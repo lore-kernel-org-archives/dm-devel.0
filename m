@@ -1,14 +1,12 @@
-From: Martin Schlemmer <azarah@nosferatu.za.org>
-Subject: Re: KLIBC support for device-mapper
-Date: Wed, 09 Mar 2005 14:00:53 +0200
-Message-ID: <1110369653.8842.157.camel@nosferatu.lan>
-References: <1110115176.8842.31.camel@nosferatu.lan>
-Reply-To: Martin Schlemmer <azarah@nosferatu.za.org>,
-	device-mapper development <dm-devel@redhat.com>
+From: Christophe Saout <christophe@saout.de>
+Subject: Re: possible dm-crypt leak over loop
+Date: Thu, 10 Mar 2005 14:24:18 +0100
+Message-ID: <1110461058.14581.3.camel@leto.cs.pocnet.net>
+References: <1110147738.2266.26.camel@boxen>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-120cxBIoydJuB4EzXmo/"
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <1110115176.8842.31.camel@nosferatu.lan>
+Content-Type: multipart/mixed; boundary="===============0043736048=="
+In-Reply-To: <1110147738.2266.26.camel@boxen>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,471 +16,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alexander Nyberg <alexn@dsv.su.se>
+Cc: dm-crypt@saout.de, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
---=-120cxBIoydJuB4EzXmo/
+--===============0043736048==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-nX0/Gj0tv57QQ+nliMut"
+
+
+--=-nX0/Gj0tv57QQ+nliMut
 Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 
-On Sun, 2005-03-06 at 15:19 +0200, Martin Schlemmer wrote:
-> Hi,
-> 
-> This patch adds support for compiling device-mapper against klibc (as of
-> klibc-0.213).  Detecting klibc is still fairly crappy, but I will see if
-> we can get that simplified via support from klibc side.
-> 
+Am Sonntag, den 06.03.2005, 23:22 +0100 schrieb Alexander Nyberg:
 
-Ok, this is a new patch replacing the previous one.  It needs
-klibc-0.217 or 1.0 at least to work.
+> I think this is more related to dm-crypt and not to loop. However - this
+> only seems to happen when dm-crypt is on top of loop, something I cannot
+> explain, how do they differ?. Sysrq-t trace at the bottom. My belief
+> after looking at this is that dm-crypt leaks memory somewhere but I
+> couldn't get around the dm code so here it is. This is 2.6.11, but this
+> bug has been present forever (easier to trigger now though).
+>=20
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+>=20
+> Testcase:
+> #!/bin/sh
+> losetup /dev/loop7 loopbackfile
+> echo 0 `blockdev --getsize /dev/loop7` crypt aes-plain 0123456789abcdef01=
+23456789abcdef 0 /dev/loop7 0 | dmsetup create volume1
+> mkfs.ext3 /dev/mapper/volume1
+> mount /dev/mapper/volume1 mnt
+> cd mnt
+> dbench 20
 
-Comments will be appreciated.
+How do you see there's a memory leak? Does your machine lock up? I just
+ran your testcase several times and I don't see anything unusual. Total
+system memory consumption doesn't change before and afterwards.
+
+Can anybody else confirm this?
 
 
-Thanks,
+--=-nX0/Gj0tv57QQ+nliMut
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: Dies ist ein digital signierter Nachrichtenteil
 
--- 
-Martin Schlemmer
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.0 (GNU/Linux)
+
+iD8DBQBCMEqBZCYBcts5dM0RAiPzAKCIcDVNEjwotV6T53sVejYiJcdpiACfV/Fw
+ed3FCWiV1PTMj/9WV/MTrCs=
+=gM6S
+-----END PGP SIGNATURE-----
+
+--=-nX0/Gj0tv57QQ+nliMut--
 
 
-
--- 
----------------------[ Ciphire Signature ]----------------------
-From: azarah@nosferatu.za.org signed email body (356 characters)
-Date: on 09 March 2005 at 11:57:53 UTC
-To:   dm-devel@redhat.com
-----------------------------------------------------------------
-: Ciphire has secured this email against identity theft.
-: Free download at www.ciphire.com. The garbled lines
-: below are the sender's verifiable digital signature.
-----------------------------------------------------------------
-00fAAAAAEAAADB5C5CZAEAAPcCAAIAAgACACAjYe/qeWoHRrdDE3mOifT0WPgp92
-kbkclxgX1lQsV9VwEAJOQiG+Djg3e7Ai63e8AMF0Hl/gle8q4Ud88Lecx5fcUpaV
-5J3bEsvF9qOzLIbuIusij5fNCeJhZjBQGFEgYE9g==
-------------------[ End Ciphire Signed Message ]----------------
-
---=-120cxBIoydJuB4EzXmo/
-Content-Disposition: attachment;
-	filename=device-mapper.1.01.00-klibc_try2.patch
-Content-Type: text/x-patch; name=device-mapper.1.01.00-klibc_try2.patch;
-	charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-
-diff -urpN device-mapper.1.01.00/aclocal.m4 device-mapper.1.01.00.klibc/aclocal.m4
---- device-mapper.1.01.00/aclocal.m4	1970-01-01 02:00:00.000000000 +0200
-+++ device-mapper.1.01.00.klibc/aclocal.m4	2005-03-08 00:03:59.000000000 +0200
-@@ -0,0 +1,75 @@
-+# klibc.m4 serial 99
-+## Copyright (C) 1995-2003 Free Software Foundation, Inc.
-+## This file is free software, distributed under the terms of the GNU
-+## General Public License.  As a special exception to the GNU General
-+## Public License, this file may be distributed as part of a program
-+## that contains a configuration script generated by Autoconf, under
-+## the same distribution terms as the rest of that program.
-+##
-+## This file can can be used in projects which are not available under
-+## the GNU General Public License or the GNU Library General Public
-+## License but which still want to provide support for the GNU gettext
-+## functionality.
-+## Please note that the actual code of the GNU gettext library is covered
-+## by the GNU Library General Public License, and the rest of the GNU
-+## gettext package package is covered by the GNU General Public License.
-+## They are *not* in the public domain.
-+
-+# Authors:
-+#   Martin Schlemmer <azarah@nosferatu.za.org>, 2005.
-+
-+
-+# AC_CHECK_KLIBC
-+# --------------
-+# Check if the user wants KLIBC support enabled.  If so, set KLIBC=yes and
-+# fill in KLIBC_PREFIX, KLIBC_BINDIR, KLIBC_SBINDIR, KLIBC_LIBDIR and
-+# KLIBC_INCLUDEDIR.  CC is also set to the proper klcc executable.
-+# NOTE:  This should be called before AC_PROG_CC, and before header, function
-+#        or type checks.
-+AC_DEFUN([AC_CHECK_KLIBC],
-+[AC_BEFORE([$0], [AC_PROG_CC])
-+AC_REQUIRE([AC_CANONICAL_HOST])
-+AC_ARG_ENABLE([klibc],
-+              [AS_HELP_STRING([--enable-klibc],
-+                              [Use this to link the tools to klibc. Set KLCC
-+                               to the absolute file name of klcc if not in
-+                               the PATH.])],
-+              [KLIBC=yes], [KLIBC=no])
-+
-+if test "X$KLIBC" = Xyes; then
-+  # Basic cross compiling support.  I do not think it is wise to use
-+  # AC_CHECK_TOOL, because if we are cross compiling, we do not want
-+  # just 'klcc' to be returned ...
-+  if test "X$cross_compiling" = Xyes; then
-+    AC_CHECK_PROGS([KLCC], [${host_alias}-klcc], [no])
-+  else
-+    AC_CHECK_PROGS([KLCC], [klcc], [no])
-+  fi
-+  if test "X$KLCC" = Xno; then
-+    AC_MSG_ERROR([cannot find klibc frontend 'klcc'!])
-+  fi
-+
-+  CC="$KLCC"
-+  CFLAGS="-Os"
-+  KLIBC_KCROSS="$($KLCC -print-klibc-kcross 2>/dev/null)"
-+  KLIBC_PREFIX="$($KLCC -print-klibc-prefix 2>/dev/null)"
-+  KLIBC_BIN_DIR="$($KLCC -print-klibc-bindir 2>/dev/null)"
-+  KLIBC_SBIN_DIR="${KLIBC_PREFIX}/${KLIBC_KCROSS}sbin"
-+  KLIBC_LIB_DIR="$($KLCC -print-klibc-libdir 2>/dev/null)"
-+  KLIBC_INCLUDE_DIR="$($KLCC -print-klibc-includedir 2>/dev/null)"
-+
-+  # At least KLIBC_LIB_DIR should be valid, else klibc is too old or
-+  # something went wrong
-+  if test ! -d "$KLIBC_LIB_DIR"; then
-+    AC_MSG_ERROR([your klibc installation is too old or not functional!])
-+  fi
-+fi
-+
-+AC_SUBST(KLIBC)
-+AC_SUBST(KLIBC_PREFIX)
-+AC_SUBST(KLIBC_BIN_DIR)
-+AC_SUBST(KLIBC_SBIN_DIR)
-+AC_SUBST(KLIBC_LIB_DIR)
-+AC_SUBST(KLIBC_INCLUDE_DIR)
-+])# AC_CHECK_KLIBC
-+
-diff -urpN device-mapper.1.01.00/configure.in device-mapper.1.01.00.klibc/configure.in
---- device-mapper.1.01.00/configure.in	2005-01-06 00:00:39.000000000 +0200
-+++ device-mapper.1.01.00.klibc/configure.in	2005-03-07 17:07:42.000000000 +0200
-@@ -27,38 +27,52 @@ AC_CONFIG_AUX_DIR(autoconf) 
- dnl -- Get system type
- AC_CANONICAL_SYSTEM
- 
--case "$host_os" in
--	linux*)
--		CFLAGS="$CFLAGS"
--		COPTIMISE_FLAG="-O2"
--		CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
--		LDDEPS="$LDDEPS .export.sym"
--		SOFLAG="-shared" ;;
--	darwin*)
--		CFLAGS="$CFLAGS -no-cpp-precomp -fno-common"
--		COPTIMISE_FLAG="-O2"
--		CLDFLAGS="$CLDFLAGS"
--		LDDEPS="$LDDEPS"
--		SOFLAG="-dynamiclib" ;;
--esac
--
- ################################################################################
- dnl -- Checks for programs.
- AC_PROG_AWK
--AC_PROG_CC
--AC_PROG_GCC_TRADITIONAL
- AC_PROG_INSTALL
- AC_PROG_LN_S
- AC_PROG_MAKE_SET
- AC_PROG_RANLIB
- 
- ################################################################################
-+dnl -- Enables linking to klibc
-+dnl -- We need to do this before header checks, as we need to set CC
-+AC_CHECK_KLIBC
-+
-+################################################################################
-+dnl -- Checks for CC.
-+dnl -- Should be after klibc check.
-+AC_PROG_CC
-+AC_PROG_GCC_TRADITIONAL
-+
-+################################################################################
-+dnl -- Set system type flags, etc
-+dnl -- We do not want this with klibc
-+if test x$KLIBC != xyes; then
-+	case "$host_os" in
-+		linux*)
-+			CFLAGS="$CFLAGS"
-+			COPTIMISE_FLAG="-O2"
-+			CLDFLAGS="$CLDFLAGS -Wl,--version-script,.export.sym"
-+			LDDEPS="$LDDEPS .export.sym"
-+			SOFLAG="-shared" ;;
-+		darwin*)
-+			CFLAGS="$CFLAGS -no-cpp-precomp -fno-common"
-+			COPTIMISE_FLAG="-O2"
-+			CLDFLAGS="$CLDFLAGS"
-+			LDDEPS="$LDDEPS"
-+			SOFLAG="-dynamiclib" ;;
-+	esac
-+fi
-+
-+################################################################################
- dnl -- Checks for header files.
- AC_HEADER_DIRENT
- AC_HEADER_STDC
- AC_HEADER_TIME
- 
--AC_CHECK_HEADERS(ctype.h dirent.h errno.h fcntl.h getopt.h inttypes.h limits.h stdarg.h stdio.h stdlib.h string.h sys/ioctl.h sys/param.h sys/stat.h sys/types.h unistd.h,,AC_MSG_ERROR(bailing out))
-+AC_CHECK_HEADERS(ctype.h dirent.h errno.h fcntl.h inttypes.h limits.h stdarg.h stdio.h stdlib.h string.h sys/ioctl.h sys/param.h sys/stat.h sys/types.h unistd.h,,AC_MSG_ERROR(bailing out))
- 
- ################################################################################
- dnl -- Checks for typedefs, structures, and compiler characteristics.
-@@ -191,7 +205,10 @@ fi
- 
- ################################################################################
- dnl -- Check for getopt
--AC_CHECK_HEADERS(getopt.h, CFLAGS="$CFLAGS -DHAVE_GETOPTLONG")
-+dnl -- We do not want this with klibc
-+if test x$KLIBC != xyes; then
-+	AC_CHECK_HEADERS(getopt.h, CFLAGS="$CFLAGS -DHAVE_GETOPTLONG")
-+fi
- 
- ################################################################################
- dnl -- Internationalisation stuff
-@@ -320,6 +337,7 @@ AC_SUBST(tmpdir)
- AC_SUBST(CFLAGS)
- AC_SUBST(COPTIMISE_FLAG)
- AC_SUBST(CLDFLAGS)
-+AC_SUBST(LDFLAGS)
- AC_SUBST(LDDEPS)
- AC_SUBST(SOFLAG)
- AC_SUBST(DEBUG)
-diff -urpN device-mapper.1.01.00/dmsetup/Makefile.in device-mapper.1.01.00.klibc/dmsetup/Makefile.in
---- device-mapper.1.01.00/dmsetup/Makefile.in	2004-07-03 20:17:32.000000000 +0200
-+++ device-mapper.1.01.00.klibc/dmsetup/Makefile.in	2005-03-07 10:35:22.000000000 +0200
-@@ -17,11 +17,20 @@ top_srcdir = @top_srcdir@
- VPATH = @srcdir@
- 
- TARGETS = dmsetup
--INSTALL_TYPE = install_dynamic
- 
--ifeq ("@STATIC_LINK@", "yes")
--  TARGETS += dmsetup.static
--  INSTALL_TYPE += install_static
-+ifeq ("@KLIBC@", "yes")
-+  DMLIBS += -ldevmapper_klibc
-+  DM_LIBRARY = libdevmapper_klibc.a
-+  INSTALL_TYPE = install_dynamic
-+else
-+  DMLIBS += -ldevmapper
-+  DM_LIBRARY = libdevmapper.so
-+  INSTALL_TYPE = install_dynamic
-+
-+  ifeq ("@STATIC_LINK@", "yes")
-+    TARGETS += dmsetup.static
-+    INSTALL_TYPE += install_static
-+  endif
- endif
- 
- SOURCES = dmsetup.c
-@@ -29,13 +38,13 @@ CLEAN_TARGETS = dmsetup dmsetup.static
- 
- include ../make.tmpl
- 
--dmsetup: $(OBJECTS) $(interfacedir)/libdevmapper.so
--	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) \
--	      -L$(interfacedir) -L$(DESTDIR)/lib -ldevmapper $(LIBS)
-+dmsetup: $(OBJECTS) $(interfacedir)/$(DM_LIBRARY)
-+	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -L$(interfacedir) \
-+	      -L$(DESTDIR)/lib $(DMLIBS) $(LIBS)
- 
- dmsetup.static: $(OBJECTS) $(interfacedir)/libdevmapper.a
--	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -static \
--	      -L$(interfacedir) -L$(DESTDIR)/lib -ldevmapper $(LIBS)
-+	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -static -L$(interfacedir) \
-+	      -L$(DESTDIR)/lib $(DMLIBS) $(LIBS)
- 
- install: $(INSTALL_TYPE)
- 
-diff -urpN device-mapper.1.01.00/lib/Makefile.in device-mapper.1.01.00.klibc/lib/Makefile.in
---- device-mapper.1.01.00/lib/Makefile.in	2005-01-06 20:22:44.000000000 +0200
-+++ device-mapper.1.01.00.klibc/lib/Makefile.in	2005-03-06 14:20:10.000000000 +0200
-@@ -21,8 +21,12 @@ SOURCES = libdm-common.c libdm-file.c $(
- 
- INCLUDES = -I$(interface)
- 
--LIB_STATIC = $(interface)/libdevmapper.a
--LIB_SHARED = $(interface)/libdevmapper.so
-+ifeq ("@KLIBC@", "yes")
-+  LIB_STATIC = $(interface)/libdevmapper_klibc.a
-+else
-+  LIB_STATIC = $(interface)/libdevmapper.a
-+  LIB_SHARED = $(interface)/libdevmapper.so
-+endif
- 
- CFLAGS += -DDEVICE_UID=@DEVICE_UID@ -DDEVICE_GID=@DEVICE_GID@ \
- 	  -DDEVICE_MODE=@DEVICE_MODE@
-@@ -32,35 +36,39 @@ include ../make.tmpl
- .PHONY: install_dynamic install_static \
- 	install_fs install_ioctl install_ioctl_static
- 
--INSTALL_TYPE = install_dynamic
--
--ifeq ("@STATIC_LINK@", "yes")
--  INSTALL_TYPE += install_static
-+ifeq ("@KLIBC@", "yes")
-+  INSTALL_TYPE = install_static
-+else
-+  INSTALL_TYPE = install_dynamic
-+
-+  ifeq ("@STATIC_LINK@", "yes")
-+    INSTALL_TYPE += install_static
-+  endif
- endif
- 
- install: $(INSTALL_TYPE)
- 
- install_dynamic: install_@interface@
--	$(LN_S) -f libdevmapper.so.$(LIB_VERSION) $(libdir)/libdevmapper.so
-+	$(LN_S) -f $(notdir $(LIB_SHARED)).$(LIB_VERSION) $(libdir)/$(notdir $(LIB_SHARED))
- 	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 libdevmapper.h \
- 		$(includedir)/libdevmapper.h
- 
- install_static: install_@interface@_static
--	$(LN_S) -f libdevmapper.a.$(LIB_VERSION) $(libdir)/libdevmapper.a
-+	$(LN_S) -f $(notdir $(LIB_STATIC)).$(LIB_VERSION) $(libdir)/$(notdir $(LIB_STATIC))
- 	$(INSTALL) -D $(OWNER) $(GROUP) -m 444 libdevmapper.h \
- 		$(includedir)/libdevmapper.h
- 
--install_fs: fs/libdevmapper.so
-+install_fs: fs/$(notdir $(LIB_SHARED))
- 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
--		$(libdir)/libdevmapper.so.$(LIB_VERSION)
-+		$(libdir)/$(notdir $(LIB_SHARED)).$(LIB_VERSION)
- 
--install_ioctl: ioctl/libdevmapper.so
-+install_ioctl: ioctl/$(notdir $(LIB_SHARED))
- 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
--		$(libdir)/libdevmapper.so.$(LIB_VERSION)
-+		$(libdir)/$(notdir $(LIB_SHARED)).$(LIB_VERSION)
- 
--install_ioctl_static: ioctl/libdevmapper.a
-+install_ioctl_static: ioctl/$(notdir $(LIB_STATIC))
- 	$(INSTALL) -D $(OWNER) $(GROUP) -m 555 $(STRIP) $< \
--		$(libdir)/libdevmapper.a.$(LIB_VERSION)
-+		$(libdir)/$(notdir $(LIB_STATIC)).$(LIB_VERSION)
- 
- .PHONY: distclean_lib distclean
- 
-diff -urpN device-mapper.1.01.00/lib/ioctl/libdm-iface.c device-mapper.1.01.00.klibc/lib/ioctl/libdm-iface.c
---- device-mapper.1.01.00/lib/ioctl/libdm-iface.c	2005-01-13 00:10:14.000000000 +0200
-+++ device-mapper.1.01.00.klibc/lib/ioctl/libdm-iface.c	2005-03-06 14:00:40.000000000 +0200
-@@ -120,24 +120,30 @@ static int _get_proc_number(const char *
- 			    uint32_t *number)
- {
- 	FILE *fl;
--	char nm[256];
--	int c;
-+	char nm[256], buf[300];
-+	int num, size;
- 
- 	if (!(fl = fopen(file, "r"))) {
- 		log_error("%s: fopen failed: %s", file, strerror(errno));
- 		return 0;
- 	}
- 
--	while (!feof(fl)) {
--		if (fscanf(fl, "%d %255s\n", number, &nm[0]) == 2) {
-+	/* Use fread+sscanf for klibc compatibility. */
-+	do {
-+		size = 0;
-+		do {
-+			num = fread(&buf[size], sizeof(char), 1, fl);
-+			if (num > 0)
-+				size++;
-+		} while (num > 0 && buf[size - 1] != '\n');
-+		buf[size] = '\0';
-+		if (sscanf(buf, "%d %255s\n", number, &nm[0]) == 2) {
- 			if (!strcmp(name, nm)) {
- 				fclose(fl);
- 				return 1;
- 			}
--		} else do {
--			c = fgetc(fl);
--		} while (c != EOF && c != '\n');
--	}
-+		}
-+	} while (num > 0);
- 	fclose(fl);
- 
- 	log_error("%s: No entry for %s found", file, name);
-diff -urpN device-mapper.1.01.00/lib/libdm-file.c device-mapper.1.01.00.klibc/lib/libdm-file.c
---- device-mapper.1.01.00/lib/libdm-file.c	2005-01-06 20:22:44.000000000 +0200
-+++ device-mapper.1.01.00.klibc/lib/libdm-file.c	2005-03-06 12:43:18.000000000 +0200
-@@ -16,10 +16,12 @@
- #include "lib.h"
- #include "libdm-file.h"
- 
--#include <sys/file.h>
-+#ifndef __KLIBC__
-+# include <sys/file.h>
-+# include <malloc.h>
-+#endif
- #include <fcntl.h>
- #include <dirent.h>
--#include <malloc.h>
- 
- static int _create_dir_recursive(const char *dir)
- {
-diff -urpN device-mapper.1.01.00/make.tmpl.in device-mapper.1.01.00.klibc/make.tmpl.in
---- device-mapper.1.01.00/make.tmpl.in	2004-07-03 20:17:32.000000000 +0200
-+++ device-mapper.1.01.00.klibc/make.tmpl.in	2005-03-08 00:04:51.000000000 +0200
-@@ -34,9 +34,15 @@ SOFLAG += @SOFLAG@
- prefix = @prefix@
- exec_prefix = @exec_prefix@
- bindir = $(DESTDIR)@bindir@
--includedir = $(DESTDIR)@includedir@
--libdir = $(DESTDIR)@libdir@
--sbindir = $(DESTDIR)@sbindir@
-+ifeq ("@KLIBC@", "no")
-+  includedir = $(DESTDIR)@includedir@
-+  libdir = $(DESTDIR)@libdir@
-+  sbindir = $(DESTDIR)@sbindir@
-+else
-+  includedir = $(DESTDIR)@KLIBC_INCLUDE_DIR@
-+  libdir = $(DESTDIR)@KLIBC_LIB_DIR@
-+  sbindir = $(DESTDIR)@KLIBC_SBIN_DIR@
-+endif
- infodir = $(DESTDIR)@infodir@
- mandir = $(DESTDIR)@mandir@
- localedir = $(DESTDIR)@LOCALEDIR@
-@@ -56,7 +62,12 @@ endif
- 
- SUFFIXES = .c .d .o .so .a .po .pot .mo
- 
--CFLAGS += -fPIC -Wall -Wundef -Wshadow -Wcast-align -Wwrite-strings -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -Winline
-+CFLAGS+=-fPIC -Wall -Wundef -Wcast-align -Wwrite-strings -Winline
-+
-+ifeq ("@KLIBC@", "no")
-+  # These ones make klibc compiles very loud
-+  CFLAGS+=-Wshadow -Wmissing-prototypes -Wmissing-declarations -Wnested-externs
-+endif
- 
- #CFLAGS += -W -Wconversion -Wpointer-arith -Wredundant-decls -Wbad-function-cast -Wcast-qual -Wmissing-noreturn
- 
-
---=-120cxBIoydJuB4EzXmo/
-Content-type: text/plain;
- charset="US-ASCII";
- name="Ciphire-Signature"
-Content-description: Ciphire Signature
-Content-transfer-encoding: 7bit
-Content-disposition: inline
-
----------------------[ Ciphire Signature ]----------------------
-From: azarah@nosferatu.za.org signed 'text' (13928 bytes)
-Date: on 09 March 2005 at 11:57:53 UTC
-To:   dm-devel@redhat.com
-----------------------------------------------------------------
-: Ciphire has secured this email against identity theft.
-: Free download at www.ciphire.com. The garbled lines
-: below are the sender's verifiable digital signature.
-----------------------------------------------------------------
-01fAAAAAEAAADB5C5CaDYAADADAAIAAgACACAjYe/qeWoHRrdDE3mOifT0WPgp92
-kbkclxgX1lQsV9VwEAJOQiG+Djg3e7Ai63e8AMF0Hl/gle8q4Ud88Lecx5fcUcYM
-C8IVEPhlhjiU316WuClbJp4eHYdJfcJ8naTC+h+A==
---------------------[ End Ciphire Signature ]-------------------
-
---=-120cxBIoydJuB4EzXmo/
+--===============0043736048==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---=-120cxBIoydJuB4EzXmo/--
+--===============0043736048==--
