@@ -1,14 +1,10 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [ANNOUNCE 0/6] Open-iSCSI High-Performance Initiator
-	for Linux
-Date: Sat, 05 Mar 2005 17:02:15 -0800
-Message-ID: <422A5697.2000905@cs.wisc.edu>
-References: <4229e34e.7e535078.5bc3.0b5eSMTPIN_ADDED@mx.googlegroups.com>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: panic in dm_pg_init_complete+0x10
+Date: Tue, 8 Mar 2005 16:23:59 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A804@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <4229e34e.7e535078.5bc3.0b5eSMTPIN_ADDED@mx.googlegroups.com>
+Content-Type: text/plain
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,47 +14,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: open-iscsi@googlegroups.com
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Cc: 'Alasdair G Kergon' <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Alex Aizman wrote:
-> This is to announce Open-iSCSI project: High-Performance iSCSI Initiator for
-> Linux.
-> 
-> MOTIVATION
-> ==========
-> 
-> Our initial motivations for the project were: (1) implement the right
-> user/kernel split, and (2) design iSCSI data path for performance. Recently
-> we added (3): get accepted into the mainline kernel.
->  
-> As far as user/kernel, the existing iSCSI initiators bloat the kernel with
-> ever-growing control plane code, including but not limited to: iSCSI
-> discovery, Login (Authentication and Operational), session and connection
-> management,
+While testing multipath reaction to CLARiion CX300
+non-destructive ucode, dm-mpath paniced at
+dm_pg_init_complete+0x10.  Using version 0.4.3-pre5
+multipath tools and version 2.6.11-rc3-udm2 linux kernel.
+The panic is occurring due to corrupted memory in the path
+structure for a pg_init i/o completion.  I suspect that the memory
+for the path structure (and its encompassing path priority group
+and multipath structure) has been freed by the multipath destructor,
+subsequently re-allocated for other use, and written upon.
 
-For iscsi-sfnet, I know it does login and auth and session and connection
-management/recovery in kernel becuase nobody has been able to write a usersapce
-daemon that can survive memory allocation failures and being paged out - are
-there other problems when dealing with usersapce like this. Open-iscsi seems
-to suffer from those problems too, but they seem like they can be fixed relatively
-quickly. Do you know how long it will take? Is it still two months with some of
-the items I descibed on the open-iscsi list in mind and after looking at what dm
-multipath has had to do to perform failback and path checking?
+Furthermore, I strongly suspect the panic is related to having
+multiple pg_init requests outstanding for the same multipath.
+Since pg_init requests are not accounted for in the pending
+count of the multipath mapped device structure, it is possible
+to have outstanding pg_init requests awaiting i/o completion
+when the pending count is zero.  If the multipath table
+is destroyed via dm_table_destroy() before the pg_init i/o
+completion arrives, dm_pg_init_complete() can reference
+corrupted memory.  This can happen either from the swap-in
+of a new dm table or the closing of the dm mapped device.
+My panic involves the former use case.
 
-As you know I agree it should be done in usersapce so please spare me the usual
-advertisements and magic I normally get ;) I do not need to be sold on the
-concept. I am just trying to get a better picture of if people will merge the
-kernel part with a unreliable userspace component. If so then many sourceforge
-devs can help test as there is no point in target vendors on that list
-fixing the same bugs on multiple stacks like I have been doing (almost had
-Pyx fixed with IBM DS300 too).
+Assume that the first of two outstanding pg_init requests for
+the same multipath completes with a failure.  Further assume
+that both requests use the same path and that this is the last
+usable path for the multipath.  When the last path fails it is
+possible for multipath(8) invoked from multipathd(8)'s reaction to
+the i/o failure event for the first pg_init request to attempt to
+reload the multipath table for the multipath in question, possibly
+with some of the other paths restored to good health.  The
+dm-mpath reaction to the pre-suspension issued by the dm
+level i/o suspension will cause the two user i/os associated with
+the two pg_init requests to be processed and immediately failed
+due to "all-paths-down" in the face of i/o suspension.  The failure
+of these user i/os will decrement to zero the pending count for
+the multipath mapped_device structure -- even though the second
+of the two pg_init i/os is still outstanding.
 
-If the problems of doing recovery/login/auth in usersapce are solved and
-well known should dm multipath move its failover to usersapce too? Doing
-explicit failover is essentialy the same problem and there is no point in
-sticking in a kernel interface for dm hw handlers when it can be done in
-usersapce. I mention this becuase of the MCS embargo, and the fact the
-I cannot imagine many storage admins running iSCSI without some sort
-of multipath or failover so I would like to get that ironed out too.
+After dm_suspend() returns to do_resume(), the dm_resume() code
+will initiate swapping the old and new multipath tables. The call to
+dm_table_put() in __unbind() called from dm_swap_table() called
+from dm_resume() will initiate the freeing of the multipath structure's
+memory via the multipath_dtr() destructor.
+
+Looks to me like two issues here -- (1) probably should not allow
+concurrent pg_init i/os for the same multipath and (2) possibly the
+multipath destructor should block waiting for a possible outstanding
+pg_init i/o to complete.  I've included a patch to dm-mpath.c which
+addresses issues (1) and (2) above.  The multipath structure will now
+indicate whenever a pg_init request is outstanding and process_queued_ios()
+now will not initiate subsequent pg_init requests if one is outstanding.
+Also, multipath_dtr() is changed to block awaiting the arrival of any
+outstanding pg_init i/o completion.
+
+Even so, there are a few issues with this --
+
+(1) It is possible that an outstanding pg_init request and a new one
+are for initializing different paths of different priority groups.  The
+patch
+does not account for this possibility.  Should it, possibly by just keeping
+track of a count of the number of outstanding pg_init requests?  What
+guarantees that these multiple pg_init requests complete in the order
+that they were initially dispatched?
+
+(2) Should the mapped device's pending count reflect outstanding i/os
+initiated (not cloned) on target devices of that mapped device?  It might
+be a bit difficult to push this accounting up to higher level mapped devices
+stacked atop the one where the i/o is initiated.
