@@ -1,13 +1,13 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: md_component_detection = 1
-Date: Tue, 15 Feb 2005 22:20:19 +0100
-Message-ID: <42126793.4030407@free.fr>
-References: <000001c5136d$3b3502a0$11051aac@pcp41116>
+Subject: Re: path priority group and path state
+Date: Tue, 15 Feb 2005 22:35:55 +0100
+Message-ID: <42126B3B.3050200@free.fr>
+References: <EA4DC661A6353747A2E5C0DE8792DDDE07CA9912@orsmsx404.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-In-Reply-To: <000001c5136d$3b3502a0$11051aac@pcp41116>
+In-Reply-To: <EA4DC661A6353747A2E5C0DE8792DDDE07CA9912@orsmsx404.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,102 +17,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: shahid.shaikh@patni.com, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-All I can comment is LVM over the multipath implementation from 
-Alasdair, RedHat.
+Caushik, Ramesh wrote:
 
-For that, you need to set in /etc/lvm/lvm.conf :
+>Given that some of the problems I am noticing in my testing relates to
+>mismatch between the path state recorded by the driver and the daemon, I
+>thought I will chime in with my questions / observations.
+>   
+>My setup consists of a dual port qla2312 controller connected to a JBOD
+>through a FC switch thus creating 2 paths A & B to the drive. I have all
+>the paths in one PG using round-robin selector and "queue if no path"
+>set. I run a bonnie++ transfer to the mounted drive, and then pull out
+>the path A connection. When the transfer switches to path B I reinsert A
+>and then after a little while pull out B and repeat this a few times.
+>Sometimes the transfer just hangs and the log messages indicate the
+>driver is queueing the i/o (both paths are marked faulty). This is what
+>seems to happen. When the cable on path  A is pulled out the controller
+>receives a "LOOP DOWN" on that port and ALSO a "LIP RESET" on path B.
+>This causes i/o on both paths to return SCSI error and so both paths are
+>set faulty (some of the in-flight i/o on path B fails as a result of the
+>LIP RESET). However when the daemon checker loop wakes up and tests the
+>path (via checkfn) path B returns OK, and since the daemon will
+>reconfigure the paths only if newstate != oldstate it does not
+>reconfigure the path. As a result, we end up with a situation where the
+>driver marks path B as faulty due to i/o error in the path, and waits
+>for the daemon to reconfigure the path, while the daemon does not
+>reconfigure path B because the checkfn does not detect a state change.
+>First of all please tell me if this analyses is correct. If it is then
+>my suggestion is for the daemon checker loop to reinstate the path
+>anytime the there is a mismatch between the path state in the driver and
+>that returned by the checkfn, and not just based on the newstate !=
+>oldstate check. I am in the process of coding this up to see if it will
+>fix the problem. Meanwhile I would much appreciate any comments or
+>suggestions on this. Thanks,
+>
+>Ramesh.
+>
+Agreed : this is a real hole in the design.
+Suggested solution seems sane.
 
-    scan = [ "/dev", "/dev/mapper" ]  (you may or may not need this one, 
-depending on your distro)
-    filter = [ "r/sd.*/", "a/.*/" ]
-    types = [ "device-mapper", 254 ]
-
-Here the 254 may vary depending on your setup. To find out for your 
-case, do :
-
-[root@cl039 root]# grep mapper /proc/devices
-254 device-mapper
-
-Then everything should work as expected :
-
-[root@cl039 root]# multipath -l -v2
-red (3600a0b80000b596a000003113d9c5381)
-[size=33 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [enabled][first]
-  \_ 4:0:3:9 sdan 66:112  [ready ][active]
-  \_ 5:0:1:9 sdbh 67:176  [ready ][active]
-\_ round-robin 0 [enabled]
-  \_ 5:0:3:9 sdcb 68:240  [ready ][active]
-  \_ 4:0:1:9 sdt  65:48   [ready ][active]
-
-[root@cl039 root]# pvcreate /dev/mapper/red
-  Physical volume "/dev/mapper/red" successfully created
-
-[root@cl039 root]# pvscan
-  PV /dev/mapper/red         lvm2 [33.86 GB]
-  Total: 1 [33.86 GB] / in use: 0 [0   ] / in no VG: 1 [33.86 GB]
-
-
-That's the more precise info I can share onn the subject.
-Now your on your own.
-
-Regards,
+Thanks,
 cvaroqui
-
-
-shahid shaikh wrote:
-
->
->Hello Chris,
->
->    I have written a sample psuedo driver which is basically consolidating
->multiple paths to LUNs.
->So I need prevent SCSI devices from scanning.
->
->I gone thro' lvm.conf and found out that md is doing the similar thing by
->setting following value in lvm.conf
->
->         md_component_detection = 1
->this parameter, if set, prevents scanning of all the SCSI devices
->contributed in the creation of md.
->
->So is there any parameter in LVM2 or device mapper, setting or clearing
->which can prevent scanning of SCSI devices used for my psuedo driver.
->Obviously other than filtering it out.
->
->Thanks and Regards,
->Shahid Shaikh.
->Software Engineer.
->
->
->
->http://www.patni.com
->World-Wide Partnerships. World-Class Solutions.
->_____________________________________________________________________
->
->This e-mail message may contain proprietary, confidential or legally
->privileged information for the sole use of the person or entity to
->whom this message was originally addressed. Any review, e-transmission
->dissemination or other use of or taking of any action in reliance upon
->this information by persons or entities other than the intended
->recipient is prohibited. If you have received this e-mail in error
->kindly delete  this e-mail from your records. If it appears that this
->mail has been forwarded to you without proper authority, please notify
->us immediately at netadmin@patni.com and delete this mail. 
->_____________________________________________________________________
->  
->
->------------------------------------------------------------------------
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
->
-
 
 --
 dm-devel mailing list
