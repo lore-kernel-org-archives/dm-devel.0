@@ -1,14 +1,23 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: more multipath deadlocks -- this time involving
-	memory
-Date: Tue, 22 Mar 2005 20:38:57 +0000
-Message-ID: <20050322203857.GM19749@agk.surrey.redhat.com>
-References: <C2EEB4E538D3DC48BF57F391F422779321A856@SRMANNING.eng.emc.com>
+From: Wilfried Weissmann <Wilfried.Weissmann@gmx.at>
+Subject: Re: Re: grub 0.96 bug
+Date: Tue, 22 Mar 2005 23:42:45 +0100
+Message-ID: <42409F65.5090507@gmx.at>
+References: <62b0912f05031606396a3a47db@mail.gmail.com>	
+	<62b0912f050319145547c4a7db@mail.gmail.com>	
+	<20050320163001.GB643@percy.comedia.it>	
+	<62b0912f05032019262c009465@mail.gmail.com>	
+	<62b0912f0503202121607bd38a@mail.gmail.com>	
+	<62b0912f05032104052e78fd60@mail.gmail.com>	
+	<62b0912f050321065558fc956@mail.gmail.com>
+	<423F0F74.3030007@gmx.at>	
+	<62b0912f050321235348c20525@mail.gmail.com>
+	<42407227.2020402@gmx.at>
+	<62b0912f0503221211c21d0ec@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A856@SRMANNING.eng.emc.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+In-Reply-To: <62b0912f0503221211c21d0ec@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,34 +27,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "goggin, edward" <egoggin@emc.com>
-Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: Molle Bestefich <molle.bestefich@gmail.com>
+Cc: bug-grub@gnu.org, dm-devel@redhat.com, ataraid-list@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 21, 2005 at 09:34:20PM -0500, goggin, edward wrote:
-> I see three separate instances of the problem being plausible, 
+Molle Bestefich wrote:
+>>That would make my life a lot easier! On the other hand, the most
+>>straight forward thing to do would be to move the stage 1.5 to another
+>>default sector. So you can not forget to set any option that ruins your
+>>array if missing. Also there is no need to add some autodetection code
+>>for hpt controllers then.
+> 
+> 
+> One step ahead of me, you are.
+> 
+> I was just thinking of doing autodetection of HPT magic in GRUB.
+> 
+> The autodetection has a plus side too, though.
+> It can detect other stuff that should not be touched (Windows/Veritas
+> dynamic partition information comes to mind?) and not touch sectors
+> based on what is actually there on a particular system.  Would perhaps
+> save the implementor the pain of choosing once there's just too many
+> reserved sectors and the stage1.5 loader wont fit.
 
-We went through similar issues with lvm2's pvmove (on 2.4) and eventually 
-fixed it such that we could no longer lock up the machine while testing 
-under low memory.  That's not to say we covered every possible problem
-though.
+The problem with the autodetection code is that if you want to play safe 
+then you have to check the pci-id of the controller. Even if the BIOS of 
+the controller supports RAID if you are picky enough to do this. You 
+cannot rely on the contents of sector 9 alone since the disk may have 
+been installed on a hpt controller and then moved to another system. In 
+this case the signature is still intact and will get picked up by grub.
+There are also other things you might want to consider, like MBR + 
+loaders for disk encryption software that is also located somewhere in 
+this area.
+My opinion is that a higher default offset gets the job done. A 
+configuration option helps the people who know what they are doing in 
+weird corner cases. I would not like to add some autodetection that 
+breaks things for some people and make things compilcated when something 
+goes wrong.
 
-> The first problem scenario involves a deadlock between multipathd and
-> syslogd.  
+But I have to admit that I am getting tired of this controller.
 
-By default, pvmove turns off logging during the critical sections of code.
-[There's an option to turn it back on if you need it. I also did some
-work on code to log to pre-allocated filespace with O_DIRECT.]
+I wrote my HPT370 RAID support for kernel 2.2 based on MD.
+I debugged and extended the HPT370 ataraid module.
+I wrote a EVMS plugin for HPT370 RAID support.
+I write bug-reports for dmraid HPT370 support.
+I write bug-reports for HALd which has autodetection problems.
 
-> The second scenario involves the potential for multipathd,
-> multipath,
-> or any of the executables invoked by multipath to be deadlocked trying doing
-> synchronous page reclamation while allocating memory pages for user or
-> kernel heap memory in a system with a high degree of memory contention
+> 
+> I think I've read that the stage1.5 loader is not really necessary in
+> some cases, think I'll go doc-hunting.
 
-pvmove avoids allocating memory (incl. extending stack) in critical
-sections.  (It pre-allocates sufficient locked memory in advance.)
+I think you can also use the blocks of the stage 1.5 loader _in_ the 
+filesystem if you specify the file instead of the (hd0)16+18 blocklist. 
+But for doing things like that I hate lilo. ;)
 
-Alasdair
--- 
-agk@redhat.com
+> 
+> 
+>>>Or even better, dmraid could protect the metadata blocks by some magic
+>>>flag to dm-mod.
+>>>This isn't possible as is, is it?
+>>
+>>One can make any I/O to this block fail. But I would like something like
+>>discarding any writes and only perform reads. "dd" backups would still
+>>work then.
+> 
+> 
+> Right.  And perhaps a user-definable flag to turn the protection on or off :-).
+> Is it possible without adding new code to dm-mod?
+
+No, you have to add code that treats write request different than read 
+requests. Should not be too complicated though...
+
+Greetings,
+Wilfried
