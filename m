@@ -1,7 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: missing device-mapper functionality
-Date: Fri, 11 Feb 2005 10:09:47 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A78C@SRMANNING.eng.emc.com>
+Subject: bio/request merging
+Date: Fri, 11 Feb 2005 10:10:11 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A78D@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -17,21 +17,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The inability to monitor block I/O statistics via iostat for device-mapper
-mapped devices seems like a big loss.  Are there plans to provide this
-feature?
+As written, blk_recount_segments() requires the size of physically
+contiguous bio_vecs to not exceed the maximum virtually contiguous
+region.  This seems to be done in order to optimize the calculation of
+the hw_seg_size variable in the algorithm.  The code in
+blk_phys_contig_segment() does not force this requirement for
+physically contiguous regions?  Why the inconsistency?
 
-Seems like being able to initiate i/o requests to device-mapper target
-devices from within a device-mapper target driver is a missing link in
-the device-mapper architecture.  Are there plans to provide this feature?
+Also, why do the initial back and front merges in __make_request()
+done by ll_back_merge_fn() and ll_front_merge_fn() respectively only
+consider virtually contiguous bio_vecs while the secondary merging
+done in __make_request() by ll_merge_reqeusts_fn() considers both
+physical and virtual bio_vec contiguity?
 
-Since the multipath hardware context code for the CLARiion places
-path priority group initialization I/O requests directly on its target
-device queues it must be the case the CLARiion target devices must
-be ones which have a request_fn_proc() queue service function -- which
-rules out using other device-mapper mapped devices or md devices as
-target devices.  This restriction appears not to be in place for other
-storage systems supported by multipath.
+Off topic only a bit, but also important to bio_vec merging -- should not
+an indication of the high physical page frame number, above which all
+bio pages are bounced, be included in the device-mapper
+io_restrictions structure used by blk_recount_segments() for all
+I/O to a device-mapper mapped device?  Otherwise, isn't it possible for
+blk_recount_segments() to include bio_vec pages in a physical
+segment even if they may end up getting bounced if the bio is
+sent, by say the multipath target driver, to a different target device
+whose queue has a bounce_pfn value less than the one used by
+blk_recount_segments() with the mapped device?
+
+
+
+ 
 
 --
 dm-devel mailing list
