@@ -1,15 +1,15 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: configlet specifications being ignored in
-	multipath-tools-0.4.3
-Date: Wed, 23 Mar 2005 15:54:20 +0100
-Message-ID: <20050323145420.GA19794@averon.dyndns.org>
-References: <20050322170005.5A54073648@hormel.redhat.com>
-	<ac71172a050323041348ed3095@mail.gmail.com>
+Subject: Re: open-iscsi + dm-multipath
+Date: Wed, 23 Mar 2005 17:34:16 +0100
+Message-ID: <20050323163416.GB19794@averon.dyndns.org>
+References: <1110657791.16560.11.camel@mylaptop>
+	<1110926912.10694.41.camel@zezette>
+	<1110930664.3584.32.camel@mylaptop>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-In-Reply-To: <ac71172a050323041348ed3095@mail.gmail.com>
+In-Reply-To: <1110930664.3584.32.camel@mylaptop>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +19,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: tranlan@us.ibm.com
-Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@free.fr>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks, applied, with the missing header inclusion in devinfo.c
+On Tue, Mar 15, 2005 at 03:51:04PM -0800, Dmitry Yusupov wrote:
+> On Tue, 2005-03-15 at 23:48 +0100, christophe varoqui wrote:
+> > On sam, 2005-03-12 at 12:03 -0800, Dmitry Yusupov wrote:
+> > > Hi Guys!
+> > > 
+> > > had anyone tried to setup open-iscsi with dm-multipath yet?
+> > > I think it should work out of the box, but would be cool if someone will
+> > > double check on that.
+> > > 
+> > > PS: www.open-iscsi.org is a new cool project which features some
+> > > noticeable performance improvements for soft-based iSCSI Initiator plus
+> > > other number of exciting abilities such as independent transport and
+> > > better user-space vs. kernel split. Read more on project's web page.
+> > > 
+> > I tried on Monday, but I'm stuck before dm-multipath kicks into play.
+> > Build runs ok, modules load into the kernel, daemon starts up, but the
+> > admin tool remain desparetely silent to all commands I stuffed at it.
+> > 
+> > What is even more weird is that the daemon (in debug mode) remains
+> > silent too.
+> 
+> it easily could be a bug in open-iscsi. We just released new bits, some
+> of the issues got fixed since than. Would be cool, if you could give it
+> one more try. Kernel requirement changed since than as well. Now you
+> will need kernel >= 2.6.11 because of a bug in netlink interface.
+> 
+Tested, it works perfectly :
+
+2 streaming reads, 1 on each of these iSCSI LU (36GB 10Krpm JBODs):
+
+2b1c15ceb02796769
+[size=33 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active][first]
+  \_ 1:0:0:0 sdb  8:16    [ready ][active]
+  \_ 2:0:0:0 sde  8:64    [ready ][active]
+  \_ 3:0:0:0 sdh  8:112   [ready ][active]
+  \_ 4:0:0:0 sdk  8:160   [ready ][active]
+  \_ 5:0:0:1 sdp  8:240   [ready ][active]
+  \_ 6:0:0:0 sdq  65:0    [ready ][active]
+  \_ 7:0:0:0 sdt  65:48   [ready ][active]
+  \_ 8:0:0:0 sdw  65:96   [ready ][active]
+  \_ 9:0:0:0 sdz  65:144  [ready ][active]
+
+26353900f02796769
+[size=100 MB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active][first]
+  \_ 9:0:0:2 sdaa 65:160  [ready ][active]
+  \_ 1:0:0:2 sdc  8:32    [ready ][active]
+  \_ 2:0:0:2 sdf  8:80    [ready ][active]
+  \_ 3:0:0:2 sdi  8:128   [ready ][active]
+  \_ 4:0:0:2 sdl  8:176   [ready ][active]
+  \_ 5:0:0:2 sdo  8:224   [ready ][active]
+  \_ 6:0:0:2 sdr  65:16   [ready ][active]
+  \_ 7:0:0:2 sdu  65:64   [ready ][active]
+  \_ 8:0:0:2 sdx  65:112  [ready ][active]
+
+... gives this multipathed io profile :
+
+Device:    rrqm/s wrqm/s   r/s   w/s  rsec/s  wsec/s    rkB/s    wkB/s avgrq-sz avgqu-sz   await  svctm  %util
+sda          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdb        708,67   0,00 26,67  0,00 5877,33    0,00  2938,67     0,00   220,40     0,21    7,75   6,45  17,20
+sdc          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdd        772,33   0,00 27,67  0,00 6400,00    0,00  3200,00     0,00   231,33     0,22    7,94   6,10  16,87
+sde        707,33   0,00 26,00  0,00 5866,67    0,00  2933,33     0,00   225,64     0,23    8,92   6,22  16,17
+sdf          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdg        771,33   0,00 28,67  0,00 6400,00    0,00  3200,00     0,00   223,26     0,22    7,53   5,72  16,40
+sdh        707,67   0,00 25,67  0,00 5866,67    0,00  2933,33     0,00   228,57     0,24    9,51   6,55  16,80
+sdi          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdj        772,67   0,00 27,33  0,00 6400,00    0,00  3200,00     0,00   234,15     0,23    8,30   5,99  16,37
+sdk        707,67   0,00 25,67  0,00 5866,67    0,00  2933,33     0,00   228,57     0,23    8,83   6,81  17,47
+sdl          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdm        761,00   0,00 27,00  0,00 6301,33    0,00  3150,67     0,00   233,38     0,18    6,68   5,48  14,80
+sdn        742,67   0,00 27,00  0,00 6157,33    0,00  3078,67     0,00   228,05     0,21    7,85   5,86  15,83
+sdo          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdp        723,67   0,00 26,33  0,00 6005,33    0,00  3002,67     0,00   228,05     0,24    8,89   6,51  17,13
+sdq        741,00   0,00 25,67  0,00 6133,33    0,00  3066,67     0,00   238,96     0,24    9,19   7,08  18,17
+sdr          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sds        772,00   0,00 27,67  0,00 6400,00    0,00  3200,00     0,00   231,33     0,23    8,20   6,36  17,60
+sdt        739,67   0,00 27,00  0,00 6133,33    0,00  3066,67     0,00   227,16     0,25    9,35   7,31  19,73
+sdu          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdv        771,00   0,00 29,00  0,00 6400,00    0,00  3200,00     0,00   220,69     0,26    8,92   7,13  20,67
+sdw        741,00   0,00 25,67  0,00 6133,33    0,00  3066,67     0,00   238,96     0,24    9,18   7,12  18,27
+sdx          0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdy        772,33   0,00 27,67  0,00 6400,00    0,00  3200,00     0,00   231,33     0,24    8,82   6,71  18,57
+sdz        739,67   0,00 27,00  0,00 6133,33    0,00  3066,67     0,00   227,16     0,25    9,19   6,48  17,50
+sdaa         0,00   0,00  0,00  0,00    0,00    0,00     0,00     0,00     0,00     0,00    0,00   0,00   0,00
+sdab       770,33   0,00 29,67  0,00 6400,00    0,00  3200,00     0,00   215,73     0,23    7,84   5,67  16,83
+
+... which give around 110 MB/s
+
+IET is the target implementation, running on a dual Xeon 2.8Ghz
+Initiator is a dual Opteron 248
+NICs are tg3 on both side, connected to a 3com low cost switch without Jumbo Frames.
+
+Hope it helps ...
 
 Regards,
 cvaroqui
-
-On Wed, Mar 23, 2005 at 04:13:30AM -0800, lan wrote:
-> For multipath-tools-0.4.3, when running 'multipath' to setup multipath
-> devices, it appears that some configlet specifications are being
-> ignored because the select_getXXX calls (e.g. select_getprio,
-> select_checkfn, select_getuid) made in devinfo assume that the path's
-> hwe pointer is already initialized, but this does not happen until
-> after devinfo is called.  Thus, the path ends up being intialized with
-> the default values instead of configlet-specificed values.  The
-> following change appears to fix this problem.  Please excuse me if
-> this problem has already been resolved.
-> 
-> Thanks!
-> Lan
-> 
-> diff -Naur multipath-tools-0.4.3/multipath/devinfo.c
-> multipath-tools-0.4.3-patched/multipath/devinfo.c
-> --- multipath-tools-0.4.3/multipath/devinfo.c   2005-03-04
-> 16:32:41.000000000 -0800
-> +++ multipath-tools-0.4.3-patched/multipath/devinfo.c   2005-03-23
-> 03:49:13.000000000 -0800
-> @@ -422,6 +422,9 @@
->         pp->claimed = get_claimed(pp->dev_t);
->         dbg("claimed = %i", pp->claimed);
-> 
-> +       /* get and store hwe pointer */
-> +        pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id);
-> +
->         /*
->          * get path state, no message collection, no context
->          */
-> diff -Naur multipath-tools-0.4.3/multipath/main.c
-> multipath-tools-0.4.3-patched/multipath/main.c
-> --- multipath-tools-0.4.3/multipath/main.c      2005-03-19
-> 05:44:11.000000000 -0800
-> +++ multipath-tools-0.4.3-patched/multipath/main.c      2005-03-23
-> 00:16:31.000000000 -0800
-> @@ -157,8 +157,6 @@
->                         free(curpath);
->                         continue;
->                 }
-> -               curpath->hwe = find_hwe(conf->hwtable, curpath->vendor_id,
-> -                                                     curpath->product_id);
->                 vector_alloc_slot(pathvec);
->                 vector_set_slot(pathvec, curpath);
->         }
