@@ -1,13 +1,15 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: Re: dm panic debugging
-Date: Mon, 21 Feb 2005 10:49:39 -0600
-Message-ID: <0ff14b0dc3f58b65c81f589695de4d99@redhat.com>
-References: <02051b97d69c0b43d83d677e535d040a@anu.edu.au>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v619.2)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+From: Alex Adriaanse <alex.adriaanse@gmail.com>
+Subject: Re: Odd data corruption problem with LVM/ReiserFS
+Date: Mon, 21 Feb 2005 15:28:51 -0600
+Message-ID: <93ca306705022113287f424edb@mail.gmail.com>
+References: <93ca3067050220212518d94666@mail.gmail.com>
+	<20050221151852.GE14097@agk.surrey.redhat.com>
+Reply-To: Alex Adriaanse <alex.adriaanse@gmail.com>,
+	device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-In-Reply-To: <02051b97d69c0b43d83d677e535d040a@anu.edu.au>
+In-Reply-To: <20050221151852.GE14097@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,51 +19,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, reiserfs-list@namesys.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-what are the test you are using.  I have a couple machines here I could 
-probably have the tests running on.
+Alasdair,
 
-  brassow
+Thanks for the tips.  Do you think it's possible DM's snapshots
+could've caused this corruption, or do you think the problem lies
+elsewhere?
 
-On Feb 21, 2005, at 9:32 AM, Tim Burgess wrote:
+Alex
 
-> Hi All,,
->
-> I'm trying to debug this panic that I emailed the list about the other 
-> day...  I've gotten a little way with KDB - just wondering if there's 
-> someone familiar with the internals of dm-raid1 that I can bounce 
-> things off as I find them (lest something I find jog inspiration with 
-> someone who actually knows what's going on!).
->
-> The crash occurs here in rh_dec(), called by mirror_end_io():
->
->         if (atomic_dec_and_test(&reg->pending)) {
->
-> Because reg is a null pointer, returned by __rh_lookup()
->
-> That's as far as I have gotten so far :)
->
-> The crash is not complicated to reproduce but it does take quite a 
-> while doing heavy i/o before it crops up.  So it might be an hour or 
-> so before I can get back into my KDB session with the same problem 
-> (there is a deadlock problem as well triggered by the same steps).
->
-> Anyway - if someone is willing to lend a hand please let me know!!!
->
-> Cheers,
-> Tim
->
-> -- 
->    tim.burgess@anu.edu.au         ANU Supercomputer Facility
->    Phone: +61 2 6125 1431           and APAC National Facility
->    Fax:   +61 2 6125 8199           Leonard Huxley Bldg (No. 56)
->                                     Australian National University
->                                     Canberra, ACT, 0200, Australia
->
+
+On Mon, 21 Feb 2005 15:18:52 +0000, Alasdair G Kergon <agk@redhat.com> wrote:
+> On Sun, Feb 20, 2005 at 11:25:37PM -0600, Alex Adriaanse wrote:
+> > This morning was the first time my backup script took
+> > a snapshot since upgrading to 2.6.10-ac12 (yesterday I had taken a few
+> > snapshots myself for testing purposes, this seemed to work fine).
+> 
+> a) Activating a snapshot requires a lot of memory;
+> 
+> b) If a snapshot can't get the memory it needs you have to back it
+> out manually (using dmsetup - some combination of resume, remove &
+> possibly reload) to avoid locking up the volume - what you have to do
+> depends how far it got before it failed;
+> 
+> c) You should be OK once a snapshot is active and its origin has
+> successfully had a block written to it.
+> 
+> Work is underway to address the various problems with snapshot activation
+> - we think we understand them all - but until the fixes have worked their
+> way through, unless you've enough memory in the machine it's best to avoid
+> them.
+> 
+> Suggestions:
+>   Only do one snapshot+backup at once;
+>   Make sure logging in as root and using dmsetup does not depend on access
+>   to anything in /var or /home (similar to the case of hard NFS mounts with
+>   the server down) so you can still log in;
+> 
+> BTW Also never snapshot the root filesystem unless you've mounted it noatime
+> or disabled hotplug etc. - e.g. the machine can lock up attempting to
+> update the atime on /sbin/hotplug while writes to the filesystem are blocked
+> 
+> Alasdair
 > --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> agk@redhat.com
 >
