@@ -1,12 +1,12 @@
-From: "shahid shaikh" <shahid.shaikh@patni.com>
-Subject: Detecting Multiple Paths to LU
-Date: Wed, 16 Feb 2005 19:38:43 +0530
-Message-ID: <002401c51431$065872a0$11051aac@pcp41116>
-Reply-To: shahid.shaikh@patni.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Guy Coates <gmpc@sanger.ac.uk>
+Subject: Re: Detecting Multiple Paths to LU
+Date: Wed, 16 Feb 2005 14:22:51 +0000 (GMT)
+Message-ID: <Pine.OSF.4.44.0502161409520.1852333-100000@ecs2c.internal.sanger.ac.uk>
+References: <002401c51431$065872a0$11051aac@pcp41116>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----------=_1108562611-27208-30"
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+In-Reply-To: <002401c51431$065872a0$11051aac@pcp41116>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,90 +16,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Christophe Varoqui (E-mail)" <christophe.varoqui@free.fr>
-Cc: "Dm-Devel (E-mail)" <dm-devel@redhat.com>, "Sandhya Suman (E-mail)" <sandhya.suman@odc.patni.com>
+To: shahid.shaikh@patni.com, device-mapper development <dm-devel@redhat.com>
+Cc: "Sandhya Suman (E-mail)" <sandhya.suman@odc.patni.com>, "Christophe Varoqui (E-mail)" <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format...
 
-------------=_1108562611-27208-30
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-Hi,
-
-I want to achieve simple volume management on Linux 2.6 kernel using LVM2
-and device mapper.
-I want to perform following set of operation to do an I/O as i was doing in
-case of LVM1 and lvm-mod.
-1.pvcreate
-2.vgcreate
-3.lvcreate
-4.mkfs on LV
-5.mount the LV
-6.perform i/o on LV
-
-I can see multiple paths to single LU using disk conroller hardware.
-When i create a PV using LVM2 on a LU with single path it works fine.In this
-scenario i am able to perform above set of operations.
-But when i create a PV using LVM2 on one of the paths to a multipath LU fi
-have following observation
-1.UUID is same for all the paths to the LU.Confirmed in pvscan.
-2.vgcreate displays message saying "vg created successfully" but vgscan does
-not display the newly created vg.
-3.Backup file /etc/lvm/backup shows the above vg.
-4.cannot create and use the lv .
-
-Now my query is that Can i achieve a simple volume management using above
-set of operations on LVM2-Device Mapper?Can lvm2 handle the above scenarion
-itself or Does it need some extra tool for device consolidation?
-I had found that following utilities can be used to achieve various features
-of Device mapper viz. Multipayhing(Load spreading on multiple path),fail
-over,hot plug detection,  device consolidation,mrroring and stripping.
-1.. multipath-tools-0.2.1
-2. sblim-cmpi-sysfs-1.1.5
-3. hotplug-0.44 and hotplugctl-0.08
-4. udev-021
-5. Kpartx
-6. multipathd (daemon)
-
-My focus is that i dont want to use any other tool apart from lvm2 and
-Device mapper.Is it possible or i have to use some device consolidation tool
-other than lvm2?
-LVM version i am using is lvm2-2.00.15
-Device Mapper version i am using is device-mapper-1.00.09
+You need to set up lvm.conf to do the following. It probably is totally
+correct, but it seems to work well enough.
 
 
-Regards
-Shahid Shaikh
+# Make lvm look at the multipath device maps only, not the
+# single devices
+
+scan = [ "/dev/mapper" ]
+
+# exclude the raw disks, just to be paranoid
+filter = ["r|/dev/sd|"]
+
+# make lvm use dm devices
+types = [ "device-mapper", 16 ]
+
+
+Once you assembled the multipath devices you can then run
+
+pvcreate /dev/mapper/XXXXX
+
+and create your volume groups.
+
+
+I've created and then extended and LVM across two multipathed physical
+volumes on my test system.
 
 
 
-http://www.patni.com
-World-Wide Partnerships. World-Class Solutions.
-_____________________________________________________________________
+  --- Volume group ---
+  VG Name               web409mysqltest
+  System ID
+  Format                lvm2
+  Metadata Areas        2
+  Metadata Sequence No  4
+  VG Access             read/write
+  VG Status             resizable
+  MAX LV                0
+  Cur LV                1
+  Open LV               1
+  Max PV                0
+  Cur PV                2
+  Act PV                2
+  VG Size               199.99 GB
+  PE Size               4.00 MB
+  Total PE              51198
+  Alloc PE / Size       51198 / 199.99 GB
+  Free  PE / Size       0 / 0
+  VG UUID               CzUDTb-KpRz-KNLS-U24P-5TmZ-4WLN-OSjGBB
 
-This e-mail message may contain proprietary, confidential or legally
-privileged information for the sole use of the person or entity to
-whom this message was originally addressed. Any review, e-transmission
-dissemination or other use of or taking of any action in reliance upon
-this information by persons or entities other than the intended
-recipient is prohibited. If you have received this e-mail in error
-kindly delete  this e-mail from your records. If it appears that this
-mail has been forwarded to you without proper authority, please notify
-us immediately at netadmin@patni.com and delete this mail. 
-_____________________________________________________________________
+  --- Logical volume ---
+  LV Name                /dev/web409mysqltest/mysqltest1
+  VG Name                web409mysqltest
+  LV UUID                tT9PHO-1UVt-RsNN-6iFM-KgQx-Gl9r-adck9U
+  LV Write Access        read/write
+  LV Status              available
+  # open                 2
+  LV Size                199.99 GB
+  Current LE             51198
+  Segments               2
+  Allocation             inherit
+  Read ahead sectors     0
+  Block device           254:16
 
-------------=_1108562611-27208-30
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+  --- Physical volumes ---
+  PV Name               /dev/mapper/3600508b40001417e0001c00001b60000
+  PV UUID               3QvL3p-t45P-AY4x-nIHp-C44s-IM6O-2Ymuwy
+  PV Status             allocatable
+  Total PE / Free PE    25599 / 0
+
+  PV Name               /dev/mapper/3600508b40001417e0001c00001c90000
+  PV UUID               QGEVaA-W3sJ-DkLB-Ble1-13sU-bL6u-3tNy78
+  PV Status             allocatable
+  Total PE / Free PE    25599 / 0
+
+
+
+/sbin/dmsetup  status  /dev/mapper/3600508b40001417e0001c00001c90000
+0 209715200 multipath 1 0 0 2 2 E 0 2 0 65:240 A 0 8:176 A 0 E 0 2 0 8:16 A 0 65:80 A 0
+
+ /sbin/dmsetup  status /dev/mapper/3600508b40001417e0001c00001b60000
+0 209715200 multipath 1 0 0 2 2 E 0 2 0 65:224 A 0 8:160 A 0 E 0 2 0 8:0 A 0 65:64 A 0
+
+
+
+lvm version report
+
+lvm version
+  LVM version:     2.00.24 (2004-09-16)
+  Library version: 1.00.19-ioctl (2004-07-03)
+  Driver version:  4.3.0
+
+
+Guy
+
+
+-- 
+Dr. Guy Coates,  Informatics System Group
+The Wellcome Trust Sanger Institute, Hinxton, Cambridge, CB10 1SA, UK
+Tel: +44 (0)1223 834244 ex 7199
+
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
-------------=_1108562611-27208-30--
