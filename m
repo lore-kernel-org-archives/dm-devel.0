@@ -1,11 +1,18 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: reducing path test delays
-Date: Mon, 4 Apr 2005 15:48:36 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A8AB@SRMANNING.eng.emc.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: multipathd.init
+Date: Mon, 4 Apr 2005 21:52:27 +0100
+Message-ID: <20050404205227.GA14307@agk.surrey.redhat.com>
+References: <20050401204048.GI14307@agk.surrey.redhat.com>
+	<1112389744.8118.26.camel@zezette>
+	<20050401211902.GL14307@agk.surrey.redhat.com>
+	<1112390705.8118.34.camel@zezette>
+	<1112521418.8118.49.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1112521418.8118.49.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,24 +22,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
-Cc: 'Alasdair G Kergon' <agk@redhat.com>, 'Christophe Varoqui' <christophe.varoqui@free.fr>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-In the interest of reducing delay time when testing either good or
-failed paths, could we (1) prevent SCSI mid-layer initiated i/o
-retry of these requests and (2) insert the test path i/os at the
-head of the path's block i/o queue?  Doing either of these will
-require some kernel enhancement since there is no way to
-either request fail fast capability or insertion at queue head for
-a SCSI CDB issued from user space.
+On Sun, Apr 03, 2005 at 11:43:37AM +0200, christophe varoqui wrote:
+> Would it ease your packaging work if I put this init script as
+> multipathd/multipathd.init.redhat ?
+ 
+Yes - that's the line I've been taking with other packages,
+including multiple init scripts and letting people choose
+the one they need.
 
-Currently the scsi_cmd_ioctl->sg_io->blk_execute_rq code
-path for a multipath test i/o does not set the REQ_FAILFAST
-bit in the flags field of the request structure and unconditionally
-inserts the request at the tail of the request queue for the scsi
-device representing the scsi path being tested.
-
-Possibly the desire for each of these two attributes could be
-passed as a flag bit setting in the flag field of the sg_io_hdr
-structure passed into the kernel as part of the test path ioctl(2).
+Alasdair
+-- 
+agk@redhat.com
