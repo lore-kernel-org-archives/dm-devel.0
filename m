@@ -1,20 +1,11 @@
-From: Andrew Morton <akpm@osdl.org>
-Subject: Re: Help tracking down problem --- endless loop in
- __find_get_block_slow
-Date: Wed, 23 Feb 2005 15:17:56 -0800
-Message-ID: <20050223151756.22c8c48d.akpm@osdl.org>
-References: <4219BC1A.1060007@zensonic.dk>
-	<20050222011821.2a917859.akpm@osdl.org>
-	<20050223120013.GA28169@zensonic.dk>
-	<20050223041036.5f5df2ff.akpm@osdl.org>
-	<20050223130251.GA31851@zensonic.dk>
-	<20050223120928.133778a4.akpm@osdl.org>
-	<421D029E.8010600@zensonic.dk>
+From: Mike Anderson <andmike@us.ibm.com>
+Subject: Question on dm-mp sense handling
+Date: Wed, 23 Feb 2005 18:07:49 -0800
+Message-ID: <20050224020749.GA669@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <421D029E.8010600@zensonic.dk>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,21 +15,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Thomas S. Iversen" <zensonic@zensonic.dk>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: axboe@suse.com
 List-Id: dm-devel.ids
 
-"Thomas S. Iversen" <zensonic@zensonic.dk> wrote:
->
-> > I'd be suspecting that the sector remapping is the cause of the problem. 
-> > How is it implemented?
-> 
-> Quite simple actually. You're most welcome to see the code, but I have 
-> just done a test like the one below. Never mind the performance figures, 
->   correctness comes as a very first priority. It does not block, cause 
-> endless loops or anything funny if I take the filsystem out of the 
-> question and access the raw devicemapped block device.
-> 
-> This should assert that it is not a fault in my code, right?
+Is someone still working on the sense buffer handling code for bios
+to be used by dm-mp?
 
-I don't know.   Can you describe how your driver implements the remapping?
+The ifdef'd out code in dm-emc.c and dm_scsi_err_handler appears to only
+allow the interpretation of sense data if available and does not provide
+any detail on non-sense based failures (DRIVER_TIMEOUT vs DID_* status).
+
+An old patch that Mike Christie submitted was a start at mapping errors to
+BLK error flags but did not receive much feedback. Is there some reason to
+not decode down at the lower levels with a possible interface for vendor
+specific mapping?
+
+Old post can be found here.
+http://marc.theaimsgroup.com/?l=linux-kernel&m=107961883914541&w=2
+
+The reason I am asking the question is I am looking into issues of a
+single device mapper hardware handler supporting block devices exported by
+a DASD driver or through the SCSI subsystem.
+
+-andmike
+--
+Michael Anderson
+andmike@us.ibm.com
