@@ -1,12 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: multipathd.init
-Date: Fri, 1 Apr 2005 21:40:48 +0100
-Message-ID: <20050401204048.GI14307@agk.surrey.redhat.com>
+From: "Nicholas A. Bellinger" <nick@pyxtechnologies.com>
+Subject: Re: dm-multipath + iscsi-initiator-core success,
+	example, and questions
+Date: Fri, 01 Apr 2005 12:27:03 -0800
+Message-ID: <1112387223.8176.23.camel@haakon>
+References: <1112313131.14802.59.camel@haakon>
+	<20050401083504.GA22636@averon.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="X1bOJ3K7DJ5YkBrT"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20050401083504.GA22636@averon.dyndns.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,158 +21,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: James Bottomley <James.Bottomley@SteelEye.com>, Ming Zhang <mingz@ele.uri.edu>, iscsi-initiator-core-devel <iscsi-initiator-core-devel@iscsi-initiator-core.org>, Mike Christie <mikenc@us.ibm.com>
 List-Id: dm-devel.ids
 
+On Fri, 2005-04-01 at 10:35 +0200, Christophe Varoqui wrote:
+> On Thu, Mar 31, 2005 at 03:52:11PM -0800, Nicholas A. Bellinger wrote:
+> > 
+> > ...
+> >
+> > IO never goes back across iSCSI Channel 20.  I also noticed that this
+> > does not occur every time iSCSI Channel 20 is paused.  Sometimes IO will
+> > stop over iSCSI Channel 21 as well, but iSCSI Channel 20 can be started
+> > and IO resumes correctly to both iSCSI Channels.
+> > 
+> > So my main question is this, once the iSCSI Channel is restarted and IO
+> > is allowed to flow again, how does dm-multipath know that the device is
+> > unlocked and online?
+> > 
+> It's userspace responsability to maintain the device map.
+> In the current available implementation, multipathd does the path checking and reinstate offline paths when they come back up.
+> 
 
---X1bOJ3K7DJ5YkBrT
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+The problem that I have been encountering is multipathd never testing
+for the path (iSCSI Channel 20 in the above example) once the struct
+scsi_device goes from a blocked to unblocked state.  Is there anything
+that I am missing in the setup in the above example?
 
-Attached is a cleaned-up version of multipathd init script - at least 
-for Red Hat based systems.
+Thanks!
 
-While it uses the standard daemon-handling functions, it's still only 
-suitable for a few situations though.
-
-If you have / on dm-multipath, the daemon has to be started from
-the initrd - so you don't want it stopping/starting from init.d,
-but you might want to HUP it.
-
-If you have other system parts of your filesystem (e.g. /usr) you 
-want the daemon starting from rc.sysinit.
-
-If you have data filesystems over multipath, you want something
-to mount them after multipathd starts.
-
-And you might also have cryptsetup, md, lvm2, kpartx involved
-- in various combinations...
-
-So you could have a multi-level startup with multiple instances
-of multipathd each configured to manage only a subset of devices.
-Then the init.d multipathd script would only kill the daemon
-instance started during by the init.d script, and would leave
-alone the instances managing / and /usr.
-
-Or you could forget completely about init.d and /var/lock/subsys
-and /var/run and just launch the daemon from the initrd or
-failing that from rc.sysinit.
-
-Then you would need a new mechanism to manage it.
-(ie a dedicated client program that communicates with it e.g. via
-shared memory)
-I anticipate that something like this is the right way to go.
-
-That client program could even be 'dmsetup' if the daemon functionality
-could be incorporated into plug-ins: The various types of mirroring 
-have similar requirements, so it's sensible to have a single
-daemon infrastructure for them all.
-
-Alasdair
 -- 
-agk@redhat.com
-
---X1bOJ3K7DJ5YkBrT
-Content-Type: text/plain; charset=us-ascii
-Content-Description: multipathd
-Content-Disposition: attachment; filename=multipathd
-
-#!/bin/bash
-
-#
-#	/etc/rc.d/init.d/multipathd
-#
-# Starts the multipath daemon
-#
-# chkconfig: 2345 13 87
-# description: Manage device-mapper multipath devices
-# processname: multipathd
-
-DAEMON=/sbin/multipathd
-prog=`basename $DAEMON`
-initdir=/etc/rc.d/init.d
-lockdir=/var/lock/subsys
-sysconfig=/etc/sysconfig
-
- 
-system=redhat
- 
-if [ $system = redhat ]; then
-	# Source function library.
-	. $initdir/functions
-fi
- 
-test -x $DAEMON || exit 0
-test -r $sysconfig/$prog && . $sysconfig/$prog
-
-RETVAL=0
-
-#
-# See how we were called.
-#
-
-start() {
-	echo -n $"Starting $prog daemon: "
-	daemon $DAEMON
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && touch $lockdir/$prog
-	echo
-}
-
-stop() {
-	echo -n $"Stopping $prog daemon: "
-	killproc $DAEMON
-	RETVAL=$?
-	[ $RETVAL -eq 0 ] && rm -f $lockdir/$prog
-	echo
-}
-
-restart() {
-	stop
-	start
-}	
-
-reload() {
-	echo -n "Reloading $prog: "
-	trap "" SIGHUP
-	killproc $DAEMON -HUP
-	RETVAL=$?
-	echo
-}	
-
-case "$1" in
-start)
-	start
-	;;
-stop)
-	stop
-	;;
-reload)
-	reload
-	;;
-restart)
-	restart
-	;;
-condrestart)
-	if [ -f $lockdir/$prog ]; then
-	    restart
-	fi
-	;;
-status)
-	status $prog
-	RETVAL=$?
-	;;
-*)
-	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
-	RETVAL=1
-esac
-
-exit $RETVAL
-
---X1bOJ3K7DJ5YkBrT
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---X1bOJ3K7DJ5YkBrT--
+Nicholas A. Bellinger <nick@pyxtechnologies.com>
