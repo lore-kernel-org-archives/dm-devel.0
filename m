@@ -1,14 +1,12 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: each device filtering for multipath
-Date: Thu, 31 Mar 2005 01:31:20 +0200
-Message-ID: <1112225480.10635.45.camel@zezette>
-References: <20050330.100308.74754062.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Corruption with lvm2 snapshot over md raid1
+Date: Thu, 31 Mar 2005 15:01:37 +0100
+Message-ID: <20050331140137.GP19749@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050330.100308.74754062.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,100 +19,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Merged, thanks
+Anyone else tried this combination recently?
 
-Still need to be more clever in the blacklist function though ... like a
-regexp parser.
+Reported with several 2.6 kernels, including 2.6.12-rc1.
 
-On mer, 2005-03-30 at 10:03 -0500, k-ueda@ct.jp.nec.com wrote:
-> Hello,
-> 
-> I think that finer-grained device filtering (e.g. by each device)
-> is needed in multipath-tools.
-> Has anyone already started tackling this feature?
-> Any comments about following approach are welcome.
-> 
-> 
-> Background
-> ----------
-> Problem#1 : Multipath command configures not only multipath devices
->             (like Fibre Channel storages) but also local devices
->             (like SCSI disks) as multipath.
->             Then, as dm holds the reference to the source device,
->             local devices can't be used through /dev/sd* name.
-> 
-> Problem#2 : Even for Fibre Channel storages, there is a case such that
->             we need to configure multipath for one but don't want for
->             the other.
-> 
-> We have 2 options to configure specific devices only.
-> 
->   o Specify a device name as multipath command argument.
->   o Specify white lists (vendor/model combination) in scsi_id.config,
->     and don't use -g option for scsi_id callout.
-> 
-> But these are not enough.
-> The first option breaks if the device names are not persistent.
-> The second option can solve the problem#1, but can't solve the problem#2.
-> 
-> 
-> Proposal
-> --------
-> As multipath command already has a black listing feature, adding
-> wwid filtering to it is straightforward solution.  I've created
-> a tentative patch as proposal.  (patch for multipath-tools-0.4.3)
-> I also think that adding whitelist filtering may be useful.
-> 
-> 
-> Patch (tentative)
-> -----------------
-> -----------------------------------------------------------------------
-> --- multipath-tools-0.4.3/multipath/main.c      2005-03-23 10:18:42.000000000 -0500
-> +++ wwidfilter-0.4.3/multipath/main.c     2005-03-28 16:11:51.000000000 -0500
-> @@ -746,7 +746,8 @@ coalesce_paths (vector curmp, vector pat
->                 /* skip this path for some reason */
-> 
->                 /* 1. if path has no unique id */
-> -               if (memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0)
-> +               if ((memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0) ||
-> +                               blacklist(conf->blist, pp1->wwid))
->                         continue;
-> 
->                 /* 2. if path already coalesced */
-> --- multipath-tools-0.4.3/multipath/dict.c      2005-03-19 07:59:15.000000000 -0500
-> +++ wwidfilter-0.4.3/multipath/dict.c     2005-03-28 16:12:40.000000000 -0500
-> @@ -249,6 +249,7 @@ init_keywords(void)
-> 
->         install_keyword_root("devnode_blacklist", &blacklist_handler);
->         install_keyword("devnode", &devnode_handler);
-> +       install_keyword("blackwwid", &devnode_handler);
-> 
->         install_keyword_root("devices", &devices_handler);
->         install_keyword("device", &device_handler);
-> -----------------------------------------------------------------------
-> 
-> With above patch, we can filter each devices by specifing multipath.conf
-> like following.
-> 
-> -----------------------------------------------------------------------
-> devnode_blacklist {
->         devnode c0d
-> 	...
-> 	snip
-> 	...
->         devnode loop
->         blackwwid SSEAGATE_ST373307LC_____3HZ6XQWB00007431GBM4
->         blackwwid SSEAGATE_ST373307LC_____3HZ70N5S000074343PL8
-> }
-> -----------------------------------------------------------------------
-> 
-> 
-> Best regards,
-> Ky (Kiyoshi Ueda)
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=152162
+
+Alasdair
 -- 
-christophe varoqui <christophe.varoqui@free.fr>
+agk@redhat.com
