@@ -1,11 +1,13 @@
-From: Dmitry Yusupov <dmitry_yus@yahoo.com>
-Subject: open-iscsi + dm-multipath
-Date: Sat, 12 Mar 2005 12:03:11 -0800
-Message-ID: <1110657791.16560.11.camel@mylaptop>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: open-iscsi + dm-multipath
+Date: Tue, 15 Mar 2005 23:48:32 +0100
+Message-ID: <1110926912.10694.41.camel@zezette>
+References: <1110657791.16560.11.camel@mylaptop>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
+In-Reply-To: <1110657791.16560.11.camel@mylaptop>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,20 +17,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "open-iscsi@googlegroups.com" <open-iscsi@googlegroups.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "open-iscsi@googlegroups.com" <open-iscsi@googlegroups.com>
 List-Id: dm-devel.ids
 
-Hi Guys!
+On sam, 2005-03-12 at 12:03 -0800, Dmitry Yusupov wrote:
+> Hi Guys!
+> 
+> had anyone tried to setup open-iscsi with dm-multipath yet?
+> I think it should work out of the box, but would be cool if someone will
+> double check on that.
+> 
+> PS: www.open-iscsi.org is a new cool project which features some
+> noticeable performance improvements for soft-based iSCSI Initiator plus
+> other number of exciting abilities such as independent transport and
+> better user-space vs. kernel split. Read more on project's web page.
+> 
+I tried on Monday, but I'm stuck before dm-multipath kicks into play.
+Build runs ok, modules load into the kernel, daemon starts up, but the
+admin tool remain desparetely silent to all commands I stuffed at it.
 
-had anyone tried to setup open-iscsi with dm-multipath yet?
-I think it should work out of the box, but would be cool if someone will
-double check on that.
+What is even more weird is that the daemon (in debug mode) remains
+silent too.
 
-PS: www.open-iscsi.org is a new cool project which features some
-noticeable performance improvements for soft-based iSCSI Initiator plus
-other number of exciting abilities such as independent transport and
-better user-space vs. kernel split. Read more on project's web page.
+The target side works well : IET verified with Cisco initiator.
 
 Regards,
-Dmitry
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
