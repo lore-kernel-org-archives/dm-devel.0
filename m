@@ -1,18 +1,23 @@
-From: Jens Beyer <jbe@webde-ag.de>
-Subject: Re: [linux-lvm] Data corruption on large,
-	multi-device filesystem
-Date: Fri, 21 Jan 2005 16:09:13 +0100
-Message-ID: <20050121150913.GA16975__14371.2714002051$1106512880$gmane$org@pcnocjb.dlan.cinetic.de>
-References: <20050118091059.GC27553@pcnocjb.dlan.cinetic.de>
-	<1106172883.41eedbd386498@www.eiler.net>
-	<41EFBAF4.5030403@svs.gsfc.nasa.gov>
-	<20050120175900.GE14093@agk.surrey.redhat.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: [ANNOUNCE] multipath-tools-0.4.2
+Date: Mon, 24 Jan 2005 00:03:16 +0100
+Message-ID: <1106521396.10990.13.camel@zezette>
+References: <1096071849.4466.31.camel@zezette>
+	<1097054573.4163b96d1262c@imp5-q.free.fr>
+	<1097495416.416a73787e0ae@imp1-q.free.fr>
+	<1098021787.5433.8.camel@zezette>
+	<1098269169.417641f18a234@imp1-q.free.fr>
+	<1098656088.9350.88.camel@zezette>
+	<1098785191.417e21a7a7c28@imp1-q.free.fr>
+	<1099328918.5525.10.camel@zezette> <1100214617.10251.92.camel@zezette>
+	<1101394541.5820.71.camel@zezette> <1102261392.29843.2.camel@zezette>
+	<1103558483.11345.17.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20050120175900.GE14093@agk.surrey.redhat.com>
+In-Reply-To: <1103558483.11345.17.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,46 +27,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: LVM general discussion and development <linux-lvm@redhat.com>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-hotplug-devel@lists.sourceforge.net" <linux-hotplug-devel@lists.sourceforge.net>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
+Hello,
 
-Hi,
+here goes multipath-tools-0.4.2
 
-On Thu, Jan 20, 2005 at 05:59:00PM +0000, Alasdair G Kergon wrote:
-> On Thu, Jan 20, 2005 at 09:06:44AM -0500, Randall A. Jones wrote:
-> > To verify, this corruption you are seeing only happens when you have a 
-> > LV larger than 2TB
-> > and when you use striping specifically with lvcreate -i.
-> > Has anyone experienced data corruption with >2TB LV and no striping?
->  
-> Does this patch help?
-> 
+The focuses of this release are :
+1) bugfixing and stabilization after the DM synthax change
+2) code factorizing between the configurator and the daemon
 
-No, it doesn't. I just checked multiple times in different setups. 
-To address the 'chunksize' Problem mentioned i used lvcreate -i 3 -I 256 . 
+Full ChangeLog for the release :
 
-Jens
+        * [libmultipath] add symmetrix controler family to the
+          hwtable. Edward Goggin, EMC
+        * [libmultipath] factorize core structs (path, ...)
+          and defaults (pidfile, configfile, ...). Convert
+          callers.
+        * [multipath] fix dmparser to properly fetch non-default
+          hwhandler. Edward Goggin, EMC
+        * [multipath] fix devt2devname matching 8:1 with 8:10
+          for example. Edward Goggin, EMC
+        * [multipath] switch_pg upon devmap create or reload
+          Noticed by Ake.
+        * [libmultipath] move find_hw() the library. Convert
+          users. Now multipathd understand '*' as a product
+          string
+        * [multipath] dissaemble_map() fix to avoid to
+          interpret 'D' as a disable PG (not 'F'). Edward
+          Goggin, EMC
+        * [multipath] find_path() fix to avoid matching 8:1
+          with 8:10 for example. Edward Goggin, EMC
+        * [libmultipath] move some sysfs fetching routines
+          to library, under sysfs_devinfo.[ch]. Convert
+          callers.
+        * [multipath] fix -v0 : avoids the daemon waiting
+          for the initial multipath run to complete, which
+          will never happen because of a flooded pipe
+        * [multipathd] add scsi_id to default binvec
+        * [libmultipath] move hwtable related logic to the
+          library. Convert multipath and multipathd
+        * [multipath] move first blacklist call down after
+          setup_default_blist()
+        * [libmultipath] move basename() to the lib. Convert
+          multipath and multipathd.
+        * [libmultipath] move blacklist related logic to the
+          library. Convert multipath and multipathd
+        * [multipath] fix bug in the default hardware table
+          matching logic (Lars M-B, Suse)
+        * [multipath] allow "*" as scsi model string wildcard
+          (Lars M-B, Suse)
+        * [multipath] provide a macro to fill all hwe fields,
+          use it to declare Clariion models (Lars M-B, Suse)
+        * [multipath] use DEFAULT_GETUID instead of hardcoded
+          *and* incorrect "/bin/scsi_id -g -s" (Lars M-B, Suse)
+        * [multipath] kill superfluous suspend before table
+          reload. The code was unsafe, as spotted by Edward
+          Goggin (EMC)
+        * [multipath] exit early if device parameter is
+          blacklisted
+        * [multipath] don't check for prefix in initrd's
+          multipath.dev : this is the tool responsability to
+          exit early based on its blacklist.
+        * [multipath] don't signal the daemon in initrd
+          (Guido Guenther, Debian tracker)
+        * [multipath] better fail to run kpartx in initrd
+          than crashing the whole system. So don't sleep
+          waiting for udev to create the DM node. Maybe udev
+          has made progress I this regard ... (noticed by
+          Paul Wagland, Debian tracker)
+        * [multipath] don't reinstate when listing, ie list
+          implies dry_run
+        * [checkers] fix the emc checker (Hergen Lange)
+        * [multipath] node_name fetching shouldn't exit on
+          error. FC SAN are not the only multipathed context
+          (noticed by Ramesh Caushik)
 
+As usual, doc and download at :
+http://christophe.varoqui.free.fr/
 
-> 
-> Missing cast causing data corruption on devices with stripes > ~1TB.
-> --- diff/drivers/md/dm-stripe.c	2005-01-20 17:32:37.000000000 +0000
-> +++ source/drivers/md/dm-stripe.c	2005-01-20 17:32:26.000000000 +0000
-> @@ -179,7 +179,7 @@
->  
->  	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
->  	bio->bi_sector = sc->stripe[stripe].physical_start +
-> -	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
-> +	    ((sector_t) chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
->  	return 1;
->  }
->  
-> 
-
-
---
-Nur tote Fische schwimmen mit dem Strom
+regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
 
 --
 dm-devel mailing list
