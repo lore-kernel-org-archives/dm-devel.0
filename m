@@ -1,7 +1,7 @@
 From: Alex Adriaanse <alex.adriaanse@gmail.com>
 Subject: Re: Odd data corruption problem with LVM/ReiserFS
-Date: Mon, 21 Feb 2005 15:28:51 -0600
-Message-ID: <93ca306705022113287f424edb@mail.gmail.com>
+Date: Mon, 21 Feb 2005 21:19:50 -0600
+Message-ID: <93ca306705022119195db84f6e@mail.gmail.com>
 References: <93ca3067050220212518d94666@mail.gmail.com>
 	<20050221151852.GE14097@agk.surrey.redhat.com>
 Reply-To: Alex Adriaanse <alex.adriaanse@gmail.com>,
@@ -22,11 +22,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, reiserfs-list@namesys.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Alasdair,
+I found out some interesting things tonight.  I removed my /var and
+/home snapshots, and all the corruption, with the exception of files I
+had changed while /var and /home were in their corrupted state, had
+disappeared!
 
-Thanks for the tips.  Do you think it's possible DM's snapshots
-could've caused this corruption, or do you think the problem lies
-elsewhere?
+I overwrote several files on /var that were corrupt with clean copies
+from my backups, and verified that they were OK.  I then created a new
+/var snapshot, mounted it, only to find out that the files on that
+snapshot were still corrupt, but the files under the real /var were
+still in good shape.  I umounted, lvremoved, lvcreated, and mounted
+the /var snapshot, and saw the same results.  Even after removing the
+snapshot, rebooting, and recreating the snapshot I saw the same thing
+(real /var had correct file, snapshot /var had corrupt file).
+
+Do you think my volume group has simply become corrupt and will need
+to be recreated, or do you guys think this is a bug in dm-snapshot? 
+If so, please let me know what I can do to help you guys debug this.
+
+Thanks,
 
 Alex
 
