@@ -1,23 +1,14 @@
-From: Wilfried Weissmann <Wilfried.Weissmann@gmx.at>
-Subject: Re: Re: grub 0.96 bug
-Date: Tue, 22 Mar 2005 20:29:43 +0100
-Message-ID: <42407227.2020402@gmx.at>
-References: <62b0912f05031606396a3a47db@mail.gmail.com>	
-	<62b0912f050318142923419b20@mail.gmail.com>	
-	<62b0912f05031914513909bcfb@mail.gmail.com>	
-	<62b0912f050319145547c4a7db@mail.gmail.com>	
-	<20050320163001.GB643@percy.comedia.it>	
-	<62b0912f05032019262c009465@mail.gmail.com>	
-	<62b0912f0503202121607bd38a@mail.gmail.com>	
-	<62b0912f05032104052e78fd60@mail.gmail.com>	
-	<62b0912f050321065558fc956@mail.gmail.com>
-	<423F0F74.3030007@gmx.at>
-	<62b0912f050321235348c20525@mail.gmail.com>
+From: Dmitry Yusupov <dmitry_yus@yahoo.com>
+Subject: Re: open-iscsi + dm-multipath
+Date: Tue, 15 Mar 2005 15:55:32 -0800
+Message-ID: <1110930932.3584.35.camel@mylaptop>
+References: <1110657791.16560.11.camel@mylaptop>
+	<1110926912.10694.41.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-In-Reply-To: <62b0912f050321235348c20525@mail.gmail.com>
+In-Reply-To: <1110926912.10694.41.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,54 +18,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Molle Bestefich <molle.bestefich@gmail.com>
-Cc: bug-grub@gnu.org, dm-devel@redhat.com, ataraid-list@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "open-iscsi@googlegroups.com" <open-iscsi@googlegroups.com>
 List-Id: dm-devel.ids
 
-Molle Bestefich wrote:
-> Wilfried Weissmann wrote:
+On Tue, 2005-03-15 at 23:48 +0100, christophe varoqui wrote:
+> On sam, 2005-03-12 at 12:03 -0800, Dmitry Yusupov wrote:
+> > Hi Guys!
+> > 
+> > had anyone tried to setup open-iscsi with dm-multipath yet?
+> > I think it should work out of the box, but would be cool if someone will
+> > double check on that.
+> > 
+> > PS: www.open-iscsi.org is a new cool project which features some
+> > noticeable performance improvements for soft-based iSCSI Initiator plus
+> > other number of exciting abilities such as independent transport and
+> > better user-space vs. kernel split. Read more on project's web page.
+> > 
+> I tried on Monday, but I'm stuck before dm-multipath kicks into play.
+> Build runs ok, modules load into the kernel, daemon starts up, but the
+> admin tool remain desparetely silent to all commands I stuffed at it.
 > 
->>>It must be severely broken; since if it just sticked to writing to the
->>>device I pointed it at (hpt37x_ehgjaggaf) which is a RAID0 "virtual
->>>disk" / whatever, it should never be able to overwrite metadata out on
->>>the physical disk.
->>
->>HPT desided to make the metadata accessable from the virtual disk. Just
->>look at sector 9 of a working array and enjoy the show...
-> 
-> 
-> That's an awful decision.
+> What is even more weird is that the daemon (in debug mode) remains
+> silent too.
 
-It is, isn't it?
+forget to mention at the first place, we have a bug with debug printing
+after fork. try start daemon in foreground like this:
 
->>Grub is fine. At least the version that I am using. You have to do some
->>tricks to get grub running on the old hpt controllers (I think the new
->>ones are better, but I cannot tell for sure).
->>
->>Just copy the stage 1.5 reiserfs module to sector 16 instead of sector 8
->>which is the grub default that destroys the metadata in case of a hpt.
->>[explanation snipped]
-> 
-> 
-> Thanks for the explanation!
-> There should be an option in the GRUB configuration to do this, so
-> that the RAID won't get overwritten the next time I do a grub-install,
-> I think.
+./iscsid -d7 -f &
 
-That would make my life a lot easier! On the other hand, the most 
-straight forward thing to do would be to move the stage 1.5 to another 
-default sector. So you can not forget to set any option that ruins your 
-array if missing. Also there is no need to add some autodetection code 
-for hpt controllers then.
+Regards,
+Dima
 
 > 
-> Or even better, dmraid could protect the metadata blocks by some magic
-> flag to dm-mod.
-> This isn't possible as is, is it?
-
-One can make any I/O to this block fail. But I would like something like 
-discarding any writes and only perform reads. "dd" backups would still 
-work then.
-
-Greetings,
-Wilfried
+> The target side works well : IET verified with Cisco initiator.
+> 
+> Regards,
