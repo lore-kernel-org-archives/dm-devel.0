@@ -1,98 +1,67 @@
-From: Marcelo Matus <mmatus@dinha.acms.arizona.edu>
+From: Guy Coates <gmpc@sanger.ac.uk>
 Subject: Re: multipath/gfs lockout under heavy write
-Date: Tue, 25 Jan 2005 01:41:54 -0700
-Message-ID: <41F60652.7000908@acms.arizona.edu>
+Date: Tue, 25 Jan 2005 09:38:29 +0000 (GMT)
+Message-ID: <Pine.OSF.4.44.0501250905070.3050234-100000@ecs2e.internal.sanger.ac.uk>
 References: <1106596648.13534.79.camel@laza.eunet.yu>
-	<20050125040624.GB5786@redhat.com>
-Reply-To: mmatus@dinha.acms.arizona.edu,
-	linux clistering <linux-cluster@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-cluster-bounces@redhat.com>
-In-Reply-To: <20050125040624.GB5786@redhat.com>
-List-Unsubscribe: <http://www.redhat.com/mailman/listinfo/linux-cluster>,
-	<mailto:linux-cluster-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-cluster>
-List-Post: <mailto:linux-cluster@redhat.com>
-List-Help: <mailto:linux-cluster-request@redhat.com?subject=help>
-List-Subscribe: <http://www.redhat.com/mailman/listinfo/linux-cluster>,
-	<mailto:linux-cluster-request@redhat.com?subject=subscribe>
-Sender: linux-cluster-bounces@redhat.com
-Errors-To: linux-cluster-bounces@redhat.com
-To: linux clistering <linux-cluster@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1106596648.13534.79.camel@laza.eunet.yu>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-David Teigland wrote:
 
->On Mon, Jan 24, 2005 at 08:57:28PM +0100, Lazar Obradovic wrote:
-> 
->  
->
->>Since both LVs are a part of same VG (and, thus, are using the same
->>physical device seen over multipath), I'd guess the problem is somewhere
->>inside GFS, but the things that keep confusing me are: 
->>
->>- those SCSI errors that look like multipath errors
->>    
->>
->
->The SCSI errors appear to be the root problem, not GFS.  I don't know what
->multipath might have to do with it.
->
->  
->
->>- name 'diapered_dm-2' which I never saw before
->>    
->>
->
->In the past, GFS would immediately panic the machine when it saw i/o
->errors.  Now it tries to shut down the bad fs instead.  After this happens
->you should be able to unmount the offending fs, leave the cluster and
->reboot the machine cleanly.
->  
->
+FWIW,  I'm running LVM on top of device mapper to HSV110s,
+and it seems to work.
 
-I have a question about your last comment. We did the following 
-experiment with GFS 6.0.2:
+This is my  multipath.conf
 
-1.- Setup a cluster using a unique GFS server and gnbd device (lock_gulm 
-master
-     and gnbd_export in the same node).
 
-2.- Fence out a node manually using fence_gnbd.
+devices {
+device {
+vendor "COMPAQ  "
+product "HSV110 (C)COMPAQ"
+path_selector           "round-robin 0"
+path_grouping_policy "group_by_serial"
+getuid_callout "/sbin/scsi_id -g -u -s /block/%n"
+path_checker "readsector 0"
+#path_checker "tur"
+#features "1 queue_if_no_path"
+}
+}
 
-then we observed two cases:
+You might want to try the "readsector 0" checker rather than the
+test-unit-ready one. As others have pointed out, if you are running the
+qlogic driver then setting
 
-1.- If the fenced machine is not mounting the GFS/gnbd fs, but only 
-importing it, then we
-     can properly either reboot or restart the GFS services with no problem.
+#define QL_DEBUG_LEVEL_2
 
-2.- If the fenced machine is mounting the GFS/gnbd fs, but with no 
-process using it,
-     almost everything produces a kernel panic, even just unmounting the 
-unused fs.
-     In fact the only thing that works, besides pushing the reset 
-button, is 'reboot -f',
-     which is almost the same.
+in drivers/scsi/qla2xxx/qla_dbg.h
 
-So, when you say "In the past", do you refer to GFS 6.0.2 ?
+makes the driver print out some more useful scsi information.
 
->  
->
->>- fenced not fencing obviously faulty node
->>    
->>
->
->In your situation, the node is running fine wrt the cluster so there's no
->need to fence it.  GFS is just shutting down a faulty fs (doing this is
->not always very "clean" and can produce a lot of errors/warnings on the
->console.)
->
->Perhaps we could reinstate an option to have gfs panic immediately when it
->sees i/o errors instead of trying to shut down the problem fs.  In this
->case, the panicked node would be "dead" and it would be fenced.
->
->  
->
+
+Guy
+
+-- 
+Dr. Guy Coates,  Informatics System Group
+The Wellcome Trust Sanger Institute, Hinxton, Cambridge, CB10 1SA, UK
+Tel: +44 (0)1223 834244 ex 7199
+
+
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
