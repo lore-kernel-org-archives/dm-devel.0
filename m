@@ -1,14 +1,10 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: dm target options
-Date: Thu, 3 Mar 2005 14:22:27 -0600
-Message-ID: <200503031422.28515.kevcorry@us.ibm.com>
-References: <20050303181541.GA6814@thumper2>
+From: Dave Olien <dmo@osdl.org>
+Subject: [PATCH] trivial fix to dm-emc.c
+Date: Thu, 3 Mar 2005 13:56:21 -0800
+Message-ID: <20050303215621.GA25051@osdl.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <20050303181541.GA6814@thumper2>
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,36 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Andy,
 
-On Thu March 3 2005 12:15 pm, Andy wrote:
-> Is there any documentation that gives the format and options for the dm
-> targets table?  I'm trying to setup a mirror target, but can't find a lot
-> of information about it, and what the options mean.  Is dm-mirror good for
-> production use, or should I just use md for mirroring?
 
-There probably isn't any formal documents for the dm-mirror target. Looking at 
-drivers/md/dm-raid1.c::mirror_ctr() in the kernel tree, the current table 
-format is:
+Here's a trivial fix to the emc hardware
+handler module. The old code memset the hardware handler
+structure to zero AFTER it had initialized the structure's
+spinlock field to SPIN_LOCK_UNLOCKED.  The new patch moves the
+memset into the hardware handler allocator.
 
-<start_lba> <size_in_sectors> mirror <log_type> <#_log_params> <log_params> \
-   <#_mirrors> [<mirror_path> <starting_lba>]{2,}
+The old code would probably only have a problem if someone
+ran with spinlock debugging enabled, in which case SPIN_LOCK_UNLOCKED
+contains the value SPINLOCK_MAGIC.
 
-where <log_type> is "core" or "disk".
-<#_log_params> is 0 for the "core" log, and thus there is no <log_params> 
-entry.
-<#_log_params> is 2 or 3, and the <log_params> is:
-  <log_device_path> <region_size> [<sync|nosync>]?
+I have no emc hardware to test this change.  However it does compile.
 
-However, dm-mirror is primary used for pe-move in LVM2 and EVMS right now. 
-There's still some improvements that will need to be made before it can be a 
-full replacement for MD RAID-1. So if you're looking for something to use 
-immediately, I'd stick with the MD driver for RAID functionality.
+Dave Olien
 
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://www.ibm.com/linux/ltc/
-http://evms.sourceforge.net/
+
+diff -ur linux-2.6.11-rc3-udm2-original/drivers/md/dm-emc.c linux-2.6.11-rc3-udm2-emc/drivers/md/dm-emc.c
+--- linux-2.6.11-rc3-udm2-original/drivers/md/dm-emc.c	2005-03-03 13:40:55.000000000 -0800
++++ linux-2.6.11-rc3-udm2-emc/drivers/md/dm-emc.c	2005-03-03 13:44:38.000000000 -0800
+@@ -227,6 +227,7 @@
+ 	struct emc_handler *h = kmalloc(sizeof(*h), GFP_KERNEL);
+ 
+ 	if (h) {
++		memset(h, 0, sizeof(*h));
+ 		h->lock = SPIN_LOCK_UNLOCKED;
+ 	}
+ 
+@@ -263,8 +264,6 @@
+ 	if (!h)
+ 		return -ENOMEM;
+ 	
+-	memset(h, 0, sizeof(*h));
+-	
+ 	hwh->context = h;
+ 	
+ 	if ((h->short_trespass = short_trespass))
