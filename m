@@ -1,16 +1,13 @@
-From: syrius.ml@no-log.org
-Subject: Re: [Evms-devel] Re: dev kernels(bio change),
-	evms_activate still produces oops
-Date: Thu, 17 Feb 2005 20:58:11 +0100
-Message-ID: <87zmy39dem.87y8dn9dem@87wtt79dem.message.id>
-References: <87sm48dnh2.87r7jsdnh2@87pszcdnh2.message.id>
-	<20050209231044.GA959@osdl.org> <20050211131433.A24845@osdl.org>
-	<20050216225601.GA5806@osdl.org>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: path priority group and path state
+Date: Thu, 17 Feb 2005 21:25:33 +0100
+Message-ID: <4214FDBD.7040609@free.fr>
+References: <EA4DC661A6353747A2E5C0DE8792DDDE07CA9912@orsmsx404.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-In-Reply-To: <20050216225601.GA5806@osdl.org> (Dave Olien's message of "Wed,
-	16 Feb 2005 14:56:01 -0800")
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+In-Reply-To: <EA4DC661A6353747A2E5C0DE8792DDDE07CA9912@orsmsx404.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,41 +17,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dave Olien <dmo@osdl.org>
-Cc: evms-devel@lists.sourceforge.net, dm-devel@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dave Olien <dmo@osdl.org> writes:
+Caushik, Ramesh wrote:
 
-> I apologize again for being slow about this. Below are the two
-> patches I developed. The first one is in 2.6.11-rc4.  The other
-> one should appear in the Andrew's mm tree for rc4.
+>Given that some of the problems I am noticing in my testing relates to
+>mismatch between the path state recorded by the driver and the daemon, I
+>thought I will chime in with my questions / observations.
+>   
+>My setup consists of a dual port qla2312 controller connected to a JBOD
+>through a FC switch thus creating 2 paths A & B to the drive. I have all
+>the paths in one PG using round-robin selector and "queue if no path"
+>set. I run a bonnie++ transfer to the mounted drive, and then pull out
+>the path A connection. When the transfer switches to path B I reinsert A
+>and then after a little while pull out B and repeat this a few times.
+>Sometimes the transfer just hangs and the log messages indicate the
+>driver is queueing the i/o (both paths are marked faulty). This is what
+>seems to happen. When the cable on path  A is pulled out the controller
+>receives a "LOOP DOWN" on that port and ALSO a "LIP RESET" on path B.
+>This causes i/o on both paths to return SCSI error and so both paths are
+>set faulty (some of the in-flight i/o on path B fails as a result of the
+>LIP RESET). However when the daemon checker loop wakes up and tests the
+>path (via checkfn) path B returns OK, and since the daemon will
+>reconfigure the paths only if newstate != oldstate it does not
+>reconfigure the path. As a result, we end up with a situation where the
+>driver marks path B as faulty due to i/o error in the path, and waits
+>for the daemon to reconfigure the path, while the daemon does not
+>reconfigure path B because the checkfn does not detect a state change.
+>First of all please tell me if this analyses is correct. If it is then
+>my suggestion is for the daemon checker loop to reinstate the path
+>anytime the there is a mismatch between the path state in the driver and
+>that returned by the checkfn, and not just based on the newstate !=
+>oldstate check. I am in the process of coding this up to see if it will
+>fix the problem. Meanwhile I would much appreciate any comments or
+>suggestions on this. Thanks,
 >
-> They both apply to linux-2.6.11-rc3-udm2, with some offsets.
+>Ramesh.
 >
-> The problems both appear because of the way raid5 and raid6 created
-> its bio's that it then passed into bio_clone().
+> 
+>
+Actualy, I'd rather see the DM move to the netlink generic event model 
+anf catch fail path events from the daemon.
+Those messages would be more explicit and contain the path mjor/minor 
+info, which would enable the daemon to set the path' state to fail upon 
+arrival. That should close the design hole more elegantly.
 
->> [...]
-> ------------------ patch 1 ----------------------------------------------------
-> [...]
-> +	struct bio *b = bio_alloc_bioset(gfp_mask, bio->bi_max_vecs, fs_bio_set);
+Alasdair, al, care to comment about this DM evolution ?
 
-in fact patch 2 is in 2.6.11-rc4, and patch 1 is needed to stop the
-oops.
-Thanks you very much Dave.
-Everything seem to work. I just have dm errors messages, but it
-seems related to evms.
-
-For information (since evms-devel is cc'ed):
-device-mapper: dm-linear: Device lookup failed
-device-mapper: error adding target to table
-
-(happens even if i don't use a dm linear object.)
-
-Cheers
-
--- 
+Regards,
+cvaroqui
 
 --
 dm-devel mailing list
