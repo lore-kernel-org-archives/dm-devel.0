@@ -1,15 +1,15 @@
-From: Andrew Morton <akpm@osdl.org>
+From: zensonic@zensonic.dk (Thomas S. Iversen)
 Subject: Re: Help tracking down problem --- endless loop in
- __find_get_block_slow
-Date: Tue, 22 Feb 2005 15:28:33 -0800
-Message-ID: <20050222152833.75fb79a2.akpm@osdl.org>
+	__find_get_block_slow
+Date: Wed, 23 Feb 2005 13:00:13 +0100
+Message-ID: <20050223120013.GA28169@zensonic.dk>
 References: <4219BC1A.1060007@zensonic.dk>
-	<20050222011821.2a917859.akpm@osdl.org> <421BB65F.7040306@suse.com>
+	<20050222011821.2a917859.akpm@osdl.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <421BB65F.7040306@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20050222011821.2a917859.akpm@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +19,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jeff Mahoney <jeffm@suse.com>
+To: Andrew Morton <akpm@osdl.org>
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Jeff Mahoney <jeffm@suse.com> wrote:
->
-> In my experience, the loop is actually outside of
-> __find_get_block_slow(), in __getblk_slow(). I've been using xmon to
-> interrupt the kernel, and the results vary but are all rooted in the
-> for(;;) loop in __getblk_slow. It appears as though grow_buffers is
-> finding/creating the page, but then __find_get_block can't locate the
-> buffer it needs.
+> >  dd if=/dev/zero of=/mnt/testfile count=N, N>6
 
-Yes, that'll happen.  Because there are still buffers attached to the page
-which have the wrong blocksize.  Say, if someone is trying to read a 2k
-buffer_head which is backed by a page which already has 1k buffer_heads
-attached to it.
+It turns out N>6 is variable. But large enough and it will hang. Sugests
+some kind of race I am afraid.
 
-Does your kernel not have that big printk in __find_get_block_slow()?  If
-it does, maybe some of the buffers are unmapped.  Try:
+> >  I get into an endless loop in __find_get_block_slow. 
+> 
+> The only way in which __find_get_block_slow() can loop is if something
+> wrecked the buffer_head ring at page->private: something caused an internal
+> loop via bh->b_this_page.
+> 
+> Are you sure that's where things are hanging?  That it's not stuck on a
+> spinlock?
 
---- 25/fs/buffer.c~a	Tue Feb 22 15:27:35 2005
-+++ 25-akpm/fs/buffer.c	Tue Feb 22 15:27:41 2005
-@@ -456,7 +456,7 @@ __find_get_block_slow(struct block_devic
- 	 * file io on the block device and getblk.  It gets dealt with
- 	 * elsewhere, don't buffer_error if we had some unmapped buffers
- 	 */
--	if (all_mapped) {
-+	{
- 		printk("__find_get_block_slow() failed. "
- 			"block=%llu, b_blocknr=%llu\n",
- 			(unsigned long long)block, (unsigned long long)bh->b_blocknr);
-_
+I get the same message again and again all over (this trace with
+count=100 and a BUG() and panic inserted into buffer.c)
+
+Feb 23 13:38:34 localhost kernel: __find_get_block_slow() failed.
+block=101, b_blocknr=100
+Feb 23 13:38:34 localhost kernel: b_state=0x00000010, b_size=2048
+Feb 23 13:38:34 localhost kernel: device blocksize: 2048
+
+Ad inf. The output of the BUG() is show below. My questions remain:
+
+1. Whos fault is this?
+2. How do I fix/avoid this problem?
+
+Regards Thomas
+
+
+__find_get_block_slow() failed. block=101, b_blocknr=100
+b_state=0x00000010, b_size=2048
+device blocksize: 2048
+------------[ cut here ]------------
+DEBUG_PAGEALLOC
+Modules linked in: ufs sha512 aes_i586 dm_bde md5 ipv6 af_packet evdev ehci_hcd usbcore agpgart dm_mod rtc unix
+CPU:    0
+EIP: 0060:[__find_get_block_slow+202/304]    Not tainted
+EFLAGS: 00010286   (2.6.8) 
+EIP is at __find_get_block_slow+0xca/0x130
+eax: 00000017   ebx: dcd21208   ecx: c02c6950   edx: 000041e4
+esi: c138d600   edi: 00000065   ebp: da63aed0   esp: da7e9c54
+ds: 007b   es: 007b   ss: 0068
+Process dd (pid: 1742, threadinfo=da7e8000 task=dc76da70)
+Stack: c029a003 00000800 00000800 00000064 00000000 00000000 00000000 da63ae6c 
+       00000065 00000800 c014ab5f da63ae6c 00000065 00000800 00000800 00000065 
+       da63ae6c da764df8 c014abdb da63ae6c 00000065 00000800 00000000 00000000 
+Call Trace:
+ [__find_get_block+95/176] __find_get_block+0x5f/0xb0
+ [__getblk+43/96] __getblk+0x2b/0x60
+ [pg0+542048932/1070055424] ufs_new_fragments+0x1c4/0x740 [ufs]
+ [pg0+542070875/1070055424] ufs_inode_getfrag+0x23b/0x3f0 [ufs]
+ [pg0+542072873/1070055424] ufs_getfrag_block+0x349/0x3b0 [ufs]
+ [create_empty_buffers+37/128] create_empty_buffers+0x25/0x80
+ [__block_prepare_write+467/960] __block_prepare_write+0x1d3/0x3c0
+ [kernel_map_pages+40/144] kernel_map_pages+0x28/0x90
+ [inode_update_time+167/224] inode_update_time+0xa7/0xe0
+ [block_prepare_write+52/80] block_prepare_write+0x34/0x50
+ [pg0+542072032/1070055424] ufs_getfrag_block+0x0/0x3b0 [ufs]
+ [generic_file_aio_write_nolock+821/2624] generic_file_aio_write_nolock+0x335/0xa40
+ [pg0+542072032/1070055424] ufs_getfrag_block+0x0/0x3b0 [ufs]
+ [do_no_page+99/688] do_no_page+0x63/0x2b0 
+ [generic_file_write_nolock+116/144] generic_file_write_nolock+0x74/0x90
+ [clear_user+51/80] clear_user+0x33/0x50
+ [read_zero+452/528] read_zero+0x1c4/0x210
+ [generic_file_write+85/112] generic_file_write+0x55/0x70
+ [generic_file_write+0/112] generic_file_write+0x0/0x70
+ [vfs_write+184/304] vfs_write+0xb8/0x130
+ [copy_to_user+62/80] copy_to_user+0x3e/0x50
+ [sys_write+81/128] sys_write+0x51/0x80
+ [syscall_call+7/11] syscall_call+0x7/0xb
+Code: 0f 0b 15 02 c2 9f 29 c0 8b 06 f6 c4 08 75 17 8b 46 04 40 74 
