@@ -1,8 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: shouldn't io_restrictions indicate whether or not I/O
-	may be clus tered?
-Date: Thu, 10 Feb 2005 15:27:32 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A786@SRMANNING.eng.emc.com>
+Subject: missing device-mapper functionality
+Date: Fri, 11 Feb 2005 10:09:47 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A78C@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -18,12 +17,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Shouldn't the device-mapper io_restrictions structure include a field
-to indicate whether or not I/O may be clustered as indicated by the
-setting of the QUEUE_CLUSTER_FLAG bit of the queue_flags field
-of the request_queue structures for the target devices?  Otherwise,
-couldn't we end up with some I/Os terminated in the I/O prep phase
-due to an excess of physical segments in the I/O request?
+The inability to monitor block I/O statistics via iostat for device-mapper
+mapped devices seems like a big loss.  Are there plans to provide this
+feature?
+
+Seems like being able to initiate i/o requests to device-mapper target
+devices from within a device-mapper target driver is a missing link in
+the device-mapper architecture.  Are there plans to provide this feature?
+
+Since the multipath hardware context code for the CLARiion places
+path priority group initialization I/O requests directly on its target
+device queues it must be the case the CLARiion target devices must
+be ones which have a request_fn_proc() queue service function -- which
+rules out using other device-mapper mapped devices or md devices as
+target devices.  This restriction appears not to be in place for other
+storage systems supported by multipath.
 
 --
 dm-devel mailing list
