@@ -1,19 +1,12 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: multipathd.init
-Date: Tue, 05 Apr 2005 01:06:40 +0200
-Message-ID: <1112656001.8118.144.camel@zezette>
-References: <20050401204048.GI14307@agk.surrey.redhat.com>
-	<1112389744.8118.26.camel@zezette>
-	<20050401211902.GL14307@agk.surrey.redhat.com>
-	<1112390705.8118.34.camel@zezette> <1112521418.8118.49.camel@zezette>
-	<20050404211520.GB14307@agk.surrey.redhat.com>
-	<1112652860.8118.129.camel@zezette>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: RE: curious why waitevent sets event_nr field of event
+	_thread struct every time
+Date: Tue, 5 Apr 2005 12:56:07 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A8B8@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1112652860.8118.129.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,49 +16,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Cc: 'Christophe Varoqui' <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-I pushed 0.4.4-pre8 online.
-It contains all fixes discussed here today and the day before.
+On Wed, 30 Mar 2005 00:31:11 +0200
+christophe varoqui <christophe.varoqui@free.fr> wrote
+> Have you tried your suggested design ?
+> Is there a regression at first glance ?
 
-I hope I'll have positive feedback to release 0.4.4 soon.
+I've tried it.  The code only blindly sets the event_nr from
+the kernel the first time through.  Otherwise, if the kernel's copy
+and the pthread's copy are different the code (1) logs a msg,
+(2) sets the pthread copy from the kernel copy, and (3) goes to a
+new label "out2" to fail the paths and invoke multipath.
 
-Remember the blacklist format changed to regex, as demonstrated in the
-example config files in the tarball.
+I ran three to four times and saw log messages indicating that
+several events had the potential of being lost.  Overall, while
+this seems to be the right thing to do -- proving that events
+would actually be lost is a different thing all together.  I did
+not even attempt to do that.
 
-Regards,
-cvaroqui
-
-On mar, 2005-04-05 at 00:14 +0200, christophe varoqui wrote:
-> On lun, 2005-04-04 at 22:15 +0100, Alasdair G Kergon wrote:
-> > On Sun, Apr 03, 2005 at 11:43:37AM +0200, christophe varoqui wrote:
-> > > I also would like to kick off the debate on libsysfs and libdevmapper
-> > > klibc versions packaging, 
-> > 
-> > For Red Hat distributions, I intend to use glibc static builds for 
-> > the multipath-tools, same as for lvm2 & dmsetup.
-> > 
-> > I don't want the worry of having to support more than one libc.
-> > (All tests have to be done twice then, for starters, and you lose
-> > use of glibc features the other libraries don't support.)
-> > 
-> > So much is getting pushed into the initrd these days, that there's 
-> > even the prospect of shared object support being added one day.
-> > 
-> So be it, for now.
-> 
-> The place is cleaned from libsysfs/ and libdevmapper/ starting from
-> 0.4.4-pre6.
-> 
-> I modified the Makefiles to still compile properly with BUILD=klibc on
-> systems with /usr/lib/klibc/ properly stuffed with klibc-compiled
-> versions of these libs. A little more work for people interested in this
-> setup, but still fairly manageable.
-> 
-> Hope it eases the packaging for everyone.
-> Please tell if some more work needs to be merged in this area.
-> 
-> Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+I've included below a patch for multipathd/main.c based on version
+0.4.4-pre7 of multipath-tools.
+-----------------------------------------------------------------
+*** multipath-tools-0.4.4-pre7/multipathd/main.c.orig	2005-04-05
+04:46:30.000000000 -0400
+--- multipath-tools-0.4.4-pre7/multipathd/main.c	2005-04-05
+04:51:03.000000000 -0400
+***************
+*** 88,93 ****
+--- 88,94 ----
+  	int event_nr;
+  	char mapname[WWID_SIZE];
+  	struct paths *allpaths;
++ 	int firstTime;
+  };
+  
+  /*
+***************
+*** 245,250 ****
+--- 246,252 ----
+  	char buff[1];
+  	char cmd[CMDSIZE];
+  	struct dm_task *dmt;
++ 	int event_nr;
+  
+  	mlockall(MCL_CURRENT | MCL_FUTURE);
+  	waiter = (struct event_thread *)et;
+***************
+*** 256,262 ****
+  	}
+  	pthread_mutex_lock (waiter->waiter_lock);
+  
+! 	waiter->event_nr = dm_geteventnr (waiter->mapname);
+  	log_safe(LOG_DEBUG, "waiter->event_nr = %i", waiter->event_nr);
+  
+  	if (!(dmt = dm_task_create(DM_DEVICE_WAITEVENT)))
+--- 258,274 ----
+  	}
+  	pthread_mutex_lock (waiter->waiter_lock);
+  
+! 	event_nr = dm_geteventnr (waiter->mapname);
+! 	if (waiter->firstTime) {
+! 		waiter->event_nr = event_nr;
+! 		waiter->firstTime = 0;
+! 	}
+! 	else if (waiter->event_nr != event_nr) {
+! 		log_safe(LOG_NOTICE, "event_nr = %i, waiter->event_nr = %i:
+avoiding 0x%x lost events on map %s", event_nr, waiter->event_nr, event_nr -
+waiter->event_nr, waiter->mapname);
+! 		waiter->event_nr = event_nr;
+! 		goto out2;
+! 	}
+! 	//waiter->event_nr = dm_geteventnr (waiter->mapname);
+  	log_safe(LOG_DEBUG, "waiter->event_nr = %i", waiter->event_nr);
+  
+  	if (!(dmt = dm_task_create(DM_DEVICE_WAITEVENT)))
+***************
+*** 274,280 ****
+  
+  out:
+  	dm_task_destroy(dmt);
+! 
+  	log_safe(LOG_DEBUG, "%s", cmd);
+  	log_safe(LOG_NOTICE, "devmap event on %s", waiter->mapname);
+  	mark_failed_path(waiter->allpaths, waiter->mapname);
+--- 286,292 ----
+  
+  out:
+  	dm_task_destroy(dmt);
+! out2:
+  	log_safe(LOG_DEBUG, "%s", cmd);
+  	log_safe(LOG_NOTICE, "devmap event on %s", waiter->mapname);
+  	mark_failed_path(waiter->allpaths, waiter->mapname);
+***************
+*** 379,384 ****
+--- 391,397 ----
+  					MALLOC (sizeof (pthread_mutex_t));
+  				pthread_mutex_init (wp->waiter_lock, NULL);
+  				wp->allpaths = allpaths;
++ 				wp->firstTime = 1;
+  				vector_alloc_slot (waiters);
+  				vector_set_slot (waiters, wp);
+  			}
