@@ -1,12 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [PATCH] Snapshot restructuring: Step 1
-Date: Fri, 28 Jan 2005 22:06:20 +0000
-Message-ID: <20050128220620.GO10195@agk.surrey.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: RE: dm-devel Digest, Vol 11, Issue 18
+Date: Sat, 29 Jan 2005 01:22:11 +0100
+Message-ID: <20050129002211.GA9195@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321A72B@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A72B@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,152 +21,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-NB This patch may break some snapshot functionality in LVM2 & EVMS.
-[e.g. In LVM2 a test I did resizing the snapshot COW area locked up]
+> 
+> Noticed already.  I am advocating that detecting path-to-LU inconsistency
+> be adopted generically by the multipath configuration software using one
+> of the two methods described in previous email and not be implemented
+> piecemeal or just for CLARiion, Symmetrix, or EMC storage.
+> 
+> This could mean that the storage system getuid callouts become functions
+> like the checker callouts and that by default, a storage system's getuid
+> callout be used also as that storage system's path checker.
+> 
+Some assumptions are not that clear to me, so let me confront them to
+your knowledge :
 
-Move snapshot metadata loading to happen when table is created instead
-of when device is resumed.  Origin writes don't trigger exceptions until
-snapshot table becomes active (when resume() is called on snapshot).
+1) A Logical Unit can change its H/B/T/L mapping.
+1.1) H/B/T through LUN masking reconfiguration
+1.2) L through a logical unit reconfiguration
+2) These topology changes can happen between two checks of the affected path
+3) No path failure is seen by the device mapper during the topology
+reconfiguration
+4) Not failing or isolating the changed path from its previous multipath
+map will lead to unrecoverable data corruption at the first submitted
+write IO routed through this path
+5) HBA drivers see the LU remapping events
 
+If all these assertions are legitimate, it might not be enough to check
+uid changes at pathcheck interval.
 
-The snapshot and origin targets have various unwritten rules about
-how they can be used.  LVM2 and EVMS currently obey those rules.
-But there are various memory allocation problems with the existing
-implementation and so things have to be changed.
-The general aim is to move as much work as possible outside the
-suspend & resume functions.
+It would seem safer to let the HBA driver error the first IO submitted to a 
+changed LU *and* send an event (maybe through a transport class kobj) for
+userspace to reconfigure the maps.
 
-The restriction remains that you mustn't load the same snapshot
-metadata into more than one table: I can't think of any
-case that needs this, and this patch takes advantage of this.
+Please comment abundantly.
 
-Inactive table created with snapshot target: loads snapshot metadata, 
-  registers snapshot against its origin but does *not* start
-  capturing changes to the origin yet.
-Device is resumed, making the table active: changes to the origin *are*
-  captured from now on.
-Snapshot may be suspended/resumed or deleted, but you must never
-load the same snapshot metadata into another table concurrently - 
-so you mustn't reload the same snapshot into the INACTIVE table.
-
---- diff/drivers/md/dm-snap.c	2005-01-28 20:25:26.000000000 +0000
-+++ source/drivers/md/dm-snap.c	2005-01-28 21:18:43.000000000 +0000
-@@ -371,6 +371,20 @@
- 	return (n + size) & ~size;
- }
- 
-+static void read_snapshot_metadata(struct dm_snapshot *s)
-+{
-+	if (s->have_metadata)
-+		return;
-+
-+	if (s->store.read_metadata(&s->store)) {
-+		down_write(&s->lock);
-+		s->valid = 0;
-+		up_write(&s->lock);
-+	}
-+
-+	s->have_metadata = 1;
-+}
-+
- /*
-  * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
-  */
-@@ -848,16 +862,7 @@
- {
- 	struct dm_snapshot *s = (struct dm_snapshot *) ti->private;
- 
--	if (s->have_metadata)
--		return;
--
--	if (s->store.read_metadata(&s->store)) {
--		down_write(&s->lock);
--		s->valid = 0;
--		up_write(&s->lock);
--	}
--
--	s->have_metadata = 1;
-+	read_snapshot_metadata(s);
- }
- 
- static int snapshot_status(struct dm_target *ti, status_type_t type,
---- diff/drivers/md/dm-snap.c	2005-01-28 21:25:48.000000000 +0000
-+++ source/drivers/md/dm-snap.c	2005-01-28 21:26:21.000000000 +0000
-@@ -471,7 +471,7 @@
- 	s->chunk_shift = ffs(chunk_size) - 1;
- 
- 	s->valid = 1;
--	s->have_metadata = 0;
-+	s->active = 0;
- 	s->last_percent = 0;
- 	init_rwsem(&s->lock);
- 	s->table = ti->table;
-@@ -506,7 +506,11 @@
- 		goto bad5;
- 	}
- 
-+	/* Metadata must only be loaded into one table at once */
-+	read_snapshot_metadata(s);
-+
- 	/* Add snapshot to the list of snapshots for this origin */
-+	/* Exceptions aren't triggered till snapshot_resume() is called */
- 	if (register_snapshot(s)) {
- 		r = -EINVAL;
- 		ti->error = "Cannot register snapshot origin";
-@@ -862,7 +866,9 @@
- {
- 	struct dm_snapshot *s = (struct dm_snapshot *) ti->private;
- 
--	read_snapshot_metadata(s);
-+	down_write(&s->lock);
-+	s->active = 1;
-+	up_write(&s->lock);
- }
- 
- static int snapshot_status(struct dm_target *ti, status_type_t type,
-@@ -932,8 +938,8 @@
- 	/* Do all the snapshots on this origin */
- 	list_for_each_entry (snap, snapshots, list) {
- 
--		/* Only deal with valid snapshots */
--		if (!snap->valid)
-+		/* Only deal with valid and active snapshots */
-+		if (!snap->valid || !snap->active)
- 			continue;
- 
- 		/* Nothing to do if writing beyond end of snapshot */
---- diff/drivers/md/dm-snap.h	2005-01-12 15:21:22.000000000 +0000
-+++ source/drivers/md/dm-snap.h	2005-01-28 21:25:32.000000000 +0000
-@@ -99,7 +99,9 @@
- 
- 	/* You can't use a snapshot if this is 0 (e.g. if full) */
- 	int valid;
--	int have_metadata;
-+
-+	/* Origin writes don't trigger exceptions until this is set */
-+	int active;
- 
- 	/* Used for display of table */
- 	char type;
---- diff/drivers/md/dm-snap.c	2005-01-28 21:37:05.000000000 +0000
-+++ source/drivers/md/dm-snap.c	2005-01-28 21:36:58.000000000 +0000
-@@ -373,16 +373,11 @@
- 
- static void read_snapshot_metadata(struct dm_snapshot *s)
- {
--	if (s->have_metadata)
--		return;
--
- 	if (s->store.read_metadata(&s->store)) {
- 		down_write(&s->lock);
- 		s->valid = 0;
- 		up_write(&s->lock);
- 	}
--
--	s->have_metadata = 1;
- }
- 
- /*
+regards,
+cvaroqui
 
 --
 dm-devel mailing list
