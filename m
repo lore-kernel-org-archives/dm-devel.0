@@ -1,13 +1,15 @@
-From: "Caushik, Ramesh" <ramesh.caushik@intel.com>
-Subject: Some issues noticed in my testing.
-Date: Mon, 7 Feb 2005 15:18:17 -0800
-Message-ID: <EA4DC661A6353747A2E5C0DE8792DDDE07B82237@orsmsx404.amr.corp.intel.com>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: Re: 2.6.11-rc3-udm1
+Date: Tue, 8 Feb 2005 08:21:00 -0600
+Message-ID: <200502080821.00728.kevcorry@us.ibm.com>
+References: <20050207184930.GR10195@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Content-class: urn:content-classes:message
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+In-Reply-To: <20050207184930.GR10195@agk.surrey.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,79 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@free.fr>
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Christophe,
-I noticed a failure in multipath-tools-0.4.2 when executing the
-following scenario.
+On Monday 07 February 2005 12:49 pm, Alasdair G Kergon wrote:
+> ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/2.6.11-rc3/2.6.11-r
+>c3-udm1.tar.bz2
+>
+> I recommend you don't apply patch 14 here unless you specifically
+> intend to test that patch with dmsetup.  Existing LVM2 and EVMS
+> tools needs some modification to work with it correctly, and
+> more patches like that will follow.  The LVM2 source
+> tree will branch for a while as these changes are worked on
+> to make snapshot creation more reliable.
+>
+> Revision 14:
+>   Move snapshot metadata loading to happen when table is created instead
+>   of when device is resumed.  Origin writes don't trigger exceptions
+> until snapshot table becomes active (when resume() is called on
+> snapshot).
+>
+>   NB This patch may break some existing LVM2 and EVMS operations.
 
-i) Run multipathd & multipath with 1 of 2 paths in the system available.
-ii)activate the other path.
-iii) run multipath again.
+We should bump the snapshot version number to 1.0.2 or 1.1.0 so the tools 
+can detect whether this change has been applied. Likewise, the 
+dm-multipath version should be bumped to 1.0.4 or 1.1.0 since the table 
+format has changed from the old dm-multipath.
 
-Expect the newly inserted path to be incorporated into the original path
-groups. Does not happen. Traced it to a problem in the pgcmp2 function.
-Patch below should fix it. Also in step iii) above running multipath
-with a parameter (conf->dev) will not include the additional path into
-the particular mp because the select_alias function not called in the
-coalesce_paths function so the strncmp(mpp->alias,conf->dev,....) in
-main will always fail. Patch below should fix it.=20
+Here's a patch for both files that increments the patchlevel-versions. Feel 
+free to change these to increment the minor-versions instead if you think 
+that's more appropriate.
 
-Also while testing with a modified scsi_debug driver (to expose multiple
-paths to the same device) noticed that sysfs vendor name for the
-scsi_debug device is "Linux   " which fails to match with a "Linux"
-vendor name in the conf name and so device specific settings are not
-picked up. Think it is a good idea to chomp off trailing whitespace from
-vendor and product names. See patches below.  Regards,
-
-Ramesh.
-
-"Views expressed are mine, and not those of Intel Corporation"=20
+-- 
+Kevin Corry
+kevcorry@us.ibm.com
+http://evms.sourceforge.net/
 
 
-diff -r /home/rcaushik/multipath-tools-0.4.2/libmultipath/hwtable.c
-multipath-tools-0.4.2/libmultipath/hwtable.c
-11a12,13
-> int  strcmp_chomp(char *str1, char *str2);
->=20
-20c22
-< 		    strcmp(hwe->vendor, vendor) =3D=3D 0 &&
----
-> 		    strcmp_chomp(hwe->vendor, vendor) =3D=3D 0 &&
-22c24
-< 			strcmp(hwe->product, product) =3D=3D 0))
----
-> 			strcmp_chomp(hwe->product, product) =3D=3D 0))
-58a61,64
-> int  strcmp_chomp(char *str1, char *str2)
-> {
-> 	int i;
-> 	char s1[PARAMS_SIZE],s2[PARAMS_SIZE];
-59a66,76
->         if(!str1 || !str2)
-> 		return 1;
-> 	strncpy(s1,str1,PARAMS_SIZE);
-> 	strncpy(s2,str2,PARAMS_SIZE);
-> 	=09
-> 	for(i=3Dstrlen(s1)-1;i >=3D0 && isspace(s1[i]); --i) ;
-> 	s1[++i]=3D'\0';
-> 	for(i=3Dstrlen(s2)-1;i >=3D0 && isspace(s2[i]); --i) ;
-> 	s2[++i]=3D'\0';
-> 	return(strcmp(s1,s2));
-> }
-diff -r /home/rcaushik/multipath-tools-0.4.2/multipath/main.c
-multipath-tools-0.4.2/multipath/main.c
-405c405
-<=20
----
-> 		select_alias(mpp);
-672c672
-< 				break;
----
-> 				/* break; */
-       =20
+
+--- diff/drivers/md/dm-mpath.c 2005-02-08 08:18:47.570070088 -0600
++++ source/drivers/md/dm-mpath.c 2005-02-08 08:18:45.461390656 -0600
+@@ -1221,7 +1221,7 @@
+  *---------------------------------------------------------------*/
+ static struct target_type multipath_target = {
+  .name = "multipath",
+- .version = {1, 0, 3},
++ .version = {1, 0, 4},
+  .module = THIS_MODULE,
+  .ctr = multipath_ctr,
+  .dtr = multipath_dtr,
+--- diff/drivers/md/dm-snap.c 2005-02-08 08:18:47.570070088 -0600
++++ source/drivers/md/dm-snap.c 2005-02-08 08:18:45.461390656 -0600
+@@ -1111,7 +1111,7 @@
+ 
+ static struct target_type snapshot_target = {
+  .name    = "snapshot",
+- .version = {1, 0, 1},
++ .version = {1, 0, 2},
+  .module  = THIS_MODULE,
+  .ctr     = snapshot_ctr,
+  .dtr     = snapshot_dtr,
 
 --
 dm-devel mailing list
