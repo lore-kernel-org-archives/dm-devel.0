@@ -1,10 +1,10 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: Panic in multipath's trigger_event function
-Date: Tue, 22 Feb 2005 17:56:25 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A7C3@SRMANNING.eng.emc.com>
+Subject: Re: path priority group and path state
+Date: Tue, 22 Feb 2005 17:59:08 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A7C4@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_000_01C51931.BC2ABB85"
+Content-Type: text/plain
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,74 +15,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
-Cc: 'Alasdair G Kergon' <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This message is in MIME format. Since your mail reader does not understand
-this format, some or all of this message may not be legible.
+On Mon, 14 Feb 2005 23:28:55 +0100, Christophe Varoqui wrote
 
-------_=_NextPart_000_01C51931.BC2ABB85
-Content-Type: text/plain
+...
 
-Trigger_event() has paniced maybe 3 or 4 times now, with one
-simple dd process running while serially rebooting both
-(active and passive) service processors of a two service
-processor EMC CLARiion as part of a non-destructive
-upgrade (NDU) of ucode.
+> >As much as is reasonably possible, I would like to always know which
+> >path priority group will be used by the next I/O -- even when none of
+> >the priority groups have been initialized and therefore all of them
+> >have an "enabled" path priority group state.  Looks like "first" will
+> >tell me that, but it is not updated on "multipath -l".
+>
+>  
+>
+>Not updated ? Can you elaborate ?
+>To me, this info is fetched in the map table string upon each exec ...
 
-I think the problem is that when the old table/map for a multipath
-mapped device is swapped for a new one by dm_swap_table(), it
-is possible that the trigger_event work_struct field of the multipath
-structure for the old map is actively queued to a cpu work queue
-when table_destroy() sets about to de-allocate the memory for the
-old table, the dm_target, and calls the multipath destructor
-multipath_dtr() to de-allocate the multipath structure memory.  If
-any of these things happen before the work queue entry is serviced,
-trigger_event() will refer to stale dm_table, dm_target, or multipath
-structure memory.  This problem does not happen with the 
-process_queued_ios() event callback because these entries are
-flushed and waited for by dm_suspend() before dm_resume() calls
-dm_swap_table().
+I'm sorry for the confusion.  I wasn't very clear at all.
 
-In this case, the panic occurs when trigger_event() de-references
-the ti struct dm_target field of the old multipath structure because
-the dm_target structure memory for the multipath target was
-de-allocated via vfree() and the reference to the ti field of the
-multipath structure is to unmapped kernel memory.
+When the active path group of an active/passive array is changed
+external to multipath (either a SAN utility or multipath running
+on a different node in a multi-node cluster), sometimes the wrong
+path group is shown to be "active" and sometimes both multipath
+priority groups are shown as "enabled".  I think the former
+condition occurs between the time the active path group is changed
+externally and the time of the first block I/O to the multipath
+mapped device.  I think the latter condition occurs between the
+time multipath changes the active group back to the highest priority
+path group and the first block I/O to the multipath mapped device.
 
-Several solutions come to mind, namely (1) using reference counts
-for the multipath structure and (2) flushing the default work queue
-in the multipath destructor.  I've included a patch for the latter in this
-email.
+I think that the former condition could be addressed by validating
+with the storage array that the highest priority path group is
+actually the current active path group whenever path health is
+checked.  Yet, if they are different, it is not always clear that
+the right thing to do is to trespass back to the highest priority
+group. 
 
- <<dm-mpath c.patch>> 
-
-
-------_=_NextPart_000_01C51931.BC2ABB85
-Content-Type: application/octet-stream;
-	name="dm-mpath c.patch"
-Content-Disposition: attachment;
-	filename="dm-mpath c.patch"
-
-*** dm-mpath.c.orig	2005-02-22 10:11:47.000000000 -0500
---- dm-mpath.c	2005-02-22 12:03:15.900426560 -0500
-***************
-*** 747,752 ****
---- 747,754 ----
-  static void multipath_dtr(struct dm_target *ti)
-  {
-  	struct multipath *m = (struct multipath *) ti->private;
-+ 
-+ 	flush_scheduled_work();
-  	free_multipath(m);
-  }
-  
-
-------_=_NextPart_000_01C51931.BC2ABB85
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+I think the latter condition could be addressed by always initializing
+a multipath path group immediately whenever the path group is either
+initially setup or changed instead of waiting for the first block i/o. 
 
 
-------_=_NextPart_000_01C51931.BC2ABB85--
+> There can be room for improvement in responsiveness anyway. 
+> Caching the 
+> uids for example, but there you loose on uid changes 
+> detection, lacking 
+> an event-driven detection for that.
+> If you have suggestion, please post them.
+> 
+
+My suggestion is based on (1) periodic testing of physical paths not
+logical ones, (2) immediately placing all logical paths associated
+with failed physical components into a bypassed state whether the
+failure was detected by i/o failure or path test, (3) prioritizing
+the testing of bypassed paths, and (4) failing logical paths which
+fail path tests.  For SCSI, a physical path would be defined as a
+unique combination of initiator and target.  These components would
+need to be identified and associated with all of the logical paths
+(LU specific) which utilize the component.
+
+A similar approach can also be taken to improve the responsiveness to
+the restoration of physical path components.
+
+> >I'm just wondering if multipathd could invoke multipath to fail paths
+> >from user space in addition to reinstating them?  Seems like both
+> >multipathd/main.c:checkerloop() and 
+> multipath/main.c:/reinstate_paths()
+> >will only initiate a kernel path state transition from 
+> PSTATE_FAILED to
+> >PSTATE_ACTIVE but not the other way around.  The state 
+> transition from
+> >PSTATE_ACTIVE to PSTATE_FAILED requires a failed I/O since this state
+> >is initiated only from the kernel code itself in the event of an I/O
+> >failure on a multipath target device.
+> >
+> >One could expand this approach to proactively fail (and immediately
+> >schedule for testing) all paths associated with common bus components
+> >(for SCSI, initiator and/or target).  The goal being not 
+> only to avoid
+> >failing I/O for all but all-paths-down use cases, but to also avoid
+> >long time-out driven delays and high path testing overhead for large
+> >SANs in the process of doing so.
+> >
+> >  
+> >
+> It is commonly accepted those timouts are set to 0 in multipathed SAN.
+> Have you experienced real problems here, or is it just a theory ?
+>
+ 
+Qlogic FC HBA people have long warned EMC PowerPath multipath developers
+NOT to mess around with the timeout values of their SCSI commands.  As
+a result we have been burdoned with 30-60 second SCSI command timeout
+values for SCSI commands sent to multipathed devices in a SAN.
+My understanding was that they needed this time in order to deal
+convincingly with target-side FC disconnect failures.  Things may
+certainly have changed to allow getting rid of this huge timeout,
+though this is far from certain to me.
+
+> I particularly fear the "proactively fail all paths associated to a 
+> component", as this may lead to dramatic errors like : "I'm 
+> so smart, I 
+> failed all paths for this multipath, now the FS is remounted 
+> read-only 
+> but wait, in fact you can use this path as it is up after all"
+>
+
+One can deal with that concern by not actually failing these paths, but
+putting them into a "bypassed" state whereby (1) they are skipped (similar
+to how bypassed path groups are skipped) in all cases unless there are no
+other path choices (instead of failing the i/o) and (2) each of these paths
+are immediately scheduled for testing ahead of all others.  But since this
+testing is done in user space, we would still need the capability to fail
+these paths from user space once their failed state is verified through
+path testing.  I am still not understanding your logic behind not wanting
+to do that.
