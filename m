@@ -1,7 +1,7 @@
-From: Mark Haverkamp <markh@osdl.org>
+From: Jens Axboe <axboe@suse.de>
 Subject: Re: [PATCH] Fix panic in 2.6 with bounced bio and dm
-Date: Mon, 28 Feb 2005 08:15:10 -0800
-Message-ID: <1109607310.30227.18.camel@markh1.pdx.osdl.net>
+Date: Mon, 28 Feb 2005 17:21:29 +0100
+Message-ID: <20050228162128.GK8868@suse.de>
 References: <1109351021.5014.10.camel@markh1.pdx.osdl.net>
 	<20050225161947.5fd6d343.akpm@osdl.org>
 	<Pine.LNX.4.58.0502251640050.9237@ppc970.osdl.org>
@@ -11,8 +11,8 @@ References: <1109351021.5014.10.camel@markh1.pdx.osdl.net>
 	<1109607188.30227.16.camel@markh1.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 In-Reply-To: <1109607188.30227.16.camel@markh1.pdx.osdl.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -23,11 +23,11 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@suse.de>
+To: Mark Haverkamp <markh@osdl.org>
 Cc: Andrew Morton <akpm@osdl.org>, Linus Torvalds <torvalds@osdl.org>, linux-kernel <linux-kernel@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2005-02-28 at 08:13 -0800, Mark Haverkamp wrote:
+On Mon, Feb 28 2005, Mark Haverkamp wrote:
 > On Mon, 2005-02-28 at 16:51 +0100, Jens Axboe wrote:
 > > On Mon, Feb 28 2005, Mark Haverkamp wrote:
 > > > On Sat, 2005-02-26 at 13:39 +0100, Jens Axboe wrote:
@@ -58,9 +58,7 @@ On Mon, 2005-02-28 at 08:13 -0800, Mark Haverkamp wrote:
 > 
 > Wouldn't this potentially create bounce pages that will never be used?
 
-Sorry, never mind. I didn't notice that this was for the non-highmem
-pages.
-
+Well no, it just points them at the "top" pages from the original bio.
 
 -- 
-Mark Haverkamp <markh@osdl.org>
+Jens Axboe
