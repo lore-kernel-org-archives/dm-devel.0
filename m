@@ -1,11 +1,14 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: Question on dm-mp sense handling
-Date: Wed, 23 Feb 2005 18:07:49 -0800
-Message-ID: <20050224020749.GA669@us.ibm.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: "queue if no paths" infinite recursion when there are
+	no paths
+Date: Thu, 24 Feb 2005 02:37:32 +0000
+Message-ID: <20050224023732.GV14093@agk.surrey.redhat.com>
+References: <C2EEB4E538D3DC48BF57F391F422779321A7CE@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A7CE@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,30 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: axboe@suse.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Is someone still working on the sense buffer handling code for bios
-to be used by dm-mp?
+On Wed, Feb 23, 2005 at 04:20:15PM -0500, goggin, edward wrote:
+> It appears that there is no stopping condition for retrying i/os failed
+> via bio_endio() in dispatch_queued_ios().  
 
-The ifdef'd out code in dm-emc.c and dm_scsi_err_handler appears to only
-allow the interpretation of sense data if available and does not provide
-any detail on non-sense based failures (DRIVER_TIMEOUT vs DID_* status).
+Currently they are meant to be requeued down different path - never
+down a path already used - so they try all paths then get
+errored.  If there's no path available, and m->suspended is set,
+nothing is meant to be queued.
+I think the bug is the goto requeue that should have tested
+for m->suspended first - a test for queue_if_no_path missed when m
+->suspended was added.
 
-An old patch that Mike Christie submitted was a start at mapping errors to
-BLK error flags but did not receive much feedback. Is there some reason to
-not decode down at the lower levels with a possible interface for vendor
-specific mapping?
+if (!m->queue_if_no_path &&!m->suspended) {
 
-Old post can be found here.
-http://marc.theaimsgroup.com/?l=linux-kernel&m=107961883914541&w=2
-
-The reason I am asking the question is I am looking into issues of a
-single device mapper hardware handler supporting block devices exported by
-a DASD driver or through the SCSI subsystem.
-
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+Alasdair
