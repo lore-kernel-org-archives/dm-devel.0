@@ -1,13 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Fwd: [Next problem with multipath-tools]
-Date: Tue, 15 Feb 2005 22:48:44 +0100
-Message-ID: <42126E3C.2080306@free.fr>
-References: <20050214145026.GB13778@tykepenguin.com>
+Subject: Re: md_component_detection = 1
+Date: Tue, 15 Feb 2005 22:51:41 +0100
+Message-ID: <42126EED.2030607@free.fr>
+References: <000001c5136d$3b3502a0$11051aac@pcp41116>	<42126793.4030407@free.fr>
+	<20050215213425.GK14093@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-In-Reply-To: <20050214145026.GB13778@tykepenguin.com>
+In-Reply-To: <20050215213425.GK14093@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,49 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, pcaulfie@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Patrick,
+Alasdair G Kergon wrote:
 
-remember me why you can't start the daemon later in the boot process ?
-Last time when talked about that I guess we concluded the startup 
-position didn't really care ...
-
-Anyway, if you maintain the need, several solution might be evaluated :
-o a cmdline flag to disable pidfile creation, for those distro that 
-manage that in the init script
-o a different default pidfile location, or a flag to point to a custom 
-location
-o rip the pidfile logic altogether and go for a pidof() thing in the tool
-
-Concerning /var/cache/multipathd, I guess the overlay doesn't matter as 
-the CLONE_NEWNS flag should protect our namespace.
-
-Please comment on your prefered ways.
-
-Regards,
-cvaroqui
-
->
->	Hello Patrick,
->
->I installed the new version of libsysfs1 which fixed problem in location of 
->libsysfs in /lib (instead in /usr/lib). But I think that this bug fix didn't
->solve problem with multipath-tools. After reboot multipathd is able to start
->correctly when server is coming up. Unfortunately if /var is located on
->separate volume and is mounted at startup sequence after multipathd start, the
->new mounted file system will overlay directory structure (located in /var -
->i.e. /var/run and /var/cache/multipathd) for multipathd and daemon will stay
->nonfunctional. Multipathd is running but do nothing from this moment. It is
->necessary to restart multipathd after mounting of /var file system. I have no
->idea how to solve this problem (maybe it is necessary to modify multipathd to
->store information elsewhere than in /var - i.e. somewhere on root partition or
->in ram disk).
+>On Tue, Feb 15, 2005 at 10:20:19PM +0100, christophe varoqui wrote:
 >  
 >
+>>   types = [ "device-mapper", 254 ]
+>>    
+>>
+> 
+>The number is actually related to the partitioning allowed on the device.
 >
+> * Devices are only checked for partition tables if their minor number
+> * is a multiple of the number corresponding to their type below
+> * i.e. this gives the granularity of whole-device minor numbers.
+> * Use 1 if the device is not partitionable.
+>
+>device-mapper devices don't get partitioned by the kernel
+>so use 1 instead of 254.
+>
+>  
+>
+Ah, thank you for pointing this out.
+Will update the FAQ accordingly.
 
+regards,
+cvaroqui
 
 --
 dm-devel mailing list
