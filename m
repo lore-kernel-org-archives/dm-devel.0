@@ -1,15 +1,18 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: [patch] handle reada errors
-Date: Sat, 22 Jan 2005 00:47:26 +0100
-Message-ID: <20050121234726.GS25714@marowsky-bree.de>
-References: <20050121172614.GR25714@marowsky-bree.de>
+From: Jens Beyer <jbe@webde-ag.de>
+Subject: Re: [linux-lvm] Data corruption on large,
+	multi-device filesystem
+Date: Fri, 21 Jan 2005 16:09:13 +0100
+Message-ID: <20050121150913.GA16975__14371.2714002051$1106512880$gmane$org@pcnocjb.dlan.cinetic.de>
+References: <20050118091059.GC27553@pcnocjb.dlan.cinetic.de>
+	<1106172883.41eedbd386498@www.eiler.net>
+	<41EFBAF4.5030403@svs.gsfc.nasa.gov>
+	<20050120175900.GE14093@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050121172614.GR25714@marowsky-bree.de>
+In-Reply-To: <20050120175900.GE14093@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +22,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: LVM general discussion and development <linux-lvm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2005-01-21T18:26:14, Lars Marowsky-Bree <lmb@suse.de> wrote:
 
-> Silently ignore 'errors' for read ahead bios. They can fail in
-> __make_request with a EWOULDBLOCK.=20
+Hi,
 
-Just noticed this patch seems to be specific to the SUSE kernel. Sorry
-about that, I keep losing track of what enhancements are already merged
-upstream and which aren't yet ;-)
+On Thu, Jan 20, 2005 at 05:59:00PM +0000, Alasdair G Kergon wrote:
+> On Thu, Jan 20, 2005 at 09:06:44AM -0500, Randall A. Jones wrote:
+> > To verify, this corruption you are seeing only happens when you have a 
+> > LV larger than 2TB
+> > and when you use striping specifically with lvcreate -i.
+> > Has anyone experienced data corruption with >2TB LV and no striping?
+>  
+> Does this patch help?
+> 
 
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
+No, it doesn't. I just checked multiple times in different setups. 
+To address the 'chunksize' Problem mentioned i used lvcreate -i 3 -I 256 . 
 
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business
+Jens
+
+
+> 
+> Missing cast causing data corruption on devices with stripes > ~1TB.
+> --- diff/drivers/md/dm-stripe.c	2005-01-20 17:32:37.000000000 +0000
+> +++ source/drivers/md/dm-stripe.c	2005-01-20 17:32:26.000000000 +0000
+> @@ -179,7 +179,7 @@
+>  
+>  	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
+>  	bio->bi_sector = sc->stripe[stripe].physical_start +
+> -	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
+> +	    ((sector_t) chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
+>  	return 1;
+>  }
+>  
+> 
+
+
+--
+Nur tote Fische schwimmen mit dem Strom
 
 --
 dm-devel mailing list
