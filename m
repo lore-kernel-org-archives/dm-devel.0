@@ -1,17 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: curious why waitevent sets event_nr field of
-	event_thread struct from kernel every time.
-Date: Wed, 30 Mar 2005 10:13:54 +0200
-Message-ID: <20050330081354.GA15879@averon.dyndns.org>
-References: <C2EEB4E538D3DC48BF57F391F422779321A883@SRMANNING.eng.emc.com>
-	<1112135471.10635.41.camel@zezette>
-	<1112168002.8549.7.camel@mylaptop>
+From: "Chen, Yukun" <yukun.chen@intel.com>
+Subject: Fail to mkfs after multipath runs
+Date: Wed, 30 Mar 2005 17:35:12 +0800
+Message-ID: <16A54BF5D6E14E4D916CE26C9AD305750184A649@pdsmsx402.ccr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1112168002.8549.7.camel@mylaptop>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,29 +18,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Mar 29, 2005 at 11:33:22PM -0800, Dmitry Yusupov wrote:
-> On Wed, 2005-03-30 at 00:31 +0200, christophe varoqui wrote:
-> > On mar, 2005-03-29 at 17:15 -0500, goggin, edward wrote:
-> > > The multipathd from 0.4.4-pre4 has died a 3 more times.
-> > > I am still not sure what's up here.
-> > > 
-> > Certainly in the logger code, which is very fresh and hard to debug.
-> > Help appreciated here, as my brain kind of melted during the
-> > code-give-birth :/
-> 
-> btw, thanks for the logger. I think it could be useful outside of dm-
-> devel as well.
-> 
-> I'll try to find some time to adopt your logger for open-iscsi project.
-> probably next week.
-> 
-my pleasure :)
+Hi all,
 
-keep in my mind you can forget klibc building with either the pthread wrapper or an ipc wrapper.
-maybe fcntl on a tmpfs for locking needs plus socket for signaling might work as a klibc compliant wrapper.
+   I have setuped a multipath enviornment as follows:
+   (S/W)
+	Linux distribution =E2=80=93 RHEL 4
+	Linux kernel --- 2.6.10 or later (kernel.org)
+	QLogic driver version =E2=80=93 8.00.00b21
+	Multipath I/O kernel patch =E2=80=93 2.6.10-rc1-udm1
+	Multipath I/O tools =E2=80=93 multipath-tools-0.4.3=20
+	Udev version =E2=80=93 v045
 
-regards,
-cvaroqui
+    (H/W)=20
+          2 QLogic ISP2312 dual port FC HBA
+	Emulex 375 Fiber Channel switch( 2 ports are connected to JBOD)
+	Adaptec Fiber Channel JBOD
+
+     First, I edit /etc/multipath.conf to add alias for sda and sdc.
+
+     Then,=20
+             multipathd
+             multipath =20
+             mkfs /udev/disk1 -t ext3
+
+      Now, sda is formating and sometimes some error messages appeared on=
+ screen:
+
+#################
+	mke2fs 1.35 (28-Feb-2004)
+	max_blocks 4294967295, rsv_groups =3D 0, rsv_gdb =3D 1024
+	Filesystem label=3D
+	OS type: Linux
+	Block size=3D4096 (log=3D2)
+	Fragment size=3D4096 (log=3D2)
+	4447744 inodes, 8891620 blocks
+	444581 blocks (5.00%) reserved for the super user
+	First data block=3D0
+	Maximum filesystem blocks=3D12582912
+	272 block groups
+	32768 blocks per group, 32768 fragments per group
+	16352 inodes per group
+	Superblock backups stored on blocks:
+        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 26=
+54208,
+        4096000, 7962624
+
+	Writing inode tables: done
+	inode.i_blocks =3D 98312, i_size =3D 4243456
+	Creating journal (8192 blocks): done
+	Writing superblocks and filesystem accounting information: 1:0:0:0: sg_i=
+o failed
+	 status 0x0 0x2 0x0 0x0
+	1:0:0:0: Unable to get INQUIRY vpd 1 page 0x0.
+	pb getting path info, free
+	1:0:1:0: sg_io failed status 0x0 0x1 0x0 0x0
+	1:0:1:0: Unable to get INQUIRY vpd 1 page 0x0.
+	pb getting path info, free
+	1:0:2:0: sg_io failed status 0x0 0x1 0x0 0x0
+.......
+#############################
+
+In the meanwhile, I can get some error messages from dmesg as follows:
+############################
+qla2300 0000:07:01.1: Performing ISP error recovery - ha=3D c2314250.
+SCSI error : <1 0 0 0> return code =3D 0x20000
+end_request: I/O error, dev sdd, sector 42731920
+qla2300 0000:07:01.0: LIP reset occured (f7f7).
+qla2300 0000:07:01.0: LIP occured (f7f7).
+qla2300 0000:07:01.1: Parity error -- HCCR=3D5cb0.
+qla2300 0000:07:01.0: LIP reset occured (f7f7).
+qla2300 0000:07:01.0: LIP occured (f7f7).
+qla2300 0000:07:01.1: Performing ISP error recovery - ha=3D c2314250.
+############################
+
+Any comments for it?
+Thanx.
+
+-Aaron=20
