@@ -1,14 +1,15 @@
-From: Dave Olien <dmo@osdl.org>
-Subject: Re: [RFC] [PATCH] move bio code from dm into bio
-Date: Fri, 21 Jan 2005 10:26:28 -0800
-Message-ID: <20050121182628.GA4998@osdl.org>
-References: <20050120235826.GA3041@osdl.org> <20050121090202.GA2790@suse.de>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: [patch] handle reada errors
+Date: Sat, 22 Jan 2005 00:47:26 +0100
+Message-ID: <20050121234726.GS25714@marowsky-bree.de>
+References: <20050121172614.GR25714@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050121090202.GA2790@suse.de>
+In-Reply-To: <20050121172614.GR25714@marowsky-bree.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,52 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <axboe@suse.de>
-Cc: dm-devel@redhat.com, agk@sourceware.org, linux-kernel@vger.kernel.org, kevcorry@us.ibm.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On 2005-01-21T18:26:14, Lars Marowsky-Bree <lmb@suse.de> wrote:
 
-Thanks!  I'll continue to do more testing as well.
+> Silently ignore 'errors' for read ahead bios. They can fail in
+> __make_request with a EWOULDBLOCK.=20
 
-On Fri, Jan 21, 2005 at 10:02:02AM +0100, Jens Axboe wrote:
-> On Thu, Jan 20 2005, Dave Olien wrote:
-> > 
-> > Jens, last December you observed there was bio code
-> > duplicated in the dm drivers.
-> 
-> Yep
-> 
-> > Here are a collection of patches that implements
-> > support for local bio and bvec pools into bio.c and then
-> > removes the duplicate bio code from the dm drivers.
-> > 
-> > It also replaces a call to alloc_bio() in dm.c with
-> > a call to use a local bio pool.  This removes a 
-> > deadlock case in that code.
-> > 
-> > These patches are against 2.6.11-rc1.  If that's not
-> > a good source version to patch against, let me now
-> > what versions I should generate patches for.
-> 
-> Just check if they apply to current BK tree, in general it's just best
-> to do patches against latest -rc1-bkX (or just the bk tree, if you use
-> that).
-> 
-> But the patch looks good, the bio_set approach is the cleanest way to
-> fix it I think. It will be easy to fix the bounce deadlock as well, by
-> adding a bio_set_bounce to mm/highmem.c as well.
-> 
-> Thanks for doing this! I'll review the patch in detail, the concept and
-> solution is definitely good though.
-> 
-> -- 
-> Jens Axboe
-> 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Just noticed this patch seems to be specific to the SUSE kernel. Sorry
+about that, I keep losing track of what enhancements are already merged
+upstream and which aren't yet ;-)
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
 
 --
 dm-devel mailing list
