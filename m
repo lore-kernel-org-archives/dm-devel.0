@@ -1,11 +1,13 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: *** Announcement: dmraid 1.0.0.rc6 ***
-Date: Tue, 1 Mar 2005 20:11:27 +0100
-Message-ID: <20050301191127.GA13486@redhat.com>
-Reply-To: mauelshagen@redhat.com,
+From: John DeFranco <defranco@cup.hp.com>
+Subject: Device-mapper Question
+Date: Mon, 28 Feb 2005 13:20:05 -0800
+Message-ID: <200502281320.05297.defranco@cup.hp.com>
+Reply-To: defranco@cup.hp.com,
 	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,135 +21,73 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hello all,
 
-               *** Announcement: dmraid 1.0.0.rc6 ***
+I have a question that I believe is related to the device-mapper but may 
+easily be lvm2 instead. In any even here goes. For the purposes of this 
+discussion I have two volume groups defined, vg1 and vg2, each with one 
+logical volume (lvol0 for each). When I activate a volume group the logical 
+volume(s) appear under the /dev/mapper directory such as:
 
-dmraid 1.0.0.rc6 is available at
-http://people.redhat.com:/heinzm/sw/dmraid/ in source tarball,
-source rpm and i386 rpms (shared, static and dietlibc).
+# vgchange -a y vg2
+# ll /dev/mapper
+total 181
+drwxr-xr-x   2 root root    104 Feb 25 09:34 .
+drwxr-xr-x  35 root root 185472 Feb 25 09:34 ..
+lrwxrwxrwx   1 root root     16 Feb 16 17:34 control -> ../device-mapper
+brw-------   1 root root 253, 0 Feb 25 09:34 vg2-lvol0
+#
 
-This release introduces support for VIA Software RAID.
+And
 
-dmraid (Device-Mapper Raid tool) discovers, [de]activates and displays
-properties of software RAID sets (i.e. ATARAID) and contained DOS
-partitions using the device-mapper runtime of the 2.6 kernel.
+# vgchange -a y vg1
+# ll /dev/mapper
+total 181
+drwxr-xr-x   2 root root    136 Feb 28 12:26 .
+drwxr-xr-x  36 root root 185496 Feb 28 12:26 ..
+lrwxrwxrwx   1 root root     16 Feb 16 17:34 control -> ../device-mapper
+brw-------   1 root root 253, 1 Feb 28 12:26 vg1-lvol0
+brw-------   1 root root 253, 0 Feb 25 09:46 vg2-lvol0
+# 
 
-The following ATARAID types are supported on Linux 2.6:
+So no problems. Now if I deactivate them and reactivate them in a different 
+order I get different minor numbers:
+# vgchange -a n vg1
+  0 logical volume(s) in volume group "vg1" now active
+# vgchange -a n vg2
+  0 logical volume(s) in volume group "vg2" now active
+# vgchange -a y vg1
+  1 logical volume(s) in volume group "vg1" now active
+# vgchange -a y vg2
+  1 logical volume(s) in volume group "vg2" now active
+# !ll
+ll /dev/mapper
+total 181
+drwxr-xr-x   2 root root    136 Feb 28 12:27 .
+drwxr-xr-x  36 root root 185496 Feb 28 12:27 ..
+lrwxrwxrwx   1 root root     16 Feb 16 17:34 control -> ../device-mapper
+brw-------   1 root root 253, 0 Feb 28 12:27 vg1-lvol0
+brw-------   1 root root 253, 1 Feb 28 12:27 vg2-lvol0
+# 
 
-Highpoint HPT37X
-Highpoint HPT45X
-Intel Software RAID
-LSI Logic MegaRAID
-NVidia NForce
-Promise FastTrack
-Silicon Image Medley
-VIA Software RAID	*** NEW ***
+Overall this is ok except in the case of nfs. If I'm exporting these 
+filesystems and the minor numbers change the client gets a 'stale file 
+handle'. Is there anyway to keep the same minor numbers or otherwise a way 
+around this?
 
-Please provide insight to support those metadata formats completely.
-
-Thanks.
-
-
-See files README and CHANGELOG, which come with the source tarball for
-prerequisites to run this software, further instructions on installing
-and using dmraid!
-
-CHANGELOG is contained below for your convenience as well.
-
-
-Call for testers:
------------------
-
-I need testers with the above ATARAID types, to check that the mapping
-created by this tool is correct (see options "-t -ay") and access to the
-ATARAID data is proper.
-
-In case you have a different ATARAID solution from those listed above,
-please feel free to contact me about supporting it in dmraid.
-
-You can activate your ATARAID sets without danger of overwriting
-your metadata, because dmraid accesses it read-only unless you use
-option -E together with -r in order to erase ATARAID metadata
-(see 'man dmraid')!
-
-This is a release candidate version so you want to have backups of your valuable
-data *and* you want to test accessing your data read-only first in order to
-make sure that the mapping is correct before you go for read-write access.
-
-
-Contacts:
----------
-
-The author is reachable at <Mauelshagen@RedHat.com>.
-
-For test results, mapping information, discussions, questions, patches,
-enhancement requests and the like, please subscribe and mail to
-<ataraid-list@redhat.com>.
-
---
-
-Regards,
-Heinz    -- The LVM Guy --
+Thanks!
 
 
-CHANGELOG:
----------
 
-Changelog from dmraid 1.0.0-rc5f to 1.0.0.rc6		2005.02.28
+ 
 
-FIXES:
-------
-o sil status()
-o _sil_read() used LOG_NOTICE rather than LOG_INFO in order to
-  avoid messages about valid metadata areas being displayed
-  during "dmraid -vay".
-o isw, sil filed metadata offset on "-r -D" in sectors rather than in bytes.
-o isw needed dev_sort() to sort RAID devices in sets correctly.
-o pdc metadata format handler name creation. Lead to
-  wrong RAID set grouping logic in some configurations. 
-o dos.c: partition table code fixes by Paul Moore
-o _free_dev_pointers(): fixed potential OOB error
-o hpt37x_check: deal with raid_disks = 1 in mirror sets
-o pdc_check: status & 0x80 doesn't always show a failed device;
-  removed that check for now. Status definitions needed.
-o sil addition of RAID sets to global list of sets
-o sil spare device memory leak
-o group_set(): removal of RAID set in case of error
-o hpt37x: handle total_secs > device size
-o allow -p with -f
-o enhanced error message by checking target type against list of
-  registered target types
+-- 
+==========
 
-
-FEATURES:
----------
-o VIA metadata format handler
-o added RAID10 to lsi metadata format handler
-o "dmraid -rD": file device size into {devicename}_{formatname}.size
-o "dmraid -tay": pretty print multi-line tables ala "dmsetup table"
-o "dmraid -l": display supported RAID levels + manual update
-
-
-MISCELANIOUS:
-------------
-
-o more inline comments
-o libdmraid_init() now returns lib context
-o check_set() enhanced to do RAID set stack unrolling and
-  to check correct number of devices in sets; saves code in
-  metadata format handlers
-o introduced read_raid_dev() to further reduce metadata format handler code
-o optimized parse_table()
-o updated dmraid manual
-o devmapper.c: check target type registered before trying to load table record
-o misc.c: avoid find_percent().
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-                                                  56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            +49 2626 141200
-                                                       FAX 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+John DeFranco
+Hewlett-Packard Company
+Availability Clusters Solution Division
+19111 Pruneridge Ave, M/S 4101
+Cupertino, CA 95014 
+phone: 408-447-7543
+mailto: john.defranco@hp.com
