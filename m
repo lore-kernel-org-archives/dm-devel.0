@@ -1,11 +1,12 @@
-From: "shahid shaikh" <shahid.shaikh@patni.com>
-Subject: lvresize
-Date: Wed, 9 Mar 2005 19:51:15 +0530
-Message-ID: <008901c524b3$41aa8f90$11051aac@pcp41116>
-Reply-To: shahid.shaikh@patni.com,
+From: Chris Penney <cpenney@gmail.com>
+Subject: DM, Multipath, and LSI Disk Arrays
+Date: Wed, 9 Mar 2005 09:26:31 -0500
+Message-ID: <111aefd050309062640c23eec@mail.gmail.com>
+Reply-To: penney@msu.edu,
 	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----------=_1110377777-13175-40"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,68 +16,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Dm-Devel (E-mail)" <dm-devel@redhat.com>
-Cc: "Christophe Varoqui (E-mail)" <christophe.varoqui@free.fr>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format...
-
-------------=_1110377777-13175-40
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
 Hi,
-   I used the lvresize command. it shows the changed size in lvs, lvscan =
-and
-lvdisplay but mounted filesystem doesnt show any change.
-Is there something else i need to do to reflect changes in filesystem siz=
-e
-( i checked that through df command)?
 
-I tried to use tune2fs also but it didnt worked. actually it gives erro o=
-f
-lexiacl type.
+I'm not sure if this is the right list so apologies in advance if I'm
+in the wrong spot.  The search tool for this list doesn't seem to work
+either.
 
-i have given the following command
+I have an Intel system with dual Qlogic HBAs (2340s) that talk to an
+STK D280 disk array (I see the generic multipath.conf lists a D280 as
+a device in the config file).  I'm using SLES 9 SP1 w/ multipath-tools
+0.3.6-0.3.
 
-"tune2fs /dev/vg01/lv01"
+They way the system is setup, hba1 talks to the A controller of the
+D280 and hba2 talks to the B controller (they are on seperate sans). 
+The box has four luns, two are active on port A and two are active on
+port B.  When I let multipath do it's thing it wants to use port B for
+everything and that triggers a fail over of the A luns to port B.
 
-If any can help me in this i ll be greatful.
+If I do the dmsetup commands by hand I can get what I want, but is
+there a way to do this automatically?  The thought of having a self
+made hack init script to do this seems highly suspect.
 
-Thanks and Regards,
-Shahid Shaikh.
-Software Engineer.
-Patni Computer Systems Ltd.
-Vashi, Navi Mumbai.
-Tel. 55910849/50/51 Extn. 344
-Mobile : +91-9820986513
-=93 There are no shortcuts to any place worth going. =94
-
-
-
-
-http://www.patni.com
-World-Wide Partnerships. World-Class Solutions.
-_____________________________________________________________________
-
-This e-mail message may contain proprietary, confidential or legally
-privileged information for the sole use of the person or entity to
-whom this message was originally addressed. Any review, e-transmission
-dissemination or other use of or taking of any action in reliance upon
-this information by persons or entities other than the intended
-recipient is prohibited. If you have received this e-mail in error
-kindly delete  this e-mail from your records. If it appears that this
-mail has been forwarded to you without proper authority, please notify
-us immediately at netadmin@patni.com and delete this mail.=20
-_____________________________________________________________________
-
-------------=_1110377777-13175-40
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-------------=_1110377777-13175-40--
+   Chris
