@@ -1,13 +1,11 @@
-From: Guido Guenther <agx@sigxcpu.org>
-Subject: Re: scsi_id and EMC Symmetrix
-Date: Wed, 26 Jan 2005 11:07:15 +0100
-Message-ID: <20050126100715.GD6859@bogon.ms20.nix>
-References: <C2EEB4E538D3DC48BF57F391F422779321A6FC@SRMANNING.eng.emc.com>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: Should multipath detect changed path UIDs?
+Date: Wed, 26 Jan 2005 16:50:50 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A71C@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2008824483=="
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A6FC@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,53 +15,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Simply pulling two FC cables from a host and re-cabling incorrectly
+(think a switch of two HBA cables) or a surprise reconfiguration of a
+storage system target could lead to a situation where the potential for
+data corruption is ripe.  While it may not be reasonably possible to
+prevent data corruption in this scenario (think I/O already queued to
+target devices underneath the multipath target driver), the prudent
+course of action may be to try to prevent data corruption whenever
+the potential is discovered using reasonable means.
 
---===============2008824483==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="E/DnYTRukya0zdZ1"
-Content-Disposition: inline
+Besides such pilot error as described above, the pre-requisites for
+the cable switch scenario include at least (1) having the cable disconnect
+and subsequent re-connect events occur while no user or path checker
+initiated I/O occurs to paths using the switched cables and (2) the
+target-side connectivity for the two cables is asymmetrical.
 
+Possible solutions could involve (1) detecting fiber channel disconnect
+hotplug events and acting upon them or (2) modifying multipath checker
+functions to verify a path's UID remains consistent in addition to verifying
+path connectivity.
 
---E/DnYTRukya0zdZ1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-
-On Mon, Jan 24, 2005 at 02:56:30PM -0500, goggin, edward wrote:
-> UID for SCSI LU on all currently available EMC Symmetrix storage
-> is encoded from various byte fields of the standard inquiry reply
-> message.  Will likely soon be attempting to push upstream an
-> update to scsi_id(8) to do just that.
-Could you post a patch for that, we need that badly here.
-Cheers,
- -- Guido
-
---E/DnYTRukya0zdZ1
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.5 (GNU/Linux)
-
-iD8DBQFB92vTn88szT8+ZCYRApQyAJ9ejQKry1tYyDaIgahx2CIIVawimACdF4lI
-wh/dFKXmvjFftbyBoavLZPo=
-=7cx+
------END PGP SIGNATURE-----
-
---E/DnYTRukya0zdZ1--
-
-
---===============2008824483==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+EMC's multipathing product PowerPath uses the latter approach for
+testing paths to SCSI logical units on both Symmetrix and CLARiion
+storage systems.  Although using a single I/O for path testing may not
+be possible for many storage systems, the PowerPath checker function
+for both Symmetrix and CLARiion storage determines the UID for the
+SCSI logical unit from reply (or sense) information returned by a single
+test I/O and fails a path if the UID is not consistent.
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
---===============2008824483==--
