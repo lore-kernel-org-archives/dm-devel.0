@@ -1,14 +1,12 @@
-From: Jeff Mahoney <jeffm@suse.com>
-Subject: Re: Help tracking down problem --- endless loop in
- __find_get_block_slow (now with the patch)
-Date: Mon, 28 Feb 2005 16:09:33 -0500
-Message-ID: <4223888D.2070401@suse.com>
-References: <4219BC1A.1060007@zensonic.dk>	<20050222011821.2a917859.akpm@osdl.org>	<421BB65F.7040306@suse.com>
-	<20050222152833.75fb79a2.akpm@osdl.org> <421FBCD8.7090804@suse.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <mauelshagen@redhat.com>
+Subject: *** Announcement: dmraid 1.0.0.rc6 ***
+Date: Tue, 1 Mar 2005 20:11:27 +0100
+Message-ID: <20050301191127.GA13486@redhat.com>
+Reply-To: mauelshagen@redhat.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------040708080108070706000607"
-In-Reply-To: <421FBCD8.7090804@suse.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,254 +16,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jeff Mahoney <jeffm@suse.com>
-Cc: Andrew Morton <akpm@osdl.org>, Al Viro <viro@parcelfarce.linux.theplanet.co.uk>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------040708080108070706000607
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+               *** Announcement: dmraid 1.0.0.rc6 ***
 
-Jeff Mahoney wrote:
-> Andrew Morton wrote:
->
->>>Jeff Mahoney <jeffm@suse.com> wrote:
->>>
->>>
->>>>In my experience, the loop is actually outside of
->>>>__find_get_block_slow(), in __getblk_slow(). I've been using xmon to
->>>>interrupt the kernel, and the results vary but are all rooted in the
->>>>for(;;) loop in __getblk_slow. It appears as though grow_buffers is
->>>>finding/creating the page, but then __find_get_block can't locate the
->>>>buffer it needs.
->>>
->>>
->>>Yes, that'll happen.  Because there are still buffers attached to the page
->>>which have the wrong blocksize.  Say, if someone is trying to read a 2k
->>>buffer_head which is backed by a page which already has 1k buffer_heads
->>>attached to it.
->>>
->>>Does your kernel not have that big printk in __find_get_block_slow()?  If
->>>it does, maybe some of the buffers are unmapped.  Try:
->
->
-> I think it's likely I'm experiencing a different bug than the original
-> poster. I've tried making the printk unconditional, and I get no output.
-> However, I've continued to track it down, and I believe I've found a
-> umount race. I can also reproduce it without subfs, with the attached
-> script.
->
-> I added some debug output to aid in my search:
-> __find_get_block_slow: find_get_page
-> [block=17508,blksize=2048,index=8754,sizebits=1,size=512] returned null
-> returning page [index=2188,block=17504,size=512,sizebits=3]
-> Couldn't find buffer @ block 17508
->
-> What I'm observing is that __find_get_block_slow is calculating the
-> index using the blocksize for the device, and the grow_buffers call is
-> using the blocksize handed down from the filesystem via sb_bread(). They
-> *should* be the same, but here's where my suspected race comes in. Since
-> the buffers are being searched for in the wrong place, they're never
-> found, causing the infinite loop.
->
-> The open_bdev_excl() call in get_sb_bdev() should be keeping callers out
-> until the block device is actually closed, but it uses the fs_type
-> struct as the holder which, given that the filesystem to be mounted is
-> the same one as the one being umounted, will be the same. This allows
-> the mount attempt to continue. If the superblock for the umounting
-> filesystem is already in the process of getting shut down, sget() will
-> create a new superblock and the mount attempt will use that one. The
-> umount will continue, destroying the old superblock and setting the
-> blocksize back to its original value, dropping all buffers in the process.
->
-> If kill_block_super resets the blocksize while an sb_bread is in
-> progress, the sizes won't match up and we'll get stuck in the loop.
->
-> I'll be working on a fix, but figured I'd send out a quick update.
+dmraid 1.0.0.rc6 is available at
+http://people.redhat.com:/heinzm/sw/dmraid/ in source tarball,
+source rpm and i386 rpms (shared, static and dietlibc).
 
-Resent: Forgot to attach the patch. :-\
+This release introduces support for VIA Software RAID.
 
-To prove the race, I made bd_claim return -EBUSY even if the passed
-holder == current holder. This eliminated the race, but made a
-potentially unacceptable change to how block devices are handled. [1]
+dmraid (Device-Mapper Raid tool) discovers, [de]activates and displays
+properties of software RAID sets (i.e. ATARAID) and contained DOS
+partitions using the device-mapper runtime of the 2.6 kernel.
 
-Attached is a patch that isn't pretty but does still allow the
-multiple-open semantics of open_bdev_excl() while eliminating the race.
-Basically, it creates a call path that allows the device's block size to
-be changed only if the caller holds the sole reference to the block
-device. This has passed my admittedly small test cases without returning
-invalid results.
+The following ATARAID types are supported on Linux 2.6:
 
-Only the close case is protected by bdev_lock. This may seem racy, but I
-don't believe it to be. The only way a caller could have the opportunity
-to reset the block size while the block device is opened is if the
-holder value is the same, which means that it must be the same
-filesystem type. The same filesystem type opening the same device will
-result in finding the same on-disk superblock that the umounting
-filesystem was using, so it would be the same block size. set_blocksize
-will exit early if the block size is the same, thus avoiding the code
-that could cause issues.
+Highpoint HPT37X
+Highpoint HPT45X
+Intel Software RAID
+LSI Logic MegaRAID
+NVidia NForce
+Promise FastTrack
+Silicon Image Medley
+VIA Software RAID	*** NEW ***
 
-I'd appreciate any feedback.
+Please provide insight to support those metadata formats completely.
 
-- -Jeff
-
-[1] Currently, mtd is the only non-filesystem caller of open_bdev_excl.
-While it's possible for mtd to call open_bdev_excl twice on the same
-device, it would require passing the same device more than once as a
-module parameter.
-- --
-Jeff Mahoney
-SuSE Labs
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.5 (GNU/Linux)
-
-iD8DBQFCI4iNLPWxlyuTD7IRAhdtAJ9s/GELyA4GE4SQaDiztuAtjzffgQCcCWyO
-MZ3swZSz7YJI+ElgH9YS5kE=
-=Sd5k
------END PGP SIGNATURE-----
-
---------------040708080108070706000607
-Content-Type: text/x-patch;
- name="set_blocksize_race.diff"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="set_blocksize_race.diff"
-
-diff -ruNpX dontdiff linux-2.6.11-rc4.orig/fs/block_dev.c linux-2.6.11-rc4/fs/block_dev.c
---- linux-2.6.11-rc4.orig/fs/block_dev.c	2005-02-28 14:06:59.000000000 -0500
-+++ linux-2.6.11-rc4/fs/block_dev.c	2005-02-28 14:49:52.000000000 -0500
-@@ -62,7 +62,7 @@ static void kill_bdev(struct block_devic
- 	truncate_inode_pages(bdev->bd_inode->i_mapping, 0);
- }	
- 
--int set_blocksize(struct block_device *bdev, int size)
-+int __set_blocksize(struct block_device *bdev, int size, int sync)
- {
- 	/* Size must be a power of two, and between 512 and PAGE_SIZE */
- 	if (size > PAGE_SIZE || size < 512 || (size & (size-1)))
-@@ -74,7 +74,8 @@ int set_blocksize(struct block_device *b
- 
- 	/* Don't change the size if it is same as current */
- 	if (bdev->bd_block_size != size) {
--		sync_blockdev(bdev);
-+		if (sync)
-+			sync_blockdev(bdev);
- 		bdev->bd_block_size = size;
- 		bdev->bd_inode->i_blkbits = blksize_bits(size);
- 		kill_bdev(bdev);
-@@ -82,7 +83,7 @@ int set_blocksize(struct block_device *b
- 	return 0;
- }
- 
--EXPORT_SYMBOL(set_blocksize);
-+EXPORT_SYMBOL(__set_blocksize);
- 
- int sb_set_blocksize(struct super_block *sb, int size)
- {
-@@ -480,17 +481,19 @@ int bd_claim(struct block_device *bdev, 
- 
- EXPORT_SYMBOL(bd_claim);
- 
--void bd_release(struct block_device *bdev)
-+void __bd_release(struct block_device *bdev, int size)
- {
- 	spin_lock(&bdev_lock);
- 	if (!--bdev->bd_contains->bd_holders)
- 		bdev->bd_contains->bd_holder = NULL;
--	if (!--bdev->bd_holders)
-+	if (!--bdev->bd_holders) {
- 		bdev->bd_holder = NULL;
-+		set_blocksize_nosync (bdev, size);
-+	}
- 	spin_unlock(&bdev_lock);
- }
- 
--EXPORT_SYMBOL(bd_release);
-+EXPORT_SYMBOL(__bd_release);
- 
- /*
-  * Tries to open block device by device number.  Use it ONLY if you
-@@ -914,10 +917,10 @@ EXPORT_SYMBOL(open_bdev_excl);
-  *
-  * This is the counterpart to open_bdev_excl().
-  */
--void close_bdev_excl(struct block_device *bdev)
-+void __close_bdev_excl(struct block_device *bdev, int size)
- {
--	bd_release(bdev);
-+	__bd_release(bdev, size);
- 	blkdev_put(bdev);
- }
- 
--EXPORT_SYMBOL(close_bdev_excl);
-+EXPORT_SYMBOL(__close_bdev_excl);
-diff -ruNpX dontdiff linux-2.6.11-rc4.orig/fs/super.c linux-2.6.11-rc4/fs/super.c
---- linux-2.6.11-rc4.orig/fs/super.c	2005-02-28 14:07:01.000000000 -0500
-+++ linux-2.6.11-rc4/fs/super.c	2005-02-28 14:42:49.000000000 -0500
-@@ -732,8 +732,7 @@ void kill_block_super(struct super_block
- 
- 	bdev_uevent(bdev, KOBJ_UMOUNT);
- 	generic_shutdown_super(sb);
--	set_blocksize(bdev, sb->s_old_blocksize);
--	close_bdev_excl(bdev);
-+	__close_bdev_excl(bdev, sb->s_old_blocksize);
- }
- 
- EXPORT_SYMBOL(kill_block_super);
-diff -ruNpX dontdiff linux-2.6.11-rc4.orig/include/linux/fs.h linux-2.6.11-rc4/include/linux/fs.h
---- linux-2.6.11-rc4.orig/include/linux/fs.h	2005-02-28 14:07:42.000000000 -0500
-+++ linux-2.6.11-rc4/include/linux/fs.h	2005-02-28 14:50:53.000000000 -0500
-@@ -1294,7 +1294,10 @@ extern long compat_blkdev_ioctl(struct f
- extern int blkdev_get(struct block_device *, mode_t, unsigned);
- extern int blkdev_put(struct block_device *);
- extern int bd_claim(struct block_device *, void *);
--extern void bd_release(struct block_device *);
-+extern void __bd_release(struct block_device *, int);
-+static inline void bd_release(struct block_device *bdev) {
-+	__bd_release (bdev, bdev->bd_block_size);
-+}
- 
- /* fs/char_dev.c */
- extern int alloc_chrdev_region(dev_t *, unsigned, unsigned, const char *);
-@@ -1311,7 +1314,10 @@ extern const char *__bdevname(dev_t, cha
- extern const char *bdevname(struct block_device *bdev, char *buffer);
- extern struct block_device *lookup_bdev(const char *);
- extern struct block_device *open_bdev_excl(const char *, int, void *);
--extern void close_bdev_excl(struct block_device *);
-+extern void __close_bdev_excl(struct block_device *, int);
-+static inline void close_bdev_excl(struct block_device *bdev) {
-+	__close_bdev_excl(bdev, bdev->bd_block_size);
-+}
- 
- extern void init_special_inode(struct inode *, umode_t, dev_t);
- 
-@@ -1447,7 +1453,14 @@ extern void file_kill(struct file *f);
- struct bio;
- extern void submit_bio(int, struct bio *);
- extern int bdev_read_only(struct block_device *);
--extern int set_blocksize(struct block_device *, int);
-+extern int __set_blocksize(struct block_device *, int, int);
-+static inline int set_blocksize(struct block_device *bdev, int size) {
-+	return __set_blocksize (bdev, size, 1);
-+}
-+static inline int set_blocksize_nosync(struct block_device *bdev, int size) {
-+	return __set_blocksize (bdev, size, 0);
-+}
-+
- extern int sb_set_blocksize(struct super_block *, int);
- extern int sb_min_blocksize(struct super_block *, int);
- 
-
---------------040708080108070706000607
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Thanks.
 
 
---------------040708080108070706000607--
+See files README and CHANGELOG, which come with the source tarball for
+prerequisites to run this software, further instructions on installing
+and using dmraid!
+
+CHANGELOG is contained below for your convenience as well.
+
+
+Call for testers:
+-----------------
+
+I need testers with the above ATARAID types, to check that the mapping
+created by this tool is correct (see options "-t -ay") and access to the
+ATARAID data is proper.
+
+In case you have a different ATARAID solution from those listed above,
+please feel free to contact me about supporting it in dmraid.
+
+You can activate your ATARAID sets without danger of overwriting
+your metadata, because dmraid accesses it read-only unless you use
+option -E together with -r in order to erase ATARAID metadata
+(see 'man dmraid')!
+
+This is a release candidate version so you want to have backups of your valuable
+data *and* you want to test accessing your data read-only first in order to
+make sure that the mapping is correct before you go for read-write access.
+
+
+Contacts:
+---------
+
+The author is reachable at <Mauelshagen@RedHat.com>.
+
+For test results, mapping information, discussions, questions, patches,
+enhancement requests and the like, please subscribe and mail to
+<ataraid-list@redhat.com>.
+
+--
+
+Regards,
+Heinz    -- The LVM Guy --
+
+
+CHANGELOG:
+---------
+
+Changelog from dmraid 1.0.0-rc5f to 1.0.0.rc6		2005.02.28
+
+FIXES:
+------
+o sil status()
+o _sil_read() used LOG_NOTICE rather than LOG_INFO in order to
+  avoid messages about valid metadata areas being displayed
+  during "dmraid -vay".
+o isw, sil filed metadata offset on "-r -D" in sectors rather than in bytes.
+o isw needed dev_sort() to sort RAID devices in sets correctly.
+o pdc metadata format handler name creation. Lead to
+  wrong RAID set grouping logic in some configurations. 
+o dos.c: partition table code fixes by Paul Moore
+o _free_dev_pointers(): fixed potential OOB error
+o hpt37x_check: deal with raid_disks = 1 in mirror sets
+o pdc_check: status & 0x80 doesn't always show a failed device;
+  removed that check for now. Status definitions needed.
+o sil addition of RAID sets to global list of sets
+o sil spare device memory leak
+o group_set(): removal of RAID set in case of error
+o hpt37x: handle total_secs > device size
+o allow -p with -f
+o enhanced error message by checking target type against list of
+  registered target types
+
+
+FEATURES:
+---------
+o VIA metadata format handler
+o added RAID10 to lsi metadata format handler
+o "dmraid -rD": file device size into {devicename}_{formatname}.size
+o "dmraid -tay": pretty print multi-line tables ala "dmsetup table"
+o "dmraid -l": display supported RAID levels + manual update
+
+
+MISCELANIOUS:
+------------
+
+o more inline comments
+o libdmraid_init() now returns lib context
+o check_set() enhanced to do RAID set stack unrolling and
+  to check correct number of devices in sets; saves code in
+  metadata format handlers
+o introduced read_raid_dev() to further reduce metadata format handler code
+o optimized parse_table()
+o updated dmraid manual
+o devmapper.c: check target type registered before trying to load table record
+o misc.c: avoid find_percent().
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Heinz Mauelshagen                                 Red Hat GmbH
+Consulting Development Engineer                   Am Sonnenhang 11
+                                                  56242 Marienrachdorf
+                                                  Germany
+Mauelshagen@RedHat.com                            +49 2626 141200
+                                                       FAX 924446
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
