@@ -1,10 +1,11 @@
-From: pritam bhavsar <pritambhavsar@yahoo.com>
-Subject: adding mirroring feature
-Date: Fri, 18 Mar 2005 06:53:22 -0800 (PST)
-Message-ID: <20050318145323.39808.qmail@web41606.mail.yahoo.com>
+From: Allen Sanabria <asanabria@communityconnect.com>
+Subject: compiling Multipath-tools on RHE4 .
+Date: Tue, 22 Mar 2005 15:08:55 -0500
+Message-ID: <1111522135.29700.8.camel@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1644979481=="
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,39 +15,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel- <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1644979481==
-Content-Type: multipart/alternative; boundary="0-302095060-1111157602=:39125"
+Our System!
+2.6.9-5.ELsmp #1 SMP Wed Jan 5 19:29:47 EST 2005 x86_64 x86_64 x86_64
+GNU/Linux
+Red Hat Enterprise Linux ES release 4 (Nahant)
 
---0-302095060-1111157602=:39125
-Content-Type: text/plain; charset=us-ascii
+Packages installed
+gcc-3.4.3-9.EL4
+udev-039-10.8.EL4
+device-mapper-1.00.19-2
 
-I am adding the mirroring feature to LVM2 tools that means creating a LV on VG that contains two PVs and whatever data I am writing to LV it should get mirrored to the second PV under the same VG.. for this purpose I have already developed the command for lvcreate but I am not getting the idea about where to make changes in dm ... can anybody help me...that where should I make changes in dm files etc etc?
- 
- 
+This is the output I get when I run a make on
+multipath-tools-0.4.3-pre9.
 
-		
----------------------------------
-Do you Yahoo!?
- Yahoo! Small Business - Try our new resources site! 
---0-302095060-1111157602=:39125
-Content-Type: text/html; charset=us-ascii
+In file included from lopart.c:30:
+loop.h:82: error: syntax error before "__kernel_old_dev_t"
+loop.h:82: warning: no semicolon at end of struct or union
+loop.h:84: error: syntax error before "lo_rdevice"
+loop.h:84: warning: type defaults to `int' in declaration of
+`lo_rdevice'
+loop.h:84: warning: data definition has no type or storage class
+loop.h:93: error: syntax error before '}' token
+lopart.c: In function `find_loop_by_file':
+lopart.c:100: error: storage size of 'loopinfo' isn't known
+lopart.c:100: warning: unused variable `loopinfo'
+lopart.c: In function `find_unused_loop_device':
+lopart.c:144: error: storage size of 'loopinfo' isn't known
+lopart.c:144: warning: unused variable `loopinfo'
+lopart.c: In function `set_loop':
+lopart.c:225: error: storage size of 'loopinfo' isn't known
+lopart.c:225: warning: unused variable `loopinfo'
+make[1]: *** [lopart.o] Error 1
+make[1]: Leaving directory
+`/root/Multipath/multipath-tools-0.4.3-pre9/kpartx'
+make: *** [recurse] Error 2
 
-<DIV>I am adding the mirroring feature to LVM2 tools that means creating a LV on VG that contains two PVs and whatever data I am writing to LV it should get mirrored to the second PV under the same VG.. for this purpose I have already developed the command for lvcreate but I am not getting the idea about where to make changes in dm ... can anybody help me...that where should I make changes in dm files etc etc?</DIV>
-<DIV>&nbsp;</DIV>
-<DIV>&nbsp;</DIV><p>
-		<hr size=1>Do you Yahoo!?<br> 
-Yahoo! Small Business - <a href="http://us.rd.yahoo.com/evt=31637/*http://smallbusiness.yahoo.com/resources/">Try our new resources site!</a> 
---0-302095060-1111157602=:39125--
-
-
---===============1644979481==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1644979481==--
+If you anyone could please help me on getting this to work, This needs
+to be implemented ASAP...
+Allen Sanabria
+Systems Administrator I
+205 Hudson St 6th Floor
+New York, New York 10013
