@@ -1,16 +1,14 @@
-From: Juha Koivisto <Juha.Koivisto@hut.fi>
-Subject: Re: Re: Problems with path groups in multipath-tools
-Date: Fri, 25 Feb 2005 19:10:35 +0200
-Message-ID: <20050225171035.GA8328@debian.mydomain.bogus>
-References: <20050224210918.GA10496@debian.mydomain.bogus>
-	<20050225125613.GA6076@debian.mydomain.bogus>
-	<87f94c3705022507074134a792@mail.gmail.com>
-	<20050225163117.GA8151@debian.mydomain.bogus>
+From: Jeff Mahoney <jeffm@suse.com>
+Subject: Re: Help tracking down problem --- endless loop in
+	__find_get_block_slow
+Date: Fri, 25 Feb 2005 19:03:36 -0500
+Message-ID: <421FBCD8.7090804@suse.com>
+References: <4219BC1A.1060007@zensonic.dk>	<20050222011821.2a917859.akpm@osdl.org>	<421BB65F.7040306@suse.com>
+	<20050222152833.75fb79a2.akpm@osdl.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20050225163117.GA8151@debian.mydomain.bogus>
+Content-Type: multipart/mixed; boundary="------------000503090503000308090208"
+In-Reply-To: <20050222152833.75fb79a2.akpm@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,121 +18,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Andrew Morton <akpm@osdl.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-[This is a repost of my original message which didn't seem to go to
-the list (apologies if it actually did). The problem, which turned out
-to be an embarrassing blindness to a missing "!", has been solved
-already, but this might still contain some useful information and/or
-bug reports, so here it goes.
+This is a multi-part message in MIME format.
+--------------000503090503000308090208
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Again, please Cc: replies to me, as I'm not on the list (yet - maybe
-I should...)]
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
------
+Andrew Morton wrote:
+> Jeff Mahoney <jeffm@suse.com> wrote:
+> 
+>>In my experience, the loop is actually outside of
+>>__find_get_block_slow(), in __getblk_slow(). I've been using xmon to
+>>interrupt the kernel, and the results vary but are all rooted in the
+>>for(;;) loop in __getblk_slow. It appears as though grow_buffers is
+>>finding/creating the page, but then __find_get_block can't locate the
+>>buffer it needs.
+> 
+> 
+> Yes, that'll happen.  Because there are still buffers attached to the page
+> which have the wrong blocksize.  Say, if someone is trying to read a 2k
+> buffer_head which is backed by a page which already has 1k buffer_heads
+> attached to it.
+> 
+> Does your kernel not have that big printk in __find_get_block_slow()?  If
+> it does, maybe some of the buffers are unmapped.  Try:
 
-Sorry if this is slightly off-topic for dm-devel, I wasn't sure if there
-is a better list for the multipath userspace tools.
+I think it's likely I'm experiencing a different bug than the original
+poster. I've tried making the printk unconditional, and I get no output.
+However, I've continued to track it down, and I believe I've found a
+umount race. I can also reproduce it without subfs, with the attached
+script.
 
-Anyway, for the last couple of days I've been trying to get a multipath
-setup running, and while it seems I got most of the other problems sorted
-out, I'm now stuck at getting the path groups right. [Solved now; see
-script posted earlier in this thread (but add the missing "!")]
+I added some debug output to aid in my search:
+__find_get_block_slow: find_get_page
+[block=17508,blksize=2048,index=8754,sizebits=1,size=512] returned null
+returning page [index=2188,block=17504,size=512,sizebits=3]
+Couldn't find buffer @ block 17508
 
-First, our hardware and fabric topology:
-  - 2 Emulex LP9002L HBA's
-  - EMC CX300 (two storage processors, one of them active and the other
-    standby (can't access the disks); two FC ports each)
-  - one path to each of the four ports (each HBA sees one active and
-    one standby port through its own FC switch)
+What I'm observing is that __find_get_block_slow is calculating the
+index using the blocksize for the device, and the grow_buffers call is
+using the blocksize handed down from the filesystem via sb_bread(). They
+*should* be the same, but here's where my suspected race comes in. Since
+the buffers are being searched for in the wrong place, they're never
+found, causing the infinite loop.
 
-And software:
-  - kernel 2.6.11-rc4 with patches 00003 through 00010 from
-    http://sources.redhat.com/dm/ applied (00001 and 00002 were already
-    in the rc4 kernel); dm_multipath and dm_emc modules loaded
-  - lpfc driver v8.0.24 from http://sourceforge.net/projects/lpfcxxxx/
-  - multipath-tools v0.4.2 (23/01, 2005) from the debian package
+The open_bdev_excl() call in get_sb_bdev() should be keeping callers out
+until the block device is actually closed, but it uses the fs_type
+struct as the holder which, given that the filesystem to be mounted is
+the same one as the one being umounted, will be the same. This allows
+the mount attempt to continue. If the superblock for the umounting
+filesystem is already in the process of getting shut down, sget() will
+create a new superblock and the mount attempt will use that one. The
+umount will continue, destroying the old superblock and setting the
+blocksize back to its original value, dropping all buffers in the process.
 
-The problem:
+If kill_block_super resets the blocksize while an sb_bread is in
+progress, the sizes won't match up and we'll get stuck in the loop.
 
-I would (obviously) want to put the active paths (which are sda and sdd
-at the moment) into one group, and the standby paths (currently sdb and
-sdc) into another.
+I'll be working on a fix, but figured I'd send out a quick update.
 
-Unfortunately, with this combination of hardware and drivers, all paths
-report the same node_name and serial number, so grouping by those isn't
-working. It seems that the necessary information would in theory be
-available with a patched /sbin/scsi_id (I remember reading about it
-here, but has the patch been released yet?)
+- -Jeff
 
-Until then the only way seems to be writing a prio_callout script that
-would examine the port_name of the corresponding fc_transport target in
-sysfs (giving the SP port WWN which is the only uniquely identifying
-piece of information that I could find):
+- --
+Jeff Mahoney
+SuSE Labs
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.2.5 (GNU/Linux)
 
-$ cat /sys/class/fc_transport/target*/port_name
-0x5006016130209865
-0x5006016830209865
-0x5006016930209865
-0x5006016030209865
+iD8DBQFCH7zXLPWxlyuTD7IRAr/WAJ9B6MLsKl6cv48Qlcklx1saYERv7ACdHWGW
+UBXAsQBiEAge3T1R4akLKd0=
+=w1zP
+-----END PGP SIGNATURE-----
 
-Here, if the eighth digit is 0 or 1, the path is on storage processor A;
-if 8 or 9, it's on storage processor B. (I believe this numbering scheme
-is universal for the EMC CX?00 series; in the higher-end models with more
-ports the numbers would be 0/1/2/3 and 8/9/a/b if I'm not mistaken.)
+--------------000503090503000308090208
+Content-Type: application/x-sh;
+ name="test.sh"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="test.sh"
 
-[broken script deleted]
+#!/bin/sh
 
-Apart from the script, multipath seems to be doing something strange
-when using group_by_prio. This is what I get with no multipath.conf:
+DEV=/dev/sda1
+MNT=/media/testdev
 
-# multipath -d -v 2 -p group_by_prio
-Unknown page code '0xc0'
-Unknown page code '0xc0'
-Unknown page code '0xc0'
-Unknown page code '0xc0'
-create: 36006016024601200ea747d273d7fd911
-[size=1 TB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [first]
-  \_ 0:0:0:0 sda  8:0     [ready ]
-  \_ 0:0:1:0 sdb  8:16    [ready ]
-  \_ 1:0:1:0 sdd  8:48    [ready ]
-\_ round-robin 0 
-  \_ 1:0:0:0 sdc  8:32    [ready ]
+mount $DEV $MNT
+find $MNT > /tmp/files
+umount $DEV $MNT
 
-(The "Unknown page code" messages are printed by /sbin/scsi_id which
-doesn't support the command that multipath is trying to use for EMC
-hardware).
+for i in 1 2; do
+    (
+    while true; do
+        mount $DEV $MNT
+        umount $DEV $MNT
+    done
+    )&
+done
 
-So the paths get grouped three and one - I would understand each path
-in its own group, or all in one, or the intended two and two, but this
-I can't figure out. Judging by the debug output [see below], it would
-appear to be a bug in the multipath tool.
+IFS='
+'
+for file in `cat /tmp/files`; do
+    md5sum $file > /dev/null
+done
 
-[Also note that all paths are marked ready, even though in reality half
-of them are failing. Below is the output when using the readsector0
-path_checker instead of the default emc_clariion.] This also happens
-with an empty "devices { }" section, so having that in the config file
-at all masks out the built-in defaults. Not sure if this is a bug or a
-feature.
-
-# multipath -d -v 2 -p group_by_prio     
-create: 36006016024601200ea747d273d7fd911
-[size=1 TB][features="0"][hwhandler="0"]
-\_ round-robin 0 [first]
-  \_ 0:0:0:0 sda  8:0     [ready ]
-  \_ 0:0:1:0 sdb  8:16    [faulty]
-  \_ 1:0:1:0 sdd  8:48    [ready ]
-\_ round-robin 0 
-  \_ 1:0:0:0 sdc  8:32    [faulty]
+--------------000503090503000308090208
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-[Deleted lengthy debug output (of multipath-tools compiled with
-DEBUG=1) which is irrelevant now that the actual problem in the script
-was found. It did show, though, that prio = 1 for all of the above
-paths, which still end up in two groups. I can post it again if someone
-really wants to see it.]
-
--- 
-Juha.Koivisto@hut.fi
+--------------000503090503000308090208--
