@@ -1,11 +1,13 @@
-From: "shahid shaikh" <shahid.shaikh@patni.com>
-Subject: (no subject)
-Date: Fri, 25 Feb 2005 14:22:44 +0530
-Message-ID: <006a01c51b17$5ffb4e30$11051aac@pcp41116>
-Reply-To: shahid.shaikh@patni.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Juha Koivisto <Juha.Koivisto@hut.fi>
+Subject: Re: Problems with path groups in multipath-tools
+Date: Fri, 25 Feb 2005 14:56:13 +0200
+Message-ID: <20050225125613.GA6076@debian.mydomain.bogus>
+References: <20050224210918.GA10496@debian.mydomain.bogus>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----------=_1109321260-6500-80"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20050224210918.GA10496@debian.mydomain.bogus>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,52 +17,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Dm-Devel (E-mail)" <dm-devel@redhat.com>
-Cc: "Christophe Varoqui (E-mail)" <christophe.varoqui@free.fr>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format...
+I'm not sure if my previous message is going to make it to the list (by
+now it hasn't yet, at least according to the web archive), but I solved
+my problem already. It turns out that in order to use a shell script as
+prio_callout (in multipath.conf), the command needs to be explicitly
+executed with /bin/sh.
 
-------------=_1109321260-6500-80
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This works (at least for me):
 
-Hello,
+/etc/multipath.conf:
+---cut---
+devices {
+        device {
+                vendor                  "DGC     "
+                product                 "*"
+                path_grouping_policy    group_by_prio
+                prio_callout            "/bin/sh /usr/local/sbin/get_path_prio %n"
+                #getuid_callout         "/sbin/scsi_id -g -s /block/%n"
+                #path_checker           emc_clariion
+                path_selector           "round-robin 0"
+                hardware_handler        "1 emc"
+        }
+}
+---cut---
 
-I want to use LVM2 on top of multipath SDs.
+/usr/local/sbin/get_path_prio:
+---cut---
+#/bin/sh
 
-What approach should i follow?
+PATH=/bin:/usr/bin
 
-Thanks in advance!
+prio=1
+if [ -e /sys/block/$1/device ]; then
+        target=`ls -l /sys/block/$1/device | tr / "\n" | grep target.:.:`
+        if [ -e /sys/class/fc_transport/$target/port_name ]; then
+                id=`cut -c 10 < /sys/class/fc_transport/$target/port_name`
+                case $id in
+                        0 | 1 | 2 | 3 )
+                                prio=1
+                                ;;
+                        8 | 9 | a | b | A | B )
+                                prio=2
+                                ;;
+                esac
+        fi
+fi
 
+echo $prio
+---cut---
 
+I don't know if I should use emc_clarion as path_checker (it sees the
+non-active paths as "ready", while the default readsector0 reports them
+as faulty), but I guess that's not very important right now.
 
-Thanks and Regards, 
-Shahid Shaikh. 
+Please Cc: me in replies, I'm not subscribed to the list.
 
-
-http://www.patni.com
-World-Wide Partnerships. World-Class Solutions.
-_____________________________________________________________________
-
-This e-mail message may contain proprietary, confidential or legally
-privileged information for the sole use of the person or entity to
-whom this message was originally addressed. Any review, e-transmission
-dissemination or other use of or taking of any action in reliance upon
-this information by persons or entities other than the intended
-recipient is prohibited. If you have received this e-mail in error
-kindly delete  this e-mail from your records. If it appears that this
-mail has been forwarded to you without proper authority, please notify
-us immediately at netadmin@patni.com and delete this mail. 
-_____________________________________________________________________
-
-------------=_1109321260-6500-80
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-------------=_1109321260-6500-80--
+-- 
+Juha.Koivisto@hut.fi
