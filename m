@@ -1,16 +1,11 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: dm-mon fails to load raid1 target
-Date: Mon, 31 Jan 2005 07:47:10 -0600
-Message-ID: <200501310747.10552.kevcorry@us.ibm.com>
-References: <62b0912f05013009209d8d8f0@mail.gmail.com>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: RE: Adding/removing multi-pathed disk partitions
+Date: Mon, 31 Jan 2005 09:05:57 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A733@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <62b0912f05013009209d8d8f0@mail.gmail.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +15,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Molle Bestefich <molle.bestefich@gmail.com>
-Cc: gerte@nieuwenborg.nl
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sunday 30 January 2005 11:20 am, Molle Bestefich wrote:
-> Hi
+> Some assumptions are not that clear to me, so let me confront them to
+> your knowledge :
+> 
+
+I changed the meaningless subject line I used two days ago into
+something meaningful.
+
+> 1) A Logical Unit can change its H/B/T/L mapping.
+> 1.1) H/B/T through LUN masking reconfiguration
+> 1.2) L through a logical unit reconfiguration
+
+I think there are lots of ways to change the association
+between a kernel's SCSI mid-layer's scsi_device data
+structure and the SCSI logical unit to which it corresponds
+in an FC SAN, amongst them (1) switch zoning, (2) storage
+system LUN masking, (2) storage System LUN re-configuration,
+and (4) inadvertent re-cabling errors at initiators, switches,
+or targets.
+
+> 2) These topology changes can happen between two checks of 
+> the affected path
+
+Absoltuely.
+
+> 3) No path failure is seen by the device mapper during the topology
+> reconfiguration
+
+This is my understanding, assuming no I/Os are directed to the unit
+during this period of time.
+
+> 4) Not failing or isolating the changed path from its 
+> previous multipath
+> map will lead to unrecoverable data corruption at the first submitted
+> write IO routed through this path
+
+I belive this to be true.
+
+> 5) HBA drivers see the LU remapping events
 >
-> I can't get dm_mon to load the raid1 target.
 
-Do you mean "dm_mod", which is the core of the DM driver?
+The SCSI mid-layer should be seeing a UNIT_ATTENTION sense key
+for all I/O directed to a SCSI logical unit with a "new" identity
+before the UNIT_ATTENTION check condition is cleared.
 
-> The syslog says (timestamps removed):
-> livecd device-mapper: : unknown target type
-> livecd
-> livecd device-mapper: error adding target to table
-
-This means a user-space program tried to load a device-table for a target-type 
-that doesn't exist or couldn't be loaded.
-
-> Seems that there's a completely blank syslog message (reproducible),
-> and a surplus colon in the first message.  Might be related to the
-> dmraid tool.  Anyway.
+> If all these assertions are legitimate, it might not be 
+> enough to check
+> uid changes at pathcheck interval.
 >
-> I'm booting with a Gentoo CD [gen2dmraid 0.99 - kernel: 2.6.9, driver
-> 4.1.0, library 1.00.17-ioctl].
+
+I agree with all the assertions above.
+
+Because the consequences of the problem are so severe, I was
+advocating that the multipathing software detect this condition
+if it can do so with reasonable means, even though the potential
+for the problem cannot be fully elminated using these techniques.
+
+I now agree with your suggestion below, that the problem is better
+addressed at the SCSI mid-layer. 
+
+> It would seem safer to let the HBA driver error the first IO 
+> submitted to a 
+> changed LU *and* send an event (maybe through a transport 
+> class kobj) for
+> userspace to reconfigure the maps.
 >
-> The /lib/modules/.../raid1.ko file is present.
 
-That is the module for MD/Software-RAID RAID-1, not the Device-Mapper 
-mirroring module. They are completely different drivers that just happen to 
-be in the same directory in the kernel source and module trees.
+I like your idea better.  You are attempting to solve the problem
+at a lower level where it can more likely be fully addressed.
 
-> I tried modprobe raid1 (fine), this didn't add the mirror target to
-> "dmsetup targets".
-> Tried unloading dm-mon, reloading raid1, loading dm-mon, still no mirror
-> target.
->
-> Any hints on what is going wrong / what I am doing wrong?
+Looks like the SCSI mid-layer may be already doing __most__ of the
+"right thing" - but (1) the right thing isn't happening for EMC CLARiion
+or Symmetrix logical units (maybe other storage also) because they are
+not being treated as "removable" units by the mid-layer and (2) there
+Does not seem to be any refresh of the cached inquiry data
+(vendor/model/rev) in the mid-layer's scsi_device data structure.
+Not clear to me if these storage systems should be setting the RMB
+bit of the standard inquiry reply (which CLARiion and Symmetrix are
+not doing) or if the linux SCSI mid-layer should just be treating all
+SAN storage units as removable units, independent of the state of this bit.
 
-The Device-Mapper mirroring target is called "dm-mirror". Check your kernel 
-configuration and make sure you have CONFIG_DM_MIRROR set to "y" or "m". If 
-necessary, you may need to rebuild your kernel to enable it. Once it's 
-enabled, run "dmsetup targets" and look for a "mirror" entry. If you've 
-compiled DM mirroring as a module, try "modprobe dm-mirror", and then run 
-"dmsetup targets" again.
+The SCSI mid-layer (scsi_io_completion()) detects a SCSI sense key of
+UNIT_ATTENTION after most any attempt to access the SCSI logical unit
+With the "new" identity for the first time.  As long as the logical unit
+is viewed as "removable" media, the most of right thing happens, namely,
+the I/O in question is failed and the device is marked to prevent any
+further I/O.  Apparently calling check_disk_change() from the next
+sd_open() will at least clear the changed field of the scsi_device,
+thereby allowing I/O to the device.  But, the cached inquiry fields
+are not updated (possibly via scsi_probe_lun()) to reflect the
+possibly new device identity.
 
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://evms.sourceforge.net/
+> Please comment abundantly.
+> 
+> regards,
+> cvaroqui
+
 
 --
 dm-devel mailing list
