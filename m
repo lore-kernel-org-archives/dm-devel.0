@@ -1,108 +1,56 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: device-mapper: fix TB stripe data corruption
-Date: Thu, 27 Jan 2005 18:06:44 -0600
-Message-ID: <200501271806.44988.kevcorry@us.ibm.com>
-References: <41F6A093.1020606@meditprofi.ru>
-	<200501251448.31769.kevcorry@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Beyer <jbe@webde-ag.de>
+Subject: Re: Data corruption on large, multi-device filesystem
+Date: Fri, 28 Jan 2005 10:23:17 +0100
+Message-ID: <20050128092317.GA22682@pcnocjb.dlan.cinetic.de>
+References: <20050118091059.GC27553@pcnocjb.dlan.cinetic.de>
+	<1106172883.41eedbd386498@www.eiler.net>
+	<41EFBAF4.5030403@svs.gsfc.nasa.gov>
+	<20050120175900.GE14093@agk.surrey.redhat.com>
+	<20050121150913.GA16975@pcnocjb.dlan.cinetic.de>
+	<1106674648.41f683d80ea75@www.eiler.net>
+Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200501251448.31769.kevcorry@us.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-lvm-bounces@redhat.com>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, Dmitry Yurtaev <yurtaev@meditprofi.ru>
-Cc: DevMapper <dm-devel@redhat.com>
+In-Reply-To: <1106674648.41f683d80ea75@www.eiler.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-lvm>
+List-Post: <mailto:linux-lvm@redhat.com>
+List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
+Sender: linux-lvm-bounces@redhat.com
+Errors-To: linux-lvm-bounces@redhat.com
+To: joe@eiler.net
+Cc: dm-devel@redhat.com, LVM general discussion and development <linux-lvm@redhat.com>
 List-Id: dm-devel.ids
 
-On Tuesday 25 January 2005 2:48 pm, Kevin Corry wrote:
-> On Tuesday 25 January 2005 1:40 pm, Dmitry Yurtaev wrote:
-> > i'm sorry for mailing you directly. i was trying to get lvm2 working
-> > with 2 striped 1.8T volumes and came across your patch in the lklm. but
-> > it didn't help. after some digging i've found few suspicious functions
-> > in dm.h, especially this one:
-> >
-> > --- file: drivers/md/dm.h
-> > static inline unsigned long dm_round_up(unsigned long n, unsigned long
-> > size) {
-> >          unsigned long r = n % size;
-> >          return n + (r ? (size - r) : 0);
-> > }
-> >
-> > it is called from drivers/md/dm.c:max_io_len() with two arguments of
-> > sector_t type... i've made an ugly fix:
-> >
-> > static inline sector_t dm_round_up(sector_t n, unsigned long size)
-> > {
-> >          sector_t q = n;
-> >          sector_t r = sector_div(q, size);
-> >          return n + (r ? (size - r) : 0);
-> > }
-> >
-> > and that plus your patch eliminated my problem with data corruption.
-> >
-> > it would be nice if someone knowlegeable will audit dm.[hc]... also it
-> > looks to me like there're few places in dm-stripe.c which assume that a
-> > stripe size is <2T...
->
-> Here's a patch to implement the above change that you suggested. Thanks for
-> the feedback!
 
-Here's a corrected version of the dm.h patch from Tuesday. The previous 
-version was missing another sector_div() in dm_div_up(). When I compiled it 
-the first time, I had DM built as modules, and it all seemed to build 
-correctly. Today I switched DM back to statically built and then noticed a 
-compile error.
+Hi,
+
+since the two patches (stripe_width and sector_t cast) didnt help, 
+I started to put printk in the dm-stripe code. 
+
+At a certain point stripe_map() starts to get called with zero data 
+(eg bio->bi_sector = 0 or 2^32, 2^31 ). This lead me to put some debugging 
+into dm.c especially into max_io_len() where an inline function dm_round_up()
+is used. Interpreting my printk's this funktion doesnt work well with 
+offsets larger then 2^32. I did some (very) ugly hack to calculate the
+boundary in that case and it seems that the error is gone (though the
+full check takes a few days).
+
+Maybe someone with insight on what should happen in dm.c can have 
+a look at max_io_len and the inlined function?
+
+Jens
 
 -- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://evms.sourceforge.net/
+Nur tote Fische schwimmen mit dem Strom
 
-
-
-Make dm_round_up() and dm_div_up() 64-bit safe.
-
---- diff/drivers/md/dm.h 2005-01-27 18:00:17.918379224 -0600
-+++ source/drivers/md/dm.h 2005-01-27 18:00:37.034473136 -0600
-@@ -145,18 +145,21 @@
- /*
-  * ceiling(n / size) * size
-  */
--static inline unsigned long dm_round_up(unsigned long n, unsigned long size)
-+static inline sector_t dm_round_up(sector_t n, unsigned long size)
- {
-- unsigned long r = n % size;
-+ sector_t q = n;
-+ sector_t r = sector_div(q, size);
-  return n + (r ? (size - r) : 0);
- }
- 
- /*
-  * Ceiling(n / size)
-  */
--static inline unsigned long dm_div_up(unsigned long n, unsigned long size)
-+static inline sector_t dm_div_up(sector_t n, unsigned long size)
- {
-- return dm_round_up(n, size) / size;
-+ sector_t r = dm_round_up(n, size);
-+ sector_div(r, size);
-+ return r;
- }
- 
- static inline sector_t to_sector(unsigned long n)
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+_______________________________________________
+linux-lvm mailing list
+linux-lvm@redhat.com
+https://www.redhat.com/mailman/listinfo/linux-lvm
+read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
