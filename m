@@ -1,119 +1,69 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: more multipath deadlocks -- this time involving memory
-Date: Mon, 21 Mar 2005 21:34:20 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A856@SRMANNING.eng.emc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Molle Bestefich <molle.bestefich@gmail.com>
+Subject: Re: [dm-devel] Re: grub 0.96 bug
+Date: Tue, 22 Mar 2005 08:53:15 +0100
+Message-ID: <62b0912f050321235348c20525@mail.gmail.com>
+References: <62b0912f05031606396a3a47db@mail.gmail.com>
+	<62b0912f050318142923419b20@mail.gmail.com>
+	<62b0912f05031914513909bcfb@mail.gmail.com>
+	<62b0912f050319145547c4a7db@mail.gmail.com>
+	<20050320163001.GB643@percy.comedia.it>
+	<62b0912f05032019262c009465@mail.gmail.com>
+	<62b0912f0503202121607bd38a@mail.gmail.com>
+	<62b0912f05032104052e78fd60@mail.gmail.com>
+	<62b0912f050321065558fc956@mail.gmail.com> <423F0F74.3030007@gmx.at>
+Reply-To: Molle Bestefich <molle.bestefich@gmail.com>,
+	Promise Fasttrak / Highpoint 370 driver discussion <ataraid-list@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
-Cc: 'EXT / DEVOTEAM VAROQUI Christophe' <ext.devoteam.varoqui@sncf.fr>, 'Alasdair G Kergon' <agk@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+In-Reply-To: <423F0F74.3030007@gmx.at>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/ataraid-list>
+List-Post: <mailto:ataraid-list@redhat.com>
+List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
+Sender: ataraid-list-bounces@redhat.com
+Errors-To: ataraid-list-bounces@redhat.com
+To: Wilfried Weissmann <Wilfried.Weissmann@gmx.at>
+Cc: bug-grub@gnu.org, dm-devel@redhat.com, ataraid-list@redhat.com
 List-Id: dm-devel.ids
 
-Looks like some troublesome deadlock issues involving multipath, memory,
-and all-paths-down use cases.  While one might typically expect such a use
-case to result in errors, deadlock is not to be expected.  Furthermore, for
-non-
-destructive ucode upgrades of an EMC CLARiion storage system, it is expected
-that for a short period of time, all paths to the storage system in question
-will
-appear to a host to be failed.  It is expected that any multipathing
-solution will
-ride through this NDU scenario without a problem.
+Wilfried Weissmann wrote:
+>> It must be severely broken; since if it just sticked to writing to the
+>> device I pointed it at (hpt37x_ehgjaggaf) which is a RAID0 "virtual
+>> disk" / whatever, it should never be able to overwrite metadata out on
+>> the physical disk.
+> 
+> HPT desided to make the metadata accessable from the virtual disk. Just
+> look at sector 9 of a working array and enjoy the show...
 
-While I see three separate instances of the problem being plausible, I have
-only
-seen the first problem instance described below.  The second and third
-scenarios
-require high levels of memory contention which I have not spent significant
-time
-creating.
+That's an awful decision.
 
-The first problem scenario involves a deadlock between multipathd and
-syslogd.  The second scenario involves the potential for multipathd,
-multipath,
-or any of the executables invoked by multipath to be deadlocked trying doing
-synchronous page reclamation while allocating memory pages for user or
-kernel heap memory in a system with a high degree of memory contention
-and several multipath mapped devices in an all-paths-down failure state.
-The third scenario is extremely similar to the second but involves the need
-to allocate pages not for heap memory but to swap in working set pages for
-the multipathd, multipath, or any of the executables invoked by multipath.
+> Grub is fine. At least the version that I am using. You have to do some
+> tricks to get grub running on the old hpt controllers (I think the new
+> ones are better, but I cannot tell for sure).
+> 
+> Just copy the stage 1.5 reiserfs module to sector 16 instead of sector 8
+> which is the grub default that destroys the metadata in case of a hpt.
+> [explanation snipped]
 
-First, it seems like __every__ time I try an NDU of the EMC CLARiion ucode,
-one of the two (checkerloop or waiterloop) multipathd sub-threads gets
-blocked in unix_wait_for_peer waiting to send a syslog message through
-a UNIX domain socket to syslogd.  Unfortunately, syslogd is blocked in
-blk_congestion_wait waiting for the number of dirty pages in the page
-cache to drop below a pre-defined threshold while it was trying to write log
-info to its /var/log/messages log file.  Unfortunately, getting this to
-happen
-is dependent on the multipathd checkerloop thread periodically checking
-path connectivity and invoking multipath in order to reconfigure multipath
-maps and/or re-enable some now valid paths.  Since the multipathd
-waiterloop event thread will deadlock on the multipathd allpaths mutex
-currently owned by the checkerloop thread, starting i/o on a failed path
-will not free up the log jam.  Assuming enough free memory is available
-to do so, manually running multipath often resolves the problem.  Yet,
-this is hardly a work around to be recommended to an enterprise customer.
+Thanks for the explanation!
+There should be an option in the GRUB configuration to do this, so
+that the RAID won't get overwritten the next time I do a grub-install,
+I think.
 
-I have only been able to avoid this deadly embrace by killing syslogd
-before starting the test.  Without syslogd running, I made it through
-this test 3 consecutive times.  It seems that I cannot get through the test
-at all with syslogd running.  I think simply changing syslogd to do direct
-i/o
-instead of page cache buffered i/o to its log file(s) will avoid this
-problem.  I am
-running with 2.6.11-rc3-upd2 kernel and 0.4.3-pre9 multipath tools by the
-way.
+Or even better, dmraid could protect the metadata blocks by some magic
+flag to dm-mod.
+This isn't possible as is, is it?
 
-The 2nd scenario involves blockable user or kernel memory allocation
-requests
-requiring page write-out of dirty pages on multipath mapped devices in the
-synchronous page reclaim algorithm of __alloc_pages.  Seems to me that while
-mlockall can pin all current and future pages of a process's working set, it
-does
-not prevent synchronous page reclamation by the process as part of a
-blockable
-page allocation request.  If many of the mapped devices are in queue
-congestion
-mode due to failed paths on a storage system which is queuing failed bios
-(as
-the EMC CLARiion must), multipathd, multipath, or any executable invoked by
-multipath could block trying to page out dirty pages to these mapped devices
-while trying to allocate memory before being able to inform the kernel
-resident
-multipath components of the existence of valid paths for these mapped
-devices.
 
-The 3rd scenario involves the need to mlockall for all executables which are
-invoked by multipathd (multipath) and the executables invoked by these
-executables (scsi_id, /bin/false, ...).  Otherwise, any of these executables
-can
-block during page reclamation while trying to allocate free pages.  Also,
-does the
-effect of mlockall survive in the parent beyond fork/clone call or does it
-need to be
-renewed afterwards?
+>> Gerte has a GRUB example on his page where he does setup (hd0,5)
+>> instead of setup (hd0), perhaps that's how it's meant to work.
+> 
+> But you still need a MBR that invokes the loader in (hd0,5) then!
 
-Overall, it seems like the code path to test and restore a target path of a
-multipath
-mapped device should not require any blockable memory allocations.  This
-would
-of course rule out fork/clone/exec.  A possible alternative design to the
-current one
-is to pre-allocate or reserve the memory requirements for these tasks --
-possibly
-enough memory for testing and restoring a single path to a single LU at a
-time.
-While this design would be tuned specifically to this job, I think it would
-not need
-to be kernel resident.
+Hrm, I think LILO has an option to slam out a generic MBR that does
+something like that?
+But perhaps it requires an active flag on (hd0,5), which violates the specs..
