@@ -1,11 +1,16 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: concurrent invocations of multipath on same mapped device
-Date: Wed, 30 Mar 2005 16:46:23 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A890@SRMANNING.eng.emc.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: curious why waitevent sets event_nr field of
+	event_thread struct from kernel every time.
+Date: Thu, 31 Mar 2005 01:34:46 +0200
+Message-ID: <1112225686.10635.50.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321A883@SRMANNING.eng.emc.com>
+	<1112135471.10635.41.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1112135471.10635.41.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,28 +20,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
-Cc: 'Christophe Varoqui' <christophe.varoqui@free.fr>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 29 Mar 2005 23:14:13 +0200
-christophe varoqui <christophe.varoqui@free.fr> wrote
-> That was the idea, yes.
-> In early design, multipath was an all-or-nothing thing.
+On mer, 2005-03-30 at 00:31 +0200, christophe varoqui wrote:
+> On mar, 2005-03-29 at 17:15 -0500, goggin, edward wrote:
+> > The multipathd from 0.4.4-pre4 has died a 3 more times.
+> > I am still not sure what's up here.
+> > 
+> Certainly in the logger code, which is very fresh and hard to debug.
+> Help appreciated here, as my brain kind of melted during the
+> code-give-birth :/
 > 
-> As it evolved to trim its scope to specific multipaths, I 
-> thought it was
-> not necessary to keep it from running in parralel on different
-> multipaths.
-> 
-> I eyeballed the code and didn't see a justification to keep it running
-> alone.
-> 
-> Did I miss something important there ?
+0.4.4-pre5 is online, with a logger that I consider solid now.
+There are still glitches here and there, due to code convergence in
+libmultipath/, but nothing too bad.
 
-Not sure.  I agree that servicing different maps in parallel is
-a good thing to do ... but what keeps multiple invocations of
-multipath from running concurrently on the same multipath mapped
-device?  I think nothing does and in this case, I think there is
-nothing that guarantees a time ordering of path related actions.
-Not clear if this is a problem though. 
+Might be worth giving it a try in the "scenario from hell"
+
+I'll investigate DM ioctl flag Alasdair talked about for the next
+pre-release.
+
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
