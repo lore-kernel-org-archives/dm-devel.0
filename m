@@ -1,11 +1,15 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: Should multipath detect changed path UIDs?
-Date: Wed, 26 Jan 2005 16:50:50 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A71C@SRMANNING.eng.emc.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: Should multipath detect changed path UIDs?
+Date: Wed, 26 Jan 2005 23:13:54 +0100
+Message-ID: <20050126221354.GX5511@marowsky-bree.de>
+References: <C2EEB4E538D3DC48BF57F391F422779321A71C@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A71C@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,36 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Simply pulling two FC cables from a host and re-cabling incorrectly
-(think a switch of two HBA cables) or a surprise reconfiguration of a
-storage system target could lead to a situation where the potential for
-data corruption is ripe.  While it may not be reasonably possible to
-prevent data corruption in this scenario (think I/O already queued to
-target devices underneath the multipath target driver), the prudent
-course of action may be to try to prevent data corruption whenever
-the potential is discovered using reasonable means.
+On 2005-01-26T16:50:50, "goggin, edward" <egoggin@emc.com> wrote:
 
-Besides such pilot error as described above, the pre-requisites for
-the cable switch scenario include at least (1) having the cable disconnect
-and subsequent re-connect events occur while no user or path checker
-initiated I/O occurs to paths using the switched cables and (2) the
-target-side connectivity for the two cables is asymmetrical.
+> Possible solutions could involve (1) detecting fiber channel disconnect
+> hotplug events and acting upon them or (2) modifying multipath checker
+> functions to verify a path's UID remains consistent in addition to veri=
+fying
+> path connectivity.
 
-Possible solutions could involve (1) detecting fiber channel disconnect
-hotplug events and acting upon them or (2) modifying multipath checker
-functions to verify a path's UID remains consistent in addition to verifying
-path connectivity.
+If you look at the emc_clariion checker in multipath-tools, you'll find
+it does that.
 
-EMC's multipathing product PowerPath uses the latter approach for
-testing paths to SCSI logical units on both Symmetrix and CLARiion
-storage systems.  Although using a single I/O for path testing may not
-be possible for many storage systems, the PowerPath checker function
-for both Symmetrix and CLARiion storage determines the UID for the
-SCSI logical unit from reply (or sense) information returned by a single
-test I/O and fails a path if the UID is not consistent.
+I've this handy paper called "Developing Multipath Software for EMC
+CLARiiON Arrays" in front of me and believe that we implement it
+already, as far as possible. ;-)
+
+(There's one missing piece, it's handling the specific sense codes, but
+you'll find that they are already coded in dm-emc.c in the kernel, just
+disabled until we finally get the patch to get at the SCSI SENSE data in
+the bio struct. I need to pester axboe about it again.)
+
+Maybe you could add the Symmetrix specific handling to the emc_clariion
+path checker and the dm-emc.c kernel module? I'd be glad to make it more
+powerful than "just" the CX/AX arrays, alas, I "only" have a CX-500 for
+playing with ;-)
+
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
 
 --
 dm-devel mailing list
