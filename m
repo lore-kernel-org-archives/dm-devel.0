@@ -1,23 +1,13 @@
-From: Wilfried Weissmann <Wilfried.Weissmann@gmx.at>
-Subject: Re: Re: grub 0.96 bug
-Date: Tue, 22 Mar 2005 23:42:45 +0100
-Message-ID: <42409F65.5090507@gmx.at>
-References: <62b0912f05031606396a3a47db@mail.gmail.com>	
-	<62b0912f050319145547c4a7db@mail.gmail.com>	
-	<20050320163001.GB643@percy.comedia.it>	
-	<62b0912f05032019262c009465@mail.gmail.com>	
-	<62b0912f0503202121607bd38a@mail.gmail.com>	
-	<62b0912f05032104052e78fd60@mail.gmail.com>	
-	<62b0912f050321065558fc956@mail.gmail.com>
-	<423F0F74.3030007@gmx.at>	
-	<62b0912f050321235348c20525@mail.gmail.com>
-	<42407227.2020402@gmx.at>
-	<62b0912f0503221211c21d0ec@mail.gmail.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: compiling Multipath-tools on RHE4 .
+Date: Tue, 22 Mar 2005 23:43:33 +0100
+Message-ID: <1111531414.7024.17.camel@zezette>
+References: <1111522135.29700.8.camel@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-In-Reply-To: <62b0912f0503221211c21d0ec@mail.gmail.com>
+In-Reply-To: <1111522135.29700.8.camel@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,76 +17,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Molle Bestefich <molle.bestefich@gmail.com>
-Cc: bug-grub@gnu.org, dm-devel@redhat.com, ataraid-list@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Molle Bestefich wrote:
->>That would make my life a lot easier! On the other hand, the most
->>straight forward thing to do would be to move the stage 1.5 to another
->>default sector. So you can not forget to set any option that ruins your
->>array if missing. Also there is no need to add some autodetection code
->>for hpt controllers then.
-> 
-> 
-> One step ahead of me, you are.
-> 
-> I was just thinking of doing autodetection of HPT magic in GRUB.
-> 
-> The autodetection has a plus side too, though.
-> It can detect other stuff that should not be touched (Windows/Veritas
-> dynamic partition information comes to mind?) and not touch sectors
-> based on what is actually there on a particular system.  Would perhaps
-> save the implementor the pain of choosing once there's just too many
-> reserved sectors and the stage1.5 loader wont fit.
+Try compiling with "make BUILD=klibc"
 
-The problem with the autodetection code is that if you want to play safe 
-then you have to check the pci-id of the controller. Even if the BIOS of 
-the controller supports RAID if you are picky enough to do this. You 
-cannot rely on the contents of sector 9 alone since the disk may have 
-been installed on a hpt controller and then moved to another system. In 
-this case the signature is still intact and will get picked up by grub.
-There are also other things you might want to consider, like MBR + 
-loaders for disk encryption software that is also located somewhere in 
-this area.
-My opinion is that a higher default offset gets the job done. A 
-configuration option helps the people who know what they are doing in 
-weird corner cases. I would not like to add some autodetection that 
-breaks things for some people and make things compilcated when something 
-goes wrong.
-
-But I have to admit that I am getting tired of this controller.
-
-I wrote my HPT370 RAID support for kernel 2.2 based on MD.
-I debugged and extended the HPT370 ataraid module.
-I wrote a EVMS plugin for HPT370 RAID support.
-I write bug-reports for dmraid HPT370 support.
-I write bug-reports for HALd which has autodetection problems.
-
+On mar, 2005-03-22 at 15:08 -0500, Allen Sanabria wrote:
+> Our System!
+> 2.6.9-5.ELsmp #1 SMP Wed Jan 5 19:29:47 EST 2005 x86_64 x86_64 x86_64
+> GNU/Linux
+> Red Hat Enterprise Linux ES release 4 (Nahant)
 > 
-> I think I've read that the stage1.5 loader is not really necessary in
-> some cases, think I'll go doc-hunting.
-
-I think you can also use the blocks of the stage 1.5 loader _in_ the 
-filesystem if you specify the file instead of the (hd0)16+18 blocklist. 
-But for doing things like that I hate lilo. ;)
-
+> Packages installed
+> gcc-3.4.3-9.EL4
+> udev-039-10.8.EL4
+> device-mapper-1.00.19-2
 > 
+> This is the output I get when I run a make on
+> multipath-tools-0.4.3-pre9.
 > 
->>>Or even better, dmraid could protect the metadata blocks by some magic
->>>flag to dm-mod.
->>>This isn't possible as is, is it?
->>
->>One can make any I/O to this block fail. But I would like something like
->>discarding any writes and only perform reads. "dd" backups would still
->>work then.
+> In file included from lopart.c:30:
+> loop.h:82: error: syntax error before "__kernel_old_dev_t"
+> loop.h:82: warning: no semicolon at end of struct or union
+> loop.h:84: error: syntax error before "lo_rdevice"
+> loop.h:84: warning: type defaults to `int' in declaration of
+> `lo_rdevice'
+> loop.h:84: warning: data definition has no type or storage class
+> loop.h:93: error: syntax error before '}' token
+> lopart.c: In function `find_loop_by_file':
+> lopart.c:100: error: storage size of 'loopinfo' isn't known
+> lopart.c:100: warning: unused variable `loopinfo'
+> lopart.c: In function `find_unused_loop_device':
+> lopart.c:144: error: storage size of 'loopinfo' isn't known
+> lopart.c:144: warning: unused variable `loopinfo'
+> lopart.c: In function `set_loop':
+> lopart.c:225: error: storage size of 'loopinfo' isn't known
+> lopart.c:225: warning: unused variable `loopinfo'
+> make[1]: *** [lopart.o] Error 1
+> make[1]: Leaving directory
+> `/root/Multipath/multipath-tools-0.4.3-pre9/kpartx'
+> make: *** [recurse] Error 2
 > 
+> If you anyone could please help me on getting this to work, This needs
+> to be implemented ASAP...
+> Allen Sanabria
+> Systems Administrator I
+> 205 Hudson St 6th Floor
+> New York, New York 10013
 > 
-> Right.  And perhaps a user-definable flag to turn the protection on or off :-).
-> Is it possible without adding new code to dm-mod?
-
-No, you have to add code that treats write request different than read 
-requests. Should not be too complicated though...
-
-Greetings,
-Wilfried
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
