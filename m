@@ -1,61 +1,215 @@
-From: "" <pmarques@grupopie.com>
-Subject: [PATCH 2.6] 2/7 use kstrdup library function in dm-ioctl.c
-Date: Tue,  1 Feb 2005 03:28:25 +0000
-Message-ID: <1107228505.41fef759ae43d@webmail.grupopie.com>
+From: Jens Axboe <axboe@suse.de>
+Subject: Re: [RFC] [PATCH] bio-set patch on latest bk source tree
+Date: Tue, 1 Feb 2005 08:55:52 +0100
+Message-ID: <20050201075551.GC4137@suse.de>
+References: <20050201010431.GA4244@osdl.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="-MOQ110722850542fccf1651d8b2b4fbe40c1c1a4a0b17"
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@osdl.org>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20050201010431.GA4244@osdl.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Dave Olien <dmo@osdl.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@sourceware.org
 List-Id: dm-devel.ids
 
-This message is in MIME format.
+On Mon, Jan 31 2005, Dave Olien wrote:
+> 
+> Hi, Jens,
+> 
+> I sent you a patch for review about a week ago.  Here is that same
+> patch, applied to the latest bk kernel.  Thanks in advance for the review
 
----MOQ110722850542fccf1651d8b2b4fbe40c1c1a4a0b17
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Thanks Dave, I think we should queue this up with Andrew soonish. A few
+minor things need fixing, though:
 
+> ===== drivers/md/dm.c 1.61 vs edited =====
+> --- 1.61/drivers/md/dm.c	2005-01-25 13:50:21 -08:00
+> +++ edited/drivers/md/dm.c	2005-01-31 11:37:27 -08:00
+> @@ -96,10 +96,16 @@ struct mapped_device {
+>  static kmem_cache_t *_io_cache;
+>  static kmem_cache_t *_tio_cache;
+>  
+> +static struct bio_set *dm_set;
+> +
+>  static int __init local_init(void)
+>  {
+>  	int r;
+>  
+> +	dm_set = bioset_create(512, 512, 1);
+> +	if (!dm_set)
+> +		return -ENOMEM;
+> +
 
-This patch removes a private strdup in dm-ioctl.c, and updates it to use =
-the
-kstrdup library function.
+You consistently use 512, that's a _lot_ of reserved bio's/vecs! For the
+full range of bio_vec pools, that will eat quite a large piece of memory
+per bio_set allocated. The idea with a mempool isn't to have a huge free
+number of elements, but rather just a few to maintain progress with
+memory pressure. I think this 512 should be heavily reduced.
 
-Signed-off-by: Paulo Marques <pmarques@grupopie.com>
+>  static int zero_map(struct dm_target *ti, struct bio *bio,
+> ===== fs/bio.c 1.73 vs edited =====
+> --- 1.73/fs/bio.c	2005-01-20 21:02:13 -08:00
+> +++ edited/fs/bio.c	2005-01-31 14:50:37 -08:00
+> @@ -28,7 +28,6 @@
+>  
+>  #define BIO_POOL_SIZE 256
+>  
+> -static mempool_t *bio_pool;
+>  static kmem_cache_t *bio_slab;
+>  
+>  #define BIOVEC_NR_POOLS 6
+> @@ -40,11 +39,10 @@ static kmem_cache_t *bio_slab;
+>  #define BIO_SPLIT_ENTRIES 8	
+>  mempool_t *bio_split_pool;
+>  
+> -struct biovec_pool {
+> +struct biovec_slab {
+>  	int nr_vecs;
+>  	char *name; 
+>  	kmem_cache_t *slab;
+> -	mempool_t *pool;
+>  };
+>  
+>  /*
+> @@ -54,15 +52,32 @@ struct biovec_pool {
+>   */
+>  
+>  #define BV(x) { .nr_vecs = x, .name = "biovec-"__stringify(x) }
+> -static struct biovec_pool bvec_array[BIOVEC_NR_POOLS] = {
+> +static struct biovec_slab bvec_slabs[BIOVEC_NR_POOLS] = {
+>  	BV(1), BV(4), BV(16), BV(64), BV(128), BV(BIO_MAX_PAGES),
+>  };
+>  #undef BV
+>  
+> -static inline struct bio_vec *bvec_alloc(int gfp_mask, int nr, unsigned long *idx)
+> +/*
+> + * bio_set is used to allow other portions of the IO system to
+> + * allocate their own private memory pools for bio and iovec structures.
+> + * These memory pools in turn all allocate from the bio_slab
+> + * and the bvec_slabs[].
+> + */
+> +struct bio_set {
+> +	mempool_t *bio_pool;
+> +	mempool_t *bvec_pools[BIOVEC_NR_POOLS];
+> +};
+> +
+> +/*
+> + * fs_bio_set is the bio_set containing bio and iovec memory pools used by
+> + * IO code that does not need private memory pools.
+> + */
+> +static struct bio_set *fs_bio_set;
+> +
+> +static inline struct bio_vec *bvec_alloc_bs(int gfp_mask, int nr, unsigned long *idx, struct bio_set *bs)
+>  {
+> -	struct biovec_pool *bp;
+>  	struct bio_vec *bvl;
+> +	struct biovec_slab *bp;
+>  
+>  	/*
+>  	 * see comment near bvec_array define!
+> @@ -80,26 +95,27 @@ static inline struct bio_vec *bvec_alloc
+>  	/*
+>  	 * idx now points to the pool we want to allocate from
+>  	 */
+> -	bp = bvec_array + *idx;
+>  
+> -	bvl = mempool_alloc(bp->pool, gfp_mask);
+> +	bp = bvec_slabs + *idx;
+> +	bvl = mempool_alloc(bs->bvec_pools[*idx], gfp_mask);
+>  	if (bvl)
+>  		memset(bvl, 0, bp->nr_vecs * sizeof(struct bio_vec));
+> +
+>  	return bvl;
+>  }
+>  
+>  /*
+> - * default destructor for a bio allocated with bio_alloc()
+> + * default destructor for a bio allocated with bio_alloc_bs()
+>   */
+>  static void bio_destructor(struct bio *bio)
+>  {
+>  	const int pool_idx = BIO_POOL_IDX(bio);
+> -	struct biovec_pool *bp = bvec_array + pool_idx;
+> +	struct bio_set *bs = bio->bi_set;
+>  
+>  	BIO_BUG_ON(pool_idx >= BIOVEC_NR_POOLS);
+>  
+> -	mempool_free(bio->bi_io_vec, bp->pool);
+> -	mempool_free(bio, bio_pool);
+> +	mempool_free(bio->bi_io_vec, bs->bvec_pools[pool_idx]);
+> +	mempool_free(bio, bs->bio_pool);
+>  }
+>  
+>  inline void bio_init(struct bio *bio)
+> @@ -121,18 +137,21 @@ inline void bio_init(struct bio *bio)
+>  }
+>  
+>  /**
+> - * bio_alloc - allocate a bio for I/O
+> + * bio_alloc_bs - allocate a bio for I/O
+>   * @gfp_mask:   the GFP_ mask given to the slab allocator
+>   * @nr_iovecs:	number of iovecs to pre-allocate
+
+bs is awefully close to 'block size' when it comes to acronyms in this
+area, I would prefer if you just called it bio_alloc_bioset() instead.
+
+> +void bioset_free(struct bio_set *bs)
+> +{
+> +	if (!bs->bio_pool)
+> +		mempool_destroy(bs->bio_pool);
+
+That check looks suspect, surely you mean to check for non-NULL.
+
+> +
+> +	biovec_free_pools(bs);
+> +
+> +	kfree(bs);
+> +}
+> +
+> +struct bio_set *bioset_create(int bio_pool_size, int bvec_pool_size, int scale)
+> +{
+> +	struct bio_set *bs = kmalloc(sizeof(*bs), GFP_KERNEL);
+> +
+> +	if (!bs)
+> +		return NULL;
+> +
+> +	memset(bs, 0, sizeof(*bs));
+> +	bs->bio_pool = mempool_create(bio_pool_size, mempool_alloc_slab,
+> +			mempool_free_slab, bio_slab);
+> +
+> +	if (!bs->bio_pool) 
+> +		goto bad;
+> +	
+> +	if (biovec_create_pools(bs, bvec_pool_size, scale))
+> +		goto bad;
+> +
+> +	return bs;
+> +
+> +bad:
+> +	bioset_free(bs);
+> +	return NULL;
+> +}
+
+Please drop the last goto
+
+        if (!biovec_create_pools(bs, bvec_pool_size, scale))
+                return bs;
+
+is nicer.
+
+-- 
+Jens Axboe
 
 --
-Paulo Marques - www.grupopie.com
-=20
-All that is necessary for the triumph of evil is that good men do nothing=
-.
-Edmund Burke (1729 - 1797)
-
----MOQ110722850542fccf1651d8b2b4fbe40c1c1a4a0b17
-Content-Type: text/x-diff; name="patch2"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="patch2"
-
-LS0tIGxpbnV4LTIuNi4xMC9kcml2ZXJzL21kL2RtLWlvY3RsLmMub3JpZwkyMDA1LTAxLTMxIDE5
-OjMzOjI2LjYzMTAzOTk2NyArMDAwMAorKysgbGludXgtMi42LjEwL2RyaXZlcnMvbWQvZG0taW9j
-dGwuYwkyMDA1LTAxLTMxIDE5OjM0OjA4LjQ4ODc4NDE4MiArMDAwMApAQCAtMTIyLDE0ICsxMjIs
-NiBAQCBzdGF0aWMgc3RydWN0IGhhc2hfY2VsbCAqX19nZXRfdXVpZF9jZWxsCiAvKi0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-CiAgKiBJbnNlcnRpbmcsIHJlbW92aW5nIGFuZCByZW5hbWluZyBhIGRldmljZS4KICAqLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-Ki8KLXN0YXRpYyBpbmxpbmUgY2hhciAqa3N0cmR1cChjb25zdCBjaGFyICpzdHIpCi17Ci0JY2hh
-ciAqciA9IGttYWxsb2Moc3RybGVuKHN0cikgKyAxLCBHRlBfS0VSTkVMKTsKLQlpZiAocikKLQkJ
-c3RyY3B5KHIsIHN0cik7Ci0JcmV0dXJuIHI7Ci19Ci0KIHN0YXRpYyBzdHJ1Y3QgaGFzaF9jZWxs
-ICphbGxvY19jZWxsKGNvbnN0IGNoYXIgKm5hbWUsIGNvbnN0IGNoYXIgKnV1aWQsCiAJCQkJICAg
-IHN0cnVjdCBtYXBwZWRfZGV2aWNlICptZCkKIHsKQEAgLTEzOSw3ICsxMzEsNyBAQCBzdGF0aWMg
-c3RydWN0IGhhc2hfY2VsbCAqYWxsb2NfY2VsbChjb25zCiAJaWYgKCFoYykKIAkJcmV0dXJuIE5V
-TEw7CiAKLQloYy0+bmFtZSA9IGtzdHJkdXAobmFtZSk7CisJaGMtPm5hbWUgPSBrc3RyZHVwKG5h
-bWUsIEdGUF9LRVJORUwpOwogCWlmICghaGMtPm5hbWUpIHsKIAkJa2ZyZWUoaGMpOwogCQlyZXR1
-cm4gTlVMTDsKQEAgLTE0OSw3ICsxNDEsNyBAQCBzdGF0aWMgc3RydWN0IGhhc2hfY2VsbCAqYWxs
-b2NfY2VsbChjb25zCiAJCWhjLT51dWlkID0gTlVMTDsKIAogCWVsc2UgewotCQloYy0+dXVpZCA9
-IGtzdHJkdXAodXVpZCk7CisJCWhjLT51dWlkID0ga3N0cmR1cCh1dWlkLCBHRlBfS0VSTkVMKTsK
-IAkJaWYgKCFoYy0+dXVpZCkgewogCQkJa2ZyZWUoaGMtPm5hbWUpOwogCQkJa2ZyZWUoaGMpOwpA
-QCAtMjczLDcgKzI2NSw3IEBAIHN0YXRpYyBpbnQgZG1faGFzaF9yZW5hbWUoY29uc3QgY2hhciAq
-b2wKIAkvKgogCSAqIGR1cGxpY2F0ZSBuZXcuCiAJICovCi0JbmV3X25hbWUgPSBrc3RyZHVwKG5l
-dyk7CisJbmV3X25hbWUgPSBrc3RyZHVwKG5ldywgR0ZQX0tFUk5FTCk7CiAJaWYgKCFuZXdfbmFt
-ZSkKIAkJcmV0dXJuIC1FTk9NRU07CiAK
-
----MOQ110722850542fccf1651d8b2b4fbe40c1c1a4a0b17--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
