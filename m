@@ -1,12 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: LVM2 / device-mapper packages
-Date: Tue, 5 Apr 2005 22:50:21 +0100
-Message-ID: <20050405215021.GK9049@agk.surrey.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: pre8
+Date: Wed, 6 Apr 2005 08:32:40 +0200
+Message-ID: <20050406063240.GC12408@averon.dyndns.org>
+References: <20050405213223.GJ9049@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20050405213223.GJ9049@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,26 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, linux-lvm@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I've updated the stable pointers to point to the latest packages:
+On Tue, Apr 05, 2005 at 10:32:23PM +0100, Alasdair G Kergon wrote:
+> I appear to have almost succeeded in squeezing 0.4.4-pre8 into 
+> RHEL4 U1, but I doubt I'll be allowed any more updates now except 
+> for severe bugs.
+> 
+Just to let you you know what I think is still needed before 0.4.4 :
 
-  LVM2: 2.01.09
-  device-mapper: 1.01.01 
+o memory allocation error paths audit (mostly done in pre9)
+o don't loose events in multipathd
+o /dev/shm/cache has the same security problems you spotted in /tmp
 
-and I recommend updating to those packages.
+I guess this last item will help justify your upgrading to 0.4.4
 
-Dependencies:
-  Upgrade device-mapper to 1.01.something before upgrading
-  lvm2 to 2.01.something - keep the middle component numbers (.01.)
-  in step with each other.
- 
-
-I've only been applying bug fixes for some time now:
-The next release will start incorporating new features again,
-so expect a period of less-stable development-only releases.
-
-Alasdair
--- 
-agk@redhat.com
+Regards,
+cvaroqui
