@@ -1,14 +1,10 @@
-From: Wilfried Weissmann <Wilfried.Weissmann@gmx.at>
-Subject: Re: Re: grub 0.96 bug
-Date: Mon, 21 Mar 2005 19:16:20 +0100
-Message-ID: <423F0F74.3030007@gmx.at>
-References: <62b0912f05031606396a3a47db@mail.gmail.com>	<20050318125120.GQ3301@redhat.com>	<62b0912f0503181112ea853a6@mail.gmail.com>	<62b0912f050318142923419b20@mail.gmail.com>	<62b0912f05031914513909bcfb@mail.gmail.com>	<62b0912f050319145547c4a7db@mail.gmail.com>	<20050320163001.GB643@percy.comedia.it>	<62b0912f05032019262c009465@mail.gmail.com>	<62b0912f0503202121607bd38a@mail.gmail.com>	<62b0912f05032104052e78fd60@mail.gmail.com>
-	<62b0912f050321065558fc956@mail.gmail.com>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: more multipath deadlocks -- this time involving memory
+Date: Mon, 21 Mar 2005 21:34:20 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A856@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <62b0912f050321065558fc956@mail.gmail.com>
+Content-Type: text/plain
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,64 +14,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Molle Bestefich <molle.bestefich@gmail.com>, device-mapper development <dm-devel@redhat.com>
-Cc: bug-grub@gnu.org
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Cc: 'EXT / DEVOTEAM VAROQUI Christophe' <ext.devoteam.varoqui@sncf.fr>, 'Alasdair G Kergon' <agk@redhat.com>
 List-Id: dm-devel.ids
 
-> Chris Nicola wrote:
->> Yes I am having the exact same problem.  I am actually just going to try
->> and lower version of grub for now but I will try this patch if that
->> still happens.
-> 
-> Just did this:
-> ==========
-> grub> device (hd0) /dev/mapper/hpt37x_ehgjaggaf
-> grub> root (hd0,5)/boot
-> Filesystem type is reiserfs, partition type 0x83
-> grub> setup (hd0)
-> ==========
-> 
-> and it destroyed my RAID0.
-> GRUB is such a piece of crap :-).
-> 
-> It must be severely broken; since if it just sticked to writing to the
-> device I pointed it at (hpt37x_ehgjaggaf) which is a RAID0 "virtual
-> disk" / whatever, it should never be able to overwrite metadata out on
-> the physical disk.
+Looks like some troublesome deadlock issues involving multipath, memory,
+and all-paths-down use cases.  While one might typically expect such a use
+case to result in errors, deadlock is not to be expected.  Furthermore, for
+non-
+destructive ucode upgrades of an EMC CLARiion storage system, it is expected
+that for a short period of time, all paths to the storage system in question
+will
+appear to a host to be failed.  It is expected that any multipathing
+solution will
+ride through this NDU scenario without a problem.
 
-HPT desided to make the metadata accessable from the virtual disk. Just 
-look at sector 9 of a working array and enjoy the show...
-Grub is fine. At least the version that I am using. You have to do some 
-tricks to get grub running on the old hpt controllers (I think the new 
-ones are better, but I cannot tell for sure).
+While I see three separate instances of the problem being plausible, I have
+only
+seen the first problem instance described below.  The second and third
+scenarios
+require high levels of memory contention which I have not spent significant
+time
+creating.
 
-Just copy the stage 1.5 reiserfs module to sector 16 instead of sector 8 
-which is the grub default that destroys the metadata in case of a hpt.
+The first problem scenario involves a deadlock between multipathd and
+syslogd.  The second scenario involves the potential for multipathd,
+multipath,
+or any of the executables invoked by multipath to be deadlocked trying doing
+synchronous page reclamation while allocating memory pages for user or
+kernel heap memory in a system with a high degree of memory contention
+and several multipath mapped devices in an all-paths-down failure state.
+The third scenario is extremely similar to the second but involves the need
+to allocate pages not for heap memory but to swap in working set pages for
+the multipathd, multipath, or any of the executables invoked by multipath.
 
-# dd if=/boot/grub/reiserfs_stage1_5 of=/dev/mapper/hpt37x_cjafdedchg 
-seek=16 conv=sync
+First, it seems like __every__ time I try an NDU of the EMC CLARiion ucode,
+one of the two (checkerloop or waiterloop) multipathd sub-threads gets
+blocked in unix_wait_for_peer waiting to send a syslog message through
+a UNIX domain socket to syslogd.  Unfortunately, syslogd is blocked in
+blk_congestion_wait waiting for the number of dirty pages in the page
+cache to drop below a pre-defined threshold while it was trying to write log
+info to its /var/log/messages log file.  Unfortunately, getting this to
+happen
+is dependent on the multipathd checkerloop thread periodically checking
+path connectivity and invoking multipath in order to reconfigure multipath
+maps and/or re-enable some now valid paths.  Since the multipathd
+waiterloop event thread will deadlock on the multipathd allpaths mutex
+currently owned by the checkerloop thread, starting i/o on a failed path
+will not free up the log jam.  Assuming enough free memory is available
+to do so, manually running multipath often resolves the problem.  Yet,
+this is hardly a work around to be recommended to an enterprise customer.
 
-Then do the following in grub:
+I have only been able to avoid this deadly embrace by killing syslogd
+before starting the test.  Without syslogd running, I made it through
+this test 3 consecutive times.  It seems that I cannot get through the test
+at all with syslogd running.  I think simply changing syslogd to do direct
+i/o
+instead of page cache buffered i/o to its log file(s) will avoid this
+problem.  I am
+running with 2.6.11-rc3-upd2 kernel and 0.4.3-pre9 multipath tools by the
+way.
 
-grub> root (hd0,1)
-grub> geometry (hd0) 9964 255 63
-grub> install --stage2=/boot/grub/stage2 /boot/grub/stage1 (hd0) 
-(hd0)16+18 (hd0,1)/boot/grub/stage2 (hd0,1)/boot/grub/menu.lst
+The 2nd scenario involves blockable user or kernel memory allocation
+requests
+requiring page write-out of dirty pages on multipath mapped devices in the
+synchronous page reclaim algorithm of __alloc_pages.  Seems to me that while
+mlockall can pin all current and future pages of a process's working set, it
+does
+not prevent synchronous page reclamation by the process as part of a
+blockable
+page allocation request.  If many of the mapped devices are in queue
+congestion
+mode due to failed paths on a storage system which is queuing failed bios
+(as
+the EMC CLARiion must), multipathd, multipath, or any executable invoked by
+multipath could block trying to page out dirty pages to these mapped devices
+while trying to allocate memory before being able to inform the kernel
+resident
+multipath components of the existence of valid paths for these mapped
+devices.
 
-You have to use the correct geometry for your harddisk and your (hd...) 
-values. The "(hd0)16+18" parameter of the "install" command tells grub 
-where to find the stage 1.5 loader. "(hd0)" is the disk. "16" is the 
-offset of the sector where the module is located and "+18" is the size 
-in sectors of the module. Your size may vary. And do not forget that you 
-have to round up to the next full sector.
+The 3rd scenario involves the need to mlockall for all executables which are
+invoked by multipathd (multipath) and the executables invoked by these
+executables (scsi_id, /bin/false, ...).  Otherwise, any of these executables
+can
+block during page reclamation while trying to allocate free pages.  Also,
+does the
+effect of mlockall survive in the parent beyond fork/clone call or does it
+need to be
+renewed afterwards?
 
-> 
-> Anyway, just wanted to tell you to beware.
-> Gerte has a GRUB example on his page where he does setup (hd0,5)
-> instead of setup (hd0), perhaps that's how it's meant to work.
-> 
-
-But you still need a MBR that invokes the loader in (hd0,5) then!
-
-Greetings,
-Wilfried
+Overall, it seems like the code path to test and restore a target path of a
+multipath
+mapped device should not require any blockable memory allocations.  This
+would
+of course rule out fork/clone/exec.  A possible alternative design to the
+current one
+is to pre-allocate or reserve the memory requirements for these tasks --
+possibly
+enough memory for testing and restoring a single path to a single LU at a
+time.
+While this design would be tuned specifically to this job, I think it would
+not need
+to be kernel resident.
