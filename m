@@ -1,14 +1,12 @@
-From: "Chen, Yukun" <yukun.chen@intel.com>
-Subject: Fail to mkfs after multipath runs
-Date: Wed, 30 Mar 2005 17:35:12 +0800
-Message-ID: <16A54BF5D6E14E4D916CE26C9AD305750184A649@pdsmsx402.ccr.corp.intel.com>
+From: k-ueda@ct.jp.nec.com
+Subject: each device filtering for multipath
+Date: Wed, 30 Mar 2005 10:03:08 -0500 (EST)
+Message-ID: <11955.1276941367$1112194984@news.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,80 +19,87 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+Hello,
 
-   I have setuped a multipath enviornment as follows:
-   (S/W)
-	Linux distribution =E2=80=93 RHEL 4
-	Linux kernel --- 2.6.10 or later (kernel.org)
-	QLogic driver version =E2=80=93 8.00.00b21
-	Multipath I/O kernel patch =E2=80=93 2.6.10-rc1-udm1
-	Multipath I/O tools =E2=80=93 multipath-tools-0.4.3=20
-	Udev version =E2=80=93 v045
+I think that finer-grained device filtering (e.g. by each device)
+is needed in multipath-tools.
+Has anyone already started tackling this feature?
+Any comments about following approach are welcome.
 
-    (H/W)=20
-          2 QLogic ISP2312 dual port FC HBA
-	Emulex 375 Fiber Channel switch( 2 ports are connected to JBOD)
-	Adaptec Fiber Channel JBOD
 
-     First, I edit /etc/multipath.conf to add alias for sda and sdc.
+Background
+----------
+Problem#1 : Multipath command configures not only multipath devices
+            (like Fibre Channel storages) but also local devices
+            (like SCSI disks) as multipath.
+            Then, as dm holds the reference to the source device,
+            local devices can't be used through /dev/sd* name.
 
-     Then,=20
-             multipathd
-             multipath =20
-             mkfs /udev/disk1 -t ext3
+Problem#2 : Even for Fibre Channel storages, there is a case such that
+            we need to configure multipath for one but don't want for
+            the other.
 
-      Now, sda is formating and sometimes some error messages appeared on=
- screen:
+We have 2 options to configure specific devices only.
 
-#################
-	mke2fs 1.35 (28-Feb-2004)
-	max_blocks 4294967295, rsv_groups =3D 0, rsv_gdb =3D 1024
-	Filesystem label=3D
-	OS type: Linux
-	Block size=3D4096 (log=3D2)
-	Fragment size=3D4096 (log=3D2)
-	4447744 inodes, 8891620 blocks
-	444581 blocks (5.00%) reserved for the super user
-	First data block=3D0
-	Maximum filesystem blocks=3D12582912
-	272 block groups
-	32768 blocks per group, 32768 fragments per group
-	16352 inodes per group
-	Superblock backups stored on blocks:
-        32768, 98304, 163840, 229376, 294912, 819200, 884736, 1605632, 26=
-54208,
-        4096000, 7962624
+  o Specify a device name as multipath command argument.
+  o Specify white lists (vendor/model combination) in scsi_id.config,
+    and don't use -g option for scsi_id callout.
 
-	Writing inode tables: done
-	inode.i_blocks =3D 98312, i_size =3D 4243456
-	Creating journal (8192 blocks): done
-	Writing superblocks and filesystem accounting information: 1:0:0:0: sg_i=
-o failed
-	 status 0x0 0x2 0x0 0x0
-	1:0:0:0: Unable to get INQUIRY vpd 1 page 0x0.
-	pb getting path info, free
-	1:0:1:0: sg_io failed status 0x0 0x1 0x0 0x0
-	1:0:1:0: Unable to get INQUIRY vpd 1 page 0x0.
-	pb getting path info, free
-	1:0:2:0: sg_io failed status 0x0 0x1 0x0 0x0
-.......
-#############################
+But these are not enough.
+The first option breaks if the device names are not persistent.
+The second option can solve the problem#1, but can't solve the problem#2.
 
-In the meanwhile, I can get some error messages from dmesg as follows:
-############################
-qla2300 0000:07:01.1: Performing ISP error recovery - ha=3D c2314250.
-SCSI error : <1 0 0 0> return code =3D 0x20000
-end_request: I/O error, dev sdd, sector 42731920
-qla2300 0000:07:01.0: LIP reset occured (f7f7).
-qla2300 0000:07:01.0: LIP occured (f7f7).
-qla2300 0000:07:01.1: Parity error -- HCCR=3D5cb0.
-qla2300 0000:07:01.0: LIP reset occured (f7f7).
-qla2300 0000:07:01.0: LIP occured (f7f7).
-qla2300 0000:07:01.1: Performing ISP error recovery - ha=3D c2314250.
-############################
 
-Any comments for it?
-Thanx.
+Proposal
+--------
+As multipath command already has a black listing feature, adding
+wwid filtering to it is straightforward solution.  I've created
+a tentative patch as proposal.  (patch for multipath-tools-0.4.3)
+I also think that adding whitelist filtering may be useful.
 
--Aaron=20
+
+Patch (tentative)
+-----------------
+-----------------------------------------------------------------------
+--- multipath-tools-0.4.3/multipath/main.c      2005-03-23 10:18:42.000000000 -0500
++++ wwidfilter-0.4.3/multipath/main.c     2005-03-28 16:11:51.000000000 -0500
+@@ -746,7 +746,8 @@ coalesce_paths (vector curmp, vector pat
+                /* skip this path for some reason */
+
+                /* 1. if path has no unique id */
+-               if (memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0)
++               if ((memcmp(empty_buff, pp1->wwid, WWID_SIZE) == 0) ||
++                               blacklist(conf->blist, pp1->wwid))
+                        continue;
+
+                /* 2. if path already coalesced */
+--- multipath-tools-0.4.3/multipath/dict.c      2005-03-19 07:59:15.000000000 -0500
++++ wwidfilter-0.4.3/multipath/dict.c     2005-03-28 16:12:40.000000000 -0500
+@@ -249,6 +249,7 @@ init_keywords(void)
+
+        install_keyword_root("devnode_blacklist", &blacklist_handler);
+        install_keyword("devnode", &devnode_handler);
++       install_keyword("blackwwid", &devnode_handler);
+
+        install_keyword_root("devices", &devices_handler);
+        install_keyword("device", &device_handler);
+-----------------------------------------------------------------------
+
+With above patch, we can filter each devices by specifing multipath.conf
+like following.
+
+-----------------------------------------------------------------------
+devnode_blacklist {
+        devnode c0d
+	...
+	snip
+	...
+        devnode loop
+        blackwwid SSEAGATE_ST373307LC_____3HZ6XQWB00007431GBM4
+        blackwwid SSEAGATE_ST373307LC_____3HZ70N5S000074343PL8
+}
+-----------------------------------------------------------------------
+
+
+Best regards,
+Ky (Kiyoshi Ueda)
