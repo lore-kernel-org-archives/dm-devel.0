@@ -1,11 +1,13 @@
-From: Dave Olien <dmo@osdl.org>
-Subject: Multipath and IO statistics.
-Date: Thu, 10 Mar 2005 15:00:49 -0800
-Message-ID: <20050310230049.GA19544@osdl.org>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: DM, Multipath, and LSI Disk Arrays
+Date: Sun, 13 Mar 2005 01:41:19 +0100
+Message-ID: <1110674480.6624.43.camel@zezette>
+References: <111aefd050309062640c23eec@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+In-Reply-To: <111aefd050309062640c23eec@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,32 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, penney@msu.edu
 List-Id: dm-devel.ids
 
+On Wed, 2005-03-09 at 09:26 -0500, Chris Penney wrote:
+> Hi,
+> 
+> I'm not sure if this is the right list so apologies in advance if I'm
+> in the wrong spot.  The search tool for this list doesn't seem to work
+> either.
+> 
+> I have an Intel system with dual Qlogic HBAs (2340s) that talk to an
+> STK D280 disk array (I see the generic multipath.conf lists a D280 as
+> a device in the config file).  I'm using SLES 9 SP1 w/ multipath-tools
+> 0.3.6-0.3.
+> 
+> They way the system is setup, hba1 talks to the A controller of the
+> D280 and hba2 talks to the B controller (they are on seperate sans). 
+> The box has four luns, two are active on port A and two are active on
+> port B.  When I let multipath do it's thing it wants to use port B for
+> everything and that triggers a fail over of the A luns to port B.
+> 
+> If I do the dmsetup commands by hand I can get what I want, but is
+> there a way to do this automatically?  The thought of having a self
+> made hack init script to do this seems highly suspect.
+> 
 
-Alasdair,
+Hello,
 
-You mentioned this morning there might be some old code laying around
-related to IO statistics and device mapper/multipath?  Could you
-email me a pointer, if there is such?
+the priority framework is here to help .
 
-Otherwise, I'll try to start by just throwing out some ideas and
-going from there.
+You need a priority helper to hand a higher priority to the active
+paths. I don't know if someone already developped such a prioritizer for
+your hardware.
 
-I'm guessing we'd like some way to collect statistics through
-the /sys file system.  But we don't want the numbers to be reported
-in the same way as for real disks, because we don't want to confuse
-tools like iostat.  So we want some other sysfs file for these counters.
+Hope it helps enough to get you a step forward.
 
-But then we have to worry about tools for reporting those statistics.
-
-In addition, it would be nice to have the statistics implementation
-be modular in some way, either as a library within the kernel dm code,
-or as a "io statistics layer" that can be pushed onto the device mapper
-stack.
-
-Does this summarize where things stand right now?
-
-Thanks!
-Dave
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
