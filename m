@@ -1,14 +1,13 @@
-From: Jeff Mahoney <jeffm@suse.com>
-Subject: Re: Help tracking down problem --- endless loop in
-	__find_get_block_slow
-Date: Fri, 25 Feb 2005 19:03:36 -0500
-Message-ID: <421FBCD8.7090804@suse.com>
-References: <4219BC1A.1060007@zensonic.dk>	<20050222011821.2a917859.akpm@osdl.org>	<421BB65F.7040306@suse.com>
-	<20050222152833.75fb79a2.akpm@osdl.org>
+From: Andrew Morton <akpm@osdl.org>
+Subject: Re: [PATCH] Fix panic in 2.6 with bounced bio and dm
+Date: Fri, 25 Feb 2005 16:19:47 -0800
+Message-ID: <20050225161947.5fd6d343.akpm@osdl.org>
+References: <1109351021.5014.10.camel@markh1.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------000503090503000308090208"
-In-Reply-To: <20050222152833.75fb79a2.akpm@osdl.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+In-Reply-To: <1109351021.5014.10.camel@markh1.pdx.osdl.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,120 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@osdl.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Mark Haverkamp <markh@osdl.org>
+Cc: dm-devel@redhat.com, axboe@suse.de, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------000503090503000308090208
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
-
-Andrew Morton wrote:
-> Jeff Mahoney <jeffm@suse.com> wrote:
+Mark Haverkamp <markh@osdl.org> wrote:
+>
 > 
->>In my experience, the loop is actually outside of
->>__find_get_block_slow(), in __getblk_slow(). I've been using xmon to
->>interrupt the kernel, and the results vary but are all rooted in the
->>for(;;) loop in __getblk_slow. It appears as though grow_buffers is
->>finding/creating the page, but then __find_get_block can't locate the
->>buffer it needs.
+> Last September a fix was checked in for a memory leak problem in
+> bounce_end_io causing the entire bio to be checked.  This ended up
+> causing some dm cloned bios that had bounce buffers to free NULL pages
+> because their bi_idx can be non-zero.   This patch skips NULL pages in
+> the bio's bio_vec.  I'm not sure if this is the most optimal fix but I
+> think that it is safe since bvec_alloc memsets the bio_vec to zero.
 > 
+
+Thanks, we should get fixed for 2.6.11.
+
+It seems very weird for dm to be shoving NULL page*'s into the middle of a
+bio's bvec array, so your fix might end up being a workaround pending a
+closer look at what's going on in there.
+
 > 
-> Yes, that'll happen.  Because there are still buffers attached to the page
-> which have the wrong blocksize.  Say, if someone is trying to read a 2k
-> buffer_head which is backed by a page which already has 1k buffer_heads
-> attached to it.
+> ===== mm/highmem.c 1.55 vs edited =====
+> --- 1.55/mm/highmem.c	2005-01-07 21:44:13 -08:00
+> +++ edited/mm/highmem.c	2005-02-25 07:54:21 -08:00
+> @@ -319,7 +319,7 @@
+>  	 */
+>  	__bio_for_each_segment(bvec, bio, i, 0) {
+>  		org_vec = bio_orig->bi_io_vec + i;
+> -		if (bvec->bv_page == org_vec->bv_page)
+> +		if (!bvec->bv_page || bvec->bv_page == org_vec->bv_page)
+>  			continue;
+>  
+>  		mempool_free(bvec->bv_page, pool);	
 > 
-> Does your kernel not have that big printk in __find_get_block_slow()?  If
-> it does, maybe some of the buffers are unmapped.  Try:
-
-I think it's likely I'm experiencing a different bug than the original
-poster. I've tried making the printk unconditional, and I get no output.
-However, I've continued to track it down, and I believe I've found a
-umount race. I can also reproduce it without subfs, with the attached
-script.
-
-I added some debug output to aid in my search:
-__find_get_block_slow: find_get_page
-[block=17508,blksize=2048,index=8754,sizebits=1,size=512] returned null
-returning page [index=2188,block=17504,size=512,sizebits=3]
-Couldn't find buffer @ block 17508
-
-What I'm observing is that __find_get_block_slow is calculating the
-index using the blocksize for the device, and the grow_buffers call is
-using the blocksize handed down from the filesystem via sb_bread(). They
-*should* be the same, but here's where my suspected race comes in. Since
-the buffers are being searched for in the wrong place, they're never
-found, causing the infinite loop.
-
-The open_bdev_excl() call in get_sb_bdev() should be keeping callers out
-until the block device is actually closed, but it uses the fs_type
-struct as the holder which, given that the filesystem to be mounted is
-the same one as the one being umounted, will be the same. This allows
-the mount attempt to continue. If the superblock for the umounting
-filesystem is already in the process of getting shut down, sget() will
-create a new superblock and the mount attempt will use that one. The
-umount will continue, destroying the old superblock and setting the
-blocksize back to its original value, dropping all buffers in the process.
-
-If kill_block_super resets the blocksize while an sb_bread is in
-progress, the sizes won't match up and we'll get stuck in the loop.
-
-I'll be working on a fix, but figured I'd send out a quick update.
-
-- -Jeff
-
-- --
-Jeff Mahoney
-SuSE Labs
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.5 (GNU/Linux)
-
-iD8DBQFCH7zXLPWxlyuTD7IRAr/WAJ9B6MLsKl6cv48Qlcklx1saYERv7ACdHWGW
-UBXAsQBiEAge3T1R4akLKd0=
-=w1zP
------END PGP SIGNATURE-----
-
---------------000503090503000308090208
-Content-Type: application/x-sh;
- name="test.sh"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="test.sh"
-
-#!/bin/sh
-
-DEV=/dev/sda1
-MNT=/media/testdev
-
-mount $DEV $MNT
-find $MNT > /tmp/files
-umount $DEV $MNT
-
-for i in 1 2; do
-    (
-    while true; do
-        mount $DEV $MNT
-        umount $DEV $MNT
-    done
-    )&
-done
-
-IFS='
-'
-for file in `cat /tmp/files`; do
-    md5sum $file > /dev/null
-done
-
---------------000503090503000308090208
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------000503090503000308090208--
+> -- 
+> Mark Haverkamp <markh@osdl.org>
+> 
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
