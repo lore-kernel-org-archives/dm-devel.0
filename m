@@ -1,11 +1,12 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: dm-devel Digest, Vol 11, Issue 18
-Date: Fri, 28 Jan 2005 11:53:53 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A72B@SRMANNING.eng.emc.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [PATCH] Cope if snapshot-origin got extended
+Date: Fri, 28 Jan 2005 20:35:11 +0000
+Message-ID: <20050128203511.GN10195@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,35 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> If you look at the emc_clariion checker in multipath-tools, you'll find
-> it does that.
+Handle writes to a snapshot-origin device that has been extended since
+the snapshot was taken.
 
-> I've this handy paper called "Developing Multipath Software for EMC
-> CLARiiON Arrays" in front of me and believe that we implement it
-> already, as far as possible. ;-)
+The idea is to allow:
+  create origin lv
+  create snapshot of it
+Deactivate both devices.
+  extend the origin
+Reactivate with the revised device sizes.
 
-> (There's one missing piece, it's handling the specific sense codes, but
-> you'll find that they are already coded in dm-emc.c in the kernel, just
-> disabled until we finally get the patch to get at the SCSI SENSE data in
-> the bio struct. I need to pester axboe about it again.)
+Then the origin is bigger than the snapshot and reads to the new
+part of the origin don't need to trigger exceptions.
 
-> Maybe you could add the Symmetrix specific handling to the emc_clariion
-> path checker and the dm-emc.c kernel module? I'd be glad to make it more
-> powerful than "just" the CX/AX arrays, alas, I "only" have a CX-500 for
-> playing with ;-)
+[This is the easiest case: It's harder to support doing this while the 
+devices are active, or shrinking the origin (which doesn't achieve much).]
 
-
-Noticed already.  I am advocating that detecting path-to-LU inconsistency
-be adopted generically by the multipath configuration software using one
-of the two methods described in previous email and not be implemented
-piecemeal or just for CLARiion, Symmetrix, or EMC storage.
-
-This could mean that the storage system getuid callouts become functions
-like the checker callouts and that by default, a storage system's getuid
-callout be used also as that storage system's path checker.
+--- diff/drivers/md/dm-snap.c	2005-01-28 18:04:03.000000000 +0000
++++ source/drivers/md/dm-snap.c	2005-01-28 20:25:26.000000000 +0000
+@@ -931,6 +931,10 @@
+ 		if (!snap->valid)
+ 			continue;
+ 
++		/* Nothing to do if writing beyond end of snapshot */
++		if (bio->bi_sector >= dm_table_get_size(snap->table))
++			continue;
++
+ 		down_write(&snap->lock);
+ 
+ 		/*
 
 --
 dm-devel mailing list
