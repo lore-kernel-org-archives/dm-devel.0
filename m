@@ -1,13 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: path priority group and path state
-Date: Tue, 15 Feb 2005 22:35:55 +0100
-Message-ID: <42126B3B.3050200@free.fr>
-References: <EA4DC661A6353747A2E5C0DE8792DDDE07CA9912@orsmsx404.amr.corp.intel.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: md_component_detection = 1
+Date: Tue, 15 Feb 2005 21:34:25 +0000
+Message-ID: <20050215213425.GK14093@agk.surrey.redhat.com>
+References: <000001c5136d$3b3502a0$11051aac@pcp41116>
+	<42126793.4030407@free.fr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <EA4DC661A6353747A2E5C0DE8792DDDE07CA9912@orsmsx404.amr.corp.intel.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <42126793.4030407@free.fr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,48 +19,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: shahid.shaikh@patni.com
 List-Id: dm-devel.ids
 
-Caushik, Ramesh wrote:
+On Tue, Feb 15, 2005 at 10:20:19PM +0100, christophe varoqui wrote:
+>    types = [ "device-mapper", 254 ]
+ 
+The number is actually related to the partitioning allowed on the device.
 
->Given that some of the problems I am noticing in my testing relates to
->mismatch between the path state recorded by the driver and the daemon, I
->thought I will chime in with my questions / observations.
->   
->My setup consists of a dual port qla2312 controller connected to a JBOD
->through a FC switch thus creating 2 paths A & B to the drive. I have all
->the paths in one PG using round-robin selector and "queue if no path"
->set. I run a bonnie++ transfer to the mounted drive, and then pull out
->the path A connection. When the transfer switches to path B I reinsert A
->and then after a little while pull out B and repeat this a few times.
->Sometimes the transfer just hangs and the log messages indicate the
->driver is queueing the i/o (both paths are marked faulty). This is what
->seems to happen. When the cable on path  A is pulled out the controller
->receives a "LOOP DOWN" on that port and ALSO a "LIP RESET" on path B.
->This causes i/o on both paths to return SCSI error and so both paths are
->set faulty (some of the in-flight i/o on path B fails as a result of the
->LIP RESET). However when the daemon checker loop wakes up and tests the
->path (via checkfn) path B returns OK, and since the daemon will
->reconfigure the paths only if newstate != oldstate it does not
->reconfigure the path. As a result, we end up with a situation where the
->driver marks path B as faulty due to i/o error in the path, and waits
->for the daemon to reconfigure the path, while the daemon does not
->reconfigure path B because the checkfn does not detect a state change.
->First of all please tell me if this analyses is correct. If it is then
->my suggestion is for the daemon checker loop to reinstate the path
->anytime the there is a mismatch between the path state in the driver and
->that returned by the checkfn, and not just based on the newstate !=
->oldstate check. I am in the process of coding this up to see if it will
->fix the problem. Meanwhile I would much appreciate any comments or
->suggestions on this. Thanks,
->
->Ramesh.
->
-Agreed : this is a real hole in the design.
-Suggested solution seems sane.
+ * Devices are only checked for partition tables if their minor number
+ * is a multiple of the number corresponding to their type below
+ * i.e. this gives the granularity of whole-device minor numbers.
+ * Use 1 if the device is not partitionable.
 
-Thanks,
-cvaroqui
+device-mapper devices don't get partitioned by the kernel
+so use 1 instead of 254.
+
+Alasdair
+-- 
+agk@redhat.com
 
 --
 dm-devel mailing list
