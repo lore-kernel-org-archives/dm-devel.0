@@ -1,13 +1,14 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: more multipath deadlocks -- this time involving memory
-Date: Thu, 24 Mar 2005 00:10:02 +0100
-Message-ID: <1111619402.7024.50.camel@zezette>
+Date: Thu, 24 Mar 2005 15:07:47 +0000
+Message-ID: <20050324150747.GW19749@agk.surrey.redhat.com>
 References: <C2EEB4E538D3DC48BF57F391F422779321A856@SRMANNING.eng.emc.com>
+	<1111619402.7024.50.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A856@SRMANNING.eng.emc.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <1111619402.7024.50.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,134 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: 'Alasdair G Kergon' <agk@redhat.com>
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Just to let you know I'm not ignoring your comments and analysis.
+On Thu, Mar 24, 2005 at 12:10:02AM +0100, christophe varoqui wrote:
+> A mempool would have to wait for another release, if at all desirable.
 
-I opened the 0.4.4-pre* festival, and hope we can fix these nasties
-before the end of this cycle.
+You don't need that in userspace: glibc still supports memory 
+pre-allocation the original way (brk) used before mmap was
+invented.  Then your code is free to use malloc() within the
+amount it pre-allocated and locked - this is how the LVM2 code
+dodges userspace memory issues.
 
-I started the branch with an id cache in multipath. I'm not sure on the
-design, so I will take comments.
+The first thing is to re-visit the design and determine which
+things *have* to be done inside this tight regime and which things
+can be moved outside it and whether it's ever going to be possible
+to make it do anything useful.  Everything possible needs to be moved 
+ouside.  Logging, for example, can certainly be moved outside 
+(e.g. queued asynchronously to another process, perhaps using shmget
+- I've never tested this)
 
-As seen with Lars, I'll then continue moving bits from multipath/ to
-libmultipath/ until the daemon can be switched to
-libmultipath:multipath() instead of exec(/sbin/multipath).
+Things the LVM2 pvmove experience taught us:
+  Pathname lookups are not allowed
+  (i.e. it looked impossible to guarantee never blocking
+   while converting pathname to inode)
+    - this is why dm tables encourage you refer to devices using major:minor
+  You can't open any files or block devices: you need to have all the 
+    file descriptors you need prepared in advance;
+  All reads/writes to block devices must use O_DIRECT;
+  If you do have to read a file, you must previously have used the ioctl that turns 
+    off its atime updates;
+  You cannot write to any files (as you can't disable the update to the inode times)
 
-That, plus a loging rework that is under discussion with open-iscsi
-guys, should address most of your concerns.
+Scanning for new devices/paths is never going to be able to fit within this
+regime so has to be handled separately.
 
-A mempool would have to wait for another release, if at all desirable.
-
-Regards,
-cvaroqui
-
-On lun, 2005-03-21 at 21:34 -0500, goggin, edward wrote:
-> Looks like some troublesome deadlock issues involving multipath, memory,
-> and all-paths-down use cases.  While one might typically expect such a use
-> case to result in errors, deadlock is not to be expected.  Furthermore, for
-> non-
-> destructive ucode upgrades of an EMC CLARiion storage system, it is expected
-> that for a short period of time, all paths to the storage system in question
-> will
-> appear to a host to be failed.  It is expected that any multipathing
-> solution will
-> ride through this NDU scenario without a problem.
-> 
-> While I see three separate instances of the problem being plausible, I have
-> only
-> seen the first problem instance described below.  The second and third
-> scenarios
-> require high levels of memory contention which I have not spent significant
-> time
-> creating.
-> 
-> The first problem scenario involves a deadlock between multipathd and
-> syslogd.  The second scenario involves the potential for multipathd,
-> multipath,
-> or any of the executables invoked by multipath to be deadlocked trying doing
-> synchronous page reclamation while allocating memory pages for user or
-> kernel heap memory in a system with a high degree of memory contention
-> and several multipath mapped devices in an all-paths-down failure state.
-> The third scenario is extremely similar to the second but involves the need
-> to allocate pages not for heap memory but to swap in working set pages for
-> the multipathd, multipath, or any of the executables invoked by multipath.
-> 
-> First, it seems like __every__ time I try an NDU of the EMC CLARiion ucode,
-> one of the two (checkerloop or waiterloop) multipathd sub-threads gets
-> blocked in unix_wait_for_peer waiting to send a syslog message through
-> a UNIX domain socket to syslogd.  Unfortunately, syslogd is blocked in
-> blk_congestion_wait waiting for the number of dirty pages in the page
-> cache to drop below a pre-defined threshold while it was trying to write log
-> info to its /var/log/messages log file.  Unfortunately, getting this to
-> happen
-> is dependent on the multipathd checkerloop thread periodically checking
-> path connectivity and invoking multipath in order to reconfigure multipath
-> maps and/or re-enable some now valid paths.  Since the multipathd
-> waiterloop event thread will deadlock on the multipathd allpaths mutex
-> currently owned by the checkerloop thread, starting i/o on a failed path
-> will not free up the log jam.  Assuming enough free memory is available
-> to do so, manually running multipath often resolves the problem.  Yet,
-> this is hardly a work around to be recommended to an enterprise customer.
-> 
-> I have only been able to avoid this deadly embrace by killing syslogd
-> before starting the test.  Without syslogd running, I made it through
-> this test 3 consecutive times.  It seems that I cannot get through the test
-> at all with syslogd running.  I think simply changing syslogd to do direct
-> i/o
-> instead of page cache buffered i/o to its log file(s) will avoid this
-> problem.  I am
-> running with 2.6.11-rc3-upd2 kernel and 0.4.3-pre9 multipath tools by the
-> way.
-> 
-> The 2nd scenario involves blockable user or kernel memory allocation
-> requests
-> requiring page write-out of dirty pages on multipath mapped devices in the
-> synchronous page reclaim algorithm of __alloc_pages.  Seems to me that while
-> mlockall can pin all current and future pages of a process's working set, it
-> does
-> not prevent synchronous page reclamation by the process as part of a
-> blockable
-> page allocation request.  If many of the mapped devices are in queue
-> congestion
-> mode due to failed paths on a storage system which is queuing failed bios
-> (as
-> the EMC CLARiion must), multipathd, multipath, or any executable invoked by
-> multipath could block trying to page out dirty pages to these mapped devices
-> while trying to allocate memory before being able to inform the kernel
-> resident
-> multipath components of the existence of valid paths for these mapped
-> devices.
-> 
-> The 3rd scenario involves the need to mlockall for all executables which are
-> invoked by multipathd (multipath) and the executables invoked by these
-> executables (scsi_id, /bin/false, ...).  Otherwise, any of these executables
-> can
-> block during page reclamation while trying to allocate free pages.  Also,
-> does the
-> effect of mlockall survive in the parent beyond fork/clone call or does it
-> need to be
-> renewed afterwards?
-> 
-> Overall, it seems like the code path to test and restore a target path of a
-> multipath
-> mapped device should not require any blockable memory allocations.  This
-> would
-> of course rule out fork/clone/exec.  A possible alternative design to the
-> current one
-> is to pre-allocate or reserve the memory requirements for these tasks --
-> possibly
-> enough memory for testing and restoring a single path to a single LU at a
-> time.
-> While this design would be tuned specifically to this job, I think it would
-> not need
-> to be kernel resident.
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+The issue is how to monitor the state of the existing paths in a table within
+this regime.
+ 
+Alasdair
 -- 
-christophe varoqui <christophe.varoqui@free.fr>
+agk@redhat.com
