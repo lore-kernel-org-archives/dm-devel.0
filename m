@@ -1,147 +1,55 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
+From: David Teigland <teigland@redhat.com>
 Subject: Re: multipath/gfs lockout under heavy write
-Date: Mon, 24 Jan 2005 23:34:47 +0100
-Message-ID: <1106606087.10990.40.camel@zezette>
+Date: Tue, 25 Jan 2005 12:06:24 +0800
+Message-ID: <20050125040624.GB5786@redhat.com>
 References: <1106596648.13534.79.camel@laza.eunet.yu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: linux clistering <linux-cluster@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-cluster-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <1106596648.13534.79.camel@laza.eunet.yu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+List-Unsubscribe: <http://www.redhat.com/mailman/listinfo/linux-cluster>,
+	<mailto:linux-cluster-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-cluster>
+List-Post: <mailto:linux-cluster@redhat.com>
+List-Help: <mailto:linux-cluster-request@redhat.com?subject=help>
+List-Subscribe: <http://www.redhat.com/mailman/listinfo/linux-cluster>,
+	<mailto:linux-cluster-request@redhat.com?subject=subscribe>
+Sender: linux-cluster-bounces@redhat.com
+Errors-To: linux-cluster-bounces@redhat.com
+To: Lazar Obradovic <laza@yu.net>
+Cc: dm-devel@redhat.com, linux-cluster@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2005-01-24 at 20:57 +0100, Lazar Obradovic wrote:
-> Hello,  
-> 
-> I'm not quite sure if the problem I'm experiencing is GFS or
-> dm-multi/multipath issue, so I'm writing to both lists... sorry for that
-> and please trim as soon as you realise who is it for.
-> 
-> This is the scenario: 
-> 
-> I've created two-node cluster and mounted two LVs on each of them: 
-> 
-> /dev/vg/data on /mnt/data type gfs (rw)
-> /dev/vg/syslog on /var/log/ng type gfs (rw)
-> 
-> Each node is running 2.6.10 with udm2 patch set, GFS and LVM2 fetched
-> from CVS on Jan, 19th and multipath-tools-0.4.1. Storage controller is
-> HSV110, and has two paths from each server to it: 
-> 
-> # multipath -v2 
-> create: 3600508b400013a6c00006000009c0000
-> [size=500 GB][features="0"][hwhandler="0"]
-> \_ round-robin 0 [first]
->   \_ 0:0:0:1 sda  8:0     [faulty]
->   \_ 0:0:1:1 sdb  8:16    [ready ]
->   \_ 0:0:2:1 sdc  8:32    [faulty]
->   \_ 0:0:3:1 sdd  8:48    [ready ]
-> 
-Your path grouping policy is wrong.
-You seem to have forced "multibus" in the multipath.conf wheras
-"group_by_serial" is what you need.
-
-That said, it doesn't explain what you describe below.
-I guess very few people have experienced LVM stacking over multipath
-maps. You may have hit a corner case.
-
-> I tried to copy 100Gb of large files (each of them is about 15Gb) to
-> a /mnt/data through SSH connection from the third server to one of the
-> clustered. Looking at switch statistics, I saw that traffic was indeed
-> balanced over both FC links, but after copying almost 80Gb, without any
-> reason or unusual event on SAN/storage side, /dev/vg/data reported: 
-> 
-> SCSI error : <0 0 1 1> return code = 0x20000
-> end_request: I/O error, dev sdb, sector 401320376
-> end_request: I/O error, dev sdb, sector 401320384
-> Device sda not ready.
-> SCSI error : <0 0 3 1> return code = 0x20000
-> end_request: I/O error, dev sdd, sector 401321168
-> end_request: I/O error, dev sdd, sector 401321176
-> Buffer I/O error on device diapered_dm-2, logical block 37057899
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057900
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057901
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057902
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057903
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057904
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057905
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057906
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057907
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37057908
-> lost page write due to I/O error on diapered_dm-2
-> GFS: fsid=admin:data.0: fatal: I/O error
-> GFS: fsid=admin:data.0:   block = 37057898
-> GFS: fsid=admin:data.0:   function = gfs_dwrite
-> GFS: fsid=admin:data.0:   file = /usr/src/cluster/gfs-kernel/src/gfs/dio.c, line = 651
-> GFS: fsid=admin:data.0:   time = 1106582338
-> GFS: fsid=admin:data.0: about to withdraw from the cluster
-> GFS: fsid=admin:data.0: waiting for outstanding I/O
-> SCSI error : <0 0 1 1> return code = 0x20000
-> Device sdc not ready.
-> GFS: fsid=admin:data.0: warning: assertion "!buffer_busy(bh)" failed
-> GFS: fsid=admin:data.0:   function = gfs_logbh_uninit
-> GFS: fsid=admin:data.0:   file = /usr/src/cluster/gfs-kernel/src/gfs/dio.c, line = 930
-> GFS: fsid=admin:data.0:   time = 1106582351
-> printk: 54 messages suppressed.
-> Buffer I/O error on device diapered_dm-2, logical block 36272387
-> lost page write due to I/O error on diapered_dm-2
-> Buffer I/O error on device diapered_dm-2, logical block 37024703
-> lost page write due to I/O error on diapered_dm-2
-> GFS: fsid=admin:data.0: telling LM to withdraw
-> lock_dlm: withdraw abandoned memory
-> GFS: fsid=admin:data.0: withdrawn
-> printk: 12 messages suppressed.
-> Buffer I/O error on device diapered_dm-2, logical block 37005453
-> lost page write due to I/O error on diapered_dm-2
-> printk: 1036 messages suppressed.
-> Buffer I/O error on device diapered_dm-2, logical block 37006489
-> lost page write due to I/O error on diapered_dm-2
-> printk: 1035 messages suppressed.
-> Buffer I/O error on device diapered_dm-2, logical block 37007525
-> lost page write due to I/O error on diapered_dm-2
-> 
-> while /dev/vg/syslog continued to work as usual (dd-ing /dev/zero to
-> some file worked like a charm). After that error, SCP died, and I
-> couldn't umount nor remount that filesystem. Fenced didn't triggered so
-> I had to reboot the machine in order to make it work again (and I'm
-> using fence_ibmblade which works on another cluster I have).
-> 
+On Mon, Jan 24, 2005 at 08:57:28PM +0100, Lazar Obradovic wrote:
+ 
 > Since both LVs are a part of same VG (and, thus, are using the same
 > physical device seen over multipath), I'd guess the problem is somewhere
 > inside GFS, but the things that keep confusing me are: 
 > 
 > - those SCSI errors that look like multipath errors
-> - name 'diapered_dm-2' which I never saw before
-> - fenced not fencing obviously faulty node
-> 
-> What else do you need to debug this issue?
-> 
-> Once again, sorry for the cross-post... 
-> 
--- 
-christophe varoqui <christophe.varoqui@free.fr>
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+The SCSI errors appear to be the root problem, not GFS.  I don't know what
+multipath might have to do with it.
+
+> - name 'diapered_dm-2' which I never saw before
+
+In the past, GFS would immediately panic the machine when it saw i/o
+errors.  Now it tries to shut down the bad fs instead.  After this happens
+you should be able to unmount the offending fs, leave the cluster and
+reboot the machine cleanly.
+
+> - fenced not fencing obviously faulty node
+
+In your situation, the node is running fine wrt the cluster so there's no
+need to fence it.  GFS is just shutting down a faulty fs (doing this is
+not always very "clean" and can produce a lot of errors/warnings on the
+console.)
+
+Perhaps we could reinstate an option to have gfs panic immediately when it
+sees i/o errors instead of trying to shut down the problem fs.  In this
+case, the panicked node would be "dead" and it would be fenced.
+
+-- 
+Dave Teigland  <teigland@redhat.com>
