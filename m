@@ -1,14 +1,13 @@
-From: Christophe Saout <christophe@saout.de>
-Subject: Re: possible dm-crypt leak over loop
-Date: Thu, 10 Mar 2005 16:21:39 +0100
-Message-ID: <1110468099.16258.7.camel@leto.cs.pocnet.net>
-References: <1110147738.2266.26.camel@boxen>
-	<1110461058.14581.3.camel@leto.cs.pocnet.net>
-	<1110466511.2301.10.camel@boxen>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: panic in dm_pg_init_complete+0x10
+Date: Thu, 10 Mar 2005 16:29:13 +0000
+Message-ID: <20050310162913.GS19392@agk.surrey.redhat.com>
+References: <C2EEB4E538D3DC48BF57F391F422779321A804@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1814903446=="
-In-Reply-To: <1110466511.2301.10.camel@boxen>
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A804@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,76 +17,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alexander Nyberg <alexn@dsv.su.se>
-Cc: dm-crypt@saout.de, device-mapper development <dm-devel@redhat.com>, Steffen Michalke <StMichalke@web.de>
+To: "goggin, edward" <egoggin@emc.com>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Tue, Mar 08, 2005 at 04:23:59PM -0500, goggin, edward wrote:
+> Looks to me like two issues here -- (1) probably should not allow
+> concurrent pg_init i/os for the same multipath and 
 
---===============1814903446==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="=-iFArOP1x0QSkzwOAova9"
+Some statements that the code should be checked against.
 
+Only one pg_init can happen at once.
+  - enforced by pg_init_required only getting set to 1 in one place,
+    then set to 0 when the init is issued.
+  - BUG? it looks possible for __switch_pg to get called 
+    while there's still a pg_init outstanding.
 
---=-iFArOP1x0QSkzwOAova9
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
+Suspend cannot complete until there is no I/O outstanding, including
+any pg_init I/O.
+  - queueing is disabled while suspended
+  - the last I/O through cannot complete with an error until the last 
+    path has failed, which can't happen until the pg_init for its PG
+    has completed.
 
-Am Donnerstag, den 10.03.2005, 15:55 +0100 schrieb Alexander Nyberg:
+multipath_dtr can only be called when there is no I/O in-flight
+  - dm_swap_table checks the device is suspended before calling __unbind
+  - BUG? dm_put only calls pre/post suspend but fails to wait for I/O to clear
 
-> > Can anybody else confirm this?
->=20
-> The original report came from Steffen Michalke (CC'd), but I find it
-> very weird that you can't trigger the lockup. It takes about a second
-> here on a UP non-preempt box to lock up.
-
-Perhaps my machine has too much memory. ;)
-
-> Why I think it's a memory leak is due to the sysrq-Meminfo trace
-> and the call-trace showing=20
-> crypt_alloc_buffer =3D> mempool_alloc =3D> io_schedule
-
-That's normal. For write-outs dm-crypt has to allocate some buffers
-where it can put the encrypted data. mempool_alloc means that it ran out
-of preallocated buffers and waits for some in-flight I/O to finish which
-should free some buffers.
-
-It looks like this is a dm-crypt <-> loop deadlock. The problem with
-loop is that it goes back through the page cache. The loop thread is
-also waiting for memory to actually be able to write out some more
-pages.
-
-So this seems to be a loop bug. Loop is waiting for pages to become free
-to actually be able to write some pages. dm-crypt uses a mempool to
-avoid this deadlock but if the underlying device deadlocks it can't do
-anything about that.
-
-loop does a: alloc_page(GFP_NOIO | __GFP_HIGHMEM);
-
-There is no guarantee that this will succeed. It probably should also
-have some sort of emergency pool.
-
-
---=-iFArOP1x0QSkzwOAova9
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: Dies ist ein digital signierter Nachrichtenteil
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.0 (GNU/Linux)
-
-iD8DBQBCMGYDZCYBcts5dM0RApKdAKCm+Y+3MlimGT0FjBJZeng1739dkACfYMH0
-SZYkgwEzuBmNW4vpOvKnduA=
-=ZWmY
------END PGP SIGNATURE-----
-
---=-iFArOP1x0QSkzwOAova9--
-
-
---===============1814903446==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1814903446==--
+Alasdair
+-- 
+agk@redhat.com
