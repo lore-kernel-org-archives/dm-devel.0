@@ -1,59 +1,88 @@
-From: Jeff Mahoney <jeffm@suse.com>
-Subject: Re: Help tracking down problem --- endless loop in __find_get_block_slow
-Date: Tue, 22 Feb 2005 17:46:55 -0500
-Message-ID: <421BB65F.7040306@suse.com>
-References: <4219BC1A.1060007@zensonic.dk> <20050222011821.2a917859.akpm@osdl.org>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: Panic in multipath's trigger_event function
+Date: Tue, 22 Feb 2005 17:56:25 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A7C3@SRMANNING.eng.emc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <20050222011821.2a917859.akpm@osdl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@osdl.org>
-Cc: "Thomas S. Iversen" <zensonic@zensonic.dk>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed; boundary="----_=_NextPart_000_01C51931.BC2ABB85"
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Cc: 'Alasdair G Kergon' <agk@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+This message is in MIME format. Since your mail reader does not understand
+this format, some or all of this message may not be legible.
 
-Andrew Morton wrote:
-> "Thomas S. Iversen" <zensonic@zensonic.dk> wrote:
-> 
->>But if I do
->>
->> dd if=/dev/zero of=/mnt/testfile count=N, N>6
->>
->> I get into an endless loop in __find_get_block_slow. 
-> 
-> 
-> The only way in which __find_get_block_slow() can loop is if something
-> wrecked the buffer_head ring at page->private: something caused an internal
-> loop via bh->b_this_page.
-> 
-> Are you sure that's where things are hanging?  That it's not stuck on a
-> spinlock?
-> 
-> A sysrq-P trace might help.
+------_=_NextPart_000_01C51931.BC2ABB85
+Content-Type: text/plain
 
-I've observed similar effects without DM involved at all. I've been able
-to reproduce using subfs (it brings out umount races nicely) on kernels
-from 2.6.5 to 2.6.11-rc4, it's platform and device independent.
+Trigger_event() has paniced maybe 3 or 4 times now, with one
+simple dd process running while serially rebooting both
+(active and passive) service processors of a two service
+processor EMC CLARiion as part of a non-destructive
+upgrade (NDU) of ucode.
 
-In my experience, the loop is actually outside of
-__find_get_block_slow(), in __getblk_slow(). I've been using xmon to
-interrupt the kernel, and the results vary but are all rooted in the
-for(;;) loop in __getblk_slow. It appears as though grow_buffers is
-finding/creating the page, but then __find_get_block can't locate the
-buffer it needs.
+I think the problem is that when the old table/map for a multipath
+mapped device is swapped for a new one by dm_swap_table(), it
+is possible that the trigger_event work_struct field of the multipath
+structure for the old map is actively queued to a cpu work queue
+when table_destroy() sets about to de-allocate the memory for the
+old table, the dm_target, and calls the multipath destructor
+multipath_dtr() to de-allocate the multipath structure memory.  If
+any of these things happen before the work queue entry is serviced,
+trigger_event() will refer to stale dm_table, dm_target, or multipath
+structure memory.  This problem does not happen with the 
+process_queued_ios() event callback because these entries are
+flushed and waited for by dm_suspend() before dm_resume() calls
+dm_swap_table().
 
-- -Jeff
+In this case, the panic occurs when trigger_event() de-references
+the ti struct dm_target field of the old multipath structure because
+the dm_target structure memory for the multipath target was
+de-allocated via vfree() and the reference to the ti field of the
+multipath structure is to unmapped kernel memory.
 
-- --
-Jeff Mahoney
-SuSE Labs
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.5 (GNU/Linux)
+Several solutions come to mind, namely (1) using reference counts
+for the multipath structure and (2) flushing the default work queue
+in the multipath destructor.  I've included a patch for the latter in this
+email.
 
-iD8DBQFCG7ZeLPWxlyuTD7IRAixHAJsHORHEMfFtTIozqwUOkk9WGFxCggCgiSfn
-V3kCyFn/X87Mw4laVsJLUp4=
-=YNSw
------END PGP SIGNATURE-----
+ <<dm-mpath c.patch>> 
+
+
+------_=_NextPart_000_01C51931.BC2ABB85
+Content-Type: application/octet-stream;
+	name="dm-mpath c.patch"
+Content-Disposition: attachment;
+	filename="dm-mpath c.patch"
+
+*** dm-mpath.c.orig	2005-02-22 10:11:47.000000000 -0500
+--- dm-mpath.c	2005-02-22 12:03:15.900426560 -0500
+***************
+*** 747,752 ****
+--- 747,754 ----
+  static void multipath_dtr(struct dm_target *ti)
+  {
+  	struct multipath *m = (struct multipath *) ti->private;
++ 
++ 	flush_scheduled_work();
+  	free_multipath(m);
+  }
+  
+
+------_=_NextPart_000_01C51931.BC2ABB85
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_000_01C51931.BC2ABB85--
