@@ -1,11 +1,16 @@
-From: Arthur Bergman <sky@nanisky.com>
-Subject: xen on multipath
-Date: Sun, 30 Jan 2005 22:23:07 +0000
-Message-ID: <844EF835-730D-11D9-8EBB-000A95A2734C@nanisky.com>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: Re: dm-mon fails to load raid1 target
+Date: Mon, 31 Jan 2005 07:47:10 -0600
+Message-ID: <200501310747.10552.kevcorry@us.ibm.com>
+References: <62b0912f05013009209d8d8f0@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v619)
-Content-Type: multipart/mixed; boundary="===============0786187931=="
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <62b0912f05013009209d8d8f0@mail.gmail.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,101 +20,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, Molle Bestefich <molle.bestefich@gmail.com>
+Cc: gerte@nieuwenborg.nl
 List-Id: dm-devel.ids
 
+On Sunday 30 January 2005 11:20 am, Molle Bestefich wrote:
+> Hi
+>
+> I can't get dm_mon to load the raid1 target.
 
---===============0786187931==
-Content-Transfer-Encoding: 7bit
-Content-Type: multipart/signed; protocol="application/pgp-signature";
-	micalg=pgp-sha1; boundary="Apple-Mail-20--32431233"
+Do you mean "dm_mod", which is the core of the DM driver?
 
+> The syslog says (timestamps removed):
+> livecd device-mapper: : unknown target type
+> livecd
+> livecd device-mapper: error adding target to table
 
---Apple-Mail-20--32431233
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+This means a user-space program tried to load a device-table for a target-type 
+that doesn't exist or couldn't be loaded.
 
-Very cool, the 2.6.10-udm1 patch applies cleanly on the xen modified 
-linux tree.
+> Seems that there's a completely blank syslog message (reproducible),
+> and a surplus colon in the first message.  Might be related to the
+> dmraid tool.  Anyway.
+>
+> I'm booting with a Gentoo CD [gen2dmraid 0.99 - kernel: 2.6.9, driver
+> 4.1.0, library 1.00.17-ioctl].
+>
+> The /lib/modules/.../raid1.ko file is present.
 
-xenone-sky:~# uname -a
-Linux xenone-sky 2.6.10-xenU #1 Sun Jan 30 11:29:00 GMT 2005 i686 
-GNU/Linux
-xenone-sky:~# mount
-/dev/hda1 on / type ext3 (rw,errors=remount-ro)
+That is the module for MD/Software-RAID RAID-1, not the Device-Mapper 
+mirroring module. They are completely different drivers that just happen to 
+be in the same directory in the kernel source and module trees.
 
-xenone:/etc/xen# uname -a
-Linux xenone 2.6.10-xen0xen0multipath #4 Sun Jan 30 14:38:14 GMT 2005 
-i686 GNU/Linux
-xenone:/etc/xen# xm list
-Name              Id  Mem(MB)  CPU  State  Time(s)  Console
-Domain-0           0      123    0  r----    114.5
-sky                4      127    1  -b---      6.5    9604
-xenone:/etc/xen# xm vbd-list 4
-(vbd (idx 0) (vdev 769) (device 64769) (mode w) (dev hda1) (uname 
-phy:xen-a/xen-sky) (node xen-a/xen-sky) (index 0))
-xenone:/etc/xen# lvscan
-   ACTIVE            '/dev/xen-a/xen-sky' [10.00 GB] inherit
-xenone:/etc/xen# pvscan
-   PV /dev/No   VG xen-a   lvm2 [20.00 GB / 10.00 GB free]
-xenone:/etc# multipath -S -v 3 3600507680183001b0800000000000029
-create: 3600507680183001b0800000000000029
-[size=20 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [first]
-   \_ 0:0:0:0 sda  8:0     [ready ]
-   \_ 0:0:2:0 sdc  8:32    [ready ]
-   \_ 1:0:2:0 sdg  8:96    [ready ]
-   \_ 1:0:3:0 sdh  8:112   [ready ]
-\_ round-robin 0
-   \_ 0:0:1:0 sdb  8:16    [ready ]
-   \_ 0:0:3:0 sdd  8:48    [ready ]
-   \_ 1:0:0:0 sde  8:64    [ready ]
-   \_ 1:0:1:0 sdf  8:80    [ready ]
+> I tried modprobe raid1 (fine), this didn't add the mirror target to
+> "dmsetup targets".
+> Tried unloading dm-mon, reloading raid1, loading dm-mon, still no mirror
+> target.
+>
+> Any hints on what is going wrong / what I am doing wrong?
 
+The Device-Mapper mirroring target is called "dm-mirror". Check your kernel 
+configuration and make sure you have CONFIG_DM_MIRROR set to "y" or "m". If 
+necessary, you may need to rebuild your kernel to enable it. Once it's 
+enabled, run "dmsetup targets" and look for a "mirror" entry. If you've 
+compiled DM mirroring as a module, try "modprobe dm-mirror", and then run 
+"dmsetup targets" again.
 
-Woooo.... so the linux inside xen as no idea it is being multipathed, 
-the hypervisor does all the good work.
-
-Now going to try and migrate a xen node from one multipath hypervisor 
-to another, and after that, try and get the xen box itself boot of the 
-SAN :-)
-
-Keep up the good work.
-
-Cheers
-Arthur
-
------
-CTO @ Fotango Ltd
-+447834716919
-http://www.fotango.com/
-
---Apple-Mail-20--32431233
-content-type: application/pgp-signature; x-mac-type=70674453;
-	name=PGP.sig
-content-description: This is a digitally signed message part
-content-disposition: inline; filename=PGP.sig
-content-transfer-encoding: 7bit
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.4 (Darwin)
-
-iD8DBQFB/V5b3rfT7xAQCIQRAn7DAJ9azYdc4o236e3O5abzN6F1qBUHnACfXOCP
-xwC8/uUFX17rzZLaOXyvGug=
-=7O6X
------END PGP SIGNATURE-----
-
---Apple-Mail-20--32431233--
-
-
---===============0786187931==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+-- 
+Kevin Corry
+kevcorry@us.ibm.com
+http://evms.sourceforge.net/
 
 --
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
---===============0786187931==--
