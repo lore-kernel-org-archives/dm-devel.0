@@ -1,7 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: multipath deadlock
-Date: Tue, 8 Mar 2005 17:05:28 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A806@SRMANNING.eng.emc.com>
+Subject: panic in dm_pg_init_complete+0x10 (2nd post)
+Date: Tue, 8 Mar 2005 21:15:16 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A809@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -17,35 +17,102 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Looks to be deadlock potential between two processes and the lock
-ordering of a mapped device inode's __I_LOCK state bit and the
-mapped device's r/w semaphore lock.  I think the potential for such
-deadlock exists anytime the dm.c code calls bdget_disk() or bdget()
-in order to lock the block device inode of the mapped device for which
-it already has __exclusive__ write ownership of the r/w semaphore.  This
-deadlock potential exists due to the fact that the page writeback code
-can call dm_request() to acquire the mapped device's lock for reading
-while owning the mapped device's __I_LOCK state bit.
+Adding the patch contents this time for the panic in
+dm_pg_init_complete+0x10.
+The patch is based on linux-2.6.11-rc3-udm2.
 
-This appears to happen in the call to __unlock_fs() from dm_suspend() and
-in the call to __set_size() from __bind() from dm_swap_table() in dm.c.
-It is not clear why dm_suspend() acquires the mapped device's lock for
-reading while calling __lock_fs() yet acquires the same lock for writing
-while calling __unlock_fs().
-
-I've got an actual deadlock between multipath(8) trying to swap in a new
-table and a dd(1) performing page writeback.
-
-Multipath owns the multipath mapped device r/w semaphore lock for writing
-obtained in dm_swap_table() and is blocked trying to obtain the __I_LOCK
-inode state bit for the mapped device in __set_size() called from __bind()
-while
-trying to set the inode size of the mapped device as part of binding a new
-mapping table to the device.
-
-The dd(1) owns the __I_LOCK state bit of the mapped device's inode from
-__sync_single_inode() as part of page writeback and is trying to submit
-an i/o to the mapped device but is blocked in dm_request() trying to obtain
-the lock r/w semaphore of the mapped device for reading.
-
-No 
+*** drivers/md/dm-mpath.c.orig	2005-03-07 16:55:50.000000000 -0500
+--- drivers/md/dm-mpath.c	2005-03-08 05:36:55.000000000 -0500
+***************
+*** 63,68 ****
+--- 63,70 ----
+  	unsigned nr_priority_groups;
+  	struct list_head priority_groups;
+  	unsigned pg_init_required;	/* pg_init needs calling? */
++ 	unsigned pg_init_in_progress;	/* only 1 outstanding */
++ 	wait_queue_head_t pg_init_wait;
+  
+  	unsigned nr_valid_paths;	/* Total number of usable paths */
+  	struct pgpath *current_pgpath;
+***************
+*** 177,182 ****
+--- 179,185 ----
+  		m->queue_io = 1;
+  		INIT_WORK(&m->process_queued_ios, process_queued_ios, m);
+  		INIT_WORK(&m->trigger_event, trigger_event, m);
++ 		init_waitqueue_head(&m->pg_init_wait);
+  		m->mpio_pool = mempool_create(MIN_IOS, mempool_alloc_slab,
+  					      mempool_free_slab,
+_mpio_cache);
+  		if (!m->mpio_pool) {
+***************
+*** 394,406 ****
+  		must_queue = 1;
+  
+  	init_required = m->pg_init_required;
+! 	if (init_required)
+  		m->pg_init_required = 0;
+! 
+! 	spin_unlock_irqrestore(&m->lock, flags);
+! 
+! 	if (init_required)
+! 		hwh->type->pg_init(hwh, pgpath->pg->bypassed,
+&pgpath->path);
+  
+  	if (!must_queue)
+  		dispatch_queued_ios(m);
+--- 397,414 ----
+  		must_queue = 1;
+  
+  	init_required = m->pg_init_required;
+! 	if (init_required) {
+  		m->pg_init_required = 0;
+! 		if (!m->pg_init_in_progress) {
+! 			m->pg_init_in_progress = 1;
+! 			spin_unlock_irqrestore(&m->lock, flags);
+! 			hwh->type->pg_init(hwh, pgpath->pg->bypassed,
+&pgpath->path);
+! 		}
+! 		else
+! 			spin_unlock_irqrestore(&m->lock, flags);
+! 	}
+! 	else
+! 		spin_unlock_irqrestore(&m->lock, flags);
+  
+  	if (!must_queue)
+  		dispatch_queued_ios(m);
+***************
+*** 751,756 ****
+--- 759,779 ----
+  static void multipath_dtr(struct dm_target *ti)
+  {
+  	struct multipath *m = (struct multipath *) ti->private;
++ 	DECLARE_WAITQUEUE(wait, current);
++ 	unsigned long flags;
++ 
++ 	 // Wait for any outstanding pg_init request to complete.
++ 	spin_lock_irqsave(&m->lock, flags);
++ 	add_wait_queue(&m->pg_init_wait, &wait);
++ 	while (m->pg_init_in_progress) {
++ 		spin_unlock_irqrestore(&m->lock, flags);
++ 		io_schedule();
++ 		spin_lock_irqsave(&m->lock, flags);
++ 	}
++ 	spin_unlock_irqrestore(&m->lock, flags);
++ 	set_current_state(TASK_RUNNING);
++ 	remove_wait_queue(&m->pg_init_wait, &wait);
++ 
+  	free_multipath(m);
+  }
+  
+***************
+*** 968,973 ****
+--- 991,998 ----
+  		m->current_pgpath = NULL;
+  		m->current_pg = NULL;
+  	}
++ 	m->pg_init_in_progress = 0;
++ 	wake_up(&m->pg_init_wait);
+  	schedule_work(&m->process_queued_ios);
+  	spin_unlock_irqrestore(&m->lock, flags);
+  }
