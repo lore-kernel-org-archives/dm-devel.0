@@ -1,16 +1,13 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: Multipath target does not shift block offset?
-Date: Thu, 10 Feb 2005 13:23:30 -0600
-Message-ID: <200502101323.30143.kevcorry@us.ibm.com>
-References: <420AEAE4.8090506@anu.edu.au>
-	<20050210171832.GC14093@agk.surrey.redhat.com>
+From: "Caushik, Ramesh" <ramesh.caushik@intel.com>
+Subject: RE: Some issues noticed in my testing.
+Date: Thu, 10 Feb 2005 11:24:13 -0800
+Message-ID: <EA4DC661A6353747A2E5C0DE8792DDDE07C16E28@orsmsx404.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-In-Reply-To: <20050210171832.GC14093@agk.surrey.redhat.com>
-Content-Disposition: inline
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,109 +17,183 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thursday 10 February 2005 11:18 am, Alasdair G Kergon wrote:
-> On Thu, Feb 10, 2005 at 04:02:28PM +1100, Tim Burgess wrote:
-> > However, dm appears to be trying
-> > to map the range 286749488-573498975 of the dm device to the same
-> > offsets in the sde/sdm device.
-> >
-> > Is this what was intended?
->
-> No.
->
-> In dm-mpath.c try adding to multipath_map() at the top of the function:
->
->   bio->bi_sector = (bio->bi_sector - ti->begin);
+Sorry for the delay in the response. I am resending the patch. BTW the
+code snippet that you have suggested below does not seem to take care of
+trailing whitespaces in either the vendor or product strings failing the
+match in find_hw. My suggestion is to chomp off trailing ws before doing
+the strcmp.=20
 
-Actually, now that you point this out, I think this responsibility should
-really be handled by the core driver's I/O path instead of each target
-module. There's really no reason for the target modules to care or even
-know about the presence of multiple targets within a device table. We can
-move this line into the core's __map_bio() and get rid of a lot of
-duplicate code. Here's a patch to demonstrate what I'm talking about.
-
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://evms.sourceforge.net/
-
-
---- diff/drivers/md/dm-crypt.c 2005-02-10 13:15:17.521210768 -0600
-+++ source/drivers/md/dm-crypt.c 2005-02-10 13:05:48.847662288 -0600
-@@ -808,7 +808,7 @@
-  struct convert_context ctx;
-  struct bio *clone;
-  unsigned int remaining = bio->bi_size;
-- sector_t sector = bio->bi_sector - ti->begin;
-+ sector_t sector = bio->bi_sector;
-  unsigned int bvec_idx = 0;
- 
-  io->target = ti;
---- diff/drivers/md/dm-flakey.c 2005-02-10 13:15:17.471218368 -0600
-+++ source/drivers/md/dm-flakey.c 2005-02-10 13:06:25.068155936 -0600
-@@ -97,7 +97,7 @@
- 
-  else {
-   bio->bi_bdev = f->dev->bdev;
--  bio->bi_sector = f->start + (bio->bi_sector - ti->begin);
-+  bio->bi_sector += f->start;
-  }
- 
-  return 1;
---- diff/drivers/md/dm-linear.c 2005-02-10 13:15:17.557205296 -0600
-+++ source/drivers/md/dm-linear.c 2005-02-10 13:07:53.098773248 -0600
-@@ -71,7 +71,7 @@
-  struct linear_c *lc = (struct linear_c *) ti->private;
- 
-  bio->bi_bdev = lc->dev->bdev;
-- bio->bi_sector = lc->start + (bio->bi_sector - ti->begin);
-+ bio->bi_sector += lc->start;
- 
-  return 1;
- }
---- diff/drivers/md/dm-raid1.c 2005-02-10 13:15:17.540207880 -0600
-+++ source/drivers/md/dm-raid1.c 2005-02-10 13:09:39.481600600 -0600
-@@ -687,7 +687,7 @@
- static void map_bio(struct mirror_set *ms, struct mirror *m, struct bio *bio)
+diff -u -r /home/rcaushik/multipath-tools-0.4.2/libmultipath/hwtable.c
+multipath-tools-0.4.2/libmultipath/hwtable.c
+--- /home/rcaushik/multipath-tools-0.4.2/libmultipath/hwtable.c
+2005-01-23 14:48:05.000000000 -0800
++++ multipath-tools-0.4.2/libmultipath/hwtable.c	2005-02-03
+19:07:39.000000000 -0800
+@@ -9,6 +9,8 @@
+ #include "../libcheckers/checkers.h"
+ #include "../multipath/pgpolicies.h"
+=20
++int  strcmp_chomp(char *str1, char *str2);
++
+ extern struct hwentry *
+ find_hw (vector hwtable, char * vendor, char * product)
  {
-  bio->bi_bdev = m->dev->bdev;
-- bio->bi_sector = m->offset + (bio->bi_sector - ms->ti->begin);
-+ bio->bi_sector += m->offset;
+@@ -17,9 +19,9 @@
+=20
+ 	vector_foreach_slot (hwtable, hwe, i)
+ 		if (hwe->vendor && hwe->product &&
+-		    strcmp(hwe->vendor, vendor) =3D=3D 0 &&
++		    strcmp_chomp(hwe->vendor, vendor) =3D=3D 0 &&
+ 		    (hwe->product[0] =3D=3D '*' ||
+-			strcmp(hwe->product, product) =3D=3D 0))
++			strcmp_chomp(hwe->product, product) =3D=3D 0))
+ 			return hwe;
+ 	return NULL;
  }
- 
- static void do_reads(struct mirror_set *ms, struct bio_list *reads)
---- diff/drivers/md/dm-stripe.c 2005-02-10 13:15:17.492215176 -0600
-+++ source/drivers/md/dm-stripe.c 2005-02-10 13:13:50.842387952 -0600
-@@ -172,13 +172,12 @@
+@@ -56,4 +58,19 @@
+ 	ADDHWE_EXT(hw, "IBM", "3542", GROUP_BY_SERIAL, DEFAULT_GETUID,
+ 		   NULL, "0", "0", "tur");
+ }
++int  strcmp_chomp(char *str1, char *str2)
++{
++	int i;
++	char s1[PARAMS_SIZE],s2[PARAMS_SIZE];
+=20
++        if(!str1 || !str2)
++		return 1;
++	strncpy(s1,str1,PARAMS_SIZE);
++	strncpy(s2,str2,PARAMS_SIZE);
++	=09
++	for(i=3Dstrlen(s1)-1;i >=3D0 && isspace(s1[i]); --i) ;
++	s1[++i]=3D'\0';
++	for(i=3Dstrlen(s2)-1;i >=3D0 && isspace(s2[i]); --i) ;
++	s2[++i]=3D'\0';
++	return(strcmp(s1,s2));
++}
+
+diff -u -r /home/rcaushik/multipath-tools-0.4.2/multipath/main.c
+multipath-tools-0.4.2/multipath/main.c
+--- /home/rcaushik/multipath-tools-0.4.2/multipath/main.c
+2005-01-23 14:48:05.000000000 -0800
++++ multipath-tools-0.4.2/multipath/main.c	2005-02-07
+11:34:48.000000000 -0800
+@@ -402,7 +402,7 @@
+ 		mpp->mpe =3D find_mp(pp1->wwid);
+ 		mpp->hwe =3D find_hw(conf->hwtable,
+ 				   pp1->vendor_id, pp1->product_id);
+-
++		select_alias(mpp);
+ 		mpp->paths =3D vector_alloc();
+ 		vector_alloc_slot (mpp->paths);
+ 		vector_set_slot (mpp->paths, pp1);
+@@ -669,7 +669,7 @@
+ 			}
+ 			if (found) {
+ 				found =3D 0;
+-				break;
++				/* break; */
+ 			} else
+ 				return 1;
+ 		}
+  =20
+Regards,
+
+Ramesh.
+
+
+-----Original Message-----
+From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
+Sent: Tuesday, February 08, 2005 1:56 PM
+To: Caushik, Ramesh
+Cc: device-mapper development
+Subject: Re: Some issues noticed in my testing.
+
+Caushik, Ramesh wrote:
+
+>Hi Christophe,
+> =20
+>
+Hello,
+
+>I noticed a failure in multipath-tools-0.4.2 when executing the
+>following scenario.
+>
+>i) Run multipathd & multipath with 1 of 2 paths in the system
+available.
+>ii)activate the other path.
+>iii) run multipath again.
+>
+>Expect the newly inserted path to be incorporated into the original
+path
+>groups. Does not happen. Traced it to a problem in the pgcmp2 function.
+>Patch below should fix it.
+>
+I can't see this patch attached.
+Can you resend it. (In diff -u format if possible)
+
+> Also in step iii) above running multipath
+>with a parameter (conf->dev) will not include the additional path into
+>the particular mp because the select_alias function not called in the
+>coalesce_paths function so the strncmp(mpp->alias,conf->dev,....) in
+>main will always fail. Patch below should fix it.=20
+>
+> =20
+>
+Mr Goggin, EMC, already spotted this and a patch is present in my tree.=20
+Thanks.
+
+>Also while testing with a modified scsi_debug driver (to expose
+multiple
+>paths to the same device) noticed that sysfs vendor name for the
+>scsi_debug device is "Linux   " which fails to match with a "Linux"
+>vendor name in the conf name and so device specific settings are not
+>picked up. Think it is a good idea to chomp off trailing whitespace
+from
+>vendor and product names. See patches below.  Regards,
+>
+> =20
+>
+Can you tell me if the following fits your needs here ?
+
+--- multipath-tools-0.4.2/libmultipath/hwtable.c        2005-01-23=20
+14:48:05.830203168 -0800
++++ multipath-tools-0.4.3-pre1/libmultipath/hwtable.c   2005-02-08=20
+13:42:57.203660896 -0800
+@@ -12,14 +12,18 @@
+ extern struct hwentry *
+ find_hw (vector hwtable, char * vendor, char * product)
  {
-  struct stripe_c *sc = (struct stripe_c *) ti->private;
- 
-- sector_t offset = bio->bi_sector - ti->begin;
-- sector_t chunk = offset >> sc->chunk_shift;
-+ sector_t chunk = bio->bi_sector >> sc->chunk_shift;
-  uint32_t stripe = do_div(chunk, sc->stripes);
- 
-  bio->bi_bdev = sc->stripe[stripe].dev->bdev;
-  bio->bi_sector = sc->stripe[stripe].physical_start +
--     (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
-+     (chunk << sc->chunk_shift) + (bio->bi_sector & sc->chunk_mask);
-  return 1;
+-       int i;
++       int i, vendor_len, product_len;
+        struct hwentry * hwe;
+
++       vendor_len =3D strlen(vendor);
++       product_len =3D strlen(product);
++
+        vector_foreach_slot (hwtable, hwe, i)
+-               if (hwe->vendor && hwe->product &&
+-                   strcmp(hwe->vendor, vendor) =3D=3D 0 &&
++               if (hwe->vendor && vendor_len =3D=3D strlen(hwe->vendor) =
+&&
++                   strncmp(hwe->vendor, vendor, vendor_len) =3D=3D 0 &&
++                   hwe->product && product_len =3D=3D strlen(hwe->produc=
+t)
+&&
+                    (hwe->product[0] =3D=3D '*' ||
+-                       strcmp(hwe->product, product) =3D=3D 0))
++                    strncmp(hwe->product, product, product_len) =3D=3D 0=
+))
+                        return hwe;
+        return NULL;
  }
- 
---- diff/drivers/md/dm.c 2005-02-10 13:15:17.508212744 -0600
-+++ source/drivers/md/dm.c 2005-02-10 13:04:25.069398520 -0600
-@@ -366,6 +366,7 @@
-   * this io.
-   */
-  atomic_inc(&tio->io->io_count);
-+ clone->bi_sector -= ti->begin;
-  r = ti->type->map(ti, clone, &tio->info);
-  if (r > 0)
-   /* the bio has been remapped so dispatch it */
+
+Regards,
+cvaroqui
+
 
 --
 dm-devel mailing list
