@@ -1,12 +1,14 @@
-From: Tom Parker <palfrey@tevp.net>
-Subject: DM Performance
-Date: Thu, 07 Apr 2005 14:29:20 +0200
-Message-ID: <425527A0.4040800@tevp.net>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: DM Performance
+Date: Thu, 7 Apr 2005 13:43:28 +0100
+Message-ID: <20050407124328.GP9049@agk.surrey.redhat.com>
+References: <425527A0.4040800@tevp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <425527A0.4040800@tevp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,23 +18,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I'm trying to find out whether there's been any work regarding device mapper 
-with very large mapping tables. Specifically,
+On Thu, Apr 07, 2005 at 02:29:20PM +0200, Tom Parker wrote:
+> 1) Is there any limit on the size of a mapping table? Can hand over a table 
+> with 30,000+ entries and expect DM to still work?
 
-1) Is there any limit on the size of a mapping table? Can hand over a table with 
-30,000+ entries and expect DM to still work?
-2) Is there any significant performance degredation with large tables?
-3) As I understand it, DM stores the mapping tables itself somehow, in a way 
-that is persistant across reboots. I'm not certain about that, but if that's so, 
-wouldn't it also create limits on table sizes? If not, are there any suggested 
-ways to make complex/large tables persistant?
+Yes, but you might hit hard-coded libdevmapper limit.
 
-Thanks,
+> 2) Is there any significant performance degredation with large tables?
 
-Tom Parker
+Should not be.
+
+> 3) As I understand it, DM stores the mapping tables itself somehow, in a 
+> way that is persistant across reboots. 
+
+No, that's one thing lvm2, multipath-tools etc. are for.
+
+Alasdair
 -- 
-palfrey@tevp.net - http://tevp.net
-Illegitimus non carborundum
+agk@redhat.com
