@@ -1,15 +1,14 @@
-From: Mike Christie <mikenc@us.ibm.com>
-Subject: Re: pre8
-Date: Thu, 07 Apr 2005 00:30:04 -0700
-Message-ID: <4254E17C.1030900@us.ibm.com>
-References: <20050405213223.GJ9049@agk.surrey.redhat.com>	<20050406063240.GC12408@averon.dyndns.org>	<4254082E.1010101@us.ibm.com>
-	<1112812815.8118.156.camel@zezette>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [PATCH] self-contained "kpartx kicker"
+Date: Thu, 7 Apr 2005 10:15:08 +0200
+Message-ID: <20050407081508.GA2617@averon.dyndns.org>
+References: <20050406.211615.74755485.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1112812815.8118.156.camel@zezette>
+Content-Disposition: inline
+In-Reply-To: <20050406.211615.74755485.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +21,37 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-christophe varoqui wrote:
-> On mer, 2005-04-06 at 09:02 -0700, Mike Christie wrote:
+On Wed, Apr 06, 2005 at 09:16:15PM -0400, k-ueda@ct.jp.nec.com wrote:
+> Hello,
 > 
->>Christophe Varoqui wrote:
->>
->>>On Tue, Apr 05, 2005 at 10:32:23PM +0100, Alasdair G Kergon wrote:
->>>
->>>
->>>>I appear to have almost succeeded in squeezing 0.4.4-pre8 into 
->>>>RHEL4 U1, but I doubt I'll be allowed any more updates now except 
->>>>for severe bugs.
->>>>
->>>
->>>Just to let you you know what I think is still needed before 0.4.4 :
->>>
->>>o memory allocation error paths audit (mostly done in pre9)
->>
->>The pathcheckers use sgio, right? The block layer sg io code does some 
->>allocations with GFP_KERNEL (bio_copy_user and bio_map_user for 
->>example), so if you are relying on that path for failback I think you 
->>will be in trouble.
->>
+> I think that self-contained "kpartx kicker" which doesn't require
+> shell is needed for / on dm-multipath.
+> The attached patch makes kpartx works like /etc/dev.d/block/multipath.dev
+> if kpartx is called as "kpartx.dev".
+> The patch is for multipath-tools-0.4.4-pre8.
 > 
-> Indeed.
-> Do you have suggestions to work around this issue ?
+> Any comments are welcome.
 > 
+> 
+> Background
+> ----------
+> If you have / on a partition on dm-multipath device, kpartx has to
+> be launched on the initramfs.
+> /etc/dev.d/block/multipath.dev does it over hotplug event, but
+> multipath.dev is shell script.
+> 
+> In the initramfs of Fedora / RedHat, /bin/sh and any libraries aren't
+> included.  I feel it is their policy and I think it isn't recommended
+> to run shell scritp on the initramfs of Fedora / RedHat.
+> 
+It's a nice to have feature, but I don't really understand the reasons you present :
+kpartx needs running only after multipath, if multipath is execed from initrd why bother doing kpartx in initramfs ?
 
-For the bio allocation couldn't they just be made to do atomic 
-allocations or ones that wait but do not cause IO (__GFP_WAIT/GFP_NOIO?)?
+Either we need to do the same "hotplug mode" in multipath too, or nothing.
 
-The other allocations could be made to not use GFP_KERNEL too, but they 
-of course do not have mempools like the bios so there would still be 
-that problem. At least we are not going to block on a write to the same 
-disk we are trying to failback though.
+I guess the former brings more freedom to distributors as they can choose how they want to run, and it is overall good for performance and memory utilisation.
 
-Instead, what if the daemon that drives the path testing stays in the 
-kernel, but the component that sends the command was in a dm-multipath 
-module? We would never need more than one command per queue for testing 
-outstanding, so if there was a path testing handler in the kernel the 
-daemon would instruct that handler to send off its command. The testing 
-handler would just have a command and other resources preallocated or 
-use the kernel's preallocated resources, like using blk_get_request 
-which uses the queue's mempool, when it could. And then it would just 
-insert the command like the hw_handlers do - the preallocation is like 
-the hw_handlers too. Maybe at that point though people would just 
-consider putting the whole thing in the kernel since my idea seems like 
-a hack to bypass the sg io paths instead of fixing them (or maybe the sg 
-io paths were not supposed to be used for failback and failover?).
+Care to do the multipath part ?
 
-For iscsi I had begun to make a tester that just writes to a transport 
-class sysfs file (another allocation :) I know, but it does not have to 
-be sysfs - it is just what everyone happened to be using at the time), 
-which in turn instructs the driver to send a iscsi ping. This is similar 
-to above.
-
-
-> Regards,
+regards,
+cvaroqui
