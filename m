@@ -1,17 +1,15 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: curious why waitevent sets event_nr field of
-	event_thread struct from kernel every time.
-Date: Fri, 8 Apr 2005 09:18:38 +0200
-Message-ID: <20050408071838.GA9350@averon.dyndns.org>
-References: <C2EEB4E538D3DC48BF57F391F422779321A883@SRMANNING.eng.emc.com>
-	<1112135471.10635.41.camel@zezette>
-	<1112168002.8549.7.camel@mylaptop>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: A better solution than "md_component_detection = 1"
+Date: Sun, 10 Apr 2005 19:29:31 +0200
+Message-ID: <20050410172931.GF12752@marowsky-bree.de>
+References: <000001c5136d$3b3502a0$11051aac@pcp41116>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1112168002.8549.7.camel@mylaptop>
+In-Reply-To: <000001c5136d$3b3502a0$11051aac@pcp41116>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +19,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, gregkh@suse.de
+Cc: hare@suse.de
 List-Id: dm-devel.ids
 
-On Tue, Mar 29, 2005 at 11:33:22PM -0800, Dmitry Yusupov wrote:
-> On Wed, 2005-03-30 at 00:31 +0200, christophe varoqui wrote:
-> > On mar, 2005-03-29 at 17:15 -0500, goggin, edward wrote:
-> > > The multipathd from 0.4.4-pre4 has died a 3 more times.
-> > > I am still not sure what's up here.
-> > > 
-> > Certainly in the logger code, which is very fresh and hard to debug.
-> > Help appreciated here, as my brain kind of melted during the
-> > code-give-birth :/
-> 
-> btw, thanks for the logger. I think it could be useful outside of dm-
-> devel as well.
-> 
-> I'll try to find some time to adopt your logger for open-iscsi project.
-> probably next week.
-> 
-By the way, I don't know if it's a problem in open-iscsi or IET (or not even a problem), but an admin is currently allowed to --login multiple time on the same record. The kernel allocates disks, but really doesn't like it when one begins using them.
+On 2005-02-15T20:17:10, shahid shaikh <shahid.shaikh@patni.com> wrote:
 
-Regards,
-cvaroqui
+Sorry about this late reply, but I just stumbled across this post.
+
+To recap, the issue is that we want to prevent LVM2/EVMS2 etc from
+scanning (and using!) the raw physical devices if those are already
+claimed/used by multipath.
+
+LVM2 has a special handling for md_component_detection already; what I
+want to propose in the following is a bit more general, and I've
+discussed it with Hannes before.
+
+Problem: A general solution for finding out whether another component is
+using the device we're looking at.
+
+Proposed solution: Introduce sub-devices into the sysfs tree. (And,
+automatically, backlink those to parent devices, but that's just so the
+tree can be traversed in any order.)
+
+For example, /sys/block/sda would have a sub/ directory with "dm-0" in
+there, pointing at /sys/block/dm-0 (surprise). The
+/sys/block/dm-0/parent/sd{a,b} entries would do a very surprising
+thing.
+
+This would also allow us to handle partitions in DM better: as all
+linear mappings on top of /dev/dm-0 would show up in block/dm-0/sub/ and
+vice versa.
+
+md could work the same: block/sys/md0/parent/ would list all the devices
+(or partitions) which it consists of.
+
+This very simple(?) change would make a number of things much easier to
+figure out.
+
+
+Caveats:
+
+- This obviously only works if the devices are already active, not if
+  the specific user is offline; if LVM2 scans before multipath-tools has
+  worked its magic, it won't work.=20
+ =20
+  (But then, multipath-tools can figure out that there's already someone
+  else using the raw physical device and not mess with it! Woho, world
+  saved!)
+
+- This ONLY exports very rudimentary hierarchical information; it won't
+  tell you what the device is used for or how. However, that information
+  alone would be very helpful already.
+ =20
+
+Greg, Alasdair? List?
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
