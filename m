@@ -1,15 +1,15 @@
-From: Jens Axboe <axboe@suse.de>
-Subject: Re: reducing path test delays
-Date: Mon, 11 Apr 2005 08:43:08 +0200
-Message-ID: <20050411064308.GX22988@suse.de>
-References: <C2EEB4E538D3DC48BF57F391F422779321A8AB@SRMANNING.eng.emc.com>
-	<20050410192525.GO12752@marowsky-bree.de>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: [PATCH] trivial fix to dm-emc.c
+Date: Mon, 11 Apr 2005 10:43:18 +0200
+Message-ID: <20050411084318.GZ12752@marowsky-bree.de>
+References: <20050303215621.GA25051@osdl.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050410192525.GO12752@marowsky-bree.de>
+In-Reply-To: <20050303215621.GA25051@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +19,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Lars Marowsky-Bree <lmb@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, 'Christophe Varoqui' <christophe.varoqui@free.fr>, 'Alasdair G Kergon' <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Apr 10 2005, Lars Marowsky-Bree wrote:
-> On 2005-04-04T15:48:36, "goggin, edward" <egoggin@emc.com> wrote:
-> 
-> > In the interest of reducing delay time when testing either good or
-> > failed paths, could we (1) prevent SCSI mid-layer initiated i/o
-> > retry of these requests and (2) insert the test path i/os at the
-> > head of the path's block i/o queue?  Doing either of these will
-> > require some kernel enhancement since there is no way to
-> > either request fail fast capability or insertion at queue head for
-> > a SCSI CDB issued from user space.
-> > 
-> > Currently the scsi_cmd_ioctl->sg_io->blk_execute_rq code
-> > path for a multipath test i/o does not set the REQ_FAILFAST
-> > bit in the flags field of the request structure and unconditionally
-> > inserts the request at the tail of the request queue for the scsi
-> > device representing the scsi path being tested.
-> > 
-> > Possibly the desire for each of these two attributes could be
-> > passed as a flag bit setting in the flag field of the sg_io_hdr
-> > structure passed into the kernel as part of the test path ioctl(2).
-> 
-> Jens: Indeed, being able to inflict the equivalent of BIO_RW_FAILFAST on
-> a raw request from user-space would be desireable.
-> 
-> Do you have any objections or suggestions how this could be done best?
+On 2005-03-03T13:56:21, Dave Olien <dmo@osdl.org> wrote:
 
-Makes sense. Edwards suggestion of just using the sghdr->flags to
-indicate both is fine. You only have to be careful with head injection
-not preempting an existing active request (not an issue on SCSI).
+> Here's a trivial fix to the emc hardware
+> handler module. The old code memset the hardware handler
+> structure to zero AFTER it had initialized the structure's
+> spinlock field to SPIN_LOCK_UNLOCKED.  The new patch moves the
+> memset into the hardware handler allocator.
+>=20
+> The old code would probably only have a problem if someone
+> ran with spinlock debugging enabled, in which case SPIN_LOCK_UNLOCKED
+> contains the value SPINLOCK_MAGIC.
+>=20
+> I have no emc hardware to test this change.  However it does compile.
 
-But they are both definitely useful for testing, agree.
+Alasdair, please merge, looks correct.
 
--- 
-Jens Axboe
+Signed-off-by: Lars Marowsky-Bree <lmb@suse.de>
+
+> diff -ur linux-2.6.11-rc3-udm2-original/drivers/md/dm-emc.c linux-2.6.1=
+1-rc3-udm2-emc/drivers/md/dm-emc.c
+> --- linux-2.6.11-rc3-udm2-original/drivers/md/dm-emc.c	2005-03-03 13:40=
+:55.000000000 -0800
+> +++ linux-2.6.11-rc3-udm2-emc/drivers/md/dm-emc.c	2005-03-03 13:44:38.0=
+00000000 -0800
+> @@ -227,6 +227,7 @@
+>  	struct emc_handler *h =3D kmalloc(sizeof(*h), GFP_KERNEL);
+> =20
+>  	if (h) {
+> +		memset(h, 0, sizeof(*h));
+>  		h->lock =3D SPIN_LOCK_UNLOCKED;
+>  	}
+> =20
+> @@ -263,8 +264,6 @@
+>  	if (!h)
+>  		return -ENOMEM;
+>  =09
+> -	memset(h, 0, sizeof(*h));
+> -=09
+>  	hwh->context =3D h;
+>  =09
+>  	if ((h->short_trespass =3D short_trespass))
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>=20
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
