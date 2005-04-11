@@ -1,12 +1,10 @@
-From: Daniel Phillips <phillips@redhat.com>
-Subject: Dumb question
-Date: Mon, 11 Apr 2005 15:01:40 -0400
-Message-ID: <200504111501.40423.phillips@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Multipath bug reporting
+Date: Mon, 11 Apr 2005 20:04:10 +0100
+Message-ID: <20050411190410.GO9049@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,16 +16,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi guys,
+I've added a 'Multipath Bug Reporting' section to 
+  http://sources.redhat.com/dm/
+which has links to bugzilla.redhat.com.
 
-Here is a dumb question:  Why does dmsetup use (start, length) for each 
-target line instead of just (length)?  Is it useful to leave some parts 
-of a virtual device unmapped, and if so, why not require them to be 
-mapped explicitly to zero or error?
+For a trial period, I'm attempting to get all bugs and feature 
+requests related to device-mapper multipath - including proposed 
+kernel patches - recorded there.
 
-Regards,
-
-Daniel
+Alasdair
+-- 
+agk@redhat.com
