@@ -1,14 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Dumb question
-Date: Mon, 11 Apr 2005 20:07:22 +0100
-Message-ID: <20050411190722.GP9049@agk.surrey.redhat.com>
-References: <200504111501.40423.phillips@redhat.com>
+From: k-ueda@ct.jp.nec.com
+Subject: [PATCH] dm_mapname fix in multipath-tools-0.4.4-pre11
+Date: Mon, 11 Apr 2005 16:15:59 -0400 (EDT)
+Message-ID: <42686.4909161397$1113250495@news.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200504111501.40423.phillips@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,24 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Apr 11, 2005 at 03:01:40PM -0400, Daniel Phillips wrote:
-> Here is a dumb question:  Why does dmsetup use (start, length) for each 
-> target line instead of just (length)?  
+Hi Christophe,
 
-We decided to require this:
-  (a) to make the tables more readable in their raw form
-  (b) as additional validation against bugs
+In multipath-tools-0.4.4-pre11 kpartx/devmapper.c:135:
+-------------------------------------------
+        mapname = dm_task_get_name(dmt);
+out:
+        dm_task_destroy(dmt);
+        return mapname;
+}
+-------------------------------------------
 
-> Is it useful to leave some parts 
-> of a virtual device unmapped, and if so, why not require them to be 
-> mapped explicitly to zero or error?
- 
-They must be.  Each line has to start where the previous one
-ended or you are supposed to get an error.
+dm_task_get_name returns a pointer to dmt->dmi.v4->name
+which will be freed at dm_task_destroy() just before return.
 
-Alasdair
--- 
-agk@redhat.com
+
+--- multipath-tools-0.4.4-pre11/kpartx/devmapper.c      2005-04-07 09:47:26.000000000 -0400
++++ dm-mapname-fix/kpartx/devmapper.c   2005-04-12 04:15:14.990239582 -0400
+@@ -132,7 +132,7 @@ dm_mapname(int major, int minor)
+        if (!dm_task_run(dmt))
+                goto out;
+
+-       mapname = dm_task_get_name(dmt);
++       mapname = strdup(dm_task_get_name(dmt));
+ out:
+        dm_task_destroy(dmt);
+        return mapname;
+
+
+Regards,
+Ky (Kiyoshi Ueda)
