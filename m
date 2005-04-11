@@ -1,14 +1,12 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: [PATCH] dm_mapname fix in multipath-tools-0.4.4-pre11
-Date: Mon, 11 Apr 2005 22:26:22 +0200
-Message-ID: <1113251182.8158.2.camel@zezette>
-References: <20050411.161559.74755462.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: patch for log_enqueue in multipath-tools-0.4.4-pre11
+Date: Mon, 11 Apr 2005 15:59:50 -0500
+Message-ID: <20050411205950.GA4999@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="G4iJoqBmSsgzjUCe"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050411.161559.74755462.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,50 +19,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Nice :)
-Applied, thanks.
 
-Careful with pre11, you might have noticed the memory audit surgery is
-not without glitches.
+--G4iJoqBmSsgzjUCe
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Regards,
-cvaroqui
+It looks to me like log_enqueue can accidentally mess up its la->tail ptr,
+if it runs out of space for the new message.
 
-On lun, 2005-04-11 at 16:15 -0400, k-ueda@ct.jp.nec.com wrote:
-> Hi Christophe,
-> 
-> In multipath-tools-0.4.4-pre11 kpartx/devmapper.c:135:
-> -------------------------------------------
->         mapname = dm_task_get_name(dmt);
-> out:
->         dm_task_destroy(dmt);
->         return mapname;
-> }
-> -------------------------------------------
-> 
-> dm_task_get_name returns a pointer to dmt->dmi.v4->name
-> which will be freed at dm_task_destroy() just before return.
-> 
-> 
-> --- multipath-tools-0.4.4-pre11/kpartx/devmapper.c      2005-04-07 09:47:26.000000000 -0400
-> +++ dm-mapname-fix/kpartx/devmapper.c   2005-04-12 04:15:14.990239582 -0400
-> @@ -132,7 +132,7 @@ dm_mapname(int major, int minor)
->         if (!dm_task_run(dmt))
->                 goto out;
-> 
-> -       mapname = dm_task_get_name(dmt);
-> +       mapname = strdup(dm_task_get_name(dmt));
->  out:
->         dm_task_destroy(dmt);
->         return mapname;
-> 
-> 
-> Regards,
-> Ky (Kiyoshi Ueda)
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+If the la->head is just past la->start, and la->tail is just before la->end,
+la->tail will get updated to be la->start, because there is no room at the
+end of the buffer for the message.  Then when it realizes that there is no
+room at the start of the buffer, la->tail will be updated to la->start - fwd
+And the next message will be written before the buffer.
+
+This patch fixes that.
+
+-Ben
+Ben Marzinski
+bmarzins@redhat.com
+(612) 638-0517
+
+--G4iJoqBmSsgzjUCe
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="log_enqueue.patch"
+
+diff -urN multipath-tools-0.4.4-pre11/multipathd/log.c multipath-tools-0.4.4-log-fixed/multipathd/log.c
+--- multipath-tools-0.4.4-pre11/multipathd/log.c	2005-03-31 03:25:06.000000000 -0600
++++ multipath-tools-0.4.4-log-fixed/multipathd/log.c	2005-04-11 14:27:41.000000000 -0500
+@@ -119,7 +119,7 @@
+ 		logdbg(stderr, "enqueue: log area overrun, drop msg\n");
+ 
+ 		if (!la->empty)
+-			la->tail -= fwd;
++			la->tail = lastmsg;
+ 
+ 		return 1;
+ 	}
+
+--G4iJoqBmSsgzjUCe
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--G4iJoqBmSsgzjUCe--
