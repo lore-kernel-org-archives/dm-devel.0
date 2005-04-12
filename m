@@ -1,77 +1,67 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: [PATCH] dm_mapname fix in multipath-tools-0.4.4-pre11
-Date: Tue, 12 Apr 2005 00:55:28 +0200
-Message-ID: <1113260128.8158.30.camel@zezette>
-References: <20050411.161559.74755462.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
-	<1113251182.8158.2.camel@zezette>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: linux-iscsi development team
+	<linux-iscsi-devel@lists.sourceforge.net>
+Subject: [ANNOUNCE] open-iscsi and linux-iscsi project teams have merged!
+Date: Mon, 11 Apr 2005 22:30:58 -0400
+Message-ID: <425B32E2.9010404@lists.sourceforge.net>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1113251182.8158.2.camel@zezette>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-iscsi-devel@lists.sourceforge.net, linux-iscsi-users@lists.sourceforge.net, open-iscsi@googlegroups.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, iscsitarget-devel@lists.sourceforge.net
+Cc: itn780@yahoo.com, dmitry_yus@yahoo.com, mikenc@us.ibm.com, cnitin@cisco.com, smithan@cisco.com, coughlan@redhat.com, alewis@redhat.com, mbasavai@cisco.com, andmike@us.ibm.com, Ming Zhang <mingz@ele.uri.edu>
 List-Id: dm-devel.ids
 
-pre12 online,
-polishing the memory management rework.
+The linux-iscsi and open-iscsi developers would like to announce
+that they have combined forces on a single iSCSI initiator effort!
 
-Good night.
+This mail gives an overview of this combined effort and will be followed
+by a set of iSCSI patches the combined team submits for review as a
+candidate for inclusion into the mainline kernel.
 
-On lun, 2005-04-11 at 22:26 +0200, christophe varoqui wrote:
-> Nice :)
-> Applied, thanks.
-> 
-> Careful with pre11, you might have noticed the memory audit surgery is
-> not without glitches.
-> 
-> Regards,
-> cvaroqui
-> 
-> On lun, 2005-04-11 at 16:15 -0400, k-ueda@ct.jp.nec.com wrote:
-> > Hi Christophe,
-> > 
-> > In multipath-tools-0.4.4-pre11 kpartx/devmapper.c:135:
-> > -------------------------------------------
-> >         mapname = dm_task_get_name(dmt);
-> > out:
-> >         dm_task_destroy(dmt);
-> >         return mapname;
-> > }
-> > -------------------------------------------
-> > 
-> > dm_task_get_name returns a pointer to dmt->dmi.v4->name
-> > which will be freed at dm_task_destroy() just before return.
-> > 
-> > 
-> > --- multipath-tools-0.4.4-pre11/kpartx/devmapper.c      2005-04-07 09:47:26.000000000 -0400
-> > +++ dm-mapname-fix/kpartx/devmapper.c   2005-04-12 04:15:14.990239582 -0400
-> > @@ -132,7 +132,7 @@ dm_mapname(int major, int minor)
-> >         if (!dm_task_run(dmt))
-> >                 goto out;
-> > 
-> > -       mapname = dm_task_get_name(dmt);
-> > +       mapname = strdup(dm_task_get_name(dmt));
-> >  out:
-> >         dm_task_destroy(dmt);
-> >         return mapname;
-> > 
-> > 
-> > Regards,
-> > Ky (Kiyoshi Ueda)
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+Background
+
+After some dialog with the developers on each team, it was decided
+that although each team started out with independent code and some
+differences in architecture, it was worth considering the possibility
+of combining the two efforts into one.  Alternatives were considered
+for the combined architecture of the two projects, including adding
+an option for a kernel control plane.  After discussions, it was
+decided by consensus that the open-iscsi architecture and code would
+be the best starting point for the "next gen" linux-iscsi project.
+The advantages of this starting point include open-iscsi's optimized
+I/O paths that were built from scratch, as well as incorporation of
+well tested iscsi-sfnet components for the control plane and userspace
+components.  The combined open-iscsi and linux-iscsi teams believe
+this will result in the highest performing and most stable iSCSI stack
+for Linux.
+
+Overview of Combined Project
+
+This new combined effort will consist of the open-iscsi code and
+developers moving over to the linux-iscsi project on sourceforge
+(http://sourceforge.net/projects/linux-iscsi/).  The open-iscsi
+(http://www.open-iscsi.org) architecture will be the basis for
+the "next gen" of linux-iscsi, which will be numbered the
+linux-iscsi-5.x release series.
+
+Release Numbering
+
+If you were following the open-iscsi series, here is the mapping
+between the open-iscsi numbering and the linux-iscsi-5.x numbering:
+- open-iscsi-0.2 == linux-iscsi-5.0.0.2
+
+Kernel Submission
+
+The kernel component of the first release in this linux-iscsi 5.x
+series will follow shortly, and the combined teams wish to submit
+this as a candidate for inclusion into the mainline kernel.
+If you've reviewed the previous open-iscsi patch set, you'll find
+that this patchset is very similar, with previous reviewer comments
+incorporated.
+
+Thanks.
+
+- The combined open-iscsi and linux-iscsi teams
+
+
