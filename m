@@ -1,67 +1,38 @@
-From: linux-iscsi development team
-	<linux-iscsi-devel@lists.sourceforge.net>
-Subject: [ANNOUNCE] open-iscsi and linux-iscsi project teams have merged!
-Date: Mon, 11 Apr 2005 22:30:58 -0400
-Message-ID: <425B32E2.9010404@lists.sourceforge.net>
+From: Ming Zhang <mingz@ele.uri.edu>
+Subject: kcopyd_client_create. allocate memory fail
+Date: Wed, 13 Apr 2005 10:41:17 -0400
+Message-ID: <1113403277.6045.50.camel@localhost.localdomain>
+Reply-To: mingz@ele.uri.edu,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-iscsi-devel@lists.sourceforge.net, linux-iscsi-users@lists.sourceforge.net, open-iscsi@googlegroups.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, iscsitarget-devel@lists.sourceforge.net
-Cc: itn780@yahoo.com, dmitry_yus@yahoo.com, mikenc@us.ibm.com, cnitin@cisco.com, smithan@cisco.com, coughlan@redhat.com, alewis@redhat.com, mbasavai@cisco.com, andmike@us.ibm.com, Ming Zhang <mingz@ele.uri.edu>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The linux-iscsi and open-iscsi developers would like to announce
-that they have combined forces on a single iSCSI initiator effort!
+Hi folks
 
-This mail gives an overview of this combined effort and will be followed
-by a set of iSCSI patches the combined team submits for review as a
-candidate for inclusion into the mainline kernel.
+I knew this is reported before but seems no much discussion on it.
 
-Background
+I met a failure when creating 18th snapshot on my volume. the error is
+in kcopyd_client_create(), seems alloc_page fails. i know there is 1MB
+ram for each dm snapshot, but this is only 18th snapshot, so around
+18MB, not a big number on my 392MB ram box. i check free and there are
+still ~200MB available.
 
-After some dialog with the developers on each team, it was decided
-that although each team started out with independent code and some
-differences in architecture, it was worth considering the possibility
-of combining the two efforts into one.  Alternatives were considered
-for the combined architecture of the two projects, including adding
-an option for a kernel control plane.  After discussions, it was
-decided by consensus that the open-iscsi architecture and code would
-be the best starting point for the "next gen" linux-iscsi project.
-The advantages of this starting point include open-iscsi's optimized
-I/O paths that were built from scratch, as well as incorporation of
-well tested iscsi-sfnet components for the control plane and userspace
-components.  The combined open-iscsi and linux-iscsi teams believe
-this will result in the highest performing and most stable iSCSI stack
-for Linux.
+it is a fedora core 2 box with 2.6.8 kernel and lvm2. but i donot think
+this is a fc specific problem.
 
-Overview of Combined Project
+thanks.
 
-This new combined effort will consist of the open-iscsi code and
-developers moving over to the linux-iscsi project on sourceforge
-(http://sourceforge.net/projects/linux-iscsi/).  The open-iscsi
-(http://www.open-iscsi.org) architecture will be the basis for
-the "next gen" of linux-iscsi, which will be numbered the
-linux-iscsi-5.x release series.
-
-Release Numbering
-
-If you were following the open-iscsi series, here is the mapping
-between the open-iscsi numbering and the linux-iscsi-5.x numbering:
-- open-iscsi-0.2 == linux-iscsi-5.0.0.2
-
-Kernel Submission
-
-The kernel component of the first release in this linux-iscsi 5.x
-series will follow shortly, and the combined teams wish to submit
-this as a candidate for inclusion into the mainline kernel.
-If you've reviewed the previous open-iscsi patch set, you'll find
-that this patchset is very similar, with previous reviewer comments
-incorporated.
-
-Thanks.
-
-- The combined open-iscsi and linux-iscsi teams
-
-
+Ming
