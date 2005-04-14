@@ -1,32 +1,33 @@
-From: Kevin Johnson <kevin@utig.ig.utexas.edu>
-Subject: dm with rhel4
-Date: Wed, 13 Apr 2005 12:34:38 -0500
-Message-ID: <6.0.1.1.2.20050413123238.035f8f40@127.0.0.1>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dmitry Yusupov <dmitry_yus@yahoo.com>
+Subject: Re: [linux-iscsi-devel] [ANNOUNCE] open-iscsi and linux-iscsi
+	project teams have merged!
+Date: Thu, 14 Apr 2005 09:18:32 -0700
+Message-ID: <1113495512.13939.75.camel@beastie>
+References: <425B32E2.9010404@lists.sourceforge.net>
+	 <20050414111624.GA24570@lst.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm@uk.sistina.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20050414111624.GA24570@lst.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Christoph Hellwig <hch@lst.de>
+Cc: linux-iscsi development team <linux-iscsi-devel@lists.sourceforge.net>, linux-iscsi-users@lists.sourceforge.net, open-iscsi@googlegroups.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, iscsitarget-devel@lists.sourceforge.net, itn780@yahoo.com, mikenc@us.ibm.com, cnitin@cisco.com, smithan@cisco.com, coughlan@redhat.com, alewis@redhat.com, mbasavai@cisco.com, andmike@us.ibm.com, Ming Zhang <mingz@ele.uri.edu>
 List-Id: dm-devel.ids
 
-Hi. I'm trying to get rhel4 to recognize my isw sata array. I was able to 
-work with it running gentoo with dmraid 
-(http://tienstra4.flatnet.tudelft.nl/~gerte/gen2dmraid/), and after 
-installing rhel4 there are no mappings in /dev/mapper. Am I missing 
-something simple?  Thanks.
+On Thu, 2005-04-14 at 13:16 +0200, Christoph Hellwig wrote:
+> On Mon, Apr 11, 2005 at 10:30:58PM -0400, linux-iscsi development team wrote:
+> > The linux-iscsi and open-iscsi developers would like to announce
+> > that they have combined forces on a single iSCSI initiator effort!
+> 
+> What SCM will the code be in?  I must admit I really, really prefer the
+> SVN hosting of open-iscsi over the sf.net CVS mess.
 
-Kevin Johnson
-----
-Kevin Johnson                   University of Texas, Institute for Geophysics
-Senior Systems Analyst          4412 Spicewood Springs Rd -- Bldg. 600
-(512) 471-0410                  Austin, TX 78759-8500
-mailto:kevin@ig.utexas.edu      http://www.ig.utexas.edu
+Consider linux-iscsi-5.x CVS branch as a "mainline". Current open-iscsi
+SVN repository is the place where all hard-core development will happen
+at least for the nearest future.
+
+I really hope sf.net will provide SVN hosting very soon. than we will
+see how it goes. and may be we might just migrate current berlios.de
+hosting to the sf.net.
+
