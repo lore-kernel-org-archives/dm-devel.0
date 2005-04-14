@@ -1,15 +1,17 @@
-From: Ming Zhang <mingz@ele.uri.edu>
-Subject: Re: kcopyd_client_create. allocate memory fail
-Date: Wed, 13 Apr 2005 22:42:39 -0400
-Message-ID: <1113446559.5396.22.camel@localhost.localdomain>
-References: <1113403277.6045.50.camel@localhost.localdomain>
-Reply-To: mingz@ele.uri.edu,
+From: Molle Bestefich <molle.bestefich@gmail.com>
+Subject: Re: dm-crypt userland key patch
+Date: Thu, 14 Apr 2005 09:13:51 +0200
+Message-ID: <62b0912f05041400135426a80e@mail.gmail.com>
+References: <ac71172a05041310417117dd09@mail.gmail.com>
+	<20050413235852.45bd2500@emotpin>
+Reply-To: Molle Bestefich <molle.bestefich@gmail.com>,
 	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1113403277.6045.50.camel@localhost.localdomain>
+In-Reply-To: <20050413235852.45bd2500@emotpin>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +24,10 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Turn on the kernel hack option and i found this.
+Bjorn Andersson wrote:
+> Patch to the dm-crypt module so that it hides the crypto-key from
+> userland. (dmsetup table)
 
-every time a snapshot created, it will create and hold a kcopyd_client.
-so will call kcopyd_client_create() --> dm_io_get() --> resize_pool() --
-> mempool_resize() which has this "new_elements = kmalloc(new_min_nr *
-sizeof(*new_elements), gfp_mask);".
-
-_num_ios is a static variable and will keep increasing by pages_to_ios
-(num_pages) here. 
-
-so eventually the new_min_nr * sizeof(*new_elements) will be larger than
-what is allowed in kmalloc and thus get failed.
-
-so i think we can not use mempool here, or we have to have several
-pools.
-
-ming
-
-
-On Wed, 2005-04-13 at 10:41 -0400, Ming Zhang wrote:
-> Hi folks
-> 
-> I knew this is reported before but seems no much discussion on it.
-> 
-> I met a failure when creating 18th snapshot on my volume. the error is
-> in kcopyd_client_create(), seems alloc_page fails. i know there is 1MB
-> ram for each dm snapshot, but this is only 18th snapshot, so around
-> 18MB, not a big number on my 392MB ram box. i check free and there are
-> still ~200MB available.
-> 
-> it is a fedora core 2 box with 2.6.8 kernel and lvm2. but i donot think
-> this is a fc specific problem.
-> 
-> thanks.
-> 
-> Ming
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Does it also overwrite the key in memory when unloading dm-crypt, make
+sure that the memory is pinned so the key doesn't leak to swap, unload
+the key before a 'hibernate', and that sort of stuff?
