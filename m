@@ -1,37 +1,60 @@
-From: Lee Revell <rlrevell@joe-job.com>
-Subject: Re: [linux-iscsi-devel] [ANNOUNCE] open-iscsi and linux-iscsi
-	project teams have merged!
-Date: Thu, 14 Apr 2005 12:48:31 -0400
-Message-ID: <1113497311.18871.5.camel@mindpipe>
-References: <425B32E2.9010404@lists.sourceforge.net>
-	 <20050414111624.GA24570@lst.de> <1113495512.13939.75.camel@beastie>
-	 <20050414161956.GA29737@lst.de>
+From: Molle Bestefich <molle.bestefich@gmail.com>
+Subject: Re: dm-crypt userland key patch
+Date: Fri, 15 Apr 2005 23:48:09 +0200
+Message-ID: <62b0912f05041514485f38f872@mail.gmail.com>
+References: <ac71172a05041310417117dd09@mail.gmail.com>
+	<20050413235852.45bd2500@emotpin>
+	<62b0912f05041400135426a80e@mail.gmail.com>
+	<20050414141459.6d521f67@emotpin>
+Reply-To: Molle Bestefich <molle.bestefich@gmail.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20050414161956.GA29737@lst.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christoph Hellwig <hch@lst.de>
-Cc: Dmitry Yusupov <dmitry_yus@yahoo.com>, linux-iscsi development team <linux-iscsi-devel@lists.sourceforge.net>, linux-iscsi-users@lists.sourceforge.net, open-iscsi@googlegroups.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, iscsitarget-devel@lists.sourceforge.net, itn780@yahoo.com, mikenc@us.ibm.com, cnitin@cisco.com, smithan@cisco.com, coughlan@redhat.com, alewis@redhat.com, mbasavai@cisco.com, andmike@us.ibm.com, Ming Zhang <mingz@ele.uri.edu>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20050414141459.6d521f67@emotpin>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Bjorn Andersson <bjorn.andersson@silversmedjan.se>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2005-04-14 at 18:19 +0200, Christoph Hellwig wrote:
-> On Thu, Apr 14, 2005 at 09:18:32AM -0700, Dmitry Yusupov wrote:
-> > Consider linux-iscsi-5.x CVS branch as a "mainline". Current open-iscsi
-> > SVN repository is the place where all hard-core development will happen
-> > at least for the nearest future.
-> > 
-> > I really hope sf.net will provide SVN hosting very soon. than we will
-> > see how it goes. and may be we might just migrate current berlios.de
-> > hosting to the sf.net.
-> 
-> sf.net hosting is total crap for all services.  I'd really prefer to see
-> things hosted somewhere sane..
+Bjorn Andersson wrote:
+> > > Patch to the dm-crypt module so that it hides the crypto-key from
+> > > userland. (dmsetup table)
+> >
+> > Does it also overwrite the key in memory when unloading dm-crypt, mak=
+e
+> > sure that the memory is pinned so the key doesn't leak to swap, unloa=
+d
+> > the key before a 'hibernate', and that sort of stuff?
+>
+> No, this does only report a key of zeros when the status is requested.
+>=20
+> The unloading thing is no problem to fix, but how should the
+> 'hibernate' thing work? When you resume after a 'hibernate' you probabl=
+y
+> expect that the device is there, especially if it's on the root
+> partition. But I clearly see your point.
 
-FWIW, Sourceforge sent out an email just the other day announcing that
-they've replaced the CVS servers, and promising that these issues will
-go away.  We'll see how that works out...
+*Scratches head*, I'd expect the default to be "doing the safe thing",
+eg. picking up on hibernation and nuking the key (disabling any crypto
+devices).  If there's a lean no-hassles user interface to get the
+password entered and the devices up again when the machine is resumed,
+I'd imagine most users to be happy about it, especially when they're
+told that it's done to protect their encrypted data?
 
-Lee
+There might be a few people annoyed by it?  Or there might even be
+some obscure technical reason why you'd want your keys to survive
+hibernation..  For those cases there could be an option to disable
+"hibernation protection" or what not.
 
+Dunno, IANA expert :-o.
