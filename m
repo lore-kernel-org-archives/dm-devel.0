@@ -1,11 +1,10 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Last path failure causes oops
-Date: Mon, 18 Apr 2005 18:00:43 +0200
-Message-ID: <20050418160043.GY8413@marowsky-bree.de>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: [2.6 patch] drivers/md/: make some code static
+Date: Tue, 19 Apr 2005 02:48:34 +0200
+Message-ID: <20050419004834.GM5489@stusta.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,69 +17,143 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi, I'm finally finding time to work and play with dm-mpath again. It wor=
-ks,
-unless there's a failure ;-)
+This patch makes some needlessly global code static.
 
-(I've added a couple more log messages in places so that it's a little
-bit more obvious. Right now, dm/dm-mpath rather keeps its troubles to
-itself; if this was a relationship, I'd be sending it to a relationship
-counselor that talking is much better than silently breaking...)
+Signed-off-by: Adrian Bunk <bunk@stusta.de>
 
-Anyway:
+---
 
-device-mapper: dm-multipath: IO error on path 8:0, sector 256
-device-mapper: dm-multipath: no valid paths left.
-Buffer I/O error on device dm-4, logical block 31
-Unable to handle kernel NULL pointer dereference at virtual address 00000=
-010
- printing eip:
-f89cc8e0
-*pde =3D 00102001
-Oops: 0000 [#1]
-SMP=20
-CPU:    0
-EIP:    0060:[<f89cc8e0>]    Tainted: G  U
-EFLAGS: 00010282   (2.6.5-7.162-bigsmp SLES9_SP2_BRANCH-20050418132523000=
-0)=20
-EIP is at multipath_end_io+0x90/0x240 [dm_multipath]
-eax: 00000000   ebx: f7f60b80   ecx: fffffffb   edx: 00000000
-esi: f2dad1c0   edi: 00000000   ebp: f737c45c   esp: cde59eac
-ds: 007b   es: 007b   ss: 0068
-Process events/0 (pid: 18, threadinfo=3Dcde58000 task=3Dcde48000)
-Stack: f2dadf00 00001000 00000008 00000000 00000001 f7f60b90 00000000 fff=
-ffffb=20
-       f6e153f0 f7dfb3f0 f2dad1c0 f89e1580 f6e153f8 f8914080 f89cc850 000=
-00000=20
-       f2dad1c0 00001000 f89e1510 fffffffb c017f078 00000001 00000296 000=
-00296=20
-Call Trace:
- [<f89e1580>] clone_endio+0x70/0x120 [dm_mod]
- [<f89cc850>] multipath_end_io+0x0/0x240 [dm_multipath]
- [<f89e1510>] clone_endio+0x0/0x120 [dm_mod]
- [<c017f078>] bio_endio+0x68/0xa0
- [<f89ccdac>] process_queued_ios+0x12c/0x140 [dm_multipath]
- [<c013c2a6>] worker_thread+0x186/0x230
- [<f89ccc80>] process_queued_ios+0x0/0x140 [dm_multipath]
- [<c0123910>] default_wake_function+0x0/0x10
- [<c0123910>] default_wake_function+0x0/0x10
- [<c013c120>] worker_thread+0x0/0x230
- [<c0140019>] kthread+0xf9/0x12d
- [<c013ff20>] kthread+0x0/0x12d
- [<c0107005>] kernel_thread_helper+0x5/0x10
+ drivers/md/dm-hw-handler.c    |    2 +-
+ drivers/md/dm-path-selector.c |    2 +-
+ drivers/md/dm-table.c         |    2 +-
+ drivers/md/dm-zero.c          |    4 ++--
+ drivers/md/md.c               |   14 +++++++-------
+ drivers/md/multipath.c        |    3 ++-
+ 6 files changed, 14 insertions(+), 13 deletions(-)
 
-Code: 8b 40 10 c7 04 24 e8 da 9c f8 83 c0 14 89 44 24 04 e8 ca f1=20
- Dumping to block device (104,5) on CPU 0 ...
-
-Any ideas?
-
-
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
-
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business
+--- linux-2.6.12-rc2-mm3-full/drivers/md/dm-hw-handler.c.old	2005-04-19 00:46:32.000000000 +0200
++++ linux-2.6.12-rc2-mm3-full/drivers/md/dm-hw-handler.c	2005-04-19 00:46:39.000000000 +0200
+@@ -23,7 +23,7 @@
+ static LIST_HEAD(_hw_handlers);
+ static DECLARE_RWSEM(_hwh_lock);
+ 
+-struct hwh_internal *__find_hw_handler_type(const char *name)
++static struct hwh_internal *__find_hw_handler_type(const char *name)
+ {
+ 	struct hwh_internal *hwhi;
+ 
+--- linux-2.6.12-rc2-mm3-full/drivers/md/dm-path-selector.c.old	2005-04-19 00:47:18.000000000 +0200
++++ linux-2.6.12-rc2-mm3-full/drivers/md/dm-path-selector.c	2005-04-19 00:47:28.000000000 +0200
+@@ -26,7 +26,7 @@
+ static LIST_HEAD(_path_selectors);
+ static DECLARE_RWSEM(_ps_lock);
+ 
+-struct ps_internal *__find_path_selector_type(const char *name)
++static struct ps_internal *__find_path_selector_type(const char *name)
+ {
+ 	struct ps_internal *psi;
+ 
+--- linux-2.6.12-rc2-mm3-full/drivers/md/dm-table.c.old	2005-04-19 00:48:00.000000000 +0200
++++ linux-2.6.12-rc2-mm3-full/drivers/md/dm-table.c	2005-04-19 00:48:07.000000000 +0200
+@@ -242,7 +242,7 @@
+ 	}
+ }
+ 
+-void table_destroy(struct dm_table *t)
++static void table_destroy(struct dm_table *t)
+ {
+ 	unsigned int i;
+ 
+--- linux-2.6.12-rc2-mm3-full/drivers/md/dm-zero.c.old	2005-04-19 00:48:17.000000000 +0200
++++ linux-2.6.12-rc2-mm3-full/drivers/md/dm-zero.c	2005-04-19 00:48:37.000000000 +0200
+@@ -55,7 +55,7 @@
+ 	.map    = zero_map,
+ };
+ 
+-int __init dm_zero_init(void)
++static int __init dm_zero_init(void)
+ {
+ 	int r = dm_register_target(&zero_target);
+ 
+@@ -65,7 +65,7 @@
+ 	return r;
+ }
+ 
+-void __exit dm_zero_exit(void)
++static void __exit dm_zero_exit(void)
+ {
+ 	int r = dm_unregister_target(&zero_target);
+ 
+--- linux-2.6.12-rc2-mm3-full/drivers/md/md.c.old	2005-04-19 00:50:02.000000000 +0200
++++ linux-2.6.12-rc2-mm3-full/drivers/md/md.c	2005-04-19 00:51:12.000000000 +0200
+@@ -1046,7 +1046,7 @@
+ }
+ 
+ 
+-struct super_type super_types[] = {
++static struct super_type super_types[] = {
+ 	[0] = {
+ 		.name	= "0.90.0",
+ 		.owner	= THIS_MODULE,
+@@ -2942,7 +2942,7 @@
+ 	.revalidate_disk= md_revalidate,
+ };
+ 
+-int md_thread(void * arg)
++static int md_thread(void * arg)
+ {
+ 	mdk_thread_t *thread = arg;
+ 
+@@ -3440,7 +3440,7 @@
+ 	}
+ }
+ 
+-DECLARE_WAIT_QUEUE_HEAD(resync_wait);
++static DECLARE_WAIT_QUEUE_HEAD(resync_wait);
+ 
+ #define SYNC_MARKS	10
+ #define	SYNC_MARK_STEP	(3*HZ)
+@@ -3837,8 +3837,8 @@
+ 	}
+ }
+ 
+-int md_notify_reboot(struct notifier_block *this,
+-					unsigned long code, void *x)
++static int md_notify_reboot(struct notifier_block *this,
++			    unsigned long code, void *x)
+ {
+ 	struct list_head *tmp;
+ 	mddev_t *mddev;
+@@ -3861,7 +3861,7 @@
+ 	return NOTIFY_DONE;
+ }
+ 
+-struct notifier_block md_notifier = {
++static struct notifier_block md_notifier = {
+ 	.notifier_call	= md_notify_reboot,
+ 	.next		= NULL,
+ 	.priority	= INT_MAX, /* before any real devices */
+@@ -3878,7 +3878,7 @@
+ 		p->proc_fops = &md_seq_fops;
+ }
+ 
+-int __init md_init(void)
++static int __init md_init(void)
+ {
+ 	int minor;
+ 
+--- linux-2.6.12-rc2-mm3-full/drivers/md/multipath.c.old	2005-04-19 00:51:23.000000000 +0200
++++ linux-2.6.12-rc2-mm3-full/drivers/md/multipath.c	2005-04-19 00:51:36.000000000 +0200
+@@ -103,7 +103,8 @@
+ 	mempool_free(mp_bh, conf->pool);
+ }
+ 
+-int multipath_end_request(struct bio *bio, unsigned int bytes_done, int error)
++static int multipath_end_request(struct bio *bio, unsigned int bytes_done,
++				 int error)
+ {
+ 	int uptodate = test_bit(BIO_UPTODATE, &bio->bi_flags);
+ 	struct multipath_bh * mp_bh = (struct multipath_bh *)(bio->bi_private);
