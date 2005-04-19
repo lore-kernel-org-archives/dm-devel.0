@@ -1,14 +1,15 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: waiteventloop loops once more than it needs to
-Date: Wed, 20 Apr 2005 00:55:47 +0200
-Message-ID: <1113951347.24817.82.camel@zezette>
-References: <20050419222452.GF8789@phlogiston.msp.redhat.com>
+Subject: Re: pidfile doesn't stop multiple multipathd processes
+	from running.
+Date: Wed, 20 Apr 2005 01:03:42 +0200
+Message-ID: <1113951822.24817.86.camel@zezette>
+References: <20050419223754.GG8789@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050419222452.GF8789@phlogiston.msp.redhat.com>
+In-Reply-To: <20050419223754.GG8789@phlogiston.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,18 +22,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Right, applied.
+Not close to a one-liner, but so obviously more refined ...
+Applied, with thanks.
 
-On mar, 2005-04-19 at 17:24 -0500, Benjamin Marzinski wrote:
-> In waitevntloop(), you get the current event_nr, and then wait for an
-> event. After the event, the event_nr will always be at least one greater.
-> This means that waiteventloop will always run mark_failed_path() once more
-> than needed. This patch, against multipath-tools-0.4.4-pre15, fixes that.
+Regards,
+
+On mar, 2005-04-19 at 17:37 -0500, Benjamin Marzinski wrote:
+> The current pidfile implementation doesn't stop multiple multipathd processes
+> from running. Running
+> # while true; do multipthd; done
+> happily makes tons of them.
 > 
-> -Ben
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> The attached patch, against multipath-tools-0.4.4-pre15, fixes this.
+> 
+
 -- 
 christophe varoqui <christophe.varoqui@free.fr>
