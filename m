@@ -1,14 +1,22 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: log_enqueue frequently overruns log_area
-Date: Wed, 20 Apr 2005 23:07:32 +0200
-Message-ID: <1114031252.24817.147.camel@zezette>
-References: <20050420205905.GI8789@phlogiston.msp.redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: release 0.4.4 ?
+Date: Wed, 20 Apr 2005 23:10:00 +0200
+Message-ID: <20050420211000.GW29071@marowsky-bree.de>
+References: <1113731446.24817.4.camel@zezette>
+	<1113953571.24817.97.camel@zezette>
+	<20050420133116.GW29071@marowsky-bree.de>
+	<1114006824.24817.108.camel@zezette>
+	<20050420201249.GS29071@marowsky-bree.de>
+	<1114029597.24817.138.camel@zezette>
+	<20050420205139.GU29071@marowsky-bree.de>
+	<1114030896.24817.145.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050420205905.GI8789@phlogiston.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1114030896.24817.145.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,24 +29,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Yes, sure, it was set low for testing purpose and can now be bumped up.
+On 2005-04-20T23:01:36, christophe varoqui <christophe.varoqui@free.fr> w=
+rote:
 
-Merged, with thanks.
+> Don't forget the binaries caching in a ramfs.
+> If you don't restart the daemon, it may still use a WIP multipath
+> version as a callout.
+>=20
+> I'll try and reproduce this at OSDL.
 
-Regards,
+I've most certainly restarted the daemon. To make sure the kernel didn't
+get stuck somewhere (it's sometimes a bit annoying to be debugging
+user-space and the kernel at the same time ;-) I also rebooted the node,
+which I guess should count as a restart ;-)
 
-On mer, 2005-04-20 at 15:59 -0500, Benjamin Marzinski wrote:
-> After seeing multipathd not logging what I was expecting it to, I checked to
-> see if it was ever dropping messages, and it was. In fact, I get dropped
-> messages on start up most of the time. The attached patch, against
-> multipath-tools-0.4.4-pre16, doubles the default logarea size. At that size,
-> I haven't seen any dropped messages. I'm not sure that this is the right
-> size, but it definitely works better for me.
-> 
-> -Ben
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
