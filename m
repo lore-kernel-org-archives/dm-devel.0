@@ -1,7 +1,7 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
+From: Lars Marowsky-Bree <lmb@suse.de>
 Subject: Re: release 0.4.4 ?
-Date: Wed, 20 Apr 2005 18:27:11 +0200
-Message-ID: <1114014431.24817.125.camel@zezette>
+Date: Wed, 20 Apr 2005 19:34:07 +0200
+Message-ID: <20050420173407.GH29071@marowsky-bree.de>
 References: <1113731446.24817.4.camel@zezette>
 	<1113953571.24817.97.camel@zezette>
 	<20050420133116.GW29071@marowsky-bree.de>
@@ -10,12 +10,14 @@ References: <1113731446.24817.4.camel@zezette>
 	<1114008114.24817.115.camel@zezette>
 	<20050420150107.GD29071@marowsky-bree.de>
 	<20050420160653.GZ9049@agk.surrey.redhat.com>
+	<1114014431.24817.125.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050420160653.GZ9049@agk.surrey.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1114014431.24817.125.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,26 +30,22 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer, 2005-04-20 at 17:06 +0100, Alasdair G Kergon wrote:
-> On Wed, Apr 20, 2005 at 05:01:07PM +0200, Lars Marowsky-Bree wrote:
-> > But I think it's pretty obvious that multipath is needed before /var is
-> > mounted, I think.
->  
-> I would prefer to see the temporary file disappear completely:
-> as I see things, it was a quick workaround for a problem until
-> there's time to replace it with a better permanent solution.
-> 
-Yes, it is a workaround fited to 0.4.4
-0.4.5 won't use a cache, as Alasdair suggests.
+On 2005-04-20T18:27:11, christophe varoqui <christophe.varoqui@free.fr> w=
+rote:
 
-In the mean time, the problem boils down to which distro will maintain a
-patch over 0.4.4 to set the cache location to the place it feels
-appropriate.
+> In the mean time, the problem boils down to which distro will maintain =
+a
+> patch over 0.4.4 to set the cache location to the place it feels
+> appropriate.
 
-Volonteers ?
+Just leave it as it is then, I don't care much; it's a pretty simple
+change to maintain.
 
-May be some other location can be agreed on ?
 
-Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
