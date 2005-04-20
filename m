@@ -1,7 +1,7 @@
-From: Alasdair G Kergon <agk@redhat.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
 Subject: Re: release 0.4.4 ?
-Date: Wed, 20 Apr 2005 17:06:53 +0100
-Message-ID: <20050420160653.GZ9049@agk.surrey.redhat.com>
+Date: Wed, 20 Apr 2005 18:27:11 +0200
+Message-ID: <1114014431.24817.125.camel@zezette>
 References: <1113731446.24817.4.camel@zezette>
 	<1113953571.24817.97.camel@zezette>
 	<20050420133116.GW29071@marowsky-bree.de>
@@ -9,12 +9,13 @@ References: <1113731446.24817.4.camel@zezette>
 	<20050420142637.GA29071@marowsky-bree.de>
 	<1114008114.24817.115.camel@zezette>
 	<20050420150107.GD29071@marowsky-bree.de>
+	<20050420160653.GZ9049@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20050420150107.GD29071@marowsky-bree.de>
+In-Reply-To: <20050420160653.GZ9049@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,14 +28,26 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 20, 2005 at 05:01:07PM +0200, Lars Marowsky-Bree wrote:
-> But I think it's pretty obvious that multipath is needed before /var is
-> mounted, I think.
- 
-I would prefer to see the temporary file disappear completely:
-as I see things, it was a quick workaround for a problem until
-there's time to replace it with a better permanent solution.
+On mer, 2005-04-20 at 17:06 +0100, Alasdair G Kergon wrote:
+> On Wed, Apr 20, 2005 at 05:01:07PM +0200, Lars Marowsky-Bree wrote:
+> > But I think it's pretty obvious that multipath is needed before /var is
+> > mounted, I think.
+>  
+> I would prefer to see the temporary file disappear completely:
+> as I see things, it was a quick workaround for a problem until
+> there's time to replace it with a better permanent solution.
+> 
+Yes, it is a workaround fited to 0.4.4
+0.4.5 won't use a cache, as Alasdair suggests.
 
-Alasdair
+In the mean time, the problem boils down to which distro will maintain a
+patch over 0.4.4 to set the cache location to the place it feels
+appropriate.
+
+Volonteers ?
+
+May be some other location can be agreed on ?
+
+Regards,
 -- 
-agk@redhat.com
+christophe varoqui <christophe.varoqui@free.fr>
