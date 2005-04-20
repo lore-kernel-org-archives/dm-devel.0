@@ -1,16 +1,15 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: Making failover work quickly with QLogic HBAs
-Date: Thu, 21 Apr 2005 15:48:53 +0200
-Message-ID: <20050421134853.GM17315@marowsky-bree.de>
-References: <20050421122328.GJ17315@marowsky-bree.de>
-	<b4415a5867f3b25c8166bea8febd4b79@nanisky.com>
+From: Greg KH <gregkh@suse.de>
+Subject: Re: A better solution than "md_component_detection = 1"
+Date: Wed, 20 Apr 2005 16:42:56 -0700
+Message-ID: <20050420234256.GA24033@suse.de>
+References: <000001c5136d$3b3502a0$11051aac@pcp41116>
+	<20050410172931.GF12752@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <b4415a5867f3b25c8166bea8febd4b79@nanisky.com>
+In-Reply-To: <20050410172931.GF12752@marowsky-bree.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Lars Marowsky-Bree <lmb@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, hare@suse.de
 List-Id: dm-devel.ids
 
-On 2005-04-21T14:21:25, Arthur Bergman <sky@nanisky.com> wrote:
+On Sun, Apr 10, 2005 at 07:29:31PM +0200, Lars Marowsky-Bree wrote:
+> Proposed solution: Introduce sub-devices into the sysfs tree. (And,
+> automatically, backlink those to parent devices, but that's just so the
+> tree can be traversed in any order.)
+> 
+> For example, /sys/block/sda would have a sub/ directory with "dm-0" in
+> there, pointing at /sys/block/dm-0 (surprise). The
+> /sys/block/dm-0/parent/sd{a,b} entries would do a very surprising
+> thing.
 
-> There has been discussions that this is not supported behaviour and=20
-> could cause problems, in particular the supported configurations of big=
-=20
-> blue for their SDD multipath product states that you shouldn't do=20
-> this...
+I don't have a problem with this, and I don't think udev would either.
+There's nothing keeping this from happening today with regards to the
+sysfs code.
 
-This is about DM multipath, not about SDD multipath, so I couldn't care
-less about what big blue supports there ;-)
+thanks,
 
-But seriously, can you point me at those discussions? Are there any real
-problems caused by this beyond the depreciated sdd multipath...? It
-seems to help quite a bit for me; w/o, failover times are inacceptable.
-
-
-Mit freundlichen Gr=FC=DFen,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
-
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business
+greg k-h
