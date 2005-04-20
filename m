@@ -1,7 +1,7 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
+From: christophe varoqui <christophe.varoqui@free.fr>
 Subject: Re: release 0.4.4 ?
-Date: Wed, 20 Apr 2005 23:52:13 +0200
-Message-ID: <20050420215213.GY29071@marowsky-bree.de>
+Date: Thu, 21 Apr 2005 00:04:45 +0200
+Message-ID: <1114034685.24817.165.camel@zezette>
 References: <1113731446.24817.4.camel@zezette>
 	<1113953571.24817.97.camel@zezette>
 	<20050420133116.GW29071@marowsky-bree.de>
@@ -12,13 +12,13 @@ References: <1113731446.24817.4.camel@zezette>
 	<1114030896.24817.145.camel@zezette>
 	<20050420211000.GW29071@marowsky-bree.de>
 	<1114033119.24817.161.camel@zezette>
+	<20050420215213.GY29071@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1114033119.24817.161.camel@zezette>
+In-Reply-To: <20050420215213.GY29071@marowsky-bree.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -31,25 +31,26 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2005-04-20T23:38:39, christophe varoqui <christophe.varoqui@free.fr> w=
-rote:
+On mer, 2005-04-20 at 23:52 +0200, Lars Marowsky-Bree wrote:
+> On 2005-04-20T23:38:39, christophe varoqui <christophe.varoqui@free.fr> wrote:
+> 
+> > I can't reproduce that at OSDL :
+> > 
+> > * no config file
+> > * IBM 3542 (tur/group_by_serial/no hwh/no feature)
+> > * mp-tools 0.4.4-pre17
+> 
+> That means you're not using a priority callout, which is what the bug is
+> about, right?
+> 
+> Anyway, I'll try -pre17 (or maybe -pre18 by then ;-) tomorrow.
+> 
+oh, so you use the group_by_prio pgpolicy ?
+Indeed, the fallback prio to 1 is annoying in that scenario.
 
-> I can't reproduce that at OSDL :
->=20
-> * no config file
-> * IBM 3542 (tur/group_by_serial/no hwh/no feature)
-> * mp-tools 0.4.4-pre17
+I'll see how to propagate the error to prevent a map reloading in case
+of prio callout error.
 
-That means you're not using a priority callout, which is what the bug is
-about, right?
-
-Anyway, I'll try -pre17 (or maybe -pre18 by then ;-) tomorrow.
-
-
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
-
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
