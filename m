@@ -1,42 +1,66 @@
-From: Greg KH <gregkh@suse.de>
-Subject: Re: A better solution than "md_component_detection = 1"
-Date: Wed, 20 Apr 2005 16:42:56 -0700
-Message-ID: <20050420234256.GA24033@suse.de>
-References: <000001c5136d$3b3502a0$11051aac@pcp41116>
-	<20050410172931.GF12752@marowsky-bree.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Patrick Mansfield <patmans@us.ibm.com>
+Subject: Re: fastfail operation and retries
+Date: Thu, 21 Apr 2005 09:42:05 -0700
+Message-ID: <20050421164205.GA20482@us.ibm.com>
+References: <20050419171953.GA8444@lion28.boeblingen.de.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20050410172931.GF12752@marowsky-bree.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Lars Marowsky-Bree <lmb@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, hare@suse.de
+In-Reply-To: <20050419171953.GA8444@lion28.boeblingen.de.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Andreas Herrmann <aherrman@de.ibm.com>
+Cc: Linux SCSI <linux-scsi@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Apr 10, 2005 at 07:29:31PM +0200, Lars Marowsky-Bree wrote:
-> Proposed solution: Introduce sub-devices into the sysfs tree. (And,
-> automatically, backlink those to parent devices, but that's just so the
-> tree can be traversed in any order.)
+On Tue, Apr 19, 2005 at 07:19:53PM +0200, Andreas Herrmann wrote:
+> Hi,
 > 
-> For example, /sys/block/sda would have a sub/ directory with "dm-0" in
-> there, pointing at /sys/block/dm-0 (surprise). The
-> /sys/block/dm-0/parent/sd{a,b} entries would do a very surprising
-> thing.
+> I have question(s) regarding the fastfail operation of the SCSI stack.
+> 
+> Performing multipath-tests with an IBM ESS I encountered problems.
+> During certain operations on an ESS (quiesce/resume and such) requests
+> on all paths fail temporarily with an data underrun (resid is set in
+> the FCP-response).  In another situation abort sequences happen (see
+> FC-FS).
+> 
+> In both cases it is not a path failure but the device (ESS) reports
+> error conditions temporarily (some seconds).
+> 
+> Now on error on the first path the multipath layer initiates failover
+> to other available path(s) where requests will immediately fail.
+> 
+> Using linux-2.4 and LVM such problems did not occure. There were
+> enough retries (5 for each path) to handle such situations.
+> 
+> Now if the FASTFAIL flag is set the SCSI stack prevents retries for
+> failed SCSI commands.
+> 
+> Problem is that the multipath layer cannot distinguish between path
+> and device failures (and won't do any retries for the failed request
+> on the same path anyway).
+> 
+> How can an lld force the SCSI stack to retry a failed scsi-command
+> (without using DID_REQUEUE or DID_IMM_RETRY, which both do not change
+> the retry counter).
+> 
+> What about a DID_FORCE_RETRY ?  Or is there any outlook when there
+> will be a better interface between the SCSI stack and the multipath
+> layer to properly handle retries.
 
-I don't have a problem with this, and I don't think udev would either.
-There's nothing keeping this from happening today with regards to the
-sysfs code.
+We need a patch like Mike Christie had, this:
 
-thanks,
+http://marc.theaimsgroup.com/?l=linux-kernel&m=107961883914541&w=2
 
-greg k-h
+The scsi core should decode the sense data and pass up the result, then dm
+need not decode sense data, and we don't need sense data passed around via
+the block layer.
+
+scsi core could be changed to handle device specific decoding via sense
+tables that can be modified via sysfs, similar to devinfo code (well,
+devinfo still lacks a sysfs interface).
+
+For ESS, you probably also need the BLIST_RETRY_HWERROR that is in
+current 2.6.12 rc.
+
+-- Patrick Mansfield
