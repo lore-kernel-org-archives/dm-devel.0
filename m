@@ -1,66 +1,69 @@
-From: Patrick Mansfield <patmans@us.ibm.com>
-Subject: Re: fastfail operation and retries
-Date: Thu, 21 Apr 2005 09:42:05 -0700
-Message-ID: <20050421164205.GA20482@us.ibm.com>
-References: <20050419171953.GA8444@lion28.boeblingen.de.ibm.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20050419171953.GA8444@lion28.boeblingen.de.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Andreas Herrmann <aherrman@de.ibm.com>
-Cc: Linux SCSI <linux-scsi@vger.kernel.org>, dm-devel@redhat.com
+From: Arthur Bergman <sky@nanisky.com>
+Subject: Re: Making failover work quickly with QLogic HBAs
+Date: Thu, 21 Apr 2005 17:44:27 +0100
+Message-ID: <bd596d34f638b6fe011e296d85cdcee2@nanisky.com>
+References: <20050421122328.GJ17315@marowsky-bree.de>
+	<b4415a5867f3b25c8166bea8febd4b79@nanisky.com>
+	<20050421134853.GM17315@marowsky-bree.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v619.2)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20050421134853.GM17315@marowsky-bree.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 19, 2005 at 07:19:53PM +0200, Andreas Herrmann wrote:
-> Hi,
-> 
-> I have question(s) regarding the fastfail operation of the SCSI stack.
-> 
-> Performing multipath-tests with an IBM ESS I encountered problems.
-> During certain operations on an ESS (quiesce/resume and such) requests
-> on all paths fail temporarily with an data underrun (resid is set in
-> the FCP-response).  In another situation abort sequences happen (see
-> FC-FS).
-> 
-> In both cases it is not a path failure but the device (ESS) reports
-> error conditions temporarily (some seconds).
-> 
-> Now on error on the first path the multipath layer initiates failover
-> to other available path(s) where requests will immediately fail.
-> 
-> Using linux-2.4 and LVM such problems did not occure. There were
-> enough retries (5 for each path) to handle such situations.
-> 
-> Now if the FASTFAIL flag is set the SCSI stack prevents retries for
-> failed SCSI commands.
-> 
-> Problem is that the multipath layer cannot distinguish between path
-> and device failures (and won't do any retries for the failed request
-> on the same path anyway).
-> 
-> How can an lld force the SCSI stack to retry a failed scsi-command
-> (without using DID_REQUEUE or DID_IMM_RETRY, which both do not change
-> the retry counter).
-> 
-> What about a DID_FORCE_RETRY ?  Or is there any outlook when there
-> will be a better interface between the SCSI stack and the multipath
-> layer to properly handle retries.
+On 21 Apr 2005, at 14:48, Lars Marowsky-Bree wrote:
 
-We need a patch like Mike Christie had, this:
+> On 2005-04-21T14:21:25, Arthur Bergman <sky@nanisky.com> wrote:
+>
+>> There has been discussions that this is not supported behaviour and
+>> could cause problems, in particular the supported configurations of 
+>> big
+>> blue for their SDD multipath product states that you shouldn't do
+>> this...
+>
+> This is about DM multipath, not about SDD multipath, so I couldn't care
+> less about what big blue supports there ;-)
+>
 
-http://marc.theaimsgroup.com/?l=linux-kernel&m=107961883914541&w=2
+I have heard the same from all the different vendors...
 
-The scsi core should decode the sense data and pass up the result, then dm
-need not decode sense data, and we don't need sense data passed around via
-the block layer.
 
-scsi core could be changed to handle device specific decoding via sense
-tables that can be modified via sysfs, similar to devinfo code (well,
-devinfo still lacks a sysfs interface).
+> But seriously, can you point me at those discussions? Are there any 
+> real
+> problems caused by this beyond the depreciated sdd multipath...? It
+> seems to help quite a bit for me; w/o, failover times are inacceptable.
+>
+>
 
-For ESS, you probably also need the BLIST_RETRY_HWERROR that is in
-current 2.6.12 rc.
+It does help for us too, however most recently i saw this discussed on 
+the dm-devel list... Search for qlogic.
 
--- Patrick Mansfield
+https://www.redhat.com/archives/dm-devel/2005-February/msg00084.html
+
+Cheers
+Arthur
+
+
+-----
+CTO @ Fotango Ltd
++447834716919
+http://www.fotango.com/
+
+
+
+______________________________________________________________________
+This email has been scanned by the MessageLabs Email Security System.
+For more information please visit http://www.messagelabs.com/email 
+______________________________________________________________________
