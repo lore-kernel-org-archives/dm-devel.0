@@ -1,8 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: Should enhanced bio error state be propagated upwards to
-	parent o f failed cloned bios?
-Date: Mon, 25 Apr 2005 11:34:32 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A93A@SRMANNING.eng.emc.com>
+Subject: nit with reinstate_path for dm-mpath.c
+Date: Mon, 25 Apr 2005 15:25:36 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A93F@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,8 +18,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Should the bi_error field of a failed bio clone completion be propagated
-upwards into the parent of the cloned bio, possibly in dec_pending() of
-dm.c?  Doing so will allow target drivers higher than the one managing
-the bottom-most mapped device to have access to enhanced bio sense
-and error information.  Otherwise, all they see is -EIO like now.
+Should reinstate_path() in dm-mpath.c only conditionally reset
+current_pgpath if
+the restored path is in the same path priority group as the current_pgpath
+instead
+of doing so unconditionally as is done currently?  Albeit this change makes
+sense
+IFF it is architecturally invalid to have a path selection policy which
+spans multiple
+path priority groups -- as I think is currently the case.
