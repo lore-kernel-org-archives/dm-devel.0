@@ -1,60 +1,26 @@
-From: Andrew Morton <akpm@osdl.org>
-Subject: Fw: [Bugme-new] [Bug 4541] New: device mapper corruption
- after upgrading from 2.6.9 or 2.6.5 to 2.6.11
-Date: Mon, 25 Apr 2005 14:38:15 -0700
-Message-ID: <20050425143815.5bf8365e.akpm@osdl.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tim Pepper <tpepper@gmail.com>
+Subject: Re: [dm-devel] Re: fastfail operation and retries
+Date: Mon, 25 Apr 2005 16:56:56 -0700
+Message-ID: <eada2a070504251656762a8625@mail.gmail.com>
+References: <OF8721F851.2661040F-ONC1256FEA.0076595E-C1256FEA.00768C46@de.ibm.com>
+	 <20050421222409.GY17315@marowsky-bree.de>
+	 <ac71172a050422121365a32cc3@mail.gmail.com>
+Reply-To: Tim Pepper <tpepper@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: m@iw.hu
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <ac71172a050422121365a32cc3@mail.gmail.com>
+Content-Disposition: inline
+Sender: linux-scsi-owner@vger.kernel.org
+To: tranlan@us.ibm.com
+Cc: device-mapper development <dm-devel@redhat.com>, Linux SCSI <linux-scsi@vger.kernel.org>, aherrman@de.ibm.com
 List-Id: dm-devel.ids
 
+On 4/22/05, Lan <transter@gmail.com> wrote:
+>
+> queue_if_no_path must be used; I'm not sure why any dm-multipath
+> storage users would not want to turn on queue_if_no_path by default?
 
-
-Begin forwarded message:
-
-Date: Mon, 25 Apr 2005 11:47:56 -0700
-From: bugme-daemon@osdl.org
-To: bugme-new@lists.osdl.org
-Subject: [Bugme-new] [Bug 4541] New: device mapper corruption after upgrading from 2.6.9 or 2.6.5 to 2.6.11
-
-
-http://bugme.osdl.org/show_bug.cgi?id=4541
-
-           Summary: device mapper corruption after upgrading from 2.6.9 or
-                    2.6.5 to 2.6.11
-    Kernel Version: 2.6.11
-            Status: NEW
-          Severity: high
-             Owner: thornber@sistina.com
-         Submitter: m@iw.hu
-
-
-Distribution: Debian 
-Hardware Environment: Intel Xeon (with and w/o SMP), aic7902 scsi
-Problem Description:
-
-After upgrading from 2.6.5-rc2 or 2.6.9-rc1 to 2.6.11, all striped LVM volumes
-that have been working flawlessly for months show a totally corrupted
-filesystem. If I boot the original kernel again w/o touching the filesystems,
-everything is fine. 
-
-I guess this has to do something with the lvm striping fix that went in recently.
-
-Steps to reproduce:
-Create a striped LVM volume on 2.6.9-rc1 and upgrade the kernel to 2.6.11
-
-------- You are receiving this mail because: -------
-You are on the CC list for the bug, or are watching someone who is.
+What protection is there against long term queueing and running the
+machine out of memory?
