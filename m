@@ -1,18 +1,16 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: what is the current utility in testing active paths
-	from multipat hd?
-Date: Wed, 27 Apr 2005 22:23:31 +0200
-Message-ID: <1114633411.10011.55.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321A94B@SRMANNING.eng.emc.com>
-	<20050427170710.GU4431@marowsky-bree.de>
-	<20050427181701.GB9368@us.ibm.com>
-	<20050427201024.GD4431@marowsky-bree.de>
+From: Arthur Bergman <sky@nanisky.com>
+Subject: Re: How is the multipath pg policy group-by-nodename any
+	different th an the failover policy ...
+Date: Wed, 27 Apr 2005 21:38:34 +0100
+Message-ID: <9011afeb25b897c4f1566971ca134326@nanisky.com>
+References: <C2EEB4E538D3DC48BF57F391F422779321A950@SRMANNING.eng.emc.com>
+	<1114632455.10011.49.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
+Mime-Version: 1.0 (Apple Message framework v619.2)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050427201024.GD4431@marowsky-bree.de>
+In-Reply-To: <1114632455.10011.49.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,47 +23,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer, 2005-04-27 at 22:10 +0200, Lars Marowsky-Bree wrote:
-> On 2005-04-27T11:17:02, Mike Anderson <andmike@us.ibm.com> wrote:
-> 
-> > Once support gets completed / utilized the fc_transport class should
-> > provide data on the link state and the port state which could be provide
-> > indication of path health for deciding if to send a patch check cmd. This
-> > would add complication to the tester as each new transport would need some
-> > type of handler.
-> 
-> ACK. Yes, this is part of the additional information to use I was
-> referring to. As long as the port is down, why bother...
-> 
-> > > Another option would be to not mechanically test every N seconds, but to
-> > > retest a failed path after 1s - 2s - 4s - ... 32s max as a cascading
-> > > back-off, and maybe start at 2 - 64s for paths in inactive PGs.
-> > > 
-> > A cascading backoff / staggered  timer would require less topology
-> > knowledge than the above path health testing method and would provide the
-> > reduce IO loading desired (depending on how high a user was willing to go
-> > on setting the delta between path tests).
-> 
-> Yes, it's easier, but it also slows down responsiveness and path
-> reactivation of course. One can argue that the combination of the two
-> works; we only retest every path every N seconds, but we interleave
-> them, so that essentially we test a path every N/M seconds; and as soon
-> as one path finds a state change, we shorten the timers for all paths so
-> they get all tested faster.
-> 
-> That's probably a pretty sophisticated heuristic which would work
-> reasonably well w/o any additional configuration.
-> 
-I'm in the process of plugging a uevent listener into a new daemon
-thread.
 
-Right now, the goal is to trap sysfs block add/remove events so that I
-can get rid of the multipath -> multipathd signaling.
+On 27 Apr 2005, at 21:07, christophe varoqui wrote:
 
-I can see a bright future where the sysfs transport classes will
-broadcast over that bus too. And we'll be ready to play with these new
-events.
+> The fact is, the world seems full of exotic hardware. This pgpolicy was
+> asked by IBM for their ESS class controllers were each node has a 
+> unique
+> nodename whatever the number of paths to the node. Having a penalty
+> switching a LU from one node to its peer, they were interested in group
+> all paths to a node together.
+>
 
-Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+
+Yep, I think I requested it for the San Volume Controllers (IBM 
+standalone ESS derivative (and as I say that no doubt a ESS team member 
+will flame me ;))
+
+> Well, at least it's what I understood from the request :/
+>
+> One would have thought that group_by_serial was here to cover that
+> scenario, but that hardware just doesn't work that way.
+
+All the path have the same serial, but the show up from different nodes.
+
+Cheers
+Arthur
+
+
+-----
+CTO @ Fotango Ltd
++447834716919
+http://www.fotango.com/
