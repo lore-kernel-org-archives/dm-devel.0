@@ -1,16 +1,12 @@
-From: Arthur Bergman <sky@nanisky.com>
-Subject: Re: How is the multipath pg policy group-by-nodename any
-	different th an the failover policy ...
-Date: Wed, 27 Apr 2005 21:38:34 +0100
-Message-ID: <9011afeb25b897c4f1566971ca134326@nanisky.com>
-References: <C2EEB4E538D3DC48BF57F391F422779321A950@SRMANNING.eng.emc.com>
-	<1114632455.10011.49.camel@zezette>
+From: k-ueda@ct.jp.nec.com
+Subject: [PATCH] execute_program() fix in multipath-tools-0.4.4
+Date: Wed, 27 Apr 2005 18:26:24 -0400 (EDT)
+Message-ID: <48696.8194054954$1114640527@news.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v619.2)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1114632455.10011.49.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +16,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi Christophe,
 
-On 27 Apr 2005, at 21:07, christophe varoqui wrote:
+If there is no space (' ') in callout strings, the callout isn't called
+in multipath-tools-0.4.4.
 
-> The fact is, the world seems full of exotic hardware. This pgpolicy was
-> asked by IBM for their ESS class controllers were each node has a 
-> unique
-> nodename whatever the number of paths to the node. Having a penalty
-> switching a LU from one node to its peer, they were interested in group
-> all paths to a node together.
->
+For example, in the default multipath.conf, default_prio_callout
+is set as "/bin/false".  But it's not called due to this bug.
+If I set it as "/bin/false ", it works.
 
-
-Yep, I think I requested it for the San Volume Controllers (IBM 
-standalone ESS derivative (and as I say that no doubt a ESS team member 
-will flame me ;))
-
-> Well, at least it's what I understood from the request :/
->
-> One would have thought that group_by_serial was here to cover that
-> scenario, but that hardware just doesn't work that way.
-
-All the path have the same serial, but the show up from different nodes.
-
-Cheers
-Arthur
+Regards,
+Ky (Kiyoshi Ueda)
 
 
------
-CTO @ Fotango Ltd
-+447834716919
-http://www.fotango.com/
+--- multipath-tools-0.4.4/libmultipath/callout.c	2005-04-14 13:17:17.000000000 -0400
++++ execute-program-fix/libmultipath/callout.c	2005-04-28 05:29:30.228646923 -0400
+@@ -29,8 +29,8 @@ int execute_program(char *path, char *va
+ 	int i;
+ 
+ 	i = 0;
++	strfieldcpy(arg, path);
+ 	if (strchr(path, ' ')) {
+-		strfieldcpy(arg, path);
+ 		pos = arg;
+ 		while (pos != NULL) {
+ 			if (pos[0] == '\'') {
+@@ -39,11 +39,13 @@ int execute_program(char *path, char *va
+ 				argv[i] = strsep(&pos, "\'");
+ 				while (pos[0] == ' ')
+ 					pos++;
+-		} else {
++			} else {
+ 				argv[i] = strsep(&pos, " ");
+ 			}
+ 			i++;
+ 		}
++	} else {
++		argv[i++] = arg;
+ 	}
+ 	argv[i] =  NULL;
+ 
