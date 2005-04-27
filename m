@@ -1,12 +1,15 @@
-From: Ondrej Palkovsky <ondrap@penguin.cz>
-Subject: Snapshot read consistency?
-Date: Wed, 27 Apr 2005 21:55:58 +0200
-Message-ID: <1114631758.6389.6.camel@localhost>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: How is the multipath pg policy group-by-nodename
+	any different th an the failover policy ...
+Date: Wed, 27 Apr 2005 22:07:35 +0200
+Message-ID: <1114632455.10011.49.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321A950@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A950@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,45 +19,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I am trying to modify the snapshot code to slightly different layout of
-the exception store (to mimic behaviour of some commercial systems), and
-I came across the code to read data from snapshot. It seems to me that
-if the code is preempted after the up_read(&s->lock), the pending
-exception could be completed (or even new exception could be created and
-written!), the new block could be written to the origin and then the
-snapshot would read the new-incorrect data from origin. Highly
-improbable, but possible? Am I correct or is there some other locking
-mechanism that I have missed?
+On mer, 2005-04-27 at 15:42 -0400, goggin, edward wrote:
+> ... especially for SCSI paths where the multipathing is designed to be
+> indifferent to both transport and network route between SCSI initiator
+> and SCSI target?  Don't they both result in one path per path group
+> for a given SCSI logical unit as long as the node name is defined to
+> be the "host number/channel number/target id" triple setup by
+> sysfs_devinfo in libmultipath/discovery.c?
+> 
+> BTW, this is an example of the SCSI affinity I was mentioning in my
+> previous submission.
+> 
+> --
+Tunables don't account as blocking affinity : if you want to multipath
+over ieee1394, you just won't use those tunables like group-by-nodename.
 
-Ondrej
+The fact is, the world seems full of exotic hardware. This pgpolicy was
+asked by IBM for their ESS class controllers were each node has a unique
+nodename whatever the number of paths to the node. Having a penalty
+switching a LU from one node to its peer, they were interested in group
+all paths to a node together.
 
-- snapshot_map(), dm-snap.c
+Well, at least it's what I understood from the request :/
 
-	if (bio_rw(bio) == WRITE) {
-.......
-	} else {
-		/*
-		 * FIXME: this read path scares me because we
-		 * always use the origin when we have a pending
-		 * exception.  However I can't think of a
-		 * situation where this is wrong - ejt.
-		 */
+One would have thought that group_by_serial was here to cover that
+scenario, but that hardware just doesn't work that way.
 
-		/* Do reads */
-		down_read(&s->lock);
-
-		/* See if it it has been remapped */
-		e = lookup_exception(&s->complete, chunk);
-		if (e)
-			remap_exception(s, e, bio);
-		else
-			bio->bi_bdev = s->origin->bdev;
-
-		up_read(&s->lock);
-	}
-
-
+Regards,
 -- 
+christophe varoqui <christophe.varoqui@free.fr>
