@@ -1,8 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: How is the multipath pg policy group-by-nodename
-	any	differen t than the failover policy?
-Date: Thu, 28 Apr 2005 14:53:19 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A95A@SRMANNING.eng.emc.com>
+Subject: Re: multipath affinity to SCSI
+Date: Thu, 28 Apr 2005 15:26:51 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A95B@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,17 +18,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 27 Apr 2005 21:38:34 +0100, Arthur Bergman wrote:
+On Wed, 27 Apr 2005 19:11:33 +0200, Lars Marowsky-Bree wrote:
+ 
+> > Has anyone tried multipathing to non-SCSI target devices, 
+> e.g., LOOP,
+> > NBD, USB?  While the architecture looks fully capable of supporting
+> > such, it looks like both the kernel and user implementation 
+> would have
+> > some problems due to some SCSI affinity.
+> 
+> Well, I can see the user-space not auto-detecting the paths right now
+> (probably because simply noone has added those features yet 
+> ;-), but the
+> kernel shouldn't have any issues with it. I've played with it 
+> over loop
+> devices for testing.
+> 
+> Which SCSI affinity are you referring to?
 
-> All the path have the same serial, but the show up from different nodes.
+Kernel components look fine.  Mapped and target device concepts seem
+abstract enough to encompass multiple underlying block device session
+protocols.  I was wrong to implicate them.
 
-Not sure what this means.  The group-by-node-name policy implies assigning
-paths with similar node name attribute to the same group.  For SCSI, seems
-like the multipath configurator assigns the node name attribute to be the
-combination of SCSI initiator and target addresses (in linux, host
-no/channel no/target id).  This should be different for every path which
-would cause each path to be assigned to a different path group.
+As reported yesterday by Benjamin Marzinski, sysfs_devinfo()
+definitely shows this affinity.  Look in libmultipath/structs.h
+for more examples.  
 
-How is the resultant path grouping any different than if you used the
-failover
-path grouping policy instead? 
+I think the definition of a path may be too focused on SCSI.  Path
+attributes and path discovery are clearly SCSI centric.  Possibly
+the path data structure could use unions for the different
+definitions for a path (address attributes for a path are surely
+different across these protocols) in order to accommodate
+different underlying protocols.  Another idea is to have per
+protocol callouts from sysfs_devinfo to perform path discovery.
+
+This isn't all that different (although its at the session layer
+not the SCSI transport layer) than the need for transport specific
+handlers if/when the path testing starts making use of transport
+level attributes as pointed out by Mike Anderson yesterday. 
