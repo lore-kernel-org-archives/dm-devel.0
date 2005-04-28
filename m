@@ -1,20 +1,16 @@
-From: Tim Pepper <tpepper@gmail.com>
-Subject: Re: Re: fastfail operation and retries
-Date: Wed, 27 Apr 2005 15:57:09 -0700
-Message-ID: <eada2a0705042715573dd04ab1@mail.gmail.com>
-References: <OF8721F851.2661040F-ONC1256FEA.0076595E-C1256FEA.00768C46@de.ibm.com>
-	<20050421222409.GY17315@marowsky-bree.de>
-	<ac71172a050422121365a32cc3@mail.gmail.com>
-	<eada2a070504251656762a8625@mail.gmail.com>
-	<20050427144406.GK4431@marowsky-bree.de>
-Reply-To: Tim Pepper <tpepper@gmail.com>,
-	device-mapper development <dm-devel@redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: what is the current utility in testing active paths
+	from multipat hd?
+Date: Thu, 28 Apr 2005 18:37:31 +0200
+Message-ID: <20050428163731.GD21645@marowsky-bree.de>
+References: <C2EEB4E538D3DC48BF57F391F422779321A94B@SRMANNING.eng.emc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050427144406.GK4431@marowsky-bree.de>
 Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A94B@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,19 +20,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Lars Marowsky-Bree <lmb@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, tranlan@us.ibm.com, Linux SCSI <linux-scsi@vger.kernel.org>, aherrman@de.ibm.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 4/27/05, Lars Marowsky-Bree <lmb@suse.de> wrote:
-> User-space needs to take action and tell us when to stop queuing.
+On 2005-04-27T12:27:32, "goggin, edward" <egoggin@emc.com> wrote:
 
-Is there any risk of priority inversion?  I can't think of a specific
-issue beyond the userspace daemon process simply not existing that
-wouldn't hopefully settle out over time and I haven't looked closely
-at this aspect of 2.6, but it used to be easy to get/keep the cpu busy
-enough on flushing IO to disk to hurt userspace response times (fibre
-pulls during heavy buffered, filesystem IO effectively DoSing the
-machine for a long period).  If that sort of thing is still possible,
-it seems risky relying on a userspace application for
-timely/meaningful recovery of the resources consumed by the IO.
+> Although I know it sounds a bit radical and counter intuitive,
+> but I'm not sure of the utility gained in the current multipathing
+> implementation by multipathd periodically testing paths which
+> are known to be in an active state in the multipath target driver.
+> Possibly someone can convince me otherwise.
+
+Ed, I misread your mail and missed the point. Your more succinct summary
+on the conf call today made it all clear to me; indeed this doesn't just
+need optimization, it needs fixing...
+
+https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=3D156280
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business
