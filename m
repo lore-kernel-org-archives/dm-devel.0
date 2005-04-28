@@ -1,14 +1,15 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
+From: k-ueda@ct.jp.nec.com
 Subject: Re: what's up with pp_balance_units?
-Date: Thu, 28 Apr 2005 22:36:20 +0200
-Message-ID: <1114720580.10504.7.camel@zezette>
+Date: Thu, 28 Apr 2005 17:52:52 -0400 (EDT)
+Message-ID: <4604.3322225616$1114725342@news.gmane.org>
 References: <C2EEB4E538D3DC48BF57F391F422779321A959@SRMANNING.eng.emc.com>
+	<1114720580.10504.7.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A959@SRMANNING.eng.emc.com>
+In-Reply-To: <1114720580.10504.7.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +19,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It's not default because its code path is badly inefficient.
+Hi,
 
-I'll accept design criticism, though I think doing it more efficiently
-would recquire some hardware assistance, like the pp_alua does.
+On Thu, 28 Apr 2005 22:36:20 +0200, christophe varoqui wrote:
+> It's not default because its code path is badly inefficient.
+
+How about "don't use callout, and set same priority for all path"
+by defualt?  It's more efficient, I think.
+
+And, I found a possible bug that pp->priority is defined as 
+"unsigned int" while it's used like "int".
+But, if you fix this bug, "/bin/false" doesn't work as callout
+because it always fails.
+So I think it will fit your policy to add a feature of
+"do not use callout" and use it by default.
+
+
+Bug in multipath-tools-0.4.4
+============================
+If priority callout is "/bin/false", in devinfo(), execute_program()
+returns non-zero, since "/bin/false" exits by 1 even if "/bin/false"
+terminate normally.  So, pp->priority is set by "-1".
+
+---------------------------------------------------------------------
+libmultipath/discovery.c:477:
+
+        /*
+         * get path prio
+         */
+        if (mask & DI_PRIO) {
+                select_getprio(pp);
+
+                if (apply_format(pp->getprio, &buff[0], pp)) {
+                        condlog(0, "error formatting prio callout command");
+                        pp->priority = -1;
+                } else if (execute_program(buff, prio, 16)) {
+                        condlog(0, "error calling out %s", buff);
+                        pp->priority = -1;
+                } else
+                        pp->priority = atoi(prio);
+
+                condlog(3, "prio = %u", pp->priority);
+        }
+---------------------------------------------------------------------
+
+In coalesce_paths(), if "priority" of "struct path" is less than "0",
+the multipath which include the path isn't mapped.
+But this "if check" is always false even if it is set by "-1", since
+"priority" of "struct path" is declared with "unsigned int".
+Should it be declared with "int"?
+
+---------------------------------------------------------------
+multipath/main.c:713:
+                if (pp1->priority < 0)
+                        mpp->action = ACT_NOTHING;
+
+multipath/main.c:738:
+                        if (pp2->priority < 0)
+                                mpp->action = ACT_NOTHING;
+---------------------------------------------------------------
 
 Regards,
-cvaroqui
-
-On jeu, 2005-04-28 at 14:42 -0400, goggin, edward wrote:
-> Just wondering why the pp_balance_units path priority callout is not
-> the default get_priority callout instead of /bin/false which simply
-> assigns a priority value of 1 to every path.  This seems especially
-> true for the symmetric (active-active) storage arrays which by their
-> very definition don't have their own built-in preferential paths for a
-> logical unit.
-> 
-> Seems like pp_balance_units assigns a higher priority to paths
-> connected to SCSI targets which it anticipates will be under-utilized
-> when considering the path accessibility of all mapped devices
-> accessible on the same storage system from the same host.
-> It will also yield the same results as /bin/false will (that is, all paths
-> will have the same priority) in the case where all mapped devices
-> on a given storage array are accessible from the same set of targets
-> on that array.
-> 
-> Pp_balance_units does appear to have a deficiency in that it does
-> not take into account the impact on these storage system targets
-> from other hosts (admitably difficult to do) accessing these same
-> (cluster case) or different SCSI logical units.
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+Ky (Kiyoshi Ueda)
