@@ -1,16 +1,15 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: what's up with pp_balance_units?
-Date: Fri, 29 Apr 2005 00:40:51 +0200
-Message-ID: <1114728052.10504.12.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321A959@SRMANNING.eng.emc.com>
-	<1114720580.10504.7.camel@zezette>
-	<20050428.175252.71083259.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+Subject: Re: what is the current utility in testing active pat
+	hs from multipathd?
+Date: Fri, 29 Apr 2005 01:48:47 +0200
+Message-ID: <1114732128.10504.20.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321A95C@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050428.175252.71083259.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321A95C@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,97 +22,50 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-You need to recheck with 0.4.5-pre1, as it is now allowed and encouraged
-to have (null) prio callouts. Does that look good ?
+Feature added in 0.4.5-pre2 : now multipathd checkers proactively
+fail_path upon up -> down transitions.
 
-        if (mask & DI_PRIO) {
-                select_getprio(pp);
+It won't appear on ftp before tomorrow, as I suddenly lost my dev shell
+at osdl because of a server move (planned, /me stupid)
 
-                if (!pp->getprio) {
-                        pp->priority = 1;
-                } else if (apply_format(pp->getprio, &buff[0], pp)) {
-                        condlog(0, "error formatting prio callout
-command");
-                        pp->priority = -1;
-                } else if (execute_program(buff, prio, 16)) {
-                        condlog(0, "error calling out %s", buff);
-                        pp->priority = -1;
-                } else
-                        pp->priority = atoi(prio);
-
-                condlog(3, "prio = %u", pp->priority);
-        }
-
-
-
-struct path -> priority is now an "int", thanks for the report.
+This enhancement request wasn't ignored, just pushed after the "great
+stabilization" (which is now I guess)
 
 Regards,
 cvaroqui
 
-On jeu, 2005-04-28 at 17:52 -0400, k-ueda@ct.jp.nec.com wrote:
-> Hi,
+On jeu, 2005-04-28 at 15:45 -0400, goggin, edward wrote:
+> On Wed, 27 Apr 2005 12:27:32 -0400, "goggin, edward" wrote:
 > 
-> On Thu, 28 Apr 2005 22:36:20 +0200, christophe varoqui wrote:
-> > It's not default because its code path is badly inefficient.
+> > Although I know it sounds a bit radical and counter intuitive,
+> > but I'm not sure of the utility gained in the current multipathing
+> > implementation by multipathd periodically testing paths which
+> > are known to be in an active state in the multipath target driver.
+> > Possibly someone can convince me otherwise.
 > 
-> How about "don't use callout, and set same priority for all path"
-> by defualt?  It's more efficient, I think.
+> ... (added to save space)
 > 
-> And, I found a possible bug that pp->priority is defined as 
-> "unsigned int" while it's used like "int".
-> But, if you fix this bug, "/bin/false" doesn't work as callout
-> because it always fails.
-> So I think it will fit your policy to add a feature of
-> "do not use callout" and use it by default.
+> > Furthermore, while the checkloop function reacts immediately
+> > to a multipathd state transition of failed to active, the code
+> > appears little interested (other than updating the multipathd
+> > path state to failed) in the case where the multipathd path
+> > state changes from active to failed.
 > 
+> >From the content and volume of the negative feedback to my proposal,
+> it is clear to me that I did a horrible job presenting my point.  It
+> seems that no one paid any attention to the second paragraph above
+> nor to the fact that multipathd has NEVER (as far back as 01-04-2005
+> anyway) failed path state in the kernel when one of its path tests
+> failed.  I've pushed for this in the past several times on dm-devel,
+> as far back as February.  I stopped pushing when the idea was
+> rejected/ignored!
 > 
-> Bug in multipath-tools-0.4.4
-> ============================
-> If priority callout is "/bin/false", in devinfo(), execute_program()
-> returns non-zero, since "/bin/false" exits by 1 even if "/bin/false"
-> terminate normally.  So, pp->priority is set by "-1".
+> My email yesterday was simply questioning why even test active paths
+> if we do nothing with the result of the test.
 > 
-> ---------------------------------------------------------------------
-> libmultipath/discovery.c:477:
-> 
->         /*
->          * get path prio
->          */
->         if (mask & DI_PRIO) {
->                 select_getprio(pp);
-> 
->                 if (apply_format(pp->getprio, &buff[0], pp)) {
->                         condlog(0, "error formatting prio callout command");
->                         pp->priority = -1;
->                 } else if (execute_program(buff, prio, 16)) {
->                         condlog(0, "error calling out %s", buff);
->                         pp->priority = -1;
->                 } else
->                         pp->priority = atoi(prio);
-> 
->                 condlog(3, "prio = %u", pp->priority);
->         }
-> ---------------------------------------------------------------------
-> 
-> In coalesce_paths(), if "priority" of "struct path" is less than "0",
-> the multipath which include the path isn't mapped.
-> But this "if check" is always false even if it is set by "-1", since
-> "priority" of "struct path" is declared with "unsigned int".
-> Should it be declared with "int"?
-> 
-> ---------------------------------------------------------------
-> multipath/main.c:713:
->                 if (pp1->priority < 0)
->                         mpp->action = ACT_NOTHING;
-> 
-> multipath/main.c:738:
->                         if (pp2->priority < 0)
->                                 mpp->action = ACT_NOTHING;
-> ---------------------------------------------------------------
-> 
-> Regards,
-> Ky (Kiyoshi Ueda)
+> I was not saying that we shouldn't test active paths.  Clearly, this
+> is a good thing to do and the current code is only a first pass
+> implementation of what could be done.
 > 
 > --
 > dm-devel mailing list
