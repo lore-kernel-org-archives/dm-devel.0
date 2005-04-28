@@ -1,7 +1,8 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: Re: multipath affinity to SCSI
-Date: Thu, 28 Apr 2005 15:26:51 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A95B@SRMANNING.eng.emc.com>
+Subject: Re: what is the current utility in testing active pat
+	hs from multipathd?
+Date: Thu, 28 Apr 2005 15:45:09 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321A95C@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -18,41 +19,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 27 Apr 2005 19:11:33 +0200, Lars Marowsky-Bree wrote:
- 
-> > Has anyone tried multipathing to non-SCSI target devices, 
-> e.g., LOOP,
-> > NBD, USB?  While the architecture looks fully capable of supporting
-> > such, it looks like both the kernel and user implementation 
-> would have
-> > some problems due to some SCSI affinity.
-> 
-> Well, I can see the user-space not auto-detecting the paths right now
-> (probably because simply noone has added those features yet 
-> ;-), but the
-> kernel shouldn't have any issues with it. I've played with it 
-> over loop
-> devices for testing.
-> 
-> Which SCSI affinity are you referring to?
+On Wed, 27 Apr 2005 12:27:32 -0400, "goggin, edward" wrote:
 
-Kernel components look fine.  Mapped and target device concepts seem
-abstract enough to encompass multiple underlying block device session
-protocols.  I was wrong to implicate them.
+> Although I know it sounds a bit radical and counter intuitive,
+> but I'm not sure of the utility gained in the current multipathing
+> implementation by multipathd periodically testing paths which
+> are known to be in an active state in the multipath target driver.
+> Possibly someone can convince me otherwise.
 
-As reported yesterday by Benjamin Marzinski, sysfs_devinfo()
-definitely shows this affinity.  Look in libmultipath/structs.h
-for more examples.  
+... (added to save space)
 
-I think the definition of a path may be too focused on SCSI.  Path
-attributes and path discovery are clearly SCSI centric.  Possibly
-the path data structure could use unions for the different
-definitions for a path (address attributes for a path are surely
-different across these protocols) in order to accommodate
-different underlying protocols.  Another idea is to have per
-protocol callouts from sysfs_devinfo to perform path discovery.
+> Furthermore, while the checkloop function reacts immediately
+> to a multipathd state transition of failed to active, the code
+> appears little interested (other than updating the multipathd
+> path state to failed) in the case where the multipathd path
+> state changes from active to failed.
 
-This isn't all that different (although its at the session layer
-not the SCSI transport layer) than the need for transport specific
-handlers if/when the path testing starts making use of transport
-level attributes as pointed out by Mike Anderson yesterday. 
+From the content and volume of the negative feedback to my proposal,
+it is clear to me that I did a horrible job presenting my point.  It
+seems that no one paid any attention to the second paragraph above
+nor to the fact that multipathd has NEVER (as far back as 01-04-2005
+anyway) failed path state in the kernel when one of its path tests
+failed.  I've pushed for this in the past several times on dm-devel,
+as far back as February.  I stopped pushing when the idea was
+rejected/ignored!
+
+My email yesterday was simply questioning why even test active paths
+if we do nothing with the result of the test.
+
+I was not saying that we shouldn't test active paths.  Clearly, this
+is a good thing to do and the current code is only a first pass
+implementation of what could be done.
