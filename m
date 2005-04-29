@@ -1,14 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Multipath setup
-Date: Fri, 29 Apr 2005 17:07:23 +0200
-Message-ID: <20050429150723.GB16717@averon.dyndns.org>
-References: <960A9B249C99994AA3C7FCA016A0DA8901DA8EBE@ussccem08.corp.hds.com>
+From: k-ueda@ct.jp.nec.com
+Subject: Re: what's up with pp_balance_units?
+Date: Fri, 29 Apr 2005 11:31:44 -0400 (EDT)
+Message-ID: <30273.7421975054$1114788357@news.gmane.org>
+References: <1114720580.10504.7.camel@zezette>
+	<20050428.175252.71083259.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+	<1114728052.10504.12.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <960A9B249C99994AA3C7FCA016A0DA8901DA8EBE@ussccem08.corp.hds.com>
+In-Reply-To: <1114728052.10504.12.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> 
-> installed the 2.6.12.rc2-odm1 (I turned on the Multi-Device
-> support/Device 
-> Mapper Support and Multipath I/O Support)
-> 
+Hi Christophe,
 
-"Multipath I/O" is the MD driver.
-You need to enable the DM one.
+On Fri, 29 Apr 2005 00:40:51 +0200, christophe varoqui wrote:
+> You need to recheck with 0.4.5-pre1, as it is now allowed and encouraged
+> to have (null) prio callouts. Does that look good ?
 
-> 
-> [root@dhcp76 multipath-tools-0.4.4]# /sbin/dmsetup targets
-> striped          v1.0.2
-> linear           v1.0.1
-> error            v1.0.1
-> 
-> Is that mean I don't have multipath support compiled in the kernel ?
-> 
-Yes
+Yes, that does.
+I confirmed that priority is set by "1", if I removed
+"default_prio_callout" from multipath.conf.
 
-> Also, I have a generic question regarding to the multipath tool. We ran
-> some 
-> virtualization softwares, which generate different UUID (SCSI VPD 83)
-> for the 
-> same LUN go through different path, can the multipath software config
-> these 
-> two LUNs with difference UUID in a multipath setup ?
-> 
-You have to forge your own "getuid" program then.
-Default one is scsi_id.
+But, it may be better if user can specify null callout explicitly.
+Because, for example, user may want to specify that default is 
+"pp_balance_units" but no callout is used for specific devices
+like following.
+
+---------------------------------------------------------
+defaults {
+    ...
+    default_prio_callout   "/sbin/pp_balance_units %d"
+    ...
+}
+devices {
+    device {
+        ...
+        prio_callout       ""
+        ...
+    }
+}
+---------------------------------------------------------
 
 Regards,
-cvaroqui
+Ky (Kiyoshi Ueda)
