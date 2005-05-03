@@ -1,12 +1,14 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: default_prio_callout in multipath-tools-0.4.5-pre2
-Date: Tue, 03 May 2005 17:26:24 -0400 (EDT)
-Message-ID: <26483.5706017495$1115155274@news.gmane.org>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: multipath can't be run with -S, so don't try
+Date: Tue, 03 May 2005 23:31:24 +0200
+Message-ID: <1115155884.2277.20.camel@zezette>
+References: <20050503211703.GD5323@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20050503211703.GD5323@phlogiston.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,25 +18,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Applied, thanks.
 
-In multipath.conf of multipath-tools-0.4.5-pre2, "/bin/true" is set
-as default_prio_callout, but I think "none" is better as default.
+It will appear as commit f849af142710ddfab9d29533be30bbf23dcd5a55 in the
+git korg repository, when updated.
 
-"/bin/true" assigns a priority value of "0" and "none" assigns
-that of "1", but the results are same according to the flat priority
-assignment.
-And "none" is more efficient, since "multipath" command doesn't
-call execute_program() which does fork() and exec().
+Shall I understand you approve the design evolution ?
 
-Additionally, dependent commands can be reduced by using "none".
-It is helpful for / on multipath, since commands which need to be
-included in initramfs can be reduced when the default setting is used.
+On mar, 2005-05-03 at 16:17 -0500, Benjamin Marzinski wrote:
+> This is a patch clean up the references to -S in multipath, multipathd, and
+> the conf files.
+> 
 
-Any comments?
-
-Thanks,
-Ky (Kiyoshi Ueda)
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
