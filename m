@@ -1,14 +1,14 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: Unable to use multipath with LVM2
-Date: Tue, 3 May 2005 15:05:19 +0200
-Message-ID: <20050503130519.GA3266@marowsky-bree.de>
-References: <BFCF159FFD14F444B205968F32DBD5BB01700376@MAILEX01.rasgroup.ita.localnet>
+From: "Magni Fabrizio" <Fabrizio.Magni@rasnet.it>
+Subject: RE: Unable to use multipath with LVM2
+Date: Tue, 3 May 2005 15:18:24 +0200
+Message-ID: <BFCF159FFD14F444B205968F32DBD5BB01700379@MAILEX01.rasgroup.ita.localnet>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <BFCF159FFD14F444B205968F32DBD5BB01700376@MAILEX01.rasgroup.ita.localnet>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +21,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2005-05-03T14:49:03, Magni Fabrizio <Fabrizio.Magni@rasnet.it> wrote:
 
-> > Either the /dev/disk/by-*/ files, or /dev/dm-*; either will do. It's
-> > just important that it only uses those paths and doesn't use the raw
-> > disks (/dev/sdX).
-> 
-> /dev/disk/by-*/ can be scanned but they don't work properly on top of
-> multipath since they are linked directly to the "basic devices"
-> /dev/sd*.
+> In SP2 and onwards, /dev/disk/by-name/ are symlinks to /dev/dm-* named
+> after the mappings.
+>=20
 
-In SP2 and onwards, /dev/disk/by-name/ are symlinks to /dev/dm-* named
-after the mappings.
+There is no /dev/disk/by-name/ on SP1 but that's not a problem.
+I can create my own links to dm-* using multipath.conf and udev.rules.
 
-> I really don't understand why /dev/dm-* cannot be scanned properly by
-> the LVM2...
+The real issue is that they are not scanned by LVM2. :(
 
-Well, it seems to work for me; but I only tried it on SP2 betas.
+Is there a release date for SP2?
+Any chance to ask for a beta?
 
-
--- 
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+Fabrizio
