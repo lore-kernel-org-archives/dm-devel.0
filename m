@@ -1,17 +1,14 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: RE: How is the multipath pg policy group-by-nodename
-	any	differen t than the failover policy?
-Date: Tue, 3 May 2005 14:40:54 +0200
-Message-ID: <20050503124054.GR1285@marowsky-bree.de>
-References: <C2EEB4E538D3DC48BF57F391F422779321A95A@SRMANNING.eng.emc.com>
-	<a104606cc87e76d5150c588d17db8905@nanisky.com>
+From: "Magni Fabrizio" <Fabrizio.Magni@rasnet.it>
+Subject: RE: Unable to use multipath with LVM2
+Date: Tue, 3 May 2005 14:49:03 +0200
+Message-ID: <BFCF159FFD14F444B205968F32DBD5BB01700376@MAILEX01.rasgroup.ita.localnet>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain;
+	charset="US-ASCII"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <a104606cc87e76d5150c588d17db8905@nanisky.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,53 +21,47 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2005-05-03T13:22:32, Arthur Bergman <sky@nanisky.com> wrote:
 
-> >How is the resultant path grouping any different than if you used the
-> >failover
-> >path grouping policy instead?
-> >
-> >--
-> >dm-devel mailing list
-> >dm-devel@redhat.com
-> >https://www.redhat.com/mailman/listinfo/dm-devel
-> >
->=20
-> Huh, as far as I understand it group_by_nodename uses the
->=20
-> /sys/class/fc_transport/target0:0:0/node_name information
->=20
-> from our setup, there are 8 paths to two controllers, there is no=20
-> failover cost but it defeats read caching pretty beadly to use both=20
-> controllers..
->=20
-> /sys/class/fc_transport/target0:0:0/node_name:0x50050768010003d5
-> /sys/class/fc_transport/target0:0:1/node_name:0x5005076801000361
-> /sys/class/fc_transport/target0:0:2/node_name:0x50050768010003d5
-> /sys/class/fc_transport/target0:0:3/node_name:0x5005076801000361
-> /sys/class/fc_transport/target1:0:0/node_name:0x5005076801000361
-> /sys/class/fc_transport/target1:0:1/node_name:0x5005076801000361
-> /sys/class/fc_transport/target1:0:2/node_name:0x50050768010003d5
-> /sys/class/fc_transport/target1:0:3/node_name:0x50050768010003d5
->=20
->=20
-> So all path that ends at a matching node_name, even if they are on=20
-> different transport targets get one path.
+Hi Lars,
 
-Now figure in that this might need to be stacked with more hw-specific
-stuff like dm-emc ;-)
+> It'd be helpful if you actually reported which distribution you're
+> talking about ;-)
+>=20
 
-I think that ought to work already if multipath-tools would set up the
-right cascaded multipath tables in theory though; however it might not
-because depending on how the stacking works some things might not
-propagate up or down correctly right now.
+luckily you know my situation.
 
+> But looking at your version, I guess you might be running SLES9. In
+> which case SP2 should help address your troubles:
+> http://portal.suse.com/sdb/en/2005/04/sles_multipathing.html
+>=20
+> Please try and get access to the beta via your support contact.
+>=20
 
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
+I'm going to try soon.
 
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+> > If I insert aliases in multipath.conf and modify udev.rules=20
+> I can see
+> > symbolick links wichi can be used in failover or multibus=20
+> (tested) but
+> > they are not seen by the LVM2 (even modifying the filter in=20
+> lvm.conf and
+> > specifying "types").
+>=20
+> With those changes LVM2 is supposed to recognize them. Not sure why it
+> doesn't for you.
+>=20
+> > What devices should the LVM scan to use multipathed PVs?
+>=20
+> Either the /dev/disk/by-*/ files, or /dev/dm-*; either will do. It's
+> just important that it only uses those paths and doesn't use the raw
+> disks (/dev/sdX).
+>=20
+
+/dev/disk/by-*/ can be scanned but they don't work properly on top of
+multipath since they are linked directly to the "basic devices"
+/dev/sd*.
+
+I really don't understand why /dev/dm-* cannot be scanned properly by
+the LVM2...
+
+Fabrizio
