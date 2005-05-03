@@ -1,10 +1,10 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: checkerloop checks too many devices
-Date: Tue, 3 May 2005 14:52:01 -0500
-Message-ID: <20050503195201.GC5323@phlogiston.msp.redhat.com>
+Subject: multipath can't be run with -S, so don't try
+Date: Tue, 3 May 2005 16:17:03 -0500
+Message-ID: <20050503211703.GD5323@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="bp/iNruPH9dso1Pn"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,38 +19,74 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It seems that checkerloop isn't just checking the your multipathed devices.
-It's checking all your devices.  Wouldn't it be more sensible to find out which
-devices make up part of a multipathed device, and only check those?
 
-Currently, when I start up multipathd, I getting this printed out:
+--bp/iNruPH9dso1Pn
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Unknown switch: (null)
-multipath v0.4.4 (16/04, 2005)
-Usage: /sbin/multipath  [-v level] [-d] [-l] [-S]
-                        [-p failover|multibus|group_by_serial|group_by_prio]
-                        [device]
-
-        -v level        verbosty level
-           0                    no output
-           1                    print created devmap names only
-           2                    default verbosity
-           3                    print debug information
-        -d              dry run, do not create or update devmaps
-        -l              list the current multipath topology
-        -F              flush all multipath device maps
-        -p policy       force all maps to specified policy :
-           failover             1 path per priority group
-           multibus             all paths in 1 priority group
-           group_by_serial      1 priority group per serial
-           group_by_prio        1 priority group per priority lvl
-           group_by_node_name   1 priority group per target node
-
-        device          limit scope to the device's multipath
-                        (udev-style $DEVNAME reference, eg /dev/sdb
-                        or major:minor or a device map name)
-
-because checkerloop is trying to check the status of /dev/hda, which is not
-multipathed.
+This is a patch clean up the references to -S in multipath, multipathd, and
+the conf files.
 
 -Ben
+
+--bp/iNruPH9dso1Pn
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="no_S.patch"
+
+diff -urN multipath-tools-0.4.5-pre2/multipath/main.c multipath-tools-patched/multipath/main.c
+--- multipath-tools-0.4.5-pre2/multipath/main.c	2005-04-28 17:01:10.000000000 -0500
++++ multipath-tools-patched/multipath/main.c	2005-05-03 14:54:52.000000000 -0500
+@@ -761,7 +761,7 @@
+ usage (char * progname)
+ {
+ 	fprintf (stderr, VERSION_STRING);
+-	fprintf (stderr, "Usage: %s\t[-v level] [-d] [-l] [-S]\n",
++	fprintf (stderr, "Usage: %s\t[-v level] [-d] [-l]\n",
+ 		progname);
+ 	fprintf (stderr,
+ 		"\t\t\t[-p failover|multibus|group_by_serial|group_by_prio]\n" \
+diff -urN multipath-tools-0.4.5-pre2/multipath.conf.annotated multipath-tools-patched/multipath.conf.annotated
+--- multipath-tools-0.4.5-pre2/multipath.conf.annotated	2005-04-29 18:19:05.000000000 -0500
++++ multipath-tools-patched/multipath.conf.annotated	2005-05-03 14:54:22.000000000 -0500
+@@ -7,9 +7,9 @@
+ 	# name    : multipath_tool
+ 	# scope   : multipathd
+ 	# desc    : the tool in charge of configuring the multipath device maps
+-	# default : "/sbin/multipath -v 0 -S"
++	# default : "/sbin/multipath -v 0"
+ 	#
+-	multipath_tool	"/sbin/multipath -v 0 -S"
++	multipath_tool	"/sbin/multipath -v 0"
+ 
+ 	#
+ 	# name    : udev_dir
+diff -urN multipath-tools-0.4.5-pre2/multipath.conf.synthetic multipath-tools-patched/multipath.conf.synthetic
+--- multipath-tools-0.4.5-pre2/multipath.conf.synthetic	2005-04-28 18:08:30.000000000 -0500
++++ multipath-tools-patched/multipath.conf.synthetic	2005-05-03 14:54:34.000000000 -0500
+@@ -1,5 +1,5 @@
+ defaults {
+-	multipath_tool	"/sbin/multipath -v 0 -S"
++	multipath_tool	"/sbin/multipath -v 0"
+ 	udev_dir	/dev
+ 	polling_interval 10
+ 	default_selector	"round-robin 0"
+diff -urN multipath-tools-0.4.5-pre2/multipathd/main.h multipath-tools-patched/multipathd/main.h
+--- multipath-tools-0.4.5-pre2/multipathd/main.h	2005-04-07 14:37:22.000000000 -0500
++++ multipath-tools-patched/multipathd/main.h	2005-05-03 14:55:26.000000000 -0500
+@@ -3,6 +3,6 @@
+ 
+ #define DAEMON 1
+ #define CHECKINT 5
+-#define MULTIPATH "/sbin/multipath -v0 -S"
++#define MULTIPATH "/sbin/multipath -v0"
+ 
+ #endif
+
+--bp/iNruPH9dso1Pn
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--bp/iNruPH9dso1Pn--
