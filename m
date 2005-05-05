@@ -1,14 +1,15 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: unaligned access by multipathd logging
-Date: Fri, 06 May 2005 00:23:35 +0200
-Message-ID: <1115331816.2277.56.camel@zezette>
-References: <427A9361.2040009@ce.jp.nec.com>
+Subject: Re: [Bug 155893] [PATCH] multipathd spams syslog every 5
+	seconds
+Date: Thu, 05 May 2005 16:42:09 +0200
+Message-ID: <1115304129.2277.52.camel@zezette>
+References: <200505051348.j45DmGXa024396@www.beta.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <427A9361.2040009@ce.jp.nec.com>
+In-Reply-To: <200505051348.j45DmGXa024396@www.beta.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,25 +22,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Nice piece of brain work, thanks.
+On jeu, 2005-05-05 at 09:48 -0400, bugzilla@redhat.com wrote:
 
-I applied this patch, and it will appear as commit
-544bfcea0e63d32d4cf79abb97b6e78918fb5511 on kernel.org git repository.
+> https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=155893
+> 
+> ------- Additional Comments From agk@redhat.com  2005-05-05 09:48 EST -------
+> Gah!
+> 
+This thread is less and less helpful :)
+
+Can someone rebase the facts and problems, so that one know what it has
+to do. Because I'm inclined to think upstream is clear from that "bug"
+now.
 
 Regards,
-cvaroqui
-
-On jeu, 2005-05-05 at 17:42 -0400, Jun'ichi Nomura wrote:
-> Hi,
-> 
-> Logging code in multipathd cause unaligned access
-> which, on ia64, yields logs on both console and syslog like:
-> unaligned access to 0x60000000000141d1, ip=0x4000000000009d81
-> 
-> It's harmless except for the slight performance effect.
-> However, it's annoying for users and better to fix.
-> 
-> Attached patch aligns the la->tail to pointer size.
-> Patch is created on multipath-tools 0.4.4.
-> Please consider to apply.
-> 
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
