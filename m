@@ -1,14 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: kpartx compile error
-Date: Mon, 9 May 2005 18:27:21 +0100
-Message-ID: <20050509172721.GG20004@agk.surrey.redhat.com>
-References: <427E04CB.1040309@meteorete.homelinux.org>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: repository access?
+Date: Thu, 12 May 2005 10:12:24 +0200
+Message-ID: <20050512081224.GJ25070@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <427E04CB.1040309@meteorete.homelinux.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,19 +17,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, May 08, 2005 at 02:23:39PM +0200, Dott. Ing. Colombo Marco wrote:
-> Hi... there is a compile error in kpartx of multipath tools with kernel
-> 2.6.12-rc4
+So, silly question time.
 
-> /usr/include/linux/loop.h:88:2: #error "Wrong dev_t in loop.h"
+In some mails I saw a very brief reference to a "git repository" for
+multipath-tools. Where is that, and how do I download the latest code?
+The Wiki is exceptionally quiet...
 
-See the architecture-specific patches in the Fedora SRPMs e.g.
 
-  http://download.fedora.redhat.com/pub/fedora/linux/core/test/3.91/SRPMS/device-mapper-multipath-0.4.4-0.pre8.0.src.rpm
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
 
-Alasdair
--- 
-agk@redhat.com
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
