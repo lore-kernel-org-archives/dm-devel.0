@@ -1,15 +1,14 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: [PATCH] call dm_lib_release/exit explicitly in
-	multipath-tools
-Date: Tue, 17 May 2005 00:44:58 +0200
-Message-ID: <1116283498.9352.41.camel@zezette>
-References: <20050516.150625.74755942.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [Patch] kpartx to accept device map name
+Date: Mon, 16 May 2005 19:50:11 -0400
+Message-ID: <428931B3.7010804@ce.jp.nec.com>
+References: <4288F2B6.9070808@ce.jp.nec.com> <1116283839.9352.48.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050516.150625.74755942.k-ueda@kde.biglobe.ne.jp@kde.biglobe.ne.jp>
+In-Reply-To: <1116283839.9352.48.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,54 +21,40 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Applied, thanks.
+Hi,
 
-On lun, 2005-05-16 at 15:06 -0400, Kiyoshi Ueda wrote:
-> Hi Christophe,
+Excuse me for the misleading message.
+
+The problem I saw was that when executing kpartx just after
+multipath (in shell script), kpartx was invoked too early
+and couldn't see the device node. I could avoid it by
+inserting "sleep 5" after multipath execution but I can't
+tell whether it's enough.
+Kiyoshi's patch should fix it and the device node will be
+created on the location which libdevmapper knows. (/dev/mapper)
+
+'-m' option provides a way to avoid dependency to hidden knowledge
+about the location (/dev or /dev/mapper or anywhere else).
+Without this, we have to synchronize udev rules, hotplug shell
+scripts and initscripts to see the same device node for dm devices.
+This is why I thought it's better to give kpartx an option like this.
+
+..However, in the really latest CVS, dmsetup has a new function
+to execute external command with device node name.
+So we can do the same thing with dmsetup now.
+Given that you are reluctant to add kpartx more relationship with
+libdevmapper, dmsetup is the best place.
+
+Thanks,
+Jun'ichi Nomura
+
+christophe varoqui wrote:
+> Can you elaborate on the problems you see with the asynchronous hotplug
+> model ?
 > 
-> multipath-tools should call dm_lib_release() and dm_lib_exit() 
-> before it returns.  Then, libdevmapper will call update_devs()
-> and finalize the device node operation which creates
-> /dev/mapper/<map_name>.
+> I would like to express my reluctance to add a devmap special case to
+> kpartx.
 > 
-> This patch may not be needed if the latest libdevmapper of the
-> device-mapper CVS is used, since in the latest version, 
-> dm_lib_exit() calls dm_lib_release() and dm_lib_exit() is called
-> by default when the program returns.
-> 
-> Regards,
-> Kiyoshi Ueda
-> 
-> 
-> diff -rup multipath-tools.org/multipath/main.c multipath-tools/multipath/main.c
-> --- multipath-tools.org/multipath/main.c        2005-05-16 12:37:24.000000000 -0400
-> +++ multipath-tools/multipath/main.c    2005-05-16 12:34:41.000000000 -0400
-> @@ -1004,6 +1004,8 @@ out:
->         free_multipathvec(curmp, KEEP_PATHS);
->         free_pathvec(pathvec, FREE_PATHS);
->         free_config(conf);
-> +       dm_lib_release();
-> +       dm_lib_exit();
->  #ifdef _DEBUG_
->         dbg_free_final(NULL);
->  #endif
-> diff -rup multipath-tools.org/kpartx/kpartx.c multipath-tools/kpartx/kpartx.c
-> --- multipath-tools.org/kpartx/kpartx.c 2005-05-16 12:37:36.000000000 -0400
-> +++ multipath-tools/kpartx/kpartx.c     2005-05-16 12:36:36.000000000 -0400
-> @@ -429,6 +429,10 @@ main(int argc, char **argv){
->                 if (n > 0)
->                         break;
->         }
-> +
-> +       dm_lib_release();
-> +       dm_lib_exit();
-> +
->         return 0;
->  }
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+> On lun, 2005-05-16 at 15:21 -0400, Jun'ichi Nomura wrote:
+>>Attached patch adds '-m' option which makes kpartx
+>>to accept device map name.
