@@ -1,27 +1,28 @@
 From: Axel Thimm <Axel.Thimm@ATrpms.net>
-Subject: kpartx & dm-multipath kernel module: Where/when should
-	they be called (wrt FC4)?
+Subject: kpartx & dm-multipath kernel module: Where/when should they be
+	called (wrt FC4)?
 Date: Fri, 20 May 2005 15:20:23 +0200
-Message-ID: <20050520132023.GB7162@neu.nirvana>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0593947250=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: fedora-devel-lists@redhat.com
+Message-ID: <200505201626.j4KGQrnj012380@neu.nirvana>
+Reply-To: Development discussions related to Fedora Core <fedora-devel-list@redhat.com>
+Content-Type: multipart/mixed; boundary="===============0850574188=="
+Return-path: <fedora-devel-list-bounces@redhat.com>
+Resent-Message-Id: <200505201626.j4KGQrnj012380@neu.nirvana>
+Resent-To: fedora-devel-list@redhat.com
+List-Unsubscribe: <http://www.redhat.com/mailman/listinfo/fedora-devel-list>,
+	<mailto:fedora-devel-list-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/fedora-devel-list>
+List-Post: <mailto:fedora-devel-list@redhat.com>
+List-Help: <mailto:fedora-devel-list-request@redhat.com?subject=help>
+List-Subscribe: <http://www.redhat.com/mailman/listinfo/fedora-devel-list>,
+	<mailto:fedora-devel-list-request@redhat.com?subject=subscribe>
+Sender: fedora-devel-list-bounces@redhat.com
+Errors-To: fedora-devel-list-bounces@redhat.com
+To: fedora-devel-list@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
---===============0593947250==
+--===============0850574188==
 Content-Type: multipart/signed; micalg=pgp-sha1;
 	protocol="application/pgp-signature"; boundary="v9Ux+11Zm5mwPlX6"
 Content-Disposition: inline
@@ -87,11 +88,14 @@ nhSvo4mUFGxhanPpvonoL/E=
 --v9Ux+11Zm5mwPlX6--
 
 
---===============0593947250==
+--===============0850574188==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
-
---===============0593947250==--
+-- 
+fedora-devel-list mailing list
+fedora-devel-list@redhat.com
+http://www.redhat.com/mailman/listinfo/fedora-devel-list
+--===============0850574188==--
