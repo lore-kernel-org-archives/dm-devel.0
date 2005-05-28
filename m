@@ -1,12 +1,14 @@
-From: "shahid shaikh" <shahid.shaikh@patni.com>
-Subject: Can't create PVs on partitions
-Date: Thu, 26 May 2005 15:20:01 +0530
-Message-ID: <009201c561d8$49ca44b0$11051aac@pcp41116>
-Reply-To: shahid.shaikh@patni.com,
+From: Suleyman Nazif Kutlu <suleyman.kutlu@gmail.com>
+Subject: corruption in LVM lv to dm mapping
+Date: Sun, 29 May 2005 00:18:29 +0300
+Message-ID: <70c557b20505281418438fbcab@mail.gmail.com>
+Reply-To: Suleyman Nazif Kutlu <suleyman.kutlu@gmail.com>,
 	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----------=_1117100748-16442-14"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,61 +18,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Dm-Devel (E-mail)" <dm-devel@redhat.com>
-Cc: "Christophe Varoqui (E-mail)" <christophe.varoqui@free.fr>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format...
+Hi all,
 
-------------=_1117100748-16442-14
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+I have an AMD-64 machine running SuSE 9.2. I have one disk (for now,
+will add another later on) and a VG on it. I have created some LVs.
 
-Hi,
+Sometimes later, I realized that when I mount an LV (lets call it
+lv_a) I see the directory structure of another LV (lets call it lv_b)
+but I can see that the LV has correct size in lvdisplay.
 
-	I have a block driver "SampleDrv" which creates devices on sd devices.
-	I want to use LVM2 on that SampleDrv devices.
+/mnt is mounted as lv_b
+/mnt2 is mounted as lv_a but has contents as lv_b has.
 
- I changed settings of /etc/lvm/lvm.conf (type and filter entries) file and
-its working fine for whole devices.
+I thought that, filesystem structure is corrupted and started to work
+on some filesystem level utilities today, but today I see that,
+another filesystem pair also got the same problem.
 
- But when i partitioned my SampleDrv devices , LVM2 is not scanning those
-partition in /etc/lvm/.cache and
+So I think it is a problem in device-mapper level, not the filesystem lev=
+el.=20
 
- hence i am unable to create PVs on partitioned SampleDrv devices.
+What can be the possible works to get what is wrong and how to fix ?=20
 
- If any body can tell how this can be resolved, I will be very greatful.
+I am new at device-mapper, I don't have enough experience on it and I
+do not want to loose everything while there is something that can be
+recovered...
 
+Any help is appreciated.=20
 
-Regards,
-Shahid Shaikh.
- 
- 
+Thanks and best regards..=20
 
-
-
-http://www.patni.com
-World-Wide Partnerships. World-Class Solutions.
-_____________________________________________________________________
-
-This e-mail message may contain proprietary, confidential or legally
-privileged information for the sole use of the person or entity to
-whom this message was originally addressed. Any review, e-transmission
-dissemination or other use of or taking of any action in reliance upon
-this information by persons or entities other than the intended
-recipient is prohibited. If you have received this e-mail in error
-kindly delete  this e-mail from your records. If it appears that this
-mail has been forwarded to you without proper authority, please notify
-us immediately at netadmin@patni.com and delete this mail. 
-_____________________________________________________________________
-
-------------=_1117100748-16442-14
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-------------=_1117100748-16442-14--
+*=20
+* Suleyman Kutlu
+*
+* mailto: suleyman.kutlu@gmail.com
+*
