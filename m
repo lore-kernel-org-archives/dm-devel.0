@@ -1,14 +1,15 @@
-From: Suleyman Nazif Kutlu <suleyman.kutlu@gmail.com>
-Subject: corruption in LVM lv to dm mapping
-Date: Sun, 29 May 2005 00:18:29 +0300
-Message-ID: <70c557b20505281418438fbcab@mail.gmail.com>
-Reply-To: Suleyman Nazif Kutlu <suleyman.kutlu@gmail.com>,
-	device-mapper development <dm-devel@redhat.com>
+From: Mikael Andersson <mikael@karett.se>
+Subject: Re: Disk output lockup 2.6.12_rc2 2.6.11.7
+Date: Mon, 30 May 2005 12:30:40 +0200
+Message-ID: <429AEB50.3010506@karett.se>
+References: <4266CEED.3010108@karett.se>	<42676D02.3070201@karett.se>
+	<20050525233838.744af094.akpm@osdl.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20050525233838.744af094.akpm@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,40 +19,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Andrew Morton <akpm@osdl.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi all,
+Andrew Morton wrote:
 
-I have an AMD-64 machine running SuSE 9.2. I have one disk (for now,
-will add another later on) and a VG on it. I have created some LVs.
+>Mikeal, this smells like a devicemapper lockup.  Could you please test
+>2.6.12-rc5 and provide us with a status update?
+>  
+>
 
-Sometimes later, I realized that when I mount an LV (lets call it
-lv_a) I see the directory structure of another LV (lets call it lv_b)
-but I can see that the LV has correct size in lvdisplay.
+I haven't got any unused disks to try this on atm, but i might be able
+to use dmsetup
+to create a dmraid inside my 2G swap partition and craft a test which
+works with
+the limited space available. I'll send a report to the list as soon as
+i've got any results,
+but it will probably take some time in any case.
 
-/mnt is mounted as lv_b
-/mnt2 is mounted as lv_a but has contents as lv_b has.
+>Thanks.
+>  
+>
+/Mikael
 
-I thought that, filesystem structure is corrupted and started to work
-on some filesystem level utilities today, but today I see that,
-another filesystem pair also got the same problem.
-
-So I think it is a problem in device-mapper level, not the filesystem lev=
-el.=20
-
-What can be the possible works to get what is wrong and how to fix ?=20
-
-I am new at device-mapper, I don't have enough experience on it and I
-do not want to loose everything while there is something that can be
-recovered...
-
-Any help is appreciated.=20
-
-Thanks and best regards..=20
-
-*=20
-* Suleyman Kutlu
-*
-* mailto: suleyman.kutlu@gmail.com
-*
+>Mikael Andersson <mikael@karett.se> wrote:
+>  
+>
+>>Mikael Andersson wrote:
+>>    
+>>
+>>>During heavy io-load a lockup occurs that appears to prevent any disk
+>>>output from taking place. fs is reiserfs on two device-mapper mirrored
+>>>200G maxtor disks. After the lockup occurs you can to things like 'ls',
+>>>but echo > test.txt will hang.
+>>>      
+>>>
+>>fs is now ext3
+>>
+>>    
+>>
+>>>A typical workload producing the error is doing:
+>>>rsync of large (1GB) over 100Mbit ethernet
+>>>simultaneous compilation / gunzip
+>>>      
+>>>
+>>Or almost anything that writes something to the disk.
+>>
+>>    
+>>
+>>>I've disabled preemption, and tried with and without acpi enabled, with
+>>>and without smp support (it was smp by default so i switched it off).
+>>>Also tried with another nic (rtl8139) since i got an nv_stop_tx:
+>>>TransmitterStatus remained busy<6> in the logs. I also tried 2.6.11.7
+>>>with the same result.
+>>>      
+>>>
+>> Tried converting to ext3, some problem, albeit the lockups are less
+>>severe. More of the locked processes can be killed and echo > test.txt
+>>works. So _some_ io gets through.
+>> The output from sysrq-T is somewhat less confusing though, it appears
+>>then hung processes is somehow being hung in __generic_unplug_device,  i
+>>had a look at the assembler, but couldn't make heads or tails of it. the
+>>code at __generic_unplug_device+19 was test %eax,%eax immediately
+>>preceded by a callq to the test instruction. Obviously something magic
+>>(by my eyes) is going on here.
+>>
+>> Also tried 2.6.12_rc3-mm3
+>>
+>> I'd really like to find a solution to this since it kinda borks the
+>>nice an shiny machine if it can't handle large files without getting
+>>into trouble.
+>>
+>> I've been working on this for two days, have been trying to find
+>>similar bug reports, trying a lot of different kernels and kernel
+>>options to no avail.
+>> I'm a little out of options right now, any ideas for something to try,
+>>patches to test, or some help in understanding what's happening ?
+>>
+>>
+>>kmirrord/0 D ffff81003f1bccd8 0 978 9 1731 977 (L-TLB)
+>>Call Trace:
+>><ffffffff8016a2d6>{cache_alloc_refill+1222}
+>><ffffffff804a2f9f>{io_schedule+15}
+>>--
+>>kjournald D ffff81003e94bcd8 0 1748 1 2060 953 (L-TLB)
+>>Call Trace:
+>><ffffffff802e9c13>{__generic_unplug_device+19}
+>><ffffffff802e9cfd>{generic_unplug_device+189}
+>>--
+>>rsync D 000000701553dccf 0 6903 6901 (NOTLB)
+>>Call Trace:
+>><ffffffff802e9c13>{__generic_unplug_device+19}
+>><ffffffff802e9cfd>{generic_unplug_device+189}
+>>--
+>>x86_64-pc-lin D 0000006dc7d23e49 0 13785 13742 (NOTLB)
+>>Call Trace:
+>><ffffffff802e9cfd>{generic_unplug_device+189}
+>><ffffffff8040e3ad>{dm_unplug_all+29}
+>>
+>>/Mikael Andersson
+>>-
+>>    
+>>
