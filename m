@@ -1,11 +1,11 @@
 From: "Manu Tayal" <manut@mindtree.com>
-Subject: Error while creating mapped device...
-Date: Wed, 1 Jun 2005 09:50:59 +0530
-Message-ID: <5959EA4638D8734599AB75EAAFBB6FEF03C40073@mtv01ex04.mindtree.com>
+Subject: RE: Error while creating mapped device...
+Date: Wed, 1 Jun 2005 13:54:10 +0530
+Message-ID: <5959EA4638D8734599AB75EAAFBB6FEF03C401CA@mtv01ex04.mindtree.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
-	boundary="----=_NextPart_000_1D50D_01C5668F.6A1F4D80"
+	boundary="----=_NextPart_000_219E8_01C566B1.62BAA1D0"
 Return-path: <dm-devel-bounces@redhat.com>
 content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -22,10 +22,39 @@ List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
-------=_NextPart_000_1D50D_01C5668F.6A1F4D80
+------=_NextPart_000_219E8_01C566B1.62BAA1D0
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
+
+Another piece of information:
+
+I found the logs as:
+
+	Device-mapper: device /dev/hda1 too small for target
+	Device-mapper: dm-linear: Device lookup failed
+	Device-mapper: error adding target to table
+
+	Device-mapper: device /dev/hda5 too small for target
+	Device-mapper: dm-linear: Device lookup failed
+	Device-mapper: error adding target to table
+
+So there seems to be some size problem.
+
+	blockdev --getsize /dev/hda1		=3D 2041137
+	blockdev --getsize /dev/hda5		=3D 1043217
+
+Is there a limitation on the size of the device or is this a bug?
+
+Regards,
+Manu.
+
+
+-----Original Message-----
+From: Manu Tayal=20
+Sent: Wednesday, June 01, 2005 9:51 AM
+To: 'dm-devel@redhat.com'
+Subject: Error while creating mapped device...
 
 
 
@@ -61,7 +90,7 @@ Regards,
 Manu
 
 
-------=_NextPart_000_1D50D_01C5668F.6A1F4D80
+------=_NextPart_000_219E8_01C566B1.62BAA1D0
 Content-Type: text/plain;
 	name="disclaimer.txt"
 Content-Transfer-Encoding: quoted-printable
@@ -88,11 +117,11 @@ incomplete transmission."
 
 -------------------------------------------------------------------------=
 ----------------------------------------------------
-------=_NextPart_000_1D50D_01C5668F.6A1F4D80
+------=_NextPart_000_219E8_01C566B1.62BAA1D0
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
-------=_NextPart_000_1D50D_01C5668F.6A1F4D80--
+------=_NextPart_000_219E8_01C566B1.62BAA1D0--
