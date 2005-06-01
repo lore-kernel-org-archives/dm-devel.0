@@ -1,11 +1,11 @@
 From: "Manu Tayal" <manut@mindtree.com>
 Subject: RE: Error while creating mapped device...
-Date: Wed, 1 Jun 2005 13:54:10 +0530
-Message-ID: <5959EA4638D8734599AB75EAAFBB6FEF03C401CA@mtv01ex04.mindtree.com>
+Date: Wed, 1 Jun 2005 13:58:42 +0530
+Message-ID: <5959EA4638D8734599AB75EAAFBB6FEF03C401D0@mtv01ex04.mindtree.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
-	boundary="----=_NextPart_000_219E8_01C566B1.62BAA1D0"
+	boundary="----=_NextPart_000_21B51_01C566B2.0564C870"
 Return-path: <dm-devel-bounces@redhat.com>
 content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,15 +17,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Manu Tayal <manut@mindtree.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
-------=_NextPart_000_219E8_01C566B1.62BAA1D0
+------=_NextPart_000_21B51_01C566B2.0564C870
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
+
+The version of Linux I am using is 2.4.26 and the version of =
+device-mapper is
+1.00.18.
+
+Do let me know if any more information is required.
+
+Thanks
+Manu
+
+-----Original Message-----
+From: Manu Tayal=20
+Sent: Wednesday, June 01, 2005 1:54 PM
+To: 'dm-devel@redhat.com'
+Subject: RE: Error while creating mapped device...
 
 Another piece of information:
 
@@ -90,7 +105,7 @@ Regards,
 Manu
 
 
-------=_NextPart_000_219E8_01C566B1.62BAA1D0
+------=_NextPart_000_21B51_01C566B2.0564C870
 Content-Type: text/plain;
 	name="disclaimer.txt"
 Content-Transfer-Encoding: quoted-printable
@@ -117,11 +132,11 @@ incomplete transmission."
 
 -------------------------------------------------------------------------=
 ----------------------------------------------------
-------=_NextPart_000_219E8_01C566B1.62BAA1D0
+------=_NextPart_000_21B51_01C566B2.0564C870
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
-------=_NextPart_000_219E8_01C566B1.62BAA1D0--
+------=_NextPart_000_21B51_01C566B2.0564C870--
