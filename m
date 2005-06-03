@@ -1,14 +1,15 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
+From: Mike Anderson <andmike@us.ibm.com>
 Subject: Re: latest multipath-tools from git breaks EMC CX
-Date: Thu, 02 Jun 2005 23:42:45 +0200
-Message-ID: <1117748565.15294.106.camel@zezette>
+Date: Thu, 2 Jun 2005 23:54:22 -0700
+Message-ID: <20050603065422.GA29496@us.ibm.com>
 References: <20050602204630.GK22633@marowsky-bree.de>
+	<1117748565.15294.106.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050602204630.GK22633@marowsky-bree.de>
+Content-Disposition: inline
+In-Reply-To: <1117748565.15294.106.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,68 +22,71 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Most certainly the 8af5a2b1b5e4d3a457f5bb477214356385087eae commit is
-the culprit : I did a bit of spliting in path discovery, and introduced
-a new fn to get the sysfs bus that I use as a switch to choose a
-discovery template.
+christophe varoqui [christophe.varoqui@free.fr] wrote:
+> Most certainly the 8af5a2b1b5e4d3a457f5bb477214356385087eae commit is
+> the culprit : I did a bit of spliting in path discovery, and introduced
+> a new fn to get the sysfs bus that I use as a switch to choose a
+> discovery template.
+> 
+> Reading your output, I would say the bus fetching went wrong.
+> 
+> Well, revert it or debug it :/
+> 
 
-Reading your output, I would say the bus fetching went wrong.
+I was hitting the same problem on my system (the sysfs_get_bus function
+leaving bus a none) the hack below fix it for me, but I only tested the
+bus code against scsi YMMV.
 
-Well, revert it or debug it :/
+-andmike
+--
+Michael Anderson
+andmike@us.ibm.com
 
-Strange it didn't blew on me ...
 
-On jeu, 2005-06-02 at 22:46 +0200, Lars Marowsky-Bree wrote:
-> More specifically, it fails to detect the vendor correctly, and uses th=
-e
-> most basic internal defaults:
->=20
-> ...
-> =3D=3D=3D=3D=3D path sdz =3D=3D=3D=3D=3D
-> bus =3D 0
-> dev_t =3D 65:144
-> size =3D 280278656
-> path checker =3D readsector0 (internal default)
-> #
-> # all paths :
-> #
-> #:#:#:# sdaa 65:160  []
-> #:#:#:# sdab 65:176  []
-> #:#:#:# sdac 65:192  []
-> #:#:#:# sdad 65:208  []
-> #:#:#:# sdae 65:224  []
-> #:#:#:# sdaf 65:240  []
-> #:#:#:# sdag 66:0    []
-> #:#:#:# sdah 66:16   []
-> #:#:#:# sdai 66:32   []
-> #:#:#:# sdaj 66:48   []
->=20
-> ...
-> params =3D 0 0 4 2 round-robin 0 1 1 65:240 1000 round-robin 0 1 1 66:2=
-24 1000 round-robin 0 1 1 8:16 1000 round-robin 0 1 1 65
-> :0 1000=20
-> status =3D 1 0 0 4 2 E 0 1 0 65:240 F 1 A 0 1 0 66:224 A 0 E 0 1 0 8:16=
- F 1 E 0 1 0 65:0 A 0=20
-> 3600601607cf30e00174589a37a31d911
-> [size=3D127 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->   \_ #:#:#:# sdaf 65:240  [failed]
-> \_ round-robin 0 [active][best]
->   \_ #:#:#:# sdau 66:224  [active]
-> \_ round-robin 0 [enabled]
->   \_ #:#:#:# sdb  8:16    [failed]
-> \_ round-robin 0 [enabled]
->   \_ #:#:#:# sdq  65:0    [active]
->=20
-> ...
->=20
-> Just what the heck is going on there? ;-)
->=20
-> I don't get any more output than that, sorry.
->=20
->=20
-> Sincerely,
->     Lars Marowsky-Br=C3=A9e <lmb@suse.de>
->=20
---=20
-christophe varoqui <christophe.varoqui@free.fr>
+Hack fix for libmultipath sysfs_get_bus function.
+
+Signed-off-by: Mike Anderson <andmike@us.ibm.com>
+---
+
+--- multipath-tools-git/libmultipath/discovery.c	2005-06-03 06:11:15.752789640 -0700
++++ multipath-tools-fix/libmultipath/discovery.c	2005-06-03 06:21:15.913551336 -0700
+@@ -337,6 +337,7 @@ get_serial (char * str, int fd)
+ static void
+ sysfs_get_bus (char * sysfs_path, struct path * curpath)
+ {
++	struct sysfs_device *sdev;
+ 	char attr_path[FILE_NAME_SIZE];
+ 	char attr_buff[FILE_NAME_SIZE];
+ 
+@@ -352,25 +353,19 @@ sysfs_get_bus (char * sysfs_path, struct
+ 		condlog(0, "attr_path too small");
+ 		return;
+ 	}
+-	if (0 > sysfs_get_link(attr_path, attr_buff, sizeof(attr_buff)))
+-		return;
+-
+-	if (strlen(attr_buff) + 4 > FILE_NAME_SIZE) {
+-		condlog(0, "attr_path too small");
+-		return;
+-	}
+-	snprintf(attr_path, FILE_NAME_SIZE, "%s/bus", attr_buff);
+ 
+ 	if (0 > sysfs_get_link(attr_path, attr_buff, sizeof(attr_buff)))
+ 		return;
+ 
+-	basename(attr_buff, attr_path);
+-	
+-	if (!strncmp(attr_path, "scsi", 4))
++	sdev = sysfs_open_device_path(attr_buff);
++
++	if (!strncmp(sdev->bus, "scsi", 4))
+ 		curpath->bus = SYSFS_BUS_SCSI;
+-	else if (!strncmp(attr_path, "ide", 3))
++	else if (!strncmp(sdev->bus, "ide", 3))
+ 		curpath->bus = SYSFS_BUS_IDE;
+ 
++	sysfs_close_device(sdev);
++
+ 	return;
+ }
+ 
