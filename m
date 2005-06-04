@@ -1,15 +1,13 @@
 From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [RFC] HP storageworks-like hwhandler
-Date: Fri, 03 Jun 2005 17:46:39 -0700
-Message-ID: <1117845998.23535.4.camel@mina>
-References: <20050603182906.GB10178@averon.dyndns.org>
-	<42A0A24D.7040702@cs.wisc.edu>
+Subject: [PATCH RFC 0/4] use scatter lists for all block pc
+	requests and simplify hw handlers
+Date: Fri, 03 Jun 2005 18:19:32 -0700
+Message-ID: <1117847972.23638.62.camel@mina>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <42A0A24D.7040702@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,227 +17,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, axboe@suse.de
 List-Id: dm-devel.ids
 
-On Fri, 2005-06-03 at 11:32, Mike Christie wrote:
-> Christophe Varoqui wrote:
-> > Hello,
-> > 
-> > I repackaged Dave Olien's scsi-start hwhandler to try to give it a wider audience.
-> > It now compiles out-of-tree, and builds fine on RHEL4U1 kernel.
-> > 
-> > This hwhandler is targeted at a family of assymmetric arrays like HP StorageWorks and FSC FibreCat that take a START_STOP SCSI cmd as a sign of the host willing to initiate a LUN failover.
-> > 
-> > It would be good to have this code undusted and endorsed by HP ... before RHEL4U2 freezes.
-> > Seems a good topic for the next conf call :/
-> > 
-> > You can find the tarball there :
-> > http://christophe.varoqui.free.fr/multipath-tools/dm-scsi-start.tar.gz
-> >
-> 
-> This looks like his old code which had several problems. I think he 
-> fixed them up. Is there a new version?
+The following patches should enable the use of scatter lists for all
+REQ_BLOCK_PC requests and cleanup some code duplication or dangerous
+memory allocations in the dm-multipath hw handlers and
+block/scsi_ioctl.c.
 
+REQ_BLOCK_PC scatter list usage only required converting the old
+sg_scsi_ioctl code to do bio backed requests since the current block
+layer SG_IO code will always use requests with bios. But while
+converting the old ioctl and removing some dangerous (GFP_KERNEL in
+failover path) memory allocations from a dm-multipath hw_handler (and
+while updating the LSI one) I was able to seperate some common code into
+two new functions: blk_rq_map_kern() and bio_map_kern. These functions
+are similar to their blk/bio*user cousins where they allocate requests
+and bios and setup the data pointers except they work on kernel buffers.
 
-
-This should do the same thing as Dave's code. It was modifiied from
-my old patchset. The patch was built against 2.5.12-rc5. Since
-I do not know any of the sense values, or specifics of the command,
-or the HW or have the HW, it is pretty bare and only compile tested.
-Since it does not use any of the new features in unstable I think it
-should work against that patchset too.
-
-
-
-diff -Naurp linux-2.6.12-rc5.orig//drivers/md/dm-hp-sw.c linux-2.6.12-rc5/drivers/md/dm-hp-sw.c
---- linux-2.6.12-rc5.orig//drivers/md/dm-hp-sw.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.12-rc5/drivers/md/dm-hp-sw.c	2005-06-03 17:37:44.000000000 -0700
-@@ -0,0 +1,158 @@
-+/*
-+ * Copyright (C) 2005 Mike Christie, Inc. All rights reserved.
-+ *
-+ * This file is released under the GPL.
-+ *
-+ * Basic, very basic, support for HP StorageWorks and FSC FibreCat
-+ */
-+#include <scsi/scsi.h>
-+#include <scsi/scsi_cmnd.h>
-+
-+#include "dm.h"
-+#include "dm-hw-handler.h"
-+
-+struct hp_sw_handler {
-+	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
-+};
-+
-+static void hp_sw_endio(struct request *rq)
-+{
-+	struct path *path = rq->end_io_data;
-+
-+	/*
-+	 * TODO: something.. we have the sense and scsi bytes
-+	 */
-+	if (rq->errors) {
-+		DMINFO("hp_sw: START_STOP completed %d", rq->errors);
-+		dm_pg_init_complete(path, MP_FAIL_PATH);
-+	} else
-+		dm_pg_init_complete(path, 0);
-+
-+	blk_put_request(rq);
-+}
-+
-+static struct request *hp_sw_get_request(struct hp_sw_handler *h,
-+					struct path *path)
-+{
-+	struct request *rq;
-+	struct block_device *bdev = path->dev->bdev;
-+	struct request_queue *q = bdev_get_queue(bdev);
-+
-+	rq = blk_get_request(q, READ, __GFP_WAIT);
-+	if (!rq)
-+		return NULL;
-+
-+	rq->end_io = hp_sw_endio;
-+	rq->end_io_data = path;
-+	rq->rq_disk = bdev->bd_contains->bd_disk;
-+	rq->sense = h->sense;
-+	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
-+	rq->sense_len = 0;
-+	/*
-+	 * TODO: make me configurable
-+	 */
-+	rq->timeout = 30;
-+	rq->flags |= (REQ_BLOCK_PC | REQ_FAILFAST | REQ_NOMERGE);
-+
-+	memset(&rq->cmd, 0, BLK_MAX_CDB);
-+	rq->cmd[0] = START_STOP;
-+	/* Start spin cycle */
-+	rq->cmd[4] = 1;
-+	rq->cmd_len = COMMAND_SIZE(rq->cmd[0]);
-+
-+	return rq;
-+}
-+
-+static void hp_sw_pg_init(struct hw_handler *hwh, unsigned bypassed,
-+			   struct path *path)
-+{
-+	struct request *rq;
-+	struct request_queue *q = bdev_get_queue(path->dev->bdev);
-+
-+	/*
-+	 * We can either blindly init the pg (then look at the sense),
-+	 * or we can send some commands to get the state here (then
-+	 * possibly send the fo cmnd), or we can also have the
-+	 * initial state passed into us and then get an update here.
-+	 */
-+	if (!q) {
-+		DMERR("hp_sw: no queue!");
-+		goto fail_path;
-+	}
-+
-+	if (blk_get_queue(q))
-+		goto fail_path;
-+
-+	rq = hp_sw_get_request(hwh->context, path);
-+	if (!rq) {
-+		DMERR("hp_sw: could not allocate request for START_STOP");
-+		goto rel_queue;
-+	}
-+
-+	DMINFO("hp_sw: queueing START_STOP command");
-+	elv_add_request(q, rq, ELEVATOR_INSERT_FRONT, 1);
-+	blk_put_queue(q);
-+	return;
-+
-+rel_queue:
-+	blk_put_queue(q);
-+fail_path:
-+	dm_pg_init_complete(path, MP_FAIL_PATH);
-+}
-+
-+static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
-+{
-+	struct hp_sw_handler *h;
-+
-+	h = kmalloc(sizeof(*h), GFP_KERNEL);
-+	if (!h) {
-+		DMERR("hp_sw: could not allocate hw_handler");
-+		return -ENOMEM;
-+	}
-+	return 0;
-+}
-+
-+static void hp_sw_destroy(struct hw_handler *hwh)
-+{
-+	struct hp_sw_handler *h = hwh->context;
-+
-+	kfree(h);
-+	hwh->context = NULL;
-+}
-+
-+static struct hw_handler_type hp_sw_hwh = {
-+	.name = "hp_sw",
-+	.module = THIS_MODULE,
-+	.create = hp_sw_create,
-+	.destroy = hp_sw_destroy,
-+	.pg_init = hp_sw_pg_init,
-+};
-+
-+static int __init hp_sw_init(void)
-+{
-+	int r;
-+
-+	r = dm_register_hw_handler(&hp_sw_hwh);
-+	if (r < 0)
-+		DMERR("hp_sw: register failed %d", r);
-+
-+	DMINFO("hp_sw version 0.1 loaded");
-+
-+	return r;
-+}
-+
-+static void __exit hp_sw_exit(void)
-+{
-+	int r;
-+
-+	r = dm_unregister_hw_handler(&hp_sw_hwh);
-+	if (r < 0)
-+		DMERR("hp_sw: unregister failed %d", r);
-+}
-+
-+module_init(hp_sw_init);
-+module_exit(hp_sw_exit);
-+
-+MODULE_DESCRIPTION("HP StorageWorks and FSC FibreCat support for dm-multipath");
-+MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>");
-+MODULE_LICENSE("GPL");
-diff -Naurp linux-2.6.12-rc5.orig//drivers/md/Kconfig linux-2.6.12-rc5/drivers/md/Kconfig
---- linux-2.6.12-rc5.orig//drivers/md/Kconfig	2005-05-24 20:31:20.000000000 -0700
-+++ linux-2.6.12-rc5/drivers/md/Kconfig	2005-06-03 16:48:59.000000000 -0700
-@@ -236,5 +236,14 @@ config DM_MULTIPATH_EMC
- 	---help---
- 	  Multipath support for EMC CX/AX series hardware.
- 
-+config DM_MULTIPATH_HP_SW
-+	tristate "HP StorageWorks and FSC FibreCat (EXPERIMENTAL)"
-+	depends on DM_MULTIPATH && BLK_DEV_DM && EXPERIMENTAL
-+	---help---
-+	  Multipath support for HP StorageWorks and FSC FibreCat.
-+          This was created with no knowledge of the HW other than
-+          that it uses a START_STOP command for failover so it
-+          is marked EXPERIMENTAL.
-+
- endmenu
- 
-diff -Naurp linux-2.6.12-rc5.orig//drivers/md/Makefile linux-2.6.12-rc5/drivers/md/Makefile
---- linux-2.6.12-rc5.orig//drivers/md/Makefile	2005-05-24 20:31:20.000000000 -0700
-+++ linux-2.6.12-rc5/drivers/md/Makefile	2005-06-03 16:46:16.000000000 -0700
-@@ -33,6 +33,7 @@ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
- obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
- obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
-+obj-$(CONFIG_DM_MULTIPATH_HP_SW) += dm-hp-sw.o
- obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
- obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
- obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+The goal is next convert the scsi 'special' requests to use these
+functions, so scsi will be able to use block layer functions for scatter
+lists setup for all requests. And then hopefully one day we will not
+need those stinking "if (sc->use_sg)" paths all over our scsi drivers.
