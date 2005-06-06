@@ -1,92 +1,49 @@
-From: Douglas Gilbert <dougg@torque.net>
-Subject: Re: [PATCH RFC 0/4] use scatter lists for all block pc requests	and
- simplify hw handlers
-Date: Mon, 06 Jun 2005 15:43:17 +1000
-Message-ID: <42A3E275.6030106@torque.net>
-References: <1117847972.23638.62.camel@mina>	 <1117901234.5005.9.camel@mulgrave>  <1117955727.4961.8.camel@mina>	 <1117982408.4990.12.camel@mulgrave> <1117998665.4990.17.camel@mulgrave>
-Reply-To: dougg@torque.net
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: Re: [PATCH RFC 0/4] use scatter lists for all block pc
+	requests and simplify hw handlers
+Date: Mon, 6 Jun 2005 15:31:35 +0200
+Message-ID: <20050606133135.GZ27119@marowsky-bree.de>
+References: <1117847972.23638.62.camel@mina> <1117901234.5005.9.camel@mulgrave>
+	<1117955727.4961.8.camel@mina> <1117964506.15294.130.camel@zezette>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1117998665.4990.17.camel@mulgrave>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@SteelEye.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@suse.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1117964506.15294.130.camel@zezette>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: James Bottomley <James.Bottomley@SteelEye.com>, Jens Axboe <axboe@suse.de>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-James Bottomley wrote:
-> On Sun, 2005-06-05 at 09:40 -0500, James Bottomley wrote:
-> 
->>Finally, there's coming up with a replacement API for scsi_do_req that
->>returns via the end_io callback ... since that doesn't do a wait/wake,
->>perhaps this should be the core API upon which the others are built?
-> 
-> 
-> OK, well, the API is easy ... it's attached.  Converting sg and st to
-> use it is quite another matter.  sg in particular is a nasty tangle when
-> it comes to doing its own sg mapping, which the block layer will now do
-> for it.
-> 
-> James
-> --- a/drivers/scsi/scsi_lib.c
-> +++ b/drivers/scsi/scsi_lib.c
-> @@ -177,6 +177,23 @@ int scsi_queue_insert(struct scsi_cmnd *
->  	return 0;
->  }
->  
-> +struct scsi_do_req_cb {
-> +	void (*done)(void *, int);
-> +	void *data;
-> +};
-> +
-> +static void scsi_do_req_end_io(struct request *req)
-> +{
-> +	int result = req->errors;
-> +	struct scsi_do_req_cb *cb = req->end_io_data;
-> +	
-> +	BUG_ON(cb == NULL);
-> +	if (result)
-> +		result |= DRIVER_ERROR << 24;
-> +	blk_put_request(req);
-> +	cb->done(cb->data, result);
-> +	kfree(cb);
-> +}
->  /*
->   * Function:    scsi_do_req
->   *
-> @@ -203,38 +220,49 @@ int scsi_queue_insert(struct scsi_cmnd *
->   *		now inject requests on the *head* of the device queue
->   *		rather than the tail.
->   */
-> -void scsi_do_req(struct scsi_request *sreq, const void *cmnd,
-> -		 void *buffer, unsigned bufflen,
-> -		 void (*done)(struct scsi_cmnd *),
-> -		 int timeout, int retries)
-> +void scsi_do_command(struct scsi_device *sdev, const void *cmnd, int cmd_len,
-> +		     void *buffer, unsigned bufflen, void *data,
-> +		     void (*done)(void *, int),
-> +		     char *sense_buffer, int timeout, int retries,
-> +		     enum dma_data_direction dir)
+On 2005-06-05T11:41:46, christophe varoqui <christophe.varoqui@free.fr> w=
+rote:
 
-James,
-There is no max_length on sense_buffer. How does one
-know how much, if any, sense data was written (returned).
-resid is a very useful return parameter.
-Perhaps the *done() callback should have
-two more arguments (and scsi_do_command()
-one more argument). And 'buffer' and 'bufflen' have
-not changed in name but I assume they have in nature.
+> While the focus is in this area, I'd like to mention multipath tools
+> userland checkers will need to insert SG request on queue head (Ed
+> Gaggin will explain this at OLS). I guess the API is lacking there, and
+> would like to know if this feature is on your TODOs ...
 
-Additionally perhaps it is time to start thinking about
-a clean pass through. Something that can pass a packet
-command (like sg can at the moment) but to a scsi_host
-(or a transport host). An additional argument would be
-needed to pass addressing information to the LLD. I'm
-thinking about the SAS Serial Management Protocol (SMP)
-that has nothing to do with the block layer or the
-SCSI mid level. We want to bind to a SAS host (initiator
-port) and supply a SAS address (of the SMP target
-which is most likely an expander).
+It's on the TODO list. It's just not done yet. Essentially we need to be
+able to set BW_RW_FAILFAST from user-space for SGIO.
 
-Doug Gilbert
+This is Novell bugzilla #81694 and RHAT bugzilla #154436.
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
