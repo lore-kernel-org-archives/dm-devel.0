@@ -1,47 +1,60 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: [dm-devel] Re: [PATCH RFC 0/4] use scatter lists for all block pc requests and simplify hw handlers
-Date: Tue, 7 Jun 2005 09:01:58 +0200
-Message-ID: <20050607070158.GX27119@marowsky-bree.de>
-References: <1117847972.23638.62.camel@mina> <1117901234.5005.9.camel@mulgrave> <1117955727.4961.8.camel@mina> <1117964506.15294.130.camel@zezette> <20050606133135.GZ27119@marowsky-bree.de> <1118102649.42a4e479b5d0f@webmail.cs.wisc.edu>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH RFC 0/4] use scatter lists for all block pc
+	requests and simplify hw handlers
+Date: Tue, 7 Jun 2005 13:10:20 +0100
+Message-ID: <20050607121020.GA6458@infradead.org>
+References: <1117847972.23638.62.camel@mina> <1117901234.5005.9.camel@mulgrave>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1118102649.42a4e479b5d0f@webmail.cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Michael Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>
-Cc: James Bottomley <James.Bottomley@SteelEye.com>, Jens Axboe <axboe@suse.de>, linux-scsi <linux-scsi@vger.kernel.org>
+In-Reply-To: <1117901234.5005.9.camel@mulgrave>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: James Bottomley <James.Bottomley@SteelEye.com>
+Cc: Mike Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>, linux-scsi <linux-scsi@vger.kernel.org>, Jens Axboe <axboe@suse.de>
 List-Id: dm-devel.ids
 
-On 2005-06-06T19:04:09, Michael Christie <michaelc@cs.wisc.edu> wrote:
+On Sat, Jun 04, 2005 at 11:07:14AM -0500, James Bottomley wrote:
+> +	if (bufflen)
+> +		req = blk_rq_map_kern(sreq->sr_device->request_queue,
+> +				      sreq->sr_data_direction == DMA_TO_DEVICE,
+> +				      buffer, bufflen, __GFP_WAIT);
+> +	else
+> +		req = blk_get_request(sreq->sr_device->request_queue, READ,
+> +				      __GFP_WAIT);
 
-> > It's on the TODO list. It's just not done yet. Essentially we need
-> > to be able to set BW_RW_FAILFAST from user-space for SGIO.
-> >=20
-> Isn't this a seperate issue? It looks like the RHAT bugzilla asks to
-> be able to insert directly at the head of the queue so you do you not
-> have to wait for possibly a hundred IO to complete before the test IO=
-=2E
-> Setting failfast just means in case of en error it will be returned
-> faster (no wasting time retying).
+shouldn't blk_rq_map_kern handle a 0 buffer and do nothing more than
+blk_get_request?  It's not exactly a criticial fastpath and that would make life
+easier for the callers.
 
-Uhm, sorry, you're right. We actually want/need to be able to set both,
-but it would sort of end up being the same mechanism (additional flags
-to SGIO) and so I have it mentally lumped together ;-)
+> +		if (req->rq_disk) {
+> +			drv = *(struct scsi_driver **)req->rq_disk->private_data;
+> +			if (unlikely(!drv->init_command(cmd))) {
+> +				scsi_release_buffers(cmd);
+> +				scsi_put_command(cmd);
+> +				return BLKPREP_KILL;
+> +			}
+> +		} else {
+> +			memcpy(cmd->cmnd, req->cmd, sizeof(cmd->cmnd));
+> +			if (rq_data_dir(req) == WRITE)
+> +				cmd->sc_data_direction = DMA_TO_DEVICE;
+> +			else if (req->data_len)
+> +				cmd->sc_data_direction = DMA_FROM_DEVICE;
+> +			else
+> +				cmd->sc_data_direction = DMA_NONE;
+> +			
+> +			cmd->transfersize = req->data_len;
+> +			cmd->allowed = 3;
+> +			cmd->timeout_per_command = req->timeout;
 
-
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
-
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
-
--
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+most of this could probably be done in the midlayer always instead of the
+upper drivers.
