@@ -1,55 +1,47 @@
-From: Michael Christie <michaelc@cs.wisc.edu>
-Subject: Re: Re: [PATCH RFC 0/4] use scatter lists for all block pc
-	requests and simplify hw handlers
-Date: Mon,  6 Jun 2005 19:04:09 -0500
-Message-ID: <1118102649.42a4e479b5d0f@webmail.cs.wisc.edu>
-References: <1117847972.23638.62.camel@mina> <1117901234.5005.9.camel@mulgrave>
-	<1117955727.4961.8.camel@mina> <1117964506.15294.130.camel@zezette>
-	<20050606133135.GZ27119@marowsky-bree.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: [dm-devel] Re: [PATCH RFC 0/4] use scatter lists for all block pc requests and simplify hw handlers
+Date: Tue, 7 Jun 2005 09:01:58 +0200
+Message-ID: <20050607070158.GX27119@marowsky-bree.de>
+References: <1117847972.23638.62.camel@mina> <1117901234.5005.9.camel@mulgrave> <1117955727.4961.8.camel@mina> <1117964506.15294.130.camel@zezette> <20050606133135.GZ27119@marowsky-bree.de> <1118102649.42a4e479b5d0f@webmail.cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050606133135.GZ27119@marowsky-bree.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1118102649.42a4e479b5d0f@webmail.cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Michael Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>
 Cc: James Bottomley <James.Bottomley@SteelEye.com>, Jens Axboe <axboe@suse.de>, linux-scsi <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Quoting Lars Marowsky-Bree <lmb@suse.de>:
+On 2005-06-06T19:04:09, Michael Christie <michaelc@cs.wisc.edu> wrote:
 
-> On 2005-06-05T11:41:46, christophe varoqui <christophe.varoqui@free.fr>
-> wrote:
->=20
-> > While the focus is in this area, I'd like to mention multipath tools
-> > userland checkers will need to insert SG request on queue head (Ed
-> > Gaggin will explain this at OLS). I guess the API is lacking there, a=
-nd
-> > would like to know if this feature is on your TODOs ...
->=20
-> It's on the TODO list. It's just not done yet. Essentially we need to b=
-e
-> able to set BW_RW_FAILFAST from user-space for SGIO.
->=20
+> > It's on the TODO list. It's just not done yet. Essentially we need
+> > to be able to set BW_RW_FAILFAST from user-space for SGIO.
+> >=20
+> Isn't this a seperate issue? It looks like the RHAT bugzilla asks to
+> be able to insert directly at the head of the queue so you do you not
+> have to wait for possibly a hundred IO to complete before the test IO=
+=2E
+> Setting failfast just means in case of en error it will be returned
+> faster (no wasting time retying).
 
-Isn't this a seperate issue? It looks like the RHAT bugzilla asks to be a=
-ble to
-insert directly at the head of the queue so you do you not have to wait f=
-or
-possibly a hundred IO to complete before the test IO. Setting failfast ju=
-st
-means in case of en error it will be returned faster (no wasting time
-retying).
+Uhm, sorry, you're right. We actually want/need to be able to set both,
+but it would sort of end up being the same mechanism (additional flags
+to SGIO) and so I have it mentally lumped together ;-)
 
 
-> This is Novell bugzilla #81694 and RHAT bugzilla #154436.
->=20
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
+
+-
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
