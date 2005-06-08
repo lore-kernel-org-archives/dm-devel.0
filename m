@@ -1,15 +1,17 @@
-From: Andrew Morton <akpm@osdl.org>
+From: Lars Marowsky-Bree <lmb@suse.de>
 Subject: Re: [patch] [2.6.12-rc6-mm1] Handle READA requests in
 	dm-mpath.c
-Date: Wed, 8 Jun 2005 04:33:47 -0700
-Message-ID: <20050608043347.5db85317.akpm@osdl.org>
+Date: Wed, 8 Jun 2005 14:13:04 +0200
+Message-ID: <20050608121304.GU27119@marowsky-bree.de>
 References: <20050608110436.GQ27119@marowsky-bree.de>
+	<20050608043347.5db85317.akpm@osdl.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050608110436.GQ27119@marowsky-bree.de>
+Content-Disposition: inline
+In-Reply-To: <20050608043347.5db85317.akpm@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Lars Marowsky-Bree <lmb@suse.de>
+To: Andrew Morton <akpm@osdl.org>
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-Lars Marowsky-Bree <lmb@suse.de> wrote:
->
-> READA errors failing with EWOULDBLOCK/EAGAIN do not constitute a valid
-> reason for failing the path; this lead to erratic errors on DM multipath
-> devices. This error can be safely propagated upwards without failing the
-> path.
-> 
+On 2005-06-08T04:33:47, Andrew Morton <akpm@osdl.org> wrote:
 
-Why do you describe this as a -mm patch?  We want this in 2.6.12, no?
+> Lars Marowsky-Bree <lmb@suse.de> wrote:
+> >
+> > READA errors failing with EWOULDBLOCK/EAGAIN do not constitute a vali=
+d
+> > reason for failing the path; this lead to erratic errors on DM multip=
+ath
+> > devices. This error can be safely propagated upwards without failing =
+the
+> > path.
+> >=20
+>=20
+> Why do you describe this as a -mm patch?  We want this in 2.6.12, no?
 
-> --- linux-2.6.12-rc6-mm1.orig/drivers/md/dm-mpath.c	2005-06-08 12:51:02.741055000 +0200
-> +++ linux-2.6.12-rc6-mm1/drivers/md/dm-mpath.c	2005-06-08 12:57:55.757828867 +0200
-> @@ -985,6 +985,9 @@
->  	if (!error)
->  		return 0;	/* I/O complete */
->  
-> +	if ((error == -EWOULDBLOCK) && bio_rw_ahead(bio))
-> +		return error;
-> +
->  	spin_lock(&m->lock);
->  	if (!m->nr_valid_paths) {
->  		if (!m->queue_if_no_path || m->suspended) {
-> 
-> 
-> -- 
-> High Availability & Clustering
-> SUSE Labs, Research and Development
-> SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-> "Ignorance more frequently begets confidence than does knowledge"
+Uhm, right. I just diff'ed it against -mm out of habit, I guess, because
+I also assumed you were the fastest path to Linus ;-)
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
