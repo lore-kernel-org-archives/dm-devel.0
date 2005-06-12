@@ -1,20 +1,14 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: Re: StorageWorks failover model (was: tools target
-	for SLES9 SP2 and RHEL4 U2)
-Date: Sun, 12 Jun 2005 18:37:49 +0200
-Message-ID: <1118594269.20754.66.camel@zezette>
-References: <1118341002.14457.23.camel@zezette>
-	<20050609191541.GO15809@agk.surrey.redhat.com>
-	<1118345693.14457.30.camel@zezette>
-	<20050612122138.GA16608@neu.nirvana>
-	<1118579487.20754.59.camel@zezette>
-	<20050612143314.GA19762@neu.nirvana>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [PATCH] HP storage works support take 2
+Date: Sun, 12 Jun 2005 14:56:34 -0500
+Message-ID: <42AC9372.6040008@cs.wisc.edu>
+References: <1118539992.4683.2.camel@mina> <1118565518.20754.45.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050612143314.GA19762@neu.nirvana>
+In-Reply-To: <1118565518.20754.45.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,52 +21,239 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On dim, 2005-06-12 at 16:33 +0200, Axel Thimm wrote:
-> On Sun, Jun 12, 2005 at 02:31:26PM +0200, christophe varoqui wrote:
-> > On dim, 2005-06-12 at 14:21 +0200, Axel Thimm wrote:
-> > > Hi,
-> > > 
-> > > On Thu, Jun 09, 2005 at 09:34:53PM +0200, christophe varoqui wrote:
-> > > > On jeu, 2005-06-09 at 20:15 +0100, Alasdair G Kergon wrote:
-> > > > > On Thu, Jun 09, 2005 at 08:16:42PM +0200, christophe varoqui wrote:
-> > > > > > Should we stabilize a 0.4.5 out of the git head
-> > > > be aware I broke the StorageWorks failover model to satisfy the
-> > > > expressed need to proactively fail paths in the DM when the checkers see
-> > > > them going down.
-> > > 
-> > > What does that mean for StorageWorks users? I'm currently setting up a
-> > > StorageWorks EVA3000 from scratch based on FC4 final. Will I stumble
-> > > into any pitfalls, or would that only affect gits users?
-> > > 
-> > 0.4.4 should be ok. I don't know what FC packagers did though.
+christophe varoqui wrote:
+> I told you I tried this simple fix, without success.
+
+That fix is necessary. If the context does not get set then we will hit 
+a null pointer reference like in your oops you reported.
+
+In the mail you sent you said it hung on module load. I verified that 
+and it worked here.
+
 > 
-> It's 0.4.4.2 with a couple of patches. Is that still OK?
+> It is not enough, as it still hangs the kernel upon first io submited to
+> the map.
 > 
-I guess yes.
-You'll know soon enough in your testing ...
 
-What you have to be careful about is the daemon reinstating paths in the
-inactive PG. If it does so, you should be safe.
+this is news to me. I will test out your table when I get a chance.
 
-> > Also be aware you'll be best served using the failover policy for now :
-> > there is a 20% performance impact with multi-path per PG.
+
+> I verified this even without any hardware, with ram disks.
+> Here is a sample table :
 > 
-> The default multipath.conf ships with path_grouping_policy multibus
-> (e.g. all 4 paths in one path group on a 2x active/2x failing
-> controller setup). I understand that doing round robin over the active
-> and failed paths will make performance drop.
-
-> But what about path grouping with group_by_serial (like tur did,
-> e.g. an active path group and a failing path group)? Is that eating
-> performance, too? So I should prefer a path per PG (failover)?
+> [root@s64p17bibrn mce-dm-sstart]# dmsetup table toto: 0 1000 multipath 1
+> queue_if_no_path 1 hp_sw 2 1 round-robin 0 1 1 1:2 1000 round-robin 0 1
+> 1 1:2 1000
+> [root@s64p17bibrn mce-dm-sstart]# dd if=/dev/mapper/toto of=/dev/null
+> bs=512 count=1
 > 
-Yes, there is a performance cost with all topologies involving multiple
-paths in 1 PG. True for multibus and group_by_serial in your setup.
-
-multibus as a default is an error, which is corrected in the devel
-branch. group_by_serial would be the adequate policy, left alone this
-performance problem that will eventually gets sorted out.
-
-Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+> <HANG>
+> 
+> Regards,
+> cvaroqui
+> 
+> On sam, 2005-06-11 at 18:33 -0700, Mike Christie wrote:
+> 
+>>This should fix some bugs.
+>>
+>>
+>>
+>>diff -Naurp linux-2.6.12-rc5.orig/drivers/md/dm-hp-sw.c linux-2.6.12-rc5/drivers/md/dm-hp-sw.c
+>>--- linux-2.6.12-rc5.orig/drivers/md/dm-hp-sw.c	1969-12-31 16:00:00.000000000 -0800
+>>+++ linux-2.6.12-rc5/drivers/md/dm-hp-sw.c	2005-06-10 23:25:01.000000000 -0700
+>>@@ -0,0 +1,160 @@
+>>+/*
+>>+ * Copyright (C) 2005 Mike Christie, All rights reserved.
+>>+ *
+>>+ * This file is released under the GPL.
+>>+ *
+>>+ * Basic, very basic, support for HP StorageWorks and FSC FibreCat
+>>+ */
+>>+#include <scsi/scsi.h>
+>>+#include <scsi/scsi_cmnd.h>
+>>+
+>>+#include "dm.h"
+>>+#include "dm-hw-handler.h"
+>>+
+>>+struct hp_sw_handler {
+>>+	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
+>>+};
+>>+
+>>+static void hp_sw_endio(struct request *rq)
+>>+{
+>>+	struct path *path = rq->end_io_data;
+>>+
+>>+	/*
+>>+	 * TODO: something.. we have the sense and scsi bytes
+>>+	 */
+>>+	if (rq->errors) {
+>>+		DMINFO("hp_sw: START_STOP completed %d", rq->errors);
+>>+		dm_pg_init_complete(path, MP_FAIL_PATH);
+>>+	} else
+>>+		dm_pg_init_complete(path, 0);
+>>+
+>>+	blk_put_request(rq);
+>>+}
+>>+
+>>+static struct request *hp_sw_get_request(struct hp_sw_handler *h,
+>>+					struct path *path)
+>>+{
+>>+	struct request *rq;
+>>+	struct block_device *bdev = path->dev->bdev;
+>>+	struct request_queue *q = bdev_get_queue(bdev);
+>>+
+>>+	rq = blk_get_request(q, READ, __GFP_WAIT);
+>>+	if (!rq)
+>>+		return NULL;
+>>+
+>>+	rq->end_io = hp_sw_endio;
+>>+	rq->end_io_data = path;
+>>+	rq->rq_disk = bdev->bd_contains->bd_disk;
+>>+	rq->sense = h->sense;
+>>+	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
+>>+	rq->sense_len = 0;
+>>+	/*
+>>+	 * TODO: make me configurable
+>>+	 */
+>>+	rq->timeout = 30;
+>>+	rq->flags |= (REQ_BLOCK_PC | REQ_FAILFAST | REQ_NOMERGE);
+>>+
+>>+	memset(&rq->cmd, 0, BLK_MAX_CDB);
+>>+	rq->cmd[0] = START_STOP;
+>>+	/* Start spin cycle */
+>>+	rq->cmd[4] = 1;
+>>+	rq->cmd_len = COMMAND_SIZE(rq->cmd[0]);
+>>+
+>>+	return rq;
+>>+}
+>>+
+>>+static void hp_sw_pg_init(struct hw_handler *hwh, unsigned bypassed,
+>>+			   struct path *path)
+>>+{
+>>+	struct request *rq;
+>>+	struct request_queue *q = bdev_get_queue(path->dev->bdev);
+>>+
+>>+	/*
+>>+	 * We can either blindly init the pg (then look at the sense),
+>>+	 * or we can send some commands to get the state here (then
+>>+	 * possibly send the fo cmnd), or we can also have the
+>>+	 * initial state passed into us and then get an update here.
+>>+	 */
+>>+	if (!q) {
+>>+		DMERR("hp_sw: no queue!");
+>>+		goto fail_path;
+>>+	}
+>>+
+>>+	if (blk_get_queue(q))
+>>+		goto fail_path;
+>>+
+>>+	rq = hp_sw_get_request(hwh->context, path);
+>>+	if (!rq) {
+>>+		DMERR("hp_sw: could not allocate request for START_STOP");
+>>+		goto rel_queue;
+>>+	}
+>>+
+>>+	DMINFO("hp_sw: queueing START_STOP command");
+>>+	elv_add_request(q, rq, ELEVATOR_INSERT_FRONT, 1);
+>>+	blk_put_queue(q);
+>>+	return;
+>>+
+>>+rel_queue:
+>>+	blk_put_queue(q);
+>>+fail_path:
+>>+	dm_pg_init_complete(path, MP_FAIL_PATH);
+>>+}
+>>+
+>>+static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
+>>+{
+>>+	struct hp_sw_handler *h;
+>>+
+>>+	h = kmalloc(sizeof(*h), GFP_KERNEL);
+>>+	if (!h) {
+>>+		DMERR("hp_sw: could not allocate hw_handler");
+>>+		return -ENOMEM;
+>>+	}
+>>+
+>>+	hwh->context = h;
+>>+	return 0;
+>>+}
+>>+
+>>+static void hp_sw_destroy(struct hw_handler *hwh)
+>>+{
+>>+	struct hp_sw_handler *h = hwh->context;
+>>+
+>>+	kfree(h);
+>>+	hwh->context = NULL;
+>>+}
+>>+
+>>+static struct hw_handler_type hp_sw_hwh = {
+>>+	.name = "hp_sw",
+>>+	.module = THIS_MODULE,
+>>+	.create = hp_sw_create,
+>>+	.destroy = hp_sw_destroy,
+>>+	.pg_init = hp_sw_pg_init,
+>>+};
+>>+
+>>+static int __init hp_sw_init(void)
+>>+{
+>>+	int r;
+>>+
+>>+	r = dm_register_hw_handler(&hp_sw_hwh);
+>>+	if (r < 0)
+>>+		DMERR("hp_sw: register failed %d", r);
+>>+
+>>+	DMINFO("hp_sw version 0.1 loaded");
+>>+
+>>+	return r;
+>>+}
+>>+
+>>+static void __exit hp_sw_exit(void)
+>>+{
+>>+	int r;
+>>+
+>>+	r = dm_unregister_hw_handler(&hp_sw_hwh);
+>>+	if (r < 0)
+>>+		DMERR("hp_sw: unregister failed %d", r);
+>>+}
+>>+
+>>+module_init(hp_sw_init);
+>>+module_exit(hp_sw_exit);
+>>+
+>>+MODULE_DESCRIPTION("HP StorageWorks and FSC FibreCat support for dm-multipath");
+>>+MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>");
+>>+MODULE_LICENSE("GPL");
+>>diff -Naurp linux-2.6.12-rc5.orig/drivers/md/Kconfig linux-2.6.12-rc5/drivers/md/Kconfig
+>>--- linux-2.6.12-rc5.orig/drivers/md/Kconfig	2005-06-08 19:30:05.000000000 -0700
+>>+++ linux-2.6.12-rc5/drivers/md/Kconfig	2005-06-10 23:23:31.000000000 -0700
+>>@@ -236,5 +236,14 @@ config DM_MULTIPATH_EMC
+>> 	---help---
+>> 	  Multipath support for EMC CX/AX series hardware.
+>> 
+>>+config DM_MULTIPATH_HP_SW
+>>+	tristate "HP StorageWorks and FSC FibreCat (EXPERIMENTAL)"
+>>+	depends on DM_MULTIPATH && BLK_DEV_DM && EXPERIMENTAL
+>>+	---help---
+>>+	  Multipath support for HP StorageWorks and FSC FibreCat.
+>>+          This was created with no knowledge of the HW other than
+>>+          that it uses a START_STOP command for failover so it
+>>+          is marked EXPERIMENTAL.
+>>+
+>> endmenu
+>> 
+>>diff -Naurp linux-2.6.12-rc5.orig/drivers/md/Makefile linux-2.6.12-rc5/drivers/md/Makefile
+>>--- linux-2.6.12-rc5.orig/drivers/md/Makefile	2005-06-08 19:30:05.000000000 -0700
+>>+++ linux-2.6.12-rc5/drivers/md/Makefile	2005-06-10 23:23:31.000000000 -0700
+>>@@ -33,6 +33,7 @@ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
+>> obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+>> obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+>> obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
+>>+obj-$(CONFIG_DM_MULTIPATH_HP_SW) += dm-hp-sw.o
+>> obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+>> obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
+>> obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+>>
+>>
+>>--
+>>dm-devel mailing list
+>>dm-devel@redhat.com
+>>https://www.redhat.com/mailman/listinfo/dm-devel
