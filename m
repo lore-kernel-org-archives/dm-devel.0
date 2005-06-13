@@ -1,12 +1,12 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: [PATCH] HP SW support take 3
-Date: Sun, 12 Jun 2005 15:13:00 -0700
-Message-ID: <1118614380.5318.11.camel@mina>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: further testing w/ multipath ... and bugs
+Date: Mon, 13 Jun 2005 10:11:54 +0200
+Message-ID: <20050613081154.GA28251@averon.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,240 +16,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Fix locking bug. Will have to send the block layer stuff to
-Jens Axboe when we get hp-sw support finished. For now I included
-everything in one patch (reminder - don't use things like rd,
-dm, md, aoe, or anything without a real queue under dm-mpath
-if you are using a hw_hanlder that injects a failover command).
+Hello,
 
-This was only tested with scsi_debug.
+I'm testing Mike Christie's START_STOP hwhandler and discovered a bunch of new, interesting, phenomenons :
 
+A little context first :
+o kernel 2.6.12-rc6 + qlogic discovery patch
+o qla2342 (dual 2GB)
+o EVA5000, Solaris-tagged connections
 
-diff -Naurp linux-2.6.12-rc5.orig/drivers/block/ll_rw_blk.c linux-2.6.12-rc5/drivers/block/ll_rw_blk.c
---- linux-2.6.12-rc5.orig/drivers/block/ll_rw_blk.c	2005-06-08 19:30:08.000000000 -0700
-+++ linux-2.6.12-rc5/drivers/block/ll_rw_blk.c	2005-06-12 14:40:29.000000000 -0700
-@@ -2369,7 +2369,7 @@ void disk_round_stats(struct gendisk *di
- /*
-  * queue lock must be held
-  */
--static void __blk_put_request(request_queue_t *q, struct request *req)
-+void __blk_put_request(request_queue_t *q, struct request *req)
- {
- 	struct request_list *rl = req->rl;
- 
-@@ -2398,6 +2398,8 @@ static void __blk_put_request(request_qu
- 	}
- }
- 
-+EXPORT_SYMBOL(__blk_put_request);
-+
- void blk_put_request(struct request *req)
- {
- 	/*
-diff -Naurp linux-2.6.12-rc5.orig/drivers/md/dm-hp-sw.c linux-2.6.12-rc5/drivers/md/dm-hp-sw.c
---- linux-2.6.12-rc5.orig/drivers/md/dm-hp-sw.c	1969-12-31 16:00:00.000000000 -0800
-+++ linux-2.6.12-rc5/drivers/md/dm-hp-sw.c	2005-06-12 14:31:30.000000000 -0700
-@@ -0,0 +1,160 @@
-+/*
-+ * Copyright (C) 2005 Mike Christie, All rights reserved.
-+ *
-+ * This file is released under the GPL.
-+ *
-+ * Basic, very basic, support for HP StorageWorks and FSC FibreCat
-+ */
-+#include <scsi/scsi.h>
-+#include <scsi/scsi_cmnd.h>
-+
-+#include "dm.h"
-+#include "dm-hw-handler.h"
-+
-+struct hp_sw_handler {
-+	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
-+};
-+
-+static void hp_sw_endio(struct request *rq)
-+{
-+	struct path *path = rq->end_io_data;
-+
-+	/*
-+	 * TODO: something.. we have the sense and scsi bytes
-+	 */
-+	if (rq->errors) {
-+		DMINFO("hp_sw: START_STOP completed %d", rq->errors);
-+		dm_pg_init_complete(path, MP_FAIL_PATH);
-+	} else
-+		dm_pg_init_complete(path, 0);
-+
-+	__blk_put_request(rq->q, rq);
-+}
-+
-+static struct request *hp_sw_get_request(struct hp_sw_handler *h,
-+					struct path *path)
-+{
-+	struct request *rq;
-+	struct block_device *bdev = path->dev->bdev;
-+	struct request_queue *q = bdev_get_queue(bdev);
-+
-+	rq = blk_get_request(q, READ, __GFP_WAIT);
-+	if (!rq)
-+		return NULL;
-+
-+	rq->end_io = hp_sw_endio;
-+	rq->end_io_data = path;
-+	rq->rq_disk = bdev->bd_contains->bd_disk;
-+	rq->sense = h->sense;
-+	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
-+	rq->sense_len = 0;
-+	/*
-+	 * TODO: make me configurable
-+	 */
-+	rq->timeout = 30;
-+	rq->flags |= (REQ_BLOCK_PC | REQ_FAILFAST | REQ_NOMERGE);
-+
-+	memset(&rq->cmd, 0, BLK_MAX_CDB);
-+	rq->cmd[0] = START_STOP;
-+	/* Start spin cycle */
-+	rq->cmd[4] = 1;
-+	rq->cmd_len = COMMAND_SIZE(rq->cmd[0]);
-+
-+	return rq;
-+}
-+
-+static void hp_sw_pg_init(struct hw_handler *hwh, unsigned bypassed,
-+			   struct path *path)
-+{
-+	struct request *rq;
-+	struct request_queue *q = bdev_get_queue(path->dev->bdev);
-+
-+	/*
-+	 * We can either blindly init the pg (then look at the sense),
-+	 * or we can send some commands to get the state here (then
-+	 * possibly send the fo cmnd), or we can also have the
-+	 * initial state passed into us and then get an update here.
-+	 */
-+	if (!q) {
-+		DMERR("hp_sw: no queue!");
-+		goto fail_path;
-+	}
-+
-+	if (blk_get_queue(q))
-+		goto fail_path;
-+
-+	rq = hp_sw_get_request(hwh->context, path);
-+	if (!rq) {
-+		DMERR("hp_sw: could not allocate request for START_STOP");
-+		goto rel_queue;
-+	}
-+
-+	DMINFO("hp_sw: queueing START_STOP command");
-+	elv_add_request(q, rq, ELEVATOR_INSERT_FRONT, 1);
-+	blk_put_queue(q);
-+	return;
-+
-+rel_queue:
-+	blk_put_queue(q);
-+fail_path:
-+	dm_pg_init_complete(path, MP_FAIL_PATH);
-+}
-+
-+static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
-+{
-+	struct hp_sw_handler *h;
-+
-+	h = kmalloc(sizeof(*h), GFP_KERNEL);
-+	if (!h) {
-+		DMERR("hp_sw: could not allocate hw_handler");
-+		return -ENOMEM;
-+	}
-+
-+	hwh->context = h;
-+	return 0;
-+}
-+
-+static void hp_sw_destroy(struct hw_handler *hwh)
-+{
-+	struct hp_sw_handler *h = hwh->context;
-+
-+	kfree(h);
-+	hwh->context = NULL;
-+}
-+
-+static struct hw_handler_type hp_sw_hwh = {
-+	.name = "hp_sw",
-+	.module = THIS_MODULE,
-+	.create = hp_sw_create,
-+	.destroy = hp_sw_destroy,
-+	.pg_init = hp_sw_pg_init,
-+};
-+
-+static int __init hp_sw_init(void)
-+{
-+	int r;
-+
-+	r = dm_register_hw_handler(&hp_sw_hwh);
-+	if (r < 0)
-+		DMERR("hp_sw: register failed %d", r);
-+
-+	DMINFO("hp_sw version 0.3 loaded");
-+
-+	return r;
-+}
-+
-+static void __exit hp_sw_exit(void)
-+{
-+	int r;
-+
-+	r = dm_unregister_hw_handler(&hp_sw_hwh);
-+	if (r < 0)
-+		DMERR("hp_sw: unregister failed %d", r);
-+}
-+
-+module_init(hp_sw_init);
-+module_exit(hp_sw_exit);
-+
-+MODULE_DESCRIPTION("HP StorageWorks and FSC FibreCat support for dm-multipath");
-+MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>");
-+MODULE_LICENSE("GPL");
-diff -Naurp linux-2.6.12-rc5.orig/drivers/md/Kconfig linux-2.6.12-rc5/drivers/md/Kconfig
---- linux-2.6.12-rc5.orig/drivers/md/Kconfig	2005-06-08 19:30:05.000000000 -0700
-+++ linux-2.6.12-rc5/drivers/md/Kconfig	2005-06-10 23:23:31.000000000 -0700
-@@ -236,5 +236,14 @@ config DM_MULTIPATH_EMC
- 	---help---
- 	  Multipath support for EMC CX/AX series hardware.
- 
-+config DM_MULTIPATH_HP_SW
-+	tristate "HP StorageWorks and FSC FibreCat (EXPERIMENTAL)"
-+	depends on DM_MULTIPATH && BLK_DEV_DM && EXPERIMENTAL
-+	---help---
-+	  Multipath support for HP StorageWorks and FSC FibreCat.
-+          This was created with no knowledge of the HW other than
-+          that it uses a START_STOP command for failover so it
-+          is marked EXPERIMENTAL.
-+
- endmenu
- 
-diff -Naurp linux-2.6.12-rc5.orig/drivers/md/Makefile linux-2.6.12-rc5/drivers/md/Makefile
---- linux-2.6.12-rc5.orig/drivers/md/Makefile	2005-06-08 19:30:05.000000000 -0700
-+++ linux-2.6.12-rc5/drivers/md/Makefile	2005-06-10 23:23:31.000000000 -0700
-@@ -33,6 +33,7 @@ obj-$(CONFIG_BLK_DEV_DM)	+= dm-mod.o
- obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
- obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
- obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
-+obj-$(CONFIG_DM_MULTIPATH_HP_SW) += dm-hp-sw.o
- obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
- obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
- obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
-diff -Naurp linux-2.6.12-rc5.orig/include/linux/blkdev.h linux-2.6.12-rc5/include/linux/blkdev.h
---- linux-2.6.12-rc5.orig/include/linux/blkdev.h	2005-06-08 19:28:52.000000000 -0700
-+++ linux-2.6.12-rc5/include/linux/blkdev.h	2005-06-12 14:40:00.000000000 -0700
-@@ -540,6 +540,7 @@ extern void blk_unregister_queue(struct 
- extern void register_disk(struct gendisk *dev);
- extern void generic_make_request(struct bio *bio);
- extern void blk_put_request(struct request *);
-+extern void __blk_put_request(request_queue_t *, struct request *);
- extern void blk_end_sync_rq(struct request *rq);
- extern void blk_attempt_remerge(request_queue_t *, struct request *);
- extern void __blk_attempt_remerge(request_queue_t *, struct request *);
+Here is a map create by multipath, fresh from boot :
+
+eva1_lun2 (3600508b400014ba7000120000cf00000)
+[size=50 GB][features="1 queue_if_no_path"][hwhandler="1 hp_sw"]
+\_ round-robin 0 [active][best]
+  \_ 0:0:0:2 sdb  8:16    [ready ][active]
+  \_ 1:0:0:2 sdf  8:80    [ready ][active]
+\_ round-robin 0 [enabled]
+  \_ 0:0:1:2 sdd  8:48    [faulty][active]
+  \_ 1:0:1:2 sdh  8:112   [faulty][active]
+
+Start a background stream read with dd on that map.
+
+Do a port disable on the FC switch port connected to HBA 0
+Consistently at this moment I get the following in the logs :
+
+qla2300 0000:05:0d.0: LOOP DOWN detected.
+Debug: sleeping function called from invalid context at include/linux/rwsem.h:43
+in_atomic():1, irqs_disabled():1
+ [<c0120a74>] __might_sleep+0xa4/0xc0
+ [<c026a466>] device_for_each_child+0x26/0x80
+ [<c02b3180>] target_block+0x0/0x30
+ [<c02bbdae>] fc_remote_port_block+0x2e/0x60
+ [<c02bdbf5>] qla2x00_mark_all_devices_lost+0x55/0x60
+ [<c02c597e>] qla2x00_async_event+0x83e/0xd60
+ [<c011dd2b>] find_busiest_group+0xbb/0x310
+ [<c02cdce4>] sd_rw_intr+0x164/0x320
+ [<c02c4e37>] qla2300_intr_handler+0x77/0x240
+ [<c0144882>] handle_IRQ_event+0x32/0x70
+ [<c0144997>] __do_IRQ+0xd7/0x140
+ [<c0106756>] do_IRQ+0x36/0x70
+ [<c0104c1e>] common_interrupt+0x1a/0x20
+ [<c0102030>] default_idle+0x0/0x30
+ [<c0102053>] default_idle+0x23/0x30
+ [<c0102104>] cpu_idle+0x64/0x80
+
+If I wait long enough, I then get the following :
+
+ rport-0:0-0: blocked FC remote port time out: removing target
+ rport-0:0-1: blocked FC remote port time out: removing target
+
+... which is rather new to me.
+
+As a side effect, all sd associated are removed, uevents are sent signaling the disks have gone. This triggers checker removal on multipathd side in the current implementation.
+
+Then, upon port reenable, sd are registred again with different minor than before. uevent adds get sent, multipath reconfigures the maps and ...
+
+Unable to handle kernel NULL pointer dereference at virtual address 00000000
+ printing eip:
+f8b0d29f
+*pde = 08e4d001
+Oops: 0000 [#1]
+SMP
+Modules linked in: dm_round_robin dm_hp_sw dm_multipath md5 ipv6 parport_pc lp parport autofs4 i2c_dev i2c_core sunrpc video button battery ac ohci_hcd tg3 floppy dm_mod qla6312
+CPU:    2
+EIP:    0060:[<f8b0d29f>]    Not tainted VLI
+EFLAGS: 00010086   (2.6.12-rc6)
+EIP is at rr_select_path+0xf/0x60 [dm_round_robin]
+eax: f6a989cc   ebx: 00000000   ecx: f6a978c0   edx: f7f1e77c
+esi: f7f1e77c   edi: 00000000   ebp: 00000001   esp: f65d1f00
+ds: 007b   es: 007b   ss: 0068
+Process kmpathd/2 (pid: 4564, threadinfo=f65d0000 task=f6708aa0)
+Stack: f6a989c0 f7f1e740 f8ae3bc2 f7f1e740 f7f1e740 f8ae3c90 f7f1e740 f7f1e740
+       00000000 f7f1e74c f8ae3f9c 00000286 00000000 f7f1e754 f7f1e740 f7f34100
+       f7f1e790 00000282 c01339a2 00000000 000f42b4 f6cdfe5c f7f34128 f7f34110
+Call Trace:
+ [<f8ae3bc2>] __choose_path_in_pg+0x12/0x40 [dm_multipath]
+ [<f8ae3c90>] __choose_pgpath+0xa0/0xb0 [dm_multipath]
+ [<f8ae3f9c>] process_queued_ios+0x7c/0xf0 [dm_multipath]
+ [<c01339a2>] worker_thread+0x1c2/0x250
+ [<f8ae3f20>] process_queued_ios+0x0/0xf0 [dm_multipath]
+ [<c011eaa0>] default_wake_function+0x0/0x10
+ [<c011eaa0>] default_wake_function+0x0/0x10
+ [<c01337e0>] worker_thread+0x0/0x250
+ [<c0137c65>] kthread+0xa5/0xf0
+ [<c0137bc0>] kthread+0x0/0xf0
+ [<c0102445>] kernel_thread_helper+0x5/0x10
+Code: 42 04 89 10 89 58 04 89 03 31 c0 5b c3 eb 0d 90 90 90 90 90 90 90 90 90 90 90 90 90 83 ec 08 89 74 24 04 89 d6 89 1c 24 8b 58 04 <8b> 03 39 d8 74 30 89 c1 8b 50 04 8b 00 85 c9 89 50 04 89 02 8b
+
+Here dd is now stuck in D-state.
+
+I Will post more as I continue my hammering.
+
+Regards,
+cvaroqui
