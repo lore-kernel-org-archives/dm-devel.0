@@ -1,16 +1,15 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [PATCH] HP SW support take 3
-Date: Tue, 14 Jun 2005 08:29:03 +0200
-Message-ID: <20050614062903.GA32479@averon.dyndns.org>
-References: <1118614380.5318.11.camel@mina>
-	<20050613131012.GE28625@averon.dyndns.org>
-	<42AE220F.4090104@cs.wisc.edu> <42AE23BB.9040706@cs.wisc.edu>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: [patch] dm-mpath.c trigger_event race
+Date: Tue, 14 Jun 2005 11:13:19 +0200
+Message-ID: <20050614091319.GF25295@marowsky-bree.de>
+References: <20050613172851.GH17296@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <42AE23BB.9040706@cs.wisc.edu>
+In-Reply-To: <20050613172851.GH17296@marowsky-bree.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,77 +19,165 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jun 13, 2005 at 07:24:27PM -0500, Mike Christie wrote:
-> Mike Christie wrote:
-> >Christophe Varoqui wrote:
-> >
-> >>I confirm a robust behaviour now with take 3.
-> >>Here is a take 4 that move to an appropriate "best effort mode", ie 
-> >>always return success.
-> >>
-> >>The point is, whenever DM start submitting io the an asleep controler, 
-> >>precede with a START command. If it fails ... too bad, the consecutive 
-> >>io will fail and DM will try another PG. Had to do that because take 3 
-> >>interprets an error where the controler switch have correctly happened.
-> >>
-> >
-> >ok so is it if the controller is already failed over and we send the 
-> >START command, rq->errors had some value so I ended up failing the 
-> >operation, right? Let me send a patch that will dump the sense and 
-> >rq->errors info out so we can see if there is some nice ASC/ASCQ value 
-> >that will tell us this occured like with the LSI boxes.
-> 
-> oh wait, when I reread this I guess you are saying that I was always 
-> gettting a rq->error value when I send a START_STOP and it succeeds?
-> 
-Here is a "sg_start -s 1" output that successfully activated the controler driving sdc :
+On 2005-06-13T19:28:51, Lars Marowsky-Bree <lmb@suse.de> wrote:
 
-[root@s64p17bibrn ~]# sg_start -s 1 /dev/sdc
-sync_cache: scsi status: Check Condition
-Current, Sense key: Not Ready
-[valid=0] Info fld=0x9000000, Additional sense: Logical unit not ready, initializing cmd. required
-Raw sense data (in hex):
-  70 00 02 09 00 00 00 0a 00 00 00 00 04 02 00 93 01 00
-plus...: Driver_status=0x08 (DRIVER_SENSE,SUGGEST_OK)
-start_stop: scsi status: Check Condition
-Current, Sense key: Not Ready
-[valid=0] Info fld=0x9000000, Additional sense: Logical unit not ready, initializing cmd. required
-Raw sense data (in hex):
-  70 00 02 09 00 00 00 0a 00 00 00 00 04 02 00 93 01 00
-plus...: Driver_status=0x08 (DRIVER_SENSE,SUGGEST_OK)
+> Hi Alasdair, Ed, List,
+>=20
+> this patch addresses the bug Ed pointed out. The trigger_event queue
+> might still hold a reference while dm_destroy kills the current mapping=
+.
+>=20
+> However, this patch is unconvincing in the larger view of things. Yes,
+> barring bugs, it should address the problem, but the real issue is -
+> just like with still having pg_inits in-flight - that DM's reference
+> counting isn't taking into account what we are doing internally, and
+> that remains unsolved.
+>=20
+> Comments?
 
-Note subsequent sg_start don't spit any output, the controler is already activated :
+Second (public) revision. The wait_on_work() was no good. While it
+considerably reduced the window for the race, it didn't entirely close
+it (the flag is cleared prior to actually calling the handler).
 
-[root@s64p17bibrn ~]# sg_start -s 1 /dev/sdc
-[root@s64p17bibrn ~]#
+The comment still remains: The layering in DM is sub-optimal, if not
+wrong. I tried exporting dm_(inc|dec)_pending(struct mapped_device *md)
+from dm.c, so as to be able to influence the reference counter for the
+dm device when queuing / completing an internal event, but this is a
+mess. Deep inside dm-mpath, I don't have a reference to that struct at
+all.
 
-Reactivating the first controler outs same sense as before :
+This is actually the same problem which makes sane _logging_ in dm-mpath
+a nightmare: No references to the name of the DM dev etc. This all
+sucks(tm).
 
-[root@s64p17bibrn ~]# sg_start -s 1 /dev/sda
-sync_cache: scsi status: Check Condition
-Current, Sense key: Not Ready
-[valid=0] Info fld=0x9000000, Additional sense: Logical unit not ready, initializing cmd. required
-Raw sense data (in hex):
-  70 00 02 09 00 00 00 0a 00 00 00 00 04 02 00 93 01 00
-plus...: Driver_status=0x08 (DRIVER_SENSE,SUGGEST_OK)
-start_stop: scsi status: Check Condition
-Current, Sense key: Not Ready
-[valid=0] Info fld=0x9000000, Additional sense: Logical unit not ready, initializing cmd. required
-Raw sense data (in hex):
-  70 00 02 09 00 00 00 0a 00 00 00 00 04 02 00 93 01 00
-plus...: Driver_status=0x08 (DRIVER_SENSE,SUGGEST_OK)
+However, I needed a fix reasonably soon (as in, right now ;-) which is
+somewhat easier to verify then revamping the full DM layering. Comments
+on this approach are appreciated.
+
+And yes, I know that the "looping" in free_multipath() sucks. See above
+for the reason: It's easier to verify then the full answer.
+
+A flush_workqueue(kmultipathd) is too large a hammer - given that other
+tables might still be busy queuing events, re-queuing IO etc, that could
+potentially block for much longer periods of time.
+
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Panic in dm-mpath.c:trigger_event()
+References: 88635
+
+If a dm mpath table was destroyed while events were still pending to be
+delivered, the code could panic in trigger_event() trying to dereference
+free'd memory.
 
 
+Index: linux-2.6.5/drivers/md/dm-mpath.c
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+--- linux-2.6.5.orig/drivers/md/dm-mpath.c	2005-06-13 18:14:58.555830390 =
++0200
++++ linux-2.6.5/drivers/md/dm-mpath.c	2005-06-14 10:57:44.879248517 +0200
+@@ -80,6 +80,8 @@ struct multipath {
+ 	unsigned queue_size;
+=20
+ 	struct work_struct trigger_event;
++	atomic_t trigger_event_pending; /* Reference count whether any trigger_=
+event
++					   is outstanding */
+=20
+ 	/*
+ 	 * We must use a mempool of mpath_io structs so that we
+@@ -179,6 +180,7 @@ static struct multipath *alloc_multipath
+ 		m->queue_io =3D 1;
+ 		INIT_WORK(&m->process_queued_ios, process_queued_ios, m);
+ 		INIT_WORK(&m->trigger_event, trigger_event, m);
++		atomic_set(&m->trigger_event_pending, 0);
+ 		m->mpio_pool =3D mempool_create(MIN_IOS, mempool_alloc_slab,
+ 					      mempool_free_slab, _mpio_cache);
+ 		if (!m->mpio_pool) {
+@@ -195,6 +197,14 @@ static void free_multipath(struct multip
+ 	struct priority_group *pg, *tmp;
+ 	struct hw_handler *hwh =3D &m->hw_handler;
+=20
++	/* TODO - Yes, I know:
++	 * It would be better if in fact pending trigger_events
++	 * were accounted for in the struct mapped_device * we belong
++	 * to. However, that is not exported to us, and that fix will
++	 * require slightly more rearchitecting then this bit. */
++	while (atomic_read(&m->trigger_event_pending))
++		schedule();
++=09
+ 	list_for_each_entry_safe (pg, tmp, &m->priority_groups, list) {
+ 		list_del(&pg->list);
+ 		free_priority_group(pg, m->ti);
+@@ -421,6 +431,16 @@ static void trigger_event(void *data)
+ 	struct multipath *m =3D (struct multipath *) data;
+=20
+ 	dm_table_event(m->ti->table);
++
++	spin_lock(&m->lock);
++	atomic_set(&m->trigger_event_pending, 0);
++	spin_unlock(&m->lock);
++}
++
++static void inline queue_trigger_event(struct multipath *m)
++{
++	atomic_set(&m->trigger_event_pending, 1);
++	queue_work(kmultipathd, &m->trigger_event);
+ }
+=20
+ /*-----------------------------------------------------------------
+@@ -818,7 +838,8 @@ static int fail_path(struct pgpath *pgpa
+ 	if (pgpath =3D=3D m->current_pgpath)
+ 		m->current_pgpath =3D NULL;
+=20
+-	queue_work(kmultipathd, &m->trigger_event);
++=09
++	queue_trigger_event(m);
+=20
+ out:
+ 	spin_unlock_irqrestore(&m->lock, flags);
+@@ -857,7 +878,7 @@ static int reinstate_path(struct pgpath=20
+ 	if (!m->nr_valid_paths++)
+ 		queue_work(kmultipathd, &m->process_queued_ios);
+=20
+-	queue_work(kmultipathd, &m->trigger_event);
++	queue_trigger_event(m);
+=20
+ out:
+ 	spin_unlock_irqrestore(&m->lock, flags);
+@@ -900,9 +921,10 @@ static void bypass_pg(struct multipath *
+ 	m->current_pgpath =3D NULL;
+ 	m->current_pg =3D NULL;
+=20
++	queue_trigger_event(m);
++
+ 	spin_unlock_irqrestore(&m->lock, flags);
+=20
+-	queue_work(kmultipathd, &m->trigger_event);
+ }
+=20
+ /*
+@@ -930,9 +952,9 @@ static int switch_pg_num(struct multipat
+ 		m->current_pg =3D NULL;
+ 		m->next_pg =3D pg;
+ 	}
++	queue_trigger_event(m);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+=20
+-	queue_work(kmultipathd, &m->trigger_event);
+ 	return 0;
+ }
+=20
 
-Hope it clarifies a bit.
-Let me know if I can provide more.
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
 
-I'm surprised HP guys don't join the party.
-Decoding the sense would be easier for them.
-Lacking they knowledge, I went for the best effort mode, though I agree it would be better to decode the sense.
-
-Regards,
-cvaroqui
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
