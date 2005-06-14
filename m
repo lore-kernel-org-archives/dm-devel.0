@@ -1,15 +1,15 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: further testing w/ multipath ... and bugs
-Date: Mon, 13 Jun 2005 23:37:33 +0200
-Message-ID: <1118698654.1515.10.camel@zezette>
-References: <20050613081154.GA28251@averon.dyndns.org>
-	<42ADE021.6050902@cs.wisc.edu>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [PATCH] HP SW support take 3
+Date: Mon, 13 Jun 2005 19:17:19 -0500
+Message-ID: <42AE220F.4090104@cs.wisc.edu>
+References: <1118614380.5318.11.camel@mina>
+	<20050613131012.GE28625@averon.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <42ADE021.6050902@cs.wisc.edu>
+In-Reply-To: <20050613131012.GE28625@averon.dyndns.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,27 +22,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On lun, 2005-06-13 at 14:36 -0500, Mike Christie wrote:
-> Christophe Varoqui wrote:
-> > 
-> >  rport-0:0-0: blocked FC remote port time out: removing target
-> >  rport-0:0-1: blocked FC remote port time out: removing target
+Christophe Varoqui wrote:
+> I confirm a robust behaviour now with take 3.
+> Here is a take 4 that move to an appropriate "best effort mode", ie always return success.
 > 
-> I think if we end up doing this to all the devices paths we are going to 
-> be screwed. If all the paths suddenly fail and then those devices are 
-> freed when trying to readd/create devices when the ports come back is 
-> going to take a lot of GFP_KERNELs.
+> The point is, whenever DM start submitting io the an asleep controler, precede with a START command. If it fails ... too bad, the consecutive io will fail and DM will try another PG. Had to do that because take 3 interprets an error where the controler switch have correctly happened.
+> 
 
-Right.
+ok so is it if the controller is already failed over and we send the 
+START command, rq->errors had some value so I ended up failing the 
+operation, right? Let me send a patch that will dump the sense and 
+rq->errors info out so we can see if there is some nice ASC/ASCQ value 
+that will tell us this occured like with the LSI boxes.
 
-One thing I don't understand in the current scheme is why io are not
-rerouted by the DM multipath target between the LOOP_DOWN and the rport
-target removal ...
+> I guess we could suppress the sense buffer allocation if this "best effort mode" is agreed on.
+> 
+> I also added path->dev->name to DMINFO() calls to make for a more informative output.
 
-If io could get rerouted within a few seconds, we could set a target
-removal multi-minutes timer, which should cover most reasonable SAN
-failure scenarii.
-
-Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+ok thanks I will add more output like that to other print statements.
