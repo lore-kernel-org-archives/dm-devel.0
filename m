@@ -1,16 +1,11 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: [patch] dm-mpath pg_init could race with destructor
-Date: Thu, 16 Jun 2005 00:31:30 +0200
-Message-ID: <20050615223130.GR11423@marowsky-bree.de>
-References: <20050615071946.GA765@marowsky-bree.de>
-	<42B071AE.4040305@cs.wisc.edu>
+From: "Zhao Qian" <zhaoqian@aaastor.com>
+Subject: [patch] dm-raid1.c  a race bug in rh_dec()
+Date: Thu, 16 Jun 2005 14:40:05 +0800
+Message-ID: <004e01c5723e$3ba3da60$1f000064@polaris>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0652355695=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <42B071AE.4040305@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +15,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2005-06-15T13:21:34, Mike Christie <michaelc@cs.wisc.edu> wrote:
+This is a multi-part message in MIME format.
 
-> >Why send a pg_init request at this point if there are no queued ios?
-> >This was in fact my solution, to only send a pg_init io if there are
-> >queued ios.
-> >
-> Are there management situations where some admin wants to manually=20
-> switch. If he was going to take a controller temporarily offline for=20
-> maitnenance for example? Will multipath tools and dm-mutlipath be used=20
-> to do this type of management, or will it be some vendor specific tool=20
-> that sends a SG_IO directly?
+--===============0652355695==
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_0048_01C57281.48FA5480"
 
-I don't think that's a real problem. We will switch the group, but just
-on the first IO.
+This is a multi-part message in MIME format.
 
-That had already happened anyway (because otherwise no
-process_queued_ios() would have been queued). The only place where this
-really makes a difference is the queue_work() in presuspend: here, a
-process_queued_ios() would be qeueued even if no IO was pending, which
-could lead to a pg_init being issued, and then the object being free'd -
-bang.
+------=_NextPart_000_0048_01C57281.48FA5480
+Content-Type: text/plain;
+	charset="gb2312"
+Content-Transfer-Encoding: base64
 
-> It would not be possible to just have dm-multipath increment some=20
-> refcount like pending so you cannot destroy things while a pg_init IO i=
-s=20
-> in flight would it?
+cGF0Y2ggaGVyZSB0byBhdm9pZCByYWNlIGNvbmRpdGlvbjoNCg0KW3Jvb3RAZGFya3N0YXIgbWRd
+IyBkaWZmIC11IGRtLXJhaWQxLm9yaWcuYyBkbS1yYWlkMS5jIA0KLS0tIGRtLXJhaWQxLm9yaWcu
+YyAgICAgMjAwNS0wNi0xNiAxNDoxNzowNC4wMDAwMDAwMDAgKzA4MDANCisrKyBkbS1yYWlkMS5j
+ICAyMDA1LTA2LTE2IDE0OjE4OjI1LjAwMDAwMDAwMCArMDgwMA0KQEAgLTQwNCw3ICs0MDQsNiBA
+QA0KIA0KICAgICAgICByZWFkX2xvY2soJnJoLT5oYXNoX2xvY2spOw0KICAgICAgICByZWcgPSBf
+X3JoX2xvb2t1cChyaCwgcmVnaW9uKTsNCi0gICAgICAgcmVhZF91bmxvY2soJnJoLT5oYXNoX2xv
+Y2spOw0KIA0KICAgICAgICBpZiAoYXRvbWljX2RlY19hbmRfdGVzdCgmcmVnLT5wZW5kaW5nKSkg
+ew0KICAgICAgICAgICAgICAgIHNwaW5fbG9ja19pcnFzYXZlKCZyaC0+cmVnaW9uX2xvY2ssIGZs
+YWdzKTsNCkBAIC00MTgsNiArNDE3LDcgQEANCiAgICAgICAgICAgICAgICBzaG91bGRfd2FrZSA9
+IDE7DQogICAgICAgIH0NCiANCisgICAgICAgcmVhZF91bmxvY2soJnJoLT5oYXNoX2xvY2spOw0K
+ICAgICAgICBpZiAoc2hvdWxkX3dha2UpDQogICAgICAgICAgICAgICAgd2FrZSgpOw0KIH0NCg0K
+DQoNClNpbmNlcmVseSwNCiAgICBBaU05IDx6aGFvcWlhbkBhYWFzdG9yLmNvbT4=
 
-See my other mails.
+------=_NextPart_000_0048_01C57281.48FA5480
+Content-Type: text/html;
+	charset="gb2312"
+Content-Transfer-Encoding: base64
 
-The problem is indeed that the DM multipath's internal operations are
-not accounted for in the top-level struct mapped_device pending field.
-However, trying to get at that from within dm-mpath.c is non-trivial and
-a major conceptual change, it appears.
+PCFET0NUWVBFIEhUTUwgUFVCTElDICItLy9XM0MvL0RURCBIVE1MIDQuMCBUcmFuc2l0aW9uYWwv
+L0VOIj4NCjxIVE1MPjxIRUFEPg0KPE1FVEEgaHR0cC1lcXVpdj1Db250ZW50LVR5cGUgY29udGVu
+dD0idGV4dC9odG1sOyBjaGFyc2V0PWdiMjMxMiI+DQo8TUVUQSBjb250ZW50PSJNU0hUTUwgNi4w
+MC4yOTAwLjI2MjciIG5hbWU9R0VORVJBVE9SPg0KPFNUWUxFPjwvU1RZTEU+DQo8L0hFQUQ+DQo8
+Qk9EWSBiZ0NvbG9yPSNmZmZmZmY+DQo8RElWPjxGT05UIHNpemU9Mj5wYXRjaCBoZXJlIHRvIGF2
+b2lkIHJhY2UgY29uZGl0aW9uOjwvRk9OVD48L0RJVj4NCjxESVY+PEZPTlQgc2l6ZT0yPjwvRk9O
+VD4mbmJzcDs8L0RJVj4NCjxESVY+PEZPTlQgc2l6ZT0yPltyb290QGRhcmtzdGFyIG1kXSMgZGlm
+ZiAtdSBkbS1yYWlkMS5vcmlnLmMgZG0tcmFpZDEuYyA8QlI+LS0tIA0KZG0tcmFpZDEub3JpZy5j
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IDIwMDUtMDYtMTYgMTQ6MTc6MDQuMDAwMDAwMDAwIA0K
+KzA4MDA8QlI+KysrIGRtLXJhaWQxLmMmbmJzcDsgMjAwNS0wNi0xNiAxNDoxODoyNS4wMDAwMDAw
+MDAgKzA4MDA8QlI+QEAgLTQwNCw3IA0KKzQwNCw2IEBAPEJSPiZuYnNwOzxCUj4mbmJzcDsmbmJz
+cDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsgDQpyZWFkX2xvY2soJmFtcDtyaC0mZ3Q7
+aGFzaF9sb2NrKTs8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+IA0KcmVnID0gX19yaF9sb29rdXAocmgsIHJlZ2lvbik7PEJSPi0mbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsgDQpyZWFkX3VubG9jaygmYW1wO3JoLSZndDtoYXNoX2xvY2spOzxC
+Uj4mbmJzcDs8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IA0K
+aWYgKGF0b21pY19kZWNfYW5kX3Rlc3QoJmFtcDtyZWctJmd0O3BlbmRpbmcpKSANCns8QlI+Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7
+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IA0Kc3Bpbl9sb2NrX2lycXNhdmUoJmFtcDty
+aC0mZ3Q7cmVnaW9uX2xvY2ssIGZsYWdzKTs8QlI+QEAgLTQxOCw2ICs0MTcsNyANCkBAPEJSPiZu
+YnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyANCnNob3VsZF93YWtlID0gMTs8QlI+Jm5i
+c3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7IA0KfTxCUj4mbmJzcDs8QlI+
+KyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyANCnJlYWRfdW5sb2NrKCZhbXA7
+cmgtJmd0O2hhc2hfbG9jayk7PEJSPiZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNwOyZuYnNw
+OyZuYnNwOyANCmlmIA0KKHNob3VsZF93YWtlKTxCUj4mbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsm
+bmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJzcDsmbmJz
+cDsmbmJzcDsgDQp3YWtlKCk7PEJSPiZuYnNwO308L0ZPTlQ+PC9ESVY+DQo8RElWPjxGT05UIHNp
+emU9Mj48L0ZPTlQ+Jm5ic3A7PC9ESVY+DQo8RElWPjxGT05UIHNpemU9Mj48L0ZPTlQ+Jm5ic3A7
+PC9ESVY+DQo8RElWPjxGT05UIHNpemU9Mj48L0ZPTlQ+Jm5ic3A7PC9ESVY+DQo8RElWPlNpbmNl
+cmVseSw8QlI+Jm5ic3A7Jm5ic3A7Jm5ic3A7Jm5ic3A7QWlNOSAmbHQ7PEEgDQpocmVmPSJtYWls
+dG86emhhb3FpYW5AYWFhc3Rvci5jb20iPnpoYW9xaWFuQGFhYXN0b3IuY29tPC9BPiZndDs8L0RJ
+Vj48L0JPRFk+PC9IVE1MPg0K
 
-It's sort-of related to "try to give a sane log message from within
-dm-mpath, which actually mentions the map / dm dev we belong to".  The
-trigger_event() "fix" is also very much related.
-
-The layering is pretty well isolated, which is good, but can make such
-changes difficult.
-
-Long-term, that fix will be needed: DM personalities need to be more
-involved in their reference counting.=20
+------=_NextPart_000_0048_01C57281.48FA5480--
 
 
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
 
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+--===============0652355695==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0652355695==--
