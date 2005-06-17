@@ -1,11 +1,12 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] 2.6.12-rc6: fix rh_dec()/rh_inc() race in
-	dm-raid1.c
-Date: Thu, 16 Jun 2005 18:51:41 -0400
-Message-ID: <42B2027D.7040807@ce.jp.nec.com>
+From: "Zhao Qian" <zhaoqian@aaastor.com>
+Subject: [patch] dm-raid1.c  fix  a race bug in __rh_alloc()
+Date: Fri, 17 Jun 2005 10:21:30 +0800
+Message-ID: <003101c572e3$4a0a9f80$1f000064@polaris>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------070605000504010802010704"
+Content-Type: text/plain;
+	charset="gb2312"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,90 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------070605000504010802010704
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-
-Hello,
-
-Attached patch fixes the another bug in dm-raid1.c that
-the dirty region may stay in or be moved to clean list
-and freed while in use.
-
-It happens as follows:
-
-   CPU0                                   CPU1
-   ------------------------------------------------------------------------------
-   rh_dec()
-     if (atomic_dec_and_test(pending))
-        <the region is still marked dirty>
-                                          rh_inc()
-                                            if the region is clean
-                                               mark the region dirty
-                                               and remove from clean list
-        mark the region clean
-        and move to clean list
-                                                  atomic_inc(pending)
-
-At this stage, the region is in clean list and
-will be mistakenly reclaimed by rh_update_states() later.
-
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+after write_unlock_irq and just before read_lock, there's a small window =
+which enables a race causing deletion of the region struct in function rh=
+_update_states(). then in rh_dec(), the __rh_lookup() will return null, c=
+ausing kernel panic.=20
 
 
---------------070605000504010802010704
-Content-Type: text/x-patch;
- name="dm-raid1-race2.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm-raid1-race2.patch"
-
---- kernel/drivers/md/dm-raid1.c.orig	2005-06-16 07:13:50.610325768 -0400
-+++ kernel/drivers/md/dm-raid1.c	2005-06-16 10:34:12.510719112 -0400
-@@ -375,16 +380,18 @@ static void rh_inc(struct region_hash *r
- 
- 	read_lock(&rh->hash_lock);
- 	reg = __rh_find(rh, region);
-+
-+	atomic_inc(&reg->pending);
-+
-+	spin_lock_irq(&rh->region_lock);
- 	if (reg->state == RH_CLEAN) {
- 		rh->log->type->mark_region(rh->log, reg->key);
- 
--		spin_lock_irq(&rh->region_lock);
- 		reg->state = RH_DIRTY;
- 		list_del_init(&reg->list);	/* take off the clean list */
--		spin_unlock_irq(&rh->region_lock);
- 	}
-+	spin_unlock_irq(&rh->region_lock);
- 
--	atomic_inc(&reg->pending);
- 	read_unlock(&rh->hash_lock);
+[root@darkstar md]# diff -u dm-raid1.orig.c dm-raid1.c=20
+--- dm-raid1.orig.c     2005-06-16 14:17:04.000000000 +0800
++++ dm-raid1.c  2005-06-17 10:02:04.000000000 +0800
+@@ -252,15 +252,16 @@
+=20
+        else {
+                __rh_insert(rh, nreg);
+-               if (nreg->state =3D=3D RH_CLEAN) {
+-                       spin_lock(&rh->region_lock);
+-                       list_add(&nreg->list, &rh->clean_regions);
+-                       spin_unlock(&rh->region_lock);
+-               }
+                reg =3D nreg;
+        }
+        write_unlock_irq(&rh->hash_lock);
+        read_lock(&rh->hash_lock);
++       if (reg->state =3D=3D RH_CLEAN) {
++               spin_lock(&rh->region_lock);
++               if ( list_empty(&reg->list) )
++                       list_add(&reg->list, &rh->clean_regions);
++               spin_unlock(&rh->region_lock);
++       }
+=20
+        return reg;
  }
- 
-@@ -408,6 +414,10 @@ static void rh_dec(struct region_hash *r
- 
- 	if (atomic_dec_and_test(&reg->pending)) {
- 		spin_lock_irqsave(&rh->region_lock, flags);
-+		if (atomic_read(&reg->pending)) { /* check race */
-+			spin_unlock_irqrestore(&rh->region_lock, flags);
-+			return;
-+		}
- 		if (reg->state == RH_RECOVERING) {
- 			list_add_tail(&reg->list, &rh->quiesced_regions);
- 		} else {
 
---------------070605000504010802010704
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------070605000504010802010704--
+Sincerely,
+    Johnson <dujun@aaastor.com>
+    AiM9 <zhaoqian@aaastor.com>
