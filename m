@@ -1,14 +1,20 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: pg failback
-Date: Mon, 20 Jun 2005 20:46:34 +0200
-Message-ID: <1119293194.1515.80.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321AAD9@SRMANNING.eng.emc.com>
+Subject: Re: StorageWorks multipath support
+Date: Tue, 21 Jun 2005 00:16:26 +0200
+Message-ID: <1119305786.1515.92.camel@zezette>
+References: <20050615085634.GA16446@averon.dyndns.org>
+	<20050615131520.GC11423@marowsky-bree.de>
+	<20050615134536.GC16446@averon.dyndns.org>
+	<20050615135337.GG11423@marowsky-bree.de>
+	<20050615140740.GD16446@averon.dyndns.org>
+	<20050615142052.GT4195@agk.surrey.redhat.com>
+	<1119116112.1515.59.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AAD9@SRMANNING.eng.emc.com>
+In-Reply-To: <1119116112.1515.59.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,41 +27,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On lun, 2005-06-20 at 14:05 -0400, goggin, edward wrote:
-> Two things with path group failback seem flawed right now.
+On sam, 2005-06-18 at 19:35 +0200, christophe varoqui wrote:
+> On mer, 2005-06-15 at 15:20 +0100, Alasdair G Kergon wrote:
+> > On Wed, Jun 15, 2005 at 04:07:40PM +0200, christophe varoqui wrote:
+> > > Can you elaborate on what you have in mind ?
+> >  
+> > Listen on a socket in the filesystem?  [cf. what screen does]
+> > And have a separate helper program that sends messages down it
+> > similar to the uevent messages.
+> > 
+> Would the following do what you want ?
 > 
-> (1) Looks like it might be possible for a currently disabled path group
-> which is not the highest priority path group to remain disabled even
-> when paths in the group test successfully.  This seems to be possible
-> because the code in switch_pathgroup() called by checkerloop() in
-> multipathd only fails back to the highest priority path group.  Granted
-> that the problem is primarily (__only__) cosmetic since the other group(s)
-> are not being actively used anyway, but it is still misleading to a viewer
-> of
-> "multipath -l" to see disabled path groups which should not be in this
-> state.
-> 
-Yes, this one is on the todo.
-You already raised that point speaking of "kernel/userspace asymmetry"
-if I remember.
+No response ? LinuxTag vielleicht ?
+Well, it must mean yes then :)
 
-> (2) Seems to me that currently disabled path groups should be enabled
-> before switching to one anyway.  Doing so will enable the kernel code to
-> simply
-> reenable a group without initiating a pg_init of "a possibly newly
-> determined"
-> highest priority path group as is currently done.  Instead, as a performance
-> Improvement over the way things are now, the multipathd code can reenable
-> path
-> groups as need be, and only initiate a switch path group when it determines
-> that this is necessary.
-> 
-Some hardware (StorageWorks HSG, HSV1X0) need the unconditional pg_init
-as it is coded right now, so I guess we can't afford this little
-optimisation.
+I commited the thing, plus readline support and a few fixes for bugs
+uncovered by this nice new feature.
 
-Speaking of optimisation, have you witnessed too the ~20% performance
-decrease with multi-path PG ?
+The parser, and the synthax, are still ugly as hell. If someone cares,
+he should point me to a nice one.
+
+I'm also open to "lp" and "lm" output format/content suggestions.
 
 Regards,
 -- 
