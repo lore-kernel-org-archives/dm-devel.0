@@ -1,12 +1,14 @@
-From: =?UTF-8?B?RGF2aWQgVmlkYWwgUm9kcsOtZ3Vleg==?= <vidalrod@in.tum.de>
-Subject: Access beyond end of device with LVM2 over sw RAID1
-Date: Wed, 22 Jun 2005 19:35:09 +0200
-Message-ID: <42B9A14D.7090402@in.tum.de>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: blacklist issues and more
+Date: Wed, 22 Jun 2005 21:23:22 +0200
+Message-ID: <1119468202.1515.154.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AAEB@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AAEB@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,44 +18,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On mar, 2005-06-21 at 15:50 -0400, goggin, edward wrote:
 
-Hello everyone,
+> 
+> (2) This isn't even sufficient since the multipathd holds an open on each
+> multipath mapped
+> device.  One result of this is that the target devices used by the mapped
+> device are not
+> available for use by any application which must "claim" them exclusively,
+> for example,
+> mount(8) or for use via raw io.  I must kill multipathd before I can use any
+> of the target
+> devices by these "claiming" applications.  Seems like multipath should get
+> multipathd
+> to close its open on the newly blacklisted block device.
+> 
+I guess it may be related to the wait DM event ioctl.
 
-I am new to this list, looking for an explanation of a problem which has
-been there for a relatively long time. I've found nothing similar in the
-mailing list archive, hence this mail.
+The daemon can't reap the waiting threads it starts (may be I'm just too
+ignorant there), as they are blocked in the ioctl. It's a known and
+serious problem. Moreover the daemon leaks here and pins the dm-* kobj.
 
-Discs configuration: 2 S-ATA HDs configured as a RAID-1 mirror, on top
-of which an LVM2 volume group (VG) sits. Different logical volumes (LVs)
-are defined there, one of which (/home) has a snapshot. Everything is
-managed with IBM's EVMS tool set, so I'm using EVMS volumes on top of
-each LV.
+The dmeventd should help fix these problems, but I was waiting more
+input from Alasdair before deciding to merge that in the 0.4.5 dev
+cycle.
 
-While running kernel 2.6.10, everything is allright. But when I use one
-of the 2.6.11.* or 2.6.12-* kernels, reading files on /home leads to
-innumerable I/O errors, and the kernel complains about trying to access
-beyond the end of the dm device. Note that I'm reading the original
-volume, not the snapshot. Volumes without a snapshot don't show this
-behavior. In fact, although the root filesystem is also an EVMS volume
-on top of an LV, the system boots normally.
+Can you confirm this analysis applies to your reported problem.
 
-The problem goes away if I either downgrade to 2.6.10 or remove the
-snapshot.
-
-Is this a known problem, and if not, should I give more informations?
-
-Thank you in advance,
-David VIDAL RODRIGUEZ
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.1 (GNU/Linux)
-Comment: Using GnuPG with Thunderbird - http://enigmail.mozdev.org
-
-iD8DBQFCuaFMK3CyMA5SxrwRAl07AJ9F70wnthgxrQOTea0JY5s2COS2LQCfXn5B
-pXH2c3k5ubU1BEUMrP08KBQ=
-=RpQ2
------END PGP SIGNATURE-----
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
