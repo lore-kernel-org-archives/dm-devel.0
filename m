@@ -1,14 +1,12 @@
-From: Patrick Mansfield <patmans@us.ibm.com>
-Subject: Re: Fibre Channel related crash
-Date: Wed, 22 Jun 2005 10:28:32 -0700
-Message-ID: <20050622172832.GA11128@us.ibm.com>
-References: <1119361784.24150.47.camel@nalwalovaton>
+From: =?UTF-8?B?RGF2aWQgVmlkYWwgUm9kcsOtZ3Vleg==?= <vidalrod@in.tum.de>
+Subject: Access beyond end of device with LVM2 over sw RAID1
+Date: Wed, 22 Jun 2005 19:35:09 +0200
+Message-ID: <42B9A14D.7090402@in.tum.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1119361784.24150.47.camel@nalwalovaton>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,56 +16,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-You should really run with a stock kernel before reporting problems to
-these lists.
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-cc-ing linux-scsi, maybe someone there will give you more info about the
-HSV110.
+Hello everyone,
 
-On Tue, Jun 21, 2005 at 08:49:44AM -0500, William Alberto Lovaton Tovar wrote:
+I am new to this list, looking for an explanation of a problem which has
+been there for a relatively long time. I've found nothing similar in the
+mailing list archive, hence this mail.
 
-> Jun 20 13:35:01 dnccor50 kernel:   Vendor: COMPAQ    Model: HSV110 (C)COMPAQ  Rev: 2001
-> Jun 20 13:35:01 dnccor50 kernel:   Type:   Direct-Access                      ANSI SCSI revision: 02
-> Jun 20 13:35:01 dnccor50 kernel: qla2300 0000:07:03.0: scsi(0:0:1:2): Enabled tagged queuing, queue depth 32.
-> Jun 20 13:35:01 dnccor50 kernel: SCSI device sdb: 167772160 512-byte hdwr sectors (85899 MB)
-> Jun 20 13:35:01 dnccor50 kernel: sdb: asking for cache data failed
-> Jun 20 13:35:01 dnccor50 kernel: sdb: assuming drive cache: write through
-> Jun 20 13:35:01 dnccor50 kernel: SCSI device sdb: 167772160 512-byte hdwr sectors (85899 MB)
-> Jun 20 13:35:01 dnccor50 kernel: sdb: asking for cache data failed
-> Jun 20 13:35:01 dnccor50 kernel: sdb: assuming drive cache: write through
-> Jun 20 13:35:01 dnccor50 kernel:  sdb:<6>Device sdb not ready.
-> Jun 20 13:35:01 dnccor50 kernel: end_request: I/O error, dev sdb, sector 0
+Discs configuration: 2 S-ATA HDs configured as a RAID-1 mirror, on top
+of which an LVM2 volume group (VG) sits. Different logical volumes (LVs)
+are defined there, one of which (/home) has a snapshot. Everything is
+managed with IBM's EVMS tool set, so I'm using EVMS volumes on top of
+each LV.
 
-It isn't a fibre channel crash.
+While running kernel 2.6.10, everything is allright. But when I use one
+of the 2.6.11.* or 2.6.12-* kernels, reading files on /home leads to
+innumerable I/O errors, and the kernel complains about trying to access
+beyond the end of the dm device. Note that I'm reading the original
+volume, not the snapshot. Volumes without a snapshot don't show this
+behavior. In fact, although the root filesystem is also an EVMS volume
+on top of an LV, the system boots normally.
 
-The device is (obviously) not ready. Usually, sd during probe spins up the
-device, but the HSV110 is special cased, so we don't spin it up (send a
-START STOP command), and it just keeps telling us it is still not ready.
+The problem goes away if I either downgrade to 2.6.10 or remove the
+snapshot.
 
-Since it's a disk array, I don't know what a START / spinup means for it,
-or why it is not ready. I would guess it has some sort of failure and is
-waiting for you to fix it :)
+Is this a known problem, and if not, should I give more informations?
 
-You should check the device: verify its settings, check for failures,
-and/or reset it; or maybe send it a START UNIT to the device.
+Thank you in advance,
+David VIDAL RODRIGUEZ
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+Comment: Using GnuPG with Thunderbird - http://enigmail.mozdev.org
 
-You can try to dynamically modify the scsi_devinfo/bflags so it sends the
-START STOP during probe: 
-
-change the devinfo list (won't be reset to the original until you reload
-scsi_mod), I don't know if I have this exactly right:
-
-	echo "COMPAQ   :HSV110 (C)COMPAQ:0x0" > /proc/scsi/device_info
-
-remove and re-scan for the device
-
-	echo 1 > /sys/block/sd/device/delete
-	echo "0 1 2" > /sys/class/scsi_host/host0/scan
-
-And see what happens ... you should see some "spinning up disk ..."
-messages.
-
--- Patrick Mansfield
+iD8DBQFCuaFMK3CyMA5SxrwRAl07AJ9F70wnthgxrQOTea0JY5s2COS2LQCfXn5B
+pXH2c3k5ubU1BEUMrP08KBQ=
+=RpQ2
+-----END PGP SIGNATURE-----
