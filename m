@@ -1,14 +1,14 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: blacklist issues and more
-Date: Wed, 22 Jun 2005 21:23:22 +0200
-Message-ID: <1119468202.1515.154.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321AAEB@SRMANNING.eng.emc.com>
+Subject: RE: blacklist issues and more
+Date: Wed, 22 Jun 2005 21:15:57 +0200
+Message-ID: <1119467757.1515.147.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AAF7@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AAEB@SRMANNING.eng.emc.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AAF7@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,33 +21,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mar, 2005-06-21 at 15:50 -0400, goggin, edward wrote:
-
+On mer, 2005-06-22 at 12:21 -0400, goggin, edward wrote:
+> On Wed, 22 Jun 2005 00:58:53 +0200
+> christophe varoqui <christophe.varoqui@free.fr> wrote
 > 
-> (2) This isn't even sufficient since the multipathd holds an open on each
-> multipath mapped
-> device.  One result of this is that the target devices used by the mapped
-> device are not
-> available for use by any application which must "claim" them exclusively,
-> for example,
-> mount(8) or for use via raw io.  I must kill multipathd before I can use any
-> of the target
-> devices by these "claiming" applications.  Seems like multipath should get
-> multipathd
-> to close its open on the newly blacklisted block device.
+> > Now you also have the CLI facility to remove checkers while keeping the
+> > daemon online. That or restarting the daemon or sending a SIGHUP (not
+> > implemented right now) seem legitimate to me when an admin changes a
+> > config file. Isn't it ?
 > 
-I guess it may be related to the wait DM event ioctl.
+> Yes, I like the SIGHUP idea best.  I'm not sure what you mean by
+> "CLI facility to remove checkers".
+> 
+You should check out the git head and see the recent changes in the log.
 
-The daemon can't reap the waiting threads it starts (may be I'm just too
-ignorant there), as they are blocked in the ioctl. It's a known and
-serious problem. Moreover the daemon leaks here and pins the dm-* kobj.
+> > > 
+> > > An invocation of "multipath -F" did cleanup device files in 
+> > /dev on my Red
+> > > Hat AS 4 host
+> > > but an invocation of "dmsetup remove <map-name>" did not.  
+> > I was loath to
+> > > experiment
+> > > with "dmsetup remove_all" on my Red Hat host since my root 
+> > device on that
+> > > host is on
+> > > a device mapper LVM2 logical volume.  Otherwise, I suspect 
+> > that this command
+> > > would
+> > > fail to clean up device files in the same way "dmsetup 
+> > remove_all" failed.
+> > > 
+> > I'll wait for you to pin down this problem.
+> 
+> I was hoping Alasdair or Lars would comment first :))
+> 
+I also commited an enhancement to the map removal logic :
+Layered partitions (created by kpartx) increase the bottom map usage,
+preventing its removal. The patch also removes unpinned partitions.
 
-The dmeventd should help fix these problems, but I was waiting more
-input from Alasdair before deciding to merge that in the 0.4.5 dev
-cycle.
+May be you were hit by this.
 
-Can you confirm this analysis applies to your reported problem.
-
-Regards,
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 -- 
 christophe varoqui <christophe.varoqui@free.fr>
