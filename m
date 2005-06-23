@@ -1,69 +1,90 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: RE: blacklist issues and more
-Date: Wed, 22 Jun 2005 21:15:57 +0200
-Message-ID: <1119467757.1515.147.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321AAF7@SRMANNING.eng.emc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Philip R Auld <pauld@egenera.com>
+Subject: Re: [dm-devel] Fibre Channel related crash
+Date: Thu, 23 Jun 2005 09:52:28 -0400
+Message-ID: <20050623135227.GK9070@vienna.egenera.com>
+References: <1119361784.24150.47.camel@nalwalovaton> <20050622172832.GA11128@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AAF7@SRMANNING.eng.emc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20050622172832.GA11128@us.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Patrick Mansfield <patmans@us.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On mer, 2005-06-22 at 12:21 -0400, goggin, edward wrote:
-> On Wed, 22 Jun 2005 00:58:53 +0200
-> christophe varoqui <christophe.varoqui@free.fr> wrote
-> 
-> > Now you also have the CLI facility to remove checkers while keeping the
-> > daemon online. That or restarting the daemon or sending a SIGHUP (not
-> > implemented right now) seem legitimate to me when an admin changes a
-> > config file. Isn't it ?
-> 
-> Yes, I like the SIGHUP idea best.  I'm not sure what you mean by
-> "CLI facility to remove checkers".
-> 
-You should check out the git head and see the recent changes in the log.
 
-> > > 
-> > > An invocation of "multipath -F" did cleanup device files in 
-> > /dev on my Red
-> > > Hat AS 4 host
-> > > but an invocation of "dmsetup remove <map-name>" did not.  
-> > I was loath to
-> > > experiment
-> > > with "dmsetup remove_all" on my Red Hat host since my root 
-> > device on that
-> > > host is on
-> > > a device mapper LVM2 logical volume.  Otherwise, I suspect 
-> > that this command
-> > > would
-> > > fail to clean up device files in the same way "dmsetup 
-> > remove_all" failed.
-> > > 
-> > I'll wait for you to pin down this problem.
-> 
-> I was hoping Alasdair or Lars would comment first :))
-> 
-I also commited an enhancement to the map removal logic :
-Layered partitions (created by kpartx) increase the bottom map usage,
-preventing its removal. The patch also removes unpinned partitions.
+Hi,
 
-May be you were hit by this.
+Rumor has it that on Wed, Jun 22, 2005 at 10:28:32AM -0700 Patrick Mansfield said:
+> You should really run with a stock kernel before reporting problems to
+> these lists.
+> 
+> cc-ing linux-scsi, maybe someone there will give you more info about the
+> HSV110.
 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+The HSV110 is and active/passive array. You're probably accessing a LU 
+that is not on the controller your talking to. Sending it a start would
+work, but, of course, then you can't access it through the other
+controller...
+
+I think the multipath tools and device mapper will know how to handle
+this device.
+
+Cheers,
+
+Phil
+> 
+> On Tue, Jun 21, 2005 at 08:49:44AM -0500, William Alberto Lovaton Tovar wrote:
+> 
+> > Jun 20 13:35:01 dnccor50 kernel:   Vendor: COMPAQ    Model: HSV110 (C)COMPAQ  Rev: 2001
+> > Jun 20 13:35:01 dnccor50 kernel:   Type:   Direct-Access                      ANSI SCSI revision: 02
+> > Jun 20 13:35:01 dnccor50 kernel: qla2300 0000:07:03.0: scsi(0:0:1:2): Enabled tagged queuing, queue depth 32.
+> > Jun 20 13:35:01 dnccor50 kernel: SCSI device sdb: 167772160 512-byte hdwr sectors (85899 MB)
+> > Jun 20 13:35:01 dnccor50 kernel: sdb: asking for cache data failed
+> > Jun 20 13:35:01 dnccor50 kernel: sdb: assuming drive cache: write through
+> > Jun 20 13:35:01 dnccor50 kernel: SCSI device sdb: 167772160 512-byte hdwr sectors (85899 MB)
+> > Jun 20 13:35:01 dnccor50 kernel: sdb: asking for cache data failed
+> > Jun 20 13:35:01 dnccor50 kernel: sdb: assuming drive cache: write through
+> > Jun 20 13:35:01 dnccor50 kernel:  sdb:<6>Device sdb not ready.
+> > Jun 20 13:35:01 dnccor50 kernel: end_request: I/O error, dev sdb, sector 0
+> 
+> It isn't a fibre channel crash.
+> 
+> The device is (obviously) not ready. Usually, sd during probe spins up the
+> device, but the HSV110 is special cased, so we don't spin it up (send a
+> START STOP command), and it just keeps telling us it is still not ready.
+> 
+> Since it's a disk array, I don't know what a START / spinup means for it,
+> or why it is not ready. I would guess it has some sort of failure and is
+> waiting for you to fix it :)
+> 
+> You should check the device: verify its settings, check for failures,
+> and/or reset it; or maybe send it a START UNIT to the device.
+> 
+> You can try to dynamically modify the scsi_devinfo/bflags so it sends the
+> START STOP during probe: 
+> 
+> change the devinfo list (won't be reset to the original until you reload
+> scsi_mod), I don't know if I have this exactly right:
+> 
+> 	echo "COMPAQ   :HSV110 (C)COMPAQ:0x0" > /proc/scsi/device_info
+> 
+> remove and re-scan for the device
+> 
+> 	echo 1 > /sys/block/sd/device/delete
+> 	echo "0 1 2" > /sys/class/scsi_host/host0/scan
+> 
+> And see what happens ... you should see some "spinning up disk ..."
+> messages.
+> 
+> -- Patrick Mansfield
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
 -- 
-christophe varoqui <christophe.varoqui@free.fr>
+Philip R. Auld, Ph.D.  	        	       Egenera, Inc.    
+Software Architect                            165 Forest St.
+(508) 858-2628                            Marlboro, MA 01752
