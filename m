@@ -1,7 +1,7 @@
 From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: mirroring: [patch 4 of 8] device failure tolerance
-Date: Wed, 29 Jun 2005 13:25:59 -0500
-Message-ID: <63489c95183742b85c025a9aca71a3d5@redhat.com>
+Subject: mirroring: [patch 5 of 8] device failure tolerance
+Date: Wed, 29 Jun 2005 13:29:06 -0500
+Message-ID: <efe5aa47391659dab130b3130f4a135d@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v622)
 Content-Type: text/plain; charset=US-ASCII; format=flowed
@@ -20,391 +20,386 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Kergon Alasdair <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds detection of device failure for writes.  It also 
-contains the read balancing code as a byproduct.
+This patch add device failure detection for reads.
 
   brassow
 
-diff -urN linux-2.6.12-004/drivers/md/dm-raid1.c 
-linux-2.6.12-005/drivers/md/dm-raid1.c
---- linux-2.6.12-004/drivers/md/dm-raid1.c	2005-06-28 
-16:46:37.000000000 -0500
-+++ linux-2.6.12-005/drivers/md/dm-raid1.c	2005-06-29 
+diff -urN linux-2.6.12-005/drivers/md/dm-raid1.c 
+linux-2.6.12-006/drivers/md/dm-raid1.c
+--- linux-2.6.12-005/drivers/md/dm-raid1.c	2005-06-29 
 10:48:36.137827465 -0500
-@@ -28,6 +28,8 @@
-  	queue_work(_kmirrord_wq, &_kmirrord_work);
-  }
++++ linux-2.6.12-006/drivers/md/dm-raid1.c	2005-06-29 
+11:44:57.552713175 -0500
+@@ -6,6 +6,7 @@
 
-+static struct workqueue_struct *_mir_mond_wq;
-+
-  /*-----------------------------------------------------------------
-   * Region hash
-   *
-@@ -553,7 +555,8 @@
-   * Mirror set structures.
-   *---------------------------------------------------------------*/
-  struct mirror {
--	atomic_t error_count;
-+	atomic_t error_count;  /* Error counter to flag mirror failure */
-+	struct mirror_set *ms;
-  	struct dm_dev *dev;
-  	sector_t offset;
-  };
-@@ -564,16 +567,23 @@
-  	struct region_hash rh;
-  	struct kcopyd_client *kcopyd_client;
-
--	spinlock_t lock;	/* protects the next two lists */
-+	spinlock_t lock;	/* protects the lists */
-  	struct bio_list reads;
-  	struct bio_list writes;
-+	struct bio_list failures;
-+	struct work_struct failure_work;
-
-  	/* recovery */
-+	atomic_t suspended;
-  	region_t nr_regions;
-  	int in_sync;
-
-  	unsigned int nr_mirrors;
--	struct mirror mirror[0];
-+	spinlock_t choose_lock; /* protects select in choose_mirror(). */
-+	atomic_t read_count;    /* Read counter for read balancing. */
-+	unsigned int read_mirror;       /* Last mirror read. */
-+	struct mirror *default_mirror;  /* Default mirror. */
-+ 	struct mirror mirror[0];
+  #include "dm.h"
+  #include "dm-bio-list.h"
++#include "dm-bio-record.h"
+  #include "dm-io.h"
+  #include "dm-log.h"
+  #include "kcopyd.h"
+@@ -586,24 +587,39 @@
+   	struct mirror mirror[0];
   };
 
-  /*
-@@ -621,7 +631,7 @@
-  	unsigned long flags = 0;
-
-  	/* fill in the source */
--	m = ms->mirror + DEFAULT_MIRROR;
-+	m = ms->default_mirror;
-  	from.bdev = m->dev->bdev;
-  	from.sector = m->offset + region_to_sector(reg->rh, reg->key);
-  	if (reg->key == (ms->nr_regions - 1)) {
-@@ -637,7 +647,7 @@
-
-  	/* fill in the destinations */
-  	for (i = 0, dest = to; i < ms->nr_mirrors; i++) {
--		if (i == DEFAULT_MIRROR)
-+		if (&ms->mirror[i] == ms->default_mirror)
-  			continue;
-
-  		m = ms->mirror + i;
-@@ -687,12 +697,74 @@
-  }
-
-  /*-----------------------------------------------------------------
-- * Reads
-+ * Misc Functions
-   *---------------------------------------------------------------*/
--static struct mirror *choose_mirror(struct mirror_set *ms, sector_t 
-sector)
-+#define MIN_READS       128
-+/*
-+ * choose_mirror
-+ * @ms: the mirror set
-+ * @m: mirror that has failed, or NULL if just choosing
-+ *
-+ * Returns: chosen mirror, or NULL on failure
-+ */
-+static struct mirror *choose_mirror(struct mirror_set *ms, struct 
-mirror *m)
-+{
-+	int i, retry;
-+	unsigned long flags;
-+	struct mirror *ret = NULL;
++struct bio_map_info {
++	struct mirror *bmi_m;
++	struct dm_bio_details bmi_bd;
++};
 +
-+	spin_lock_irqsave(&ms->choose_lock, flags);
++static mempool_t *bio_map_info_pool = NULL;
 +
-+	if (unlikely(m == ms->default_mirror)) {
-+		i = DEFAULT_MIRROR;
-+		atomic_set(&ms->read_count, MIN_READS);
-+	} else {
-+		i = ms->read_mirror;
-+	}
-+
-+	for (retry = 0; retry < ms->nr_mirrors; ) {
-+		i %= ms->nr_mirrors;
-+		ret = ms->mirror + i;
-+
-+		if (unlikely(atomic_read(&ret->error_count))) {
-+			retry++;
-+			i++;
-+		} else {
-+			/*
-+			 * Guarantee that a number of read IOs
-+			 * get queued to the same mirror.
-+			 */
-+			if (atomic_dec_and_test(&ms->read_count)) {
-+				atomic_set(&ms->read_count, MIN_READS);
-+				i++;
-+			}
-+
-+			ms->read_mirror = i;
-+			break;
-+		}
-+	}
-+
-+	/* Check for failure of default mirror, reset if necessary */
-+	if (unlikely(m == ms->default_mirror)) {
-+		ms->default_mirror = ret;
-+	}
-+
-+	spin_unlock_irqrestore(&ms->choose_lock, flags);
-+
-+	if (unlikely(atomic_read(&ret->error_count))) {
-+		DMERR("All mirror devices are dead. Unable to choose mirror.");
-+		return NULL;
-+	}
-+
-+	return ret;
++static void *bio_map_info_alloc(unsigned int gfp_mask, void 
+*pool_data){
++	return kmalloc(sizeof(struct bio_map_info), gfp_mask);
 +}
 +
-+static void fail_mirror(struct mirror *m)
-  {
--	/* FIXME: add read balancing */
--	return ms->mirror + DEFAULT_MIRROR;
-+	DMINFO("incrementing error_count on %s", m->dev->name);
-+	atomic_inc(&m->error_count);
++static void bio_map_info_free(void *element, void *pool_data){
++	kfree(element);
++}
 +
-+	choose_mirror(m->ms, m);
-  }
+  /*
+   * Every mirror should look like this one.
+   */
+  #define DEFAULT_MIRROR 0
 
   /*
-@@ -704,6 +776,9 @@
-  	bio->bi_sector = m->offset + (bio->bi_sector - ms->ti->begin);
+- * This is yucky.  We squirrel the mirror_set struct away inside
+- * bi_next for write buffers.  This is safe since the bh
++ * This is yucky.  We squirrel the mirror struct away inside
++ * bi_next for read/write buffers.  This is safe since the bh
+   * doesn't get submitted to the lower levels of block layer.
+   */
+-static struct mirror_set *bio_get_ms(struct bio *bio)
++static struct mirror *bio_get_m(struct bio *bio)
+  {
+-	return (struct mirror_set *) bio->bi_next;
++	return (struct mirror *) bio->bi_next;
   }
 
-+/*-----------------------------------------------------------------
-+ * Reads
-+ *---------------------------------------------------------------*/
+-static void bio_set_ms(struct bio *bio, struct mirror_set *ms)
++static void bio_set_m(struct bio *bio, struct mirror *m)
+  {
+-	bio->bi_next = (struct bio *) ms;
++	bio->bi_next = (struct bio *) m;
+  }
+
+  /*-----------------------------------------------------------------
+@@ -767,37 +783,95 @@
+  	choose_mirror(m->ms, m);
+  }
+
++static int default_ok(struct mirror *m)
++{
++	return !atomic_read(&m->ms->default_mirror->error_count);
++}
++
+  /*
+   * remap a buffer to a particular mirror.
+   */
+-static void map_bio(struct mirror_set *ms, struct mirror *m, struct 
+bio *bio)
++static sector_t map_sector(struct mirror *m, struct bio *bio)
++{
++	return m->offset + (bio->bi_sector - m->ms->ti->begin);
++}
++
++static void map_bio(struct mirror *m, struct bio *bio)
+  {
+  	bio->bi_bdev = m->dev->bdev;
+-	bio->bi_sector = m->offset + (bio->bi_sector - ms->ti->begin);
++	bio->bi_sector = map_sector(m, bio);
++}
++
++static void map_region(struct io_region *io, struct mirror *m,
++		       struct bio *bio)
++{
++	io->bdev = m->dev->bdev;
++	io->sector = map_sector(m, bio);
++	io->count = bio->bi_size >> 9;
+  }
+
+  /*-----------------------------------------------------------------
+   * Reads
+   *---------------------------------------------------------------*/
++static void read_callback(unsigned long error, void *context)
++{
++	struct bio *bio = (struct bio *)context;
++	struct mirror *m;
++
++	m = bio_get_m(bio);
++	bio_set_m(bio, NULL);
++
++	if (unlikely(error)) {
++		DMWARN("A read failure occurred on a mirror device.");
++		fail_mirror(m);
++		if (likely(default_ok(m))) {
++			DMWARN("Trying different device.");
++			queue_bio(m->ms, bio, bio_rw(bio));
++		} else {
++			DMERR("No other device available, failing I/O.");
++			bio_endio(bio, 0, -EIO);
++		}
++	} else
++		bio_endio(bio, bio->bi_size, 0);
++}
++
++/* Asynchronous read. */
++static void read_async_bio(struct mirror *m, struct bio *bio)
++{
++	struct io_region io;
++
++	map_region(&io, m, bio);
++	bio_set_m(bio, m);
++	dm_io_async_bvec(1, &io, READ,
++			 bio->bi_io_vec + bio->bi_idx,
++			 read_callback, bio);
++}
++
   static void do_reads(struct mirror_set *ms, struct bio_list *reads)
   {
-  	region_t region;
-@@ -717,9 +792,9 @@
+-	region_t region;
+  	struct bio *bio;
+  	struct mirror *m;
+
+  	while ((bio = bio_list_pop(reads))) {
+-		region = bio_to_region(&ms->rh, bio);
+-
+  		/*
   		 * We can only read balance if the region is in sync.
   		 */
-  		if (rh_in_sync(&ms->rh, region, 0) == RH_CLEAN)
--			m = choose_mirror(ms, bio->bi_sector);
-+			m = choose_mirror(ms, NULL);
-  		else
--			m = ms->mirror + DEFAULT_MIRROR;
-+			m = ms->default_mirror;;
+-		if (rh_in_sync(&ms->rh, region, 0) == RH_CLEAN)
++		if (likely(rh_in_sync(&ms->rh,
++				      bio_to_region(&ms->rh, bio),
++				      0) == RH_CLEAN))
+  			m = choose_mirror(ms, NULL);
+-		else
++		else {
+  			m = ms->default_mirror;;
 
-  		map_bio(ms, m, bio);
-  		generic_make_request(bio);
-@@ -736,35 +811,87 @@
-   * RECOVERING:	delay the io until recovery completes
-   * NOSYNC:	increment pending, just write to the default mirror
-   *---------------------------------------------------------------*/
-+static void write_failure_handler(void *data)
-+{
-+	struct bio *bio;
-+	struct bio_list failed_writes;
-+	struct mirror_set *ms = (struct mirror_set *)data;
-+
-+	dm_table_event(ms->ti->table);
-+
-+	/* Take list out to handle endios. */
-+	spin_lock(&ms->lock);
-+	failed_writes = ms->failures;
-+	bio_list_init(&ms->failures);
-+	spin_unlock(&ms->lock);
-+
-+	while ((bio = bio_list_pop(&failed_writes))) {
-+		bio_endio(bio, bio->bi_size, 0);
-+	}
-+}
-+
-  static void write_callback(unsigned long error, void *context)
-  {
--	unsigned int i;
--	int uptodate = 1;
-+	unsigned int i, ret = 0;
-  	struct bio *bio = (struct bio *) context;
-  	struct mirror_set *ms;
--
-+
-  	ms = bio_get_ms(bio);
-  	bio_set_ms(bio, NULL);
--
-+
-  	/*
-  	 * NOTE: We don't decrement the pending count here,
-  	 * instead it is done by the targets endio function.
-  	 * This way we handle both writes to SYNC and NOSYNC
-  	 * regions with the same code.
-  	 */
-+	if (unlikely(error)) {
-+		int uptodate = 0, run;
-+
-+		DMERR("Error during write occurred.");
-
--	if (error) {
-  		/*
--		 * only error the io if all mirrors failed.
--		 * FIXME: bogus
-+		 * Test all bits - if all failed, fail io.
-+		 * Otherwise, go through hassle of failing a device...
-  		 */
--		uptodate = 0;
--		for (i = 0; i < ms->nr_mirrors; i++)
--			if (!test_bit(i, &error)) {
-+		for (i = 0; i < ms->nr_mirrors; i++) {
-+			if (test_bit(i, &error))
-+				fail_mirror(ms->mirror + i);
-+			else
-  				uptodate = 1;
--				break;
+-		map_bio(ms, m, bio);
+-		generic_make_request(bio);
++			/* If the default fails, we give up .*/
++			if (unlikely(m && atomic_read(&m->error_count)))
++				m = NULL;
 +		}
 +
-+		if (likely(uptodate)) {
-+			spin_lock(&ms->lock);
-+			if (atomic_read(&ms->suspended)) {
-+				/*
-+				 * The device is suspended, it is
-+				 * safe to complete I/O.
-+				 */
-+				spin_unlock(&ms->lock);
-+			} else {
-+				/*
-+				 * Need to raise event.  Since raising
-+				 * events can block, we need to do it in
-+				 * seperate thread.
-+				 */
-+				run = !ms->failures.head;
-+				bio_list_add(&ms->failures, bio);
-+				spin_unlock(&ms->lock);
-+			
-+				if (run) {
-+					queue_work(_mir_mond_wq,
-+						   &ms->failure_work);
-+				}
-+				return;
-  			}
-+		} else {
-+			DMERR("All replicated volumes dead, failing I/O");
-+			/* None of the writes succeeded, fail the I/O. */
-+			ret = -EIO;
-+		}
++		if (likely(m))
++			read_async_bio(m, bio);
++		else
++			bio_endio(bio, 0, -EIO);
   	}
-+
-  	bio_endio(bio, bio->bi_size, 0);
   }
 
-@@ -843,7 +970,7 @@
+@@ -836,8 +910,8 @@
+  	struct bio *bio = (struct bio *) context;
+  	struct mirror_set *ms;
+
+-	ms = bio_get_ms(bio);
+-	bio_set_ms(bio, NULL);
++	ms = (bio_get_m(bio))->ms;
++	bio_set_m(bio, NULL);
+
+  	/*
+  	 * NOTE: We don't decrement the pending count here,
+@@ -898,21 +972,26 @@
+  static void do_write(struct mirror_set *ms, struct bio *bio)
+  {
+  	unsigned int i;
+-	struct io_region io[KCOPYD_MAX_REGIONS+1];
++	struct io_region io[ms->nr_mirrors], *dest = io;
+  	struct mirror *m;
+
+-	for (i = 0; i < ms->nr_mirrors; i++) {
+-		m = ms->mirror + i;
+-
+-		io[i].bdev = m->dev->bdev;
+-		io[i].sector = m->offset + (bio->bi_sector - ms->ti->begin);
+-		io[i].count = bio->bi_size >> 9;
++	for (i = 0, m = ms->mirror; i < ms->nr_mirrors; i++, m++) {
++		if (likely(!atomic_read(&m->error_count)))
++			map_region(dest++, m, bio);
+  	}
+
+-	bio_set_ms(bio, ms);
+-	dm_io_async_bvec(ms->nr_mirrors, io, WRITE,
+-			 bio->bi_io_vec + bio->bi_idx,
+-			 write_callback, bio);
++	if (likely(dest - io)) {	
++		/*
++		 * We can use the default mirror here, because we
++		 * only need it in order to retrieve the reference
++		 * to the mirror set in write_callback().
++		 */
++		bio_set_m(bio, ms->default_mirror);
++		dm_io_async_bvec(dest - io, io, WRITE,
++				 bio->bi_io_vec + bio->bi_idx,
++				 write_callback, bio);
++	} else
++		bio_endio(bio, bio->bi_size, -EIO);
+  }
+
+  static void do_writes(struct mirror_set *ms, struct bio_list *writes)
+@@ -970,7 +1049,7 @@
   		rh_delay(&ms->rh, bio);
 
   	while ((bio = bio_list_pop(&nosync))) {
--		map_bio(ms, ms->mirror + DEFAULT_MIRROR, bio);
-+		map_bio(ms, ms->default_mirror, bio);
+-		map_bio(ms, ms->default_mirror, bio);
++		map_bio(ms->default_mirror, bio);
   		generic_make_request(bio);
   	}
   }
-@@ -905,11 +1032,15 @@
+@@ -1256,42 +1335,62 @@
+  	int r, rw = bio_rw(bio);
+  	struct mirror *m;
+  	struct mirror_set *ms = ti->private;
+-
+-	map_context->ll = bio->bi_sector >> ms->rh.region_shift;
++	struct dm_bio_details *bd;
++	struct bio_map_info *bmi;
 
-  	memset(ms, 0, len);
-  	spin_lock_init(&ms->lock);
-+	spin_lock_init(&ms->choose_lock);
-
-  	ms->ti = ti;
-  	ms->nr_mirrors = nr_mirrors;
-  	ms->nr_regions = dm_sector_div_up(ti->len, region_size);
-  	ms->in_sync = 0;
-+	ms->default_mirror = &ms->mirror[DEFAULT_MIRROR];
-+
-+	atomic_set(&ms->suspended, 0);
-
-  	if (rh_init(&ms->rh, ms, dl, region_size, ms->nr_regions)) {
-  		ti->error = "dm-mirror: Error creating dirty region hash";
-@@ -917,6 +1048,11 @@
-  		return NULL;
-  	}
-
-+	atomic_set(&ms->read_count, MIN_READS);
-+
-+	bio_list_init(&ms->failures);
-+	INIT_WORK(&ms->failure_work, write_failure_handler, ms);
-+	
-  	return ms;
-  }
-
-@@ -954,6 +1090,8 @@
-  	}
-
-  	ms->mirror[mirror].offset = offset;
-+	atomic_set(&(ms->mirror[mirror].error_count), 0);
-+	ms->mirror[mirror].ms = ms;
-
-  	return 0;
-  }
-@@ -1148,7 +1286,7 @@
+  	if (rw == WRITE) {
++		/* Save region for mirror_end_io() handler */
++		map_context->ll = bio_to_region(&ms->rh, bio);
+  		queue_bio(ms, bio, rw);
   		return 0;
   	}
 
--	m = choose_mirror(ms, bio->bi_sector);
-+	m = choose_mirror(ms, NULL);
-  	if (!m)
-  		return -EIO;
-
-@@ -1172,6 +1310,13 @@
-  	return 0;
-  }
-
-+static void mirror_presuspend(struct dm_target *ti){
-+	struct mirror_set *ms = (struct mirror_set *)ti->private;
++	/* It's all about the READs now */
 +
-+	atomic_set(&ms->suspended, 1);
-+}
-+
-+
-  static void mirror_postsuspend(struct dm_target *ti)
-  {
-  	struct mirror_set *ms = (struct mirror_set *) ti->private;
-@@ -1191,6 +1336,7 @@
-  		/* FIXME: need better error handling */
-  		DMWARN("log resume failed");
-  	rh_start_recovery(&ms->rh);
-+	atomic_set(&ms->suspended, 0);
-  }
+  	r = ms->rh.log->type->in_sync(ms->rh.log,
+  				      bio_to_region(&ms->rh, bio), 0);
+  	if (r < 0 && r != -EWOULDBLOCK)
+  		return r;
 
-  static int mirror_status(struct dm_target *ti, status_type_t type,
-@@ -1233,6 +1379,7 @@
-  	.dtr	 = mirror_dtr,
-  	.map	 = mirror_map,
-  	.end_io	 = mirror_end_io,
-+	.presuspend = mirror_presuspend,
-  	.postsuspend = mirror_postsuspend,
-  	.resume	 = mirror_resume,
-  	.status	 = mirror_status,
-@@ -1250,16 +1397,25 @@
-  	if (!_kmirrord_wq) {
-  		DMERR("couldn't start kmirrord");
-  		dm_dirty_log_exit();
--		return r;
-+		return -ENOMEM;
+-	if (r != RH_CLEAN)
+-		r = 0;
++	if (likely(r == LOG_CLEAN)) {
++		/*
++		 * Optimize reads by avoiding to hand them to daemon.
++		 *
++		 * In case they fail, queue them for another shot
++		 * in the mirror_end_io() function.
++		 */
++		m = choose_mirror(ms, NULL);
++		if (likely(m)) {
++			bmi = mempool_alloc(bio_map_info_pool, GFP_KERNEL);
++
++			if (likely(bmi)) {
++				/* without this, a read is not retryable */
++				bd = &bmi->bmi_bd;
++				dm_bio_record(bd, bio);
++				map_context->ptr = bmi;
++				bmi->bmi_m = m;
++			} else {
++				/* we could fail now, but we can at least  **
++				** give it a shot.  The bd is only used to **
++				** retry in the event of a failure anyway. **
++				** If we fail, we can fail the I/O then.   */
++				map_context->ptr = NULL;
++			}
+
+-	/*
+-	 * We don't want to fast track a recovery just for a read
+-	 * ahead.  So we just let it silently fail.
+-	 * FIXME: get rid of this.
+-	 */
+-	if (!r && rw == READA)
+-		return -EIO;
++			map_bio(m, bio);
++			return 1; /* Mapped -> queue request. */
++		} else{
++			return -EIO;
++		}
++	} else {
++		/* Either not clean, or -EWOULDBLOCK */
++		if (rw == READA)
++			return -EIO;
+
+-	if (!r) {
+-		/* Pass this io over to the daemon */
+  		queue_bio(ms, bio, rw);
+-		return 0;
   	}
-  	INIT_WORK(&_kmirrord_work, do_work, NULL);
 
-+	_mir_mond_wq = create_workqueue("mir_mond");
-+	if (!_mir_mond_wq) {
-+		DMERR("couldn't start mir_mond");
-+		dm_dirty_log_exit();
-+		destroy_workqueue(_kmirrord_wq);
+-	m = choose_mirror(ms, NULL);
+-	if (!m)
+-		return -EIO;
+-
+-	map_bio(ms, m, bio);
+-	return 1;
++	return 0;
+  }
+
+  static int mirror_end_io(struct dm_target *ti, struct bio *bio,
+@@ -1299,15 +1398,53 @@
+  {
+  	int rw = bio_rw(bio);
+  	struct mirror_set *ms = (struct mirror_set *) ti->private;
+-	region_t region = map_context->ll;
++	struct mirror *m = NULL;
+
+  	/*
+  	 * We need to dec pending if this was a write.
+  	 */
+-	if (rw == WRITE)
+-		rh_dec(&ms->rh, region);
++	if (rw == WRITE) {
++		rh_dec(&ms->rh, map_context->ll);
++		return error;
++	}
+
+-	return 0;
++	if (unlikely(error)) {
++		struct dm_bio_details *bd = NULL;
++
++		DMERR("A read failure occurred on a mirror device.");
++		if (!map_context->ptr) {
++			/*
++			 * There wasn't enough memory to record necessary
++			 * information for a retry.
++			 */
++			DMERR("Out of memory causing inability to retry read.");
++			return -EIO;
++		}
++		m = ((struct bio_map_info *)map_context->ptr)->bmi_m;
++		fail_mirror(m); /* Flag error on mirror. */
++
++		/*
++		 * A failed read needs to get queued
++		 * to the daemon for another shot to
++		 * one (if any) intact mirrors.
++		 */
++		if (rw == READ && default_ok(m)) {
++			bd = &(((struct bio_map_info *)map_context->ptr)->bmi_bd);
++
++			DMWARN("Trying different device.");
++			dm_bio_restore(bd, bio);
++			mempool_free(map_context->ptr, bio_map_info_pool);
++			map_context->ptr = NULL;
++			queue_bio(ms, bio, rw);
++			return 1; /* We want another shot on the bio. */
++		}
++		DMERR("All replicated volumes dead, failing I/O");
++	}
++
++	if (map_context->ptr)
++		mempool_free(map_context->ptr, bio_map_info_pool);
++
++	return error;
+  }
+
+  static void mirror_presuspend(struct dm_target *ti){
+@@ -1389,6 +1526,12 @@
+  {
+  	int r;
+
++	bio_map_info_pool = mempool_create(100, bio_map_info_alloc,
++					   bio_map_info_free, NULL);
++	if (!bio_map_info_pool) {
 +		return -ENOMEM;
 +	}
 +
-  	r = dm_register_target(&mirror_target);
-  	if (r < 0) {
-  		DMERR("%s: Failed to register mirror target",
-  		      mirror_target.name);
-  		dm_dirty_log_exit();
-  		destroy_workqueue(_kmirrord_wq);
-+		destroy_workqueue(_mir_mond_wq);
-  	}
-
-  	return r;
+  	r = dm_dirty_log_init();
+  	if (r)
+  		return r;
