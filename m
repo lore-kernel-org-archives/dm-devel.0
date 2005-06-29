@@ -1,7 +1,7 @@
 From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: mirroring: [patch 1 of 8] device failure tolerance
-Date: Wed, 29 Jun 2005 13:07:49 -0500
-Message-ID: <16a7b346170f3909d57592016a32abc0@redhat.com>
+Subject: mirroring: [patch 2 of 8] device failure tolerance
+Date: Wed, 29 Jun 2005 13:11:12 -0500
+Message-ID: <38d8d3826e021270e5f3f05f5da2196f@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v622)
 Content-Type: text/plain; charset=US-ASCII; format=flowed
@@ -20,125 +20,133 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Kergon Alasdair <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch defines a couple more states that logs can return, and 
-checks for those states in the mirror code.  The states are useful for 
-logs that have cluster support.
+This patch adds the ability to detect log device failures.
 
   brassow
 
-diff -urN linux-2.6.12-orig/drivers/md/dm-log.c 
-linux-2.6.12-001/drivers/md/dm-log.c
---- linux-2.6.12-orig/drivers/md/dm-log.c	2005-06-17 14:48:29.000000000 
+diff -urN linux-2.6.12-001/drivers/md/dm-log.c 
+linux-2.6.12-002/drivers/md/dm-log.c
+--- linux-2.6.12-001/drivers/md/dm-log.c	2005-06-28 14:38:40.349390239 
 -0500
-+++ linux-2.6.12-001/drivers/md/dm-log.c	2005-06-28 14:38:40.349390239 
++++ linux-2.6.12-002/drivers/md/dm-log.c	2005-06-28 15:26:47.916480356 
 -0500
-@@ -517,13 +517,13 @@
-  static int core_is_clean(struct dirty_log *log, region_t region)
-  {
-  	struct log_c *lc = (struct log_c *) log->context;
--	return log_test_bit(lc->clean_bits, region);
-+	return (log_test_bit(lc->clean_bits, region)) ? LOG_CLEAN : LOG_DIRTY;
-  }
-
-  static int core_in_sync(struct dirty_log *log, region_t region, int 
-block)
-  {
-  	struct log_c *lc = (struct log_c *) log->context;
--	return log_test_bit(lc->sync_bits, region);
-+	return (log_test_bit(lc->sync_bits, region)) ? LOG_CLEAN : LOG_NOSYNC;
-  }
-
-  static int core_flush(struct dirty_log *log)
-diff -urN linux-2.6.12-orig/drivers/md/dm-log.h 
-linux-2.6.12-001/drivers/md/dm-log.h
---- linux-2.6.12-orig/drivers/md/dm-log.h	2005-06-17 14:48:29.000000000 
--0500
-+++ linux-2.6.12-001/drivers/md/dm-log.h	2005-06-28 14:23:54.655103852 
--0500
-@@ -9,6 +9,12 @@
-
-  #include "dm.h"
-
-+#define LOG_DIRTY              0
-+#define LOG_CLEAN              1
-+#define LOG_NOSYNC             2
-+#define LOG_RECOVERING         3
-+#define LOG_REMOTE_RECOVERING  4
-+
-  typedef sector_t region_t;
-
-  struct dirty_log_type;
-diff -urN linux-2.6.12-orig/drivers/md/dm-raid1.c 
-linux-2.6.12-001/drivers/md/dm-raid1.c
---- linux-2.6.12-orig/drivers/md/dm-raid1.c	2005-06-17 
-14:48:29.000000000 -0500
-+++ linux-2.6.12-001/drivers/md/dm-raid1.c	2005-06-28 
-14:49:38.985786409 -0500
-@@ -91,7 +91,8 @@
-  	RH_CLEAN,
-  	RH_DIRTY,
-  	RH_NOSYNC,
--	RH_RECOVERING
-+	RH_RECOVERING,
-+	RH_REMOTE_RECOVERING
-  };
-
-  struct region {
-@@ -234,7 +235,7 @@
-
-  	read_unlock(&rh->hash_lock);
-  	nreg = mempool_alloc(rh->region_pool, GFP_NOIO);
--	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
-+	nreg->state = (rh->log->type->in_sync(rh->log, region, 1) == 
-LOG_CLEAN) ?
-  		RH_CLEAN : RH_NOSYNC;
-  	nreg->rh = rh;
-  	nreg->key = region;
-@@ -292,13 +293,26 @@
-  	 * The region wasn't in the hash, so we fall back to the
-  	 * dirty log.
-  	 */
--	r = rh->log->type->in_sync(rh->log, region, may_block);
--
-+	switch (rh->log->type->in_sync(rh->log, region, may_block)) {
-+	case LOG_CLEAN:
-+		r = RH_CLEAN;
-+		break;
-+	case LOG_DIRTY:
-+		r = RH_DIRTY;
-+		break;
-+	case LOG_REMOTE_RECOVERING:
-+		r = RH_REMOTE_RECOVERING;
-+		break;
-+	default:
-+		r = RH_NOSYNC;
-+		break;
-+	}
-+	
+@@ -150,6 +150,7 @@
   	/*
-  	 * Any error from the dirty log (eg. -EWOULDBLOCK) gets
-  	 * taken as a RH_NOSYNC
+  	 * Disk log fields
   	 */
--	return r == 1 ? RH_CLEAN : RH_NOSYNC;
++	int log_dev_failed;
+  	struct dm_dev *log_dev;
+  	struct log_header header;
+
+@@ -412,6 +413,7 @@
+
+  	lc = (struct log_c *) log->context;
+  	lc->log_dev = dev;
++	lc->log_dev_failed = 0;
+
+  	/* setup the disk header fields */
+  	lc->header_location.bdev = lc->log_dev->bdev;
+@@ -472,15 +474,27 @@
+  	struct log_c *lc = (struct log_c *) log->context;
+  	size_t size = lc->bitset_uint32_count * sizeof(uint32_t);
+
+-	/* read the disk header */
+-	r = read_header(lc);
+-	if (r)
+-		return r;
+-
+-	/* read the bits */
+-	r = read_bits(lc);
+-	if (r)
+-		return r;
++	/*
++	 * Read the disk header, but only if we know it is good.
++	 */
++	if(!lc->log_dev_failed){
++		r = read_header(lc);
++		if (r) {
++			DMERR("A read failure has occurred on a mirror log device.");
++			lc->log_dev_failed = 1;
++			dm_table_event(lc->ti->table);
++			lc->header.nr_regions = 0;
++		} else {
++			/* read the bits */
++			r = read_bits(lc);
++			if (r){
++				DMERR("A read failure has occurred on a mirror log device.");
++				lc->log_dev_failed = 1;
++				dm_table_event(lc->ti->table);
++				lc->header.nr_regions = 0;
++			}
++		}
++	}
+
+  	/* set or clear any new bits */
+  	if (lc->sync == NOSYNC)
+@@ -496,16 +510,28 @@
+  	memcpy(lc->sync_bits, lc->clean_bits, size);
+  	lc->sync_count = count_bits32(lc->clean_bits, 
+lc->bitset_uint32_count);
+
++	/* set the correct number of regions in the header */
++	lc->header.nr_regions = lc->region_count;
++
+  	/* write the bits */
+  	r = write_bits(lc);
+-	if (r)
++	if (r) {
++		DMERR("A write failure has occurred on a mirror log device.");
++		lc->log_dev_failed = 1;
++		dm_table_event(lc->ti->table);
+  		return r;
+-
+-	/* set the correct number of regions in the header */
+-	lc->header.nr_regions = lc->region_count;
++	}
+
+  	/* write the new header */
+-	return write_header(lc);
++	r = write_header(lc);
++	if (r) {
++		DMERR("A write failure has occurred on a mirror log device.");
++		lc->log_dev_failed = 1;
++		dm_table_event(lc->ti->table);
++	} else
++		lc->log_dev_failed = 0;
++
 +	return r;
   }
 
-  static inline int rh_in_sync(struct region_hash *rh,
-@@ -702,7 +716,7 @@
-  		/*
-  		 * We can only read balance if the region is in sync.
-  		 */
--		if (rh_in_sync(&ms->rh, region, 0))
-+		if (rh_in_sync(&ms->rh, region, 0) == RH_CLEAN)
-  			m = choose_mirror(ms, bio->bi_sector);
-  		else
-  			m = ms->mirror + DEFAULT_MIRROR;
-@@ -1117,7 +1131,7 @@
-  	if (r < 0 && r != -EWOULDBLOCK)
-  		return r;
+  static uint32_t core_get_region_size(struct dirty_log *log)
+@@ -541,9 +567,29 @@
+  	if (!lc->touched)
+  		return 0;
 
--	if (r == -EWOULDBLOCK)	/* FIXME: ugly */
-+	if (r != RH_CLEAN)
-  		r = 0;
++	/*
++	 * Could be dangerous if the write fails.
++	 * If the machine dies while the on-disk log is different from the 
+core,
++	 * and the device is readalbe when the machine comes back, it may be
++	 * possible that not all regions will be recovered.
++	 *
++	 * The event is raised so that dmeventd can suspend the device for a
++	 * moment while it removes the log device.
++	 *
++	 * So, not running dmeventd and having a machine fail after a log has
++	 * failed and having the device available when the machine reboots is
++	 * a bad thing.
++	 */
+  	r = write_bits(lc);
+-	if (!r)
++	if (!r) {
+  		lc->touched = 0;
++		lc->log_dev_failed = 0;
++	} else {
++		DMERR("A write failure has occurred on a mirror log device.");
++		DMERR("Log device is now not in-sync with the core.");
++		lc->log_dev_failed = 1;
++		dm_table_event(lc->ti->table);
++	}
 
-  	/*
+  	return r;
+  }
