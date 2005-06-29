@@ -1,12 +1,12 @@
 From: "Zhao Qian" <zhaoqian@aaastor.com>
 Subject: bio's bi_size bug also be founded at dm-stripe.c and
-	dm-snap.c
-Date: Wed, 29 Jun 2005 18:06:01 +0800
-Message-ID: <009201c57c92$282303e0$1f000064@polaris>
+	dm-snap.c (resend in correct charset)
+Date: Wed, 29 Jun 2005 18:10:22 +0800
+Message-ID: <00a501c57c92$c3041020$1f000064@polaris>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="Windows-1252"
+	charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
