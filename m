@@ -1,7 +1,7 @@
 From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: mirroring: [patch 2 of 8] device failure tolerance
-Date: Wed, 29 Jun 2005 13:11:12 -0500
-Message-ID: <38d8d3826e021270e5f3f05f5da2196f@redhat.com>
+Subject: mirroring: [patch 3 of 8] device failure tolerance
+Date: Wed, 29 Jun 2005 13:19:36 -0500
+Message-ID: <81dff920a130cbb1abecd2352d0daddd@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v622)
 Content-Type: text/plain; charset=US-ASCII; format=flowed
@@ -20,133 +20,61 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Kergon Alasdair <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds the ability to detect log device failures.
+This patch changes the status info returned from the log and the mirror 
+code so that they display whether a device is dead (D) or alive (A).  
+This is needed in order for the user-land programs to be able to 
+determine which device is bad in the event of a failure.
 
   brassow
 
-diff -urN linux-2.6.12-001/drivers/md/dm-log.c 
-linux-2.6.12-002/drivers/md/dm-log.c
---- linux-2.6.12-001/drivers/md/dm-log.c	2005-06-28 14:38:40.349390239 
+diff -urN linux-2.6.12-003/drivers/md/dm-log.c 
+linux-2.6.12-004/drivers/md/dm-log.c
+--- linux-2.6.12-003/drivers/md/dm-log.c	2005-06-28 16:02:39.071277119 
 -0500
-+++ linux-2.6.12-002/drivers/md/dm-log.c	2005-06-28 15:26:47.916480356 
++++ linux-2.6.12-004/drivers/md/dm-log.c	2005-06-28 16:40:49.157122050 
 -0500
-@@ -150,6 +150,7 @@
-  	/*
-  	 * Disk log fields
-  	 */
-+	int log_dev_failed;
-  	struct dm_dev *log_dev;
-  	struct log_header header;
+@@ -679,12 +679,22 @@
 
-@@ -412,6 +413,7 @@
+  	switch(status) {
+  	case STATUSTYPE_INFO:
++		format_dev_t(buffer, lc->log_dev->bdev->bd_dev);
++		DMEMIT("%s %u %s%s %u ",
++		       log->type->name,
++		       lc->sync == DEFAULTSYNC ? 2 : 3,
++		       buffer,
++		       lc->log_dev_failed ? "/D" : "/A",
++		       lc->region_size);
++		DMEMIT_SYNC;
+  		break;
 
-  	lc = (struct log_c *) log->context;
-  	lc->log_dev = dev;
-+	lc->log_dev_failed = 0;
-
-  	/* setup the disk header fields */
-  	lc->header_location.bdev = lc->log_dev->bdev;
-@@ -472,15 +474,27 @@
-  	struct log_c *lc = (struct log_c *) log->context;
-  	size_t size = lc->bitset_uint32_count * sizeof(uint32_t);
-
--	/* read the disk header */
--	r = read_header(lc);
--	if (r)
--		return r;
--
--	/* read the bits */
--	r = read_bits(lc);
--	if (r)
--		return r;
-+	/*
-+	 * Read the disk header, but only if we know it is good.
-+	 */
-+	if(!lc->log_dev_failed){
-+		r = read_header(lc);
-+		if (r) {
-+			DMERR("A read failure has occurred on a mirror log device.");
-+			lc->log_dev_failed = 1;
-+			dm_table_event(lc->ti->table);
-+			lc->header.nr_regions = 0;
-+		} else {
-+			/* read the bits */
-+			r = read_bits(lc);
-+			if (r){
-+				DMERR("A read failure has occurred on a mirror log device.");
-+				lc->log_dev_failed = 1;
-+				dm_table_event(lc->ti->table);
-+				lc->header.nr_regions = 0;
-+			}
+  	case STATUSTYPE_TABLE:
+  		format_dev_t(buffer, lc->log_dev->bdev->bd_dev);
+-		DMEMIT("%s %u %s %u ", log->type->name,
+-		       lc->sync == DEFAULTSYNC ? 2 : 3, buffer,
++		DMEMIT("%s %u %s %u ",
++		       log->type->name,
++		       lc->sync == DEFAULTSYNC ? 2 : 3,
++		       buffer,
+  		       lc->region_size);
+  		DMEMIT_SYNC;
+  	}
+diff -urN linux-2.6.12-003/drivers/md/dm-raid1.c 
+linux-2.6.12-004/drivers/md/dm-raid1.c
+--- linux-2.6.12-003/drivers/md/dm-raid1.c	2005-06-28 
+16:02:33.953912094 -0500
++++ linux-2.6.12-004/drivers/md/dm-raid1.c	2005-06-28 
+16:46:37.167943233 -0500
+@@ -1204,8 +1204,11 @@
+  	switch (type) {
+  	case STATUSTYPE_INFO:
+  		DMEMIT("%d ", ms->nr_mirrors);
+-		for (m = 0; m < ms->nr_mirrors; m++)
+-			DMEMIT("%s ", ms->mirror[m].dev->name);
++		for (m = 0; m < ms->nr_mirrors; m++) {
++			DMEMIT("%s/%s ", ms->mirror[m].dev->name,
++			       atomic_read(&(ms->mirror[m].error_count)) ?
++			       "D" : "A");
 +		}
-+	}
 
-  	/* set or clear any new bits */
-  	if (lc->sync == NOSYNC)
-@@ -496,16 +510,28 @@
-  	memcpy(lc->sync_bits, lc->clean_bits, size);
-  	lc->sync_count = count_bits32(lc->clean_bits, 
-lc->bitset_uint32_count);
-
-+	/* set the correct number of regions in the header */
-+	lc->header.nr_regions = lc->region_count;
-+
-  	/* write the bits */
-  	r = write_bits(lc);
--	if (r)
-+	if (r) {
-+		DMERR("A write failure has occurred on a mirror log device.");
-+		lc->log_dev_failed = 1;
-+		dm_table_event(lc->ti->table);
-  		return r;
--
--	/* set the correct number of regions in the header */
--	lc->header.nr_regions = lc->region_count;
-+	}
-
-  	/* write the new header */
--	return write_header(lc);
-+	r = write_header(lc);
-+	if (r) {
-+		DMERR("A write failure has occurred on a mirror log device.");
-+		lc->log_dev_failed = 1;
-+		dm_table_event(lc->ti->table);
-+	} else
-+		lc->log_dev_failed = 0;
-+
-+	return r;
-  }
-
-  static uint32_t core_get_region_size(struct dirty_log *log)
-@@ -541,9 +567,29 @@
-  	if (!lc->touched)
-  		return 0;
-
-+	/*
-+	 * Could be dangerous if the write fails.
-+	 * If the machine dies while the on-disk log is different from the 
-core,
-+	 * and the device is readalbe when the machine comes back, it may be
-+	 * possible that not all regions will be recovered.
-+	 *
-+	 * The event is raised so that dmeventd can suspend the device for a
-+	 * moment while it removes the log device.
-+	 *
-+	 * So, not running dmeventd and having a machine fail after a log has
-+	 * failed and having the device available when the machine reboots is
-+	 * a bad thing.
-+	 */
-  	r = write_bits(lc);
--	if (!r)
-+	if (!r) {
-  		lc->touched = 0;
-+		lc->log_dev_failed = 0;
-+	} else {
-+		DMERR("A write failure has occurred on a mirror log device.");
-+		DMERR("Log device is now not in-sync with the core.");
-+		lc->log_dev_failed = 1;
-+		dm_table_event(lc->ti->table);
-+	}
-
-  	return r;
-  }
+  		DMEMIT(SECTOR_FORMAT "/" SECTOR_FORMAT,
+  		       ms->rh.log->type->get_sync_count(ms->rh.log),
