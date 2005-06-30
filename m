@@ -1,14 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Fw: dm-mirror/kmirrord oops
-Date: Wed, 29 Jun 2005 23:32:33 +0100
-Message-ID: <20050629223233.GD27078@agk.surrey.redhat.com>
-References: <20050627004827.12a389e0.akpm@osdl.org>
+From: "Zhao Qian" <zhaoqian@aaastor.com>
+Subject: Re: bio's bi_size bug also be founded at dm-stripe.c and
+	dm-snap.c (resend in correct charset)
+Date: Thu, 30 Jun 2005 10:02:03 +0800
+Message-ID: <003501c57d17$bd99f2f0$1f000064@polaris>
+References: <00a501c57c92$c3041020$1f000064@polaris>
+	<200506290630.57441.kevcorry@us.ibm.com>
+	<200506290646.00118.kevcorry@us.ibm.com>
+	<20050629144253.GR27078@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20050627004827.12a389e0.akpm@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,22 +22,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Cyril Chaboisseau <cyril.chaboisseau@free.fr>
-Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
+Cc: Zhao Qian <zhaoqian@aaastor.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 27, 2005 at 12:48:27AM -0700, Andrew Morton wrote:
-> Unable to handle kernel paging request at ffffc2000015c128 RIP: 
-> <ffffffff802964a8>{core_in_sync+8}
+Yes,i think so:)
 
-Do the following patches help?
+Sincerely,
+Zhao Qian zhaoqian@aaastor.com
 
-  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/00011.patch
-  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/00012.patch
-  ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/00013.patch
+----- Original Message -----=20
+From: "Alasdair G Kergon" <agk@redhat.com>
+To: "device-mapper development" <dm-devel@redhat.com>
+Cc: "Zhao Qian" <zhaoqian@aaastor.com>
+Sent: Wednesday, June 29, 2005 10:42 PM
+Subject: Re: [dm-devel] bio's bi_size bug also be founded at dm-stripe.c =
+and dm-snap.c (resend in correct charset)
 
-[12 and 13 are already included in -mm; Jon Brassow is working on a cleaner fix]
 
-Alasdair
--- 
-agk@redhat.com
+> On Wed, Jun 29, 2005 at 06:46:00AM -0500, Kevin Corry wrote:
+>> Alasdair, should that field be set for dm-mirror targets?=20
+>=20
+> Like you, I assumed it already was:-)
+>=20
+> Zhao, does Kevin's patch fix things for you?
+>=20
+> Alasdair
+> --=20
+> agk@redhat.com
+>
