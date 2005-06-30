@@ -1,17 +1,15 @@
-From: Greg Freemyer <greg.freemyer@gmail.com>
-Subject: Re: mirroring: [patch 1 of 8] device failure tolerance
-Date: Thu, 30 Jun 2005 12:38:17 -0400
-Message-ID: <87f94c370506300938213c1ad8@mail.gmail.com>
-References: <16a7b346170f3909d57592016a32abc0@redhat.com>
-	<87f94c37050630081370347a28@mail.gmail.com>
-	<3333970fb0e372a4637169a2b97b46f7@redhat.com>
-Reply-To: Greg Freemyer <greg.freemyer@gmail.com>,
-	device-mapper development <dm-devel@redhat.com>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: Re: mirroring: [patch 5 of 6] device failure tolerance
+Date: Thu, 30 Jun 2005 11:38:28 -0500
+Message-ID: <200506301138.29354.kevcorry@us.ibm.com>
+References: <d459df3fa77e2c972d837f613a137de5@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3333970fb0e372a4637169a2b97b46f7@redhat.com>
+In-Reply-To: <d459df3fa77e2c972d837f613a137de5@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,59 +20,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan E Brassow <jbrassow@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Kergon Alasdair <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On 6/30/05, Jonathan E Brassow <jbrassow@redhat.com> wrote:
->=20
-> On Jun 30, 2005, at 10:13 AM, Greg Freemyer wrote:
->=20
-> > On 6/29/05, Jonathan E Brassow <jbrassow@redhat.com> wrote:
-> >> This patch defines a couple more states that logs can return, and
-> >> checks for those states in the mirror code.  The states are useful f=
-or
-> >> logs that have cluster support.
-> >>
-> >>   brassow
-> >
-> > Have I been asleep?  This is the first I heard of DM having cluster
-> > mirror support.  I assume the goal is something along the lines of
-> > what DRBD provides.
-> >
-> > Can someone give a very high-level overview of current status, plans,
-> > etc. related to DM Cluster Mirror support.  And if this related to th=
-e
-> > DRBD project?
->=20
-> Please note that the "mirroring [patch x of 8]..." set for device fault
-> tolerance has been replaced with the "mirroring [patch x of 6]..." set.
->=20
-> The cluster mirroring that I'm talking about is active/active and
-> capable of handling more than 2 nodes.  It would be used in conjunction
-> with a clustered file system - like GFS.  The application sitting on
-> the cluster mirror should be cluster-aware.  You wouldn't be able to
-> just put ext3 on there and expect it to work in a cluster capacity.
->=20
-> Although there are some minor things that need to happen in the mirror
-> proper code (as can be seen from the smallness of the cluster patch),
-> the heavy lifting is done by a cluster-aware log.  That is were you are
-> keeping track of clean/dirty/recovering state.
->=20
-> An out-dated (but still useful for background) dock can be found at
-> http://www.brassow.com/mirroring/index.html
->=20
->   brassow
->=20
+Hi Jonathan,
 
-Sounds like you have more ambitious plans than DRBD.   (They have
-active-passive now and IIRC they plan the next major release to have
-active-active, but I think only on 2 nodes.)
+On Thu June 30 2005 3:00 am, Jonathan E Brassow wrote:
+> This patch changes the status output.  It will break pvmove and other
+> things that may have been parsing the status output of a mirror.
 
-Is the GFS team planning on supporting this infrastructure.  I hope so.
+Any time a target's table-format or status-format changes, we also need to 
+increment that target's version number so user-space can figure out which 
+format to expect.
 
-Greg
---=20
-Greg Freemyer
-The Norcross Group
-Forensics for the 21st Century
+The version for dm-mirror is currently 1.0.1, so we should at least bump it to 
+1.0.2 or 1.1.0.
+
+Also, please remember to turn off line-wrap when inserting patches into 
+emails.  :)
+
+Thanks,
+-- 
+Kevin Corry
+kevcorry@us.ibm.com
+http://www.ibm.com/linux/
+http://evms.sourceforge.net/
+
+
+--- dm-raid1.c.old 2005-06-30 11:33:24.000000000 -0500
++++ dm-raid1.c 2005-06-30 11:33:34.000000000 -0500
+@@ -1210,7 +1210,7 @@
+ 
+ static struct target_type mirror_target = {
+  .name  = "mirror",
+- .version = {1, 0, 1},
++ .version = {1, 1, 0},
+  .module  = THIS_MODULE,
+  .ctr  = mirror_ctr,
+  .dtr  = mirror_dtr,
