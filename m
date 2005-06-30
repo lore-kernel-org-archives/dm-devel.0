@@ -1,17 +1,18 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: Re: mirroring: [patch 1 of 8] device failure tolerance
-Date: Thu, 30 Jun 2005 13:00:43 -0500
-Message-ID: <c374c7e0c97c91c12f0ae0b993fa0446@redhat.com>
-References: <16a7b346170f3909d57592016a32abc0@redhat.com>
-	<87f94c37050630081370347a28@mail.gmail.com>
-	<3333970fb0e372a4637169a2b97b46f7@redhat.com>
-	<87f94c370506300938213c1ad8@mail.gmail.com>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: Re: mirroring: [patch 5 of 6] device failure tolerance
+Date: Thu, 30 Jun 2005 13:00:47 -0500
+Message-ID: <200506301300.47209.kevcorry@us.ibm.com>
+References: <d459df3fa77e2c972d837f613a137de5@redhat.com>
+	<200506301138.29354.kevcorry@us.ibm.com>
+	<20050630175645.GG27078@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v622)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87f94c370506300938213c1ad8@mail.gmail.com>
+In-Reply-To: <20050630175645.GG27078@agk.surrey.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,72 +22,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-On Jun 30, 2005, at 11:38 AM, Greg Freemyer wrote:
-
-> On 6/30/05, Jonathan E Brassow <jbrassow@redhat.com> wrote:
->>
->> On Jun 30, 2005, at 10:13 AM, Greg Freemyer wrote:
->>
->>> On 6/29/05, Jonathan E Brassow <jbrassow@redhat.com> wrote:
->>>> This patch defines a couple more states that logs can return, and
->>>> checks for those states in the mirror code.  The states are useful 
->>>> for
->>>> logs that have cluster support.
->>>>
->>>>   brassow
->>>
->>> Have I been asleep?  This is the first I heard of DM having cluster
->>> mirror support.  I assume the goal is something along the lines of
->>> what DRBD provides.
->>>
->>> Can someone give a very high-level overview of current status, plans,
->>> etc. related to DM Cluster Mirror support.  And if this related to 
->>> the
->>> DRBD project?
->>
->> Please note that the "mirroring [patch x of 8]..." set for device 
->> fault
->> tolerance has been replaced with the "mirroring [patch x of 6]..." 
->> set.
->>
->> The cluster mirroring that I'm talking about is active/active and
->> capable of handling more than 2 nodes.  It would be used in 
->> conjunction
->> with a clustered file system - like GFS.  The application sitting on
->> the cluster mirror should be cluster-aware.  You wouldn't be able to
->> just put ext3 on there and expect it to work in a cluster capacity.
->>
->> Although there are some minor things that need to happen in the mirror
->> proper code (as can be seen from the smallness of the cluster patch),
->> the heavy lifting is done by a cluster-aware log.  That is were you 
->> are
->> keeping track of clean/dirty/recovering state.
->>
->> An out-dated (but still useful for background) dock can be found at
->> http://www.brassow.com/mirroring/index.html
->>
->>   brassow
->>
+On Thu June 30 2005 12:56 pm, Alasdair G Kergon wrote:
+> On Thu, Jun 30, 2005 at 11:38:28AM -0500, Kevin Corry wrote:
+> > Any time a target's table-format or status-format changes, we also need
+> > to increment that target's version number so user-space can figure out
+> > which format to expect.
 >
-> Sounds like you have more ambitious plans than DRBD.   (They have
-> active-passive now and IIRC they plan the next major release to have
-> active-active, but I think only on 2 nodes.)
->
-> Is the GFS team planning on supporting this infrastructure.  I hope so.
->
+> Indeed, but I don't want version numbers updating till we know what
+> sequence things will go upstream.
 
-Yes.  In fact, the cluster log being developed leverages the Red hat 
-cluster manager (cman) - the same one that GFS uses.
+Of course. As long as it gets updated before it hits mainline. :)
 
-CMAN is moving to user space (I think in the FC5 timeframe?), so the 
-cluster log will have to adapt to that.  I won't be submitting the 
-cluster log code until that takes place.  It is available in the 
-cluster repository though (sources.redhat.com/cluster), but i will have 
-to clean it up again to take advantage of the hooks I added to the 
-logging code.
-
-  brassow
+-- 
+Kevin Corry
+kevcorry@us.ibm.com
+http://www.ibm.com/linux/
+http://evms.sourceforge.net/
