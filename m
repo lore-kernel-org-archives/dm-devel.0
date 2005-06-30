@@ -1,16 +1,13 @@
-From: Cyril Chaboisseau <cyril.chaboisseau@free.fr>
-Subject: Re: Fw: dm-mirror/kmirrord oops
-Date: Thu, 30 Jun 2005 08:25:32 +0200
-Message-ID: <20050630062532.GA11851@adren.mine.nu>
-References: <20050627004827.12a389e0.akpm@osdl.org>
-	<20050629223233.GD27078@agk.surrey.redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: MPIO + offlined devices
+Date: Thu, 30 Jun 2005 16:42:02 +0200
+Message-ID: <20050630144202.GL31922@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050629223233.GD27078@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,32 +17,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Andrew Morton <akpm@osdl.org>
-Cc: Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
- Le 29 juin vers 23:32, Alasdair G Kergon =E9crivait:
-> On Mon, Jun 27, 2005 at 12:48:27AM -0700, Andrew Morton wrote:
-> > Unable to handle kernel paging request at ffffc2000015c128 RIP:=20
-> > <ffffffff802964a8>{core_in_sync+8}
->=20
-> Do the following patches help?
->=20
->   ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/=
-00011.patch
->   ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/=
-00012.patch
->   ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing/patches/=
-00013.patch
->=20
-> [12 and 13 are already included in -mm; Jon Brassow is working on a cle=
-aner fix]
+Summary:
 
-unfortunately, I'm not able to test it anymore as the problem is
-resolved (I just let pvmove finish it's work without doing any I/O on
-the partitions)
+The SCSI stack might set devices to "offline" during certain error
+recovery code paths; offline devices fail _all_ IO immediately. These
+devices then require special activation again before even the path
+checkers can test it again.
 
-sorry
+We've investigated hacks to make the kernel not offline devices for
+"FAILFAST" IO. However, this has proven to be lacking, because the
+SCSI error handling stack is somewhat complex to decipher. ;-)
+
+As the "special handling" consists of
+
+	echo 1 >/sys/block/<sda>/device/online
+
+only, my proposal would be to do this every single time before we invoke
+a path checker anywhere, at least for SCSI devices (ie, where sg_id is
+set).
+
+The most elegant way might be a gateway function: int
+call_checker(struct path *pp), which did whatever was necessary and then
+called pp->checkerfn(); it could also take care of setting up the
+context, opening the fd, figuring out the checkerfn if not yet set etc.
+
+What do you think?
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
 
 --=20
-	Cyril Chaboisseau
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
