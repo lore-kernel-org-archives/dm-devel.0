@@ -1,12 +1,15 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: mirroring: [patch 6 of 6] device failure tolerance
-Date: Thu, 30 Jun 2005 03:04:21 -0500
-Message-ID: <01e61ce296a442e0f399a4bf4864b79e@redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: mirroring: [patch 1 of 8] device failure tolerance
+Date: Thu, 30 Jun 2005 13:33:53 +0200
+Message-ID: <20050630113353.GC31922@marowsky-bree.de>
+References: <16a7b346170f3909d57592016a32abc0@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v622)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <16a7b346170f3909d57592016a32abc0@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,38 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Kergon Alasdair <agk@redhat.com>
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This patch changes how suspend works in dm.c (dm_suspend).  As a 
-result, it breaks multipath.  It is necessary for cluster mirroring to 
-ensure that a suspend happens before other nodes have a chance at 
-getting an inconsistent read.
+On 2005-06-29T13:07:49, Jonathan E Brassow <jbrassow@redhat.com> wrote:
 
-  brassow
+> This patch defines a couple more states that logs can return, and=20
+> checks for those states in the mirror code.  The states are useful for=20
+> logs that have cluster support.
 
-diff -urN linux-2.6.12-00005/drivers/md/dm.c 
-linux-2.6.12-00006/drivers/md/dm.c
---- linux-2.6.12-00005/drivers/md/dm.c	2005-06-17 14:48:29.000000000 
--0500
-+++ linux-2.6.12-00006/drivers/md/dm.c	2005-06-30 01:06:36.146154215 
--0500
-@@ -1055,14 +1055,14 @@
-  	if (test_bit(DMF_BLOCK_IO, &md->flags))
-  		goto out_read_unlock;
+OK. Let me just ask one question, which I'll preface with the following:
 
--	error = __lock_fs(md);
--	if (error)
--		goto out_read_unlock;
--
-  	map = dm_get_table(md);
-  	if (map)
-  		dm_table_presuspend_targets(map);
+I totally love the idea of md / DM convergence. I'm not yet quite clear
+how this is to be achieved, but having two separate frameworks which at
+least considerable overlap doesn't make sense - this isn't like two
+filesystems, this is like two VFS layers and obviously silly. So, I
+appreciate movement into that direction.
 
-+	error = __lock_fs(md);
-+	if (error)
-+		goto out_read_unlock;
-+
-  	up_read(&md->lock);
+However, what's going on now is that features are being added to the DM
+raid code, instead of figuring out a path of convergence.
 
-  	/*
+RAID code takes, that's the experience we've got with Linux so far,
+quite some time to stabilize. Duplicating it definetely doesn't seem
+smart, if I may be so blunt. The RAID code in md is, nowadays, very
+stable, and even already has patches for faster resync etc (merged in
+-mm).
+
+md is, in certain ways, more mature, which is exemplified by md's
+ability to actually provide sane logging. DM has new cool features (like
+the online remapping and stuff).
+
+Why is the approach of reinventing a wheel with a slightly different
+number of edges taken?
+
+Is it believed that DM will supersede all aspects of md one day? Ain't
+that slightly silly? ;-)
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
