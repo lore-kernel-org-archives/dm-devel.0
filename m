@@ -1,17 +1,11 @@
-From: "Zhao Qian" <zhaoqian@aaastor.com>
-Subject: Re: bio's bi_size bug also be founded at dm-stripe.c and
-	dm-snap.c (resend in correct charset)
-Date: Thu, 30 Jun 2005 10:02:03 +0800
-Message-ID: <003501c57d17$bd99f2f0$1f000064@polaris>
-References: <00a501c57c92$c3041020$1f000064@polaris>
-	<200506290630.57441.kevcorry@us.ibm.com>
-	<200506290646.00118.kevcorry@us.ibm.com>
-	<20050629144253.GR27078@agk.surrey.redhat.com>
+From: Jonathan E Brassow <jbrassow@redhat.com>
+Subject: mirroring: [patch 1 of 6] device failure tolerance
+Date: Thu, 30 Jun 2005 02:33:14 -0500
+Message-ID: <9c5e9901e6e1e5f064cd64a5b855b503@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0 (Apple Message framework v622)
+Content-Type: text/plain; charset=US-ASCII; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,32 +16,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: Zhao Qian <zhaoqian@aaastor.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Kergon Alasdair <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Yes,i think so:)
+Thanks to some great feedback from agk and alewis, I've reworked the 
+patches.  I moved away from creating new LOG_<state> defines and from 
+forcing functions to do what they probably weren't meant to.  In the 
+process though, I have added more log functions.  I think this makes 
+things cleaner and clearer.  These 6 patches completely replace the old 
+set of 8.
 
-Sincerely,
-Zhao Qian zhaoqian@aaastor.com
+This first patch handles log device failures.
 
------ Original Message -----=20
-From: "Alasdair G Kergon" <agk@redhat.com>
-To: "device-mapper development" <dm-devel@redhat.com>
-Cc: "Zhao Qian" <zhaoqian@aaastor.com>
-Sent: Wednesday, June 29, 2005 10:42 PM
-Subject: Re: [dm-devel] bio's bi_size bug also be founded at dm-stripe.c =
-and dm-snap.c (resend in correct charset)
+  brassow
 
+diff -urN linux-2.6.12-orig/drivers/md/dm-log.c 
+linux-2.6.12-00001/drivers/md/dm-log.c
+--- linux-2.6.12-orig/drivers/md/dm-log.c	2005-06-17 14:48:29.000000000 
+-0500
++++ linux-2.6.12-00001/drivers/md/dm-log.c	2005-06-29 
+19:23:58.371949200 -0500
+@@ -150,6 +150,7 @@
+  	/*
+  	 * Disk log fields
+  	 */
++	int log_dev_failed;
+  	struct dm_dev *log_dev;
+  	struct log_header header;
 
-> On Wed, Jun 29, 2005 at 06:46:00AM -0500, Kevin Corry wrote:
->> Alasdair, should that field be set for dm-mirror targets?=20
->=20
-> Like you, I assumed it already was:-)
->=20
-> Zhao, does Kevin's patch fix things for you?
->=20
-> Alasdair
-> --=20
-> agk@redhat.com
->
+@@ -412,6 +413,7 @@
+
+  	lc = (struct log_c *) log->context;
+  	lc->log_dev = dev;
++	lc->log_dev_failed = 0;
+
+  	/* setup the disk header fields */
+  	lc->header_location.bdev = lc->log_dev->bdev;
+@@ -465,6 +467,17 @@
+  	return count;
+  }
+
++static void fail_log_device(struct log_c *lc)
++{
++	lc->log_dev_failed = 1;
++	dm_table_event(lc->ti->table);
++}
++
++static void restore_log_device(struct log_c *lc)
++{
++	lc->log_dev_failed = 0;
++}
++
+  static int disk_resume(struct dirty_log *log)
+  {
+  	int r;
+@@ -472,15 +485,16 @@
+  	struct log_c *lc = (struct log_c *) log->context;
+  	size_t size = lc->bitset_uint32_count * sizeof(uint32_t);
+
+-	/* read the disk header */
+-	r = read_header(lc);
+-	if (r)
+-		return r;
+-
+-	/* read the bits */
+-	r = read_bits(lc);
+-	if (r)
+-		return r;
++	/*
++	 * Read the disk header, but only if we know it is good.
++	 */
++	if (!lc->log_dev_failed) {
++		if (read_header(lc) || read_bits(lc)) {
++			DMERR("A read failure has occurred on a mirror log device.");
++			fail_log_device(lc);
++			lc->header.nr_regions = 0;
++		}
++	}
+
+  	/* set or clear any new bits */
+  	if (lc->sync == NOSYNC)
+@@ -496,16 +510,17 @@
+  	memcpy(lc->sync_bits, lc->clean_bits, size);
+  	lc->sync_count = count_bits32(lc->clean_bits, 
+lc->bitset_uint32_count);
+
+-	/* write the bits */
+-	r = write_bits(lc);
+-	if (r)
+-		return r;
+-
+  	/* set the correct number of regions in the header */
+  	lc->header.nr_regions = lc->region_count;
+
+-	/* write the new header */
+-	return write_header(lc);
++	/* write out the log */
++	if ((r = write_bits(lc)) || (r = write_header(lc))){
++		DMERR("A write failure has occurred on a mirror log device.");
++		fail_log_device(lc);
++	} else {
++		restore_log_device(lc);
++	}
++	return r;
+  }
+
+  static uint32_t core_get_region_size(struct dirty_log *log)
+@@ -541,9 +556,29 @@
+  	if (!lc->touched)
+  		return 0;
+
++	/*
++	 * Could be dangerous if the write fails.
++	 * If the machine dies while the on-disk log is different from the 
+core,
++	 * and the device is readable when the machine comes back, it may be
++	 * possible that not all regions will be recovered.
++	 *
++	 * The event is raised so that a user-land program 'waiting' on the
++	 * device can choose stop the mirror, remap the mirror using a
++	 * different log device, or switch to core.
++	 *
++	 * So, not taking action in user-space AND having a machine fail
++	 * after a log has failed AND having the device available when the
++	 * machine reboots is a bad thing.
++	 */
+  	r = write_bits(lc);
+-	if (!r)
++	if (!r) {
+  		lc->touched = 0;
++		restore_log_device(lc);
++	} else {
++		DMERR("A write failure has occurred on a mirror log device.");
++		DMERR("Log device is now not in-sync with the core.");
++		fail_log_device(lc);
++	}
+
+  	return r;
+  }
