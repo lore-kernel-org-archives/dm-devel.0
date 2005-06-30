@@ -1,16 +1,15 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: mirroring: [patch 5 of 6] device failure tolerance
-Date: Thu, 30 Jun 2005 11:38:28 -0500
-Message-ID: <200506301138.29354.kevcorry@us.ibm.com>
+Date: Thu, 30 Jun 2005 18:56:45 +0100
+Message-ID: <20050630175645.GG27078@agk.surrey.redhat.com>
 References: <d459df3fa77e2c972d837f613a137de5@redhat.com>
+	<200506301138.29354.kevcorry@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d459df3fa77e2c972d837f613a137de5@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <200506301138.29354.kevcorry@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +19,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Kergon Alasdair <agk@redhat.com>
+To: Kevin Corry <kevcorry@us.ibm.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jonathan,
-
-On Thu June 30 2005 3:00 am, Jonathan E Brassow wrote:
-> This patch changes the status output.  It will break pvmove and other
-> things that may have been parsing the status output of a mirror.
-
-Any time a target's table-format or status-format changes, we also need to 
-increment that target's version number so user-space can figure out which 
-format to expect.
-
-The version for dm-mirror is currently 1.0.1, so we should at least bump it to 
-1.0.2 or 1.1.0.
-
-Also, please remember to turn off line-wrap when inserting patches into 
-emails.  :)
-
-Thanks,
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://www.ibm.com/linux/
-http://evms.sourceforge.net/
-
-
---- dm-raid1.c.old 2005-06-30 11:33:24.000000000 -0500
-+++ dm-raid1.c 2005-06-30 11:33:34.000000000 -0500
-@@ -1210,7 +1210,7 @@
+On Thu, Jun 30, 2005 at 11:38:28AM -0500, Kevin Corry wrote:
+> Any time a target's table-format or status-format changes, we also need to 
+> increment that target's version number so user-space can figure out which 
+> format to expect.
  
- static struct target_type mirror_target = {
-  .name  = "mirror",
-- .version = {1, 0, 1},
-+ .version = {1, 1, 0},
-  .module  = THIS_MODULE,
-  .ctr  = mirror_ctr,
-  .dtr  = mirror_dtr,
+Indeed, but I don't want version numbers updating till we know what
+sequence things will go upstream.
+
+BTW I've not seen a justification for breaking the existing format here
+yet as opposed to simply appending new data to the end of the status line.
+
+Alasdair
+-- 
+agk@redhat.com
