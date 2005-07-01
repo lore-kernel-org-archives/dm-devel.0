@@ -1,12 +1,15 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: thoughts about having device specific "multipath -l"
-	display opti ons?
-Date: Fri, 1 Jul 2005 17:45:29 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB3C@SRMANNING.eng.emc.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: multipathd can fail to monitor paths in some corner
+	cases
+Date: Fri, 01 Jul 2005 23:48:21 +0200
+Message-ID: <1120254501.8721.20.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB3A@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB3A@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,14 +19,122 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Any thoughts about this?
+Would you adhere to this variant ?
 
-Would definitely like to know for EMC CLARiiON which one of the 2 possible
-path groups is active and which one is the default owner for a particular
-logical
-unit -- since the current "multipath -l" display does not currently provide
-this
-information in an accurate fashion at all times.
+... because :
+
+1) disass*table is always called before disass*status
+2) saves a couple of loops
+
+Anyway, did you solve your git problems ?
+Your testing would be much appreciated on HEAD.
+
+Regards,
+cvaroqui
+
+--- b40790b47efc2b5e50b241945bfca58c569e91ee/libmultipath/dmparser.c
+(mode:100644)
++++ uncommitted/libmultipath/dmparser.c  (mode:100644)
+@@ -216,9 +216,20 @@
+                        if (store_path(pgp->paths, pp))
+                                goto out;
+
++                       /*
++                        * Update wwid for multipaths which are not set
++                        * in the get_dm_mpvec() code path
++                        */
+                        if (!strlen(mpp->wwid))
+                                strncpy(mpp->wwid, pp->wwid, WWID_SIZE);
+
++                       /*
++                        * Update wwid for paths which may not have been
++                        * active at the time the getuid callout was run
++                        */
++                       else if (!strlen(pp->wwid))
++                               strncpy(pp->wwid, mpp->wwid, WWID_SIZE);
++
+                        pgp->id ^= (long)pp;
+                        pp->pgindex = i + 1;
+
+
+
+On ven, 2005-07-01 at 17:03 -0400, goggin, edward wrote:
+> Apologies in advance if this issue has been posted previously.
+> 
+> Any inability of multipathd to determine the multipath UID for a path which
+> the multipath target
+> driver is already using as a target device of a particular multipath mapped
+> device can lead to a
+> discrepancy in the set of paths to a block device used by the multipath
+> target driver in the kernel
+> and those paths to the block device monitored by multipathd in user space.
+> 
+> The case I have validated involves path failures between the last issuance
+> of multipath and when
+> multipathd is started, although there may be other similar transient errors
+> which could cause
+> similar results.  Since in these cases multipathd will not be managing all
+> paths to a block device,
+> for those paths not being managed by multipathd, kernel path state is not
+> being accurately
+> updated to reflect the actual physical path state of the paths.
+> 
+> While paths in the active path group will be updated to a failed state by
+> the kernel multipath target driver,
+> the state for these paths will never be updated to active as the path is
+> physically reconnected.  Conversely,
+> the path state for physically disconnected paths in the non-active path
+> group(s) will incorrectly be
+> displayed as active.  The path state for both categories of incorrectly
+> displayed paths will only be
+> updated to failed in the event someone manually restarts multipathd or runs
+> multipath to reconfigure
+> paths.  Obviously, these steps shouldn't be necessary.
+> 
+> The patch below fixes this problem by enabling disassemble_map() to populate
+> the wwid field for
+> a path in a mapped device's path group from the wwid field of the path's
+> associated mapped device
+> If the path's wwid field is currently not initialized.  Doing so is
+> necessary since (1) this field was
+> set to zeros during device discovery if the path was unusable at the time
+> the path getuid callout
+> was made, (2) a valid wwid field is necessary in order to match a path to
+> its mapped device (mpp)
+> structure, and (3) multipathd will not monitor a path which has no valid mpp
+> structure.
+> 
+> The diff is based on 0.4.5-pre3.
+> 
+> diff -u multipath-tools-0.4.5-pre3.orig/libmultipath/dmparser.c
+> multipath-tools-0.4.5-pre3-ed/libmultipath/dmparser.c
+> --- multipath-tools-0.4.5-pre3.orig/libmultipath/dmparser.c	2005-06-10
+> 03:28:53.000000000 -0500
+> +++ multipath-tools-0.4.5-pre3-ed/libmultipath/dmparser.c	2005-07-01
+> 15:19:29.250125016 -0500
+> @@ -261,6 +261,15 @@
+>  			for (k = 0; k < num_paths_args; k++)
+>  				p += get_word(p, NULL);
+>  		}
+> +		/*
+> +		 * Update wwid for paths which may not have been active at
+> +		 * the time the getuid callout was run.
+> +		 */
+> +		for (j = 0; j < num_paths; j++) {
+> +			pp = VECTOR_SLOT(pgp->paths, j);
+> +			if (!strlen(pp->wwid))
+> +				strncpy(pp->wwid, mpp->wwid, WWID_SIZE);
+> +		}
+>  	}
+>  	return 0;
+>  out1:
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
