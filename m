@@ -1,7 +1,8 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: Re: multipath state between user and kernel space
-Date: Thu, 7 Jul 2005 19:08:13 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB47@SRMANNING.eng.emc.com>
+Subject: Re: multipathd can fail to monitor paths in some corne
+	r cases
+Date: Thu, 7 Jul 2005 19:23:27 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB48@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -18,21 +19,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, 02 Jul 2005 00:07:40 +0200
+On Fri, 01 Jul 2005 23:48:21 +0200
 christophe varoqui <christophe.varoqui@free.fr> wrote
 
-> Would printing the "PG-summed path priorities" value for each PG meet
-> your needs/taste ?
+> Would you adhere to this variant ?
+>
+> ... because :
+>
+> 1) disass*table is always called before disass*status
+> 2) saves a couple of loops
+>
+> Anyway, did you solve your git problems ?
+> Your testing would be much appreciated on HEAD.
 
-Yes.  I assume that this would be the sum as recorded by multipathd and
-the kernel's active path group would only reflect this under certain
-conditions, (e.g., immediate failback is enabled).
+I'm able to at least check out the git head -- haven't
+tried updating it yet though.
 
-What about the idea of having device specific display options (and
-device specific plug-ins to manage these) which while they are
-multipathing relevant, they are not managed by multipath(8)?
-Are you trying to stay away from this?
+I tested your code on the git head and it works well.
 
-I'm sure our CLARiiON customers would rather see that the multipath
-display command using terminology which they are familiar with
-already.
+I ran into other issues (mostly SuSE kernel) which is
+why its taken me so long to validate.  Sorry!
+
+What about also handling paths which are attached to the
+kernel (already scanned by LLDD) but not usable when multipath(8) is
+run but which could be detected to be usable by multipath?
+This would involve multipathd determining a path's UID and
+trying to match it with any known multipath map.  If it
+didn't find one it could create and populate it -- effectively
+doing the discovery process done by multipath(8).
+
+Would require a library interface to the getuid functions like
+scsi_id.  May be too much investment for little return though :((
+
+Ed
