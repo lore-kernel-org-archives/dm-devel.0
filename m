@@ -1,11 +1,15 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: Re: multipath state between user and kernel space
-Date: Fri, 8 Jul 2005 12:39:14 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB54@SRMANNING.eng.emc.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: bugs in handling of errors for SG_IO and SCSI_IOCT
+	L_SEND_COMMAND ioctls to block device
+Date: Fri, 08 Jul 2005 11:48:08 -0500
+Message-ID: <42CEAE48.9050203@cs.wisc.edu>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB53@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB53@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,30 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 8 Jul 2005 09:15:11 +0200
-Christophe Varoqui <christophe.varoqui@free.fr> wrote
+goggin, edward wrote:
+> On Thu, 07 Jul 2005 23:19:57 -0500
+> Mike Christie <michaelc@cs.wisc.edu> wrote
+> 
+> 
+>>>...
+>>>
+>>>	The bio handling for these REQ_BLOCK_PC requests shouldn't be
+>>>treated any
+>>>	differently than the more typical REQ_CMD type block io request.
+>>
+> 
+>>what is meant by this last comment specifically?
+> 
+> 
+> Just trying to make a case that a device pass through read command
+> issued to a block device should transfer to user space only the
+> user requested number of bytes minus the residual from the transfer
+> (as is done for block device read and write requests) and not always
+> transfer the number of bytes requested by the user.
+> 
 
-> > What about the idea of having device specific display options (and
-> > device specific plug-ins to manage these) which while they are
-> > multipathing relevant, they are not managed by multipath(8)?
-> > Are you trying to stay away from this?
-> > 
-> > I'm sure our CLARiiON customers would rather see that the multipath
-> > display command using terminology which they are familiar with
-> > already.
-> > 
-> I'd rather favor consistency for users changing multipathing 
-> hardware, than for users changing OS but keeping the same 
-> multipathing hardware.
-> 
-> I guess in the second case, the users already expects changes.
-> 
-> Also I suspect multi-vendor SAN users will appreciate the consistency.
-> 
-> Do you have strong feelings about this plugin idea ?
+ah ok, I thought it was referring to something else, nevermind.
 
-No.  You bring up a very good point about maintaining consistency for the
-management of either a multi-vendor SAN or across different SAN hardware.
+Was the reason it does SG_IO reads becuase opens on the device were not 
+allowed? Was not being able to open a dm device a bug or by design? For 
+devices that do not support SG_IO like NBD, dasd and if you do 
+dm-multipath with AOE, another solution may have to be found.
