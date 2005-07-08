@@ -1,8 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: Re: multipathd can fail to monitor paths in some corne
-	r cases
-Date: Thu, 7 Jul 2005 19:23:27 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB48@SRMANNING.eng.emc.com>
+Subject: Re: multipath state between user and kernel space
+Date: Thu, 7 Jul 2005 22:11:46 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB49@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,36 +18,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 01 Jul 2005 23:48:21 +0200
+On Sat, 02 Jul 2005 00:01:09 +0200
 christophe varoqui <christophe.varoqui@free.fr> wrote
 
-> Would you adhere to this variant ?
->
-> ... because :
->
-> 1) disass*table is always called before disass*status
-> 2) saves a couple of loops
->
-> Anyway, did you solve your git problems ?
-> Your testing would be much appreciated on HEAD.
+> On ven, 2005-07-01 at 17:30 -0400, goggin, edward wrote:
+> > 
+> > (2) Two path state values, one for user space and one for the kernel
+> > resident multipath target driver,
+> > will be shown whenever the cached device configuration 
+> information is hot.
+> > Otherwise, "multipath -l"
+> > shows only the kernel driver's path state value since the 
+> user space path
+> > state value is not displayed
+> > if its value is PATH_UNCHECKED which it will be (for 
+> "multipath -l") if the
+> > saved device configuration
+> > cache is not used.
+> > 
+> > Seems like either one value should always be displayed or 
+> two values should
+> > always be displayed --
+> > I would certainly prefer that only one value be displayed 
+> at all times.
+> > Seems like a simple change.
+> > 
+> Like that ?
+> 
+>  ...
 
-I'm able to at least check out the git head -- haven't
-tried updating it yet though.
-
-I tested your code on the git head and it works well.
-
-I ran into other issues (mostly SuSE kernel) which is
-why its taken me so long to validate.  Sorry!
-
-What about also handling paths which are attached to the
-kernel (already scanned by LLDD) but not usable when multipath(8) is
-run but which could be detected to be usable by multipath?
-This would involve multipathd determining a path's UID and
-trying to match it with any known multipath map.  If it
-didn't find one it could create and populate it -- effectively
-doing the discovery process done by multipath(8).
-
-Would require a library interface to the getuid functions like
-scsi_id.  May be too much investment for little return though :((
-
-Ed
+Yes.  Looks good.  Gives a more deterministic look to
+"multipath -l" at least.
