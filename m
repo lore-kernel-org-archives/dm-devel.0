@@ -1,15 +1,14 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: bugs in handling of errors for SG_IO and SCSI_IOCT
-	L_SEND_COMMAND ioctls to block device
-Date: Fri, 08 Jul 2005 11:48:08 -0500
-Message-ID: <42CEAE48.9050203@cs.wisc.edu>
-References: <C2EEB4E538D3DC48BF57F391F422779321AB53@SRMANNING.eng.emc.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: several small issues
+Date: Sat, 09 Jul 2005 15:02:42 +0200
+Message-ID: <1120914162.26998.36.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB4E@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB53@SRMANNING.eng.emc.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB4E@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,31 +21,67 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-goggin, edward wrote:
-> On Thu, 07 Jul 2005 23:19:57 -0500
-> Mike Christie <michaelc@cs.wisc.edu> wrote
+On ven, 2005-07-08 at 00:09 -0400, goggin, edward wrote:
+> Christophe,
 > 
+> (1) Could you initialize di_flag to 0 in main() of multipath/main.c or
+> else "multipath -l" and "multipath -ll" use a non-deterministic flags
+> value for path discovery?
 > 
->>>...
->>>
->>>	The bio handling for these REQ_BLOCK_PC requests shouldn't be
->>>treated any
->>>	differently than the more typical REQ_CMD type block io request.
->>
-> 
->>what is meant by this last comment specifically?
-> 
-> 
-> Just trying to make a case that a device pass through read command
-> issued to a block device should transfer to user space only the
-> user requested number of bytes minus the residual from the transfer
-> (as is done for block device read and write requests) and not always
-> transfer the number of bytes requested by the user.
-> 
+done
 
-ah ok, I thought it was referring to something else, nevermind.
+> (2) Could you append a "\n" to the logging string in the call to condlog()
+> from
+> get_word() in libmultipath/util.c?  Doing so helps the readability of the
+> event
+> log when starting multipathd with "-v4".
+> 
+May be I should just comment this log now that this code path is stable.
+Anyway, I don't really see the readability problem you mention ...
 
-Was the reason it does SG_IO reads becuase opens on the device were not 
-allowed? Was not being able to open a dm device a bug or by design? For 
-devices that do not support SG_IO like NBD, dasd and if you do 
-dm-multipath with AOE, another solution may have to be found.
+> (3) Could you change checkerloop() in multipathd/main.c to call LOG_MSG
+> with the checker message if the path state is failed?  This would be useful
+> for administrators and it also helps our debugging -- it helps point out
+> cases
+> where multipathd may think a path's checker state is failed even when
+> "multipath -l" shows otherwise.
+> 
+done, only for '-v4', and whatever the check return value.
+
+> (4) The multipathd is dying when I send it a "show paths" or "display paths"
+> message.  I haven't debugged it to know what's wrong.
+> 
+Not for me, so I'll let you dig this one ...
+
+xa-s05:~/scm/test# multipathd/multipathd -k"show paths"
+
+       sdb: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdc: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdd: state 2,  12/ 14 XXXXXXXXXXXX..
+       sde: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdf: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdg: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdh: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdi: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdj: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdk: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdl: state 2,  12/ 14 XXXXXXXXXXXX..
+       sdm: state 2,  12/ 14 XXXXXXXXXXXX..
+
+xa-s05:~/scm/test# multipathd/multipathd -k"display paths"
+ list|show paths
+ list|show maps
+ add path $path
+ remove|del path $path
+ add map $map
+ remove|del map $map
+ switch|switchgroup map $map group $group
+
+xa-s05:~/scm/test# pgrep multipathd
+18462
+xa-s05:~/scm/test#
+
+
+Thanks for the feedback,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
