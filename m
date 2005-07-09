@@ -1,8 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: Re: bugs in handling of errors for SG_IO and SCSI_IOCT
-	L_SEND_COMMAND ioctls to block device
-Date: Sat, 9 Jul 2005 18:58:51 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB5C@SRMANNING.eng.emc.com>
+Subject: Re: several small issues
+Date: Sat, 9 Jul 2005 19:02:57 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB5D@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,58 +18,50 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 08 Jul 2005 11:48:08 -0500
-Mike Christie <michaelc@cs.wisc.edu> wrote
+On Sat, 09 Jul 2005 15:02:42 +0200
+christophe varoqui <christophe.varoqui@free.fr> wrote
 
-> Subject: Re: [dm-devel] bugs in handling of errors for SG_IO and
-> 	SCSI_IOCT	L_SEND_COMMAND ioctls to block device
-> To: device-mapper development <dm-devel@redhat.com>
-> Message-ID: <42CEAE48.9050203@cs.wisc.edu>
-> Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+> On ven, 2005-07-08 at 00:09 -0400, goggin, edward wrote:
+> > Christophe,
+
+> > ...
+> >
+> > (2) Could you append a "\n" to the logging string in the 
+> call to condlog()
+> > from
+> > get_word() in libmultipath/util.c?  Doing so helps the 
+> readability of the
+> > event
+> > log when starting multipathd with "-v4".
+> > 
+> May be I should just comment this log now that this code path 
+> is stable.
+> Anyway, I don't really see the readability problem you mention ...
+
+It is really difficult to see where one event log file entry
+ends and another begins without the new line separator character.
+
 > 
-> goggin, edward wrote:
-> > On Thu, 07 Jul 2005 23:19:57 -0500
-> > Mike Christie <michaelc@cs.wisc.edu> wrote
+> > (3) Could you change checkerloop() in multipathd/main.c to 
+> call LOG_MSG
+> > with the checker message if the path state is failed?  This 
+> would be useful
+> > for administrators and it also helps our debugging -- it 
+> helps point out
+> > cases
+> > where multipathd may think a path's checker state is failed 
+> even when
+> > "multipath -l" shows otherwise.
 > > 
-> > 
-> >>>...
-> >>>
-> >>>	The bio handling for these REQ_BLOCK_PC requests shouldn't be
-> >>>treated any
-> >>>	differently than the more typical REQ_CMD type block io request.
-> >>
-> > 
-> >>what is meant by this last comment specifically?
-> > 
-> > 
-> > Just trying to make a case that a device pass through read command
-> > issued to a block device should transfer to user space only the
-> > user requested number of bytes minus the residual from the transfer
-> > (as is done for block device read and write requests) and not always
-> > transfer the number of bytes requested by the user.
-> > 
+> done, only for '-v4', and whatever the check return value.
+
+Sounds great.
+
 > 
-> ah ok, I thought it was referring to something else, nevermind.
-> 
-> Was the reason it does SG_IO reads becuase opens on the 
-> device were not 
-> allowed?
+> > (4) The multipathd is dying when I send it a "show paths" 
+> or "display paths"
+> > message.  I haven't debugged it to know what's wrong.
+> > 
+> Not for me, so I'll let you dig this one ...
 
-Sorry, I should not have singled out pass through read commands.  My
-statement above should have simply referred to "pass through commands
-which are transferring data from the device".
-
-> Was not being able to open a dm device a bug or by 
-> design? 
-
-I didn't provide my context for why the pass through commands are issued.
-These are test path ios initiated by the multipathd in user space --
-either tur, read of sector 0, or a page 0xc0 inquiry.
-
-> For devices that do not support SG_IO like NBD, dasd and if you do 
-> dm-multipath with AOE, another solution may have to be found.
->
-
-Good point.  While dm-multipath is designed to be block device
-protocol agnostic, its current implementation only supports
-SCSI devices.
+Ok, I'll try to get you something Monday or Tuesday next week.
