@@ -1,15 +1,15 @@
-From: Suleyman Kutlu <suleyman.kutlu@gmail.com>
-Subject: Device Mapper corruption
-Date: Mon, 11 Jul 2005 15:32:24 +0300
-Message-ID: <42D266D8.6040001@gmail.com>
-References: <00a501c57c92$c3041020$1f000064@polaris>
-Reply-To: suleyman.kutlu@gmail.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: path notification not working using on Suse SP2
+Date: Mon, 11 Jul 2005 12:01:08 +0200
+Message-ID: <20050711100108.GO19928@marowsky-bree.de>
+References: <3456F611E9329441B12FBB24447B3FA0023F847F@bgeexc01.asiapacific.cpqcorp.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <00a501c57c92$c3041020$1f000064@polaris>
+Content-Disposition: inline
+In-Reply-To: <3456F611E9329441B12FBB24447B3FA0023F847F@bgeexc01.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,36 +22,40 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello all,
+On 2005-07-08T17:45:20, "Murthy, Narasimha Doraswamy (STSD)" <narasimha.m=
+urthy@hp.com> wrote:
 
-I have an AMD-64 machine running SuSE 9.2. I have one disk (for now,
-will add another later on) and a VG on it. I have created some LVs.
+Hi, posting to public mailing lists about bugs in our Release Candidate
+products isn't very nice ;-) And, it's bound to be overlooked, because
+during final product stages, monitoring public lists sort of takes a
+back seat... Please use the Novell bugzilla via your partner processes
+to file such bug reports.  Thanks.
 
-Sometimes later, I realized that when I mount an LV (lets call it
-lv_a) I see the directory structure of another LV (lets call it lv_b). If I issue a df -k, I see the size of lv_b for lv_a,
-but in lvdisplay output, the size for lv_a is correct.
+> We have tried the same on Suse SP2- rc2, rc3 and rc4. The behaviour is
+> the same, when the "readsector0" path checker is used for path
+> verification.
 
-/mnt is mounted as lv_b
-/mnt2 is mounted as lv_a but has contents as lv_b has.
+This might be a side effect of bug #95907 which Ed reported, and which
+was very recently fixed (well, ok, I committed the fix to our kernel 2
+hours ago ;-).
 
-I thought that, filesystem structure is corrupted and started to work
-on some filesystem level utilities today, but today I see that,
-another filesystem pair also got the same problem.
+But without logs, it's hard to say. Please, file a bugzilla report if
+(the now released) SLES9 SP2 still exhibits the problem. And please also
+try a kernel of the day from ftp.suse.com/pub/projects/kernel/ which
+includes the fix for said bug in the changelog:
 
-So I think it is a problem in device-mapper level, not the filesystem level. 
+-------------------------------------------------------------------
+Mon Jul 11 11:08:11 CEST 2005 - lmb@suse.de
 
-What can be the possible works to get what is wrong and how to fix ? 
+- patches.fixes/sg_io_error_passing: Propagate errors correctly for
+  SG_IO ops (#95907).
 
-I am new at device-mapper, I don't have enough experience on it and I
-do not want to loose everything while there is something that can be
-recovered...
 
-Any help is appreciated. 
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
 
-Thanks and best regards.. 
-
-* 
-* Suleyman Kutlu
-*
-* mailto: suleyman.kutlu@gmail.com
-*
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
