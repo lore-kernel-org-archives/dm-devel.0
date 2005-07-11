@@ -1,16 +1,15 @@
 From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: How to avoid lots of read ios to passive paths of
-	active-passive storage devices?
-Date: Mon, 11 Jul 2005 11:57:07 +0200
-Message-ID: <20050711095707.GN19928@marowsky-bree.de>
-References: <C2EEB4E538D3DC48BF57F391F422779321AB50@SRMANNING.eng.emc.com>
+Subject: Re: Path status updation on HP arrays.
+Date: Mon, 11 Jul 2005 12:02:13 +0200
+Message-ID: <20050711100213.GP19928@marowsky-bree.de>
+References: <3456F611E9329441B12FBB24447B3FA0023F84E6@bgeexc01.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB50@SRMANNING.eng.emc.com>
+In-Reply-To: <3456F611E9329441B12FBB24447B3FA0023F84E6@bgeexc01.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,21 +20,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "Reilly, Stephen (MRO)" <steve.reilly@hp.com>, "P S,  Suresh (STSD)" <suresh.pathamadai@hp.com>
 List-Id: dm-devel.ids
 
-On 2005-07-08T00:21:21, "goggin, edward" <egoggin@emc.com> wrote:
+On 2005-07-08T18:55:43, "Murthy, Narasimha Doraswamy (STSD)" <narasimha.m=
+urthy@hp.com> wrote:
 
-> How sould device scanning utilities like blkid, pvscan,
-> vgscan, and lvscan (others?) be made to avoid issuing
-> a significant number of read ios to passive paths of
-> active-passive storage devices?
+> I am seeing path updation issues with multipath tools versions 0.4.4 an=
+d
+> 0.4.5, when tested with EVA HSV 200, MSA and XP (Active Active arrays)
+> on RHEL U1.=20
+>=20
+> Failover works fine and fails to the other path in the path group, but
+> when the failed path comes back online,  the status of this path is
+> [ready][failed]. This doesn't change unless "multipath" is executed
+> manually from the command prompt. =20
 
-Good question.
-
-One could argue that if we issue a bd_claim() (I know, it's falling out
-of favour ;-), we might want to issue a theoretical bd_claim_exclusive()
-which excludes anyone else from messing with our precciiioussss: ie,
-everybody else would be denied open().
+Is multipathd running correctly, and was it started after the multipath
+DM tables have been created?
 
 
 Sincerely,
