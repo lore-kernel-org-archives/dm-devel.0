@@ -1,11 +1,16 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: Re: several small issues
-Date: Sat, 9 Jul 2005 19:02:57 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB5D@SRMANNING.eng.emc.com>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: How to avoid lots of read ios to passive paths of
+	active-passive storage devices?
+Date: Mon, 11 Jul 2005 11:57:07 +0200
+Message-ID: <20050711095707.GN19928@marowsky-bree.de>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB50@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB50@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,53 +20,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Sat, 09 Jul 2005 15:02:42 +0200
-christophe varoqui <christophe.varoqui@free.fr> wrote
+On 2005-07-08T00:21:21, "goggin, edward" <egoggin@emc.com> wrote:
 
-> On ven, 2005-07-08 at 00:09 -0400, goggin, edward wrote:
-> > Christophe,
+> How sould device scanning utilities like blkid, pvscan,
+> vgscan, and lvscan (others?) be made to avoid issuing
+> a significant number of read ios to passive paths of
+> active-passive storage devices?
 
-> > ...
-> >
-> > (2) Could you append a "\n" to the logging string in the 
-> call to condlog()
-> > from
-> > get_word() in libmultipath/util.c?  Doing so helps the 
-> readability of the
-> > event
-> > log when starting multipathd with "-v4".
-> > 
-> May be I should just comment this log now that this code path 
-> is stable.
-> Anyway, I don't really see the readability problem you mention ...
+Good question.
 
-It is really difficult to see where one event log file entry
-ends and another begins without the new line separator character.
+One could argue that if we issue a bd_claim() (I know, it's falling out
+of favour ;-), we might want to issue a theoretical bd_claim_exclusive()
+which excludes anyone else from messing with our precciiioussss: ie,
+everybody else would be denied open().
 
-> 
-> > (3) Could you change checkerloop() in multipathd/main.c to 
-> call LOG_MSG
-> > with the checker message if the path state is failed?  This 
-> would be useful
-> > for administrators and it also helps our debugging -- it 
-> helps point out
-> > cases
-> > where multipathd may think a path's checker state is failed 
-> even when
-> > "multipath -l" shows otherwise.
-> > 
-> done, only for '-v4', and whatever the check return value.
 
-Sounds great.
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
 
-> 
-> > (4) The multipathd is dying when I send it a "show paths" 
-> or "display paths"
-> > message.  I haven't debugged it to know what's wrong.
-> > 
-> Not for me, so I'll let you dig this one ...
-
-Ok, I'll try to get you something Monday or Tuesday next week.
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
