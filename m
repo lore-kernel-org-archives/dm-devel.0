@@ -1,15 +1,15 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: Path status updation on HP arrays.
-Date: Mon, 11 Jul 2005 12:02:13 +0200
-Message-ID: <20050711100213.GP19928@marowsky-bree.de>
-References: <3456F611E9329441B12FBB24447B3FA0023F84E6@bgeexc01.asiapacific.cpqcorp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Suleyman Kutlu <suleyman.kutlu@gmail.com>
+Subject: Device Mapper corruption
+Date: Mon, 11 Jul 2005 15:32:24 +0300
+Message-ID: <42D266D8.6040001@gmail.com>
+References: <00a501c57c92$c3041020$1f000064@polaris>
+Reply-To: suleyman.kutlu@gmail.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <3456F611E9329441B12FBB24447B3FA0023F84E6@bgeexc01.asiapacific.cpqcorp.net>
+In-Reply-To: <00a501c57c92$c3041020$1f000064@polaris>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +20,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "Reilly, Stephen (MRO)" <steve.reilly@hp.com>, "P S,  Suresh (STSD)" <suresh.pathamadai@hp.com>
 List-Id: dm-devel.ids
 
-On 2005-07-08T18:55:43, "Murthy, Narasimha Doraswamy (STSD)" <narasimha.m=
-urthy@hp.com> wrote:
+Hello all,
 
-> I am seeing path updation issues with multipath tools versions 0.4.4 an=
-d
-> 0.4.5, when tested with EVA HSV 200, MSA and XP (Active Active arrays)
-> on RHEL U1.=20
->=20
-> Failover works fine and fails to the other path in the path group, but
-> when the failed path comes back online,  the status of this path is
-> [ready][failed]. This doesn't change unless "multipath" is executed
-> manually from the command prompt. =20
+I have an AMD-64 machine running SuSE 9.2. I have one disk (for now,
+will add another later on) and a VG on it. I have created some LVs.
 
-Is multipathd running correctly, and was it started after the multipath
-DM tables have been created?
+Sometimes later, I realized that when I mount an LV (lets call it
+lv_a) I see the directory structure of another LV (lets call it lv_b). If I issue a df -k, I see the size of lv_b for lv_a,
+but in lvdisplay output, the size for lv_a is correct.
 
+/mnt is mounted as lv_b
+/mnt2 is mounted as lv_a but has contents as lv_b has.
 
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
+I thought that, filesystem structure is corrupted and started to work
+on some filesystem level utilities today, but today I see that,
+another filesystem pair also got the same problem.
 
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+So I think it is a problem in device-mapper level, not the filesystem level. 
+
+What can be the possible works to get what is wrong and how to fix ? 
+
+I am new at device-mapper, I don't have enough experience on it and I
+do not want to loose everything while there is something that can be
+recovered...
+
+Any help is appreciated. 
+
+Thanks and best regards.. 
+
+* 
+* Suleyman Kutlu
+*
+* mailto: suleyman.kutlu@gmail.com
+*
