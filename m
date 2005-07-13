@@ -1,11 +1,12 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: queue_if_no_paths timeout handling
-Date: Tue, 12 Jul 2005 22:28:09 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB67@SRMANNING.eng.emc.com>
+From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
+Subject: Re: Path status updation on HP arrays.
+Date: Wed, 13 Jul 2005 17:20:30 +0530
+Message-ID: <3456F611E9329441B12FBB24447B3FA0024AF49D@bgeexc01.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: multipart/mixed; boundary="===============0126729010=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,14 +16,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-May need to be able to at least offer the option of timing out ios to
-multipath
-block devices enabled with the queue_if_no_paths feature which are in an
-all-paths-down use case for a configurable amount of time.
+This is a multi-part message in MIME format.
 
-Christophe, could you remove this attribute from the hwtable.c entry for the
-EMC CLARiiON?  Its the one with the vendor string of "DGC".  The feature
-is no longer needed.
+--===============0126729010==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C587A1.11CCB681"
+
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C587A1.11CCB681
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+
+Yes, multipathd daemon is started after DM tables are setup. But I see
+this working with your latest kernel rpm for SLES 9 SP2.=20
+
+Thanks and regards
+
+-Murthy
+
+=20
+
+
+------_=_NextPart_001_01C587A1.11CCB681
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"MS Sans Serif";
+	panose-1:0 0 0 0 0 0 0 0 0 0;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"MS Sans Serif";
+	color:windowtext;
+	font-weight:normal;
+	font-style:normal;
+	text-decoration:none none;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>Hi,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>Yes, multipathd daemon is started =
+after DM
+tables are setup. But I see this working with your latest kernel rpm for =
+SLES 9
+SP2. <o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>Thanks and =
+regards<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>-Murthy<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'><o:p>&nbsp;</o:p></span></font></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01C587A1.11CCB681--
+
+
+--===============0126729010==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0126729010==--
