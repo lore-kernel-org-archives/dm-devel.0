@@ -1,10 +1,10 @@
 From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Subject: Re: Path status updation on HP arrays.
-Date: Wed, 13 Jul 2005 17:20:30 +0530
-Message-ID: <3456F611E9329441B12FBB24447B3FA0024AF49D@bgeexc01.asiapacific.cpqcorp.net>
+Subject: Re: path notification not working using on Suse SP2
+Date: Wed, 13 Jul 2005 16:53:27 +0530
+Message-ID: <3456F611E9329441B12FBB24447B3FA0024AF46E@bgeexc01.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0126729010=="
+Content-Type: multipart/mixed; boundary="===============0117177380=="
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -21,22 +21,20 @@ List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
---===============0126729010==
+--===============0117177380==
 Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C587A1.11CCB681"
+	boundary="----_=_NextPart_001_01C5879D.4AC5F339"
 
 This is a multi-part message in MIME format.
 
-------_=_NextPart_001_01C587A1.11CCB681
+------_=_NextPart_001_01C5879D.4AC5F339
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
-
-Yes, multipathd daemon is started after DM tables are setup. But I see
-this working with your latest kernel rpm for SLES 9 SP2.=20
+I apologize for porting here; we will post to Novell bugzilla for any
+SP2 queries.
 
 Thanks and regards
 
@@ -45,7 +43,7 @@ Thanks and regards
 =20
 
 
-------_=_NextPart_001_01C587A1.11CCB681
+------_=_NextPart_001_01C5879D.4AC5F339
 Content-Type: text/html;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
@@ -55,7 +53,7 @@ xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
 xmlns=3D"http://www.w3.org/TR/REC-html40">
 
 <head>
-<meta http-equiv=3DContent-Type content=3D"text/html; =
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
 charset=3Dus-ascii">
 <meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
 <style>
@@ -99,15 +97,9 @@ div.Section1
 
 <p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
 style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>Hi,<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>Yes, multipathd daemon is started =
-after DM
-tables are setup. But I see this working with your latest kernel rpm for =
-SLES 9
-SP2. <o:p></o:p></span></font></p>
+10.0pt;font-family:"MS Sans Serif"'>I apologize for porting here; we =
+will post
+to Novell bugzilla for any SP2 queries.<o:p></o:p></span></font></p>
 
 <p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
 style=3D'font-size:
@@ -128,14 +120,14 @@ style=3D'font-size:
 
 </html>
 
-------_=_NextPart_001_01C587A1.11CCB681--
+------_=_NextPart_001_01C5879D.4AC5F339--
 
 
---===============0126729010==
+--===============0117177380==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0126729010==--
+--===============0117177380==--
