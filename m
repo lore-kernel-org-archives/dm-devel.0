@@ -1,14 +1,13 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: pthread_cancel and clone weirdness
-Date: Sat, 16 Jul 2005 19:07:56 +0200
-Message-ID: <1121533676.19015.11.camel@zezette>
-References: <20050716143122.GA11187@phlogiston.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: =?ks_c_5601-1987?B?sK21v8Dn?= <djkang@etri.re.kr>
+Subject: using ext3 filesystem with multipath
+Date: Mon, 18 Jul 2005 16:45:25 +0900
+Message-ID: <908e301c58b6c$a89b8360$8410fe81@email2>
+Reply-To: =?ks_c_5601-1987?B?sK21v8Dn?= <djkang@etri.re.kr>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1928650518=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050716143122.GA11187@phlogiston.msp.redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,50 +17,97 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-cvaroqui@zezette:tmp$ ./pthread_test
-cancelling thread
-pthread cancel returned : Success
-joining thread
-pthread_join returned : Success
-child was canceled
+This is a multi-part message in MIME format.
 
-both with and without "#define WORK_CORRECTLY 1" on ubuntu breezy HEAD,
-amd64.
+--===============1928650518==
+Content-Transfer-Encoding: 7bit
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_908E4_01C58BB8.18832B60"
+Content-class: urn:content-classes:message
 
-Will try on Debian Sid/amd64 too, tomorrow.
+This is a multi-part message in MIME format.
 
-That said, we may now be able to kill all the clone/prepare_namespace()
-things.
+------=_NextPart_000_908E4_01C58BB8.18832B60
+Content-Type: text/plain;
+	charset="ks_c_5601-1987"
+Content-Transfer-Encoding: base64
 
-They were introduced to protect from /sbin/multipath exec failures under
-memory pressure. Now, the daemon doesn't exec multipath anymore, so if
-nobody cares, I'll kill them soon, and go back to pure fork()-based
-daemonization.
 
-Regards,
-cvaroqui
+------=_NextPart_000_908E4_01C58BB8.18832B60
+Content-Type: text/html;
+	charset="ks_c_5601-1987"
+Content-Transfer-Encoding: base64
 
-On sam, 2005-07-16 at 09:31 -0500, Benjamin Marzinski wrote:
-> O.k. I finally figured out why pthread_cancel just wasn't working for me,
-> and it has something to do with the clone() call in multipathd. If you
-> fork child(), everything works correctly. If you clone it, pthread_cancel
-> dosn't work on PTHREAD_CANCEL_ASYNCHRONOUS type threads. This makes
-> no sense to me.  Is this supposed to happen??
-> 
-> Could people please try running the attached test program? When I use
-> clone() (WORKS_CORRECTLY set to 0) it hangs. When I use fork()
-> (WORKS_CORRECTLY set to 1) it does exactly what I expect.  This is happening
-> for me on RHEL4. I would be interested in knowing if it happens on other
-> distros.
-> 
-> Thanks
-> -Ben
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+PERJViBpZD1tc2dib2R5IHN0eWxlPSJGT05ULVNJWkU6IDEwcHQ7IEZPTlQtRkFNSUxZOiCxvLiy
+Ij4NCjxESVY+PEJSPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPg0KPERJViBzdHlsZT0iRk9OVC1TSVpFOiAxMHB0OyBGT05ULUZBTUlMWTog
+sby4siI+DQo8RElWPjxGT05UIHNpemU9Mj4NCjxQIGNsYXNzPU1zb05vcm1hbCBzdHlsZT0iTUFS
+R0lOOiAwY20gMGNtIDBwdCAyN3B0OyBURVhULUlOREVOVDogLTI3cHQ7IG1zby1jaGFyLWluZGVu
+dC1jb3VudDogLTIuNyI+PFNQQU4gbGFuZz1FTi1VUz48Rk9OVCBmYWNlPSJUaW1lcyBOZXcgUm9t
+YW4iPldlIGhhdmUgdGVzdGVkIE1QSU8gdW5kZXIgZXh0MyBqb3VybmFsaW5nIGZpbGVzeXN0ZW0g
+ZW52aXJvbm1lbnQgYW5kIGZvdW5kIGEgcHJvYmxlbS4gPC9GT05UPjwvU1BBTj48L1A+DQo8UCBj
+bGFzcz1Nc29Ob3JtYWwgc3R5bGU9Ik1BUkdJTjogMGNtIDBjbSAwcHQgMjdwdDsgVEVYVC1JTkRF
+TlQ6IC0yN3B0OyBtc28tY2hhci1pbmRlbnQtY291bnQ6IC0yLjciPjxTUEFOIGxhbmc9RU4tVVM+
+PEZPTlQgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj53ZSB1c2UgaW96b25lIHRvb2wgPC9GT05UPjwv
+U1BBTj48U1BBTiBsYW5nPUVOLVVTPjxGT05UIGZhY2U9IlRpbWVzIE5ldyBSb21hbiI+Zm9yIHBl
+cmZvcm1pbmcgY29udGludW91cyBJTyB0byBNUElPIGRldmljZXMuJm5ic3A7PC9GT05UPjwvU1BB
+Tj48L1A+DQo8UCBjbGFzcz1Nc29Ob3JtYWwgc3R5bGU9Ik1BUkdJTjogMGNtIDBjbSAwcHQgMjdw
+dDsgVEVYVC1JTkRFTlQ6IC0yN3B0OyBtc28tY2hhci1pbmRlbnQtY291bnQ6IC0yLjciPjxTUEFO
+IGxhbmc9RU4tVVM+PEZPTlQgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj5XaGVuIG9uZSBwYXRoIGlz
+IGZhaWxlZCwgYmVjYXVzZSBJTyBjYW4gYmUgcGVyZm9ybWVkIGFueW1vcmUsIG1vZGUgb2YgZXh0
+MyBmaWxlc3lzdGVtIHdhczwvRk9OVD48L1NQQU4+PC9QPg0KPFAgY2xhc3M9TXNvTm9ybWFsIHN0
+eWxlPSJNQVJHSU46IDBjbSAwY20gMHB0IDI3cHQ7IFRFWFQtSU5ERU5UOiAtMjdwdDsgbXNvLWNo
+YXItaW5kZW50LWNvdW50OiAtMi43Ij48U1BBTiBsYW5nPUVOLVVTPjxGT05UIGZhY2U9IlRpbWVz
+IE5ldyBSb21hbiI+Y2hhbmdlZCB0byBSRUFEX09OTFkgZmlsZXN5c3RlbS4gU28sIGFmdGVyIHRo
+ZSBjaGFuZ2UsIHdlIGNhbiBub3Qgd3JpdGUgdGhlIGN1cnJlbnQgZXh0MyBmaWxlc3lzdGVtLjwv
+Rk9OVD48L1NQQU4+PC9QPg0KPFA+PEZPTlQgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48U1BBTiBs
+YW5nPUVOLVVTIHN0eWxlPSJGT05ULVNJWkU6IDEwcHQ7IEZPTlQtRkFNSUxZOiC52cXBOyBtc28t
+YmlkaS1mb250LXNpemU6IDEyLjBwdDsgbXNvLWhhbnNpLWZvbnQtZmFtaWx5OiAnVGltZXMgTmV3
+IFJvbWFuJzsgbXNvLWJpZGktZm9udC1mYW1pbHk6ICdUaW1lcyBOZXcgUm9tYW4nOyBtc28tZm9u
+dC1rZXJuaW5nOiAxLjBwdDsgbXNvLWFuc2ktbGFuZ3VhZ2U6IEVOLVVTOyBtc28tZmFyZWFzdC1s
+YW5ndWFnZTogS087IG1zby1iaWRpLWxhbmd1YWdlOiBBUi1TQSI+SSB3b25kZXIgdGhhdCBNUElP
+IGNhbjwvU1BBTj48U1BBTiBsYW5nPUVOLVVTIHN0eWxlPSJGT05ULVNJWkU6IDEwcHQ7IEZPTlQt
+RkFNSUxZOiAnVGltZXMgTmV3IFJvbWFuJzsgbXNvLWJpZGktZm9udC1zaXplOiAxMi4wcHQ7IG1z
+by1mb250LWtlcm5pbmc6IDEuMHB0OyBtc28tYW5zaS1sYW5ndWFnZTogRU4tVVM7IG1zby1mYXJl
+YXN0LWxhbmd1YWdlOiBLTzsgbXNvLWJpZGktbGFuZ3VhZ2U6IEFSLVNBOyBtc28tYXNjaWktZm9u
+dC1mYW1pbHk6ILnZxcE7IG1zby1mYXJlYXN0LWZvbnQtZmFtaWx5OiC52cXBIj6hrzwvU1BBTj48
+U1BBTiBsYW5nPUVOLVVTIHN0eWxlPSJGT05ULVNJWkU6IDEwcHQ7IEZPTlQtRkFNSUxZOiC52cXB
+OyBtc28tYmlkaS1mb250LXNpemU6IDEyLjBwdDsgbXNvLWhhbnNpLWZvbnQtZmFtaWx5OiAnVGlt
+ZXMgTmV3IFJvbWFuJzsgbXNvLWJpZGktZm9udC1mYW1pbHk6ICdUaW1lcyBOZXcgUm9tYW4nOyBt
+c28tZm9udC1rZXJuaW5nOiAxLjBwdDsgbXNvLWFuc2ktbGFuZ3VhZ2U6IEVOLVVTOyBtc28tZmFy
+ZWFzdC1sYW5ndWFnZTogS087IG1zby1iaWRpLWxhbmd1YWdlOiBBUi1TQSI+dCB1c2Ugd2l0aCBl
+eHQzIGZpbGVzeXN0ZW0ob3Igb3RoZXIgam91cm5hbGluZyBmaWxlc3lzdGVtcykuIDwvU1BBTj48
+L0ZPTlQ+PC9QPg0KPFA+PEZPTlQgZmFjZT0iVGltZXMgTmV3IFJvbWFuIj48U1BBTiBsYW5nPUVO
+LVVTIHN0eWxlPSJGT05ULVNJWkU6IDEwcHQ7IEZPTlQtRkFNSUxZOiC52cXBOyBtc28tYmlkaS1m
+b250LXNpemU6IDEyLjBwdDsgbXNvLWhhbnNpLWZvbnQtZmFtaWx5OiAnVGltZXMgTmV3IFJvbWFu
+JzsgbXNvLWJpZGktZm9udC1mYW1pbHk6ICdUaW1lcyBOZXcgUm9tYW4nOyBtc28tZm9udC1rZXJu
+aW5nOiAxLjBwdDsgbXNvLWFuc2ktbGFuZ3VhZ2U6IEVOLVVTOyBtc28tZmFyZWFzdC1sYW5ndWFn
+ZTogS087IG1zby1iaWRpLWxhbmd1YWdlOiBBUi1TQSI+aWYgaXQgaXMgbm90IHRydWUsIHdoYXQg
+aXMgd3Jvbmcgd2l0aCBtZT88L1NQQU4+PC9GT05UPjwvRk9OVD48L1A+PC9ESVY+PC9ESVY+PC9E
+SVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+
+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PC9ESVY+PGltZyBzdHlsZT0iZGlzcGxheTpu
+b25lIiB3aWR0aD0wIGhlaWdodD0wIHNyYz0iaHR0cDovL3VtYWlsLmV0cmkucmUua3IvRXh0ZXJu
+YWxfUmVhZENoZWNrLmFzcHg/ZW1haWw9ZG0tZGV2ZWxAcmVkaGF0LmNvbSZuYW1lPWRtLWRldmVs
+JTQwcmVkaGF0LmNvbSZmcm9tZW1haWw9ZGprYW5nQGV0cmkucmUua3ImbWVzc2FnZWlkPSUzQzJi
+ZDZlNTJiLTg2ZTgtNDYyMS05NDJhLWVkZTE4ZGYxNDE5ZEBldHJpLnJlLmtyJTNFIj4=
+
+------=_NextPart_000_908E4_01C58BB8.18832B60--
+
+
+--===============1928650518==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1928650518==--
