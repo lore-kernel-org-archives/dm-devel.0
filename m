@@ -1,14 +1,12 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: tiny bug
-Date: Tue, 19 Jul 2005 01:16:45 +0200
-Message-ID: <1121728606.19015.42.camel@zezette>
-References: <20050718215304.GE24376@phlogiston.msp.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: [multipathd] kill clone() ?
+Date: Tue, 19 Jul 2005 15:36:06 +0200
+Message-ID: <20050719133606.GA19691@averon.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050718215304.GE24376@phlogiston.msp.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,16 +16,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On lun, 2005-07-18 at 16:53 -0500, Benjamin Marzinski wrote:
-> mulitpathd was crashing when I entered an empty line at the CLI prompt, because
-> the output buffer from get_word was being checked to see if it was NULL, but
-> get_word never explicitly sets the buffer to NULL if there is no word.
-> 
-> The patch fixes this.
-> 
-Applied, thanks.
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+Ed, Alasdair, et al,
+
+this is your last chance to convince me not to kill clone()/private namespace/ramfs logic in multipathd.
+Because :
+
+1) Martin spoted some rough edges with it and pthread cancelations.
+2) It was introduced at a time when path reinstate was done by /sbin/multipath, which is not the case anymore.
+3) It simplifies the design a fair bit and removes quite a lot of code.
+
+I verified the path reinstate codepath, and it does only 1 dmt allocation ... no callbacks anymore.
+So I guess it is safe to kill, be would like to raise the point one last time.
+
+Regards,
+cvaroqui
