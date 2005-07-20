@@ -1,14 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: race bugs
-Date: Wed, 20 Jul 2005 11:06:59 +0200
-Message-ID: <20050720090659.GB24444@averon.dyndns.org>
-References: <20050718225603.GF24376@phlogiston.msp.redhat.com>
+From: h4x3r <h4x3r@triad.rr.com>
+Subject: Fedora cdrom issues ...
+Date: Tue, 19 Jul 2005 21:18:47 -0400
+Message-ID: <1121822327.4334.5.camel@908kc2RHrV.qIFnWDaIuu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20050718225603.GF24376@phlogiston.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,54 +16,121 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-applied, thanks.
+Hello,
 
-On Mon, Jul 18, 2005 at 05:56:04PM -0500, Benjamin Marzinski wrote:
-> I was looking at the waitevent thread, and I noticed some issues. Since the
-> cancellation type is asynchronous, the thread can get cancelled at any
-> moment. This can cause bugs. For instance, the double removal of the dm task
-> structure that just got fixed can still show up if the thread were cancelled
-> after it was freed but before it was set to NULL, there were other issues
-> like this in update_multpath. It seems like the easiest way to fix this is to
-> set some defined cancellation points. So that's what this does.
-> 
-> 
-> -Ben
+Bug issue w/ your name on it.
 
-> diff -urpN mp-devel/multipathd/main.c mp-devel-patched/multipathd/main.c
-> --- mp-devel/multipathd/main.c	2005-07-18 10:21:17.000000000 -0500
-> +++ mp-devel-patched/multipathd/main.c	2005-07-18 17:52:46.385426160 -0500
-> @@ -350,7 +350,6 @@ waiteventloop (struct event_thread * wai
->  
->  	dm_task_no_open_count(waiter->dmt);
->  
-> -	pthread_testcancel();
->  	dm_task_run(waiter->dmt);
->  	pthread_testcancel();
->  	dm_task_destroy(waiter->dmt);
-> @@ -404,7 +403,6 @@ waitevent (void * et)
->  	mlockall(MCL_CURRENT | MCL_FUTURE);
->  
->  	waiter = (struct event_thread *)et;
-> -	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
->  	pthread_cleanup_push(free_waiter, et);
->  
->  	while (1) {
-> @@ -413,7 +411,9 @@ waitevent (void * et)
->  		if (r < 0)
->  			break;
->  
-> +		pthread_testcancel();
->  		sleep(r);
-> +		pthread_testcancel();
->  	}
->  
->  	pthread_cleanup_pop(1);
+$ uname -a
+Linux xxx.xxx 2.6.12-1.1435_FC5smp #1 SMP Sun Jul 17 18:33:39 EDT 2005
+i686 i686 i386 GNU/Linux
 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+hdb is a CDROM CD486-H Cyberdrive w/ firmware updated by Hewlett-Packard
+
+device-mapper: 4.4.0-ioctl (2005-01-12) initialised: dm-devel@redhat.com
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 0
+Buffer I/O error on device hdb, logical block 0
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 0
+Buffer I/O error on device hdb, logical block 0
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 8
+Buffer I/O error on device hdb, logical block 1
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 16
+Buffer I/O error on device hdb, logical block 2
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 24
+Buffer I/O error on device hdb, logical block 3
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 32
+Buffer I/O error on device hdb, logical block 4
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 40
+Buffer I/O error on device hdb, logical block 5
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 48
+Buffer I/O error on device hdb, logical block 6
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 56
+Buffer I/O error on device hdb, logical block 7
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 1024768
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 0
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 0
+Buffer I/O error on device hdb, logical block 0
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 0
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 8
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 16
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 24
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 32
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 40
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 48
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 56
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 1024768
+hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+ide: failed opcode was: unknown
+end_request: I/O error, dev hdb, sector 0
+
+Sorry, I just copied everything that appeared in my log
+doesnt really tell me a whole lot but, I have reported this bug before
+on bugzilla https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=138119
+
+Regards,
