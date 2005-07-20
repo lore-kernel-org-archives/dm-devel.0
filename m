@@ -1,11 +1,10 @@
 From: h4x3r <h4x3r@triad.rr.com>
-Subject: Fedora cdrom issues ...
-Date: Tue, 19 Jul 2005 21:18:47 -0400
-Message-ID: <1121822327.4334.5.camel@908kc2RHrV.qIFnWDaIuu>
+Subject: Re: Fedora cdrom issues ...
+Date: Tue, 19 Jul 2005 23:21:47 -0400
+Message-ID: <1121829707.4385.3.camel@908kc2RHrV.qIFnWDaIuu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-spHGMr8MwK+25wvPeMhr"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,6 +17,54 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
+
+
+--=-spHGMr8MwK+25wvPeMhr
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+--Hello,
+
+--Bug issue w/ your name on it.
+
+--$ uname -a
+--Linux xxx.xxx 2.6.12-1.1435_FC5smp #1 SMP Sun Jul 17 18:33:39 EDT 2005
+--i686 i686 i386 GNU/Linux
+
+--hdb is a CDROM CD486-H Cyberdrive w/ firmware updated by
+--Hewlett-Packard
+
+--device-mapper: 4.4.0-ioctl (2005-01-12) initialised:
+--dm-devel@redhat.com
+--hdb: command error: status=0x51 { DriveReady SeekComplete Error }
+--hdb: command error: error=0x54 { AbortedCommand LastFailedSense=0x05 }
+
+Hello again,
+
+I compiled my own kernel and the messages disappeared...
+this is very strange.
+
+I can attach .config for you to study in hopes this mistake 
+doesnt crop up again..
+
+let me know if you need that .config for the kernel
+
+Regards,
+
+--=-spHGMr8MwK+25wvPeMhr
+Content-Disposition: inline
+Content-Description: Forwarded message - Fedora cdrom issues ...
+Content-Type: message/rfc822
+
+Subject: Fedora cdrom issues ...
+From: h4x3r <h4x3r@triad.rr.com>
+To: dm-devel@redhat.com
+Content-Type: text/plain
+Message-Id: <1121822327.4334.5.camel@908kc2RHrV.qIFnWDaIuu>
+Mime-Version: 1.0
+X-Mailer: Evolution 2.2.3 (2.2.3-1.fc4) 
+Date: Tue, 19 Jul 2005 21:18:50 -0400
+Content-Transfer-Encoding: 7bit
 
 Hello,
 
@@ -134,3 +181,13 @@ doesnt really tell me a whole lot but, I have reported this bug before
 on bugzilla https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=138119
 
 Regards,
+
+
+--=-spHGMr8MwK+25wvPeMhr
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-spHGMr8MwK+25wvPeMhr--
