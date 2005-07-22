@@ -1,15 +1,12 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: path notification not working using on Suse SP2
-Date: Sun, 24 Jul 2005 22:20:50 +0200
-Message-ID: <20050724202050.GL8005@marowsky-bree.de>
-References: <C2EEB4E538D3DC48BF57F391F422779321AB62@SRMANNING.eng.emc.com>
+From: michael.n.murray@census.gov
+Subject: Multipath Config Question
+Date: Fri, 22 Jul 2005 13:54:57 -0400
+Message-ID: <OF3BA6523C.F10DBB18-ON85257046.00626A41-85257046.00626A4F@census.gov>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============2010881917=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB62@SRMANNING.eng.emc.com>
+MIME-Version: 1.0
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +16,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 2005-07-11T13:45:36, "goggin, edward" <egoggin@emc.com> wrote:
+--===============2010881917==
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=ISO-8859-1
 
-> > Hi, posting to public mailing lists about bugs in our Release
-> > Candidate products isn't very nice ;-)
-> I agree and I apologize to you and Novell/SuSE for doing so.
+<font face=3D"monospace" size=3D"3">Hi,<br>
+&nbsp;&nbsp;&nbsp; Sorry if this is the wrong place to request
+this.&nbsp; I'm new to this and trying to setup multipathing with the
+following config:<br>
+<br>
+</font><font face=3D"monospace" size=3D"3">SW:<br>&nbsp;Suse SLES 9<br>&nbs=
+p;SP2<br>
+<br>
+</font><font face=3D"monospace" size=3D"3">HW:<br>&nbsp;3Par SAN<br>&nbsp;2=
+ Qlogic HBAs QLA2310s (fiber)<br>&nbsp;drivers: qla2300/qla2xxx<br><br>
+</font><font face=3D"monospace" size=3D"3">I can mount the SAN device just =
+fine:<br>&nbsp;#mount /dev/disk/by-name/350002ac000070240 /test<br><br>I ve=
+rified both HBAs work by disconnecting the fiber to each one and testing th=
+at I could mount/write/read (requires reboots).<br>
+</font><font face=3D"monospace" size=3D"3"><br>
+ I believe however that multipath -ll should be seeing the second HBA, corr=
+ect?&nbsp; Currently all I get is:<br>&nbsp;# multipath -ll<br>&nbsp;350002=
+ac000070240<br>&nbsp;[size=3D100 GB][features=3D0][hwhandler=3D0]<br>&nbsp;=
+\=5Fround-robin 0 [active][best]<br>&nbsp; \=5F 2:0:0:0 sdg 8:96 [ready][ac=
+tive]<br><br>...when I expected something like:<br>
+</font><font face=3D"monospace" size=3D"3"># multipath -ll</font><font face=
+=3D"monospace" size=3D"3"><br>
+350002ac000070240</font><span style=3D"font-family: monospace;"> <br>
+[</span>size=3D100 GB][features=3D"0"][hwhandler=3D"0"]<span style=3D"font-=
+family: monospace;"><br>
+</span>\=5F round-robin 0 [active][first]<span style=3D"font-family: monosp=
+ace;"><br>
+&nbsp;</span>\=5F 1:0:1:2 sdav 66:240  [ready ][active]<span style=3D"font-=
+family: monospace;"><br>
+</span>&nbsp; \=5F 0:0:1:2 sdr  65:16   [ready ][active]<span style=3D"font=
+-family: monospace;"><br>
+</span>\=5F round-robin 0 [enabled]<span style=3D"font-family: monospace;">=
+<br>
+&nbsp; </span>\=5F 1:0:0:2 sdag 66:0    [ready ][active]<br>
 
-Just a note in general, it's obviously alright and great if we discuss
-bugs here which are present in upstream, but it's better for Alasdair's
-and my tracking if bugs which are dist-specific (like, not backported
-issues) are reported directly.
 
-For bugs upstream which you want fixed in our respective releases, it
-helps if you also file a stub in the respective bugzilla pointing to the
-upstream discussion.
-
-Otherwise they might get lost or not paid attention to quickly enough,
-for example Alasdair and I were both travelling this week. (Well, so
-were you, and it was great meeting you finally being able to put a
-person to the voice on the conference calls ;-)
+&nbsp; &nbsp; \=5F 0:0:0:2 sdc  8:32    [ready ][active]<br>
 
 
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
+<font face=3D"monospace" size=3D"3"><br>
+Not sure what to do, like modify multipath.conf?<br>
+<br>
+Suggestions/FAQs/How-Tos (I've read most of what I could Google).<br>
+<br>
+Thanks,<br>
+Mike M.</font>=
 
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+
+--===============2010881917==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2010881917==--
