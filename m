@@ -1,17 +1,15 @@
-From: Philipp Niemann <niemann@dimdi.de>
-Subject: Re: Multipathing hints request
-Date: Fri, 22 Jul 2005 14:09:55 +0200
-Message-ID: <20050722120955.GL4240@pan.dimdi.de>
-References: <20050721143110.GD4240@pan.dimdi.de>
-	<1121970687.19015.78.camel@zezette>
-	<20050722083722.GJ4240@pan.dimdi.de>
-	<20050722095828.GA13294@averon.dyndns.org>
+From: Lars Marowsky-Bree <lmb@suse.de>
+Subject: Re: queue_if_no_paths timeout handling
+Date: Sun, 24 Jul 2005 22:17:13 +0200
+Message-ID: <20050724201713.GK8005@marowsky-bree.de>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB67@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050722095828.GA13294@averon.dyndns.org>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB67@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,71 +19,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Well, almost at it.
+On 2005-07-12T22:28:09, "goggin, edward" <egoggin@emc.com> wrote:
 
-On Fri, 22.07.2005-11:58:28 +0200, Christophe Varoqui wrote:
-> hardware_handler and features params must be in the devices {} section, not in multipaths {}.
+> May need to be able to at least offer the option of timing out ios to
+> multipath block devices enabled with the queue_if_no_paths feature
+> which are in an all-paths-down use case for a configurable amount of
+> time.
 
-I changed the settings in /etc/multipath.conf again, as you advised.
-Here is it:
+Proposed solution part A: multipathd should disable queue_if_no_path
+(via the message ioctl) if all paths are down for N seconds.
 
-# Begin of /etc/multipath.conf
-defaults {
-        multipath_tool  "/sbin/multipath -v 0 -S"
-        udev_dir        /dev
-        polling_interval 10
-        default_selector        "round-robin 0"
-        default_path_grouping_policy    failover
-        default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
-        default_prio_callout    "/bin/false"
-        default_features        "0"
-}
-multipaths {
-        multipath {
-                wwid                    360060160200161a037f90d75dfca84f7
-                alias                   416L3
-                path_grouping_policy    failover
-                path_selector           "round-robin 0"
-        }
-}
-devices {
-        device {
-                vendor                  "DGC     "
-                product                 "RAID 5          "
-                path_grouping_policy    group_by_serial
-                getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-                path_checker            emc_clariion
-                path_selector           "round-robin 0"
-                features                "0"
-                hardware_handler        "1 emc"
-        }
-}
-# End of /etc/multipath.conf
+Proposed solution part B: Must figure out a way how to throttle higher
+levels from throwing more IO at us when we're in that state. A regular
+app will be throttled by the fact that no ACK's come back, I guess.
 
-I figured out that the vendor value must be exactly 8 characters long.
+Proposed solution part C: In case of multipathd dieing, do we need a
+last resort way for the kernel to disable queue if no path by itself so
+memory can be reclaimed, which might be necessary for multipathd being
+able to restart?
 
-> Also, pgpolicy is best set to group_by_serial with Clariion hw.
-> You'll see it produce same grouping than failover in your case.
 
-Hm, doesn't look the same here. It again leaves me with only one
-priority group. So I stick to failover for now.
+So, there is a more generic issue here involving the fact that dm-mpath
+and multipathd are pretty tightly coupled, and we might not be able to
+always behave "correctly" if user-space dies on us. (In fact, I can see
+this affecting not just multipathd, but even some cluster
+infrastructure.) So I have this really sick idea about this, which I'm
+now going to share with you. Grab a bucket before reading on. But maybe
+you won't find it that horrible.
 
-What different features are available? I just managed to freeze my
-network conn (at least, haven't checked the host yet) by adding "1
-queue_if_no_path" as used with the compaq entry in the examples.
+Ready? Ok, I warned you.
 
-I didn't manage to get failover to work, yet. Am I correct in assuming
-that the multipathd daemon is only needed for path recovery? Because I
-have problems getting that one to react to signals properly.
+Within user-space, what we do in the Linux-HA heartbeat project for some
+of these critical tasks is that we run an application heartbeat to the
+monitor process - if one fails to heartbeat for too long, we'll take
+recovery action.
 
-Right, gonna check what happend to the machine.
-CU,
-Philipp
--- 
-Philipp Niemann                                       DIMDI
-Abteilung D / AG D4
-Peripherie / UNIX-Systembetreuer     Waisenhausgasse 36-38a
-Tel. : 0221/4724-281                            50676 Koeln
+So, how about having critical user-space heartbeat to the kernel?
+
+(There's prior art here in the software watchdog, but that's a much more
+global hammer.)
+
+Just having the kernel watch whether the process keeps running won't do.
+We ought to be able to restart the user-space process, which might mean
+it exits/restarts within some timeout.
+
+It not actually all that difficult to implement. Simply setup a timer on
+registration, set it back whenever user-space heartbeats (by writing to
+a sysfs file would be more generic, but if we want to stay within dm for
+a second, by sending us a heartbeat via the message ioctl), and if it
+eventually triggers, kick a callback function provided at registration
+with some data.
+
+(Said callback function might, in our case, reset all paths to "healthy"
+to give them a last chance, and disable queue_if_no_path - so that if
+all paths fail again, IO would be errored out for good.)
+
+On graceful shutdown, multipathd would either lengthen that timer (to
+allow for a restart) or disable it completely (maybe along with
+queue_if_no_path) so that the system can reboot gracefully.
+
+Now how is that?
+
+It seems somewhat hackish, but I quite like it ;-)
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
