@@ -1,16 +1,19 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: queue_if_no_paths timeout handling
-Date: Mon, 25 Jul 2005 14:41:35 +0200
-Message-ID: <20050725124135.GA21362@averon.dyndns.org>
-References: <C2EEB4E538D3DC48BF57F391F422779321AB67@SRMANNING.eng.emc.com>
-	<20050724201713.GK8005@marowsky-bree.de>
+From: niemann@dimdi.de (Philipp Niemann)
+Subject: Re: Multipathing hints request
+Date: Mon, 25 Jul 2005 15:02:56 +0200
+Message-ID: <20050725130256.GO4240@pan.dimdi.de>
+References: <20050721143110.GD4240@pan.dimdi.de>
+	<1121970687.19015.78.camel@zezette>
+	<20050722083722.GJ4240@pan.dimdi.de>
+	<20050722095828.GA13294@averon.dyndns.org>
+	<20050722120955.GL4240@pan.dimdi.de>
+	<20050724200238.GJ8005@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050724201713.GK8005@marowsky-bree.de>
+In-Reply-To: <20050724200238.GJ8005@marowsky-bree.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,99 +26,48 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Maybe I miss some important point already raised in the past, but ...
-How about adding more params to queue_if_no_path ? eg,
+Jo!
+A very happy me shouts out thanks to all the list. Special thanks to
+Lars who gave the final hint:
 
-- timer value
-- pending io queue length
+On Sun, 24.07.2005-22:02:38 +0200, Lars Marowsky-Bree wrote:
+> On 2005-07-22T14:09:55, Philipp Niemann <niemann@dimdi.de> wrote:
+> > 
+[snip]
+> >                 hardware_handler        "1 emc"
+> >         }
+> 
+> For the Clariion 4500, you need to set the hardware_handler to
+> 	"3 emc 1 0"
+> 
+> (The trespass command to transfer ownership of a LU from one
+> Service-Processor to the other is different from the FC4500 to the EMC
+> CX series. I've got to admit I've not tested the FC4500 yet, though.)
+> 
+> You also want the pp_emc callout from the newer multipath-tools
+> package and use that as the priority callout, and group by priority.
 
-That way kernel is kept free from policies,
-and the framework survives a daemon crash.
+Actually I am using 'hardware_handler "3 emc 1 1"' in my config file now.
+Without the reservation bit honouring the failover didn't work. I also
+upgraded to multipath-tools-0.4.4 to get the pp_emc thingy.
 
-Regards,
-cvaroqui
+That gives me a configuration where I can trespass LUNs on the Array via
+the Management Suite and get them switched back by my linux box.
+The other way works too, so that a write operation on a SAN Filesystem
+continues to write even if I pull out the active cable. When I plug it
+back in place after some time, the system even switches back to the
+default path. Wow! Only scratch in the surface is that the devices come
+back in with new names, so former sde becomes sdo. Maybe persistent
+bindings might help.
 
-On Sun, Jul 24, 2005 at 10:17:13PM +0200, Lars Marowsky-Bree wrote:
-> On 2005-07-12T22:28:09, "goggin, edward" <egoggin@emc.com> wrote:
->=20
-> > May need to be able to at least offer the option of timing out ios to
-> > multipath block devices enabled with the queue_if_no_paths feature
-> > which are in an all-paths-down use case for a configurable amount of
-> > time.
->=20
-> Proposed solution part A: multipathd should disable queue_if_no_path
-> (via the message ioctl) if all paths are down for N seconds.
->=20
-> Proposed solution part B: Must figure out a way how to throttle higher
-> levels from throwing more IO at us when we're in that state. A regular
-> app will be throttled by the fact that no ACK's come back, I guess.
->=20
-> Proposed solution part C: In case of multipathd dieing, do we need a
-> last resort way for the kernel to disable queue if no path by itself so
-> memory can be reclaimed, which might be necessary for multipathd being
-> able to restart?
->=20
->=20
-> So, there is a more generic issue here involving the fact that dm-mpath
-> and multipathd are pretty tightly coupled, and we might not be able to
-> always behave "correctly" if user-space dies on us. (In fact, I can see
-> this affecting not just multipathd, but even some cluster
-> infrastructure.) So I have this really sick idea about this, which I'm
-> now going to share with you. Grab a bucket before reading on. But maybe
-> you won't find it that horrible.
->=20
-> Ready? Ok, I warned you.
->=20
-> Within user-space, what we do in the Linux-HA heartbeat project for som=
-e
-> of these critical tasks is that we run an application heartbeat to the
-> monitor process - if one fails to heartbeat for too long, we'll take
-> recovery action.
->=20
-> So, how about having critical user-space heartbeat to the kernel?
->=20
-> (There's prior art here in the software watchdog, but that's a much mor=
-e
-> global hammer.)
->=20
-> Just having the kernel watch whether the process keeps running won't do=
-.
-> We ought to be able to restart the user-space process, which might mean
-> it exits/restarts within some timeout.
->=20
-> It not actually all that difficult to implement. Simply setup a timer o=
-n
-> registration, set it back whenever user-space heartbeats (by writing to
-> a sysfs file would be more generic, but if we want to stay within dm fo=
-r
-> a second, by sending us a heartbeat via the message ioctl), and if it
-> eventually triggers, kick a callback function provided at registration
-> with some data.
->=20
-> (Said callback function might, in our case, reset all paths to "healthy=
-"
-> to give them a last chance, and disable queue_if_no_path - so that if
-> all paths fail again, IO would be errored out for good.)
->=20
-> On graceful shutdown, multipathd would either lengthen that timer (to
-> allow for a restart) or disable it completely (maybe along with
-> queue_if_no_path) so that the system can reboot gracefully.
->=20
-> Now how is that?
->=20
-> It seems somewhat hackish, but I quite like it ;-)
->=20
->=20
-> Sincerely,
->     Lars Marowsky-Br=E9e <lmb@suse.de>
->=20
-> --=20
-> High Availability & Clustering
-> SUSE Labs, Research and Development
-> SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-> "Ignorance more frequently begets confidence than does knowledge"
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+I got somewhat scared as the system issues _lots_ of IO Errors. But a
+filesystem check after IO Operation finished gave no problems
+whatsoever. So I guess it worked alright.
+
+Thanks again for your support,
+Philipp
+-- 
+Philipp Niemann                                       DIMDI
+Abteilung D / AG D4
+Peripherie / UNIX-Systembetreuer     Waisenhausgasse 36-38a
+Tel. : 0221/4724-281                            50676 Koeln
