@@ -1,12 +1,12 @@
-From: michael.n.murray@census.gov
-Subject: Multipath Config Question
-Date: Fri, 22 Jul 2005 13:54:57 -0400
-Message-ID: <OF3BA6523C.F10DBB18-ON85257046.00626A41-85257046.00626A4F@census.gov>
+From: "Alexandre Berge" <Alexandre.Berge@etsi.org>
+Subject: [SATA Raid] Volume is broken (Intel ICH7-R)
+Date: Tue, 26 Jul 2005 18:26:30 +0200
+Message-ID: <4091553999CBE4409CC2B562152B5A330857F680@email10.etsihq.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2010881917=="
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C591FE.C78CAF3B"
 Return-path: <dm-devel-bounces@redhat.com>
-MIME-Version: 1.0
+content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,64 +19,114 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2010881917==
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C591FE.C78CAF3B
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
-Content-Type: text/html;
-	charset=ISO-8859-1
 
-<font face=3D"monospace" size=3D"3">Hi,<br>
-&nbsp;&nbsp;&nbsp; Sorry if this is the wrong place to request
-this.&nbsp; I'm new to this and trying to setup multipathing with the
-following config:<br>
-<br>
-</font><font face=3D"monospace" size=3D"3">SW:<br>&nbsp;Suse SLES 9<br>&nbs=
-p;SP2<br>
-<br>
-</font><font face=3D"monospace" size=3D"3">HW:<br>&nbsp;3Par SAN<br>&nbsp;2=
- Qlogic HBAs QLA2310s (fiber)<br>&nbsp;drivers: qla2300/qla2xxx<br><br>
-</font><font face=3D"monospace" size=3D"3">I can mount the SAN device just =
-fine:<br>&nbsp;#mount /dev/disk/by-name/350002ac000070240 /test<br><br>I ve=
-rified both HBAs work by disconnecting the fiber to each one and testing th=
-at I could mount/write/read (requires reboots).<br>
-</font><font face=3D"monospace" size=3D"3"><br>
- I believe however that multipath -ll should be seeing the second HBA, corr=
-ect?&nbsp; Currently all I get is:<br>&nbsp;# multipath -ll<br>&nbsp;350002=
-ac000070240<br>&nbsp;[size=3D100 GB][features=3D0][hwhandler=3D0]<br>&nbsp;=
-\=5Fround-robin 0 [active][best]<br>&nbsp; \=5F 2:0:0:0 sdg 8:96 [ready][ac=
-tive]<br><br>...when I expected something like:<br>
-</font><font face=3D"monospace" size=3D"3"># multipath -ll</font><font face=
-=3D"monospace" size=3D"3"><br>
-350002ac000070240</font><span style=3D"font-family: monospace;"> <br>
-[</span>size=3D100 GB][features=3D"0"][hwhandler=3D"0"]<span style=3D"font-=
-family: monospace;"><br>
-</span>\=5F round-robin 0 [active][first]<span style=3D"font-family: monosp=
-ace;"><br>
-&nbsp;</span>\=5F 1:0:1:2 sdav 66:240  [ready ][active]<span style=3D"font-=
-family: monospace;"><br>
-</span>&nbsp; \=5F 0:0:1:2 sdr  65:16   [ready ][active]<span style=3D"font=
--family: monospace;"><br>
-</span>\=5F round-robin 0 [enabled]<span style=3D"font-family: monospace;">=
-<br>
-&nbsp; </span>\=5F 1:0:0:2 sdag 66:0    [ready ][active]<br>
+Hello,
+
+I've got the same kind of problem, except that I'm trying to use RAID 1
+(on Fedora Core 4)
+
+dmraid 1.0.0.rc8
+device-mapper 1.01.02
+grub 0.95
+
+# dmraid --debug --verbose -ay
+DEBUG: _find_set: searching isw_ciehjjjfgd
+DEBUG: _find_set: not found isw_ciehjjjfgd
+ERROR: isw: volume Raid-HD0_2 is broken
+DEBUG: _find_set: searching isw_ciehjjjfgd
+DEBUG: _find_set: found isw_ciehjjjfgd
+ERROR: isw: volume Raid-HD0_2 is broken
+DEBUG: set status of set "isw_ciehjjjfgd" to 16
+INFO: Activating GROUP RAID set "isw_ciehjjjfgd"
+DEBUG: freeing devices of RAID set "isw_ciehjjjfgd"
+DEBUG: freeing device "isw_ciehjjjfgd", path "/dev/sda"
+DEBUG: freeing device "isw_ciehjjjfgd", path "/dev/sdc"
+
+Please find attached my "dmraid -rD" ...
+
+The second disk of the array (sdc) has been unplungged and then
+re-plugged before the problem happened... Raid array status is displayed
+as "REBUILD" during boot process.
+
+Thanks in advance for your help,
+
+Alex
+
+> Chandler,
+>
+> please send me the files "dmraid -rD" writes (*.dat, *.size, *.offset)
+> in a bzip2'ed tarball named isw-Chandler_Garruth.tar.bz2 for
+> investigation.
+>
+> Regards,
+> Heinz
+>
+> On Wed, Jul 06, 2005 at 04:59:48PM -0400, Chandler Carruth wrote:
+> > Hello,
+> >=20
+> > I am attempting to install Gentoo Linux on a box with a RAID0 Array.
+> > This is a brand new box, with Intel's ICH7 chipset, and accompanying
+> > fake-RAID chip. The RAID array works in Windows, but despite all my
+> > attempts, I cannot get it working in Linux. I am now using a LiveCD
+> > designed specifically to run on boxes with fake-RAID arrays. The
+various
+> > software versions are:
+> >=20
+> > * Grub 0.96
+> > * device-mapper version 1.00.19
+> > * dmraid version 1.0.0.rc6
+> >=20
+> > This is the most recent version I have been able to find. I am
+> > attempting to compile a binary of dmraid version 1.0.0.rc8, but I am
+> > doubtful about this solving the problem. Any ideas would be welcome.
+=3D]
+> >=20
+> > # dmraid --debug --verbose -ay
+> > DEBUG: _find_set: searching isw_bhibhdiifc
+> > DEBUG: _find_set: not found isw_bhibhdiifc
+> > ERROR: isw: volume ARRAY is broken
+> > DEBUG: _find_set: searching isw_bhibhdiifc
+> > DEBUG: _find_set: found isw_bhibhdiifc
+> > ERROR: isw: volume ARRAY is broken
+> > DEBUG : set status of set "isw_bhibhdiifc" to 16
+> > INFO: Activating GROUP RAID set "isw_bhibhdiifc"
+> > DEBUG: freeing devices of RAID set "isw_bhibhdiifc"
+> > DEBUG: freeing device "isw_bhibhdiifc", path "/dev/sda"
+> > DEBUG: freeing device "isw_bhibhdiifc", path "/dev/sda"
+> >=20
+> > Please, any idea as to how to setup this RAID array?
 
 
-&nbsp; &nbsp; \=5F 0:0:0:2 sdc  8:32    [ready ][active]<br>
 
+------_=_NextPart_001_01C591FE.C78CAF3B
+Content-Type: application/octet-stream;
+	name="isw-Alexandre_Berge.tar.bz2"
+Content-Transfer-Encoding: base64
+Content-Description: isw-Alexandre_Berge.tar.bz2
+Content-Disposition: attachment;
+	filename="isw-Alexandre_Berge.tar.bz2"
 
-<font face=3D"monospace" size=3D"3"><br>
-Not sure what to do, like modify multipath.conf?<br>
-<br>
-Suggestions/FAQs/How-Tos (I've read most of what I could Google).<br>
-<br>
-Thanks,<br>
-Mike M.</font>=
+QlpoOTFBWSZTWex2/8gAAj//t//0EMVEE//5fG5YgO+lntAAEEAgYACACAoASBxAAfzoBEcAwjCa
+YhgEAyAGEaZMmEYCGhwDCMJpiGAQDIAYRpkyYRgIaCKqZGKeppoaZGhtR6gAAAAABptEbUBUkiaE
+npppMgDRoyNAGgaZAaDQD1DRmOkua6l6k45KWay5wqdLpnWpjXycqWbMsisqIXNktCYLlkZ1QjOo
+uVCaUs889WHUISIlGO0LGtyqWysQLEKTLUVZjIbpRoXtKiztqWUpkbb8LzGm8xBgUU31rPMc7BVz
+7opNKoflrycklyeBXpe98nxXm2U+0mJwmJtl6dyTMmwIzNdLA6ykk4HA4Hr7LQSbrPJvGu3szO1m
+STfZWLWxyWvZZLzSpxszvLmwuWk7K2pokuZF+bFeY5L5MGe1qaqoYUwUthTOlzVky5C2SSseFZG4
+pmOaY3EvMrITaOKTmyaHGe1e2XE9LB+2pNo+DUPYYN1xrNK5qnPbknz5KqqxmrJ3J8z9L4LCl4KH
+bKjfXCcS8iyF5YjlXAXzAFckWgtBMU04eeCmHcHJLprrKuqXCwLZFqrnrGt1fVaBtmMYlzUZVkJS
+BbCzGJYEayxFc4CyUcrlL4/yhOw/4u5IpwoSHY7f+QA=
 
-
---===============2010881917==
+------_=_NextPart_001_01C591FE.C78CAF3B
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2010881917==--
+------_=_NextPart_001_01C591FE.C78CAF3B--
