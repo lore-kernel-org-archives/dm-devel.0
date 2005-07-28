@@ -1,17 +1,9 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
-Subject: Re: Multipath Config Question
-Date: Wed, 27 Jul 2005 15:21:18 +0200
-Message-ID: <20050727132118.GW16649@marowsky-bree.de>
-References: <OF3BA6523C.F10DBB18-ON85257046.00626A41-85257046.00626A4F@census.gov>
-	<20050726181014.GD16649@marowsky-bree.de>
-	<1122402796.22146.5.camel@zezette>
+From: akpm@osdl.org
+Subject: [patch 01/18] bio_clone fix
+Date: Thu, 28 Jul 2005 01:07:18 -0700
+Message-ID: <200507280808.j6S88F15013833@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1122402796.22146.5.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +13,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: torvalds@osdl.org
+Cc: akpm@osdl.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, axboe@suse.de, matthew4196@gmail.com
 List-Id: dm-devel.ids
 
-On 2005-07-26T20:33:16, christophe varoqui <christophe.varoqui@free.fr> w=
-rote:
 
-> The output sample on this page are column-aligned, which is anachronous
-> as I just started playing with that :) ... Do you sit on patches, or is
-> an html editor's trick ?
+From: Andrew Morton <akpm@osdl.org>
 
-I guess the HTML folks did that to make it more pretty - whitespace in
-HTML is always annoying to get right, and it's just meant as an example
-anyway, the actual output will differ from that for sure...
+Fix bug introduced in 2.6.11-rc2: when we clone a BIO we need to copy over the
+current index into it as well.
 
+It corrupts data with some MD setups.
 
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
+See http://bugzilla.kernel.org/show_bug.cgi?id=4946
 
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+Huuuuuuuuge thanks to Matthew Stapleton <matthew4196@gmail.com> for doggedly
+chasing this one down.
+
+Acked-by: Jens Axboe <axboe@suse.de>
+Cc: <linux-raid@vger.kernel.org>
+Cc: <dm-devel@redhat.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+---
+
+ fs/bio.c |    1 +
+ 1 files changed, 1 insertion(+)
+
+diff -puN fs/bio.c~bio_clone-fix fs/bio.c
+--- devel/fs/bio.c~bio_clone-fix	2005-07-28 00:39:40.000000000 -0700
++++ devel-akpm/fs/bio.c	2005-07-28 01:02:34.000000000 -0700
+@@ -261,6 +261,7 @@ inline void __bio_clone(struct bio *bio,
+ 	 */
+ 	bio->bi_vcnt = bio_src->bi_vcnt;
+ 	bio->bi_size = bio_src->bi_size;
++	bio->bi_idx = bio_src->bi_idx;
+ 	bio_phys_segments(q, bio);
+ 	bio_hw_segments(q, bio);
+ }
+_
