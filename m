@@ -1,13 +1,14 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
+From: Lars Marowsky-Bree <lmb@suse.de>
 Subject: Re: EMC Clariion ghost devices
-Date: Sat, 30 Jul 2005 10:27:36 +0200
-Message-ID: <1122712056.7553.17.camel@zezette>
+Date: Mon, 1 Aug 2005 00:01:54 +0200
+Message-ID: <20050731220154.GC15655@marowsky-bree.de>
 References: <20050729222803.GS16618@ca-server1.us.oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <20050729222803.GS16618@ca-server1.us.oracle.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,38 +19,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On ven, 2005-07-29 at 15:28 -0700, Joel Becker wrote:
-> Christophe,
+On 2005-07-29T15:28:03, Joel Becker <Joel.Becker@oracle.com> wrote:
+
 > 	I've just tried using the multipath-tools (SLES9 SP2,
-> multipath-tools-0.4.4-0.22) with my EMC clariion.  Now, this clariion is
+> multipath-tools-0.4.4-0.22) with my EMC clariion.  Now, this clariion i=
+s
 > an active/passive system, and the second path is showing a ghost LUN 0
 > (this is expected).
+
+"WFM". I actually tested the SP2 code on a CLARiiON, it's my development
+box ;-) The version of multipath-tools on SLES9 SP2 is not quite 0.4.4
+from upstream, though, but with some fixes pulled in.
+
+Have you seen
+http://portal.suse.com/sdb/en/2005/04/sles_multipathing.html ?
+
 > 	During normal boot, the device (/dev/sdap) returns an I/O error
-> when the kernel tries to get the partition table.  No problem.  If later
+> when the kernel tries to get the partition table.  No problem.  If late=
+r
 > someone scans the disk, they get an I/O error.  No problem.
+
+Yeah, this is ugly and annoying, but harmless.
+
 > 	Then I fire up multipathd and multipath.  Multipath creates a dm
-> device for the ghost, and tries to run kpartx on it.  That kpartx hangs.
+> device for the ghost, and tries to run kpartx on it.  That kpartx hangs=
+.
 > In fact, I don't know how, but it ends up in a frozen I/O state.  It's
-> unkillable.  I'd expect an I/O error, but no, it just plain doesn't
-> exit.  Ditto any other access to the associated dm.
-> 	Now, is this a dm problem (the device not seeing the error and
-> returning it)?  Is it a multipath problem (multipath should notice the
-> ghost and not try to dm it)?  Is it a configuration problem (I should
-> somehow know which name the ghost got, and configure multipath to ignore
-> it)?
+> unkillable.
 
-/sbin/multipath sure shouldn't create a multipath map with just ghost
-paths in it. If it is the case, some paths' wwid must be wrong. May be
-due to scsi_id inconsistencies ?
+That should not happen(tm). Where does it hang according to sysrq-t?
 
-You can try and verify that with 'multipath -v4', reading the "all
-paths" section.
+(kpartx supposedly is run against the dm-multipath table and not against
+sdap, so it should already benefit from the multipath protection...)
 
-I hope Lars will react on this one as he has the hardware at hand ...
+"sg_inq -P /dev/sdap" might also be worth a try, what does it report for
+the various paths?
 
-Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+Is that a LUN 0 backed by actual storage or a LUN_Z?
+
+
+Sincerely,
+    Lars Marowsky-Br=E9e <lmb@suse.de>
+
+--=20
+High Availability & Clustering
+SUSE Labs, Research and Development
+SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
+"Ignorance more frequently begets confidence than does knowledge"
