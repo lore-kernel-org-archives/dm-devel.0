@@ -1,14 +1,14 @@
-From: =?iso-8859-1?Q?Ga=E1l_Norbert?= <norbert.gaal@comparex.hu>
-Subject: RE: EMC Clariion ghost devices
-Date: Mon, 1 Aug 2005 10:33:31 +0200
-Message-ID: <180AB5814976694EB9B978153E1CD17DD36A5E@SRHUBUD01.comparex.bud>
+From: "Thomas S. Iversen" <zensonic@zensonic.dk>
+Subject: sectorsize and boundary in device mapper
+Date: Mon, 1 Aug 2005 12:34:15 +0200
+Message-ID: <200508011234.15846.zensonic@zensonic.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,56 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi there
 
-Hi!
+I have ported GBDE (Geom Based Block Device encryption) from freebsd to 
+devicemapper under linux.
 
->> Is that a LUN 0 backed by actual storage or a LUN_Z?
+GBDE has a unique key pr. softsector. The size of a softsector can be either 
+512, 1024, 2048 or 4096. dmbde currently supports a softsector size of 512. 
+It doesn't support 1024, 2048 and  4096 as I do not know how to program my 
+dm-plugin so that it requires BIOs on 1024, 2048 and 4096 boundries and with 
+these sizes. Eg. emulate that my dmbde devices are block devices with at 
+different hardsect size that 512.
 
->	I don't quite know what you mean by LUN_Z.  My EMC guy says it
->is a "ghost" projected because the second SP owns no disks, but SCSI
->requires a LUN 0 to be scannable.
->
->Joel
+Any clues? I investigated split_io with a chunksize, but couldn't figure out 
+if it would work, or if split_io just sets a max size on the BIOs presented 
+to the dm-plugins. If its only an upper limit it won't work, it has to be a 
+firm limit; otherwise I have to satisfy requests where I have to fetch a 
+whole softsector, decrypt it all, and only return a partial result. Not the 
+right way to go IMHO.
 
-If no LUN 0 is present (or no LUN is in the Storage Group), and arraycomm=
-path is enabled the Clariion 'emulates' a LUN this is a LUNZ.
+Any help appriciated. 
 
-From a EMC primus article:
-
-A SCSI-3 (SCC-2) term defined as "the logical unit number that an applica=
-tion client uses to communicate with, configure and determine information=
- about an SCSI storage array and the logical units attached to it. The LU=
-N_Z value shall be zero." In the CLARiiON context, LUNz refers to a fake =
-logical unit zero presented to the host to provide a path for host softwa=
-re to send configuration commands to the array when no physical logical u=
-nit zero is available to the host. When Access Logix is used on a CLARiiO=
-N array, an agent runs on the host and communicates with the storage syst=
-em through either LUNz or a storage device. On a CLARiiON array, the LUNZ=
- device is replaced when a valid LUN is assigned to the HLU LUN0 by the S=
-torage Group. The agent then communicates through the storage device. The=
- user will continue, however, to see DGC LUNz in the Device Manager.=20
-LUNz has been implemented on CLARiiON arrays to make arrays visible to th=
-e host OS and PowerPath when no LUNs are bound on that array.  When using=
- a direct connect configuration, and there is no Navisphere Management st=
-ation to talk directly to the array over IP, the LUNZ can be used as a pa=
-thway for Navisphere CLI to send Bind commands to the array.=20
-
-LUNz also makes arrays visible to the host OS and PowerPath when the host=
-=B7s initiators have not yet =B7logged in to the Storage Group created fo=
-r the host.  Without LUNz, there would be no device on the host for Navis=
-phere Agent to push the initiator record through to the array. This is ma=
-ndatory for the host to log in to the Storage Group. Once this initiator =
-push is done, the host will be displayed as an available host to add to t=
-he Storage Group in Navisphere Manager (Navisphere Express).
-
-LUNz should disappear once a LUN zero is bound, or when Storage Group acc=
-ess has been attained.
-
-To turn on the LUNz behavior on CLARiiON arrays, you must configure the "=
-arraycommpath."=20
-
-Regards:
- Norbert Gaal
+Regards Thomas, Denmark
+-- 
+Bills travel through the mail at twice the speed of checks
