@@ -1,15 +1,15 @@
-From: Lars Marowsky-Bree <lmb@suse.de>
+From: Joel Becker <Joel.Becker@oracle.com>
 Subject: Re: EMC Clariion ghost devices
-Date: Mon, 1 Aug 2005 00:01:54 +0200
-Message-ID: <20050731220154.GC15655@marowsky-bree.de>
+Date: Sun, 31 Jul 2005 22:50:39 -0700
+Message-ID: <20050801055039.GU16618@ca-server1.us.oracle.com>
 References: <20050729222803.GS16618@ca-server1.us.oracle.com>
+	<20050731220154.GC15655@marowsky-bree.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20050729222803.GS16618@ca-server1.us.oracle.com>
+In-Reply-To: <20050731220154.GC15655@marowsky-bree.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +19,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-On 2005-07-29T15:28:03, Joel Becker <Joel.Becker@oracle.com> wrote:
+On Mon, Aug 01, 2005 at 12:01:54AM +0200, Lars Marowsky-Bree wrote:
+> That should not happen(tm). Where does it hang according to sysrq-t?
 
-> 	I've just tried using the multipath-tools (SLES9 SP2,
-> multipath-tools-0.4.4-0.22) with my EMC clariion.  Now, this clariion i=
-s
-> an active/passive system, and the second path is showing a ghost LUN 0
-> (this is expected).
+	Not in front of it right now, I'll let you know when I find out
+:-)
+>
+> (kpartx supposedly is run against the dm-multipath table and not against
+> sdap, so it should already benefit from the multipath protection...)
 
-"WFM". I actually tested the SP2 code on a CLARiiON, it's my development
-box ;-) The version of multipath-tools on SLES9 SP2 is not quite 0.4.4
-from upstream, though, but with some fixes pulled in.
+	This kpartx is run against dm-16 (on the particular boot I
+remember), which was the dm on top of the ghost device.
+ 
+> "sg_inq -P /dev/sdap" might also be worth a try, what does it report for
+> the various paths?
 
-Have you seen
-http://portal.suse.com/sdb/en/2005/04/sles_multipathing.html ?
+	Again, have to check tomorrow.
 
-> 	During normal boot, the device (/dev/sdap) returns an I/O error
-> when the kernel tries to get the partition table.  No problem.  If late=
-r
-> someone scans the disk, they get an I/O error.  No problem.
+> Is that a LUN 0 backed by actual storage or a LUN_Z?
 
-Yeah, this is ugly and annoying, but harmless.
+	I don't quite know what you mean by LUN_Z.  My EMC guy says it
+is a "ghost" projected because the second SP owns no disks, but SCSI
+requires a LUN 0 to be scannable.
 
-> 	Then I fire up multipathd and multipath.  Multipath creates a dm
-> device for the ghost, and tries to run kpartx on it.  That kpartx hangs=
-.
-> In fact, I don't know how, but it ends up in a frozen I/O state.  It's
-> unkillable.
+Joel
 
-That should not happen(tm). Where does it hang according to sysrq-t?
+-- 
 
-(kpartx supposedly is run against the dm-multipath table and not against
-sdap, so it should already benefit from the multipath protection...)
+"A narcissist is someone better looking than you are."  
+         - Gore Vidal
 
-"sg_inq -P /dev/sdap" might also be worth a try, what does it report for
-the various paths?
-
-Is that a LUN 0 backed by actual storage or a LUN_Z?
-
-
-Sincerely,
-    Lars Marowsky-Br=E9e <lmb@suse.de>
-
---=20
-High Availability & Clustering
-SUSE Labs, Research and Development
-SUSE LINUX Products GmbH - A Novell Business	 -- Charles Darwin
-"Ignorance more frequently begets confidence than does knowledge"
+Joel Becker
+Senior Member of Technical Staff
+Oracle
+E-mail: joel.becker@oracle.com
+Phone: (650) 506-8127
