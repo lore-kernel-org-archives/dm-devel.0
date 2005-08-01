@@ -1,14 +1,12 @@
-From: "Thomas S. Iversen" <zensonic@zensonic.dk>
-Subject: sectorsize and boundary in device mapper
-Date: Mon, 1 Aug 2005 12:34:15 +0200
-Message-ID: <200508011234.15846.zensonic@zensonic.dk>
+From: Taavi Ilves <ilvez@ut.ee>
+Subject: Writing basic functions using libdevmapper.h
+Date: Mon, 01 Aug 2005 17:47:34 +0300
+Message-ID: <42EE3606.8030003@ut.ee>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,27 +19,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi there
+Hi!
 
-I have ported GBDE (Geom Based Block Device encryption) from freebsd to 
-devicemapper under linux.
+I'm a quite C newbie, but for my school-project I need something to be 
+done with device-mapper.
 
-GBDE has a unique key pr. softsector. The size of a softsector can be either 
-512, 1024, 2048 or 4096. dmbde currently supports a softsector size of 512. 
-It doesn't support 1024, 2048 and  4096 as I do not know how to program my 
-dm-plugin so that it requires BIOs on 1024, 2048 and 4096 boundries and with 
-these sizes. Eg. emulate that my dmbde devices are block devices with at 
-different hardsect size that 512.
+Problem is quite simple: I have a device-mapper device ( in /dev/mapper 
+) and I must find out which loop ( or actually whatever ) device is 
+behind that mapper-device device.
 
-Any clues? I investigated split_io with a chunksize, but couldn't figure out 
-if it would work, or if split_io just sets a max size on the BIOs presented 
-to the dm-plugins. If its only an upper limit it won't work, it has to be a 
-firm limit; otherwise I have to satisfy requests where I have to fetch a 
-whole softsector, decrypt it all, and only return a partial result. Not the 
-right way to go IMHO.
+Example: status output with cryptsetup
 
-Any help appriciated. 
+# cryptsetup status /dev/mapper/secret10
+/dev/mapper//dev/mapper/secret10 is active:
+   cipher:  aes-cbc-plain
+   keysize: 256 bits
+   device:  /dev/loop/1
+   offset:  0 sectors
+   size:    917 sectors
+   mode:    read/write
 
-Regards Thomas, Denmark
--- 
-Bills travel through the mail at twice the speed of checks
+This device field is what I'm looking for. I have looked into dm-setup 
+and cryptsetup too, where libdevmapper.h is being used to get such 
+information, but those applications were quite advance for me to study.
+
+So I seek documentation and maybe some simple examples to learn how to 
+use libdevmapper.h . I don't need full source-code solution for my 
+problem, but still I welcome anything that leads to the solution. Thanks 
+ahead!
+
+Best wishes,
+Taavi Ilves
