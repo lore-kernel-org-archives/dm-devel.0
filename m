@@ -1,14 +1,14 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: Re: mirror patches - device failure detection/race
-	fix/deadlock fix
-Date: Tue, 2 Aug 2005 16:04:28 -0500
-Message-ID: <23dfce5ae45001c2cd544b7160621bb6@redhat.com>
-References: <278411eef6c06676d89c4ab5530cde8e@redhat.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: RE: dm-devel Digest, Vol 18, Issue 2
+Date: Tue, 02 Aug 2005 22:27:09 +0200
+Message-ID: <1123014429.20148.3.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB99@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v622)
-Content-Type: multipart/mixed; boundary=Apple-Mail-8-828064171
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <278411eef6c06676d89c4ab5530cde8e@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB99@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,94 +21,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On mar, 2005-08-02 at 15:07 -0400, goggin, edward wrote:
+> On Tue, 02 Aug 2005 09:37:14 -0500
+> "Christopher C. Weis" <ccweis@gmail.com> wrote
+> 
+> > I have a multipath SAN environment with storage controllers that are
+> > active/active.  However, the controllers are not active/active at the
+> > LUN-level without a performance penalty, meaning if two 
+> > servers want to
+> > see the same LUN (as in a clustered filesystem environment), they both
+> > need to be using the same controller.  I'm trying to figure 
+> > out a way to
+> > statically "order" the paths so that I can copy a config to all of the
+> > nodes using the CFS.
+> > 
+> > >From what I've read, in a single-server environment with controllers
+> > such as the ones I'm dealing with, the path_grouping_policy should be
+> > set to "group_by_serial", which should work fine, but in a clustered
+> > environment, I need to be sure that the path ordering is the same.
+> > 
+> > Are there any path_selectors, other than round-robin, that might
+> > accomplish this?  Any other ideas?
+> > 
+> 
+> One was is to configure each multipath to have two groups with one group
+> having a higher priority than the other based on whether the path accesses
+> the fast path controller.  The assignment of the highest priority path group
+> is non deterministic when using the "group_by_serial" path grouping policy.
+> 
+> Seems like you want to use the "group_by_priority" path grouping policy and
+> create and get_priority executable which when invoked will return a 1 for
+> fast path and 0 for slow path.  See the code for mpath_prio_emc, the
+> get_priority executable for the EMC CLARiiON array in
+> multipath-tools/path_priority/pp_emc/pp_emc.c.
+> 
+Yes, also note "group_by_priority" path grouping policy may be overkill
+for the context. PG produced by "group_by_serial" can be sorted with an
+adequate prioritizer too.
 
---Apple-Mail-8-828064171
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain;
-	charset=US-ASCII;
-	delsp=yes;
-	format=flowed
-
-On Aug 2, 2005, at 11:00 AM, Jonathan E Brassow wrote:
-
-> The first 4 patches (0000[1234].patch) are the device failure  
-> detection patches.  They've been cleaned up a bit from the last time  
-> they were posted.
->
-> The 'race.patch' fixes a couple race conditions that were a result of  
-> the __rh_alloc() function releasing and regrabbing a lock when called.
->
-> The 'deadlock.patch' switches all spin_lock calls on the region_lock  
-> to spin_lock_irqsave.  Without this patch you machine will hang.
->
-> The patches apply in the order described, and should apply to kernels  
-> 2.6.12 - 2.6.13-rc5.
->
-> I've made them all attachments to this e-mail.  If people don't like  
-> it this way, let me know, and I'll do it lkml style.
->
->  brassow
->
-> <00001.patch><00002.patch><00003.patch><00004.patch><race.patch><deadlo 
-> ck.patch>--
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-
-I'm an idiot.  :)
-
-The 0000[1234].patch files remain unchanged, but you can forget about  
-the race & deadlock patch files.  For fixes to those problems, try this  
-new race patch.
-
-QA has confirmed that this patch has at least taken care of the  
-problems I was trying to address with the other patches...
-
-  brassow
-
-
---Apple-Mail-8-828064171
-Content-Transfer-Encoding: 7bit
-Content-Type: application/octet-stream; x-unix-mode=0664; name="race2.patch"
-Content-Disposition: attachment;
-	filename=race2.patch
-
-diff -purN linux-2.6.13-rc5-04/drivers/md/dm-raid1.c linux-2.6.13-rc5-05/drivers/md/dm-raid1.c
---- linux-2.6.13-rc5-04/drivers/md/dm-raid1.c	2005-08-02 15:31:27.590377441 -0500
-+++ linux-2.6.13-rc5-05/drivers/md/dm-raid1.c	2005-08-02 15:20:22.331704140 -0500
-@@ -1563,7 +1563,7 @@ static int __init dm_mirror_init(void)
- 	if (r)
- 		return r;
- 
--	_kmirrord_wq = create_workqueue("kmirrord");
-+	_kmirrord_wq = create_singlethread_workqueue("kmirrord");
- 	if (!_kmirrord_wq) {
- 		DMERR("couldn't start kmirrord");
- 		dm_dirty_log_exit();
-@@ -1571,7 +1571,7 @@ static int __init dm_mirror_init(void)
- 	}
- 	INIT_WORK(&_kmirrord_work, do_work, NULL);
- 
--	_kmir_mon_wq = create_workqueue("kmir_mon");
-+	_kmir_mon_wq = create_singlethread_workqueue("kmir_mon");
- 	if (!_kmir_mon_wq) {
- 		DMERR("couldn't start kmir_mon");
- 		dm_dirty_log_exit();
-
---Apple-Mail-8-828064171
-Content-Transfer-Encoding: 7bit
-Content-Type: text/plain;
-	charset=US-ASCII;
-	format=flowed
-
-
-
---Apple-Mail-8-828064171
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---Apple-Mail-8-828064171--
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
