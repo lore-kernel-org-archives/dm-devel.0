@@ -1,10 +1,10 @@
-From: Taavi Ilves <ilvez@ut.ee>
-Subject: Writing basic functions using libdevmapper.h
-Date: Mon, 01 Aug 2005 17:47:34 +0300
-Message-ID: <42EE3606.8030003@ut.ee>
+From: "Christopher C. Weis" <ccweis@gmail.com>
+Subject: multipath configuration questions
+Date: Tue, 02 Aug 2005 09:37:14 -0500
+Message-ID: <42EF851A.20108@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,34 +19,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi!
+Hello.  I don't know if this is the proper place to post this, so please
+point me to the correct list if it isn't.
 
-I'm a quite C newbie, but for my school-project I need something to be 
-done with device-mapper.
+I have a multipath SAN environment with storage controllers that are
+active/active.  However, the controllers are not active/active at the
+LUN-level without a performance penalty, meaning if two servers want to
+see the same LUN (as in a clustered filesystem environment), they both
+need to be using the same controller.  I'm trying to figure out a way to
+statically "order" the paths so that I can copy a config to all of the
+nodes using the CFS.
 
-Problem is quite simple: I have a device-mapper device ( in /dev/mapper 
-) and I must find out which loop ( or actually whatever ) device is 
-behind that mapper-device device.
+From what I've read, in a single-server environment with controllers
+such as the ones I'm dealing with, the path_grouping_policy should be
+set to "group_by_serial", which should work fine, but in a clustered
+environment, I need to be sure that the path ordering is the same.
 
-Example: status output with cryptsetup
+Are there any path_selectors, other than round-robin, that might
+accomplish this?  Any other ideas?
 
-# cryptsetup status /dev/mapper/secret10
-/dev/mapper//dev/mapper/secret10 is active:
-   cipher:  aes-cbc-plain
-   keysize: 256 bits
-   device:  /dev/loop/1
-   offset:  0 sectors
-   size:    917 sectors
-   mode:    read/write
+Thanks.  I appreciate any information that can be offered.
 
-This device field is what I'm looking for. I have looked into dm-setup 
-and cryptsetup too, where libdevmapper.h is being used to get such 
-information, but those applications were quite advance for me to study.
-
-So I seek documentation and maybe some simple examples to learn how to 
-use libdevmapper.h . I don't need full source-code solution for my 
-problem, but still I welcome anything that leads to the solution. Thanks 
-ahead!
-
-Best wishes,
-Taavi Ilves
+~Chris
