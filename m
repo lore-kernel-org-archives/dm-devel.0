@@ -1,12 +1,14 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: [Bug 164617] extracting tar image causes paths sta
-	te	change to [ready][failed]
-Date: Tue, 2 Aug 2005 16:12:43 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB9C@SRMANNING.eng.emc.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: RE: Missing DM event ?
+Date: Tue, 02 Aug 2005 22:45:59 +0200
+Message-ID: <1123015559.20148.15.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB9B@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB9B@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,46 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 29 Jul 2005 15:35:25 +0200
-christophe varoqui <christophe.varoqui@free.fr> wrote
-> Subject: [dm-devel] [Bug 164617] extracting tar image causes paths
-> 	state	change to [ready][failed]
-> To: narasimha.murthy@hp.com
-> Cc: device-mapper development <dm-devel@redhat.com>
-> Message-ID: <1122644125.3569.37.camel@zezette>
-> Content-Type: text/plain
+On mar, 2005-08-02 at 15:37 -0400, goggin, edward wrote:
+> On Thu, 28 Jul 2005 16:25:33 +0200
+> Christophe Varoqui <christophe.varoqui@free.fr> wrote
 > 
-> Will provide the following additional info :
+> > I played with the "rename" multipath feature in 
+> > /sbin/multipath and noticed it doesn't trigger a DM event to 
+> > the old devmap listeners. Which is quite annoying if we want 
+> > the daemon to rely on this event to catch a rename initiated 
+> > by /sbin/multipath.
+> > 
+> > Don't know if it is expected behaviour ...
+> > Anyway, I finaly went the easy way and did the thing with a 
+> > remove/add sequence.
 > 
-> Was the daemon runing ?
-> If so paste a verbose daemon log.
-> Paste a dmesg too.
+> I missed this when I submitted the patch for the dmsetup remove
+> and remove_all subcommands.  This is definitely a problem since
+> the device-mapper user space utilities like multipath use the
+> dm device name to identify a particular mapped device.
+>   
+> I think the fix is for dm_hash_rename to be calling dm_table_event.
+> I don't have a working host now so I can't include a tested patch.
+> I will later this week.
+> 
+> Do you want to change multipathd to recognize that a simple name
+> change occurred to a map for which it already knows about or simply
+> have it do an implicit remove/add sequence as I suspect it is already
+> doing in this case?
+> 
+I was close to handle the rename events in the daemon when I realised
+the events weren't delivered, so it might be doable. But franckly, I was
+just toying with the idea, as I'm still not sure how we should
+"socially" handle alias changing ...
 
-Talking with Narasimha on the weekly multipathing conference call,
-it seems this problem only occurs when a second multipath mapped
-device is manually created via dmsetup to utilize the SAME paths
-as a multipath mapped device already configured by multipath(8).
+Indeed, "map rename" is not an operation we should ease as it may have
+subtle side-effects (for one, what about mounted FS). Or should we ?
 
-Seems to me that neither multipath nor multipathd will react well
-to this configuration since there is but a single path data structure
-for each physical path and each path structure has but a single link
-to its multipath data structure.
+For now I feel rather safe with the add/remove sequence, but have no
+strong feelings.
 
-It also seems that the kernel dm code should not be allowing this to
-happen, that is, a target device should not be used as a target of
-more than a single device-mapper mapped device.
-
-Target devices are claimed for use by but a single exclusive open via
-a call to bd_claim in open_dev, but the device-mapper uses the same
-claim holder value for all target devices -- thereby allowing the same
-device to be a target device of multiple mapped devices.
-
-A possible fix here is to use a claim holder value (ptr to mapped
-device possibly) which is unique for each mapped device -- thereby
-causing an attempt to create a mapped device using a target device
-of an already existing mapped device to fail.
-
-I can experiment with this and get a patch as soon as I have a host to use.
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
