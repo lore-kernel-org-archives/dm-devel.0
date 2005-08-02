@@ -1,14 +1,14 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: RE: Missing DM event ?
-Date: Tue, 02 Aug 2005 22:45:59 +0200
-Message-ID: <1123015559.20148.15.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321AB9B@SRMANNING.eng.emc.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [patch] dm-raid1.c  a race bug in rh_dec()
+Date: Tue, 2 Aug 2005 21:49:25 +0100
+Message-ID: <20050802204925.GE5224@agk.surrey.redhat.com>
+References: <004e01c5723e$3ba3da60$1f000064@polaris>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AB9B@SRMANNING.eng.emc.com>
+Content-Disposition: inline
+In-Reply-To: <004e01c5723e$3ba3da60$1f000064@polaris>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,45 +21,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mar, 2005-08-02 at 15:37 -0400, goggin, edward wrote:
-> On Thu, 28 Jul 2005 16:25:33 +0200
-> Christophe Varoqui <christophe.varoqui@free.fr> wrote
-> 
-> > I played with the "rename" multipath feature in 
-> > /sbin/multipath and noticed it doesn't trigger a DM event to 
-> > the old devmap listeners. Which is quite annoying if we want 
-> > the daemon to rely on this event to catch a rename initiated 
-> > by /sbin/multipath.
-> > 
-> > Don't know if it is expected behaviour ...
-> > Anyway, I finaly went the easy way and did the thing with a 
-> > remove/add sequence.
-> 
-> I missed this when I submitted the patch for the dmsetup remove
-> and remove_all subcommands.  This is definitely a problem since
-> the device-mapper user space utilities like multipath use the
-> dm device name to identify a particular mapped device.
->   
-> I think the fix is for dm_hash_rename to be calling dm_table_event.
-> I don't have a working host now so I can't include a tested patch.
-> I will later this week.
-> 
-> Do you want to change multipathd to recognize that a simple name
-> change occurred to a map for which it already knows about or simply
-> have it do an implicit remove/add sequence as I suspect it is already
-> doing in this case?
-> 
-I was close to handle the rename events in the daemon when I realised
-the events weren't delivered, so it might be doable. But franckly, I was
-just toying with the idea, as I'm still not sure how we should
-"socially" handle alias changing ...
+On Thu, Jun 16, 2005 at 02:40:05PM +0800, Zhao Qian wrote:
+> patch here to avoid race condition:
+ 
+And further analysis turns up several more races too.
 
-Indeed, "map rename" is not an operation we should ease as it may have
-subtle side-effects (for one, what about mounted FS). Or should we ?
+But how many are left after applying the following patch?
 
-For now I feel rather safe with the add/remove sequence, but have no
-strong feelings.
+Alasdair
 
-Regards,
--- 
-christophe varoqui <christophe.varoqui@free.fr>
+--- linux-2.6.9/drivers/md/dm-raid1.c	2005-07-08 22:05:19.000000000 +0100
++++ linux-2.6.9-test/drivers/md/dm-raid1.c	2005-08-02 21:44:32.000000000 +0100
+@@ -1229,7 +1230,7 @@ static int __init dm_mirror_init(void)
+ 	if (r)
+ 		return r;
+ 
+-	_kmirrord_wq = create_workqueue("kmirrord");
++	_kmirrord_wq = create_singlethread_workqueue("kmirrord");
+ 	if (!_kmirrord_wq) {
+ 		DMERR("couldn't start kmirrord");
+ 		dm_dirty_log_exit();
