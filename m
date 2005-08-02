@@ -1,7 +1,7 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: dm-devel Digest, Vol 18, Issue 2
-Date: Tue, 2 Aug 2005 15:07:14 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB99@SRMANNING.eng.emc.com>
+Subject: mptools output
+Date: Tue, 2 Aug 2005 15:15:48 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AB9A@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -18,35 +18,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 02 Aug 2005 09:37:14 -0500
-"Christopher C. Weis" <ccweis@gmail.com> wrote
+On Tue, 26 Jul 2005 16:35:57 +0200
+Lars Marowsky-Bree <lmb@suse.de> wrote
 
-> I have a multipath SAN environment with storage controllers that are
-> active/active.  However, the controllers are not active/active at the
-> LUN-level without a performance penalty, meaning if two 
-> servers want to
-> see the same LUN (as in a clustered filesystem environment), they both
-> need to be using the same controller.  I'm trying to figure 
-> out a way to
-> statically "order" the paths so that I can copy a config to all of the
-> nodes using the CFS.
+> On 2005-07-26T16:29:24, Christophe Varoqui 
+> <christophe.varoqui@free.fr> wrote:
 > 
-> >From what I've read, in a single-server environment with controllers
-> such as the ones I'm dealing with, the path_grouping_policy should be
-> set to "group_by_serial", which should work fine, but in a clustered
-> environment, I need to be sure that the path ordering is the same.
+> > I find it easier to eye-parse that way, but maybe others 
+> don't agree.
 > 
-> Are there any path_selectors, other than round-robin, that might
-> accomplish this?  Any other ideas?
-> 
+> Actually I like the old format quite a bit better and find it 
+> much more
+> readable.
 
-One was is to configure each multipath to have two groups with one group
-having a higher priority than the other based on whether the path accesses
-the fast path controller.  The assignment of the highest priority path group
-is non deterministic when using the "group_by_serial" path grouping policy.
-
-Seems like you want to use the "group_by_priority" path grouping policy and
-create and get_priority executable which when invoked will return a 1 for
-fast path and 0 for slow path.  See the code for mpath_prio_emc, the
-get_priority executable for the EMC CLARiiON array in
-multipath-tools/path_priority/pp_emc/pp_emc.c.
+I agree with Lars on both points.
