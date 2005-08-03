@@ -1,15 +1,17 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: Re: Re: mirroring: [patch 1 of 6] device failure tolerance
-Date: Wed, 3 Aug 2005 13:48:11 -0500
-Message-ID: <e40538a1400cf18abec4993361441c00@redhat.com>
-References: <9c5e9901e6e1e5f064cd64a5b855b503@redhat.com>
-	<loom.20050803T173749-127@post.gmane.org>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: RE: dm-devel Digest, Vol 18, Issue 2
+Date: Wed, 03 Aug 2005 20:53:44 +0200
+Message-ID: <1123095225.21778.45.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AB99@SRMANNING.eng.emc.com>
+	<1123014429.20148.3.camel@zezette>
+	<d6dcfcc90508021449d4de066@mail.gmail.com>
+	<d6dcfcc90508022001702e46c9@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v622)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+Mime-Version: 1.0
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <loom.20050803T173749-127@post.gmane.org>
+In-Reply-To: <d6dcfcc90508022001702e46c9@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,32 +24,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-You're welcome to try them.  However, the user-space compliment for 
-handling device failures is not there yet.  You should be able to test 
-read balancing though.
 
-Please make sure you have the latest patches.  See:
-http://www.redhat.com/archives/dm-devel/2005-August/msg00006.html
-and
-http://www.redhat.com/archives/dm-devel/2005-August/msg00018.html
+>                 
+>         
+>         
+>         Does this mean that "group_by_serial" utilizes a
+>         "default_prio_callout" program/script as well, or is there
+>         another callout (or something totally different that I'm
+>         missing)?
+> 
+> I've verified that by writing my own "default_prio_callout" script I
+> can achieve what I want with both the "group_by_priority" and
+> "failover" policies.  Once I get done testing/tweaking the script,
+> I'll post it in case anyone else wants it.
+> 
+> I can't seem to make group_by_serial work, although I'm not sure I
+> understand this policy very well.  It sounds like it's supposed to
+> make all paths that go to a particular controller (serial?) be in the
+> same priority group.  For me, it's no different than multibus.
+> Probably my misunderstanding, so I'm open to any suggestions...
+> 
+"/sbin/multipath -v4" will verbosely show you the path discovery phase,
+including the discovered serials.
 
-  brassow
+May be you'll understand better what happens with your hardware.
 
-On Aug 3, 2005, at 10:50 AM, Dick wrote:
-
-> I'm really happy someone (Jonathan E Brassow) is working on this part 
-> of
-> device-mapper. I'd like to know if I can 'safely' try these patches, 
-> or will it
-> most likely nuke my data? I'm especially interested in the read 
-> balancing
-> updates with raid-1.
->
-> Greetings,
-> Dick
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
