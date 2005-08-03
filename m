@@ -1,10 +1,12 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: path priority
-Date: Wed, 3 Aug 2005 12:19:28 -0400
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ABA8@SRMANNING.eng.emc.com>
+From: Dick <dm@chello.nl>
+Subject: Re: mirroring: [patch 1 of 6] device failure tolerance
+Date: Wed, 3 Aug 2005 15:50:06 +0000 (UTC)
+Message-ID: <loom.20050803T173749-127@post.gmane.org>
+References: <9c5e9901e6e1e5f064cd64a5b855b503@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,19 +17,13 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 02 Aug 2005 22:27:09 +0200
-christophe varoqui <christophe.varoqui@free.fr> wrote
+I'm really happy someone (Jonathan E Brassow) is working on this part of
+device-mapper. I'd like to know if I can 'safely' try these patches, or will it
+most likely nuke my data? I'm especially interested in the read balancing
+updates with raid-1.
 
-> Yes, also note "group_by_priority" path grouping policy may 
-> be overkill
-> for the context. PG produced by "group_by_serial" can be 
-> sorted with an
-> adequate prioritizer too.
-
-Yeah, I forgot about the fact that the get_priority callout
-can be used to determine the highest priority path group to
-use for all of the path grouping policies ... not just the
-group_by_priority one.
+Greetings,
+Dick
