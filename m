@@ -1,15 +1,12 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: RE: regarding DM device for a single path.
-Date: Sun, 07 Aug 2005 00:18:16 +0200
-Message-ID: <1123366696.21778.71.camel@zezette>
-References: <E8C532D801BE5B479B28B626184E8CDD07C7F2FB@tayexc14.americas.cpqcorp.net>
-	<1123264699.21778.57.camel@zezette>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: in favor of multipath display of both active and best
+	path groups
+Date: Wed, 10 Aug 2005 17:33:35 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ABC3@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1123264699.21778.57.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,33 +16,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On ven, 2005-08-05 at 19:58 +0200, christophe varoqui wrote:
-> =20
-> >=20
-> >      1. I tested your latest user space tools with 2.6.9-11.41 kernel=
-.
-> >         Used the default created devices for multipathing. The path
-> >         status is getting updated appropriately for HSV200 arrays.
-> >          However the failback functionality is not working for me. I
-> >         have configure value for =E2=80=9Cfailback=E2=80=9D variable
-> >         in /etc/multipath.conf as zero for immediate failback, but
-> >         when the failed path in the original path group comes back
-> >         online, the IO is not failed back the old pathgroup.
-> >=20
-> I'll look into that when I return from vacation in 2 weeks.
-> I think I'll have the appropriate HW at hand.
-> =20
-Well, preparing my laptop for vacation, I took the time to verify that :
+I am in favor of the multipath display distinguishing between
+the highest priority path group and the currently active one,
+similar to what we had when the multipath display would show
+both "best" and "active" path groups respectively.  I do not think
+the dual display is necessarily redundant.
 
-1) /sbin/multipath works with usb keys (modulo a brain-dead
-getuid_callout like "/bin/echo myonlykey") :/
+These two attributes can differ if path group failback is not enabled
+and one of the non-highest priority path groups has been made
+the active path group either due to IO failure on all paths of the
+highest priority path group or as a result of a path group reassignment
+operation done external to the host in question, (that is, by
+either a SAN utility or another node in a multi-node cluster).
 
-2) single path maps effectivelly get created
-
-Leaving for 2 weeks now.
-Regards,
---=20
-christophe varoqui <christophe.varoqui@free.fr>
+Having this capability to see that the active path group is different
+than the highest priority path group for a significant number of block
+devices can provide incentive for customers to enable path group
+failback for the block devices in question.
