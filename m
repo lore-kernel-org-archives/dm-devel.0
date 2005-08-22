@@ -1,16 +1,13 @@
-From: Alan Kasindorf <akasindorf@mail.communityconnect.com>
-Subject: Re: multipath-tools-0.4.4 on 3par unknown path failure
-	issue
-Date: Wed, 17 Aug 2005 16:25:15 -0400
-Message-ID: <43039D2B.4060506@mail.communityconnect.com>
-References: <42FA7674.4070201@mail.communityconnect.com>	<20050811195540.GA16665@thumper2>	<42FBB2CC.2040508@mail.communityconnect.com>	<4303923E.1000606@mail.communityconnect.com>
-	<20050817200821.GA28881@www.ewilts.org>
+From: "Mallikarjuna C" <Mallikarjuna_C@mindtree.com>
+Subject: How to mount initrd file?
+Date: Mon, 22 Aug 2005 19:02:24 +0530
+Message-ID: <5959EA4638D8734599AB75EAAFBB6FEF04AFA858@mtv01ex04.mindtree.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed;
+	boundary="----=_NextPart_000_2E5E7_01C5A74C.07EF3F00"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050817200821.GA28881@www.ewilts.org>
+content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,38 +17,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
-> The current Red Hat qlogic driver doesn't support most of the adjustable
-> parameters.  However, the one you can download from qlogic does.  Red
-> Hat will include this driver in its next release (beta in about a week,
-> production in mid-September).  In addition, Red Hat will support
-> multipathing to at least same level as what SuSe supports today:
-> http://portal.suse.com/sdb/en/2005/04/sles_multipathing.html
+------=_NextPart_000_2E5E7_01C5A74C.07EF3F00
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-I haven't used a QLogic driver with those tunables, and the ones shown 
-to me via `modinfo qla2xxx` have been sufficient for fixing most of our 
-latency related problems. I don't believe any of these tunables will be 
-able to fix this problem though. Both paths go down in the same second, 
-so there is no way to support the device. On that note however, I assume 
-the U2 release will have both the mpath driver and the QLogic driver 
-updated?
+		Hello,
+		=09
+			I am trying to mount /boot/initrd-2.6X file using a
+loop back device. I am facing the following problem.
 
-> Red Hat is just a bit behind, but if you really need this in production,
-> I'd suggest you contact your support and/or sales rep to ask them to
-> support you with the beta release.  How much luck you'll have, I don't
-> know.
+		Steps which I have executed:
 
-All I really care about is getting a workaround, or getting a redhat 
-kernel which is at least on par with a stable vanilla release of Linux. 
-Having consistently subpar stable releases of redhat software, and 
-absolutely no option to bring it up to the quality of a stable Linux 
-release is possibly going to result us in switching our contracts at 
-this point. I have contacted support, and am still waiting for some kind 
-of response. Last time we talked with them about multipath support, they 
-said to wait for U1 then it'd be good. Now we get to start over? :)
+1.	cp /boot/initrd-2.6.11-1.1369_FC4.img /tmp
+2.	mkdir /tmp/init
+3.	cd /tmp
+4.	mv /boot/initrd-2.6.11-1.1369_FC4.img
+/boot/initrd-2.6.11-1.1369_FC4.img.gz
+5.	gunzip /boot/initrd-2.6.11-1.1369_FC4.img.gz
+6.	mount /boot/initrd-2.6.11-1.1369_FC4.img /tmp/init -o loop
 
-Thanks,
--Alan
+		For this mount I am getting error saying
+			ioctl: LOOP_CLR_FD: Device or resource busy
+			mount: you must specify the filesystem type
+
+		I am using Fedora Core 4.
+
+		What may be the problem?
+
+		Thanks and regards,=20
+		Mallikarjuna C
+	=09
+
+------=_NextPart_000_2E5E7_01C5A74C.07EF3F00
+Content-Type: text/plain;
+	name="disclaimer.txt"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+	filename="disclaimer.txt"
+
+-------------------------------------------------------------------------=
+----------------------------------------------------
+Disclaimer
+-------------------------------------------------------------------------=
+----------------------------------------------------
+
+"This message(including attachment if any)is confidential and may be =
+privileged.Before opening attachments please check them
+for viruses and defects.MindTree Consulting Private Limited =
+(MindTree)will not be responsible for any viruses or defects or
+any forwarded attachments emanating either from within MindTree or =
+outside.If you have received this message by mistake please notify the =
+sender by return  e-mail and delete this message from your system. Any =
+unauthorized use or dissemination of this message in whole or in part is =
+strictly prohibited.  Please note that e-mails are susceptible to change =
+and MindTree shall not be liable for any improper, untimely or =
+incomplete transmission."
+
+-------------------------------------------------------------------------=
+----------------------------------------------------
+------=_NextPart_000_2E5E7_01C5A74C.07EF3F00
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------=_NextPart_000_2E5E7_01C5A74C.07EF3F00--
