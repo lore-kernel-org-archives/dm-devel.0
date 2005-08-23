@@ -1,14 +1,14 @@
-From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Subject: Re: Path updation while controller is rebooted.
-Date: Tue, 23 Aug 2005 19:48:15 +0530
-Message-ID: <3456F611E9329441B12FBB24447B3FA0028AF9C7@bgeexc01.asiapacific.cpqcorp.net>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: directio path-checker for multipath-tools
+Date: Wed, 24 Aug 2005 00:40:18 +0200
+Message-ID: <1124836819.6937.39.camel@zezette>
+References: <42FB6447.8000105@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <42FB6447.8000105@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,34 +21,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Yes, I am using an active active configuration.  All the paths are
-displayed as [ready][failed] or [faulty][active].  Once the controller
-comes back online, the subsequent path verification updates the status
-properly.
+Sorry I didn't reply earlier.
+
+Nice work.
+
++       buf = (unsigned char *)malloc(blksize + pgsize);
++       if (!buf){
++               goto out;
++       }
+
+Don't you want to use an oversized buffer instead of malloc'ing in this
+code path ?
 
 
- From: Ed Wilts <ewilts ewilts org>=20
-* To: device-mapper development <dm-devel redhat com>=20
-* Subject: Re: [dm-devel] Path updation while controller is rebooted.=20
-* Date: Wed, 17 Aug 2005 12:21:07 -0500=20
 
-On Wed, Aug 17, 2005 at 08:54:17PM +0530, Murthy, Narasimha Doraswamy
-(STSD) wrote:
-> With latest RHEL 4 DM modules and user space tools, when the Storage
-> controller is rebooted and if "multipath -ll" is executed, the command
-> is hung for a while (because of retries) and outputs the following
-> status:
 
-Which SAN controllers are you using?  Are they active/active (like an
-EVA8000) or active/passive (like an EVA5000)?
-
-If they're active/passive, then the dm stuff isn't supported yet.
-That's coming in U2.
-
-        .../Ed
-
---
-Ed Wilts, RHCE
-Mounds View, MN, USA
-mailto:ewilts ewilts org
-Member #1, Red Hat Community Ambassador Program
+On jeu, 2005-08-11 at 16:44 +0200, Hannes Reinecke wrote:
+> Hi Christophe,
+> 
+> I've implemented yet another path checker, based on O_DIRECT.
+> Rationale: On S/390 it's possible to activate multipath support for DASD
+> devices (called Parallel Access Volume (PAV)). As these are no SCSI
+> devices the readsector0 path checker wouldn't work.
+> And as this checker is quite generic it'll work for just about anybody.
+> 
+> Cheers,
+> 
+> Hannes
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
