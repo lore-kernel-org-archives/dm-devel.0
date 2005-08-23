@@ -1,7 +1,7 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
 Subject: Re: directio path-checker for multipath-tools
-Date: Wed, 24 Aug 2005 00:40:18 +0200
-Message-ID: <1124836819.6937.39.camel@zezette>
+Date: Wed, 24 Aug 2005 00:48:54 +0200
+Message-ID: <1124837334.6937.42.camel@zezette>
 References: <42FB6447.8000105@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,20 +21,10 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Sorry I didn't reply earlier.
+And may I safely cast to (unsigned char *) instead of (char *) at
+directio.c::137 ? There is a compilation warning there as is.
 
-Nice work.
-
-+       buf = (unsigned char *)malloc(blksize + pgsize);
-+       if (!buf){
-+               goto out;
-+       }
-
-Don't you want to use an oversized buffer instead of malloc'ing in this
-code path ?
-
-
-
+Regards,
 
 On jeu, 2005-08-11 at 16:44 +0200, Hannes Reinecke wrote:
 > Hi Christophe,
@@ -45,12 +35,6 @@ On jeu, 2005-08-11 at 16:44 +0200, Hannes Reinecke wrote:
 > devices the readsector0 path checker wouldn't work.
 > And as this checker is quite generic it'll work for just about anybody.
 > 
-> Cheers,
-> 
-> Hannes
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+
 -- 
 christophe varoqui <christophe.varoqui@free.fr>
