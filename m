@@ -1,16 +1,15 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: cow snapshot on cloop device
-Date: Wed, 24 Aug 2005 08:58:56 -0500
-Message-ID: <200508241358.56758.kevcorry@us.ibm.com>
-References: <6262291505082404352d0a4dc2@mail.gmail.com>
+From: Patrick Mansfield <patmans@us.ibm.com>
+Subject: Re: [RFC PATCH 1/4] convert block layer drivers to
+	blkerr error values
+Date: Wed, 24 Aug 2005 12:21:32 -0700
+Message-ID: <20050824192132.GA20663@us.ibm.com>
+References: <1124874238.10888.18.camel@max>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6262291505082404352d0a4dc2@mail.gmail.com>
 Content-Disposition: inline
+In-Reply-To: <1124874238.10888.18.camel@max>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +19,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Jacob Broido <jacob.broido@gmail.com>
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: dm-devel@redhat.com, axboe@suse.de, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed August 24 2005 11:35 am, Jacob Broido wrote:
-> Hi,
-> I am trying to set a cow snapshot on a cloop device.
-> I managed to create a snapshot and mount it as read/write, but it appears
-> that the data inside the /cloop appears invalid:
->
-> Binary executables appear to be invalid, I perfomed diff between files on
-> snapshotted /dev/cloop, and the same files accessed directly through cloop.
->
-> The files were diffrent,
-> anyone has idea as to what can be the reason for this?
+On Wed, Aug 24, 2005 at 04:03:58AM -0500, Mike Christie wrote:
 
-Are you using LVM, EVMS, or dmsetup to create your snapshot? Please send in 
-the output from "dmsetup ls" and "dmsetup table", as well as the contents 
-of /proc/partitions and /proc/mounts, after you have activated and mounted 
-your snapshot.
+> -#define end_io_error(uptodate)	(unlikely((uptodate) <= 0))
+> +enum {
+> +	BLK_SUCCESS = 0,	/* Must be zero for compat with old usage */
+> +	BLKERR_IO,		/* Generic I/O error */
+> +	BLKERR_NOTSUPP,		/* Operation is not supported */
+> +	BLKERR_WOULDBLOCK,	/* Operation would block */
+> +	BLKERR_FATAL_DRV,	/* Fatal driver error */
+> +	BLKERR_FATAL_DEV,	/* Fatal device error */
+> +	BLKERR_FATAL_XPT,	/* Fatal transport error */
+> +	BLKERR_RETRY_DRV,	/* Driver error, I/O may be retried */
+> +	BLKERR_RETRY_DEV,	/* Device error, I/O may be retried */
+> +	BLKERR_RETRY_XPT,	/* Transport error, I/O may retried */
+> +};
 
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://www.ibm.com/linux/
-http://evms.sourceforge.net/
+Do you need to add and use a BLKERR_TIMEOUT? As we can't determine the
+problem area for a timeout, and if it can or should be retried.
+
+-- Patrick Mansfield
