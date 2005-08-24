@@ -1,12 +1,15 @@
 From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: [RFC PATCH 0/4] add new block layer error values
-Date: Wed, 24 Aug 2005 04:03:50 -0500
-Message-ID: <1124874230.10888.17.camel@max>
+Subject: Re: [RFC PATCH 1/4] convert block layer drivers to
+	blkerr error values
+Date: Wed, 24 Aug 2005 04:49:27 -0500
+Message-ID: <430C42A7.3040008@cs.wisc.edu>
+References: <1124874238.10888.18.camel@max>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1124874238.10888.18.camel@max>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,15 +19,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-scsi@vger.kernel.org, dm-devel@redhat.com, axboe@suse.de
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: dm-devel@redhat.com, axboe@suse.de, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-The current -Exyz errors are not descriptive enough to allow upper
-layers like DM and MD to decide how to handle IO errors. In many cases
-all we get is a -EIO. The following patches introduce block layer error
-values for use with the bio_endio and end_that_request* functions
-(end_request keeps uptodate).
+Mike Christie wrote:
+> @@ -1049,7 +1049,6 @@ static void pkt_start_write(struct pktcd
+>  	pkt->w_bio->bi_max_vecs = PACKET_MAX_SIZE;
+>  	pkt->w_bio->bi_sector = pkt->sector;
+>  	pkt->w_bio->bi_bdev = pd->bdev;
+> -	pkt->w_bio->bi_end_io = pkt_end_io_packet_write;
 
-This is just as a RFC I am still testing and working on them and am
-hoping to get some comments. All patches were made against the
-scsi-misc-2.6 tree.
+oops I messed up my git checkins and stuff. This was a accident.
