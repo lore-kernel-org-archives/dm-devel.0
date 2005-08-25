@@ -1,15 +1,12 @@
-From: Jacob Broido <jacob.broido@gmail.com>
-Subject: Fwd: cow snapshot on cloop device
-Date: Wed, 24 Aug 2005 19:01:21 +0200
-Message-ID: <6262291505082410015647272d@mail.gmail.com>
-References: <6262291505082404352d0a4dc2@mail.gmail.com>
-	<200508241358.56758.kevcorry@us.ibm.com>
-	<6262291505082410002ca214a9@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Martin Schlemmer <azarah@nosferatu.za.org>
+Subject: KLIBC support for device-mapper-1.01.04
+Date: Thu, 25 Aug 2005 23:27:52 +0200
+Message-ID: <1125005272.7187.49.camel@lycan.lan>
+Reply-To: azarah@nosferatu.za.org,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0714975048=="
+Content-Type: multipart/mixed; boundary="===============2046778739=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6262291505082410002ca214a9@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,209 +17,332 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: KLIBC Mailing List <klibc@zytor.com>, Christophe Varoqui <christophe.varoqui@free.fr>, Heinz Mauelshagen <mauelshagen@redhat.com>
 List-Id: dm-devel.ids
 
---===============0714975048==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_693_17149490.1124902881095"
 
-------=_Part_693_17149490.1124902881095
-Content-Type: text/plain; charset=ISO-8859-1
+
+--===============2046778739==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-1Bgn4B1QWchOOHZsZGKu"
+
+
+
+--=-1Bgn4B1QWchOOHZsZGKu
+Content-Type: multipart/mixed; boundary="=-lywufUQjP6/jnNWlIS8Y"
+
+
+--=-lywufUQjP6/jnNWlIS8Y
+Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
 
----------- Forwarded message ----------
-From: Jacob Broido <jacob.broido@gmail.com>
-Date: Aug 24, 2005 7:00 PM
-Subject: Re: [dm-devel] cow snapshot on cloop device
-To: Kevin Corry <kevcorry@us.ibm.com>
+Hi,
 
-I am using dmsetup directly. and I do the following:
-1) Create an empty file that will be used as cow backing storage
-2) losetup the backing file to /dev/loop0
-3) create a snapshot of main root_device on /dev/loop0
-4) mount the cow snapshot
+Some time back I sent a patch for KLIBC support for device-mapper, but
+no response so far.  I have however updated the patch.
+
+Comments and suggestions appreciated.
 
 
-Here is the info you requested:
-The kernel is a - 2.6.11.10 <http://2.6.11.10> + xen patch.
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D
-/ # dmsetup ls
-root_master (253, 0)
-root_cow0 (253, 1)
-/ # dmsetup table
-root_master: 0 4096128 linear 240:0 0=20
-root_cow0: 0 4096128 snapshot 253:0 7:0 P 8
-
-/ # cat /proc/partitions
-
-major minor #blocks name
-
-7 0 loop0
-8 0 sda
-8 1 sda1
-8 2 sda2
-8 3 sda3
-240 0 cloop0
-252 0 dm-0
-253 1 dm-1
-
-/ # cat /proc/mounts
-rootfs / rootfs rw 0 0
-/dev/root.old / ext2 rw 0 0
-/proc /proc proc rw,noadirtime 0 0
-/sys /sys sysfs rw 0 0
-/dev/hdc /cdrom iso9660 ro 0 0
-/ramdisk /ramdisk tmpfs rw 0 0
-/dev/mapper/root_cow0 /cow ext2 rw.noatime 0 0
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D
-
-On 8/24/05, Kevin Corry <kevcorry@us.ibm.com> wrote:=20
->=20
-> On Wed August 24 2005 11:35 am, Jacob Broido wrote:
-> > Hi,
-> > I am trying to set a cow snapshot on a cloop device.=20
-> > I managed to create a snapshot and mount it as read/write, but it=20
-> appears
-> > that the data inside the /cloop appears invalid:
-> >
-> > Binary executables appear to be invalid, I perfomed diff between files=
-=20
-> on=20
-> > snapshotted /dev/cloop, and the same files accessed directly through=20
-> cloop.
-> >
-> > The files were diffrent,
-> > anyone has idea as to what can be the reason for this?
->=20
-> Are you using LVM, EVMS, or dmsetup to create your snapshot? Please send=
-=20
-> in=20
-> the output from "dmsetup ls" and "dmsetup table", as well as the contents
-> of /proc/partitions and /proc/mounts, after you have activated and mounte=
-d
-> your snapshot.
->=20
-> --
-> Kevin Corry
-> kevcorry@us.ibm.com
-> http://www.ibm.com/linux/
-> http://evms.sourceforge.net/
->=20
-
-
+Regards,
 
 --=20
-Not gonna be king of the world if you're slave to the grind
-- Skid Row=20
+Martin Schlemmer
 
 
---=20
-Not gonna be king of the world if you're slave to the grind
-- Skid Row
+--=-lywufUQjP6/jnNWlIS8Y
+Content-Disposition: attachment; filename=device-mapper.1.01.04-klibc.patch
+Content-Type: text/x-patch; name=device-mapper.1.01.04-klibc.patch;
+	charset=UTF-8
+Content-Transfer-Encoding: base64
 
-------=_Part_693_17149490.1124902881095
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+ZGlmZiAtdXJwTiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQvYWNsb2NhbC5tNCBkZXZpY2UtbWFwcGVy
+LjEuMDEuMDQua2xpYmMvYWNsb2NhbC5tNA0KLS0tIGRldmljZS1tYXBwZXIuMS4wMS4wNC9hY2xv
+Y2FsLm00CTE5NzAtMDEtMDEgMDI6MDA6MDAuMDAwMDAwMDAwICswMjAwDQorKysgZGV2aWNlLW1h
+cHBlci4xLjAxLjA0LmtsaWJjL2FjbG9jYWwubTQJMjAwNS0wOC0yNSAyMTozMTozMS4wMDAwMDAw
+MDAgKzAyMDANCkBAIC0wLDAgKzEsOTQgQEANCisjIGtsaWJjLm00IHNlcmlhbCA5OQ0KKyMjIENv
+cHlyaWdodCAoQykgMTk5NS0yMDAzIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbiwgSW5jLg0KKyMj
+IFRoaXMgZmlsZSBpcyBmcmVlIHNvZnR3YXJlLCBkaXN0cmlidXRlZCB1bmRlciB0aGUgdGVybXMg
+b2YgdGhlIEdOVQ0KKyMjIEdlbmVyYWwgUHVibGljIExpY2Vuc2UuICBBcyBhIHNwZWNpYWwgZXhj
+ZXB0aW9uIHRvIHRoZSBHTlUgR2VuZXJhbA0KKyMjIFB1YmxpYyBMaWNlbnNlLCB0aGlzIGZpbGUg
+bWF5IGJlIGRpc3RyaWJ1dGVkIGFzIHBhcnQgb2YgYSBwcm9ncmFtDQorIyMgdGhhdCBjb250YWlu
+cyBhIGNvbmZpZ3VyYXRpb24gc2NyaXB0IGdlbmVyYXRlZCBieSBBdXRvY29uZiwgdW5kZXINCisj
+IyB0aGUgc2FtZSBkaXN0cmlidXRpb24gdGVybXMgYXMgdGhlIHJlc3Qgb2YgdGhhdCBwcm9ncmFt
+Lg0KKyMjDQorIyMgVGhpcyBmaWxlIGNhbiBjYW4gYmUgdXNlZCBpbiBwcm9qZWN0cyB3aGljaCBh
+cmUgbm90IGF2YWlsYWJsZSB1bmRlcg0KKyMjIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5z
+ZSBvciB0aGUgR05VIExpYnJhcnkgR2VuZXJhbCBQdWJsaWMNCisjIyBMaWNlbnNlIGJ1dCB3aGlj
+aCBzdGlsbCB3YW50IHRvIHByb3ZpZGUgc3VwcG9ydCBmb3IgdGhlIEdOVSBnZXR0ZXh0DQorIyMg
+ZnVuY3Rpb25hbGl0eS4NCisjIyBQbGVhc2Ugbm90ZSB0aGF0IHRoZSBhY3R1YWwgY29kZSBvZiB0
+aGUgS0xJQkMgTGlicmFyeSBpcyBwYXJ0bHkgY292ZXJlZA0KKyMjIGJ5IHRoZSBHTlUgTGlicmFy
+eSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlLCBhbmQgcGFydHkgY29weXJpZ2h0ZWQgYnkgdGhlDQor
+IyMgUmVnZW50cyBvZiBUaGUgVW5pdmVyc2l0eSBvZiBDYWxpZm9ybmlhLCBhbmQgdGhlIHJlc3Qg
+aXMgY292ZXJlZCBieSBhDQorIyMgTUlUIHN0eWxlIGxpY2Vuc2UuIA0KKw0KKyMgQXV0aG9yczoN
+CisjICAgTWFydGluIFNjaGxlbW1lciA8YXphcmFoQG5vc2ZlcmF0dS56YS5vcmc+LCAyMDA1Lg0K
+Kw0KKw0KKyMgQUNfQ0hFQ0tfS0xJQkMNCisjIC0tLS0tLS0tLS0tLS0tDQorIyBDaGVjayBpZiB0
+aGUgdXNlciB3YW50cyBLTElCQyBzdXBwb3J0IGVuYWJsZWQuICBJZiBzbywgc2V0IEtMSUJDPXll
+cyBhbmQNCisjIGZpbGwgaW4gS0xJQkNfUFJFRklYLCBLTElCQ19CSU5ESVIsIEtMSUJDX1NCSU5E
+SVIsIEtMSUJDX0xJQkRJUiBhbmQNCisjIEtMSUJDX0lOQ0xVREVESVIuICBDQyBpcyBhbHNvIHNl
+dCB0byB0aGUgcHJvcGVyIGtsY2MgZXhlY3V0YWJsZS4NCisjIE5PVEU6ICBUaGlzIHNob3VsZCBi
+ZSBjYWxsZWQgYmVmb3JlIEFDX1BST0dfQ0MsIGFuZCBiZWZvcmUgaGVhZGVyLCBmdW5jdGlvbg0K
+KyMgICAgICAgIG9yIHR5cGUgY2hlY2tzLg0KK0FDX0RFRlVOKFtBQ19DSEVDS19LTElCQ10sDQor
+W0FDX0JFRk9SRShbJDBdLCBbQUNfUFJPR19DQ10pDQorQUNfUkVRVUlSRShbQUNfQ0FOT05JQ0FM
+X0hPU1RdKQ0KK0FDX0FSR19FTkFCTEUoW2tsaWJjXSwNCisgICAgICAgICAgICAgIFtBU19IRUxQ
+X1NUUklORyhbLS1lbmFibGUta2xpYmNdLA0KKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+IFtFbmFibGUgbGlua2luZyB0byBrbGliYyBbbm9dLiAgWW91IG5lZWQgYXQNCisgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgbGVhc3Qga2xpYmMtMS4wIG9yIGxhdGVyIGZvciB0aGlzLiAg
+U2V0IEtMQ0MNCisgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdG8gdGhlIGFic29sdXRl
+IGZpbGUgbmFtZSBvZiBrbGNjIGlmIG5vdCBpbg0KKyAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICB0aGUgUEFUSF0pXSwNCisgICAgICAgICAgICAgIFtLTElCQz0kZW5hYmxldmFsXSwgW0tM
+SUJDPW5vXSkNCitBQ19BUkdfRU5BQkxFKFtrbGliYy1sYXlvdXRdLA0KKyAgICAgICAgICAgICAg
+W0FTX0hFTFBfU1RSSU5HKFstLWVuYWJsZS1rbGliYy1sYXlvdXRdLA0KKyAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIFtFbmFibGUgaW5zdGFsbGluZyBiaW5hcmllcywgbGlicmFyaWVzIGFu
+ZA0KKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBoZWFkZXJzIGludG8gdGhlIGtsaWJj
+IHByZWZpeCBbeWVzXSBdKV0sDQorICAgICAgICAgICAgICBbaWYgdGVzdCAiWCRLTElCQyIgIT0g
+WG5vOyB0aGVuDQorICAgICAgICAgICAgICAgICBLTElCQ19MQVlPVVQ9JGVuYWJsZXZhbA0KKyAg
+ICAgICAgICAgICAgIGVsc2UNCisgICAgICAgICAgICAgICAgIEtMSUJDX0xBWU9VVD1ubw0KKyAg
+ICAgICAgICAgICAgIGZpXSwNCisgICAgICAgICAgICAgIFtpZiB0ZXN0ICJYJEtMSUJDIiAhPSBY
+bm87IHRoZW4NCisgICAgICAgICAgICAgICAgIEtMSUJDX0xBWU9VVD15ZXMNCisgICAgICAgICAg
+ICAgICBlbHNlDQorICAgICAgICAgICAgICAgICBLTElCQ19MQVlPVVQ9bm8NCisgICAgICAgICAg
+ICAgICBmaV0pDQorDQoraWYgdGVzdCAiWCRLTElCQyIgIT0gWG5vOyB0aGVuDQorICAjIEJhc2lj
+IGNyb3NzIGNvbXBpbGluZyBzdXBwb3J0LiAgSSBkbyBub3QgdGhpbmsgaXQgaXMgd2lzZSB0byB1
+c2UNCisgICMgQUNfQ0hFQ0tfVE9PTCwgYmVjYXVzZSBpZiB3ZSBhcmUgY3Jvc3MgY29tcGlsaW5n
+LCB3ZSBkbyBub3Qgd2FudA0KKyAgIyBqdXN0ICdrbGNjJyB0byBiZSByZXR1cm5lZCAuLi4NCisg
+IGlmIHRlc3QgIiR7aG9zdF9hbGlhc30iICE9ICIke2J1aWxkX2FsaWFzfSI7IHRoZW4NCisgICAg
+QUNfQ0hFQ0tfUFJPR1MoW0tMQ0NdLCBbJHtob3N0X2FsaWFzfS1rbGNjXSwgW25vXSkNCisgIGVs
+c2UNCisgICAgQUNfQ0hFQ0tfUFJPR1MoW0tMQ0NdLCBba2xjY10sIFtub10pDQorICBmaQ0KKyAg
+aWYgdGVzdCAiWCRLTENDIiA9IFhubzsgdGhlbg0KKyAgICBBQ19NU0dfRVJST1IoW2Nhbm5vdCBm
+aW5kIGtsaWJjIGZyb250ZW5kICdrbGNjJyFdKQ0KKyAgZmkNCisNCisgIENDPSIkS0xDQyINCisg
+IENGTEFHUz0iLU9zIg0KKw0KKyAgS0xJQkNfS0NST1NTPSIkKCRLTENDIC1wcmludC1rbGliYy1r
+Y3Jvc3MgMj4vZGV2L251bGwpIg0KKyAgS0xJQkNfUFJFRklYPSIkKCRLTENDIC1wcmludC1rbGli
+Yy1wcmVmaXggMj4vZGV2L251bGwpIg0KKyAgS0xJQkNfQklOX0RJUj0iJCgkS0xDQyAtcHJpbnQt
+a2xpYmMtYmluZGlyIDI+L2Rldi9udWxsKSINCisgIEtMSUJDX1NCSU5fRElSPSIke0tMSUJDX1BS
+RUZJWH0vJHtLTElCQ19LQ1JPU1N9c2JpbiINCisgIEtMSUJDX0xJQl9ESVI9IiQoJEtMQ0MgLXBy
+aW50LWtsaWJjLWxpYmRpciAyPi9kZXYvbnVsbCkiDQorICBLTElCQ19JTkNMVURFX0RJUj0iJCgk
+S0xDQyAtcHJpbnQta2xpYmMtaW5jbHVkZWRpciAyPi9kZXYvbnVsbCkiDQorDQorICBpZiB0ZXN0
+ICJYJEtMSUJDX0xBWU9VVCIgIT0gWG5vOyB0aGVuDQorICAgIHByZWZpeD0iJEtMSUJDX1BSRUZJ
+WCINCisgICAgYmluZGlyPSIkS0xJQkNfQklOX0RJUiINCisgICAgc2JpbmRpcj0iJEtMSUJDX1NC
+SU5fRElSIg0KKyAgICBsaWJkaXI9IiRLTElCQ19MSUJfRElSIg0KKyAgICBpbmNsdWRlZGlyPSIk
+S0xJQkNfSU5DTFVERV9ESVIiDQorICBmaQ0KKw0KKyAgIyBBdCBsZWFzdCBLTElCQ19MSUJfRElS
+IHNob3VsZCBiZSB2YWxpZCwgZWxzZSBrbGliYyBpcyB0b28gb2xkIG9yDQorICAjIHNvbWV0aGlu
+ZyB3ZW50IHdyb25nDQorICBpZiB0ZXN0ICEgLWQgIiRLTElCQ19MSUJfRElSIjsgdGhlbg0KKyAg
+ICBBQ19NU0dfRVJST1IoW3lvdXIga2xpYmMgaW5zdGFsbGF0aW9uIGlzIHRvbyBvbGQgb3Igbm90
+IGZ1bmN0aW9uYWwhXSkNCisgIGZpDQorZmkNCisNCitBQ19TVUJTVChLTElCQykNCitdKSMgQUNf
+Q0hFQ0tfS0xJQkMNCisNCmRpZmYgLXVycE4gZGV2aWNlLW1hcHBlci4xLjAxLjA0L2NvbmZpZ3Vy
+ZS5pbiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvY29uZmlndXJlLmluDQotLS0gZGV2aWNl
+LW1hcHBlci4xLjAxLjA0L2NvbmZpZ3VyZS5pbgkyMDA1LTA4LTAyIDIzOjA0OjUxLjAwMDAwMDAw
+MCArMDIwMA0KKysrIGRldmljZS1tYXBwZXIuMS4wMS4wNC5rbGliYy9jb25maWd1cmUuaW4JMjAw
+NS0wOC0yNSAyMzoxOTo0MC4wMDAwMDAwMDAgKzAyMDANCkBAIC0yNyw0MiArMjcsNjQgQEAgQUNf
+Q09ORklHX0FVWF9ESVIoYXV0b2NvbmYpIA0KIGRubCAtLSBHZXQgc3lzdGVtIHR5cGUNCiBBQ19D
+QU5PTklDQUxfU1lTVEVNDQogDQotY2FzZSAiJGhvc3Rfb3MiIGluDQotCWxpbnV4KikNCi0JCUNG
+TEFHUz0iJENGTEFHUyINCi0JCUNPUFRJTUlTRV9GTEFHPSItTzIiDQotCQlDTERGTEFHUz0iJENM
+REZMQUdTIC1XbCwtLXZlcnNpb24tc2NyaXB0LC5leHBvcnQuc3ltIg0KLQkJTERERVBTPSIkTERE
+RVBTIC5leHBvcnQuc3ltIg0KLQkJTElCX1NVRkZJWD0ic28iDQotCQlETUlPQ1RMUz0ieWVzIg0K
+LQkJU0VMSU5VWD0ieWVzIiA7Ow0KLQlkYXJ3aW4qKQ0KLQkJQ0ZMQUdTPSIkQ0ZMQUdTIC1uby1j
+cHAtcHJlY29tcCAtZm5vLWNvbW1vbiINCi0JCUNPUFRJTUlTRV9GTEFHPSItTzIiDQotCQlDTERG
+TEFHUz0iJENMREZMQUdTIg0KLQkJTERERVBTPSIkTERERVBTIg0KLQkJTElCX1NVRkZJWD0iZHls
+aWIiDQotCQlETUlPQ1RMUz0ibm8iDQotCQlTRUxJTlVYPSJubyIgOzsNCi1lc2FjDQotDQogIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2tzIGZvciBwcm9ncmFtcy4NCiBBQ19Q
+Uk9HX0FXSw0KLUFDX1BST0dfQ0MNCi1BQ19QUk9HX0dDQ19UUkFESVRJT05BTA0KIEFDX1BST0df
+SU5TVEFMTA0KIEFDX1BST0dfTE5fUw0KIEFDX1BST0dfTUFLRV9TRVQNCiBBQ19QUk9HX1JBTkxJ
+Qg0KIA0KICMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjDQorZG5sIC0tIEVuYWJsZXMgbGlua2luZyB0
+byBrbGliYw0KK2RubCAtLSBXZSBuZWVkIHRvIGRvIHRoaXMgYmVmb3JlIGhlYWRlciBjaGVja3Ms
+IGFzIHdlIG5lZWQgdG8gc2V0IENDDQorQUNfQ0hFQ0tfS0xJQkMNCisNCisjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIw0KK2RubCAtLSBTZXQgc3lzdGVtIHR5cGUgZmxhZ3MsIGV0Yw0KK2lmIHRlc3Qg
+eCRLTElCQyAhPSB4eWVzOyB0aGVuDQorCWNhc2UgIiRob3N0X29zIiBpbg0KKwkJbGludXgqKQ0K
+KwkJCUNGTEFHUz0iJENGTEFHUyINCisJCQlDT1BUSU1JU0VfRkxBRz0iLU8yIg0KKwkJCUNMREZM
+QUdTPSIkQ0xERkxBR1MgLVdsLC0tdmVyc2lvbi1zY3JpcHQsLmV4cG9ydC5zeW0iDQorCQkJTERE
+RVBTPSIkTERERVBTIC5leHBvcnQuc3ltIg0KKwkJCUxJQl9TVUZGSVg9InNvIg0KKwkJCURNSU9D
+VExTPSJ5ZXMiDQorCQkJU0VMSU5VWD0ieWVzIiA7Ow0KKwkJZGFyd2luKikNCisJCQlDRkxBR1M9
+IiRDRkxBR1MgLW5vLWNwcC1wcmVjb21wIC1mbm8tY29tbW9uIg0KKwkJCUNPUFRJTUlTRV9GTEFH
+PSItTzIiDQorCQkJQ0xERkxBR1M9IiRDTERGTEFHUyINCisJCQlMRERFUFM9IiRMRERFUFMiDQor
+CQkJTElCX1NVRkZJWD0iZHlsaWIiDQorCQkJRE1JT0NUTFM9Im5vIg0KKwkJCVNFTElOVVg9Im5v
+IiA7Ow0KKwllc2FjDQorZWxzZQ0KKwlkbmwgLS0gV2Ugb25seSBzdXBwb3J0IGxpbnV4IHdpdGgg
+a2xpYmMgLi4uDQorCUNGTEFHUz0iJENGTEFHUyINCisJQ09QVElNSVNFX0ZMQUc9DQorCUNMREZM
+QUdTPSIkQ0xERkxBR1MgLVdsLC0tdmVyc2lvbi1zY3JpcHQsLmV4cG9ydC5zeW0iDQorCUxEREVQ
+Uz0iJExEREVQUyAuZXhwb3J0LnN5bSINCisJTElCX1NVRkZJWD0iYSINCisJRE1JT0NUTFM9Inll
+cyINCisJU0VMSU5VWD0ibm8iDQorZmkNCisNCisjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIw0KK2Ru
+bCAtLSBDaGVja3MgZm9yIENDLg0KK2RubCAtLSBTaG91bGQgYmUgYWZ0ZXIga2xpYmMgY2hlY2su
+DQorQUNfUFJPR19DQw0KK0FDX1BST0dfR0NDX1RSQURJVElPTkFMDQorDQorIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2tzIGZvciBoZWFkZXIgZmlsZXMuDQogQUNfSEVBREVS
+X0RJUkVOVA0KIEFDX0hFQURFUl9TVERDDQogQUNfSEVBREVSX1RJTUUNCiANCi1BQ19DSEVDS19I
+RUFERVJTKGN0eXBlLmggZGlyZW50LmggZXJybm8uaCBmY250bC5oIGdldG9wdC5oIGludHR5cGVz
+LmggbGltaXRzLmggc3RkYXJnLmggc3RkaW8uaCBzdGRsaWIuaCBzdHJpbmcuaCBzeXMvaW9jdGwu
+aCBzeXMvcGFyYW0uaCBzeXMvc3RhdC5oIHN5cy90eXBlcy5oIHVuaXN0ZC5oLCxBQ19NU0dfRVJS
+T1IoYmFpbGluZyBvdXQpKQ0KK0FDX0NIRUNLX0hFQURFUlMoY3R5cGUuaCBkaXJlbnQuaCBlcnJu
+by5oIGZjbnRsLmggaW50dHlwZXMuaCBsaW1pdHMuaCBzdGRhcmcuaCBzdGRpby5oIHN0ZGxpYi5o
+IHN0cmluZy5oIHN5cy9pb2N0bC5oIHN5cy9wYXJhbS5oIHN5cy9zdGF0Lmggc3lzL3R5cGVzLmgg
+dW5pc3RkLmgsLEFDX01TR19FUlJPUihiYWlsaW5nIG91dCkpDQogDQogIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2tzIGZvciB0eXBlZGVmcywgc3RydWN0dXJlcywgYW5kIGNv
+bXBpbGVyIGNoYXJhY3RlcmlzdGljcy4NCkBAIC0yMDYsNyArMjI4LDEwIEBAIGZpDQogDQogIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2sgZm9yIGdldG9wdA0KLUFDX0NIRUNL
+X0hFQURFUlMoZ2V0b3B0LmgsIENGTEFHUz0iJENGTEFHUyAtREhBVkVfR0VUT1BUTE9ORyIpDQor
+ZG5sIC0tIFdlIGRvIG5vdCB3YW50IHRoaXMgd2l0aCBrbGliYw0KK2lmIHRlc3QgeCRLTElCQyAh
+PSB4eWVzOyB0aGVuDQorCUFDX0NIRUNLX0hFQURFUlMoZ2V0b3B0LmgsIENGTEFHUz0iJENGTEFH
+UyAtREhBVkVfR0VUT1BUTE9ORyIpDQorZmkNCiANCiAjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIw0K
+IGRubCAtLSBJbnRlcm5hdGlvbmFsaXNhdGlvbiBzdHVmZg0KZGlmZiAtdXJwTiBkZXZpY2UtbWFw
+cGVyLjEuMDEuMDQvZG1zZXR1cC9NYWtlZmlsZS5pbiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xp
+YmMvZG1zZXR1cC9NYWtlZmlsZS5pbg0KLS0tIGRldmljZS1tYXBwZXIuMS4wMS4wNC9kbXNldHVw
+L01ha2VmaWxlLmluCTIwMDUtMDEtMjcgMTg6MTY6NTIuMDAwMDAwMDAwICswMjAwDQorKysgZGV2
+aWNlLW1hcHBlci4xLjAxLjA0LmtsaWJjL2Rtc2V0dXAvTWFrZWZpbGUuaW4JMjAwNS0wOC0yNSAy
+MTo0NDoxNi4wMDAwMDAwMDAgKzAyMDANCkBAIC0xNywxMSArMTcsMjAgQEAgdG9wX3NyY2RpciA9
+IEB0b3Bfc3JjZGlyQA0KIFZQQVRIID0gQHNyY2RpckANCiANCiBUQVJHRVRTID0gZG1zZXR1cA0K
+LUlOU1RBTExfVFlQRSA9IGluc3RhbGxfZHluYW1pYw0KIA0KLWlmZXEgKCJAU1RBVElDX0xJTktA
+IiwgInllcyIpDQotICBUQVJHRVRTICs9IGRtc2V0dXAuc3RhdGljDQotICBJTlNUQUxMX1RZUEUg
+Kz0gaW5zdGFsbF9zdGF0aWMNCitpZmVxICgiQEtMSUJDQCIsICJ5ZXMiKQ0KKyAgRE1MSUJTICs9
+IC1sZGV2bWFwcGVyX2tsaWJjDQorICBETV9MSUJSQVJZID0gbGliZGV2bWFwcGVyX2tsaWJjLmEN
+CisgIElOU1RBTExfVFlQRSA9IGluc3RhbGxfZHluYW1pYw0KK2Vsc2UNCisgIERNTElCUyArPSAt
+bGRldm1hcHBlcg0KKyAgRE1fTElCUkFSWSA9IGxpYmRldm1hcHBlci5zbw0KKyAgSU5TVEFMTF9U
+WVBFID0gaW5zdGFsbF9keW5hbWljDQorDQorICBpZmVxICgiQFNUQVRJQ19MSU5LQCIsICJ5ZXMi
+KQ0KKyAgICBUQVJHRVRTICs9IGRtc2V0dXAuc3RhdGljDQorICAgIElOU1RBTExfVFlQRSArPSBp
+bnN0YWxsX3N0YXRpYw0KKyAgZW5kaWYNCiBlbmRpZg0KIA0KIFNPVVJDRVMgPSBkbXNldHVwLmMN
+CkBAIC0yOSwxMyArMzgsMTMgQEAgQ0xFQU5fVEFSR0VUUyA9IGRtc2V0dXAgZG1zZXR1cC5zdGF0
+aWMNCiANCiBpbmNsdWRlIC4uL21ha2UudG1wbA0KIA0KLWRtc2V0dXA6ICQoT0JKRUNUUykgJChp
+bnRlcmZhY2VkaXIpL2xpYmRldm1hcHBlci4kKExJQl9TVUZGSVgpDQorZG1zZXR1cDogJChPQkpF
+Q1RTKSAkKGludGVyZmFjZWRpcikvJChETV9MSUJSQVJZKQ0KIAkkKENDKSAtbyAkQCAkKE9CSkVD
+VFMpICQoTERGTEFHUykgXA0KLQkgICAgICAtTCQoaW50ZXJmYWNlZGlyKSAtTCQoREVTVERJUikv
+bGliIC1sZGV2bWFwcGVyICQoTElCUykNCisJICAgICAgLUwkKGludGVyZmFjZWRpcikgLUwkKERF
+U1RESVIpL2xpYiAkKERNTElCUykgJChMSUJTKQ0KIA0KIGRtc2V0dXAuc3RhdGljOiAkKE9CSkVD
+VFMpICQoaW50ZXJmYWNlZGlyKS9saWJkZXZtYXBwZXIuYQ0KIAkkKENDKSAtbyAkQCAkKE9CSkVD
+VFMpICQoTERGTEFHUykgLXN0YXRpYyBcDQotCSAgICAgIC1MJChpbnRlcmZhY2VkaXIpIC1MJChE
+RVNURElSKS9saWIgLWxkZXZtYXBwZXIgJChMSUJTKQ0KKwkgICAgICAtTCQoaW50ZXJmYWNlZGly
+KSAtTCQoREVTVERJUikvbGliICQoRE1MSUJTKSAkKExJQlMpDQogDQogaW5zdGFsbDogJChJTlNU
+QUxMX1RZUEUpDQogDQpkaWZmIC11cnBOIGRldmljZS1tYXBwZXIuMS4wMS4wNC9kbXNldHVwL2Rt
+c2V0dXAuYyBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvZG1zZXR1cC9kbXNldHVwLmMNCi0t
+LSBkZXZpY2UtbWFwcGVyLjEuMDEuMDQvZG1zZXR1cC9kbXNldHVwLmMJMjAwNS0wNy0yOSAxODox
+MToyMy4wMDAwMDAwMDAgKzAyMDANCisrKyBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvZG1z
+ZXR1cC9kbXNldHVwLmMJMjAwNS0wOC0yNSAyMjozNDozMy4wMDAwMDAwMDAgKzAyMDANCkBAIC0y
+Niw3ICsyNiw5IEBADQogI2luY2x1ZGUgPGRpcmVudC5oPg0KICNpbmNsdWRlIDxlcnJuby5oPg0K
+ICNpbmNsdWRlIDx1bmlzdGQuaD4NCi0jaW5jbHVkZSA8bGliZ2VuLmg+DQorI2lmbmRlZiBfX0tM
+SUJDX18NCisjIGluY2x1ZGUgPGxpYmdlbi5oPg0KKyNlbmRpZg0KICNpbmNsdWRlIDxzeXMvd2Fp
+dC5oPg0KICNpbmNsdWRlIDx1bmlzdGQuaD4NCiAjaW5jbHVkZSA8c3lzL3BhcmFtLmg+DQpAQCAt
+MTA1NCw3ICsxMDU2LDE4IEBAIHN0YXRpYyBpbnQgX3Byb2Nlc3Nfc3dpdGNoZXMoaW50ICphcmdj
+LCANCiAJbWVtc2V0KCZfdmFsdWVzLCAwLCBzaXplb2YoX3ZhbHVlcykpOw0KIA0KIAluYW1lYmFz
+ZSA9IHN0cmR1cCgoKmFyZ3YpWzBdKTsNCisjaWZuZGVmIF9fS0xJQkNfXw0KIAliYXNlID0gYmFz
+ZW5hbWUobmFtZWJhc2UpOw0KKyNlbHNlDQorCWJhc2UgPSBzdHJyY2hyKG5hbWViYXNlLCAnLycp
+Ow0KKwlpZiAoYmFzZSAhPSBOVUxMKQ0KKwkJLyogUmVtb3ZlIGxlYWRpbmcgJy8nICovDQorCQli
+YXNlKys7DQorCWVsc2UNCisJCS8qIEFscmVhZHkgYmFzZW5hbWUgPyAqLw0KKwkJYmFzZSA9IG5h
+bWViYXNlOw0KKwkNCisjZW5kaWYNCiANCiAJaWYgKCFzdHJjbXAoYmFzZSwgImRldm1hcF9uYW1l
+IikpIHsNCiAJCWZyZWUobmFtZWJhc2UpOw0KZGlmZiAtdXJwTiBkZXZpY2UtbWFwcGVyLjEuMDEu
+MDQvbGliL01ha2VmaWxlLmluIGRldmljZS1tYXBwZXIuMS4wMS4wNC5rbGliYy9saWIvTWFrZWZp
+bGUuaW4NCi0tLSBkZXZpY2UtbWFwcGVyLjEuMDEuMDQvbGliL01ha2VmaWxlLmluCTIwMDUtMDQt
+MjggMDA6MzI6MDAuMDAwMDAwMDAwICswMjAwDQorKysgZGV2aWNlLW1hcHBlci4xLjAxLjA0Lmts
+aWJjL2xpYi9NYWtlZmlsZS5pbgkyMDA1LTA4LTI1IDIxOjQwOjA3LjAwMDAwMDAwMCArMDIwMA0K
+QEAgLTI5LDEyICsyOSwxNiBAQCBTT1VSQ0VTID0gbGliZG0tY29tbW9uLmMgbGliZG0tZmlsZS5j
+ICQoDQogDQogSU5DTFVERVMgPSAtSSQoaW50ZXJmYWNlKQ0KIA0KLUxJQl9TVEFUSUMgPSAkKGlu
+dGVyZmFjZSkvbGliZGV2bWFwcGVyLmENCi0NCi1pZmVxICgiQExJQl9TVUZGSVhAIiwiZHlsaWIi
+KQ0KLSAgTElCX1NIQVJFRCA9ICQoaW50ZXJmYWNlKS9saWJkZXZtYXBwZXIuZHlsaWINCitpZmVx
+ICgiQEtMSUJDQCIsICJ5ZXMiKQ0KKyAgTElCX1NUQVRJQyA9ICQoaW50ZXJmYWNlKS9saWJkZXZt
+YXBwZXJfa2xpYmMuYQ0KIGVsc2UNCi0gIExJQl9TSEFSRUQgPSAkKGludGVyZmFjZSkvbGliZGV2
+bWFwcGVyLnNvDQorICBMSUJfU1RBVElDID0gJChpbnRlcmZhY2UpL2xpYmRldm1hcHBlci5hDQor
+DQorICBpZmVxICgiQExJQl9TVUZGSVhAIiwiZHlsaWIiKQ0KKyAgICBMSUJfU0hBUkVEID0gJChp
+bnRlcmZhY2UpL2xpYmRldm1hcHBlci5keWxpYg0KKyAgZWxzZQ0KKyAgICBMSUJfU0hBUkVEID0g
+JChpbnRlcmZhY2UpL2xpYmRldm1hcHBlci5zbw0KKyAgZW5kaWYNCiBlbmRpZg0KIA0KIENGTEFH
+UyArPSAtRERFVklDRV9VSUQ9QERFVklDRV9VSURAIC1EREVWSUNFX0dJRD1AREVWSUNFX0dJREAg
+XA0KQEAgLTQ3LDggKzUxLDE0IEBAIGluY2x1ZGUgLi4vbWFrZS50bXBsDQogDQogSU5TVEFMTF9U
+WVBFID0gaW5zdGFsbF9keW5hbWljDQogDQotaWZlcSAoIkBTVEFUSUNfTElOS0AiLCAieWVzIikN
+Ci0gIElOU1RBTExfVFlQRSArPSBpbnN0YWxsX3N0YXRpYw0KK2lmZXEgKCJAS0xJQkNAIiwgInll
+cyIpDQorICBJTlNUQUxMX1RZUEUgPSBpbnN0YWxsX3N0YXRpYw0KK2Vsc2UNCisgIElOU1RBTExf
+VFlQRSA9IGluc3RhbGxfZHluYW1pYw0KKw0KKyAgaWZlcSAoIkBTVEFUSUNfTElOS0AiLCAieWVz
+IikNCisgICAgSU5TVEFMTF9UWVBFICs9IGluc3RhbGxfc3RhdGljDQorICBlbmRpZg0KIGVuZGlm
+DQogDQogaW5zdGFsbDogJChJTlNUQUxMX1RZUEUpDQpAQCAtNjAsNyArNzAsOCBAQCBpbnN0YWxs
+X2R5bmFtaWM6IGluc3RhbGxfQGludGVyZmFjZUANCiAJCSQoaW5jbHVkZWRpcikvbGliZGV2bWFw
+cGVyLmgNCiANCiBpbnN0YWxsX3N0YXRpYzogaW5zdGFsbF9AaW50ZXJmYWNlQF9zdGF0aWMNCi0J
+JChMTl9TKSAtZiBsaWJkZXZtYXBwZXIuYS4kKExJQl9WRVJTSU9OKSAkKGxpYmRpcikvbGliZGV2
+bWFwcGVyLmENCisJJChMTl9TKSAtZiAkKG5vdGRpciAkKExJQl9TVEFUSUMpKS4kKExJQl9WRVJT
+SU9OKSBcDQorCQkkKGxpYmRpcikvJChub3RkaXIgJChMSUJfU1RBVElDKSkNCiAJJChJTlNUQUxM
+KSAtRCAkKE9XTkVSKSAkKEdST1VQKSAtbSA0NDQgbGliZGV2bWFwcGVyLmggXA0KIAkJJChpbmNs
+dWRlZGlyKS9saWJkZXZtYXBwZXIuaA0KIA0KQEAgLTcyLDkgKzgzLDkgQEAgaW5zdGFsbF9pb2N0
+bDogaW9jdGwvbGliZGV2bWFwcGVyLiQoTElCXw0KIAkkKElOU1RBTEwpIC1EICQoT1dORVIpICQo
+R1JPVVApIC1tIDU1NSAkKFNUUklQKSAkPCBcDQogCQkkKGxpYmRpcikvbGliZGV2bWFwcGVyLiQo
+TElCX1NVRkZJWCkuJChMSUJfVkVSU0lPTikNCiANCi1pbnN0YWxsX2lvY3RsX3N0YXRpYzogaW9j
+dGwvbGliZGV2bWFwcGVyLmENCitpbnN0YWxsX2lvY3RsX3N0YXRpYzogaW9jdGwvJChub3RkaXIg
+JChMSUJfU1RBVElDKSkNCiAJJChJTlNUQUxMKSAtRCAkKE9XTkVSKSAkKEdST1VQKSAtbSA1NTUg
+JChTVFJJUCkgJDwgXA0KLQkJJChsaWJkaXIpL2xpYmRldm1hcHBlci5hLiQoTElCX1ZFUlNJT04p
+DQorCQkkKGxpYmRpcikvJChub3RkaXIgJChMSUJfU1RBVElDKSkuJChMSUJfVkVSU0lPTikNCiAN
+CiAuUEhPTlk6IGRpc3RjbGVhbl9saWIgZGlzdGNsZWFuDQogDQpkaWZmIC11cnBOIGRldmljZS1t
+YXBwZXIuMS4wMS4wNC9saWIvaW9jdGwvbGliZG0taWZhY2UuYyBkZXZpY2UtbWFwcGVyLjEuMDEu
+MDQua2xpYmMvbGliL2lvY3RsL2xpYmRtLWlmYWNlLmMNCi0tLSBkZXZpY2UtbWFwcGVyLjEuMDEu
+MDQvbGliL2lvY3RsL2xpYmRtLWlmYWNlLmMJMjAwNS0wNi0xMyAxNToxMTo0OC4wMDAwMDAwMDAg
+KzAyMDANCisrKyBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvbGliL2lvY3RsL2xpYmRtLWlm
+YWNlLmMJMjAwNS0wOC0yNSAyMjoxNDoyNC4wMDAwMDAwMDAgKzAyMDANCkBAIC0xMjIsMjQgKzEy
+MiwzMCBAQCBzdGF0aWMgaW50IF9nZXRfcHJvY19udW1iZXIoY29uc3QgY2hhciAqDQogCQkJICAg
+IHVpbnQzMl90ICpudW1iZXIpDQogew0KIAlGSUxFICpmbDsNCi0JY2hhciBubVsyNTZdOw0KLQlp
+bnQgYzsNCisJY2hhciBubVsyNTZdLCBidWZbMzAwXTsNCisJaW50IG51bSwgc2l6ZTsNCiANCiAJ
+aWYgKCEoZmwgPSBmb3BlbihmaWxlLCAiciIpKSkgew0KIAkJbG9nX2Vycm9yKCIlczogZm9wZW4g
+ZmFpbGVkOiAlcyIsIGZpbGUsIHN0cmVycm9yKGVycm5vKSk7DQogCQlyZXR1cm4gMDsNCiAJfQ0K
+IA0KLQl3aGlsZSAoIWZlb2YoZmwpKSB7DQotCQlpZiAoZnNjYW5mKGZsLCAiJWQgJTI1NXNcbiIs
+IG51bWJlciwgJm5tWzBdKSA9PSAyKSB7DQorCS8qIFVzZSBmcmVhZCtzc2NhbmYgZm9yIGtsaWJj
+IGNvbXBhdGliaWxpdHkuICovDQorCWRvIHsNCisJCXNpemUgPSAwOw0KKwkJZG8gew0KKwkJCW51
+bSA9IGZyZWFkKCZidWZbc2l6ZV0sIHNpemVvZihjaGFyKSwgMSwgZmwpOw0KKwkJCWlmIChudW0g
+PiAwKQ0KKwkJCQlzaXplKys7DQorCQl9IHdoaWxlIChudW0gPiAwICYmIGJ1ZltzaXplIC0gMV0g
+IT0gJ1xuJyk7DQorCQlidWZbc2l6ZV0gPSAnXDAnOw0KKwkJaWYgKHNzY2FuZihidWYsICIlZCAl
+MjU1c1xuIiwgbnVtYmVyLCAmbm1bMF0pID09IDIpIHsNCiAJCQlpZiAoIXN0cmNtcChuYW1lLCBu
+bSkpIHsNCiAJCQkJZmNsb3NlKGZsKTsNCiAJCQkJcmV0dXJuIDE7DQogCQkJfQ0KLQkJfSBlbHNl
+IGRvIHsNCi0JCQljID0gZmdldGMoZmwpOw0KLQkJfSB3aGlsZSAoYyAhPSBFT0YgJiYgYyAhPSAn
+XG4nKTsNCi0JfQ0KKwkJfQ0KKwl9IHdoaWxlIChudW0gPiAwKTsNCiAJZmNsb3NlKGZsKTsNCiAN
+CiAJbG9nX2Vycm9yKCIlczogTm8gZW50cnkgZm9yICVzIGZvdW5kIiwgZmlsZSwgbmFtZSk7DQpA
+QCAtMTUxLDYgKzE1Nyw3IEBAIHN0YXRpYyBpbnQgX2NvbnRyb2xfZGV2aWNlX251bWJlcih1aW50
+MzINCiAJaWYgKCFfZ2V0X3Byb2NfbnVtYmVyKFBST0NfREVWSUNFUywgTUlTQ19OQU1FLCBtYWpv
+cikgfHwNCiAJICAgICFfZ2V0X3Byb2NfbnVtYmVyKFBST0NfTUlTQywgRE1fTkFNRSwgbWlub3Ip
+KSB7DQogCQkqbWFqb3IgPSAwOw0KKwkJcHJpbnRmKCJGYWlsZWQgdG8gZ2V0IGRldmljZSBudW1i
+ZXIhXG4iKTsNCiAJCXJldHVybiAwOw0KIAl9DQogDQpkaWZmIC11cnBOIGRldmljZS1tYXBwZXIu
+MS4wMS4wNC9saWIvbGliZG0tZmlsZS5jIGRldmljZS1tYXBwZXIuMS4wMS4wNC5rbGliYy9saWIv
+bGliZG0tZmlsZS5jDQotLS0gZGV2aWNlLW1hcHBlci4xLjAxLjA0L2xpYi9saWJkbS1maWxlLmMJ
+MjAwNS0wMS0yNyAxODoxNjo1NC4wMDAwMDAwMDAgKzAyMDANCisrKyBkZXZpY2UtbWFwcGVyLjEu
+MDEuMDQua2xpYmMvbGliL2xpYmRtLWZpbGUuYwkyMDA1LTA4LTI1IDIxOjQxOjQ5LjAwMDAwMDAw
+MCArMDIwMA0KQEAgLTE2LDExICsxNiwxMyBAQA0KICNpbmNsdWRlICJsaWIuaCINCiAjaW5jbHVk
+ZSAibGliZG0tZmlsZS5oIg0KIA0KLSNpbmNsdWRlIDxzeXMvZmlsZS5oPg0KKyNpZm5kZWYgX19L
+TElCQ19fDQorIyBpbmNsdWRlIDxzeXMvZmlsZS5oPg0KKyNlbmRpZg0KICNpbmNsdWRlIDxmY250
+bC5oPg0KICNpbmNsdWRlIDxkaXJlbnQuaD4NCiANCi0jaWZkZWYgbGludXgNCisjaWYgZGVmaW5l
+ZChsaW51eCkgJiYgIWRlZmluZWQoX19LTElCQ19fKQ0KICMgIGluY2x1ZGUgPG1hbGxvYy5oPg0K
+ICNlbmRpZg0KIA0KZGlmZiAtdXJwTiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQvbWFrZS50bXBsLmlu
+IGRldmljZS1tYXBwZXIuMS4wMS4wNC5rbGliYy9tYWtlLnRtcGwuaW4NCi0tLSBkZXZpY2UtbWFw
+cGVyLjEuMDEuMDQvbWFrZS50bXBsLmluCTIwMDUtMDEtMjcgMTg6MTY6NTEuMDAwMDAwMDAwICsw
+MjAwDQorKysgZGV2aWNlLW1hcHBlci4xLjAxLjA0LmtsaWJjL21ha2UudG1wbC5pbgkyMDA1LTA4
+LTI1IDIxOjMxOjE3LjAwMDAwMDAwMCArMDIwMA0KQEAgLTU2LDcgKzU1LDEyIEBAIGVuZGlmDQog
+DQogLlNVRkZJWEVTOiAuYyAuZCAubyAuc28gLmEgLnBvIC5wb3QgLm1vIC5keWxpYg0KIA0KLUNG
+TEFHUyArPSAtZlBJQyAtV2FsbCAtV3VuZGVmIC1Xc2hhZG93IC1XY2FzdC1hbGlnbiAtV3dyaXRl
+LXN0cmluZ3MgLVdtaXNzaW5nLXByb3RvdHlwZXMgLVdtaXNzaW5nLWRlY2xhcmF0aW9ucyAtV25l
+c3RlZC1leHRlcm5zIC1XaW5saW5lDQorQ0ZMQUdTKz0tZlBJQyAtV2FsbCAtV3VuZGVmIC1XY2Fz
+dC1hbGlnbiAtV3dyaXRlLXN0cmluZ3MgLVdpbmxpbmUNCisNCitpZmVxICgiQEtMSUJDQCIsICJu
+byIpDQorICAjIFRoZXNlIG9uZXMgbWFrZSBrbGliYyBjb21waWxlcyB2ZXJ5IGxvdWQNCisgIENG
+TEFHUys9LVdzaGFkb3cgLVdtaXNzaW5nLXByb3RvdHlwZXMgLVdtaXNzaW5nLWRlY2xhcmF0aW9u
+cyAtV25lc3RlZC1leHRlcm5zDQorZW5kaWYNCiANCiAjQ0ZMQUdTICs9IC1XIC1XY29udmVyc2lv
+biAtV3BvaW50ZXItYXJpdGggLVdyZWR1bmRhbnQtZGVjbHMgLVdiYWQtZnVuY3Rpb24tY2FzdCAt
+V2Nhc3QtcXVhbCAtV21pc3Npbmctbm9yZXR1cm4NCiANCm==
 
-<br><br>---------- Forwarded message ----------<br><span class=3D"gmail_quo=
-te">From: <b class=3D"gmail_sendername">Jacob Broido</b> &lt;<a href=3D"mai=
-lto:jacob.broido@gmail.com">jacob.broido@gmail.com</a>&gt;<br>Date: Aug 24,=
- 2005 7:00 PM
-<br>Subject: Re: [dm-devel] cow snapshot on cloop device<br>To: Kevin Corry=
- &lt;<a href=3D"mailto:kevcorry@us.ibm.com">kevcorry@us.ibm.com</a>&gt;<br>=
-<br></span>I am using dmsetup directly. and I do the following:<br>
-1) Create an empty file that will be used as cow backing storage<br>
-2) losetup the backing file to /dev/loop0<br>
-3) create a snapshot of main root_device on /dev/loop0<br>
-4) mount the cow snapshot<br>
-<br>
-<br>
-Here is the info you requested:<br>
-The kernel is a - <a href=3D"http://2.6.11.10" target=3D"_blank" onclick=3D=
-"return top.js.OpenExtLink(window,event,this)">2.6.11.10</a> + xen patch.<b=
-r>
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D<br>
-/ # dmsetup ls<br>
-root_master &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (253, 0)<br>
-root_cow0&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; (253, 1)<br>
-/ # dmsetup table<br>
-root_master: 0 4096128 linear 240:0 0 <br>
-root_cow0: 0 4096128 snapshot 253:0 7:0 P 8<br>
-<br>
-/ # cat /proc/partitions<br>
-<br>
-major minor&nbsp; #blocks&nbsp;&nbsp;&nbsp; name<br>
-<br>
-7&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; loop0<br>
-8&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sda<br>
-8&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sda1<br>
-8&nbsp;&nbsp;&nbsp; 2&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sda2<br>
-8&nbsp;&nbsp;&nbsp; 3&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; sda3<br>
-240&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; cloop0<br>
-252&nbsp;&nbsp;&nbsp; 0&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dm-0<br>
-253&nbsp;&nbsp;&nbsp; 1&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; dm-1<br>
-<br>
-/ # cat /proc/mounts<br>
-rootfs / rootfs rw 0 0<br>
-/dev/root.old&nbsp; / ext2 rw 0 0<br>
-/proc /proc proc rw,noadirtime 0 0<br>
-/sys&nbsp; /sys sysfs rw 0 0<br>
-/dev/hdc /cdrom iso9660 ro 0 0<br>
-/ramdisk /ramdisk tmpfs rw 0 0<br>
-/dev/mapper/root_cow0 /cow ext2 rw.noatime 0 0<br>
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D<div><span class=3D"e" id=3D"q_105e96f6f1d75cf8_1"><br><br><div><span=
- class=3D"gmail_quote">On 8/24/05, <b class=3D"gmail_sendername">Kevin Corr=
-y</b> &lt;<a href=3D"mailto:kevcorry@us.ibm.com" target=3D"_blank" onclick=
-=3D"return top.js.OpenExtLink(window,event,this)">
-kevcorry@us.ibm.com</a>&gt; wrote:
-</span><blockquote class=3D"gmail_quote" style=3D"border-left: 1px solid rg=
-b(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">On Wed Aug=
-ust 24 2005 11:35 am, Jacob Broido wrote:<br>&gt; Hi,<br>&gt; I am trying t=
-o set a cow snapshot on a cloop device.
-<br>&gt; I managed to create a snapshot and mount it as read/write, but it =
-appears<br>&gt; that the data inside the /cloop appears invalid:<br>&gt;<br=
->&gt; Binary executables appear to be invalid, I perfomed diff between file=
-s on
-<br>&gt; snapshotted /dev/cloop, and the same files accessed directly throu=
-gh cloop.<br>&gt;<br>&gt; The files were diffrent,<br>&gt; anyone has idea =
-as to what can be the reason for this?<br><br>Are you using LVM, EVMS, or d=
-msetup to create your snapshot? Please send in
-<br>the output from &quot;dmsetup ls&quot; and &quot;dmsetup table&quot;, a=
-s well as the contents<br>of /proc/partitions and /proc/mounts, after you h=
-ave activated and mounted<br>your snapshot.<br><br>--<br>Kevin Corry<br>
 
-<a href=3D"mailto:kevcorry@us.ibm.com" target=3D"_blank" onclick=3D"return =
-top.js.OpenExtLink(window,event,this)">kevcorry@us.ibm.com</a><br><a href=
-=3D"http://www.ibm.com/linux/" target=3D"_blank" onclick=3D"return top.js.O=
-penExtLink(window,event,this)">
-http://www.ibm.com/linux/</a><br><a href=3D"http://evms.sourceforge.net/" t=
-arget=3D"_blank" onclick=3D"return top.js.OpenExtLink(window,event,this)">h=
-ttp://evms.sourceforge.net/</a><br></blockquote>
-</div><br><br clear=3D"all"><br></span></div><div><span class=3D"e" id=3D"q=
-_105e96f6f1d75cf8_2">-- <br>Not gonna be king of the world if you're slave =
-to the grind<br>- Skid Row
+--=-lywufUQjP6/jnNWlIS8Y--
 
-</span></div><br clear=3D"all"><br>-- <br>Not gonna be king of the world if=
- you're slave to the grind<br>- Skid Row
+--=-1Bgn4B1QWchOOHZsZGKu
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
 
-------=_Part_693_17149490.1124902881095--
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2 (GNU/Linux)
+
+iD8DBQBDDjfYqburzKaJYLYRAopZAJ0VUPuMvRmENqdsHqPVI3D6yHJcNwCfSC2r
+F5GDOlmqhPBfriApmFsvsSw=
+=xlWD
+-----END PGP SIGNATURE-----
+
+--=-1Bgn4B1QWchOOHZsZGKu--
 
 
---===============0714975048==
+--===============2046778739==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0714975048==--
+--===============2046778739==--
