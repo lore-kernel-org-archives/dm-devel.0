@@ -1,16 +1,14 @@
-From: Jacob Broido <jacob.broido@gmail.com>
-Subject: Re: Fwd: cow snapshot on cloop device
-Date: Fri, 26 Aug 2005 03:51:16 +0200
-Message-ID: <6262291505082518517c9d1adb@mail.gmail.com>
-References: <6262291505082404352d0a4dc2@mail.gmail.com>
-	<6262291505082410002ca214a9@mail.gmail.com>
-	<6262291505082410015647272d@mail.gmail.com>
-	<200508251902.39765.kevcorry@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Martin Schlemmer <azarah@nosferatu.za.org>
+Subject: Re: KLIBC support for device-mapper-1.01.04
+Date: Sat, 27 Aug 2005 13:02:40 +0200
+Message-ID: <1125140561.10188.10.camel@lycan.lan>
+References: <1125005272.7187.49.camel@lycan.lan>
+Reply-To: azarah@nosferatu.za.org,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1735568122=="
+Content-Type: multipart/mixed; boundary="===============0752443616=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200508251902.39765.kevcorry@us.ibm.com>
+In-Reply-To: <1125005272.7187.49.camel@lycan.lan>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,226 +18,303 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kevin Corry <kevcorry@us.ibm.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: KLIBC Mailing List <klibc@zytor.com>, Christophe Varoqui <christophe.varoqui@free.fr>, Heinz Mauelshagen <mauelshagen@redhat.com>
 List-Id: dm-devel.ids
 
---===============1735568122==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_2110_12103172.1125021076618"
 
-------=_Part_2110_12103172.1125021076618
-Content-Type: text/plain; charset=ISO-8859-1
+
+--===============0752443616==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-3av5Gv/41NGfpScuf1Rk"
+
+
+
+--=-3av5Gv/41NGfpScuf1Rk
+Content-Type: multipart/mixed; boundary="=-IkLu792qztqGsd99EN63"
+
+
+--=-IkLu792qztqGsd99EN63
+Content-Type: text/plain
 Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
 
-Hey Kevin,
-Thanks for the response,
-
-I've read through the thread but I am not clear on a few issues,
-
-Why is there a need to create a snapshot-origin, isnt the fact that I creat=
-e=20
-snapshot of a specific device, in my case root_master, using the command :=
-=20
-echo "0 4096128 snapshot root_master /dev/loop0 p 8"| dmsetup create=20
-root_cow0=20
-already monitors the origin device root_master for write operations?
-
-As far as I understood the COW/snapshot logic is the following:
-1) Snapshot device is created over some other dm device
-2) snapshot dm device is mounted.
-3) Any call to write() or othere rw syscalls issues a write to backing stor=
-e=20
-as defined during creation of snapshot device, and relevant pointers=20
-updated.
-4) Read from mounted snapshot device, results in one of the following : if=
-=20
-data was modified since the snapshot its read from COW backing=20
-device(transparently to end user) , if data was not modified from snapshot=
-=20
-creation, its read from origin dm device.
-
-
-In addition as I mentioned, I am able to mount the dm snapshot device, and =
-I=20
-am also able to perform write operations (even though the origin device is=
-=20
-on a readonly media).
-
-The problem I encountered is data corruption and is partial, all files are=
-=20
-partially damaged or have corrupted parts.
-
-What am I missing?
-
-P.S Is there a documentation reagrding varios targets and their table forma=
-t
-P.P.S in snapshot creation, what does <p|n> mean.
-Thanks.
-
-
-On 8/26/05, Kevin Corry <kevcorry@us.ibm.com> wrote:
+On Thu, 2005-08-25 at 23:28 +0200, Martin Schlemmer wrote:
+> Hi,
 >=20
-> Hi Jacob,
->=20
-> On Wed August 24 2005 12:01 pm, Jacob Broido wrote:
-> > ---------- Forwarded message ----------
-> > From: Jacob Broido <jacob.broido@gmail.com>
-> > Date: Aug 24, 2005 7:00 PM
-> > Subject: Re: [dm-devel] cow snapshot on cloop device
-> > To: Kevin Corry <kevcorry@us.ibm.com>
-> >
-> > I am using dmsetup directly. and I do the following:
-> > 1) Create an empty file that will be used as cow backing storage
-> > 2) losetup the backing file to /dev/loop0
-> > 3) create a snapshot of main root_device on /dev/loop0
-> > 4) mount the cow snapshot
-> >
-> >
-> > Here is the info you requested:
-> > The kernel is a - 2.6.11.10 <http://2.6.11.10> <http://2.6.11.10> + xen=
-=20
-> patch.
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D
-> > / # dmsetup ls
-> > root_master (253, 0)
-> > root_cow0 (253, 1)
-> > / # dmsetup table
-> > root_master: 0 4096128 linear 240:0 0
-> > root_cow0: 0 4096128 snapshot 253:0 7:0 P 8
->=20
-> Ok, this is not going to do what you're expecting it to do. In order to=
-=20
-> use
-> snapshotting, you need a snapshot device, and you also need a=20
-> snapshot-origin
-> device. The snapshot-origin code is what monitors the I/O path for the=20
-> origin
-> device, and performs the copy-on-writes as necessary.
->=20
-> Last summer I did a write-up how you might use dmsetup to create=20
-> snapshots.
-> You can read the thread at:
-> https://www.redhat.com/archives/dm-devel/2004-July/msg00068.html
->=20
-> But in short, it's vastly simpler to just use LVM2 or EVMS to create
-> snapshots. You should be able to create volumes on your cloop devices=20
-> using
-> either set of tools.
->=20
-> Let me know if you have additional questions after reading through the=20
-> thread
-> above.
->=20
-> --
-> Kevin Corry
-> kevcorry@us.ibm.com
-> http://www.ibm.com/linux/
-> http://evms.sourceforge.net/
+> Some time back I sent a patch for KLIBC support for device-mapper, but
+> no response so far.  I have however updated the patch.
 >=20
 
+Ok, I checked multipath-tools again, and did query on the klibc mailing
+lists (no real response), and decided to not have the _klibc suffix on
+the library.  Also tweaked the build to build a binary default linked
+dynamic to klibc, with --enable-static_link giving static linked binary.
 
+Comments once again welcome.
+
+
+Thanks,
 
 --=20
-Not gonna be king of the world if you're slave to the grind
-- Skid Row
-
-------=_Part_2110_12103172.1125021076618
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
-
-Hey Kevin,<br>
-Thanks for the response,<br>
-<br>
-I've read through the thread but I am not clear on a few issues,<br>
-<br>
-&nbsp;Why is there a need to create a snapshot-origin, isnt the fact
-that I create snapshot of a specific device, in my case root_master,
-using the command : <br>
-echo &quot;0 <span class=3D"q">4096128 snapshot&nbsp; root_master /dev/loop=
-0 p 8&quot;| dmsetup create root_cow0 <br>
-already monitors the origin device root_master for write operations?<br>
-<br>
-As far as I understood the COW/snapshot logic is the following:<br>
-1) Snapshot device is created over some other dm device<br>
-2) snapshot dm device is mounted.<br>
-3) Any call to write() or othere rw syscalls issues a write to backing
-store as defined during creation of snapshot device, and relevant
-pointers updated.<br>
-4) Read from mounted snapshot device, results in one of the following :
-if data was modified since the snapshot its read from COW backing
-device(transparently to end user) , if data was not modified from
-snapshot creation, its read from origin dm device.<br>
-<br>
-<br>
-In addition as I mentioned, I am able to mount the dm snapshot device,
-and I am also able to perform write operations (even though the origin
-device is on a readonly media).<br>
-<br>
-The problem I encountered is data corruption and is partial, all files are =
-partially damaged or have corrupted parts.<br>
-<br>
-What am I missing?<br>
-<br>
-</span>P.S Is there a documentation reagrding varios targets and their tabl=
-e format<br>
-P.P.S in snapshot creation, what does &lt;p|n&gt; mean.<br>
-Thanks.<br>
-<br>
-<br><div><span class=3D"gmail_quote">On 8/26/05, <b class=3D"gmail_senderna=
-me">Kevin Corry</b> &lt;<a href=3D"mailto:kevcorry@us.ibm.com">kevcorry@us.=
-ibm.com</a>&gt; wrote:</span><blockquote class=3D"gmail_quote" style=3D"bor=
-der-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-=
-left: 1ex;">
-Hi Jacob,<br><br>On Wed August 24 2005 12:01 pm, Jacob Broido wrote:<br>&gt=
-; ---------- Forwarded message ----------<br>&gt; From: Jacob Broido &lt;<a=
- href=3D"mailto:jacob.broido@gmail.com">jacob.broido@gmail.com</a>&gt;<br>
-&gt; Date: Aug 24, 2005 7:00 PM<br>&gt; Subject: Re: [dm-devel] cow snapsho=
-t on cloop device<br>&gt; To: Kevin Corry &lt;<a href=3D"mailto:kevcorry@us=
-.ibm.com">kevcorry@us.ibm.com</a>&gt;<br>&gt;<br>&gt; I am using dmsetup di=
-rectly. and I do the following:
-<br>&gt; 1) Create an empty file that will be used as cow backing storage<b=
-r>&gt; 2) losetup the backing file to /dev/loop0<br>&gt; 3) create a snapsh=
-ot of main root_device on /dev/loop0<br>&gt; 4) mount the cow snapshot<br>
-&gt;<br>&gt;<br>&gt; Here is the info you requested:<br>&gt; The kernel is =
-a - <a href=3D"http://2.6.11.10">2.6.11.10</a> &lt;<a href=3D"http://2.6.11=
-.10">http://2.6.11.10</a>&gt; + xen patch.<br>&gt; =3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-<br>&gt; / # dmsetup ls<br>&gt; root_master (253, 0)<br>&gt; root_cow0 (253=
-, 1)<br>&gt; / # dmsetup table<br>&gt; root_master: 0 4096128 linear 240:0 =
-0<br>&gt; root_cow0: 0 4096128 snapshot 253:0 7:0 P 8<br><br>Ok, this is no=
-t going to do what you're expecting it to do. In order to use
-<br>snapshotting, you need a snapshot device, and you also need a snapshot-=
-origin<br>device. The snapshot-origin code is what monitors the I/O path fo=
-r the origin<br>device, and performs the copy-on-writes as necessary.<br>
-<br>Last summer I did a write-up how you might use dmsetup to create snapsh=
-ots.<br>You can read the thread at:<br><a href=3D"https://www.redhat.com/ar=
-chives/dm-devel/2004-July/msg00068.html">https://www.redhat.com/archives/dm=
--devel/2004-July/msg00068.html
-</a><br><br>But in short, it's vastly simpler to just use LVM2 or EVMS to c=
-reate<br>snapshots. You should be able to create volumes on your cloop devi=
-ces using<br>either set of tools.<br><br>Let me know if you have additional=
- questions after reading through the thread
-<br>above.<br><br>--<br>Kevin Corry<br><a href=3D"mailto:kevcorry@us.ibm.co=
-m">kevcorry@us.ibm.com</a><br><a href=3D"http://www.ibm.com/linux/">http://=
-www.ibm.com/linux/</a><br><a href=3D"http://evms.sourceforge.net/">http://e=
-vms.sourceforge.net/
-</a><br></blockquote></div><br><br clear=3D"all"><br>-- <br>Not gonna be ki=
-ng of the world if you're slave to the grind<br>- Skid Row
-
-------=_Part_2110_12103172.1125021076618--
+Martin Schlemmer
 
 
---===============1735568122==
+--=-IkLu792qztqGsd99EN63
+Content-Disposition: attachment; filename=device-mapper.1.01.04-klibc2.patch
+Content-Type: text/x-patch; name=device-mapper.1.01.04-klibc2.patch;
+	charset=UTF-8
+Content-Transfer-Encoding: base64
+
+ZGlmZiAtdXJwTiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQvYWNsb2NhbC5tNCBkZXZpY2UtbWFwcGVy
+LjEuMDEuMDQua2xpYmMvYWNsb2NhbC5tNA0KLS0tIGRldmljZS1tYXBwZXIuMS4wMS4wNC9hY2xv
+Y2FsLm00CTE5NzAtMDEtMDEgMDI6MDA6MDAuMDAwMDAwMDAwICswMjAwDQorKysgZGV2aWNlLW1h
+cHBlci4xLjAxLjA0LmtsaWJjL2FjbG9jYWwubTQJMjAwNS0wOC0yNyAxMjo0ODo1OS4wMDAwMDAw
+MDAgKzAyMDANCkBAIC0wLDAgKzEsOTQgQEANCisjIGtsaWJjLm00IHNlcmlhbCA5OQ0KKyMjIENv
+cHlyaWdodCAoQykgMTk5NS0yMDAzIEZyZWUgU29mdHdhcmUgRm91bmRhdGlvbiwgSW5jLg0KKyMj
+IFRoaXMgZmlsZSBpcyBmcmVlIHNvZnR3YXJlLCBkaXN0cmlidXRlZCB1bmRlciB0aGUgdGVybXMg
+b2YgdGhlIEdOVQ0KKyMjIEdlbmVyYWwgUHVibGljIExpY2Vuc2UuICBBcyBhIHNwZWNpYWwgZXhj
+ZXB0aW9uIHRvIHRoZSBHTlUgR2VuZXJhbA0KKyMjIFB1YmxpYyBMaWNlbnNlLCB0aGlzIGZpbGUg
+bWF5IGJlIGRpc3RyaWJ1dGVkIGFzIHBhcnQgb2YgYSBwcm9ncmFtDQorIyMgdGhhdCBjb250YWlu
+cyBhIGNvbmZpZ3VyYXRpb24gc2NyaXB0IGdlbmVyYXRlZCBieSBBdXRvY29uZiwgdW5kZXINCisj
+IyB0aGUgc2FtZSBkaXN0cmlidXRpb24gdGVybXMgYXMgdGhlIHJlc3Qgb2YgdGhhdCBwcm9ncmFt
+Lg0KKyMjDQorIyMgVGhpcyBmaWxlIGNhbiBjYW4gYmUgdXNlZCBpbiBwcm9qZWN0cyB3aGljaCBh
+cmUgbm90IGF2YWlsYWJsZSB1bmRlcg0KKyMjIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5z
+ZSBvciB0aGUgR05VIExpYnJhcnkgR2VuZXJhbCBQdWJsaWMNCisjIyBMaWNlbnNlIGJ1dCB3aGlj
+aCBzdGlsbCB3YW50IHRvIHByb3ZpZGUgc3VwcG9ydCBmb3IgdGhlIEdOVSBnZXR0ZXh0DQorIyMg
+ZnVuY3Rpb25hbGl0eS4NCisjIyBQbGVhc2Ugbm90ZSB0aGF0IHRoZSBhY3R1YWwgY29kZSBvZiB0
+aGUgS0xJQkMgTGlicmFyeSBpcyBwYXJ0bHkgY292ZXJlZA0KKyMjIGJ5IHRoZSBHTlUgTGlicmFy
+eSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlLCBhbmQgcGFydHkgY29weXJpZ2h0ZWQgYnkgdGhlDQor
+IyMgUmVnZW50cyBvZiBUaGUgVW5pdmVyc2l0eSBvZiBDYWxpZm9ybmlhLCBhbmQgdGhlIHJlc3Qg
+aXMgY292ZXJlZCBieSBhDQorIyMgTUlUIHN0eWxlIGxpY2Vuc2UuIA0KKw0KKyMgQXV0aG9yczoN
+CisjICAgTWFydGluIFNjaGxlbW1lciA8YXphcmFoQG5vc2ZlcmF0dS56YS5vcmc+LCAyMDA1Lg0K
+Kw0KKw0KKyMgQUNfQ0hFQ0tfS0xJQkMNCisjIC0tLS0tLS0tLS0tLS0tDQorIyBDaGVjayBpZiB0
+aGUgdXNlciB3YW50cyBLTElCQyBzdXBwb3J0IGVuYWJsZWQuICBJZiBzbywgc2V0IEtMSUJDPXll
+cyBhbmQNCisjIGZpbGwgaW4gS0xJQkNfUFJFRklYLCBLTElCQ19CSU5ESVIsIEtMSUJDX1NCSU5E
+SVIsIEtMSUJDX0xJQkRJUiBhbmQNCisjIEtMSUJDX0lOQ0xVREVESVIuICBDQyBpcyBhbHNvIHNl
+dCB0byB0aGUgcHJvcGVyIGtsY2MgZXhlY3V0YWJsZS4NCisjIE5PVEU6ICBUaGlzIHNob3VsZCBi
+ZSBjYWxsZWQgYmVmb3JlIEFDX1BST0dfQ0MsIGFuZCBiZWZvcmUgaGVhZGVyLCBmdW5jdGlvbg0K
+KyMgICAgICAgIG9yIHR5cGUgY2hlY2tzLg0KK0FDX0RFRlVOKFtBQ19DSEVDS19LTElCQ10sDQor
+W0FDX0JFRk9SRShbJDBdLCBbQUNfUFJPR19DQ10pDQorQUNfUkVRVUlSRShbQUNfQ0FOT05JQ0FM
+X0hPU1RdKQ0KK0FDX0FSR19FTkFCTEUoW2tsaWJjXSwNCisgICAgICAgICAgICAgIFtBU19IRUxQ
+X1NUUklORyhbLS1lbmFibGUta2xpYmNdLA0KKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
+IFtFbmFibGUgbGlua2luZyB0byBrbGliYyBbbm9dLiAgWW91IG5lZWQgYXQNCisgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgbGVhc3Qga2xpYmMtMS4wIG9yIGxhdGVyIGZvciB0aGlzLiAg
+U2V0IEtMQ0MNCisgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgdG8gdGhlIGFic29sdXRl
+IGZpbGUgbmFtZSBvZiBrbGNjIGlmIG5vdCBpbg0KKyAgICAgICAgICAgICAgICAgICAgICAgICAg
+ICAgICB0aGUgUEFUSF0pXSwNCisgICAgICAgICAgICAgIFtLTElCQz0kZW5hYmxldmFsXSwgW0tM
+SUJDPW5vXSkNCitBQ19BUkdfRU5BQkxFKFtrbGliYy1sYXlvdXRdLA0KKyAgICAgICAgICAgICAg
+W0FTX0hFTFBfU1RSSU5HKFstLWVuYWJsZS1rbGliYy1sYXlvdXRdLA0KKyAgICAgICAgICAgICAg
+ICAgICAgICAgICAgICAgIFtFbmFibGUgaW5zdGFsbGluZyBiaW5hcmllcywgbGlicmFyaWVzIGFu
+ZA0KKyAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBoZWFkZXJzIGludG8gdGhlIGtsaWJj
+IHByZWZpeCBbeWVzXSBdKV0sDQorICAgICAgICAgICAgICBbaWYgdGVzdCAiWCRLTElCQyIgIT0g
+WG5vOyB0aGVuDQorICAgICAgICAgICAgICAgICBLTElCQ19MQVlPVVQ9JGVuYWJsZXZhbA0KKyAg
+ICAgICAgICAgICAgIGVsc2UNCisgICAgICAgICAgICAgICAgIEtMSUJDX0xBWU9VVD1ubw0KKyAg
+ICAgICAgICAgICAgIGZpXSwNCisgICAgICAgICAgICAgIFtpZiB0ZXN0ICJYJEtMSUJDIiAhPSBY
+bm87IHRoZW4NCisgICAgICAgICAgICAgICAgIEtMSUJDX0xBWU9VVD15ZXMNCisgICAgICAgICAg
+ICAgICBlbHNlDQorICAgICAgICAgICAgICAgICBLTElCQ19MQVlPVVQ9bm8NCisgICAgICAgICAg
+ICAgICBmaV0pDQorDQoraWYgdGVzdCAiWCRLTElCQyIgIT0gWG5vOyB0aGVuDQorICAjIEJhc2lj
+IGNyb3NzIGNvbXBpbGluZyBzdXBwb3J0LiAgSSBkbyBub3QgdGhpbmsgaXQgaXMgd2lzZSB0byB1
+c2UNCisgICMgQUNfQ0hFQ0tfVE9PTCwgYmVjYXVzZSBpZiB3ZSBhcmUgY3Jvc3MgY29tcGlsaW5n
+LCB3ZSBkbyBub3Qgd2FudA0KKyAgIyBqdXN0ICdrbGNjJyB0byBiZSByZXR1cm5lZCAuLi4NCisg
+IGlmIHRlc3QgIiR7aG9zdF9hbGlhc30iICE9ICIke2J1aWxkX2FsaWFzfSI7IHRoZW4NCisgICAg
+QUNfQ0hFQ0tfUFJPR1MoW0tMQ0NdLCBbJHtob3N0X2FsaWFzfS1rbGNjXSwgW25vXSkNCisgIGVs
+c2UNCisgICAgQUNfQ0hFQ0tfUFJPR1MoW0tMQ0NdLCBba2xjY10sIFtub10pDQorICBmaQ0KKyAg
+aWYgdGVzdCAiWCRLTENDIiA9IFhubzsgdGhlbg0KKyAgICBBQ19NU0dfRVJST1IoW2Nhbm5vdCBm
+aW5kIGtsaWJjIGZyb250ZW5kICdrbGNjJyFdKQ0KKyAgZmkNCisNCisgIENDPSIkS0xDQyINCisg
+IENGTEFHUz0iLU9zIg0KKw0KKyAgS0xJQkNfS0NST1NTPSIkKCRLTENDIC1wcmludC1rbGliYy1r
+Y3Jvc3MgMj4vZGV2L251bGwpIg0KKyAgS0xJQkNfUFJFRklYPSIkKCRLTENDIC1wcmludC1rbGli
+Yy1wcmVmaXggMj4vZGV2L251bGwpIg0KKyAgS0xJQkNfQklOX0RJUj0iJCgkS0xDQyAtcHJpbnQt
+a2xpYmMtYmluZGlyIDI+L2Rldi9udWxsKSINCisgIEtMSUJDX1NCSU5fRElSPSIke0tMSUJDX1BS
+RUZJWH0vJHtLTElCQ19LQ1JPU1N9c2JpbiINCisgIEtMSUJDX0xJQl9ESVI9IiQoJEtMQ0MgLXBy
+aW50LWtsaWJjLWxpYmRpciAyPi9kZXYvbnVsbCkiDQorICBLTElCQ19JTkNMVURFX0RJUj0iJCgk
+S0xDQyAtcHJpbnQta2xpYmMtaW5jbHVkZWRpciAyPi9kZXYvbnVsbCkiDQorDQorICBpZiB0ZXN0
+ICJYJEtMSUJDX0xBWU9VVCIgIT0gWG5vOyB0aGVuDQorICAgIHByZWZpeD0iJEtMSUJDX1BSRUZJ
+WCINCisgICAgYmluZGlyPSIkS0xJQkNfQklOX0RJUiINCisgICAgc2JpbmRpcj0iJEtMSUJDX1NC
+SU5fRElSIg0KKyAgICBsaWJkaXI9IiRLTElCQ19MSUJfRElSIg0KKyAgICBpbmNsdWRlZGlyPSIk
+S0xJQkNfSU5DTFVERV9ESVIiDQorICBmaQ0KKw0KKyAgIyBBdCBsZWFzdCBLTElCQ19MSUJfRElS
+IHNob3VsZCBiZSB2YWxpZCwgZWxzZSBrbGliYyBpcyB0b28gb2xkIG9yDQorICAjIHNvbWV0aGlu
+ZyB3ZW50IHdyb25nDQorICBpZiB0ZXN0ICEgLWQgIiRLTElCQ19MSUJfRElSIjsgdGhlbg0KKyAg
+ICBBQ19NU0dfRVJST1IoW3lvdXIga2xpYmMgaW5zdGFsbGF0aW9uIGlzIHRvbyBvbGQgb3Igbm90
+IGZ1bmN0aW9uYWwhXSkNCisgIGZpDQorZmkNCisNCitBQ19TVUJTVChLTElCQykNCitdKSMgQUNf
+Q0hFQ0tfS0xJQkMNCisNCmRpZmYgLXVycE4gZGV2aWNlLW1hcHBlci4xLjAxLjA0L2NvbmZpZ3Vy
+ZS5pbiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvY29uZmlndXJlLmluDQotLS0gZGV2aWNl
+LW1hcHBlci4xLjAxLjA0L2NvbmZpZ3VyZS5pbgkyMDA1LTA4LTAyIDIzOjA0OjUxLjAwMDAwMDAw
+MCArMDIwMA0KKysrIGRldmljZS1tYXBwZXIuMS4wMS4wNC5rbGliYy9jb25maWd1cmUuaW4JMjAw
+NS0wOC0yNyAxMjo0ODo1OS4wMDAwMDAwMDAgKzAyMDANCkBAIC0yNyw0MiArMjcsNjQgQEAgQUNf
+Q09ORklHX0FVWF9ESVIoYXV0b2NvbmYpIA0KIGRubCAtLSBHZXQgc3lzdGVtIHR5cGUNCiBBQ19D
+QU5PTklDQUxfU1lTVEVNDQogDQotY2FzZSAiJGhvc3Rfb3MiIGluDQotCWxpbnV4KikNCi0JCUNG
+TEFHUz0iJENGTEFHUyINCi0JCUNPUFRJTUlTRV9GTEFHPSItTzIiDQotCQlDTERGTEFHUz0iJENM
+REZMQUdTIC1XbCwtLXZlcnNpb24tc2NyaXB0LC5leHBvcnQuc3ltIg0KLQkJTERERVBTPSIkTERE
+RVBTIC5leHBvcnQuc3ltIg0KLQkJTElCX1NVRkZJWD0ic28iDQotCQlETUlPQ1RMUz0ieWVzIg0K
+LQkJU0VMSU5VWD0ieWVzIiA7Ow0KLQlkYXJ3aW4qKQ0KLQkJQ0ZMQUdTPSIkQ0ZMQUdTIC1uby1j
+cHAtcHJlY29tcCAtZm5vLWNvbW1vbiINCi0JCUNPUFRJTUlTRV9GTEFHPSItTzIiDQotCQlDTERG
+TEFHUz0iJENMREZMQUdTIg0KLQkJTERERVBTPSIkTERERVBTIg0KLQkJTElCX1NVRkZJWD0iZHls
+aWIiDQotCQlETUlPQ1RMUz0ibm8iDQotCQlTRUxJTlVYPSJubyIgOzsNCi1lc2FjDQotDQogIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2tzIGZvciBwcm9ncmFtcy4NCiBBQ19Q
+Uk9HX0FXSw0KLUFDX1BST0dfQ0MNCi1BQ19QUk9HX0dDQ19UUkFESVRJT05BTA0KIEFDX1BST0df
+SU5TVEFMTA0KIEFDX1BST0dfTE5fUw0KIEFDX1BST0dfTUFLRV9TRVQNCiBBQ19QUk9HX1JBTkxJ
+Qg0KIA0KICMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjDQorZG5sIC0tIEVuYWJsZXMgbGlua2luZyB0
+byBrbGliYw0KK2RubCAtLSBXZSBuZWVkIHRvIGRvIHRoaXMgYmVmb3JlIGhlYWRlciBjaGVja3Ms
+IGFzIHdlIG5lZWQgdG8gc2V0IENDDQorQUNfQ0hFQ0tfS0xJQkMNCisNCisjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIw0KK2RubCAtLSBTZXQgc3lzdGVtIHR5cGUgZmxhZ3MsIGV0Yw0KK2lmIHRlc3Qg
+eCRLTElCQyAhPSB4eWVzOyB0aGVuDQorCWNhc2UgIiRob3N0X29zIiBpbg0KKwkJbGludXgqKQ0K
+KwkJCUNGTEFHUz0iJENGTEFHUyINCisJCQlDT1BUSU1JU0VfRkxBRz0iLU8yIg0KKwkJCUNMREZM
+QUdTPSIkQ0xERkxBR1MgLVdsLC0tdmVyc2lvbi1zY3JpcHQsLmV4cG9ydC5zeW0iDQorCQkJTERE
+RVBTPSIkTERERVBTIC5leHBvcnQuc3ltIg0KKwkJCUxJQl9TVUZGSVg9InNvIg0KKwkJCURNSU9D
+VExTPSJ5ZXMiDQorCQkJU0VMSU5VWD0ieWVzIiA7Ow0KKwkJZGFyd2luKikNCisJCQlDRkxBR1M9
+IiRDRkxBR1MgLW5vLWNwcC1wcmVjb21wIC1mbm8tY29tbW9uIg0KKwkJCUNPUFRJTUlTRV9GTEFH
+PSItTzIiDQorCQkJQ0xERkxBR1M9IiRDTERGTEFHUyINCisJCQlMRERFUFM9IiRMRERFUFMiDQor
+CQkJTElCX1NVRkZJWD0iZHlsaWIiDQorCQkJRE1JT0NUTFM9Im5vIg0KKwkJCVNFTElOVVg9Im5v
+IiA7Ow0KKwllc2FjDQorZWxzZQ0KKwlkbmwgLS0gV2Ugb25seSBzdXBwb3J0IGxpbnV4IHdpdGgg
+a2xpYmMgLi4uDQorCUNGTEFHUz0iJENGTEFHUyINCisJQ09QVElNSVNFX0ZMQUc9DQorCUNMREZM
+QUdTPSIkQ0xERkxBR1MgLVdsLC0tdmVyc2lvbi1zY3JpcHQsLmV4cG9ydC5zeW0iDQorCUxEREVQ
+Uz0iJExEREVQUyAuZXhwb3J0LnN5bSINCisJTElCX1NVRkZJWD0iYSINCisJRE1JT0NUTFM9Inll
+cyINCisJU0VMSU5VWD0ibm8iDQorZmkNCisNCisjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIw0KK2Ru
+bCAtLSBDaGVja3MgZm9yIENDLg0KK2RubCAtLSBTaG91bGQgYmUgYWZ0ZXIga2xpYmMgY2hlY2su
+DQorQUNfUFJPR19DQw0KK0FDX1BST0dfR0NDX1RSQURJVElPTkFMDQorDQorIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2tzIGZvciBoZWFkZXIgZmlsZXMuDQogQUNfSEVBREVS
+X0RJUkVOVA0KIEFDX0hFQURFUl9TVERDDQogQUNfSEVBREVSX1RJTUUNCiANCi1BQ19DSEVDS19I
+RUFERVJTKGN0eXBlLmggZGlyZW50LmggZXJybm8uaCBmY250bC5oIGdldG9wdC5oIGludHR5cGVz
+LmggbGltaXRzLmggc3RkYXJnLmggc3RkaW8uaCBzdGRsaWIuaCBzdHJpbmcuaCBzeXMvaW9jdGwu
+aCBzeXMvcGFyYW0uaCBzeXMvc3RhdC5oIHN5cy90eXBlcy5oIHVuaXN0ZC5oLCxBQ19NU0dfRVJS
+T1IoYmFpbGluZyBvdXQpKQ0KK0FDX0NIRUNLX0hFQURFUlMoY3R5cGUuaCBkaXJlbnQuaCBlcnJu
+by5oIGZjbnRsLmggaW50dHlwZXMuaCBsaW1pdHMuaCBzdGRhcmcuaCBzdGRpby5oIHN0ZGxpYi5o
+IHN0cmluZy5oIHN5cy9pb2N0bC5oIHN5cy9wYXJhbS5oIHN5cy9zdGF0Lmggc3lzL3R5cGVzLmgg
+dW5pc3RkLmgsLEFDX01TR19FUlJPUihiYWlsaW5nIG91dCkpDQogDQogIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2tzIGZvciB0eXBlZGVmcywgc3RydWN0dXJlcywgYW5kIGNv
+bXBpbGVyIGNoYXJhY3RlcmlzdGljcy4NCkBAIC0yMDYsNyArMjI4LDEwIEBAIGZpDQogDQogIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMNCiBkbmwgLS0gQ2hlY2sgZm9yIGdldG9wdA0KLUFDX0NIRUNL
+X0hFQURFUlMoZ2V0b3B0LmgsIENGTEFHUz0iJENGTEFHUyAtREhBVkVfR0VUT1BUTE9ORyIpDQor
+ZG5sIC0tIFdlIGRvIG5vdCB3YW50IHRoaXMgd2l0aCBrbGliYw0KK2lmIHRlc3QgeCRLTElCQyAh
+PSB4eWVzOyB0aGVuDQorCUFDX0NIRUNLX0hFQURFUlMoZ2V0b3B0LmgsIENGTEFHUz0iJENGTEFH
+UyAtREhBVkVfR0VUT1BUTE9ORyIpDQorZmkNCiANCiAjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj
+IyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIw0K
+IGRubCAtLSBJbnRlcm5hdGlvbmFsaXNhdGlvbiBzdHVmZg0KZGlmZiAtdXJwTiBkZXZpY2UtbWFw
+cGVyLjEuMDEuMDQvZG1zZXR1cC9NYWtlZmlsZS5pbiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xp
+YmMvZG1zZXR1cC9NYWtlZmlsZS5pbg0KLS0tIGRldmljZS1tYXBwZXIuMS4wMS4wNC9kbXNldHVw
+L01ha2VmaWxlLmluCTIwMDUtMDEtMjcgMTg6MTY6NTIuMDAwMDAwMDAwICswMjAwDQorKysgZGV2
+aWNlLW1hcHBlci4xLjAxLjA0LmtsaWJjL2Rtc2V0dXAvTWFrZWZpbGUuaW4JMjAwNS0wOC0yNyAx
+Mjo1ODozMi4wMDAwMDAwMDAgKzAyMDANCkBAIC0xOSw2ICsxOSwxMCBAQCBWUEFUSCA9IEBzcmNk
+aXJADQogVEFSR0VUUyA9IGRtc2V0dXANCiBJTlNUQUxMX1RZUEUgPSBpbnN0YWxsX2R5bmFtaWMN
+CiANCitpZmVxICgiQEtMSUJDQCIsICJ5ZXMiKQ0KKyAgRVhUUkFfTERGTEFHUyA9IC1zaGFyZWQN
+CitlbmRpZg0KKw0KIGlmZXEgKCJAU1RBVElDX0xJTktAIiwgInllcyIpDQogICBUQVJHRVRTICs9
+IGRtc2V0dXAuc3RhdGljDQogICBJTlNUQUxMX1RZUEUgKz0gaW5zdGFsbF9zdGF0aWMNCkBAIC0z
+MCw3ICszNCw3IEBAIENMRUFOX1RBUkdFVFMgPSBkbXNldHVwIGRtc2V0dXAuc3RhdGljDQogaW5j
+bHVkZSAuLi9tYWtlLnRtcGwNCiANCiBkbXNldHVwOiAkKE9CSkVDVFMpICQoaW50ZXJmYWNlZGly
+KS9saWJkZXZtYXBwZXIuJChMSUJfU1VGRklYKQ0KLQkkKENDKSAtbyAkQCAkKE9CSkVDVFMpICQo
+TERGTEFHUykgXA0KKwkkKENDKSAtbyAkQCAkKE9CSkVDVFMpICQoTERGTEFHUykgJChFWFRSQV9M
+REZMQUdTKSBcDQogCSAgICAgIC1MJChpbnRlcmZhY2VkaXIpIC1MJChERVNURElSKS9saWIgLWxk
+ZXZtYXBwZXIgJChMSUJTKQ0KIA0KIGRtc2V0dXAuc3RhdGljOiAkKE9CSkVDVFMpICQoaW50ZXJm
+YWNlZGlyKS9saWJkZXZtYXBwZXIuYQ0KZGlmZiAtdXJwTiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQv
+ZG1zZXR1cC9kbXNldHVwLmMgZGV2aWNlLW1hcHBlci4xLjAxLjA0LmtsaWJjL2Rtc2V0dXAvZG1z
+ZXR1cC5jDQotLS0gZGV2aWNlLW1hcHBlci4xLjAxLjA0L2Rtc2V0dXAvZG1zZXR1cC5jCTIwMDUt
+MDctMjkgMTg6MTE6MjMuMDAwMDAwMDAwICswMjAwDQorKysgZGV2aWNlLW1hcHBlci4xLjAxLjA0
+LmtsaWJjL2Rtc2V0dXAvZG1zZXR1cC5jCTIwMDUtMDgtMjcgMTI6NDg6NTkuMDAwMDAwMDAwICsw
+MjAwDQpAQCAtMjYsNyArMjYsOSBAQA0KICNpbmNsdWRlIDxkaXJlbnQuaD4NCiAjaW5jbHVkZSA8
+ZXJybm8uaD4NCiAjaW5jbHVkZSA8dW5pc3RkLmg+DQotI2luY2x1ZGUgPGxpYmdlbi5oPg0KKyNp
+Zm5kZWYgX19LTElCQ19fDQorIyBpbmNsdWRlIDxsaWJnZW4uaD4NCisjZW5kaWYNCiAjaW5jbHVk
+ZSA8c3lzL3dhaXQuaD4NCiAjaW5jbHVkZSA8dW5pc3RkLmg+DQogI2luY2x1ZGUgPHN5cy9wYXJh
+bS5oPg0KQEAgLTEwNTQsNyArMTA1NiwxOCBAQCBzdGF0aWMgaW50IF9wcm9jZXNzX3N3aXRjaGVz
+KGludCAqYXJnYywgDQogCW1lbXNldCgmX3ZhbHVlcywgMCwgc2l6ZW9mKF92YWx1ZXMpKTsNCiAN
+CiAJbmFtZWJhc2UgPSBzdHJkdXAoKCphcmd2KVswXSk7DQorI2lmbmRlZiBfX0tMSUJDX18NCiAJ
+YmFzZSA9IGJhc2VuYW1lKG5hbWViYXNlKTsNCisjZWxzZQ0KKwliYXNlID0gc3RycmNocihuYW1l
+YmFzZSwgJy8nKTsNCisJaWYgKGJhc2UgIT0gTlVMTCkNCisJCS8qIFJlbW92ZSBsZWFkaW5nICcv
+JyAqLw0KKwkJYmFzZSsrOw0KKwllbHNlDQorCQkvKiBBbHJlYWR5IGJhc2VuYW1lID8gKi8NCisJ
+CWJhc2UgPSBuYW1lYmFzZTsNCisJDQorI2VuZGlmDQogDQogCWlmICghc3RyY21wKGJhc2UsICJk
+ZXZtYXBfbmFtZSIpKSB7DQogCQlmcmVlKG5hbWViYXNlKTsNCmRpZmYgLXVycE4gZGV2aWNlLW1h
+cHBlci4xLjAxLjA0L2xpYi9NYWtlZmlsZS5pbiBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMv
+bGliL01ha2VmaWxlLmluDQotLS0gZGV2aWNlLW1hcHBlci4xLjAxLjA0L2xpYi9NYWtlZmlsZS5p
+bgkyMDA1LTA0LTI4IDAwOjMyOjAwLjAwMDAwMDAwMCArMDIwMA0KKysrIGRldmljZS1tYXBwZXIu
+MS4wMS4wNC5rbGliYy9saWIvTWFrZWZpbGUuaW4JMjAwNS0wOC0yNyAxMjo0ODo1OS4wMDAwMDAw
+MDAgKzAyMDANCkBAIC00Nyw4ICs0NywxNCBAQCBpbmNsdWRlIC4uL21ha2UudG1wbA0KIA0KIElO
+U1RBTExfVFlQRSA9IGluc3RhbGxfZHluYW1pYw0KIA0KLWlmZXEgKCJAU1RBVElDX0xJTktAIiwg
+InllcyIpDQotICBJTlNUQUxMX1RZUEUgKz0gaW5zdGFsbF9zdGF0aWMNCitpZmVxICgiQEtMSUJD
+QCIsICJ5ZXMiKQ0KKyAgSU5TVEFMTF9UWVBFID0gaW5zdGFsbF9zdGF0aWMNCitlbHNlDQorICBJ
+TlNUQUxMX1RZUEUgPSBpbnN0YWxsX2R5bmFtaWMNCisNCisgIGlmZXEgKCJAU1RBVElDX0xJTktA
+IiwgInllcyIpDQorICAgIElOU1RBTExfVFlQRSArPSBpbnN0YWxsX3N0YXRpYw0KKyAgZW5kaWYN
+CiBlbmRpZg0KIA0KIGluc3RhbGw6ICQoSU5TVEFMTF9UWVBFKQ0KZGlmZiAtdXJwTiBkZXZpY2Ut
+bWFwcGVyLjEuMDEuMDQvbGliL2lvY3RsL2xpYmRtLWlmYWNlLmMgZGV2aWNlLW1hcHBlci4xLjAx
+LjA0LmtsaWJjL2xpYi9pb2N0bC9saWJkbS1pZmFjZS5jDQotLS0gZGV2aWNlLW1hcHBlci4xLjAx
+LjA0L2xpYi9pb2N0bC9saWJkbS1pZmFjZS5jCTIwMDUtMDYtMTMgMTU6MTE6NDguMDAwMDAwMDAw
+ICswMjAwDQorKysgZGV2aWNlLW1hcHBlci4xLjAxLjA0LmtsaWJjL2xpYi9pb2N0bC9saWJkbS1p
+ZmFjZS5jCTIwMDUtMDgtMjcgMTI6NDg6NTkuMDAwMDAwMDAwICswMjAwDQpAQCAtMTIyLDI0ICsx
+MjIsMzAgQEAgc3RhdGljIGludCBfZ2V0X3Byb2NfbnVtYmVyKGNvbnN0IGNoYXIgKg0KIAkJCSAg
+ICB1aW50MzJfdCAqbnVtYmVyKQ0KIHsNCiAJRklMRSAqZmw7DQotCWNoYXIgbm1bMjU2XTsNCi0J
+aW50IGM7DQorCWNoYXIgbm1bMjU2XSwgYnVmWzMwMF07DQorCWludCBudW0sIHNpemU7DQogDQog
+CWlmICghKGZsID0gZm9wZW4oZmlsZSwgInIiKSkpIHsNCiAJCWxvZ19lcnJvcigiJXM6IGZvcGVu
+IGZhaWxlZDogJXMiLCBmaWxlLCBzdHJlcnJvcihlcnJubykpOw0KIAkJcmV0dXJuIDA7DQogCX0N
+CiANCi0Jd2hpbGUgKCFmZW9mKGZsKSkgew0KLQkJaWYgKGZzY2FuZihmbCwgIiVkICUyNTVzXG4i
+LCBudW1iZXIsICZubVswXSkgPT0gMikgew0KKwkvKiBVc2UgZnJlYWQrc3NjYW5mIGZvciBrbGli
+YyBjb21wYXRpYmlsaXR5LiAqLw0KKwlkbyB7DQorCQlzaXplID0gMDsNCisJCWRvIHsNCisJCQlu
+dW0gPSBmcmVhZCgmYnVmW3NpemVdLCBzaXplb2YoY2hhciksIDEsIGZsKTsNCisJCQlpZiAobnVt
+ID4gMCkNCisJCQkJc2l6ZSsrOw0KKwkJfSB3aGlsZSAobnVtID4gMCAmJiBidWZbc2l6ZSAtIDFd
+ICE9ICdcbicpOw0KKwkJYnVmW3NpemVdID0gJ1wwJzsNCisJCWlmIChzc2NhbmYoYnVmLCAiJWQg
+JTI1NXNcbiIsIG51bWJlciwgJm5tWzBdKSA9PSAyKSB7DQogCQkJaWYgKCFzdHJjbXAobmFtZSwg
+bm0pKSB7DQogCQkJCWZjbG9zZShmbCk7DQogCQkJCXJldHVybiAxOw0KIAkJCX0NCi0JCX0gZWxz
+ZSBkbyB7DQotCQkJYyA9IGZnZXRjKGZsKTsNCi0JCX0gd2hpbGUgKGMgIT0gRU9GICYmIGMgIT0g
+J1xuJyk7DQotCX0NCisJCX0NCisJfSB3aGlsZSAobnVtID4gMCk7DQogCWZjbG9zZShmbCk7DQog
+DQogCWxvZ19lcnJvcigiJXM6IE5vIGVudHJ5IGZvciAlcyBmb3VuZCIsIGZpbGUsIG5hbWUpOw0K
+QEAgLTE1MSw2ICsxNTcsNyBAQCBzdGF0aWMgaW50IF9jb250cm9sX2RldmljZV9udW1iZXIodWlu
+dDMyDQogCWlmICghX2dldF9wcm9jX251bWJlcihQUk9DX0RFVklDRVMsIE1JU0NfTkFNRSwgbWFq
+b3IpIHx8DQogCSAgICAhX2dldF9wcm9jX251bWJlcihQUk9DX01JU0MsIERNX05BTUUsIG1pbm9y
+KSkgew0KIAkJKm1ham9yID0gMDsNCisJCXByaW50ZigiRmFpbGVkIHRvIGdldCBkZXZpY2UgbnVt
+YmVyIVxuIik7DQogCQlyZXR1cm4gMDsNCiAJfQ0KIA0KZGlmZiAtdXJwTiBkZXZpY2UtbWFwcGVy
+LjEuMDEuMDQvbGliL2xpYmRtLWZpbGUuYyBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvbGli
+L2xpYmRtLWZpbGUuYw0KLS0tIGRldmljZS1tYXBwZXIuMS4wMS4wNC9saWIvbGliZG0tZmlsZS5j
+CTIwMDUtMDEtMjcgMTg6MTY6NTQuMDAwMDAwMDAwICswMjAwDQorKysgZGV2aWNlLW1hcHBlci4x
+LjAxLjA0LmtsaWJjL2xpYi9saWJkbS1maWxlLmMJMjAwNS0wOC0yNyAxMjo0ODo1OS4wMDAwMDAw
+MDAgKzAyMDANCkBAIC0xNiwxMSArMTYsMTMgQEANCiAjaW5jbHVkZSAibGliLmgiDQogI2luY2x1
+ZGUgImxpYmRtLWZpbGUuaCINCiANCi0jaW5jbHVkZSA8c3lzL2ZpbGUuaD4NCisjaWZuZGVmIF9f
+S0xJQkNfXw0KKyMgaW5jbHVkZSA8c3lzL2ZpbGUuaD4NCisjZW5kaWYNCiAjaW5jbHVkZSA8ZmNu
+dGwuaD4NCiAjaW5jbHVkZSA8ZGlyZW50Lmg+DQogDQotI2lmZGVmIGxpbnV4DQorI2lmIGRlZmlu
+ZWQobGludXgpICYmICFkZWZpbmVkKF9fS0xJQkNfXykNCiAjICBpbmNsdWRlIDxtYWxsb2MuaD4N
+CiAjZW5kaWYNCiANCmRpZmYgLXVycE4gZGV2aWNlLW1hcHBlci4xLjAxLjA0L21ha2UudG1wbC5p
+biBkZXZpY2UtbWFwcGVyLjEuMDEuMDQua2xpYmMvbWFrZS50bXBsLmluDQotLS0gZGV2aWNlLW1h
+cHBlci4xLjAxLjA0L21ha2UudG1wbC5pbgkyMDA1LTAxLTI3IDE4OjE2OjUxLjAwMDAwMDAwMCAr
+MDIwMA0KKysrIGRldmljZS1tYXBwZXIuMS4wMS4wNC5rbGliYy9tYWtlLnRtcGwuaW4JMjAwNS0w
+OC0yNyAxMjo0ODo1OS4wMDAwMDAwMDAgKzAyMDANCkBAIC01Niw3ICs1NiwxMiBAQCBlbmRpZg0K
+IA0KIC5TVUZGSVhFUzogLmMgLmQgLm8gLnNvIC5hIC5wbyAucG90IC5tbyAuZHlsaWINCiANCi1D
+RkxBR1MgKz0gLWZQSUMgLVdhbGwgLVd1bmRlZiAtV3NoYWRvdyAtV2Nhc3QtYWxpZ24gLVd3cml0
+ZS1zdHJpbmdzIC1XbWlzc2luZy1wcm90b3R5cGVzIC1XbWlzc2luZy1kZWNsYXJhdGlvbnMgLVdu
+ZXN0ZWQtZXh0ZXJucyAtV2lubGluZQ0KK0NGTEFHUys9LWZQSUMgLVdhbGwgLVd1bmRlZiAtV2Nh
+c3QtYWxpZ24gLVd3cml0ZS1zdHJpbmdzIC1XaW5saW5lDQorDQoraWZlcSAoIkBLTElCQ0AiLCAi
+bm8iKQ0KKyAgIyBUaGVzZSBvbmVzIG1ha2Uga2xpYmMgY29tcGlsZXMgdmVyeSBsb3VkDQorICBD
+RkxBR1MrPS1Xc2hhZG93IC1XbWlzc2luZy1wcm90b3R5cGVzIC1XbWlzc2luZy1kZWNsYXJhdGlv
+bnMgLVduZXN0ZWQtZXh0ZXJucw0KK2VuZGlmDQogDQogI0NGTEFHUyArPSAtVyAtV2NvbnZlcnNp
+b24gLVdwb2ludGVyLWFyaXRoIC1XcmVkdW5kYW50LWRlY2xzIC1XYmFkLWZ1bmN0aW9uLWNhc3Qg
+LVdjYXN0LXF1YWwgLVdtaXNzaW5nLW5vcmV0dXJuDQogDQo=
+
+
+--=-IkLu792qztqGsd99EN63--
+
+--=-3av5Gv/41NGfpScuf1Rk
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2 (GNU/Linux)
+
+iD8DBQBDEEhQqburzKaJYLYRAvzuAJ4+WKdkoRgycsOQ/02BU+rr32rgCgCfWOA4
+YXddNMrv6BnBgFbRCX3dZvQ=
+=OZxu
+-----END PGP SIGNATURE-----
+
+--=-3av5Gv/41NGfpScuf1Rk--
+
+
+--===============0752443616==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1735568122==--
+--===============0752443616==--
