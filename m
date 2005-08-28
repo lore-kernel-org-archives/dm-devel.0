@@ -1,15 +1,14 @@
-From: "H. Peter Anvin" <hpa@zytor.com>
-Subject: Re: [klibc] Re: KLIBC support for device-mapper-1.01.04
-Date: Sat, 27 Aug 2005 11:24:32 -0700
-Message-ID: <4310AFE0.6040807@zytor.com>
-References: <1125005272.7187.49.camel@lycan.lan>
-	<1125140561.10188.10.camel@lycan.lan>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: Re: [PATCH: multipath-tools]: pp_alua updates
+Date: Sun, 28 Aug 2005 23:00:53 +0200
+Message-ID: <1125262853.8344.0.camel@zezette>
+References: <OF7F17F348.90D9EE70-ONC1257069.002B3A47-C1257069.002B868B@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1125140561.10188.10.camel@lycan.lan>
+In-Reply-To: <OF7F17F348.90D9EE70-ONC1257069.002B3A47-C1257069.002B868B@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: azarah@nosferatu.za.org
-Cc: dm-devel@redhat.com, KLIBC Mailing List <klibc@zytor.com>, Christophe Varoqui <christophe.varoqui@free.fr>, Heinz Mauelshagen <mauelshagen@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Martin Schlemmer wrote:
-> On Thu, 2005-08-25 at 23:28 +0200, Martin Schlemmer wrote:
+On ven, 2005-08-26 at 09:57 +0200, Stefan Bader wrote:
+> Hi Christophe,
 > 
->>Hi,
->>
->>Some time back I sent a patch for KLIBC support for device-mapper, but
->>no response so far.  I have however updated the patch.
->>
-> Ok, I checked multipath-tools again, and did query on the klibc mailing
-> lists (no real response), and decided to not have the _klibc suffix on
-> the library.  Also tweaked the build to build a binary default linked
-> dynamic to klibc, with --enable-static_link giving static linked binary.
+> two more patches for pp_alua. The first ones just documentation and adapts 
+> the manpage to
+> the new callout name.
 > 
-> Comments once again welcome.
 > 
-
-Sorry for the lack of feedback; I'm a bit backlogged in my life :-/ at 
-the moment... I'll try to catch up as soon as possible.
-
-	-hpa
+> 
+> The second one removes bitfields in the SCSI structs. This didn't work on 
+> i386.
+> 
+Merged, thanks.
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
