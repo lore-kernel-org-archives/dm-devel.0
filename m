@@ -1,30 +1,18 @@
-From: Administrator <admin@photoresearchers.com>
+From: Christoph Hellwig <hch@infradead.org>
 Subject: Re: fibre channel/multipath questions
-Date: Mon, 29 Aug 2005 12:56:36 -0400
-Message-ID: <43133E44.9000904@photoresearchers.com>
-References: <20050829160004.07583734F7@hormel.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Mon, 29 Aug 2005 18:23:16 +0100
+Message-ID: <20050829172316.GC7875@infradead.org>
+References: <200508261812.23328.Rik.Bobbaers@cc.kuleuven.be>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050829160004.07583734F7@hormel.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Rik.Bobbaers@cc.kuleuven.be
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <200508261812.23328.Rik.Bobbaers@cc.kuleuven.be>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Rik Bobbaers <Rik.Bobbaers@cc.kuleuven.be>
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Rik Bobbaers <Rik.Bobbaers@cc.kuleuven.be> wrote:
-> 2. Is it possible to make the fibrechannel driver get loaded AFTER the others? 
+I think you can setup dm-multipath based on WWNs, so the device
+numbers don't matter.  Cc'ed the dm-devel list to verify my assumption.
 
-Yes.  It's in the archives:
-
-http://www.redhat.com/archives/dm-devel/2005-June/msg00142.html
