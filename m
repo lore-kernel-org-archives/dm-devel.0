@@ -1,8 +1,8 @@
 From: "Lin, Weichuan" <weichuan.lin@intel.com>
 Subject: ioctl failed when parted operated on device active by
 	dmraid?
-Date: Tue, 30 Aug 2005 10:24:53 +0800
-Message-ID: <571ACEFD467F7749BC50E0A98C17CDD807BD347D@pdsmsx403>
+Date: Tue, 30 Aug 2005 12:38:53 +0800
+Message-ID: <571ACEFD467F7749BC50E0A98C17CDD807BD35D0@pdsmsx403>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
