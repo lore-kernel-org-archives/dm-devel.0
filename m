@@ -1,75 +1,70 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: [ANNOUNCE] multipath-tools-0.4.5
-Date: Fri, 02 Sep 2005 23:16:05 +0200
-Message-ID: <1125695765.6217.10.camel@zezette>
+Subject: Re: FW: How to avoid lots of read ios to passive paths
+	of active-pass ive storage devices?
+Date: Fri, 02 Sep 2005 23:17:11 +0200
+Message-ID: <1125695831.6217.12.camel@zezette>
+References: <C2EEB4E538D3DC48BF57F391F422779321AC40@SRMANNING.eng.emc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-Sender: linux-raid-owner@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AC40@SRMANNING.eng.emc.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-hotplug-devel@lists.sourceforge.net" <linux-hotplug-devel@lists.sourceforge.net>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hello,
-
-here goes multipath-tools-0.4.5
-
-This release was long due.
-Full of new shiny features.
-
-Worth noting :
-
-    * multipathd keeps Device Mapper path status in sync with path
-      checker status : proactive fail_path and reinstate_path
-    * proactive path group re-enable, as soon as one path goes up
-    * multipathd is now fully event driven :
-          o NetLink? uevents for kernels/distro that enables the feature
-          o Hotplug
-          o Unix socket messages
-    * a Command Line Interface to drive and inspect the daemon
-    * remove the multipath(8) cache file logic in favour of a
-      multipathd<->multipath unix socket request/reply design
-    * split multipath(8) listing option into
-          o short-list (-l) : don't fetch wwid, path checker status,
-            priorities ... fast
-          o detailed-list (-ll) : refetch all info
-    * the daemon asynchronous logger is now solid and avoid sending
-      critical messages
-    * daemon CLI command to reload the config file
-    * path checking interval gets longer when the path is reliably up,
-      resets to short as soon as a problem occur
-    * daemon implements 3 path group failback methods :
-          o manual
-          o immediate : failback as soon as an (enabled && !active) PG
-            gets the highest priority
-          o defered : failback to the highest priority 
-            (enabled && !active) PG n seconds after the last PG priority
-            order change
-    * remove over-complicated and thread-confusing daemon initial
-      clone() w/ private namespace
-    * prioritizers official prefix is now mpath_prio_
-    * multipath(8) displays PG priorities when available
-    * new hp_sw checker. It's a tri-state UP/DOWN/GHOST
-    * new directio checker. Useful with DASD devices. May suplant
-      readsector0 in the long run ?
-    * stricter default blacklist regexps
-    * new '-f' multipath(8) flag to selectively suppress a multipath
-      map, and its device-mapped partitions
-    * alua prioritizer update, should work on x86
-    * support for >2TB multipaths
-    * claimed device detection : no more warning/error messages with
-      paths pinned by mounted FS
-    * option to use priorities as weights in the round-robin scheduler :
-      for people who can't wait for a qlen-based scheduler
-
-As usual, doc and download at :
-http://christophe.varoqui.free.fr/
-
-Archive mirror at ftp://sources.redhat.com/pub/dm/multipath-tools/
+What if we claim exclusively these passive paths from multipathd ?
 
 Regards,
+
+On ven, 2005-09-02 at 10:25 -0400, goggin, edward wrote:
+> Reposting since it didn't get much response initially and the issue came up
+> again
+> in yesterday's multipath conference call.
+> 
+> > ______________________________________________ 
+> > From: 	goggin, edward  
+> > Sent:	Friday, July 08, 2005 12:21 AM
+> > To:	'dm-devel@redhat.com'
+> > Subject:	How to avoid lots of read ios to passive paths of
+> > active-passive storage devices?
+> > 
+> > How sould device scanning utilities like blkid, pvscan,
+> > vgscan, and lvscan (others?) be made to avoid issuing
+> > a significant number of read ios to passive paths of
+> > active-passive storage devices?
+> > 
+> > Possibly they could be changed to use device specific
+> > command interfaces like SCSI pass through ioctls to
+> > read the native device paths in order to avoid sending
+> > lots of ios down the passive paths to active-passive
+> > storage devices?
+> > 
+> > This way they could parse the sense key, ASC, and ASCQ
+> > returned via the SG_IO interface, see values like
+> > "Not Ready, Manual Intervention Required" and avoid
+> > sending subsequent reads to the same path.
+> > 
+> > Or should they be changed to scan the multipath devices
+> > if they exist instead of the path specific devices?
+> > 
+> > While this isn't an issue now, it could become one later
+> > when/if linux hosts are configured with hundreds/thousands
+> > of passive paths.
+> > 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 -- 
 christophe varoqui <christophe.varoqui@free.fr>
-
-
