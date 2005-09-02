@@ -1,81 +1,75 @@
-From: Steve Lord <lord@xfs.org>
-Subject: Re: FW: How to avoid lots of read ios to passive paths
-	of	active-pass ive storage devices?
-Date: Fri, 02 Sep 2005 10:34:35 -0500
-Message-ID: <4318710B.6060904@xfs.org>
-References: <C2EEB4E538D3DC48BF57F391F422779321AC40@SRMANNING.eng.emc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: christophe varoqui <christophe.varoqui@free.fr>
+Subject: [ANNOUNCE] multipath-tools-0.4.5
+Date: Fri, 02 Sep 2005 23:16:05 +0200
+Message-ID: <1125695765.6217.10.camel@zezette>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AC40@SRMANNING.eng.emc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>, "linux-hotplug-devel@lists.sourceforge.net" <linux-hotplug-devel@lists.sourceforge.net>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-goggin, edward wrote:
-> Reposting since it didn't get much response initially and the issue came up
-> again
-> in yesterday's multipath conference call.
-> 
+Hello,
 
->>
->>While this isn't an issue now, it could become one later
->>when/if linux hosts are configured with hundreds/thousands
->>of passive paths.
->>
-> 
+here goes multipath-tools-0.4.5
 
-There are already issues out there, these were not directly with
-multipath, but should serve as examples.
+This release was long due.
+Full of new shiny features.
 
-An SGI Altix box with 8 HBA ports connected via a fabric to 4 Engenio dual
-controller raids (2 ports on each controller). From what I recall there were 4
-LUNs assigned to each controller on each raid. I think there were 1024 paths
-in the complete configuration. This was actually a very small version of
-the planned production system which has multiple hosts and several thousand
-LUNs.
+Worth noting :
 
-Path ping pong during partition table scanning took several hours
-to resolve itself (we gave up waiting and went home for the day).
+    * multipathd keeps Device Mapper path status in sync with path
+      checker status : proactive fail_path and reinstate_path
+    * proactive path group re-enable, as soon as one path goes up
+    * multipathd is now fully event driven :
+          o NetLink? uevents for kernels/distro that enables the feature
+          o Hotplug
+          o Unix socket messages
+    * a Command Line Interface to drive and inspect the daemon
+    * remove the multipath(8) cache file logic in favour of a
+      multipathd<->multipath unix socket request/reply design
+    * split multipath(8) listing option into
+          o short-list (-l) : don't fetch wwid, path checker status,
+            priorities ... fast
+          o detailed-list (-ll) : refetch all info
+    * the daemon asynchronous logger is now solid and avoid sending
+      critical messages
+    * daemon CLI command to reload the config file
+    * path checking interval gets longer when the path is reliably up,
+      resets to short as soon as a problem occur
+    * daemon implements 3 path group failback methods :
+          o manual
+          o immediate : failback as soon as an (enabled && !active) PG
+            gets the highest priority
+          o defered : failback to the highest priority 
+            (enabled && !active) PG n seconds after the last PG priority
+            order change
+    * remove over-complicated and thread-confusing daemon initial
+      clone() w/ private namespace
+    * prioritizers official prefix is now mpath_prio_
+    * multipath(8) displays PG priorities when available
+    * new hp_sw checker. It's a tri-state UP/DOWN/GHOST
+    * new directio checker. Useful with DASD devices. May suplant
+      readsector0 in the long run ?
+    * stricter default blacklist regexps
+    * new '-f' multipath(8) flag to selectively suppress a multipath
+      map, and its device-mapped partitions
+    * alua prioritizer update, should work on x86
+    * support for >2TB multipaths
+    * claimed device detection : no more warning/error messages with
+      paths pinned by mounted FS
+    * option to use priorities as weights in the round-robin scheduler :
+      for people who can't wait for a qlen-based scheduler
 
-The issue was made worth by attempts at parallelism and retries in
-the logic. Multiple device reads were issued in parallel
-via udev to all the different paths to devices, these reads
-did retries on failures. Since a trespass (or automatic volume
-transfer, depending on your terminology), causes a failure on
-the active path on this raid, end result was it takes a lot of
-I/O failures before one actually works.
+As usual, doc and download at :
+http://christophe.varoqui.free.fr/
 
-Once all this completed, various volume manager components then
-came along and tried to look for their metadata at the other
-end of the LUNs. The same chaos ensues.
+Archive mirror at ftp://sources.redhat.com/pub/dm/multipath-tools/
 
-Engenio has actually added code to their raid firmware which
-lets you turn off automatic transfers within the first few
-blocks of the disk. This deals with partition scanning for the
-most part. There is no code to deal with metadata scanning
-at the end of luns, just don't do it.
+Regards,
+-- 
+christophe varoqui <christophe.varoqui@free.fr>
 
-There are Linux SANs in production where the reboot of a
-single node in a fabric causes all the active nodes to suffer
-major performance problems as paths get moved out from under
-them.
 
-In the RDAC mode of operation instead of the path ping pong
-issue, you still end up with slow I/O failures on the
-standby paths. Nowhere near as bad, but still painful
-once you scale things up.
-
-Steve
-
-p.s. is anyone working on multipath modules for Engenio devices?
