@@ -1,7 +1,7 @@
 From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: new hardware handler
-Date: Mon, 05 Sep 2005 19:45:54 +0200
-Message-ID: <1125942354.9859.53.camel@zezette>
+Subject: more multipath doc
+Date: Mon, 05 Sep 2005 19:26:06 +0200
+Message-ID: <1125941166.9859.43.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -21,17 +21,16 @@ List-Id: dm-devel.ids
 
 Hello,
 
-would it be possible to add the SCSI_START hardware handler to the next
-weekly conference topics ?
+I started a little glossary for multipath acronyms and terms at
+http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=Glossary
 
-... or if it alrealdy has been debated, can someone report me the
-conclusions.
+Feel free to correct it, enrich it, link it, or ignore it ...
+(but try to keep it alphabetically sorted)
 
-I would be surprised if HP is not interested in making that handler
-happen ? EMA-class and first generation EVA-class hardware were best
-sellers and certainly deserve a little support with recent Linux
-distros.
-
+While on the doc subject, Lars, can you feed the TestedEnv page the
+Clariion configlets (and sign for credits and tracability). Maybe 3par
+and other vendors have interest in doing the same.
+ 
 Regards,
 -- 
 christophe varoqui <christophe.varoqui@free.fr>
