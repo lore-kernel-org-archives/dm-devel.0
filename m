@@ -1,14 +1,14 @@
-From: christophe varoqui <christophe.varoqui@free.fr>
-Subject: Re: multipath info: wwid
-Date: Wed, 07 Sep 2005 20:52:46 +0200
-Message-ID: <1126119166.17815.23.camel@zezette>
-References: <431F0FC0.7010805@theorematica.it>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: [PATCH] Add I/O stats for DM devices
+Date: Thu, 8 Sep 2005 15:56:28 -0500
+Message-ID: <200509081556.28286.kevcorry@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <431F0FC0.7010805@theorematica.it>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: DevMapper <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer, 2005-09-07 at 18:05 +0200, Nicola Murino wrote:
-> Thanks for the glossary now I understand well some things,
-> 
-> only another question, the wwid is given from the output of the command:
-> 
-> multipath -ll
-> 
-> or there is another way?
-> 
-> excuse me if the question is trivial but I have only a machine with
-> multipath and is in production with kernel 2.4.21 so I cannot test
-> directly multipath-tools before I format next saturday and I would like
-> to reduce the downtime collecting more possible info before installation,
-> 
-scsi_id(8) is used by default by multipath(8) to get path unique
-identifiers.
+Got a request to add I/O statistics for DM devices, so they will show up
+when running the iostat command, so I wrote up this patch. The code was
+taken from the various MD personalities. As such, it only keeps track of
+the number of reads/writes and the number of sectors read/written. It
+doesn't keep track of any of the time-based measurements. See
+struct disk_stats in include/linux/genhd.h for more details.
 
-You can plug another callout if you want.
-
-Excuse me if the suggestion is trivial but ... make backups :)
-
-Regards,
 -- 
-christophe varoqui <christophe.varoqui@free.fr>
+Kevin Corry
+kevcorry@us.ibm.com
+http://www.ibm.com/linux/
+http://evms.sourceforge.net/
+
+
+
+Add I/O statistics for Device-Mapper devices. Only keeps track of count and
+size of I/Os, not completion times. Patch is against 2.6.12.
+
+--- diff/drivers/md/dm.c 2005-08-25 11:29:04.000000000 -0500
++++ source/drivers/md/dm.c 2005-08-25 11:26:49.000000000 -0500
+@@ -570,6 +570,14 @@
+ 
+  down_read(&md->lock);
+ 
++ if (bio_data_dir(bio) == WRITE) {
++  disk_stat_inc(dm_disk(md), writes);
++  disk_stat_add(dm_disk(md), write_sectors, bio_sectors(bio));
++ } else {
++  disk_stat_inc(dm_disk(md), reads);
++  disk_stat_add(dm_disk(md), read_sectors, bio_sectors(bio));
++ }
++
+  /*
+   * If we're suspended we have to queue
+   * this io for later.
