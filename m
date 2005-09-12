@@ -1,12 +1,15 @@
-From: Nicola Murino <n.murino@theorematica.it>
-Subject: EMC CX 300 multipath problem
-Date: Mon, 12 Sep 2005 10:04:52 +0200
-Message-ID: <432536A4.7040306@theorematica.it>
+From: gistolero@gmx.de
+Subject: Re: Problems with multipathd
+Date: Mon, 12 Sep 2005 17:52:57 +0200
+Message-ID: <4325A459.2030005@gmx.de>
+References: <20050831152928.GA53290@sysconfig.de>	<1125518162.6375.52.camel@zezette>
+	<431DC7D6.1010900@gmx.de> <1126039647.9859.89.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1126039647.9859.89.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,251 +19,172 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+>>===> I found some settings in /sys/module/qla2xxx/parameters/...,
+>>but most of them are read-only values. I have changed ql2xretrycount
+>>and ql2xsuspendcount but without success. Any suggestions for
+>>this driver?
+>>
+> 
+> Here are the interesting one I guess.
+> 
+> [root@s64p17bibro ~]# find /sys/class/ -name "*tmo*"
+> /sys/class/fc_remote_ports/rport-1:0-3/dev_loss_tmo
+> /sys/class/fc_remote_ports/rport-1:0-2/dev_loss_tmo
+> /sys/class/fc_remote_ports/rport-1:0-1/dev_loss_tmo
+> /sys/class/fc_remote_ports/rport-1:0-0/dev_loss_tmo
+> /sys/class/scsi_host/host1/lpfc_nodev_tmo
 
-I have some problem with multipath-tools,
-
- multipath -ll
-web (3600601608c9012006269b8f63b87d911)
-[size=5 GB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1][enabled]
- \_ 1:0:0:4 sdf 8:80  [active][ready]
-
-mysql (3600601608c901200ccfe543f4053d911)
-[size=200 GB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [enabled]
- \_ 1:0:0:1 sdc 8:32  [active][ready]
-
-mail (3600601608c9012008ae5de2cc985d911)
-[size=300 GB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1][enabled]
- \_ 1:0:0:0 sdb 8:16  [active][ready]
-
-3600601608c901200a8b8972f4053d911
-[size=100 MB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1][enabled]
- \_ 1:0:0:2 sdd 8:48  [active][ready]
-
-3600601608c901200bc7680294053d911
-[size=100 MB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [enabled]
- \_ 1:0:0:3 sde 8:64  [active][ready]
-
-only one disk is active,
-
-I have to do the command:
-
-nodob mapper # multipath /dev/sdb
-error calling out /sbin/scsi_id -g -u -s /block/sda
-reload: mail (3600601608c9012008ae5de2cc985d911)
-[size=300 GB][features="1 queue_if_no_path"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1]
- \_ 1:0:0:0 sdb 8:16  [active][ready]
- \_ 2:0:0:0 sdg 8:96  [ready]
-
-and now the other path is activated:
-
-nodob mapper # multipath /dev/sdb
-error calling out /sbin/scsi_id -g -u -s /block/sda
-reload: mail (3600601608c9012008ae5de2cc985d911)
-[size=300 GB][features="1 queue_if_no_path"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1]
- \_ 1:0:0:0 sdb 8:16  [active][ready]
- \_ 2:0:0:0 sdg 8:96  [active][ready]
+Ok, I have a 6 seconds timeout now :-)
 
 
-multipath -ll
-web (3600601608c9012006269b8f63b87d911)
-[size=5 GB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1][enabled]
- \_ 1:0:0:4 sdf 8:80  [active][ready]
+>>I have commented this line, but udev still has difficulties to create this
+>>links. Therefore I have changed /etc/dev.d/block/multipath.dev (the script
+>>is attached at the end of this post) and added debug messages. The most
+>>important modification is that kpartx uses the block-device-files in
+>>/dev/mapper/... instead of /dev/...
+>>===> Why isn't that the default? Are there any disadvantages?
+>>
+> 
+> Not really. All distributors seem to have their own ideas about naming
+> policies. You should ask about, and follow the Gentoo philosophy I
+> guess.
 
-mysql (3600601608c901200ccfe543f4053d911)
-[size=200 GB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [enabled]
- \_ 1:0:0:1 sdc 8:32  [active][ready]
 
-mail (3600601608c9012008ae5de2cc985d911)
-[size=300 GB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1][enabled]
- \_ 1:0:0:0 sdb 8:16  [active][ready]
- \_ 2:0:0:0 sdg 8:96  [active][ready]
+I'm sure of not beeing the only one who has problems with missing /dev/... 
+links. It's possible that multipath installs a device-mapper table without 
+errors, but kpartx fails because udev doesn't create links in /dev/... So, I 
+think multipath.dev should execute kpartx with /dev/mapper/... instead of 
+/dev/... by default.
 
-3600601608c901200a8b8972f4053d911
-[size=100 MB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [prio=1][enabled]
- \_ 1:0:0:2 sdd 8:48  [active][ready]
 
-3600601608c901200bc7680294053d911
-[size=100 MB][features="0"][hwhandler="1 emc"]
-\_ round-robin 0 [enabled]
- \_ 1:0:0:3 sde 8:64  [active][ready]
+>>===> Without "udevstart" udev doesn't create the /dev/150gb*
+>>links! Is this a udev bug?
+>>
+> You can still identify the udev problems keeping the node creation
+> in /dev/. Maybe all path setupis done in the initrd/initramfs without
+> multipath being able to react.
 
-in /dev/mapper I have the following:
+multipath is able to react. I don't understand why I have to execute udevstart.
 
-brw-------  1 root root 254,  3 Sep 12  2005
-3600601608c901200a8b8972f4053d911
-brw-------  1 root root 254,  1 Sep 12  2005
-3600601608c901200bc7680294053d911
-crw-rw----  1 root root  10, 63 Sep 12  2005 control
-brw-------  1 root root 254,  4 Sep 12  2005 mail
-brw-------  1 root root 254,  5 Sep 12  2005 mail1
-brw-------  1 root root 254,  0 Sep 10 20:23 mysql
-brw-------  1 root root 254,  2 Sep 10 20:23 mysql1
-brw-------  1 root root 254,  7 Sep 12  2005 vg00-admin
-brw-------  1 root root 254, 13 Sep 12  2005 vg00-log
-brw-------  1 root root 254, 11 Sep 12  2005 vg00-portage
-brw-------  1 root root 254,  8 Sep 12  2005 vg00-root
-brw-------  1 root root 254,  9 Sep 12  2005 vg00-tmp
-brw-------  1 root root 254, 10 Sep 12  2005 vg00-usr
-brw-------  1 root root 254, 12 Sep 12  2005 vg00-var
-brw-------  1 root root 254,  6 Sep 12  2005 web
 
-is correct?
 
-grep -v "#" /etc/multipath.conf
-defaults {
-        multipath_tool  "/sbin/multipath -v0"
-        udev_dir        /dev
+>>===> First multipathd says "8:0: tur checker reports
+>>path is down" and multipath prints sda "failed" (ok).
+>>After a few seconds sda is "ready" and multipathd says
+>>"8:0: tur checker reports path is up"?! I have changed
+>>nothing during this time.
+>>
+> 
+> Maybe the checker is confused by the long timeouts.
+> Worth another try after the lowering.
+
+After lowering the timeouts to 6 seconds multipathd shows the same behavior.
+
+
+
+>>===> Multipathing seems to work without but not with multipathd.
+>>It's very slow, but Christophe Varoqui wrote that I have to lower
+>>the HBA timeouts (unfortunately, I don't know how to do this,
+>>see above). Does I really need multipathd? I suppose so :-)
+>>
+> 
+> multipathd is needed to reinstate paths.
+> In your case the rport disappears and reappears so the mecanism is all
+> hotplug-driven and thus may work without the daemon ... if memory
+> ressources permits hotplug and multipath(8) execution, that is.
+
+What do you means with "In your case..."? Because 2.6 and udev are 
+multipath-tools dependencies all systems running multipath have the same 
+environment. They all use kernel 2.6 and udev, that is hotplug-driven. The 
+kernel starts this hotplug process and udev executes multipath. Sorry, but I 
+have to ask again: Does we really need multipathd?
+
+
+After lowering dev_loss_tmo timeouts and stopping multipathd I have a working 
+multipath environment :-))) I tested this with a little perl script and a 
+mysql database:
+
+
+
+My trafficmaker-host executed this script 27 times (parallel):
+
+...
+for(my $count=1;$count<=1000000;$count++)
+{
+   ...
+   my $sql="INSERT INTO $table VALUES($id,\"$value\")";
+   my $return=$dbh->do($sql);
+   ...
 }
-multipaths {
-        multipath {
-                wwid                    3600601608c9012008ae5de2cc985d911
-                alias                   mail
-                path_grouping_policy    multibus
-                 path_checker           readsector0
-                path_selector           "round-robin 0"
-
-                failback                immediate
-}
-        multipath {
-                wwid                    3600601608c901200ccfe543f4053d911
-                alias                   mysql
-                path_grouping_policy    multibus
-                path_checker            readsector0
-                path_selector           "round-robin 0"
-        }
-        multipath {
-                wwid                    3600601608c9012006269b8f63b87d911
-                alias                   web
-                path_grouping_policy    multibus
-                path_checker            readsector0
-                path_selector           "round-robin 0"
-        }
+...
+{
+   my $sql="SELECT COUNT(*) FROM $table WHERE id=$id";
+   my $sth=$dbh->prepare($sql);
+   my $return=$sth->execute();
+   ...
+   $selectCount=$sth->fetchrow_array();
+   ...;
 }
 
-nodob mapper # lspci
-0000:00:00.0 Host bridge: Intel Corp. E7520 Memory Controller Hub (rev 09)
-0000:00:02.0 PCI bridge: Intel Corp. E7525/E7520/E7320 PCI Express Port
-A (rev 09)
-0000:00:04.0 PCI bridge: Intel Corp. E7525/E7520 PCI Express Port B (rev 09)
-0000:00:05.0 PCI bridge: Intel Corp. E7520 PCI Express Port B1 (rev 09)
-0000:00:06.0 PCI bridge: Intel Corp. E7520 PCI Express Port C (rev 09)
-0000:00:1d.0 USB Controller: Intel Corp. 82801EB/ER (ICH5/ICH5R) USB
-UHCI Controller #1 (rev 02)
-0000:00:1d.1 USB Controller: Intel Corp. 82801EB/ER (ICH5/ICH5R) USB
-UHCI Controller #2 (rev 02)
-0000:00:1d.2 USB Controller: Intel Corp. 82801EB/ER (ICH5/ICH5R) USB
-UHCI #3 (rev 02)
-0000:00:1d.7 USB Controller: Intel Corp. 82801EB/ER (ICH5/ICH5R) USB2
-EHCI Controller (rev 02)
-0000:00:1e.0 PCI bridge: Intel Corp. 82801 PCI Bridge (rev c2)
-0000:00:1f.0 ISA bridge: Intel Corp. 82801EB/ER (ICH5/ICH5R) LPC
-Interface Bridge (rev 02)
-0000:00:1f.1 IDE interface: Intel Corp. 82801EB/ER (ICH5/ICH5R) IDE
-Controller (rev 02)
-0000:01:00.0 PCI bridge: Intel Corp. 80332 [Dobson] I/O processor (rev 06)
-0000:01:00.2 PCI bridge: Intel Corp. 80332 [Dobson] I/O processor (rev 06)
-0000:02:0e.0 RAID bus controller: Dell PowerEdge Expandable RAID
-controller 4 (rev 06)
-0000:05:00.0 PCI bridge: Intel Corp. 6700PXH PCI Express-to-PCI Bridge A
-(rev 09)
-0000:05:00.2 PCI bridge: Intel Corp. 6700PXH PCI Express-to-PCI Bridge B
-(rev 09)
-0000:06:07.0 Ethernet controller: Intel Corp. 82541GI/PI Gigabit
-Ethernet Controller (rev 05)
-0000:07:08.0 Ethernet controller: Intel Corp. 82541GI/PI Gigabit
-Ethernet Controller (rev 05)
-0000:08:00.0 PCI bridge: Intel Corp. 6700PXH PCI Express-to-PCI Bridge A
-(rev 09)
-0000:08:00.2 PCI bridge: Intel Corp. 6700PXH PCI Express-to-PCI Bridge B
-(rev 09)
-0000:09:04.0 SCSI storage controller: Adaptec AHA-3960D / AIC-7899A
-U160/m (rev 01)
-0000:09:04.1 SCSI storage controller: Adaptec AHA-3960D / AIC-7899A
-U160/m (rev 01)
-0000:0a:02.0 Fibre Channel: QLogic Corp. QLA2312 Fibre Channel Adapter
-(rev 02)
-0000:0a:03.0 Fibre Channel: QLogic Corp. QLA2312 Fibre Channel Adapter
-(rev 02)
-0000:0b:0d.0 VGA compatible controller: ATI Technologies Inc Radeon
-RV100 QY [Radeon 7000/VE]
+
+The database host had to insert this 30 byte strings and I have started some 
+copy-jobs (cp -a /usr/* /partition_mounted_with_multipath/ etc.) to increase 
+the I/O load. During this test I have disabled and enabled the different 
+HBA-Switch-Ports with the following result: It took 6 to 15 seconds before 
+"multipath -l" showed that a path is down (15 seconds because the host had a 
+30.0 CPU load and responded very slowly), but no INSERT got lost :-)))
+
+But sometimes multipath seems to be a bit confused...
 
 
-nodob mapper # lsmod
-Module                  Size  Used by
-dm_round_robin          4096  1
-qla2300               125056  0
-qla2xxx               112092  20 qla2300
-firmware_class          8832  1 qla2xxx
-dm_emc                  6144  1
-dm_multipath           19464  3 dm_round_robin,dm_emc
-dm_mod                 52380  12 dm_multipath
 
-from dmesg:
+1.) one path disabled
 
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-e1000: eth0: e1000_watchdog_task: NIC Link is Up 1000 Mbps Full Duplex
-e1000: eth1: e1000_watchdog_task: NIC Link is Up 1000 Mbps Full Duplex
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
+In the majority of cases multipath prints...
 
-I'm using gentoo, udev-0.68, device-mapper-1.03, multipath-tools-0.4.5,
-kernel-2.6.13 (2.6.12 give oops when load qla2300)
+testhalde2 sbin # multipath -l
+150gb ()
+[size=150 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ #:#:#:#     8:0  [active]
+  \_ 1:0:0:1 sdb 8:16 [active]
 
 
-some suggestions?
+But sometimes I get...
 
-I have to post other specific configuration o log file?
+testhalde2 usr # multipath -l
+150gb ()
+[size=150 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 4:0:0:1 sdb 8:16 [active]
 
-thanks,
 
-Nicola
+
+2.) all paths enabled (default)
+
+In the majority of cases multipath prints...
+
+testhalde2 sbin # multipath -l
+150gb ()
+[size=150 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [enabled]
+  \_ 1:0:0:1 sdb 8:16 [active]
+  \_ 0:0:0:1 sdc 8:32 [active]
+
+
+But sometimes I get...
+
+testhalde2 usr # multipath -l
+150gb ()
+[size=150 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 0:0:0:1 sdb 8:16 [active]
+\_ round-robin 0 [enabled]
+  \_ 4:0:0:1 sdc 8:32 [active]
+
+
+Regards
+Simon
