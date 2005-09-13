@@ -1,12 +1,14 @@
-From: =?ks_c_5601-1987?B?sejA57+t?= <gauri@etri.re.kr>
-Subject: How about shortening SCSI timeout value dynamically?
-Date: Tue, 13 Sep 2005 11:52:05 +0900
-Message-ID: <4C86297B4AC6554B8BA018F0806590CE5E9123@email1>
+From: Nicola Murino <n.murino@theorematica.it>
+Subject: Re: Re: EMC Cx300 multipath seems to work
+Date: Tue, 13 Sep 2005 18:50:33 +0200
+Message-ID: <43270359.80504@theorematica.it>
+References: <4326878A.3090303@theorematica.it> <4326C29F.3060202@gmx.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0751633128=="
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <4326C29F.3060202@gmx.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,275 +18,158 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, gistolero@gmx.de
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+gistolero@gmx.de ha scritto:
 
---===============0751633128==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C5B80E.5A65ACC3"
+> Hi Nicola,
+>
+> Nicola Murino wrote:
+>
+>> Hi,
+>>
+>> multipath seems to work on gentoo, I have to load the modules in proper
+>> order, this is my configuration:
+>>
+>> cat /etc/conf.d/local.start
+>> # /etc/conf.d/local.start
+>>
+>> # This is a good place to load any misc programs
+>> # on startup ( use 1>&2 to hide output)
+>> /sbin/modprobe dm-emc
+>> /sbin/modprobe qla2300
+>> /bin/sleep 5
+>> /sbin/udevstart
+>> /etc/init.d/multipathd start
+>>
+>> is critical the command udevstart without only one path is seen,
+>
+>
+>
+> After rebooting my system, I see only one path always:
+>
+> testhalde2 ~ # multipath -l
+> 150gb ()
+> [size=150 GB][features="0"][hwhandler="0"]
+> \_ round-robin 0 [active]
+>  \_ 0:0:0:1 sda 8:0  [active]
+>
+>
+> I have to run multipath again:
+>
+> testhalde2 ~ # multipath /dev/sda
+> reload: 150gb (3600508b40010079d0001900000460000)
+> [size=150 GB][features="0"][hwhandler="0"]
+> \_ round-robin 0
+>  \_ 0:0:0:1 sda 8:0  [active][ready]
+>  \_ 1:0:0:1 sdb 8:16 [ready]
+>
+>
+Yes, after reboot I see only one path too, but when I run udevstart I
+see all paths, for this reason I put udevstart in /etc/conf.d/local.start
 
-This is a multi-part message in MIME format.
+>> I experienced a kernel oops with kernel-2.6.12 (both vanilla-sources and
+>> gentoo-sources) when I load qla2300 module, here are the logs:
+>
+>
+> I'm using a HP DL-380 G3 Proliant + Qlogic QLA 2340 (qla2300) with
+> 2.6.12.5 (vanilla). No kernel oops here.
+>
+I have qlogic 2322 and I must load dm-emc too, however
+kernel-2.6.13-gentoo-r1 works fine
 
-------_=_NextPart_001_01C5B80E.5A65ACC3
-Content-Type: text/plain;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: quoted-printable
+>
+>> P.S. for gistolero, I haven't your problem with multipathd (or so seems)
+>> however my hardware is different, I think also that the need to run
+>> udevstart is a gentoo bug, today gentoo has releases udev-0.68-r1 with
+>> start-stop script, if you read start script there is udevstart, however
+>> I haven't yet tested this script because they require unstable
+>> baselayout-1.12
+>
+>
+> The same behavior with udev-068-r1. I don't think that this is a
+> gentoo bug, because distributions differ in udev _startup_ scripts
+> only. I know that I have to run udevstart after creating a new
+> udev.rules in /etc/udev/rules/. But  after this, udev should parse
+> this rule after every change:
+>
+>
+udev 0.68-r1 needs unstable baselayout (1.12) to execute udev-start.sh,
+what baselayout are you using?
 
-Under the multipath environment, when the path is determined to fail, we =
-have to wait 30 seconds because of the SCSI command default timeout(30 =
-seconds). If the multiple paths are alive, I think it is more efficient =
-to short the SCSI command timeout. Then we can shorten the delay of =
-failover.
-Is there any critical reason to remain SCSI timeout as a 30 seconds?
-=20
-What do you think about my this?
-
-------_=_NextPart_001_01C5B80E.5A65ACC3
-Content-Type: text/html;
-	charset="ks_c_5601-1987"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dks_c_5601-1987">
-<meta name=3DProgId content=3DWord.Document>
-<meta name=3DGenerator content=3D"Microsoft Word 11">
-<meta name=3DOriginator content=3D"Microsoft Word 11">
-<link rel=3DFile-List href=3D"cid:filelist.xml@01C5B859.8FF44E40">
-<!--[if gte mso 9]><xml>
- <o:OfficeDocumentSettings>
-  <o:DoNotRelyOnCSS/>
- </o:OfficeDocumentSettings>
-</xml><![endif]--><!--[if gte mso 9]><xml>
- <w:WordDocument>
-  <w:DontDisplayPageBoundaries/>
-  <w:SpellingState>Clean</w:SpellingState>
-  <w:GrammarState>Clean</w:GrammarState>
-  <w:DocumentKind>DocumentEmail</w:DocumentKind>
-  <w:EnvelopeVis/>
-  =
-<w:DisplayHorizontalDrawingGridEvery>0</w:DisplayHorizontalDrawingGridEve=
-ry>
-  =
-<w:DisplayVerticalDrawingGridEvery>2</w:DisplayVerticalDrawingGridEvery>
-  <w:ValidateAgainstSchemas/>
-  <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>
-  <w:IgnoreMixedContent>false</w:IgnoreMixedContent>
-  <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>
-  <w:Compatibility>
-   <w:SpaceForUL/>
-   <w:BalanceSingleByteDoubleByteWidth/>
-   <w:DoNotLeaveBackslashAlone/>
-   <w:ULTrailSpace/>
-   <w:DoNotExpandShiftReturn/>
-   <w:AdjustLineHeightInTable/>
-   <w:BreakWrappedTables/>
-   <w:SnapToGridInCell/>
-   <w:WrapTextWithPunct/>
-   <w:UseAsianBreakRules/>
-   <w:UseWord2002TableStyleRules/>
-   <w:UseFELayout/>
-  </w:Compatibility>
-  <w:BrowserLevel>MicrosoftInternetExplorer4</w:BrowserLevel>
- </w:WordDocument>
-</xml><![endif]--><!--[if gte mso 9]><xml>
- <w:LatentStyles DefLockedState=3D"false" LatentStyleCount=3D"156">
- </w:LatentStyles>
-</xml><![endif]-->
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:=B9=D9=C5=C1;
-	panose-1:2 3 6 0 0 1 1 1 1 1;
-	mso-font-alt:Batang;
-	mso-font-charset:129;
-	mso-generic-font-family:roman;
-	mso-font-pitch:variable;
-	mso-font-signature:-1342176593 1775729915 48 0 524447 0;}
-@font-face
-	{font-family:=B1=BC=B8=B2;
-	panose-1:2 11 6 0 0 1 1 1 1 1;
-	mso-font-alt:Gulim;
-	mso-font-charset:129;
-	mso-generic-font-family:modern;
-	mso-font-pitch:variable;
-	mso-font-signature:-1342176593 1775729915 48 0 524447 0;}
-@font-face
-	{font-family:"Century Gothic";
-	panose-1:2 11 5 2 2 2 2 2 2 4;
-	mso-font-charset:0;
-	mso-generic-font-family:swiss;
-	mso-font-pitch:variable;
-	mso-font-signature:647 0 0 0 159 0;}
-@font-face
-	{font-family:"\@=B1=BC=B8=B2";
-	panose-1:2 11 6 0 0 1 1 1 1 1;
-	mso-font-charset:129;
-	mso-generic-font-family:modern;
-	mso-font-pitch:variable;
-	mso-font-signature:-1342176593 1775729915 48 0 524447 0;}
-@font-face
-	{font-family:"\@=B9=D9=C5=C1";
-	panose-1:2 3 6 0 0 1 1 1 1 1;
-	mso-font-charset:129;
-	mso-generic-font-family:roman;
-	mso-font-pitch:variable;
-	mso-font-signature:-1342176593 1775729915 48 0 524447 0;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{mso-style-parent:"";
-	margin:0cm;
-	margin-bottom:.0001pt;
-	text-align:justify;
-	text-justify:inter-ideograph;
-	mso-pagination:none;
-	text-autospace:none;
-	word-break:break-hangul;
-	font-size:9.0pt;
-	font-family:=B1=BC=B8=B2;
-	mso-bidi-font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;
-	text-underline:single;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;
-	text-underline:single;}
-p
-	{mso-margin-top-alt:auto;
-	margin-right:0cm;
-	mso-margin-bottom-alt:auto;
-	margin-left:0cm;
-	mso-pagination:widow-orphan;
-	font-size:12.0pt;
-	font-family:=B1=BC=B8=B2;
-	mso-bidi-font-family:=B1=BC=B8=B2;}
-p.patch, li.patch, div.patch
-	{mso-style-name:"patch =C4=DA=B5=E5";
-	margin:0cm;
-	margin-bottom:.0001pt;
-	line-height:8.0pt;
-	mso-pagination:widow-orphan;
-	text-autospace:none;
-	word-break:break-hangul;
-	font-size:8.0pt;
-	mso-bidi-font-size:12.0pt;
-	font-family:"Century Gothic";
-	mso-fareast-font-family:"Century Gothic";
-	mso-bidi-font-family:"Times New Roman";
-	mso-fareast-language:EN-US;}
-span.EmailStyle18
-	{mso-style-type:personal-compose;
-	mso-style-noshow:yes;
-	mso-ansi-font-size:10.0pt;
-	mso-bidi-font-size:10.0pt;
-	font-family:=B1=BC=B8=B2;
-	mso-ascii-font-family:=B1=BC=B8=B2;
-	mso-fareast-font-family:=B1=BC=B8=B2;
-	mso-hansi-font-family:Arial;
-	mso-bidi-font-family:Arial;
-	color:windowtext;}
-span.SpellE
-	{mso-style-name:"";
-	mso-spl-e:yes;}
-span.GramE
-	{mso-style-name:"";
-	mso-gram-e:yes;}
- /* Page Definitions */
- @page
-	{mso-page-border-surround-header:no;
-	mso-page-border-surround-footer:no;}
-@page Section1
-	{size:595.3pt 841.9pt;
-	margin:99.25pt 3.0cm 3.0cm 3.0cm;
-	mso-header-margin:42.55pt;
-	mso-footer-margin:49.6pt;
-	mso-paper-source:0;
-	layout-grid:18.0pt;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-<!--[if gte mso 10]>
-<style>
- /* Style Definitions */=20
- table.MsoNormalTable
-	{mso-style-name:"=C7=A5=C1=D8 =C7=A5";
-	mso-tstyle-rowband-size:0;
-	mso-tstyle-colband-size:0;
-	mso-style-noshow:yes;
-	mso-style-parent:"";
-	mso-padding-alt:0cm 5.4pt 0cm 5.4pt;
-	mso-para-margin:0cm;
-	mso-para-margin-bottom:.0001pt;
-	mso-pagination:widow-orphan;
-	font-size:10.0pt;
-	font-family:"Times New Roman";
-	mso-ansi-language:#0400;
-	mso-fareast-language:#0400;
-	mso-bidi-language:#0400;}
-</style>
-<![endif]-->
-</head>
-
-<body lang=3DKO link=3Dblue vlink=3Dpurple =
-style=3D'tab-interval:40.0pt'>
-
-<div class=3DSection1 style=3D'layout-grid:18.0pt'>
-
-<p class=3DMsoNormal><font size=3D2 face=3D=B1=BC=B8=B2><span =
-lang=3DEN-US style=3D'font-size:10.0pt;
-mso-hansi-font-family:Arial;mso-bidi-font-family:Arial'>Under the <span
-class=3DSpellE>multipath</span> environment, when the path is determined =
-to fail,
-we have to wait 30 seconds because of the SCSI command default <span
-class=3DGramE>timeout(</span>30 seconds). If the multiple paths are =
-alive, I
-think it is more efficient to short the SCSI command timeout. Then we =
-can
-shorten the delay of failover.<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D=B1=BC=B8=B2><span =
-lang=3DEN-US style=3D'font-size:10.0pt;
-mso-hansi-font-family:Arial;mso-bidi-font-family:Arial'>Is there any =
-critical
-reason to remain SCSI timeout <span class=3DGramE>as a</span> 30 =
-seconds?<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D=B1=BC=B8=B2><span =
-lang=3DEN-US style=3D'font-size:10.0pt;
-mso-hansi-font-family:Arial;mso-bidi-font-family:Arial'><o:p>&nbsp;</o:p>=
-</span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D=B1=BC=B8=B2><span =
-lang=3DEN-US style=3D'font-size:10.0pt;
-mso-hansi-font-family:Arial;mso-bidi-font-family:Arial'>What do you =
-think about
-my this?<o:p></o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
-------_=_NextPart_001_01C5B80E.5A65ACC3--
-
-
---===============0751633128==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0751633128==--
+>
+> After reboot...
+>
+> testhalde2 ~ # ls -lF /dev/mapper/
+> brw-------  1 root root 254,  0 Sep 13  2005 150gb
+> brw-------  1 root root 254,  1 Sep 13  2005 150gb1
+> brw-------  1 root root 254,  2 Sep 13  2005 150gb2
+> crw-rw----  1 root root  10, 63 Sep 13  2005 control
+> testhalde2 ~ # ls -lF /dev/1*
+> lrwxrwxrwx  1 root root 4 Sep 13  2005 /dev/150gb2 -> dm-2
+>
+> testhalde2 ~ # udevstart
+>
+> testhalde2 ~ # ls -lF /dev/1*
+> lrwxrwxrwx  1 root root 4 Sep 13 13:00 /dev/150gb -> dm-0
+> lrwxrwxrwx  1 root root 4 Sep 13 13:00 /dev/150gb1 -> dm-1
+> lrwxrwxrwx  1 root root 4 Sep 13 13:00 /dev/150gb2 -> dm-2
+>
+> Ok, udev knows the multipath udev-rule and creates this links.
+>
+>
+>
+> Deleting the multipath-table...
+>
+> testhalde2 ~ # dmsetup table
+> 150gb1: 0 64197 linear 254:0 63
+> 150gb: 0 314572800 multipath 0 0 1 1 round-robin 0 2 1 8:0 1000 8:16 1000
+> 150gb2: 0 314504505 linear 254:0 64260
+>
+> testhalde2 ~ # dmsetup remove 150gb1
+> testhalde2 ~ # dmsetup remove 150gb2
+> testhalde2 ~ # dmsetup remove 150gb
+> testhalde2 ~ # dmsetup table
+> No devices found
+>
+> testhalde2 ~ # ls -lF /dev/mapper/
+> total 0
+> crw-rw----  1 root root 10, 63 Sep 13  2005 control
+>
+> testhalde2 ~ # ls -lF /dev/1*
+> ls: /dev/1*: No such file or directory
+>
+>
+>
+> Creating the multipath-table...
+>
+> testhalde2 ~ # multipath /dev/sda
+> create: 150gb (3600508b40010079d0001900000460000)
+> [size=150 GB][features="0"][hwhandler="0"]
+> \_ round-robin 0
+>  \_ 0:0:0:1 sda 8:0  [ready]
+>  \_ 1:0:0:1 sdb 8:16 [ready]
+>
+> testhalde2 ~ # ls -lF /dev/mapper/
+> total 0
+> brw-------  1 root root 254,  0 Sep 13 13:04 150gb
+> brw-------  1 root root 254,  1 Sep 13 13:04 150gb1
+> brw-------  1 root root 254,  2 Sep 13 13:04 150gb2
+> crw-rw----  1 root root  10, 63 Sep 13  2005 control
+>
+> testhalde2 ~ # ls -lF /dev/1*
+> ls: /dev/1*: No such file or directory
+>
+>
+> No links in /dev/... I don't understand this, because
+> udev should read the multipath udev-rule again.
+> Perhaps I'm mistaken?
+>
+> Simon
+>
+> -- 
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
