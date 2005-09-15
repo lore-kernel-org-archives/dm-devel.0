@@ -1,49 +1,91 @@
-From: Piotr Kral <piotr.kral@coig.katowice.pl>
-Subject: Cluster dilemas...
-Date: Thu, 15 Sep 2005 18:29:14 +0200
-Message-ID: <4329A15A.50500@coig.katowice.pl>
-Reply-To: linux clustering <linux-cluster@redhat.com>
+From: gistolero@gmx.de
+Subject: Re: mpath_ctl observation + some novice questions
+Date: Thu, 15 Sep 2005 18:31:38 +0200
+Message-ID: <4329A1EA.9040203@gmx.de>
+References: <20050915132538.GA27752@locust.cns.vt.edu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-cluster-bounces@redhat.com>
-List-Unsubscribe: <http://www.redhat.com/mailman/listinfo/linux-cluster>,
-	<mailto:linux-cluster-request@redhat.com?subject=unsubscribe>
-List-Archive: <http://redhat.com/archives/linux-cluster>
-List-Post: <mailto:linux-cluster@redhat.com>
-List-Help: <mailto:linux-cluster-request@redhat.com?subject=help>
-List-Subscribe: <http://www.redhat.com/mailman/listinfo/linux-cluster>,
-	<mailto:linux-cluster-request@redhat.com?subject=subscribe>
-Sender: linux-cluster-bounces@redhat.com
-Errors-To: linux-cluster-bounces@redhat.com
-To: linux-cluster@redhat.com, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20050915132538.GA27752@locust.cns.vt.edu>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <http://redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-	Hi
-I have IBM Blade Center connected to IBM DS 4300 (former FASTt 600) disk 
-system. The blades are diksless machines and they are connected to 
-storage via fc switches, so I have 4 physical patchs to each disk. My 
-dilemma is as follows: I wont to run Red Hat cluster suite on at least 
-two servers and since I'm building systems from the beginning I'd rather 
-use RHEL4 since it's newer, faster, more reliable (add more marketing 
-bullshit here) etc. But HBA drivers that support multipath fail over are 
-only in RHEL3 on RHEL4 there is something called dm + 
-device-mapper-multipath but it is in beta stage :( So I'd like to ask 
-You three things:
-1. Is Red Hat cluster suite much different in RHEL3 then in RHEL4. 
-Because if there is no big difference maybay it's not worth to fight 
-with RHEL4 HBA drivers and just install RHEL3, and when RHEL4 will have 
-proper drivers just upgrade?
-2. Do You have any experience with "dm + device-mapper-multipath". To be 
-sure this "beta stage" worries me a lot. But maybay You have some 
-information when it will be in official release of RHEL4 (U2??), and 
-most important: is it stable solution, and can it work in "production 
-sewers"
-3. What do You think of solution RHEL4 without multipath failover (so 
-I'll see 4 paths, and in case of primary path failure at least one node 
-will crush) + Red Hat cluster suite? I'm thinking off it in case 
-problems with HBA drivers and some new functionality in Red Hat cluster 
-suite in RHEL4
+Hi,
 
-Kind Regards
-Piotr
+> Next topic.  I'm a real dm novice user.  I have not
+> figured out how to create the disk devices and lvm fs.  Is there 
+> a doc on how to do this?  My guess is that I need 
+> to map the wwid in multipath.conf.  Is this demonstrated
+> somewhere?  Thanks.
+
+use a test environment, no production server!
+
+
+startup-configuration:
+
+1.) load dm-mapper and HBA kernel modules
+
+
+2.) create partitions on each lun (e.g.: lun0 has two paths sda and sdb - 
+"fdisk sda" creates the partitions for sda _and_ sdb) - you have to do this 
+step _before_ creating multipath devices (kpartx in 
+/etc/dev.d/block/multipath.dev reads this partition information)
+
+
+3.) create /etc/multipath.conf
+
+- check multipath.conf.annotated and multipath.conf.synthetic in the 
+multipath-tools tarball
+- get lun wwid's with "scsi_id -g -u -s /block/sd?"
+- create a "multipath { ... }" section for each lun (define "wwid" and "alias")
+- create a "device { ... }" section for your storage (see "TestedEnvironments" 
+located at the multipath-tools homepage) - set "path_grouping_policy" and 
+"prio_callout" (setting "prio_callout" is important. if you choose a wrong 
+value, you will see nothing after starting multipath)
+
+
+4.) start multipathd (debug with "-d" or "-v4" (syslog))
+
+
+5.) run "multipath /dev/sd?" for each sd? device
+
+multipath should create device-mapper table entries (see "dmsetup table"), 
+block-device-files in /dev/mapper/ and links in /dev/ for the lun and for each 
+partition
+
+e.g.: you have created two partitions and your lun alias is "yellow" (defined 
+in /etc/multipath.conf):
+
+# dmsetup table
+yellow1: ...
+yellow: ...
+yellow2: ...
+
+# ls /dev/mapper/
+yellow yellow1 yellow2 control
+
+# ls -F /dev/yellow*
+/dev/yellow@  /dev/yellow1@  /dev/yellow2@
+
+and check "multipath [-v3] -ll"
+
+
+6.) create filesystems and mount /dev/yellow1 and /dev/yellow2
+
+
+you can delete the current configuration with "dmsetup remove yellow2; dmsetup 
+remove yellow1; dmsetup remove yellow"
+
+hope that helps
+simon
