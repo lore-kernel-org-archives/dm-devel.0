@@ -1,14 +1,12 @@
-From: gistolero@gmx.de
-Subject: Re: mpath_ctl observation + some novice questions
-Date: Thu, 15 Sep 2005 18:31:38 +0200
-Message-ID: <4329A1EA.9040203@gmx.de>
-References: <20050915132538.GA27752@locust.cns.vt.edu>
+From: Ray Stell <stellr@cns.vt.edu>
+Subject: lvm - No matching physical volumes found
+Date: Fri, 16 Sep 2005 10:22:11 -0400
+Message-ID: <20050916142211.GA10521@locust.cns.vt.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20050915132538.GA27752@locust.cns.vt.edu>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <http://redhat.com/archives/dm-devel>
@@ -18,74 +16,123 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Can you tell what's going wrong here.  TIA: 
 
-> Next topic.  I'm a real dm novice user.  I have not
-> figured out how to create the disk devices and lvm fs.  Is there 
-> a doc on how to do this?  My guess is that I need 
-> to map the wwid in multipath.conf.  Is this demonstrated
-> somewhere?  Thanks.
+[root@pecan ~]# pvscan
+  No matching physical volumes found
 
-use a test environment, no production server!
+--------------------------------------
 
+[root@pecan ~]# lvm dumpconfig
+devices {
+        dir="/dev"
+        scan="/dev"
+        filter=["r/sd.*/", "a/.*/"]
+        cache="/etc/lvm/.cache"
+        write_cache_state=1
+        types=["device-mapper", 1]
+        sysfs_scan=1
+        md_component_detection=1
+}
+activation {
+        missing_stripe_filler="/dev/ioerror"
+        mirror_region_size=512
+        reserved_stack=256
+        reserved_memory=8192
+        process_priority=-18
+}
+global {
+        umask=63
+        test=0
+        activation=1
+        proc="/proc"
+        locking_type=1
+        locking_dir="/var/lock/lvm"
+}
+shell {
+        history_size=100
+}
+backup {
+        backup=1
+        backup_dir="/etc/lvm/backup"
+        archive=1
+        archive_dir="/etc/lvm/archive"
+        retain_min=10
+        retain_days=30
+}
+log {
+        verbose=0
+        syslog=1
+        overwrite=0
+        level=0
+        indent=1
+        command_names=0
+        prefix="  "
+}
 
-startup-configuration:
+--------------------------------------
 
-1.) load dm-mapper and HBA kernel modules
+[root@pecan dev]# ls -l /dev/dm-*
+brw-r-----  1 root root 253, 0 Sep 16 09:32 /dev/dm-0
+brw-r-----  1 root root 253, 1 Sep 16 09:32 /dev/dm-1
+brw-r-----  1 root root 253, 2 Sep 16 09:32 /dev/dm-2
+brw-r-----  1 root root 253, 3 Sep 16 09:32 /dev/dm-3
 
+[root@pecan dev]# ls -l /dev/mapper/
+crw-------  1 root root  10, 63 Sep 16 09:30 control
+brw-rw----  1 root disk 253,  1 Sep 16 09:32 LUN30A
+brw-rw----  1 root disk 253,  0 Sep 16 09:32 LUN50A
+brw-rw----  1 root disk 253,  2 Sep 16 09:32 LUN726
+brw-rw----  1 root disk 253,  3 Sep 16 09:32 LUN727
 
-2.) create partitions on each lun (e.g.: lun0 has two paths sda and sdb - 
-"fdisk sda" creates the partitions for sda _and_ sdb) - you have to do this 
-step _before_ creating multipath devices (kpartx in 
-/etc/dev.d/block/multipath.dev reads this partition information)
+[root@pecan dev]# dmsetup table
+LUN30A: 0 41015680 multipath 0 0 1 1 round-robin 0 3 1 8:16 1000 8:144 1000 8:208 1000
+LUN50A: 0 41015680 multipath 0 0 1 1 round-robin 0 3 1 8:0 1000 8:64 1000 8:128 1000
+LUN727: 0 41015680 multipath 0 0 1 1 round-robin 0 3 1 8:48 1000 8:176 1000 8:240 1000
+LUN726: 0 41015680 multipath 0 0 1 1 round-robin 0 4 1 8:32 1000 8:96 1000 8:160 1000 8:224 1000
 
+--------------------------------------
 
-3.) create /etc/multipath.conf
+[root@pecan ~]# multipath -ll
+LUN30A (1IBM_____2105____________30A22206)
+[size=19 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 0:0:0:1 sdb  8:16    [ready ][active]
+  \_ 1:0:0:1 sdj  8:144   [ready ][active]
+  \_ 1:0:1:1 sdn  8:208   [ready ][active]
 
-- check multipath.conf.annotated and multipath.conf.synthetic in the 
-multipath-tools tarball
-- get lun wwid's with "scsi_id -g -u -s /block/sd?"
-- create a "multipath { ... }" section for each lun (define "wwid" and "alias")
-- create a "device { ... }" section for your storage (see "TestedEnvironments" 
-located at the multipath-tools homepage) - set "path_grouping_policy" and 
-"prio_callout" (setting "prio_callout" is important. if you choose a wrong 
-value, you will see nothing after starting multipath)
+LUN50A (1IBM_____2105____________50A22206)
+[size=19 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 0:0:0:0 sda  8:0     [ready ][active]
+  \_ 0:0:1:0 sde  8:64    [ready ][active]
+  \_ 1:0:0:0 sdi  8:128   [ready ][active]
 
+LUN727 (1IBM_____2105____________72722206)
+[size=19 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 0:0:0:3 sdd  8:48    [ready ][active]
+  \_ 1:0:0:3 sdl  8:176   [ready ][active]
+  \_ 1:0:1:3 sdp  8:240   [ready ][active]
 
-4.) start multipathd (debug with "-d" or "-v4" (syslog))
+LUN726 (1IBM_____2105____________72622206)
+[size=19 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 0:0:0:2 sdc  8:32    [ready ][active]
+  \_ 0:0:1:2 sdg  8:96    [ready ][active]
+  \_ 1:0:0:2 sdk  8:160   [ready ][active]
+  \_ 1:0:1:2 sdo  8:224   [ready ][active]
 
+--------------------------------------
 
-5.) run "multipath /dev/sd?" for each sd? device
-
-multipath should create device-mapper table entries (see "dmsetup table"), 
-block-device-files in /dev/mapper/ and links in /dev/ for the lun and for each 
-partition
-
-e.g.: you have created two partitions and your lun alias is "yellow" (defined 
-in /etc/multipath.conf):
-
-# dmsetup table
-yellow1: ...
-yellow: ...
-yellow2: ...
-
-# ls /dev/mapper/
-yellow yellow1 yellow2 control
-
-# ls -F /dev/yellow*
-/dev/yellow@  /dev/yellow1@  /dev/yellow2@
-
-and check "multipath [-v3] -ll"
-
-
-6.) create filesystems and mount /dev/yellow1 and /dev/yellow2
-
-
-you can delete the current configuration with "dmsetup remove yellow2; dmsetup 
-remove yellow1; dmsetup remove yellow"
-
-hope that helps
-simon
+environment:
+ - rhas4 U2 Beta - Linux pecan 2.6.9-16.EL #1 Mon Aug 15 19:58:49 EDT 2005 i686 i686 i386 GNU/Linux
+ - multipath-tools-0.4.5.49. compiled from ftp://sources.redhat.com/pub/dm/multipath-tools 
+ - 2 QLogic PCI to Fibre Channel Host Adapters for QLA2340:
+   Firmware version 3.03.15 IPX, Driver version 8.01.00b5-rh2
+ - IBM ESS 2105F20 4 paths
+============================================================
+Ray Stell  stellr@vt.edu  (540) 231-4109  Tempus fugit  28^D
