@@ -1,7 +1,7 @@
-From: Mike Anderson <andmike@us.ibm.com>
+From: Ray Stell <stellr@cns.vt.edu>
 Subject: Re: blacklisted paths?
-Date: Mon, 19 Sep 2005 16:07:18 -0700
-Message-ID: <20050919230718.GA26508@us.ibm.com>
+Date: Tue, 20 Sep 2005 08:01:53 -0400
+Message-ID: <20050920120153.GA25978@locust.cns.vt.edu>
 References: <20050919211649.GA24756@locust.cns.vt.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -18,49 +18,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ray Stell <stellr@cns.vt.edu> wrote:
-> [root@pecan ~]# multipath  -v3 -d | grep blacklist
-> dm-0 blacklisted
-> dm-1 blacklisted
-> dm-2 blacklisted
-> dm-3 blacklisted
-> dm-4 blacklisted
-> dm-5 blacklisted
-> fd0 blacklisted
-> hda blacklisted
-> hdb blacklisted
-> hdc blacklisted
-> md0 blacklisted
-> ram0 blacklisted
-> ram10 blacklisted
-> ram11 blacklisted
-> ram12 blacklisted
-> ram13 blacklisted
-> ram14 blacklisted
-> ram15 blacklisted
-> ram1 blacklisted
-> ram2 blacklisted
-> ram3 blacklisted
-> ram4 blacklisted
-> ram5 blacklisted
-> ram6 blacklisted
-> ram7 blacklisted
-> ram8 blacklisted
-> ram9 blacklisted
-> sdf blacklisted
-> sdh blacklisted
-> sdm blacklisted
+On Mon, 19 Sep 2005 16:07:18 -070, Mike Anderson wrote:
+>Well I do not have a good explanation why the blacklisting is not more
+>consistent, but can you send your /etc/multipath.conf. I might suspect
+>that a devnode_blacklist regular expression maybe matching resulting in
+>blacklisting when it should not.
 
-Well I do not have a good explanation why the blacklisting is not more
-consistent, but can you send your /etc/multipath.conf. I might suspect
-that a devnode_blacklist regular expression maybe matching resulting in
-blacklisting when it should not.
+Thanks for looking at this problem:
 
-
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+# cat /etc/multipath.conf
+# Blacklist all devices by default. Remove this to enable multipathing
+# on the default devices.
+##
+## This is a template multipath-tools configuration file
+## Uncomment the lines relevent to your environment
+##
+defaults {
+        multipath_tool  "/sbin/multipath -v0"
+        udev_dir        /dev
+        polling_interval 10
+        default_selector        "round-robin 0"
+        default_path_grouping_policy    multibus
+        default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
+        default_prio_callout    "/bin/true"
+        default_features        "0"
+        rr_wmin_io              100
+        failback                immediate
+}
+devnode_blacklist {
+        devnode "hd*"
+        devnode "fd*"
+        devnode "ram*"
+        devnode "md*"
+}
+devices {
+        device {
+                vendor                  "IBM     "
+                product                 "2105            "
+                path_grouping_policy    multibus
+                path_checker            tur
+        }
+}
+============================================================
+Ray Stell  stellr@vt.edu  (540) 231-4109  Tempus fugit  28^D
