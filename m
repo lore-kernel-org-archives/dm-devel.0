@@ -1,16 +1,12 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: Re: Re: blacklisted paths?
-Date: Tue, 20 Sep 2005 08:36:44 -0700
-Message-ID: <20050920153644.GA20698@us.ibm.com>
-References: <20050919211649.GA24756@locust.cns.vt.edu>
-	<20050920120153.GA25978@locust.cns.vt.edu>
-	<20050920151151.GA3518@locust.cns.vt.edu>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: Patch for setting pgfailback coded default for EMC
+	CLARiiON and o thers
+Date: Wed, 21 Sep 2005 14:39:46 -0400
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ACC6@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20050920151151.GA3518@locust.cns.vt.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,34 +16,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ray Stell <stellr@cns.vt.edu> wrote:
-> On Tue, Sep 20, 2005 at 08:01:53AM -0400, Ray Stell wrote:
-> > devnode_blacklist {
-> >         devnode "hd*"
-> >         devnode "fd*"
-> >         devnode "ram*"
-> >         devnode "md*"
-> > }
-> 
-> I removed the * chars from this block it mapped all the paths.  
-
-Good to see that they are all mapped now. You may want to switch to using
-"^" to match beginning of line and also use the multiple match / single
-line regular expression.
-
-Here is an example of what I am running. I believe it is close to the
-/etc/multipath.conf example file.
-
-devnode_blacklist {
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-        devnode "^hd[a-z][0-9]*"
-        devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
-}
-
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -228,7 +228,7 @@ out:
+ int
+ store_hwe_ext (vector hwtable, char * vendor, char * product, int pgp,
+ 	   char * getuid, char * getprio, char * hwhandler,
+-	   char * features, char * checker)
++	   char * features, char * checker, int pgfailback)
+ {
+ 	struct hwentry * hwe;
+ 
+@@ -284,6 +284,8 @@ store_hwe_ext (vector hwtable, char * ve
+ 	else
+ 		hwe->checker_index = get_checker_id(DEFAULT_CHECKER);
+ 
++	hwe->pgfailback = pgfailback;
++
+ 	if (!vector_alloc_slot(hwtable))
+ 		goto out;
+ 
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -86,8 +86,7 @@ int store_hwe (vector hwtable, char * ve
+ 		char * getuid);
+ int store_hwe_ext (vector hwtable, char * vendor, char * product, int pgp,
+ 		char * getuid, char * getprio, char * hwhandler,
+-		char * features, char * checker);
+-
++		char * features, char * checker, int pgfailback);
+ int load_config (char * file);
+ struct config * alloc_config (void);
+ void free_config (struct config * conf);
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -37,13 +37,13 @@ setup_default_hwtable (vector hw)
+ 
+ 	r += store_hwe_ext(hw, "DGC", "*", GROUP_BY_PRIO, DEFAULT_GETUID,
+ 		   "/sbin/mpath_prio_emc /dev/%n", "1 emc",
+-		   "1 queue_if_no_path", "emc_clariion");
++		   "1 queue_if_no_path", "emc_clariion",
+FAILBACK_IMMEDIATE);
+ 	r += store_hwe_ext(hw, "IBM", "3542", GROUP_BY_SERIAL,
+DEFAULT_GETUID,
+-		   NULL, "0", "0", "tur");
++		   NULL, "0", "0", "tur", FAILBACK_UNDEF);
+ 	r += store_hwe_ext(hw, "SGI", "TP9400", MULTIBUS, DEFAULT_GETUID,
+-		   NULL, "0", "0", "tur");
++		   NULL, "0", "0", "tur", FAILBACK_UNDEF);
+ 	r += store_hwe_ext(hw, "SGI", "TP9500", FAILOVER, DEFAULT_GETUID,
+-		   NULL, "0", "0", "tur");
++		   NULL, "0", "0", "tur", FAILBACK_UNDEF);
