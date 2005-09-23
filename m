@@ -1,10 +1,11 @@
-From: Jane Liu <janliu@nvidia.com>
-Subject: RAID 5 support?
-Date: 22 Sep 2005 13:43:38 -0700
-Message-ID: <1127421818.3350.25.camel@dhcp-174-61.nvidia.com>
+From: Hubert <hubgor@poczta.fm>
+Subject: Dmsetup snapshot create/remove procedure and latest
+ status with 2.6.x kernel series
+Date: Fri, 23 Sep 2005 10:07:41 +0200
+Message-ID: <4333B7CD.8010106@poczta.fm>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-2; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,11 +20,51 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Is there a RAID 5 target for device-mapper? If not we would like to add
-RAID 5 support in both device-mapper and dmraid. We'll be happy to
-contribute to any efforts already underway.
 
-Thanks,
-Jane Liu
---------
-NVIDIA Corporation
+Hello,
+
+I noticed that lvm2 create/remove snapshot of logical volume feature 
+with 2.6.x kernel series is still very bad and at last randomly causes 
+that any access (read/write) to that lv is impossible or even ocures 
+system hung up.
+
+In detail especially create/remove many snapshots of XFS logical volume 
+is big problem and causes randomly hung up xfs_io or dmsetup 
+suspend/resume calls in memory.
+
+Please if somebody could help and give me some exemple(s) of proper use 
+dmsetup tool (suspend/resume) or maybe xfs_freeze -f/u command under 
+creating/removing snapshot and copying data at the same time ?
+
+Should i use any of above dmsetup or xfs_freeze commands ?
+
+My configuration :
+- Debian GNU/Linux 3.0 stable
+- tested kernels: 2.6.12.3, 2.6.13.2, 2.6.14rc1, 2.6.14rc2
+- libdevmapper and lvm2 1.05 - both from cvs
+- 512MB DDR RAM
+- 3ware 3xxx SATA Raid controller
+- 8x 250GB SATA HDD (Raid0 sda = 1.36T)
+- 1x vg, 1x xfs lv = 698GB, 2x snapshot = 349GB each
+
+I randomly creating / removing snashots under copying data from remote
+host to smb share or to iSCSI target on my server.
+
+I noticed that best results give me xfs_freeze -f/u usage but it 
+sometimes couses that xfs_io hung up and then any i/o calls to XFS 
+logical volume are inpossible.
+
+Even if i add more RAM (1/2GB) it not help.
+
+What dm-devel patches should be applied (patches 8 and 9 for snapshots 
+don't make any diffrence) ?
+
+
+Thanks for any help.
+Best regards
+
+Hubert
+
+
+----------------------------------------------------------------------
+Sa niesamowite, zobaczysz... ;-) >>> link http://link.interia.pl/f18b9
