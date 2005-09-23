@@ -1,12 +1,10 @@
-From: Hubert <hubgor@poczta.fm>
-Subject: Dmsetup snapshot create/remove procedure and latest
- status with 2.6.x kernel series
-Date: Fri, 23 Sep 2005 10:07:41 +0200
-Message-ID: <4333B7CD.8010106@poczta.fm>
+From: Stefan Bader <Stefan.Bader@de.ibm.com>
+Subject: [multipath-tools] multipath -ll and offline devices
+Date: Fri, 23 Sep 2005 15:56:50 +0200
+Message-ID: <OFE13C2366.8185C9D5-ONC1257085.0047B6BE-C1257085.004C9A99@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-2; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="US-ASCII"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,51 +18,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi, 
 
-Hello,
+I got a report about strange behaviour of "multipath -l" if one of the 
+devices that are used for
+multipathing is set offline. In that case the code in libmultipath 
+(discovery.c) just ends processing
+and the output is incomplete.
 
-I noticed that lvm2 create/remove snapshot of logical volume feature 
-with 2.6.x kernel series is still very bad and at last randomly causes 
-that any access (read/write) to that lv is impossible or even ocures 
-system hung up.
+The problem is that setting a scsi device offline (through sysfs state 
+attribute) will remove the
+device node in /dev. And this will cause pathinfo to abort which gives no 
+output at all.
+This looks strange and in that situation the path could be assumed as 
+failed. On the other hand
+if the device node just had been removed "failed" wouldn't be a correct 
+state.
 
-In detail especially create/remove many snapshots of XFS logical volume 
-is big problem and causes randomly hung up xfs_io or dmsetup 
-suspend/resume calls in memory.
+One solution might be to use the state attribute of the scsi device 
+(wasn't that once called online?
+*sigh*) to check for an offline device and set the path state to failed in 
+that case. Or should the map
+get updated as soon as the device is set offline, to remove the path?
 
-Please if somebody could help and give me some exemple(s) of proper use 
-dmsetup tool (suspend/resume) or maybe xfs_freeze -f/u command under 
-creating/removing snapshot and copying data at the same time ?
+Stefan Bader
 
-Should i use any of above dmsetup or xfs_freeze commands ?
-
-My configuration :
-- Debian GNU/Linux 3.0 stable
-- tested kernels: 2.6.12.3, 2.6.13.2, 2.6.14rc1, 2.6.14rc2
-- libdevmapper and lvm2 1.05 - both from cvs
-- 512MB DDR RAM
-- 3ware 3xxx SATA Raid controller
-- 8x 250GB SATA HDD (Raid0 sda = 1.36T)
-- 1x vg, 1x xfs lv = 698GB, 2x snapshot = 349GB each
-
-I randomly creating / removing snashots under copying data from remote
-host to smb share or to iSCSI target on my server.
-
-I noticed that best results give me xfs_freeze -f/u usage but it 
-sometimes couses that xfs_io hung up and then any i/o calls to XFS 
-logical volume are inpossible.
-
-Even if i add more RAM (1/2GB) it not help.
-
-What dm-devel patches should be applied (patches 8 and 9 for snapshots 
-don't make any diffrence) ?
-
-
-Thanks for any help.
-Best regards
-
-Hubert
-
-
-----------------------------------------------------------------------
-Sa niesamowite, zobaczysz... ;-) >>> link http://link.interia.pl/f18b9
+SW Linux on zSeries Development & Services
+Stefan.Bader@de.ibm.com
+----------------------------------------------------------------------------------
+  When all other means of communication fail, try words.
