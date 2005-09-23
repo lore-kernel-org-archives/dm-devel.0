@@ -1,11 +1,13 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: [multipath-tools] multipath -ll and offline devices
-Date: Fri, 23 Sep 2005 15:56:50 +0200
-Message-ID: <OFE13C2366.8185C9D5-ONC1257085.0047B6BE-C1257085.004C9A99@de.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <mauelshagen@redhat.com>
+Subject: *** Announcement: dmraid 1.0.0.rc9 ***
+Date: Fri, 23 Sep 2005 16:45:44 +0200
+Message-ID: <20050923144544.GA17694@redhat.com>
+Reply-To: mauelshagen@redhat.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,32 +20,146 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi, 
 
-I got a report about strange behaviour of "multipath -l" if one of the 
-devices that are used for
-multipathing is set offline. In that case the code in libmultipath 
-(discovery.c) just ends processing
-and the output is incomplete.
+               *** Announcement: dmraid 1.0.0.rc9 ***
 
-The problem is that setting a scsi device offline (through sysfs state 
-attribute) will remove the
-device node in /dev. And this will cause pathinfo to abort which gives no 
-output at all.
-This looks strange and in that situation the path could be assumed as 
-failed. On the other hand
-if the device node just had been removed "failed" wouldn't be a correct 
-state.
+dmraid 1.0.0.rc9 is available at
+http://people.redhat.com/heinzm/sw/dmraid/ in source tarball,
+source rpm and i386 rpm (with shared and static dietlibc binary).
 
-One solution might be to use the state attribute of the scsi device 
-(wasn't that once called online?
-*sigh*) to check for an offline device and set the path state to failed in 
-that case. Or should the map
-get updated as soon as the device is set offline, to remove the path?
+This release fixes a stripe size bug on VIA and adds RAID10 support
+on Promise (see CHANGELOG below for more).
 
-Stefan Bader
 
-SW Linux on zSeries Development & Services
-Stefan.Bader@de.ibm.com
-----------------------------------------------------------------------------------
-  When all other means of communication fail, try words.
+dmraid (Device-Mapper RAID tool) discovers, [de]activates and displays
+properties of software RAID sets (i.e. ATARAID) and contained DOS
+partitions using the device-mapper runtime of the 2.6 kernel.
+
+The following ATARAID types are supported on Linux 2.6:
+
+Highpoint HPT37X
+Highpoint HPT45X
+Intel Software RAID
+LSI Logic MegaRAID
+NVidia NForce
+Promise FastTrack
+Silicon Image Medley
+VIA Software RAID
+
+Please provide insight to support those metadata formats completely.
+
+Thanks.
+
+
+See files README, which comes with the source tarball for
+prerequisites to run this software, further instructions on installing
+and using dmraid!
+
+
+Call for testers:
+-----------------
+
+I need testers with the above ATARAID types, to check that the mapping
+created by this tool is correct (see options "-t -ay") and access to the
+ATARAID data is proper.
+
+In case you have a different ATARAID solution from those listed above,
+please feel free to contact me about supporting it in dmraid.
+
+You can activate your ATARAID sets without danger of overwriting
+your metadata, because dmraid accesses it read-only unless you use
+option -E together with -r in order to erase ATARAID metadata
+(see 'man dmraid')!
+
+This is a release candidate version so you want to have backups of your valuable
+data *and* you want to test accessing your data read-only first in order to
+make sure that the mapping is correct before you go for read-write access.
+
+
+Contacts:
+---------
+
+The author is reachable at <Mauelshagen@RedHat.com>.
+
+For test results, mapping information, discussions, questions, patches,
+enhancement requests and the like, please subscribe and mail to
+<ataraid-list@redhat.com>.
+
+--
+
+Regards,
+Heinz    -- The LVM Guy --
+
+
+CHANGELOG from dmraid 1.0.0.rc8 to 1.0.0.rc9		2005.09.23
+------------------------------------------------------------------
+
+FIXES:
+------
+o via.c: checksum() calculation;
+	 stride size
+
+o toollib.c:  memory leak in _valid_format()
+
+o isw.c: avoid endianess conversion bug in to_cpu();
+         disk status check;
+	 version check to cover 1.2.02;
+	 isw_write() to store metadata in correct sequence
+
+o hpt37x.c, lsi.c, nv.c, pdc.c, sil.c via.c: streamlined grouping switch()
+
+o hpt45x.c: added missing RAID10 to capability string
+
+o sil.c: streamlined quorate()
+
+o misc.c: p_fmt() missed a free_string()
+
+
+FEATURES:
+---------
+o pdc.c: support RAID10
+
+o commands.c: added --separator option for selectable string
+	      separator character (used with --format etc.)
+
+o display.c: support customizable column output through field
+	     identifiers with -c option
+
+
+MISCELANIOUS:
+------------
+o metadata.c: use log_alloc_err()
+
+o format.h: introduced caps (RAID capabilities) member
+
+o format.c: introduced get_format_caps() and free_format_caps()
+	    to ease library use in installers (pjones@redhat.com)
+
+o display.c: streamlined log_devices()
+
+o toollib.c: stremalined collapse_delimiters()
+
+o isw.c: streamlined isw_read_extended() and setup_rd()
+
+o file.c: cleanup
+
+o add /var/lock/dmraid to rpm
+
+o avoid global variable format_names:
+  - change discover_raid_devices() interface
+  - saves code in toollib
+
+o added more info to format_error output
+
+o activate.c: display RAID string with unsupported mapping
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Heinz Mauelshagen                                 Red Hat GmbH
+Consulting Development Engineer                   Am Sonnenhang 11
+                                                  56242 Marienrachdorf
+                                                  Germany
+Mauelshagen@RedHat.com                            +49 2626 141200
+                                                       FAX 924446
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
