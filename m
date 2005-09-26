@@ -1,14 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [RFC][multipath-tools] device nodes
-Date: Mon, 26 Sep 2005 09:53:36 +0200
-Message-ID: <20050926075336.GB27319@free.fr>
-References: <1127685667.26246.13.camel@zezette>
+Subject: Re: [multipath-tools] multipath -ll and offline devices
+Date: Mon, 26 Sep 2005 09:58:03 +0200
+Message-ID: <20050926075803.GD27319@free.fr>
+References: <OFE13C2366.8185C9D5-ONC1257085.0047B6BE-C1257085.004C9A99@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1127685667.26246.13.camel@zezette>
+In-Reply-To: <OFE13C2366.8185C9D5-ONC1257085.0047B6BE-C1257085.004C9A99@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,10 +21,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-erratum ...
+On Fri, Sep 23, 2005 at 03:56:50PM +0200, Stefan Bader wrote:
+> Hi, 
+> 
+> I got a report about strange behaviour of "multipath -l" if one of the 
+> devices that are used for
+> multipathing is set offline. In that case the code in libmultipath 
+> (discovery.c) just ends processing
+> and the output is incomplete.
+> 
+> The problem is that setting a scsi device offline (through sysfs state 
+> attribute) will remove the
+> device node in /dev. And this will cause pathinfo to abort which gives no 
+> output at all.
+> This looks strange and in that situation the path could be assumed as 
+> failed. On the other hand
+> if the device node just had been removed "failed" wouldn't be a correct 
+> state.
+> 
+> One solution might be to use the state attribute of the scsi device 
+> (wasn't that once called online?
+> *sigh*) to check for an offline device and set the path state to failed in 
+> that case. Or should the map
+> get updated as soon as the device is set offline, to remove the path?
+>
+Thanks for the report,
 
--I strongly question the need to keep the multipath.dev udev trigger
-+I strongly question the need to keep the multipath.rules udev trigger
-
+I merged a fix.
+Can you report on its behaviour ?
+ 
 Regards,
 cvaroqui
