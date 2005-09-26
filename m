@@ -1,15 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [multipath-tools] multipath -ll and offline devices
-Date: Mon, 26 Sep 2005 11:30:23 +0200
-Message-ID: <20050926093023.GE27319@free.fr>
-References: <20050926075803.GD27319@free.fr>
-	<OF0C2F4897.5FD0B0FC-ONC1257088.0031BFAC-C1257088.003203CE@de.ibm.com>
+From: Ray Stell <stellr@cns.vt.edu>
+Subject: adding luns
+Date: Mon, 26 Sep 2005 09:09:10 -0400
+Message-ID: <20050926130910.GA19498@locust.cns.vt.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <OF0C2F4897.5FD0B0FC-ONC1257088.0031BFAC-C1257088.003203CE@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +16,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Sep 26, 2005 at 11:08:05AM +0200, Stefan Bader wrote:
-> Hi Christophe,
-> 
-> looks good. After setting a device offline it is reported as failed by 
-> 'multipath -ll'.
-> Just calling 'multipath' will remove the offline device which makes sense. 
-> The path
-> can be re-established by calling multipath again after returning the 
-> device to online
-> state.
-> 
-Good, I'm uploading another fix :
+What actions are required to get multipath to "see" a lun added
+after reboot?  I tried using an alternate qlogic driver, qla2xxx-v8.00.02-1, 
+but that did not work.  Thanks. 
 
-When the daemon runs while test your scenario you'll notice multipath won't load the map because it get a wwid 
-for the path from the daemon cache, which causes multipath to try to load a map *with* the faulty path ... which 
-fails in the kernel DM subsystem.
-
-Fix is memseting pp->wwid in discovery.c:pathinfo() error path.
-
-Regards,
-cvaroqui
+environment:
+ - rhas4 U2 Beta - Linux pecan 2.6.9-16.EL #1 Mon Aug 15 19:58:49 EDT 2005 i686 i686 i386 GNU/Linux
+ - multipath-tools-0.4.5.49. compiled from ftp://sources.redhat.com/pub/dm/multipath-tools    
+     one-off patch of mpath_faker.c
+ - 2 QLogic PCI to Fibre Channel Host Adapters for QLA2340:
+   Firmware version 3.03.15 IPX, Driver version 8.01.00b5-rh2
+ - IBM ESS 2105F20 4 paths
+ - /etc/mulipath.conf:
+   defaults {
+           multipath_tool  "/sbin/multipath -v0"
+           udev_dir        /dev
+           polling_interval 10
+           default_selector        "round-robin 0"
+           default_path_grouping_policy    multibus
+           default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
+           default_prio_callout    "/bin/true"
+           default_features        "0"
+           rr_wmin_io              100
+           failback                immediate
+   }
+   devnode_blacklist {
+           devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+           devnode "^hd[a-z][0-9]*"
+           devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
+   }
+   devices {
+           device {
+                   vendor                  "IBM"
+                   product                 "2105F20"
+                   path_grouping_policy    multibus
+                   path_checker            tur
+           }
+   }
+============================================================
+Ray Stell  stellr@vt.edu  (540) 231-4109  Tempus fugit  28^D
