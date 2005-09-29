@@ -1,12 +1,12 @@
-From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Subject: clarification
-Date: Mon, 10 Oct 2005 19:57:29 +0530
-Message-ID: <3456F611E9329441B12FBB24447B3FA002CC63C2@bgeexc01.asiapacific.cpqcorp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: andysayshi <andysayshi@gmail.com>
+Subject: multipath v0.4.5, nodes not appearing in /dev/
+Date: Thu, 29 Sep 2005 17:02:46 -0400
+Message-ID: <3f57d11c050929140232079e87@mail.gmail.com>
+Reply-To: andysayshi <andysayshi@gmail.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1066705117=="
+Content-Type: multipart/mixed; boundary="===============0430998034=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,150 +16,172 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
-
---===============1066705117==
-Content-class: urn:content-classes:message
+--===============0430998034==
 Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C5CDA6.BF0C77F7"
+	boundary="----=_Part_5453_16089458.1128027766197"
 
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C5CDA6.BF0C77F7
-Content-Type: text/plain;
-	charset="us-ascii"
+------=_Part_5453_16089458.1128027766197
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-Why do I get "null" when the following is executed on the command line?
-Because of this only one symbolic link "(null)" is created in /dev/mpath
-pointing to last dm device (when "udevstart" is executed).
+multipath version: multipath v0.4.5 (16/06, 2005)
+kernel: Linux 2.6.9-22.ELsmp #1 SMP Mon Sep 19 18:32:14 EDT 2005
+os: Red Hat Enterprise Linux ES release 4 (Nahant Update 2)
 
-=20
+Hello,
 
-=20
+Im new to multipath/devicemapper, so please excuse any misterminology or
+misunderstanding on my part : )
 
-dmsetup ls --target multipath --exec basename -j 253 -m 8
+Basically, if i start up the multipathd service and run multipath to scan
+for devices, it finds (as it's supposed to) and emc entry (which i defined
+in /etc/multipath.conf).
 
-=20
+[root@cc1-86 dev]# multipath -v2 -l
+emc1 (36006016046861000625964d94cbbd911)
+[size=3D133 GB][features=3D"0"][hwhandler=3D"1 emc"]
+\_ round-robin 0 [active]
+\_ 1:0:0:0 sdb 8:16 [active]
+\_ 2:0:0:0 sdd 8:48 [active]
+\_ round-robin 0 [enabled]
+\_ 1:0:1:0 sdc 8:32 [active]
+\_ 2:0:1:0 sde 8:64 [active]
 
-Thanks and regards
--Murthy
+[root@cc1-86 dev]#
 
+Now, originally we were running a previous version as a seperate admin
+mentioned here:
+https://www.redhat.com/archives/dm-devel/2005-August/msg00043.html , after
+lots of back and forth for this and other issues, our redhat support
+instructed us to use a updated version of multipath (ver listed above). bac=
+k
+on the previous version (v0.4.4), i would be able to find the multipath nod=
+e
+in /dev so that i could mount it. but now, i dont see anything in /dev, i d=
+o
+however see entries in /dev/mapper:
 
-------_=_NextPart_001_01C5CDA6.BF0C77F7
-Content-Type: text/html;
-	charset="us-ascii"
+[root@cc1-86 dev]# ls -l /dev|grep dm
+brw-r----- 1 root root 253, 0 Sep 29 13:11 dm-0
+[root@cc1-86 dev]# ls -l /dev/mapper/
+total 0
+crw------- 1 root root 10, 63 Sep 29 09:08 control
+brw-rw---- 1 root disk 253, 0 Sep 29 13:11 emc1
+[root@cc1-86 dev]#
+
+I've tried searching online for info, and i ran across this via
+http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3DFAQ :
+ 5. I see my multipath nodes in /dev/mapper/ but not in /dev/ Verify you
+have a naming rule configured in udev *and* no bypass rule for dm-* devices=
+.
+The naming rule may use dmsetup or multipath-tools'-provided devmap_name.
+
+# Commented out :
+# KERNEL=3D"dm-[0-9]*", OPTIONS+=3D"ignore_device"
+KERNEL=3D"dm-[0-9]*", PROGRAM=3D"/sbin/devmap_name %M %m", NAME=3D"%k",
+SYMLINK=3D"%c"
+
+Partition mapping through kpartx won't work unless devices appear in /dev/.
+
+Can someone tell me if this is what I need to do as well? If so, where woul=
+d
+this file be located, so that I can update it?
+
+Thanks in advance,
+
+Andy.
+
+------=_Part_5453_16089458.1128027766197
+Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
+multipath version: multipath v0.4.5 (16/06, 2005)<br>
+kernel: Linux 2.6.9-22.ELsmp #1 SMP Mon Sep 19 18:32:14 EDT 2005<br>
+os: Red Hat Enterprise Linux ES release 4 (Nahant Update 2)<br>
+<br>
+Hello,<br>
+<br>
+Im new to multipath/devicemapper, so please excuse any misterminology or mi=
+sunderstanding on my part : )<br>
+<br>
+Basically, if i start up the multipathd service and run multipath to
+scan for devices, it finds (as it's supposed to) and emc entry (which i
+defined in /etc/multipath.conf). <br>
+<br>
+[root@cc1-86 dev]# multipath -v2 -l<br>
+emc1 (36006016046861000625964d94cbbd911)<br>
+[size=3D133 GB][features=3D&quot;0&quot;][hwhandler=3D&quot;1 emc&quot;]<br=
+>
+\_ round-robin 0 [active]<br>
+&nbsp; \_ 1:0:0:0 sdb&nbsp; 8:16&nbsp;&nbsp;&nbsp; [active]<br>
+&nbsp; \_ 2:0:0:0 sdd&nbsp; 8:48&nbsp;&nbsp;&nbsp; [active]<br>
+\_ round-robin 0 [enabled]<br>
+&nbsp; \_ 1:0:1:0 sdc&nbsp; 8:32&nbsp;&nbsp;&nbsp; [active]<br>
+&nbsp; \_ 2:0:1:0 sde&nbsp; 8:64&nbsp;&nbsp;&nbsp; [active]<br>
+<br>
+[root@cc1-86 dev]# <br>
+<br>
+Now, originally we were running a previous version as a seperate admin
+mentioned here:
+<a href=3D"https://www.redhat.com/archives/dm-devel/2005-August/msg00043.ht=
+ml">https://www.redhat.com/archives/dm-devel/2005-August/msg00043.html</a> =
+,
+after lots of back and forth for this and other issues, our redhat
+support instructed us to use a updated version of multipath (ver listed
+above). back on the previous version (v0.4.4), i would be able to find
+the multipath node in /dev so that i could mount it. but now, i dont
+see anything in /dev, i do however see entries in /dev/mapper:<br>
+<br>
+[root@cc1-86 dev]# ls -l /dev|grep dm<br>
+brw-r-----&nbsp; 1 root&nbsp;&nbsp; root&nbsp;&nbsp; 253,&nbsp;&nbsp; 0 Sep=
+ 29 13:11 dm-0<br>
+[root@cc1-86 dev]# ls -l /dev/mapper/<br>
+total 0<br>
+crw-------&nbsp; 1 root root&nbsp; 10, 63 Sep 29 09:08 control<br>
+brw-rw----&nbsp; 1 root disk 253,&nbsp; 0 Sep 29 13:11 emc1<br>
+[root@cc1-86 dev]# <br>
+<br>
+I've tried searching online for info, and i ran across this via <a href=3D"=
+http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3DFAQ">http://christo=
+phe.varoqui.free.fr/wiki/wakka.php?wiki=3DFAQ</a> :<br>
+<h3> 5. I see my multipath nodes in /dev/mapper/ but not in /dev/ </h3>
 
-<head>
-<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
-charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:"MS Sans Serif";
-	panose-1:0 0 0 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:"Microsoft Sans Serif";
-	panose-1:2 11 6 4 2 2 2 2 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-p
-	{mso-margin-top-alt:auto;
-	margin-right:0in;
-	mso-margin-bottom-alt:auto;
-	margin-left:0in;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"MS Sans Serif";
-	color:windowtext;
-	font-weight:normal;
-	font-style:normal;
-	text-decoration:none none;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
+Verify you have a naming rule configured in udev *and* no bypass rule for d=
+m-* devices.<br>
 
-</head>
+The naming rule may use dmsetup or multipath-tools'-provided devmap_name.<b=
+r>
 
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+<tt><br>
+# Commented out :<br>
+# KERNEL=3D&quot;dm-[0-9]*&quot;, OPTIONS+=3D&quot;ignore_device&quot;<br>
+KERNEL=3D&quot;dm-[0-9]*&quot;, PROGRAM=3D&quot;/sbin/devmap_name %M %m&quo=
+t;, NAME=3D&quot;%k&quot;, SYMLINK=3D&quot;%c&quot;<br>
+</tt><br>
 
-<div class=3DSection1>
+Partition mapping through kpartx won't work unless devices appear in /dev/.=
+<br>
+<br>
+Can someone tell me if this is what I need to do as well? If so, where woul=
+d this file be located, so that I can update it?<br>
+<br>
+Thanks in advance,<br>
+<br>
+Andy.<br>
 
-<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2
-face=3D"Microsoft Sans Serif"><span =
-style=3D'font-size:10.0pt;font-family:"Microsoft Sans Serif"'>Why
-do I get &#8220;null&#8221; when the following is executed on the =
-command line?
-Because of this only one symbolic link &#8220;(null)&#8221; is created =
-in
-/dev/mpath pointing to last dm device (when &#8220;udevstart&#8221; is =
-executed).<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2
-face=3D"Microsoft Sans Serif"><span =
-style=3D'font-size:10.0pt;font-family:"Microsoft Sans =
-Serif"'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2
-face=3D"Microsoft Sans Serif"><span =
-style=3D'font-size:10.0pt;font-family:"Microsoft Sans =
-Serif"'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2
-face=3D"Microsoft Sans Serif"><span =
-style=3D'font-size:10.0pt;font-family:"Microsoft Sans Serif"'>dmsetup
-ls --target multipath --exec basename -j 253 -m =
-8<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'><o:p>&nbsp;</o:p></span></font></p>
-
-<p><font size=3D2 face=3D"Microsoft Sans Serif"><span =
-style=3D'font-size:10.0pt;
-font-family:"Microsoft Sans Serif"'>Thanks and regards<br>
--Murthy<o:p></o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
-------_=_NextPart_001_01C5CDA6.BF0C77F7--
+------=_Part_5453_16089458.1128027766197--
 
 
---===============1066705117==
+--===============0430998034==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1066705117==--
+--===============0430998034==--
