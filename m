@@ -1,11 +1,14 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: [multipath-tools][PATCH] two small fixes
-Date: Fri, 30 Sep 2005 13:11:00 +0200
-Message-ID: <OF4AD11055.453B94FF-ONC125708C.003CADFE-C125708C.003D616E@de.ibm.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [multipath-tools][PATCH] two small fixes
+Date: Fri, 30 Sep 2005 14:27:02 +0200
+Message-ID: <20050930122702.GB29806@free.fr>
+References: <OF4AD11055.453B94FF-ONC125708C.003CADFE-C125708C.003D616E@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=_mixed 003D60FFC125708C_="
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <OF4AD11055.453B94FF-ONC125708C.003CADFE-C125708C.003D616E@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,110 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---=_mixed 003D60FFC125708C_=
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: quoted-printable
+On Fri, Sep 30, 2005 at 01:11:00PM +0200, Stefan Bader wrote:
+> Hi,
+> 
+> two small fixxes:
+> 
+> 1. I guess 0 _is_ a valid file descriptor though it won't happen very 
+> often...
+>
+ok,
+btw, you forgot structs.c:alloc_path()
+ 
+> 
+> 
+> 2. The status information from path selectors that apply to paths are 
+> repeated for
+>         each path.
+> 
+> 
+Can you explain this with some example ... I fail to see the logic :/
 
-Hi,
-
-two small fixxes:
-
-1. I guess 0 =5Fis=5F a valid file descriptor though it won't happen very=20
-often...
-
-
-
-2. The status information from path selectors that apply to paths are=20
-repeated for
-        each path.
-
-
-
-Mit freundlichem Gru=DF,
-Stefan Bader
-
-SW Linux on zSeries Development & Services
-Stefan.Bader@de.ibm.com
-Phone: +49 (7031) 16-2472
----------------------------------------------------------------------------=
--------
-  When all other means of communication fail, try words.
---=_mixed 003D60FFC125708C_=
-Content-Type: application/octet-stream; name="multipath-tools-fix-fd0.diff"
-Content-Disposition: attachment; filename="multipath-tools-fix-fd0.diff"
-Content-Transfer-Encoding: base64
-
-ZGlmZiAtcnVOcCBtdWx0aXBhdGgtdG9vbHMtMC40LjUuRmluYWwtMTkvbGlibXVsdGlwYXRoL2Nh
-Y2hlLmMgbXVsdGlwYXRoLXRvb2xzLTAuNC41LkZpbmFsLTE5LWZpeGVkL2xpYm11bHRpcGF0aC9j
-YWNoZS5jCi0tLSBtdWx0aXBhdGgtdG9vbHMtMC40LjUuRmluYWwtMTkvbGlibXVsdGlwYXRoL2Nh
-Y2hlLmMJMjAwNS0wOC0yNCAwOTo1Njo0Mi4wMDAwMDAwMDAgKzAyMDAKKysrIG11bHRpcGF0aC10
-b29scy0wLjQuNS5GaW5hbC0xOS1maXhlZC9saWJtdWx0aXBhdGgvY2FjaGUuYwkyMDA1LTA5LTI5
-IDExOjI2OjE4LjAwMDAwMDAwMCArMDIwMApAQCAtMTIsNyArMTIsNyBAQCBzdGF0aWMgdm9pZAog
-cmV2b2tlX2NhY2hlX2luZm8oc3RydWN0IHBhdGggKiBwcCkKIHsKIAlwcC0+Y2hlY2tlcl9jb250
-ZXh0ID0gTlVMTDsKLQlwcC0+ZmQgPSAwOworCXBwLT5mZCA9IC0xOwogCXBwLT5tcHAgPSBOVUxM
-OwogCXBwLT5nZXR1aWQgPSBOVUxMOwogCXBwLT5nZXRwcmlvID0gTlVMTDsKZGlmZiAtcnVOcCBt
-dWx0aXBhdGgtdG9vbHMtMC40LjUuRmluYWwtMTkvbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jIG11
-bHRpcGF0aC10b29scy0wLjQuNS5GaW5hbC0xOS1maXhlZC9saWJtdWx0aXBhdGgvZGlzY292ZXJ5
-LmMKLS0tIG11bHRpcGF0aC10b29scy0wLjQuNS5GaW5hbC0xOS9saWJtdWx0aXBhdGgvZGlzY292
-ZXJ5LmMJMjAwNS0wOS0yOCAxNjo1OTowMy4wMDAwMDAwMDAgKzAyMDAKKysrIG11bHRpcGF0aC10
-b29scy0wLjQuNS5GaW5hbC0xOS1maXhlZC9saWJtdWx0aXBhdGgvZGlzY292ZXJ5LmMJMjAwNS0w
-OS0zMCAxMjo1OTo1Mi4wMDAwMDAwMDAgKzAyMDAKQEAgLTIwNywxMSArMjA3LDExIEBAIG9wZW5u
-b2RlIChjaGFyICogZGV2LCBpbnQgbW9kZSkKIAl3aGlsZSAoLS1sb29wKSB7CiAJCWZkID0gb3Bl
-bihkZXZwYXRoLCBtb2RlKTsKIAotCQlpZiAoZmQgPD0gMCAmJiBlcnJubyAhPSBFTk9FTlQpIHsK
-KwkJaWYgKGZkIDwgMCAmJiBlcnJubyAhPSBFTk9FTlQpIHsKIAkJCWNvbmRsb2coMywgIm9wZW4g
-ZXJyb3IgKCVzKVxuIiwgc3RyZXJyb3IoZXJybm8pKTsKIAkJCXJldHVybiBmZDsKIAkJfQotCQlp
-ZiAoZmQgPiAwKQorCQlpZiAoZmQgPj0gMCkKIAkJCXJldHVybiBmZDsKIAogCQl1c2xlZXAoMTAw
-MCAqIDEwMDAgLyBXQUlUX0xPT1BfUEVSX1NFQ09ORCk7CkBAIC0yMjUsNyArMjI1LDcgQEAgZ2V0
-X2NsYWltZWQoY2hhciAqIGRldm5hbWUpCiB7CiAJaW50IGZkID0gb3Blbm5vZGUoZGV2bmFtZSwg
-T19FWENMKTsKIAotCWlmIChmZCA8PSAwICYmIGVycm5vID09IEVCVVNZKQorCWlmIChmZCA8IDAg
-JiYgZXJybm8gPT0gRUJVU1kpCiAJCXJldHVybiAxOwogCiAJY2xvc2UoZmQpOwpAQCAtNjAxLDEw
-ICs2MDEsMTAgQEAgcGF0aGluZm8gKHN0cnVjdCBwYXRoICpwcCwgdmVjdG9yIGh3dGFibAogCQlw
-cC0+Y2xhaW1lZCA9IGdldF9jbGFpbWVkKHBwLT5kZXYpOwogCQljb25kbG9nKDMsICJjbGFpbWVk
-ID0gJWkiLCBwcC0+Y2xhaW1lZCk7CiAJfQotCWlmIChwcC0+ZmQgPD0gMCkKKwlpZiAocHAtPmZk
-IDwgMCkKIAkJcHAtPmZkID0gb3Blbm5vZGUocHAtPmRldiwgT19SRE9OTFkpOwogCi0JaWYgKHBw
-LT5mZCA8PSAwKQorCWlmIChwcC0+ZmQgPCAwKQogCQlnb3RvIG91dDsKIAogCWlmIChwcC0+YnVz
-ID09IFNZU0ZTX0JVU19TQ1NJICYmCmRpZmYgLXJ1TnAgbXVsdGlwYXRoLXRvb2xzLTAuNC41LkZp
-bmFsLTE5L2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmMgbXVsdGlwYXRoLXRvb2xzLTAuNC41LkZpbmFs
-LTE5LWZpeGVkL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmMKLS0tIG11bHRpcGF0aC10b29scy0wLjQu
-NS5GaW5hbC0xOS9saWJtdWx0aXBhdGgvc3RydWN0cy5jCTIwMDUtMDgtMjUgMTA6MzE6NTEuMDAw
-MDAwMDAwICswMjAwCisrKyBtdWx0aXBhdGgtdG9vbHMtMC40LjUuRmluYWwtMTktZml4ZWQvbGli
-bXVsdGlwYXRoL3N0cnVjdHMuYwkyMDA1LTA5LTI5IDExOjI2OjM4LjAwMDAwMDAwMCArMDIwMApA
-QCAtMzMsNyArMzMsNyBAQCBmcmVlX3BhdGggKHN0cnVjdCBwYXRoICogcHApCiAJaWYgKHBwLT5j
-aGVja2VyX2NvbnRleHQpCiAJCWZyZWUocHAtPmNoZWNrZXJfY29udGV4dCk7CiAKLQlpZiAocHAt
-PmZkID4gMCkKKwlpZiAocHAtPmZkID49IDApCiAJCWNsb3NlKHBwLT5mZCk7CiAKIAlGUkVFKHBw
-KTsK
-
---=_mixed 003D60FFC125708C_=
-Content-Type: application/octet-stream;
-	name="multipath-tools-fix-pathargs-parsing.diff"
-Content-Disposition: attachment;
-	filename="multipath-tools-fix-pathargs-parsing.diff"
-Content-Transfer-Encoding: base64
-
-ZGlmZiAtcnVOcCBtdWx0aXBhdGgtdG9vbHMtMC40LjUuRmluYWwtMTkvbGlibXVsdGlwYXRoL2Rt
-cGFyc2VyLmMgbXVsdGlwYXRoLXRvb2xzLTAuNC41LkZpbmFsLTE5LWZpeGVkL2xpYm11bHRpcGF0
-aC9kbXBhcnNlci5jCi0tLSBtdWx0aXBhdGgtdG9vbHMtMC40LjUuRmluYWwtMTkvbGlibXVsdGlw
-YXRoL2RtcGFyc2VyLmMJMjAwNS0wOC0yMyAxNjo0NjoxNy4wMDAwMDAwMDAgKzAyMDAKKysrIG11
-bHRpcGF0aC10b29scy0wLjQuNS5GaW5hbC0xOS1maXhlZC9saWJtdWx0aXBhdGgvZG1wYXJzZXIu
-YwkyMDA1LTA5LTMwIDEyOjU0OjI2LjAwMDAwMDAwMCArMDIwMApAQCAtMjUwLDcgKzI1MCw3IEBA
-IGRpc2Fzc2VtYmxlX3N0YXR1cyAoY2hhciAqIHBhcmFtcywgc3RydWMKIHsKIAljaGFyICogd29y
-ZDsKIAljaGFyICogcDsKLQlpbnQgaSwgajsKKwlpbnQgaSwgaiwgazsKIAlpbnQgbnVtX2ZlYXR1
-cmVfYXJnczsKIAlpbnQgbnVtX2h3aGFuZGxlcl9hcmdzOwogCWludCBudW1fcGc7CkBAIC00MDUs
-MTIgKzQwNSwxMyBAQCBkaXNhc3NlbWJsZV9zdGF0dXMgKGNoYXIgKiBwYXJhbXMsIHN0cnVjCiAK
-IAkJCXBwLT5mYWlsY291bnQgPSBhdG9pKHdvcmQpOwogCQkJRlJFRSh3b3JkKTsKKworCQkJLyoK
-KwkJCSAqIHNlbGVjdG9yIGFyZ3MKKwkJCSAqLworCQkJZm9yIChrID0gMDsgayA8IG51bV9wZ19h
-cmdzOyBrKyspCisJCQkJcCArPSBnZXRfd29yZChwLCBOVUxMKTsKIAkJfQotCQkvKgotCQkgKiBz
-ZWxlY3RvciBhcmdzCi0JCSAqLwotCQlmb3IgKGogPSAwOyBqIDwgbnVtX3BnX2FyZ3M7IGorKykK
-LQkJCXAgKz0gZ2V0X3dvcmQocCwgTlVMTCk7CiAJfQogCXJldHVybiAwOwogfQo=
-
---=_mixed 003D60FFC125708C_=
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=_mixed 003D60FFC125708C_=--
+Regards,
+cvaroqui
