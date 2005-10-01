@@ -1,16 +1,15 @@
-From: Ed Wilts <ewilts@ewilts.org>
+From: Guy Coates <gmpc@sanger.ac.uk>
 Subject: Re: [PATCH RFT/RFC 4/4] add dm-hp-sw hw handler
-Date: Fri, 30 Sep 2005 18:07:04 -0500
-Message-ID: <20050930230704.GB9070@www.ewilts.org>
+Date: Sat, 1 Oct 2005 09:27:01 +0100 (BST)
+Message-ID: <Pine.OSF.4.44.0510010909370.3245698-100000@ecs2f.internal.sanger.ac.uk>
 References: <1128109342.24395.26.camel@max> <433DA3AB.9010900@redhat.com>
-	<1128113524.6536.63.camel@zezette> <433DB11A.9090001@cs.wisc.edu>
-	<1128117687.6536.78.camel@zezette>
+	<1128113524.6536.63.camel@zezette>
+	<20050930230415.GA9070@www.ewilts.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1128117687.6536.78.camel@zezette>
+In-Reply-To: <20050930230415.GA9070@www.ewilts.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-On Sat, Oct 01, 2005 at 12:01:27AM +0200, Christophe Varoqui wrote:
-> dm-assym-sworks
->   - does not use the "hp" branding
->     not so bad considering how many corps have controled StorageWorks
->     (Digital, Compaq, HP, ...)
+> - I've got 4 inhouse and a 5th on the way.
+>
+> > EVA4000 , 6000, 8000 don't need no hardware handler (afaik).
+>
+> These are all active/active.  I don't have any to play with yet -
+> probably next year.
 
-To us old farts, it will forever be DEC.
+That isn't entirely true; although they are active/active, there is still
+a preferred LUN for each controller.  (see bad ascii art)
 
-McData's SANavigator nicely reports the WWN as being owned by Digital.
-As it should be :-)
 
-Your naming convention is probably politically correct and as good as
-you can get these days I think.
+             SAN FABRIC
+|                            |
+|                            |
+Controller1<--Internal bus-->Controller2
+|
+|
+LUN
 
-        .../Ed
+Read IO to controller1 goes direct to the LUN. Read IOs to controller2
+cross an internal bus to controller1, which can limit performance.
+
+
+However, if IO is going consistently to the non-preffered controller, the
+EVA will flip the lun over and make that controller the preffered
+controller.
+
+The upshot was we found we got better, more consistent, performance when
+we used the group-by-serial rather than multibus path_grouping_policy for
+the EVA8000.
+
+Allegedly, there is a way to find out which controller is the preffered
+one for each lun, but I don't know what it is.
+
+
+Cheers,
+
+
+Guy
+
+
 
 -- 
-Ed Wilts, RHCE
-Mounds View, MN, USA
-mailto:ewilts@ewilts.org
-Member #1, Red Hat Community Ambassador Program
+Dr. Guy Coates,  Informatics System Group
+The Wellcome Trust Sanger Institute, Hinxton, Cambridge, CB10 1HH, UK
+Tel: +44 (0)1223 834244 x 6925
+Fax: +44 (0)1223 494919
