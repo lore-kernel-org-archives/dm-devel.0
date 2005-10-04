@@ -1,10 +1,10 @@
 From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Subject: regarding handling IO aborts
-Date: Tue, 4 Oct 2005 15:20:22 +0530
-Message-ID: <3456F611E9329441B12FBB24447B3FA002C73DEE@bgeexc01.asiapacific.cpqcorp.net>
+Subject: DM configuration
+Date: Tue, 4 Oct 2005 15:29:51 +0530
+Message-ID: <3456F611E9329441B12FBB24447B3FA002C73E05@bgeexc01.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1404613003=="
+Content-Type: multipart/mixed; boundary="===============0091291477=="
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,36 +16,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe varoqui <christophe.varoqui@free.fr>, device-mapper development <dm-devel@redhat.com>
+Cc: "P S, Suresh (STSD)" <suresh.pathamadai@hp.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
---===============1404613003==
+--===============0091291477==
 Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C5C8C9.09C173CC"
+	boundary="----_=_NextPart_001_01C5C8CA.5CCF9092"
 
 This is a multi-part message in MIME format.
 
-------_=_NextPart_001_01C5C8C9.09C173CC
+------_=_NextPart_001_01C5C8CA.5CCF9092
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-Can someone tell how the IO aborts handled in DM? Does the aborted IO
-from the SCSI subsystem for a given path is retried on other paths to
-the same device?  Does DM have the capability of issuing IO abort to
-SCSI subsystem for the requests sent to below?
+Hi,
 
 =20
 
-Thanks!!
+Please let me know your inputs on the following,
 
+=20
+
+1) Under all path failure condition or the device is removed from array
+(using management station), IO continues if "queue_if_no_path" feature
+is enabled. As all the requests are cached all the memory gets used out
+for this. Can there be any mechanism where the all path failure is
+detected and marked, devices can be suspended or removed after some time
+(user configurable). By doing this the OS stalling can be avoided when
+the LUN is in dead state for prolonged period of time.
+
+  =20
+
+2) I am not able to give partial product ID string (substring) in
+/etc/multipath.conf as DM expects complete product string. This
+requirement is needed to cater different product id strings for same
+product. The XP array has the ids based on the emulation type of each
+LUN.   With the current settings available in /etc/multipath.conf, the
+only option is to have separate "device" structs mentioning about the
+policies/features for each LUN.
+
+Thanks
 -Murthy
 
 
-------_=_NextPart_001_01C5C8C9.09C173CC
+------_=_NextPart_001_01C5C8CA.5CCF9092
 Content-Type: text/html;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
@@ -64,6 +83,9 @@ charset=3Dus-ascii">
  @font-face
 	{font-family:"MS Sans Serif";
 	panose-1:0 0 0 0 0 0 0 0 0 0;}
+@font-face
+	{font-family:"Microsoft Sans Serif";
+	panose-1:2 11 6 4 2 2 2 2 2 4;}
  /* Style Definitions */
  p.MsoNormal, li.MsoNormal, div.MsoNormal
 	{margin:0in;
@@ -106,26 +128,62 @@ div.Section1
 
 <p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
 style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>Can someone tell how the IO aborts =
-handled
-in DM? Does the aborted IO from the SCSI subsystem for a given path is =
-retried
-on other paths to the same device? &nbsp;Does DM have the capability of =
-issuing
-IO abort to SCSI subsystem for the requests sent to =
-below?<o:p></o:p></span></font></p>
+10.0pt;font-family:"MS Sans Serif"'>Hi,<o:p></o:p></span></font></p>
 
 <p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
 style=3D'font-size:
 10.0pt;font-family:"MS Sans Serif"'><o:p>&nbsp;</o:p></span></font></p>
 
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span =
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
 style=3D'font-size:
-12.0pt'>Thanks!!<o:p></o:p></span></font></p>
+10.0pt;font-family:"MS Sans Serif"'>Please let me know your inputs on =
+the
+following,<o:p></o:p></span></font></p>
 
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span =
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
 style=3D'font-size:
-12.0pt'>-Murthy<o:p></o:p></span></font></p>
+10.0pt;font-family:"MS Sans Serif"'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>1) Under all path failure condition =
+or the
+device is removed from array (using management station), IO continues if
+&quot;queue_if_no_path&quot; feature is enabled. As all the requests are =
+cached
+all the memory gets used out for this. Can there be any mechanism where =
+the all
+path failure is detected and marked, devices can be suspended or removed =
+after
+some time (user configurable). By doing this the OS stalling can be =
+avoided
+when the LUN is in dead state for prolonged period of =
+time.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>&nbsp;&nbsp; =
+<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
+style=3D'font-size:
+10.0pt;font-family:"MS Sans Serif"'>2) I am not able to give partial =
+product ID
+string (substring) in /etc/multipath.conf as DM expects complete product
+string. This requirement is needed to cater different product id strings =
+for
+same product. The XP array has the ids based on the emulation type of =
+each LUN.
+&nbsp;&nbsp;With the current settings available in /etc/multipath.conf, =
+the
+only option is to have separate &#8220;device&#8221; structs mentioning =
+about
+the policies/features for each LUN.<o:p></o:p></span></font></p>
+
+<p><font size=3D2 face=3D"Microsoft Sans Serif"><span =
+style=3D'font-size:10.0pt;
+font-family:"Microsoft Sans Serif"'>Thanks<br>
+-Murthy<o:p></o:p></span></font></p>
 
 </div>
 
@@ -133,14 +191,14 @@ style=3D'font-size:
 
 </html>
 
-------_=_NextPart_001_01C5C8C9.09C173CC--
+------_=_NextPart_001_01C5C8CA.5CCF9092--
 
 
---===============1404613003==
+--===============0091291477==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1404613003==--
+--===============0091291477==--
