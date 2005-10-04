@@ -1,13 +1,14 @@
-From: Eduard Bloch <edi@gmx.de>
-Subject: Strange data corruption with RW snapshots
-Date: Sat, 1 Oct 2005 13:20:09 +0200
-Message-ID: <20051001112009.GC24685@debian>
+From: krishna here <krishnambm@yahoo.com>
+Subject: Re: dm-devel Digest, Vol 20, Issue 1
+Date: Tue, 4 Oct 2005 04:56:43 -0700 (PDT)
+Message-ID: <20051004115643.85036.qmail@web32810.mail.mud.yahoo.com>
+References: <20051001160056.AE84172DF8@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20051001160056.AE84172DF8@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,65 +19,164 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: krishnambm@yahoo.com, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Hello people,
+Christophe,
 
-I am trying to create a modified KNOPPIX using devmapper RW snapshots
-instead of its unionfs solution. The problem is: I get corrupted data
-and cannot see where it comes from. The relevant part of setup code
-is attached below. The resulting snapshot volume looks ok at the first
-glance (dmsetup status) and can be mounted (ext2), the directory tree is
-displayed but it returns corruped data on most files. I cannot see the
-problem, a simulation with the same setup method in another environment
-(kernel 2.6.13) did work as expected. Also Ubuntu uses that method for
-their Live CD and there it works as well.
+I have been following the dm and multipath tools
+mailing lists for a while now.
 
-I looked for a good and up-to-date documentation of the snapshot target
-but could not find anything. I hope someone can give me a clue, I cannot
-see how I could solve the problem now.
+I was trying to setup the MPIO using iSCSI Initiator
+and target setup. this is what i was using
 
-# state: KNOPDEV is /dev/cloop, readonly block device and mounted on
-# /KNOPPIX, DMSETUP is a static. linked version from devmapper-1.01.04,
-# kernel is .2.6.12 (.4 or so)
-COW_NAME=3DCOW
-CHUNK_SIZE=3D8
-SNAPSHOT_NAME=3Dknop_rw
-VOL_SIZE=3D$(blockdev --getsize $KNOPDEV)
+a. multipath-tools package0.4.4
+b. Linux kernel 2.6.12 and devmapper (recompiled).
+c. multipath configuration file is
 
-# create space for the cow data and assign it to a free loop device COWDE=
-V
-echo | dd bs=3D1 of=3D/ramdisk/$COW_NAME seek=3D`expr 512 \* $VOL_SIZE` c=
-ount=3D1 2>/dev/null
-for x in /dev/loop* ; do if losetup $x >/dev/null 2>&1 ; then continue ; =
-else COWDEV=3D$x ; break ; fi ; done
-losetup $COWDEV /ramdisk/$COW_NAME
+......
+devnode_blacklist {
+        wwid 26353900f02796769
+	devnode "(ram|raw|loop|fd|sr|scd|st)[0-9]*"
+	devnode "hd*]"
+	devnode "cciss!c[0-9]d[0-9]*[p[0-9]*]"
+}
+......
 
-umount /KNOPPIX
-# critical part, no /KNOPPIX/* system tools for now
-$DMSETUP mknodes
-echo "0 $VOL_SIZE linear /dev/cloop 0" | $DMSETUP create knop_ro
 
-# this was expected to be a workaround, mapping the loop device to a
-# devmapper volume. It did also fail when using pure $COWDEV
-echo "0 $VOL_SIZE linear $COWDEV 0"    | $DMSETUP create cow
+devices {
+	device {
+		vendor			"COMPAQ  "
+		product			"HSV110 (C)COMPAQ"
+		path_grouping_policy	failover
+		getuid_callout          "/sbin/scsi_id -g -u -s
+/block/%n"
+		path_checker		readsector0
+		path_selector		"round-robin 0"
+		features		"1 queue_if_no_path"
+		hardware_handler	"0"
+	}
+	device {
+		vendor			"SIMU TGT"
+		product			"0000           "
+		path_grouping_policy	failover
+		getuid_callout          "/sbin/scsi_id -g -u -s
+/block/%n"
+		path_checker		readsector0
+		path_selector		"round-robin 0"
+		features		"1 queue_if_no_path"
+		hardware_handler	"0"
+	}
+}
 
-echo "0 $VOL_SIZE snapshot /dev/mapper/knop_ro /dev/mapper/cow p $CHUNK_S=
-IZE" | $DMSETUP create $SNAPSHOT_NAME
+........... bla bla
 
-$DMSETUP mknodes $SNAPSHOT_NAME
 
-#remount
-/static/mount /dev/mapper/$SNAPSHOT_NAME /KNOPPIX
-# we are back, rewritable
-bash
-# And this bash command running on /KNOPPIX already fails with obscure
-# errors.
+Basically Vendor is "SIMU TGT" and Product is "0000 =20
+" which i get in SCSI INQUIRY information.
 
-Thanks,
-Eduard.
+If dm is created using the below file, and multipath
+daemon is run.
 
---=20
-<Getty> LOL die Telefonnummer vom Arbeitsamt M=F6nchengladbach ist echt 4=
-04-0?
-<Getty> Soll das nen schlechter Scherz sein?
+dmcreate.sh script file
+START=3D0
+END=3D199873
+#Two Path groups - One Path each
+echo "$START $END multipath 0 0 2 1 round-robin 0 1 1
+8:0 1000 round-robin 0 1 1 8:16 1000" | dmsetup create
+target
+
+Observations:
+Say 8:0 is Path A,
+    8:16 is Path B.
+1. multipath shows both paths as [ready] [active]
+properly
+2. Run some I/O on dm-0, I/O flows on Path A
+3. Pull out cable A --> Path A is down
+4. I/O fails over to Path B
+5. multipath shows [faulty] [failed] for Path A
+6. Put back the cable A --> Path A is up
+7. multipath shows [ready] [failed] ????
+8. After some debugging i found that daemon is calling
+
+/sbin/multipath -v 0 8:0 when the path comes up.
+9. But this does not cause any change in the path
+state to active.
+10. If path B is down, I/O fails on dm-0.
+
+
+The situation is similar to below problem, Can some
+one  help me to know,
+--- if the multipath.conf is wrong
+--- I have also checked the bug mentioned below and
+the check is (newstate !=3D pp->state)
+--- or some bug in the dm.
+--- Pls let me know if I am not mailing in the correct
+list.
+
+Thanks
+Krishna MBM
+
+------------------------------------------------------
+Re: [dm-devel] path priority group and path state
+
+    * From: Christophe Varoqui <christophe varoqui
+free fr>
+    * To: device-mapper development <dm-devel redhat
+com>
+    * Subject: Re: [dm-devel] path priority group and
+path state
+    * Date: Tue, 15 Feb 2005 22:35:55 +0100
+
+Caushik, Ramesh wrote:
+    Given that some of the problems I am noticing in
+my testing relates to mismatch between the path state
+recorded by the driver and the daemon, I thought I
+will chime in with my questions / observations.
+    My setup consists of a dual port qla2312
+controller connected to a JBOD through a FC switch
+thus creating 2 paths A & B to the drive. I have all
+the paths in one PG using round-robin selector and
+"queue if no path"    set. I run a bonnie++ transfer
+to the mounted drive, and then pull out the path A
+connection. When the transfer switches to path B I
+reinsert A and then after a little while pull out B
+and repeat this a few times. Sometimes the transfer
+just hangs and the log messages indicate the driver is
+queueing the i/o (both paths are marked faulty). This
+is what seems to happen. When the cable on path A is
+pulled out the controller    receives a "LOOP DOWN" on
+that port and ALSO a "LIP RESET" on path B. This
+causes i/o on both paths to return SCSI error and so
+both paths are set faulty (some of the in-flight i/o
+on path B fails as a result of the LIP RESET). However
+when the daemon checker loop wakes up and tests the
+path (via checkfn) path B returns OK, and since the
+daemon will reconfigure the paths only if newstate !=3D
+oldstate it does not reconfigure the path. As a
+result, we end up with a situation where the driver
+marks path B as faulty due to i/o error in the path,
+and waits for the daemon to reconfigure the path,
+while the daemon does not  reconfigure path B because
+the checkfn does not detect a state change.
+
+    First of all please tell me if this analyses is
+correct. If it is then my suggestion is for the daemon
+checker loop to reinstate the path anytime the there
+is a mismatch between the path state in the driver and
+   that returned by the checkfn, and not just based on
+the newstate !=3D oldstate check. I am in the process of
+coding this up to see if it will fix the problem.
+Meanwhile I would much appreciate any comments or =20
+suggestions on this.=20
+                                    Thanks,
+                                    Ramesh.
+
+Agreed : this is a real hole in the design.
+Suggested solution seems sane.
+
+
+	=09
+__________________________________=20
+Yahoo! Mail - PC Magazine Editors' Choice 2005=20
+http://mail.yahoo.com
