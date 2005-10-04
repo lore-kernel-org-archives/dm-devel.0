@@ -1,7 +1,7 @@
 From: krishna here <krishnambm@yahoo.com>
-Subject: Re: dm-devel Digest, Vol 20, Issue 1
-Date: Tue, 4 Oct 2005 04:56:43 -0700 (PDT)
-Message-ID: <20051004115643.85036.qmail@web32810.mail.mud.yahoo.com>
+Subject: Problem with state updation in Device mapper
+Date: Tue, 4 Oct 2005 04:59:11 -0700 (PDT)
+Message-ID: <20051004115911.36574.qmail@web32808.mail.mud.yahoo.com>
 References: <20051001160056.AE84172DF8@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -176,7 +176,9 @@ Agreed : this is a real hole in the design.
 Suggested solution seems sane.
 
 
+=09
 	=09
-__________________________________=20
-Yahoo! Mail - PC Magazine Editors' Choice 2005=20
-http://mail.yahoo.com
+______________________________________________________=20
+Yahoo! for Good=20
+Donate to the Hurricane Katrina relief effort.=20
+http://store.yahoo.com/redcross-donate3/=20
