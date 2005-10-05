@@ -1,14 +1,11 @@
-From: krishna here <krishnambm@yahoo.com>
-Subject: Problem with state updation in Device mapper
-Date: Tue, 4 Oct 2005 04:59:11 -0700 (PDT)
-Message-ID: <20051004115911.36574.qmail@web32808.mail.mud.yahoo.com>
-References: <20051001160056.AE84172DF8@hormel.redhat.com>
+From: Patrick Caulfield <pcaulfie@redhat.com>
+Subject: [PATCH] [RFC] persistent readable names
+Date: Wed, 05 Oct 2005 15:14:52 +0100
+Message-ID: <4343DFDC.2020701@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="------------000400080900060901000701"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20051001160056.AE84172DF8@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,166 +16,293 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: krishnambm@yahoo.com, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Christophe,
+This is a multi-part message in MIME format.
+--------------000400080900060901000701
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-I have been following the dm and multipath tools
-mailing lists for a while now.
+This patch is more for discussion than inclusion at the moment. Basically it's
+unrealistic for users with hundreds of disks to alias them all in
+/etc/multipath.conf and the default names are very unwieldy.
 
-I was trying to setup the MPIO using iSCSI Initiator
-and target setup. this is what i was using
+What this patch does is attach a name to any un-aliased path and write that name
+to /etc/multipath.names. The file is read again every time the paths are added
+so they are persistent.
 
-a. multipath-tools package0.4.4
-b. Linux kernel 2.6.12 and devmapper (recompiled).
-c. multipath configuration file is
+There are a small number of possibly contentious things:
+- the multipath.names file is in a different format from the config file. It's
+easier to parse this one and it's not meant to be human editable really. Also
+extending the existing parser to cope with the ability to read bits for the same
+MPE from more than one place looked hard :)
 
-......
-devnode_blacklist {
-        wwid 26353900f02796769
-	devnode "(ram|raw|loop|fd|sr|scd|st)[0-9]*"
-	devnode "hd*]"
-	devnode "cciss!c[0-9]d[0-9]*[p[0-9]*]"
-}
-......
+- The names file is held in /etc which may not be available if multipath is run
+from an initrd - though it does fail silently if it can't be written.
 
+The feature is selected with
 
-devices {
-	device {
-		vendor			"COMPAQ  "
-		product			"HSV110 (C)COMPAQ"
-		path_grouping_policy	failover
-		getuid_callout          "/sbin/scsi_id -g -u -s
-/block/%n"
-		path_checker		readsector0
-		path_selector		"round-robin 0"
-		features		"1 queue_if_no_path"
-		hardware_handler	"0"
-	}
-	device {
-		vendor			"SIMU TGT"
-		product			"0000           "
-		path_grouping_policy	failover
-		getuid_callout          "/sbin/scsi_id -g -u -s
-/block/%n"
-		path_checker		readsector0
-		path_selector		"round-robin 0"
-		features		"1 queue_if_no_path"
-		hardware_handler	"0"
-	}
+defaults {
+   autonames 1
 }
 
-........... bla bla
+in the config file, and the names can be formatted with
+
+defaults {
+   autoname_prefix "multipath%d"
+}
+-- 
+
+patrick
+
+--------------000400080900060901000701
+Content-Type: text/x-patch;
+ name="mpauto.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="mpauto.patch"
+
+diff -rwup multipath-tools-0.4.5/libmultipath/config.c multipath-tools-0.4.5.new/libmultipath/config.c
+--- multipath-tools-0.4.5/libmultipath/config.c	2005-09-02 14:14:18.000000000 +0100
++++ multipath-tools-0.4.5.new/libmultipath/config.c	2005-10-05 13:39:33.000000000 +0100
+@@ -330,6 +330,9 @@ free_config (struct config * conf)
+ 	if (conf->default_hwhandler)
+ 		FREE(conf->default_hwhandler);
+ 
++	if (conf->autoname_prefix)
++		FREE(conf->autoname_prefix);
++
+ 	free_blacklist(conf->blist);
+ 	free_mptable(conf->mptable);
+ 	free_hwtable(conf->hwtable);
+@@ -407,6 +410,9 @@ load_config (char * file)
+ 	if (conf->default_hwhandler == NULL)
+ 		conf->default_hwhandler = set_default(DEFAULT_HWHANDLER);
+ 
++	if (conf->autoname_prefix == NULL)
++		conf->autoname_prefix = set_default(DEFAULT_AUTONAME_PREFIX);
++
+ 	if (!conf->default_selector  || !conf->udev_dir         ||
+ 	    !conf->default_getuid    || !conf->default_features ||
+ 	    !conf->default_hwhandler)
+diff -rwup multipath-tools-0.4.5/libmultipath/config.h multipath-tools-0.4.5.new/libmultipath/config.h
+--- multipath-tools-0.4.5/libmultipath/config.h	2005-09-02 14:14:18.000000000 +0100
++++ multipath-tools-0.4.5.new/libmultipath/config.h	2005-10-05 13:39:33.000000000 +0100
+@@ -55,6 +55,7 @@ struct config {
+ 	int pgfailback;
+ 	int remove;
+ 	int rr_weight;
++	int autoname;
+ 
+ 	char * dev;
+ 	char * multipath;
+@@ -64,6 +65,7 @@ struct config {
+ 	char * default_getprio;
+ 	char * default_features;
+ 	char * default_hwhandler;
++	char * autoname_prefix;
+ 
+ 	vector mptable;
+ 	vector hwtable;
+diff -rwup multipath-tools-0.4.5/libmultipath/defaults.h multipath-tools-0.4.5.new/libmultipath/defaults.h
+--- multipath-tools-0.4.5/libmultipath/defaults.h	2005-09-02 14:14:18.000000000 +0100
++++ multipath-tools-0.4.5.new/libmultipath/defaults.h	2005-10-05 13:39:33.000000000 +0100
+@@ -9,5 +9,7 @@
+ #define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
+ #define DEFAULT_SOCKET		"/var/run/multipathd.sock"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
++#define DEFAULT_NAMEFILE	"/etc/multipath.names"
++#define DEFAULT_AUTONAME_PREFIX "multipath%d"
+ 
+ char * set_default (char * str);
+diff -rwup multipath-tools-0.4.5/libmultipath/dict.c multipath-tools-0.4.5.new/libmultipath/dict.c
+--- multipath-tools-0.4.5/libmultipath/dict.c	2005-09-02 14:14:18.000000000 +0100
++++ multipath-tools-0.4.5.new/libmultipath/dict.c	2005-10-05 14:27:52.000000000 +0100
+@@ -102,6 +102,17 @@ def_prio_callout_handler(vector strvec)
+ }
+ 
+ static int
++def_autoname_prefix_handler(vector strvec)
++{
++        conf->autoname_prefix = set_value(strvec);
++
++        if (!conf->autoname_prefix)
++                return 1;
++
++        return 0;
++}
++
++static int
+ def_features_handler(vector strvec)
+ {
+ 	conf->default_features = set_value(strvec);
+@@ -129,6 +140,23 @@ def_minio_handler(vector strvec)
+ }
+ 
+ static int
++def_autoname_handler(vector strvec)
++{
++        char * buff;
++
++        buff = set_value(strvec);
++
++        if (!buff)
++                return 1; 
++
++        conf->autoname = atoi(buff);
++        FREE(buff);                                             
++                                                                
++        return 0;
++}
++
++
++static int
+ def_weight_handler(vector strvec)
+ {
+ 	char * buff;
+@@ -590,6 +618,8 @@ init_keywords(void)
+ 	install_keyword("default_features", &def_features_handler);
+ 	install_keyword("failback", &default_failback_handler);
+ 	install_keyword("rr_min_io", &def_minio_handler);
++	install_keyword("autoname", &def_autoname_handler);
++	install_keyword("autoname_prefix", &def_autoname_prefix_handler);
+ 	install_keyword("rr_weight", &def_weight_handler);
+ 	
+ 	install_keyword_root("devnode_blacklist", &blacklist_handler);
+diff -rwup multipath-tools-0.4.5/multipath/main.c multipath-tools-0.4.5.new/multipath/main.c
+--- multipath-tools-0.4.5/multipath/main.c	2005-10-05 14:22:06.000000000 +0100
++++ multipath-tools-0.4.5.new/multipath/main.c	2005-10-05 13:56:40.000000000 +0100
+@@ -642,6 +642,42 @@ domap (struct multipath * mpp)
+ 	return r;
+ }
+ 
++
++static void
++autoname_mpp(struct multipath *mpp)
++{
++	int i;
++	struct mpentry *mpe;
++	FILE *namefile;
++	static int highest = 0;
++
++/* Look through the list of multipaths and look for the next highest autoname number.
++   We then assign that to the passed-in mpp and add it to the multipath.names file */
++
++	/* Only need to scan it once */
++	if (!highest) {
++		vector_foreach_slot (conf->mptable, mpe, i) {
++
++			int thisnum;
++
++			if (mpe->alias && sscanf(mpe->alias, conf->autoname_prefix, &thisnum) == 1)
++				if (thisnum > highest)
++					highest = thisnum;
++		}
++	}
++	highest++;
++	mpp->alias = MALLOC(strlen(conf->autoname_prefix)+10);
++	sprintf(mpp->alias, conf->autoname_prefix, highest);
++
++	/* Add an entry to the names file */
++	namefile = fopen(DEFAULT_NAMEFILE, "a");
++	if (!namefile) {
++		return;
++	}
++	fprintf(namefile, "%s\t%s\n", mpp->wwid, mpp->alias);
++	fclose(namefile);
++}
++
+ static int
+ coalesce_paths (vector curmp, vector pathvec)
+ {
+@@ -681,6 +717,8 @@ coalesce_paths (vector curmp, vector pat
+ 		strcpy(mpp->wwid, pp1->wwid);
+ 		mpp->size = pp1->size;
+ 		mpp->paths = vector_alloc();
++		if ((!mpp->alias || mpp->alias == mpp->wwid) && conf->autoname)
++			autoname_mpp(mpp);
+ 
+ 		if (pp1->priority < 0)
+ 			mpp->action = ACT_NOTHING;
+@@ -839,6 +877,61 @@ get_dm_mpvec (vector curmp, vector pathv
+ 	return 0;
+ }
+ 
++static void
++load_autonames(char *fname)
++{
++	char buf[1024];
++	char *alias;
++	int i;
++	struct mpentry *mpe;
++
++	stream = fopen(fname, "r");
++	if (!stream)
++		return; /* File is optional */
++
++	while (read_line(buf, sizeof(buf))) {
++		alias = strchr(buf, '\t');
++		if (!alias)
++			continue;
++		*alias = '\0';
++		alias++;
++
++		/* Look for the WWID and store its autogenerated alias */
++		vector_foreach_slot (conf->mptable, mpe, i) {
++			if (!strcmp(mpe->wwid, buf)) {
++				if (!mpe->alias || mpe->alias == mpe->wwid) {
++					mpe->alias = MALLOC(strlen(alias)+1);
++					if (mpe->alias)
++						strcpy(mpe->alias, alias);
++					break; /* back to read_line loop */
++				}
++			}
++		}
++		/* no mpentry found - need to create one */
++		mpe = alloc_mpe();
++		if (!vector_alloc_slot(conf->mptable)) {
++			FREE(mpe);
++			return;
++		}
++		mpe->wwid = MALLOC(strlen(buf)+1);
++		if (!mpe->wwid) {
++			FREE(mpe);
++			return;
++		}
++		mpe->alias = MALLOC(strlen(alias)+1);
++		if (!mpe->alias) {
++			FREE(mpe->wwid);
++			FREE(mpe);
++			return;
++		}
++		strcpy(mpe->wwid, buf);
++		strcpy(mpe->alias, alias);
++		vector_set_slot(conf->mptable, mpe);
++        }
++
++	fclose(stream);
++}
++
+ int
+ main (int argc, char *argv[])
+ {
+@@ -1006,7 +1099,10 @@ main (int argc, char *argv[])
+ 	if (conf->list)
+ 		goto out;
+ 
++	/* This has auto-named paths in it */
++	load_autonames(DEFAULT_NAMEFILE); 
++
+ 	/*
+ 	 * core logic entry point
+ 	 */
+ 
+
+--------------000400080900060901000701
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-Basically Vendor is "SIMU TGT" and Product is "0000 =20
-" which i get in SCSI INQUIRY information.
-
-If dm is created using the below file, and multipath
-daemon is run.
-
-dmcreate.sh script file
-START=3D0
-END=3D199873
-#Two Path groups - One Path each
-echo "$START $END multipath 0 0 2 1 round-robin 0 1 1
-8:0 1000 round-robin 0 1 1 8:16 1000" | dmsetup create
-target
-
-Observations:
-Say 8:0 is Path A,
-    8:16 is Path B.
-1. multipath shows both paths as [ready] [active]
-properly
-2. Run some I/O on dm-0, I/O flows on Path A
-3. Pull out cable A --> Path A is down
-4. I/O fails over to Path B
-5. multipath shows [faulty] [failed] for Path A
-6. Put back the cable A --> Path A is up
-7. multipath shows [ready] [failed] ????
-8. After some debugging i found that daemon is calling
-
-/sbin/multipath -v 0 8:0 when the path comes up.
-9. But this does not cause any change in the path
-state to active.
-10. If path B is down, I/O fails on dm-0.
-
-
-The situation is similar to below problem, Can some
-one  help me to know,
---- if the multipath.conf is wrong
---- I have also checked the bug mentioned below and
-the check is (newstate !=3D pp->state)
---- or some bug in the dm.
---- Pls let me know if I am not mailing in the correct
-list.
-
-Thanks
-Krishna MBM
-
-------------------------------------------------------
-Re: [dm-devel] path priority group and path state
-
-    * From: Christophe Varoqui <christophe varoqui
-free fr>
-    * To: device-mapper development <dm-devel redhat
-com>
-    * Subject: Re: [dm-devel] path priority group and
-path state
-    * Date: Tue, 15 Feb 2005 22:35:55 +0100
-
-Caushik, Ramesh wrote:
-    Given that some of the problems I am noticing in
-my testing relates to mismatch between the path state
-recorded by the driver and the daemon, I thought I
-will chime in with my questions / observations.
-    My setup consists of a dual port qla2312
-controller connected to a JBOD through a FC switch
-thus creating 2 paths A & B to the drive. I have all
-the paths in one PG using round-robin selector and
-"queue if no path"    set. I run a bonnie++ transfer
-to the mounted drive, and then pull out the path A
-connection. When the transfer switches to path B I
-reinsert A and then after a little while pull out B
-and repeat this a few times. Sometimes the transfer
-just hangs and the log messages indicate the driver is
-queueing the i/o (both paths are marked faulty). This
-is what seems to happen. When the cable on path A is
-pulled out the controller    receives a "LOOP DOWN" on
-that port and ALSO a "LIP RESET" on path B. This
-causes i/o on both paths to return SCSI error and so
-both paths are set faulty (some of the in-flight i/o
-on path B fails as a result of the LIP RESET). However
-when the daemon checker loop wakes up and tests the
-path (via checkfn) path B returns OK, and since the
-daemon will reconfigure the paths only if newstate !=3D
-oldstate it does not reconfigure the path. As a
-result, we end up with a situation where the driver
-marks path B as faulty due to i/o error in the path,
-and waits for the daemon to reconfigure the path,
-while the daemon does not  reconfigure path B because
-the checkfn does not detect a state change.
-
-    First of all please tell me if this analyses is
-correct. If it is then my suggestion is for the daemon
-checker loop to reinstate the path anytime the there
-is a mismatch between the path state in the driver and
-   that returned by the checkfn, and not just based on
-the newstate !=3D oldstate check. I am in the process of
-coding this up to see if it will fix the problem.
-Meanwhile I would much appreciate any comments or =20
-suggestions on this.=20
-                                    Thanks,
-                                    Ramesh.
-
-Agreed : this is a real hole in the design.
-Suggested solution seems sane.
-
-
-=09
-	=09
-______________________________________________________=20
-Yahoo! for Good=20
-Donate to the Hurricane Katrina relief effort.=20
-http://store.yahoo.com/redcross-donate3/=20
+--------------000400080900060901000701--
