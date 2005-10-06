@@ -1,82 +1,54 @@
-From: =?ISO-8859-2?Q?Tomasz_K=B3oczko?= <kloczek@rudy.mif.pg.gda.pl>
-Subject: [2.6.14-rc3-git3/x86_64]: lvrename stalls on rename snapshot volume
-Date: Thu, 6 Oct 2005 17:08:26 +0200 (CEST)
-Message-ID: <Pine.BSO.4.62.0510061349190.28198@rudy.mif.pg.gda.pl>
+From: Patrick Mansfield <patmans@us.ibm.com>
+Subject: Re: [PATCH] [RFC] persistent readable names
+Date: Thu, 6 Oct 2005 08:54:31 -0700
+Message-ID: <20051006155431.GA9285@us.ibm.com>
+References: <4343DFDC.2020701@redhat.com> <20051005150923.GC6195@free.fr>
+	<20051005180721.GA22387@us.ibm.com>
+	<1128547659.6140.40.camel@zezette>
+	<20051005223824.GA27219@us.ibm.com> <4344CD38.2030004@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="0-309887809-1128609134=:28198"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751075AbVJFPIa@vger.kernel.org>
-Content-ID: <Pine.BSO.4.62.0510061652130.28198@rudy.mif.pg.gda.pl>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4344CD38.2030004@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi Patrick :)
 
---0-309887809-1128609134=:28198
-Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-2; FORMAT=flowed
-Content-Transfer-Encoding: 8BIT
-Content-ID: <Pine.BSO.4.62.0510061652131.28198@rudy.mif.pg.gda.pl>
+On Thu, Oct 06, 2005 at 08:07:36AM +0100, Patrick Caulfield wrote:
+> Patrick Mansfield wrote:
+> 
+> > Here is some /dev, lsscsi and scsi_id output on a SLES9 system (rpm
+> > udev-021-36.55). by-path is basically pci and scsi bus_id's; by-id is
+> > basically scsi_id plus partition output. 
+> > 
 
+> Those are the names I'm trying to free people from.
+> 
+> OK, multipath1 - multipath5000 aren't exactly friendly (but how else are you
+> going to name 5000 disks - there aren't that many Simpsons characters!) but
+> they're are a /lot/ easier to deal with than those I can see there.
 
-[root@v20z-2 ~]# vgs -a; lvs
-File descriptor 3 left open
-File descriptor 5 left open
-File descriptor 7 left open
-   VG     #PV #LV #SN Attr  VSize   VFree
-   users    1   2   0 wz--n 499,99G 49,99G
-   v20z.2   1   3   0 wz--n  63,75G     0
-   zie      1   3   0 wz--n 124,99G 56,99G
-File descriptor 3 left open
-File descriptor 5 left open
-File descriptor 7 left open
-   LV       VG     Attr   LSize   Origin Snap%  Move Log Copy%
-   prac     users  -wi-ao 225,00G
-   studenci users  -wi-ao 225,00G
-   home     v20z.2 -wi-ao  33,75G
-   root     v20z.2 -wi-ao  10,00G
-   var      v20z.2 -wi-ao  20,00G
-   mail     zie    -wi-ao  24,00G
-   mailman  zie    -wi-ao   8,00G
-[root@v20z-2 ~]# lvcreate -s -L5G -c 4k -p r -n prac-1 /dev/users/prac
-File descriptor 3 left open
-File descriptor 5 left open
-File descriptor 7 left open
-   Logical volume "prac-1" created
-[root@v20z-2 ~]# lvs -a
-File descriptor 3 left open
-File descriptor 5 left open
-File descriptor 7 left open
-   LV       VG     Attr   LSize   Origin Snap%  Move Log Copy%
-   prac     users  owi-ao 225,00G
-   [prac-1] users  sri-a-   5,00G prac     0,00
-   studenci users  -wi-ao 225,00G
-   home     v20z.2 -wi-ao  33,75G
-   root     v20z.2 -wi-ao  10,00G
-   var      v20z.2 -wi-ao  20,00G
-   mail     zie    -wi-ao  24,00G
-   mailman  zie    -wi-ao   8,00G
-   srv      zie    -wi-ao  36,00G
-[root@v20z-2 ~]# lvrename /dev/users/prac-1 /dev/users/prac-2
-File descriptor 3 left open
-File descriptor 5 left open
-File descriptor 7 left open
+But we should not have a dm only solution.
 
-And in this poind lvrename stalls with sleeping in kernel in function:
+For that many disks, I don't see how it helps much, you must still deal
+with the specific id's at some level. I was thinking more about nice names
+for a few disks, or splitting disks into groups with a common prefix (and
+then still keep the long id portion).
 
-# ps -eo wchan,args | grep lvrename
-sync_b lvrename /dev/users/prac-1 /dev/users/prac-2
-^^^^^^
+Enumerating names in shared/cluster setups probably makes things worse,
+though you could try to share or copy the file that maps wwid to the
+enumeration, the same thing for a udev solution.
 
-lvrename can't be killed. Also system can't be shutdowned because hanging 
-lvrename stops shutdown. All other works correctly and there is kernel 
-messages.
-
-kloczek
--- 
------------------------------------------------------------
-*Ludzie nie maj± problemów, tylko sobie sami je stwarzaj±*
------------------------------------------------------------
-Tomasz K³oczko, sys adm @zie.pg.gda.pl|*e-mail: kloczek@rudy.mif.pg.gda.pl*
---0-309887809-1128609134=:28198--
+-- Patrick Mansfield
