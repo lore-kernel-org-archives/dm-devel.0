@@ -1,14 +1,18 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: DM configuration
-Date: Mon, 10 Oct 2005 14:23:22 +0200
-Message-ID: <20051010122322.GA23091@free.fr>
-References: <3456F611E9329441B12FBB24447B3FA002CC6311@bgeexc01.asiapacific.cpqcorp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: Re: DM configuration
+Date: Sat, 08 Oct 2005 00:56:50 +0200
+Message-ID: <1128725810.20114.15.camel@zezette>
+References: <3456F611E9329441B12FBB24447B3FA002C73E05@bgeexc01.asiapacific.cpqcorp.net>
+	<20051005134505.GB6195@free.fr>
+	<20051006.131418.71083514.k-ueda@ct.jp.nec.com>
+	<1128718450.18441.21.camel@zezette>
+Reply-To: christophe.varoqui@free.fr,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <3456F611E9329441B12FBB24447B3FA002CC6311@bgeexc01.asiapacific.cpqcorp.net>
+In-Reply-To: <1128718450.18441.21.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +22,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: christophe.varoqui@free.fr, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 10, 2005 at 05:19:45PM +0530, Murthy, Narasimha Doraswamy (STSD) wrote:
-> Christophe,
-> The one mentioned below will be success for the regular expressions that
-> matches anywhere in the string. Can we modify strcmp_chomp(...) in
-> <multipath-src>/libmultipath/utils.c  as below:
+
+> > diff -rup git/libmultipath/config.h retry-multipathd/libmultipath/config.h
+> > --- git/libmultipath/config.h	2005-09-28 12:32:02.000000000 -0400
+> > +++ retry-multipathd/libmultipath/config.h	2005-10-05 18:37:33.000000000 -0400
+> > @@ -33,6 +33,7 @@ struct mpentry {
+> >  	int pgpolicy;
+> >  	int pgfailback;
+> >  	int rr_weight;
+> > +	int no_path_retry;
+> >  
+> >  	char * wwid;
+> >  	char * selector;
+> > @@ -56,6 +57,7 @@ struct config {
+> >  	int pgfailback;
+> >  	int remove;
+> >  	int rr_weight;
+> > +	int default_no_path_retry;
+> >  
+> the "default_" prefix can be avoided here and in the dictionnary, as the
+> default{} block says it all.
 > 
-> # diff util.c util.c.mod 
-> 29c29
-> <       return(strcmp(s1,s2));
-> ---
-> >       return(strncmp(s1,s2,strlen(s1)));
->  
-> so that both the partial string and the complete string can be compared.
-> 
-> 
-Hello,
+Speaking of which ...
 
-I fear I don't understand your mail : Isn't the regexp solution enought ? Is 
-it overkill ? Why modify strcmp_chomp(), as it no longer is in the find_hwe() 
-code path ?
+Does someone care if I deprecate all "default_foo" in favor of "foo" in
+the default{} dictionnary and 'struct config' ?
 
-With the patch I posted you can specify vendor/product ids like this :
+I'll keep the old keyword around, for compat, but undocumented.
 
-       device {
-                vendor                  IET
-                product                 V.RTUAL.*K
-       }
+Keywords concerned are :
 
-Isn't that what you asked for ?
+        "default_selector"
+        "default_path_grouping_policy"
+        "default_getuid_callout"
+        "default_prio_callout"
+        "default_features"
+        "default_path_checker"
 
 Regards,
 cvaroqui
