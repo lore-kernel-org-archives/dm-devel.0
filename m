@@ -1,16 +1,12 @@
-From: Patrick Caulfield <pcaulfie@redhat.com>
-Subject: Re: PATCH - pvmove doesn't terminate sometimes on 64-bit
-	bigendian machines
-Date: Mon, 10 Oct 2005 08:27:55 +0100
-Message-ID: <434A17FB.9040004@redhat.com>
-References: <17191.43003.616513.15285@cse.unsw.edu.au>	<20050928174827.GS18976@agk.surrey.redhat.com>
-	<17225.56945.115400.390314@cse.unsw.edu.au>
+From: Hubert <hubgor@poczta.fm>
+Subject: Dm-devel ioctl-skip-lockfs patch
+Date: Mon, 10 Oct 2005 12:31:56 +0200
+Message-ID: <434A431C.1060208@poczta.fm>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-2; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <17225.56945.115400.390314@cse.unsw.edu.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,40 +16,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Neil Brown wrote:
-> On Wednesday September 28, agk@redhat.com wrote:
-> 
->>On Wed, Sep 14, 2005 at 02:32:59PM +1000, Neil Brown wrote:
->>
->>> It is worth noting that the code uses the same bitsets for in-memory
->>> and on-disk logs.  As these bitsets are host-endian and host-sized,
->>> this means that they cannot safely be moved between computers with
->>> different architectures.  I don't know if the dm doco makes this
->>> clear...
->>
->> 
->>Are you able to try out the (untested) patch from Patrick below?
->>Since the current implementation is broken for 64-bit BE we might
->>as well fix both problems at the same time.
->>
-> 
-> 
-> I've ask the person who reported the problem to test this patch.  I'll
-> let you know what eventuates.
 
-Thanks
+Hello,
 
-> ... it's a pity about the 'ext2' appearing in there instead of a more
-> sensible 'set_le_bit', isn't it :-(
-> 
+How to apply below dm-ioctl-skip-lockfs.patch ? Maybe there is some bug ?
+ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing-quilt/patches/dm-ioctl-skip-lockfs.patch
+With above patch newest device-mapper 1.01.06 from cvs compiles fine but 
+kernel not at all.
+I tested it with 2.6.14-rc2(-rc2), 2.6.12.6, 2.6.12.3, 2.6.13.2 and 
+2.6.13.3 kernel series and at any time kernel sources wasn't  compiles.
 
-yes. In some (well, the big-endian) architectures it's called set_le_bit and
-#defined to ext2_set_bit, bit the LE architectures just define ext2_set_bit to
-be set_bit :(
+Thanks for any help.
+Best regards
 
--- 
+Hubert
 
-patrick
+
+----------------------------------------------------------------------
+Daj sie skusic... >>> http://link.interia.pl/f18bc
