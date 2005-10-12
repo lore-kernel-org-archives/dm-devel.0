@@ -1,7 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Path check interval in multipathd is 1 second longer
-Date: Wed, 12 Oct 2005 15:50:02 -0400 (EDT)
-Message-ID: <20051012.155002.71083127.k-ueda@ct.jp.nec.com>
+Subject: Failback delay in multipathd is 1 second shorter
+Date: Wed, 12 Oct 2005 15:52:24 -0400 (EDT)
+Message-ID: <20051012.155224.104027237.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
@@ -22,32 +22,31 @@ List-Id: dm-devel.ids
 
 Hi Christophe,
 
-Current path check interval is 1 second longer than polling_interval
-setting in multipath.conf.
+Current delay time of defered failback is 1 second shorter than
+"failback" setting in multipath.conf, because defered_failback_tick()
+is called before sleep(1) in checkerloop().
 
-This bug affects the "no_path_retry" option.
-For example, if no_path_retry is set in 1, retry (== path check) will
-not be launched in no-path situation.
-
-diff -rup git/multipathd/main.c pathcheck-int-fix/multipathd/main.c
+diff -rup git/multipathd/main.c failback-tick-fix/multipathd/main.c
 --- git/multipathd/main.c	2005-10-12 10:08:28.000000000 -0400
-+++ pathcheck-int-fix/multipathd/main.c	2005-10-12 15:33:13.000000000 -0400
-@@ -1175,13 +1175,8 @@ checkerloop (void *ap)
- 			if (!pp->mpp)
- 				continue;
- 
--			if (pp->tick) {
--				/*
--				 * don't check this path yet
--				 */
--				pp->tick--;
--				continue;
--			}
-+			if (pp->tick && --pp->tick)
-+				continue; /* don't check this path yet */
- 
- 			/*
- 			 * provision a next check soonest,
- 
++++ failback-tick-fix/multipathd/main.c	2005-10-12 14:16:12.000000000 -0400
+@@ -1242,7 +1242,7 @@ checkerloop (void *ap)
+ 				 */
+ 				if (pp->mpp->pgfailback > 0)
+ 					pp->mpp->failback_tick =
+-						pp->mpp->pgfailback;
++						pp->mpp->pgfailback + 1;
+ 				else if (pp->mpp->pgfailback == -FAILBACK_IMMEDIATE &&
+ 				    need_switch_pathgroup(pp->mpp, 1))
+ 					switch_pathgroup(pp->mpp);
+@@ -1281,7 +1281,7 @@ checkerloop (void *ap)
+ 			if (need_switch_pathgroup(pp->mpp, 0)) {
+ 				if (pp->mpp->pgfailback > 0)
+ 					pp->mpp->failback_tick =
+-						pp->mpp->pgfailback;
++						pp->mpp->pgfailback + 1;
+ 				else if (pp->mpp->pgfailback ==
+ 						-FAILBACK_IMMEDIATE)
+ 					switch_pathgroup(pp->mpp);
+
 Regards,
 Kiyoshi Ueda
