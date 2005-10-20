@@ -1,14 +1,15 @@
 From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [ANNOUNCE] block layer (request based) multipath v1
-Date: Thu, 20 Oct 2005 15:05:10 -0500
-Message-ID: <4357F876.80102@cs.wisc.edu>
-References: <4355E5BC.60701@cs.wisc.edu> <20051020135303.GD10778@free.fr>
+Subject: Re: [ANNOUNCE] block layer (request based) multipath v
+ 1
+Date: Thu, 20 Oct 2005 15:07:31 -0500
+Message-ID: <4357F903.1070504@cs.wisc.edu>
+References: <C2EEB4E538D3DC48BF57F391F422779321AD4E@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20051020135303.GD10778@free.fr>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AD4E@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,41 +22,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Christophe Varoqui wrote:
-> On Wed, Oct 19, 2005 at 01:20:44AM -0500, Mike Christie wrote:
+goggin, edward wrote:
+> On Thu, 20 Oct 2005 15:53:03 +0200
+> Christophe Varoqui <christophe.varoqui@free.fr> wrote:
 > 
->>Version 1 and maybe the only version :)
+> 
+>>Nice,
 >>
-> 
-> ...
-> 
->>I think the only items I have left to convert are some of the dm ioctls, 
->>but that is trivial and the defaults are ok for usage. For example I 
->>have not implemted a sysfs attr to read/write queue_if_no_path and a 
->>timeout attr so we do not have to wait forever on it.
+>>can libdevmapper event listening mecanisms be replaced by the 
+>>uevents listener ?
+>>IOW, will all necessary attribute changes be reported as uevents ?
 >>
->>Comments???? Should I work with Christophe to convert the userspace tools?
+>>Events needed are :
+>>- multipath topology changes :
+>>  - path add/remove (well, this one is guarantied through 
+>>/block I guess)
+>>  - attributes changes
+>>  - path state changes / path reinstates
+>>  - path group switches
+>>- multipath add/remove (Deduce from /block uevents ?)
 >>
+>>Regards,
+>>cvaroqui
 > 
-> Nice,
 > 
-> can libdevmapper event listening mecanisms be replaced by the uevents listener ?
-> IOW, will all necessary attribute changes be reported as uevents ?
+> Good idea -- but Netlink sockets are inherently unreliable
+> (think UDP not TCP) since they use datagrams.  Also, we will
+> need lots of kobjects scattered around the current multipath
+> kernel components in order to generate the necessary uevents
+> whenever attribute values change.  This is no trivial task --
 
-It looks like I am going to redo the patches and make it so dm call 
-request_fns. So we are basicall going to fix up dm-multipath instead of 
-making yet another multipath driver :)
+We could actaully do our own netlink socket like the open iscsi guys 
+did. Add our own mempools (although Dimitry and Alex found some places 
+where there are OOM problems there) and have complete control over the 
+events, serialization, etc.
 
-> 
-> Events needed are :
-> - multipath topology changes :
->   - path add/remove (well, this one is guarantied through /block I guess)
->   - attributes changes
->   - path state changes / path reinstates
->   - path group switches
-> - multipath add/remove (Deduce from /block uevents ?)
-> 
-
-I was just wondering where is all this netlink stuff? I have not seen a 
-dm-netlink interface patch. Are you just keying of events from the 
-kobject stuff?
+> making the kobject_hotplug call at the right point in the kernel
+> code is non intuitive.  Already, the existing code is generating
+> calling kobject_hotplug too early in lots of places before
+> things needed by the user level code are necessarily in place.
+> This causes problems intermittent failures which can be very
+> difficult to diagnose.
