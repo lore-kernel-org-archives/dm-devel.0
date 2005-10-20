@@ -1,15 +1,14 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: racing libdevmapper calls
-Date: Wed, 19 Oct 2005 01:05:55 +0200
-Message-ID: <1129676755.7313.26.camel@zezette>
-References: <1129674646.7313.15.camel@zezette>
-Reply-To: christophe.varoqui@free.fr,
-	device-mapper development <dm-devel@redhat.com>
+Subject: Re: [ANNOUNCE] block layer (request based) multipath v1
+Date: Thu, 20 Oct 2005 15:53:03 +0200
+Message-ID: <20051020135303.GD10778@free.fr>
+References: <4355E5BC.60701@cs.wisc.edu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1129674646.7313.15.camel@zezette>
+Content-Disposition: inline
+In-Reply-To: <4355E5BC.60701@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,42 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On mer, 2005-10-19 at 00:30 +0200, Christophe Varoqui wrote:
-> Hello,
+On Wed, Oct 19, 2005 at 01:20:44AM -0500, Mike Christie wrote:
+> Version 1 and maybe the only version :)
+>
+...
 > 
-> The following command :
-> # dmsetup remove foo;echo "0 10 linear 8:16 63"|dmsetup create foo &
-> echo "0 20 linear 8:16 63"|dmsetup create foo
+> I think the only items I have left to convert are some of the dm ioctls, 
+> but that is trivial and the defaults are ok for usage. For example I 
+> have not implemted a sysfs attr to read/write queue_if_no_path and a 
+> timeout attr so we do not have to wait forever on it.
 > 
-> will quite easily produce error message like :
-> "device-mapper ioctl cmd 3 failed: Device or resource busy"
+> Comments???? Should I work with Christophe to convert the userspace tools?
 > 
-> Is it designed behaviour ?
-> Can't we expect libdevmapper to serialize its ioctls ?
-> 
-> multipath(8), being run in storms by udev, has trouble with this.
-> Ideas ?
-> 
-I realize this example is trivially flawed : 2nd ioctl will necessarily
-fail, and the message is appropriate in this case.
+Nice,
 
-But in multipath(8), I tried something like :
+can libdevmapper event listening mecanisms be replaced by the uevents listener ?
+IOW, will all necessary attribute changes be reported as uevents ?
 
-if (map exists) /* through DM_DEVICE_INFO */
-	DM_DEVICE_RELOAD
-else
-	DM_DEVICE_CREATE
-
-Which translate like :
-# dmsetup remove foo;echo "0 10 linear 8:16 63"|dmsetup create foo &
-dmsetup info foo || echo "0 20 linear 8:16 63"|dmsetup create foo
-
-But I can't seem to avoid the "device-mapper ioctl cmd 3 failed: Device
-or resource busy" messages.
+Events needed are :
+- multipath topology changes :
+  - path add/remove (well, this one is guarantied through /block I guess)
+  - attributes changes
+  - path state changes / path reinstates
+  - path group switches
+- multipath add/remove (Deduce from /block uevents ?)
 
 Regards,
 cvaroqui
