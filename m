@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] device-mapper: dm-mpath.c/dm_end_io might
-	dead-lock
-Date: Fri, 21 Oct 2005 13:50:11 +0100
-Message-ID: <20051021125011.GR30611@agk.surrey.redhat.com>
-References: <OF05AB6962.4DDCCB12-ONC12570A1.0043BB4B-C12570A1.00449DA9@de.ibm.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: User friendly names patch.
+Date: Fri, 21 Oct 2005 18:35:21 -0500
+Message-ID: <20051021233521.GA32160@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <OF05AB6962.4DDCCB12-ONC12570A1.0043BB4B-C12570A1.00449DA9@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,15 +19,14 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 21, 2005 at 02:30:43PM +0200, Stefan Bader wrote:
-> We had a problem with the multipath target which seems to be a locking
-> problem. The following patch fixed the problem for us by replacing the
-> spin_lock calls by the _irqsave/_irqrestore counterparts.
-> Alasdair, is that fix acceptable? If yes, could you please include it into
-> the kernel source?
- 
-Yes.
+This is a patch to add the option of more user friendly names for the
+multipath maps, in the form of mpath<n>.  It adds a configuration option
+"user_friendly_names". If set, it will cause multipath to check a bindings
+file for the names. The bindings file (/var/lib/multipath/bindings) has
+alias to wwid mappings. If multipath finds its wwid in the file, it uses
+the associated alias. If not, it creates a new alias, and adds the binding
+to the bindings file. If the config option is not set, multipath defaults
+to it's regular behavior. Specific aliases in /etc/multipath.conf override
+this behavior.
 
-Alasdair
--- 
-agk@redhat.com
+-Ben
