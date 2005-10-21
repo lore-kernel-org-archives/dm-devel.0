@@ -1,12 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: uuid prefix
-Date: Thu, 20 Oct 2005 22:21:23 +0100
-Message-ID: <20051020212123.GP30611@agk.surrey.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: freaky <andy_petroff@mail.ru>
+Subject: Device-mapper error
+Date: Fri, 21 Oct 2005 09:28:36 +0400
+Message-ID: <779948346.20051021092836@mail.ru>
+Reply-To: freaky <andy_petroff@mail.ru>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,28 +20,9 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I've added the prefix 'LVM-' to the uuids of all devices created by LVM2.
+I've rebuilt kernel 2.6.13.4 and I got the next message while loading:
+- device mapper: dm-linear: device lookup failed device mapper:
+error adding target to table.
 
-This means that it's trivial to identify them as 'belonging' to the
-lvm2 application.
-
-libdevmapper is being extended at the moment to incorporate higher-level
-functions.
-
-One of the new library calls I've added so far is capable of acting on
-several devices.  One of its parameters is a uuid prefix so that it
-only acts on devices with a matching prefix.
-
-This is a simple way of providing application ownership so that LVM2 will 
-never be able to do anything to a device created by multipath-tools, for 
-example.
-
-When you list those devices with 'dmsetup' you can tell immediately whether
-or not LVM2 created them, and easily grep / sort the output.
-
-I suggest EVMS, cryptsetup, ddraid, multipath tools etc. also consider
-adding short application prefixes to the uuids of devices they create.
-
-Alasdair
--- 
-agk@redhat.com
+So nooone partiton can't be mounted after system is loaded. What's
+wrong ?
