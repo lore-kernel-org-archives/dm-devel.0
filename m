@@ -1,7 +1,7 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
 Subject: Re: User friendly names patch.
-Date: Sat, 22 Oct 2005 09:36:35 +0200
-Message-ID: <1129966596.7313.58.camel@zezette>
+Date: Sat, 22 Oct 2005 09:52:04 +0200
+Message-ID: <1129967524.7313.65.camel@zezette>
 References: <20051021233521.GA32160@phlogiston.msp.redhat.com>
 Reply-To: christophe.varoqui@free.fr,
 	device-mapper development <dm-devel@redhat.com>
@@ -33,11 +33,10 @@ On ven, 2005-10-21 at 18:35 -0500, Benjamin Marzinski wrote:
 > to it's regular behavior. Specific aliases in /etc/multipath.conf override
 > this behavior.
 > 
-You forgot to attach the patch :/
-I'll review it again.
-
-Last time I remember I had some worries about it, though I'm perfectly
-happy with the feature. Others' review is welcome.
+On eof my worry is that /var/lib/multipath/bindings is not available in
+early userspace. Is this taken care of. Also remember not relying on
+hotplug to execute multipath in early userspace is a redhat choice.
+Others strategy may differ.
 
 Regards,
 cvaroqui
