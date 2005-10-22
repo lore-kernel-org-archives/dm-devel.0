@@ -1,12 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: User friendly names patch.
-Date: Fri, 21 Oct 2005 18:35:21 -0500
-Message-ID: <20051021233521.GA32160@phlogiston.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: User friendly names patch.
+Date: Sat, 22 Oct 2005 09:36:35 +0200
+Message-ID: <1129966596.7313.58.camel@zezette>
+References: <20051021233521.GA32160@phlogiston.msp.redhat.com>
+Reply-To: christophe.varoqui@free.fr,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20051021233521.GA32160@phlogiston.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,14 +22,22 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a patch to add the option of more user friendly names for the
-multipath maps, in the form of mpath<n>.  It adds a configuration option
-"user_friendly_names". If set, it will cause multipath to check a bindings
-file for the names. The bindings file (/var/lib/multipath/bindings) has
-alias to wwid mappings. If multipath finds its wwid in the file, it uses
-the associated alias. If not, it creates a new alias, and adds the binding
-to the bindings file. If the config option is not set, multipath defaults
-to it's regular behavior. Specific aliases in /etc/multipath.conf override
-this behavior.
+On ven, 2005-10-21 at 18:35 -0500, Benjamin Marzinski wrote:
+> This is a patch to add the option of more user friendly names for the
+> multipath maps, in the form of mpath<n>.  It adds a configuration option
+> "user_friendly_names". If set, it will cause multipath to check a bindings
+> file for the names. The bindings file (/var/lib/multipath/bindings) has
+> alias to wwid mappings. If multipath finds its wwid in the file, it uses
+> the associated alias. If not, it creates a new alias, and adds the binding
+> to the bindings file. If the config option is not set, multipath defaults
+> to it's regular behavior. Specific aliases in /etc/multipath.conf override
+> this behavior.
+> 
+You forgot to attach the patch :/
+I'll review it again.
 
--Ben
+Last time I remember I had some worries about it, though I'm perfectly
+happy with the feature. Others' review is welcome.
+
+Regards,
+cvaroqui
