@@ -1,16 +1,17 @@
-From: Neil Brown <neilb@suse.de>
+From: Alan Hourihane <alanh@fairlite.demon.co.uk>
 Subject: Re: RAID5 support ?
-Date: Mon, 24 Oct 2005 09:54:12 +1000
-Message-ID: <17244.8868.117125.78408@cse.unsw.edu.au>
+Date: Mon, 24 Oct 2005 13:46:13 +0100
+Message-ID: <1130157973.6046.11.camel@jetpack.demon.co.uk>
 References: <1129981242.7217.6.camel@jetpack.demon.co.uk>
 	<17242.17266.315175.852854@cse.unsw.edu.au>
 	<1129996688.7217.9.camel@jetpack.demon.co.uk>
+	<17244.8868.117125.78408@cse.unsw.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Alan Hourihane on Saturday October 22
+In-Reply-To: <17244.8868.117125.78408@cse.unsw.edu.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,82 +24,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Saturday October 22, alanh@fairlite.demon.co.uk wrote:
-> > More usefully though, I'd be very happy to talk about how md/raid5 can
-> > be made to be sufficient.  I'd be happy for it to integrate more
-> > closely with dm, if that was seen to be of value.
+On Mon, 2005-10-24 at 09:54 +1000, Neil Brown wrote:
+> On Saturday October 22, alanh@fairlite.demon.co.uk wrote:
+> > > More usefully though, I'd be very happy to talk about how md/raid5 can
+> > > be made to be sufficient.  I'd be happy for it to integrate more
+> > > closely with dm, if that was seen to be of value.
+> > 
+> > That'd be useful Neil.
+> > 
+> > I'll explain the problem.
+> > 
+> > I've got a SIL3114 controller with 4 x 200GB drives attached. Now that
+> > SIL controller supports RAID5. Given that I set the RAID support up in
+> > the BIOS I can now boot from the array.
+> > 
+> > If one of those disks die, I understand that the BIOS will still allow
+> > me to boot from the array, even though the primary disk may have died.
+> > 
+> > In the md/raid5 setup, I'm not sure that's the case and if you lose the
+> > primary you have to muck about with your bootloader to fix things up.
 > 
-> That'd be useful Neil.
-> 
-> I'll explain the problem.
-> 
-> I've got a SIL3114 controller with 4 x 200GB drives attached. Now that
-> SIL controller supports RAID5. Given that I set the RAID support up in
-> the BIOS I can now boot from the array.
-> 
-> If one of those disks die, I understand that the BIOS will still allow
-> me to boot from the array, even though the primary disk may have died.
-> 
-> In the md/raid5 setup, I'm not sure that's the case and if you lose the
-> primary you have to muck about with your bootloader to fix things up.
+> It seems the core problem here is that you need soft-raid5 in Linux
+> which can work with the metadata that is stored by the BIOS on the SIL
+> controller. 
+> This shouldn't be too hard to do, providing it is reasonably
+> documented.
+> 'md' has all the meta-data operations reasonably well factored out, so
+> working with new formats shouldn't be difficult.
 
-It seems the core problem here is that you need soft-raid5 in Linux
-which can work with the metadata that is stored by the BIOS on the SIL
-controller. 
-This shouldn't be too hard to do, providing it is reasonably
-documented.
-'md' has all the meta-data operations reasonably well factored out, so
-working with new formats shouldn't be difficult.
+That to me still doesn't resolve the bootloader problems.
 
-I suspect that it would be best to have the code for understanding the
-metadata run in user-space rather than in the kernel - I gather that
-is what dmraid does.
+Regardless of the md understanding the meta-data operations, it deals
+with partitions and therefore the boot sector of each drive in an md
+setup is outside the scope of it's operation.
 
-For raid5, we really need synchronous metadata updates when a device
-fails, as it is not really safe to write anything after the decision
-to fail a device, and before the metadata has been updated.
+Unless I'm missing something, this is where device-mapper really is
+useful, and presents a single drive to linux.
 
-I am currently working on adding sysfs support to md and raid5 and
-would prefer to use this as the interface between md and a user-space
-metadata handler (though I could probably be convinced to work under
-the dm ioctls as well if that was important).
-
-So the enhancements that seem to be needed to md/raid5 would include:
-
-1/ Introduce a new metadata type which the kernel doesn't read or
-   write at all.  When a write is required, it signals userspace
-   somehow, and blocks writes until it is told to continue.
-
-2/ Allow all config information to be provided by userspace.  The
-   current SET_ARRAY_INFO is not quite up to the task.  e.g. you 
-   cannot give a device offset through that interface.
-
-
-I plan to do (2) anyway, probably through sysfs, but maybe configfs -
-I'm not sure yet.
-
-(1) probably needs a bit more thought and some understanding on what
-the userspace metadata tool would require.
-I imagine having an event counter which is updated whenever a
-metadata update is required.
-The userspace tool would
-  - read a number from the event-counter file
-  - extract all the metadata information needed from sysfs
-  - write it to the devices
-  - write the original event-count to some other sysfs file.
-
-The kernel would not allow further writes until the number written
-to the second file matches the most current event counter, thus if
-multiple events happened while the metadata was being updated, we
-still wouldn't get out of sync.
-
-Of course, we wouldn't want to have to poll the event-counter
-file.  We would need some more direct notification of change.  As
-I am using sysfs, maybe some sort of hot-plug event... but I'll
-have to learn more about hot plug events first.
-
-
-Does any of this sound useful?
-Any other suggestions?
-
-NeilBrown
+Alan.
