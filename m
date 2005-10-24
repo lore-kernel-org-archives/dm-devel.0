@@ -1,14 +1,14 @@
-From: Brian Long <brilong@cisco.com>
-Subject: Re: Getting close to RHEL4 U3 freeze
-Date: Mon, 24 Oct 2005 13:07:10 -0400
-Message-ID: <1130173630.4201.19.camel@brilong-lnx>
-References: <20051024170054.GC19176@phlogiston.msp.redhat.com>
+From: "Jane Liu" <janliu@nvidia.com>
+Subject: RE: RAID5 support ?
+Date: Mon, 24 Oct 2005 12:45:31 -0700
+Message-ID: <DBFABB80F7FD3143A911F9E6CFD477B00830D3AF@hqemmail02.nvidia.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20051024170054.GC19176@phlogiston.msp.redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,39 +21,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2005-10-24 at 12:00 -0500, Benjamin Marzinski wrote:
-> Just to let everybody know that freeze date for Redhat Enterprise Linux 4
-> Update 3 is getting close.  The blocker bug that is currently being used to
-> track bugfixes and enhancements that are getting into U3 is
-> 
-> https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=171044
-> 
-> If anyone feels strongly that there is a bugzilla that should be on the list,
-> but is not, please put a comment in the 171044 bugzilla entry.  If it's an
-> enhancement, please make sure that the enhancement description is as specific
-> as possible.
-> 
-> Thanks
-> 
-> -Ben
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Alan Hourihane
+> Sent: Saturday, October 22, 2005 4:41 AM
+> To: dm-devel@redhat.com
+> Subject: [dm-devel] RAID5 support ?
+>=20
+> I read on September 23rd that NVIDIA spoke about the need to support
+> RAID5 in device-mapper and that RedHat was going to speak to them
+about
+> supporting it.
+>=20
+> How far has this got ? as I can't see anything in CVS yet.
 
-Ben,
+We are working closely with Heinz Mauelshagen of RedHat on RAID5
+support. Heinz is working hard to get a RAID5 target ready for testing.
+We don't know the exact schedule yet, but do hope to have something
+reasonably stable within a couple months. Sorry our efforts won't help
+with your immediate needs. Please stay tuned...
 
-We are starting to use dm-multipath in RHEL 4 U2 and documentation is
-sorely lacking.  I've opened IT 81946, but my TAM said it came in too
-late for U3.  Any doc updates you can provide around the proper usage of
-"dm-emc" or "1 emc" hardware_handler as well as expounding on the docs
-around path_checker of tur vs. readsector0.  The vendor-specific
-path_checkers like "emc_clariion" are not documented inside the dm-
-multipath RPM; only by searching the archives on this mailing list is it
-found.
-
-Thanks. 
-
-/Brian/
-
--- 
-       Brian Long                      |         |           |
-       IT Data Center Systems          |       .|||.       .|||.
-       Cisco Linux Developer           |   ..:|||||||:...:|||||||:..
-       Phone: (919) 392-7363           |   C i s c o   S y s t e m s
+Regards,
+Jane Liu
+--------
+NVIDIA Corporation
