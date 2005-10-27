@@ -1,12 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: multipathd leak
-Date: Thu, 27 Oct 2005 12:14:23 +0200
-Message-ID: <20051027101423.GA19853@free.fr>
+From: Brian Long <brilong@cisco.com>
+Subject: Re: LVM2, RHEL 4 update 2: can't remove logical volume
+Date: Thu, 27 Oct 2005 07:41:04 -0400
+Message-ID: <1130413264.4047.13.camel@brilong-lnx>
+References: <OF29A33E0B.95E7850F-ONC12570A7.002EDB85-C12570A7.0031344E@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <OF29A33E0B.95E7850F-ONC12570A7.002EDB85-C12570A7.0031344E@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,28 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmarzins@redhat.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
+On Thu, 2005-10-27 at 10:58 +0200, Stefan Bader wrote:
+> We got something similar here. Try to change the filter rules to exclude 
+> the
+> volume group devices. What you want is the devices created by the
+> multipath-tools included but not the devices created by lvm2.
+> Otherwise the tools will have the lv open at the time they should be
+> removed.
+> 
+> Stefan Bader
 
-can you look into this leak reported by valgrind :
-(valgrind --show-reachable=yes --leak-check=full -v multipathd/multipathd -d)
+Stefan,
 
-==2957== 16384 bytes in 1 blocks are definitely lost in loss record 10 of 10
-==2957==    at 0x11B1BE96: malloc (vg_replace_malloc.c:149)
-==2957==    by 0x11D41B61: dm_task_run (in /lib/libdevmapper.so.1.01)
-==2957==    by 0x40444D: waiteventloop (main.c:481)
-==2957==    by 0x40464C: waitevent (main.c:537)
-==2957==    by 0x11C2FB1B: start_thread (in /lib/libpthread-2.3.5.so)
-==2957==    by 0x1243B272: clone (in /lib/libc-2.3.5.so)
+Could you post your filter example so Phil and I can integrate it into
+our lvm.conf?  Thanks!
 
-We miss a dm_task_destroy in the stop_waiter_thread path.
-It seems related to the pthread_kill trickery you are familiar with.
+/Brian/
 
-Didn't we conclude the trickery was due to a glibc bug earlier ?
-If so, can this be fixed in updates or  will it have to wait till RHEL5 ?
-
-Regards,
-cvaroqui
+-- 
+       Brian Long                      |         |           |
+       IT Data Center Systems          |       .|||.       .|||.
+       Cisco Linux Developer           |   ..:|||||||:...:|||||||:..
+       Phone: (919) 392-7363           |   C i s c o   S y s t e m s
