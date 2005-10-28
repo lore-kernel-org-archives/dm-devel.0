@@ -1,15 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: query on device alias/black listing
-Date: Fri, 28 Oct 2005 19:29:27 +0200
-Message-ID: <1130520567.13850.58.camel@zezette>
-References: <3456F611E9329441B12FBB24447B3FA002E39FA5@bgeexc01.asiapacific.cpqcorp.net>
-Reply-To: christophe.varoqui@free.fr,
-	device-mapper development <dm-devel@redhat.com>
+From: "Bruen, Mark" <mbruen@trilegiant.com>
+Subject: Multipathing using device mapper howto?
+Date: Fri, 28 Oct 2005 16:39:50 -0400
+Message-ID: <43628C96.2090605@trilegiant.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3456F611E9329441B12FBB24447B3FA002E39FA5@bgeexc01.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,20 +16,12 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On ven, 2005-10-28 at 14:35 +0530, Murthy, Narasimha Doraswamy (STSD)
-wrote:
-> Both devices exist in /dev/mapper/ directory. When =E2=80=9Cmultipath =E2=
-=80=93ll=E2=80=9D is
-> executed, both original device and the device with alias name are
-> displayed. We can have different device policies like path grouping
-> etc for both of these devices.
-
-To my knowledge, upstream is not affected.
-Can you confirm ?
-
-Regards,
-cvaroqui
+I'm just beginning to look at device mapper to multipath SAN luns. I've 
+been searching for some time and can't find a simple reference on how to 
+create the multipathed devices from the same luns presented to two or 
+more HBA paths. Is there a source for that information?
+Thanks.
+    -Mark
