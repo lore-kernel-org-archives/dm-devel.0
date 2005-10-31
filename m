@@ -1,17 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Clariion CX600 automatic failback support
-Date: Mon, 31 Oct 2005 17:06:52 +0100
-Message-ID: <20051031160652.GB31532@free.fr>
-References: <013350FE9CC8AC4EB602045723F47222B9A2BB@xmb-rtp-215.amer.cisco.com>
-	<1130767086.4071.6.camel@brilong-lnx>
-	<20051031140712.GA31532@free.fr>
-	<1130773899.4071.18.camel@brilong-lnx>
+From: Dale.R.Fowle@seagate.com
+Subject: Trouble configuring MPIO with multipath-tools
+Date: Mon, 31 Oct 2005 18:22:02 +0000 (UTC)
+Message-ID: <200510311820.j9VIKTUJ012571@mh0.sv.mailhost.seagate.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1130773899.4071.18.camel@brilong-lnx>
+Date: 31-Oct-2005 11:20:23 MST
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +16,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Oct 31, 2005 at 10:51:38AM -0500, Brian Long wrote:
-> On Mon, 2005-10-31 at 15:07 +0100, Christophe Varoqui wrote:
-> > > 
-> > > No one has automatic failback working on Clarrion storage?
-> > > 
-> > Do you reproduce with upstream ?
-> 
-> No.  I imagine we will log a support request with Red Hat to get it
-> working on RHEL 4 U2.  If they want to give us an updated device-mapper-
-> multipath RPM to try to reproduce with upstream, that's up to them.
-> Phil and I were just wondering if there is a specific configuration
-> parameter to get the trespass to happen again once all paths are back
-> online.
-> 
-Every check interval, the daemon re-evaluates path priorities (through
-external prioritizers), then re-compute path-groups priorities. If PG
-priority order change, the highest-prio PG might be activated :
 
-- immediatly, if "failback" is set to immediate
-- never, if "failback" is set to manual
-- in a number of prio-order stable consecutive checks, if failback
-  set to #
+Hi all, I'm wondering if anyone can help un-confuse me. =-)
 
-Thus, failback/no-failback is a property of the external prioritizer, plus
-a framework policy switch in the name of the "failback" config file keyword.
+I've been through about every document I can find on the internet trying to
+chase down exactly how I'm supposed to configure devices for MPIO. I
+haven't seen the same answer twice. Everything is different.
 
-Well, at least it is the current design upstream.
-You'll have to dig the changelog to see if RedHat packages all the
-necassary bits.
+The most formal documentation I found was here:
+http://portal.suse.com/sdb/en/2005/04/sles_multipathing.html
 
-Regards,
-cvaroqui
+I've also been out to the multipath-tools resource page:
+http://christophe.varoqui.free.fr/
+
+I really haven't gotten anything to work yet. =-)
+
+I also saw another issue addressed from this e-mail discussion board that
+said really all you need to do is uncomment some lines in
+/etc/multipath.conf and comment out some other lines and you're good to go.
+
+So, to clear things up with the device mapper piece of things. Is there any
+requirement of the multipath command that these devices have to be
+pre-built using dmsetup before multipath will recognize and built a path
+under /dev/dm-*? If so,...how do you setup two paths to one device in your
+target_file? What's confusing to me for setting up two devices in a
+"linear" fashion would seem like it's creating a concatenation of two
+separate devices instead of creating two paths to one device (i.e. "0
+1028160 linear /dev/hda 0 1028160 3903762 linear /dev/hdb 0" from the
+dmsetup manpage). The only other options are to set them up as stripe or
+error devices.
+
+I'm not sure where to go next with this. I can see my two paths at /dev/sda
+and /dev/sdb. Whether I partition them or not, multipath won't pick
+anything up and display it with 'multipath -v2 -d' or 'multipath -l'. What
+I get from 'multipath -v2 -d' is an error like this:
+
+#multipath -v2 -d
+error calling out /bin/false
+error calling out /bin/false
+#
+
+Also, does multipathd or the multipath command itself update
+/etc/multipath.conf when multipath configures or recognizes a device,..or
+is it all a manual process? I can't say I've ever seen a device addressed
+like this before:
+                                                                            
+          3600601607cf30e00184589a37a31d911                                 
+                                                                            
+                                                                            
+                                                                            
+
+Coming from a Solaris background, I'm used seeing the WWNN and/or the WWPN.
+=-) I'm pretty new to the Linux world, so I understand that I'll have to
+get used to seeing things differently sometimes.
+
+Anyways, I'd appreciate any help anyone can offer. FYI, I'm running SLES 9
+with SP2, multipath-tools 0.4.4 is installed, and I'm using a pair of
+Qlogic 2340 HBAs. The storage array controllers are configured as
+active/active. The Qlogic failover parameter is disabled due to my previous
+trials playing with mdadm's mpio features as well.
+
+
+Thanks,
+Dale
+
+
+Dale Fowle
+Seagate Technology
+Colorado Springs, CO
+719-388-5584
