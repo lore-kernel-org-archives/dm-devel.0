@@ -1,12 +1,16 @@
-From: Dale.R.Fowle@seagate.com
-Subject: Trouble configuring MPIO with multipath-tools
-Date: Mon, 31 Oct 2005 18:22:02 +0000 (UTC)
-Message-ID: <200510311820.j9VIKTUJ012571@mh0.sv.mailhost.seagate.com>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: Trouble configuring MPIO with multipath-tools
+Date: Mon, 31 Oct 2005 19:36:59 +0100
+Message-ID: <200510311936.59600.bernd@bzed.de>
+References: <200510311820.j9VIKTUJ012571@mh0.sv.mailhost.seagate.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Date: 31-Oct-2005 11:20:23 MST
+In-Reply-To: <200510311820.j9VIKTUJ012571@mh0.sv.mailhost.seagate.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,75 +20,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi,
 
-Hi all, I'm wondering if anyone can help un-confuse me. =-)
+> Anyways, I'd appreciate any help anyone can offer. FYI, I'm running SLES 9
+> with SP2, multipath-tools 0.4.4 is installed, and I'm using a pair of
 
-I've been through about every document I can find on the internet trying to
-chase down exactly how I'm supposed to configure devices for MPIO. I
-haven't seen the same answer twice. Everything is different.
+from my own experience I can strongly suggest to update the multipath-tools to 
+something >= 0.4.5. Read Christophe's page 
+http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=Home and/or the 
+git-changelog and you know why... 
 
-The most formal documentation I found was here:
-http://portal.suse.com/sdb/en/2005/04/sles_multipathing.html
-
-I've also been out to the multipath-tools resource page:
-http://christophe.varoqui.free.fr/
-
-I really haven't gotten anything to work yet. =-)
-
-I also saw another issue addressed from this e-mail discussion board that
-said really all you need to do is uncomment some lines in
-/etc/multipath.conf and comment out some other lines and you're good to go.
-
-So, to clear things up with the device mapper piece of things. Is there any
-requirement of the multipath command that these devices have to be
-pre-built using dmsetup before multipath will recognize and built a path
-under /dev/dm-*? If so,...how do you setup two paths to one device in your
-target_file? What's confusing to me for setting up two devices in a
-"linear" fashion would seem like it's creating a concatenation of two
-separate devices instead of creating two paths to one device (i.e. "0
-1028160 linear /dev/hda 0 1028160 3903762 linear /dev/hdb 0" from the
-dmsetup manpage). The only other options are to set them up as stripe or
-error devices.
-
-I'm not sure where to go next with this. I can see my two paths at /dev/sda
-and /dev/sdb. Whether I partition them or not, multipath won't pick
-anything up and display it with 'multipath -v2 -d' or 'multipath -l'. What
-I get from 'multipath -v2 -d' is an error like this:
-
-#multipath -v2 -d
-error calling out /bin/false
-error calling out /bin/false
-#
-
-Also, does multipathd or the multipath command itself update
-/etc/multipath.conf when multipath configures or recognizes a device,..or
-is it all a manual process? I can't say I've ever seen a device addressed
-like this before:
-                                                                            
-          3600601607cf30e00184589a37a31d911                                 
-                                                                            
-                                                                            
-                                                                            
-
-Coming from a Solaris background, I'm used seeing the WWNN and/or the WWPN.
-=-) I'm pretty new to the Linux world, so I understand that I'll have to
-get used to seeing things differently sometimes.
-
-Anyways, I'd appreciate any help anyone can offer. FYI, I'm running SLES 9
-with SP2, multipath-tools 0.4.4 is installed, and I'm using a pair of
-Qlogic 2340 HBAs. The storage array controllers are configured as
-active/active. The Qlogic failover parameter is disabled due to my previous
-trials playing with mdadm's mpio features as well.
-
-
-Thanks,
-Dale
-
-
-Dale Fowle
-Seagate Technology
-Colorado Springs, CO
-719-388-5584
+Bernd
