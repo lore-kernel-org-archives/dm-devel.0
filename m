@@ -1,23 +1,14 @@
-From: Alan Hourihane <alanh@fairlite.demon.co.uk>
-Subject: Re: RAID5 support ?
-Date: Thu, 03 Nov 2005 11:39:43 +0000
-Message-ID: <1131017984.6239.36.camel@jetpack.demon.co.uk>
-References: <1129981242.7217.6.camel@jetpack.demon.co.uk>
-	<17242.17266.315175.852854@cse.unsw.edu.au>
-	<1129996688.7217.9.camel@jetpack.demon.co.uk>
-	<17244.8868.117125.78408@cse.unsw.edu.au>
-	<1130157973.6046.11.camel@jetpack.demon.co.uk>
-	<17257.33116.12284.159992@cse.unsw.edu.au>
-	<1131008651.6239.10.camel@jetpack.demon.co.uk>
-	<17257.57720.25495.299797@cse.unsw.edu.au>
-	<1131013854.6239.16.camel@jetpack.demon.co.uk>
-	<17257.62063.205766.403519@cse.unsw.edu.au>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: Clariion CX600 automatic failback support
+Date: Thu, 3 Nov 2005 14:58:36 +0100
+Message-ID: <20051103135836.GA8868@free.fr>
+References: <C2EEB4E538D3DC48BF57F391F422779321AD96@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <17257.62063.205766.403519@cse.unsw.edu.au>
+Content-Disposition: inline
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AD96@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -30,39 +21,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2005-11-03 at 22:20 +1100, Neil Brown wrote:
-> On Thursday November 3, alanh@fairlite.demon.co.uk wrote:
-> > 
-> > I mean "Load the kernel image from an md device" which is what it means
-> > to me too.
-> > 
-> > So, you go on to say that booting from raid5 almost certainly requires
-> > bios support - so I'm back to needing the onboard Sil 3114 BIOS to
-> > handle that and then get md/dmraid to sort the rest out - which gets
-> > back to my original question on when device mapper would get RAID5
-> > support so that dmraid can handle the SIL RAID5 metadata.
 > 
-> "device mapper" and "dmraid" are of course different things.  
-> One is a kernel subsystem, the other is a configuration tool.
-> For dmraid to be able to handle SIL RAID5, it is not necessary for
-> "device mapper" to get RAID5 support, only for dmraid to have
-> appropriate access to some sort of raid5 support in the Linux kernel.
+> Once the distributors pick up both this single line change and the
+> change in hwtable.c, immediate path group failback for CLARiiON
+> will just work.
 > 
-> I would like md/raid5 (which is quite separate from device mapper) to
-> be able to provide the required level of support so that if the dmraid
-> developers so chose, they could use it rather than needing a second
-> raid5 implementation in the kernel.  Hence my original question, asking
->  "how md/raid5 can be made to be sufficient" for the needs for dmraid?
+> -------------------------------------------------------------------
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -146,6 +146,7 @@ adopt_paths (struct vectors * vecs, stru
+>  		if (!strncmp(mpp->wwid, pp->wwid, WWID_SIZE)) {
+>  			condlog(4, "%s ownership set", pp->dev_t);
+>  			pp->mpp = mpp;
+> +			mpp->hwe = pp->hwe;
+>  		}
+>  	}
+>  }
+> 
+Upstream has had a patch for that. It plug the mpp->hwe refresh in
+setup_multipath().
 
-So what exactly is Heinz working on if it isn't support for RAID5 in
-device-mapper ?
+Can you check it has no regression wrt your suggested fix ?
 
-> I suspect all it needs is to be able to interface with a user-space
-> metadata handler, and possibly some extra configuration options to
-> match the expected functionality of the SiL.
-> The former I hope be possible by 2.6.16.  The later I'm interested in
-> advice on.
-
-I'll defer to Heinz to make that choice - he's a lot closer to the code.
-
-Alan.
+Regards,
+cvaroqui
