@@ -1,7 +1,7 @@
-From: Alan Hourihane <alanh@fairlite.demon.co.uk>
+From: Neil Brown <neilb@suse.de>
 Subject: Re: RAID5 support ?
-Date: Thu, 03 Nov 2005 10:30:54 +0000
-Message-ID: <1131013854.6239.16.camel@jetpack.demon.co.uk>
+Date: Thu, 3 Nov 2005 22:20:15 +1100
+Message-ID: <17257.62063.205766.403519@cse.unsw.edu.au>
 References: <1129981242.7217.6.camel@jetpack.demon.co.uk>
 	<17242.17266.315175.852854@cse.unsw.edu.au>
 	<1129996688.7217.9.camel@jetpack.demon.co.uk>
@@ -10,12 +10,13 @@ References: <1129981242.7217.6.camel@jetpack.demon.co.uk>
 	<17257.33116.12284.159992@cse.unsw.edu.au>
 	<1131008651.6239.10.camel@jetpack.demon.co.uk>
 	<17257.57720.25495.299797@cse.unsw.edu.au>
+	<1131013854.6239.16.camel@jetpack.demon.co.uk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <17257.57720.25495.299797@cse.unsw.edu.au>
+In-Reply-To: message from Alan Hourihane on Thursday November 3
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,56 +29,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2005-11-03 at 21:07 +1100, Neil Brown wrote:
-> On Thursday November 3, alanh@fairlite.demon.co.uk wrote:
-> > > md doesn't work with partitions.  It works with devices which may be
-> > > partitions or may be the whole device.
-> > > I often make raid5 arrays out of a set of devices, none of them
-> > > partitioned. 
-> > 
-> > O.k. Can you explain to me how to do that and still boot from the md
-> > device ?
+On Thursday November 3, alanh@fairlite.demon.co.uk wrote:
 > 
-> It depends on exactly what you mean by 'still boot from'...
+> I mean "Load the kernel image from an md device" which is what it means
+> to me too.
 > 
-> If you mean, "Have to root filesystem on an md device", there are two
-> ways. 
-> 
-> 1/ use a kernel parameter like:
->      md=d0,/dev/hda,/dev/hdc root=/dev/md_d0p1
-> 
->  This tells the kernel to assemble an md array from /dev/hda and
->  /dev/hdc.  It will be /dev/md/d0 which is a partitionable array,
->  so you can have normal partitioning. /dev/md/d0p1 /dev/md0/d0p2.
->  Most of my servers I configure like this, with a raid1 pair on sda
->  and sdb, partitioned into root, swap, and the rest.
-> 
->  This works quite well for ide drives as the device names are stable.
->  It is not so good for SCSI as device names can change if you pull a
->  device out.  However using sda and sdb for the root device works ok.
-> 
-> 2/ use an initrd or initfs image which contains code to find and
->   assemble md/raid arrays. mdadm comes with a striped down
->   'mdassemble' which does just this.
->   It currently needs a config file in the initfs, but I'm working
->   towards being able to have the important configuration information
->   reliably in the raid superblock.
-> 
-> 
-> If you mean "Load the kernel image from an md device" (which is what
-> "boot from" really means to me), then it depends on your boot loader.
-> I have lilo configured to boot from a mirrored pair as above.  Booting
-> from a raid5 almost certainly requires bios support, but once the
-> kernel and initfs are loaded, md can take it from there (once it can
-> understand the metadata format).
+> So, you go on to say that booting from raid5 almost certainly requires
+> bios support - so I'm back to needing the onboard Sil 3114 BIOS to
+> handle that and then get md/dmraid to sort the rest out - which gets
+> back to my original question on when device mapper would get RAID5
+> support so that dmraid can handle the SIL RAID5 metadata.
 
-I mean "Load the kernel image from an md device" which is what it means
-to me too.
+"device mapper" and "dmraid" are of course different things.  
+One is a kernel subsystem, the other is a configuration tool.
+For dmraid to be able to handle SIL RAID5, it is not necessary for
+"device mapper" to get RAID5 support, only for dmraid to have
+appropriate access to some sort of raid5 support in the Linux kernel.
 
-So, you go on to say that booting from raid5 almost certainly requires
-bios support - so I'm back to needing the onboard Sil 3114 BIOS to
-handle that and then get md/dmraid to sort the rest out - which gets
-back to my original question on when device mapper would get RAID5
-support so that dmraid can handle the SIL RAID5 metadata.
+I would like md/raid5 (which is quite separate from device mapper) to
+be able to provide the required level of support so that if the dmraid
+developers so chose, they could use it rather than needing a second
+raid5 implementation in the kernel.  Hence my original question, asking
+ "how md/raid5 can be made to be sufficient" for the needs for dmraid?
 
-Alan.
+I suspect all it needs is to be able to interface with a user-space
+metadata handler, and possibly some extra configuration options to
+match the expected functionality of the SiL.
+The former I hope be possible by 2.6.16.  The later I'm interested in
+advice on.
+
+NeilBrown
