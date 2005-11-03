@@ -1,17 +1,14 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: Clariion CX600 automatic failback support
-Date: Thu, 3 Nov 2005 23:00:36 +0100
-Message-ID: <200511032300.36884.bernd@bzed.de>
-References: <C2EEB4E538D3DC48BF57F391F422779321ADA0@SRMANNING.eng.emc.com>
-	<1131051354.4436.63.camel@brilong-lnx>
+From: David Wysochanski <davidw@netapp.com>
+Subject: Re: Getting close to RHEL4 U3 freeze
+Date: Thu, 03 Nov 2005 18:27:23 -0500
+Message-ID: <436A9CDB.1060606@netapp.com>
+References: <20051024170054.GC19176@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1131051354.4436.63.camel@brilong-lnx>
-Content-Disposition: inline
+In-Reply-To: <20051024170054.GC19176@phlogiston.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,20 +21,35 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+When's the freeze?
 
-> So it sounds like I need Red Hat to issue me a hotfix for device-mapper-
-> multipath that includes the upstream patch or your patch for get
-> Clariion fallback working properly.
+I have a path priority patch (for netapp targets) I'm trying to get
+tested so I can submit it.  It's purely new code in userspace (patch
+against multipath-tools), so hopefully non-controversial.
 
-tested on a debian sarge machine and a CX400 today, actual multipath-tools 
-from git, including the patch from 
-https://www.redhat.com/archives/dm-devel/2005-November/msg00028.html
+Not sure if I should kill myself or not, hence the question about
+whether I've missed U3 freeze yet.
 
-Seems to work very well, especially fine that the LUNs get trespassed to their 
-default owner.
+Thanks.
 
-Many thanks to all who made this working.
-
-
-Bernd
+Benjamin Marzinski wrote:
+> Just to let everybody know that freeze date for Redhat Enterprise Linux 4
+> Update 3 is getting close.  The blocker bug that is currently being used to
+> track bugfixes and enhancements that are getting into U3 is
+> 
+> https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=171044
+> 
+> If anyone feels strongly that there is a bugzilla that should be on the list,
+> but is not, please put a comment in the 171044 bugzilla entry.  If it's an
+> enhancement, please make sure that the enhancement description is as specific
+> as possible.
+> 
+> Thanks
+> 
+> -Ben
+> 
+> -- 
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
