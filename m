@@ -1,14 +1,16 @@
-From: David Wysochanski <davidw@netapp.com>
-Subject: Re: Getting close to RHEL4 U3 freeze
-Date: Thu, 03 Nov 2005 18:27:23 -0500
-Message-ID: <436A9CDB.1060606@netapp.com>
-References: <20051024170054.GC19176@phlogiston.msp.redhat.com>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: Clariion CX600 automatic failback support
+Date: Fri, 4 Nov 2005 09:19:06 +0100
+Message-ID: <200511040919.07200.bernd@bzed.de>
+References: <C2EEB4E538D3DC48BF57F391F422779321ADA0@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20051024170054.GC19176@phlogiston.msp.redhat.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321ADA0@SRMANNING.eng.emc.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +23,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When's the freeze?
+Hi,
 
-I have a path priority patch (for netapp targets) I'm trying to get
-tested so I can submit it.  It's purely new code in userspace (patch
-against multipath-tools), so hopefully non-controversial.
+> Looks good, except the call to extract_hwe_from_path in setup_multipath
+> must be before the call to select_pgfailback.
+>
 
-Not sure if I should kill myself or not, hence the question about
-whether I've missed U3 freeze yet.
+We have a ton of these log messages now.
+From the last about 2 hours:
 
-Thanks.
+580x multipathd: 3600601f4a20c000099dc229956b0d711: switch to path group =
+#1
+714x multipathd: 3600601f4a20c000096dc229956b0d711: switch to path group =
+#1
+714x multipathd: 3600601f2a20c0000fb13caa656b0d711: switch to path group =
+#1
+  45x kernel: device-mapper: dm-emc: emc_pg_init: sending switch-over com=
+mand
 
-Benjamin Marzinski wrote:
-> Just to let everybody know that freeze date for Redhat Enterprise Linux 4
-> Update 3 is getting close.  The blocker bug that is currently being used to
-> track bugfixes and enhancements that are getting into U3 is
-> 
-> https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=171044
-> 
-> If anyone feels strongly that there is a bugzilla that should be on the list,
-> but is not, please put a comment in the 171044 bugzilla entry.  If it's an
-> enhancement, please make sure that the enhancement description is as specific
-> as possible.
-> 
-> Thanks
-> 
-> -Ben
-> 
-> -- 
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
+It happens only for these 3 of 8 luns.
+
+Kernel is 2.6.13.4, devmapper 1.01, latest multipath-tools from git, evms=
+=20
+2.5.3
+
+zeus-1:/# cat /etc/multipath.conf
+defaults {
+        failback                                immediate
+}
+
+
+Since we had a lot of trouble with our CX400 (Hardware problems, but they=
+'re=20
+supposed to be fixed) I'm wondering what these messages mean, and if we s=
+till=20
+have hardware/software bugs somewhere.
+
+Any ideas?
+Thanks for your help!
+
+
+Bernd
