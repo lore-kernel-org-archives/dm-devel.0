@@ -1,41 +1,51 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Clariion CX600 automatic failback support
-Date: Sat, 05 Nov 2005 13:26:27 +0100
-Message-ID: <1131193587.7463.16.camel@zezette>
-References: <C2EEB4E538D3DC48BF57F391F422779321ADAC@SRMANNING.eng.emc.com>
-	<1131137721.7463.12.camel@zezette> <200511050103.58170.bernd@bzed.de>
-Reply-To: christophe.varoqui@free.fr,
-	device-mapper development <dm-devel@redhat.com>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: [2.6 patch] drivers/md/kcopyd.c: remove kcopyd_cancel()
+Date: Sat, 5 Nov 2005 17:31:08 +0100
+Message-ID: <20051105163108.GJ5368@stusta.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200511050103.58170.bernd@bzed.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751248AbVKEQbL@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On sam, 2005-11-05 at 01:03 +0100, Bernd Zeimetz wrote:
-> Hi,
-> 
-> > I'm inclined to keep the tools patch anyway : it wastes an "int" per
-> > multipath but is brain-friendlier (as it avoids using mpp->nextpg to
-> > represent the current setting *and* the best-rated setting).
-> >
-> > Are interested parties ok with that ?
-> 
-> I'm ok with anything you prefer, as long as it works and it doesn't change 
-> again with the next kernel/tools-release ;)
-> 
-Want to write a regression test ?
+A function that is
+- not used
+- empty
+- without a prototype in any header file
+should be removed.
 
-Regards,
-cvaroqui
+
+Signed-off-by: Adrian Bunk <bunk@stusta.de>
+
+---
+
+ drivers/md/kcopyd.c |   11 -----------
+ 1 file changed, 11 deletions(-)
+
+--- linux-2.6.14-rc5-mm1-full/drivers/md/kcopyd.c.old	2005-11-05 16:36:11.000000000 +0100
++++ linux-2.6.14-rc5-mm1-full/drivers/md/kcopyd.c	2005-11-05 17:04:45.000000000 +0100
+@@ -558,16 +558,6 @@
+ 	return 0;
+ }
+ 
+-/*
+- * Cancels a kcopyd job, eg. someone might be deactivating a
+- * mirror.
+- */
+-int kcopyd_cancel(struct kcopyd_job *job, int block)
+-{
+-	/* FIXME: finish */
+-	return -1;
+-}
+-
+ /*-----------------------------------------------------------------
+  * Unit setup
+  *---------------------------------------------------------------*/
+@@ -685,4 +675,3 @@
+ EXPORT_SYMBOL(kcopyd_client_create);
+ EXPORT_SYMBOL(kcopyd_client_destroy);
+ EXPORT_SYMBOL(kcopyd_copy);
+-EXPORT_SYMBOL(kcopyd_cancel);
