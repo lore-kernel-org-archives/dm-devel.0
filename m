@@ -1,7 +1,7 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [dm-devel] Re: [PATCH resubmit] do_mount: reduce stack consumption
-Date: Tue, 8 Nov 2005 09:12:30 +1100
-Message-ID: <17263.53582.223276.493074@cse.unsw.edu.au>
+From: Andrew Morton <akpm@osdl.org>
+Subject: Re: Re: [PATCH resubmit] do_mount: reduce stack consumption
+Date: Mon, 7 Nov 2005 15:37:06 -0800
+Message-ID: <20051107153706.2f3c8b67.akpm@osdl.org>
 References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
 	<20051104084829.714c5dbb.akpm@osdl.org>
 	<20051104212742.GC9222@osiris.ibm.com>
@@ -11,53 +11,54 @@ References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
 	<20051104173721.597bd223.akpm@osdl.org>
 	<17260.17661.523593.420313@cse.unsw.edu.au>
 	<17262.40176.342746.634262@cse.unsw.edu.au>
-	<20051107161522.GA28164@osiris.boeblingen.de.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965365AbVKGWMp@vger.kernel.org>
-In-Reply-To: message from Heiko Carstens on Monday November 7
-Sender: linux-kernel-owner@vger.kernel.org
-To: Heiko Carstens <heiko.carstens@de.ibm.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, aherrman@de.ibm.com, bunk@stusta.de, cplk@itee.uq.edu.au
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <17262.40176.342746.634262@cse.unsw.edu.au>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Neil Brown <neilb@suse.de>
+Cc: heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, bunk@stusta.de, dm-devel@redhat.com, aherrman@de.ibm.com, cplk@itee.uq.edu.au
 List-Id: dm-devel.ids
 
-On Monday November 7, heiko.carstens@de.ibm.com wrote:
-> > > Ok, I'll dust it off, make sure it seems to work (at the time I first
-> > > wrote it, I think it caused 'md' to deadlock) and submit it.
-> > > 
-> > > NeilBrown
-> > > 
-> > 
-> > For your consideration and testing (it works for me, but I'd like to
-> > see it tested a bit more heavily in a variety of configurations).
+Neil Brown <neilb@suse.de> wrote:
+>
+> ...
+> Reduce stack usage with stacked block devices
 > 
-> Works fine for me. Thank you!
-> 
+> ...
+> diff ./include/linux/sched.h~current~ ./include/linux/sched.h
+> --- ./include/linux/sched.h~current~	2005-11-07 10:01:36.000000000 +1100
+> +++ ./include/linux/sched.h	2005-11-07 10:02:23.000000000 +1100
+> @@ -829,6 +829,9 @@ struct task_struct {
+>  /* journalling filesystem info */
+>  	void *journal_info;
+>  
+> +/* stacked block device info */
+> +	struct bio *bio_list, **bio_tail;
+> +
+>  /* VM state */
+>  	struct reclaim_state *reclaim_state;
+>  
 
-Thanks for the feed-back.
+More state in the task_strut is a bit sad, but not nearly as sad as deep
+recursion in our deepest codepath..
 
-> However I noticed another recursive call while dumping all call traces:
->  ...
->  [<00000000001e1952>] zfcp_scsi_command_async+0xf6/0x1c4
->  [<000000000013cd6a>] scsi_dispatch_cmd+0x1ae/0x37c
->  [<0000000000143dc4>] scsi_request_fn+0x1dc/0x390
->  [<000000000012f65a>] generic_unplug_device+0x2a/0x38
->  [<0000000000181262>] dm_table_unplug_all+0x42/0x58
->  [<000000000017e598>] dm_unplug_all+0x2c/0x44
->  [<0000000000181262>] dm_table_unplug_all+0x42/0x58
->  [<000000000017e598>] dm_unplug_all+0x2c/0x44
->  [<00000000000782aa>] block_sync_page+0x4e/0x68
->  [<00000000000514f8>] sync_page+0x48/0x68
->  [<00000000002ab36e>] __wait_on_bit+0x9a/0xe0
->  ...
+Possibly one could do:
 
-Hmm.. This (and a similar one with ->issue_flush_fn) would be a lot
-harder to unwind, but it is also much more benign.  These sorts of
-calls should always be very shallow.
-I don't think there is anything useful that can be done here, and I'm
-not convinced there is a real problem.
-It is worth noticing it and keeping it in mind though.
+struct make_request_state {
+	struct bio *bio_list;
+	struct bio **bio_tail;
+};
 
-Thanks,
-NeilBrown
+and stick a `struct make_request_state *' into the task_struct and actually
+allocate the thing on the stack.  That's not much nicer though.
