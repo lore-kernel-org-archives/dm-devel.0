@@ -1,104 +1,63 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: Clariion CX600 automatic failback support
-Date: Mon, 7 Nov 2005 13:25:10 -0600
-Message-ID: <20051107192510.GC26529@phlogiston.msp.redhat.com>
-References: <C2EEB4E538D3DC48BF57F391F422779321AD96@SRMANNING.eng.emc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [dm-devel] Re: [PATCH resubmit] do_mount: reduce stack consumption
+Date: Tue, 8 Nov 2005 09:12:30 +1100
+Message-ID: <17263.53582.223276.493074@cse.unsw.edu.au>
+References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
+	<20051104084829.714c5dbb.akpm@osdl.org>
+	<20051104212742.GC9222@osiris.ibm.com>
+	<20051104235500.GE5368@stusta.de>
+	<20051104160851.3a7463ff.akpm@osdl.org>
+	<Pine.GSO.4.60.0511051108070.2449@mango.itee.uq.edu.au>
+	<20051104173721.597bd223.akpm@osdl.org>
+	<17260.17661.523593.420313@cse.unsw.edu.au>
+	<17262.40176.342746.634262@cse.unsw.edu.au>
+	<20051107161522.GA28164@osiris.boeblingen.de.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AD96@SRMANNING.eng.emc.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965365AbVKGWMp@vger.kernel.org>
+In-Reply-To: message from Heiko Carstens on Monday November 7
+Sender: linux-kernel-owner@vger.kernel.org
+To: Heiko Carstens <heiko.carstens@de.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, aherrman@de.ibm.com, bunk@stusta.de, cplk@itee.uq.edu.au
 List-Id: dm-devel.ids
 
-On Wed, Nov 02, 2005 at 04:32:06PM -0500, goggin, edward wrote:
-> On Date: Mon, 31 Oct 2005 08:58:06 -0500
-> Brian Long <brilong@cisco.com> wrote 
-> 
-> > 
-> > On Wed, 2005-10-26 at 15:37 -0400, Phil Lowden (plowden) wrote:
-> > > I'm using LVM2 with device-mapper-multipath 0.4.5 on GA 
-> > RHEL 4 update 2 
-> > > release, kernel version 2.6.9-22.ELsmp.  Storage is 4 Clariion CX600
-> > > LUNs, 
-> > > 2 with a primary path on SP A and 2 on SP B.  HBAs are QLA3240 with
-> > > firmware 3.03.15 IPX and the RedHat-distributed driver version
-> > > 8.01.00b5-rh2.
+On Monday November 7, heiko.carstens@de.ibm.com wrote:
+> > > Ok, I'll dust it off, make sure it seems to work (at the time I first
+> > > wrote it, I think it caused 'md' to deadlock) and submit it.
 > > > 
-> > > When I disrupt one path by disabling a host or SP switch port,
-> > > failover works great but failback doesn't happen automatically
-> > > with the current config (below).  By this I mean
-> > > when the connection to e.g. SP B is restored, all
-> > > 4 LUNs stay trespassed to SP A.  Is this by design?
-> > > Or is there support for automatic failback, i.e.
-> > > I/O is paused and a trespass is issued to restore
-> > > the 2 SP B LUNs to their primary paths?
+> > > NeilBrown
 > > > 
-> > > Of course manual failback is possible, but without
-> > > quiescing I/O I found I was able to munge my LVM2
-> > > objects up quite nicely.  Manual failback with quiesced 
-> > > I/O is fine.
 > > 
-> > No one has automatic failback working on Clarrion storage?
+> > For your consideration and testing (it works for me, but I'd like to
+> > see it tested a bit more heavily in a variety of configurations).
 > 
-> Unfortunately, this doesn't just work "out of the box" yet.
+> Works fine for me. Thank you!
 > 
-> You need to setup a default failback setting of immediate in the
-> /etc/multipath.conf configuration file, ...
-> 
-> 	defaults {
-> 		failback 	immediate
-> 	}
-> 
-> ... or selectively set the failback setting to immediate in the
-> multipath config file for each EMC CLARiiON logical unit
-> 
-> 	multipaths {
-> 		multipath {
-> 			wwid	360061 ...
-> 			failback	immediate
-> 		}
-> 		...
-> 	}
-> 
-> Setting this attribute value for the entire EMC CLARiiON class of
-> devices via the multipath config file "device" attribute doesn't
-> work because of a bug (mpp->hwe field is never set for multipathd)
-> in the multipathd code which is patched to work by the single line
-> patch below.  Due to the same bug, a patch I submitted many weeks
-> ago to libmultipath/hwtable.c to setup the default failback policy
-> for EMC CLARiiON to immediate also does not work.
-> 
-> Once the distributors pick up both this single line change and the
-> change in hwtable.c, immediate path group failback for CLARiiON
-> will just work.
 
-These changes are both in the RHEL4 U3 code.
- 
-> -------------------------------------------------------------------
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -146,6 +146,7 @@ adopt_paths (struct vectors * vecs, stru
->  		if (!strncmp(mpp->wwid, pp->wwid, WWID_SIZE)) {
->  			condlog(4, "%s ownership set", pp->dev_t);
->  			pp->mpp = mpp;
-> +			mpp->hwe = pp->hwe;
->  		}
->  	}
->  }
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks for the feed-back.
+
+> However I noticed another recursive call while dumping all call traces:
+>  ...
+>  [<00000000001e1952>] zfcp_scsi_command_async+0xf6/0x1c4
+>  [<000000000013cd6a>] scsi_dispatch_cmd+0x1ae/0x37c
+>  [<0000000000143dc4>] scsi_request_fn+0x1dc/0x390
+>  [<000000000012f65a>] generic_unplug_device+0x2a/0x38
+>  [<0000000000181262>] dm_table_unplug_all+0x42/0x58
+>  [<000000000017e598>] dm_unplug_all+0x2c/0x44
+>  [<0000000000181262>] dm_table_unplug_all+0x42/0x58
+>  [<000000000017e598>] dm_unplug_all+0x2c/0x44
+>  [<00000000000782aa>] block_sync_page+0x4e/0x68
+>  [<00000000000514f8>] sync_page+0x48/0x68
+>  [<00000000002ab36e>] __wait_on_bit+0x9a/0xe0
+>  ...
+
+Hmm.. This (and a similar one with ->issue_flush_fn) would be a lot
+harder to unwind, but it is also much more benign.  These sorts of
+calls should always be very shallow.
+I don't think there is anything useful that can be done here, and I'm
+not convinced there is a real problem.
+It is worth noticing it and keeping it in mind though.
+
+Thanks,
+NeilBrown
