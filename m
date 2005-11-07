@@ -1,46 +1,73 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: Re: [dm-devel] Re: [PATCH resubmit] do_mount: reduce stack consumption
-Date: Mon, 7 Nov 2005 17:15:22 +0100
-Message-ID: <20051107161522.GA28164@osiris.boeblingen.de.ibm.com>
-References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com> <20051104084829.714c5dbb.akpm@osdl.org> <20051104212742.GC9222@osiris.ibm.com> <20051104235500.GE5368@stusta.de> <20051104160851.3a7463ff.akpm@osdl.org> <Pine.GSO.4.60.0511051108070.2449@mango.itee.uq.edu.au> <20051104173721.597bd223.akpm@osdl.org> <17260.17661.523593.420313@cse.unsw.edu.au> <17262.40176.342746.634262@cse.unsw.edu.au>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Getting close to RHEL4 U3 freeze
+Date: Mon, 7 Nov 2005 13:17:17 -0600
+Message-ID: <20051107191717.GB26529@phlogiston.msp.redhat.com>
+References: <20051024170054.GC19176@phlogiston.msp.redhat.com>
+	<436A9CDB.1060606@netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S964842AbVKGQP0@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <17262.40176.342746.634262@cse.unsw.edu.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, aherrman@de.ibm.com, bunk@stusta.de, cplk@itee.uq.edu.au
+In-Reply-To: <436A9CDB.1060606@netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> > Ok, I'll dust it off, make sure it seems to work (at the time I first
-> > wrote it, I think it caused 'md' to deadlock) and submit it.
-> > 
-> > NeilBrown
-> > 
+On Thu, Nov 03, 2005 at 06:27:23PM -0500, David Wysochanski wrote:
+> When's the freeze?
 > 
-> For your consideration and testing (it works for me, but I'd like to
-> see it tested a bit more heavily in a variety of configurations).
+> I have a path priority patch (for netapp targets) I'm trying to get
+> tested so I can submit it.  It's purely new code in userspace (patch
+> against multipath-tools), so hopefully non-controversial.
+> 
+> Not sure if I should kill myself or not, hence the question about
+> whether I've missed U3 freeze yet.
 
-Works fine for me. Thank you!
+If it's just a totally new path priority binary,  I can pretty easily take
+it if you get it upstream before the 15th. If you mess with the rest of the
+multipath-tools code, it depends.  I'm mostly only taking bug fixes from
+upstream now, but I'll pull in enhancements as long as they are minor changes
+and obviously correct. For these, sooner is definitely better, and they
+must be upstream before the 15th to even have a chance.
 
-However I noticed another recursive call while dumping all call traces:
- ...
- [<00000000001e1952>] zfcp_scsi_command_async+0xf6/0x1c4
- [<000000000013cd6a>] scsi_dispatch_cmd+0x1ae/0x37c
- [<0000000000143dc4>] scsi_request_fn+0x1dc/0x390
- [<000000000012f65a>] generic_unplug_device+0x2a/0x38
- [<0000000000181262>] dm_table_unplug_all+0x42/0x58
- [<000000000017e598>] dm_unplug_all+0x2c/0x44
- [<0000000000181262>] dm_table_unplug_all+0x42/0x58
- [<000000000017e598>] dm_unplug_all+0x2c/0x44
- [<00000000000782aa>] block_sync_page+0x4e/0x68
- [<00000000000514f8>] sync_page+0x48/0x68
- [<00000000002ab36e>] __wait_on_bit+0x9a/0xe0
- ...
-
-Even though there is a lot of space left on the stack (this time) I don't
-think it's desirable to have recursive calls. Especially not when going
-for 4k stacks.
-
-Heiko
+-Ben
+ 
+> Thanks.
+> 
+> Benjamin Marzinski wrote:
+> >Just to let everybody know that freeze date for Redhat Enterprise Linux 4
+> >Update 3 is getting close.  The blocker bug that is currently being used to
+> >track bugfixes and enhancements that are getting into U3 is
+> >
+> >https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=171044
+> >
+> >If anyone feels strongly that there is a bugzilla that should be on the 
+> >list,
+> >but is not, please put a comment in the 171044 bugzilla entry.  If it's an
+> >enhancement, please make sure that the enhancement description is as 
+> >specific
+> >as possible.
+> >
+> >Thanks
+> >
+> >-Ben
+> >
+> >-- 
+> >dm-devel mailing list
+> >dm-devel@redhat.com
+> >https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
