@@ -1,15 +1,14 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: Getting close to RHEL4 U3 freeze
-Date: Mon, 7 Nov 2005 13:17:17 -0600
-Message-ID: <20051107191717.GB26529@phlogiston.msp.redhat.com>
-References: <20051024170054.GC19176@phlogiston.msp.redhat.com>
-	<436A9CDB.1060606@netapp.com>
+Subject: Re: Clariion CX600 automatic failback support
+Date: Mon, 7 Nov 2005 13:25:10 -0600
+Message-ID: <20051107192510.GC26529@phlogiston.msp.redhat.com>
+References: <C2EEB4E538D3DC48BF57F391F422779321AD96@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <436A9CDB.1060606@netapp.com>
+In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AD96@SRMANNING.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,50 +21,82 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Nov 03, 2005 at 06:27:23PM -0500, David Wysochanski wrote:
-> When's the freeze?
+On Wed, Nov 02, 2005 at 04:32:06PM -0500, goggin, edward wrote:
+> On Date: Mon, 31 Oct 2005 08:58:06 -0500
+> Brian Long <brilong@cisco.com> wrote 
 > 
-> I have a path priority patch (for netapp targets) I'm trying to get
-> tested so I can submit it.  It's purely new code in userspace (patch
-> against multipath-tools), so hopefully non-controversial.
+> > 
+> > On Wed, 2005-10-26 at 15:37 -0400, Phil Lowden (plowden) wrote:
+> > > I'm using LVM2 with device-mapper-multipath 0.4.5 on GA 
+> > RHEL 4 update 2 
+> > > release, kernel version 2.6.9-22.ELsmp.  Storage is 4 Clariion CX600
+> > > LUNs, 
+> > > 2 with a primary path on SP A and 2 on SP B.  HBAs are QLA3240 with
+> > > firmware 3.03.15 IPX and the RedHat-distributed driver version
+> > > 8.01.00b5-rh2.
+> > > 
+> > > When I disrupt one path by disabling a host or SP switch port,
+> > > failover works great but failback doesn't happen automatically
+> > > with the current config (below).  By this I mean
+> > > when the connection to e.g. SP B is restored, all
+> > > 4 LUNs stay trespassed to SP A.  Is this by design?
+> > > Or is there support for automatic failback, i.e.
+> > > I/O is paused and a trespass is issued to restore
+> > > the 2 SP B LUNs to their primary paths?
+> > > 
+> > > Of course manual failback is possible, but without
+> > > quiescing I/O I found I was able to munge my LVM2
+> > > objects up quite nicely.  Manual failback with quiesced 
+> > > I/O is fine.
+> > 
+> > No one has automatic failback working on Clarrion storage?
 > 
-> Not sure if I should kill myself or not, hence the question about
-> whether I've missed U3 freeze yet.
+> Unfortunately, this doesn't just work "out of the box" yet.
+> 
+> You need to setup a default failback setting of immediate in the
+> /etc/multipath.conf configuration file, ...
+> 
+> 	defaults {
+> 		failback 	immediate
+> 	}
+> 
+> ... or selectively set the failback setting to immediate in the
+> multipath config file for each EMC CLARiiON logical unit
+> 
+> 	multipaths {
+> 		multipath {
+> 			wwid	360061 ...
+> 			failback	immediate
+> 		}
+> 		...
+> 	}
+> 
+> Setting this attribute value for the entire EMC CLARiiON class of
+> devices via the multipath config file "device" attribute doesn't
+> work because of a bug (mpp->hwe field is never set for multipathd)
+> in the multipathd code which is patched to work by the single line
+> patch below.  Due to the same bug, a patch I submitted many weeks
+> ago to libmultipath/hwtable.c to setup the default failback policy
+> for EMC CLARiiON to immediate also does not work.
+> 
+> Once the distributors pick up both this single line change and the
+> change in hwtable.c, immediate path group failback for CLARiiON
+> will just work.
 
-If it's just a totally new path priority binary,  I can pretty easily take
-it if you get it upstream before the 15th. If you mess with the rest of the
-multipath-tools code, it depends.  I'm mostly only taking bug fixes from
-upstream now, but I'll pull in enhancements as long as they are minor changes
-and obviously correct. For these, sooner is definitely better, and they
-must be upstream before the 15th to even have a chance.
-
--Ben
+These changes are both in the RHEL4 U3 code.
  
-> Thanks.
-> 
-> Benjamin Marzinski wrote:
-> >Just to let everybody know that freeze date for Redhat Enterprise Linux 4
-> >Update 3 is getting close.  The blocker bug that is currently being used to
-> >track bugfixes and enhancements that are getting into U3 is
-> >
-> >https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=171044
-> >
-> >If anyone feels strongly that there is a bugzilla that should be on the 
-> >list,
-> >but is not, please put a comment in the 171044 bugzilla entry.  If it's an
-> >enhancement, please make sure that the enhancement description is as 
-> >specific
-> >as possible.
-> >
-> >Thanks
-> >
-> >-Ben
-> >
-> >-- 
-> >dm-devel mailing list
-> >dm-devel@redhat.com
-> >https://www.redhat.com/mailman/listinfo/dm-devel
-> >
+> -------------------------------------------------------------------
+> diff --git a/multipathd/main.c b/multipathd/main.c
+> --- a/multipathd/main.c
+> +++ b/multipathd/main.c
+> @@ -146,6 +146,7 @@ adopt_paths (struct vectors * vecs, stru
+>  		if (!strncmp(mpp->wwid, pp->wwid, WWID_SIZE)) {
+>  			condlog(4, "%s ownership set", pp->dev_t);
+>  			pp->mpp = mpp;
+> +			mpp->hwe = pp->hwe;
+>  		}
+>  	}
+>  }
 > 
 > --
 > dm-devel mailing list
