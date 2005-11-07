@@ -1,13 +1,21 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: Clariion CX600 automatic failback support
-Date: Sun, 6 Nov 2005 13:29:05 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ADB3@SRMANNING.eng.emc.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: Re: [PATCH resubmit] do_mount: reduce stack consumption
+Date: Mon, 7 Nov 2005 11:16:48 +1100
+Message-ID: <17262.40176.342746.634262@cse.unsw.edu.au>
+References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
+	<20051104084829.714c5dbb.akpm@osdl.org>
+	<20051104212742.GC9222@osiris.ibm.com>
+	<20051104235500.GE5368@stusta.de>
+	<20051104160851.3a7463ff.akpm@osdl.org>
+	<Pine.GSO.4.60.0511051108070.2449@mango.itee.uq.edu.au>
+	<20051104173721.597bd223.akpm@osdl.org>
+	<17260.17661.523593.420313@cse.unsw.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: message from Neil Brown on Saturday November 5
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,65 +25,154 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Andrew Morton <akpm@osdl.org>, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, bunk@stusta.de, aherrman@de.ibm.com, cplk@itee.uq.edu.au
 List-Id: dm-devel.ids
 
-On Date: Fri, 04 Nov 2005 21:55:20 +0100
-Christophe Varoqui <christophe.varoqui@free.fr> wrote
+On Saturday November 5, neilb@suse.de wrote:
+> 
+> Ok, I'll dust it off, make sure it seems to work (at the time I first
+> wrote it, I think it caused 'md' to deadlock) and submit it.
+> 
+> NeilBrown
+> 
 
-> Subject: RE: [dm-devel] Clariion CX600 automatic failback support
-> To: device-mapper development <dm-devel@redhat.com>
-> Message-ID: <1131137721.7463.12.camel@zezette>
-> Content-Type: text/plain; charset=3Dutf-8
->=20
->=20
-> > > Yes, the test to determine if a switch is needed is sub-optimal :
-> > > The no activated PG case (all Enabled for example=C3=83=C6=92) keep=
-s=20
-> > > triggering a switch.
-> > > I checked-in a patch to solve that issue.
-> >=20
-> > I've dealt with this problem by patching the device mapper
-> > multipath driver in the kernel.
-> >=20
-> > The patch below patches drivers/md/dm-mpath.c:multipath_status()
-> > to return an active state for a path group which is either the
-> > current path group or setup to be the next path group instead
-> > of just returning an active state for a path group which is
-> > currently active.
-> >=20
-> Right, it deserved to be done.
->=20
-> I'm inclined to keep the tools patch anyway : it wastes an "int" per
-> multipath but is brain-friendlier (as it avoids using mpp->nextpg to
-> represent the current setting *and* the best-rated setting).
->=20
-> Are interested parties ok with that ?
+For your consideration and testing (it works for me, but I'd like to
+see it tested a bit more heavily in a variety of configurations).
 
-Good point.  This slightly modified patch fixes the "*and*" case by only
-returning active if either the particular path group is the current activ=
-e
-or there is no current active but the particular path group is set to be
-the next (first) deferred active path group.
+NeilBrown
 
-*** ../base/linux-2.6.14-rc4/drivers/md/dm-mpath.c	Mon Oct 10 20:19:19
-2005
---- drivers/md/dm-mpath.c	Sat Nov  5 03:02:50 2005
-***************
-*** 1158,1164 ****
-  		list_for_each_entry(pg, &m->priority_groups, list) {
-  			if (pg->bypassed)
-  				state =3D 'D';	/* Disabled */
-! 			else if (pg =3D=3D m->current_pg)
-  				state =3D 'A';	/* Currently Active */
-  			else
-  				state =3D 'E';	/* Enabled */
---- 1158,1164 ----
-  		list_for_each_entry(pg, &m->priority_groups, list) {
-  			if (pg->bypassed)
-  				state =3D 'D';	/* Disabled */
-! 			else if ((pg =3D=3D m->current_pg) || ((!m->current_pg)
-&&(pg =3D=3D m->next_pg)))
-  				state =3D 'A';	/* Currently Active */
-  			else
-  				state =3D 'E';	/* Enabled */
+--
+Reduce stack usage with stacked block devices
+
+When stacked block devices are in-use (e.g. md or dm), the recursive
+calls to generic_make_request can use up a lot of space, and we would
+rather they didn't.
+
+As generic_make_request is a void function, and as it is generally not
+expected that it will have any effect immediately, it is safe to delay
+any call to generic_make_request until there is sufficient stack space
+available.
+
+As ->bi_next is reserved for the driver to use, it can have no valid
+value when generic_make_request is called, and as __make_request
+implicitly assumes it will be NULL (ELEVATOR_BACK_MERGE fork of
+switch) we can be certain that all callers set it to NULL.  We can
+therefore safely use bi_next to link pending requests together,
+providing we clear it before making the real call.
+
+So, we choose to allow each thread to only be active in one
+generic_make_request at a time.  If a subsequent (recursive) call is
+made, the bio is linked into a per-thread list, and is handled when
+the active call completes.
+
+As the list of pending bios is per-thread, there are no locking issues
+to worry about.
+
+I say above that it is "safe to delay any call...".  There are,
+however, some behaviours of a make_request_fn which would make it
+unsafe.  These include any behaviour that assumes anything will have
+changed after a recursive call to generic_make_request.
+
+These could include:
+ - waiting for that call to finish and call it's bi_end_io function.
+   md use to sometimes do this (marking the superblock dirty before
+   completing a write) but doesn't any more
+ - inspecting the bio for fields that generic_make_request might
+   change, such as bi_sector or bi_bdev.  It is hard to see a good
+   reason for this, and I don't think anyone actually does it.
+ - inspecing the queue to see if, e.g. it is 'full' yet.  Again, I
+   think this is very unlikely to be useful, or to be done.
+
+Signed-off-by: Neil Brown <neilb@cse.unsw.edu.au>
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./drivers/block/ll_rw_blk.c |   53 +++++++++++++++++++++++++++++++++++++++++++-
+ ./include/linux/sched.h     |    3 ++
+ 2 files changed, 55 insertions(+), 1 deletion(-)
+
+diff ./drivers/block/ll_rw_blk.c~current~ ./drivers/block/ll_rw_blk.c
+--- ./drivers/block/ll_rw_blk.c~current~	2005-11-07 10:01:36.000000000 +1100
++++ ./drivers/block/ll_rw_blk.c	2005-11-07 10:33:47.000000000 +1100
+@@ -2957,7 +2957,7 @@ static void handle_bad_sector(struct bio
+  * bi_sector for remaps as it sees fit.  So the values of these fields
+  * should NOT be depended on after the call to generic_make_request.
+  */
+-void generic_make_request(struct bio *bio)
++static inline void __generic_make_request(struct bio *bio)
+ {
+ 	request_queue_t *q;
+ 	sector_t maxsector;
+@@ -3038,6 +3038,57 @@ end_io:
+ 	} while (ret);
+ }
+ 
++/*
++ * We only want one ->make_request_fn to be active at a time,
++ * else stack usage with stacked devices could be a problem.
++ * So use current->bio_{list,tail} to keep a list of requests
++ * submited by a make_request_fn function.
++ * current->bio_tail is also used as a flag to say if
++ * generic_make_request is currently active in this task or not.
++ * If it is NULL, then no make_request is active.  If it is non-NULL,
++ * then a make_request is active, and new requests should be added
++ * at the tail
++ */
++void generic_make_request(struct bio *bio)
++{
++	if (current->bio_tail) {
++		/* make_request is active */
++		*(current->bio_tail) = bio;
++		bio->bi_next = NULL;
++		current->bio_tail = &bio->bi_next;
++		return;
++	}
++	/* following loop may be a bit non-obvious, and so deserves some
++	 * explantion.
++	 * Before entering the loop, bio->bi_next is NULL (as all callers
++	 * ensure that) so we have a list with a single bio.
++	 * We pretend that we have just taken it off a longer list, so
++	 * we assign bio_list to the next (which is NULL) and bio_tail
++	 * to &bio_list, thus initialising the bio_list of new bios to be
++	 * added.  __generic_make_request may indeed add some more bios
++	 * through a recursive call to generic_make_request.  If it
++	 * did, we find a non-NULL value in bio_list and re-enter the loop
++	 * from the top.  In this case we really did just take the bio
++	 * of the top of the list (no pretending) and so fixup bio_list and
++	 * bio_tail or bi_next, and call into __generic_make_request again.
++	 *
++	 * The loop was structured like this to make only one call to
++	 * __generic_make_request (which is important as it is large and inlined)
++	 * and to keep the structure simple.
++	 */
++	BUG_ON(bio->bi_next);
++	do {
++		current->bio_list = bio->bi_next;
++		if (bio->bi_next == NULL)
++			current->bio_tail = &current->bio_list;
++		else
++			bio->bi_next = NULL;
++		__generic_make_request(bio);
++		bio = current->bio_list;
++	} while (bio);
++	current->bio_tail = NULL; /* deactivate */
++}
++
+ EXPORT_SYMBOL(generic_make_request);
+ 
+ /**
+
+diff ./include/linux/sched.h~current~ ./include/linux/sched.h
+--- ./include/linux/sched.h~current~	2005-11-07 10:01:36.000000000 +1100
++++ ./include/linux/sched.h	2005-11-07 10:02:23.000000000 +1100
+@@ -829,6 +829,9 @@ struct task_struct {
+ /* journalling filesystem info */
+ 	void *journal_info;
+ 
++/* stacked block device info */
++	struct bio *bio_list, **bio_tail;
++
+ /* VM state */
+ 	struct reclaim_state *reclaim_state;
+ 
