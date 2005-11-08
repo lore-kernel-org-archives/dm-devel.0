@@ -1,7 +1,7 @@
-From: Neil Brown <neilb@suse.de>
+From: Andrew Morton <akpm@osdl.org>
 Subject: Re: Re: [PATCH resubmit] do_mount: reduce stack consumption
-Date: Tue, 8 Nov 2005 12:03:33 +1100
-Message-ID: <17263.63845.556511.171582@cse.unsw.edu.au>
+Date: Mon, 7 Nov 2005 17:15:07 -0800
+Message-ID: <20051107171507.0b0dc83a.akpm@osdl.org>
 References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
 	<20051104084829.714c5dbb.akpm@osdl.org>
 	<20051104212742.GC9222@osiris.ibm.com>
@@ -13,12 +13,13 @@ References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
 	<17262.40176.342746.634262@cse.unsw.edu.au>
 	<20051107153706.2f3c8b67.akpm@osdl.org>
 	<436FF20D.8030200@yahoo.com.au>
+	<17263.63845.556511.171582@cse.unsw.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Nick Piggin on Tuesday November 8
+In-Reply-To: <17263.63845.556511.171582@cse.unsw.edu.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,42 +29,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nick Piggin <nickpiggin@yahoo.com.au>
-Cc: Andrew Morton <akpm@osdl.org>, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, bunk@stusta.de, dm-devel@redhat.com, aherrman@de.ibm.com, cplk@itee.uq.edu.au
+To: Neil Brown <neilb@suse.de>
+Cc: nickpiggin@yahoo.com.au, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, bunk@stusta.de, dm-devel@redhat.com, aherrman@de.ibm.com, cplk@itee.uq.edu.au
 List-Id: dm-devel.ids
 
-On Tuesday November 8, nickpiggin@yahoo.com.au wrote:
-> Andrew Morton wrote:
+Neil Brown <neilb@suse.de> wrote:
+>
+> On Tuesday November 8, nickpiggin@yahoo.com.au wrote:
+> > Andrew Morton wrote:
+> > > 
+> > > More state in the task_strut is a bit sad, but not nearly as sad as deep
+> > > recursion in our deepest codepath..
+> > > 
+> > > Possibly one could do:
+> > > 
+> > > struct make_request_state {
+> > > 	struct bio *bio_list;
+> > > 	struct bio **bio_tail;
+> > > };
+> > > 
+> > > and stick a `struct make_request_state *' into the task_struct and actually
+> > > allocate the thing on the stack.  That's not much nicer though.
 > > 
-> > More state in the task_strut is a bit sad, but not nearly as sad as deep
-> > recursion in our deepest codepath..
+> > Possibly it could go into struct io_context?
 > > 
-> > Possibly one could do:
-> > 
-> > struct make_request_state {
-> > 	struct bio *bio_list;
-> > 	struct bio **bio_tail;
-> > };
-> > 
-> > and stick a `struct make_request_state *' into the task_struct and actually
-> > allocate the thing on the stack.  That's not much nicer though.
 > 
-> Possibly it could go into struct io_context?
+> My quick reading of the code says that we could have to 
+> allocate the struct right there in generic_make_request, and I don't
+> think we can be certain that such an allocation will succeed.
+
+With this sort of lifecycle it's more appropriat to allocate the struct on
+the stack and to put a pointer to it into task_struct.
+
+> Code that uses io_context can limp along if it doesn't exist.  
+> The new generic_make_request needs this bio_list to be present 
+> or it cannot do it's job.
 > 
+> Just how tight are we for space in task_struct?
 
-My quick reading of the code says that we could have to 
-allocate the struct right there in generic_make_request, and I don't
-think we can be certain that such an allocation will succeed.
+I don't recall anyone getting outraged about it.
 
-Code that uses io_context can limp along if it doesn't exist.  
-The new generic_make_request needs this bio_list to be present 
-or it cannot do it's job.
+>  It seems to have a
+> fair amount of cruft in it.
 
-Just how tight are we for space in task_struct?  It seems to have a
-fair amount of cruft in it.
-Is it getting close to one-page or something?
-Can we just split the less interesting stuff up into a separate
-structure, allocate a separate page for that are fork time, and leave 
-just a pointer in the task_struct?
+yup.
 
-NeilBrown
+> Is it getting close to one-page or something?
+
+1280 bytes on my x86
+
+> Can we just split the less interesting stuff up into a separate
+> structure, allocate a separate page for that are fork time, and leave 
+> just a pointer in the task_struct?
+
+Something like that, if it becomes a problem.
+
+Probably there are various deporking opportunities in there.
