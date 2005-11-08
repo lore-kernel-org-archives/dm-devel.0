@@ -1,87 +1,42 @@
-From: Andrew Morton <akpm@osdl.org>
-Subject: Re: Re: [PATCH resubmit] do_mount: reduce stack consumption
-Date: Mon, 7 Nov 2005 17:15:07 -0800
-Message-ID: <20051107171507.0b0dc83a.akpm@osdl.org>
-References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>
-	<20051104084829.714c5dbb.akpm@osdl.org>
-	<20051104212742.GC9222@osiris.ibm.com>
-	<20051104235500.GE5368@stusta.de>
-	<20051104160851.3a7463ff.akpm@osdl.org>
-	<Pine.GSO.4.60.0511051108070.2449@mango.itee.uq.edu.au>
-	<20051104173721.597bd223.akpm@osdl.org>
-	<17260.17661.523593.420313@cse.unsw.edu.au>
-	<17262.40176.342746.634262@cse.unsw.edu.au>
-	<20051107153706.2f3c8b67.akpm@osdl.org>
-	<436FF20D.8030200@yahoo.com.au>
-	<17263.63845.556511.171582@cse.unsw.edu.au>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Nick Piggin <nickpiggin@yahoo.com.au>
+Subject: Re: [dm-devel] Re: [PATCH resubmit] do_mount: reduce stack consumption
+Date: Tue, 08 Nov 2005 12:37:30 +1100
+Message-ID: <4370015A.8010402@yahoo.com.au>
+References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>	<20051104084829.714c5dbb.akpm@osdl.org>	<20051104212742.GC9222@osiris.ibm.com>	<20051104235500.GE5368@stusta.de>	<20051104160851.3a7463ff.akpm@osdl.org>	<Pine.GSO.4.60.0511051108070.2449@mango.itee.uq.edu.au>	<20051104173721.597bd223.akpm@osdl.org>	<17260.17661.523593.420313@cse.unsw.edu.au>	<17262.40176.342746.634262@cse.unsw.edu.au>	<20051107153706.2f3c8b67.akpm@osdl.org>	<436FF20D.8030200@yahoo.com.au> <17263.63845.556511.171582@cse.unsw.edu.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965100AbVKHBhM@vger.kernel.org>
 In-Reply-To: <17263.63845.556511.171582@cse.unsw.edu.au>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Neil Brown <neilb@suse.de>
-Cc: nickpiggin@yahoo.com.au, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, bunk@stusta.de, dm-devel@redhat.com, aherrman@de.ibm.com, cplk@itee.uq.edu.au
+Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, aherrman@de.ibm.com, bunk@stusta.de, cplk@itee.uq.edu.au
 List-Id: dm-devel.ids
 
-Neil Brown <neilb@suse.de> wrote:
->
+Neil Brown wrote:
 > On Tuesday November 8, nickpiggin@yahoo.com.au wrote:
-> > Andrew Morton wrote:
-> > > 
-> > > More state in the task_strut is a bit sad, but not nearly as sad as deep
-> > > recursion in our deepest codepath..
-> > > 
-> > > Possibly one could do:
-> > > 
-> > > struct make_request_state {
-> > > 	struct bio *bio_list;
-> > > 	struct bio **bio_tail;
-> > > };
-> > > 
-> > > and stick a `struct make_request_state *' into the task_struct and actually
-> > > allocate the thing on the stack.  That's not much nicer though.
-> > 
-> > Possibly it could go into struct io_context?
-> > 
+
+>>Possibly it could go into struct io_context?
+>>
+> 
 > 
 > My quick reading of the code says that we could have to 
 > allocate the struct right there in generic_make_request, and I don't
 > think we can be certain that such an allocation will succeed.
-
-With this sort of lifecycle it's more appropriat to allocate the struct on
-the stack and to put a pointer to it into task_struct.
-
+> 
 > Code that uses io_context can limp along if it doesn't exist.  
 > The new generic_make_request needs this bio_list to be present 
 > or it cannot do it's job.
 > 
-> Just how tight are we for space in task_struct?
 
-I don't recall anyone getting outraged about it.
+You can ask for the io context without having a request. However,
+there is nothing like a mempool for them so code really should be
+able to limp along without them.
 
->  It seems to have a
-> fair amount of cruft in it.
+I guess it would be silly to require such an allocation to succeed
+here, because the block layer is pretty free of OOM deadlocks.
 
-yup.
+-- 
+SUSE Labs, Novell Inc.
 
-> Is it getting close to one-page or something?
-
-1280 bytes on my x86
-
-> Can we just split the less interesting stuff up into a separate
-> structure, allocate a separate page for that are fork time, and leave 
-> just a pointer in the task_struct?
-
-Something like that, if it becomes a problem.
-
-Probably there are various deporking opportunities in there.
+Send instant messages to your online friends http://au.messenger.yahoo.com 
