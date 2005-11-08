@@ -1,42 +1,63 @@
-From: Nick Piggin <nickpiggin@yahoo.com.au>
-Subject: Re: [dm-devel] Re: [PATCH resubmit] do_mount: reduce stack consumption
-Date: Tue, 08 Nov 2005 12:37:30 +1100
-Message-ID: <4370015A.8010402@yahoo.com.au>
-References: <20051104105026.GA12476@osiris.boeblingen.de.ibm.com>	<20051104084829.714c5dbb.akpm@osdl.org>	<20051104212742.GC9222@osiris.ibm.com>	<20051104235500.GE5368@stusta.de>	<20051104160851.3a7463ff.akpm@osdl.org>	<Pine.GSO.4.60.0511051108070.2449@mango.itee.uq.edu.au>	<20051104173721.597bd223.akpm@osdl.org>	<17260.17661.523593.420313@cse.unsw.edu.au>	<17262.40176.342746.634262@cse.unsw.edu.au>	<20051107153706.2f3c8b67.akpm@osdl.org>	<436FF20D.8030200@yahoo.com.au> <17263.63845.556511.171582@cse.unsw.edu.au>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: [2.6 patch] drivers/md/kcopyd.c: remove kcopyd_cancel()
+Date: Tue, 8 Nov 2005 14:44:19 +0100
+Message-ID: <20051108134419.GR3847@stusta.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965100AbVKHBhM@vger.kernel.org>
-In-Reply-To: <17263.63845.556511.171582@cse.unsw.edu.au>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com, heiko.carstens@de.ibm.com, linux-kernel@vger.kernel.org, aherrman@de.ibm.com, bunk@stusta.de, cplk@itee.uq.edu.au
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Andrew Morton <akpm@osdl.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Neil Brown wrote:
-> On Tuesday November 8, nickpiggin@yahoo.com.au wrote:
+A function that is
+- not used
+- empty
+- without a prototype in any header file
+should be removed.
 
->>Possibly it could go into struct io_context?
->>
-> 
-> 
-> My quick reading of the code says that we could have to 
-> allocate the struct right there in generic_make_request, and I don't
-> think we can be certain that such an allocation will succeed.
-> 
-> Code that uses io_context can limp along if it doesn't exist.  
-> The new generic_make_request needs this bio_list to be present 
-> or it cannot do it's job.
-> 
 
-You can ask for the io context without having a request. However,
-there is nothing like a mempool for them so code really should be
-able to limp along without them.
+Signed-off-by: Adrian Bunk <bunk@stusta.de>
 
-I guess it would be silly to require such an allocation to succeed
-here, because the block layer is pretty free of OOM deadlocks.
+---
 
--- 
-SUSE Labs, Novell Inc.
+This patch was already sent on:
+- 5 Nov 2005
 
-Send instant messages to your online friends http://au.messenger.yahoo.com 
+ drivers/md/kcopyd.c |   11 -----------
+ 1 file changed, 11 deletions(-)
+
+--- linux-2.6.14-rc5-mm1-full/drivers/md/kcopyd.c.old	2005-11-05 16:36:11.000000000 +0100
++++ linux-2.6.14-rc5-mm1-full/drivers/md/kcopyd.c	2005-11-05 17:04:45.000000000 +0100
+@@ -558,16 +558,6 @@
+ 	return 0;
+ }
+ 
+-/*
+- * Cancels a kcopyd job, eg. someone might be deactivating a
+- * mirror.
+- */
+-int kcopyd_cancel(struct kcopyd_job *job, int block)
+-{
+-	/* FIXME: finish */
+-	return -1;
+-}
+-
+ /*-----------------------------------------------------------------
+  * Unit setup
+  *---------------------------------------------------------------*/
+@@ -685,4 +675,3 @@
+ EXPORT_SYMBOL(kcopyd_client_create);
+ EXPORT_SYMBOL(kcopyd_client_destroy);
+ EXPORT_SYMBOL(kcopyd_copy);
+-EXPORT_SYMBOL(kcopyd_cancel);
