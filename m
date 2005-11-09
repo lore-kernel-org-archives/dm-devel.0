@@ -1,15 +1,12 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: Re: [PATCH RFC 0/2] dm-mp netlink events
-Date: Wed, 9 Nov 2005 09:26:32 -0800
-Message-ID: <20051109172632.GB16171@us.ibm.com>
-References: <20051109075423.GA11492@us.ibm.com>
-	<20051109091000.GA16793@free.fr>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: improved daemon setup
+Date: Wed, 9 Nov 2005 16:00:16 -0600
+Message-ID: <20051109220015.GD26529@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="OXfL5xGRrasGEqWY"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20051109091000.GA16793@free.fr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,27 +19,105 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Christophe Varoqui <christophe.varoqui@free.fr> wrote:
-> Would uevents work instead of yet another Netlink wire ?
-> The multipath daemon already listens for uevents ...
 
-I general similar information could have been sent using the uevents
-netlink. Though changes would be needed in kobject_uevent to allow more
-event data to be passed in the events environmental data. Also while we
-could generate events against /sys/block/dm-* it might be more interesting
-if we had more detailed kobjects in the sysfs tree to generate events
-against, but that is a larger change.
+--OXfL5xGRrasGEqWY
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-The reason I decide to use a different netlink number was that I was trying
-to use a event method that would have a higher chance of working under low
-memory conditions (i.e. the skb mempool). I also used unicast instead of
-broadcast. When using netlink_broadcast I could not control the memory
-allocation in the skb_clone. While skb_clone just clones the header so it
-would me a smaller allocation and you can pass in the flags for the
-allocation I was still concerned that this might not work in low memory
-cases.
+If you log into a machine and start the multipathd daemon, you will hang on
+logout, because multipathd doesn't fully detach itself from the calling
+processes. Also, occasionally the device mapper library functions will print
+error messages to stdout.  These appear in the terminal that was used to
+start multipathd, if it was started by hand (not by init scripts).  To fix these
+I added some code to fully daemonize multipathd, and redirect stdout and
+stderr to /dev/console.
 
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+--OXfL5xGRrasGEqWY
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="daemonize.patch"
+
+diff -urpN a/multipathd/main.c b/multipathd/main.c
+--- a/multipathd/main.c	2005-11-07 12:13:07.000000000 -0600
++++ b/multipathd/main.c	2005-11-09 14:52:36.000000000 -0600
+@@ -3,6 +3,9 @@
+ #include <libdevmapper.h>
+ #include <wait.h>
+ #include <sys/mman.h>
++#include <sys/types.h>
++#include <fcntl.h>
++#include <errno.h>
+ 
+ /*
+  * libsysfs
+@@ -1559,6 +1562,53 @@ child (void * param)
+ 	exit(0);
+ }
+ 
++static int
++daemonize(void)
++{
++	int pid, i;
++	int in_fd, out_fd;
++
++	if( (pid = fork()) < 0){
++		fprintf(stderr, "Failed first fork : %s\n", strerror(errno));
++		return -1;
++	}
++	else if (pid != 0)
++		return pid;
++
++	setsid();
++
++	if ( (pid = fork()) < 0)
++		fprintf(stderr, "Failed second fork : %s\n", strerror(errno));
++	else if (pid != 0)
++		_exit(0);
++
++	in_fd = open("/dev/null", O_RDONLY);
++	if (in_fd < 0){
++		fprintf(stderr, "cannot open /dev/null for input : %s\n",
++			strerror(errno));
++		_exit(0);
++	}
++	out_fd = open("/dev/console", O_WRONLY);
++	if (out_fd < 0){
++		fprintf(stderr, "cannot open /dev/console for output : %s\n",
++			strerror(errno));
++		_exit(0);
++	}
++
++	close(STDIN_FILENO);
++	dup(in_fd);
++	close(STDOUT_FILENO);
++	dup(out_fd);
++	close(STDERR_FILENO);
++	dup(out_fd);
++
++	close(in_fd);
++	close(out_fd);
++	chdir("/");
++	umask(0);
++	return 0;
++}
++
+ int
+ main (int argc, char *argv[])
+ {
+@@ -1607,7 +1657,7 @@ main (int argc, char *argv[])
+ 	if (!logsink)
+ 		err = 0;
+ 	else
+-		err = fork();
++		err = daemonize();
+ 	
+ 	if (err < 0)
+ 		/* error */
+
+--OXfL5xGRrasGEqWY
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--OXfL5xGRrasGEqWY--
