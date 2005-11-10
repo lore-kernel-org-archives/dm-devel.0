@@ -1,41 +1,50 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: improved daemon setup
-Date: Wed, 09 Nov 2005 23:50:55 +0100
-Message-ID: <1131576656.7463.59.camel@zezette>
-References: <20051109220015.GD26529@phlogiston.msp.redhat.com>
-Reply-To: christophe.varoqui@free.fr,
-	device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: New LVM2/device-mapper development tarballs
+Date: Thu, 10 Nov 2005 15:52:47 +0000
+Message-ID: <20051110155247.GH26394@agk.surrey.redhat.com>
+Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20051109220015.GD26529@phlogiston.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-lvm-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-lvm>
+List-Post: <mailto:linux-lvm@redhat.com>
+List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
+Sender: linux-lvm-bounces@redhat.com
+Errors-To: linux-lvm-bounces@redhat.com
+To: dm-devel@redhat.com, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-On mer, 2005-11-09 at 16:00 -0600, Benjamin Marzinski wrote:
-> If you log into a machine and start the multipathd daemon, you will hang on
-> logout, because multipathd doesn't fully detach itself from the calling
-> processes. Also, occasionally the device mapper library functions will print
-> error messages to stdout.  These appear in the terminal that was used to
-> start multipathd, if it was started by hand (not by init scripts).  To fix these
-> I added some code to fully daemonize multipathd, and redirect stdout and
-> stderr to /dev/console.
-> --
-Thanks, applied.
+I have just created new tarballs from CVS for testing
+purposes:
 
-BTW, Ed has to add a EMC copyright notice in multipathd/main.c
-So I seeded the header with my copyright.
-You can send a patch adding yours or Redhat's too ...
+  ftp://sources.redhat.com/pub/dm/device-mapper.1.02.00.tgz
+  ftp://sources.redhat.com/pub/lvm2/LVM2.2.02.00.tgz
 
-Regards,
-cvaroqui
+There are some significant extensions to libdevmapper and 
+the code that activates logical volumes has been rewritten
+to prepare for kernel patches to fix snapshot activation.
+The new code will also make it possible to support more
+complex device hierarchies in the future, such as snapshots 
+of mirrors.
+
+So far I've done some basic testing, but I expect there
+are still plenty more bugs to be found: If you find any,
+please report them to one of these lists!
+
+(Note that you'll need to install the new device-mapper package
+before the new LVM2 one.)
+
+Alasdair
+-- 
+agk@redhat.com
+
+_______________________________________________
+linux-lvm mailing list
+linux-lvm@redhat.com
+https://www.redhat.com/mailman/listinfo/linux-lvm
+read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
