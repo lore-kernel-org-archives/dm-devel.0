@@ -1,18 +1,12 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: Clariion CX600 automatic failback support
-Date: Thu, 10 Nov 2005 20:24:55 +0100
-Message-ID: <200511102024.55481.bernd@bzed.de>
-References: <C2EEB4E538D3DC48BF57F391F422779321ADAC@SRMANNING.eng.emc.com>
-	<200511050103.58170.bernd@bzed.de>
-	<1131193587.7463.16.camel@zezette>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: patch to bus_add_device to delay call to device_attach
+	till after "bus" and bus id sym links are set up
+Date: Thu, 10 Nov 2005 15:03:53 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ADE3@srmanning.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1131193587.7463.16.camel@zezette>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,29 +16,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Cc: Greg KH <greg@kroah.com>
 List-Id: dm-devel.ids
 
-Hi,
+Resend (hopefully) without line wrap.
 
-> Want to write a regression test ?
+Patch to drivers/base/bus.c:bus_add_device to delay the driver_attach
+call until after the "bus" and bus_id symbolic links for the device exist
+so that a hotplug/uevent handler will not fail to find these links already
+established for a newly added device.
 
-Doubt that's really neccessary - at least not for us (which means I'll have to 
-work on the other waiting projects first before doing anything else here). 
-Due to the lack of the company where we've bought the machine (unfortunately 
-not directly from EMC) in supporting us with their own 
-closed-source-multipath-modules for an actual kernel.org kernel it took me 
-more time than planned to get the CX running stable again. Many thanks again 
-to Christophe, Edward and Kevin for the support & patches!
-
-Within the next week I'll update your wiki with a completion of the 
-DebianInstall page, which will include a link to an updated multipath-tools 
-package (latest git) for Debian Sarge.
-
-A few minutes ago I've added the CX to 
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments - I 
-hope it'll be useful. Please let me know if I've forgotten anything.
-
-Thanks again,
-
-Bernd
+--- ../base/linux-2.6.14-rc4/drivers/base/bus.c	2005-10-10
+20:19:19.000000000 -0500
++++ drivers/base/bus.c	2005-11-03 13:32:02.000000000 -0600
+@@ -359,13 +359,13 @@ int bus_add_device(struct device * dev)
+ 
+ 	if (bus) {
+ 		pr_debug("bus %s: add device %s\n", bus->name, dev->bus_id);
+-		device_attach(dev);
+ 		klist_add_tail(&dev->knode_bus, &bus->klist_devices);
+ 		error = device_add_attrs(bus, dev);
+ 		if (!error) {
+ 			sysfs_create_link(&bus->devices.kobj, &dev->kobj,
+dev->bus_id);
+ 			sysfs_create_link(&dev->kobj,
+&dev->bus->subsys.kset.kobj, "bus");
+ 		}
++		device_attach(dev);
+ 	}
+ 	return error;
+ }
