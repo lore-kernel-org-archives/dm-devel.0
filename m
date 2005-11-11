@@ -1,8 +1,8 @@
 From: "goggin, edward" <egoggin@emc.com>
-Subject: RE: patch to dm.c to delay add_disk call for new mappe
-	d device till a fter device's map is loaded
-Date: Thu, 10 Nov 2005 20:21:29 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ADEA@srmanning.eng.emc.com>
+Subject: RE: patch to enable creating device attributes before
+	exporting h otpl ug/uevent for device kobject
+Date: Thu, 10 Nov 2005 20:34:42 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ADEB@srmanning.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -16,72 +16,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'Alasdair G Kergon' <agk@redhat.com>
+To: 'Greg KH' <greg@kroah.com>
 Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 > -----Original Message-----
-> From: Alasdair G Kergon [mailto:agk@redhat.com] 
-> Sent: Thursday, November 10, 2005 6:22 PM
+> From: Greg KH [mailto:greg@kroah.com] 
+> Sent: Thursday, November 10, 2005 5:38 PM
 > To: goggin, edward
 > Cc: 'dm-devel@redhat.com'
-> Subject: Re: [dm-devel] patch to dm.c to delay add_disk call 
-> for new mapped device till a fter device's map is loaded
+> Subject: Re: patch to enable creating device attributes 
+> before exporting hotpl ug/uevent for device kobject
 > 
-> On Thu, Nov 10, 2005 at 01:53:53PM -0500, goggin, edward wrote:
-> > Patch to dm.c to delay the add_disk call for a newly 
-> created mapped device
-> > until after the mapped device's map is loaded for the first 
-> time in dev_load
-> > so that an a hotplug/uevent handler will not fail to 
-> acquire information
-> > about
-> > the mapped device's map.
->  
-> I'm not keen on this one yet - I can see the problem, but 
-> uevent is asynchronous
-> so I'm not sure where the right place to fix this is.
-
-I'm not either.
-
-> [By the time the handler runs, anything could have happened 
-> to the device's 
-> state - the device could even have been deleted.  So when the 
-> handler runs it
-> can make *no* assumptions about the state of the device.  
-> Particularly as
-> uevents can get lost.]
-
-I don't disagree with any of this.  But, without this change or
-something like it, a call to dm to get information about the
-mapped device associated with a uevent add event can fail even
-without any of these atypical occurrences.  How is the uevent
-handling code to differentiate one of the cases you describe
-above from the case my patch is trying to fix.  It is difficult
-to do without writing code to delay and retry on error.  This
-is ugly code and must be written in every uevent handler for
-these events.
-
+> On Thu, Nov 10, 2005 at 03:08:53PM -0500, goggin, edward wrote:
+> > In order to guarantee visibility through Sysfs of device 
+> attributes for
+> > uevent/hotplug handlers, I've changed drivers/base/core.c:device_add
+> > from calling kobject_register() before adding attributes to 
+> the device
+> > kobject to instead
+> > 
+> > 	(1) call kobject_add(),
+> > 
+> > 	(2) add the device attributes to the device kobject, and
+> > 
+> > 	(3) call kobject_hotplug() to export the kobject ONLY AFTER the
+> > attributes
+> > 	are added to the device object.
+> > 
+> > Also, changed scsi_sysfs_add_sdev() to follow this new 
+> sequence for creating
+> > scsi device objects.
 > 
-> If the handler wants to know what type of table, then it 
-> should be notified
-> every time a new table goes live - separately from when the 
-> device is created.
+> Ick.  First a few general comments on procedure:
+>   - please CC: linux-hotplug devel, or linux-kernel with core 
+> stuff like
+>     this.
 
-I see that as a different issue.  This change is to enable a uevent
-handler to deterministically tell if a one of the conditions you
-cite above occurred (device was deleted before uevent handler got
-to call into dm) without sleeping and retrying.
+OK.  Thanks.
+
+>   - your patch was line-wrapped, and could not be applied :(
+
+I'm having a terrible time with the line-wrapping.  I'll work on it.
+
+>   - No Signed-off-by: line as per the rules specified in
+>     Documentation/SubmittingPatches.
+
+Guilty as charged.  I'll read Documentation/SubmittingPatches.  Thanks.
 
 > 
-> If the uuid holds the 'creating subsystem' as a prefix then 
-> that's sufficient to
-> identify it as multipath or EVMS or LVM2 etc. rather than 
-> looking for a map.
+> Ok, now, what exactly are you trying to solve here?  With 2.6.14 and
+> udev handling the hotplug control, you should not see any need for a
+> change like this.
+
+The multipathd uevent handler is sometimes failing to find attribute files
+for scsi sysfs kobjects like those found under /sys/block/sda/device/
+because
+these sysfs attributes are created after the kobject is added to sysfs.
+Hotplug
+and udev are not involved.
+
 > 
-> And for snapshots, issuing a uevent when a table is activated 
-> may risk problems
-> - it needs thinking through.
+> thanks,
 > 
-> Alasdair
+> greg k-h
 > 
