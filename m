@@ -1,41 +1,47 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: Automatic failback with multipath
-Date: Fri, 11 Nov 2005 18:49:34 +0100
-Message-ID: <200511111849.35565.bernd@bzed.de>
-References: <200511111721.jABHLQto010050@mh0.sv.mailhost.seagate.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: [ANNOUNCE] multipath-tools-0.4.6
+Date: Fri, 11 Nov 2005 23:05:27 +0100
+Message-ID: <1131746727.7463.96.camel@zezette>
+Reply-To: christophe.varoqui@free.fr
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200511111721.jABHLQto010050@mh0.sv.mailhost.seagate.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "linux-hotplug-devel@lists.sourceforge.net" <linux-hotplug-devel@lists.sourceforge.net>, "linux-raid@vger.kernel.org" <linux-raid@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi,
+Hello,
 
-> Any help would be appreciated.
+here goes multipath-tools-0.4.6.
 
-You should definitely use actual multipath-tools, best is to get them from git 
-and compile them. If you have trouble with that send me the output of your 
-compiler and I'll try to figure out what's wrong. Also check
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments
-- at the bottom of the page is my short summary about running an EMC CX with 
-multipath-tools - at least what I've figured out. There's also a link to a 
-longer thread on the dm-devel list, you probably want to read it.
+Distributors using mostly-unmodified upstream package are encouraged to
+upgrade. This version brings important bugfixes and nice new features,
+including :
+
+* add/del cli commands accept map names as param
+  * new add "reinstate/fail" cli commands
+  * new add "suspend/resume" cli commands
+  * extended information display in "show map/paths" cli commands
+  * fix thread reaping logic
+  * user friendly map names (mpath[0..n]) without alias defines (!!!
+    warning : chances are your current device naming will change !!!)
+  * option to disable io queueing if no valid path after a delay
+  * vendor/product as regexp in config file
+  * set devmap uuid as multipath wwid
+  * move hotplug logic to udev's rules.d/
+  * configlets now adds up or replace the hardcoded ones
+  * ALUA prioritizer update
+  * option to use priorities as weights in the round-robin scheduler
+  * add the directio checker
+
+As usual, doc and download at :
+http://christophe.varoqui.free.fr/
+
+Archive mirror at ftp://sources.redhat.com/pub/dm/multipath-tools/
+
+Regards,
+cvaroqui
 
 
-Bye,
-
-Bernd
