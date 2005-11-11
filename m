@@ -1,12 +1,12 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: two minor multipath tools fixes
-Date: Thu, 10 Nov 2005 18:08:32 -0600
-Message-ID: <20051111000832.GA9399@phlogiston.msp.redhat.com>
+From: "goggin, edward" <egoggin@emc.com>
+Subject: RE: patch to dm.c to delay add_disk call for new mappe
+	d device till a fter device's map is loaded
+Date: Thu, 10 Nov 2005 20:21:29 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321ADEA@srmanning.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="n8g4imXOkfNTN/H1"
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,59 +16,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: 'Alasdair G Kergon' <agk@redhat.com>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+> -----Original Message-----
+> From: Alasdair G Kergon [mailto:agk@redhat.com] 
+> Sent: Thursday, November 10, 2005 6:22 PM
+> To: goggin, edward
+> Cc: 'dm-devel@redhat.com'
+> Subject: Re: [dm-devel] patch to dm.c to delay add_disk call 
+> for new mapped device till a fter device's map is loaded
+> 
+> On Thu, Nov 10, 2005 at 01:53:53PM -0500, goggin, edward wrote:
+> > Patch to dm.c to delay the add_disk call for a newly 
+> created mapped device
+> > until after the mapped device's map is loaded for the first 
+> time in dev_load
+> > so that an a hotplug/uevent handler will not fail to 
+> acquire information
+> > about
+> > the mapped device's map.
+>  
+> I'm not keen on this one yet - I can see the problem, but 
+> uevent is asynchronous
+> so I'm not sure where the right place to fix this is.
 
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+I'm not either.
 
-There was a spot where multipathd's reply length forgot to count the NULL,
-and I noticed that the way domap go rewritten, the dry-run option doesn't
-print out the maps.
+> [By the time the handler runs, anything could have happened 
+> to the device's 
+> state - the device could even have been deleted.  So when the 
+> handler runs it
+> can make *no* assumptions about the state of the device.  
+> Particularly as
+> uevents can get lost.]
 
-This patch fixes both.
+I don't disagree with any of this.  But, without this change or
+something like it, a call to dm to get information about the
+mapped device associated with a uevent add event can fail even
+without any of these atypical occurrences.  How is the uevent
+handling code to differentiate one of the cases you describe
+above from the case my patch is trying to fix.  It is difficult
+to do without writing code to delay and retry on error.  This
+is ugly code and must be written in every uevent handler for
+these events.
 
--Ben
+> 
+> If the handler wants to know what type of table, then it 
+> should be notified
+> every time a new table goes live - separately from when the 
+> device is created.
 
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="cli_dry_run.patch"
+I see that as a different issue.  This change is to enable a uevent
+handler to deterministically tell if a one of the conditions you
+cite above occurred (device was deleted before uevent handler got
+to call into dm) without sleeping and retrying.
 
-diff -urpN mp-devel/multipath/main.c mp-devel-patched/multipath/main.c
---- mp-devel/multipath/main.c	2005-11-07 12:13:07.000000000 -0600
-+++ mp-devel-patched/multipath/main.c	2005-11-10 18:23:46.000000000 -0600
-@@ -626,8 +626,10 @@ domap (struct multipath * mpp)
- 	/*
- 	 * last chance to quit before touching the devmaps
- 	 */
--	if (conf->dry_run)
-+	if (conf->dry_run) {
-+		print_mp(mpp);
- 		return 0;
-+	}
- 
- 	switch (mpp->action) {
- 	case ACT_NOTHING:
-diff -urpN mp-devel/multipathd/cli.c mp-devel-patched/multipathd/cli.c
---- mp-devel/multipathd/cli.c	2005-11-01 18:41:23.000000000 -0600
-+++ mp-devel-patched/multipathd/cli.c	2005-11-10 18:23:34.000000000 -0600
-@@ -314,7 +314,7 @@ parse_cmd (char * cmd, char ** reply, in
- 
- 	if (!cmdvec) {
- 		*reply = genhelp_handler();
--		*len = strlen(*reply);
-+		*len = strlen(*reply) + 1;
- 		return 0;
- 	}
- 
-
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---n8g4imXOkfNTN/H1--
+> 
+> If the uuid holds the 'creating subsystem' as a prefix then 
+> that's sufficient to
+> identify it as multipath or EVMS or LVM2 etc. rather than 
+> looking for a map.
+> 
+> And for snapshots, issuing a uevent when a table is activated 
+> may risk problems
+> - it needs thinking through.
+> 
+> Alasdair
+> 
