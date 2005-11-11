@@ -1,14 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: how to get mapped device name given its uuid?
-Date: Thu, 10 Nov 2005 23:30:11 +0000
-Message-ID: <20051110233011.GM26394@agk.surrey.redhat.com>
-References: <C2EEB4E538D3DC48BF57F391F422779321ADE6@srmanning.eng.emc.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: two minor multipath tools fixes
+Date: Thu, 10 Nov 2005 18:08:32 -0600
+Message-ID: <20051111000832.GA9399@phlogiston.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="n8g4imXOkfNTN/H1"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321ADE6@srmanning.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,19 +16,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "goggin, edward" <egoggin@emc.com>
-Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Nov 10, 2005 at 03:33:41PM -0500, goggin, edward wrote:
-> Is there a dm library interface to get the name for a dm device given its
-> uuid?
+
+--n8g4imXOkfNTN/H1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+
+There was a spot where multipathd's reply length forgot to count the NULL,
+and I noticed that the way domap go rewritten, the dry-run option doesn't
+print out the maps.
+
+This patch fixes both.
+
+-Ben
+
+--n8g4imXOkfNTN/H1
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="cli_dry_run.patch"
+
+diff -urpN mp-devel/multipath/main.c mp-devel-patched/multipath/main.c
+--- mp-devel/multipath/main.c	2005-11-07 12:13:07.000000000 -0600
++++ mp-devel-patched/multipath/main.c	2005-11-10 18:23:46.000000000 -0600
+@@ -626,8 +626,10 @@ domap (struct multipath * mpp)
+ 	/*
+ 	 * last chance to quit before touching the devmaps
+ 	 */
+-	if (conf->dry_run)
++	if (conf->dry_run) {
++		print_mp(mpp);
+ 		return 0;
++	}
  
-From userspace, yes.
-(libdevmapper equivalent of: dmsetup info -u <uuid>)
+ 	switch (mpp->action) {
+ 	case ACT_NOTHING:
+diff -urpN mp-devel/multipathd/cli.c mp-devel-patched/multipathd/cli.c
+--- mp-devel/multipathd/cli.c	2005-11-01 18:41:23.000000000 -0600
++++ mp-devel-patched/multipathd/cli.c	2005-11-10 18:23:34.000000000 -0600
+@@ -314,7 +314,7 @@ parse_cmd (char * cmd, char ** reply, in
+ 
+ 	if (!cmdvec) {
+ 		*reply = genhelp_handler();
+-		*len = strlen(*reply);
++		*len = strlen(*reply) + 1;
+ 		return 0;
+ 	}
+ 
 
-In kernel - no, but we could add one based on find_device().
+--n8g4imXOkfNTN/H1
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Alasdair
--- 
-agk@redhat.com
+
+--n8g4imXOkfNTN/H1--
