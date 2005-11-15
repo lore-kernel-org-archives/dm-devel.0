@@ -1,12 +1,11 @@
-From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Subject: bugzilla ID for submitting ioctl requests.
-Date: Fri, 11 Nov 2005 20:03:17 +0530
-Message-ID: <3456F611E9329441B12FBB24447B3FA002FBFC34@bgeexc01.asiapacific.cpqcorp.net>
+From: sivaram ch <srr_kernel@yahoo.co.in>
+Subject: Req: Details on Multipath-i/o FX-HBA
+Date: Tue, 15 Nov 2005 06:04:11 +0000 (GMT)
+Message-ID: <20051115060411.13318.qmail@web8609.mail.in.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0780849310=="
+Content-Type: multipart/mixed; boundary="===============1599285194=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,152 +15,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+--===============1599285194==
+Content-Type: multipart/alternative; boundary="0-1646793910-1132034651=:12682"
+Content-Transfer-Encoding: 7bit
 
---===============0780849310==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C5E6CC.DBCF1EA8"
-
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C5E6CC.DBCF1EA8
-Content-Type: text/plain;
-	charset="us-ascii"
+--0-1646793910-1132034651=:12682
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-Yesterday, Alasdair was pointing out a particular bugzilla ID for
-submitting specific ioctl requests to be supported on DM multipath
-target.
+Hello,
 
-The 2 bugzilla ID's which discuss about ioctls ID's are: 171318
-<https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=3D171318>  and
-168801 <https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=3D168801>=20
+this is siva ,  i have some drought on Multipath i/o. If you  know=20
+please send the details.
 
 =20
 
-Let me know, which I need to refer for submission.
+1. Linux 2.6 supporting multpath  i/o  but why different companies=20
+release their own products like (powepath- from EMC.).
 
-Thanks,
--Murthy
+2. What is main difference between these two?
+
+3. And if you have any data on multipath i/o  and fiber channel HBA=20
+please send.
+
+=20
+
+=20
+
+Thank & Regards
+
+siva
 
 =20
 
 
-------_=_NextPart_001_01C5E6CC.DBCF1EA8
-Content-Type: text/html;
-	charset="us-ascii"
+	=09
+---------------------------------
+ Enjoy this Diwali with Y! India Click here
+--0-1646793910-1132034651=:12682
+Content-Type: text/html; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
-charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:"MS Sans Serif";
-	panose-1:0 0 0 0 0 0 0 0 0 0;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-p
-	{mso-margin-top-alt:auto;
-	margin-right:0in;
-	mso-margin-bottom-alt:auto;
-	margin-left:0in;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"MS Sans Serif";
-	color:windowtext;
-	font-weight:normal;
-	font-style:normal;
-	text-decoration:none none;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-
-</head>
-
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>Yesterday, Alasdair was pointing out =
-a
-particular bugzilla ID for submitting specific ioctl requests to be =
-supported on
-DM multipath target.<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>The 2 bugzilla ID&#8217;s which =
-discuss
-about ioctls ID&#8217;s are: </span></font><a
-href=3D"https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=3D171318">17=
-1318</a> and
-<a =
-href=3D"https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=3D168801"
-title=3D"ASSIGNED - kernel dm multipath: ioctl =
-support">168801</a><o:p></o:p></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>Let me know, which I need to refer =
-for
-submission.<o:p></o:p></span></font></p>
-
-<p><font size=3D3 face=3D"Times New Roman"><span =
-style=3D'font-size:12.0pt'>Thanks,<br>
--Murthy<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span =
-style=3D'font-size:
-12.0pt'><o:p>&nbsp;</o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
-------_=_NextPart_001_01C5E6CC.DBCF1EA8--
+<DIV>Hello,<BR><BR>this is siva ,&nbsp; i have some drought on Multipath =
+i/o. If you&nbsp; know <BR>please send the details.<BR><BR> <BR><BR>1. Li=
+nux 2.6 supporting multpath&nbsp; i/o&nbsp; but why different companies <=
+BR>release their own products like (powepath- from EMC.).<BR><BR>2. What =
+is main difference between these two?<BR><BR>3. And if you have any data =
+on multipath i/o&nbsp; and fiber channel HBA <BR>please send.<BR><BR> <BR=
+><BR> <BR><BR>Thank &amp; Regards<BR><BR>siva<BR><BR>&nbsp;<BR></DIV><p>
+		<hr size=3D1>=20
+Enjoy this Diwali with Y! India <a href=3D"http://in.promos.yahoo.com/fab=
+mall/index.html">Click here</a>
+--0-1646793910-1132034651=:12682--
 
 
---===============0780849310==
+--===============1599285194==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0780849310==--
+--===============1599285194==--
