@@ -1,13 +1,10 @@
-From: "Bartschies, Thomas" <Thomas.Bartschies@cvk.de>
-Subject: Devices are reassigned after Link up,
-	MP path remains down
-Date: Wed, 16 Nov 2005 10:47:50 +0100
-Message-ID: <35E1A31585C19A4E8D6CEFFADC2E625E015562EC@CVK014.intra.cvk.de>
+From: "Brian Wong" <bwong@pillardata.com>
+Subject: build issue in multipath-tools, HOL
+Date: Thu, 17 Nov 2005 13:19:13 -0800
+Message-ID: <35D744B011AD9A4A86B5962E85181C78027AB6C6@caex02.trans.corp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C5EBBC.8EE6FFF2"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,65 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
-Hi,
-our environment is:
+------_=_NextPart_001_01C5EBBC.8EE6FFF2
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Fujitsu-Siemens Primergy RX600 Server, with 2 Emulex LP1050 FC-HBAs
-Connected through 2 EMC/McData FC Switches to an EMC Symmetrix DMX800.
-Each Patch is connected to one of the two switches. The Switch are
-connected
-to the DMX through separate FC HAs. Dist is FC4 with a vanilla 2.6.14.2
-Kernel
-and device-mapper-multipath tools 0.4.6. MP policy is multibus. device
-mapper
-tools are version 1.01.02.
+One of the recent commits introduced a build problem (undefined
+PATH_WILD).
 
-Now we're testing path down scenarios by pulling the FC cables of the
-Emulex
-HBAs. All path down situations are correctly recognized. Problems arise
-when
-we put the cables back in.
+------_=_NextPart_001_01C5EBBC.8EE6FFF2
+Content-Type: application/octet-stream;
+	name="diff.out"
+Content-Transfer-Encoding: base64
+Content-Description: diff.out
+Content-Disposition: attachment;
+	filename="diff.out"
 
-Here's are list of actions and results:
-1. Cable Pull on first path	-> Path is recognized as down, Service
-resumes
-2. Cable Back in on first path	-> Path comes up, Devices are assigned
-the same
-				major/minor numbers by hotplug as
-before. Path
-				is recognized as up and ready.
-3. Cable Pull on second path	-> Path is recognized as down, Service
-resumes
-4. Cable Back in on second path	-> Path comes up, Devices are assigned
-new=20
-				minor numbers by hotplug. These new
-devices
-				are usable. Multipath doesn't recognize
-the path as
-				ready, because it assumes the devices
-for the path
-				will come up on the previous major/minor
-pairs
+ZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmMgYi9saWJtdWx0aXBhdGgvc3RydWN0
+cy5jCi0tLSBhL2xpYm11bHRpcGF0aC9zdHJ1Y3RzLmMKKysrIGIvbGlibXVsdGlwYXRoL3N0cnVj
+dHMuYwpAQCAtMTIsNiArMTIsNyBAQAogI2luY2x1ZGUgInN0cnVjdHMuaCIKICNpbmNsdWRlICJj
+b25maWcuaCIKICNpbmNsdWRlICJkZWJ1Zy5oIgorI2luY2x1ZGUgIi4uL2xpYmNoZWNrZXJzL3Bh
+dGhfc3RhdGUuaCIKIAogc3RydWN0IHBhdGggKgogYWxsb2NfcGF0aCAodm9pZCkK
 
-After this, only one path remains available to multipath, although the
-devices are available.
-But only through new device minor numbers. So is there a way we can
-prevent the system
-from assigning new minor device numbers, if a path comes back up? Has
-anyone experienced
-the same?
+------_=_NextPart_001_01C5EBBC.8EE6FFF2
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Regards,
---
-i. A. Thomas Bartschies=20
-IT Systeme
 
-Cornelsen Verlagskontor GmbH & Co. KG
-Kammerratsheide 66, 33609 Bielefeld
-Telefon 0521.9719-310
-Telefax 0521.9719-93310
-http://www.cvk.de
+------_=_NextPart_001_01C5EBBC.8EE6FFF2--
