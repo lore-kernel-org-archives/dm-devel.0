@@ -1,18 +1,13 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: Req: Details on Multipath-i/o FX-HBA
-Date: Mon, 21 Nov 2005 20:37:33 +0100
-Message-ID: <200511212037.33995.bernd@bzed.de>
-References: <20051115060411.13318.qmail@web8609.mail.in.yahoo.com>
-	<200511191234.28207.bernd@bzed.de>
-	<20051121191232.GA21618@www.ewilts.org>
+From: siva ram <srr.kernel@gmail.com>
+Subject: Re: dm-devel Digest, Vol 21, Issue 16
+Date: Mon, 21 Nov 2005 16:08:56 +0530
+Message-ID: <a70fc890511210238n4dd5f30et19b5471935601a8c@mail.gmail.com>
+References: <20051119170053.8A74A736B2@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1344068145=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20051121191232.GA21618@www.ewilts.org>
-Content-Disposition: inline
+In-Reply-To: <20051119170053.8A74A736B2@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,19 +17,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+--===============1344068145==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_17941_10307858.1132569536210"
 
-> I've got experience with both PowerPath (EMC) and SecurePath (HP) and
-> both suck (in different ways at different times in their product
-> cycles).  Everybody will be much happier when products like these go
-> away.
+------=_Part_17941_10307858.1132569536210
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-imho the same for the Fujitsu-Siemens multipath driver for EMC hardware. 
-Although the multipath-tools are probably not 100% stable they allready work 
-much better than their solution. We're really happy now :)
+hi all
+ 1--can any one please tell how Device mapper is foundation of multipath I/=
+o
+
+2-- How multipath works in both kernel and user space ? how it will interac=
+t
 
 
-Bernd
+Regards
+siva
+
+------=_Part_17941_10307858.1132569536210
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+<div>hi all</div>
+<div>&nbsp;</div>
+<div>1--can any one please tell&nbsp; how Device mapper is foundation&nbsp;=
+of &nbsp;multipath I/o </div>
+<div>2-- How multipath works in both kernel and user space ? how it will in=
+teract</div>
+<div><br><br>Regards</div>
+<div>siva</div>
+
+------=_Part_17941_10307858.1132569536210--
+
+
+--===============1344068145==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1344068145==--
