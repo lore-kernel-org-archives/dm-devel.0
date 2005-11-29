@@ -1,11 +1,12 @@
-From: "goggin, edward" <egoggin@emc.com>
-Subject: proposed changes to multipath-tools
-Date: Mon, 28 Nov 2005 11:06:14 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321AE45@srmanning.eng.emc.com>
+From: "Brian Wong" <bwong@pillardata.com>
+Subject: [multipath] [patch] eliminate kpartx/devmapper.[ch]
+Date: Tue, 29 Nov 2005 09:56:00 -0800
+Message-ID: <35D744B011AD9A4A86B5962E85181C78027AB6DD@caex02.trans.corp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C5F50E.286BC432"
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,95 +16,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Christophe and I have re-designed the multipath-tools package to enable
-multipathd(8) to be self sufficient without multipath(8).
+This is a multi-part message in MIME format.
 
-Design Change :
-===============
-multipathd(8) now configures paths/devices directly in response to
-uevent or UNIX domain socket driven path addition/removal and mapped
-device addition/removal/rename external events without requiring
-a hotplug invocation of multipath(8) or any other executable/shell
-to accomplish these tasks.
+------_=_NextPart_001_01C5F50E.286BC432
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Rationale :
-===========
-This design approach is more efficient than the previous one
-involving hotplug invocation of multipath since 
+Hi Christophe,
 
-(1) it does not involve fork&exec
+Here's a patch to remove devmapper.[ch] from kpartx/, as the
+devmapper.[ch] in libmultipath is more up to date and contains a
+superset of the functions defined in kpartx/devmapper.[ch]
 
-(2) it does not require that a host's entire multipath path state be
-    reconstructed upon the occurrence of each event
+Cheers,
 
-(3) this design approach will eventually lead to the elimination of
-    the file based path cache currently used by multipath(8) to
-    improve the response time of frequent path management invocations
+brian
 
-(4) since this design approach consolidates multipath state management,
-    synchronization of updates to the multipath configuration become
-    more easily achievable
+------_=_NextPart_001_01C5F50E.286BC432
+Content-Type: application/octet-stream;
+	name="diff.out"
+Content-Transfer-Encoding: base64
+Content-Description: diff.out
+Content-Disposition: attachment;
+	filename="diff.out"
 
-(5) multipathd(8) is now able to respond effectively to the hotplug
-    removal (restoration) of failed (reactivated) paths to SCSI
-    logical units initiated by the common SCSI transport classes
-    (fiber channel, iSCSI) introduced at or about the 2.6.13 kernel
+ZGlmZiAtLWdpdCBhL2twYXJ0eC9NYWtlZmlsZSBiL2twYXJ0eC9NYWtlZmlsZQotLS0gYS9rcGFy
+dHgvTWFrZWZpbGUKKysrIGIva3BhcnR4L01ha2VmaWxlCkBAIC0xMywyMiArMTMsMjAgQEAgaWZl
+cSAoJChzdHJpcCAkKEJVSUxEKSksa2xpYmMpCiAJICAgICAgIGxvcGFydC5vIHhzdHJuY3B5Lm8g
+ZGV2bWFwcGVyLm8gXAogCSAgICAgICAkKE1VTFRJUEFUSExJQiktJChCVUlMRCkuYSAkKGxpYmRt
+KQogZWxzZQotCUxERkxBR1MgPSAtbGRldm1hcHBlcgorCUxERkxBR1MgKz0gLWxkZXZtYXBwZXIg
+LWxwdGhyZWFkCiAJT0JKUyA9IGJzZC5vIGRvcy5vIGtwYXJ0eC5vIHNvbGFyaXMubyB1bml4d2Fy
+ZS5vIFwKLQkgICAgICAgZ3B0Lm8gY3JjMzIubyBsb3BhcnQubyB4c3RybmNweS5vIGRldm1hcHBl
+ci5vCisJICAgICAgIGdwdC5vIGNyYzMyLm8gbG9wYXJ0Lm8geHN0cm5jcHkubyBcCisJCSQoTVVM
+VElQQVRITElCKS0kKEJVSUxEKS5hCiBlbmRpZgogCiBFWEVDID0ga3BhcnR4CiAKIGFsbDogJChC
+VUlMRCkKIAotcHJlcGFyZToKLQlybSAtZiBjb3JlICoubyAqLmd6Ci0KLWdsaWJjOiBwcmVwYXJl
+ICQoT0JKUykKK2dsaWJjOiAkKE9CSlMpCiAJJChDQykgJChPQkpTKSAtbyAkKEVYRUMpICQoTERG
+TEFHUykKIAkkKEdaSVApICQoRVhFQykuOCA+ICQoRVhFQykuOC5negotCQorCiBrbGliYzogcHJl
+cGFyZSAkKE9CSlMpCiAJJChDQykgLXN0YXRpYyAtbyAkKEVYRUMpICQoQ1JUMCkgJChPQkpTKSAk
+KEtMSUJDKSAkKExJQkdDQykKIAkkKEdaSVApICQoRVhFQykuOCA+ICQoRVhFQykuOC5negpkaWZm
+IC0tZ2l0IGEva3BhcnR4L2Rldm1hcHBlci5jIGIva3BhcnR4L2Rldm1hcHBlci5jCmRlbGV0ZWQg
+ZmlsZSBtb2RlIDEwMDY0NAotLS0gYS9rcGFydHgvZGV2bWFwcGVyLmMKKysrIC9kZXYvbnVsbApA
+QCAtMSwxNDMgKzAsMCBAQAotLyoKLSAqIENvcHlyaWdodCAoYykgMjAwNCwgMjAwNSBDaHJpc3Rv
+cGhlIFZhcm9xdWkKLSAqLwotI2luY2x1ZGUgPHN0ZGlvLmg+Ci0jaW5jbHVkZSA8c3RkbGliLmg+
+Ci0jaW5jbHVkZSA8c3RyaW5nLmg+Ci0jaW5jbHVkZSA8bGliZGV2bWFwcGVyLmg+Ci0jaW5jbHVk
+ZSA8Y3R5cGUuaD4KLSNpbmNsdWRlIDxsaW51eC9rZGV2X3QuaD4KLQotZXh0ZXJuIGludAotZG1f
+cHJlcmVxIChjaGFyICogc3RyLCBpbnQgeCwgaW50IHksIGludCB6KQotewotCWludCByID0gMTsK
+LQlzdHJ1Y3QgZG1fdGFzayAqZG10OwotCXN0cnVjdCBkbV92ZXJzaW9ucyAqdGFyZ2V0OwotCXN0
+cnVjdCBkbV92ZXJzaW9ucyAqbGFzdF90YXJnZXQ7Ci0KLQlpZiAoIShkbXQgPSBkbV90YXNrX2Ny
+ZWF0ZShETV9ERVZJQ0VfTElTVF9WRVJTSU9OUykpKQotCQlyZXR1cm4gMTsKLQotCWRtX3Rhc2tf
+bm9fb3Blbl9jb3VudChkbXQpOwotCi0JaWYgKCFkbV90YXNrX3J1bihkbXQpKQotCQlnb3RvIG91
+dDsKLQotCXRhcmdldCA9IGRtX3Rhc2tfZ2V0X3ZlcnNpb25zKGRtdCk7Ci0KLQkvKiBGZXRjaCB0
+YXJnZXRzIGFuZCBwcmludCAnZW0gKi8KLQlkbyB7Ci0JCWxhc3RfdGFyZ2V0ID0gdGFyZ2V0Owot
+Ci0JCWlmICghc3RybmNtcChzdHIsIHRhcmdldC0+bmFtZSwgc3RybGVuKHN0cikpICYmCi0JCSAg
+ICAvKiBkdW1teSBwcmVyZXEgb24gbXVsdGlwYXRoIHZlcnNpb24gKi8KLQkJICAgIHRhcmdldC0+
+dmVyc2lvblswXSA+PSB4ICYmCi0JCSAgICB0YXJnZXQtPnZlcnNpb25bMV0gPj0geSAmJgotCQkg
+ICAgdGFyZ2V0LT52ZXJzaW9uWzJdID49IHoKLQkJICAgKQotCQkJciA9IDA7Ci0KLQkJdGFyZ2V0
+ID0gKHZvaWQgKikgdGFyZ2V0ICsgdGFyZ2V0LT5uZXh0OwotCX0gd2hpbGUgKGxhc3RfdGFyZ2V0
+ICE9IHRhcmdldCk7Ci0KLQlvdXQ6Ci0JZG1fdGFza19kZXN0cm95KGRtdCk7Ci0JcmV0dXJuIHI7
+Ci19Ci0KLWV4dGVybiBpbnQKLWRtX3NpbXBsZWNtZCAoaW50IHRhc2ssIGNvbnN0IGNoYXIgKm5h
+bWUpIHsKLQlpbnQgciA9IDA7Ci0Jc3RydWN0IGRtX3Rhc2sgKmRtdDsKLQotCWlmICghKGRtdCA9
+IGRtX3Rhc2tfY3JlYXRlKHRhc2spKSkKLQkJcmV0dXJuIDA7Ci0KLQlpZiAoIWRtX3Rhc2tfc2V0
+X25hbWUoZG10LCBuYW1lKSkKLQkJZ290byBvdXQ7Ci0KLQlkbV90YXNrX25vX29wZW5fY291bnQo
+ZG10KTsKLQotCXIgPSBkbV90YXNrX3J1bihkbXQpOwotCi0Jb3V0OgotCWRtX3Rhc2tfZGVzdHJv
+eShkbXQpOwotCXJldHVybiByOwotfQotCi1leHRlcm4gaW50Ci1kbV9hZGRtYXAgKGludCB0YXNr
+LCBjb25zdCBjaGFyICpuYW1lLCBjb25zdCBjaGFyICp0YXJnZXQsCi0JICAgY29uc3QgY2hhciAq
+cGFyYW1zLCB1bnNpZ25lZCBsb25nIHNpemUpIHsKLQlpbnQgciA9IDA7Ci0Jc3RydWN0IGRtX3Rh
+c2sgKmRtdDsKLQotCWlmICghKGRtdCA9IGRtX3Rhc2tfY3JlYXRlICh0YXNrKSkpCi0JCXJldHVy
+biAwOwotCi0JaWYgKCFkbV90YXNrX3NldF9uYW1lIChkbXQsIG5hbWUpKQotCQlnb3RvIGFkZG91
+dDsKLQotCWlmICghZG1fdGFza19hZGRfdGFyZ2V0IChkbXQsIDAsIHNpemUsIHRhcmdldCwgcGFy
+YW1zKSkKLQkJZ290byBhZGRvdXQ7Ci0KLQlkbV90YXNrX25vX29wZW5fY291bnQoZG10KTsKLQot
+CXIgPSBkbV90YXNrX3J1biAoZG10KTsKLQotCWFkZG91dDoKLQlkbV90YXNrX2Rlc3Ryb3kgKGRt
+dCk7Ci0JcmV0dXJuIHI7Ci19Ci0KLWV4dGVybiBpbnQKLWRtX21hcF9wcmVzZW50IChjaGFyICog
+c3RyKQotewotCWludCByID0gMDsKLQlzdHJ1Y3QgZG1fdGFzayAqZG10OwotCXN0cnVjdCBkbV9p
+bmZvIGluZm87Ci0KLQlpZiAoIShkbXQgPSBkbV90YXNrX2NyZWF0ZShETV9ERVZJQ0VfSU5GTykp
+KQotCQlyZXR1cm4gMDsKLQotCWlmICghZG1fdGFza19zZXRfbmFtZShkbXQsIHN0cikpCi0JCWdv
+dG8gb3V0OwotCi0JZG1fdGFza19ub19vcGVuX2NvdW50KGRtdCk7Ci0KLQlpZiAoIWRtX3Rhc2tf
+cnVuKGRtdCkpCi0JCWdvdG8gb3V0OwotCi0JaWYgKCFkbV90YXNrX2dldF9pbmZvKGRtdCwgJmlu
+Zm8pKQotCQlnb3RvIG91dDsKLQotCWlmIChpbmZvLmV4aXN0cykKLQkJciA9IDE7Ci1vdXQ6Ci0J
+ZG1fdGFza19kZXN0cm95KGRtdCk7Ci0JcmV0dXJuIHI7Ci19Ci0KLQotY29uc3QgY2hhciAqCi1k
+bV9tYXBuYW1lKGludCBtYWpvciwgaW50IG1pbm9yKQotewotCXN0cnVjdCBkbV90YXNrICpkbXQ7
+Ci0JY29uc3QgY2hhciAqbWFwbmFtZTsKLQotCWlmICghKGRtdCA9IGRtX3Rhc2tfY3JlYXRlKERN
+X0RFVklDRV9JTkZPKSkpCi0JCXJldHVybiBOVUxMOwotCi0JZG1fdGFza19ub19vcGVuX2NvdW50
+KGRtdCk7Ci0JZG1fdGFza19zZXRfbWFqb3IoZG10LCBtYWpvcik7Ci0JZG1fdGFza19zZXRfbWlu
+b3IoZG10LCBtaW5vcik7Ci0KLQlpZiAoIWRtX3Rhc2tfcnVuKGRtdCkpCi0JCWdvdG8gb3V0Owot
+Ci0JbWFwbmFtZSA9IHN0cmR1cChkbV90YXNrX2dldF9uYW1lKGRtdCkpOwotb3V0OgotCWRtX3Rh
+c2tfZGVzdHJveShkbXQpOwotCXJldHVybiBtYXBuYW1lOwotfQotCmRpZmYgLS1naXQgYS9rcGFy
+dHgvZGV2bWFwcGVyLmggYi9rcGFydHgvZGV2bWFwcGVyLmgKZGVsZXRlZCBmaWxlIG1vZGUgMTAw
+NjQ0Ci0tLSBhL2twYXJ0eC9kZXZtYXBwZXIuaAorKysgL2Rldi9udWxsCkBAIC0xLDUgKzAsMCBA
+QAotaW50IGRtX3ByZXJlcSAoY2hhciAqLCBpbnQsIGludCwgaW50KTsKLWludCBkbV9zaW1wbGVj
+bWQgKGludCwgY29uc3QgY2hhciAqKTsKLWludCBkbV9hZGRtYXAgKGludCwgY29uc3QgY2hhciAq
+LCBjb25zdCBjaGFyICosIGNvbnN0IGNoYXIgKiwgdW5zaWduZWQgbG9uZyk7Ci1pbnQgZG1fbWFw
+X3ByZXNlbnQgKGNoYXIgKik7Ci1jb25zdCBjaGFyICogZG1fbWFwbmFtZShpbnQgbWFqb3IsIGlu
+dCBtaW5vcik7Cg==
 
-Consequences for users and packagers :
-======================================
-As part of this effort, a significant amount of code previously
-private to either the multipath(8) or multipathd(8) executables
-has been moved to libmultipath where it is easily sharable between
-both executables.  Although multipath(8) will continue to be
-capable of setting up the multipath configuration (particularly
-during early boot), its use to perform multipath configuration
-duties beyond early boot is no longer required.
+------_=_NextPart_001_01C5F50E.286BC432
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-While these changes will likely be first introduced in version
-0.4.7 of multipath-tools, at least the functionality for multipathd(8)
-to be responsive to the externally initiated renaming of a multipath
-mapped device is dependent on a kernel patch which is likely
-destined for 2.6.15.
 
-Also, please remember that while the invocation of multipath(8) via
-hotplug is no longer necessary (or desirable at this point), the
-hotplug invocation of kpartx(8) is desirable.  To affect this, please
-do not remove the multipath udev rules file at
-/etc/udev/rules.d/multipath.rules, but instead simply comment out
-the invocation of multipath(8) upon the occurrence of a hotplug add
-event for a target device.
-
-Near-term plans :
-=================
-Continue enhancing multipath-tools to
-
-(1) broaden the capability to selectively update the components of
-    a multipath map
-
-(2) enhance the capabilities of the multipathd(8) client interface.
-
-An improvement in the first category is the configuration support for
-adding/removing/changing any component of a multipath map, particularly
-adding/removing a single path or path group, to a multipath map without
-having to reload a new map and changing multipathd to take advantage
-of this new support.  Much of this work will require commensurate
-kernel changes to the multipath target driver.  An improvement in
-the second category is the enhancement of both the "list paths" and
-"list maps" multipathd(8) client commands to have "at least" the
-capability of a "multipath -l" display.
-
-Longer-term plans :
-===================
-Adapt multipath-tools to utilize whatever new device mapper event
-mechanism and/or configuration passing mechanism gets implemented
-with the goal of having multipathd be capable of 
-
-(1) selectively updating either the contents or status of any
-component of a multipath map
-
-(2) being alerted via a kernel generated event whenever either any
-component of the map is changed or the status of any map component
-changes.
+------_=_NextPart_001_01C5F50E.286BC432--
