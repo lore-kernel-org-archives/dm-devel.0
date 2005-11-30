@@ -1,12 +1,14 @@
-From: "Brian Wong" <bwong@pillardata.com>
-Subject: [multipath] [patch] eliminate kpartx/devmapper.[ch]
-Date: Tue, 29 Nov 2005 09:56:00 -0800
-Message-ID: <35D744B011AD9A4A86B5962E85181C78027AB6DD@caex02.trans.corp>
+From: Mike Anderson <andmike@us.ibm.com>
+Subject: [PATCH RFC 3/4] dm-mpath calls to dm-netlink
+Date: Wed, 30 Nov 2005 00:28:12 -0800
+Message-ID: <20051130082812.GC18284@us.ibm.com>
+References: <20051130082311.GA18453@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C5F50E.286BC432"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+Content-Disposition: inline
+In-Reply-To: <20051130082311.GA18453@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,105 +21,100 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+This patch adds a call to init dm_nl during dm init, and calls to dm_nl
+functions for path failure / reinstate events.
 
-------_=_NextPart_001_01C5F50E.286BC432
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Signed-off-by: Mike Anderson <andmike@us.ibm.com>
 
-Hi Christophe,
+ drivers/md/dm-mpath.c |    9 ++++++---
+ drivers/md/dm.c       |    2 ++
+ drivers/md/dm.h       |    3 +++
+ 3 files changed, 11 insertions(+), 3 deletions(-)
 
-Here's a patch to remove devmapper.[ch] from kpartx/, as the
-devmapper.[ch] in libmultipath is more up to date and contains a
-superset of the functions defined in kpartx/devmapper.[ch]
-
-Cheers,
-
-brian
-
-------_=_NextPart_001_01C5F50E.286BC432
-Content-Type: application/octet-stream;
-	name="diff.out"
-Content-Transfer-Encoding: base64
-Content-Description: diff.out
-Content-Disposition: attachment;
-	filename="diff.out"
-
-ZGlmZiAtLWdpdCBhL2twYXJ0eC9NYWtlZmlsZSBiL2twYXJ0eC9NYWtlZmlsZQotLS0gYS9rcGFy
-dHgvTWFrZWZpbGUKKysrIGIva3BhcnR4L01ha2VmaWxlCkBAIC0xMywyMiArMTMsMjAgQEAgaWZl
-cSAoJChzdHJpcCAkKEJVSUxEKSksa2xpYmMpCiAJICAgICAgIGxvcGFydC5vIHhzdHJuY3B5Lm8g
-ZGV2bWFwcGVyLm8gXAogCSAgICAgICAkKE1VTFRJUEFUSExJQiktJChCVUlMRCkuYSAkKGxpYmRt
-KQogZWxzZQotCUxERkxBR1MgPSAtbGRldm1hcHBlcgorCUxERkxBR1MgKz0gLWxkZXZtYXBwZXIg
-LWxwdGhyZWFkCiAJT0JKUyA9IGJzZC5vIGRvcy5vIGtwYXJ0eC5vIHNvbGFyaXMubyB1bml4d2Fy
-ZS5vIFwKLQkgICAgICAgZ3B0Lm8gY3JjMzIubyBsb3BhcnQubyB4c3RybmNweS5vIGRldm1hcHBl
-ci5vCisJICAgICAgIGdwdC5vIGNyYzMyLm8gbG9wYXJ0Lm8geHN0cm5jcHkubyBcCisJCSQoTVVM
-VElQQVRITElCKS0kKEJVSUxEKS5hCiBlbmRpZgogCiBFWEVDID0ga3BhcnR4CiAKIGFsbDogJChC
-VUlMRCkKIAotcHJlcGFyZToKLQlybSAtZiBjb3JlICoubyAqLmd6Ci0KLWdsaWJjOiBwcmVwYXJl
-ICQoT0JKUykKK2dsaWJjOiAkKE9CSlMpCiAJJChDQykgJChPQkpTKSAtbyAkKEVYRUMpICQoTERG
-TEFHUykKIAkkKEdaSVApICQoRVhFQykuOCA+ICQoRVhFQykuOC5negotCQorCiBrbGliYzogcHJl
-cGFyZSAkKE9CSlMpCiAJJChDQykgLXN0YXRpYyAtbyAkKEVYRUMpICQoQ1JUMCkgJChPQkpTKSAk
-KEtMSUJDKSAkKExJQkdDQykKIAkkKEdaSVApICQoRVhFQykuOCA+ICQoRVhFQykuOC5negpkaWZm
-IC0tZ2l0IGEva3BhcnR4L2Rldm1hcHBlci5jIGIva3BhcnR4L2Rldm1hcHBlci5jCmRlbGV0ZWQg
-ZmlsZSBtb2RlIDEwMDY0NAotLS0gYS9rcGFydHgvZGV2bWFwcGVyLmMKKysrIC9kZXYvbnVsbApA
-QCAtMSwxNDMgKzAsMCBAQAotLyoKLSAqIENvcHlyaWdodCAoYykgMjAwNCwgMjAwNSBDaHJpc3Rv
-cGhlIFZhcm9xdWkKLSAqLwotI2luY2x1ZGUgPHN0ZGlvLmg+Ci0jaW5jbHVkZSA8c3RkbGliLmg+
-Ci0jaW5jbHVkZSA8c3RyaW5nLmg+Ci0jaW5jbHVkZSA8bGliZGV2bWFwcGVyLmg+Ci0jaW5jbHVk
-ZSA8Y3R5cGUuaD4KLSNpbmNsdWRlIDxsaW51eC9rZGV2X3QuaD4KLQotZXh0ZXJuIGludAotZG1f
-cHJlcmVxIChjaGFyICogc3RyLCBpbnQgeCwgaW50IHksIGludCB6KQotewotCWludCByID0gMTsK
-LQlzdHJ1Y3QgZG1fdGFzayAqZG10OwotCXN0cnVjdCBkbV92ZXJzaW9ucyAqdGFyZ2V0OwotCXN0
-cnVjdCBkbV92ZXJzaW9ucyAqbGFzdF90YXJnZXQ7Ci0KLQlpZiAoIShkbXQgPSBkbV90YXNrX2Ny
-ZWF0ZShETV9ERVZJQ0VfTElTVF9WRVJTSU9OUykpKQotCQlyZXR1cm4gMTsKLQotCWRtX3Rhc2tf
-bm9fb3Blbl9jb3VudChkbXQpOwotCi0JaWYgKCFkbV90YXNrX3J1bihkbXQpKQotCQlnb3RvIG91
-dDsKLQotCXRhcmdldCA9IGRtX3Rhc2tfZ2V0X3ZlcnNpb25zKGRtdCk7Ci0KLQkvKiBGZXRjaCB0
-YXJnZXRzIGFuZCBwcmludCAnZW0gKi8KLQlkbyB7Ci0JCWxhc3RfdGFyZ2V0ID0gdGFyZ2V0Owot
-Ci0JCWlmICghc3RybmNtcChzdHIsIHRhcmdldC0+bmFtZSwgc3RybGVuKHN0cikpICYmCi0JCSAg
-ICAvKiBkdW1teSBwcmVyZXEgb24gbXVsdGlwYXRoIHZlcnNpb24gKi8KLQkJICAgIHRhcmdldC0+
-dmVyc2lvblswXSA+PSB4ICYmCi0JCSAgICB0YXJnZXQtPnZlcnNpb25bMV0gPj0geSAmJgotCQkg
-ICAgdGFyZ2V0LT52ZXJzaW9uWzJdID49IHoKLQkJICAgKQotCQkJciA9IDA7Ci0KLQkJdGFyZ2V0
-ID0gKHZvaWQgKikgdGFyZ2V0ICsgdGFyZ2V0LT5uZXh0OwotCX0gd2hpbGUgKGxhc3RfdGFyZ2V0
-ICE9IHRhcmdldCk7Ci0KLQlvdXQ6Ci0JZG1fdGFza19kZXN0cm95KGRtdCk7Ci0JcmV0dXJuIHI7
-Ci19Ci0KLWV4dGVybiBpbnQKLWRtX3NpbXBsZWNtZCAoaW50IHRhc2ssIGNvbnN0IGNoYXIgKm5h
-bWUpIHsKLQlpbnQgciA9IDA7Ci0Jc3RydWN0IGRtX3Rhc2sgKmRtdDsKLQotCWlmICghKGRtdCA9
-IGRtX3Rhc2tfY3JlYXRlKHRhc2spKSkKLQkJcmV0dXJuIDA7Ci0KLQlpZiAoIWRtX3Rhc2tfc2V0
-X25hbWUoZG10LCBuYW1lKSkKLQkJZ290byBvdXQ7Ci0KLQlkbV90YXNrX25vX29wZW5fY291bnQo
-ZG10KTsKLQotCXIgPSBkbV90YXNrX3J1bihkbXQpOwotCi0Jb3V0OgotCWRtX3Rhc2tfZGVzdHJv
-eShkbXQpOwotCXJldHVybiByOwotfQotCi1leHRlcm4gaW50Ci1kbV9hZGRtYXAgKGludCB0YXNr
-LCBjb25zdCBjaGFyICpuYW1lLCBjb25zdCBjaGFyICp0YXJnZXQsCi0JICAgY29uc3QgY2hhciAq
-cGFyYW1zLCB1bnNpZ25lZCBsb25nIHNpemUpIHsKLQlpbnQgciA9IDA7Ci0Jc3RydWN0IGRtX3Rh
-c2sgKmRtdDsKLQotCWlmICghKGRtdCA9IGRtX3Rhc2tfY3JlYXRlICh0YXNrKSkpCi0JCXJldHVy
-biAwOwotCi0JaWYgKCFkbV90YXNrX3NldF9uYW1lIChkbXQsIG5hbWUpKQotCQlnb3RvIGFkZG91
-dDsKLQotCWlmICghZG1fdGFza19hZGRfdGFyZ2V0IChkbXQsIDAsIHNpemUsIHRhcmdldCwgcGFy
-YW1zKSkKLQkJZ290byBhZGRvdXQ7Ci0KLQlkbV90YXNrX25vX29wZW5fY291bnQoZG10KTsKLQot
-CXIgPSBkbV90YXNrX3J1biAoZG10KTsKLQotCWFkZG91dDoKLQlkbV90YXNrX2Rlc3Ryb3kgKGRt
-dCk7Ci0JcmV0dXJuIHI7Ci19Ci0KLWV4dGVybiBpbnQKLWRtX21hcF9wcmVzZW50IChjaGFyICog
-c3RyKQotewotCWludCByID0gMDsKLQlzdHJ1Y3QgZG1fdGFzayAqZG10OwotCXN0cnVjdCBkbV9p
-bmZvIGluZm87Ci0KLQlpZiAoIShkbXQgPSBkbV90YXNrX2NyZWF0ZShETV9ERVZJQ0VfSU5GTykp
-KQotCQlyZXR1cm4gMDsKLQotCWlmICghZG1fdGFza19zZXRfbmFtZShkbXQsIHN0cikpCi0JCWdv
-dG8gb3V0OwotCi0JZG1fdGFza19ub19vcGVuX2NvdW50KGRtdCk7Ci0KLQlpZiAoIWRtX3Rhc2tf
-cnVuKGRtdCkpCi0JCWdvdG8gb3V0OwotCi0JaWYgKCFkbV90YXNrX2dldF9pbmZvKGRtdCwgJmlu
-Zm8pKQotCQlnb3RvIG91dDsKLQotCWlmIChpbmZvLmV4aXN0cykKLQkJciA9IDE7Ci1vdXQ6Ci0J
-ZG1fdGFza19kZXN0cm95KGRtdCk7Ci0JcmV0dXJuIHI7Ci19Ci0KLQotY29uc3QgY2hhciAqCi1k
-bV9tYXBuYW1lKGludCBtYWpvciwgaW50IG1pbm9yKQotewotCXN0cnVjdCBkbV90YXNrICpkbXQ7
-Ci0JY29uc3QgY2hhciAqbWFwbmFtZTsKLQotCWlmICghKGRtdCA9IGRtX3Rhc2tfY3JlYXRlKERN
-X0RFVklDRV9JTkZPKSkpCi0JCXJldHVybiBOVUxMOwotCi0JZG1fdGFza19ub19vcGVuX2NvdW50
-KGRtdCk7Ci0JZG1fdGFza19zZXRfbWFqb3IoZG10LCBtYWpvcik7Ci0JZG1fdGFza19zZXRfbWlu
-b3IoZG10LCBtaW5vcik7Ci0KLQlpZiAoIWRtX3Rhc2tfcnVuKGRtdCkpCi0JCWdvdG8gb3V0Owot
-Ci0JbWFwbmFtZSA9IHN0cmR1cChkbV90YXNrX2dldF9uYW1lKGRtdCkpOwotb3V0OgotCWRtX3Rh
-c2tfZGVzdHJveShkbXQpOwotCXJldHVybiBtYXBuYW1lOwotfQotCmRpZmYgLS1naXQgYS9rcGFy
-dHgvZGV2bWFwcGVyLmggYi9rcGFydHgvZGV2bWFwcGVyLmgKZGVsZXRlZCBmaWxlIG1vZGUgMTAw
-NjQ0Ci0tLSBhL2twYXJ0eC9kZXZtYXBwZXIuaAorKysgL2Rldi9udWxsCkBAIC0xLDUgKzAsMCBA
-QAotaW50IGRtX3ByZXJlcSAoY2hhciAqLCBpbnQsIGludCwgaW50KTsKLWludCBkbV9zaW1wbGVj
-bWQgKGludCwgY29uc3QgY2hhciAqKTsKLWludCBkbV9hZGRtYXAgKGludCwgY29uc3QgY2hhciAq
-LCBjb25zdCBjaGFyICosIGNvbnN0IGNoYXIgKiwgdW5zaWduZWQgbG9uZyk7Ci1pbnQgZG1fbWFw
-X3ByZXNlbnQgKGNoYXIgKik7Ci1jb25zdCBjaGFyICogZG1fbWFwbmFtZShpbnQgbWFqb3IsIGlu
-dCBtaW5vcik7Cg==
-
-------_=_NextPart_001_01C5F50E.286BC432
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-------_=_NextPart_001_01C5F50E.286BC432--
+Index: linux-2.6.15-rc1-patched/drivers/md/dm.h
+===================================================================
+--- linux-2.6.15-rc1-patched.orig/drivers/md/dm.h	2005-06-17 17:21:30.000000000 -0700
++++ linux-2.6.15-rc1-patched/drivers/md/dm.h	2005-11-29 23:32:32.000000000 -0800
+@@ -192,4 +192,7 @@ void dm_stripe_exit(void);
+ void *dm_vcalloc(unsigned long nmemb, unsigned long elem_size);
+ union map_info *dm_get_mapinfo(struct bio *bio);
+ 
++int dm_nl_init(void);
++void dm_nl_exit(void);
++
+ #endif
+Index: linux-2.6.15-rc1-patched/drivers/md/dm.c
+===================================================================
+--- linux-2.6.15-rc1-patched.orig/drivers/md/dm.c	2005-10-27 18:52:10.000000000 -0700
++++ linux-2.6.15-rc1-patched/drivers/md/dm.c	2005-11-29 23:32:32.000000000 -0800
+@@ -163,6 +163,7 @@ int (*_inits[])(void) __initdata = {
+ 	dm_linear_init,
+ 	dm_stripe_init,
+ 	dm_interface_init,
++	dm_nl_init,
+ };
+ 
+ void (*_exits[])(void) = {
+@@ -171,6 +172,7 @@ void (*_exits[])(void) = {
+ 	dm_linear_exit,
+ 	dm_stripe_exit,
+ 	dm_interface_exit,
++	dm_nl_exit,
+ };
+ 
+ static int __init dm_init(void)
+Index: linux-2.6.15-rc1-patched/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.15-rc1-patched.orig/drivers/md/dm-mpath.c	2005-10-27 18:52:10.000000000 -0700
++++ linux-2.6.15-rc1-patched/drivers/md/dm-mpath.c	2005-11-29 23:32:32.000000000 -0800
+@@ -10,6 +10,7 @@
+ #include "dm-hw-handler.h"
+ #include "dm-bio-list.h"
+ #include "dm-bio-record.h"
++#include "dm-netlink.h"
+ 
+ #include <linux/ctype.h>
+ #include <linux/init.h>
+@@ -798,7 +799,7 @@ static int multipath_map(struct dm_targe
+ /*
+  * Take a path out of use.
+  */
+-static int fail_path(struct pgpath *pgpath)
++static int fail_path(struct pgpath *pgpath, struct bio *bio)
+ {
+ 	unsigned long flags;
+ 	struct multipath *m = pgpath->pg->m;
+@@ -819,6 +820,7 @@ static int fail_path(struct pgpath *pgpa
+ 	if (pgpath == m->current_pgpath)
+ 		m->current_pgpath = NULL;
+ 
++	dm_nl_path_fail(pgpath->path.dev->name, 0x5A5A5A5A);
+ 	queue_work(kmultipathd, &m->trigger_event);
+ 
+ out:
+@@ -858,6 +860,7 @@ static int reinstate_path(struct pgpath 
+ 	if (!m->nr_valid_paths++ && m->queue_size)
+ 		queue_work(kmultipathd, &m->process_queued_ios);
+ 
++	dm_nl_path_reinstate(pgpath->path.dev->name);
+ 	queue_work(kmultipathd, &m->trigger_event);
+ 
+ out:
+@@ -975,7 +978,7 @@ void dm_pg_init_complete(struct path *pa
+ 		err_flags |= MP_FAIL_PATH;
+ 
+ 	if (err_flags & MP_FAIL_PATH)
+-		fail_path(pgpath);
++		fail_path(pgpath, NULL);
+ 
+ 	if (err_flags & MP_BYPASS_PG)
+ 		bypass_pg(m, pg, 1);
+@@ -1027,7 +1030,7 @@ static int do_end_io(struct multipath *m
+ 
+ 	if (mpio->pgpath) {
+ 		if (err_flags & MP_FAIL_PATH)
+-			fail_path(mpio->pgpath);
++			fail_path(mpio->pgpath, bio);
+ 
+ 		if (err_flags & MP_BYPASS_PG)
+ 			bypass_pg(m, mpio->pgpath->pg, 1);
