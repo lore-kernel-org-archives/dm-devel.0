@@ -1,7 +1,7 @@
 From: Mike Anderson <andmike@us.ibm.com>
-Subject: [PATCH RFC 1/4] dm-netlink skeleton support
-Date: Wed, 30 Nov 2005 00:25:03 -0800
-Message-ID: <20051130082503.GA18284@us.ibm.com>
+Subject: [PATCH RFC 4/4] Sample user space program (dm_nld)
+Date: Wed, 30 Nov 2005 00:29:34 -0800
+Message-ID: <20051130082934.GD18284@us.ibm.com>
 References: <20051130082311.GA18453@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,29 +21,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds a dm-netlink skeleton support to the Makefile, Kconfig,
-and the dm directory. This base dm-netlink file only contains the mempool
-support.
+ Sample program that receives dm netlink events and prints them out. This
+ program uses the netlink library (libnl)
+ http://people.suug.ch/~tgr/libnl/
 
-Signed-off-by: Mike Anderson <andmike@us.ibm.com>
+ Signed-off-by: Mike Anderson <andmike@us.ibm.com>
 
- drivers/md/Kconfig      |    6 ++
- drivers/md/Makefile     |    3 +
- drivers/md/dm-netlink.c |  144 ++++++++++++++++++++++++++++++++++++++++++++++++
- include/linux/netlink.h |    1 
- 4 files changed, 154 insertions(+)
+ Makefile |   31 ++++++++++++
+ dm_nld.c |  159 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ dm_nld.h |   53 +++++++++++++++++++++
+ 3 files changed, 243 insertions(+)
 
-Index: linux-2.6.15-rc1-patched/drivers/md/dm-netlink.c
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ linux-2.6.15-rc1-patched/drivers/md/dm-netlink.c	2005-11-29 23:50:01.000000000 -0800
-@@ -0,0 +1,144 @@
+--- /dev/null	2005-11-13 12:06:42.576962000 -0800
++++ dm_nld/dm_nld.c	2005-11-29 21:03:14.000000000 -0800
+@@ -0,0 +1,159 @@
 +/*
-+ * Device Mapper Netlink Support (dm-netlink)
++ * Device Mapper Netlink User Space Daemon (dm-nld)
 + *
 + * Copyright (C) 2005 IBM Corporation
 + * 	Author: Mike Anderson <andmike@us.ibm.com>
-+ * 	skb mempool derived from drivers/scsi/scsi_transport_iscsi.c
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
@@ -60,167 +56,231 @@ Index: linux-2.6.15-rc1-patched/drivers/md/dm-netlink.c
 + * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 + *
 + */
-+#include <linux/module.h>
-+#include <linux/mempool.h>
-+#include <linux/time.h>
-+#include <linux/jiffies.h>
-+#include <linux/security.h>
-+#include <net/sock.h>
-+#include <net/netlink.h>
++/*
++ * This program is a proto example of using the dm netlink interface
++ */
 +
-+#define MIN_EVT_SKBS	16
-+#define HIWAT_EVT_SKBS	32
-+#define EVT_SKB_SIZE	NLMSG_SPACE(128)
++#include <unistd.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <fcntl.h>
++#include <errno.h>
++#include <inttypes.h>
++#include <sys/socket.h>
++#include <sys/user.h>
++#include <asm/types.h>
++#include <linux/netlink.h>
++#include <time.h>
++#include "dm_nld.h"
 +
-+struct mempool_zone {
-+	mempool_t *pool;
-+	int allocated;
-+	int size;
-+	int hiwat;
-+	struct list_head freequeue;
-+	spinlock_t freelock;
++static struct nla_policy dm_e_attr_policy[DM_E_ATTR_MAX] = {
++	[DM_E_ATTR_SEQNUM]	= { .type = NLA_U64 },
++	[DM_E_ATTR_TSSEC]	= { .type = NLA_U64 },
++	[DM_E_ATTR_TSUSEC]	= { .type = NLA_U64 },
++	[DM_E_ATTR_DMNAME]	= { .type = NLA_STRING },
++	[DM_E_ATTR_BLKERR]	= { .type = NLA_U32 },
 +};
 +
-+static struct mempool_zone z_dm_evt;
-+
-+static inline struct list_head *skb_to_lh(struct sk_buff *skb)
++char * build_evt_msg(struct nlattr *dm_attr[])
 +{
-+	return (struct list_head *)&skb->cb;
++	int n, size = 1024;
++	char *bmark, *str = NULL;
++
++	str = calloc(1, size);
++	if (!str)
++		goto out;
++	bmark = str;
++
++	n = snprintf(bmark, size, "[Event]:");
++	size -= n;
++	bmark += n;
++
++	if (dm_attr[DM_E_ATTR_SEQNUM] && size) {
++		n = snprintf(bmark, size, " SEQNUM: %" PRIu64,
++			     nla_get_u64(dm_attr[DM_E_ATTR_SEQNUM]));
++		size -= n;
++		bmark += n;
++	}
++
++	if (dm_attr[DM_E_ATTR_TSSEC] && size) {
++		const time_t t = nla_get_u64(dm_attr[DM_E_ATTR_TSSEC]),
++		n = snprintf(bmark, size, ", Time: %s", ctime(&t));
++		size -= n;
++		bmark += n - 1;
++	}
++
++	if (dm_attr[DM_E_ATTR_DMNAME] && size) {
++		n = snprintf(bmark, size, ", DMNAME: %s", (char *)
++			     nla_data(dm_attr[DM_E_ATTR_DMNAME]));
++		size -= n;
++		bmark += n;
++	}
++
++	if (dm_attr[DM_E_ATTR_BLKERR] && size) {
++		n = snprintf(bmark, size, ", BLKERR: 0x%x",
++			     nla_get_u32(dm_attr[DM_E_ATTR_BLKERR]));
++	}
++
++out:
++	return str;
 +}
 +
-+static void* mempool_zone_alloc_skb(unsigned int gfp_mask,
-+				    void *pool_data)
++int main (int argc, char *argv[])
 +{
-+	struct mempool_zone *zone = pool_data;
++	int err = -1;
++	struct sockaddr_nl addr;
++	struct nlmsghdr *nlh;
++	struct dm_nl_msghdr *dm_nlh;
++	unsigned char *msg;
++	char *evt_str = NULL;
++	struct nlattr *dm_attr[DM_E_ATTR_MAX];
 +
-+	return alloc_skb(zone->size, gfp_mask);
-+}
++	struct nl_handle *handle;
 +
-+static void mempool_zone_free_skb(void *element, void *pool_data)
-+{
-+	kfree_skb(element);
-+}
++	handle = nl_handle_alloc();
++	if (!handle)
++		goto handle_out;
 +
-+static void
-+mempool_zone_complete(struct mempool_zone *zone, int release_all)
-+{
-+	unsigned long flags;
-+	struct list_head *lh, *n;
++	nl_disable_sequence_check(handle);
 +
-+	spin_lock_irqsave(&zone->freelock, flags);
-+	if (zone->allocated) {
-+		list_for_each_safe(lh, n, &zone->freequeue) {
-+			struct sk_buff *skb =
-+				(struct sk_buff *)((char *)lh -
-+				 offsetof(struct sk_buff, cb));
-+			if (skb_shared(skb)) {
-+				if (release_all)
-+					kfree_skb(skb);
-+				else
-+					continue;
-+			}
++	err = nl_connect(handle, NETLINK_DM);
++	if (err < 0)
++		goto connect_out;
 +
-+			list_del(skb_to_lh(skb));
-+			mempool_free(skb, zone->pool);
-+			--zone->allocated;
++	err = nl_send_simple(handle, NLMSG_NOOP, 0, NULL, 0);
++	if (err < 0)
++		goto simple_out;
 +
++	memset(&addr, 0, sizeof(addr));
++	addr.nl_family = AF_NETLINK;
++	addr.nl_pid = 0;
++	addr.nl_groups = 0;
++
++	do {
++		err = nl_recv(handle, &addr, &msg);
++		if (err <= 0)
++			break;
++		nlh = (struct nlmsghdr *) msg;
++		fprintf(stdout, "Msg Type: %d Recevied\n",
++			nlh->nlmsg_type);
++		if (nlh->nlmsg_type == DM_EVT) {
++			dm_nlh = nlmsg_data(nlh);
++			fprintf(stdout, "Event Type: %d Version: %d\n",
++				dm_nlh->type, dm_nlh->version);
++			
++			err = nla_parse(dm_attr, DM_E_ATTR_MAX - 1,
++					nlmsg_attrdata(nlh, 
++						sizeof(struct dm_nl_msghdr)),
++					nlmsg_attrlen(nlh, 
++					      sizeof(struct dm_nl_msghdr)),
++					dm_e_attr_policy);
++			if (err < 0)
++				break;
++
++			evt_str = build_evt_msg(dm_attr);
++			if (evt_str)
++				fprintf(stdout, "%s\n", evt_str);
 +		}
-+	}
-+	spin_unlock_irqrestore(&zone->freelock, flags);
++
++		free(evt_str);
++		free(msg);
++	} while (1);
++
++simple_out:
++	nl_close(handle);
++connect_out:
++	nl_handle_destroy(handle);
++handle_out:
++	exit(err == 0 ? 0 : 1);
 +}
+--- /dev/null	2005-11-13 12:06:42.576962000 -0800
++++ dm_nld/dm_nld.h	2005-11-23 01:23:56.000000000 -0800
+@@ -0,0 +1,53 @@
++/*
++ * Device Mapper Netlink Daemon
++ *
++ * Copyright (C) 2005 IBM Corporation
++ * 	Author: Mike Anderson <andmike@us.ibm.com>
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ */
++#ifndef DM_NLD_H
++#define DM_NLD_H
++#include <stdint.h>
++#include <netlink/attr.h>
++#include <netlink/msg.h>
 +
-+static int mempool_zone_init(struct mempool_zone *zp, unsigned size,
-+			     int min_nr, unsigned hiwat)
-+{
-+	zp->size = size;
-+	zp->hiwat = hiwat;
-+	zp->allocated = 0;
-+	INIT_LIST_HEAD(&zp->freequeue);
-+	spin_lock_init(&zp->freelock);
++enum dm_evt_attr {
++	DM_E_ATTR_SEQNUM	= 1,
++	DM_E_ATTR_TSSEC		= 2,
++	DM_E_ATTR_TSUSEC	= 3,
++	DM_E_ATTR_DMNAME	= 4,
++	DM_E_ATTR_BLKERR	= 5,
++	DM_E_ATTR_MAX,
++};
 +
-+	zp->pool = mempool_create(min_nr, mempool_zone_alloc_skb,
-+				  mempool_zone_free_skb, zp);
-+	if (!zp->pool)
-+		return -ENOMEM;
++#ifndef NLMSG_MIN_TYPE
++#define NLMSG_MIN_TYPE 0x10
++#endif
 +
-+	return 0;
-+}
++#define DM_EVT NLMSG_MIN_TYPE + 0x1
 +
-+static struct sk_buff* mempool_zone_get_skb(struct mempool_zone *zone)
-+{
-+	struct sk_buff *skb;
-+	unsigned long flags;
++#define DM_EVT_FAIL_PATH 0x1
++#define DM_EVT_REINSTATE_PATH 0x2
 +
-+	/* Check for ones we can complete before we alloc */
-+	mempool_zone_complete(zone, 0);
++struct dm_nl_msghdr {
++	uint16_t type;
++	uint16_t version;
++	uint16_t reserved1;
++	uint16_t reserved2;
++} __attribute__((aligned(sizeof(uint64_t))));
 +
-+	skb = mempool_alloc(zone->pool, GFP_ATOMIC);
-+	if (skb) {
-+		skb_get(skb);
-+		spin_lock_irqsave(&z_dm_evt.freelock, flags);
-+		list_add(skb_to_lh(skb), &z_dm_evt.freequeue);
-+		++zone->allocated;
-+		spin_unlock_irqrestore(&z_dm_evt.freelock, flags);
-+	}
-+	return skb;
-+}
++#endif /* DM_NLD_H */
+--- /dev/null	2005-11-13 12:06:42.576962000 -0800
++++ dm_nld/Makefile	2005-11-23 01:37:40.000000000 -0800
+@@ -0,0 +1,31 @@
++# Make variables (CC, etc...)
++AS              = $(CROSS_COMPILE)as
++LD              = $(CROSS_COMPILE)ld
++CC              = $(CROSS_COMPILE)gcc
++CPP             = $(CC) -E
++AR              = $(CROSS_COMPILE)ar
++NM              = $(CROSS_COMPILE)nm
++STRIP           = $(CROSS_COMPILE)strip
++OBJCOPY         = $(CROSS_COMPILE)objcopy
++OBJDUMP         = $(CROSS_COMPILE)objdump
 +
-+int __init dm_nl_init(void)
-+{
-+	int err;
++CFLAGS		+= -fno-builtin -Wall -Wchar-subscripts -Wundef \
++		   -Wstrict-prototypes -Wpointer-arith -Wsign-compare
++CFLAGS		+= -DNETLINK_DM=17
 +
-+	err = mempool_zone_init(&z_dm_evt, EVT_SKB_SIZE,
-+				MIN_EVT_SKBS, HIWAT_EVT_SKBS);
-+	if (!err)
-+		printk(KERN_DEBUG "dm-netlink version 0.0.1 loaded\n");
-+
-+	return err;
-+
-+}
-+
-+void dm_nl_exit(void)
-+{
-+	mempool_destroy(z_dm_evt.pool);
-+}
-Index: linux-2.6.15-rc1-patched/include/linux/netlink.h
-===================================================================
---- linux-2.6.15-rc1-patched.orig/include/linux/netlink.h	2005-11-11 18:51:47.000000000 -0800
-+++ linux-2.6.15-rc1-patched/include/linux/netlink.h	2005-11-29 22:48:29.000000000 -0800
-@@ -21,6 +21,7 @@
- #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
- #define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
- #define NETLINK_GENERIC		16
-+#define NETLINK_DM			17	/* Device Mapper */
- 
- #define MAX_LINKS 32		
- 
-Index: linux-2.6.15-rc1-patched/drivers/md/Makefile
-===================================================================
---- linux-2.6.15-rc1-patched.orig/drivers/md/Makefile	2005-08-28 17:51:43.000000000 -0700
-+++ linux-2.6.15-rc1-patched/drivers/md/Makefile	2005-11-29 22:48:29.000000000 -0800
-@@ -37,6 +37,9 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc
- obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
- obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
- obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
-+ifeq ($(CONFIG_DM_NL_SUPPORT),y)
-+  dm-mod-objs += dm-netlink.o
++LDFLAGS		= -lnl
++ifeq ($(strip $(DEBUG)),true)
++CFLAGS		+= -O1 -g
++else
++CFLAGS		+= -Os
 +endif
- 
- quiet_cmd_unroll = UNROLL  $@
-       cmd_unroll = $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
-Index: linux-2.6.15-rc1-patched/drivers/md/Kconfig
-===================================================================
---- linux-2.6.15-rc1-patched.orig/drivers/md/Kconfig	2005-06-17 17:21:30.000000000 -0700
-+++ linux-2.6.15-rc1-patched/drivers/md/Kconfig	2005-11-29 22:48:29.000000000 -0800
-@@ -236,5 +236,11 @@ config DM_MULTIPATH_EMC
- 	---help---
- 	  Multipath support for EMC CX/AX series hardware.
- 
-+config DM_NL_SUPPORT
-+	bool "DM Netlink Support (EXPERIMENTAL)"
-+	depends on  BLK_DEV_DM && EXPERIMENTAL
-+	---help---
-+	  Netlink events for dm devices.
 +
- endmenu
- 
++PROGRAM	= dm_nld
++
++all: $(PROGRAM)
++
++dm_evtd: dm_nld.o
++	$(CC) $^ -o $@
++
++clean:
++	rm -f *.o $(PROGRAM)
