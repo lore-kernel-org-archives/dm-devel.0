@@ -1,10 +1,10 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: kpartx bug fixes for dos extended partition [1/4]
-Date: Thu, 01 Dec 2005 15:05:50 -0500
-Message-ID: <438F579E.302@ce.jp.nec.com>
+Subject: kpartx bug fixes for dos extended partition [2/4]
+Date: Thu, 01 Dec 2005 15:14:41 -0500
+Message-ID: <438F59B1.1010901@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------010604000803030303060502"
+Content-Type: multipart/mixed; boundary="------------060103000309000007080709"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,77 +19,78 @@ To: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christo
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------010604000803030303060502
+--------------060103000309000007080709
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 Hi Christophe,
 
-the latest kpartx generates wrong mapping for
-MS-DOS extended partitions.
-Attached patch fixes the problem.
+kpartx usually doesn't create a mapping for extended partition.
+However, it does if it's empty.
+It's harmless but not consistent.
+Attached patch makes it consistent by not creating a mapping
+even when the extended partition is empty.
+
 Please consider to apply.
 
-Consider you created the following partition table.
+If you have logical partitions in extended partition:
   # parted /dev/sdc p
   Disk geometry for /dev/sdc: 0.000-34686.000 megabytes
   Disk label type: msdos
   Minor    Start       End     Type      Filesystem  Flags
-  1          0.031      7.844  primary
-  2          7.844     31.376  extended
+  1          7.844     31.376  extended
   5          7.875     23.532  logical
-  6         23.563     31.376  logical
 
-kpartx should generate the following mappings:
+No mapping is created for extended partition:
   # dmsetup table|grep sdc|sort
-  sdc1: 0 16002 linear 8:32 63
   sdc5: 0 32067 linear 8:32 16128
-  sdc6: 0 16002 linear 8:32 48258
 
-However, actually it generates:
+However, if the extended partition is empty:
+  # parted /dev/sdc p
+  Disk geometry for /dev/sdc: 0.000-34686.000 megabytes
+  Disk label type: msdos
+  Minor    Start       End     Type      Filesystem  Flags
+  1          7.844     31.376  extended
+
+The following mapping is created:
   # dmsetup table|grep sdc|sort
-  sdc1: 0 16002 linear 8:32 63
-  sdc5: 0 32067 linear 8:32 16128
-  sdc6: 0 16065 linear 8:32 80325
-  sdc7: 0 16002 linear 8:32 48258
+  sdc1: 0 48195 linear 8:32 16065
 
 Thanks,
 Nick
 
---------------010604000803030303060502
-Content-Type: text/x-patch; name="01-kpartx-dont-count-hidden-extended.patch"
+
+
+--------------060103000309000007080709
+Content-Type: text/x-patch;
+	name="02-kpartx-avoid-mapping-empty-extended-part.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
-	filename="01-kpartx-dont-count-hidden-extended.patch"
+	filename="02-kpartx-avoid-mapping-empty-extended-part.patch"
 
-Don't count (hidden) extended partition table entry as partition.
+Don't create mapping for extended partition.
 
-Otherwise, kpartx cause inconsistent numbering of partitions and
-also generate useless/misleading mappings for such entries.
+--- multipath-tools.orig/kpartx/dos.c	2005-12-02 01:33:41.000000000 +0900
++++ multipath-tools/kpartx/dos.c	2005-12-02 01:33:29.000000000 +0900
+@@ -99,8 +99,11 @@ read_dos_pt(int fd, struct slice all, st
+ 				"dos_partition: too many slices\n");
+ 			break;
+ 		}
+-		if (is_extended(p.sys_type))
++		if (is_extended(p.sys_type)) {
+ 			n += read_extended_partition(fd, &p, sp+n, ns-n);
++			/* hide the extended partition itself */
++			sp[i].size = 0;
++		}
+ 	}
+ 	return n;
+ }
 
-
-DOS extended partition is implemented by chain of 2-slot tables.
-Both Linux kernel and fdisk/parted doesn't count the link to the next
-extended partition table as single partition.
-
---- multipath-tools.orig/kpartx/dos.c	2005-12-01 08:36:57.000000000 +0900
-+++ multipath-tools/kpartx/dos.c	2005-12-02 04:06:25.000000000 +0900
-@@ -47,8 +47,7 @@ read_extended_partition(int fd, struct p
- 					here = start + le32_to_cpu(p.start_sect);
- 					moretodo = 1;
- 				}
--				else
--					continue;
-+				continue;
- 			}
- 			if (n < ns) {
- 				sp[n].start = here + le32_to_cpu(p.start_sect);
-
---------------010604000803030303060502
+--------------060103000309000007080709
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------010604000803030303060502--
+--------------060103000309000007080709--
