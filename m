@@ -1,10 +1,10 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: kpartx bug fixes for dos extended partition [2/4]
-Date: Thu, 01 Dec 2005 15:14:41 -0500
-Message-ID: <438F59B1.1010901@ce.jp.nec.com>
+Subject: kpartx bug fixes for dos extended partition [3/4]
+Date: Thu, 01 Dec 2005 15:22:33 -0500
+Message-ID: <438F5B89.5000903@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------060103000309000007080709"
+Content-Type: multipart/mixed; boundary="------------070407050000010309060700"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,78 +19,78 @@ To: device-mapper development <dm-devel@redhat.com>, Christophe Varoqui <christo
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------060103000309000007080709
+--------------070407050000010309060700
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 Hi Christophe,
 
-kpartx usually doesn't create a mapping for extended partition.
-However, it does if it's empty.
-It's harmless but not consistent.
-Attached patch makes it consistent by not creating a mapping
-even when the extended partition is empty.
+in the for loop in read_extended_partition,
+'here' is updated if the next extended partition is found.
 
-Please consider to apply.
+However, the 'here' value should be updated in the next while loop.
+Otherwise it's possible that following partition table
+entry refers updated value and generate wrong mapping.
 
-If you have logical partitions in extended partition:
-  # parted /dev/sdc p
-  Disk geometry for /dev/sdc: 0.000-34686.000 megabytes
-  Disk label type: msdos
-  Minor    Start       End     Type      Filesystem  Flags
-  1          7.844     31.376  extended
-  5          7.875     23.532  logical
-
-No mapping is created for extended partition:
-  # dmsetup table|grep sdc|sort
-  sdc5: 0 32067 linear 8:32 16128
-
-However, if the extended partition is empty:
-  # parted /dev/sdc p
-  Disk geometry for /dev/sdc: 0.000-34686.000 megabytes
-  Disk label type: msdos
-  Minor    Start       End     Type      Filesystem  Flags
-  1          7.844     31.376  extended
-
-The following mapping is created:
-  # dmsetup table|grep sdc|sort
-  sdc1: 0 48195 linear 8:32 16065
+I'm not sure if there is any partitioning tool which can generate
+such table. But it's safer to fix this.
 
 Thanks,
 Nick
 
-
-
---------------060103000309000007080709
+--------------070407050000010309060700
 Content-Type: text/x-patch;
-	name="02-kpartx-avoid-mapping-empty-extended-part.patch"
+ name="03-kpartx-fix-cursor-update.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
-	filename="02-kpartx-avoid-mapping-empty-extended-part.patch"
+ filename="03-kpartx-fix-cursor-update.patch"
 
-Don't create mapping for extended partition.
+If the 1st slot of extended partition contains a pointer to
+the next extended partition and the 2nd is normal logical partition,
+incorrect mapping will be generated for the 2nd partition.
 
---- multipath-tools.orig/kpartx/dos.c	2005-12-02 01:33:41.000000000 +0900
-+++ multipath-tools/kpartx/dos.c	2005-12-02 01:33:29.000000000 +0900
-@@ -99,8 +99,11 @@ read_dos_pt(int fd, struct slice all, st
- 				"dos_partition: too many slices\n");
- 			break;
- 		}
--		if (is_extended(p.sys_type))
-+		if (is_extended(p.sys_type)) {
- 			n += read_extended_partition(fd, &p, sp+n, ns-n);
-+			/* hide the extended partition itself */
-+			sp[i].size = 0;
-+		}
- 	}
- 	return n;
- }
+Usually, 2 slots of extended partition table is used
+and the 2nd slot points to the next extended partition.
+So this bug will not be hit in most cases.
 
---------------060103000309000007080709
+--- multipath-tools.orig/kpartx/dos.c	2005-12-02 04:06:25.000000000 +0900
++++ multipath-tools/kpartx/dos.c	2005-12-02 01:33:41.000000000 +0900
+@@ -20,15 +20,16 @@ read_extended_partition(int fd, struct p
+ 			struct slice *sp, int ns)
+ {
+ 	struct partition p;
+-	unsigned long start, here;
++	unsigned long start, here, next;
+ 	unsigned char *bp;
+ 	int loopct = 0;
+ 	int moretodo = 1;
+ 	int i, n=0;
+ 
+-	here = start = le32_to_cpu(ep->start_sect);
++	next = start = le32_to_cpu(ep->start_sect);
+ 
+ 	while (moretodo) {
++		here = next;
+ 		moretodo = 0;
+ 		if (++loopct > 100)
+ 			return n;
+@@ -43,8 +44,8 @@ read_extended_partition(int fd, struct p
+ 		for (i=0; i<2; i++) {
+ 			memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
+ 			if (is_extended(p.sys_type)) {
+-				if (p.nr_sects) {
+-					here = start + le32_to_cpu(p.start_sect);
++				if (p.nr_sects && !moretodo) {
++					next = start + le32_to_cpu(p.start_sect);
+ 					moretodo = 1;
+ 				}
+ 				continue;
+
+--------------070407050000010309060700
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------060103000309000007080709--
+--------------070407050000010309060700--
