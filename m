@@ -1,46 +1,63 @@
-From: "Carlos Manuel Duclos Vergara" <carlos@embedded.cl>
-Subject: Re: [KJ] [PATCH] dm: uninitialize static variables
-Date: Mon, 5 Dec 2005 12:47:40 -0000 (GMT)
-Message-ID: <50993.206.49.219.34.1133786860.squirrel@webmail.embedded.cl>
-References: <20051205132800.34631bbf@lucky.kitzblitz>
-Reply-To: carlos@embedded.cl
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: kpartx bug fixes for dos extended partition [4/4]
+Date: Mon, 05 Dec 2005 11:29:14 -0500
+Message-ID: <43946ADA.7060600@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: 8bit
-Return-path: <kernel-janitors-bounces@lists.osdl.org>
-In-Reply-To: <20051205132800.34631bbf@lucky.kitzblitz>
-List-Unsubscribe: <https://lists.osdl.org/mailman/listinfo/kernel-janitors>,
-	<mailto:kernel-janitors-request@lists.osdl.org?subject=unsubscribe>
-List-Archive: <http://lists.osdl.org/pipermail/kernel-janitors>
-List-Post: <mailto:kernel-janitors@lists.osdl.org>
-List-Help: <mailto:kernel-janitors-request@lists.osdl.org?subject=help>
-List-Subscribe: <https://lists.osdl.org/mailman/listinfo/kernel-janitors>,
-	<mailto:kernel-janitors-request@lists.osdl.org?subject=subscribe>
-Sender: kernel-janitors-bounces@lists.osdl.org
-Errors-To: kernel-janitors-bounces@lists.osdl.org
-To: Nicolas Kaiser <nikai@nikai.net>
-Cc: kernel-janitors@lists.osdl.org, dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="------------070605000101090400020701"
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+This is a multi-part message in MIME format.
+--------------070605000101090400020701
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 
-> uninitialize static variables initialized to 0, to make them go
-> to .bss instead of .data.
->
+This mail was not reached to dm-devel.
+I'm resending this.
 
-if you want that why not explicitely put them in .bss?
-something like:
+There is meaninglessly duplicated code in read_dos_pt().
+It should be safe to remove it.
 
-> -static unsigned int major = 0;
-> +static unsigned int major; /* = 0 */
+Thanks,
+Nick
 
-static unsigned int major = 0 __attribute__ ((section(".bss"));
+--------------070605000101090400020701
+Content-Type: text/x-patch;
+ name="04-kpartx-remove-duplicated-code.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline; filename="04-kpartx-remove-duplicated-code.patch"
 
-Even when crt should take care of initializing bss to zero, so I think
-that you're trying to save some cpu cycles
+Duplicated for loop is non-sense.
 
-my $1
+--- multipath-tools.orig/kpartx/dos.c	2005-12-02 01:33:29.000000000 +0900
++++ multipath-tools/kpartx/dos.c	2005-12-02 04:11:13.000000000 +0900
+@@ -86,9 +86,6 @@ read_dos_pt(int fd, struct slice all, st
+ 
+ 	for (i=0; i<4; i++) {
+ 		memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
+-	}
+-	for (i=0; i<4; i++) {
+-		memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
+ 		if (is_gpt(p.sys_type))
+ 			return 0;
+ 		if (i < ns) {
 
--- 
-Carlos Manuel Duclos Vergara
-http://www.toolchains.com/personal/blog
+--------------070605000101090400020701
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------070605000101090400020701--
