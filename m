@@ -1,10 +1,14 @@
-From: Nicolas Kaiser <nikai@nikai.net>
-Subject: [KJ] [PATCH] dm: uninitialize static variables
-Date: Mon, 5 Dec 2005 13:28:00 +0100
-Message-ID: <20051205132800.34631bbf@lucky.kitzblitz>
+From: "Carlos Manuel Duclos Vergara" <carlos@embedded.cl>
+Subject: Re: [KJ] [PATCH] dm: uninitialize static variables
+Date: Mon, 5 Dec 2005 12:47:40 -0000 (GMT)
+Message-ID: <50993.206.49.219.34.1133786860.squirrel@webmail.embedded.cl>
+References: <20051205132800.34631bbf@lucky.kitzblitz>
+Reply-To: carlos@embedded.cl
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============71703601335763079=="
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: 8bit
 Return-path: <kernel-janitors-bounces@lists.osdl.org>
+In-Reply-To: <20051205132800.34631bbf@lucky.kitzblitz>
 List-Unsubscribe: <https://lists.osdl.org/mailman/listinfo/kernel-janitors>,
 	<mailto:kernel-janitors-request@lists.osdl.org?subject=unsubscribe>
 List-Archive: <http://lists.osdl.org/pipermail/kernel-janitors>
@@ -14,59 +18,29 @@ List-Subscribe: <https://lists.osdl.org/mailman/listinfo/kernel-janitors>,
 	<mailto:kernel-janitors-request@lists.osdl.org?subject=subscribe>
 Sender: kernel-janitors-bounces@lists.osdl.org
 Errors-To: kernel-janitors-bounces@lists.osdl.org
-To: dm-devel@redhat.com
-Cc: kernel-janitors@lists.osdl.org
+To: Nicolas Kaiser <nikai@nikai.net>
+Cc: kernel-janitors@lists.osdl.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============71703601335763079==
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Hi,
 
-uninitialize static variables initialized to 0, to make them go
-to .bss instead of .data.
+> uninitialize static variables initialized to 0, to make them go
+> to .bss instead of .data.
+>
 
-Signed-off-by: Nicolas Kaiser <nikai@nikai.net>
----
- dm.c     |    4 ++--
- kcopyd.c |    2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+if you want that why not explicitely put them in .bss?
+something like:
 
-diff -urpN a/drivers/md/dm.c b/drivers/md/dm.c
---- a/drivers/md/dm.c	2005-10-02 15:53:35.000000000 +0200
-+++ b/drivers/md/dm.c	2005-12-05 00:01:26.000000000 +0100
-@@ -20,8 +20,8 @@
- 
- static const char *_name = DM_NAME;
- 
--static unsigned int major = 0;
--static unsigned int _major = 0;
-+static unsigned int major; /* = 0 */
-+static unsigned int _major; /* = 0 */
- 
- /*
-  * One of these is allocated per bio.
-diff -urpN a/drivers/md/kcopyd.c b/drivers/md/kcopyd.c
---- a/drivers/md/kcopyd.c	2005-10-02 15:53:35.000000000 +0200
-+++ b/drivers/md/kcopyd.c	2005-12-05 00:00:33.000000000 +0100
-@@ -588,7 +588,7 @@ static void client_del(struct kcopyd_cli
- }
- 
- static DECLARE_MUTEX(kcopyd_init_lock);
--static int kcopyd_clients = 0;
-+static int kcopyd_clients; /* = 0 */
- 
- static int kcopyd_init(void)
- {
+> -static unsigned int major = 0;
+> +static unsigned int major; /* = 0 */
 
---===============71703601335763079==
-Content-Type: text/plain; charset="iso-8859-1"
-MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+static unsigned int major = 0 __attribute__ ((section(".bss"));
 
-_______________________________________________
-Kernel-janitors mailing list
-Kernel-janitors@lists.osdl.org
-https://lists.osdl.org/mailman/listinfo/kernel-janitors
+Even when crt should take care of initializing bss to zero, so I think
+that you're trying to save some cpu cycles
 
---===============71703601335763079==--
+my $1
+
+-- 
+Carlos Manuel Duclos Vergara
+http://www.toolchains.com/personal/blog
