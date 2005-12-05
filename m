@@ -1,11 +1,15 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: kpartx bug fixes for dos extended partition [4/4]
-Date: Mon, 05 Dec 2005 11:29:14 -0500
-Message-ID: <43946ADA.7060600@ce.jp.nec.com>
+From: Nicolas Kaiser <nikai@nikai.net>
+Subject: Re: [KJ] [PATCH] dm: uninitialize static variables
+Date: Mon, 5 Dec 2005 19:00:29 +0100
+Message-ID: <20051205190029.4b29e759@lucky.kitzblitz>
+References: <20051205132800.34631bbf@lucky.kitzblitz>
+	<50993.206.49.219.34.1133786860.squirrel@webmail.embedded.cl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------070605000101090400020701"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <50993.206.49.219.34.1133786860.squirrel@webmail.embedded.cl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,49 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Carlos Manuel Duclos Vergara"@redhat.com, carlos@embedded.cl
+Cc: kernel-janitors@lists.osdl.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------070605000101090400020701
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+* "Carlos Manuel Duclos Vergara" <carlos@embedded.cl>:
+> > uninitialize static variables initialized to 0, to make them go
+> > to .bss instead of .data.
+> >
+> 
+> if you want that why not explicitely put them in .bss?
+> something like:
+> 
+> > -static unsigned int major = 0;
+> > +static unsigned int major; /* = 0 */
+> 
+> static unsigned int major = 0 __attribute__ ((section(".bss"));
 
-This mail was not reached to dm-devel.
-I'm resending this.
+I personally like the idea of explicitly expressing this intention,
+but I didn't manage to achieve this together with initialization.
+I tried
 
-There is meaninglessly duplicated code in read_dos_pt().
-It should be safe to remove it.
+ static unsigned int __attribute__((__section__(".bss"))) major = 0;
+ static unsigned int __attribute__((__section__(".bss"))) _major = 0;
 
-Thanks,
-Nick
+but they appear not to end up in .bss nevertheless, compared with the
+uninitialized version:
 
---------------070605000101090400020701
-Content-Type: text/x-patch;
- name="04-kpartx-remove-duplicated-code.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline; filename="04-kpartx-remove-duplicated-code.patch"
+--- dm-mod.ko1.txt      2005-12-05 18:40:00.000000000 +0100
++++ dm-mod.ko2.txt      2005-12-05 18:39:52.000000000 +0100
+@@ -27,7 +27,7 @@
+ [22] .rel.init.data       REL          00000000 00b174 000028  8       29  21  4
+ [23] .gnu.linkonce.this_module PROGBITS     00000000 0087c0 000160  0 WA     0   0 32
+ [24] .rel.gnu.linkonce.this_module REL          00000000 00b19c 000010  8       29  23  4
+-[25] .bss                 NOBITS       00000000 008920 00049c  0 WA     0   0 32
++[25] .bss                 NOBITS       00000000 008920 000498  0 WA     0   0 32
+ [26] .comment             PROGBITS     00000000 008920 00022e  0        0   0  1
+ [27] .note.GNU-stack      PROGBITS     00000000 008b4e 000000  0        0   0  1
+ [28] .shstrtab            STRTAB       00000000 008b4e 00011e  0        0   0  1
 
-Duplicated for loop is non-sense.
+If you could tell me how to achieve this in a fancy way which also works,
+I'm all ears. Maybe the janitorial steering committee might also like the
+idea enough to adjust their current TODO list.
+( http://janitor.kernelnewbies.org/TODO - 10th task in 6th section)
 
---- multipath-tools.orig/kpartx/dos.c	2005-12-02 01:33:29.000000000 +0900
-+++ multipath-tools/kpartx/dos.c	2005-12-02 04:11:13.000000000 +0900
-@@ -86,9 +86,6 @@ read_dos_pt(int fd, struct slice all, st
- 
- 	for (i=0; i<4; i++) {
- 		memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
--	}
--	for (i=0; i<4; i++) {
--		memcpy(&p, bp + 0x1be + i * sizeof (p), sizeof (p));
- 		if (is_gpt(p.sys_type))
- 			return 0;
- 		if (i < ns) {
-
---------------070605000101090400020701
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------070605000101090400020701--
+Cheers,
+n.
