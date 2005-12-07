@@ -1,10 +1,10 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] S/390 DASD support for multipath-tools
-Date: Wed, 07 Dec 2005 14:52:52 +0100
-Message-ID: <4396E934.2020306@suse.de>
+Subject: [kpartx] add support for S/390 DASD
+Date: Wed, 07 Dec 2005 15:08:05 +0100
+Message-ID: <4396ECC5.2090202@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------030603050006080001020707"
+Content-Type: multipart/mixed; boundary="------------030506060202000508040800"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,15 +20,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------030603050006080001020707
+--------------030506060202000508040800
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christophe,
 
-this patch adds S/390 DASD support for multipath-tools.
-As the DASD do have their own type of multipathing (called PAV there)
-I don't see why multipath-tools shouldn't support it.
+this patch adds kpartx support for S/390 DASD partitions.
+Helpful when using multipath-tools on them.
 
 Cheers,
 
@@ -39,158 +38,140 @@ SuSE Linux Products GmbH		S390 & zSeries
 Maxfeldstra=DFe 5				+49 911 74053 688
 90409 N=FCrnberg				http://www.suse.de
 
---------------030603050006080001020707
+--------------030506060202000508040800
 Content-Type: text/x-patch;
- name="multipath-tools-dasd-support.patch"
+ name="kpartx-dasd-support.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="multipath-tools-dasd-support.patch"
+ filename="kpartx-dasd-support.patch"
 
-Add support for S/390 DASD
+[kpartx] Add support for S/390 DASD partitions
 
-On newer zSeries hardware the default disks (called DASDs) have a
-multipath feature built-in (aka PAV for Parallel Access Volumes).
-This patch enables support for these disks.
+As multipath-tools now supports S/390 DASDs there is no reason why
+kpartx should not.
 
-Signed-off-by: Hannes Reinecke
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 
 ---
+ kpartx/Makefile    |    4 ++--
+ kpartx/devmapper.c |   40 ++++++++++++++++++++++++++++++++++++++--
+ kpartx/devmapper.h |    1 +
+ kpartx/kpartx.c    |    1 +
+ kpartx/kpartx.h    |    1 +
+ 5 files changed, 43 insertions(+), 4 deletions(-)
 
- libmultipath/discovery.c |   64 +++++++++++++++++++++++++++++++++++++++++++++-
- libmultipath/hwtable.c   |    4 +++
- libmultipath/structs.h   |    3 +-
- 3 files changed, 68 insertions(+), 3 deletions(-)
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -181,6 +181,8 @@ sysfs_get_##fname (char * sysfs_path, ch
- 	return 0; \
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -10,11 +10,11 @@ CFLAGS = -pipe -g -Wall -Wunused -Wstric
+ 
+ ifeq ($(strip $(BUILD)),klibc)
+ 	OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o gpt.o crc32.o \
+-	       lopart.o xstrncpy.o devmapper.o \
++	       lopart.o xstrncpy.o devmapper.o dasd.o \
+ 	       $(MULTIPATHLIB)-$(BUILD).a $(libdm)
+ else
+ 	LDFLAGS = -ldevmapper
+-	OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o \
++	OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o \
+ 	       gpt.o crc32.o lopart.o xstrncpy.o devmapper.o
+ endif
+ 
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -123,7 +123,7 @@ const char *
+ dm_mapname(int major, int minor)
+ {
+ 	struct dm_task *dmt;
+-	const char *mapname;
++	const char *mapname = NULL, *map;
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
+ 		return NULL;
+@@ -135,9 +135,45 @@ dm_mapname(int major, int minor)
+ 	if (!dm_task_run(dmt))
+ 		goto out;
+ 
+-	mapname = strdup(dm_task_get_name(dmt));
++	map = dm_task_get_name(dmt);
++	if (map && map[0] != '\0')
++		mapname = strdup(map);
++
+ out:
+ 	dm_task_destroy(dmt);
+ 	return mapname;
  }
  
-+declare_sysfs_get_str(devtype, "%s/block/%s/device/devtype");
-+declare_sysfs_get_str(cutype, "%s/block/%s/device/cutype");
- declare_sysfs_get_str(vendor, "%s/block/%s/device/vendor");
- declare_sysfs_get_str(model, "%s/block/%s/device/model");
- declare_sysfs_get_str(rev, "%s/block/%s/device/rev");
-@@ -392,6 +394,8 @@ sysfs_get_bus (char * sysfs_path, struct
- 		curpath->bus = SYSFS_BUS_SCSI;
- 	else if (!strncmp(sdev->bus, "ide", 3))
- 		curpath->bus = SYSFS_BUS_IDE;
-+	else if (!strncmp(sdev->bus, "ccw", 3))
-+		curpath->bus = SYSFS_BUS_CCW;
- 	else
- 		return 1;
- 
-@@ -469,6 +473,59 @@ scsi_sysfs_pathinfo (struct path * curpa
- }
- 
- static int
-+ccw_sysfs_pathinfo (struct path * curpath)
++/*
++ * dm_get_first_dep
++ *
++ * Return the device number of the first dependend device
++ * for a given target.
++ */
++dev_t dm_get_first_dep(char *devname)
 +{
-+	char attr_path[FILE_NAME_SIZE];
-+	char attr_buff[FILE_NAME_SIZE];
++	struct dm_task *dmt;
++	struct dm_deps *dm_deps;
++	dev_t ret = 0;
 +
-+	sprintf(curpath->vendor_id, "IBM");
-+
-+	condlog(3, "vendor = %s", curpath->vendor_id);
-+
-+	if (sysfs_get_devtype(sysfs_path, curpath->dev,
-+			      attr_buff, FILE_NAME_SIZE))
-+		return 1;
-+
-+	if (!strncmp(attr_buff, "3370", 4)) {
-+		sprintf(curpath->product_id,"S/390 DASD FBA");
-+	} else if (!strncmp(attr_buff, "9336", 4)) {
-+		sprintf(curpath->product_id,"S/390 DASD FBA");
-+	} else {
-+		sprintf(curpath->product_id,"S/390 DASD ECKD");
++	if ((dmt = dm_task_create(DM_DEVICE_DEPS)) == NULL) {
++		return ret;
 +	}
-+
-+	condlog(3, "product = %s", curpath->product_id);
-+
-+	/*
-+	 * host / bus / target / lun
-+	 */
-+	if(safe_sprintf(attr_path, "%s/block/%s/device",
-+			sysfs_path, curpath->dev)) {
-+		condlog(0, "attr_path too small");
-+		return 1;
++	if (!dm_task_set_name(dmt, devname)) {
++		goto out;
 +	}
-+	if (0 > sysfs_get_link(attr_path, attr_buff, sizeof(attr_buff)))
-+		return 1;
-+	
-+	basename(attr_buff, attr_path);
++	if (!dm_task_run(dmt)) {
++		goto out;
++	}
++	if ((dm_deps = dm_task_get_deps(dmt)) == NULL) {
++		goto out;
++	}
++	if (dm_deps->count > 0) {
++		ret = dm_deps->device[0];
++	}
++out:
++	dm_task_destroy(dmt);
 +
-+	condlog(3, "device path %s", attr_path);
-+
-+	curpath->sg_id.lun = 0;
-+	sscanf(attr_path, "%i.%i.%x",
-+			&curpath->sg_id.host_no,
-+			&curpath->sg_id.channel,
-+			&curpath->sg_id.scsi_id);
-+	condlog(3, "h:b:t:l = %i:%i:%i:%i",
-+			curpath->sg_id.host_no,
-+			curpath->sg_id.channel,
-+			curpath->sg_id.scsi_id,
-+			curpath->sg_id.lun);
-+
-+	return 0;
++	return ret;
 +}
 +
-+static int
- common_sysfs_pathinfo (struct path * curpath)
- {
- 	if (sysfs_get_bus(sysfs_path, curpath))
-@@ -498,10 +555,13 @@ sysfs_pathinfo(struct path * curpath)
- 
- 	if (curpath->bus == SYSFS_BUS_UNDEF)
- 		return 0;
--	else if (curpath->bus == SYSFS_BUS_SCSI)
-+	else if (curpath->bus == SYSFS_BUS_SCSI) {
- 		if (scsi_sysfs_pathinfo(curpath))
- 			return 1;
--
-+	} else if (curpath->bus == SYSFS_BUS_CCW) {
-+		if (ccw_sysfs_pathinfo(curpath))
-+			return 1;
-+	}
- 	return 0;
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -3,3 +3,4 @@ int dm_simplecmd (int, const char *);
+ int dm_addmap (int, const char *, const char *, const char *, unsigned long);
+ int dm_map_present (char *);
+ const char * dm_mapname(int major, int minor);
++dev_t dm_get_first_dep(char *devname);
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -77,6 +77,7 @@ initpts(void)
+ 	addpts("bsd", read_bsd_pt);
+ 	addpts("solaris", read_solaris_pt);
+ 	addpts("unixware", read_unixware_pt);
++	addpts("dasd", read_dasd_pt);
  }
  
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -53,6 +53,10 @@ setup_default_hwtable (vector hw)
- 	/* IBM SAN Volume Controller */
- 	r += store_hwe_ext(hw, "IBM", "2145", MULTIBUS, DEFAULT_GETUID,
- 		   NULL, "0", "1 queue_if_no_path", "tur", FAILBACK_UNDEF);
-+	/* IBM S/390 ECKD DASD */
-+	r += store_hwe_ext(hw, "IBM", "S/390 DASD ECKD", MULTIBUS,
-+		   "/sbin/dasdview -j /dev/%n", NULL, "0", "0",
-+		   "directio", FAILBACK_UNDEF);
- 	r += store_hwe_ext(hw, "NETAPP", "LUN", GROUP_BY_PRIO, DEFAULT_GETUID,
- 		  "/sbin/mpath_prio_netapp /dev/%n", NULL,
- 		  "1 queue_if_no_path", "readsector0", FAILBACK_UNDEF);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -38,7 +38,8 @@ enum failback_mode {
- enum sysfs_buses {
- 	SYSFS_BUS_UNDEF,
- 	SYSFS_BUS_SCSI,
--	SYSFS_BUS_IDE
-+	SYSFS_BUS_IDE,
-+	SYSFS_BUS_CCW
- };
+ static char short_opts[] = "ladgvnp:t:";
+diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
+--- a/kpartx/kpartx.h
++++ b/kpartx/kpartx.h
+@@ -31,6 +31,7 @@ extern ptreader read_bsd_pt;
+ extern ptreader read_solaris_pt;
+ extern ptreader read_unixware_pt;
+ extern ptreader read_gpt_pt;
++extern ptreader read_dasd_pt;
  
- enum pathstates {
+ char *getblock(int fd, unsigned int secnr);
+ 
 
---------------030603050006080001020707
+--------------030506060202000508040800
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------030603050006080001020707--
+--------------030506060202000508040800--
