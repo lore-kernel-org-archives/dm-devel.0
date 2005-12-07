@@ -1,11 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [multipathd] correct oom_adj value
-Date: Wed, 07 Dec 2005 15:57:57 +0100
-Message-ID: <4396F875.1050907@suse.de>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Make sure QUEUE_FLAG_CLUSTER is set properly
+	for dm.
+Date: Wed, 7 Dec 2005 22:27:55 +0000
+Message-ID: <20051207222755.GM3647@agk.surrey.redhat.com>
+References: <17302.21846.792776.256696@cse.unsw.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------030004020106080106060402"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <17302.21846.792776.256696@cse.unsw.edu.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,65 +19,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------030004020106080106060402
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+On Wed, Dec 07, 2005 at 02:21:58PM +1100, Neil Brown wrote:
+>  the block layer has a flag - QUEUE_FLAG_CLUSTER - which can be set
 
-Hi Christophe,
+Yes, but does it make much difference at the moment, given that we 
+need to use small bios to avoid having to split them if they cross 
+mapping boundaries?  (That's the real problem that needs tackling.)
 
-any recent kernel will only accept values > -17 for oom_adj.
-So writing '-17' into oom_adj will only lead to an error, not to the
-desired behaviour.
-
-Patch is attached.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
-
---------------030004020106080106060402
-Content-Type: text/x-patch;
- name="multipath-tools-oom-adj.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="multipath-tools-oom-adj.patch"
-
-[multipathd] set oom_adj to a valid value
-
-As of 2.6.14, the kernel will only accept oom_adj values of > -17.
-Writing '-17' into oom_adj will be ignored. This patch fixes the
-value to -16.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-
-diff --git a/multipathd/main.c b/multipathd/main.c
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1554,7 +1554,7 @@ child (void * param)
- 	}
- 	signal_init();
- 	setscheduler();
--	set_oom_adj(-17);
-+	set_oom_adj(-16);
- 	vecs = gvecs = init_vecs();
- 
- 	if (!vecs)
-
---------------030004020106080106060402
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------030004020106080106060402--
+Alasdair
+-- 
+agk@redhat.com
