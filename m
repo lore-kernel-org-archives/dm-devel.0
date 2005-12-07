@@ -1,14 +1,11 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: [PATCH] IBM hwtable update
-Date: Wed, 7 Dec 2005 12:45:00 +0100
-Message-ID: <OF3BAED142.4E324BA7-ONC12570D0.003FCC56-C12570D0.00406650@de.ibm.com>
-References: <4396C35B.7030109@suse.de>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] S/390 DASD support for multipath-tools
+Date: Wed, 07 Dec 2005 14:52:52 +0100
+Message-ID: <4396E934.2020306@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="------------030603050006080001020707"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4396C35B.7030109@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,91 +15,182 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: christophe varoqui <christophe.varoqui@free.fr>
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Christophe, Hannes,
+This is a multi-part message in MIME format.
+--------------030603050006080001020707
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-I thought I had already sent parts of these but they don't seem to be in=20
-the git head when
-I look now. I'd suggest a small change for the DS6000 aka 1750500. Since=20
-paths with
-higher prio are more appreciated, wouldn'T FAILBACK_IMMEDIATE make more=20
-sense?
+Hi Christophe,
 
-Regards,
-Stefan
+this patch adds S/390 DASD support for multipath-tools.
+As the DASD do have their own type of multipathing (called PAV there)
+I don't see why multipath-tools shouldn't support it.
 
-SW Linux on zSeries Development & Services
-Stefan.Bader@de.ibm.com
--------------------------------------------------------------------------=
----------
-  When all other means of communication fail, try words.
+Cheers,
 
-dm-devel-bounces@redhat.com wrote on 07.12.2005 12:11:23:
+Hannes
+--=20
+Dr. Hannes Reinecke			hare@suse.de
+SuSE Linux Products GmbH		S390 & zSeries
+Maxfeldstra=DFe 5				+49 911 74053 688
+90409 N=FCrnberg				http://www.suse.de
 
-> Hi Christophe,
->=20
-> attached is a patch to update hwtable.c with some IBM Storage Servers.
-> Especially the DS6000 should be handled properly as it again has
-> asymmetric paths.
->=20
-> Cheers,
->=20
-> Hannes
-> --=20
-> Dr. Hannes Reinecke         hare@suse.de
-> SuSE Linux Products GmbH      S390 & zSeries
-> Maxfeldstra=DFe 5            +49 911 74053 688
-> 90409 N=FCrnberg            http://www.suse.de
-> Subject: Hardware entries for IBM Storage Servers
->=20
-> Several IBM Storage Servers (most notably the DS range) need
-> specific hardware entries. This patch adds hardware entries
-> for:
->=20
-> - IBM ESS F20 (aka Shark)
-> - IBM DS6000
-> - IBM DS8000
-> - IBM SVC
->=20
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
->=20
-> ---
->=20
->  libmultipath/hwtable.c |   14 ++++++++++++++
->  1 files changed, 14 insertions(+), 0 deletions(-)
->=20
-> diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-> --- a/libmultipath/hwtable.c
-> +++ b/libmultipath/hwtable.c
-> @@ -39,6 +39,20 @@ setup_default_hwtable (vector hw)
->           "1 queue_if_no_path", "emc_clariion", -FAILBACK_IMMEDIATE);
->     r +=3D store_hwe_ext(hw, "IBM", "3542", GROUP_BY_SERIAL,=20
-DEFAULT_GETUID,
->           NULL, "0", "0", "tur", FAILBACK_UNDEF);
-> +   /* IBM ESS F20 aka Shark */
-> +   r +=3D store_hwe_ext(hw, "IBM", "2105F20", GROUP_BY_SERIAL,
-> +         DEFAULT_GETUID, NULL, "0", "1 queue_if_no_path",
-> +         "tur", FAILBACK_UNDEF);
-> +       /* IBM DS6000 */
-> +   r +=3D store_hwe_ext(hw, "IBM", "1750500", GROUP_BY_PRIO,=20
-DEFAULT_GETUID,
-> +         "/sbin/mpath_prio_alua /dev/%n", "0", "1 queue_if_no_path",
-> +         "tur", FAILBACK_UNDEF);
-> +   /* IBM DS8000 */
-> +   r +=3D store_hwe_ext(hw, "IBM", "2107900", GROUP_BY_SERIAL,=20
-DEFAULT_GETUID,
-> +         NULL, "0", "1 queue_if_no_path", "tur", FAILBACK_UNDEF);
-> +   /* IBM SAN Volume Controller */
-> +   r +=3D store_hwe_ext(hw, "IBM", "2145", MULTIBUS, DEFAULT_GETUID,
-> +         NULL, "0", "1 queue_if_no_path", "tur", FAILBACK_UNDEF);
->     r +=3D store_hwe_ext(hw, "NETAPP", "LUN", GROUP_BY_PRIO,=20
-DEFAULT_GETUID,
->          "/sbin/mpath_prio_netapp /dev/%n", NULL,
->          "1 queue_if_no_path", "readsector0", FAILBACK_UNDEF);
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--------------030603050006080001020707
+Content-Type: text/x-patch;
+ name="multipath-tools-dasd-support.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="multipath-tools-dasd-support.patch"
+
+Add support for S/390 DASD
+
+On newer zSeries hardware the default disks (called DASDs) have a
+multipath feature built-in (aka PAV for Parallel Access Volumes).
+This patch enables support for these disks.
+
+Signed-off-by: Hannes Reinecke
+
+---
+
+ libmultipath/discovery.c |   64 +++++++++++++++++++++++++++++++++++++++++++++-
+ libmultipath/hwtable.c   |    4 +++
+ libmultipath/structs.h   |    3 +-
+ 3 files changed, 68 insertions(+), 3 deletions(-)
+
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -181,6 +181,8 @@ sysfs_get_##fname (char * sysfs_path, ch
+ 	return 0; \
+ }
+ 
++declare_sysfs_get_str(devtype, "%s/block/%s/device/devtype");
++declare_sysfs_get_str(cutype, "%s/block/%s/device/cutype");
+ declare_sysfs_get_str(vendor, "%s/block/%s/device/vendor");
+ declare_sysfs_get_str(model, "%s/block/%s/device/model");
+ declare_sysfs_get_str(rev, "%s/block/%s/device/rev");
+@@ -392,6 +394,8 @@ sysfs_get_bus (char * sysfs_path, struct
+ 		curpath->bus = SYSFS_BUS_SCSI;
+ 	else if (!strncmp(sdev->bus, "ide", 3))
+ 		curpath->bus = SYSFS_BUS_IDE;
++	else if (!strncmp(sdev->bus, "ccw", 3))
++		curpath->bus = SYSFS_BUS_CCW;
+ 	else
+ 		return 1;
+ 
+@@ -469,6 +473,59 @@ scsi_sysfs_pathinfo (struct path * curpa
+ }
+ 
+ static int
++ccw_sysfs_pathinfo (struct path * curpath)
++{
++	char attr_path[FILE_NAME_SIZE];
++	char attr_buff[FILE_NAME_SIZE];
++
++	sprintf(curpath->vendor_id, "IBM");
++
++	condlog(3, "vendor = %s", curpath->vendor_id);
++
++	if (sysfs_get_devtype(sysfs_path, curpath->dev,
++			      attr_buff, FILE_NAME_SIZE))
++		return 1;
++
++	if (!strncmp(attr_buff, "3370", 4)) {
++		sprintf(curpath->product_id,"S/390 DASD FBA");
++	} else if (!strncmp(attr_buff, "9336", 4)) {
++		sprintf(curpath->product_id,"S/390 DASD FBA");
++	} else {
++		sprintf(curpath->product_id,"S/390 DASD ECKD");
++	}
++
++	condlog(3, "product = %s", curpath->product_id);
++
++	/*
++	 * host / bus / target / lun
++	 */
++	if(safe_sprintf(attr_path, "%s/block/%s/device",
++			sysfs_path, curpath->dev)) {
++		condlog(0, "attr_path too small");
++		return 1;
++	}
++	if (0 > sysfs_get_link(attr_path, attr_buff, sizeof(attr_buff)))
++		return 1;
++	
++	basename(attr_buff, attr_path);
++
++	condlog(3, "device path %s", attr_path);
++
++	curpath->sg_id.lun = 0;
++	sscanf(attr_path, "%i.%i.%x",
++			&curpath->sg_id.host_no,
++			&curpath->sg_id.channel,
++			&curpath->sg_id.scsi_id);
++	condlog(3, "h:b:t:l = %i:%i:%i:%i",
++			curpath->sg_id.host_no,
++			curpath->sg_id.channel,
++			curpath->sg_id.scsi_id,
++			curpath->sg_id.lun);
++
++	return 0;
++}
++
++static int
+ common_sysfs_pathinfo (struct path * curpath)
+ {
+ 	if (sysfs_get_bus(sysfs_path, curpath))
+@@ -498,10 +555,13 @@ sysfs_pathinfo(struct path * curpath)
+ 
+ 	if (curpath->bus == SYSFS_BUS_UNDEF)
+ 		return 0;
+-	else if (curpath->bus == SYSFS_BUS_SCSI)
++	else if (curpath->bus == SYSFS_BUS_SCSI) {
+ 		if (scsi_sysfs_pathinfo(curpath))
+ 			return 1;
+-
++	} else if (curpath->bus == SYSFS_BUS_CCW) {
++		if (ccw_sysfs_pathinfo(curpath))
++			return 1;
++	}
+ 	return 0;
+ }
+ 
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -53,6 +53,10 @@ setup_default_hwtable (vector hw)
+ 	/* IBM SAN Volume Controller */
+ 	r += store_hwe_ext(hw, "IBM", "2145", MULTIBUS, DEFAULT_GETUID,
+ 		   NULL, "0", "1 queue_if_no_path", "tur", FAILBACK_UNDEF);
++	/* IBM S/390 ECKD DASD */
++	r += store_hwe_ext(hw, "IBM", "S/390 DASD ECKD", MULTIBUS,
++		   "/sbin/dasdview -j /dev/%n", NULL, "0", "0",
++		   "directio", FAILBACK_UNDEF);
+ 	r += store_hwe_ext(hw, "NETAPP", "LUN", GROUP_BY_PRIO, DEFAULT_GETUID,
+ 		  "/sbin/mpath_prio_netapp /dev/%n", NULL,
+ 		  "1 queue_if_no_path", "readsector0", FAILBACK_UNDEF);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -38,7 +38,8 @@ enum failback_mode {
+ enum sysfs_buses {
+ 	SYSFS_BUS_UNDEF,
+ 	SYSFS_BUS_SCSI,
+-	SYSFS_BUS_IDE
++	SYSFS_BUS_IDE,
++	SYSFS_BUS_CCW
+ };
+ 
+ enum pathstates {
+
+--------------030603050006080001020707
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------030603050006080001020707--
