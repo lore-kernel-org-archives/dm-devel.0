@@ -1,10 +1,10 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [kpartx] add support for S/390 DASD
-Date: Wed, 07 Dec 2005 15:08:05 +0100
-Message-ID: <4396ECC5.2090202@suse.de>
+Subject: [kpartx] Use lseek64 instead of self-defined syscall
+Date: Wed, 07 Dec 2005 15:46:55 +0100
+Message-ID: <4396F5DF.9090105@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------030506060202000508040800"
+Content-Type: multipart/mixed; boundary="------------000408000601040002060309"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,14 +20,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------030506060202000508040800
+--------------000408000601040002060309
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christophe,
 
-this patch adds kpartx support for S/390 DASD partitions.
-Helpful when using multipath-tools on them.
+this patch enables kpartx to use lseek64 instead of a self-defined syscal=
+l.
 
 Cheers,
 
@@ -38,140 +38,78 @@ SuSE Linux Products GmbH		S390 & zSeries
 Maxfeldstra=DFe 5				+49 911 74053 688
 90409 N=FCrnberg				http://www.suse.de
 
---------------030506060202000508040800
+--------------000408000601040002060309
 Content-Type: text/x-patch;
- name="kpartx-dasd-support.patch"
+ name="kpartx-use-lseek64.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="kpartx-dasd-support.patch"
+ filename="kpartx-use-lseek64.patch"
 
-[kpartx] Add support for S/390 DASD partitions
-
-As multipath-tools now supports S/390 DASDs there is no reason why
-kpartx should not.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+[kpartx] use lseek64 instead of self-defined syscall.
 
 ---
- kpartx/Makefile    |    4 ++--
- kpartx/devmapper.c |   40 ++++++++++++++++++++++++++++++++++++++--
- kpartx/devmapper.h |    1 +
- kpartx/kpartx.c    |    1 +
- kpartx/kpartx.h    |    1 +
- 5 files changed, 43 insertions(+), 4 deletions(-)
+commit 400137e766f9585ae5d9038ce769810757e3b344
+tree 0a9974d358e0f6443e23794b1f37b0609987f249
+parent d43d7b77542d8459c30f82062f5c76954f124062
+author Hannes Reinecke,SUSE LINUX GmbH; Maxfeldstrasse 5; D-90409 Nuernberg; Zi. 2.2-20,+49-911-740 53-688,,serv=wotan,mail=imap-dhs,type=real <hare@lammermuir.suse.de> Wed, 07 Dec 2005 15:44:56 +0100
+committer Hannes Reinecke,SUSE LINUX GmbH; Maxfeldstrasse 5; D-90409 Nuernberg; Zi. 2.2-20,+49-911-740 53-688,,serv=wotan,mail=imap-dhs,type=real <hare@lammermuir.suse.de> Wed, 07 Dec 2005 15:44:56 +0100
+
+ kpartx/Makefile |    2 +-
+ kpartx/kpartx.c |   19 +++----------------
+ 2 files changed, 4 insertions(+), 17 deletions(-)
 
 diff --git a/kpartx/Makefile b/kpartx/Makefile
 --- a/kpartx/Makefile
 +++ b/kpartx/Makefile
-@@ -10,11 +10,11 @@ CFLAGS = -pipe -g -Wall -Wunused -Wstric
+@@ -6,7 +6,7 @@ BUILD=glibc
+ 
+ include ../Makefile.inc
+ 
+-CFLAGS = -pipe -g -Wall -Wunused -Wstrict-prototypes -I.
++CFLAGS = -pipe -g -Wall -Wunused -Wstrict-prototypes -I. -D_LARGEFILE64_SOURCE
  
  ifeq ($(strip $(BUILD)),klibc)
  	OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o gpt.o crc32.o \
--	       lopart.o xstrncpy.o devmapper.o \
-+	       lopart.o xstrncpy.o devmapper.o dasd.o \
- 	       $(MULTIPATHLIB)-$(BUILD).a $(libdm)
- else
- 	LDFLAGS = -ldevmapper
--	OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o \
-+	OBJS = bsd.o dos.o kpartx.o solaris.o unixware.o dasd.o \
- 	       gpt.o crc32.o lopart.o xstrncpy.o devmapper.o
- endif
- 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -123,7 +123,7 @@ const char *
- dm_mapname(int major, int minor)
- {
- 	struct dm_task *dmt;
--	const char *mapname;
-+	const char *mapname = NULL, *map;
- 
- 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
- 		return NULL;
-@@ -135,9 +135,45 @@ dm_mapname(int major, int minor)
- 	if (!dm_task_run(dmt))
- 		goto out;
- 
--	mapname = strdup(dm_task_get_name(dmt));
-+	map = dm_task_get_name(dmt);
-+	if (map && map[0] != '\0')
-+		mapname = strdup(map);
-+
- out:
- 	dm_task_destroy(dmt);
- 	return mapname;
- }
- 
-+/*
-+ * dm_get_first_dep
-+ *
-+ * Return the device number of the first dependend device
-+ * for a given target.
-+ */
-+dev_t dm_get_first_dep(char *devname)
-+{
-+	struct dm_task *dmt;
-+	struct dm_deps *dm_deps;
-+	dev_t ret = 0;
-+
-+	if ((dmt = dm_task_create(DM_DEVICE_DEPS)) == NULL) {
-+		return ret;
-+	}
-+	if (!dm_task_set_name(dmt, devname)) {
-+		goto out;
-+	}
-+	if (!dm_task_run(dmt)) {
-+		goto out;
-+	}
-+	if ((dm_deps = dm_task_get_deps(dmt)) == NULL) {
-+		goto out;
-+	}
-+	if (dm_deps->count > 0) {
-+		ret = dm_deps->device[0];
-+	}
-+out:
-+	dm_task_destroy(dmt);
-+
-+	return ret;
-+}
-+
-diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
---- a/kpartx/devmapper.h
-+++ b/kpartx/devmapper.h
-@@ -3,3 +3,4 @@ int dm_simplecmd (int, const char *);
- int dm_addmap (int, const char *, const char *, const char *, unsigned long);
- int dm_map_present (char *);
- const char * dm_mapname(int major, int minor);
-+dev_t dm_get_first_dep(char *devname);
 diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
 --- a/kpartx/kpartx.c
 +++ b/kpartx/kpartx.c
-@@ -77,6 +77,7 @@ initpts(void)
- 	addpts("bsd", read_bsd_pt);
- 	addpts("solaris", read_solaris_pt);
- 	addpts("unixware", read_unixware_pt);
-+	addpts("dasd", read_dasd_pt);
- }
+@@ -465,27 +465,14 @@ xmalloc (size_t size) {
+ /*
+  * sseek: seek to specified sector
+  */
+-#if !defined (__alpha__) && !defined (__ia64__) && !defined (__x86_64__) \
+-	&& !defined (__s390x__)
+-#include <linux/unistd.h>       /* _syscall */
+-static
+-_syscall5(int,  _llseek,  uint,  fd, ulong, hi, ulong, lo,
+-	  long long *, res, uint, wh);
+-#endif
  
- static char short_opts[] = "ladgvnp:t:";
-diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
---- a/kpartx/kpartx.h
-+++ b/kpartx/kpartx.h
-@@ -31,6 +31,7 @@ extern ptreader read_bsd_pt;
- extern ptreader read_solaris_pt;
- extern ptreader read_unixware_pt;
- extern ptreader read_gpt_pt;
-+extern ptreader read_dasd_pt;
+ static int
+ sseek(int fd, unsigned int secnr) {
+-	long long in, out;
+-	in = ((long long) secnr << 9);
++	off64_t in, out;
++	in = ((off64_t) secnr << 9);
+ 	out = 1;
  
- char *getblock(int fd, unsigned int secnr);
- 
+-#if !defined (__alpha__) && !defined (__ia64__) && !defined (__x86_64__) \
+-	&& !defined (__s390x__)
+-	if (_llseek (fd, in>>32, in & 0xffffffff, &out, SEEK_SET) != 0
+-	    || out != in)
+-#else
+-	if ((out = lseek(fd, in, SEEK_SET)) != in)
+-#endif
++	if ((out = lseek64(fd, in, SEEK_SET)) != in)
+ 	{
+ 		fprintf(stderr, "llseek error\n");
+ 		return -1;
 
---------------030506060202000508040800
+--------------000408000601040002060309
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------030506060202000508040800--
+--------------000408000601040002060309--
