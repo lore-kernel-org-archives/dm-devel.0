@@ -1,10 +1,10 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] kpartx compilation fix
-Date: Fri, 09 Dec 2005 13:07:10 +0100
-Message-ID: <4399736E.1060705@suse.de>
+Subject: [PATCH] multipath compilation fixes
+Date: Fri, 09 Dec 2005 13:06:01 +0100
+Message-ID: <43997329.7080803@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------070702050900090003020006"
+Content-Type: multipart/mixed; boundary="------------090203090303030801070704"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,14 +20,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------070702050900090003020006
+--------------090203090303030801070704
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christophe,
 
-this is a small compile fix for dasd.c; a pointer to unsigned char
-should be of type unsigned char ...
+dm_mapname returns a strdup()ed string, which does not really
+qualify as const. This patchs corrects it.
 
 Cheers,
 
@@ -38,38 +38,67 @@ SuSE Linux Products GmbH		S390 & zSeries
 Maxfeldstra=DFe 5				+49 911 74053 688
 90409 N=FCrnberg				http://www.suse.de
 
---------------070702050900090003020006
+--------------090203090303030801070704
 Content-Type: text/x-patch;
- name="kpartx-dasd-compilation-fix.patch"
+ name="multipath-tools-compile-fix.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="kpartx-dasd-compilation-fix.patch"
+ filename="multipath-tools-compile-fix.patch"
 
-[kpartx] compilation fixes for dasd.c
+[devmapper] Compilation fixes
 
-If a pointer points to an unsigned char it should be of the correct
-type.
+As we're returning a strdup()ed string from dm_mapname() it hardly
+qualifies as 'const'.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-diff --git a/kpartx/dasd.c b/kpartx/dasd.c
---- a/kpartx/dasd.c
-+++ b/kpartx/dasd.c
-@@ -52,7 +52,7 @@ read_dasd_pt(int fd, struct slice all, s
- 	struct hd_geometry geo;
- 	char type[5] = {0,};
- 	char name[7] = {0,};
--	char *label_raw;
-+	unsigned char *label_raw;
- 	volume_label_t vlabel;
- 	unsigned char *data = NULL;
- 	unsigned int blk;
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -119,11 +119,12 @@ out:
+ }
+ 
+ 
+-const char *
++char *
+ dm_mapname(int major, int minor)
+ {
+ 	struct dm_task *dmt;
+-	const char *mapname = NULL, *map;
++	char *mapname = NULL;
++	const char *map;
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
+ 		return NULL;
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -2,5 +2,5 @@ int dm_prereq (char *, int, int, int);
+ int dm_simplecmd (int, const char *);
+ int dm_addmap (int, const char *, const char *, const char *, unsigned long);
+ int dm_map_present (char *);
+-const char * dm_mapname(int major, int minor);
++char * dm_mapname(int major, int minor);
+ dev_t dm_get_first_dep(char *devname);
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -675,7 +675,8 @@ out:
+ char *
+ dm_mapname(int major, int minor)
+ {
+-	char * response = NULL, *map;
++	char * response = NULL;
++	const char *map;
+ 	struct dm_task *dmt;
+ 	int r;
+ 	int loop = MAX_WAIT * LOOPS_PER_SEC;
 
---------------070702050900090003020006
+--------------090203090303030801070704
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------070702050900090003020006--
+--------------090203090303030801070704--
