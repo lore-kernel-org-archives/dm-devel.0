@@ -1,75 +1,100 @@
-From: Nicolas Kaiser <nikai@nikai.net>
-Subject: [KJ] [PATCH] dm: uninitialize static variables v2
-Date: Sat, 10 Dec 2005 20:32:26 +0100
-Message-ID: <20051210203226.297058d0@lucky.kitzblitz>
-References: <20051205132800.34631bbf@lucky.kitzblitz>
-	<20051210153129.GA2003@mipter.zuzino.mipt.ru>
+From: Toon van der Pas <toon@hout.vanvergehaald.nl>
+Subject: Re: What's the status on I/O-stats for dm block devices?
+Date: Sun, 11 Dec 2005 15:03:35 +0100
+Message-ID: <20051211140335.GA9080@shuttle.vanvergehaald.nl>
+References: <20051122223701.GA23045@shuttle.vanvergehaald.nl>
+	<20051123000356.GG26394@agk.surrey.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============60804637086858726=="
-Return-path: <kernel-janitors-bounces@lists.osdl.org>
-In-Reply-To: <20051210153129.GA2003@mipter.zuzino.mipt.ru>
-List-Unsubscribe: <https://lists.osdl.org/mailman/listinfo/kernel-janitors>,
-	<mailto:kernel-janitors-request@lists.osdl.org?subject=unsubscribe>
-List-Archive: <http://lists.osdl.org/pipermail/kernel-janitors>
-List-Post: <mailto:kernel-janitors@lists.osdl.org>
-List-Help: <mailto:kernel-janitors-request@lists.osdl.org?subject=help>
-List-Subscribe: <https://lists.osdl.org/mailman/listinfo/kernel-janitors>,
-	<mailto:kernel-janitors-request@lists.osdl.org?subject=subscribe>
-Sender: kernel-janitors-bounces@lists.osdl.org
-Errors-To: kernel-janitors-bounces@lists.osdl.org
-To: kernel-janitors@lists.osdl.org
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20051123000356.GG26394@agk.surrey.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============60804637086858726==
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Hi, I took the time today to compile an -mm kernel (2.6.15-rc5-mm1)
+and apply your patches...
 
-uninitialize static variables initialized to 0, to make them go
-to .bss instead of .data.
+On Wed, Nov 23, 2005 at 12:03:56AM +0000, Alasdair G Kergon wrote:
+> On Tue, Nov 22, 2005 at 11:37:03PM +0100, Toon van der Pas wrote:
+> > See: http://bugme.osdl.org/show_bug.cgi?id=1806
+>  
+> I wasn't aware of that, but you'll see there's been some work on this
+> recently:
+> 
+>   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+>     dm-disk-statistics*
+> 
+> If people can test these patches and report back, I'm hoping to submit them 
+> for 2.5.16.
+> 
+>   dm-disk-statistics-basic.patch
+>   dm-disk-statistics-timing.patch
+> 
+> Additional patches for the latest -mm kernels:
+>   dm-disk-statistics-basic-mm.patch
+>   dm-disk-statistics-timing-mm.patch
 
-Signed-off-by: Nicolas Kaiser <nikai@nikai.net>
----
- drivers/md/dm.c     |    4 ++--
- drivers/md/kcopyd.c |    2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+These patches applied with some fuzz.
+The statistics seem to work now. These are the results.
 
-diff -urpN a/drivers/md/dm.c b/drivers/md/dm.c
---- a/drivers/md/dm.c	2005-10-02 15:53:35.000000000 +0200
-+++ b/drivers/md/dm.c	2005-12-10 20:24:13.000000000 +0100
-@@ -20,8 +20,8 @@
- 
- static const char *_name = DM_NAME;
- 
--static unsigned int major = 0;
--static unsigned int _major = 0;
-+static unsigned int major;
-+static unsigned int _major;
- 
- /*
-  * One of these is allocated per bio.
-diff -urpN a/drivers/md/kcopyd.c b/drivers/md/kcopyd.c
---- a/drivers/md/kcopyd.c	2005-10-02 15:53:35.000000000 +0200
-+++ b/drivers/md/kcopyd.c	2005-12-10 20:26:16.000000000 +0100
-@@ -588,7 +588,7 @@ static void client_del(struct kcopyd_cli
- }
- 
- static DECLARE_MUTEX(kcopyd_init_lock);
--static int kcopyd_clients = 0;
-+static int kcopyd_clients;
- 
- static int kcopyd_init(void)
- {
+*** Before the patch: ***
 
---===============60804637086858726==
-Content-Type: text/plain; charset="iso-8859-1"
-MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+# cat /proc/diskstats | grep dm
+ 253    0 dm-0 0 0 0 0 0 0 0 0 0 0 0
+ 253    1 dm-1 0 0 0 0 0 0 0 0 0 0 0
+ 253    2 dm-2 0 0 0 0 0 0 0 0 0 0 0
+ 253    3 dm-3 0 0 0 0 0 0 0 0 0 0 0
+ 253    4 dm-4 0 0 0 0 0 0 0 0 0 0 0
+ 253    5 dm-5 0 0 0 0 0 0 0 0 0 0 0
+ 253    6 dm-6 0 0 0 0 0 0 0 0 0 0 0
 
-_______________________________________________
-Kernel-janitors mailing list
-Kernel-janitors@lists.osdl.org
-https://lists.osdl.org/mailman/listinfo/kernel-janitors
+# cat /sys/block/dm-*/stat
+       0        0        0        0        0        0        0        0        0        0        0
+       0        0        0        0        0        0        0        0        0        0        0
+       0        0        0        0        0        0        0        0        0        0        0
+       0        0        0        0        0        0        0        0        0        0        0
+       0        0        0        0        0        0        0        0        0        0        0
+       0        0        0        0        0        0        0        0        0        0        0
+       0        0        0        0        0        0        0        0        0        0        0
 
---===============60804637086858726==--
+*** After the patch: ***
+
+# cat /proc/diskstats | grep dm
+ 254    0 dm-0 1110 0 40394 11444 1 0 8 8 0 3480 11452
+ 254    1 dm-1 51 0 418 280 14 0 112 12 0 284 292
+ 254    2 dm-2 11 0 82 68 1 0 8 12 0 80 80
+ 254    3 dm-3 98 0 802 1064 381 0 3048 1872 0 1336 2936
+ 254    4 dm-4 26 0 202 120 88 0 704 280 1 144 400
+ 254    5 dm-5 1 0 8 12 0 0 0 0 0 12 12
+ 254    6 dm-6 0 0 0 0 0 0 0 0 0 0 0
+
+# cat /sys/block/dm-*/stat
+    1110        0    40394    11444        1        0        8        8        0     3480    11452
+      51        0      418      280       14        0      112       12        0      284      292
+      11        0       82       68        1        0        8       12        0       80       80
+      98        0      802     1064      381        0     3048     1872        0     1336     2936
+      25        0      194      120       80        0      640      280        0      144      400
+       1        0        8       12        0        0        0        0        0       12       12
+       0        0        0        0        0        0        0        0        0        0        0
+
+I don't know what else to do.
+Switched back to my regular gentoo-sources kernel.
+(the nvidia modules don't work with -mm kernels)
+
+Why don't you submit these patches to Andrew Morton for inclusion in -mm?
+That way your patches would get much more exposure...
+
+Thanks for device-mapper and LVM2!
+Regards,
+Toon.
