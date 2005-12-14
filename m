@@ -1,15 +1,11 @@
-From: Brian Wong <bwong@pillardata.com>
-Subject: Re: Requiring a hwtable entry for a dm target device?
-Date: Thu, 15 Dec 2005 14:53:12 -0800
-Message-ID: <1134687192.8409.5.camel@ca-bwong3.trans.corp>
-References: <C2EEB4E538D3DC48BF57F391F422779321AEB9@srmanning.eng.emc.com>
-Reply-To: bwong@pillardata.com,
-	device-mapper development <dm-devel@redhat.com>
+From: siva ram <srr.kernel@gmail.com>
+Subject: Multipath limitations
+Date: Wed, 14 Dec 2005 11:24:11 +0530
+Message-ID: <a70fc890512132154v5ff658dfib301181dc32123f2@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0836882091=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321AEB9@srmanning.eng.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,30 +15,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2005-12-15 at 16:29 -0500, egoggin@emc.com wrote:
-> Currently a dm target device which is not blacklisted need not have a
-> corresponding hwentry in either libmultipath/hwtable.c or
-> /etc/multipath.conf
-> for the target device to be recognized and a multipath mapped device
-> created for it.  Is this desirable, possibly for multipathing to JBOD?
+--===============0836882091==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_11105_22325728.1134539651756"
 
-yes, it is desirable.  i think the intent is that all reasonably
-standards-conformant products should "just work", without needing to
-provide special configuration stanzas in .conf files, or, worse yet,
-actual source code as system administrators are even less eager to touch
-those than conf files.
+------=_Part_11105_22325728.1134539651756
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-> 
-> An alternative is to require that a hwentry be found and fail to recognize
-> the target device otherwise.  Doing so has the distinct advantage of being
-> able to use the regular expression matching logic in find_hwe() to
-> effectively
-> blacklist a target device based on the contents of the target device's
-> vendor
-> and product device attributes.
-> 
+Hi Everyone, i have some dought on multipath io, if any one know please let
+me clear
 
-i don't understand why it is important to exclude devices from being seen.  doesn't it make more+sense to be able to see as many legitimate devices as possible?  If that's not desirable, isn't there already a way to blacklist devices in the .conf file?
+1--> how many HBAs(disks) can be supported by Linux mulipath device driver?
+and is there any limit?
+
+2-->what is the test environment  for multipath io
+
+3->Is there any site to know more information about multipath testing
+
+
+Regards
+srr
+
+------=_Part_11105_22325728.1134539651756
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+<p>Hi Everyone, i have some dought on multipath io, if any one know please =
+let me clear</p>
+<p>1--&gt; how many HBAs(disks) can be supported by Linux mulipath device d=
+river? and is there any limit?</p>
+<p>2--&gt;what is the test environment&nbsp; for multipath io </p>
+<p>3-&gt;Is there any site to know more information about multipath testing=
+</p>
+<p><br>Regards<br>srr</p>
+
+------=_Part_11105_22325728.1134539651756--
+
+
+--===============0836882091==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0836882091==--
