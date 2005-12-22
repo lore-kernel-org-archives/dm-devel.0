@@ -1,10 +1,12 @@
-From: siva ram <srr.kernel@gmail.com>
-Subject: Multipath limitations
-Date: Wed, 14 Dec 2005 11:24:11 +0530
-Message-ID: <a70fc890512132154v5ff658dfib301181dc32123f2@mail.gmail.com>
+From: "=?GB2312?B?y++/oc6w?=" <sunjw@onewaveinc.com>
+Subject: dm-multipath: kernel paniced when I pull out one HBA card
+Date: Thu, 22 Dec 2005 14:47:30 +0800
+Message-ID: <SERVERfGhlKUhIECRyR00007b6d@mail.onewaveinc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0836882091=="
+Content-Type: text/plain;
+	charset="gb2312"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,54 +17,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel <dm-devel@redhat.com>, "christophe.varoqui" <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
---===============0836882091==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_11105_22325728.1134539651756"
+Hello, all
 
-------=_Part_11105_22325728.1134539651756
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+I'm testing the DM multipath. 
+I use the packages as follows:
+kernel 2.6.14.2
+device-mapper.1.01.05
+multipath-tools-0.4.6
+udev-058-1
 
-Hi Everyone, i have some dought on multipath io, if any one know please let
-me clear
+I created the dm device as:
+create: 3600d0230006927de000001618fecaf00
+[size=476 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=1]
+ \_ 0:0:0:0 sda 8:0  [undef] [ready]
+\_ round-robin 0 [prio=1]
+ \_ 1:0:0:0 sdb 8:16 [undef] [ready]
 
-1--> how many HBAs(disks) can be supported by Linux mulipath device driver?
-and is there any limit?
+Then, I tried the command: dd if=/dev/dm-0 of=/dev/null
+I saw only the device /dev/sda was readed. It's OK.
 
-2-->what is the test environment  for multipath io
+but when I pull out the HBA which related to /dev/sdb for about 1 minute,and then plug it in again,
+the kernel paniced.
 
-3->Is there any site to know more information about multipath testing
+the messages are as follows:
+Dec 22 05:25:07 nd02 kernel: qla2300 0000:07:01.1: LIP reset occured (f823).
+Dec 22 05:25:07 nd02 kernel: qla2300 0000:07:01.1: LIP occured (f823).
+Dec 22 05:25:07 nd02 kernel: qla2300 0000:07:01.1: LOOP DOWN detected (2).
+Dec 22 05:25:42 nd02 kernel:  rport-1:0-1: blocked FC remote port time out: removing target
+Dec 22 05:25:42 nd02 multipathd: 8:16: readsector0 checker reports path is down
+Dec 22 05:25:42 nd02 multipathd: checker failed path 8:16 in map 3600d0230006927de000001618fecaf00
+Dec 22 05:25:42 nd02 kernel: device-mapper: dm-multipath: Failing path 8:16.
+Dec 22 05:25:42 nd02 multipathd: 3600d0230006927de000001618fecaf00: remaining active paths: 1
+Dec 22 05:25:43 nd02 multipathd: remove sdb path checker
+Dec 22 05:25:43 nd02 kernel: Synchronizing SCSI cache for disk sdb:
+Dec 22 05:25:43 nd02 kernel: FAILED
+Dec 22 05:25:43 nd02 kernel:   status = 0, message = 00, host = 1, driver = 00
+Dec 22 05:26:12 nd02 kernel:   <6>qla2300 0000:07:01.1: LIP reset occured (f8f7).
+Dec 22 05:26:12 nd02 kernel: qla2300 0000:07:01.1: LIP occured (f8f7).
+Dec 22 05:26:12 nd02 kernel: qla2300 0000:07:01.1: LOOP UP detected (2 Gbps).
+Dec 22 05:26:13 nd02 kernel:   Vendor: TOYOU     Model: NetStor DA9220F   Rev: 342R
+Dec 22 05:26:13 nd02 kernel:   Type:   Direct-Access                      ANSI SCSI revision: 03
+Dec 22 05:26:13 nd02 kernel: SCSI device sdc: 999950336 512-byte hdwr sectors (511975 MB)
+Dec 22 05:26:13 nd02 kernel: SCSI device sdc: drive cache: write back
+Dec 22 05:26:13 nd02 kernel: SCSI device sdc: 999950336 512-byte hdwr sectors (511975 MB)
+Dec 22 05:26:14 nd02 kernel: SCSI device sdc: drive cache: write back
+Dec 22 05:26:14 nd02 kernel:  sdc:
+Dec 22 05:26:14 nd02 kernel: Attached scsi disk sdc at scsi1, channel 0, id 0, lun 0
+Dec 22 05:26:14 nd02 kernel: Attached scsi generic sg1 at scsi1, channel 0, id 0, lun 0,  type 0
+Dec 22 05:26:14 nd02 scsi.agent[4098]: disk at /devices/pci0000:00/0000:00:02.0/0000:05:1d.0/0000:07:01.1/host1/rport-1:0-1/target1:0:0/1:0:0:0
 
+--------------------->> All right above here.
 
-Regards
-srr
+Dec 22 05:26:14 nd02 kernel:   Vendor: TOYOU     Model: NetStor DA9220F   Rev: 342R
+Dec 22 05:26:14 nd02 kernel:   Type:   Direct-Access                      ANSI SCSI revision: 03
+Dec 22 05:26:14 nd02 kernel: error 1
+Dec 22 05:26:14 nd02 kernel: scsi: Unexpected response from host 1 channel 0 id 0 lun 0 while scanning, scan aborted
+Dec 22 05:26:14 nd02 kernel: Badness in kref_get at lib/kref.c:32
+Dec 22 05:26:14 nd02 kernel:  [<c01d9c6a>] kref_get+0x3f/0x41
+Dec 22 05:26:14 nd02 kernel:  [<c01d92e0>] kobject_get+0x17/0x1e
+Dec 22 05:26:14 nd02 kernel:  [<c019d896>] sysfs_getlink+0x38/0xfa
+Dec 22 05:26:14 nd02 kernel:  [<c019d999>] sysfs_follow_link+0x41/0x59
+Dec 22 05:26:14 nd02 kernel:  [<c016ee2f>] generic_readlink+0x2a/0x85
+Dec 22 05:26:14 nd02 kernel:  [<c017fc72>] __mark_inode_dirty+0x52/0x1a8
+Dec 22 05:26:14 nd02 kernel:  [<c012332f>] current_fs_time+0x59/0x67
+Dec 22 05:26:14 nd02 kernel:  [<c0177e61>] update_atime+0x67/0x8c
+Dec 22 05:26:14 nd02 kernel:  [<c01674b5>] sys_readlink+0x7e/0x82
+Dec 22 05:26:14 nd02 kernel:  [<c0103af3>] sysenter_past_esp+0x54/0x75
+Dec 22 05:26:17 nd02 kernel: Unable to handle kernel paging requestBadness in kref_get at lib/kref.c:32
+Dec 22 05:26:17 nd02 kernel:  [<c01d9c6a>] kref_get+0x3f/0x41
+Dec 22 05:26:17 nd02 kernel:  [<c01d92e0>] kobject_get+0x17/0x1e
+Dec 22 05:26:17 nd02 kernel:  [<c019d896>] sysfs_getlink+0x38/0xfa
+Dec 22 05:26:17 nd02 kernel:  [<c019d999>] sysfs_follow_link+0x41/0x59
+Dec 22 05:26:17 nd02 kernel:  [<c016ee2f>] generic_readlink+0x2a/0x85
+Dec 22 05:26:17 nd02 kernel:  [<c012332f>] current_fs_time+0x59/0x67
+Dec 22 05:26:17 nd02 kernel:  [<c0177e61>] update_atime+0x67/0x8c
+Dec 22 05:26:17 nd02 kernel:  [<c01674b5>] sys_readlink+0x7e/0x82
+Dec 22 05:26:17 nd02 kernel:  [<c0103af3>] sysenter_past_esp+0x54/0x75
+Dec 22 05:26:17 nd02 kernel:  at virtual address 00200200
+Dec 22 05:26:17 nd02 kernel:  printing eip:
+Dec 22 05:26:17 nd02 kernel: c02583a1
+Dec 22 05:26:17 nd02 kernel: *pde = 37eb7001
+Dec 22 05:26:17 nd02 kernel: Oops: 0002 [#1]
+Dec 22 05:26:17 nd02 kernel: SMP
+Dec 22 05:26:17 nd02 kernel: Modules linked in: dm_round_robin dm_multipath binfmt_misc dm_mirror dm_mod video thermal proces
+sor fan button battery ac uhci_hcd usbcore hw_random shpchp pci_hotplug e1000 qla2300 qla2xxx scsi_transport_fc sd_mod
+Dec 22 05:26:17 nd02 kernel: CPU:    1
+Dec 22 05:26:17 nd02 kernel: EIP:    0060:[<c02583a1>]    Not tainted VLI
+Dec 22 05:26:17 nd02 kernel: EFLAGS: 00010002   (2.6.14.2smp)
+Dec 22 05:26:17 nd02 kernel: EIP is at scsi_device_dev_release+0x3d/0x113
+Dec 22 05:26:17 nd02 kernel: eax: 00100100   ebx: c2c03194   ecx: 00200200   edx: 00000286
+Dec 22 05:26:17 nd02 kernel: esi: c2c03008   edi: c2c03000   ebp: c229d814   esp: d326fe68
+Dec 22 05:26:17 nd02 kernel: ds: 007b   es: 007b   ss: 0068
+Dec 22 05:26:17 nd02 kernel: Process udev (pid: 4108, threadinfo=d326e000 task=f6e3ca30)
+Dec 22 05:26:17 nd02 kernel: Stack: 7f7e7d7c c2c0320c c0371b08 c0371b20 c229d88c c01d935e c2c03194 c2c03224
+Dec 22 05:26:17 nd02 kernel:        c01d9362 c03754b8 c2c0320c c01d9c9e c2c0320c c019d854 c03754b8 ef1ac000
+Dec 22 05:26:17 nd02 kernel:        c0365040 00000000 c01d938a c2c03224 c01d9362 c019d927 c2c0320c c03754b8
+Dec 22 05:26:17 nd02 kernel: Call Trace:
+Dec 22 05:26:17 nd02 kernel:  [<c01d935e>] kobject_cleanup+0x77/0x7b
+Dec 22 05:26:17 nd02 kernel:  [<c01d9362>] kobject_release+0x0/0xa
+Dec 22 05:26:17 nd02 kernel:  [<c01d9c9e>] kref_put+0x32/0x84
+Dec 22 05:26:17 nd02 kernel:  [<c019d854>] sysfs_get_target_path+0x73/0x7d
+Dec 22 05:26:17 nd02 kernel:  [<c01d938a>] kobject_put+0x1e/0x22
+Dec 22 05:26:17 nd02 kernel:  [<c01d9362>] kobject_release+0x0/0xa
+Dec 22 05:26:17 nd02 kernel:  [<c019d927>] sysfs_getlink+0xc9/0xfa
+Dec 22 05:26:17 nd02 kernel:  [<c019d999>] sysfs_follow_link+0x41/0x59
+Dec 22 05:26:17 nd02 kernel:  [<c016ee2f>] generic_readlink+0x2a/0x85
+Dec 22 05:26:17 nd02 kernel:  [<c017fc72>] __mark_inode_dirty+0x52/0x1a8
+Dec 22 05:26:17 nd02 kernel:  [<c012332f>] current_fs_time+0x59/0x67
+Dec 22 05:26:17 nd02 kernel:  [<c0177e61>] update_atime+0x67/0x8c
+Dec 22 05:26:17 nd02 kernel:  [<c01674b5>] sys_readlink+0x7e/0x82
+Dec 22 05:26:17 nd02 kernel:  [<c0103af3>] sysenter_past_esp+0x54/0x75
+Dec 22 05:26:17 nd02 kernel: Code: ff ff 8d bb 6c fe ff ff 8d 75 ec 8b 40 2c e8 cc df 0a 00 83 86 34 01 00 00 01 8d b3 74 fe
+ff ff 8b 4e 04 89 c2 8b 83 74 fe ff ff <89> 01 89 48 04 c7 46 04 00 02 20 00 8d b3 7c fe ff ff 8b 83 7c
+Dec 22 05:26:19 nd02 multipathd: sdc: path checker registered
 
-------=_Part_11105_22325728.1134539651756
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+What can I do ? 
+Thanks for any suggestion!
 
-<p>Hi Everyone, i have some dought on multipath io, if any one know please =
-let me clear</p>
-<p>1--&gt; how many HBAs(disks) can be supported by Linux mulipath device d=
-river? and is there any limit?</p>
-<p>2--&gt;what is the test environment&nbsp; for multipath io </p>
-<p>3-&gt;Is there any site to know more information about multipath testing=
-</p>
-<p><br>Regards<br>srr</p>
-
-------=_Part_11105_22325728.1134539651756--
-
-
---===============0836882091==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0836882091==--
+Best regards!
+Luckey
