@@ -1,10 +1,10 @@
-From: siva ram <srr.kernel@gmail.com>
-Subject: multipath test plane
-Date: Wed, 28 Dec 2005 16:16:01 +0530
-Message-ID: <a70fc890512280246v2448e8fel1a7f1df46db5c701@mail.gmail.com>
+From: natasha patil <natasha182_pune@yahoo.com>
+Subject: "device mapper" patch problem
+Date: Tue, 27 Dec 2005 10:00:42 -0800 (PST)
+Message-ID: <20051227180042.24402.qmail@web32508.mail.mud.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1963339951=="
+Content-Type: multipart/mixed; boundary="===============1158051179=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,82 +18,93 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1963339951==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_4849_7139940.1135766761832"
+--===============1158051179==
+Content-Type: multipart/alternative; boundary="0-7259836-1135706442=:23893"
+Content-Transfer-Encoding: 7bit
 
-------=_Part_4849_7139940.1135766761832
-Content-Type: text/plain; charset=ISO-8859-1
+--0-7259836-1135706442=:23893
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
 
-hi everyone
+ Sir,
+              I am using mandrake 10.2 (kernel : 2.6.11-6mdk ),
+    which device mapper patch i should download
+    because on  website
+     there are only 2 patches available :
+   =20
+    1)   2.4.26-rc1
+    2)   2.6.12-rc2-udm1
+   =20
+    i have tried with 2nd option n followed  commands given on website
+   =20
+    http://sources.redhat.com/dm/patches.html:
+   =20
+    > cd /tmp
+    > tar jxvf 2.6.12-rc2-udm1.tar.bz2
+    > cd /usr/src/2.6.12-rc2-udm1
+    > cat /tmp/2.6.12-rc2-udm1/*.patch | patch -p1
+   =20
+   =20
+    i didnt understand 3rd command "cd /usr/src/2.6.12-rc2-udm1"
+    my question is :  i untar that file in /tmp folder then how this
+    folder is created in /usr/src ?
+   =20
+    I followed following path :
+   =20
+    1) i kept that "  2.6.12-rc2-udm1"  in /tmp
+    2) cd /tmp
+    3)tar jxvf 2.6.12-rc2-udm1.tar.bz2
+    4) copy that directory (2.6.12-rc2-udm1) to directory /usr/src
+    5) cat  /tmp/2.6.12-rc2-udm1/*.patch | patch -p1
+   =20
+   =20
+    Then it gives me error as :
+    cannot find file to patch at input line 6
+   =20
+    where i am wrong ?
+   =20
+    So, basically i want to know  which patch i should use ?
+    please help me .
 
-i have some doughts on multipath, I installed multipath tools and  i planed
-to connect 4 paths to SAN
-my problems are
-                                        1- -How each device represent the
-multipath
-
-                                        2--what is the test plane and what
-are the  type of test I can do for hardning the paths.
-
-                                        3--how these user tools interact
-with kernel ( I gone through christiphe tools site) but i am not understand
-fully.
-
-
-if any one have data about multipath test plane, please let me know?
-
-Thanks & Regards..
-.......................srr.
-
-------=_Part_4849_7139940.1135766761832
-Content-Type: text/html; charset=ISO-8859-1
+	=09
+---------------------------------
+ Yahoo! DSL Something to write home about. Just $16.99/mo. or less
+--0-7259836-1135706442=:23893
+Content-Type: text/html; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
 
-<div>hi everyone</div>
-<div>&nbsp;</div>
-<div>i have some doughts on multipath,&nbsp;I installed multipath tools and=
-&nbsp; i planed to connect 4 paths to SAN</div>
-<div>my problems are&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<=
-/div>
-<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nb=
-sp; &nbsp;1- -How each device represent the multipath</div>
-<div>&nbsp;</div>
-<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp; 2--what is the test plane and what are the &nbsp;type of test&nbs=
-p;I can do for hardning the paths.</div>
-<div>&nbsp;</div>
-<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp; &nbsp;3--how these user tools interact with kernel (&nbsp;I gone t=
-hrough christiphe tools site) but i am not understand fully.</div>
-<div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </div>
-<div>&nbsp;</div>
-<div>if any one have data about multipath test plane, please let me know?</=
-div>
-<div>&nbsp;</div>
-<div>Thanks &amp; Regards..</div>
-<div>.......................srr.</div>
-<div>&nbsp;</div>
-<div>&nbsp;</div>
-
-------=_Part_4849_7139940.1135766761832--
+<div id=3D"RTEContent">&nbsp;Sir,<br>   &nbsp;&nbsp;&nbsp;&nbsp; &nbsp;&n=
+bsp;&nbsp;&nbsp;&nbsp; I am using mandrake 10.2 (kernel : 2.6.11-6mdk ),<=
+br>    which device mapper patch i should download<br>    because on&nbsp=
+; website<br>     there are only 2 patches available :<br>    <br>    1)&=
+nbsp;&nbsp; 2.4.26-rc1<br>    2)&nbsp;&nbsp; 2.6.12-rc2-udm1<br>    <br> =
+   i have tried with 2nd option n followed&nbsp; commands given on websit=
+e<br>    <br>    http://sources.redhat.com/dm/patches.html:<br>    <br>  =
+  &gt; cd /tmp<br>    &gt; tar jxvf 2.6.12-rc2-udm1.tar.bz2<br>    &gt; c=
+d /usr/src/2.6.12-rc2-udm1<br>    &gt; cat /tmp/2.6.12-rc2-udm1/*.patch |=
+ patch -p1<br>    <br>    <br>    i didnt understand 3rd command "cd /usr=
+/src/2.6.12-rc2-udm1"<br>    my question is :&nbsp; i untar that file in =
+/tmp folder then how this<br>    folder is created in /usr/src ?<br>    <=
+br>    I followed following path :<br>    <br>    1) i kept that "  2.6.1=
+2-rc2-udm1"  in /tmp<br>    2) cd /tmp<br>!
+    3)tar
+ jxvf 2.6.12-rc2-udm1.tar.bz2<br>    4) copy that directory (2.6.12-rc2-u=
+dm1) to directory /usr/src<br>    5) cat  /tmp/2.6.12-rc2-udm1/*.patch | =
+patch -p1<br>    <br>    <br>    Then it gives me error as :<br>    canno=
+t find file to patch at input line 6<br>    <br>    where i am wrong ?<br=
+>    <br>    So, basically i want to know  which patch i should use ?<br>=
+    please help me .</div><p>
+		<hr size=3D1> <a href=3D"http://pa.yahoo.com/*http://us.rd.yahoo.com/ev=
+t=3D37474/*http://promo.yahoo.com/broadband/=20
+">Yahoo! DSL</a> Something to write home about. Just $16.99/mo. or less
+--0-7259836-1135706442=:23893--
 
 
---===============1963339951==
+--===============1158051179==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1963339951==--
+--===============1158051179==--
