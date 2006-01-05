@@ -1,12 +1,11 @@
-From: "Murthy, Narasimha Doraswamy (STSD)" <narasimha.murthy@hp.com>
-Subject: in-code default value for no_path_retry parameter
-Date: Fri, 6 Jan 2006 20:53:19 +0530
-Message-ID: <3456F611E9329441B12FBB24447B3FA003450837@bgeexc01.asiapacific.cpqcorp.net>
+From: siva ram <srr.kernel@gmail.com>
+Subject: multipath user tools help
+Date: Thu, 5 Jan 2006 14:32:38 +0530
+Message-ID: <a70fc890601050102h134316aj1e3b45a0ea4a22c6@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0618551215=="
+Content-Type: multipart/mixed; boundary="===============2068512319=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,152 +15,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Securelinux <securelinux@hp.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
-
---===============0618551215==
-Content-class: urn:content-classes:message
+--===============2068512319==
 Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C612D5.203E6F1C"
+	boundary="----=_Part_36155_1862610.1136451758152"
 
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C612D5.203E6F1C
-Content-Type: text/plain;
-	charset="us-ascii"
+------=_Part_36155_1862610.1136451758152
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-Hi Alasdair
+hi everyone
 
-We can set "no_path_retry" to "fail" or "queue" or <num> from
-/etc/multipath.conf file. But we can't set any in-code default value as
-we do for other variables in setup_default_hwtable(..) in
-libmultipath/hwtable.c, rather "features" parameter has to be set to
-either NULL or "1 queue_if_no_path".  Also the value is applied to DM
-devices only when the no_path_retry is configured via defaults section
-in /etc/multipath.conf file. There is no change in DM device map
-properties if "no_path_retry" is configured elsewhere other than default
-section.  Do I need to submit a bugzilla for this?
+i have some primary doughts on multipath, i installed every thing like user
+tools and kernel module.
 
-Thanks and regards
--Murthy
+but in my case disk subsystem in other country, they told  2 paths for disk
+subsystem.
+
+but if i use multipath user command like *multipath -l* itis showing only
+one path and if i say *multipath -v 1*( it has to print devmap names), but
+is is giving error like error adding target table.
+
+can any one know the details please help me.
 
 
-------_=_NextPart_001_01C612D5.203E6F1C
-Content-Type: text/html;
-	charset="us-ascii"
+*multipath -v 1*
+device-mapper: dm-multipath: error getting device
+device-mapper: error adding target to table
+device-mapper: dm-multipath: error getting device
+device-mapper: error adding target to table
+device-mapper: dm-multipath: error getting device
+device-mapper: error adding target to table
+_______________________________________________
+ *multipath -l*
+SUNISYS__018404ST318404L3BT1AVVX000021460S66
+[size=3D17 GB][features=3D"0"][hwhandler=3D"0"]
+\_ round-robin 0 [active]
+ \_ 0:0:1:0 sdb 8:16 [active][ready]
+
+SSEAGATE_ST318305LC_____3JKP1HJQ000022144RSP
+[size=3D16 GB][features=3D"0"][hwhandler=3D"0"]
+\_ round-robin 0 [active]
+ \_ 1:0:2:0 sde 8:64 [active][ready]
+
+_________________________________________
+
+* *
+
+------=_Part_36155_1862610.1136451758152
+Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:"MS Sans Serif";
-	panose-1:0 0 0 0 0 0 0 0 0 0;}
-@font-face
-	{font-family:"Microsoft Sans Serif";
-	panose-1:2 11 6 4 2 2 2 2 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-p
-	{mso-margin-top-alt:auto;
-	margin-right:0in;
-	mso-margin-bottom-alt:auto;
-	margin-left:0in;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"MS Sans Serif";
-	color:windowtext;
-	font-weight:normal;
-	font-style:normal;
-	text-decoration:none none;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-
-</head>
-
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>Hi =
-Alasdair<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3D"MS Sans Serif"><span =
-style=3D'font-size:
-10.0pt;font-family:"MS Sans Serif"'>We can set <b><span =
-style=3D'font-weight:
-bold'>&#8220;no_path_retry&#8221;</span></b> to &#8220;fail&#8221; or =
-&#8220;queue&#8221;
-or &lt;num&gt; from /etc/multipath.conf file. But we can&#8217;t set any =
-in-code
-default value as we do for other variables in setup_default_hwtable(..) =
-in
-libmultipath/hwtable.c, rather <b><span =
-style=3D'font-weight:bold'>&#8220;features&#8221;
-</span></b>parameter has to be set to either NULL or &#8220;1 =
-queue_if_no_path&#8221;.
-&nbsp;Also the value is applied to DM devices only when the =
-no_path_retry is
-configured via <b><span style=3D'font-weight:bold'>defaults =
-</span></b>section in
-/etc/multipath.conf file. There is no change in DM device map properties =
-if <b><span
-style=3D'font-weight:bold'>&#8220;no_path_retry&#8221;</span></b> is =
-configured
-elsewhere other than default section. &nbsp;Do I need to submit a =
-bugzilla for
-this?<o:p></o:p></span></font></p>
-
-<p><font size=3D2 face=3D"Microsoft Sans Serif"><span =
-style=3D'font-size:10.0pt;
-font-family:"Microsoft Sans Serif"'>Thanks and regards<br>
--Murthy<o:p></o:p></span></font></p>
-
+<div>hi everyone</div>
+<div>&nbsp;</div>
+<div>i have some primary doughts on multipath, i installed every thing like=
+ user tools and kernel module.</div>
+<div>&nbsp;</div>
+<div>but in my case disk subsystem in other country, they told&nbsp; 2 path=
+s&nbsp;for disk subsystem. </div>
+<div>&nbsp;</div>
+<div>but if i use multipath user command like <strong>multipath -l</strong>=
+ itis showing only one path and if i say <strong>multipath -v 1</strong>( i=
+t has to print devmap names), but is is giving error like error adding targ=
+et table.
 </div>
+<div>&nbsp;</div>
+<div>can any one know the details please help me.</div>
+<div>&nbsp;</div>
+<div>&nbsp;</div>
+<div><strong>multipath -v 1</strong></div>
+<div>device-mapper: dm-multipath: error getting device<br>device-mapper: er=
+ror adding target to table<br>device-mapper: dm-multipath: error getting de=
+vice<br>device-mapper: error adding target to table<br>device-mapper: dm-mu=
+ltipath: error getting device
+<br>device-mapper: error adding target to table<br>________________________=
+_______________________</div>
+<div>&nbsp;<strong>multipath -l</strong><br>SUNISYS__018404ST318404L3BT1AVV=
+X000021460S66<br>[size=3D17 GB][features=3D&quot;0&quot;][hwhandler=3D&quot=
+;0&quot;]<br>\_ round-robin 0 [active]<br>&nbsp;\_ 0:0:1:0 sdb 8:16 [active=
+][ready]</div>
 
-</body>
+<div>
+<p>SSEAGATE_ST318305LC_____3JKP1HJQ000022144RSP<br>[size=3D16 GB][features=
+=3D&quot;0&quot;][hwhandler=3D&quot;0&quot;]<br>\_ round-robin 0 [active]<b=
+r>&nbsp;\_ 1:0:2:0 sde 8:64 [active][ready]</p>
+<p>_________________________________________</p>
+<p><strong>&nbsp;</strong></p></div>
 
-</html>
-
-------_=_NextPart_001_01C612D5.203E6F1C--
+------=_Part_36155_1862610.1136451758152--
 
 
---===============0618551215==
+--===============2068512319==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0618551215==--
+--===============2068512319==--
