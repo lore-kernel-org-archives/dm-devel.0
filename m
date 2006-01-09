@@ -1,10 +1,11 @@
-From: Chris Penney <penney@msu.edu>
-Subject: STK / LSI Multipath Support
-Date: Thu, 12 Jan 2006 22:52:41 -0500
-Message-ID: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
+From: Dan Gregory <dan.gregory@mci.com>
+Subject: Multipathing to a LUN through brocade switch
+Date: Mon, 09 Jan 2006 14:49:14 -0500
+Message-ID: <43C2BE3A.8030309@mci.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0290793502=="
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,70 +19,52 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0290793502==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_26782_10849997.1137124361892"
+Hullo,
 
-------=_Part_26782_10849997.1137124361892
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+I know this list has handle many issues of users not knowing how to
+setup multipathing, but I've read all of them and Christophe's wiki and
+I can't get my system to talk to my storage array.
 
-Hello,
+OS: RHEL 4.2, device-mapper-multipath-0.4.5-6.0.RHEL4
 
-The multipath code seems to support STK D280 (active / passive) disk arrays=
-,
-but with one exception.  It doesn't seem to be able to query the priorities
-of the luns properly.  For example, I create four luns on a D280 and assign
-two luns to controller A and two to controller B.  When the system (which
-has dual hbas) boots they all end up on one controller and multipathd never
-switches to the primary paths even though they are available.
+Configuration:  I have a SunFire 4100 with one 2 port qla hba pci card
+dual connected to a single 16 port brocade silkworm which in turn in
+dual connected to a Sun StorEdge 3511.  Interestingly, I get 4
+/dev/sd[c-f] associated with the same LUN.  I presume that each device
+can see the LUN through each of the 2 connections from the switch to the
+3511.
 
-I am guessing this is because "prio_callout" is set to "/bin/true" so it
-defaults to the first path in the list.  Is there a prio_callout that works
-with lsi branded arrays?  I run SLES 9 and I see there are
-mpath_prio_{emc,tpc,alua}, but none (somewhat obviously) don't work.  I was
-able to write a perl script that simply took a device arguement and looked
-up a priority in a table and it appears to work, but it's obviously a nasty
-hack and doesn't automatically detect the proper path (which would be
-necessary in the case of a manual failover).
+I know that mapper is working because there are 2 devices that the LVM
+creates, one for / and one for swap, but the LUNs don't show up.
+multipath -v2  does not give any output, but -v3 gives information on
+all 6 of the sd[a-f] devices.  The only differences in the output of
+sd[c-f] are dev_t and h:b:t:l fields (see below).  I've tried to add
+entries into the multipath.conf file, but nothing changes the output and
+I never get any more devices in /dev/mapper.
+
+What am I doing wrong?
+
 
 Thanks,
-
-   Chris Penney
-   penney@msu.edu
-
-------=_Part_26782_10849997.1137124361892
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
-
-Hello,<br><br>The multipath code seems to support STK D280 (active / passiv=
-e) disk arrays, but with one exception.&nbsp; It doesn't seem to be able to=
- query the priorities of the luns properly.&nbsp; For example, I create fou=
-r luns on a D280 and assign two luns to controller A and two to controller =
-B.&nbsp; When the system (which has dual hbas) boots they all end up on one=
- controller and multipathd never switches to the primary paths even though =
-they are available.
-<br><br>I am guessing this is because &quot;prio_callout&quot; is set to &q=
-uot;/bin/true&quot; so it defaults to the first path in the list.&nbsp; Is =
-there a prio_callout that works with lsi branded arrays?&nbsp; I run SLES 9=
- and I see there are mpath_prio_{emc,tpc,alua}, but none (somewhat obviousl=
-y) don't work.&nbsp; I was able to write a perl script that simply took a d=
-evice arguement and looked up a priority in a table and it appears to work,=
- but it's obviously a nasty hack and doesn't automatically detect the prope=
-r path (which would be necessary in the case of a manual failover).
-<br><br>Thanks,<br><br>&nbsp;&nbsp; Chris Penney<br>&nbsp;&nbsp; <a href=3D=
-"mailto:penney@msu.edu">penney@msu.edu</a><br><br><br>
-
-------=_Part_26782_10849997.1137124361892--
+Dan
 
 
---===============0290793502==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
+(I diffed the sections in the multipath -v3 output)
 
---===============0290793502==--
+< ===== path sdc =====
+---
+> ===== path sdf =====
+3c3
+< dev_t = 8:32
+---
+> dev_t = 8:80
+8c8
+< h:b:t:l = 1:0:0:0
+---
+> h:b:t:l = 2:0:1:0
+17,18c17
+< path sdd not found in pathvec
+<
+---
+> path sdg not found in pathvec
