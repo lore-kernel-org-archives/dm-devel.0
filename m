@@ -1,15 +1,11 @@
-From: Adrian Bunk <bunk@stusta.de>
-Subject: Re: Oops: dm_mirror on 2.6.14
-Date: Tue, 10 Jan 2006 01:43:43 +0100
-Message-ID: <20060110004343.GW3774@stusta.de>
-References: <43763521.20302@conterra.de>
+From: akpm@osdl.org
+Subject: -
+	md-dm-reduce-stack-usage-with-stacked-block-devices-fixes.patch
+	removed from -mm tree
+Date: Mon, 09 Jan 2006 18:30:42 -0800
+Message-ID: <200601100230.k0A2Us1M005580@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <43763521.20302@conterra.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,109 +15,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dieter =?iso-8859-1?Q?St=FCken?= <stueken@conterra.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: akpm@osdl.org, axboe@suse.de, dm-devel@redhat.com, neilb@suse.de, mm-commits@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Nov 12, 2005 at 07:32:01PM +0100, Dieter St=FCken wrote:
-> I run into trouble while moving some LVs. Looks very much the same
-> as http://www.redhat.com/archives/dm-devel/2005-June/msg00162.html
-> to me. The first Oops arise accessing some data during pvmove, as
-> I unfortunately did not unmount the LVs. Meanwhile I recognized
-> my kernel (2.6.12.2) still suffered from the bio_clone bug
-> http://www.redhat.com/archives/dm-devel/2005-July/msg00086.html,
-> but I can't tell if this really caused the problem. After all,
-> I get an Oops now, whenever I try to activate my lvm, as dm-mirror
-> is still active because the pvmove did not finish :-(
->=20
-> The interesting thing is, that even my new 2.6.14 kernel fails
-> to activate the mirrored volume. I may either abort the pvmove or
-> restore the VG to its previous state, but then the opportunity
-> to analyze and fix the problem may be lost.
->=20
-> Here comes the Oops of my current 2.6.14 kernel (x86/PIII):
+
+The patch titled
+
+     md-dm-reduce-stack-usage-with-stacked-block-devices-fixes
+
+has been removed from the -mm tree.  Its filename is
+
+     md-dm-reduce-stack-usage-with-stacked-block-devices-fixes.patch
+
+This patch was probably dropped from -mm because
+it has already been merged into a subsystem tree
+or into Linus's tree
 
 
-Is this problem still present in kernel 2.6.15?
+From: Andrew Morton <akpm@osdl.org>
 
+Cc: Neil Brown <neilb@suse.de>
+Cc: Jens Axboe <axboe@suse.de>
+Cc: <dm-devel@redhat.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+---
 
-> Unable to handle kernel paging request at virtual address d0a47000
->  printing eip:
-> d0a339a7
-> *pde =3D 0127b067
-> Oops: 0000 [#1]
-> Modules linked in: dm_mirror dm_mod sata_promise libata pdc202xx_old=20
-> via82cxxx ...
-> CPU:    0
-> EIP:    0060:[<d0a339a7>]    Not tainted VLI
-> EFLAGS: 00010246   (2.6.14-default-gf2c84c0e)
-> EIP is at core_in_sync+0x7/0x20 [dm_mirror]
-> eax: c958bdc0   ebx: d0a41000   ecx: 00000000   edx: 00030000
-> esi: cffc2900   edi: c97657e0   ebp: 00000000   esp: c84fda3c
-> ds: 007b   es: 007b   ss: 0068
-> Process udev_volume_id (pid: 12044, threadinfo=3Dc84fc000 task=3Dc554e5=
-c0)
-> Stack: d0a38380 d0a35651 00000000 0000000a 00030000 00000000 c01608a9=20
-> c6a3f740
->        c958be40 c6a3f738 cffc2900 d0a310b8 d087837c 0c000000 00000000=20
->        cffc2180
->        c6a3f748 c84fdae8 d0878618 00000000 00000001 00000008 00000000=20
->        00000000
-> Call Trace:
->  [<d0a35651>] mirror_map+0xa1/0x150 [dm_mirror]
->  [<c01608a9>] bio_clone+0xc9/0xd0
->  [<d087837c>] __map_bio+0x3c/0x100 [dm_mod]
->  [<d0878618>] __clone_and_map+0xc8/0x320 [dm_mod]
->  [<c0140f1a>] mempool_alloc+0x2a/0xc0
->  [<d0878917>] __split_bio+0xa7/0x120 [dm_mod]
->  [<d08789f6>] dm_request+0x66/0x90 [dm_mod]
->  [<c025772b>] generic_make_request+0xeb/0x170
->  [<c01608a9>] bio_clone+0xc9/0xd0
->  [<d087837c>] __map_bio+0x3c/0x100 [dm_mod]
->  [<d0878618>] __clone_and_map+0xc8/0x320 [dm_mod]
->  [<c0140f1a>] mempool_alloc+0x2a/0xc0
->  [<d0878917>] __split_bio+0xa7/0x120 [dm_mod]
->  [<d08789f6>] dm_request+0x66/0x90 [dm_mod]
->  [<c025772b>] generic_make_request+0xeb/0x170
->  [<c0257800>] submit_bio+0x50/0xe0
->  [<c01605e9>] bio_alloc_bioset+0xe9/0x1e0
->  [<c015ff6d>] submit_bh+0x13d/0x190
->  [<c015ef2a>] block_read_full_page+0x30a/0x320
->  [<c0162e90>] blkdev_get_block+0x0/0x80
->  [<c0144aec>] read_pages+0x4c/0x100
->  [<c014247c>] __alloc_pages+0x17c/0x410
->  [<c0144c44>] __do_page_cache_readahead+0xa4/0x100
->  [<c0144df1>] blockable_page_cache_readahead+0x51/0xd0
->  [<c0145031>] page_cache_readahead+0x101/0x1a0
->  [<c013e516>] do_generic_mapping_read+0x326/0x490
->  [<c013e912>] __generic_file_aio_read+0x1a2/0x210
->  [<c013e680>] file_read_actor+0x0/0xf0
->  [<c013ea85>] generic_file_read+0x95/0xc0
->  [<c012ea20>] autoremove_wake_function+0x0/0x50
->  [<c015b947>] vfs_read+0xd7/0x180
->  [<c015bcd1>] sys_read+0x41/0x70
->  [<c0102f29>] syscall_call+0x7/0xb
->=20
->=20
->=20
-> --=20
-> Dieter St=FCken, con terra GmbH, M=FCnster
->     stueken@conterra.de
->     http://www.conterra.de/
->     (0)251-7474-501
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+ block/ll_rw_blk.c     |    6 +++---
+ include/linux/sched.h |    1 +
+ 2 files changed, 4 insertions(+), 3 deletions(-)
 
-cu
-Adrian
+diff -puN block/ll_rw_blk.c~md-dm-reduce-stack-usage-with-stacked-block-devices-fixes block/ll_rw_blk.c
+--- devel/block/ll_rw_blk.c~md-dm-reduce-stack-usage-with-stacked-block-devices-fixes	2006-01-08 22:21:35.000000000 -0800
++++ devel-akpm/block/ll_rw_blk.c	2006-01-08 22:21:35.000000000 -0800
+@@ -3086,7 +3086,7 @@ void generic_make_request(struct bio *bi
+ 		return;
+ 	}
+ 	/* following loop may be a bit non-obvious, and so deserves some
+-	 * explantion.
++	 * explanation.
+ 	 * Before entering the loop, bio->bi_next is NULL (as all callers
+ 	 * ensure that) so we have a list with a single bio.
+ 	 * We pretend that we have just taken it off a longer list, so
+@@ -3100,8 +3100,8 @@ void generic_make_request(struct bio *bi
+ 	 * bio_tail or bi_next, and call into __generic_make_request again.
+ 	 *
+ 	 * The loop was structured like this to make only one call to
+-	 * __generic_make_request (which is important as it is large and inlined)
+-	 * and to keep the structure simple.
++	 * __generic_make_request (which is important as it is large and
++	 * inlined) and to keep the structure simple.
+ 	 */
+ 	BUG_ON(bio->bi_next);
+ 	do {
+diff -puN include/linux/sched.h~md-dm-reduce-stack-usage-with-stacked-block-devices-fixes include/linux/sched.h
+--- devel/include/linux/sched.h~md-dm-reduce-stack-usage-with-stacked-block-devices-fixes	2006-01-08 22:21:35.000000000 -0800
++++ devel-akpm/include/linux/sched.h	2006-01-08 22:21:35.000000000 -0800
+@@ -39,6 +39,7 @@
+ #include <linux/auxvec.h>	/* For AT_VECTOR_SIZE */
+ 
+ struct exec_domain;
++struct bio;
+ 
+ /*
+  * cloning flags:
+_
 
---=20
+Patches currently in -mm which might be from akpm@osdl.org are
 
-       "Is there not promise of rain?" Ling Tan asked suddenly out
-        of the darkness. There had been need of rain for many days.
-       "Only a promise," Lao Er said.
-                                       Pearl S. Buck - Dragon Seed
+linus.patch
+remove-asm-serialh-from-synclink_gt.patch
+ocfs-update-atime-borkage.patch
+hrtimer-export-deinlined-mktime.patch
+md-dm-reduce-stack-usage-with-stacked-block-devices.patch
+md-dm-reduce-stack-usage-with-stacked-block-devices-fixes.patch
+vfa-at-functions-core-sparc64-fix.patch
+nr_blockdev_pages-in_interrupt-warning.patch
+sysfs-crash-debugging.patch
+device-suspend-debug.patch
+tty-layer-buffering-revamp-jsm-is-broken.patch
+tty-layer-buffering-revamp-pmac_zilog-warning-fix.patch
+tty-layer-buffering-revamp-sunsab-build-fix.patch
+isicom-pci-probing-added-fix-vs-gregkh-pci-pci-driver-owner-removal.patch
+lindent-rio-drivers.patch
