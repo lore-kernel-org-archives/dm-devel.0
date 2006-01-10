@@ -1,11 +1,11 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] drivers/md/dm-raid1.c: Fix inconsistent
- mirroring after interrupted recovery
-Date: Tue, 10 Jan 2006 17:20:03 -0500
-Message-ID: <43C43313.3000402@ce.jp.nec.com>
+Subject: [RFC] dm-raid1: not to add newly-allocated RH_CLEAN
+	region to clean_regions
+Date: Tue, 10 Jan 2006 18:11:40 -0500
+Message-ID: <43C43F2C.6050704@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------030401010002020505010006"
+Content-Type: multipart/mixed; boundary="------------080908050709060306000709"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,119 +17,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: akpm@osdl.org, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------030401010002020505010006
+--------------080908050709060306000709
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 Hi,
 
-dm-mirror has potential data corruption problem:
-while on-disk log shows that all disk contents are in-sync,
-actual contents of the disks are not synchronized.
-This problem occurs if initial recovery (synching) is
-interrupted and resumed.
+I would like to know whether the attached patch is something
+acceptable or not.
 
-Attached patch fixes this problem.
-Please consider to apply.
+In dm-raid1.c, 'clean_regions' in region hash is a list used
+to link regions which are clean AND no longer interested (freeable).
+So I think it's safe not to add newly-allocated RH_CLEAN entry
+to the list because someone who allocates it has interest
+on the region.
 
-Background:
+In the current code, rh_alloc()/rh_find() is called from:
+  - rh_inc(), which makes the state RH_DIRTY if it's RH_CLEAN
+  - __rh_recovery_prepare(), which makes the state RH_RECOVERING
+  - rh_delay(), which is called when the region is RH_RECOVERING
 
-rh_dec() changes the region state from RH_NOSYNC (out-of-sync)
-to RH_CLEAN (in-sync), which results in the corresponding bit
-of clean_bits being set.
+So none uses the newly allocated RH_CLEAN region as-is.
+RH_DIRTY region is changed back to RH_CLEAN and then connected
+to clean_regions when pending I/O completes.
+RH_RECOVERING region is reclaimed when the recovery on the
+region completes.
 
-This is harmful if on-disk log is used and the map is
-removed/suspended before the initial sync is completed.
-The clean_bits is written down to the on-disk log at the map
-removal, and, upon resume, it's read and copied to sync_bits.
-Since the recovery process refers to the sync_bits to find
-a region to be recovered, the region whose state was changed
-from RH_NOSYNC to RH_CLEAN is no longer recovered.
+If this patch is acceptable, we can also merge RH_CLEAN and
+RH_DIRTY into one state.
 
-If you haven't applied dm-raid1-read-balancing.patch proposed
-in dm-devel sometimes ago, the contents of the mirrored disk
-just corrupt silently.
-If you have, balanced read may get bogus data from out-of-sync
-disks.
-
-The patch keeps RH_NOSYNC state unchanged.
-It will be changed to RH_RECOVERING when recovery starts
-and get reclaimed when the recovery completes.
-So it doesn't leak the region hash entry.
+Comments are welcome.
 
 Thanks,
 Jun'ichi "Nick" Nomura
 
---------------030401010002020505010006
+--------------080908050709060306000709
 Content-Type: text/x-patch;
- name="dm-mirror-keepnosync.patch"
+ name="dm-mirror-dont-add-clean.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="dm-mirror-keepnosync.patch"
+ filename="dm-mirror-dont-add-clean.patch"
 
-Keep RH_NOSYNC state unchanged when I/O on the region completes.
+[RFC] dm-raid1: not to add newly-allocated RH_CLEAN region to clean_regions
 
-rh_dec() changes the region state from RH_NOSYNC (out-of-sync)
-to RH_CLEAN (in-sync), which results in the corresponding bit
-of clean_bits being set.
+The clean_regions list is used to maintain reclaimable hash entries.
+If the region is known to be marked RH_DIRTY or RH_RECOVERING later,
+it's not necessarily connected to clean_regions even if it's clean.
 
-This is harmful if on-disk log is used and the map is
-removed/suspended before the initial sync is completed.
-The clean_bits is written down to the on-disk log at the map
-removal, and, upon resume, it's read and copied to sync_bits.
-Since the recovery process refers to the sync_bits to find
-a region to be recovered, the region whose state was changed
-from RH_NOSYNC to RH_CLEAN is no longer recovered.
+OTOH, region hash entries are allocated only when the region is going
+to be written (RH_DIRTY) or recoverred (RH_RECOVERING).
 
-If you haven't applied dm-raid1-read-balancing.patch proposed
-in dm-devel sometimes ago, the contents of the mirrored disk
-just corrupt silently.
-If you have, balanced read may get bogus data from out-of-sync
-disks.
-
-The RH_NOSYNC region will be changed to RH_RECOVERING when
-recovery starts on the region and get reclaimed when the recovery
-completes.
-So it doesn't leak the region hash entry.
+So it's safe not to add RH_CLEAN region to clean_regions in __rh_alloc().
+Not adding to clean_regions protects the region from potential race
+condition that the hash entry is reclaimed by rh_update_states()
+before use.
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
 diff -urp linux.orig/drivers/md/dm-raid1.c linux/drivers/md/dm-raid1.c
 --- linux.orig/drivers/md/dm-raid1.c	2005-12-26 05:25:04.000000000 -0500
-+++ linux/drivers/md/dm-raid1.c	2006-01-06 10:19:49.000000000 -0500
-@@ -414,9 +414,21 @@ static void rh_dec(struct region_hash *r
++++ linux/drivers/md/dm-raid1.c	2006-01-06 11:47:03.000000000 -0500
+@@ -255,11 +254,6 @@ static struct region *__rh_alloc(struct 
  
- 	spin_lock_irqsave(&rh->region_lock, flags);
- 	if (atomic_dec_and_test(&reg->pending)) {
-+		/*
-+		 * There is no pending I/O for this region.
-+		 * We can move the region to corresponding list for next action.
-+		 * At this point, the region is not yet connected to any list.
-+		 *
-+		 * If the state is RH_NOSYNC, the region should be kept off
-+		 * from clean list.
-+		 * The hash entry for RH_NOSYNC will remain in memory
-+		 * until the region is recovered or the map is reloaded.
-+		 */
-+
-+		/* do nothing for RH_NOSYNC */
- 		if (reg->state == RH_RECOVERING) {
- 			list_add_tail(&reg->list, &rh->quiesced_regions);
--		} else {
-+		} else if (reg->state == RH_DIRTY) {
- 			reg->state = RH_CLEAN;
- 			list_add(&reg->list, &rh->clean_regions);
- 		}
+ 	else {
+ 		__rh_insert(rh, nreg);
+-		if (nreg->state == RH_CLEAN) {
+-			spin_lock(&rh->region_lock);
+-			list_add(&nreg->list, &rh->clean_regions);
+-			spin_unlock(&rh->region_lock);
+-		}
+ 		reg = nreg;
+ 	}
+ 	write_unlock_irq(&rh->hash_lock);
 
---------------030401010002020505010006
+--------------080908050709060306000709
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------030401010002020505010006--
+--------------080908050709060306000709--
