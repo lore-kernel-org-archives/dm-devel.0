@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [patch 1/1] md/dm: Reduce stack usage with stacked
-	block devices
-Date: Tue, 10 Jan 2006 14:04:02 +0000
-Message-ID: <20060110140402.GQ4346@agk.surrey.redhat.com>
-References: <200601100231.k0A2VMYu005612@shell0.pdx.osdl.net>
+From: Jeff DiNisco <jdinisco@cptech.com>
+Subject: multipathing buffer I/O error
+Date: Tue, 10 Jan 2006 14:57:36 -0500
+Message-ID: <1136923056.3161.41.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200601100231.k0A2VMYu005612@shell0.pdx.osdl.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,28 +16,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: akpm@osdl.org, neilb@suse.de, axboe@suse.de, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Jan 09, 2006 at 06:31:10PM -0800, Andrew Morton wrote:
-> When stacked block devices are in-use (e.g.  md or dm), the recursive calls
-> to generic_make_request can use up a lot of space, and we would rather they
-> didn't.
- 
-I can see nothing wrong with this in principle.
+I'm running multipath-tools on RHEL AS 4 update1.
 
-For device-mapper at the moment though it's essential that, while the bio 
-mappings may now get delayed, they still get processed in exactly
-the same order as they were passed to generic_make_request().
+I have 2 qlogic 2340 cards (qlogic multipathing disabled) attached to a
+Sun StorEdge 3510 w/ dual controllers.  
 
-My main concern is whether the timing changes implicit in this patch
-will make the rare data-corrupting races in the existing snapshot code
-more likely. (I'm working on a fix for these races, but the unfinished
-patch is already several hundred lines long.)
+Multipathing appears to be working well.  The devs are created
+in /dev/mapper, kpartx creates the partitons, and multipath -l reports
+multiple paths to a single device.  I created an ext3 fs on a
+multipathed dev and mounted it.  To test, I ran a script to generate
+constant i/o to the fs then pulled the fiber cable from one of the
+qlogic cards.  At this point, things still look good.  My log reports...
 
-It would be helpful if some people on this mailing list would test 
-this patch in various scenarios and report back.
+Jan 10 14:15:01 v20z-d kernel: SCSI error : <4 0 0 4> return code =
+0x10000
+Jan 10 14:15:01 v20z-d kernel: end_request: I/O error, dev sdo, sector
+5207
+Jan 10 14:15:01 v20z-d kernel: device-mapper: dm-multipath: Failing path
+8:224.
 
-Alasdair
--- 
-agk@redhat.com
+multipath -l shows a failed and active path for the device and the
+script is still successfully generating i/o.  The problem occurs when I
+plug the fiber cable back in.  My log reports...
+
+Jan 10 14:15:53 v20z-d kernel: qla2300 0000:02:05.0: LIP reset occured
+(f7f7).
+Jan 10 14:15:53 v20z-d kernel: qla2300 0000:02:05.0: LIP occured (f7f7).
+Jan 10 14:15:53 v20z-d kernel: qla2300 0000:03:01.0: LIP reset occured
+(f7f7).
+Jan 10 14:15:54 v20z-d kernel: qla2300 0000:02:05.0: LIP reset occured
+(f8f7).
+Jan 10 14:15:54 v20z-d kernel: qla2300 0000:03:01.0: LIP occured (f7f7).
+Jan 10 14:15:54 v20z-d kernel: qla2300 0000:02:05.0: LIP occured (f8f7).
+Jan 10 14:15:54 v20z-d kernel: qla2300 0000:03:01.0: LOOP UP detected (2
+Gbps).
+Jan 10 14:15:54 v20z-d kernel: SCSI error : <3 0 0 4> return code =
+0x20000
+Jan 10 14:15:54 v20z-d kernel: end_request: I/O error, dev sdf, sector
+2952647
+Jan 10 14:15:54 v20z-d kernel: device-mapper: dm-multipath: Failing path
+8:80.
+Jan 10 14:15:54 v20z-d kernel: end_request: I/O error, dev sdf, sector
+2952655
+Jan 10 14:15:54 v20z-d kernel: printk: 10821 messages suppressed.
+Jan 10 14:15:54 v20z-d kernel: Buffer I/O error on device dm-9, logical
+block 369074
+Jan 10 14:15:54 v20z-d kernel: lost page write due to I/O error on dm-9
+Jan 10 14:15:54 v20z-d kernel: Buffer I/O error on device dm-9, logical
+block 369075
+Jan 10 14:15:54 v20z-d kernel: lost page write due to I/O error on dm-9
+
+
+there are many more of these errors and it ends w/...
+
+Jan 10 14:15:55 v20z-d kernel: SCSI error : <3 0 0 4> return code =
+0x20000
+Jan 10 14:15:55 v20z-d kernel: end_request: I/O error, dev sdf, sector
+1570127
+Jan 10 14:15:55 v20z-d kernel: Aborting journal on device dm-9.
+Jan 10 14:15:55 v20z-d kernel: ext3_abort called.
+Jan 10 14:15:55 v20z-d kernel: EXT3-fs error (device dm-9):
+ext3_journal_start_sb: Detected aborted journal
+Jan 10 14:15:55 v20z-d kernel: Remounting filesystem read-only
+
+I've tried a few different options in multipath.conf to no avail.
+Here's what it looked like when these errors were generated...
+
+defaults {
+        multipath_tool  "/sbin/multipath -v0"
+        udev_dir        /dev
+        polling_interval 120
+        default_selector        "round-robin 0"
+        default_path_grouping_policy    multibus
+#
+# From StorEdge 3510 section
+        default_path_checker    tur
+#
+        default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
+        default_prio_callout    "/bin/true"
+        default_features        "0"
+        rr_wmin_io              100
+        failback                immediate
+}
+
+
+software versions...
+
+device-mapper-1.01.01-1.RHEL4
+device-mapper-multipath-0.4.5-6.0.RHEL4
+udev-039-10.8.EL4
+kernel version - 2.6.9-11.EL
+
+Any help would be greatly appreciated.
