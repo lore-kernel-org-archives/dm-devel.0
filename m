@@ -1,14 +1,15 @@
-From: Molle Bestefich <molle.bestefich@gmail.com>
-Subject: Was: [patch 1/1] md/dm: Reduce stack usage with stacked
-	block devices
-Date: Wed, 11 Jan 2006 13:45:41 +0100
-Message-ID: <62b0912f0601110445w34d480c4n56d8f02056baef26@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Was: [patch 1/1] md/dm: Reduce stack usage with
+	stacked block devices
+Date: Wed, 11 Jan 2006 13:53:01 +0000
+Message-ID: <20060111135301.GY4346@agk.surrey.redhat.com>
+References: <62b0912f0601110445w34d480c4n56d8f02056baef26@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <62b0912f0601110445w34d480c4n56d8f02056baef26@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,34 +19,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
+To: Molle Bestefich <molle.bestefich@gmail.com>
 Cc: akpm@osdl.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Alasdair G Kergon wrote:
-> My main concern is whether the timing changes implicit in this patch
-> will make the rare data-corrupting races in the existing snapshot code
-> more likely.
+On Wed, Jan 11, 2006 at 01:45:41PM +0100, Molle Bestefich wrote:
+> * Do you think that there is only 1 data corruption bug in dm snapshot
+> and that the code is otherwise good (data consistency wise)?
+ 
+There are several races.  The code makes some ordering assumptions
+about the I/O but does nothing to enforce those assumptions.  
+So if you're unlucky and I/O happens to complete in the wrong order
+or too soon you can see transient corruption in the snapshot or 
+reference memory that has been freed and perhaps reallocated to
+something else.
 
-Haha!  Rare my a** :-).
+Some references:
+  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=175830
+  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=164959
+  https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=173209
 
-> (I'm working on a fix for these races, but the unfinished
-> patch is already several hundred lines long.)
+> * Is dm-snapshot being actively developed?
+> * Which organization/person is the main developer on dm-snapshot?
 
-Sounds cool.
-A few questions, if you have the time:
+Not actively developed, no.  Long-term we want to replace it with
+something better.  But at the moment I'm reviewing the existing code
+and fixing as many problems as I can find.
+ 
+> What's the codebase that this patch applies to?
 
-* Do you think that there is only 1 data corruption bug in dm snapshot
-and that the code is otherwise good (data consistency wise)?
+The -mm tree is here:
+  http://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/
 
-* Is dm-snapshot being actively developed?
+The patches I'm working on will appear here very soon now (and I'll
+send an email dm-devel):
+  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/
 
-* Which organization/person is the main developer on dm-snapshot?
-
-> It would be helpful if some people on this mailing list would test
-> this patch in various scenarios and report back.
-
-I'd be more than happy to test improvements to dm-snapshot.
-Is this supposed to be one?
-
-What's the codebase that this patch applies to?
+Alasdair
+-- 
+agk@redhat.com
