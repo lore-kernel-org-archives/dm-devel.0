@@ -1,12 +1,20 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [PATCH] device-mapper snaphot: fix origin_write
-	pending_exception submission
-Date: Wed, 11 Jan 2006 21:17:28 +0000
-Message-ID: <20060111211728.GH4474@agk.surrey.redhat.com>
+From: Mike Snitzer <snitzer@gmail.com>
+Subject: Re: Re: Was: [patch 1/1] md/dm: Reduce stack usage with
+	stacked block devices
+Date: Thu, 12 Jan 2006 14:32:15 -0500
+Message-ID: <170fa0d20601121132o5e031e55ge291b883250781af@mail.gmail.com>
+References: <62b0912f0601110445w34d480c4n56d8f02056baef26@mail.gmail.com>
+	<20060111135301.GY4346@agk.surrey.redhat.com>
+	<62b0912f0601111226q4732fc23qee79b7a2fc215fe9@mail.gmail.com>
+	<1137012072.10270.113.camel@localhost.localdomain>
+	<20060111205437.GD4346@agk.surrey.redhat.com>
+	<1137013229.10270.117.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1137013229.10270.117.camel@localhost.localdomain>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,119 +25,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: mingz@ele.uri.edu, device-mapper development <dm-devel@redhat.com>
+Cc: akpm@osdl.org, phillips@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Say you have several snapshots of the same origin and then you issue
-a write to some place in the origin for the first time.
+On 1/11/06, Ming Zhang <mingz@ele.uri.edu> wrote:
+> On Wed, 2006-01-11 at 20:54 +0000, Alasdair G Kergon wrote:
 
-Before the device-mapper snapshot target lets the write go through to 
-the underlying device, it needs to make a copy of the data that 
-is about to be overwritten.  Each snapshot is independent, so it makes 
-one copy for each snapshot.
+> > Efficient, unlikely with the current implemention - hence the need
+> > for a rewrite.
+>
+> >
+> > If you have 5 snapshots of the same origin, the current implemention
+> > takes 5 copies of the data when you change it. That approach is
+> > never going to scale well!  And it uses lots of memory.
+>
+> yes, you are right. is there any new rewrite action proposed or planned=
+?
 
-__origin_write() loops through each snapshot and checks to see
-whether a copy is needed for that snapshot.  (A copy is only needed
-the first time that data changes.)  
+My understanding is that much of RedHat's Cluster Snapshot Block
+Device (CSNAP) core is a candidate for the dm-snapshot rewrite:
+http://sources.redhat.com/cluster/csnap/csnap.ps
 
-If a copy is needed, the code allocates a 'pending_exception' structure 
-holding the details.  It links these together for all the snapshots, then 
-works its way through this list and submits the copying requests to
-the kcopyd thread by calling start_copy().  When each request is
-completed, the original pending_exception structure gets freed in
-pending_complete().
+Along with other improvements, performance would be addressed with a
+shared exception table (tree) for all snapshots (only one copy of each
+exception).  When I spoke with Daniel Phillips (author of CSNAP
+stuffs) a few months ago he said CSNAP is on the back burner until
+others realize just how bad the existing dm-snapshot is.  He is
+looking/waiting for others who are willing to contribute in moving
+CSNAP's snapshot improvements into dm-snapshot++.  Unfortunately I'd
+only be able to contribute testing at this time...
 
-If you're very unlucky, this structure can get freed *before* the 
-submission process has finished walking the list.
-
-
-This patch:
-  1) Creates a new temporary list pe_queue to hold the pending exception 
-structures;
-  2) Does all the bookkeeping up-front, then walks through the new list
-safely and calls start_copy() for each pending_exception that needed it;
-  3) Avoids attempting to add pe->siblings to the list if it's already
-connected.
-
-
-[NB This does not fix all the races in this code.  More patches to follow.]
-
-Signed-Off-By: Alasdair G Kergon <agk@redhat.com>
-
-Index: current-quilt-publish/drivers/md/dm-snap.c
-===================================================================
---- current-quilt-publish.orig/drivers/md/dm-snap.c	2006-01-06 15:02:51.000000000 +0000
-+++ current-quilt-publish/drivers/md/dm-snap.c	2006-01-11 21:13:20.000000000 +0000
-@@ -49,6 +49,11 @@ struct pending_exception {
- 	struct bio_list snapshot_bios;
- 
- 	/*
-+	 * Short-term queue of pending exceptions prior to submission.
-+	 */
-+	struct list_head list;
-+
-+	/*
- 	 * Other pending_exceptions that are processing this
- 	 * chunk.  When this list is empty, we know we can
- 	 * complete the origins.
-@@ -930,8 +935,9 @@ static int __origin_write(struct list_he
- 	int r = 1, first = 1;
- 	struct dm_snapshot *snap;
- 	struct exception *e;
--	struct pending_exception *pe, *last = NULL;
-+	struct pending_exception *pe, *next_pe, *last = NULL;
- 	chunk_t chunk;
-+	LIST_HEAD(pe_queue);
- 
- 	/* Do all the snapshots on this origin */
- 	list_for_each_entry (snap, snapshots, list) {
-@@ -965,12 +971,19 @@ static int __origin_write(struct list_he
- 				snap->valid = 0;
- 
- 			} else {
--				if (last)
-+				if (first) {
-+					bio_list_add(&pe->origin_bios, bio);
-+					r = 0;
-+					first = 0;
-+				}
-+				if (last && list_empty(&pe->siblings))
- 					list_merge(&pe->siblings,
- 						   &last->siblings);
--
-+				if (!pe->started) {
-+					pe->started = 1;
-+					list_add_tail(&pe->list, &pe_queue);
-+				}
- 				last = pe;
--				r = 0;
- 			}
- 		}
- 
-@@ -980,24 +993,8 @@ static int __origin_write(struct list_he
- 	/*
- 	 * Now that we have a complete pe list we can start the copying.
- 	 */
--	if (last) {
--		pe = last;
--		do {
--			down_write(&pe->snap->lock);
--			if (first)
--				bio_list_add(&pe->origin_bios, bio);
--			if (!pe->started) {
--				pe->started = 1;
--				up_write(&pe->snap->lock);
--				start_copy(pe);
--			} else
--				up_write(&pe->snap->lock);
--			first = 0;
--			pe = list_entry(pe->siblings.next,
--					struct pending_exception, siblings);
--
--		} while (pe != last);
--	}
-+	list_for_each_entry_safe(pe, next_pe, &pe_queue, list)
-+		start_copy(pe);
- 
- 	return r;
- }
+Mike
