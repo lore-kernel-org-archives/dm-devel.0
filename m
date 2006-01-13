@@ -1,14 +1,13 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: [PATCH 3/3] path failure and reinstate events
-Date: Mon, 16 Jan 2006 00:38:08 -0800
-Message-ID: <20060116083808.GD15587@us.ibm.com>
-References: <20060116083356.GA15587@us.ibm.com>
+From: Chris Penney <penney@msu.edu>
+Subject: Re: STK / LSI Multipath Support
+Date: Fri, 13 Jan 2006 12:00:41 -0500
+Message-ID: <111aefd0601130900w76ed8c8eo53d3a64b41dc4345@mail.gmail.com>
+References: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============2000678507=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20060116083356.GA15587@us.ibm.com>
+In-Reply-To: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,156 +20,101 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds a call to init dm_nl during dm init, and calls to dm_nl
-functions for path failure / reinstate events.
+--===============2000678507==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_34176_4691637.1137171641566"
 
-Signed-off-by: Mike Anderson <andmike@us.ibm.com>
+------=_Part_34176_4691637.1137171641566
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
- drivers/md/dm-mpath.c |   34 ++++++++++++++++++++++++++++++++--
- drivers/md/dm.c       |    2 ++
- drivers/md/dm.h       |    1 +
- 3 files changed, 35 insertions(+), 2 deletions(-)
+On 1/12/06, Chris Penney <penney@msu.edu> wrote:
+>
+> Hello,
+>
+> The multipath code seems to support STK D280 (active / passive) disk
+> arrays, but with one exception.  It doesn't seem to be able to query the
+> priorities of the luns properly.  For example, I create four luns on a D2=
+80
+> and assign two luns to controller A and two to controller B.  When the
+> system (which has dual hbas) boots they all end up on one controller and
+> multipathd never switches to the primary paths even though they are
+> available.
+>
+> I am guessing this is because "prio_callout" is set to "/bin/true" so it
+> defaults to the first path in the list.  Is there a prio_callout that wor=
+ks
+> with lsi branded arrays?  I run SLES 9 and I see there are
+> mpath_prio_{emc,tpc,alua}, but none (somewhat obviously) don't work.  I w=
+as
+> able to write a perl script that simply took a device arguement and looke=
+d
+> up a priority in a table and it appears to work, but it's obviously a nas=
+ty
+> hack and doesn't automatically detect the proper path (which would be
+> necessary in the case of a manual failover).
+>
+> Thanks,
+>
+>    Chris Penney
+>    penney@msu.edu
 
-Index: sas-2.6-patched/drivers/md/dm.h
-===================================================================
---- sas-2.6-patched.orig/drivers/md/dm.h	2006-01-15 22:41:53.000000000 -0800
-+++ sas-2.6-patched/drivers/md/dm.h	2006-01-15 22:45:12.000000000 -0800
-@@ -14,6 +14,7 @@
- #include <linux/device-mapper.h>
- #include <linux/list.h>
- #include <linux/blkdev.h>
-+#include "dm-netlink.h"
- 
- #define DM_NAME "device-mapper"
- #define DMWARN(f, x...) printk(KERN_WARNING DM_NAME ": " f "\n" , ## x)
-Index: sas-2.6-patched/drivers/md/dm.c
-===================================================================
---- sas-2.6-patched.orig/drivers/md/dm.c	2006-01-15 22:41:53.000000000 -0800
-+++ sas-2.6-patched/drivers/md/dm.c	2006-01-15 22:45:12.000000000 -0800
-@@ -163,6 +163,7 @@ int (*_inits[])(void) __initdata = {
- 	dm_linear_init,
- 	dm_stripe_init,
- 	dm_interface_init,
-+	dm_nl_init,
- };
- 
- void (*_exits[])(void) = {
-@@ -171,6 +172,7 @@ void (*_exits[])(void) = {
- 	dm_linear_exit,
- 	dm_stripe_exit,
- 	dm_interface_exit,
-+	dm_nl_exit,
- };
- 
- static int __init dm_init(void)
-Index: sas-2.6-patched/drivers/md/dm-mpath.c
-===================================================================
---- sas-2.6-patched.orig/drivers/md/dm-mpath.c	2006-01-15 22:41:53.000000000 -0800
-+++ sas-2.6-patched/drivers/md/dm-mpath.c	2006-01-15 22:50:23.000000000 -0800
-@@ -10,6 +10,7 @@
- #include "dm-hw-handler.h"
- #include "dm-bio-list.h"
- #include "dm-bio-record.h"
-+#include "dm-netlink.h"
- 
- #include <linux/ctype.h>
- #include <linux/init.h>
-@@ -80,6 +81,7 @@ struct multipath {
- 	unsigned queue_size;
- 
- 	struct work_struct trigger_event;
-+	struct list_head evt_list;
- 
- 	/*
- 	 * We must use a mempool of mpath_io structs so that we
-@@ -179,6 +181,7 @@ static struct multipath *alloc_multipath
- 		m->queue_io = 1;
- 		INIT_WORK(&m->process_queued_ios, process_queued_ios, m);
- 		INIT_WORK(&m->trigger_event, trigger_event, m);
-+		INIT_LIST_HEAD(&m->evt_list);
- 		m->mpio_pool = mempool_create(MIN_IOS, mempool_alloc_slab,
- 					      mempool_free_slab, _mpio_cache);
- 		if (!m->mpio_pool) {
-@@ -426,7 +429,19 @@ out:
-  */
- static void trigger_event(void *data)
- {
-+	unsigned long flags;
- 	struct multipath *m = (struct multipath *) data;
-+	struct dm_evt *evt, *next;
-+	LIST_HEAD(events);
-+
-+	spin_lock_irqsave(&m->lock, flags);
-+	list_splice_init(&m->evt_list, &events);
-+	spin_unlock_irqrestore(&m->lock, flags);
-+
-+	list_for_each_entry_safe(evt, next, &events, elist) {
-+		list_del_init(&evt->elist);
-+		dm_send_evt(evt);
-+	}
- 
- 	dm_table_event(m->ti->table);
- }
-@@ -798,9 +813,10 @@ static int multipath_map(struct dm_targe
- /*
-  * Take a path out of use.
-  */
--static int fail_path(struct pgpath *pgpath)
-+static int __fail_path(struct pgpath *pgpath, struct bio *bio)
- {
- 	unsigned long flags;
-+	struct dm_evt *evt;
- 	struct multipath *m = pgpath->pg->m;
- 
- 	spin_lock_irqsave(&m->lock, flags);
-@@ -819,6 +835,10 @@ static int fail_path(struct pgpath *pgpa
- 	if (pgpath == m->current_pgpath)
- 		m->current_pgpath = NULL;
- 
-+	/* Get error data from bio when available */
-+	evt = dm_path_fail_evt(pgpath->path.dev->name, 0);
-+	if (evt)
-+		list_add(&evt->elist, &m->evt_list);
- 	queue_work(kmultipathd, &m->trigger_event);
- 
- out:
-@@ -827,6 +847,11 @@ out:
- 	return 0;
- }
- 
-+static int fail_path(struct pgpath *pgpath)
-+{
-+	return __fail_path(pgpath, NULL);
-+}
-+
- /*
-  * Reinstate a previously-failed path
-  */
-@@ -834,6 +859,7 @@ static int reinstate_path(struct pgpath 
- {
- 	int r = 0;
- 	unsigned long flags;
-+	struct dm_evt *evt;
- 	struct multipath *m = pgpath->pg->m;
- 
- 	spin_lock_irqsave(&m->lock, flags);
-@@ -858,6 +884,10 @@ static int reinstate_path(struct pgpath 
- 	if (!m->nr_valid_paths++ && m->queue_size)
- 		queue_work(kmultipathd, &m->process_queued_ios);
- 
-+	evt = dm_path_reinstate_evt(pgpath->path.dev->name);
-+	if (evt)
-+		list_add(&evt->elist, &m->evt_list);
-+
- 	queue_work(kmultipathd, &m->trigger_event);
- 
- out:
-@@ -1028,7 +1058,7 @@ static int do_end_io(struct multipath *m
- 
- 	if (mpio->pgpath) {
- 		if (err_flags & MP_FAIL_PATH)
--			fail_path(mpio->pgpath);
-+			__fail_path(mpio->pgpath, bio);
- 
- 		if (err_flags & MP_BYPASS_PG)
- 			bypass_pg(m, mpio->pgpath->pg, 1);
+
+After some experimentation and looking at the defaults for the SGI 9500
+(which is the same hardware as the STK D280 with only some firmware
+differences) I found that I could use mpath_prio_tpc with the STK array.  I=
+s
+this a reasonable solution?
+
+    Chris
+
+------=_Part_34176_4691637.1137171641566
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+<div><span class=3D"gmail_quote">On 1/12/06, <b class=3D"gmail_sendername">=
+Chris Penney</b> &lt;<a href=3D"mailto:penney@msu.edu">penney@msu.edu</a>&g=
+t; wrote:</span>
+<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
+px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">Hello,<br><br>The multipath code=
+ seems to support STK D280 (active / passive) disk arrays, but with one exc=
+eption.&nbsp; It doesn't seem to be able to query the priorities of the lun=
+s properly.&nbsp; For example, I create four luns on a D280 and assign two =
+luns to controller A and two to controller B.&nbsp; When the system (which =
+has dual hbas) boots they all end up on one controller and multipathd never=
+ switches to the primary paths even though they are available.=20
+<br><br>I am guessing this is because &quot;prio_callout&quot; is set to &q=
+uot;/bin/true&quot; so it defaults to the first path in the list.&nbsp; Is =
+there a prio_callout that works with lsi branded arrays?&nbsp; I run SLES 9=
+ and I see there are mpath_prio_{emc,tpc,alua}, but none (somewhat obviousl=
+y) don't work.&nbsp; I was able to write a perl script that simply took a d=
+evice arguement and looked up a priority in a table and it appears to work,=
+ but it's obviously a nasty hack and doesn't automatically detect the prope=
+r path (which would be necessary in the case of a manual failover).=20
+<br><br>Thanks,<br><span class=3D"sg"><br>&nbsp;&nbsp; Chris Penney<br>&nbs=
+p;&nbsp; <a onclick=3D"return top.js.OpenExtLink(window,event,this)" href=
+=3D"mailto:penney@msu.edu" target=3D"_blank">penney@msu.edu</a></span></blo=
+ckquote>
+<div>&nbsp;</div>
+<div>After some experimentation and looking at the defaults for the SGI 950=
+0 (which is the same hardware as the STK D280 with only some firmware diffe=
+rences) I found that I could use mpath_prio_tpc with the STK array.&nbsp; I=
+s this a reasonable solution?
+</div>
+<div>&nbsp;</div>
+<div>&nbsp;&nbsp;&nbsp; Chris</div>
+<div>&nbsp;</div><br>&nbsp;</div>
+
+------=_Part_34176_4691637.1137171641566--
+
+
+--===============2000678507==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2000678507==--
