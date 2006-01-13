@@ -1,14 +1,15 @@
-From: Dan Gregory <dan.gregory@mci.com>
-Subject: Re: Multipathing to a LUN through brocade switch
-Date: Wed, 11 Jan 2006 16:43:43 -0500
-Message-ID: <43C57C0F.90202@mci.com>
-References: <43C2BE3A.8030309@mci.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Brian Wong <bwong@pillardata.com>
+Subject: Re: STK / LSI Multipath Support
+Date: Fri, 13 Jan 2006 11:05:44 -0800
+Message-ID: <1137179144.3643.4.camel@ca-bwong3.trans.corp>
+References: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
+Reply-To: bwong@pillardata.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <43C2BE3A.8030309@mci.com>
+In-Reply-To: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,83 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dan Gregory <dan.gregory@mci.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
-All,
+> 
+> I am guessing this is because "prio_callout" is set to "/bin/true" so
+> it defaults to the first path in the list.  Is there a prio_callout
 
-I fixed my issue with this but it brings up some other problem.  It
-turns out that hal installed a non-existent floppy drive as /dev/sdg.
-When multipath ran it appeared to "crash" when trying to query this
-device.  When I added sdg to the blacklist it worked.
+silly question: is the path_grouping_policy set to "group_by_prio"?  
 
-The question now, is there any way that you can blacklist on anything
-but the /dev/* names because it would seem that in my case /dev/sdg
-could potentially change at some point and my blacklist could block a
-legitimate drive.
+>  that works with lsi branded arrays?  I run SLES 9 and I see there are
+> mpath_prio_{emc,tpc,alua}, but none (somewhat obviously) don't work. 
 
-Thanks,
-Dan
+fwiw, I've used multipath with an active/passive box and prio_callout
+set to "/sbin/mpath_prio_alua -d/tmp %d" successfully with paths
+properly grouped active/passive.
 
+cheers,
 
-Dan Gregory wrote:
-> Hullo,
-> 
-> I know this list has handle many issues of users not knowing how to
-> setup multipathing, but I've read all of them and Christophe's wiki and
-> I can't get my system to talk to my storage array.
-> 
-> OS: RHEL 4.2, device-mapper-multipath-0.4.5-6.0.RHEL4
-> 
-> Configuration:  I have a SunFire 4100 with one 2 port qla hba pci card
-> dual connected to a single 16 port brocade silkworm which in turn in
-> dual connected to a Sun StorEdge 3511.  Interestingly, I get 4
-> /dev/sd[c-f] associated with the same LUN.  I presume that each device
-> can see the LUN through each of the 2 connections from the switch to the
-> 3511.
-> 
-> I know that mapper is working because there are 2 devices that the LVM
-> creates, one for / and one for swap, but the LUNs don't show up.
-> multipath -v2  does not give any output, but -v3 gives information on
-> all 6 of the sd[a-f] devices.  The only differences in the output of
-> sd[c-f] are dev_t and h:b:t:l fields (see below).  I've tried to add
-> entries into the multipath.conf file, but nothing changes the output and
-> I never get any more devices in /dev/mapper.
-> 
-> What am I doing wrong?
-> 
-> 
-> Thanks,
-> Dan
-> 
-> 
-> 
-> (I diffed the sections in the multipath -v3 output)
-> 
-> < ===== path sdc =====
-> ---
-> 
->>===== path sdf =====
-> 
-> 3c3
-> < dev_t = 8:32
-> ---
-> 
->>dev_t = 8:80
-> 
-> 8c8
-> < h:b:t:l = 1:0:0:0
-> ---
-> 
->>h:b:t:l = 2:0:1:0
-> 
-> 17,18c17
-> < path sdd not found in pathvec
-> <
-> ---
-> 
->>path sdg not found in pathvec
-> 
-> 
+Brian
