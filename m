@@ -1,7 +1,7 @@
 From: Mike Anderson <andmike@us.ibm.com>
-Subject: [PATCH 2/3] netlink support for dm-netlink
-Date: Mon, 16 Jan 2006 00:36:57 -0800
-Message-ID: <20060116083657.GC15587@us.ibm.com>
+Subject: [PATCH 3/3] path failure and reinstate events
+Date: Mon, 16 Jan 2006 00:38:08 -0800
+Message-ID: <20060116083808.GD15587@us.ibm.com>
 References: <20060116083356.GA15587@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,489 +21,156 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds netlink support to dm-netlink. It also adds support for
-using netlink attributes for the event messages.
+This patch adds a call to init dm_nl during dm init, and calls to dm_nl
+functions for path failure / reinstate events.
 
 Signed-off-by: Mike Anderson <andmike@us.ibm.com>
 
- drivers/md/dm-netlink.c    |  277 ++++++++++++++++++++++++++++++++++++++-------
- drivers/md/dm-netlink.h    |   58 +++++++++
- include/linux/dm-netlink.h |   46 +++++++
- 3 files changed, 344 insertions(+), 37 deletions(-)
+ drivers/md/dm-mpath.c |   34 ++++++++++++++++++++++++++++++++--
+ drivers/md/dm.c       |    2 ++
+ drivers/md/dm.h       |    1 +
+ 3 files changed, 35 insertions(+), 2 deletions(-)
 
-Index: sas-2.6-patched/drivers/md/dm-netlink.c
+Index: sas-2.6-patched/drivers/md/dm.h
 ===================================================================
---- sas-2.6-patched.orig/drivers/md/dm-netlink.c	2006-01-15 17:39:28.000000000 -0800
-+++ sas-2.6-patched/drivers/md/dm-netlink.c	2006-01-15 17:42:48.000000000 -0800
-@@ -27,13 +27,16 @@
- #include <linux/security.h>
- #include <net/sock.h>
- #include <net/netlink.h>
-+#include <linux/dm-netlink.h>
+--- sas-2.6-patched.orig/drivers/md/dm.h	2006-01-15 22:41:53.000000000 -0800
++++ sas-2.6-patched/drivers/md/dm.h	2006-01-15 22:45:12.000000000 -0800
+@@ -14,6 +14,7 @@
+ #include <linux/device-mapper.h>
+ #include <linux/list.h>
+ #include <linux/blkdev.h>
 +#include "dm-netlink.h"
  
- #define MIN_EVT_SKBS	16
- #define HIWAT_EVT_SKBS	32
- #define EVT_SKB_SIZE	NLMSG_SPACE(128)
- 
--struct mempool_zone {
-+struct mp_zone {
- 	mempool_t *pool;
-+	kmem_cache_t *cache;
- 	int allocated;
- 	int size;
- 	int hiwat;
-@@ -41,55 +44,63 @@ struct mempool_zone {
- 	spinlock_t freelock;
+ #define DM_NAME "device-mapper"
+ #define DMWARN(f, x...) printk(KERN_WARNING DM_NAME ": " f "\n" , ## x)
+Index: sas-2.6-patched/drivers/md/dm.c
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/dm.c	2006-01-15 22:41:53.000000000 -0800
++++ sas-2.6-patched/drivers/md/dm.c	2006-01-15 22:45:12.000000000 -0800
+@@ -163,6 +163,7 @@ int (*_inits[])(void) __initdata = {
+ 	dm_linear_init,
+ 	dm_stripe_init,
+ 	dm_interface_init,
++	dm_nl_init,
  };
  
--static struct mempool_zone z_dm_evt;
-+static struct mp_zone z_dm_evt;
+ void (*_exits[])(void) = {
+@@ -171,6 +172,7 @@ void (*_exits[])(void) = {
+ 	dm_linear_exit,
+ 	dm_stripe_exit,
+ 	dm_interface_exit,
++	dm_nl_exit,
+ };
  
--static inline struct list_head *skb_to_lh(struct sk_buff *skb)
--{
--	return (struct list_head *)&skb->cb;
--}
--
--static void* mempool_zone_alloc_skb(unsigned int gfp_mask,
-+static void* mp_zone_alloc_dm_evt(unsigned int gfp_mask,
- 				    void *pool_data)
+ static int __init dm_init(void)
+Index: sas-2.6-patched/drivers/md/dm-mpath.c
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/dm-mpath.c	2006-01-15 22:41:53.000000000 -0800
++++ sas-2.6-patched/drivers/md/dm-mpath.c	2006-01-15 22:50:23.000000000 -0800
+@@ -10,6 +10,7 @@
+ #include "dm-hw-handler.h"
+ #include "dm-bio-list.h"
+ #include "dm-bio-record.h"
++#include "dm-netlink.h"
+ 
+ #include <linux/ctype.h>
+ #include <linux/init.h>
+@@ -80,6 +81,7 @@ struct multipath {
+ 	unsigned queue_size;
+ 
+ 	struct work_struct trigger_event;
++	struct list_head evt_list;
+ 
+ 	/*
+ 	 * We must use a mempool of mpath_io structs so that we
+@@ -179,6 +181,7 @@ static struct multipath *alloc_multipath
+ 		m->queue_io = 1;
+ 		INIT_WORK(&m->process_queued_ios, process_queued_ios, m);
+ 		INIT_WORK(&m->trigger_event, trigger_event, m);
++		INIT_LIST_HEAD(&m->evt_list);
+ 		m->mpio_pool = mempool_create(MIN_IOS, mempool_alloc_slab,
+ 					      mempool_free_slab, _mpio_cache);
+ 		if (!m->mpio_pool) {
+@@ -426,7 +429,19 @@ out:
+  */
+ static void trigger_event(void *data)
  {
--	struct mempool_zone *zone = pool_data;
-+	struct dm_evt *evt;
-+	struct mp_zone *zone = pool_data;
++	unsigned long flags;
+ 	struct multipath *m = (struct multipath *) data;
++	struct dm_evt *evt, *next;
++	LIST_HEAD(events);
++
++	spin_lock_irqsave(&m->lock, flags);
++	list_splice_init(&m->evt_list, &events);
++	spin_unlock_irqrestore(&m->lock, flags);
++
++	list_for_each_entry_safe(evt, next, &events, elist) {
++		list_del_init(&evt->elist);
++		dm_send_evt(evt);
++	}
  
--	return alloc_skb(zone->size, gfp_mask);
-+	evt = kmem_cache_alloc(zone->cache, gfp_mask);
-+	if (!evt)
-+		goto out;
-+
-+	evt->skb = alloc_skb(zone->size, gfp_mask);
-+	if (!evt->skb)
-+		goto cache_out;
-+	return evt;
-+
-+cache_out:
-+	kmem_cache_free(zone->cache, evt);
-+out:
-+	return NULL;
+ 	dm_table_event(m->ti->table);
  }
- 
--static void mempool_zone_free_skb(void *element, void *pool_data)
-+static void mp_zone_free_dm_evt(void *element, void *pool_data)
- {
--	kfree_skb(element);
-+	struct dm_evt *evt = element;
-+	struct mp_zone *zone = pool_data;
-+
-+	kfree_skb(evt->skb);
-+	kmem_cache_free(zone->cache, evt);
- }
- 
- static void
--mempool_zone_complete(struct mempool_zone *zone, int release_all)
-+mp_zone_complete(struct mp_zone *zone, int release_all)
+@@ -798,9 +813,10 @@ static int multipath_map(struct dm_targe
+ /*
+  * Take a path out of use.
+  */
+-static int fail_path(struct pgpath *pgpath)
++static int __fail_path(struct pgpath *pgpath, struct bio *bio)
  {
  	unsigned long flags;
--	struct list_head *lh, *n;
-+	struct dm_evt *evt, *n;
++	struct dm_evt *evt;
+ 	struct multipath *m = pgpath->pg->m;
  
- 	spin_lock_irqsave(&zone->freelock, flags);
- 	if (zone->allocated) {
--		list_for_each_safe(lh, n, &zone->freequeue) {
--			struct sk_buff *skb =
--				(struct sk_buff *)((char *)lh -
--				 offsetof(struct sk_buff, cb));
--			if (skb_shared(skb)) {
-+		list_for_each_entry_safe(evt, n, &zone->freequeue, zlist) {
-+			if (skb_shared(evt->skb)) {
- 				if (release_all)
--					kfree_skb(skb);
-+					kfree_skb(evt->skb);
- 				else
- 					continue;
- 			}
+ 	spin_lock_irqsave(&m->lock, flags);
+@@ -819,6 +835,10 @@ static int fail_path(struct pgpath *pgpa
+ 	if (pgpath == m->current_pgpath)
+ 		m->current_pgpath = NULL;
  
--			list_del(skb_to_lh(skb));
--			mempool_free(skb, zone->pool);
-+			list_del(&evt->zlist);
-+			mempool_free(evt, zone->pool);
- 			--zone->allocated;
--
- 		}
- 	}
- 	spin_unlock_irqrestore(&zone->freelock, flags);
- }
++	/* Get error data from bio when available */
++	evt = dm_path_fail_evt(pgpath->path.dev->name, 0);
++	if (evt)
++		list_add(&evt->elist, &m->evt_list);
+ 	queue_work(kmultipathd, &m->trigger_event);
  
--static int mempool_zone_init(struct mempool_zone *zp, unsigned size,
-+static int mp_zone_init(struct mp_zone *zp, unsigned size,
- 			     int min_nr, unsigned hiwat)
- {
- 	zp->size = size;
-@@ -98,47 +109,239 @@ static int mempool_zone_init(struct memp
- 	INIT_LIST_HEAD(&zp->freequeue);
- 	spin_lock_init(&zp->freelock);
- 
--	zp->pool = mempool_create(min_nr, mempool_zone_alloc_skb,
--				  mempool_zone_free_skb, zp);
-+	zp->pool = mempool_create(min_nr, mp_zone_alloc_dm_evt,
-+				  mp_zone_free_dm_evt, zp);
- 	if (!zp->pool)
- 		return -ENOMEM;
- 
+ out:
+@@ -827,6 +847,11 @@ out:
  	return 0;
  }
  
--static struct sk_buff* mempool_zone_get_skb(struct mempool_zone *zone)
-+static struct dm_evt* mp_zone_get_dm_evt(struct mp_zone *zone)
++static int fail_path(struct pgpath *pgpath)
++{
++	return __fail_path(pgpath, NULL);
++}
++
+ /*
+  * Reinstate a previously-failed path
+  */
+@@ -834,6 +859,7 @@ static int reinstate_path(struct pgpath 
  {
--	struct sk_buff *skb;
-+	struct dm_evt *evt;
+ 	int r = 0;
  	unsigned long flags;
- 
- 	/* Check for ones we can complete before we alloc */
--	mempool_zone_complete(zone, 0);
-+	mp_zone_complete(zone, 0);
- 
--	skb = mempool_alloc(zone->pool, GFP_ATOMIC);
--	if (skb) {
--		skb_get(skb);
-+	evt = mempool_alloc(zone->pool, GFP_ATOMIC);
-+	if (evt) {
-+		skb_get(evt->skb);
-+		INIT_LIST_HEAD(&evt->zlist);
- 		spin_lock_irqsave(&z_dm_evt.freelock, flags);
--		list_add(skb_to_lh(skb), &z_dm_evt.freequeue);
-+		list_add(&evt->zlist, &z_dm_evt.freequeue);
- 		++zone->allocated;
- 		spin_unlock_irqrestore(&z_dm_evt.freelock, flags);
- 	}
--	return skb;
-+	return evt;
-+}
-+
-+static struct sock *dm_nl_sock;
-+static int dm_nl_daemon_pid;
-+
-+static u64 dm_evt_seqnum;
-+static DEFINE_SPINLOCK(sequence_lock);
-+
-+static struct dm_evt *dm_nl_build_path_msg(char* dm_name, int type,
-+					     int blk_err)
-+{
 +	struct dm_evt *evt;
-+	struct nlmsghdr	*nlh;
-+	struct dm_nl_msghdr *dm_nlh;
-+	u64 seq;
-+	struct timeval tv;
-+	int err = -ENOBUFS;
-+
-+	evt = mp_zone_get_dm_evt(&z_dm_evt);
-+	if (!evt) {
-+		printk(KERN_ERR "%s: mp_zone_get_dm_evt %d\n",
-+		       __FUNCTION__, err);
-+		err = -ENOMEM;
-+		goto out;
-+	}
-+
-+	nlh = nlmsg_put(evt->skb, dm_nl_daemon_pid, 0, DM_EVT,
-+			NLMSG_ALIGN(sizeof(*dm_nlh)), 0);
-+	if (!nlh)
-+		goto nla_put_failure;
-+
-+	dm_nlh = nlmsg_data(nlh);
-+	dm_nlh->type = type;
-+	dm_nlh->version = DM_E_ATTR_MAX;
-+
-+	spin_lock(&sequence_lock);
-+	seq = ++dm_evt_seqnum;
-+	spin_unlock(&sequence_lock);
-+	do_gettimeofday(&tv);
-+
-+	NLA_PUT_U64(evt->skb, DM_E_ATTR_SEQNUM, seq);
-+	NLA_PUT_U64(evt->skb, DM_E_ATTR_TSSEC, tv.tv_sec);
-+	NLA_PUT_U64(evt->skb, DM_E_ATTR_TSUSEC, tv.tv_usec);
-+	NLA_PUT_STRING(evt->skb, DM_E_ATTR_DMNAME, dm_name);
-+
-+	if (blk_err)
-+		NLA_PUT_U32(evt->skb, DM_E_ATTR_BLKERR, blk_err);
-+
-+	nlmsg_end(evt->skb, nlh);
-+
-+	return evt;
-+
-+nla_put_failure:
-+	printk(KERN_ERR "%s: nla_put_failure\n",
-+	       __FUNCTION__);
-+	/* reduce skb users so zone_complete can free */
-+	kfree_skb(evt->skb);
-+	mp_zone_complete(&z_dm_evt, 0);
-+out:
-+	return ERR_PTR(err);
-+
-+}
-+
-+void dm_send_evt(struct dm_evt *evt)
-+{
-+	int err;
-+
-+	if (!dm_nl_sock || !dm_nl_daemon_pid)
-+		return;
-+
-+	err = nlmsg_unicast(dm_nl_sock, evt->skb, dm_nl_daemon_pid);
-+	if (err < 0)
-+		printk(KERN_ERR "%s: nlmsg_unicast %d\n", __FUNCTION__,
-+		       err);
-+}
-+EXPORT_SYMBOL(dm_send_evt);
-+
-+struct dm_evt *dm_path_fail_evt(char* dm_name, int blk_err)
-+{
-+	struct dm_evt *evt;
-+	evt = dm_nl_build_path_msg(dm_name, DM_EVT_FAIL_PATH, blk_err);
-+
-+	return evt;
-+}
-+
-+EXPORT_SYMBOL(dm_path_fail_evt);
-+
-+struct dm_evt *dm_path_reinstate_evt(char* dm_name)
-+{
-+	struct dm_evt *evt;
-+	evt = dm_nl_build_path_msg(dm_name, DM_EVT_REINSTATE_PATH, 0);
-+
-+	return evt;
-+}
-+
-+EXPORT_SYMBOL(dm_path_reinstate_evt);
-+
-+#define RCV_SKB_FAIL(err) do { netlink_ack(skb, nlh, (err)); return; } while (0)
-+
-+static void dm_nl_rcv_msg(struct sk_buff *skb)
-+{
-+	int pid, flags;
-+	struct nlmsghdr *nlh = (struct nlmsghdr *) skb->data;
-+
-+	if (skb->len >= NLMSG_SPACE(0)) {
-+
-+		if (nlh->nlmsg_len < sizeof(*nlh) ||
-+			skb->len < nlh->nlmsg_len) {
-+			return;
-+		}
-+		pid = nlh->nlmsg_pid;
-+		flags = nlh->nlmsg_flags;
-+
-+		if (security_netlink_recv(skb))
-+			RCV_SKB_FAIL(-EPERM);
-+
-+		if (dm_nl_daemon_pid) {
-+			if (dm_nl_daemon_pid != pid) {
-+				RCV_SKB_FAIL(-EBUSY);
-+			}
-+		} else {
-+			dm_nl_daemon_pid = pid;
-+		}
-+
-+		if (flags & NLM_F_ACK)
-+			netlink_ack(skb, nlh, 0);
-+	}
-+}
-+
-+static void dm_nl_rcv(struct sock *sk, int len)
-+{
-+	struct sk_buff *skb;
-+	unsigned int qlen;
-+
-+	for (qlen = skb_queue_len(&sk->sk_receive_queue); qlen; qlen--) {
-+		skb = skb_dequeue(&sk->sk_receive_queue);
-+		dm_nl_rcv_msg(skb);
-+		kfree_skb(skb);
-+	}
-+}
-+
-+static int dm_nl_rcv_nl_event(struct notifier_block *this, unsigned long event, void *ptr)
-+{
-+	struct netlink_notify *n = ptr;
-+
-+	if (event == NETLINK_URELEASE &&
-+	    n->protocol == NETLINK_DM && n->pid) {
-+		if ( n->pid == dm_nl_daemon_pid  ) {
-+			dm_nl_daemon_pid = 0;
-+		}
-+		mp_zone_complete(&z_dm_evt, 1);
-+	}
-+
-+	return NOTIFY_DONE;
- }
+ 	struct multipath *m = pgpath->pg->m;
  
-+static struct notifier_block dm_nl_nl_notifier = {
-+	.notifier_call  = dm_nl_rcv_nl_event,
-+};
-+
-+static struct sock *dm_nl_sock;
-+static int dm_nl_daemon_pid;
-+
- int __init dm_nl_init(void)
- {
- 	int err;
+ 	spin_lock_irqsave(&m->lock, flags);
+@@ -858,6 +884,10 @@ static int reinstate_path(struct pgpath 
+ 	if (!m->nr_valid_paths++ && m->queue_size)
+ 		queue_work(kmultipathd, &m->process_queued_ios);
  
--	err = mempool_zone_init(&z_dm_evt, EVT_SKB_SIZE,
-+	err = netlink_register_notifier(&dm_nl_nl_notifier);
-+	if (err)
-+		return err;
++	evt = dm_path_reinstate_evt(pgpath->path.dev->name);
++	if (evt)
++		list_add(&evt->elist, &m->evt_list);
 +
-+	dm_nl_sock = netlink_kernel_create(NETLINK_DM, 0,
-+					    dm_nl_rcv, THIS_MODULE);
-+	if (!dm_nl_sock) {
-+		err = -ENOBUFS;
-+		goto notifier_out;
-+	}
-+
-+	z_dm_evt.cache = kmem_cache_create("dm_events",
-+			sizeof(struct dm_evt), 0, 0, NULL, NULL);
-+	if (!z_dm_evt.cache)
-+		goto socket_out;
-+
-+	err = mp_zone_init(&z_dm_evt, EVT_SKB_SIZE,
- 				MIN_EVT_SKBS, HIWAT_EVT_SKBS);
--	if (!err)
--		printk(KERN_DEBUG "dm-netlink version 0.0.1 loaded\n");
-+	if (err)
-+		goto cache_out;
-+
-+	printk(KERN_DEBUG "dm-netlink version 0.0.2 loaded\n");
+ 	queue_work(kmultipathd, &m->trigger_event);
  
- 	return err;
+ out:
+@@ -1028,7 +1058,7 @@ static int do_end_io(struct multipath *m
  
-+cache_out:
-+	kmem_cache_destroy(z_dm_evt.cache);
-+socket_out:
-+	sock_release(dm_nl_sock->sk_socket);
-+notifier_out:
-+	netlink_unregister_notifier(&dm_nl_nl_notifier);
-+	printk(KERN_ERR "%s: failed %d\n", __FUNCTION__, err);
-+	return err;
- }
+ 	if (mpio->pgpath) {
+ 		if (err_flags & MP_FAIL_PATH)
+-			fail_path(mpio->pgpath);
++			__fail_path(mpio->pgpath, bio);
  
- void dm_nl_exit(void)
- {
-+	flush_scheduled_work();
- 	mempool_destroy(z_dm_evt.pool);
-+	kmem_cache_destroy(z_dm_evt.cache);
-+	sock_release(dm_nl_sock->sk_socket);
-+	netlink_unregister_notifier(&dm_nl_nl_notifier);
- }
-Index: sas-2.6-patched/include/linux/dm-netlink.h
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ sas-2.6-patched/include/linux/dm-netlink.h	2006-01-15 17:40:31.000000000 -0800
-@@ -0,0 +1,46 @@
-+/*
-+ * Device Mapper Netlink Support
-+ *
-+ * Copyright (C) 2005 IBM Corporation
-+ * 	Author: Mike Anderson <andmike@us.ibm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-+ *
-+ */
-+#ifndef LINUX_DM_NETLINK_H
-+#define LINUX_DM_NETLINK_H
-+
-+enum dm_evt_attr {
-+	DM_E_ATTR_SEQNUM	= 1,
-+	DM_E_ATTR_TSSEC		= 2,
-+	DM_E_ATTR_TSUSEC	= 3,
-+	DM_E_ATTR_DMNAME	= 4,
-+	DM_E_ATTR_BLKERR	= 5,
-+	DM_E_ATTR_MAX,
-+};
-+
-+#define DM_EVT NLMSG_MIN_TYPE + 0x1
-+
-+#define DM_EVT_FAIL_PATH 0x1
-+#define DM_EVT_REINSTATE_PATH 0x2
-+
-+struct dm_nl_msghdr {
-+	uint16_t type;
-+	uint16_t version;
-+	uint16_t reserved1;
-+	uint16_t reserved2;
-+} __attribute__((aligned(sizeof(uint64_t))));
-+
-+#endif /* LINUX_DM_NETLINK_H */
-Index: sas-2.6-patched/drivers/md/dm-netlink.h
-===================================================================
---- /dev/null	1970-01-01 00:00:00.000000000 +0000
-+++ sas-2.6-patched/drivers/md/dm-netlink.h	2006-01-15 17:42:56.000000000 -0800
-@@ -0,0 +1,58 @@
-+/*
-+ * Device Mapper Netlink Support
-+ *
-+ * Copyright (C) 2005 IBM Corporation
-+ * 	Author: Mike Anderson <andmike@us.ibm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-+ *
-+ */
-+#ifndef DM_NETLINK_H
-+#define DM_NETLINK_H
-+
-+struct dm_evt {
-+	struct list_head zlist;
-+	struct list_head elist;
-+	struct sk_buff *skb;
-+};
-+
-+#ifdef CONFIG_DM_NL_EVT
-+void dm_send_evt(struct dm_evt *);
-+struct dm_evt *dm_path_fail_evt(char*, int);
-+struct dm_evt *dm_path_reinstate_evt(char*);
-+int dm_nl_init(void);
-+void dm_nl_exit(void);
-+#else
-+static inline void dm_send_evt(struct dm_evt *evt)
-+{
-+}
-+static inline struct dm_evt *dm_path_fail_evt(char* dm_name, int blk_err)
-+{
-+	return NULL;
-+}
-+static inline struct dm_evt *dm_path_reinstate_evt(char* dm_name)
-+{
-+	return NULL;
-+}
-+static inline int __init dm_nl_init(void)
-+{
-+	return 0;
-+}
-+static inline void dm_nl_exit(void)
-+{
-+}
-+#endif
-+
-+#endif /* DM_NETLINK_H */
+ 		if (err_flags & MP_BYPASS_PG)
+ 			bypass_pg(m, mpio->pgpath->pg, 1);
