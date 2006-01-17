@@ -1,13 +1,11 @@
-From: Chris Penney <penney@msu.edu>
-Subject: Re: STK / LSI Multipath Support
-Date: Fri, 13 Jan 2006 12:00:41 -0500
-Message-ID: <111aefd0601130900w76ed8c8eo53d3a64b41dc4345@mail.gmail.com>
-References: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
+From: aaron <aaron@sysdev.oucs.ox.ac.uk>
+Subject: multipath, Engenio 6998 and Volume Snapshot
+Date: Tue, 17 Jan 2006 15:53:30 +0000
+Message-ID: <20060117155330.GA19101@curfew.oucs.ox.ac.uk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2000678507=="
+Content-Type: multipart/mixed; boundary="===============0215781037=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <111aefd0601121952r55594f0ahdb5ed4fa46ae145d@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,101 +18,204 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============2000678507==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_34176_4691637.1137171641566"
 
-------=_Part_34176_4691637.1137171641566
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+--===============0215781037==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="98e8jtXdkpgskNou"
 Content-Disposition: inline
 
-On 1/12/06, Chris Penney <penney@msu.edu> wrote:
->
-> Hello,
->
-> The multipath code seems to support STK D280 (active / passive) disk
-> arrays, but with one exception.  It doesn't seem to be able to query the
-> priorities of the luns properly.  For example, I create four luns on a D2=
-80
-> and assign two luns to controller A and two to controller B.  When the
-> system (which has dual hbas) boots they all end up on one controller and
-> multipathd never switches to the primary paths even though they are
-> available.
->
-> I am guessing this is because "prio_callout" is set to "/bin/true" so it
-> defaults to the first path in the list.  Is there a prio_callout that wor=
-ks
-> with lsi branded arrays?  I run SLES 9 and I see there are
-> mpath_prio_{emc,tpc,alua}, but none (somewhat obviously) don't work.  I w=
-as
-> able to write a perl script that simply took a device arguement and looke=
-d
-> up a priority in a table and it appears to work, but it's obviously a nas=
-ty
-> hack and doesn't automatically detect the proper path (which would be
-> necessary in the case of a manual failover).
->
-> Thanks,
->
->    Chris Penney
->    penney@msu.edu
 
-
-After some experimentation and looking at the defaults for the SGI 9500
-(which is the same hardware as the STK D280 with only some firmware
-differences) I found that I could use mpath_prio_tpc with the STK array.  I=
-s
-this a reasonable solution?
-
-    Chris
-
-------=_Part_34176_4691637.1137171641566
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+--98e8jtXdkpgskNou
+Content-Type: multipart/mixed; boundary="HcAYCG3uE/tztfnV"
 Content-Disposition: inline
 
-<div><span class=3D"gmail_quote">On 1/12/06, <b class=3D"gmail_sendername">=
-Chris Penney</b> &lt;<a href=3D"mailto:penney@msu.edu">penney@msu.edu</a>&g=
-t; wrote:</span>
-<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
-px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">Hello,<br><br>The multipath code=
- seems to support STK D280 (active / passive) disk arrays, but with one exc=
-eption.&nbsp; It doesn't seem to be able to query the priorities of the lun=
-s properly.&nbsp; For example, I create four luns on a D280 and assign two =
-luns to controller A and two to controller B.&nbsp; When the system (which =
-has dual hbas) boots they all end up on one controller and multipathd never=
- switches to the primary paths even though they are available.=20
-<br><br>I am guessing this is because &quot;prio_callout&quot; is set to &q=
-uot;/bin/true&quot; so it defaults to the first path in the list.&nbsp; Is =
-there a prio_callout that works with lsi branded arrays?&nbsp; I run SLES 9=
- and I see there are mpath_prio_{emc,tpc,alua}, but none (somewhat obviousl=
-y) don't work.&nbsp; I was able to write a perl script that simply took a d=
-evice arguement and looked up a priority in a table and it appears to work,=
- but it's obviously a nasty hack and doesn't automatically detect the prope=
-r path (which would be necessary in the case of a manual failover).=20
-<br><br>Thanks,<br><span class=3D"sg"><br>&nbsp;&nbsp; Chris Penney<br>&nbs=
-p;&nbsp; <a onclick=3D"return top.js.OpenExtLink(window,event,this)" href=
-=3D"mailto:penney@msu.edu" target=3D"_blank">penney@msu.edu</a></span></blo=
-ckquote>
-<div>&nbsp;</div>
-<div>After some experimentation and looking at the defaults for the SGI 950=
-0 (which is the same hardware as the STK D280 with only some firmware diffe=
-rences) I found that I could use mpath_prio_tpc with the STK array.&nbsp; I=
-s this a reasonable solution?
-</div>
-<div>&nbsp;</div>
-<div>&nbsp;&nbsp;&nbsp; Chris</div>
-<div>&nbsp;</div><br>&nbsp;</div>
 
-------=_Part_34176_4691637.1137171641566--
+--HcAYCG3uE/tztfnV
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
 
---===============2000678507==
+(or depending on your choice of branding an IBM DS4800 (flashcopy),
+SGI TP9700 (SnapCopy) and no doubt lots of other brandings)
+
+I'm also having a problem using multipath, the DS4800 and the DS4800's
+inbuilt flashcopy feature. I'd like to use the DS4800's inbuilt
+flashcopy feature  becuase (i) it is there and (ii) it will push the
+load of backing up from the indiviual SAN attached machines to the
+DS4800 and backup servers.
+
+The problem is as follows. There are 8 volumes mounted on server A,
+which is Debain/Sarge system running a 2.6.15 kernel with multipath
+tools built from the git tree on 2005-12-14. If I try to create a
+snapshot on the DS4800, not involving any of the mounted volumes, and
+there is some disk IOi (*) on one of the mounted volumes then the
+following occurs:
+
+1) There are messages like:
+
+ multipathd: 65:160: tur checker reports path is down
+ multipathd: checker failed path 65:160 in map imap225-x4
+ kernel: device-mapper: dm-multipath: Failing path 65:160.
+ multipathd: imap225-x4: remaining active paths: 1
+ multipathd: 8:240: tur checker reports path is down
+ multipathd: checker failed path 8:240 in map imap224-x4
+ kernel: device-mapper: dm-multipath: Failing path 8:240.
+ multipathd: imap224-x4: remaining active paths: 1
+ multipathd: 65:160: tur checker reports path is up
+ multipathd: 65:160: reinstated 3370:Jan 16 18:41:58 imap224 multipathd: im=
+ap225-x4: remaining active paths: 2
+ multipathd: 8:240: tur checker reports path is up
+ multipathd: 8:240: reinstated
+ multipathd: imap224-x4: remaining active paths: 2
+
+in syslog for each of the mounted volumes.
+
+2) I've seen errors like  there are SCSI errors for the volume with disk IO:
+
+ kernel: sd 2:0:0:6: rejecting I/O to offline device
+ kernel: sd 2:0:0:6: SCSI error: return code =3D 0x10000
+ kernel: end_request: I/O error, dev sdw, sector 60402552
+
+(with numberous repititions) and I've also seen errors like:
+
+kernel: qla2300 0000:04:02.0: scsi(1:0:6): Abort command issued -- 188fa3 2=
+002.  Abort command issued -- 188fbe 2002.
+kernel: qla2300 0000:04:02.0: scsi(1:0:6): Abort command issued -- 188fbf 2=
+002.
+kernel: qla2300 0000:04:02.0: scsi(1:0:6): Abort command issued -- 188fc0 2=
+002.
+
+which result in the IP for this disk stopping=20
+
+The program generating IO is also unhappy, and gives errors like:
+
+(3735) open clients/client42/~dmtmp/PARADOX/__414F2.DB succeeded for handle=
+ -1
+(49517) ERROR: handle 13114 was not found
+(62475) rmdir clients/client71/~dmtmp/ACCESS failed (Directory not empty)
+(62476) rmdir clients/client71/~dmtmp failed (Directory not empty)
+(62477) rmdir clients/client71 failed (Directory not empty)
+
+which seems to be a bad thing.
+
+The multipath configutation is attached.
+
+Has anyone come accross this before and/or does any one have any hints
+as to what (if anything) is going wrong ?
+
+aaron
+
+(*) My favourite form of disk IO at the moment is dbench 100 (where
+dbench is part of the Samba benchmarking suite).
+
+
+--HcAYCG3uE/tztfnV
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="multipath.conf"
+Content-Transfer-Encoding: quoted-printable
+
+
+multipaths {
+  multipath {
+    wwid        3600a0b8000114d9a0000953d4396577c
+    alias       imap224-x0
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a0000945c439feea3
+    alias       imap224-x1
+  } =20
+  multipath {
+    wwid        3600a0b8000114d9a000095ef43a14230
+    alias       imap224-x2
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a0000946d43a142f5
+    alias       imap224-x3
+  } =20
+  multipath {
+    wwid        3600a0b8000114d9a000095f343a1440e
+    alias       imap224-x4
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a0000947043a14483
+    alias       imap224-x5
+  } =20
+  multipath {
+    wwid        3600a0b8000114d9a000095f543a1449a
+    alias       imap224-x6
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a0000947143a144ff
+    alias       imap224-x7
+  } =20
+  multipath {
+    wwid        3600a0b8000114d9a00009417438d7eaa
+    alias       imap225-x0
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a00009332438d8135
+    alias       imap225-x1
+  } =20
+  multipath {
+    wwid        3600a0b8000114d9a00009422438d8142
+    alias       imap225-x2
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a00009333438d8185
+    alias       imap225-x3
+  } =20
+  multipath {
+    wwid        3600a0b8000114d9a00009424438d8188
+    alias       imap225-x4
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a00009334438d81c3
+    alias       imap225-x5
+  }
+  multipath {
+    wwid        3600a0b8000114d9a00009426438d81c4
+    alias       imap225-x6
+  } =20
+  multipath {
+    wwid        3600a0b8000114e5a00009335438d81fd
+    alias       imap225-x7
+  } =20
+}
+
+devices {
+  device {
+    vendor      "IBM"
+    product     "1815      FAStT"
+    path_grouping_policy group_by_prio
+    prio_callout    "/sbin/mpath_prio_tpc /dev/%n"
+    path_checker  tur
+  }
+}
+
+--HcAYCG3uE/tztfnV--
+
+--98e8jtXdkpgskNou
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+iD8DBQFDzRL5eYyiwd4skvMRAqoZAKC2/BkTNRx3qS/kfitDk3upRUmZQACbBo4F
+SDJCQysY+xXlT5V2W4VfIUU=
+=/5Rl
+-----END PGP SIGNATURE-----
+
+--98e8jtXdkpgskNou--
+
+
+--===============0215781037==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2000678507==--
+--===============0215781037==--
