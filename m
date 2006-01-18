@@ -1,14 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: current status of mirroring in devel cycle?
-Date: Wed, 18 Jan 2006 13:53:09 -0600
-Message-ID: <20060118195309.GB14754@homer.msp.redhat.com>
-References: <43CE918A.10805@photoresearchers.com>
+From: David Wysochanski <davidw@netapp.com>
+Subject: default value for rr_min_io too high?
+Date: Wed, 18 Jan 2006 16:41:57 -0500
+Message-ID: <43CEB625.9000503@netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <43CE918A.10805@photoresearchers.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,15 +19,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 18, 2006 at 02:05:46PM -0500, Administrator wrote:
-> Ideally I'd like to use pvmove to shift its 
-> data onto other available PVs; with backups available I'm not sure I am as 
-> concerned with "supported" so much as "stable".  
+I'm wondering where the value of 1000 came from, and
+whether that's really a good default.
 
-pvmove is believed to be pretty stable.
+Some preliminary tests I've run with iSCSI seem to indicate
+something lower (say 100) might be a better default, but
+perhaps others have a differing opinion.  I searched the
+list but couldn't find any discussion on it.
 
-What is not stable yet is persistent mirroring using lvcreate -m.
-
-Alasdair
--- 
-agk@redhat.com
+Thanks.
