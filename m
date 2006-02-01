@@ -1,11 +1,15 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: [Patch] dm-log.c: Use ext2_find_next_zero_bit()
-Date: Wed, 01 Feb 2006 17:54:57 +0100
-Message-ID: <43E0E7E1.6050400@de.ibm.com>
+From: David Wysochanski <davidw@netapp.com>
+Subject: Re: default value for rr_min_io too high?
+Date: Wed, 01 Feb 2006 13:30:22 -0500
+Message-ID: <43E0FE3E.3050402@netapp.com>
+References: <43CEB625.9000503@netapp.com> <1137623400.15100.11.camel@zezette>
+	<1137801470.18191.16.camel@zezette>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------050109070506030906010802"
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1137801470.18191.16.camel@zezette>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,60 +19,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: christophe.varoqui@free.fr, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------050109070506030906010802
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
-Content-Transfer-Encoding: 7bit
+Christophe Varoqui wrote:
+> On mer, 2006-01-18 at 23:29 +0100, Christophe Varoqui wrote:
+>  > On mer, 2006-01-18 at 16:41 -0500, David Wysochanski wrote:
+>  > > I'm wondering where the value of 1000 came from, and
+>  > > whether that's really a good default.
+>  > >
+>  > > Some preliminary tests I've run with iSCSI seem to indicate
+>  > > something lower (say 100) might be a better default, but
+>  > > perhaps others have a differing opinion.  I searched the
+>  > > list but couldn't find any discussion on it.
+>  > >
+>  > I'm not really focused on performance, but this seems to be an
+>  > io-pattern dependant choice.
+>  >
+>  > Higher values may help the elevators, (right ?) thus help the seeky
+>  > workloads. Lower values may certainly benefit from lower values to
+>  > really get the paths summed bandwidth.
+>  >
+>  > Anyway, I can not back this with numbers. Any value will be fine with me
+>  > as a default, and I highlight that now you can also set per device
+>  > defaults like rr_min_io in hwtable.c
+>  >
+> Replying to myself,
+> 
+> I finally got the chance to challenge my sayings, and I'm proven badly
+> wrong :/
+> 
+> On a StorageWorks EVA110 FC array, 2 active 2Gb/s paths to 2 2Gb/s
+> target ports. 1 streaming read (sg_dd dio=1 if=/dev/mapper/mpath0
+> of=/dev/null bs=1M count=100k) :
+> 
+> rr_min_io = 1000 => aggregated throughput = 120 Mo/s
+> rr_min_io =  100 => aggregated throughput = 130 Mo/s
+> rr_min_io =   50 => aggregated throughput = 200 Mo/s
+> rr_min_io =   20 => aggregated throughput = 260 Mo/s
+> rr_min_io =   10 => aggregated throughput = 300 Mo/s
+> 
 
-Hi,
+What I seemed to see what the larger the I/O size the lower
+I needed to go with rr_min_io to get best throughput.  Did
+you run it with a smaller block size, say 4k?
 
-This patch will replace the find_next_zero_bit function with the
-appropriate ext2 counterpart. Without this on 64 bit BE machines the
-mirror target will try to recover regions beyond the end of device.
-
-Regards,
-Stefan
-
-
---------------050109070506030906010802
-Content-Type: text/plain;
- name="dm-log-fix-synccount-be64.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm-log-fix-synccount-be64.patch"
-
-From: Stefan Bader <shbader@de.ibm.com>
-
-This is an addition to the endian fixes that introduce ext2_* versions
-of the set and clear bit functions. The find_next_zero_bit also has to
-be the ext2 one. Otherwise the mirror target tries to recover non-existent
-regions beyond the end of device.
-
-Signed-Off-By: Stefan Bader <shbader@de.ibm.com>
-
-diff -Nurp linux-2.6.15/drivers/md/dm-log.c linux-2.6.15-fix/drivers/md/dm-log.c
---- linux-2.6.15/drivers/md/dm-log.c	2006-02-01 16:43:32.707368696 +0100
-+++ linux-2.6.15-fix/drivers/md/dm-log.c	2006-02-01 16:48:40.344639085 +0100
-@@ -545,7 +545,8 @@ static int core_get_resync_work(struct d
- 		return 0;
- 
- 	do {
--		*region = find_next_zero_bit((unsigned long *) lc->sync_bits,
-+		*region = ext2_find_next_zero_bit(
-+					     (unsigned long *) lc->sync_bits,
- 					     lc->region_count,
- 					     lc->sync_search);
- 		lc->sync_search = *region + 1;
-
-
---------------050109070506030906010802
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------050109070506030906010802--
+I will try to get some more definitive #'s and post.
