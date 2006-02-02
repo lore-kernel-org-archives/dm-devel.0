@@ -1,15 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [PATCH][multipath-tools] discovery.c set hwe pointer
-	for bus type ccw
-Date: Thu, 2 Feb 2006 17:19:06 +0100
-Message-ID: <20060202161906.GA11415@pundit>
-References: <OFFD0A28A6.4D76571F-ONC1257109.004DBE99-C1257109.0052476D@de.ibm.com>
+From: =?ISO-8859-2?Q?Maciej_S=B3ojewski?= <mslonik@poczta.onet.pl>
+Subject: Ubuntu distro with lvm2, raid 1, not booting anymore.
+Date: Thu, 02 Feb 2006 20:18:11 +0100
+Message-ID: <43E25AF3.5000700@poczta.onet.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <OFFD0A28A6.4D76571F-ONC1257109.004DBE99-C1257109.0052476D@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Stefan Weinhuber <WEIN@de.ibm.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> 
-> I tried to use the current git tree version of the multipath-tools in a 
-> Linux on zSeries environment with DASD devices. The tool multipath seemed 
-> to
-> recognize the disks correctly, but ignored the device specific 
-> configuration
-> in my multipath.conf.
-> 
-Good to see there is some testing happening there.
-Next major distro release is approaching and not many seem to care to bullet proof the next release ...
+Welcome!
 
-> Stefan Bader found the problem in libmultipath/discovery.c in the function 
-> 
-> ccw_sysfs_pathinfo. In that function the hwe configlet pointer should be 
-> set.
+I have the serious problem with booting of my machine. It is run on 
+Ubuntu distro (5.10), with lvm2 raid 1 on two identical sata hard disks. 
+Lilo bootloader. The problem is that after small change in lilo.conf and 
+running /sbin/lilo my system is no longer bootable. I see 'kernel panic' 
+message. When I try to run lilo again (from Ubuntu Live! cd) I see some 
+comments somehow related to dev-mapper:
 
-Thanks, my bad.
+Warning: /proc/partitions does not match /dev directory structure
+Name change: /dev/cloop 0 -> /tmp/dev.0
+(...)
+Fatal: is_primary: Not a valid device
 
-I pushed it as 2f6c4c8ae93d599bf1c2630c97cc675e92fbea90
+I don't know how to handle these problesm. Looking over net didn't help 
+me. So I decided to write on this mailing list. If you can help me anyway,
+even just redirecting me to appropriate group / chanel where people will 
+help me to deal with these problem, I will appreciate it. Thanks
+in advance!
 
-Regards,
-cvaroqui
+My lilo version is 22.6.1
+dev-mapper version is 1.11.0
+kernel (default of Ubuntu 5.10): 2.6.12-10-386
+
+I will quote the kernel messages:
+RAMDISK: ran out of compressed data
+invalid compressed format (err=1)
+VFS: Cannot open root device "fd02" or unknow-block (253,2)
+Please append a correct "root=" root option
+Kernel panic - not syncing: VFS: Unable to mount root fs
+unknown-block (253,2)
+
+That is all. It looks like kernel is doing some hardware recognition and 
+then stops.
+
+Kind regards,
+Maciej Slojewski (mslonik)
