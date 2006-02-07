@@ -1,12 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [PATCH] device-mapper snaphot: fix kcopyd destructor
-Date: Tue, 7 Feb 2006 16:22:13 +0000
-Message-ID: <20060207162213.GQ4724@agk.surrey.redhat.com>
+From: Thomas Berton <thomas.berton@kreno.be>
+Subject: device-mapper: device /dev/hdc too small for target
+Date: Tue, 07 Feb 2006 18:37:26 +0100
+Message-ID: <43E8DAD6.3030208@kreno.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,127 +19,130 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Before removing a snapshot, wait for the completion of any kcopyd jobs
-using it.  Without this patch, the snapshot structures get freed while
-there could still be kcopyd jobs referencing them, which leads to a
-crash.  To see this, all you have to do is create a new snapshot of an
-LV, start a large write to the LV and then attempt to remove the
-snapshot before the write you issued to the origin has finished.
+Hello,
+I'm encountering some problems with device-mapper when migrating my lvm 
+system to a new debian system.
+I must say I had to play around with pvcreate and vgcfgrestore to get 
+/dev/hdb recognized again on the new system but after fixing that issue 
+I'm stuck with following problem:
+Booting the new system with the lvm disks it seems that the 
+device-mapper is having troubles putting together the lvm device:
 
-The patch maintains a count (nr_jobs) of how many outstanding jobs
-each kcopyd_client has.
+output from dmesg:
+device-mapper: 4.1.0-ioctl (2003-12-10) initialised: dm@uk.sistina.com
+device-mapper: device /dev/hdc too small for target
+device-mapper: : dm-linear: Device lookup failed
 
-The snapshot destructor first unregisters the snapshot so that no
-new kcopyd jobs (created by writes to the origin) will reference 
-that particular snapshot.   kcopyd_client_destroy() is now run next
-to wait for the completion of any outstanding jobs before the snapshot
-exception structures (that those jobs reference) are freed.
+device-mapper: error adding target to table
 
+Starting the lvm service gives the following:
+storage:~# /etc/init.d/lvm start
+Setting up LVM Volume Groups...
+ Reading all physical volumes.  This may take a while...
+ Found volume group "storage" using metadata type lvm2
+ /dev/storage: opendir failed: No such file or directory
+ device-mapper ioctl cmd 9 failed: Invalid argument
+ Couldn't load device 'storage-storage1'.
+ 1 logical volume(s) in volume group "storage" now active
+storage:~#
 
-Comments?
+Nevertheless other lvm commands seem to display correct information 
+about the lvm.
+Below is the output from pvscan, lvscan, lvmdiskscan, pvdisplay and 
+vgdisplay.
+The lvm is appearing in the /dev/mapper folder, but no link is made in 
+the /dev folder btw.
+Mounting the lvm fails, gives the error of bad superblock (ext3 
+filesystem).
+The lvm has been created using the full disks and not working on 
+partitions.
+I'm hoping someone on this list can help me out or give me some pointers 
+on how to continue and getting the disks right and making my lvm 
+mountable again.
+Thx in advance,
+Thomas.
 
+storage:~# pvscan
+ PV /dev/hda   VG storage   lvm2 [279.46 GB / 0    free]
+ PV /dev/hdc   VG storage   lvm2 [189.92 GB / 0    free]
+ PV /dev/hdb   VG storage   lvm2 [279.46 GB / 0    free]
+ Total: 3 [748.84 GB] / in use: 3 [748.84 GB] / in no VG: 0 [0   ]
+storage:~#
 
-Signed-Off-By: Alasdair G Kergon <agk@redhat.com>
+storage:~# lvscan
+ ACTIVE            '/dev/storage/storage1' [748.84 GB] inherit
+storage:~#
 
-Index: linux-2.6.16-rc1/drivers/md/kcopyd.c
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/md/kcopyd.c	2006-02-07 15:49:28.000000000 +0000
-+++ linux-2.6.16-rc1/drivers/md/kcopyd.c	2006-02-07 15:49:38.000000000 +0000
-@@ -43,6 +43,9 @@ struct kcopyd_client {
- 	struct page_list *pages;
- 	unsigned int nr_pages;
- 	unsigned int nr_free_pages;
-+
-+	wait_queue_head_t destroyq;
-+	atomic_t nr_jobs;
- };
- 
- static struct page_list *alloc_pl(void)
-@@ -292,10 +295,15 @@ static int run_complete_job(struct kcopy
- 	int read_err = job->read_err;
- 	unsigned int write_err = job->write_err;
- 	kcopyd_notify_fn fn = job->fn;
-+	struct kcopyd_client *kc = job->kc;
- 
--	kcopyd_put_pages(job->kc, job->pages);
-+	kcopyd_put_pages(kc, job->pages);
- 	mempool_free(job, _job_pool);
- 	fn(read_err, write_err, context);
-+
-+	if (atomic_dec_and_test(&kc->nr_jobs))
-+		wake_up(&kc->destroyq);
-+
- 	return 0;
- }
- 
-@@ -430,6 +438,7 @@ static void do_work(void *ignored)
-  */
- static void dispatch_job(struct kcopyd_job *job)
- {
-+	atomic_inc(&job->kc->nr_jobs);
- 	push(&_pages_jobs, job);
- 	wake();
- }
-@@ -442,6 +451,7 @@ static void segment_complete(int read_er
- 	sector_t progress = 0;
- 	sector_t count = 0;
- 	struct kcopyd_job *job = (struct kcopyd_job *) context;
-+	struct kcopyd_client *kc = job->kc;
- 
- 	down(&job->lock);
- 
-@@ -496,6 +506,8 @@ static void segment_complete(int read_er
- 		 */
- 		job->fn(read_err, write_err, job->context);
- 		mempool_free(job, _job_pool);
-+		if (atomic_dec_and_test(&kc->nr_jobs))
-+			wake_up(&kc->destroyq);
- 	}
- }
- 
-@@ -669,6 +681,9 @@ int kcopyd_client_create(unsigned int nr
- 		return r;
- 	}
- 
-+	init_waitqueue_head(&kc->destroyq);
-+	atomic_set(&kc->nr_jobs, 0);
-+
- 	client_add(kc);
- 	*result = kc;
- 	return 0;
-@@ -676,6 +691,9 @@ int kcopyd_client_create(unsigned int nr
- 
- void kcopyd_client_destroy(struct kcopyd_client *kc)
- {
-+	/* Wait for completion of all jobs submitted by this client. */
-+	wait_event(kc->destroyq, !atomic_read(&kc->nr_jobs));
-+
- 	dm_io_put(kc->nr_pages);
- 	client_free_pages(kc);
- 	client_del(kc);
-Index: linux-2.6.16-rc1/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.16-rc1.orig/drivers/md/dm-snap.c	2006-02-07 15:49:28.000000000 +0000
-+++ linux-2.6.16-rc1/drivers/md/dm-snap.c	2006-02-07 15:49:38.000000000 +0000
-@@ -559,8 +559,12 @@ static void snapshot_dtr(struct dm_targe
- {
- 	struct dm_snapshot *s = (struct dm_snapshot *) ti->private;
- 
-+	/* Prevent further origin writes from using this snapshot. */
-+	/* After this returns there can be no new kcopyd jobs. */
- 	unregister_snapshot(s);
- 
-+	kcopyd_client_destroy(s->kcopyd_client);
-+
- 	exit_exception_table(&s->pending, pending_cache);
- 	exit_exception_table(&s->complete, exception_cache);
- 
-@@ -569,7 +573,7 @@ static void snapshot_dtr(struct dm_targe
- 
- 	dm_put_device(ti, s->origin);
- 	dm_put_device(ti, s->cow);
--	kcopyd_client_destroy(s->kcopyd_client);
-+
- 	kfree(s);
- }
- 
+storage:~# lvmdiskscan
+ /dev/hda  [      279.46 GB] LVM physical volume
+ /dev/hdc  [      189.92 GB] LVM physical volume
+ /dev/sda1 [       18.63 GB]
+ /dev/sda2 [      957.00 MB]
+ /dev/sda3 [        4.66 GB]
+ /dev/sda5 [      956.97 MB]
+ /dev/sda6 [        2.80 GB]
+ /dev/hdb  [      279.46 GB] LVM physical volume
+ 0 disks
+ 5 partitions
+ 3 LVM physical volume whole disks
+ 0 LVM physical volumes
+storage:~#
+
+storage:~# pvdisplay
+ --- Physical volume ---
+ PV Name               /dev/hda
+ VG Name               storage
+ PV Size               279.46 GB / not usable 0
+ Allocatable           yes (but full)
+ PE Size (KByte)       4096
+ Total PE              71541
+ Free PE               0
+ Allocated PE          71541
+ PV UUID               ZDOYsq-1rGU-bngq-QVZu-DqvG-I7AO-r7Rnl5
+
+ --- Physical volume ---
+ PV Name               /dev/hdc
+ VG Name               storage
+ PV Size               189.92 GB / not usable 0
+ Allocatable           yes (but full)
+ PE Size (KByte)       4096
+ Total PE              48620
+ Free PE               0
+ Allocated PE          48620
+ PV UUID               VT7Lkj-n4V1-G8mV-a6GF-kspp-Zs61-3YzXD3
+
+ --- Physical volume ---
+ PV Name               /dev/hdb
+ VG Name               storage
+ PV Size               279.46 GB / not usable 0
+ Allocatable           yes (but full)
+ PE Size (KByte)       4096
+ Total PE              71541
+ Free PE               0
+ Allocated PE          71541
+ PV UUID               jJqtAX-XxMz-nIEC-2ast-7y40-XPFG-rN0Rzz
+storage:~#
+
+storage:~# vgdisplay
+ --- Volume group ---
+ VG Name               storage
+ System ID
+ Format                lvm2
+ Metadata Areas        3
+ Metadata Sequence No  12
+ VG Access             read/write
+ VG Status             resizable
+ MAX LV                0
+ Cur LV                1
+ Open LV               0
+ Max PV                0
+ Cur PV                3
+ Act PV                3
+ VG Size               748.84 GB
+ PE Size               4.00 MB
+ Total PE              191702
+ Alloc PE / Size       191702 / 748.84 GB
+ Free  PE / Size       0 / 0
+ VG UUID               59Yxut-UcZa-MBUS-KH8Y-5wZP-Eh1x-1E33Wl
+
+storage:~#
