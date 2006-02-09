@@ -1,12 +1,14 @@
 From: Mike Anderson <andmike@us.ibm.com>
-Subject: [PATCH 0/2] dm-netlink events (update)
-Date: Thu, 9 Feb 2006 07:40:09 -0800
-Message-ID: <20060209154009.GA29591@us.ibm.com>
+Subject: [PATCH 1/2] dm-netlink events skeleton support (update)
+Date: Thu, 9 Feb 2006 07:41:56 -0800
+Message-ID: <20060209154156.GB29591@us.ibm.com>
+References: <20060209154009.GA29591@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20060209154009.GA29591@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +21,205 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This patch adds a dm-netlink skeleton support to the Makefile, and the dm
+directory. This base dm-netlink file only contains the mempool support.
 
-This is another update of my previous patch to add netlink event support to dm.
+Signed-off-by: Mike Anderson <andmike@us.ibm.com>
 
-The skb mempool in this patch is derived from:
-drivers/scsi/scsi_transport_iscsi.c.
+ drivers/md/Kconfig      |    5 +
+ drivers/md/Makefile     |    4 +
+ drivers/md/dm-netlink.c |  144 ++++++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/netlink.h |    1 
+ 4 files changed, 154 insertions(+)
 
-This patch series contains:
-1 dm-netlink skeleton support.
-2 The netlink support to dm-netlink. Add init calls and send on path
-failure and reinstate events.
-
-I have ran path failure testing on a small config.
-
-Output:
-1.) Path failure.
-Msg Type: 17 Recevied
-Event Type: 1 Version: 8
-[Event]: MDNAME: 253:5, SEQNUM: 3, Time: Thu Feb  9 15:33:41 2006, DMNAME:
-65:112, VLDPTHS: 0x3
-
-
-2.) Path reinstate.
-Msg Type: 17 Recevied
-Event Type: 2 Version: 8
-[Event]: MDNAME: 253:5, SEQNUM: 4, Time: Thu Feb  9 15:38:33 2006, DMNAME:
-65:112, VLDPTHS: 0x4
-
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+Index: sas-2.6-patched/drivers/md/dm-netlink.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ sas-2.6-patched/drivers/md/dm-netlink.c	2006-01-15 23:02:41.000000000 -0800
+@@ -0,0 +1,144 @@
++/*
++ * Device Mapper Netlink Support (dm-netlink)
++ *
++ * Copyright (C) 2005 IBM Corporation
++ * 	Author: Mike Anderson <andmike@us.ibm.com>
++ * 	skb mempool derived from drivers/scsi/scsi_transport_iscsi.c
++ *
++ * This program is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License as published by
++ * the Free Software Foundation; either version 2 of the License, or
++ * (at your option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ * GNU General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software
++ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ */
++#include <linux/module.h>
++#include <linux/mempool.h>
++#include <linux/time.h>
++#include <linux/jiffies.h>
++#include <linux/security.h>
++#include <net/sock.h>
++#include <net/netlink.h>
++
++#define MIN_EVT_SKBS	16
++#define HIWAT_EVT_SKBS	32
++#define EVT_SKB_SIZE	NLMSG_SPACE(128)
++
++struct mempool_zone {
++	mempool_t *pool;
++	int allocated;
++	int size;
++	int hiwat;
++	struct list_head freequeue;
++	spinlock_t freelock;
++};
++
++static struct mempool_zone z_dm_evt;
++
++static inline struct list_head *skb_to_lh(struct sk_buff *skb)
++{
++	return (struct list_head *)&skb->cb;
++}
++
++static void* mempool_zone_alloc_skb(unsigned int gfp_mask,
++				    void *pool_data)
++{
++	struct mempool_zone *zone = pool_data;
++
++	return alloc_skb(zone->size, gfp_mask);
++}
++
++static void mempool_zone_free_skb(void *element, void *pool_data)
++{
++	kfree_skb(element);
++}
++
++static void
++mempool_zone_complete(struct mempool_zone *zone, int release_all)
++{
++	unsigned long flags;
++	struct list_head *lh, *n;
++
++	spin_lock_irqsave(&zone->freelock, flags);
++	if (zone->allocated) {
++		list_for_each_safe(lh, n, &zone->freequeue) {
++			struct sk_buff *skb =
++				(struct sk_buff *)((char *)lh -
++				 offsetof(struct sk_buff, cb));
++			if (skb_shared(skb)) {
++				if (release_all)
++					kfree_skb(skb);
++				else
++					continue;
++			}
++
++			list_del(skb_to_lh(skb));
++			mempool_free(skb, zone->pool);
++			--zone->allocated;
++
++		}
++	}
++	spin_unlock_irqrestore(&zone->freelock, flags);
++}
++
++static int mempool_zone_init(struct mempool_zone *zp, unsigned size,
++			     int min_nr, unsigned hiwat)
++{
++	zp->size = size;
++	zp->hiwat = hiwat;
++	zp->allocated = 0;
++	INIT_LIST_HEAD(&zp->freequeue);
++	spin_lock_init(&zp->freelock);
++
++	zp->pool = mempool_create(min_nr, mempool_zone_alloc_skb,
++				  mempool_zone_free_skb, zp);
++	if (!zp->pool)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static struct sk_buff* mempool_zone_get_skb(struct mempool_zone *zone)
++{
++	struct sk_buff *skb;
++	unsigned long flags;
++
++	/* Check for ones we can complete before we alloc */
++	mempool_zone_complete(zone, 0);
++
++	skb = mempool_alloc(zone->pool, GFP_ATOMIC);
++	if (skb) {
++		skb_get(skb);
++		spin_lock_irqsave(&z_dm_evt.freelock, flags);
++		list_add(skb_to_lh(skb), &z_dm_evt.freequeue);
++		++zone->allocated;
++		spin_unlock_irqrestore(&z_dm_evt.freelock, flags);
++	}
++	return skb;
++}
++
++int __init dm_nl_init(void)
++{
++	int err;
++
++	err = mempool_zone_init(&z_dm_evt, EVT_SKB_SIZE,
++				MIN_EVT_SKBS, HIWAT_EVT_SKBS);
++	if (!err)
++		printk(KERN_DEBUG "dm-netlink version 0.0.1 loaded\n");
++
++	return err;
++
++}
++
++void dm_nl_exit(void)
++{
++	mempool_destroy(z_dm_evt.pool);
++}
+Index: sas-2.6-patched/include/linux/netlink.h
+===================================================================
+--- sas-2.6-patched.orig/include/linux/netlink.h	2006-01-12 00:02:14.000000000 -0800
++++ sas-2.6-patched/include/linux/netlink.h	2006-01-12 00:02:40.000000000 -0800
+@@ -21,6 +21,7 @@
+ #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
+ #define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
+ #define NETLINK_GENERIC		16
++#define NETLINK_DM			17	/* Device Mapper */
+ 
+ #define MAX_LINKS 32		
+ 
+Index: sas-2.6-patched/drivers/md/Makefile
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/Makefile	2006-01-12 00:02:14.000000000 -0800
++++ sas-2.6-patched/drivers/md/Makefile	2006-01-15 23:06:44.000000000 -0800
+@@ -46,6 +46,10 @@ ifeq ($(CONFIG_ALTIVEC),y)
+ altivec_flags := -maltivec -mabi=altivec
+ endif
+ 
++ifeq ($(CONFIG_DM_NL_EVT),y)
++dm-mod-objs			+= dm-netlink.o
++endif
++
+ targets += raid6int1.c
+ $(obj)/raid6int1.c:   UNROLL := 1
+ $(obj)/raid6int1.c:   $(src)/raid6int.uc $(src)/unroll.pl FORCE
+Index: sas-2.6-patched/drivers/md/Kconfig
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/Kconfig	2006-01-03 13:49:55.000000000 -0800
++++ sas-2.6-patched/drivers/md/Kconfig	2006-01-15 23:04:41.000000000 -0800
+@@ -236,5 +236,10 @@ config DM_MULTIPATH_EMC
+ 	---help---
+ 	  Multipath support for EMC CX/AX series hardware.
+ 
++config DM_NL_EVT
++	bool "DM netlink events (EXPERIMENTAL)"
++	depends on BLK_DEV_DM && EXPERIMENTAL
++	---help---
++	Generate netlink events for DM events.
+ endmenu
+ 
