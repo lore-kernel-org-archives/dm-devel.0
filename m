@@ -1,15 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Multipath selector policy additions
-Date: Thu, 09 Feb 2006 20:37:25 +0100
-Message-ID: <1139513846.2915.12.camel@zezette>
-References: <00f901c62c33$48a82090$060aa8c0@workshop>
-Reply-To: christophe.varoqui@free.fr,
-	device-mapper development <dm-devel@redhat.com>
+From: Dale.R.Fowle@seagate.com
+Subject: path checker in regards to failback
+Date: Thu, 9 Feb 2006 12:39:07 -0700
+Message-ID: <OF63663B7F.8E27641A-ON87257110.006B2BE6-87257110.006BF522@seagate.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <00f901c62c33$48a82090$060aa8c0@workshop>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,52 +15,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On mar, 2006-02-07 at 16:10 -0600, Brad Johnson wrote:
-> I am a software developer that is new to this list. I understand that
-> currently round-robin is the only implemented path selector type. I am
-> scoping (for a major storage vendor) the effort required to implement
-> additional selector types, as well as other work required to function
-> properly with their hardware (possibly special device-specific
-> hardware handlers, config file changes, etc.). I assume there is a
-> procedure in place to allow developers to submit changes such as these
-> to the public domain, and hope that eventually they may be included in
-> some future distributions.
->  
-> My questions are:
->  
-> What is the procedure for submitting kernel patches for the device
-> mapper?
 
-Submitting changes to the maintainer, cc the dm-devel list is the
-practice for both kernel-space and user-space multipath subsystems.
+Hi all, I have a question related to failover/failback. I'm running
+0.4.5-0.11. I'm wondering what the path checker does for the multipathd
+daemon.
 
-> Who (or what organization) owns responsibility for the device mapper
-> kernel modules?
+Here's my senario:
+I have two paths to a LUN, configure it with 'multipath -v 2 -p failover'.
+Run some I/O down the path of the /dev/mapper/<device>.
+I fail one of the paths either by pulling the fibre or disabling the port
+it's connected to.
+When I run 'multipath -ll' I see the failed path 'failed faulty'.
+I restore the path physically.
+Run 'multipath -ll' again to see the status and it's 'failed ready'.
 
-I'll guess you mean maintainership, not "responsibility" :/
+Now, my question is, is multipathd supposed to handle making that path
+'active ready'?
+I have 'failback immediate' set in the /etc/multipath.conf file. And it
+does do the immediate failback,...but based on the 'active ready' status.
+To get to that status, I have to actually issue a 'multipath' command to
+reinstate the path to active.
 
-The DM maintainer is Alasdair Kergon, RedHat.
+Is there something that I'm missing or am I just going to have to make a
+cron job run every few minutes to do path status updates?
 
-> Who owns responsibility for the user-space multipath pieces?
+Thanks much,
+Dale
 
-I maintain the user-space tools
-> 
-> Is anyone else currently developing additional path selector types?
 
-Mike Christie, RedHat, and Lars M. Bree, Suse, have experimence with
-hwhandlers
-
->  
-> I am sorry if my newbie questions are naive, but any help to point me
-> in the right direction will be greatly appreciated.
->  
-> Regards,
-> Brad Johnson
->  
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Dale Fowle
+Seagate Technology
+Colorado Springs, CO
+719-388-5584
