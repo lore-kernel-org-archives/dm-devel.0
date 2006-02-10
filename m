@@ -1,46 +1,55 @@
-From: Andrew Morton <akpm@osdl.org>
+From: Phillip Susi <psusi@cfl.rr.com>
 Subject: Re: [PATCH] Support HDIO_GETGEO on device-mapper volumes
-Date: Thu, 9 Feb 2006 18:58:55 -0800
-Message-ID: <20060209185855.6643dcce.akpm@osdl.org>
+Date: Fri, 10 Feb 2006 00:15:54 -0500
+Message-ID: <43EC218A.9000402@cfl.rr.com>
 References: <43EBEDD0.60608@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751098AbWBJFQa@vger.kernel.org>
 In-Reply-To: <43EBEDD0.60608@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: "Darrick J. Wong" <djwong@us.ibm.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, lcm@us.ibm.com
+Cc: dm-devel@redhat.com, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-"Darrick J. Wong" <djwong@us.ibm.com> wrote:
->
+Hrm... when I setup my system on a dmraid controlled hardware fakeraid 
+raid-0, I just gave grub a suitable geometry command since it couldn't 
+auto detect it.  I suppose this would make that unnecessary.
+
+I think that ultimately, grub shouldn't care about the geometry since 
+that information has been obsolete for years.  If it can't detect the 
+geometry, then it should just assume the system supports LBA and to hell 
+with using made up geometry numbers.
+
+
+Darrick J. Wong wrote:
+> Hi again,
+> 
+> I'm trying to install grub on a device-mapper RAID1 array that I set up 
+> via dmraid (in other words, a bootable software fakeraid).  Since dm 
+> doesn't implement the HDIO_GETGEO ioctl, grub assumes that the CHS 
+> geometry is 620/128/63, which makes it impossible to configure it to 
+> boot a filesystem that lives beyond the 2GB mark, even if the system 
+> BIOS supports that.
+> 
 > The attached patch implements a simple ioctl handler that supplies a 
 > compatible geometry when HDIO_GETGEO is called against a device-mapper 
-> device.
-
-block_device_operations now has a standalone `getgeo' method.
-
-> ...
-> +static int dm_blk_ioctl(struct inode * inode, struct file * filp,
-> +			unsigned int cmd, unsigned long arg)
-> +{
-> +	struct block_device *bdev = inode->i_bdev;
-> +	struct hd_geometry __user *loc = (void __user *)arg;
-> +	struct mapped_device *md;
-> +	int diskinfo[4];
-> +
-> +	if (cmd == HDIO_GETGEO) {
-> +		if (!arg)
-> +			return -EINVAL;
-
-I don't think we need that check?  The -EFAULT should suffice.
+> device.  Its behavior is somewhat similar to what sd_mod does if the 
+> scsi controller doesn't provide its own geometry.  Granted, the notion 
+> of cylinders, heads and sectors is silly on a RAID array, but with this 
+> patch, interested programs can obtain CHS data that's somewhat close to 
+> correct; this seems to be a better option than having each program make 
+> up its own potentially different geometry, or making an arbitrary guess. 
+>  Assuming that all of the programs that need to know CHS geometry will 
+> query the kernel via HDIO_GETGEO, this patch makes it so that all of 
+> those programs end up using the same geometry.
+> 
+> The patch applies cleanly against 2.6.15.3; if there aren't any 
+> objections then I'm submitting this for upstream.  However, I'm all ears 
+> for suggestions.
+> 
+> Signed-off-by: Darrick J. Wong <djwong@us.ibm.com>
+> 
+> --Darrick
+> 
