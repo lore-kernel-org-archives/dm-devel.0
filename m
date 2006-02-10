@@ -1,14 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
+From: Phillip Susi <psusi@cfl.rr.com>
 Subject: Re: [PATCH] Support HDIO_GETGEO on device-mapper volumes
-Date: Fri, 10 Feb 2006 14:53:48 +0000
-Message-ID: <20060210145348.GA12173@agk.surrey.redhat.com>
-References: <43EBEDD0.60608@us.ibm.com>
+Date: Fri, 10 Feb 2006 10:14:46 -0500
+Message-ID: <43ECADE6.9020609@cfl.rr.com>
+References: <43EBEDD0.60608@us.ibm.com> <43EC218A.9000402@cfl.rr.com>
+	<43EC4B57.9000408@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <43EBEDD0.60608@us.ibm.com>
+In-Reply-To: <43EC4B57.9000408@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,42 +23,12 @@ To: "Darrick J. Wong" <djwong@us.ibm.com>
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Chris McDermott <lcm@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Thu, Feb 09, 2006 at 05:35:12PM -0800, Darrick J. Wong wrote:
-> Since dm doesn't implement the HDIO_GETGEO ioctl,
+Darrick J. Wong wrote:
+> Phillip... are you the person working on dmraid support in Ubuntu?  
+> For the first time, I boot Ubuntu off that HostRAID array this 
+> afternoon without the need for a helper disk and with dmraid in the 
+> initramfs.  I appreciated the howto. :)
+>
 
-Why should it?  Device-mapper constructs a virtual device and
-I think it's completely wrong for it to 'fake' a geometry.
-
-Of course dm could recognise the ioctl - but the default response
-should be the one that indicates the geometry is unknown.
-
-> grub assumes that the CHS
-> geometry is 620/128/63, which makes it impossible to configure it to
-> boot a filesystem that lives beyond the 2GB mark, even if the system
-> BIOS supports that.
-
-Surely a problem in grub, not the kernel?
-
-> The attached patch implements a simple ioctl handler that supplies a
-> compatible geometry when HDIO_GETGEO is called against a device-mapper
-> device.  Its behavior is somewhat similar to what sd_mod does if the
-> scsi controller doesn't provide its own geometry. 
-
-What if the dm device is a linear mapping to an sd device that *does*
-provide a different geometry?  Then the 'fake' geometry dm would return
-with this patch would be wrong!
-
-> this seems to be a better option than having each program make
-> up its own potentially different geometry, or making an arbitrary guess.
-
-I disagree - either dm should work out the *correct* geometry to
-return for those mappings where a geometry is known and it's sensible
-to return one (e.g. linear mapping to the start of certain scsi
-devices), or else it should leave it to userspace to decide how to
-handle the situation.  (And there's nothing currently stopping
-userspace seeing that a dm device is constructed out of a scsi device
-and choosing to use the geometry of that underlying device.)
-
-Alasdair
---
-agk@redhat.com
+Yes, I'm currently working on getting it nicely packaged, udebified, and 
+integrated into the installer.  Might not make it in time for dapper. 
