@@ -1,15 +1,15 @@
-From: Josef Whiter <jwhiter@redhat.com>
-Subject: Re: multipath device question
-Date: Fri, 10 Feb 2006 20:25:38 -0500
-Message-ID: <20060211012538.GD31895@dogpound.rdu.redhat.com>
-References: <43ED334A.7050009@linworx.cz>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Support HDIO_GETGEO on device-mapper volumes
+Date: Fri, 10 Feb 2006 15:13:09 +0000
+Message-ID: <20060210151309.GB12173@agk.surrey.redhat.com>
+References: <43EBEDD0.60608@us.ibm.com>
+	<20060210145348.GA12173@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <43ED334A.7050009@linworx.cz>
+In-Reply-To: <20060210145348.GA12173@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,60 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Darrick J. Wong" <djwong@us.ibm.com>, dm-devel@redhat.com, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Sat, Feb 11, 2006 at 01:43:54AM +0100, Stanislav Pol=C3=A1=C5=A1ek wro=
-te:
-> -----BEGIN PGP SIGNED MESSAGE-----
-> Hash: SHA1
->=20
-> Hi! Let me please start with apology for using the development list to
-> ask rather end-user question. I am looking for help with multipath
-> setup. I have a few servers connected to a ibm storage. Two servers hav=
-e
-> two qlogic HBAs each. On the first server was created a multipath devic=
-e
-> out of all 4 scsi devices/paths. On the second server it is possible to
-> assemble the same mp device and attach it without problems (there is th=
-e
-> gfs).
->=20
-> However, the third server I would like to connect to the storage has
-> just one HBA. It's only 1U format and I cannot add anything to it. And
-> moreover, the visible storage scsi device order there is different.
->=20
-> As I know the mdadm that I used to create the multipath device writes t=
-o
-> the superblock an information about the array, I would like to find out
-> how much the multipath implementation in the kernel depends on this
-> information. Would it be a problem to connect the third server to the
-> storage by assembling the multipath device out of just two scsi
-> devices/paths instead of four and in addition using scsi devices with
-> diferrent minor/major numbers?
->=20
-> As I do really doubt that, is there any way how to connect the third
-> server using the multipath setup?
->=20
-> Thank you very much for your help. I could get the answers by testing,
-> but these are production servers with terrabytes of data and I cannot
-> really stop them now for more then just a few minutes.
->=20
-> Stanislav Polasek
+On Fri, Feb 10, 2006 at 02:53:48PM +0000, Alasdair G Kergon wrote:
+> I disagree - either dm should work out the *correct* geometry to
+> return for those mappings where a geometry is known and it's sensible
+> to return one (e.g. linear mapping to the start of certain scsi
+> devices), or else it should leave it to userspace to decide how to
+> handle the situation.  (And there's nothing currently stopping
+> userspace seeing that a dm device is constructed out of a scsi device
+> and choosing to use the geometry of that underlying device.)
 
-Hello,
+s/scsi/hd/ in those examples for slightly more sense
 
-DM multipathing is all automatic, it does not write any information to th=
-e disk,
-it is completely nodal specific.  If you have different multipathing setu=
-p for
-each node, or nodes that aren't multipathed, dm multipathing will figure
-everything out by itself.  You will have to keep in mind that in order to=
- add a
-node to an existing two node GFS6.1 cluster you will have to bring the cl=
-uster
-down because of the special two node option.  After you have more than tw=
-o nodes
-you can add nodes without rebooting the cluster.  Thank you,
+What would the 'geometry' of a dm 'error' target mean?
+Or of a snapshot?
 
-Josef
+In any patch, consider that we've already identified a need 
+(e.g. for multipath) to add a framework to device-mapper to pass 
+certain ioctls along to the underlying devices.  I'd prefer
+to see that approach here: for tables with a single entry, pass 
+the ioctl into the target. Linear and multipath would then pass 
+it along to the underlying device; other targets would return zeros.
+ 
+Alasdair
+-- 
+agk@redhat.com
