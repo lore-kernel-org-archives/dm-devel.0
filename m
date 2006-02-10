@@ -1,40 +1,46 @@
-From: "Darrick J. Wong" <djwong@us.ibm.com>
+From: Molle Bestefich <molle.bestefich@gmail.com>
 Subject: Re: [PATCH] Support HDIO_GETGEO on device-mapper volumes
-Date: Fri, 10 Feb 2006 00:14:15 -0800
-Message-ID: <43EC4B57.9000408@us.ibm.com>
-References: <43EBEDD0.60608@us.ibm.com> <43EC218A.9000402@cfl.rr.com>
+Date: Fri, 10 Feb 2006 15:15:57 +0100
+Message-ID: <62b0912f0602100615n77583a68ib3882d2c90fd20a6@mail.gmail.com>
+References: <43EBEDD0.60608@us.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751195AbWBJIOP@vger.kernel.org>
-In-Reply-To: <43EC218A.9000402@cfl.rr.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Phillip Susi <psusi@cfl.rr.com>
-Cc: dm-devel@redhat.com, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <43EBEDD0.60608@us.ibm.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: djwong@us.ibm.com
+Cc: dm-devel@redhat.com, lcm@us.ibm.com
 List-Id: dm-devel.ids
 
-Phillip Susi wrote:
-> Hrm... when I setup my system on a dmraid controlled hardware fakeraid 
-> raid-0, I just gave grub a suitable geometry command since it couldn't 
-> auto detect it.  I suppose this would make that unnecessary.
+Darrick J. Wong wrote:
+> I'm trying to install grub on a device-mapper RAID1 array that I set up
+> via dmraid (in other words, a bootable software fakeraid).  Since dm
+> doesn't implement the HDIO_GETGEO ioctl, grub assumes that the CHS
+> geometry is 620/128/63, which makes it impossible to configure it to
+> boot a filesystem that lives beyond the 2GB mark, even if the system
+> BIOS supports that.
+>
+> The attached patch implements a simple ioctl handler that supplies a
+> compatible geometry when HDIO_GETGEO is called against a device-mapper
+> device.
 
-That was the intent. :)
+FYI, I made a patch a year ago or so that achieves the same, only in GRUB=
+ land.
+I like your approach just as well (and my patch was ugly and needed
+TLC badly), so cool.
 
-> I think that ultimately, grub shouldn't care about the geometry since 
-> that information has been obsolete for years.  If it can't detect the 
-> geometry, then it should just assume the system supports LBA and to hell 
-> with using made up geometry numbers.
-
-You certainly get my vote for that.  Consider, however, that sd_mod 
-invents geometry numbers for whomever is silly enough to call 
-HDIO_GETGEO, even though CHS doesn't make sense _at all_ on a SCSI disk, 
-which never had that mode of addressing in the first place.  I wonder if 
-there exists users of dmraid who have systems that can't do LBA?  (Seems 
-unlikely though...)
-
-Phillip... are you the person working on dmraid support in Ubuntu?  For 
-the first time, I boot Ubuntu off that HostRAID array this afternoon 
-without the need for a helper disk and with dmraid in the initramfs.  I 
-appreciated the howto. :)
-
---D
+You might want to cc: your patch to Peter Jones or someone from Fedora Co=
+re,
+just in case they picked up that ugly Grub thing I did, so they can
+remove that and use yours instead :-)...
