@@ -1,14 +1,11 @@
-From: "Thomas S. Iversen" <zensonic@zensonic.dk>
-Subject: dm-bde
-Date: Sat, 11 Feb 2006 16:18:07 +0100
-Message-ID: <200602111618.07949.zensonic@zensonic.dk>
+From: Bastian Blank <bastian@waldi.eu.org>
+Subject: devmapper 1.02.03 breaks ABI
+Date: Sun, 12 Feb 2006 11:23:57 +0100
+Message-ID: <20060212102357.GA4134@wavehammer.waldi.eu.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2086252357=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,25 +15,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi There
 
-As a part of my education I have ported FreeBSDs Geom Based Device Encryption 
-system to Linux. It is implemented as a Devicemapper module. It works but has 
-some bugs. My question now is, what kind of state should the code be in in 
-order for somebody to pick it up? I can read and write GBDE devices, but
+--===============2086252357==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="ZPt4rx8FFjLCG7dd"
+Content-Disposition: inline
 
-1. If the device is over 4GB and constructed on the opposite system (FreeBSD 
-vs. LInux), it will not work. Devices over 4GB constructed on the same OS 
-works fine.
-2. It is not threadsafe and I cant figure out why.
-3. It has the same readspeed as FreeBSD, but (somewhat) slower write speed in 
-comparison.
 
-Regards 
-Thomas, Denmark
--- 
-In the 60's people took acid to make the world weird. Now the world is weird, 
-people take prozac to make it normal.
+--ZPt4rx8FFjLCG7dd
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Hi folks
+
+devmapper 1.02.03 breaks the ABI by removing the exported symbol dm_strdup.
+
+Bastian
+
+--=20
+The sight of death frightens them [Earthers].
+		-- Kras the Klingon, "Friday's Child", stardate 3497.2
+
+--ZPt4rx8FFjLCG7dd
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2 (GNU/Linux)
+
+iEYEARECAAYFAkPvDL0ACgkQnw66O/MvCNFCfACfRXPyXepq0m57W+/FozS5KMi0
+y9sAoKRjF8Qi4NXLyXoV/O9j4eGmaqIb
+=F8Td
+-----END PGP SIGNATURE-----
+
+--ZPt4rx8FFjLCG7dd--
+
+
+--===============2086252357==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2086252357==--
