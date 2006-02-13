@@ -1,16 +1,16 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH] Make sure QUEUE_FLAG_CLUSTER is set properly
-	for dm.
-Date: Mon, 13 Feb 2006 09:38:11 +1100
-Message-ID: <17391.47315.428100.32466@cse.unsw.edu.au>
-References: <17302.21846.792776.256696@cse.unsw.edu.au>
-	<20051207222755.GM3647@agk.surrey.redhat.com>
+From: Josef Whiter <jwhiter@redhat.com>
+Subject: Re: multipath device question
+Date: Mon, 13 Feb 2006 09:07:40 -0500
+Message-ID: <20060213140740.GA9162@dogpound.rdu.redhat.com>
+References: <43ED334A.7050009@linworx.cz>
+	<20060211012538.GD31895@dogpound.rdu.redhat.com>
+	<43EDF9C6.2010805@linworx.cz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Alasdair G Kergon on Wednesday December 7
+Content-Disposition: inline
+In-Reply-To: <43EDF9C6.2010805@linworx.cz>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,25 +23,17 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wednesday December 7, agk@redhat.com wrote:
-> On Wed, Dec 07, 2005 at 02:21:58PM +1100, Neil Brown wrote:
-> >  the block layer has a flag - QUEUE_FLAG_CLUSTER - which can be set
-> 
-> Yes, but does it make much difference at the moment, given that we 
-> need to use small bios to avoid having to split them if they cross 
-> mapping boundaries?  (That's the real problem that needs tackling.)
-> 
+> Thank you very much for the answer. Would that mean the dm-multipath on
+> one machine would happily coexist with the md-multipath on the other two
+> machines? The setup of first two servers was done by the vendor and they
+> did it the MD way. But, as I suspect, the md-multipath uses the
+> superblocks to store info about the multipath array, so it seems to be
+> dangerous to have different MD configuration on different machines
+> conected to the same target drive.
+>
 
-I'm sorry, I didn't see this back in December... I'm still not used to
-these lists that set the 'reply-to' header, so I don't get a reply
-explicitly addressed to me.... I've have to make my filters smarter!
+MD multipathing is not cluster aware, so you are going to want to rip that out
+of there and exclusively use dm multipathing.  Using md devices on a cluster
+will lead to file system corruption.  Thank you,
 
-Does DM *always* use small bios?  Even for multipath targets, where
-presumably there would be no need even to limit the size?
-
-If so, I guess this patch isn't going to make a big difference no, but
-it would be worth having it in place for whenever handling larger bios
-gets implemented.
-
-Thanks,
-NeilBrown
+Josef 
