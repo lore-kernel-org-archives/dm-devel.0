@@ -1,18 +1,12 @@
-From: Stephan =?utf-8?Q?Austerm=C3=BChle?= <au@hcsd.de>
-Subject: Re: dm-multipath: multipath setup okay,
-	nothing in /dev/disk/by-name (solved)
-Date: Mon, 13 Feb 2006 18:16:31 +0100 (CET)
-Message-ID: <60031.194.39.131.40.1139850991.squirrel@www.hcsd.de>
-References: <57309.194.39.131.39.1139845883.squirrel@www.hcsd.de>
-	<1139846514.7784.9.camel@zezette>
-	<37637.194.39.131.39.1139847251.squirrel@www.hcsd.de>
-	<43F0495D.D2F3.0050.0@novell.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: checkers segfault
+Date: Mon, 13 Feb 2006 19:26:57 -0600
+Message-ID: <20060214012657.GB25174@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="C7zPtVaVf+AK4Oqc"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <43F0495D.D2F3.0050.0@novell.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,21 +16,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kevin Lyons <klyons@novell.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Kevin,
 
-> On SLES, the symlinks are created by the udev system.  The symlinks are
-> created by a rule in the /etc/udev/udev.rules file similar to the
-> following:
->
-> KERNEL=3D"dm-[0-9]*", PROGRAM=3D"/sbin/devmap_name %M %m", NAME=3D"%k"
-> SYMLINK=3D"disk/by-name/%c"
+--C7zPtVaVf+AK4Oqc
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-That's it! A more recent version of the udev package creates the symlink.
+Multipath was segfaulting on startup because of some pointer arithmatic
+craziness with the checkers. The attached patch fixes it.
 
-Thanks a lot!
+-Ben
 
-Stephan
+--C7zPtVaVf+AK4Oqc
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="checker.patch"
+
+diff -urpN mp-devel-clean/libcheckers/checkers.c mp-devel-patched/libcheckers/checkers.c
+--- mp-devel-clean/libcheckers/checkers.c	2006-02-13 11:53:34.000000000 -0600
++++ mp-devel-patched/libcheckers/checkers.c	2006-02-13 20:03:14.000000000 -0600
+@@ -70,7 +70,7 @@ struct checker * checker_lookup (char * 
+ 	while (c->check) {
+ 		if (!strncmp(name, c->name, CHECKER_NAME_LEN))
+ 			return c;
+-		c += sizeof(struct checker);
++		c++;
+ 	}
+ 	return NULL;
+ }
+
+--C7zPtVaVf+AK4Oqc
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--C7zPtVaVf+AK4Oqc--
