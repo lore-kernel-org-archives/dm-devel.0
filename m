@@ -1,12 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: checkers segfault
-Date: Mon, 13 Feb 2006 19:26:57 -0600
-Message-ID: <20060214012657.GB25174@ether.msp.redhat.com>
+From: Thomas Berton <thomas.berton@kreno.be>
+Subject: Re: device-mapper: device /dev/hdc too small for target
+Date: Tue, 14 Feb 2006 09:16:44 +0100
+Message-ID: <43F191EC.6080207@kreno.be>
+References: <43E8DAD6.3030208@kreno.be>
+	<20060207184106.GB22775@tik.ee.ethz.ch>	<43E8EFA0.6050805@kreno.be>
+	<03ee370c27de419c858856bf24f5dadf@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="C7zPtVaVf+AK4Oqc"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <03ee370c27de419c858856bf24f5dadf@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,41 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Jonathan E Brassow wrote:
+> md and dm are two different things.  LVM uses dm, not md.
+>
+> I can't really say I see what is wrong, but your binaries seem to be 
+> pretty old...
+>
+> "device-mapper: 4.1.0-ioctl (2003-12-10) initialised: dm@uk.sistina.com"
+My apologies for the late response.
+The problem seems to be fixed when using the latest (at the moment) 
+vanilla kernel sources, 2.6.15-4.
+Thank you Jonathan for pointing me into the good direction!
 
---C7zPtVaVf+AK4Oqc
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+I hope this information is of any use to other lvm users with strange 
+problems.
 
-Multipath was segfaulting on startup because of some pointer arithmatic
-craziness with the checkers. The attached patch fixes it.
-
--Ben
-
---C7zPtVaVf+AK4Oqc
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="checker.patch"
-
-diff -urpN mp-devel-clean/libcheckers/checkers.c mp-devel-patched/libcheckers/checkers.c
---- mp-devel-clean/libcheckers/checkers.c	2006-02-13 11:53:34.000000000 -0600
-+++ mp-devel-patched/libcheckers/checkers.c	2006-02-13 20:03:14.000000000 -0600
-@@ -70,7 +70,7 @@ struct checker * checker_lookup (char * 
- 	while (c->check) {
- 		if (!strncmp(name, c->name, CHECKER_NAME_LEN))
- 			return c;
--		c += sizeof(struct checker);
-+		c++;
- 	}
- 	return NULL;
- }
-
---C7zPtVaVf+AK4Oqc
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---C7zPtVaVf+AK4Oqc--
+Greetings,
+Thomas.
