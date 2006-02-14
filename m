@@ -1,16 +1,14 @@
-From: Thomas Berton <thomas.berton@kreno.be>
-Subject: Re: device-mapper: device /dev/hdc too small for target
-Date: Tue, 14 Feb 2006 09:16:44 +0100
-Message-ID: <43F191EC.6080207@kreno.be>
-References: <43E8DAD6.3030208@kreno.be>
-	<20060207184106.GB22775@tik.ee.ethz.ch>	<43E8EFA0.6050805@kreno.be>
-	<03ee370c27de419c858856bf24f5dadf@redhat.com>
+From: "Tom Kalus" <tkalus@us.xyratex.com>
+Subject: multipath-tools changing an alias
+Date: Tue, 14 Feb 2006 11:38:45 -0800
+Message-ID: <DF112ECA4AC6564C934A2D2E2D57A07707B830@XYUS-EX22.xyus.xyratex.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <03ee370c27de419c858856bf24f5dadf@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,23 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Jonathan E Brassow wrote:
-> md and dm are two different things.  LVM uses dm, not md.
->
-> I can't really say I see what is wrong, but your binaries seem to be 
-> pretty old...
->
-> "device-mapper: 4.1.0-ioctl (2003-12-10) initialised: dm@uk.sistina.com"
-My apologies for the late response.
-The problem seems to be fixed when using the latest (at the moment) 
-vanilla kernel sources, 2.6.15-4.
-Thank you Jonathan for pointing me into the good direction!
+Couple questions:
 
-I hope this information is of any use to other lvm users with strange 
-problems.
 
-Greetings,
-Thomas.
+Is there a bug and enhancement tracking site for multipath-tools?
+I saw a few postings on bugzilla at redhat; is there a less-obvious
+place?
+
+
+Is there a way to change an alias from the command line with
+multipath-tools?=20
+I saw that the assiciations were maintained in a flat file
+(/var/cacahe/multipath/bindings), but I didn't see any way of changing
+the alias without parsing/editing the file itself.
+Am I just not looking in the right place (alias.c)? Or am I going to get
+a "great feature, I await your patch."
+
+
+Thanks,
+Tom
+
+
+Version: 0.4.6.latest (from kernel.org's git repo as of 2006-02-14 1900
++0000)
+Where I'm expecting to see something: libmulitpath/alias.[ch]
+=20
+
+*
+Tom Kalus II
+Software Engineer
+Xyratex International
+San Jose, CA, USA
+tkalus@us.xyratex.com=20
