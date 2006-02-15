@@ -1,13 +1,11 @@
-From: Brian Long <brilong@cisco.com>
-Subject: Re: Multipathing with RHEL4 U2 on EMC DMX
-Date: Wed, 15 Feb 2006 14:52:12 -0500
-Message-ID: <1140033133.6263.1.camel@brilong-lnx>
-References: <2CF4E90F20CF3C4DBD3A71BD9FA2758D122F66@PSCDALPEXCH03.perotsystems.net>
+From: "Darrick J. Wong" <djwong@us.ibm.com>
+Subject: [PATCH] User-configurable HDIO_GETGEO for dm volumes
+Date: Wed, 15 Feb 2006 12:22:27 -0800
+Message-ID: <43F38D83.3040702@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-1vvq5bme7LKlSDR4COy9"
+Content-Type: multipart/mixed; boundary="------------050009090802040106030209"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2CF4E90F20CF3C4DBD3A71BD9FA2758D122F66@PSCDALPEXCH03.perotsystems.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,392 +15,418 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org, Chris McDermott <lcm@us.ibm.com>
 List-Id: dm-devel.ids
 
-
---=-1vvq5bme7LKlSDR4COy9
-Content-Type: text/plain
+This is a multi-part message in MIME format.
+--------------050009090802040106030209
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 
-On Fri, 2006-02-10 at 08:48 -0600, Child, David wrote:
-> Hello,
-> 
-> I've just recently connected some HP BL20p G3 blades running RHEL4 U2
-> up to a DMX2000 (via McData switches). We didn't get PowerPath and
-> intended to use device-mapper multipathing. I was able to get things
-> up for the most part and get devices defined, but have to do that
-> manually.
+Hi everyone,
 
-Hello David,
+Here's a rework of last week's HDIO_GETGEO patch.  Based on all the 
+feedback that I received last week, it seems that a better way to 
+approach this problem is:
 
-We have a /etc/lvm/lvm.conf and /etc/multipath.conf tweak you may be
-interested in.  I've attached them to this email.
+- Store a hd_geometry structure with each dm_table entry.
+- Provide a dm getgeo method that returns that geometry (or
+   -ENOTTY if there is no geometry).
+- Add a dm control ioctl to set the geometry of an arbitrary dm device.
+- Modify dmsetup to be able to set geometries.
 
-/Brian/
+This way, dmraid can associate geometries with bootable fakeraid 
+devices, and dmsetup can be told to assign a geometry to a single-device 
+linear/multipath setup as desired.  Furthermore, HDIO_GETGEO callers 
+will go away empty-handed if the userspace config tools do not set up a 
+geometry, as is the case now.  The decision to assign a geometry (and 
+what that should be) is totally deferred to userspace.
 
--- 
-       Brian Long                      |         |           |
-       IT Data Center Systems          |       .|||.       .|||.
-       Cisco Linux Developer           |   ..:|||||||:...:|||||||:..
-       Phone: (919) 392-7363           |   C i s c o   S y s t e m s
+So, dm-getgeo_1.patch is a patch to 2.6.16-rc3 that modifies the dm 
+driver to store and retrieve geometries.  I chose to attach the 
+hd_geometry structure to dm_table because it seemed like a convenient 
+place to attach config data.  The only part of this patch that I think 
+to be particularly dodgy is the dev_setgeo function, because I'm using 
+the dm_target_msg struct to pass the user's hd_geometry into the kernel. 
+  I'm not really sure if or how I'm supposed to send binary blobs into 
+the dm code, though the piggyback method works adequately.  Obviously, 
+this introduces a new dm control ioctl DM_DEV_SETGEO.
 
+The second patch (device-mapper-geometry_1.patch), unsurprisingly, is a 
+patch to the userspace libdevmapper/dmsetup code to enable the passing 
+of hd_geometry structures to the kernel.
 
---=-1vvq5bme7LKlSDR4COy9
-Content-Disposition: attachment; filename=lvm.conf.cisco
-Content-Type: text/plain; name=lvm.conf.cisco; charset=utf-8
+Questions?  Comments?
+
+--D
+
+Signed-off-by: Darrick J. Wong <djwong@us.ibm.com>
+
+--------------050009090802040106030209
+Content-Type: text/x-patch;
+ name="device-mapper-geometry_1.patch"
 Content-Transfer-Encoding: 7bit
-
-# Refer to 'man lvm.conf' for further information including the file layout.
-#
-# To put this file in a different directory and override /etc/lvm set
-# the environment variable LVM_SYSTEM_DIR before running the tools.
-
-
-# This section allows you to configure which block devices should
-# be used by the LVM system.
-devices {
-
-    # Where do you want your volume groups to appear ?
-    dir = "/dev"
-
-    # An array of directories that contain the device nodes you wish
-    # to use with LVM2.
-    scan = [ "/dev" ]
-
-    # A filter that tells LVM2 to only use a restricted set of devices.
-    # The filter consists of an array of regular expressions.  These
-    # expressions can be delimited by a character of your choice, and
-    # prefixed with either an 'a' (for accept) or 'r' (for reject).
-    # The first expression found to match a device name determines if
-    # the device will be accepted or rejected (ignored).  Devices that
-    # don't match any patterns are accepted.
-
-    # Be careful if there there are symbolic links or multiple filesystem 
-    # entries for the same device as each name is checked separately against
-    # the list of patterns.  The effect is that if any name matches any 'a'
-    # pattern, the device is accepted; otherwise if any name matches any 'r'
-    # pattern it is rejected; otherwise it is accepted.
-
-    # Remember to run vgscan after you change this parameter to ensure 
-    # that the cache file gets regenerated (see below).
-
-    # By default we accept every block device:
-    # filter = [ "a/.*/" ]
-    # Cisco filter
-    filter = [ "a|^/dev/mapper/.*|", "r/.*/" ]
-
-    # Exclude the cdrom drive
-    # filter = [ "r|/dev/cdrom|" ]
-
-    # When testing I like to work with just loopback devices:
-    #filter = [ "a|loop|", "r/.*/" ]
-
-    # Or maybe all loops and ide drives except hdc:
-    # filter =[ "a|loop|", "r|/dev/hdc|", "a|/dev/ide|", "r|.*|" ]
-
-    # Use anchors if you want to be really specific
-    # filter = [ "a|^/dev/hda8$|", "r/.*/" ]
-
-    # The results of the filtering are cached on disk to avoid
-    # rescanning dud devices (which can take a very long time).  By
-    # default this cache file is hidden in the /etc/lvm directory.
-    # It is safe to delete this file: the tools regenerate it.
-    cache = "/etc/lvm/.cache"
-
-    # You can turn off writing this cache file by setting this to 0.
-    write_cache_state = 1
-
-    # Advanced settings.
-
-    # List of pairs of additional acceptable block device types found 
-    # in /proc/devices with maximum (non-zero) number of partitions.
-    # types = [ "fd", 16 ]
-    # Cisco added
-    types = [ "device-mapper", 1 ]
-
-
-    # If sysfs is mounted (2.6 kernels) restrict device scanning to 
-    # the block devices it believes are valid.
-    # 1 enables; 0 disables.
-    sysfs_scan = 1	
-
-    # By default, LVM2 will ignore devices used as components of
-    # software RAID (md) devices by looking for md superblocks.
-    # 1 enables; 0 disables.
-    # Cisco changed
-    md_component_detection = 0
-}
-
-# This section that allows you to configure the nature of the
-# information that LVM2 reports.
-log {
-
-    # Controls the messages sent to stdout or stderr.
-    # There are three levels of verbosity, 3 being the most verbose.
-    verbose = 0
-
-    # Should we send log messages through syslog?
-    # 1 is yes; 0 is no.
-    syslog = 1
-
-    # Should we log error and debug messages to a file?
-    # By default there is no log file.
-    #file = "/var/log/lvm2.log"
-
-    # Should we overwrite the log file each time the program is run?
-    # By default we append.
-    overwrite = 0
-
-    # What level of log messages should we send to the log file and/or syslog?
-    # There are 6 syslog-like log levels currently in use - 2 to 7 inclusive.
-    # 7 is the most verbose (LOG_DEBUG).
-    level = 0
-    
-    # Format of output messages
-    # Whether or not (1 or 0) to indent messages according to their severity
-    indent = 1
-
-    # Whether or not (1 or 0) to display the command name on each line output
-    command_names = 0
-
-    # A prefix to use before the message text (but after the command name,
-    # if selected).  Default is two spaces, so you can see/grep the severity
-    # of each message.
-    prefix = "  "
-
-    # To make the messages look similar to the original LVM tools use:
-    #   indent = 0
-    #   command_names = 1
-    #   prefix = " -- "
-
-    # Set this if you want log messages during activation.
-    # Don't use this in low memory situations (can deadlock).
-    # activation = 0
-}
-
-# Configuration of metadata backups and archiving.  In LVM2 when we
-# talk about a 'backup' we mean making a copy of the metadata for the
-# *current* system.  The 'archive' contains old metadata configurations.
-# Backups are stored in a human readeable text format.
-backup {
-
-    # Should we maintain a backup of the current metadata configuration ?
-    # Use 1 for Yes; 0 for No.
-    # Think very hard before turning this off!
-    backup = 1
-
-    # Where shall we keep it ?
-    # Remember to back up this directory regularly!
-    backup_dir = "/etc/lvm/backup"
-
-    # Should we maintain an archive of old metadata configurations.
-    # Use 1 for Yes; 0 for No.
-    # On by default.  Think very hard before turning this off.
-    archive = 1
-
-    # Where should archived files go ?
-    # Remember to back up this directory regularly!
-    archive_dir = "/etc/lvm/archive"
-    
-    # What is the minimum number of archive files you wish to keep ?
-    retain_min = 10
-
-    # What is the minimum time you wish to keep an archive file for ?
-    retain_days = 30
-}
-
-# Settings for the running LVM2 in shell (readline) mode.
-shell {
-
-    # Number of lines of history to store in ~/.lvm_history
-    history_size = 100
-}
-
-
-# Miscellaneous global LVM2 settings
-global {
-    
-    # The file creation mask for any files and directories created.
-    # Interpreted as octal if the first digit is zero.
-    umask = 077
-
-    # Allow other users to read the files
-    #umask = 022
-
-    # Enabling test mode means that no changes to the on disk metadata
-    # will be made.  Equivalent to having the -t option on every
-    # command.  Defaults to off.
-    test = 0
-
-    # Whether or not to communicate with the kernel device-mapper.
-    # Set to 0 if you want to use the tools to manipulate LVM metadata 
-    # without activating any logical volumes.
-    # If the device-mapper kernel driver is not present in your kernel
-    # setting this to 0 should suppress the error messages.
-    activation = 1
-
-    # If we can't communicate with device-mapper, should we try running 
-    # the LVM1 tools?
-    # This option only applies to 2.4 kernels and is provided to help you
-    # switch between device-mapper kernels and LVM1 kernels.
-    # The LVM1 tools need to be installed with .lvm1 suffices
-    # e.g. vgscan.lvm1 and they will stop working after you start using
-    # the new lvm2 on-disk metadata format.
-    # The default value is set when the tools are built.
-    # fallback_to_lvm1 = 0
-
-    # The default metadata format that commands should use - "lvm1" or "lvm2".
-    # The command line override is -M1 or -M2.
-    # Defaults to "lvm1" if compiled in, else "lvm2".
-    # format = "lvm1"
-
-    # Location of proc filesystem
-    proc = "/proc"
-
-    # Type of locking to use. Defaults to file-based locking (1).
-    # Turn locking off by setting to 0 (dangerous: risks metadata corruption
-    # if LVM2 commands get run concurrently).
-    locking_type = 1
-
-    # Local non-LV directory that holds file-based locks while commands are
-    # in progress.  A directory like /tmp that may get wiped on reboot is OK.
-    locking_dir = "/var/lock/lvm"
-
-    # Other entries can go here to allow you to load shared libraries
-    # e.g. if support for LVM1 metadata was compiled as a shared library use
-    #   format_libraries = "liblvm2format1.so" 
-    # Full pathnames can be given.
-
-    # Search this directory first for shared libraries.
-    #   library_dir = "/lib"
-}
-
-activation {
-    # Device used in place of missing stripes if activating incomplete volume.
-    # For now, you need to set this up yourself first (e.g. with 'dmsetup')
-    # For example, you could make it return I/O errors using the 'error' 
-    # target or make it return zeros.
-    missing_stripe_filler = "/dev/ioerror"
-
-    # Size (in KB) of each copy operation when mirroring
-    mirror_region_size = 512
-
-    # How much stack (in KB) to reserve for use while devices suspended
-    reserved_stack = 256
-
-    # How much memory (in KB) to reserve for use while devices suspended
-    reserved_memory = 8192
-
-    # Nice value used while devices suspended
-    process_priority = -18
-
-    # If volume_list is defined, each LV is only activated if there is a
-    # match against the list.
-    #   "vgname" and "vgname/lvname" are matched exactly.
-    #   "@tag" matches any tag set in the LV or VG.
-    #   "@*" matches if any tag defined on the host is also set in the LV or VG
-    #
-    # volume_list = [ "vg1", "vg2/lvol1", "@tag1", "@*" ]
-}
-
-
-####################
-# Advanced section #
-####################
-
-# Metadata settings
-#
-# metadata {
-    # Default number of copies of metadata to hold on each PV.  0, 1 or 2.
-    # You might want to override it from the command line with 0 
-    # when running pvcreate on new PVs which are to be added to large VGs.
-
-    # pvmetadatacopies = 1
-
-    # Approximate default size of on-disk metadata areas in sectors.
-    # You should increase this if you have large volume groups or
-    # you want to retain a large on-disk history of your metadata changes.
-
-    # pvmetadatasize = 255
-
-    # List of directories holding live copies of text format metadata.
-    # These directories must not be on logical volumes!
-    # It's possible to use LVM2 with a couple of directories here,
-    # preferably on different (non-LV) filesystems, and with no other 
-    # on-disk metadata (pvmetadatacopies = 0). Or this can be in
-    # addition to on-disk metadata areas.
-    # The feature was originally added to simplify testing and is not
-    # supported under low memory situations - the machine could lock up.
-    #
-    # Never edit any files in these directories by hand unless you
-    # you are absolutely sure you know what you are doing! Use
-    # the supplied toolset to make changes (e.g. vgcfgrestore).
-
-    # dirs = [ "/etc/lvm/metadata", "/mnt/disk2/lvm/metadata2" ]
-#}
-
-
-
---=-1vvq5bme7LKlSDR4COy9
-Content-Disposition: attachment; filename=multipath.conf.cisco
-Content-Type: text/plain; name=multipath.conf.cisco; charset=utf-8
+Content-Disposition: inline;
+ filename="device-mapper-geometry_1.patch"
+
+diff -Naurp -x '*CVS*' device-mapper-cvs/dmsetup/dmsetup.c device-mapper/dmsetup/dmsetup.c
+--- device-mapper-cvs/dmsetup/dmsetup.c	2006-02-03 06:23:22.000000000 -0800
++++ device-mapper/dmsetup/dmsetup.c	2006-02-15 10:57:56.000000000 -0800
+@@ -35,6 +35,7 @@
+ #include <sys/param.h>
+ #include <locale.h>
+ #include <langinfo.h>
++#include <linux/hdreg.h>
+ 
+ #ifdef HAVE_SYS_IOCTL_H
+ #  include <sys/ioctl.h>
+@@ -508,6 +509,73 @@ static int _message(int argc, char **arg
+ 	return r;
+ }
+ 
++static int _setgeo(int argc, char **argv, void *data)
++{
++	int r = 0, i;
++	struct dm_task *dmt;
++	struct hd_geometry *geo = NULL;
++	long long x;
++
++	if (!(dmt = dm_task_create(DM_DEVICE_SETGEO)))
++		return 0;
++
++	if (_switches[UUID_ARG] || _switches[MAJOR_ARG]) {
++		if (!_set_task_device(dmt, NULL, 0))
++			goto out;
++	} else {
++		if (!_set_task_device(dmt, argv[1], 0))
++			goto out;
++		argc--;
++		argv++;
++	}
++
++	for (i = 0; i < argc; i++) {
++		printf("_setgeo[%d] = %s\n", i, argv[i]);
++	}
++
++	geo = calloc(1, sizeof(*geo) + 1);
++	if (!geo)
++		goto out;
++
++	/* Now start filling out the geometry structure. */
++	x = strtoll(argv[1], NULL, 10);
++	if (x > USHRT_MAX || x < 0)
++		goto out;
++	geo->cylinders = (unsigned long)x;
++
++	x = strtoll(argv[2], NULL, 10);
++	if (x > UCHAR_MAX || x < 0)
++		goto out;
++	geo->heads = x;
++
++	x = strtoll(argv[3], NULL, 10);
++	if (x > UCHAR_MAX || x < 0)
++		goto out;
++	geo->sectors = x;
++	
++	x = strtoll(argv[4], NULL, 10);
++	if (x > UINT_MAX || x < 0)
++		goto out;
++	geo->start = x;
++
++	/* FIXME: Is piggybacking a structure as a string too evil? */
++	if (!dm_task_set_message(dmt, (char *)geo))
++		goto out;
++
++	/* run the task */
++	if (!dm_task_run(dmt))
++		goto out;
++
++	r = 1;
++
++      out:
++	if (geo)
++		free(geo);
++	dm_task_destroy(dmt);
++
++	return r;
++}
++
+ static int _version(int argc, char **argv, void *data)
+ {
+ 	char version[80];
+@@ -1326,6 +1394,7 @@ static struct command _commands[] = {
+ 	{"mknodes", "[<device>]", 0, 1, _mknodes},
+ 	{"targets", "", 0, 0, _targets},
+ 	{"version", "", 0, 0, _version},
++	{"setgeometry", "<device> <cyl> <head> <sect> <start>", 5, 5, _setgeo},
+ 	{NULL, NULL, 0, 0, NULL}
+ };
+ 
+diff -Naurp -x '*CVS*' device-mapper-cvs/kernel/ioctl/dm-ioctl.h device-mapper/kernel/ioctl/dm-ioctl.h
+--- device-mapper-cvs/kernel/ioctl/dm-ioctl.h	2005-10-04 13:12:32.000000000 -0700
++++ device-mapper/kernel/ioctl/dm-ioctl.h	2006-02-14 14:24:08.000000000 -0800
+@@ -220,6 +220,8 @@ enum {
+ 	/* Added later */
+ 	DM_LIST_VERSIONS_CMD,
+ 	DM_TARGET_MSG_CMD,
++
++	DM_DEV_SETGEO_CMD
+ };
+ 
+ /*
+@@ -249,6 +251,7 @@ typedef char ioctl_struct[308];
+ #define DM_TABLE_STATUS_32  _IOWR(DM_IOCTL, DM_TABLE_STATUS_CMD, ioctl_struct)
+ #define DM_LIST_VERSIONS_32 _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, ioctl_struct)
+ #define DM_TARGET_MSG_32    _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, ioctl_struct)
++#define DM_DEV_SETGEO_32    _IOWR(DM_IOCTL, DM_DEV_SETGEO_CMD, ioctl_struct)
+ #endif
+ 
+ #define DM_IOCTL 0xfd
+@@ -272,6 +275,7 @@ typedef char ioctl_struct[308];
+ #define DM_LIST_VERSIONS _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, struct dm_ioctl)
+ 
+ #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
++#define DM_DEV_SETGEO	 _IOWR(DM_IOCTL, DM_DEV_SETGEO_CMD, struct dm_ioctl)
+ 
+ #define DM_VERSION_MAJOR	4
+ #define DM_VERSION_MINOR	5
+diff -Naurp -x '*CVS*' device-mapper-cvs/lib/ioctl/libdm-iface.c device-mapper/lib/ioctl/libdm-iface.c
+--- device-mapper-cvs/lib/ioctl/libdm-iface.c	2006-02-03 06:23:22.000000000 -0800
++++ device-mapper/lib/ioctl/libdm-iface.c	2006-02-14 14:23:16.000000000 -0800
+@@ -103,6 +103,9 @@ static struct cmd_data _cmd_data_v4[] = 
+ #ifdef DM_TARGET_MSG
+ 	{"message",	DM_TARGET_MSG,		{4, 2, 0}},
+ #endif
++#ifdef DM_DEV_SETGEO
++	{"setgeo",	DM_DEV_SETGEO,		{4, 2, 0}},
++#endif
+ };
+ /* *INDENT-ON* */
+ 
+diff -Naurp -x '*CVS*' device-mapper-cvs/lib/libdevmapper.h device-mapper/lib/libdevmapper.h
+--- device-mapper-cvs/lib/libdevmapper.h	2006-02-03 06:23:22.000000000 -0800
++++ device-mapper/lib/libdevmapper.h	2006-02-14 14:04:55.000000000 -0800
+@@ -80,7 +80,9 @@ enum {
+ 
+ 	DM_DEVICE_LIST_VERSIONS,
+ 	
+-	DM_DEVICE_TARGET_MSG
++	DM_DEVICE_TARGET_MSG,
++
++	DM_DEVICE_SETGEO
+ };
+ 
+ struct dm_task;
+
+--------------050009090802040106030209
+Content-Type: text/x-patch;
+ name="dm-getgeo_1.patch"
 Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-getgeo_1.patch"
 
-# See /usr/share/doc/device-mapper-multipath-*/multipath.conf.annotated
-# for a fully-detailed multipath.conf.
-#
-# BEGIN Cisco-specific configuration
-defaults {
-       multipath_tool           "/sbin/multipath -v0"
-       udev_dir                 /dev
-       polling_interval         10
-       default_selector         "round-robin 0"
-       default_path_grouping_policy    multibus
-       default_getuid_callout   "/sbin/scsi_id -g -u -s /block/%n"
-       default_prio_callout     "/bin/true"
-       default_features         "0"
-       rr_wmin_io               100
-       failback                 immediate
-}
-# Only specify options in the devices section to override the defaults.
-devices {
-    # EMC Symmetrix / DMX
-    device {
-        vendor                  "EMC     "
-        product                 "SYMMETRIX     "
-    }
-    # EMC Clariion (active/passive)
-    device {
-        vendor "DGC     "
-        product "RAID 5        "
-        path_grouping_policy    failover
-        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-        path_checker            emc_clariion
-        path_selector           "round-robin 0"
-        features	            "0"
-        hardware_handler        "1 emc"
-        failback                immediate
-    }
-    device {
-        vendor "DGC     "
-        product "              "
-        path_grouping_policy    failover
-        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-        path_checker            emc_clariion
-        path_selector           "round-robin 0"
-        features	            "0"
-        hardware_handler        "1 emc"
-        failback                immediate
-    }
-}
-# END Cisco-specific configuration
+diff -Naurp old/drivers/md/dm.c linux-2.6.16-rc3/drivers/md/dm.c
+--- old/drivers/md/dm.c	2006-02-15 10:49:46.000000000 -0800
++++ linux-2.6.16-rc3/drivers/md/dm.c	2006-02-15 10:42:14.000000000 -0800
+@@ -17,6 +17,7 @@
+ #include <linux/mempool.h>
+ #include <linux/slab.h>
+ #include <linux/idr.h>
++#include <linux/hdreg.h>
+ 
+ static const char *_name = DM_NAME;
+ 
+@@ -225,6 +226,16 @@ static int dm_blk_close(struct inode *in
+ 	return 0;
+ }
+ 
++static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
++{
++	int ret;
++	struct mapped_device *md = bdev->bd_disk->private_data;
++
++	ret = dm_table_get_geometry(md->map, geo);
++
++	return (ret ? 0 : -ENOTTY);
++}	
++
+ static inline struct dm_io *alloc_io(struct mapped_device *md)
+ {
+ 	return mempool_alloc(md->io_pool, GFP_NOIO);
+@@ -1242,6 +1253,7 @@ int dm_suspended(struct mapped_device *m
+ static struct block_device_operations dm_blk_dops = {
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
++	.getgeo = dm_blk_getgeo,
+ 	.owner = THIS_MODULE
+ };
+ 
+diff -Naurp old/drivers/md/dm.h linux-2.6.16-rc3/drivers/md/dm.h
+--- old/drivers/md/dm.h	2006-02-15 10:49:46.000000000 -0800
++++ linux-2.6.16-rc3/drivers/md/dm.h	2006-02-13 17:35:24.000000000 -0800
+@@ -123,6 +123,8 @@ void dm_table_resume_targets(struct dm_t
+ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
+ void dm_table_unplug_all(struct dm_table *t);
+ int dm_table_flush_all(struct dm_table *t);
++int dm_table_get_geometry(struct dm_table *t, struct hd_geometry *geo);
++int dm_table_set_geometry(struct dm_table *t, struct hd_geometry *geo);
+ 
+ /*-----------------------------------------------------------------
+  * A registry of target types.
+diff -Naurp old/drivers/md/dm-ioctl.c linux-2.6.16-rc3/drivers/md/dm-ioctl.c
+--- old/drivers/md/dm-ioctl.c	2006-02-15 10:49:46.000000000 -0800
++++ linux-2.6.16-rc3/drivers/md/dm-ioctl.c	2006-02-15 10:51:19.000000000 -0800
+@@ -690,6 +690,35 @@ static int dev_rename(struct dm_ioctl *p
+ 	return dm_hash_rename(param->name, new_name);
+ }
+ 
++static int dev_setgeo(struct dm_ioctl *param, size_t param_size)
++{
++	int r = 0;
++	size_t len;
++	struct mapped_device *md;
++	struct dm_table *tbl;
++	struct dm_geometry_msg *dgm;
++	struct dm_target_msg *tmsg;
++
++	md = find_device(param);
++	if (!md)
++		return -ENXIO;
++
++	/*
++	 * Grab our output buffer.
++	 */
++	tmsg = get_result_buffer(param, param_size, &len);
++	dgm = (struct dm_geometry_msg *)tmsg->message;
++
++	tbl = dm_get_table(md);
++
++	r = dm_table_set_geometry(tbl, &dgm->geo);
++
++	dm_table_put(tbl);
++	dm_put(md);
++
++	return (r ? 0 : -EINVAL);
++}
++
+ static int do_suspend(struct dm_ioctl *param)
+ {
+ 	int r = 0;
+@@ -1214,7 +1243,8 @@ static ioctl_fn lookup_ioctl(unsigned in
+ 
+ 		{DM_LIST_VERSIONS_CMD, list_versions},
+ 
+-		{DM_TARGET_MSG_CMD, target_message}
++		{DM_TARGET_MSG_CMD, target_message},
++		{DM_DEV_SETGEO_CMD, dev_setgeo}
+ 	};
+ 
+ 	return (cmd >= ARRAY_SIZE(_ioctls)) ? NULL : _ioctls[cmd].fn;
+diff -Naurp old/drivers/md/dm-table.c linux-2.6.16-rc3/drivers/md/dm-table.c
+--- old/drivers/md/dm-table.c	2006-02-15 10:49:46.000000000 -0800
++++ linux-2.6.16-rc3/drivers/md/dm-table.c	2006-02-15 10:42:37.000000000 -0800
+@@ -15,6 +15,7 @@
+ #include <linux/slab.h>
+ #include <linux/interrupt.h>
+ #include <asm/atomic.h>
++#include <linux/hdreg.h>
+ 
+ #define MAX_DEPTH 16
+ #define NODE_SIZE L1_CACHE_BYTES
+@@ -53,6 +54,9 @@ struct dm_table {
+ 	/* events get handed up using this callback */
+ 	void (*event_fn)(void *);
+ 	void *event_context;
++
++	/* forced geometry settings */
++	struct hd_geometry forced_geometry;
+ };
+ 
+ /*
+@@ -945,6 +949,29 @@ int dm_table_flush_all(struct dm_table *
+ 	return ret;
+ }
+ 
++int dm_table_get_geometry(struct dm_table *t, struct hd_geometry *geo)
++{
++	sector_t sects;
++
++	sects = t->forced_geometry.cylinders * t->forced_geometry.heads
++		* t->forced_geometry.sectors;
++
++	if (!sects) {
++		return 0;
++	}
++
++	memcpy(geo, &t->forced_geometry, sizeof(*geo));
++
++	return 1;
++}
++
++int dm_table_set_geometry(struct dm_table *t, struct hd_geometry *geo)
++{
++	memcpy(&t->forced_geometry, geo, sizeof(*geo));
++
++	return 1;
++}
++
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
+diff -Naurp old/include/linux/dm-ioctl.h linux-2.6.16-rc3/include/linux/dm-ioctl.h
+--- old/include/linux/dm-ioctl.h	2006-02-15 10:49:47.000000000 -0800
++++ linux-2.6.16-rc3/include/linux/dm-ioctl.h	2006-02-13 18:05:45.000000000 -0800
+@@ -9,6 +9,7 @@
+ #define _LINUX_DM_IOCTL_V4_H
+ 
+ #include <linux/types.h>
++#include <linux/hdreg.h>
+ 
+ #define DM_DIR "mapper"		/* Slashes not supported */
+ #define DM_MAX_TYPE_NAME 16
+@@ -191,6 +192,11 @@ struct dm_target_msg {
+ 	char message[0];
+ };
+ 
++/* Used to force a geometry */
++struct dm_geometry_msg {
++	struct hd_geometry geo;
++};
++
+ /*
+  * If you change this make sure you make the corresponding change
+  * to dm-ioctl.c:lookup_ioctl()
+@@ -218,6 +224,7 @@ enum {
+ 	/* Added later */
+ 	DM_LIST_VERSIONS_CMD,
+ 	DM_TARGET_MSG_CMD,
++	DM_DEV_SETGEO_CMD,
+ };
+ 
+ /*
+@@ -247,6 +254,7 @@ typedef char ioctl_struct[308];
+ #define DM_TABLE_STATUS_32  _IOWR(DM_IOCTL, DM_TABLE_STATUS_CMD, ioctl_struct)
+ #define DM_LIST_VERSIONS_32 _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, ioctl_struct)
+ #define DM_TARGET_MSG_32    _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, ioctl_struct)
++#define DM_DEV_SETGEO_32    _IOWR(DM_IOCTL, DM_DEV_SETGEO_CMD, ioctl_struct)
+ #endif
+ 
+ #define DM_IOCTL 0xfd
+@@ -270,6 +278,7 @@ typedef char ioctl_struct[308];
+ #define DM_LIST_VERSIONS _IOWR(DM_IOCTL, DM_LIST_VERSIONS_CMD, struct dm_ioctl)
+ 
+ #define DM_TARGET_MSG	 _IOWR(DM_IOCTL, DM_TARGET_MSG_CMD, struct dm_ioctl)
++#define DM_DEV_SETGEO	 _IOWR(DM_IOCTL, DM_DEV_SETGEO_CMD, struct dm_ioctl)
+ 
+ #define DM_VERSION_MAJOR	4
+ #define DM_VERSION_MINOR	5
 
---=-1vvq5bme7LKlSDR4COy9
+--------------050009090802040106030209
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---=-1vvq5bme7LKlSDR4COy9--
+--------------050009090802040106030209--
