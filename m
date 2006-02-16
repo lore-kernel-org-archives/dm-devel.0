@@ -1,14 +1,11 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: Multipathing with RHEL4 U2 on EMC DMX
-Date: Thu, 16 Feb 2006 22:45:17 +0100
-Message-ID: <43F4F26D.2000401@bzed.de>
-References: <2CF4E90F20CF3C4DBD3A71BD9FA2758D122FAF@PSCDALPEXCH03.perotsystems.net>
+From: egoggin@emc.com
+Subject: RE: Multipathing with RHEL4 U2 on EMC DMX
+Date: Thu, 16 Feb 2006 17:05:19 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321B02C@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2CF4E90F20CF3C4DBD3A71BD9FA2758D122FAF@PSCDALPEXCH03.perotsystems.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,24 +15,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+on Thursday, February 16, 2006 4:09 PM Child, David wrote:
 
->Now I have auto-detected multipaths for each EMC Symm LUN and each
->partition on those LUNs (if any). The last item of importance (the most
->important actually) is to figure out why both paths to a device get
->knocked offline (failed) at the same time when hit with high I/O (see
->original post).
->  
->
-thanks for the reminder - I had overlooked this part of your first
-posting - just replied to it.
+> 3. At this point auto-discovery of the paths worked, but my 
+> device files
+> were called things like: SEMC_____SYMMETRIX______790367051000. That
+> didn't look useful so I added the following to /etc/multipath.conf;
+> 	multipaths {
+> 		multipath {
+> 			wwid
+> SEMC_____SYMMETRIX______790367051000
+> 			alias                   sym051mp
+> 		}
+> 		<repeat for each LUN>
+> 	}
 
-Could you also please add your infos to
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments ?
+The upstream version of scsi_id kept within udev is changed to support
+retrieving a device UID from older model (4, 5, and 6) Symmetrix storage
+arrays via the new scsi_id option "pre-spc3-83".  Red Hat may have a version
+of the udev RPM for update 2 with this change.
 
-Thanks,
+Setting up the Symmetrix device entry in /etc/multipath.conf to also use
+this option "-ppre-spc3-83" will cause dm multipath to generate mapped
+device names for Symmetrix logical units which do not have the vendor/model
+prefix.
 
-Bernd
+Both of these changes are in SuSE SLES 9 SP3 and it works as stated above.
