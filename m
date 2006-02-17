@@ -1,12 +1,11 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 1/3] sysfs representation of stacked devices
-	(dm/md common)
-Date: Fri, 17 Feb 2006 13:01:48 -0500
-Message-ID: <43F60F8C.8090207@ce.jp.nec.com>
+Subject: [PATCH 2/3] sysfs representation of stacked devices (dm)
+Date: Fri, 17 Feb 2006 13:03:55 -0500
+Message-ID: <43F6100B.4000001@ce.jp.nec.com>
 References: <43F60F31.1030507@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------090707000204020103000604"
+Content-Type: multipart/mixed; boundary="------------080307080201050907090904"
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <43F60F31.1030507@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -23,227 +22,122 @@ Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.or
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------090707000204020103000604
+--------------080307080201050907090904
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
-This patch provides common functions to create symlinks in sysfs
-between stacked device and its slaves.
-
-I placed functions in fs/block_dev.c as some of them are
-privately used by bd_claim().
-I'm not sure if it's better to put them in other files.
+This patch modifies dm driver to create symlinks to/from
+underlying devices.
 
 -- 
 Jun'ichi Nomura, NEC Solutions (America), Inc.
 
---------------090707000204020103000604
+--------------080307080201050907090904
 Content-Type: text/x-patch;
-	name="stacked-device-representation-in-sysfs-1-common.patch"
+	name="stacked-device-representation-in-sysfs-1-dm.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
-	filename="stacked-device-representation-in-sysfs-1-common.patch"
+	filename="stacked-device-representation-in-sysfs-1-dm.patch"
 
-Exporting stacked device relationship to sysfs (common functions)
+Exporting stacked device relationship to sysfs (dm)
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
---- linux-2.6.15.orig/include/linux/fs.h	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/include/linux/fs.h	2006-02-16 10:46:31.000000000 -0500
-@@ -373,6 +373,7 @@ struct block_device {
- 	struct list_head	bd_inodes;
- 	void *			bd_holder;
- 	int			bd_holders;
-+	struct kobject		bd_holder_kobj;
- 	struct block_device *	bd_contains;
- 	unsigned		bd_block_size;
- 	struct hd_struct *	bd_part;
-@@ -1352,6 +1353,13 @@ extern int blkdev_put(struct block_devic
- extern int bd_claim(struct block_device *, void *);
- extern void bd_release(struct block_device *);
+--- linux-2.6.15.orig/drivers/md/dm.c	2006-01-02 22:21:10.000000000 -0500
++++ linux-2.6.15/drivers/md/dm.c	2006-02-14 12:18:13.000000000 -0500
+@@ -853,6 +853,7 @@ static int __bind(struct mapped_device *
  
-+/* stacked device linking */
-+extern void stackdev_init(struct kobject *, struct kobject *);
-+extern void stackdev_clear(struct kobject *);
-+extern void stackdev_link(struct block_device *,
-+				struct kobject *, struct kobject *);
-+extern void stackdev_unlink(struct block_device *,
-+				struct kobject *, struct kobject *);
- /* fs/char_dev.c */
- extern int alloc_chrdev_region(dev_t *, unsigned, unsigned, const char *);
- extern int register_chrdev_region(dev_t, unsigned, const char *);
---- linux-2.6.15.orig/fs/block_dev.c	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/fs/block_dev.c	2006-02-17 10:06:17.000000000 -0500
-@@ -443,6 +443,126 @@ void bd_forget(struct inode *inode)
- 	spin_unlock(&bdev_lock);
+ 	dm_table_get(t);
+ 	dm_table_event_callback(t, event_callback, md);
++	dm_link_device(md, t);
+ 
+ 	write_lock(&md->map_lock);
+ 	md->map = t;
+@@ -873,6 +874,7 @@ static void __unbind(struct mapped_devic
+ 	write_lock(&md->map_lock);
+ 	md->map = NULL;
+ 	write_unlock(&md->map_lock);
++	dm_unlink_device(md, map);
+ 	dm_table_put(map);
  }
  
-+/*
-+ * kobject linking functions for stacked device
-+ */
-+
-+static inline struct kobject * bdev_get_kobj(struct block_device *bdev)
-+{
-+	if (!bdev)
-+		return NULL;
-+	else if (bdev->bd_contains != bdev)
-+		return kobject_get(&bdev->bd_part->kobj);
-+	else
-+		return kobject_get(&bdev->bd_disk->kobj);
-+}
-+
-+static inline void add_symlink(struct kobject *from, struct kobject *to)
-+{
-+	if (!from || !to)
-+		return;
-+	sysfs_create_link(from, to, kobject_name(to));
-+}
-+
-+static inline void del_symlink(struct kobject *from, struct kobject *to)
-+{
-+	if (!from || !to)
-+		return;
-+	sysfs_remove_link(from, kobject_name(to));
-+}
-+
-+/* This is a mere directory in sysfs. No methods are needed. */
-+static struct kobj_type bd_holder_ktype = {
-+	.release	= NULL,
-+	.sysfs_ops	= NULL,
-+	.default_attrs	= NULL,
-+};
-+
-+/*
-+ * Set the bdev as possible slave of a stacked device
-+ * (called from bd_claim)
-+ */
-+static inline void add_holder_object(struct block_device *bdev)
-+{
-+	struct kobject *kobj = &bdev->bd_holder_kobj;
-+
-+	kobj->ktype = &bd_holder_ktype;
-+	kobject_set_name(kobj, "holders");
-+	kobj->parent = bdev_get_kobj(bdev);
-+	kobject_register(kobj);
-+	kobject_put(kobj->parent);
-+}
-+
-+/*
-+ * Declare the bdev is no longer a possible slave of a stacked device
-+ * (called from bd_release)
-+ */
-+static inline void del_holder_object(struct block_device *bdev)
-+{
-+	kobject_unregister(&bdev->bd_holder_kobj);
-+}
-+
-+/* This is a mere directory in sysfs. No methods are needed. */
-+static struct kobj_type bd_slave_ktype = {
-+	.release	= NULL,
-+	.sysfs_ops	= NULL,
-+	.default_attrs	= NULL,
-+};
-+
-+/* Set the bdev as stacked device */
-+void stackdev_init(struct kobject *slave_dir, struct kobject *holder_dev)
-+{
-+	slave_dir->ktype = &bd_slave_ktype;
-+	kobject_set_name(slave_dir, "slaves");
-+	slave_dir->parent = holder_dev;
-+
-+	kobject_register(slave_dir);
-+}
-+EXPORT_SYMBOL(stackdev_init);
-+
-+/* Declare the bdev is no longer a stacked device */
-+void stackdev_clear(struct kobject *slave_dir)
-+{
-+	kobject_unregister(slave_dir);
-+}
-+EXPORT_SYMBOL(stackdev_clear);
-+
-+/*
-+ * Create symlinks between the holder and the slave of the stacked device.
-+ * The slave devices needs to be bd_claim()-ed before.
-+ */
-+void stackdev_link(struct block_device *slave,
-+			struct kobject *slave_dir, struct kobject *holder_dev)
-+{
-+	struct kobject *slave_dev, *holder_dir;
-+
-+	slave_dev = bdev_get_kobj(slave);
-+
-+	add_symlink(slave_dir, slave_dev);
-+	add_symlink(&slave->bd_holder_kobj, holder_dev);
-+
-+	kobject_put(slave_dev);
-+}
-+EXPORT_SYMBOL(stackdev_link);
-+
-+/*
-+ * Remove symlinks between the holder and the slave of the stacked device.
-+ * This should be called before bd_release() the slave device.
-+ */
-+void stackdev_unlink(struct block_device *slave,
-+			struct kobject *slave_dir, struct kobject *holder_dev)
-+{
-+	struct kobject *slave_dev, *holder_dir;
-+
-+	slave_dev = bdev_get_kobj(slave);
-+
-+	del_symlink(slave_dir, slave_dev);
-+	del_symlink(&slave->bd_holder_kobj, holder_dev);
-+
-+	kobject_put(slave_dev);
-+}
-+EXPORT_SYMBOL(stackdev_unlink);
-+
- int bd_claim(struct block_device *bdev, void *holder)
- {
- 	int res;
-@@ -450,7 +570,7 @@ int bd_claim(struct block_device *bdev, 
+--- linux-2.6.15.orig/drivers/md/dm.h	2006-01-02 22:21:10.000000000 -0500
++++ linux-2.6.15/drivers/md/dm.h	2006-02-14 12:21:10.000000000 -0500
+@@ -94,6 +94,12 @@ int dm_wait_event(struct mapped_device *
+ struct gendisk *dm_disk(struct mapped_device *md);
+ int dm_suspended(struct mapped_device *md);
  
- 	/* first decide result */
- 	if (bdev->bd_holder == holder)
--		res = 0;	 /* already a holder */
-+		res = 1;	 /* already a holder */
- 	else if (bdev->bd_holder != NULL)
- 		res = -EBUSY; 	 /* held by someone else */
- 	else if (bdev->bd_contains == bdev)
-@@ -469,10 +589,14 @@ int bd_claim(struct block_device *bdev, 
- 		 * will be incremented twice, and bd_holder will
- 		 * be set to bd_claim before being set to holder
- 		 */
--		bdev->bd_contains->bd_holders ++;
- 		bdev->bd_contains->bd_holder = bd_claim;
--		bdev->bd_holders++;
- 		bdev->bd_holder = holder;
-+		add_holder_object(bdev);
-+	}
-+	if (res >= 0) {
-+		bdev->bd_contains->bd_holders ++;
-+		bdev->bd_holders++;
-+		res = 0;
- 	}
- 	spin_unlock(&bdev_lock);
- 	return res;
-@@ -485,8 +609,10 @@ void bd_release(struct block_device *bde
- 	spin_lock(&bdev_lock);
- 	if (!--bdev->bd_contains->bd_holders)
- 		bdev->bd_contains->bd_holder = NULL;
--	if (!--bdev->bd_holders)
-+	if (!--bdev->bd_holders) {
- 		bdev->bd_holder = NULL;
-+		del_holder_object(bdev);
-+	}
- 	spin_unlock(&bdev_lock);
++/*
++ * kobject linking functions
++ */
++int dm_link_device(struct mapped_device *md, struct dm_table *t);
++int dm_unlink_device(struct mapped_device *md, struct dm_table *t);
++
+ /*-----------------------------------------------------------------
+  * Functions for manipulating a table.  Tables are also reference
+  * counted.
+--- linux-2.6.15.orig/drivers/md/dm-table.c	2006-01-02 22:21:10.000000000 -0500
++++ linux-2.6.15/drivers/md/dm-table.c	2006-02-16 23:25:49.000000000 -0500
+@@ -53,6 +53,9 @@ struct dm_table {
+ 	/* events get handed up using this callback */
+ 	void (*event_fn)(void *);
+ 	void *event_context;
++
++	/* sysfs deptree */
++	struct kobject slave_dir;
+ };
+ 
+ /*
+@@ -945,6 +948,43 @@ int dm_table_flush_all(struct dm_table *
+ 	return ret;
  }
+ 
++/* create sysfs symlinks between mapped device and underlying devices */
++int dm_link_device(struct mapped_device *md, struct dm_table *t)
++{
++	struct list_head *d, *devices;
++	struct kobject *md_kobj;
++
++	md_kobj = &dm_disk(md)->kobj;
++	stackdev_init(&t->slave_dir, md_kobj);
++
++	devices = dm_table_get_devices(t);
++	for (d = devices->next; d != devices; d = d->next) {
++		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
++		stackdev_link(dd->bdev, &t->slave_dir, md_kobj);
++	}
++
++	return 0;
++}
++
++/* remove sysfs symlinks between mapped device and underlying devices */
++int dm_unlink_device(struct mapped_device *md, struct dm_table *t)
++{
++	struct list_head *d, *devices;
++	struct kobject *md_kobj;
++
++	md_kobj = &dm_disk(md)->kobj;
++
++	devices = dm_table_get_devices(t);
++	for (d = devices->next; d != devices; d = d->next) {
++		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
++		stackdev_unlink(dd->bdev, &t->slave_dir, md_kobj);
++	}
++
++	stackdev_clear(&t->slave_dir);
++
++	return 0;
++}
++
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
 
---------------090707000204020103000604
+--------------080307080201050907090904
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------090707000204020103000604--
+--------------080307080201050907090904--
