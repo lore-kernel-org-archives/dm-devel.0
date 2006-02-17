@@ -1,13 +1,16 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 3/3] sysfs representation of stacked devices (md)
-Date: Fri, 17 Feb 2006 13:05:18 -0500
-Message-ID: <43F6105E.4040005@ce.jp.nec.com>
-References: <43F60F31.1030507@ce.jp.nec.com>
+From: "Allen Jack" <AJACK@novell.com>
+Subject: Re: Opening a dm device reads from cache, not the device.
+Date: Fri, 17 Feb 2006 11:18:19 -0700
+Message-ID: <43F5B0FB.8B4D.000D.0@novell.com>
+References: <43F35F58.8B4D.000D.0@novell.com>
+	<20060217175601.GB23651@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------090309030209000200080906"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <43F60F31.1030507@ce.jp.nec.com>
+In-Reply-To: <20060217175601.GB23651@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,83 +20,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------090309030209000200080906
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+This is my own RAID0 and RAID5 plugin, not one that ships with
+device-mapper.  I have already put in the logic within the plugin to not
+use my cache when using clustering.  That is not the problem.  The
+problem is that if an application in user space opens the RAID5 device
+that was created (using open("/dev/evms/.nodes/r5", O_RDWR | O_SYNC |
+O_DIRECT)) it will open successfully.  If I read sector 0 (the first 512
+bytes) it will return data that is cached somewhere (I don't know
+where).  I have a print statement in the map routine of my plugin, and
+it never gets hit during the read.  If I then read some random sector
+out, my plugin map code does get hit, and I return the data.
 
-This patch modifies md driver to create symlinks to/from
-underlying devices.
+So, the problem is that somewhere the data is being cached when the
+device is being opened. This happens above my plugin.   In a cluster,
+this is bad because I cannot even return the current data on the disk.
 
--- 
-Jun'ichi Nomura, NEC Solutions (America), Inc.
+Is there something I need to do to disable this caching outside from my
+plugin?  Is the data being cached by reiser or device-mapper?  That is
+the question.
 
---------------090309030209000200080906
-Content-Type: text/x-patch;
-	name="stacked-device-representation-in-sysfs-1-md.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename="stacked-device-representation-in-sysfs-1-md.patch"
+Allen
 
-Exporting stacked device relationship to sysfs (md)
+Allen Jack
+email - ajack@novell.com
+Novell, Inc., the leading provider of information solutions
+http://www.novell.com
 
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+>>>> Heinz Mauelshagen <mauelshagen@redhat.com> 2/17/2006 10:56 am >>>
+>
+>Is this dm-raid45 ?
+>
+>If so, you'll need to add cluster logic to it (ie. taking locks
+>out on stripe cache accesses, invalidating stripes etc).
+>
+>>On Wed, Feb 15, 2006 at 05:05:28PM -0700, Allen Jack wrote:
+>> I have a RAID5 plugin that is also used with clustering.  I open
+the
+>> raid device (created in device-mapper) using the O_SYNC and
+O_DIRECT
+>> flags, but it seems to read the data from a cache somewhere.  I put
+a
+>> printk in my plugin map function, but it doesn't get hit.  If
+another
+>> node in the cluster changes the data on the disk, it never gets
+>> refreshed on this node because of the caching.
+>> 
+>> Is there any way to turn off the caching so that all read requests
+come
+>> to my plugin?  And where is the caching taking place?
+>> 
+>> Thanks,
+>> 
+>> Allen
+>> 
+>> Allen Jack
+>> email - ajack@novell.com 
+>> Novell, Inc., the leading provider of information solutions
+>> http://www.novell.com 
+>> 
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com 
+>> https://www.redhat.com/mailman/listinfo/dm-devel 
 
---- linux-2.6.15.orig/include/linux/raid/md_k.h	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/include/linux/raid/md_k.h	2006-02-16 15:36:22.000000000 -0500
-@@ -155,6 +155,7 @@ struct mddev_s
- 	struct gendisk			*gendisk;
- 
- 	struct kobject			kobj;
-+	struct kobject			slave_dir;
- 
- 	/* Superblock information */
- 	int				major_version,
-md.c linux-2.6.15/drivers/md/md.c
---- linux-2.6.15.orig/drivers/md/md.c	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/drivers/md/md.c	2006-02-16 17:44:49.000000000 -0500
-@@ -182,6 +182,7 @@ static void mddev_put(mddev_t *mddev)
- 		return;
- 	if (!mddev->raid_disks && list_empty(&mddev->disks)) {
- 		list_del(&mddev->all_mddevs);
-+		stackdev_clear(&mddev->slave_dir);
- 		blk_put_queue(mddev->queue);
- 		kobject_unregister(&mddev->kobj);
- 	}
-@@ -1226,6 +1227,7 @@ static int bind_rdev_to_array(mdk_rdev_t
- 	else
- 		ko = &rdev->bdev->bd_disk->kobj;
- 	sysfs_create_link(&rdev->kobj, ko, "block");
-+	stackdev_link(rdev->bdev, &mddev->slave_dir, &mddev->gendisk->kobj);
- 	return 0;
- }
- 
-@@ -1236,6 +1238,8 @@ static void unbind_rdev_from_array(mdk_r
- 		MD_BUG();
- 		return;
- 	}
-+	stackdev_unlink(rdev->bdev, &rdev->mddev->slave_dir,
-+			&rdev->mddev->gendisk->kobj);
- 	list_del_init(&rdev->same_set);
- 	printk(KERN_INFO "md: unbind<%s>\n", bdevname(rdev->bdev,b));
- 	rdev->mddev = NULL;
-@@ -1924,6 +1928,7 @@ static struct kobject *md_probe(dev_t de
- 	snprintf(mddev->kobj.name, KOBJ_NAME_LEN, "%s", "md");
- 	mddev->kobj.ktype = &md_ktype;
- 	kobject_register(&mddev->kobj);
-+	stackdev_init(&mddev->slave_dir, &mddev->gendisk->kobj);
- 	return NULL;
- }
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
---------------090309030209000200080906
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Heinz Mauelshagen                                 Red Hat GmbH
+Consulting Development Engineer                   Am Sonnenhang 11
+Cluster and Storage Development                   56242 Marienrachdorf
+                                                  Germany
+Mauelshagen@RedHat.com                            +49 2626 141200
+                                                       FAX 924446
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-
---------------090309030209000200080906--
+--
+dm-devel mailing list
+dm-devel@redhat.com 
+https://www.redhat.com/mailman/listinfo/dm-devel
