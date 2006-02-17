@@ -1,14 +1,12 @@
-From: =?ISO-8859-1?Q?Jo=E3o_Daniel?= <jd-apinf@est.ips.pt>
-Subject: Re: Problem with Multipath (devices not ready)
-Date: Mon, 13 Feb 2006 12:38:50 +0000
-Message-ID: <43F07DDA.70702@est.ips.pt>
-References: <!&!AAAAAAAAAAAYAAAAAAAAANNuC7JXowhAhztxsUsdl9nCgAAAEAAAAFrKzybPoitElCE3HsMmQqIBAAAAAA==@est.ips.pt>	<1139513000.2915.4.camel@zezette>
-	<43EB9B48.7020707@bzed.de>
+From: "Juer(ZH-CN)" <jlee@plasmon.cn>
+Subject: Kernel panic issue of kernel 2.6.16-rc1 + latest device
+	mapper patches
+Date: Fri, 17 Feb 2006 09:26:43 +0800
+Message-ID: <200602170135.k1H1ZL6n030476@mx1.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0729723194=="
+Content-Type: multipart/mixed; boundary="===============0133936565=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <43EB9B48.7020707@bzed.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,781 +16,938 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0729723194==
-Content-Type: text/html; charset=ISO-8859-1
+This is a multi-part message in MIME format.
+
+--===============0133936565==
+Content-Type: multipart/alternative;
+	boundary="----=_NextPart_000_030F_01C633A4.448A5F50"
+
+This is a multi-part message in MIME format.
+
+------=_NextPart_000_030F_01C633A4.448A5F50
+Content-Type: text/plain;
+	charset="US-ASCII"
 Content-Transfer-Encoding: 7bit
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
-<head>
-  <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-</head>
-<body bgcolor="#ffffff" text="#000000">
-Hi again,<br>
-<br>
-<br>
-&nbsp;&nbsp;&nbsp; I've tried all your suggestions but i'm still having exactly the
-same problems.<br>
-&nbsp;&nbsp;&nbsp; I'm starting to think that my driver isn't good enough to handle
-one QLA<font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">2340 and 4
-paths to the LUN.<br>
-&nbsp;&nbsp;&nbsp; I've tried: update OS, update drivers, update multipath,
-re-configurate multipath... <br>
-&nbsp;&nbsp;&nbsp; What do you think I should try now ?<br>
-<br>
-<br>
-<br>
-</span></font><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p></o:p></span></font>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Best regards,<o:p></o:p></span></font></p>
-<div class="moz-signature">-- <br>
-<meta http-equiv="Content-Type" content="text/html; ">
-<meta content="MSHTML 6.00.2900.2769" name="GENERATOR">
-<style type="text/css">
-		
-		DIV.MsoNormal {
-			FONT-SIZE: 12pt; MARGIN: 0cm 0cm 0pt; FONT-FAMILY: "Times New Roman, serif"
-		}
-		A:link {
-			COLOR: blue; TEXT-DECORATION: none; background-color: transparent;
-		}
-		SPAN.MsoHyperlink {
-			COLOR: blue; TEXT-DECORATION: underline; background-color: transparent;
-		}
-		A:visited {
-			COLOR: purple; TEXT-DECORATION: underline; background-color: transparent;
-		}
-		SPAN.MsoHyperlinkFollowed {
-			COLOR: purple; TEXT-DECORATION: underline; background-color: transparent;
-		}
-		SPAN.EmailStyle17 {
-			COLOR: navy; FONT-FAMILY: Arial, serif; background-color: transparent;
-		}
-		SPAN.EmailStyle18 {
-			COLOR: navy; FONT-FAMILY: Arial, , serif; background-color: transparent;
-		}
-		
-		.style1 {
-			font-size: 9pt;
-			color: #000000;
-			background-color: transparent;
-		}
-		</style>
-<style type="text/css">
-		
-		:link { color: Blue; background-color: transparent;}
-		:visited { color: Purple; background-color: transparent;}
-		p.c11 { text-align: right; }
-		table.c2, td.c4 { width: 600px; }
-		table.c3 { width: 617px; }
-		table.c6 { width: 100%; }
-		td.c13 { width: 17px; }
-		td.c5 { width: 607px; }
-		.c1 { color: Navy; font-family: arial, serif; font-size: x-small; background-color: transparent;}
-		.c10 { color: Black; background-color: transparent;}
-		.c12 {
-			color: Navy;
-			font-family: "times new roman","serif";
-			font-size: small;
-			background-color: transparent;
-		}
-		.c14 {
-			color: Navy;
-			font-family: "times new roman","serif";
-			font-size: x-small;
-			background-color: transparent;
-		}
-		.c7 {
-			color: #4E81C4;
-			font-family: verdana,serif;
-			font-size: xx-small;
-			background-color: transparent;
-		}
-		.c8 {
-			color: Black;
-			font-family: verdana, serif;
-			font-size: xx-small;
-			background-color: transparent;
-		}
-		.c9 { color: Navy; background-color: transparent;}
-		</style>
-<title>Assinatura</title>
-<div class="section1">
-<p class="msonormal"><span class="c1"><span
- style="font-size: 10pt; color: navy; font-family: arial;" lang="pt">&nbsp;</span></span></p>
-<div>
-<table class="c2" style="width: 450pt;" summary="sum" border="0"
- cellpadding="0" cellspacing="0">
-  <tbody>
-    <tr>
-      <td style="padding: 0cm;">
-      <table class="c3" style="width: 450pt;" summary="sum"
- align="right" border="0" cellpadding="0" cellspacing="0">
-        <tbody>
-          <tr>
-            <td style="padding: 0cm;" class="c4">
-            <table class="msonormaltable"
- style="border: 1pt solid rgb(102, 102, 102); width: 450pt;"
- summary="sum" border="1" cellpadding="0" cellspacing="0" width="611">
-              <tbody>
-                <tr>
-                  <td colspan="2"
- style="border: medium none ; padding: 0.75pt;" class="c5">
-                  <table class="c6" style="width: 100%;" summary="sum"
- align="right" border="0" cellpadding="0">
-                    <tbody>
-                      <tr style="height: 0.75pt;" height="1">
-                        <td rowspan="2"
- style="padding: 0.75pt 0.75pt 3pt 3pt; height: 0.75pt;" valign="top">
-                        <p class="msonormal" style=""><b><span
- class="c7"><span
- style="font-weight: bold; font-size: 10pt; color: rgb(0, 0, 0); font-family: verdana;"
- lang="pt">Jo&atilde;o Daniel</span></span></b><span class="c8"><span
- style="font-size: 8pt; color: rgb(0, 102, 153); font-family: verdana;"
- lang="pt"><br>
-                        <i><span style="font-style: normal;"> <br>
-                        <br>
-                        <br>
-                        <br>
-Apoio Inform&aacute;tico <br>
-                        <br>
-Sistema de Informa&ccedil;&atilde;o do Instituto Polit&eacute;cnico de Set&uacute;bal </span></i> </span></span></p>
-                        <p class="msonormal" style=""><span class="c8"><span
- style="font-size: 8pt; color: rgb(0, 0, 0); font-family: verdana;"></span></span>
-                        </p>
-                        </td>
-                        <td
- style="padding: 0.75pt 3pt 3pt 0.75pt; height: 0.75pt;" height="1"
- valign="top">
-                        <p class="c11" style="text-align: right;"><b><span
- class="c7"><span
- style="font-weight: bold; font-size: 8pt; color: rgb(0, 0, 0); font-family: verdana;"
- lang="pt"> Instituto Polit&eacute;cnico de Set&uacute;bal <br>
-Esc. Sup. de Tec. de Set&uacute;bal </span></span></b><span class="c7"><span
- style="font-size: 8pt; color: rgb(0, 0, 0); font-family: verdana;"
- lang="pt"><br>
-                        <br>
-Campus do IPS, Estefanilha<br>
-2910-761 Set&uacute;bal </span></span></p>
-                        </td>
-                      </tr>
-                      <tr style="height: 0.75pt;" height="1">
-                        <td
- style="padding: 0.75pt 3pt 3pt 0.75pt; height: 0.75pt;" height="1"
- valign="bottom">
-                        <table class="msonormaltable" summary="sum"
- align="right" border="0" cellpadding="0" cellspacing="0">
-                          <tbody>
-                            <tr>
-                              <td style="padding: 0.75pt;"
- nowrap="nowrap">
-                              <p class="c11" style="text-align: right;"><span
- class="c8"><span
- style="font-size: 8pt; color: rgb(0, 0, 0); font-family: verdana;"><br>
-                              <br>
-tel: &nbsp; </span></span></p>
-                              </td>
-                              <td
- style="padding: 0.75pt 0.75pt 0.75pt 3pt;" nowrap="nowrap">
-                              <p class="c11" style="text-align: right;"><span
- class="c8"><span
- style="font-size: 8pt; color: rgb(0, 0, 0); font-family: verdana;"><br>
-+351 </span></span><span class="style1"><span
- style="font-family: verdana;">265</span></span> <span class="style1"><span
- style="font-family: verdana;">790</span></span> <span class="style1"><span
- style="font-family: verdana;">133</span></span><span class="c8"><span
- style="font-size: 8pt; color: rgb(0, 0, 0); font-family: verdana;"><br>
-+351 </span></span><span class="style1"><span
- style="font-family: verdana;">265 </span><span
- style="font-family: verdana;">790</span></span> <span class="style1"><span
- style="font-family: verdana;">119</span></span></p>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-                        <br>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            </td>
-            <td style="padding: 0cm;" class="c13">
-            <p class="msonormal" style=""><span class="c14"><span
- style="font-size: 10pt; color: navy;">&nbsp;</span></span></p>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      </td>
-    </tr>
-  </tbody>
-</table>
-</div>
-</div>
-</div>
-<br>
-<font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-</span></font><br>
-<br>
-Bernd Zeimetz wrote:
-<blockquote cite="mid43EB9B48.7020707@bzed.de" type="cite">
-  <pre wrap="">Hi,
+Hi, 
 
-  </pre>
-  <blockquote type="cite">
-    <blockquote type="cite">
-      <pre wrap="">           default_getuid_callout    "/sbin/scsi_id -g -u -s /block/%
-n"
-
-   
-
-      </pre>
-    </blockquote>
-    <pre wrap="">remove too : the CX need a special flag passed to scsi_id if I
-remember ...
  
 
-    </pre>
-  </blockquote>
-  <pre wrap=""><!---->this was mentioned in a thread about the EMC CX a few weeks ago. But I
-think there's also a working default setting for this in multipath (at
-least it works very well with the default settings here). Also check
-<a class="moz-txt-link-freetext" href="http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments">http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments</a>
-- I've mentioned the neccessary settings on the CX there.
+Thanks for the team working on the device mapper driver.
+
+I have installed Fedora Core 4 and downloaded latest device mapper patches
+from the website
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/ and
+applied them to the kernel 2.6.16-rc1, but I still experience problems when
+removing snapshots if there are large I/Os and tens of snapshots have been
+created. Before applying those patches to the kernel, kernel panic even when
+removing the only one snapshot created for a LV if there are large I/Os on
+the LV.
+
+ 
+
+The steps to produce the issue:
+
+ 
+
+1.       Create PV on the disk partition directly 
+
+2.       Create VG on the PV just created
+
+3.       Create a 20G LV on the VG
+
+4.       Create XFS file system on the LV
+
+5.       Mount the LV
+
+6.       Run a script to generate large I/Os on the LV. The job will keep
+running till interrupted by me.
+
+7.       2 snapshots have been created for the LV successfully
+
+8.       All snapshots have been removed one by one successfully
+
+9.       21 snapshots have been created for the LV successfully
+
+10.   Try to remove all snapshots by ("lvremove -f /dev/vg/snap*").
+
+I have seen following messages in the system log before kernel panic
+information were logged.
+
+Feb 15 15:39:43 sit-fc4 kernel: attempt to access beyond end of device
+
+Feb 15 15:39:43 sit-fc4 kernel: dm-14: rw=17, want=4194320, limit=4194304
+
+ 
+
+       Kernel panic
+
+Kernel panic information:
+
+ 
+
+Feb 15 15:40:22 sit-fc4 kernel: Unable to handle kernel paging request at
+virtual address 8b8a8988
+
+Feb 15 15:40:22 sit-fc4 kernel:  printing eip:
+
+Feb 15 15:40:22 sit-fc4 kernel: f8abe0ab
+
+Feb 15 15:40:22 sit-fc4 kernel: *pde = 9b9a9998
+
+Feb 15 15:40:22 sit-fc4 kernel: Oops: 0000 [#1]
+
+Feb 15 15:40:22 sit-fc4 kernel: SMP
+
+Feb 15 15:40:22 sit-fc4 kernel: Modules linked in: smbfs xfs exportfs
+dm_zero dm_snapshot dm_mod ipv6 parport_pc lp parport autofs4
+
+rfcomm l2cap bluetooth sunrpc video button battery ac uhci_hcd i2c_i801
+i2c_core shpchp e1000 ext3 jbd sata_mv libata aic79xx scsi_t
+
+ransport_spi sd_mod scsi_mod
+
+Feb 15 15:40:22 sit-fc4 kernel: CPU:    0
+
+Feb 15 15:40:22 sit-fc4 kernel: EIP:    0060:[<f8abe0ab>]    Not tainted VLI
+
+Feb 15 15:40:22 sit-fc4 kernel: EFLAGS: 00010212   (2.6.16rc2)
+
+Feb 15 15:40:22 sit-fc4 kernel: EIP is at exit_exception_table+0x3b/0x70
+[dm_snapshot]
+
+Feb 15 15:40:22 sit-fc4 kernel: eax: 00000046   ebx: 8b8a8988   ecx:
+f6fa38c0   edx: dde13988
+
+Feb 15 15:40:22 sit-fc4 kernel: esi: f8bf6ec0   edi: f6fa38c0   ebp:
+000001d8   esp: dfb28da4
+
+Feb 15 15:40:22 sit-fc4 kernel: ds: 007b   es: 007b   ss: 0068
+
+Feb 15 15:40:22 sit-fc4 kernel: Process lvremove (pid: 4057,
+threadinfo=dfb28000 task=c85e4aa0)
+
+Feb 15 15:40:22 sit-fc4 kernel: Stack: <0>e66b84d8 00004000 e66b8480
+d8b097c0 f8ac3700 f8a3e080 f8abe619 f8a3e080
+
+Feb 15 15:40:22 sit-fc4 kernel:        e66b8280 00000000 00000000 f8aaff16
+00000004 e66b8280 f59e68e0 00000004
+
+Feb 15 15:40:22 sit-fc4 kernel:        f8ab2a00 f8ab1f33 f8abb6ec f8ad8000
+f8ab2a44 00000000 00000000 f8ad8000
+
+Feb 15 15:40:22 sit-fc4 kernel: Call Trace:
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<f8abe619>] snapshot_dtr+0x99/0x110
+[dm_snapshot]
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<f8aaff16>] dm_table_put+0x56/0xd0
+[dm_mod]
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<f8ab2a00>] dev_remove+0x0/0x90 [dm_mod]
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<f8ab1f33>] __hash_remove+0x63/0x80
+[dm_mod]
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<f8ab2a44>] dev_remove+0x44/0x90 [dm_mod]
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<f8ab2105>] ctl_ioctl+0x1b5/0x2c0 [dm_mod]
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<c0150607>] __alloc_pages+0x57/0x320
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<c017f6fa>] do_ioctl+0x8a/0xa0
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<c017f76c>] vfs_ioctl+0x5c/0x2f0
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<c0106b2a>] do_syscall_trace+0x21a/0x240
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<c017fa72>] sys_ioctl+0x72/0x90
+
+Feb 15 15:40:22 sit-fc4 kernel:  [<c0104205>] syscall_call+0x7/0xb
+
+Feb 15 15:40:22 sit-fc4 kernel: Code: d2 89 54 24 04 7e 43 8b 40 04 31 ed 8d
+74 26 00 8d 34 e8 8b 16 39 d6 8b 1a 75 07 eb 1a 8d 76 0
+
+0 89 c3 89 f8 e8 a7 ab 6a c7 39 de <8b> 03 89 da 75 ef 8b 14 24 8b 42 04 45
+39 6c 24 04 75 d2 83 c4
+
+Feb 15 15:40:22 sit-fc4 kernel:  <0>Fatal exception: panic in 5 seconds
+
+11.   Reboot the system, then remove all snapshots
+
+12.   Repeat step 6 - Run a script to generate large I/Os on the LV. The job
+will keep running till interrupted by me.
+
+13.   5 snapshots have been created for the LV successfully
+
+14.   All snapshots have been removed by ("lvremove -f /dev/vg/snap*")
+successfully.
+
+15.   9 snapshots have been created for the LV successfully
+
+16.   Try to remove all snapshots by ("lvremove -f /dev/vg/snap*").
+
+17.   Kernel panic again
+
+18.   5 snapshots have been created for the LV successfully
+
+19.   All snapshots have been removed by ("lvremove -f /dev/vg/snap*")
+successfully.
+
+20.    
+
+ 
+
+Juer
 
 
-Bernd
+------=_NextPart_000_030F_01C633A4.448A5F50
+Content-Type: text/html;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 
---
-dm-devel mailing list
-<a class="moz-txt-link-abbreviated" href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a>
-<a class="moz-txt-link-freetext" href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a>
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:x=3D"urn:schemas-microsoft-com:office:excel" =
+xmlns:st1=3D"urn:schemas-microsoft-com:office:smarttags" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"City" =
+downloadurl=3D"http://www.5iamas-microsoft-com:office:smarttags"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"place" downloadurl=3D"http://www.5iantlavalamp.com/"/>
+<!--[if !mso]>
+<style>
+st1\:*{behavior:url(#default#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+@font-face
+	{font-family:SimSun;
+	panose-1:2 1 6 0 3 1 1 1 1 1;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	text-align:justify;
+	text-justify:inter-ideograph;
+	font-size:10.5pt;
+	font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p.MsoPlainText, li.MsoPlainText, div.MsoPlainText
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	font-size:9.0pt;
+	font-family:SimSun;}
+span.EmailStyle18
+	{mso-style-type:personal;
+	font-family:Arial;
+	color:navy;}
+span.EmailStyle19
+	{mso-style-type:personal;
+	font-family:Arial;
+	color:navy;}
+span.EmailStyle20
+	{mso-style-type:personal-reply;
+	font-family:Arial;
+	color:navy;}
+@page Section1
+	{size:595.3pt 841.9pt;
+	margin:72.0pt 126.65pt 72.0pt 126.65pt;
+	layout-grid:15.6pt;}
+div.Section1
+	{page:Section1;}
+ /* List Definitions */
+ @list l0
+	{mso-list-id:700907788;
+	mso-list-type:hybrid;
+	mso-list-template-ids:-2051754402 1258327734 67698713 67698715 67698703 =
+67698713 67698715 67698703 67698713 67698715;}
+@list l0:level1
+	{mso-level-tab-stop:18.0pt;
+	mso-level-number-position:left;
+	margin-left:18.0pt;
+	text-indent:-18.0pt;}
+@list l0:level2
+	{mso-level-number-format:alpha-lower;
+	mso-level-text:"%2\)";
+	mso-level-tab-stop:42.0pt;
+	mso-level-number-position:left;
+	margin-left:42.0pt;
+	text-indent:-21.0pt;}
+@list l0:level3
+	{mso-level-tab-stop:108.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level4
+	{mso-level-tab-stop:144.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level5
+	{mso-level-tab-stop:180.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level6
+	{mso-level-tab-stop:216.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level7
+	{mso-level-tab-stop:252.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level8
+	{mso-level-tab-stop:288.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+@list l0:level9
+	{mso-level-tab-stop:324.0pt;
+	mso-level-number-position:left;
+	text-indent:-18.0pt;}
+ol
+	{margin-bottom:0cm;}
+ul
+	{margin-bottom:0cm;}
+-->
+</style>
+
+</head>
+
+<body lang=3DZH-CN link=3Dblue vlink=3Dpurple =
+style=3D'text-justify-trim:punctuation'>
+
+<div class=3DSection1 style=3D'layout-grid:15.6pt'>
+
+<p class=3DMsoPlainText><font size=3D1 face=3D&#23435;&#20307;><span =
+lang=3DEN-US
+style=3D'font-size:9.0pt'>Hi, <o:p></o:p></span></font></p>
+
+<p class=3DMsoPlainText><font size=3D1 face=3D&#23435;&#20307;><span =
+lang=3DEN-US
+style=3D'font-size:7.5pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoPlainText><font size=3D1 face=3D&#23435;&#20307;><span =
+lang=3DEN-US
+style=3D'font-size:9.0pt'>Thanks for the team working on the device =
+mapper
+driver.<o:p></o:p></span></font></p>
+
+<p class=3DMsoPlainText><font size=3D1 face=3D&#23435;&#20307;><span =
+lang=3DEN-US
+style=3D'font-size:9.0pt'>I have installed Fedora Core 4 and downloaded =
+latest
+device mapper patches from the website <a
+href=3D"http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/edi=
+ting/">http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/edit=
+ing/</a>
+and applied them to the kernel 2.6.16-rc1, but I still experience =
+problems when
+removing snapshots if there are large I/Os and tens of snapshots have =
+been
+created. Before applying those patches to the kernel, kernel panic even =
+when
+removing the only one snapshot created for a <st1:City =
+w:st=3D"on">LV</st1:City>
+if there are large I/Os on the <st1:place w:st=3D"on"><st1:City =
+w:st=3D"on">LV.</st1:City></st1:place><o:p></o:p></span></font></p>
+
+<p class=3DMsoPlainText><font size=3D1 color=3Dblack =
+face=3D&#23435;&#20307;><span
+lang=3DEN-US =
+style=3D'font-size:7.5pt;color:black'><o:p>&nbsp;</o:p></span></font></p>=
 
 
-  </pre>
-</blockquote>
-<br>
-<br>
-<br>
-<br>
-<br>
-<br>
-<pre wrap=""><span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>defaults {
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>            multipath_tool   "/sbin/multipath -v 0 -S"
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>            udev_dir            /dev
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>            polling_interval 10
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>            default_selector "round-robin 0"
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>    #default_path_grouping_policy           failover
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>            default_path_grouping_policy     multibus
-<span class="moz-txt-citetags">&gt; </span>
-</pre>
-<pre wrap=""><!---->
-CX300 is not a multibus-capable hardware.
-You should remove this directive and let the in-core defaults apply.
+<p class=3DMsoPlainText><font size=3D1 color=3Dblack =
+face=3D&#23435;&#20307;><span
+lang=3DEN-US style=3D'font-size:9.0pt;color:black'>The steps to produce =
+the issue:<o:p></o:p></span></font></p>
 
-</pre>
-<blockquote type="cite">
-  <pre wrap=""><span class="moz-txt-citetags">&gt; </span>            default_getuid_callout    "<i
- class="moz-txt-slash"><span class="moz-txt-tag">/</span>sbin/scsi_id -g -u -s /block<span
- class="moz-txt-tag">/</span></i>%
-<span class="moz-txt-citetags">&gt; </span>n"
-<span class="moz-txt-citetags">&gt; </span>
-  </pre>
-</blockquote>
-<pre wrap=""><!---->remove too : the CX need a special flag passed to scsi_id if I
-remember ...
+<p class=3DMsoPlainText><font size=3D1 color=3Dblack =
+face=3D&#23435;&#20307;><span
+lang=3DEN-US =
+style=3D'font-size:7.5pt;color:black'><o:p>&nbsp;</o:p></span></font></p>=
 
 
-</pre>
-<blockquote type="cite">
-  <pre wrap=""><span class="moz-txt-citetags">&gt; </span>            #default_prio_callout      "/bin/false"
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>    failback        immediate
-<span class="moz-txt-citetags">&gt; </span>
-<span class="moz-txt-citetags">&gt; </span>}
-<span class="moz-txt-citetags">&gt; </span>
-  </pre>
-</blockquote>
-<pre wrap=""><!---->Regards,
-cvaroqui
-</pre>
-<blockquote type="cite">
-  <pre wrap=""><span class="moz-txt-citetags">&gt; </span>
-  </pre>
-</blockquote>
-<pre wrap=""><!---->
---
-dm-devel mailing list
-<a class="moz-txt-link-abbreviated" href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a>
-<a class="moz-txt-link-freetext"
- href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a>
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>1.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Create PV on the disk partition directly =
+<o:p></o:p></span></p>
 
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>2.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Create VG on the PV just created<o:p></o:p></span></p>
 
-</pre>
-<br>
-<br>
-<br>
-<br>
-<br>
-<div class="moz-text-html" lang="x-western">
-<div class="Section1">
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Hi,<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">I have
-upgraded from SLES9-SP2 to SLES9-SP3.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">The purpose
-was to fix some problems related to
-OCFS2.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">I have many
-warnings (as you can see below) in my /var/log/messages
-related to multipath (i think), indicating that the devices aren't
-ready. <o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Maybe the
-multipath.conf needs some extra
-configuration (please see my multipath.conf).<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">The sdc and
-sdd devices are disks out on the EMC.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Can anyone
-help me with this problem ?<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">ERROR
-MESSAGES:<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">(...)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:18 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:18 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:29 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:29 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:40 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:40 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:51 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:16:51 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:02 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:02 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:13 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:13 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:24 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:24 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:35 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:35 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:46 siipstestes kernel: Device sdc not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Jan 27
-16:17:46 siipstestes kernel: Device sdd not
-ready.<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">(...)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">server:~ #
-multipath -v2 -l<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">dm names&nbsp;&nbsp;
-N&nbsp; <o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">dm table
-LUN_TESTES&nbsp; N&nbsp; <o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">dm table
-LUN_TESTES&nbsp; N&nbsp; <o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">dm status
-LUN_TESTES&nbsp; N&nbsp; <o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">dm info LUN_TESTES&nbsp; O&nbsp; <o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">LUN_TESTES
-(360060160256014006adcbf64a644da11)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">[size=458
-GB][features="0"][hwhandler="0"]<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">\_
-round-robin 0 [active]<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;\_ 3:0:0:0
-sdc 8:32 [failed][faulty]<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;\_ 3:0:1:0
-sdd 8:48 [failed][faulty]<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;\_ 3:0:2:0
-sde 8:64 [active][ready]<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;\_ 3:0:3:0
-sdf 8:80 [active][ready]<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">Here is my
-MULTIPATH.CONF file:<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">defaults {<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-multipath_tool&nbsp;&nbsp; "/sbin/multipath -v
-0 -S"<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-udev_dir&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; /dev<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-polling_interval 10<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-default_selector "round-robin
-0"<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;
-#default_path_grouping_policy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; failover<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-#default_path_grouping_policy&nbsp;&nbsp;&nbsp;&nbsp; multibus<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-#default_getuid_callout&nbsp;&nbsp;&nbsp; "/sbin/scsi_id
--g -u -s /block/%n"<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-#default_prio_callout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "/bin/false"<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;
-failback&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; immediate<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">}<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">#<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># name&nbsp;&nbsp;&nbsp; :
-devnode_blacklist<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># scope&nbsp;&nbsp; :
-multipath &amp; multipathd<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># desc&nbsp;&nbsp;&nbsp; :
-list of device names to discard as not
-multipath candidates<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># default :
-cciss, fd, hd, md, dm, sr, scd, st, ram,
-raw, loop<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">#<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">devnode_blacklist
-{<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-devnode cciss<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-devnode fd<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></font><font
- face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">devnode hd<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode md<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode dm-<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode sr<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode scd<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode st<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode ram<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode raw<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; devnode loop<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></font><font
- face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">devnode sda<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-devnode sdb<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">}<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">#<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># name&nbsp;&nbsp;&nbsp; :
-multipaths<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># scope&nbsp;&nbsp; :
-multipath &amp; multipathd<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"># desc&nbsp;&nbsp;&nbsp; :
-list of multipaths finest-grained
-settings<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">#<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">multipaths {<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-# name&nbsp; : multipath<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-# scope : multipath &amp; multipathd<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-# desc&nbsp; : container for settings that
-apply to one specific multipath<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; </span></font><font
- face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">#<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; multipath {<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-wwid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 360060160256014006adcbf64a644da11<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-alias&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; LUN_TESTES<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">}<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<br>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;">&nbsp;<span lang="EN-GB"><o:p></o:p></span></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">HARDWARE:<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- DELL 2850<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- 1x QLogic
-2340 (BIOS 1.47) to acess my Storage (EMC
-Clariion CX300)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">&nbsp;<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">SOFTWARE:<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- SLES9 (32
-bit) + SP3 (with Multipath and OCFS2
-configured)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- Oracle
-Clusterware Release 2 (10.2.0.1.0)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- Oracle
-Database 10g Release 2 (10.2.0.1.0)<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- Qlogic
-driver: qlafc-linux-8.01.00-4-install.tgz.gz<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- Naviagent
-CLI: naviagentcli-6.16.0.4.63-1.i386.rpm<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- SANsurfer:
-emc_sansurfer2.0.30b52_linux_install.bin<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB">- Multipath
-0.4.5-0.11<o:p></o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
-<p class="MsoNormal"><font face="Arial" size="2"><span
- style="font-size: 10pt; font-family: Arial;" lang="EN-GB"><o:p>&nbsp;</o:p></span></font></p>
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>3.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Create a 20G <st1:place w:st=3D"on"><st1:City =
+w:st=3D"on">LV</st1:City></st1:place>
+on the VG<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>4.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Create XFS file system on the <st1:place =
+w:st=3D"on"><st1:City =
+w:st=3D"on">LV</st1:City></st1:place><o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>5.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Mount the <st1:place w:st=3D"on"><st1:City =
+w:st=3D"on">LV</st1:City></st1:place><o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>6.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Run a script to generate large I/Os on the <st1:place =
+w:st=3D"on"><st1:City
+ w:st=3D"on">LV.</st1:City></st1:place> The job will keep running till
+interrupted by me.<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>7.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>2 snapshots have been created for the <st1:place =
+w:st=3D"on"><st1:City
+ w:st=3D"on">LV</st1:City></st1:place> =
+successfully<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>8.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>All snapshots have been removed one by one =
+successfully<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>9.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New =
+Roman"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>21 snapshots have been created for the <st1:place =
+w:st=3D"on"><st1:City
+ w:st=3D"on">LV</st1:City></st1:place> =
+successfully<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>10.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Try to remove all snapshots by (&#8220;lvremove &#8211;f
+/dev/vg/snap*&#8221;).<o:p></o:p></span></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2 =
+color=3Dblue
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt;color:blue'>I
+have seen following messages in the system log before kernel panic =
+information
+were logged.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:39:43 sit-fc4 kernel: attempt to access beyond end of =
+device<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-indent:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:39:43 sit-fc4 kernel: dm-14: rw=3D17, want=3D4194320, =
+limit=3D4194304<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-indent:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"Times New Roman"><span =
+lang=3DEN-US
+style=3D'font-size:10.5pt'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+</span></font><font
+size=3D2 color=3Dred><span lang=3DEN-US =
+style=3D'font-size:10.0pt;color:red'>Kernel
+panic</span></font><font size=3D2><span lang=3DEN-US =
+style=3D'font-size:10.0pt'><o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Kernel panic
+information:<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Unable to handle kernel paging request at =
+virtual
+address 8b8a8988<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; printing =
+eip:<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: f8abe0ab<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: *pde =3D 9b9a9998<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Oops: 0000 [#1]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: SMP<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Modules linked in: smbfs xfs exportfs dm_zero
+dm_snapshot dm_mod ipv6 parport_pc lp parport =
+autofs4<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>rfcomm l2cap
+bluetooth sunrpc video button battery ac uhci_hcd i2c_i801 i2c_core =
+shpchp
+e1000 ext3 jbd sata_mv libata aic79xx =
+scsi_t<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>ransport_spi
+sd_mod scsi_mod<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: CPU:&nbsp;&nbsp;&nbsp; =
+0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: EIP:&nbsp;&nbsp;&nbsp;
+0060:[&lt;f8abe0ab&gt;]&nbsp;&nbsp;&nbsp; Not tainted =
+VLI<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: EFLAGS: 00010212&nbsp;&nbsp; =
+(2.6.16rc2)<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: EIP is at exit_exception_table+0x3b/0x70 =
+[dm_snapshot]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: eax: 00000046&nbsp;&nbsp; ebx: =
+8b8a8988&nbsp;&nbsp;
+ecx: f6fa38c0&nbsp;&nbsp; edx: dde13988<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: esi: f8bf6ec0&nbsp;&nbsp; edi: =
+f6fa38c0&nbsp;&nbsp;
+ebp: 000001d8&nbsp;&nbsp; esp: dfb28da4<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: ds: 007b&nbsp;&nbsp; es: 007b&nbsp;&nbsp; ss: =
+0068<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Process lvremove (pid: 4057, =
+threadinfo=3Ddfb28000
+task=3Dc85e4aa0)<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Stack: &lt;0&gt;e66b84d8 00004000 e66b8480 =
+d8b097c0
+f8ac3700 f8a3e080 f8abe619 f8a3e080<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+e66b8280
+00000000 00000000 f8aaff16 00000004 e66b8280 f59e68e0 =
+00000004<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+f8ab2a00
+f8ab1f33 f8abb6ec f8ad8000 f8ab2a44 00000000 00000000 =
+f8ad8000<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Call Trace:<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;f8abe619&gt;] =
+snapshot_dtr+0x99/0x110
+[dm_snapshot]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;f8aaff16&gt;] dm_table_put+0x56/0xd0
+[dm_mod]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;f8ab2a00&gt;] dev_remove+0x0/0x90 =
+[dm_mod]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;f8ab1f33&gt;] =
+__hash_remove+0x63/0x80
+[dm_mod]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;f8ab2a44&gt;] dev_remove+0x44/0x90 =
+[dm_mod]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;f8ab2105&gt;] ctl_ioctl+0x1b5/0x2c0
+[dm_mod]<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;c0150607&gt;] =
+__alloc_pages+0x57/0x320<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;c017f6fa&gt;] =
+do_ioctl+0x8a/0xa0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;c017f76c&gt;] =
+vfs_ioctl+0x5c/0x2f0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;c0106b2a&gt;] =
+do_syscall_trace+0x21a/0x240<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;c017fa72&gt;] =
+sys_ioctl+0x72/0x90<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; [&lt;c0104205&gt;] =
+syscall_call+0x7/0xb<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel: Code: d2 89 54 24 04 7e 43 8b 40 04 31 ed 8d 74 =
+26 00
+8d 34 e8 8b 16 39 d6 8b 1a 75 07 eb 1a 8d 76 =
+0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US style=3D'font-size:10.5pt'>0 =
+89 c3 89 f8
+e8 a7 ab 6a c7 39 de &lt;8b&gt; 03 89 da 75 ef 8b 14 24 8b 42 04 45 39 =
+6c 24 04
+75 d2 83 c4<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'margin-left:21.0pt'><font size=3D2
+face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'>Feb 15
+15:40:22 sit-fc4 kernel:&nbsp; &lt;0&gt;Fatal exception: panic in 5 =
+seconds<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>11.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Reboot the system, then remove all =
+snapshots<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>12.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Repeat step 6 - Run a script to generate large I/Os on the =
+<st1:place
+w:st=3D"on"><st1:City w:st=3D"on">LV.</st1:City></st1:place> The job =
+will keep
+running till interrupted by me.<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>13.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>5 snapshots have been created for the <st1:place =
+w:st=3D"on"><st1:City
+ w:st=3D"on">LV</st1:City></st1:place> =
+successfully<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>14.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>All snapshots have been removed by (&#8220;lvremove =
+&#8211;f
+/dev/vg/snap*&#8221;) successfully.<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>15.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>9 snapshots have been created for the <st1:place =
+w:st=3D"on"><st1:City
+ w:st=3D"on">LV</st1:City></st1:place> =
+successfully<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>16.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>Try to remove all snapshots by (&#8220;lvremove &#8211;f
+/dev/vg/snap*&#8221;).<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>17.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><font
+color=3Dred><span lang=3DEN-US style=3D'color:red'>Kernel panic =
+again</span></font><span
+lang=3DEN-US><o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>18.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>5 snapshots have been created for the <st1:place =
+w:st=3D"on"><st1:City
+ w:st=3D"on">LV</st1:City></st1:place> =
+successfully<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>19.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US>All snapshots have been removed by (&#8220;lvremove =
+&#8211;f
+/dev/vg/snap*&#8221;) successfully.<o:p></o:p></span></p>
+
+<p class=3DMsoNormal =
+style=3D'margin-left:18.0pt;text-indent:-18.0pt;mso-list:l0 level1 =
+lfo2'><![if !supportLists]><font
+size=3D2 face=3D"Times New Roman"><span lang=3DEN-US =
+style=3D'font-size:10.5pt'><span
+style=3D'mso-list:Ignore'>20.<font size=3D1 face=3D"Times New =
+Roman"><span
+style=3D'font:7.0pt "Times New Roman"'>&nbsp;&nbsp; =
+</span></font></span></span></font><![endif]><span
+lang=3DEN-US><o:p>&nbsp;</o:p></span></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"Times New Roman"><span =
+lang=3DEN-US
+style=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoPlainText><font size=3D1 color=3Dblack =
+face=3D&#23435;&#20307;><span
+lang=3DEN-US =
+style=3D'font-size:9.0pt;color:black'>Juer<o:p></o:p></span></font></p>
+
 </div>
-</div>
+
 </body>
+
 </html>
 
+------=_NextPart_000_030F_01C633A4.448A5F50--
 
---===============0729723194==
+
+--===============0133936565==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0729723194==--
+--===============0133936565==--
