@@ -1,15 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/3] sysfs representation of stacked devices
-	(dm/md)
-Date: Fri, 17 Feb 2006 19:42:49 +0000
-Message-ID: <20060217194249.GO12169@agk.surrey.redhat.com>
-References: <43F60F31.1030507@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <mauelshagen@redhat.com>
+Subject: *** Announcement: dmraid 1.0.0.rc10 ***
+Date: Fri, 17 Feb 2006 22:06:34 +0100
+Message-ID: <20060217210634.GA13066@redhat.com>
+Reply-To: mauelshagen@redhat.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <43F60F31.1030507@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +17,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 17, 2006 at 01:00:17PM -0500, Jun'ichi Nomura wrote:
-> These patches provide common representation of dependencies
-> between stacked devices (dm and md) in sysfs.
 
-I'm neutral on this change so long as it can be done without 
-introducing problems for device-mapper.
+               *** Announcement: dmraid 1.0.0.rc10 ***
 
-> Though md0, dm-0, dm-1 and sd[a-d] contain same LVM2 meta data,
-> LVM2 should pick up md0 as PV, not dm-0, dm-1 and sdXs.
-> mdadm should build md0 from dm-0 and dm-1, not from sdXs.
-> Similar things will happen on 'mount' and 'fsck' if we use
-> file system labels instead of LVM2.
- 
-I can't speak for the 'mount' code base, but I don't think it'll
-make any significant difference to LVM2 - we'd still have to do 
-all the same device scanning as we do now because we have to be
-aware of md devices defined in on-disk metadata regardless of 
-whether or not the kernel knows about them at the time the 
-command is run.
+dmraid 1.0.0.rc10 is available at
+http://people.redhat.com/heinzm/sw/dmraid/ in source tarball,
+source rpm and i386 rpm (with shared and static binary).
 
-> Currently, these relationships are determined by each tool
-> combining information like the existence of md metadata
-> and dm dependency ioctl.
- 
-And attempts to open a device exclusively.  That's one check LVM2 
-does before running 'pvcreate' on a device.
+This release adds support for Adaptec HostRAID and JMicron JMB36X
+(see CHANGELOG below for more information).
 
-> thus we only need to check "holders" directory of the device
-> to decide whether the device is used by dm/md.
-> Also we can walk down the "slaves" directories to collect
-> the devices conposing the given dm/md device.
 
-For device-mapper devices, 'dmsetup deps' and ls --tree already
-gives you this information reasonably efficiently.
+dmraid (Device-Mapper RAID tool) discovers, [de]activates and displays
+properties of software RAID sets (i.e. ATARAID) and contained DOS
+partitions using the device-mapper runtime of the 2.6 kernel.
 
-Would others find the proposal useful for non-dm devices?
+The following ATARAID types are supported on Linux 2.6:
 
-And rather than adding code just to dm and md, would it be better 
-to implement it by enhancing bd_claim()?
- 
-Alasdair
--- 
-agk@redhat.com
+Adaptec HostRAID ASR
+Highpoint HPT37X
+Highpoint HPT45X
+Intel Software RAID
+JMicron JMB36X
+LSI Logic MegaRAID
+NVidia NForce
+Promise FastTrack
+Silicon Image Medley
+VIA Software RAID
+
+Please provide insight to support those metadata formats completely.
+
+Thanks.
+
+
+See files README, which comes with the source tarball for
+prerequisites to run this software, further instructions on installing
+and using dmraid!
+
+
+Call for testers:
+-----------------
+
+I need testers with the above ATARAID types, to check that the mapping
+created by this tool is correct (see options "-t -ay") and access to the
+ATARAID data is proper.
+
+In case you have a different ATARAID solution from those listed above,
+please feel free to contact me about supporting it in dmraid.
+
+You can activate your ATARAID sets without danger of overwriting
+your metadata, because dmraid accesses it read-only unless you use
+option -E together with -r in order to erase ATARAID metadata
+(see 'man dmraid')!
+
+This is a release candidate version so you want to have backups of your valuable
+data *and* you want to test accessing your data read-only first in order to
+make sure that the mapping is correct before you go for read-write access.
+
+
+Contacts:
+---------
+
+The author is reachable at <Mauelshagen@RedHat.com>.
+
+For test results, mapping information, discussions, questions, patches,
+enhancement requests and the like, please subscribe and mail to
+<ataraid-list@redhat.com>.
+
+--
+
+Regards,
+Heinz    -- The LVM Guy --
+
+
+Changelog from dmraid 1.0.0.rc9 to 1.0.0.rc10		2006.02.17
+
+FIXES:
+------
+o metadata.c: want_set() didn't drop sets properly
+              (eg, jmicron_raid10 wanted and jmicron_raid1 not dropped)
+
+o scsi.c: avoid retrieving too much data (Al Viro)
+
+o sil.h: magic number fix (some arrays were not recognized)
+
+FEATURES:
+---------
+o added libdmraid_make_table() to activate.c to be used by installer
+
+o asr.[ch]: added Adaptec HostRAID support
+
+o jm.[ch]: added JMicron JMB36x support
+
+o added '--enable-libselinux' to configure for those who want
+  to build without it
+
+o bytorder.h: enhanced to support big endian conversion
+              on little endian arch
+
+o nv.c: support RAID5 with dm-raid45 target
+
+o pdc.h: support additional metadata offset
+
+o metadata.c: enhanced to support RAID4 and RAID5 mappings with dm-raid45 target
+
+
+MISCELANIOUS:
+-------------
+o misc.c: streamlined remove_white_space() (Al Viro)
+
+
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Heinz Mauelshagen                                 Red Hat GmbH
+Consulting Development Engineer                   Am Sonnenhang 11
+                                                  56242 Marienrachdorf
+                                                  Germany
+Mauelshagen@RedHat.com                            +49 2626 141200
+                                                       FAX 924446
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
