@@ -1,15 +1,13 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: Opening a dm device reads from cache, not the device.
-Date: Fri, 17 Feb 2006 18:56:01 +0100
-Message-ID: <20060217175601.GB23651@redhat.com>
-References: <43F35F58.8B4D.000D.0@novell.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH 0/3] sysfs representation of stacked devices
+	(dm/md)
+Date: Fri, 17 Feb 2006 13:00:17 -0500
+Message-ID: <43F60F31.1030507@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <43F35F58.8B4D.000D.0@novell.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +17,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+Hello,
 
-Is this dm-raid45 ?
+These patches provide common representation of dependencies
+between stacked devices (dm and md) in sysfs.
+For example, if dm-0 maps to sda, we have the following symlinks;
+   /sys/block/dm-0/slaves/sda --> /sys/block/sda
+   /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
 
-If so, you'll need to add cluster logic to it (ie. taking locks
-out on stripe cache accesses, invalidating stripes etc).
+This makes it easier for user space tools/scripts to find out
+device dependencies.
 
-On Wed, Feb 15, 2006 at 05:05:28PM -0700, Allen Jack wrote:
-> I have a RAID5 plugin that is also used with clustering.  I open the
-> raid device (created in device-mapper) using the O_SYNC and O_DIRECT
-> flags, but it seems to read the data from a cache somewhere.  I put a
-> printk in my plugin map function, but it doesn't get hit.  If another
-> node in the cluster changes the data on the disk, it never gets
-> refreshed on this node because of the caching.
-> 
-> Is there any way to turn off the caching so that all read requests come
-> to my plugin?  And where is the caching taking place?
-> 
-> Thanks,
-> 
-> Allen
-> 
-> Allen Jack
-> email - ajack@novell.com
-> Novell, Inc., the leading provider of information solutions
-> http://www.novell.com
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Suppose complicated but quite normal situation like below:
+We have a logical volume (dm-2) on md raid1 (md0) which is
+build upon dm-multipath (dm-0, dm-1) on FC disks (sda .. sdd).
+   dm-2
+      +-- md0
+             |-- dm-0
+             |      |-- sda
+             |      +-- sdb
+             |
+             +-- dm-1
+                    |-- sdc
+                    +-- sdd
 
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Cluster and Storage Development                   56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            +49 2626 141200
-                                                       FAX 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Though md0, dm-0, dm-1 and sd[a-d] contain same LVM2 meta data,
+LVM2 should pick up md0 as PV, not dm-0, dm-1 and sdXs.
+mdadm should build md0 from dm-0 and dm-1, not from sdXs.
+Similar things will happen on 'mount' and 'fsck' if we use
+file system labels instead of LVM2.
+
+Currently, these relationships are determined by each tool
+combining information like the existence of md metadata
+and dm dependency ioctl.
+
+With the patches, symlinks are created as shown below:
+   /sys/block/dm-2/slaves/md0 --> /sys/block/md0
+   /sys/block/md0/holders/dm-2 --> /sys/block/dm-2
+   /sys/block/md0/slaves/dm-1 --> /sys/block/dm-1
+   /sys/block/md0/slaves/dm-0 --> /sys/block/dm-0
+   /sys/block/dm-0/holders/md0 --> /sys/block/md0
+   /sys/block/dm-0/slaves/sda --> /sys/block/sda
+   /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
+   ...
+
+thus we only need to check "holders" directory of the device
+to decide whether the device is used by dm/md.
+Also we can walk down the "slaves" directories to collect
+the devices conposing the given dm/md device.
+
+The idea was raised in dm-devel by Lars in the last year
+but I couldn't find follow ups of actual implementation.
+https://www.redhat.com/archives/dm-devel/2005-April/msg00040.html
+
+
+Any comments?
+
+--
+Jun'ichi "Nick" Nomura, NEC Solutions (America), Inc.
