@@ -1,15 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/3] sysfs representation of stacked devices
-	(dm/md common)
-Date: Fri, 17 Feb 2006 18:44:35 +0000
-Message-ID: <20060217184435.GM12169@agk.surrey.redhat.com>
-References: <43F60F31.1030507@ce.jp.nec.com> <43F60F8C.8090207@ce.jp.nec.com>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: Problem with Multipath (devices not ready)
+Date: Fri, 17 Feb 2006 20:00:32 +0100
+Message-ID: <43F61D50.3060509@bzed.de>
+References: <!&!AAAAAAAAAAAYAAAAAAAAANNuC7JXowhAhztxsUsdl9nCgAAAEAAAAFrKzybPoitElCE3HsMmQqIBAAAAAA==@est.ips.pt>	<1139513000.2915.4.camel@zezette>	<43EB9B48.7020707@bzed.de>
+	<43F07DDA.70702@est.ips.pt>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <43F60F8C.8090207@ce.jp.nec.com>
+In-Reply-To: <43F07DDA.70702@est.ips.pt>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +19,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Make sure you test this properly under low memory situations.
+Hi,
+>     I've tried: update OS, update drivers, update multipath, re-configurate 
+> multipath...
+>   
+did you update to multipath >= 0.4.6 ?
 
-On Fri, Feb 17, 2006 at 01:01:48PM -0500, Jun'ichi Nomura wrote:
-> This patch provides common functions to create symlinks in sysfs
-> between stacked device and its slaves.
+>     What do you think I should try now ?
+>   
+Probably I've missed it - but how do you access the CX? Via a switch?
+direct? How many HBAs do you use? Are they all allowed to connect to the
+machine?
 
-dm_swap_table() mustn't block waiting for memory to become
-free (except in a controlled way e.g. with a mempool, but
-it would need more than that here).
+Did you try it without any multipath.conf at all? The defaults in 0.4.6
+work well.
 
-Here, dm_swap_table() leads to kmalloc() getting called
-in sysfs_add_link().
+> LUN_TESTES (360060160256014006adcbf64a644da11)
+>
+> [size=458 GB][features="0"][hwhandler="0"]
+>
+> \_ round-robin 0 [active]
+>
+>  \_ 3:0:0:0 sdc 8:32 [failed][faulty]
+>
+>  \_ 3:0:1:0 sdd 8:48 [failed][faulty]
+>
+>  \_ 3:0:2:0 sde 8:64 [active][ready]
+>
+>  \_ 3:0:3:0 sdf 8:80 [active][ready]
+>   
+although sdc and sdd are faulty you should be able to access the LUN -
+you have 2 active and ready paths to it. Look for LUN_TESTES in your
+/dev directory.
 
-[e.g. Consider the extreme case where the dm device
-you're changing is your swap device.  While dm_swap_table()
-runs, no I/O will get through to your swap device.]
+Do you have the right udev rules for multipath? As all distros do handle
+this on a different way - which distro and udev version are you using?
 
-If you can't avoid the sysfs code allocating memory, then
-you must find a way of doing it before the dm suspend or
-after the dm resume.
-e.g. Do the sysfs memory allocations for the links prior to 
-the dm suspend [which may have happened in a previous system call] 
-and then use a different function to move them into place during
-dm_swap_table() without performing further memory allocations?
-[Lazy workaround is to set PF_MEMALLOC again...]
+Make sure dm events are not discarded.
+On debian sarge for example you ahve to change this in udev.rules:
 
-Alasdair
--- 
-agk@redhat.com
+#KERNEL="dm-[0-9]*",    OPTIONS="ignore_device"
+KERNEL="dm-[0-9]*", PROGRAM="/sbin/devmap_name %M %m", NAME="%k",
+SYMLINK="%c"
+
+Are the multipath rules for udev installed? Do you have any errors from
+udev in your log?
+
+
+I hope I could give you some more hints.
+
+
+Best regards,
+
+Bernd
