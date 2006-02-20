@@ -1,117 +1,155 @@
-From: "Molle Bestefich" <molle.bestefich@gmail.com>
+From: Phillip Susi <psusi@cfl.rr.com>
 Subject: Re: Support HDIO_GETGEO on device-mapper volumes
-Date: Mon, 20 Feb 2006 19:09:22 +0100
-Message-ID: <62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.gmail.com>
+Date: Mon, 20 Feb 2006 16:30:24 -0500
+Message-ID: <43FA34F0.8020201@cfl.rr.com>
 References: <43EBEDD0.60608@us.ibm.com>
-	 <20060210145348.GA12173@agk.surrey.redhat.com>
-	 <43ECAD5B.9070308@cfl.rr.com>
-	 <62b0912f0602101227q719e712bq40da5b2f0c5422c5@mail.gmail.com>
-	 <43ED03F1.4010308@cfl.rr.com>
+	<20060210145348.GA12173@agk.surrey.redhat.com>
+	<43ECAD5B.9070308@cfl.rr.com>
+	<62b0912f0602101227q719e712bq40da5b2f0c5422c5@mail.gmail.com>
+	<43ED03F1.4010308@cfl.rr.com>
+	<62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932615AbWBTSJZ@vger.kernel.org>
-In-Reply-To: <43ED03F1.4010308@cfl.rr.com>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Phillip Susi <psusi@cfl.rr.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "Darrick J. Wong" <djwong@us.ibm.com>, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Molle Bestefich <molle.bestefich@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Phillip Susi wrote:
-> Molle Bestefich wrote:
-> > It would be better to make the decision once and for all, in one place.
-> >
-> > It would be even better for the HDIO_GETGEO call to return the same
-> > geometry that the BIOS uses, so that Grub is handed numbers that
-> > actually mean *something*.
->
-> The problem is that the numbers don't actually mean anything, even to
-> the bios.  They are only there for backward compatibility with real mode
-> software that makes int 13 calls.  The bios just fakes the geometry
-> anyway so it can emulate something, but there really is no meaning to
-> the geometry; it's just smoke and mirrors.
+Molle Bestefich wrote:
+> 
+> Obviously.
+> 
+> That doesn't stop the Linux kernel and device-mapper from presenting
+> usable numbers to user space tools.
+> 
+> What are "usable numbers"?
+> The only usable numbers are the exact ones that the BIOS uses, because
+> they are the only CHS numbers that have a purpose:
+> 
+> The purpose of those numbers is backwards compatibility with DOS and
+> Windows.  Stuff like PartitionMagic, FreeDOS, odd boot loaders
+> (including Windows XP's), weird implementations of fdisk, etc.
+> 
+> And that's the reason that the kernel and device mapper should either
+> represent the numbers that the BIOS currently uses, or nothing at all.
+> 
+> Fair'n'square..
+> 
 
-Obviously.
+Exactly!  If guesses have to be made because the correct values can not 
+be obtained from the bios, then it should be fdisk/parted/whatever that 
+has to make that guess ( or ask the user for manual intervention ), not 
+the kernel.
 
-That doesn't stop the Linux kernel and device-mapper from presenting
-usable numbers to user space tools.
+> The statement that "any value is gibberish" is plain wrong, since the
+> BIOS translations are useful values under some circumstances.
+> 
 
-What are "usable numbers"?
-The only usable numbers are the exact ones that the BIOS uses, because
-they are the only CHS numbers that have a purpose:
+In certain dm configurations ( specifically, when used for dmraid 
+assisted hardware fakeraid ) it might make sense, but for many dm 
+configurations it won't because the bios can't access the volume anyhow, 
+so it hardly makes any sense to associate a bios geometry with it. 
+That's what I meant by gibberish; if the drive isn't seen by the bios, 
+any geometry you come up with has no meaning.
 
-The purpose of those numbers is backwards compatibility with DOS and
-Windows.  Stuff like PartitionMagic, FreeDOS, odd boot loaders
-(including Windows XP's), weird implementations of fdisk, etc.
+> In cases where it does make sense, you want a consistent and well
+> maintained method of matching BIOS drives to devices and reporting
+> BIOS numbers.
+> 
 
-And that's the reason that the kernel and device mapper should either
-represent the numbers that the BIOS currently uses, or nothing at all.
+Right.  Unfortunately, it seems this was specifically removed from the 
+kernel because it was problematic, which I don't really mind since CHS 
+addressing needs to die anyhow.
 
-Fair'n'square..
+> In cases where it does not make sense, you just want to return error
+> and let the app handle it.
+> 
 
-> In the case of dm, which geometry should it report?  In some cases it
-> might make sense to pass up the values from the bios,
+Bingo.
 
-It does, I've come across a few.
+>> Just bring the apps still using it ( grub, lilo ) into the 21st century and have them
+>> stop using these meaningless values in the first place.
+> 
+> LILO is already fit for fight if you use the right flag.
+> 
+> Good idea to fix GRUB.
+> The GRUB code does look like a mess to me, though.
+> An ETA on GRUB2 would be nice, or an alternate source tree where
+> people could improve on the existing GRUB..
+> 
 
-> but in most, there
-> is no sensible way to choose what to report, and any value you do report
-> is meaningless gibberish anyhow, so why bother at all?
+IIRC, grub just uses the geometry it finds in the MBR, or you can 
+override with the geometry command.
 
-The statement that "any value is gibberish" is plain wrong, since the
-BIOS translations are useful values under some circumstances.
+>> LBA has been around for a good 10 years now, so I think it is safe to no longer
+>> require these made up values to support CHS addressing.
+> 
+> If you rip all CHS out of the kernel right now, user space tools has
+> to make guesses when mucking with partition tables.  Any attempts to
+> make Linux <whatever>fdisk compatible with other fdisk's will be
+> futile.  Stuff like for example placing a partition on a (virtual)
+> cylinder boundary is going to break when Linux <whatever>fdisk
+> translates LBA to CHS in one way (since the kernel doesn't provide a
+> meaningful value) and your BIOS does it another.
+> 
 
-In cases where it does make sense, you want a consistent and well
-maintained method of matching BIOS drives to devices and reporting
-BIOS numbers.
+Right, but this has already been done.  The values currently in the 
+kernel are not taken from the bios, so as you said, either report it 
+right, or don't report it at all.
 
-In cases where it does not make sense, you just want to return error
-and let the app handle it.
+In the case where fdisk must initialize a brand new MBR, then it should 
+assume sensible defaults and allow you to override.  Most of the time 
+though, people will already have a drive formatted by windows which will 
+have the correct geometry written in the MBR, so the linux tools will 
+just use that.
 
-> Just bring the apps still using it ( grub, lilo ) into the 21st century and have them
-> stop using these meaningless values in the first place.
+> 
+> Ok, the better approach might be to destroy HDIO_GETGEO entirely and
+> tell userspace apps to use /sys/firmware/edd/int13_dev instead.  It
+> provides for a cleaner implementation.
+> 
+> But then again, that breaks compatibility with current tools.
+> 
 
-LILO is already fit for fight if you use the right flag.
+They are already broken since the HDIO_GETGEO isn't returning the values 
+from the bios.  What is the status of edd?  Is that officially supported 
+or is it depreciated?  If it is ok to use, then it would probably be a 
+good place for fdisk to get that info from, though it's going to have to 
+figure out which int13_dev ( if any ) corresponds to the device you are 
+partitioning.  Sensible defaults for well known devices like /dev/hda 
+should cover most cases, but not all.  For instance, I recently 
+configured a server's bios to disable the primary ide channel because 
+that disk was bad and I needed to boot from the second mirrored drive, 
+so /dev/hdb actually corresponded to bios device 80, not /dev/hda.
 
-Good idea to fix GRUB.
-The GRUB code does look like a mess to me, though.
-An ETA on GRUB2 would be nice, or an alternate source tree where
-people could improve on the existing GRUB..
+> A good way to get the ball rolling could be if we could all agree that
+> there are a number of tools that need the BIOS CHS numbers.  Then we
+> can decide where the universal logic that attempts to guess which
+> devices are which should go.  Then a proper implementation could be
+> discussed and conjured, and dmraid, <whatever>fdisk, perhaps LILO/GRUB
+> etc. could be made dependant on it.  And THEN the HDIO_GETGEO could be
+> ripped...
+> 
 
-> LBA has been around for a good 10 years now, so I think it is safe to no longer
-> require these made up values to support CHS addressing.
+Aye, well put.  So let's see here.  As far as I can see, the only tools 
+that need this information are ones that can create MBRs, so that's 
+fdisk, cfdisk, parted, and friends.  Everything else can/should just use 
+the values listed in the MBR.
 
-If you rip all CHS out of the kernel right now, user space tools has
-to make guesses when mucking with partition tables.  Any attempts to
-make Linux <whatever>fdisk compatible with other fdisk's will be
-futile.  Stuff like for example placing a partition on a (virtual)
-cylinder boundary is going to break when Linux <whatever>fdisk
-translates LBA to CHS in one way (since the kernel doesn't provide a
-meaningful value) and your BIOS does it another.
+Agree?
 
-> > When 'dmraid' has assembled an array, it should find the matching BIOS
-> > drive in /proc/bios/int13_dev* and then it should tell device-mapper
-> > to present that geometry to whomever asks via HDIO_GETGEO.
->
-> dmraid is only one client of the kernel device mapper.  It has numerous
-> uses that have nothing to do with hardware fakeraid, including LVM.  In
-> the special case of dmraid there is a bios int13 dev for the raid that
-> provides some geometry, but why hack dm for this special case
-
-Ok, the better approach might be to destroy HDIO_GETGEO entirely and
-tell userspace apps to use /sys/firmware/edd/int13_dev instead.  It
-provides for a cleaner implementation.
-
-But then again, that breaks compatibility with current tools.
-
-A good way to get the ball rolling could be if we could all agree that
-there are a number of tools that need the BIOS CHS numbers.  Then we
-can decide where the universal logic that attempts to guess which
-devices are which should go.  Then a proper implementation could be
-discussed and conjured, and dmraid, <whatever>fdisk, perhaps LILO/GRUB
-etc. could be made dependant on it.  And THEN the HDIO_GETGEO could be
-ripped...
-
-Anyway, just a personal idea, your concept of completely nuking CHS
-from the kernel right now might be acceptable as well.
+> Anyway, just a personal idea, your concept of completely nuking CHS
+> from the kernel right now might be acceptable as well.
+> 
