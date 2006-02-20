@@ -1,47 +1,117 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [PATCH 0/3] sysfs representation of stacked devices
-	(dm/md)
-Date: Mon, 20 Feb 2006 09:04:27 +1100
-Message-ID: <17400.60267.923268.861047@cse.unsw.edu.au>
-References: <43F60F31.1030507@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Molle Bestefich" <molle.bestefich@gmail.com>
+Subject: Re: Support HDIO_GETGEO on device-mapper volumes
+Date: Mon, 20 Feb 2006 19:09:22 +0100
+Message-ID: <62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.gmail.com>
+References: <43EBEDD0.60608@us.ibm.com>
+	 <20060210145348.GA12173@agk.surrey.redhat.com>
+	 <43ECAD5B.9070308@cfl.rr.com>
+	 <62b0912f0602101227q719e712bq40da5b2f0c5422c5@mail.gmail.com>
+	 <43ED03F1.4010308@cfl.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Jun'ichi Nomura on Friday February 17
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932615AbWBTSJZ@vger.kernel.org>
+In-Reply-To: <43ED03F1.4010308@cfl.rr.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Phillip Susi <psusi@cfl.rr.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "Darrick J. Wong" <djwong@us.ibm.com>, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Friday February 17, j-nomura@ce.jp.nec.com wrote:
-> Hello,
-> 
-> These patches provide common representation of dependencies
-> between stacked devices (dm and md) in sysfs.
-> For example, if dm-0 maps to sda, we have the following symlinks;
->    /sys/block/dm-0/slaves/sda --> /sys/block/sda
->    /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
+Phillip Susi wrote:
+> Molle Bestefich wrote:
+> > It would be better to make the decision once and for all, in one place.
+> >
+> > It would be even better for the HDIO_GETGEO call to return the same
+> > geometry that the BIOS uses, so that Grub is handed numbers that
+> > actually mean *something*.
+>
+> The problem is that the numbers don't actually mean anything, even to
+> the bios.  They are only there for backward compatibility with real mode
+> software that makes int 13 calls.  The bios just fakes the geometry
+> anyway so it can emulate something, but there really is no meaning to
+> the geometry; it's just smoke and mirrors.
 
-I happy with the idea of having these links.
-I agree that it would be nice to have this very strongly based on the
-bd_claim infrastructure.
+Obviously.
 
-It would be really nice if bd_claim took a "kobject *" rather than a 
-"void *" and put a link in there.  This would be easy for dm and md,
-but awkward for other claimers like filesystems and open file
-descriptors as they don't currently have kobjects.
+That doesn't stop the Linux kernel and device-mapper from presenting
+usable numbers to user space tools.
 
-Possibly an extra flag that says if the 'holder' is a kobject or not,
-and if it is, appropriate symlinks are created...??
+What are "usable numbers"?
+The only usable numbers are the exact ones that the BIOS uses, because
+they are the only CHS numbers that have a purpose:
 
-NeilBrown
+The purpose of those numbers is backwards compatibility with DOS and
+Windows.  Stuff like PartitionMagic, FreeDOS, odd boot loaders
+(including Windows XP's), weird implementations of fdisk, etc.
+
+And that's the reason that the kernel and device mapper should either
+represent the numbers that the BIOS currently uses, or nothing at all.
+
+Fair'n'square..
+
+> In the case of dm, which geometry should it report?  In some cases it
+> might make sense to pass up the values from the bios,
+
+It does, I've come across a few.
+
+> but in most, there
+> is no sensible way to choose what to report, and any value you do report
+> is meaningless gibberish anyhow, so why bother at all?
+
+The statement that "any value is gibberish" is plain wrong, since the
+BIOS translations are useful values under some circumstances.
+
+In cases where it does make sense, you want a consistent and well
+maintained method of matching BIOS drives to devices and reporting
+BIOS numbers.
+
+In cases where it does not make sense, you just want to return error
+and let the app handle it.
+
+> Just bring the apps still using it ( grub, lilo ) into the 21st century and have them
+> stop using these meaningless values in the first place.
+
+LILO is already fit for fight if you use the right flag.
+
+Good idea to fix GRUB.
+The GRUB code does look like a mess to me, though.
+An ETA on GRUB2 would be nice, or an alternate source tree where
+people could improve on the existing GRUB..
+
+> LBA has been around for a good 10 years now, so I think it is safe to no longer
+> require these made up values to support CHS addressing.
+
+If you rip all CHS out of the kernel right now, user space tools has
+to make guesses when mucking with partition tables.  Any attempts to
+make Linux <whatever>fdisk compatible with other fdisk's will be
+futile.  Stuff like for example placing a partition on a (virtual)
+cylinder boundary is going to break when Linux <whatever>fdisk
+translates LBA to CHS in one way (since the kernel doesn't provide a
+meaningful value) and your BIOS does it another.
+
+> > When 'dmraid' has assembled an array, it should find the matching BIOS
+> > drive in /proc/bios/int13_dev* and then it should tell device-mapper
+> > to present that geometry to whomever asks via HDIO_GETGEO.
+>
+> dmraid is only one client of the kernel device mapper.  It has numerous
+> uses that have nothing to do with hardware fakeraid, including LVM.  In
+> the special case of dmraid there is a bios int13 dev for the raid that
+> provides some geometry, but why hack dm for this special case
+
+Ok, the better approach might be to destroy HDIO_GETGEO entirely and
+tell userspace apps to use /sys/firmware/edd/int13_dev instead.  It
+provides for a cleaner implementation.
+
+But then again, that breaks compatibility with current tools.
+
+A good way to get the ball rolling could be if we could all agree that
+there are a number of tools that need the BIOS CHS numbers.  Then we
+can decide where the universal logic that attempts to guess which
+devices are which should go.  Then a proper implementation could be
+discussed and conjured, and dmraid, <whatever>fdisk, perhaps LILO/GRUB
+etc. could be made dependant on it.  And THEN the HDIO_GETGEO could be
+ripped...
+
+Anyway, just a personal idea, your concept of completely nuking CHS
+from the kernel right now might be acceptable as well.
