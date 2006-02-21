@@ -1,19 +1,21 @@
-From: Phillip Susi <psusi@cfl.rr.com>
+From: "Molle Bestefich" <molle.bestefich@gmail.com>
 Subject: Re: Support HDIO_GETGEO on device-mapper volumes
-Date: Mon, 20 Feb 2006 16:30:24 -0500
-Message-ID: <43FA34F0.8020201@cfl.rr.com>
+Date: Tue, 21 Feb 2006 14:30:14 +0100
+Message-ID: <62b0912f0602210530i5e820ccci3f4068c9f1b66a7d@mail.gmail.com>
 References: <43EBEDD0.60608@us.ibm.com>
 	<20060210145348.GA12173@agk.surrey.redhat.com>
 	<43ECAD5B.9070308@cfl.rr.com>
 	<62b0912f0602101227q719e712bq40da5b2f0c5422c5@mail.gmail.com>
 	<43ED03F1.4010308@cfl.rr.com>
 	<62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.gmail.com>
+	<43FA34F0.8020201@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.gmail.com>
+In-Reply-To: <43FA34F0.8020201@cfl.rr.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,133 +25,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Molle Bestefich <molle.bestefich@gmail.com>
+To: Phillip Susi <psusi@cfl.rr.com>
 Cc: device-mapper development <dm-devel@redhat.com>, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Molle Bestefich wrote:
-> 
-> Obviously.
-> 
-> That doesn't stop the Linux kernel and device-mapper from presenting
-> usable numbers to user space tools.
-> 
-> What are "usable numbers"?
-> The only usable numbers are the exact ones that the BIOS uses, because
-> they are the only CHS numbers that have a purpose:
-> 
-> The purpose of those numbers is backwards compatibility with DOS and
-> Windows.  Stuff like PartitionMagic, FreeDOS, odd boot loaders
-> (including Windows XP's), weird implementations of fdisk, etc.
-> 
-> And that's the reason that the kernel and device mapper should either
-> represent the numbers that the BIOS currently uses, or nothing at all.
-> 
-> Fair'n'square..
-> 
+Phillip Susi wrote:
+> Right.  Unfortunately, it seems this was specifically removed from the
+> kernel because it was problematic,
 
-Exactly!  If guesses have to be made because the correct values can not 
-be obtained from the bios, then it should be fdisk/parted/whatever that 
-has to make that guess ( or ask the user for manual intervention ), not 
-the kernel.
+Ok.  Got an archive link or other references?
 
-> The statement that "any value is gibberish" is plain wrong, since the
-> BIOS translations are useful values under some circumstances.
-> 
+> IIRC, grub just uses the geometry it finds in the MBR, or you can
+> override with the geometry command.
 
-In certain dm configurations ( specifically, when used for dmraid 
-assisted hardware fakeraid ) it might make sense, but for many dm 
-configurations it won't because the bios can't access the volume anyhow, 
-so it hardly makes any sense to associate a bios geometry with it. 
-That's what I meant by gibberish; if the drive isn't seen by the bios, 
-any geometry you come up with has no meaning.
+Last I checked, grub used HDIO_GETGEO when running under Linux.
 
-> In cases where it does make sense, you want a consistent and well
-> maintained method of matching BIOS drives to devices and reporting
-> BIOS numbers.
-> 
+Which makes it pretty useless if what you say above is true.  Except
+of course in the particular cases where the bogus values that the
+Linux kernel makes up happens to be correct.
 
-Right.  Unfortunately, it seems this was specifically removed from the 
-kernel because it was problematic, which I don't really mind since CHS 
-addressing needs to die anyhow.
+Horribly unsafe way for a boot loader to function, if you ask me.
+(Not really grub's fault, more the Linux kernel it seems.)
 
-> In cases where it does not make sense, you just want to return error
-> and let the app handle it.
-> 
 
-Bingo.
+> In the case where fdisk must initialize a brand new MBR, then it should
+> assume sensible defaults and allow you to override.
 
->> Just bring the apps still using it ( grub, lilo ) into the 21st century and have them
->> stop using these meaningless values in the first place.
-> 
-> LILO is already fit for fight if you use the right flag.
-> 
-> Good idea to fix GRUB.
-> The GRUB code does look like a mess to me, though.
-> An ETA on GRUB2 would be nice, or an alternate source tree where
-> people could improve on the existing GRUB..
-> 
+There are no sensible defaults.
 
-IIRC, grub just uses the geometry it finds in the MBR, or you can 
-override with the geometry command.
+There's the translation that the BIOS (and thus DOS, PartitionMagic,
+yadda) uses, and then there's everything else, which is wrong.
 
->> LBA has been around for a good 10 years now, so I think it is safe to no longer
->> require these made up values to support CHS addressing.
-> 
-> If you rip all CHS out of the kernel right now, user space tools has
-> to make guesses when mucking with partition tables.  Any attempts to
-> make Linux <whatever>fdisk compatible with other fdisk's will be
-> futile.  Stuff like for example placing a partition on a (virtual)
-> cylinder boundary is going to break when Linux <whatever>fdisk
-> translates LBA to CHS in one way (since the kernel doesn't provide a
-> meaningful value) and your BIOS does it another.
-> 
+It won't do you any good to fill in "sensible defaults", since if it
+doesn't comply with what the BIOS decides (or you decide in the BIOS
+setup as is the case on my Compaq), those old programs just won't
+work.
+And Linux doesn't care about CHS values anyway, so no point in filling
+in hocus pocus "sensible" stuff on that account.
 
-Right, but this has already been done.  The values currently in the 
-kernel are not taken from the bios, so as you said, either report it 
-right, or don't report it at all.
 
-In the case where fdisk must initialize a brand new MBR, then it should 
-assume sensible defaults and allow you to override.  Most of the time 
-though, people will already have a drive formatted by windows which will 
-have the correct geometry written in the MBR, so the linux tools will 
-just use that.
+> Most of the time though, people will already have a drive formatted by
+> windows which will have the correct geometry written in the MBR,
+> so the linux tools will just use that.
 
-> 
-> Ok, the better approach might be to destroy HDIO_GETGEO entirely and
-> tell userspace apps to use /sys/firmware/edd/int13_dev instead.  It
-> provides for a cleaner implementation.
-> 
-> But then again, that breaks compatibility with current tools.
-> 
+Yes, well, but it WOULD be nice if Linux was able to partition the
+disk in a compatible way.
 
-They are already broken since the HDIO_GETGEO isn't returning the values 
-from the bios.  What is the status of edd?  Is that officially supported 
-or is it depreciated?  If it is ok to use, then it would probably be a 
-good place for fdisk to get that info from, though it's going to have to 
-figure out which int13_dev ( if any ) corresponds to the device you are 
-partitioning.  Sensible defaults for well known devices like /dev/hda 
-should cover most cases, but not all.  For instance, I recently 
-configured a server's bios to disable the primary ide channel because 
-that disk was bad and I needed to boot from the second mirrored drive, 
-so /dev/hdb actually corresponded to bios device 80, not /dev/hda.
+It's a stupid feature that one HAS to first boot a Windows CD,
+partition the harddrive and install Windows and then install Linux
+afterwards.  Should be doable the other way around.
 
-> A good way to get the ball rolling could be if we could all agree that
-> there are a number of tools that need the BIOS CHS numbers.  Then we
-> can decide where the universal logic that attempts to guess which
-> devices are which should go.  Then a proper implementation could be
-> discussed and conjured, and dmraid, <whatever>fdisk, perhaps LILO/GRUB
-> etc. could be made dependant on it.  And THEN the HDIO_GETGEO could be
-> ripped...
-> 
+Moreover, the MBR values are not guaranteed to be correct if you want
+to partition your disk in a way compatible with the BIOS in your
+system.  The disk might have been moved from another PC (using another
+translation), in which case the MBR values will be wrong.  Another
+example is dd'ing an entire drive to a larger drive - the BIOS might
+use different translation for the two drives, and the MBR values will
+be incorrect.
 
-Aye, well put.  So let's see here.  As far as I can see, the only tools 
-that need this information are ones that can create MBRs, so that's 
-fdisk, cfdisk, parted, and friends.  Everything else can/should just use 
-the values listed in the MBR.
+Ok, quite theoretical perhaps, but the main idea is that if you want
+to partition a disk to be compatible with DOS, Windows etc. on the PC
+the disk is sitting in, you have to use BIOS, not MBR values.
 
-Agree?
+(MBR values can be good for other things, for example preparing a disk
+for a different system.)
 
-> Anyway, just a personal idea, your concept of completely nuking CHS
-> from the kernel right now might be acceptable as well.
-> 
+
+> > Ok, the better approach might be to destroy HDIO_GETGEO entirely and
+> > tell userspace apps to use /sys/firmware/edd/int13_dev instead.  It
+> > provides for a cleaner implementation.
+> >
+> > But then again, that breaks compatibility with current tools.
+>
+> They are already broken since the HDIO_GETGEO isn't returning the value=
+s
+> from the bios.
+
+Ok.
+
+> What is the status of edd?  Is that officially supported
+> or is it depreciated?
+
+Can't imagine why it would be deprecated.
+
+> If it is ok to use, then it would probably be a
+> good place for fdisk to get that info from, though it's going to have t=
+o
+> figure out which int13_dev ( if any ) corresponds to the device you are
+> partitioning.
+
+Comparing the first and last sector should do.
+If not, we can error out without mapping certain devices.
+If that's a problem to any users, they can use a tool to write unique
+sigs to the start ~2kB or end ~2kB of disks..
+
+> Sensible defaults for well known devices like /dev/hda
+> should cover most cases, but not all.
+
+Nah, I don't think that's a good idea.
+Figure out the right mappings or error out, don't guess.
+
+> For instance, I recently
+> configured a server's bios to disable the primary ide channel because
+> that disk was bad and I needed to boot from the second mirrored drive,
+> so /dev/hdb actually corresponded to bios device 80, not /dev/hda.
+
+And there are far more weird and obscure cases than this.
+
+> > A good way to get the ball rolling could be if we could all agree tha=
+t
+> > there are a number of tools that need the BIOS CHS numbers.  Then we
+> > can decide where the universal logic that attempts to guess which
+> > devices are which should go.  Then a proper implementation could be
+> > discussed and conjured, and dmraid, <whatever>fdisk, perhaps LILO/GRU=
+B
+> > etc. could be made dependant on it.  And THEN the HDIO_GETGEO could b=
+e
+> > ripped...
+>
+> Aye, well put.  So let's see here.  As far as I can see, the only tools
+> that need this information are ones that can create MBRs, so that's
+> fdisk, cfdisk, parted, and friends.  Everything else can/should just us=
+e
+> the values listed in the MBR.
+>
+> Agree?
+
+GRUB and LILO might want to see CHS values too, in case you're
+preparing a boot loader on a PC without int13 LBA extensions.  Ok,
+that's pretty far out, but could happen :-).  If nothing else, then
+because the user accidentally chose CHS mode.
+
+dmraid might want to see the CHS values, in case there's an ATARAID
+adapter which might or might not be capping drives to their last GB,
+and dmraid wants to know whether the capping feature is enabled.  Not
+sure if this is a sensible way to gather that information, but it
+might be the only one for some adapters (who knows).
+
+Can't think of anything else on top of my head (not saying that there
+isn't any :-)).
