@@ -1,20 +1,13 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: Support HDIO_GETGEO on device-mapper volumes
-Date: Tue, 21 Feb 2006 11:02:04 -0500
-Message-ID: <43FB397C.1070509@cfl.rr.com>
-References: <43EBEDD0.60608@us.ibm.com>
-	<20060210145348.GA12173@agk.surrey.redhat.com>
-	<43ECAD5B.9070308@cfl.rr.com>
-	<62b0912f0602101227q719e712bq40da5b2f0c5422c5@mail.gmail.com>
-	<43ED03F1.4010308@cfl.rr.com>
-	<62b0912f0602201009o3e3338d4lf7bdcdf1af172dda@mail.g
-	<62b0912f0602210530i5e820ccci3f4068c9f1b66a7d@mail.gmail.com>
+From: Stefan Weinhuber <WEIN@de.ibm.com>
+Subject: [RFC] improve device mapper response characteristics by
+ implementing timeouts
+Date: Tue, 21 Feb 2006 19:02:25 +0100
+Message-ID: <OF6C9A5B0A.EE19FB3C-ONC125711C.0061011B-C125711C.00631634@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <62b0912f0602210530i5e820ccci3f4068c9f1b66a7d@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,167 +17,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Molle Bestefich <molle.bestefich@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Chris McDermott <lcm@us.ibm.com>, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: heinzm@redhat.com, agk@redhat.com, Holger Smolinski <smolinski@de.ibm.com>
 List-Id: dm-devel.ids
 
-Molle Bestefich wrote:
-> Ok.  Got an archive link or other references?
-> 
+Hello everyone,
 
-Unfortunately, no.
+Stefan Bader and I are currently looking into the device mapper and
+its mirror target, with the intention to improve its response
+characteristic. (We already got some early feedback from Alasdair and
+others, so just assume that the bad ideas are from us and the good
+ones are from those helpful people :-)
 
->> IIRC, grub just uses the geometry it finds in the MBR, or you can
->> override with the geometry command.
-> 
-> Last I checked, grub used HDIO_GETGEO when running under Linux.
-> 
-> Which makes it pretty useless if what you say above is true.  Except
-> of course in the particular cases where the bogus values that the
-> Linux kernel makes up happens to be correct.
-> 
+The current implementation of device mapper relies entirely on the
+underlying devices to report success or failure within a short time
+frame. With SAN devices however, there may be longer delays due to
+network congestion or error recovery within the storage device or the
+network.  For the mirror target this means that a single delayed
+physical device will cause a delay on the virtual device.
 
-Exactly.  Oddly enough though, most of the time these days the bogus 
-values do match the bios values.  If grub is using HDIO_GETGEO then yea, 
-it should just use the geometry in the MBR instead.  That probably 
-explains why I had to issue the geometry command explicitly when 
-installing grub on my hardware fakeraid.  I guess grub assumed some odd 
-defaults when HDIO_GETGEO failed.  I should investigate that further.
+Applications on the other hand expect certain response times before
+taking recovery actions as well. We want to improve the response time
+of a virtual device by allowing the mirror volume to become out of
+sync to a certain degree if one of the underlying devices doesn't
+respond within a user defined time frame but other devices in the
+mirror group do. Devices that do not respond will become 'degraded'
+and will not be used for further reading or writing until all of the
+outstanding requests have been completed.
 
-> Horribly unsafe way for a boot loader to function, if you ask me.
-> (Not really grub's fault, more the Linux kernel it seems.)
-> 
+Of course there are several issues that have to be solved:
 
-It is unsafe, but it is also partly grub's fault since it shouldn't be 
-calling HDIO_GETGEO in the first place.  It should assume that the 
-values stored in the MBR already are correct, since if they weren't, the 
-system wouldn't boot anyhow, and use those rather than ask the kernel.
+First issue: Risk of data corruption.
 
-> 
->> In the case where fdisk must initialize a brand new MBR, then it should
->> assume sensible defaults and allow you to override.
-> 
-> There are no sensible defaults.
-> 
+Bios that are still running on some of the devices but are returned as
+finished to the upper layer may cause data inconsistency. The memory
+referred to by the bios may be changed before the device is actually
+performing any read or write action. So the device will update memory
+or disk in an inconsistent way.
 
-Sure there are: 255 heads and 63 sectors.  Most bioses will map most 
-modern hard disks ( > 8 GB ) to this geometry.  Fdisk seems to use this 
-default, and most of the time, it is correct.
+We see two ways how to deal with this problem:
 
-> There's the translation that the BIOS (and thus DOS, PartitionMagic,
-> yadda) uses, and then there's everything else, which is wrong.
-> 
-> It won't do you any good to fill in "sensible defaults", since if it
-> doesn't comply with what the BIOS decides (or you decide in the BIOS
-> setup as is the case on my Compaq), those old programs just won't
-> work.
-> And Linux doesn't care about CHS values anyway, so no point in filling
-> in hocus pocus "sensible" stuff on that account.
-> 
+1. Implement a way to control a request still running on a device, so
+   that it can be stopped before it is finished. A possible
+   implementation would be to introduce some new functionality in the
+   block layer that allows to cancel a submitted request. If one of
+   the low level devices doesn't return in the requested time frame,
+   then the device mapper could actively cancel the request on that
+   device. The low level driver of that device must make sure that a
+   canceled request will not be executed and thus will not change disk
+   or memory in any unexpected way.
 
-You have to use SOMETHING and since most of the time it will be 255/63, 
-the tools may as well default to that, possibly with a warning informing 
-the user that they may need to change that to be able to dual boot with 
-windows.
+2. Make sure that the memory used for any request running on the
+   device is not changed. This can be achieved by making a deep copy
+   of every bio and sub those clones to the devices instead of the
+   original bios.
+   This could be implemented within device mapper or the mirror target
+   itself. Instead of just creating a set of bios that all refer to
+   the original memory pages, the memory pages would be copied as
+   well. When one of the low level devices does not return within the
+   requested time frame, that device can be simply ignored. Device
+   mapper can return the original bio without risk of data
+   inconsistency. Once this happens to a device we should stop cloning
+   bios for that device until we know it is fully operational again
+   and the devices were resynchronized again.
 
-> 
->> Most of the time though, people will already have a drive formatted by
->> windows which will have the correct geometry written in the MBR,
->> so the linux tools will just use that.
-> 
-> Yes, well, but it WOULD be nice if Linux was able to partition the
-> disk in a compatible way.
-> 
-> It's a stupid feature that one HAS to first boot a Windows CD,
-> partition the harddrive and install Windows and then install Linux
-> afterwards.  Should be doable the other way around.
-> 
+Some further considerations:=20
+- Cloning is expensive and we probably want a cancellation method in
+  the long term. The cancellation approach though will need a lot of
+  discussion and it may take some time before the needed
+  infrastructure is there. We should design the interfaces in a way
+  that allows us to do either cloning or canceling.=20
+- Cloning or rather caching of data is something that is needed in
+  other places as well. The raid4 and raid5 targets already implement
+  a data cache. This code might be moved out of those targets for
+  generic use.
 
-You can do it the other way around, you just have to make sure that 
-linux's fdisk guesses the correct geometry, which it will most of the 
-time.
 
-> Moreover, the MBR values are not guaranteed to be correct if you want
-> to partition your disk in a way compatible with the BIOS in your
-> system.  The disk might have been moved from another PC (using another
-> translation), in which case the MBR values will be wrong.  Another
-> example is dd'ing an entire drive to a larger drive - the BIOS might
-> use different translation for the two drives, and the MBR values will
-> be incorrect.
-> 
+Second issue: Where should the timeout be handled?=20
 
-Correct, which is why fdisk needs to allow you to override the geometry, 
-but most of the time users won't run into this so it is sensible to 
-assume sensible defaults.
+We want to improve the mirror target, but other targets might profit
+from a timeout interface as well. For example, on a multipath target a
+bio is send via one path to a target, if that path fails, the bio must
+be resent via a different path. But if a path does not react at all,
+the bio can't be resent. In this case a timeout could help to break up
+such a situation. So the timeout interface should be implemented in a
+generic way, that makes its use possible for all device mapper targets.
 
-> Ok, quite theoretical perhaps, but the main idea is that if you want
-> to partition a disk to be compatible with DOS, Windows etc. on the PC
-> the disk is sitting in, you have to use BIOS, not MBR values.
-> 
-> (MBR values can be good for other things, for example preparing a disk
-> for a different system.)
-> 
-> 
->> They are already broken since the HDIO_GETGEO isn't returning the values
->> from the bios.
-> 
-> Ok.
-> 
->> What is the status of edd?  Is that officially supported
->> or is it depreciated?
-> 
-> Can't imagine why it would be deprecated.
-> 
->> If it is ok to use, then it would probably be a
->> good place for fdisk to get that info from, though it's going to have to
->> figure out which int13_dev ( if any ) corresponds to the device you are
->> partitioning.
-> 
-> Comparing the first and last sector should do.
-> If not, we can error out without mapping certain devices.
-> If that's a problem to any users, they can use a tool to write unique
-> sigs to the start ~2kB or end ~2kB of disks..
-> 
 
-Good idea.  It is a bit kludgey, but it should work well enough.  It 
-also requires being able to call int 13 to read the first and last sector.
+Third issue: Logging and error recovery.
 
->> Sensible defaults for well known devices like /dev/hda
->> should cover most cases, but not all.
-> 
-> Nah, I don't think that's a good idea.
-> Figure out the right mappings or error out, don't guess.
-> 
->> For instance, I recently
->> configured a server's bios to disable the primary ide channel because
->> that disk was bad and I needed to boot from the second mirrored drive,
->> so /dev/hdb actually corresponded to bios device 80, not /dev/hda.
-> 
-> And there are far more weird and obscure cases than this.
-> 
-> 
-> GRUB and LILO might want to see CHS values too, in case you're
-> preparing a boot loader on a PC without int13 LBA extensions.  Ok,
-> that's pretty far out, but could happen :-).  If nothing else, then
-> because the user accidentally chose CHS mode.
-> 
+With our approach disks will go out of sync not just because of error
+situations but also because of bad performance, which is much more
+likely to happen. So the mechanisms for resynchronization must be able
+to deal with this. We also need to think about error recovery. What
+will happen if we reboot a system and the master disk of a mirror
+fails and only an out of sync copy comes up? What will happen if our
+log device fails? As long as we only have one log we have a single
+point of failure, but if we had two logs how would we recognize an up
+to date log in case of an error recovery?
 
-They should be getting the geometry from the MBR anyhow since if they do 
-choose a value different from those used to create the partition table, 
-it will screw the pooch.
 
-> dmraid might want to see the CHS values, in case there's an ATARAID
-> adapter which might or might not be capping drives to their last GB,
-> and dmraid wants to know whether the capping feature is enabled.  Not
-> sure if this is a sensible way to gather that information, but it
-> might be the only one for some adapters (who knows).
-> 
 
-I don't follow.  dmraid doesn't know or care about ATARAID adapters that 
-may or may not be hiding the tail end of the disk, that is taken care of 
-by the driver, which just disables the hiding.  dmraid just looks at the 
-tail of the disks for the bios configuration block and sets up device 
-mapper to access the disks.
+Well, these are our ideas and intentions so far.=20
+Do you think this makes sense at all? Any issues that we overlooked?
+We appreciate any kind of feedback. :-)
+As the next step we will think about the new interfaces that would be
+needed and how they could look like.
 
-> Can't think of anything else on top of my head (not saying that there
-> isn't any :-)).
+
+Best Regards /  Mit freundlichen Gr=FC=DFen
+
+Stefan Weinhuber
+
+-------------------------------------------------------------------
+IBM Deutschland Entwicklung GmbH
+Linux for zSeries Development & Services
