@@ -1,14 +1,15 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 2/3] sysfs representation of stacked devices (dm)
-	(rev.2)
-Date: Wed, 22 Feb 2006 11:13:06 -0500
-Message-ID: <43FC8D92.6010006@ce.jp.nec.com>
-References: <43FC8C00.5020600@ce.jp.nec.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 2/3] sysfs representation of stacked devices
+	(dm) (rev.2)
+Date: Wed, 22 Feb 2006 16:34:38 +0000
+Message-ID: <20060222163438.GC31641@agk.surrey.redhat.com>
+References: <43FC8C00.5020600@ce.jp.nec.com> <43FC8D92.6010006@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------020406090002080501030405"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <43FC8C00.5020600@ce.jp.nec.com>
+Content-Disposition: inline
+In-Reply-To: <43FC8D92.6010006@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,241 +19,164 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Greg KH <gregkh@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Mike Anderson <andmike@us.ibm.com>, Greg KH <gregkh@suse.de>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------020406090002080501030405
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+On Wed, Feb 22, 2006 at 11:13:06AM -0500, Jun'ichi Nomura wrote:
+> This patch modifies dm driver to call bd_claim_by_kobject
+> and bd_release_from_kobject.
+> To do that, reference to the mapped_device is added in
+> dm_table.
+ 
+This patch needs splitting up so that independent changes can be 
+considered separately.
 
-This patch modifies dm driver to call bd_claim_by_kobject
-and bd_release_from_kobject.
-To do that, reference to the mapped_device is added in
-dm_table.
+c.f. The proposal from Mike Anderson (repeated below) which I prefer 
+because it makes it clear that a table always belongs to exactly one md.
 
+Exposing dm_table_set_md() suggests a table can have its owning md 
+changed - it can't.
+
+Alasdair
 -- 
-Jun'ichi Nomura, NEC Solutions (America), Inc.
+agk@redhat.com
 
---------------020406090002080501030405
-Content-Type: text/x-patch;
- name="dm.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm.patch"
 
-Exporting stacked device relationship to sysfs (dm)
+ This patch adds a mapped_device member to the dm_table struct.
 
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+ Signed-off-by: Mike Anderson <andmike@us.ibm.com>
 
---- linux-2.6.15/drivers/md/dm.h	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/drivers/md/dm.h	2006-02-21 16:49:22.000000000 -0500
-@@ -102,6 +102,8 @@ int dm_table_create(struct dm_table **re
+ drivers/md/dm-ioctl.c |   32 +++++++++++++++++++-------------
+ drivers/md/dm-table.c |   12 +++++++++++-
+ drivers/md/dm.h       |    4 +++-
+ 3 files changed, 33 insertions(+), 15 deletions(-)
+
+Index: sas-2.6-patched/drivers/md/dm.h
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/dm.h	2006-02-20 01:05:32.000000000 -0800
++++ sas-2.6-patched/drivers/md/dm.h	2006-02-20 01:42:29.000000000 -0800
+@@ -99,7 +99,8 @@ int dm_suspended(struct mapped_device *m
+  * Functions for manipulating a table.  Tables are also reference
+  * counted.
+  *---------------------------------------------------------------*/
+-int dm_table_create(struct dm_table **result, int mode, unsigned num_targets);
++int dm_table_create(struct dm_table **result, int mode, unsigned
++		    num_targets, struct mapped_device *md);
  
  void dm_table_get(struct dm_table *t);
  void dm_table_put(struct dm_table *t);
-+void dm_table_set_md(struct dm_table *t, struct mapped_device *md);
-+struct mapped_device *dm_table_device(struct dm_table *t);
+@@ -123,6 +124,7 @@ void dm_table_resume_targets(struct dm_t
+ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
+ void dm_table_unplug_all(struct dm_table *t);
+ int dm_table_flush_all(struct dm_table *t);
++struct mapped_device *dm_table_get_md(struct dm_table *t);
  
- int dm_table_add_target(struct dm_table *t, const char *type,
- 			sector_t start,	sector_t len, char *params);
---- linux-2.6.15/drivers/md/dm-ioctl.c	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/drivers/md/dm-ioctl.c	2006-02-21 16:51:30.000000000 -0500
-@@ -228,6 +228,16 @@ static int dm_hash_insert(const char *na
- 	return -EBUSY;
- }
- 
-+/* called when the populated table is no longer needed */
-+static void __release_new_map(struct dm_table *t)
-+{
-+	struct mapped_device *md = dm_table_device(t);
-+
-+	dm_table_put(t);
-+	if (md)
-+		dm_put(md);
-+}
-+
- static void __hash_remove(struct hash_cell *hc)
- {
- 	struct dm_table *table;
-@@ -246,7 +256,7 @@ static void __hash_remove(struct hash_ce
- 
- 	dm_put(hc->md);
- 	if (hc->new_map)
--		dm_table_put(hc->new_map);
-+		__release_new_map(hc->new_map);
- 	free_cell(hc);
- }
- 
-@@ -719,6 +729,7 @@ static int do_resume(struct dm_ioctl *pa
- 	dm_get(md);
- 
- 	new_map = hc->new_map;
-+	dm_put(md); /* drop reference by dm_table_set_md() */
- 	hc->new_map = NULL;
- 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
- 
-@@ -963,9 +974,19 @@ static int table_load(struct dm_ioctl *p
- 	if (r)
- 		return r;
- 
-+	down_read(&_hash_lock);
-+	hc = __find_device_hash_cell(param);
-+	if (!hc) {
-+		DMWARN("device doesn't appear to be in the dev hash table.");
-+		up_read(&_hash_lock);
-+		return -ENXIO;
-+	}
-+	dm_table_set_md(t, hc->md);
-+	up_read(&_hash_lock);
-+
- 	r = populate_table(t, param, param_size);
- 	if (r) {
--		dm_table_put(t);
-+		__release_new_map(t);
- 		return r;
- 	}
- 
-@@ -979,7 +1000,7 @@ static int table_load(struct dm_ioctl *p
- 	}
- 
- 	if (hc->new_map)
--		dm_table_put(hc->new_map);
-+		__release_new_map(hc->new_map);
- 	hc->new_map = t;
- 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
- 
-@@ -1003,7 +1024,7 @@ static int table_clear(struct dm_ioctl *
- 	}
- 
- 	if (hc->new_map) {
--		dm_table_put(hc->new_map);
-+		__release_new_map(hc->new_map);
- 		hc->new_map = NULL;
- 	}
- 
---- linux-2.6.15/drivers/md/dm-table.c	2006-01-02 22:21:10.000000000 -0500
-+++ linux-2.6.15/drivers/md/dm-table.c	2006-02-21 19:11:03.000000000 -0500
-@@ -53,6 +53,8 @@ struct dm_table {
- 	/* events get handed up using this callback */
- 	void (*event_fn)(void *);
- 	void *event_context;
-+
+ /*-----------------------------------------------------------------
+  * A registry of target types.
+Index: sas-2.6-patched/drivers/md/dm-table.c
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/dm-table.c	2006-02-20 01:05:32.000000000 -0800
++++ sas-2.6-patched/drivers/md/dm-table.c	2006-02-20 01:42:29.000000000 -0800
+@@ -33,6 +33,7 @@ struct dm_table {
+ 	unsigned int num_allocated;
+ 	sector_t *highs;
+ 	struct dm_target *targets;
 +	struct mapped_device *md;
- };
  
- /*
-@@ -345,7 +347,7 @@ static struct dm_dev *find_device(struct
- /*
-  * Open a device so we can use it as a map destination.
-  */
--static int open_dev(struct dm_dev *d, dev_t dev)
-+static int open_dev(struct dm_dev *d, dev_t dev, struct mapped_device *md)
- {
- 	static char *_claim_ptr = "I belong to device-mapper";
- 	struct block_device *bdev;
-@@ -358,7 +360,7 @@ static int open_dev(struct dm_dev *d, de
- 	bdev = open_by_devnum(dev, d->mode);
- 	if (IS_ERR(bdev))
- 		return PTR_ERR(bdev);
--	r = bd_claim(bdev, _claim_ptr);
-+	r = bd_claim_by_kobject(bdev, _claim_ptr, &dm_disk(md)->slave_dir);
- 	if (r)
- 		blkdev_put(bdev);
- 	else
-@@ -369,12 +371,12 @@ static int open_dev(struct dm_dev *d, de
- /*
-  * Close a device that we've been using.
-  */
--static void close_dev(struct dm_dev *d)
-+static void close_dev(struct dm_dev *d, struct mapped_device *md)
- {
- 	if (!d->bdev)
- 		return;
- 
--	bd_release(d->bdev);
-+	bd_release_from_kobject(d->bdev, &dm_disk(md)->slave_dir);
- 	blkdev_put(d->bdev);
- 	d->bdev = NULL;
+ 	/*
+ 	 * Indicates the rw permissions for the new logical
+@@ -204,7 +205,8 @@ static int alloc_targets(struct dm_table
+ 	return 0;
  }
-@@ -395,7 +397,7 @@ static int check_device_area(struct dm_d
-  * careful to leave things as they were if we fail to reopen the
-  * device.
-  */
--static int upgrade_mode(struct dm_dev *dd, int new_mode)
-+static int upgrade_mode(struct dm_dev *dd, int new_mode, struct mapped_device *md)
+ 
+-int dm_table_create(struct dm_table **result, int mode, unsigned num_targets)
++int dm_table_create(struct dm_table **result, int mode,
++		    unsigned num_targets, struct mapped_device *md)
  {
- 	int r;
- 	struct dm_dev dd_copy;
-@@ -405,9 +407,9 @@ static int upgrade_mode(struct dm_dev *d
+ 	struct dm_table *t = kmalloc(sizeof(*t), GFP_KERNEL);
  
- 	dd->mode |= new_mode;
- 	dd->bdev = NULL;
--	r = open_dev(dd, dev);
-+	r = open_dev(dd, dev, md);
- 	if (!r)
--		close_dev(&dd_copy);
-+		close_dev(&dd_copy, md);
- 	else
- 		*dd = dd_copy;
- 
-@@ -450,7 +452,7 @@ static int __table_get_device(struct dm_
- 		dd->mode = mode;
- 		dd->bdev = NULL;
- 
--		if ((r = open_dev(dd, dev))) {
-+		if ((r = open_dev(dd, dev, t->md))) {
- 			kfree(dd);
- 			return r;
- 		}
-@@ -461,7 +463,7 @@ static int __table_get_device(struct dm_
- 		list_add(&dd->list, &t->devices);
- 
- 	} else if (dd->mode != (mode | dd->mode)) {
--		r = upgrade_mode(dd, mode);
-+		r = upgrade_mode(dd, mode, t->md);
- 		if (r)
- 			return r;
+@@ -227,6 +229,7 @@ int dm_table_create(struct dm_table **re
  	}
-@@ -536,7 +538,7 @@ int dm_get_device(struct dm_target *ti, 
- void dm_put_device(struct dm_target *ti, struct dm_dev *dd)
- {
- 	if (atomic_dec_and_test(&dd->count)) {
--		close_dev(dd);
-+		close_dev(dd, ti->table->md);
- 		list_del(&dd->list);
- 		kfree(dd);
- 	}
-@@ -945,6 +947,22 @@ int dm_table_flush_all(struct dm_table *
+ 
+ 	t->mode = mode;
++	t->md = md;
+ 	*result = t;
+ 	return 0;
+ }
+@@ -945,6 +948,12 @@ int dm_table_flush_all(struct dm_table *
  	return ret;
  }
  
-+void dm_table_set_md(struct dm_table *t, struct mapped_device *md)
++struct mapped_device *dm_table_get_md(struct dm_table *t)
 +{
-+	if (t->md) {
-+		dm_put(t->md);
-+		t->md = NULL;
-+	}
-+	if (md) {
-+		dm_get(md);
-+		t->md = md;
-+	}
-+}
-+struct mapped_device *dm_table_device(struct dm_table *t)
-+{
++	dm_get(t->md);
 +	return t->md;
 +}
 +
  EXPORT_SYMBOL(dm_vcalloc);
  EXPORT_SYMBOL(dm_get_device);
  EXPORT_SYMBOL(dm_put_device);
-
---------------020406090002080501030405
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------020406090002080501030405--
+@@ -955,3 +964,4 @@ EXPORT_SYMBOL(dm_table_put);
+ EXPORT_SYMBOL(dm_table_get);
+ EXPORT_SYMBOL(dm_table_unplug_all);
+ EXPORT_SYMBOL(dm_table_flush_all);
++EXPORT_SYMBOL(dm_table_get_md);
+Index: sas-2.6-patched/drivers/md/dm-ioctl.c
+===================================================================
+--- sas-2.6-patched.orig/drivers/md/dm-ioctl.c	2006-02-20 01:05:32.000000000 -0800
++++ sas-2.6-patched/drivers/md/dm-ioctl.c	2006-02-20 01:42:29.000000000 -0800
+@@ -972,27 +972,26 @@ static int populate_table(struct dm_tabl
+ 
+ static int table_load(struct dm_ioctl *param, size_t param_size)
+ {
+-	int r;
++	int r = -ENXIO;
+ 	struct hash_cell *hc;
+ 	struct dm_table *t;
+ 
+-	r = dm_table_create(&t, get_mode(param), param->target_count);
+-	if (r)
+-		return r;
+-
+-	r = populate_table(t, param, param_size);
+-	if (r) {
+-		dm_table_put(t);
+-		return r;
+-	}
+ 
+ 	down_write(&_hash_lock);
+ 	hc = __find_device_hash_cell(param);
+ 	if (!hc) {
+ 		DMWARN("device doesn't appear to be in the dev hash table.");
+-		up_write(&_hash_lock);
+-		dm_table_put(t);
+-		return -ENXIO;
++		goto out;
++	}
++
++	r = dm_table_create(&t, get_mode(param), param->target_count,
++			    hc->md);
++	if (r)
++		goto out;
++
++	r = populate_table(t, param, param_size);
++	if (r) {
++		goto table_out;
+ 	}
+ 
+ 	if (hc->new_map)
+@@ -1001,6 +1000,13 @@ static int table_load(struct dm_ioctl *p
+ 	param->flags |= DM_INACTIVE_PRESENT_FLAG;
+ 
+ 	r = __dev_status(hc->md, param);
++
++	up_write(&_hash_lock);
++	return r;
++
++table_out:
++	dm_table_put(t);
++out:
+ 	up_write(&_hash_lock);
+ 	return r;
+ }
