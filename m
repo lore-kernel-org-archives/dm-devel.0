@@ -1,14 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: dm-multipath: syncing path states
-Date: Wed, 22 Feb 2006 00:08:40 +0100
-Message-ID: <1140563320.5370.0.camel@localhost.localdomain>
-References: <20060221223708.GB5670@ether.msp.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH 0/3] sysfs representation of stacked devices
+	(dm/md) (rev.2)
+Date: Wed, 22 Feb 2006 11:06:24 -0500
+Message-ID: <43FC8C00.5020600@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060221223708.GB5670@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,21 +17,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Neil Brown <neilb@suse.de>, Alasdair Kergon <agk@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Greg KH <gregkh@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Le mardi 21 f=C3=A9vrier 2006 =C3=A0 16:37 -0600, Benjamin Marzinski a =C3=
-=A9crit :
-> Occasionally, the path states for multipathd and device mapper are out =
-of sync.
-> This happens either when multipathd starts, or after a multipath map is
-> created or reloaded (what a path is added or removed, or a map is added=
-).
-> The attached patch syncs the paths' dmstate with it's state after one o=
-f
-> these actions happens.
->=20
-Applied, thanks.
+Hello,
 
-Regards,
-cvaroqui
+This is a revised set of pathces which provides common
+representation of dependencies between stacked devices (dm and md)
+in sysfs.
+
+Variants of bd_claim/bd_release are added to accept a kobject
+and create symlinks between the claimed bdev and the holder.
+
+dm/md will give a child of its gendisk kobject to bd_claim.
+For example, if dm-0 maps to sda, we have the following symlinks;
+   /sys/block/dm-0/slaves/sda --> /sys/block/sda
+   /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
+
+Comments are welcome.
+
+A few points I would appreciate comments/reviews from maintainers:
+  About sysfs
+    - I confirmed sysfs_remove_symlink() and kobject_del() don't
+      allocate memory in 2.6.15 and it seems true on the git head.
+      I would like to make sure it's true in future versions of kernel
+      because they are called during device-mapper's table swapping
+      where I/O to free memory could deadlock on the dm device.
+      What is the recommended way to do that?
+      Or can I just expect these functions will not allocate memory
+      in future versions of kernel?
+  About dm
+    - To get a reference to mapped_device, table_load() do
+      dm_get() before populating table. It will dm_put() when
+      the table is being discarded or the table is being activated.
+  About md
+    - Rather than carrying mddev pointer around, bd_claim is now
+      made twice. First is not changed at lock_rdev().
+      The second is at bind_rdev_to_array() where kobject is passed
+      and symlinks are created.
+
+-- 
+Jun'ichi Nomura, NEC Solutions (America), Inc.
