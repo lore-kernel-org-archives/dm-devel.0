@@ -1,17 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 2/3] sysfs representation of stacked devices
-	(dm) (rev.2)
-Date: Wed, 22 Feb 2006 18:13:05 +0000
-Message-ID: <20060222181305.GD31641@agk.surrey.redhat.com>
-References: <43FC8C00.5020600@ce.jp.nec.com> <43FC8D92.6010006@ce.jp.nec.com>
-	<20060222163438.GC31641@agk.surrey.redhat.com>
-	<43FC9BD4.1010901@ce.jp.nec.com>
+From: Greg KH <gregkh@suse.de>
+Subject: Re: [PATCH 0/3] sysfs representation of stacked devices
+	(dm/md) (rev.2)
+Date: Wed, 22 Feb 2006 10:47:29 -0800
+Message-ID: <20060222184729.GA13638@suse.de>
+References: <43FC8C00.5020600@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <43FC9BD4.1010901@ce.jp.nec.com>
+In-Reply-To: <43FC8C00.5020600@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,25 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Mike Anderson <andmike@us.ibm.com>, Greg KH <gregkh@suse.de>, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>, Alasdair Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Wed, Feb 22, 2006 at 12:13:56PM -0500, Jun'ichi Nomura wrote:
-> Alasdair G Kergon wrote:
-> > This patch needs splitting up so that independent changes can be
-> > considered separately.
-> > c.f. The proposal from Mike Anderson (repeated below) which I prefer
-> > because it makes it clear that a table always belongs to exactly one md.
- 
-> I like his proposed patch.
-> The interface is useful for my purpose too and moving table
-> creation inside _hash_lock means I don't need dm_get() neither.
+On Wed, Feb 22, 2006 at 11:06:24AM -0500, Jun'ichi Nomura wrote:
+> Hello,
+> 
+> This is a revised set of pathces which provides common
+> representation of dependencies between stacked devices (dm and md)
+> in sysfs.
+> 
+> Variants of bd_claim/bd_release are added to accept a kobject
+> and create symlinks between the claimed bdev and the holder.
+> 
+> dm/md will give a child of its gendisk kobject to bd_claim.
+> For example, if dm-0 maps to sda, we have the following symlinks;
+>    /sys/block/dm-0/slaves/sda --> /sys/block/sda
+>    /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
+> 
+> Comments are welcome.
+> 
+> A few points I would appreciate comments/reviews from maintainers:
+>   About sysfs
+>     - I confirmed sysfs_remove_symlink() and kobject_del() don't
+>       allocate memory in 2.6.15 and it seems true on the git head.
+>       I would like to make sure it's true in future versions of kernel
+>       because they are called during device-mapper's table swapping
+>       where I/O to free memory could deadlock on the dm device.
+>       What is the recommended way to do that?
 
-The global _hash_lock should not be held (thereby locking out most dm ioctl 
-operations on any device) while the slow populate_table() runs.
+But it can possibly sleep.
 
-I'm trying out a variant of the patch that drops and reacquires that lock.
- 
-Alasdair
--- 
-agk@redhat.com
+Hm, wait, the put_device stuff can possibly sleep, the "raw"
+kobject_del() stuff looks safe.  Either way, they don't create new
+memory, unless you do something really wierd in your release callback.
+
+So you should be safe here.
+
+But if you want to be absolutly safe, look at the thread on lkml about
+changing the scsi code to do the final release in a non-interrupt
+context.  That looks like it might be the same thing you want to do
+here to guarantee that nothing bad happens.
+
+thanks,
+
+greg k-h
