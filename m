@@ -1,14 +1,14 @@
-From: karl shaul <shaulk@013.net>
-Subject: Manualy creating device files in /dev for lvm.
-Date: Sat, 25 Feb 2006 22:34:02 +0200
-Message-ID: <172575a33a9c.4400db5a@default.domain>
+From: "Chakravarti, Avishek (STSD)" <avishek.chakravarti@hp.com>
+Subject: Dm-mirror creation failure
+Date: Mon, 27 Feb 2006 12:33:18 +0530
+Message-ID: <71ED110921D72047BFD1C9B300133745052BE7DE@BGEEXC02.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-language: en
-Content-disposition: inline
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,9 +21,29 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-  Can I manualy  create device files (in /dev) for lvm? If so, where can I learn which
-files are needed?
-  I want to have a simple lvm configuration for a desktop: just one hard disk with a 
-few LVs. I believe I can apriori determine the names involved, uuid, etc. Can I mknod
-the device files so that no such files will be created dynamically?
-  Should I try on linux-lvm@reddhat.com?
+
+Hi,
+
+I came across the following scenario while testing a dm-mirror created
+using dmsetup.
+
+One of the mirror halves was failed and the node was rebooted
+immediately afterwards so that when the node came up the failed disk was
+not only accessible but was also not configured. Now when I tried
+creating the mirror again using using the same target as before, it
+failed.=20
+
+In such a scenario, how do I create the dm mirror with just one half of
+the mirror available ?=20
+
+Is there a way to create a device-mapper device survive reboots, e.g.
+create a mirror once and then start and stop it, after node reboots.
+
+Is there a way to start the dm-mirror by using the " -u uuid " option
+instead of device names with dmsetup?=20
+
+What is the status of lvm mirroring, using "lvcreate -m" , how stable is
+it?=20
+
+Thanks,
+Avishek
