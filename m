@@ -1,43 +1,50 @@
 From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: [PATCH] Add metadata writing and hot spare
-	processing to hostraid driver in dmraid
-Date: Sat, 4 Mar 2006 10:10:49 +0100
-Message-ID: <20060304091049.GC2966@redhat.com>
+Subject: Re: [PATCH] Add metadata writing and hot spare processing to
+	hostraid driver in dmraid
+Date: Sat, 4 Mar 2006 10:14:37 +0100
+Message-ID: <20060304091437.GD2966@redhat.com>
 References: <4408E5F0.50208@us.ibm.com>
 Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+	"ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <ataraid-list-bounces@redhat.com>
 Content-Disposition: inline
 In-Reply-To: <4408E5F0.50208@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/ataraid-list>
+List-Post: <mailto:ataraid-list@redhat.com>
+List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
+Sender: ataraid-list-bounces@redhat.com
+Errors-To: ataraid-list-bounces@redhat.com
 To: "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
 Cc: dm-devel@redhat.com, Chris McDermott <lcm@us.ibm.com>
 List-Id: dm-devel.ids
 
+
+Darrick,
+
+had a quick glance through your patch.
+
+I want to handle more of this generically in libdmraid and
+reuse it in the dmeventd DSO in order to avoid superfluous code duplicaton
+in any metadata format handler.
+
+More next week...
+
+Heinz
+
 On Fri, Mar 03, 2006 at 04:57:20PM -0800, Darrick J. Wong wrote:
 > Hi all,
-
-Hi Darrick.
-
 > 
 > Now that dmraid supports Adaptec HostRAID, I've turned my attention to 
 > enabling support for writing metadata back to the disks, and 
 > implementing rudimentary spare handling in RAID1 configurations.
 > 
 > The attached patch (which is admittedly very rough) does two key things. 
-
-Will look into it on Mon.
-
 >  First, it implements asr_write in a more meaningful manner than what's 
 > in rc10 right now; with that part of the patch, dmraid gains the ability 
 > to reconfigure an array while the system is running and save the changes 
@@ -58,11 +65,6 @@ Will look into it on Mon.
 > reconfiguration support in dmraid (which I can now test via asr_write) 
 > and online spare handling.  Heinz, are you working on either of these 
 > features, or should I start writing them?
-
-I am into device-mapper core work right now so please, go ahead :)
-
-Heinz
-
 > 
 > --D
 
