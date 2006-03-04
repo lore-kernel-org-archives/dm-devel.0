@@ -1,11 +1,11 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 2/6] add holders/slaves subdirectory to /sys/block
-Date: Fri, 03 Mar 2006 19:57:37 -0500
-Message-ID: <4408E601.1040602@ce.jp.nec.com>
+Subject: [PATCH 4/6] bd_claim_by_disk
+Date: Fri, 03 Mar 2006 19:57:54 -0500
+Message-ID: <4408E612.60401@ce.jp.nec.com>
 References: <4408E33E.1080703@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------090806000009080008060701"
+Content-Type: multipart/mixed; boundary="------------030502050400080208050601"
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <4408E33E.1080703@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -22,125 +22,62 @@ Cc: akpm@osdl.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsk
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------090806000009080008060701
+--------------030502050400080208050601
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 This patch is part of dm/md sysfs dependency tree.
 
-With this patch, "slaves" and "holders" directories are
-created in /sys/block/<disk> and
-"holders" directory is created in /sys/block/<disk>/<partition>.
+This adds variants of bd_claim_by_kobject which takes gendisk instead
+of kobject and do kobject_{get,put}(&gendisk->slave_dir).
 
 Thanks,
 -- 
 Jun'ichi Nomura, NEC Solutions (America), Inc.
 
---------------090806000009080008060701
+--------------030502050400080208050601
 Content-Type: text/x-patch;
- name="02-add_subdirs.patch"
+ name="04-bd_claim_by_disk.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="02-add_subdirs.patch"
+ filename="04-bd_claim_by_disk.patch"
 
-Creating "slaves" and "holders" directories in /sys/block/<disk> and
-creating "holders" directory under /sys/block/<disk>/<partition>
+Variants of bd_claim_by_kobject which takes gendisk instead
+of kobject and do kobject_{get,put}(&gendisk->slave_dir).
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
- fs/partitions/check.c |   27 +++++++++++++++++++++++++++
- include/linux/genhd.h |    3 +++
- 2 files changed, 30 insertions(+)
+ include/linux/genhd.h |   13 +++++++++++++
+ 1 files changed, 13 insertions(+)
 
 --- linux-2.6.16-rc5.orig/include/linux/genhd.h	2006-02-27 00:09:35.000000000 -0500
 +++ linux-2.6.16-rc5/include/linux/genhd.h	2006-03-02 10:29:55.000000000 -0500
-@@ -78,6 +78,7 @@ struct hd_struct {
- 	sector_t start_sect;
- 	sector_t nr_sects;
- 	struct kobject kobj;
-+	struct kobject *holder_dir;
- 	unsigned ios[2], sectors[2];	/* READs and WRITEs */
- 	int policy, partno;
- };
-@@ -114,6 +115,8 @@ struct gendisk {
- 	int number;			/* more of the same */
- 	struct device *driverfs_dev;
- 	struct kobject kobj;
-+	struct kobject *holder_dir;
-+	struct kobject *slave_dir;
- 
- 	struct timer_rand_state *random;
- 	int policy;
---- linux-2.6.16-rc5.orig/fs/partitions/check.c	2006-02-27 00:09:35.000000000 -0500
-+++ linux-2.6.16-rc5/fs/partitions/check.c	2006-03-02 10:29:55.000000000 -0500
-@@ -297,6 +297,25 @@ struct kobj_type ktype_part = {
- 	.sysfs_ops	= &part_sysfs_ops,
- };
- 
-+static inline void partition_sysfs_add_subdir(struct hd_struct *p)
-+{
-+	struct kobject *k;
-+
-+	k = kobject_get(&p->kobj);
-+	p->holder_dir = kobject_add_dir(k, "holders");
-+	kobject_put(k);
-+}
-+
-+static inline void disk_sysfs_add_subdirs(struct gendisk *disk)
-+{
-+	struct kobject *k;
-+
-+	k = kobject_get(&disk->kobj);
-+	disk->holder_dir = kobject_add_dir(k, "holders");
-+	disk->slave_dir = kobject_add_dir(k, "slaves");
-+	kobject_put(k);
-+}
-+
- void delete_partition(struct gendisk *disk, int part)
- {
- 	struct hd_struct *p = disk->part[part-1];
-@@ -310,6 +329,8 @@ void delete_partition(struct gendisk *di
- 	p->ios[0] = p->ios[1] = 0;
- 	p->sectors[0] = p->sectors[1] = 0;
- 	devfs_remove("%s/part%d", disk->devfs_name, part);
-+	if (p->holder_dir)
-+		kobject_unregister(p->holder_dir);
- 	kobject_unregister(&p->kobj);
+@@ -421,6 +424,19 @@ static inline struct block_device *bdget
+ 	return bdget(MKDEV(disk->major, disk->first_minor) + index);
  }
  
-@@ -337,6 +358,7 @@ void add_partition(struct gendisk *disk,
- 	p->kobj.parent = &disk->kobj;
- 	p->kobj.ktype = &ktype_part;
- 	kobject_register(&p->kobj);
-+	partition_sysfs_add_subdir(p);
- 	disk->part[part-1] = p;
- }
++static inline int bd_claim_by_disk(struct block_device *bdev,
++					void *holder, struct gendisk *disk)
++{
++	return bd_claim_by_kobject(bdev, holder, kobject_get(disk->slave_dir));
++}
++
++static inline void bd_release_from_disk(struct block_device *bdev,
++					struct gendisk *disk)
++{
++	bd_release_from_kobject(bdev, disk->slave_dir);
++	kobject_put(disk->slave_dir);
++}
++
+ #endif
  
-@@ -383,6 +405,7 @@ void register_disk(struct gendisk *disk)
- 	if ((err = kobject_add(&disk->kobj)))
- 		return;
- 	disk_sysfs_symlinks(disk);
-+ 	disk_sysfs_add_subdirs(disk);
- 	kobject_uevent(&disk->kobj, KOBJ_ADD);
- 
- 	/* No minors to use for partitions */
-@@ -483,6 +506,10 @@ void del_gendisk(struct gendisk *disk)
- 
- 	devfs_remove_disk(disk);
- 
-+	if (disk->holder_dir)
-+		kobject_unregister(disk->holder_dir);
-+	if (disk->holder_dir)
-+		kobject_unregister(disk->slave_dir);
- 	if (disk->driverfs_dev) {
- 		char *disk_name = make_block_name(disk);
- 		sysfs_remove_link(&disk->kobj, "device");
+ #endif
 
---------------090806000009080008060701
+--------------030502050400080208050601
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------090806000009080008060701--
+--------------030502050400080208050601--
