@@ -1,11 +1,11 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 4/6] bd_claim_by_disk
-Date: Fri, 03 Mar 2006 19:57:54 -0500
-Message-ID: <4408E612.60401@ce.jp.nec.com>
+Subject: [PATCH 5/6] md to use bd_claim_by_disk
+Date: Fri, 03 Mar 2006 19:58:21 -0500
+Message-ID: <4408E62D.9030701@ce.jp.nec.com>
 References: <4408E33E.1080703@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------030502050400080208050601"
+Content-Type: multipart/mixed; boundary="------------040005090200080303080904"
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <4408E33E.1080703@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -22,62 +22,66 @@ Cc: akpm@osdl.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsk
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------030502050400080208050601
+--------------040005090200080303080904
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 This patch is part of dm/md sysfs dependency tree.
 
-This adds variants of bd_claim_by_kobject which takes gendisk instead
-of kobject and do kobject_{get,put}(&gendisk->slave_dir).
+Following symlinks are created if md0 is built from sda and sdb
+  /sys/block/md0/slaves/sda --> /sys/block/sda
+  /sys/block/md0/slaves/sdb --> /sys/block/sdb
+  /sys/block/sda/holders/md0 --> /sys/block/md0
+  /sys/block/sdb/holders/md0 --> /sys/block/md0
 
 Thanks,
 -- 
 Jun'ichi Nomura, NEC Solutions (America), Inc.
 
---------------030502050400080208050601
+--------------040005090200080303080904
 Content-Type: text/x-patch;
- name="04-bd_claim_by_disk.patch"
+ name="05-md_deptree.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="04-bd_claim_by_disk.patch"
+ filename="05-md_deptree.patch"
 
-Variants of bd_claim_by_kobject which takes gendisk instead
-of kobject and do kobject_{get,put}(&gendisk->slave_dir).
+Use bd_claim_by_disk.
+
+Following symlinks are created if md0 is built from sda and sdb
+  /sys/block/md0/slaves/sda --> /sys/block/sda
+  /sys/block/md0/slaves/sdb --> /sys/block/sdb
+  /sys/block/sda/holders/md0 --> /sys/block/md0
+  /sys/block/sdb/holders/md0 --> /sys/block/md0
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
- include/linux/genhd.h |   13 +++++++++++++
- 1 files changed, 13 insertions(+)
+ drivers/md/md.c |    2 ++
+ 1 files changed, 2 insertions(+)
 
---- linux-2.6.16-rc5.orig/include/linux/genhd.h	2006-02-27 00:09:35.000000000 -0500
-+++ linux-2.6.16-rc5/include/linux/genhd.h	2006-03-02 10:29:55.000000000 -0500
-@@ -421,6 +424,19 @@ static inline struct block_device *bdget
- 	return bdget(MKDEV(disk->major, disk->first_minor) + index);
+--- linux-2.6.16-rc5.orig/drivers/md/md.c	2006-02-27 00:09:35.000000000 -0500
++++ linux-2.6.16-rc5/drivers/md/md.c	2006-03-02 14:57:05.000000000 -0500
+@@ -1298,6 +1298,7 @@ static int bind_rdev_to_array(mdk_rdev_t
+ 	else
+ 		ko = &rdev->bdev->bd_disk->kobj;
+ 	sysfs_create_link(&rdev->kobj, ko, "block");
++	bd_claim_by_disk(rdev->bdev, rdev, mddev->gendisk);
+ 	return 0;
  }
  
-+static inline int bd_claim_by_disk(struct block_device *bdev,
-+					void *holder, struct gendisk *disk)
-+{
-+	return bd_claim_by_kobject(bdev, holder, kobject_get(disk->slave_dir));
-+}
-+
-+static inline void bd_release_from_disk(struct block_device *bdev,
-+					struct gendisk *disk)
-+{
-+	bd_release_from_kobject(bdev, disk->slave_dir);
-+	kobject_put(disk->slave_dir);
-+}
-+
- #endif
- 
- #endif
+@@ -1308,6 +1309,7 @@ static void unbind_rdev_from_array(mdk_r
+ 		MD_BUG();
+ 		return;
+ 	}
++	bd_release_from_disk(rdev->bdev, rdev->mddev->gendisk);
+ 	list_del_init(&rdev->same_set);
+ 	printk(KERN_INFO "md: unbind<%s>\n", bdevname(rdev->bdev,b));
+ 	rdev->mddev = NULL;
 
---------------030502050400080208050601
+--------------040005090200080303080904
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------030502050400080208050601--
+--------------040005090200080303080904--
