@@ -1,85 +1,138 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: [PATCH] Add metadata writing and hot spare processing to
-	hostraid driver in dmraid
-Date: Sat, 4 Mar 2006 10:14:37 +0100
-Message-ID: <20060304091437.GD2966@redhat.com>
-References: <4408E5F0.50208@us.ibm.com>
-Reply-To: mauelshagen@redhat.com,
-	"ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: Re: 2.6.16-rc5 oops in dm_mirror during pvmove (old
+	bio_clone bug?)
+Date: Sat, 4 Mar 2006 18:41:36 +0100
+Message-ID: <20060304174135.GJ9295@stusta.de>
+References: <8BE19BC613681046A50B3FD0DCC996CD01CB8B10@eu-brac-m51.global.tektronix.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <ataraid-list-bounces@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4408E5F0.50208@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
-	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/ataraid-list>
-List-Post: <mailto:ataraid-list@redhat.com>
-List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
-	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
-Sender: ataraid-list-bounces@redhat.com
-Errors-To: ataraid-list-bounces@redhat.com
-To: "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
-Cc: dm-devel@redhat.com, Chris McDermott <lcm@us.ibm.com>
+In-Reply-To: <8BE19BC613681046A50B3FD0DCC996CD01CB8B10@eu-brac-m51.global.tektronix.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: pete.chapman@exgate.tek.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+Let's add the device mapper maintainers to the Cc.
 
-Darrick,
-
-had a quick glance through your patch.
-
-I want to handle more of this generically in libdmraid and
-reuse it in the dmeventd DSO in order to avoid superfluous code duplicaton
-in any metadata format handler.
-
-More next week...
-
-Heinz
-
-On Fri, Mar 03, 2006 at 04:57:20PM -0800, Darrick J. Wong wrote:
-> Hi all,
+On Wed, Mar 01, 2006 at 11:18:37AM -0000, pete.chapman@exgate.tek.com wrote:
+> While doing an overnight pvmove on a ~200G physical volume, disk
+> activity by a cron job seems to have provoked an oops. I saw this on a
+> 2.6.12 kernel too, and the bug seems to have been around for a while:
+> http://lkml.org/lkml/2005/4/1/116
 > 
-> Now that dmraid supports Adaptec HostRAID, I've turned my attention to 
-> enabling support for writing metadata back to the disks, and 
-> implementing rudimentary spare handling in RAID1 configurations.
-> 
-> The attached patch (which is admittedly very rough) does two key things. 
->  First, it implements asr_write in a more meaningful manner than what's 
-> in rc10 right now; with that part of the patch, dmraid gains the ability 
-> to reconfigure an array while the system is running and save the changes 
-> out to disk.  To do this, I had to change a struct to a pointer to a 
-> struct in asr_reservedblock to to get write_metadata to work properly. 
-> Also, it turns out that a few more things in asr_write had to happen 
-> (and in the correct order) for writes to succeed.  If we fail to write 
-> the metadata correctly, the HostRAID BIOS wipes the entire sector during 
-> the next reboot.
-> 
-> The second part of the patch stores spare devices in a dummy .asr_spares 
-> array.  When an I/O error is noticed (via event_io), a suitable spare 
-> drive is pulled from the spare pool and inserted into the failing array.
-> I haven't had a chance to test this code rigorously yet, because the 
-> dmeventd portions of dmraid aren't implemented yet.
-> 
-> So, there are two things that I'd like to see added: online 
-> reconfiguration support in dmraid (which I can now test via asr_write) 
-> and online spare handling.  Heinz, are you working on either of these 
-> features, or should I start writing them?
-> 
-> --D
-
-
-> _______________________________________________
-> Ataraid-list mailing list
-> Ataraid-list@redhat.com
-> https://www.redhat.com/mailman/listinfo/ataraid-list
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Cluster and Storage Development                   56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            +49 2626 141200
-                                                       FAX 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+> Mar  1 00:00:00 gallifrey CROND[27778]: (andyh) CMD
+> (/home/andyh/bin/scripts/backup.sh >& /home/andyh/misc/backup_cron.log)
+> Mar  1 00:00:06 gallifrey kernel: Unable to handle kernel paging request
+> at ffffc2001008ec20 RIP:
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff882679c4>{:dm_mirror:core_in_sync+12}
+> Mar  1 00:00:06 gallifrey kernel: PGD 23fc4e067 PUD 23fc4f067 PMD
+> 23fa6c067 PTE 0
+> Mar  1 00:00:06 gallifrey kernel: Oops: 0000 [1] SMP 
+> Mar  1 00:00:06 gallifrey kernel: CPU 0 
+> Mar  1 00:00:06 gallifrey kernel: Modules linked in: dm_mirror
+> binfmt_misc ipt_REJECT xt_mac xt_tcpudp iptable_filter ip_tables
+> x_tables nfsd exportfs lockd nfs_acl sunrpc ipv6 nls_iso8859_1 cifs
+> rfcomm l2cap bluetooth parport_pc lp parport af_packet floppy video
+> thermal processor fan container button battery ac usb_storage libusual
+> e1000 ide_cd loop hw_random ehci_hcd uhci_hcd usbcore ext3 jbd ata_piix
+> libata dm_mod sd_mod scsi_mod
+> Mar  1 00:00:06 gallifrey kernel: Pid: 27782, comm: tar Not tainted
+> 2.6.16-rc5.13mdksmp #1
+> Mar  1 00:00:06 gallifrey kernel: RIP: 0010:[_end+131774916/2132033536]
+> <ffffffff882679c4>{:dm_mirror:core_in_sync+12}
+> Mar  1 00:00:06 gallifrey kernel: RIP: 0010:[<ffffffff882679c4>]
+> <ffffffff882679c4>{:dm_mirror:core_in_sync+12}
+> Mar  1 00:00:06 gallifrey kernel: RSP: 0018:ffff810231981848  EFLAGS:
+> 00010202
+> Mar  1 00:00:06 gallifrey kernel: RAX: ffff8102396c55e8 RBX:
+> 0000000000000000 RCX: 000000000000000a
+> Mar  1 00:00:06 gallifrey kernel: RDX: ffffc20010081000 RSI:
+> 000000000006e110 RDI: ffff81023c138e68
+> Mar  1 00:00:06 gallifrey kernel: RBP: ffff810231981848 R08:
+> ffff8101901211b0 R09: 0000000000000000
+> Mar  1 00:00:06 gallifrey kernel: R10: ffff81023fd49040 R11:
+> ffff81023f714b30 R12: ffff81023f714b30
+> Mar  1 00:00:06 gallifrey kernel: R13: ffff810178e13720 R14:
+> 0000000000000000 R15: ffff8101d65e6198
+> Mar  1 00:00:06 gallifrey kernel: FS:  00002b979cafe6e0(0000)
+> GS:ffffffff80472000(0000) knlGS:0000000000000000
+> Mar  1 00:00:06 gallifrey kernel: CS:  0010 DS: 0000 ES: 0000 CR0:
+> 000000008005003b
+> Mar  1 00:00:06 gallifrey kernel: CR2: ffffc2001008ec20 CR3:
+> 000000022e2a9000 CR4: 00000000000006e0
+> Mar  1 00:00:06 gallifrey kernel: Process tar (pid: 27782, threadinfo
+> ffff810231980000, task ffff810233fee140)
+> Mar  1 00:00:06 gallifrey kernel: Stack: ffff810231981878
+> ffffffff882683f4 0000000000000000 ffff8101f961ada0
+> Mar  1 00:00:06 gallifrey kernel:        ffff81023f714b30
+> 000000001b844010 ffff8102319818a8 ffffffff88029dc6
+> Mar  1 00:00:06 gallifrey kernel:        0000000000000000
+> ffffc2000003d0d0
+> Mar  1 00:00:06 gallifrey kernel: Call Trace:
+> <ffffffff882683f4>{:dm_mirror:mirror_map+87}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff88029dc6>{:dm_mod:__map_bio+68}
+> <ffffffff8802a014>{:dm_mod:__split_bio+356}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff8802a3ae>{:dm_mod:dm_request+273}
+> <ffffffff801d9837>{generic_make_request+348}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff88029dd6>{:dm_mod:__map_bio+84}
+> <ffffffff8802a014>{:dm_mod:__split_bio+356}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff8802a3ae>{:dm_mod:dm_request+273}
+> <ffffffff801d9837>{generic_make_request+348}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff801d9cfb>{submit_bio+191} <ffffffff8017d0eb>{submit_bh+263}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff8805b948>{:ext3:__ext3_get_inode_loc+680}
+> <ffffffff8805d24a>{:ext3:ext3_read_inode+56}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff880622b9>{:ext3:ext3_lookup+120}
+> <ffffffff80191743>{d_lookup+40}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff8018891d>{do_lookup+197}
+> <ffffffff8018934d>{__link_path_walk+2433}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff801898a0>{link_path_walk+103}
+> <ffffffff801e5230>{_atomic_dec_and_lock+52}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff801943dd>{mntput_no_expire+27}
+> <ffffffff80189ede>{do_path_lookup+607}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff8018a52c>{__user_walk_fd+63}
+> <ffffffff8018360e>{vfs_lstat_fd+33}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff801e5230>{_atomic_dec_and_lock+52}
+> <ffffffff801943dd>{mntput_no_expire+27}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff80183c43>{sys_newlstat+34} <ffffffff8017bef1>{fput+20}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff80179799>{filp_close+98} <ffffffff8017a097>{sys_close+147}
+> Mar  1 00:00:06 gallifrey kernel:
+> <ffffffff8010a7e6>{system_call+126}
+> Mar  1 00:00:06 gallifrey kernel:
+> Mar  1 00:00:06 gallifrey kernel: Code: 0f a3 32 19 c0 85 c0 c9 0f 95 c0
+> 0f b6 c0 c3 48 8b 4f 08 55
+> Mar  1 00:00:06 gallifrey kernel: RIP
+> <ffffffff882679c4>{:dm_mirror:core_in_sync+12} RSP <ffff810231981848>
+> Mar  1 00:00:06 gallifrey kernel: CR2: ffffc2001008ec20
+> Mar  1 00:00:06 gallifrey kernel:  BUG: tar/27782, lock held at task
+> exit time!
+> Mar  1 00:00:06 gallifrey kernel:  [ffff8101d65e65c0] {inode_init_once}
+> Mar  1 00:00:06 gallifrey kernel: .. held by:               tar:27782
+> [ffff810233fee140, 118]
+> Mar  1 00:00:06 gallifrey kernel: ... acquired at:
+> do_lookup+0x81/0x174
