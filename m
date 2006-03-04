@@ -1,15 +1,12 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: dm-cow: A userspace-controlled CoW implementation
-Date: Fri, 03 Mar 2006 15:40:30 -0800
-Message-ID: <873bhzgkr5.fsf@caffeine.beaverton.ibm.com>
-References: <877j7bglko.fsf@caffeine.beaverton.ibm.com>
-	<20060303233357.GA25317@agk.surrey.redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH 0/6] dm/md sysfs dependency tree (rev.3)
+Date: Fri, 03 Mar 2006 19:45:50 -0500
+Message-ID: <4408E33E.1080703@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060303233357.GA25317@agk.surrey.redhat.com> (Alasdair
-	G. Kergon's message of "Fri, 3 Mar 2006 23:33:57 +0000")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,21 +16,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, Greg KH <gregkh@suse.de>, linux-kernel@vger.kernel.org
+Cc: akpm@osdl.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>
 List-Id: dm-devel.ids
 
->>>>> "AK" == Alasdair G Kergon <agk@redhat.com> writes:
- 
-AK> Can you put a tarball up?
+Hello,
 
-Yep, absolutely.  I work with mercurial all day long, so sometimes I
-forget that others don't :)
+This is an updated version of dm/md sysfs dependency tree patch set.
+For example, if dm-0 maps to sda, we'll have following symlinks;
+   /sys/block/dm-0/slaves/sda --> /sys/block/sda
+   /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
 
-http://static.danplanet.com/dm-cow/dm-cow-03032006.tar.gz
+Thanks for Alasdair, Neil and Greg for reviews and comments.
+I think the patches get much better shape than before.
+I'm happy to hear any other comments for these patches.
 
+Patches included are:
+
+  1. [PATCH 1/6] kobject_add_dir
+     Adding kobject_add_dir() function which creates
+     a subdirectory for a given kobject.
+
+  2. [PATCH 2/6] add holders/slaves subdirectory to /sys/block
+     Creating "slaves" and "holders" directories in /sys/block/<disk>,
+     creating "holders" directory under /sys/block/<disk>/<partition>
+
+  3. [PATCH 3/6] bd_claim_by_kobject
+     Adding bd_claim_by_kobject() function which takes kobject as
+     additional signature of holder device and creates sysfs symlinks
+     between holder device and claimed device.
+     bd_release_from_kobject() is a counter part of bd_claim_by_kobject.
+
+  4. [PATCH 4/6] bd_claim_by_disk
+     Variants which take gendisk instead of kobject
+     and do kobject_{get,put}(&gendisk->kobj).
+
+  5. [PATCH 5/6] md to use bd_claim_by_disk
+     Use bd_claim_by_disk.
+
+  6. [PATCH 6/6] dm to use bd_claim_by_disk
+     Use bd_claim_by_disk.
+
+Patches from 1 to 5 work both on 2.6.16-rc5 and 2.6.16-rc5-mm2.
+I hope them to be included in mm if there's no problem.
+
+Patch 6 depends on dm-table-store-md.patch in
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/.
+The dm-table-store-md.patch might theoretically require some
+locking/release-ordering fixes in dm core which is under
+investigation though it's separate issue.
+
+Thanks,
 -- 
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
+Jun'ichi Nomura, NEC Solutions (America), Inc.
