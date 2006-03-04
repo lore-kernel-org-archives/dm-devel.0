@@ -1,12 +1,13 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 0/6] dm/md sysfs dependency tree (rev.3)
-Date: Fri, 03 Mar 2006 19:45:50 -0500
-Message-ID: <4408E33E.1080703@ce.jp.nec.com>
+Subject: [PATCH 1/6] kobject_add_dir
+Date: Fri, 03 Mar 2006 19:57:26 -0500
+Message-ID: <4408E5F6.7060403@ce.jp.nec.com>
+References: <4408E33E.1080703@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------010304010507020902010703"
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4408E33E.1080703@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,52 +21,99 @@ To: Alasdair Kergon <agk@redhat.com>, Neil Brown <neilb@suse.de>, Greg KH <gregk
 Cc: akpm@osdl.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>
 List-Id: dm-devel.ids
 
-Hello,
+This is a multi-part message in MIME format.
+--------------010304010507020902010703
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 
-This is an updated version of dm/md sysfs dependency tree patch set.
-For example, if dm-0 maps to sda, we'll have following symlinks;
-   /sys/block/dm-0/slaves/sda --> /sys/block/sda
-   /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
+This patch is part of dm/md sysfs dependency tree.
 
-Thanks for Alasdair, Neil and Greg for reviews and comments.
-I think the patches get much better shape than before.
-I'm happy to hear any other comments for these patches.
-
-Patches included are:
-
-  1. [PATCH 1/6] kobject_add_dir
-     Adding kobject_add_dir() function which creates
-     a subdirectory for a given kobject.
-
-  2. [PATCH 2/6] add holders/slaves subdirectory to /sys/block
-     Creating "slaves" and "holders" directories in /sys/block/<disk>,
-     creating "holders" directory under /sys/block/<disk>/<partition>
-
-  3. [PATCH 3/6] bd_claim_by_kobject
-     Adding bd_claim_by_kobject() function which takes kobject as
-     additional signature of holder device and creates sysfs symlinks
-     between holder device and claimed device.
-     bd_release_from_kobject() is a counter part of bd_claim_by_kobject.
-
-  4. [PATCH 4/6] bd_claim_by_disk
-     Variants which take gendisk instead of kobject
-     and do kobject_{get,put}(&gendisk->kobj).
-
-  5. [PATCH 5/6] md to use bd_claim_by_disk
-     Use bd_claim_by_disk.
-
-  6. [PATCH 6/6] dm to use bd_claim_by_disk
-     Use bd_claim_by_disk.
-
-Patches from 1 to 5 work both on 2.6.16-rc5 and 2.6.16-rc5-mm2.
-I hope them to be included in mm if there's no problem.
-
-Patch 6 depends on dm-table-store-md.patch in
-http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/.
-The dm-table-store-md.patch might theoretically require some
-locking/release-ordering fixes in dm core which is under
-investigation though it's separate issue.
+This adds kobject_add_dir() function which creates a subdirectory
+for a given kobject.
 
 Thanks,
 -- 
 Jun'ichi Nomura, NEC Solutions (America), Inc.
+
+--------------010304010507020902010703
+Content-Type: text/x-patch;
+ name="01-kobject_add_dir.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="01-kobject_add_dir.patch"
+
+Adding kobject_add_dir() function which creates a subdirectory
+for a given kobject.
+
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+
+ include/linux/kobject.h |    2 ++
+ lib/kobject.c           |   37 +++++++++++++++++++++++++++++++++++++
+ 2 files changed, 39 insertions(+)
+
+--- linux-2.6.16-rc5.orig/include/linux/kobject.h	2006-02-27 00:09:35.000000000 -0500
++++ linux-2.6.16-rc5/include/linux/kobject.h	2006-03-02 14:26:26.000000000 -0500
+@@ -80,6 +80,8 @@ extern void kobject_unregister(struct ko
+ extern struct kobject * kobject_get(struct kobject *);
+ extern void kobject_put(struct kobject *);
+ 
++extern struct kobject * kobject_add_dir(struct kobject *, const char *);
++
+ extern char * kobject_get_path(struct kobject *, gfp_t);
+ 
+ struct kobj_type {
+--- linux-2.6.16-rc5.orig/lib/kobject.c	2006-02-27 00:09:35.000000000 -0500
++++ linux-2.6.16-rc5/lib/kobject.c	2006-03-02 14:26:26.000000000 -0500
+@@ -379,6 +379,43 @@ void kobject_put(struct kobject * kobj)
+ }
+ 
+ 
++static void dir_release(struct kobject *kobj)
++{
++	kfree(kobj);
++}
++
++static struct kobj_type dir_ktype = {
++	.release	= dir_release,
++	.sysfs_ops	= NULL,
++	.default_attrs	= NULL,
++};
++
++/**
++ *	kobject_add_dir - add sub directory of object.
++ *	@parent:	object in which a directory is created.
++ *	@name:	directory name.
++ *
++ *	Add a plain directory object as child of given object.
++ */
++struct kobject *kobject_add_dir(struct kobject *parent, const char *name)
++{
++	struct kobject *k;
++
++	if (!parent)
++		return NULL;
++
++	k = kzalloc(sizeof(*k), GFP_KERNEL);
++	if (!k)
++		return NULL;
++
++	k->parent = parent;
++	k->ktype = &dir_ktype;
++	kobject_set_name(k, name);
++	kobject_register(k);
++
++	return k;
++}
++
+ /**
+  *	kset_init - initialize a kset for use
+  *	@k:	kset 
+
+--------------010304010507020902010703
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------010304010507020902010703--
