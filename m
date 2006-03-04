@@ -1,11 +1,11 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 3/6] bd_claim_by_kobject
-Date: Fri, 03 Mar 2006 19:57:43 -0500
-Message-ID: <4408E607.2010300@ce.jp.nec.com>
+Subject: [PATCH 2/6] add holders/slaves subdirectory to /sys/block
+Date: Fri, 03 Mar 2006 19:57:37 -0500
+Message-ID: <4408E601.1040602@ce.jp.nec.com>
 References: <4408E33E.1080703@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------080505040400050701020003"
+Content-Type: multipart/mixed; boundary="------------090806000009080008060701"
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <4408E33E.1080703@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -22,301 +22,125 @@ Cc: akpm@osdl.org, device-mapper development <dm-devel@redhat.com>, Lars Marowsk
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------080505040400050701020003
+--------------090806000009080008060701
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 This patch is part of dm/md sysfs dependency tree.
 
-This adds bd_claim_by_kobject() function which takes kobject as
-additional signature of holder device and creates sysfs symlinks
-between holder device and claimed device.
-bd_release_from_kobject() is a counter part of bd_claim_by_kobject.
+With this patch, "slaves" and "holders" directories are
+created in /sys/block/<disk> and
+"holders" directory is created in /sys/block/<disk>/<partition>.
 
 Thanks,
 -- 
 Jun'ichi Nomura, NEC Solutions (America), Inc.
 
---------------080505040400050701020003
+--------------090806000009080008060701
 Content-Type: text/x-patch;
- name="03-bd_claim_by_kobj.patch"
+ name="02-add_subdirs.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="03-bd_claim_by_kobj.patch"
+ filename="02-add_subdirs.patch"
 
-Adding bd_claim_by_kobject() function which takes kobject as
-additional signature of holder device and creates sysfs symlinks
-between holder device and claimed device.
-bd_release_from_kobject() is a counter part of bd_claim_by_kobject.
+Creating "slaves" and "holders" directories in /sys/block/<disk> and
+creating "holders" directory under /sys/block/<disk>/<partition>
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
- fs/block_dev.c     |  196 +++++++++++++++++++++++++++++++++++++++++++++++++++-
- include/linux/fs.h |    3
- 2 files changed, 197 insertions(+), 2 deletions(-)
+ fs/partitions/check.c |   27 +++++++++++++++++++++++++++
+ include/linux/genhd.h |    3 +++
+ 2 files changed, 30 insertions(+)
 
---- linux-2.6.16-rc5.orig/include/linux/fs.h	2006-02-27 00:09:35.000000000 -0500
-+++ linux-2.6.16-rc5/include/linux/fs.h	2006-03-02 10:29:55.000000000 -0500
-@@ -401,6 +401,7 @@ struct block_device {
- 	struct list_head	bd_inodes;
- 	void *			bd_holder;
- 	int			bd_holders;
-+	struct list_head	bd_holder_list;
- 	struct block_device *	bd_contains;
- 	unsigned		bd_block_size;
- 	struct hd_struct *	bd_part;
-@@ -1380,6 +1381,8 @@ extern int blkdev_get(struct block_devic
- extern int blkdev_put(struct block_device *);
- extern int bd_claim(struct block_device *, void *);
- extern void bd_release(struct block_device *);
-+extern int bd_claim_by_kobject(struct block_device *, void *, struct kobject *);
-+extern void bd_release_from_kobject(struct block_device *, struct kobject *);
+--- linux-2.6.16-rc5.orig/include/linux/genhd.h	2006-02-27 00:09:35.000000000 -0500
++++ linux-2.6.16-rc5/include/linux/genhd.h	2006-03-02 10:29:55.000000000 -0500
+@@ -78,6 +78,7 @@ struct hd_struct {
+ 	sector_t start_sect;
+ 	sector_t nr_sects;
+ 	struct kobject kobj;
++	struct kobject *holder_dir;
+ 	unsigned ios[2], sectors[2];	/* READs and WRITEs */
+ 	int policy, partno;
+ };
+@@ -114,6 +115,8 @@ struct gendisk {
+ 	int number;			/* more of the same */
+ 	struct device *driverfs_dev;
+ 	struct kobject kobj;
++	struct kobject *holder_dir;
++	struct kobject *slave_dir;
  
- /* fs/char_dev.c */
- extern int alloc_chrdev_region(dev_t *, unsigned, unsigned, const char *);
---- linux-2.6.16-rc5.orig/fs/block_dev.c	2006-02-27 00:09:35.000000000 -0500
-+++ linux-2.6.16-rc5/fs/block_dev.c	2006-03-02 10:29:55.000000000 -0500
-@@ -269,6 +269,7 @@ static void init_once(void * foo, kmem_c
- 		sema_init(&bdev->bd_mount_sem, 1);
- 		INIT_LIST_HEAD(&bdev->bd_inodes);
- 		INIT_LIST_HEAD(&bdev->bd_list);
-+		INIT_LIST_HEAD(&bdev->bd_holder_list);
- 		inode_init_once(&ei->vfs_inode);
- 	}
- }
-@@ -443,7 +444,179 @@ void bd_forget(struct inode *inode)
- 	spin_unlock(&bdev_lock);
- }
+ 	struct timer_rand_state *random;
+ 	int policy;
+--- linux-2.6.16-rc5.orig/fs/partitions/check.c	2006-02-27 00:09:35.000000000 -0500
++++ linux-2.6.16-rc5/fs/partitions/check.c	2006-03-02 10:29:55.000000000 -0500
+@@ -297,6 +297,25 @@ struct kobj_type ktype_part = {
+ 	.sysfs_ops	= &part_sysfs_ops,
+ };
  
--int bd_claim(struct block_device *bdev, void *holder)
-+/*
-+ * Functions for bd_claim_by_kobject / bd_release_from_kobject
-+ *
-+ *     If a kobject is passed to bd_claim_by_kobject() 
-+ *     and the kobject has a parent directory,
-+ *     following symlinks are created:
-+ *        o from the kobject to the claimed bdev
-+ *        o from "holders" directory of the bdev to the parent of the kobject
-+ *     bd_release_from_kobject() removes these symlinks.
-+ *
-+ *     Example:
-+ *        If /dev/dm-0 maps to /dev/sda, kobject corresponding to
-+ *        /sys/block/dm-0/slaves is passed to bd_claim_by_kobject(), then:
-+ *           /sys/block/dm-0/slaves/sda --> /sys/block/sda
-+ *           /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
-+ */
-+
-+static inline struct kobject * bdev_get_kobj(struct block_device *bdev)
++static inline void partition_sysfs_add_subdir(struct hd_struct *p)
 +{
-+	if (!bdev)
-+		return NULL;
-+	else if (bdev->bd_contains != bdev)
-+		return kobject_get(&bdev->bd_part->kobj);
-+	else
-+		return kobject_get(&bdev->bd_disk->kobj);
++	struct kobject *k;
++
++	k = kobject_get(&p->kobj);
++	p->holder_dir = kobject_add_dir(k, "holders");
++	kobject_put(k);
 +}
 +
-+static inline struct kobject * bdev_get_holder(struct block_device *bdev)
++static inline void disk_sysfs_add_subdirs(struct gendisk *disk)
 +{
-+	if (!bdev)
-+		return NULL;
-+	else if (bdev->bd_contains != bdev)
-+		return kobject_get(bdev->bd_part->holder_dir);
-+	else
-+		return kobject_get(bdev->bd_disk->holder_dir);
++	struct kobject *k;
++
++	k = kobject_get(&disk->kobj);
++	disk->holder_dir = kobject_add_dir(k, "holders");
++	disk->slave_dir = kobject_add_dir(k, "slaves");
++	kobject_put(k);
 +}
 +
-+static inline void add_symlink(struct kobject *from, struct kobject *to)
-+{
-+	if (!from || !to)
-+		return;
-+	kobject_get(from);
-+	kobject_get(to);
-+	sysfs_create_link(from, to, kobject_name(to));
-+}
-+
-+static inline void del_symlink(struct kobject *from, struct kobject *to)
-+{
-+	if (!from || !to)
-+		return;
-+	sysfs_remove_link(from, kobject_name(to));
-+	kobject_put(from);
-+	kobject_put(to);
-+}
-+
-+static inline int bd_claim_grab_dirs(struct block_device *bdev,
-+			struct kobject *holder,
-+			struct kobject **sdir, struct kobject **sdev,
-+			struct kobject **hdir, struct kobject **hdev)
-+{
-+	*sdir = kobject_get(holder);
-+	if (!*sdir)
-+		return 0;
-+
-+	*hdev = kobject_get((*sdir)->parent);
-+	if (!*hdev)
-+		goto fail_put_sdir;
-+
-+	*sdev = bdev_get_kobj(bdev);
-+	if (!*sdev)
-+		goto fail_put_hdev;
-+
-+	*hdir = bdev_get_holder(bdev);
-+	if (!*hdir)
-+		goto fail_put_sdev;
-+
-+	return 1;
-+
-+fail_put_sdev:
-+	kobject_put(*sdev);
-+fail_put_hdev:
-+	kobject_put(*hdev);
-+fail_put_sdir:
-+	kobject_put(*sdir);
-+
-+	return 0;
-+}
-+
-+static inline void bd_claim_release_dirs(
-+			struct kobject *sdir, struct kobject *sdev,
-+			struct kobject *hdir, struct kobject *hdev)
-+{
-+	kobject_put(hdir);
-+	kobject_put(sdev);
-+	kobject_put(hdev);
-+	kobject_put(sdir);
-+}
-+
-+static void link_bd_holder(struct block_device *bdev, struct kobject *holder)
-+{
-+	struct kobject *sdir, *sdev, *hdir, *hdev;
-+
-+	if (bd_claim_grab_dirs(bdev, holder, &sdir, &sdev, &hdir, &hdev)) {
-+		add_symlink(sdir, sdev);
-+		add_symlink(hdir, hdev);
-+		bd_claim_release_dirs(sdir, sdev, hdir, hdev);
-+	}
-+
-+	return;
-+}
-+
-+static void unlink_bd_holder(struct block_device *bdev, struct kobject *holder)
-+{
-+	struct kobject *sdir, *sdev, *hdir, *hdev;
-+
-+	if (bd_claim_grab_dirs(bdev, holder, &sdir, &sdev, &hdir, &hdev)) {
-+		del_symlink(sdir, sdev);
-+		del_symlink(hdir, hdev);
-+		bd_claim_release_dirs(sdir, sdev, hdir, hdev);
-+	}
-+}
-+
-+/* bd_holder_list is protected by bdev_lock */
-+struct bd_holder {
-+	struct list_head list;	/* chain of holders of the bdev */
-+	int count;		/* references from the holder */
-+	struct kobject *kobj;	/* holder kobject */
-+};
-+
-+static int add_bd_holder(struct block_device *bdev, struct kobject *kobj)
-+{
-+        struct bd_holder *bo;
-+
-+	list_for_each_entry(bo, &bdev->bd_holder_list, list) {
-+		if (bo->kobj == kobj) {
-+			bo->count++;
-+			return 0;
-+		}
-+	}
-+
-+	bo = kmalloc(sizeof(*bo), GFP_KERNEL);
-+	if (!bo)
-+		return -ENOMEM;
-+
-+	bo->count = 1;
-+	bo->kobj = kobj;
-+	list_add_tail(&bo->list, &bdev->bd_holder_list);
-+	link_bd_holder(bdev, kobj);
-+
-+	return 0;
-+}
-+
-+static int del_bd_holder(struct block_device *bdev, struct kobject *kobj)
-+{
-+	struct bd_holder *bo;
-+
-+	list_for_each_entry(bo, &bdev->bd_holder_list, list) {
-+		if (bo->kobj == kobj) {
-+			bo->count--;
-+			BUG_ON(bo->count < 0);
-+			if (!bo->count) {
-+				unlink_bd_holder(bdev, kobj);
-+				list_del(&bo->list);
-+				kfree(bo);
-+			}
-+			break;
-+		}
-+	}
-+
-+	return 0;
-+}
-+
-+int bd_claim_by_kobject(struct block_device *bdev, void *holder, struct kobject *kobj)
+ void delete_partition(struct gendisk *disk, int part)
  {
- 	int res;
- 	spin_lock(&bdev_lock);
-@@ -464,6 +637,9 @@ int bd_claim(struct block_device *bdev, 
- 		res = 0;	 /* is a partition of an un-held device */
- 
- 	/* now impose change */
-+	if (res == 0 && kobj)
-+		res = add_bd_holder(bdev, kobj);
-+
- 	if (res==0) {
- 		/* note that for a whole device bd_holders
- 		 * will be incremented twice, and bd_holder will
-@@ -478,11 +654,20 @@ int bd_claim(struct block_device *bdev, 
- 	return res;
+ 	struct hd_struct *p = disk->part[part-1];
+@@ -310,6 +329,8 @@ void delete_partition(struct gendisk *di
+ 	p->ios[0] = p->ios[1] = 0;
+ 	p->sectors[0] = p->sectors[1] = 0;
+ 	devfs_remove("%s/part%d", disk->devfs_name, part);
++	if (p->holder_dir)
++		kobject_unregister(p->holder_dir);
+ 	kobject_unregister(&p->kobj);
  }
  
-+EXPORT_SYMBOL(bd_claim_by_kobject);
-+
-+int bd_claim(struct block_device *bdev, void *holder)
-+{
-+	return bd_claim_by_kobject(bdev, holder, NULL);
-+}
-+
- EXPORT_SYMBOL(bd_claim);
- 
--void bd_release(struct block_device *bdev)
-+void bd_release_from_kobject(struct block_device *bdev, struct kobject *kobj)
- {
- 	spin_lock(&bdev_lock);
-+	if (kobj)
-+		del_bd_holder(bdev, kobj);
- 	if (!--bdev->bd_contains->bd_holders)
- 		bdev->bd_contains->bd_holder = NULL;
- 	if (!--bdev->bd_holders)
-@@ -490,6 +675,13 @@ void bd_release(struct block_device *bde
- 	spin_unlock(&bdev_lock);
+@@ -337,6 +358,7 @@ void add_partition(struct gendisk *disk,
+ 	p->kobj.parent = &disk->kobj;
+ 	p->kobj.ktype = &ktype_part;
+ 	kobject_register(&p->kobj);
++	partition_sysfs_add_subdir(p);
+ 	disk->part[part-1] = p;
  }
  
-+EXPORT_SYMBOL(bd_release_from_kobject);
-+
-+void bd_release(struct block_device *bdev)
-+{
-+	bd_release_from_kobject(bdev, NULL);
-+}
-+
- EXPORT_SYMBOL(bd_release);
+@@ -383,6 +405,7 @@ void register_disk(struct gendisk *disk)
+ 	if ((err = kobject_add(&disk->kobj)))
+ 		return;
+ 	disk_sysfs_symlinks(disk);
++ 	disk_sysfs_add_subdirs(disk);
+ 	kobject_uevent(&disk->kobj, KOBJ_ADD);
  
- /*
+ 	/* No minors to use for partitions */
+@@ -483,6 +506,10 @@ void del_gendisk(struct gendisk *disk)
+ 
+ 	devfs_remove_disk(disk);
+ 
++	if (disk->holder_dir)
++		kobject_unregister(disk->holder_dir);
++	if (disk->holder_dir)
++		kobject_unregister(disk->slave_dir);
+ 	if (disk->driverfs_dev) {
+ 		char *disk_name = make_block_name(disk);
+ 		sysfs_remove_link(&disk->kobj, "device");
 
---------------080505040400050701020003
+--------------090806000009080008060701
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------080505040400050701020003--
+--------------090806000009080008060701--
