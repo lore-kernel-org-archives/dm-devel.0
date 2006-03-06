@@ -1,38 +1,145 @@
-From: Alasdair G Kergon <agk@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
 Subject: Re: [PATCH 6/6] dm to use bd_claim_by_disk
-Date: Mon, 6 Mar 2006 15:56:50 +0000
-Message-ID: <20060306155649.GB25317@agk.surrey.redhat.com>
-References: <4408E33E.1080703@ce.jp.nec.com> <4408E638.9060704@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Mon, 06 Mar 2006 12:00:15 -0500
+Message-ID: <440C6A9F.1060301@ce.jp.nec.com>
+References: <4408E33E.1080703@ce.jp.nec.com> <4408E638.9060704@ce.jp.nec.com> <20060306155649.GB25317@agk.surrey.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4408E638.9060704@ce.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: akpm@osdl.org, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: multipart/mixed;
+ boundary="------------060601010900060400060103"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751179AbWCFQ7A@vger.kernel.org>
+In-Reply-To: <20060306155649.GB25317@agk.surrey.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: linux-kernel@vger.kernel.org, akpm@osdl.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Mar 03, 2006 at 07:58:32PM -0500, Jun'ichi Nomura wrote:
-> This patch is part of dm/md sysfs dependency tree.
- 
-> +static int open_dev(struct dm_dev *d, dev_t dev, struct gendisk *holder)
-> +static int upgrade_mode(struct dm_dev *dd, int new_mode, struct gendisk *holder)
-> +static void close_dev(struct dm_dev *d, struct gendisk *holder)
+This is a multi-part message in MIME format.
+--------------060601010900060400060103
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Please pass the dm structure, struct mapped_device, around between dm functions
-internally where you can, instead of struct gendisk.  (Every time the new 
-parameter is passed it's wrapped with dm_disk(), so move the dm_disk() inside.)
+Hi Alasdair,
 
-Alasdair
+Alasdair G Kergon wrote:
+ >>+static int open_dev(struct dm_dev *d, dev_t dev, struct gendisk *holder)
+ >>+static int upgrade_mode(struct dm_dev *dd, int new_mode, struct gendisk *holder)
+ >>+static void close_dev(struct dm_dev *d, struct gendisk *holder)
+ >
+ > Please pass the dm structure, struct mapped_device, around between dm functions
+ > internally where you can, instead of struct gendisk.  (Every time the new
+ > parameter is passed it's wrapped with dm_disk(), so move the dm_disk() inside.)
+
+Thank you for the comment. I changed them and updated the patch.
+Could you check whether there is any other wrong thing?
+
+Thanks,
 -- 
-agk@redhat.com
+Jun'ichi Nomura, NEC Solutions (America), Inc.
+
+--------------060601010900060400060103
+Content-Type: text/x-patch;
+ name="06-dm_deptree-2.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="06-dm_deptree-2.patch"
+
+Use bd_claim_by_disk.
+
+Following symlinks are created if dm-0 maps to sda:
+  /sys/block/dm-0/slaves/sda --> /sys/block/sda
+  /sys/block/sda/holders/dm-0 --> /sys/block/dm-0
+
+This patch depends on dm-table-store-md.patch in
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+
+ drivers/md/dm-table.c |   20 ++++++++++----------
+ 1 files changed, 10 insertions(+), 10 deletions(-)
+
+
+--- linux-2.6.16-rc5.orig/drivers/md/dm-table.c	2006-03-02 14:55:14.000000000 -0500
++++ linux-2.6.16-rc5/drivers/md/dm-table.c	2006-03-06 11:00:23.000000000 -0500
+@@ -348,7 +348,7 @@ static struct dm_dev *find_device(struct
+ /*
+  * Open a device so we can use it as a map destination.
+  */
+-static int open_dev(struct dm_dev *d, dev_t dev)
++static int open_dev(struct dm_dev *d, dev_t dev, struct mapped_device *md)
+ {
+ 	static char *_claim_ptr = "I belong to device-mapper";
+ 	struct block_device *bdev;
+@@ -361,7 +361,7 @@ static int open_dev(struct dm_dev *d, de
+ 	bdev = open_by_devnum(dev, d->mode);
+ 	if (IS_ERR(bdev))
+ 		return PTR_ERR(bdev);
+-	r = bd_claim(bdev, _claim_ptr);
++	r = bd_claim_by_disk(bdev, _claim_ptr, dm_disk(md));
+ 	if (r)
+ 		blkdev_put(bdev);
+ 	else
+@@ -372,12 +372,12 @@ static int open_dev(struct dm_dev *d, de
+ /*
+  * Close a device that we've been using.
+  */
+-static void close_dev(struct dm_dev *d)
++static void close_dev(struct dm_dev *d, struct mapped_device *md)
+ {
+ 	if (!d->bdev)
+ 		return;
+ 
+-	bd_release(d->bdev);
++	bd_release_from_disk(d->bdev, dm_disk(md));
+ 	blkdev_put(d->bdev);
+ 	d->bdev = NULL;
+ }
+@@ -398,7 +398,7 @@ static int check_device_area(struct dm_d
+  * careful to leave things as they were if we fail to reopen the
+  * device.
+  */
+-static int upgrade_mode(struct dm_dev *dd, int new_mode)
++static int upgrade_mode(struct dm_dev *dd, int new_mode, struct mapped_device *md)
+ {
+ 	int r;
+ 	struct dm_dev dd_copy;
+@@ -408,9 +408,9 @@ static int upgrade_mode(struct dm_dev *d
+ 
+ 	dd->mode |= new_mode;
+ 	dd->bdev = NULL;
+-	r = open_dev(dd, dev);
++	r = open_dev(dd, dev, md);
+ 	if (!r)
+-		close_dev(&dd_copy);
++		close_dev(&dd_copy, md);
+ 	else
+ 		*dd = dd_copy;
+ 
+@@ -453,7 +453,7 @@ static int __table_get_device(struct dm_
+ 		dd->mode = mode;
+ 		dd->bdev = NULL;
+ 
+-		if ((r = open_dev(dd, dev))) {
++		if ((r = open_dev(dd, dev, t->md))) {
+ 			kfree(dd);
+ 			return r;
+ 		}
+@@ -464,7 +464,7 @@ static int __table_get_device(struct dm_
+ 		list_add(&dd->list, &t->devices);
+ 
+ 	} else if (dd->mode != (mode | dd->mode)) {
+-		r = upgrade_mode(dd, mode);
++		r = upgrade_mode(dd, mode, t->md);
+ 		if (r)
+ 			return r;
+ 	}
+@@ -539,7 +539,7 @@ int dm_get_device(struct dm_target *ti, 
+ void dm_put_device(struct dm_target *ti, struct dm_dev *dd)
+ {
+ 	if (atomic_dec_and_test(&dd->count)) {
+-		close_dev(dd);
++		close_dev(dd, ti->table->md);
+ 		list_del(&dd->list);
+ 		kfree(dd);
+ 	}
+
+--------------060601010900060400060103--
