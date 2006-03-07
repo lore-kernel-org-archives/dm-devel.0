@@ -1,11 +1,12 @@
-From: Mirko Vogt <mirko-vogt@web.de>
-Subject: dmcrypt on OpenWrt (using uClibc)
-Date: Tue, 07 Mar 2006 20:06:33 +0100
-Message-ID: <440DD9B9.1040504@web.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Darrick J. Wong" <djwong@us.ibm.com>
+Subject: [PATCH] hostraid dmraid plugin should check for hostraid
+	controller
+Date: Tue, 07 Mar 2006 15:00:30 -0800
+Message-ID: <1141772430.24849.41.camel@localhost.localdomain>
+Reply-To: "Darrick J. Wong" <djwong@us.ibm.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0901202620=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,105 +17,178 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel <dm-devel@redhat.com>, ataraid-list <ataraid-list@redhat.com>
+Cc: Chris McDermott <lcm@us.ibm.com>
 List-Id: dm-devel.ids
 
-Hi!
 
-I ported dm-crypt to OpenWrt but have a few problems using it.
-OpenWrt is based on the uClibc - maybe it's relevant.
-The kernel-modules are loaded successfully, this seems not to be the
-problem - aes, too.
+--===============0901202620==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-l6AkJES/qH2R3nbUhXWx"
 
-# dmsetup create foo /dev/scsi/host0/bus0/target0/lun0/part1
-/dev/scsi/host0/bus0/target0/lun0/part1:1 Invalid format
-Command failed
-#
 
-Here is a strace:
+--=-l6AkJES/qH2R3nbUhXWx
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-# strace dmsetup create foo /dev/scsi/host0/bus0/target0/lun0/part1
-execve("/usr/sbin/dmsetup", ["dmsetup", "create", "foo",
-"/dev/scsi/host0/bus0/target0/lun"...], [/* 8 vars */]) = 0
-svr4_syscall()                          = -1 ERRNO_4090 (Unknown error 4090)
-stat("/etc/ld.so.cache", 0x7ffe6ad8)    = -1 ENOENT (No such file or
-directory)
-open("/lib/libdevmapper.so.1.02", O_RDONLY) = -1 ENOENT (No such file or
-directory)
-open("/lib/libdevmapper.so.1.02", O_RDONLY) = -1 ENOENT (No such file or
-directory)
-open("/usr/lib/libdevmapper.so.1.02", O_RDONLY) = 3
-old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
--1, 0) = 0x2aaae000
-read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\10\0\1\0\0\0\20\36"...,
-4096) = 4096
-old_mmap(NULL, 323584, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) =
-0x2aaed000
-old_mmap(0x2aaed000, 55052, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED,
-3, 0) = 0x2aaed000
-old_mmap(0x2ab3a000, 7154, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED,
-3, 0xd000) = 0x2ab3a000
-close(3)                                = 0
-munmap(0x2aaae000, 4096)                = 0
-open("/lib/libc.so.0", O_RDONLY)        = 3
-old_mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS,
--1, 0) = 0x2aaae000
-read(3, "\177ELF\1\1\1\0\0\0\0\0\0\0\0\0\3\0\10\0\1\0\0\0\240\270"...,
-4096) = 4096
-old_mmap(NULL, 655360, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) =
-0x2ab3c000
-old_mmap(0x2ab3c000, 366372, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_FIXED,
-3, 0) = 0x2ab3c000
-old_mmap(0x2abd6000, 4479, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED,
-3, 0x5a000) = 0x2abd6000
-old_mmap(0x2abd8000, 15640, PROT_READ|PROT_WRITE,
-MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x2abd8000
-close(3)                                = 0
-munmap(0x2aaae000, 4096)                = 0
-ioctl(0, TIOCNXCL, {B38400 opost isig icanon echo ...}) = 0
-ioctl(1, TIOCNXCL, {B38400 opost isig icanon echo ...}) = 0
-brk(0)                                  = 0x10002000
-brk(0x10003000)                         = 0x10003000
-open("/proc/devices", O_RDONLY|O_LARGEFILE) = 3
-ioctl(3, TIOCNXCL, 0x7ffe5858)          = -1 ENOTTY (Inappropriate ioctl
-for device)
-brk(0x10004000)                         = 0x10004000
-read(3, "Character devices:\n  1 mem\n  4 t"..., 4096) = 305
-close(3)                                = 0
-open("/proc/misc", O_RDONLY|O_LARGEFILE) = 3
-ioctl(3, TIOCNXCL, 0x7ffe5858)          = -1 ENOTTY (Inappropriate ioctl
-for device)
-read(3, " 63 device-mapper\n200 tun\n", 4096) = 26
-close(3)                                = 0
-stat64(0x7ffe5ac0, 0x7ffe59f0)          = 0
-open("/dev/mapper/control", O_RDWR|O_LARGEFILE) = 3
-open("/proc/devices", O_RDONLY|O_LARGEFILE) = 4
-ioctl(4, TIOCNXCL, 0x7ffe5838)          = -1 ENOTTY (Inappropriate ioctl
-for device)
-read(4, "Character devices:\n  1 mem\n  4 t"..., 4096) = 305
-read(4, "", 4096)                       = 0
-close(4)                                = 0
-brk(0x10007000)                         = 0x10007000
-ioctl(3, 0xc138fd00, 0x100023d0)        = 0
-open("/dev/scsi/host0/bus0/target0/lun0/part1", O_RDONLY|O_LARGEFILE) = 4
-ioctl(4, TIOCNXCL, 0x7ffe63e8)          = -1 EINVAL (Invalid argument)
-read(4, "\27\264,\222\10py\204w\17\326\2\17;\374\361>\376\353\254"...,
-4096) = 4096
-write(2, "/dev/scsi/host0/bus0/target0/lun"...,
-39/dev/scsi/host0/bus0/target0/lun0/part1) = 39
-write(2, ":", 1:)                        = 1
-write(2, "1", 11)                        = 1
-write(2, " Invalid format\n", 16 Invalid format
-)       = 16
-close(4)                                = 0
-write(2, "Command failed\n", 15Command failed
-)        = 15
-close(3)                                = 0
-exit(1)
-#
+Hi all (and Heinz in particular),
 
-Sorry for my bad English.
+The attached patch against dmraid v1.0.0rc10 removes an unneeded
+comment, supplements an existing one, and most importantly, and causes
+is_asr to reject a disk if it can prove that the PCI controller attached
+to the disk is not a categorized as a RAID controller (this
+characteristic of the PCI class code is true for all the hostraid
+adapters in my lab).
 
-Thanks a lot - you are my last hope,
+This part of the patch helps us to avoid the situation where you can
+take a disk out of a HostRAID array, plug it in to a different system,
+and have dmraid -ay go all haywire when it can't find the rest of the
+disks.  It is my intent, however, that if is_asr will not reject a disk
+if it can't make this positive identification; this patch therefore
+should not affect Heinz's dm-based fakefakeraid testing rig. :)
 
-Mirko
+Heinz, if you like this patch, could you put it in dmraid CVS?
+
+Thanks,
+
+--D
+
+-------------
+
+Signed-off-by: Darrick J. Wong <djwong@us.ibm.com>
+diff -Naurp v7.orig/lib/format/ataraid/asr.c v7-hr/lib/format/ataraid/asr.c
+--- v7.orig/lib/format/ataraid/asr.c	2006-02-17 09:26:44.000000000 -0800
++++ v7-hr/lib/format/ataraid/asr.c	2006-03-07 14:58:53.000000000 -0800
+@@ -8,6 +8,7 @@
+=20
+ #include <errno.h>
+ #include <netinet/in.h>
++#include <limits.h>
+=20
+ #define	HANDLER	"asr"
+=20
+@@ -88,9 +89,6 @@ static char *name(struct lib_context *lc
+=20
+ 	if ((ret =3D dbg_malloc((len =3D _name(lc, asr, NULL, 0) + 1)))) {
+ 		_name(lc, asr, ret, len);
+-		/* Why do we call mk_alpha?  This makes labels like
+-		 * "OS-u320-15k" become "OS-udca-bek", which is confusing.
+-		 * mk_alpha(lc, ret + HANDLER_LEN, len - HANDLER_LEN); */
+ 	} else
+ 		log_alloc_err(lc, handler);
+=20
+@@ -109,6 +107,9 @@ static inline unsigned int stride(struct
+  * combination?  The BIOS implies that it only does RAID 0, 1 and 10.
+  * The emd driver implied support for RAID3/4/5, but dm doesn't
+  * do any of those right now (RAID4 and RAID5 are in the works).
++ *
++ * The HostRAID User Guide only claims to do RAID 0 and 1, which is
++ * inaccurate, as the BIOS clearly supports RAID01 as well.
+  */
+ static struct types types[] =3D {
+ 	{ ASR_RAID0,   t_raid0 },
+@@ -297,22 +298,59 @@ static int read_extended(struct lib_cont
+ static int is_asr(struct lib_context *lc, struct dev_info *di, void *meta)
+ {
+ 	struct asr *asr =3D meta;
++	char *slash;
++	char sysfspath[_POSIX_PATH_MAX], class_str[PCI_CLASS_ID_LENGTH];
++	FILE *fp;
++	long class_type;
+=20
+ 	/*
+ 	 * Check our magic numbers and that the version =3D=3D v8.
+ 	 * We don't support anything other than that right now.
+ 	 */
+-	if (asr->rb.b0idcode =3D=3D B0RESRVD &&
+-	    asr->rb.smagic =3D=3D SVALID) {
+-		if (asr->rb.resver =3D=3D RBLOCK_VER)
+-			return 1;
+-	=09
++	if (asr->rb.b0idcode !=3D B0RESRVD ||
++	    asr->rb.smagic !=3D SVALID) {
++		return 0;
++	}
++
++	/*
++	 * Figure out if the disk came from a HostRAID controller.
++	 * We can discover PCI information from sysfs.  We only jump out
++	 * if we see an ASR signature on a non-HostRAID controller; if
++	 * we get no data from sysfs, keep going.
++	 */
++	slash =3D strrchr(di->path, '/');
++	if (!slash)
++		goto skip_pci_check;
++
++	slash++;
++	snprintf(sysfspath, _POSIX_PATH_MAX,
++		 "/sys/block/%s/device/../../../class", slash);
++	fp =3D fopen(sysfspath, "r");
++	if (!fp)
++		goto skip_pci_check;
++
++	memset(class_str, 0, PCI_CLASS_ID_LENGTH);
++	if (fread(class_str, 1, PCI_CLASS_ID_LENGTH, fp)) {
++		class_type =3D strtol(class_str, NULL, 0);
++		class_type >>=3D 8;
++
++		if (class_type !=3D PCI_CLASS_STORAGE_RAID)
++			LOG_ERR(lc, 0,
++				"%s: Skipping disk with ASR signature"
++				" because the controller is not in "
++				"RAID mode.\n", handler);
++	}
++	fclose(fp);
++
++skip_pci_check:
++	/* Check version support. */
++	if (asr->rb.resver !=3D RBLOCK_VER) {
+ 		LOG_ERR(lc, 0,
+ 			"%s: ASR v%d detected, but we only support v8.\n",
+ 			handler, asr->rb.resver);
+ 	}
+=20
+-	return 0;
++	return 1;
+ }
+=20
+ /*
+diff -Naurp v7.orig/lib/format/ataraid/asr.h v7-hr/lib/format/ataraid/asr.h
+--- v7.orig/lib/format/ataraid/asr.h	2006-01-19 02:08:10.000000000 -0800
++++ v7-hr/lib/format/ataraid/asr.h	2006-03-07 14:40:25.000000000 -0800
+@@ -53,6 +53,10 @@
+ /* Assume block size is 512.  So much for CD dmraid... */
+ #define ASR_DISK_BLOCK_SIZE	512
+=20
++/* PCI device detection constants */
++#define PCI_CLASS_ID_LENGTH	12
++#define PCI_CLASS_STORAGE_RAID	0x0104
++
+ /* End of stuff that Darrick Wong added */
+=20
+ /* Begining of stuff copied verbatim from Adaptec's emd driver. */
+
+--=-l6AkJES/qH2R3nbUhXWx
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.1 (GNU/Linux)
+
+iD8DBQBEDhCOa6vRYYgWQuURAn++AJ4s+a9nNnPpFT6QPPr7cMhJjQo9PgCcDqLR
+EIRU4oawVogwhhKO9neLQiY=
+=l6y8
+-----END PGP SIGNATURE-----
+
+--=-l6AkJES/qH2R3nbUhXWx--
+
+
+--===============0901202620==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0901202620==--
