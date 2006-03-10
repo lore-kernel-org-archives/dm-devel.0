@@ -1,13 +1,15 @@
-From: David Wysochanski <davidw@netapp.com>
-Subject: Re: [PATCH] update defaults for netapp targets
-Date: Fri, 10 Mar 2006 11:38:30 -0500
-Message-ID: <4411AB86.5020506@netapp.com>
-References: <4411A7D3.2030306@netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ming Zhang <mingz@ele.uri.edu>
+Subject: Re: 2.6 device mapper performance?
+Date: Fri, 10 Mar 2006 11:59:22 -0500
+Message-ID: <1142009962.20484.83.camel@localhost.localdomain>
+References: <HIENIDNHFMODBIPFNJPDOEMBDAAA.ken.hwang@zyxel.com>
+Reply-To: mingz@ele.uri.edu,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------070801010403070602030207"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4411A7D3.2030306@netapp.com>
+In-Reply-To: <HIENIDNHFMODBIPFNJPDOEMBDAAA.ken.hwang@zyxel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,79 +19,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: ken.hwang@zyxel.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------070801010403070602030207
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+u have too many chances here. so hard to blame any one. suggest u to
+test it one by one if possible.
 
-Apologies for the misfire.  But the 'minio' line should be 128, not 64.  
-Attached is
-updated patch.
+for example, have same box run 2.4 and 2.6, test performance on volume
+first before run xfs, and samba.
 
-Thanks.
+ming
 
-Wysochanski, David wrote:
->
-> Should apply to latest git tree.
->
->
-> ------------------------------------------------------------------------
->
-> --- libmultipath/hwtable.c	2006-03-02 11:29:20.000000000 -0500
-> +++ libmultipath/hwtable.c.new	2006-03-10 11:22:38.180997000 -0500
-> @@ -330,10 +330,10 @@ static struct hwentry default_hw[] = {
->  		.hwhandler     = DEFAULT_HWHANDLER,
->  		.selector      = DEFAULT_SELECTOR,
->  		.pgpolicy      = GROUP_BY_PRIO,
-> -		.pgfailback    = FAILBACK_UNDEF,
-> +		.pgfailback    = -FAILBACK_IMMEDIATE,
->  		.rr_weight     = RR_WEIGHT_NONE,
->  		.no_path_retry = NO_PATH_RETRY_UNDEF,
-> -		.minio         = DEFAULT_MINIO,
-> +		.minio         = 64
->  		.checker_name  = READSECTOR0,
->  	},
->  	/*
->   
-> ------------------------------------------------------------------------
->
+On Wed, 2006-03-08 at 16:49 -0800, Ken Hwang wrote:
+> Hi,
+> 
+> I'm not sure I should ask this question here, if this is not the place then
+> I apologize. I have a home made NAS with Linux. I use evms to create volume,
+> put xfs on top of it, and then use samba to share it with Windows clients.
+> When I was using kernel 2.4 with all the needed patches I could get netbench
+> 106Mbps with 4 clients, and 95Mbps with 8 clients. Recently I upgraded the
+> same hardware to kernel 2.6 (I also upgraded the related application such as
+> samba, xfs utility, and dmsetup accordingly). Then I ran netbench again and
+> got 80Mbps with 4 clients, 53Mbps with 8 clients. Which drop almost 80% (95
+> vs 53) in 8 clients case.
+> 
+> I then  make and mount xfs on another raid5 (which uses the same disk but on
+> different partitions) and found it got better performance (95Mbps with 4
+> clients, 85Mbps with 8 clients). In brief:
+> xfs volume on raid5 md/md1 on sda6/sdb6/sdc6/sdd6 netbench: 95/85Mbps
+> xfs volume on EVMS volume /dev/evms/volume1 on raid5 md/md3 on
+> sda8/sdb8/sdc8/sdd8: 80/53Mbps
+> 
+> Do you think the slow down (85 to 53Mbps) was caused by device mapper?
+> Please advice.
+> 
+> Ken
+> 
+> --
+> No virus found in this outgoing message.
+> Checked by AVG Free Edition.
+> Version: 7.1.375 / Virus Database: 268.2.0/276 - Release Date: 3/7/2006
+> 
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
-
-
---------------070801010403070602030207
-Content-Type: text/x-patch;
- name="update-netapp-target-defaults.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="update-netapp-target-defaults.patch"
-
---- libmultipath/hwtable.c	2006-03-02 11:29:20.000000000 -0500
-+++ libmultipath/hwtable.c.new	2006-03-10 11:39:51.375259000 -0500
-@@ -330,10 +330,10 @@ static struct hwentry default_hw[] = {
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
- 		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = FAILBACK_UNDEF,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
--		.minio         = DEFAULT_MINIO,
-+		.minio         = 128
- 		.checker_name  = READSECTOR0,
- 	},
- 	/*
-
---------------070801010403070602030207
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------070801010403070602030207--
