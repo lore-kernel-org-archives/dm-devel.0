@@ -1,15 +1,15 @@
-From: Ming Zhang <mingz@ele.uri.edu>
-Subject: RE: 2.6 device mapper performance?
-Date: Sat, 11 Mar 2006 18:16:58 -0500
-Message-ID: <1142119018.27020.17.camel@localhost.localdomain>
-References: <HIENIDNHFMODBIPFNJPDAENODAAA.ken.hwang@zyxel.com>
-Reply-To: mingz@ele.uri.edu,
-	device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Flush deferred queue when dm_suspend() is
+	interrupted
+Date: Sun, 12 Mar 2006 21:02:08 +0000
+Message-ID: <20060312210208.GG25317@agk.surrey.redhat.com>
+References: <4410BECD.9080908@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <HIENIDNHFMODBIPFNJPDAENODAAA.ken.hwang@zyxel.com>
+Content-Disposition: inline
+In-Reply-To: <4410BECD.9080908@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,138 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: ken.hwang@zyxel.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2006-03-10 at 21:58 -0800, Ken Hwang wrote:
-> Hi Ming,
-> 
-> I did more tests and list them at the following. Please help me analyze them
-> if it's possible and thanks. Allow me describe the disk/volume layout. I had
-> 4 120GB sata disks as sda, sdb, sdc, sdd. And they form 4 raid5 region, on
-> top of the raid5 region there is a container, then I take 50% of the
-> container to be a evms region, and then put a evms volume /dev/evms/volume1
-> on top of the region. And I believe the raid5 region I used can be found at
-> /dev/evms/.nodes/md/md3.
-> 
-> test: sync; time dd if=/dev/evms/volume1 of=/dev/null bs=1024k count=1024
-> kernel 2.4 got 33.649s/0.010s/20.430s (real/user/sys)
-> kernel 2.6 got 46.690s/0.024s/26.902s
-> 
-> test: sync; time dd if=/dev/evms/.nodes/md/md3 of=/dev/null bs=1024k
-> count=1024
-> kernel 2.4: 19.471s/0.000s/13.480s
-> kernel 2.6: 23.763s/0.008s/16.097s
-> 
-> test: sync; time dd if=/dev/zero of=/dev/evms/volume1 bs=1024k count=1024
-> kernel 2.4: 69.183s/0.000s/15.430s
-> krenel 2.6: 52.543s/0.004/7.640s
-> 
-> test: sync; time dd if=/dev/zero of=/dev/evms/.nodes/md/md3 bs=1024k
-> count=1024
-> kernel 2.4: 37.862s/0.000s/11.730s
-> kernel 2.6: 23.628s/0.000s/5.536s
-> 
-> test: blockdev --getra /dev/evms/volume1
-> kernel 2.4: 1024
-> kernel 2.6: 384
+On Thu, Mar 09, 2006 at 06:48:29PM -0500, Jun'ichi Nomura wrote:
+> I found in a code review that dm_suspend() doesn't flush
+> deferred queue when it's interrupted and failed to suspend.
+ 
+Yup - adding to tree.
 
-try to increase this number by --setra with blockdev
+> But I don't have a testcase to pick this point
 
-> 
-> test: blockdev --getra /dev/evms/.nodes/md/md3
-> kernel 2.4: 64
-> kernel 2.6: 256
-> 
-> Looks like kernel 2.4 reading is faster than 2.6 but 2.6 writing is faster.
-> 
-> By comparing read from md3 and volume1,
-> kernel 2.4 drop from 19.471s to 33.649s (72.8%)
-> kernel 2.6 drop from 23.763s to 46.690s (96.4%)
-> 
-> By comparing write to md3 and volume1,
-> kernel 2.4 drop from 37.862s to 69.183s (82.7%)
-> kernel 2.6 drop from 23.628s to 52.543s (122.4%)
-> 
-> What's the blockdev numbers mean?
+Suspend the device below & issue I/O so the loop won't exit
+until you abort the suspend.  That's the reason for that code.
 
-yes, pretty big drop here. no idea why. i think both lvm and evms use dm
-and should not have such big difference.
+> For the failed dm_suspend() case, there is another problem
+> that presuspend is not reverted.
 
-that is to query/set the readahead buffer window, useful for sequential
-workload.
+Not a problem yet: no user of that should do anything that needs
+reverting should suspension fail, as per the comment (not a FIXME):
+       /* This does not get reverted if there's an error later. */
 
+If new targets or enhancements need new hooks then of course
+we can consider adding them when the need arises.
 
-> 
-> Thanks,
-> 
-> Ken
-> 
-> 
-> -----Original Message-----
-> From: Ming Zhang [mailto:mingz@ele.uri.edu]
-> Sent: Friday, March 10, 2006 8:59 AM
-> To: ken.hwang@zyxel.com; device-mapper development
-> Subject: Re: [dm-devel] 2.6 device mapper performance?
-> 
-> 
-> u have too many chances here. so hard to blame any one. suggest u to
-> test it one by one if possible.
-> 
-> for example, have same box run 2.4 and 2.6, test performance on volume
-> first before run xfs, and samba.
-> 
-> ming
-> 
-> On Wed, 2006-03-08 at 16:49 -0800, Ken Hwang wrote:
-> > Hi,
-> >
-> > I'm not sure I should ask this question here, if this is not the place
-> then
-> > I apologize. I have a home made NAS with Linux. I use evms to create
-> volume,
-> > put xfs on top of it, and then use samba to share it with Windows clients.
-> > When I was using kernel 2.4 with all the needed patches I could get
-> netbench
-> > 106Mbps with 4 clients, and 95Mbps with 8 clients. Recently I upgraded the
-> > same hardware to kernel 2.6 (I also upgraded the related application such
-> as
-> > samba, xfs utility, and dmsetup accordingly). Then I ran netbench again
-> and
-> > got 80Mbps with 4 clients, 53Mbps with 8 clients. Which drop almost 80%
-> (95
-> > vs 53) in 8 clients case.
-> >
-> > I then  make and mount xfs on another raid5 (which uses the same disk but
-> on
-> > different partitions) and found it got better performance (95Mbps with 4
-> > clients, 85Mbps with 8 clients). In brief:
-> > xfs volume on raid5 md/md1 on sda6/sdb6/sdc6/sdd6 netbench: 95/85Mbps
-> > xfs volume on EVMS volume /dev/evms/volume1 on raid5 md/md3 on
-> > sda8/sdb8/sdc8/sdd8: 80/53Mbps
-> >
-> > Do you think the slow down (85 to 53Mbps) was caused by device mapper?
-> > Please advice.
-> >
-> > Ken
-> >
-> > --
-> > No virus found in this outgoing message.
-> > Checked by AVG Free Edition.
-> > Version: 7.1.375 / Virus Database: 268.2.0/276 - Release Date: 3/7/2006
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> --
-> No virus found in this incoming message.
-> Checked by AVG Free Edition.
-> Version: 7.1.375 / Virus Database: 268.2.1/278 - Release Date: 3/9/2006
-> 
-> --
-> No virus found in this outgoing message.
-> Checked by AVG Free Edition.
-> Version: 7.1.375 / Virus Database: 268.2.1/279 - Release Date: 3/10/2006
-> 
+Alasdair
+-- 
+agk@redhat.com
