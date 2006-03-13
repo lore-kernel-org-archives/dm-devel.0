@@ -1,12 +1,12 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 5/7] dm/md dependency tree in sysfs: md to use bd_claim_by_disk
-Date: Mon, 13 Mar 2006 17:16:40 -0500
-Message-ID: <4415EF48.5060907@ce.jp.nec.com>
+Subject: [PATCH 7/7] dm/md dependency tree in sysfs: convert bd_sem to bd_mutex
+Date: Mon, 13 Mar 2006 17:17:43 -0500
+Message-ID: <4415EF87.8060006@ce.jp.nec.com>
 References: <4415EC4B.4010003@ce.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
- boundary="------------000105040106010208040102"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932505AbWCMWPK@vger.kernel.org>
+ boundary="------------030202050004070800080201"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932506AbWCMWQV@vger.kernel.org>
 In-Reply-To: <4415EC4B.4010003@ce.jp.nec.com>
 Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@osdl.org>, Alasdair Kergon <agk@redhat.com>, Greg KH <gregkh@suse.de>, Neil Brown <neilb@suse.de>
@@ -14,59 +14,62 @@ Cc: Lars Marowsky-Bree <lmb@suse.de>, device-mapper development <dm-devel@redhat
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------000105040106010208040102
+--------------030202050004070800080201
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 This patch is part of dm/md dependency tree in sysfs.
 
-Following symlinks are created if md0 is built from sda and sdb
-  /sys/block/md0/slaves/sda --> /sys/block/sda
-  /sys/block/md0/slaves/sdb --> /sys/block/sdb
-  /sys/block/sda/holders/md0 --> /sys/block/md0
-  /sys/block/sdb/holders/md0 --> /sys/block/md0
+This patch follows the change introduced by
+sem2mutex-blockdev-2.patch in 2.6.16-rc6-mm1.
 
 Thanks,
 -- 
 Jun'ichi Nomura, NEC Solutions (America), Inc.
 
---------------000105040106010208040102
+--------------030202050004070800080201
 Content-Type: text/x-patch;
- name="05-md_deptree.patch"
+ name="07-sem2mutex-bd_sem.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="05-md_deptree.patch"
+ filename="07-sem2mutex-bd_sem.patch"
 
-Use bd_claim_by_disk.
-
-Following symlinks are created if md0 is built from sda and sdb
-  /sys/block/md0/slaves/sda --> /sys/block/sda
-  /sys/block/md0/slaves/sdb --> /sys/block/sdb
-  /sys/block/sda/holders/md0 --> /sys/block/md0
-  /sys/block/sdb/holders/md0 --> /sys/block/md0
+Convert bd_sem to bd_mutex
 
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
- drivers/md/md.c |    2 ++
- 1 files changed, 2 insertions(+)
+ block_dev.c |    8 ++++----
+ 1 files changed, 4 insertions(+), 4 deletions(-)
 
---- linux-2.6.16-rc6.orig/drivers/md/md.c	2006-03-11 17:12:55.000000000 -0500
-+++ linux-2.6.16-rc6/drivers/md/md.c	2006-03-13 11:24:00.000000000 -0500
-@@ -1298,6 +1298,7 @@ static int bind_rdev_to_array(mdk_rdev_t
- 	else
- 		ko = &rdev->bdev->bd_disk->kobj;
- 	sysfs_create_link(&rdev->kobj, ko, "block");
-+	bd_claim_by_disk(rdev->bdev, rdev, mddev->gendisk);
- 	return 0;
+--- linux-2.6.16-rc6-mm1.orig/fs/block_dev.c.orig-mm1	2006-03-13 14:04:32.000000000 -0500
++++ linux-2.6.16-rc6-mm1/fs/block_dev.c	2006-03-13 12:29:35.000000000 -0500
+@@ -674,11 +674,11 @@ int bd_claim_by_kobject(struct block_dev
+ 	if (!bo)
+ 		return -ENOMEM;
+ 
+-	down(&bdev->bd_sem);
++	mutex_lock(&bdev->bd_mutex);
+ 	res = bd_claim(bdev, holder);
+ 	if (res || !add_bd_holder(bdev, bo))
+ 		free_bd_holder(bo);
+-	up(&bdev->bd_sem);
++	mutex_unlock(&bdev->bd_mutex);
+ 
+ 	return res;
+ }
+@@ -692,11 +692,11 @@ void bd_release_from_kobject(struct bloc
+ 	if (!kobj)
+ 		return;
+ 
+-	down(&bdev->bd_sem);
++	mutex_lock(&bdev->bd_mutex);
+ 	bd_release(bdev);
+ 	if ((bo = del_bd_holder(bdev, kobj)))
+ 		free_bd_holder(bo);
+-	up(&bdev->bd_sem);
++	mutex_unlock(&bdev->bd_mutex);
  }
  
-@@ -1308,6 +1309,7 @@ static void unbind_rdev_from_array(mdk_r
- 		MD_BUG();
- 		return;
- 	}
-+	bd_release_from_disk(rdev->bdev, rdev->mddev->gendisk);
- 	list_del_init(&rdev->same_set);
- 	printk(KERN_INFO "md: unbind<%s>\n", bdevname(rdev->bdev,b));
- 	rdev->mddev = NULL;
+ EXPORT_SYMBOL(bd_release_from_kobject);
 
---------------000105040106010208040102--
+--------------030202050004070800080201--
