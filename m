@@ -1,68 +1,36 @@
 From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: [ANNOUNCE] multipath-tools 0.4.7
-Date: Mon, 13 Mar 2006 15:14:19 +0100
-Message-ID: <20060313141419.GE6902@pundit>
+Subject: Re: [PATCH] multipath-tools: IBM hwtable update
+Date: Mon, 13 Mar 2006 14:51:09 +0100
+Message-ID: <20060313135109.GC6902@pundit>
+References: <441557F8.10008@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-scsi-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-scsi@vger.kernel.org
+In-Reply-To: <441557F8.10008@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
-
-Here comes multipath-tools 0.4.7.
-
-This release is a milestone : the daemon is progressively taught to overtake all the work done by the multipath configurator in the previous releases. To that end, the daemon CLI syntax is being vastly extended.
-
-
-2006-03-13 multipath-tools-0.4.7 shortlog :
-
-    * multipathd empowering
-          o DM driving directly from the daemon, without resorting to multipath(8)
-          o udev rules deprecation, as events are acted upon directly through uevent in the daemon. The kpartx rule remains though
-    * multipathd CLI commands
-          o enh : the CLI parser now accept unambiguous shortcuts, like "sho topo" for "show topology"
-          o new : "show config" drops a config file as seen by the live daemon
-          o new : "show maps stats" drops some statistics about multipaths events
-          o new : "show topology", mimics the "multipath -ll" output
-          o new : "show map $map topology", mimics the "multipath -ll $map" output
-          o enh : "reconfigure" correctness issues fixed, scope extended
-          o enh : "add/del map" now apply to the DM live configuration too (!!caution, maps are really removed!!)
-          o rem : "dump pathvec", deprecated
-    * prioritizers
-          o new : netapp prioritizer
-          o new : tpc prioritizer (SGI, ...)
-    * netlink uevent robustness
-          o bigger receive buffer
-          o uevent queueing and async dequeueing
-    * configuration
-          o rr_min_io can be put in "device" and "multipath" config blocks
-          o internal defaults are now exhaustive
-          o tweak defaults for HP, SGI, IBM, EMC, ...
-    * multipaths renaming through DM renames rather than remove/add cycles
-    * logging
-          o "multipathd -d" now prints the date
-          o overall output beautifying
-    * drop the "path cache" framework
-    * kpartx
-          o fixes to dos partition handler
-          o new mac partition handler
-    * make the tools work with DASD
-    * blacklist
-          o add per-device product-string blacklist
-          o add a device blacklist
-          o add a wwid blacklist
-          o deprecate the "devnode_blacklist" keyword ub favor of "blacklist"
-    * adapt to libsysfs2 api, without breaking compat with libsysfs1
-    * checkers
-          o API rewrite
-          o reduce allocation on the directio checking code path
-
-As usual, the tarball can be downloaded at http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.4.7.tar.bz2
-Documentation and general information at http://christophe.varoqui.free.fr
+On Mon, Mar 13, 2006 at 12:31:04PM +0100, Hannes Reinecke wrote:
+> Hi Christophe,
+> 
+> attached is an update for the IBM hwtable.
+> There is a new hardware ID for the IBM F20; and I've also switched to
+> 'dasd_id' from udev instead of dasdview from s390-tools.
+> 
+> Please apply.
+> 
+Applied, thanks.
 
 Regards,
 cvaroqui
