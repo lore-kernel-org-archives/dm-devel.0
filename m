@@ -1,149 +1,68 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipath-tools: fix minor compilation issues
-Date: Mon, 13 Mar 2006 13:27:40 +0100
-Message-ID: <4415653C.4050702@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: [ANNOUNCE] multipath-tools 0.4.7
+Date: Mon, 13 Mar 2006 15:14:19 +0100
+Message-ID: <20060313141419.GE6902@pundit>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------050401070904020507060105"
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------050401070904020507060105
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Hello,
 
-Hi Christophe,
+Here comes multipath-tools 0.4.7.
 
-our checker found some minor issues:
-
-- refwwid in libmultipath/configure.c:get_refwwid() might be used
-  uninitialized. As dev_type is a simple 'int' there is nothing which
-  prevents the unsuspecting user to call it with an unhandled value.
-  We shoud rather use an enum and set refwwid to NULL to be on the safe
-  side.
-- attr in libmultipath/discovery.c:devt2devname() might be used
-  uninitialized. Quite unlikely, but might happen in principle.
-  So better have it initialized.
-- r in multipath/main.c:main() might be used uninitialized.
-  True. So have it initialized.
-
-Please apply.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
-
---------------050401070904020507060105
-Content-Type: text/x-patch;
- name="multipath-tools-compile-fixes.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="multipath-tools-compile-fixes.patch"
-
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index 6e5633a..43282fe 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -48,7 +48,7 @@ struct config {
- 	int with_sysfs;
- 	int pgpolicy;
- 	struct checker * checker;
--	int dev_type;
-+	enum devtypes dev_type;
- 	int minio;
- 	int checkint;
- 	int max_checkint;
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 1ba4356..7285617 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -547,11 +547,11 @@ coalesce_paths (struct vectors * vecs, v
- }
- 
- extern char *
--get_refwwid (char * dev, int dev_type, vector pathvec)
-+get_refwwid (char * dev, enum devtypes dev_type, vector pathvec)
- {
- 	struct path * pp;
- 	char buff[FILE_NAME_SIZE];
--	char * refwwid;
-+	char * refwwid = NULL;
- 
- 	if (dev_type == DEV_NONE)
- 		return NULL;
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 42ee9b0..1cbbe82 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -25,5 +25,5 @@ int setup_map (struct multipath * mpp);
- int domap (struct multipath * mpp);
- int reinstate_paths (struct multipath *mpp);
- int coalesce_paths (struct vectors *vecs, vector curmp, char * refwwid);
--char * get_refwwid (char * dev, int dev_type, vector pathvec);
-+char * get_refwwid (char * dev, enum devtypes dev_type, vector pathvec);
- 
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index cf8289c..0b8095c 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -237,7 +237,7 @@ devt2devname (char *devname, char *devt)
- 	struct dlist * ls;
- 	char attr_path[FILE_NAME_SIZE];
- 	char block_path[FILE_NAME_SIZE];
--	struct sysfs_attribute * attr;
-+	struct sysfs_attribute * attr = NULL;
- 	struct sysfs_class * class;
- 	struct sysfs_class_device * dev;
- 
-diff --git a/libmultipath/print.c b/libmultipath/print.c
-index 6cc63e2..2c44122 100644
---- a/libmultipath/print.c
-+++ b/libmultipath/print.c
-@@ -13,8 +13,8 @@
- #include "structs_vec.h"
- #include "print.h"
- #include "dmparser.h"
--#include "configure.h"
- #include "config.h"
-+#include "configure.h"
- #include "pgpolicies.h"
- #include "defaults.h"
- #include "parser.h"
-diff --git a/multipath/main.c b/multipath/main.c
-index 98f7207..931b137 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -305,7 +305,7 @@ main (int argc, char *argv[])
- 	int arg;
- 	extern char *optarg;
- 	extern int optind;
--	int i, r;
-+	int i, r = 1;
- 
- 	if (getuid() != 0) {
- 		fprintf(stderr, "need to be root\n");
-
---------------050401070904020507060105
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This release is a milestone : the daemon is progressively taught to overtake all the work done by the multipath configurator in the previous releases. To that end, the daemon CLI syntax is being vastly extended.
 
 
---------------050401070904020507060105--
+2006-03-13 multipath-tools-0.4.7 shortlog :
+
+    * multipathd empowering
+          o DM driving directly from the daemon, without resorting to multipath(8)
+          o udev rules deprecation, as events are acted upon directly through uevent in the daemon. The kpartx rule remains though
+    * multipathd CLI commands
+          o enh : the CLI parser now accept unambiguous shortcuts, like "sho topo" for "show topology"
+          o new : "show config" drops a config file as seen by the live daemon
+          o new : "show maps stats" drops some statistics about multipaths events
+          o new : "show topology", mimics the "multipath -ll" output
+          o new : "show map $map topology", mimics the "multipath -ll $map" output
+          o enh : "reconfigure" correctness issues fixed, scope extended
+          o enh : "add/del map" now apply to the DM live configuration too (!!caution, maps are really removed!!)
+          o rem : "dump pathvec", deprecated
+    * prioritizers
+          o new : netapp prioritizer
+          o new : tpc prioritizer (SGI, ...)
+    * netlink uevent robustness
+          o bigger receive buffer
+          o uevent queueing and async dequeueing
+    * configuration
+          o rr_min_io can be put in "device" and "multipath" config blocks
+          o internal defaults are now exhaustive
+          o tweak defaults for HP, SGI, IBM, EMC, ...
+    * multipaths renaming through DM renames rather than remove/add cycles
+    * logging
+          o "multipathd -d" now prints the date
+          o overall output beautifying
+    * drop the "path cache" framework
+    * kpartx
+          o fixes to dos partition handler
+          o new mac partition handler
+    * make the tools work with DASD
+    * blacklist
+          o add per-device product-string blacklist
+          o add a device blacklist
+          o add a wwid blacklist
+          o deprecate the "devnode_blacklist" keyword ub favor of "blacklist"
+    * adapt to libsysfs2 api, without breaking compat with libsysfs1
+    * checkers
+          o API rewrite
+          o reduce allocation on the directio checking code path
+
+As usual, the tarball can be downloaded at http://christophe.varoqui.free.fr/multipath-tools/multipath-tools-0.4.7.tar.bz2
+Documentation and general information at http://christophe.varoqui.free.fr
+
+Regards,
+cvaroqui
