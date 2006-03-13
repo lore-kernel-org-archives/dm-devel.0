@@ -1,14 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: path group failback
-Date: Mon, 13 Mar 2006 18:17:35 +0100
-Message-ID: <20060313171735.GA13642@pundit>
-References: <C2EEB4E538D3DC48BF57F391F422779321B0E5@SRMANNING.eng.emc.com>
+From: Patrick Mansfield <patmans@us.ibm.com>
+Subject: Re: Unable to get INQUIRY vpd 1 page 0x0
+Date: Mon, 13 Mar 2006 09:23:00 -0800
+Message-ID: <20060313172300.GA13879@us.ibm.com>
+References: <20060313110046.91886.qmail@web33302.mail.mud.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <C2EEB4E538D3DC48BF57F391F422779321B0E5@SRMANNING.eng.emc.com>
+In-Reply-To: <20060313110046.91886.qmail@web33302.mail.mud.yahoo.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,42 +18,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: egoggin@emc.com
-Cc: dm-devel@redhat.com, christophe.varoqui@free.fr
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> > In such a scenario, wouldn't the priorizer catch priority changes ?
+On Mon, Mar 13, 2006 at 03:00:46AM -0800, li nux wrote:
+> On doing a '/etc/init.d/boot.udev start' or 'multipath
+> -v2 -d' i get following error for all the devices:
 > 
-> No, not necessarily, and certainly not for CLARiiON.  None of these
-> 3 use cases involves changing which path group is the highest priority
-> path group so each path in the 2 groups continue to have the same
-> priority as before the externally initiated change of the active path
-> group.  For each use case, only the identity of the active path group
-> has been changed.
+> creating device nodes 0:0:0:0: sg_io failed status 0x0
+> 0x1 0x0 0x0
+> 0:0:0:0: Unable to get INQUIRY vpd 1 page 0x0.
+> 0:0:0:1: sg_io failed status 0x0 0x1 0x0 0x0
 > 
-I guess the priorizer *should* catch priority changes ...
+> Can somebody have an idea, what i need to correct.
 
-> > 
-> > ie, paths to owning SP are heavier than paths to not owning SP, so
-> > changing the owning SP in navisphere would shuffle the path group
-> > priorites.
-> 
-> CLARiiON path priority is dependent solely on 2 factors -- (1) the
-> path must be active (or ghost) and (2) the path must connect to its
-> logical unit's "default" (not necessarily active) owning service
-> processor.
-> 
-> > 
-> > If it is the case I would imagine the failback target to be the
-> > externally designated one, which seems right.
-> 
-> No.  The CLARiiON's highest priority path group is defined to be
-> the default owning service processor instead of the active service
-> processor (they may or may not be the same at any given instant)
-> in order to maintain the manually established distribution of
-> logical units across the 2 service processors.
-> 
-Would it be unreasonable to teach the prioritizer about this case ?
+You can run scsi_id manually like:
 
-Regards,
-cvaroqui
+	scsi_id -g -s /block/sda
+	scsi_id -g -s /block/sdb
+
+Or for whatever devices are at 0:0:0:0 and 0:0:0:1
+
+Also try normal read/write to the devices.
+
+And you should have posted the full dmesg output (that includes all
+SCSI and perhaps PCI messages).
+
+The devices are getting a host status of 1, that is a DID_NO_CONNECT and
+generally means the initiator could not talk to the target (the linux
+driver or hardware can't communicate with the disk), it is also used by
+linux scsi core when it kills IO (like when a device is hot-unplugged
+while IO is in progress).
+
+If you get this error all the time, you won't be able to send any commands
+to the device. Since the device actually showed up (and linux scsi core
+device discovery sent at least an INQUIRY to it OK), something else is now
+causing it to fail, you need to figure that out.
+
+Depending on results, discussion should probably be moved to
+linux-scsi@vger.kernel.org 
+
+-- Patrick Mansfield
