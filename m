@@ -1,12 +1,11 @@
-From: penguin <mnmasterjp@ybb.ne.jp>
-Subject: HP MSA1000
-Date: Tue, 14 Mar 2006 20:24:45 +0900
-Message-ID: <4416A7FD.50001@ybb.ne.jp>
+From: <gregkh@suse.de>
+Subject: patch kobject_add_dir.patch added to gregkh-2.6 tree
+Date: Tue, 14 Mar 2006 11:40:44 -0800
+Message-ID: <1FJFNs-0HQ-00@press.kroah.org>
+References: <4415EEC1.5080201@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4415EEC1.5080201@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,12 +15,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: j-nomura@ce.jp.nec.com, agk@redhat.com, akpm@osdl.org, dm-devel@redhat.com, gregkh@suse.de, lmb@suse.de, neilb@suse.de
 List-Id: dm-devel.ids
 
-Hello,
 
-Can I use Multipath-device-mapper by HP MSA1000?
+This is a note to let you know that I've just added the patch titled
 
-Because of MSA1000 is active/passive controller, I think that can't use
-by MSA1000.
+     Subject: kobject_add_dir
+
+to my gregkh-2.6 tree.  Its filename is
+
+     kobject_add_dir.patch
+
+This tree can be found at 
+    http://www.kernel.org/pub/linux/kernel/people/gregkh/gregkh-2.6/patches/
