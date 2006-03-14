@@ -1,75 +1,174 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 7/7] dm/md dependency tree in sysfs: convert bd_sem to bd_mutex
-Date: Mon, 13 Mar 2006 17:17:43 -0500
-Message-ID: <4415EF87.8060006@ce.jp.nec.com>
-References: <4415EC4B.4010003@ce.jp.nec.com>
+From: Andrew Morton <akpm@osdl.org>
+Subject: Re: [PATCH 3/7] dm/md dependency tree in sysfs:
+	bd_claim_by_kobject
+Date: Mon, 13 Mar 2006 18:27:30 -0800
+Message-ID: <20060313182730.335bc6c8.akpm@osdl.org>
+References: <4415EC4B.4010003@ce.jp.nec.com> <4415EEFD.6010002@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------030202050004070800080201"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932506AbWCMWQV@vger.kernel.org>
-In-Reply-To: <4415EC4B.4010003@ce.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@osdl.org>, Alasdair Kergon <agk@redhat.com>, Greg KH <gregkh@suse.de>, Neil Brown <neilb@suse.de>
-Cc: Lars Marowsky-Bree <lmb@suse.de>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4415EEFD.6010002@ce.jp.nec.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: gregkh@suse.de, linux-kernel@vger.kernel.org, dm-devel@redhat.com, lmb@suse.de, agk@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------030202050004070800080201
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+"Jun'ichi Nomura" <j-nomura@ce.jp.nec.com> wrote:
+>
+> This patch is part of dm/md dependency tree in sysfs.
+> 
+> This adds bd_claim_by_kobject() function which takes kobject as
+> additional signature of holder device and creates sysfs symlinks
+> between holder device and claimed device.
+> bd_release_from_kobject() is a counter part of bd_claim_by_kobject.
+> 
+> ...
+>
+> @@ -402,6 +402,7 @@ struct block_device {
+>  	struct list_head	bd_inodes;
+>  	void *			bd_holder;
+>  	int			bd_holders;
+> +	struct list_head	bd_holder_list;
+>  	struct block_device *	bd_contains;
+>  	unsigned		bd_block_size;
+>  	struct hd_struct *	bd_part;
 
-This patch is part of dm/md dependency tree in sysfs.
+Bear in mind that sysfs is Kconfigurable (CONFIG_SYSFS).  If possible,
+newly-added code which doesn't make sense without sysfs should not appear
+in a CONFIG_SYSFS=n vmlinux.
 
-This patch follows the change introduced by
-sem2mutex-blockdev-2.patch in 2.6.16-rc6-mm1.
+> +
+> +static inline struct kobject * bdev_get_kobj(struct block_device *bdev)
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Solutions (America), Inc.
+pet-peeve: The space after asterisk has no use.
 
---------------030202050004070800080201
-Content-Type: text/x-patch;
- name="07-sem2mutex-bd_sem.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="07-sem2mutex-bd_sem.patch"
+> +{
+> +	if (bdev->bd_contains != bdev)
+> +		return kobject_get(&bdev->bd_part->kobj);
+> +	else
+> +		return kobject_get(&bdev->bd_disk->kobj);
+> +}
+> +
+> +static inline struct kobject * bdev_get_holder(struct block_device *bdev)
+> +static inline void add_symlink(struct kobject *from, struct kobject *to)
+> +static inline void del_symlink(struct kobject *from, struct kobject *to)
+> +static inline int bd_holder_grab_dirs(struct block_device *bdev,
+> +static inline void bd_holder_release_dirs(struct bd_holder *bo)
 
-Convert bd_sem to bd_mutex
+I suposse the inlines are OK, given that we "know" that there's only a
+single callsite.  But recent gcc's take care of that automatically.
 
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> +static int add_bd_holder(struct block_device *bdev, struct bd_holder *bo)
+> +{
+> +        struct bd_holder *tmp;
+> +
+> +	if (!bo)
+> +		return 0;
 
- block_dev.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+whitespace went wild there.
 
---- linux-2.6.16-rc6-mm1.orig/fs/block_dev.c.orig-mm1	2006-03-13 14:04:32.000000000 -0500
-+++ linux-2.6.16-rc6-mm1/fs/block_dev.c	2006-03-13 12:29:35.000000000 -0500
-@@ -674,11 +674,11 @@ int bd_claim_by_kobject(struct block_dev
- 	if (!bo)
- 		return -ENOMEM;
- 
--	down(&bdev->bd_sem);
-+	mutex_lock(&bdev->bd_mutex);
- 	res = bd_claim(bdev, holder);
- 	if (res || !add_bd_holder(bdev, bo))
- 		free_bd_holder(bo);
--	up(&bdev->bd_sem);
-+	mutex_unlock(&bdev->bd_mutex);
- 
- 	return res;
- }
-@@ -692,11 +692,11 @@ void bd_release_from_kobject(struct bloc
- 	if (!kobj)
- 		return;
- 
--	down(&bdev->bd_sem);
-+	mutex_lock(&bdev->bd_mutex);
- 	bd_release(bdev);
- 	if ((bo = del_bd_holder(bdev, kobj)))
- 		free_bd_holder(bo);
--	up(&bdev->bd_sem);
-+	mutex_unlock(&bdev->bd_mutex);
- }
- 
- EXPORT_SYMBOL(bd_release_from_kobject);
+> +static void free_bd_holder(struct bd_holder *bo)
+> ...
+> +
+> +	bo->sdir = kobj;
+> +	list_for_each_entry(tmp, &bdev->bd_holder_list, list) {
+> +		if (tmp->sdir == bo->sdir) {
+> +			tmp->count++;
+> +			return 0;
+> +		}
+> +	}
+> +
+> +	if (!bd_holder_grab_dirs(bdev, bo))
+> +		return 0;
+> +
+> +	add_symlink(bo->sdir, bo->sdev);
+> +	add_symlink(bo->hdir, bo->hdev);
+> +	list_add_tail(&bo->list, &bdev->bd_holder_list);
+> +	return 1;
+> +}
+> 
+> +static struct bd_holder *del_bd_holder(struct block_device *bdev,
+> +					struct kobject *kobj)
+> +{
+> +	struct bd_holder *bo;
+> +
+> +	list_for_each_entry(bo, &bdev->bd_holder_list, list) {
+> +		if (bo->sdir == kobj) {
+> +			bo->count--;
+> +			BUG_ON(bo->count < 0);
+> +			if (!bo->count) {
+> +				list_del(&bo->list);
+> +				del_symlink(bo->sdir, bo->sdev);
+> +				del_symlink(bo->hdir, bo->hdev);
+> +				bd_holder_release_dirs(bo);
+> +				return bo;
+> +			}
+> +			break;
+> +		}
+> +	}
+> +
+> +	return NULL;
+> +}
 
---------------030202050004070800080201--
+Some comments which describe what these do, what they return and why they
+return it would be nice.
+
+> +
+> +int bd_claim_by_kobject(struct block_device *bdev, void *holder,
+> +			struct kobject *kobj)
+> +{
+
+Ditto.
+
+> +	int res = -EBUSY;
+> +	struct bd_holder *bo;
+> +
+> +	if (!kobj)
+> +		return -EINVAL;
+> +
+> +	bo = alloc_bd_holder(kobj);
+> +	if (!bo)
+> +		return -ENOMEM;
+> +
+> +	down(&bdev->bd_sem);
+> +	res = bd_claim(bdev, holder);
+> +	if (res || !add_bd_holder(bdev, bo))
+> +		free_bd_holder(bo);
+> +	up(&bdev->bd_sem);
+> +
+> +	return res;
+> +}
+> +
+> +EXPORT_SYMBOL(bd_claim_by_kobject);
+
+I don't think the blank line before the EXPORT_SYMBOL() does anything useful.
+
+EXPORT_SYMBOL_GPL() might be preferred.
+
+> +void bd_release_from_kobject(struct block_device *bdev, struct kobject *kobj)
+> +{
+> +	struct bd_holder *bo;
+> +
+> +	if (!kobj)
+> +		return;
+> +
+> +	down(&bdev->bd_sem);
+> +	bd_release(bdev);
+> +	if ((bo = del_bd_holder(bdev, kobj)))
+> +		free_bd_holder(bo);
+> +	up(&bdev->bd_sem);
+> +}
+> +
+> +EXPORT_SYMBOL(bd_release_from_kobject);
+
+Ditto.
