@@ -1,15 +1,15 @@
 From: Andrew Morton <akpm@osdl.org>
-Subject: Re: [PATCH 3/7] dm/md dependency tree in sysfs:
-	bd_claim_by_kobject
-Date: Mon, 13 Mar 2006 18:27:30 -0800
-Message-ID: <20060313182730.335bc6c8.akpm@osdl.org>
-References: <4415EC4B.4010003@ce.jp.nec.com> <4415EEFD.6010002@ce.jp.nec.com>
+Subject: Re: [PATCH 4/7] dm/md dependency tree in sysfs:
+	bd_claim_by_disk
+Date: Mon, 13 Mar 2006 18:29:43 -0800
+Message-ID: <20060313182943.437c0d43.akpm@osdl.org>
+References: <4415EC4B.4010003@ce.jp.nec.com> <4415EF35.2010402@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4415EEFD.6010002@ce.jp.nec.com>
+In-Reply-To: <4415EF35.2010402@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,150 +25,35 @@ List-Id: dm-devel.ids
 
 "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com> wrote:
 >
-> This patch is part of dm/md dependency tree in sysfs.
+>  Variants of bd_claim_by_kobject which takes gendisk instead
+>  of kobject and do kobject_{get,put}(&gendisk->slave_dir).
 > 
-> This adds bd_claim_by_kobject() function which takes kobject as
-> additional signature of holder device and creates sysfs symlinks
-> between holder device and claimed device.
-> bd_release_from_kobject() is a counter part of bd_claim_by_kobject.
+>  Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 > 
-> ...
->
-> @@ -402,6 +402,7 @@ struct block_device {
->  	struct list_head	bd_inodes;
->  	void *			bd_holder;
->  	int			bd_holders;
-> +	struct list_head	bd_holder_list;
->  	struct block_device *	bd_contains;
->  	unsigned		bd_block_size;
->  	struct hd_struct *	bd_part;
-
-Bear in mind that sysfs is Kconfigurable (CONFIG_SYSFS).  If possible,
-newly-added code which doesn't make sense without sysfs should not appear
-in a CONFIG_SYSFS=n vmlinux.
-
-> +
-> +static inline struct kobject * bdev_get_kobj(struct block_device *bdev)
-
-pet-peeve: The space after asterisk has no use.
-
-> +{
-> +	if (bdev->bd_contains != bdev)
-> +		return kobject_get(&bdev->bd_part->kobj);
-> +	else
-> +		return kobject_get(&bdev->bd_disk->kobj);
-> +}
-> +
-> +static inline struct kobject * bdev_get_holder(struct block_device *bdev)
-> +static inline void add_symlink(struct kobject *from, struct kobject *to)
-> +static inline void del_symlink(struct kobject *from, struct kobject *to)
-> +static inline int bd_holder_grab_dirs(struct block_device *bdev,
-> +static inline void bd_holder_release_dirs(struct bd_holder *bo)
-
-I suposse the inlines are OK, given that we "know" that there's only a
-single callsite.  But recent gcc's take care of that automatically.
-
-> +static int add_bd_holder(struct block_device *bdev, struct bd_holder *bo)
-> +{
-> +        struct bd_holder *tmp;
-> +
-> +	if (!bo)
-> +		return 0;
-
-whitespace went wild there.
-
-> +static void free_bd_holder(struct bd_holder *bo)
-> ...
-> +
-> +	bo->sdir = kobj;
-> +	list_for_each_entry(tmp, &bdev->bd_holder_list, list) {
-> +		if (tmp->sdir == bo->sdir) {
-> +			tmp->count++;
-> +			return 0;
-> +		}
-> +	}
-> +
-> +	if (!bd_holder_grab_dirs(bdev, bo))
-> +		return 0;
-> +
-> +	add_symlink(bo->sdir, bo->sdev);
-> +	add_symlink(bo->hdir, bo->hdev);
-> +	list_add_tail(&bo->list, &bdev->bd_holder_list);
-> +	return 1;
-> +}
+>   include/linux/genhd.h |   13 +++++++++++++
+>   1 files changed, 13 insertions(+)
 > 
-> +static struct bd_holder *del_bd_holder(struct block_device *bdev,
-> +					struct kobject *kobj)
-> +{
-> +	struct bd_holder *bo;
-> +
-> +	list_for_each_entry(bo, &bdev->bd_holder_list, list) {
-> +		if (bo->sdir == kobj) {
-> +			bo->count--;
-> +			BUG_ON(bo->count < 0);
-> +			if (!bo->count) {
-> +				list_del(&bo->list);
-> +				del_symlink(bo->sdir, bo->sdev);
-> +				del_symlink(bo->hdir, bo->hdev);
-> +				bd_holder_release_dirs(bo);
-> +				return bo;
-> +			}
-> +			break;
-> +		}
-> +	}
-> +
-> +	return NULL;
-> +}
+>  --- linux-2.6.16-rc6.orig/include/linux/genhd.h	2006-03-11 17:12:55.000000000 -0500
+>  +++ linux-2.6.16-rc6/include/linux/genhd.h	2006-03-13 11:24:13.000000000 -0500
+>  @@ -421,6 +424,19 @@ static inline struct block_device *bdget
+>   	return bdget(MKDEV(disk->major, disk->first_minor) + index);
+>   }
+>   
+>  +static inline int bd_claim_by_disk(struct block_device *bdev,
+>  +					void *holder, struct gendisk *disk)
+>  +{
+>  +	return bd_claim_by_kobject(bdev, holder, kobject_get(disk->slave_dir));
+>  +}
+>  +
+>  +static inline void bd_release_from_disk(struct block_device *bdev,
+>  +					struct gendisk *disk)
+>  +{
+>  +	bd_release_from_kobject(bdev, disk->slave_dir);
+>  +	kobject_put(disk->slave_dir);
+>  +}
+>  +
 
-Some comments which describe what these do, what they return and why they
-return it would be nice.
+genhd.h doesn't include kobject.h, so this only compiles due to luck.
 
-> +
-> +int bd_claim_by_kobject(struct block_device *bdev, void *holder,
-> +			struct kobject *kobj)
-> +{
-
-Ditto.
-
-> +	int res = -EBUSY;
-> +	struct bd_holder *bo;
-> +
-> +	if (!kobj)
-> +		return -EINVAL;
-> +
-> +	bo = alloc_bd_holder(kobj);
-> +	if (!bo)
-> +		return -ENOMEM;
-> +
-> +	down(&bdev->bd_sem);
-> +	res = bd_claim(bdev, holder);
-> +	if (res || !add_bd_holder(bdev, bo))
-> +		free_bd_holder(bo);
-> +	up(&bdev->bd_sem);
-> +
-> +	return res;
-> +}
-> +
-> +EXPORT_SYMBOL(bd_claim_by_kobject);
-
-I don't think the blank line before the EXPORT_SYMBOL() does anything useful.
-
-EXPORT_SYMBOL_GPL() might be preferred.
-
-> +void bd_release_from_kobject(struct block_device *bdev, struct kobject *kobj)
-> +{
-> +	struct bd_holder *bo;
-> +
-> +	if (!kobj)
-> +		return;
-> +
-> +	down(&bdev->bd_sem);
-> +	bd_release(bdev);
-> +	if ((bo = del_bd_holder(bdev, kobj)))
-> +		free_bd_holder(bo);
-> +	up(&bdev->bd_sem);
-> +}
-> +
-> +EXPORT_SYMBOL(bd_release_from_kobject);
-
-Ditto.
+An alternative to adding possibly risky nested header inclusions would be
+to uninline these functions.
