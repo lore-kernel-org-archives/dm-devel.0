@@ -1,15 +1,15 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: [PATCH] dm-striped device sizes must be multiple of
+From: "Darrick J. Wong" <djwong@us.ibm.com>
+Subject: Re: [PATCH] dm-striped device sizes must be multiple of
 	chunk-size
-Date: Tue, 14 Mar 2006 16:31:01 -0600
-Message-ID: <200603141631.02655.kevcorry@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Tue, 14 Mar 2006 14:43:43 -0800
+Message-ID: <1142376223.3333.25.camel@localhost.localdomain>
+References: <200603141631.02655.kevcorry@us.ibm.com>
+Reply-To: "Darrick J. Wong" <djwong@us.ibm.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1680193345=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <200603141631.02655.kevcorry@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,63 +19,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: DevMapper <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The dm-striped target currently does not enforce that the size of a stripe 
-device be a multiple of the chunk-size. Under certain conditions, this can 
-lead to I/O requests going off the end of an underlying device. This 
-test-case shows one example.
 
-echo "0 100 linear /dev/hdb1 0" | dmsetup create linear0
-echo "0 100 linear /dev/hdb1 100" | dmsetup create linear1
-echo "0 200 striped 2 32 /dev/mapper/linear0 0 /dev/mapper/linear1 0" | \
-   dmsetup create stripe0
-dd if=/dev/zero of=/dev/mapper/stripe0 bs=1k
-
-This will produce the output:
-dd: writing '/dev/mapper/stripe0': Input/output error
-97+0 records in
-96+0 records out
-
-And in the kernel log will be:
-attempt to access beyond end of device
-dm-0: rw=0, want=104, limit=100
-
-The patch below will check that the table size is a multiple of the stripe 
-chunk-size when the table is created, which will prevent the above striped 
-device from being created.
-
-This should not effect tools like LVM or EVMS, since in all the cases I can 
-think of, striped devices are always created with the sizes being a multiple 
-of the chunk-size.
-
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://www.ibm.com/linux/
-http://evms.sourceforge.net/
+--===============1680193345==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-JdGcydY5pZfhL3iYGOtK"
 
 
-The size of a stripe device must be a multiple of its chunk-size.
+--=-JdGcydY5pZfhL3iYGOtK
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Kevin Corry <kevcorry@us.ibm.com>
+Also, those error messages should read "Target length not divisible...",
+not "divisable".
 
- dm-stripe.c |    6 ++++++
- 1 file changed, 6 insertions(+)
+--D
 
---- diff/drivers/md/dm-stripe.c	2006-03-14 15:57:30.000000000 -0600
-+++ source/drivers/md/dm-stripe.c	2006-03-14 16:01:41.000000000 -0600
-@@ -103,6 +103,12 @@
- 		return -EINVAL;
- 	}
- 
-+	if (((uint32_t)ti->len) & (chunk_size - 1)) {
-+		ti->error = "dm-stripe: Target length not divisable by "
-+		    "chunk size";
-+		return -EINVAL;
-+	}
-+
- 	width = ti->len;
- 	if (sector_div(width, stripes)) {
- 		ti->error = "dm-stripe: Target length not divisable by "
+On Tue, 2006-03-14 at 16:31 -0600, Kevin Corry wrote:
+> The dm-striped target currently does not enforce that the size of a strip=
+e=20
+> device be a multiple of the chunk-size. Under certain conditions, this ca=
+n=20
+> lead to I/O requests going off the end of an underlying device. This=20
+> test-case shows one example.
+>=20
+> echo "0 100 linear /dev/hdb1 0" | dmsetup create linear0
+> echo "0 100 linear /dev/hdb1 100" | dmsetup create linear1
+> echo "0 200 striped 2 32 /dev/mapper/linear0 0 /dev/mapper/linear1 0" | \
+>    dmsetup create stripe0
+> dd if=3D/dev/zero of=3D/dev/mapper/stripe0 bs=3D1k
+>=20
+> This will produce the output:
+> dd: writing '/dev/mapper/stripe0': Input/output error
+> 97+0 records in
+> 96+0 records out
+>=20
+> And in the kernel log will be:
+> attempt to access beyond end of device
+> dm-0: rw=3D0, want=3D104, limit=3D100
+>=20
+> The patch below will check that the table size is a multiple of the strip=
+e=20
+> chunk-size when the table is created, which will prevent the above stripe=
+d=20
+> device from being created.
+>=20
+> This should not effect tools like LVM or EVMS, since in all the cases I c=
+an=20
+> think of, striped devices are always created with the sizes being a multi=
+ple=20
+> of the chunk-size.
+>=20
+
+--=-JdGcydY5pZfhL3iYGOtK
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.1 (GNU/Linux)
+
+iD8DBQBEF0cfa6vRYYgWQuURAuipAJ9P0YxfWKpmOC8nlNDnRBS+R4qAVgCfR9pD
+/vGPqLnPOFIJyJdQpPWJKAc=
+=MNBu
+-----END PGP SIGNATURE-----
+
+--=-JdGcydY5pZfhL3iYGOtK--
+
+
+--===============1680193345==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1680193345==--
