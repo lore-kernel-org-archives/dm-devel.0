@@ -1,14 +1,11 @@
-From: li nux <lnxluv@yahoo.com>
-Subject: Re: Unable to get INQUIRY vpd 1 page 0x0
-Date: Mon, 13 Mar 2006 21:03:11 -0800 (PST)
-Message-ID: <20060314050311.38998.qmail@web33309.mail.mud.yahoo.com>
-References: <20060313172300.GA13879@us.ibm.com>
+From: Stefan Bader <Stefan.Bader@de.ibm.com>
+Subject: [RFC] New interface for dm-io to handle timed requests
+Date: Tue, 14 Mar 2006 11:19:03 +0100
+Message-ID: <44169897.1080900@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="------------020803090307090800010706"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060313172300.GA13879@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,87 +15,228 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: patmans@us.ibm.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---- Patrick Mansfield <patmans@us.ibm.com> wrote:
+This is a multi-part message in MIME format.
+--------------020803090307090800010706
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
 
-> On Mon, Mar 13, 2006 at 03:00:46AM -0800, li nux
-> wrote:
-> > On doing a '/etc/init.d/boot.udev start' or
-> 'multipath
-> > -v2 -d' i get following error for all the devices:
-> >=20
-> > creating device nodes 0:0:0:0: sg_io failed status
-> 0x0
-> > 0x1 0x0 0x0
-> > 0:0:0:0: Unable to get INQUIRY vpd 1 page 0x0.
-> > 0:0:0:1: sg_io failed status 0x0 0x1 0x0 0x0
-> >=20
-> > Can somebody have an idea, what i need to correct.
->=20
-> You can run scsi_id manually like:
->=20
-> 	scsi_id -g -s /block/sda
-> 	scsi_id -g -s /block/sdb
->=20
-> Or for whatever devices are at 0:0:0:0 and 0:0:0:1
->=20
+Some days ago we proposed an extension to the device mapper that allows 
+to specify a timeout after which a given request should return as 
+successful, even if some of the target devices did not react by that 
+time.  As we cannot return a request to the upper layers as long as some 
+io is still running and possibly modifying referenced pages, we also 
+need a way to handle those requests.
+The ideal solution would be to have an interface in the block layer that 
+allows us to cancel any submitted requests. But since such a change will 
+take quite a lot discussions and work, we want to emulate such a 
+behavior in the dm core for now.
 
-This also gives the same error
-0:0:0:1: sg_io failed status 0x0 0x1 0x0 0x0
-0:0:0:1: Unable to get INQUIRY vpd 1 page 0x0.
-error calling out /sbin/scsi_id -g -u -s /block/sda
+The rough idea is as follows:
+- The dm core has to keep track of running ios, so each client has to
+   create a dm_io_client structure by calling dm_io_client_create
+   This is also required to have better scaling targets that use
+   dm-io since this allows to have memory pools private to each
+   target instance.
+- Any io is submitted via dm_io. Details on timeouts, what callback
+   function to use, etc. are submitted via a struct dm_io_control.
+- The notify function will be called multiple times, usually once for
+   each region. It's the job of the client to wait for all regions to
+   complete.
+- The state of a region can be OK, TIMEOUT, CANCELED or ERROR. If The
+   state is TIMEOUT, the io is still running, and can complete later by
+   it self. In that case the callback is called again with the new
+   state.
+   If the client doesn't want to wait, it can call
+   dm_io_cancel_by_device or dm_io_cancel_by_handle to cancel the
+   outstanding io.
+- Once all regions returned with a return code of OK, CANCELED or ERROR
+   the io request can be returned to the originator.
+- Synchronous calls are done by setting the SYNC bit in the rw attribute
+   (only one function call instead of multiple ones). The call will wait
+   until all regions are done (but will call the notify function if
+   supplied). If no notify function is supplied the caller will only
+   know that any region has an error or all are done.
+   Without notify function but with timeout the regions will be cancelled
+   automatically.
 
-Why it is enquiring page 0x0, vpd enquires from page
-0x80 or 0x83, right ?
+Regards,
+Stefan Bader
 
-> Also try normal read/write to the devices.
->=20
-
-This works
-
-> And you should have posted the full dmesg output
-> (that includes all
-> SCSI and perhaps PCI messages).
->=20
-> The devices are getting a host status of 1, that is
-> a DID_NO_CONNECT and
-> generally means the initiator could not talk to the
-> target (the linux
-> driver or hardware can't communicate with the disk),
-> it is also used by
-> linux scsi core when it kills IO (like when a device
-> is hot-unplugged
-> while IO is in progress).
-
-You are right, The devices were hot-unplugged and then
-new devices were hot-plugged. But udev should take
-care of these events and should refresh its
-device-name mappings accordingly ?
-
-After a rebooted, new disks under /proc/partitions
-looks like cciss/c0d0p1 etc.
-how should i run scsi_id on these ?
-
->=20
-> If you get this error all the time, you won't be
-> able to send any commands
-> to the device. Since the device actually showed up
-> (and linux scsi core
-> device discovery sent at least an INQUIRY to it OK),
-> something else is now
-> causing it to fail, you need to figure that out.
->=20
-> Depending on results, discussion should probably be
-> moved to
-> linux-scsi@vger.kernel.org=20
->=20
-> -- Patrick Mansfield
+----------------------------------------------------------------------
+Here comes the proposed new header:
 
 
-__________________________________________________
-Do You Yahoo!?
-Tired of spam?  Yahoo! Mail has the best spam protection around=20
-http://mail.yahoo.com=20
+--------------020803090307090800010706
+Content-Type: text/plain;
+ name="dm-io-v2.h"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-io-v2.h"
+
+#include <linux/bio.h>
+
+#include "dm.h"
+
+#define dm_io_page_list page_list
+
+/*=============================================================================
+ * Structures and functions to manage different I/O clients.
+ *=============================================================================
+ */
+struct dm_io_client;
+
+/*
+ * NOTE: We need the number of requests (ios) that the target wants to have
+ *       running on (devices) devices in parallel. The size is sort of bad.
+ *       We need it to simulate cancellation since there we have to have
+ *       enough memory to store the bio_vecs content. Otherwise we would have
+ *       to reserve the maximum memory size a bio_vec can adress which is a
+ *       waste of memory.
+ *       Another proposal would be:
+ *       dm_io_client_create(dm_target *, uint, uint, dm_io_client **)
+ */
+
+/*-----------------------------------------------------------------------------
+ * Register as a new I/O client.
+ *
+ * Arguments: devices  = how many devices will be used for each request.
+ *            min_ios  = the minimum number of I/O request that should run
+ *                       in parallel.
+ *            max_size = the biggest amount of memory that will be packed into
+ *                       one bio_vec.
+ *            cl       = address into which the pointer to the new dm_io_client
+ *                       will be written.
+ *
+ * Returns: 0            on success
+ *          -ENOMEM      if there is not enough memory to build all memory
+ *                       pools and data structures.
+ *-----------------------------------------------------------------------------
+ */
+int dm_io_client_create(
+	unsigned int		devices,
+	unsigned int		min_ios,
+	unsigned int		max_size,
+	struct dm_io_client **	cl);
+
+/*-----------------------------------------------------------------------------
+ * Unregister as a client.
+ *
+ * Arguments: cl = pointer to the client context to release.
+ *-----------------------------------------------------------------------------
+ */
+void dm_io_client_destroy(struct dm_io_client *cl);
+
+
+/*=============================================================================
+ * Structures and functions to do the actual I/O. The dm_io_region is a
+ * container to pass in the destination(s) for write- and the source for
+ * read-requests.A
+ *=============================================================================
+ */
+struct dm_io_region {
+	struct block_device *	bdev;
+	sector_t		sector;
+	sector_t		count;
+};
+
+/*
+ * The dm_io_handle is in place for future extensions where it is necessary
+ * to identify a certain I/O job in calls to dm_io functions.
+ */
+struct dm_io_handle;
+struct dm_io_region_state {
+	unsigned int		index;
+	enum {
+		OK,
+		TIMEOUT,
+		CANCELLED,
+		ERROR,
+	}			state;
+	int			error_code;
+	struct dm_io_handle *	hdl;
+};
+
+/*
+ * Note: It is guaranteed that the contents of region_state will not change
+ *       while in the notify function.
+ * Note: The dm_io_handle is only valid during the call. If the caller stores
+ *       it somewhere else it has to use dm_io_handle_get().
+ */
+typedef void (*dm_io_notify_fn)(
+		struct dm_io_region_state *state,
+		void *context);
+
+struct dm_io_page_list {
+	struct dm_io_page_list *	next;
+	struct page *			page;
+};
+
+struct dm_io_memory {
+	enum {
+		IO_PAGE_LIST,
+		IO_BVEC,
+		IO_VM,
+	}						type;
+	union {
+		void *				vma;
+		struct bio_vec *		bv;
+		struct dm_io_page_list *	pl;
+	}						ptr;
+	unsigned int					offset;
+};
+
+/*
+ * Optional flags for dm_io_control:
+ */
+#define DM_IO_CANCEL_ON_TIMEOUT		1
+
+struct dm_io_control {
+	struct dm_io_memory	memory;
+	int			rw;		// SYNC flag supported...
+	dm_io_notify_fn		notify;
+	void *			context;
+	struct dm_io_client *	client;
+	unsigned long		timeout;	// What time base (seconds)?
+	unsigned int		flags;
+};
+
+/*
+ * Note: If the caller supplies a place to store the io_handle it has to
+ *       release it by calling dm_io_handle_put().
+ * Note: By issuing a SYNC I/O the call will return when all I/O has
+ *       completed but the notify function is called as it would be with
+ *       asyncronous calls.
+ */
+int dm_io(
+	struct dm_io_control *	ctrl,
+	unsigned int		num_regions,
+	struct dm_io_region *	regions,
+	struct dm_io_handle **	hdl);
+
+/*
+ * Since the interface allows to pass references to the io handle to the
+ * caller we need to supply a way to manage them.
+ * The *_get variant might be unnecessary but IMHO it should be there to
+ * allow clients to store the reference to additional locations. Comments?
+ */
+struct dm_io_handle *dm_io_handle_get(struct dm_io_handle *io);
+struct dm_io_handle *dm_io_handle_put(struct dm_io_handle *io);
+
+/*
+ * Cancelation functions for several I/O entities.
+ */
+int dm_io_cancel_by_device(struct dm_io_client *cl, struct block_device *bdev);
+int dm_io_cancel_by_handle(struct dm_io_client *cl, struct dm_io_handle *hdl);
+
+
+--------------020803090307090800010706
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------020803090307090800010706--
