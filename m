@@ -1,11 +1,13 @@
-From: David Wysochanski <davidw@netapp.com>
-Subject: PATCH - change netapp maintainer in hwtable.c
-Date: Tue, 14 Mar 2006 19:15:05 -0500
-Message-ID: <44175C89.5020707@netapp.com>
+From: Stefan Bader <Stefan.Bader@de.ibm.com>
+Subject: Re: [RFC] New interface for dm-io to handle timed requests
+Date: Wed, 15 Mar 2006 16:33:56 +0100
+Message-ID: <OFA18B9D5F.C030F341-ONC1257132.00548304-C1257132.005565B1@de.ibm.com>
+References: <4417244E.5080707@cs.wisc.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------090500020906030600020701"
+Content-Type: text/plain; charset="US-ASCII"
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4417244E.5080707@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,39 +20,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------090500020906030600020701
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+dm-devel-bounces@redhat.com wrote on 14.03.2006 21:15:10:
 
+> Stefan Bader wrote:
+> > The ideal solution would be to have an interface in the block layer 
+that 
+> > allows us to cancel any submitted requests. But since such a change 
+will 
+> > take quite a lot discussions and work, we want to emulate such a 
+> > behavior in the dm core for now.
+> > 
+> 
+> The scsi people and some block people have been talking about moving 
+> more error handling functionality into the block layer for a while and 
+> it is slowing moving that way. It could probably be done faster if 
+> people did not concentrate on one subsystem :)
+> 
 
+It is not that much about error handling. More about policy. If the
+subsystem decides that io took enough time or maybe it just doesn't
+want to go on (could be a force umount...) it would be nice to be
+able to stop lower level drivers from doing error recovery. Thus
+the idea of stopping a submitted request.
 
---------------090500020906030600020701
-Content-Type: text/x-patch;
- name="change-netapp-maintainer.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="change-netapp-maintainer.patch"
+The changes to the core now shall fake this as long as there isn't
+such a functionality in the kernel with an interface that can handle
+this.
 
---- multipath-tools-0.4.7/libmultipath/hwtable.c	2006-03-13 06:07:45.000000000 -0500
-+++ multipath-tools-0.4.7/libmultipath/hwtable.c.new	2006-03-14 19:14:51.141547000 -0500
-@@ -318,8 +318,8 @@ static struct hwentry default_hw[] = {
- 	/*
- 	 * NETAPP controler family
- 	 *
--	 * Maintainer : Igor Feoktistov
--	 * Mail : igorf@netapp.com
-+	 * Maintainer : Dave Wysochanski
-+	 * Mail : davidw@netapp.com
- 	 */
- 	{
- 		.vendor        = "NETAPP",
+> Maybe you should post to lkml and linux-scsi and get some responses from 
 
---------------090500020906030600020701
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> them before adding it to dm core. If a post already went out to those 
+> list my fault for missing it.
+> 
+No it didn't. I guess lkml is a good point. I am not sure about 
+linux-scsi.
+As it is not related specifically to scsi...
 
+Stefan Bader
 
---------------090500020906030600020701--
+SW Linux on zSeries Development & Services
+Stefan.Bader@de.ibm.com
+----------------------------------------------------------------------------------
+  When all other means of communication fail, try words.
