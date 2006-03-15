@@ -1,13 +1,11 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: [RFC] New interface for dm-io to handle timed requests
-Date: Wed, 15 Mar 2006 16:33:56 +0100
-Message-ID: <OFA18B9D5F.C030F341-ONC1257132.00548304-C1257132.005565B1@de.ibm.com>
-References: <4417244E.5080707@cs.wisc.edu>
+From: egoggin@emc.com
+Subject: RE: path group failback
+Date: Wed, 15 Mar 2006 11:06:37 -0500
+Message-ID: <C2EEB4E538D3DC48BF57F391F422779321B104@SRMANNING.eng.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4417244E.5080707@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,48 +15,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@free.fr
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-dm-devel-bounces@redhat.com wrote on 14.03.2006 21:15:10:
+On Monday, March 13, 2006 12:18 PM, Christophe Varoqui wrote
 
-> Stefan Bader wrote:
-> > The ideal solution would be to have an interface in the block layer 
-that 
-> > allows us to cancel any submitted requests. But since such a change 
-will 
-> > take quite a lot discussions and work, we want to emulate such a 
-> > behavior in the dm core for now.
+> > > In such a scenario, wouldn't the priorizer catch priority 
+> changes ?
 > > 
-> 
-> The scsi people and some block people have been talking about moving 
-> more error handling functionality into the block layer for a while and 
-> it is slowing moving that way. It could probably be done faster if 
-> people did not concentrate on one subsystem :)
-> 
+> > No, not necessarily, and certainly not for CLARiiON.  None of these
+> > 3 use cases involves changing which path group is the 
+> highest priority
+> > path group so each path in the 2 groups continue to have the same
+> > priority as before the externally initiated change of the 
+> active path
+> > group.  For each use case, only the identity of the active 
+> path group
+> > has been changed.
+> > 
+> I guess the priorizer *should* catch priority changes ...
 
-It is not that much about error handling. More about policy. If the
-subsystem decides that io took enough time or maybe it just doesn't
-want to go on (could be a force umount...) it would be nice to be
-able to stop lower level drivers from doing error recovery. Thus
-the idea of stopping a submitted request.
+> > > 
+> > > ie, paths to owning SP are heavier than paths to not owning SP, so
+> > > changing the owning SP in navisphere would shuffle the path group
+> > > priorites.
+> > 
+> > CLARiiON path priority is dependent solely on 2 factors -- (1) the
+> > path must be active (or ghost) and (2) the path must connect to its
+> > logical unit's "default" (not necessarily active) owning service
+> > processor.
+> > 
+> > > 
+> > > If it is the case I would imagine the failback target to be the
+> > > externally designated one, which seems right.
+> > 
+> > No.  The CLARiiON's highest priority path group is defined to be
+> > the default owning service processor instead of the active service
+> > processor (they may or may not be the same at any given instant)
+> > in order to maintain the manually established distribution of
+> > logical units across the 2 service processors.
+> > 
+> Would it be unreasonable to teach the prioritizer about this case ?
 
-The changes to the core now shall fake this as long as there isn't
-such a functionality in the kernel with an interface that can handle
-this.
+This will be difficult if not unreasonable.  We don't want to blindly
+have the priority follow the currently active path group.  Doing so
+will eliminate the ability to maintain the statically assigned balance
+of logical units to SCSI targets.  I find it difficult to believe that
+the CLARiiON is the only case of this issue given the 5 active/passive
+arrays listed in libmultipath/hwtable.c that have both priority based
+path group membership and immediate path group failback configured.
 
-> Maybe you should post to lkml and linux-scsi and get some responses from 
+Ideally we would be able to differentiate an externally initiated path
+group switch from an internal one.  This will be difficult without
+some kernel changes to the EMC hardware handler and more involved changes
+to multipathd which I wanted to avoid proposing.
 
-> them before adding it to dm core. If a post already went out to those 
-> list my fault for missing it.
-> 
-No it didn't. I guess lkml is a good point. I am not sure about 
-linux-scsi.
-As it is not related specifically to scsi...
-
-Stefan Bader
-
-SW Linux on zSeries Development & Services
-Stefan.Bader@de.ibm.com
-----------------------------------------------------------------------------------
-  When all other means of communication fail, try words.
+The prioritizer interface does not facilitate state maintenance which
+I think would be needed to make an intelligent decision about what to
+do.  This would be state like path active/failed state for each path
+and the total number of paths and path groups for each mapped device.
+Since multipathd already tracks this state, it seems reasonable to have
+this logic enforced within a path group failback mode -- especially if
+it is an issue common to other arrays in addition to CLARiiON.
