@@ -1,15 +1,13 @@
-From: Ming Zhang <mingz@ele.uri.edu>
-Subject: RE: 2.6 device mapper performance?
-Date: Wed, 15 Mar 2006 16:53:52 -0500
-Message-ID: <1142459632.29974.85.camel@localhost.localdomain>
-References: <HIENIDNHFMODBIPFNJPDEEACDBAA.ken.hwang@zyxel.com>
-Reply-To: mingz@ele.uri.edu,
-	device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] RFC: Changing dm core data structure
+	relationships (0/5)
+Date: Thu, 16 Mar 2006 19:14:25 -0500
+Message-ID: <4419FF61.9050501@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <HIENIDNHFMODBIPFNJPDEEACDBAA.ken.hwang@zyxel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,199 +17,141 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: ken.hwang@zyxel.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-then i run out of idea.
+Hello,
 
-i guess only evms developer can tell u exactly why 2.6 evms has such
-performance loss compared with 2.4.x
+This is a proposal of changing dm core structure for
+simplification, SMP race avoidance and guaranteed release
+ordering. Patches don't affect dm targets.
 
-both evms and lvm use device mapper in kernel and i do not see such
-performance loss in lvm. so pretty strange,
+I would like to hear your opinion on this.
 
-ming
+The core motivation for these changes are followings:
+  - Device open and remove can race.
+    As a result, the device we opened might be freed by someone.
+  - We lost control on device when it's removed.
+    e.g. if the device is opened and suspended, we no longer
+    really remove the device.
+  - With dm-table-store-md.patch in -mm, table has reference to md.
+    So we would like to guarantee that table is freed before md.
+It's achived in the third patch.
 
-On Wed, 2006-03-15 at 13:48 -0800, Ken Hwang wrote:
-> Hi Ming,
-> 
-> I did blockdev --setra 1024 on kernel 2.6 system to make the same number as
-> read from kernel 2.4 and the result:
-> test:sync; time dd if=/dev/evms/volume1 of=/dev/null bs=1024k count=1024
-> kernel 2.6 got 44.444s/0.004s/24.254s, and it was 46.690s/0.024s/26.902s.
-> It's still far away from kernel 2.4: 33.649s/0.010s/20.430s.
-> 
-> 
-> blockdev --setra 64 /dev/evms.nodes/md/md3
-> test:sync; time dd if=/dev/evms/.nodes/md/md3 of=/dev/null bs=1024k
-> count=1024
-> kernel 2.6 got 26.770s/0.016s/11.257s, and it was 23.763s/0.008s/16.097s.
-> The real time gets slower but system time gets faster. And they are still
-> not close to
-> kernel 2.4 19.471s/0.000s/13.480s
-> 
-> Do you have any advice I can do to tune the 2.6 performance?
-> 
-> Thanks in advance,
-> 
-> Ken
-> 
-> -----Original Message-----
-> From: Ming Zhang [mailto:mingz@ele.uri.edu]
-> Sent: Saturday, March 11, 2006 3:17 PM
-> To: ken.hwang@zyxel.com
-> Cc: device-mapper development
-> Subject: RE: [dm-devel] 2.6 device mapper performance?
-> 
-> 
-> On Fri, 2006-03-10 at 21:58 -0800, Ken Hwang wrote:
-> > Hi Ming,
-> >
-> > I did more tests and list them at the following. Please help me analyze
-> them
-> > if it's possible and thanks. Allow me describe the disk/volume layout. I
-> had
-> > 4 120GB sata disks as sda, sdb, sdc, sdd. And they form 4 raid5 region, on
-> > top of the raid5 region there is a container, then I take 50% of the
-> > container to be a evms region, and then put a evms volume
-> /dev/evms/volume1
-> > on top of the region. And I believe the raid5 region I used can be found
-> at
-> > /dev/evms/.nodes/md/md3.
-> >
-> > test: sync; time dd if=/dev/evms/volume1 of=/dev/null bs=1024k count=1024
-> > kernel 2.4 got 33.649s/0.010s/20.430s (real/user/sys)
-> > kernel 2.6 got 46.690s/0.024s/26.902s
-> >
-> > test: sync; time dd if=/dev/evms/.nodes/md/md3 of=/dev/null bs=1024k
-> > count=1024
-> > kernel 2.4: 19.471s/0.000s/13.480s
-> > kernel 2.6: 23.763s/0.008s/16.097s
-> >
-> > test: sync; time dd if=/dev/zero of=/dev/evms/volume1 bs=1024k count=1024
-> > kernel 2.4: 69.183s/0.000s/15.430s
-> > krenel 2.6: 52.543s/0.004/7.640s
-> >
-> > test: sync; time dd if=/dev/zero of=/dev/evms/.nodes/md/md3 bs=1024k
-> > count=1024
-> > kernel 2.4: 37.862s/0.000s/11.730s
-> > kernel 2.6: 23.628s/0.000s/5.536s
-> >
-> > test: blockdev --getra /dev/evms/volume1
-> > kernel 2.4: 1024
-> > kernel 2.6: 384
-> 
-> try to increase this number by --setra with blockdev
-> 
-> >
-> > test: blockdev --getra /dev/evms/.nodes/md/md3
-> > kernel 2.4: 64
-> > kernel 2.6: 256
-> >
-> > Looks like kernel 2.4 reading is faster than 2.6 but 2.6 writing is
-> faster.
-> >
-> > By comparing read from md3 and volume1,
-> > kernel 2.4 drop from 19.471s to 33.649s (72.8%)
-> > kernel 2.6 drop from 23.763s to 46.690s (96.4%)
-> >
-> > By comparing write to md3 and volume1,
-> > kernel 2.4 drop from 37.862s to 69.183s (82.7%)
-> > kernel 2.6 drop from 23.628s to 52.543s (122.4%)
-> >
-> > What's the blockdev numbers mean?
-> 
-> yes, pretty big drop here. no idea why. i think both lvm and evms use dm
-> and should not have such big difference.
-> 
-> that is to query/set the readahead buffer window, useful for sequential
-> workload.
-> 
-> 
-> >
-> > Thanks,
-> >
-> > Ken
-> >
-> >
-> > -----Original Message-----
-> > From: Ming Zhang [mailto:mingz@ele.uri.edu]
-> > Sent: Friday, March 10, 2006 8:59 AM
-> > To: ken.hwang@zyxel.com; device-mapper development
-> > Subject: Re: [dm-devel] 2.6 device mapper performance?
-> >
-> >
-> > u have too many chances here. so hard to blame any one. suggest u to
-> > test it one by one if possible.
-> >
-> > for example, have same box run 2.4 and 2.6, test performance on volume
-> > first before run xfs, and samba.
-> >
-> > ming
-> >
-> > On Wed, 2006-03-08 at 16:49 -0800, Ken Hwang wrote:
-> > > Hi,
-> > >
-> > > I'm not sure I should ask this question here, if this is not the place
-> > then
-> > > I apologize. I have a home made NAS with Linux. I use evms to create
-> > volume,
-> > > put xfs on top of it, and then use samba to share it with Windows
-> clients.
-> > > When I was using kernel 2.4 with all the needed patches I could get
-> > netbench
-> > > 106Mbps with 4 clients, and 95Mbps with 8 clients. Recently I upgraded
-> the
-> > > same hardware to kernel 2.6 (I also upgraded the related application
-> such
-> > as
-> > > samba, xfs utility, and dmsetup accordingly). Then I ran netbench again
-> > and
-> > > got 80Mbps with 4 clients, 53Mbps with 8 clients. Which drop almost 80%
-> > (95
-> > > vs 53) in 8 clients case.
-> > >
-> > > I then  make and mount xfs on another raid5 (which uses the same disk
-> but
-> > on
-> > > different partitions) and found it got better performance (95Mbps with 4
-> > > clients, 85Mbps with 8 clients). In brief:
-> > > xfs volume on raid5 md/md1 on sda6/sdb6/sdc6/sdd6 netbench: 95/85Mbps
-> > > xfs volume on EVMS volume /dev/evms/volume1 on raid5 md/md3 on
-> > > sda8/sdb8/sdc8/sdd8: 80/53Mbps
-> > >
-> > > Do you think the slow down (85 to 53Mbps) was caused by device mapper?
-> > > Please advice.
-> > >
-> > > Ken
-> > >
-> > > --
-> > > No virus found in this outgoing message.
-> > > Checked by AVG Free Edition.
-> > > Version: 7.1.375 / Virus Database: 268.2.0/276 - Release Date: 3/7/2006
-> > >
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > --
-> > No virus found in this incoming message.
-> > Checked by AVG Free Edition.
-> > Version: 7.1.375 / Virus Database: 268.2.1/278 - Release Date: 3/9/2006
-> >
-> > --
-> > No virus found in this outgoing message.
-> > Checked by AVG Free Edition.
-> > Version: 7.1.375 / Virus Database: 268.2.1/279 - Release Date: 3/10/2006
-> >
-> --
-> No virus found in this incoming message.
-> Checked by AVG Free Edition.
-> Version: 7.1.375 / Virus Database: 268.2.1/279 - Release Date: 3/10/2006
-> 
-> --
-> No virus found in this outgoing message.
-> Checked by AVG Free Edition.
-> Version: 7.1.385 / Virus Database: 268.2.4/282 - Release Date: 3/15/2006
-> 
+Patches are created and tested based on 2.6.16-rc6-mm1 plus:
+  - dm-flush-queue-eintr.patch
+  - dm-tidy-mdptr.patch
+  - dm-table-store-md.patch
+  - dm-md-dependency-tree-in-sysfs-add_subdirs.patch                           14-Mar-2006 18:33  3.2K
+  - dm-md-dependency-tree-in-sysfs-bd_claim_by_kobj.patch                      14-Mar-2006 18:33  9.5K
+  - dm-md-dependency-tree-in-sysfs-dm_deptree.patch                            14-Mar-2006 18:33  2.8K
+  - dm-md-dependency-tree-in-sysfs-kobject_add_dir.patch                       14-Mar-2006 18:33  1.9K
+  - dm-md-dependency-tree-in-sysfs-md_deptree.patch
+
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Solutions (America), Inc.
+
+--------------------------------------------------------------------------
+Description of patches
+
+01-dm-sem.patch
+  Literally replace _hash_lock with dm_sem. Make it extern.
+
+02-put-table-after-unlock.patch
+  Moving dm_table_put() which may destroy table to outside of dm_sem.
+  This is for next patches which dm_sem is held is device close
+  thus table destructor may otherwise deadlock.
+
+03-hc-open-count.patch
+  Moving open counter to hc. Disables removal of hc with openers.
+  md->holders become purely a reference counter of md.
+    * disk->private_data points to hc rather than md.
+      When hc is removed, disk->private_data becomes NULL and no new open
+      is possible.
+    * Open count is protected by dm_sem to avoid open vs. remove race.
+    * Upon hc removal, tables are released from md.
+    * Table gets reference to md on creation, puts on free.
+      Thus we can guarantee md is not freed before its tables are feed.
+    * dm_get_md(), which maps minor to md, checks interface_ptr to avoid
+      getting md being removed.
+
+04-remove-dm-md-get.patch
+    * dm_get_md() is removed. There is no user.
+
+05-move-new-map-to-md.patch
+  Moving hc->new_map to md->new_map.
+    * Map loading no longer needs global dm_sem.
+      Just grab md and lock map_lock.
+    * Most of __find_device_hash_cell() can be replaced by find_device().
+
+Should be applied in this order.
+
+Concerns:
+  - Is moving dm_blk_open/close to dm-ioctl.c right thing?
+    Is it nice to rename dm-ioctl.c to dm-interface.c or something?
+  - Does other .c files need to get hc->count?
+  - dm_table_get_md() really needs dm_get()?
+    We can assume md exists whenever the table exists.
+
+--------------------------------------------------------------------
+Structures:
+  - mapped_device (md)
+  - hash_cell (hc)
+  - dm_table (table)
+  - gendisk (disk)
+  - request_queue (queue)
+  - minor number (minor)
+
+Relationships:
+  - hc owns 1 md
+  - md owns 0-2 tables, 1 disk
+  - disk owns 1 queue and 1 minor number
+
+Roles:
+  - hc manages access from outside of dm (block device, ioctl).
+    It has open counter. hc can be removed from list only when
+    there is no opener.
+  - md is a core of dm device. Access to table needs to go through md.
+
+Locks:
+  - dm_sem: hc list, gendisk->dm device binding
+  - io_lock: DMF_BLOCK_IO, md->deferred, md->wait
+  - map_lock: md->map, md->new_map
+  - suspend_lock: DMF_SUSPENDED
+
+Ordering:
+  - Allocation/Register
+       1) allocation of md, hc, disk, queue, minor can occur in any order
+       2) register md to disk
+       3) register disk (it eventually register minor and queue)
+          <device visible from block layer>
+       4) register md to hc
+          <block device access enabled>
+       5) register hc to hash list
+          <ioctl access enabled>
+       6) table allocation (load)
+       7) table register (resume -> bind)
+          <I/O enabled>
+  - Freeing/Unregister (reordered proposal)
+       [lock dm_sem]
+       3) unregister hc from hash list
+          <ioctl access disabled>
+       4) unregister md from hc
+       6) unregister md from disk
+          <block device access rejected>
+       [unlock dm_sem]
+       1) table unregister (resume -> unbind)
+          <I/O disabled>
+       2) table free
+       5) unregister disk
+          <block device access disabled>
+       7) free in any order
+
+       (*) Moving 1) and 2) later has a benefit that we don't
+           need to care for racing with new table registration.
+       (*) Swapping the order of 5) and 6), because 5) eventually
+           cause kobject_uevent(hotplug) which may sleep.
+           It's not good thing to do in global dm_sem.
+           Doing 6) makes future open to fail so it has same shutdown
+           effect and faster.
