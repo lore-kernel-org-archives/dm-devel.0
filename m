@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] Fixes for clone_bio and __clone_and_map
-	functions in dm.c
-Date: Tue, 21 Mar 2006 14:35:15 +0000
-Message-ID: <20060321143515.GL26428@agk.surrey.redhat.com>
-References: <Pine.GSO.4.60.0603202032490.29527@cascade.cs.ubc.ca>
+From: Brad Johnson <bjohnson@proficientsolutionsinc.com>
+Subject: path selector question
+Date: Tue, 21 Mar 2006 09:40:36 -0600
+Message-ID: <1142955636.3824.11.camel@homer>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.GSO.4.60.0603202032490.29527@cascade.cs.ubc.ca>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,25 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> I am a little confused about why is this not a problem. Isn't 
-> clone->bi_vcnt 
-> supposed to hold the number of bio vectors in the clone? Why does it hold 
-> idx+bv_count instead? Please clarify.
- 
-idx is non-zero; bv_count variable is the number starting from idx.
-clone->bi_vcnt is the total number.
+I am in the process of adding one or more new path selector types to the
+device-mapper. While the dm-round-robin module gets automatically loaded
+when multipath is started, my new module does not (I have to manually
+add it with modprobe). I know there are many ways I can have this done
+automatically, such as adding my own init script. But I am very curious
+how the round-robin module is getting automatically loaded. I have
+grepped through all the source code for multipath-tools and device-
+mapper, as well as the config files for the tools. And while it might be
+obvious how this is happening, I can't see it.
+Any help with this will be appreciated.
 
-       unsigned int     bi_vcnt;     /* how many bio_vec's */
-       unsigned int     bi_idx;      /* current index into bio_vec array */
-
-      clone_bio(bio, ci->sector, ci->idx, bio->bi_vcnt - ci->idx, ci->sector_count);
-leads to clone->bi_vcnt = ci->idx + bio->bi_vcnt - ci->idx = bio->bi_vcnt
-
-Like I said, obfuscated.
-
-Alasdair
--- 
-agk@redhat.com
+Thanks,
+Brad Johnson
