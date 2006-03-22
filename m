@@ -1,7 +1,7 @@
 From: Jens Axboe <axboe@suse.de>
 Subject: Re: Re: dm: bio split bvec fix
-Date: Wed, 22 Mar 2006 13:56:24 +0100
-Message-ID: <20060322125624.GE4285@suse.de>
+Date: Wed, 22 Mar 2006 14:08:24 +0100
+Message-ID: <20060322130823.GH4285@suse.de>
 References: <20060320192155.GU4724@agk.surrey.redhat.com>
 	<20060322113235.GC4285@suse.de>
 	<20060322121941.GS26428@agk.surrey.redhat.com>
@@ -42,9 +42,16 @@ On Wed, Mar 22 2006, Alasdair G Kergon wrote:
 > that are too big (because the max number of bytes we accept
 > got reduced between the initial call and the bio actually being 
 > presented) and they go back and get processed again.
-
-Ok, thanks for the followup explanation, I guess there's no way around
-that then.
+> 
+> Alasdair
+> -- 
+> agk@redhat.com
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+> 
 
 -- 
 Jens Axboe
