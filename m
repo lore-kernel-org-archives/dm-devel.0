@@ -1,13 +1,14 @@
-From: egoggin@emc.com
-Subject: RE: multipath -l displays nothing (Solved)
-Date: Tue, 21 Mar 2006 14:40:42 -0500
-Message-ID: <C2EEB4E538D3DC48BF57F391F422779321B13C@SRMANNING.eng.emc.com>
+From: Jens Axboe <axboe@suse.de>
+Subject: Re: dm: bio split bvec fix
+Date: Wed, 22 Mar 2006 12:32:35 +0100
+Message-ID: <20060322113235.GC4285@suse.de>
+References: <20060320192155.GU4724@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20060320192155.GU4724@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,36 +18,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-By the way, you shouldn't have to setup ANY multipath parameters in
-/etc/multipath.conf for the dm-multipath software to work well with
-all CLARiiON models except FC series.
+On Mon, Mar 20 2006, Alasdair G Kergon wrote:
+> The code that handles bios that span table target boundaries by breaking
+> them up into smaller bios will not split an individual struct bio_vec
+> into more than two pieces.  Sometimes more than that are required.
+> 
+> This patch adds a loop to break the second piece up into as many
+> pieces as are necessary.
 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com=20
-> [mailto:dm-devel-bounces@redhat.com]=20
-> Sent: Tuesday, March 21, 2006 2:37 PM
-> To: device-mapper development
-> Subject: RE: [dm-devel] multipath -l displays nothing (Solved)
->=20
-> On Tue, 21 Mar 2006, Jussi Hamalainen wrote:
->=20
-> > Tried that. It didn't help with my current situation.
->=20
-> After a lot of trial and error I decided to compile device mapper and
-> multipathing statically into the kernel. Things seem a lot better
-> after rebooting.
->=20
-> --=20
-> Jussi H=E4m=E4l=E4inen         +358 3 3551 8086   University of Tampere
-> System administrator     +358 50  5900641   Computer Centre
-> ccjuha@uta.fi            TietoPinni  4166  =20
-> http://www.uta.fi/laitokset/tkk
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
+Why isn't this just handled in the merge callback? Can a single page bio
+span > 2 targets?
+
+-- 
+Jens Axboe
