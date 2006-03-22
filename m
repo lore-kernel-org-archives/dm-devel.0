@@ -1,14 +1,15 @@
-From: Jens Axboe <axboe@suse.de>
-Subject: Re: dm: bio split bvec fix
-Date: Wed, 22 Mar 2006 12:32:35 +0100
-Message-ID: <20060322113235.GC4285@suse.de>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Re: dm: bio split bvec fix
+Date: Wed, 22 Mar 2006 12:19:41 +0000
+Message-ID: <20060322121941.GS26428@agk.surrey.redhat.com>
 References: <20060320192155.GU4724@agk.surrey.redhat.com>
+	<20060322113235.GC4285@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20060320192155.GU4724@agk.surrey.redhat.com>
+In-Reply-To: <20060322113235.GC4285@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,19 +19,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: Jens Axboe <axboe@suse.de>
+Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Mar 20 2006, Alasdair G Kergon wrote:
-> The code that handles bios that span table target boundaries by breaking
-> them up into smaller bios will not split an individual struct bio_vec
-> into more than two pieces.  Sometimes more than that are required.
-> 
-> This patch adds a loop to break the second piece up into as many
-> pieces as are necessary.
+On Wed, Mar 22, 2006 at 12:32:35PM +0100, Jens Axboe wrote:
+> Why isn't this just handled in the merge callback? Can a single page bio
+> span > 2 targets?
+ 
+Yes.  (Unit of size if the sector - and things don't have to
+be aligned nicely, just aligned to sector.)
 
-Why isn't this just handled in the merge callback? Can a single page bio
-span > 2 targets?
+IIRC the merge function assumes the number of bytes that can
+be added is only a function of the offset: but in our case
+it's also a function of time.  To make this work it should
+reserve those bytes with device-mapper, and guarantee either to 
+supply them to us subsequently (and preferably quickly) or to 
+cancel that reservation.  Device-mapper for its part would
+guarantee to accept the bio without needing to split it.
+Or dm could have a rejection mechanism that refuses bios
+that are too big (because the max number of bytes we accept
+got reduced between the initial call and the bio actually being 
+presented) and they go back and get processed again.
 
+Alasdair
 -- 
-Jens Axboe
+agk@redhat.com
