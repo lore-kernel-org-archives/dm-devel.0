@@ -1,15 +1,12 @@
-From: "Michael Steinmann" <msl@calivia.com>
-Subject: Re: multipath-tools: race-condition with boot.multipath
-	and boot.lvm
-Date: Thu, 23 Mar 2006 09:57:08 +0100 (CET)
-Message-ID: <26594.193.5.216.100.1143104228.squirrel@www2.calivia.com>
-References: <59460.193.5.216.100.1142589401.squirrel@www2.calivia.com>
+From: li nux <lnxluv@yahoo.com>
+Subject: how to disable a path
+Date: Thu, 23 Mar 2006 05:48:32 -0800 (PST)
+Message-ID: <20060323134832.64490.qmail@web33315.mail.mud.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <59460.193.5.216.100.1142589401.squirrel@www2.calivia.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,60 +16,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> We're currently experiencing problems at boot and got aware of a
-> race-condition related to LVM over multipath.
->
-> We're on SuSE SLES9 SP3 x86_64, multipath-tools-0.4.5-0.11
->
-> The SuSE initscript contains 'sleep 1' after running /sbin/multipath in
-> /etc/init.d/boot.multipath. Our SAN is currently so slow that we had to
-> increase the sleep to 15 seconds to boot reliably. If the vgscan in
-> /etc/init.d/boot.lvm starts too quick it would not see the VGs on the
-> multipath devices.
->
-> Is there a way to wait until all multipath devices are up and ready?
->
->
-> The relevant part of SLES9 SP3 /etc/init.d/boot.multipath:
->
-> case "$1" in
->     start)
->         echo -n "Creating multipath targets"
->         # Check whether we should rescan for devices
->         if grep -q multipath /proc/cmdline && test -d
-> /sys/class/scsi_host; then
->             pushd /sys/class/scsi_host 2> /dev/null
->             for host in *; do
->                 if [ -d $host ]; then
->                     echo "- - -" > $host/scan
->                 fi
->             done
->         fi
->         # Load prerequisite module
->         modprobe dm-multipath
->
->         # Clear /dev/disk/by-name/ prior to start-up; multipath will
->         # recreate them.
->         rm -f /dev/disk/by-name/* 2>&1 >/dev/null
->
->         # Start the program directly as checkproc doesn't work here
->         $PROGRAM -v 0
->
->         # Remember status and be verbose
->         rc_status -v
-> -        sleep 1
-> +        sleep 15
->         ;;
+I have setup multipathing on rhel4 u3 x86_64 like
+this:
 
-The problem with devices not being discovered by vgscan at boot seems to
-be related to subfs. When subfs is disabled
-(/etc/sysconfig/hotplug:HOTPLUG_USE_SUBFS=3Dno) the devices get available
-faster and are seen by the vgscan in boot.lvm. The 1 second delay in the
-standard SUSE boot.multipath is enough and all volume groups are
-discovered at boot.
+There are two paths to the disk, sda and sde
+# multipath -v2 -l
+mpath0 (3600805f300176640a435a927359c0003)
+[size=3D440 GB][features=3D"0"][hwhandler=3D"0"]
+\_ round-robin 0 [enabled]
+ \_ 0:0:0:1 sda 8:0   [active][ready]
+ \_ 2:0:0:1 sde 8:64  [active][ready]
 
---
-mike
+I need help in the following:
+
+1. How to disable a particular path lets say sda.
+I tried to blacklist sda by putting the entry in
+/etc/multipath.conf:
+
+devnode_blacklist {
+       devnode "sda"
+}
+
+But on running multipath, it gives a segmentation
+fault
+# multipath
+Segmentation fault
+
+strace shows that it faults immediately after close()
+open("/var/lib/multipath/bindings", O_RDWR|O_CREAT,
+0600) =3D 11
+----------<snip>----------
+close(11)                               =3D 0
+--- SIGSEGV (Segmentation fault) @ 0 (0) ---
+
+
+2. How to correlate /dev/dm- entries to the disks, how
+to find which device /dev/dm-10 is mapped to
+
+-lnx
+
+__________________________________________________
+Do You Yahoo!?
+Tired of spam?  Yahoo! Mail has the best spam protection around=20
+http://mail.yahoo.com=20
