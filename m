@@ -1,12 +1,14 @@
-From: li nux <lnxluv@yahoo.com>
-Subject: how to disable a path
-Date: Thu, 23 Mar 2006 05:48:32 -0800 (PST)
-Message-ID: <20060323134832.64490.qmail@web33315.mail.mud.yahoo.com>
+From: "Joseph Yasi" <joe.yasi@gmail.com>
+Subject: Re: [PATCH] dm-striped device sizes must be multiple of
+	chunk-size
+Date: Wed, 22 Mar 2006 23:28:22 -0600
+Message-ID: <e3538fbd0603222128o525b4608h84b4004fc4ca0a61@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,49 +18,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I have setup multipathing on rhel4 u3 x86_64 like
-this:
+Hello,
 
-There are two paths to the disk, sda and sde
-# multipath -v2 -l
-mpath0 (3600805f300176640a435a927359c0003)
-[size=3D440 GB][features=3D"0"][hwhandler=3D"0"]
-\_ round-robin 0 [enabled]
- \_ 0:0:0:1 sda 8:0   [active][ready]
- \_ 2:0:0:1 sde 8:64  [active][ready]
+    I am using the dmraid utility to detect and configure my Intel
+Software Raid RAID0 array.  When upgrading to 2.6.16 from 2.6.15, the
+system failed to boot because the device-mapper array was not built.=20
+I have traced the problem to this patch that limits dm-stripe to
+targets that are multiples of the chunk size.  I don't know whether to
+consider this a problem with device-mapper or with the Intel Software
+Raid BIOS that built the array.  Dmraid is giving me a target of
+980460038 blocks with a chunk size of 256 blocks.  Is this a problem
+with device-mapper, the dmraid utility or the raid bios?  Should
+device-mapper handle striped targets that are not multiples of the
+chunk size?
 
-I need help in the following:
+Thank You,
+Joe Yasi
 
-1. How to disable a particular path lets say sda.
-I tried to blacklist sda by putting the entry in
-/etc/multipath.conf:
+dmesg gives these pertinent lines:
+device-mapper: dm-stripe: Target length not divisible by chunk size.
+device-mapper: error adding target to table.
 
-devnode_blacklist {
-       devnode "sda"
-}
+dmsetup status
+isw_caejhbcidd_Volume03: 0 976173660 linear
+isw_caejhbcidd_Volume02: 0 4209030 linear
+isw_caejhbcidd_Volume01: 0 64197 linear
+isw_caejhbcidd_Volume0: 0 980460038 striped
 
-But on running multipath, it gives a segmentation
-fault
-# multipath
-Segmentation fault
-
-strace shows that it faults immediately after close()
-open("/var/lib/multipath/bindings", O_RDWR|O_CREAT,
-0600) =3D 11
-----------<snip>----------
-close(11)                               =3D 0
---- SIGSEGV (Segmentation fault) @ 0 (0) ---
-
-
-2. How to correlate /dev/dm- entries to the disks, how
-to find which device /dev/dm-10 is mapped to
-
--lnx
-
-__________________________________________________
-Do You Yahoo!?
-Tired of spam?  Yahoo! Mail has the best spam protection around=20
-http://mail.yahoo.com=20
+dmraid -s
+*** Group superset isw_caejhbcidd
+--> Active Subset
+name   : isw_caejhbcidd_Volume0
+size   : 980460038
+stride : 256
+type   : stripe
+status : ok
+subsets: 0
+devs   : 2
+spares : 0
