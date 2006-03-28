@@ -1,18 +1,15 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: Re: [PATCH] dm-striped device sizes must be
-	multiple	of chunk-size
-Date: Tue, 28 Mar 2006 16:06:12 +0200
-Message-ID: <20060328140612.GD3218@redhat.com>
-References: <e3538fbd0603222128o525b4608h84b4004fc4ca0a61@mail.gmail.com>
-	<200603242246.25314.kevcorry@us.ibm.com>
-	<loom.20060326T005919-664@post.gmane.org>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [RFC,
+	PATCH] dm-log.c: Work with devices with hard-sector-size > 512 bytes
+Date: Tue, 28 Mar 2006 15:18:31 +0100
+Message-ID: <20060328141831.GC2690@agk.surrey.redhat.com>
+References: <200603271546.25508.kevcorry@us.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <loom.20060326T005919-664@post.gmane.org>
+In-Reply-To: <200603271546.25508.kevcorry@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,45 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dwaine Garden <DwaineGarden@rogers.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Mon, Mar 27, 2006 at 03:46:24PM -0600, Kevin Corry wrote:
+> However, this necessitated a change of the disk-log version
+> from 2 to 3, meaning the new code would not be compatible with any
+> existing disk-logs. 
 
-Dwaine,
+Several points:
+  The patch should have no impact on existing users for whom everything
+  is working OK - compatibility should be preserved.
 
-can you please send me your metadata for refernence as well so
-that I can confirm that my fix is good for bz #186842 ?
+  People who need the patch are unable to use this code yet so there's no
+  need to preserve compatibility for them.
 
-Thanks,
-Heinz
+  We need to continue to support disk logs being loaded onto different
+  machines/devices from where they were created.
 
-On Sun, Mar 26, 2006 at 12:01:17AM +0000, Dwaine Garden wrote:
-> Kevin Corry <kevcorry <at> us.ibm.com> writes:
-> > 
-> > I'm thinking that this mapping would do what the BIOS is actually intending. 
-> > It ought to be relatively straight-forward to recognize this situation in 
-> > dmraid and set up a mapping similar to the one above.
-> > 
-> 
-> I have the same problem.  How would you resolve this?
-> 
-> Dwaine
-> 
-> 
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+  If there's no alternative but to take the disruptive step of changing
+  the header version number (not convinced of that yet) then we should
+  fix other problems with the header at the same time e.g. LOG_OFFSET
+  should only be used when creating a new log, not when reading an
+  existing one (ie store it in the header); version should include
+  compatibility mechanism (flags and/or major/minor) etc.
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Alasdair
+-- 
+agk@redhat.com
