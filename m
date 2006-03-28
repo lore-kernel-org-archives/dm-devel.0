@@ -1,14 +1,18 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: [RFC,	PATCH] dm-log.c: Work with devices with
-	hard-sector-size > 512 bytes
-Date: Tue, 28 Mar 2006 14:20:40 +0200
-Message-ID: <OFF9070A97.1B2B4FBF-ONC125713F.0043348E-C125713F.0043C3DD@de.ibm.com>
-References: <200603271546.25508.kevcorry@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <mauelshagen@redhat.com>
+Subject: Re: Re: [PATCH] dm-striped device sizes must be
+	multiple	of chunk-size
+Date: Tue, 28 Mar 2006 16:06:12 +0200
+Message-ID: <20060328140612.GD3218@redhat.com>
+References: <e3538fbd0603222128o525b4608h84b4004fc4ca0a61@mail.gmail.com>
+	<200603242246.25314.kevcorry@us.ibm.com>
+	<loom.20060326T005919-664@post.gmane.org>
+Reply-To: mauelshagen@redhat.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200603271546.25508.kevcorry@us.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <loom.20060326T005919-664@post.gmane.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,25 +22,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Dwaine Garden <DwaineGarden@rogers.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> 
-> Unfortunately, the on-disk bitset is hardcoded to be at sector 2, which
-> is too small for any device with hard-sector-size > 1k. I've changed
-> this offset to sector 64 (32k from start of device), which should be a
-> safer choice. However, this necessitated a change of the disk-log 
-version
-> from 2 to 3, meaning the new code would not be compatible with any
-> existing disk-logs. At the moment, I haven't added any code to deal with
-> this scenario - I wanted to get some opinions on how to best handle 
-this.
-> 
 
-Would it really hurt to leave the sector offset just at 2? That way the
-bitset data starts at different byte offsets but that would be consistent
-with the device. A fix byte offset would only be needed if a device could
-change its hardsector size without loosing data, wouldn't it?
+Dwaine,
 
-Regards,
-Stefan Bader
+can you please send me your metadata for refernence as well so
+that I can confirm that my fix is good for bz #186842 ?
+
+Thanks,
+Heinz
+
+On Sun, Mar 26, 2006 at 12:01:17AM +0000, Dwaine Garden wrote:
+> Kevin Corry <kevcorry <at> us.ibm.com> writes:
+> > 
+> > I'm thinking that this mapping would do what the BIOS is actually intending. 
+> > It ought to be relatively straight-forward to recognize this situation in 
+> > dmraid and set up a mapping similar to the one above.
+> > 
+> 
+> I have the same problem.  How would you resolve this?
+> 
+> Dwaine
+> 
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+
+Heinz Mauelshagen                                 Red Hat GmbH
+Consulting Development Engineer                   Am Sonnenhang 11
+Storage Development                               56242 Marienrachdorf
+                                                  Germany
+Mauelshagen@RedHat.com                            PHONE +49  171 7803392
+                                                  FAX   +49 2626 924446
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
