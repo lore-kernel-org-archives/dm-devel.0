@@ -1,18 +1,11 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: [RFC,
-	PATCH] dm-log.c: Work with devices with hard-sector-size > 512 bytes
-Date: Tue, 28 Mar 2006 16:58:36 -0600
-Message-ID: <200603281658.36642.kevcorry@us.ibm.com>
-References: <200603271546.25508.kevcorry@us.ibm.com>
-	<20060328150100.GD2690@agk.surrey.redhat.com>
+From: Sharif Nassar <lists-dmdevel@mrwacky.com>
+Subject: resizing multipathed luns attached to EMC cx500
+Date: Tue, 28 Mar 2006 17:36:58 -0800 (PST)
+Message-ID: <Pine.LNX.4.61.0603281705170.6511@mrwacky.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060328150100.GD2690@agk.surrey.redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,44 +16,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue March 28 2006 9:01 am, Alasdair G Kergon wrote:
-> A couple of options:
->
->   Retain the existing on-disk format exactly, but adjust the offsets and
->   sizes used in the reads and writes to avoid the problems (pre-reading
->   other data if necessary to extend a write).
 
-This method seems like it should be easy to implement. We could just extend 
-the buffer for the disk-header and always read and write both the header and 
-the log at the same time, and just point lc->clean_bits at the appropriate 
-offset within that buffer. The log could then remain at offset 1k, and the 
-version wouldn't have to change.
+Hi,
 
->   Add an option to create version 3 metadata storing the offset in the
->   on-disk header but continue to use version 2 by default.
+I'm running latest greatest RHEL 4 kernel, device-mapper tools, etc on a 
+Sun V40z, using dual Qlogic 2340 HBA attached to Brocade SAN (EMC badged 
+3850), tied to our EMC CX500.
 
-I think this is a better overall solution - less kludgy and more flexible.
+I'm trying to determine if it's possible to resize a multipathed LUN while 
+there are active LVM2 volume groups.
 
->   Update userspace code to request version 3 (via new log parameter) for
->   new mirror logs by default, but still permit version 2 for new logs.
+Lots of searching, and list archive trawling has told me that I should be 
+able to just invoke multipath from the command line, and it will see the 
+new size, and I run merrily along with pvresize and lvresize..
 
-Is there a situation where someone would still need to create a new version 2 
-log? I would think it would be far simpler to switch all new logs to use 
-version 3, and revert back to version 2 only when the log offset recorded in 
-the on-disk header is blank.
+After expanding the lun in navisphere, however, i can't see the new size 
+of the block device without deactivating all VG on the multipathed 
+device-mapped device.
 
-Or were you thinking of using this new log parameter to allow user-space to 
-specify the offset of the log?
+Here is the test LUN, that the OS sees as 8GB, even though it's been grown 
+on EMC to 19GB:
 
-On a related note, shouldn't log_header.nr_regions be a uint64_t instead of a 
-sector_t? The header_to_disk() and header_from_disk() routines already treat 
-it as 64-bit.
+# multipath -l mpath3
+mpath3 (3600601608a9112009cd9fafafebdda11)
+[size=8 GB][features="1 queue_if_no_path"][hwhandler="1 emc"]
+\_ round-robin 0 [active]
+  \_ 1:0:1:2 sdf 8:80  [active][ready]
+  \_ 2:0:1:2 sdj 8:144 [active][ready]
+\_ round-robin 0 [enabled]
+  \_ 1:0:0:2 sdd 8:48  [active][ready]
+  \_ 2:0:0:2 sdh 8:112 [active][ready]
 
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://www.ibm.com/linux/
-http://evms.sourceforge.net/
+  vgchange -an test3
+   0 logical volume(s) in volume group "test3" now active
+[root@halfoat.ds ~]# multipath -l mpath3
+mpath3 (3600601608a9112009cd9fafafebdda11)
+[size=8 GB][features="1 queue_if_no_path"][hwhandler="1 emc"]
+\_ round-robin 0 [active]
+  \_ 1:0:1:2 sdf 8:80  [active][ready]
+  \_ 2:0:1:2 sdj 8:144 [active][ready]
+\_ round-robin 0 [enabled]
+  \_ 1:0:0:2 sdd 8:48  [active][ready]
+  \_ 2:0:0:2 sdh 8:112 [active][ready]
+
+Next, turn off the VG, and flush multipath table
+# vgchange -an test3
+   0 logical volume(s) in volume group "test3" now active
+# multipath -f mpath3
+
+# for i in f j d h ; do blockdev --getsize /dev/sd$i ; done
+39845888
+39845888
+39845888
+39845888
+
+BANG, it's got the new size:
+# multipath
+create: mpath3 (3600601608a9112009cd9fafafebdda11)
+[size=19 GB][features="1 queue_if_no_path"][hwhandler="1 emc"]
+\_ round-robin 0 [prio=2]
+  \_ 1:0:1:2 sdf 8:80  [ready]
+  \_ 2:0:1:2 sdj 8:144 [ready]
+\_ round-robin 0
+  \_ 1:0:0:2 sdd 8:48  [ready]
+  \_ 2:0:0:2 sdh 8:112 [ready]
+
+Next, I grow the LUN again on EMC, and try to skip some steps..
+
+# for i in f j d h ; do blockdev --rereadpt /dev/sd$i ; done
+# multipath
+device-mapper: dm-emc: long trespass command will be send
+device-mapper: dm-emc: honor reservation bit will not be set (default)
+device-mapper: device 8:80 too small for target
+device-mapper: dm-multipath: error getting device
+device-mapper: error adding target to table
+device-mapper ioctl cmd 9 failed: Invalid argument
+
+
+So, yeah, is there a way to get dm to see the new size of the block device 
+without:  un mounting all fs, and vgchange all volgroups on the device ?
+
+thanks
+
+-sharif
