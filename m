@@ -1,18 +1,12 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: Re: [PATCH] dm-striped device sizes must be multiple
-	of chunk-size
-Date: Wed, 29 Mar 2006 15:48:47 +0200
-Message-ID: <20060329134847.GE3218@redhat.com>
-References: <e3538fbd0603222128o525b4608h84b4004fc4ca0a61@mail.gmail.com>
-	<200603242246.25314.kevcorry@us.ibm.com>
-	<20060328120813.GB3218@redhat.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: "Brian Long" <briandlong@gmail.com>
+Subject: [RHEL 4 U2] Recommended blacklist for Sun X4200, V40z
+Date: Wed, 29 Mar 2006 10:40:05 -0500
+Message-ID: <1c59d60b0603290740p7831d874h840add20cc5abab3@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed;
+	boundary="----=_Part_8964_16965281.1143646805230"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20060328120813.GB3218@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,124 +16,524 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: mauelshagen@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: Joseph Yasi <joe.yasi@gmail.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+------=_Part_8964_16965281.1143646805230
+Content-Type: multipart/alternative;
+	boundary="----=_Part_8965_23484689.1143646805230"
 
-Kevin,
+------=_Part_8965_23484689.1143646805230
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-got a fix in a central location (activate.c) which looks like it cuts the issue.
-Just waiting for metadata samples of reporters to get in to confirm.
+I'm running RHEL 4 U2 (device-mapper-multipath-0.4.5-6.0.RHEL4).  I have a
+multipath.conf which uses the compiled-in blacklist.  I also have specified
+device entries specific to certain EMC arrays in use (see attached
+multipath.conf).  The majority of our hosts are HP Proliant with cciss loca=
+l
+disks and they are blacklisted appropriately.  When I use the same
+multipath.conf on a Sun V40z or X4200, multipathing is not working and I
+believe it's because the internal disk (LSI Logic / MPT Fusion RAID) is not
+blacklisted (see attached multipath-v3.out for details).
 
-Heinz
+Is there a recommended blacklist entry for these hosts?  Can I blacklist by
+vendor ID instead of device?
 
-On Tue, Mar 28, 2006 at 02:08:13PM +0200, Heinz Mauelshagen wrote:
-> 
-> Kevin,
-> 
-> I'm not convinced that a more complex mapping is needed.
-> 
-> Haven't seen the reported case so far with a lot of RAID0 metadata samples
-> users provided to me for various ATARAID flavours.
-> 
-> The RAID device size (which is smaller than the underlying device)
-> needs to be divisable w/o rest by the stride size IMO.
-> 
-> Guess I'm missing something about setting up the device size (rd->sectors)
-> correctly in the metadata format handler.
-> 
-> Investigating...
-> 
-> Heinz
-> 
-> On Fri, Mar 24, 2006 at 10:46:25PM -0600, Kevin Corry wrote:
-> > On Wed March 22 2006 11:28 pm, Joseph Yasi wrote:
-> > >     I am using the dmraid utility to detect and configure my Intel
-> > > Software Raid RAID0 array.  When upgrading to 2.6.16 from 2.6.15, the
-> > > system failed to boot because the device-mapper array was not built.
-> > > I have traced the problem to this patch that limits dm-stripe to
-> > > targets that are multiples of the chunk size.  I don't know whether to
-> > > consider this a problem with device-mapper or with the Intel Software
-> > > Raid BIOS that built the array.  Dmraid is giving me a target of
-> > > 980460038 blocks with a chunk size of 256 blocks.  Is this a problem
-> > > with device-mapper, the dmraid utility or the raid bios?  Should
-> > > device-mapper handle striped targets that are not multiples of the
-> > > chunk size?
-> > 
-> > Hmm...I obviously didn't expect dmraid to be creating such devices.
-> > 
-> > The kernel patch that was added to 2.6.16 is definitely correct. Dm-stripe 
-> > should not allow creating a device with a size that's not a multiple of the 
-> > chunk-size. To do so leaves a partial chunk at the end of each device. While 
-> > at first glance this might not seem like a big deal, the striping 
-> > calculations in the I/O path do not handle this situation (at least, not in 
-> > the way you would think it should be handled), and cause I/O errors if you 
-> > try to access the end of the stripe device.
-> > 
-> > > dmesg gives these pertinent lines:
-> > > device-mapper: dm-stripe: Target length not divisible by chunk size.
-> > > device-mapper: error adding target to table.
-> > >
-> > > dmsetup status
-> > > isw_caejhbcidd_Volume03: 0 976173660 linear
-> > > isw_caejhbcidd_Volume02: 0 4209030 linear
-> > > isw_caejhbcidd_Volume01: 0 64197 linear
-> > > isw_caejhbcidd_Volume0: 0 980460038 striped
-> > >
-> > > dmraid -s
-> > > *** Group superset isw_caejhbcidd
-> > > --> Active Subset
-> > > name   : isw_caejhbcidd_Volume0
-> > > size   : 980460038
-> > > stride : 256
-> > > type   : stripe
-> > > status : ok
-> > > subsets: 0
-> > > devs   : 2
-> > > spares : 0
-> > 
-> > In your example, your stripe device is 980460038 sectors, with a 256 sector 
-> > chunk-size.This means the stripe device has 3829922 chunks, with 6 sectors 
-> > left over (3 on each of the two devices, presumably). I would think that the 
-> > BIOS intends that these last 3 sectors on each device should be striped with 
-> > an effective chunk-size of 3 sectors. To do this, dmraid should set up a 
-> > device with two targets, one with a chunk-size of 256, and one with a 
-> > chunk-size of 3. The map would look something like:
-> > 
-> > 0 980460032 striped 2 256 /dev/hda 0 /dev/hdb 0
-> > 980460032 6 striped 2 3 /dev/hda /dev/hdb 490230016
-> > 
-> > Unfortunately, this doesn't work either, because the chunk-size must be a 
-> > power-of-2. So...since we know the second target in the map really represents 
-> > only one "stripe", we could treat them as a concatenation of independent 
-> > linear targets. So we end up with a map like this:
-> > 
-> > 0 980460032 striped 2 256 /dev/hda 0 /dev/hdb 0
-> > 980460032 3 linear /dev/hda 490230016
-> > 980460032 3 linear /dev/hdb 490230016
-> > 
-> > I'm thinking that this mapping would do what the BIOS is actually intending. 
-> > It ought to be relatively straight-forward to recognize this situation in 
-> > dmraid and set up a mapping similar to the one above.
-> > 
-> > -- 
-> > Kevin Corry
-> > kevcorry@us.ibm.com
-> > http://www.ibm.com/linux/
-> > http://evms.sourceforge.net/
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
+Thank you.
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+/Brian/
 
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+------=_Part_8965_23484689.1143646805230
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+I'm running RHEL 4 U2 (device-mapper-multipath-0.4.5-6.0.RHEL4).&nbsp; I ha=
+ve a multipath.conf which uses the compiled-in blacklist.&nbsp; I also have=
+ specified device entries specific to certain EMC arrays in use (see attach=
+ed multipath.conf
+).&nbsp; The majority of our hosts are HP Proliant with cciss local disks a=
+nd they are blacklisted appropriately.&nbsp; When I use the same multipath.=
+conf on a Sun V40z or X4200, multipathing is not working and I believe it's=
+ because the internal disk (LSI Logic / MPT Fusion RAID) is not blacklisted=
+ (see attached=20
+multipath-v3.out for details).<br><br>Is there a recommended blacklist entr=
+y for these hosts?&nbsp; Can I blacklist by vendor ID instead of device?<br=
+><br>Thank you.<br><br>/Brian/<br><br><br>
+
+------=_Part_8965_23484689.1143646805230--
+
+------=_Part_8964_16965281.1143646805230
+Content-Type: application/octet-stream; name=multipath.conf
+Content-Transfer-Encoding: 7bit
+X-Attachment-Id: f_eldtumnl
+Content-Disposition: attachment; filename="multipath.conf"
+
+# See /usr/share/doc/device-mapper-multipath-*/multipath.conf.annotated
+# for a fully-detailed multipath.conf.
+#
+# BEGIN Cisco-specific configuration
+defaults {
+       multipath_tool           "/sbin/multipath -v0"
+       udev_dir                 /dev
+       polling_interval         10
+       default_selector         "round-robin 0"
+       default_path_grouping_policy    multibus
+       default_getuid_callout   "/sbin/scsi_id -g -u -s /block/%n"
+       default_prio_callout     "/bin/true"
+       default_features         "0"
+       rr_wmin_io               100
+       failback                 immediate
+}
+# Only specify options in the devices section to override the defaults.
+devices {
+    # EMC Symmetrix / DMX
+    device {
+        vendor                  "EMC     "
+        product                 "SYMMETRIX     "
+    }
+    # EMC Clariion (active/passive)
+    device {
+        vendor "DGC     "
+        product "RAID 5        "
+        path_grouping_policy    failover
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        path_checker            emc_clariion
+        path_selector           "round-robin 0"
+        features	            "0"
+        hardware_handler        "1 emc"
+        failback                immediate
+    }
+    device {
+        vendor "DGC     "
+        product "              "
+        path_grouping_policy    failover
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        path_checker            emc_clariion
+        path_selector           "round-robin 0"
+        features	            "0"
+        hardware_handler        "1 emc"
+        failback                immediate
+    }
+}
+# END Cisco-specific configuration
+
+
+------=_Part_8964_16965281.1143646805230
+Content-Type: application/octet-stream; name=multipath-v3.out
+Content-Transfer-Encoding: 7bit
+X-Attachment-Id: f_eldtv9zg
+Content-Disposition: attachment; filename="multipath-v3.out"
+
+hda blacklisted
+md0 blacklisted
+ram0 blacklisted
+ram10 blacklisted
+ram11 blacklisted
+ram12 blacklisted
+ram13 blacklisted
+ram14 blacklisted
+ram15 blacklisted
+ram1 blacklisted
+ram2 blacklisted
+ram3 blacklisted
+ram4 blacklisted
+ram5 blacklisted
+ram6 blacklisted
+ram7 blacklisted
+ram8 blacklisted
+ram9 blacklisted
+path sdaa not found in pathvec
+
+===== path sdaa =====
+bus = 1
+dev_t = 65:160
+size = 53539200
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:18
+tgt_node_name = 0x50060482c3a194cd
+serial = 5012670AC000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______5012670AC000 (callout)
+path sdab not found in pathvec
+
+===== path sdab =====
+bus = 1
+dev_t = 65:176
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:20
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267025000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267025000 (callout)
+path sdac not found in pathvec
+
+===== path sdac =====
+bus = 1
+dev_t = 65:192
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:21
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267026000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267026000 (callout)
+path sdad not found in pathvec
+
+===== path sdad =====
+bus = 1
+dev_t = 65:208
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:22
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267027000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267027000 (callout)
+path sdae not found in pathvec
+
+===== path sdae =====
+bus = 1
+dev_t = 65:224
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:23
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267028000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267028000 (callout)
+path sdaf not found in pathvec
+
+===== path sdaf =====
+bus = 1
+dev_t = 65:240
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:24
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267029000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267029000 (callout)
+path sdag not found in pathvec
+
+===== path sdag =====
+bus = 1
+dev_t = 66:0
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:25
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126702A000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126702A000 (callout)
+path sdah not found in pathvec
+
+===== path sdah =====
+bus = 1
+dev_t = 66:16
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:26
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126702B000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126702B000 (callout)
+path sdai not found in pathvec
+
+===== path sdai =====
+bus = 1
+dev_t = 66:32
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:27
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126702C000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126702C000 (callout)
+path sdaj not found in pathvec
+
+===== path sdaj =====
+bus = 1
+dev_t = 66:48
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:28
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126702D000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126702D000 (callout)
+path sdak not found in pathvec
+
+===== path sdak =====
+bus = 1
+dev_t = 66:64
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:29
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126702E000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126702E000 (callout)
+path sdal not found in pathvec
+
+===== path sdal =====
+bus = 1
+dev_t = 66:80
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:30
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126702F000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126702F000 (callout)
+path sdam not found in pathvec
+
+===== path sdam =====
+bus = 1
+dev_t = 66:96
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:31
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267030000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267030000 (callout)
+path sdan not found in pathvec
+
+===== path sdan =====
+bus = 1
+dev_t = 66:112
+size = 17846400
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:32
+tgt_node_name = 0x50060482c3a194cd
+serial = 5012670AF000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______5012670AF000 (callout)
+path sdao not found in pathvec
+
+===== path sdao =====
+bus = 1
+dev_t = 66:128
+size = 71385600
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:33
+tgt_node_name = 0x50060482c3a194cd
+serial = 5012670EF000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______5012670EF000 (callout)
+path sdap not found in pathvec
+
+===== path sdap =====
+bus = 1
+dev_t = 66:144
+size = 71385600
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:34
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267100000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267100000 (callout)
+path sdaq not found in pathvec
+
+===== path sdaq =====
+bus = 1
+dev_t = 66:160
+size = 71385600
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:35
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267118000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267118000 (callout)
+path sdar not found in pathvec
+
+===== path sdar =====
+bus = 1
+dev_t = 66:176
+size = 71385600
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:36
+tgt_node_name = 0x50060482c3a194cd
+serial = 501267112000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______501267112000 (callout)
+path sdas not found in pathvec
+
+===== path sdas =====
+bus = 1
+dev_t = 66:192
+size = 245760
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:52
+tgt_node_name = 0x50060482c3a194cd
+serial = 50126710B000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______50126710B000 (callout)
+path sdat not found in pathvec
+
+===== path sdat =====
+bus = 1
+dev_t = 66:208
+size = 5760
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:240
+tgt_node_name = 0x50060482c3a194cd
+serial = 5012670CF000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______5012670CF000 (callout)
+path sdau not found in pathvec
+
+===== path sdau =====
+bus = 1
+dev_t = 66:224
+size = 5760
+vendor = EMC     
+product = SYMMETRIX       
+rev = 5568
+h:b:t:l = 2:0:0:241
+tgt_node_name = 0x50060482c3a194cd
+serial = 5012670D0000
+path checker = readsector0 (internal default)
+state = 2
+getprio = /bin/true (internal default)
+prio = 0
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+uid = SEMC_____SYMMETRIX______5012670D0000 (callout)
+path sdav not found in pathvec
+
+===== path sdav =====
+bus = 1
+dev_t = 66:240
+
+------=_Part_8964_16965281.1143646805230
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------=_Part_8964_16965281.1143646805230--
