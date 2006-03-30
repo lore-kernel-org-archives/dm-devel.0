@@ -1,15 +1,14 @@
-From: Bernd Zeimetz <bernd@bzed.de>
+From: Mike Christie <mchristi@redhat.com>
 Subject: Re: Fwd: IO error on DM device
-Date: Fri, 31 Mar 2006 00:48:56 +0200
-Message-ID: <442C6058.2060006@bzed.de>
+Date: Thu, 30 Mar 2006 13:44:45 -0600
+Message-ID: <442C352D.8010604@redhat.com>
 References: <39daa5689df1bf4a05a144891cc3563d@redhat.com>
-	<442C2AAC.1020405@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <442C2AAC.1020405@redhat.com>
+In-Reply-To: <39daa5689df1bf4a05a144891cc3563d@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,22 +19,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Ryan O'Hara <rohara@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-> So based on the comments below and steps to reproduce, I'd say this is 
-> expected behavior since multipathd is turned off. What happens if 
-> multipathd is left running? It is implied that not stopping multipathd 
-> will still cause a failure but will take much longer. I am no expert 
-> on multipathd, so perhaps one of the dm developers can comment on 
-> multipathd handling these SCSI error.
-Unfortunately I've seen these errors occuring with an EMC CX attached to 
-a single host, which was running multipath, too. It happened very, very 
-rarely and just completely random. I didn't find any way to make it 
-reproducible.
+Jonathan E Brassow wrote:
+> 
+>     Another observation is that we are not seeing any IO errors when the
+>     same test is executed on SLES9 SP3/SP4.
+> 
+
+I think Ryan's post is correct, but I wonder why the SLES9 is not 
+returning errors. Was the SLES statement referring to the scsi errors 
+you see in the log like this:
 
 
-Best regards,
+     Feb  1 11:47:45 apwtest52 kernel: SCSI error : <3 0 0 1> return code
+     = 0x20000
+
+or the dm-multipath and block layer messages
+
+Feb  1 11:48:40 apwtest52 kernel: device-mapper: dm-multipath:
+     Failing path 8:32.
 
 
-Bernd
+     Feb  1 11:48:40 apwtest52 kernel: Buffer I/O error on device dm-0,
+     logical block 116940 u
+
+
+or both?
+
+Do you have the same dm-multipath settings (queue if no path, etc)? Is 
+this is the qlogic qla2xxx driver? Are there qlogic guys on the list 
+that would know if there are any differences between the SLES and RHEL 
+drivers or are we going to have to dig in there? Are there differences 
+between the SLES and RHEL dm multipath drivers? Does this occur with the 
+upstream kernel?
