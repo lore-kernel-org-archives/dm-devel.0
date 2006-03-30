@@ -1,34 +1,31 @@
-From: Matthew Wilcox <matthew@wil.cx>
-Subject: Re: [patch 7/8] drivers: use list_move()
-Date: Thu, 30 Mar 2006 05:11:14 -0700
-Message-ID: <20060330121114.GF13590@parisc-linux.org>
-References: <20060330081605.085383000@localhost.localdomain> <20060330081731.173381000@localhost.localdomain>
+From: "bart brooks" <bart_brooks@hotmail.com>
+Subject: striped multipath -
+Date: Thu, 30 Mar 2006 13:03:32 +0000
+Message-ID: <BAY101-F39B1D769666B7AE38961EA9DD10@phx.gbl>
+References: <20060302220248.GW25317@agk.surrey.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932144AbWC3MLR@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20060330081731.173381000@localhost.localdomain>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Akinobu Mita <mita@miraclelinux.com>
-Cc: linux-kernel@vger.kernel.org, akpm@osdl.org, Corey Minyard <minyard@mvista.com>, Ben Collins <bcollins@debian.org>, Roland Dreier <rolandd@cisco.com>, Alasdair Kergon <dm-devel@redhat.com>, Gerd Knorr <kraxel@bytesex.org>, Paul Mackerras <paulus@samba.org>, Frank Pavlic <fpavlic@de.ibm.com>, Andrew Vasquez <linux-driver@qlogic.com>, Mikael Starvik <starvik@axis.com>, Greg Kroah-Hartman <greg@kroah.com>
+Content-Type: text/plain; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20060302220248.GW25317@agk.surrey.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Mar 30, 2006 at 04:16:12PM +0800, Akinobu Mita wrote:
->  drivers/scsi/ncr53c8xx.c                       |    3 +--
+Hello Alasdair -
 
-> Index: 2.6-git/drivers/scsi/ncr53c8xx.c
-> ===================================================================
-> --- 2.6-git.orig/drivers/scsi/ncr53c8xx.c
-> +++ 2.6-git/drivers/scsi/ncr53c8xx.c
-> @@ -5118,8 +5118,7 @@ static void ncr_ccb_skipped(struct ncb *
->  		cp->host_status &= ~HS_SKIPMASK;
->  		cp->start.schedule.l_paddr = 
->  			cpu_to_scr(NCB_SCRIPT_PHYS (np, select));
-> -		list_del(&cp->link_ccbq);
-> -		list_add_tail(&cp->link_ccbq, &lp->skip_ccbq);
-> +		list_move_tail(&cp->link_ccbq, &lp->skip_ccbq);
->  		if (cp->queued) {
->  			--lp->queuedccbs;
->  		}
+Could you please answer a quick question for me -
 
-ACK.  Thanks!
+Is it possible to define (create) a new logical device, which is striped 
+multipath using dmsetup or some other means?
+
+Thanks,
+Bart Brooks
