@@ -1,15 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: creating partition mappings with different delimiters
-Date: Mon, 03 Apr 2006 23:23:18 +0200
-Message-ID: <44319246.6040008@free.fr>
-References: <1144081162.3111.32.camel@gator.sc.steeleye.com>
-	<1144097506.3111.81.camel@gator.sc.steeleye.com>
+From: David Wysochanski <davidw@netapp.com>
+Subject: [PATCH] update netapp and IBM nseries (netapp) hwtable.c
+	targets
+Date: Mon, 03 Apr 2006 17:36:34 -0400
+Message-ID: <44319562.80106@netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="------------070000050100020407030104"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1144097506.3111.81.camel@gator.sc.steeleye.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,25 +19,79 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Eddie Williams a =E9crit :
-> I see it is kpartx that is defaulting to the 'p' as the delimiter (in
-> the set_delimiter function) when the uuid ends with a digit and no
-> delimiter when the uuid ends with a character.
->
-> Wouldn't it be better to always use the same delimiter by default?  As
-> it stands now one will not be able to determine that a node is a
-> partition versus a full device by just looking at the name.=20
->
->  =20
-This behaviour mimics the kernel partition naming policies : /dev/sd?=20
-partitions have no separator, while /dev/cciss/c0d0 have one, for example=
-.
+This is a multi-part message in MIME format.
+--------------070000050100020407030104
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-kpartx once meant to be a true alternative to in-kernel partition=20
-handling, thus cared about that naming compatibility.
+Should apply to latest source.
 
-I'm inclined to leave it that way, if not only to discourage people to=20
-partition multipathed devices :)
+--------------070000050100020407030104
+Content-Type: text/x-patch;
+ name="update-netapp-ibm-nseries-hwtable.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline; filename="update-netapp-ibm-nseries-hwtable.patch"
 
-Regards,
-cvaroqui
+--- libmultipath/hwtable.c.orig	2006-04-03 16:54:34.865830000 -0400
++++ libmultipath/hwtable.c	2006-04-03 17:23:14.464443000 -0400
+@@ -315,25 +315,46 @@ static struct hwentry default_hw[] = {
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = DIRECTIO,
+ 	},
+-	/*
++ 	/*
+ 	 * NETAPP controler family
+ 	 *
+ 	 * Maintainer : Dave Wysochanski
+-	 * Mail : davidw netapp com
++	 * Mail : davidw@netapp.com
+ 	 */
+ 	{
+ 		.vendor        = "NETAPP",
+-		.product       = "LUN",
++		.product       = "LUN.*",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = "/sbin/mpath_prio_netapp /dev/%n",
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = FAILBACK_UNDEF,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
++		.minio         = 128,
++		.checker_name  = READSECTOR0,
++	},
++ 	/*
++	 * IBM NSeries (NETAPP) controler family
++	 *
++	 * Maintainer : Dave Wysochanski
++	 * Mail : davidw@netapp.com
++	 */
++	{
++		.vendor        = "IBM",
++		.product       = "Nseries.*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_netapp /dev/%n",
++		.features      = "1 queue_if_no_path",
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.minio         = 128,
+ 		.checker_name  = READSECTOR0,
+ 	},
+ 	/*
+
+--------------070000050100020407030104
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------070000050100020407030104--
