@@ -1,13 +1,12 @@
-From: "Brian Long" <briandlong@gmail.com>
-Subject: Re: [RHEL 4 U2] Recommended blacklist for Sun X4200, V40z
-Date: Wed, 5 Apr 2006 22:25:36 -0400
-Message-ID: <1c59d60b0604051925y20520e17k676c1e21ca7cdc58@mail.gmail.com>
-References: <1c59d60b0603290740p7831d874h840add20cc5abab3@mail.gmail.com>
+From: "Stefan Majer" <stefan@x-cellent.com>
+Subject: [Fwd: Multipath, page allocation failure during bonnie++]
+Date: Tue, 4 Apr 2006 08:40:42 +0200 (CEST)
+Message-ID: <34881.212.34.68.21.1144132842.squirrel@extern.x-cellent.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1358689635=="
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1c59d60b0603290740p7831d874h840add20cc5abab3@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,76 +19,89 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1358689635==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_8033_21664155.1144290336145"
+Hi,
 
-------=_Part_8033_21664155.1144290336145
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+im currently testing your multipath solution with the following setup:
 
-On 3/29/06, Brian Long <briandlong@gmail.com> wrote:
->
-> I'm running RHEL 4 U2 (device-mapper-multipath-0.4.5-6.0.RHEL4).  I have =
-a
-> multipath.conf which uses the compiled-in blacklist.  I also have
-> specified device entries specific to certain EMC arrays in use (see attac=
-hed
-> multipath.conf ).  The majority of our hosts are HP Proliant with cciss
-> local disks and they are blacklisted appropriately.  When I use the same
-> multipath.conf on a Sun V40z or X4200, multipathing is not working and I
-> believe it's because the internal disk (LSI Logic / MPT Fusion RAID) is n=
-ot
-> blacklisted (see attached multipath-v3.out for details).
->
-> Is there a recommended blacklist entry for these hosts?  Can I blacklist
-> by vendor ID instead of device?
->
+HP DL585 with 4 DualCore Opterons, 8Gig RAM an 4 Qlogic FC Adapters,
+connected to 2 IBM DS8100 Storages through two Broadcom Fabrics.
+i Have 4 LUNS, 2 from each Storage Box. I build 2 SW-Raid=B4s with 2 LUNS
+each to get host-based-mirroring. The SW-Raid is used as PV for LVM2.
+Its a RH4 AS U3 kernel (2.6.9-34) with the device-mapper-multipath 0.45.
 
-I could not get multipath working properly on these hosts until I set up a
-vendor-based blacklist in /etc/scis_id.conf.  I blacklisted vendor=3DLSILOG=
-IC
-and multipath works well for the SAN devices.
+After doing some Stresstests with bonnie (4 parallel runs) i got the
+following:
 
-/Brian/
+Mar 31 10:05:06 arenat11 kernel: bonnie++: page allocation failure.
+order:0, mode:0x50
+Mar 31 10:05:06 arenat11 kernel:
+Mar 31 10:05:06 arenat11 kernel: Call
+Trace:<ffffffff8015d06e>{__alloc_pages+846}
+<ffffffff8015d105>{__get_free_pages+11}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff801600e4>{kmem_getpages+36}
+<ffffffff80160879>{cache_alloc_refill+609}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff801605b7>{kmem_cache_alloc+90}
+<ffffffffa00a146b>{:jbd:journal_start+132}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffffa00b6ae4>{:ext3:ext3_ordered_writepage+127}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff801641bb>{shrink_zone+3095} <ffffffff8013f4b7>{del_timer+107}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff8013f574>{del_singleshot_timer_sync+9}
+<ffffffff80305528>{schedule_timeout+252
+}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff801647a5>{try_to_free_pages+303}
+<ffffffff80134df2>{autoremove_wake_function+0
+}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff8015cf74>{__alloc_pages+596}
+<ffffffff8015a6d8>{generic_file_buffered_write+29
+5}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffffa00be568>{:ext3:__ext3_journal_stop+31}
+<ffffffff8013bd7f>{current_fs_time+89}
 
-------=_Part_8033_21664155.1144290336145
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
-
-<br><br><div><span class=3D"gmail_quote">On 3/29/06, <b class=3D"gmail_send=
-ername">Brian Long</b> &lt;<a href=3D"mailto:briandlong@gmail.com">briandlo=
-ng@gmail.com</a>&gt; wrote:</span><blockquote class=3D"gmail_quote" style=
-=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; p=
-adding-left: 1ex;">
-<div style=3D"direction: ltr;">I'm running RHEL 4 U2 (device-mapper-multipa=
-th-0.4.5-6.0.RHEL4).&nbsp; I have a multipath.conf which uses the compiled-=
-in blacklist.&nbsp; I also have specified device entries specific to certai=
-n EMC arrays in use (see attached=20
-multipath.conf
-).&nbsp; The majority of our hosts are HP Proliant with cciss local disks a=
-nd they are blacklisted appropriately.&nbsp; When I use the same multipath.=
-conf on a Sun V40z or X4200, multipathing is not working and I believe it's=
- because the internal disk (LSI Logic / MPT Fusion RAID) is not blacklisted=
- (see attached=20
-multipath-v3.out for details).<br><br>Is there a recommended blacklist entr=
-y for these hosts?&nbsp; Can I blacklist by vendor ID instead of device?</d=
-iv></blockquote><div><br>I could not get multipath working properly on thes=
-e hosts until I set up a vendor-based blacklist in /etc/scis_id.conf.&nbsp;=
- I blacklisted vendor=3DLSILOGIC and multipath works well for the SAN devic=
-es.
-<br></div><br>/Brian/<br></div><br>
-
-------=_Part_8033_21664155.1144290336145--
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff8015af36>{__generic_file_aio_write_nolock+731}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff8015b1d4>{generic_file_aio_write_nolock+32}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff8015b29e>{generic_file_aio_write+126}
+<ffffffffa00b4ee5>{:ext3:ext3_file_write
++22}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff80177b65>{do_sync_write+173} <ffffffff80304a85>{thread_return+0}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff80304add>{thread_return+88}
+<ffffffff80134df2>{autoremove_wake_function+0}
+Mar 31 10:05:06 arenat11 kernel:
+<ffffffff80191570>{dnotify_parent+34} <ffffffff80177c60>{vfs_write+207}
+Mar 31 10:05:06 arenat11 kernel:        <ffffffff80177d48>{sys_write+69}
+<ffffffff801101c6>{system_call+126}
+Mar 31 10:05:06 arenat11 kernel:
+Mar 31 10:05:06 arenat11 kernel: Mem-info:
+Mar 31 10:05:06 arenat11 kernel: Node 3 DMA per-cpu: empty
+Mar 31 10:05:06 arenat11 kernel: Node 3 Normal per-cpu:
+Mar 31 10:05:06 arenat11 kernel: cpu 0 hot: low 32, high 96, batch 16
+Mar 31 10:05:06 arenat11 kernel: cpu 0 cold: low 0, high 32, batch 16
+Mar 31 10:05:06 arenat11 kernel: cpu 1 hot: low 32, high 96, batch 16
+Mar 31 10:05:06 arenat11 kernel: cpu 1 cold: low 0, high 32, batch 16
+Mar 31 10:05:06 arenat11 kernel: cpu 2 hot: low 32, high 96, batch 16
 
 
---===============1358689635==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This only happens if i use device-mapper-multipath for multipathing, it
+does not if i use the LUNS without.
+
+Any Ideas ?
+
+I can run additional Test as you like, because this is a test environment=
+.
+I have two of those boxen, one with 128G of ram, all tests welcome.
 
 
---===============1358689635==--
+Greetings from Munich
+
+Stefan Majer
