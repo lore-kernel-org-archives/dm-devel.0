@@ -1,12 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: [RFC] 2 features for mptools 0.4.8
-Date: Wed, 05 Apr 2006 00:22:45 +0200
-Message-ID: <4432F1B5.3080905@free.fr>
+From: Abhishek Gupta <agupta@cs.ubc.ca>
+Subject: Target needs access to mapped device
+Date: Tue, 4 Apr 2006 22:58:31 -0700 (PDT)
+Message-ID: <Pine.LNX.4.60.0604042215210.24876@okanagan.cs.ubc.ca>
+References: <20060321170118.1721674450@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20060321170118.1721674450@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,66 +17,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+Hi everyone,
 
-multipath-tools path checking framework has a well-known (nonetheless 
-serious) design hole : a blocked check can hang the whole daemon.
+I need to be able to set a logical device to read-only from the 
+target of the logical device. In other words, I need the following 
+function in dm-table.c:
 
-Consensus was to export to userspace a sort of FAILFAST flag checkers 
-could use.
+void dm_table_set_mode(struct dm_table *t, int mode)
+{
+ 	t->mode = mode;
+}
 
-I'm more than willing to get that problem straight in the tools, but 
-what's the status on the kernel side of this work ?
+There is already a function dm-table.c:dm_table_get_mode(). Will it be 
+feasible to 
+include its counterpart too?
 
-We can also debate other ways to work-around this, if some emerge.
+Thanks
 
-
-On a related note, is there still interest in a physical path-based 
-checking, rather than the current logical path-based one ?
-
-The recent fc_host sysfs class normalisation brings a simple way to 
-identify physical local endpoint with FC transport :
-
-local endpoint :     /sys/class/fc_host/host1/port_name
-remote endpoint : /sys/class/fc_transport/target1:0:2/port_name
-logical paths on this phy :
-
-[root@s64p17bic44 ~]# file 
-/sys/class/fc_transport/target1\:0\:2/device/1\:0\:2\:*/block
-/sys/class/fc_transport/target1:0:2/device/1:0:2:0/block:   symbolic 
-link to `../../../../../../../../block/sdaa'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:512/block: symbolic 
-link to `../../../../../../../../block/sdab'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:513/block: symbolic 
-link to `../../../../../../../../block/sdac'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:514/block: symbolic 
-link to `../../../../../../../../block/sdad'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:515/block: symbolic 
-link to `../../../../../../../../block/sdae'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:516/block: symbolic 
-link to `../../../../../../../../block/sdaf'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:517/block: symbolic 
-link to `../../../../../../../../block/sdag'
-/sys/class/fc_transport/target1:0:2/device/1:0:2:518/block: symbolic 
-link to `../../../../../../../../block/sdah'
-
-Implementing this idea would mean in this example that checker status 
-for sdaa applies to sda[bcdefgh].
-
-Arguments in favor of this approach are :
-
-1) less checking work
-2) lower failure-to-reaction latency : batched reactions upon phy path 
-failure.
-3) lessen the checking time drift : setup interval is I, but the real 
-interval is "I+(checker loop time)"
-4) each path check involves I/O, thus quite a high latency. Less checks 
-means higher efficiency.
-
-I'm open for comments.
-
-Regards,
-cvaroqui
+Abhishek
