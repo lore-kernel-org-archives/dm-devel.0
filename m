@@ -1,15 +1,11 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: 	[Fwd: Multipath,
-	page allocation failure during bonnie++]
-Date: Thu, 06 Apr 2006 19:35:59 +0200
-Message-ID: <4435517F.4020509@bzed.de>
-References: <34881.212.34.68.21.1144132842.squirrel@extern.x-cellent.com>
+From: Dale.R.Fowle@seagate.com
+Subject: device mapper cleanup
+Date: Thu, 6 Apr 2006 15:42:23 -0600
+Message-ID: <OF16134823.26AB83BB-ON87257148.0076840B-87257148.0077352B@seagate.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <34881.212.34.68.21.1144132842.squirrel@extern.x-cellent.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,20 +15,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
-> Its a RH4 AS U3 kernel (2.6.9-34) with the device-mapper-multipath 0.45.
->   
-you should update your Kernel and the multipath-tools. I didn't get them 
-working stable before 2.6.13 and multipath-tools 0.4.6. If you have a 
-look at the git you'll see that updating to 0.4.8 is worth the work.
-Unfortunately christophe's wiki seems to be down, there's more info.
+
+Hi all, what can I use to clean up old device mapper entries. I've got some
+devices sitting under /dev/mapper that do not get cleaned up after a
+reboot. These devices no longer exist on my storage, yet they still show
+up. I attempted a 'multipath -F' to flush the maps to all "unused" devices,
+but it wound up only clearing the configuration of everything I had just
+configured. Is there another command or tool I should be using to clean out
+the device trees of these old devices? I'm running
+multipath-tools0.4.5-0.11.
+
+Any ideas would be appreciated.
+
+Thanks,
+Dale
 
 
-Best regards,
-greetings from Darmstadt.
-
-
-Bernd
+Dale Fowle
+Seagate Technology
+Colorado Springs, CO
