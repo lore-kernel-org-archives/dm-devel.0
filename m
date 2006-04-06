@@ -1,14 +1,12 @@
-From: "Philip R. Auld" <pauld@egenera.com>
-Subject: Re: [RFC] 2 features for mptools 0.4.8
-Date: Wed, 5 Apr 2006 09:19:05 -0400
-Message-ID: <20060405131905.GM5783@vienna.egenera.com>
-References: <4432F1B5.3080905@free.fr>
+From: "Dominik Schmid" <dominik_schmid@gmx.ch>
+Subject: device-mapper initrd
+Date: Thu, 6 Apr 2006 15:02:09 +0200 (MEST)
+Message-ID: <17376.1144328529@www006.gmx.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4432F1B5.3080905@free.fr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,93 +16,189 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Hi
 
-Rumor has it that on Wed, Apr 05, 2006 at 12:22:45AM +0200 Christophe Varoqui said:
-> Hello,
-> 
-...
+I have problem bringing up the multipath-raid devices at bootup.
 
-> 
-> On a related note, is there still interest in a physical path-based 
-> checking, rather than the current logical path-based one ?
-> 
-> The recent fc_host sysfs class normalisation brings a simple way to 
-> identify physical local endpoint with FC transport :
-> 
+INFO:
+----------
 
-Is this FC transport specific or would it work for, say, iSCSI devices?
+I have a system with two fibre channel devices and
+device-mapper-multipathing with the following config:
 
+defaults {
+        udev_dir                /dev
+        polling_interval        10
+        selector                "round-robin 0"
+        path_grouping_policy    multibus
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        prio_callout            /bin/true
+        path_checker            readsector0
+        rr_min_io               100
+        rr_weight               priorities
+        failback                immediate
+        no_path_retry           fail
+        user_friendly_name      yes
+}
+devnode_blacklist {
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z]"
+        devnode "^cciss!c[0-9]d[0-9]*"
+}
+multipaths {
+        multipath {
+                wwid                    xxxxxxxxx (censured)
+                alias                   yellow
+                path_grouping_policy    multibus
+                path_checker            readsector0
+                path_selector           "round-robin 0"
+                failback                manual
+                rr_weight               priorities
+                no_path_retry           5
+        }
+        multipath {
+                wwid                    xxxxxxxxx
+                alias                   green
+                path_grouping_policy    multibus
+                path_checker            readsector0
+                path_selector           "round-robin 0"
+                failback                manual
+                rr_weight               priorities
+                no_path_retry           5
+        }
+        multipath {
+                wwid                    xxxxxxxxx
+                alias                   blue
+                path_grouping_policy    multibus
+                path_checker            readsector0
+                path_selector           "round-robin 0"
+                failback                manual
+                rr_weight               priorities
+                no_path_retry           5
+        }
+        multipath {
+                wwid                    xxxxxxxxx
+                alias                   red
+                path_grouping_policy    multibus
+                path_checker            readsector0
+                path_selector           "round-robin 0"
+                failback                manual
+                rr_weight               priorities
+                no_path_retry           5
+        }
+}
 
-> local endpoint :     /sys/class/fc_host/host1/port_name
-> remote endpoint : /sys/class/fc_transport/target1:0:2/port_name
-> logical paths on this phy :
-> 
-> [root@s64p17bic44 ~]# file 
-> /sys/class/fc_transport/target1\:0\:2/device/1\:0\:2\:*/block
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:0/block:   symbolic 
-> link to `../../../../../../../../block/sdaa'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:512/block: symbolic 
-> link to `../../../../../../../../block/sdab'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:513/block: symbolic 
-> link to `../../../../../../../../block/sdac'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:514/block: symbolic 
-> link to `../../../../../../../../block/sdad'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:515/block: symbolic 
-> link to `../../../../../../../../block/sdae'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:516/block: symbolic 
-> link to `../../../../../../../../block/sdaf'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:517/block: symbolic 
-> link to `../../../../../../../../block/sdag'
-> /sys/class/fc_transport/target1:0:2/device/1:0:2:518/block: symbolic 
-> link to `../../../../../../../../block/sdah'
-> 
-> Implementing this idea would mean in this example that checker status 
-> for sdaa applies to sda[bcdefgh].
+Now i have four logical device maps:
 
-Seems to me you may need a hybrid of both approaches. I agree that if 
-the target (sdaa) fails it's pretty safe to assume the LUs behind it
-are gone. But just because sdaa is back does not mean the LUs are
-definitely reachable again. Until sdaa comes back though there is not
-much point in checking for the LUs. 
-
-It may also be useful to have it be a configuration option.
-
-This and the fix for FASTFAIL will make the tools dependent on 
-specific kernel revs. How well do they handle running on slightly 
-older kernels?
+multipath -l
+yellow (xxxxxxxxx)
+[size=10 GB][features="1 queue_if_no_path"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 0:0:0:0 sda 8:0   [active][ready]
+ \_ 0:0:1:0 sdb 8:16  [active][ready]
+ \_ 1:0:0:0 sdi 8:128 [active][ready]
+ \_ 1:0:1:0 sdj 8:144 [active][ready]
  
+green (xxxxxxxxx)
+[size=10 GB][features="1 queue_if_no_path"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 0:0:4:0 sde 8:64  [active][ready]
+ \_ 0:0:5:0 sdf 8:80  [active][ready]
+ \_ 1:0:4:0 sdm 8:192 [active][ready]
+ \_ 1:0:5:0 sdn 8:208 [active][ready]
+ 
+blue (xxxxxxxxx)
+[size=4 GB][features="1 queue_if_no_path"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 0:0:2:0 sdc 8:32  [active][ready]
+ \_ 0:0:3:0 sdd 8:48  [active][ready]
+ \_ 1:0:2:0 sdk 8:160 [active][ready]
+ \_ 1:0:3:0 sdl 8:176 [active][ready]
+ 
+red (xxxxxxxxx)
+[size=4 GB][features="1 queue_if_no_path"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 0:0:6:0 sdg 8:96  [active][ready]
+ \_ 0:0:7:0 sdh 8:112 [active][ready]
+ \_ 1:0:6:0 sdo 8:224 [active][ready]
+ \_ 1:0:7:0 sdp 8:240 [active][ready]
 
-Cheers,
+----------
 
+Now to my problem:
 
-Phil
+I made a file /etc/volume_disk1:
+# Ofs Size   Raid   Log  Number Region Should Number Source  Start Taget 
+Start
+# in  of the type   type of log size   sync?  of     Device  in    Device in
+# vol volume                 params                     mirrors            
+Device          Device
+0    20971520 mirror core 2        2048 sync 2           /dev/mapper/yellow
+0  
+/dev/mapper/green 0
 
-> 
-> Arguments in favor of this approach are :
-> 
-> 1) less checking work
-> 2) lower failure-to-reaction latency : batched reactions upon phy path 
-> failure.
-> 3) lessen the checking time drift : setup interval is I, but the real 
-> interval is "I+(checker loop time)"
-> 4) each path check involves I/O, thus quite a high latency. Less checks 
-> means higher efficiency.
-> 
-> I'm open for comments.
-> 
-> Regards,
-> cvaroqui
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Then i made dmsetup create disk1 /etc/volume_disk1.
+So i have the following:
+
+dmsetup info
+Name:              yellow
+State:             ACTIVE
+Tables present:    LIVE
+Open count:        1
+Event number:      1
+Major, minor:      253, 0
+Number of targets: 1
+UUID: mpath-xxxxxxxxx
+
+Name:              green
+State:             ACTIVE
+Tables present:    LIVE
+Open count:        1
+Event number:      1
+Major, minor:      253, 2
+Number of targets: 1
+UUID: mpath-xxxxxxxxx
+ 
+Name:              blue
+State:             ACTIVE
+Tables present:    LIVE
+Open count:        1
+Event number:      1
+Major, minor:      253, 1
+Number of targets: 1
+UUID: mpath-xxxxxxxxx
+ 
+Name:              red
+State:             ACTIVE
+Tables present:    LIVE
+Open count:        1
+Event number:      1
+Major, minor:      253, 3
+Number of targets: 1
+UUID: mpath-xxxxxxxxx
+
+Name:              disk1
+State:             ACTIVE
+Tables present:    LIVE
+Open count:        0
+Event number:      0
+Major, minor:      253, 8
+Number of targets: 1
+
+Questions:
+--> How make i to do the disk1 come up on boot, so that i can use it in the
+fstab file?
+Is this the right way to do a mirror on a multipath device?
+
+I have made a new initrd with mkinitrd but the device-mapper didn't find my
+mirrors...
+
+Thanks!
+Dominik
 
 -- 
-Philip R. Auld, Ph.D.  	        	       Egenera, Inc.    
-Software Architect                            165 Forest St.
-(508) 858-2628                            Marlboro, MA 01752
+E-Mails und Internet immer und überall!
+1&1 PocketWeb, perfekt mit GMX: http://www.gmx.net/de/go/pocketweb
