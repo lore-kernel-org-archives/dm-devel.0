@@ -1,11 +1,14 @@
-From: Dale.R.Fowle@seagate.com
-Subject: device mapper cleanup
-Date: Thu, 6 Apr 2006 15:42:23 -0600
-Message-ID: <OF16134823.26AB83BB-ON87257148.0076840B-87257148.0077352B@seagate.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: device mapper cleanup
+Date: Thu, 6 Apr 2006 23:19:57 +0100
+Message-ID: <20060406221957.GK4197@agk.surrey.redhat.com>
+References: <OF16134823.26AB83BB-ON87257148.0076840B-87257148.0077352B@seagate.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <OF16134823.26AB83BB-ON87257148.0076840B-87257148.0077352B@seagate.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,25 +18,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Thu, Apr 06, 2006 at 03:42:23PM -0600, Dale.R.Fowle@seagate.com wrote:
+> devices sitting under /dev/mapper that do not get cleaned up after a
+> reboot. These devices no longer exist on my storage, yet they still show
+> up. 
 
-Hi all, what can I use to clean up old device mapper entries. I've got some
-devices sitting under /dev/mapper that do not get cleaned up after a
-reboot. These devices no longer exist on my storage, yet they still show
-up. I attempted a 'multipath -F' to flush the maps to all "unused" devices,
-but it wound up only clearing the configuration of everything I had just
-configured. Is there another command or tool I should be using to clean out
-the device trees of these old devices? I'm running
-multipath-tools0.4.5-0.11.
+Should run 'dmsetup mknodes' during early startup.
 
-Any ideas would be appreciated.
-
-Thanks,
-Dale
-
-
-Dale Fowle
-Seagate Technology
-Colorado Springs, CO
+Alasdair
+-- 
+agk@redhat.com
