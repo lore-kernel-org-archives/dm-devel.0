@@ -1,14 +1,16 @@
-From: Ed Wilts <ewilts@ewilts.org>
+From: "Eric Van Hensbergen" <ericvh@gmail.com>
 Subject: Re: Device Mapper as a cache for SAN?
-Date: Mon, 10 Apr 2006 13:45:31 -0500
-Message-ID: <20060410184531.GA12908@www.ewilts.org>
+Date: Mon, 10 Apr 2006 14:46:02 -0500
+Message-ID: <a4e6962a0604101246y5f912a01y72519a6c58291f5@mail.gmail.com>
 References: <a4e6962a0604101058w75a7147cy8860bc9ebf8f269e@mail.gmail.com>
+	<20060410184531.GA12908@www.ewilts.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20060410184531.GA12908@www.ewilts.org>
 Content-Disposition: inline
-In-Reply-To: <a4e6962a0604101058w75a7147cy8860bc9ebf8f269e@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,21 +23,18 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Apr 10, 2006 at 12:58:36PM -0500, Eric Van Hensbergen wrote:
-> It seems like device-mapper would allow a fairly straightforward
-> implementation of a local-disk cache for a SAN (iSCSI, AOE, etc.).  
-> The dm-raid1 and dm-mpath modules seem to have elements of overlap,
-> but its not clear if there's a straightforward way to implement a
-> local-disk block cache using existing modules, or whether a new one is
-> needed.  Has anyone looked at this before?
+On 4/10/06, Ed Wilts <ewilts@ewilts.org> wrote:
+>
+> The obvious question is why?  What would this provide that the kernel
+> and file systems don't already provide?
+>
 
-The obvious question is why?  What would this provide that the kernel
-and file systems don't already provide?
+Well, kernel provides in-memory page cache, not local disk page cache.
+ There is some ongoing remote file system local disk cache work being
+done, but it applies primarily to AFS and NFS - not block-based
+transports such as iSCSI and AOE.  The various cluster file systems
+may provide something more akin to this, but again, this doesn't
+really cover SAN technologies -- not in any sort of a generic way.=20
+Let me know if I'm missing something.
 
-        .../Ed
-
--- 
-Ed Wilts, RHCE
-Mounds View, MN, USA
-mailto:ewilts@ewilts.org
-Member #1, Red Hat Community Ambassador Program
+        -eric
