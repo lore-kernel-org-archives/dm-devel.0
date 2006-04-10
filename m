@@ -1,13 +1,14 @@
-From: "Eric Van Hensbergen" <ericvh@gmail.com>
-Subject: Device Mapper as a cache for SAN?
-Date: Mon, 10 Apr 2006 12:58:36 -0500
-Message-ID: <a4e6962a0604101058w75a7147cy8860bc9ebf8f269e@mail.gmail.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: HSG80, DM, multipath issues
+Date: Mon, 10 Apr 2006 20:28:47 +0200
+Message-ID: <443AA3DF.3080404@free.fr>
+References: <20060410174210.GA3798@tditx.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20060410174210.GA3798@tditx.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,14 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-It seems like device-mapper would allow a fairly straightforward
-implementation of a local-disk cache for a SAN (iSCSI, AOE, etc.). =20
-The dm-raid1 and dm-mpath modules seem to have elements of overlap,
-but its not clear if there's a straightforward way to implement a
-local-disk block cache using existing modules, or whether a new one is
-needed.  Has anyone looked at this before?
 
-          -eric
+>
+>   a. (the big one!) Is there something I'm doing wrong, or a workaround, or something that would
+>      help me get this up & running
+>   
+You mostly got it right.
+
+HP indeed is not interested in providing a firmware with LUN size 
+inquiry enabled for this array. So we are bound to  ugly workarounds.
+
+The one I used is "force a bounce per LUN just after driver loading", 
+which this snippet does :
+
+# cat read_ghost_capa
+dummy_capa=2097152
+
+for i in $(grep -rl $dummy_capa /sys/block/sd*/size|awk -F/ '{print $4}')
+do
+        sg_start -s 1 /dev/$i
+        sleep 1
+        echo 1>/sys/block/$i/device/rescan
+done
+
+
+The multipath tools are rightly refusing to deal with paths with unknown 
+size. This won't change.
+
+That problem solved, you'll hit the next wall, which is the hardware 
+handler need for this array family.
+
+Regards,
+cvaroqui
