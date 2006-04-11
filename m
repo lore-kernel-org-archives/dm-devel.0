@@ -1,14 +1,14 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Problems with multipathing
-Date: Tue, 11 Apr 2006 20:42:02 +0200
-Message-ID: <443BF87A.10804@free.fr>
-References: <443BF12E.50900@ludd.luth.se>
+From: URZ- AG <arsene.gschwind@unibas.ch>
+Subject: Re: multipath disk size
+Date: Tue, 11 Apr 2006 21:54:53 +0200
+Message-ID: <443C098D.1090604@unibas.ch>
+References: <4436271F.1090509@unibas.ch> <4436E844.2090301@free.fr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <443BF12E.50900@ludd.luth.se>
+In-Reply-To: <4436E844.2090301@free.fr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,31 +21,37 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Roger H=E5kansson a =E9crit :
-> I'm trying to setup a couple of machines running CentOS 4.3 x86_64 usin=
-g
-> disk from a SAN, but I can't get the multipathing to work properly.
+
+
+Christophe Varoqui wrote:
+
+>>
+> Thanks for this report.
 >
-> The machines (three in total) all have two Emulex LP10000-M2 and thus
-> are using the lpfc-driver.
+> I can't reproduce this here.
 >
-> When I boot the machines the paths seem to be multipathed somewhat, if =
-i
-> put a "multipath"-tag in /etc/multipath.conf with a specific alias
-> (yellow,red) for each wwid, those paths are mapped under /dev/mapper an=
-d
-> /dev/mpath.
+> I'm afraid I'll have to ask you to try and refine your report though.
+> Use a debugger to track [m]pp->size changes, or try adding debugging=20
+> output in the key code areas : add_map_with_path(), coalesce_paths(), .=
+..
 >
-> But multipath -ll doesn't show what I expect (basically no mappings) an=
-d
-> if I do a multipath -F I can't get the mappings back without a reboot.
+> Regards,
+> cvaroqui
 >
-> If I do a 'multipath -v3' directly after boot, this is what I get:
-> ...
-> Anyone got a clue how to solve this problem?
->
->  =20
-Can you reproduce with upstream version ?
+Hello Christophe,
+
+I'm not a C Guru but i think i have been able to track it down.
+It seems that when discovering the device for paths after the get_serial=20
+(discovery.c) function the size has changed.
+I've entered two debug entries in  scsi_ioctl_pathinfo() which prints=20
+out  pp->size, one before get_serial call and one after and the size has=20
+changed when the second print its value. So far I've seen, this function=20
+should not change anything to the size, but it seems to write to that=20
+pointer, could it be that this function writes out of a buffer size?
+I'm not comfortable with the debugger so I have not been able to debug=20
+that in deep.
+It would be great if  you could give me some more instructions on how to=20
+analyze/debug it .
 
 Regards,
-cvaroqui
+Ars=E8ne
