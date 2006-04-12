@@ -1,15 +1,16 @@
-From: Arsene Gschwind <arsene.gschwind@unibas.ch>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
 Subject: Re: multipath disk size
-Date: Wed, 12 Apr 2006 14:19:21 +0200
-Message-ID: <443CF049.40003@unibas.ch>
-References: <4436271F.1090509@unibas.ch> <4436E844.2090301@free.fr>
-	<443C098D.1090604@unibas.ch>
+Date: Wed, 12 Apr 2006 21:45:14 +0200
+Message-ID: <443D58CA.8080301@free.fr>
+References: <4436271F.1090509@unibas.ch>
+	<4436E844.2090301@free.fr>	<443C098D.1090604@unibas.ch>
+	<443CF049.40003@unibas.ch>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <443C098D.1090604@unibas.ch>
+In-Reply-To: <443CF049.40003@unibas.ch>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,74 +23,156 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I've found something strange, 2 declaration of SERIAL_SIZE with=20
-different sizes
-libmultipath/structs.h:#define SERIAL_SIZE              17
-path_priority/pp_balance_units/pp_balance_units.c:#define SERIAL_SIZE 255
-
-In my case the first buffer size is to small because pp->serial has a=20
-size of 17 chars and when you look at my output it has 40 chars.
-By setting libmultipath/structs.h:#define SERIAL_SIZE    to 255 it works=20
-for me and the returned volume size is correct.
-I'm not sure if this is the right solution, it would be great if someone=20
-could verify that issue.
-
-Thanks a lot for your work
-Ars=E8ne
-
-URZ- AG wrote:
-
+Arsene Gschwind a =E9crit :
+> I've found something strange, 2 declaration of SERIAL_SIZE with=20
+> different sizes
+> libmultipath/structs.h:#define SERIAL_SIZE              17
+> path_priority/pp_balance_units/pp_balance_units.c:#define SERIAL_SIZE 2=
+55
 >
+> In my case the first buffer size is to small because pp->serial has a=20
+> size of 17 chars and when you look at my output it has 40 chars.
+> By setting libmultipath/structs.h:#define SERIAL_SIZE    to 255 it=20
+> works for me and the returned volume size is correct.
+> I'm not sure if this is the right solution, it would be great if=20
+> someone could verify that issue.
 >
-> Christophe Varoqui wrote:
->
->>>
->> Thanks for this report.
->>
->> I can't reproduce this here.
->>
->> I'm afraid I'll have to ask you to try and refine your report though.
->> Use a debugger to track [m]pp->size changes, or try adding debugging=20
->> output in the key code areas : add_map_with_path(), coalesce_paths(),=20
->> ...
->>
->> Regards,
->> cvaroqui
->>
-> Hello Christophe,
->
-> I'm not a C Guru but i think i have been able to track it down.
-> It seems that when discovering the device for paths after the=20
-> get_serial (discovery.c) function the size has changed.
-> I've entered two debug entries in  scsi_ioctl_pathinfo() which prints=20
-> out  pp->size, one before get_serial call and one after and the size=20
-> has changed when the second print its value. So far I've seen, this=20
-> function should not change anything to the size, but it seems to write=20
-> to that pointer, could it be that this function writes out of a buffer=20
-> size?
-> I'm not comfortable with the debugger so I have not been able to debug=20
-> that in deep.
-> It would be great if  you could give me some more instructions on how=20
-> to analyze/debug it .
->
-> Regards,
+> Thanks a lot for your work
 > Ars=E8ne
 >
-> --=20
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+Very good catch.
+get_serial() was happily overflowing.
+Sorry for your being the first with a long-serial-hardware :)
 
 
---=20
-***********************************************************
-Gschwind Arsene		=09
-Universitaet Rechenzentrum (URZ)
-Klingelbergstrasse 70
-CH-4056 Basel
-SWITZERLAND
+Please try the following 2 patchs, with testing between to 2, please.
 
-Languages : F/E/D
-WWW:  <http://www.urz.unibas.ch>
-Mail: <Arsene DOT Gschwind AT unibas DOT ch>
-************************************************************
+=3D=3D=3D 1=3D=3D=3D
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -339,24 +339,26 @@ do_inq(int sg_fd, int cmddt, int evpd, u
+         return -1;
+ }
+
+-int
+-get_serial (char * str, int fd)
++static int
++get_serial (char * str, int maxlen, int fd)
+ {
+         int len =3D 0;
+         char buff[MX_ALLOC_LEN + 1] =3D {0};
+
+        if (fd < 0)
+-                return 0;
++                return 1;
+
+        if (0 =3D=3D do_inq(fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0)) {
+                len =3D buff[3];
++               if (len >=3D maxlen)
++                       return 1;
+                if (len > 0) {
+                        memcpy(str, buff + 4, len);
+                        str[len] =3D '\0';
+                }
+-               return 1;
++               return 0;
+        }
+-        return 0;
++        return 1;
+ }
+
+ static int
+@@ -597,7 +599,7 @@ static int
+ scsi_ioctl_pathinfo (struct path * pp, int mask)
+ {
+        if (mask & DI_SERIAL) {
+-               get_serial(pp->serial, pp->fd);
++               get_serial(pp->serial, SERIAL_SIZE, pp->fd);
+                condlog(3, "%s: serial =3D %s", pp->dev, pp->serial);
+        }
+
+diff --git a/libmultipath/discovery.h b/libmultipath/discovery.h
+--- a/libmultipath/discovery.h
++++ b/libmultipath/discovery.h
+@@ -30,7 +30,6 @@ int sysfs_get_size (char * sysfs_path, c
+ int path_discovery (vector pathvec, struct config * conf, int flag);
+
+ void basename (char *, char *);
+-int get_serial (char * buff, int fd);
+ int do_tur (char *);
+ int devt2devname (char *, char *);
+ int pathinfo (struct path *, vector hwtable, int mask);
+diff --git a/path_priority/pp_balance_units/pp_balance_units.c=20
+b/path_priority/pp_balance_units/pp_balance_units.c
+--- a/path_priority/pp_balance_units/pp_balance_units.c
++++ b/path_priority/pp_balance_units/pp_balance_units.c
+@@ -172,7 +172,7 @@ do_inq(int sg_fd, int cmddt, int evpd, u
+ }
+
+ static int
+-get_serial (char * str, char * devt)
++get_serial (char * str, int maxlen, char * devt)
+ {
+        int fd;
+         int len;
+@@ -181,20 +181,22 @@ get_serial (char * str, char * devt)
+        fd =3D opennode(devt, O_RDONLY);
+
+        if (fd < 0)
+-                return 0;
++                return 1;
+
+        if (0 =3D=3D do_inq(fd, 0, 1, 0x80, buff, MX_ALLOC_LEN, 0)) {
+                len =3D buff[3];
++               if (len >=3D maxlen)
++                       return 1;
+                if (len > 0) {
+                        memcpy(str, buff + 4, len);
+                        buff[len] =3D '\0';
+                }
+                close(fd);
+-               return 1;
++               return 0;
+        }
+
+        closenode(devt, fd);
+-        return 0;
++        return 1;
+ }
+
+ static void *
+@@ -358,7 +360,7 @@ get_paths (vector pathvec)
+                        if (pos =3D=3D BEFOREPG)
+                                pos =3D INPG;
+
+-                       get_serial(pp->serial, pp->dev_t);
++                       get_serial(pp->serial, SERIAL_SIZE, pp->dev_t);
+                        vector_alloc_slot(pathvec);
+                        vector_set_slot(pathvec, pp);
+                        debug("store %s [%s]",
+@@ -449,7 +451,7 @@ main (int argc, char **argv)
+        if (optind<argc)
+                strncpy(ref_path->dev_t, argv[optind], WORD_SIZE);
+
+-       get_serial(ref_path->serial, ref_path->dev_t);
++       get_serial(ref_path->serial, SERIAL_SIZE, ref_path->dev_t);
+
+        if (!ref_path->serial || !strlen(ref_path->serial))
+                exit_tool(0);
+
+
+=3D=3D=3D=3D 2 =3D=3D=3D=3D
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -2,7 +2,7 @@
+ #define _STRUCTS_H
+
+ #define WWID_SIZE              64
+-#define SERIAL_SIZE            17
++#define SERIAL_SIZE            64
+ #define NODE_NAME_SIZE         19
+ #define PATH_STR_SIZE                  16
+ #define PARAMS_SIZE            1024
