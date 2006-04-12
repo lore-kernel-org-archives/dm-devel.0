@@ -1,11 +1,15 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Help with a BUG()
-Date: Tue, 11 Apr 2006 14:37:05 -0700
-Message-ID: <87vetfkd4u.fsf@caffeine.beaverton.ibm.com>
+From: Arsene Gschwind <arsene.gschwind@unibas.ch>
+Subject: Re: multipath disk size
+Date: Wed, 12 Apr 2006 14:19:21 +0200
+Message-ID: <443CF049.40003@unibas.ch>
+References: <4436271F.1090509@unibas.ch> <4436E844.2090301@free.fr>
+	<443C098D.1090604@unibas.ch>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1508446305=="
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <443C098D.1090604@unibas.ch>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,99 +22,74 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1508446305==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+I've found something strange, 2 declaration of SERIAL_SIZE with=20
+different sizes
+libmultipath/structs.h:#define SERIAL_SIZE              17
+path_priority/pp_balance_units/pp_balance_units.c:#define SERIAL_SIZE 255
 
---=-=-=
-Content-Transfer-Encoding: quoted-printable
+In my case the first buffer size is to small because pp->serial has a=20
+size of 17 chars and when you look at my output it has 40 chars.
+By setting libmultipath/structs.h:#define SERIAL_SIZE    to 255 it works=20
+for me and the returned volume size is correct.
+I'm not sure if this is the right solution, it would be great if someone=20
+could verify that issue.
 
-Hi All,
+Thanks a lot for your work
+Ars=E8ne
 
-I continue to work on my userspace-controlled CoW target for
-device-mapper and have almost completed qcow support.  Recently, I've
-been hitting a BUG() when I do anything more than trivial reads and
-writes to my target (bug output included at the end of this mail).  It
-seems as though the loopback driver (which is one of the places I'm
-sending bio's to) is calling bio_put() when the usage count is already
-zero.  I'm not sure what I could be doing in my target that could be
-affecting the usage count on a bio.
+URZ- AG wrote:
 
-I would _really_ appreciate it if a few people could take a look at my
-kernel code (module/dm-cow.c) and see if anything pops out at them as
-incorrect:
-
-  http://static.danplanet.com/dm-cow/dm_cow_04112006.tar.gz
-
-Anyone that wants to run it and see the issue for themselves can try
-running the 'copyusr' test, which might work with a healthy amount of
-luck.=20
-
-Thanks!
-
-=2D-=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
-
-kernel BUG at fs/bio.c:220!
-invalid opcode: 0000 [#1]
-SMP
-Modules linked in: loop dm_cow ipv6 parport_pc
-acl rfcomm l2cap bluetooth sunrpc video button
-i801 i2c_core shpchp tg3 dm_snapshot dm_zero dm_mirror ext3 jbd dm_mod mpts=
-pi mptscsih mptbase sd_mod scsi_mod
-CPU:    2
-EIP:    0060:[<c1067b31>]    Not tainted VLI
-EFLAGS: 00010246   (2.6.16.1 #2)
-EIP is at bio_put+0x24/0x2e
-eax: 00000000   ebx: cce658f8   ecx: f7af3d80
-
-esi: d3e07d80   edi: 00000000   ebp: 00000000
-
-ds: 007b   es: 007b   ss: 0068
-Process loop0 (pid: 14450, threadinfo=3Df6ea6000
-
-Stack: <0>f8885606 00000078 f88b9080 cce643ec 00000000 d3e07d80 00000200 f8=
-885567
-       00000000 c10678b2 f6ea6f64 f8a58884 00000200 00000000 d3e07d80 f7fca=
-fbc
-       00000200 00000000 f8a585ff f8a58884 f6ea6fc0 c1005e96 00000001 cda73=
-124
-Call Trace:
- [<f8885606>] clone_endio+0x9f/0xd2 [dm_mod]
- [<f8885567>] clone_endio+0x0/0xd2 [dm_mod]
- [<c10678b2>] bio_endio+0x3e/0x69
- [<f8a58884>] lo_read_actor+0x0/0xe9 [loop]
- [<f8a585ff>] loop_thread+0x18e/0x413 [loop]
- [<f8a58884>] lo_read_actor+0x0/0xe9 [loop]
- [<c1005e96>] do_syscall_trace+0x196/0x1f5
- [<c1003906>] syscall_exit_work+0x16/0x1c
- [<f8a58471>] loop_thread+0x0/0x413 [loop]
- [<c1001ac5>] kernel_thread_helper+0x5/0xb
-Code: c6 7c db 5b 5e 5f c3 89 c2 8b 40 38 85 c0 74 1b f0 ff 4a 38 0f 94 c0 =
-84 c0 75 01 c3 c7 42 08 00 00 00 00 89 d0 ff 52 40 89 f6 c3 <0f> 0b dc 00 1=
-7 5a 23 c1 eb db 55 57 56 53 89 c7 8b 40 30 0f b7
-
---=-=-=
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2.1 (GNU/Linux)
-
-iD8DBQBEPCGDwtEf7b4GJVQRAuZuAJ9h9+Ctc6eiaihgTN6evOY0vf6MJACeOpqp
-uC4b20d6LXZkyj8qVomRqUM=
-=2A68
------END PGP SIGNATURE-----
---=-=-=--
+>
+>
+> Christophe Varoqui wrote:
+>
+>>>
+>> Thanks for this report.
+>>
+>> I can't reproduce this here.
+>>
+>> I'm afraid I'll have to ask you to try and refine your report though.
+>> Use a debugger to track [m]pp->size changes, or try adding debugging=20
+>> output in the key code areas : add_map_with_path(), coalesce_paths(),=20
+>> ...
+>>
+>> Regards,
+>> cvaroqui
+>>
+> Hello Christophe,
+>
+> I'm not a C Guru but i think i have been able to track it down.
+> It seems that when discovering the device for paths after the=20
+> get_serial (discovery.c) function the size has changed.
+> I've entered two debug entries in  scsi_ioctl_pathinfo() which prints=20
+> out  pp->size, one before get_serial call and one after and the size=20
+> has changed when the second print its value. So far I've seen, this=20
+> function should not change anything to the size, but it seems to write=20
+> to that pointer, could it be that this function writes out of a buffer=20
+> size?
+> I'm not comfortable with the debugger so I have not been able to debug=20
+> that in deep.
+> It would be great if  you could give me some more instructions on how=20
+> to analyze/debug it .
+>
+> Regards,
+> Ars=E8ne
+>
+> --=20
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
 
---===============1508446305==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+--=20
+***********************************************************
+Gschwind Arsene		=09
+Universitaet Rechenzentrum (URZ)
+Klingelbergstrasse 70
+CH-4056 Basel
+SWITZERLAND
 
-
---===============1508446305==--
+Languages : F/E/D
+WWW:  <http://www.urz.unibas.ch>
+Mail: <Arsene DOT Gschwind AT unibas DOT ch>
+************************************************************
