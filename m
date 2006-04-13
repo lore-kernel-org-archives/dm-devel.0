@@ -1,14 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Segfault running multipath -d -v 3 at HOL
-Date: Thu, 13 Apr 2006 23:06:09 +0200
-Message-ID: <443EBD41.5060503@free.fr>
-References: <1144886522.7553.6.camel@ca-bwong3.trans.corp>
+From: =?big5?B?TWljaGFlbCBZYW8gLavAp9O/sg==?= <Michael.Yao@zyxel.com.tw>
+Subject: [EVMS][XFS][DM] We cannot create XFS file system on the
+	evms volume larger than 1TB
+Date: Thu, 13 Apr 2006 17:06:18 +0800
+Message-ID: <6AADA40AD4E8874FAF6FFED523614C9B2500E8@zytwbe01.ZyXEL.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============1156072047=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1144886522.7553.6.camel@ca-bwong3.trans.corp>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,45 +17,529 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bwong@pillardata.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: =?big5?B?Q2hpYSBDaGFvIC27r7nFsWo=?= <Chia.Chao@zyxel.com.tw>, =?big5?B?QWxleCBDaGVuZyAtvke0vKSv?= <Alex.Cheng@zyxel.com.tw>
 List-Id: dm-devel.ids
 
-Brian Wong a =E9crit :
-> Hi Christophe,
->
-> I'm seeing a segfault running `multipath -d -v 3` at HOL.  Here's the
-> fix for the issue.  It might be worth applying similar logic fixes to
-> the rest of the free_x() calls in free_config(); let me know if you wan=
-t
-> that patch too.
->  =20
-Thanks. I applied this bit.
-> =20
-> diff --git a/libmultipath/parser.c b/libmultipath/parser.c
-> index 385e4fb..bb04968 100644
-> --- a/libmultipath/parser.c
-> +++ b/libmultipath/parser.c
-> @@ -18,6 +18,7 @@
->   */
-> =20
->  #include <syslog.h>
-> =20
->  #include "parser.h"
->  #include "memory.h"
-> @@ -110,6 +111,9 @@ free_keywords(vector keywords)
->  	struct keyword *keyword;
->  	int i;
-> =20
-> +	if (!keywords) return;
-> +
->  	for (i =3D 0; i < VECTOR_SIZE(keywords); i++) {
->  		keyword =3D VECTOR_SLOT(keywords, i);
->  		if (keyword->sub)
-> @@ -483,3 +487,11 @@ init_data(char *conf_file, void (*init_k
-> =20
->  	return r;
->  }
->
->  =20
-Regards,
-cvaroqui
+This is a multi-part message in MIME format.
+
+--===============1156072047==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C65ED9.86BB7CED"
+
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C65ED9.86BB7CED
+Content-Type: text/plain;
+	charset="big5"
+Content-Transfer-Encoding: quoted-printable
+
+=20
+
+Hi, I have FOUR 500GB SATA hard disks.
+
+I created a 1.4TB evms volume, and it failed when I want to make XFS =
+filesystem on it.=20
+
+These are the snapshots:
+
+root@2TB:~# mkfs.xfs -f -L volume1 /dev/evms/volume1
+
+meta-data=3D/dev/evms/volume1      isize=3D256    agcount=3D4294967134, =
+agsize=3D1048576 blks
+
+         =3D                       sectsz=3D512
+
+data     =3D                       bsize=3D4096   =
+blocks=3D4503599456772095, imaxpct=3D25
+
+         =3D                       sunit=3D0      swidth=3D0 blks, =
+unwritten=3D1
+
+naming   =3Dversion 2              bsize=3D4096
+
+log      =3Dinternal log           bsize=3D4096   blocks=3D32768, =
+version=3D1
+
+         =3D                       sectsz=3D512   sunit=3D0 blks
+
+realtime =3Dnone                   extsz=3D65536  blocks=3D0, =
+rtextents=3D0
+
+mkfs.xfs: pwrite64 failed: Invalid argument
+
+root@2TB:~# mkfs.xfs -f -L volume1 -d size=3D100m /dev/evms/volume1
+
+meta-data=3D/dev/evms/volume1      isize=3D256    agcount=3D6, =
+agsize=3D4267 blks
+
+         =3D                       sectsz=3D512
+
+data     =3D                       bsize=3D4096   blocks=3D25600, =
+imaxpct=3D25
+
+         =3D                       sunit=3D0      swidth=3D0 blks, =
+unwritten=3D1
+
+naming   =3Dversion 2              bsize=3D4096
+
+log      =3Dinternal log           bsize=3D4096   blocks=3D1200, =
+version=3D1
+
+         =3D                       sectsz=3D512   sunit=3D0 blks
+
+realtime =3Dnone                   extsz=3D65536  blocks=3D0, =
+rtextents=3D0
+
+mkfs.xfs: pwrite64 failed: Invalid argument
+
+=20
+
+4503599456772095 probably isn't correct, it should be 357687.
+
+It seems to have a disconnection between what evms is reporting for the =
+size of the partition and what mkfs is getting.=20
+
+And it won=A1=A6t happen in non-EVMS/DM devices.
+
+As described in http://oss.sgi.com/bugzilla/show_bug.cgi?id=3D267=20
+
+=20
+
+Setup: device-mapper 1.01.05/Driver version 4.1.1, evms2.5.5, linux =
+2.4.31
+
+=20
+
+And these are the evms commands:
+
+asm:DosSegMgr=3D{}, sda
+
+asm:DosSegMgr=3D{}, sdb
+
+asm:DosSegMgr=3D{}, sdc
+
+asm:DosSegMgr=3D{}, sdd
+
+create: Segment, sda_freespace1, primary=3Dfalse
+
+create: Segment, sdb_freespace1, primary=3Dfalse
+
+create: Segment, sdc_freespace1, primary=3Dfalse
+
+create: Segment, sdd_freespace1, primary=3Dfalse
+
+create: Region, MDRaid5RegMgr=3D{}, sda5, sdb5, sdc5, sdd5
+
+create: Container, LvmRegMgr=3D{name=3D"Con_volume1", pe_size=3D32MB}, =
+md/md0
+
+create: Region, LvmRegMgr=3D{name=3D"Reg_volume1", size=3D1.4TB}, =
+"lvm/Con_volume1/Freespace"
+
+create: Volume, "lvm/Con_volume1/Reg_volume1", Name=3D"volume1=A1=A7
+
+mkfs: XFS=3D{vollabel=3Dvolume1}, /dev/evms/volume1
+
+=20
+
+--
+
+Best regards, Michael Yao
+
+=20
+
+
+------_=_NextPart_001_01C65ED9.86BB7CED
+Content-Type: text/html;
+	charset="big5"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:p=3D"urn:schemas-microsoft-com:office:powerpoint" =
+xmlns:oa=3D"urn:schemas-microsoft-com:office:activation" =
+xmlns:st1=3D"urn:schemas-microsoft-com:office:smarttags" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Dbig5">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"chsdate"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"chmetcnv"/>
+<!--[if !mso]>
+<style>
+st1\:*{behavior:url(#default#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:=B7s=B2=D3=A9=FA=C5=E9;
+	panose-1:2 2 3 0 0 0 0 0 0 0;}
+@font-face
+	{font-family:"\@=B7s=B2=D3=A9=FA=C5=E9";
+	panose-1:2 2 3 0 0 0 0 0 0 0;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0cm;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:Arial;
+	color:windowtext;}
+ /* Page Definitions */
+ @page Section1
+	{size:595.3pt 841.9pt;
+	margin:72.0pt 90.0pt 72.0pt 90.0pt;
+	layout-grid:18.0pt;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+
+</head>
+
+<body lang=3DZH-TW link=3Dblue vlink=3Dpurple =
+style=3D'text-justify-trim:punctuation'>
+
+<div class=3DSection1 style=3D'layout-grid:18.0pt'>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>Hi, I have FOUR 500GB SATA hard =
+disks.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>I created a 1.4TB evms volume, and it failed =
+when I
+want to make XFS filesystem on it. <o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>These are the =
+snapshots:<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>root@2TB:~# mkfs.xfs -f -L volume1 =
+/dev/evms/volume1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>meta-data=3D/dev/evms/volume1&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;
+isize=3D256&nbsp;&nbsp;&nbsp; agcount=3D4294967134, agsize=3D1048576 =
+blks<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sectsz=3D512<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>data&nbsp;&nbsp;&nbsp;&nbsp;
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+bsize=3D4096&nbsp;&nbsp; blocks=3D4503599456772095, =
+imaxpct=3D25<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sunit=3D0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; swidth=3D0 blks, =
+unwritten=3D1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>naming&nbsp;&nbsp; =3Dversion
+2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;
+bsize=3D4096<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>log&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =3Dinternal
+log&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+bsize=3D4096&nbsp;&nbsp; blocks=3D32768, =
+version=3D1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sectsz=3D512&nbsp;&nbsp; sunit=3D0 blks<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>realtime
+=3Dnone&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+extsz=3D65536&nbsp; blocks=3D0, =
+rtextents=3D0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>mkfs.xfs: pwrite64 failed: Invalid =
+argument<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>root@2TB:~# mkfs.xfs -f -L volume1 -d =
+size=3D<st1:chmetcnv
+TCSC=3D"0" NumberType=3D"1" Negative=3D"False" HasSpace=3D"False" =
+SourceValue=3D"100"
+UnitName=3D"m" w:st=3D"on">100m</st1:chmetcnv> =
+/dev/evms/volume1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>meta-data=3D/dev/evms/volume1&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;
+isize=3D256&nbsp;&nbsp;&nbsp; agcount=3D6, agsize=3D4267 =
+blks<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sectsz=3D512<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>data&nbsp;&nbsp;&nbsp;&nbsp;
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+bsize=3D4096&nbsp;&nbsp; blocks=3D25600, =
+imaxpct=3D25<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sunit=3D0&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; swidth=3D0 blks, =
+unwritten=3D1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>naming&nbsp;&nbsp; =3Dversion
+2&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;
+bsize=3D4096<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>log&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =3Dinternal
+log&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+bsize=3D4096&nbsp;&nbsp; blocks=3D1200, =
+version=3D1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+
+=3D&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+sectsz=3D512&nbsp;&nbsp; sunit=3D0 blks<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>realtime =
+=3Dnone&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+extsz=3D65536&nbsp; blocks=3D0, =
+rtextents=3D0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>mkfs.xfs: pwrite64 failed: Invalid =
+argument<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>4503599456772095 probably isn't correct, it =
+should be
+357687.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>It seems to have a disconnection between what =
+evms is
+reporting for the size of the partition and what mkfs is getting. =
+<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>And it won=A1=A6t happen in non-EVMS/DM =
+devices.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>As described in <a
+href=3D"http://oss.sgi.com/bugzilla/show_bug.cgi?id=3D267">http://oss.sgi=
+.com/bugzilla/show_bug.cgi?id=3D267</a>
+<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>Setup: device-mapper <st1:chsdate =
+IsROCDate=3D"False"
+IsLunarDate=3D"False" Day=3D"30" Month=3D"12" Year=3D"1899" =
+w:st=3D"on">1.01.05</st1:chsdate>/Driver
+version 4.1.1, evms2.5.5, linux 2.4.31<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>And these are the evms =
+commands:<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>asm:DosSegMgr=3D{}, =
+sda<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>asm:DosSegMgr=3D{}, =
+sdb<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>asm:DosSegMgr=3D{}, =
+sdc<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>asm:DosSegMgr=3D{}, =
+sdd<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Segment, sda_freespace1, =
+primary=3Dfalse<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Segment, sdb_freespace1, =
+primary=3Dfalse<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Segment, sdc_freespace1, =
+primary=3Dfalse<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Segment, sdd_freespace1, =
+primary=3Dfalse<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Region, MDRaid5RegMgr=3D{}, sda5, sdb5, =
+sdc5,
+sdd5<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Container,
+LvmRegMgr=3D{name=3D&quot;Con_volume1&quot;, pe_size=3D32MB}, =
+md/md0<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Region, =
+LvmRegMgr=3D{name=3D&quot;Reg_volume1&quot;,
+size=3D1.4TB}, =
+&quot;lvm/Con_volume1/Freespace&quot;<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>create: Volume,
+&quot;lvm/Con_volume1/Reg_volume1&quot;, =
+Name=3D&quot;volume1=A1=A7<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span lang=3DEN-US =
+style=3D'font-size:
+9.0pt;font-family:Arial'>mkfs: XFS=3D{vollabel=3Dvolume1}, =
+/dev/evms/volume1<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"Times New Roman"><span =
+lang=3DEN-US
+style=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"Times New Roman"><span =
+lang=3DEN-US
+style=3D'font-size:10.0pt'>--</span></font><span =
+lang=3DEN-US><o:p></o:p></span></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3D"Times New Roman"><span =
+lang=3DEN-US
+style=3D'font-size:10.0pt'>Best regards, Michael Yao</span></font><span
+lang=3DEN-US><o:p></o:p></span></p>
+
+<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span =
+lang=3DEN-US
+style=3D'font-size:12.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01C65ED9.86BB7CED--
+
+
+--===============1156072047==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1156072047==--
