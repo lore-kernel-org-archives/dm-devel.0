@@ -1,7 +1,7 @@
 From: Arsene Gschwind <arsene.gschwind@unibas.ch>
 Subject: Re: multipath disk size
-Date: Thu, 13 Apr 2006 11:34:45 +0200
-Message-ID: <443E1B35.2030204@unibas.ch>
+Date: Thu, 13 Apr 2006 18:41:39 +0200
+Message-ID: <443E7F43.9060907@unibas.ch>
 References: <4436271F.1090509@unibas.ch> <4436E844.2090301@free.fr>
 	<443C098D.1090604@unibas.ch> <443CF049.40003@unibas.ch>
 	<443D58CA.8080301@free.fr>
@@ -23,22 +23,20 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I'm having problems applying those patches. When I try to apply the=20
-first one it returns an error:
+Hello Christophe,
 
-patch -p1 < ../patch1.diff
-patching file libmultipath/discovery.c
-patch: **** malformed patch at line 6: }
+I've applied the patchs editing by hand.
+Doing tests after applied the first Patch results in an empty serial=20
+printout, but the volume size returned is korrekt and the multipath=20
+driver works fine.
+Doing tests after applied the second Patch results with a correct serial=20
+printout and correct volume size.
+It seems that this 2 patches resolved my issue, thanks a lot.
 
-and when using git-apply:
-git-apply --check ../patch1.diff
-fatal: corrupt patch at line 6
+Are you going to release a new tarball version which includes this 2=20
+patches?
 
-As source I'm using the latest tarball "multipath-tools-0.4.7.tar.bz2"
-I haven't been able to figure out what's wrong, I may have used the=20
-wrong patch tool or options ??
-Thanks for any hint
-
+Thanks a lot et "Joyeuse P=E2ques" avec beaucoup de chocolat :-)
 Ars=E8ne
 
 Christophe Varoqui wrote:
