@@ -1,7 +1,8 @@
 From: Jeff Mahoney <jeffm@suse.com>
-Subject: [PATCH 06/08] dm: fix refcounting
+Subject: [PATCH 01/08] idr: add idr_replace method for replacing
+	pointers
 Date: Mon, 17 Apr 2006 11:16:02 -0400
-Message-ID: <20060417151602.GA18977@locomotive.unixthugs.org>
+Message-ID: <20060417151602.GA18916@locomotive.unixthugs.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -20,149 +21,78 @@ To: Device Mapper Development List <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
- For the most part, reference counting in the dm code is ok, but it must be
- taken under the _minor_lock. There are paths where a mapped_device pointer
- is returned and then a reference is taken - and taking the reference may be
- too late.
-
- This patch fixes a number of paths so that the reference is always taken
- under the lock.
+ This patch adds an idr_replace() method to the IDR library for replacing
+ a pointer already present in the IDR. Rather than do a remove/add pair, this
+ function simply updates the pointer for an ID.
 
 Signed-off-by: Jeff Mahoney <jeffm@suse.com>
 
 --
- drivers/md/dm-ioctl.c |   21 ++++++++++++++-------
- drivers/md/dm.c       |   14 +++-----------
- 2 files changed, 17 insertions(+), 18 deletions(-)
+ include/linux/idr.h |    1 +
+ lib/idr.c           |   43 +++++++++++++++++++++++++++++++++++++++++++
+ 2 files changed, 44 insertions(+)
 
-diff -ruNpX ../dontdiff 2.6.17-rc1-staging1/drivers/md/dm.c 2.6.17-rc1-staging2/drivers/md/dm.c
---- 2.6.17-rc1-staging1/drivers/md/dm.c	2006-04-17 10:51:48.000000000 -0400
-+++ 2.6.17-rc1-staging2/drivers/md/dm.c	2006-04-17 10:51:48.000000000 -0400
-@@ -1026,7 +1026,7 @@ int dm_create_with_minor(unsigned int mi
- 	return create_aux(minor, 1, result);
+diff -ruNpX ../dontdiff 2.6.17-rc1-staging1/include/linux/idr.h 2.6.17-rc1-staging2/include/linux/idr.h
+--- 2.6.17-rc1-staging1/include/linux/idr.h	2006-01-02 22:21:10.000000000 -0500
++++ 2.6.17-rc1-staging2/include/linux/idr.h	2006-04-17 10:51:41.000000000 -0400
+@@ -78,6 +78,7 @@ void *idr_find(struct idr *idp, int id);
+ int idr_pre_get(struct idr *idp, gfp_t gfp_mask);
+ int idr_get_new(struct idr *idp, void *ptr, int *id);
+ int idr_get_new_above(struct idr *idp, void *ptr, int starting_id, int *id);
++void *idr_replace(struct idr *idp, void *ptr, int id);
+ void idr_remove(struct idr *idp, int id);
+ void idr_destroy(struct idr *idp);
+ void idr_init(struct idr *idp);
+diff -ruNpX ../dontdiff 2.6.17-rc1-staging1/lib/idr.c 2.6.17-rc1-staging2/lib/idr.c
+--- 2.6.17-rc1-staging1/lib/idr.c	2006-01-02 22:21:10.000000000 -0500
++++ 2.6.17-rc1-staging2/lib/idr.c	2006-04-17 10:51:41.000000000 -0400
+@@ -390,6 +390,49 @@ void *idr_find(struct idr *idp, int id)
  }
+ EXPORT_SYMBOL(idr_find);
  
--static struct mapped_device *dm_find_md(dev_t dev)
-+struct mapped_device *dm_get_md(dev_t dev)
- {
- 	struct mapped_device *md;
- 	unsigned minor = MINOR(dev);
-@@ -1043,6 +1043,8 @@ static struct mapped_device *dm_find_md(
- 	if (md) {
- 		if (test_bit(DMF_FREEING, &md->flags))
- 			md = NULL;
-+		else
-+			dm_get(md);
- 	}
- 
- 	spin_unlock(&_minor_lock);
-@@ -1050,16 +1052,6 @@ static struct mapped_device *dm_find_md(
- 	return md;
- }
- 
--struct mapped_device *dm_get_md(dev_t dev)
--{
--	struct mapped_device *md = dm_find_md(dev);
--
--	if (md)
--		dm_get(md);
--
--	return md;
--}
--
- void *dm_get_mdptr(struct mapped_device *md)
- {
- 	return md->interface_ptr;
-diff -ruNpX ../dontdiff 2.6.17-rc1-staging1/drivers/md/dm-ioctl.c 2.6.17-rc1-staging2/drivers/md/dm-ioctl.c
---- 2.6.17-rc1-staging1/drivers/md/dm-ioctl.c	2006-04-13 20:22:45.000000000 -0400
-+++ 2.6.17-rc1-staging2/drivers/md/dm-ioctl.c	2006-04-17 10:51:48.000000000 -0400
-@@ -102,8 +102,10 @@ static struct hash_cell *__get_name_cell
- 	unsigned int h = hash_str(str);
- 
- 	list_for_each_entry (hc, _name_buckets + h, name_list)
--		if (!strcmp(hc->name, str))
-+		if (!strcmp(hc->name, str)) {
-+			dm_get(hc->md);
- 			return hc;
-+		}
- 
- 	return NULL;
- }
-@@ -114,8 +116,10 @@ static struct hash_cell *__get_uuid_cell
- 	unsigned int h = hash_str(str);
- 
- 	list_for_each_entry (hc, _uuid_buckets + h, uuid_list)
--		if (!strcmp(hc->uuid, str))
-+		if (!strcmp(hc->uuid, str)) {
-+			dm_get(hc->md);
- 			return hc;
-+		}
- 
- 	return NULL;
- }
-@@ -611,10 +615,8 @@ static struct hash_cell *__find_device_h
- 		return __get_name_cell(param->name);
- 
- 	md = dm_get_md(huge_decode_dev(param->dev));
--	if (md) {
-+	if (md)
- 		mdptr = dm_get_mdptr(md);
--		dm_put(md);
--	}
- 
- 	return mdptr;
- }
-@@ -628,7 +630,6 @@ static struct mapped_device *find_device
- 	hc = __find_device_hash_cell(param);
- 	if (hc) {
- 		md = hc->md;
--		dm_get(md);
- 
- 		/*
- 		 * Sneakily write in both the name and the uuid
-@@ -653,6 +654,7 @@ static struct mapped_device *find_device
- static int dev_remove(struct dm_ioctl *param, size_t param_size)
- {
- 	struct hash_cell *hc;
-+	struct mapped_device *md;
- 
- 	down_write(&_hash_lock);
- 	hc = __find_device_hash_cell(param);
-@@ -663,8 +665,11 @@ static int dev_remove(struct dm_ioctl *p
- 		return -ENXIO;
- 	}
- 
-+	md = hc->md;
++/**
++ * idr_replace - replace pointer for given id
++ * @idp: idr handle
++ * @ptr: pointer you want associated with the ide
++ * @id: lookup key
++ *
++ * Replace the pointer registered with an id and return the old value.
++ * A -ENOENT return indicates that @id was not found.
++ * A -EINVAL return indicates that @id was not within valid constraints.
++ *
++ * The caller must serialize vs idr_find(), idr_get_new(), and idr_remove().
++ */
++void *idr_replace(struct idr *idp, void *ptr, int id)
++{
++	int n;
++	struct idr_layer *p;
++	int shift = (idp->layers - 1) * IDR_BITS;
++	void *old;
 +
- 	__hash_remove(hc);
- 	up_write(&_hash_lock);
-+	dm_put(md);
- 	param->data_size = 0;
- 	return 0;
- }
-@@ -790,7 +795,6 @@ static int do_resume(struct dm_ioctl *pa
- 	}
- 
- 	md = hc->md;
--	dm_get(md);
- 
- 	new_map = hc->new_map;
- 	hc->new_map = NULL;
-@@ -1078,6 +1082,7 @@ static int table_clear(struct dm_ioctl *
++	n = idp->layers * IDR_BITS;
++	p = idp->top;
++
++	id &= MAX_ID_MASK;
++
++	if (id >= (1 << n))
++		return ERR_PTR(-EINVAL);
++
++	while ((shift > 0) && p) {
++		n = (id >> shift) & IDR_MASK;
++		p = p->ary[n];
++		shift -= IDR_BITS;
++	}
++
++	n = id & IDR_MASK;
++	if (unlikely(p == NULL || !test_bit(n, &p->bitmap)))
++		return ERR_PTR(-ENOENT);
++
++	old = p->ary[n];
++	p->ary[n] = ptr;
++	return old;
++}
++EXPORT_SYMBOL(idr_replace);
++
+ static void idr_cache_ctor(void * idr_layer, kmem_cache_t *idr_layer_cache,
+ 		unsigned long flags)
  {
- 	int r;
- 	struct hash_cell *hc;
-+	struct mapped_device *md;
- 
- 	down_write(&_hash_lock);
- 
-@@ -1096,7 +1101,9 @@ static int table_clear(struct dm_ioctl *
- 	param->flags &= ~DM_INACTIVE_PRESENT_FLAG;
- 
- 	r = __dev_status(hc->md, param);
-+	md = hc->md;
- 	up_write(&_hash_lock);
-+	dm_put(md);
- 	return r;
- }
- 
