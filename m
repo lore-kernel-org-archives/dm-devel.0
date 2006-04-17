@@ -1,8 +1,7 @@
 From: Jeff Mahoney <jeffm@suse.com>
-Subject: [PATCH 08/08] dm: fix ordering of initialization in
-	alloc_dev()
+Subject: [PATCH 03/08] dm: fix idr_pre_get lock ordering
 Date: Mon, 17 Apr 2006 11:16:02 -0400
-Message-ID: <20060417151602.GA18999@locomotive.unixthugs.org>
+Message-ID: <20060417151602.GA18941@locomotive.unixthugs.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,43 +20,58 @@ To: Device Mapper Development List <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
- In alloc_dev(), we register the device with the block layer and then
- continue to initialize the device. register_disk() will have already
- made the device available to userspace, and a potential race exists
- with the device being opened for use and the completion of the
- initialization.
-
- This patch moves the final bits of the initialization above the disk
- registration.
+ idr_pre_get() can sleep while allocating memory for the worst-case scenario.
+ This isn't a huge deal with the current code, but the next patch will
+ switch _minor_lock to a spinlock.
 
 Signed-off-by: Jeff Mahoney <jeffm@suse.com>
 
 --
- drivers/md/dm.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/dm.c |   20 ++++++++------------
+ 1 files changed, 8 insertions(+), 12 deletions(-)
 
 diff -ruNpX ../dontdiff 2.6.17-rc1-staging1/drivers/md/dm.c 2.6.17-rc1-staging2/drivers/md/dm.c
---- 2.6.17-rc1-staging1/drivers/md/dm.c	2006-04-17 10:51:50.000000000 -0400
-+++ 2.6.17-rc1-staging2/drivers/md/dm.c	2006-04-17 10:51:50.000000000 -0400
-@@ -885,6 +885,10 @@ static struct mapped_device *alloc_dev(u
- 	if (!md->disk)
- 		goto bad4;
+--- 2.6.17-rc1-staging1/drivers/md/dm.c	2006-04-17 10:51:44.000000000 -0400
++++ 2.6.17-rc1-staging2/drivers/md/dm.c	2006-04-17 10:51:44.000000000 -0400
+@@ -766,6 +766,10 @@ static int specific_minor(struct mapped_
+ 	if (minor >= (1 << MINORBITS))
+ 		return -EINVAL;
  
-+	atomic_set(&md->pending, 0);
-+	init_waitqueue_head(&md->wait);
-+	init_waitqueue_head(&md->eventq);
++	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
++	if (!r)
++		return -ENOMEM;
 +
- 	md->disk->major = _major;
- 	md->disk->first_minor = minor;
- 	md->disk->fops = &dm_blk_dops;
-@@ -894,10 +898,6 @@ static struct mapped_device *alloc_dev(u
- 	add_disk(md->disk);
- 	format_dev_t(md->name, MKDEV(_major, minor));
+ 	mutex_lock(&_minor_lock);
  
--	atomic_set(&md->pending, 0);
--	init_waitqueue_head(&md->wait);
--	init_waitqueue_head(&md->eventq);
+ 	if (idr_find(&_minor_idr, minor)) {
+@@ -773,12 +777,6 @@ static int specific_minor(struct mapped_
+ 		goto out;
+ 	}
+ 
+-	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
+-	if (!r) {
+-		r = -ENOMEM;
+-		goto out;
+-	}
 -
- 	/* Populate the mapping, nobody knows we exist yet */
- 	spin_lock(&_minor_lock);
- 	old_ide = idr_replace(&_minor_idr, md, minor);
+ 	r = idr_get_new_above(&_minor_idr, MINOR_ALLOCED, minor, &m);
+ 	if (r) {
+ 		goto out;
+@@ -800,13 +798,11 @@ static int next_free_minor(struct mapped
+ 	int r;
+ 	unsigned int m;
+ 
+-	mutex_lock(&_minor_lock);
+-
+ 	r = idr_pre_get(&_minor_idr, GFP_KERNEL);
+-	if (!r) {
+-		r = -ENOMEM;
+-		goto out;
+-	}
++	if (!r)
++		return -ENOMEM;
++
++	mutex_lock(&_minor_lock);
+ 
+ 	r = idr_get_new(&_minor_idr, MINOR_ALLOCED, &m);
+ 	if (r) {
