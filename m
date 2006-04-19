@@ -1,16 +1,11 @@
-From: James Smart <James.Smart@Emulex.Com>
-Subject: Re: Problems with multipathing
-Date: Tue, 18 Apr 2006 15:38:44 -0400
-Message-ID: <44454044.7010902@emulex.com>
-References: <443BF12E.50900@ludd.luth.se>	<443BF87A.10804@free.fr>	<443C19E6.8000607@ludd.luth.se>	<443E870E.1070902@ludd.luth.se>	<443EB907.1070600@free.fr>	<4442E2ED.7020405@ludd.luth.se>	<4443635F.5000401@free.fr>	<4443A390.5010005@ludd.luth.se>
-	<44446F7E.2060502@free.fr>
-Reply-To: James.Smart@Emulex.Com,
-	device-mapper development <dm-devel@redhat.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: [RFC] dm-userspace
+Date: Wed, 19 Apr 2006 12:48:55 -0700
+Message-ID: <87lku18hy0.fsf@caffeine.beaverton.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============1790988502=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <44446F7E.2060502@free.fr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,38 +18,63 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+--===============1790988502==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-> Roger H=E5kansson a =E9crit :
->> Also, I've noticed that it's not only when a controller fails that thi=
-s
->> happens, when a failed controller is "revived" the same thing might=20
->> happen.
->>
->> As far as I've been able to tell, the more I/O-transactions at the tim=
-e
->> of the failure, the more likely that the (SCSI) device will be marked =
-as
->> "dead".
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-Hmmm.. I'm wondering if he's hitting the scenario in which the midlayer
-marks the sdev in an offline state - which could be the "dead" state.
-This occurs if an i/o hits the LLDD when the device is disconnected, and
-error recovery fails. If so, at a later time when the LLDD has connectivi=
-ty
-and can access the device, the scsi layer would still likely bounce i/o.
-It requires a manual interaction to change it back to a running state,
-any i/o requests by dm would be failed back by the midlayer.
+Hi List,
 
-What doesn't jive is the rescan re-enabling the device. As I stated, this
-is usually a manual action to restore things. If the rescans are just
-prior to the transition to the offline state, they may be making dm chang=
-e
-it's path mappings to avoid i/o to the failed path, thus deflecting the
-sdev transition.  Can you report the contents of
-/sys/class/scsi_device/1:0:*/device/state  at the following states in bot=
-h
-the works and does not work cases :
-   working, right after failover but before dm fails it; after failure/su=
-ccess
+As you all know, I'm working on a userspace-controlled CoW
+implementation using device-mapper.  The idea is to offer a pseudo
+device through device-mapper that has CoW behavior, but where the
+block allocation decisions are made from userspace.
 
--- james
+My thoughts are that it might be best to abandon the concept of the
+"dm-cow" target and instead work on a "dm-userspace" target.  The
+userspace cow application I'm working on would remain mostly the
+same.  Similarly, dm-userspace would look almost identical to my
+dm-cow does right now, but more generic.  The target would simply
+present the details of the data passed to the map() function to
+userspace, which would respond with a target device and sector of
+where to send the request.
+
+A generic dm-userspace target would allow for testing of new
+algorithms (RAID, CoW, etc) from a userspace application, as well as
+some more interesting things involving distributed applications.  Just
+like FUSE allows for some neat (although not necessarily
+high-performance) tricks, dm-userspace could allow the same thing for
+block devices.
+
+Would the device-mapper maintainers be interested in accepting
+something like dm-userspace upstream?
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.1 (GNU/Linux)
+
+iD8DBQBERpQpwtEf7b4GJVQRAq4vAKCJsNr3LDUYUj6eTgWhx9GOz7sc6wCfTg8G
+dMM+8HWXuEKdBdpcvhEgktI=
+=XVr0
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1790988502==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1790988502==--
