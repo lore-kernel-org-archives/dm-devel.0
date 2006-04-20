@@ -1,12 +1,14 @@
-From: Steve Feehan <sfeehan@sbb.uvm.edu>
-Subject: multipath and StorageWorks HSG80
-Date: Thu, 20 Apr 2006 15:43:21 -0400
-Message-ID: <20060420194321.GE29759@ingress.sbb.uvm.edu>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: multipath and StorageWorks HSG80
+Date: Thu, 20 Apr 2006 22:02:07 +0200
+Message-ID: <4447E8BF.1060205@bzed.de>
+References: <20060420194321.GE29759@ingress.sbb.uvm.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20060420194321.GE29759@ingress.sbb.uvm.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,120 +18,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello. I'm trying to figure out multipath on a StorageWorks HSG80
-contoller. I'm using Ubuntu "Dapper" with the following software
-versions:
-
-  kernel:           2.6.15-20-server
-  multipath-tools:  0.4.7-1ubuntu4
-
-From what I've been reading[1], I gather that I need to use the
-dm-hp-sw kernel module. So I applied the patches[2,3,4,5] to
-the kernel and setup the /etc/multipath.conf as follows:
-
-devices {
-
-        device {
-                vendor                  "DEC"
-                product                 "HSG80"
-                path_grouping_policy    group_by_serial
-                path_checker            hp_sw
-                features                "1 queue_if_no_path"
-                hardware_handler        "1 hp_sw"
-        }
-}
-
-multipaths {
-        multipath {
-                wwid    60001fe10015bf500009947159810015
-                alias   red
-        }
-}
-
-From what I can tell, it is basically working:
-
-sfeehan@dogwood:~$ sudo multipath -ll
-red (360001fe10015bf500009947159810015)
-[size=203 GB][features=1 queue_if_no_path][hwhandler=1 hp_sw]
-\_ round-robin 0 [prio=2][active]
- \_ 0:0:0:1 sda 8:0   [active][ready]
- \_ 0:0:1:1 sdb 8:16  [active][ready]
-\_ round-robin 0 [prio=2][enabled]
- \_ 0:0:2:1 sdc 8:32  [active][ghost]
- \_ 0:0:3:1 sdd 8:48  [active][ghost]
+Steve Feehan wrote:
+> Hello. I'm trying to figure out multipath on a StorageWorks HSG80
+> contoller. I'm using Ubuntu "Dapper" with the following software
+>   
+there was a thread about the HSG80s few days ago.
+http://www.redhat.com/archives/dm-devel/2006-April/msg00025.html
+probably that answers all your questions.
 
 
-And now the problem: I see quite a few errors in dmesg:
+Actually I'd really like to have them supported well, chances are good
+that we'll get some of them soon :\
 
 
-[42949392.230000] sd 0:0:2:1: Device not ready.
-[42949392.230000] end_request: I/O error, dev sdc, sector 426583424
-[42949392.230000] printk: 515 messages suppressed.
-[42949392.230000] Buffer I/O error on device sdc, logical block
-213291712
-[42949392.230000] sd 0:0:2:1: Device not ready.
-[42949392.230000] end_request: I/O error, dev sdc, sector 426583424
-[42949392.230000] sd 0:0:3:1: Device not ready.
-[42949392.230000] end_request: I/O error, dev sdd, sector 426583424
-[42949392.230000] sd 0:0:3:1: Device not ready.
-[42949392.230000] end_request: I/O error, dev sdd, sector 426583424
+Best regards,
 
 
-And when I put LVM on top of the multipath device I get lots
-of errors:
-
-sfeehan@dogwood:~$ sudo pvcreate /dev/mapper/red
-  Physical volume "/dev/mapper/red" successfully created
-sfeehan@dogwood:~$ sudo vgcreate vg0 /dev/mapper/red
-  Found duplicate PV qDhK4gPTGtzXAm7jPQf0uf07a0FQs2qL: using /dev/sdb1
-not /dev/sda1
-  /dev/sdc: read failed after 0 of 2048 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 2048 at 0: Input/output error
-  Found duplicate PV qDhK4gPTGtzXAm7jPQf0uf07a0FQs2qL: using /dev/sda1
-not /dev/sdb1
-  Found duplicate PV qDhK4gPTGtzXAm7jPQf0uf07a0FQs2qL: using /dev/sdb1
-not /dev/sda1
-  /dev/sdc: read failed after 0 of 1024 at 0: Input/output error
-  /dev/sdc: read failed after 0 of 2048 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 1024 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 2048 at 0: Input/output error
-  Volume group "vg0" successfully created
-sfeehan@dogwood:~$
-sfeehan@dogwood:~$
-sfeehan@dogwood:~$ sudo lvcreate -L 10G -n test vg0
-  Found duplicate PV qDhK4gPTGtzXAm7jPQf0uf07a0FQs2qL: using /dev/sdb1
-not /dev/sda1
-  /dev/sdc: read failed after 0 of 2048 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 2048 at 0: Input/output error
-  Logical volume "test" created
-sfeehan@dogwood:~$
-
-
-So... what are the errors about? Are they significant? What
-if anything can I do to resolve them?
-
-Thanks.
-
-Steve
-
-
-[1] [dm-devel] StorageWorks multipath support
-    http://www.redhat.com/archives/dm-devel/2005-June/msg00105.html
-
-[2] [dm-devel] [PATCH RFT/RFC 1/4] export block layer helpers
-    http://www.redhat.com/archives/dm-devel/2005-September/msg00097.html
-
-[3] [dm-devel] [PATCH RFT/RFC 2/4] add dm_scsi helpers
-    http://www.redhat.com/archives/dm-devel/2005-September/msg00098.html
-
-[4] [dm-devel] [PATCH RFT/RFC 3/4] convert dm emc
-    http://www.redhat.com/archives/dm-devel/2005-September/msg00099.html
-
-[5] [dm-devel] [PATCH RFT/RFC 4/4] add dm-hp-sw hw handler
-    http://www.redhat.com/archives/dm-devel/2005-September/msg00100.html
-
--- 
-Steve Feehan
+Bernd
