@@ -1,15 +1,15 @@
 From: Steve Feehan <sfeehan@sbb.uvm.edu>
 Subject: Re: multipath and StorageWorks HSG80
-Date: Thu, 20 Apr 2006 16:44:49 -0400
-Message-ID: <20060420204449.GA32417@ingress.sbb.uvm.edu>
+Date: Thu, 20 Apr 2006 16:47:39 -0400
+Message-ID: <20060420204739.GB32417@ingress.sbb.uvm.edu>
 References: <20060420194321.GE29759@ingress.sbb.uvm.edu>
-	<4447EA16.9070708@free.fr>
+	<4447E8BF.1060205@bzed.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4447EA16.9070708@free.fr>
+In-Reply-To: <4447E8BF.1060205@bzed.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,36 +22,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 20, 2006 at 10:07:50PM +0200, Christophe Varoqui wrote:
+On Thu, Apr 20, 2006 at 10:02:07PM +0200, Bernd Zeimetz wrote:
+> Steve Feehan wrote:
+> > Hello. I'm trying to figure out multipath on a StorageWorks HSG80
+> > contoller. I'm using Ubuntu "Dapper" with the following software
+> >   
+> there was a thread about the HSG80s few days ago.
+> http://www.redhat.com/archives/dm-devel/2006-April/msg00025.html
+> probably that answers all your questions.
 
-> Overall, that's very good howto material, if you care to feed the wiki.
+Yes, I saw that. The particular problem that I saw there
+was the misreporting of unit size. The Ubuntu init script
+takes care of this and all of my units report the same 
+size.
 
-OK, I will see what I can do.
-
-> The IO errors are due to lvm tools trying to scan the individual paths, 
-> including those not usable, where they should only care about the 
-> multipath devices.
->
-> You should blacklist the individual path in the lvm config.
-
-Yes, I put the following in /etc/lvm/lvm.conf:
-
-filter = [ "r|/dev/cdrom|", "r|/dev/sd|" ]
-
-And that makes the errors go away for the LVM case. But I still 
-get the kernel errors during bootup.
-
-It's too soon to say for sure, but so far I don't seem to be
-getting any errors once the system has booted. Perhaps it's just
-during the early stages of booting and not an issue after that?
-
-If anyone would like to see the full dmesg output for a boot
-I'd be glad to send it.
-
-And I haven't even begun to test actually failing over the
-controllers. I imagine I'll have more problems/questions shortly. :)
-
-Thanks.
+> Actually I'd really like to have them supported well, chances are good
+> that we'll get some of them soon :\
+> 
+> 
+> Best regards,
+> 
+> 
+> Bernd
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
 -- 
 Steve Feehan
