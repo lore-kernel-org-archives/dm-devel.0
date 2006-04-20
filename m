@@ -1,14 +1,15 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: Support for CCISS for multipath
-Date: Thu, 20 Apr 2006 07:12:38 +0200
-Message-ID: <44471846.5070104@free.fr>
-References: <6B07290940B2C14BA4567FABFDE6024D88096C@bgeexc04.asiapacific.cpqcorp.net>
+From: "Eric Van Hensbergen" <ericvh@gmail.com>
+Subject: Re: [RFC] dm-userspace
+Date: Thu, 20 Apr 2006 12:50:44 -0500
+Message-ID: <a4e6962a0604201050h44d2e8e0r5a96d763f53328e7@mail.gmail.com>
+References: <87lku18hy0.fsf@caffeine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6B07290940B2C14BA4567FABFDE6024D88096C@bgeexc04.asiapacific.cpqcorp.net>
+In-Reply-To: <87lku18hy0.fsf@caffeine.beaverton.ibm.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +22,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Kumar, Satish (STSD) a =E9crit :
-> =20
+On 4/19/06, Dan Smith <danms@us.ibm.com> wrote:
 >
-> Hi All,
+> A generic dm-userspace target would allow for testing of new
+> algorithms (RAID, CoW, etc) from a userspace application, as well as
+> some more interesting things involving distributed applications.  Just
+> like FUSE allows for some neat (although not necessarily
+> high-performance) tricks, dm-userspace could allow the same thing for
+> block devices.
 >
-> Is CCISS devices supported as dm multipath targets?
-> Even though the utilities to identify a unique id for
-> CCISS devices may not be present and hence it may be
-> difficult to configure them, are the other kernel changes
-> to support CCISS already present?=20
+> Would the device-mapper maintainers be interested in accepting
+> something like dm-userspace upstream?
 >
->  =20
-/dev/cciss/* are blacklisted in the internal defaults.
-You would have to override the hardcoded blacklist.
-Ideally, we should be able to blacklist SA* monopathed devices and still=20
-allow for multipathed ones, though they may all be driven by the cciss=20
-driver. Have an idea how?
 
-Is this for the SAS controlers ?
+It seems like this would be really useful for prototyping and
+debugging new device mapper modules (like the dm-cache ideas I posted
+about a few weeks back).  At the very least, I'd be interested in
+using it?
 
+A couple of questions:
 
-Regards,
-cvaroqui
+1) how would you handle permissions?  IIRC FUSE allows normal users to
+bind their own FUSE userspace file systems, would something similar
+happen for dm-userspace or would even binding a userspace
+device-mapper module require root?
+
+2) How close would the userspace API be to the kernel device-mapper
+API?  It'd be nice to have something close so that userspace code
+could easily be migrated into the kernel (for performance reasons) as
+appropriate.
+
+3) When do you think you'll be able to post a patch for RFC?
+
+           -eric
