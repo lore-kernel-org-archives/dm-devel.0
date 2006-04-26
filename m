@@ -1,15 +1,15 @@
-From: Ming Zhang <mingz@ele.uri.edu>
+From: Dan Smith <danms@us.ibm.com>
 Subject: Re: [RFC] dm-userspace
-Date: Wed, 26 Apr 2006 18:55:28 -0400
-Message-ID: <1146092129.14129.333.camel@localhost.localdomain>
+Date: Wed, 26 Apr 2006 16:07:35 -0700
+Message-ID: <87psj45420.fsf@caffeine.beaverton.ibm.com>
 References: <87u08g553l.fsf@caffeine.beaverton.ibm.com>
-Reply-To: mingz@ele.uri.edu,
-	device-mapper development <dm-devel@redhat.com>
+	<1146092129.14129.333.camel@localhost.localdomain>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1782145068=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87u08g553l.fsf@caffeine.beaverton.ibm.com>
+In-Reply-To: <1146092129.14129.333.camel@localhost.localdomain> (Ming Zhang's
+	message of "Wed, 26 Apr 2006 18:55:28 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,68 +19,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-kernel@vger.kernel.org
+To: mingz@ele.uri.edu
+Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-just curious, will the speed be a problem here? considering each time it
-needs to contact user space for mapping a piece of data. and the size
-unit is per sector in dm?
+--===============1782145068==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-do u have any benchmark results about overhead?
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-ming
+MZ> just curious, will the speed be a problem here?=20
+
+I'm glad you asked... :)
+
+MZ> considering each time it needs to contact user space for mapping a
+MZ> piece of data.=20
+
+Actually, that's not the case.  The idea is for mappings to be cached
+in the kernel module so that the communication with userspace only
+needs to happen once per block.  The thought is to ask once for a
+read, and then remember that mapping until a write happens, which
+might change the story.  If so, we ask userspace again.
+
+Right now, the kernel module expires mappings in a pretty brain-dead
+way to make sure the list doesn't get too long.  An intelligent data
+structure and expiration method would probably improve performance
+quite a bit.
+
+I don't have any benchmark data to post right now.  I did some quick
+analysis a while back and found it to be not too bad.  When using loop
+devices as a backing store, I achieved performance as high as a little
+under 50% of native.
+
+MZ> and the size unit is per sector in dm?
+
+Well, for qcow it is a sector, yes.  The module itself, however, can
+use any block size (as long as it is a multiple of a sector).  Before
+I started work on qcow support, I wrote a test application that used
+2MiB blocks, which is where I got the approximately 50% performance
+value I described above.
+
+Our thought is that this would mostly be used for the OS images of
+virtual machines, which shouldn't change much, which would help to
+prevent constantly asking userspace to map blocks.
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQBET/03wtEf7b4GJVQRAjriAKCEJYwRg30sBHBsR108iXXGS2cp0gCfWQXg
+9/+VuCdkbTG4sDwHDQFUoNc=
+=07tN
+-----END PGP SIGNATURE-----
+--=-=-=--
 
 
-On Wed, 2006-04-26 at 15:45 -0700, Dan Smith wrote:
-> Xen needs to be able to directly access disk formats such as QEMU's
-> qcow, VMware's vmdk, and possibly others.  Most of these formats are
-> based on copy-on-write ideas, and thus have a base image and a bunch
-> of modified blocks stored elsewhere.  Presenting this to a virtual
-> machine transparently as a normal block device would be ideal.  The
-> solution I propose is to use device-mapper for redirecting block
-> accesses to the appropriate locations within either the base image or
-> the COW space, with the following constraints:
-> 
-> 1. The block-allocation algorithm and formatting scheme should not be
->    in the kernel.  This gives the most flexibility and puts the
->    complexity in userspace.
-> 2. Actual data flow should happen only in the kernel, and userspace
->    should be able to control it without the blocks being passed back
->    and forth.
-> 
-> So, I developed a generic device-mapper target called dm-userspace
-> which allows a userspace application to control the block mapping in a
-> mostly generic way.  With the functionality it provides, I was able to
-> write a userspace daemon that handles the mapping of blocks such that
-> a qcow file could be presented as a single block device, mounted and
-> accessed as if it were a normal disk.  If/when VMware releases their
-> vmdk spec under the GPL, adding support for it would be relatively
-> simple.  This would give us a unified block device to export to the
-> virtual machine, that would be backed by a complex format such as vmdk
-> or qcow.
-> 
-> In addition to providing support for the above scenario, dm-userspace
-> could be used for other things as well.  It's possible that new
-> device-mapper targets could be developed in userspace using a special
-> application that used dm-userspace to simulate the kernel
-> environment.  Additionally, filesystem debuggers may be able to use
-> dm-userspace to provide interactive control and logging of disk
-> writes. 
-> 
-> A patch against 2.6.16.9 to add dm-userspace to the kernel is
-> available here:
-> 
->   http://static.danplanet.com/dm-userspace/dmu-2.6.16.9.patch
-> 
-> After you have a patched kernel, you can build the (very tiny) helper
-> library and example program, available here:
-> 
->   http://static.danplanet.com/dm-userspace/libdmu-0.1.tar.gz
-> 
-> Comments would be appreciated :)
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--===============1782145068==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1782145068==--
