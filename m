@@ -1,17 +1,11 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: Re: Re: mirroring: [patch 1 of 6] device failure tolerance
-Date: Wed, 26 Apr 2006 16:35:07 -0500
-Message-ID: <daad987672ac03ceccc36033fb88f2ee@redhat.com>
-References: <9c5e9901e6e1e5f064cd64a5b855b503@redhat.com>
-	<loom.20050803T173749-127@post.gmane.org>
-	<e40538a1400cf18abec4993361441c00@redhat.com>
-	<loom.20060426T190551-784@post.gmane.org>
+From: Dan Smith <danms@us.ibm.com>
+Subject: [RFC] dm-userspace
+Date: Wed, 26 Apr 2006 15:45:02 -0700
+Message-ID: <87u08g553l.fsf@caffeine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v623)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0095962488=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <loom.20060426T190551-784@post.gmane.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,29 +15,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: linux-kernel@vger.kernel.org
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-you can check http://www.brassow.com/mirroring ...
+--===============0095962488==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-New(er) patches will be coming soon, as well as userland code updates.
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-  brassow
+Xen needs to be able to directly access disk formats such as QEMU's
+qcow, VMware's vmdk, and possibly others.  Most of these formats are
+based on copy-on-write ideas, and thus have a base image and a bunch
+of modified blocks stored elsewhere.  Presenting this to a virtual
+machine transparently as a normal block device would be ideal.  The
+solution I propose is to use device-mapper for redirecting block
+accesses to the appropriate locations within either the base image or
+the COW space, with the following constraints:
 
-On Apr 26, 2006, at 12:09 PM, Dick wrote:
+1. The block-allocation algorithm and formatting scheme should not be
+   in the kernel.  This gives the most flexibility and puts the
+   complexity in userspace.
+2. Actual data flow should happen only in the kernel, and userspace
+   should be able to control it without the blocks being passed back
+   and forth.
 
-> Hi Jonathan, or anyone else who is involved,
->
-> The old patches won't apply on linux-2.6.16(.3) anymore, could you 
-> please create
-> new patches (for linux 2.6.16) ?
-> The previous update worked for me quite well!
->
-> Thanks in advance,
-> Dick
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+So, I developed a generic device-mapper target called dm-userspace
+which allows a userspace application to control the block mapping in a
+mostly generic way.  With the functionality it provides, I was able to
+write a userspace daemon that handles the mapping of blocks such that
+a qcow file could be presented as a single block device, mounted and
+accessed as if it were a normal disk.  If/when VMware releases their
+vmdk spec under the GPL, adding support for it would be relatively
+simple.  This would give us a unified block device to export to the
+virtual machine, that would be backed by a complex format such as vmdk
+or qcow.
+
+In addition to providing support for the above scenario, dm-userspace
+could be used for other things as well.  It's possible that new
+device-mapper targets could be developed in userspace using a special
+application that used dm-userspace to simulate the kernel
+environment.  Additionally, filesystem debuggers may be able to use
+dm-userspace to provide interactive control and logging of disk
+writes.=20
+
+A patch against 2.6.16.9 to add dm-userspace to the kernel is
+available here:
+
+  http://static.danplanet.com/dm-userspace/dmu-2.6.16.9.patch
+
+After you have a patched kernel, you can build the (very tiny) helper
+library and example program, available here:
+
+  http://static.danplanet.com/dm-userspace/libdmu-0.1.tar.gz
+
+Comments would be appreciated :)
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQBET/f9wtEf7b4GJVQRAjj7AJ9Fu2hFEEVW9bnAhvLyPDk7Frc6mwCeNbGG
+NVpEU/eIoL3WGCKLlZWBGBU=
+=jcgr
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============0095962488==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0095962488==--
