@@ -1,14 +1,17 @@
-From: Erez Zilber <erezz@voltaire.com>
-Subject: Re: Setting up a multipath device
-Date: Thu, 04 May 2006 18:28:08 +0300
-Message-ID: <445A1D88.7030500@voltaire.com>
-References: <445A0AE9.20907@voltaire.com> <20060504144915.GA2319@pundit>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: Re: Multipath on STK OPENStorage D240
+Date: Thu, 4 May 2006 18:13:44 +0200
+Message-ID: <20060504161344.GA23550@bogon.ms20.nix>
+References: <20060504074119.GB17730@bogon.ms20.nix>
+	<20060504123523.GA9269@vienna.egenera.com>
+	<20060504133753.GA22657@bogon.ms20.nix>
+	<20060504145544.GA23460@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060504144915.GA2319@pundit>
+Content-Disposition: inline
+In-Reply-To: <20060504145544.GA23460@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,96 +24,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Christophe Varoqui wrote:
-
->On Thu, May 04, 2006 at 05:08:41PM +0300, Erez Zilber wrote:
-> =20
->
->>Hi,
->>
->>I'm new to device mapper and trying to set a multipath target:
->>
->>I'm connected to the same LUN over iSCSI in 2 paths:
->>
->>Here's the output of sg_map:
->>sg_map -i -x
->>/dev/sg0 3 0 0 0 0 /dev/sda DotHill SANnet II FC 411I
->>/dev/sg1 4 0 0 0 0 /dev/sdb DotHill SANnet II FC 411I
->>
->>I ran the following command:
->>multipath 2 round-robin 1 0 /dev/sda round-robin 1 0 /dev/sdb
->>
->>   =20
->>
->Just start multipathd
->or run multipath without params
->
-> =20
->
->>If I understand correctly, the 1st priority group contains /dev/sda. Th=
-e=20
->>2nd priority group contains /dev/sdb. If /dev/sda fails, traffic should=
-=20
->>automatically move to /dev/sdb. Is that right?
->>
->>Here's the out put of multipath -l:
->>
->>3600c0ff00000000007c1d121c397f503
->>[size=3D10 GB][features=3D0][hwhandler=3D0]
->>\_ round-robin 0 [prio=3D0][active]
->>\_ 3:0:0:0 sda 8:0 [active][undef]
->>\_ round-robin 0 [prio=3D0][enabled]
->>\_ 4:0:0:0 sdb 8:16 [active][undef]
->>
->>What does 8:0 & 8:16 mean? What is 3600c0ff00000000007c1d121c397f503?
->>
->>   =20
->>
->8:0 & 8:16 are paths major:minor numbers
->3600c0ff00000000007c1d121c397f503 is the multipath name.
->consider activating the fancy naming option in the config file.
->=20
-> =20
->
->>Now, assuming that what I did so far is ok, how do I use the multipath=20
->>device? Do I use /dev/sda (or /dev/sdb)?
->>
->>   =20
->>
->You should use /dev/mapper/3600c0ff00000000007c1d121c397f503
->=20
->Regards,
->cvaroqui
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
-> =20
->
-Thanks. It seems to work now. Anyway, I have some more questions:
-
-   1. Was it wrong to run 'multipath 2 round-robin 1 0 /dev/sda
-      round-robin 1 0 /dev/sdb'?
-   2. If I don't supply any parameters, how does the dm know which
-      devices are the same physical device (that /dev/sda & /dev/sdb are
-      the same physical device)?
-   3. How are the priority groups defined if no parameters are supplied?
-   4. What is the timeout for a device that has failed? When does the dm
-      move to the next priority group?
-
-
-Thanks
---=20
-
-____________________________________________________________
-
-Erez Zilber | 972-9-971-7689
-
-Software Engineer, Storage Team
-
-Voltaire =96 _The Grid Backbone_
-
-__
-
-www.voltaire.com <http://www.voltaire.com/>
+On Thu, May 04, 2006 at 04:55:44PM +0200, Guido Guenther wrote:
+> On Thu, May 04, 2006 at 03:37:53PM +0200, Guido Guenther wrote:
+> > On Thu, May 04, 2006 at 08:35:23AM -0400, Philip R. Auld wrote:
+> > > Hi,
+> > > 
+> > > Rumor has it that on Thu, May 04, 2006 at 09:41:20AM +0200 Guido Guenther said:
+> > > > Hi,
+> > > > when using path_checker readsector0 on the above machine the box stalls
+> > > > every 5 seconds when checking the currently nonactive path. Same for
+> > > > path_checker tur. Is there a way to avoid this? I'd consider writing a
+> > > > specific checker but am lacking any documentation.
+> > > 
+> > > This thing is a preferred path array. I can see how readsector0
+> > > is probably the wrong choice of checker. I imagine it causes 
+> > > a cache flush from the preferred controller. Odd that the tur
+> > > checker has the same behavior. If you want to code something 
+> > Well, can I check which check is really being used, if not I'll hack
+> > that into the daemon next week? I noticed that typos in multipath.conf
+> > are being silently ignored. 
+> ...replying to myself: using "path_checker tur" in the defaults section
+> of multipath.conf indeed _does_ seem to work. I've put it to the
+> individual paths before (as shown in several example configs) but this
+> seems to be silently ignored. I'll try to find some time to dig into
+> this next week.
+...monologue mode off: it should have been in the device section from
+the very beginning, not in the multipath section. Silly me - works fine
+now. Simple user error.
+Cheers and sorry for the noise,
+ -- Guido
