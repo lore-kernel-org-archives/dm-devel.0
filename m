@@ -1,14 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [PATCH] pp_aula/spc.h
-Date: Thu, 4 May 2006 16:56:45 +0200
-Message-ID: <20060504145645.GA2379@pundit>
-References: <4457DDE2.6050607@us.xyratex.com>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: Re: Multipath on STK OPENStorage D240
+Date: Thu, 4 May 2006 16:55:44 +0200
+Message-ID: <20060504145544.GA23460@bogon.ms20.nix>
+References: <20060504074119.GB17730@bogon.ms20.nix>
+	<20060504123523.GA9269@vienna.egenera.com>
+	<20060504133753.GA22657@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4457DDE2.6050607@us.xyratex.com>
+In-Reply-To: <20060504133753.GA22657@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,43 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: stefan.bader@de.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 02, 2006 at 03:32:02PM -0700, Tom Kalus wrote:
-> path_priority/pp_aula/spc.h
-> 
-> Isn't the inquiry_data.product_identifier 16 bytes long? or do I need a 
-> later draft of SPC3... 21d - Feb 2005
-> Bug doesn't effect existing code, but it's still a bug.
-> Rest looks ok, so far as I can tell.
-> 
-> See attached patch.
-> 
-> 
-
-> diff --git a/path_priority/pp_alua/spc3.h b/path_priority/pp_alua/spc3.h
-> index 11f5dbd..bddbbdd 100644
-> --- a/path_priority/pp_alua/spc3.h
-> +++ b/path_priority/pp_alua/spc3.h
-> @@ -148,10 +148,10 @@ struct inquiry_data {
->  					/* ......x. = command queue support  */
->  					/* .......x = vs2                    */
->  	unsigned char	vendor_identification[8];
-> -	unsigned char	product_identification[8];
-> +	unsigned char	product_identification[16];
->  	unsigned char	product_revision[4];
->  	unsigned char	vendor_specific[20];
-> -	unsigned char	b48;		/* xxxx.... = reserved               */
-> +	unsigned char	b56;		/* xxxx.... = reserved               */
->  					/* ....xx.. = clocking               */
->  					/* ......x. = qas                    */
->  					/* .......x = ius                    */
-
-Stefan,
-
-Can you you ack this one ?
-
-Regards,
-cvaroqui
+On Thu, May 04, 2006 at 03:37:53PM +0200, Guido Guenther wrote:
+> On Thu, May 04, 2006 at 08:35:23AM -0400, Philip R. Auld wrote:
+> > Hi,
+> > 
+> > Rumor has it that on Thu, May 04, 2006 at 09:41:20AM +0200 Guido Guenther said:
+> > > Hi,
+> > > when using path_checker readsector0 on the above machine the box stalls
+> > > every 5 seconds when checking the currently nonactive path. Same for
+> > > path_checker tur. Is there a way to avoid this? I'd consider writing a
+> > > specific checker but am lacking any documentation.
+> > 
+> > This thing is a preferred path array. I can see how readsector0
+> > is probably the wrong choice of checker. I imagine it causes 
+> > a cache flush from the preferred controller. Odd that the tur
+> > checker has the same behavior. If you want to code something 
+> Well, can I check which check is really being used, if not I'll hack
+> that into the daemon next week? I noticed that typos in multipath.conf
+> are being silently ignored. 
+...replying to myself: using "path_checker tur" in the defaults section
+of multipath.conf indeed _does_ seem to work. I've put it to the
+individual paths before (as shown in several example configs) but this
+seems to be silently ignored. I'll try to find some time to dig into
+this next week.
+Cheers,
+ -- Guido
