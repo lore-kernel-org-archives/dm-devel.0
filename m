@@ -1,11 +1,11 @@
-From: Stephen Howell <showell@bigpond.net.au>
-Subject: dm-striped device sizes must be multiple of chunk-size
-Date: Thu, 04 May 2006 20:11:47 +1000
-Message-ID: <1146737507.3650.4.camel@localhost>
+From: "m9230" <m9230@cn.ee.ccu.edu.tw>
+Subject: [PATCH] dm.c
+Date: Thu, 4 May 2006 09:51:19 +0800
+Message-ID: <20060504014051.M90815@cn.ee.ccu.edu.tw>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset=big5
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,33 +19,20 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I have been reading the post at 
-http://www.archivesat.com/RedHat_device-mapper_development/thread353566.htm
+Hello, I found a problem in dm_blk_ioctl() in dm.c:
 
-I also have this problem
+In dm.c, dm_blk_ioctl() is assigning a full unsigned 32 bits of device size 
+to a signed 32 bit size.
+This may cause BLKGETSIZE64 ioctl and BLKGETSIZE ioctl failed to get the 
+device size when device size is larger than 1TB.
 
-dmraid -s
-*** Active Set
-name   : nvidia_egiafbgb
-size   : 1562845532
-stride : 128
-type   : stripe
-status : ok
-subsets: 0
-devs   : 2
-spares : 0
+I am using device-mapper.1.01.05.
 
-dmraid -r
-/dev/sdb: nvidia, "nvidia_egiafbgb", stripe, ok, 781422766 sectors,
-data@ 0
-/dev/sdc: nvidia, "nvidia_egiafbgb", stripe, ok, 781422766 sectors,
-data@ 0
+Changing "long size;" to "sector_t size;" might fix this up, it works for me.
+For example:
+error = ioctl(fd, BLKGETSIZE64, &size);
+returns "size" in bytes.
 
-and get the dm-stripe error listed in the subject above.
 
-This occurs under 2.6.16 but not under 2.6.14.
-
-Thought I might add some more data to Joe's comments.
-
-Stephen Howell
-Melbourne Australia
+--
+Best Regards, Michael Yao
