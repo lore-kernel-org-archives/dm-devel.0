@@ -1,14 +1,17 @@
-From: "Philip R. Auld" <pauld@egenera.com>
-Subject: Re: Multipath on STK OPENStorage D240
-Date: Thu, 4 May 2006 08:35:23 -0400
-Message-ID: <20060504123523.GA9269@vienna.egenera.com>
-References: <20060504074119.GB17730@bogon.ms20.nix>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: Re: [PATCH] dm-striped device sizes must be multiple of
+	chunk-size(Causes Failures)
+Date: Thu, 4 May 2006 08:41:49 -0500
+Message-ID: <200605040841.50083.kevcorry@us.ibm.com>
+References: <OFFE1FB53B.25095B7A-ON85257161.0072CF32-85257161.0073E75D@wsib.on.ca>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <OFFE1FB53B.25095B7A-ON85257161.0072CF32-85257161.0073E75D@wsib.on.ca>
 Content-Disposition: inline
-In-Reply-To: <20060504074119.GB17730@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +21,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Dwaine_Garden@wsib.on.ca, dwainegarden@rogers.com
 List-Id: dm-devel.ids
 
-Hi,
+On Mon May 1 2006 4:05 pm, Dwaine_Garden@wsib.on.ca wrote:
+> It looks like dmsetup need to be patched as well.   There is a bug opened
+> up for dmraid because after this
+> patch, Fedora 5 installs would not boot with kernel 2.6.16.  There is a
+> patch to round down the stripe size to be multiple of the chunk-size, but
+> the computers still fail trying to boot and mount volumes.
+>
+> After Heinz patched dmraid, it now fixed.  It looks like dmsetup needs to
+> be patched as well(Or something within device-mapper).  Via_ecfdfiehfa is
+> not a multiple of chunk-size,   Both dmraid and dmsetup should match.   So
+> all software raid0 setup with dmraid still fail to boot under 2.6.16+.
+> Nvidia, Intel and Via chipsets are confirmed impacted, but all the chipsets
+> which has this software raid0 will have this problem.
 
-Rumor has it that on Thu, May 04, 2006 at 09:41:20AM +0200 Guido Guenther said:
-> Hi,
-> when using path_checker readsector0 on the above machine the box stalls
-> every 5 seconds when checking the currently nonactive path. Same for
-> path_checker tur. Is there a way to avoid this? I'd consider writing a
-> specific checker but am lacking any documentation.
-
-This thing is a preferred path array. I can see how readsector0
-is probably the wrong choice of checker. I imagine it causes 
-a cache flush from the preferred controller. Odd that the tur
-checker has the same behavior. If you want to code something 
-you might try a checker that just does a standard INQUIRY.
-I'd think that would not cause a cache flush, but then
-I'd have thought that about the TUR as well... Such a checker 
-may be useful for other preferred path arrays. 
-
-I've got an STK array here but haven't gotten access to it 
-yet to run dm-multipath so I can't confirm having seen this
-problem.
-
-
-Cheers,
-
-Phil
-
-
-> Cheers,
->  -- Guido
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+There's nothing in dmsetup to patch with regards to this problem. dmsetup and 
+libdevmapper have no knowledge at all of any of the device-mapper kernel 
+target modules (e.g. linear, striped, mirror, snapshot). They effectively 
+just act as a convenient pass-thru to the device-mapper ioctl interface. If 
+you're using dmsetup, you need to know about any restrictions required by the 
+target you're using, and write your mappings appropriately.
 
 -- 
-Philip R. Auld, Ph.D.  	        	       Egenera, Inc.    
-Software Architect                            165 Forest St.
-(508) 858-2628                            Marlboro, MA 01752
+Kevin Corry
+kevcorry@us.ibm.com
+http://www.ibm.com/linux/
+http://evms.sourceforge.net/
