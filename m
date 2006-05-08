@@ -1,16 +1,15 @@
-From: Erez Zilber <erezz@voltaire.com>
-Subject: Re: Setting up a multipath device
-Date: Sun, 07 May 2006 17:01:01 +0300
-Message-ID: <445DFD9D.4040402@voltaire.com>
-References: <445A0AE9.20907@voltaire.com>
-	<20060504144915.GA2319@pundit>	<445A1D88.7030500@voltaire.com>
-	<1146768927.27764.12.camel@localhost.localdomain>
+From: Kevin Corry <kevcorry@us.ibm.com>
+Subject: [PATCH] dmsetup: Remove limitation on table file line
+	length
+Date: Mon, 8 May 2006 13:59:32 -0500
+Message-ID: <200605081359.32562.kevcorry@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+  charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1146768927.27764.12.camel@localhost.localdomain>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,55 +19,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: DevMapper <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Some more questions:
+Greetings,
 
-   1. I couldn't find the config file. Where is it located? Is there any
-      documentation about it?
-   2. How can I configure fancy naming for devices (instaed of using
-      something like /dev/mapper/3600c0ff00000000007c1d121c397f503) in
-      the config file?
-   3. How can I config the delay from the time that a device has failed
-      until the dm moves to the next active device? Again, I understand
-      that I should use the config file somehow.
+The dmsetup tool currently has a limit of 1024 characters for the length of a 
+line in a table file when running the 'create' or 'load' command. When have 
+run into scenarios where we've exceeded this length, usually due to creating 
+large striped devices with unusually long names for the underlying disks.
 
-I tried to run the following test: I created a multipath device with 2 
-physical devices (/dev/sda & /dev/sdb). I started running traffic on the 
-multipath device. All traffic ran through /dev/sda. Then, I disconnected 
-the iSCSI target that was represented by /dev/sda. After some time, the 
-traffic was directed to /dev/sdb. I stopped the traffic, disconnected 
-the iSCSI target that was represented by /dev/sdb and reconnected 
-/dev/sda. Now, if I run `multipath -l`, I see the following output:
+To get around this limitation, I wrote a patch that simply changes from using 
+fgets() to getline() in the _parse_file() routine. The getline() routine will 
+automatically allocate (or reallocate) space as needed to read in an entire 
+line from a file.
 
-3600c0ff00000000007c1d121c397f503
-[size=10 GB][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][enabled]
- \_ 0:0:0:0 sda 8:0   [failed][undef]
-\_ round-robin 0 [prio=0][enabled]
- \_ 1:0:0:0 sdb 8:16  [failed][faulty]
+I have tested this patch successfully with table lines of at least 1300 
+characters.
 
-/dev/sdb is dead and I'm ok with it. However, /dev/sda is alive. I was 
-able to run the following command:
+Thanks,
+-- 
+Kevin Corry
+kevcorry@us.ibm.com
+http://www.ibm.com/linux/
+http://evms.sourceforge.net/
 
-dd if=/dev/sda of=/dev/null count=100000
 
-However, if I run the following command:
+Use getline() instead of fgets() to remove the line-size limitation when
+parsing the input file in dmsetup. 
 
-dd if=/dev/mapper/3600c0ff00000000007c1d121c397f503 of=/dev/null 
-count=100000
+Signed-Off-By: Kevin Corry <kevcorry@us.ibm.com>
 
-This is what I get:
-
-dd: reading `/dev/mapper/3600c0ff00000000007c1d121c397f503': 
-Input/output error
-0+0 records in
-0+0 records out
-0 bytes (0 B) copied, 0.00067 seconds, 0.0 kB/s
-
-Can't it recongnize that a device that has failed (/dev/sda) is back to 
-life?
-
-Thanks
-Erez
+Index: device-mapper.1.02.05/dmsetup/dmsetup.c
+===================================================================
+--- device-mapper.1.02.05.orig/dmsetup/dmsetup.c
++++ device-mapper.1.02.05/dmsetup/dmsetup.c
+@@ -117,7 +117,8 @@ static struct dm_tree *_dtree;
+  */
+ static int _parse_file(struct dm_task *dmt, const char *file)
+ {
+-	char buffer[LINE_SIZE], ttype[LINE_SIZE], *ptr, *comment;
++	char *buffer = NULL, ttype[LINE_SIZE], *ptr, *comment;
++	size_t buffer_size = 0;
+ 	FILE *fp;
+ 	unsigned long long start, size;
+ 	int r = 0, n, line = 0;
+@@ -132,7 +133,7 @@ static int _parse_file(struct dm_task *d
+ 	} else
+ 		fp = stdin;
+ 
+-	while (fgets(buffer, sizeof(buffer), fp)) {
++	while (getline(&buffer, &buffer_size, fp) > 0) {
+ 		line++;
+ 
+ 		/* trim trailing space */
+@@ -166,6 +167,7 @@ static int _parse_file(struct dm_task *d
+       out:
+ 	if (file)
+ 		fclose(fp);
++	free(buffer);
+ 	return r;
+ }
+ 
