@@ -1,15 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH-RFC] Bug in dm-raid1 as used by pvmove
-Date: Tue, 9 May 2006 16:19:58 +0100
-Message-ID: <20060509151958.GK16180@agk.surrey.redhat.com>
-References: <17504.8384.533148.557081@cse.unsw.edu.au>
-	<51da725d31fe6ead1d9f3c13b8a0a746@redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: Running open-iscsi with device mapper hangs
+Date: Tue, 09 May 2006 11:55:20 -0500
+Message-ID: <4460C978.7090803@cs.wisc.edu>
+References: <4460A074.6030805@voltaire.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <51da725d31fe6ead1d9f3c13b8a0a746@redhat.com>
+In-Reply-To: <4460A074.6030805@voltaire.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: open-iscsi@googlegroups.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, May 09, 2006 at 10:00:18AM -0500, Jon Brassow wrote:
-> It looks reasonable at first glance, but I have to think about it more. 
->  Do you have a test case that I can reproduce with?
+Erez Zilber wrote:
+> Hi,
+> 
+> I'm trying to run open-iscsi with the multipath tool. I was able to 
+> create a scenario in which the initiator machine hangs:
+> 
+> My initiator runs on a SLES 10 beta 8 machine. The db contains 2 targets:
+> iscsiadm -m node
+> [83347a] 192.168.10.106:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C1D1
+> [030479] 192.168.10.105:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C1D1
+> 
 
-How about you create a device with an enormous zero mapping followed by
-a mirror mapping?
-
-> On May 8, 2006, at 11:55 PM, Neil Brown wrote:
-> > We will try to get this patch tested on the machine that showed the
-> > fault, but I would appreciate any feedback about the patch and I am
-> > still not very familiar with this code.
-
-It's not the first time we've found a bug like that:-(
-We need to review the rest of the file - on the face of it, more places
-look to be missing that adjustment.
-
-> >+	return (bio->bi_sector - rh->ms->ti->begin) >> rh->region_shift;
-
-Alasdair
--- 
-agk@redhat.com
+are you using the iscsi initiator in a SLES kernel, a mainline kernel or
+svn or a open-iscsi.org tarball?
