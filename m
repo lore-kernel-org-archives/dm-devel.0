@@ -1,19 +1,12 @@
-From: Kevin Corry <kevcorry@us.ibm.com>
-Subject: Re: [RFC,
-	PATCH] dm-log.c: Work with devices with hard-sector-size > 512 bytes
-Date: Mon, 8 May 2006 22:28:32 -0500
-Message-ID: <200605082228.33401.kevcorry@us.ibm.com>
-References: <200603271546.25508.kevcorry@us.ibm.com>
-	<20060328150100.GD2690@agk.surrey.redhat.com>
-	<200603281658.36642.kevcorry@us.ibm.com>
+From: Neil Brown <neilb@suse.de>
+Subject: [PATCH-RFC] Bug in dm-raid1 as used by pvmove
+Date: Tue, 9 May 2006 14:55:28 +1000
+Message-ID: <17504.8384.533148.557081@cse.unsw.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200603281658.36642.kevcorry@us.ibm.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,198 +17,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue March 28 2006 4:58 pm, Kevin Corry wrote:
-> On Tue March 28 2006 9:01 am, Alasdair G Kergon wrote:
-> > A couple of options:
-> >
-> >   Retain the existing on-disk format exactly, but adjust the offsets and
-> >   sizes used in the reads and writes to avoid the problems (pre-reading
-> >   other data if necessary to extend a write).
->
-> This method seems like it should be easy to implement. We could just extend
-> the buffer for the disk-header and always read and write both the header
-> and the log at the same time, and just point lc->clean_bits at the
-> appropriate offset within that buffer. The log could then remain at offset
-> 1k, and the version wouldn't have to change.
 
-Sorry I haven't had a chance to get back to this in a while. I was finally 
-able to finish up a new patch to fix this bug based on the above suggestions.
+Hi,
+ We have a report of a system oops during pvmove.
 
-This patch maintains compatibility with the existing metadata layout by 
-combining the disk-header buffer and clean-bits bitset buffer into a single 
-buffer.
+ What appears to be happening is core_in_sync is being passed
+ a 'region' is which much too large.  When this is indexed into the
+ bitset at lc->sync_bits it hits an unmapped page, and results in an
+ oops.
 
--- 
-Kevin Corry
-kevcorry@us.ibm.com
-http://www.ibm.com/linux/
-http://evms.sourceforge.net/
+ I believe the problem is in bio_to_region.  See the patch below.
+
+ If a section of an lv which is *not* at the start of the lv is being
+ moved using dm-raid1, I think the region number is being calculated
+ wrongly resulting in the inappropriately large index.  We really
+ need to subtract ti->begin from bi_sector before shifting.
+
+ We will try to get this patch tested on the machine that showed the
+ fault, but I would appreciate any feedback about the patch and I am
+ still not very familiar with this code.
+
+Thanks,
+NeilBrown
 
 
-On-disk logs for dm-mirror devices are currently hard-coded to use 512 byte
-hard-sector-sizes. This patch fixes dm-log so it will work with devices
-with non-512-byte hard-sector-sizes.
 
-To maintain full compatibility, instead of moving the clean-bits bitset to a
-different location, this patch removes the separate buffer used for the
-bitset, and enlarges the disk-header buffer to encompass both the header and
-the bitset. The I/O routines for the bitset are removed, and the I/O routines
-for the disk-header now also read/write the bitset.
+Signed-off-by: Neil Brown <neilb@suse.de>
 
-Signed-Off-By: Kevin Corry <kevcorry@us.ibm.com>
+### Diffstat output
+ ./drivers/md/dm-raid1.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: 2.6.17-rc1/drivers/md/dm-log.c
-===================================================================
---- 2.6.17-rc1.orig/drivers/md/dm-log.c
-+++ 2.6.17-rc1/drivers/md/dm-log.c
-@@ -155,8 +155,6 @@ struct log_c {
- 
- 	struct io_region header_location;
- 	struct log_header *disk_header;
--
--	struct io_region bits_location;
- };
- 
- /*
-@@ -241,29 +239,6 @@ static inline int write_header(struct lo
- }
- 
- /*----------------------------------------------------------------
-- * Bits IO
-- *--------------------------------------------------------------*/
--static int read_bits(struct log_c *log)
--{
--	int r;
--	unsigned long ebits;
--
--	r = dm_io_sync_vm(1, &log->bits_location, READ,
--			  log->clean_bits, &ebits);
--	if (r)
--		return r;
--
--	return 0;
--}
--
--static int write_bits(struct log_c *log)
--{
--	unsigned long ebits;
--	return dm_io_sync_vm(1, &log->bits_location, WRITE,
--			     log->clean_bits, &ebits);
--}
--
--/*----------------------------------------------------------------
-  * core log constructor/destructor
-  *
-  * argv contains region_size followed optionally by [no]sync
-@@ -373,9 +348,11 @@ static int disk_ctr(struct dirty_log *lo
- 		    unsigned int argc, char **argv)
+diff ./drivers/md/dm-raid1.c~current~ ./drivers/md/dm-raid1.c
+--- ./drivers/md/dm-raid1.c~current~	2006-05-09 14:47:35.000000000 +1000
++++ ./drivers/md/dm-raid1.c	2006-05-09 14:47:35.000000000 +1000
+@@ -111,7 +111,7 @@ struct region {
+  */
+ static inline region_t bio_to_region(struct region_hash *rh, struct bio *bio)
  {
- 	int r;
--	size_t size;
-+	size_t size, bitset_size;
- 	struct log_c *lc;
- 	struct dm_dev *dev;
-+	uint32_t *clean_bits;
-+	unsigned int hardsect_size;
- 
- 	if (argc < 2 || argc > 3) {
- 		DMWARN("wrong number of arguments to disk mirror log");
-@@ -396,26 +373,30 @@ static int disk_ctr(struct dirty_log *lo
- 	lc = (struct log_c *) log->context;
- 	lc->log_dev = dev;
- 
-+	hardsect_size = ti->limits.hardsect_size;
-+	bitset_size = lc->bitset_uint32_count * sizeof(uint32_t);
-+
- 	/* setup the disk header fields */
- 	lc->header_location.bdev = lc->log_dev->bdev;
- 	lc->header_location.sector = 0;
--	lc->header_location.count = 1;
- 
--	/*
--	 * We can't read less than this amount, even though we'll
--	 * not be using most of this space.
--	 */
--	lc->disk_header = vmalloc(1 << SECTOR_SHIFT);
-+	/* Include both the header and the bitset in one buffer. */
-+	size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) + bitset_size,
-+			   hardsect_size);
-+	lc->header_location.count = size >> SECTOR_SHIFT;
-+
-+	lc->disk_header = vmalloc(size);
- 	if (!lc->disk_header)
- 		goto bad;
- 
--	/* setup the disk bitset fields */
--	lc->bits_location.bdev = lc->log_dev->bdev;
--	lc->bits_location.sector = LOG_OFFSET;
--
--	size = dm_round_up(lc->bitset_uint32_count * sizeof(uint32_t),
--			   1 << SECTOR_SHIFT);
--	lc->bits_location.count = size >> SECTOR_SHIFT;
-+	/* Deallocate the clean_bits buffer that was allocated in core_ctr()
-+	 * and point it at the appropriate place in the disk_header buffer.
-+	 */
-+	clean_bits = lc->clean_bits;
-+	lc->clean_bits = (void *)lc->disk_header + (LOG_OFFSET << SECTOR_SHIFT);
-+	memcpy(lc->clean_bits, clean_bits, bitset_size);
-+	vfree(clean_bits);
-+
- 	return 0;
- 
-  bad:
-@@ -429,6 +410,7 @@ static void disk_dtr(struct dirty_log *l
- 	struct log_c *lc = (struct log_c *) log->context;
- 	dm_put_device(lc->ti, lc->log_dev);
- 	vfree(lc->disk_header);
-+	lc->clean_bits = NULL;
- 	core_dtr(log);
+-	return bio->bi_sector >> rh->region_shift;
++	return (bio->bi_sector - rh->ms->ti->begin) >> rh->region_shift;
  }
  
-@@ -449,16 +431,11 @@ static int disk_resume(struct dirty_log 
- 	struct log_c *lc = (struct log_c *) log->context;
- 	size_t size = lc->bitset_uint32_count * sizeof(uint32_t);
- 
--	/* read the disk header */
-+	/* read the disk header and bitset */
- 	r = read_header(lc);
- 	if (r)
- 		return r;
- 
--	/* read the bits */
--	r = read_bits(lc);
--	if (r)
--		return r;
--
- 	/* set or clear any new bits */
- 	if (lc->sync == NOSYNC)
- 		for (i = lc->header.nr_regions; i < lc->region_count; i++)
-@@ -473,15 +450,10 @@ static int disk_resume(struct dirty_log 
- 	memcpy(lc->sync_bits, lc->clean_bits, size);
- 	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
- 
--	/* write the bits */
--	r = write_bits(lc);
--	if (r)
--		return r;
--
- 	/* set the correct number of regions in the header */
- 	lc->header.nr_regions = lc->region_count;
- 
--	/* write the new header */
-+	/* write the new header and bitset */
- 	return write_header(lc);
- }
- 
-@@ -518,7 +490,7 @@ static int disk_flush(struct dirty_log *
- 	if (!lc->touched)
- 		return 0;
- 
--	r = write_bits(lc);
-+	r = write_header(lc);
- 	if (!r)
- 		lc->touched = 0;
- 
+ static inline sector_t region_to_sector(struct region_hash *rh, region_t region)
