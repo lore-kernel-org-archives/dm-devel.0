@@ -1,14 +1,12 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: Running open-iscsi with device mapper hangs
-Date: Tue, 09 May 2006 11:55:20 -0500
-Message-ID: <4460C978.7090803@cs.wisc.edu>
-References: <4460A074.6030805@voltaire.com>
+From: Shyam Sundar <g.shyamsundar@yahoo.co.in>
+Subject: Tested APPLE Xserve RAID with multipath
+Date: Tue, 9 May 2006 20:11:38 +0100 (BST)
+Message-ID: <20060509191138.3401.qmail@web8514.mail.in.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4460A074.6030805@voltaire.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,21 +16,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: open-iscsi@googlegroups.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Erez Zilber wrote:
-> Hi,
-> 
-> I'm trying to run open-iscsi with the multipath tool. I was able to 
-> create a scenario in which the initiator machine hangs:
-> 
-> My initiator runs on a SLES 10 beta 8 machine. The db contains 2 targets:
-> iscsiadm -m node
-> [83347a] 192.168.10.106:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C1D1
-> [030479] 192.168.10.105:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C1D1
-> 
+I tested Apple's Xserve RAID with the multipath tools.
 
-are you using the iscsi initiator in a SLES kernel, a mainline kernel or
-svn or a open-iscsi.org tarball?
+Here is the entry I had to make in the config file, if
+one wants to add it to the dafault table:
+
+{                                                    =20
+                                                     =20
+
+              .vendor        =3D "APPLE ",             =20
+                                                     =20
+     =20
+              .product       =3D "Xserve RAID ",       =20
+                                                     =20
+     =20
+              .getuid        =3D DEFAULT_GETUID,       =20
+                                                     =20
+     =20
+              .getprio       =3D NULL,                 =20
+                                                     =20
+     =20
+              .features      =3D DEFAULT_FEATURES,     =20
+                                                     =20
+     =20
+              .hwhandler     =3D DEFAULT_HWHANDLER,    =20
+                                                     =20
+     =20
+              .selector      =3D DEFAULT_SELECTOR,     =20
+                                                     =20
+     =20
+              .pgpolicy      =3D MULTIBUS,             =20
+                                                     =20
+     =20
+              .pgfailback    =3D FAILBACK_UNDEF,       =20
+                                                     =20
+     =20
+              .rr_weight     =3D RR_WEIGHT_NONE,       =20
+                                                     =20
+     =20
+              .no_path_retry =3D NO_PATH_RETRY_UNDEF,  =20
+                                                     =20
+     =20
+              .minio         =3D DEFAULT_MINIO,        =20
+                                                     =20
+     =20
+              .checker_name  =3D DEFAULT_CHECKER,      =20
+                                                     =20
+     =20
+      },
+
+-Shyam
+
+
+	=09
+__________________________________________________________=20
+Yahoo! India Answers: Share what you know. Learn something new.=20
+http://in.answers.yahoo.com
