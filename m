@@ -1,14 +1,17 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: Multipath load balancing?
-Date: Wed, 10 May 2006 13:29:56 +0200
-Message-ID: <OFF145ED5E.1C3D90E3-ONC125716A.003B41FD-C125716A.003EFC5E@de.ibm.com>
-References: <1147214696.27764.80.camel@localhost.localdomain>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ming Zhang <mingz@ele.uri.edu>
+Subject: Re: [RFC] dm-userspace
+Date: Wed, 10 May 2006 09:27:37 -0400
+Message-ID: <1147267657.905.8.camel@localhost.localdomain>
+References: <87u08g553l.fsf@caffeine.beaverton.ibm.com>
+	<1146092129.14129.333.camel@localhost.localdomain>
+	<m33bfig5u6.fsf@guaranine.beaverton.ibm.com>
+Reply-To: mingz@ele.uri.edu,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1147214696.27764.80.camel@localhost.localdomain>
+In-Reply-To: <m33bfig5u6.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,52 +21,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Dan Smith <danms@us.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Xen Developers <xen-devel@lists.xensource.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Some would make a diference between load-balancing and round-robin. The=20
-currently
-available round-robin selector switches paths based on a fix number of=20
-requests that
-have been sent to one path. Quite some time ago I posted a load-level pat=
-h=20
-selector
-that tries to select a path also based on the number of requests that are=
-=20
-still being
-processed. Unfortunately this also required some changes to the main code=
-=20
-and
-Alasdair hasn't much time to integrate new features.
+On Tue, 2006-05-09 at 16:02 -0700, Dan Smith wrote:
+> (I'm including the xen-devel list on this, as things are starting to
+> get interesting).
+> 
+> MZ> do u have any benchmark results about overhead?
+> 
+> So, I've spent some time over the last week working to improve
+> performance and collect some benchmark data.
+> 
+> I moved to using slab caches for the request and remap objects, which
+> helped a little.  I also added a poll() method to the control device,
+> which improved performance significantly.  Finally, I changed the
+> internal remap storage data structure to a hash table, which had a
+> very large performance impact (about 8x).
 
-Regards,
-Stefan
 
-SW Linux on zSeries Development & Services
-Stefan.Bader@de.ibm.com
--------------------------------------------------------------------------=
----------
-  When all other means of communication fail, try words.
+why need a poll here? ask a dumb question.
 
-dm-devel-bounces@redhat.com wrote on 10.05.2006 00:44:56:
+this is interesting. have u ever check the average loop up path length
+with single queue and has table? this can improve by 8X, quite
+impressive.
 
-> Le mardi 09 mai 2006 =E0 15:07 -0700, Brad Dameron a =E9crit :
-> > I am rewriting this since I received no answer.
-> >=20
-> > Does DM and Multipath tools now offer load balancing between 2 HBA=20
-ports
-> > to a single SAN? So if I have a 2 port HBA that can both see the same
-> > LUN I can setup a multipath device and it will then utilize both path=
-s
-> > as one larger single path?
-> >=20
-> To my understanding, it does since day-1 : paths round-robining is the
-> one and only load-balancing algo implemented in DM.
->=20
-> Regards,
-> cvaroqui
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+> 
+> Copying data to a device backed by dm-userspace presents a worst-case
+> scenario, especially with a small block-size like what qcow uses.  In
+> one of my tests, I copy about 20MB of data to a dm-userspace device,
+> backed by files hooked up to the loopback driver.  I compare this with
+> a "control" of a single loop-mounted image file (i.e., without
+> dm-userspace or CoW).  I measured the time to mount, copy, and unmount
+> the device, which (with the recent performance improvements) are
+> approximately:
+> 
+>   Normal Loop:        1 seconds
+>   dm-userspace/qcow: 10 seconds
+> 
+> For comparison, before adding poll() and the hash table, the
+> dm-userspace number was over 70 seconds.
+
+nice improvement!
+
+> 
+> One of the most interesting cases for us, however, is providing a
+> CoW-based VM disk image, which is mostly used for reading, with a
+> small amount of writing for configuration data.  To test this, I used
+> Xen to compare a fresh FC4 boot (firstboot, where things like SSH keys
+> are generated and written to disk) that used an LVM volume as root to
+> using dm-userspace (and loopback-files) as the root.  The numbers are
+> approximately:
+> 
+>   LVM root:          26 seconds
+>   dm-userspace/qcow: 27 seconds
+
+this is quite impressive, i think application take most of the time and
+some time are overlapped with io. and with little io here, this little
+difference is what u can get. i think this will be very helpful for
+diskless san boot.
+
+
+
+> 
+> Note that this does not yet include any read-ahead type behavior, nor
+> does it include priming the kernel module with remaps at create-time
+> (which results in a few initial compulsory "misses").  Also, I removed
+> the remap expiration functionality while adding the hash table and
+> have not yet added it back, so that may further improve performance
+> for large amounts of remaps (and bucket collisions).
+> 
+> Here is a link to a patch against 2.6.16.14:
+> 
+>   http://static.danplanet.com/dm-userspace/dmu-2.6.16.14-patch
+> 
+> Here are links to the userspace library, as well as the cow daemon,
+> which provides qcow support:
+> 
+>   http://static.danplanet.com/dm-userspace/libdmu-0.2.tar.gz
+>   http://static.danplanet.com/dm-userspace/cowd-0.1.tar.gz
+> 
+> (Note that the daemon is still rather rough, and the qcow
+> implementation has some bugs.  However, it works for light testing and
+> the occasional luck-assisted heavy testing)
+> 
+> As always, comments welcome and appreciated :)
+> 
