@@ -1,14 +1,14 @@
-From: Erez Zilber <erezz@voltaire.com>
-Subject: Re: Re: Running open-iscsi with device mapper hangs
-Date: Wed, 10 May 2006 10:20:04 +0300
-Message-ID: <44619424.4090208@voltaire.com>
-References: <4460A074.6030805@voltaire.com> <4460C978.7090803@cs.wisc.edu>
+From: Stefan Bader <Stefan.Bader@de.ibm.com>
+Subject: Re: Multipath load balancing?
+Date: Wed, 10 May 2006 13:29:56 +0200
+Message-ID: <OFF145ED5E.1C3D90E3-ONC125716A.003B41FD-C125716A.003EFC5E@de.ibm.com>
+References: <1147214696.27764.80.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4460C978.7090803@cs.wisc.edu>
+In-Reply-To: <1147214696.27764.80.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,63 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: open-iscsi@googlegroups.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
-
->Erez Zilber wrote:
-> =20
->
->>Hi,
->>
->>I'm trying to run open-iscsi with the multipath tool. I was able to=20
->>create a scenario in which the initiator machine hangs:
->>
->>My initiator runs on a SLES 10 beta 8 machine. The db contains 2 target=
-s:
->>iscsiadm -m node
->>[83347a] 192.168.10.106:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C1D=
-1
->>[030479] 192.168.10.105:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C1D=
-1
->>
->>   =20
->>
->
->are you using the iscsi initiator in a SLES kernel, a mainline kernel or
->svn or a open-iscsi.org tarball?
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
-> =20
->
-I'm using the initiator that comes with the SLES kernel=20
-(2.6.16-rc6-git1-4-smp). We applied 3 patches that are located in=20
-https://openib.org/svn/gen2/branches/backport/sles10/:
-iscsi-04-libiscsi.patch
-iscsi-05-convert-tcp.patch
-iscsi-06-transport-ep-cb.patch
-
-The userspace part is r560.
-
-Do you prefer that I try to run it with a different open-iscsi version?
-
---=20
-
-____________________________________________________________
-
-Erez Zilber   |  972-9-971-7689
-
-Software Engineer, Storage Team
-
-Voltaire =96 _The Grid Backbone_
-
- __
-
- www.voltaire.com <http://www.voltaire.com/>
-
+Some would make a diference between load-balancing and round-robin. The=20
+currently
+available round-robin selector switches paths based on a fix number of=20
+requests that
+have been sent to one path. Quite some time ago I posted a load-level pat=
+h=20
+selector
+that tries to select a path also based on the number of requests that are=
 =20
+still being
+processed. Unfortunately this also required some changes to the main code=
+=20
+and
+Alasdair hasn't much time to integrate new features.
+
+Regards,
+Stefan
+
+SW Linux on zSeries Development & Services
+Stefan.Bader@de.ibm.com
+-------------------------------------------------------------------------=
+---------
+  When all other means of communication fail, try words.
+
+dm-devel-bounces@redhat.com wrote on 10.05.2006 00:44:56:
+
+> Le mardi 09 mai 2006 =E0 15:07 -0700, Brad Dameron a =E9crit :
+> > I am rewriting this since I received no answer.
+> >=20
+> > Does DM and Multipath tools now offer load balancing between 2 HBA=20
+ports
+> > to a single SAN? So if I have a 2 port HBA that can both see the same
+> > LUN I can setup a multipath device and it will then utilize both path=
+s
+> > as one larger single path?
+> >=20
+> To my understanding, it does since day-1 : paths round-robining is the
+> one and only load-balancing algo implemented in DM.
+>=20
+> Regards,
+> cvaroqui
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
