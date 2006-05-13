@@ -1,112 +1,77 @@
-From: Erez Zilber <erezz@voltaire.com>
-Subject: Re: Re: Running open-iscsi with device mapper hangs
-Date: Thu, 11 May 2006 17:55:58 +0300
-Message-ID: <4463507E.8090801@voltaire.com>
-References: <4460A074.6030805@voltaire.com>
-	<4460C978.7090803@cs.wisc.edu>	<44619424.4090208@voltaire.com>
-	<4462216D.6070907@cs.wisc.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
+Subject: Re: [PATCH] Remove softlockup from invalidate_mapping_pages. (might be dm related)
+Date: Sat, 13 May 2006 17:00:03 +0200
+Message-ID: <20060513150003.GA6096@uio.no>
+References: <20060420160549.7637.patches@notabene> <1060420062955.7727@suse.de> <20060420003839.1a41c36f.akpm@osdl.org> <20060426204809.GA15462@uio.no> <20060426135809.10a37ec3.akpm@osdl.org> <20060513134908.GA4480@uio.no> <20060513073344.4fcbc46b.akpm@osdl.org> <20060513144334.GA6013@uio.no> <20060513075147.423d18bd.akpm@osdl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4462216D.6070907@cs.wisc.edu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: open-iscsi@googlegroups.com, Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751079AbWEMPAJ@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20060513075147.423d18bd.akpm@osdl.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@osdl.org>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
+On Sat, May 13, 2006 at 07:51:47AM -0700, Andrew Morton wrote:
+> ho-hum.  Please see if there's anything else you can do to rule out a
+> hardware failure, then copy dm-devel@redhat.com on the next oops report.
 
->Erez Zilber wrote:
-> =20
->
->>Mike Christie wrote:
->>
->>   =20
->>
->>>Erez Zilber wrote:
->>>=20
->>>
->>>     =20
->>>
->>>>Hi,
->>>>
->>>>I'm trying to run open-iscsi with the multipath tool. I was able to=20
->>>>create a scenario in which the initiator machine hangs:
->>>>
->>>>My initiator runs on a SLES 10 beta 8 machine. The db contains 2 targ=
-ets:
->>>>iscsiadm -m node
->>>>[83347a] 192.168.10.106:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C=
-1D1
->>>>[030479] 192.168.10.105:3260,1 iqn.2005-12.com.voltaire.206000C0FF07C=
-1D1
->>>>
->>>>  =20
->>>>
->>>>       =20
->>>>
->>>are you using the iscsi initiator in a SLES kernel, a mainline kernel =
-or
->>>svn or a open-iscsi.org tarball?
->>>
->>>--
->>>dm-devel mailing list
->>>dm-devel@redhat.com
->>>https://www.redhat.com/mailman/listinfo/dm-devel
->>>=20
->>>
->>>     =20
->>>
->>I'm using the initiator that comes with the SLES kernel=20
->>(2.6.16-rc6-git1-4-smp). We applied 3 patches that are located in=20
->>https://openib.org/svn/gen2/branches/backport/sles10/:
->>iscsi-04-libiscsi.patch
->>iscsi-05-convert-tcp.patch
->>iscsi-06-transport-ep-cb.patch
->>
->>The userspace part is r560.
->>
->>Do you prefer that I try to run it with a different open-iscsi version?
->>
->>   =20
->>
->
->Maybe. Do those patches have any of the later fixes PatM found? Look at
->r543, 544, 545. Without them you can hit some lockups or oops.
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
-> =20
->
-I'm now running with r545 and I don't see this behavior anymore.
+It's not swap related. It crashes even without swap enabled; still with lots of
+dm stuff in the backtrace, though:
 
-Hannes - do you know when will there be an update for SLES 10 with those=20
-fixes ?
+[ 3192.568880] general protection fault: 0000 [1] SMP 
+[ 3192.573779] CPU 1 
+[ 3192.575804] Modules linked in: w83627hf_wdt eeprom ide_generic ide_disk ide_cd cdrom ipv6 psmouse i2c_nforce2 serio_raw pcspkr i2c_core parport_pc parport rtc ext3 jbd mbcache raid6 raid5 xor raid10 raid1 raid0 linear md_mod dm_mod sd_mod sata_nv tg3 sata_sil libata scsi_mod forcedeth generic amd74xx ehci_hcd ide_core ohc i_hcd thermal processor fan unix
+[ 3192.607472] Pid: 3432, comm: md1_raid5 Not tainted 2.6.17-rc4 #1
+[ 3192.613471] RIP: 0010:[<ffffffff803a1ae8>] <ffffffff803a1ae8>{__lock_text_start+0}
+[ 3192.620870] RSP: 0018:ffff81000245bd70  EFLAGS: 00210086
+[ 3192.626374] RAX: 000000000000fa40 RBX: aaaa8b5ad269b80f RCX: ffff81000151ff50
+[ 3192.633501] RDX: ffff81007febd600 RSI: ffff81000151fef0 RDI: aaaa8b5ad269b81f
+[ 3192.640628] RBP: 000000000000fa40 R08: ffff81007db6d2c0 R09: ffff81007db6d2c0
+[ 3192.647756] R10: 0000000000000007 R11: ffffffff8024c868 R12: ffff81007febf040
+[ 3192.654882] R13: 0000000000200296 R14: ffff810004a97fb0 R15: 0000000000000000
+[ 3192.662009] FS:  0000000000000000(0000) GS:ffff81007f827840(0000) knlGS:00000000f7ad9ae0
+[ 3192.670101] CS:  0010 DS: 0018 ES: 0018 CR0: 000000008005003b
+[ 3192.675843] CR2: 00000000080850e0 CR3: 000000007c11e000 CR4: 00000000000006e0
+[ 3192.682970] Process md1_raid5 (pid: 3432, threadinfo ffff81007ddb6000, task ffff81007f997080)
+[ 3192.691495] Stack: ffffffff802668b8 ffff81007f27c880 ffff810049bb23c0 ffff810049bb23c0 
+[ 3192.699353]        0000000000000000 ffff81007d0788b8 ffff810049bb23c0 0000000000000000 
+[ 3192.707404]        ffffffff880d3b67 ffff81007ed0cba8 
+[ 3192.712476] Call Trace: <IRQ> <ffffffff802668b8>{kmem_cache_free+186}
+[ 3192.718950]        <ffffffff880d3b67>{:dm_mod:clone_endio+135} <ffffffff802c9372>{__end_that_request_first+420}
+[ 3192.729081]        <ffffffff802c7d1b>{blk_run_queue+62} <ffffffff8806f8a6>{:scsi_mod:scsi_end_request+40}
+[ 3192.738700]        <ffffffff8806fb51>{:scsi_mod:scsi_io_completion+522}
+[ 3192.745334]        <ffffffff880cc4a1>{:sd_mod:sd_rw_intr+623} <ffffffff880705d6>{:scsi_mod:scsi_device_unbusy+85}
+[ 3192.755641]        <ffffffff802c86cb>{blk_done_softirq+113} <ffffffff8022c41b>{__do_softirq+86}
+[ 3192.764377]        <ffffffff8020a742>{call_softirq+30} <ffffffff8020b902>{do_softirq+44}
+[ 3192.772509]        <ffffffff8020b947>{do_IRQ+65} <ffffffff80209aa0>{ret_from_intr+0} <EOI>
+[ 3192.780822]        <ffffffff881129a7>{:raid5:compute_parity+880} <ffffffff802d5e2f>{memcmp+11}
+[ 3192.789476]        <ffffffff8811467a>{:raid5:handle_stripe+3022} <ffffffff80238a7c>{keventd_create_kthread+0}
+[ 3192.799424]        <ffffffff80238a7c>{keventd_create_kthread+0} <ffffffff881153e9>{:raid5:raid5d+333}
+[ 3192.808682]        <ffffffff880e464f>{:md_mod:md_thread+0} <ffffffff880e4751>{:md_mod:md_thread+258}
+[ 3192.817864]        <ffffffff80238e78>{autoremove_wake_function+0} <ffffffff880e464f>{:md_mod:md_thread+0}
+[ 3192.827471]        <ffffffff80238cc4>{kthread+203} <ffffffff8020a3f2>{child_rip+8}
+[ 3192.835081]        <ffffffff80238a7c>{keventd_create_kthread+0} <ffffffff80238bf9>{kthread+0}
+[ 3192.843646]        <ffffffff8020a3ea>{child_rip+0}
+[ 3192.848646] 
+[ 3192.848647] Code: f0 ff 0f 0f 88 c8 01 00 00 c3 f0 ff 0f 8b 07 ba 01 00 00 00 
+[ 3192.857563] RIP <ffffffff803a1ae8>{__lock_text_start+0} RSP <ffff81000245bd70>
+[ 3192.865039]  <0>Kernel panic - not syncing: Aiee, killing interrupt handler!
+[ 3192.872164]  <0>Rebooting in 60 seconds..
 
---=20
+(Thank goodness for serial console; I couldn't possibly write all these oopses
+by hand. :-) )
 
-____________________________________________________________
+> The stack backtrace you have there is a little surprising.  Enabling
+> CONFIG_FRAME_POINTER might help clear it up.  Also it'd be worth seeing if
+> CONFIG_DEBUG_SLAB turns up anything.
 
-Erez Zilber   |  972-9-971-7689
+I'm recompiling 2.6.17-rc4 now with those two added in. I'll let you know in a
+few hours when it crashes again, I'd guess :-)
 
-Software Engineer, Storage Team
+Would it be a good idea to revert your mm patch and test again, just in case?
 
-Voltaire =96 _The Grid Backbone_
-
- __
-
- www.voltaire.com <http://www.voltaire.com/>
-
-=20
+/* Steinar */
+-- 
+Homepage: http://www.sesse.net/
