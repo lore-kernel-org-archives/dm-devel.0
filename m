@@ -1,36 +1,115 @@
-From: "Steinar H. Gunderson" <sgunderson@bigfoot.com>
-Subject: Re: [PATCH] Remove softlockup from invalidate_mapping_pages. (might be dm related)
-Date: Sun, 14 May 2006 01:28:42 +0200
-Message-ID: <20060513232842.GA8591@uio.no>
-References: <20060426135809.10a37ec3.akpm@osdl.org> <20060513134908.GA4480@uio.no> <20060513073344.4fcbc46b.akpm@osdl.org> <20060513144334.GA6013@uio.no> <20060513075147.423d18bd.akpm@osdl.org> <20060513150003.GA6096@uio.no> <20060513082409.4d173ccc.akpm@osdl.org> <20060513153231.GA6277@uio.no> <20060513084317.50356155.akpm@osdl.org> <20060513171414.GA7628@uio.no>
+From: Joe Harvell <jharvell@dogpad.net>
+Subject: LVM2 tools<-->library<-->driver compatibility
+Date: Mon, 15 May 2006 14:01:23 -0500
+Message-ID: <4468D003.6010703@dogpad.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S964802AbWEMX2r@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20060513171414.GA7628@uio.no>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@osdl.org>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, neilb@suse.de
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, May 13, 2006 at 07:14:14PM +0200, Steinar H. Gunderson wrote:
-> I guess it's time for memtest86, just in case I botched the RAM while
-> moving it...
+I am installing Gentoo Linux on my machine and I'm running into LVM
+problems.  The installer CD is 2.6 kernel based, but I am installing a
+2.4 kernel based system.  Gentoo has an install profile for this to
+prevent programs and libraries that have a dependency on 2.6 kernel
+headers from being installed when a 2.4 profile is being used.
 
-Good news! :-) memtest86+ refused to boot, since I have too much memory (2GB)
-and this somehow interferes with grub, but mprime (my other favourite tool
-for this kind of testing) quite quickly bombed out. (This in itself usually
-means bad RAM, bad motherboard or some interrupt handler messing up badly.)
+As part of the install process, I created an LVM2 volume group
+containing LVs for /, /usr, /var, /opt, and /home.  I created
+filesystems on these LVs and performed the installation no problem.  I
+also configured and compiled the kernel, which is a 2.4.32 based kernel
+with LVM2 backported into it by the Gentoo developer team.
 
-I moved the RAM from DIMM slot 3+4 to 1+2, and suddenly things became a _lot_
-better. I definitely can't say it's oops-free yet, since it's only been
-running a couple of hours, but this certainly points towards that the larger
-part of my issues were some odd sort of motherboard hiccup.
+I created the initrd which is based on an initrd I created myself and
+have been using successfully on 2.4 and 2.6 based kernels.  It contains
+the LVM tools and libraries, along with disk drivers and the
+device-mapper driver.
 
-I take it this also frees the dm, md and NUMA code of most suspicion --
-consider the issues fixed for now, and I'll be sure to bug you again if I
-start to get oopses again. Sorry for wasting your time :-)
+When I run vgscan, it finds the volume group no problem.  However, when
+I run 'vgchange -ay <vgname>', I see three problems.
 
-/* Steinar */
--- 
-Homepage: http://www.sesse.net/
+1.  There are entries in /dev/mapper/<vgname>-<lvname>, but no symlinks
+in the form /dev/<vgname>/<lvname> --> /dev/mapper/<vgname>/<lvname>.  I
+run 'lvm vgmknodes' and it remedies this.
+
+2. I see five complaints from 'vgchange -ay <vgname>' (one for each LV)
+as follows:
+
+on stderr:   device-mapper: table ioctl failed: Invalid argument
+on console (from dm-mod driver): device-mapper: one of name or uuid must
+be supplied, cmd (12)
+
+I ran vgchange under strace and here is the following snippet:
+
+open("/dev/mapper/control", O_RDWR|O_LARGEFILE) = 9
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+mlockall(MCL_CURRENT|MCL_FUTURE)        = 0
+brk(0x8936000)                          = 0x8936000
+brk(0x8b1e000)                          = 0x8b1e000
+getpriority(PRIO_PROCESS, 0)            = 20
+setpriority(PRIO_PROCESS, 0, -18)       = 0
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
+address)
+stat64("/dev/ide/host0/bus0/target0/lun0/part10", {st_mode=S_IFBLK|0600,
+st_rdev=makedev(3, 10), ...}) = 0
+stat64("/dev/ide/host0/bus0/target0/lun0/part11", {st_mode=S_IFBLK|0600,
+st_rdev=makedev(3, 11), ...}) = 0
+stat64("/dev/ide/host0/bus0/target0/lun0/part12", {st_mode=S_IFBLK|0600,
+st_rdev=makedev(3, 12), ...}) = 0
+ioctl(9, DM_DEV_CREATE, 0x8109958)      = 0
+ioctl(9, DM_TABLE_STATUS, 0x8109958)    = -1 EINVAL (Invalid argument)
+write(2, "  ", 2)                       = 2
+write(2, "device-mapper: table ioctl faile"..., 51) = 51
+write(2, "\n", 1)                       = 1
+
+3.  When I try to mount the filesystem in that LV, it fails.  I tried
+with different filesystem types and it's the same result.  From within
+the 2.4 kernel based initrd, it fails.  If I reboot into the 2.6 kernel
+based installer environment, no problem.
+
+This looks like an incompatibility between the lvm2 and/or device-mapper
+library code and the kernel device-mapper code.  Here are the versions
+installed in the install environment (the one that works):
+
+lvm> version
+   LVM version:     2.02.05 (2006-04-21)
+   Library version: 1.02.03 (2006-02-08)
+   Driver version:  4.4.0
+
+In the initrd, the only thing different would be the driver version.
+Later today I will have access to the machine again and I can run the
+lvm version command there to see what the driver version is.  In the
+meantime, I am looking at the kernel sources and I don't see anything
+obvious in the driver/md directory.
