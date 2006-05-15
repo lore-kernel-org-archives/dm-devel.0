@@ -1,12 +1,14 @@
-From: Joe Harvell <jharvell@dogpad.net>
-Subject: LVM2 tools<-->library<-->driver compatibility
-Date: Mon, 15 May 2006 14:01:23 -0500
-Message-ID: <4468D003.6010703@dogpad.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Darrick J. Wong" <djwong@us.ibm.com>
+Subject: Re: Follow-up on your AIC-79xx Linux Patch...
+Date: Mon, 15 May 2006 12:25:56 -0700
+Message-ID: <4468D5C4.4050303@us.ibm.com>
+References: <44651D75.8060209@mat.puc.cl>
+Reply-To: "Darrick J. Wong" <djwong@us.ibm.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1862654488=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <44651D75.8060209@mat.puc.cl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,100 +18,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: =?ISO-8859-1?Q?=22Jos=E9_Miguel_Morales_F=2E=22?= <jmmf@mat.puc.cl>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I am installing Gentoo Linux on my machine and I'm running into LVM
-problems.  The installer CD is 2.6 kernel based, but I am installing a
-2.4 kernel based system.  Gentoo has an install profile for this to
-prevent programs and libraries that have a dependency on 2.6 kernel
-headers from being installed when a 2.4 profile is being used.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--===============1862654488==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="------------enigE23EC14E8180E43767AF29AC"
 
-As part of the install process, I created an LVM2 volume group
-containing LVs for /, /usr, /var, /opt, and /home.  I created
-filesystems on these LVs and performed the installation no problem.  I
-also configured and compiled the kernel, which is a 2.4.32 based kernel
-with LVM2 backported into it by the Gentoo developer team.
+This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
+--------------enigE23EC14E8180E43767AF29AC
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-I created the initrd which is based on an initrd I created myself and
-have been using successfully on 2.4 and 2.6 based kernels.  It contains
-the LVM tools and libraries, along with disk drivers and the
-device-mapper driver.
+Actually, there are two ways that I know of to deal with this.  I'm
+assuming that you're using Adaptec HostRAID on that 7901 controller:
 
-When I run vgscan, it finds the volume group no problem.  However, when
-I run 'vgchange -ay <vgname>', I see three problems.
+1) Deactivate HostRAID.  Set up a small /boot at the beginning of sda,
+make a md-based RAID0 out of the rest of the two drives for /, and
+(generally speaking) things should just work.
 
-1.  There are entries in /dev/mapper/<vgname>-<lvname>, but no symlinks
-in the form /dev/<vgname>/<lvname> --> /dev/mapper/<vgname>/<lvname>.  I
-run 'lvm vgmknodes' and it remedies this.
+2) md doesn't know how to interpret HostRAID arrays correctly--what you
+want is a program called dmraid because it _does_ know how to interpret
+HostRAID arrays and set up the device-mapper driver correctly.  You'll
+need to get the latest copy (1.0.0rc10) from Heinz Mauelshagen
+(http://people.redhat.com/~heinzm/sw/dmraid/), build it, and then modify
+your initrd to include /sbin/dmraid and call "dmraid -ay" prior to
+mounting the root filesystem.
 
-2. I see five complaints from 'vgchange -ay <vgname>' (one for each LV)
-as follows:
+Neither approach requires the attach_HostRAID patch.  Incidentally, the
+a320raid driver is a binary module from Adaptec.  You're not losing much
+by using an open-source solution, because a320raid, md and dmraid are
+all software RAID drivers.
 
-on stderr:   device-mapper: table ioctl failed: Invalid argument
-on console (from dm-mod driver): device-mapper: one of name or uuid must
-be supplied, cmd (12)
+--D
 
-I ran vgchange under strace and here is the following snippet:
+Jos=E9 Miguel Morales F. wrote:
+> Hello Mr. Darrick. My name is Jos=E9 Miguel Morales, System Manager at
+> Mining Center, P. Catholic University of Chile.
+>=20
+>    I'm writing to you (in hope this IS your right address) about a
+> thread you started on December 1st, 2005, at ussg.iu.edu
+>=20
+>    Is about your "rejected" patch for "aic79xx_osm_pci.c" under kernel
+> 2.6.14.
+>=20
+>    I have a couple of Dell Precision 670n, with nice AIC-7901 on-board =
++
+> 2 73 GiB. SCSI-3 10.000 RPM H.D.s, built as RAID-0 for QUITE A GOOD
+> speed...
+>=20
+>    Well, of course I had trouble installing Linux on that configuration=
+=2E
+> The driver ("aic79xx_osm_pci.c" of kernel 2.6.15, IDENTICAL to the
+> 2.6.14 one) just recognized my two disks as /dev/sda & /dev/sdb, and NO=
 
-open("/dev/mapper/control", O_RDWR|O_LARGEFILE) = 9
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-mlockall(MCL_CURRENT|MCL_FUTURE)        = 0
-brk(0x8936000)                          = 0x8936000
-brk(0x8b1e000)                          = 0x8b1e000
-getpriority(PRIO_PROCESS, 0)            = 20
-setpriority(PRIO_PROCESS, 0, -18)       = 0
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-ioctl(9, DM_DEV_STATUS, 0x8109958)      = -1 ENXIO (No such device or
-address)
-stat64("/dev/ide/host0/bus0/target0/lun0/part10", {st_mode=S_IFBLK|0600,
-st_rdev=makedev(3, 10), ...}) = 0
-stat64("/dev/ide/host0/bus0/target0/lun0/part11", {st_mode=S_IFBLK|0600,
-st_rdev=makedev(3, 11), ...}) = 0
-stat64("/dev/ide/host0/bus0/target0/lun0/part12", {st_mode=S_IFBLK|0600,
-st_rdev=makedev(3, 12), ...}) = 0
-ioctl(9, DM_DEV_CREATE, 0x8109958)      = 0
-ioctl(9, DM_TABLE_STATUS, 0x8109958)    = -1 EINVAL (Invalid argument)
-write(2, "  ", 2)                       = 2
-write(2, "device-mapper: table ioctl faile"..., 51) = 51
-write(2, "\n", 1)                       = 1
+> RAID support.
+>=20
+>    With your patch (and using "attach_HostRAID=3D1"), I finally made a
+> /dev/md/0 visible, then wrote a SIMPLE /etc/raidtab (included below) an=
+d
+> started it with "raid0run /dev/md/0".
+>=20
+>    That way "fdisk /dev/md/0" was able to see the partitions, and WITH
+> apropriate device names for each partition, but such devices don't exis=
+t
+> under /dev/md/...
+>=20
+>    Looking at /var/log/messages I found raidtools complaining about
+> "errors with the superblock of the array", and I was unable to perform
+> further actions without risking to destroy the array. (Which already ha=
+s
+> 2 partitions with a complete WinXP installation.)
+>=20
+>    I noticed that you talk about an "a320raid" drier module, but I can'=
+t
+> find any "direct" reference to it. Could it be possible to you to
+> enlighten me a bit more on this issue, please?
+>=20
+>    Sorry for bugging you, but as I read the whole thread I know I'll ge=
+t
+> no "official" help from Linux people, and I don't want to give up the
+> array...
+>=20
+>     Thank you very much in advance...    Jos=E9 Miguel Morales F.
+>=20
+> P.D.: Here is my "simple" /etc/raidtab:
+>=20
+>  - + - + - + -   Cut Here    - + - + - + -   Cut Here    - + - + - + -
+>=20
+> raiddev /dev/md/0
+>     raid-level        0
+>     nr-raid-disks        2
+>     persistent-superblock    0
+>     chunk-size        16
+>=20
+>     device            /dev/sda
+>     raid-disk        0
+>     device                  /dev/sdb
+>     raid-disk        1
+>=20
+>  - + - + - + -   Cut Here    - + - + - + -   Cut Here    - + - + - + -
+>=20
+>    ... I really don't know, but the "persistent-superblock" statement
+> always gives me problems, no matter how do I use (or don't use) it...  =
+=20
+> Regards !!!
+>=20
 
-3.  When I try to mount the filesystem in that LV, it fails.  I tried
-with different filesystem types and it's the same result.  From within
-the 2.4 kernel based initrd, it fails.  If I reboot into the 2.6 kernel
-based installer environment, no problem.
 
-This looks like an incompatibility between the lvm2 and/or device-mapper
-library code and the kernel device-mapper code.  Here are the versions
-installed in the install environment (the one that works):
+--------------enigE23EC14E8180E43767AF29AC
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
-lvm> version
-   LVM version:     2.02.05 (2006-04-21)
-   Library version: 1.02.03 (2006-02-08)
-   Driver version:  4.4.0
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-In the initrd, the only thing different would be the driver version.
-Later today I will have access to the machine again and I can run the
-lvm version command there to see what the driver version is.  In the
-meantime, I am looking at the kernel sources and I don't see anything
-obvious in the driver/md directory.
+iD8DBQFEaNXEa6vRYYgWQuURAgHQAKCl8Nqk9crQOxf2sd+aB5Prvb6k8ACgplzo
+LBcOizYtBBpTkxgXo06wh78=
+=OuNj
+-----END PGP SIGNATURE-----
+
+--------------enigE23EC14E8180E43767AF29AC--
+
+
+--===============1862654488==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1862654488==--
