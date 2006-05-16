@@ -1,14 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: LVM2 tools<-->library<-->driver compatibility
-Date: Tue, 16 May 2006 20:06:57 +0100
-Message-ID: <20060516190657.GH16180@agk.surrey.redhat.com>
-References: <4468D003.6010703@dogpad.net> <446A20E3.70500@dogpad.net>
+From: egoggin@emc.com
+Subject: patch to allow multipath(8) and multipathd(8) to pick up
+	existing alias (if any) from dm device-name
+Date: Tue, 16 May 2006 15:32:28 -0400
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4149049@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <446A20E3.70500@dogpad.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,18 +16,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-On Tue, May 16, 2006 at 01:58:43PM -0500, Joe Harvell wrote:
-> I am suspecting a driver <--> tools incompatibility:
+Christophe,
+
+This small patch should allow multipath(8) and multipathd(8) to acquire its
+internal alias name from the device-mapper's device-name for the device if a
+multipath specific alias (user friendly one or not) has __not__ been set.
+Otherwise, assuming that a multipath device has been renamed beforehand by
+someone invoking "dm_setup rename", simply invoking "multipath" changes the
+device-mapper's device-name for the device back to the multipath assigned
+UID name.
+
+Ed
+
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index 79cee8b..003433e 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -15,6 +15,7 @@
+ #include "pgpolicies.h"
+ #include "alias.h"
+ #include "defaults.h"
++#include "devmapper.h"
  
-> >on console (from dm-mod driver): device-mapper: one of name or uuid must
-> >be supplied, cmd (12)
-
-Make sure the device-mapper library version you're using with a 2.4 kernel 
-is at least version 1.02.05.  (Some more backwards compatibility got added.)
-
-Alasdair
--- 
-agk@redhat.com
+ pgpolicyfn *pgpolicies[] = {
+ 	NULL,
+@@ -165,6 +166,9 @@ select_alias (struct multipath * mp)
+ 			mp->alias = get_user_friendly_alias(mp->wwid,
+ 					conf->bindings_file);
+ 		if (mp->alias == NULL)
++			if ((mp->alias = MALLOC(WWID_SIZE)) != NULL)
++				dm_get_name(mp->wwid, DEFAULT_TARGET,
+mp->alias);
++		if (mp->alias == NULL)
+ 			mp->alias = mp->wwid;
+ 	}
