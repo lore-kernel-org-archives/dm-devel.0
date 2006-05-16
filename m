@@ -1,15 +1,15 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: patch to allow multipath(8) and multipathd(8) to
-	pick up existing alias (if any) from dm device-name
-Date: Tue, 16 May 2006 23:28:40 +0200
-Message-ID: <1147814920.4854.30.camel@localhost.localdomain>
-References: <6CCEAEDF4D06984A83F427424F47D6E4149049@CORPUSMX40A.corp.emc.com>
+From: Joe Harvell <jharvell@dogpad.net>
+Subject: Re: LVM2 tools<-->library<-->driver compatibility
+Date: Tue, 16 May 2006 17:28:19 -0500
+Message-ID: <446A5203.5050707@dogpad.net>
+References: <4468D003.6010703@dogpad.net> <446A20E3.70500@dogpad.net>
+	<20060516190657.GH16180@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4149049@CORPUSMX40A.corp.emc.com>
+In-Reply-To: <20060516190657.GH16180@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,24 +22,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Le mardi 16 mai 2006 =C3=A0 15:32 -0400, egoggin@emc.com a =C3=A9crit :
-> Christophe,
->=20
-> This small patch should allow multipath(8) and multipathd(8) to acquire=
- its
-> internal alias name from the device-mapper's device-name for the device=
- if a
-> multipath specific alias (user friendly one or not) has __not__ been se=
-t.
-> Otherwise, assuming that a multipath device has been renamed beforehand=
- by
-> someone invoking "dm_setup rename", simply invoking "multipath" changes=
- the
-> device-mapper's device-name for the device back to the multipath assign=
-ed
-> UID name.
->=20
-Sure. Good point.
+1.02.05 fixed it.  Thanks!!!
 
-Applied and pushed, thanks,
-cvaroqui
+Alasdair G Kergon wrote:
+> On Tue, May 16, 2006 at 01:58:43PM -0500, Joe Harvell wrote:
+>   
+>> I am suspecting a driver <--> tools incompatibility:
+>>     
+>  
+>   
+>>> on console (from dm-mod driver): device-mapper: one of name or uuid must
+>>> be supplied, cmd (12)
+>>>       
+>
+> Make sure the device-mapper library version you're using with a 2.4 kernel 
+> is at least version 1.02.05.  (Some more backwards compatibility got added.)
+>
+> Alasdair
+>   
