@@ -1,15 +1,14 @@
-From: Steve Lord <lord@xfs.org>
-Subject: Re: dm-multipath has great throughput but we'd like more!
-Date: Thu, 18 May 2006 15:28:09 -0500
-Message-ID: <446CD8D9.2010106@xfs.org>
-References: <1147935929.27006.57.camel@baggage>	<d2c2bb37e4e03a0daa7ee7e5803174cd@redhat.com>
-	<1147938254.27006.65.camel@baggage>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [PATCH-RFC] Bug in dm-raid1 as used by pvmove
+Date: Fri, 19 May 2006 11:17:58 +1000
+Message-ID: <17517.7366.969023.850708@cse.unsw.edu.au>
+References: <17504.8384.533148.557081@cse.unsw.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1147938254.27006.65.camel@baggage>
+In-Reply-To: message from Neil Brown on Tuesday May 9
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,102 +18,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: rgautier@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: consult-list@redhat.com
+To: Jonathan E Brassow <jbrassowredhatcom@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+On Tuesday May 9, Jonathan E Brassow wrote:
+> It looks reasonable at first glance, but I have to think about it
+> more.  Do you have a test case that I can reproduce with? 
 
-Provided you have things cabled right and you have 2 HBA ports going either
-into a switch, or into the controllers of the raid (raid probably has 4
-ports), then the theoretical bandwidth is closer to 400 Mbytes/sec. Pretty sure
-any reasonable Hitachi raid will sustain close to that. Using other software and
-raid hardware I can generally sustain 375 Mbytes/sec from 2 qlogic hba ports in
-a  fairly old dell server box, and that is going through 3 switches in the
-middle.
+Not really... The customer does, but I don't have precise details.
+I think is several drives, with several lvs across them, and active
+NFS activity on these.
+In this situation 'pvmove' everything off a device which contains a
+non-initial section of at least one of the lvs.  The active traffic on
+the filesystem in an important part of the test case I think.
 
-You need to have sustained I/O which is directed at both sides of the
-raid though. Not sure about the HDS 9980, but I think that is an
-active/active raid, which means each controller can access each lun
-in parallel. You really need to be striping your I/O across the luns
-and controllers though. You can pull tricks to measure the fabric
-capacity vs the storage bandwidth by using the raid's cache. Ensure you
-have caching enabled in the raid, and have a file which is laid out
-across multiple luns. Read a file which is a large percentage of the
-cache size using o_direct (lmdd can be built with direct I/O support).
-Then run the read again, if you did it right, you just eliminated the
-spindles from the I/O.
+I have since found that not only didn't the original patch compile,
+but it wasn't complete either.
 
-Not sure about the hitachi raid again, but a lun would generally
-belong to a controller on the raid, and there are usually two
-controllers. Make sure that when you build the volume you stripe
-luns so that they alternate between controllers. Then you need to
-make sure that your I/Os are large enough to hit multiple disks
-at once. There are lots of tricks to tuning this type of setup.
+The mirror_map function sets map_context->ll to a value which is
+effectively the same as bio_to_region.  As I changed bio_to_region, I
+need to change that assignment to.
 
-The problem with the load balancing in dm-multipath is that it is not
-really load balancing, it is round robin, on a per lun basis I think,
-it has no global picture of how much other load is currently going
-to each HBA or controller port. The best you can do is drop the value
-of rr_min_io in the /etc/multipath.conf file to a small value, try
-something like 1 or 2.
+This is the current patch.  Note that the declaration of two structures
+needed to be moved up for it to compile.
 
-Steve
+NeilBrown
 
 
-Bob Gautier wrote:
-> On Thu, 2006-05-18 at 02:25 -0500, Jonathan E Brassow wrote:
->> The system bus isn't a limiting factor is it?  64-bit PCI-X will get 
->> 8.5 GB/s (plenty), but 32-bit PCI 33MHz got 133MB/s.
->>
->> Can your disks sustain that much bandwidth? 10 striped drives might get 
->> better than 200MB/s if done right, I suppose.
->>
->> Don't the switches run at 2 Gbits/s?  2 Gbits/s / 10 (throw in 2 bits 
->> for protocol) ~= 200MB/s.
->>
-> 
-> Thanks for the fast responses:
-> 
-> The card is a 64-bit PCI-X, so I don't think the bus is the bottleneck,
-> and anyway the vendor specifies a maximum throughput of 200Mbyte/s per
-> card.
-> 
-> The disk array does not appear to be the bottleneck because we get
-> 200Mbyte/s when we use *two* HBAs in load-balanced mode.
-> 
-> The question is really about why we only see O(100Mbyte/s) with one HBA
-> when we can achieve O(200MByte/s) with two cards, given that one card
-> should be able to achieve that throughput.
-> 
-> I don't think the method of producing the traffic (bonnie++ or something
-> else) should be relevant but if it were that would be very interesting
-> for the benchmark authors!
-> 
-> The storage is an HDS 9980 (I think?)
-> 
->> Could be a bunch of reasons...
->>
->>   brassow
->>
->> On May 18, 2006, at 2:05 AM, Bob Gautier wrote:
->>
->>> Yesterday my client was testing of multipath load balancing and 
->>> failover
->>> on a system running ext3 on a logical volume which comprises about ten
->>> SAN LUNs all reached using multipath in multibus mode over two QL2340
->>> HBAs.
->>>
->>> On the one hand, the client is very impressed: running bonnie++
->>> (inspired by Ronan's GFS v VxFS example) we get just over 200Mbyte/s
->>> over the two HBAs, and when we pull a link we get about 120MByte/s.
->>>
->>> The throughput and failover response times are better than the client
->>> has ever seen, but we're wondering why we are not seeing higher
->>> throughput per-HBA -- the QL2340 datasheet says it should manage
->>> 200Mbyte/s and all switches etc. run at 2GBps.
->>>
->>> Any ideas?
->>>
->>> Bob Gautier
->>> +44 7921 700996
->>>
+Signed-off-by: Neil Brown <neilb@suse.de>
+
+### Diffstat output
+ ./drivers/md/dm-raid1.c |   63 ++++++++++++++++++++++++------------------------
+ 1 file changed, 32 insertions(+), 31 deletions(-)
+
+diff ./drivers/md/dm-raid1.c~current~ ./drivers/md/dm-raid1.c
+--- ./drivers/md/dm-raid1.c~current~	2006-05-12 14:28:37.000000000 +1000
++++ ./drivers/md/dm-raid1.c	2006-05-19 11:15:58.000000000 +1000
+@@ -106,12 +106,42 @@ struct region {
+ 	struct bio_list delayed_bios;
+ };
+ 
++
++/*-----------------------------------------------------------------
++ * Mirror set structures.
++ *---------------------------------------------------------------*/
++struct mirror {
++	atomic_t error_count;
++	struct dm_dev *dev;
++	sector_t offset;
++};
++
++struct mirror_set {
++	struct dm_target *ti;
++	struct list_head list;
++	struct region_hash rh;
++	struct kcopyd_client *kcopyd_client;
++
++	spinlock_t lock;	/* protects the next two lists */
++	struct bio_list reads;
++	struct bio_list writes;
++
++	/* recovery */
++	region_t nr_regions;
++	int in_sync;
++
++	struct mirror *default_mirror;	/* Default mirror */
++
++	unsigned int nr_mirrors;
++	struct mirror mirror[0];
++};
++
+ /*
+  * Conversion fns
+  */
+ static inline region_t bio_to_region(struct region_hash *rh, struct bio *bio)
+ {
+-	return bio->bi_sector >> rh->region_shift;
++	return (bio->bi_sector - rh->ms->ti->begin) >> rh->region_shift;
+ }
+ 
+ static inline sector_t region_to_sector(struct region_hash *rh, region_t region)
+@@ -539,35 +569,6 @@ static void rh_start_recovery(struct reg
+ 	wake();
+ }
+ 
+-/*-----------------------------------------------------------------
+- * Mirror set structures.
+- *---------------------------------------------------------------*/
+-struct mirror {
+-	atomic_t error_count;
+-	struct dm_dev *dev;
+-	sector_t offset;
+-};
+-
+-struct mirror_set {
+-	struct dm_target *ti;
+-	struct list_head list;
+-	struct region_hash rh;
+-	struct kcopyd_client *kcopyd_client;
+-
+-	spinlock_t lock;	/* protects the next two lists */
+-	struct bio_list reads;
+-	struct bio_list writes;
+-
+-	/* recovery */
+-	region_t nr_regions;
+-	int in_sync;
+-
+-	struct mirror *default_mirror;	/* Default mirror */
+-
+-	unsigned int nr_mirrors;
+-	struct mirror mirror[0];
+-};
+-
+ /*
+  * Every mirror should look like this one.
+  */
+@@ -1113,7 +1114,7 @@ static int mirror_map(struct dm_target *
+ 	struct mirror *m;
+ 	struct mirror_set *ms = ti->private;
+ 
+-	map_context->ll = bio->bi_sector >> ms->rh.region_shift;
++	map_context->ll = bio_to_region(&ms->rh, bio);
+ 
+ 	if (rw == WRITE) {
+ 		queue_bio(ms, bio, rw);
