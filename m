@@ -1,11 +1,12 @@
-From: "Gil" <gils@fe.up.pt>
-Subject: IBM DS4300
-Date: Mon, 29 May 2006 18:42:27 +0100
-Message-ID: <200605291742.k4THgWWZ016415@relay2.fe.up.pt>
+From: "John Vaughan" <jvaughan@dataroad.com>
+Subject: Multipath and LVM2 with hsg80
+Date: Sun, 28 May 2006 18:44:42 -0400
+Message-ID: <2E9EB7DC6BB8164485F079DC23A61C2A632040@SRV08.dataroad.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0872189041=="
+Content-Type: multipart/mixed; boundary="===============1179510935=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,220 +21,114 @@ List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
---===============0872189041==
+--===============1179510935==
+Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0016_01C6834F.A5794100"
+	boundary="----_=_NextPart_001_01C682A8.4FDC7702"
 
 This is a multi-part message in MIME format.
 
-------=_NextPart_000_0016_01C6834F.A5794100
+------_=_NextPart_001_01C682A8.4FDC7702
 Content-Type: text/plain;
 	charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 
-Hi list,
+=20
+=20
+Folks,
+=20
+I have an hsg80 controller that I am trying to get to work with Redhat
+ES 4 update 3.
+=20
+I want to multipath and put LVM2 on top of the dm-# devices.
+=20
+First,  Does this work and has it been tested?
+=20
+Second,  Do I need to add the hp_sw handler to this release or is in
+there already?
+=20
+Third,  How do I get this to all work cleanly on boot?
+=20
+=20
+I am asking  because I have not been able to get the correct
+combination. And Redhat support has not been much help.
+=20
+Thanks for the help
+=20
+=20
 
- 
-
-I have the following SAN hardware, and would be very grateful for any help:
-
- 
-
-SAN:
-
-IBM DS4300 Storage Server with Turbo Option
-
- 
-
-HBA:
-
-Fast Host Bus Adapter FC-2
-
- 
-
-Switch:
-
-2 IBM TotalStorage SAN Switch H08 (8-portas)
-
- 
-
-Does multipath-tools support this hardware? How should I configure it?
-
- 
-
-I have tried to use multipath with it, using default configuration, but I am
-having performance problems. What I would like to figure out is if
-multipath-tools has anything to do with it.
-
- 
-
-Best regards,
-
-    Gil
-
-
-------=_NextPart_000_0016_01C6834F.A5794100
+------_=_NextPart_001_01C682A8.4FDC7702
 Content-Type: text/html;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
-xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; =
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3DContent-Type content=3D"text/html; =
 charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<style>
-<!--
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0cm;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-span.EstiloCorreioElectrnico17
-	{mso-style-type:personal-compose;
-	font-family:Arial;
-	color:windowtext;}
-@page Section1
-	{size:595.3pt 841.9pt;
-	margin:70.85pt 3.0cm 70.85pt 3.0cm;}
-div.Section1
-	{page:Section1;}
--->
-</style>
+<META content=3D"MSHTML 6.00.2900.2873" name=3DGENERATOR></HEAD>
+<BODY>
+<DIV dir=3Dltr align=3Dleft><FONT face=3DArial color=3D#0000ff=20
+size=3D2></FONT>&nbsp;</DIV>
+<DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr =
+align=3Dleft>&nbsp;</DIV>
+<DIV></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006>Folks,</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>I have =
+an hsg80=20
+controller that I am trying to get to work with Redhat ES 4 update=20
+3.</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>I want =
+to multipath=20
+and put LVM2 on top of the dm-# devices.</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN =
+class=3D603592922-28052006>First,&nbsp; Does=20
+this work and has it been tested?</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN =
+class=3D603592922-28052006>Second,&nbsp; Do I=20
+need to add the hp_sw handler to this release or is in there=20
+already?</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN =
+class=3D603592922-28052006>Third,&nbsp; How do=20
+I get this to all work cleanly on boot?</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>I am =
+asking&nbsp;=20
+because I have not been able to get the correct combination. And Redhat =
+support=20
+has not been much help.</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>Thanks =
+for the=20
+help</SPAN></FONT></DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
+<DIV><FONT face=3DArial size=3D2><SPAN=20
+class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV></BODY></HTML>
 
-</head>
-
-<body lang=3DPT link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'>Hi list,<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'>I have the following SAN hardware, and would =
-be very
-grateful for any help:<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>SAN:<o:p></o:p></=
-span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>IBM DS4300 =
-Storage Server
-with Turbo Option</span></font><font size=3D1 color=3D"#304965" =
-face=3DArial><span
-lang=3DEN-GB =
-style=3D'font-size:8.0pt;font-family:Arial;color:#304965'><o:p></o:p></sp=
-an></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'>HBA:<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'>Fast Host Bus Adapter =
-FC-2<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span lang=3DEN-GB =
-style=3D'font-size:
-10.0pt;font-family:Arial'>Switch:<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>2 IBM =
-TotalStorage SAN
-Switch H08 (8-portas)<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'><o:p>&nbsp;</o:p>=
-</span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>Does =
-multipath-tools
-support this hardware? How should I configure =
-it?<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'><o:p>&nbsp;</o:p>=
-</span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>I have tried to =
-use
-multipath with it, using default configuration, but I am having =
-performance
-problems. What I would like to figure out is if multipath-tools has =
-anything to
-do with it.<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'><o:p>&nbsp;</o:p>=
-</span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>Best =
-regards,<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
-lang=3DEN-GB
-style=3D'font-size:9.0pt;font-family:Arial;color:black'>&nbsp;&nbsp;&nbsp=
-; Gil<o:p></o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
-------=_NextPart_000_0016_01C6834F.A5794100--
+------_=_NextPart_001_01C682A8.4FDC7702--
 
 
---===============0872189041==
+--===============1179510935==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0872189041==--
+--===============1179510935==--
