@@ -1,15 +1,11 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: dm-linear error: Device lookup failed
-Date: Sun, 28 May 2006 13:06:22 +0200
-Message-ID: <20060528110622.GA2179@redhat.com>
-References: <1148338665.1812.16.camel@solid.brisbane.redhat.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] Add events for dm suspend / resume
+Date: Mon, 29 May 2006 10:04:09 +0200
+Message-ID: <447AAAF9.2070704@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="------------030104090400010507030401"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1148338665.1812.16.camel@solid.brisbane.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +16,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: hjm@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
+--------------030104090400010507030401
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-Mark,
+Hi all,
 
-you're saying, the system is wotking properly, but without the respecive
-mapping tables it's hard to tell if there's a hidden issue.
+currently device-mapper doesn't play well with udev & hotplug events.
+The event is sent out on the initial device create; only at this stage
+the device is not usable. Only after one did a 'table load' and a
+'resume' the device is actually accessible from userland.
+And thus it is purely coincidental if any 'dmsetup' call from udev
+(which is triggered by the device create events) will return any useful
+data.
 
-The message shows, that device-mapper is unable to discover 2 devices
-while loading (a) mapping table(s).
+This patch adds two additional events 'online' and 'offline' which get
+send after 'resume' and 'suspend', respectively.
+With this patch udev can hook on the 'online' event and will always get
+valid data via the dmsetup call.
 
-On Tue, May 23, 2006 at 08:57:45AM +1000, Mark Huth wrote:
-> Hi,
-> I am encountering the following error/message whilst the machine is
-> booting up:
-> 
-> kernel: device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-
-> devel@redhat.com
-> kernel: device-mapper: dm-linear: Device lookup failed
-> kernel: device-mapper: error adding target to table
-> kernel: device-mapper: dm-linear: Device lookup failed
-> kernel: device-mapper: error adding target to table
-> kernel: cdrom: open failed.
-> last message repeated 2 times
-> 
-> I am not using LVM (just a bunch of raid0 partitions) so it seems that
-> this error is more informational rather than a sign of possible
-> problems, and the system seems to otherwise be functioning normally.  So
-> I was wondering if anyone on this list can confirm that it is nothing to
-> worry about and if there a way to make the system happy to prevent this
-> message from showing up.  I am using RHEL4U3 (kernel 2.6.9-34.EL).
-> 
-> Thanks,
-> Mark
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Comments etc. are welcome.
 
--- 
+Cheers,
 
-Regards,
-Heinz    -- The LVM Guy --
+Hannes
+--=20
+Dr. Hannes Reinecke			hare@suse.de
+SuSE Linux Products GmbH		S390 & zSeries
+Maxfeldstra=DFe 5				+49 911 74053 688
+90409 N=FCrnberg				http://www.suse.de
 
-*** Software bugs are stupid.
-    Nevertheless it needs not so stupid people to solve them ***
+--------------030104090400010507030401
+Content-Type: text/plain;
+ name="dm-suspend-resume-events"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-suspend-resume-events"
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+--- linux-2.6.16/drivers/md/dm.c.orig	2006-05-23 12:18:09.000000000 +0200
++++ linux-2.6.16/drivers/md/dm.c	2006-05-26 14:09:16.000000000 +0200
+@@ -1201,6 +1201,7 @@ int dm_suspend(struct mapped_device *md,
+ 	dm_table_postsuspend_targets(map);
+ 
+ 	set_bit(DMF_SUSPENDED, &md->flags);
++	kobject_uevent(&md->disk->kobj, KOBJ_OFFLINE);
+ 
+ 	r = 0;
+ 
+@@ -1247,6 +1248,7 @@ int dm_resume(struct mapped_device *md)
+ 
+ 	dm_table_unplug_all(map);
+ 
++	kobject_uevent(&md->disk->kobj, KOBJ_ONLINE);
+ 	r = 0;
+ 
+ out:
 
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+--------------030104090400010507030401
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------030104090400010507030401--
