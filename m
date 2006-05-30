@@ -1,12 +1,13 @@
-From: "John Vaughan" <jvaughan@dataroad.com>
-Subject: Multipath and LVM2 with hsg80
-Date: Sun, 28 May 2006 18:44:42 -0400
-Message-ID: <2E9EB7DC6BB8164485F079DC23A61C2A632040@SRV08.dataroad.com>
+From: Peyrotau Yannick <peyrotau.yannick@free.fr>
+Subject: Re: [PATCH] dm-striped device sizes must be multiple of
+	chunk-size
+Date: Tue, 30 May 2006 15:14:19 +0200
+Message-ID: <447C452B.4030401@free.fr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1179510935=="
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,116 +20,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Hi, I have the same problem too when i try to upgrade to 2.6.16 kernel.
 
---===============1179510935==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C682A8.4FDC7702"
+My motherbord is ASUS A8N-E with a nvidia raid chip.
 
-This is a multi-part message in MIME format.
+I have make an archive with my metadata at this adress :
+http://crashteam1.free.fr/metadata/metadata_isw-Yannick_Peyrotau-raid0.tar.bz2
 
-------_=_NextPart_001_01C682A8.4FDC7702
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-=20
-=20
-Folks,
-=20
-I have an hsg80 controller that I am trying to get to work with Redhat
-ES 4 update 3.
-=20
-I want to multipath and put LVM2 on top of the dm-# devices.
-=20
-First,  Does this work and has it been tested?
-=20
-Second,  Do I need to add the hp_sw handler to this release or is in
-there already?
-=20
-Third,  How do I get this to all work cleanly on boot?
-=20
-=20
-I am asking  because I have not been able to get the correct
-combination. And Redhat support has not been much help.
-=20
-Thanks for the help
-=20
-=20
-
-------_=_NextPart_001_01C682A8.4FDC7702
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<META content=3D"MSHTML 6.00.2900.2873" name=3DGENERATOR></HEAD>
-<BODY>
-<DIV dir=3Dltr align=3Dleft><FONT face=3DArial color=3D#0000ff=20
-size=3D2></FONT>&nbsp;</DIV>
-<DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr =
-align=3Dleft>&nbsp;</DIV>
-<DIV></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006>Folks,</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>I have =
-an hsg80=20
-controller that I am trying to get to work with Redhat ES 4 update=20
-3.</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>I want =
-to multipath=20
-and put LVM2 on top of the dm-# devices.</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN =
-class=3D603592922-28052006>First,&nbsp; Does=20
-this work and has it been tested?</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN =
-class=3D603592922-28052006>Second,&nbsp; Do I=20
-need to add the hp_sw handler to this release or is in there=20
-already?</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN =
-class=3D603592922-28052006>Third,&nbsp; How do=20
-I get this to all work cleanly on boot?</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>I am =
-asking&nbsp;=20
-because I have not been able to get the correct combination. And Redhat =
-support=20
-has not been much help.</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN class=3D603592922-28052006>Thanks =
-for the=20
-help</SPAN></FONT></DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2><SPAN=20
-class=3D603592922-28052006></SPAN></FONT>&nbsp;</DIV></BODY></HTML>
-
-------_=_NextPart_001_01C682A8.4FDC7702--
+Can i resolve it ?
 
 
---===============1179510935==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Thanks,
+Yannick
 
-
---===============1179510935==--
+ > Dwaine,
+ >
+ > can you please send me your metadata for refernence as well so
+ > that I can confirm that my fix is good for bz #186842 ?
+ >
+ > Thanks,
+ > Heinz
+ >
+ > On Sun, Mar 26, 2006 at 12:01:17AM +0000, Dwaine Garden wrote:
+ > > Kevin Corry <kevcorry <at> us.ibm.com> writes:
+ > > >
+ > > > I'm thinking that this mapping would do what the BIOS is actually
+ > > > intending.
+ > > > It ought to be relatively straight-forward to recognize this
+ > > > situation in
+ > > > dmraid and set up a mapping similar to the one above.
+ > > >
+ > >
+ > > I have the same problem.  How would you resolve this?
+ > >
+ > > Dwaine
+ > >
+ > >
+ > >
+ > >
+ > > --
+ > > dm-devel mailing list
+ > > dm-devel redhat com
+ > > https://www.redhat.com/mailman/listinfo/dm-devel
