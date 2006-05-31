@@ -1,14 +1,12 @@
-From: Luca Berra <bluca@comedia.it>
-Subject: Re: Multipath and LVM2 with hsg80
-Date: Wed, 31 May 2006 21:08:46 +0200
-Message-ID: <20060531190845.GA2064@percy.comedia.it>
-References: <2E9EB7DC6BB8164485F079DC23A61C2A632040@SRV08.dataroad.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Brian Wong <bwong@pillardata.com>
+Subject: [multipath-tools] [patch] retry tur on reset
+Date: Wed, 31 May 2006 13:25:58 -0700
+Message-ID: <1149107158.5790.3.camel@ca-bwong3.trans.corp>
+Reply-To: bwong@pillardata.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: multipart/mixed; boundary="=-jZgaljb1wbuJvM3nNOuV"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2E9EB7DC6BB8164485F079DC23A61C2A632040@SRV08.dataroad.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,28 +19,76 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, May 28, 2006 at 06:44:42PM -0400, John Vaughan wrote:
-> 
-> 
->Folks,
-> 
->I have an hsg80 controller that I am trying to get to work with Redhat
->ES 4 update 3.
-> 
->I want to multipath and put LVM2 on top of the dm-# devices.
-> 
->First,  Does this work and has it been tested?
 
-afaik it is not a supported configuration
-http://h20000.www2.hp.com/bizsupport/TechSupport/CoreRedirect.jsp?redirectReason=DocIndexPDF&prodSeriesId=421487&targetPage=http%3A%2F%2Fh20000.www2.hp.com%2Fbc%2Fdocs%2Fsupport%2FSupportManual%2Fc00635587%2Fc00635587.pdf
+--=-jZgaljb1wbuJvM3nNOuV
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-Regards,
-L.
+hi christophe,
 
--- 
-Luca Berra -- bluca@comedia.it
-        Communication Media & Services S.r.l.
- /"\
- \ /     ASCII RIBBON CAMPAIGN
-  X        AGAINST HTML MAIL
- / \
+this patch retries the tur sgio in the tur checker when the status
+returned is a scsi reset.  
+
+cheers,
+
+brian
+
+--=-jZgaljb1wbuJvM3nNOuV
+Content-Disposition: attachment; filename=diff.out
+Content-Type: text/x-patch; name=diff.out; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+
+diff --git a/libcheckers/tur.c b/libcheckers/tur.c
+index d40a273..463dba9 100644
+--- a/libcheckers/tur.c
++++ b/libcheckers/tur.c
+@@ -43,7 +43,7 @@ tur (struct checker * c)
+ 	struct sg_io_hdr io_hdr;
+         unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0 };
+         unsigned char sense_buffer[32];
+-
++	
+         memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+         io_hdr.interface_id = 'S';
+         io_hdr.cmd_len = sizeof (turCmdBlk);
+@@ -53,10 +53,28 @@ tur (struct checker * c)
+         io_hdr.sbp = sense_buffer;
+         io_hdr.timeout = 20000;
+         io_hdr.pack_id = 0;
+-        if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
++ do_sgio:
++	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+ 		MSG(c, MSG_TUR_DOWN);
+-                return PATH_DOWN;
+-        }
++		return PATH_DOWN;
++	}
++	if (io_hdr.status == SCSI_CHECK_CONDITION) {
++		if (io_hdr.sbp && (io_hdr.sb_len_wr > 2)) {
++			int		sense_key;
++			unsigned char *	sense_buffer = io_hdr.sbp;
++			
++			if (sense_buffer[0] & 0x2)
++				sense_key = sense_buffer[1] & 0xf;
++			else
++				sense_key = sense_buffer[2] & 0xf;
++
++			/* retry UA, SCSI RESET conditions */
++			if (sense_key == 0x06 && sense_buffer[12] == 0x29) {
++				goto do_sgio;
++			}
++			
++		}
++	}
+         if (io_hdr.info & SG_INFO_OK_MASK) {
+ 		MSG(c, MSG_TUR_DOWN);
+                 return PATH_DOWN;
+
+--=-jZgaljb1wbuJvM3nNOuV
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-jZgaljb1wbuJvM3nNOuV--
