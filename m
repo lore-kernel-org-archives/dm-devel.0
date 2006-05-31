@@ -1,13 +1,14 @@
-From: Peyrotau Yannick <peyrotau.yannick@free.fr>
-Subject: Re: [PATCH] dm-striped device sizes must be multiple of
-	chunk-size
-Date: Tue, 30 May 2006 15:14:19 +0200
-Message-ID: <447C452B.4030401@free.fr>
+From: Luca Berra <bluca@comedia.it>
+Subject: Re: Multipath and LVM2 with hsg80
+Date: Wed, 31 May 2006 21:08:46 +0200
+Message-ID: <20060531190845.GA2064@percy.comedia.it>
+References: <2E9EB7DC6BB8164485F079DC23A61C2A632040@SRV08.dataroad.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <2E9EB7DC6BB8164485F079DC23A61C2A632040@SRV08.dataroad.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +21,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi, I have the same problem too when i try to upgrade to 2.6.16 kernel.
+On Sun, May 28, 2006 at 06:44:42PM -0400, John Vaughan wrote:
+> 
+> 
+>Folks,
+> 
+>I have an hsg80 controller that I am trying to get to work with Redhat
+>ES 4 update 3.
+> 
+>I want to multipath and put LVM2 on top of the dm-# devices.
+> 
+>First,  Does this work and has it been tested?
 
-My motherbord is ASUS A8N-E with a nvidia raid chip.
+afaik it is not a supported configuration
+http://h20000.www2.hp.com/bizsupport/TechSupport/CoreRedirect.jsp?redirectReason=DocIndexPDF&prodSeriesId=421487&targetPage=http%3A%2F%2Fh20000.www2.hp.com%2Fbc%2Fdocs%2Fsupport%2FSupportManual%2Fc00635587%2Fc00635587.pdf
 
-I have make an archive with my metadata at this adress :
-http://crashteam1.free.fr/metadata/metadata_isw-Yannick_Peyrotau-raid0.tar.bz2
+Regards,
+L.
 
-Can i resolve it ?
-
-
-Thanks,
-Yannick
-
- > Dwaine,
- >
- > can you please send me your metadata for refernence as well so
- > that I can confirm that my fix is good for bz #186842 ?
- >
- > Thanks,
- > Heinz
- >
- > On Sun, Mar 26, 2006 at 12:01:17AM +0000, Dwaine Garden wrote:
- > > Kevin Corry <kevcorry <at> us.ibm.com> writes:
- > > >
- > > > I'm thinking that this mapping would do what the BIOS is actually
- > > > intending.
- > > > It ought to be relatively straight-forward to recognize this
- > > > situation in
- > > > dmraid and set up a mapping similar to the one above.
- > > >
- > >
- > > I have the same problem.  How would you resolve this?
- > >
- > > Dwaine
- > >
- > >
- > >
- > >
- > > --
- > > dm-devel mailing list
- > > dm-devel redhat com
- > > https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+Luca Berra -- bluca@comedia.it
+        Communication Media & Services S.r.l.
+ /"\
+ \ /     ASCII RIBBON CAMPAIGN
+  X        AGAINST HTML MAIL
+ / \
