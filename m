@@ -1,40 +1,70 @@
-From: "Harik A'ttar" <harik@chaos.ao.net>
-Subject: Re: mirroring
-Date: Wed, 31 May 2006 19:19:59 -0400
-Message-ID: <447E249F.4070908@chaos.ao.net>
-References: <dc915e7688b9d1184493c7f81c5ca330@redhat.com>	<200605181256.31974.jw0_lists@headissue.com>
-	<447E23AB.1030408@chaos.ao.net>
-Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [multipath-tools] [patch] fix select_alias weirdness
+Date: Wed, 31 May 2006 20:09:14 -0500
+Message-ID: <20060601010913.GA25695@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-lvm-bounces@redhat.com>
-In-Reply-To: <447E23AB.1030408@chaos.ao.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-lvm>
-List-Post: <mailto:linux-lvm@redhat.com>
-List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
-Sender: linux-lvm-bounces@redhat.com
-Errors-To: linux-lvm-bounces@redhat.com
-To: LVM general discussion and development <linux-lvm@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: multipart/mixed; boundary="45Z9DzgjV8m4Oswq"
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Harik A'ttar wrote:
 
-> You've merged the 2.6.16.16 patch with the mirroring patch.   Can you 
-> redo the patch from the same versions?
+--45Z9DzgjV8m4Oswq
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Duh, I just used zcat | less to read it, completely ignoring the fact
-it was a tarball.  It's already split out nicely, I'm just running slow 
-today.
+In select_alias, the code that tries to pull the alias from dm_get_name()
+sets mp->alias. So even if it fails,  mp->alias will never get set to mp->wwid. 
+
+This patch fixes that.
+
+-Ben
+
+--45Z9DzgjV8m4Oswq
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="alias_fix.patch"
+
+diff -urpN mp-devel-clean/libmultipath/propsel.c mp-devel-patched/libmultipath/propsel.c
+--- mp-devel-clean/libmultipath/propsel.c	2006-05-23 11:12:15.000000000 -0500
++++ mp-devel-patched/libmultipath/propsel.c	2006-05-31 13:33:13.000000000 -0500
+@@ -165,10 +165,16 @@ select_alias (struct multipath * mp)
+ 		if (conf->user_friendly_names)
+ 			mp->alias = get_user_friendly_alias(mp->wwid,
+ 					conf->bindings_file);
+-		if (mp->alias == NULL)
+-			if ((mp->alias = MALLOC(WWID_SIZE)) != NULL)
+-				dm_get_name(mp->wwid, DEFAULT_TARGET,
+-					    mp->alias);
++		if (mp->alias == NULL){
++			char *alias;
++			if ((alias = MALLOC(WWID_SIZE)) != NULL){
++				if (dm_get_name(mp->wwid, DEFAULT_TARGET,
++						alias) == 1)
++					mp->alias = alias;
++				else
++					FREE(alias);
++			}
++		}
+ 		if (mp->alias == NULL)
+ 			mp->alias = mp->wwid;
+ 	}
+
+--45Z9DzgjV8m4Oswq
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-_______________________________________________
-linux-lvm mailing list
-linux-lvm@redhat.com
-https://www.redhat.com/mailman/listinfo/linux-lvm
-read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
+--45Z9DzgjV8m4Oswq--
