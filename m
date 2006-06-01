@@ -1,12 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [multipath-tools] [patch] fix select_alias weirdness
-Date: Wed, 31 May 2006 20:09:14 -0500
-Message-ID: <20060601010913.GA25695@ether.msp.redhat.com>
+From: Holger Smolinski <smolinski@de.ibm.com>
+Subject: Re: IBM DS4300
+Date: Thu, 1 Jun 2006 10:15:01 +0200
+Message-ID: <OFB2DC3C68.165CC670-ONC1257180.002CC9D2-C1257180.002D51F4@de.ibm.com>
+References: <200605291742.k4THgWWZ016415@relay2.fe.up.pt>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="45Z9DzgjV8m4Oswq"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <200605291742.k4THgWWZ016415@relay2.fe.up.pt>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,55 +18,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Gil,
 
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+DS4300 has two modes:
 
-In select_alias, the code that tries to pull the alias from dm_get_name()
-sets mp->alias. So even if it fails,  mp->alias will never get set to mp->wwid. 
+AVT, which means only one path can be used at any point in time. Using an
+alternate path will cause Automated Volume Transfer and add significant
+latency.
+RDAC, which means only one path can be used at any point in time. Using a=
+n
+alternate path will cause an I/O error unless the volume has been migrate=
+d
+manually or by a hardware_handler.
 
-This patch fixes that.
-
--Ben
-
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="alias_fix.patch"
-
-diff -urpN mp-devel-clean/libmultipath/propsel.c mp-devel-patched/libmultipath/propsel.c
---- mp-devel-clean/libmultipath/propsel.c	2006-05-23 11:12:15.000000000 -0500
-+++ mp-devel-patched/libmultipath/propsel.c	2006-05-31 13:33:13.000000000 -0500
-@@ -165,10 +165,16 @@ select_alias (struct multipath * mp)
- 		if (conf->user_friendly_names)
- 			mp->alias = get_user_friendly_alias(mp->wwid,
- 					conf->bindings_file);
--		if (mp->alias == NULL)
--			if ((mp->alias = MALLOC(WWID_SIZE)) != NULL)
--				dm_get_name(mp->wwid, DEFAULT_TARGET,
--					    mp->alias);
-+		if (mp->alias == NULL){
-+			char *alias;
-+			if ((alias = MALLOC(WWID_SIZE)) != NULL){
-+				if (dm_get_name(mp->wwid, DEFAULT_TARGET,
-+						alias) == 1)
-+					mp->alias = alias;
-+				else
-+					FREE(alias);
-+			}
-+		}
- 		if (mp->alias == NULL)
- 			mp->alias = mp->wwid;
- 	}
-
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Best Regards
+        Holger Smolinski
+--
+Dr. Holger Smolinski, Linux Technology Center, Linux on zSeries
+Author of the '-t2'-Option
+IBM Deutschland Entwicklung GmbH,Sch=F6naicher Str. 220, 71032 B=F6blinge=
+n
+FAX: +49-7031-16-3456, Tel. +49-7031-16-4652
 
 
---45Z9DzgjV8m4Oswq--
+                                                                         =
+ =20
+             "Gil"                                                       =
+ =20
+             <gils@fe.up.pt>                                             =
+ =20
+             Sent by:                                                   T=
+o=20
+             dm-devel-bounces@         <dm-devel@redhat.com>             =
+ =20
+             redhat.com                                                 c=
+c=20
+                                                                         =
+ =20
+                                                                   Subjec=
+t=20
+             29.05.2006 19:42          [dm-devel] IBM DS4300             =
+ =20
+                                                                         =
+ =20
+                                                                         =
+ =20
+             Please respond to                                           =
+ =20
+               device-mapper                                             =
+ =20
+                development                                              =
+ =20
+             <dm-devel@redhat.                                           =
+ =20
+                   com>                                                  =
+ =20
+                                                                         =
+ =20
+                                                                         =
+ =20
+
+
+
+
+Hi list,
+
+I have the following SAN hardware, and would be very grateful for any hel=
+p:
+
+SAN:
+IBM DS4300 Storage Server with Turbo Option
+
+HBA:
+Fast Host Bus Adapter FC-2
+
+Switch:
+2 IBM TotalStorage SAN Switch H08 (8-portas)
+
+Does multipath-tools support this hardware? How should I configure it?
+
+I have tried to use multipath with it, using default configuration, but I
+am having performance problems. What I would like to figure out is if
+multipath-tools has anything to do with it.
+
+Best regards,
+    Gil--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
