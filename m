@@ -1,13 +1,14 @@
-From: "V.Kukushkin" <vlkukushkin@yandex.ru>
-Subject: HOW to install software to mapped device persistently
-Date: Thu, 01 Jun 2006 14:11:43 +0400
-Message-ID: <optago9tmrbp19rg@devel.lan.internet2.ru>
-Reply-To: vlkukushkin@yandex.ru,
-	device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: HOW to install software to mapped device persistently
+Date: Thu, 1 Jun 2006 15:07:03 +0100
+Message-ID: <20060601140703.GK10603@agk.surrey.redhat.com>
+References: <optago9tmrbp19rg@devel.lan.internet2.ru>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; delsp=yes; charset=windows-1251
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <optago9tmrbp19rg@devel.lan.internet2.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,65 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: vlkukushkin@yandex.ru
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+On Thu, Jun 01, 2006 at 02:11:43PM +0400, V.Kukushkin wrote:
+> All we know the good way to make read-only ROOT device be read-write  
+> looking.
+> It is the use of dmsetup in initrd. It works perfect. But ..
+ 
+Depends where the 'read-only' setting is coming from.
 
-All we know the good way to make read-only ROOT device be read-write =20
-looking.
-It is the use of dmsetup in initrd. It works perfect. But ..
+LVM?  Use lvchange -pr
 
-Question1: HOW to install software to this mapped device persistently ?
+dm itself?  (using device vg0-lvol0 as the example)
+  'dmsetup info vg0-lvol0 | grep State' shows ACTIVE (READ-ONLY)
 
-For example, if you need to upgrade something and ROOT device is read-wri=
-te
-in fact (e.g. flash) but used as read-only for safety.
+Then:
+  dmsetup table vg0-lvol0 | dmsetup reload vg0-lvol0; dmsetup resume vg0-lvol0
+And to put it back read-only afterwards
+  dmsetup table vg0-lvol0 | dmsetup reload -r vg0-lvol0; dmsetup resume vg0-lvol0
 
-I tried to do this by sequence of commands:
-(/dev/hdc1 "snapshotted" to / by devmapper)
-# mount /dev/hdc1 /mnt/disk
-# chroot /mnt/disk
-# rpm -Uv <pkg> or whateveer else
-# exit
-# umount /mnt/disk
-Of course, my changes were not seen from "/" because mapper know nothing
-about that changes. So, I need to reboot the system to make changes =20
-visible.
-Another and more clear way is to reboot to standard
-configuration (without device mapper)and install/update software,
-then reboot again to devmapper configuration. Both these ways are =20
-inacceptible
-in production system.
-
-Question2: How to make devmapper to know that base (snapshot'ed) device =20
-have
-been changed ?
-
-1( My thoughs was to remap root from snapshot to disk, upgrade software =20
-and remap
-root back to snapshot. It doesn't work.
-2( We may delete snapshot and snapshot-orig and disk mappings, then =20
-upgrade soft, then restore
-snapshotting back. It doen't work also.
-
-The case, I think, in initrd nature of mapping. I.e. mapping devices are
-in /inird/dev/mapper instead of /dev/mapper.
-My device-mapper configuration as following (by initrd)
---
-root-orig: 0 430048 snapshot-origin 254:000
-ram: 0 430048 linear 007:000 0
-root: 0 430048 snapshot 254:000 254:001 P 8
-hd: 0 430048 linear 022:001 0
---
-"hd" - base device (compact flash in my case, /dev/hdc1)
-"ram" - temporary loop device on file in ramfs.
-"root" - snapshot of "hd" to "ram"
-"root-orig" - snapshot-orig to "hd"
-Rootfs mounted on /dev/mapper/root.
-
-Question3stupid: Where rootfs must be mounted - on /dev/mapper/root or =20
-/dev/mapper/root-orig ?
---=20
-regards,
-Vladimir
+Alasdair
+-- 
+agk@redhat.com
