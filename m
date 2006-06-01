@@ -1,12 +1,14 @@
-From: MAHMOUD HANAFI <hanafim@asc.hpc.mil>
-Subject: wrong fs type when trying to mount after a reboot
-Date: Thu, 01 Jun 2006 14:01:48 -0400
-Message-ID: <447F2B8C.4020706@asc.hpc.mil>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: Hitachi storage and Multipath-Tools
+Date: Thu, 01 Jun 2006 20:37:12 +0200
+Message-ID: <1149187033.8452.77.camel@localhost.localdomain>
+References: <C67364BD62907640A033D1F4094CA7B7043CECBC@UKSPKEVS101.corp.hds.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <C67364BD62907640A033D1F4094CA7B7043CECBC@UKSPKEVS101.corp.hds.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,56 +18,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Matthias.Rudolph@hds.com
 List-Id: dm-devel.ids
 
-I am running 2.6.9-22.ELsmp kernel with device-mapper-multipath-0.4.5-6.0.RHEL4. I have multipath 
-configure and working. My HBA's are Emulex LP11000.
+Le lundi 29 mai 2006 =C3=A0 15:56 +0100, Matthias Rudolph a =C3=A9crit :
+> Hi Christopher,
+>=20
+> I have checked the latest file hwtable.c on /pub/mirrors/kernel.org/pub=
+/scm/linux/storage/multipath-tools and I do not understand the entries fo=
+r vendor HP and Hitachi. I hope you can help.
+>=20
+> Here are some background information:
+>=20
+> Vendor Hitachi build two different storage classes with fibre channel c=
+onnectivity: Enterprise class and Modular class.
+> The SCSI product inquiry for Enterprise classe always begins with "OPEN=
+-" and the rest of the string depends on the LUN type (for example "OPEN-=
+V*10" for a MetaLUN/LUSE build from 10 different internal LUNs). The LUNs=
+ of the Enterprise Class can be accessed active/active (multibus). There =
+are different versions of the Enterprise class and all with nearly the sa=
+me internal crossbar/switch architecture (no bus): 9910, 9960, 9970V, 998=
+0V, USP100, USP600 and USP1100.
+> The other storage class made by Hitachi is the Modular class. The SCSI =
+product inquiry for Modular class always begins with "DF". The LUNs of th=
+e Modular class can be accessed active/passive (group_by_prio) and for sp=
+reading the load you need a prioritizer (pp_hds_modular). There are also =
+a lot of different versions of the Hitachi Modular class and all with a t=
+wo-controller-architecture: 9200, 9520V, 9530V, 9570V, 9580V, 9585V, WMS,=
+ AMS500, AMS1000 and so on. The Hitachi internal naming for 9200 is DF500=
+x, for 95xxV is DF600x and for AMS/WMS is DF700x. The SCSI product inquir=
+y changes depending on the Hitachi internal name and the LUN type (for ex=
+ample "DF600F-CM" for a 9580V LUN with Command Device functionality.
+>=20
+> I am an employee of HDS - Hitachi Data Systems. It is a 100% doughter o=
+f Hitachi Limited in Japan and we are the responsible for selling and for=
+ service of the Storage products from Hitachi worldwide.
+>=20
+> Hawlett Packard (HP) does also sell the Hitachi Enterprise class. The o=
+nly difference is the different SCSI inquiry for vendor (HP) and the name=
+s. The SCSI inquiry for product "OPEN-" is the same. HP sells the Hitachi=
+ Enterprise class under the name XPxxxxx.
+> The product A6189A is HPs own developed Modular storage class and is se=
+lled under the name EVA. It is not compatible to Hitachi products.
+>=20
+> SUN Microsystems is also selling the Hitachi Enterprise class but they =
+do not change the SCSI vendor inquiry. They use "HITACHI" as vendor strin=
+g.
+>=20
+I tried to apply your suggestions.
 
-[root@io1 device-mapper-multipath-0.4.5]# ls -l  /dev/mpath/*
-lrwxrwxrwx  1 root root 7 May 31 17:21 /dev/mpath/2000b080009001474 -> ../dm-0
-lrwxrwxrwx  1 root root 7 May 31 17:21 /dev/mpath/2000b08000b001474 -> ../dm-1
-[root@io1 device-mapper-multipath-0.4.5]# lvmdiskscan
-   /dev/hda                     [      238.12 MB]
-   /dev/mpath/2000b080009001474 [        1.22 TB] LVM physical volume
-   /dev/sda1                    [       62.72 MB]
-   /dev/mpath/2000b08000b001474 [      150.73 GB] LVM physical volume
-   /dev/sda2                    [      509.88 MB]
-   /dev/io1_vg1/io1_lv1         [        1.22 TB] LVM physical volume
-   /dev/sda3                    [        7.81 GB]
-   /dev/root                    [        7.81 GB]
-   /dev/sda6                    [       52.05 GB]
-   2 disks
-   4 partitions
-   0 LVM physical volume whole disks
-   3 LVM physical volumes
+Please check out the lastest git tree and confirm I did the job right,
+this time.
 
-I can create an ext3 filesystem on /dev/dm-1 and mount it. But if I reboot the node and try mounting 
-the filesystem I get the following error:
+I also declared you as maintainer of the Hitachi defaults.
+I hope it's ok with you. Let me know if not.
 
-[root@io1 device-mapper-multipath-0.4.5]# mount -t ext3 /dev/dm-1 /nfswork/
-mount: wrong fs type, bad option, bad superblock on /dev/dm-1,
-        or too many mounted file systems
-
-
------ /etc/multipath.conf ----
-defaults {
-         multipath_tool  "/sbin/multipath -v0"
-         udev_dir        /dev
-         polling_interval 10
-         default_selector        "round-robin 0"
-         default_path_grouping_policy    multibus
-         default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
-         default_prio_callout    "/bin/true"
-         default_features        "0"
-         rr_wmin_io              100
-         failback                immediate
-}
-devnode_blacklist {
-
-         devnode "^(sda|hda)[0-9]*"
-
-}
------------------------------------------------
-
--Mahmoud
+Thanks,
+cvaroqui
