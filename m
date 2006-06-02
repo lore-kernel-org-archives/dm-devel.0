@@ -1,12 +1,12 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [multipath-tools] [patch] getopt cleanup
-Date: Thu, 1 Jun 2006 19:19:12 -0500
-Message-ID: <20060602001912.GD25695@ether.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Darrick J. Wong" <djwong@us.ibm.com>
+Subject: Maximum chunk size in dm-raid4-5.c
+Date: Thu, 01 Jun 2006 17:45:42 -0700
+Message-ID: <447F8A36.30908@us.ibm.com>
+Reply-To: "Darrick J. Wong" <djwong@us.ibm.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="GZVR6ND4mMseVXL/"
+Content-Type: multipart/mixed; boundary="------------000500090907060305000508"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,40 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Heinz Mauelshagen <mauelshagen@redhat.com>
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
+--------------000500090907060305000508
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
---GZVR6ND4mMseVXL/
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Hi,
 
-'q' and 'i' are never used, so don't accept them as valid options
+Is there a particular reason why CHUNK_SIZE_MAX is set to 512 sectors in
+the dm raid4/5 module?  I have a fakeraid controller that can create
+rather huge (1MB!) RAID5 stripes that this module rejects.  I set it to
+2048 and as far as I can tell there haven't been any adverse stability
+effects, though I suspect that gigantic stripes do wonders for disk
+throughput. :P
 
--Ben
+Attached is a patch to increase it to 2048 sectors.  Please apply if
+it's ok.
 
---GZVR6ND4mMseVXL/
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="getopt_cleanup.patch"
+--D
 
-diff -urpN mp-devel-clean/multipath/main.c mp-devel-patched/multipath/main.c
---- mp-devel-clean/multipath/main.c	2006-04-03 14:10:39.000000000 -0500
-+++ mp-devel-patched/multipath/main.c	2006-06-01 12:49:54.000000000 -0500
-@@ -321,7 +321,7 @@ main (int argc, char *argv[])
- 	if (load_config(DEFAULT_CONFIGFILE))
- 		exit(1);
- 
--	while ((arg = getopt(argc, argv, ":qdl::Ffi:M:v:p:b:")) != EOF ) {
-+	while ((arg = getopt(argc, argv, ":dl::FfM:v:p:b:")) != EOF ) {
- 		switch(arg) {
- 		case 1: printf("optarg : %s\n",optarg);
- 			break;
+Signed-off-by: Darrick J. Wong <djwong@us.ibm.com>
+--- a/drivers/md/dm-raid4-5.c	2006-06-01 17:42:27.000000000 -0700
++++ b/drivers/md/dm-raid4-5.c	2006-06-01 17:42:32.000000000 -0700
+@@ -70,7 +70,7 @@
+ #define	CHUNK_SIZE		64
 
---GZVR6ND4mMseVXL/
+ /* Maximum setable chunk size in sectors */
+-#define	CHUNK_SIZE_MAX		512
++#define	CHUNK_SIZE_MAX		2048
+
+ /* Recover chunk size in sectors */
+ #define	RECOVER_CHUNK_SIZE	CHUNK_SIZE_MAX
+@@ -3114,7 +3114,7 @@ static int raid_ctr(struct dm_target *ti
+ 		    chunk_size > CHUNK_SIZE_MAX ||
+ 		    chunk_size & (chunk_size - 1))
+ 			TI_ERR("Invalid chunk size; must "
+-			       "be 2^^n and less equal 512");
++			       "be 2^^n and less equal 2048");
+
+ 		/*
+ 		 * In case we've got 2 or more variable raid parameters,
+
+--------------000500090907060305000508
+Content-Type: text/x-patch;
+ name="dmraid45big.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline;
+ filename="dmraid45big.patch"
+
+--- a/drivers/md/dm-raid4-5.c	2006-06-01 17:42:27.000000000 -0700
++++ b/drivers/md/dm-raid4-5.c	2006-06-01 17:42:32.000000000 -0700
+@@ -70,7 +70,7 @@
+ #define	CHUNK_SIZE		64
+=20
+ /* Maximum setable chunk size in sectors */
+-#define	CHUNK_SIZE_MAX		512
++#define	CHUNK_SIZE_MAX		2048
+=20
+ /* Recover chunk size in sectors */
+ #define	RECOVER_CHUNK_SIZE	CHUNK_SIZE_MAX
+@@ -3114,7 +3114,7 @@ static int raid_ctr(struct dm_target *ti
+ 		    chunk_size > CHUNK_SIZE_MAX ||
+ 		    chunk_size & (chunk_size - 1))
+ 			TI_ERR("Invalid chunk size; must "
+-			       "be 2^^n and less equal 512");
++			       "be 2^^n and less equal 2048");
+=20
+ 		/*
+ 		 * In case we've got 2 or more variable raid parameters,
+
+--------------000500090907060305000508
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---GZVR6ND4mMseVXL/--
+--------------000500090907060305000508--
