@@ -1,16 +1,13 @@
-From: "Kumar, Satish (STSD)" <satish.gandham@hp.com>
-Subject: RE: Setting up multipath device
-Date: Thu, 8 Jun 2006 19:28:11 +0530
-Message-ID: <6B07290940B2C14BA4567FABFDE6024DBC3E2E@bgeexc04.asiapacific.cpqcorp.net>
-References: <5485940d0606080647k1fc84114i2c36537008723974@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: lbt <transter@gmail.com>
+Subject: [PATCH] garbled output after rename map and rerun
+	multipath
+Date: Tue, 6 Jun 2006 14:36:05 -0700
+Message-ID: <ac71172a0606061436o6ac13146ga04dd1dfe5c06711@mail.gmail.com>
+Reply-To: transter@gmail.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0640294483=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <5485940d0606080647k1fc84114i2c36537008723974@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,47 +20,70 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-=20
-Hi Pierre,
+--===============0640294483==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_4390_16496826.1149629765964"
+
+------=_Part_4390_16496826.1149629765964
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+There was some garbled output after renaming a multipath device and
+rerunning multipath.
+This is just a minor fix to add some actions that were missing.
+
+Thanks,
+lan
+
+--- multipath-git/libmultipath/print.c  2006-06-05 14:26:52.000000000 -0700
++++ multipath-tools-2006.6.5-changed/libmultipath/print.c       2006-06-06
+13:48:54.000000000 -0700
+@@ -211,12 +211,16 @@
+ snprint_action (char * buff, size_t len, struct multipath * mpp)
+ {
+        switch (mpp->action) {
++       case ACT_REJECT:
++               return snprint_str(buff, len, ACT_REJECT_STR);
+        case ACT_RELOAD:
+                return snprint_str(buff, len, ACT_RELOAD_STR);
+-       case ACT_CREATE:
+-               return snprint_str(buff, len, ACT_CREATE_STR);
+        case ACT_SWITCHPG:
+                return snprint_str(buff, len, ACT_SWITCHPG_STR);
++       case ACT_RENAME:
++               return snprint_str(buff, len, ACT_RENAME_STR);
++       case ACT_CREATE:
++               return snprint_str(buff, len, ACT_CREATE_STR);
+        default:
+                return 0;
+        }
+
+------=_Part_4390_16496826.1149629765964
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+<div>There was some garbled output&nbsp;after renaming a multipath device and rerunning multipath. </div>
+<div>This is just a minor fix to add some actions that were missing. </div>
+<div>&nbsp;</div>
+<div>Thanks,</div>
+<div>lan</div>
+<div>&nbsp;</div>
+<div>--- multipath-git/libmultipath/print.c&nbsp; 2006-06-05 14:26:52.000000000 -0700<br>+++ multipath-tools-2006.6.5-changed/libmultipath/print.c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2006-06-06 13:48:54.000000000 -0700<br>@@ -211,12 +211,16 @@<br>&nbsp;snprint_action (char * buff, size_t len, struct multipath * mpp)
+<br>&nbsp;{<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; switch (mpp-&gt;action) {<br>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case ACT_REJECT:<br>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return snprint_str(buff, len, ACT_REJECT_STR);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case ACT_RELOAD:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return snprint_str(buff, len, ACT_RELOAD_STR);
+<br>-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case ACT_CREATE:<br>-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return snprint_str(buff, len, ACT_CREATE_STR);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case ACT_SWITCHPG:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return snprint_str(buff, len, ACT_SWITCHPG_STR);<br>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case ACT_RENAME:<br>
++&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return snprint_str(buff, len, ACT_RENAME_STR);<br>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; case ACT_CREATE:<br>+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return snprint_str(buff, len, ACT_CREATE_STR);<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; default:<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return 0;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+&nbsp;</div>
+
+------=_Part_4390_16496826.1149629765964--
 
 
-	May be the following links can help u ..
+--===============0640294483==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-http://support.novell.com/techcenter/sdb/en/2005/04/sles_multipathing.ht
-ml
-http://www.redhat.com/docs/manuals/csgfs/browse/rh-cs-en/ap-rhcs-dm-mult
-ipath-usagetxt.html
 
-Satish G.
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of C'est Pierre
-Sent: Thursday, June 08, 2006 7:18 PM
-To: dm-devel@redhat.com
-Subject: [dm-devel] Setting up multipath device
-
-Hello,
-
-I am trying to setup a multipath device, but I am failing to do so, cuz
-I don't have as much documentation as I would wish to.
-
-Here's the output of 'multipath -l'
-
-# multipath -l
-3600508b40010130d00006000011c0000
-[size=3D50 GB][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:0:2 sda 8:0   [active][undef]
- \_ 1:0:0:2 sdb 8:16  [active][undef]
-
-How can I generate a "one device" that's recognizable by lvm, just so I
-can setup a VG with it?
-
-Thank you
-Pierre
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+--===============0640294483==--
