@@ -1,8 +1,8 @@
-From: Josef Whiter <jwhiter@redhat.com>
-Subject: Inconsistancy with multipath -v2 and multipath -ll
-Date: Fri, 9 Jun 2006 16:29:32 -0400
-Message-ID: <20060609202931.GE24377@korben.rdu.redhat.com>
-Reply-To: dm-devel@redhat.com
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Next set of device-mapper patches
+Date: Fri, 9 Jun 2006 22:22:34 +0100
+Message-ID: <20060609212234.GF7606@agk.surrey.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
@@ -19,38 +19,54 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+I'm preparing the next set of minor patches to go upstream and would
+appreciate comments and testing.  They're built on top of the patches
+currently in -mm.
 
-This is a sanity check for myself, I just want to make sure I'm not missing
-something.  If I set features to be "1 queue_if_no_path" and I run
 
-multipath -v2
+dm-support-ioctls-on-mapped-devices.patch
+    Mechanics to support ioctls on certain devices.
 
-I get
+dm-linear-support-ioctls.patch
+    ioctl support for the linear target
 
-[size=12 GB][features="1 queue_if_no_path"][hwhandler="0"]
-\_ round-robin 0 
- \_ 2:0:0:0     sdb           8:16  [ready]
- \_ 3:0:0:0     sdf           8:80  [ready]
+dm-mpath-support-ioctls.patch
+    ioctl support for the multipath target
 
-But if I then do a multipath -ll I get
+dm-export-blkdev_driver_ioctl.patch
+    Export another function to avoid calling some code twice.
 
-[size=12 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [active]
- \_ 2:0:0:0     sdb           8:16  [active][ready]
- \_ 3:0:0:0     sdf           8:80  [active][ready]
+dm-mirror-log-sector-size-fix.patch
+dm-mirror-log-refactor-context.patch
+    Make mirror log work regardless of hard sector size.
 
-Now when multipath -v2 is run, the maps arent printed until domap is hit in
-coalesce_paths, at which point the mpp has had features set from the
-configuration.  Howerver, with multipath -ll, it never hits coalesce_paths, it
-just pulls the information out of mpp->params, which is something like
+dm-table-split_args-handle-no-input.patch
+    Trivial extension to table_split_args.
 
-params = 0 0 1 1 round-robin 0 2 1 8:48 100 8:112 100
+dm-consolidate-creation-functions.patch
+    Merge dm_create and dm_create_with_minor.
 
-It doesn't look like the features is getting put into the params list.  My
-question is this, is anyone else using features "1 queue_if_no_path", and if you
-are do you see the same things I do?  If you are good theres a bug and that
-needs to be addressed, if you aren't then would you mind posting your
-multipath.conf to see if I've just fudged this all up?  Thank you,
+dm-exports.patch
+    Make various dm functions available to modules officially.
 
-Josef
+dm-create-error-table.patch
+    Add a library function for modules to use.
+
+dm-prevent-removal-if-open.patch
+    Reinstate earlier dm behaviour so open devices can't be removed.
+
+
+These patches are all at:
+  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+based on 2.6.17-rc6.  (Apply in the order shown in the series file,
+or use 'quilt' directly.)
+
+
+If there are any further small patches I've missed (and aren't yet in the
+editing directory) please remind me of them!  Once these are out of the
+way, I'll get onto meatier things like adding netlink & the enhancements to
+snapshot, multipath & raid*.
+
+Alasdair
+--
+agk@redhat.com
