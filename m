@@ -1,15 +1,12 @@
-From: Arno Wagner <wagner@tik.ee.ethz.ch>
-Subject: Re: Hard drives shutting themselves off in RAID mode
-Date: Fri, 16 Jun 2006 00:53:53 +0200
-Message-ID: <20060615225353.GA10252@tik.ee.ethz.ch>
-References: <20060615232542.6b085337@localhost>
-	<Pine.LNX.4.63.0606160031480.22065@pingle.local.rsnet>
+From: David Sung Min Joo <djoo@redhat.com>
+Subject: DS4300 Turbo
+Date: Fri, 16 Jun 2006 08:28:46 +0900
+Message-ID: <4491ED2E.6070101@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=EUC-KR
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.63.0606160031480.22065@pingle.local.rsnet>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,84 +16,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Jun 16, 2006 at 12:48:24AM +0200, Rune Saetre wrote:
-> Hi
-> 
-> Next silly question then:
-> It can't be the power supply not coping with a large number of disks 
-> seeking simultaneously? If the voltage drops too much some disks might 
-> shut down.
-> 
-> Probably unlikely, but it would yield a simple solution..
+Dear all,
 
-Unlikely but possible IMO. If you can test it with reasonable
-effort and cost (e.g. put some of them on another PSU),
-you might want to do that.
+I just had a case where, I setup dm-multipath with DS4300-turbo (Dual
+controller) with failover.
+However with CLVM, whenever I try to check VGs with vgscan it would take
+more than 3 mins.
 
-Arno
+Then in the /var/log/messages, I would see paths being dropped resulting
+not having any path to the storage, and after few retries within
+themselves, the right VGs will be shown.
+However, I am very worried with outputs;
+Jun 16 06:52:20 aigwebmail kernel: device-mapper: dm-multipath: Failing
+path 8:16.
+Jun 16 06:52:20 aigwebmail multipathd: 8:16: tur checker reports path is
+down
+Jun 16 06:52:20 aigwebmail multipathd: checker failed path 8:16 in map
+4300-0
+Jun 16 06:52:20 aigwebmail multipathd: 4300-0: remaining active paths: 1
+Jun 16 06:52:21 aigwebmail multipathd: 8:144: tur checker reports path
+is down
+Jun 16 06:52:21 aigwebmail multipathd: checker failed path 8:144 in map
+4300-0
+Jun 16 06:52:21 aigwebmail kernel: device-mapper: dm-multipath: Failing
+path 8:144.
+Jun 16 06:52:31 aigwebmail multipathd: 4300-0: remaining active paths: 0
+Jun 16 06:52:31 aigwebmail multipathd: 8:16: tur checker reports path is up
+Jun 16 06:52:31 aigwebmail multipathd: 8:16: reinstated
+Jun 16 06:52:31 aigwebmail multipathd: 4300-0: remaining active paths: 1
+Jun 16 06:52:31 aigwebmail multipathd: 8:144: tur checker reports path is up
+Jun 16 06:52:31 aigwebmail multipathd: 8:144: reinstated
+Jun 16 06:52:31 aigwebmail multipathd: 4300-0: remaining active paths: 2
+Jun 16 06:52:42 aigwebmail multipathd: 8:160: tur checker reports path
+is down
+Jun 16 06:52:42 aigwebmail multipathd: checker failed path 8:160 in map
+4300-1
+Jun 16 06:52:42 aigwebmail kernel: device-mapper: dm-multipath: Failing
+path 8:160.
+Jun 16 06:52:52 aigwebmail multipathd: 4300-1: remaining active paths: 1
+Jun 16 06:52:52 aigwebmail multipathd: 8:160: tur checker reports path is up
+Jun 16 06:52:52 aigwebmail multipathd: 8:160: reinstated
+Jun 16 06:52:52 aigwebmail multipathd: 4300-1: remaining active paths: 2
 
- 
-> Rune
-> 
-> ---
-> Rune S?tre <rune.saetre@netcom-gsm.no>
-> NetCom as
-> ..
-> 
-> On Thu, 15 Jun 2006, Tom Wirschell wrote:
-> 
-> >On 15 Jun 2006, Greg Freemyer wrote:
-> >>
-> >>In 2.6.17-mm there is a huge SATA error handler (EH) rewrite.  Is is
-> >>planned to hit the stable Linus kernel with 2.6.18 towards the end of
-> >>the summer, but even then it will only have a few of the actual
-> >>drivers modified to use the EH infrastructure.
-> >
-> >Damn. I read about this in the LWN.net Kernel pages for may 17th. I
-> >figured that once it was in, everything would automagically be using it
-> >too (i.e. the drivers wouldn't need to be updated to the new system).
-> >Guess I was a tad na?ve about that.
-> >I tried 2.6.17-rc5-mm2 and ran into some BUG()s which went away when I
-> >just stuck to 2.6.17-rc5.
-> >
-> >>I would repost your problem to the lkml-ide list and see if they think
-> >>that the new EH should help you, and when/if your controller will be
-> >>using the new EH infrastructure.
-> >
-> >Looks like a good idea, thanks!
-> >Don't let that keep anybody on this list who might have an explanation
-> >for this be deterred from responding though. :)
-> >
-> >>Also, there is a ton of testing going on with the new EH, so if your
-> >>willing to be a guinea pig, I'm sure you will get a lot of support
-> >>from the dev. team and get your specific driver updated ASAP.
-> >
-> >I've been sitting on a non-functional array for almost 3 months now.
-> >Don't mind having weird issues a little longer if it means things will
-> >end up working nicely in the end (or I at least get a sensible
-> >explanation for what's wrong, so I know what I must do to fix it).
-> >
-> >Kind regards,
-> >
-> >Tom Wirschell
-> >
-> >--
-> >dm-devel mailing list
-> >dm-devel@redhat.com
-> >https://www.redhat.com/mailman/listinfo/dm-devel
-> >
+FYI,
 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+multipath.conf
 
--- 
-Arno Wagner, Dipl. Inform., CISSP --- CSG, ETH Zurich, wagner@tik.ee.ethz.ch 
-GnuPG:  ID: 1E25338F  FP: 0C30 5782 9D93 F785 E79C  0296 797F 6B50 1E25 338F
-----
-Cuddly UI's are the manifestation of wishful thinking. -- Dylan Evans
-Windows is the "under-3" toy of the OS world. -- Matthew D. Fuller
+defaults {
+	multipath_tool 		"/sbin/multipath -v0"
+	udev_dir     		/dev
+	polling_interval	10
+	selector     		"round-robin 0"
+	path_grouping_policy	failover
+	getuid_callout 		"/sbin/scsi_id -g -u -s /block/%n"
+	prio_callout		"/bin/true"
+	path_checker		tur
+	rr_wmin_io		100
+	failback		immediate
+	user_friendly_names	yes
+}
+....
+devnode_blacklist {
+       wwid 26353900f02796769
+	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+	devnode "^hd[a-z][0-9]*"
+	devnode "^cciss!c[0-9]d[0-9]*"
+	devnode "sda"
+
+Regards,
+David Joo
+}
