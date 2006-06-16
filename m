@@ -1,7 +1,7 @@
 From: "Singh, Santosh (STSD)" <santosh.singh3@hp.com>
 Subject: RE: Next set of device-mapper  patches
-Date: Fri, 16 Jun 2006 20:01:38 +0530
-Message-ID: <3EC60E80D9AA7C4E910ACC9DA2003AC306028314@BGEEXC02.asiapacific.cpqcorp.net>
+Date: Fri, 16 Jun 2006 20:06:40 +0530
+Message-ID: <3EC60E80D9AA7C4E910ACC9DA2003AC30602831A@BGEEXC02.asiapacific.cpqcorp.net>
 References: <20060615161658.GL27639@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -24,12 +24,30 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: "P S, Suresh (STSD)" <suresh.pathamadai@hp.com>
 List-Id: dm-devel.ids
 
-Hello All, =20
+Hi,
 
-What are the type of ioctl supported in this IOCTL patches.
+ With the uploaded patches I am able to apply the patches and build the
+kernel, but on boot=20
+it displays the following messages & kernel panics.
 
-Regards
+Insmod: error inserting '/lib/scsi_mod.o' : -1 invalid format=20
+ERROR:/bin/insmod exited abnormally! (pid 327)
+
+I am getting these messages for all these modules
+sd_mod.o,cciss.o, sg.o ide-disk.o,jbd.o and ext3.o .
+
+
+I have patched the 2.6.16 kernel and my development system is having
+2.6.9-22.0.2.Elsmp.
+
+Any  advice on this.
+
+TIA
 Santosh
+
+
+
+
 
 -----Original Message-----
 From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
