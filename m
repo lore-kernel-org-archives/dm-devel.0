@@ -1,14 +1,16 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [PATCH] Add dm-userspace target
-Date: Thu, 15 Jun 2006 20:05:09 -0700
-Message-ID: <m364j1x0ka.fsf@guaranine.beaverton.ibm.com>
-References: <E8C532D801BE5B479B28B626184E8CDD093627A5@tayexc14.americas.cpqcorp.net>
+From: "Reilly, Stephen (MRO)" <Steve.Reilly@hp.com>
+Subject: RE: [PATCH] Add dm-userspace target
+Date: Thu, 15 Jun 2006 23:05:24 -0400
+Message-ID: <E8C532D801BE5B479B28B626184E8CDD093627AC@tayexc14.americas.cpqcorp.net>
+References: <m364j1x0ka.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0588151786=="
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E8C532D801BE5B479B28B626184E8CDD093627A5@tayexc14.americas.cpqcorp.net>
-	(Stephen Reilly's message of "Thu, 15 Jun 2006 22:36:32 -0400")
+Content-class: urn:content-classes:message
+In-Reply-To: <m364j1x0ka.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,15 +21,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: stsd-securelinux-hp <stsd-securelinux-hp@hp.com>, "Patterson,  Andrew D (Linux R&D)" <andrew.patterson@hp.com>
 List-Id: dm-devel.ids
 
---===============0588151786==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+Oops, I just realize you are talking about the LVM portion of the
+code... my bias is multipathing and thus my confusion... sorry
 
---=-=-=
-Content-Transfer-Encoding: quoted-printable
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Dan Smith
+Sent: Thursday, June 15, 2006 11:05 PM
+To: device-mapper development
+Cc: stsd-securelinux-hp; Patterson, Andrew D (Linux R&D)
+Subject: Re: [dm-devel] [PATCH] Add dm-userspace target
 
 RS> Could you be more specific by the phrase of "block placement
 RS> decisions" what placement are you referring too?
@@ -53,30 +59,8 @@ of other nifty things you can do from the comfort of userspace once
 you have this generic enabler in the kernel to act on your behalf.
 *Lots* :)
 
-=2D-=20
+--=20
 Dan Smith
 IBM Linux Technology Center
 Open Hypervisor Team
 email: danms@us.ibm.com
-
---=-=-=
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2.2 (GNU/Linux)
-
-iD8DBQFEkh/owtEf7b4GJVQRAt9uAJ9QXVdrXmJr3CuSDuD5Od3ooE5CAgCdGsCw
-YP7zyQHA/jfcqoHtWybdrGA=
-=f6tP
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============0588151786==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0588151786==--
