@@ -1,16 +1,18 @@
-From: "Singh, Santosh (STSD)" <santosh.singh3@hp.com>
-Subject: RE: Next set of device-mapper  patches
-Date: Fri, 16 Jun 2006 20:06:40 +0530
-Message-ID: <3EC60E80D9AA7C4E910ACC9DA2003AC30602831A@BGEEXC02.asiapacific.cpqcorp.net>
-References: <20060615161658.GL27639@agk.surrey.redhat.com>
+From: "Molle Bestefich" <molle.bestefich@gmail.com>
+Subject: Re: Hard drives shutting themselves off in RAID mode
+Date: Fri, 16 Jun 2006 20:21:52 +0200
+Message-ID: <62b0912f0606161121i52d05d08m66c5676ff7895da2@mail.gmail.com>
+References: <20060613235316.7f982af7@localhost>
+	<62b0912f0606140419s60c30535pbcc97c30ef99c50d@mail.gmail.com>
+	<Pine.LNX.4.63.0606141609310.7019@pingle.local.rsnet>
+	<20060614215258.6aa76d0f@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20060615161658.GL27639@agk.surrey.redhat.com>
+In-Reply-To: <20060614215258.6aa76d0f@localhost>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,51 +23,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "P S, Suresh (STSD)" <suresh.pathamadai@hp.com>
 List-Id: dm-devel.ids
 
-Hi,
+Greg Freemeyer:
+> I did not review your e-mail in total, but using lots of SATA drives
+> in a big RAID array is not something I would attempt with 2.6.17 or
+> older kernels.  (I know 2.6.17 is not even out yet.).
 
- With the uploaded patches I am able to apply the patches and build the
-kernel, but on boot=20
-it displays the following messages & kernel panics.
+I've seen IDE failures on every Linux kernel I ever tried.
+I hope Linux IDE will mature, some glorious day in a distant future...
 
-Insmod: error inserting '/lib/scsi_mod.o' : -1 invalid format=20
-ERROR:/bin/insmod exited abnormally! (pid 327)
+Tom Wirschell:
+> > Have you tried poking the IDE driver to reset the bus,
+> > might get it running again?
+>
+> How would I do this?
 
-I am getting these messages for all these modules
-sd_mod.o,cciss.o, sg.o ide-disk.o,jbd.o and ext3.o .
+Not sure how it's done with libata.  Perhaps:
+# cd /sys/block/sda/device/
+# echo 1 > rescan
 
+Rune Saetre wrote:
+> It can't be the power supply not coping with a large number of disks
+> seeking simultaneously?  If the voltage drops too much some disks
+> might shut down.
 
-I have patched the 2.6.16 kernel and my development system is having
-2.6.9-22.0.2.Elsmp.
+I was of the impression that disks suck tons of juice when they
+spin up, and only 5W a piece or so at any other time.  Is that right?
 
-Any  advice on this.
+Of course, WD disks could be weird.
 
-TIA
-Santosh
+Or they could be configured to go into standby mode after some time,
+requiring another spinup - but AFAIR, MD would spin them up one
+after one.
 
+Arno Wagner:
+> If you can test it with reasonable effort and cost (e.g. put some of
+> them on another PSU), you might want to do that.
 
+Is that safe?
 
-
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Alasdair G Kergon
-Sent: Thursday, June 15, 2006 9:47 PM
-To: device-mapper development
-Subject: Re: [dm-devel] Next set of device-mapper patches
-
-On Thu, Jun 15, 2006 at 09:16:56PM +0530, Singh, Santosh (STSD) wrote:
-> I tried to patch on 2.6.16 as following and got the error below
-=20
-Strange.  That file got truncated.  I've uploaded it again.
-
-Alasdair
---
-agk@redhat.com
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Another way could be to use a meter to gauge how much power it drains.
