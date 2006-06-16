@@ -1,16 +1,14 @@
-From: "Reilly, Stephen (MRO)" <Steve.Reilly@hp.com>
-Subject: RE: [PATCH] Add dm-userspace target
-Date: Thu, 15 Jun 2006 22:36:32 -0400
-Message-ID: <E8C532D801BE5B479B28B626184E8CDD093627A5@tayexc14.americas.cpqcorp.net>
-References: <m37j3i1kbq.fsf@guaranine.beaverton.ibm.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [PATCH] Add dm-userspace target
+Date: Thu, 15 Jun 2006 20:05:09 -0700
+Message-ID: <m364j1x0ka.fsf@guaranine.beaverton.ibm.com>
+References: <E8C532D801BE5B479B28B626184E8CDD093627A5@tayexc14.americas.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0588151786=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <m37j3i1kbq.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <E8C532D801BE5B479B28B626184E8CDD093627A5@tayexc14.americas.cpqcorp.net>
+	(Stephen Reilly's message of "Thu, 15 Jun 2006 22:36:32 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,33 +22,61 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: stsd-securelinux-hp <stsd-securelinux-hp@hp.com>, "Patterson,  Andrew D (Linux R&D)" <andrew.patterson@hp.com>
 List-Id: dm-devel.ids
 
-Could you be more specific by the phrase of "block placement decisions"
-what placement are you referring too?=20
+--===============0588151786==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Dan Smith
-Sent: Thursday, June 15, 2006 11:59 AM
-To: device-mapper development
-Cc: Ryan Grimm
-Subject: [dm-devel] [PATCH] Add dm-userspace target
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-This patch adds the dm-userspace target to the kernel.  I have tested
-it successfully on both i386 and x86_64 SMP machines.
+RS> Could you be more specific by the phrase of "block placement
+RS> decisions" what placement are you referring too?
 
-The idea of dm-userspace is to export an interface for userspace
-control over device-mapper block placement decisions.  It effectively
-allows device-mapper target logic to be implemented in userspace.
+Sure.
 
-I have a library that provides a simple record-based userspace
-interface for communication with a dm-userspace target, available
-here:
+So, take a complex format like qcow for example.  All of the data for
+the disk is in the file, but clearly not in linear order, right?  Not
+only is it non-linear, but it's in some form that requires some
+understanding of a sophisticated set of metadata to linearize it.
+But, since the data is just jumbled up, we can use device-mapper to
+create a linear pseudo device that maps the linear blocks to their
+correct location in the qcow file.  However, putting this logic in the
+kernel is mildly ugly, and gets extremely ugly when you talk about
+adding another format, such as vmdk, msvhd, etc.
 
-  http://static.danplanet.com/dm-userspace/libdmu-0.3.tar.gz
+With dm-userspace and the help of my userspace application (cowd), you
+can mount these files as if they were normal disks in linux.
 
-The library tarball also contains an example.c, which demonstrates how
-to write a userspace application (in about 16 lines of actual code).
+So, by giving a userspace application real-time control over the
+mappings, we can push the complexity into userspace.  There are a lot
+of other nifty things you can do from the comfort of userspace once
+you have this generic enabler in the kernel to act on your behalf.
+*Lots* :)
 
-I would really like feedback about the kernel module.  I'm definitely
-willing to do whatever work is needed to make this an acceptable part
-of device-mapper.
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFEkh/owtEf7b4GJVQRAt9uAJ9QXVdrXmJr3CuSDuD5Od3ooE5CAgCdGsCw
+YP7zyQHA/jfcqoHtWybdrGA=
+=f6tP
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============0588151786==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0588151786==--
