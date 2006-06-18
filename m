@@ -1,15 +1,12 @@
-From: Arno Wagner <wagner@tik.ee.ethz.ch>
-Subject: Re: Hard drives shutting themselves off in RAID mode
-Date: Sun, 18 Jun 2006 20:50:21 +0200
-Message-ID: <20060618185021.GA24450@tik.ee.ethz.ch>
-References: <62b0912f0606161121i52d05d08m66c5676ff7895da2@mail.gmail.com>
-	<Pine.LNX.4.63.0606181533080.15173@pingle.local.rsnet>
+From: "John Steinman" <john.steinman46@gmail.com>
+Subject: Should the device-mapper and multipath be using the NAA
+	with a type prefix?
+Date: Sun, 18 Jun 2006 06:26:47 -0600
+Message-ID: <9e0ffe70606180526k33f2bf7w35ae0d33453603f7@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============1395461939=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.63.0606181533080.15173@pingle.local.rsnet>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +16,81 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Jun 18, 2006 at 03:45:36PM +0200, Rune Saetre wrote:
-> Hi
-> 
-> >Arno Wagner:
-> >>If you can test it with reasonable effort and cost (e.g. put some of
-> >>them on another PSU), you might want to do that.
-> >
-> >Is that safe?
-> 
-> Don't know how safe it is to use different PSU's, but I have done it with 
-> success several times on old hardware used for testing. I can't think of 
-> any reason you should run into trouble if ground is common, and the disks 
-> are powered up first.
+--===============1395461939==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_12013_20818784.1150633607762"
 
-It is pretty safe, as long as you plug both PSUs into the same
-outlet and the outlet its grounded. Also powering up may be a bit
-difficult, since the power-up signal comes from the mainboard today.
+------=_Part_12013_20818784.1150633607762
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Better solution: Get a PSU with more power reserves and try with that.
-From the time you have alreasy sunk into this problem, I gather 
-paying for a, say, 500W PSU would not be too bad.
- 
-> >Another way could be to use a meter to gauge how much power it drains.
-> 
-> You better use an oscilloscope if anything, as you are looking for very 
-> short transients. I have heard (but never tested) that the disks pull 
-> large currents when moving the heads, but with seek times of some 
-> milliseconds you wouldn't even see it on a regular amperemeter.
+Should the device-mapper and multipath be using the NAA with a type prefix?
 
-Nor a regular oscilloscope. Would need to be the storage kind.
-Expensive, unless you can borrow it.
+A type 3 prefix is being reported with the NAA:
 
-Arno
+# scsi_id -p 0x83 -s /class/scsi_generic/sg4 -g
 
--- 
-Arno Wagner, Dipl. Inform., CISSP --- CSG, ETH Zurich, wagner@tik.ee.ethz.ch 
-GnuPG:  ID: 1E25338F  FP: 0C30 5782 9D93 F785 E79C  0296 797F 6B50 1E25 338F
-----
-Cuddly UI's are the manifestation of wishful thinking. -- Dylan Evans
-Windows is the "under-3" toy of the OS world. -- Matthew D. Fuller
+3600601600f50100014d66db7da7eda11
+
+dmsetup -j 254 -m 7 --noopencount --noheading -c info
+3600601600f50100014d66db7da7eda11:254:7:L--w:-1:1:1:3600601600f50100014d66db7da7eda11
+
+Reporting of the NAA with a type prefix appears to be in conflict with
+NAVICLI which reports just the NAA.
+
+  --
+John F. Steinman
+
+------=_Part_12013_20818784.1150633607762
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+
+<p class="MsoNormal">Should the device-mapper and multipath be using the NAA with
+a type prefix?</p>
+
+
+<p class="MsoNormal">A type 3 prefix is being reported with the NAA:<br>
+</p>
+
+
+<p class="MsoNormal"># scsi_id -p 0x83 -s /class/scsi_generic/sg4 -g</p>
+
+
+<p class="MsoNormal">3600601600f50100014d66db7da7eda11</p>
+
+
+
+
+<p class="MsoNormal">dmsetup -j 254 -m 7 --noopencount --noheading -c info</p>
+
+
+
+
+3600601600f50100014d66db7da7eda11:254:7:L--w:-1:1:1:3600601600f50100014d66db7da7eda11<br>
+<br>
+Reporting of the NAA with a type prefix appears to be in
+conflict with NAVICLI which reports just the NAA.<br>
+<br>
+&nbsp;
+
+
+-- <br>John F. Steinman<br>
+
+------=_Part_12013_20818784.1150633607762--
+
+
+--===============1395461939==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1395461939==--
