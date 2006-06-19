@@ -1,96 +1,114 @@
-From: "John Steinman" <john.steinman46@gmail.com>
-Subject: Should the device-mapper and multipath be using the NAA
-	with a type prefix?
-Date: Sun, 18 Jun 2006 06:26:47 -0600
-Message-ID: <9e0ffe70606180526k33f2bf7w35ae0d33453603f7@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: CaT <cat@zip.com.au>
+Subject: 2.6.16.20/dm: can't create more then one snapshot of an lv
+Date: Mon, 19 Jun 2006 12:00:40 +1000
+Message-ID: <20060619020040.GX2059@zip.com.au>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1395461939=="
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1750937AbWFSB7t@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1395461939==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_12013_20818784.1150633607762"
+I am attempting to create multiple snapshots of an lv ontop of a raid-5
+software raid device and ext3+dir_index and resize_inode for the fs.
+The kernel is a pure 64bit compile with Debian Sarge amd64 running on
+top of it. The kernel is monolithic and I'm using lvm2 2.01.03-5 with
+devmapper 1.01.
 
-------=_Part_12013_20818784.1150633607762
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This works under 2.6.15.7. Under 2.6.16.20 I get this:
 
-Should the device-mapper and multipath be using the NAA with a type prefix?
+# lvcreate --snapshot --size 50G --name snap-12 --permission r --verbose /dev/backups/main
+    Setting chunksize to 16 sectors.
+    Finding volume group "backups"
+    Creating logical volume snap-12
+    Archiving volume group "backups" metadata.
+    Creating volume group backup "/etc/lvm/backup/backups"
+    Found volume group "backups"
+    Loading backups-snap--12
+    Zeroing start of logical volume "snap-12"
+    Found volume group "backups"
+    Removing backups-snap--12
+    Found volume group "backups"
+    Found volume group "backups"
+    Found volume group "backups"
+    Loading backups-main-real
+    Loading backups-snap--12-cow
+    Loading backups-snap--12
+    Loading backups-main
+    Creating volume group backup "/etc/lvm/backup/backups"
+  Logical volume "snap-12" created
+# lvcreate --snapshot --size 50G --name snap-13 --permission r --verbose /dev/backups/main
+    Setting chunksize to 16 sectors.
+    Finding volume group "backups"
+    Creating logical volume snap-13
+    Archiving volume group "backups" metadata.
+    Creating volume group backup "/etc/lvm/backup/backups"
+    Found volume group "backups"
+    Loading backups-snap--13
+    Zeroing start of logical volume "snap-13"
+    Found volume group "backups"
+    Removing backups-snap--13
+    Found volume group "backups"
+    Found volume group "backups"
+    Found volume group "backups"
+    Loading backups-main-real
+    Loading backups-snap--12-cow
+    Loading backups-snap--12
+*freeze*
 
-A type 3 prefix is being reported with the NAA:
+# ps auxww | grep lvcreate
+root      1315  0.0  1.2 16000 13104 pts/2   D<L+ 11:44   0:00 lvcreate --snapshot --size 50G --name snap-13 --permission r --verbose /dev/backups/main
 
-# scsi_id -p 0x83 -s /class/scsi_generic/sg4 -g
+Nothing special in dmesg at time of lvcreate.
 
-3600601600f50100014d66db7da7eda11
+# lsof -n | grep 1315 | less
+lvcreate  1315        root  cwd       DIR                9,0    1024       4017 /root
+lvcreate  1315        root  rtd       DIR                9,0    1024          2 /
+lvcreate  1315        root  txt       REG                9,0  465896     116659 /lib/lvm-200/lvm
+lvcreate  1315        root  mem       REG                0,0                  0 [heap] (stat: No such file or directory)
+lvcreate  1315        root  mem       REG                9,0   90288     116481 /lib/ld-2.3.2.so
+lvcreate  1315        root  mem       REG                9,1  290512     458029 /usr/lib/locale/locale-archive
+lvcreate  1315        root  mem       REG                9,0   34640     116657 /lib/libdevmapper.so.1.01
+lvcreate  1315        root  mem       REG                9,0   12072     116489 /lib/libdl-2.3.2.so
+lvcreate  1315        root  mem       REG                9,0 1295328     116487 /lib/libc-2.3.2.so
+lvcreate  1315        root    0u      CHR              136,2                  4 /dev/pts/2
+lvcreate  1315        root    1u      CHR              136,2                  4 /dev/pts/2
+lvcreate  1315        root    2u      CHR              136,2                  4 /dev/pts/2
+lvcreate  1315        root    3u      CHR              10,63              44265 /dev/mapper/control
+lvcreate  1315        root    4uW     REG              253,2       0     147459 /var/lock/lvm/V_backups
+lvcreate  1315        root    5u      BLK                9,0              33555 /dev/md0
+lvcreate  1315        root    6u      BLK                9,1              33567 /dev/md1
+lvcreate  1315        root    7u      BLK                9,2              33568 /dev/md2
+lvcreate  1315        root    8u      BLK                9,3              33569 /dev/md3
 
-dmsetup -j 254 -m 7 --noopencount --noheading -c info
-3600601600f50100014d66db7da7eda11:254:7:L--w:-1:1:1:3600601600f50100014d66db7da7eda11
+MD section of .config:
 
-Reporting of the NAA with a type prefix appears to be in conflict with
-NAVICLI which reports just the NAA.
+#
+# Multi-device support (RAID and LVM)
+#
+CONFIG_MD=y
+CONFIG_BLK_DEV_MD=y
+# CONFIG_MD_LINEAR is not set
+# CONFIG_MD_RAID0 is not set
+CONFIG_MD_RAID1=y
+# CONFIG_MD_RAID10 is not set
+CONFIG_MD_RAID5=y
+# CONFIG_MD_RAID6 is not set
+# CONFIG_MD_MULTIPATH is not set
+# CONFIG_MD_FAULTY is not set
+CONFIG_BLK_DEV_DM=y
+CONFIG_DM_CRYPT=y
+CONFIG_DM_SNAPSHOT=y
+CONFIG_DM_MIRROR=y
+CONFIG_DM_ZERO=y
+# CONFIG_DM_MULTIPATH is not set
 
-  --
-John F. Steinman
+This server is not live yet so I can test patches if need be. I wont be 
+able to in approx 1 weeks time though.
 
-------=_Part_12013_20818784.1150633607762
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-
-<p class="MsoNormal">Should the device-mapper and multipath be using the NAA with
-a type prefix?</p>
-
-
-<p class="MsoNormal">A type 3 prefix is being reported with the NAA:<br>
-</p>
-
-
-<p class="MsoNormal"># scsi_id -p 0x83 -s /class/scsi_generic/sg4 -g</p>
-
-
-<p class="MsoNormal">3600601600f50100014d66db7da7eda11</p>
-
-
-
-
-<p class="MsoNormal">dmsetup -j 254 -m 7 --noopencount --noheading -c info</p>
-
-
-
-
-3600601600f50100014d66db7da7eda11:254:7:L--w:-1:1:1:3600601600f50100014d66db7da7eda11<br>
-<br>
-Reporting of the NAA with a type prefix appears to be in
-conflict with NAVICLI which reports just the NAA.<br>
-<br>
-&nbsp;
-
-
--- <br>John F. Steinman<br>
-
-------=_Part_12013_20818784.1150633607762--
-
-
---===============1395461939==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1395461939==--
+-- 
+    "To the extent that we overreact, we proffer the terrorists the
+    greatest tribute."
+    	- High Court Judge Michael Kirby
