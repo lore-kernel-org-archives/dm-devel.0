@@ -1,15 +1,12 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: Next set of device-mapper  patches
-Date: Wed, 21 Jun 2006 15:26:36 +0200
-Message-ID: <4499490C.5070603@redhat.com>
-References: <3EC60E80D9AA7C4E910ACC9DA2003AC30606C55C@BGEEXC02.asiapacific.cpqcorp.net>	<4499310F.3000007@redhat.com>
-	<20060621130620.GA11880@fenrir.local>
+From: "George, Martin" <marting@netapp.com>
+Subject: DM-MP failover with Emulex HBAs
+Date: Tue, 20 Jun 2006 17:46:30 +0530
+Message-ID: <7026BCCA258BA2438F885772CA0B431302BEEC8C@exbtc01.hq.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-2; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0974240074=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060621130620.GA11880@fenrir.local>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,35 +16,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
+
+--===============0974240074==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C69463.5D194F8A"
+
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C69463.5D194F8A
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hi,
+     Just as you had specified low timeout values in the Qlogic HBA for
+faster DM-MP failover in
+http://www.redhat.com/archives/dm-devel/2005-April/msg00158.html, do you
+have anything similar for Emulex HBAs?
+=20
+=20
+Regards,
+=20
+Martin George
+Netapp
+
+------_=_NextPart_001_01C69463.5D194F8A
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<META content=3D"MSHTML 6.00.2900.2873" name=3DGENERATOR></HEAD>
+<BODY>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2>Hi,</FONT></SPAN></DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2>&nbsp;&nbsp;&nbsp;&nbsp; Just as you had specified low timeout =
+values in=20
+the Qlogic HBA for faster DM-MP failover in <A=20
+href=3D"http://www.redhat.com/archives/dm-devel/2005-April/msg00158.html"=
+>http://www.redhat.com/archives/dm-devel/2005-April/msg00158.html</A>,=20
+do you have anything similar for Emulex HBAs?</FONT></SPAN></DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2>Regards,</FONT></SPAN></DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial size=3D2>Martin =
+
+George</FONT></SPAN></DIV>
+<DIV><SPAN class=3D138291212-20062006><FONT face=3DArial=20
+size=3D2>Netapp</FONT></SPAN></DIV></BODY></HTML>
+
+------_=_NextPart_001_01C69463.5D194F8A--
 
 
-AJ Lewis wrote:
-> On Wed, Jun 21, 2006 at 01:44:15PM +0200, Milan Broz wrote:
->> ioctl patch simple route ioctls to underlying block device
->> -> it supports all ioctl which are supported by your physical device.
->>
->> e.g.
->> in simple case you have volume /dev/mapper/VolGroup00-LogVol0
->> mapped to physical device /dev/sda, inquiry ioctl (using tools from 
->> sg3_util)
->> sg_inq /dev/sda   
->> 	is the same as
->> sg_inq /dev/mapper/VolGroup00-LogVol0
->>
->> In the case of multipath target ioctl command is sent through
->> active path.
-> 
-> So what happens when you have multiple block devices in the volume?  And what
-> if those block devices have different levels of support for the ioctls?
+--===============0974240074==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Currently supported for simple mapping with single target only,
-if there are more than one target, it will fail with error -ENOTTY.
 
-Milan
-
--- 
-Milan Broz
-mbroz@redhat.com
+--===============0974240074==--
