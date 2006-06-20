@@ -1,46 +1,39 @@
-From: CaT <cat@zip.com.au>
-Subject: Re: 2.6.16.20/dm: can't create more then one snapshot of an lv
-Date: Tue, 20 Jun 2006 22:17:10 +1000
-Message-ID: <20060620121710.GA2059@zip.com.au>
-References: <20060619020040.GX2059@zip.com.au> <20060620005405.GY2059@zip.com.au> <20060620100209.GA4566@redhat.com> <20060620114613.GZ2059@zip.com.au> <20060620115545.GB4566@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: 2.6.16.20/dm: can't create more then one snapshot of
+	an lv
+Date: Tue, 20 Jun 2006 15:20:05 +0100
+Message-ID: <20060620142005.GA19254@agk.surrey.redhat.com>
+References: <20060619020040.GX2059@zip.com.au>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932614AbWFTMQT@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20060620115545.GB4566@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Heinz Mauelshagen <mauelshagen@redhat.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+In-Reply-To: <20060619020040.GX2059@zip.com.au>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: CaT <cat@zip.com.au>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Jun 20, 2006 at 01:55:45PM +0200, Heinz Mauelshagen wrote:
-> On Tue, Jun 20, 2006 at 09:46:13PM +1000, CaT wrote:
-> > On Tue, Jun 20, 2006 at 12:02:09PM +0200, Heinz Mauelshagen wrote:
-> > > How many snapshots active at once ?
-> > 
-> > 1. I can start more then 1 premade snapshots just fine and use them
-> > but the moment I add another one a freeze occurs.
-> 
-> Well, that's fairly few ;)
+On Mon, Jun 19, 2006 at 12:00:40PM +1000, CaT wrote:
+> I am attempting to create multiple snapshots of an lv ontop of a raid-5
+> software raid device and ext3+dir_index and resize_inode for the fs.
+> The kernel is a pure 64bit compile with Debian Sarge amd64 running on
+> top of it. The kernel is monolithic and I'm using lvm2 2.01.03-5 with
+> devmapper 1.01.
+> This works under 2.6.15.7. Under 2.6.16.20 I get this:
 
-Yes. I thought so too. :)
+Update to lvm2 version 2.02.01 or later and device-mapper version 1.02.02
+or later.
 
-> > > I guess this is a kcopyd scalability issue which needs addressing.
-> > 
-> > Well in the end I'm hoping to get at least 7. Hopefully that's not
-> > insane. :)
-> 
-> No, I was assuming, you were trying to activate plenty.
-
-Not yet. Though as I said I plan to max out at 7 or so.
-
-> FYI: the snapshot code in 2.6.17-rc has received a fair amount of fixes
->      which might help this vs. 2.6.16.20.
-
-I tried 2.6.17 and I get the same issue. Any other kernel you want me to
-try? I can reboot this box at will at the moment and test.
-
+Alasdair
 -- 
-    "To the extent that we overreact, we proffer the terrorists the
-    greatest tribute."
-    	- High Court Judge Michael Kirby
+agk@redhat.com
