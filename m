@@ -1,8 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [RFC PATCH 2/4] dm_queue: add fastsuspend feature to
-	dm_queue
-Date: Fri, 23 Jun 2006 17:48:15 -0400 (EDT)
-Message-ID: <20060623.174815.45517450.k-ueda@ct.jp.nec.com>
+Subject: [RFC PATCH 3/4] dm_queue: dm-mpath to enable fastsuspend
+Date: Fri, 23 Jun 2006 17:49:20 -0400 (EDT)
+Message-ID: <20060623.174920.18307851.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
@@ -20,26 +19,11 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds fastsuspend feature which enables suspend
-without flushing I/O and handovers queued bios to new mapping
-after table swapping.
-The feature is implemented as the following steps:
-
-  1). At suspension, woker thread stops queue processing
-      if the queue can be stopped without flushing.
-      [This step is called "fastsuspend".]
-
-  2). When table is swapped at resume time, queued bios are unmapped
-      and handover the original bios to deferred list in mapped_device.
-
-  3). Upon resuming the new table, the original bios in deferred list
-      are remapped and issued based on the new table.
-
-If table swap doesn't occur, no change is made on queued bios.
-
-The fastsuspend feature is optional.
-dm_queue user (target driver) can decide to enable the feature.
-If the feature isn't enabled, suspend/resume behavior is unchanged.
+This patch replaces the retry I/O queue of multipath target
+by dm_queue.
+Multipath target uses the fastsuspend feature for the queue.
+By using the feature, queued bios are handed over to the new table
+when table is swapped.
 
 The patch is for 2.6.17-rc6-mm1 + Alasdair's patches which was sent
 to this ML (Subject: "Next set of device-mapper patches").
@@ -51,523 +35,329 @@ Kiyoshi Ueda
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm.c 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm.c
---- 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm.c	2006-06-23 11:17:29.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm.c	2006-06-23 10:47:23.000000000 -0400
-@@ -67,6 +67,7 @@ EXPORT_SYMBOL_GPL(dm_get_mapinfo);
- #define DMF_FROZEN 2
- #define DMF_FREEING 3
- #define DMF_DELETING 4
-+#define DMF_QFREEZING 5
+diff -rupN 2.6.17-rc6-mm1.agk/drivers/md/dm-mpath.c 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-mpath.c
+--- 2.6.17-rc6-mm1.agk/drivers/md/dm-mpath.c	2006-06-09 16:50:42.000000000 -0400
++++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-mpath.c	2006-06-23 09:31:20.000000000 -0400
+@@ -75,10 +75,6 @@ struct multipath {
+ 	unsigned queue_if_no_path;	/* Queue I/O if last path fails? */
+ 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
  
- struct mapped_device {
- 	struct rw_semaphore io_lock;
-@@ -497,6 +498,36 @@ static int clone_endio(struct bio *bio, 
+-	struct work_struct process_queued_ios;
+-	struct bio_list queued_ios;
+-	unsigned queue_size;
+-
+ 	struct work_struct trigger_event;
+ 
+ 	/*
+@@ -106,6 +102,11 @@ struct workqueue_struct *kmultipathd;
+ static void process_queued_ios(void *data);
+ static void trigger_event(void *data);
+ 
++enum {
++	RETRY_QUEUE,
++	NUM_QUEUES
++};
++
+ 
+ /*-----------------------------------------------
+  * Allocation routines
+@@ -177,7 +178,6 @@ static struct multipath *alloc_multipath
+ 		INIT_LIST_HEAD(&m->priority_groups);
+ 		spin_lock_init(&m->lock);
+ 		m->queue_io = 1;
+-		INIT_WORK(&m->process_queued_ios, process_queued_ios, m);
+ 		INIT_WORK(&m->trigger_event, trigger_event, m);
+ 		m->mpio_pool = mempool_create_slab_pool(MIN_IOS, _mpio_cache);
+ 		if (!m->mpio_pool) {
+@@ -284,12 +284,12 @@ failed:
+ 	m->current_pg = NULL;
+ }
+ 
+-static int map_io(struct multipath *m, struct bio *bio, struct mpath_io *mpio,
+-		  unsigned was_queued)
++static int map_io(struct multipath *m, struct bio *bio, struct mpath_io *mpio)
+ {
+ 	int r = 1;
+ 	unsigned long flags;
+ 	struct pgpath *pgpath;
++	struct dm_queue *q;
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+@@ -300,17 +300,14 @@ static int map_io(struct multipath *m, s
+ 
+ 	pgpath = m->current_pgpath;
+ 
+-	if (was_queued)
+-		m->queue_size--;
+-
+ 	if ((pgpath && m->queue_io) ||
+ 	    (!pgpath && m->queue_if_no_path)) {
+ 		/* Queue for the daemon to resubmit */
+-		bio_list_add(&m->queued_ios, bio);
+-		m->queue_size++;
++		q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
++		dm_queue_add_bio(q, bio);
+ 		if ((m->pg_init_required && !m->pg_init_in_progress) ||
+ 		    !m->queue_io)
+-			queue_work(kmultipathd, &m->process_queued_ios);
++			dm_queue_process(q);
+ 		pgpath = NULL;
+ 		r = 0;
+ 	} else if (!pgpath)
+@@ -332,6 +329,7 @@ static int queue_if_no_path(struct multi
+ 			    unsigned save_old_value)
+ {
+ 	unsigned long flags;
++	struct dm_queue *q;
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+@@ -340,8 +338,10 @@ static int queue_if_no_path(struct multi
+ 	else
+ 		m->saved_queue_if_no_path = queue_if_no_path;
+ 	m->queue_if_no_path = queue_if_no_path;
+-	if (!m->queue_if_no_path && m->queue_size)
+-		queue_work(kmultipathd, &m->process_queued_ios);
++	if (!m->queue_if_no_path) {
++		q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
++		dm_queue_process(q);
++	}
+ 
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
+@@ -352,38 +352,32 @@ static int queue_if_no_path(struct multi
+  * The multipath daemon is responsible for resubmitting queued ios.
+  *---------------------------------------------------------------*/
+ 
+-static void dispatch_queued_ios(struct multipath *m)
++static void dispatch_queued_ios(struct dm_queue *q)
+ {
++	struct dm_target *ti = dm_queue_get_target(q);
++	struct multipath *m = (struct multipath *) ti->private;
+ 	int r;
+-	unsigned long flags;
+-	struct bio *bio = NULL, *next;
++	struct bio *bio;
+ 	struct mpath_io *mpio;
+ 	union map_info *info;
+ 
+-	spin_lock_irqsave(&m->lock, flags);
+-	bio = bio_list_get(&m->queued_ios);
+-	spin_unlock_irqrestore(&m->lock, flags);
+-
+-	while (bio) {
+-		next = bio->bi_next;
+-		bio->bi_next = NULL;
+-
++	while ((bio = dm_queue_pop_bio(q))) {
+ 		info = dm_get_mapinfo(bio);
+ 		mpio = info->ptr;
+ 
+-		r = map_io(m, bio, mpio, 1);
++		r = map_io(m, bio, mpio);
+ 		if (r < 0)
+ 			bio_endio(bio, bio->bi_size, r);
+ 		else if (r == 1)
+ 			generic_make_request(bio);
+-
+-		bio = next;
+ 	}
+ }
+ 
+ static void process_queued_ios(void *data)
+ {
+-	struct multipath *m = (struct multipath *) data;
++	struct dm_queue *q = (struct dm_queue *) data;
++	struct dm_target *ti = dm_queue_get_target(q);
++	struct multipath *m = (struct multipath *) ti->private;
+ 	struct hw_handler *hwh = &m->hw_handler;
+ 	struct pgpath *pgpath = NULL;
+ 	unsigned init_required = 0, must_queue = 1;
+@@ -391,7 +385,7 @@ static void process_queued_ios(void *dat
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+-	if (!m->queue_size)
++	if (!dm_queue_size(q) || dm_queue_freezing(q))
+ 		goto out;
+ 
+ 	if (!m->current_pgpath)
+@@ -416,7 +410,7 @@ out:
+ 		hwh->type->pg_init(hwh, pgpath->pg->bypassed, &pgpath->path);
+ 
+ 	if (!must_queue)
+-		dispatch_queued_ios(m);
++		dispatch_queued_ios(q);
+ }
+ 
+ /*
+@@ -698,6 +692,7 @@ static int multipath_ctr(struct dm_targe
+ 
+ 	int r;
+ 	struct multipath *m;
++	struct dm_queue *q;
+ 	struct arg_set as;
+ 	unsigned pg_count = 0;
+ 	unsigned next_pg_num;
+@@ -751,6 +746,18 @@ static int multipath_ctr(struct dm_targe
+ 		goto bad;
+ 	}
+ 
++	/* allocate and initiarize queue for retry io */
++	ti->queues = dm_queue_alloc(NUM_QUEUES);
++	if (!ti->queues) {
++		ti->error = ESTR("can't allocate queues");
++		r = -ENOMEM;
++		goto bad;
++	}
++	ti->num_queues = NUM_QUEUES;
++	q = dm_queue_find(ti->queues, RETRY_QUEUE);
++	dm_queue_setup(q, process_queued_ios, ti);
++	dm_queue_enable_fastsuspend(q);
++
+ 	ti->private = m;
+ 	m->ti = ti;
+ 
+@@ -764,6 +771,13 @@ static int multipath_ctr(struct dm_targe
+ static void multipath_dtr(struct dm_target *ti)
+ {
+ 	struct multipath *m = (struct multipath *) ti->private;
++	int i;
++
++	for (i = 0; i < ti->num_queues; i++) {
++		struct dm_queue *q = dm_queue_find(ti->queues, i);
++		dm_queue_flush(q);
++	}
++	dm_queue_free(ti->queues);
+ 
+ 	flush_workqueue(kmultipathd);
+ 	free_multipath(m);
+@@ -787,7 +801,7 @@ static int multipath_map(struct dm_targe
+ 
+ 	map_context->ptr = mpio;
+ 	bio->bi_rw |= (1 << BIO_RW_FAILFAST);
+-	r = map_io(m, bio, mpio, 0);
++	r = map_io(m, bio, mpio);
+ 	if (r < 0)
+ 		mempool_free(mpio, m->mpio_pool);
+ 
+@@ -834,6 +848,7 @@ static int reinstate_path(struct pgpath 
+ 	int r = 0;
+ 	unsigned long flags;
+ 	struct multipath *m = pgpath->pg->m;
++	struct dm_queue *q;
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+@@ -854,8 +869,10 @@ static int reinstate_path(struct pgpath 
+ 	pgpath->path.is_active = 1;
+ 
+ 	m->current_pgpath = NULL;
+-	if (!m->nr_valid_paths++ && m->queue_size)
+-		queue_work(kmultipathd, &m->process_queued_ios);
++	if (!m->nr_valid_paths++) {
++		q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
++		dm_queue_process(q);
++	}
+ 
+ 	queue_work(kmultipathd, &m->trigger_event);
+ 
+@@ -967,6 +984,7 @@ void dm_pg_init_complete(struct path *pa
+ 	struct pgpath *pgpath = path_to_pgpath(path);
+ 	struct priority_group *pg = pgpath->pg;
+ 	struct multipath *m = pg->m;
++	struct dm_queue *q;
+ 	unsigned long flags;
+ 
+ 	/* We insist on failing the path if the PG is already bypassed. */
+@@ -987,7 +1005,8 @@ void dm_pg_init_complete(struct path *pa
+ 		m->queue_io = 0;
+ 
+ 	m->pg_init_in_progress = 0;
+-	queue_work(kmultipathd, &m->process_queued_ios);
++	q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
++	dm_queue_process(q);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ }
+ 
+@@ -1000,6 +1019,7 @@ static int do_end_io(struct multipath *m
+ 	struct hw_handler *hwh = &m->hw_handler;
+ 	unsigned err_flags = MP_FAIL_PATH;	/* Default behavior */
+ 	unsigned long flags;
++	struct dm_queue *q;
+ 
+ 	if (!error)
+ 		return 0;	/* I/O complete */
+@@ -1041,10 +1061,10 @@ static int do_end_io(struct multipath *m
+ 
+ 	/* queue for the daemon to resubmit or fail */
+ 	spin_lock_irqsave(&m->lock, flags);
+-	bio_list_add(&m->queued_ios, bio);
+-	m->queue_size++;
++	q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
++	dm_queue_add_bio(q, bio);
+ 	if (!m->queue_io)
+-		queue_work(kmultipathd, &m->process_queued_ios);
++		dm_queue_process(q);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
+ 	return 1;	/* io not complete */
+@@ -1071,6 +1091,17 @@ static int multipath_end_io(struct dm_ta
  	return r;
  }
  
-+struct bio *dm_unmap_bio(struct bio *clone)
++static int multipath_unmap(struct dm_target *ti, struct bio *bio,
++			   union map_info *map_context)
 +{
-+	struct bio *orig = NULL;
-+	struct target_io *tio = clone->bi_private;
-+	struct dm_io *io = tio->io;
-+	dm_unmap_fn unmap = tio->ti->type->unmap;
-+	int r = 0;
++	struct multipath *m = (struct multipath *) ti->private;
++	struct mpath_io *mpio = (struct mpath_io *) map_context->ptr;
 +
-+	/* remove target specific data */
-+	if (unmap)
-+		r = unmap(tio->ti, clone, &tio->info);
-+
-+	if (r) {
-+		DMERR("target unmap function failed. The memory leaked!");
-+		BUG();
-+	}
-+
-+	free_tio(io->md, tio);
-+
-+	if (atomic_dec_and_test(&io->io_count)) {
-+		end_io_acct(io);
-+		orig = io->bio;
-+		free_io(io->md, io);
-+	}
-+
-+	bio_put(clone);
-+
-+	return orig;
-+}
-+
- static sector_t max_io_len(struct mapped_device *md,
- 			   sector_t sector, struct dm_target *ti)
- {
-@@ -1076,6 +1107,16 @@ static void __unbind(struct mapped_devic
- 	if (!map)
- 		return;
- 
-+	if (dm_qfreezing(md)) {
-+		struct bio_list bl;
-+
-+		bio_list_init(&bl);
-+		dm_table_withdraw_queued_io(map, &bl);
-+		down_write(&md->io_lock);
-+		bio_list_merge_head(&md->deferred, &bl);
-+		up_write(&md->io_lock);
-+	}
-+
- 	dm_table_event_callback(map, NULL, NULL);
- 	write_lock(&md->map_lock);
- 	md->map = NULL;
-@@ -1252,12 +1293,13 @@ static void unlock_fs(struct mapped_devi
-  * dm_bind_table, dm_suspend must be called to flush any in
-  * flight bios and ensure that any further io gets deferred.
-  */
--int dm_suspend(struct mapped_device *md, int do_lockfs)
-+int dm_suspend(struct mapped_device *md, int do_lockfs, int fastsuspend)
- {
- 	struct dm_table *map = NULL;
- 	DECLARE_WAITQUEUE(wait, current);
- 	struct bio *def;
- 	int r = -EINVAL;
-+	unsigned int queued_bios = 0;
- 
- 	down(&md->suspend_lock);
- 
-@@ -1266,6 +1308,10 @@ int dm_suspend(struct mapped_device *md,
- 
- 	map = dm_get_table(md);
- 
-+	/* DMF_QFREEZING must be set before presuspend. */
-+	if (fastsuspend)
-+		set_bit(DMF_QFREEZING, &md->flags);
-+
- 	/* This does not get reverted if there's an error later. */
- 	dm_table_presuspend_targets(map);
- 
-@@ -1277,7 +1323,7 @@ int dm_suspend(struct mapped_device *md,
- 	}
- 
- 	/* Flush I/O to the device. */
--	if (do_lockfs) {
-+	if (do_lockfs && !fastsuspend) {
- 		r = lock_fs(md);
- 		if (r)
- 			goto out;
-@@ -1298,12 +1344,16 @@ int dm_suspend(struct mapped_device *md,
- 
- 	/*
- 	 * Then we wait for the already mapped ios to
--	 * complete.
-+	 * complete or be queued when fastsuspending.
- 	 */
- 	while (1) {
- 		set_current_state(TASK_INTERRUPTIBLE);
- 
--		if (!atomic_read(&md->pending) || signal_pending(current))
-+		if (fastsuspend)
-+			queued_bios = dm_table_queue_size(map, 1);
-+
-+		if ((atomic_read(&md->pending) == queued_bios) ||
-+		    signal_pending(current))
- 			break;
- 
- 		io_schedule();
-@@ -1315,7 +1365,11 @@ int dm_suspend(struct mapped_device *md,
- 
- 	/* were we interrupted ? */
- 	r = -EINTR;
--	if (atomic_read(&md->pending)) {
-+	if (atomic_read(&md->pending) != queued_bios) {
-+		if (fastsuspend) {
-+			clear_bit(DMF_QFREEZING, &md->flags);
-+			dm_table_process_queue(map);
-+		}
- 		clear_bit(DMF_BLOCK_IO, &md->flags);
- 		def = bio_list_get(&md->deferred);
- 		__flush_deferred_io(md, def);
-@@ -1357,6 +1411,12 @@ int dm_resume(struct mapped_device *md)
- 	if (!map || !dm_table_get_size(map))
- 		goto out;
- 
-+	/*
-+	 * DMF_QFREEZING will prevent target resume function to restart
-+	 * pending I/Os.  So clearing it here.
-+	 */
-+	clear_bit(DMF_QFREEZING, &md->flags);
-+
- 	dm_table_resume_targets(map);
- 
- 	down_write(&md->io_lock);
-@@ -1417,6 +1477,12 @@ int dm_suspended(struct mapped_device *m
- }
- EXPORT_SYMBOL_GPL(dm_suspended);
- 
-+int dm_qfreezing(struct mapped_device *md)
-+{
-+	return test_bit(DMF_QFREEZING, &md->flags);
-+}
-+EXPORT_SYMBOL_GPL(dm_qfreezing);
-+
- static struct block_device_operations dm_blk_dops = {
- 	.open = dm_blk_open,
- 	.release = dm_blk_close,
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-table.c 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-table.c
---- 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-table.c	2006-06-23 11:27:10.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-table.c	2006-06-22 15:23:13.000000000 -0400
-@@ -1011,6 +1011,62 @@ struct mapped_device *dm_table_get_md(st
- 	return t->md;
- }
- 
-+void dm_table_withdraw_queued_io(struct dm_table *t, struct bio_list *bl)
-+{
-+	unsigned int i, j;
-+
-+	for (i = 0; i < t->num_targets; i++) {
-+		struct dm_target *ti = t->targets + i;
-+
-+		for (j = 0; j < ti->num_queues; j++) {
-+			struct dm_queue *q = dm_queue_find(ti->queues, j);
-+			dm_queue_withdraw(q, bl);
-+		}
-+	}
-+}
-+
-+unsigned int dm_table_queue_size(struct dm_table *t, int qfreezing)
-+{
-+	unsigned int size = 0;
-+	unsigned int i, j;
-+
-+	for (i = 0; i < t->num_targets; i++) {
-+		struct dm_target *ti = t->targets + i;
-+
-+		for (j = 0; j < ti->num_queues; j++) {
-+			struct dm_queue *q = dm_queue_find(ti->queues, j);
-+
-+			/*
-+			 * For fast suspend in dm_suspend().
-+			 * If the queue is non fast-suspendable, the queue
-+			 * should be processed during waiting for pending
-+			 * I/Os in dm_suspend().
-+			 * Therefore, ignore the size of such queues.
-+			 */
-+			if (qfreezing && !dm_queue_fastsuspendable(q))
-+				continue;
-+
-+			size += dm_queue_size(q);
-+		}
-+	}
-+
-+	return size;
-+}
-+
-+void dm_table_process_queue(struct dm_table *t)
-+{
-+	unsigned int i, j;
-+
-+	for (i = 0; i < t->num_targets; i++) {
-+		struct dm_target *ti = t->targets + i;
-+
-+		for (j = 0; j < ti->num_queues; j++) {
-+			struct dm_queue *q = dm_queue_find(ti->queues, j);
-+			dm_queue_process(q);
-+		}
-+	}
-+}
-+
- EXPORT_SYMBOL(dm_vcalloc);
- EXPORT_SYMBOL(dm_get_device);
- EXPORT_SYMBOL(dm_put_device);
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-queue.c 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-queue.c
---- 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-queue.c	2006-06-23 11:36:04.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-queue.c	2006-06-23 09:44:21.000000000 -0400
-@@ -11,6 +11,8 @@
- 
- struct workqueue_struct *kdmqd;
- 
-+#define DMQ_FASTSUSPENDABLE	0
-+
- struct dm_queue {
- 	spinlock_t lock; /* protects .bios and .size */
- 	struct bio_list bios;
-@@ -18,6 +20,7 @@ struct dm_queue {
- 
- 	struct dm_target *ti;
- 	struct work_struct work;
-+	unsigned long flags;
- };
- 
- int dm_queue_init()
-@@ -81,6 +84,7 @@ int dm_queue_setup(struct dm_queue *q, v
- 	q->size = 0;
- 	q->ti = ti;
- 	INIT_WORK(&q->work, work, q);
-+	q->flags = 0UL;
- 
- 	return 0;
- }
-@@ -106,10 +110,14 @@ struct bio *dm_queue_pop_bio(struct dm_q
- 
- 	spin_lock_irqsave(&q->lock, flags);
- 
-+	if (dm_queue_freezing(q) && dm_queue_fastsuspendable(q))
-+		goto out;
-+
- 	bio = bio_list_pop(&q->bios);
- 	if (bio)
- 		q->size--;
- 
-+out:
- 	spin_unlock_irqrestore(&q->lock, flags);
- 
- 	return bio;
-@@ -123,9 +131,13 @@ struct bio *dm_queue_get_bios(struct dm_
- 
- 	spin_lock_irqsave(&q->lock, flags);
- 
-+	if (dm_queue_freezing(q) && dm_queue_fastsuspendable(q))
-+		goto out;
-+
- 	bio = bio_list_get(&q->bios);
- 	q->size = 0;
- 
-+out:
- 	spin_unlock_irqrestore(&q->lock, flags);
- 
- 	return bio;
-@@ -151,6 +163,30 @@ struct dm_target *dm_queue_get_target(st
- }
- EXPORT_SYMBOL_GPL(dm_queue_get_target);
- 
-+int dm_queue_enable_fastsuspend(struct dm_queue *q)
-+{
-+	set_bit(DMQ_FASTSUSPENDABLE, &q->flags);
++	mempool_free(mpio, m->mpio_pool);
 +
 +	return 0;
 +}
-+EXPORT_SYMBOL_GPL(dm_queue_enable_fastsuspend);
 +
-+int dm_queue_fastsuspendable(struct dm_queue *q)
-+{
-+	return test_bit(DMQ_FASTSUSPENDABLE, &q->flags);
-+}
-+
-+int dm_queue_freezing(struct dm_queue *q)
-+{
-+	struct mapped_device *md = dm_table_get_md(q->ti->table);
-+	int r = dm_qfreezing(md);
-+
-+	dm_put(md);
-+
-+	return r;
-+}
-+EXPORT_SYMBOL_GPL(dm_queue_freezing);
-+
- void dm_queue_process(struct dm_queue *q)
+ /*
+  * Suspend can't complete until all the I/O is processed so if
+  * the last path fails we must error any remaining I/O.
+@@ -1091,10 +1122,14 @@ static void multipath_resume(struct dm_t
  {
+ 	struct multipath *m = (struct multipath *) ti->private;
  	unsigned long flags;
-@@ -160,9 +196,34 @@ void dm_queue_process(struct dm_queue *q
- 	if (!q->size)
- 		goto out;
++	struct dm_queue *q;
  
-+	if (dm_queue_freezing(q) && dm_queue_fastsuspendable(q))
-+		goto out;
+ 	spin_lock_irqsave(&m->lock, flags);
+ 	m->queue_if_no_path = m->saved_queue_if_no_path;
+ 	spin_unlock_irqrestore(&m->lock, flags);
 +
- 	queue_work(kdmqd, &q->work);
- 
- out:
- 	spin_unlock_irqrestore(&q->lock, flags);
- }
- EXPORT_SYMBOL_GPL(dm_queue_process);
-+
-+void dm_queue_withdraw(struct dm_queue *q, struct bio_list *bl)
-+{
-+	struct bio *clone, *next, *orig;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&q->lock, flags);
-+	clone = bio_list_get(&q->bios);
-+	q->size = 0;
-+	spin_unlock_irqrestore(&q->lock, flags);
-+
-+	while (clone) {
-+		next = clone->bi_next;
-+		clone->bi_next = NULL;
-+
-+		orig = dm_unmap_bio(clone);
-+		if (orig)
-+			bio_list_add(bl, orig);
-+
-+		clone = next;
-+	}
-+}
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-ioctl.c 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-ioctl.c
---- 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-ioctl.c	2006-06-23 11:20:20.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-ioctl.c	2006-06-20 18:31:34.000000000 -0400
-@@ -767,6 +767,7 @@ static int do_suspend(struct dm_ioctl *p
- {
- 	int r = 0;
- 	int do_lockfs = 1;
-+	int fastsuspend = 0;
- 	struct mapped_device *md;
- 
- 	md = find_device(param);
-@@ -775,9 +776,11 @@ static int do_suspend(struct dm_ioctl *p
- 
- 	if (param->flags & DM_SKIP_LOCKFS_FLAG)
- 		do_lockfs = 0;
-+	if (param->flags & DM_FASTSUSPEND_FLAG)
-+		fastsuspend = 1;
- 
- 	if (!dm_suspended(md))
--		r = dm_suspend(md, do_lockfs);
-+		r = dm_suspend(md, do_lockfs, fastsuspend);
- 
- 	if (!r)
- 		r = __dev_status(md, param);
-@@ -790,6 +793,7 @@ static int do_resume(struct dm_ioctl *pa
- {
- 	int r = 0;
- 	int do_lockfs = 1;
-+	int fastsuspend = 0;
- 	struct hash_cell *hc;
- 	struct mapped_device *md;
- 	struct dm_table *new_map;
-@@ -816,8 +820,10 @@ static int do_resume(struct dm_ioctl *pa
- 		/* Suspend if it isn't already suspended */
- 		if (param->flags & DM_SKIP_LOCKFS_FLAG)
- 			do_lockfs = 0;
-+		if (param->flags & DM_FASTSUSPEND_FLAG)
-+			fastsuspend = 1;
- 		if (!dm_suspended(md))
--			dm_suspend(md, do_lockfs);
-+			dm_suspend(md, do_lockfs, fastsuspend);
- 
- 		r = dm_swap_table(md, new_map);
- 		if (r) {
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm.h 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm.h
---- 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm.h	2006-06-23 11:18:54.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm.h	2006-06-22 14:26:57.000000000 -0400
-@@ -39,6 +39,7 @@ struct dm_dev {
- };
- 
- struct dm_table;
-+struct bio_list;
- struct dm_queue;
- 
- /*-----------------------------------------------------------------
-@@ -56,12 +57,17 @@ void dm_table_resume_targets(struct dm_t
- int dm_table_any_congested(struct dm_table *t, int bdi_bits);
- void dm_table_unplug_all(struct dm_table *t);
- int dm_table_flush_all(struct dm_table *t);
-+void dm_table_withdraw_queued_io(struct dm_table *t, struct bio_list *bl);
-+unsigned int dm_table_queue_size(struct dm_table *t, int qfreezing);
-+void dm_table_process_queue(struct dm_table *t);
- 
- /*-----------------------------------------------------------------
-  * Queue functions.
-  *---------------------------------------------------------------*/
- int dm_queue_init(void);
- void dm_queue_exit(void);
-+int dm_queue_fastsuspendable(struct dm_queue *q);
-+void dm_queue_withdraw(struct dm_queue *q, struct bio_list *bl);
- 
- /*-----------------------------------------------------------------
-  * A registry of target types.
-@@ -132,5 +138,6 @@ void *dm_vcalloc(unsigned long nmemb, un
- union map_info *dm_get_mapinfo(struct bio *bio);
- int dm_open_count(struct mapped_device *md);
- int dm_lock_for_deletion(struct mapped_device *md);
-+struct bio *dm_unmap_bio(struct bio *bio);
- 
- #endif
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/include/linux/device-mapper.h 2.6.17-rc6-mm1.agk.moveq.fastsusp/include/linux/device-mapper.h
---- 2.6.17-rc6-mm1.agk.moveq/include/linux/device-mapper.h	2006-06-23 11:29:00.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/include/linux/device-mapper.h	2006-06-23 10:42:08.000000000 -0400
-@@ -56,6 +56,8 @@ typedef int (*dm_endio_fn) (struct dm_ta
- 			    struct bio *bio, int error,
- 			    union map_info *map_context);
- 
-+typedef int (*dm_unmap_fn) (struct dm_target *ti, struct bio *bio,
-+			    union map_info *map_context);
- typedef void (*dm_presuspend_fn) (struct dm_target *ti);
- typedef void (*dm_postsuspend_fn) (struct dm_target *ti);
- typedef void (*dm_resume_fn) (struct dm_target *ti);
-@@ -91,6 +93,7 @@ struct target_type {
- 	dm_dtr_fn dtr;
- 	dm_map_fn map;
- 	dm_endio_fn end_io;
-+	dm_unmap_fn unmap;
- 	dm_presuspend_fn presuspend;
- 	dm_postsuspend_fn postsuspend;
- 	dm_resume_fn resume;
-@@ -169,7 +172,7 @@ void *dm_get_mdptr(struct mapped_device 
- /*
-  * A device can still be used while suspended, but I/O is deferred.
-  */
--int dm_suspend(struct mapped_device *md, int with_lockfs);
-+int dm_suspend(struct mapped_device *md, int with_lockfs, int fastsuspend);
- int dm_resume(struct mapped_device *md);
- 
- /*
-@@ -183,6 +186,7 @@ int dm_wait_event(struct mapped_device *
-  */
- struct gendisk *dm_disk(struct mapped_device *md);
- int dm_suspended(struct mapped_device *md);
-+int dm_qfreezing(struct mapped_device *md);
- 
- /*
-  * Geometry functions.
-@@ -265,6 +269,11 @@ int dm_queue_setup(struct dm_queue *q, v
- 		   struct dm_target *ti);
- 
- /*
-+ * Optional setups.
-+ */
-+int dm_queue_enable_fastsuspend(struct dm_queue *q);
-+
-+/*
-  * Free allocated queues.
-  */
- void dm_queue_free(struct dm_queue *qs);
-@@ -286,6 +295,7 @@ struct bio *dm_queue_get_bios(struct dm_
-  */
- unsigned int dm_queue_size(struct dm_queue *q);
- struct dm_target *dm_queue_get_target(struct dm_queue *q);
-+int dm_queue_freezing(struct dm_queue *q);
- 
- /*
-  * Start processing a queue.
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/include/linux/dm-ioctl.h 2.6.17-rc6-mm1.agk.moveq.fastsusp/include/linux/dm-ioctl.h
---- 2.6.17-rc6-mm1.agk.moveq/include/linux/dm-ioctl.h	2006-06-23 11:29:25.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/include/linux/dm-ioctl.h	2006-06-20 18:34:42.000000000 -0400
-@@ -323,4 +323,9 @@ typedef char ioctl_struct[308];
-  */
- #define DM_SKIP_LOCKFS_FLAG	(1 << 10) /* In */
- 
-+/*
-+ * Set this to suspend without flushing queued ios.
-+ */
-+#define DM_FASTSUSPEND_FLAG	(1 << 11) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
-diff -rupN 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-bio-list.h 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-bio-list.h
---- 2.6.17-rc6-mm1.agk.moveq/drivers/md/dm-bio-list.h	2006-06-23 11:13:57.000000000 -0400
-+++ 2.6.17-rc6-mm1.agk.moveq.fastsusp/drivers/md/dm-bio-list.h	2006-06-20 10:40:22.000000000 -0400
-@@ -44,6 +44,19 @@ static inline void bio_list_merge(struct
- 	bl->tail = bl2->tail;
++	q = dm_queue_find(ti->queues, RETRY_QUEUE);
++	dm_queue_process(q);
  }
  
-+static inline void bio_list_merge_head(struct bio_list *bl, struct bio_list *bl2)
-+{
-+	if (!bl2->head)
-+		return;
-+
-+	if (bl->head)
-+		bl2->tail->bi_next = bl->head;
-+	else
-+		bl->tail = bl2->tail;
-+
-+	bl->head = bl2->head;
-+}
-+
- static inline struct bio *bio_list_pop(struct bio_list *bl)
- {
- 	struct bio *bio = bl->head;
+ /*
+@@ -1120,6 +1155,7 @@ static int multipath_status(struct dm_ta
+ 	unsigned long flags;
+ 	struct multipath *m = (struct multipath *) ti->private;
+ 	struct hw_handler *hwh = &m->hw_handler;
++	struct dm_queue *q = dm_queue_find(ti->queues, RETRY_QUEUE);
+ 	struct priority_group *pg;
+ 	struct pgpath *p;
+ 	unsigned pg_num;
+@@ -1129,7 +1165,7 @@ static int multipath_status(struct dm_ta
+ 
+ 	/* Features */
+ 	if (type == STATUSTYPE_INFO)
+-		DMEMIT("1 %u ", m->queue_size);
++		DMEMIT("1 %u ", dm_queue_size(q));
+ 	else if (m->queue_if_no_path)
+ 		DMEMIT("1 queue_if_no_path ");
+ 	else
+@@ -1297,6 +1333,7 @@ static struct target_type multipath_targ
+ 	.ctr = multipath_ctr,
+ 	.dtr = multipath_dtr,
+ 	.map = multipath_map,
++	.unmap = multipath_unmap,
+ 	.end_io = multipath_end_io,
+ 	.presuspend = multipath_presuspend,
+ 	.resume = multipath_resume,
