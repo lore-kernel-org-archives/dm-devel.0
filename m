@@ -1,91 +1,75 @@
-From: "Sandeep Kumar" <sandeepksinha@gmail.com>
-Subject: Re: doubt about linear_ctr
-Date: Fri, 24 Nov 2006 13:03:40 +0530
-Message-ID: <37d33d830611232333ue727ac1n83fc928aec072db2@mail.gmail.com>
-References: <37d33d830611232326i1aefbfa6v86aa97ec6696792@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: multipart/alternative;
-	boundary="----=_Part_41703_25562570.1164353620337"
-Return-path: <kernelnewbies-bounce@nl.linux.org>
-In-Reply-To: <37d33d830611232326i1aefbfa6v86aa97ec6696792@mail.gmail.com>
-Sender: kernelnewbies-bounce@nl.linux.org
-Errors-to: kernelnewbies-bounce@nl.linux.org
-List-help: <mailto:ecartis@nl.linux.org?Subject=help>
-List-unsubscribe: <mailto:kernelnewbies-request@nl.linux.org?Subject=unsubscribe>
-List-software: Ecartis version 1.0.0
-List-subscribe: <mailto:kernelnewbies-request@nl.linux.org?Subject=subscribe>
-List-owner: <mailto:ecartis-owner@nl.linux.org>
-List-post: <mailto:kernelnewbies@nl.linux.org>
-List-archive: <http://mail.nl.linux.org/kernelnewbies/>
-To: dm-devel@redhat.com, kernelnewbies <kernelnewbies@nl.linux.org>
+From: akpm@osdl.org
+Subject: [patch 168/215] dm: add module ref counting
+Date: Mon, 26 Jun 2006 00:27:25 -0700
+Message-ID: <200606260727.k5Q7RPFp030214@shell0.pdx.osdl.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: torvalds@osdl.org
+Cc: stable@kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-------=_Part_41703_25562570.1164353620337
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
-On 11/24/06, Sandeep Kumar <sandeepksinha@gmail.com> wrote:
->
-> Hi all,
->
-> #echo 0 100 linear /dev/hdd 0 | dmsetup create new
-> #dd if=/dev/zero count=1 of=/dev/mapper/new
->
->
->
-> Well, I am trying to get the information printed from the bio structure,
-> when the control comes to linear_ctr.
-> I found that the control comes to linear_ctr twice.
->
-> I have customized the linear_ctr  and have re-compiled the kernel.
->
-> Why is that so ?
-> Why two times ?
+From: Jeff Mahoney <jeffm@suse.com>
 
+The reference counting on dm-mod is zero if no mapped devices are open.  This
+is incorrect, and can lead to an oops if the module is unloaded while mapped
+devices exist.
 
-Sorry, its not linear_ctr. Its linear_map.
+This patch claims a reference to the module whenever a device is created, and
+drops it again when the device is freed.
 
+Devices must be removed before dm-mod is unloaded.
 
--- 
-> Regards,
-> Sandeep
->
->
->
->
->
-> Winners expect to win in advance. Life is a self-fulfilling prophecy.
+[akpm: too late for 2.6.17 - suitable for 2.6.17.x after it has settled]
 
+Signed-off-by: Jeff Mahoney <jeffm@suse.com>
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+Signed-off-by: Andrew Morton <akpm@osdl.org>
+Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+---
 
+ drivers/md/dm.c |    6 ++++++
+ 1 file changed, 6 insertions(+)
 
+--- linux-2.6.17.11.orig/drivers/md/dm.c
++++ linux-2.6.17.11/drivers/md/dm.c
+@@ -852,6 +852,9 @@ static struct mapped_device *alloc_dev(u
+ 		return NULL;
+ 	}
+ 
++	if (!try_module_get(THIS_MODULE))
++		goto bad0;
++
+ 	/* get a minor number for the dev */
+ 	r = persistent ? specific_minor(md, minor) : next_free_minor(md, &minor);
+ 	if (r < 0)
+@@ -918,6 +921,8 @@ static struct mapped_device *alloc_dev(u
+ 	blk_cleanup_queue(md->queue);
+ 	free_minor(minor);
+  bad1:
++	module_put(THIS_MODULE);
++ bad0:
+ 	kfree(md);
+ 	return NULL;
+ }
+@@ -941,6 +946,7 @@ static void free_dev(struct mapped_devic
+ 
+ 	put_disk(md->disk);
+ 	blk_cleanup_queue(md->queue);
++	module_put(THIS_MODULE);
+ 	kfree(md);
+ }
+ 
 
--- 
-Regards,
-Sandeep
-
-
-
-
-
-Winners expect to win in advance. Life is a self-fulfilling prophecy.
-
-------=_Part_41703_25562570.1164353620337
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-<br><br><div><span class="gmail_quote">On 11/24/06, <b class="gmail_sendername">Sandeep Kumar</b> &lt;<a href="mailto:sandeepksinha@gmail.com">sandeepksinha@gmail.com</a>&gt; wrote:</span><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
-Hi all,<br><br>#echo 0 100 linear /dev/hdd 0 | dmsetup create new<br>#dd if=/dev/zero count=1 of=/dev/mapper/new <br><br><br><br>Well, I am trying to get the information printed from the bio structure, when the control comes to linear_ctr.
-<br>I found that the control comes to linear_ctr twice.<br><br>I have customized the linear_ctr&nbsp; and have re-compiled the kernel.<br><br>Why is that so ?<br>Why two times ?</blockquote><div><br>Sorry, its not linear_ctr. Its linear_map.
-<br>&nbsp;</div><br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">-- <br>Regards,<br>Sandeep<br>
-<br><br><br><br><br>Winners expect to win in advance. Life is a self-fulfilling prophecy.
-
-</blockquote></div><br><br clear="all"><br>-- <br>Regards,<br>Sandeep<br><br><br><br><br><br>Winners expect to win in advance. Life is a self-fulfilling prophecy.
-
-------=_Part_41703_25562570.1164353620337--
-
---
-Kernelnewbies: Help each other learn about the Linux kernel.
-Archive:       http://mail.nl.linux.org/kernelnewbies/
-FAQ:           http://kernelnewbies.org/faq/
+--WIyZ46R2i8wDzkSu
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="dm-mirror-sector-offset-fix.patch"
