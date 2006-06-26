@@ -1,7 +1,7 @@
 From: akpm@osdl.org
-Subject: dm: Fix deadlock under high i/o load in raid1 setup.
-Date: Sun, 27 Aug 2006 01:23:24 -0700
-Message-ID: <200608270823.k7R8NO3M020753@shell0.pdx.osdl.net>
+Subject: [patch 161/215] dm snapshot: unify chunk_size
+Date: Mon, 26 Jun 2006 00:27:18 -0700
+Message-ID: <200606260727.k5Q7RIaI030186@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -14,119 +14,219 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: torvalds@osdl.org
-Cc: akpm@osdl.org, kobras@linux.de, stable@kernel.org, agk@redhat.com
+Cc: stable@kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-From: Daniel Kobras <kobras@linux.de>
 
-On an nForce4-equipped machine with two SATA disk in raid1 setup using dmraid,
-we experienced frequent deadlock of the system under high i/o load.  'cat
-/dev/zero > ~/zero' was the most reliable way to reproduce them: Randomly
-after a few GB, 'cp' would be left in 'D' state along with kjournald and
-kmirrord.  The functions cp and kjournald were blocked in did vary, but
-kmirrord's wchan always pointed to 'mempool_alloc()'.  We've seen this pattern
-on 2.6.15 and 2.6.17 kernels.  http://lkml.org/lkml/2005/4/20/142 indicates
-that this problem has been around even before.
+From: Alasdair G Kergon <agk@redhat.com>
 
-So much for the facts, here's my interpretation: mempool_alloc() first tries
-to atomically allocate the requested memory, or falls back to hand out
-preallocated chunks from the mempool.  If both fail, it puts the calling
-process (kmirrord in this case) on a private waitqueue until somebody refills
-the pool.  Where the only 'somebody' is kmirrord itself, so we have a
-deadlock.
+Persistent snapshots currently store a private copy of the chunk size. 
+Userspace also supplies the chunk size when loading a snapshot.  Ensure
+consistency by only storing the chunk_size in one place instead of two.
 
-I worked around this problem by falling back to a (blocking) kmalloc when
-before kmirrord would have ended up on the waitqueue.  This defeats part of
-the benefits of using the mempool, but at least keeps the system running.  And
-it could be done with a two-line change.  Note that mempool_alloc() clears the
-GFP_NOIO flag internally, and only uses it to decide whether to wait or return
-an error if immediate allocation fails, so the attached patch doesn't change
-behaviour in the non-deadlocking case.  Path is against current git
-(2.6.18-rc4), but should apply to earlier versions as well.  I've tested on
-2.6.15, where this patch makes the difference between random lockup and a
-stable system.
 
-Signed-off-by: Daniel Kobras <kobras@linux.de>
-Acked-by: Alasdair G Kergon <agk@redhat.com>
+Currently the two sizes will differ if the chunk size supplied by userspace
+does not match the chunk size an existing snapshot actually uses.  Amongst
+other problems, this causes an incorrect 'percentage full' to be reported.
+
+The patch ensures consistency by only storing the chunk_size in one place,
+removing it from struct pstore.  Some initialisation is delayed until the
+correct chunk_size is known.  If read_header() discovers that the wrong chunk
+size was supplied, the 'area' buffer (which the header already got read into)
+is reinitialised to the correct size.
+
+[akpm: too late for 2.6.17 - suitable for 2.6.17.x after it has settled]
+
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
-
 ---
- drivers/md/dm-raid1.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
 
---- linux-2.6.17.11.orig/drivers/md/dm-raid1.c
-+++ linux-2.6.17.11/drivers/md/dm-raid1.c
-@@ -253,7 +253,9 @@ static struct region *__rh_alloc(struct 
- 	struct region *reg, *nreg;
+ drivers/md/dm-exception-store.c |   65 +++++++++++++++++++++++++---------------
+ drivers/md/dm-snap.c            |    6 +--
+ 2 files changed, 45 insertions(+), 26 deletions(-)
+
+--- linux-2.6.17.11.orig/drivers/md/dm-exception-store.c
++++ linux-2.6.17.11/drivers/md/dm-exception-store.c
+@@ -91,7 +91,6 @@ struct pstore {
+ 	struct dm_snapshot *snap;	/* up pointer to my snapshot */
+ 	int version;
+ 	int valid;
+-	uint32_t chunk_size;
+ 	uint32_t exceptions_per_area;
  
- 	read_unlock(&rh->hash_lock);
--	nreg = mempool_alloc(rh->region_pool, GFP_NOIO);
-+	nreg = mempool_alloc(rh->region_pool, GFP_ATOMIC);
-+	if (unlikely(!nreg))
-+		nreg = kmalloc(sizeof(struct region), GFP_NOIO);
- 	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
- 		RH_CLEAN : RH_NOSYNC;
- 	nreg->rh = rh;
+ 	/*
+@@ -133,7 +132,7 @@ static int alloc_area(struct pstore *ps)
+ 	int r = -ENOMEM;
+ 	size_t len;
+ 
+-	len = ps->chunk_size << SECTOR_SHIFT;
++	len = ps->snap->chunk_size << SECTOR_SHIFT;
+ 
+ 	/*
+ 	 * Allocate the chunk_size block of memory that will hold
+@@ -160,8 +159,8 @@ static int chunk_io(struct pstore *ps, u
+ 	unsigned long bits;
+ 
+ 	where.bdev = ps->snap->cow->bdev;
+-	where.sector = ps->chunk_size * chunk;
+-	where.count = ps->chunk_size;
++	where.sector = ps->snap->chunk_size * chunk;
++	where.count = ps->snap->chunk_size;
+ 
+ 	return dm_io_sync_vm(1, &where, rw, ps->area, &bits);
+ }
+@@ -188,7 +187,7 @@ static int area_io(struct pstore *ps, ui
+ 
+ static int zero_area(struct pstore *ps, uint32_t area)
+ {
+-	memset(ps->area, 0, ps->chunk_size << SECTOR_SHIFT);
++	memset(ps->area, 0, ps->snap->chunk_size << SECTOR_SHIFT);
+ 	return area_io(ps, area, WRITE);
+ }
+ 
+@@ -196,6 +195,7 @@ static int read_header(struct pstore *ps
+ {
+ 	int r;
+ 	struct disk_header *dh;
++	chunk_t chunk_size;
+ 
+ 	r = chunk_io(ps, 0, READ);
+ 	if (r)
+@@ -210,8 +210,29 @@ static int read_header(struct pstore *ps
+ 		*new_snapshot = 0;
+ 		ps->valid = le32_to_cpu(dh->valid);
+ 		ps->version = le32_to_cpu(dh->version);
+-		ps->chunk_size = le32_to_cpu(dh->chunk_size);
+-
++		chunk_size = le32_to_cpu(dh->chunk_size);
++		if (ps->snap->chunk_size != chunk_size) {
++			DMWARN("chunk size %llu in device metadata overrides "
++			       "table chunk size of %llu.",
++			       (unsigned long long)chunk_size,
++			       (unsigned long long)ps->snap->chunk_size);
++
++			/* We had a bogus chunk_size. Fix stuff up. */
++			dm_io_put(sectors_to_pages(ps->snap->chunk_size));
++			free_area(ps);
++
++			ps->snap->chunk_size = chunk_size;
++			ps->snap->chunk_mask = chunk_size - 1;
++			ps->snap->chunk_shift = ffs(chunk_size) - 1;
++
++			r = alloc_area(ps);
++			if (r)
++				return r;
++
++			r = dm_io_get(sectors_to_pages(chunk_size));
++			if (r)
++				return r;
++		}
+ 	} else {
+ 		DMWARN("Invalid/corrupt snapshot");
+ 		r = -ENXIO;
+@@ -224,13 +245,13 @@ static int write_header(struct pstore *p
+ {
+ 	struct disk_header *dh;
+ 
+-	memset(ps->area, 0, ps->chunk_size << SECTOR_SHIFT);
++	memset(ps->area, 0, ps->snap->chunk_size << SECTOR_SHIFT);
+ 
+ 	dh = (struct disk_header *) ps->area;
+ 	dh->magic = cpu_to_le32(SNAP_MAGIC);
+ 	dh->valid = cpu_to_le32(ps->valid);
+ 	dh->version = cpu_to_le32(ps->version);
+-	dh->chunk_size = cpu_to_le32(ps->chunk_size);
++	dh->chunk_size = cpu_to_le32(ps->snap->chunk_size);
+ 
+ 	return chunk_io(ps, 0, WRITE);
+ }
+@@ -365,7 +386,7 @@ static void persistent_destroy(struct ex
+ {
+ 	struct pstore *ps = get_info(store);
+ 
+-	dm_io_put(sectors_to_pages(ps->chunk_size));
++	dm_io_put(sectors_to_pages(ps->snap->chunk_size));
+ 	vfree(ps->callbacks);
+ 	free_area(ps);
+ 	kfree(ps);
+@@ -384,6 +405,16 @@ static int persistent_read_metadata(stru
+ 		return r;
+ 
+ 	/*
++	 * Now we know correct chunk_size, complete the initialisation.
++	 */
++	ps->exceptions_per_area = (ps->snap->chunk_size << SECTOR_SHIFT) /
++				  sizeof(struct disk_exception);
++	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
++			sizeof(*ps->callbacks));
++	if (!ps->callbacks)
++		return -ENOMEM;
++
++	/*
+ 	 * Do we need to setup a new snapshot ?
+ 	 */
+ 	if (new_snapshot) {
+@@ -533,9 +564,6 @@ int dm_create_persistent(struct exceptio
+ 	ps->snap = store->snap;
+ 	ps->valid = 1;
+ 	ps->version = SNAPSHOT_DISK_VERSION;
+-	ps->chunk_size = chunk_size;
+-	ps->exceptions_per_area = (chunk_size << SECTOR_SHIFT) /
+-	    sizeof(struct disk_exception);
+ 	ps->next_free = 2;	/* skipping the header and first area */
+ 	ps->current_committed = 0;
+ 
+@@ -543,18 +571,9 @@ int dm_create_persistent(struct exceptio
+ 	if (r)
+ 		goto bad;
+ 
+-	/*
+-	 * Allocate space for all the callbacks.
+-	 */
+ 	ps->callback_count = 0;
+ 	atomic_set(&ps->pending_count, 0);
+-	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
+-				   sizeof(*ps->callbacks));
+-
+-	if (!ps->callbacks) {
+-		r = -ENOMEM;
+-		goto bad;
+-	}
++	ps->callbacks = NULL;
+ 
+ 	store->destroy = persistent_destroy;
+ 	store->read_metadata = persistent_read_metadata;
+--- linux-2.6.17.11.orig/drivers/md/dm-snap.c
++++ linux-2.6.17.11/drivers/md/dm-snap.c
+@@ -530,7 +530,7 @@ static int snapshot_ctr(struct dm_target
+ 	}
+ 
+ 	ti->private = s;
+-	ti->split_io = chunk_size;
++	ti->split_io = s->chunk_size;
+ 
+ 	return 0;
+ 
+@@ -1204,7 +1204,7 @@ static int origin_status(struct dm_targe
+ 
+ static struct target_type origin_target = {
+ 	.name    = "snapshot-origin",
+-	.version = {1, 1, 0},
++	.version = {1, 4, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = origin_ctr,
+ 	.dtr     = origin_dtr,
+@@ -1215,7 +1215,7 @@ static struct target_type origin_target 
+ 
+ static struct target_type snapshot_target = {
+ 	.name    = "snapshot",
+-	.version = {1, 1, 0},
++	.version = {1, 4, 0},
+ 	.module  = THIS_MODULE,
+ 	.ctr     = snapshot_ctr,
+ 	.dtr     = snapshot_dtr,
 
 --WIyZ46R2i8wDzkSu
 Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename=patch-fix-metadata-writing-when-suspending
-
-commit 927ffe7c9a156e259aae31c07dd76072c459ec57
-Author: Mark McLoughlin <markmc@redhat.com>
-Date:   Tue Oct 3 01:15:27 2006 -0700
-
-    [PATCH] dm snapshot: fix metadata writing when suspending
-    
-    When suspending a device-mapper device, dm_suspend() sleeps until all
-    necessary I/O is completed.  This state is triggered by a callback from
-    persistent_commit().  But some I/O can still be issued *after* the callback
-    (to prepare the next metadata area for use if the current one is full).  This
-    patch delays the callback until after that I/O is complete.
-    
-    Signed-off-by: Mark McLoughlin <markmc@redhat.com>
-    Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-    Signed-off-by: Andrew Morton <akpm@osdl.org>
-    Signed-off-by: Linus Torvalds <torvalds@osdl.org>
-
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index 002417d..99cdffa 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -536,6 +536,16 @@ static void persistent_commit(struct exc
- 		if (r)
- 			ps->valid = 0;
- 
-+		/*
-+		 * Have we completely filled the current area ?
-+		 */
-+		if (ps->current_committed == ps->exceptions_per_area) {
-+			ps->current_committed = 0;
-+			r = zero_area(ps, ps->current_area + 1);
-+			if (r)
-+				ps->valid = 0;
-+		}
-+
- 		for (i = 0; i < ps->callback_count; i++) {
- 			cb = ps->callbacks + i;
- 			cb->callback(cb->context, r == 0 ? 1 : 0);
-@@ -543,16 +553,6 @@ static void persistent_commit(struct exc
- 
- 		ps->callback_count = 0;
- 	}
--
--	/*
--	 * Have we completely filled the current area ?
--	 */
--	if (ps->current_committed == ps->exceptions_per_area) {
--		ps->current_committed = 0;
--		r = zero_area(ps, ps->current_area + 1);
--		if (r)
--			ps->valid = 0;
--	}
- }
- 
- static void persistent_drop(struct exception_store *store)
-
---WIyZ46R2i8wDzkSu--
+Content-Disposition: attachment; filename="dm-add-module-ref-counting.patch"
