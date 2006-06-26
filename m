@@ -1,7 +1,7 @@
 From: akpm@osdl.org
-Subject: [patch 161/215] dm snapshot: unify chunk_size
-Date: Mon, 26 Jun 2006 00:27:18 -0700
-Message-ID: <200606260727.k5Q7RIaI030186@shell0.pdx.osdl.net>
+Subject: [patch 170/215] dm: mirror sector offset fix
+Date: Mon, 26 Jun 2006 00:27:26 -0700
+Message-ID: <200606260727.k5Q7RQhI030222@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,215 +18,119 @@ Cc: stable@kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
 
-From: Alasdair G Kergon <agk@redhat.com>
+From: Neil Brown <neilb@suse.de>
 
-Persistent snapshots currently store a private copy of the chunk size. 
-Userspace also supplies the chunk size when loading a snapshot.  Ensure
-consistency by only storing the chunk_size in one place instead of two.
+The device-mapper core does not perform any remapping of bios before passing
+them to the targets.  If a particular mapping begins part-way into a device,
+targets obtain the sector relative to the start of the mapping by subtracting
+ti->begin.
 
-
-Currently the two sizes will differ if the chunk size supplied by userspace
-does not match the chunk size an existing snapshot actually uses.  Amongst
-other problems, this causes an incorrect 'percentage full' to be reported.
-
-The patch ensures consistency by only storing the chunk_size in one place,
-removing it from struct pstore.  Some initialisation is delayed until the
-correct chunk_size is known.  If read_header() discovers that the wrong chunk
-size was supplied, the 'area' buffer (which the header already got read into)
-is reinitialised to the correct size.
+The dm-raid1 target didn't do this everywhere: this patch fixes it, taking
+care to subtract ti->begin exactly once for each bio.
 
 [akpm: too late for 2.6.17 - suitable for 2.6.17.x after it has settled]
 
+Signed-off-by: Neil Brown <neilb@suse.de>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 ---
 
- drivers/md/dm-exception-store.c |   65 +++++++++++++++++++++++++---------------
- drivers/md/dm-snap.c            |    6 +--
- 2 files changed, 45 insertions(+), 26 deletions(-)
+ drivers/md/dm-raid1.c |   63 +++++++++++++++++++++++++-------------------------
+ 1 file changed, 32 insertions(+), 31 deletions(-)
 
---- linux-2.6.17.11.orig/drivers/md/dm-exception-store.c
-+++ linux-2.6.17.11/drivers/md/dm-exception-store.c
-@@ -91,7 +91,6 @@ struct pstore {
- 	struct dm_snapshot *snap;	/* up pointer to my snapshot */
- 	int version;
- 	int valid;
--	uint32_t chunk_size;
- 	uint32_t exceptions_per_area;
+--- linux-2.6.17.11.orig/drivers/md/dm-raid1.c
++++ linux-2.6.17.11/drivers/md/dm-raid1.c
+@@ -106,12 +106,42 @@ struct region {
+ 	struct bio_list delayed_bios;
+ };
  
- 	/*
-@@ -133,7 +132,7 @@ static int alloc_area(struct pstore *ps)
- 	int r = -ENOMEM;
- 	size_t len;
- 
--	len = ps->chunk_size << SECTOR_SHIFT;
-+	len = ps->snap->chunk_size << SECTOR_SHIFT;
- 
- 	/*
- 	 * Allocate the chunk_size block of memory that will hold
-@@ -160,8 +159,8 @@ static int chunk_io(struct pstore *ps, u
- 	unsigned long bits;
- 
- 	where.bdev = ps->snap->cow->bdev;
--	where.sector = ps->chunk_size * chunk;
--	where.count = ps->chunk_size;
-+	where.sector = ps->snap->chunk_size * chunk;
-+	where.count = ps->snap->chunk_size;
- 
- 	return dm_io_sync_vm(1, &where, rw, ps->area, &bits);
- }
-@@ -188,7 +187,7 @@ static int area_io(struct pstore *ps, ui
- 
- static int zero_area(struct pstore *ps, uint32_t area)
++
++/*-----------------------------------------------------------------
++ * Mirror set structures.
++ *---------------------------------------------------------------*/
++struct mirror {
++	atomic_t error_count;
++	struct dm_dev *dev;
++	sector_t offset;
++};
++
++struct mirror_set {
++	struct dm_target *ti;
++	struct list_head list;
++	struct region_hash rh;
++	struct kcopyd_client *kcopyd_client;
++
++	spinlock_t lock;	/* protects the next two lists */
++	struct bio_list reads;
++	struct bio_list writes;
++
++	/* recovery */
++	region_t nr_regions;
++	int in_sync;
++
++	struct mirror *default_mirror;	/* Default mirror */
++
++	unsigned int nr_mirrors;
++	struct mirror mirror[0];
++};
++
+ /*
+  * Conversion fns
+  */
+ static inline region_t bio_to_region(struct region_hash *rh, struct bio *bio)
  {
--	memset(ps->area, 0, ps->chunk_size << SECTOR_SHIFT);
-+	memset(ps->area, 0, ps->snap->chunk_size << SECTOR_SHIFT);
- 	return area_io(ps, area, WRITE);
+-	return bio->bi_sector >> rh->region_shift;
++	return (bio->bi_sector - rh->ms->ti->begin) >> rh->region_shift;
  }
  
-@@ -196,6 +195,7 @@ static int read_header(struct pstore *ps
- {
- 	int r;
- 	struct disk_header *dh;
-+	chunk_t chunk_size;
+ static inline sector_t region_to_sector(struct region_hash *rh, region_t region)
+@@ -541,35 +571,6 @@ static void rh_start_recovery(struct reg
+ 	wake();
+ }
  
- 	r = chunk_io(ps, 0, READ);
- 	if (r)
-@@ -210,8 +210,29 @@ static int read_header(struct pstore *ps
- 		*new_snapshot = 0;
- 		ps->valid = le32_to_cpu(dh->valid);
- 		ps->version = le32_to_cpu(dh->version);
--		ps->chunk_size = le32_to_cpu(dh->chunk_size);
+-/*-----------------------------------------------------------------
+- * Mirror set structures.
+- *---------------------------------------------------------------*/
+-struct mirror {
+-	atomic_t error_count;
+-	struct dm_dev *dev;
+-	sector_t offset;
+-};
 -
-+		chunk_size = le32_to_cpu(dh->chunk_size);
-+		if (ps->snap->chunk_size != chunk_size) {
-+			DMWARN("chunk size %llu in device metadata overrides "
-+			       "table chunk size of %llu.",
-+			       (unsigned long long)chunk_size,
-+			       (unsigned long long)ps->snap->chunk_size);
-+
-+			/* We had a bogus chunk_size. Fix stuff up. */
-+			dm_io_put(sectors_to_pages(ps->snap->chunk_size));
-+			free_area(ps);
-+
-+			ps->snap->chunk_size = chunk_size;
-+			ps->snap->chunk_mask = chunk_size - 1;
-+			ps->snap->chunk_shift = ffs(chunk_size) - 1;
-+
-+			r = alloc_area(ps);
-+			if (r)
-+				return r;
-+
-+			r = dm_io_get(sectors_to_pages(chunk_size));
-+			if (r)
-+				return r;
-+		}
- 	} else {
- 		DMWARN("Invalid/corrupt snapshot");
- 		r = -ENXIO;
-@@ -224,13 +245,13 @@ static int write_header(struct pstore *p
- {
- 	struct disk_header *dh;
- 
--	memset(ps->area, 0, ps->chunk_size << SECTOR_SHIFT);
-+	memset(ps->area, 0, ps->snap->chunk_size << SECTOR_SHIFT);
- 
- 	dh = (struct disk_header *) ps->area;
- 	dh->magic = cpu_to_le32(SNAP_MAGIC);
- 	dh->valid = cpu_to_le32(ps->valid);
- 	dh->version = cpu_to_le32(ps->version);
--	dh->chunk_size = cpu_to_le32(ps->chunk_size);
-+	dh->chunk_size = cpu_to_le32(ps->snap->chunk_size);
- 
- 	return chunk_io(ps, 0, WRITE);
- }
-@@ -365,7 +386,7 @@ static void persistent_destroy(struct ex
- {
- 	struct pstore *ps = get_info(store);
- 
--	dm_io_put(sectors_to_pages(ps->chunk_size));
-+	dm_io_put(sectors_to_pages(ps->snap->chunk_size));
- 	vfree(ps->callbacks);
- 	free_area(ps);
- 	kfree(ps);
-@@ -384,6 +405,16 @@ static int persistent_read_metadata(stru
- 		return r;
- 
- 	/*
-+	 * Now we know correct chunk_size, complete the initialisation.
-+	 */
-+	ps->exceptions_per_area = (ps->snap->chunk_size << SECTOR_SHIFT) /
-+				  sizeof(struct disk_exception);
-+	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
-+			sizeof(*ps->callbacks));
-+	if (!ps->callbacks)
-+		return -ENOMEM;
-+
-+	/*
- 	 * Do we need to setup a new snapshot ?
- 	 */
- 	if (new_snapshot) {
-@@ -533,9 +564,6 @@ int dm_create_persistent(struct exceptio
- 	ps->snap = store->snap;
- 	ps->valid = 1;
- 	ps->version = SNAPSHOT_DISK_VERSION;
--	ps->chunk_size = chunk_size;
--	ps->exceptions_per_area = (chunk_size << SECTOR_SHIFT) /
--	    sizeof(struct disk_exception);
- 	ps->next_free = 2;	/* skipping the header and first area */
- 	ps->current_committed = 0;
- 
-@@ -543,18 +571,9 @@ int dm_create_persistent(struct exceptio
- 	if (r)
- 		goto bad;
- 
--	/*
--	 * Allocate space for all the callbacks.
--	 */
- 	ps->callback_count = 0;
- 	atomic_set(&ps->pending_count, 0);
--	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
--				   sizeof(*ps->callbacks));
+-struct mirror_set {
+-	struct dm_target *ti;
+-	struct list_head list;
+-	struct region_hash rh;
+-	struct kcopyd_client *kcopyd_client;
 -
--	if (!ps->callbacks) {
--		r = -ENOMEM;
--		goto bad;
--	}
-+	ps->callbacks = NULL;
+-	spinlock_t lock;	/* protects the next two lists */
+-	struct bio_list reads;
+-	struct bio_list writes;
+-
+-	/* recovery */
+-	region_t nr_regions;
+-	int in_sync;
+-
+-	struct mirror *default_mirror;	/* Default mirror */
+-
+-	unsigned int nr_mirrors;
+-	struct mirror mirror[0];
+-};
+-
+ /*
+  * Every mirror should look like this one.
+  */
+@@ -1115,7 +1116,7 @@ static int mirror_map(struct dm_target *
+ 	struct mirror *m;
+ 	struct mirror_set *ms = ti->private;
  
- 	store->destroy = persistent_destroy;
- 	store->read_metadata = persistent_read_metadata;
---- linux-2.6.17.11.orig/drivers/md/dm-snap.c
-+++ linux-2.6.17.11/drivers/md/dm-snap.c
-@@ -530,7 +530,7 @@ static int snapshot_ctr(struct dm_target
- 	}
+-	map_context->ll = bio->bi_sector >> ms->rh.region_shift;
++	map_context->ll = bio_to_region(&ms->rh, bio);
  
- 	ti->private = s;
--	ti->split_io = chunk_size;
-+	ti->split_io = s->chunk_size;
- 
- 	return 0;
- 
-@@ -1204,7 +1204,7 @@ static int origin_status(struct dm_targe
- 
- static struct target_type origin_target = {
- 	.name    = "snapshot-origin",
--	.version = {1, 1, 0},
-+	.version = {1, 4, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = origin_ctr,
- 	.dtr     = origin_dtr,
-@@ -1215,7 +1215,7 @@ static struct target_type origin_target 
- 
- static struct target_type snapshot_target = {
- 	.name    = "snapshot",
--	.version = {1, 1, 0},
-+	.version = {1, 4, 0},
- 	.module  = THIS_MODULE,
- 	.ctr     = snapshot_ctr,
- 	.dtr     = snapshot_dtr,
+ 	if (rw == WRITE) {
+ 		queue_bio(ms, bio, rw);
 
 --WIyZ46R2i8wDzkSu
 Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="dm-add-module-ref-counting.patch"
+Content-Disposition: attachment; filename="dm-fix-deadlock-under-high-i-o-load-in-raid1-setup.patch"
