@@ -1,16 +1,12 @@
-From: CaT <cat@zip.com.au>
-Subject: Re: 2.6.16.20/dm: can't create more then one snapshot of
-	an lv
-Date: Tue, 27 Jun 2006 12:55:15 +1000
-Message-ID: <20060627025515.GC2059@zip.com.au>
-References: <20060619020040.GX2059@zip.com.au>
-	<20060620142005.GA19254@agk.surrey.redhat.com>
+From: Andrew Elwell <andrewe@epcc.ed.ac.uk>
+Subject: RHEL 4.3 to Sun 6320 storage
+Date: Tue, 27 Jun 2006 11:04:16 +0100
+Message-ID: <1151402657.4766.13.camel@x41ade>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20060620142005.GA19254@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Jun 20, 2006 at 03:20:05PM +0100, Alasdair G Kergon wrote:
-> On Mon, Jun 19, 2006 at 12:00:40PM +1000, CaT wrote:
-> > I am attempting to create multiple snapshots of an lv ontop of a raid-5
-> > software raid device and ext3+dir_index and resize_inode for the fs.
-> > The kernel is a pure 64bit compile with Debian Sarge amd64 running on
-> > top of it. The kernel is monolithic and I'm using lvm2 2.01.03-5 with
-> > devmapper 1.01.
-> > This works under 2.6.15.7. Under 2.6.16.20 I get this:
-> 
-> Update to lvm2 version 2.02.01 or later and device-mapper version 1.02.02
-> or later.
+Hi folks,
 
-Done. It's all good under 2.6.16.20. Thanks for that. I'm wondering
-though. I checked the minimal requirements in the
-/usr/src/linux/Documentation/Changes file but nothing is mentioned for
-LVM there. Is this no longer the right place to check for what userspace
-utils are required for certain kernel functionality? (or was it never the
-right place?)
+I'm trying to set up access to our SAN, 5 cabinets of 6320 storage, from
+CentOS 4.3 using dm-multipath and two Emulex lpfc cards.
 
--- 
-    "To the extent that we overreact, we proffer the terrorists the
-    greatest tribute."
-    	- High Court Judge Michael Kirby
+
+So far I can see the correct arrays through the zoning and have setup
+multipath.conf as below:
+
+defaults {
+        user_friendly_names     yes
+        polling_interval        1
+        path_checker            tur
+        path_grouping_policy    group_by_serial
+}
+devnode_blacklist {
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z]"
+        devnode "^sd[a-b]"
+	# sda and sdb are internal 3ware raid and sata system disk
+        devnode "^cciss!c[0-9]d[0-9]*"
+}
+multipaths {
+        multipath {
+                wwid     360003baccb976000426f26d30004c45a
+                alias    cab2a01t0
+        }
+        multipath {
+                wwid    360003baccb976000426f27a00006ae93
+                alias   cab2a01t1
+	}
+	... snip more multipath definitions....
+}
+
+multipath -ll shows..
+
+
+cab2a01t2 (360003baccb976000426f289000049adb)
+[size=1638 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 3:0:0:2 sde 8:64  [failed][faulty]
+ \_ 4:0:0:2 sdj 8:144 [active][ready]
+
+cab2a01t1 (360003baccb976000426f27a00006ae93)
+[size=1638 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 3:0:0:1 sdd 8:48  [active][ready]
+ \_ 4:0:0:1 sdi 8:128 [active][ready]
+
+cab2a01t0 (360003baccb976000426f26d30004c45a)
+[size=1638 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 3:0:0:0 sdc 8:32  [active][ready]
+ \_ 4:0:0:0 sdh 8:112 [active][ready]
+
+
+
+but the error log is filling up with 
+ kernel: Device sde not ready.
+ kernel: end_request: I/O error, dev sde, sector 2181037632
+ multipathd: 8:64: mark as failed
+ multipathd: cab2a01t2: remaining active paths: 1
+ multipathd: 8:64: tur checker reports path is up
+ multipathd: 8:64: reinstated
+ multipathd: cab2a01t2: remaining active paths: 2
+ kernel: Device sde not ready.
+ kernel: end_request: I/O error, dev sde, sector 3187670215
+ kernel: device-mapper: dm-multipath: Failing path 8:64.
+
+etc. I guess I should be using something other than the default for
+prio_callout, but what?
+
+Please can someone give me hints on the correct incantation for
+path_checker, path_grouping_policy, prio_callout
+
+Many thanks
+
+Andrew
