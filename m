@@ -1,7 +1,7 @@
 From: akpm@osdl.org
-Subject: [patch 012/215] drivers: use list_move()
-Date: Mon, 26 Jun 2006 00:24:41 -0700
-Message-ID: <200606260724.k5Q7Of2V029559@shell0.pdx.osdl.net>
+Subject: - drivers-use-list_move.patch removed from -mm tree
+Date: Mon, 26 Jun 2006 18:04:02 -0700
+Message-ID: <200606270104.k5R142vu007438@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -13,12 +13,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: torvalds@osdl.org
-Cc: akpm@osdl.org, mita@miraclelinux.com, matthew@wil.cx, greg@kroah.com, starvik@axis.com, dm-devel@redhat.com, kraxel@bytesex.org, bcollins@debian.org, linux-driver@qlogic.com, fpavlic@de.ibm.com, rolandd@cisco.com, paulus@samba.org, minyard@mvista.com
+To: mita@miraclelinux.com, bcollins@debian.org, dm-devel@redhat.com, fpavlic@de.ibm.com, greg@kroah.com, kraxel@bytesex.org, linux-driver@qlogic.com, matthew@wil.cx, minyard@mvista.com, paulus@samba.org, rolandd@cisco.com, starvik@axis.com, mm-commits@vger.kernel.org
 List-Id: dm-devel.ids
 
 
+The patch titled
+
+     drivers: use list_move()
+
+has been removed from the -mm tree.  Its filename is
+
+     drivers-use-list_move.patch
+
+This patch was dropped because it was merged into mainline or a subsystem tree
+
+------------------------------------------------------
+Subject: drivers: use list_move()
 From: Akinobu Mita <mita@miraclelinux.com>
+
 
 This patch converts the combination of list_del(A) and list_add(A, B) to
 list_move(A, B) under drivers/.
@@ -318,3 +330,7 @@ diff -puN drivers/usb/serial/whiteheat.c~drivers-use-list_move drivers/usb/seria
  			break;
  		}
 _
+
+Patches currently in -mm which might be from mita@miraclelinux.com are
+
+origin.patch
