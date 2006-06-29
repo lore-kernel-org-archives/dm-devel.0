@@ -1,12 +1,15 @@
-From: "Rajat Sharma, Noida" <sharma.rajat@hcl.in>
-Subject: device mapper source code documentation
-Date: Fri, 30 Jun 2006 12:13:26 +0530
-Message-ID: <539C0A297AA0C74581CB5AF82D53729101B831FE@HSDLNTD1110010.noida.hcltech.com>
+From: "Arumugam, Anburaja (STSD)" <anburaja.arumugam@hp.com>
+Subject: RE: Issue in Root partition from SAN as
+	device-mapper-multipath device
+Date: Thu, 29 Jun 2006 21:00:06 +0530
+Message-ID: <7EB526165496DF4ABE1A64C5CE0BB59B02F3D435@bgeexc01.asiapacific.cpqcorp.net>
+References: <58FE8766C9D3FE4E8AF6B6B75A74AF8F061F0749@BGEEXC02.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2065145021=="
+Content-Type: multipart/mixed; boundary="===============0278446879=="
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
+In-Reply-To: <58FE8766C9D3FE4E8AF6B6B75A74AF8F061F0749@BGEEXC02.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,219 +20,245 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: "P S, Suresh (STSD)" <suresh.pathamadai@hp.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
---===============2065145021==
+--===============0278446879==
 Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C69C10.7DB77BD2"
+	boundary="----_=_NextPart_001_01C69B90.E630D0B0"
 
 This is a multi-part message in MIME format.
 
-------_=_NextPart_001_01C69C10.7DB77BD2
+------_=_NextPart_001_01C69B90.E630D0B0
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
+> Hi,
+>=20
+We are trying to get the root partition in a multipath device from a
+SAN, in RHEL 4 U4 Beta. For this we have done the following things:
 
-Hi All,
+1. We set up a boot from SAN environment, with 3 partitions(/boot, /,
+swap respectively) from a LUN on the SAN.
+2. Without DM multipath, in GRUB.conf we had the parameter as
+root=3D/dev/sda2, and it worked fine as expected
+3. We want to set the / partition as a DM multipath device, and we
+repackaged the initrd with the following as we felt these are required
+by DM multipath to work at boot time:
+3.1 modules in lib: dm-multipath.ko, multipath.ko, dm-round-robin.ko,
+dm-zero.ko, dm-mod.ko
+3.2 binaries in sbin (all static binaries): dmsetup, multipath, kpartx
+3.2 config files in etc: multipath.conf, scsi_id.config,
+40-multipath.rules
+4. Our modified  init script in initrd looks as ;
+.........
+echo "Loading jbd.ko module"
+insmod /lib/jbd.ko
+echo "Loading ext3.ko module"
+insmod /lib/ext3.ko
+/sbin/udevstart
+echo "Loading DM Module"
+insmod /lib/dm-mod.ko
+echo "Loading DM Multipath Module"
+insmod /lib/dm-multipath.ko
+echo "Execution multipath binary with v0"
+/sbin/multipath -v 0
+echo "Execution dmsetup"
+/sbin/dmsetup ls --target multipath --exec "/sbin/kpartx -a"
+echo Creating root device
+mkrootdev /dev/root
+umount /sys
+echo Mounting root filesystem
+mount -o defaults --ro -t ext3 /dev/root /sysroot
+mount -t tmpfs --bind /dev /sysroot/dev
+echo Switching to new root
+switchroot /sysroot
+umount /initrd/dev
+5. Having the UUID returned by scsi_id for the root Lun is,
+3600508b400102be10000100023750000, in GRUB.conf, we changed the
+parameter as root=3D/dev/mapper/3600508b400102be10000100023750000p2=20
+6. rebooted the host, and it gave the following error.
+"No devices found"
+"mount: error  mounting ext3"
 
-=20
+The reason behind this is as you know, No DM multipath device has been
+created under /dev/mapper/ for root partition from the Lun, its unable
+to mount the root '/' file system.
 
-I want to support multipath and failover functionality in a file system,
-which I am implementing for learning purpose. For this I need device
-mapper source code documentation and design documentation for 2.6
-kernel. Could any one provide me some link in this regards??
+Can anyone help us by letting us know that, what are we missing in our
+approach to create the DM multipath mapped devices for the root
+partition diuring boot?
 
-=20
+Thanks for your valuable inputs.
 
-Rajat Sharma
+Regards,
+Anbu
 
-HCL Technologies Ltd.,
-A-11, Sector-16, Noida-201301
-http://www.hcltechnologies.com <http://www.hcltechnologies.com/>=20
-Ph. : +91-120-2510701/702 Ext : 3155
-FAX : +91-120-2510713
-Mobile: 9810057563=20
-
-=20
-
-
-
-DISCLAIMER:
----------------------------------------------------------------------------=
---------------------------------------------
-The contents of this e-mail and any attachment(s) are confidential and=
- intended for the named recipient(s) only.=20
-It shall not attach any liability on the originator or HCL or its=
- affiliates. Any views or opinions presented in=20
-this email are solely those of the author and may not necessarily reflect=
- the opinions of HCL or its affiliates.=20
-Any form of reproduction, dissemination, copying, disclosure, modification,=
- distribution and / or publication of=20
-this message without the prior written consent of the author of this e-mail=
- is strictly prohibited. If you have=20
-received this email in error please delete it and notify the sender=
- immediately. Before opening any mail and=20
-attachments please check them for viruses and defect.
----------------------------------------------------------------------------=
---------------------------------------------
-------_=_NextPart_001_01C69C10.7DB77BD2
+------_=_NextPart_001_01C69B90.E630D0B0
 Content-Type: text/html;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=
-=3D"urn:schemas-microsoft-com:office:word" xmlns:st1=
-=3D"urn:schemas-microsoft-com:office:smarttags" xmlns=
-=3D"http://www.w3.org/TR/REC-html40">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+6.5.7651.16">
+<TITLE>RE: [dm-devel] Issue in Root partition from SAN as =
+device-mapper-multipath device</TITLE>
+</HEAD>
+<BODY>
+<!-- Converted from text/rtf format -->
 
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<o:SmartTagType namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
- name=3D"City"/>
-<o:SmartTagType namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
- name=3D"place"/>
-<!--[if !mso]>
-<style>
-st1\:*{behavior:url(#default#ieooui) }
-</style>
-<![endif]-->
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:"Comic Sans MS";
-	panose-1:3 15 7 2 3 3 2 2 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:9.0pt;
-	font-family:Arial;}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-p.MsoPlainText, li.MsoPlainText, div.MsoPlainText
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:10.0pt;
-	font-family:"Courier New";}
-p.MsoAutoSig, li.MsoAutoSig, div.MsoAutoSig
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:Arial;
-	color:windowtext;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
+<P><FONT SIZE=3D2 FACE=3D"Arial">Hi,</FONT>
+</P>
 
-</head>
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">We are trying to get =
+the root partition in a multipath device from a SAN, in RHEL 4 U4 Beta. =
+For this we have done the following things:</FONT></P>
 
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">1. We set up a boot =
+from SAN environment, with 3 partitions(/boot, /, swap respectively) =
+from a LUN on the SAN.</FONT>
 
-<div class=3DSection1>
+<BR><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">2. Without DM =
+multipath, in GRUB.conf we had the parameter as root=3D/dev/sda2, and it =
+worked fine as expected</FONT>
 
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
-=3D'font-size:10.0pt'>Hi
-All,<o:p></o:p></span></font></p>
+<BR><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">3. We want to set =
+the / partition as a DM multipath device, and we repackaged the initrd =
+with the following as we felt these are required by DM multipath to work =
+at boot time:</FONT></P>
 
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
-=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">3.1 modules in =
+lib:</FONT><I> <FONT SIZE=3D2 FACE=3D"Arial">dm-multipath.ko, =
+multipath.ko, dm-round-robin.ko, dm-zero.ko, dm-mod.ko</FONT></I>
 
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
-=3D'font-size:10.0pt'>I
-want to support multipath and failover functionality in a file system,=
- which I am
-implementing for learning purpose. For this I need device mapper source=
- code documentation
-and design documentation for 2.6 kernel. Could any one provide me some link=
- in
-this regards??<o:p></o:p></span></font></p>
+<BR><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">3.2 binaries in sbin =
+(all static binaries):</FONT><I> <FONT SIZE=3D2 FACE=3D"Arial">dmsetup, =
+multipath, kpartx</FONT></I>
 
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
-=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+<BR><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">3.2 config files in =
+etc:</FONT><I> <FONT SIZE=3D2 FACE=3D"Arial">multipath.conf, =
+scsi_id.config, 40-multipath.rules</FONT></I>
 
-<p class=3DMsoAutoSig><font size=3D4 color=3D"#339966" face=3D"Times New=
- Roman"><span
-style=3D'font-size:14.0pt;color:#339966'>Rajat=
- Sharma</span></font><o:p></o:p></p>
+<BR><FONT SIZE=3D2 FACE=3D"Arial">4. Our modified&nbsp; init script in =
+initrd looks as ;</FONT><I></I>
 
-<p class=3DMsoAutoSig><b><font size=3D2 color=3Dblue face=3DArial><span
-style=
-=3D'font-size:10.0pt;font-family:Arial;color:blue;font-weight:bold'>HCL
-Technologies Ltd.,</span></font></b><br>
-<font size=3D2 face=3DArial><span style=
-=3D'font-size:10.0pt;font-family:Arial'>A-11,
-Sector-16, Noida-201301</span></font><br>
-<u><font size=3D2 color=3Dblue face=3DArial><span style=
-=3D'font-size:10.0pt;font-family:
-Arial;color:blue'><a href=3D"http://www.hcltechnologies.com/" target=
-=3D"_blank"
-title=
-=3D"http://www.hcltechnologies.com/">http://www.hcltechnologies.com</a></sp=
-an></font></u><br>
-<font face=3DArial><span style=3D'font-family:Arial'>Ph. :=
- +91-120-2510701/702 Ext
-: 3155<br>
-FAX : +91-120-2510713<br>
-</span></font><st1:place w:st=3D"on"><st1:City w:st=3D"on"><font
-  face=3D"Comic Sans MS"><span style=3D'font-family:"Comic Sans=
- MS"'>Mobile</span></font></st1:City></st1:place><font
-face=3D"Comic Sans MS"><span style=3D'font-family:"Comic Sans MS"'>:=
- 9810057563</span></font>
-<o:p></o:p></p>
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">&#8230;&#8230;&#8230;</FONT></I>
 
-<p class=3DMsoNormal><font size=3D1 face=3DArial><span style=
-=3D'font-size:9.0pt'><o:p>&nbsp;</o:p></span></font></p>
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo &quot;Loading jbd.ko =
+module&quot;</FONT></I>
 
-</div>
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">insmod /lib/jbd.ko</FONT></I>
 
-</body>
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo &quot;Loading ext3.ko =
+module&quot;</FONT></I>
 
-</html>
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">insmod /lib/ext3.ko</FONT></I>
 
-<table><tr><td bgcolor=3D#ffffff><font color=3D#000000>DISCLAIMER:<br>
----------------------------------------------------------------------------=
---------------------------------------------<br>
-The contents of this e-mail and any attachment(s) are confidential and=
- intended for the named recipient(s) only. <br>
-It shall not attach any liability on the originator or HCL or its=
- affiliates. Any views or opinions presented in <br>
-this email are solely those of the author and may not necessarily reflect=
- the opinions of HCL or its affiliates. <br>
-Any form of reproduction, dissemination, copying, disclosure, modification,=
- distribution and / or publication of <br>
-this message without the prior written consent of the author of this e-mail=
- is strictly prohibited. If you have <br>
-received this email in error please delete it and notify the sender=
- immediately. Before opening any mail and <br>
-attachments please check them for viruses and defect.<br>
----------------------------------------------------------------------------=
---------------------------------------------<br>
-</font></td></tr></table>
-------_=_NextPart_001_01C69C10.7DB77BD2--
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">/sbin/udevstart</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo &quot;Loading DM =
+Module&quot;</FONT></I>
+
+<BR><I><B><FONT SIZE=3D2 FACE=3D"Arial">insmod =
+/lib/dm-mod.ko</FONT></B></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo &quot;Loading DM Multipath =
+Module&quot;</FONT></I>
+
+<BR><I><B><FONT SIZE=3D2 FACE=3D"Arial">insmod =
+/lib/dm-multipath.ko</FONT></B></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo &quot;Execution multipath =
+binary with v0&quot;</FONT></I>
+
+<BR><I><B><FONT SIZE=3D2 FACE=3D"Arial">/sbin/multipath -v =
+0</FONT></B></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo &quot;Execution =
+dmsetup&quot;</FONT></I>
+
+<BR><I><B><FONT SIZE=3D2 FACE=3D"Arial">/sbin/dmsetup ls --target =
+multipath --exec &quot;/sbin/kpartx -a&quot;</FONT></B></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo Creating root =
+device</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">mkrootdev /dev/root</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">umount /sys</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo Mounting root =
+filesystem</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">mount -o defaults --ro -t ext3 =
+/dev/root /sysroot</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">mount -t tmpfs --bind /dev =
+/sysroot/dev</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">echo Switching to new =
+root</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">switchroot /sysroot</FONT></I>
+
+<BR><I><FONT SIZE=3D2 FACE=3D"Arial">umount /initrd/dev</FONT></I>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">5. Having the UUID returned by scsi_id =
+for the root Lun is,</FONT><I> <FONT SIZE=3D2 =
+FACE=3D"Arial">3600508b400102be10000100023750000,</FONT></I> <FONT =
+COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">in GRUB.conf, we changed the =
+parameter as root=3D/dev/mapper/</FONT><I><FONT SIZE=3D2 =
+FACE=3D"Arial">3600508b400102be10000100023750000p2</FONT></I><FONT =
+COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial"></FONT> </P>
+
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">6. rebooted the host, =
+and it gave the following error.</FONT>
+
+<BR><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">&quot;No devices =
+found&quot;</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">&quot;mount: error&nbsp; mounting =
+ext3&quot;</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">The reason behind this is as you know, =
+No DM multipath device has been created under /dev/mapper/ for root =
+partition from the Lun, its unable to mount the root '/' file =
+system.</FONT></P>
+
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">Can anyone help us by =
+letting us know that, what are we missing in our approach to create the =
+DM multipath mapped devices for the root partition diuring =
+boot?</FONT></P>
+
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">Thanks for your =
+valuable inputs.</FONT>
+</P>
+
+<P><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">Regards,</FONT>
+
+<BR><FONT COLOR=3D"#0000FF" SIZE=3D2 FACE=3D"Arial">Anbu</FONT>
+</P>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01C69B90.E630D0B0--
 
 
---===============2065145021==
+--===============0278446879==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2065145021==--
+--===============0278446879==--
