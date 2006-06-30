@@ -1,16 +1,12 @@
-From: URZ- AG <arsene.gschwind@unibas.ch>
-Subject: Re: device-mapper-multipath
-Date: Wed, 28 Jun 2006 10:52:14 +0200
-Message-ID: <44A2433E.2000507@unibas.ch>
-References: <449AEF1D.3080701@unibas.ch>
-	<1151013487.8923.9.camel@localhost.localdomain>
-	<449BB39E.808@unibas.ch>
-	<1151464418.15903.16.camel@localhost.localdomain>
+From: "Rajat Sharma, Noida" <sharma.rajat@hcl.in>
+Subject: device mapper source code documentation
+Date: Fri, 30 Jun 2006 12:13:26 +0530
+Message-ID: <539C0A297AA0C74581CB5AF82D53729101B831FE@HSDLNTD1110010.noida.hcltech.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2031156573=="
+Content-Type: multipart/mixed; boundary="===============2065145021=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1151464418.15903.16.camel@localhost.localdomain>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,156 +16,220 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---===============2031156573==
+
+--===============2065145021==
+Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="------------080806040003080706050404"
+	boundary="----_=_NextPart_001_01C69C10.7DB77BD2"
 
 This is a multi-part message in MIME format.
---------------080806040003080706050404
-Content-Type: text/plain; charset=UTF-8; format=flowed
+
+------_=_NextPart_001_01C69C10.7DB77BD2
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-Hi,
 
-Many thanks for the informations, I knew already that Christophe=20
-committed this patch (great Job) since a while ago. But I would like to=20
-know if somebody knows when Redhat is going to update his=20
-device-mapper-multiptah rpm package so it will include this patch?
-The latest RHL4.3 still contains version 0.4.5 of=20
-device-mapper-multipath. If I do install a self compiled multipath-tools=20
-(git) including the latest patches/updates it may break the update=20
-process from Redhat.
+Hi All,
 
-regards,
-Ars=C3=A8ne
+=20
 
-Christophe Varoqui wrote:
+I want to support multipath and failover functionality in a file system,
+which I am implementing for learning purpose. For this I need device
+mapper source code documentation and design documentation for 2.6
+kernel. Could any one provide me some link in this regards??
 
->   =20
-> =20
->
->>>For reference, cea2dae4c8cb2584fb0de7cd6066862671b66d4b is the said
->>>commit.
->>>     =20
->>>
->
-> =20
->
->>>Le vendredi 23 juin 2006 =C3=A0 11:25 +0200, URZ- AG a =C3=A9crit :
->>>     =20
->>>
->>Hello Christophe,
->>
->>Thanks for your reply, but I'm not used to deal with that kind of
->>reference / commit.
->>Is there a place where can look for more Information about this
->>commit? =20
->>
->>   =20
->>
->There :
->
->http://kernel.org/git/?p=3Dlinux/storage/multipath-tools/.git;a=3Dsummar=
-y
->
->Regards,
->cvaroqui
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
-> =20
->
+=20
 
---------------080806040003080706050404
-Content-Type: text/html; charset=UTF-8
+Rajat Sharma
+
+HCL Technologies Ltd.,
+A-11, Sector-16, Noida-201301
+http://www.hcltechnologies.com <http://www.hcltechnologies.com/>=20
+Ph. : +91-120-2510701/702 Ext : 3155
+FAX : +91-120-2510713
+Mobile: 9810057563=20
+
+=20
+
+
+
+DISCLAIMER:
+---------------------------------------------------------------------------=
+--------------------------------------------
+The contents of this e-mail and any attachment(s) are confidential and=
+ intended for the named recipient(s) only.=20
+It shall not attach any liability on the originator or HCL or its=
+ affiliates. Any views or opinions presented in=20
+this email are solely those of the author and may not necessarily reflect=
+ the opinions of HCL or its affiliates.=20
+Any form of reproduction, dissemination, copying, disclosure, modification,=
+ distribution and / or publication of=20
+this message without the prior written consent of the author of this e-mail=
+ is strictly prohibited. If you have=20
+received this email in error please delete it and notify the sender=
+ immediately. Before opening any mail and=20
+attachments please check them for viruses and defect.
+---------------------------------------------------------------------------=
+--------------------------------------------
+------_=_NextPart_001_01C69C10.7DB77BD2
+Content-Type: text/html;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<html>
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=
+=3D"urn:schemas-microsoft-com:office:word" xmlns:st1=
+=3D"urn:schemas-microsoft-com:office:smarttags" xmlns=
+=3D"http://www.w3.org/TR/REC-html40">
+
 <head>
-  <meta content=3D"text/html;charset=3DUTF-8" http-equiv=3D"Content-Type"=
->
-  <title></title>
+<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<o:SmartTagType namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"City"/>
+<o:SmartTagType namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"place"/>
+<!--[if !mso]>
+<style>
+st1\:*{behavior:url(#default#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Comic Sans MS";
+	panose-1:3 15 7 2 3 3 2 2 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:9.0pt;
+	font-family:Arial;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p.MsoPlainText, li.MsoPlainText, div.MsoPlainText
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:10.0pt;
+	font-family:"Courier New";}
+p.MsoAutoSig, li.MsoAutoSig, div.MsoAutoSig
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:Arial;
+	color:windowtext;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+
 </head>
-<body bgcolor=3D"#ffffff" text=3D"#000000">
-Hi,<br>
-<br>
-Many thanks for the informations, I knew already that Christophe
-committed this patch (great Job) since a while ago. But I would like to
-know if somebody knows when Redhat is going to update his
-device-mapper-multiptah rpm package so it will include this patch?<br>
-The latest RHL4.3 still contains version 0.4.5 of
-device-mapper-multipath. If I do install a self compiled
-multipath-tools (git) including the latest patches/updates it may break
-the update process from Redhat.<br>
-<br>
-regards, <br>
-Ars=C3=A8ne<br>
-<br>
-Christophe Varoqui wrote:
-<blockquote cite=3D"mid1151464418.15903.16.camel@localhost.localdomain"
- type=3D"cite">
-  <pre wrap=3D"">   =20
-  </pre>
-  <blockquote type=3D"cite">
-    <blockquote type=3D"cite">
-      <pre wrap=3D"">For reference, cea2dae4c8cb2584fb0de7cd6066862671b66=
-d4b is the said
-commit.
-      </pre>
-    </blockquote>
-  </blockquote>
-  <pre wrap=3D""><!---->
-  </pre>
-  <blockquote type=3D"cite">
-    <blockquote type=3D"cite">
-      <pre wrap=3D"">Le vendredi 23 juin 2006 =C3=A0 11:25 +0200, URZ- AG=
- a =C3=A9crit :
-      </pre>
-    </blockquote>
-    <pre wrap=3D"">Hello Christophe,
 
-Thanks for your reply, but I'm not used to deal with that kind of
-reference / commit.
-Is there a place where can look for more Information about this
-commit? =20
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
 
-    </pre>
-  </blockquote>
-  <pre wrap=3D""><!---->There :
+<div class=3DSection1>
 
-<a class=3D"moz-txt-link-freetext" href=3D"http://kernel.org/git/?p=3Dlin=
-ux/storage/multipath-tools/.git;a=3Dsummary">http://kernel.org/git/?p=3Dl=
-inux/storage/multipath-tools/.git;a=3Dsummary</a>
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt'>Hi
+All,<o:p></o:p></span></font></p>
 
-Regards,
-cvaroqui
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
 
---
-dm-devel mailing list
-<a class=3D"moz-txt-link-abbreviated" href=3D"mailto:dm-devel@redhat.com"=
->dm-devel@redhat.com</a>
-<a class=3D"moz-txt-link-freetext" href=3D"https://www.redhat.com/mailman=
-/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel</a>
-  </pre>
-</blockquote>
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt'>I
+want to support multipath and failover functionality in a file system,=
+ which I am
+implementing for learning purpose. For this I need device mapper source=
+ code documentation
+and design documentation for 2.6 kernel. Could any one provide me some link=
+ in
+this regards??<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoAutoSig><font size=3D4 color=3D"#339966" face=3D"Times New=
+ Roman"><span
+style=3D'font-size:14.0pt;color:#339966'>Rajat=
+ Sharma</span></font><o:p></o:p></p>
+
+<p class=3DMsoAutoSig><b><font size=3D2 color=3Dblue face=3DArial><span
+style=
+=3D'font-size:10.0pt;font-family:Arial;color:blue;font-weight:bold'>HCL
+Technologies Ltd.,</span></font></b><br>
+<font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt;font-family:Arial'>A-11,
+Sector-16, Noida-201301</span></font><br>
+<u><font size=3D2 color=3Dblue face=3DArial><span style=
+=3D'font-size:10.0pt;font-family:
+Arial;color:blue'><a href=3D"http://www.hcltechnologies.com/" target=
+=3D"_blank"
+title=
+=3D"http://www.hcltechnologies.com/">http://www.hcltechnologies.com</a></sp=
+an></font></u><br>
+<font face=3DArial><span style=3D'font-family:Arial'>Ph. :=
+ +91-120-2510701/702 Ext
+: 3155<br>
+FAX : +91-120-2510713<br>
+</span></font><st1:place w:st=3D"on"><st1:City w:st=3D"on"><font
+  face=3D"Comic Sans MS"><span style=3D'font-family:"Comic Sans=
+ MS"'>Mobile</span></font></st1:City></st1:place><font
+face=3D"Comic Sans MS"><span style=3D'font-family:"Comic Sans MS"'>:=
+ 9810057563</span></font>
+<o:p></o:p></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span style=
+=3D'font-size:9.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+</div>
+
 </body>
+
 </html>
 
---------------080806040003080706050404--
+<table><tr><td bgcolor=3D#ffffff><font color=3D#000000>DISCLAIMER:<br>
+---------------------------------------------------------------------------=
+--------------------------------------------<br>
+The contents of this e-mail and any attachment(s) are confidential and=
+ intended for the named recipient(s) only. <br>
+It shall not attach any liability on the originator or HCL or its=
+ affiliates. Any views or opinions presented in <br>
+this email are solely those of the author and may not necessarily reflect=
+ the opinions of HCL or its affiliates. <br>
+Any form of reproduction, dissemination, copying, disclosure, modification,=
+ distribution and / or publication of <br>
+this message without the prior written consent of the author of this e-mail=
+ is strictly prohibited. If you have <br>
+received this email in error please delete it and notify the sender=
+ immediately. Before opening any mail and <br>
+attachments please check them for viruses and defect.<br>
+---------------------------------------------------------------------------=
+--------------------------------------------<br>
+</font></td></tr></table>
+------_=_NextPart_001_01C69C10.7DB77BD2--
 
 
---===============2031156573==
+--===============2065145021==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============2031156573==--
+--===============2065145021==--
