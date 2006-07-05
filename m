@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: IBM (Adaptec) DS400 SAN support - sponsorship
-Date: Tue, 04 Jul 2006 09:12:59 +0200
-Message-ID: <44AA14FB.8080307@suse.de>
-References: <1151939929.3663.41.camel@wolfhound.placemark.pmi>
+From: "kong han" <kong_han@dahuatech.com>
+Subject: LVM on Intel IQ31244 board
+Date: Wed, 5 Jul 2006 16:37:29 +0800
+Message-ID: <002801c6a00e$4059c890$1201060a@kongh>
+References: <20060704160023.4143C738E9@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+	charset="gb2312"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1151939929.3663.41.camel@wolfhound.placemark.pmi>
+In-Reply-To: <20060704160023.4143C738E9@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,220 +19,176 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kevin Taylor <ktaylor@placemark.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Kevin Taylor wrote:
-> Hello devs,
->=20
-> I'm hoping that I can find the right person to help me on this list, as
-> it seems this list is, by far, the greatest collection of people with
-> expertise regarding dm-multipath.
->=20
-> My desire:
->=20
-> To locate a person who can write a hardware handler for the DS400 that
-> will allow proper active/passive fail-over/fail-back, which we would be
-> happy to sponsor financially (for contribution back to the project, of
-> course).
->=20
-> My situation:
->=20
-> Our company has an existing IBM DS400 SAN that we are trying to deploy
-> as part of a Oracle RAC project.  In doing testing and analysis of the
-> device and proper configuration of it for this purpose, I have learned
-> that in a two controller configuration, this device is active/passive,
-> and that in dm-multipath this results in the following configuration
-> profile (from "multipath -ll" with all controllers connected):
->=20
-> ---------------------------------------------
->=20
-> ora_admin (20000d126733eaf14)
-> [size=3D10 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:3 sde 8:64  [active][faulty]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:1:3 sdk 8:160 [active][ready]
->=20
-> 20000d126733eaf17
-> [size=3D10 MB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:0 sdb 8:16  [active][faulty]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:1:0 sdh 8:112 [active][ready]
->=20
-> ora_data1 (20000d126733eaf10)
-> [size=3D200 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:5 sdg 8:96  [active][faulty]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 1:0:1:5 sdm 8:192 [active][ready]
->=20
-> ora_archive (20000d126733eaf15)
-> [size=3D50 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:4 sdf 8:80  [active][faulty]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:1:4 sdl 8:176 [active][ready]
->=20
-> ora_redo2 (20000d126733eaf0b)
-> [size=3D68 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:0:2 sdd 8:48  [active][ready]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:2 sdj 8:144 [active][faulty]
->=20
-> ora_redo1 (20000d126733eaf0a)
-> [size=3D68 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:0:1 sdc 8:32  [active][ready]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:1 sdi 8:128 [active][faulty]
->=20
-> ---------------------------------------------
->=20
-> And when controller 1 is unplugged, the configuration does the
-> following:
->=20
-> ora_admin (20000d126733eaf14)
-> [size=3D10 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:3 sde 8:64  [active][faulty]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:1:3 sdk 8:160 [active][ready]
->=20
-> 20000d126733eaf17
-> [size=3D10 MB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:0 sdb 8:16  [active][faulty]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:1:0 sdh 8:112 [active][ready]
->=20
-> ora_data1 (20000d126733eaf10)
-> [size=3D200 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:5 sdg 8:96  [failed][faulty]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 1:0:1:5 sdm 8:192 [active][ready]
->=20
-> ora_archive (20000d126733eaf15)
-> [size=3D50 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:4 sdf 8:80  [failed][faulty]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:1:4 sdl 8:176 [active][ready]
->=20
-> ora_redo2 (20000d126733eaf0b)
-> [size=3D68 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [active]
->  \_ 1:0:0:2 sdd 8:48  [failed][faulty]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:2 sdj 8:144 [active][faulty]
->=20
-> ora_redo1 (20000d126733eaf0a)
-> [size=3D68 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:1 sdc 8:32  [failed][faulty]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:1 sdi 8:128 [failed][faulty]
->=20
-> --------------------------------------------------
->=20
-> And when controller 2 is unplugged, the configuration does the
-> following:
->=20
-> ora_admin (20000d126733eaf14)
-> [size=3D10 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:3 sde 8:64  [active][faulty]
-> \_ round-robin 0 [active]
->  \_ 1:0:1:3 sdk 8:160 [failed][faulty]
->=20
-> 20000d126733eaf17
-> [size=3D10 MB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:0 sdb 8:16  [active][faulty]
-> \_ round-robin 0 [active]
->  \_ 1:0:1:0 sdh 8:112 [failed][faulty]
->=20
-> ora_data1 (20000d126733eaf10)
-> [size=3D200 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:5 sdg 8:96  [active][faulty]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:5 sdm 8:192 [active][faulty]
->=20
-> ora_archive (20000d126733eaf15)
-> [size=3D50 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:0:4 sdf 8:80  [active][faulty]
-> \_ round-robin 0 [active]
->  \_ 1:0:1:4 sdl 8:176 [failed][faulty]
->=20
-> ora_redo2 (20000d126733eaf0b)
-> [size=3D68 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:0:2 sdd 8:48  [active][ready]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:2 sdj 8:144 [active][faulty]
->=20
-> ora_redo1 (20000d126733eaf0a)
-> [size=3D68 GB][features=3D"0"][hwhandler=3D"0"]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 1:0:0:1 sdc 8:32  [active][ready]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:1 sdi 8:128 [failed][faulty]
->=20
-> --------------------------------------------------
->=20
-> I believe that without a proper hardware handler to instruct the DS400
-> to activate the passive controller and shift all LUNS in a timely
-> fashion, that this storage unit will not be able to be used in a
-> multipath manner for controller failover.  Of course, it's quite
-> possible that I am wrong, and there may be another way to make this
-> active/passive configuration work without a hardware handler, and I'd b=
-e
-> very happy to hear about any alternatives anyone may suggest.
->=20
-It looks as it if this is an RDAC style controller.
-If you have the latest sg_utils ready you can try to issue an
+Hi,
+    when I use lvm on my IQ31244 board, I can't create pv.
+build lvm and device-mapper like this:
+device-mapper-1.02.07:
+./configure --host=3Darmv5l-linux --prefix=3D/opt/buildfs
+make all install
+lvm2.2.02.06:
+./configure --host=3Darmv5l-linux --prefix=3D/opt/buildfs
+make all install
 
-sg_inq -e /dev/sgX
+linux kernel 2.6.15
 
-If there are any pages listed within the 0xc0 - 0xcf range there is a=20
-good change this is such a system.
-And
+when I check the metadata on disk,  but no label data,=20
+add sync() in _io function like:
+		n =3D should_write ?
+		    write(fd, buffer, (size_t) where->size - total) :
+		    read(fd, buffer, (size_t) where->size - total);
+		sync();
+the metadata on disk ok(dd out to another file), but the dev_read functio=
+n read
+data and calculate CRC data failure.
+this is the output:
 
-sg_inq -e -p=3D0xc2 /dev/sgX
+root@iop:~# dd if=3D/dev/zero of=3D/dev/sda1 bs=3D8K count=3D1
+1+0 records in
+1+0 records out
+8192 bytes (8.2 kB) copied,  seconds,  MB/s
+root@iop:~# pvcreate /dev/sda1 -vv
+      Setting global/locking_type to 1
+      Setting global/locking_dir to /var/lock/lvm
+      File-based locking enabled.
+      Locking /var/lock/lvm/P_orphans=20
+dev_read from /dev/sda1 offset : 0x0 len : 2048
+      /dev/sda1: No label detected
+      /dev/sda1: size is 488397105 sectors
+dev_read from /dev/sda1 offset : 0x3a38b10000 len : 4
+      metadata/pvmetadatasize not found in config: defaulting to 255
+      metadata/pvmetadatacopies not found in config: defaulting to 1
+      /dev/sda1: size is 488397105 sectors
+dev_write to /dev/sda1 offset : 0x1000 len : 1
+    Set up physical volume for "/dev/sda1" with 488396721 available secto=
+rs
+      Scanning for labels to wipe from /dev/sda1
+dev_read from /dev/sda1 offset : 0x0 len : 2048
+    Zeroing start of device /dev/sda1
+dev_write to /dev/sda1 offset : 0x0 len : 2048
+      Writing physical volume data to disk "/dev/sda1"
+write mda header to /dev/sda1:
+1bc73560204c564d3220785b35412572
+304e2a3e010000000010000000000000
+00f00200000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+dev_write to /dev/sda1 offset : 0x1000 len : 512
+  pe size : 3a38af6200
+write label data to /dev/sda1:
+4c4142454c4f4e450100000000000000
+750a9468200000004c564d3220303031
+536e5a68365269314c666f763531694a
+6859706232666b5564394b47427a3044
+0062af383a0000000000030000000000
+00000000000000000000000000000000
+00000000000000000010000000000000
+00f00200000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+      /dev/sda1: Writing label to sector 1
+dev_write to /dev/sda1 offset : 0x200 len : 512
+  Physical volume "/dev/sda1" successfully created
+      Unlocking /var/lock/lvm/P_orphans
+root@iop:~# pvdisplay /dev/sda1 -vv
+      Setting global/locking_type to 1
+      Setting global/locking_dir to /var/lock/lvm
+      File-based locking enabled.
+    Using physical volume(s) on command line
+dev_read from /dev/sda1 offset : 0x0 len : 2048
+read label data from /dev/sda1:
+4c4142454c4f4e450100000000000000
+750a9468200000004c564d3220303031
+4c02f2bef4cf0a40050000003b080000
+00000000d80c0f400015000005000000
+0062af383a0000000000030000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+0010000090ff1440ffffffff005b0700
+cc740940ffffffff000000000b000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+000000006c1f1540e0250a4090ff1440
+a81c154000b001400000000001000000
+d4110a403000000000000000295b0700
+2a5b0700d0120a4090ff144084270a40
+295b07002f00000000000000ec08f2be
+000000006c1f154058f0074000000000
+050000000000000044f707408008f2be
+4c08f2bea4e5f2ff140af2be06000000
+00000000000000000000000000000000
+00000000000000000000000000000000
+ffffffff300000000e5b07004c08f2be
+03000000020000000000000000000000
+000000000a0000000000000000000000
+00000000000000000000000000000000
+00000000000000000000000001000000
+00000000200000006400000000000000
+      Label checksum incorrect on /dev/sda1 - ignoring
+      /dev/sda1: No label detected
+  No physical volume label read from /dev/sda1
+  Failed to read physical volume "/dev/sda1"
+root@iop:~#=20
 
-should lists some meaningful info.
-
-Unfortunately there is currently only limited support for RDAC style=20
-controllers; you can try using the 'prio_tpc' priority program; this=20
-will allow you at least to access the storage properly.
-To enable proper failover you'll have to ensure to place the storage in=20
-'AVT' mode (Automatic Volume Transfer); but you'll have to look up in=20
-the manual on how to do that.
-Proper RDAC mode requires an hardware handler; the current=20
-multipath-tools / device-mapper does not implement this.
-
-> Would anyone here be willing to talk with me about our sponsorship of
-> expanding the supported hardware list for dm-multipath to include this
-> device?  Does anyone know a person not already on this list who might b=
-e
-> a good possibility as a developer for such a project?
->=20
-I have started to implement such an hardware handler, but haven't=20
-progressed any further due to other tasks.
-
-Drop me a mail if you'd like to support the development.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+-----------------------------
+Wyatt Kong (=BF=D7=EA=CF)
+Dahua Security Technology Ltd co.
+Phone : +86-0571-28939557
+Email : kong_han@dahuatech.com
+-----------------------------
