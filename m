@@ -1,10 +1,10 @@
-From: "Ishai Rabinovitz" <ishai@mellanox.co.il>
-Subject: Module reference count problem when using multipath
-Date: Wed, 12 Jul 2006 15:08:00 +0300
-Message-ID: <6AB138A2AB8C8E4A98B9C0C3D52670E302842878@mtlexch01.mtl.com>
+From: "Rajat Sharma, Noida" <sharma.rajat@hcl.in>
+Subject: md and dm
+Date: Wed, 5 Jul 2006 13:19:12 +0530
+Message-ID: <539C0A297AA0C74581CB5AF82D53729101CC7DDD@HSDLNTD1110010.noida.hcltech.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0585616505=="
+Content-Type: multipart/mixed; boundary="===============1664061261=="
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -21,145 +21,205 @@ List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
---===============0585616505==
+--===============1664061261==
 Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C6A5AB.D6AC6210"
+	boundary="----_=_NextPart_001_01C6A007.81BABFF2"
 
 This is a multi-part message in MIME format.
 
-------_=_NextPart_001_01C6A5AB.D6AC6210
+------_=_NextPart_001_01C6A007.81BABFF2
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-Hi All,
-=20
-I take part in the development of SRP (Scsi RDMA Protocol). and I'm
-trying to work with dm to support failover.
-I downloaded multipath 0.4.7 and I'm working with linux-2.6.18-rc1
-kernel over RHAS4.OU3 distribution.
-=20
-I have connected to the SRP target (That has a lot of disks), and they
-can be accessed through /dev/sdb /dev/sdc and so on. I run multipath and
-got the mapping as it should be.
-=20
-The problem is that the reference count of ib_srp module is equal to the
-number of disks that were mapped using multipath. Because of that I can
-not remove the ib_srp module.
-This does not occur without multipath.
-=20
-There is also reference count of 1 on dm_round_robin.
-=20
-I tried to look at "ps aux" and "lsof" but found no process or file that
-should hold reference to ib_srp. I tried to google it without any
-success.
-=20
-Can someone answer any of the following questions:
-1) Why does every disk that is mapped through multipath hold a reference
-to the ib_srp module?  Is this the correct behavior, or is it a bug?
-2) Can I remove a mapping from the multipath ?
-3) Any ideas how I can debug this.
-=20
-I will appreciate any help.
-=20
-Thanks
-Ishai
 
-------_=_NextPart_001_01C6A5AB.D6AC6210
+Could anybody tell me how md driver and device-mapper are linked??
+dm_mpath.c file contains multipath support then so does the multipath.c
+provides multipath personality for md driver. Both are placed in same
+directory in kernel sources but why?? Does device-mapper uses md driver
+anyhow??
+
+=20
+
+Rajat Sharma
+
+HCL Technologies Ltd.,
+A-11, Sector-16, Noida-201301
+http://www.hcltechnologies.com <http://www.hcltechnologies.com/>=20
+Ph. : +91-120-2510701/702 Ext : 3155
+FAX : +91-120-2510713
+Mobile: 9810057563=20
+
+=20
+
+
+
+DISCLAIMER:
+---------------------------------------------------------------------------=
+--------------------------------------------
+
+The contents of this e-mail and any attachment(s) are confidential and=
+ intended for the named recipient(s) only.=20
+It shall not attach any liability on the originator or HCL or its=
+ affiliates. Any views or opinions presented in=20
+this email are solely those of the author and may not necessarily reflect=
+ the opinions of HCL or its affiliates.=20
+Any form of reproduction, dissemination, copying, disclosure, modification,=
+ distribution and / or publication of=20
+this message without the prior written consent of the author of this e-mail=
+ is strictly prohibited. If you have=20
+received this email in error please delete it and notify the sender=
+ immediately. Before opening any mail and=20
+attachments please check them for viruses and defect.
+
+---------------------------------------------------------------------------=
+--------------------------------------------
+------_=_NextPart_001_01C6A007.81BABFF2
 Content-Type: text/html;
 	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<META content=3D"MSHTML 6.00.2900.2912" name=3DGENERATOR></HEAD>
-<BODY>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>Hi=20
-All,</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I take =
-part in the=20
-development of SRP (Scsi RDMA Protocol). and I'm trying to work with dm=20
-to&nbsp;support failover.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I =
-downloaded=20
-multipath 0.4.7 and I'm working&nbsp;with linux-2.6.18-rc1 kernel over =
-RHAS4.OU3=20
-distribution.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial =
-size=3D2>I&nbsp;have=20
-connected to&nbsp;the SRP target (That has a lot of disks), and they can =
-be=20
-accessed through /dev/sdb&nbsp;/dev/sdc and so on. </FONT></SPAN><SPAN=20
-class=3D448572611-12072006><FONT face=3DArial size=3D2>I run multipath =
-and got the=20
-mapping as it should be.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>The =
-problem is=20
-that&nbsp;the reference count&nbsp;of ib_srp module&nbsp;is equal =
-to&nbsp;the=20
-number of disks that were mapped using multipath. Because of that&nbsp;I =
-can not=20
-remove the ib_srp module.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>This =
-does not occur=20
-without multipath.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>There =
-is also=20
-reference count of 1&nbsp;on dm_round_robin.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I =
-tried to look at=20
-"ps aux" and "lsof" but found no process or file that should hold =
-reference to=20
-ib_srp. I tried to google it without any success.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>Can =
-someone answer=20
-any of the following&nbsp;questions:</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>1) Why =
-does every=20
-disk that is mapped through multipath hold a reference to the ib_srp=20
-module?&nbsp; Is this the correct behavior, or is it a =
-bug?</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>2) Can =
-I remove a=20
-mapping from the multipath ?</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>3) Any =
-ideas how I=20
-can debug this.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I will =
-appreciate=20
-any help.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2>Thanks</FONT></SPAN></DIV>
-<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
-size=3D2>Ishai</FONT></SPAN></DIV></BODY></HTML>
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" xmlns:w=
+=3D"urn:schemas-microsoft-com:office:word" xmlns:st1=
+=3D"urn:schemas-microsoft-com:office:smarttags" xmlns=
+=3D"http://www.w3.org/TR/REC-html40">
 
-------_=_NextPart_001_01C6A5AB.D6AC6210--
+<head>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; charset=
+=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<o:SmartTagType namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"City"/>
+<o:SmartTagType namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"place"/>
+<!--[if !mso]>
+<style>
+st1\:*{behavior:url(#default#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:"Comic Sans MS";
+	panose-1:3 15 7 2 3 3 2 2 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:9.0pt;
+	font-family:Arial;}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p.MsoAutoSig, li.MsoAutoSig, div.MsoAutoSig
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:Arial;
+	color:windowtext;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt'>Could
+anybody tell me how md driver and device-mapper are linked?? dm_mpath.c=
+ file
+contains multipath support then so does the multipath.c provides multipath
+personality for md driver. Both are placed in same directory in kernel=
+ sources
+but why?? Does device-mapper uses md driver=
+ anyhow??<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoAutoSig><font size=3D4 color=3D"#339966" face=3D"Times New=
+ Roman"><span
+style=3D'font-size:14.0pt;color:#339966'>Rajat=
+ Sharma</span></font><o:p></o:p></p>
+
+<p class=3DMsoAutoSig><b><font size=3D2 color=3Dblue face=3DArial><span
+style=
+=3D'font-size:10.0pt;font-family:Arial;color:blue;font-weight:bold'>HCL
+Technologies Ltd.,</span></font></b><br>
+<font size=3D2 face=3DArial><span style=
+=3D'font-size:10.0pt;font-family:Arial'>A-11,
+Sector-16, Noida-201301</span></font><br>
+<u><font size=3D2 color=3Dblue face=3DArial><span style=
+=3D'font-size:10.0pt;font-family:
+Arial;color:blue'><a href=3D"http://www.hcltechnologies.com/" target=
+=3D"_blank"
+title=
+=3D"http://www.hcltechnologies.com/">http://www.hcltechnologies.com</a></sp=
+an></font></u><br>
+<font face=3DArial><span style=3D'font-family:Arial'>Ph. :=
+ +91-120-2510701/702 Ext
+: 3155<br>
+FAX : +91-120-2510713<br>
+</span></font><st1:place w:st=3D"on"><st1:City w:st=3D"on"><font
+  face=3D"Comic Sans MS"><span style=3D'font-family:"Comic Sans=
+ MS"'>Mobile</span></font></st1:City></st1:place><font
+face=3D"Comic Sans MS"><span style=3D'font-family:"Comic Sans MS"'>:=
+ 9810057563</span></font>
+<o:p></o:p></p>
+
+<p class=3DMsoNormal><font size=3D1 face=3DArial><span style=
+=3D'font-size:9.0pt'><o:p>&nbsp;</o:p></span></font></p>
+
+</div>
+
+</body>
+
+</html>
+
+<table><tr><td bgcolor=3D#ffffff><font color=3D#000000>DISCLAIMER:<br>
+---------------------------------------------------------------------------=
+--------------------------------------------<br>
+<br>
+The contents of this e-mail and any attachment(s) are confidential and=
+ intended for the named recipient(s) only. <br>
+It shall not attach any liability on the originator or HCL or its=
+ affiliates. Any views or opinions presented in <br>
+this email are solely those of the author and may not necessarily reflect=
+ the opinions of HCL or its affiliates. <br>
+Any form of reproduction, dissemination, copying, disclosure, modification,=
+ distribution and / or publication of <br>
+this message without the prior written consent of the author of this e-mail=
+ is strictly prohibited. If you have <br>
+received this email in error please delete it and notify the sender=
+ immediately. Before opening any mail and <br>
+attachments please check them for viruses and defect.<br>
+<br>
+---------------------------------------------------------------------------=
+--------------------------------------------<br>
+</font></td></tr></table>
+------_=_NextPart_001_01C6A007.81BABFF2--
 
 
---===============0585616505==
+--===============1664061261==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0585616505==--
+--===============1664061261==--
