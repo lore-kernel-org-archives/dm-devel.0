@@ -1,15 +1,15 @@
-From: "kong han" <kong_han@dahuatech.com>
-Subject: LVM on Intel IQ31244 board
-Date: Wed, 5 Jul 2006 16:37:29 +0800
-Message-ID: <002801c6a00e$4059c890$1201060a@kongh>
-References: <20060704160023.4143C738E9@hormel.redhat.com>
+From: "Matthias Rudolph" <Matthias.Rudolph@hds.com>
+Subject: multipath-tools prioritizer - different naming
+	conventions
+Date: Wed, 5 Jul 2006 12:27:37 +0100
+Message-ID: <C67364BD62907640A033D1F4094CA7B704A9D734@UKSPKEVS101.corp.hds.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="gb2312"
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060704160023.4143C738E9@hormel.redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,176 +19,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>, Lars Marowsky-Bree <lmb@suse.de>
 List-Id: dm-devel.ids
 
-Hi,
-    when I use lvm on my IQ31244 board, I can't create pv.
-build lvm and device-mapper like this:
-device-mapper-1.02.07:
-./configure --host=3Darmv5l-linux --prefix=3D/opt/buildfs
-make all install
-lvm2.2.02.06:
-./configure --host=3Darmv5l-linux --prefix=3D/opt/buildfs
-make all install
+Hi Christophe,
+I have tested SLES 10 RC 3.
+The multipath-tools-0.4.6-25.6 are included. And the Hitachi prioritizer
+is also included now. I developed the prioritizer under the old name
+/sbin/pp_hds_modular. But in the distribution is the new name
+/sbin/mpath_prio_hds_modular used. It seems we have to change the file
+hwtable.c so that the Hitachi entry points to the new name of the
+prioritizer.
+All other things works perfect now (after # mv
+/sbin/mpath_prio_hds_modular /sbin/pp_hds_modular) with Hitachi
+Enterprise and Modular Class w/o an adapted /etc/multipath.conf file.
 
-linux kernel 2.6.15
+WE HAVE TO CHANGE FROM:
+	/*
+	 * Hitachi controler family
+	 *
+	 * Maintainer : Matthias Rudolph
+	 * Mail : matthias.rudolph@hds.com
+	 */
+	{
+		.vendor        =3D "{HITACHI,HP}",
+		.product       =3D "OPEN-*",
+		.getuid        =3D DEFAULT_GETUID,
+		.getprio       =3D NULL,
+		.features      =3D DEFAULT_FEATURES,
+		.hwhandler     =3D DEFAULT_HWHANDLER,
+		.selector      =3D DEFAULT_SELECTOR,
+		.pgpolicy      =3D MULTIBUS,
+		.pgfailback    =3D FAILBACK_UNDEF,
+		.rr_weight     =3D RR_WEIGHT_NONE,
+		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
+		.minio         =3D DEFAULT_MINIO,
+		.checker_name  =3D READSECTOR0,
+	},
+	{
+		.vendor        =3D "HITACHI",
+		.product       =3D "DF*",
+		.getuid        =3D DEFAULT_GETUID,
+		.getprio       =3D "/sbin/pp_hds_modular %d",
+		.features      =3D DEFAULT_FEATURES,
+		.hwhandler     =3D DEFAULT_HWHANDLER,
+		.selector      =3D DEFAULT_SELECTOR,
+		.pgpolicy      =3D GROUP_BY_PRIO,
+		.pgfailback    =3D -FAILBACK_IMMEDIATE,
+		.rr_weight     =3D RR_WEIGHT_NONE,
+		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
+		.minio         =3D DEFAULT_MINIO,
+		.checker_name  =3D READSECTOR0,
+	},
 
-when I check the metadata on disk,  but no label data,=20
-add sync() in _io function like:
-		n =3D should_write ?
-		    write(fd, buffer, (size_t) where->size - total) :
-		    read(fd, buffer, (size_t) where->size - total);
-		sync();
-the metadata on disk ok(dd out to another file), but the dev_read functio=
-n read
-data and calculate CRC data failure.
-this is the output:
+CHANGE TO:
+	/*
+	 * Hitachi controler family
+	 *
+	 * Maintainer : Matthias Rudolph
+	 * Mail : matthias.rudolph@hds.com
+	 */
+	{
+		.vendor        =3D "{HITACHI,HP}",
+		.product       =3D "OPEN-*",
+		.getuid        =3D DEFAULT_GETUID,
+		.getprio       =3D NULL,
+		.features      =3D DEFAULT_FEATURES,
+		.hwhandler     =3D DEFAULT_HWHANDLER,
+		.selector      =3D DEFAULT_SELECTOR,
+		.pgpolicy      =3D MULTIBUS,
+		.pgfailback    =3D FAILBACK_UNDEF,
+		.rr_weight     =3D RR_WEIGHT_NONE,
+		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
+		.minio         =3D DEFAULT_MINIO,
+		.checker_name  =3D READSECTOR0,
+	},
+	{
+		.vendor        =3D "HITACHI",
+		.product       =3D "DF*",
+		.getuid        =3D DEFAULT_GETUID,
+		.getprio       =3D "/sbin/mpath_prio_hds_modular %d",
+		.features      =3D DEFAULT_FEATURES,
+		.hwhandler     =3D DEFAULT_HWHANDLER,
+		.selector      =3D DEFAULT_SELECTOR,
+		.pgpolicy      =3D GROUP_BY_PRIO,
+		.pgfailback    =3D -FAILBACK_IMMEDIATE,
+		.rr_weight     =3D RR_WEIGHT_NONE,
+		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
+		.minio         =3D DEFAULT_MINIO,
+		.checker_name  =3D READSECTOR0,
+	},
 
-root@iop:~# dd if=3D/dev/zero of=3D/dev/sda1 bs=3D8K count=3D1
-1+0 records in
-1+0 records out
-8192 bytes (8.2 kB) copied,  seconds,  MB/s
-root@iop:~# pvcreate /dev/sda1 -vv
-      Setting global/locking_type to 1
-      Setting global/locking_dir to /var/lock/lvm
-      File-based locking enabled.
-      Locking /var/lock/lvm/P_orphans=20
-dev_read from /dev/sda1 offset : 0x0 len : 2048
-      /dev/sda1: No label detected
-      /dev/sda1: size is 488397105 sectors
-dev_read from /dev/sda1 offset : 0x3a38b10000 len : 4
-      metadata/pvmetadatasize not found in config: defaulting to 255
-      metadata/pvmetadatacopies not found in config: defaulting to 1
-      /dev/sda1: size is 488397105 sectors
-dev_write to /dev/sda1 offset : 0x1000 len : 1
-    Set up physical volume for "/dev/sda1" with 488396721 available secto=
-rs
-      Scanning for labels to wipe from /dev/sda1
-dev_read from /dev/sda1 offset : 0x0 len : 2048
-    Zeroing start of device /dev/sda1
-dev_write to /dev/sda1 offset : 0x0 len : 2048
-      Writing physical volume data to disk "/dev/sda1"
-write mda header to /dev/sda1:
-1bc73560204c564d3220785b35412572
-304e2a3e010000000010000000000000
-00f00200000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-dev_write to /dev/sda1 offset : 0x1000 len : 512
-  pe size : 3a38af6200
-write label data to /dev/sda1:
-4c4142454c4f4e450100000000000000
-750a9468200000004c564d3220303031
-536e5a68365269314c666f763531694a
-6859706232666b5564394b47427a3044
-0062af383a0000000000030000000000
-00000000000000000000000000000000
-00000000000000000010000000000000
-00f00200000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-      /dev/sda1: Writing label to sector 1
-dev_write to /dev/sda1 offset : 0x200 len : 512
-  Physical volume "/dev/sda1" successfully created
-      Unlocking /var/lock/lvm/P_orphans
-root@iop:~# pvdisplay /dev/sda1 -vv
-      Setting global/locking_type to 1
-      Setting global/locking_dir to /var/lock/lvm
-      File-based locking enabled.
-    Using physical volume(s) on command line
-dev_read from /dev/sda1 offset : 0x0 len : 2048
-read label data from /dev/sda1:
-4c4142454c4f4e450100000000000000
-750a9468200000004c564d3220303031
-4c02f2bef4cf0a40050000003b080000
-00000000d80c0f400015000005000000
-0062af383a0000000000030000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-0010000090ff1440ffffffff005b0700
-cc740940ffffffff000000000b000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-000000006c1f1540e0250a4090ff1440
-a81c154000b001400000000001000000
-d4110a403000000000000000295b0700
-2a5b0700d0120a4090ff144084270a40
-295b07002f00000000000000ec08f2be
-000000006c1f154058f0074000000000
-050000000000000044f707408008f2be
-4c08f2bea4e5f2ff140af2be06000000
-00000000000000000000000000000000
-00000000000000000000000000000000
-ffffffff300000000e5b07004c08f2be
-03000000020000000000000000000000
-000000000a0000000000000000000000
-00000000000000000000000000000000
-00000000000000000000000001000000
-00000000200000006400000000000000
-      Label checksum incorrect on /dev/sda1 - ignoring
-      /dev/sda1: No label detected
-  No physical volume label read from /dev/sda1
-  Failed to read physical volume "/dev/sda1"
-root@iop:~#=20
 
------------------------------
-Wyatt Kong (=BF=D7=EA=CF)
-Dahua Security Technology Ltd co.
-Phone : +86-0571-28939557
-Email : kong_han@dahuatech.com
------------------------------
+Thanks a lot for your support
+Matthias Rudolph
+Hitachi Data Systems
