@@ -1,12 +1,12 @@
-From: ganja <ganja@0x63.nu>
-Subject: Problem with cryptsetup/device-mapper
-Date: Thu, 06 Jul 2006 09:52:04 +0200
-Message-ID: <44ACC124.2040609@0x63.nu>
+From: "Srinivas, Vidya" <vidya.srinivas@intel.com>
+Subject: Booting Linux from a RAID volume
+Date: Wed, 5 Jul 2006 17:03:16 +0530
+Message-ID: <A6A77F954AFACF42928F5E931ABDB18F6DC3A2@bgsmsx411.gar.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0241548821=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,63 +16,166 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello all, I am having some problems setting up a crypted device, and to=20
-me it seems to have with device mapper to do. I have loaded what modules=20
-I know is necessary as you can see below and I have tried different=20
-devices and pure files (ex /tmp/myimage which I created with dd=20
-if=3D/dev/urandom).
+This is a multi-part message in MIME format.
 
-I am running Debian Unstable and I have tested it with 1-2 week old=20
-packages and fully upgraded. I also talked to google for an hour, be he=20
-wasnt very nice to me, found no valuable information at all.
+--===============0241548821==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C6A026.CF273E3B"
 
-Any help appreciated.
-(please CC me, I am not subscribed)
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C6A026.CF273E3B
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hi
+
+=20
+
+I am using dmraid to activate the RAID5 volume (Intel software raid).
+Can someone let me know the best way to install Linux on the volume?
+
+=20
+
+I observed that, each time the machine reboots, the dmraid activated
+RAID volume name changes. So how can I achieve bootable Linux volume
+using grub or something else?
+
+=20
+
+Thanks
+
+Vidya
+
+=20
 
 
-thor:/tmp# cryptsetup -y -c aes -s 256 create hda1aes /dev/hda1
-Enter passphrase:
-Verify passphrase:
-Command failed: device-mapper: reload ioctl failed: Invalid argument
+------_=_NextPart_001_01C6A026.CF273E3B
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-thor:/tmp# lsmod
-Module                  Size  Used by
-dm_crypt               10056  0
-aes                    28736  0
-hptmv                 198660  14
-nvidia               4543700  12
-sr_mod                 13476  0
-dm_mod                 50200  3 dm_crypt
-raid5                  32448  4
-xor                    16072  1 raid5
-raid1                  21824  0
-raid0                   8064  0
-md_mod                 70612  7 raid5,raid1,raid0
-loop                   13576  0
-sata_promise            9348  12
-ata_piix                9668  12
-libata                 60300  2 sata_promise,ata_piix
-uhci_hcd               20552  0
-e1000                 109624  0
-sd_mod                 16832  41
+<html xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
 
-thor:/tmp# uname -a
-Linux thor 2.6.17 #1 SMP PREEMPT Mon Jun 19 15:51:08 CEST 2006 i686=20
-GNU/Linux
+<head>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<title>RE: [dm-devel] Issue in Root partition from SAN as
+device-mapper-multipath device</title>
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+p
+	{mso-margin-top-alt:auto;
+	margin-right:0in;
+	mso-margin-bottom-alt:auto;
+	margin-left:0in;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+span.EmailStyle18
+	{mso-style-type:personal-reply;
+	font-family:"Times New Roman";
+	color:blue;
+	font-weight:normal;
+	font-style:normal;
+	text-decoration:none none;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
 
-thor:/tmp# dmesg|tail -n3
-device-mapper: crypt: Device lookup failed
-device-mapper: error adding target to table
-device-mapper: device doesn't appear to be in the dev hash table.
+</head>
 
-thor:/tmp# tail /var/log/messages -n2
-Jul  6 09:45:50 localhost kernel: device-mapper: error adding target to=20
-table
-Jul  6 09:45:50 localhost kernel: device-mapper: device doesn't appear=20
-to be in the dev hash table.
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
 
---
-Magnus M=E5nsson
+<div class=3DSection1>
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'>Hi<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'><o:p>&nbsp;</o:p></span></font></p>=
+
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'>I am using dmraid to activate the =
+RAID5
+volume (Intel software raid). Can someone let me know the best way to =
+install Linux
+on the volume?<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'><o:p>&nbsp;</o:p></span></font></p>=
+
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'>I observed that, each time the =
+machine
+reboots, the dmraid activated RAID volume name changes. So how can I =
+achieve
+bootable Linux volume using grub or something =
+else?<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'><o:p>&nbsp;</o:p></span></font></p>=
+
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'>Thanks<o:p></o:p></span></font></p>=
+
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'>Vidya<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 color=3Dblue face=3D"Times New =
+Roman"><span
+style=3D'font-size:11.0pt;color:blue'><o:p>&nbsp;</o:p></span></font></p>=
+
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01C6A026.CF273E3B--
+
+
+--===============0241548821==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0241548821==--
