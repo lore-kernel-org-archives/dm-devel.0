@@ -1,7 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 3/4] dm_queue: dm-mpath to enable noflush (take 2)
-Date: Mon, 10 Jul 2006 18:35:35 -0400 (EDT)
-Message-ID: <20060710.183535.26540405.k-ueda@ct.jp.nec.com>
+Subject: [PATCH 4/4] dm_queue: add API to libdevmapper (take 2)
+Date: Mon, 10 Jul 2006 18:36:50 -0400 (EDT)
+Message-ID: <20060710.183650.98855191.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
@@ -19,344 +19,138 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch replaces the retry I/O queue of multipath target
-by dm_queue.
-Multipath target uses the noflush feature for the queue.
-By using the feature, queued bios are handed over to the new table
-when table is swapped.
+This patch adds the feature to use the kernel noflush suspend feature
+to the device-mapper user-space tool.
 
-The patch is for 2.6.18-rc1-mm1.
+For dmsetup:
+    # dmsetup --noflush suspend <map name>
+
+For library users:
+    int dm_task_no_flush(struct dm_task *dmt);
+
+This patch is for the CVS tree on July 7, 2006.
 
 Regards,
 Kiyoshi Ueda
 
 
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-
-diff -rupN 2.6.18-rc1-mm1/drivers/md/dm-mpath.c 2.6.18-rc1-mm1.dmq.noflush/drivers/md/dm-mpath.c
---- 2.6.18-rc1-mm1/drivers/md/dm-mpath.c	2006-07-10 09:06:17.000000000 -0400
-+++ 2.6.18-rc1-mm1.dmq.noflush/drivers/md/dm-mpath.c	2006-07-10 13:10:36.000000000 -0400
-@@ -76,10 +76,6 @@ struct multipath {
- 	unsigned queue_if_no_path;	/* Queue I/O if last path fails? */
- 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
- 
--	struct work_struct process_queued_ios;
--	struct bio_list queued_ios;
--	unsigned queue_size;
--
- 	struct work_struct trigger_event;
- 
- 	/*
-@@ -107,6 +103,11 @@ struct workqueue_struct *kmultipathd;
- static void process_queued_ios(void *data);
- static void trigger_event(void *data);
- 
-+enum {
-+	RETRY_QUEUE,
-+	NUM_QUEUES
-+};
-+
- 
- /*-----------------------------------------------
-  * Allocation routines
-@@ -178,7 +179,6 @@ static struct multipath *alloc_multipath
- 		INIT_LIST_HEAD(&m->priority_groups);
- 		spin_lock_init(&m->lock);
- 		m->queue_io = 1;
--		INIT_WORK(&m->process_queued_ios, process_queued_ios, m);
- 		INIT_WORK(&m->trigger_event, trigger_event, m);
- 		m->mpio_pool = mempool_create_slab_pool(MIN_IOS, _mpio_cache);
- 		if (!m->mpio_pool) {
-@@ -285,12 +285,12 @@ failed:
- 	m->current_pg = NULL;
- }
- 
--static int map_io(struct multipath *m, struct bio *bio, struct mpath_io *mpio,
--		  unsigned was_queued)
-+static int map_io(struct multipath *m, struct bio *bio, struct mpath_io *mpio)
- {
- 	int r = 1;
- 	unsigned long flags;
- 	struct pgpath *pgpath;
-+	struct dm_queue *q;
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 
-@@ -301,17 +301,14 @@ static int map_io(struct multipath *m, s
- 
- 	pgpath = m->current_pgpath;
- 
--	if (was_queued)
--		m->queue_size--;
--
- 	if ((pgpath && m->queue_io) ||
- 	    (!pgpath && m->queue_if_no_path)) {
- 		/* Queue for the daemon to resubmit */
--		bio_list_add(&m->queued_ios, bio);
--		m->queue_size++;
-+		q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
-+		dm_queue_add_bio(q, bio);
- 		if ((m->pg_init_required && !m->pg_init_in_progress) ||
- 		    !m->queue_io)
--			queue_work(kmultipathd, &m->process_queued_ios);
-+			dm_queue_process(q);
- 		pgpath = NULL;
- 		r = 0;
- 	} else if (!pgpath)
-@@ -333,6 +330,7 @@ static int queue_if_no_path(struct multi
- 			    unsigned save_old_value)
- {
- 	unsigned long flags;
-+	struct dm_queue *q;
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 
-@@ -341,8 +339,10 @@ static int queue_if_no_path(struct multi
- 	else
- 		m->saved_queue_if_no_path = queue_if_no_path;
- 	m->queue_if_no_path = queue_if_no_path;
--	if (!m->queue_if_no_path && m->queue_size)
--		queue_work(kmultipathd, &m->process_queued_ios);
-+	if (!m->queue_if_no_path) {
-+		q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
-+		dm_queue_process(q);
-+	}
- 
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
-@@ -353,38 +353,32 @@ static int queue_if_no_path(struct multi
-  * The multipath daemon is responsible for resubmitting queued ios.
-  *---------------------------------------------------------------*/
- 
--static void dispatch_queued_ios(struct multipath *m)
-+static void dispatch_queued_ios(struct dm_queue *q)
- {
-+	struct dm_target *ti = dm_queue_get_target(q);
-+	struct multipath *m = (struct multipath *) ti->private;
- 	int r;
--	unsigned long flags;
--	struct bio *bio = NULL, *next;
-+	struct bio *bio;
- 	struct mpath_io *mpio;
- 	union map_info *info;
- 
--	spin_lock_irqsave(&m->lock, flags);
--	bio = bio_list_get(&m->queued_ios);
--	spin_unlock_irqrestore(&m->lock, flags);
--
--	while (bio) {
--		next = bio->bi_next;
--		bio->bi_next = NULL;
--
-+	while ((bio = dm_queue_pop_bio(q))) {
- 		info = dm_get_mapinfo(bio);
- 		mpio = info->ptr;
- 
--		r = map_io(m, bio, mpio, 1);
-+		r = map_io(m, bio, mpio);
- 		if (r < 0)
- 			bio_endio(bio, bio->bi_size, r);
- 		else if (r == 1)
- 			generic_make_request(bio);
--
--		bio = next;
- 	}
- }
- 
- static void process_queued_ios(void *data)
- {
--	struct multipath *m = (struct multipath *) data;
-+	struct dm_queue *q = (struct dm_queue *) data;
-+	struct dm_target *ti = dm_queue_get_target(q);
-+	struct multipath *m = (struct multipath *) ti->private;
- 	struct hw_handler *hwh = &m->hw_handler;
- 	struct pgpath *pgpath = NULL;
- 	unsigned init_required = 0, must_queue = 1;
-@@ -392,7 +386,7 @@ static void process_queued_ios(void *dat
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 
--	if (!m->queue_size)
-+	if (!dm_queue_size(q) || dm_queue_noflush_suspending(q))
+diff -rup device-mapper.1.02.08.cvs20060707/dmsetup/dmsetup.c noflush/dmsetup/dmsetup.c
+--- device-mapper.1.02.08.cvs20060707/dmsetup/dmsetup.c	2006-06-18 07:51:46.000000000 -0400
++++ noflush/dmsetup/dmsetup.c	2006-07-07 15:44:00.000000000 -0400
+@@ -93,6 +93,7 @@ enum {
+ 	MAJOR_ARG,
+ 	MINOR_ARG,
+ 	MODE_ARG,
++	NOFLUSH_ARG,
+ 	NOHEADINGS_ARG,
+ 	NOLOCKFS_ARG,
+ 	NOOPENCOUNT_ARG,
+@@ -588,6 +589,9 @@ static int _simple(int task, const char 
+ 	if (event_nr && !dm_task_set_event_nr(dmt, event_nr))
  		goto out;
  
- 	if (!m->current_pgpath)
-@@ -417,7 +411,7 @@ out:
- 		hwh->type->pg_init(hwh, pgpath->pg->bypassed, &pgpath->path);
- 
- 	if (!must_queue)
--		dispatch_queued_ios(m);
-+		dispatch_queued_ios(q);
- }
- 
- /*
-@@ -697,6 +691,7 @@ static int multipath_ctr(struct dm_targe
- 
- 	int r;
- 	struct multipath *m;
-+	struct dm_queue *q;
- 	struct arg_set as;
- 	unsigned pg_count = 0;
- 	unsigned next_pg_num;
-@@ -750,6 +745,18 @@ static int multipath_ctr(struct dm_targe
- 		goto bad;
- 	}
- 
-+	/* allocate and initiarize queue for retry io */
-+	ti->queues = dm_queue_alloc(NUM_QUEUES);
-+	if (!ti->queues) {
-+		ti->error = "can't allocate queues";
-+		r = -ENOMEM;
-+		goto bad;
-+	}
-+	ti->num_queues = NUM_QUEUES;
-+	q = dm_queue_find(ti->queues, RETRY_QUEUE);
-+	dm_queue_setup(q, process_queued_ios, ti);
-+	dm_queue_enable_noflush(q);
++	if (_switches[NOFLUSH_ARG] && !dm_task_no_flush(dmt))
++		goto out;
 +
- 	ti->private = m;
- 	m->ti = ti;
+ 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
+ 		goto out;
  
-@@ -763,6 +770,13 @@ static int multipath_ctr(struct dm_targe
- static void multipath_dtr(struct dm_target *ti)
- {
- 	struct multipath *m = (struct multipath *) ti->private;
-+	int i;
+@@ -1502,7 +1506,8 @@ static void _usage(FILE *out)
+ 
+ 	fprintf(out, "Usage:\n\n");
+ 	fprintf(out, "dmsetup [--version] [-v|--verbose [-v|--verbose ...]]\n"
+-		"        [-r|--readonly] [--noopencount] [--nolockfs]\n\n");
++		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
++		"        [--noflush]\n\n");
+ 	for (i = 0; _commands[i].name; i++)
+ 		fprintf(out, "\t%s %s\n", _commands[i].name, _commands[i].help);
+ 	fprintf(out, "\n<device> may be device name or -u <uuid> or "
+@@ -1606,6 +1611,7 @@ static int _process_switches(int *argc, 
+ 		{"major", 1, &ind, MAJOR_ARG},
+ 		{"minor", 1, &ind, MINOR_ARG},
+ 		{"mode", 1, &ind, MODE_ARG},
++		{"noflush", 0, &ind, NOFLUSH_ARG},
+ 		{"noheadings", 0, &ind, NOHEADINGS_ARG},
+ 		{"nolockfs", 0, &ind, NOLOCKFS_ARG},
+ 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
+@@ -1714,6 +1720,8 @@ static int _process_switches(int *argc, 
+ 			_switches[TARGET_ARG]++;
+ 			_target = optarg;
+ 		}
++		if ((ind == NOFLUSH_ARG))
++			_switches[NOFLUSH_ARG]++;
+ 		if ((ind == NOHEADINGS_ARG))
+ 			_switches[NOHEADINGS_ARG]++;
+ 		if ((ind == NOLOCKFS_ARG))
+diff -rup device-mapper.1.02.08.cvs20060707/kernel/ioctl/dm-ioctl.h noflush/kernel/ioctl/dm-ioctl.h
+--- device-mapper.1.02.08.cvs20060707/kernel/ioctl/dm-ioctl.h	2006-02-20 18:55:57.000000000 -0500
++++ noflush/kernel/ioctl/dm-ioctl.h	2006-07-07 15:44:29.000000000 -0400
+@@ -326,4 +326,9 @@ typedef char ioctl_struct[308];
+  */
+ #define DM_SKIP_LOCKFS_FLAG	(1 << 10) /* In */
+ 
++/*
++ * Set this to suspend without flushing queued ios.
++ */
++#define DM_NOFLUSH_FLAG		(1 << 11) /* In */
 +
-+	for (i = 0; i < ti->num_queues; i++) {
-+		struct dm_queue *q = dm_queue_find(ti->queues, i);
-+		dm_queue_flush(q);
-+	}
-+	dm_queue_free(ti->queues);
- 
- 	flush_workqueue(kmultipathd);
- 	free_multipath(m);
-@@ -786,7 +800,7 @@ static int multipath_map(struct dm_targe
- 
- 	map_context->ptr = mpio;
- 	bio->bi_rw |= (1 << BIO_RW_FAILFAST);
--	r = map_io(m, bio, mpio, 0);
-+	r = map_io(m, bio, mpio);
- 	if (r < 0)
- 		mempool_free(mpio, m->mpio_pool);
- 
-@@ -833,6 +847,7 @@ static int reinstate_path(struct pgpath 
- 	int r = 0;
- 	unsigned long flags;
- 	struct multipath *m = pgpath->pg->m;
-+	struct dm_queue *q;
- 
- 	spin_lock_irqsave(&m->lock, flags);
- 
-@@ -853,8 +868,10 @@ static int reinstate_path(struct pgpath 
- 	pgpath->path.is_active = 1;
- 
- 	m->current_pgpath = NULL;
--	if (!m->nr_valid_paths++ && m->queue_size)
--		queue_work(kmultipathd, &m->process_queued_ios);
-+	if (!m->nr_valid_paths++) {
-+		q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
-+		dm_queue_process(q);
-+	}
- 
- 	queue_work(kmultipathd, &m->trigger_event);
- 
-@@ -966,6 +983,7 @@ void dm_pg_init_complete(struct path *pa
- 	struct pgpath *pgpath = path_to_pgpath(path);
- 	struct priority_group *pg = pgpath->pg;
- 	struct multipath *m = pg->m;
-+	struct dm_queue *q;
- 	unsigned long flags;
- 
- 	/* We insist on failing the path if the PG is already bypassed. */
-@@ -986,7 +1004,8 @@ void dm_pg_init_complete(struct path *pa
- 		m->queue_io = 0;
- 
- 	m->pg_init_in_progress = 0;
--	queue_work(kmultipathd, &m->process_queued_ios);
-+	q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
-+	dm_queue_process(q);
- 	spin_unlock_irqrestore(&m->lock, flags);
+ #endif				/* _LINUX_DM_IOCTL_H */
+diff -rup device-mapper.1.02.08.cvs20060707/lib/.exported_symbols noflush/lib/.exported_symbols
+--- device-mapper.1.02.08.cvs20060707/lib/.exported_symbols	2006-02-20 18:55:58.000000000 -0500
++++ noflush/lib/.exported_symbols	2006-07-07 15:41:56.000000000 -0400
+@@ -28,6 +28,7 @@ dm_task_set_gid
+ dm_task_set_mode
+ dm_task_suppress_identical_reload
+ dm_task_add_target
++dm_task_no_flush
+ dm_task_no_open_count
+ dm_task_skip_lockfs
+ dm_task_update_nodes
+diff -rup device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-iface.c noflush/lib/ioctl/libdm-iface.c
+--- device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-iface.c	2006-06-14 18:00:03.000000000 -0400
++++ noflush/lib/ioctl/libdm-iface.c	2006-07-07 15:41:56.000000000 -0400
+@@ -1026,6 +1026,13 @@ int dm_task_set_geometry(struct dm_task 
+ 	return 1;
  }
  
-@@ -999,6 +1018,7 @@ static int do_end_io(struct multipath *m
- 	struct hw_handler *hwh = &m->hw_handler;
- 	unsigned err_flags = MP_FAIL_PATH;	/* Default behavior */
- 	unsigned long flags;
-+	struct dm_queue *q;
- 
- 	if (!error)
- 		return 0;	/* I/O complete */
-@@ -1040,10 +1060,10 @@ static int do_end_io(struct multipath *m
- 
- 	/* queue for the daemon to resubmit or fail */
- 	spin_lock_irqsave(&m->lock, flags);
--	bio_list_add(&m->queued_ios, bio);
--	m->queue_size++;
-+	q = dm_queue_find(m->ti->queues, RETRY_QUEUE);
-+	dm_queue_add_bio(q, bio);
- 	if (!m->queue_io)
--		queue_work(kmultipathd, &m->process_queued_ios);
-+		dm_queue_process(q);
- 	spin_unlock_irqrestore(&m->lock, flags);
- 
- 	return 1;	/* io not complete */
-@@ -1070,6 +1090,17 @@ static int multipath_end_io(struct dm_ta
- 	return r;
- }
- 
-+static int multipath_unmap(struct dm_target *ti, struct bio *bio,
-+			   union map_info *map_context)
++int dm_task_no_flush(struct dm_task *dmt)
 +{
-+	struct multipath *m = (struct multipath *) ti->private;
-+	struct mpath_io *mpio = (struct mpath_io *) map_context->ptr;
++	dmt->noflush = 1;
 +
-+	mempool_free(mpio, m->mpio_pool);
-+
-+	return 0;
++	return 1;
 +}
 +
- /*
-  * Suspend can't complete until all the I/O is processed so if
-  * the last path fails we must error any remaining I/O.
-@@ -1090,10 +1121,14 @@ static void multipath_resume(struct dm_t
+ int dm_task_no_open_count(struct dm_task *dmt)
  {
- 	struct multipath *m = (struct multipath *) ti->private;
- 	unsigned long flags;
-+	struct dm_queue *q;
+ 	dmt->no_open_count = 1;
+@@ -1270,6 +1277,8 @@ static struct dm_ioctl *_flatten(struct 
  
- 	spin_lock_irqsave(&m->lock, flags);
- 	m->queue_if_no_path = m->saved_queue_if_no_path;
- 	spin_unlock_irqrestore(&m->lock, flags);
-+
-+	q = dm_queue_find(ti->queues, RETRY_QUEUE);
-+	dm_queue_process(q);
- }
- 
- /*
-@@ -1119,6 +1154,7 @@ static int multipath_status(struct dm_ta
- 	unsigned long flags;
- 	struct multipath *m = (struct multipath *) ti->private;
- 	struct hw_handler *hwh = &m->hw_handler;
-+	struct dm_queue *q = dm_queue_find(ti->queues, RETRY_QUEUE);
- 	struct priority_group *pg;
- 	struct pgpath *p;
- 	unsigned pg_num;
-@@ -1128,7 +1164,7 @@ static int multipath_status(struct dm_ta
- 
- 	/* Features */
- 	if (type == STATUSTYPE_INFO)
--		DMEMIT("1 %u ", m->queue_size);
-+		DMEMIT("1 %u ", dm_queue_size(q));
- 	else if (m->queue_if_no_path)
- 		DMEMIT("1 queue_if_no_path ");
- 	else
-@@ -1303,6 +1339,7 @@ static struct target_type multipath_targ
- 	.ctr = multipath_ctr,
- 	.dtr = multipath_dtr,
- 	.map = multipath_map,
-+	.unmap = multipath_unmap,
- 	.end_io = multipath_end_io,
- 	.presuspend = multipath_presuspend,
- 	.resume = multipath_resume,
+ 	if (dmt->type == DM_DEVICE_SUSPEND)
+ 		dmi->flags |= DM_SUSPEND_FLAG;
++	if (dmt->noflush)
++		dmi->flags |= DM_NOFLUSH_FLAG;
+ 	if (dmt->read_only)
+ 		dmi->flags |= DM_READONLY_FLAG;
+ 	if (dmt->skip_lockfs)
+diff -rup device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-targets.h noflush/lib/ioctl/libdm-targets.h
+--- device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-targets.h	2006-02-20 18:55:58.000000000 -0500
++++ noflush/lib/ioctl/libdm-targets.h	2006-07-07 15:41:56.000000000 -0400
+@@ -52,6 +52,7 @@ struct dm_task {
+ 	char *message;
+ 	char *geometry;
+ 	uint64_t sector;
++	int noflush;
+ 	int no_open_count;
+ 	int skip_lockfs;
+ 	int suppress_identical_reload;
+diff -rup device-mapper.1.02.08.cvs20060707/lib/libdevmapper.h noflush/lib/libdevmapper.h
+--- device-mapper.1.02.08.cvs20060707/lib/libdevmapper.h	2006-05-11 15:10:55.000000000 -0400
++++ noflush/lib/libdevmapper.h	2006-07-07 15:41:56.000000000 -0400
+@@ -150,6 +150,7 @@ int dm_task_set_event_nr(struct dm_task 
+ int dm_task_set_geometry(struct dm_task *dmt, const char *cylinders, const char *heads, const char *sectors, const char *start);
+ int dm_task_set_message(struct dm_task *dmt, const char *message);
+ int dm_task_set_sector(struct dm_task *dmt, uint64_t sector);
++int dm_task_no_flush(struct dm_task *dmt);
+ int dm_task_no_open_count(struct dm_task *dmt);
+ int dm_task_skip_lockfs(struct dm_task *dmt);
+ int dm_task_suppress_identical_reload(struct dm_task *dmt);
