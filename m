@@ -1,12 +1,14 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 4/4] dm_queue: add API to libdevmapper (take 2)
-Date: Mon, 10 Jul 2006 18:36:50 -0400 (EDT)
-Message-ID: <20060710.183650.98855191.k-ueda@ct.jp.nec.com>
+From: Nicola Murino <n.murino@theorematica.it>
+Subject: RE: dm-emc doesn't works with vanilla kernel
+Date: Tue, 11 Jul 2006 14:25:39 +0200
+Message-ID: <1152620739.7745.15.camel@d810>
+References: <6CCEAEDF4D06984A83F427424F47D6E4149186@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4149186@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,141 +18,114 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch adds the feature to use the kernel noflush suspend feature
-to the device-mapper user-space tool.
+Thanks for your reply, 
 
-For dmsetup:
-    # dmsetup --noflush suspend <map name>
-
-For library users:
-    int dm_task_no_flush(struct dm_task *dmt);
-
-This patch is for the CVS tree on July 7, 2006.
-
-Regards,
-Kiyoshi Ueda
+I'm currently using multipath-tools 0.4.7, the problem happen when I
+manually detach a path with a kernel>2.6.13, 
 
 
-diff -rup device-mapper.1.02.08.cvs20060707/dmsetup/dmsetup.c noflush/dmsetup/dmsetup.c
---- device-mapper.1.02.08.cvs20060707/dmsetup/dmsetup.c	2006-06-18 07:51:46.000000000 -0400
-+++ noflush/dmsetup/dmsetup.c	2006-07-07 15:44:00.000000000 -0400
-@@ -93,6 +93,7 @@ enum {
- 	MAJOR_ARG,
- 	MINOR_ARG,
- 	MODE_ARG,
-+	NOFLUSH_ARG,
- 	NOHEADINGS_ARG,
- 	NOLOCKFS_ARG,
- 	NOOPENCOUNT_ARG,
-@@ -588,6 +589,9 @@ static int _simple(int task, const char 
- 	if (event_nr && !dm_task_set_event_nr(dmt, event_nr))
- 		goto out;
- 
-+	if (_switches[NOFLUSH_ARG] && !dm_task_no_flush(dmt))
-+		goto out;
-+
- 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
- 		goto out;
- 
-@@ -1502,7 +1506,8 @@ static void _usage(FILE *out)
- 
- 	fprintf(out, "Usage:\n\n");
- 	fprintf(out, "dmsetup [--version] [-v|--verbose [-v|--verbose ...]]\n"
--		"        [-r|--readonly] [--noopencount] [--nolockfs]\n\n");
-+		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
-+		"        [--noflush]\n\n");
- 	for (i = 0; _commands[i].name; i++)
- 		fprintf(out, "\t%s %s\n", _commands[i].name, _commands[i].help);
- 	fprintf(out, "\n<device> may be device name or -u <uuid> or "
-@@ -1606,6 +1611,7 @@ static int _process_switches(int *argc, 
- 		{"major", 1, &ind, MAJOR_ARG},
- 		{"minor", 1, &ind, MINOR_ARG},
- 		{"mode", 1, &ind, MODE_ARG},
-+		{"noflush", 0, &ind, NOFLUSH_ARG},
- 		{"noheadings", 0, &ind, NOHEADINGS_ARG},
- 		{"nolockfs", 0, &ind, NOLOCKFS_ARG},
- 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
-@@ -1714,6 +1720,8 @@ static int _process_switches(int *argc, 
- 			_switches[TARGET_ARG]++;
- 			_target = optarg;
- 		}
-+		if ((ind == NOFLUSH_ARG))
-+			_switches[NOFLUSH_ARG]++;
- 		if ((ind == NOHEADINGS_ARG))
- 			_switches[NOHEADINGS_ARG]++;
- 		if ((ind == NOLOCKFS_ARG))
-diff -rup device-mapper.1.02.08.cvs20060707/kernel/ioctl/dm-ioctl.h noflush/kernel/ioctl/dm-ioctl.h
---- device-mapper.1.02.08.cvs20060707/kernel/ioctl/dm-ioctl.h	2006-02-20 18:55:57.000000000 -0500
-+++ noflush/kernel/ioctl/dm-ioctl.h	2006-07-07 15:44:29.000000000 -0400
-@@ -326,4 +326,9 @@ typedef char ioctl_struct[308];
-  */
- #define DM_SKIP_LOCKFS_FLAG	(1 << 10) /* In */
- 
-+/*
-+ * Set this to suspend without flushing queued ios.
-+ */
-+#define DM_NOFLUSH_FLAG		(1 << 11) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
-diff -rup device-mapper.1.02.08.cvs20060707/lib/.exported_symbols noflush/lib/.exported_symbols
---- device-mapper.1.02.08.cvs20060707/lib/.exported_symbols	2006-02-20 18:55:58.000000000 -0500
-+++ noflush/lib/.exported_symbols	2006-07-07 15:41:56.000000000 -0400
-@@ -28,6 +28,7 @@ dm_task_set_gid
- dm_task_set_mode
- dm_task_suppress_identical_reload
- dm_task_add_target
-+dm_task_no_flush
- dm_task_no_open_count
- dm_task_skip_lockfs
- dm_task_update_nodes
-diff -rup device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-iface.c noflush/lib/ioctl/libdm-iface.c
---- device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-iface.c	2006-06-14 18:00:03.000000000 -0400
-+++ noflush/lib/ioctl/libdm-iface.c	2006-07-07 15:41:56.000000000 -0400
-@@ -1026,6 +1026,13 @@ int dm_task_set_geometry(struct dm_task 
- 	return 1;
- }
- 
-+int dm_task_no_flush(struct dm_task *dmt)
-+{
-+	dmt->noflush = 1;
-+
-+	return 1;
-+}
-+
- int dm_task_no_open_count(struct dm_task *dmt)
- {
- 	dmt->no_open_count = 1;
-@@ -1270,6 +1277,8 @@ static struct dm_ioctl *_flatten(struct 
- 
- 	if (dmt->type == DM_DEVICE_SUSPEND)
- 		dmi->flags |= DM_SUSPEND_FLAG;
-+	if (dmt->noflush)
-+		dmi->flags |= DM_NOFLUSH_FLAG;
- 	if (dmt->read_only)
- 		dmi->flags |= DM_READONLY_FLAG;
- 	if (dmt->skip_lockfs)
-diff -rup device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-targets.h noflush/lib/ioctl/libdm-targets.h
---- device-mapper.1.02.08.cvs20060707/lib/ioctl/libdm-targets.h	2006-02-20 18:55:58.000000000 -0500
-+++ noflush/lib/ioctl/libdm-targets.h	2006-07-07 15:41:56.000000000 -0400
-@@ -52,6 +52,7 @@ struct dm_task {
- 	char *message;
- 	char *geometry;
- 	uint64_t sector;
-+	int noflush;
- 	int no_open_count;
- 	int skip_lockfs;
- 	int suppress_identical_reload;
-diff -rup device-mapper.1.02.08.cvs20060707/lib/libdevmapper.h noflush/lib/libdevmapper.h
---- device-mapper.1.02.08.cvs20060707/lib/libdevmapper.h	2006-05-11 15:10:55.000000000 -0400
-+++ noflush/lib/libdevmapper.h	2006-07-07 15:41:56.000000000 -0400
-@@ -150,6 +150,7 @@ int dm_task_set_event_nr(struct dm_task 
- int dm_task_set_geometry(struct dm_task *dmt, const char *cylinders, const char *heads, const char *sectors, const char *start);
- int dm_task_set_message(struct dm_task *dmt, const char *message);
- int dm_task_set_sector(struct dm_task *dmt, uint64_t sector);
-+int dm_task_no_flush(struct dm_task *dmt);
- int dm_task_no_open_count(struct dm_task *dmt);
- int dm_task_skip_lockfs(struct dm_task *dmt);
- int dm_task_suppress_identical_reload(struct dm_task *dmt);
+The system works fine with only an active path, here a re the logs:
+
+Jul  7 12:29:00 nodob qla2300 0000:0a:03.0: LIP reset occured (f8ef).
+Jul  7 12:29:35 nodob rport-2:0-0: blocked FC remote port time out:
+removing target
+Jul  7 12:29:45 nodob scsi2 (0:1): rejecting I/O to dead device
+Jul  7 12:29:45 nodob device-mapper: dm-multipath: Failing path 8:112.
+Jul  7 12:29:45 nodob device-mapper: dm-emc: emc_pg_init: sending
+switch-over command
+
+
+but when I reattach the failed path the system is unable to react to
+this event, I have this in my logs (kernel-2.6.14 and 2.6.16):
+
+Jul  7 12:30:05 nodob qla2300 0000:0a:03.0: LIP occured (f8ef).
+Jul  7 12:30:06 nodob Vendor: DGC       Model: RAID 5            Rev:
+0207
+Jul  7 12:30:06 nodob Type:   Direct-Access                      ANSI
+SCSI revision: 04
+Jul  7 12:30:06 nodob SCSI device sdl: 629145600 512-byte hdwr sectors
+(322123 MB)
+Jul  7 12:30:06 nodob sdl: asking for cache data failed
+Jul  7 12:30:06 nodob sdl: assuming drive cache: write through
+Jul  7 12:30:06 nodob SCSI device sdl: 629145600 512-byte hdwr sectors
+(322123 MB)
+Jul  7 12:30:06 nodob sdl: asking for cache data failed
+Jul  7 12:30:06 nodob sdl: assuming drive cache: write through
+Jul  7 12:30:06 nodob sdl:<6>sd 2:0:0:0: Device not ready.
+Jul  7 12:30:06 nodob end_request: I/O error, dev sdl, sector 0
+Jul  7 12:30:06 nodob Buffer I/O error on device sdl, logical block 0
+Jul  7 12:30:06 nodob sd 2:0:0:0: Device not ready.
+Jul  7 12:30:06 nodob end_request: I/O error, dev sdl, sector 0
+Jul  7 12:30:06 nodob Buffer I/O error on device sdl, logical block 0
+Jul  7 12:30:06 nodob unable to read partition table
+Jul  7 12:30:06 nodob Attached scsi disk sdl at scsi2, channel 0, id 0,
+lun 0
+Jul  7 12:30:06 nodob Attached scsi generic sg7 at scsi2, channel 0, id
+0, lun 0,  type 0
+Jul  7 12:30:06 nodob Vendor: DGC       Model: RAID 5            Rev:
+0207
+Jul  7 12:30:06 nodob Type:   Direct-Access                      ANSI
+SCSI revision: 04
+Jul  7 12:30:06 nodob error 1
+Jul  7 12:30:06 nodob scsi: Unexpected response from host 2 channel 0 id
+0 lun 0 while scanning, scan aborted
+
+and I have to reboot the server to have a working system,
+
+with kernel-2.6.13 on the same system with the same udev and
+multipath-tools all is fine,
+
+thanks
+Nicola
+
+
+Il giorno lun, 10/07/2006 alle 11.07 -0400, egoggin@emc.com ha scritto:
+> I suspect that the problem is with multipath-tools not the
+> dm-emc code.  You may need to upgrade your multipath-tools
+> package to a version 0.4.7 base.  Could you try this and
+> let me know the status?
+> 
+> I have no problem of this sort with my CX series CLARiiONs
+> with version 2.6.(13,14,15,16) linux kernels.
+> 
+> > -----Original Message-----
+> > From: dm-devel-bounces@redhat.com 
+> > [mailto:dm-devel-bounces@redhat.com] On Behalf Of Nicola Murino
+> > Sent: Saturday, July 08, 2006 5:09 AM
+> > To: dm-devel@redhat.com
+> > Subject: [dm-devel] dm-emc doesn't works with vanilla kernel
+> > 
+> > Hi all,
+> > 
+> > I'm successfully running multipath-tools on a gentoo server 
+> > since almost
+> > a year, only a problem:
+> > 
+> > if I use a kernel different from 2.6.13 after detaching a fibre path
+> > dm-emc doesn't send trespass and the cx300 luns are not accessible, I
+> > got this problem with kernel-2.6.14 and kernel-2.6.16.19, 
+> > kernel-2.6.13
+> > works ok. 
+> > 
+> > On another installation with centos, last kernel 
+> > (2.6.9-34.01EL) and the
+> > same storage all is fine.
+> > 
+> > Would be great if dm-emc works properly with the upstream kernels,
+> > 
+> > thanks
+> > Nicola
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> > 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
