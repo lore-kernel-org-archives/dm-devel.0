@@ -1,14 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: lockdep warning when nesting dm devices
-Date: Mon, 17 Jul 2006 03:45:19 +0100
-Message-ID: <20060717024519.GA26318@agk.surrey.redhat.com>
-References: <m34pxj6rsm.fsf@telia.com>
+From: "Ishai Rabinovitz" <ishai@mellanox.co.il>
+Subject: Module reference count problem when using multipath
+Date: Wed, 12 Jul 2006 15:08:00 +0300
+Message-ID: <6AB138A2AB8C8E4A98B9C0C3D52670E302842878@mtlexch01.mtl.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============0585616505=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <m34pxj6rsm.fsf@telia.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +16,150 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Peter Osterlund <petero2@telia.com>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Arjan van de Ven <arjan@linux.intel.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sat, Jul 15, 2006 at 01:17:29PM +0200, Peter Osterlund wrote:
-> # echo "0 10000 linear /dev/loop0 0" | /sbin/dmsetup create test
-> # echo "0 10000 linear /dev/mapper/test 0" | /sbin/dmsetup create test2
- 
-> I get the following warning from the lockdep validator.
-> =============================================
-> [ INFO: possible recursive locking detected ]
-> ---------------------------------------------
+This is a multi-part message in MIME format.
 
-Well at first sight the message is simply pointing out something expected - it
-only say "INFO" after all - viz. recursive use of
-	down_read(&md->io_lock);
-something tied up with the split_bio horridness which needs to go away some
-day.  The lock prevents any attempt to suspend the device from happening
-while a bio is in the process of being split into other bios.
+--===============0585616505==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C6A5AB.D6AC6210"
 
-Of course it's always helpful to review code from different perspectives
-like this to look out for any gotchas and we ought to re-check the use
-of this lock.
+This is a multi-part message in MIME format.
 
-> Btw, is there a limit on how many dm devices can be chained? I guess
-> there will be a kernel stack overflow if you try to chain together too
-> many devices.
+------_=_NextPart_001_01C6A5AB.D6AC6210
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-There's a patch in -mm which tackles that, but it needs some changes to dm
-(which Milan Broz has begun working on) before it will behave correctly in all
-cases.
- 
-Alasdair
--- 
-agk@redhat.com
+Hi All,
+=20
+I take part in the development of SRP (Scsi RDMA Protocol). and I'm
+trying to work with dm to support failover.
+I downloaded multipath 0.4.7 and I'm working with linux-2.6.18-rc1
+kernel over RHAS4.OU3 distribution.
+=20
+I have connected to the SRP target (That has a lot of disks), and they
+can be accessed through /dev/sdb /dev/sdc and so on. I run multipath and
+got the mapping as it should be.
+=20
+The problem is that the reference count of ib_srp module is equal to the
+number of disks that were mapped using multipath. Because of that I can
+not remove the ib_srp module.
+This does not occur without multipath.
+=20
+There is also reference count of 1 on dm_round_robin.
+=20
+I tried to look at "ps aux" and "lsof" but found no process or file that
+should hold reference to ib_srp. I tried to google it without any
+success.
+=20
+Can someone answer any of the following questions:
+1) Why does every disk that is mapped through multipath hold a reference
+to the ib_srp module?  Is this the correct behavior, or is it a bug?
+2) Can I remove a mapping from the multipath ?
+3) Any ideas how I can debug this.
+=20
+I will appreciate any help.
+=20
+Thanks
+Ishai
+
+------_=_NextPart_001_01C6A5AB.D6AC6210
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<META content=3D"MSHTML 6.00.2900.2912" name=3DGENERATOR></HEAD>
+<BODY>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>Hi=20
+All,</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I take =
+part in the=20
+development of SRP (Scsi RDMA Protocol). and I'm trying to work with dm=20
+to&nbsp;support failover.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I =
+downloaded=20
+multipath 0.4.7 and I'm working&nbsp;with linux-2.6.18-rc1 kernel over =
+RHAS4.OU3=20
+distribution.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial =
+size=3D2>I&nbsp;have=20
+connected to&nbsp;the SRP target (That has a lot of disks), and they can =
+be=20
+accessed through /dev/sdb&nbsp;/dev/sdc and so on. </FONT></SPAN><SPAN=20
+class=3D448572611-12072006><FONT face=3DArial size=3D2>I run multipath =
+and got the=20
+mapping as it should be.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>The =
+problem is=20
+that&nbsp;the reference count&nbsp;of ib_srp module&nbsp;is equal =
+to&nbsp;the=20
+number of disks that were mapped using multipath. Because of that&nbsp;I =
+can not=20
+remove the ib_srp module.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>This =
+does not occur=20
+without multipath.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>There =
+is also=20
+reference count of 1&nbsp;on dm_round_robin.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I =
+tried to look at=20
+"ps aux" and "lsof" but found no process or file that should hold =
+reference to=20
+ib_srp. I tried to google it without any success.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>Can =
+someone answer=20
+any of the following&nbsp;questions:</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>1) Why =
+does every=20
+disk that is mapped through multipath hold a reference to the ib_srp=20
+module?&nbsp; Is this the correct behavior, or is it a =
+bug?</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>2) Can =
+I remove a=20
+mapping from the multipath ?</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>3) Any =
+ideas how I=20
+can debug this.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial size=3D2>I will =
+appreciate=20
+any help.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2>Thanks</FONT></SPAN></DIV>
+<DIV><SPAN class=3D448572611-12072006><FONT face=3DArial=20
+size=3D2>Ishai</FONT></SPAN></DIV></BODY></HTML>
+
+------_=_NextPart_001_01C6A5AB.D6AC6210--
+
+
+--===============0585616505==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0585616505==--
