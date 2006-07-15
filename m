@@ -1,12 +1,12 @@
-From: "Bruen, Mark" <mbruen@trilegiant.com>
-Subject: Trying to blacklist a USB memory stick
-Date: Fri, 14 Jul 2006 10:38:33 -0400
-Message-ID: <44B7AC69.20100@trilegiant.com>
+From: sda@rosenergo.com
+Subject: multipathd is not detect restored fc-path
+Date: Sat, 15 Jul 2006 12:13:19 +0400
+Message-ID: <20060715081319.GA13955@matador.rosenergo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=koi8-r
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,37 +16,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I'm trying to blacklist a USB memory stick in /etc/multipath.conf. The 
-output of multipath -v4:
-===== path sdar =====
-bus = 1
-dev_t = 66:176
-size = 126976
-vendor =        
-product = USB DISK 2.0   
-rev = 1.16
-h:b:t:l = 3:0:0:0
-tgt_node_name =
-failed to open /dev/sdar
+	Hello!
 
-I've tried this with the "h:b:t:l" alone and with the "product" alone 
-(neither work):
+	I have multipathing configuration with path_grouping_policy = failover with two fibre channel simultaneous connections (active and standby). If I break active connection, multipathd detect this and switch data transfer to standby. But later, then connection restored, multipathd is not detect this fact automatically, command "multipath -l" show than old fibre channel remain failed. Multipathd will see that old channel is OK only if I manually remap paths with "multipath" command. This is not good, because if after then the first path broken and restored the second path fail too, conection to SAN will be completely unable to work. I suppose this is because of unproper configuration of multipathing.
 
-devnode_blacklist {
-#   devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|sda|sdb|hdc)[0-9]*"
-    devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|hdc)[0-9]*"
-    devnode "sda "
-    devnode "sdb "
-    wwid 350002ac0001302c6
-    wwid 350002ac0002502c6
-    device {
-        h:b:t:l = 3:0:0:0
-        product "USB DISK 2.0"
-    }
+	Explain me, please, that is cause of this trouble and how I may correct it.
+
+  This is my configuration:
+	- disk storage - ds4800
+	- hba - two Emulex Corporation LP952 Fibre Channel Host Adapter
+	- OS - rhel as 4 update 3
+	- multipath toolkit source - device-mapper-multipath-0.4.5-12.0.RHEL4.i386.rpm
+	- multipathd config:
+
+defaults {
+        multipath_tool  "/sbin/multipath -v0"
+        udev_dir        /dev
+        polling_interval 10
+        default_selector        "round-robin 0"
+        default_path_grouping_policy    failover
+        default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
+        default_prio_callout    "/bin/true"
+        default_features        "0"
+        rr_wmin_io              100
+        failback                immediate
+        user_friendly_names     yes
 }
 
-Any ideas? Thanks.
--Mark
+
+multipaths {
+        multipath {
+                wwid                    3600a0b8000115280000040b9448f8cea
+                alias                   mp03
+                path_grouping_policy    failover
+                path_selector           "round-robin 0"
+                failback                immediate
+        }
+        multipath {
+                wwid                    3600a0b8000115280000040cd448f8d1e
+                alias                   mp04
+                path_grouping_policy    failover
+                path_selector           "round-robin 0"
+                failback                immediate
+        }
+}
+devices {
+  device {
+    vendor      "IBM"
+    product     "1815      FAStT"
+    path_grouping_policy failover
+    path_checker  tur
+  }
+
+}
+
+
+	Thanks,
+	Dmitry Sedov, NP ATS.
