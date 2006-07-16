@@ -1,14 +1,12 @@
-From: Paul Reilly <paul@astropaul.com>
-Subject: dm ioctl cmd 9 failed: Cannot allocate memory
-Date: Sat, 15 Jul 2006 21:08:06 -0700
-Message-ID: <1153022886.44b9bba6ec583@mail.third-rock.net>
-References: <mailman.12195.1153022224.1982.dm-devel@redhat.com>
+From: Ishai Rabinovitz <ishai@mellanox.co.il>
+Subject: [PATCH] Fix a bug in error path in alloc_dev
+Date: Sun, 16 Jul 2006 22:30:30 +0300
+Message-ID: <20060716193030.GA2486@mellanox.co.il>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <mailman.12195.1153022224.1982.dm-devel@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,34 +19,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
 Hi,
 
-I'm getting various lvm/devmapper errors when creating and removing
-snapshots on debian Sarge.
+While reading the code I found a bug in the error path in alloc_dev in dm.c
 
-  device-mapper ioctl cmd 9 failed: Cannot allocate memory
-  Couldn't load device 'myvg-www2_snapshot'.
-  Unable to deactivate logical volume "myvg-www2_snapshot"
+When blk_alloc_queue fails there is no call to free_minor.
 
-I can now no longer make changes to LVM volumes, my processes
-just hang and are un-killable.
+This patch fixes the problem.
 
-I am using:
+Signed-off-by: Ishai Rabinovitz <ishai@mellanox.co.il>
 
- lvm2                            2.01.04-5
- libdevmapper1.01                1.01.00-4
- kernel 2.6.10
-
-
-Is this a known bug in my version of devmapper?
-
-This appears to be the latest version of LVM and device-mapper
-in debian Sarge. Does anyone know if there are updates to fix this
-issue?
-
-What is the most stable devmapper I can get for this kernel?
-I could perhaps install from source.
-
-Thanks
-Paul
+Index: linux-2.6.18-devel/drivers/md/dm.c
+===================================================================
+--- linux-2.6.18-devel.orig/drivers/md/dm.c
++++ linux-2.6.18-devel/drivers/md/dm.c
+@@ -903,7 +903,7 @@ static struct mapped_device *alloc_dev(i
+ 
+ 	md->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (!md->queue)
+-		goto bad1;
++		goto bad1_free_minor;
+ 
+ 	md->queue->queuedata = md;
+ 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+@@ -953,6 +953,7 @@ static struct mapped_device *alloc_dev(i
+ 	mempool_destroy(md->io_pool);
+  bad2:
+ 	blk_cleanup_queue(md->queue);
++ bad1_free_minor:
+ 	free_minor(minor);
+  bad1:
+ 	module_put(THIS_MODULE);
+-- 
+Ishai Rabinovitz
