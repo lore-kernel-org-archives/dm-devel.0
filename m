@@ -1,11 +1,14 @@
-From: egoggin@emc.com
-Subject: patch for adding new multipath mapped devices
-Date: Mon, 17 Jul 2006 15:29:20 -0400
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E41491AA@CORPUSMX40A.corp.emc.com>
+From: Edward Goggin <egoggin@emc.com>
+Subject: patch to fix locking bug in libmultipath/alias.c
+Date: Mon, 17 Jul 2006 23:05:20 -0400
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E41491AF@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,126 +19,209 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Chrisophe,
+Christophe,
 
-This patch tries to deal with the fact that neither a dm mapped device's
-name nor any of its targets are necessarily available at the time
-hotplug/udev announces the existence of the mapped device.  Since my attempt
-to patch this in the kernel was rejected 8 or so months ago, this patch
-tries to deal with these badly ordered events by simply inserting delays
-when thought justified.  The scope of the existing delay in dm_mapname() is
-changed to incorporate the retrieval of the mapped
-device's name and a new function dm_map_target_present() is created which
-will delay until at least one target exists for a named map.
+The posix file byte range locks used to provide atomicity for accessing
+the entries in the multipath bindings file get released from whenever
+__any__ descriptor or FILE structure for that file is closed.  This
+patch delays the fclose() for the FILE structures used within
+lookup_binding() and rlookup_binding() until there is no more need for
+the atomicity.
 
-Without both of these changes, it is hit-or-miss whether or not
-multipathd(8) will correctly learn about a dm multipath mapped device newly
-added by multipath(8).
+Without this patch I could fairly easily get two multipath mpath0
+entries in /var/lib/multipath/bindings by running 8 concurrent instances
+of multipath(8) while with the patch I cannot get this problem to occur.
 
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index c0765ae..081e25c 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -183,6 +183,41 @@ out:
- }
- 
- extern int
-+dm_map_target_present (char * str)
-+{
-+	int r = 0;
-+	struct dm_task *dmt;
-+	struct dm_info info;
-+	int loop = MAX_WAIT * LOOPS_PER_SEC;
-+
-+	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
-+		return 0;
-+
-+	if (!dm_task_set_name(dmt, str))
-+		goto out;
-+
-+	dm_task_no_open_count(dmt);
-+
-+	while (--loop) {
-+		dm_shut_log();
-+		if (!dm_task_run(dmt))
-+			goto out;
-+		dm_restore_log();
-+
-+		if (!dm_task_get_info(dmt, &info))
-+			goto out;
-+
-+		if (info.target_count) {
-+			r = 1;
-+			break;
-+		}
-+	}
-+out:
-+	dm_task_destroy(dmt);
-+	return r;
-+}
-+
-+extern int
- dm_get_map(char * name, unsigned long long * size, char * outparams)
+diff --git a/libmultipath/alias.c b/libmultipath/alias.c
+index 6d103d7..86cae9b 100644
+--- a/libmultipath/alias.c
++++ b/libmultipath/alias.c
+@@ -166,28 +166,14 @@ fail:
+=20
+=20
+ static int
+-lookup_binding(int fd, char *map_wwid, char **map_alias)
++lookup_binding(FILE *f, char *map_wwid, char **map_alias)
  {
- 	int r = 1;
-@@ -725,21 +760,21 @@ dm_mapname(int major, int minor)
- 		r = dm_task_run(dmt);
- 		dm_restore_log();
- 
--		if (r)
-+		if (!r) {
-+			condlog(0, "%i:%i: timeout fetching map name",
-+				major, minor);
-+			goto bad;
-+		}
-+
-+		map = dm_task_get_name(dmt);
-+		if (map && strlen(map))
-+			response = STRDUP((char *)dm_task_get_name(dmt));
-+		if (response)
- 			break;
- 
- 		usleep(1000 * 1000 / LOOPS_PER_SEC);
- 	}
- 
--	if (!r) {
--		condlog(0, "%i:%i: timeout fetching map name", major,
-minor);
--		goto bad;
+ 	char buf[LINE_MAX];
+-	FILE *f;
+ 	unsigned int line_nr =3D 0;
+-	int scan_fd;
+ 	int id =3D 0;
+=20
+ 	*map_alias =3D NULL;
+-	scan_fd =3D dup(fd);
+-	if (scan_fd < 0) {
+-		condlog(0, "Cannot dup bindings file descriptor : %s",
+-			strerror(errno));
+-		return -1;
 -	}
--
--	map = dm_task_get_name(dmt);
--	if (map && strlen(map))
--		response = STRDUP((char *)dm_task_get_name(dmt));
--
- 	dm_task_destroy(dmt);
- 	return response;
- bad:
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index c7879a7..e11c037 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -5,6 +5,7 @@ int dm_simplecmd (int, const char *);
- int dm_addmap (int, const char *, const char *, const char *,
- 	       unsigned long long, const char *uuid);
- int dm_map_present (char *);
-+int dm_map_target_present (char *);
- int dm_get_map(char *, unsigned long long *, char *);
- int dm_get_status(char *, char *);
- int dm_type(char *, char *);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 91a1597..48a69b9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -234,7 +234,7 @@ ev_add_map (char * devname, struct vecto
+-	f =3D fdopen(scan_fd, "r");
+-	if (!f) {
+-		condlog(0, "cannot fdopen on bindings file descriptor :
+%s",
+-			strerror(errno));
+-		close(scan_fd);
+-		return -1;
+-	}
++
+ 	while (fgets(buf, LINE_MAX, f)) {
+ 		char *c, *alias, *wwid;
+ 		int curr_id;
+@@ -215,38 +201,22 @@ lookup_binding(int fd, char *map_wwid, c
+ 			if (*map_alias =3D=3D NULL)
+ 				condlog(0, "Cannot copy alias from
+bindings "
+ 					"file : %s", strerror(errno));
+-			fclose(f);
+ 			return id;
+ 		}
+ 	}
+ 	condlog(3, "No matching wwid [%s] in bindings file.", map_wwid);
+-	fclose(f);
+ 	return id;
+ }=09
+=20
+ static int
+-rlookup_binding(int fd, char **map_wwid, char *map_alias)
++rlookup_binding(FILE *f, char **map_wwid, char *map_alias)
+ {
+ 	char buf[LINE_MAX];
+-	FILE *f;
+ 	unsigned int line_nr =3D 0;
+-	int scan_fd;
+ 	int id =3D 0;
+=20
+ 	*map_wwid =3D NULL;
+-	scan_fd =3D dup(fd);
+-	if (scan_fd < 0) {
+-		condlog(0, "Cannot dup bindings file descriptor : %s",
+-			strerror(errno));
+-		return -1;
+-	}
+-	f =3D fdopen(scan_fd, "r");
+-	if (!f) {
+-		condlog(0, "cannot fdopen on bindings file descriptor :
+%s",
+-			strerror(errno));
+-		close(scan_fd);
+-		return -1;
+-	}
++
+ 	while (fgets(buf, LINE_MAX, f)) {
+ 		char *c, *alias, *wwid;
+ 		int curr_id;
+@@ -274,12 +244,10 @@ rlookup_binding(int fd, char **map_wwid,
+ 			if (*map_wwid =3D=3D NULL)
+ 				condlog(0, "Cannot copy alias from
+bindings "
+ 					"file : %s", strerror(errno));
+-			fclose(f);
+ 			return id;
+ 		}
+ 	}
+ 	condlog(3, "No matching alias [%s] in bindings file.",
+map_alias);
+-	fclose(f);
+ 	return id;
+ }=09
+=20
+@@ -327,7 +295,8 @@ char *
+ get_user_friendly_alias(char *wwid, char *file)
+ {
+ 	char *alias;
+-	int fd, id;
++	int fd, scan_fd, id;
++	FILE *f;
+=20
+ 	if (!wwid || *wwid =3D=3D '\0') {
+ 		condlog(3, "Cannot find binding for empty WWID");
+@@ -337,14 +306,37 @@ get_user_friendly_alias(char *wwid, char
+ 	fd =3D open_bindings_file(file);
+ 	if (fd < 0)
+ 		return NULL;
+-	id =3D lookup_binding(fd, wwid, &alias);
++
++	scan_fd =3D dup(fd);
++	if (scan_fd < 0) {
++		condlog(0, "Cannot dup bindings file descriptor : %s",
++			strerror(errno));
++		close(fd);
++		return NULL;
++	}
++
++	f =3D fdopen(scan_fd, "r");
++	if (!f) {
++		condlog(0, "cannot fdopen on bindings file descriptor :
+%s",
++			strerror(errno));
++		close(scan_fd);
++		close(fd);
++		return NULL;
++	}
++
++	id =3D lookup_binding(f, wwid, &alias);
+ 	if (id < 0) {
++		fclose(f);
++		close(scan_fd);
+ 		close(fd);
+ 		return NULL;
+ 	}
++
  	if (!alias)
- 		return 1;
- 	
--	map_present = dm_map_present(alias);
-+	map_present = dm_map_target_present(alias);
- 
- 	if (map_present && dm_type(alias, DEFAULT_TARGET) <= 0) {
- 		condlog(4, "%s: not a multipath map", alias);
+ 		alias =3D allocate_binding(fd, wwid, id);
+=20
++	fclose(f);
++	close(scan_fd);
+ 	close(fd);
+ 	return alias;
+ }
+@@ -353,7 +345,8 @@ char *
+ get_user_friendly_wwid(char *alias, char *file)
+ {
+ 	char *wwid;
+-	int fd, id;
++	int fd, scan_fd, id;
++	FILE *f;
+=20
+ 	if (!alias || *alias =3D=3D '\0') {
+ 		condlog(3, "Cannot find binding for empty alias");
+@@ -363,12 +356,34 @@ get_user_friendly_wwid(char *alias, char
+ 	fd =3D open_bindings_file(file);
+ 	if (fd < 0)
+ 		return NULL;
+-	id =3D rlookup_binding(fd, &wwid, alias);
++
++	scan_fd =3D dup(fd);
++	if (scan_fd < 0) {
++		condlog(0, "Cannot dup bindings file descriptor : %s",
++			strerror(errno));
++		close(fd);
++		return NULL;
++	}
++
++	f =3D fdopen(scan_fd, "r");
++	if (!f) {
++		condlog(0, "cannot fdopen on bindings file descriptor :
+%s",
++			strerror(errno));
++		close(scan_fd);
++		close(fd);
++		return NULL;
++	}
++
++	id =3D rlookup_binding(f, &wwid, alias);
+ 	if (id < 0) {
++		fclose(f);
++		close(scan_fd);
+ 		close(fd);
+ 		return NULL;
+ 	}
+=20
++	fclose(f);
++	close(scan_fd);
+ 	close(fd);
+ 	return wwid;
+ }
