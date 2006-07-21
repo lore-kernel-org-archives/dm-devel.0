@@ -1,212 +1,191 @@
-From: "Fiederling, Daniel" <daniel.fiederling@warema.de>
-Subject: multipath setup with emc clariion
-Date: Wed, 19 Jul 2006 15:55:51 +0200
-Message-ID: <7CA7BBF7F95AA245ACAB8E28A6285EB905191DD8@s01edv50.warema.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+From: mcguire@lzu.edu.cn
+Subject: [RTLWS8-CFP] Eighth Real-Time Linux Workshop 2nd CFP
+Date: Fri, 21 Jul 2006 18:07:33 +0800
+Message-ID: <200607211007.k6LA7Xmh005844@opentech.lzu.edu.cn>
+Return-path: <linux-raid-owner@vger.kernel.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: nag@nag.ru, matthewc@hp.com, luck@intel.com, gtm-dev@vialink.com.br, gtm-dev-subscribe@vialink.com.br, bapm@netcabo.pt, webmaster@ibiblio.org, williams@intel.com, vasquez@qlogic.com, mikukkon@gmail.com, mikukkon@iki.fi, fandom@telefonica.net, jesse@cola.voip.idv.tw, jdike@addtoit.com, kambarov@berkeley.edu, zkambarov@coverity.com, mkrufky@m1k.net, mchehab@brturbo.com.br, kjhall@us.ibm.com, kernel@linuxace.com, alexn@telia.com, langsdorf@amd.com, christensen@tpack.net, stable@kernel.org, matthew4196@gmail.com, linux-raid@vger.kernel.org, dm-devel@redhat.com, voegtle@coreworks.de, siddha@intel.com, mostrows@watson.ibm.com, mdr@sgi.com, george@mvista.com, sam@ravnborg.org
 List-Id: dm-devel.ids
 
-Hello,
 
-currently I'm trying to set up a SuSE 10.1 box with two qlogic adapters
-("suse shipped" qla2xxx module), each one is connected to one of our two
-emc clariions that are offering 50GB disks. I have four paths to each
-clariion. When I start the multipath config init script "boot.multipath"
-the script hangs and never returns, no chance to abort. I put a lot of
-debug stuff here so maybe someone can tell me why the script (or better
-said kpartx) hangs (see the following "ps ax").
-I guess one of the kernel modules is waiting for some init stuff of the
-disks because I even can't "kill -9 <kpartx>".
-
-The multipath.conf is mostly derived from a pdf by emc. The multipaths
-{} section is written by me.
-
-What does the following message from multipath mean:
-sdX: checker msg is "emc_clariion_checker: Path not correctly configured
-for failover"
-What do I have to do to resolve this "problem"?
-
-Ciao
-Daniel
-
-btw.: I also tried using the latest qlogic drivers, same result.
-
-
-# cat /etc/multipath.conf
-blacklist {
-	wwid 20010b9fd080b7321
-	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-	devnode "^hd[a-z][[0-9]*]"
-	devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
-}
-
-devices {
-	device {
-		vendor "EMC "
-		product "SYMMETRIX"
-		path_grouping_policy multibus
-		getuid_callout "/sbin/scsi_id -g -u -s /block/%n"
-		path_selector "round-robin 0"
-		features "0"
-		hardware_handler "0"
-		failback immediate
-	}
-	device {
-		vendor "DGC"
-		product "*"
-		path_grouping_policy group_by_prio
-		getuid_callout "/sbin/scsi_id -g -u -s /block/%n"
-		prio_callout "/sbin/mpath_prio_emc /dev/%n"
-		hardware_handler "1 emc"
-		features "1 queue_if_no_path"
-		no_path_retry 300
-		path_checker emc_clariion
-		failback immediate
-	}
-}
-
-multipaths {
-	multipath {
-		wwid
-3600601608d1e170090af86321308db11
-		alias			san1
-		path_grouping_policy	failover
-		failback		immediate
-	}
-	multipath {
-		wwid
-360060160a1f4160072ee88ba1208db11
-		alias			san2
-		path_grouping_policy	failover
-		failback		immediate
-	}
-}
-
-
-# uname -r
-2.6.16.13-4-smp
-
-# dmsetup version
-Library version:   1.02.03 (2006-02-08)
-Driver version:    4.5.0
+We apologize for multiple receipts.
 
 
 
-# lsscsi
-[0:0:0:0]    disk    DGC      RAID 5           0219  /dev/sda
-[0:0:1:0]    disk    DGC      LUNZ             0219  /dev/sdb
-[0:0:2:0]    disk    DGC      LUNZ             0219  /dev/sdc
-[0:0:3:0]    disk    DGC      LUNZ             0219  /dev/sdd
-[1:0:0:0]    disk    DGC      RAID 5           0219  /dev/sde
-[1:0:1:0]    disk    DGC      LUNZ             0219  /dev/sdf
-[1:0:2:0]    disk    DGC      LUNZ             0219  /dev/sdg
-[1:0:3:0]    disk    DGC      LUNZ             0219  /dev/sdh
+--------------------------------------------------------------------------------
 
-# ps ax
-...
- 3568 pts/0    S+     0:00 /bin/sh /etc/init.d/boot.multipath start
- 3584 ?        S<     0:00 [kmpathd/0]
- 3585 ?        S<     0:00 [kmpathd/1]
- 3620 ?        S<     0:00 /sbin/udevd --daemon
- 3621 ?        D<     0:00 /sbin/vol_id --export /dev/.tmp-253-1
- 3625 ?        S<     0:00 /sbin/udevd --daemon
- 3626 ?        D<     0:00 /sbin/vol_id --export /dev/.tmp-253-2
- 3630 pts/0    S+     0:00 /sbin/dmsetup ls --target multipath --exec
-/sbin/kpartx -a -p -part
- 3632 pts/0    D+     0:00 /sbin/kpartx -a -p -part
-/dev/mapper/350060160b02217df50060160b02217df
 
-# lsmod | grep dm
-dm_round_robin          7168  1
-dm_emc                  9472  1
-dm_multipath           22152  3 dm_round_robin,dm_emc
-dm_mod                 57936  9 dm_multipath
 
-# multipath -d v4 (after starting the config script!)
-sda: checker msg is "emc_clariion_checker: Path not correctly configured
-for failover"
-sde: checker msg is "emc_clariion_checker: Path not correctly configured
-for failover"
+                      Eighth Real-Time Linux Workshop
 
-# multipath -ll (after starting the config script!)
-sda: checker msg is "emc_clariion_checker: Path not correctly configured
-for failover"
-sde: checker msg is "emc_clariion_checker: Path not correctly configured
-for failover"
-350060160b02217df50060160b02217df
-[size=3D1 GB][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D3][enabled]
- \_ 0:0:2:0 sdc 8:32  [failed][ready]
- \_ 0:0:3:0 sdd 8:48  [failed][ready]
- \_ 1:0:1:0 sdf 8:80  [failed][ready]
-350060160b022151c50060160b022151c
-[size=3D1 GB][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D3][enabled]
- \_ 0:0:1:0 sdb 8:16  [failed][ready]
- \_ 1:0:2:0 sdg 8:96  [failed][ready]
- \_ 1:0:3:0 sdh 8:112 [failed][ready]
-san2 (360060160a1f4160072ee88ba1208db11)
-[size=3D50 GB][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D0][active]
- \_ 1:0:0:0 sde 8:64  [active][faulty]
-san1 (3600601608d1e170090af86321308db11)
-[size=3D50 GB][features=3D1 queue_if_no_path][hwhandler=3D1 emc]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:0:0 sda 8:0   [active][faulty]
+                            October 12-15, 2006
+                         Lanzhou University - SISE
+                          Tianshui South Road 222
+                           Lanzhou, Gansu 730000
+                                 P.R.China
 
-# dmesg (after starting the config script!)
-device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-devel@redhat.com
-dm-netlink version 0.0.2 loaded
-device-mapper: dm-multipath version 1.0.4 loaded
-device-mapper: dm-emc version 0.0.3 loaded
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-round-robin version 1.0.0 loaded
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
-end_request: I/O error, dev sdh, sector 2097024
-device-mapper: dm-multipath: Failing path 8:112.
-end_request: I/O error, dev sdg, sector 2097024
-device-mapper: dm-multipath: Failing path 8:96.
-end_request: I/O error, dev sdb, sector 2097024
-device-mapper: dm-multipath: Failing path 8:16.
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
-end_request: I/O error, dev sdf, sector 2097024
-device-mapper: dm-multipath: Failing path 8:80.
-end_request: I/O error, dev sdd, sector 2097024
-device-mapper: dm-multipath: Failing path 8:48.
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-end_request: I/O error, dev sdc, sector 2097024
-device-mapper: dm-multipath: Failing path 8:32.
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
 
-# dmsetup table
-350060160b02217df50060160b02217df: 0 2097152 multipath 1
-queue_if_no_path 1 emc 1 1 round-robin 0 3 1 8:32 1000 8:48 1000 8:80
-1000
-350060160b022151c50060160b022151c: 0 2097152 multipath 1
-queue_if_no_path 1 emc 1 1 round-robin 0 3 1 8:16 1000 8:96 1000 8:112
-1000
-san2: 0 104857600 multipath 1 queue_if_no_path 1 emc 1 1 round-robin 0 1
-1 8:64 1000
-san1: 0 104857600 multipath 1 queue_if_no_path 1 emc 1 1 round-robin 0 1
-1 8:0 1000
+  General
+
+   Following  the  meetings  of  developers  and  users at the previous 7
+   successful  real-time Linux workshops held in Vienna, Orlando, Milano,
+   Boston,  and  Valencia, Singapore, Lille, the Real-Time Linux Workshop
+   for  2006  will  come back to Asia again, to be held at the School for
+   Information  Science  and  Engineering, Lanzhou University, in Lanzhou
+   China.
+
+   Embedded  and  real-time Linux is rapidly gaining traction in the Asia
+   Pacific  region.  Embedded  systems  in  both  automation/control  and
+   entertainment moving to 32/64bit systems, opening the door for the use
+   of  full  featured  OS  like  GNU/Linux  on  COTS  based systems. With
+   real-time  capabilities being a common demand for embedded systems the
+   soft  and  hard  real-time  variants are an important extension to the
+   versatile GNU/Linux GPOS.
+
+   Authors  are  invited  to  submit  original  work dealing with general
+   topics  related  to  real-time  Linux  research,  experiments and case
+   studies,  as  well  as issues of integration of real-time and embedded
+   Linux.  A  special focus will be on industrial case studies. Topics of
+   interest include, but are not limited to:
+
+     * Modifications and variants of the GNU/Linux operating system
+       extending its real-time capabilities,
+     * Contributions to real-time Linux variants, drivers and extensions,
+     * User-mode real-time concepts, implementation and experience,
+     * Real-time Linux applications, in academia, research and industry,
+     * Work in progress reports, covering recent developments,
+     * Educational material on real-time Linux,
+     * Tools for embedding Linux or real-time Linux and embedded
+       real-time Linux applications,
+     * RTOS core concepts, RT-safe synchronization mechanisms,
+     * RT-safe interaction of RT and non RT components,
+     * IPC mechanisms in RTOS,
+     * Analysis and Benchmarking methods and results of 
+       real-time GNU/Linux variants,
+     * Debugging techniques and tools, both for code and temporal
+       debugging of core RTOS components, drivers and real-time
+       applications,
+     * Real-time related extensions to development environments.
+  
+  Further information:
+ 
+  EN: http://www.realtimelinuxfoundation.org/events/rtlws-2006/ws.html 
+  CN: http://dslab.lzu.edu.cn/rtlws8/index.html
+
+  Awarded papers
+
+  The  Programme Committee  will award a best paper in the category Real-
+  Time Systems Theory.  This best paper will be invited  for  publication 
+  to the Real-Time Systems Journal, RTSJ. 
+  
+  The  Programme Committee will award a best paper in the category Real-
+  Time Systems Application. This best paper will be invited for publication 
+  to the Dr Dobbs Journal. Moreover, the publication of the other papers in
+  a special issue of Dr Dobbs Journal is in discussion. 
+
+  Abstract submission
+
+  In  order register an abstract, please go to:
+  http://www.realtimelinuxfoundation.org/rtlf/register-abstract.html
+
+  Venue
+
+  Lanzhou University Information Building, School of Information Science
+  and Engineering, Laznhou University, http://www.lzu.edu.cn/.
+
+  Registration
+
+  In  order  to  participate  to  the  workshop,  please register on the
+  registration page at:
+  http://www.realtimelinuxfoundation.org/rtlf/register-participant.html
+
+  Accommodation
+
+  Please refer to the Lanzhou hotel page for accomodation at
+  http://dslab.lzu.edu.cn/rtlws8/hotels/hotels.htm
+
+  Travel information
+
+  For travel information and directions how to get to Lanzhou from an 
+  international airport in China please refer to:
+  http://www.realtimelinuxfoundation.org/events/rtlws-2006/
+
+  Important dates
+
+  August    28:  Abstract submission
+  September 15:  Notification of acceptance
+  September 29:  Final paper
+
+  Pannel Participants:
+
+     o Roberto Bucher - Scuola Universitaria Professionale della Svizzera
+       Italiana, Switzerland, RTAI/ADEOS/RTAI-Lab.
+
+     o Alfons Crespo Lorente - University of Valenica, Spain,Departament
+       d'Informtica de Sistemes i Computadors, XtratuM.
+
+     o Herman Haertig - Technical University Dresden, Germany,Institute for
+       System Architecture, L4/Fiasco/L4Linux.
+
+     o Nicholas Mc Guire - Lanzhou University, P.R. China, Distributed and
+       Embedded Systems Lab, RTLinux/GPL.
+
+     o Douglas Niehaus - University of Kansas, USA, Information and
+       Telecommunication Technology Center, RT-preempt.
+
+  Organization committee:
+
+     * Prof. Li LIAN (Co-Chair), (SISE, Lanzhou University, CHINA)
+     * Xiaoping ZHANG, LZU, CHINA
+     * Jiming WANG, PKU, CHINA
+     * Zhibing LI, ECNU, China
+     * Prof.  Nicholas  MCGUIRE  (Co-Chair),  Real  Time Linux Foundation
+       (RTLF)
+     * Dr. Peter WURMSDOBLER, Real Time Linux Foundation (RTLF)
+     * Dr.  Qingguo  ZHOU, (Distributed and Embedded Systems Lab, Lanzhou
+       University, CHINA)
+
+  Program committee:
+
+    * Prof. Li Xing (Co-Chair), (Tsinghua University, CHINA)
+     * Dr.  Zhang  Yunquan,  (Institute  of  Software, Chinese Academy of
+       Science, CHINA)
+     * Dr. Chen Yu, (Tsinghua University, CHINA)
+     * Dr. Chen Maoke, (Tsinghua University, CHINA)
+     * Dr. Yu Guanghui, (Dalian University of Techonolgy, CHINA)
+     * Prof.   Dr.   Paolo   Mantegazza,   (Dipartimento   di  Ingegneria
+       Aerospaziale, ITALY)
+     * Prof.  Dr.  Bernhard  Zagar,  (Johannes  Kepler  Universitt Linz,
+       AUSTRIA)
+     * Prof.   Dr.   Hermann  Hrtig,  (Technische  Universitt  Dresden,
+       Fakultt Informatik, GERMANY)
+     * Prof.  Tei-Wei  Kuo,  (National  Taiwan  University, Department of
+       Computer Science and Information Engineering,TAIWAN)
+     * Anthony Skjellum, (Mississippi State University, USA)
+     * Ing. Pavel Pisa, (Czech Technical University, CZECH REPUBLIC)
+     * Prof. Alfons Crespo, (Universidad Politcnica de Valencia, SPAIN)
+     * Dr. Qingguo Zhou, (Lanzhou University, CHINA)
+     * PhD. Jaesoon Choi, (National Cancer Center, KOREA)
+     * Prof. Douglas Niehaus, (Kansas University, USA)
+     * Dr. Michael Hohmuth, (Technische Universitt Dresden, GERMANY)
+     * Prof.  Thambipillai Srikanthan, (Nanyang Technological University,
+       SINGAPORE)
+     * Zhengting He, (University of Texas, USA)
+     * Martin Terbuc, (Universitz of Maribor, SLOVENIA)
+     * Yoshinori Sato, (the H8/300 project, JAPAN)
+     * Yuqing Lan, (China Standard SoftwareCo.,LTD, CHINA)
+     * Dr. Peter Wurmsdobler, (Real Time Linux Foundation, USA)
+     * Prof. Nicholas Mc Guire (Co-Chair), (Lanzhou University, CHINA)
+
+  Workshop organizers:
+
+     * School  for  Information  Science and Engineering (SISE) , Lanzhou
+       University , CHINA
+     * IBM China, Xi'an Branch , China
+     * Haag Embedded Systems, Austira
+
+
+Peter Wurmsdobler <peter@wurmsdobler.org>
+Nicholas Mc Guire <mcguire@lzu.edu.cn>
+Zhou Qingguo <zhouqg@lzu.edu.cn>
+
