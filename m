@@ -1,8 +1,7 @@
-From: "Jeff Gibson" <jgibson@spscommerce.com>
-Subject: RE: Bug in multipath detecting devices
-Date: Mon, 31 Jul 2006 18:14:08 -0500
-Message-ID: <E59516884AA0B041BCB80771B771498336519B@lumbergh.spscommerce.com>
-References: <1154387006.29739.24.camel@localhost.localdomain>
+From: "Peter Koutoupis" <Peter_Koutoupis@us.xyratex.com>
+Subject: aliases as raw devices......
+Date: Fri, 28 Jul 2006 14:16:30 -0700
+Message-ID: <1121230D3E3B6B4E9162069832D90A641BBF78@XYUS-EX22.xyus.xyratex.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -10,7 +9,6 @@ Content-Type: text/plain;
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <1154387006.29739.24.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,63 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@free.fr>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-The need is Oracle.  We're running an Oracle RAC configuration which
-needs the device numbers for it's raw partitions and especially for
-ASMlib.  If the device numbers change very bad things could happen.
-Since multipath is probably used more for enterprise applications I
-would think this would be a concern.=20
+All,
 
-I don't understand what you mean about the names being static if they
-start pointing to different devices. =20
+Using Redhat Advanced Server 4 Update 3 and the
+device-mapper/multipath-tools native to it
+(device-mapper-1.02.02-3.RHEL4 +
+device-mapper-multipath-0.4.5-12.0.RHEL4), we have a failover
+configuration of however many raw devices sorted by their WWID.  An
+alias of both dm-x and the WWID number is given to that one LD of many
+LUN mapping.  Let us say I have:
+/dev/sda
+/dev/sdb
+/dev/sdc
+/dev/sdd
+All being different LUN mappings of the same LD and assigned the alias
+of dm-0.  I can obviously write to the raw device of /dev/sda or
+/dev/sdb and so on but I am unable to write to the raw device of
+/dev/dm-0.  Actually to get into more detail..... dd writes to dm-0 just
+fine but our own coded I/O read/write utility as an issue with ioctl
+statting the geometry to the alias to the raw device.
 
------Original Message-----
-From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
-Sent: Monday, July 31, 2006 6:03 PM
-To: Jeff Gibson
-Cc: dm-devel@redhat.com
-Subject: Re: Bug in multipath detecting devices
+Oictl_status =3D ioctl(fd, HDIO_GETGEO, &disk_geometry_info); //part of
+source
 
+The IO utility comes back saying:
 
-> It seems that if you have more than 26 disks/luns it will detect sdaa=20
-> before it detects sdb (sda is the onboard raid & is blacklisted).  The
+HDIO_GETGEO error number 25
 
-> result is that the major/minor numbers in /dev/mapper get out of order
-
-> with the disks presented to the system.  For example:
->=20
-Yes.
-
-Nobody claimed mapper devices numbers are static nor even predictible.
-But their names really are.
-
-Actually, you shouldn't trust Linux device number at all : the dynamic
-device numbering idea still has fans amongst kernel developpers, I guess
-;)
-
-
-> The major problem with this is that if I add another disk/lun in the=20
-> future sdaa will change to another disk.  This is because sdaa is on=20
-> the second port of the qlogic card and gets detected as a later device
-
-> than before.  When multipath comes along it creates the device in=20
-> /dev/mapper that sdaa is a member of before sdb's device is created. =20
-> As a result the multipath devices aren't in the same sequnce as the=20
-> devices that the OS detects (sdb, sdc, etc).  It would be better if=20
-> sdb was always detected before sdaa.  However, I don't see a way to do
-
-> that in /etc/multipath.conf without blacklisting all of the sda*
-drives.
-> Another option would be to have a user-configurable scan order, which=20
-> I don't think exists (correct me if I'm wrong).
->=20
-The multipath assembly walks the device list as show by "ls
-/sys/block/", ie alphabetically.
-
-I still don't see the need to do it differently.
+To stat a dm device what parameter would be most appropriate for ioctl
+to pass?
 
 Regards,
-cvaroqui
+
+Peter Koutoupis
+Systems Engineer
+Xyratex International, Inc.
+1804 Centre Point Circle
+Suite 112
+Naperville, IL 60563 USA
+(630)364-7656
