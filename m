@@ -1,14 +1,13 @@
-From: Ed Wilts <ewilts@ewilts.org>
-Subject: Re: not all paths working at boot
-Date: Thu, 3 Aug 2006 12:29:25 -0500
-Message-ID: <20060803172925.GB6204@www.ewilts.org>
-References: <20060803135447.GE15820@sanger.ac.uk>
+From: David Wysochanski <davidw@netapp.com>
+Subject: [PATCH] Update pp_netapp callout - increase ioctl
+	timeout and return 0 when ioctls fail
+Date: Thu, 03 Aug 2006 14:00:21 -0400
+Message-ID: <1154628021.1474.6.camel@davidw-sles10.rtp.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20060803135447.GE15820@sanger.ac.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: clairek@netapp.com, marting@netapp.com, "Nair, Vinod K" <nvinod@netapp.com>, shenoy@netapp.com
 List-Id: dm-devel.ids
 
-On Thu, Aug 03, 2006 at 02:54:47PM +0100, Dave Holland wrote:
-> I have a problem with multipath-tools 0.4.7 (I also tried the latest
-> "git" version) running on Debian (mix of stable/unstable), kernel
-> 2.6.17-1-amd64-k8, libdevmapper 1.02.07-1, udev 0.093-1. The machine is
-> a HP DL385 with QLA2312 FC card.
-> 
-> Basically, at boot time, multipath does not recognise all the paths. The
-> underlying LUNs are visible, the mid-layer allocates /dev/sd* device
-> names, but not all the paths are not used:
-> 
-> newftp1b:~# lsscsi -d | grep ':1]'
-> [0:0:0:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sda[8:0]
-> [0:0:1:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sdi[8:128]
-> [1:0:0:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sdq[65:0]
-> [1:0:1:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sdy[65:128]
+This patch against the latest git tree fixes a couple minor
+bugs in the Netapp priority callout:
+- increase the ioctl timeout from 30 to 60 
+- return 0 for priority value when ioctls fail
 
-The EVAs are strange beasts...  You are running an EVA5000 with firmware
-3.028.  That makes it an active/passive controller.  In addition,
-although each HSV controller in the EVA has 2 paths to each fabric, only
-1 path is actually ever used and the other is there in case the first
-fails.   So...your storage is really available on only 1 of the 4 paths.
 
-My personal solution to the EVAs on Linux is to just use the qlogic
-failover driver.  It just works.  That's not to say that there isn't a
-problem in the multipath software - I'm just saying that you don't need
-the multipath suite to make stuff work (in this case).
+Signed-off-by: Dave Wysochanski <davidw@netapp.com>
+Signed-off-by: Claire Kraft <ckraft@netapp.com>
 
-        .../Ed
-
--- 
-Ed Wilts, RHCE
-Mounds View, MN, USA
-mailto:ewilts@ewilts.org
-Member #1, Red Hat Community Ambassador Program
+--- multipath-tools-git/path_priority/pp_netapp/pp_netapp.c	2005-12-02 17:40:39.000000000 -0500
++++ multipath-tools-patch/path_priority/pp_netapp/pp_netapp.c	2006-08-03 13:51:39.177207000 -0400
+@@ -29,7 +29,7 @@
+ #define INQUIRY_CMDLEN	6
+ #define DEFAULT_PRIO	10
+ #define RESULTS_MAX	256
+-#define SG_TIMEOUT	30000
++#define SG_TIMEOUT	60000
+ 
+ 
+ static void dump_cdb(unsigned char *cdb, int size)
+@@ -209,7 +209,7 @@ static int netapp_prio(const char *dev)
+ 
+ 	memset(&results, 0, sizeof (results));
+ 	rc = send_gva(dev, 0x41, results, &results_size);
+-	if (rc == 0) {
++	if (rc >= 0) {
+ 		tot_len = results[0] << 24 | results[1] << 16 |
+ 			  results[2] << 8 | results[3];
+ 		if (tot_len <= 8) {
+@@ -229,12 +229,16 @@ static int netapp_prio(const char *dev)
+ 			is_iscsi_hardware = 1;
+ 			goto prio_select;
+ 		}
++	} else {
++		return 0;
+ 	}
+ 	
+  try_fcp_proxy:	
+ 	rc = get_proxy(dev);
+ 	if (rc >= 0) {
+ 		is_proxy = rc;
++	} else {
++		return 0;
+ 	}
+ 
+  prio_select:
