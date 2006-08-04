@@ -1,16 +1,14 @@
-From: Ed Wilts <ewilts@ewilts.org>
-Subject: Re: not all paths working at boot
-Date: Thu, 3 Aug 2006 16:02:52 -0500
-Message-ID: <20060803210252.GB9952@www.ewilts.org>
-References: <20060803135447.GE15820@sanger.ac.uk>
-	<20060803172925.GB6204@www.ewilts.org>
-	<1154634091.3072.20.camel@gator.sc.steeleye.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: multipath-tools - checker for DDN S2A8500
+Date: Fri, 04 Aug 2006 08:41:44 +0200
+Message-ID: <44D2EC28.4030502@suse.de>
+References: <44C75AC0.1030905@ext.bull.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1154634091.3072.20.camel@gator.sc.steeleye.com>
+In-Reply-To: <44C75AC0.1030905@ext.bull.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,60 +19,181 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: =?ISO-8859-1?Q?Ludovic_Fran=E7ois?= <lfrancois@datadirectnet.com>, Alain Moulle <Alain.Moulle@bull.net>, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-On Thu, Aug 03, 2006 at 03:41:31PM -0400, Eddie Williams wrote:
-> 
-> If you can, upgrade to 4.004 firmware.  This makes the EVA active/active
-> and perhaps will resolve your problems.  It definitely makes it work
-> better!
+Frederic TEMPORELLI wrote:
+> Hello,
+>=20
+>=20
+> When using multipath-tools 0.4.7, I would like to reports that DDN=20
+> S2A8500 disk array reports a wrong status whith 'readsector0' checker.=20
+> 'directio' seems to be the right checker for such storage system (see=20
+> following logs).
+> Can you update hwtable.c in this way ?
+>=20
+>=20
+> multipathd logs when using 'readsector0':
+>=20
+> [root@iotiger2 ~]# multipathd -d -v3
+> Jul 26 10:53:59 | --------start up--------
+> Jul 26 10:53:59 | read /etc/multipath.conf
+> Jul 26 10:53:59 | dm-0: blacklisted
+> Jul 26 10:53:59 | dm-1: blacklisted
+> Jul 26 10:53:59 | dm-2: blacklisted
+> Jul 26 10:53:59 | dm-3: blacklisted
+> Jul 26 10:53:59 | hda: blacklisted
+> Jul 26 10:53:59 | loop0: blacklisted
+> Jul 26 10:53:59 | loop1: blacklisted
+> Jul 26 10:53:59 | loop2: blacklisted
+> Jul 26 10:53:59 | loop3: blacklisted
+> Jul 26 10:53:59 | loop4: blacklisted
+> Jul 26 10:53:59 | loop5: blacklisted
+> Jul 26 10:53:59 | loop6: blacklisted
+> Jul 26 10:53:59 | loop7: blacklisted
+> Jul 26 10:53:59 | ram0: blacklisted
+> Jul 26 10:53:59 | ram1: blacklisted
+> Jul 26 10:53:59 | ram2: blacklisted
+> ...
+> Jul 26 10:53:59 | sdc: not found in pathvec
+> Jul 26 10:53:59 | sdc: mask =3D 0x1f
+> Jul 26 10:53:59 | sdc: bus =3D 1
+> Jul 26 10:53:59 | sdc: dev_t =3D 8:32
+> Jul 26 10:53:59 | sdc: size =3D 571416576
+> Jul 26 10:53:59 | sdc: vendor =3D DDN
+> Jul 26 10:53:59 | sdc: product =3D S2A 8500
+> Jul 26 10:53:59 | sdc: rev =3D 5.22
+> Jul 26 10:53:59 | sdc: h:b:t:l =3D 4:0:0:0
+> Jul 26 10:53:59 | sdc: tgt_node_name =3D 0x20000001ff0302a8
+> Jul 26 10:53:59 | sdc: serial =3D
+> Jul 26 10:53:59 | sdc: path checker =3D readsector0 (config file defaul=
+t)
+> Jul 26 10:53:59 | sdc: state =3D 1
+> Jul 26 10:53:59 | sdc: checker msg is "readsector0 checker reports path=
+=20
+> is down"
+> Jul 26 10:53:59 | sdc: getuid =3D /sbin/scsi_id -g -u -s /block/%n (con=
+fig=20
+> file default)
+> Jul 26 10:53:59 | sdc: uid =3D 360001ff02002110102a8fe1c220f0100 (callo=
+ut)
+> Jul 26 10:53:59 | sdd: not found in pathvec
+> Jul 26 10:53:59 | sdd: mask =3D 0x1f
+> Jul 26 10:53:59 | sdd: bus =3D 1
+> Jul 26 10:53:59 | sdd: dev_t =3D 8:48
+> Jul 26 10:53:59 | sdd: size =3D 571416576
+> Jul 26 10:53:59 | sdd: vendor =3D DDN
+> Jul 26 10:53:59 | sdd: product =3D S2A 8500
+> Jul 26 10:53:59 | sdd: rev =3D 5.22
+> Jul 26 10:53:59 | sdd: h:b:t:l =3D 4:0:0:1
+> Jul 26 10:53:59 | sdd: tgt_node_name =3D 0x20000001ff0302a8
+> Jul 26 10:53:59 | sdd: serial =3D
+> Jul 26 10:53:59 | sdd: path checker =3D readsector0 (config file defaul=
+t)
+> Jul 26 10:53:59 | sdd: state =3D 1
+> Jul 26 10:53:59 | sdd: checker msg is "readsector0 checker reports path=
+=20
+> is down"
+> Jul 26 10:53:59 | sdd: getuid =3D /sbin/scsi_id -g -u -s /block/%n (con=
+fig=20
+> file default)
+> Jul 26 10:53:59 | sdd: uid =3D 360001ff02002110102a8fe20220f0300 (callo=
+ut)
+> Jul 26 10:53:59 | sde: not found in pathvec
+> ...
+>=20
+> then, multipathd logs when using 'directio':
+>=20
+> Jul 26 10:56:09 | --------start up--------
+> Jul 26 10:56:09 | read /etc/multipath.conf
+> Jul 26 10:56:09 | dm-0: blacklisted
+> Jul 26 10:56:09 | dm-1: blacklisted
+> Jul 26 10:56:09 | dm-2: blacklisted
+> Jul 26 10:56:09 | dm-3: blacklisted
+> Jul 26 10:56:09 | dm-4: blacklisted
+> Jul 26 10:56:09 | hda: blacklisted
+> Jul 26 10:56:09 | loop0: blacklisted
+> Jul 26 10:56:09 | loop1: blacklisted
+> Jul 26 10:56:09 | loop2: blacklisted
+> Jul 26 10:56:09 | loop3: blacklisted
+> Jul 26 10:56:09 | loop4: blacklisted
+> Jul 26 10:56:09 | loop5: blacklisted
+> Jul 26 10:56:09 | loop6: blacklisted
+> Jul 26 10:56:09 | loop7: blacklisted
+> Jul 26 10:56:09 | ram0: blacklisted
+> Jul 26 10:56:09 | ram1: blacklisted
+> Jul 26 10:56:09 | ram2: blacklisted
+> ...
+> Jul 26 10:56:09 | sdc: not found in pathvec
+> Jul 26 10:56:09 | sdc: mask =3D 0x1f
+> Jul 26 10:56:09 | sdc: bus =3D 1
+> Jul 26 10:56:09 | sdc: dev_t =3D 8:32
+> Jul 26 10:56:09 | sdc: size =3D 571416576
+> Jul 26 10:56:09 | sdc: vendor =3D DDN
+> Jul 26 10:56:09 | sdc: product =3D S2A 8500
+> Jul 26 10:56:09 | sdc: rev =3D 5.22
+> Jul 26 10:56:09 | sdc: h:b:t:l =3D 4:0:0:0
+> Jul 26 10:56:09 | sdc: tgt_node_name =3D 0x20000001ff0302a8
+> Jul 26 10:56:09 | sdc: serial =3D
+> Jul 26 10:56:09 | sdc: path checker =3D directio (config file default)
+> Jul 26 10:56:09 | sdc: state =3D 0
+> Jul 26 10:56:09 | sdc: getprio =3D /bin/true (config file default)
+> Jul 26 10:56:09 | sdc: prio =3D 0
+> Jul 26 10:56:09 | sdc: getuid =3D /sbin/scsi_id -g -u -s /block/%n (con=
+fig=20
+> file default)
+> Jul 26 10:56:09 | sdc: uid =3D 360001ff02002110102a8fe1c220f0100 (callo=
+ut)
+> Jul 26 10:56:09 | sdd: not found in pathvec
+> Jul 26 10:56:09 | sdd: mask =3D 0x1f
+> Jul 26 10:56:09 | sdd: bus =3D 1
+> Jul 26 10:56:09 | sdd: dev_t =3D 8:48
+> Jul 26 10:56:09 | sdd: size =3D 571416576
+> Jul 26 10:56:09 | sdd: vendor =3D DDN
+> Jul 26 10:56:09 | sdd: product =3D S2A 8500
+> Jul 26 10:56:09 | sdd: rev =3D 5.22
+> Jul 26 10:56:09 | sdd: h:b:t:l =3D 4:0:0:1
+> Jul 26 10:56:09 | sdd: tgt_node_name =3D 0x20000001ff0302a8
+> Jul 26 10:56:09 | sdd: serial =3D
+> Jul 26 10:56:09 | sdd: path checker =3D directio (config file default)
+> Jul 26 10:56:09 | sdd: state =3D 0
+> Jul 26 10:56:09 | sdd: getprio =3D /bin/true (config file default)
+> Jul 26 10:56:09 | sdd: prio =3D 0
+> Jul 26 10:56:09 | sdd: getuid =3D /sbin/scsi_id -g -u -s /block/%n (con=
+fig=20
+> file default)
+> Jul 26 10:56:09 | sdd: uid =3D 360001ff02002110102a8fe20220f0300 (callo=
+ut)
+> Jul 26 10:56:09 | sde: not found in pathvec
+> Jul 26 10:56:09 | sde: mask =3D 0x1f
+> Jul 26 10:56:09 | sde: bus =3D 1
+> Jul 26 10:56:09 | sde: dev_t =3D 8:64
+> Jul 26 10:56:09 | sde: size =3D 571416576
+> Jul 26 10:56:09 | sde: vendor =3D DDN
+> Jul 26 10:56:09 | sde: product =3D S2A 8500
+> Jul 26 10:56:09 | sde: rev =3D 5.22
+> Jul 26 10:56:09 | sde: h:b:t:l =3D 4:0:0:2
+> Jul 26 10:56:09 | sde: tgt_node_name =3D 0x20000001ff0302a8
+> Jul 26 10:56:09 | sde: serial =3D
+> Jul 26 10:56:09 | sde: path checker =3D directio (config file default)
+> Jul 26 10:56:09 | sde: state =3D 0
+> Jul 26 10:56:09 | sde: getprio =3D /bin/true (config file default)
+> Jul 26 10:56:09 | sde: prio =3D 0
+> Jul 26 10:56:09 | sde: getuid =3D /sbin/scsi_id -g -u -s /block/%n (con=
+fig=20
+> file default)
+> Jul 26 10:56:09 | sde: uid =3D 360001ff02002110102a8fe24220f0500 (callo=
+ut)
+> ...
+>=20
+Have you tested the 'tur' checker?
+I'd generally prefer that one as it doesn't require a disk read ...
 
-This is a *major* change that most customers are not doing because of
-the significance of it.  I'm not saying that it's a bad thing but this
-*MUST* be planned very, very carefully and even then, if it goes wrong,
-you have the potential to lose the frame since there is no roll-back.
+Cheers,
 
-        .../Ed
-> 
-> Eddie
-> On Thu, 2006-08-03 at 12:29 -0500, Ed Wilts wrote:
-> > On Thu, Aug 03, 2006 at 02:54:47PM +0100, Dave Holland wrote:
-> > > I have a problem with multipath-tools 0.4.7 (I also tried the latest
-> > > "git" version) running on Debian (mix of stable/unstable), kernel
-> > > 2.6.17-1-amd64-k8, libdevmapper 1.02.07-1, udev 0.093-1. The machine is
-> > > a HP DL385 with QLA2312 FC card.
-> > > 
-> > > Basically, at boot time, multipath does not recognise all the paths. The
-> > > underlying LUNs are visible, the mid-layer allocates /dev/sd* device
-> > > names, but not all the paths are not used:
-> > > 
-> > > newftp1b:~# lsscsi -d | grep ':1]'
-> > > [0:0:0:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sda[8:0]
-> > > [0:0:1:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sdi[8:128]
-> > > [1:0:0:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sdq[65:0]
-> > > [1:0:1:1]    disk    COMPAQ   HSV110 (C)COMPAQ 3028  /dev/sdy[65:128]
-> > 
-> > The EVAs are strange beasts...  You are running an EVA5000 with firmware
-> > 3.028.  That makes it an active/passive controller.  In addition,
-> > although each HSV controller in the EVA has 2 paths to each fabric, only
-> > 1 path is actually ever used and the other is there in case the first
-> > fails.   So...your storage is really available on only 1 of the 4 paths.
-> > 
-> > My personal solution to the EVAs on Linux is to just use the qlogic
-> > failover driver.  It just works.  That's not to say that there isn't a
-> > problem in the multipath software - I'm just saying that you don't need
-> > the multipath suite to make stuff work (in this case).
-> > 
-> >         .../Ed
-> > 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
--- 
-Ed Wilts, RHCE
-Mounds View, MN, USA
-mailto:ewilts@ewilts.org
-Member #1, Red Hat Community Ambassador Program
+Hannes
+--=20
+Dr. Hannes Reinecke			hare@suse.de
+SuSE Linux Products GmbH		S390 & zSeries
+Maxfeldstra=DFe 5				+49 911 74053 688
+90409 N=FCrnberg				http://www.suse.de
