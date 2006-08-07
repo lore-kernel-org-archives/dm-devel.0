@@ -1,10 +1,11 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: send 'change' uevent for device-mapper table resume
-Date: Sun, 13 Aug 2006 16:04:56 +0200
-Message-ID: <20060813140456.GA8170@vrfy.org>
+From: =?iso-8859-2?Q?Micha=B3_Miros=B3aw?= <mirq-linux@rere.qmqm.pl>
+Subject: [DM-MPATH] multipath_ctr() and friends - cleanup
+Date: Mon, 7 Aug 2006 16:14:06 +0200
+Message-ID: <20060807141406.GB27177@rere.qmqm.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,49 +17,89 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Alasdair,
-I'm not sure if Hannes already sent this, if not, please take this into
-your tree. As discussed at OLS, this is one step, to make udev's operation
-on dm devices more reliable.
+After initialising m->ti, there's no need to pass it in subsequent calls
+to static functions used for parsing parameters.
 
-Thanks,
-Kay
+This patch depends on my previous patch [DM-MPATH] BUG/OOPS fix.
 
+Signed-off-by: Micha=B3 Miros=B3aw <mirq-linux@rere.qmqm.pl>
 
-From: Hannes Reinecke <hare@suse.de>
-
-device-mapper: send 'change' uevent for device-mapper table resume
-
-Device-mapper tables are only ever usable after a 'resume'
-ioctl has been issued. But to know when this happens we need to
-generate an uevent to notify udev, so that it can take appropriate
-action.
-
-As discussed with agk and kay at OLS we should be sending 'change' events
-for resume; events on suspend don't give you anything interesting and indeed
-might lead to failures as any I/O on that table will be blocked anyway.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-Signed-off-by: Kay Sievers <kay.sievers@vrfy.org>
--- 
-
- dm.c |    2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index c99bf9f..93014c4 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1337,6 +1337,8 @@ int dm_resume(struct mapped_device *md)
- 
- 	dm_table_unplug_all(map);
- 
-+	kobject_uevent(&md->disk->kobj, KOBJ_CHANGE);
-+
- 	r = 0;
- 
- out:
+diff -urN linux-2.6.17.8-routes-esfq/drivers/md/dm-mpath.c linux-2.6.17.8=
+-routes-esfq-mq/drivers/md/dm-mpath.c
+--- linux-2.6.17.8-routes-esfq/drivers/md/dm-mpath.c	2006-07-05 18:29:10.=
+000000000 +0200
++++ linux-2.6.17.8-routes-esfq-mq/drivers/md/dm-mpath.c	2006-08-07 15:25:=
+07.000000000 +0200
+@@ -558,8 +558,7 @@
+ }
+=20
+ static struct priority_group *parse_priority_group(struct arg_set *as,
+-						   struct multipath *m,
+-						   struct dm_target *ti)
++						   struct multipath *m)
+ {
+ 	static struct param _params[] =3D {
+ 		{1, 1024, ESTR("invalid number of paths")},
+@@ -569,6 +568,7 @@
+ 	int r;
+ 	unsigned i, nr_selector_args, nr_params;
+ 	struct priority_group *pg;
++	struct dm_target *ti =3D m->ti;
+=20
+ 	if (as->argc < 2) {
+ 		as->argc =3D 0;
+@@ -625,12 +625,12 @@
+ 	return NULL;
+ }
+=20
+-static int parse_hw_handler(struct arg_set *as, struct multipath *m,
+-			    struct dm_target *ti)
++static int parse_hw_handler(struct arg_set *as, struct multipath *m)
+ {
+ 	int r;
+ 	struct hw_handler_type *hwht;
+ 	unsigned hw_argc;
++	struct dm_target *ti =3D m->ti;
+=20
+ 	static struct param _params[] =3D {
+ 		{0, 1024, ESTR("invalid number of hardware handler args")},
+@@ -662,11 +662,11 @@
+ 	return 0;
+ }
+=20
+-static int parse_features(struct arg_set *as, struct multipath *m,
+-			  struct dm_target *ti)
++static int parse_features(struct arg_set *as, struct multipath *m)
+ {
+ 	int r;
+ 	unsigned argc;
++	struct dm_target *ti =3D m->ti;
+=20
+ 	static struct param _params[] =3D {
+ 		{0, 1, ESTR("invalid number of feature args")},
+@@ -713,11 +713,11 @@
+=20
+ 	m->ti =3D ti;
+=20
+-	r =3D parse_features(&as, m, ti);
++	r =3D parse_features(&as, m);
+ 	if (r)
+ 		goto bad;
+=20
+-	r =3D parse_hw_handler(&as, m, ti);
++	r =3D parse_hw_handler(&as, m);
+ 	if (r)
+ 		goto bad;
+=20
+@@ -733,7 +733,7 @@
+ 	while (as.argc) {
+ 		struct priority_group *pg;
+=20
+-		pg =3D parse_priority_group(&as, m, ti);
++		pg =3D parse_priority_group(&as, m);
+ 		if (!pg) {
+ 			r =3D -EINVAL;
+ 			goto bad;
