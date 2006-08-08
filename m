@@ -1,8 +1,7 @@
 From: egoggin@emc.com
-Subject: disabling lock_fs call on DM_DEVICE_RESUME libdevmapper
-	ioctl
-Date: Tue, 8 Aug 2006 10:16:17 -0400
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1350@CORPUSMX40A.corp.emc.com>
+Subject: preventing block I/O to EMC CLARiiON LUNZ paths
+Date: Tue, 8 Aug 2006 10:22:45 -0400
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1351@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -22,38 +21,38 @@ List-Id: dm-devel.ids
 
 Christophe,
 
-This patch to dm_simplecmd of multipath-tools/libmultipath/devmapper.c will
-disable the use of lock_fs during I/O suspension while changing dm-multipath
-device mapper maps via the DM_DEVICE_RESUME ioctl of libdevmapper.
-
-Disabling lock_fs will result in not flushing I/O to the dm-multipath block
-device before changing the maps for the mapped device.  Flushing I/O at this
-time appears not only unnecessary for dm-multipath devices but causes some
-troublesome delays due to SCSI HBA driver target-side timeouts when these
-maps are changed as a result of paths coming and going while upgrading
-software (a non-disruptive ucode upgrade) on a storage system.
-
-As is the case for any change which is dependent on similar changes in
-libdevmapper and the kernel, this patch will introduce a dependency on
-libdevmapper and kernel.  Not sure which versions first had this support but
-at least libdevmapper 1.02.02 and linux kernel version 2.6.18-rc2 have the
-required support.
-
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index c0765ae..67c7740 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -105,6 +105,7 @@ dm_simplecmd (int task, const char *name
- 		goto out;
- 
- 	dm_task_no_open_count(dmt);
-+	dm_task_skip_lockfs(dmt);	/* for DM_DEVICE_RESUME */
- 
- 	r = dm_task_run (dmt);
- 
-@@ -183,6 +184,41 @@ out:
- }
+This patch simply reports a PATH_DOWN status for paths to an EMC CLARiiON
+LUNZ (or an unbound) block device since these paths cannot possibly be used
+to issue I/O to such a device.  In fact, allowing block I/O to a LUNZ
+dm-multipath device will cause the process to hang until the no_path_retry
+timeout is incurred.  This is not desirable.
 
 Thanks,
 
-Ed 
+Ed
+
+
+diff --git a/libcheckers/emc_clariion.c b/libcheckers/emc_clariion.c
+index 462117b..a883e3d 100644
+--- a/libcheckers/emc_clariion.c
++++ b/libcheckers/emc_clariion.c
+@@ -89,14 +89,11 @@ int emc_clariion(struct checker * c)
+ 		return PATH_SHAKY;
+ 	}
+ 
+-#if 0
+-	/* This is not actually an error as the failover to this group
+-	 * _would_ bind the path */
+-	if ( /* LUN should at least be bound somewhere */
+-		sense_buffer[4] != 0x00) {
+-		return PATH_UP;
++	if ( /* LUN should at least be bound somewhere and not be LUNZ */
++		sense_buffer[4] == 0x00) {
++		MSG(c, "emc_clariion_checker: Logical Unit is unbound or
+LUNZ");
++		return PATH_DOWN;
+ 	}
+-#endif	
+ 	
+ 	/*
+ 	 * store the LUN WWN there and compare that it indeed did not
