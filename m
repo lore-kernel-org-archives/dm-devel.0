@@ -1,12 +1,11 @@
-From: Antonello Piemonte <apiemont@eso.org>
-Subject: raw devices with multipathing and SUN Storedge 3511
-Date: Tue, 8 Aug 2006 11:00:50 +0200
-Message-ID: <200608081100.50317.apiemont@eso.org>
+From: =?iso-8859-2?Q?Micha=B3_Miros=B3aw?= <mirq-linux@rere.qmqm.pl>
+Subject: BUG/OOPS fix
+Date: Tue, 8 Aug 2006 13:32:27 +0200
+Message-ID: <20060808113227.GA26434@rere.qmqm.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,45 +18,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hello
+[Previous copy probably got into redhat.com's spambox]
 
-I have two questions:
+Fix BUG I tripped on while testing failover and multipathing.
 
-1) is it ok to use raw devices with device mapper and multipathing?
+BUG shows up on error path in multipath_ctr() when parse_priority_group()=
+ fails
+after returning at least once without error. The fix is to initialize m->=
+ti
+early - just after alloc()ing it.
 
-I have the following simple setup under RHEL4.3 (x86_64), e.g. one LUN
-exported from a SUNStoredge 3511 directly to the host which has two HBA,
-therefore I see the same LUN twice, as sdc and sdd:
+BUG: unable to handle kernel NULL pointer dereference at virtual address =
+00000000
+ printing eip:
+c027c3d2
+*pde =3D 00000000
+Oops: 0000 [#3]
+Modules linked in: qla2xxx ext3 jbd mbcache sg ide_cd cdrom floppy
+CPU:    0
+EIP:    0060:[<c027c3d2>]    Not tainted VLI
+EFLAGS: 00010202   (2.6.17.3 #1)
+EIP is at dm_put_device+0xf/0x3b
+eax: 00000001   ebx: ee4fcac0   ecx: 00000000   edx: ee4fcac0
+esi: ee4fc4e0   edi: ee4fc4e0   ebp: 00000000   esp: c5db3e78
+ds: 007b   es: 007b   ss: 0068
+Process multipathd (pid: 15912, threadinfo=3Dc5db2000 task=3Def485a90)
+Stack: ec4eda40 c02816bd ee4fc4c0 00000000 f7e89498 f883e0bc c02816f6 f7e=
+89480
+       f7e8948c c0281801 ffffffea f7e89480 f883e080 c0281ffe 00000001 000=
+00000
+       00000004 dfe9cab8 f7a693c0 f883e080 f883e0c0 ca4b99c0 c027c6ee 014=
+00000
+Call Trace:
+ <c02816bd> free_pgpaths+0x31/0x45  <c02816f6> free_priority_group+0x25/0=
+x2e
+ <c0281801> free_multipath+0x35/0x67  <c0281ffe> multipath_ctr+0x123/0x12=
+d
+ <c027c6ee> dm_table_add_target+0x11e/0x18b  <c027e5b4> populate_table+0x=
+8a/0xaf
+ <c027e62b> table_load+0x52/0xf9  <c027ec23> ctl_ioctl+0xca/0xfc
+ <c027e5d9> table_load+0x0/0xf9  <c0152146> do_ioctl+0x3e/0x43
+ <c0152360> vfs_ioctl+0x16c/0x178  <c01523b4> sys_ioctl+0x48/0x60
+ <c01029b3> syscall_call+0x7/0xb
+Code: 97 f0 00 00 00 89 c1 83 c9 01 80 e2 01 0f 44 c1 88 43 14 8b 04 24 5=
+9 5b 5e 5f 5d c3 53 89 c1 89 d3 ff 4a 08 0f 94 c0 84 c0 74 2a <8b> 01 8b =
+10 89 d8 e8 f6 fb ff ff 8b 03 8b 53 04 89 50 04 89 02
+EIP: [<c027c3d2>] dm_put_device+0xf/0x3b SS:ESP 0068:c5db3e78
 
-# multipath -l
-mpath2 (3600c0ff00000000009279811b3f44a00)
-[size=1862 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [active]
- \_ 1:0:0:0     sdc 8:32  [active][ready]
- \_ 2:0:0:0     sdd 8:48  [active][ready]
+Signed-off-by: Micha=B3 Miros=B3aw <mirq-linux@rere.qmqm.pl>
 
-I made 2 partitions on the mpath2 device and used kpartx to make is 
-visible to device mapper, e.g.
-
-# ll /dev/mpath/
-total 0
-lrwxrwxrwx  1 root root 7 Aug  7 17:50 mpath2 -> ../dm-0
-lrwxrwxrwx  1 root root 7 Aug  8 10:32 mpath2p1 -> ../dm-1
-lrwxrwxrwx  1 root root 7 Aug  8 10:32 mpath2p2 -> ../dm-2
-
-if I then proceed to asssigne raw devices, it seems to work
-# raw /dev/raw/raw2 /dev/dm-2
-/dev/raw/raw2:  bound to major 253, minor 2
-# raw -qa
-/dev/raw/raw2:  bound to major 253, minor 2
-
-is then suitable to use /dev/raw/raw2 with databases
-(namely sybase ASE 15)?
-
-2) second question: is the SUN Storedge 3511 an active/active array and if 
-not, do I need to worry about hardware handlers specific for it?
-
-many thanks for your help!
-antonello
+diff -urN linux-2.6.17.8-routes-esfq/drivers/md/dm-mpath.c linux-2.6.17.8=
+-routes-esfq-mq/drivers/md/dm-mpath.c
+--- linux-2.6.17.8-routes-esfq/drivers/md/dm-mpath.c	2006-07-05 18:29:10.=
+000000000 +0200
++++ linux-2.6.17.8-routes-esfq-mq/drivers/md/dm-mpath.c	2006-08-07 15:25:=
+07.000000000 +0200
+@@ -711,6 +711,8 @@
+ 		return -EINVAL;
+ 	}
+=20
++	m->ti =3D ti;
++
+ 	r =3D parse_features(&as, m, ti);
+ 	if (r)
+ 		goto bad;
+@@ -752,7 +754,6 @@
+ 	}
+=20
+ 	ti->private =3D m;
+-	m->ti =3D ti;
+=20
+ 	return 0;
