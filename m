@@ -1,14 +1,13 @@
-From: "Matthias Rudolph" <Matthias.Rudolph@hds.com>
-Subject: Re: Bug in multipath detecting devices
-Date: Wed, 9 Aug 2006 14:58:55 +0100
-Message-ID: <C67364BD62907640A033D1F4094CA7B7050F801C@UKSPKEVS101.corp.hds.com>
+From: =?iso-8859-2?Q?Micha=B3_Miros=B3aw?= <mirq-linux@rere.qmqm.pl>
+Subject: [PATCH] dm-mpath: kmalloc+memset -> kzalloc
+Date: Wed, 9 Aug 2006 17:17:46 +0200
+Message-ID: <20060809151746.GA31694@rere.qmqm.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain; charset=iso-8859-2
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,79 +18,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: jgibson@spscommerce.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Jeff,
+Use kzalloc() instead of kmalloc() + memset().
 
-in Oracle Clusterware, RAC and ASM you have to use RAW devices - as you
-mentioned. In Linux you have to bind the SCSI block devices to a RAW
-device.
+Signed-off-by: Micha=B3 Miros=B3aw <mirq-linux@rere.qmqm.pl>
 
-In RedHat:
-# vi /etc/sysconfig/rawdevices
-/dev/raw/raw1 /dev/disk/by-name/1HITACHI_D60085320025
-/dev/raw/raw2 /dev/disk/by-name/1HITACHI_D60085320018
-
-In Suse:
-# vi /etc/raw
-raw1:disk/by-name/1HITACHI_D60085320025
-raw2:disk/by-name/1HITACHI_D60085320018
-
-After restarting the RAW subsystem you only work with /dev/raw/raw.*.
-The mapper device name is fixed and depends on the storage type, serial
-number and storage internal lun number. With the binding also the RAW
-device names are fixed. In Oracle ASM you enter /dev/raw/raw.* and the
-complete path is binded.
-
-If you use the Oracle ASMlib (easy to install) you do not need to bind
-the RAW devices.
-Example:
-
-# multipath -ll
-1HITACHI_D60H02610121
-[size=3D1 GB][features=3D"0"][hwhandler=3D"0"]
-\_ round-robin 0 [prio=3D1][active]
- \_ 1:0:1:1 sdj  8:144  [active][ready]
-\_ round-robin 0 [enabled]
- \_ 2:0:1:1 sdan 66:112 [active][ready]
-
-# /etc/init.d/oracleasm createdisk DISK1
-/dev/disk/by-name/1HITACHI_D60H02660121
-Marking disk "/dev/disk/by-name/1HITACHI_D60H02660121" as an ASM disk:
-done
-
-# /etc/init.d/oracleasm listdisks
-DISK1
-
-# /etc/init.d/oracleasm querydisk DISK1
-Disk "DISK1" is a valid ASM disk on device [253, 6]
-
-SHUTDOWN the server
-Exchange the LUN number with another LUN for an different scanning
-sequence.
-BOOT the server
-Now other major and minor numbers are used:
-
-# multipath -l
-1HITACHI_D60H02610121
-[size=3D1 GB][features=3D"0"][hwhandler=3D"0"]
-\_ round-robin 0 [active]
- \_ 1:0:1:0 sdi  8:128  [active][ready]
-\_ round-robin 0 [enabled]
- \_ 2:0:1:0 sdam 66:96  [active][ready]
-
-# /etc/init.d/oracleasm listdisks
-DISK1
-
-# /etc/init.d/oracleasm querydisk DISK1
-Disk "DISK1" is a valid ASM disk on device [8, 32]
-
-# /etc/init.d/oracleasm querydisk
-/dev/disk/by-name/1HITACHI_D60H02660121
-Disk "/dev/disk/by-name/1HITACHI_D60H02660121" is marked an ASM disk
-with the label "DISK1"
-
-No problem for ASM to find the correct disk.
-
-Regards, Matthias
+diff -urN linux-2.6.17.8-routes-esfq-mq/drivers/md/dm-mpath.c linux-fixes=
+/drivers/md/dm-mpath.c
+--- linux-2.6.17.8-routes-esfq-mq/drivers/md/dm-mpath.c	2006-08-07 15:25:=
+07.000000000 +0200
++++ linux-fixes/drivers/md/dm-mpath.c	2006-08-09 17:05:48.000000000 +0200
+@@ -113,12 +113,10 @@
+=20
+ static struct pgpath *alloc_pgpath(void)
+ {
+-	struct pgpath *pgpath =3D kmalloc(sizeof(*pgpath), GFP_KERNEL);
++	struct pgpath *pgpath =3D kzalloc(sizeof(*pgpath), GFP_KERNEL);
+=20
+-	if (pgpath) {
+-		memset(pgpath, 0, sizeof(*pgpath));
++	if (pgpath)
+ 		pgpath->path.is_active =3D 1;
+-	}
+=20
+ 	return pgpath;
+ }
+@@ -132,12 +130,10 @@
+ {
+ 	struct priority_group *pg;
+=20
+-	pg =3D kmalloc(sizeof(*pg), GFP_KERNEL);
+-	if (!pg)
+-		return NULL;
++	pg =3D kzalloc(sizeof(*pg), GFP_KERNEL);
+=20
+-	memset(pg, 0, sizeof(*pg));
+-	INIT_LIST_HEAD(&pg->pgpaths);
++	if (pg)
++		INIT_LIST_HEAD(&pg->pgpaths);
+=20
+ 	return pg;
+ }
+@@ -171,9 +167,8 @@
+ {
+ 	struct multipath *m;
+=20
+-	m =3D kmalloc(sizeof(*m), GFP_KERNEL);
++	m =3D kzalloc(sizeof(*m), GFP_KERNEL);
+ 	if (m) {
+-		memset(m, 0, sizeof(*m));
+ 		INIT_LIST_HEAD(&m->priority_groups);
+ 		spin_lock_init(&m->lock);
+ 		m->queue_io =3D 1;
