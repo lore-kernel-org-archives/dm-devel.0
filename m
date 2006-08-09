@@ -1,14 +1,14 @@
-From: "Darrick J. Wong" <djwong@us.ibm.com>
-Subject: Re: geometry of dm devices......
-Date: Tue, 08 Aug 2006 15:08:40 -0700
-Message-ID: <44D90B68.3010401@us.ibm.com>
-References: <1121230D3E3B6B4E9162069832D90A641BC0D2@XYUS-EX22.xyus.xyratex.com>
-Reply-To: "Darrick J. Wong" <djwong@us.ibm.com>,
-	device-mapper development <dm-devel@redhat.com>
+From: "Matthias Rudolph" <Matthias.Rudolph@hds.com>
+Subject: Re: Bug in multipath detecting devices
+Date: Wed, 9 Aug 2006 14:58:55 +0100
+Message-ID: <C67364BD62907640A033D1F4094CA7B7050F801C@UKSPKEVS101.corp.hds.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0995285102=="
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1121230D3E3B6B4E9162069832D90A641BC0D2@XYUS-EX22.xyus.xyratex.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,62 +18,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: jgibson@spscommerce.com
 List-Id: dm-devel.ids
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---===============0995285102==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="------------enig86204B1D9ACBF0609650DAC0"
+Hi Jeff,
 
-This is an OpenPGP/MIME signed message (RFC 2440 and 3156)
---------------enig86204B1D9ACBF0609650DAC0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+in Oracle Clusterware, RAC and ASM you have to use RAW devices - as you
+mentioned. In Linux you have to bind the SCSI block devices to a RAW
+device.
 
-Peter Koutoupis wrote:
+In RedHat:
+# vi /etc/sysconfig/rawdevices
+/dev/raw/raw1 /dev/disk/by-name/1HITACHI_D60085320025
+/dev/raw/raw2 /dev/disk/by-name/1HITACHI_D60085320018
 
->> I understand the HDIO_GETGEO is an unsupported feature to dm=20
->> devices....but under normal practices how would a normal end-user be=20
->> able to obtain such geometry from a raw dm device?  I have read of=20
+In Suse:
+# vi /etc/raw
+raw1:disk/by-name/1HITACHI_D60085320025
+raw2:disk/by-name/1HITACHI_D60085320018
 
-Wow, I'm late to the game.  If your kernel/software are new enough, you
-can set a dm device's geometry via the DM_DEV_SET_GEOMETRY_CMD ioctl.
-iirc, the userland equivalent is:
+After restarting the RAW subsystem you only work with /dev/raw/raw.*.
+The mapper device name is fixed and depends on the storage type, serial
+number and storage internal lun number. With the binding also the RAW
+device names are fixed. In Oracle ASM you enter /dev/raw/raw.* and the
+complete path is binded.
 
-# dmsetup setgeometry /dev/foo cyl head spt start
+If you use the Oracle ASMlib (easy to install) you do not need to bind
+the RAW devices.
+Example:
 
-=2E..after which HDIO_GETGEO should return nonzero values.
+# multipath -ll
+1HITACHI_D60H02610121
+[size=3D1 GB][features=3D"0"][hwhandler=3D"0"]
+\_ round-robin 0 [prio=3D1][active]
+ \_ 1:0:1:1 sdj  8:144  [active][ready]
+\_ round-robin 0 [enabled]
+ \_ 2:0:1:1 sdan 66:112 [active][ready]
 
-You'll need kernel 2.6.16+ and I think the requisite version of dmsetup
-is 1.02.  And to my (very limited) knowledge of multipath, geometry is
-not set up automatically.
+# /etc/init.d/oracleasm createdisk DISK1
+/dev/disk/by-name/1HITACHI_D60H02660121
+Marking disk "/dev/disk/by-name/1HITACHI_D60H02660121" as an ASM disk:
+done
 
---D
+# /etc/init.d/oracleasm listdisks
+DISK1
 
+# /etc/init.d/oracleasm querydisk DISK1
+Disk "DISK1" is a valid ASM disk on device [253, 6]
 
---------------enig86204B1D9ACBF0609650DAC0
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+SHUTDOWN the server
+Exchange the LUN number with another LUN for an different scanning
+sequence.
+BOOT the server
+Now other major and minor numbers are used:
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2.2 (GNU/Linux)
+# multipath -l
+1HITACHI_D60H02610121
+[size=3D1 GB][features=3D"0"][hwhandler=3D"0"]
+\_ round-robin 0 [active]
+ \_ 1:0:1:0 sdi  8:128  [active][ready]
+\_ round-robin 0 [enabled]
+ \_ 2:0:1:0 sdam 66:96  [active][ready]
 
-iD8DBQFE2Qtta6vRYYgWQuURAi//AJ0VA8rNEMAczSKTXOGfFVWcq9wTswCdG9I/
-WH9epT74B82SgF2dfl8dpIk=
-=5cMq
------END PGP SIGNATURE-----
+# /etc/init.d/oracleasm listdisks
+DISK1
 
---------------enig86204B1D9ACBF0609650DAC0--
+# /etc/init.d/oracleasm querydisk DISK1
+Disk "DISK1" is a valid ASM disk on device [8, 32]
 
+# /etc/init.d/oracleasm querydisk
+/dev/disk/by-name/1HITACHI_D60H02660121
+Disk "/dev/disk/by-name/1HITACHI_D60H02660121" is marked an ASM disk
+with the label "DISK1"
 
---===============0995285102==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+No problem for ASM to find the correct disk.
 
-
---===============0995285102==--
+Regards, Matthias
