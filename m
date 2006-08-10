@@ -1,12 +1,14 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: [PATCH and question]: dm-table should check for valid
-	queue
-Date: Thu, 10 Aug 2006 13:29:08 +0200
-Message-ID: <44DB1884.7070800@de.ibm.com>
+From: "Peter Koutoupis" <Peter_Koutoupis@us.xyratex.com>
+Subject: RE: geometry of dm devices......
+Date: Thu, 10 Aug 2006 04:38:17 -0700
+Message-ID: <1121230D3E3B6B4E9162069832D90A641BC10E@XYUS-EX22.xyus.xyratex.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------010404090004020206000002"
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,65 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "Darrick J. Wong" <djwong@us.ibm.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------010404090004020206000002
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
+Thanks Darrick,
 
-Hi,
-
-in some cases it is possible that bdev_get_queue() returns NULL. And
-there are some places where device-mapper just uses the returned pointer
-to call queue functions. The attached patch adds this to
-dm_table_unplug_all() and dm_table_flush_all(). I treated a device
-without a queue as sort of successfully flushed. Is this what would be
-expected?
-Same problem with dm_table_any_congested() which I didn't change, yet.
-This function should probably also check before using
-q->backing_dev_info. But what effect should a missing queue have? Same
-as device is congested or not or let the call fail somehow?
+I actually saw that in the source to build 1.02.08 but unfortunately it
+would be of no help in my situation.  You see I work in a storage/array
+test environment and as for dm, we must specifically work with the
+builds packaged with the releases of Redhat, Suse, etc.  I saw that
+SLES10 had a build of 1.02.xx but I can also see that it was prior to
+this new implementation.  We are unable to modify (unless required in a
+customer support scenario) what is packaged with these releases.  Thanks
+again.=20
 
 Regards,
-Stefan Bader
 
---------------010404090004020206000002
-Content-Type: text/plain;
- name="dm-table-checkreqq.diff"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm-table-checkreqq.diff"
+Peter
 
-diff -Nurp linux-RHEL4/drivers/md/dm-table.c linux-RHEL4-BTM/drivers/md/dm-table.c
---- linux-RHEL4/drivers/md/dm-table.c	2006-08-07 13:15:30.000000000 +0200
-+++ linux-RHEL4-BTM/drivers/md/dm-table.c	2005-10-06 15:34:15.000000000 +0200
-@@ -917,7 +917,7 @@ void dm_table_unplug_all(struct dm_table
- 		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
- 		request_queue_t *q = bdev_get_queue(dd->bdev);
- 
--		if (q && q->unplug_fn)
-+		if (q->unplug_fn)
- 			q->unplug_fn(q);
- 	}
- }
-@@ -932,9 +932,6 @@ int dm_table_flush_all(struct dm_table *
- 		request_queue_t *q = bdev_get_queue(dd->bdev);
- 		int err;
- 
--		if (!q)
--			continue;
--
- 		if (!q->issue_flush_fn)
- 			err = -EOPNOTSUPP;
- 		else
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Darrick J. Wong
+Sent: Tuesday, August 08, 2006 5:09 PM
+To: device-mapper development
+Subject: Re: [dm-devel] geometry of dm devices......
 
---------------010404090004020206000002
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Peter Koutoupis wrote:
 
+>> I understand the HDIO_GETGEO is an unsupported feature to dm=20
+>> devices....but under normal practices how would a normal end-user be=20
+>> able to obtain such geometry from a raw dm device?  I have read of
 
---------------010404090004020206000002--
+Wow, I'm late to the game.  If your kernel/software are new enough, you
+can set a dm device's geometry via the DM_DEV_SET_GEOMETRY_CMD ioctl.
+iirc, the userland equivalent is:
+
+# dmsetup setgeometry /dev/foo cyl head spt start
+
+...after which HDIO_GETGEO should return nonzero values.
+
+You'll need kernel 2.6.16+ and I think the requisite version of dmsetup
+is 1.02.  And to my (very limited) knowledge of multipath, geometry is
+not set up automatically.
+
+--D
