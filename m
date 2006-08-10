@@ -1,15 +1,12 @@
-From: "Haripriya S" <SHARIPRIYA@novell.com>
-Subject: snapshot scalability
-Date: Thu, 10 Aug 2006 04:46:29 -0600
-Message-ID: <44DB5C21.F25D.00B6.0@novell.com>
-References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
-	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
+From: Stefan Bader <Stefan.Bader@de.ibm.com>
+Subject: [PATCH and question]: dm-table should check for valid
+	queue
+Date: Thu, 10 Aug 2006 13:29:08 +0200
+Message-ID: <44DB1884.7070800@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------010404090004020206000002"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,21 +19,62 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
+--------------010404090004020206000002
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+
 Hi,
 
-A co-worker recently did some tests on DM snapshots using bonnie, and
-here is a rough summary of what he got as write throughput:
+in some cases it is possible that bdev_get_queue() returns NULL. And
+there are some places where device-mapper just uses the returned pointer
+to call queue functions. The attached patch adds this to
+dm_table_unplug_all() and dm_table_flush_all(). I treated a device
+without a queue as sort of successfully flushed. Is this what would be
+expected?
+Same problem with dm_table_any_congested() which I didn't change, yet.
+This function should probably also check before using
+q->backing_dev_info. But what effect should a missing queue have? Same
+as device is congested or not or let the call fail somehow?
 
-No Snapshots     - 373 MB/s
-One Snapshots   - 55 MB/s
-Two Snapshots  - 16 MB/s
-Four Snapshots  - 14 MB/s
-Eight Snapshots  - 6.5 MB/s
+Regards,
+Stefan Bader
 
-He is doing some more tests now to verify these results, but I wanted
-to quickly check with the dm snapshot community. Are there any current
-known scalability limits on snapshots and do the numbers mentioned here
-look normal ?
+--------------010404090004020206000002
+Content-Type: text/plain;
+ name="dm-table-checkreqq.diff"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-table-checkreqq.diff"
 
-Thanks and Regards,
-Haripriya
+diff -Nurp linux-RHEL4/drivers/md/dm-table.c linux-RHEL4-BTM/drivers/md/dm-table.c
+--- linux-RHEL4/drivers/md/dm-table.c	2006-08-07 13:15:30.000000000 +0200
++++ linux-RHEL4-BTM/drivers/md/dm-table.c	2005-10-06 15:34:15.000000000 +0200
+@@ -917,7 +917,7 @@ void dm_table_unplug_all(struct dm_table
+ 		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
+ 		request_queue_t *q = bdev_get_queue(dd->bdev);
+ 
+-		if (q && q->unplug_fn)
++		if (q->unplug_fn)
+ 			q->unplug_fn(q);
+ 	}
+ }
+@@ -932,9 +932,6 @@ int dm_table_flush_all(struct dm_table *
+ 		request_queue_t *q = bdev_get_queue(dd->bdev);
+ 		int err;
+ 
+-		if (!q)
+-			continue;
+-
+ 		if (!q->issue_flush_fn)
+ 			err = -EOPNOTSUPP;
+ 		else
+
+--------------010404090004020206000002
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------010404090004020206000002--
