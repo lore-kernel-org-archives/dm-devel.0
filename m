@@ -1,12 +1,15 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: request based multipath
-Date: Thu, 10 Aug 2006 05:03:45 -0400
-Message-ID: <44DAF671.5000705@cs.wisc.edu>
+From: "Haripriya S" <SHARIPRIYA@novell.com>
+Subject: snapshot scalability
+Date: Thu, 10 Aug 2006 04:46:29 -0600
+Message-ID: <44DB5C21.F25D.00B6.0@novell.com>
+References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
+	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,39 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I know I said I would not do it, but I was without internet access for
-some time and the request based multipath stuff was the only code on my
-computer, so I updated the code and fixed the locking and irq bugs.
+Hi,
 
-I stuck it in the multipath branch of my iscsi tree here
-http://kernel.org/git/?p=linux/kernel/git/mnc/linux-2.6-iscsi.git;a=summary
-I am not looking for a formal review of the patches so I will not send
-the patches to the list unless someone asks. I just updated the code due
-to popular request and because I was testing the request struct timer
-patch :)
+A co-worker recently did some tests on DM snapshots using bonnie, and
+here is a rough summary of what he got as write throughput:
 
-It compiles. It works, but has not been tested very hard. There are lots
-of things I did not handle because if we move it to dm then I need to
-update some of that code to handle things properly. And there is a nasty
-performance problem. I think this is due to me using the block layer
-functions as-is in a little less than optimal way. It is about a 1-2%
-drop for normal setups like when using qla2xxx or lpfc or iscsi, but
-when using libata with very small IOs we hit some problems that I
-believe are result of me using the block layer with no modifications to
-the queueing, unplugging and locking. I will continue to look into this.
+No Snapshots     - 373 MB/s
+One Snapshots   - 55 MB/s
+Two Snapshots  - 16 MB/s
+Four Snapshots  - 14 MB/s
+Eight Snapshots  - 6.5 MB/s
 
-I did not hook this into Jens's cmd type stuff and my patch to move the
-scsi hw handlers to the scsi layer. I did not have time. The code does
-have us send the sense and request->errors to the multipath layer for
-read and writes and failover IOs, and the io scheduler is in the correct
-place now. I still have to hook into the dm layer or we have to figure
-out what we are going to do about that - maybe just port multipath-tools
-to the new multipath layer (this should not be too bad since we can add
-a interface similar to dm's very easily).
+He is doing some more tests now to verify these results, but I wanted
+to quickly check with the dm snapshot community. Are there any current
+known scalability limits on snapshots and do the numbers mentioned here
+look normal ?
 
-So Alasdair tell me what you want to do and if you have time? If you are
-busy Mike Anderson and I and the NEC guys could probably take this task
-and that way we can get multipath development going again.
+Thanks and Regards,
+Haripriya
