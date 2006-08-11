@@ -1,14 +1,18 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: preventing block I/O to EMC CLARiiON LUNZ paths
-Date: Fri, 11 Aug 2006 09:11:29 +0200
-Message-ID: <20060811071129.GB18144@zezette.dyndns.org>
-References: <6CCEAEDF4D06984A83F427424F47D6E4013D1351@CORPUSMX40A.corp.emc.com>
+From: Eddie Williams <Eddie.Williams@steeleye.com>
+Subject: Re: SUSE 10 shutdown problem - network shutdown before
+	LifeKeeper is stopped
+Date: Fri, 11 Aug 2006 13:31:06 -0400
+Message-ID: <1155317466.3170.53.camel@gator.sc.steeleye.com>
+References: <1155215838.3107.8.camel@gator.sc.steeleye.com>
+	<1155310796.3170.35.camel@gator.sc.steeleye.com>
+	<44DCACB6.3050108@steeleye.com>
+	<1155316819.3170.50.camel@gator.sc.steeleye.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D1351@CORPUSMX40A.corp.emc.com>
+In-Reply-To: <1155316819.3170.50.camel@gator.sc.steeleye.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,20 +22,9 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: egoggin@emc.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Aug 08, 2006 at 10:22:45AM -0400, egoggin@emc.com wrote:
-> Christophe,
-> 
-> This patch simply reports a PATH_DOWN status for paths to an EMC CLARiiON
-> LUNZ (or an unbound) block device since these paths cannot possibly be used
-> to issue I/O to such a device.  In fact, allowing block I/O to a LUNZ
-> dm-multipath device will cause the process to hang until the no_path_retry
-> timeout is incurred.  This is not desirable.
-> 
-Applied locally.
-Thanks.
 
-cvaroqui
+# Required-Start: $local_fs $syslog
+# Should-Start: $remote_fs multipathd raw cups winbind smb nmb smbfs drbd
