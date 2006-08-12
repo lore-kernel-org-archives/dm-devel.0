@@ -1,19 +1,15 @@
-From: Eddie Williams <Eddie.Williams@steeleye.com>
-Subject: Re: Re: SUSE 10 shutdown problem - network shutdown
-	before LifeKeeper is stopped
-Date: Fri, 11 Aug 2006 13:44:08 -0400
-Message-ID: <1155318248.3170.55.camel@gator.sc.steeleye.com>
-References: <1155215838.3107.8.camel@gator.sc.steeleye.com>
-	<1155310796.3170.35.camel@gator.sc.steeleye.com>
-	<44DCACB6.3050108@steeleye.com>
-	<1155316819.3170.50.camel@gator.sc.steeleye.com>
-	<1155317466.3170.53.camel@gator.sc.steeleye.com>
+From: Andrew Morton <akpm@osdl.org>
+Subject: Re: [PATCH] dm: Fix deadlock under high i/o load in
+	raid1 setup.
+Date: Sat, 12 Aug 2006 13:02:28 -0700
+Message-ID: <20060812130228.f7954b5f.akpm@osdl.org>
+References: <20060809164421.GC9984@antares.tat.physik.uni-tuebingen.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1155317466.3170.53.camel@gator.sc.steeleye.com>
+In-Reply-To: <20060809164421.GC9984@antares.tat.physik.uni-tuebingen.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,10 +19,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Daniel Kobras <kobras@linux.de>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Wed, 9 Aug 2006 18:44:21 +0200
+Daniel Kobras <kobras@linux.de> wrote:
 
-oops, sorry about the intrusion.  Sent to the wrong mailing list!
+> Implement private fallback if immediate allocation from mempool fails.
+> Standard mempool_alloc() fallback can yield a deadlock when only the
+> calling process is able to refill the pool. In out-of-memory situations,
+> instead of waiting for itself, kmirrord now waits for someone else to
+> free some space, using a standard blocking allocation.
+> 
+> Signed-off-by: Daniel Kobras <kobras@linux.de>
+> ---
+> [Resending with Cc to l-k. First attempt apparently hasn't made it through to 
+> dm-devel.]
+> 
+> Hi!
+> 
+> On an nForce4-equipped machine with two SATA disk in raid1 setup using
+> dmraid, we experienced frequent deadlock of the system under high i/o
+> load. 'cat /dev/zero > ~/zero' was the most reliable way to reproduce
+> them: Randomly after a few GB, 'cp' would be left in 'D' state along
+> with kjournald and kmirrord. The functions cp and kjournald were blocked
+> in did vary, but kmirrord's wchan always pointed to 'mempool_alloc()'.
+> We've seen this pattern on 2.6.15 and 2.6.17 kernels.
+> http://lkml.org/lkml/2005/4/20/142 indicates that this problem has been
+> around even before.
+> 
+> So much for the facts, here's my interpretation: mempool_alloc() first
+> tries to atomically allocate the requested memory, or falls back to hand
+> out preallocated chunks from the mempool. If both fail, it puts the
+> calling process (kmirrord in this case) on a private waitqueue until
+> somebody refills the pool. Where the only 'somebody' is kmirrord itself,
+> so we have a deadlock.
 
-Eddie
+Right.  That's a design error in DM.  mempools are only supposed to be used
+in situations where we *know* that if we wait for a bit, some elements will
+be returned to the pool.  Obviously, if the only thread in the machine
+which can release elements is the one which is waiting for thse elements,
+we die.
+
+> I worked around this problem by falling back to a (blocking) kmalloc
+> when before kmirrord would have ended up on the waitqueue. This defeats
+> part of the benefits of using the mempool, but at least keeps the system
+> running. And it could be done with a two-line change. Note that
+> mempool_alloc() clears the GFP_NOIO flag internally, and only uses it to
+> decide whether to wait or return an error if immediate allocation fails,
+> so the attached patch doesn't change behaviour in the non-deadlocking case.
+> Path is against current git (2.6.18-rc4), but should apply to earlier
+> versions as well. I've tested on 2.6.15, where this patch makes the
+> difference between random lockup and a stable system.
+> 
+> Regards,
+> 
+> Daniel.
+> 
+> diff -r dcc321d1340a -r d52bb3a14d60 drivers/md/dm-raid1.c
+> --- a/drivers/md/dm-raid1.c	Sun Aug 06 19:00:05 2006 +0000
+> +++ b/drivers/md/dm-raid1.c	Mon Aug 07 23:16:44 2006 +0200
+> @@ -255,7 +255,9 @@ static struct region *__rh_alloc(struct 
+>  	struct region *reg, *nreg;
+>  
+>  	read_unlock(&rh->hash_lock);
+> -	nreg = mempool_alloc(rh->region_pool, GFP_NOIO);
+> +	nreg = mempool_alloc(rh->region_pool, GFP_ATOMIC);
+> +	if (unlikely(!nreg))
+> +		nreg = kmalloc(sizeof(struct region), GFP_NOIO);
+>  	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
+>  		RH_CLEAN : RH_NOSYNC;
+>  	nreg->rh = rh;
+
+Yes, that'll fix it.  It's rather nasty to be allocating elements with
+kmalloc and then sending them back with mempool_free().  But it'll work.
+
+Alasdair, I'd say that this is a 2.6.18 fix and a 2.6.17.x backport.
+
+A longer-term fix might be to stop using mempools in there, just use
+kmalloc.  Or move the mempool_free()ing out of kmorrord context and into
+IO-completion context, perhaps.
