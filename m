@@ -1,15 +1,12 @@
-From: Andrew Morton <akpm@osdl.org>
-Subject: Re: [PATCH] dm: Fix deadlock under high i/o load in
-	raid1 setup.
-Date: Sat, 12 Aug 2006 13:02:28 -0700
-Message-ID: <20060812130228.f7954b5f.akpm@osdl.org>
-References: <20060809164421.GC9984@antares.tat.physik.uni-tuebingen.de>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: send 'change' uevent for device-mapper table resume
+Date: Sun, 13 Aug 2006 16:04:56 +0200
+Message-ID: <20060813140456.GA8170@vrfy.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060809164421.GC9984@antares.tat.physik.uni-tuebingen.de>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,84 +16,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Daniel Kobras <kobras@linux.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 9 Aug 2006 18:44:21 +0200
-Daniel Kobras <kobras@linux.de> wrote:
+Hi Alasdair,
+I'm not sure if Hannes already sent this, if not, please take this into
+your tree. As discussed at OLS, this is one step, to make udev's operation
+on dm devices more reliable.
 
-> Implement private fallback if immediate allocation from mempool fails.
-> Standard mempool_alloc() fallback can yield a deadlock when only the
-> calling process is able to refill the pool. In out-of-memory situations,
-> instead of waiting for itself, kmirrord now waits for someone else to
-> free some space, using a standard blocking allocation.
-> 
-> Signed-off-by: Daniel Kobras <kobras@linux.de>
-> ---
-> [Resending with Cc to l-k. First attempt apparently hasn't made it through to 
-> dm-devel.]
-> 
-> Hi!
-> 
-> On an nForce4-equipped machine with two SATA disk in raid1 setup using
-> dmraid, we experienced frequent deadlock of the system under high i/o
-> load. 'cat /dev/zero > ~/zero' was the most reliable way to reproduce
-> them: Randomly after a few GB, 'cp' would be left in 'D' state along
-> with kjournald and kmirrord. The functions cp and kjournald were blocked
-> in did vary, but kmirrord's wchan always pointed to 'mempool_alloc()'.
-> We've seen this pattern on 2.6.15 and 2.6.17 kernels.
-> http://lkml.org/lkml/2005/4/20/142 indicates that this problem has been
-> around even before.
-> 
-> So much for the facts, here's my interpretation: mempool_alloc() first
-> tries to atomically allocate the requested memory, or falls back to hand
-> out preallocated chunks from the mempool. If both fail, it puts the
-> calling process (kmirrord in this case) on a private waitqueue until
-> somebody refills the pool. Where the only 'somebody' is kmirrord itself,
-> so we have a deadlock.
+Thanks,
+Kay
 
-Right.  That's a design error in DM.  mempools are only supposed to be used
-in situations where we *know* that if we wait for a bit, some elements will
-be returned to the pool.  Obviously, if the only thread in the machine
-which can release elements is the one which is waiting for thse elements,
-we die.
 
-> I worked around this problem by falling back to a (blocking) kmalloc
-> when before kmirrord would have ended up on the waitqueue. This defeats
-> part of the benefits of using the mempool, but at least keeps the system
-> running. And it could be done with a two-line change. Note that
-> mempool_alloc() clears the GFP_NOIO flag internally, and only uses it to
-> decide whether to wait or return an error if immediate allocation fails,
-> so the attached patch doesn't change behaviour in the non-deadlocking case.
-> Path is against current git (2.6.18-rc4), but should apply to earlier
-> versions as well. I've tested on 2.6.15, where this patch makes the
-> difference between random lockup and a stable system.
-> 
-> Regards,
-> 
-> Daniel.
-> 
-> diff -r dcc321d1340a -r d52bb3a14d60 drivers/md/dm-raid1.c
-> --- a/drivers/md/dm-raid1.c	Sun Aug 06 19:00:05 2006 +0000
-> +++ b/drivers/md/dm-raid1.c	Mon Aug 07 23:16:44 2006 +0200
-> @@ -255,7 +255,9 @@ static struct region *__rh_alloc(struct 
->  	struct region *reg, *nreg;
->  
->  	read_unlock(&rh->hash_lock);
-> -	nreg = mempool_alloc(rh->region_pool, GFP_NOIO);
-> +	nreg = mempool_alloc(rh->region_pool, GFP_ATOMIC);
-> +	if (unlikely(!nreg))
-> +		nreg = kmalloc(sizeof(struct region), GFP_NOIO);
->  	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
->  		RH_CLEAN : RH_NOSYNC;
->  	nreg->rh = rh;
+From: Hannes Reinecke <hare@suse.de>
 
-Yes, that'll fix it.  It's rather nasty to be allocating elements with
-kmalloc and then sending them back with mempool_free().  But it'll work.
+device-mapper: send 'change' uevent for device-mapper table resume
 
-Alasdair, I'd say that this is a 2.6.18 fix and a 2.6.17.x backport.
+Device-mapper tables are only ever usable after a 'resume'
+ioctl has been issued. But to know when this happens we need to
+generate an uevent to notify udev, so that it can take appropriate
+action.
 
-A longer-term fix might be to stop using mempools in there, just use
-kmalloc.  Or move the mempool_free()ing out of kmorrord context and into
-IO-completion context, perhaps.
+As discussed with agk and kay at OLS we should be sending 'change' events
+for resume; events on suspend don't give you anything interesting and indeed
+might lead to failures as any I/O on that table will be blocked anyway.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+Signed-off-by: Kay Sievers <kay.sievers@vrfy.org>
+-- 
+
+ dm.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index c99bf9f..93014c4 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -1337,6 +1337,8 @@ int dm_resume(struct mapped_device *md)
+ 
+ 	dm_table_unplug_all(map);
+ 
++	kobject_uevent(&md->disk->kobj, KOBJ_CHANGE);
++
+ 	r = 0;
+ 
+ out:
