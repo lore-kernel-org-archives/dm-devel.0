@@ -1,7 +1,7 @@
 From: akpm@osdl.org
-Subject: [patch 168/215] dm: add module ref counting
-Date: Mon, 26 Jun 2006 00:27:25 -0700
-Message-ID: <200606260727.k5Q7RPFp030214@shell0.pdx.osdl.net>
+Subject: dm: BUG/OOPS fix
+Date: Sun, 13 Aug 2006 23:24:20 -0700
+Message-ID: <200608140624.k7E6OKjC006995@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -13,63 +13,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: torvalds@osdl.org
-Cc: stable@kernel.org, agk@redhat.com
+To: greg@kroah.com
+Cc: akpm@osdl.org, torvalds@osdl.org, stable@kernel.org, agk@redhat.com, mirq-linux@rere.qmqm.pl
 List-Id: dm-devel.ids
 
+From: Michal Miroslaw <mirq-linux@rere.qmqm.pl>
 
-From: Jeff Mahoney <jeffm@suse.com>
+Fix BUG I tripped on while testing failover and multipathing.
 
-The reference counting on dm-mod is zero if no mapped devices are open.  This
-is incorrect, and can lead to an oops if the module is unloaded while mapped
-devices exist.
+BUG shows up on error path in multipath_ctr() when parse_priority_group()
+fails after returning at least once without error.  The fix is to
+initialize m->ti early - just after alloc()ing it.
 
-This patch claims a reference to the module whenever a device is created, and
-drops it again when the device is freed.
+BUG: unable to handle kernel NULL pointer dereference at virtual address 00000000
+ printing eip:
+c027c3d2
+*pde = 00000000
+Oops: 0000 [#3]
+Modules linked in: qla2xxx ext3 jbd mbcache sg ide_cd cdrom floppy
+CPU:    0
+EIP:    0060:[<c027c3d2>]    Not tainted VLI
+EFLAGS: 00010202   (2.6.17.3 #1)
+EIP is at dm_put_device+0xf/0x3b
+eax: 00000001   ebx: ee4fcac0   ecx: 00000000   edx: ee4fcac0
+esi: ee4fc4e0   edi: ee4fc4e0   ebp: 00000000   esp: c5db3e78
+ds: 007b   es: 007b   ss: 0068
+Process multipathd (pid: 15912, threadinfo=c5db2000 task=ef485a90)
+Stack: ec4eda40 c02816bd ee4fc4c0 00000000 f7e89498 f883e0bc c02816f6 f7e89480
+       f7e8948c c0281801 ffffffea f7e89480 f883e080 c0281ffe 00000001 00000000
+       00000004 dfe9cab8 f7a693c0 f883e080 f883e0c0 ca4b99c0 c027c6ee 01400000
+Call Trace:
+ <c02816bd> free_pgpaths+0x31/0x45  <c02816f6> free_priority_group+0x25/0x2e
+ <c0281801> free_multipath+0x35/0x67  <c0281ffe> multipath_ctr+0x123/0x12d
+ <c027c6ee> dm_table_add_target+0x11e/0x18b  <c027e5b4> populate_table+0x8a/0xaf
+ <c027e62b> table_load+0x52/0xf9  <c027ec23> ctl_ioctl+0xca/0xfc
+ <c027e5d9> table_load+0x0/0xf9  <c0152146> do_ioctl+0x3e/0x43
+ <c0152360> vfs_ioctl+0x16c/0x178  <c01523b4> sys_ioctl+0x48/0x60
+ <c01029b3> syscall_call+0x7/0xb
+Code: 97 f0 00 00 00 89 c1 83 c9 01 80 e2 01 0f 44 c1 88 43 14 8b 04 24 59 5b 5e 5f 5d c3 53 89 c1 89 d3 ff 4a 08 0f 94 c0 84 c0 74 2a <8b> 01 8b 10 89 d8 e8 f6 fb ff ff 8b 03 8b 53 04 89 50 04 89 02
+EIP: [<c027c3d2>] dm_put_device+0xf/0x3b SS:ESP 0068:c5db3e78
 
-Devices must be removed before dm-mod is unloaded.
-
-[akpm: too late for 2.6.17 - suitable for 2.6.17.x after it has settled]
-
-Signed-off-by: Jeff Mahoney <jeffm@suse.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+Signed-off-by: Michal Miroslaw <mirq-linux@rere.qmqm.pl>
+Acked-by: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
+
 ---
+ drivers/md/dm-mpath.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
- drivers/md/dm.c |    6 ++++++
- 1 file changed, 6 insertions(+)
-
---- linux-2.6.17.11.orig/drivers/md/dm.c
-+++ linux-2.6.17.11/drivers/md/dm.c
-@@ -852,6 +852,9 @@ static struct mapped_device *alloc_dev(u
- 		return NULL;
+--- linux-2.6.17.9.orig/drivers/md/dm-mpath.c
++++ linux-2.6.17.9/drivers/md/dm-mpath.c
+@@ -711,6 +711,8 @@ static int multipath_ctr(struct dm_targe
+ 		return -EINVAL;
  	}
  
-+	if (!try_module_get(THIS_MODULE))
-+		goto bad0;
++	m->ti = ti;
 +
- 	/* get a minor number for the dev */
- 	r = persistent ? specific_minor(md, minor) : next_free_minor(md, &minor);
- 	if (r < 0)
-@@ -918,6 +921,8 @@ static struct mapped_device *alloc_dev(u
- 	blk_cleanup_queue(md->queue);
- 	free_minor(minor);
-  bad1:
-+	module_put(THIS_MODULE);
-+ bad0:
- 	kfree(md);
- 	return NULL;
- }
-@@ -941,6 +946,7 @@ static void free_dev(struct mapped_devic
+ 	r = parse_features(&as, m, ti);
+ 	if (r)
+ 		goto bad;
+@@ -752,7 +754,6 @@ static int multipath_ctr(struct dm_targe
+ 	}
  
- 	put_disk(md->disk);
- 	blk_cleanup_queue(md->queue);
-+	module_put(THIS_MODULE);
- 	kfree(md);
- }
+ 	ti->private = m;
+-	m->ti = ti;
+ 
+ 	return 0;
  
 
 --WIyZ46R2i8wDzkSu
 Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="dm-mirror-sector-offset-fix.patch"
+Content-Disposition: attachment; filename="dm-snapshot-unify-chunk_size.patch"
