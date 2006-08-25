@@ -1,15 +1,16 @@
-From: Benjamin Gilbert <bgilbert@cs.cmu.edu>
+From: Dan Smith <danms@us.ibm.com>
 Subject: Re: dm-userspace memory consumption in remap cache
-Date: Fri, 25 Aug 2006 15:32:45 -0400
-Message-ID: <44EF505D.8040806@cs.cmu.edu>
+Date: Fri, 25 Aug 2006 12:40:47 -0700
+Message-ID: <m3lkpcbo3k.fsf@guaranine.beaverton.ibm.com>
 References: <44EF3DC5.2040403@cs.cmu.edu>
 	<m3zmdsbqrs.fsf@guaranine.beaverton.ibm.com>
+	<44EF505D.8040806@cs.cmu.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0124046350=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3zmdsbqrs.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <44EF505D.8040806@cs.cmu.edu> (Benjamin Gilbert's message of
+	"Fri, 25 Aug 2006 15:32:45 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,65 +20,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Dan Smith <danms@us.ibm.com>
+To: Benjamin Gilbert <bgilbert@cs.cmu.edu>
 Cc: Niraj Tolia <ntolia@gmail.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dan Smith wrote:
-> BG> I noticed that after I wrote 1 GB of data to a dmu device with a 4
-> BG> KB blocksize, the dm-userspace-remaps slab cache consumed about 39
-> BG> MB of memory.  
-> Ah, right.
+--===============0124046350==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-In fact, when the dmu device is unmapped, destroy_dmu_device() moves all 
-of the dmu_maps to the end of the MRU list but does not free them, so 
-that memory stays around.  If a new device is created, its dmu_maps will 
-still be obtained from kmem_cache_alloc even though there are unused 
-dmu_maps.
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-> We could push statistic information back to cowd when there
-> was nothing else to do.  That might be interesting, but probably not
-> the best way to solve this particular issue.
+BG> In fact, when the dmu device is unmapped, destroy_dmu_device()
+BG> moves all of the dmu_maps to the end of the MRU list but does not
+BG> free them, so that memory stays around.  If a new device is
+BG> created, its dmu_maps will still be obtained from kmem_cache_alloc
+BG> even though there are unused dmu_maps.
 
-Come to think of it, that would be very interesting data in its own 
-right.  Hmm... you could push statistics on a block whenever its mapping 
-expires, but that doesn't help the MFU blocks.  You could provide a 
-query-and-reset-counters request for individual blocks still in the 
-cache, and since userspace could watch the statistics pushes to see what 
-blocks had been removed, it would know which blocks to query on.  That 
-would allow userspace to maintain statistics on whatever level of 
-time-granularity it wanted, without requiring the kernel to do periodic 
-sweeps or to do large dumps to userspace.
+Ah, yet another good point :)
 
-...I'm probably missing an obvious reason that that won't work.
+BG> Come to think of it, that would be very interesting data in its
+BG> own right.
 
-> BG> (As an aside, I haven't been able to figure out the semantics of
-> BG> the completion notification mechanism.  Could you provide an
-> BG> example of how you expect it to be used from the userspace side?)
-> Recent versions of cowd use this to prevent the completion (endio)
-> From firing until it has flushed its internal metadata mapping to
-> disk, to prevent the data from being written and the completion event
-> sent, when the data isn't really on the disk (well, it's on the disk,
-> but if we crash before we write our metadata, we can't tell that it's
-> really there during recovery).
+I agree.
 
-Okay, I see.
+BG> ...I'm probably missing an obvious reason that that won't work.
 
-> BG> 3. Map in dm-linear when there are large consecutive ranges, to
-> BG> try to keep the table size down.
-> I don't think this is the best approach, because if you want to
-> invalidate a mapping, you'd have to split the dm-linear back up,
-> suspend/resume the device, etc.
+I'm not sure why it wouldn't work.  I think it's likely to result in a
+lot of polling, but it could definitely be useful in certain
+situations.
 
-Oh, good point.
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
 
-> Now that I know at least someone is paying attention, I'll try to get
-> my latest dm-userspace and cowd versions out on this list.  A small
-> fix has been made to dm-userspace, and several improvements and fixes
-> have been made to cowd.  After I post my current code, I'll implement
-> the memory limit/aggressive reuse functionality and post that as well.
+--=-=-=
+Content-Type: application/pgp-signature
 
-Great.  Thanks!
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-Thanks
---Benjamin Gilbert
+iD8DBQFE71JEwtEf7b4GJVQRAp1vAJ9pydVrZWnkUSUp+K0vCf3mEOtMqACfeH8z
+2DfpCjZJ0AEYduS6pTGYQqc=
+=+edA
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============0124046350==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0124046350==--
