@@ -1,7 +1,7 @@
 From: akpm@osdl.org
-Subject: dm: BUG/OOPS fix
-Date: Sun, 13 Aug 2006 23:24:20 -0700
-Message-ID: <200608140624.k7E6OKjC006995@shell0.pdx.osdl.net>
+Subject: dm: Fix deadlock under high i/o load in raid1 setup.
+Date: Sun, 27 Aug 2006 01:23:24 -0700
+Message-ID: <200608270823.k7R8NO3M020753@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -13,75 +13,120 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: greg@kroah.com
-Cc: akpm@osdl.org, torvalds@osdl.org, stable@kernel.org, agk@redhat.com, mirq-linux@rere.qmqm.pl
+To: torvalds@osdl.org
+Cc: akpm@osdl.org, kobras@linux.de, stable@kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-From: Michal Miroslaw <mirq-linux@rere.qmqm.pl>
+From: Daniel Kobras <kobras@linux.de>
 
-Fix BUG I tripped on while testing failover and multipathing.
+On an nForce4-equipped machine with two SATA disk in raid1 setup using dmraid,
+we experienced frequent deadlock of the system under high i/o load.  'cat
+/dev/zero > ~/zero' was the most reliable way to reproduce them: Randomly
+after a few GB, 'cp' would be left in 'D' state along with kjournald and
+kmirrord.  The functions cp and kjournald were blocked in did vary, but
+kmirrord's wchan always pointed to 'mempool_alloc()'.  We've seen this pattern
+on 2.6.15 and 2.6.17 kernels.  http://lkml.org/lkml/2005/4/20/142 indicates
+that this problem has been around even before.
 
-BUG shows up on error path in multipath_ctr() when parse_priority_group()
-fails after returning at least once without error.  The fix is to
-initialize m->ti early - just after alloc()ing it.
+So much for the facts, here's my interpretation: mempool_alloc() first tries
+to atomically allocate the requested memory, or falls back to hand out
+preallocated chunks from the mempool.  If both fail, it puts the calling
+process (kmirrord in this case) on a private waitqueue until somebody refills
+the pool.  Where the only 'somebody' is kmirrord itself, so we have a
+deadlock.
 
-BUG: unable to handle kernel NULL pointer dereference at virtual address 00000000
- printing eip:
-c027c3d2
-*pde = 00000000
-Oops: 0000 [#3]
-Modules linked in: qla2xxx ext3 jbd mbcache sg ide_cd cdrom floppy
-CPU:    0
-EIP:    0060:[<c027c3d2>]    Not tainted VLI
-EFLAGS: 00010202   (2.6.17.3 #1)
-EIP is at dm_put_device+0xf/0x3b
-eax: 00000001   ebx: ee4fcac0   ecx: 00000000   edx: ee4fcac0
-esi: ee4fc4e0   edi: ee4fc4e0   ebp: 00000000   esp: c5db3e78
-ds: 007b   es: 007b   ss: 0068
-Process multipathd (pid: 15912, threadinfo=c5db2000 task=ef485a90)
-Stack: ec4eda40 c02816bd ee4fc4c0 00000000 f7e89498 f883e0bc c02816f6 f7e89480
-       f7e8948c c0281801 ffffffea f7e89480 f883e080 c0281ffe 00000001 00000000
-       00000004 dfe9cab8 f7a693c0 f883e080 f883e0c0 ca4b99c0 c027c6ee 01400000
-Call Trace:
- <c02816bd> free_pgpaths+0x31/0x45  <c02816f6> free_priority_group+0x25/0x2e
- <c0281801> free_multipath+0x35/0x67  <c0281ffe> multipath_ctr+0x123/0x12d
- <c027c6ee> dm_table_add_target+0x11e/0x18b  <c027e5b4> populate_table+0x8a/0xaf
- <c027e62b> table_load+0x52/0xf9  <c027ec23> ctl_ioctl+0xca/0xfc
- <c027e5d9> table_load+0x0/0xf9  <c0152146> do_ioctl+0x3e/0x43
- <c0152360> vfs_ioctl+0x16c/0x178  <c01523b4> sys_ioctl+0x48/0x60
- <c01029b3> syscall_call+0x7/0xb
-Code: 97 f0 00 00 00 89 c1 83 c9 01 80 e2 01 0f 44 c1 88 43 14 8b 04 24 59 5b 5e 5f 5d c3 53 89 c1 89 d3 ff 4a 08 0f 94 c0 84 c0 74 2a <8b> 01 8b 10 89 d8 e8 f6 fb ff ff 8b 03 8b 53 04 89 50 04 89 02
-EIP: [<c027c3d2>] dm_put_device+0xf/0x3b SS:ESP 0068:c5db3e78
+I worked around this problem by falling back to a (blocking) kmalloc when
+before kmirrord would have ended up on the waitqueue.  This defeats part of
+the benefits of using the mempool, but at least keeps the system running.  And
+it could be done with a two-line change.  Note that mempool_alloc() clears the
+GFP_NOIO flag internally, and only uses it to decide whether to wait or return
+an error if immediate allocation fails, so the attached patch doesn't change
+behaviour in the non-deadlocking case.  Path is against current git
+(2.6.18-rc4), but should apply to earlier versions as well.  I've tested on
+2.6.15, where this patch makes the difference between random lockup and a
+stable system.
 
-Signed-off-by: Michal Miroslaw <mirq-linux@rere.qmqm.pl>
+Signed-off-by: Daniel Kobras <kobras@linux.de>
 Acked-by: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 ---
- drivers/md/dm-mpath.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/md/dm-raid1.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
---- linux-2.6.17.9.orig/drivers/md/dm-mpath.c
-+++ linux-2.6.17.9/drivers/md/dm-mpath.c
-@@ -711,6 +711,8 @@ static int multipath_ctr(struct dm_targe
- 		return -EINVAL;
- 	}
+--- linux-2.6.17.11.orig/drivers/md/dm-raid1.c
++++ linux-2.6.17.11/drivers/md/dm-raid1.c
+@@ -253,7 +253,9 @@ static struct region *__rh_alloc(struct 
+ 	struct region *reg, *nreg;
  
-+	m->ti = ti;
-+
- 	r = parse_features(&as, m, ti);
- 	if (r)
- 		goto bad;
-@@ -752,7 +754,6 @@ static int multipath_ctr(struct dm_targe
- 	}
- 
- 	ti->private = m;
--	m->ti = ti;
- 
- 	return 0;
- 
+ 	read_unlock(&rh->hash_lock);
+-	nreg = mempool_alloc(rh->region_pool, GFP_NOIO);
++	nreg = mempool_alloc(rh->region_pool, GFP_ATOMIC);
++	if (unlikely(!nreg))
++		nreg = kmalloc(sizeof(struct region), GFP_NOIO);
+ 	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
+ 		RH_CLEAN : RH_NOSYNC;
+ 	nreg->rh = rh;
 
 --WIyZ46R2i8wDzkSu
 Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="dm-snapshot-unify-chunk_size.patch"
+Content-Disposition: attachment; filename=patch-fix-metadata-writing-when-suspending
+
+commit 927ffe7c9a156e259aae31c07dd76072c459ec57
+Author: Mark McLoughlin <markmc@redhat.com>
+Date:   Tue Oct 3 01:15:27 2006 -0700
+
+    [PATCH] dm snapshot: fix metadata writing when suspending
+    
+    When suspending a device-mapper device, dm_suspend() sleeps until all
+    necessary I/O is completed.  This state is triggered by a callback from
+    persistent_commit().  But some I/O can still be issued *after* the callback
+    (to prepare the next metadata area for use if the current one is full).  This
+    patch delays the callback until after that I/O is complete.
+    
+    Signed-off-by: Mark McLoughlin <markmc@redhat.com>
+    Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+    Signed-off-by: Andrew Morton <akpm@osdl.org>
+    Signed-off-by: Linus Torvalds <torvalds@osdl.org>
+
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index 002417d..99cdffa 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -536,6 +536,16 @@ static void persistent_commit(struct exc
+ 		if (r)
+ 			ps->valid = 0;
+ 
++		/*
++		 * Have we completely filled the current area ?
++		 */
++		if (ps->current_committed == ps->exceptions_per_area) {
++			ps->current_committed = 0;
++			r = zero_area(ps, ps->current_area + 1);
++			if (r)
++				ps->valid = 0;
++		}
++
+ 		for (i = 0; i < ps->callback_count; i++) {
+ 			cb = ps->callbacks + i;
+ 			cb->callback(cb->context, r == 0 ? 1 : 0);
+@@ -543,16 +553,6 @@ static void persistent_commit(struct exc
+ 
+ 		ps->callback_count = 0;
+ 	}
+-
+-	/*
+-	 * Have we completely filled the current area ?
+-	 */
+-	if (ps->current_committed == ps->exceptions_per_area) {
+-		ps->current_committed = 0;
+-		r = zero_area(ps, ps->current_area + 1);
+-		if (r)
+-			ps->valid = 0;
+-	}
+ }
+ 
+ static void persistent_drop(struct exception_store *store)
+
+--WIyZ46R2i8wDzkSu--
