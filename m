@@ -1,13 +1,16 @@
-From: "Adam Huffman" <adam.huffman@gmail.com>
-Subject: Multipathd not starting up properly
-Date: Tue, 29 Aug 2006 19:12:53 +0100
-Message-ID: <608c44bf0608291112h1b62eef2hec5ceeb491e9b5b@mail.gmail.com>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: patch to dm-emc.c
+Date: Tue, 29 Aug 2006 16:57:10 -0400
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1389@CORPUSMX40A.corp.emc.com>
+References: <44DBA4CB.8030600@cs.wisc.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
+In-Reply-To: <44DBA4CB.8030600@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,90 +20,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: michaelc@cs.wisc.edu, agk@redhat.com
 List-Id: dm-devel.ids
 
-I'm seeing the following messages when I start multipathd:
+On Thursday, August 10, 2006 5:28 PM, Mike Christie wrote
+=20
+> But I thought, a request should eventually complete and so we=20
+> should be
+> woken up from get_request_wait, and we will try allocate a=20
+> request again
+> and then the write request count should have gone down and we=20
+> should be
+> able to proceed.
 
-Aug 29 19:00:21 multipathd: error calling out /sbin/scsi_id -g -u -s /block/sda
-Aug 29 19:00:21 multipathd: error calling out /sbin/scsi_id -g -u -s /block/sdb
+Mike,
 
-Here is the output of multipath -v 3:
+You are right.  My logic was bad ... I was confusing mapped and
+target device queues.  Turns out the delays that I am seeing
+(multipathd checker thread is stuck waiting for up to 15 minutes
+waiting for a free target device queue) are due to ios being
+held and timed out by the SCSI LLD (Emulex).  I never waited
+more than 10 minutes in my testing earlier in the month before
+looking for some type of deadlock.
 
+I've changed the patch to call blk_get_request() with __GFP_WAIT
+always from a worker thread context since using pre-allocated
+request structures does not help the problem.
 
-load path identifiers cache
-#
-# all paths in cache :
-#
-  0:0:0:0 sda 8:0  [ready] Raidtec /JEFF            /0281
-  0:0:1:0 sdb 8:16  [ready] Raidtec /JEFF            /0281
-cciss!c0d0 blacklisted
-dm-0 blacklisted
-dm-1 blacklisted
-dm-2 blacklisted
-fd0 blacklisted
-hda blacklisted
-md0 blacklisted
-ram0 blacklisted
-ram10 blacklisted
-ram11 blacklisted
-ram12 blacklisted
-ram13 blacklisted
-ram14 blacklisted
-ram15 blacklisted
-ram1 blacklisted
-ram2 blacklisted
-ram3 blacklisted
-ram4 blacklisted
-ram5 blacklisted
-ram6 blacklisted
-ram7 blacklisted
-ram8 blacklisted
-ram9 blacklisted
-===== path info sda (mask 0x1f) =====
-bus = 1
-dev_t = 8:0
-size = 2929684480
-vendor = Raidtec
-product = JEFF
-rev = 0281
-h:b:t:l = 0:0:0:0
-tgt_node_name = 0x20000010e9004510
-serial = 11900002000010
+Thanks,
 
-path checker = readsector0 (internal default)
-state = 2
-getprio = (null) (internal default)
-prio = 1
-getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
-error calling out /sbin/scsi_id -g -u -s /block/sda
-uid =  (callout)
-===== path info sdb (mask 0x1f) =====
-bus = 1
-dev_t = 8:16
-size = 2929684480
-vendor = Raidtec
-product = JEFF
-rev = 0281
-h:b:t:l = 0:0:1:0
-tgt_node_name = 0x20000010e9004510
-serial = 11900002000010
-
-path checker = readsector0 (internal default)
-state = 2
-getprio = (null) (internal default)
-prio = 1
-getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
-error calling out /sbin/scsi_id -g -u -s /block/sdb
-uid =  (callout)
-#
-# all paths :
-#
-  0:0:0:0 sda 8:0 1 [ready] Raidtec /JEFF            /0281
-  0:0:1:0 sdb 8:16 1 [ready] Raidtec /JEFF            /0281
-
-I don't seem to be getting anything useful without this call out working.
-
-Any suggestions appreciated.
-
-Adam
+Ed
