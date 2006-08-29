@@ -1,14 +1,13 @@
-From: seth vidal <skvidal@linux.duke.edu>
-Subject: Re: failover speed
-Date: Tue, 29 Aug 2006 12:57:12 -0400
-Message-ID: <1156870632.29242.80.camel@cutter>
-References: <1156791189.26413.8.camel@cutter>
+From: "Adam Huffman" <adam.huffman@gmail.com>
+Subject: Multipathd not starting up properly
+Date: Tue, 29 Aug 2006 19:12:53 +0100
+Message-ID: <608c44bf0608291112h1b62eef2hec5ceeb491e9b5b@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1156791189.26413.8.camel@cutter>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,34 +17,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2006-08-28 at 14:53 -0400, seth vidal wrote:
-> Hi,
->  I've gotten failover and failback working, however, I'm not sure if the
-> amount of wait time for the failover is reasonable. I'm using QLogic
-> 2340 cards and an EVA8000. I'm curious if anyone else using something
-> similar is seeing in terms of failover times. 
-> 
-> When things are running as I'd expect I'm seeing just a few seconds
-> before the new path is up. When things seem wrong it's waiting and
-> queueing for as much as 1.5 minutes.
-> 
+I'm seeing the following messages when I start multipathd:
 
-Okay - I read #8 on the faq in the wiki which told me to look for \*tmo
-\* files in /sys/
+Aug 29 19:00:21 multipathd: error calling out /sbin/scsi_id -g -u -s /block/sda
+Aug 29 19:00:21 multipathd: error calling out /sbin/scsi_id -g -u -s /block/sdb
 
-The problem is I'm running a 2.6.9 kernel for rhel4/centos4 and it
-doesn't have those, yet.
+Here is the output of multipath -v 3:
 
-I did, however, find these:
-/sys/class/fc_transport/target1:0:0/device/1:0:0:*/timeout
 
-which are set to 30s each.
+load path identifiers cache
+#
+# all paths in cache :
+#
+  0:0:0:0 sda 8:0  [ready] Raidtec /JEFF            /0281
+  0:0:1:0 sdb 8:16  [ready] Raidtec /JEFF            /0281
+cciss!c0d0 blacklisted
+dm-0 blacklisted
+dm-1 blacklisted
+dm-2 blacklisted
+fd0 blacklisted
+hda blacklisted
+md0 blacklisted
+ram0 blacklisted
+ram10 blacklisted
+ram11 blacklisted
+ram12 blacklisted
+ram13 blacklisted
+ram14 blacklisted
+ram15 blacklisted
+ram1 blacklisted
+ram2 blacklisted
+ram3 blacklisted
+ram4 blacklisted
+ram5 blacklisted
+ram6 blacklisted
+ram7 blacklisted
+ram8 blacklisted
+ram9 blacklisted
+===== path info sda (mask 0x1f) =====
+bus = 1
+dev_t = 8:0
+size = 2929684480
+vendor = Raidtec
+product = JEFF
+rev = 0281
+h:b:t:l = 0:0:0:0
+tgt_node_name = 0x20000010e9004510
+serial = 11900002000010
 
-Are these the functional equivalent of each other? Or if I set the above
-down to say 6s or 3s will I encounter other types of suffering?
+path checker = readsector0 (internal default)
+state = 2
+getprio = (null) (internal default)
+prio = 1
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+error calling out /sbin/scsi_id -g -u -s /block/sda
+uid =  (callout)
+===== path info sdb (mask 0x1f) =====
+bus = 1
+dev_t = 8:16
+size = 2929684480
+vendor = Raidtec
+product = JEFF
+rev = 0281
+h:b:t:l = 0:0:1:0
+tgt_node_name = 0x20000010e9004510
+serial = 11900002000010
 
-Thanks,
--sv
+path checker = readsector0 (internal default)
+state = 2
+getprio = (null) (internal default)
+prio = 1
+getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
+error calling out /sbin/scsi_id -g -u -s /block/sdb
+uid =  (callout)
+#
+# all paths :
+#
+  0:0:0:0 sda 8:0 1 [ready] Raidtec /JEFF            /0281
+  0:0:1:0 sdb 8:16 1 [ready] Raidtec /JEFF            /0281
+
+I don't seem to be getting anything useful without this call out working.
+
+Any suggestions appreciated.
+
+Adam
