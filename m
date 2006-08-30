@@ -1,12 +1,14 @@
-From: Raghavendra Shenoy <shenoy@netapp.com>
-Subject: PATCH - change netapp maintainer in hwtable.c
-Date: Thu, 31 Aug 2006 00:07:01 +0530
-Message-ID: <44F5DACD.9010603@netapp.com>
+From: David Wysochanski <davidw@netapp.com>
+Subject: Re: Multipathd not starting up properly
+Date: Wed, 30 Aug 2006 14:48:15 -0400
+Message-ID: <44F5DD6F.4080208@netapp.com>
+References: <608c44bf0608291112h1b62eef2hec5ceeb491e9b5b@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <608c44bf0608291112h1b62eef2hec5ceeb491e9b5b@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +21,15 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: Raghavendra Shenoy <shenoy@netapp.com>
-Acked-by: David Wysochanski <davidw@netapp.com>
-Index: multipath-tools/libmultipath/hwtable.c
-===================================================================
---- multipath-tools.orig/libmultipath/hwtable.c
-+++ multipath-tools/libmultipath/hwtable.c
-@@ -339,8 +339,8 @@ static struct hwentry default_hw[] = {
-      /*
-       * NETAPP controller family
-       *
--        * Maintainer : Dave Wysochanski
--        * Mail : davidw@netapp.com
-+        * Maintainer : Raghavendra Shenoy
-+        * Mail : shenoy@netapp.com
-       */
-      {                      .vendor        = "NETAPP",
-@@ -360,8 +360,8 @@ static struct hwentry default_hw[] = {
-      /*
-       * IBM NSeries (NETAPP) controller family
-       *
--        * Maintainer : Dave Wysochanski
--        * Mail : davidw@netapp.com
-+        * Maintainer : Raghavendra Shenoy
-+        * Mail : shenoy@netapp.com
-       */
-      {                      .vendor        = "IBM",
+Adam Huffman wrote:
+> I'm seeing the following messages when I start multipathd:
+> 
+> Aug 29 19:00:21 multipathd: error calling out /sbin/scsi_id -g -u -s 
+> /block/sda
+> Aug 29 19:00:21 multipathd: error calling out /sbin/scsi_id -g -u -s 
+> /block/sdb
+> 
+
+Does /sbin/scsi_id exist on your system?
+
+Did you try running this manually from the command line?
