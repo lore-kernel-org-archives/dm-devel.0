@@ -1,10 +1,10 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] add support for IBM 3526
-Date: Fri, 01 Sep 2006 08:57:48 +0200
-Message-ID: <44F7D9EC.2060400@suse.de>
+Subject: [PATCH] disable debug output for pp_tpc
+Date: Fri, 01 Sep 2006 09:01:24 +0200
+Message-ID: <44F7DAC4.6090804@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------050609010306090501010303"
+Content-Type: multipart/mixed; boundary="------------070902050403090009080206"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,17 +20,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------050609010306090501010303
+--------------070902050403090009080206
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christophe,
 
-we've found another IBM storage server in our lab; this patch adds the=20
-necessary hwtable entry for it.
-
-However, this is an RDAC machine, so it'll work only in some cases. One=20
-day we really need an RDAC hw-handler.
+this patch removes the debug output for pp_tpc and also decreases the=20
+priority ratings so that the passive path will have a priority of 0.
 
 Please apply,
 
@@ -41,62 +38,62 @@ SuSE Linux Products GmbH		S390 & zSeries
 Maxfeldstra=DFe 5				+49 911 74053 688
 90409 N=FCrnberg				http://www.suse.de
 
---------------050609010306090501010303
-Content-Type: text/plain;
- name="multipath-tools-ibm-3526-update"
+--------------070902050403090009080206
+Content-Type: text/x-patch;
+	name="multipath-tools-pp_tpc-disable-debug-output.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="multipath-tools-ibm-3526-update"
+	filename="multipath-tools-pp_tpc-disable-debug-output.patch"
 
-Add support for IBM 3526
+diff --git a/path_priority/pp_tpc/pp_tpc.c b/path_priority/pp_tpc/pp_tpc.c
+index 76e7c47..a7ed7ad 100644
+--- a/path_priority/pp_tpc/pp_tpc.c
++++ b/path_priority/pp_tpc/pp_tpc.c
+@@ -62,18 +62,13 @@ int sgi_tpc_prio(const char *dev)
+ 		goto out;
+ 	}
+ 	
+-	if ( /* Auto-volume Transfer Enabled */
+-	    	(sense_buffer[8] & 0x80) != 0x80 ) {
+-		fprintf(stderr, "Auto-volume Transfer not enabled");
+-	}
+-
+ 	if ( /* Current Volume Path Bit */
+ 		( sense_buffer[8] & 0x01) == 0x01 ) {
+ 		/* 
+ 		 * This volume was owned by the controller receiving
+ 		 * the inquiry command.
+ 		 */
+-		ret |= 0x02;
++		ret |= 0x01;
+ 	}
+ 
+ 	/* Volume Preferred Path Priority */
+@@ -83,7 +78,7 @@ int sgi_tpc_prio(const char *dev)
+ 		 * Access to this volume is most preferred through
+ 		 * this path and other paths with this value.
+ 		 */
+-		ret |= 0x04;
++		ret |= 0x02;
+ 		break;
+ 	case 0x02:
+ 		/*
+@@ -91,8 +86,7 @@ int sgi_tpc_prio(const char *dev)
+ 		 * as a secondary path. Typically this path would be used
+ 		 * for fail-over situations.
+ 		 */
+-		ret |= 0x01;
+-		break;
++		/* Fallthrough */
+ 	default:
+ 		/* Reserved values */
+ 		break;
 
-Adding support for IBM Netfinity FC RAID controller.
-Note that this is actually a RDAC controller, so it's supported
-in AVT mode only. We don't do RDAC-style failover (yet).
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-
----
-
- libmultipath/hwtable.c |   16 ++++++++++++++++
- 1 files changed, 16 insertions(+), 0 deletions(-)
-
-807fdf4dc06ee4be11620b11ce0be3630a598d57
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index b991689..50cd4c7 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -236,6 +236,22 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = TUR,
- 	},
- 	{
-+		/* IBM Netfinity Fibre Channel RAID Controller Unit */
-+		.vendor        = "IBM",
-+		.product       = "3526",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = "/sbin/mpath_prio_tpc /dev/%n",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_UNDEF,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = TUR,
-+	},
-+	{
- 		/* IBM DS4200 / FAStT200 */
- 		.vendor        = "IBM",
- 		.product       = "3542",
--- 
-1.1.3
-
---------------050609010306090501010303
+--------------070902050403090009080206
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------050609010306090501010303--
+--------------070902050403090009080206--
