@@ -1,11 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Fixup return code for 'multipath -l'
-Date: Fri, 01 Sep 2006 09:36:28 +0200
-Message-ID: <44F7E2FC.1090806@suse.de>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: [-mm patch] drivers/md/Kconfig: fix BLOCK dependency
+Date: Fri, 1 Sep 2006 15:50:55 +0200
+Message-ID: <20060901135055.GA18276@stusta.de>
+References: <20060901015818.42767813.akpm@osdl.org> <44F80F0D.70100@zen.co.uk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------050703010808090706020804"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <44F80F0D.70100@zen.co.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,63 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Grant Wilson <grant.wilson@zen.co.uk>, David Howells <dhowells@redhat.com>, Jens Axboe <axboe@kernel.dk>
+Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------050703010808090706020804
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+On Fri, Sep 01, 2006 at 11:44:29AM +0100, Grant Wilson wrote:
+> Andrew Morton wrote:
+> > ftp://ftp.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.18-rc5/2.6.18-rc5-mm1/
+> [snip]
+> >  The CONFIG_BLOCK changes wrecked these.
+> 
+> The CONFIG_BLOCK changes also seem to prevent the selection of any RAID
+> or LVM drivers...
 
-Hi Christophe,
+Thanks for the bug report, patch below.
 
-'multipath -l' should really set the return code to '0' if no error=20
-occurred.
+> Cheers,
+> Grant
 
-Please apply.
+cu
+Adrian
 
-Cheers,
 
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+<--  snip  -->
 
---------------050703010808090706020804
-Content-Type: text/plain;
- name="multipath-tools-fixup-return-code"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="multipath-tools-fixup-return-code"
 
- multipath/main.c |    4 +++-
- 1 files changed, 3 insertions(+), 1 deletions(-)
+Signed-off-by: Adrian Bunk <bunk@stusta.de>
 
-diff --git a/multipath/main.c b/multipath/main.c
-index c1257a2..b6f8814 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -280,8 +280,10 @@ configure (void)
+--- linux-2.6.18-rc5-mm1/drivers/md/Kconfig.old	2006-09-01 15:47:10.000000000 +0200
++++ linux-2.6.18-rc5-mm1/drivers/md/Kconfig	2006-09-01 15:47:16.000000000 +0200
+@@ -2,7 +2,7 @@
+ # Block device driver configuration
+ #
  
- 	filter_pathvec(pathvec, refwwid);
+-if CONFIG_BLOCK
++if BLOCK
  
--	if (conf->list)
-+	if (conf->list) {
-+		r = 0;
- 		goto out;
-+	}
+ menu "Multi-device support (RAID and LVM)"
  
- 	/*
- 	 * core logic entry point
-
---------------050703010808090706020804
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------050703010808090706020804--
