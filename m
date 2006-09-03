@@ -1,29 +1,38 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [-mm patch] drivers/md/Kconfig: fix BLOCK dependency
-Date: Fri, 1 Sep 2006 16:26:23 +0200
-Message-ID: <20060901142622.GE25434@kernel.dk>
-References: <20060901135055.GA18276@stusta.de> <20060901015818.42767813.akpm@osdl.org> <44F80F0D.70100@zen.co.uk> <11281.1157120111@warthog.cambridge.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [PATCH] Fixup return code for 'multipath -l'
+Date: Mon, 04 Sep 2006 00:39:47 +0200
+Message-ID: <1157323188.13005.15.camel@localhost.localdomain>
+References: <44F7E2FC.1090806@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751120AbWIAOXZ@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <11281.1157120111@warthog.cambridge.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: David Howells <dhowells@redhat.com>
-Cc: Adrian Bunk <bunk@stusta.de>, Grant Wilson <grant.wilson@zen.co.uk>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <44F7E2FC.1090806@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Sep 01 2006, David Howells wrote:
-> Adrian Bunk <bunk@stusta.de> wrote:
-> 
-> > -if CONFIG_BLOCK
-> > +if BLOCK
-> 
-> Oops.
-> 
-> Acked-By: David Howells <dhowells@redhat.com>
+Le vendredi 01 septembre 2006 =C3=A0 09:36 +0200, Hannes Reinecke a =C3=A9=
+crit :
+> Hi Christophe,
+>=20
+> 'multipath -l' should really set the return code to '0' if no error=20
+> occurred.
+>=20
+> Please apply.
+>=20
+Done.
+The 4 previous patches are also merged.
 
-Merged.
-
--- 
-Jens Axboe
+Thanks,
+cvaroqui
