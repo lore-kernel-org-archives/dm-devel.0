@@ -1,13 +1,12 @@
-From: "bart brooks" <bart_brooks@hotmail.com>
-Subject: Re: SCSI Sense patch
-Date: Tue, 05 Sep 2006 21:12:39 +0000
-Message-ID: <BAY114-F3773B8BFBF0D1B588213C99D300@phx.gbl>
-References: <44FDB64E.7020301@cs.wisc.edu>
+From: John Little <jslittl@hendricks.org>
+Subject: Multipath and SAN Fabric failover
+Date: Thu, 7 Sep 2006 13:39:43 -0400
+Message-ID: <20060907133943.4aa92481@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <44FDB64E.7020301@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,87 +19,149 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hi all,
 
-Thanks for responding to my question
-I took a look at the patches and see what you mean.
-It would be a nightmare to maintain error code mapping in the scsi-core for 
-each unique type of device that produces UA/sense data.
+I am trying to setup our server so that we have fabric failover from
+the san.  However my file sytem comes up read-only when I pull a cable
+for testing.
 
-Bart
+I am using the following:
+SLES 10
+multipath-tools-0.4.6-25.8
+q-logic 2342 dual port hba
+emc cx600 san
+(4) McData DS-24 switches (2 for fabric a and 2 for fabric b)
 
+I have one port from the hba plugged into fabric a and the other
+plugged into fabric b.
 
->From: Mike Christie <michaelc@cs.wisc.edu>
->Reply-To: device-mapper development <dm-devel@redhat.com>
->To: device-mapper development <dm-devel@redhat.com>
->Subject: Re: [dm-devel] SCSI Sense patch
->Date: Tue, 05 Sep 2006 12:39:26 -0500
->MIME-Version: 1.0
->Received: from hormel.redhat.com ([209.132.177.30]) by 
->bay0-mc6-f16.bay0.hotmail.com with Microsoft SMTPSVC(6.0.3790.2444); Tue, 5 
->Sep 2006 10:39:45 -0700
->Received: from listman.util.phx.redhat.com (listman.util.phx.redhat.com 
->[10.8.4.110])by hormel.redhat.com (Postfix) with ESMTPid C936273117; Tue,  
->5 Sep 2006 13:39:42 -0400 (EDT)
->Received: from int-mx1.corp.redhat.com 
->(int-mx1.corp.redhat.com[172.16.52.254])by listman.util.phx.redhat.com 
->(8.13.1/8.13.1) with ESMTP idk85HdfWF000464 for 
-><dm-devel@listman.util.phx.redhat.com>;Tue, 5 Sep 2006 13:39:41 -0400
->Received: from mx3.redhat.com (mx3.redhat.com [172.16.48.32])by 
->int-mx1.corp.redhat.com (8.12.11.20060308/8.12.11) with ESMTP 
->idk85HdfiK029876for <dm-devel@redhat.com>; Tue, 5 Sep 2006 13:39:41 -0400
->Received: from sabe.cs.wisc.edu (sabe.cs.wisc.edu [128.105.6.20])by 
->mx3.redhat.com (8.13.1/8.13.1) with ESMTP id k85HdWOT001383for 
-><dm-devel@redhat.com>; Tue, 5 Sep 2006 13:39:33 -0400
->Received: from [192.168.0.7] (CPE-70-92-133-61.mn.res.rr.com 
->[70.92.133.61])(authenticated bits=0)by sabe.cs.wisc.edu (8.13.6/8.13.6) 
->with ESMTP id k85HdVd6024654(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA 
->bits=256 verify=NO)for <dm-devel@redhat.com>; Tue, 5 Sep 2006 12:39:32 
->-0500
->X-Message-Info: LsUYwwHHNt3660MmjhEvYg2f34OAemlKtU9j2Z7TuGo=
->User-Agent: Thunderbird 1.5 (X11/20060313)
->References: <BAY114-F483ED5326C22601EF09069D300@phx.gbl>
->X-Enigmail-Version: 0.94.0.0
->X-RedHat-Spam-Score: 0 X-loop: dm-devel@redhat.com
->X-BeenThere: dm-devel@redhat.com
->X-Mailman-Version: 2.1.5
->Precedence: junk
->List-Id: device-mapper development <dm-devel.redhat.com>
->List-Unsubscribe: 
-><https://www.redhat.com/mailman/listinfo/dm-devel>,<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
->List-Archive: <https://www.redhat.com/archives/dm-devel>
->List-Post: <mailto:dm-devel@redhat.com>
->List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
->List-Subscribe: 
-><https://www.redhat.com/mailman/listinfo/dm-devel>,<mailto:dm-devel-request@redhat.com?subject=subscribe>
->Errors-To: dm-devel-bounces@redhat.com
->Return-Path: dm-devel-bounces@redhat.com
->X-OriginalArrivalTime: 05 Sep 2006 17:39:45.0634 (UTC) 
->FILETIME=[46EF4420:01C6D112]
->
->bart brooks wrote:
-> > Hi Alasdair,
-> >
-> > I take it you are referring to the addition of “bi_error” to the bio
-> > data structure.
-> > Any idea when an alternate solution will be available, is it still in
-> > the discussion phase ?
-> >
->
->I did two possible alternatives when trying to think of a way around
->KABI. You can find them here
->
->http://www.cs.wisc.edu/~michaelc/block/dm/rhel4/
->
->I am not pushing either approach right now since one is a crazy ugly
->hack (u3-bio-sense/) that I do not want to maintain or try to completely
->test for something like RHEL. The other possibility (u3-blkerr) is nicer
->but needs to be fixed up for some cases and needs lots of testing. The
->latter approach is also a little hacky since I had to work around the
->KABI restrictions but I do not think it is as evil as the u3-bio-sense
->approach.
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
+multipath -v2 -d before failover gives the following:
+xen2:~ # multipath -v2 -d
+create: SSEAGATE_ST973401LSUN72G0910FQL9_3LB0FQL9SEAGATE,ST973401LSUN72G
+[size=68G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][undef]
+ \_ 0:2:0:0 sda 8:0   [undef][ready]
+SSEAGATE_ST973401LSUN72G0910FPHE_3LB0FPHESEAGATE,ST973401LSUN72G
+[size=68G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][undef]
+ \_ 0:3:1:0 sdb 8:16  [active][ready]
+capsprod (360060160f06109004352b218eb51da11) DGC,RAID 5
+[size=50G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=1][undef]
+ \_ 1:0:0:0 sdc 8:32  [active][ready]
+\_ round-robin 0 [prio=1][undef]
+ \_ 1:0:1:0 sde 8:64  [active][ready]
+360060160f0610900ea604e9d2412db11DGC,RAID 5
+[size=58G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=2][undef]
+ \_ 1:0:0:1 sdd 8:48  [active][ready]
+ \_ 1:0:1:1 sdf 8:80  [active][ready]
+capsprod (360060160f06109004352b218eb51da11) DGC,RAID 5
+[size=50G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=1][undef]
+ \_ 1:0:0:0 sdc 8:32  [undef][ready]
+\_ round-robin 0 [prio=1][undef]
+ \_ 1:0:1:0 sde 8:64  [undef][ready]
+360060160f0610900ea604e9d2412db11DGC,RAID 5
+[size=58G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=2][undef]
+ \_ 1:0:0:1 sdd 8:48  [undef][ready]
+ \_ 1:0:1:1 sdf 8:80  [undef][ready]
+
+The disc that I'm using for test has the alias capsprod.
+
+When I pull the cable from fabric a multipath -v2 -d gives:
+xen2:~ # multipath -v2 -d
+sdc: checker msg is "emc_clariion_checker: query command indicates
+error"
+error calling out /sbin/scsi_id -g -u -s /block/sdc
+sdd: checker msg is "emc_clariion_checker: query command indicates
+error"
+error calling out /sbin/scsi_id -g -u -s /block/sdd
+sde: checker msg is "emc_clariion_checker: query command indicates
+error"
+error calling out /sbin/scsi_id -g -u -s /block/sde
+sdf: checker msg is "emc_clariion_checker: query command indicates
+error"
+error calling out /sbin/scsi_id -g -u -s /block/sdf
+create: SSEAGATE_ST973401LSUN72G0910FQL9_3LB0FQL9SEAGATE,ST973401LSUN72G
+[size=68G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][undef]
+ \_ 0:2:0:0 sda 8:0   [undef][ready]
+SSEAGATE_ST973401LSUN72G0910FPHE_3LB0FPHESEAGATE,ST973401LSUN72G
+[size=68G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][undef]
+ \_ 0:3:1:0 sdb 8:16  [active][ready]
+sdc: checker msg is "emc_clariion_checker: query command indicates
+error"
+sde: checker msg is "emc_clariion_checker: query command indicates
+error"
+capsprod (360060160f06109004352b218eb51da11) DGC,RAID 5
+[size=50G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=0][undef]
+ \_ 1:0:0:0 sdc 8:32  [failed][faulty]
+\_ round-robin 0 [prio=0][undef]
+ \_ 1:0:1:0 sde 8:64  [failed][faulty]
+sdd: checker msg is "emc_clariion_checker: query command indicates
+error"
+sdf: checker msg is "emc_clariion_checker: query command indicates
+error"
+360060160f0610900ea604e9d2412db11DGC,RAID 5
+[size=58G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=0][undef]
+ \_ 1:0:0:1 sdd 8:48  [failed][faulty]
+ \_ 1:0:1:1 sdf 8:80  [failed][faulty]
+sdc: checker msg is "emc_clariion_checker: query command indicates
+error"
+sde: checker msg is "emc_clariion_checker: query command indicates
+error"
+capsprod (360060160f06109004352b218eb51da11) DGC,RAID 5
+[size=50G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=0][undef]
+ \_ 1:0:0:0 sdc 8:32  [undef][faulty]
+\_ round-robin 0 [prio=0][undef]
+ \_ 1:0:1:0 sde 8:64  [undef][faulty]
+sdd: checker msg is "emc_clariion_checker: query command indicates
+error"
+sdf: checker msg is "emc_clariion_checker: query command indicates
+error"
+360060160f0610900ea604e9d2412db11DGC,RAID 5
+[size=58G][features=1 queue_if_no_path][hwhandler=1 emc]
+\_ round-robin 0 [prio=0][undef]
+ \_ 1:0:0:1 sdd 8:48  [undef][faulty]
+ \_ 1:0:1:1 sdf 8:80  [undef][faulty]
+
+/etc/multipath.conf has the following entries:
+
+xen2:~ # grep -v "#" /etc/multipath.conf
+defaults {
+        udev_dir                /dev
+        polling_interval        10
+        selector                "round-robin 0"
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        prio_callout            /bin/true
+        failback                immediate
+}
+devnode_blacklist {
+        device {
+                vendor SEAGATE
+                product ST973401LSUN72G
+        }
+}
+multipaths {
+        multipath {
+                wwid                    360060160f06109004352b218eb51da11
+                alias                   capsprod
+                path_grouping_policy    failover
+                path_checker            readsector0
+                path_selector           "round-robin 0"
+                failback                immediate
+        }
+}
+
+Can someone point me in the right direction to get this resolved?
+
+Best regards,
+John Little, Network Systems
+Hendricks Regional Health
+http://hendrickshospital.org
