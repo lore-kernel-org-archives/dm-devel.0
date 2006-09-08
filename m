@@ -1,14 +1,13 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: Multipath and SAN Fabric failover
-Date: Thu, 07 Sep 2006 20:09:38 +0200
-Message-ID: <45006062.6020800@bzed.de>
-References: <20060907133943.4aa92481@localhost>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Darryl Dixon" <esrever_otua@pythonhacker.is-a-geek.net>
+Subject: Multipath on root
+Date: Fri, 8 Sep 2006 15:31:49 +1200 (NZST)
+Message-ID: <15021.203.97.62.217.1157686309.squirrel@pythonhacker.is-a-geek.net>
+Reply-To: esrever_otua@pythonhacker.is-a-geek.net,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060907133943.4aa92481@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,78 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Heya,
+Hi All,
 
-I think you should just try an empty multipath.conf, only put the 
-blacklist in. The EMC CX needs pp_emc as prio callout for example. The 
-defaults within multipath should just work.
-Also make sure your failovermode and arraycommpath are both set to 1. A 
-few hints are mentioned on 
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments
-Please fill in if you find something that's missing there.
+I write as I have some questions about dm-multipath, and there seems to b=
+e
+a dearth of good documentation available. To make things worse the
+official Wiki even contains self-conflicting information (compare:
+http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3DFAQ """supports r=
+oot
+FS on multipathed SAN""" vs
+http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3DUsageFile """DM-M=
+P
+cannot be run on either the root or boot device.""").
+I figured what better place to get answers than from the experts involved
+in actually developing the system :)
 
-Best regards,
+What I would please like to get a clear understanding of is:
 
-Bernd Zeimetz
+1) What are the software components and dependencies involved in the bare
+necessities of making dm-multipath work? I've reviewed the architectural
+diagrams (which are quite good), but am looking more specifically for
+answers to things like 'is there actually a hard technical necessity for
+udev in order to actually make dm-multipath to work, or is its presence
+more an artifact of the assumptions built-in to overall design of the
+system?'
 
+2) Why exactly can't dm-multipath be used to multipath a root filesystem?
+What are the dependencies that can't be met by initrd? Why is dm-multipat=
+h
+different in this regard to any other block driver, eg md or LVM?
+OR
+2) What exactly, specifically is required in order to have root on a
+multipath device? A high-level overview would probably be more useful tha=
+n
+nitty-gritty of what entry to put in what file, at this point.
 
-John Little wrote:
-> Hi all,
->
-> I am trying to setup our server so that we have fabric failover from
-> the san.  However my file sytem comes up read-only when I pull a cable
-> for testing.
->
-> I am using the following:
-> SLES 10
-> multipath-tools-0.4.6-25.8
-> q-logic 2342 dual port hba
-> emc cx600 san
-> (4) McData DS-24 switches (2 for fabric a and 2 for fabric b)
->
->
->
-> /etc/multipath.conf has the following entries:
->
-> xen2:~ # grep -v "#" /etc/multipath.conf
-> defaults {
->         udev_dir                /dev
->         polling_interval        10
->         selector                "round-robin 0"
->         getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
->         prio_callout            /bin/true
->         failback                immediate
-> }
-> devnode_blacklist {
->         device {
->                 vendor SEAGATE
->                 product ST973401LSUN72G
->         }
-> }
-> multipaths {
->         multipath {
->                 wwid                    360060160f06109004352b218eb51da11
->                 alias                   capsprod
->                 path_grouping_policy    failover
->                 path_checker            readsector0
->                 path_selector           "round-robin 0"
->                 failback                immediate
->         }
-> }
->
-> Can someone point me in the right direction to get this resolved?
->
-> Best regards,
-> John Little, Network Systems
-> Hendricks Regional Health
-> http://hendrickshospital.org
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->   
+I'm guessing that a solid answer to (1) above will probably answer (2) in
+the process.
+
+The reason for the request is that the seemingly desirable and obvious
+option of booting from a SAN on Linux is pretty much worthless if
+multipathing can't be used for root - your system is less safe than
+booting from some mirrored internal disks...
+
+Thanks in advance for any and all assistance and answers on this,
+
+Darryl Dixon
+http://www.winterhouseconsulting.com
