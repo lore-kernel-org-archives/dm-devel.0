@@ -1,12 +1,11 @@
-From: "Darryl Dixon" <esrever_otua@pythonhacker.is-a-geek.net>
-Subject: Multipath on root
-Date: Fri, 8 Sep 2006 15:31:49 +1200 (NZST)
-Message-ID: <15021.203.97.62.217.1157686309.squirrel@pythonhacker.is-a-geek.net>
-Reply-To: esrever_otua@pythonhacker.is-a-geek.net,
-	device-mapper development <dm-devel@redhat.com>
+From: John Little <jslittl@hendricks.org>
+Subject: Re: Multipath and SAN Fabric failover
+Date: Fri, 8 Sep 2006 11:32:32 -0400
+Message-ID: <20060908113232.214106b1@localhost>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,50 +19,63 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi All,
+Hi Bernd
 
-I write as I have some questions about dm-multipath, and there seems to b=
-e
-a dearth of good documentation available. To make things worse the
-official Wiki even contains self-conflicting information (compare:
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3DFAQ """supports r=
-oot
-FS on multipathed SAN""" vs
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=3DUsageFile """DM-M=
-P
-cannot be run on either the root or boot device.""").
-I figured what better place to get answers than from the experts involved
-in actually developing the system :)
+I commented out everything including the blacklist in the multipath.conf as you suggested.  When I unplug the fc cable from fabric a the filesystem goes into read only mode.  multipath -v2 -d shows the same errors previously noted.  After rebooting I unplugged the fc cable from fabric b.  The file system properly stays in read\write mode.
 
-What I would please like to get a clear understanding of is:
+Just to make sure that I've covered everything I partitioned the disk as /dev/sdc and then used lvm2 command: pvcreate /dev/disk/by-name/capsprod-part1 to initialize and use the partition with lvm.
 
-1) What are the software components and dependencies involved in the bare
-necessities of making dm-multipath work? I've reviewed the architectural
-diagrams (which are quite good), but am looking more specifically for
-answers to things like 'is there actually a hard technical necessity for
-udev in order to actually make dm-multipath to work, or is its presence
-more an artifact of the assumptions built-in to overall design of the
-system?'
+I found the following error in dmesg:
 
-2) Why exactly can't dm-multipath be used to multipath a root filesystem?
-What are the dependencies that can't be met by initrd? Why is dm-multipat=
-h
-different in this regard to any other block driver, eg md or LVM?
-OR
-2) What exactly, specifically is required in order to have root on a
-multipath device? A high-level overview would probably be more useful tha=
-n
-nitty-gritty of what entry to put in what file, at this point.
+device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-devel@redhat.com
+dm-netlink version 0.0.2 loaded
+device-mapper: dm-multipath version 1.0.4 loaded
+device-mapper: dm-round-robin version 1.0.0 loaded
+device-mapper: dm-multipath: error getting device<====error
+device-mapper: error adding target to table<====error
+device-mapper: dm-emc version 0.0.3 loaded
+device-mapper: dm-emc: long trespass command will be send
+device-mapper: dm-emc: honor reservation bit will not be set (default)
+device-mapper: dm-emc: long trespass command will be send
+device-mapper: dm-emc: emc_pg_init: sending switch-over command
+device-mapper: dm-emc: honor reservation bit will not be set (default)
+device-mapper: dm-emc: emc_pg_init: sending switch-over command
 
-I'm guessing that a solid answer to (1) above will probably answer (2) in
-the process.
+Can you give me an idea of what else to check?  I'm nowhere near an expert on this subject as just about everything I've learned has been from reading this list.  
 
-The reason for the request is that the seemingly desirable and obvious
-option of booting from a SAN on Linux is pretty much worthless if
-multipathing can't be used for root - your system is less safe than
-booting from some mirrored internal disks...
+A couple  of questions come to mind:
+Is the lun not properly trespassing  from fabric a to fabric b?
+Where does the directive [features=1 queue_if_no_path] come from when
+running multipath -v2 -d?  Could this be the problem?
 
-Thanks in advance for any and all assistance and answers on this,
+Thanks,
 
-Darryl Dixon
-http://www.winterhouseconsulting.com
+John
+
+
+>Heya,
+
+
+>I think you should just try an empty multipath.conf, only put the blacklist in. The EMC CX needs pp_emc as prio callout for example. The defaults within >multipath should just work. Also make sure your failovermode and arraycommpath are both set to 1. A few hints are mentioned on >http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments
+
+>Please fill in if you find something that's missing there.
+
+>Best regards,
+
+>Bernd Zeimetz
+
+
+>>John Little wrote:
+
+>>    Hi all,
+
+>>    I am trying to setup our server so that we have fabric failover from
+ >>   the san.  However my file sytem comes up read-only when I pull a cable
+ >>  for testing.
+
+>>    I am using the following:
+>>    SLES 10
+>>    multipath-tools-0.4.6-25.8
+>>    q-logic 2342 dual port hba
+>>    emc cx600 san
+>>    (4) McData DS-24 switches (2 for fabric a and 2 for fabric b)
