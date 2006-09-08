@@ -1,16 +1,12 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: Re: 1st of 2 patches for dm_emc.c and dm-multipath
-	hardware handler interface
-Date: Fri, 08 Sep 2006 12:59:50 -0500
-Message-ID: <4501AF96.9030502@cs.wisc.edu>
-References: <6CCEAEDF4D06984A83F427424F47D6E4013D1397@CORPUSMX40A.corp.emc.com>
-	<4501A68F.8050708@cs.wisc.edu>
+From: John Little <jslittl@hendricks.org>
+Subject: Fw: Multipath and SAN Fabric failover
+Date: Fri, 8 Sep 2006 14:34:10 -0400
+Message-ID: <20060908143410.28764b76@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4501A68F.8050708@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,69 +16,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: agk@redhat.com, Edward Goggin <egoggin@emc.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
-> Edward Goggin wrote:
->> +
->> +	rq->buffer = rq->data = h->buffer;
->> +	rq->data_len = len;
->> +	rq->bio = rq->biotail = NULL;
->>  
-> 
-> I think I only suggested that you use the block layer map functions in
-> the previous review. Now I will say, use them and fix the core code to
-> not allocate memory or use a mempool since it will also fix the path
-> testers at the same time :) The reason is that the scsi layer is trying
-> to make every thing run with scatterlists. In 2.6.18, every place is
-> converted (they should be at least), so you should not be adding another
-> place where we send down a data buffer like this.
-> 
+Bernd/All,
 
-And if we are going to continue to do some scsi processing in dm I
-already did some helpers you could base yourself off of here
+Some additional infos:
 
-http://www.cs.wisc.edu/~michaelc/block/dm/v4/
+I unplugged the fc cable from fabric a and rebooted.  When checking
+dmesg I noticed that there were not any dm-emc parameters loaded like
+there were in my previous email below when rebooting with both cables
+connected.
+
+xen2:~ # dmesg |grep -i device-mapper
+device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-devel@redhat.com
+device-mapper: dm-multipath version 1.0.4 loaded
+device-mapper: dm-round-robin version 1.0.0 loaded
+device-mapper: dm-multipath: error getting device
+device-mapper: error adding target to table
+xen2:~ #
+
+Am I missing some setup somewhere for a dual port hba?
+
+Thanks,
+John
+
+Begin forwarded message:
+
+Date: Fri, 8 Sep 2006 11:32:32 -0400
+From: John Little <jslittl@hendricks.org>
+To: dm-devel@redhat.com
+Subject: Re: [dm-devel] Multipath and SAN Fabric failover
 
 
-In dm_scsi_end_rq, you could handle errors like transient transport
-failures for all hw handlers at one tine.
+Hi Bernd
 
-http://www.cs.wisc.edu/~michaelc/block/dm/v4/02-dm-scsi-helpers.patch
+I commented out everything including the blacklist in the
+multipath.conf as you suggested.  When I unplug the fc cable from
+fabric a the filesystem goes into read only mode.  multipath -v2 -d
+shows the same errors previously noted.  After rebooting I unplugged
+the fc cable from fabric b.  The file system properly stays in
+read\write mode.
 
-And in fact a lot of your patch has already been done with this patch
+Just to make sure that I've covered everything I partitioned the disk
+as /dev/sdc and then used lvm2 command:
+pvcreate /dev/disk/by-name/capsprod-part1 to initialize and use the
+partition with lvm.
 
-http://www.cs.wisc.edu/~michaelc/block/dm/v4/03-emc.patch a year ago.
+I found the following error in dmesg:
 
-We really need to change how dm-multipath development works IMHO.
-Alasdair is just too overworked. It is not fair to him to have so much
-work piled on top of him and not fair to the community to have problems
-like this sit around for so long.
+device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-devel@redhat.com
+dm-netlink version 0.0.2 loaded
+device-mapper: dm-multipath version 1.0.4 loaded
+device-mapper: dm-round-robin version 1.0.0 loaded
+device-mapper: dm-multipath: error getting device<====error
+device-mapper: error adding target to table<====error
+device-mapper: dm-emc version 0.0.3 loaded
+device-mapper: dm-emc: long trespass command will be send
+device-mapper: dm-emc: honor reservation bit will not be set (default)
+device-mapper: dm-emc: long trespass command will be send
+device-mapper: dm-emc: emc_pg_init: sending switch-over command
+device-mapper: dm-emc: honor reservation bit will not be set (default)
+device-mapper: dm-emc: emc_pg_init: sending switch-over command
 
-The basics of the hw handler framework were done when I did my pg group
-callouts that improved on Joe's idea to put everything in the path
-selectors. It took a year after that to get hw handlers, which made some
-of the same architectural mistakes as well as odd coding choices that I
-made, in the kernel. And now for another year we have been sitting on
-these type of bugs and problems where we need some of the hw handler
-functionality in the scsi layer as well as dm layer.
+Can you give me an idea of what else to check?  I'm nowhere near an
+expert on this subject as just about everything I've learned has been
+from reading this list.  
 
-With Alasdair having to maintain every driver that dm handles and those
-drivers increasing in complexity the work load is too large for one
-person and this makes coordination with other subsystems impossible.
-This is a large problem, when for something like dm-multipath it needs
-help from the block layer, and low levels like scsi.
+A couple  of questions come to mind:
+Is the lun not properly trespassing  from fabric a to fabric b?
+Where does the directive [features=1 queue_if_no_path] come from when
+running multipath -v2 -d?  Could this be the problem?
 
-We really need a system like in the scsi layer where there are driver
-maintainers and then one core maintainer of the subsystem. The core
-maintainer has final (well ok community has final say I guess) say but
-trusts the low level driver maintainers to some extent. The low level
-driver maintainers still have to post patches for review to the
-community and maintainer but the core maintainer does not have to do a
-line by line review of the dm target module and learn all the lower
-level details of the sub-subsytem/lld/dm target module/transport/spec
-unless it affects dm core or it is a suspicious patch.
+Thanks,
 
-Just my 2 cents.
+John
+
+
+>Heya,
+
+
+>I think you should just try an empty multipath.conf, only put the
+>blacklist in. The EMC CX needs pp_emc as prio callout for example. The
+>defaults within >multipath should just work. Also make sure your
+>failovermode and arraycommpath are both set to 1. A few hints are
+>mentioned on
+>>http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments
+
+>Please fill in if you find something that's missing there.
+
+>Best regards,
+
+>Bernd Zeimetz
+
+
+>>John Little wrote:
+
+>>    Hi all,
+
+>>    I am trying to setup our server so that we have fabric failover
+>> from
+ >>   the san.  However my file sytem comes up read-only when I pull a
+cable >>  for testing.
+
+>>    I am using the following:
+>>    SLES 10
+>>    multipath-tools-0.4.6-25.8
+>>    q-logic 2342 dual port hba
+>>    emc cx600 san
+>>    (4) McData DS-24 switches (2 for fabric a and 2 for fabric b)
