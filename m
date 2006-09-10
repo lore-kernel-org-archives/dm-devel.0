@@ -1,15 +1,14 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [PATCH] Latest dm-userspace, with memory reclaim
-Date: Sun, 10 Sep 2006 10:15:44 -0700
-Message-ID: <m3mz97tzgf.fsf@guaranine.beaverton.ibm.com>
-References: <m3veob7a9d.fsf@guaranine.beaverton.ibm.com>
-	<200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: Fw: Multipath and SAN Fabric failover
+Date: Sun, 10 Sep 2006 21:23:55 +0200
+Message-ID: <4504664B.7040509@bzed.de>
+References: <20060908143410.28764b76@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1473411464=="
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp> (FUJITA Tomonori's
-	message of "Sun, 10 Sep 2006 22:34:39 +0900")
+In-Reply-To: <20060908143410.28764b76@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,80 +21,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1473411464==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+Heya,
+> Just to make sure that I've covered everything I partitioned the disk
+> as /dev/sdc and then used lvm2 command:
+>   
+sorry, I've missed that before. /dev/sdc is only _one_ of your paths to 
+a LUN. multipath will take the right 2 of those sd* to create one dm 
+device file. Have a look if there's somethign in /dev/mapper, also check 
+your udev rules, you need this line in there:
 
---=-=-=
-Content-Transfer-Encoding: quoted-printable
+KERNEL=="dm-[0-9]*", PROGRAM="/sbin/devmap_name %M %m", NAME="%k", 
+SYMLINK="%c"
 
-FT> You said that the remap object mechanism improves the performance
-FT> by avoiding contacting user space for every requests. However, as
-FT> you see, Xen blktap (contacting user space for every requests) and
-FT> blkback (doing I/O in kernel) performances are comparable.
-
-You may be right.  I suppose the page cache might serve to prevent
-repeated accesses to the same location on disk, thus making the remap
-cache mostly unnecessary?
-
-FT> dm-userspace's poor performance of user space access is due to
-FT> ioctl, an inefficient interface.
-
-I do not use ioctl; I assume you're talking about the chardev
-read/write interface...
-
-Do you have performance metrics that show it performs better without
-the remap cache?  I have gathered the following:
-
-dbench to an LVM:  250-300 MB/s
-dbench to a dm-user cow, backed by LVM: 200-248 MB/s
-
-Considering one is doing CoW and one is not, would you consider
-~50MB/s too much of a hit?
-
-FT> The blktap uses shared ring buffer between kernel and user space,
-FT> which enables us to batch multiple requests without data copies.
-
-Well, the remap cache and the read/write interface do as much batching
-as possible to reduce communication with userspace.  Requests are
-copied to/from the kernel, which I suppose limits performance, but the
-request objects are rather small.
-
-FT> Here's a patch to remove the remap object mechanism and add
-FT> replaced ioctl with ring buffer.
-
-If performance does not suffer, I would love to remove the remap
-cache, as it is really ugly and complicated.  I suppose I have been
-under the assumption that it is absolutely necessary to achieve good
-performance, but if not, I will be the first to rip it out :)
-
-A performance comparison with/without the remap cache would be
-appreciated.=20
-
-=2D-=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
-
---=-=-=
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2.2 (GNU/Linux)
-
-iD8DBQFFBEhDwtEf7b4GJVQRAq5eAJ9pNZM2JaSRCc6OCK0fgmYNVLmrsACeMnXN
-kFVYZfEPZjkk9EMHlV/qG7E=
-=UW6z
------END PGP SIGNATURE-----
---=-=-=--
+most distros have a line like
+#KERNEL=="dm-[0-9]*",           NAME=""
+in there, you need to comment it out if you add the lien above.
 
 
---===============1473411464==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hope that helped,
 
+best regards
 
---===============1473411464==--
+Bernd Zeimetz
