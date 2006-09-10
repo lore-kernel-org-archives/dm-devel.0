@@ -1,12 +1,14 @@
-From: John Little <jslittl@hendricks.org>
-Subject: Fw: Multipath and SAN Fabric failover
-Date: Fri, 8 Sep 2006 14:34:10 -0400
-Message-ID: <20060908143410.28764b76@localhost>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH] Latest dm-userspace, with memory reclaim
+Date: Sun, 10 Sep 2006 22:34:39 +0900
+Message-ID: <200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp>
+References: <m3veob7a9d.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <m3veob7a9d.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,109 +21,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Bernd/All,
+From: Dan Smith <danms@us.ibm.com>
+Subject: [dm-devel] [PATCH] Latest dm-userspace, with memory reclaim
+Date: Tue, 29 Aug 2006 09:54:38 -0700
 
-Some additional infos:
+> This is the latest version of dm-userspace.  I have added a
+> (configurable) limit on the number of remap objects the kernel will
+> maintain in memory before re-using old ones.
+> 
+> I think it may be beneficial to have a soft and a hard limit on this,
+> to allow allocation to be done if no remaps can be re-used at a given
+> point (up to the hard limit).  Comments appreciated.
 
-I unplugged the fc cable from fabric a and rebooted.  When checking
-dmesg I noticed that there were not any dm-emc parameters loaded like
-there were in my previous email below when rebooting with both cables
-connected.
+How about removing the remap object mechanism?
 
-xen2:~ # dmesg |grep -i device-mapper
-device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-devel@redhat.com
-device-mapper: dm-multipath version 1.0.4 loaded
-device-mapper: dm-round-robin version 1.0.0 loaded
-device-mapper: dm-multipath: error getting device
-device-mapper: error adding target to table
-xen2:~ #
+You said that the remap object mechanism improves the performance by
+avoiding contacting user space for every requests. However, as you
+see, Xen blktap (contacting user space for every requests) and blkback
+(doing I/O in kernel) performances are comparable. dm-userspace's poor
+performance of user space access is due to ioctl, an inefficient
+interface. The blktap uses shared ring buffer between kernel and user
+space, which enables us to batch multiple requests without data
+copies.
 
-Am I missing some setup somewhere for a dual port hba?
+Here's a patch to remove the remap object mechanism and add replaced
+ioctl with ring buffer.
 
-Thanks,
-John
+As you can see, the half of the dm-userspace code is for the remap
+object mechanism:
 
-Begin forwarded message:
+   99 drivers/md/dm-user.h
+  544 drivers/md/dm-userspace.c
+  406 drivers/md/dm-userspace-chardev.c
+   81 include/linux/dm-userspace.h
+ 1130 total
 
-Date: Fri, 8 Sep 2006 11:32:32 -0400
-From: John Little <jslittl@hendricks.org>
-To: dm-devel@redhat.com
-Subject: Re: [dm-devel] Multipath and SAN Fabric failover
-
-
-Hi Bernd
-
-I commented out everything including the blacklist in the
-multipath.conf as you suggested.  When I unplug the fc cable from
-fabric a the filesystem goes into read only mode.  multipath -v2 -d
-shows the same errors previously noted.  After rebooting I unplugged
-the fc cable from fabric b.  The file system properly stays in
-read\write mode.
-
-Just to make sure that I've covered everything I partitioned the disk
-as /dev/sdc and then used lvm2 command:
-pvcreate /dev/disk/by-name/capsprod-part1 to initialize and use the
-partition with lvm.
-
-I found the following error in dmesg:
-
-device-mapper: 4.5.0-ioctl (2005-10-04) initialised: dm-devel@redhat.com
-dm-netlink version 0.0.2 loaded
-device-mapper: dm-multipath version 1.0.4 loaded
-device-mapper: dm-round-robin version 1.0.0 loaded
-device-mapper: dm-multipath: error getting device<====error
-device-mapper: error adding target to table<====error
-device-mapper: dm-emc version 0.0.3 loaded
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: long trespass command will be send
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
-device-mapper: dm-emc: honor reservation bit will not be set (default)
-device-mapper: dm-emc: emc_pg_init: sending switch-over command
-
-Can you give me an idea of what else to check?  I'm nowhere near an
-expert on this subject as just about everything I've learned has been
-from reading this list.  
-
-A couple  of questions come to mind:
-Is the lun not properly trespassing  from fabric a to fabric b?
-Where does the directive [features=1 queue_if_no_path] come from when
-running multipath -v2 -d?  Could this be the problem?
-
-Thanks,
-
-John
+  209 drivers/md/dm-user.h
+ 1171 drivers/md/dm-userspace.c
+  900 drivers/md/dm-userspace-chardev.c
+  147 include/linux/dm-userspace.h
+ 2427 total
 
 
->Heya,
+I also uploaded a example program to use the new ring buffer
+interface:
 
-
->I think you should just try an empty multipath.conf, only put the
->blacklist in. The EMC CX needs pp_emc as prio callout for example. The
->defaults within >multipath should just work. Also make sure your
->failovermode and arraycommpath are both set to 1. A few hints are
->mentioned on
->>http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=TestedEnvironments
-
->Please fill in if you find something that's missing there.
-
->Best regards,
-
->Bernd Zeimetz
-
-
->>John Little wrote:
-
->>    Hi all,
-
->>    I am trying to setup our server so that we have fabric failover
->> from
- >>   the san.  However my file sytem comes up read-only when I pull a
-cable >>  for testing.
-
->>    I am using the following:
->>    SLES 10
->>    multipath-tools-0.4.6-25.8
->>    q-logic 2342 dual port hba
->>    emc cx600 san
->>    (4) McData DS-24 switches (2 for fabric a and 2 for fabric b)
+http://www.kernel.org/pub/linux/kernel/people/tomo/dmu/example-rb.c
