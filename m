@@ -1,15 +1,15 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+From: Dan Smith <danms@us.ibm.com>
 Subject: Re: [PATCH] Latest dm-userspace, with memory reclaim
-Date: Sun, 10 Sep 2006 22:45:02 +0900
-Message-ID: <200609101345.k8ADj3fg013628@r-dd.iij4u.or.jp>
+Date: Sun, 10 Sep 2006 10:15:44 -0700
+Message-ID: <m3mz97tzgf.fsf@guaranine.beaverton.ibm.com>
 References: <m3veob7a9d.fsf@guaranine.beaverton.ibm.com>
 	<200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1473411464=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp>
+In-Reply-To: <200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp> (FUJITA Tomonori's
+	message of "Sun, 10 Sep 2006 22:34:39 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,40 +19,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [dm-devel] [PATCH] Latest dm-userspace, with memory reclaim
-Date: Sun, 10 Sep 2006 22:34:39 +0900
+--===============1473411464==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-> From: Dan Smith <danms@us.ibm.com>
-> Subject: [dm-devel] [PATCH] Latest dm-userspace, with memory reclaim
-> Date: Tue, 29 Aug 2006 09:54:38 -0700
-> 
-> > This is the latest version of dm-userspace.  I have added a
-> > (configurable) limit on the number of remap objects the kernel will
-> > maintain in memory before re-using old ones.
-> > 
-> > I think it may be beneficial to have a soft and a hard limit on this,
-> > to allow allocation to be done if no remaps can be re-used at a given
-> > point (up to the hard limit).  Comments appreciated.
-> 
-> How about removing the remap object mechanism?
-> 
-> You said that the remap object mechanism improves the performance by
-> avoiding contacting user space for every requests. However, as you
-> see, Xen blktap (contacting user space for every requests) and blkback
-> (doing I/O in kernel) performances are comparable. dm-userspace's poor
-> performance of user space access is due to ioctl, an inefficient
-> interface. The blktap uses shared ring buffer between kernel and user
-> space, which enables us to batch multiple requests without data
-> copies.
-> 
-> Here's a patch to remove the remap object mechanism and add replaced
-> ioctl with ring buffer.
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-The mailing list removed my patch for some reasons. So I uploaded the
-patch too:
+FT> You said that the remap object mechanism improves the performance
+FT> by avoiding contacting user space for every requests. However, as
+FT> you see, Xen blktap (contacting user space for every requests) and
+FT> blkback (doing I/O in kernel) performances are comparable.
 
-http://www.kernel.org/pub/linux/kernel/people/tomo/dmu/ringbuf.patch
+You may be right.  I suppose the page cache might serve to prevent
+repeated accesses to the same location on disk, thus making the remap
+cache mostly unnecessary?
+
+FT> dm-userspace's poor performance of user space access is due to
+FT> ioctl, an inefficient interface.
+
+I do not use ioctl; I assume you're talking about the chardev
+read/write interface...
+
+Do you have performance metrics that show it performs better without
+the remap cache?  I have gathered the following:
+
+dbench to an LVM:  250-300 MB/s
+dbench to a dm-user cow, backed by LVM: 200-248 MB/s
+
+Considering one is doing CoW and one is not, would you consider
+~50MB/s too much of a hit?
+
+FT> The blktap uses shared ring buffer between kernel and user space,
+FT> which enables us to batch multiple requests without data copies.
+
+Well, the remap cache and the read/write interface do as much batching
+as possible to reduce communication with userspace.  Requests are
+copied to/from the kernel, which I suppose limits performance, but the
+request objects are rather small.
+
+FT> Here's a patch to remove the remap object mechanism and add
+FT> replaced ioctl with ring buffer.
+
+If performance does not suffer, I would love to remove the remap
+cache, as it is really ugly and complicated.  I suppose I have been
+under the assumption that it is absolutely necessary to achieve good
+performance, but if not, I will be the first to rip it out :)
+
+A performance comparison with/without the remap cache would be
+appreciated.=20
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFBEhDwtEf7b4GJVQRAq5eAJ9pNZM2JaSRCc6OCK0fgmYNVLmrsACeMnXN
+kFVYZfEPZjkk9EMHlV/qG7E=
+=UW6z
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1473411464==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1473411464==--
