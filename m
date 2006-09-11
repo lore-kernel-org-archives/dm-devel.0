@@ -1,16 +1,17 @@
-From: Jie Gao <J.Gao@isu.usyd.edu.au>
-Subject: multipath feature sticks
-Date: Mon, 11 Sep 2006 10:34:50 +1000 (EST)
-Message-ID: <Pine.GSO.4.58.0609111026520.4522@banquo.ucc.usyd.edu.au>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [PATCH] Latest dm-userspace, with memory reclaim
+Date: Sun, 10 Sep 2006 19:49:28 -0700
+Message-ID: <m3irjvt8w7.fsf@guaranine.beaverton.ibm.com>
 References: <m3veob7a9d.fsf@guaranine.beaverton.ibm.com>
 	<200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp>
 	<m3mz97tzgf.fsf@guaranine.beaverton.ibm.com>
 	<200609102354.k8ANsPoC018868@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: multipart/mixed; boundary="===============1384917513=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200609102354.k8ANsPoC018868@r-dd.iij4u.or.jp>
+In-Reply-To: <200609102354.k8ANsPoC018868@r-dd.iij4u.or.jp> (FUJITA Tomonori's
+	message of "Mon, 11 Sep 2006 08:54:24 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,59 +24,71 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi All
+--===============1384917513==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-Redhat Enterprise Linux AS update 4 patched up-to-date:
-2.6.9-42.0.2.ELsmp #1 SMP Thu Aug 17 17:57:31 EDT 2006 x86_64 x86_64 x86_64 GNU/Linux
--------------------------------------------------------------------------------------
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-I have the following in my multipath.conf:
+FT> Yeah, I think that there is no performance difference under real
+FT> workloads (not synthetic benchmark workloads).
 
-> grep no_path_retry /etc/multipath.conf
-        no_path_retry           60
-#       no_path_retry           fail
-#       no_path_retry           queue
-        no_path_retry           60
-                no_path_retry           60
-                no_path_retry           60
-#               no_path_retry           5
-#               no_path_retry           queue
+So dbench is too synthetic?  Performance with guest domains has been
+quite good in my experience.
 
-As you can see, I had "no_path_retry queue" before and I have
-since changed it to "no_path_retry 60".
+FT> Right, I should have said that the major advantage of ring buffer
+FT> is communication without system calls.
 
-The problem is that the value of "queue" somehow sticks:
+That's definitely possible, but if the remap cache reduces the amount
+of communication with userspace, then you also save the context switch
+to map the data each time.  I know that blktap does not seem to suffer
+much of a performance hit here, so it may be lost in the noise of a
+domain switch.  What about native performance?  I intend for
+dm-userspace to be useful outside the realm of Xen :)
 
-> multipath -ll
-3600d02300067d2b107ad9a43303d8200
-[size=390 GB][features="1 queue_if_no_path"][hwhandler="0"]
-\_ round-robin 0 [active]
- \_ 1:0:0:1 sdb 8:16 [active][ready]
- \_ 2:0:0:1 sdd 8:48 [active][ready]
+FT> I've not tried the origianl dm-userspace.=20
 
-3600d02300067d2f707d12552c2821300
-[size=390 GB][features="1 queue_if_no_path"][hwhandler="0"]
-\_ round-robin 0 [active]
- \_ 1:0:1:1 sdc 8:32 [active][ready]
- \_ 2:0:1:1 sde 8:64 [active][ready]
+Then why do you claim that performance suffers because of the use of
+syscalls?=20
 
-Rebooting does not solve this problem.
+FT> You have all the equipment, so can you do a performance
+FT> comparison?=20
 
-> dmsetup table
-www_vg_01-www_lv_01: 0 314572800 linear 9:1 384
-3600d02300067d2b107ad9a43303d8200: 0 819200000 multipath 1 queue_if_no_path 0 1 1 round-robin 0 2 1 8:16
-100 8:48 100
-3600d02300067d2f707d12552c2821300: 0 819200000 multipath 1 queue_if_no_path 0 1 1 round-robin 0 2 1 8:32
-100 8:64 100
+Yes, I can.
 
-I know I can use dmsetup to reset it, but problem is there seems to
-only two values that can be used with dmsetup: either queue_if_no_path
-or fail_if_no_path; and the value does not stay across reboot.
+FT> I guess that the results of Xen blktap and blkback drivers have
+FT> told us the expected performance differences.
 
-Anybody can help?
+Is it not possible that blktap performs well for Xen because I/O
+latency is hidden by domain switches?  I would think that on a single
+processor vanilla linux system that switching to userspace for every
+single map would not be ideal.
 
-Regards,
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFBM6+wtEf7b4GJVQRAjsHAJ4gk74uy7lVO+DgD9KQ5w8RER3v9wCaAqG8
+iac989K0gXfF6FcPUQk5gH4=
+=Xl8A
+-----END PGP SIGNATURE-----
+--=-=-=--
 
 
+--===============1384917513==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Jie
+
+--===============1384917513==--
