@@ -1,16 +1,11 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH] Latest dm-userspace, with memory reclaim
-Date: Mon, 11 Sep 2006 08:54:24 +0900
-Message-ID: <200609102354.k8ANsPoC018868@r-dd.iij4u.or.jp>
-References: <m3veob7a9d.fsf@guaranine.beaverton.ibm.com>
-	<200609101334.k8ADYeHM012649@r-dd.iij4u.or.jp>
-	<m3mz97tzgf.fsf@guaranine.beaverton.ibm.com>
+From: Jie Gao <J.Gao@isu.usyd.edu.au>
+Subject: /dev/mdX won't shutdown
+Date: Mon, 11 Sep 2006 10:26:27 +1000 (EST)
+Message-ID: <Pine.GSO.4.58.0609111015210.4522@banquo.ucc.usyd.edu.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3mz97tzgf.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,67 +15,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] [PATCH] Latest dm-userspace, with memory reclaim
-Date: Sun, 10 Sep 2006 10:15:44 -0700
+Hi All
 
-> FT> You said that the remap object mechanism improves the performance
-> FT> by avoiding contacting user space for every requests. However, as
-> FT> you see, Xen blktap (contacting user space for every requests) and
-> FT> blkback (doing I/O in kernel) performances are comparable.
-> 
-> You may be right.  I suppose the page cache might serve to prevent
-> repeated accesses to the same location on disk, thus making the remap
-> cache mostly unnecessary?
+Redhat Enterprise Linux AS update 4 patched up-to-date:
+2.6.9-42.0.2.ELsmp #1 SMP Thu Aug 17 17:57:31 EDT 2006 x86_64 x86_64 x86_64 GNU/Linux
+-------------------------------------------------------------------------------------
 
-Yeah, I think that there is no performance difference under real
-workloads (not synthetic benchmark workloads).
+I reckon somebody must have encountered this, but I will report this anyway.
 
+I have set up mirroring as /dev/md1 on the following multipath devices
 
-> FT> dm-userspace's poor performance of user space access is due to
-> FT> ioctl, an inefficient interface.
-> 
-> I do not use ioctl; I assume you're talking about the chardev
-> read/write interface...
-> 
-> Do you have performance metrics that show it performs better without
-> the remap cache?  I have gathered the following:
-> 
-> dbench to an LVM:  250-300 MB/s
-> dbench to a dm-user cow, backed by LVM: 200-248 MB/s
-> 
-> Considering one is doing CoW and one is not, would you consider
-> ~50MB/s too much of a hit?
-> 
-> FT> The blktap uses shared ring buffer between kernel and user space,
-> FT> which enables us to batch multiple requests without data copies.
-> 
-> Well, the remap cache and the read/write interface do as much batching
-> as possible to reduce communication with userspace.  Requests are
-> copied to/from the kernel, which I suppose limits performance, but the
-> request objects are rather small.
+/dev/mapper/3600d02300067d2b107ad9a43303d8200
+/dev/mapper/3600d02300067d2f707d12552c2821300.
 
-Right, I should have said that the major advantage of ring buffer is
-communication without system calls.
+I have used lvms to create physical volume, volume group, and a logical
+volume on it.
+
+I can shutdown /dev/md1 using "mdadm --stop /dev/md1" and restart it
+after all the above steps except the logical volume creation. I cannot
+shut down /dev/md1 once the logical volume is created: I get the
+following message:
+
+mdadm: fail to stop array /dev/md1: Device or resource busy
+
+The device is not mounted.
+
+dmesetup says:
+
+> dmsetup info -c
+Name             Maj Min Stat Open Targ Event  UUID
+www_vg_01-www_lv_01 253   2 L--w    1    1      0
+LVM-138joBnlTj4A60wh1AqTEriQ2Tfczwyj8ckKOs70a8K2FcQjhwdx6M1e6ge48GVH
+3600d02300067d2b107ad9a43303d8200 253   0 L--w    1    1      1 mpath-3600d02300067d2b107ad9a43303d8200
+3600d02300067d2f707d12552c2821300 253   1 L--w    1    1      1 mpath-3600d02300067d2f707d12552c2821300
+
+Regards,
 
 
-> FT> Here's a patch to remove the remap object mechanism and add
-> FT> replaced ioctl with ring buffer.
-> 
-> If performance does not suffer, I would love to remove the remap
-> cache, as it is really ugly and complicated.  I suppose I have been
-> under the assumption that it is absolutely necessary to achieve good
-> performance, but if not, I will be the first to rip it out :)
-> 
-> A performance comparison with/without the remap cache would be
-> appreciated. 
 
-I'd like to say the same. :)
-
-I've not tried the origianl dm-userspace. You have all the equipment,
-so can you do a performance comparison? I guess that the results of
-Xen blktap and blkback drivers have told us the expected performance
-differences.
+Jie
