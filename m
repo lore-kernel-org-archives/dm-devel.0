@@ -1,16 +1,16 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: dm-userspace (no in-kernel cache version)
-Date: Fri, 15 Sep 2006 01:27:57 +0900
-Message-ID: <20060915012757J.fujita.tomonori@lab.ntt.co.jp>
-References: <m3lkoopxf9.fsf@guaranine.beaverton.ibm.com>
-	<20060915004807D.fujita.tomonori@lab.ntt.co.jp>
-	<m3y7smmobw.fsf@guaranine.beaverton.ibm.com>
+From: Laurent Riffard <laurent.riffard@free.fr>
+Subject: Re: lvresize fails with "reload ioctl failed: Invalid
+	argument"
+Date: Mon, 11 Sep 2006 19:18:58 +0200
+Message-ID: <45059A82.6080402@free.fr>
+References: <ee20kk$s7u$1@sea.gmane.org>
+	<20060910221427.GF13859@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3y7smmobw.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <20060910221427.GF13859@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,83 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] dm-userspace (no in-kernel cache version)
-Date: Thu, 14 Sep 2006 08:59:15 -0700
+Le 11.09.2006 00:14, Alasdair G Kergon a =E9crit :
+> On Sun, Sep 10, 2006 at 11:38:27PM +0200, Laurent Riffard wrote:
+>>  device-mapper: reload ioctl failed: Invalid argument
+>=20
+>>  LVM version:     2.02.06 (2006-05-12)
+>>  Library version: 1.02.09 (2006-08-15)
+>>  Driver version:  4.8.0
+>> Linux version 2.6.18-rc6-mm1 (laurent@calimero.antadix) (gcc version 4=
+.1.1=20
+>> 20060724 (prerelease) (4.1.1-3mdk)) #145 Sun Sep 10 20:48:49 CEST 2006
+> =20
+>=20
+>> Is it a known problem ?=20
+>=20
+> Not sure, but try updating lvm2 version to the same date as the
+> library version (at least 2.02.08 15th August).
+>=20
+> Alasdair
 
-> FT> Have you tried SCHED_FIFO?
-> 
-> Not yet, but that is a good suggestion.
-> 
-> FT> By the way, can you upload or post the latest kernel and
-> FT> user-space code?
-> 
-> Right now I am working on a version that still uses read()/write(),
-> but that does not use a remap cache (in a way very similar to what you
-> posted).  When I get it close to stable, I'll post it here for
-> comments.
+Still fails...
 
-I see.
+[root@calimero ~]# PATH=3D/home/laurent/bin:/home/laurent/sbin:$PATH
+[root@calimero ~]# lvm version
+  LVM version:     2.02.08 (2006-08-15)
+  Library version: 1.02.09 (2006-08-15)
+  Driver version:  4.8.0
+[root@calimero ~]# lvm lvresize  --extents +1 /dev/vglinux1/lvswap2
+  Extending logical volume lvswap2 to 1,00 GB
+  device-mapper: reload ioctl failed: Argument invalide
+  Failed to suspend lvswap2
 
-
-> After reviewing the ringbuffer code more, I'm not sure that it really
-> buys you any additional performance (other than 1/3 less syscalls).
-> The amount of memory that is copied around seems to be about the
-> same.
-
-Well, my code just uses ring buffer and is not tuned yet. As you know,
-you can eliminate memory copies easily (I've attached a patch to do
-that for dmu_uspace_send_map_req), though maybe memory copies don't
-make the large difference. As you said, after having a stable version
-without rmap cache, performance tests (write/read vs. ring buffer)
-are necessary.
-
-
-diff --git a/drivers/md/dm-userspace-chardev.c b/drivers/md/dm-userspace-chardev.c
-index 5a4b0d3..42172ce 100644
---- a/drivers/md/dm-userspace-chardev.c
-+++ b/drivers/md/dm-userspace-chardev.c
-@@ -117,12 +117,35 @@ static int dmu_uspace_send_event(struct 
- 
- int dmu_uspace_send_map_req(struct dmu_device *dev, u64 id, u32 flags, u64 block)
- {
--	struct dmu_event ev;
-+	struct chardev_transport *t = dev->transport_private;
-+	struct dmu_ring *ring = &t->tx;
-+	struct dmu_event *ev;
-+	int err = 0;
-+
-+	spin_lock(&ring->r_lock);
-+
-+	ev = dmu_head_event(ring, ring->r_idx);
-+	if (!ev->status) {
-+
-+		ev->type = DM_USERSPACE_MAP_BLOCK_REQ;
-+		ev->status = 1;
-+		ev->k.map_req.id = id;
-+		ev->k.map_req.flags = flags;
-+		ev->k.map_req.block = block;
- 
--	ev.k.map_req.id = id;
--	ev.k.map_req.flags = flags;
--	ev.k.map_req.block = block;
--	return dmu_uspace_send_event(dev, DM_USERSPACE_MAP_BLOCK_REQ, &ev);
-+		mb();
-+		dmu_ring_idx_inc(ring);
-+	} else
-+		err = -EBUSY;
-+
-+	spin_unlock(&ring->r_lock);
-+
-+	if (!err) {
-+		flush_dcache_page(virt_to_page(ev));
-+		wake_up_interruptible(&t->tx_poll_wait);
-+	}
-+
-+	return err;
- }
- 
- int dmu_uspace_send_map_status(struct dmu_device *dev, u64 id, u32 status)
+~~
+laurent
