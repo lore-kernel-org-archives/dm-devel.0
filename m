@@ -1,16 +1,12 @@
-From: Laurent Riffard <laurent.riffard@free.fr>
-Subject: Re: lvresize fails with "reload ioctl failed: Invalid
-	argument"
-Date: Tue, 12 Sep 2006 22:57:10 +0200
-Message-ID: <45071F26.1090108@free.fr>
-References: <ee20kk$s7u$1@sea.gmane.org>	<20060910221427.GF13859@agk.surrey.redhat.com>	<20060911141916.GC13522@percy.comedia.it>	<450592C5.50905@free.fr>	<20060911170527.GE13522@percy.comedia.it>	<4505C3BB.1050000@free.fr>
-	<4505FD02.10309@ce.jp.nec.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: dm-userspace (no in-kernel cache version)
+Date: Tue, 12 Sep 2006 14:50:02 -0700
+Message-ID: <m3lkoopxf9.fsf@guaranine.beaverton.ibm.com>
+References: <20060912080748X.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============1908841287=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4505FD02.10309@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,100 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Le 12.09.2006 02:19, Jun'ichi Nomura a =E9crit :
-> Hi Laurent,
->=20
-> Laurent Riffard wrote:
->>>>>>>  device-mapper: reload ioctl failed: Invalid argument
-> ...
->>> works for me with 2.6.17-4mdv kernel
->>> maybe something related to your kernel version?
->>
->> Yes, you seem to be right: it does work with 2.6.17-2mdv or=20
->> 2.6.17-4mdv, but it fails with 2.6.18-rc6-mm1.
->=20
-> I reproduced the problem on my host, too.
-> I found a change in -mm which would cause this problem
-> and attached patch fixed it.
->=20
-> I'll post it to linux-kernel as well.
->=20
-> Thanks,
+--===============1908841287==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-Hi Jun'ichi,
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-I can confirm that your patch solved this problem.=20
+FT> As explained, this removes rmap (in-kernel cache) and use mmaped
+FT> buffer instead of read/write system calls for user/kernel
+FT> communication.
 
-- 2.6.18-rc6 works
-- 2.6.18-rc6-mm1 fails
-- 2.6.18-rc6-mm2 fails
-- 2.6.18-rc6-mm2 + correct-add_bd_holder-return-value.patch works
+Ok, I got your code to work, and I have run some benchmarks.  I'll cut
+directly to the chase...
 
-Thanks!
---
-laurent
+I used dbench with a single process, for 120 seconds on a dm-userspace
+device mapping directly to an LVM device.  I used my example.c and the
+example-rb.c provided with the ringbuffer version.  The results are:
 
-> -----------------------------------------------------------------------=
--
->=20
-> If a matching bd_holder is found in bd_holder_list,
-> add_bd_holder() completes its job by just incrementing the reference co=
-unt.
-> In this case, it should be considered as success but it used to return =
-'fail'
-> to let the caller free bd_holder.
-> Fixed it to return success and free given object by itself.
->=20
-> Also, if either one of symlinking fails, the bd_holder should not
-> be added to the list so that it can be discarded later.
-> Otherwise, the caller will free bd_holder which is in the list.
->=20
-> This patch is neccessary only for -mm (later than 2.6.18-rc1-mm1).
->=20
->  fs/block_dev.c |   11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
->=20
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
->=20
-> diff -urp linux-2.6.18-rc5-mm1.orig/fs/block_dev.c linux-2.6.18-rc5-mm1=
-/fs/block_dev.c
-> --- linux-2.6.18-rc5-mm1.orig/fs/block_dev.c	2006-09-11 19:33:35.000000=
-000 -0400
-> +++ linux-2.6.18-rc5-mm1/fs/block_dev.c	2006-09-11 19:21:46.000000000 -=
-0400
-> @@ -655,8 +655,8 @@ static void free_bd_holder(struct bd_hol
->   * If there is no matching entry with @bo in @bdev->bd_holder_list,
->   * add @bo to the list, create symlinks.
->   *
-> - * Returns 0 if @bo was added to the list.
-> - * Returns -ve if @bo wasn't used by any reason and should be freed.
-> + * Returns 0 if symlinks are created or already there.
-> + * Returns -ve if something fails and @bo can be freed.
->   */
->  static int add_bd_holder(struct block_device *bdev, struct bd_holder *=
-bo)
->  {
-> @@ -669,7 +669,9 @@ static int add_bd_holder(struct block_de
->  	list_for_each_entry(tmp, &bdev->bd_holder_list, list) {
->  		if (tmp->sdir =3D=3D bo->sdir) {
->  			tmp->count++;
-> -			return -EEXIST;
-> +			/* We've already done what we need to do here. */
-> +			free_bd_holder(bo);
-> +			return 0;
->  		}
->  	}
-> =20
-> @@ -682,7 +684,8 @@ static int add_bd_holder(struct block_de
->  		if (ret)
->  			del_symlink(bo->sdir, bo->sdev);
->  	}
-> -	list_add_tail(&bo->list, &bdev->bd_holder_list);
-> +	if (ret =3D=3D 0)
-> +		list_add_tail(&bo->list, &bdev->bd_holder_list);
->  	return ret;
->  }
->=20
+  with cache, chardev:  251 MB/s
+  no cache, ringbuffer: 243 MB/s
+=20
+I am very pleased with these results.  I assume that your code is not
+tuned for performance yet, which means we should be able to squeeze at
+least 8 MB/s more out to make it equal (or better).  Even still, the
+amount of code it saves is worth the hit, IMHO.
+
+I do have a couple of comments:
+
+1. You said that the ringbuffer saves the need for syscalls on each
+   batch read.  This is partially true, but you still use a write() to
+   signal completion so that the kernel will read the u->k ringbuffer.
+   So, at best, the number of syscalls made is half of my
+   read()/write() method.  I think it's possible that another
+   signaling mechanism could be used, which would eliminate this call.
+   I do think eliminating the copying with the ringbuffer approach is
+   very nice; I like it a lot.
+
+2. I was unable to get your code to perform well with multiple threads
+   of dbench.  While my code sustains performance with 16 threads, the
+   non-cache/ringbuffer version slows to a crawl (~1MB/s with 16
+   procs).  I noticed that the request list grows to over a 100,000
+   entries at times, which means that the response from userspace
+   requires searching that linearly, which may be the issue.
+
+I am going to further study your changes, but I think in the end that
+I will incorporate most or all of them.  Some work will need to be
+done to incorporate support for some of the newer features (endio, for
+example), but I'll start looking into that.
+
+Thanks a lot!
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFByuNwtEf7b4GJVQRAollAJ9SeY02ZOxJ80TqJSwsdlbOYh5wnACfUh4Q
+8FJtOqmSQs2AmVicyEdx9is=
+=73N1
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1908841287==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1908841287==--
