@@ -1,15 +1,16 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+From: Dan Smith <danms@us.ibm.com>
 Subject: Re: dm-userspace (no in-kernel cache version)
-Date: Wed, 13 Sep 2006 11:01:31 +0900
-Message-ID: <200609130201.k8D21V3e014353@r-dd.iij4u.or.jp>
+Date: Tue, 12 Sep 2006 21:28:58 -0700
+Message-ID: <m3hczcpeyd.fsf@guaranine.beaverton.ibm.com>
 References: <20060912080748X.fujita.tomonori@lab.ntt.co.jp>
 	<m3lkoopxf9.fsf@guaranine.beaverton.ibm.com>
+	<200609130201.k8D21V3e014353@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1505935676=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3lkoopxf9.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <200609130201.k8D21V3e014353@r-dd.iij4u.or.jp> (FUJITA Tomonori's
+	message of "Wed, 13 Sep 2006 11:01:31 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,86 +20,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] dm-userspace (no in-kernel cache version)
-Date: Tue, 12 Sep 2006 14:50:02 -0700
+--===============1505935676==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-> FT> As explained, this removes rmap (in-kernel cache) and use mmaped
-> FT> buffer instead of read/write system calls for user/kernel
-> FT> communication.
-> 
-> Ok, I got your code to work, and I have run some benchmarks.  I'll cut
-> directly to the chase...
-> 
-> I used dbench with a single process, for 120 seconds on a dm-userspace
-> device mapping directly to an LVM device.  I used my example.c and the
-> example-rb.c provided with the ringbuffer version.  The results are:
-> 
->   with cache, chardev:  251 MB/s
->   no cache, ringbuffer: 243 MB/s
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-Thanks. Looks very nice.
+FT> Surely, we need to replace the request list with hash list.
 
+I have done that now.  It helps performance quite a bit, although it
+does not perform at the same level with lots of threads.  I'll keep
+working on it.
 
-> I am very pleased with these results.  I assume that your code is not
-> tuned for performance yet, which means we should be able to squeeze at
-> least 8 MB/s more out to make it equal (or better).  Even still, the
-> amount of code it saves is worth the hit, IMHO.
+FT> Another possible improvement is that simplifying dmu_ctl_write()
+FT> by using kernel thread. Now the user-space daemon calls
+FT> dmu_ctl_write() and does lots of work in kernel mode. It is better
+FT> for a user-space daemon to just notify kernel of new events, go
+FT> back to user space, and receive new events from kernel in SMP
+FT> boxes. I like to create kernel threads, dmu_ctl_write just wakes
+FT> up the threads, and they call dmu_event_recv().
 
-Yeah.
+Yes, I think this would be a good idea.
 
+FT> Yep, I dropped some of the features because of my laziness, though
+FT> if endio means that the kernel notifies user-space of I/O
+FT> completion, I think that I implemented it.
 
-> I do have a couple of comments:
-> 
-> 1. You said that the ringbuffer saves the need for syscalls on each
->    batch read.  This is partially true, but you still use a write() to
->    signal completion so that the kernel will read the u->k ringbuffer.
+We need more than just notification of endio, but also the ability to
+delay the endio completion until userspace has acknowledged the
+endio.  This is crucial for us to maintain metadata consistency in the
+CoW case.
 
-Right. Practically, a user-space daemon needs to notify the kernel of
-new events.
+FT> One possible feature is support for multiple destinations. If user
+FT> space can tell kernel to write multiple devices, we can implement
+FT> kinda RAID daemons in user space.
 
+Yes, my original version supported this, which would allow RAID from
+userspace, as well as lots of other neat tricks :)
 
->    So, at best, the number of syscalls made is half of my
->    read()/write() method.  I think it's possible that another
->    signaling mechanism could be used, which would eliminate this call.
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
 
-Yeah. There are other possible mechanisms for notifications. I just
-chose a easy one.
+--=-=-=
+Content-Type: application/pgp-signature
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
 
->    I do think eliminating the copying with the ringbuffer approach is
->    very nice; I like it a lot.
-> 
-> 2. I was unable to get your code to perform well with multiple threads
->    of dbench.  While my code sustains performance with 16 threads, the
->    non-cache/ringbuffer version slows to a crawl (~1MB/s with 16
->    procs).  I noticed that the request list grows to over a 100,000
->    entries at times, which means that the response from userspace
->    requires searching that linearly, which may be the issue.
-
-Surely, we need to replace the request list with hash list.
-
-Another possible improvement is that simplifying dmu_ctl_write() by
-using kernel thread. Now the user-space daemon calls dmu_ctl_write()
-and does lots of work in kernel mode. It is better for a user-space
-daemon to just notify kernel of new events, go back to user space, and
-receive new events from kernel in SMP boxes. I like to create kernel
-threads, dmu_ctl_write just wakes up the threads, and they call
-dmu_event_recv().
+iD8DBQFFB4kQwtEf7b4GJVQRAvSfAJ42bAQ2OhcZY8+7NQhsbwsgWYMt6gCeNsGr
+4wgE/7ZN/NLqzxv/HS5E2hk=
+=T44k
+-----END PGP SIGNATURE-----
+--=-=-=--
 
 
-> I am going to further study your changes, but I think in the end that
-> I will incorporate most or all of them.  Some work will need to be
-> done to incorporate support for some of the newer features (endio, for
-> example), but I'll start looking into that.
+--===============1505935676==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Yep, I dropped some of the features because of my laziness, though if
-endio means that the kernel notifies user-space of I/O completion, I
-think that I implemented it.
 
-One possible feature is support for multiple destinations. If user
-space can tell kernel to write multiple devices, we can implement
-kinda RAID daemons in user space.
+--===============1505935676==--
