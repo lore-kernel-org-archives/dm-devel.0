@@ -1,12 +1,16 @@
-From: John Little <jslittl@hendricks.org>
-Subject: Re: Fw: Multipath and SAN Fabric failover
-Date: Thu, 14 Sep 2006 08:08:41 -0400
-Message-ID: <20060914080841.25106efd@localhost>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [Bugme-new] [Bug 7158] New: Out of memory happen in
+	snapshot
+Date: Thu, 14 Sep 2006 14:33:28 +0100
+Message-ID: <20060914133328.GW13859@agk.surrey.redhat.com>
+References: <20060913223638.fcb73078.akpm@osdl.org>
+	<200609140644.k8E6iib1026888@mail.thecus.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <200609140644.k8E6iib1026888@mail.thecus.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,40 +20,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: kevin Cheng <kevin_cheng@thecus.com>
+Cc: 'Andrew Morton' <akpm@osdl.org>, dm-devel@redhat.com, agk@redhat.com, "'bugme-daemon@kernel-bugs.osdl.org'" <bugme-daemon@bugzilla.kernel.org>
 List-Id: dm-devel.ids
 
-dm-devel-bounces@redhat.com wrote on 09/10/2006 03:23:55 PM:
+What is the output of these three commands?
 
-> Heya,
-> > Just to make sure that I've covered everything I partitioned the
-> > disk as /dev/sdc and then used lvm2 command:
-> >   
-> sorry, I've missed that before. /dev/sdc is only _one_ of your paths
-> to a LUN. multipath will take the right 2 of those sd* to create one
-> dm device file. Have a look if there's somethign in /dev/mapper, also
-> check your udev rules, you need this line in there:
-> 
-> KERNEL=="dm-[0-9]*", PROGRAM="/sbin/devmap_name %M %m", NAME="%k", 
-> SYMLINK="%c"
-> 
-> most distros have a line like
-> #KERNEL=="dm-[0-9]*",           NAME=""
-> in there, you need to comment it out if you add the lien above.
-> 
-> 
-> Hope that helped,
-> 
-> best regards
-> 
-> Bernd Zeimetz
+  dmsetup info -c
+  dmsetup table
+  dmsetup status
 
-Bernd,
+The current snapshot implementation does require a lot of kernel memory
+to store each snapshot's exception table, which grows as there is new I/O.
+Eight snapshots means eight times the memory needed by one snapshot.
 
-I haven't had a chance to work on this for a couple of days but I did
-get do some reading.  I'm wondering if I'm using the correct driver for
-this.  I have been trying to use the QLogic driver shipped with SLES.
-Should I be using the non-EMC driver from the Qlogic website?
+Are you using the default chunk size?  If so, try a larger one (lvcreate -c).
 
-Regards,
-John
+Alasdair
+-- 
+agk@redhat.com
