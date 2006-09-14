@@ -1,14 +1,14 @@
-From: Dave Wysochanski <dave.wysochanski@redhat.com>
-Subject: Re: (no subject)
-Date: Thu, 14 Sep 2006 10:00:06 -0400
-Message-ID: <1158242406.4265.19.camel@linux-cxyg.rtp.netapp.com>
-References: <8859E1A9-9C74-4188-A678-F97FD77A86FF@ysbl.york.ac.uk>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: Fw: Multipath and SAN Fabric failover
+Date: Thu, 14 Sep 2006 22:32:10 +0200
+Message-ID: <4509BC4A.5020301@bzed.de>
+References: <20060914080841.25106efd@localhost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8859E1A9-9C74-4188-A678-F97FD77A86FF@ysbl.york.ac.uk>
+In-Reply-To: <20060914080841.25106efd@localhost>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,31 +21,15 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+hi,
 
-> Surely there is some way to tell device-mapper to leave things alone?  
-> I simply need four drives that I can use as four separate units - no  
-> RAIDing, nothing fancy, but this it seems impossible to tell the OS  
-> that...
-> 
-Did you try blacklisting in /etc/multipath.conf?
+> I haven't had a chance to work on this for a couple of days but I did
+> get do some reading.  I'm wondering if I'm using the correct driver for
+> this.  I have been trying to use the QLogic driver shipped with SLES.
+they should work fine (I hope...). But did you check what I've written 
+in my last mail?
 
-I don't know which keyword for your setup - either blacklist or
-devnode_blacklist.
 
-Something like this should work:
+Best regards,
 
-devnode_blacklist {
-       devnode "^sd[a-d]$"
-}
-
-_or_
-
-blacklist {
-       devnode "^sd[a-d]$"
-}
-
-To blacklist everything use devnode "*".
-
-To verify the blacklist use the multipath command:
-# multipath -d -v3 | grep sd
-sda: blacklisted
+Bernd
