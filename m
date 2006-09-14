@@ -1,16 +1,16 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+From: Dan Smith <danms@us.ibm.com>
 Subject: Re: dm-userspace (no in-kernel cache version)
-Date: Fri, 15 Sep 2006 00:51:38 +0900
-Message-ID: <20060915005138A.fujita.tomonori@lab.ntt.co.jp>
-References: <m3hczcpeyd.fsf@guaranine.beaverton.ibm.com>
-	<20060913140454U.fujita.tomonori@lab.ntt.co.jp>
-	<m3d59zq41e.fsf@guaranine.beaverton.ibm.com>
+Date: Thu, 14 Sep 2006 08:59:15 -0700
+Message-ID: <m3y7smmobw.fsf@guaranine.beaverton.ibm.com>
+References: <20060912080748X.fujita.tomonori@lab.ntt.co.jp>
+	<m3lkoopxf9.fsf@guaranine.beaverton.ibm.com>
+	<20060915004807D.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0209309121=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3d59zq41e.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <20060915004807D.fujita.tomonori@lab.ntt.co.jp> (FUJITA
+	Tomonori's message of "Fri, 15 Sep 2006 00:48:07 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,38 +20,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] dm-userspace (no in-kernel cache version)
-Date: Wed, 13 Sep 2006 06:39:25 -0700
+--===============0209309121==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-> FT> I'm not sure how this works. Have you explained the details of
-> FT> this feature in the earlier thread?
-> 
-> For example, in our CoW case:
-> 
-> A write is made to a previously unremapped block.  We queue that block
-> and let userspace make a mapping.  Then, we allow the write to happen,
-> but intercept the completion (endio) and notify userspace that it has
-> completed.  Then, userspace flushes its metadata to disk and notifies
-> the kernel to allow the endio to complete.  Without this, a crash
-> could result in an inconsistent CoW device.  (Note this only needs to
-> happen on the _initial_ write to a block)
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-I see. Thanks.
+FT> Have you tried SCHED_FIFO?
+
+Not yet, but that is a good suggestion.
+
+FT> By the way, can you upload or post the latest kernel and
+FT> user-space code?
+
+Right now I am working on a version that still uses read()/write(),
+but that does not use a remap cache (in a way very similar to what you
+posted).  When I get it close to stable, I'll post it here for
+comments.
+
+After reviewing the ringbuffer code more, I'm not sure that it really
+buys you any additional performance (other than 1/3 less syscalls).
+The amount of memory that is copied around seems to be about the
+same.  Either way, I'll revisit this after I get my current version
+stable again.
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFCXxTwtEf7b4GJVQRAnDwAJ9NXEHQY7exlISVXtwADXXWMqV7wgCfUbNg
+VtEAtLjaeUrOFcBrHKO81SY=
+=Xi5b
+-----END PGP SIGNATURE-----
+--=-=-=--
 
 
-> FT> I see. I don't think that you need to implement it now (simple
-> FT> code is always better for mainline inclusion), however, it would
-> FT> be nice to have dmu_event structure for this.
-> 
-> Well, it's crucial for our CoW work, so unless Alasdair would prefer
-> me to leave it out in the initial upstream push, I would like to
-> include it.  It was already implemented and working in my original
-> version.
+--===============0209309121==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Of course, no problem if the maintainer agrees on it. I just meant
-that user-kernel APIs must be ready for the future extensions because
-you cannot change them easily after inclusion.
+
+--===============0209309121==--
