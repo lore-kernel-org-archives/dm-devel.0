@@ -1,16 +1,16 @@
 From: "kevin Cheng" <kevin_cheng@thecus.com>
-Subject: RE: [Bugme-new] [Bug 7158] New: Out of memory happen in
-	snapshot
-Date: Fri, 15 Sep 2006 11:25:29 +0800
-Message-ID: <200609150325.k8F3Petg003696@mail.thecus.com>
-References: <20060914133328.GW13859@agk.surrey.redhat.com>
+Subject: RE: RE: [Bugme-new] [Bug 7158] New: Out of memory happen
+	insnapshot
+Date: Fri, 15 Sep 2006 14:56:33 +0800
+Message-ID: <200609150656.k8F6ulbs006442@mail.thecus.com>
+References: <200609150325.k8F3Petg003696@mail.thecus.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
 	charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060914133328.GW13859@agk.surrey.redhat.com>
+In-Reply-To: <200609150325.k8F3Petg003696@mail.thecus.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,9 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'Alasdair G Kergon' <agk@redhat.com>
-Cc: 'Andrew Morton' <akpm@osdl.org>, dm-devel@redhat.com, "'bugme-daemon@kernel-bugs.osdl.org'" <bugme-daemon@bugzilla.kernel.org>
+To: 'device-mapper development' <dm-devel@redhat.com>, 'Alasdair G Kergon' <agk@redhat.com>
+Cc: 'Andrew Morton' <akpm@osdl.org>, "'bugme-daemon@kernel-bugs.osdl.org'" <bugme-daemon@bugzilla.kernel.org>
 List-Id: dm-devel.ids
+
+Dear Alasdair:
+    When I try use dd to general 8GB file to lv ,and "out of memory" still
+happen. 
+And in slabinfo "dm-snapshot-ex" always keep high count , may be "1193248"
+more higher . 
+Have any way to change dm-snapshot-ex memory use trans to swap or les memory
+use ? Thanks!!
+
+Regards,
+
+Kevin
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On
+Behalf Of kevin Cheng
+Sent: Friday, September 15, 2006 11:25 AM
+To: 'Alasdair G Kergon'
+Cc: 'Andrew Morton'; dm-devel@redhat.com;
+'bugme-daemon@kernel-bugs.osdl.org'
+Subject: [dm-devel] RE: [Bugme-new] [Bug 7158] New: Out of memory happen
+insnapshot
 
 Dear Alasdair:
    Thanks for your help. We have capture the info about you want in the
@@ -125,7 +147,7 @@ vg0-2006--09--15--10--32--37: 0 161906688 snapshot 5669120/34603008
 vg0-2006--09--15--10--32--44-cow: 0 34603008 linear
 vg0-2006--09--15--10--32--35-cow: 0 34603008 linear
 ----------------------------------------------------------------------------
----------------------------------------- 
+----------------------------------------
 Before:
 kcopyd-jobs          512    525    264   15    1 : tunables   54   27    0 :
 slabdata     35     35      0
@@ -212,3 +234,9 @@ Are you using the default chunk size?  If so, try a larger one (lvcreate
 Alasdair
 --
 agk@redhat.com
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
