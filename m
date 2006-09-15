@@ -1,16 +1,15 @@
-From: "kevin Cheng" <kevin_cheng@thecus.com>
-Subject: RE: RE: [Bugme-new] [Bug 7158] New: Out of memory happen
-	insnapshot
-Date: Fri, 15 Sep 2006 14:56:33 +0800
-Message-ID: <200609150656.k8F6ulbs006442@mail.thecus.com>
-References: <200609150325.k8F3Petg003696@mail.thecus.com>
+From: Darryl Dixon <esrever_otua@pythonhacker.is-a-geek.net>
+Subject: Re: Multipath not re-activating failed paths? [SOLVED]
+	and Multipath on root [SOLVED]
+Date: Fri, 15 Sep 2006 21:08:53 +1200
+Message-ID: <1158311333.2718.39.camel@darrylsfc3box.ddnet.co.nz>
+References: <7EB526165496DF4ABE1A64C5CE0BB59B03858645@bgeexc01.asiapacific.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200609150325.k8F3Petg003696@mail.thecus.com>
+In-Reply-To: <7EB526165496DF4ABE1A64C5CE0BB59B03858645@bgeexc01.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,223 +19,295 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'device-mapper development' <dm-devel@redhat.com>, 'Alasdair G Kergon' <agk@redhat.com>
-Cc: 'Andrew Morton' <akpm@osdl.org>, "'bugme-daemon@kernel-bugs.osdl.org'" <bugme-daemon@bugzilla.kernel.org>
+To: "Arumugam, Anburaja (STSD)" <anburaja.arumugam@hp.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dear Alasdair:
-    When I try use dd to general 8GB file to lv ,and "out of memory" still
-happen. 
-And in slabinfo "dm-snapshot-ex" always keep high count , may be "1193248"
-more higher . 
-Have any way to change dm-snapshot-ex memory use trans to swap or les memory
-use ? Thanks!!
+Hi Anbu,
 
-Regards,
+For the benefit of the list, I tracked the problem of paths not
+re-activating down to (ironically) the interaction between the
+supposedly 'enhanced' HP-supplied GPL'ed QLogic drivers and our SUN
+3510 :) What I noticed was that when the link was brought back up, two
+of my four LUNs would have their second path re-activated, but the other
+two wouldn't. In /var/log/messages whenever a cable was unplugged for
+testing, I'd see messages like this:
 
-Kevin
+----------8<----------[cut]
+kernel: qla2300 0000:06:01.1: qla2xxx_eh_abort scsi(1:0:1:0):
+cmd_timeout_in_sec=0x3c.
+kernel: qla2300 0000:06:01.1: scsi(1:0:1:0): DEVICE RESET ISSUED.
+kernel: qla2300 0000:06:01.1: qla2xxx_eh_device_reset: device reset
+failed
+kernel: qla2300 0000:06:01.1: scsi(1:0:1:0): LOOP RESET ISSUED.
+kernel: qla2300 0000:06:01.1: qla2xxx_eh_bus_reset: reset failed
+kernel: qla2300 0000:06:01.1: scsi(1:0:1:0): ADAPTER RESET issued.
+kernel: qla2300 0000:06:01.1: Performing ISP error recovery - ha=
+00000100f54903c8.
+kernel: Performing ISP error recovery - ha= 00000100f54903c8.
+kernel: qla2300 0000:06:01.1: LIP reset occured (f8f7).
+kernel: qla2300 0000:06:01.1: LIP occured (f7f7).
+kernel: qla2300 0000:06:01.1: LOOP UP detected (2 Gbps).
+kernel: qla2300 0000:06:01.1: qla2xxx_eh_host_reset: reset succeded
+kernel: scsi: Device offlined - not ready after error recovery: host 1
+channel 0 id 2 lun 0
+last message repeated 15 times
+kernel: scsi: Device offlined - not ready after error recovery: host 1
+channel 0 id 0 lun 0
+----------8<----------[cut]
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On
-Behalf Of kevin Cheng
-Sent: Friday, September 15, 2006 11:25 AM
-To: 'Alasdair G Kergon'
-Cc: 'Andrew Morton'; dm-devel@redhat.com;
-'bugme-daemon@kernel-bugs.osdl.org'
-Subject: [dm-devel] RE: [Bugme-new] [Bug 7158] New: Out of memory happen
-insnapshot
+Sure enough, when I rolled back to use the standard RHEL qla2300.ko and
+qla2xxx.ko kernel modules that are supplied in the distribution,
+everything started working as expected, and I no longer saw the above
+messages any more.
 
-Dear Alasdair:
-   Thanks for your help. We have capture the info about you want in the
-follow. 
-And we have try to use chunk size 64KB ,it seens useful . And we get the
-slabinfo in the next follow.
-But the speed is very slow ,DISK IO throughtput just down to 1.68MB/s . 
-Have any to solve it? 
+In summary, I *was* using the 'enhanced' QLogic drivers available from
+HP et al, but the Qlogic drivers that are packaged by RedHat with RHEL 4
+work better in this situation.
 
+To answer your second question (HOW-TO multipath on root)...
 
-Thanks!!
+In terms of changes to a default RHEL install, I needed to unpack the
+standard initrd that is created with `mkinitrd` and then modify it as
+follows:
 
+* copy in the following files: bin/dmsetup.static, bin/kpartx.static,
+bin/multipath.static, bin/scsi_id.static (these are available
+from /sbin/ in a standard RHEL install), and then create symlinks in the
+initrd that pointed the 'normal' names for each to the staticly compiled
+version, eg bin/dmsetup -> bin/dmsetup.static
 
-Kevin
+* copy /etc/multipath.conf (as outlined below in my earlier mail) to
+etc/multipath.conf in the initrd
 
-----------------------------------------------------------------------------
------------------
-root@127.0.0.1:~# /app/dmsetup info -c
-Name             Maj Min Stat Open Targ Event  UUID
-vg0-2006--09--15--10--32--35 253   7 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOOh53h60HLMcWIqLfCSt8vWO9B6DRhE5c
-vg0-lv0-real     253   3 L--w    9    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOW1BfYcHj2lYmvnb1TzyRCzp9hUwHsRl1-real
-vg0-2006--09--15--10--32--48 253  17 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VO2ryv6q3C0AxF4WxKdK0wNsgfaJW15uYA
-vg0-2006--09--15--10--32--50 253  19 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOdLWwX9RWix7ufflxxcU8pYJ7ugTiTqcr
-vg0-2006--09--15--10--32--46-cow 253  14 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOz0IxXWp1V2yB1E2GVNNuStIKS4HGDKul-cow
-vg0-syslv        253   0 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOgjsjzAhmgflRymCKspDrRAWEtKTvxGC2
-vg0-2006--09--15--10--32--37-cow 253   8 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOXgG6ht87GUFzownX6qboGAjj3aMoDdmB-cow
-vg0-2006--09--15--10--32--29 253   5 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOK8ZP2bR28O99DZEXzZF5QmEIHtEyIt28
-vg0-2006--09--15--10--32--46 253  15 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOz0IxXWp1V2yB1E2GVNNuStIKS4HGDKul
-vg0-2006--09--15--10--32--50-cow 253  18 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOdLWwX9RWix7ufflxxcU8pYJ7ugTiTqcr-cow
-vg0-2006--09--15--10--32--29-cow 253   4 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOK8ZP2bR28O99DZEXzZF5QmEIHtEyIt28-cow
-vg0-2006--09--15--10--32--44 253  13 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOaSFou8q5Xb3asN9U8WN2RiXaHb9jjVT4
-vg0-lv1          253   2 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VO5SUSILIIEM2gLYakhI8maNb1UFI21b1h
-vg0-2006--09--15--10--32--48-cow 253  16 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VO2ryv6q3C0AxF4WxKdK0wNsgfaJW15uYA-cow
-vg0-2006--09--15--10--32--39-cow 253  10 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOAR6hd59N2ljEz0QIfaEwDgpxNTFENo0B-cow
-vg0-lv0          253   1 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOW1BfYcHj2lYmvnb1TzyRCzp9hUwHsRl1
-vg0-2006--09--15--10--32--39 253  11 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOAR6hd59N2ljEz0QIfaEwDgpxNTFENo0B
-vg0-2006--09--15--10--32--37 253   9 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOXgG6ht87GUFzownX6qboGAjj3aMoDdmB
-vg0-2006--09--15--10--32--44-cow 253  12 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOaSFou8q5Xb3asN9U8WN2RiXaHb9jjVT4-cow
-vg0-2006--09--15--10--32--35-cow 253   6 L--w    1    1      0
-LVM-tyDxlOveI21xekkD63t1eYO42UhWM4VOOh53h60HLMcWIqLfCSt8vWO9B6DRhE5c-cow
-root@127.0.0.1:~# /app/dmsetup table
-vg0-2006--09--15--10--32--35: 0 161906688 snapshot 253:3 253:6 P 128
-vg0-lv0-real: 0 161906688 linear 9:0 2097536
-vg0-2006--09--15--10--32--48: 0 161906688 snapshot 253:3 253:16 P 128
-vg0-2006--09--15--10--32--50: 0 161906688 snapshot 253:3 253:18 P 128
-vg0-2006--09--15--10--32--46-cow: 0 34603008 linear 9:0 360087936
-vg0-syslv: 0 2097152 linear 9:0 384
-vg0-2006--09--15--10--32--37-cow: 0 34603008 linear 9:0 256278912
-vg0-2006--09--15--10--32--29: 0 161906688 snapshot 253:3 253:4 P 128
-vg0-2006--09--15--10--32--46: 0 161906688 snapshot 253:3 253:14 P 128
-vg0-2006--09--15--10--32--50-cow: 0 35446784 linear 9:0 429293952
-vg0-2006--09--15--10--32--29-cow: 0 34603008 linear 9:0 187072896
-vg0-2006--09--15--10--32--44: 0 161906688 snapshot 253:3 253:12 P 128
-vg0-lv1: 0 23068672 linear 9:0 164004224
-vg0-2006--09--15--10--32--48-cow: 0 34603008 linear 9:0 394690944
-vg0-2006--09--15--10--32--39-cow: 0 34603008 linear 9:0 290881920
-vg0-lv0: 0 161906688 snapshot-origin 253:3
-vg0-2006--09--15--10--32--39: 0 161906688 snapshot 253:3 253:10 P 128
-vg0-2006--09--15--10--32--37: 0 161906688 snapshot 253:3 253:8 P 128
-vg0-2006--09--15--10--32--44-cow: 0 34603008 linear 9:0 325484928
-vg0-2006--09--15--10--32--35-cow: 0 34603008 linear 9:0 221675904
-root@127.0.0.1:~# /app/dmsetup status
-vg0-2006--09--15--10--32--35: 0 161906688 snapshot 5669120/34603008
-vg0-lv0-real: 0 161906688 linear
-vg0-2006--09--15--10--32--48: 0 161906688 snapshot 5669120/34603008
-vg0-2006--09--15--10--32--50: 0 161906688 snapshot 5669120/35446784
-vg0-2006--09--15--10--32--46-cow: 0 34603008 linear
-vg0-syslv: 0 2097152 linear
-vg0-2006--09--15--10--32--37-cow: 0 34603008 linear
-vg0-2006--09--15--10--32--29: 0 161906688 snapshot 5669120/34603008
-vg0-2006--09--15--10--32--46: 0 161906688 snapshot 5669120/34603008
-vg0-2006--09--15--10--32--50-cow: 0 35446784 linear
-vg0-2006--09--15--10--32--29-cow: 0 34603008 linear
-vg0-2006--09--15--10--32--44: 0 161906688 snapshot 5669120/34603008
-vg0-lv1: 0 23068672 linear
-vg0-2006--09--15--10--32--48-cow: 0 34603008 linear
-vg0-2006--09--15--10--32--39-cow: 0 34603008 linear
-vg0-lv0: 0 161906688 snapshot-origin
-vg0-2006--09--15--10--32--39: 0 161906688 snapshot 5669120/34603008
-vg0-2006--09--15--10--32--37: 0 161906688 snapshot 5669120/34603008
-vg0-2006--09--15--10--32--44-cow: 0 34603008 linear
-vg0-2006--09--15--10--32--35-cow: 0 34603008 linear
-----------------------------------------------------------------------------
-----------------------------------------
-Before:
-kcopyd-jobs          512    525    264   15    1 : tunables   54   27    0 :
-slabdata     35     35      0
-dm-snapshot-in       128    177     64   59    1 : tunables  120   60    0 :
-slabdata      3      3      0
-dm-snapshot-ex         8    145     24  145    1 : tunables  120   60    0 :
-slabdata      1      1      0
-dm_tio              5120   5278     16  203    1 : tunables  120   60    0 :
-slabdata     26     26      0
-dm_io               5120   5239     20  169    1 : tunables  120   60    0 :
-slabdata     31     31      0
-journal_head           1     72     52   72    1 : tunables  120   60    0 :
-slabdata      1      1      0
-biovec-(256)          15     16   3072    2    2 : tunables   24   12    0 :
-slabdata      8      8      0
-biovec-128            23     25   1536    5    2 : tunables   24   12    0 :
-slabdata      5      5      0
-biovec-64             39     40    768    5    1 : tunables   54   27    0 :
-slabdata      8      8      0
-biovec-16             39     40    192   20    1 : tunables  120   60    0 :
-slabdata      2      2      0
-biovec-4              39     59     64   59    1 : tunables  120   60    0 :
-slabdata      1      1      0
-biovec-1             100   1218     16  203    1 : tunables  120   60    0 :
-slabdata      6      6      0
-bio                  295   1050    128   30    1 : tunables  120   60    0 :
-slabdata     35     35      0
-buffer_head         1419   7560     52   72    1 : tunables  120   60    0 :
-slabdata    105    105      0
+* edit the standard /etc/udev/rules.d/40-multipath.rules to use
+different rules (THIS IS CRITICAL) that look like:
+----------8<----------[cut]
+# multipath wants the devmaps presented as meaninglful device names
+# so name them after their devmap name
 
+#The Blockdev
+ACTION=="add", SUBSYSTEM=="block", KERNEL=="dm-*", \
+PROGRAM="/sbin/dmsetup -j %M -m %m --noopencount --noheadings -c -o name
+info"
 
-After:
-kcopyd-jobs          512   1290    264   15    1 : tunables   54   27    0 :
-slabdata     86     86      0
-dm-snapshot-in       129   1121     64   59    1 : tunables  120   60    0 :
-slabdata     19     19      0
-dm-snapshot-ex     97904  98020     24  145    1 : tunables  120   60    0 :
-slabdata    676    676      0
-dm_tio              5121   8526     16  203    1 : tunables  120   60    0 :
-slabdata     42     42      0
-dm_io               5121   6760     20  169    1 : tunables  120   60    0 :
-slabdata     40     40      0
-journal_head          15    576     52   72    1 : tunables  120   60    0 :
-slabdata      8      8      0
-biovec-(256)          15     16   3072    2    2 : tunables   24   12    0 :
-slabdata      8      8      0
-biovec-128            23     25   1536    5    2 : tunables   24   12    0 :
-slabdata      5      5      0
-biovec-64             40     70    768    5    1 : tunables   54   27    0 :
-slabdata     14     14      0
-biovec-16             40    140    192   20    1 : tunables  120   60    0 :
-slabdata      5      7      0
-biovec-4              40    118     64   59    1 : tunables  120   60    0 :
-slabdata      2      2      0
-biovec-1              81   2030     16  203    1 : tunables  120   60    0 :
-slabdata     10     10      0
-bio                  318   2250    128   30    1 : tunables  120   60    0 :
-slabdata     75     75      0
-buffer_head         1331  12960     52   72    1 : tunables  120   60    0 :
-slabdata    180    180      0
-----------------------------------------------------------------------------
----------------------------------------- 
------Original Message-----
-From: Alasdair G Kergon [mailto:agk@redhat.com] 
-Sent: Thursday, September 14, 2006 9:33 PM
-To: kevin Cheng
-Cc: 'Andrew Morton'; 'bugme-daemon@kernel-bugs.osdl.org';
-dm-devel@redhat.com; agk@redhat.com; mbroz@redhat.com
-Subject: Re: [Bugme-new] [Bug 7158] New: Out of memory happen in snapshot
+#The Partitions
+ACTION=="add", SUBSYSTEM=="block", KERNEL=="dm-*", \
+RUN+="/sbin/kpartx -a /dev/mapper/%c"
+----------8<----------[cut]
 
-What is the output of these three commands?
+* ...and then copy the contents of /etc/udev/rules.d/* into the same
+directory in the initrd
 
-  dmsetup info -c
-  dmsetup table
-  dmsetup status
+* Copy all the dm-* kernel modules and the qla* modules (if using QLogic
+HBA) into lib/ in the initrd
 
-The current snapshot implementation does require a lot of kernel memory to
-store each snapshot's exception table, which grows as there is new I/O.
-Eight snapshots means eight times the memory needed by one snapshot.
+* Edit the 'init' script in the initrd.  Here's what mine looks like
+now. I added the insmod lines for the dm-* modules and the qla* modules.
+I also added the two lines beginning with 'multipath' and 'dmsetup',
+which are critical, it won't work without them there (although I'm still
+not certain on ~why~). Also, I seemed to need to load the qla2300 HBA
+module *after* all the dm-* modules.
+----------8<----------[cut]
+#!/bin/nash
 
-Are you using the default chunk size?  If so, try a larger one (lvcreate
--c).
+mount -t proc /proc /proc
+setquiet
+echo Mounted /proc filesystem
+echo Mounting sysfs
+mount -t sysfs none /sys
+echo Creating /dev
+mount -o mode=0755 -t tmpfs none /dev
+mknod /dev/console c 5 1
+mknod /dev/null c 1 3
+mknod /dev/zero c 1 5
+mkdir /dev/pts
+mkdir /dev/shm
+echo Starting udev
+/sbin/udevstart
+echo -n "/sbin/hotplug" > /proc/sys/kernel/hotplug
+echo "Loading scsi_mod.ko module"
+insmod /lib/scsi_mod.ko
+echo "Loading sd_mod.ko module"
+insmod /lib/sd_mod.ko
+echo "Loading cciss.ko module"
+insmod /lib/cciss.ko
+echo "Loading scsi_transport_fc.ko module"
+insmod /lib/scsi_transport_fc.ko
+echo "Loading qla2xxx.ko module"
+insmod /lib/qla2xxx.ko
+echo "Loading dm-mod.ko module"
+insmod /lib/dm-mod.ko
+echo "Loading dm-multipath.ko module"
+insmod /lib/dm-multipath.ko
+echo "Loading dm-round-robin.ko module"
+insmod /lib/dm-round-robin.ko
+echo "Loading dm-mirror.ko module"
+insmod /lib/dm-mirror.ko
+# LOAD THE HBA DRIVER LAST
+echo "Loading qla2300.ko module"
+insmod /lib/qla2300.ko
+/sbin/udevstart
+# THE NEXT TWO LINES ARE CRITICAL
+multipath
+dmsetup ls --target multipath --exec "/sbin/kpartx -a"
+echo Creating root device
+mkrootdev /dev/root
+umount /sys
+echo Mounting root filesystem
+mount -o defaults --ro -t ext2 /dev/root /sysroot
+mount -t tmpfs --bind /dev /sysroot/dev
+echo Switching to new root
+switchroot /sysroot
+umount /initrd/dev
+----------8<----------[cut]
 
-Alasdair
---
-agk@redhat.com
+* Now re-pack the initrd and copy the image into /boot, then edit the
+appropriate entry in your grub.conf so that the root= option points to
+the mapper device (eg, mine is root=/dev/mapper/os2), and change the
+initrd line to point at your newly modified initrd image.
+
+* Finally, make sure that you have the appropriate entry in
+your /etc/fstab; in my case /dev/mapper/os2 is the device to use for
+root, as 'os' was the alias that I set up for the root LUN.
+
+Now reboot :)
+
+I hope that this helps anyone else trying to do what I have done, it was
+the better part of a week's worth of work :)
+
+many regards,
+Darryl Dixon
+http://www.winterhouseconsulting.com
 
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+
+On Fri, 2006-09-15 at 12:41 +0530, Arumugam, Anburaja (STSD) wrote:
+> Hi Darryl,
+> 
+> Not sure if this hint helps you, if you haven't tried this before. But
+> you may want to check the process status of your 'multipathd' daemon
+> which initiates the path verification, after the failure of one path.
+> B'cos, for some reason if the 'multipathd' daemon is in "stopped" state,
+> then there is no way for the multipath configurator to get the path back
+> as online.
+> 
+> You can check the status of the 'multipathd' daemon by using
+> "/etc/init.d/multipathd status" on your host.
+> 
+> Hope this helps!!
+> 
+> We are curious of the fact that you have a working multipath root device
+> setup on your side. Could you please give some pointers on how do we
+> have the working multipath boot setup? What we are looking at is, what
+> kind of changes you need to do at the grub.conf, and what kind of steps
+> you should follow to get the multipath/udev/multipath.conf in the
+> 'initrd', if we need to do so.
+> 
+> Thanks in advance,
+> Anbu
+> 
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of Darryl Dixon
+> Sent: Friday, September 15, 2006 5:24 AM
+> To: dm-devel@redhat.com
+> Subject: [dm-devel] Multipath not re-activating failed paths?
+> 
+> Hi All,
+> 
+> I have a working dm-multipath set up with a multipath root device. For
+> some reason, while multipath seems to correctly use both paths, and will
+> gracefully handle the failing of a path (uninterrupted IO works OK), it
+> does not seem to want to detect once the failed path has come back up
+> again. In other words, in my two-path setup, it will load balance
+> between the paths, continue successfully on one path when one fails, but
+> it will then be 'stuck' on that path forever until the next reboot, even
+> if the first path is back up and otherwise working fine.
+> 
+> >From what I can understand of the multipath.conf settings, the paths
+> should be tested every 5 seconds, and should be marked 'active' once
+> they come back up.
+> 
+> How can I best go about debugging/investigating this?
+> 
+> My setup details:
+> Machine:     HP Blade BL25P with QLogic dual-ported HBA
+> Storage:     Two paths to SUN 3510
+> OS:          RHEL4 x86_64
+> DM package:  device-mapper-multipath-0.4.5-16.1.RHEL4
+> uname -r:    2.6.9-42.0.2.ELsmp
+> 
+> contents of /etc/multipath.conf:
+> ----------8<----------[cut]
+> devnode_blacklist {
+>        devnode "^cciss!c[0-9]d[0-9]*"
+> }
+> 
+> defaults {
+>     user_friendly_names yes
+>     no_path_retry fail
+>     path_grouping_policy multibus
+>     failback immediate
+> 
+> }
+> 
+> multipaths {
+>     multipath {
+>         wwid   3500000e01190e340
+>         alias  os
+>     }
+> }
+> ----------8<----------[cut]
+> 
+> Output of multipath -l:
+> ----------8<----------[cut]
+> 3500000e01190e100
+> [size=68 GB][features="0"][hwhandler="0"] \_ round-robin 0 [active]  \_
+> 0:0:3:0 sdd 8:48  [active]  \_ 1:0:3:0 sdh 8:112 [active]
+> 
+> 3500000e01190e3f0
+> [size=68 GB][features="0"][hwhandler="0"] \_ round-robin 0 [active]  \_
+> 0:0:1:0 sdb 8:16  [active]  \_ 1:0:0:0 sde 8:64  [active]
+> 
+> os (3500000e01190e340)
+> [size=68 GB][features="0"][hwhandler="0"] \_ round-robin 0 [active]
+>  \_ 0:0:0:0 sda 8:0   [active]
+>  \_ 1:0:2:0 sdg 8:96  [active]
+> 
+> 3500000e01190e310
+> [size=68 GB][features="0"][hwhandler="0"] \_ round-robin 0 [active]  \_
+> 0:0:2:0 sdc 8:32  [active]  \_ 1:0:1:0 sdf 8:80  [active]
+> ----------8<----------[cut]
+> 
+> Contents of /dev/mapper/:
+> ----------8<----------[cut]
+> brw-rw----  1 root disk 253,  3 Sep 15  2006 3500000e01190e100
+> brw-rw----  1 root disk 253,  2 Sep 15  2006 3500000e01190e310
+> brw-rw----  1 root disk 253,  1 Sep 15  2006 3500000e01190e3f0
+> crw-------  1 root root  10, 63 Sep 15  2006 control
+> brw-rw----  1 root disk 253,  0 Sep 15  2006 os
+> brw-rw----  1 root disk 253,  4 Sep 15  2006 os1
+> brw-rw----  1 root disk 253,  5 Sep 15  2006 os2
+> brw-rw----  1 root disk 253,  6 Sep 15  2006 os3
+> ----------8<----------[cut]
+> 
+> Output of df -k:
+> ----------8<----------[cut]
+> Filesystem           1K-blocks      Used Available Use% Mounted on
+> /dev/mapper/os2       50394996  29944792  17890248  63% /
+> /dev/mapper/os1         101086     23801     72066  25% /boot
+> none                   5036176         0   5036176   0% /dev/shm
+> ----------8<----------[cut]
+> 
+> 
+> Any and all pointers or assistance appreciated.
+> 
+> regards,
+> Darryl Dixon
+> http://www.winterhouseconsulting.com
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
