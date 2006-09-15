@@ -1,14 +1,16 @@
-From: Martin George <marting@netapp.com>
-Subject: Re: PATCH - change netapp maintainer in pp_netapp.c
-Date: Fri, 22 Sep 2006 12:39:21 +0530
-Message-ID: <45138C21.6020003@netapp.com>
-References: <7026BCCA258BA2438F885772CA0B431303BEEB6C@exbtc01.hq.netapp.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "ted creedon" <tcreedon@easystreet.com>
+Subject: RE: (no subject)
+Date: Fri, 15 Sep 2006 12:36:16 -0700
+Message-ID: <026401c6d8fe$380a4dd0$aa01010a@teddoris.fam>
+References: <4509D246.7010803@us.ibm.com>
+Reply-To: tcreedon@easystreet.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7026BCCA258BA2438F885772CA0B431303BEEB6C@exbtc01.hq.netapp.com>
+In-Reply-To: <4509D246.7010803@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,69 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "'Darrick J. Wong'" <djwong@us.ibm.com>, 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-    As the maintainer's name is already updated in hwtable.c as 
-submitted in 
-https://www.redhat.com/archives/dm-devel/2006-August/msg00076.html, this 
-patch which I had submitted earlier is not required.
+For what its worth, using SuSE 10.1
 
-    The only change that is required here is the removal of the author's 
-mail id as it is no longer valid. Submitting the new patch below:
+1. Set up e Nvidia SATA raids in the bios slots 2 and 3 in the controller,
+slot 1 is linux
+2. Devices look like /dev/sdb1 /dev/sdc1 on boot
+3. run YaST it detects /dev/sdb and sdc as raid
+4. use YaST partitioner to make /dev/md0 a mirror raid for sdb and sdc
+5. /dev/sdb1 and /dev/sdc1 disappear and are replaced with /dev/md0
 
-Regards,
+tedc
 
-Martin George
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On
+Behalf Of Darrick J. Wong
+Sent: Thursday, September 14, 2006 3:06 PM
+To: device-mapper development
+Subject: Re: [dm-devel] (no subject)
+
+Mr. Kirk,
+
+> Sounds like dmraid is grabbing them.  I'm not sure where the configuration
+for
+> dmraid is, but that's a starting point.
+
+I think FC5 runs "dmraid -ay" automatically, which probes disks and sets
+up device-mapper configurations.  However, to ensure that this is really
+dmraid's fault, could you post the output of "dmsetup table" after you
+boot the system (and before you blow away the dm devices, obviously)?
+
+If it _is_ dmraid, then you'll want to clean out any RAID configurations
+in the SATA BIOS, and/or run dmraid -E /dev/sdX to remove the dmraid
+configuration data.
+
+Thanks,
+
+--Darrick
 
 
-Signed-off-by: Martin George <marting@netapp.com>
-Acked-by: Raghavendra Shenoy <shenoy@netapp.com>
-Index: multipath-tools/path_priority/pp_netapp/pp_netapp.c
-===================================================================
---- multipath-tools.orig/path_priority/pp_netapp/pp_netapp.c	2005-11-22 
-04:58:32.000000000 +0530
-+++ multipath-tools/path_priority/pp_netapp/pp_netapp.c	2006-09-22 
-12:21:31.000000000 +0530
-@@ -1,6 +1,6 @@
-  /*
-   * Copyright 2005 Network Appliance, Inc., All Rights Reserved
-- * Author:  David Wysochanski available at davidw@netapp.com
-+ * Author:  David Wysochanski
-   *
-   * This program is free software; you can redistribute it and/or modify
-   * it under the terms of the GNU General Public License version 2 as
-
-
->  
-> 
-> -----Original Message-----
-> From: Martin George [mailto:marting@netapp.com] 
-> Sent: Thursday, September 21, 2006 9:22 PM
-> To: dm-devel@redhat.com
-> Subject: [dm-devel] PATCH - change netapp maintainer in pp_netapp.c
-> 
-> Signed-off-by: Martin George <marting netapp com>
-> Acked-by: Raghavendra Shenoy <shenoy netapp com>
-> Index: multipath-tools/path_priority/pp_netapp/pp_netapp.c
-> ===================================================================
-> --- multipath-tools.orig/path_priority/pp_netapp/pp_netapp.c
-> 2005-11-22 
-> 04:58:32.000000000 +0530
-> +++ multipath-tools/path_priority/pp_netapp/pp_netapp.c	2006-09-21 
-> 19:05:49.000000000 +0530
-> @@ -1,6 +1,6 @@
->   /*
->    * Copyright 2005 Network Appliance, Inc., All Rights Reserved
-> - * Author:  David Wysochanski available at davidw@netapp.com
-> + * Author:  Martin George available at marting@netapp.com
->    *
->    * This program is free software; you can redistribute it and/or
-> modify
->    * it under the terms of the GNU General Public License version 2 as
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
