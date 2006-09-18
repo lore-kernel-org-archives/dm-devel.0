@@ -1,10 +1,10 @@
 From: Dan Smith <danms@us.ibm.com>
-Subject: Latest dm-userspace kernel code
-Date: Mon, 18 Sep 2006 07:52:48 -0700
-Message-ID: <m38xkhmdkv.fsf@guaranine.beaverton.ibm.com>
+Subject: Latest dm-userspace userspace code
+Date: Mon, 18 Sep 2006 07:53:17 -0700
+Message-ID: <m31wq9mdk2.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1203991768=="
+Content-Type: multipart/mixed; boundary="===============0519665026=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,27 +19,24 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: fujita.tomonori@lab.ntt.co.jp
 List-Id: dm-devel.ids
 
---===============1203991768==
-Content-Type: multipart/signed; boundary="=-=-=";
+--===============0519665026==
+Content-Type: multipart/signed; boundary="==-=-=";
 	micalg=pgp-sha1; protocol="application/pgp-signature"
+
+--==-=-=
+Content-Type: multipart/mixed; boundary="=-=-="
 
 --=-=-=
 Content-Transfer-Encoding: quoted-printable
 
-This is the latest dm-userspace kernel code.  I have removed the
-in-kernel remap cache and cleaned up a lot of code as a result.
-Performance of the map cache/no cache versions seem to be about the
-same.
+This is the latest dm-userspace example code, and the updated library
+interface.  For testing, the two can be compiled into the same
+binary.
 
-I also tweaked the message protocol to be more rigid.  It now looks
-more like the ringbuffer messages, which should allow an easier
-transition to a ringbuffer approach.  This is not completely clean,
-but I wanted to post it for visibility now that it seems to be stable
-for me.
+Comments on the library interface would be appreciated.  I will send a
+patch against the device-mapper package if this looks reasonable.
 
-I will send the userspace example code shortly...
-
-Comments appreciated.
+Signed-off-by: Dan Smith <danms@us.ibm.com>
 
 =2D-=20
 Dan Smith
@@ -47,1581 +44,341 @@ IBM Linux Technology Center
 Open Hypervisor Team
 email: danms@us.ibm.com
 
-Signed-off-by: Dan Smith <danms@us.ibm.com>
-diff -Naur linux-2.6.17.13-orig/drivers/md/dm-user.h linux-2.6.17.13-dmu/dr=
-ivers/md/dm-user.h
-=2D-- linux-2.6.17.13-orig/drivers/md/dm-user.h	1969-12-31 16:00:00.0000000=
-00 -0800
-+++ linux-2.6.17.13-dmu/drivers/md/dm-user.h	2006-09-15 14:20:48.000000000 =
--0700
-@@ -0,0 +1,142 @@
-+/*
-+ * Copyright (C) International Business Machines Corp., 2006
-+ * Author: Dan Smith <danms@us.ibm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; under version 2 of the License.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  U=
-SA
-+ *
-+ */
-+
-+#ifndef __DM_USER_H
-+#define __DM_USER_H
-+
-+#include <linux/hardirq.h>
-+
-+#define DMU_KEY_LEN 256
-+
-+extern struct target_type userspace_target;
-+extern mempool_t *request_pool;
-+extern dev_t dmu_dev;
-+extern spinlock_t devices_lock;
-+extern struct list_head devices;
-+
-+/*
-+ * A block device that we can send bios to
-+ */
-+struct target_device {
-+	struct list_head list;        /* Our place in the targets list      */
-+	struct block_device *bdev;    /* The target block_device            */
-+	struct kref users;            /* Self-destructing reference count   */
-+};
-+
-+/*
-+ * A dm-userspace device, which consists of multiple targets sharing a
-+ * common key
-+ */
-+struct dmu_device {
-+	struct list_head list;        /* Our place in the devices list     */
-+
-+	spinlock_t lock;              /* Protects all the fields below     */
-+
-+	struct list_head tx_requests; /* Requests to send to userspace     */
-+	struct list_head rx_requests; /* Requests waiting for reply        */
-+	struct list_head cp_requests; /* Requests waiting to be copied     */
-+
-+	struct list_head target_devs; /* List of devices we can target     */
-+
-+	void *transport_private;      /* Private data for userspace comms  */
-+
-+	char key[DMU_KEY_LEN];        /* Unique name string for device     */
-+	struct kref users;            /* Self-destructing reference count  */
-+
-+	wait_queue_head_t wqueue;     /* To block while waiting for reqs   */
-+
-+	uint64_t block_size;          /* Block size for this device        */
-+	uint64_t block_mask;          /* Mask for offset in block          */
-+	unsigned int block_shift;     /* Shift to convert to/from block    */
-+
-+	struct kcopyd_client *kcopy;  /* Interface to kcopyd               */
-+
-+	/* FIXME: Remove after debugging */
-+	atomic_t t_reqs;
-+	atomic_t r_reqs;
-+	atomic_t f_reqs;
-+	atomic_t total;
-+};
-+
-+struct dmu_request {
-+	struct list_head list;        /* Our place on the request queue    */
-+	struct dmu_device *dev;       /* The DMU device that owns us       */
-+
-+	int type;                     /* Type of request                   */
-+	uint32_t flags;               /* Attribute flags                   */
-+	uint64_t id;                  /* Unique ID for sync with userspace */
-+	union {
-+		uint64_t block;       /* The block in question             */
-+	} u;
-+
-+	struct list_head deps;        /* Requests depending on this one    */
-+	struct bio *bio;              /* The bio this request represents   */
-+
-+	struct work_struct task;      /* Async task to run for this req    */
-+
-+	struct dmu_msg_map_response response; /* FIXME: Clean this up      */
-+};
-+
-+
-+/* Find and grab a reference to a target device */
-+struct target_device *find_target(struct dmu_device *dev,
-+				  dev_t devno);
-+/* Character device transport functions */
-+int register_chardev_transport(struct dmu_device *dev);
-+void unregister_chardev_transport(struct dmu_device *dev);
-+int init_chardev_transport(void);
-+void cleanup_chardev_transport(void);
-+void write_chardev_transport_info(struct dmu_device *dev,
-+				  char *buf, unsigned int maxlen);
-+
-+/* Return the block number for @sector */
-+static inline u64 dmu_block(struct dmu_device *dev,
-+			    sector_t sector)
-+{
-+	return sector >> dev->block_shift;
-+}
-+
-+/* Return the sector offset in a block for @sector */
-+static inline u64 dmu_sector_offset(struct dmu_device *dev,
-+				    sector_t sector)
-+{
-+	return sector & dev->block_mask;
-+}
-+
-+/* Return the starting sector for @block */
-+static inline u64 dmu_sector(struct dmu_device *dev,
-+			     uint64_t block)
-+{
-+	return block << dev->block_shift;
-+}
-+
-+/* Increase the usage count for @dev */
-+static inline void get_dev(struct dmu_device *dev)
-+{
-+	kref_get(&dev->users);
-+}
-+
-+/* Decrease the usage count for @dev */
-+void destroy_dmu_device(struct kref *ref);
-+static inline void put_dev(struct dmu_device *dev)
-+{
-+	kref_put(&dev->users, destroy_dmu_device);
-+}
-+
-+#endif
-diff -Naur linux-2.6.17.13-orig/drivers/md/dm-userspace.c linux-2.6.17.13-d=
-mu/drivers/md/dm-userspace.c
-=2D-- linux-2.6.17.13-orig/drivers/md/dm-userspace.c	1969-12-31 16:00:00.00=
-0000000 -0800
-+++ linux-2.6.17.13-dmu/drivers/md/dm-userspace.c	2006-09-15 14:20:48.00000=
-0000 -0700
-@@ -0,0 +1,575 @@
-+/*
-+ * Copyright (C) International Business Machines Corp., 2006
-+ * Author: Dan Smith <danms@us.ibm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; under version 2 of the License.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  U=
-SA
-+ *
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/init.h>
-+#include <linux/blkdev.h>
-+#include <linux/bio.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+#include <linux/list.h>
-+#include <linux/fs.h>
-+#include <linux/cdev.h>
-+#include <linux/types.h>
-+#include <linux/poll.h>
-+
-+#include <linux/dm-userspace.h>
-+
-+#include "dm.h"
-+#include "dm-bio-list.h"
-+#include "kcopyd.h"
-+#include "dm-user.h"
-+
-+#define DMU_COPY_PAGES     256
-+
-+#define DM_MSG_PREFIX     "dm-userspace"
-+
-+static kmem_cache_t *request_cache;
-+mempool_t *request_pool;
-+
-+spinlock_t devices_lock;
-+LIST_HEAD(devices);
-+
-+/* Device number for the control device */
-+dev_t dmu_dev;
-+
-+/* Add a request to a device's request queue */
-+static void add_tx_request(struct dmu_device *dev,
-+			   struct dmu_request *req)
-+{
-+
-+	req->id =3D (uint64_t)(unsigned int)req;
-+
-+	spin_lock(&dev->lock);
-+	list_add_tail(&req->list, &dev->tx_requests);
-+	spin_unlock(&dev->lock);
-+
-+	wake_up(&dev->wqueue);
-+}
-+
-+/* Handle the cleanup of a request once its endio has fired.  In
-+ * general, the endio has been allowed to complete and all this does
-+ * is clean up the request (or wait, if necessary).  In the case of a
-+ * SYNC request, we may need to send a message to userspace
-+ */
-+static void endio_worker(void *data)
-+{
-+	struct dmu_request *req =3D data;
-+	enum {RESCHED, REQ_SYNC, FREE_REQ} task;
-+
-+	spin_lock(&req->dev->lock);
-+	if (dmu_get_flag(&req->flags, DMU_FLAG_SYNC))
-+		task =3D REQ_SYNC;
-+	else if (!list_empty(&req->list))
-+		task =3D RESCHED;
-+	else if (list_empty(&req->list))
-+		task =3D FREE_REQ;
-+	spin_unlock(&req->dev->lock);
-+
-+	if (task =3D=3D REQ_SYNC) {
-+		req->type =3D DM_USERSPACE_SYNC_COMPLETE;
-+		add_tx_request(req->dev, req);
-+		atomic_inc(&req->dev->t_reqs);
-+	} else if (task =3D=3D RESCHED) {
-+		PREPARE_WORK(&req->task, endio_worker, req);
-+		schedule_work(&req->task);
-+	} else if (task =3D=3D FREE_REQ) {
-+		atomic_dec(&req->dev->f_reqs);
-+		mempool_free(req, request_pool);
-+	}
-+}
-+
-+/* Return an already-bound target device */
-+struct target_device *find_target(struct dmu_device *dev,
-+					 dev_t devno)
-+{
-+	struct target_device *target, *match =3D NULL;
-+
-+	spin_lock(&dev->lock);
-+	list_for_each_entry(target, &dev->target_devs, list) {
-+		if (target->bdev->bd_dev =3D=3D devno) {
-+			match =3D target;
-+			break;
-+		}
-+	}
-+	spin_unlock(&dev->lock);
-+
-+	return match;
-+}
-+
-+/* Find a new target device and bind it to our device */
-+static struct target_device *get_target(struct dmu_device *dev,
-+					dev_t devno)
-+{
-+	struct target_device *target;
-+	struct block_device *bdev;
-+
-+	target =3D find_target(dev, devno);
-+	if (target)
-+		return target;
-+
-+	bdev =3D open_by_devnum(devno, FMODE_READ | FMODE_WRITE);
-+	if (IS_ERR(bdev)) {
-+		DMERR("Unable to lookup device %x", devno);
-+		return NULL;
-+	}
-+
-+	target =3D kmalloc(sizeof(*target), GFP_KERNEL);
-+	if (!target) {
-+		DMERR("Unable to alloc new target device");
-+		return NULL;
-+	}
-+
-+	target->bdev =3D bdev;
-+	INIT_LIST_HEAD(&target->list);
-+
-+	if (in_interrupt())
-+		printk("%s in irq\n", __FUNCTION__);
-+
-+	spin_lock(&dev->lock);
-+	list_add_tail(&target->list, &dev->target_devs);
-+	spin_unlock(&dev->lock);
-+
-+	return target;
-+}
-+
-+/* Caller must hold dev->lock */
-+static void put_target(struct dmu_device *dev,
-+		       struct target_device *target)
-+{
-+	list_del(&target->list);
-+
-+	bd_release(target->bdev);
-+	blkdev_put(target->bdev);
-+
-+	kfree(target);
-+}
-+
-+void destroy_dmu_device(struct kref *ref)
-+{
-+	struct dmu_device *dev;
-+	struct list_head *cursor, *next;
-+
-+	dev =3D container_of(ref, struct dmu_device, users);
-+
-+	spin_lock(&devices_lock);
-+	list_del(&dev->list);
-+	spin_unlock(&devices_lock);
-+
-+	list_for_each_safe(cursor, next, &dev->target_devs) {
-+		struct target_device *target;
-+
-+		target =3D list_entry(cursor,
-+				    struct target_device,
-+				    list);
-+
-+		put_target(dev, target);
-+	}
-+
-+	list_for_each_safe(cursor, next, &dev->tx_requests) {
-+		struct dmu_request *req;
-+
-+		req =3D list_entry(cursor,
-+				 struct dmu_request,
-+				 list);
-+
-+		DMERR("Failing unsent bio");
-+		bio_io_error(req->bio, req->bio->bi_size);
-+
-+		list_del(&req->list);
-+
-+		mempool_free(req, request_pool);
-+	}
-+
-+	list_for_each_safe(cursor, next, &dev->rx_requests) {
-+		struct dmu_request *req;
-+
-+		req =3D list_entry(cursor,
-+				 struct dmu_request,
-+				 list);
-+
-+		DMERR("Failing bio");
-+		req->flags =3D 0;
-+		bio_io_error(req->bio, req->bio->bi_size);
-+
-+		list_del(&req->list);
-+
-+		mempool_free(req, request_pool);
-+	}
-+
-+	list_for_each_safe(cursor, next, &dev->cp_requests) {
-+		struct dmu_request *req;
-+
-+		req =3D list_entry(cursor,
-+				 struct dmu_request,
-+				 list);
-+
-+		DMERR("Failing bio");
-+		req->flags =3D 0;
-+		bio_io_error(req->bio, req->bio->bi_size);
-+
-+		list_del(&req->list);
-+
-+		mempool_free(req, request_pool);
-+	}
-+
-+	kcopyd_client_destroy(dev->kcopy);
-+	unregister_chardev_transport(dev);
-+
-+	kfree(dev);
-+}
-+
-+static int init_dmu_device(struct dmu_device *dev, u32 block_size)
-+{
-+	int ret;
-+
-+	init_waitqueue_head(&dev->wqueue);
-+	INIT_LIST_HEAD(&dev->list);
-+	INIT_LIST_HEAD(&dev->target_devs);
-+	kref_init(&dev->users);
-+	spin_lock_init(&dev->lock);
-+
-+	INIT_LIST_HEAD(&dev->tx_requests);
-+	INIT_LIST_HEAD(&dev->rx_requests);
-+	INIT_LIST_HEAD(&dev->cp_requests);
-+
-+	dev->block_size  =3D block_size;
-+	dev->block_mask  =3D block_size - 1;
-+	dev->block_shift =3D ffs(block_size) - 1;
-+
-+	printk("%s: %llu %llu %u\n",  dev->key,
-+	       dev->block_size, dev->block_mask, dev->block_shift);
-+
-+	atomic_set(&dev->t_reqs, 0);
-+	atomic_set(&dev->r_reqs, 0);
-+	atomic_set(&dev->f_reqs, 0);
-+	atomic_set(&dev->total, 0);
-+
-+	ret =3D kcopyd_client_create(DMU_COPY_PAGES, &dev->kcopy);
-+	if (ret) {
-+		DMERR("Failed to initialize kcopyd client");
-+		return 0;
-+	}
-+
-+	return 1;
-+}
-+
-+static struct dmu_device *new_dmu_device(char *key,
-+					 struct dm_target *ti,
-+					 u32 block_size)
-+{
-+	struct dmu_device *dev;
-+	int                ret;
-+
-+	dev =3D kmalloc(sizeof(*dev), GFP_KERNEL);
-+	if (dev =3D=3D NULL) {
-+		DMERR("Failed to allocate new userspace device");
-+		return NULL;
-+	}
-+
-+	if (!init_dmu_device(dev, block_size))
-+		goto bad1;
-+
-+	snprintf(dev->key, DMU_KEY_LEN, "%s", key);
-+
-+	ret =3D register_chardev_transport(dev);
-+	if (!ret)
-+		goto bad2;
-+
-+	spin_lock(&devices_lock);
-+	list_add(&dev->list, &devices);
-+	spin_unlock(&devices_lock);
-+
-+	return dev;
-+
-+ bad2:
-+	put_dev(dev);
-+ bad1:
-+	kfree(dev);
-+	DMERR("Failed to create device");
-+	return NULL;
-+}
-+
-+static struct dmu_device *find_dmu_device(const char *key)
-+{
-+	struct dmu_device *dev;
-+	struct dmu_device *match =3D NULL;
-+
-+	spin_lock(&devices_lock);
-+
-+	list_for_each_entry(dev, &devices, list) {
-+		spin_lock(&dev->lock);
-+		if (strncmp(dev->key, key, DMU_KEY_LEN) =3D=3D 0) {
-+			match =3D dev;
-+			spin_unlock(&dev->lock);
-+			break;
-+		}
-+		spin_unlock(&dev->lock);
-+	}
-+
-+	spin_unlock(&devices_lock);
-+
-+	return match;
-+}
-+
-+static int dmu_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-+{
-+	uint64_t block_size;
-+	struct dmu_device *dev;
-+	char *device_key;
-+	char *block_size_param;
-+	int target_idx =3D 2;
-+
-+	if (argc < 3) {
-+		ti->error =3D "Invalid argument count";
-+		return -EINVAL;
-+	}
-+
-+	device_key =3D argv[0];
-+	block_size_param =3D argv[1];
-+
-+	block_size =3D simple_strtoul(block_size_param, NULL, 10) / 512;
-+
-+	dev =3D find_dmu_device(device_key);
-+	if (dev =3D=3D NULL) {
-+		dev =3D new_dmu_device(device_key,
-+				     ti,
-+				     block_size);
-+		if (dev =3D=3D NULL) {
-+			ti->error =3D "Failed to create device";
-+			goto bad;
-+		}
-+	} else {
-+		get_dev(dev);
-+	}
-+
-+	spin_lock(&dev->lock);
-+	if (dev->block_size !=3D block_size) {
-+		ti->error =3D "Invalid block size";
-+		goto bad;
-+	}
-+	spin_unlock(&dev->lock);
-+
-+	/* Resolve target devices */
-+	do {
-+		int maj, min;
-+		sscanf(argv[target_idx], "%i:%i", &maj, &min);
-+		if (!get_target(dev, MKDEV(maj, min))) {
-+			DMERR("Failed to find target device %i:%i (%s)",
-+			      maj, min, argv[target_idx]);
-+			goto out;
-+		}
-+	} while (++target_idx < argc);
-+
-+	ti->private  =3D dev;
-+	ti->split_io =3D block_size;
-+
-+	return 0;
-+
-+ bad:
-+	if (dev) {
-+		spin_unlock(&dev->lock);
-+	}
-+ out:
-+	if (dev) {
-+		put_dev(dev);
-+	}
-+
-+	return -EINVAL;
-+}
-+
-+static void dmu_dtr(struct dm_target *ti)
-+{
-+	struct dmu_device *dev =3D (struct dmu_device *) ti->private;
-+
-+	put_dev(dev);
-+}
-+
-+static int dmu_map(struct dm_target *ti, struct bio *bio,
-+		   union map_info *map_context)
-+{
-+	struct dmu_device *dev =3D (struct dmu_device *) ti->private;
-+	struct dmu_request *req;
-+
-+	req =3D mempool_alloc(request_pool, GFP_NOIO);
-+	if (!req) {
-+		DMERR("Failed to alloc request");
-+		return -1;
-+	}
-+
-+	atomic_inc(&dev->t_reqs);
-+	atomic_inc(&dev->total);
-+
-+	map_context->ptr =3D req;
-+
-+	/* FIXME: Need an allocation function here */
-+	req->type =3D DM_USERSPACE_MAP_BLOCK_REQ;
-+	req->dev =3D dev;
-+	req->bio =3D bio;
-+	req->u.block =3D dmu_block(dev, bio->bi_sector);
-+	req->flags =3D 0;
-+	INIT_LIST_HEAD(&req->deps);
-+
-+	if (bio_rw(bio))
-+		dmu_set_flag(&req->flags, DMU_FLAG_WR);
-+
-+	add_tx_request(dev, req);
-+
-+	return 0;
-+}
-+
-+static int dmu_status(struct dm_target *ti, status_type_t type,
-+		      char *result, unsigned int maxlen)
-+{
-+	struct dmu_device *dev =3D (struct dmu_device *) ti->private;
-+
-+	/* FIXME: Remove after debug */
-+	spin_lock(&dev->lock);
-+	printk("Requests: %u t:%u r:%u f:%u (%c%c)\n",
-+	       atomic_read(&dev->total),
-+	       atomic_read(&dev->t_reqs),
-+	       atomic_read(&dev->r_reqs),
-+	       atomic_read(&dev->f_reqs),
-+	       list_empty(&dev->tx_requests) ? ' ':'T',
-+	       list_empty(&dev->rx_requests) ? ' ':'R');
-+	spin_unlock(&dev->lock);
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+		write_chardev_transport_info(dev, result, maxlen);
-+		break;
-+
-+	case STATUSTYPE_TABLE:
-+		snprintf(result, maxlen, "%s %llu",
-+			 dev->key,
-+			 dev->block_size * 512);
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static int dmu_end_io(struct dm_target *ti, struct bio *bio,
-+                        int error, union map_info *map_context)
-+{
-+	struct dmu_request *req =3D map_context->ptr;
-+	int ret =3D 0;
-+
-+	if (error) {
-+		DMERR("Error in dmu_end_io");
-+		return -1;
-+	}
-+
-+	INIT_WORK(&req->task, endio_worker, req);
-+	schedule_work(&req->task);
-+
-+	if (dmu_get_flag(&req->flags, DMU_FLAG_SYNC))
-+	    ret =3D 1;
-+
-+	return ret;
-+}
-+
-+struct target_type userspace_target =3D {
-+	.name    =3D "userspace",
-+	.version =3D {0, 1, 0},
-+	.module  =3D THIS_MODULE,
-+	.ctr     =3D dmu_ctr,
-+	.dtr     =3D dmu_dtr,
-+	.map     =3D dmu_map,
-+	.status  =3D dmu_status,
-+	.end_io  =3D dmu_end_io
-+};
-+
-+int __init dm_userspace_init(void)
-+{
-+	int r =3D dm_register_target(&userspace_target);
-+	if (r < 0) {
-+		DMERR("Register failed %d", r);
-+		return 0;
-+	}
-+
-+	spin_lock_init(&devices_lock);
-+
-+	request_cache =3D
-+		kmem_cache_create("dm-userspace-requests",
-+				  sizeof(struct dmu_request),
-+				  __alignof__ (struct dmu_request),
-+				  0, NULL, NULL);
-+	if (!request_cache) {
-+		DMERR("Failed to allocate request cache");
-+		goto bad;
-+	}
-+
-+	request_pool =3D mempool_create(64,
-+				      mempool_alloc_slab, mempool_free_slab,
-+				      request_cache);
-+	if (!request_pool) {
-+		DMERR("Failed to allocate request pool");
-+		goto bad2;
-+	}
-+
-+	r =3D init_chardev_transport();
-+	if (!r)
-+		goto bad3;
-+
-+	return 1;
-+
-+ bad3:
-+	mempool_destroy(request_pool);
-+ bad2:
-+	kmem_cache_destroy(request_cache);
-+ bad:
-+	dm_unregister_target(&userspace_target);
-+
-+	return 0;
-+}
-+
-+void __exit dm_userspace_exit(void)
-+{
-+	int r;
-+	struct list_head *cursor, *next;
-+	struct dmu_device *dev;
-+
-+	spin_lock(&devices_lock);
-+
-+	list_for_each_safe(cursor, next, &devices) {
-+		dev =3D list_entry(cursor, struct dmu_device, list);
-+		list_del(cursor);
-+		destroy_dmu_device(&dev->users);
-+		DMERR("Destroying hanging device %s", dev->key);
-+	}
-+
-+	spin_unlock(&devices_lock);
-+
-+	cleanup_chardev_transport();
-+
-+	mempool_destroy(request_pool);
-+	kmem_cache_destroy(request_cache);
-+
-+	r =3D dm_unregister_target(&userspace_target);
-+	if (r < 0)
-+		DMERR("unregister failed %d", r);
-+}
-+
-+module_init(dm_userspace_init);
-+module_exit(dm_userspace_exit);
-+
-+MODULE_DESCRIPTION(DM_NAME " userspace target");
-+MODULE_AUTHOR("Dan Smith");
-+MODULE_LICENSE("GPL");
-diff -Naur linux-2.6.17.13-orig/drivers/md/dm-userspace-chardev.c linux-2.6=
-.17.13-dmu/drivers/md/dm-userspace-chardev.c
-=2D-- linux-2.6.17.13-orig/drivers/md/dm-userspace-chardev.c	1969-12-31 16:=
-00:00.000000000 -0800
-+++ linux-2.6.17.13-dmu/drivers/md/dm-userspace-chardev.c	2006-09-15 14:20:=
-48.000000000 -0700
-@@ -0,0 +1,614 @@
-+/*
-+ * Copyright (C) International Business Machines Corp., 2006
-+ * Author: Dan Smith <danms@us.ibm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; under version 2 of the License.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  U=
-SA
-+ *
-+ */
-+
-+#include <linux/spinlock.h>
-+#include <linux/blkdev.h>
-+#include <linux/mempool.h>
-+#include <linux/dm-userspace.h>
-+#include <linux/list.h>
-+#include <linux/sched.h>
-+#include <linux/wait.h>
-+#include <linux/poll.h>
-+#include <linux/fs.h>
-+#include <linux/cdev.h>
-+#include <asm/uaccess.h>
-+
-+#include "dm.h"
-+#include "dm-bio-list.h"
-+#include "kcopyd.h"
-+#include "dm-user.h"
-+
-+#define DM_MSG_PREFIX "dm-userspace"
-+
-+/* This allows for a cleaner separation between the dm-userspace
-+ * device-mapper target, and the userspace transport used.  Right now,
-+ * only a chardev transport exists, but it's possible that there could
-+ * be more in the future
-+ */
-+struct chardev_transport {
-+	struct cdev cdev;
-+	dev_t ctl_dev;
-+	struct dmu_device *parent;
-+};
-+
-+static void add_rx_request(struct dmu_device *dev,
-+			   struct dmu_request *req)
-+{
-+	spin_lock(&dev->lock);
-+	list_add_tail(&req->list, &dev->rx_requests);
-+	spin_unlock(&dev->lock);
-+}
-+
-+static struct dmu_request *find_rx_request(struct dmu_device *dev,
-+					   uint64_t id)
-+{
-+	struct dmu_request *req, *next, *match =3D NULL;
-+
-+	spin_lock(&dev->lock);
-+	list_for_each_entry_safe(req, next, &dev->rx_requests, list) {
-+		if (req->id =3D=3D id) {
-+			list_del_init(&req->list);
-+			match =3D req;
-+			break;
-+		}
-+	}
-+	spin_unlock(&dev->lock);
-+
-+	return match;
-+}
-+
-+static int have_pending_requests(struct dmu_device *dev)
-+{
-+	return atomic_read(&dev->t_reqs) !=3D 0;
-+}
-+
-+static int send_userspace_message(uint8_t __user *buffer,
-+				  struct dmu_request *req)
-+{
-+	int ret =3D 0;
-+	struct dmu_msg msg;
-+
-+	memset(&msg, 0, sizeof(msg));
-+
-+	msg.hdr.id =3D req->id;
-+
-+	switch (req->type) {
-+	case DM_USERSPACE_GET_VERSION:
-+		msg.hdr.msg_type =3D req->type;
-+		msg.payload.ver.kernel_ver =3D
-+			userspace_target.version[0] << 16 |
-+			userspace_target.version[1] << 8  |
-+			userspace_target.version[2];
-+
-+		break;
-+
-+	case DM_USERSPACE_MAP_BLOCK_REQ:
-+		msg.hdr.msg_type =3D req->type;
-+		msg.payload.map_req.org_block =3D req->u.block;
-+		dmu_cpy_flag(&msg.payload.map_req.flags,
-+			     req->flags, DMU_FLAG_RD);
-+		dmu_cpy_flag(&msg.payload.map_req.flags,
-+			     req->flags, DMU_FLAG_WR);
-+
-+		break;
-+
-+	case DM_USERSPACE_SYNC_COMPLETE:
-+	case DM_USERSPACE_INVAL_COMPLETE:
-+	case DM_USERSPACE_INVAL_FAILED:
-+		msg.hdr.msg_type =3D DM_USERSPACE_STATUS;
-+		msg.payload.status.status =3D req->type;
-+		msg.payload.status.id_of_op =3D req->id;
-+
-+		break;
-+
-+	default:
-+		DMWARN("Unknown outgoing message type %i", req->type);
-+		ret =3D 0;
-+	}
-+
-+	if (copy_to_user(buffer, &msg, sizeof(msg)))
-+		return -EFAULT;
-+
-+	ret =3D sizeof(msg);
-+
-+	if ((msg.hdr.msg_type !=3D DM_USERSPACE_MAP_BLOCK_REQ) &&
-+	    (msg.hdr.msg_type !=3D DM_USERSPACE_STATUS)) {
-+		printk("Sending weird message type %u\n", msg.hdr.msg_type);
-+	}
-+
-+	if (req->type =3D=3D DM_USERSPACE_GET_VERSION) {
-+		mempool_free(req, request_pool);
-+	}
-+
-+	return ret;
-+}
-+
-+struct dmu_request *pluck_next_request(struct dmu_device *dev)
-+{
-+	struct dmu_request *req =3D NULL;
-+
-+	spin_lock(&dev->lock);
-+	if (!list_empty(&dev->tx_requests)) {
-+		req =3D list_entry(dev->tx_requests.next,
-+				 struct dmu_request, list);
-+
-+		list_del_init(&req->list);
-+		atomic_dec(&dev->t_reqs);
-+	}
-+	spin_unlock(&dev->lock);
-+
-+	if (req && ((req->type =3D=3D DM_USERSPACE_MAP_BLOCK_REQ) ||
-+		    (req->type =3D=3D DM_USERSPACE_SYNC_COMPLETE))) {
-+		add_rx_request(dev, req);
-+		atomic_inc(&dev->r_reqs);
-+	}
-+
-+	return req;
-+}
-+
-+ssize_t dmu_ctl_read(struct file *file, char __user *buffer,
-+		     size_t size, loff_t *offset)
-+{
-+
-+	struct dmu_device *dev =3D (struct dmu_device *)file->private_data;
-+	struct dmu_request *req =3D NULL;
-+	int ret =3D 0, r;
-+
-+        if (!capable(CAP_SYS_ADMIN))
-+                return -EACCES;
-+
-+	if (size < sizeof(struct dmu_msg)) {
-+		DMERR("Userspace buffer too small for a single message");
-+		return 0;
-+	}
-+
-+	while (!have_pending_requests(dev)) {
-+		if (file->f_flags & O_NONBLOCK) {
-+			return 0;
-+		}
-+
-+		if (wait_event_interruptible(dev->wqueue,
-+					     have_pending_requests(dev)))
-+			return -ERESTARTSYS;
-+	}
-+
-+	while (ret < size) {
-+		if ((size - ret) < sizeof(struct dmu_msg))
-+			break;
-+
-+		req =3D pluck_next_request(dev);
-+		if (!req)
-+			break;
-+
-+		r =3D send_userspace_message((void *)(buffer + ret), req);
-+		if (r =3D=3D 0)
-+			continue;
-+		else if (r < 0)
-+			return r;
-+
-+		ret +=3D r;
-+	}
-+
-+	if (ret < sizeof(struct dmu_msg))
-+		DMINFO("Sent 0 requests to userspace");
-+
-+	return ret;
-+}
-+
-+/*
-+ * Adds the request to the front of the queue so it's picked up first
-+ */
-+static void add_urgent_request(struct dmu_device *dev,
-+			       struct dmu_request *req)
-+{
-+
-+	if (in_interrupt())
-+		printk("%s in irq\n", __FUNCTION__);
-+
-+	spin_lock(&dev->lock);
-+	list_add(&req->list, &dev->tx_requests);
-+	spin_unlock(&dev->lock);
-+
-+	wake_up(&dev->wqueue);
-+}
-+
-+static int version_request(struct dmu_msg_version *msg,
-+			   struct dmu_device *dev, uint32_t id)
-+{
-+	struct dmu_request *req;
-+
-+	req =3D mempool_alloc(request_pool, GFP_NOIO);
-+	if (!req) {
-+		DMERR("Failed to alloc version response");
-+		return 0;
-+	}
-+
-+	atomic_inc(&dev->t_reqs);
-+
-+	req->dev =3D dev;
-+	req->type =3D DM_USERSPACE_GET_VERSION;
-+	add_urgent_request(dev, req);
-+
-+	return 1;
-+}
-+
-+static struct dmu_request *pluck_dep_req(struct dmu_request *req)
-+{
-+	struct dmu_request *dreq =3D NULL;
-+
-+	spin_lock(&req->dev->lock);
-+	if (list_empty(&req->deps)) {
-+		/* Delete from cp_requests */
-+		list_del_init(&req->list);
-+	} else {
-+		/* Get next dependent request */
-+		dreq =3D list_entry(req->deps.next, struct dmu_request, list);
-+		list_del_init(&dreq->list);
-+	}
-+	spin_unlock(&req->dev->lock);
-+
-+	return dreq;
-+}
-+
-+static void flush_block(int read_err, unsigned int write_err, void *data)
-+{
-+	struct dmu_request *req =3D data;
-+	struct dmu_request *dreq;
-+
-+	generic_make_request(req->bio);
-+
-+	while ((dreq =3D pluck_dep_req(req)))
-+		generic_make_request(dreq->bio);
-+}
-+
-+static void copy_block(struct dmu_device *dev,
-+		       struct block_device *src_dev,
-+		       struct block_device *dst_dev,
-+		       struct dmu_request *req,
-+		       uint64_t org_block,
-+		       uint64_t new_block,
-+		       int64_t offset)
-+{
-+	struct io_region src, dst;
-+
-+	src.bdev =3D src_dev;
-+	src.sector =3D org_block << dev->block_shift;
-+	src.count =3D dev->block_size;
-+
-+	dst.bdev =3D dst_dev;
-+	dst.sector =3D new_block << dev->block_shift;
-+	dst.sector +=3D offset;
-+	dst.count =3D dev->block_size;
-+
-+	kcopyd_copy(dev->kcopy, &src, 1, &dst, 0, flush_block, req);
-+}
-+
-+/*
-+ * Queues @req with a waiting request to the same block, if one
-+ * exists.  Returns nonzero if queued.
-+ */
-+static int queue_dependent_request(struct dmu_request *req)
-+{
-+	struct dmu_request *dreq =3D NULL;
-+	int found =3D 0;
-+
-+	spin_lock(&req->dev->lock);
-+	list_for_each_entry(dreq, &req->dev->cp_requests, list) {
-+		if (dmu_block(req->dev, req->bio->bi_sector) =3D=3D
-+		    dmu_block(req->dev, dreq->bio->bi_sector)) {
-+			list_add_tail(&req->list, &dreq->deps);
-+			found =3D 1;
-+			break;
-+		}
-+	}
-+	spin_unlock(&req->dev->lock);
-+
-+	return found;
-+}
-+
-+static void map_worker(void *data)
-+{
-+	struct dmu_request *req =3D data;
-+	struct dmu_msg_map_response *msg =3D &req->response;
-+	struct dmu_device *dev =3D req->dev;
-+	struct target_device *src_dev, *dst_dev;
-+
-+	if (dmu_get_flag(&msg->flags, DMU_FLAG_COPY_FIRST)) {
-+		src_dev =3D find_target(dev, MKDEV(msg->src_maj, msg->src_min));
-+		if (!src_dev) {
-+			DMERR("Failed to find src device %i:%i\n",
-+			      msg->src_maj, msg->src_min);
-+			goto fail;
-+		}
-+	} else
-+		src_dev =3D NULL;
-+
-+	dst_dev =3D find_target(dev, MKDEV(msg->dst_maj, msg->dst_min));
-+	if (!dst_dev) {
-+		DMERR("Failed to find dest device %i:%i\n",
-+		      msg->dst_maj, msg->dst_min);
-+		goto fail;
-+	}
-+
-+	/* Remap the bio */
-+	req->bio->bi_sector =3D dmu_sector(dev, msg->new_block) +
-+		dmu_sector_offset(dev, req->bio->bi_sector) +
-+		msg->offset;
-+	req->bio->bi_bdev =3D dst_dev->bdev;
-+
-+	dmu_cpy_flag(&req->flags, msg->flags, DMU_FLAG_SYNC);
-+
-+	atomic_dec(&dev->r_reqs);
-+	atomic_inc(&dev->f_reqs);
-+
-+	if (!queue_dependent_request(req)) {
-+		if (dmu_get_flag(&msg->flags, DMU_FLAG_COPY_FIRST)) {
-+			spin_lock(&dev->lock);
-+			list_add(&req->list, &req->dev->cp_requests);
-+			spin_unlock(&dev->lock);
-+
-+			copy_block(dev, src_dev->bdev, dst_dev->bdev, req,
-+				   msg->org_block, msg->new_block,
-+				   msg->offset);
-+		} else {
-+			flush_block(0, 0, req);
-+		}
-+	}
-+
-+	return;
-+
-+ fail:
-+	bio_io_error(req->bio, req->bio->bi_size);
-+}
-+
-+static void do_map_bio(struct dmu_device *dev,
-+		       struct dmu_msg_map_response *msg)
-+{
-+	struct dmu_request *req;
-+
-+	req =3D find_rx_request(dev, msg->id_of_req);
-+	if (!req) {
-+		DMERR("Unable to complete unknown map: %llu\n",
-+		      msg->id_of_req);
-+		return;
-+	}
-+
-+	memcpy(&req->response, msg, sizeof(req->response));
-+
-+	INIT_WORK(&req->task, map_worker, req);
-+	schedule_work(&req->task);
-+}
-+
-+static void do_sync_complete(struct dmu_device *dev, uint32_t id_of_op) {
-+	struct dmu_request *req;
-+
-+	req =3D find_rx_request(dev, id_of_op);
-+	if (!req) {
-+		DMERR("Unable to complete unknown request: %u\n",
-+		      id_of_op);
-+		return;
-+	}
-+
-+	atomic_dec(&req->dev->r_reqs);
-+
-+	dmu_clr_flag(&req->flags, DMU_FLAG_SYNC);
-+
-+	req->bio->bi_end_io(req->bio, 0, 0);
-+}
-+
-+ssize_t dmu_ctl_write(struct file *file, const char __user *buffer,
-+		      size_t size, loff_t *offset)
-+{
-+	struct dmu_device *dev =3D (struct dmu_device *)file->private_data;
-+	int ret =3D 0;
-+	struct dmu_msg msg;
-+
-+        if (!capable(CAP_SYS_ADMIN))
-+                return -EACCES;
-+
-+	while ((ret + sizeof(msg)) <=3D size) {
-+		if (copy_from_user(&msg, buffer+ret, sizeof(msg))) {
-+			DMERR("%s copy_from_user failed!", __FUNCTION__);
-+			ret =3D -EFAULT;
-+			goto out;
-+		}
-+
-+		ret +=3D sizeof(msg);
-+
-+		switch (msg.hdr.msg_type) {
-+
-+		case DM_USERSPACE_GET_VERSION:
-+			version_request(&msg.payload.ver, dev, msg.hdr.id);
-+			break;
-+
-+		case DM_USERSPACE_MAP_BLOCK_RESP:
-+			do_map_bio(dev, &msg.payload.map_rsp);
-+			break;
-+
-+		case DM_USERSPACE_MAP_FAILED:
-+			/* FIXME: Do something here */
-+			DMERR("Userspace map failed");
-+			break;
-+
-+		case DM_USERSPACE_STATUS:
-+			if (msg.payload.status.status =3D=3D
-+			    DM_USERSPACE_SYNC_COMPLETE) {
-+				do_sync_complete(dev,
-+						 msg.payload.status.id_of_op);
-+			} else {
-+				printk("Unknown status type %u\n",
-+				       msg.payload.status.status);
-+			}
-+			break;
-+
-+		default:
-+			DMWARN("Unknown incoming request type: %i",
-+			       msg.hdr.msg_type);
-+		}
-+	}
-+ out:
-+	if (ret < sizeof(msg)) {
-+		DMINFO("Received 0 responses from userspace");
-+	}
-+
-+	return ret;
-+}
-+
-+int dmu_ctl_open(struct inode *inode, struct file *file)
-+{
-+	struct chardev_transport *t;
-+	struct dmu_device *dev;
-+
-+        if (!capable(CAP_SYS_ADMIN))
-+                return -EACCES;
-+
-+	t =3D container_of(inode->i_cdev, struct chardev_transport, cdev);
-+	dev =3D t->parent;
-+
-+	get_dev(dev);
-+
-+	file->private_data =3D dev;
-+
-+	return 0;
-+}
-+
-+int dmu_ctl_release(struct inode *inode, struct file *file)
-+{
-+	struct dmu_device *dev;
-+
-+	dev =3D (struct dmu_device *)file->private_data;
-+
-+	put_dev(dev);
-+
-+	return 0;
-+}
-+
-+unsigned dmu_ctl_poll(struct file *file, poll_table *wait)
-+{
-+	struct dmu_device *dev =3D (struct dmu_device *)file->private_data;
-+	unsigned mask =3D 0;
-+
-+	poll_wait(file, &dev->wqueue, wait);
-+
-+	if (have_pending_requests(dev))
-+		mask |=3D POLLIN | POLLRDNORM;
-+
-+	return mask;
-+}
-+
-+static struct file_operations ctl_fops =3D {
-+	.open    =3D dmu_ctl_open,
-+	.release =3D dmu_ctl_release,
-+	.read    =3D dmu_ctl_read,
-+	.write   =3D dmu_ctl_write,
-+	.poll    =3D dmu_ctl_poll,
-+	.owner   =3D THIS_MODULE,
-+};
-+
-+static int get_free_minor(void)
-+{
-+	struct dmu_device *dev;
-+	int minor =3D 0;
-+
-+	spin_lock(&devices_lock);
-+
-+	while (1) {
-+		list_for_each_entry(dev, &devices, list) {
-+			struct chardev_transport *t =3D dev->transport_private;
-+			if (MINOR(t->ctl_dev) =3D=3D minor)
-+				goto dupe;
-+		}
-+		break;
-+	dupe:
-+		minor++;
-+	}
-+
-+	spin_unlock(&devices_lock);
-+
-+	return minor;
-+}
-+
-+int register_chardev_transport(struct dmu_device *dev)
-+{
-+	struct chardev_transport *t;
-+	int ret;
-+
-+	dev->transport_private =3D kmalloc(sizeof(struct chardev_transport),
-+					 GFP_KERNEL);
-+	t =3D dev->transport_private;
-+
-+	if (!t) {
-+		DMERR("Failed to allocate chardev transport");
-+		goto bad;
-+	}
-+
-+	t->ctl_dev =3D MKDEV(MAJOR(dmu_dev), get_free_minor());
-+	t->parent =3D dev;
-+
-+	cdev_init(&t->cdev, &ctl_fops);
-+	t->cdev.owner =3D THIS_MODULE;
-+	t->cdev.ops =3D &ctl_fops;
-+
-+	ret =3D cdev_add(&t->cdev, t->ctl_dev, 1);
-+	if (ret < 0) {
-+		DMERR("Failed to register control device %d:%d",
-+		       MAJOR(t->ctl_dev), MINOR(t->ctl_dev));
-+		goto bad;
-+	}
-+
-+	return 1;
-+
-+ bad:
-+	kfree(t);
-+	return 0;
-+}
-+
-+void unregister_chardev_transport(struct dmu_device *dev)
-+{
-+	struct chardev_transport *t =3D dev->transport_private;
-+
-+	cdev_del(&t->cdev);
-+	kfree(t);
-+}
-+
-+int init_chardev_transport(void)
-+{
-+	int r;
-+
-+	r =3D alloc_chrdev_region(&dmu_dev, 0, 10, "dm-userspace");
-+	if (r) {
-+		DMERR("Failed to allocate chardev region");
-+		return 0;
-+	} else
-+		return 1;
-+}
-+
-+void cleanup_chardev_transport(void)
-+{
-+	unregister_chrdev_region(dmu_dev, 10);
-+}
-+
-+void write_chardev_transport_info(struct dmu_device *dev,
-+			char *buf, unsigned int maxlen)
-+{
-+	struct chardev_transport *t =3D dev->transport_private;
-+
-+	snprintf(buf, maxlen, "%x:%x",
-+		 MAJOR(t->ctl_dev), MINOR(t->ctl_dev));
-+}
-diff -Naur linux-2.6.17.13-orig/drivers/md/Kconfig linux-2.6.17.13-dmu/driv=
-ers/md/Kconfig
-=2D-- linux-2.6.17.13-orig/drivers/md/Kconfig	2006-09-08 20:23:25.000000000=
- -0700
-+++ linux-2.6.17.13-dmu/drivers/md/Kconfig	2006-09-15 14:20:48.000000000 -0=
-700
-@@ -237,6 +237,12 @@
-        ---help---
-          Allow volume managers to take writeable snapshots of a device.
-=20
-+config DM_USERSPACE
-+       tristate "Userspace target (EXPERIMENTAL)"
-+       depends on BLK_DEV_DM && EXPERIMENTAL
-+       ---help---
-+	 A target that provides a userspace interface to device-mapper
-+
- config DM_MIRROR
-        tristate "Mirror target (EXPERIMENTAL)"
-        depends on BLK_DEV_DM && EXPERIMENTAL
-diff -Naur linux-2.6.17.13-orig/drivers/md/Makefile linux-2.6.17.13-dmu/dri=
-vers/md/Makefile
-=2D-- linux-2.6.17.13-orig/drivers/md/Makefile	2006-09-08 20:23:25.00000000=
-0 -0700
-+++ linux-2.6.17.13-dmu/drivers/md/Makefile	2006-09-15 14:20:48.000000000 -=
-0700
-@@ -14,6 +14,7 @@
- 		   raid6altivec1.o raid6altivec2.o raid6altivec4.o \
- 		   raid6altivec8.o \
- 		   raid6mmx.o raid6sse1.o raid6sse2.o
-+dm-user-objs    :=3D dm-userspace.o dm-userspace-chardev.o
- hostprogs-y	:=3D mktables
-=20
- # Note: link order is important.  All raid personalities
-@@ -37,6 +38,7 @@
- obj-$(CONFIG_DM_SNAPSHOT)	+=3D dm-snapshot.o
- obj-$(CONFIG_DM_MIRROR)		+=3D dm-mirror.o
- obj-$(CONFIG_DM_ZERO)		+=3D dm-zero.o
-+obj-$(CONFIG_DM_USERSPACE)      +=3D dm-user.o
-=20
- quiet_cmd_unroll =3D UNROLL  $@
-       cmd_unroll =3D $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
-diff -Naur linux-2.6.17.13-orig/include/linux/dm-userspace.h linux-2.6.17.1=
-3-dmu/include/linux/dm-userspace.h
-=2D-- linux-2.6.17.13-orig/include/linux/dm-userspace.h	1969-12-31 16:00:00=
-.000000000 -0800
-+++ linux-2.6.17.13-dmu/include/linux/dm-userspace.h	2006-09-15 14:20:48.00=
-0000000 -0700
-@@ -0,0 +1,151 @@
-+/*
-+ * Copyright (C) International Business Machines Corp., 2006
-+ * Author: Dan Smith <danms@us.ibm.com>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; under version 2 of the License.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  U=
-SA
-+ *
-+ */
-+
-+#ifndef __DM_USERSPACE_H
-+#define __DM_USERSPACE_H
-+
-+#include <linux/types.h>
-+
-+/*
-+ * Message Types
-+ */
-+#define DM_USERSPACE_GET_VERSION      1
-+#define DM_USERSPACE_MAP_BLOCK_REQ    2
-+#define DM_USERSPACE_MAP_BLOCK_RESP   3
-+#define DM_USERSPACE_MAP_FAILED       4
-+#define DM_USERSPACE_MAP_INVALIDATE   5
-+#define DM_USERSPACE_STATUS           6
-+
-+/*
-+ * Status codes
-+ */
-+#define DM_USERSPACE_INVAL_COMPLETE   101
-+#define DM_USERSPACE_INVAL_FAILED     102
-+#define DM_USERSPACE_SYNC_COMPLETE    103
-+
-+/*
-+ * Flags and associated macros
-+ */
-+#define DMU_FLAG_VALID       1
-+#define DMU_FLAG_RD          2
-+#define DMU_FLAG_WR          4
-+#define DMU_FLAG_COPY_FIRST  8
-+#define DMU_FLAG_TEMPORARY  16
-+#define DMU_FLAG_DONE       32
-+#define DMU_FLAG_SYNC       64
-+#define DMU_FLAG_WAITING   128
-+
-+static int dmu_get_flag(uint32_t *flags, uint32_t flag)
-+{
-+	return (*flags & flag) !=3D 0;
-+}
-+
-+static void dmu_set_flag(uint32_t *flags, uint32_t flag)
-+{
-+	*flags |=3D flag;
-+}
-+
-+static void dmu_clr_flag(uint32_t *flags, uint32_t flag)
-+{
-+	*flags &=3D (~flag);
-+}
-+
-+static void dmu_cpy_flag(uint32_t *flags, uint32_t src, uint32_t flag)
-+{
-+	*flags =3D (*flags & ~flag) | (src & flag);
-+}
-+
-+/*
-+ * This message header is sent in front of every message, in both
-+ * directions
-+ */
-+struct dmu_msg_header {
-+	uint64_t id;
-+	uint32_t msg_type;
-+	uint32_t payload_len;
-+};
-+
-+/* DM_USERSPACE_GET_VERSION */
-+struct dmu_msg_version {
-+	uint32_t userspace_ver;
-+	uint32_t kernel_ver;
-+};
-+
-+/* For status codes */
-+struct dmu_msg_status {
-+	uint64_t id_of_op;
-+	uint32_t status;
-+};
-+
-+/* DM_USERSPACE_MAP_BLOCK_REQ */
-+struct dmu_msg_map_request {
-+	uint64_t org_block;
-+
-+	uint32_t flags;
-+};
-+
-+/* DM_USERSPACE_MAP_BLOCK_RESP
-+ * DM_USERSPACE_MAP_BLOCK_FAILED
-+ */
-+struct dmu_msg_map_response {
-+	uint64_t org_block;
-+	uint64_t new_block;
-+	int64_t offset;
-+
-+	uint64_t id_of_req;
-+	uint32_t flags;
-+
-+	uint32_t src_maj;
-+	uint32_t src_min;
-+
-+	uint32_t dst_maj;
-+	uint32_t dst_min;
-+};
-+
-+/* A full message */
-+struct dmu_msg {
-+	struct dmu_msg_header hdr;
-+	union {
-+		struct dmu_msg_version ver;
-+		struct dmu_msg_status status;
-+		struct dmu_msg_map_request map_req;
-+		struct dmu_msg_map_response map_rsp;
-+	} payload;
-+};
-+
-+static inline int dmu_get_msg_len(int type)
-+{
-+	switch (type) {
-+	case DM_USERSPACE_GET_VERSION:
-+		return sizeof(struct dmu_msg_version);
-+	case DM_USERSPACE_INVAL_COMPLETE:
-+	case DM_USERSPACE_INVAL_FAILED:
-+	case DM_USERSPACE_STATUS:
-+		return sizeof(struct dmu_msg_status);
-+	case DM_USERSPACE_MAP_BLOCK_REQ:
-+		return sizeof(struct dmu_msg_map_request);
-+	case DM_USERSPACE_MAP_BLOCK_RESP:
-+	case DM_USERSPACE_MAP_FAILED:
-+		return sizeof(struct dmu_msg_map_response);
-+	default:
-+		return -1;
-+	};
-+}
-+
-+#endif
 
 --=-=-=
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=example.c
+Content-Transfer-Encoding: base64
+
+LyoKICogQ29weXJpZ2h0IChDKSBJbnRlcm5hdGlvbmFsIEJ1c2luZXNzIE1hY2hpbmVzIENvcnAu
+LCAyMDA2CiAqIEF1dGhvcjogRGFuIFNtaXRoIDxkYW5tc0B1cy5pYm0uY29tPgogKgogKiBUaGlz
+IGZpbGUgaXMgc3ViamVjdCB0byB0aGUgdGVybXMgYW5kIGNvbmRpdGlvbnMgb2YgdGhlIEdOVSBM
+ZXNzZXIKICogR2VuZXJhbCBQdWJsaWMgTGljZW5zZS4gU2VlIHRoZSBmaWxlIENPUFlJTkcgaW4g
+dGhlIG1haW4gZGlyZWN0b3J5CiAqIG9mIHRoaXMgYXJjaGl2ZSBmb3IgbW9yZSBkZXRhaWxzLgog
+KgogKi8KLyoKICogVGhpcyBleGFtcGxlIHByb2dyYW0gZGVtb25zdHJhdGVzIGEgdHJpdmlhbCB1
+c2Ugb2YgdGhlIGRtdSBwaWVjZXMKICogb2YgdGhlIGxpYmRldm1hcHBlciBsaWJyYXJ5IGZvciB1
+c2Vyc3BhY2Ugb3JjaGVzdHJhdGlvbiBvZiBhCiAqIGRldmljZS1tYXBwZXIgcHNldWRvLWRldmlj
+ZS4gIFRvIGNvbXBpbGU6CiAqCiAqICAjIGdjYyAtbGRldm1hcHBlciAtbyBkbXUtZXhhbXBsZSBk
+bXUtZXhhbXBsZS5jCiAqCiAqIEhlcmUsIHdlIHNpbXBseSBtYXAgYWxsIHJlYWRzIGFuZCB3cml0
+ZXMgdG8gdGhlIGRldmljZSBnaXZlbiBhcyB0aGUKICogZmlyc3QgYXJndW1lbnQgdG8gdGhlIHBy
+b2dyYW0uICBGb3IgZXhhbXBsZToKICoKICogICMgLi9kbXUtZXhhbXBsZSAvZGV2L3JhbTAKICoK
+ICogd2lsbCBjcmVhdGUgYSBkZXZpY2UgL2Rldi9tYXBwZXIvZm9vIGluIHdoaWNoIGFsbCBhY2Nl
+c3NlcyBhcmUKICogcmVkaXJlY3RlZCB0byAvZGV2L3JhbTAuCiAqLwoKI2luY2x1ZGUgPHN0ZGlv
+Lmg+CiNpbmNsdWRlIDxzdGRsaWIuaD4KI2luY2x1ZGUgPHN0ZGludC5oPgojaW5jbHVkZSA8c3lz
+L3N0YXQuaD4KI2luY2x1ZGUgPHN5cy90eXBlcy5oPgoKI2luY2x1ZGUgPGxpYmRldm1hcHBlci5o
+PgoKI2luY2x1ZGUgPGRtdS5oPgoKZGV2X3QgZGVzdGluYXRpb25fZGV2OwoKaW50IGNvdW50ID0g
+MDsKdW5zaWduZWQgaW50IHRvdGFsID0gMDsKCnN0cnVjdCBkbXVfY29udGV4dCAqYzsKCmludCBt
+YXBfaGFuZGxlcih2b2lkICpkYXRhLCBzdHJ1Y3QgZG11X21hcF9kYXRhICptYXBfZGF0YSkKewoJ
+ZG11X21hcF9zZXRfd3JpdGFibGUobWFwX2RhdGEsIDEpOwoJLy8JZG11X21hcF9zZXRfc3luYyht
+YXBfZGF0YSk7CgoJLyogV2UgbGVhdmUgYmxvY2sgcG9pbnRpbmcgdG8gdGhlIG9yaWdpbmFsIGxv
+Y2F0aW9uLCBidXQKCSAqIGNoYW5nZSB0aGUgZGVzdGluYXRpb24gZGV2aWNlIAoJICovCglkbXVf
+bWFwX3NldF9kZXN0X2RldihtYXBfZGF0YSwgZGVzdGluYXRpb25fZGV2KTsKCQovLwlwcmludGYo
+IlsldV0gTWFwcGluZyAlbGx1IC0+IDB4JWxseFxuIiwKLy8JICAgICAgIGRtdV9tYXBfZ2V0X2lk
+KG1hcF9kYXRhKSwKLy8JICAgICAgIGRtdV9tYXBfZ2V0X2Jsb2NrKG1hcF9kYXRhKSwKLy8JICAg
+ICAgIGRlc3RpbmF0aW9uX2Rldik7CgkKCWNvdW50Kys7Cgl0b3RhbCsrOwoKCS8qIFJldHVybiBu
+b256ZXJvIHRvIGZsdXNoIG91dGdvaW5nIG1lc3NhZ2VzIGJhY2sgdG8KCSAqIGRtLXVzZXJzcGFj
+ZSBhZnRlciBwcm9jZXNzaW5nIAoJICovCglyZXR1cm4gMTsKfQoKaW50IHN0YXR1c19tc2dfaGFu
+ZGxlcih2b2lkICpkYXRhLCB1aW50NjRfdCBpZCwgdWludDMyX3Qgc3RhdHVzKQp7CglpZiAoc3Rh
+dHVzID09IERNVV9TVEFUVVNfU1lOQ19DT01QTEVURSkgewoJCWRtdV9zeW5jX2NvbXBsZXRlKGMs
+IGlkKTsKCQlkbXVfY3RsX3NlbmRfcXVldWUoYyk7Cgl9IGVsc2UgewoJCXByaW50ZigiU3RhdHVz
+IG1lc3NhZ2U6ICV1XG4iLCBzdGF0dXMpOwoJfQkJCn0KCmludCBtYWluKGludCBhcmdjLCBjaGFy
+ICoqYXJndikKewoKCXN0cnVjdCBzdGF0IHM7CgljaGFyIGNtZFsyNTZdOwoKCWlmIChhcmdjICE9
+IDIpIHsKCQlwcmludGYoIlVzYWdlOiAlcyA8ZGV2aWNlPlxuIiwgYXJndlswXSk7CgkJZXhpdCgx
+KTsKCX0KCglwcmludGYoIkknbSBjcmVhdGluZyBhIGRldmljZS1tYXBwZXIgZGV2aWNlIGNhbGxl
+ZCAnZm9vJy4gIFxuIgoJICAgICAgICJCZSBzdXJlIHRvIHJlbW92ZSBpdCB3aGVuIHlvdSdyZSBk
+b25lIHdpdGggdGhpcyBleGFtcGxlXG4iCgkgICAgICAgInByb2dyYW0hIChydW4gJ2Rtc2V0dXAg
+cmVtb3ZlIGZvbycpXG4iKTsKCgkvKiBEZXRlcm1pbmUgYW5kIHJlY29yZCBvdXIgZGVzdGluYXRp
+b24gZGV2aWNlIGZvciBtYXBwaW5ncyAqLwoJc3RhdChhcmd2WzFdLCAmcyk7CglkZXN0aW5hdGlv
+bl9kZXYgPSBzLnN0X3JkZXY7CgoJLyogQ3JlYXRlIGEgdmVyeSBzaW1wbGUgZGV2aWNlLW1hcHBl
+ciBkZXZpY2Ugd2l0aCBhIHNtYWxsCgkgKiBzZWN0aW9uIG9mIHNlY3RvcnMgbWFwcGVkIHRvIGRt
+LXVzZXJzcGFjZSwgYXQgNTEyLWJ5dGUKCSAqIGJsb2NrcwoJICovCglzcHJpbnRmKGNtZCwKCQki
+ZWNobyAwIDEwNDg1NzYgdXNlcnNwYWNlIGZvbyA0MDk2ICVpOiVpIHwgZG1zZXR1cCBjcmVhdGUg
+Zm9vIiwKCQkodW5zaWduZWQpKGRlc3RpbmF0aW9uX2RldiAmIDB4RkYwMCkgPj4gOCwKCQkodW5z
+aWduZWQpKGRlc3RpbmF0aW9uX2RldiAmIDB4MDBGRikpOwoJc3lzdGVtKGNtZCk7CgoJLyogT3Bl
+biB0aGUgY29udHJvbCBkZXZpY2UgZm9yIHRoZSBkZXZpY2UtbWFwcGVyIGRldmljZSAnZm9vJyAq
+LwoJYyA9IGRtdV9jdGxfb3BlbigiZm9vIiwgMCk7CglpZiAoIWMpIHsKCQlwcmludGYoIkZhaWxl
+ZCB0byBnZXQgY29udHJvbCBkZXZpY2VcbiIpOwoJCWV4aXQoMSk7Cgl9CgoJLyogUmVnaXN0ZXIg
+b3VyIGNhbGxiYWNrIGZ1bmN0aW9uIGZvciBoYW5kbGluZyBtYXAgZXZlbnRzICovCglkbXVfcmVn
+aXN0ZXJfbWFwX2hhbmRsZXIoYywgbWFwX2hhbmRsZXIsIE5VTEwpOwoJZG11X3JlZ2lzdGVyX3N0
+YXR1c19oYW5kbGVyKGMsIHN0YXR1c19tc2dfaGFuZGxlciwgTlVMTCk7CgoJd2hpbGUgKDEpIHsK
+CQlpZiAoZG11X2V2ZW50c19wZW5kaW5nKGMsIDEwMDApKSB7CgkJCS8vcHJpbnRmKCJQcm9jZXNz
+aW5nIGV2ZW50cy4uLlxuIik7CgkJCWRtdV9wcm9jZXNzX2V2ZW50cyhjKTsKCQkJcHJpbnRmKCJQ
+cm9jZXNzZWQgJWkgZXZlbnRzXG4iLCBjb3VudCk7CgkJCWNvdW50ID0gMDsKCQl9IGVsc2UgewoJ
+CQlwcmludGYoIk5vdGhpbmcgdG8gZG9cbiIpOwoJCX0KCQlwcmludGYoIlRvdGFsOiAldVxuIiwg
+dG90YWwpOwoJfQp9Cg==
+--=-=-=
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=dmu.c
+Content-Transfer-Encoding: base64
+
+LyoKICogQ29weXJpZ2h0IChDKSBJbnRlcm5hdGlvbmFsIEJ1c2luZXNzIE1hY2hpbmVzIENvcnAu
+LCAyMDA2CiAqIEF1dGhvcjogRGFuIFNtaXRoIDxkYW5tc0B1cy5pYm0uY29tPgogKgogKiBUaGlz
+IGZpbGUgaXMgc3ViamVjdCB0byB0aGUgdGVybXMgYW5kIGNvbmRpdGlvbnMgb2YgdGhlIEdOVSBM
+ZXNzZXIKICogR2VuZXJhbCBQdWJsaWMgTGljZW5zZS4gU2VlIHRoZSBmaWxlIENPUFlJTkcgaW4g
+dGhlIG1haW4gZGlyZWN0b3J5CiAqIG9mIHRoaXMgYXJjaGl2ZSBmb3IgbW9yZSBkZXRhaWxzLgog
+KgogKi8KCiNpbmNsdWRlIDxzdGRpby5oPgojaW5jbHVkZSA8ZmNudGwuaD4KI2luY2x1ZGUgPGxp
+bnV4L2ZzLmg+CiNpbmNsdWRlIDxzeXMvc3RhdC5oPgojaW5jbHVkZSA8c3lzL3N5c21hY3Jvcy5o
+PgojaW5jbHVkZSA8ZXJybm8uaD4KI2luY2x1ZGUgPHN0ZGludC5oPgojaW5jbHVkZSA8c3RyaW5n
+Lmg+CiNpbmNsdWRlIDx1bmlzdGQuaD4KI2luY2x1ZGUgPHN0ZGxpYi5oPgojaW5jbHVkZSA8bGli
+ZGV2bWFwcGVyLmg+CiNpbmNsdWRlIDxsaW51eC9kbS11c2Vyc3BhY2UuaD4KCiNpbmNsdWRlIDxk
+bXUuaD4KCiNkZWZpbmUgRE1VX01TR19ERUJVRyAwCgojZGVmaW5lIFFVRVVFX1NJWkVfS0IgMTAy
+NAoKI2lmIERNVV9NU0dfREVCVUcKI2RlZmluZSBEUFJJTlRGKCBzLCBhcmcuLi4gKSBmcHJpbnRm
+KHN0ZGVyciwgcywgIyNhcmcpCiNlbHNlCiNkZWZpbmUgRFBSSU5URiggcywgYXJnLi4uICkKI2Vu
+ZGlmCgpzdHJ1Y3QgZG11X2V2ZW50cyB7CglzdGF0dXNfaGFuZGxlciBzdGF0dXNfZm47CgltYXBf
+cmVxX2hhbmRsZXIgbWFwX2ZuOwp9OwoKc3RydWN0IGRtdV9ldmVudF9kYXRhIHsKCXZvaWQgKnN0
+YXR1c191c2VyX2RhdGE7Cgl2b2lkICptYXBfdXNlcl9kYXRhOwp9OwoKc3RydWN0IGRtdV9jb250
+ZXh0IHsKCWludCBmZDsKCXVuc2lnbmVkIGludCBidWZfc2l6ZTsKCXVuc2lnbmVkIGludCBpbl9w
+dHI7Cgl1bnNpZ25lZCBpbnQgb3V0X3B0cjsKCXVpbnQ4X3QgKmluX2J1ZjsKCXVpbnQ4X3QgKm91
+dF9idWY7Cgl1aW50MzJfdCBpZF9jdHI7CglzdHJ1Y3QgZG11X2V2ZW50cyBldmVudHM7CglzdHJ1
+Y3QgZG11X2V2ZW50X2RhdGEgZXZlbnRfZGF0YTsKfTsKCnN0cnVjdCBkbXVfbWFwX2RhdGEgewoJ
+dWludDY0X3QgYmxvY2s7CglpbnQ2NF90IG9mZnNldDsKCXVpbnQzMl90IGlkOwoJdWludDMyX3Qg
+ZmxhZ3M7CglkZXZfdCBkZXN0X2RldjsKCWRldl90IGNvcHlfc3JjX2RldjsKfTsKCnZvaWQgZG11
+X21hcF9zZXRfYmxvY2soc3RydWN0IGRtdV9tYXBfZGF0YSAqZGF0YSwgdWludDY0X3QgYmxvY2sp
+CnsKCWRhdGEtPmJsb2NrID0gYmxvY2s7Cn0KCnVpbnQ2NF90IGRtdV9tYXBfZ2V0X2Jsb2NrKHN0
+cnVjdCBkbXVfbWFwX2RhdGEgKmRhdGEpCnsKCXJldHVybiBkYXRhLT5ibG9jazsKfQoKdm9pZCBk
+bXVfbWFwX3NldF9vZmZzZXQoc3RydWN0IGRtdV9tYXBfZGF0YSAqZGF0YSwgaW50NjRfdCBvZmZz
+ZXQpCnsKCWRhdGEtPm9mZnNldCA9IG9mZnNldDsKfQoKdWludDMyX3QgZG11X21hcF9nZXRfaWQo
+c3RydWN0IGRtdV9tYXBfZGF0YSAqZGF0YSkKewoJcmV0dXJuIGRhdGEtPmlkOwp9Cgp2b2lkIGRt
+dV9tYXBfc2V0X2Rlc3RfZGV2KHN0cnVjdCBkbXVfbWFwX2RhdGEgKmRhdGEsIGRldl90IGRldikK
+ewoJZGF0YS0+ZGVzdF9kZXYgPSBkZXY7Cn0KCnZvaWQgZG11X21hcF9zZXRfY29weV9zcmNfZGV2
+KHN0cnVjdCBkbXVfbWFwX2RhdGEgKmRhdGEsIGRldl90IGRldikKewoJZGF0YS0+Y29weV9zcmNf
+ZGV2ID0gZGV2OwoJZG11X3NldF9mbGFnKCZkYXRhLT5mbGFncywgRE1VX0ZMQUdfQ09QWV9GSVJT
+VCk7Cn0KCnZvaWQgZG11X21hcF9zZXRfd3JpdGFibGUoc3RydWN0IGRtdV9tYXBfZGF0YSAqZGF0
+YSwgaW50IHdyaXRhYmxlKQp7CglpZiAod3JpdGFibGUpCgkJZG11X3NldF9mbGFnKCZkYXRhLT5m
+bGFncywgRE1VX0ZMQUdfV1IpOwoJZWxzZQoJCWRtdV9jbHJfZmxhZygmZGF0YS0+ZmxhZ3MsIERN
+VV9GTEFHX1dSKTsKfQoKaW50IGRtdV9tYXBfaXNfd3JpdGUoc3RydWN0IGRtdV9tYXBfZGF0YSAq
+ZGF0YSkKewoJcmV0dXJuIGRtdV9nZXRfZmxhZygmZGF0YS0+ZmxhZ3MsIERNVV9GTEFHX1dSKTsK
+fQoKdm9pZCBkbXVfbWFwX3NldF9zeW5jKHN0cnVjdCBkbXVfbWFwX2RhdGEgKmRhdGEpCnsKCWRt
+dV9zZXRfZmxhZygmZGF0YS0+ZmxhZ3MsIERNVV9GTEFHX1NZTkMpOwp9CgovKgogKiBHZXQgdGhl
+IG1ham9yL21pbm9yIG9mIHRoZSBjaGFyYWN0ZXIgY29udHJvbCBkZXZpY2UgdGhhdCBAZG1fZGV2
+aWNlCiAqIGhhcyBleHBvcnRlZCBmb3IgdXMuICBXZSBkbyB0aGlzIGJ5IGxvb2tpbmcgYXQgdGhl
+IGRldmljZSBzdGF0dXMKICogc3RyaW5nLgogKi8Kc3RhdGljIGludCBnZXRfZG1fY29udHJvbF9k
+ZXYoY2hhciAqZG1fZGV2aWNlLAoJCQkgICAgICAgdW5zaWduZWQgKm1haiwgdW5zaWduZWQgKm1p
+bikKewoJc3RydWN0IGRtX3Rhc2sgKnRhc2s7CglpbnQgcmV0OwoJdm9pZCAqbmV4dCA9IE5VTEw7
+Cgl1aW50NjRfdCBzdGFydCwgbGVuZ3RoOwoJY2hhciAqdHR5cGUgPSBOVUxMLCAqcGFyYW1zID0g
+TlVMTDsKCgl0YXNrID0gZG1fdGFza19jcmVhdGUoRE1fREVWSUNFX1NUQVRVUyk7CgoJcmV0ID0g
+ZG1fdGFza19zZXRfbmFtZSh0YXNrLCBkbV9kZXZpY2UpOwoJaWYgKCFyZXQpIHsKCQlEUFJJTlRG
+KCJGYWlsZWQgdG8gc2V0IGRldmljZS1tYXBwZXIgdGFyZ2V0IG5hbWVcbiIpOwoJCWRtX3Rhc2tf
+ZGVzdHJveSh0YXNrKTsKCQlyZXR1cm4gLTE7Cgl9CgoJcmV0ID0gZG1fdGFza19ydW4odGFzayk7
+CglpZiAoIXJldCkgewoJCURQUklOVEYoIkZhaWxlZCB0byBydW4gZGV2aWNlLW1hcHBlciB0YXNr
+XG4iKTsKCQlkbV90YXNrX2Rlc3Ryb3kodGFzayk7CgkJcmV0dXJuIC0xOwoJfQoKCXJldCA9IDA7
+CglkbyB7CgkJbmV4dCA9IGRtX2dldF9uZXh0X3RhcmdldCh0YXNrLCBuZXh0LCAmc3RhcnQsICZs
+ZW5ndGgsCgkJCQkJICAmdHR5cGUsICZwYXJhbXMpOwoKCQlpZiAoc3RyY21wKHR0eXBlLCAidXNl
+cnNwYWNlIikgPT0gMCkgewoJCQlyZXQgPSBzc2NhbmYocGFyYW1zLCAiJXg6JXgiLCBtYWosIG1p
+bik7CgkJCWlmIChyZXQgPT0gMikKCQkJCWJyZWFrOwoJCX0KCgl9IHdoaWxlIChuZXh0KTsKCgly
+ZXR1cm4gMDsKfQoKLyoKICogQ3JlYXRlIHRoZSBjaGFyYWN0ZXIgZGV2aWNlIG5vZGUgZm9yIG91
+ciBjb250cm9sIGNoYW5uZWwKICovCnN0YXRpYyBpbnQgbWFrZV9kZXZpY2Vfbm9kZSh1bnNpZ25l
+ZCBtYWpvciwgdW5zaWduZWQgbWlub3IpCnsKCWNoYXIgcGF0aFsyNTZdOwoKCXNwcmludGYocGF0
+aCwgIi9kZXYvZG11JWkiLCBtaW5vcik7CgoJcmV0dXJuIG1rbm9kKHBhdGgsIFNfSUZDSFIsIG1h
+a2VkZXYobWFqb3IsIG1pbm9yKSk7Cn0KCnN0YXRpYyBjaGFyICpkbXVfZ2V0X2N0bF9kZXZpY2Uo
+Y2hhciAqZG1fZGV2aWNlKQp7Cgl1bnNpZ25lZCBjdGxfbWFqb3IsIGN0bF9taW5vcjsKCXN0YXRp
+YyBjaGFyIHBhdGhbMjU2XTsKCglpZiAoZ2V0X2RtX2NvbnRyb2xfZGV2KGRtX2RldmljZSwgJmN0
+bF9tYWpvciwgJmN0bF9taW5vcikgPCAwKQoJCXJldHVybiBOVUxMOwoKCWlmIChjdGxfbWFqb3Ig
+PT0gMCkgewoJCURQUklOVEYoIlVuYWJsZSB0byBnZXQgZGV2aWNlIG51bWJlclxuIik7CgkJcmV0
+dXJuIE5VTEw7Cgl9CgoJc3ByaW50ZihwYXRoLCAiL2Rldi9kbXUlaSIsIGN0bF9taW5vcik7CgoJ
+aWYgKGFjY2VzcyhwYXRoLCBSX09LIHwgV19PSykpIHsKCQlpZiAobWFrZV9kZXZpY2Vfbm9kZShj
+dGxfbWFqb3IsIGN0bF9taW5vcikpIHsKCQkJRFBSSU5URigiRmFpbGVkIHRvIGNyZWF0ZSBkZXZp
+Y2Ugbm9kZTogJXMiLAoJCQkJc3RyZXJyb3IoZXJybm8pKTsKCQkJcmV0dXJuIE5VTEw7CgkJfQoJ
+fQoKCXJldHVybiBwYXRoOwp9CgpzdGF0aWMgdWludDMyX3QgbWFrZV92ZXJzaW9uKGludCBtYWos
+IGludCBtaW4sIGludCBwYXRjaCkKewoJcmV0dXJuIDAgfCAobWFqIDw8IDE2KSB8IChtaW4gPDwg
+OCkgfCBwYXRjaDsKfQoKc3RhdGljIHZvaWQgZG11X3NwbGl0X2RldihkZXZfdCBkZXYsIHVpbnQz
+Ml90ICptYWosIHVpbnQzMl90ICptaW4pCnsKCSptYWogPSAoZGV2ICYgMHhGRjAwKSA+PiA4OwoJ
+Km1pbiA9IChkZXYgJiAweDAwRkYpOwp9CgovKiBRdWV1ZSBhIG1lc3NhZ2UgZm9yIHNlbmRpbmcg
+Ki8Kc3RhdGljIGludCBkbXVfY3RsX3F1ZXVlX21zZyhzdHJ1Y3QgZG11X2NvbnRleHQgKmN0eCwg
+aW50IHR5cGUsIHZvaWQgKm1zZ2J1ZikKewoJc3RydWN0IGRtdV9tc2cgKm1zZzsKCglpZiAoKGN0
+eC0+b3V0X3B0ciArIHNpemVvZigqbXNnKSkgPiBjdHgtPmJ1Zl9zaXplKSB7CgkJcHJpbnRmKCJP
+dXQgb2YgYnVmZmVyIHNwYWNlIGZvciBzZW5kXG4iKTsKCQlyZXR1cm4gMDsgLyogTm8gcm9vbSBm
+b3IgdGhpcyAqLwoJfQoKCW1zZyA9IChzdHJ1Y3QgZG11X21zZyAqKShjdHgtPm91dF9idWYgKyBj
+dHgtPm91dF9wdHIpOwoKCW1zZy0+aGRyLm1zZ190eXBlID0gdHlwZTsKCW1zZy0+aGRyLmlkID0g
+Y3R4LT5pZF9jdHIrKzsKCgltZW1jcHkoJm1zZy0+cGF5bG9hZCwgbXNnYnVmLCBzaXplb2YobXNn
+LT5wYXlsb2FkKSk7CgljdHgtPm91dF9wdHIgKz0gc2l6ZW9mKCptc2cpOwoKCXJldHVybiAxOwp9
+CgppbnQgZG11X3N5bmNfY29tcGxldGUoc3RydWN0IGRtdV9jb250ZXh0ICpjdHgsIHVpbnQ2NF90
+IGlkKQp7CglzdHJ1Y3QgZG11X21zZ19zdGF0dXMgc3RhdHVzX21zZzsKCglzdGF0dXNfbXNnLmlk
+X29mX29wID0gaWQ7CglzdGF0dXNfbXNnLnN0YXR1cyA9IERNX1VTRVJTUEFDRV9TWU5DX0NPTVBM
+RVRFOwoKCURQUklOVEYoIlF1ZXVpbmcgbWV0YWRhdGEgd3JpdHRlbiBmb3IgaWQgJWxsdVxuIiwg
+aWQpOwoKCXJldHVybiBkbXVfY3RsX3F1ZXVlX21zZyhjdHgsIERNX1VTRVJTUEFDRV9TVEFUVVMs
+CgkJCQkgJnN0YXR1c19tc2cpOwp9CgpzdGF0aWMgaW50IGRtdV9jdGxfcGVla19xdWV1ZShzdHJ1
+Y3QgZG11X2NvbnRleHQgKmN0eCwKCQkJICAgICAgaW50ICp0eXBlLCB2b2lkICoqbXNnX2J1ZikK
+ewoJc3RydWN0IGRtdV9tc2cgKm1zZzsKCglpZiAoY3R4LT5pbl9wdHIgPCBzaXplb2YoKm1zZykp
+CgkJcmV0dXJuIDA7CgoJbXNnID0gKHN0cnVjdCBkbXVfbXNnICopY3R4LT5pbl9idWY7CgoJKnR5
+cGUgPSBtc2ctPmhkci5tc2dfdHlwZTsKCSptc2dfYnVmID0gJm1zZy0+cGF5bG9hZDsKCglyZXR1
+cm4gMTsKfQoKLyogRmx1c2ggcXVldWUgb2YgbWVzc2FnZXMgdG8gdGhlIGtlcm5lbCAqLwppbnQg
+ZG11X2N0bF9zZW5kX3F1ZXVlKHN0cnVjdCBkbXVfY29udGV4dCAqY3R4KQp7CglpbnQgcjsKCglE
+UFJJTlRGKCJGbHVzaGluZyBvdXRnb2luZyBxdWV1ZVxuIik7CgoJciA9IHdyaXRlKGN0eC0+ZmQs
+IGN0eC0+b3V0X2J1ZiwgY3R4LT5vdXRfcHRyKTsKCglpZiAociA9PSBjdHgtPm91dF9wdHIpCgkJ
+ciA9IDE7CgllbHNlCgkJciA9IDA7CgoJY3R4LT5vdXRfcHRyID0gMDsKCglEUFJJTlRGKCJGaW5p
+c2hlZCBmbHVzaGluZyBxdWV1ZVxuIik7CgoJcmV0dXJuIHI7Cn0KCi8qIEZpbGwgdGhlIHF1ZXVl
+IHdpdGggcmVxdWVzdHMgZnJvbSB0aGUga2VybmVsICovCnN0YXRpYyBpbnQgZG11X2N0bF9yZWN2
+X3F1ZXVlKHN0cnVjdCBkbXVfY29udGV4dCAqY3R4KQp7CglpbnQgcjsKCglyID0gcmVhZChjdHgt
+PmZkLCBjdHgtPmluX2J1ZiwgY3R4LT5idWZfc2l6ZSk7CgoJY3R4LT5pbl9wdHIgPSByOwoKCWlm
+IChyID49IDApCgkJciA9IDE7CgllbHNlCgkJciA9IDA7CgoJcmV0dXJuIHI7Cn0KCnN0cnVjdCBk
+bXVfY29udGV4dCAqZG11X2N0bF9vcGVuKGNoYXIgKmRldiwgaW50IGZsYWdzKQp7CglpbnQgZmQs
+IHIsIHR5cGUgPSAwOwoJc3RydWN0IGRtdV9tc2dfdmVyc2lvbiBtc2c7CglzdHJ1Y3QgZG11X21z
+Z192ZXJzaW9uICpyZXNwb25zZTsKCXN0cnVjdCBkbXVfY29udGV4dCAqY3R4ID0gTlVMTDsKCWNo
+YXIgKmN0bF9kZXY7CgkKCWN0bF9kZXYgPSBkbXVfZ2V0X2N0bF9kZXZpY2UoZGV2KTsKCWlmIChj
+dGxfZGV2ID09IE5VTEwpCgkJcmV0dXJuIE5VTEw7CgllbHNlIGlmIChhY2Nlc3MoY3RsX2Rldiwg
+Ul9PSyB8IFdfT0spKQoJCXJldHVybiBOVUxMOwoKCWZkID0gb3BlbihjdGxfZGV2LCBPX1JEV1Ig
+fCBmbGFncyk7CglpZiAoZmQgPCAwKQoJCWdvdG8gb3V0OwoKCWN0eCA9IGNhbGxvYyhzaXplb2Yo
+KmN0eCksIDEpOwoJaWYgKCFjdHgpCgkJZ290byBvdXQ7CgoJY3R4LT5pbl9idWYgPSBtYWxsb2Mo
+UVVFVUVfU0laRV9LQiA8PCAxMCk7CglpZiAoIWN0eC0+aW5fYnVmKQoJCWdvdG8gb3V0OwoJY3R4
+LT5vdXRfYnVmID0gbWFsbG9jKFFVRVVFX1NJWkVfS0IgPDwgMTApOwoJaWYgKCFjdHgtPm91dF9i
+dWYpCgkJZ290byBvdXQ7CgoJY3R4LT5mZCA9IGZkOwoJY3R4LT5pbl9wdHIgPSBjdHgtPm91dF9w
+dHIgPSAwOwoJY3R4LT5pZF9jdHIgPSAwOwoJY3R4LT5idWZfc2l6ZSA9IFFVRVVFX1NJWkVfS0Ig
+PDwgMTA7CgltZW1zZXQoJmN0eC0+ZXZlbnRzLCAwLCBzaXplb2YoY3R4LT5ldmVudHMpKTsKCW1l
+bXNldCgmY3R4LT5ldmVudF9kYXRhLCAwLCBzaXplb2YoY3R4LT5ldmVudF9kYXRhKSk7CgovLwlt
+c2cudXNlcnNwYWNlX3ZlciA9IG1ha2VfdmVyc2lvbigwLCAxLCAwKTsKCi8vCXIgPSBkbXVfY3Rs
+X3F1ZXVlX21zZyhjdHgsIERNX1VTRVJTUEFDRV9HRVRfVkVSU0lPTiwgJm1zZyk7Ci8vCWlmIChy
+IDwgMCkKLy8JCWdvdG8gb3V0OwovLwovLwlkbXVfY3RsX3NlbmRfcXVldWUoY3R4KTsKCi8vCS8q
+IEZJWE1FOiBIYWNrIHRvIHJlY3Ygb25seSBvbmUgbWVzc2FnZSAqLwovLwljdHgtPmJ1Zl9zaXpl
+ID0gc2l6ZW9mKHN0cnVjdCBkbXVfbXNnKSArIDE7Ci8vCWRtdV9jdGxfcmVjdl9xdWV1ZShjdHgp
+OwovLwljdHgtPmJ1Zl9zaXplID0gUVVFVUVfU0laRV9LQiA8PCAxMDsKLy8KLy8JciA9IGRtdV9j
+dGxfcGVla19xdWV1ZShjdHgsICZ0eXBlLCAodm9pZCoqKSZyZXNwb25zZSk7Ci8vCWlmIChyIDwg
+MCkKLy8JCWdvdG8gb3V0OwovLwovLwlpZiAodHlwZSAhPSBETV9VU0VSU1BBQ0VfR0VUX1ZFUlNJ
+T04pIHsKLy8JCURQUklOVEYoIkdvdCBub24tdmVyc2lvbiBwaW5nIGJhY2s6ICVpXG4iLCB0eXBl
+KTsKLy8JCWdvdG8gb3V0OwovLwl9Ci8vCi8vCWlmIChyZXNwb25zZS0+a2VybmVsX3ZlciAhPSBt
+c2cudXNlcnNwYWNlX3ZlcikgewovLwkJRFBSSU5URigiVmVyc2lvbiBtaXNtYXRjaDogJXggIT0g
+JXhcbiIsCi8vCQkJbXNnLnVzZXJzcGFjZV92ZXIsIHJlc3BvbnNlLT5rZXJuZWxfdmVyKTsKLy8J
+CWdvdG8gb3V0OwovLwl9IGVsc2UgewovLwkJRFBSSU5URigiVmVyc2lvbiBtYXRjaDogJXggPT0g
+JXhcbiIsCi8vCQkJbXNnLnVzZXJzcGFjZV92ZXIsIHJlc3BvbnNlLT5rZXJuZWxfdmVyKTsKLy8J
+fQoKCXJldHVybiBjdHg7Cgogb3V0OgoJaWYgKGN0eCAmJiBjdHgtPmluX2J1ZikKCQlmcmVlKGN0
+eC0+aW5fYnVmKTsKCglpZiAoY3R4ICYmIGN0eC0+b3V0X2J1ZikKCQlmcmVlKGN0eC0+b3V0X2J1
+Zik7CgoJaWYgKGN0eCkKCQlmcmVlKGN0eCk7CgoJcmV0dXJuIE5VTEw7Cn0KCmludCBkbXVfY3Rs
+X2Nsb3NlKHN0cnVjdCBkbXVfY29udGV4dCAqY3R4KQp7CglyZXR1cm4gY2xvc2UoY3R4LT5mZCk7
+Cn0KCnZvaWQgZG11X3JlZ2lzdGVyX3N0YXR1c19oYW5kbGVyKHN0cnVjdCBkbXVfY29udGV4dCAq
+Y3R4LAoJCQkJIHN0YXR1c19oYW5kbGVyIGhhbmRsZXIsCgkJCQkgdm9pZCAqZGF0YSkKewoJY3R4
+LT5ldmVudHMuc3RhdHVzX2ZuID0gaGFuZGxlcjsKCWN0eC0+ZXZlbnRfZGF0YS5zdGF0dXNfdXNl
+cl9kYXRhID0gZGF0YTsKfQoKdm9pZCBkbXVfcmVnaXN0ZXJfbWFwX2hhbmRsZXIoc3RydWN0IGRt
+dV9jb250ZXh0ICpjdHgsCgkJCSAgICAgIG1hcF9yZXFfaGFuZGxlciBoYW5kbGVyLAoJCQkgICAg
+ICB2b2lkICpkYXRhKQp7CgljdHgtPmV2ZW50cy5tYXBfZm4gPSBoYW5kbGVyOwoJY3R4LT5ldmVu
+dF9kYXRhLm1hcF91c2VyX2RhdGEgPSBkYXRhOwp9CgppbnQgZG11X2V2ZW50c19wZW5kaW5nKHN0
+cnVjdCBkbXVfY29udGV4dCAqY3R4LCB1bnNpZ25lZCBpbnQgbXNlYykKewoJZmRfc2V0IGZkczsK
+CXN0cnVjdCB0aW1ldmFsIHR2OwoKCUZEX1pFUk8oJmZkcyk7CglGRF9TRVQoY3R4LT5mZCwgJmZk
+cyk7CgoJdHYudHZfc2VjID0gbXNlYyAvIDEwMDA7Cgl0di50dl91c2VjID0gKG1zZWMgJSAxMDAw
+KSAqIDEwMDA7CgoJaWYgKHNlbGVjdChjdHgtPmZkICsgMSwgJmZkcywgTlVMTCwgTlVMTCwgJnR2
+KSA8IDApCgkJcmV0dXJuIDA7CgoJaWYgKEZEX0lTU0VUKGN0eC0+ZmQsICZmZHMpKQoJCXJldHVy
+biAxOwoJZWxzZQoJCXJldHVybiAwOwp9CgpzdGF0aWMgaW50IGZpcmVfbWFwX3JlcV9ldmVudChz
+dHJ1Y3QgZG11X2NvbnRleHQgKmN0eCwKCQkJICAgICAgc3RydWN0IGRtdV9tc2dfbWFwX3JlcXVl
+c3QgKnJlcSwKCQkJICAgICAgdWludDMyX3QgaWQpCnsKCXN0cnVjdCBkbXVfbXNnX21hcF9yZXNw
+b25zZSByZXNwOwoJc3RydWN0IGRtdV9tYXBfZGF0YSBkYXRhOwoJaW50IHJldDsKCglpZiAoIWN0
+eC0+ZXZlbnRzLm1hcF9mbikKCQlyZXR1cm4gMTsKCglEUFJJTlRGKCJNYXAgZXZlbnQgZm9yICVs
+bHUgJWNcbiIsCgkJcmVxLT5vcmdfYmxvY2ssCgkJZG11X2dldF9mbGFnKCZyZXEtPmZsYWdzLCBE
+TVVfRkxBR19XUikgPyAnVyc6J1InKTsKCglkYXRhLmJsb2NrID0gcmVxLT5vcmdfYmxvY2s7Cglk
+YXRhLm9mZnNldCA9IDA7CglkYXRhLmlkID0gaWQ7CglkYXRhLmZsYWdzID0gcmVxLT5mbGFnczsK
+CWRhdGEuZGVzdF9kZXYgPSBkYXRhLmNvcHlfc3JjX2RldiA9IDA7CgoJZG11X2Nscl9mbGFnKCZk
+YXRhLmZsYWdzLCBETVVfRkxBR19DT1BZX0ZJUlNUKTsKCWRtdV9jbHJfZmxhZygmZGF0YS5mbGFn
+cywgRE1VX0ZMQUdfU1lOQyk7CgoJcmV0ID0gY3R4LT5ldmVudHMubWFwX2ZuKGN0eC0+ZXZlbnRf
+ZGF0YS5tYXBfdXNlcl9kYXRhLCAmZGF0YSk7CgoJcmVzcC5vcmdfYmxvY2sgPSByZXEtPm9yZ19i
+bG9jazsKCXJlc3AubmV3X2Jsb2NrID0gZGF0YS5ibG9jazsKCXJlc3Aub2Zmc2V0ID0gZGF0YS5v
+ZmZzZXQ7CglyZXNwLmZsYWdzID0gZGF0YS5mbGFnczsKCXJlc3AuaWRfb2ZfcmVxID0gZGF0YS5p
+ZDsKCglkbXVfc3BsaXRfZGV2KGRhdGEuY29weV9zcmNfZGV2LCAmcmVzcC5zcmNfbWFqLCAmcmVz
+cC5zcmNfbWluKTsKCWRtdV9zcGxpdF9kZXYoZGF0YS5kZXN0X2RldiwgJnJlc3AuZHN0X21haiwg
+JnJlc3AuZHN0X21pbik7CgoJRFBSSU5URigiTWFwcGVkICVsbHUgLT4gJWxsdVxuIiwgcmVzcC5v
+cmdfYmxvY2ssIHJlc3AubmV3X2Jsb2NrKTsKCglpZiAocmV0IDwgMCkKCQlkbXVfY3RsX3F1ZXVl
+X21zZyhjdHgsIERNX1VTRVJTUEFDRV9NQVBfRkFJTEVELCAmcmVzcCk7CgllbHNlCgkJZG11X2N0
+bF9xdWV1ZV9tc2coY3R4LCBETV9VU0VSU1BBQ0VfTUFQX0JMT0NLX1JFU1AsICZyZXNwKTsKCgly
+ZXR1cm4gcmV0Owp9CgpzdGF0aWMgaW50IGZpcmVfc3RhdHVzX2V2ZW50KHN0cnVjdCBkbXVfY29u
+dGV4dCAqY3R4LAoJCQkgICAgIHN0cnVjdCBkbXVfbXNnX3N0YXR1cyAqc3RhdHVzLAoJCQkgICAg
+IHVpbnQzMl90IGlkKQp7Cgl1aW50MzJfdCB1c2VyX2NvZGU7CgoJc3dpdGNoIChzdGF0dXMtPnN0
+YXR1cykgewoJY2FzZSBETV9VU0VSU1BBQ0VfU1lOQ19DT01QTEVURToKCQl1c2VyX2NvZGUgPSBE
+TVVfU1RBVFVTX1NZTkNfQ09NUExFVEU7CgkJYnJlYWs7CglkZWZhdWx0OgoJCXVzZXJfY29kZSA9
+IERNVV9TVEFUVVNfVU5LTk9XTjsKCX07CgoJaWYgKGN0eC0+ZXZlbnRzLnN0YXR1c19mbikKCQlj
+dHgtPmV2ZW50cy5zdGF0dXNfZm4oY3R4LT5ldmVudF9kYXRhLnN0YXR1c191c2VyX2RhdGEsCgkJ
+CQkgICAgICBzdGF0dXMtPmlkX29mX29wLCB1c2VyX2NvZGUpOwoKCXJldHVybiAwOwp9CgpzdGF0
+aWMgaW50IGRlY29kZV9tZXNzYWdlKHN0cnVjdCBkbXVfY29udGV4dCAqY3R4LCBpbnQgdHlwZSwg
+dWludDMyX3QgaWQsCgkJCSAgdWludDhfdCAqbXNnKQp7Cglzd2l0Y2ggKHR5cGUpIHsKCWNhc2Ug
+RE1fVVNFUlNQQUNFX01BUF9CTE9DS19SRVE6CgkJRFBSSU5URigiUmVxdWVzdCBldmVudDogJXVc
+biIsIGlkKTsKCQlyZXR1cm4gZmlyZV9tYXBfcmVxX2V2ZW50KGN0eCwKCQkJCQkgIChzdHJ1Y3Qg
+ZG11X21zZ19tYXBfcmVxdWVzdCAqKW1zZywKCQkJCQkgIGlkKTsKCWNhc2UgRE1fVVNFUlNQQUNF
+X1NUQVRVUzoKCQlEUFJJTlRGKCJTdGF0dXMgZXZlbnRcbiIpOwoJCXJldHVybiBmaXJlX3N0YXR1
+c19ldmVudChjdHgsCgkJCQkJIChzdHJ1Y3QgZG11X21zZ19zdGF0dXMgKiltc2csCgkJCQkJIGlk
+KTsKCWRlZmF1bHQ6CgkJcHJpbnRmKCJVbmtub3duIG1lc3NhZ2UgdHlwZTogJWlcbiIsIHR5cGUp
+OwoJCXJldHVybiAtMTsgLyogVW5rbm93biBtZXNzYWdlIHR5cGUgKi8KCX07Cn0KCmludCBkbXVf
+cHJvY2Vzc19ldmVudHMoc3RydWN0IGRtdV9jb250ZXh0ICpjdHgpCnsKCXN0cnVjdCBkbXVfbXNn
+ICptc2c7CglpbnQgcHRyID0gMCwgcmV0LCBkb19mbHVzaCA9IDA7CgoJaWYgKCFkbXVfY3RsX3Jl
+Y3ZfcXVldWUoY3R4KSkKCQlyZXR1cm4gLTE7IC8qIFJlY2VpdmUgZmFpbGVkICovCgoJRFBSSU5U
+RigiR290ICVpIGJ5dGVzXG4iLCBjdHgtPmluX3B0cik7CgoJcHRyID0gMDsKCXdoaWxlIChwdHIg
+PCBjdHgtPmluX3B0cikgewoJCW1zZyA9IChzdHJ1Y3QgZG11X21zZyAqKSZjdHgtPmluX2J1Zltw
+dHJdOwoJCXB0ciArPSBzaXplb2YoKm1zZyk7CgoJCXJldCA9IGRlY29kZV9tZXNzYWdlKGN0eCwg
+bXNnLT5oZHIubXNnX3R5cGUsIG1zZy0+aGRyLmlkLAoJCQkJICAgICAodWludDhfdCAqKSZtc2ct
+PnBheWxvYWQpOwoJCWlmIChyZXQgPiAwKQoJCQlkb19mbHVzaCA9IDE7Cgl9OwoKCWN0eC0+aW5f
+cHRyID0gMDsKCglpZiAoZG9fZmx1c2gpIHsKCQlEUFJJTlRGKCJGbHVzaGluZyBvdXRnb2luZyBt
+ZXNzYWdlIHF1ZXVlIGFzIHJlcXVlc3RlZFxuIik7CgkJZG11X2N0bF9zZW5kX3F1ZXVlKGN0eCk7
+Cgl9CgoJcmV0dXJuIDE7Cn0KCg==
+--=-=-=
+Content-Type: application/octet-stream
+Content-Disposition: attachment; filename=dmu.h
+
+#ifndef __DMU_H
+#define __DMU_H
+
+#include <stdint.h>
+
+/**************
+ * dm-userspace
+ **************/
+
+enum {
+        DMU_STATUS_UNKNOWN = 0,
+        DMU_STATUS_BLOCK_FLUSHED,
+        DMU_STATUS_INVAL_COMPLETE,
+        DMU_STATUS_INVAL_FAILED,
+        DMU_STATUS_SYNC_COMPLETE
+};
+
+struct dmu_context;
+struct dmu_map_data;
+
+typedef int (*status_handler)(void *data, uint64_t id, uint32_t status);
+typedef int (*map_req_handler)(void *data, struct dmu_map_data *map_data);
+
+/* High-level control operations */
+struct dmu_context *dmu_ctl_open(char *dev, int flags);
+int dmu_ctl_close(struct dmu_context *ctx);
+int dmu_ctl_send_queue(struct dmu_context *ctx);
+void dmu_register_status_handler(struct dmu_context *ctx,
+                                 status_handler handler,
+                                 void *data);
+void dmu_register_map_handler(struct dmu_context *ctx,
+                              map_req_handler handler,
+                              void *data);
+int dmu_invalidate_block(struct dmu_context *ctx, uint64_t block);
+int dmu_sync_complete(struct dmu_context *ctx, uint64_t id);
+int dmu_events_pending(struct dmu_context *ctx, unsigned int msec);
+int dmu_process_events(struct dmu_context *ctx);
+
+/* Map manipulation functions */
+void dmu_map_set_block(struct dmu_map_data *data, uint64_t block);
+uint64_t dmu_map_get_block(struct dmu_map_data *data);
+void dmu_map_set_offset(struct dmu_map_data *data, int64_t offset);
+uint32_t dmu_map_get_id(struct dmu_map_data *data);
+void dmu_map_set_dest_dev(struct dmu_map_data *data, dev_t dev);
+void dmu_map_set_copy_src_dev(struct dmu_map_data *data, dev_t dev);
+void dmu_map_set_writable(struct dmu_map_data *data, int writable);
+int dmu_map_is_write(struct dmu_map_data *data);
+void dmu_map_set_sync(struct dmu_map_data *data);
+
+#endif
+
+--=-=-=--
+
+--==-=-=
 Content-Type: application/pgp-signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-iD8DBQFFDrLFwtEf7b4GJVQRAsCzAJ9agPFn/TjZoCaY4Vd9e7kxZGVHQwCeOjWV
-2ZuXdmun4+MgoafOF7ruA8s=
-=pGJb
+iD8DBQFFDrLewtEf7b4GJVQRAnbhAJ9SxaNtBRy7At0BNRmJfTDgOs4PvwCfXUa2
+P2MfkleEVfzTgsdQKN9anMA=
+=337L
 -----END PGP SIGNATURE-----
---=-=-=--
+--==-=-=--
 
 
---===============1203991768==
+--===============0519665026==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1203991768==--
+--===============0519665026==--
