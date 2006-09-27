@@ -1,18 +1,15 @@
-From: Jan Blunck <j.blunck@tu-harburg.de>
-Subject: Re: dm-snapshot scalability - chained delta snapshots
-	approach
-Date: Wed, 27 Sep 2006 11:17:00 +0200
-Message-ID: <20060927091700.GA6314@X40.redhat.com>
-References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
-	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
-	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
-Reply-To: jblunck@suse.de,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: The MoonSeeker <themoonseeker@gmail.com>
+Subject: Re: Problem when creating snashots
+Date: Wed, 27 Sep 2006 11:51:43 +0200
+Message-ID: <A544D1D7-C0A0-4EAB-8806-1A77B8453B56@gmail.com>
+References: <77299A0E-4C81-4820-97BF-FB15B1A96FD6@gmail.com>
+	<20060926211407.GA2915@hasse.suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v752.2)
+Content-Type: text/plain; charset=ISO-8859-1; delsp=yes; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <451A5915.F25D.00B6.0@novell.com>
+In-Reply-To: <20060926211407.GA2915@hasse.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,43 +22,48 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Sep 26, Haripriya S wrote:
+Yes I really need it. I have to create a virtual network editor for =20
+my diploma project. So I have found many virtual solutions but the =20
+bestest for our project is OpenVZ. Unfortunatly, OpenVZ don't offer =20
+the copy on write with his solution, after many tests, I have found a =20
+solution based on LVM.
 
-> I had previously put out some performance numbers for origin writes
-> where performance goes down drastically w.r.t. the number of snapshots.
-> Going further, we identified one of the reasons for the performance drop
-> with increase in number of snapshots as the COW copies that happen to
-> every snapshot COW device when an origin write happens.
+The main idea is to have a Virtual Private Server Core and lot of =20
+Virtual Private Server who are a snapshot of the Virtual Server Core. =20
+Now the problem is the limitation of VLM, I need more than 32 servers =20
+(32 snapshots). Will this limitation incresed in futur futur released =20
+of LVM? Or can we broke this limitation?
 
-Thanks a lot for your work in this area of the device-mapper. Your performance
-numbers show that work is really necessary here.
+Have you a solution, it's relly urgent for me...
 
-> We have currently experimented with dm-snapshot code with two different
-> approaches and have got good performance numbers. I describe the first
-> approach and the results here and appreciate your opinions and inputs on
-> this.
-> 
-> Approach 1 - Chained delta snapshots
+Thanks you
 
-This means that every snapshot still has its own exception store. This would
-make deletion of snapshots unnecessary complex. It moves the work (copying of
-chunks) to the deletion of the snapshot.
 
-We discussed some of the ideas about snapshots here at the dm summit. The
-general ideas are as follows:
+Le 26 sept. 06 =E0 23:14, Jan Blunck a =E9crit :
 
-- one exception store per origin device that is shared by all snapshots
-- don't keep the complete exception tables in memory all the time
-- limit kcopyd outstanding requests
-
-This would address the two biggest problems that I see with the snapshot
-target. The throughput issues should be addressed by only writing to one
-exception store. The memory issues should be addressed by the changes to the
-exception table handling. Although that includes a complete redesign of the
-exception store code.
-
-There are still ongoing discussions about the snapshot target. It would be
-nice if you have additional thoughts about this proposal. I guess it is
-similar to one of your prototypes.
-
-Jan
+> On Tue, Sep 26, The MoonSeeker wrote:
+>
+>> I'd like to create many snaphot of an image but I've got when I
+>> attemp to create the 32th snapshot :
+>>
+>> root@B03:/diplome# lvcreate -s -L150M -n 232 /dev/openvz/vps-core
+>>   Rounding up size to full physical extent 152.00 MB
+>>   device-mapper: reload ioctl failed: Ne peut allouer de la m=E9moire
+>>   Failed to suspend origin vps-core
+>>
+>> I don't understand the error..
+>
+> I'm not a native french speaker (hint!) but I assume you run out of
+> memory.
+>
+> Yes there are limitations to the number of snapshots. For every single
+> snapshot we have to allocate memory for copying the chunks to the =20
+> exception
+> store.
+>
+> Do you really need that many snapshots at the same time?
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
