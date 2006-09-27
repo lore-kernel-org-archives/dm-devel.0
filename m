@@ -1,11 +1,12 @@
-From: Butler <tears.the@gmail.com>
-Subject: Help! multipath of iscsi device doesn't work!
-Date: Tue, 26 Sep 2006 14:50:22 +0800
-Message-ID: <607ab8450609252350q2911cbeby9dadbf36dbdd654a@mail.gmail.com>
+From: "Herr, Manuel" <mher@msc-ge.com>
+Subject: Avoid Error Messages in /var/log/messages EMC CX300
+Date: Wed, 27 Sep 2006 12:26:56 +0200
+Message-ID: <C514D40EFDB5C84083DAEB84A1186A8F266AEB@msc-ex02.msc-ge.mscnet>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1665119321=="
+Content-Type: multipart/mixed; boundary="===============0711449156=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,275 +19,375 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1665119321==
+This is a multi-part message in MIME format.
+
+--===============0711449156==
+Content-class: urn:content-classes:message
 Content-Type: multipart/alternative;
-	boundary="----=_Part_457_2964960.1159253422805"
+	boundary="----_=_NextPart_001_01C6E21F.7554D82F"
 
-------=_Part_457_2964960.1159253422805
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+This is a multi-part message in MIME format.
 
-Dear all,
+------_=_NextPart_001_01C6E21F.7554D82F
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-I tried to use dm-multipath to access a iscsi-target (IET) with open-iscsi.
-However, I have no luck to make it work.
+Hi there,
+i get Error Messages in my logfiles when I boot the System and then, =
+approx. every 10 Minutes, or during an hwinfo.
+The Server is connected to an EMC CX 300 through 1 Qlogic HBA.
+The Messages only appear for the failover Device. In my Example for =
+/dev/sdh.=20
 
-I connect to the same target with 2 NIC and connect with open-iscsi as 2
-devices (/dev/sdb & /dev/sdc).
+#multipath -ld
+sapdata (36006016040321900600487993216db11)
+[size=3D133 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"1 emc"]
+\_ round-robin 0 [active]
+ \_ 3:0:1:6 sdp 8:240 [active][ready]
+\_ round-robin 0 [enabled]
+ \_ 3:0:0:6 sdh 8:112 [active][ready]
+*snip*
 
-$ /sbin/scsi_id -g -u -s /block/sda
-1ATA_____ST3120813AS_________________________________________3LS09TWT
-$ /sbin/scsi_id -g -u -s /block/sdb
-14945540000000000325f3000000000000000000000000000
-$/sbin/scsi_id -g -u -s /block/sdc
-14945540000000000325f3000000000000000000000000000
+#fdisk -l /dev/sdp
+Disk /dev/sdp: 143.0 GB, 143034155008 bytes
+255 heads, 63 sectors/track, 17389 cylinders
+Units =3D cylinders of 16065 * 512 =3D 8225280 bytes
 
-where sda is internal SATA disk,
-sdb & sdc are iscsi devices of the same target thru 2 NIC.
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sdp1               1       17389   139677111   83  Linux
 
-When I start multpathd, I found the following error message :
-   Sep 25 17:03:34 liverpool multipathd: error calling out /sbin/scsi_id -g
--u -s /block/sdb
-
-Then I tried to use "multipath -v2"  but nothing happen.
-
-Please help! Thanks a lot!
-
-open-iscsi version : v1.1-619
-linux : 2.6.17-1.2142_FC4smp
-
-
-Full log message:
-
-Sep 25 16:39:31 liverpool kernel: device-mapper: dm-multipath version
-1.0.4loaded
-Sep 25 16:39:43 liverpool kernel: device-mapper: dm-round-robin version
-1.0.0 loaded
-
-Sep 25 17:01:23 liverpool kernel: scsi8 : iSCSI Initiator over TCP/IP,
-v1.1-619
-Sep 25 17:01:24 liverpool kernel:   Vendor: IET       Model:
-VIRTUAL-DISK      Rev: 0
-Sep 25 17:01:24 liverpool kernel:   Type:
-Direct-Access                      ANSI SCSI revision: 04
-Sep 25 17:01:24 liverpool kernel: SCSI device sdb: 12582912 512-byte hdwr
-sectors (6442 MB)
-Sep 25 17:01:24 liverpool kernel: sdb: Write Protect is off
-Sep 25 17:01:24 liverpool kernel: SCSI device sdb: drive cache: write back
-Sep 25 17:01:24 liverpool kernel: SCSI device sdb: 12582912 512-byte hdwr
-sectors (6442 MB)
-Sep 25 17:01:24 liverpool kernel: sdb: Write Protect is off
-Sep 25 17:01:24 liverpool kernel: SCSI device sdb: drive cache: write back
-Sep 25 17:01:24 liverpool kernel:  sdb: sdb1
-Sep 25 17:01:24 liverpool kernel: sd 8:0:0:0: Attached scsi disk sdb
-Sep 25 17:01:24 liverpool iscsid: connection4:0 is operational now
-Sep 25 17:01:24 liverpool scsi.agent[4618]: disk at
-/devices/platform/host8/session4/target8:0:0/8:0:0:0
-Sep 25 17:01:31 liverpool kernel: scsi9 : iSCSI Initiator over TCP/IP,
-v1.1-619
-Sep 25 17:01:32 liverpool iscsid: picking unique OUI for the same target
-node name iqn.2006-09.com.myhost:storage.vg2-sn-abcde
-Sep 25 17:01:32 liverpool kernel:   Vendor: IET       Model:
-VIRTUAL-DISK      Rev: 0
-Sep 25 17:01:32 liverpool kernel:   Type:
-Direct-Access                      ANSI SCSI revision: 04
-Sep 25 17:01:32 liverpool kernel: SCSI device sdc: 12582912 512-byte hdwr
-sectors (6442 MB)
-Sep 25 17:01:32 liverpool kernel: sdc: Write Protect is off
-Sep 25 17:01:32 liverpool kernel: SCSI device sdc: drive cache: write back
-Sep 25 17:01:32 liverpool kernel: SCSI device sdc: 12582912 512-byte hdwr
-sectors (6442 MB)
-Sep 25 17:01:32 liverpool kernel: sdc: Write Protect is off
-Sep 25 17:01:32 liverpool kernel: SCSI device sdc: drive cache: write back
-Sep 25 17:01:32 liverpool kernel:  sdc: sdc1
-Sep 25 17:01:32 liverpool kernel: sd 9:0:0:0: Attached scsi disk sdc
-Sep 25 17:01:33 liverpool scsi.agent[4693]: disk at
-/devices/platform/host9/session5/target9:0:0/9:0:0:0
-Sep 25 17:01:33 liverpool iscsid: connection5:0 is operational now
-
-Sep 25 17:03:34 liverpool multipathd: --------start up--------
-Sep 25 17:03:34 liverpool multipathd: read /etc/multipath.conf
-Sep 25 17:03:34 liverpool multipathd: ramfs maxsize is 100706
-Sep 25 17:03:34 liverpool multipathd: start DM events thread
-Sep 25 17:03:34 liverpool multipathd: initial reconfigure multipath maps
-Sep 25 17:03:34 liverpool multipathd: path checkers start up
-Sep 25 17:03:34 liverpool multipathd: refresh devmaps list
-Sep 25 17:03:34 liverpool multipathd: refresh paths list
-Sep 25 17:03:34 liverpool multipathd: dm-0 blacklisted
-Sep 25 17:03:34 liverpool multipathd: fd0 blacklisted
-Sep 25 17:03:34 liverpool multipathd: path hda not found in pathvec
-Sep 25 17:03:34 liverpool multipathd: ===== path hda =====
-Sep 25 17:03:34 liverpool multipathd: md0 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram0 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram10 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram11 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram12 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram13 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram14 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram15 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram1 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram2 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram3 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram4 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram5 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram6 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram7 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram8 blacklisted
-Sep 25 17:03:34 liverpool multipathd: ram9 blacklisted
-Sep 25 17:03:34 liverpool multipathd: path sda not found in pathvec
-Sep 25 17:03:34 liverpool multipathd: ===== path sda =====
-Sep 25 17:03:34 liverpool multipathd: vendor = ATA
-Sep 25 17:03:34 liverpool multipathd: product = ST3120813AS
-Sep 25 17:03:34 liverpool multipathd: rev = 2AAA
-Sep 25 17:03:34 liverpool multipathd: dev_t = 8:0
-Sep 25 17:03:34 liverpool multipathd: size = 234441648
-Sep 25 17:03:34 liverpool multipathd: h:b:t:l = 1:0:0:0
-Sep 25 17:03:34 liverpool multipathd: tgt_node_name =
-Sep 25 17:03:34 liverpool multipathd: serial =             3LS09TWT
-Sep 25 17:03:34 liverpool multipathd: path checker = readsector0 (internal
-default)
-Sep 25 17:03:34 liverpool multipathd: state = 2
-Sep 25 17:03:34 liverpool multipathd: getprio = (null) (internal default)
-Sep 25 17:03:34 liverpool multipathd: prio = 1
-Sep 25 17:03:34 liverpool multipathd: getuid = /sbin/scsi_id -g -u -s
-/block/%n (internal default)
-Sep 25 17:03:34 liverpool multipathd: error calling out /sbin/scsi_id -g -u
--s /block/sda
-Sep 25 17:03:34 liverpool multipathd: uid =  (callout)
-Sep 25 17:03:34 liverpool multipathd: path sdb not found in pathvec
-Sep 25 17:03:34 liverpool multipathd: ===== path sdb =====
-Sep 25 17:03:34 liverpool multipathd: vendor = IET
-Sep 25 17:03:34 liverpool multipathd: product = VIRTUAL-DISK
-Sep 25 17:03:34 liverpool multipathd: rev = 0
-Sep 25 17:03:34 liverpool multipathd: dev_t = 8:16
-Sep 25 17:03:34 liverpool multipathd: size = 12582912
-Sep 25 17:03:34 liverpool multipathd: h:b:t:l = 8:0:0:0
-Sep 25 17:03:34 liverpool multipathd: tgt_node_name =
-Sep 25 17:03:34 liverpool multipathd: serial =
-Sep 25 17:03:34 liverpool multipathd: path checker = readsector0 (internal
-default)
-Sep 25 17:03:34 liverpool multipathd: state = 2
-Sep 25 17:03:34 liverpool multipathd: getprio = (null) (internal default)
-Sep 25 17:03:34 liverpool multipathd: prio = 1
-Sep 25 17:03:34 liverpool multipathd: getuid = /sbin/scsi_id -g -u -s
-/block/%n (internal default)
-Sep 25 17:03:34 liverpool multipathd: error calling out /sbin/scsi_id -g -u
--s /block/sdb
-Sep 25 17:03:34 liverpool multipathd: uid =  (callout)
-Sep 25 17:03:34 liverpool multipathd: path sdc not found in pathvec
-Sep 25 17:03:34 liverpool multipathd: ===== path sdc =====
-Sep 25 17:03:34 liverpool multipathd: vendor = IET
-Sep 25 17:03:34 liverpool multipathd: product = VIRTUAL-DISK
-Sep 25 17:03:34 liverpool multipathd: rev = 0
-Sep 25 17:03:34 liverpool multipathd: dev_t = 8:32
-Sep 25 17:03:34 liverpool multipathd: size = 12582912
-Sep 25 17:03:35 liverpool multipathd: h:b:t:l = 9:0:0:0
-Sep 25 17:03:35 liverpool multipathd: tgt_node_name =
-Sep 25 17:03:35 liverpool multipathd: state = 2
-Sep 25 17:03:35 liverpool multipathd: prio = 1
-Sep 25 17:03:44 liverpool multipathd: ===== path hda =====
-Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal
-default)
-Sep 25 17:03:44 liverpool multipathd: : no usable fd
-Sep 25 17:03:44 liverpool multipathd: reconfigure  multipath
-Sep 25 17:03:44 liverpool multipathd: refresh devmaps list
-Sep 25 17:03:44 liverpool multipathd: refresh paths list
-Sep 25 17:03:44 liverpool multipathd: dm-0 blacklisted
-Sep 25 17:03:44 liverpool multipathd: fd0 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ===== path hda =====
-Sep 25 17:03:44 liverpool multipathd: md0 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram0 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram10 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram11 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram12 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram13 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram14 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram15 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram1 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram2 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram3 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram4 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram5 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram6 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram7 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram8 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ram9 blacklisted
-Sep 25 17:03:44 liverpool multipathd: ===== path sda =====
-Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal
-default)
-Sep 25 17:03:44 liverpool multipathd: ===== path sdb =====
-Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal
-default)
-Sep 25 17:03:44 liverpool multipathd: ===== path sdc =====
-Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal
-default)
-Sep 25 17:03:44 liverpool multipathd: start up event loops
-Sep 25 17:03:44 liverpool multipathd: 0 pending event(s)
-
--- 
-Butler
-
-------=_Part_457_2964960.1159253422805
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-<div>Dear all,<br><br>I tried to use dm-multipath to access a iscsi-target (IET) with open-iscsi. However, I have no luck to make it work.<br><br>I connect to the same target with 2 NIC and connect with open-iscsi as 2 devices (/dev/sdb &amp; /dev/sdc). 
-<br><br><font face="courier new,monospace">$ /sbin/scsi_id -g -u -s /block/sda<br>1ATA_____ST3120813AS_________________________________________3LS09TWT<br></font><span style="FONT-FAMILY: courier new,monospace"><font face="courier new,monospace">
-$</font> /sbin/scsi_id -g -u -s /block/sdb</span><br style="FONT-FAMILY: courier new,monospace"><span style="FONT-FAMILY: courier new,monospace">14945540000000000325f3000000000000000000000000000</span><br style="FONT-FAMILY: courier new,monospace">
-<span style="FONT-FAMILY: courier new,monospace">$/sbin/scsi_id -g -u -s /block/sdc</span><br style="FONT-FAMILY: courier new,monospace"><span style="FONT-FAMILY: courier new,monospace">14945540000000000325f3000000000000000000000000000
-</span><br style="FONT-FAMILY: courier new,monospace"><br>where sda is internal SATA disk, </div>
-<div>sdb &amp; sdc are iscsi devices of the same target&nbsp;thru 2 NIC.<br><br>When I start multpathd, I found the following error message : <br><span style="FONT-FAMILY: courier new,monospace">&nbsp;&nbsp; Sep 25 17:03:34 liverpool multipathd: error calling out /sbin/scsi_id -g -u -s /block/sdb
-</span><br><br>Then I tried to use &quot;multipath -v2&quot;&nbsp; but nothing happen. <br><br>Please help! Thanks a lot!<br><br>open-iscsi version : <span style="FONT-FAMILY: courier new,monospace">v1.1-619<br>linux : 2.6.17-1.2142_FC4smp
-<br></span><br><br>Full log message:<br><br><span style="FONT-FAMILY: courier new,monospace">Sep 25 16:39:31 liverpool kernel: device-mapper: dm-multipath version 1.0.4 loaded<br>Sep 25 16:39:43 liverpool kernel: device-mapper: dm-round-robin version 
-1.0.0 loaded<br><br>Sep 25 17:01:23 liverpool kernel: scsi8 : iSCSI Initiator over TCP/IP, v1.1-619<br>Sep 25 17:01:24 liverpool kernel:&nbsp;&nbsp; Vendor: IET&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Model: VIRTUAL-DISK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0<br>Sep 25 17:01:24 liverpool kernel:&nbsp;&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ANSI SCSI revision: 04
-<br>Sep 25 17:01:24 liverpool kernel: SCSI device sdb: 12582912 512-byte hdwr sectors (6442 MB) <br>Sep 25 17:01:24 liverpool kernel: sdb: Write Protect is off<br>Sep 25 17:01:24 liverpool kernel: SCSI device sdb: drive cache: write back
-<br>Sep 25 17:01:24 liverpool kernel: SCSI device sdb: 12582912 512-byte hdwr sectors (6442 MB) <br>Sep 25 17:01:24 liverpool kernel: sdb: Write Protect is off<br>Sep 25 17:01:24 liverpool kernel: SCSI device sdb: drive cache: write back
-<br>Sep 25 17:01:24 liverpool kernel:&nbsp; sdb: sdb1<br>Sep 25 17:01:24 liverpool kernel: sd 8:0:0:0: Attached scsi disk sdb <br>Sep 25 17:01:24 liverpool iscsid: connection4:0 is operational now<br>Sep 25 17:01:24 liverpool 
-scsi.agent[4618]: disk at /devices/platform/host8/session4/target8:0:0/8:0:0:0<br>Sep 25 17:01:31 liverpool kernel: scsi9 : iSCSI Initiator over TCP/IP, v1.1-619<br>Sep 25 17:01:32 liverpool iscsid: picking unique OUI for the same target node name 
-iqn.2006-09.com.myhost:storage.vg2-sn-abcde<br>Sep 25 17:01:32 liverpool kernel:&nbsp;&nbsp; Vendor: IET&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Model: VIRTUAL-DISK&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0 <br>Sep 25 17:01:32 liverpool kernel:&nbsp;&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ANSI SCSI revision: 04
-<br>Sep 25 17:01:32 liverpool kernel: SCSI device sdc: 12582912 512-byte hdwr sectors (6442 MB)<br>Sep 25 17:01:32 liverpool kernel: sdc: Write Protect is off <br>Sep 25 17:01:32 liverpool kernel: SCSI device sdc: drive cache: write back
-<br>Sep 25 17:01:32 liverpool kernel: SCSI device sdc: 12582912 512-byte hdwr sectors (6442 MB)<br>Sep 25 17:01:32 liverpool kernel: sdc: Write Protect is off <br>Sep 25 17:01:32 liverpool kernel: SCSI device sdc: drive cache: write back
-<br>Sep 25 17:01:32 liverpool kernel:&nbsp; sdc: sdc1<br>Sep 25 17:01:32 liverpool kernel: sd 9:0:0:0: Attached scsi disk sdc<br>Sep 25 17:01:33 liverpool scsi.agent[4693]: disk at /devices/platform/host9/session5/target9:0:0/9:0:0:0
-<br>Sep 25 17:01:33 liverpool iscsid: connection5:0 is operational now<br><br>Sep 25 17:03:34 liverpool multipathd: --------start up--------<br>Sep 25 17:03:34 liverpool multipathd: read /etc/multipath.conf<br>Sep 25 17:03:34 liverpool multipathd: ramfs maxsize is 100706
-<br>Sep 25 17:03:34 liverpool multipathd: start DM events thread<br>Sep 25 17:03:34 liverpool multipathd: initial reconfigure multipath maps <br>Sep 25 17:03:34 liverpool multipathd: path checkers start up<br>Sep 25 17:03:34 liverpool multipathd: refresh devmaps list
-<br>Sep 25 17:03:34 liverpool multipathd: refresh paths list<br>Sep 25 17:03:34 liverpool multipathd: dm-0 blacklisted <br>Sep 25 17:03:34 liverpool multipathd: fd0 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: path hda not found in pathvec
-<br>Sep 25 17:03:34 liverpool multipathd: ===== path hda =====<br>Sep 25 17:03:34 liverpool multipathd: md0 blacklisted <br>Sep 25 17:03:34 liverpool multipathd: ram0 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram10 blacklisted
-<br>Sep 25 17:03:34 liverpool multipathd: ram11 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram12 blacklisted <br>Sep 25 17:03:34 liverpool multipathd: ram13 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram14 blacklisted
-<br>Sep 25 17:03:34 liverpool multipathd: ram15 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram1 blacklisted <br>Sep 25 17:03:34 liverpool multipathd: ram2 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram3 blacklisted
-<br>Sep 25 17:03:34 liverpool multipathd: ram4 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram5 blacklisted <br>Sep 25 17:03:34 liverpool multipathd: ram6 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram7 blacklisted
-<br>Sep 25 17:03:34 liverpool multipathd: ram8 blacklisted<br>Sep 25 17:03:34 liverpool multipathd: ram9 blacklisted <br>Sep 25 17:03:34 liverpool multipathd: path sda not found in pathvec<br>Sep 25 17:03:34 liverpool multipathd: ===== path sda =====
-<br>Sep 25 17:03:34 liverpool multipathd: vendor = ATA<br>Sep 25 17:03:34 liverpool multipathd: product = ST3120813AS <br>Sep 25 17:03:34 liverpool multipathd: rev = 2AAA<br>Sep 25 17:03:34 liverpool multipathd: dev_t = 8:0
-<br>Sep 25 17:03:34 liverpool multipathd: size = 234441648<br>Sep 25 17:03:34 liverpool multipathd: h:b:t:l = 1:0:0:0 <br>Sep 25 17:03:34 liverpool multipathd: tgt_node_name =<br>Sep 25 17:03:34 liverpool multipathd: serial =&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3LS09TWT
-<br>Sep 25 17:03:34 liverpool multipathd: path checker = readsector0 (internal default)<br>Sep 25 17:03:34 liverpool multipathd: state = 2 <br>Sep 25 17:03:34 liverpool multipathd: getprio = (null) (internal default)<br>Sep 25 17:03:34 liverpool multipathd: prio = 1
-<br>Sep 25 17:03:34 liverpool multipathd: getuid = /sbin/scsi_id -g -u -s /block/%n (internal default) <br>Sep 25 17:03:34 liverpool multipathd: error calling out /sbin/scsi_id -g -u -s /block/sda<br>Sep 25 17:03:34 liverpool multipathd: uid =&nbsp; (callout)
-<br>Sep 25 17:03:34 liverpool multipathd: path sdb not found in pathvec <br>Sep 25 17:03:34 liverpool multipathd: ===== path sdb =====<br>Sep 25 17:03:34 liverpool multipathd: vendor = IET<br>Sep 25 17:03:34 liverpool multipathd: product = VIRTUAL-DISK
-<br>Sep 25 17:03:34 liverpool multipathd: rev = 0 <br>Sep 25 17:03:34 liverpool multipathd: dev_t = 8:16<br>Sep 25 17:03:34 liverpool multipathd: size = 12582912<br>Sep 25 17:03:34 liverpool multipathd: h:b:t:l = 8:0:0:0<br>
-Sep 25 17:03:34 liverpool multipathd: tgt_node_name = <br>Sep 25 17:03:34 liverpool multipathd: serial =<br>Sep 25 17:03:34 liverpool multipathd: path checker = readsector0 (internal default)<br>Sep 25 17:03:34 liverpool multipathd: state = 2
-<br>Sep 25 17:03:34 liverpool multipathd: getprio = (null) (internal default) <br>Sep 25 17:03:34 liverpool multipathd: prio = 1<br>Sep 25 17:03:34 liverpool multipathd: getuid = /sbin/scsi_id -g -u -s /block/%n (internal default)
-<br>Sep 25 17:03:34 liverpool multipathd: error calling out /sbin/scsi_id -g -u -s /block/sdb <br>Sep 25 17:03:34 liverpool multipathd: uid =&nbsp; (callout)<br>Sep 25 17:03:34 liverpool multipathd: path sdc not found in pathvec
-<br>Sep 25 17:03:34 liverpool multipathd: ===== path sdc =====<br>Sep 25 17:03:34 liverpool multipathd: vendor = IET <br>Sep 25 17:03:34 liverpool multipathd: product = VIRTUAL-DISK<br>Sep 25 17:03:34 liverpool multipathd: rev = 0
-<br>Sep 25 17:03:34 liverpool multipathd: dev_t = 8:32<br>Sep 25 17:03:34 liverpool multipathd: size = 12582912 <br>Sep 25 17:03:35 liverpool multipathd: h:b:t:l = 9:0:0:0<br>Sep 25 17:03:35 liverpool multipathd: tgt_node_name =
-<br>Sep 25 17:03:35 liverpool multipathd: state = 2<br>Sep 25 17:03:35 liverpool multipathd: prio = 1<br>Sep 25 17:03:44 liverpool multipathd: ===== path hda =====<br>Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal default)
-<br>Sep 25 17:03:44 liverpool multipathd: : no usable fd<br>Sep 25 17:03:44 liverpool multipathd: reconfigure&nbsp; multipath <br>Sep 25 17:03:44 liverpool multipathd: refresh devmaps list<br>Sep 25 17:03:44 liverpool multipathd: refresh paths list
-<br>Sep 25 17:03:44 liverpool multipathd: dm-0 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: fd0 blacklisted <br>Sep 25 17:03:44 liverpool multipathd: ===== path hda =====<br>Sep 25 17:03:44 liverpool multipathd: md0 blacklisted
-<br>Sep 25 17:03:44 liverpool multipathd: ram0 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram10 blacklisted <br>Sep 25 17:03:44 liverpool multipathd: ram11 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram12 blacklisted
-<br>Sep 25 17:03:44 liverpool multipathd: ram13 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram14 blacklisted <br>Sep 25 17:03:44 liverpool multipathd: ram15 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram1 blacklisted
-<br>Sep 25 17:03:44 liverpool multipathd: ram2 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram3 blacklisted <br>Sep 25 17:03:44 liverpool multipathd: ram4 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram5 blacklisted
-<br>Sep 25 17:03:44 liverpool multipathd: ram6 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram7 blacklisted <br>Sep 25 17:03:44 liverpool multipathd: ram8 blacklisted<br>Sep 25 17:03:44 liverpool multipathd: ram9 blacklisted
-<br>Sep 25 17:03:44 liverpool multipathd: ===== path sda =====<br>Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal default) <br>Sep 25 17:03:44 liverpool multipathd: ===== path sdb =====<br>Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal default)
-<br>Sep 25 17:03:44 liverpool multipathd: ===== path sdc =====<br>Sep 25 17:03:44 liverpool multipathd: path checker = readsector0 (internal default) <br>Sep 25 17:03:44 liverpool multipathd: start up event loops<br>Sep 25 17:03:44 liverpool multipathd: 0 pending event(s)
-<br></span><br>-- <br>Butler </div>
-
-------=_Part_457_2964960.1159253422805--
+#fdisk -l /dev/sdh
+--> Generates this Error in /var/log/messages
+Sep 27 12:17:44 saptf2 kernel: end_request: I/O error, dev sdh, sector 0
+Sep 27 12:17:44 saptf2 kernel: Buffer I/O error on device sdh, logical =
+block 0
 
 
---===============1665119321==
+Configuration:
+/etc/multipath.conf
+defaults {
+        default_features "1 queue_if_no_path"
+}
+
+multipaths {
+        multipath
+        {
+                #mountpoint /sapdb/PF1/sapdata
+                wwid 36006016040321900600487993216db11
+                alias sapdata
+        }
+*snip* (some more aliases for other LUNs) *snip*
+}
+devices {
+        device {
+                vendor                  "DGC  "
+                product                 "*"
+                path_grouping_policy    group_by_prio
+                getuid_callout          "/sbin/scsi_id -g -u -s =
+/block/%n"
+                path_checker            emc_clariion
+                features                "1 queue_if_no_path"
+                hardware_handler        "1 emc"
+                failback                immediate
+                prio_callout            "/sbin/mpath_prio_emc /dev/%n"
+                no_path_retry           300
+        }
+}
+
+Loaded Modules:
+dm_emc                 23808  1
+dm_round_robin         20480  1
+dm_multipath           38800  3 dm_emc,dm_round_robin
+dm_mod                 77536  23 dm_multipath
+qla2300               141696  0
+qla2xxx               356192  33 qla2300
+
+#modinfo qla2300
+version:        8.01.02-sles DBB4213CE377B7165AFB8AC
+
+#modinfo qla2xxx
+version:        8.01.02-sles F6D31250031AEB3A3B9138A
+
+Kernel:=20
+2.6.5-7.282-smp X86_64
+
+I searched the mailing Lists for other examples, but i didnt find any =
+Suggestions to solve this.
+Thanks for help!
+Regarding=20
+Manuel Herr
+
+
+
+------_=_NextPart_001_01C6E21F.7554D82F
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Diso-8859-1">
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+6.5.7650.28">
+<TITLE>Avoid Error Messages in /var/log/messages EMC CX300</TITLE>
+</HEAD>
+<BODY>
+<!-- Converted from text/rtf format -->
+
+<P><FONT FACE=3D"Arial">Hi there,</FONT>
+
+<BR><FONT FACE=3D"Arial">i get Error Messages in my logfiles when I boot =
+the System and then, approx. every 10 Minutes, or during an =
+hwinfo.</FONT>
+
+<BR><FONT FACE=3D"Arial">The Server is connected to an EMC CX 300 =
+through 1 Qlogic HBA.</FONT>
+
+<BR><FONT FACE=3D"Arial">The Messages only appear for the failover =
+Device. In my Example for /dev/sdh. </FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">#multipath -ld</FONT>
+
+<BR><FONT FACE=3D"Arial">sapdata =
+(36006016040321900600487993216db11)</FONT>
+
+<BR><FONT FACE=3D"Arial">[size=3D133 GB][features=3D&quot;1 =
+queue_if_no_path&quot;][hwhandler=3D&quot;1 emc&quot;]</FONT>
+
+<BR><FONT FACE=3D"Arial">\_ round-robin 0 [active]</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;\_ 3:0:1:6 sdp 8:240 =
+[active][ready]</FONT>
+
+<BR><FONT FACE=3D"Arial">\_ round-robin 0 [enabled]</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;\_ 3:0:0:6 sdh 8:112 =
+[active][ready]</FONT>
+
+<BR><FONT FACE=3D"Arial">*snip*</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">#fdisk -l /dev/sdp</FONT>
+
+<BR><FONT FACE=3D"Arial">Disk /dev/sdp: 143.0 GB, 143034155008 =
+bytes</FONT>
+
+<BR><FONT FACE=3D"Arial">255 heads, 63 sectors/track, 17389 =
+cylinders</FONT>
+
+<BR><FONT FACE=3D"Arial">Units =3D cylinders of 16065 * 512 =3D 8225280 =
+bytes</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">&nbsp;&nbsp; Device =
+Boot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+Start&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+End&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Blocks&nbsp;&nbsp; Id&nbsp; =
+System</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">/dev/sdp1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 17389&nbsp;&nbsp; =
+139677111&nbsp;&nbsp; 83&nbsp; Linux</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">#fdisk -l /dev/sdh</FONT>
+
+<BR><FONT FACE=3D"Arial">--&gt; Generates this Error in =
+/var/log/messages</FONT>
+
+<BR><FONT FACE=3D"Arial">Sep 27 12:17:44 saptf2 kernel: end_request: I/O =
+error, dev sdh, sector 0</FONT>
+
+<BR><FONT FACE=3D"Arial">Sep 27 12:17:44 saptf2 kernel: Buffer I/O error =
+on device sdh, logical block 0</FONT>
+</P>
+<BR>
+
+<P><FONT FACE=3D"Arial">Configuration:</FONT>
+
+<BR><FONT FACE=3D"Arial">/etc/multipath.conf</FONT>
+
+<BR><FONT FACE=3D"Arial">defaults {</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+default_features &quot;1 queue_if_no_path&quot;</FONT>
+
+<BR><FONT FACE=3D"Arial">}</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">multipaths {</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+multipath</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+{</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; #mountpoint /sapdb/PF1/sapdata</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; wwid =
+36006016040321900600487993216db11</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; alias sapdata</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+}</FONT>
+
+<BR><FONT FACE=3D"Arial">*snip* (some more aliases for other LUNs) =
+*snip*</FONT>
+
+<BR><FONT FACE=3D"Arial">}</FONT>
+
+<BR><FONT FACE=3D"Arial">devices {</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+device {</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+vendor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;DGC&nbsp; &quot;</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+product&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;*&quot;</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; path_grouping_policy&nbsp;&nbsp;&nbsp; =
+group_by_prio</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+getuid_callout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+&quot;/sbin/scsi_id -g -u -s /block/%n&quot;</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+path_checker&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp; emc_clariion</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+features&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
+;&nbsp;&nbsp;&nbsp;&nbsp; &quot;1 queue_if_no_path&quot;</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+hardware_handler&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;1 =
+emc&quot;</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+failback&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
+;&nbsp;&nbsp;&nbsp;&nbsp; immediate</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+prio_callout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp; &quot;/sbin/mpath_prio_emc /dev/%n&quot;</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+no_path_retry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+ 300</FONT>
+
+<BR><FONT FACE=3D"Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+}</FONT>
+
+<BR><FONT FACE=3D"Arial">}</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">Loaded Modules:</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">dm_emc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 23808&nbsp; 1</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">dm_round_robin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
+bsp; 20480&nbsp; 1</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">dm_multipath&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp; 38800&nbsp; 3 dm_emc,dm_round_robin</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">dm_mod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 77536&nbsp; 23 =
+dm_multipath</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">qla2300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
+sp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 141696&nbsp; 0</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">qla2xxx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
+sp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 356192&nbsp; 33 qla2300</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">#modinfo qla2300</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">version:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+8.01.02-sles DBB4213CE377B7165AFB8AC</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">#modinfo qla2xxx</FONT>
+
+<BR><FONT =
+FACE=3D"Arial">version:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+8.01.02-sles F6D31250031AEB3A3B9138A</FONT>
+</P>
+
+<P><FONT FACE=3D"Arial">Kernel: </FONT>
+
+<BR><FONT FACE=3D"Arial">2.6.5-7.282-smp X86_64</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">I searched the mailing Lists for other =
+examples, but i didnt find any Suggestions to solve this.</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Thanks for help!</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Regarding </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Manuel Herr</FONT>
+</P>
+<BR>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01C6E21F.7554D82F--
+
+
+--===============0711449156==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1665119321==--
+--===============0711449156==--
