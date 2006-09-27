@@ -1,15 +1,11 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: Problem when creating snashots
-Date: Wed, 27 Sep 2006 14:35:26 +0200
-Message-ID: <451A700E.4030202@redhat.com>
-References: <77299A0E-4C81-4820-97BF-FB15B1A96FD6@gmail.com>	<20060926211407.GA2915@hasse.suse.de>	<A544D1D7-C0A0-4EAB-8806-1A77B8453B56@gmail.com>	<451A5425.2010704@redhat.com>
-	<3FCAF7B4-032A-421B-A061-DB4EA906138F@gmail.com>
+From: Srinivasa Ds <srinivasa@in.ibm.com>
+Subject: [RFC] Reverting "bd_mount_mutex" to "bd_mount_sem"
+Date: Wed, 27 Sep 2006 18:43:03 +0530
+Message-ID: <451A78DF.1060901@in.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="------------020402080609080603050102"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3FCAF7B4-032A-421B-A061-DB4EA906138F@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,94 +15,136 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, linux-lvm@redhat.com, linux-kernel@vger.kernel.org, mingo@elte.hu, agk@redhat.com
 List-Id: dm-devel.ids
 
-The MoonSeeker napsal(a):
-> Where can I find this patch? I'd like to test it..
->=20
+This is a multi-part message in MIME format.
+--------------020402080609080603050102
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Patches are in development quilt queue=20
-http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+Hi all
+  When I was executing "dmsetup resume <device-name>" command,I got the 
+error shown below. Which basically tells that, "bd_mount_mutex"  in 
+thaw_bdev() is not locked by "dmsetup resume" command and hence it is 
+not allowing it to unlock also.
+=========================================================
+Badness in debug_mutex_unlock at kernel/mutex-debug.c:80
 
-related *testing* patches=20
-dm-io-*.patch
-dm-kcopyd-newio.patch
-dm-exception-store-newio.patch
+Call Trace:
+[C0000000634DB260] [C000000000010948] .show_stack+0x68/0x1b0 (unreliable)
+[C0000000634DB300] [C0000000003376C4] .program_check_exception+0x1cc/0x5b0
+[C0000000634DB3D0] [C0000000000047EC] program_check_common+0xec/0x100
+--- Exception: 700 at .debug_mutex_unlock+0x3c/0xc4
+    LR = .debug_mutex_unlock+0x30/0xc4
+[C0000000634DB6C0] [C0000000634DB750] 0xc0000000634db750 (unreliable)
+[C0000000634DB740] [C000000000335950] .__mutex_unlock_slowpath+0xd8/0x144
+[C0000000634DB7E0] [C0000000000E2370] .thaw_bdev+0x9c/0xb8
+[C0000000634DB870] [D000000000480830] .unlock_fs+0x34/0x70 [dm_mod]
+[C0000000634DB900] [D000000000481720] .dm_resume+0x110/0x1ac [dm_mod]
+[C0000000634DB9A0] [D000000000485C54] .dev_suspend+0x1b0/0x204 [dm_mod]
+[C0000000634DBA40] [D000000000486728] .ctl_ioctl+0x29c/0x318 [dm_mod]
+[C0000000634DBC30] [C0000000000F8310] .do_ioctl+0xbc/0xf0
+[C0000000634DBCD0] [C0000000000F879C] .vfs_ioctl+0x458/0x498
+[C0000000634DBD80] [C0000000000F8874] .sys_ioctl+0x98/0xe0
+[C0000000634DBE30] [C00000000000871C] syscall_exit+0x0/0x40
+======================================================================
 
-but depends probably on some patches in series file.
+   On debugging I found out that,"dmsetup suspend <device name>" calls 
+"freeze_bdev()",which locks "bd_mount_mutex" to make sure that no new 
+mounts happen on bdev until thaw_bdev() is called.
+   This "thaw_bdev()" is getting called when we resume the device through
+"dmsetup resume <device-name>".
+   Hence we have 2 processes,one of which locks "bd_mount_mutex"(dmsetup
+suspend) and Another(dmsetup resume) unlocks it.
 
-Note: there is no patch for new dm-io change in dm-raid1 & dm-log,
-do *not* use these patches now if you are using mirror (raid1)
-target !=20
-(Remaining patches - including raid1 - are waiting in Alasdair's mail...)
+   Since this is not allowed in mutex,I reverted back to 
+bd_mount_sem(semaphore),It worked for me.
 
-Milan
---
-mbroz@redhat.com
+  So  need your comments for changing "bd_mount_mutex" to "bd_mount_sem".
+  
+  This is the patch,which I have used.
 
-> Le 27 sept. 06 =E0 12:36, Milan Broz a =E9crit :
->=20
->> The problem with limited number of snapshots is caused by the using
->> big common mempool in dm-io module.
->> (This can happen even you have a lot of free memory...)
->>
->> There are new dm-io patches which introduce new dm-io interface
->> (using private mempools) and solving this type of snapshot limitation.
->>
->> Patches are currently in review and will probably change a bit,
->> but I hope it will in 2.6.19 kernel.
->>
->> Milan
->>
->> --=20
->> mbroz@redhat.com
->>
->> The MoonSeeker napsal(a):
->>> Yes I really need it. I have to create a virtual network editor for m=
-y
->>> diploma project. So I have found many virtual solutions but the beste=
-st
->>> for our project is OpenVZ. Unfortunatly, OpenVZ don't offer the copy =
-on
->>> write with his solution, after many tests, I have found a solution ba=
-sed
->>> on LVM.
->>>
->>> The main idea is to have a Virtual Private Server Core and lot of
->>> Virtual Private Server who are a snapshot of the Virtual Server Core.
->>> Now the problem is the limitation of VLM, I need more than 32 servers
->>> (32 snapshots). Will this limitation incresed in futur futur released=
- of
->>> LVM? Or can we broke this limitation?
->>>
->>> Have you a solution, it's relly urgent for me...
->>>
->>> Thanks you
->>>
->>>
->>> Le 26 sept. 06 =E0 23:14, Jan Blunck a =E9crit :
->>>
->>>> On Tue, Sep 26, The MoonSeeker wrote:
->>>>
->>>>> I'd like to create many snaphot of an image but I've got when I
->>>>> attemp to create the 32th snapshot :
->>>>>
->>>>> root@B03:/diplome# lvcreate -s -L150M -n 232 /dev/openvz/vps-core
->>>>>   Rounding up size to full physical extent 152.00 MB
->>>>>   device-mapper: reload ioctl failed: Ne peut allouer de la m=E9moi=
-re
->>>>>   Failed to suspend origin vps-core
->>>>>
->>>>> I don't understand the error..
->>>>
->>>> I'm not a native french speaker (hint!) but I assume you run out of
->>>> memory.
->>>>
->>>> Yes there are limitations to the number of snapshots. For every sing=
-le
->>>> snapshot we have to allocate memory for copying the chunks to the
->>>> exception
->>>> store.
->>>>
->>>> Do you really need that many snapshots at the same time?
+Thanks
+ Srinivasa Ds
+ LTC-IBM
+ Bangalore
+
+
+
+--------------020402080609080603050102
+Content-Type: text/plain;
+ name="mutex_to_sem.fix"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="mutex_to_sem.fix"
+
+diff -Naurp linux-2.6.18-rc6-orig/fs/block_dev.c linux-2.6.18-rc6-mod/fs/block_dev.c
+--- linux-2.6.18-rc6-orig/fs/block_dev.c	2006-09-27 04:47:25.000000000 -0700
++++ linux-2.6.18-rc6-mod/fs/block_dev.c	2006-09-27 04:53:29.000000000 -0700
+@@ -261,7 +261,7 @@ static void init_once(void * foo, kmem_c
+ 	{
+ 		memset(bdev, 0, sizeof(*bdev));
+ 		mutex_init(&bdev->bd_mutex);
+-		mutex_init(&bdev->bd_mount_mutex);
++		sema_init(&bdev->bd_mount_sem, 1);
+ 		INIT_LIST_HEAD(&bdev->bd_inodes);
+ 		INIT_LIST_HEAD(&bdev->bd_list);
+ #ifdef CONFIG_SYSFS
+diff -Naurp linux-2.6.18-rc6-orig/fs/buffer.c linux-2.6.18-rc6-mod/fs/buffer.c
+--- linux-2.6.18-rc6-orig/fs/buffer.c	2006-09-27 04:46:14.000000000 -0700
++++ linux-2.6.18-rc6-mod/fs/buffer.c	2006-09-27 04:49:55.000000000 -0700
+@@ -213,7 +213,7 @@ struct super_block *freeze_bdev(struct b
+ {
+ 	struct super_block *sb;
+ 
+-	mutex_lock(&bdev->bd_mount_mutex);
++	down(&bdev->bd_mount_sem);
+ 	sb = get_super(bdev);
+ 	if (sb && !(sb->s_flags & MS_RDONLY)) {
+ 		sb->s_frozen = SB_FREEZE_WRITE;
+@@ -255,7 +255,7 @@ void thaw_bdev(struct block_device *bdev
+ 		drop_super(sb);
+ 	}
+ 
+-	mutex_unlock(&bdev->bd_mount_mutex);
++	up(&bdev->bd_mount_sem);
+ }
+ EXPORT_SYMBOL(thaw_bdev);
+ 
+diff -Naurp linux-2.6.18-rc6-orig/fs/super.c linux-2.6.18-rc6-mod/fs/super.c
+--- linux-2.6.18-rc6-orig/fs/super.c	2006-09-27 04:46:51.000000000 -0700
++++ linux-2.6.18-rc6-mod/fs/super.c	2006-09-27 04:50:56.000000000 -0700
+@@ -700,9 +700,9 @@ int get_sb_bdev(struct file_system_type 
+ 	 * will protect the lockfs code from trying to start a snapshot
+ 	 * while we are mounting
+ 	 */
+-	mutex_lock(&bdev->bd_mount_mutex);
++	down(&bdev->bd_mount_sem);
+ 	s = sget(fs_type, test_bdev_super, set_bdev_super, bdev);
+-	mutex_unlock(&bdev->bd_mount_mutex);
++	up(&bdev->bd_mount_sem);
+ 	if (IS_ERR(s))
+ 		goto error_s;
+ 
+diff -Naurp linux-2.6.18-rc6-orig/include/linux/fs.h linux-2.6.18-rc6-mod/include/linux/fs.h
+--- linux-2.6.18-rc6-orig/include/linux/fs.h	2006-09-27 04:45:31.000000000 -0700
++++ linux-2.6.18-rc6-mod/include/linux/fs.h	2006-09-27 04:52:30.000000000 -0700
+@@ -414,7 +414,7 @@ struct block_device {
+ 	struct inode *		bd_inode;	/* will die */
+ 	int			bd_openers;
+ 	struct mutex		bd_mutex;	/* open/close mutex */
+-	struct mutex		bd_mount_mutex;	/* mount mutex */
++	struct semaphore        bd_mount_sem;
+ 	struct list_head	bd_inodes;
+ 	void *			bd_holder;
+ 	int			bd_holders;
+
+--------------020402080609080603050102
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------020402080609080603050102--
