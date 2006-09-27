@@ -1,31 +1,55 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: [RFC] Reverting "bd_mount_mutex" to "bd_mount_sem"
-Date: Wed, 27 Sep 2006 15:57:05 +0200
-Message-ID: <20060927135705.GA30311@elte.hu>
-References: <451A78DF.1060901@in.ibm.com>
+From: "Bill Rugolsky Jr." <brugolsky@telemetry-investments.com>
+Subject: Re: dm-snapshot scalability - chained delta snapshots
+	approach
+Date: Wed, 27 Sep 2006 10:47:59 -0400
+Message-ID: <20060927144759.GA27027@ti64.telemetry-investments.com>
+References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
+	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
+	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
+	<20060927091700.GA6314@X40.redhat.com>
+	<20060927104035.GA4939@computer-surgery.co.uk>
+Reply-To: "Bill Rugolsky Jr." <brugolsky@telemetry-investments.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932251AbWI0OE5@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <451A78DF.1060901@in.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Srinivasa Ds <srinivasa@in.ibm.com>
-Cc: dm-devel@redhat.com, linux-lvm@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+In-Reply-To: <20060927104035.GA4939@computer-surgery.co.uk>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Sep 27, 2006 at 11:40:35AM +0100, rgammans@computer-surgery.co.uk wrote:
+> I was considering some sort of B or B+ -tree type arrangement as then
+> we can use the buffer-cache (I'm assuming something similiar still
+> exists after the bh -> bio rewrite but I 'm a lttle behind) to store
+> the commonly referenced exceptions, which should keep the memory
+> required by the tables down at times of high memory pressure.
+> 
+> > There are still ongoing discussions about the snapshot target. It would be
+> > nice if you have additional thoughts about this proposal. I guess it is
+> > similar to one of your prototypes.
+> 
+> Is this where those discussion are taking place if I want to help 
+> and particpate?
+ 
+Daniel Phillips's csnap target was based on BTree design:
 
-* Srinivasa Ds <srinivasa@in.ibm.com> wrote:
+  http://sources.redhat.com/cluster/csnap/
 
->   On debugging I found out that,"dmsetup suspend <device name>" calls 
-> "freeze_bdev()",which locks "bd_mount_mutex" to make sure that no new 
-> mounts happen on bdev until thaw_bdev() is called.
->   This "thaw_bdev()" is getting called when we resume the device 
-> through "dmsetup resume <device-name>".
->   Hence we have 2 processes,one of which locks 
-> "bd_mount_mutex"(dmsetup suspend) and Another(dmsetup resume) unlocks 
-> it.
+There are papers there describing the design in great detail.
 
-hm, to me this seems quite a fragile construct - even if the 
-mutex-debugging warning is worked around by reverting to a semaphore.
+Unfortunately, his various projects (csnap, ddraid, ...) seem to have
+been abandoned.
 
-	Ingo
+Regards,
+
+    Bill Rugolsky
