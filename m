@@ -1,19 +1,15 @@
-From: rgammans@computer-surgery.co.uk
-Subject: Re: dm-snapshot scalability - chained delta snapshots
-	approach
-Date: Wed, 27 Sep 2006 11:40:35 +0100
-Message-ID: <20060927104035.GA4939@computer-surgery.co.uk>
-References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
-	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
-	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
-	<20060927091700.GA6314@X40.redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: Problem when creating snashots
+Date: Wed, 27 Sep 2006 14:35:26 +0200
+Message-ID: <451A700E.4030202@redhat.com>
+References: <77299A0E-4C81-4820-97BF-FB15B1A96FD6@gmail.com>	<20060926211407.GA2915@hasse.suse.de>	<A544D1D7-C0A0-4EAB-8806-1A77B8453B56@gmail.com>	<451A5425.2010704@redhat.com>
+	<3FCAF7B4-032A-421B-A061-DB4EA906138F@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1476770544=="
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Resent-Message-ID: <20060927120650.GA6294@computer-surgery.co.uk>
-Resent-To: dm-devel@redhat.com
-In-Reply-To: <20060927091700.GA6314@X40.redhat.com>
+In-Reply-To: <3FCAF7B4-032A-421B-A061-DB4EA906138F@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,85 +19,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jblunck@suse.de, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
---===============1476770544==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="wac7ysb48OaltWcw"
-Content-Disposition: inline
-
-
---wac7ysb48OaltWcw
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Wed, Sep 27, 2006 at 11:17:00AM +0200, Jan Blunck wrote:
-> We discussed some of the ideas about snapshots here at the dm summit. The
-> general ideas are as follows:
+The MoonSeeker napsal(a):
+> Where can I find this patch? I'd like to test it..
 >=20
-> - one exception store per origin device that is shared by all snapshots
-> - don't keep the complete exception tables in memory all the time
-> - limit kcopyd outstanding requests
-[snip]
-> target. The throughput issues should be addressed by only writing to one
-> exception store. The memory issues should be addressed by the changes to =
-the
 
-I have a need fro a 'snapshot' type dm mode which has this
-characterstic. Eg, it leavse to origin device completely untouch by any
-changes.=20
+Patches are in development quilt queue=20
+http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
 
-I was thinking that I'd have to code it myself from scratch as I could
-see any simple way of reuse the existing dm-snap code - especially since
-in my case the origin device will always be a physical volume (ie hda).
+related *testing* patches=20
+dm-io-*.patch
+dm-kcopyd-newio.patch
+dm-exception-store-newio.patch
 
-However if I can make use of a new dm-exception-store and possibly
-even contribute to it this would be better.
+but depends probably on some patches in series file.
 
-I was considering some sort of B or B+ -tree type arrangement as then
-we can use the buffer-cache (I'm assuming something similiar still
-exists after the bh -> bio rewrite but I 'm a lttle behind) to store
-the commonly referenced exceptions, which should keep the memory
-required by the tables down at times of high memory pressure.
+Note: there is no patch for new dm-io change in dm-raid1 & dm-log,
+do *not* use these patches now if you are using mirror (raid1)
+target !=20
+(Remaining patches - including raid1 - are waiting in Alasdair's mail...)
 
-> There are still ongoing discussions about the snapshot target. It would be
-> nice if you have additional thoughts about this proposal. I guess it is
-> similar to one of your prototypes.
+Milan
+--
+mbroz@redhat.com
 
-Is this where those discussion are taking place if I want to help=20
-and particpate?
-
-TTFN
---=20
-Roger. 	                        Home| http://www.sandman.uklinux.net/
-Master of Peng Shui.      (Ancient oriental art of Penguin Arranging)
-Work|Independent Sys Consultant | http://www.computer-surgery.co.uk/
- New key Fpr: 1227 ABB1 7545 77A7 6816  2D18 4EBC AA9B 8EE3 1DD3
-
---wac7ysb48OaltWcw
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.1 (GNU/Linux)
-
-iD8DBQFFGlUjTryqm47jHdMRApBHAJ9voZWk87cDQBKVuZGl07jWmuyfhQCdGAxR
-/spXQrWnM2bh8wDQs2QcZ8U=
-=tFqG
------END PGP SIGNATURE-----
-
---wac7ysb48OaltWcw--
-
-
---===============1476770544==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1476770544==--
+> Le 27 sept. 06 =E0 12:36, Milan Broz a =E9crit :
+>=20
+>> The problem with limited number of snapshots is caused by the using
+>> big common mempool in dm-io module.
+>> (This can happen even you have a lot of free memory...)
+>>
+>> There are new dm-io patches which introduce new dm-io interface
+>> (using private mempools) and solving this type of snapshot limitation.
+>>
+>> Patches are currently in review and will probably change a bit,
+>> but I hope it will in 2.6.19 kernel.
+>>
+>> Milan
+>>
+>> --=20
+>> mbroz@redhat.com
+>>
+>> The MoonSeeker napsal(a):
+>>> Yes I really need it. I have to create a virtual network editor for m=
+y
+>>> diploma project. So I have found many virtual solutions but the beste=
+st
+>>> for our project is OpenVZ. Unfortunatly, OpenVZ don't offer the copy =
+on
+>>> write with his solution, after many tests, I have found a solution ba=
+sed
+>>> on LVM.
+>>>
+>>> The main idea is to have a Virtual Private Server Core and lot of
+>>> Virtual Private Server who are a snapshot of the Virtual Server Core.
+>>> Now the problem is the limitation of VLM, I need more than 32 servers
+>>> (32 snapshots). Will this limitation incresed in futur futur released=
+ of
+>>> LVM? Or can we broke this limitation?
+>>>
+>>> Have you a solution, it's relly urgent for me...
+>>>
+>>> Thanks you
+>>>
+>>>
+>>> Le 26 sept. 06 =E0 23:14, Jan Blunck a =E9crit :
+>>>
+>>>> On Tue, Sep 26, The MoonSeeker wrote:
+>>>>
+>>>>> I'd like to create many snaphot of an image but I've got when I
+>>>>> attemp to create the 32th snapshot :
+>>>>>
+>>>>> root@B03:/diplome# lvcreate -s -L150M -n 232 /dev/openvz/vps-core
+>>>>>   Rounding up size to full physical extent 152.00 MB
+>>>>>   device-mapper: reload ioctl failed: Ne peut allouer de la m=E9moi=
+re
+>>>>>   Failed to suspend origin vps-core
+>>>>>
+>>>>> I don't understand the error..
+>>>>
+>>>> I'm not a native french speaker (hint!) but I assume you run out of
+>>>> memory.
+>>>>
+>>>> Yes there are limitations to the number of snapshots. For every sing=
+le
+>>>> snapshot we have to allocate memory for copying the chunks to the
+>>>> exception
+>>>> store.
+>>>>
+>>>> Do you really need that many snapshots at the same time?
