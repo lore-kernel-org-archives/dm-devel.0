@@ -1,13 +1,12 @@
-From: "Debarshi 'Rishi' Ray" <debarshi.ray@gmail.com>
-Subject: API documentation.
-Date: Thu, 28 Sep 2006 13:01:16 +0530
-Message-ID: <3170f42f0609280031m1956c551wd0a66099d75aee32@mail.gmail.com>
+From: Stephan =?utf-8?Q?Austerm=C3=BChle?= <au@hcsd.de>
+Subject: How to 	temporary disable one path?
+Date: Thu, 28 Sep 2006 10:42:51 +0200 (CEST)
+Message-ID: <52822.155.56.68.221.1159432971.squirrel@www.hcsd.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +19,13 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I have been searching for documentation regarding the libdevmapper
-API, but till now the only documentation I have got is
-/usr/include/libdevmapper.h. I could not find much at /usr/share/doc
-and the Device Mapper resource page. Is there somewhere I could get
-some documentation regarding this.
+Hi,
 
-I need this, since I am looking to incorporate device mapper support
-in GNU Parted (http://www.gnu.org/software/parted/).
+we have intermittent problems with one of four pathes to a disk array. Ho=
+w
+can I temporary disable one path without having to modify the
+configuration file?
 
-Thanks,
-Debarshi
--- 
-Microsoft does have a Y2K problem... it's called GNU/Linux!
+Thanks for your hints,
+
+Stephan
