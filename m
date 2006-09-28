@@ -1,13 +1,16 @@
-From: Thomas Schwinge <tschwinge@gnu.org>
+From: "Debarshi 'Rishi' Ray" <debarshi.ray@gmail.com>
 Subject: Re: API documentation.
-Date: Thu, 28 Sep 2006 10:54:47 +0200
-Message-ID: <20060928085447.GA442@fencepost>
+Date: Thu, 28 Sep 2006 14:28:26 +0530
+Message-ID: <3170f42f0609280158n29db9c2dy9d1548d5cba486f2@mail.gmail.com>
 References: <3170f42f0609280031m1956c551wd0a66099d75aee32@mail.gmail.com>
+	<20060928085447.GA442@fencepost>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0603077594=="
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <3170f42f0609280031m1956c551wd0a66099d75aee32@mail.gmail.com>
+In-Reply-To: <20060928085447.GA442@fencepost>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,64 +20,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Debarshi 'Rishi' Ray <debarshi.ray@gmail.com>
+To: Thomas Schwinge <tschwinge@gnu.org>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+> Some bits are available at <http://people.redhat.com/agk/talks/> --- but
+> that's unfortunately all I know about, apart from the source code.
 
---===============0603077594==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="J/dobhs11T7y2rNN"
-Content-Disposition: inline
+Many many thanks. I will be going through it. By the way, can I ping
+you about something which I am unable to make out? Are you available
+on irc.freenode.net?
 
-
---J/dobhs11T7y2rNN
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-
-Hello!
-
-On Thu, Sep 28, 2006 at 01:01:16PM +0530, Debarshi 'Rishi' Ray wrote:
-> I have been searching for documentation regarding the libdevmapper
-> API, but till now the only documentation I have got is
-> /usr/include/libdevmapper.h. I could not find much at /usr/share/doc
-> and the Device Mapper resource page. Is there somewhere I could get
-> some documentation regarding this.
-
-Some bits are available at <http://people.redhat.com/agk/talks/> --- but
-that's unfortunately all I know about, apart from the source code.
-
-
-> I need this, since I am looking to incorporate device mapper support
-> in GNU Parted (http://www.gnu.org/software/parted/).
-
-Very nice!
-
-
-Regards,
- Thomas
-
---J/dobhs11T7y2rNN
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.2.5 (GNU/Linux)
-
-iD8DBQFFG43Xgfzh735dTTURAvKHAKCcIsUFn6bmgZ0LnZFDKbD7bS8t1wCghCs2
-8zJQoHIxxcgo4Ug6pVA3Q08=
-=7VvR
------END PGP SIGNATURE-----
-
---J/dobhs11T7y2rNN--
-
-
---===============0603077594==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0603077594==--
+Happy hacking,
+Debarshi
+-- 
+Microsoft does have a Y2K problem... it's called GNU/Linux!
