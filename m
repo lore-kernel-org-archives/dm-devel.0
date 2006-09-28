@@ -1,20 +1,13 @@
-From: "Bill Rugolsky Jr." <brugolsky@telemetry-investments.com>
-Subject: Re: dm-snapshot scalability - chained delta snapshots
-	approach
-Date: Wed, 27 Sep 2006 10:47:59 -0400
-Message-ID: <20060927144759.GA27027@ti64.telemetry-investments.com>
-References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
-	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
-	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
-	<20060927091700.GA6314@X40.redhat.com>
-	<20060927104035.GA4939@computer-surgery.co.uk>
-Reply-To: "Bill Rugolsky Jr." <brugolsky@telemetry-investments.com>,
-	device-mapper development <dm-devel@redhat.com>
+From: "Debarshi 'Rishi' Ray" <debarshi.ray@gmail.com>
+Subject: API documentation.
+Date: Thu, 28 Sep 2006 13:01:16 +0530
+Message-ID: <3170f42f0609280031m1956c551wd0a66099d75aee32@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20060927104035.GA4939@computer-surgery.co.uk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,32 +17,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Sep 27, 2006 at 11:40:35AM +0100, rgammans@computer-surgery.co.uk wrote:
-> I was considering some sort of B or B+ -tree type arrangement as then
-> we can use the buffer-cache (I'm assuming something similiar still
-> exists after the bh -> bio rewrite but I 'm a lttle behind) to store
-> the commonly referenced exceptions, which should keep the memory
-> required by the tables down at times of high memory pressure.
-> 
-> > There are still ongoing discussions about the snapshot target. It would be
-> > nice if you have additional thoughts about this proposal. I guess it is
-> > similar to one of your prototypes.
-> 
-> Is this where those discussion are taking place if I want to help 
-> and particpate?
- 
-Daniel Phillips's csnap target was based on BTree design:
+I have been searching for documentation regarding the libdevmapper
+API, but till now the only documentation I have got is
+/usr/include/libdevmapper.h. I could not find much at /usr/share/doc
+and the Device Mapper resource page. Is there somewhere I could get
+some documentation regarding this.
 
-  http://sources.redhat.com/cluster/csnap/
+I need this, since I am looking to incorporate device mapper support
+in GNU Parted (http://www.gnu.org/software/parted/).
 
-There are papers there describing the design in great detail.
-
-Unfortunately, his various projects (csnap, ddraid, ...) seem to have
-been abandoned.
-
-Regards,
-
-    Bill Rugolsky
+Thanks,
+Debarshi
+-- 
+Microsoft does have a Y2K problem... it's called GNU/Linux!
