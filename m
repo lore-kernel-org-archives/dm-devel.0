@@ -1,11 +1,14 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Thoughts on removing the remap cache
-Date: Fri, 29 Sep 2006 14:36:58 -0700
-Message-ID: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: Latest dm-userspace kernel code
+Date: Sat, 30 Sep 2006 11:21:02 +0900
+Message-ID: <200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp>
+References: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1856279283=="
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,60 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: fujita.tomonori@lab.ntt.co.jp
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1856279283==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+From: Dan Smith <danms@us.ibm.com>
+Subject: [dm-devel] Latest dm-userspace kernel code
+Date: Thu, 28 Sep 2006 13:59:06 -0700
 
---=-=-=
-Content-Transfer-Encoding: quoted-printable
+> Here is my latest dm-userspace kernel code.  This has a lot of
+> cleanups and fixes since the last version.  We have been successfully
+> using this version for a while and believe it to be quite stable and
+> well-performing.  It is not intended to be in final form, but I think
+> it should be close to functionally complete.
 
-Hi Fujita,
+Here are some comments:
 
-I've been very pleased with the removal of the remap caching from
-dm-userspace because performance seems to be good and complexity is
-lower.
+- I think that you can use kernel threads for map_worker since dmu_map
+says that we might reorder I/Os.
 
-However, all of my tests up until now have been with dbench.  I think
-that dbench works well in cases where latency is high, which is of
-course the case since we're sending all requests to userspace.  When I
-try to boot a Xen domU with root on dm-userspace (without the
-caching), it is *painfully* slow.  I assume this is because the domU
-boot is doing a lot of synchronous, sequential operations.
+- What is the purpose of dmu_request->deps? I guess that it is for
+preventing I/O being reordered. if so, again, you don't need to do
+that.
 
-Since domU performance was good when I was caching mappings in the
-kernel, I would assume that the difference in performance is related
-to the caching.
+- Would be better to move non-transport functions (map_worker,
+copy_block, etc) to dm-userspace.c?
 
-What do you think?
+- How does the current kernel/user interface support multiple
+destination feature?
 
-=2D-=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
-
---=-=-=
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2.2 (GNU/Linux)
-
-iD8DBQFFHZH8wtEf7b4GJVQRAkykAJ9cyDSZ6Ww8z4xXTGLgk7jvC8ZxewCeLW9E
-EUal3qhDJ+dGKXf7YLsDAV4=
-=6HWv
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============1856279283==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1856279283==--
+- Needs some cosmetic fixes (removing needless whitespaces and braces,
+etc)
