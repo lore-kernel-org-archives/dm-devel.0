@@ -1,16 +1,15 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: Latest dm-userspace kernel code
-Date: Sat, 30 Sep 2006 20:13:35 +0900
-Message-ID: <200609301113.k8UBDfWS015780@r-dd.iij4u.or.jp>
-References: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
-	<200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp>
-	<m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: Thoughts on removing the remap cache
+Date: Sat, 30 Sep 2006 08:44:26 -0700
+Message-ID: <m3ven5z7dx.fsf@guaranine.beaverton.ibm.com>
+References: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
+	<200609300246.k8U2khwi004095@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1054248701=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <200609300246.k8U2khwi004095@r-dd.iij4u.or.jp> (FUJITA Tomonori's
+	message of "Sat, 30 Sep 2006 11:46:38 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,28 +19,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: fujita.tomonori@lab.ntt.co.jp
 List-Id: dm-devel.ids
 
-Seems that 4th patch is delayed or lost. I'll post it again if it will
-not be delivered until tomorrow.
+--===============1054248701==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] Latest dm-userspace kernel code
-Date: Fri, 29 Sep 2006 19:39:46 -0700
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-> FT> - What is the purpose of dmu_request->deps? I guess that it is for
-> FT> preventing I/O being reordered. if so, again, you don't need to do
-> FT> that.
-> 
-> Well, the problem is that a block copy would overwrite other requests.
-> I think that while a copy is happening, you have to be careful to not
-> write into that block so that your writes are not lost.
+FT> I guess that dbench generates relatively large size I/Os than
+FT> common workloads, which is more sensitive to latency.
 
-On second thought, I think that it would be better to handle this in
-user space.
+Right, that is what I am thinking.  However, dbench inside a domU does
+not perform well either.  Even running dbench inside a domU, the
+batches that the userspace daemon sees are only about 10 requests,
+compared to several thousand at times when running on bare metal.
 
-If you add a feature to notify I/O completion of user space (I think
-this feature is necessary for other reasons too), user-space programs
-can take care about this easily. I prefer the dm-userspace kernel
-module to just perform I/Os according to requests from user space.
+FT> Seems that Xen camp is pretty happy with blktap. So dm-userspace
+FT> should be ok with domU. Maybe it's time to try ring buffer stuff
+FT> again. :)
+
+You think that the ring buffer has the potential to be lower latency
+due to fewer memcpy()'s right?
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFHpDcwtEf7b4GJVQRAjESAJ46CPDC3Uv2dudqQBql1D/Onm/B1wCfZPIS
+NdqOocvxp40XjRvM9b4JNFw=
+=CIbk
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1054248701==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1054248701==--
