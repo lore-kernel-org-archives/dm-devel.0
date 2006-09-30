@@ -1,15 +1,14 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: Latest dm-userspace kernel code
-Date: Fri, 29 Sep 2006 19:39:46 -0700
-Message-ID: <m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
-References: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
-	<200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: Thoughts on removing the remap cache
+Date: Sat, 30 Sep 2006 11:46:38 +0900
+Message-ID: <200609300246.k8U2khwi004095@r-dd.iij4u.or.jp>
+References: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2099515703=="
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp> (FUJITA Tomonori's
-	message of "Sat, 30 Sep 2006 11:21:02 +0900")
+In-Reply-To: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,77 +18,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: fujita.tomonori@lab.ntt.co.jp
 List-Id: dm-devel.ids
 
---===============2099515703==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+From: Dan Smith <danms@us.ibm.com>
+Subject: [dm-devel] Thoughts on removing the remap cache
+Date: Fri, 29 Sep 2006 14:36:58 -0700
 
---=-=-=
-Content-Transfer-Encoding: quoted-printable
+> However, all of my tests up until now have been with dbench.  I think
+> that dbench works well in cases where latency is high, which is of
+> course the case since we're sending all requests to userspace.  When I
+> try to boot a Xen domU with root on dm-userspace (without the
+> caching), it is *painfully* slow.  I assume this is because the domU
+> boot is doing a lot of synchronous, sequential operations.
+> 
+> Since domU performance was good when I was caching mappings in the
+> kernel, I would assume that the difference in performance is related
+> to the caching.
 
-FT> - I think that you can use kernel threads for map_worker since
-FT> dmu_map says that we might reorder I/Os.
+I guess that dbench generates relatively large size I/Os than common
+workloads, which is more sensitive to latency.
 
-Yes, I think you are probably right.  I disabled the kernel thread at
-one point as a sanity check, but I think it might be ok to turn it
-back on.  I'll do some testing.
+Seems that Xen camp is pretty happy with blktap. So dm-userspace
+should be ok with domU. Maybe it's time to try ring buffer stuff
+again. :)
 
-FT> - What is the purpose of dmu_request->deps? I guess that it is for
-FT> preventing I/O being reordered. if so, again, you don't need to do
-FT> that.
-
-Well, the problem is that a block copy would overwrite other requests.
-I think that while a copy is happening, you have to be careful to not
-write into that block so that your writes are not lost.
-
-Am I over-thinking it?
-
-FT> - Would be better to move non-transport functions (map_worker,
-FT> copy_block, etc) to dm-userspace.c?
-
-Yes.  You did a much better job of isolating those functions than I
-did :) ...  I plan to revisit that soon.
-
-FT> - How does the current kernel/user interface support multiple
-FT> destination feature?
-
-I'm not sure what you mean here.  Can you elaborate?
-
-FT> - Needs some cosmetic fixes (removing needless whitespaces and
-FT> braces, etc)
-
-Indeed.  I made sure to mention in my post that it was not in "final
-form" for this reason :)  I'll try to clean it up a little more before
-I post it again.
-
-Thanks for the feedback!
-
-=2D-=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
-
---=-=-=
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2.2 (GNU/Linux)
-
-iD8DBQFFHdjywtEf7b4GJVQRAnhrAJ9cAxfVUgG7diQ8ov8QWyu+28yfcgCfbmAz
-yWWZ91fHGLCK73J4qoVMUSI=
-=LyVy
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============2099515703==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2099515703==--
+Ok, I'll salvage and update the old patch, post a new patch compatible
+with the current code.
