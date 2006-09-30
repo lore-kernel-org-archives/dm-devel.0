@@ -1,16 +1,16 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: Thoughts on removing the remap cache
-Date: Sun, 01 Oct 2006 01:27:38 +0900
-Message-ID: <20061001012738C.fujita.tomonori@lab.ntt.co.jp>
-References: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
-	<200609300246.k8U2khwi004095@r-dd.iij4u.or.jp>
-	<m3ven5z7dx.fsf@guaranine.beaverton.ibm.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [PATCH 3/4] dm-userspace: fix DMU_FLAG_SYNC
+Date: Sat, 30 Sep 2006 09:32:59 -0700
+Message-ID: <m3ejttz550.fsf@guaranine.beaverton.ibm.com>
+References: <200609301044.k8UAifNn013346@r-dd.iij4u.or.jp>
+	<m3irj5z73q.fsf@guaranine.beaverton.ibm.com>
+	<20061001011211M.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2030129893=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3ven5z7dx.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <20061001011211M.fujita.tomonori@lab.ntt.co.jp> (FUJITA
+	Tomonori's message of "Sun, 01 Oct 2006 01:12:11 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,28 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] Thoughts on removing the remap cache
-Date: Sat, 30 Sep 2006 08:44:26 -0700
+--===============2030129893==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-> FT> I guess that dbench generates relatively large size I/Os than
-> FT> common workloads, which is more sensitive to latency.
-> 
-> Right, that is what I am thinking.  However, dbench inside a domU does
-> not perform well either.  Even running dbench inside a domU, the
-> batches that the userspace daemon sees are only about 10 requests,
-> compared to several thousand at times when running on bare metal.
-> 
-> FT> Seems that Xen camp is pretty happy with blktap. So dm-userspace
-> FT> should be ok with domU. Maybe it's time to try ring buffer stuff
-> FT> again. :)
-> 
-> You think that the ring buffer has the potential to be lower latency
-> due to fewer memcpy()'s right?
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-Yeah, though there might be other factors, I guess.
+FT> My point is that the kernel module always sets DMU_FLAG_SYNC flag
+FT> regardless of user space. As the patch does, should dmu_cpy_flag
+FT> be used instead of cmu_set_flag? This enables a user-space
+FT> programs to choose the behavior.
 
-Anyway, could you try the new ring buffer patch that I posted?
+This is what I did previously; I let userspace set the sync flag if it
+wanted to catch the endio.  However, during some debugging, I decided
+to just send every endio to userspace.  I think I did this because I
+was getting some corruption and thought it might be related to endio.
+I think you are right, however, that because we can complete the IOs
+in any order, we can delay some endios and not others.  I'll change it
+back to copy the flag and do some more testing Monday to verify.
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFHpw7wtEf7b4GJVQRAr0yAJ4oIAmLP0bVKdCxUQhark7Vh4M9ewCeN1Yb
+a/7SXPbhj2zzSDswOehcZo8=
+=B9ob
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============2030129893==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2030129893==--
