@@ -1,14 +1,16 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: Thoughts on removing the remap cache
-Date: Sat, 30 Sep 2006 11:46:38 +0900
-Message-ID: <200609300246.k8U2khwi004095@r-dd.iij4u.or.jp>
-References: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
+Subject: Re: Latest dm-userspace kernel code
+Date: Sat, 30 Sep 2006 12:14:51 +0900
+Message-ID: <200609300314.k8U3EvGF006445@r-dd.iij4u.or.jp>
+References: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
+	<200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp>
+	<m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,30 +21,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: fujita.tomonori@lab.ntt.co.jp
 List-Id: dm-devel.ids
 
 From: Dan Smith <danms@us.ibm.com>
-Subject: [dm-devel] Thoughts on removing the remap cache
-Date: Fri, 29 Sep 2006 14:36:58 -0700
+Subject: Re: [dm-devel] Latest dm-userspace kernel code
+Date: Fri, 29 Sep 2006 19:39:46 -0700
 
-> However, all of my tests up until now have been with dbench.  I think
-> that dbench works well in cases where latency is high, which is of
-> course the case since we're sending all requests to userspace.  When I
-> try to boot a Xen domU with root on dm-userspace (without the
-> caching), it is *painfully* slow.  I assume this is because the domU
-> boot is doing a lot of synchronous, sequential operations.
+> FT> - What is the purpose of dmu_request->deps? I guess that it is for
+> FT> preventing I/O being reordered. if so, again, you don't need to do
+> FT> that.
 > 
-> Since domU performance was good when I was caching mappings in the
-> kernel, I would assume that the difference in performance is related
-> to the caching.
+> Well, the problem is that a block copy would overwrite other requests.
+> I think that while a copy is happening, you have to be careful to not
+> write into that block so that your writes are not lost.
+> 
+> Am I over-thinking it?
 
-I guess that dbench generates relatively large size I/Os than common
-workloads, which is more sensitive to latency.
+Oh, I see. I think that you are right. That should not happen.
 
-Seems that Xen camp is pretty happy with blktap. So dm-userspace
-should be ok with domU. Maybe it's time to try ring buffer stuff
-again. :)
 
-Ok, I'll salvage and update the old patch, post a new patch compatible
-with the current code.
+> FT> - How does the current kernel/user interface support multiple
+> FT> destination feature?
+> 
+> I'm not sure what you mean here.  Can you elaborate?
+
+I thought that dm-userpsace supports a feature to map a single request
+to multiple devices for kinda raid. For that, I guess that struct
+dmu_msg_map_response includes several sets of dst_maj and dst_min. Or
+you might use 'linked' dmu_msg_map_response, which enables a
+user-space daemon to send multiple dmu_msg_map_responses for one
+dmu_msg_map_request (if a dmu_msg_map_response is marked 'linked',
+dm-userspace module clones the bio and does not free struct
+the dmu_request).
