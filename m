@@ -1,12 +1,16 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 3/4] dm-userspace: fix DMU_FLAG_SYNC
-Date: Sat, 30 Sep 2006 19:44:35 +0900
-Message-ID: <200609301044.k8UAifNn013346@r-dd.iij4u.or.jp>
+Subject: Re: Latest dm-userspace kernel code
+Date: Sat, 30 Sep 2006 20:13:35 +0900
+Message-ID: <200609301113.k8UBDfWS015780@r-dd.iij4u.or.jp>
+References: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
+	<200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp>
+	<m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,37 +21,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: danms@us.ibm.com
 List-Id: dm-devel.ids
 
-Seems that DMU_FLAG_SYNC flag is always set. Is this intentional?
+Seems that 4th patch is delayed or lost. I'll post it again if it will
+not be delivered until tomorrow.
 
-Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
----
- drivers/md/dm-userspace-chardev.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [dm-devel] Latest dm-userspace kernel code
+Date: Fri, 29 Sep 2006 19:39:46 -0700
 
-diff --git a/drivers/md/dm-userspace-chardev.c b/drivers/md/dm-userspace-chardev.c
-index 1853d0d..ee55ca8 100644
---- a/drivers/md/dm-userspace-chardev.c
-+++ b/drivers/md/dm-userspace-chardev.c
-@@ -304,7 +304,7 @@ static void map_worker(void *data)
- 	struct target_device *src_dev, *dst_dev;
- 	int need_copy = dmu_get_flag(&msg->flags, DMU_FLAG_COPY_FIRST);
- 
--	if (dmu_get_flag(&msg->flags, DMU_FLAG_COPY_FIRST)) {
-+	if (need_copy) {
- 		src_dev = find_target(dev, MKDEV(msg->src_maj, msg->src_min));
- 		if (!src_dev) {
- 			DMERR("Failed to find src device %i:%i\n",
-@@ -327,7 +327,7 @@ static void map_worker(void *data)
- 		msg->offset;
- 	req->bio->bi_bdev = dst_dev->bdev;
- 
--	dmu_set_flag(&req->flags, DMU_FLAG_SYNC);
-+	dmu_cpy_flag(&req->flags, msg->flags, DMU_FLAG_SYNC);
- 
- 	if (!maybe_queue_dependent_request(req, need_copy)) {
- 		if (need_copy)
--- 
-1.4.1
+> FT> - What is the purpose of dmu_request->deps? I guess that it is for
+> FT> preventing I/O being reordered. if so, again, you don't need to do
+> FT> that.
+> 
+> Well, the problem is that a block copy would overwrite other requests.
+> I think that while a copy is happening, you have to be careful to not
+> write into that block so that your writes are not lost.
+
+On second thought, I think that it would be better to handle this in
+user space.
+
+If you add a feature to notify I/O completion of user space (I think
+this feature is necessary for other reasons too), user-space programs
+can take care about this easily. I prefer the dm-userspace kernel
+module to just perform I/Os according to requests from user space.
