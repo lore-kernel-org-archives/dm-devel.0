@@ -1,8 +1,7 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 2/4] dm-userspace: use kernel threads for
-	do_map_bio
-Date: Sat, 30 Sep 2006 19:44:32 +0900
-Message-ID: <200609301044.k8UAic8Y013343@r-dd.iij4u.or.jp>
+Subject: [PATCH 3/4] dm-userspace: fix DMU_FLAG_SYNC
+Date: Sat, 30 Sep 2006 19:44:35 +0900
+Message-ID: <200609301044.k8UAifNn013346@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
@@ -21,35 +20,34 @@ To: dm-devel@redhat.com
 Cc: danms@us.ibm.com
 List-Id: dm-devel.ids
 
-No need to care about I/O reordering, so kernel threads can performs
-do_map_bio (that might provide the better performance).
+Seems that DMU_FLAG_SYNC flag is always set. Is this intentional?
 
 Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 ---
- drivers/md/dm-userspace-chardev.c |    9 ---------
- 1 files changed, 0 insertions(+), 9 deletions(-)
+ drivers/md/dm-userspace-chardev.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/drivers/md/dm-userspace-chardev.c b/drivers/md/dm-userspace-chardev.c
-index 869e359..1853d0d 100644
+index 1853d0d..ee55ca8 100644
 --- a/drivers/md/dm-userspace-chardev.c
 +++ b/drivers/md/dm-userspace-chardev.c
-@@ -358,17 +358,8 @@ static void do_map_bio(struct dmu_device
+@@ -304,7 +304,7 @@ static void map_worker(void *data)
+ 	struct target_device *src_dev, *dst_dev;
+ 	int need_copy = dmu_get_flag(&msg->flags, DMU_FLAG_COPY_FIRST);
  
- 	memcpy(&req->response, msg, sizeof(req->response));
+-	if (dmu_get_flag(&msg->flags, DMU_FLAG_COPY_FIRST)) {
++	if (need_copy) {
+ 		src_dev = find_target(dev, MKDEV(msg->src_maj, msg->src_min));
+ 		if (!src_dev) {
+ 			DMERR("Failed to find src device %i:%i\n",
+@@ -327,7 +327,7 @@ static void map_worker(void *data)
+ 		msg->offset;
+ 	req->bio->bi_bdev = dst_dev->bdev;
  
--#if 0
--	/* I think it would be nice to farm this out to a worker
--	 * thread, so that userspace does not have to do all the work,
--	 * but I wonder about the correctness of possibly reordering
--	 * requests to a single block
--	 */
- 	INIT_WORK(&req->task, map_worker, req);
- 	schedule_work(&req->task);
--#else
--	map_worker(req);
--#endif
- }
+-	dmu_set_flag(&req->flags, DMU_FLAG_SYNC);
++	dmu_cpy_flag(&req->flags, msg->flags, DMU_FLAG_SYNC);
  
- static void do_map_done(struct dmu_device *dev, uint64_t id_of_op, int fail)
+ 	if (!maybe_queue_dependent_request(req, need_copy)) {
+ 		if (need_copy)
 -- 
 1.4.1
