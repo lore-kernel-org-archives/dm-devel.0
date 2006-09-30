@@ -1,15 +1,17 @@
 From: Dan Smith <danms@us.ibm.com>
-Subject: Re: Thoughts on removing the remap cache
-Date: Sat, 30 Sep 2006 08:44:26 -0700
-Message-ID: <m3ven5z7dx.fsf@guaranine.beaverton.ibm.com>
-References: <m3d59e1hj9.fsf@guaranine.beaverton.ibm.com>
-	<200609300246.k8U2khwi004095@r-dd.iij4u.or.jp>
+Subject: Re: Latest dm-userspace kernel code
+Date: Sat, 30 Sep 2006 08:46:10 -0700
+Message-ID: <m3r6xtz7b1.fsf@guaranine.beaverton.ibm.com>
+References: <m3hcyr4sit.fsf@guaranine.beaverton.ibm.com>
+	<200609300221.k8U2L7UU001919@r-dd.iij4u.or.jp>
+	<m3zmciyt59.fsf@guaranine.beaverton.ibm.com>
+	<200609300314.k8U3EvGF006445@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1054248701=="
+Content-Type: multipart/mixed; boundary="===============1977949996=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200609300246.k8U2khwi004095@r-dd.iij4u.or.jp> (FUJITA Tomonori's
-	message of "Sat, 30 Sep 2006 11:46:38 +0900")
+In-Reply-To: <200609300314.k8U3EvGF006445@r-dd.iij4u.or.jp> (FUJITA Tomonori's
+	message of "Sat, 30 Sep 2006 12:14:51 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +22,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: fujita.tomonori@lab.ntt.co.jp
 List-Id: dm-devel.ids
 
---===============1054248701==
+--===============1977949996==
 Content-Type: multipart/signed; boundary="=-=-=";
 	micalg=pgp-sha1; protocol="application/pgp-signature"
 
 --=-=-=
 Content-Transfer-Encoding: quoted-printable
 
-FT> I guess that dbench generates relatively large size I/Os than
-FT> common workloads, which is more sensitive to latency.
+FT> I thought that dm-userpsace supports a feature to map a single
+FT> request to multiple devices for kinda raid. For that, I guess that
+FT> struct dmu_msg_map_response includes several sets of dst_maj and
+FT> dst_min. Or you might use 'linked' dmu_msg_map_response, which
+FT> enables a user-space daemon to send multiple dmu_msg_map_responses
+FT> for one dmu_msg_map_request (if a dmu_msg_map_response is marked
+FT> 'linked', dm-userspace module clones the bio and does not free
+FT> struct the dmu_request).
 
-Right, that is what I am thinking.  However, dbench inside a domU does
-not perform well either.  Even running dbench inside a domU, the
-batches that the userspace daemon sees are only about 10 requests,
-compared to several thousand at times when running on bare metal.
-
-FT> Seems that Xen camp is pretty happy with blktap. So dm-userspace
-FT> should be ok with domU. Maybe it's time to try ring buffer stuff
-FT> again. :)
-
-You think that the ring buffer has the potential to be lower latency
-due to fewer memcpy()'s right?
+Hmm, I had not planned to implement this kind of behavior, but I can
+see the benefit.  I think it would be best to focus on performance for
+now and add that capability later.
 
 =2D-=20
 Dan Smith
@@ -57,18 +56,18 @@ Content-Type: application/pgp-signature
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.2.2 (GNU/Linux)
 
-iD8DBQFFHpDcwtEf7b4GJVQRAjESAJ46CPDC3Uv2dudqQBql1D/Onm/B1wCfZPIS
-NdqOocvxp40XjRvM9b4JNFw=
-=CIbk
+iD8DBQFFHpFCwtEf7b4GJVQRAjdYAJ985VPRGjvcKDRcRSJVk4JDV0GbcQCgg6zC
+wM/r5h+veCjo6TRbnczCUYs=
+=IjMn
 -----END PGP SIGNATURE-----
 --=-=-=--
 
 
---===============1054248701==
+--===============1977949996==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============1054248701==--
+--===============1977949996==--
