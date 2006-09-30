@@ -1,14 +1,10 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: Avoid Error Messages in /var/log/messages EMC CX300
-Date: Fri, 29 Sep 2006 11:58:15 -0400
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1402@CORPUSMX40A.corp.emc.com>
-References: <C514D40EFDB5C84083DAEB84A1186A8F266AEB@msc-ex02.msc-ge.mscnet>
+From: fujita <tomof@dd.iij4u.or.jp>
+Subject: [PATCH 4/4] dm-userspace: use mmaped buffer instead of
+ read/write system calls
+Date: Sat, 30 Sep 2006 19:44:36 +0900
+Message-ID: <200609301044.k8UAigeQ013351@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1828954548=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <C514D40EFDB5C84083DAEB84A1186A8F266AEB@msc-ex02.msc-ge.mscnet>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,376 +15,559 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: danms@us.ibm.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
-
---===============1828954548==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C6E3E0.130D0649"
-
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C6E3E0.130D0649
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-These errors are caused by Linux system applications, (e.g., blkid(8),
-hwinfo(8)), which issue read/write i/o directly to target device paths
-(i.e., /dev/sdh in your example) which are in a passive/standby state.
-=20
-Although the errors are benign, there can be a lot of them and it makes
-it difficult to discern the ones which are not benign.
-
-
-________________________________
-
-	From: dm-devel-bounces@redhat.com
-[mailto:dm-devel-bounces@redhat.com] On Behalf Of Herr, Manuel
-	Sent: Wednesday, September 27, 2006 6:27 AM
-	To: dm-devel@redhat.com
-	Subject: [dm-devel] Avoid Error Messages in /var/log/messages
-EMC CX300
-=09
-=09
-
-	Hi there,=20
-	i get Error Messages in my logfiles when I boot the System and
-then, approx. every 10 Minutes, or during an hwinfo.=20
-	The Server is connected to an EMC CX 300 through 1 Qlogic HBA.=20
-	The Messages only appear for the failover Device. In my Example
-for /dev/sdh.=20
-
-	#multipath -ld=20
-	sapdata (36006016040321900600487993216db11)=20
-	[size=3D133 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"1 emc"]=20
-	\_ round-robin 0 [active]=20
-	 \_ 3:0:1:6 sdp 8:240 [active][ready]=20
-	\_ round-robin 0 [enabled]=20
-	 \_ 3:0:0:6 sdh 8:112 [active][ready]=20
-	*snip*=20
-
-	#fdisk -l /dev/sdp=20
-	Disk /dev/sdp: 143.0 GB, 143034155008 bytes=20
-	255 heads, 63 sectors/track, 17389 cylinders=20
-	Units =3D cylinders of 16065 * 512 =3D 8225280 bytes=20
-
-	   Device Boot      Start         End      Blocks   Id  System=20
-	/dev/sdp1               1       17389   139677111   83  Linux=20
-
-	#fdisk -l /dev/sdh=20
-	--> Generates this Error in /var/log/messages=20
-	Sep 27 12:17:44 saptf2 kernel: end_request: I/O error, dev sdh,
-sector 0=20
-	Sep 27 12:17:44 saptf2 kernel: Buffer I/O error on device sdh,
-logical block 0=20
-
-
-	Configuration:=20
-	/etc/multipath.conf=20
-	defaults {=20
-	        default_features "1 queue_if_no_path"=20
-	}=20
-
-	multipaths {=20
-	        multipath=20
-	        {=20
-	                #mountpoint /sapdb/PF1/sapdata=20
-	                wwid 36006016040321900600487993216db11=20
-	                alias sapdata=20
-	        }=20
-	*snip* (some more aliases for other LUNs) *snip*=20
-	}=20
-	devices {=20
-	        device {=20
-	                vendor                  "DGC  "=20
-	                product                 "*"=20
-	                path_grouping_policy    group_by_prio=20
-	                getuid_callout          "/sbin/scsi_id -g -u -s
-/block/%n"=20
-	                path_checker            emc_clariion=20
-	                features                "1 queue_if_no_path"=20
-	                hardware_handler        "1 emc"=20
-	                failback                immediate=20
-	                prio_callout            "/sbin/mpath_prio_emc
-/dev/%n"=20
-	                no_path_retry           300=20
-	        }=20
-	}=20
-
-	Loaded Modules:=20
-	dm_emc                 23808  1=20
-	dm_round_robin         20480  1=20
-	dm_multipath           38800  3 dm_emc,dm_round_robin=20
-	dm_mod                 77536  23 dm_multipath=20
-	qla2300               141696  0=20
-	qla2xxx               356192  33 qla2300=20
-
-	#modinfo qla2300=20
-	version:        8.01.02-sles DBB4213CE377B7165AFB8AC=20
-
-	#modinfo qla2xxx=20
-	version:        8.01.02-sles F6D31250031AEB3A3B9138A=20
-
-	Kernel:=20
-	2.6.5-7.282-smp X86_64=20
-
-	I searched the mailing Lists for other examples, but i didnt
-find any Suggestions to solve this.=20
-	Thanks for help!=20
-	Regarding=20
-	Manuel Herr=20
-
-
-
-------_=_NextPart_001_01C6E3E0.130D0649
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><TITLE>Avoid Error Messages in /var/log/messages EMC =
-CX300</TITLE>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<META content=3D"MSHTML 6.00.2800.1561" name=3DGENERATOR></HEAD>
-<BODY>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D688375315-29092006><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2>These errors are caused by Linux system =
-applications,=20
-(e.g., blkid(8), hwinfo(8)), which issue read/write i/o directly to =
-target=20
-device paths (i.e., /dev/sdh in your example) which are in a =
-passive/standby=20
-state.</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D688375315-29092006><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D688375315-29092006><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2>Although the errors are benign, there can be a =
-lot of them=20
-and it makes it difficult to discern the ones which are not=20
-benign.</FONT></SPAN></DIV><BR>
-<BLOCKQUOTE=20
-style=3D"PADDING-LEFT: 5px; MARGIN-LEFT: 5px; BORDER-LEFT: #0000ff 2px =
-solid; MARGIN-RIGHT: 0px">
-  <DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr align=3Dleft>
-  <HR tabIndex=3D-1>
-  <FONT face=3DTahoma size=3D2><B>From:</B> dm-devel-bounces@redhat.com=20
-  [mailto:dm-devel-bounces@redhat.com] <B>On Behalf Of </B>Herr,=20
-  Manuel<BR><B>Sent:</B> Wednesday, September 27, 2006 6:27 =
-AM<BR><B>To:</B>=20
-  dm-devel@redhat.com<BR><B>Subject:</B> [dm-devel] Avoid Error Messages =
-in=20
-  /var/log/messages EMC CX300<BR></FONT><BR></DIV>
-  <DIV></DIV><!-- Converted from text/rtf format -->
-  <P><FONT face=3DArial>Hi there,</FONT> <BR><FONT face=3DArial>i get =
-Error Messages=20
-  in my logfiles when I boot the System and then, approx. every 10 =
-Minutes, or=20
-  during an hwinfo.</FONT> <BR><FONT face=3DArial>The Server is =
-connected to an=20
-  EMC CX 300 through 1 Qlogic HBA.</FONT> <BR><FONT face=3DArial>The =
-Messages only=20
-  appear for the failover Device. In my Example for /dev/sdh. =
-</FONT></P>
-  <P><FONT face=3DArial>#multipath -ld</FONT> <BR><FONT =
-face=3DArial>sapdata=20
-  (36006016040321900600487993216db11)</FONT> <BR><FONT =
-face=3DArial>[size=3D133=20
-  GB][features=3D"1 queue_if_no_path"][hwhandler=3D"1 emc"]</FONT> =
-<BR><FONT=20
-  face=3DArial>\_ round-robin 0 [active]</FONT> <BR><FONT =
-face=3DArial>&nbsp;\_=20
-  3:0:1:6 sdp 8:240 [active][ready]</FONT> <BR><FONT face=3DArial>\_ =
-round-robin 0=20
-  [enabled]</FONT> <BR><FONT face=3DArial>&nbsp;\_ 3:0:0:6 sdh 8:112=20
-  [active][ready]</FONT> <BR><FONT face=3DArial>*snip*</FONT> </P>
-  <P><FONT face=3DArial>#fdisk -l /dev/sdp</FONT> <BR><FONT =
-face=3DArial>Disk=20
-  /dev/sdp: 143.0 GB, 143034155008 bytes</FONT> <BR><FONT =
-face=3DArial>255 heads,=20
-  63 sectors/track, 17389 cylinders</FONT> <BR><FONT face=3DArial>Units =
-=3D=20
-  cylinders of 16065 * 512 =3D 8225280 bytes</FONT> </P>
-  <P><FONT face=3DArial>&nbsp;&nbsp; Device =
-Boot&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  Start&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  End&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Blocks&nbsp;&nbsp; Id&nbsp; =
-System</FONT>=20
-  <BR><FONT=20
-  =
-face=3DArial>/dev/sdp1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nb=
-sp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  1&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 17389&nbsp;&nbsp; =
-139677111&nbsp;&nbsp;=20
-  83&nbsp; Linux</FONT> </P>
-  <P><FONT face=3DArial>#fdisk -l /dev/sdh</FONT> <BR><FONT =
-face=3DArial>--&gt;=20
-  Generates this Error in /var/log/messages</FONT> <BR><FONT =
-face=3DArial>Sep 27=20
-  12:17:44 saptf2 kernel: end_request: I/O error, dev sdh, sector =
-0</FONT>=20
-  <BR><FONT face=3DArial>Sep 27 12:17:44 saptf2 kernel: Buffer I/O error =
-on device=20
-  sdh, logical block 0</FONT> </P><BR>
-  <P><FONT face=3DArial>Configuration:</FONT> <BR><FONT=20
-  face=3DArial>/etc/multipath.conf</FONT> <BR><FONT =
-face=3DArial>defaults {</FONT>=20
-  <BR><FONT face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  default_features "1 queue_if_no_path"</FONT> <BR><FONT =
-face=3DArial>}</FONT>=20
-</P>
-  <P><FONT face=3DArial>multipaths {</FONT> <BR><FONT=20
-  face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-multipath</FONT>=20
-  <BR><FONT face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-{</FONT>=20
-  <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  #mountpoint /sapdb/PF1/sapdata</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  wwid 36006016040321900600487993216db11</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  alias sapdata</FONT> <BR><FONT=20
-  face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</FONT> =
-<BR><FONT=20
-  face=3DArial>*snip* (some more aliases for other LUNs) *snip*</FONT> =
-<BR><FONT=20
-  face=3DArial>}</FONT> <BR><FONT face=3DArial>devices {</FONT> =
-<BR><FONT=20
-  face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; device =
-{</FONT>=20
-  <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-vendor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  "DGC&nbsp; "</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-product&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  "*"</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  path_grouping_policy&nbsp;&nbsp;&nbsp; group_by_prio</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  getuid_callout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  "/sbin/scsi_id -g -u -s /block/%n"</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-path_checker&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;=20
-  emc_clariion</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-features&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  "1 queue_if_no_path"</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  hardware_handler&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "1 =
-emc"</FONT>=20
-  <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-failback&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  immediate</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-prio_callout&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;=20
-  "/sbin/mpath_prio_emc /dev/%n"</FONT> <BR><FONT=20
-  =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  =
-no_path_retry&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-=20
-  300</FONT> <BR><FONT =
-face=3DArial>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  }</FONT> <BR><FONT face=3DArial>}</FONT> </P>
-  <P><FONT face=3DArial>Loaded Modules:</FONT> <BR><FONT=20
-  =
-face=3DArial>dm_emc&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  23808&nbsp; 1</FONT> <BR><FONT=20
-  =
-face=3DArial>dm_round_robin&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;=20
-  20480&nbsp; 1</FONT> <BR><FONT=20
-  =
-face=3DArial>dm_multipath&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;=20
-  38800&nbsp; 3 dm_emc,dm_round_robin</FONT> <BR><FONT=20
-  =
-face=3DArial>dm_mod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  77536&nbsp; 23 dm_multipath</FONT> <BR><FONT=20
-  =
-face=3DArial>qla2300&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  141696&nbsp; 0</FONT> <BR><FONT=20
-  =
-face=3DArial>qla2xxx&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
-  356192&nbsp; 33 qla2300</FONT> </P>
-  <P><FONT face=3DArial>#modinfo qla2300</FONT> <BR><FONT=20
-  face=3DArial>version:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-8.01.02-sles=20
-  DBB4213CE377B7165AFB8AC</FONT> </P>
-  <P><FONT face=3DArial>#modinfo qla2xxx</FONT> <BR><FONT=20
-  face=3DArial>version:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
-8.01.02-sles=20
-  F6D31250031AEB3A3B9138A</FONT> </P>
-  <P><FONT face=3DArial>Kernel: </FONT><BR><FONT =
-face=3DArial>2.6.5-7.282-smp=20
-  X86_64</FONT> </P>
-  <P><FONT face=3DArial size=3D2>I searched the mailing Lists for other =
-examples,=20
-  but i didnt find any Suggestions to solve this.</FONT> <BR><FONT =
-face=3DArial=20
-  size=3D2>Thanks for help!</FONT> <BR><FONT face=3DArial =
-size=3D2>Regarding=20
-  </FONT><BR><FONT face=3DArial size=3D2>Manuel Herr</FONT>=20
-</P><BR></BLOCKQUOTE></BODY></HTML>
-
-------_=_NextPart_001_01C6E3E0.130D0649--
-
-
---===============1828954548==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
+FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Dcc: fujita.tomonori@lab.ntt.co.jp
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
 
+Use mmaped buffer instead of read/write system calls for kernel/user
+communication. I've not tested this heavily, though seems to
+works. Hopefully, good enough for performance comparisons.
 
---===============1828954548==--
+Here's a user-space example code:
+
+http://www.kernel.org/pub/linux/kernel/people/tomo/dmu/example-rb.c
+
+Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+---
+ drivers/md/dm-user.h              |    2 
+ drivers/md/dm-userspace-chardev.c |  300 ++++++++++++++++++++++++++-----------
+ drivers/md/dm-userspace.c         |   20 --
+ include/linux/dm-userspace.h      |    6 +
+ 4 files changed, 221 insertions(+), 107 deletions(-)
+
+diff --git a/drivers/md/dm-user.h b/drivers/md/dm-user.h
+index 06b251b..1f301f2 100644
+--- a/drivers/md/dm-user.h
++++ b/drivers/md/dm-user.h
+@@ -119,6 +119,8 @@ void cleanup_chardev_transport(void);
+ void write_chardev_transport_info(struct dmu_device *dev,
+ 				  char *buf, unsigned int maxlen);
+ 
++extern void dmu_add_tx_request(struct dmu_device *dev, struct dmu_request *req);
++
+ /* Return the block number for @sector */
+ static inline u64 dmu_block(struct dmu_device *dev,
+ 			    sector_t sector)
+diff --git a/drivers/md/dm-userspace-chardev.c b/drivers/md/dm-userspace-chardev.c
+index ee55ca8..e3f85c7 100644
+--- a/drivers/md/dm-userspace-chardev.c
++++ b/drivers/md/dm-userspace-chardev.c
+@@ -2,6 +2,8 @@
+  * Copyright (C) International Business Machines Corp., 2006
+  * Author: Dan Smith <danms@us.ibm.com>
+  *
++ * Copyright (C) 2006 FUJITA Tomonori <tomof@acm.org>
++ *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation; under version 2 of the License.
+@@ -36,6 +38,12 @@ #include "dm-user.h"
+ 
+ #define DM_MSG_PREFIX "dm-userspace"
+ 
++struct dmu_ring {
++	u32 r_idx;
++	unsigned long r_pages[DMU_RING_PAGES];
++	spinlock_t r_lock;
++};
++
+ /* This allows for a cleaner separation between the dm-userspace
+  * device-mapper target, and the userspace transport used.  Right now,
+  * only a chardev transport exists, but it's possible that there could
+@@ -45,8 +53,31 @@ struct chardev_transport {
+ 	struct cdev cdev;
+ 	dev_t ctl_dev;
+ 	struct dmu_device *parent;
++
++	struct dmu_ring tx;
++	struct dmu_ring rx;
++	wait_queue_head_t tx_poll_wait;
+ };
+ 
++static inline void dmu_ring_idx_inc(struct dmu_ring *r)
++{
++	if (r->r_idx == DMU_MAX_EVENTS - 1)
++		r->r_idx = 0;
++	else
++		r->r_idx++;
++}
++
++static struct dmu_msg *dmu_head_msg(struct dmu_ring *r, u32 idx)
++{
++	u32 pidx, off;
++
++	pidx = idx / DMU_EVENT_PER_PAGE;
++	off = idx % DMU_EVENT_PER_PAGE;
++
++	return (struct dmu_msg *)
++		(r->r_pages[pidx] + sizeof(struct dmu_msg) * off);
++}
++
+ static struct dmu_request *find_rx_request(struct dmu_device *dev,
+ 					   uint64_t id)
+ {
+@@ -66,34 +97,39 @@ static struct dmu_request *find_rx_reque
+ 	return match;
+ }
+ 
+-static int have_pending_requests(struct dmu_device *dev)
+-{
+-	return atomic_read(&dev->t_reqs) != 0;
+-}
+-
+-static int send_userspace_message(uint8_t __user *buffer,
+-				  struct dmu_request *req)
++static int send_userspace_message(struct dmu_device *dev, struct dmu_request *req)
+ {
++	struct chardev_transport *t = dev->transport_private;
+ 	int ret = 0;
+-	struct dmu_msg msg;
++	struct dmu_msg *msg;
++	struct dmu_ring *ring = &t->tx;
++
++	spin_lock(&ring->r_lock);
++	msg = dmu_head_msg(ring, ring->r_idx);
++	if (!msg->hdr.status)
++		dmu_ring_idx_inc(ring);
++	else
++		ret = -EBUSY;
++	spin_unlock(&ring->r_lock);
+ 
+-	memset(&msg, 0, sizeof(msg));
++	if (ret)
++		return ret;
+ 
+-	msg.hdr.id = req->id;
++	msg->hdr.id = req->id;
+ 
+ 	switch (req->type) {
+ 	case DM_USERSPACE_MAP_BLOCK_REQ:
+-		msg.hdr.msg_type = req->type;
+-		msg.payload.map_req.org_block = req->u.block;
+-		dmu_cpy_flag(&msg.payload.map_req.flags,
++		msg->hdr.msg_type = req->type;
++		msg->payload.map_req.org_block = req->u.block;
++		dmu_cpy_flag(&msg->payload.map_req.flags,
+ 			     req->flags, DMU_FLAG_WR);
+ 		break;
+ 
+ 	case DM_USERSPACE_MAP_DONE:
+-		msg.hdr.msg_type = DM_USERSPACE_MAP_DONE;
+-		msg.payload.map_done.id_of_op = req->id;
+-		msg.payload.map_done.org_block = req->u.block;
+-		dmu_cpy_flag(&msg.payload.map_done.flags,
++		msg->hdr.msg_type = DM_USERSPACE_MAP_DONE;
++		msg->payload.map_done.id_of_op = req->id;
++		msg->payload.map_done.org_block = req->u.block;
++		dmu_cpy_flag(&msg->payload.map_done.flags,
+ 			     req->flags, DMU_FLAG_WR);
+ 		break;
+ 
+@@ -102,10 +138,9 @@ static int send_userspace_message(uint8_
+ 		ret = 0;
+ 	}
+ 
+-	if (copy_to_user(buffer, &msg, sizeof(msg)))
+-		return -EFAULT;
+-
+-	ret = sizeof(msg);
++	msg->hdr.status = 1;
++	mb();
++	flush_dcache_page(virt_to_page(msg));
+ 
+ 	/* If this request is not on a list (the rx_requests list),
+ 	 * then it needs to be freed after sending
+@@ -113,10 +148,12 @@ static int send_userspace_message(uint8_
+ 	if (list_empty(&req->list))
+ 		mempool_free(req, request_pool);
+ 
+-	return ret;
++	wake_up_interruptible(&dev->wqueue);
++
++	return 0;
+ }
+ 
+-struct dmu_request *pluck_next_request(struct dmu_device *dev)
++static struct dmu_request *pluck_next_request(struct dmu_device *dev)
+ {
+ 	struct dmu_request *req = NULL;
+ 	unsigned long flags;
+@@ -142,56 +179,39 @@ struct dmu_request *pluck_next_request(s
+ 	return req;
+ }
+ 
+-ssize_t dmu_ctl_read(struct file *file, char __user *buffer,
+-		     size_t size, loff_t *offset)
++static void delay_tx_request(struct dmu_device *dev, struct dmu_request *req)
+ {
++	unsigned long flags;
+ 
+-	struct dmu_device *dev = (struct dmu_device *)file->private_data;
+-	struct dmu_request *req = NULL;
+-	int ret = 0, r;
+-
+-        if (!capable(CAP_SYS_ADMIN))
+-                return -EACCES;
+-
+-	if (size < sizeof(struct dmu_msg)) {
+-		DMERR("Userspace buffer too small for a single message");
+-		return 0;
+-	}
+-
+-	while (!have_pending_requests(dev)) {
+-		if (file->f_flags & O_NONBLOCK) {
+-			return 0;
+-		}
+-
+-		if (wait_event_interruptible(dev->wqueue,
+-					     have_pending_requests(dev)))
+-			return -ERESTARTSYS;
+-	}
+-
+-	while (ret < size) {
+-		if ((size - ret) < sizeof(struct dmu_msg))
+-			break;
++	spin_lock(&dev->lock);
++	list_del_init(&req->list);
++	atomic_dec(&dev->r_reqs);
++	spin_unlock(&dev->lock);
+ 
+-		req = pluck_next_request(dev);
+-		if (!req)
+-			break;
++	spin_lock_irqsave(&dev->tx_lock, flags);
++	list_add_tail(&req->list, &dev->tx_requests);
++	atomic_inc(&dev->t_reqs);
++	spin_unlock_irqrestore(&dev->tx_lock, flags);
++}
+ 
+-		r = send_userspace_message((void *)(buffer + ret), req);
+-		if (r == 0)
+-			continue;
+-		else if (r < 0)
+-			return r;
++/* Add a request to a device's request queue */
++void dmu_add_tx_request(struct dmu_device *dev, struct dmu_request *req)
++{
++	int err;
+ 
+-		ret += r;
+-	}
++	BUG_ON(!list_empty(&req->list));
+ 
+-	if (ret < sizeof(struct dmu_msg)) {
+-		if (ret != 0)
+-			DMERR("Sending partial message!");
+-		DMINFO("Sent 0 requests to userspace");
++	if (req->type == DM_USERSPACE_MAP_BLOCK_REQ ||
++	    req->type == DM_USERSPACE_MAP_DONE) {
++		spin_lock(&dev->lock);
++		list_add_tail(&req->list, &dev->rx_requests);
++		atomic_inc(&dev->r_reqs);
++		spin_unlock(&dev->lock);
+ 	}
+ 
+-	return ret;
++	err = send_userspace_message(dev, req);
++	if (err)
++		delay_tx_request(dev, req);
+ }
+ 
+ static struct dmu_request *pluck_dep_req(struct dmu_request *req)
+@@ -402,54 +422,91 @@ ssize_t dmu_ctl_write(struct file *file,
+ 		      size_t size, loff_t *offset)
+ {
+ 	struct dmu_device *dev = (struct dmu_device *)file->private_data;
+-	int ret = 0;
+-	struct dmu_msg msg;
++	struct chardev_transport *t = dev->transport_private;
++	struct dmu_ring *ring = &t->rx;
++	struct dmu_msg *msg;
++	struct dmu_request *req;
+ 
+         if (!capable(CAP_SYS_ADMIN))
+                 return -EACCES;
+ 
+-	while ((ret + sizeof(msg)) <= size) {
+-		if (copy_from_user(&msg, buffer+ret, sizeof(msg))) {
+-			DMERR("%s copy_from_user failed!", __FUNCTION__);
+-			ret = -EFAULT;
+-			goto out;
+-		}
++	while (1) {
++		msg = dmu_head_msg(ring, ring->r_idx);
+ 
+-		ret += sizeof(msg);
++		if (!msg->hdr.status)
++			break;
++
++		/* do we need this? */
++		flush_dcache_page(virt_to_page(msg));
++		dmu_ring_idx_inc(ring);
+ 
+-		switch (msg.hdr.msg_type) {
++		switch (msg->hdr.msg_type) {
+ 		case DM_USERSPACE_MAP_BLOCK_RESP:
+-			do_map_bio(dev, &msg.payload.map_rsp);
++			do_map_bio(dev, &msg->payload.map_rsp);
+ 			break;
+ 
+ 		case DM_USERSPACE_MAP_FAILED:
+-			do_map_failed(dev, msg.payload.map_rsp.id_of_req);
++			do_map_failed(dev, msg->payload.map_rsp.id_of_req);
+ 			break;
+ 
+ 		case DM_USERSPACE_MAP_DONE:
+-			do_map_done(dev, msg.payload.map_done.id_of_op, 0);
++			do_map_done(dev, msg->payload.map_done.id_of_op, 0);
+ 			break;
+ 
+ 		case DM_USERSPACE_MAP_DONE_FAILED:
+-			do_map_done(dev, msg.payload.map_done.id_of_op, 1);
++			do_map_done(dev, msg->payload.map_done.id_of_op, 1);
+ 			break;
+ 
+ 		default:
+ 			DMWARN("Unknown incoming request type: %i",
+-			       msg.hdr.msg_type);
++			       msg->hdr.msg_type);
+ 		}
++
++		msg->hdr.status = 0;
+ 	}
+- out:
+-	if (ret < sizeof(msg))
+-		DMINFO("Received 0 responses from userspace");
+ 
+-	return ret;
++	while ((req = pluck_next_request(dev))) {
++		int err = send_userspace_message(dev, req);
++		if (err) {
++			delay_tx_request(dev, req);
++			break;
++		}
++	}
++
++	return size;
++}
++
++static void dmu_ring_free(struct dmu_ring *r)
++{
++	int i;
++	for (i = 0; i < DMU_RING_PAGES; i++) {
++		if (!r->r_pages[i])
++			break;
++		free_page(r->r_pages[i]);
++		r->r_pages[i] = 0;
++	}
++}
++
++static int dmu_ring_alloc(struct dmu_ring *r)
++{
++	int i;
++
++	r->r_idx = 0;
++	spin_lock_init(&r->r_lock);
++
++	for (i = 0; i < DMU_RING_PAGES; i++) {
++		r->r_pages[i] = get_zeroed_page(GFP_KERNEL);
++		if (!r->r_pages[i])
++			return -ENOMEM;
++	}
++	return 0;
+ }
+ 
+ int dmu_ctl_open(struct inode *inode, struct file *file)
+ {
+ 	struct chardev_transport *t;
+ 	struct dmu_device *dev;
++	int ret;
+ 
+         if (!capable(CAP_SYS_ADMIN))
+                 return -EACCES;
+@@ -457,19 +514,33 @@ int dmu_ctl_open(struct inode *inode, st
+ 	t = container_of(inode->i_cdev, struct chardev_transport, cdev);
+ 	dev = t->parent;
+ 
++	ret = dmu_ring_alloc(&t->tx);
++	if (ret)
++		goto free_tx;
++
++	ret = dmu_ring_alloc(&t->rx);
++	if (ret)
++		goto free_rx;
++
+ 	get_dev(dev);
+ 
+ 	file->private_data = dev;
+ 
+ 	return 0;
++free_rx:
++	dmu_ring_free(&t->rx);
++free_tx:
++	dmu_ring_free(&t->tx);
++	return ret;
+ }
+ 
+ int dmu_ctl_release(struct inode *inode, struct file *file)
+ {
+-	struct dmu_device *dev;
+-
+-	dev = (struct dmu_device *)file->private_data;
++	struct dmu_device *dev = (struct dmu_device *)file->private_data;
++	struct chardev_transport *t = dev->transport_private;
+ 
++	dmu_ring_free(&t->rx);
++	dmu_ring_free(&t->tx);
+ 	put_dev(dev);
+ 
+ 	return 0;
+@@ -478,21 +549,72 @@ int dmu_ctl_release(struct inode *inode,
+ unsigned dmu_ctl_poll(struct file *file, poll_table *wait)
+ {
+ 	struct dmu_device *dev = (struct dmu_device *)file->private_data;
++	struct chardev_transport *t = dev->transport_private;
++	struct dmu_ring *ring = &t->tx;
++	struct dmu_msg *msg;
+ 	unsigned mask = 0;
++	u32 idx;
+ 
+ 	poll_wait(file, &dev->wqueue, wait);
+ 
+-	if (have_pending_requests(dev))
++	spin_lock(&ring->r_lock);
++
++	idx = ring->r_idx ? ring->r_idx - 1 : DMU_MAX_EVENTS - 1;
++	msg = dmu_head_msg(ring, idx);
++	if (msg->hdr.status)
+ 		mask |= POLLIN | POLLRDNORM;
+ 
++	spin_unlock(&ring->r_lock);
++
+ 	return mask;
+ }
+ 
++static int dmu_ring_map(struct vm_area_struct *vma, unsigned long addr,
++			struct dmu_ring *ring)
++{
++	int i, err;
++
++	for (i = 0; i < DMU_RING_PAGES; i++) {
++		struct page *page = virt_to_page(ring->r_pages[i]);
++		err = vm_insert_page(vma, addr, page);
++		if (err)
++			return err;
++		addr += PAGE_SIZE;
++	}
++
++	return 0;
++}
++
++static int dmu_ctl_mmap(struct file *file, struct vm_area_struct *vma)
++{
++	struct dmu_device *dev = (struct dmu_device *)file->private_data;
++	struct chardev_transport *t = dev->transport_private;
++	unsigned long addr;
++	int err;
++
++	if (vma->vm_pgoff)
++		return -EINVAL;
++
++	if (vma->vm_end - vma->vm_start != DMU_RING_SIZE * 2) {
++		DMERR("mmap size must be %lu, not %lu \n",
++			DMU_RING_SIZE * 2, vma->vm_end - vma->vm_start);
++		return -EINVAL;
++	}
++
++	addr = vma->vm_start;
++	err = dmu_ring_map(vma, addr, &t->tx);
++	if (err)
++		return err;
++	err = dmu_ring_map(vma, addr + DMU_RING_SIZE, &t->rx);
++
++	return err;
++}
++
+ static struct file_operations ctl_fops = {
+ 	.open    = dmu_ctl_open,
+ 	.release = dmu_ctl_release,
+-	.read    = dmu_ctl_read,
+ 	.write   = dmu_ctl_write,
++	.mmap	 = dmu_ctl_mmap,
+ 	.poll    = dmu_ctl_poll,
+ 	.owner   = THIS_MODULE,
+ };
+diff --git a/drivers/md/dm-userspace.c b/drivers/md/dm-userspace.c
+index 3f3d2ef..6074f6b 100644
+--- a/drivers/md/dm-userspace.c
++++ b/drivers/md/dm-userspace.c
+@@ -49,22 +49,6 @@ LIST_HEAD(devices);
+ /* Device number for the control device */
+ dev_t dmu_dev;
+ 
+-/* Add a request to a device's request queue */
+-static void add_tx_request(struct dmu_device *dev,
+-			   struct dmu_request *req)
+-{
+-	unsigned long flags;
+-
+-	BUG_ON(!list_empty(&req->list));
+-
+-	spin_lock_irqsave(&dev->tx_lock, flags);
+-	list_add_tail(&req->list, &dev->tx_requests);
+-	atomic_inc(&dev->t_reqs);
+-	spin_unlock_irqrestore(&dev->tx_lock, flags);
+-
+-	wake_up(&dev->wqueue);
+-}
+-
+ static void endio_worker(void *data)
+ {
+ 	struct dmu_request *req = data;
+@@ -431,7 +415,7 @@ static int dmu_map(struct dm_target *ti,
+ 
+ 	init_req(dev, bio, req);
+ 
+-	add_tx_request(dev, req);
++	dmu_add_tx_request(dev, req);
+ 
+ 	return 0;
+ }
+@@ -480,7 +464,7 @@ static int dmu_end_io(struct dm_target *
+ 
+ 	if (dmu_get_flag(&req->flags, DMU_FLAG_SYNC)) {
+ 		req->type = DM_USERSPACE_MAP_DONE;
+-		add_tx_request(req->dev, req);
++		dmu_add_tx_request(req->dev, req);
+ 		ret = 1;
+ 	} else {
+ 		INIT_WORK(&req->task, endio_worker, req);
+diff --git a/include/linux/dm-userspace.h b/include/linux/dm-userspace.h
+index 698093a..0d7f59e 100644
+--- a/include/linux/dm-userspace.h
++++ b/include/linux/dm-userspace.h
+@@ -65,6 +65,7 @@ static inline void dmu_cpy_flag(uint32_t
+  */
+ struct dmu_msg_header {
+ 	uint64_t id;
++	uint64_t status;
+ 	uint32_t msg_type;
+ 	uint32_t payload_len;
+ };
+@@ -112,4 +113,9 @@ struct dmu_msg {
+ 	} payload;
+ };
+ 
++#define DMU_RING_SIZE (1UL << 18)
++#define DMU_RING_PAGES (DMU_RING_SIZE >> PAGE_SHIFT)
++#define DMU_EVENT_PER_PAGE (PAGE_SIZE / sizeof(struct dmu_msg))
++#define DMU_MAX_EVENTS (DMU_EVENT_PER_PAGE * DMU_RING_PAGES)
++
+ #endif
+-- 
+1.4.1
