@@ -1,16 +1,17 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+From: Dan Smith <danms@us.ibm.com>
 Subject: Re: Latest dm-userspace kernel code
-Date: Sun, 01 Oct 2006 12:51:24 +0900
-Message-ID: <200610010351.k913pOSL020042@r-dd.iij4u.or.jp>
+Date: Sun, 01 Oct 2006 10:12:09 -0700
+Message-ID: <m31wpsyn86.fsf@guaranine.beaverton.ibm.com>
 References: <m3mz8hz76i.fsf@guaranine.beaverton.ibm.com>
 	<20061001023502S.fujita.tomonori@lab.ntt.co.jp>
 	<m364f5yomi.fsf@guaranine.beaverton.ibm.com>
+	<200610010351.k913pOSL020042@r-dd.iij4u.or.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1403137190=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m364f5yomi.fsf@guaranine.beaverton.ibm.com>
+In-Reply-To: <200610010351.k913pOSL020042@r-dd.iij4u.or.jp> (FUJITA Tomonori's
+	message of "Sun, 01 Oct 2006 12:51:24 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,47 +21,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] Latest dm-userspace kernel code
-Date: Sat, 30 Sep 2006 15:29:41 -0700
+--===============1403137190==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-> >> In order for this to perform well, we will need to use AIO, right?
-> FT> I'm not sure about this. Can you elaborate?
-> 
-> Well, assuming that a copy operation (and an fsync() to make sure it
-> is on-disk) is a non-trivial operation, it would be good to allow the
-> copy to happen in the background while still being able to service
-> other requests from the kernel.
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-Seems that we ara not talking about the same thing.
+FT> I'm talking about removing dmu_request->deps (dependent request
+FT> feature). Seems that you are talking about DMU_FLAG_COPY_FIRST
+FT> feature (it's ok for me).
 
-I'm talking about removing dmu_request->deps (dependent request
-feature). Seems that you are talking about DMU_FLAG_COPY_FIRST
-feature (it's ok for me).
+Ah, I see.  Sorry for the confusion :)
 
-My point is that the dependent request feature can be done in user
-space easily. If a user-space program gets a request trying to perform
-I/Os in the same block that an outgoing request with
-DMU_FLAG_COPY_FIRST are performing I/Os too, it waits for the I/O
-completion and then submit the new request to kernel space.
+FT> My point is that the dependent request feature can be done in user
+FT> space easily. If a user-space program gets a request trying to
+FT> perform I/Os in the same block that an outgoing request with
+FT> DMU_FLAG_COPY_FIRST are performing I/Os too, it waits for the I/O
+FT> completion and then submit the new request to kernel space.
+
+Yes, I think this is a good idea.  I will put it on my list of things
+to do next week.
+
+FT> I think that AIO is essential for the metadata issue even with
+FT> DMU_FLAG_COPY_FIRST and dependent request features, though the
+FT> DMU_FLAG_COPY_FIRST feature is important for writing a newly
+FT> allocated cow block.
+
+Yes, I fully intend to use AIO for metadata flushing eventually.
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.2.2 (GNU/Linux)
+
+iD8DBQFFH/brwtEf7b4GJVQRAtHzAJsEn03QdKH46EcEpQ84OE8uDUAEcACbBq6y
+mmtCg7JPjzzzvZU7ejbVO88=
+=0oJ8
+-----END PGP SIGNATURE-----
+--=-=-=--
 
 
-> In cowd, I need to write metadata when blocks are mapped, and fsync()
-> them to make sure they are on disk before I allow the IO to complete.
-> If I do this with a normal write()/fsync() (or open the file O_SYNC),
-> then cowd is blocked until the write is complete.  This means that
-> other requests that are in the queue, which may not require a copy,
-> are also blocked unnecessarily.  I assume that unless copy operations
-> are performed asynchronously (as they are now by letting the kernel do
-> it), the problem will get even worse.
+--===============1403137190==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I think that AIO is essential for the metadata issue even with
-DMU_FLAG_COPY_FIRST and dependent request features, though the
-DMU_FLAG_COPY_FIRST feature is important for writing a newly allocated
-cow block.
 
-I thought your user-space programs uses AIO like blktap does, though
-the current AIO implementation lacks some important features.
+--===============1403137190==--
