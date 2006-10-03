@@ -1,15 +1,12 @@
-From: Kyle Moffett <mrmacman_g4@mac.com>
-Subject: Re: Recommendations for cascaded snapshots
-Date: Mon, 2 Oct 2006 02:42:20 -0400
-Message-ID: <79ABCD24-0B9C-4D80-8BB9-79367A038CEC@mac.com>
-References: <D47F6AD4-A487-41B7-8576-D480D50E9F23@mac.com>
-	<20061001210921.GC17654@agk.surrey.redhat.com>
+From: Brice Figureau <brice+dm@daysofwonder.com>
+Subject: kernel NULL pointer after snapshot remove on 2.6.17
+Date: Tue, 03 Oct 2006 15:12:44 +0200
+Message-ID: <1159881164.19882.21.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v752.2)
-Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
+Mime-Version: 1.0
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061001210921.GC17654@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,79 +16,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Oct 01, 2006, at 17:09:21, Alasdair G Kergon wrote:
-> On Sun, Oct 01, 2006 at 03:12:01PM -0400, Kyle Moffett wrote:
->> Another quickie question:  How can I measure the current %use of a  
->> given snapshot device?
->
-> lvs -o snap_percent vgname/lvname
-> (see man page for formatting options to control output units &  
-> suppress headings etc.)
+Hi,
 
-Ok; this works for in-LVM snapshots; what if my blockdev isn't  
-actually an LVM device?  I'd like to be able to just run some command  
-on /dev/mapper/whatever or even /dev/sdXY that happens to contain my  
-"SnAp" exception table and get an answer from that.  If such a tool  
-doesn't exist; I'll probably just read the LVM sources and write one  
-myself but I'd rather not do that if a preexisting solution exists.
+I just found the following oops after lvremove'ing a snapshot which was
+used to backup a mysql database.
 
->> My first "solution" was to use stacked snapshots such that the
->
-> See the list archives for the thread last week.  I'll review the  
-> concept & initial code later this week. [see LVM2/lib/report/ 
-> columns.h in the source tree for the definitive list of fields; we  
-> should probably fix the tools to display the list that got compiled  
-> in.]
+This oops happened because I mistakenly copied a part of the snapshot
+back to the original volume. This apparently exhausted the capacity of
+the snapshot and triggered the following oops.
 
-This looks interesting; this would mean I could just create all the  
-snapshots sequentially and rely on the DM-snapshot code to do the  
-right thing.  I suppose the one issue is that the all-in-kernel  
-approach is still horrendously pre-alpha.  I've got time constraints  
-so I'm more curious what the present performance disadvantages are to  
-managing the stacking in userspace (using code I've mostly written  
-and partially tested already, and with the exception of the merging,  
-of course).
+lvremove after the oops was stuck in D+ state. 
+Any lv* command was also stuck after that.
+After that the server was stuck while rebooting with the error message:
+"snapshot is marked invalid", then nothing else.
 
->> First of all, it doesn't seem possible to merge two snapshots  
->> together
->
-> Mark has code to do this for read-only origins (originally  
-> implemented in
-> userspace).
+I cured the problem by booting a rescue CD, and hand-lvremoving the
+offending snapshot.
 
-Oh?  Do you have a link I could go peek at?  My "origin" would be  
-effectively read-only by the time I try to do any merges so an all- 
-userspace solution would be very easy for me to safely implement.  It  
-also makes the thread very easy to control CPU and IO usage using  
-traditional process-management tools.
+All this is on an amd64 debian etch with custom compiled kernel version
+2.6.17, and lvm2 version 2.02.06-2, and libdevmapper is at 1.02.08-1.
 
-Also, is it possible to mark a DM blockdev as "read-only" so that  
-attempts to mount it read-write or even write to it directly would  
-fail?  I _think_ I saw something going via LVM; but I haven't been  
-able to find a simple direct userspace tool to do that.  If it's  
-possible but such a tool doesn't exist then I'll probably just write  
-one.
+Here is the trace information:
 
-I realize there are a number of advantages to doing everything  
-through the LVM interface but I like to have a manual fallback for  
-when the excrement hits the impeller, especially on beta software  
-like this.
+attempt to access beyond end of device
+dm-8: rw=17, want=4194320, limit=4194304
+Unable to handle kernel NULL pointer dereference at 0000000000000000 RIP: 
+<ffffffff8804c121>{:dm_snapshot:exit_exception_table+81}
+PGD 5e9eb067 PUD 1d537067 PMD 0 
+Oops: 0000 [1] SMP 
+CPU 1 
+Modules linked in: ip_conntrack_ftp ipt_REJECT xt_tcpudp ipt_LOG xt_limit xt_state iptable_filter ip_conntrack nfnetlink ipmi_watchdog button ac battery ip_tables x_tables megaraid ipmi_devintf ipmi_si ipmi_msghandler psmouse e752x_edac serio_raw pcspkr hw_random edac_mc dm_mirror dm_snapshot dm_mod megaraid_mbox ehci_hcd uhci_hcd megaraid_mm thermal processor fan
+Pid: 4452, comm: lvremove Not tainted 2.6.17 #2
+RIP: 0010:[<ffffffff8804c121>] <ffffffff8804c121>{:dm_snapshot:exit_exception_table+81}
+RSP: 0018:ffff810076957c38  EFLAGS: 00010282
+RAX: 0000000000000001 RBX: ffffc20010400e00 RCX: 0000000000000004
+RDX: 0000000000000000 RSI: 0000000000000000 RDI: ffff81007f5eb200
+RBP: ffff810076957c68 R08: 0000000000000001 R09: 0000000000000000
+R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000000
+R13: ffff81007f5eb200 R14: 00000000000021e0 R15: ffff8100770b86e8
+FS:  00002b05cb22bc80(0000) GS:ffff81007ffae3c0(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 0000000000000000 CR3: 0000000063d52000 CR4: 00000000000006e0
+Process lvremove (pid: 4452, threadinfo ffff810076956000, task ffff81007e89eb50)
+Stack: 0000400000000282 ffff8100770b8680 ffffc20000061080 0000000000000000 
+       00000000005b7cd0 ffffffff8803d330 ffff810076957c88 ffffffff8804c7ba 
+       ffffc20000061080 ffff81007e9bbc00 
+Call Trace: <ffffffff8803d330>{:dm_mod:dev_remove+0}
+       <ffffffff8804c7ba>{:dm_snapshot:snapshot_dtr+170} <ffffffff8803ab09>{:dm_mod:dm_table_put+121}
+       <ffffffff8803a107>{:dm_mod:dm_put+87} <ffffffff8803c9c0>{:dm_mod:__hash_remove+144}
+       <ffffffff8803d37c>{:dm_mod:dev_remove+76} <ffffffff8803e370>{:dm_mod:ctl_ioctl+640}
+       <ffffffff8028bffd>{do_ioctl+125} <ffffffff8028c2cd>{vfs_ioctl+685}
+       <ffffffff8028c33d>{sys_ioctl+77} <ffffffff80209c8a>{system_call+126}
 
->> but I couldn't determine how stable it was or whether or not it  
->> applied to recent kernels.
->
-> I'm part-way through integrating it.  Once the snapshot concurrent  
-> read/write bug fix is finally sorted out, it shouldn't take long.
 
-Hmm, ok, thanks for the reply.  When you get it working do you have a  
-git tree or quilt patchset I could start testing with?  Also, I'm  
-curious about the "concurrent read/write bug"; do you have a message- 
-id or reference of some kind for that?
-
-Thanks for all your help!
-
-Cheers,
-Kyle Moffett
+Thank you for your help, if someone needs more information I can produce
+it.
+-- 
+Brice Figureau <brice+dm@daysofwonder.com>
