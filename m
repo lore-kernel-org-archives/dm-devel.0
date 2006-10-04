@@ -1,9 +1,15 @@
-From: agk@sourceware.org
-Subject: device-mapper WHATS_NEW
-Date: 3 Oct 2006 21:51:28 -0000
-Message-ID: <20061003215128.18908.qmail@sourceware.org>
+From: Brice Figureau <brice+dm@daysofwonder.com>
+Subject: Re: kernel NULL pointer after snapshot remove on 2.6.17
+Date: Wed, 04 Oct 2006 09:58:06 +0200
+Message-ID: <1159948686.21692.4.camel@localhost.localdomain>
+References: <1159881164.19882.21.camel@localhost.localdomain>
+	<45226702.5050003@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <45226702.5050003@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,29 +19,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2006-10-03 21:51:28
+On Tue, 2006-10-03 at 15:34 +0200, Milan Broz wrote:
+> For patch see http://bugzilla.kernel.org/show_bug.cgi?id=7040
 
-Modified files:
-	.              : WHATS_NEW 
+Thanks for the information, and sorry for the list noise.
 
-Log message:
-	Test.  Future commit messages should now also go to the dm-devel list
-	(450 subscribers) for discussion as well as the read-only dm-cvs list
-	(just 15 subscribers).
+The bug report mentions that the patch will be sent to -stable, but it
+doesn't appears in any 2.6.17.y
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.123&r2=1.124
+Has it been submitted for 2.6.18-stable ?
 
---- device-mapper/WHATS_NEW	2006/09/19 17:50:58	1.123
-+++ device-mapper/WHATS_NEW	2006/10/03 21:51:28	1.124
-@@ -1,4 +1,4 @@
--Version 1.02.11 - 
-+Version 1.02.11 -  
- =============================
- 
- Version 1.02.10 - 19 Sep 2006
+Thanks,
+-- 
+Brice Figureau <brice+dm@daysofwonder.com>
