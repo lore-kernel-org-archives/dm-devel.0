@@ -1,7 +1,7 @@
 From: Edward Goggin <egoggin@emc.com>
-Subject: dm-multipath alua assigned path priorities
-Date: Wed, 4 Oct 2006 14:24:07 -0400
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D140E@CORPUSMX40A.corp.emc.com>
+Subject: boot scripts and dm-multipath
+Date: Wed, 4 Oct 2006 15:42:02 -0400
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1410@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -21,11 +21,29 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Are the relationships between various dm-multipath ALUA assigned path
-priorities (active/optimal=3D50;active/sub-optimal=3D10;standby=3D1;other=
-=3D0)
-based on the performance characteristics of a particular array or were
-they arbitrarily chosen?  Also, is it reasonable to make these ALUA
-assigned path priorities configurable (particularly the ratio of
-active/optimal to active/sub-optimal priorities) on a per storage system
-basis?
+SuSE and Red Hat (maybe others also) enterprise distributions currently
+invoke multipath fairly early in the boot sequence, followed sometime
+later by multipathd.  I think that these distributions run the risk of
+incurring a boot-time hang when read I/Os issued (by kpartx in
+/etc/boot.multipath for instance) to dm-multipath mapped devices before
+multipathd is started, fail (due to failures which are not SCSI
+transport related) when sent to storage targets configured with the
+dm-multipath queue_if_no_path.  Without multipathd running there is no
+ability to timeout the "queue I/O forever" behavior during an
+all-paths-down use case.
+
+In these cases, the dm-multipath device is created because the storage
+target responds successfully to the device id (VPD page 0x83) inquiry
+request for each path but all path tests and read/write I/O requests
+issued on any/all paths to the block device will fail.  Currently, the
+kernel resident dm-multipath code will queue the failed read/write I/O
+indefinitely if the queue_if_no_path attribute is configured for the
+mapped device since this code is currently unable to differentiate
+between SCSI transport related failures and other errors.
+
+Newer versions of multipathd (that is, ones based on
+multipath-tools-0.4.7) do not need to invoke multipath in order to
+configure the dm-multipath mapped devices, simply invoking multipathd
+suffices.  Is it reasonable to change these scripts to invoke multipathd
+instead of multipath at early boot and not invoke multipath at all from
+these scripts?
