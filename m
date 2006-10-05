@@ -1,14 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Does dm avoid container/member loops?
-Date: Thu, 5 Oct 2006 14:40:50 +0100
-Message-ID: <20061005134050.GI17654@agk.surrey.redhat.com>
-References: <17700.39744.188262.731633@cse.unsw.edu.au>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: patch for handling clariion I/O to
+Date: Thu, 5 Oct 2006 12:16:49 -0400
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1418@CORPUSMX40A.corp.emc.com>
+References: <1159999754.15916.20.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <17700.39744.188262.731633@cse.unsw.edu.au>
+Content-class: urn:content-classes:message
+In-Reply-To: <1159999754.15916.20.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,27 +20,210 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: christophe.varoqui@free.fr
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 05, 2006 at 03:42:24PM +1000, Neil Brown wrote:
->  As both dm and md  create a block device using other block
->  devices as components, and as components can be added after creation,
->  it is theoretically possible to create a loop.
+=20
 
-Userspace LVM2 code takes steps to catch the most likely cases:
-  exclusive open is required to create a PV;
-  device-mapper dependencies are checked for loops when adding a PV to a VG.
+> -----Original Message-----
+> From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
+> Sent: Wednesday, October 04, 2006 6:09 PM
+> To: goggin, edward
+> Cc: device-mapper development
+> Subject: Re: patch for handling clariion I/O to
+>=20
+> Le mercredi 04 octobre 2006 =E0 16:01 -0400, Edward Goggin a =E9crit :
+> > Christophe,
+> >=20
+> > This patch attempts to prevent an I/O hang which can occur=20
+> with host I/O
+> > to an "in-active" CLARiiON snapshot LU.  While the snapshot LU is
+> > presented to the host, inquiry, TUR, and read capacity=20
+> commands succeed,
+> > but read and write commands are failed.
+> >=20
+> > The patch is not entirely CLARiiON specific since I've=20
+> added a field to
+> > the multipath structure (failallpaths) and I've modified=20
+> the interface
+> > of the sg_read function in libcheckers/readsector0.c.  If you prefer
+> > that I do this with a solution which is entirely isolated to the
+> > CLARiiON, I can do that instead.
+> >=20
+>=20
+> I don't see you ever reseting "allfailpaths". Isn't it a problem ?
+>
+=20
+I'm counting on the MALLOC macro, (defined in memory.h and called from
+alloc_multipath) to call zalloc to zero/reset all fields of struct multip=
+ath.
 
-The general problem is harder as you also have to track through filesystems
-(losetup) etc.
+> If "failallpaths" usage is limited to "emc_clariion.c", I would rather
+> see it added to the "struct emc_clariion_checker_context" instead of
+> "struct multipath" :
+>=20
 
->  This would probably give lockdep a major headache, but should detect
->  loops reliably, including loops involving both md and dm.
+I would also.  I will need to add logic to this code to coalesce paths
+to common block devices since that path checker code only deals with
+individual paths.  I'll do that though since that approach is a more
+isolated solution in addition to having the two advantages you've
+pointed out below.
 
-I reckon the solution involves bd_claim* preventing loops in the device
-dependency tree.
+> - no need to include libmultipath headers in checkers
+> - no need to declare (and use) the "container_of" macro ;)
+>=20
+>=20
+> The sg_read() change looks opportune indeed. I'll apply it as=20
+> soon as we
+> have the other pieces sorted out.
+>=20
 
-Alasdair
--- 
-agk@redhat.com
+Ok.  I'll try to have something early next week.
+
+> Thanks,
+> cvaroqui
+>=20
+>=20
+>=20
+> > diff --git a/libcheckers/emc_clariion.c b/libcheckers/emc_clariion.c
+> > index a883e3d..e4004a7 100644
+> > --- a/libcheckers/emc_clariion.c
+> > +++ b/libcheckers/emc_clariion.c
+> > @@ -3,6 +3,7 @@
+> >   */
+> >  #include <stdio.h>
+> >  #include <stdlib.h>
+> > +#include <stddef.h>
+> >  #include <string.h>
+> >  #include <sys/types.h>
+> >  #include <sys/stat.h>
+> > @@ -14,6 +15,14 @@
+> >  #include "checkers.h"
+> > =20
+> >  #include "../libmultipath/sg_include.h"
+> > +#include "../libmultipath/vector.h"
+> > +#include "../libmultipath/structs.h"
+> > +
+> > +#define container_of(ptr, type, member) ({			\
+> > +        const typeof( ((type *)0)->member ) *__mptr =3D=20
+> (ptr);	\
+> > +        (type *)( (char *)__mptr - offsetof(type,member) );})
+> > +
+> > +int sg_read (int sg_fd, unsigned char * buff, unsigned char *
+> > senseBuff);
+> > =20
+> >  #define INQUIRY_CMD     0x12
+> >  #define INQUIRY_CMDLEN  6
+> > @@ -40,13 +49,18 @@ void emc_clariion_free (struct checker *
+> > =20
+> >  int emc_clariion(struct checker * c)
+> >  {
+> > -	unsigned char sense_buffer[256] =3D { 0, };
+> > +	unsigned char sense_buffer[256] =3D { 0, }, *sbb;
+> >  	unsigned char sb[128] =3D { 0, };
+> >  	unsigned char inqCmdBlk[INQUIRY_CMDLEN] =3D {INQUIRY_CMD, 1, 0xC0,
+> > 0,
+> >  						sizeof(sb), 0};
+> >  	struct sg_io_hdr io_hdr;
+> >  	struct emc_clariion_checker_context * ct =3D
+> >  		(struct emc_clariion_checker_context *)c->context;
+> > +	struct path *p;
+> > +	int ret;
+> > +
+> > +	p =3D container_of(c, struct path, checker);
+> > +
+> > =20
+> >  	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+> >  	io_hdr.interface_id =3D 'S';
+> > @@ -110,7 +124,27 @@ int emc_clariion(struct checker * c)
+> >  		ct->wwn_set =3D 1;
+> >  	}
+> >  =09
+> > -=09
+> > -	MSG(c, "emc_clariion_checker: Path healthy");
+> > -        return PATH_UP;
+> > +	if (p->mpp && p->mpp->failallpaths) {
+> > +		ret =3D PATH_DOWN;
+> > +		MSG(c, "emc_clariion_checker: Path to inactive
+> > snapshot.");
+> > +	}
+> > +	else {
+> > +		unsigned char buf[512];
+> > +
+> > +		ret =3D sg_read(c->fd, &buf[0], sbb =3D &sense_buffer[0]);
+> > +
+> > +		if (((sbb[2]&0xf) =3D=3D 5) && (sbb[12] =3D=3D 0x25) &&
+> > (sbb[13]=3D=3D1)) {
+> > +			if (p->mpp)
+> > +				p->mpp->failallpaths =3D 1;
+> > +			MSG(c, "emc_clariion_checker: Path to inactive
+> > snapshot.");
+> > +			ret =3D PATH_DOWN;
+> > +		}
+> > +		else if (((sbb[2]&0xf)=3D=3D2) && (sbb[12]=3D=3D4) &&
+> > (sbb[13]=3D=3D3)) {
+> > +			MSG(c, "emc_clariion_checker: Passive path is
+> > healthy.");
+> > +			ret =3D PATH_UP;	/* not ghost */
+> > +		}
+> > +		else
+> > +			MSG(c, "emc_clariion_checker: Active path is
+> > healthy.");
+> > +	}
+> > +	return ret;
+> >  }
+> > diff --git a/libcheckers/readsector0.c b/libcheckers/readsector0.c
+> > index b0acec9..dd18528 100644
+> > --- a/libcheckers/readsector0.c
+> > +++ b/libcheckers/readsector0.c
+> > @@ -34,8 +34,8 @@ void readsector0_free (struct checker *=20
+> >  	return;
+> >  }
+> > =20
+> > -static int
+> > -sg_read (int sg_fd, unsigned char * buff)
+> > +int
+> > +sg_read (int sg_fd, unsigned char * buff, unsigned char *=20
+> senseBuff)
+> >  {
+> >  	/* defaults */
+> >  	int blocks =3D 1;
+> > @@ -45,7 +45,6 @@ sg_read (int sg_fd, unsigned char * buff
+> >  	int * diop =3D NULL;
+> > =20
+> >  	unsigned char rdCmd[cdbsz];
+> > -	unsigned char senseBuff[SENSE_BUFF_LEN];
+> >  	struct sg_io_hdr io_hdr;
+> >  	int res;
+> >  	int rd_opcode[] =3D {0x8, 0x28, 0xa8, 0x88};
+> > @@ -97,9 +96,10 @@ extern int
+> >  readsector0 (struct checker * c)
+> >  {
+> >  	unsigned char buf[512];
+> > +	unsigned char sbuf[SENSE_BUFF_LEN];
+> >  	int ret;
+> > =20
+> > -	ret =3D sg_read(c->fd, &buf[0]);
+> > +	ret =3D sg_read(c->fd, &buf[0], &sbuf[0]);
+> > =20
+> >  	switch (ret)
+> >  	{
+> > diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+> > index faa2b8f..049c82b 100644
+> > --- a/libmultipath/structs.h
+> > +++ b/libmultipath/structs.h
+> > @@ -127,6 +127,7 @@ struct multipath {
+> >  	int no_path_retry; /* number of retries after all paths are down
+> > */
+> >  	int retry_tick;    /* remaining times for retries */
+> >  	int minio;
+> > +	int failallpaths;
+> >  	unsigned long long size;
+> >  	vector paths;
+> >  	vector pg;
+> >=20
+> >=20
+> >=20
+>=20
+>=20
