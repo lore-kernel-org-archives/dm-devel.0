@@ -1,43 +1,39 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c
-Date: 6 Oct 2006 18:35:13 -0000
-Message-ID: <20061006183513.29199.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Eric Sandeen <sandeen@sandeen.net>
+Subject: Re: [RFC] Reverting "bd_mount_mutex" to "bd_mount_sem"
+Date: Fri, 06 Oct 2006 15:50:12 -0500
+Message-ID: <4526C184.7070507@sandeen.net>
+References: <451A78DF.1060901@in.ibm.com> <20060927135705.GA30311@elte.hu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1422949AbWJFUu2@vger.kernel.org>
+In-Reply-To: <20060927135705.GA30311@elte.hu>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ingo Molnar <mingo@elte.hu>
+Cc: Srinivasa Ds <srinivasa@in.ibm.com>, dm-devel@redhat.com, linux-lvm@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Changes by:	bmarzins@sourceware.org	2006-10-06 18:35:13
+Ingo Molnar wrote:
+> * Srinivasa Ds <srinivasa@in.ibm.com> wrote:
+> 
+>>   On debugging I found out that,"dmsetup suspend <device name>" calls 
+>> "freeze_bdev()",which locks "bd_mount_mutex" to make sure that no new 
+>> mounts happen on bdev until thaw_bdev() is called.
+>>   This "thaw_bdev()" is getting called when we resume the device 
+>> through "dmsetup resume <device-name>".
+>>   Hence we have 2 processes,one of which locks 
+>> "bd_mount_mutex"(dmsetup suspend) and Another(dmsetup resume) unlocks 
+>> it.
+> 
+> hm, to me this seems quite a fragile construct - even if the 
+> mutex-debugging warning is worked around by reverting to a semaphore.
+> 
+> 	Ingo
 
-Modified files:
-	libmultipath   : discovery.c 
+Ingo, what do you feel is fragile about this?  It seems like this is a
+reasonable way to go, except that maybe a down_trylock would be good if
+a 2nd process tries to freeze while it's already frozen...
 
-Log message:
-	fixing bz #207726, if sysfs_get_rev fails, don't completely abort all path
-	checks.
+Thanks,
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&r1=1.30&r2=1.31
-
---- multipath-tools/libmultipath/discovery.c	2006/07/12 19:42:43	1.30
-+++ multipath-tools/libmultipath/discovery.c	2006/10/06 18:35:13	1.31
-@@ -470,7 +470,7 @@
- 
- 	if (sysfs_get_rev(sysfs_path, pp->dev,
- 			  pp->rev, SCSI_REV_SIZE))
--		return 1;
-+		pp->rev[0] = '\0';;
- 
- 	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
- 
+-Eric
