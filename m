@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
 Subject: multipath-tools/libmultipath discovery.c
-Date: 6 Oct 2006 18:09:15 -0000
-Message-ID: <20061006180915.19619.qmail@sourceware.org>
+Date: 6 Oct 2006 18:35:13 -0000
+Message-ID: <20061006183513.29199.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,26 +18,26 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2006-10-06 18:09:15
+Changes by:	bmarzins@sourceware.org	2006-10-06 18:35:13
 
 Modified files:
 	libmultipath   : discovery.c 
 
 Log message:
-	Comitted patch for 207726
+	fixing bz #207726, if sysfs_get_rev fails, don't completely abort all path
+	checks.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.28.2.2&r2=1.28.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&r1=1.30&r2=1.31
 
---- multipath-tools/libmultipath/discovery.c	2006/09/19 21:06:40	1.28.2.2
-+++ multipath-tools/libmultipath/discovery.c	2006/10/06 18:09:14	1.28.2.3
-@@ -480,7 +480,7 @@
+--- multipath-tools/libmultipath/discovery.c	2006/07/12 19:42:43	1.30
++++ multipath-tools/libmultipath/discovery.c	2006/10/06 18:35:13	1.31
+@@ -470,7 +470,7 @@
  
- 	if (sysfs_get_rev(sysfs_path, curpath->dev,
- 			  curpath->rev, SCSI_REV_SIZE))
+ 	if (sysfs_get_rev(sysfs_path, pp->dev,
+ 			  pp->rev, SCSI_REV_SIZE))
 -		return 1;
-+		curpath->rev[0] = '\0';
++		pp->rev[0] = '\0';;
  
- 	condlog(3, "rev = %s", curpath->rev);
+ 	condlog(3, "%s: rev = %s", pp->dev, pp->rev);
  
