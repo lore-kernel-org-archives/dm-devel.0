@@ -1,39 +1,38 @@
-From: Eric Sandeen <sandeen@sandeen.net>
-Subject: Re: [RFC] Reverting "bd_mount_mutex" to "bd_mount_sem"
-Date: Fri, 06 Oct 2006 15:50:12 -0500
-Message-ID: <4526C184.7070507@sandeen.net>
-References: <451A78DF.1060901@in.ibm.com> <20060927135705.GA30311@elte.hu>
+From: "Dan Bar Dov" <danb@voltaire.com>
+Subject: Usage question: how to access partitions?
+Date: Sun, 8 Oct 2006 19:01:00 +0200
+Message-ID: <D4F8F0B3820E754C887699BEF26A8940016E3489@taurus.voltaire.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1422949AbWJFUu2@vger.kernel.org>
-In-Reply-To: <20060927135705.GA30311@elte.hu>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ingo Molnar <mingo@elte.hu>
-Cc: Srinivasa Ds <srinivasa@in.ibm.com>, dm-devel@redhat.com, linux-lvm@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ingo Molnar wrote:
-> * Srinivasa Ds <srinivasa@in.ibm.com> wrote:
-> 
->>   On debugging I found out that,"dmsetup suspend <device name>" calls 
->> "freeze_bdev()",which locks "bd_mount_mutex" to make sure that no new 
->> mounts happen on bdev until thaw_bdev() is called.
->>   This "thaw_bdev()" is getting called when we resume the device 
->> through "dmsetup resume <device-name>".
->>   Hence we have 2 processes,one of which locks 
->> "bd_mount_mutex"(dmsetup suspend) and Another(dmsetup resume) unlocks 
->> it.
-> 
-> hm, to me this seems quite a fragile construct - even if the 
-> mutex-debugging warning is worked around by reverting to a semaphore.
-> 
-> 	Ingo
 
-Ingo, what do you feel is fragile about this?  It seems like this is a
-reasonable way to go, except that maybe a down_trylock would be good if
-a 2nd process tries to freeze while it's already frozen...
+After configuring multipath access to a LU, I partitioned it with fdisk.
+fdisk complained about failing to re-read the partition table,=20
+blockdev --rereadpt failed as well.
 
-Thanks,
+No new devices were created for the new partitions. I guess
+there are udev rules to do that, are there?
 
--Eric
+How do I get the partition to become available, what should be the=20
+partitions device names in /dev?
+
+I'm using SLES9sp3
+
+Thanks for pointers/advice
+Dan
