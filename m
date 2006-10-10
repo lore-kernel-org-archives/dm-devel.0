@@ -1,15 +1,15 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: New read-balancing patch for dm-raid1.c
-Date: Tue, 10 Oct 2006 21:02:44 +0200
-Message-ID: <20061010190244.GA4792@redhat.com>
-References: <1160410439.30654.12.camel@hydrogen.msp.redhat.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Michae Lyulko <michaell@voltaire.com>
+Subject: Re: Failover between two paths to one LU doesn't work
+	onlinux-iscsi
+Date: Tue, 10 Oct 2006 21:55:12 +0200
+Message-ID: <452BFAA0.1000100@voltaire.com>
+References: <452BD5C6.2080808@voltaire.com> <452BD768.30206@ilm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1160410439.30654.12.camel@hydrogen.msp.redhat.com>
+In-Reply-To: <452BD768.30206@ilm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,223 +19,237 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: heinzm@redhat.com, dm-devel@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Eli Stair wrote:
+>
+> What versions of the tools and kernel are you running?  What are your 
+> settings for multipath.conf?  Is multipathd running?  If you run 
+> multipath -v2 manually, does it fail the path?  Etc.
+>
+>> 1. Are there any known problems that can cause fail-over not to happen
+>> in linux-iscsi?
+>
+>> 2. Is there any way to get debug information in order to understand more
+>> in-depth what's going on?
+>
+> man multipath && man multipathd
+> multipathd -d
+> multipath -v4
+>
+>> 3. How can I know what the timeouts are and how to change them?
+>
+> Timeouts occur at several levels.  Your HBA or iSCSI driver will have 
+> (at least) one.  Check the documentation for the aspects of 
+> software/hardware you're using (kernel module options), dm-multipath 
+> docs, etc.
+I meant Multipath timeouts. iSCSI driver definitely has some.
+>
+>> 4. If you need more specific information, please write what can help.
+>
+> http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=Home
+>
+> I've never done multipath-iscsi, so don't have direct experience.  Try 
+> posting some more detailed info on your setup and what errors or info 
+> messages are occuring.
+>
+>
+> /eli
+>
+> -- 
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+Here is some additional info (includes versions, debug info from 
+multipath -v4, etc.)
+multipathd -d doesn't seem to add any info (strange),
+multipath -v2 doesn't fail the path.
+multipathd  is running.
+I can work with the device via /dev/mapper/3600d02300063ccc60000006215c0b501
+or via /dev/dm-0    --  mkfs was successful;
+I ran iozone benchmark and manually failed one of two paths. There was 
+no failover to second path.
+The iSCSI initiator retried to reconnect to the first path - 
+unsuccessfully. When I restored the first
+path - the initiator reconnected to the target via the first path.
 
-Jon,
+Thanks!
 
-the "if (ms->read_count_reset)" should read "if (!ms->read_count_reset)"
-to disable read balancing and the 2 while loops could be merged into one.
+------------- INFO -------------
+Versions:
+device-mapper-1.01.01-1.6
+multipath-tools-0.4.5-0.11
 
-Heinz
+Machine:
+2.6.5-7.244-smp; x86_64; SLES9 sp3
 
-On Mon, Oct 09, 2006 at 11:13:59AM -0500, Jonathan Brassow wrote:
-> Looking for some opinions/comments on this read balancing patch.  (Basic
-> implementation details in patch header.)
-> 
-> I haven't gone to too much trouble to make the read balancing code
-> generic, since there is only one policy right now.  In the future, I
-> will likely have to swap out the three fields in the mirror set
-> structure for a void pointer that will contain data for various other
-> read balancing policies.  I have, however, constructed the new table
-> line arguments in such a way that the read-balancing arguments are easy
-> to identify and pass to an initialization function without knowing too
-> much about the actual arguments.
-> 
-> One thing I'm not all that fond of is the order that the mirror is set
-> up.  The read-balancing arguments are parsed before 'alloc_context' is
-> called - meaning that new read-balancing structures would be allocated
-> first, then linked in later... and read-balancing is set up before the
-> default mirror device is chosen.  I don't really care for
-> 'alloc_context' setting up 'ms->read_mirror', while other fields are
-> initialized after 'alloc_context'.  I don't think this is too much of a
-> problem though.
-> 
->  brassow
-> 
-> This patch adds read balancing.  The round-robin method is the first
-> to be implemented, but provisions are made for others to be implemented
-> in the future.
-> 
-> The allowable mirror table arguments has been expanded.  It is now
-> as follows:
-> 
->        <start> <length> mirror \
->        <log-type> <# log params> <log params> \
-> *new*  [readbalance <# rb params> <rb params>] \
->        <# mirrors> <device1> <offset1> ... <deviceN> <offsetN>
-> 
-> The new read balancing arguments are optional, and the only
-> currently valid read balancing arguments are:
->        readbalance 2 roundrobin <count>
-> Where 'count' is the number of I/Os that go to a device before
-> switching to the next device.
-> 
-> 'struct mirror *choose_mirror(struct mirror_set *ms)' is the
-> function that chooses the read mirror based on read balancing
-> policy.  It should only be called when the region of the
-> mirror being read from is known to be in-sync.  'choose_mirror'
-> will avoid selecting devices with error_counts > 0 - returning
-> NULL if no devices are available.
-> 
-> Index: linux-2.6.18/drivers/md/dm-raid1.c
-> ===================================================================
-> --- linux-2.6.18.orig/drivers/md/dm-raid1.c	2006-10-05 13:38:27.000000000 -0500
-> +++ linux-2.6.18/drivers/md/dm-raid1.c	2006-10-09 10:31:47.000000000 -0500
-> @@ -135,6 +135,9 @@ struct mirror_set {
->  	struct mirror *default_mirror;	/* Default mirror */
->  
->  	unsigned int nr_mirrors;
-> +	unsigned int read_count_reset; /* number of reads before switching */
-> +	atomic_t read_count;      /* Read counter for read balancing */
-> +	struct mirror *read_mirror; /* Last mirror read. */
->  	struct mirror mirror[0];
->  };
->  
-> @@ -686,10 +689,59 @@ static void do_recovery(struct mirror_se
->  /*-----------------------------------------------------------------
->   * Reads
->   *---------------------------------------------------------------*/
-> -static struct mirror *choose_mirror(struct mirror_set *ms, sector_t sector)
-> +
-> +/* choose_mirror
-> + * @ms: the mirror set
-> + *
-> + * This function is used for read balancing.
-> + *
-> + * Returns: chosen mirror, or NULL on failure
-> + */
-> +static struct mirror *choose_mirror(struct mirror_set *ms)
->  {
-> -	/* FIXME: add read balancing */
-> -	return ms->default_mirror;
-> +	unsigned int i;
-> +	struct mirror *start_mirror = ms->read_mirror;
-> +
-> +	/*
-> +	 * If 'read_count_reset' is zero here, then read-balancing
-> +	 * is disabled.
-> +	 */
-> +	if (ms->read_count_reset)) {
-> +		do {
-> +			if (likely(!atomic_read(&ms->read_mirror->error_count)))
-> +				goto use_mirror;
-> +
-> +			if (ms->read_mirror-- == ms->mirror)
-> +				ms->read_mirror += ms->nr_mirrors;
-> +		} while (ms->read_mirror != start_mirror);
-> +		return NULL;
-> +	}
-> +
-> +	/*
-> +	 * Perform ms->read_count_reset reads on each working mirror then
-> +	 * advance to the next one.  start_mirror stores
-> +	 * the first we tried, so we know when we're done.
-> +	 */
-> +	do {
-> +		if (likely(!atomic_read(&ms->read_mirror->error_count)) &&
-> +		    !atomic_dec_and_test(&ms->read_count))
-> +			goto use_mirror;
-> +
-> +		atomic_set(&ms->read_count, ms->read_count_reset);
-> +
-> +		if (ms->read_mirror-- == ms->mirror)
-> +			ms->read_mirror += ms->nr_mirrors;
-> +	} while (ms->read_mirror != start_mirror);
-> +
-> +	/*
-> +	 * We've rejected every mirror.
-> +	 * Confirm the start_mirror can be used.
-> +	 */
-> +	if (unlikely(atomic_read(&ms->read_mirror->error_count)))
-> +		return NULL;
-> +
-> +use_mirror:
-> +	return ms->read_mirror;
->  }
->  
->  /*
-> @@ -714,7 +766,7 @@ static void do_reads(struct mirror_set *
->  		 * We can only read balance if the region is in sync.
->  		 */
->  		if (rh_in_sync(&ms->rh, region, 0))
-> -			m = choose_mirror(ms, bio->bi_sector);
-> +			m = choose_mirror(ms);
->  		else
->  			m = ms->default_mirror;
->  
-> @@ -907,6 +959,7 @@ static struct mirror_set *alloc_context(
->  	ms->nr_mirrors = nr_mirrors;
->  	ms->nr_regions = dm_sector_div_up(ti->len, region_size);
->  	ms->in_sync = 0;
-> +	ms->read_mirror = &ms->mirror[DEFAULT_MIRROR];
->  	ms->default_mirror = &ms->mirror[DEFAULT_MIRROR];
->  
->  	if (rh_init(&ms->rh, ms, dl, region_size, ms->nr_regions)) {
-> @@ -1028,6 +1081,7 @@ static struct dirty_log *create_dirty_lo
->  static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
->  {
->  	int r;
-> +	unsigned int read_count_reset = 0, read_balance_args;
->  	unsigned int nr_mirrors, m, args_used;
->  	struct mirror_set *ms;
->  	struct dirty_log *dl;
-> @@ -1039,6 +1093,29 @@ static int mirror_ctr(struct dm_target *
->  	argv += args_used;
->  	argc -= args_used;
->  
-> +	if (!argc) {
-> +		ti->error = "Invalid number of arguments";
-> +		dm_destroy_dirty_log(dl);
-> +		return -EINVAL;
-> +	} else if (!strcmp("readbalance", argv[0]) &&
-> +		   (sscanf(argv[1], "%u", &read_balance_args) == 1)) {
-> +		/*
-> +		 * When there is more than one read-balancing policy,
-> +		 * we will push this next if statement into an
-> +		 * initialization function.
-> +		 */
-> +		if ((read_balance_args == 2) &&
-> +		    !strcmp("roundrobin", argv[2]) &&
-> +		    (sscanf(argv[3], "%u", &read_count_reset) == 1)) {
-> +			argv += 4;
-> +			argc -= 4;
-> +		} else {
-> +			ti->error = "Invalid read-balancing arguments";
-> +			dm_destroy_dirty_log(dl);
-> +			return -EINVAL;
-> +		}
-> +	}
-> +
->  	if (!argc || sscanf(argv[0], "%u", &nr_mirrors) != 1 ||
->  	    nr_mirrors < 2 || nr_mirrors > KCOPYD_MAX_REGIONS + 1) {
->  		ti->error = "Invalid number of mirrors";
-> @@ -1060,6 +1137,8 @@ static int mirror_ctr(struct dm_target *
->  		return -ENOMEM;
->  	}
->  
-> +	ms->read_count_reset = read_count_reset;
-> +
->  	/* Get the mirror parameter sets */
->  	for (m = 0; m < nr_mirrors; m++) {
->  		r = get_mirror(ms, ti, m, argv);
-> @@ -1147,7 +1226,7 @@ static int mirror_map(struct dm_target *
->  		return 0;
->  	}
->  
-> -	m = choose_mirror(ms, bio->bi_sector);
-> +	m = choose_mirror(ms);
->  	if (!m)
->  		return -EIO;
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+virgo4:~ # lsmod | grep dm_multipath
+dm_multipath           38544  2 dm_round_robin
+dm_mod                 77536  2 dm_multipath
 
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+virgo4:~ # ps -ef | grep multipathd
+root     17078     1  0 22:04 pts/0    00:00:00 /sbin/multipathd
+root     17228 10503  0 22:13 pts/0    00:00:00 grep multipathd
+
+
+virgo4:~ # multipath -p failover
+dm names   N
+dm info 3600d02300063ccc60000006215c0b501  N
+dm create 3600d02300063ccc60000006215c0b501 
+3600d02300063ccc60000006215c0b501 O
+dm reload 3600d02300063ccc60000006215c0b501  O
+dm resume 3600d02300063ccc60000006215c0b501  N
+dm message 3600d02300063ccc60000006215c0b501  N  switch_group 1
+
+create: 3600d02300063ccc60000006215c0b501
+[size=87 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=1]
+ \_ 1:0:6:0 sda 8:0  [ready]
+\_ round-robin 0 [prio=1]
+ \_ 1:1:6:0 sdb 8:16 [ready]
+
+virgo4:~ #
+
+
+virgo4:~ # multipath -l
+dm names   N
+dm table 3600d02300063ccc60000006215c0b501  N
+dm table 3600d02300063ccc60000006215c0b501  N
+dm status 3600d02300063ccc60000006215c0b501  N
+dm info 3600d02300063ccc60000006215c0b501  O
+3600d02300063ccc60000006215c0b501
+[size=87 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 1:0:6:0 sda 8:0  [active][ready]
+\_ round-robin 0 [enabled]
+ \_ 1:1:6:0 sdb 8:16 [active][ready]
+
+virgo4:~ #
+virgo4:~ #
+virgo4:~ # multipath -v2
+dm names   N
+dm table 3600d02300063ccc60000006215c0b501  N
+dm table 3600d02300063ccc60000006215c0b501  N
+dm status 3600d02300063ccc60000006215c0b501  N
+dm info 3600d02300063ccc60000006215c0b501  O
+virgo4:~ #
+virgo4:~ #
+virgo4:~ #
+virgo4:~ # multipath -v4
+load path identifiers cache
+3600d02300063ccc60000006215c0b501  1:0:6:0 sda 8:0  [ready] IFT     /ES 
+A16F-G
+3600d02300063ccc60000006215c0b501  1:1:6:0 sdb 8:16  [ready] IFT     /ES 
+A16F-
+dm-0 blacklisted
+hda blacklisted
+hdd blacklisted
+loop0 blacklisted
+loop1 blacklisted
+loop2 blacklisted
+loop3 blacklisted
+loop4 blacklisted
+loop5 blacklisted
+loop6 blacklisted
+loop7 blacklisted
+md0 blacklisted
+ram0 blacklisted
+ram10 blacklisted
+ram11 blacklisted
+ram12 blacklisted
+ram13 blacklisted
+ram14 blacklisted
+ram15 blacklisted
+ram1 blacklisted
+ram2 blacklisted
+ram3 blacklisted
+ram4 blacklisted
+ram5 blacklisted
+ram6 blacklisted
+ram7 blacklisted
+ram8 blacklisted
+ram9 blacklisted
+===== path info sda (mask 0x3f) =====
+device sda is on bus scsi
+bus = 1
+dev_t = 8:0
+size = 184320000
+vendor = IFT
+product = ES A16F-G
+rev = 331J
+h:b:t:l = 1:0:6:0
+tgt_node_name =
+open error (Device or resource busy)
+
+claimed = 1
+serial = 0000006215C0B501
+path checker = readsector0 (internal default)
+state = 2
+getprio = (null) (internal default)
+prio = 1
+uid = 3600d02300063ccc60000006215c0b501 (cache)
+===== path info sdb (mask 0x3f) =====
+device sdb is on bus scsi
+bus = 1
+dev_t = 8:16
+size = 184320000
+vendor = IFT
+product = ES A16F-G
+rev = 331J
+h:b:t:l = 1:1:6:0
+tgt_node_name =
+open error (Device or resource busy)
+
+claimed = 1
+serial = 0000006215C0B501
+path checker = readsector0 (internal default)
+state = 2
+getprio = (null) (internal default)
+prio = 1
+uid = 3600d02300063ccc60000006215c0b501 (cache)
+3600d02300063ccc60000006215c0b501  1:0:6:0 sda 8:0 1 [ready][claimed] IFT
+3600d02300063ccc60000006215c0b501  1:1:6:0 sdb 8:16 1 [ready][claimed] IFT
+dm names   N
+dm table 3600d02300063ccc60000006215c0b501  N
+dm table 3600d02300063ccc60000006215c0b501  N
+dm status 3600d02300063ccc60000006215c0b501  N
+dm info 3600d02300063ccc60000006215c0b501  O
+get_dm_mpvec for (null)
+params = 0 0 2 1 round-robin 0 1 1 8:0 1000 round-robin 0 1 1 8:16 1000
+status = 1 0 0 2 1 A 0 1 0 8:0 A 0 E 0 1 0 8:16 A 0
+*word = 0, len = 1
+*word = 0, len = 1
+*word = 2, len = 1
+*word = 1, len = 1
+*word = round-robin, len = 11
+*word = 0, len = 1
+*word = 1, len = 1
+*word = 1, len = 1
+*word = 8:0, len = 3
+*word = 1, len = 1
+*word = 1, len = 1
+*word = 8:16, len = 4
+*word = 1, len = 1
+*word = 0, len = 1
+*word = 2, len = 1
+*word = A, len = 1
+*word = 1, len = 1
+*word = 0, len = 1
+*word = A, len = 1
+*word = 0, len = 1
+*word = E, len = 1
+*word = 1, len = 1
+*word = 0, len = 1
+*word = A, len = 1
+*word = 0, len = 1
+pgpolicy = failover (internal default)
+selector = round-robin 0 (internal default)
+features = 0 (internal default)
+hwhandler = 0 (internal default)
+rr_weight = 1 (internal default)
+0 184320000 multipath 0 0 2 1 round-robin 0 1 1 8:0 1000 round-robin 0 1 
+1 8:16 1000
+set ACT_NOTHING: map unchanged
+virgo4:~ #
