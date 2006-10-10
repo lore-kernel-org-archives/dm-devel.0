@@ -1,12 +1,15 @@
-From: "Andreas Huck" <dm-devel@huck.it>
-Subject: multipath with dual Compaq SA462 connected to MSA500
-Date: Tue, 10 Oct 2006 12:21:13 +0200 (CEST)
-Message-ID: <37429.195.37.166.71.1160475673.squirrel@io3.huck.it>
+From: "David Guyon Martin" <david.guyonmartin@gmail.com>
+Subject: Re: Usage question: how to access partitions?
+Date: Tue, 10 Oct 2006 15:36:52 +0200
+Message-ID: <2c53b31c0610100636j40b0385bh62d0989f4378cc41@mail.gmail.com>
+References: <2c53b31c0610090721g3b5bfc64v30d5ed081e7b348d@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <2c53b31c0610090721g3b5bfc64v30d5ed081e7b348d@mail.gmail.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,45 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Dan Bar Dov wrote on Sun, 8 Oct 2006 19:01:00:
+> After configuring multipath access to a LU, I partitioned it with fdisk.
+> fdisk complained about failing to re-read the partition table,
+> blockdev --rereadpt failed as well.
+>
+> No new devices were created for the new partitions. I guess
+> there are udev rules to do that, are there?
+>
+> How do I get the partition to become available, what should be the
+> partitions device names in /dev?
 
-Hi,
+man kpartx
 
-I'd like to enable some sort of multipath to a RAID device which
-is connected by two Smart Array 462 to a MSA500. The host is a DL380 G4.
-In contrast to MSA1000 the MSA500 is just directly attached, no HBA
-involved.
-The RAID appears as /dev/cciss/c1d0 and /dev/cciss/c2d0 and currently
-I am forced to disable one path by lvm filter.
+"This tool, derived from util-linux' partx, reads partition tables on
+specified device and create device maps over partitions segments
+detected. It is called from hotplug upon device maps creation and
+deletion."
 
-Without the lvm filter I get:
+More info in
+www.linuxsymposium.org/2005/linuxsymposium_procv1.pdf
+search kpartx, or see page 166 ( "p158" )
 
-Found duplicate PV iXZqRZZg8X6pNn4RBrxRbFiK8O6txY0b: using
-/dev/cciss/c2d0p1 not /dev/cciss/c1d0p1
+David G.M.
 
-So, I'd like to use both controllers but setup multipath on them. Anyone
-around who succeeded with such a setup? It should work since HP offers
-some Win*** driver for it, but I need to enable it with SLES9-SP3++ ;-)
-
-The drives do not register as scis defices and to not appear in
-/proc/scsi/scsi. Therefore, /sbin/scsi_id -g -u -s /block/%n
-does not work of course.
-
-# multipath -v2 -d
-dm names   N
-dm table vgdata-netview  N
-dm table vglocal-tivoli  N
-dm table vgdata-oradata  N
-dm table vglocal-tmp  N
-dm table vglocal-optoracle  N
-dm table vgdata-etc_tivoli  N
-dm table vglocal-var  N
-
-So just the LVM devices appear, vgdata is on the MSA500.
-
-Any hints apprecciated!
-
-Thanks and best regards,
-Andreas Huck
+PS: this is a text-only repost, previous mail caught by anti-spam
