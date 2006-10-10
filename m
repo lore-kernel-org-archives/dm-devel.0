@@ -1,15 +1,17 @@
-From: Eli Stair <estair@ilm.com>
-Subject: Re: Failover between two paths to one LU doesn't work
-	onlinux-iscsi
-Date: Tue, 10 Oct 2006 10:24:56 -0700
-Message-ID: <452BD768.30206@ilm.com>
-References: <452BD5C6.2080808@voltaire.com>
+From: "David Guyon Martin" <david.guyonmartin@gmail.com>
+Subject: Re: dm-slow , a slow down dm ( dm-error alike )
+Date: Tue, 10 Oct 2006 19:40:48 +0200
+Message-ID: <2c53b31c0610101040v3908eech8df05e83df3c9749@mail.gmail.com>
+References: <2c53b31c0610061231k8b06a4dxce2cd3a9febed86@mail.gmail.com>
+	<2c53b31c0610100644o75fe3d56v261752598faebe20@mail.gmail.com>
+	<20061010140122.GL17654@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <452BD5C6.2080808@voltaire.com>
+In-Reply-To: <20061010140122.GL17654@agk.surrey.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,35 +24,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+> > We need to slow down a disk access to be able to monitor some events,
+> > for testing.
+>
+> Take a look at dm-delay.
+> http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/
+>
+> Alasdair
 
-What versions of the tools and kernel are you running?  What are your 
-settings for multipath.conf?  Is multipathd running?  If you run 
-multipath -v2 manually, does it fail the path?  Etc.
+So great ! I dreamt it and it was done by Heinz Mauelshagen, who is
+also working on dm-loop now after Bryn Reeves. Thanks!
+Those two dm filters are both a must-have to me.
 
-> 1. Are there any known problems that can cause fail-over not to happen
-> in linux-iscsi?
+Hum, dm-delay accept a miliseconds parameter but I don't see the chunk
+size for this delay, do you have any clue ?
 
-> 2. Is there any way to get debug information in order to understand more
-> in-depth what's going on?
-
-man multipath && man multipathd
-multipathd -d
-multipath -v4
-
-> 3. How can I know what the timeouts are and how to change them?
-
-Timeouts occur at several levels.  Your HBA or iSCSI driver will have 
-(at least) one.  Check the documentation for the aspects of 
-software/hardware you're using (kernel module options), dm-multipath 
-docs, etc.
-
-> 4. If you need more specific information, please write what can help.
-
-http://christophe.varoqui.free.fr/wiki/wakka.php?wiki=Home
-
-I've never done multipath-iscsi, so don't have direct experience.  Try 
-posting some more detailed info on your setup and what errors or info 
-messages are occuring.
-
-
-/eli
+David
