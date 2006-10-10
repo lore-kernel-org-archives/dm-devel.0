@@ -1,8 +1,8 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 3/7] dm: return value definition of target
-	map/end_io
-Date: Tue, 10 Oct 2006 17:30:25 -0400 (EDT)
-Message-ID: <20061010.173025.08316466.k-ueda@ct.jp.nec.com>
+Subject: [PATCH 4/7] dm: reflect new defined return value symbols
+	to targets
+Date: Tue, 10 Oct 2006 17:30:54 -0400 (EDT)
+Message-ID: <20061010.173054.21933652.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
@@ -20,114 +20,210 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch explicitly defines the use of return values from
-target map/end_io functions.
-Values more than 1 are reserved for future use.
-
-I have confirmed existing upstream target drivers don't use
-the reserved values.
+This patch reflects the symbol definition for target map/end_io
+function to targets.
 Should have no effect on the behavior.
-Corresponding changes in target drivers will follow.
-
-Details are below.
-
-o Reserve return values more than 1 from target map function.
-  Current target drivers can use more than 0 to tell map complete
-  to the dm core, but all target drivers are using 1 for that now.
-  So reserve more than 1 explicitly so that target drivers can tell
-  other things to the dm core in the future.  New definition is below.
-      < 0 : error
-      = 0 : The target will handle the io (symbol: DM_MAPIO_SUBMITTED)
-      = 1 : map complete (symbol: DM_MAPIO_REMAPPED)
-      > 1 : reserved (undefined)
-
-o Reserve return values more than 1 from target end_io function.
-  More than 1 is not defined and actually target drivers can use
-  more than 1 instead of 1.  So reserve it explicitly.
 
 
 Test results:
-I have tested by using multipath target.
-I/Os succeed when valid paths are existing.
-I/Os are queued in the multipath target when no valid paths and
-queue_if_no_path is set.
-I/Os fail when no valid paths and no queue_if_no_path setting.
+Done build test without errors.
 
 
 The patch is for:
-    2.6.18-mm2 + patch 1-2
+    2.6.18-mm2 + patch 1-3
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
-diff -rupN 2-susp-iface-change/drivers/md/dm.c 3-core-rval-iface-change/drivers/md/dm.c
---- 2-susp-iface-change/drivers/md/dm.c	2006-10-05 10:26:33.000000000 -0400
-+++ 3-core-rval-iface-change/drivers/md/dm.c	2006-10-05 13:48:34.000000000 -0400
-@@ -482,9 +482,13 @@ static int clone_endio(struct bio *bio, 
- 		r = endio(tio->ti, bio, error, &tio->info);
- 		if (r < 0)
- 			error = r;
--		else if (r > 0)
--			/* the target wants another shot at the io */
-+		else if (r == DM_ENDIO_INCOMPLETE)
-+			/* The target will handle the io */
- 			return 1;
-+		else if (r) {
-+			DMWARN("unimplemented target endio return value: %d", r);
-+			BUG();
-+		}
- 	}
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-crypt.c 4-target-rval-iface-change/drivers/md/dm-crypt.c
+--- 3-core-rval-iface-change/drivers/md/dm-crypt.c	2006-10-05 10:23:59.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-crypt.c	2006-10-06 13:03:55.000000000 -0400
+@@ -907,7 +907,7 @@ static int crypt_map(struct dm_target *t
+ 	atomic_set(&io->pending, 0);
+ 	kcryptd_queue_io(io);
  
- 	dec_pending(tio->io, error);
-@@ -542,7 +546,7 @@ static void __map_bio(struct dm_target *
- 	atomic_inc(&tio->io->io_count);
- 	sector = clone->bi_sector;
- 	r = ti->type->map(ti, clone, &tio->info);
--	if (r > 0) {
-+	if (r == DM_MAPIO_REMAPPED) {
- 		/* the bio has been remapped so dispatch it */
- 
- 		blk_add_trace_remap(bdev_get_queue(clone->bi_bdev), clone,
-@@ -560,6 +564,9 @@ static void __map_bio(struct dm_target *
- 		clone->bi_private = md->bs;
- 		bio_put(clone);
- 		free_tio(md, tio);
-+	} else if (r) {
-+		DMWARN("unimplemented target map return value: %d", r);
-+		BUG();
- 	}
+-	return 0;
++	return DM_MAPIO_SUBMITTED;
  }
  
-diff -rupN 2-susp-iface-change/drivers/md/dm.h 3-core-rval-iface-change/drivers/md/dm.h
---- 2-susp-iface-change/drivers/md/dm.h	2006-10-05 10:26:33.000000000 -0400
-+++ 3-core-rval-iface-change/drivers/md/dm.h	2006-10-05 10:45:08.000000000 -0400
-@@ -33,6 +33,17 @@
- #define SECTOR_SHIFT 9
+ static int crypt_status(struct dm_target *ti, status_type_t type,
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-linear.c 4-target-rval-iface-change/drivers/md/dm-linear.c
+--- 3-core-rval-iface-change/drivers/md/dm-linear.c	2006-10-05 10:23:59.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-linear.c	2006-10-06 13:05:02.000000000 -0400
+@@ -77,7 +77,7 @@ static int linear_map(struct dm_target *
+ 	bio->bi_bdev = lc->dev->bdev;
+ 	bio->bi_sector = lc->start + (bio->bi_sector - ti->begin);
  
- /*
-+ * Definitions of return values from target end_io function.
-+ */
-+#define DM_ENDIO_INCOMPLETE	1
-+
-+/*
-+ * Definitions of return values from target map function.
-+ */
-+#define DM_MAPIO_SUBMITTED	0
-+#define DM_MAPIO_REMAPPED	1
-+
-+/*
-  * Suspend feature flags
-  */
- #define DM_SUSPEND_LOCKFS_FLAG		(1 << 0)
-diff -rupN 2-susp-iface-change/include/linux/device-mapper.h 3-core-rval-iface-change/include/linux/device-mapper.h
---- 2-susp-iface-change/include/linux/device-mapper.h	2006-10-05 10:26:33.000000000 -0400
-+++ 3-core-rval-iface-change/include/linux/device-mapper.h	2006-10-05 10:41:27.000000000 -0400
-@@ -39,7 +39,7 @@ typedef void (*dm_dtr_fn) (struct dm_tar
-  * The map function must return:
-  * < 0: error
-  * = 0: The target will handle the io by resubmitting it later
-- * > 0: simple remap complete
-+ * = 1: simple remap complete
-  */
- typedef int (*dm_map_fn) (struct dm_target *ti, struct bio *bio,
- 			  union map_info *map_context);
+-	return 1;
++	return DM_MAPIO_REMAPPED;
+ }
+ 
+ static int linear_status(struct dm_target *ti, status_type_t type,
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-mpath.c 4-target-rval-iface-change/drivers/md/dm-mpath.c
+--- 3-core-rval-iface-change/drivers/md/dm-mpath.c	2006-10-05 10:23:59.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-mpath.c	2006-10-06 13:02:32.000000000 -0400
+@@ -285,7 +285,7 @@ failed:
+ static int map_io(struct multipath *m, struct bio *bio, struct mpath_io *mpio,
+ 		  unsigned was_queued)
+ {
+-	int r = 1;
++	int r = DM_MAPIO_REMAPPED;
+ 	unsigned long flags;
+ 	struct pgpath *pgpath;
+ 
+@@ -310,7 +310,7 @@ static int map_io(struct multipath *m, s
+ 		    !m->queue_io)
+ 			queue_work(kmultipathd, &m->process_queued_ios);
+ 		pgpath = NULL;
+-		r = 0;
++		r = DM_MAPIO_SUBMITTED;
+ 	} else if (!pgpath)
+ 		r = -EIO;		/* Failed */
+ 	else
+@@ -372,7 +372,7 @@ static void dispatch_queued_ios(struct m
+ 		r = map_io(m, bio, mpio, 1);
+ 		if (r < 0)
+ 			bio_endio(bio, bio->bi_size, r);
+-		else if (r == 1)
++		else if (r == DM_MAPIO_REMAPPED)
+ 			generic_make_request(bio);
+ 
+ 		bio = next;
+@@ -1040,7 +1040,7 @@ static int do_end_io(struct multipath *m
+ 		queue_work(kmultipathd, &m->process_queued_ios);
+ 	spin_unlock_irqrestore(&m->lock, flags);
+ 
+-	return 1;	/* io not complete */
++	return DM_ENDIO_INCOMPLETE;	/* io not complete */
+ }
+ 
+ static int multipath_end_io(struct dm_target *ti, struct bio *bio,
+@@ -1058,7 +1058,7 @@ static int multipath_end_io(struct dm_ta
+ 		if (ps->type->end_io)
+ 			ps->type->end_io(ps, &pgpath->path);
+ 	}
+-	if (r <= 0)
++	if (r != DM_ENDIO_INCOMPLETE)
+ 		mempool_free(mpio, m->mpio_pool);
+ 
+ 	return r;
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-raid1.c 4-target-rval-iface-change/drivers/md/dm-raid1.c
+--- 3-core-rval-iface-change/drivers/md/dm-raid1.c	2006-10-05 10:23:59.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-raid1.c	2006-10-06 13:12:56.000000000 -0400
+@@ -1122,7 +1122,7 @@ static int mirror_map(struct dm_target *
+ 
+ 	if (rw == WRITE) {
+ 		queue_bio(ms, bio, rw);
+-		return 0;
++		return DM_MAPIO_SUBMITTED;
+ 	}
+ 
+ 	r = ms->rh.log->type->in_sync(ms->rh.log,
+@@ -1131,7 +1131,7 @@ static int mirror_map(struct dm_target *
+ 		return r;
+ 
+ 	if (r == -EWOULDBLOCK)	/* FIXME: ugly */
+-		r = 0;
++		r = DM_MAPIO_SUBMITTED;
+ 
+ 	/*
+ 	 * We don't want to fast track a recovery just for a read
+@@ -1144,7 +1144,7 @@ static int mirror_map(struct dm_target *
+ 	if (!r) {
+ 		/* Pass this io over to the daemon */
+ 		queue_bio(ms, bio, rw);
+-		return 0;
++		return DM_MAPIO_SUBMITTED;
+ 	}
+ 
+ 	m = choose_mirror(ms, bio->bi_sector);
+@@ -1152,7 +1152,7 @@ static int mirror_map(struct dm_target *
+ 		return -EIO;
+ 
+ 	map_bio(ms, m, bio);
+-	return 1;
++	return DM_MAPIO_REMAPPED;
+ }
+ 
+ static int mirror_end_io(struct dm_target *ti, struct bio *bio,
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-snap.c 4-target-rval-iface-change/drivers/md/dm-snap.c
+--- 3-core-rval-iface-change/drivers/md/dm-snap.c	2006-10-05 10:23:59.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-snap.c	2006-10-06 13:21:02.000000000 -0400
+@@ -867,7 +867,7 @@ static int snapshot_map(struct dm_target
+ {
+ 	struct exception *e;
+ 	struct dm_snapshot *s = (struct dm_snapshot *) ti->private;
+-	int r = 1;
++	int r = DM_MAPIO_REMAPPED;
+ 	chunk_t chunk;
+ 	struct pending_exception *pe = NULL;
+ 
+@@ -913,7 +913,7 @@ static int snapshot_map(struct dm_target
+ 		remap_exception(s, &pe->e, bio);
+ 		bio_list_add(&pe->snapshot_bios, bio);
+ 
+-		r = 0;
++		r = DM_MAPIO_SUBMITTED;
+ 
+ 		if (!pe->started) {
+ 			/* this is protected by snap->lock */
+@@ -991,7 +991,7 @@ static int snapshot_status(struct dm_tar
+  *---------------------------------------------------------------*/
+ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ {
+-	int r = 1, first = 0;
++	int r = DM_MAPIO_REMAPPED, first = 0;
+ 	struct dm_snapshot *snap;
+ 	struct exception *e;
+ 	struct pending_exception *pe, *next_pe, *primary_pe = NULL;
+@@ -1049,7 +1049,7 @@ static int __origin_write(struct list_he
+ 
+ 			bio_list_add(&primary_pe->origin_bios, bio);
+ 
+-			r = 0;
++			r = DM_MAPIO_SUBMITTED;
+ 		}
+ 
+ 		if (!pe->primary_pe) {
+@@ -1098,7 +1098,7 @@ static int __origin_write(struct list_he
+ static int do_origin(struct dm_dev *origin, struct bio *bio)
+ {
+ 	struct origin *o;
+-	int r = 1;
++	int r = DM_MAPIO_REMAPPED;
+ 
+ 	down_read(&_origins_lock);
+ 	o = __lookup_origin(origin->bdev);
+@@ -1155,7 +1155,7 @@ static int origin_map(struct dm_target *
+ 		return -EOPNOTSUPP;
+ 
+ 	/* Only tell snapshots if this is a write */
+-	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : 1;
++	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
+ }
+ 
+ #define min_not_zero(l, r) (l == 0) ? r : ((r == 0) ? l : min(l, r))
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-stripe.c 4-target-rval-iface-change/drivers/md/dm-stripe.c
+--- 3-core-rval-iface-change/drivers/md/dm-stripe.c	2006-09-19 23:42:06.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-stripe.c	2006-10-06 13:21:35.000000000 -0400
+@@ -186,7 +186,7 @@ static int stripe_map(struct dm_target *
+ 	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
+ 	bio->bi_sector = sc->stripe[stripe].physical_start +
+ 	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
+-	return 1;
++	return DM_MAPIO_REMAPPED;
+ }
+ 
+ static int stripe_status(struct dm_target *ti,
+diff -rupN 3-core-rval-iface-change/drivers/md/dm-zero.c 4-target-rval-iface-change/drivers/md/dm-zero.c
+--- 3-core-rval-iface-change/drivers/md/dm-zero.c	2006-09-19 23:42:06.000000000 -0400
++++ 4-target-rval-iface-change/drivers/md/dm-zero.c	2006-10-06 13:21:51.000000000 -0400
+@@ -46,7 +46,7 @@ static int zero_map(struct dm_target *ti
+ 	bio_endio(bio, bio->bi_size, 0);
+ 
+ 	/* accepted bio, don't make new request */
+-	return 0;
++	return DM_MAPIO_SUBMITTED;
+ }
+ 
+ static struct target_type zero_target = {
