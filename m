@@ -1,17 +1,16 @@
-From: Andreas Huck <dm-devel@huck.it>
-Subject: Re: multipath with dual Compaq SA462 connected to MSA500
-Date: Wed, 11 Oct 2006 09:59:14 +0200
-Message-ID: <200610110959.14268.dm-devel@huck.it>
-References: <37429.195.37.166.71.1160475673.squirrel@io3.huck.it>
-	<200610110012.29891.dm-devel@huck.it> <452C1D4F.9000800@bzed.de>
-Reply-To: dm-devel list <dm-devel@redhat.com>
+From: Dave Wysochanski <dave.wysochanski@redhat.com>
+Subject: Re: Failover between two paths to one LU doesn't work
+	onlinux-iscsi
+Date: Wed, 11 Oct 2006 10:16:45 -0400
+Message-ID: <1160576205.4819.13.camel@linux-cxyg.rtp.netapp.com>
+References: <452BD5C6.2080808@voltaire.com> <452BD768.30206@ilm.com>
+	<452BFAA0.1000100@voltaire.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <452C1D4F.9000800@bzed.de>
-Content-Disposition: inline
+In-Reply-To: <452BFAA0.1000100@voltaire.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,24 +20,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-On Wednesday, 11. October 2006 00:23, Bernd Zeimetz wrote:
-> Hi,
-> >   
-> > well, HP recommends the rather deprecated dm-multipath (on SLES9-SP3).
-> >   
+> I ran iozone benchmark and manually failed one of two paths. There was 
+> no failover to second path.
+> The iSCSI initiator retried to reconnect to the first path - 
+> unsuccessfully. When I restored the first
+> path - the initiator reconnected to the target via the first path.
 > 
-> I think you mean md-multipath.
-
-sure, thanks for comment!
-
-Regards,
-Andreas
-
-
+> Thanks!
 > 
-> ;)
+> ------------- INFO -------------
+> Versions:
+> device-mapper-1.01.01-1.6
+> multipath-tools-0.4.5-0.11
+> 
+> Machine:
+> 2.6.5-7.244-smp; x86_64; SLES9 sp3
+> 
+
+Did you set ConnFailTimeout to a non-zero value?  This sounds like it's
+still at default (reconnect indefinately).  You also need to set the
+Multipath variable, but it sounds like you may have done that already.
