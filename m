@@ -1,13 +1,14 @@
-From: "David Guyon Martin" <david.guyonmartin@gmail.com>
-Subject: New dm filters and patch format for kernel config
-Date: Thu, 12 Oct 2006 10:49:45 +0200
-Message-ID: <2c53b31c0610120149r577bd90cy6e67466b8a96e87e@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: New read-balancing patch for dm-raid1.c
+Date: Thu, 12 Oct 2006 15:46:14 +0100
+Message-ID: <20061012144614.GY17654@agk.surrey.redhat.com>
+References: <1160580794.15980.2.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <1160580794.15980.2.camel@hydrogen.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,51 +18,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+On Wed, Oct 11, 2006 at 10:33:14AM -0500, Jon Brassow wrote:
+> This patch adds read balancing.  The round-robin method is the first
+> to be implemented, but provisions are made for others to be implemented
+> in the future.
+ 
+My first thought in looking over this is that it ought to share the existing
+dm-round-robin module used by multipath (which is already more flexible than
+this as paths can be weighted).  It looks fairly straightforward to do this.
+(And we certainly shouldn't confuse people by having 'roundrobin' in one
+part of dm and 'round-robin' in another!)
 
-Regarding new filters:
-dm-delay patch add the filter and its entries for menuconfig and make,
-but dm-loop do not.
-Let us have a look to the missing diffs for dm-loop <once dm-delay applied> :
+When we implement more complex load balancing policies, there seems little
+point doing everything twice, once for multipath and once for mirroring:-)
 
---- orig/Makefile       2006-10-11 17:14:46.988454352 +0200
-+++ drivers/md/Makefile 2006-10-11 17:15:08.804137864 +0200
-@@ -32,6 +32,7 @@
- obj-$(CONFIG_BLK_DEV_DM)       += dm-mod.o
- obj-$(CONFIG_DM_CRYPT)         += dm-crypt.o
- obj-$(CONFIG_DM_DELAY)         += dm-delay.o
-+obj-$(CONFIG_DM_LOOP)          += dm-loop.o
- obj-$(CONFIG_DM_MULTIPATH)     += dm-multipath.o dm-round-robin.o
- obj-$(CONFIG_DM_MULTIPATH_EMC) += dm-emc.o
- obj-$(CONFIG_DM_SNAPSHOT)      += dm-snapshot.o
-
---- orig/Kconfig        2006-10-11 17:14:53.251502224 +0200
-+++ drivers/md/Kconfig  2006-10-11 17:15:08.307213408 +0200
-@@ -258,5 +258,13 @@
-
-          If unsure, say N.
-
-+config DM_LOOP
-+       tristate "Loop target (EXPERIMENTAL)"
-+       depends on BLK_DEV_DM && EXPERIMENTAL
-+       ---help---
-+         A target that replace losetup or mount -o loop
-+
-+         If unsure, say N.
-+
- endmenu
-
-
-I think an other patch format (ed?) to add the Kconfig entries would
-be more convenient:
-**diffs may not work** on Kconfig or Makefile, depending on what new
-filter is already
-patched in.
-I'll have a look on how to tell the patch util:  "Just add those lines
-before the last one" ,
- but I'm sure many of you already know :-) hum ?
-
-David G.M.
+Alasdair
+-- 
+agk@redhat.com
