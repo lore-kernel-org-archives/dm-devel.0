@@ -1,12 +1,13 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: New read-balancing patch for dm-raid1.c
-Date: Wed, 11 Oct 2006 10:33:14 -0500
-Message-ID: <1160580794.15980.2.camel@hydrogen.msp.redhat.com>
+From: "David Guyon Martin" <david.guyonmartin@gmail.com>
+Subject: New dm filters and patch format for kernel config
+Date: Thu, 12 Oct 2006 10:49:45 +0200
+Message-ID: <2c53b31c0610120149r577bd90cy6e67466b8a96e87e@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,171 +17,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Updated patch with suggestions from Heinz Mauelshagen.
+Hello,
 
- brassow
+Regarding new filters:
+dm-delay patch add the filter and its entries for menuconfig and make,
+but dm-loop do not.
+Let us have a look to the missing diffs for dm-loop <once dm-delay applied> :
 
-This patch adds read balancing.  The round-robin method is the first
-to be implemented, but provisions are made for others to be implemented
-in the future.
+--- orig/Makefile       2006-10-11 17:14:46.988454352 +0200
++++ drivers/md/Makefile 2006-10-11 17:15:08.804137864 +0200
+@@ -32,6 +32,7 @@
+ obj-$(CONFIG_BLK_DEV_DM)       += dm-mod.o
+ obj-$(CONFIG_DM_CRYPT)         += dm-crypt.o
+ obj-$(CONFIG_DM_DELAY)         += dm-delay.o
++obj-$(CONFIG_DM_LOOP)          += dm-loop.o
+ obj-$(CONFIG_DM_MULTIPATH)     += dm-multipath.o dm-round-robin.o
+ obj-$(CONFIG_DM_MULTIPATH_EMC) += dm-emc.o
+ obj-$(CONFIG_DM_SNAPSHOT)      += dm-snapshot.o
 
-The allowable mirror table arguments has been expanded.  It is now
-as follows:
+--- orig/Kconfig        2006-10-11 17:14:53.251502224 +0200
++++ drivers/md/Kconfig  2006-10-11 17:15:08.307213408 +0200
+@@ -258,5 +258,13 @@
 
-       <start> <length> mirror \
-       <log-type> <# log params> <log params> \
-*new*  [readbalance <# rb params> <rb params>] \
-       <# mirrors> <device1> <offset1> ... <deviceN> <offsetN>
+          If unsure, say N.
 
-The new read balancing arguments are optional, and the only
-currently valid read balancing arguments are:
-       readbalance 2 roundrobin <count>
-Where 'count' is the number of I/Os that go to a device before
-switching to the next device.
++config DM_LOOP
++       tristate "Loop target (EXPERIMENTAL)"
++       depends on BLK_DEV_DM && EXPERIMENTAL
++       ---help---
++         A target that replace losetup or mount -o loop
++
++         If unsure, say N.
++
+ endmenu
 
-'struct mirror *choose_mirror(struct mirror_set *ms)' is the
-function that chooses the read mirror based on read balancing
-policy.  It should only be called when the region of the
-mirror being read from is known to be in-sync.  'choose_mirror'
-will avoid selecting devices with error_counts > 0 - returning
-NULL if no devices are available.
 
-Index: linux-2.6.18/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.18.orig/drivers/md/dm-raid1.c	2006-10-05 13:38:27.000000000 -0500
-+++ linux-2.6.18/drivers/md/dm-raid1.c	2006-10-11 10:29:39.000000000 -0500
-@@ -135,6 +135,9 @@ struct mirror_set {
- 	struct mirror *default_mirror;	/* Default mirror */
- 
- 	unsigned int nr_mirrors;
-+	unsigned int read_count_reset; /* number of reads before switching */
-+	atomic_t read_count;      /* Read counter for read balancing */
-+	struct mirror *read_mirror; /* Last mirror read. */
- 	struct mirror mirror[0];
- };
- 
-@@ -686,10 +689,45 @@ static void do_recovery(struct mirror_se
- /*-----------------------------------------------------------------
-  * Reads
-  *---------------------------------------------------------------*/
--static struct mirror *choose_mirror(struct mirror_set *ms, sector_t sector)
-+
-+/* choose_mirror
-+ * @ms: the mirror set
-+ *
-+ * This function is used for read balancing.
-+ *
-+ * Returns: chosen mirror, or NULL on failure
-+ */
-+static struct mirror *choose_mirror(struct mirror_set *ms)
- {
--	/* FIXME: add read balancing */
--	return ms->default_mirror;
-+	unsigned int i;
-+	struct mirror *start_mirror = ms->read_mirror;
-+
-+	/*
-+	 * Perform ms->read_count_reset reads on each working mirror then
-+	 * advance to the next one.  (If ms->read_count_reset is zero,
-+	 * then do not advance unless the device is faulty.)  start_mirror
-+	 * stores the first we tried, so we know when we're done.
-+	 */
-+	do {
-+		if (likely(!atomic_read(&ms->read_mirror->error_count)) &&
-+		    (!ms->read_count_reset || !atomic_dec_and_test(&ms->read_count)))
-+			goto use_mirror;
-+
-+		atomic_set(&ms->read_count, ms->read_count_reset);
-+
-+		if (ms->read_mirror-- == ms->mirror)
-+			ms->read_mirror += ms->nr_mirrors;
-+	} while (ms->read_mirror != start_mirror);
-+
-+	/*
-+	 * We've rejected every mirror.
-+	 * Confirm the start_mirror can be used.
-+	 */
-+	if (unlikely(atomic_read(&ms->read_mirror->error_count)))
-+		return NULL;
-+
-+use_mirror:
-+	return ms->read_mirror;
- }
- 
- /*
-@@ -714,7 +752,7 @@ static void do_reads(struct mirror_set *
- 		 * We can only read balance if the region is in sync.
- 		 */
- 		if (rh_in_sync(&ms->rh, region, 0))
--			m = choose_mirror(ms, bio->bi_sector);
-+			m = choose_mirror(ms);
- 		else
- 			m = ms->default_mirror;
- 
-@@ -907,6 +945,7 @@ static struct mirror_set *alloc_context(
- 	ms->nr_mirrors = nr_mirrors;
- 	ms->nr_regions = dm_sector_div_up(ti->len, region_size);
- 	ms->in_sync = 0;
-+	ms->read_mirror = &ms->mirror[DEFAULT_MIRROR];
- 	ms->default_mirror = &ms->mirror[DEFAULT_MIRROR];
- 
- 	if (rh_init(&ms->rh, ms, dl, region_size, ms->nr_regions)) {
-@@ -1028,6 +1067,7 @@ static struct dirty_log *create_dirty_lo
- static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
- 	int r;
-+	unsigned int read_count_reset = 0, read_balance_args;
- 	unsigned int nr_mirrors, m, args_used;
- 	struct mirror_set *ms;
- 	struct dirty_log *dl;
-@@ -1039,6 +1079,29 @@ static int mirror_ctr(struct dm_target *
- 	argv += args_used;
- 	argc -= args_used;
- 
-+	if (!argc) {
-+		ti->error = "Invalid number of arguments";
-+		dm_destroy_dirty_log(dl);
-+		return -EINVAL;
-+	} else if (!strcmp("readbalance", argv[0]) &&
-+		   (sscanf(argv[1], "%u", &read_balance_args) == 1)) {
-+		/*
-+		 * When there is more than one read-balancing policy,
-+		 * we will push this next if statement into an
-+		 * initialization function.
-+		 */
-+		if ((read_balance_args == 2) &&
-+		    !strcmp("roundrobin", argv[2]) &&
-+		    (sscanf(argv[3], "%u", &read_count_reset) == 1)) {
-+			argv += 4;
-+			argc -= 4;
-+		} else {
-+			ti->error = "Invalid read-balancing arguments";
-+			dm_destroy_dirty_log(dl);
-+			return -EINVAL;
-+		}
-+	}
-+
- 	if (!argc || sscanf(argv[0], "%u", &nr_mirrors) != 1 ||
- 	    nr_mirrors < 2 || nr_mirrors > KCOPYD_MAX_REGIONS + 1) {
- 		ti->error = "Invalid number of mirrors";
-@@ -1060,6 +1123,8 @@ static int mirror_ctr(struct dm_target *
- 		return -ENOMEM;
- 	}
- 
-+	ms->read_count_reset = read_count_reset;
-+
- 	/* Get the mirror parameter sets */
- 	for (m = 0; m < nr_mirrors; m++) {
- 		r = get_mirror(ms, ti, m, argv);
-@@ -1147,7 +1212,7 @@ static int mirror_map(struct dm_target *
- 		return 0;
- 	}
- 
--	m = choose_mirror(ms, bio->bi_sector);
-+	m = choose_mirror(ms);
- 	if (!m)
- 		return -EIO;
- 
+I think an other patch format (ed?) to add the Kconfig entries would
+be more convenient:
+**diffs may not work** on Kconfig or Makefile, depending on what new
+filter is already
+patched in.
+I'll have a look on how to tell the patch util:  "Just add those lines
+before the last one" ,
+ but I'm sure many of you already know :-) hum ?
+
+David G.M.
