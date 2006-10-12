@@ -1,14 +1,18 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [PATCH RFC] replace dm hw handlers with scsi handlers
-Date: Thu, 12 Oct 2006 15:21:15 -0500
-Message-ID: <452EA3BB.8020305@cs.wisc.edu>
-References: <1160684310.4163.4.camel@madmax>
+From: David Wysochanski <dwysocha@redhat.com>
+Subject: Re: Failover between two paths to one LU doesn't work
+	onlinux-iscsi
+Date: Thu, 12 Oct 2006 16:28:06 -0400
+Message-ID: <1160684886.6294.9.camel@dhcp59-220.rdu.redhat.com>
+References: <452BD5C6.2080808@voltaire.com> <452BD768.30206@ilm.com>
+	<452BFAA0.1000100@voltaire.com>
+	<1160576205.4819.13.camel@linux-cxyg.rtp.netapp.com>
+	<452E8E50.3080507@voltaire.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1160684310.4163.4.camel@madmax>
+In-Reply-To: <452E8E50.3080507@voltaire.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,55 +22,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
-> +
-> +static int clariion_check_sense(struct scsi_sense_hdr *sense_hdr)
-> +{
-> +	switch (sense_hdr->sense_key) {
-> +	case NOT_READY:
-> +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x03)
-> +			/*
-> +			 * LUN Not Ready - Manual Intervention Required
-> +			 * indicates this is a passive path.
-> +			 *
-> +			 * FIXME: However, if this is seen and EVPD C0
-> +			 * indicates that this is due to a NDU in
-> +			 * progress, we should set FAIL_PATH too.
-> +			 * This indicates we might have to do a SCSI
-> +			 * inquiry in the end_io path. Ugh.
-> +			 */
-> +			return FAILED;
-> +		break;
-> +	case ILLEGAL_REQUEST:
-> +		if (sense_hdr->asc == 0x25 && sense_hdr->ascq == 0x01)
-> +			/*
-> +			 * An array based copy is in progress. Do not
-> +			 * fail the path, do not bypass to another PG,
-> +			 * do not retry. Fail the IO immediately.
-> +			 * (Actually this is the same conclusion as in
-> +			 * the default handler, but lets make sure.)
-> +			 */
-> +			return FAILED;
-> +		break;
-> +	case UNIT_ATTENTION:
-> +		if (sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x00)
-> +			/*
-> +			 * Unit Attention Code. This is the first IO
-> +			 * to the new path, so just retry.
-> +			 */
-> +			return NEEDS_RETRY;
-> +		break;
-> +	}
-> +
-> +	/* success just means we do not care what scsi-ml does */
-> +	return SUCCESS;
-> +}
-> +
+On Thu, 2006-10-12 at 20:49 +0200, Michael Lyulko wrote:
+> Dave Wysochanski wrote:
+> >> I ran iozone benchmark and manually failed one of two paths. There was 
+> >> no failover to second path.
+> >> The iSCSI initiator retried to reconnect to the first path - 
+> >> unsuccessfully. When I restored the first
+> >> path - the initiator reconnected to the target via the first path.
+> >>
+> >> Thanks!
+> >>
+> >> ------------- INFO -------------
+> >> Versions:
+> >> device-mapper-1.01.01-1.6
+> >> multipath-tools-0.4.5-0.11
+> >>
+> >> Machine:
+> >> 2.6.5-7.244-smp; x86_64; SLES9 sp3
+> >>
+> >>     
+> >
+> > Did you set ConnFailTimeout to a non-zero value?  This sounds like it's
+> > still at default (reconnect indefinately).  You also need to set the
+> > Multipath variable, but it sounds like you may have done that already.
+> >
+> >
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> >   
+> Thanks! Now I set ConnFailTimeout=30 and when one of the paths failed a 
+> fail-over to
+> second path occurred (I had Multipath=portal). But after the first path 
+> is back (iSCSI session
+> is established and I can read from the device) multipath -l shows:
+> <snip>
+> \_ round-robin 0 [enabled]
+>  \_ 0:0:6:0 sda 8:0  [failed][ready]            //   still "failed" - 
+> Michael
+> \_ round-robin 0 [active]
+>  \_ 0:1:6:0 sdb 8:16 [active][ready]
+> 
+> 1. How can I configure the DM to automatically detect that a path is 
+> active again?
 
-Oh yeah, Ed could you tell me where sometimes a commend gets retried
-over and over when a path is passive and can you tell me on what error
-values it does this so I can add this in? Does the check_sense code
-force the retry, or scsi_io_completion or the ULD?
+you probably want "failback immediate"
+there's also been some bugs with failback - not sure about your version
+- your mileage may vary
+
+> 2. I don't have a multipath.conf in /etc. Is 
+> /usr/share/doc/packages/multipath-tools/
+> the right place to take it from?
+
+Yes, you can start with this.  I think there may be a problem with some
+of the examples - make sure the "blacklist" keyword is correct - at some
+point it changed from "devnode_blacklist" to "blacklist" (not sure which
+one is in your version but example may be wrong).
+
+> 3. What params in multipath.conf are a must in this case of fail-over 
+> setup regarding question no.1?
+> 
+
+You might also want to look at no_path_retry and/or queue_if_no_path
+options.
