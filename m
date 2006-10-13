@@ -1,9 +1,25 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdm-deptree.c
-Date: 13 Oct 2006 14:03:35 -0000
-Message-ID: <20061013140335.28520.qmail@sourceware.org>
+From: "Mike Snitzer" <snitzer@gmail.com>
+Subject: Re: [RFC] DM Snapshot scalability - Common snap store
+	approach
+Date: Fri, 13 Oct 2006 13:30:32 -0400
+Message-ID: <170fa0d20610131030g15d27462x821114cc19726a36@mail.gmail.com>
+References: <452A3B1A0200000B0001CA9C@lucius.provo.novell.com>
+	<452A40850200000B0001CAE7@lucius.provo.novell.com>
+	<452A409C0200000B0001CAE9@lucius.provo.novell.com>
+	<452A40AC0200000B0001CAEB@lucius.provo.novell.com>
+	<452A41140200000B0001CAED@lucius.provo.novell.com>
+	<452A413B0200000B0001CAF6@lucius.provo.novell.com>
+	<452A414F0200000B0001CAF8@lucius.provo.novell.com>
+	<452A41610200000B0001CAFA@lucius.provo.novell.com>
+	<452A417D0200000B0001CAFC@lucius.provo.novell.com>
+	<452A5625.E9E2.000B.0@novell.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <452A5625.E9E2.000B.0@novell.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,41 +29,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2006-10-13 14:03:35
+On 10/9/06, Vijai Babu Madhavan <MVijai@novell.com> wrote:
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdm-deptree.c 
+> Quick summary
+> =========
+>
+> Various approaches that are being considered/prototyped to solve the
+> scalability problem with
+> DM snapshots are described here. Currently, I like the 2.d approach
+> (using a single cow device
+> for all snapshots of an origin, with a combination of exception
+> stores). If you don't want to
+> read about other approaches, jump there directly. I would like to know
+> about other ways
+> to solve this problem, and comments about these approaches.
 
-Log message:
-	Avoid deptree attempting to suspend a device that's already suspended.
+A shared exception store was included as part of the cluster snapshot
+prototype that Daniel Phillips worked on some time ago:
+http://sources.redhat.com/cluster/csnap/
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.129&r2=1.130
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.28&r2=1.29
+See section "1.3  Multiple Snapshots" and "5 Server Implementation
+details" in csnap.ps.  And csnap.c in the csnap.0.0.1.tgz
 
---- device-mapper/WHATS_NEW	2006/10/12 17:45:11	1.129
-+++ device-mapper/WHATS_NEW	2006/10/13 14:03:33	1.130
-@@ -1,5 +1,6 @@
- Version 1.02.12 -
- ==============================
-+  Avoid deptree attempting to suspend a device that's already suspended.
- 
- Version 1.02.11 -  12 Oct 2006
- ==============================
---- device-mapper/lib/libdm-deptree.c	2006/05/16 16:20:29	1.28
-+++ device-mapper/lib/libdm-deptree.c	2006/10/13 14:03:35	1.29
-@@ -1028,7 +1028,7 @@
- 			continue;
- 
- 		if (!_info_by_dev(dinfo->major, dinfo->minor, 0, &info) ||
--		    !info.exists)
-+		    !info.exists || info.suspended)
- 			continue;
- 
- 		if (!_suspend_node(name, info.major, info.minor,
+This code is quite cluster oriented but it does provide a good amount
+of detail on how one might implement a shared exception store.  I
+kernel-based solution could come later...
+
+It would be _very_ nice to improve the current dm-snapshot with shared
+exceptions; I for one am eager to see continued
+discussion/implementation of this.
+
+Mike
