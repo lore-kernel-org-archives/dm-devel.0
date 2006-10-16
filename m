@@ -1,14 +1,15 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [PATCH RFC] replace dm hw handlers with scsi handlers
-Date: Sat, 14 Oct 2006 09:09:46 -0400
-Message-ID: <4530E19A.8040002@cs.wisc.edu>
-References: <1160684310.4163.4.camel@madmax>
+From: Frederic TEMPORELLI <frederic.temporelli@ext.bull.net>
+Subject: Re: multipath tools - 'fail to get path uid' on LUN 0
+	whenfailback
+Date: Mon, 16 Oct 2006 11:08:57 +0200
+Message-ID: <45334C29.2090604@ext.bull.net>
+References: <452F9A89.6080702@ext.bull.net> <452FDC63.7080000@ilm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1160684310.4163.4.camel@madmax>
+In-Reply-To: <452FDC63.7080000@ilm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,63 +20,837 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@free.fr>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
-> - Bind per device instead of per target to allow for
-> per LU failover.
-> - Merge Ed's updated dm-emc code into scsi_emc_clariion.
-> - Add basic code to hook into REQ_TYPE_LINUX_BLOCK cmd_type
-> (must ask Jens if this is how he wanted it).
-> - Do a partial conversion of dm-mpath.c (hooked dm-mpath.c
-> in, but all the hw handler code can now be removed (will
-> do this in a seperate patch to reduce noise)).
-> - added device_id table to bind devices to modules by.
+Hi,
+
+
+
+In libmultipath/discovery.c, function wait_for_file(char * filename):
+
+- increase WAIT_MAX_SECONDS (from 5 to 10 seconds)
+- add a condlog (level 3) to confirm WAIT_MAX_SECONDS and WAIT_LOOP_PER_SECOND 
+values, and that we are running the 'daemonized' func.
+
+Doing so, I'm able to get device serial for LUN0 after 6 seconds...
+=> udev is always losing the race, and in our case is more than 5 seconds late.
+(we are running a dual IA64 server). May be time to upgrade udev (still 039 
+shipped in RHEL4U4) ?
+
+
+Here's the output when serial is OK for LUN0, after a 6 seconds polling on /dev/sdX
+=====================================================================
+Oct 16 10:32:26 | sdf: vendor = DDN
+Oct 16 10:32:26 | wait for file (daemon) /sys/block/sdf/device/model max seconds 
+10, loops per sec 5
+Oct 16 10:32:26 | sdf: product = S2A 8500
+Oct 16 10:32:26 | wait for file (daemon) /sys/block/sdf/device/rev max seconds 
+10, loops per sec 5
+Oct 16 10:32:26 | sdf: rev = 5.24
+Oct 16 10:32:26 | sdf: h:b:t:l = 5:0:0:0
+Oct 16 10:32:26 | sdf: tgt_node_name = 0x20000001ff0302a8
+Oct 16 10:32:26 | wait for file (daemon) /dev/sdf max seconds 10, loops per sec 5
+Oct 16 10:32:32 | sdf: serial = 03E0FE340C00
+Oct 16 10:32:32 | sdf: path checker = directio (controller setting)
+Oct 16 10:32:32 | sdf: state = 2
+Oct 16 10:32:32 | sdf: getprio = NULL (internal default)
+Oct 16 10:32:32 | sdf: prio = 1
+Oct 16 10:32:32 | sdf: getuid = /sbin/scsi_id -g -u -s /block/%n (controller 
+setting)
+Oct 16 10:32:32 | sdf: uid = 360001ff02002110103e0fe34001f0c00 (callout)
+Oct 16 10:32:32 | 8:16: not found in pathvec
+Oct 16 10:32:32 | sdb: ownership set to 360001ff02002110103e0fe34001f0c00
+=====================================================================
+
+
+
+
+Eli Stair wrote:
+> 
+> 
+> You're having identical symptoms to what I reported earlier this week, 
+> with the same versions.  I've since upgraded the base device-mapper 
+> package to 1.02.11 and recompiled multipath-tools, with no change.
+> 
+>   https://www.redhat.com/archives/dm-devel/2006-October/msg00038.html
+> 
+> Haven't heard any response yet on it, so I'm slowly going through and 
+> debugging the relevant code and tracking it down. Initially I thought it 
+> was a race condition due to a udev device-creation delay, but it appears 
+> the hangup is actually in /sys/block or (/sys/class) somewhere.
+> 
+> It's looking to me like it points to the block device being (improperly) 
+> flagged as a partition here:
+> 
+> 
+> multipathd/main.c:961 (uev_discard):
+> 
+>         if (sscanf(devpath, "/block/%10s", a) != 1 ||
+>             sscanf(devpath, "/block/%10[^/]/%10s", a, b) == 2) {
+>                 condlog(4, "discard event on %s", devpath);
+>                 return 1;
+>         }
+> 
+> 
+> I'm tracking backwards from here, figuring out what vars are passed into 
+> the function that it is comparing to the device in /sys.
+> 
+> 
+> /eli
+> 
+> 
+> Frederic TEMPORELLI wrote:
+> 
+>> Hello,
+>>
+>>
+>> I'm running kernel 2.6.18 + multipath-tools 0.4.7.
+>>
+>> Using Emulex HBA (kernel driver 8.1.9) and DDN S2A8500 disk array, 
+>> multipathd
+>> generates a 'fail to get path uid' error when failback from link down 
+>> failure.
+>> This only happen for LUN0 of the target. All the other LUNs are nicely 
+>> detected
+>> and dm are updated for these other LUNs.
+>>
+>> attached is the multipathd log (multipathd -d -v4) and the system syslog.
+>> => I'm thinking that multipathd can't open the /dev/sdX related to 
+>> LUN0 as soon
+>> as the the scsi event is received. multipathd processing is delayed 
+>> (until open
+>> error is fired) then the other LUNs are processed (with sd that can be 
+>> opened).
+>> Following such issue, LUN0 can be put back in multipath configuration 
+>> by running
+>> by hand multipath command (but we lose the advantage of the multipathd
+>> monitoring...)
+>>
+>> Did anyone get such issue ? any idea to solve it ?
+>> (may be a way to add a delay between event and scsi_id detection ?)
+>>
+>> Thanks for your help.
+>>
+>> -- 
+>> Frederic TEMPORELLI
+>>
+>>
+>> ------------------------------------------------------------------------
+>>
+>> Oct 13 15:18:17 s_kernel@iotiger3 kernel: lpfc 0000:06:02.1: 1:1305 
+>> Link Down Event x4 received Data: x4 x20 x0
+>> Oct 13 15:18:27 s_kernel@iotiger3 kernel: lpfc 0000:06:02.1: 1:0203 
+>> Nodev timeout on WWPN 23:0:0:1:ff:3:2:a8 NPort xef Data: x8 x7 x0
+>> Oct 13 15:18:32 s_kernel@iotiger3 kernel: rport-5:0-0: blocked FC 
+>> remote port time out: removing target and saving binding
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: lpfc 0000:06:02.1: 1:1303 
+>> Link Up Event x5 received Data: x5 x1 x8 x2
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Vendor: DDN       Model: S2A 
+>> 8500          Rev: 5.24
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Type:   
+>> Direct-Access                      ANSI SCSI revision: 03
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdf: 2048000 
+>> 512-byte hdwr sectors (1049 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdf: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdf: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdf: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdf: 2048000 
+>> 512-byte hdwr sectors (1049 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdf: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdf: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdf: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdf: unknown partition table
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:0: Attached scsi 
+>> disk sdf
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:0: Attached scsi 
+>> generic sg6 type 0
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Vendor: DDN       Model: S2A 
+>> 8500          Rev: 5.24
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Type:   
+>> Direct-Access                      ANSI SCSI revision: 03
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdg: 571416576 
+>> 512-byte hdwr sectors (292565 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdg: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdg: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdg: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdg: 571416576 
+>> 512-byte hdwr sectors (292565 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdg: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdg: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdg: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdg: unknown partition table
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:1: Attached scsi 
+>> disk sdg
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:1: Attached scsi 
+>> generic sg7 type 0
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Vendor: DDN       Model: S2A 
+>> 8500          Rev: 5.24
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Type:   
+>> Direct-Access                      ANSI SCSI revision: 03
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdh: 2048000 
+>> 512-byte hdwr sectors (1049 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdh: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdh: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdh: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdh: 2048000 
+>> 512-byte hdwr sectors (1049 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdh: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdh: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdh: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdh: unknown partition table
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:2: Attached scsi 
+>> disk sdh
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:2: Attached scsi 
+>> generic sg8 type 0
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Vendor: DDN       Model: S2A 
+>> 8500          Rev: 5.24
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: Type:   
+>> Direct-Access                      ANSI SCSI revision: 03
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdi: 571416576 
+>> 512-byte hdwr sectors (292565 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdi: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdi: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdi: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdi: 571416576 
+>> 512-byte hdwr sectors (292565 MB)
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdi: Write Protect is off
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdi: Mode Sense: a7 00 10 08
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: SCSI device sdi: drive 
+>> cache: write through w/ FUA
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sdi: unknown partition table
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:3: Attached scsi 
+>> disk sdi
+>> Oct 13 15:19:14 s_kernel@iotiger3 kernel: sd 5:0:0:3: Attached scsi 
+>> generic sg9 type 0
+>> Oct 13 15:19:14 s_sys@iotiger3 scsi.agent[14745]: disk at 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:14 s_sys@iotiger3 scsi.agent[14757]: disk at 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:14 s_sys@iotiger3 scsi.agent[14716]: disk at 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:14 s_sys@iotiger3 scsi.agent[14734]: disk at 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>>
+>>
+>> ------------------------------------------------------------------------
+>>
+>> Oct 13 15:18:43 | sdb: directio checker reports path is up
+>> Oct 13 15:18:43 | 8:16: delay next check 80s
+>> Oct 13 15:18:43 | path prio refresh
+>> Oct 13 15:18:43 | sdb: mask = 0x8
+>> Oct 13 15:18:43 | sdb: prio = 1
+>> Oct 13 15:18:43 | sdc: directio checker reports path is up
+>> Oct 13 15:18:43 | 8:32: delay next check 80s
+>> Oct 13 15:18:43 | path prio refresh
+>> Oct 13 15:18:43 | sdc: mask = 0x8
+>> Oct 13 15:18:43 | sdc: prio = 1
+>> Oct 13 15:18:43 | sdd: directio checker reports path is up
+>> Oct 13 15:18:43 | 8:48: delay next check 80s
+>> Oct 13 15:18:43 | path prio refresh
+>> Oct 13 15:18:43 | sdd: mask = 0x8
+>> Oct 13 15:18:43 | sdd: prio = 1
+>> Oct 13 15:18:43 | sde: directio checker reports path is up
+>> Oct 13 15:18:43 | 8:64: delay next check 80s
+>> Oct 13 15:18:43 | path prio refresh
+>> Oct 13 15:18:43 | sde: mask = 0x8
+>> Oct 13 15:18:43 | sde: prio = 1
+>> Oct 13 15:18:44 | tick
+>> Oct 13 15:18:45 | tick
+>> Oct 13 15:18:45 | map garbage collection
+>> Oct 13 15:18:46 | tick
+>> Oct 13 15:18:47 | tick
+>> Oct 13 15:18:48 | tick
+>> Oct 13 15:18:49 | tick
+>> Oct 13 15:18:50 | tick
+>> Oct 13 15:18:51 | tick
+>> Oct 13 15:18:51 | map garbage collection
+>> Oct 13 15:18:52 | tick
+>> Oct 13 15:18:53 | tick
+>> Oct 13 15:18:54 | tick
+>> Oct 13 15:18:55 | tick
+>> Oct 13 15:18:56 | tick
+>> Oct 13 15:18:57 | tick
+>> Oct 13 15:18:57 | map garbage collection
+>> Oct 13 15:18:58 | tick
+>> Oct 13 15:18:59 | tick
+>> Oct 13 15:19:00 | tick
+>> Oct 13 15:19:01 | tick
+>> Oct 13 15:19:02 | tick
+>> Oct 13 15:19:03 | tick
+>> Oct 13 15:19:03 | map garbage collection
+>> Oct 13 15:19:04 | tick
+>> Oct 13 15:19:05 | tick
+>> Oct 13 15:19:06 | tick
+>> Oct 13 15:19:07 | tick
+>> Oct 13 15:19:08 | tick
+>> Oct 13 15:19:09 | tick
+>> Oct 13 15:19:09 | map garbage collection
+>> Oct 13 15:19:10 | tick
+>> Oct 13 15:19:11 | tick
+>> Oct 13 15:19:12 | tick
+>> Oct 13 15:19:13 | tick
+>> Oct 13 15:19:14 | uevent 'add' from '/class/fc_transport/target5:0:0'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/fc_transport/target5:0:0
+>> Oct 13 15:19:14 | SUBSYSTEM=fc_transport
+>> Oct 13 15:19:14 | SEQNUM=1294
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0 
+>>
+>> Oct 13 15:19:14 | discard event on /class/fc_transport/target5:0:0
+>> Oct 13 15:19:14 | uevent 'add' from 
+>> '/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0'Oct 
+>> 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | 
+>> DEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi
+>> Oct 13 15:19:14 | SEQNUM=1295
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | discard event on 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_disk/5:0:0:0'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_disk/5:0:0:0
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_disk
+>> Oct 13 15:19:14 | SEQNUM=1296
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | discard event on /class/scsi_disk/5:0:0:0
+>> Oct 13 15:19:14 | uevent 'add' from '/block/sdf'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/block/sdf
+>> Oct 13 15:19:14 | SUBSYSTEM=block
+>> Oct 13 15:19:14 | SEQNUM=1297
+>> Oct 13 15:19:14 | MINOR=80
+>> Oct 13 15:19:14 | MAJOR=8
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | sdf: add path (uevent)
+>> Oct 13 15:19:14 | sdf: not found in pathvec
+>> Oct 13 15:19:14 | sdf: mask = 0x1f
+>> Oct 13 15:19:14 | sdf: bus = 1
+>> Oct 13 15:19:14 | sdf: dev_t = 8:80
+>> Oct 13 15:19:14 | sdf: size = 2048000
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_device/5:0:0:0'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_device/5:0:0:0
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_device
+>> Oct 13 15:19:14 | SEQNUM=1298
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_generic/sg6'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_generic/sg6
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_generic
+>> Oct 13 15:19:14 | SEQNUM=1299
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:0 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | MAJOR=21
+>> Oct 13 15:19:14 | MINOR=6
+>> Oct 13 15:19:14 | uevent 'add' from 
+>> '/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1'Oct 
+>> 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | 
+>> DEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi
+>> Oct 13 15:19:14 | SEQNUM=1300
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_disk/5:0:0:1'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_disk/5:0:0:1
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_disk
+>> Oct 13 15:19:14 | SEQNUM=1301
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/block/sdg'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/block/sdg
+>> Oct 13 15:19:14 | SUBSYSTEM=block
+>> Oct 13 15:19:14 | SEQNUM=1302
+>> Oct 13 15:19:14 | MINOR=96
+>> Oct 13 15:19:14 | MAJOR=8
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_device/5:0:0:1'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_device/5:0:0:1
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_device
+>> Oct 13 15:19:14 | SEQNUM=1303
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_generic/sg7'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_generic/sg7
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_generic
+>> Oct 13 15:19:14 | SEQNUM=1304
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | MAJOR=21
+>> Oct 13 15:19:14 | MINOR=7
+>> Oct 13 15:19:14 | uevent 'add' from 
+>> '/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2'Oct 
+>> 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | 
+>> DEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi
+>> Oct 13 15:19:14 | SEQNUM=1305
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_disk/5:0:0:2'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_disk/5:0:0:2
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_disk
+>> Oct 13 15:19:14 | SEQNUM=1306
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/block/sdh'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/block/sdh
+>> Oct 13 15:19:14 | SUBSYSTEM=block
+>> Oct 13 15:19:14 | SEQNUM=1307
+>> Oct 13 15:19:14 | MINOR=112
+>> Oct 13 15:19:14 | MAJOR=8
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_device/5:0:0:2'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_device/5:0:0:2
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_device
+>> Oct 13 15:19:14 | SEQNUM=1308
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_generic/sg8'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_generic/sg8
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_generic
+>> Oct 13 15:19:14 | SEQNUM=1309
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | MAJOR=21
+>> Oct 13 15:19:14 | MINOR=8
+>> Oct 13 15:19:14 | uevent 'add' from 
+>> '/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3'Oct 
+>> 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | 
+>> DEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi
+>> Oct 13 15:19:14 | SEQNUM=1310
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_disk/5:0:0:3'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_disk/5:0:0:3
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_disk
+>> Oct 13 15:19:14 | SEQNUM=1311
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/block/sdi'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/block/sdi
+>> Oct 13 15:19:14 | SUBSYSTEM=block
+>> Oct 13 15:19:14 | SEQNUM=1312
+>> Oct 13 15:19:14 | MINOR=128
+>> Oct 13 15:19:14 | MAJOR=8
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_device/5:0:0:3'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_device/5:0:0:3
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_device
+>> Oct 13 15:19:14 | SEQNUM=1313
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | uevent 'add' from '/class/scsi_generic/sg9'
+>> Oct 13 15:19:14 | ACTION=add
+>> Oct 13 15:19:14 | DEVPATH=/class/scsi_generic/sg9
+>> Oct 13 15:19:14 | SUBSYSTEM=scsi_generic
+>> Oct 13 15:19:14 | SEQNUM=1314
+>> Oct 13 15:19:14 | 
+>> PHYSDEVPATH=/devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:14 | PHYSDEVBUS=scsi
+>> Oct 13 15:19:14 | PHYSDEVDRIVER=sd
+>> Oct 13 15:19:14 | MAJOR=21
+>> Oct 13 15:19:14 | MINOR=9
+>> Oct 13 15:19:14 | sdf: vendor = DDN
+>> Oct 13 15:19:14 | sdf: product = S2A 8500
+>> Oct 13 15:19:14 | sdf: rev = 5.24
+>> Oct 13 15:19:14 | sdf: h:b:t:l = 5:0:0:0
+>> Oct 13 15:19:14 | sdf: tgt_node_name = 0x20000001ff0302a8
+>> Oct 13 15:19:19 | failed to open /dev/sdf
+>> Oct 13 15:19:19 | sdf: failed to get path uid
+>> Oct 13 15:19:19 | uevent trigger error
+>> Oct 13 15:19:19 | Oct 13 15:19:19 | tick
+>> discard event on /class/scsi_device/5:0:0:0
+>> Oct 13 15:19:19 | discard event on /class/scsi_generic/sg6
+>> Oct 13 15:19:19 | discard event on 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:1 
+>>
+>> Oct 13 15:19:19 | discard event on /class/scsi_disk/5:0:0:1
+>> Oct 13 15:19:19 | sdg: add path (uevent)
+>> Oct 13 15:19:19 | sdg: not found in pathvec
+>> Oct 13 15:19:19 | sdg: mask = 0x1f
+>> Oct 13 15:19:19 | sdg: bus = 1
+>> Oct 13 15:19:19 | sdg: dev_t = 8:96
+>> Oct 13 15:19:19 | sdg: size = 571416576
+>> Oct 13 15:19:19 | sdg: vendor = DDN
+>> Oct 13 15:19:19 | sdg: product = S2A 8500
+>> Oct 13 15:19:19 | sdg: rev = 5.24
+>> Oct 13 15:19:19 | sdg: h:b:t:l = 5:0:0:1
+>> Oct 13 15:19:19 | sdg: tgt_node_name = 0x20000001ff0302a8
+>> Oct 13 15:19:20 | sdg: serial = 03E0FE360D00
+>> Oct 13 15:19:20 | sdg: path checker = directio (controller setting)
+>> Oct 13 15:19:20 | sdg: state = 2
+>> Oct 13 15:19:20 | sdg: getprio = NULL (internal default)
+>> Oct 13 15:19:20 | sdg: prio = 1
+>> Oct 13 15:19:20 | sdg: getuid = /sbin/scsi_id -g -u -s /block/%n 
+>> (controller setting)
+>> Oct 13 15:19:20 | sdg: uid = 360001ff02002110103e0fe36220f0d00 (callout)
+>> Oct 13 15:19:20 | 8:32: not found in pathvec
+>> Oct 13 15:19:20 | sdc: ownership set to 360001ff02002110103e0fe36220f0d00
+>> Oct 13 15:19:20 | sdc: mask = 0xc
+>> Oct 13 15:19:20 | sdc: state = 2
+>> Oct 13 15:19:20 | sdc: prio = 1
+>> Oct 13 15:19:20 | sdg: ownership set to 360001ff02002110103e0fe36220f0d00
+>> Oct 13 15:19:20 | sdg: not found in pathvec
+>> Oct 13 15:19:20 | sdg: mask = 0xc
+>> Oct 13 15:19:20 | sdg: state = 2
+>> Oct 13 15:19:20 | sdg: prio = 1
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: pgfailback = -2 
+>> (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: pgpolicy = 
+>> multibus (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: selector = 
+>> round-robin 0 (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: features = 0 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: hwhandler = 0 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: rr_weight = 1 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: minio = 1000 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: no_path_retry = 
+>> -1 (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: load table [0 
+>> 571416576 multipath 0 0 1 1 round-robin 0 2 1 8:32 1000 8:96 1000]
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: discover
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 2, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 8:32, len = 4
+>> Oct 13 15:19:20 | *word = 1000, len = 4
+>> Oct 13 15:19:20 | *word = 8:96, len = 4
+>> Oct 13 15:19:20 | *word = 1000, len = 4
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = E, len = 1
+>> Oct 13 15:19:20 | *word = 2, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = A, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = A, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: rr_weight = 1 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: pgfailback = -2 
+>> (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe36220f0d00: no_path_retry = 
+>> -1 (config file default)
+>> Oct 13 15:19:20 | sdg path added to devmap 
+>> 360001ff02002110103e0fe36220f0d00
+>> Oct 13 15:19:20 | discard event on /class/scsi_device/5:0:0:1
+>> Oct 13 15:19:20 | discard event on /class/scsi_generic/sg7
+>> Oct 13 15:19:20 | discard event on 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:2 
+>>
+>> Oct 13 15:19:20 | discard event on /class/scsi_disk/5:0:0:2
+>> Oct 13 15:19:20 | sdh: add path (uevent)
+>> Oct 13 15:19:20 | sdh: not found in pathvec
+>> Oct 13 15:19:20 | sdh: mask = 0x1f
+>> Oct 13 15:19:20 | sdh: bus = 1
+>> Oct 13 15:19:20 | sdh: dev_t = 8:112
+>> Oct 13 15:19:20 | sdh: size = 2048000
+>> Oct 13 15:19:20 | sdh: vendor = DDN
+>> Oct 13 15:19:20 | sdh: product = S2A 8500
+>> Oct 13 15:19:20 | sdh: rev = 5.24
+>> Oct 13 15:19:20 | sdh: h:b:t:l = 5:0:0:2
+>> Oct 13 15:19:20 | sdh: tgt_node_name = 0x20000001ff0302a8
+>> Oct 13 15:19:20 | sdh: serial = 03E0FE380E00
+>> Oct 13 15:19:20 | sdh: path checker = directio (controller setting)
+>> Oct 13 15:19:20 | sdh: state = 2
+>> Oct 13 15:19:20 | sdh: getprio = NULL (internal default)
+>> Oct 13 15:19:20 | sdh: prio = 1
+>> Oct 13 15:19:20 | sdh: getuid = /sbin/scsi_id -g -u -s /block/%n 
+>> (controller setting)
+>> Oct 13 15:19:20 | sdh: uid = 360001ff02002110103e0fe38001f0e00 (callout)
+>> Oct 13 15:19:20 | 8:48: not found in pathvec
+>> Oct 13 15:19:20 | sdd: ownership set to 360001ff02002110103e0fe38001f0e00
+>> Oct 13 15:19:20 | sdd: mask = 0xc
+>> Oct 13 15:19:20 | sdd: state = 2
+>> Oct 13 15:19:20 | sdd: prio = 1
+>> Oct 13 15:19:20 | sdh: ownership set to 360001ff02002110103e0fe38001f0e00
+>> Oct 13 15:19:20 | sdh: not found in pathvec
+>> Oct 13 15:19:20 | sdh: mask = 0xc
+>> Oct 13 15:19:20 | sdh: state = 2
+>> Oct 13 15:19:20 | sdh: prio = 1
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: pgfailback = -2 
+>> (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: pgpolicy = 
+>> multibus (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: selector = 
+>> round-robin 0 (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: features = 0 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: hwhandler = 0 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: rr_weight = 1 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: minio = 1000 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: no_path_retry = 
+>> -1 (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: load table [0 
+>> 2048000 multipath 0 0 1 1 round-robin 0 2 1 8:48 1000 8:112 1000]
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: discover
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 2, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 8:48, len = 4
+>> Oct 13 15:19:20 | *word = 1000, len = 4
+>> Oct 13 15:19:20 | *word = 8:112, len = 5
+>> Oct 13 15:19:20 | *word = 1000, len = 4
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = E, len = 1
+>> Oct 13 15:19:20 | *word = 2, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = A, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = A, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: rr_weight = 1 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: pgfailback = -2 
+>> (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe38001f0e00: no_path_retry = 
+>> -1 (config file default)
+>> Oct 13 15:19:20 | sdh path added to devmap 
+>> 360001ff02002110103e0fe38001f0e00
+>> Oct 13 15:19:20 | discard event on /class/scsi_device/5:0:0:2
+>> Oct 13 15:19:20 | discard event on /class/scsi_generic/sg8
+>> Oct 13 15:19:20 | discard event on 
+>> /devices/pci0000:05/0000:05:1d.0/0000:06:02.1/host5/rport-5:0-0/target5:0:0/5:0:0:3 
+>>
+>> Oct 13 15:19:20 | discard event on /class/scsi_disk/5:0:0:3
+>> Oct 13 15:19:20 | sdi: add path (uevent)
+>> Oct 13 15:19:20 | sdi: not found in pathvec
+>> Oct 13 15:19:20 | sdi: mask = 0x1f
+>> Oct 13 15:19:20 | sdi: bus = 1
+>> Oct 13 15:19:20 | sdi: dev_t = 8:128
+>> Oct 13 15:19:20 | sdi: size = 571416576
+>> Oct 13 15:19:20 | sdi: vendor = DDN
+>> Oct 13 15:19:20 | sdi: product = S2A 8500
+>> Oct 13 15:19:20 | sdi: rev = 5.24
+>> Oct 13 15:19:20 | sdi: h:b:t:l = 5:0:0:3
+>> Oct 13 15:19:20 | sdi: tgt_node_name = 0x20000001ff0302a8
+>> Oct 13 15:19:20 | sdi: serial = 03E0FE3A0F00
+>> Oct 13 15:19:20 | sdi: path checker = directio (controller setting)
+>> Oct 13 15:19:20 | sdi: state = 2
+>> Oct 13 15:19:20 | sdi: getprio = NULL (internal default)
+>> Oct 13 15:19:20 | sdi: prio = 1
+>> Oct 13 15:19:20 | sdi: getuid = /sbin/scsi_id -g -u -s /block/%n 
+>> (controller setting)
+>> Oct 13 15:19:20 | sdi: uid = 360001ff02002110103e0fe3a220f0f00 (callout)
+>> Oct 13 15:19:20 | 8:64: not found in pathvec
+>> Oct 13 15:19:20 | sde: ownership set to 360001ff02002110103e0fe3a220f0f00
+>> Oct 13 15:19:20 | sde: mask = 0xc
+>> Oct 13 15:19:20 | sde: state = 2
+>> Oct 13 15:19:20 | sde: prio = 1
+>> Oct 13 15:19:20 | sdi: ownership set to 360001ff02002110103e0fe3a220f0f00
+>> Oct 13 15:19:20 | sdi: not found in pathvec
+>> Oct 13 15:19:20 | sdi: mask = 0xc
+>> Oct 13 15:19:20 | sdi: state = 2
+>> Oct 13 15:19:20 | sdi: prio = 1
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: pgfailback = -2 
+>> (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: pgpolicy = 
+>> multibus (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: selector = 
+>> round-robin 0 (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: features = 0 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: hwhandler = 0 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: rr_weight = 1 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: minio = 1000 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: no_path_retry = 
+>> -1 (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: load table [0 
+>> 571416576 multipath 0 0 1 1 round-robin 0 2 1 8:64 1000 8:128 1000]
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: discover
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 2, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 8:64, len = 4
+>> Oct 13 15:19:20 | *word = 1000, len = 4
+>> Oct 13 15:19:20 | *word = 8:128, len = 5
+>> Oct 13 15:19:20 | *word = 1000, len = 4
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = 1, len = 1
+>> Oct 13 15:19:20 | *word = E, len = 1
+>> Oct 13 15:19:20 | *word = 2, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = A, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | *word = A, len = 1
+>> Oct 13 15:19:20 | *word = 0, len = 1
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: rr_weight = 1 
+>> (controller setting)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: pgfailback = -2 
+>> (config file default)
+>> Oct 13 15:19:20 | 360001ff02002110103e0fe3a220f0f00: no_path_retry = 
+>> -1 (config file default)
+>> Oct 13 15:19:20 | sdi path added to devmap 
+>> 360001ff02002110103e0fe3a220f0f00
+>> Oct 13 15:19:20 | discard event on /class/scsi_device/5:0:0:3
+>> Oct 13 15:19:20 | discard event on /class/scsi_generic/sg9
+>> Oct 13 15:19:20 | tick
+>> Oct 13 15:19:20 | sdg: directio checker reports path is up
+>> Oct 13 15:19:20 | 8:96: delay next check 40s
+>> Oct 13 15:19:20 | path prio refresh
+>> Oct 13 15:19:20 | sdg: mask = 0x8
+>> Oct 13 15:19:20 | sdg: prio = 1
+>> Oct 13 15:19:20 | sdh: directio checker reports path is up
+>> Oct 13 15:19:20 | 8:112: delay next check 40s
+>> Oct 13 15:19:20 | path prio refresh
+>> Oct 13 15:19:20 | sdh: mask = 0x8
+>> Oct 13 15:19:20 | sdh: prio = 1
+>> Oct 13 15:19:20 | sdi: directio checker reports path is up
+>> Oct 13 15:19:20 | 8:128: delay next check 40s
+>> Oct 13 15:19:20 | path prio refresh
+>> Oct 13 15:19:20 | sdi: mask = 0x8
+>> Oct 13 15:19:20 | sdi: prio = 1
+>> Oct 13 15:19:20 | map garbage collection
+>> Oct 13 15:19:21 | tick
+>> Oct 13 15:19:22 | tick
+>> Oct 13 15:19:23 | tick
+>> Oct 13 15:19:24 | tick
+>> Oct 13 15:19:25 | unlink pidfile
+>> Oct 13 15:19:25 | 360001ff02002110103e0fe34001f0c00: stop event 
+>> checker thread
+>> Oct 13 15:19:25 | sdb: orphaned
+>> Oct 13 15:19:25 | 360001ff02002110103e0fe36220f0d00: stop event 
+>> checker thread
+>> Oct 13 15:19:25 | sdc: orphaned
+>> Oct 13 15:19:25 | sdg: orphaned
+>> Oct 13 15:19:25 | 360001ff02002110103e0fe38001f0e00: stop event 
+>> checker thread
+>> Oct 13 15:19:25 | sdd: orphaned
+>> Oct 13 15:19:25 | sdh: orphaned
+>> Oct 13 15:19:25 | 360001ff02002110103e0fe3a220f0f00: stop event 
+>> checker thread
+>> Oct 13 15:19:25 | sde: orphaned
+>> Oct 13 15:19:25 | SIGUSR1 received
+>> Oct 13 15:19:25 | SIGUSR1 received
+>> Oct 13 15:19:25 | SIGUSR1 received
+>> Oct 13 15:19:25 | SIGUSR1 received
+>> Oct 13 15:19:25 | sdi: orphaned
+>>
+>>
+>>
+>> ------------------------------------------------------------------------
+>>
+>> -- 
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+> -- 
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 > 
 
-I updated this patchset here
 
-http://kernel.org/git/?p=linux/kernel/git/mnc/linux-2.6-iscsi.git;a=summary
+-- 
+Frederic TEMPORELLI
 
-in the multipath branch.
-
-I added a rdac handler and hp storage works one that does START_STOP. I
-also integrated it into the devinfo table (cannot update from proc or
-module param just yet) and fixed some bugs and did some cleanup - still
-need to better integrate the REQ cmt type checking.
-
-Christophe V, I was wondering what is the vendor/module info for your
-box? We have a MSA1000 VOLUME/COMPAQ here, but START_STOP does not work.
-I mean if I send the command it always executes successfully, but the
-device does not failover (READ/WRITEs fail). I tried just running
-sg_start and this runs ok but READ/WRITE still fail, so I hacked up
-scsi_debug to simulate my testing.
-
-If you want to try it out, you just have to add a devinfo entry for your
-box. I did this for the MSA I thought used it by adding the "hp_sw"
-string to the end of an existing devinfo entry:
-
-+       {"COMPAQ", "MSA1000", NULL, BLIST_SPARSELUN |
-BLIST_NOSTARTONADD, "hp_sw"},
-+       {"COMPAQ", "MSA1000 VOLUME", NULL, BLIST_SPARSELUN |
-BLIST_NOSTARTONADD, "hp_sw"},
-
-
-and you need to use a slightly different table format. I use this for a
-setup with two paths (one to each target controller) with each path in a
-different priority group.
-
-0 16384 multipath 1 queue_if_no_path 1 1 2 1 round-robin 0 1 1 8:48 1000
-round-robin 0 1 1 8:32 1000
-
-0 16384 multipath 1 queue_if_no_path        <the bits here "1 1" is what
-changed >         2 1 round-robin 0 1 1 8:48 1000 round-robin 0 1 1 8:32
-1000
-
-If you have a device that needs manual failover, you pass "1 1". If it
-it does not require manual failover then just pass "0".  There is no
-need to pass any hw handler type because the hw handler is no longer in
-dm. Later when we do more advanced configuration we will have to write
-to some sysfs interface at the scsi layer to configure values like the
-tresspass or page2c type (clariion and rdac settings).
+   \|/ ____ \|/
+   "@'/ ,. \`@"
+   /_| \__/ |_\
+      \__U_/
