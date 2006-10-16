@@ -1,55 +1,110 @@
-From: Jonathan E Brassow <jbrassow@redhat.com>
-Subject: Re: New read-balancing patch for dm-raid1.c
-Date: Mon, 16 Oct 2006 10:16:56 -0500
-Message-ID: <5db14e6c416d4b52ecb48605341f39f9@redhat.com>
-References: <1160580794.15980.2.camel@hydrogen.msp.redhat.com>
-	<20061012144614.GY17654@agk.surrey.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v624)
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061012144614.GY17654@agk.surrey.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+From: Grzegorz Kulewski <kangur-ghbW0t/Qn0CsTnJN9+BGXg@public.gmane.org>
+Subject: Strange SIGSEGV problem around dmcrypt, evms and jfs
+Date: Mon, 16 Oct 2006 18:12:15 +0200 (CEST)
+Message-ID: <Pine.LNX.4.63.0610161737250.14187@alpha.polcom.net>
+Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-crypt-return-1902-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
+List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
+To: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: shaggy-V7BBcbaFuwjMbYB6QlFGEg@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, dm-crypt-4q3lyFh4P1g@public.gmane.org, mingo-X9Un+BFzKDI@public.gmane.org, akpm-3NddpPZAyC0@public.gmane.org
 List-Id: dm-devel.ids
 
-good suggestion.  I'll look into this.
+Hi,
 
-  brassow
+I was begining to play with dmcrypt, evms and jfs on one spare disk I 
+have (currently empty and only for tests). I produced some partitions with 
+evms and made volumes on them. Nothing strange, normal configuration. The 
+partition layout seems ok. Then I used dmcrypt mappings on top of two of 
+them to make encrypted swaps and swapon'ed them. Still everything was ok. 
+Then I tested different ciphers performance by doing dmcrypt mappings on 
+top of some other volume with different settings and dd'ed data from and 
+to them to test the speed. Then I choosen one cipher setup and and did the 
+final mapping and created and mounted  jfs on it. Then I copied one large 
+(like 4GB) file on it several times to make sure everything is ok. I 
+checked sha1sums and everything was indeed ok.
 
-On Oct 12, 2006, at 9:46 AM, Alasdair G Kergon wrote:
+But then all big applications (firefox, oo2, acroread, ..., opera was the 
+notable exception) couldn't start being killed by SIGSEGVs out of nowhere. 
+I reproduced it two time already (after a clean reboot): today and 
+yesterday. Maybe someone knows what is happening? For me it looks like 
+something broken some kernel memory and the kernel started doing stupid 
+things. But nothing strange has shown in logs.
 
-> On Wed, Oct 11, 2006 at 10:33:14AM -0500, Jon Brassow wrote:
->> This patch adds read balancing.  The round-robin method is the first
->> to be implemented, but provisions are made for others to be 
->> implemented
->> in the future.
->
-> My first thought in looking over this is that it ought to share the 
-> existing
-> dm-round-robin module used by multipath (which is already more 
-> flexible than
-> this as paths can be weighted).  It looks fairly straightforward to do 
-> this.
-> (And we certainly shouldn't confuse people by having 'roundrobin' in 
-> one
-> part of dm and 'round-robin' in another!)
->
-> When we implement more complex load balancing policies, there seems 
-> little
-> point doing everything twice, once for multipath and once for 
-> mirroring:-)
->
-> Alasdair
-> -- 
-> agk@redhat.com
+One time I couldn't even shut down the machine normally, only SysRQ-B 
+worked (shutdown scripts were probably killed too or something). Every 
+application works ok (and did so for at least a year) before I will start 
+playing with dmcrypt and jfs. I am not sure where exactly the problems 
+start but will be investigating it shortly.
+
+I am rather sure that my hardware is ok. Everything was and is fine till I 
+will start doing these tests. Including that testing disk (tested with 
+smart and dd and some others). My setup is:
+- Athlon (Barton) XP 2000MHz
+- Abit KW7 KT880 board
+- 1GB DDR 133
+- main disk is 80GB Samsung @ IDE (VIA southbridge)
+- testing disk is 250GB Seagate @ SATA (VIA southbridge).
+
+This behavoiur was observed on 2.6.18-ck1 + vesafb-tng patch. Kernel was 
+tainted by nvidia and kqemu modules. Now I am trying to recreate this 
+problem with 2.6.18.1 with nearly all kernel debuging options turned on
+and without any proprietary modules loaded. But since I don't know exactly 
+how to reproduce the problem it may take some time so any suggestions what 
+can be wrong are welcome.
+
+Further info available on request.
+
+BTW. Why booting my machine with 2.6.18.1 with nearly all debuging on I 
+got the following. While I am nearly sure it is not the problem I am 
+writing about I will report it:
+
+Oct 16 17:29:33 kangur [   74.485627] =============================================
+Oct 16 17:29:33 kangur [   74.485767] [ INFO: possible recursive locking detected ]
+Oct 16 17:29:33 kangur [   74.485840] ---------------------------------------------
+Oct 16 17:29:33 kangur [   74.485912] evms_activate/2346 is trying to acquire lock:
+Oct 16 17:29:33 kangur [   74.485985]  (&md->io_lock){----}, at: [<f8d95458>] dm_request+0x18/0x150 [dm_mod]
+Oct 16 17:29:33 kangur [   74.486269]
+Oct 16 17:29:33 kangur [   74.486270] but task is already holding lock:
+Oct 16 17:29:33 kangur [   74.486406]  (&md->io_lock){----}, at: [<f8d95458>] dm_request+0x18/0x150 [dm_mod]
+Oct 16 17:29:33 kangur [   74.486673]
+Oct 16 17:29:33 kangur [   74.486674] other info that might help us debug this:
+Oct 16 17:29:33 kangur [   74.486813] 1 lock held by evms_activate/2346:
+Oct 16 17:29:33 kangur [   74.486883]  #0:  (&md->io_lock){----}, at: [<f8d95458>] dm_request+0x18/0x150 [dm_mod]
+Oct 16 17:29:33 kangur [   74.487191]
+Oct 16 17:29:33 kangur [   74.487192] stack backtrace:
+Oct 16 17:29:33 kangur [   74.487475]  [<c01043ad>] show_trace_log_lvl+0x18d/0x1b0
+Oct 16 17:29:33 kangur [   74.487606]  [<c0104af2>] show_trace+0x12/0x20
+Oct 16 17:29:33 kangur [   74.487728]  [<c0104b59>] dump_stack+0x19/0x20
+Oct 16 17:29:33 kangur [   74.487851]  [<c0136193>] __lock_acquire+0x813/0xd80
+Oct 16 17:29:33 kangur [   74.488044]  [<c0136a65>] lock_acquire+0x75/0xa0
+Oct 16 17:29:33 kangur [   74.488230]  [<c013298a>] down_read+0x3a/0x50
+Oct 16 17:29:33 kangur [   74.488413]  [<f8d95458>] dm_request+0x18/0x150 [dm_mod]
+Oct 16 17:29:33 kangur [   74.488543]  [<c0211517>] generic_make_request+0x147/0x1c0
+Oct 16 17:29:33 kangur [   74.489020]  [<f8d9443d>] __map_bio+0x4d/0xa0 [dm_mod]
+Oct 16 17:29:33 kangur [   74.489141]  [<f8d9517a>] __split_bio+0x34a/0x380 [dm_mod]
+Oct 16 17:29:33 kangur [   74.489263]  [<f8d95514>] dm_request+0xd4/0x150 [dm_mod]
+Oct 16 17:29:33 kangur [   74.489384]  [<c0211517>] generic_make_request+0x147/0x1c0
+Oct 16 17:29:33 kangur [   74.489745]  [<c0213bc2>] submit_bio+0x72/0x120
+Oct 16 17:29:33 kangur [   74.490112]  [<c016ee8a>] submit_bh+0xca/0x120
+Oct 16 17:29:33 kangur [   74.490358]  [<c0171f58>] block_read_full_page+0x258/0x2d0
+Oct 16 17:29:33 kangur [   74.490602]  [<c0174ecf>] blkdev_readpage+0xf/0x20
+Oct 16 17:29:33 kangur [   74.490851]  [<c0154740>] __do_page_cache_readahead+0x1b0/0x260
+Oct 16 17:29:33 kangur [   74.491071]  [<c0154852>] blockable_page_cache_readahead+0x62/0xe0
+Oct 16 17:29:33 kangur [   74.491288]  [<c0154a9d>] page_cache_readahead+0x11d/0x1d0
+Oct 16 17:29:33 kangur [   74.491504]  [<c014e6b2>] do_generic_mapping_read+0x462/0x4e0
+Oct 16 17:29:33 kangur [   74.491718]  [<c014f0de>] __generic_file_aio_read+0xee/0x220
+Oct 16 17:29:33 kangur [   74.491929]  [<c015048d>] generic_file_read+0x8d/0xb0
+Oct 16 17:29:33 kangur [   74.492141]  [<c016d94d>] vfs_read+0xad/0x180
+Oct 16 17:29:33 kangur [   74.492377]  [<c016ddbd>] sys_read+0x3d/0x70
+Oct 16 17:29:33 kangur [   74.492616]  [<c01030ed>] sysenter_past_esp+0x56/0x8d
+Oct 16 17:29:33 kangur [   74.492736]  [<b7f19410>] 0xb7f19410
+
+
+Thanks in advance,
+
+Grzegorz Kulewski
