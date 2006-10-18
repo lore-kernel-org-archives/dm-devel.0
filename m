@@ -1,19 +1,11 @@
-From: Jan Blunck <jblunck@suse.de>
-Subject: Re: dm-snapshot scalability - chained delta snapshots
-	approach
-Date: Tue, 24 Oct 2006 11:52:00 +0200
-Message-ID: <20061024095200.GE4729@hasse.suse.de>
-References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
-	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
-	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
-	<20060927091700.GA6314@X40.redhat.com>
-	<62b0912f0610231016r23585c34y6308cb3540ed926c@mail.gmail.com>
+From: Andre Noll <maan@systemlinux.org>
+Subject: 2.6.18.1, ext3: attempt to access beyond end of device
+Date: Wed, 18 Oct 2006 09:47:53 +0200
+Message-ID: <20061018074753.GT22487@skl-net.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============1634706846=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <62b0912f0610231016r23585c34y6308cb3540ed926c@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,50 +18,114 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Oct 23, Molle Bestefich wrote:
 
-> >This means that every snapshot still has its own exception store.
-> >This would make deletion of snapshots unnecessary complex.
-> 
-> Complex, how?
-> 
-> Necessary operations (in order listed):
-> * Acquire exclusive lock on this snapshot.
-> * Check that next snapshot has room for exceptions, abort if not.
-> * Acquire exclusive lock on next snapshot.
-> * Move all exceptions to next snapshot.
-> * Unlock next snapshot.
-> * Remove this snapshot.
-> * Done...
-> 
-> Sounds simple to me, but maybe I'm missing the point.
+--===============1634706846==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="BVQ1RKc6+nLPB5pT"
+Content-Disposition: inline
 
-Hmm, sounds simple. Somehow I can't remember exactly where I thought the
-problem is ...
 
-> >We discussed some of the ideas about snapshots here at the dm summit. The
-> >general ideas are as follows:
-> >
-> >- one exception store per origin device that is shared by all snapshots
-> 
-> Now that sounds complex.
+--BVQ1RKc6+nLPB5pT
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-But that is something already implemented for clustered snapshots although
-that is userspace code.
+Hi
 
-> >Although that includes a complete redesign of the exception store code.
-> 
-> Especially when you say stuff like that :-).
-> 
+While doing some stress tests on our raid system, we encountered the
+following:
 
-The chained-snapshots approach needs that too.
+[13933.173768] EXT3-fs error (device dm-0): ext3_new_block: Allocating bloc=
+k in system zone - blocks from 192708608, length 1
+[13933.176790] Aborting journal on device dm-0.
+[13934.512464] ext3_abort called.
+[13934.514031] EXT3-fs error (device dm-0): ext3_journal_start_sb: Detected=
+ aborted journal
+[13934.517537] Remounting filesystem read-only
+[13934.519438] EXT3-fs error (device dm-0): ext3_free_blocks: Freeing block=
+s in system zones - Block =3D 192708608, count =3D 1
+[13934.524084] EXT3-fs error (device dm-0) in ext3_free_blocks_sb: Journal =
+has aborted
+[14585.157319] attempt to access beyond end of device
+[14585.159480] dm-1: rw=3D1, want=3D9592553968, limit=3D5292146688
 
-> >The throughput issues should be addressed by only
-> >writing to one exception store.
-> 
-> Wouldn't this make debugging more complex, and further add to
-> the difficulty of snapshot resizing?
+[many of these with different "want" values]
 
-Resizing? Nope, you only need to resize the exception store thats it. Resizing
-the chained-snapshots approach is complex however: in the worst case you have
-to move the exception stores to get enough free space.
+[14586.072700] Buffer I/O error on device dm-1, logical block 1313832302
+[14586.076005] lost page write due to I/O error on dm-1
+[14586.079177] Aborting journal on device dm-1.
+[14586.082161] EXT3-fs error (device dm-1) in ext3_dirty_inode: IO failure
+[14586.102836] EXT3-fs error (device dm-1) in ext3_ordered_writepage: IO fa=
+ilure
+[14586.226243] ext3_abort called.
+[14586.226249] EXT3-fs error (device dm-1) in ext3_ordered_commit_write: IO=
+ failure
+[14586.227872] ext3_abort called.
+[14586.227875] EXT3-fs error (device dm-1): ext3_journal_start_sb: Detected=
+ aborted journal
+[14586.227878] Remounting filesystem read-only
+[14586.247468] EXT3-fs error (device dm-1): ext3_journal_start_sb: Detected=
+ aborted journal
+[14587.486480] __journal_remove_journal_head: freeing b_committed_data
+[14587.489821] __journal_remove_journal_head: freeing b_committed_data
+[58760.477871] EXT3-fs error (device dm-1): ext3_readdir: bad entry in dire=
+ctory #2: rec_len % 4 !=3D 0 - offset=3D0, inode=3D1753114490, rec_len=3D19=
+037, name_len=3D53
+[145152.943222] EXT3-fs error (device dm-1): ext3_readdir: bad entry in dir=
+ectory #2: rec_len % 4 !=3D 0 - offset=3D0, inode=3D1753114490, rec_len=3D1=
+9037, name_len=3D53
+
+Further info:
+
+root@ubuntu:~# vgs
+  VG   #PV #LV #SN Attr   VSize VFree
+  vg     1   2   0 wz--n- 6.36T    0=20
+root@ubuntu:~# pvs
+  PV         VG   Fmt  Attr PSize PFree
+  /dev/md0   vg   lvm2 a-   6.36T    0=20
+root@ubuntu:~# lvs
+  LV       VG   Attr   LSize Origin Snap%  Move Log Copy%=20
+  ext3_lv1 vg   -wi-ao 3.90T                             =20
+  ext3_lv2 vg   -wi-ao 2.46T                             =20
+root@ubuntu:~# df -h /dev/vg/*
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/vg/ext3_lv1      3.9T  724G  3.0T  20% /mnt/lv1
+/dev/vg/ext3_lv2      2.5T  552G  1.8T  24% /mnt/lv2
+root@ubuntu:~# uname -a
+Linux ubuntu 2.6.18.1 #1 SMP Sun Oct 15 13:43:51 CDT 2006 ppc64 GNU/Linux
+root@ubuntu:~# cat /proc/mdstat=20
+Personalities : [raid6] [raid5] [raid4]=20
+md0 : active raid6 sdb[0] sdq[15] sdp[14] sdo[13] sdn[12] sdm[11] sdl[10] s=
+dk[9] sdj[8] sdi[7] sdh[6] sdg[5] sdf[4] sde[3] sdd[2] sdc[1]
+      6833669248 blocks level 6, 64k chunk, algorithm 2 [16/16] [UUUUUUUUUU=
+UUUUUU]
+
+Andre
+
+--=20
+The only person who always got his work done by Friday was Robinson Crusoe
+
+--BVQ1RKc6+nLPB5pT
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.1 (GNU/Linux)
+
+iD8DBQFFNdwpWto1QDEAkw8RAp4GAJsEEwB/2GUY27X47m9xR6549Sr5OgCfebj9
+aLfZNCiYSOtDLNWqpv/N6UY=
+=HnN4
+-----END PGP SIGNATURE-----
+
+--BVQ1RKc6+nLPB5pT--
+
+
+--===============1634706846==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1634706846==--
