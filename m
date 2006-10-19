@@ -1,246 +1,117 @@
-From: Josef "Jeff" Sipek <jsipek@cs.sunysb.edu>
-Subject: [PATCH 2 of 4] struct path: Rename DM's struct path
-Date: Wed, 18 Oct 2006 20:57:09 -0400
-Message-ID: <e7d8180e69f54c625376.1161219429@thor.fsl.cs.sunysb.edu>
-References: <patchbomb.1161219427@thor.fsl.cs.sunysb.edu>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <patchbomb.1161219427@thor.fsl.cs.sunysb.edu>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: linux-fsdevel@vger.kernel.org, akpm@osdl.org, hch@infradead.org, viro@ftp.linux.org.uk, mhalcrow@us.ibm.com, chris.mason@oracle.com, ezk@cs.sunysb.edu, penberg@cs.helsinki.fi, dm-devel@redhat.com, mingo@redhat.com, reiserfs-dev@namesys.com
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmsetup/dmsetup.c
+Date: 19 Oct 2006 15:34:50 -0000
+Message-ID: <20061019153450.20033.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Josef "Jeff" Sipek <jsipek@cs.sunysb.edu>
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2006-10-19 15:34:50
 
-Rename DM's struct path to struct dm_path to prevent name collision
-between it and struct path from fs/namei.c.
+Modified files:
+	.              : WHATS_NEW 
+	dmsetup        : dmsetup.c 
 
-Signed-off-by: Josef "Jeff" Sipek <jsipek@cs.sunysb.edu>
+Log message:
+	Suppress encryption key in 'dmsetup table' output unless --showkeys supplied.
 
----
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.132&r2=1.133
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.73&r2=1.74
 
-6 files changed, 23 insertions(+), 23 deletions(-)
-drivers/md/dm-emc.c           |   10 +++++-----
-drivers/md/dm-hw-handler.h    |    2 +-
-drivers/md/dm-mpath.c         |    6 +++---
-drivers/md/dm-mpath.h         |    4 ++--
-drivers/md/dm-path-selector.h |   12 ++++++------
-drivers/md/dm-round-robin.c   |   12 ++++++------
-
-diff --git a/drivers/md/dm-emc.c b/drivers/md/dm-emc.c
---- a/drivers/md/dm-emc.c
-+++ b/drivers/md/dm-emc.c
-@@ -40,7 +40,7 @@ static inline void free_bio(struct bio *
+--- device-mapper/WHATS_NEW	2006/10/13 19:01:30	1.132
++++ device-mapper/WHATS_NEW	2006/10/19 15:34:49	1.133
+@@ -1,5 +1,6 @@
+ Version 1.02.13 - 
+ =============================
++  Suppress encryption key in 'dmsetup table' output unless --showkeys supplied.
  
- static int emc_endio(struct bio *bio, unsigned int bytes_done, int error)
- {
--	struct path *path = bio->bi_private;
-+	struct dm_path *path = bio->bi_private;
+ Version 1.02.12 - 13 Oct 2006
+ =============================
+--- device-mapper/dmsetup/dmsetup.c	2006/10/12 17:09:09	1.73
++++ device-mapper/dmsetup/dmsetup.c	2006/10/19 15:34:50	1.74
+@@ -114,6 +114,7 @@
+ 	NOOPENCOUNT_ARG,
+ 	NOTABLE_ARG,
+ 	OPTIONS_ARG,
++	SHOWKEYS_ARG,
+ 	TABLE_ARG,
+ 	TARGET_ARG,
+ 	TREE_ARG,
+@@ -211,7 +212,11 @@
+ 	r = 1;
  
- 	if (bio->bi_size)
- 		return 1;
-@@ -61,7 +61,7 @@ static int emc_endio(struct bio *bio, un
- 	return 0;
- }
- 
--static struct bio *get_failover_bio(struct path *path, unsigned data_size)
-+static struct bio *get_failover_bio(struct dm_path *path, unsigned data_size)
- {
- 	struct bio *bio;
- 	struct page *page;
-@@ -96,7 +96,7 @@ static struct bio *get_failover_bio(stru
- }
- 
- static struct request *get_failover_req(struct emc_handler *h,
--					struct bio *bio, struct path *path)
-+					struct bio *bio, struct dm_path *path)
- {
- 	struct request *rq;
- 	struct block_device *bdev = bio->bi_bdev;
-@@ -133,7 +133,7 @@ static struct request *get_failover_req(
- }
- 
- static struct request *emc_trespass_get(struct emc_handler *h,
--					struct path *path)
-+					struct dm_path *path)
- {
- 	struct bio *bio;
- 	struct request *rq;
-@@ -191,7 +191,7 @@ static struct request *emc_trespass_get(
- }
- 
- static void emc_pg_init(struct hw_handler *hwh, unsigned bypassed,
--			struct path *path)
-+			struct dm_path *path)
- {
- 	struct request *rq;
- 	struct request_queue *q = bdev_get_queue(path->dev->bdev);
-diff --git a/drivers/md/dm-hw-handler.h b/drivers/md/dm-hw-handler.h
---- a/drivers/md/dm-hw-handler.h
-+++ b/drivers/md/dm-hw-handler.h
-@@ -32,7 +32,7 @@ struct hw_handler_type {
- 	void (*destroy) (struct hw_handler *hwh);
- 
- 	void (*pg_init) (struct hw_handler *hwh, unsigned bypassed,
--			 struct path *path);
-+			 struct dm_path *path);
- 	unsigned (*error) (struct hw_handler *hwh, struct bio *bio);
- 	int (*status) (struct hw_handler *hwh, status_type_t type,
- 		       char *result, unsigned int maxlen);
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -31,7 +31,7 @@ struct pgpath {
- 	struct priority_group *pg;	/* Owning PG */
- 	unsigned fail_count;		/* Cumulative failure count */
- 
--	struct path path;
-+	struct dm_path path;
- };
- 
- #define path_to_pgpath(__pgp) container_of((__pgp), struct pgpath, path)
-@@ -229,7 +229,7 @@ static void __switch_pg(struct multipath
- 
- static int __choose_path_in_pg(struct multipath *m, struct priority_group *pg)
- {
--	struct path *path;
-+	struct dm_path *path;
- 
- 	path = pg->ps.type->select_path(&pg->ps, &m->repeat_count);
- 	if (!path)
-@@ -955,7 +955,7 @@ static int bypass_pg_num(struct multipat
- /*
-  * pg_init must call this when it has completed its initialisation
-  */
--void dm_pg_init_complete(struct path *path, unsigned err_flags)
-+void dm_pg_init_complete(struct dm_path *path, unsigned err_flags)
- {
- 	struct pgpath *pgpath = path_to_pgpath(path);
- 	struct priority_group *pg = pgpath->pg;
-diff --git a/drivers/md/dm-mpath.h b/drivers/md/dm-mpath.h
---- a/drivers/md/dm-mpath.h
-+++ b/drivers/md/dm-mpath.h
-@@ -11,7 +11,7 @@
- 
- struct dm_dev;
- 
--struct path {
-+struct dm_path {
- 	struct dm_dev *dev;	/* Read-only */
- 	unsigned is_active;	/* Read-only */
- 
-@@ -20,6 +20,6 @@ struct path {
- };
- 
- /* Callback for hwh_pg_init_fn to use when complete */
--void dm_pg_init_complete(struct path *path, unsigned err_flags);
-+void dm_pg_init_complete(struct dm_path *path, unsigned err_flags);
- 
- #endif
-diff --git a/drivers/md/dm-path-selector.h b/drivers/md/dm-path-selector.h
---- a/drivers/md/dm-path-selector.h
-+++ b/drivers/md/dm-path-selector.h
-@@ -44,7 +44,7 @@ struct path_selector_type {
- 	 * Add an opaque path object, along with some selector specific
- 	 * path args (eg, path priority).
- 	 */
--	int (*add_path) (struct path_selector *ps, struct path *path,
-+	int (*add_path) (struct path_selector *ps, struct dm_path *path,
- 			 int argc, char **argv, char **error);
- 
- 	/*
-@@ -55,27 +55,27 @@ struct path_selector_type {
- 	 * calling the function again.  0 means don't call it again unless
- 	 * the path fails.
- 	 */
--	struct path *(*select_path) (struct path_selector *ps,
-+	struct dm_path *(*select_path) (struct path_selector *ps,
- 				     unsigned *repeat_count);
- 
- 	/*
- 	 * Notify the selector that a path has failed.
- 	 */
--	void (*fail_path) (struct path_selector *ps, struct path *p);
-+	void (*fail_path) (struct path_selector *ps, struct dm_path *p);
- 
- 	/*
- 	 * Ask selector to reinstate a path.
- 	 */
--	int (*reinstate_path) (struct path_selector *ps, struct path *p);
-+	int (*reinstate_path) (struct path_selector *ps, struct dm_path *p);
- 
- 	/*
- 	 * Table content based on parameters added in ps_add_path_fn
- 	 * or path selector status
- 	 */
--	int (*status) (struct path_selector *ps, struct path *path,
-+	int (*status) (struct path_selector *ps, struct dm_path *path,
- 		       status_type_t type, char *result, unsigned int maxlen);
- 
--	int (*end_io) (struct path_selector *ps, struct path *path);
-+	int (*end_io) (struct path_selector *ps, struct dm_path *path);
- };
- 
- /* Register a path selector */
-diff --git a/drivers/md/dm-round-robin.c b/drivers/md/dm-round-robin.c
---- a/drivers/md/dm-round-robin.c
-+++ b/drivers/md/dm-round-robin.c
-@@ -21,7 +21,7 @@
-  *---------------------------------------------------------------*/
- struct path_info {
- 	struct list_head list;
--	struct path *path;
-+	struct dm_path *path;
- 	unsigned repeat_count;
- };
- 
-@@ -80,7 +80,7 @@ static void rr_destroy(struct path_selec
- 	ps->context = NULL;
- }
- 
--static int rr_status(struct path_selector *ps, struct path *path,
-+static int rr_status(struct path_selector *ps, struct dm_path *path,
- 		     status_type_t type, char *result, unsigned int maxlen)
- {
- 	struct path_info *pi;
-@@ -106,7 +106,7 @@ static int rr_status(struct path_selecto
-  * Called during initialisation to register each path with an
-  * optional repeat_count.
-  */
--static int rr_add_path(struct path_selector *ps, struct path *path,
-+static int rr_add_path(struct path_selector *ps, struct dm_path *path,
- 		       int argc, char **argv, char **error)
- {
- 	struct selector *s = (struct selector *) ps->context;
-@@ -141,7 +141,7 @@ static int rr_add_path(struct path_selec
- 	return 0;
- }
- 
--static void rr_fail_path(struct path_selector *ps, struct path *p)
-+static void rr_fail_path(struct path_selector *ps, struct dm_path *p)
- {
- 	struct selector *s = (struct selector *) ps->context;
- 	struct path_info *pi = p->pscontext;
-@@ -149,7 +149,7 @@ static void rr_fail_path(struct path_sel
- 	list_move(&pi->list, &s->invalid_paths);
- }
- 
--static int rr_reinstate_path(struct path_selector *ps, struct path *p)
-+static int rr_reinstate_path(struct path_selector *ps, struct dm_path *p)
- {
- 	struct selector *s = (struct selector *) ps->context;
- 	struct path_info *pi = p->pscontext;
-@@ -159,7 +159,7 @@ static int rr_reinstate_path(struct path
- 	return 0;
- }
- 
--static struct path *rr_select_path(struct path_selector *ps,
-+static struct dm_path *rr_select_path(struct path_selector *ps,
- 				   unsigned *repeat_count)
- {
- 	struct selector *s = (struct selector *) ps->context;
-
-
+       out:
++#ifndef HAVE_GETLINE
+ 	dm_free(buffer);
++#else
++	free(buffer);
++#endif
+ 	if (file)
+ 		fclose(fp);
+ 	return r;
+@@ -915,7 +920,7 @@
+ 	void *next = NULL;
+ 	uint64_t start, length;
+ 	char *target_type = NULL;
+-	char *params;
++	char *params, *c;
+ 	int cmd;
+ 	struct dm_names *names = (struct dm_names *) data;
+ 	const char *name = NULL;
+@@ -978,6 +983,17 @@
+ 			if (data && !_switches[VERBOSE_ARG])
+ 				printf("%s: ", name);
+ 			if (target_type) {
++
++			/* Suppress encryption key */
++			if (!_switches[SHOWKEYS_ARG] &&
++			    !strcmp(target_type, "crypt")) {
++				c = params;
++				while (*c && *c != ' ')
++					c++;
++				c++;
++				while (*c && *c != ' ')
++					*c++ = '0';
++			}
+ 				printf("%" PRIu64 " %" PRIu64 " %s %s",
+ 				       start, length, target_type, params);
+ 			}
+@@ -1522,7 +1538,7 @@
+ 	{"info", "[<device>]", 0, 1, _info},
+ 	{"deps", "[<device>]", 0, 1, _deps},
+ 	{"status", "[<device>] [--target <target_type>]", 0, 1, _status},
+-	{"table", "[<device>] [--target <target_type>]", 0, 1, _status},
++	{"table", "[<device>] [--target <target_type>] [--showkeys]", 0, 1, _status},
+ 	{"wait", "<device> [<event_nr>]", 0, 2, _wait},
+ 	{"mknodes", "[<device>]", 0, 1, _mknodes},
+ 	{"targets", "", 0, 0, _targets},
+@@ -1868,6 +1884,7 @@
+ 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
+ 		{"notable", 0, &ind, NOTABLE_ARG},
+ 		{"options", 1, &ind, OPTIONS_ARG},
++		{"showkeys", 0, &ind, SHOWKEYS_ARG},
+ 		{"table", 1, &ind, TABLE_ARG},
+ 		{"target", 1, &ind, TARGET_ARG},
+ 		{"tree", 0, &ind, TREE_ARG},
+@@ -1988,6 +2005,8 @@
+ 			_switches[NOLOCKFS_ARG]++;
+ 		if ((ind == NOOPENCOUNT_ARG))
+ 			_switches[NOOPENCOUNT_ARG]++;
++		if ((ind == SHOWKEYS_ARG))
++			_switches[SHOWKEYS_ARG]++;
+ 		if ((ind == TABLE_ARG)) {
+ 			_switches[TABLE_ARG]++;
+ 			_table = optarg;
