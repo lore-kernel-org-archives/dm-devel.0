@@ -1,13 +1,19 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: [RFC] Change to the mirror table map
-Date: Mon, 23 Oct 2006 18:01:53 +0200
-Message-ID: <OFD597D136.7095259E-ONC1257210.00549799-C1257210.0057CA37@de.ibm.com>
-References: <c333ab79987a0006c182eb7d041e3fc7@redhat.com>
+From: "Molle Bestefich" <molle.bestefich@gmail.com>
+Subject: Re: dm-snapshot scalability - chained delta snapshots
+	approach
+Date: Mon, 23 Oct 2006 19:16:02 +0200
+Message-ID: <62b0912f0610231016r23585c34y6308cb3540ed926c@mail.gmail.com>
+References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
+	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
+	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
+	<20060927091700.GA6314@X40.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <c333ab79987a0006c182eb7d041e3fc7@redhat.com>
+In-Reply-To: <20060927091700.GA6314@X40.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,68 +24,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-dm-devel-bounces@redhat.com wrote on 20.10.2006 21:36:54:
-> 
-> > "disk" is format2.
-> 
-> or "clustered_disk" or "clustered_core" or any other logging 
-> implementation that we may develop in the future, like "multi_disk". 
-> The problem is, then we need to either encode all those in the 
-> mirror_ctr or wait for 'create_dirty_log' to return NULL - then pass on 
-> to the second format, which may also return an error.
-> 
-> And if we again decide to change the format in the future...
-> 
-> With the format argument, we don't need the extra logic.  We simply 
-> pass on the rest to the correct constructor function for that format.
-> 
-Well, I guess this is just a minor issue. It is a simple approach to
-to it that way. My point was just that "core" and "disk" (if these
-were not used as section label) would indicate the old format. The
-new parser would get used for all formats, simply skipping sections
-that it doesn't understand. But "formatX" is ok.
+Haripriya S wrote:
+> Approach 1 - Chained delta snapshots
+>
+> Advantages:
+> 1. Very simple, adds very few lines of code to existing dm-snap code.
 
+Nice.
 
-> For simplicity, I've kept the offset (pvmove uses it), removed the 
-> status arg, and made the section argument count consistent.  I now 
-> think it should look something like:
->      devices 4 253:3 0 253:4 0
-> (The example patch expects this.)
-> 
-> >    devices 2 2 253:3 rr_min=1000 3 253:4 mstate=m rr_min=1000
-> > be done more than once...
-> 
-> I agree that having to state a device multiple times is ugly.  However, 
-> I don't like parsing sections multiple times for different things.  I'd 
-> really like to have a 'section to function' mapping if possible. 
-> Additionally, we can't be sure what extra information (sections) we may 
-> add in the future.  (Think device status, or other).  That could be 
-> solved by your solution above and would simply change the per device 
-> argument count; but again, I'd like to avoid parsing the same section 
-> multiple times - or mangling the order of parameters to much just to 
-> pass them to say, the path selector constructor for read balancing.)
-> 
-Yes, it makes it simpler to break up parsing. The other approach, while
-it might be simpler to read would mean every place interrested in device
-options would have to parse them again. And it would require all parsers
-to change. And that is a too big change.
-What makes me a bit uneasy about having devices in several places is that
-this allows configuration mistakes that could be fatal. For example give
-different devices to device section and round-robin section...
+> 2. Does not change the dm-snapshot architecture, and no changes
+> required in LVM or EVMS
 
-> 
-> Thank-you for your comments Stefan.  Below is a quick patch of how I 
-> would see the code changes for the constructor.  (I didn't put in the 
-> per-section functions.  Nor did I put in the read balancing stuff yet. 
-> This is just an example of how to make the constructor more flexible... 
-> paving the way for read balancing.)
-> 
-Well, besides my "bad feelings" this looks good to me. But at the moment
-I can't think of a better solution that wouldn't require changes to other
-parsers. :( 
+Nice.
 
-Regards,
-Stefan
+> 3. Since the COW copies due to origin write will always go to the most
+> recent snapshot, snapshot COW devices can be created with less size.
+> Whenever the COW allocation increase beyond say 90%, a new snapshot can
+> be created which will take all the subsequent COW copies. This may avoid
+> making COW devices invalid.
+
+Nice !!!!!
+
+> Disadvantages:
+> 1. snapshots which were independent previously are now dependent on
+> each other. Corruption of one COW device will affect the other snapshots
+> as well.
+
+Fixing dm-snapshot so devices do not get corrupted would make
+dm-snapshot immensely more useful.
+One way of doing that is to provoke bugs to more quickly become
+visible to the user.  I think your patch might accomplish this.
+Another way is to keep the code simple.  I'd say your patch does that.
+
+(A third way is extensive testing, and a fourth is mathematically
+proving that the code is sane.  But who has the time and energy ;-).)
+
+Overall, what you're doing looks like a good thing for stability.
+
+> 2. Will have a small impact in snapshot read performance,
+> currently (if I understood right)
+
+Minor disadvantage compared to the massive improvements seen in write speed.
+Can be optimized on later.
+
+(Fx. caching a list of which exceptions exist other places in the chain..)
+
+> 3. There is a need to change the disk exception structure
+
+Hopefully there's a version number on disk which allows incompatible
+tools to skip lv's or whatever.
+
+If not, this is a great excuse to create one.
+
+> 4. When snapshots are deleted the COW exceptions have to be transferred
+> to the next snapshot in the write chain.
+
+Jan Blunck wrote:
+> This means that every snapshot still has its own exception store.
+> This would make deletion of snapshots unnecessary complex.
+
+Complex, how?
+
+Necessary operations (in order listed):
+ * Acquire exclusive lock on this snapshot.
+ * Check that next snapshot has room for exceptions, abort if not.
+ * Acquire exclusive lock on next snapshot.
+ * Move all exceptions to next snapshot.
+ * Unlock next snapshot.
+ * Remove this snapshot.
+ * Done...
+
+Sounds simple to me, but maybe I'm missing the point.
+
+> It moves the work (copying of chunks)
+> to the deletion of the snapshot.
+
+Snapshot deletion is usually a "low privilege" task, something done
+to redeem disk space on a periodic schedule.  It is not something a
+user absolutely needs to finish immediately.  Sounds like a very
+fair deal to me, but then again, I'm just a user.
+
+> We discussed some of the ideas about snapshots here at the dm summit. The
+> general ideas are as follows:
+>
+> - one exception store per origin device that is shared by all snapshots
+
+Now that sounds complex.
+
+> Although that includes a complete redesign of the exception store code.
+
+Especially when you say stuff like that :-).
+
+> The throughput issues should be addressed by only
+> writing to one exception store.
+
+Wouldn't this make debugging more complex, and further add to
+the difficulty of snapshot resizing?
