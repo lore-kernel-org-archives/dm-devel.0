@@ -1,19 +1,15 @@
-From: "Molle Bestefich" <molle.bestefich@gmail.com>
-Subject: Re: dm-snapshot scalability - chained delta snapshots
-	approach
-Date: Mon, 23 Oct 2006 19:16:02 +0200
-Message-ID: <62b0912f0610231016r23585c34y6308cb3540ed926c@mail.gmail.com>
-References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
-	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
-	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
-	<20060927091700.GA6314@X40.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <mauelshagen@redhat.com>
+Subject: Re: [RFC] Change to the mirror table map
+Date: Tue, 24 Oct 2006 11:30:47 +0200
+Message-ID: <20061024093047.GB4792@redhat.com>
+References: <1161291378.26135.3.camel@hydrogen.msp.redhat.com>
+Reply-To: mauelshagen@redhat.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20060927091700.GA6314@X40.redhat.com>
 Content-Disposition: inline
+In-Reply-To: <1161291378.26135.3.camel@hydrogen.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,101 +20,131 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Haripriya S wrote:
-> Approach 1 - Chained delta snapshots
->
-> Advantages:
-> 1. Very simple, adds very few lines of code to existing dm-snap code.
+On Thu, Oct 19, 2006 at 03:56:18PM -0500, Jonathan Brassow wrote:
+> The impetus for this was the desire to add read balancing to mirroring
+> and have it share code with multipath.
 
-Nice.
+Makes sense.
 
-> 2. Does not change the dm-snapshot architecture, and no changes
-> required in LVM or EVMS
+> 
+>  brassow
+> 
+> ORIGINAL:
+> <start> <length> mirror \
+> <log_type> <#log_params> <log_params> \
+> <#mirrors> <device1> <offset1> ... <deviceN> <offsetN>
+> 
+> Example:
+> 0 1024000 mirror \
+> disk 3 253:2 1024 block_on_error \
+> 2 253:3 0 253:4 0
+> 
+> 
+> MODIFIED:
+>                           [-------- logging section ---------] [- mirror devices section -] [--------------- read balancing section -------------]
+> 0 71014400 mirror format2 log 4 disk 253:2 1024 block_on_error devices 2 1 253:3 S 253:4 A  read-balance 8 round-robin 0 2 1 253:3 1000 253:4 1000
+> ^    ^       ^       ^     ^  ^  ^   <^^^^^^^^^^^^^^^^^^^^^^^>    ^    ^ ^   ^   ^              ^       ^ <^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^>
+> |    |       |       |     |  |  |   |                            |    | |   |   |              |       | |
+> |    |       |       |     |  |  |   |                            |    | |   |   |              |       | same as multipath
+> |    |       |       |     |  |  |   |                            |    | |   |   |              |       # read-balance args
+> |    |       |       |     |  |  |   |                            |    | |   |   |              read-balance section indicator
+> |    |       |       |     |  |  |   |                            |    | |   |   Device status (slave/active/dead)
+> |    |       |       |     |  |  |   |                            |    | |   Device
+> |    |       |       |     |  |  |   |                            |    | # of device args
+> |    |       |       |     |  |  |   |                            |    # of devices
+> |    |       |       |     |  |  |   |                            device section indicator
+> |    |       |       |     |  |  |   log type specific args
+> |    |       |       |     |  |  log type
+> |    |       |       |     |  # of log args
+> |    |       |       |     log section indicator
+> |    |       |       target table format
+> |    |       target name
+> |    target length in 512-byte blocks
+> starting offset of target
+> 
+> New features:
+> ================================================================================
+> I've added a format argument ("format2" in example).  It is always the first
+> argument to the mirror target.  If it isn't present, we can assume the original
+> format.  If it is present, we can use the format specified.
 
-Nice.
+Makes sense for backward compatibility and makes parsing easy.
 
-> 3. Since the COW copies due to origin write will always go to the most
-> recent snapshot, snapshot COW devices can be created with less size.
-> Whenever the COW allocation increase beyond say 90%, a new snapshot can
-> be created which will take all the subsequent COW copies. This may avoid
-> making COW devices invalid.
+> 
+> The mapping table is broken up into sections.  The sections are allowed to be
+> in any order, and we should be able to add sections in the future if
+> necessary.
+> 
+> The logging section starts with the keyword 'log' and is followed by the number
+> of log arguments.  No changes to the dm_create_dirty_log function should be
+> necessary.
 
-Nice !!!!!
+Again an advantage for parsing.
 
-> Disadvantages:
-> 1. snapshots which were independent previously are now dependent on
-> each other. Corruption of one COW device will affect the other snapshots
-> as well.
+> 
+> The devices section starts with the keyword 'devices' and is followed by the
+> number of devices then the number of per device arguments.  This is not
+> consistent with the other sections.  It may be better to have the keyword
+> followed by the argument count, followed by the per device argument count.
+> Something like:
+>     devices 5 1 253:3 S 253:4 A
+> or
+>     devices 5 2 253:3 S 253:4 A
+> depending on if you want to include the device in the per device argument
+> count.  Notice that I have done away with the 'offset' parameter found in
+> the original.
 
-Fixing dm-snapshot so devices do not get corrupted would make
-dm-snapshot immensely more useful.
-One way of doing that is to provoke bugs to more quickly become
-visible to the user.  I think your patch might accomplish this.
-Another way is to keep the code simple.  I'd say your patch does that.
+Keep it: we need it to easier support things like lvm pvmove and for metadata
+at the beginning of the mapped devices.
 
-(A third way is extensive testing, and a fourth is mathematically
-proving that the code is sane.  But who has the time and energy ;-).)
+> Multipath doesn't have that, and neither does mirroring
+> when specifying the log device.  For the above example, I did add an
+> additional per device parameter to specify the status of a device.  I was
+> imagining a scenario where IBM's slave context might be specified, or
+> a new mirror device is added to the set.  With the indicator, you could
+> tell which devices were in-sync, and which ones needed recovery.
+> (Perhaps that is better left to an additional section, since it is not
+> yet known how this functionality would be added.)
 
-Overall, what you're doing looks like a good thing for stability.
+Yes, we can have a device-properties or domething section after the devices
+one once that hash been sorted.
 
-> 2. Will have a small impact in snapshot read performance,
-> currently (if I understood right)
+> 
+> The read balancing section starts with the keyword 'read-balance' and is
+> followed by the number of read balancing arguments.  After that, it is
+> just like multipathing.  If we were certain that the devices section did
+> not need any device specific arguments, we could combine the devices section
+> and the read-balance section.  (This could be the case if we decided to
+> add a section for initial device status and didn't need the offset argument.)
+> Mirror does need to keep it's own list of devices, however; and it might be
+> nice to be able to parse that section separate - rather than parse the
+> read-balancing section twice.
+> 
+> Multipath takes the approach of having positional arguments (e.g. the 'number
+> of features' argument is in a known place).  If we took this approach, we
+> could eliminate the keywords.  However, I think I prefer the ability to
+> identify sections.
 
-Minor disadvantage compared to the massive improvements seen in write speed.
-Can be optimized on later.
+I agree. Much more flexible for enhancements and for the ease of parsing.
 
-(Fx. caching a list of which exceptions exist other places in the chain..)
+Heinz
 
-> 3. There is a need to change the disk exception structure
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-Hopefully there's a version number on disk which allows incompatible
-tools to skip lv's or whatever.
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-If not, this is a great excuse to create one.
-
-> 4. When snapshots are deleted the COW exceptions have to be transferred
-> to the next snapshot in the write chain.
-
-Jan Blunck wrote:
-> This means that every snapshot still has its own exception store.
-> This would make deletion of snapshots unnecessary complex.
-
-Complex, how?
-
-Necessary operations (in order listed):
- * Acquire exclusive lock on this snapshot.
- * Check that next snapshot has room for exceptions, abort if not.
- * Acquire exclusive lock on next snapshot.
- * Move all exceptions to next snapshot.
- * Unlock next snapshot.
- * Remove this snapshot.
- * Done...
-
-Sounds simple to me, but maybe I'm missing the point.
-
-> It moves the work (copying of chunks)
-> to the deletion of the snapshot.
-
-Snapshot deletion is usually a "low privilege" task, something done
-to redeem disk space on a periodic schedule.  It is not something a
-user absolutely needs to finish immediately.  Sounds like a very
-fair deal to me, but then again, I'm just a user.
-
-> We discussed some of the ideas about snapshots here at the dm summit. The
-> general ideas are as follows:
->
-> - one exception store per origin device that is shared by all snapshots
-
-Now that sounds complex.
-
-> Although that includes a complete redesign of the exception store code.
-
-Especially when you say stuff like that :-).
-
-> The throughput issues should be addressed by only
-> writing to one exception store.
-
-Wouldn't this make debugging more complex, and further add to
-the difficulty of snapshot resizing?
+Heinz Mauelshagen                                 Red Hat GmbH
+Consulting Development Engineer                   Am Sonnenhang 11
+Storage Development                               56242 Marienrachdorf
+                                                  Germany
+Mauelshagen@RedHat.com                            PHONE +49  171 7803392
+                                                  FAX   +49 2626 924446
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
