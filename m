@@ -1,15 +1,19 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: [RFC] Change to the mirror table map
-Date: Tue, 24 Oct 2006 11:30:47 +0200
-Message-ID: <20061024093047.GB4792@redhat.com>
-References: <1161291378.26135.3.camel@hydrogen.msp.redhat.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Jan Blunck <jblunck@suse.de>
+Subject: Re: dm-snapshot scalability - chained delta snapshots
+	approach
+Date: Tue, 24 Oct 2006 11:52:00 +0200
+Message-ID: <20061024095200.GE4729@hasse.suse.de>
+References: <44DA246B020000B60000BD22@lucius.provo.novell.com>
+	<44DB5BDD020000B60000BD96@lucius.provo.novell.com>
+	<44DB5C21.F25D.00B6.0@novell.com> <451A5915.F25D.00B6.0@novell.com>
+	<20060927091700.GA6314@X40.redhat.com>
+	<62b0912f0610231016r23585c34y6308cb3540ed926c@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1161291378.26135.3.camel@hydrogen.msp.redhat.com>
+In-Reply-To: <62b0912f0610231016r23585c34y6308cb3540ed926c@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,132 +23,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: agk@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Oct 19, 2006 at 03:56:18PM -0500, Jonathan Brassow wrote:
-> The impetus for this was the desire to add read balancing to mirroring
-> and have it share code with multipath.
+On Mon, Oct 23, Molle Bestefich wrote:
 
-Makes sense.
-
+> >This means that every snapshot still has its own exception store.
+> >This would make deletion of snapshots unnecessary complex.
 > 
->  brassow
+> Complex, how?
 > 
-> ORIGINAL:
-> <start> <length> mirror \
-> <log_type> <#log_params> <log_params> \
-> <#mirrors> <device1> <offset1> ... <deviceN> <offsetN>
+> Necessary operations (in order listed):
+> * Acquire exclusive lock on this snapshot.
+> * Check that next snapshot has room for exceptions, abort if not.
+> * Acquire exclusive lock on next snapshot.
+> * Move all exceptions to next snapshot.
+> * Unlock next snapshot.
+> * Remove this snapshot.
+> * Done...
 > 
-> Example:
-> 0 1024000 mirror \
-> disk 3 253:2 1024 block_on_error \
-> 2 253:3 0 253:4 0
+> Sounds simple to me, but maybe I'm missing the point.
+
+Hmm, sounds simple. Somehow I can't remember exactly where I thought the
+problem is ...
+
+> >We discussed some of the ideas about snapshots here at the dm summit. The
+> >general ideas are as follows:
+> >
+> >- one exception store per origin device that is shared by all snapshots
 > 
+> Now that sounds complex.
+
+But that is something already implemented for clustered snapshots although
+that is userspace code.
+
+> >Although that includes a complete redesign of the exception store code.
 > 
-> MODIFIED:
->                           [-------- logging section ---------] [- mirror devices section -] [--------------- read balancing section -------------]
-> 0 71014400 mirror format2 log 4 disk 253:2 1024 block_on_error devices 2 1 253:3 S 253:4 A  read-balance 8 round-robin 0 2 1 253:3 1000 253:4 1000
-> ^    ^       ^       ^     ^  ^  ^   <^^^^^^^^^^^^^^^^^^^^^^^>    ^    ^ ^   ^   ^              ^       ^ <^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^>
-> |    |       |       |     |  |  |   |                            |    | |   |   |              |       | |
-> |    |       |       |     |  |  |   |                            |    | |   |   |              |       | same as multipath
-> |    |       |       |     |  |  |   |                            |    | |   |   |              |       # read-balance args
-> |    |       |       |     |  |  |   |                            |    | |   |   |              read-balance section indicator
-> |    |       |       |     |  |  |   |                            |    | |   |   Device status (slave/active/dead)
-> |    |       |       |     |  |  |   |                            |    | |   Device
-> |    |       |       |     |  |  |   |                            |    | # of device args
-> |    |       |       |     |  |  |   |                            |    # of devices
-> |    |       |       |     |  |  |   |                            device section indicator
-> |    |       |       |     |  |  |   log type specific args
-> |    |       |       |     |  |  log type
-> |    |       |       |     |  # of log args
-> |    |       |       |     log section indicator
-> |    |       |       target table format
-> |    |       target name
-> |    target length in 512-byte blocks
-> starting offset of target
+> Especially when you say stuff like that :-).
 > 
-> New features:
-> ================================================================================
-> I've added a format argument ("format2" in example).  It is always the first
-> argument to the mirror target.  If it isn't present, we can assume the original
-> format.  If it is present, we can use the format specified.
 
-Makes sense for backward compatibility and makes parsing easy.
+The chained-snapshots approach needs that too.
 
+> >The throughput issues should be addressed by only
+> >writing to one exception store.
 > 
-> The mapping table is broken up into sections.  The sections are allowed to be
-> in any order, and we should be able to add sections in the future if
-> necessary.
-> 
-> The logging section starts with the keyword 'log' and is followed by the number
-> of log arguments.  No changes to the dm_create_dirty_log function should be
-> necessary.
+> Wouldn't this make debugging more complex, and further add to
+> the difficulty of snapshot resizing?
 
-Again an advantage for parsing.
-
-> 
-> The devices section starts with the keyword 'devices' and is followed by the
-> number of devices then the number of per device arguments.  This is not
-> consistent with the other sections.  It may be better to have the keyword
-> followed by the argument count, followed by the per device argument count.
-> Something like:
->     devices 5 1 253:3 S 253:4 A
-> or
->     devices 5 2 253:3 S 253:4 A
-> depending on if you want to include the device in the per device argument
-> count.  Notice that I have done away with the 'offset' parameter found in
-> the original.
-
-Keep it: we need it to easier support things like lvm pvmove and for metadata
-at the beginning of the mapped devices.
-
-> Multipath doesn't have that, and neither does mirroring
-> when specifying the log device.  For the above example, I did add an
-> additional per device parameter to specify the status of a device.  I was
-> imagining a scenario where IBM's slave context might be specified, or
-> a new mirror device is added to the set.  With the indicator, you could
-> tell which devices were in-sync, and which ones needed recovery.
-> (Perhaps that is better left to an additional section, since it is not
-> yet known how this functionality would be added.)
-
-Yes, we can have a device-properties or domething section after the devices
-one once that hash been sorted.
-
-> 
-> The read balancing section starts with the keyword 'read-balance' and is
-> followed by the number of read balancing arguments.  After that, it is
-> just like multipathing.  If we were certain that the devices section did
-> not need any device specific arguments, we could combine the devices section
-> and the read-balance section.  (This could be the case if we decided to
-> add a section for initial device status and didn't need the offset argument.)
-> Mirror does need to keep it's own list of devices, however; and it might be
-> nice to be able to parse that section separate - rather than parse the
-> read-balancing section twice.
-> 
-> Multipath takes the approach of having positional arguments (e.g. the 'number
-> of features' argument is in a known place).  If we took this approach, we
-> could eliminate the keywords.  However, I think I prefer the ability to
-> identify sections.
-
-I agree. Much more flexible for enhancements and for the ease of parsing.
-
-Heinz
-
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+Resizing? Nope, you only need to resize the exception store thats it. Resizing
+the chained-snapshots approach is complex however: in the worst case you have
+to move the exception stores to get enough free space.
