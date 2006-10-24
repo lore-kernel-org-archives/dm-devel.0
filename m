@@ -1,117 +1,212 @@
-From: Christophe Saout <christophe@saout.de>
-Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to 2.6.19-rc3
-	and breaks yaird.
-Date: Mon, 30 Oct 2006 20:39:08 +0100
-Message-ID: <1162237148.9415.7.camel@leto.intern.saout.de>
-References: <20061030151930.GQ27337@susi>
-	 <20061030184331.GY3928@agk.surrey.redhat.com>
-	 <Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
+From: "Youngbauer, Todd" <todd.youngbauer@t-llc.com>
+Subject: multipath on Red Hat
+Date: Tue, 24 Oct 2006 12:55:33 -0500
+Message-ID: <E765F7D38460FA47B4A896E6DDA3505811793D@transcendent01.t-llc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-OrTDVc9+b74E8RmmEFWe"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1161243AbWJ3TjP@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@osdl.org>
-Cc: Alasdair G Kergon <agk@redhat.com>, herbert@gondor.apana.org.au, linux-kernel@vger.kernel.org, Stefan Schmidt <stefan@datenfreihafen.org>, dm-devel@redhat.com, dm-crypt@saout.de, Andrew Morton <akpm@osdl.org>
+Content-Type: multipart/mixed; boundary="===============0060113742=="
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
---=-OrTDVc9+b74E8RmmEFWe
-Content-Type: text/plain
+--===============0060113742==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C6F795.9A54F7F3"
+
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C6F795.9A54F7F3
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 
-Am Montag, den 30.10.2006, 11:00 -0800 schrieb Linus Torvalds:
-> On Mon, 30 Oct 2006, Alasdair G Kergon wrote:
-> > =20
-> > It cannot have been intentional as there was no mention of the change t=
-o the
-> > userspace interface in the git changelog (and the interface version num=
-ber
-> > was not changed).
-> >=20
-> > A new patch is needed to revert the part of the patch that changed the
-> > userspace interface.
-> >=20
-> > Please don't forget to copy in the appropriate maintainers when you sen=
-d
-> > messages like this one:
-> >   http://marc.theaimsgroup.com/?l=3Dlinux-netdev&m=3D115547174417490&w=
-=3D2
-> > so they can provide acks:-)
->=20
-> Yeah.
->=20
-> Herbert, the breakage _seems_ to be due to the STATUSTYPE_TABLE case=20
-> change:
->=20
-> -		cipher =3D crypto_tfm_alg_name(cc->tfm);
-> +		cipher =3D crypto_blkcipher_name(cc->tfm);
->=20
-> which effectively changes "aes" into "cbc(aes)", which is wrong, since we=
+Has anyone had any success with multipath?   We are trying to connect 1
+volume to the SAN. That works fine.  We have 4 pathways into storage, 1
+switch and 2 qlogic HBAs.  The server boots fine but when I pull a fiber
+it goes into I/O error and then recovers with read only access.
+
 =20
-> show the chainmode separately.
->=20
-> Please, somebody who knows this area, send me a fix,
->=20
-> (maybe something like this trivial one? Totally untested, but it would=20
-> seem to be the sane approach)
 
-Yes, this works just fine. It can also be cleaned up a little further as
-the temporary variables are unnecessary at that point.
+I have tried changing the multipath.conf file every way I can image.
 
-----
-
-Fix dm-crypt after the block cipher API changes to correctly return the
-backwards compatible cipher-chainmode[-ivmode] format for "dmsetup
-table".
-
-Signed-off-by: Christophe Saout <christophe@saout.de>
-
-diff linux-2.6.19-rc3.orig/drivers/md/dm-crypt.c linux-2.6.19-rc3/drivers/m=
-d/dm-crypt.c
---- linux-2.6.19-rc3.orig/drivers/md/dm-crypt.c	2006-10-26 13:17:58.0000000=
-00 +0200
-+++ linux-2.6.19-rc3/drivers/md/dm-crypt.c	2006-10-30 20:26:37.000000000 +0=
-100
-@@ -915,8 +915,6 @@ static int crypt_status(struct dm_target
- 			char *result, unsigned int maxlen)
- {
- 	struct crypt_config *cc =3D (struct crypt_config *) ti->private;
--	const char *cipher;
--	const char *chainmode =3D NULL;
- 	unsigned int sz =3D 0;
 =20
- 	switch (type) {
-@@ -925,14 +923,11 @@ static int crypt_status(struct dm_target
- 		break;
+
+I even tried without a multipath.conf
+
 =20
- 	case STATUSTYPE_TABLE:
--		cipher =3D crypto_blkcipher_name(cc->tfm);
--
--		chainmode =3D cc->chainmode;
--
- 		if (cc->iv_mode)
--			DMEMIT("%s-%s-%s ", cipher, chainmode, cc->iv_mode);
-+			DMEMIT("%s-%s-%s ", cc->cipher, cc->chainmode,
-+			       cc->iv_mode);
- 		else
--			DMEMIT("%s-%s ", cipher, chainmode);
-+			DMEMIT("%s-%s ", cc->cipher, cc->chainmode);
+
+Any help would be great.  I tried everything I can think of as well as
+read every site I could fine.
+
 =20
- 		if (cc->key_size > 0) {
- 			if ((maxlen - sz) < ((cc->key_size << 1) + 1))
+
+Storage =3D Compellent
+
+Server  =3D HP
+
+HBA =3D Qlogic
+
+Switch =3D Brocade
+
+=20
+
+Thanks
+
+Todd
 
 
---=-OrTDVc9+b74E8RmmEFWe
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: Dies ist ein digital signierter Nachrichtenteil
+------_=_NextPart_001_01C6F795.9A54F7F3
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
 
-iD8DBQBFRlTbZCYBcts5dM0RAq1pAJ9sNRVH7s9ecH6WjwpQ9uwUe0ubJQCcDMTk
-5bDZUCEQeU7V75FdfpNof/g=
-=sejZ
------END PGP SIGNATURE-----
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:Arial;
+	color:windowtext;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]-->
+</head>
 
---=-OrTDVc9+b74E8RmmEFWe--
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Has anyone had any success with multipath? =
+&nbsp;&nbsp;We
+are trying to connect 1 volume to the SAN. That works fine.&nbsp; We =
+have 4
+pathways into storage, 1 switch and 2 qlogic HBAs. &nbsp;The server =
+boots fine
+but when I pull a fiber it goes into I/O error and then recovers with =
+read only
+access.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>I have tried changing the multipath.conf file every =
+way I
+can image.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>I even tried without a =
+multipath.conf<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Any help would be great.&nbsp; I tried everything I =
+can
+think of as well as read every site I could =
+fine.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Storage =3D Compellent<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Server&nbsp; =3D HP<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>HBA =3D Qlogic<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Switch =3D Brocade<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Thanks<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Todd<o:p></o:p></span></font></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01C6F795.9A54F7F3--
+
+
+--===============0060113742==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0060113742==--
