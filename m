@@ -1,16 +1,15 @@
-From: "Herr, Manuel" <mher@msc-ge.com>
-Subject: AW: dm-0
-Date: Fri, 27 Oct 2006 10:36:30 +0200
-Message-ID: <C514D40EFDB5C84083DAEB84A1186A8F94CCED@msc-ex02.msc-ge.mscnet>
-References: <20061027073451.33894.qmail@web56112.mail.re3.yahoo.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [PATCH 1/2] dm-userspace: use ring buffer instead of
+	system call
+Date: Fri, 27 Oct 2006 07:01:41 -0700
+Message-ID: <m31wotsvqy.fsf@guaranine.beaverton.ibm.com>
+References: <20061025194412J.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0614955427=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20061027073451.33894.qmail@web56112.mail.re3.yahoo.com>
+In-Reply-To: <20061025194412J.fujita.tomonori@lab.ntt.co.jp> (FUJITA
+	Tomonori's message of "Wed, 25 Oct 2006 19:44:12 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,60 +22,59 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-No, the /dev/dm* devices are recreated every reboot.
-Only the wwids in /dev/mapper/ are persistant. (/dev/disk/by-name/<wwid>)
-Use them for mountpoint in the fstab.=20
+--===============0614955427==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-/dev/disk/by-name/data1 /usr/sap reiserfs acl,user_xattr 1 2
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-You can alias the horrible wwid by logical names in the multipath.conf.
-E.g.
+FT> It's against on the top of the following patches:
 
-multipaths {
-        multipath
-        {
-                #mountpoint /data
-                wwid 360060160403219007aa7b461c917db11
-                alias data
-        }
-}
-This will create an link /dev/mapper/data1 -> /dev/dm-<actualNumber>
+Would you mind sending a patch against a vanilla tree?  I'm having a
+hard time getting the patches (old and new) to apply cleanly and in
+the right order.
 
-Take a look at the boot.multipath script.
+FT> In my experiments, the ring buffer interface provides 10% better
+FT> write performance with disktest benchmark, though dbench gives
+FT> comparable performances (about 340 MB/s).
 
-*snip*
-# Clear /dev/disk/by-name/ prior to start-up; multipath will
-        # recreate them.
-        rm -f /dev/disk/by-name/* 2>&1 >/dev/null
-*snap*
+This is good to hear.  I am interested in testing it in some of my
+real-life situations where performance is slower due to the high
+latency.  This mostly affects the boot time of Xen guests.
 
-Regards,
-Manuel
+I have added kernel caching back into my local version (which only
+adds 200 lines).  It improves Xen guest boot performance
+significantly, but does not affect dbench performance.  I will be
+interested to see what kind of performance I can get from your
+ringbuffer version, as well as possibly a combination of the two.
 
-> -----Urspr=FCngliche Nachricht-----
-> Von: dm-devel-bounces@redhat.com=20
-> [mailto:dm-devel-bounces@redhat.com] Im Auftrag von lnx dm
-> Gesendet: Freitag, 27. Oktober 2006 09:35
-> An: dm
-> Betreff: [dm-devel] dm-0
->=20
-> will dm-0 will always point to the same device across reboots=20
-> irrespective of the the order in which devices are detected ?
-> which is persistent /dev/dm-0 or /dev/mapper/<wwid> ?
->=20
-> # ls -l /dev/mpath/
-> lrwxrwxrwx  1 root root 7 Mar 24 01:45
-> 3600805f300176640a435a927359c0003 -> ../dm-0
->=20
-> -lnxdm
->=20
-> __________________________________________________
-> Do You Yahoo!?
-> Tired of spam?  Yahoo! Mail has the best spam protection=20
-> around http://mail.yahoo.com=20
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
+Thanks!
+
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
+
+--=-=-=
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQFFQhFKwtEf7b4GJVQRAoGjAJ0UUlNROC3jpefIkidqXLjMrcE64QCbBRBe
+tBGT8LygY5iC7zMAc/ZfWMk=
+=cPtU
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============0614955427==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0614955427==--
