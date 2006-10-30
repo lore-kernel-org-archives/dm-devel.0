@@ -1,61 +1,41 @@
-From: Stefan Schmidt <stefan@datenfreihafen.org>
-Subject: [BUG] dmsetup table output changed from 2.6.18 to 2.6.19-rc3 and breaks yaird.
-Date: Mon, 30 Oct 2006 16:19:30 +0100
-Message-ID: <20061030151930.GQ27337@susi>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to 2.6.19-rc3 and breaks yaird.
+Date: Mon, 30 Oct 2006 18:43:31 +0000
+Message-ID: <20061030184331.GY3928@agk.surrey.redhat.com>
+References: <20061030151930.GQ27337@susi>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="ELk+q2VdTjIkPHaj"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1030535AbWJ3PeH@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1161341AbWJ3SoO@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20061030151930.GQ27337@susi>
 Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: herbert@gondor.apana.org.au, dm-devel@redhat.com
+To: herbert@gondor.apana.org.au
+Cc: linux-kernel@vger.kernel.org, Stefan Schmidt <stefan@datenfreihafen.org>, dm-devel@redhat.com, dm-crypt@saout.de, Christophe Saout <christophe@saout.de>, Andrew Morton <akpm@osdl.org>, torvalds@osdl.org
 List-Id: dm-devel.ids
 
+On Mon, Oct 30, 2006 at 04:19:30PM +0100, Stefan Schmidt wrote:
+> dmsetup table on 2.6.18 reports: aes-cbc-essiv:sha256
+> dmsetup table on 2.6.19-rc3 reports: cbc(aes)-cbc-essiv:sha256
 
---ELk+q2VdTjIkPHaj
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> The problem seems to be on the kernel side here. Herbert Xu changed
+> the output with d1806f6a97a536b043fe50e6d8a25b061755cf50
+> http://kernel.org/git/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commit;h=d1806f6a97a536b043fe50e6d8a25b061755cf50
 
-Hello.
+> The question is if this change was intentional and yaird should be
+> fixed, or it's a kernel API breakage.
+ 
+It cannot have been intentional as there was no mention of the change to the
+userspace interface in the git changelog (and the interface version number
+was not changed).
 
-Today the build of an initrd from a 2.6.19-rc3 kernel failed.
+A new patch is needed to revert the part of the patch that changed the
+userspace interface.
 
-fairlight:/boot# yaird -o /tmp/foo.initrd 2.6.19-rc3-fairlight
-yaird error: Could not read output for /sbin/modprobe -v -n --show-depends =
---set-version 2.6.19-rc3-fairlight cbc(aes) (fatal)
+Please don't forget to copy in the appropriate maintainers when you send
+messages like this one:
+  http://marc.theaimsgroup.com/?l=linux-netdev&m=115547174417490&w=2
+so they can provide acks:-)
 
-dmsetup table has changed the report for luks cipher.=20
-
-dmsetup table on 2.6.18 reports: aes-cbc-essiv:sha256
-
-dmsetup table on 2.6.19-rc3 reports: cbc(aes)-cbc-essiv:sha256
-
-The problem seems to be on the kernel side here. Herbert Xu changed
-the output with d1806f6a97a536b043fe50e6d8a25b061755cf50
-
-http://kernel.org/git/?p=3Dlinux/kernel/git/torvalds/linux-2.6.git;a=3Dcomm=
-it;h=3Dd1806f6a97a536b043fe50e6d8a25b061755cf50
-
-The question is if this change was intentional and yaird should be
-fixed, or it's a kernel API breakage.
-
-regards
-Stefan Schmidt
-
---ELk+q2VdTjIkPHaj
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.1 (GNU/Linux)
-Comment: http://www.datenfreihafen.org/contact.html
-
-iD8DBQFFRhgCbNSsvd31FmURAlW+AJ9JZCVK8bdFzgYhAOU6DK9htXFgagCfZ8uC
-A3QKnY87YLC2y2Yybr9GTBg=
-=enYW
------END PGP SIGNATURE-----
-
---ELk+q2VdTjIkPHaj--
+Alasdair
+-- 
+agk@redhat.com
