@@ -1,59 +1,117 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to
-	2.6.19-rc3 and breaks yaird.
-Date: Mon, 30 Oct 2006 19:15:54 +0000
-Message-ID: <20061030191554.GN1319@agk.surrey.redhat.com>
+From: Christophe Saout <christophe@saout.de>
+Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to 2.6.19-rc3
+	and breaks yaird.
+Date: Mon, 30 Oct 2006 20:39:08 +0100
+Message-ID: <1162237148.9415.7.camel@leto.intern.saout.de>
 References: <20061030151930.GQ27337@susi>
-	<20061030184331.GY3928@agk.surrey.redhat.com>
-	<Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	 <20061030184331.GY3928@agk.surrey.redhat.com>
+	 <Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-OrTDVc9+b74E8RmmEFWe"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1161243AbWJ3TjP@vger.kernel.org>
 In-Reply-To: <Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@osdl.org>
-Cc: Andrew Morton <akpm@osdl.org>, Christophe Saout <christophe@saout.de>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Stefan Schmidt <stefan@datenfreihafen.org>, herbert@gondor.apana.org.au
+Cc: Alasdair G Kergon <agk@redhat.com>, herbert@gondor.apana.org.au, linux-kernel@vger.kernel.org, Stefan Schmidt <stefan@datenfreihafen.org>, dm-devel@redhat.com, dm-crypt@saout.de, Andrew Morton <akpm@osdl.org>
 List-Id: dm-devel.ids
 
-On Mon, Oct 30, 2006 at 11:00:29AM -0800, Linus Torvalds wrote:
-> (maybe something like this trivial one? Totally untested, but it would 
+
+--=-OrTDVc9+b74E8RmmEFWe
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
+
+Am Montag, den 30.10.2006, 11:00 -0800 schrieb Linus Torvalds:
+> On Mon, 30 Oct 2006, Alasdair G Kergon wrote:
+> > =20
+> > It cannot have been intentional as there was no mention of the change t=
+o the
+> > userspace interface in the git changelog (and the interface version num=
+ber
+> > was not changed).
+> >=20
+> > A new patch is needed to revert the part of the patch that changed the
+> > userspace interface.
+> >=20
+> > Please don't forget to copy in the appropriate maintainers when you sen=
+d
+> > messages like this one:
+> >   http://marc.theaimsgroup.com/?l=3Dlinux-netdev&m=3D115547174417490&w=
+=3D2
+> > so they can provide acks:-)
+>=20
+> Yeah.
+>=20
+> Herbert, the breakage _seems_ to be due to the STATUSTYPE_TABLE case=20
+> change:
+>=20
+> -		cipher =3D crypto_tfm_alg_name(cc->tfm);
+> +		cipher =3D crypto_blkcipher_name(cc->tfm);
+>=20
+> which effectively changes "aes" into "cbc(aes)", which is wrong, since we=
+=20
+> show the chainmode separately.
+>=20
+> Please, somebody who knows this area, send me a fix,
+>=20
+> (maybe something like this trivial one? Totally untested, but it would=20
 > seem to be the sane approach)
- 
-> diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-> index a625576..645e3ce 100644
-> --- a/drivers/md/dm-crypt.c
-> +++ b/drivers/md/dm-crypt.c
-> @@ -925,8 +925,7 @@ static int crypt_status(struct dm_target
->  		break;
->  
->  	case STATUSTYPE_TABLE:
-> -		cipher = crypto_blkcipher_name(cc->tfm);
-> -
-> +		cipher = cc->cipher;
->  		chainmode = cc->chainmode;
->  
->  		if (cc->iv_mode)
-> 
-> 
 
-Looks correct.
+Yes, this works just fine. It can also be cleaned up a little further as
+the temporary variables are unnecessary at that point.
 
-The point of STATUSTYPE_TABLE is to return (readable) output to userspace in
-a format that the crypt_ctr() function would accept back in.
+----
 
-So crypt_ctr() now stores a private copy of cipher and chainmode for
-crypt_status() to regurgitate when requested.
+Fix dm-crypt after the block cipher API changes to correctly return the
+backwards compatible cipher-chainmode[-ivmode] format for "dmsetup
+table".
 
-Alasdair
--- 
-agk@redhat.com
+Signed-off-by: Christophe Saout <christophe@saout.de>
+
+diff linux-2.6.19-rc3.orig/drivers/md/dm-crypt.c linux-2.6.19-rc3/drivers/m=
+d/dm-crypt.c
+--- linux-2.6.19-rc3.orig/drivers/md/dm-crypt.c	2006-10-26 13:17:58.0000000=
+00 +0200
++++ linux-2.6.19-rc3/drivers/md/dm-crypt.c	2006-10-30 20:26:37.000000000 +0=
+100
+@@ -915,8 +915,6 @@ static int crypt_status(struct dm_target
+ 			char *result, unsigned int maxlen)
+ {
+ 	struct crypt_config *cc =3D (struct crypt_config *) ti->private;
+-	const char *cipher;
+-	const char *chainmode =3D NULL;
+ 	unsigned int sz =3D 0;
+=20
+ 	switch (type) {
+@@ -925,14 +923,11 @@ static int crypt_status(struct dm_target
+ 		break;
+=20
+ 	case STATUSTYPE_TABLE:
+-		cipher =3D crypto_blkcipher_name(cc->tfm);
+-
+-		chainmode =3D cc->chainmode;
+-
+ 		if (cc->iv_mode)
+-			DMEMIT("%s-%s-%s ", cipher, chainmode, cc->iv_mode);
++			DMEMIT("%s-%s-%s ", cc->cipher, cc->chainmode,
++			       cc->iv_mode);
+ 		else
+-			DMEMIT("%s-%s ", cipher, chainmode);
++			DMEMIT("%s-%s ", cc->cipher, cc->chainmode);
+=20
+ 		if (cc->key_size > 0) {
+ 			if ((maxlen - sz) < ((cc->key_size << 1) + 1))
+
+
+--=-OrTDVc9+b74E8RmmEFWe
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: Dies ist ein digital signierter Nachrichtenteil
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQBFRlTbZCYBcts5dM0RAq1pAJ9sNRVH7s9ecH6WjwpQ9uwUe0ubJQCcDMTk
+5bDZUCEQeU7V75FdfpNof/g=
+=sejZ
+-----END PGP SIGNATURE-----
+
+--=-OrTDVc9+b74E8RmmEFWe--
