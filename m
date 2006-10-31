@@ -1,49 +1,69 @@
-From: Stefan Schmidt <stefan@datenfreihafen.org>
-Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to 2.6.19-rc3 and breaks yaird.
-Date: Mon, 30 Oct 2006 20:52:43 +0100
-Message-ID: <20061030195243.GR27337@susi>
-References: <20061030151930.GQ27337@susi> <20061030184331.GY3928@agk.surrey.redhat.com> <Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to
+	2.6.19-rc3 and breaks yaird.
+Date: Tue, 31 Oct 2006 11:56:46 +1100
+Message-ID: <20061031005646.GA26146@gondor.apana.org.au>
+References: <20061030151930.GQ27337@susi>
+	<20061030184331.GY3928@agk.surrey.redhat.com>
+	<Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
+	<1162237148.9415.7.camel@leto.intern.saout.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="iks5JP/frMpeeVyh"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932482AbWJ3UHu@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Linus Torvalds <torvalds@osdl.org>
-Cc: Alasdair G Kergon <agk@redhat.com>, herbert@gondor.apana.org.au, linux-kernel@vger.kernel.org, dm-devel@redhat.com, dm-crypt@saout.de, Christophe Saout <christophe@saout.de>, Andrew Morton <akpm@osdl.org>
+In-Reply-To: <1162237148.9415.7.camel@leto.intern.saout.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Christophe Saout <christophe@saout.de>
+Cc: Andrew Morton <akpm@osdl.org>, dm-crypt@saout.de, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@osdl.org>, Alasdair G Kergon <agk@redhat.com>, Stefan Schmidt <stefan@datenfreihafen.org>
 List-Id: dm-devel.ids
 
+On Mon, Oct 30, 2006 at 08:39:08PM +0100, Christophe Saout wrote:
+>
+> > Herbert, the breakage _seems_ to be due to the STATUSTYPE_TABLE case 
+> > change:
+> > 
+> > -		cipher = crypto_tfm_alg_name(cc->tfm);
+> > +		cipher = crypto_blkcipher_name(cc->tfm);
+> > 
+> > which effectively changes "aes" into "cbc(aes)", which is wrong, since we 
+> > show the chainmode separately.
 
---iks5JP/frMpeeVyh
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Yes that's wrong.
 
-Hello.
+However, the bigger problem is that dmcrypt's algorithm specification
+does not allow all algorithms to be specified.  In particular, algorithms
+with dashes in their names cannot be represented in an unambiguous way.
 
-On Mon, 2006-10-30 at 11:00, Linus Torvalds wrote:
->=20
-> (maybe something like this trivial one? Totally untested, but it would=20
-> seem to be the sane approach)
+The separation of chain modes and algorithm names is in fact unnecessary
+and only complicates matters.
 
-I just tested it. Works fine for me.
+For now it's no big deal since the algorithms people actually use
+can be represented.  But it would be nice to get this fixed.
+ 
+> ----
+> 
+> Fix dm-crypt after the block cipher API changes to correctly return the
+> backwards compatible cipher-chainmode[-ivmode] format for "dmsetup
+> table".
+> 
+> Signed-off-by: Christophe Saout <christophe@saout.de>
 
-regards
-Stefan Schmidt
+Looks good to me.
 
---iks5JP/frMpeeVyh
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
+Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.1 (GNU/Linux)
-Comment: http://www.datenfreihafen.org/contact.html
-
-iD8DBQFFRlgKbNSsvd31FmURApsMAKC0v3nPMQtU5bi781aCJOae8nmY8QCg2Szl
-h2FXHPsB/bNy66/Df3l8vow=
-=c3fw
------END PGP SIGNATURE-----
-
---iks5JP/frMpeeVyh--
+Thanks,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
