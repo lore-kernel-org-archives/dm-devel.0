@@ -1,18 +1,20 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: [BUG] dmsetup table output changed from 2.6.18 to
-	2.6.19-rc3 and breaks yaird.
-Date: Tue, 31 Oct 2006 11:56:46 +1100
-Message-ID: <20061031005646.GA26146@gondor.apana.org.au>
-References: <20061030151930.GQ27337@susi>
-	<20061030184331.GY3928@agk.surrey.redhat.com>
-	<Pine.LNX.4.64.0610301053010.25218@g5.osdl.org>
-	<1162237148.9415.7.camel@leto.intern.saout.de>
+From: Dave Wysochanski <dave.wysochanski@redhat.com>
+Subject: Re: Failover between two paths to one LU doesn't work
+	onlinux-iscsi
+Date: Wed, 01 Nov 2006 01:20:04 -0500
+Message-ID: <1162362004.5668.21.camel@linux-cxyg.rtp.netapp.com>
+References: <452BD5C6.2080808@voltaire.com> <452BD768.30206@ilm.com>
+	<452BFAA0.1000100@voltaire.com>
+	<1160576205.4819.13.camel@linux-cxyg.rtp.netapp.com>
+	<452E8E50.3080507@voltaire.com>
+	<1160684886.6294.9.camel@dhcp59-220.rdu.redhat.com>
+	<4536789C.70807@voltaire.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1162237148.9415.7.camel@leto.intern.saout.de>
+In-Reply-To: <4536789C.70807@voltaire.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,48 +24,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Saout <christophe@saout.de>
-Cc: Andrew Morton <akpm@osdl.org>, dm-crypt@saout.de, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Linus Torvalds <torvalds@osdl.org>, Alasdair G Kergon <agk@redhat.com>, Stefan Schmidt <stefan@datenfreihafen.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 30, 2006 at 08:39:08PM +0100, Christophe Saout wrote:
->
-> > Herbert, the breakage _seems_ to be due to the STATUSTYPE_TABLE case 
-> > change:
-> > 
-> > -		cipher = crypto_tfm_alg_name(cc->tfm);
-> > +		cipher = crypto_blkcipher_name(cc->tfm);
-> > 
-> > which effectively changes "aes" into "cbc(aes)", which is wrong, since we 
-> > show the chainmode separately.
+On Wed, 2006-10-18 at 20:55 +0200, Michael Lyulko wrote:
+> >>
+> >> 1. How can I configure the DM to automatically detect that a path is 
+> >> active again?
+> >>     
+> >
+> > you probably want "failback immediate"
+> > there's also been some bugs with failback - not sure about your version
+> > - your mileage may vary
+> >
+> >   
+> "failback immediate" didn't help on both SLES9 sp3 and SLES10. The 
+> device mapper doesn't
+> rescan automatically the paths, so when the failed path is back to life, 
+> it is still "failed"
+> in multipath -l output.
+> Issuing "multipath -p failover" helps to return the path back to 
+> "active". I need an automatic "rescan".
 
-Yes that's wrong.
+This is supposed to be multipathd's job - it's supposed to have a path
+checker thread that repeatedly scans and notifies the kernel to
+reinstate paths.  If the first state remains "[failed]", it indicates
+either multipathd isn't running or it's not notifying the kernel
+correctly of the reinstated paths.
 
-However, the bigger problem is that dmcrypt's algorithm specification
-does not allow all algorithms to be specified.  In particular, algorithms
-with dashes in their names cannot be represented in an unambiguous way.
-
-The separation of chain modes and algorithm names is in fact unnecessary
-and only complicates matters.
-
-For now it's no big deal since the algorithms people actually use
-can be represented.  But it would be nice to get this fixed.
- 
-> ----
-> 
-> Fix dm-crypt after the block cipher API changes to correctly return the
-> backwards compatible cipher-chainmode[-ivmode] format for "dmsetup
-> table".
-> 
-> Signed-off-by: Christophe Saout <christophe@saout.de>
-
-Looks good to me.
-
-Acked-by: Herbert Xu <herbert@gondor.apana.org.au>
-
-Thanks,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+I seem to recall there was a sequencing problem - at least on SLES9 SP?
+with boot.multipath, multipathd and iscsi - something like multipathd
+starting too early, which caused it not to monitor paths properly.  Did
+you try restarting multipathd after everything is up (on SLES9)?
