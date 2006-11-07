@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [Patch 7 of 14] Device Mapper Mirror
-Date: Tue, 07 Nov 2006 10:03:37 -0600
-Message-ID: <1162915417.17899.48.camel@hydrogen.msp.redhat.com>
+Subject: [Patch 8 of 14] Device Mapper Mirror
+Date: Tue, 07 Nov 2006 10:04:17 -0600
+Message-ID: <1162915457.17899.51.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -22,136 +22,138 @@ List-Id: dm-devel.ids
 
  brassow
 
-This patch adds the ability to specify desired features in the mirror
-constructor/mapping table.
+We used to take a best effort approach to recovery - failures during
+a resync were completely ignored.  This meant that regions where
+marked 'in-sync' and 'clean' and removed from the hash list.  Future
+reads and writes that query the region would incorrectly interpret the
+region as in-sync.
 
-The first feature of interest is "handle_errors".  Currently, mirroring
-will ignore any I/O errors from the devices.  Subsequent patches will
-check for this flag and handle the errors.  If flag/feature is not
-present, mirror will do nothing - maintaining backwards compatibility.
+This patch handles failures during the recovery process.  If a failure
+occurs, the region is marked as 'not-in-sync' (aka RH_NOSYNC) and added
+to a new list 'failed_recovered_regions'.
 
+Regions on the 'failed_recovered_regions' list are not marked as 'clean'
+upon removal from the list.  Furthermore, if the DM_FEATURE_HANDLE_ERRORS
+flag is set, the region is marked as 'not-in-sync'.  This action prevents
+any future read-balancing from choosing an invalid device because of the
+'not-in-sync' status.
+
+Note that if the DM_FEATURE_HANDLE_ERRORS flag is not present, the region
+will still be marked 'in-sync' (although it remains 'dirty').  This is
+to preserve backwards compatibility with user-space tools, such as
+'pvmove'.  However, since future read-balancing policies will rely on
+the correct sync status of a region, you can not simultaneously have
+read-balancing and not have the DM_FEATURE_HANDLE_ERRORS flag.  This
+has been noted in a comment.
 Index: linux-2.6.18.1/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.18.1.orig/drivers/md/dm-raid1.c	2006-11-01 14:16:14.000000000 -0600
-+++ linux-2.6.18.1/drivers/md/dm-raid1.c	2006-11-01 14:16:15.000000000 -0600
-@@ -114,6 +114,8 @@ struct region {
- /*-----------------------------------------------------------------
-  * Mirror set structures.
-  *---------------------------------------------------------------*/
-+#define DM_FEATURE_HANDLE_ERRORS 0x1
-+
- struct mirror {
- 	atomic_t error_count;
- 	struct dm_dev *dev;
-@@ -130,6 +132,9 @@ struct mirror_set {
- 	struct bio_list reads;
- 	struct bio_list writes;
+--- linux-2.6.18.1.orig/drivers/md/dm-raid1.c	2006-11-06 11:50:42.000000000 -0600
++++ linux-2.6.18.1/drivers/md/dm-raid1.c	2006-11-06 14:08:11.000000000 -0600
+@@ -89,6 +89,7 @@ struct region_hash {
+ 	struct list_head clean_regions;
+ 	struct list_head quiesced_regions;
+ 	struct list_head recovered_regions;
++	struct list_head failed_recovered_regions;
+ };
  
-+	/* Features */
-+	uint64_t feature_flags;
-+
- 	/* recovery */
- 	region_t nr_regions;
- 	int in_sync;
-@@ -1037,14 +1042,63 @@ static struct dirty_log *create_dirty_lo
- 	return dl;
- }
+ enum {
+@@ -202,6 +203,7 @@ static int rh_init(struct region_hash *r
+ 	INIT_LIST_HEAD(&rh->clean_regions);
+ 	INIT_LIST_HEAD(&rh->quiesced_regions);
+ 	INIT_LIST_HEAD(&rh->recovered_regions);
++	INIT_LIST_HEAD(&rh->failed_recovered_regions);
  
-+static int parse_features(struct mirror_set *ms,
-+			  unsigned int argc, char **argv,
-+			  unsigned int *args_used)
-+{
-+	int i;
-+	unsigned int features_argc, used = 0;
-+	struct dm_target *ti = ms->ti;
-+
-+	*args_used = 0;
-+
-+	if (!argc)
-+		return 0;
-+
-+	if (sscanf(argv[0], "%u", &features_argc) != 1) {
-+		ti->error = "Invalid number of features";
-+		return -EINVAL;
-+	}
-+
-+	argc--;
-+	argv++;
-+	used++;
-+
-+	if (features_argc > argc) {
-+		ti->error = "Not enough arguments to support feature count";
-+		return -EINVAL;
-+	}
-+
-+	for (i = 0; i < features_argc; i++) {
-+		if (!strcmp("handle_errors", argv[i]))
-+			ms->feature_flags |= DM_FEATURE_HANDLE_ERRORS;
-+		else {
-+			ti->error = "Unknown feature argument";
-+			return -EINVAL;
-+		}
-+		used++;
-+	}
-+
-+	*args_used = used;
-+	return 0;
-+}
-+
- /*
-- * Construct a mirror mapping:
-+ * mirror_ctr
-+ * @ti
-+ * @argc
-+ * @argv
-  *
-- * log_type #log_params <log_params>
-- * #mirrors [mirror_path offset]{2,}
-+ * Allowable argument list is as follows:
-+ *     log_type #log_params <log_params> \
-+ *     #mirrors <device1> <offset1> ... <deviceN> <offsetN> \
-+ *     <# feature args> <feature args>
-  *
-- * log_type is "core" or "disk"
-- * #log_params is between 1 and 3
-+ * Refer to log implementation for log specific parameters.
-+ * Current features include:
-+ *     handle_errors
-+ *
-+ * Returns: 0 on success, -EXXX on failure
-  */
- #define DM_IO_PAGES 64
- static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
-@@ -1096,6 +1150,22 @@ static int mirror_ctr(struct dm_target *
- 	ti->private = ms;
-  	ti->split_io = ms->rh.region_size;
+ 	rh->region_pool = mempool_create_kmalloc_pool(MIN_REGIONS,
+ 						      sizeof(struct region));
+@@ -366,6 +368,7 @@ static void rh_update_states(struct regi
  
-+	/* check for features */
-+	r = parse_features(ms, argc, argv, &args_used);
-+	if (r) {
-+		free_context(ms, ti, ms->nr_mirrors);
-+		return r;
+ 	LIST_HEAD(clean);
+ 	LIST_HEAD(recovered);
++	LIST_HEAD(failed_recovered);
+ 
+ 	/*
+ 	 * Quickly grab the lists.
+@@ -389,6 +392,15 @@ static void rh_update_states(struct regi
+ 		list_for_each_entry (reg, &recovered, list)
+ 			list_del(&reg->hash_list);
+ 	}
++
++	if (!list_empty(&rh->failed_recovered_regions)) {
++		list_splice(&rh->failed_recovered_regions, &failed_recovered);
++		INIT_LIST_HEAD(&rh->failed_recovered_regions);
++
++		list_for_each_entry (reg, &failed_recovered, list)
++			list_del(&reg->hash_list);
 +	}
 +
-+	argv += args_used;
-+	argc -= args_used;
-+
-+	if (argc) {
-+		ti->error = "Wrong number of mirror arguments";
-+		free_context(ms, ti, ms->nr_mirrors);
-+		return -EINVAL;
-+	}
-+
- 	r = kcopyd_client_create(DM_IO_PAGES, &ms->kcopyd_client);
- 	if (r) {
- 		free_context(ms, ti, ms->nr_mirrors);
-@@ -1243,6 +1313,9 @@ static int mirror_status(struct dm_targe
- 		for (m = 0; m < ms->nr_mirrors; m++)
- 			DMEMIT(" %s %llu", ms->mirror[m].dev->name,
- 				(unsigned long long)ms->mirror[m].offset);
-+
-+		if (ms->feature_flags & DM_FEATURE_HANDLE_ERRORS)
-+			DMEMIT(" 1 handle_errors");
+ 	spin_unlock(&rh->region_lock);
+ 	write_unlock_irq(&rh->hash_lock);
+ 
+@@ -403,6 +415,14 @@ static void rh_update_states(struct regi
+ 		mempool_free(reg, rh->region_pool);
  	}
  
- 	return 0;
++	list_for_each_entry_safe (reg, next, &failed_recovered, list) {
++		if (rh->ms->feature_flags & DM_FEATURE_HANDLE_ERRORS)
++			complete_resync_work(reg, 0);
++		else
++			complete_resync_work(reg, 1);
++		mempool_free(reg, rh->region_pool);
++	}
++
+ 	if (!list_empty(&recovered))
+ 		rh->log->type->flush(rh->log);
+ 
+@@ -554,13 +574,17 @@ static struct region *rh_recovery_start(
+ 	return reg;
+ }
+ 
+-/* FIXME: success ignored for now */
+ static void rh_recovery_end(struct region *reg, int success)
+ {
+ 	struct region_hash *rh = reg->rh;
+ 
+ 	spin_lock_irq(&rh->region_lock);
+-	list_add(&reg->list, &reg->rh->recovered_regions);
++	if (success)
++		list_add(&reg->list, &reg->rh->recovered_regions);
++	else {
++		reg->state = RH_NOSYNC;
++		list_add(&reg->list, &reg->rh->failed_recovered_regions);
++	}
+ 	spin_unlock_irq(&rh->region_lock);
+ 
+ 	wake();
+@@ -632,7 +656,15 @@ static void recovery_complete(int read_e
+ {
+ 	struct region *reg = (struct region *) context;
+ 
+-	/* FIXME: better error handling */
++	/* FIXME:  don't spray the console */
++	if (read_err)
++		/* Read error means the failure of default mirror. */
++		DMERR("Unable to read from primary mirror during recovery");
++
++	if (write_err)
++		DMERR("Write error during recovery (error = 0x%x)",
++		      write_err);
++
+ 	rh_recovery_end(reg, !(read_err || write_err));
+ }
+ 
+@@ -1160,6 +1192,15 @@ static int mirror_ctr(struct dm_target *
+ 	argv += args_used;
+ 	argc -= args_used;
+ 
++	/*
++	 * Note:  Any read-balancing addition depends on the
++	 *        DM_FEATURES_HANDLE_ERRORS flag being present.
++	 *        This is because the decision to balance depends
++	 *        on the sync state of a region.  If the above
++	 *        flag is not present, we ignore errors; and
++	 *        the sync state may not properly be reflected.
++	 */
++
+ 	if (argc) {
+ 		ti->error = "Wrong number of mirror arguments";
+ 		free_context(ms, ti, ms->nr_mirrors);
