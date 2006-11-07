@@ -1,16 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not
-	mutex
-Date: Tue, 7 Nov 2006 23:34:20 +0000
-Message-ID: <20061107233420.GC30653@agk.surrey.redhat.com>
+From: Ingo Molnar <mingo@elte.hu>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Wed, 8 Nov 2006 00:39:38 +0100
+Message-ID: <20061107233938.GA2498@elte.hu>
 References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<170fa0d20611071218t3c145ef9i5413e432597d78a5@mail.gmail.com>
+	<20061107122837.54828e24.akpm@osdl.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <170fa0d20611071218t3c145ef9i5413e432597d78a5@mail.gmail.com>
+In-Reply-To: <20061107122837.54828e24.akpm@osdl.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +20,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Andrew Morton <akpm@osdl.org>, Srinivasa DS <srinivasa@in.ibm.com>, Ingo Molnar <mingo@elte.hu>, Eric Sandeen <sandeen@sandeen.net>, linux-kernel@vger.kernel.org
+To: Andrew Morton <akpm@osdl.org>
+Cc: Srinivasa DS <srinivasa@in.ibm.com>, dm-devel@redhat.com, Eric Sandeen <sandeen@sandeen.net>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 07, 2006 at 03:18:08PM -0500, Mike Snitzer wrote:
-> Srinivasa's description of the patch just speaks to how freeze_bdev
-> and thaw_bdev are used by DM but completely skips justification for
-> switching from mutex to semaphore.  Why is it beneficial and/or
-> necessary to use a semaphore instead of a mutex here?
 
-This used to be a semaphore; someone changed it to a mutex; we started
-getting device-mapper bug reports from people because the usage breaks the
-stated semantics for a mutex; this patch puts things back while we consider
-if there's a better way of doing things.
- 
-Alasdair
--- 
-agk@redhat.com
+* Andrew Morton <akpm@osdl.org> wrote:
+
+> If so, it's a bit sad to switch to semaphore just because of some 
+> errant debugging code.  Perhaps it would be better to create a new 
+> mutex_unlock_stfu() which suppresses the warning?
+
+the code was not using semaphores as a pure mutex thing. For example 
+unlocking by non-owner is not legal. AFAICS the code returns to 
+userspace with a held in-kernel mutex. That makes it hard for the kernel 
+to determine for example whether the lock has been 'forgotten', or kept 
+like that intentionally. Alasdair, what is the motivation for doing it 
+like that?
+
+	Ingo
