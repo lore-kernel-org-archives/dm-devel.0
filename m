@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [Patch 2 of 14] Device Mapper Mirror
-Date: Tue, 07 Nov 2006 10:00:04 -0600
-Message-ID: <1162915205.17899.38.camel@hydrogen.msp.redhat.com>
+Subject: [Patch 3 of 14] Device Mapper Mirror
+Date: Tue, 07 Nov 2006 10:00:52 -0600
+Message-ID: <1162915252.17899.39.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -22,41 +22,79 @@ List-Id: dm-devel.ids
 
  brassow
 
-Reset sync_search on resume.  The effect of this patch is to check
-over the log bitmap when a mirror is resumed - providing a "second
-chance" at resync'ing regions which may have failed to resync in
-the original pass due to an I/O error.
-Index: linux-2.6.18.1/drivers/md/dm-log.c
+All device-mapper targets must complete out-standing I/O before
+suspending.  The mirror target produces its own I/O when in the
+recovery phase.  This recovery I/O must be tracked so we can
+ensure that it has completed before we suspend.
+Index: linux-2.6.18.1/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.18.1.orig/drivers/md/dm-log.c	2006-10-25 11:36:14.000000000 -0500
-+++ linux-2.6.18.1/drivers/md/dm-log.c	2006-10-25 11:36:17.000000000 -0500
-@@ -466,6 +466,7 @@ static int disk_resume(struct dirty_log 
- 	/* copy clean across to sync */
- 	memcpy(lc->sync_bits, lc->clean_bits, size);
- 	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
-+	lc->sync_search = 0;
+--- linux-2.6.18.1.orig/drivers/md/dm-raid1.c	2006-10-25 11:36:14.000000000 -0500
++++ linux-2.6.18.1/drivers/md/dm-raid1.c	2006-10-25 11:36:23.000000000 -0500
+@@ -24,6 +24,7 @@
  
- 	/* set the correct number of regions in the header */
- 	lc->header.nr_regions = lc->region_count;
-@@ -480,6 +481,13 @@ static uint32_t core_get_region_size(str
- 	return lc->region_size;
+ static struct workqueue_struct *_kmirrord_wq;
+ static struct work_struct _kmirrord_work;
++DECLARE_WAIT_QUEUE_HEAD(recovery_stopped_event);
+ 
+ static inline void wake(void)
+ {
+@@ -83,6 +84,7 @@ struct region_hash {
+ 	struct list_head *buckets;
+ 
+ 	spinlock_t region_lock;
++	atomic_t recovery_in_flight;
+ 	struct semaphore recovery_count;
+ 	struct list_head clean_regions;
+ 	struct list_head quiesced_regions;
+@@ -191,6 +193,7 @@ static int rh_init(struct region_hash *r
+ 
+ 	spin_lock_init(&rh->region_lock);
+ 	sema_init(&rh->recovery_count, 0);
++	atomic_set(&rh->recovery_in_flight, 0);
+ 	INIT_LIST_HEAD(&rh->clean_regions);
+ 	INIT_LIST_HEAD(&rh->quiesced_regions);
+ 	INIT_LIST_HEAD(&rh->recovered_regions);
+@@ -346,6 +349,8 @@ static void complete_resync_work(struct 
+ 	struct region_hash *rh = reg->rh;
+ 
+ 	rh->log->type->set_region_sync(rh->log, reg->key, success);
++	if (atomic_dec_and_test(&rh->recovery_in_flight))
++		wake_up_all(&recovery_stopped_event);
+ 	dispatch_bios(rh->ms, &reg->delayed_bios);
+ 	up(&rh->recovery_count);
+ }
+@@ -509,11 +514,21 @@ static int __rh_recovery_prepare(struct 
+ 
+ static void rh_recovery_prepare(struct region_hash *rh)
+ {
+-	while (!down_trylock(&rh->recovery_count))
++	/* Extra reference to avoid race with rh_stop_recovery */
++	atomic_inc(&rh->recovery_in_flight);
++
++	while (!down_trylock(&rh->recovery_count)) {
++		atomic_inc(&rh->recovery_in_flight);
+ 		if (__rh_recovery_prepare(rh) <= 0) {
++			atomic_dec(&rh->recovery_in_flight);
+ 			up(&rh->recovery_count);
+ 			break;
+ 		}
++	}
++
++	/* Drop the extra reference */
++	if (atomic_dec_and_test(&rh->recovery_in_flight))
++		wake_up_all(&recovery_stopped_event);
  }
  
-+static int core_resume(struct dirty_log *log)
-+{
-+	struct log_c *lc = (struct log_c *) log->context;
-+	lc->sync_search = 0;
-+	return 0;
-+}
+ /*
+@@ -1184,6 +1199,11 @@ static void mirror_postsuspend(struct dm
+ 	struct dirty_log *log = ms->rh.log;
+ 
+ 	rh_stop_recovery(&ms->rh);
 +
- static int core_is_clean(struct dirty_log *log, region_t region)
- {
- 	struct log_c *lc = (struct log_c *) log->context;
-@@ -621,6 +629,7 @@ static struct dirty_log_type _core_type 
- 	.module = THIS_MODULE,
- 	.ctr = core_ctr,
- 	.dtr = core_dtr,
-+	.resume = core_resume,
- 	.get_region_size = core_get_region_size,
- 	.is_clean = core_is_clean,
- 	.in_sync = core_in_sync,
++	/* Wait for all I/O we generated to complete */
++	wait_event(recovery_stopped_event,
++		   !atomic_read(&ms->rh.recovery_in_flight));
++
+ 	if (log->type->suspend && log->type->suspend(log))
+ 		/* FIXME: need better error handling */
+ 		DMWARN("log suspend failed");
