@@ -1,7 +1,8 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [PATCH 2.6.19 3/5] dm: multipath: fix rr_add_path order
-Date: Tue, 7 Nov 2006 18:31:36 +0000
-Message-ID: <20061107183136.GE6993@agk.surrey.redhat.com>
+Subject: [PATCH 2.6.19 4/5] dm: raid1: fix waiting for io on
+	suspend
+Date: Tue, 7 Nov 2006 18:32:43 +0000
+Message-ID: <20061107183243.GF6993@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,25 +23,83 @@ List-Id: dm-devel.ids
 
 From: Jonathan E Brassow <jbrassow@redhat.com>
 
-When adding paths to the round-robin path selector, their order gets
-inverted, which is not desirable.
-
-Fix by replacing list_add() with list_add_tail().
+All device-mapper targets must complete outstanding I/O before suspending.  The
+mirror target generates I/O in its recovery phase and fails to wait for it.  It
+needs to be tracked so we can ensure that it has completed before we suspend.
 
 Signed-off-by: Jonathan E Brassow <jbrassow@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 
-Index: linux-2.6.19-rc4/drivers/md/dm-round-robin.c
+Index: linux-2.6.19-rc4/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.19-rc4.orig/drivers/md/dm-round-robin.c	2006-11-07 17:06:19.000000000 +0000
-+++ linux-2.6.19-rc4/drivers/md/dm-round-robin.c	2006-11-07 17:07:59.000000000 +0000
-@@ -136,7 +136,7 @@ static int rr_add_path(struct path_selec
+--- linux-2.6.19-rc4.orig/drivers/md/dm-raid1.c	2006-11-07 17:06:23.000000000 +0000
++++ linux-2.6.19-rc4/drivers/md/dm-raid1.c	2006-11-07 17:25:42.000000000 +0000
+@@ -24,6 +24,7 @@
  
- 	path->pscontext = pi;
+ static struct workqueue_struct *_kmirrord_wq;
+ static struct work_struct _kmirrord_work;
++DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
  
--	list_add(&pi->list, &s->valid_paths);
-+	list_add_tail(&pi->list, &s->valid_paths);
+ static inline void wake(void)
+ {
+@@ -83,6 +84,7 @@ struct region_hash {
+ 	struct list_head *buckets;
  
- 	return 0;
+ 	spinlock_t region_lock;
++	atomic_t recovery_in_flight;
+ 	struct semaphore recovery_count;
+ 	struct list_head clean_regions;
+ 	struct list_head quiesced_regions;
+@@ -191,6 +193,7 @@ static int rh_init(struct region_hash *r
+ 
+ 	spin_lock_init(&rh->region_lock);
+ 	sema_init(&rh->recovery_count, 0);
++	atomic_set(&rh->recovery_in_flight, 0);
+ 	INIT_LIST_HEAD(&rh->clean_regions);
+ 	INIT_LIST_HEAD(&rh->quiesced_regions);
+ 	INIT_LIST_HEAD(&rh->recovered_regions);
+@@ -382,6 +385,8 @@ static void rh_update_states(struct regi
+ 		rh->log->type->clear_region(rh->log, reg->key);
+ 		rh->log->type->complete_resync_work(rh->log, reg->key, 1);
+ 		dispatch_bios(rh->ms, &reg->delayed_bios);
++		if (atomic_dec_and_test(&rh->recovery_in_flight))
++			wake_up_all(&_kmirrord_recovery_stopped);
+ 		up(&rh->recovery_count);
+ 		mempool_free(reg, rh->region_pool);
+ 	}
+@@ -502,11 +507,21 @@ static int __rh_recovery_prepare(struct 
+ 
+ static void rh_recovery_prepare(struct region_hash *rh)
+ {
+-	while (!down_trylock(&rh->recovery_count))
++	/* Extra reference to avoid race with rh_stop_recovery */
++	atomic_inc(&rh->recovery_in_flight);
++
++	while (!down_trylock(&rh->recovery_count)) {
++		atomic_inc(&rh->recovery_in_flight);
+ 		if (__rh_recovery_prepare(rh) <= 0) {
++			atomic_dec(&rh->recovery_in_flight);
+ 			up(&rh->recovery_count);
+ 			break;
+ 		}
++	}
++
++	/* Drop the extra reference */
++	if (atomic_dec_and_test(&rh->recovery_in_flight))
++		wake_up_all(&_kmirrord_recovery_stopped);
  }
+ 
+ /*
+@@ -1177,6 +1192,11 @@ static void mirror_postsuspend(struct dm
+ 	struct dirty_log *log = ms->rh.log;
+ 
+ 	rh_stop_recovery(&ms->rh);
++
++	/* Wait for all I/O we generated to complete */
++	wait_event(_kmirrord_recovery_stopped,
++		   !atomic_read(&ms->rh.recovery_in_flight));
++
+ 	if (log->type->suspend && log->type->suspend(log))
+ 		/* FIXME: need better error handling */
+ 		DMWARN("log suspend failed");
