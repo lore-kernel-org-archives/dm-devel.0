@@ -1,53 +1,36 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Wed, 8 Nov 2006 02:30:39 +0000
-Message-ID: <20061108023039.GF30653@agk.surrey.redhat.com>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<20061107122837.54828e24.akpm@osdl.org>
-	<45510C73.7060408@redhat.com> <200611080005.50070.rjw@sisk.pl>
-	<20061107234951.GD30653@agk.surrey.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Wed, 8 Nov 2006 14:33:50 +1100
+Message-ID: <20061108033350.GR11034@melbourne.sgi.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611080005.50070.rjw@sisk.pl> <20061107234951.GD30653@agk.surrey.redhat.com> <200611080100.18290.rjw@sisk.pl>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754028AbWKHDfS@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20061107234951.GD30653@agk.surrey.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+In-Reply-To: <200611080100.18290.rjw@sisk.pl>
+Sender: linux-kernel-owner@vger.kernel.org
 To: "Rafael J. Wysocki" <rjw@sisk.pl>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, linux-kernel@vger.kernel.org
+Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Srinivasa DS <srinivasa@in.ibm.com>
 List-Id: dm-devel.ids
 
-On Tue, Nov 07, 2006 at 11:49:51PM +0000, Alasdair G Kergon wrote:
-> I hadn't noticed that -mm patch.  I'll take a look.  
+On Wed, Nov 08, 2006 at 01:00:17AM +0100, Rafael J. Wysocki wrote:
+> 
+> However, XFS_IOC_FREEZE happily returns 0 after calling freeze_bdev(),
+> apparetnly assuming that it won't fail.
 
-swsusp-freeze-filesystems-during-suspend-rev-2.patch
+Because it _can't_ fail at this point. We've got an active superblock,
+because we've had to open a fd on the filesystem to get to the point
+where we can issue the ioctl.
 
-I think you need to give more thought to device-mapper
-interactions here.  If an underlying device is suspended
-by device-mapper without freezing the filesystem (the
-normal state) and you issue a freeze_bdev on a device
-above it, the freeze_bdev may never return if it attempts
-any synchronous I/O (as it should).
+Hence the get_super() call will always succeed and the freeze
+will be executed if we are not read only. The superblock
+state changes if the freeze goes ahead, and XFS uses this state
+change to determine what to do when the thaw command is sent.
 
-Try:
-  while process generating I/O to filesystem on LVM
-  issue dmsetup suspend --nolockfs (which the lvm2 tools often do)
-  try your freeze_filesystems()
+Cheers,
 
-Maybe: don't allow freeze_filesystems() to run when the system is in that
-state; or, use device-mapper suspend instead of freeze_bdev directly where
-dm is involved; or skip dm devices that are already frozen - all with
-appropriate dependency tracking to process devices in the right order.
-
-Alasdair
+Dave.
 -- 
-agk@redhat.com
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
