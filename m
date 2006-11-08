@@ -1,62 +1,62 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Fix priorities handling for multipathing
-Date: Wed, 08 Nov 2006 11:50:27 +0100
-Message-ID: <4551B673.7030107@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Wed, 8 Nov 2006 13:10:18 +0100
+Message-ID: <200611081310.19100.rjw@sisk.pl>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <20061107234951.GD30653@agk.surrey.redhat.com> <20061108023039.GF30653@agk.surrey.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------010500070209030807080204"
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754550AbWKHMMd@vger.kernel.org>
+In-Reply-To: <20061108023039.GF30653@agk.surrey.redhat.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------010500070209030807080204
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+On Wednesday, 8 November 2006 03:30, Alasdair G Kergon wrote:
+> On Tue, Nov 07, 2006 at 11:49:51PM +0000, Alasdair G Kergon wrote:
+> > I hadn't noticed that -mm patch.  I'll take a look.  
+> 
+> swsusp-freeze-filesystems-during-suspend-rev-2.patch
+> 
+> I think you need to give more thought to device-mapper
+> interactions here.  If an underlying device is suspended
+> by device-mapper without freezing the filesystem (the
+> normal state) and you issue a freeze_bdev on a device
+> above it, the freeze_bdev may never return if it attempts
+> any synchronous I/O (as it should).
 
-Hi Christophe,
+Well, it looks like the interactions with dm add quite a bit of
+complexity here.
 
-rr_weight=3Dpriorities is currently broken as the 'minio' parameter is=20
-incremented for each path. So when we have enough paths the minio=20
-parameter will eventually overflow and generate an invalid map.
-And we don't disassemble such a map properly, either.
+> Try:
+>   while process generating I/O to filesystem on LVM
+>   issue dmsetup suspend --nolockfs (which the lvm2 tools often do)
+>   try your freeze_filesystems()
 
-Please apply.
+Okay, I will.
 
-Cheers,
+> Maybe: don't allow freeze_filesystems() to run when the system is in that
+> state;
 
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+I'd like to avoid that (we may be running out of battery power at this point).
 
---------------010500070209030807080204
-Content-Type: text/plain;
-	name*0="0011-multipath-devices-are-not-created-for-the-Luns-having-8-pat";
-	name*1="hs.txt"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename*0="0011-multipath-devices-are-not-created-for-the-Luns-having-8";
-	filename*1="-paths.txt"
+> or, use device-mapper suspend instead of freeze_bdev directly where 
+> dm is involved;
 
+How do I check if dm is involved?
 
---------------010500070209030807080204
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> or skip dm devices that are already frozen - all with 
+> appropriate dependency tracking to process devices in the right order.
+
+I'd prefer this one, but probably the previous one is simpler to start with.
+
+Greetings,
+Rafael
 
 
---------------010500070209030807080204--
+-- 
+You never change things by fighting the existing reality.
+		R. Buckminster Fuller
