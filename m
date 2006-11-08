@@ -1,66 +1,69 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Wed, 8 Nov 2006 15:25:33 +0000
-Message-ID: <20061108152533.GH30653@agk.surrey.redhat.com>
+From: Nigel Cunningham <nigel@suspend2.net>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Thu, 09 Nov 2006 07:48:20 +1100
+Message-ID: <1163018900.8844.2.camel@nigel.suspend2.net>
 References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<20061108082722.GH8394166@melbourne.sgi.com>
-	<20061108142511.GG30653@agk.surrey.redhat.com>
-	<200611081543.28548.rjw@sisk.pl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	 <20061107234951.GD30653@agk.surrey.redhat.com>
+	 <20061108023039.GF30653@agk.surrey.redhat.com>
+	 <200611081310.19100.rjw@sisk.pl>
+Reply-To: nigel@suspend2.net
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200611081543.28548.rjw@sisk.pl>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1423694AbWKHUs2@vger.kernel.org>
+In-Reply-To: <200611081310.19100.rjw@sisk.pl>
+Sender: linux-kernel-owner@vger.kernel.org
 To: "Rafael J. Wysocki" <rjw@sisk.pl>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Ingo Molnar <mingo@elte.hu>, Alasdair G Kergon <agk@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 08, 2006 at 03:43:26PM +0100, Rafael J. Wysocki wrote:
-> Will it be enough to cover the interactions with dm?
- 
-There are cases where you *cannot* freeze the filesystem (unless
-you wait for userspace processes to finish what they are doing) -
-and only dm can tell you that.
+Hi.
 
-The freeze_filesystems() code ought to do it's best in any given 
-circumstances within the constraints.
+On Wed, 2006-11-08 at 13:10 +0100, Rafael J. Wysocki wrote:
+> On Wednesday, 8 November 2006 03:30, Alasdair G Kergon wrote:
+> > On Tue, Nov 07, 2006 at 11:49:51PM +0000, Alasdair G Kergon wrote:
+> > > I hadn't noticed that -mm patch.  I'll take a look.  
+> > 
+> > swsusp-freeze-filesystems-during-suspend-rev-2.patch
+> > 
+> > I think you need to give more thought to device-mapper
+> > interactions here.  If an underlying device is suspended
+> > by device-mapper without freezing the filesystem (the
+> > normal state) and you issue a freeze_bdev on a device
+> > above it, the freeze_bdev may never return if it attempts
+> > any synchronous I/O (as it should).
+> 
+> Well, it looks like the interactions with dm add quite a bit of
+> complexity here.
+> 
+> > Try:
+> >   while process generating I/O to filesystem on LVM
+> >   issue dmsetup suspend --nolockfs (which the lvm2 tools often do)
+> >   try your freeze_filesystems()
+> 
+> Okay, I will.
+> 
+> > Maybe: don't allow freeze_filesystems() to run when the system is in that
+> > state;
+> 
+> I'd like to avoid that (we may be running out of battery power at this point).
+> 
+> > or, use device-mapper suspend instead of freeze_bdev directly where 
+> > dm is involved;
+> 
+> How do I check if dm is involved?
+> 
+> > or skip dm devices that are already frozen - all with 
+> > appropriate dependency tracking to process devices in the right order.
+> 
+> I'd prefer this one, but probably the previous one is simpler to start with.
 
-So:
-  Get the filesystem's block device.
-  Check the full tree of devices that that block device depends upon
-and for any device that belongs to device-mapper check if it is suspended.
-If it is, skip the original device.
+Shouldn't we just go for the right thing to begin with? Otherwise we'll
+just make more problems for ourselves later.
 
-  struct mapped_device *dm_get_md(dev_t dev);
-  int dm_suspended(struct mapped_device *md);
-  void dm_put(struct mapped_device *md);
+If we do this last one, I guess we want to do something like I was doing
+before (creating a list of the devices we've frozen)?
 
-Handling the tree is the difficult bit, but sysfs could help.
-[You can get the device-mapper dependencies with:
-  struct mapped_device *dm_get_md(dev_t dev);
-  struct dm_table *dm_get_table(struct mapped_device *md);
-  struct list_head *dm_table_get_devices(struct dm_table *t);
-  void dm_table_put(struct dm_table *t);
-  void dm_put(struct mapped_device *md);
-]
+Regards,
 
-Consider that you could have an already-frozen filesystem containing a loop
-device containing a device-mapper device containing a not-frozen filesystem.
-You won't be able to freeze that top filesystem because the I/O would
-queue lower down the stack.  (Similar problem if the device-mapper device
-in the stack was suspended.)
-
-Alasdair
--- 
-agk@redhat.com
+Nigel
