@@ -1,31 +1,34 @@
 From: David Chinner <dgc@sgi.com>
 Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
-Date: Wed, 8 Nov 2006 14:33:50 +1100
-Message-ID: <20061108033350.GR11034@melbourne.sgi.com>
-References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611080005.50070.rjw@sisk.pl> <20061107234951.GD30653@agk.surrey.redhat.com> <200611080100.18290.rjw@sisk.pl>
+Date: Wed, 8 Nov 2006 19:27:22 +1100
+Message-ID: <20061108082722.GH8394166@melbourne.sgi.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611080005.50070.rjw@sisk.pl> <45511430.8030703@redhat.com> <200611080042.03563.rjw@sisk.pl> <20061108000109.GE30653@agk.surrey.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754028AbWKHDfS@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754447AbWKHI3V@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <200611080100.18290.rjw@sisk.pl>
+In-Reply-To: <20061108000109.GE30653@agk.surrey.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@sisk.pl>
-Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Srinivasa DS <srinivasa@in.ibm.com>
+To: "Rafael J. Wysocki" <rjw@sisk.pl>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Srinivasa DS <srinivasa@in.ibm.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 08, 2006 at 01:00:17AM +0100, Rafael J. Wysocki wrote:
+On Wed, Nov 08, 2006 at 12:01:09AM +0000, Alasdair G Kergon wrote:
+> On Wed, Nov 08, 2006 at 12:42:02AM +0100, Rafael J. Wysocki wrote:
+> > On Wednesday, 8 November 2006 00:18, Eric Sandeen wrote:
+> > > But, how is a stampede of fs-freezers -supposed- to work?  I could
+> > > imagine something like a freezer count, and the filesystem is only
+> > > unfrozen after everyone has thawed?  Or should only one freezer be
+> > > active at a time... which is what we have now I guess.
+> > I think it shouldn't be possible to freeze an fs more than once.
 > 
-> However, XFS_IOC_FREEZE happily returns 0 after calling freeze_bdev(),
-> apparetnly assuming that it won't fail.
+> In device-mapper today, the only way to get more than one freeze on the
+> same device is to use xfs and issue xfs_freeze before creating an lvm snapshot
+> (or issuing the dmsetup equivalent), and at the moment we tell people not to do
+> that any more.
 
-Because it _can't_ fail at this point. We've got an active superblock,
-because we've had to open a fd on the filesystem to get to the point
-where we can issue the ioctl.
-
-Hence the get_super() call will always succeed and the freeze
-will be executed if we are not read only. The superblock
-state changes if the freeze goes ahead, and XFS uses this state
-change to determine what to do when the thaw command is sent.
+But it's trivial to detect this condition - if (sb->s_frozen != SB_UNFROZEN)
+then the filesystem is already frozen and you shouldn't try to freeze
+it again. It's simple to do, and the whole problem then just goes away....
 
 Cheers,
 
