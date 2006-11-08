@@ -1,62 +1,35 @@
-From: akpm@osdl.org
-Subject: - dm-multipath-fix-rr_add_path-order.patch removed from
-	-mm tree
-Date: Thu, 09 Nov 2006 00:44:52 -0800
-Message-ID: <200611090844.kA98iqVX010578@shell0.pdx.osdl.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: jbrassow@redhat.com, agk@redhat.com, dm-devel@redhat.com, mm-commits@vger.kernel.org
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Wed, 8 Nov 2006 18:09:22 +0000
+Message-ID: <20061108180921.GA7708@ucw.cz>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <20061107234951.GD30653@agk.surrey.redhat.com> <20061108023039.GF30653@agk.surrey.redhat.com> <200611081310.19100.rjw@sisk.pl>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754430AbWKIJMU@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <200611081310.19100.rjw@sisk.pl>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Rafael J. Wysocki" <rjw@sisk.pl>
+Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>
 List-Id: dm-devel.ids
 
+Hi!
 
-The patch titled
-     dm: multipath: fix rr_add_path order
-has been removed from the -mm tree.  Its filename was
-     dm-multipath-fix-rr_add_path-order.patch
+> > swsusp-freeze-filesystems-during-suspend-rev-2.patch
+> > 
+> > I think you need to give more thought to device-mapper
+> > interactions here.  If an underlying device is suspended
+> > by device-mapper without freezing the filesystem (the
+> > normal state) and you issue a freeze_bdev on a device
+> > above it, the freeze_bdev may never return if it attempts
+> > any synchronous I/O (as it should).
+> 
+> Well, it looks like the interactions with dm add quite a bit of
+> complexity here.
 
-This patch was dropped because it was merged into mainline or a subsystem tree
+What about just fixing xfs (thou shall not write to disk when kernel
+threads are frozen), and getting rid of blockdev freezing?
 
-------------------------------------------------------
-Subject: dm: multipath: fix rr_add_path order
-From: Jonathan E Brassow <jbrassow@redhat.com>
-
-When adding paths to the round-robin path selector, their order gets inverted,
-which is not desirable.
-
-Fix by replacing list_add() with list_add_tail().
-
-Signed-off-by: Jonathan E Brassow <jbrassow@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Cc: <dm-devel@redhat.com>
-Signed-off-by: Andrew Morton <akpm@osdl.org>
----
-
- drivers/md/dm-round-robin.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff -puN drivers/md/dm-round-robin.c~dm-multipath-fix-rr_add_path-order drivers/md/dm-round-robin.c
---- a/drivers/md/dm-round-robin.c~dm-multipath-fix-rr_add_path-order
-+++ a/drivers/md/dm-round-robin.c
-@@ -136,7 +136,7 @@ static int rr_add_path(struct path_selec
- 
- 	path->pscontext = pi;
- 
--	list_add(&pi->list, &s->valid_paths);
-+	list_add_tail(&pi->list, &s->valid_paths);
- 
- 	return 0;
- }
-_
-
-Patches currently in -mm which might be from jbrassow@redhat.com are
-
-origin.patch
+						Pavel
+-- 
+Thanks for all the (sleeping) penguins.
