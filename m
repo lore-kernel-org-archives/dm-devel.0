@@ -1,74 +1,68 @@
-From: "Mark De Lange" <mark.deLange@crosswalkinc.com>
-Subject: How do I determine the status of a dm device?
-Date: Wed, 8 Nov 2006 15:54:25 -0700
-Message-ID: <2E02749DAF5338479606A056219BE109014839D1@smail.crosswalkinc.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Thu, 9 Nov 2006 00:06:11 +0100
+Message-ID: <200611090006.12880.rjw@sisk.pl>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611081543.28548.rjw@sisk.pl> <20061108152533.GH30653@agk.surrey.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1423871AbWKHXIh@vger.kernel.org>
+In-Reply-To: <20061108152533.GH30653@agk.surrey.redhat.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: David Chinner <dgc@sgi.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Srinivasa DS <srinivasa@in.ibm.com>
 List-Id: dm-devel.ids
 
-An example may illustrate the question better:
+On Wednesday, 8 November 2006 16:25, Alasdair G Kergon wrote:
+> On Wed, Nov 08, 2006 at 03:43:26PM +0100, Rafael J. Wysocki wrote:
+> > Will it be enough to cover the interactions with dm?
+>  
+> There are cases where you *cannot* freeze the filesystem (unless
+> you wait for userspace processes to finish what they are doing) -
+> and only dm can tell you that.
+> 
+> The freeze_filesystems() code ought to do it's best in any given 
+> circumstances within the constraints.
+> 
+> So:
+>   Get the filesystem's block device.
+>   Check the full tree of devices that that block device depends upon
+> and for any device that belongs to device-mapper check if it is suspended.
+> If it is, skip the original device.
+> 
+>   struct mapped_device *dm_get_md(dev_t dev);
+>   int dm_suspended(struct mapped_device *md);
+>   void dm_put(struct mapped_device *md);
+> 
+> Handling the tree is the difficult bit, but sysfs could help.
+> [You can get the device-mapper dependencies with:
+>   struct mapped_device *dm_get_md(dev_t dev);
+>   struct dm_table *dm_get_table(struct mapped_device *md);
+>   struct list_head *dm_table_get_devices(struct dm_table *t);
+>   void dm_table_put(struct dm_table *t);
+>   void dm_put(struct mapped_device *md);
+> ]
+> 
+> Consider that you could have an already-frozen filesystem containing a loop
+> device containing a device-mapper device containing a not-frozen filesystem.
 
-1)  I have 2 FC SCSI devices each with 2 paths.  dm_multipath will thus
-create 2 dm devices.
-2)  I create another dm device using the "striped" target and the
-members are the 2 multipath devices.
+I think the last point is handled correctly by freezing the filesystems in the
+reverse order - unless the fs below the loop has been frozen before by
+someone else, but I guess that would lead to problems anyway.
+
+> You won't be able to freeze that top filesystem because the I/O would
+> queue lower down the stack.  (Similar problem if the device-mapper device
+> in the stack was suspended.)
+
+The suspended dm device in the stack is not, however.
+
+Is there any list of all dm devices in the system?
+
+Rafael
 
 
-The failure scenario:
-1) the paths to my FC SCSI devices fail (e.g. the FC switch may be
-powered down etc - it doesn't really matter as to the cause).
-2) The SCSI disks will (eventually) be marked as failed/offline.
-3) dm_multipath detects the failed paths and marks them as such.
-
-The problem:
-Other than the states in 2) and 3) above, there is no status information
-maintained for dm devices (at least none that I can find - hence this
-email).
-
-
-System information:
-RedHat X86_64 RHEL4 release (update 3)
-QLogic FC HBA
-
-Some configuration setup:
-Output from "multipath -l"
-
-mylun1 (3600a0b80001f4e5d00001c764517be04)
-[size=3D18 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"0"]
-\_ round-robin 0 [active]
- \_ 1:0:1:2 sdg 8:96  [active][ready]
- \_ 2:0:1:2 sdo 8:224 [active][ready]
-
-mylun2 (3600a0b80001f4e5d00001c744517bdba)
-[size=3D18 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"0"]
-\_ round-robin 0 [active]
- \_ 1:0:0:1 sdb 8:16  [active][ready]
- \_ 2:0:0:1 sdj 8:144 [active][ready]
-
-
-Output from "dmsetup table"
-
-mylun1: 0 533651456 multipath 1 queue_if_no_path 0 2 1 round-robin 0 2 1
-8:128 1280 65:0 1280 round-robin 0 2 1 8:64 1280 8:192 1280
-mylun2: 0 819350994 multipath 1 queue_if_no_path 0 2 1 round-robin 0 2 1
-8:48 1280 8:176 1280 round-robin 0 2 1 8:112 1280 8:240 1280
-myvol1: 0 41943040 striped 2 256 253:0 10486144 253:1 10486144
-
-Pointers/help on this will be greatly appreciated.
-Thanks
-Mark
+-- 
+You never change things by fighting the existing reality.
+		R. Buckminster Fuller
