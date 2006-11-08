@@ -1,54 +1,66 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
-Date: Wed, 8 Nov 2006 15:43:26 +0100
-Message-ID: <200611081543.28548.rjw@sisk.pl>
-References: <20061107183459.GG6993@agk.surrey.redhat.com> <20061108082722.GH8394166@melbourne.sgi.com> <20061108142511.GG30653@agk.surrey.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Wed, 8 Nov 2006 15:25:33 +0000
+Message-ID: <20061108152533.GH30653@agk.surrey.redhat.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<20061108082722.GH8394166@melbourne.sgi.com>
+	<20061108142511.GG30653@agk.surrey.redhat.com>
+	<200611081543.28548.rjw@sisk.pl>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S965822AbWKHOqE@vger.kernel.org>
-In-Reply-To: <20061108142511.GG30653@agk.surrey.redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: David Chinner <dgc@sgi.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Srinivasa DS <srinivasa@in.ibm.com>
+In-Reply-To: <200611081543.28548.rjw@sisk.pl>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Rafael J. Wysocki" <rjw@sisk.pl>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Ingo Molnar <mingo@elte.hu>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wednesday, 8 November 2006 15:25, Alasdair G Kergon wrote:
-> On Wed, Nov 08, 2006 at 07:27:22PM +1100, David Chinner wrote:
-> > But it's trivial to detect this condition - if (sb->s_frozen != SB_UNFROZEN)
-> > then the filesystem is already frozen and you shouldn't try to freeze
-> > it again. It's simple to do, and the whole problem then just goes away....
->  
-> So is that another vote in support of explicitly supporting multiple concurrent
-> freeze requests, letting them all succeed, and only thawing after the last one
-> has requested its thaw?  (It's not enough just to check SB_UNFROZEN - also need
-> to track whether any other outstanding requests to avoid risk of it getting
-> unfrozen while something independent believes it still to be frozen.)
+On Wed, Nov 08, 2006 at 03:43:26PM +0100, Rafael J. Wysocki wrote:
+> Will it be enough to cover the interactions with dm?
+ 
+There are cases where you *cannot* freeze the filesystem (unless
+you wait for userspace processes to finish what they are doing) -
+and only dm can tell you that.
 
-So, I think, we need the following patch to fix freeze_filesystems().
+The freeze_filesystems() code ought to do it's best in any given 
+circumstances within the constraints.
 
-Will it be enough to cover the interactions with dm?
+So:
+  Get the filesystem's block device.
+  Check the full tree of devices that that block device depends upon
+and for any device that belongs to device-mapper check if it is suspended.
+If it is, skip the original device.
 
-Rafael
+  struct mapped_device *dm_get_md(dev_t dev);
+  int dm_suspended(struct mapped_device *md);
+  void dm_put(struct mapped_device *md);
 
+Handling the tree is the difficult bit, but sysfs could help.
+[You can get the device-mapper dependencies with:
+  struct mapped_device *dm_get_md(dev_t dev);
+  struct dm_table *dm_get_table(struct mapped_device *md);
+  struct list_head *dm_table_get_devices(struct dm_table *t);
+  void dm_table_put(struct dm_table *t);
+  void dm_put(struct mapped_device *md);
+]
 
-Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
----
- fs/buffer.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Consider that you could have an already-frozen filesystem containing a loop
+device containing a device-mapper device containing a not-frozen filesystem.
+You won't be able to freeze that top filesystem because the I/O would
+queue lower down the stack.  (Similar problem if the device-mapper device
+in the stack was suspended.)
 
-Index: linux-2.6.19-rc5-mm1/fs/buffer.c
-===================================================================
---- linux-2.6.19-rc5-mm1.orig/fs/buffer.c
-+++ linux-2.6.19-rc5-mm1/fs/buffer.c
-@@ -264,7 +264,7 @@ void freeze_filesystems(void)
- 	 */
- 	list_for_each_entry_reverse(sb, &super_blocks, s_list) {
- 		if (!sb->s_root || !sb->s_bdev ||
--		    (sb->s_frozen == SB_FREEZE_TRANS) ||
-+		    (sb->s_frozen != SB_UNFROZEN) ||
- 		    (sb->s_flags & MS_RDONLY) ||
- 		    (sb->s_flags & MS_FROZEN))
- 			continue;
+Alasdair
+-- 
+agk@redhat.com
