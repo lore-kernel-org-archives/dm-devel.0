@@ -1,62 +1,43 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
-Date: Wed, 8 Nov 2006 13:10:18 +0100
-Message-ID: <200611081310.19100.rjw@sisk.pl>
-References: <20061107183459.GG6993@agk.surrey.redhat.com> <20061107234951.GD30653@agk.surrey.redhat.com> <20061108023039.GF30653@agk.surrey.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Wed, 8 Nov 2006 14:25:11 +0000
+Message-ID: <20061108142511.GG30653@agk.surrey.redhat.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<200611080005.50070.rjw@sisk.pl> <45511430.8030703@redhat.com>
+	<200611080042.03563.rjw@sisk.pl>
+	<20061108000109.GE30653@agk.surrey.redhat.com>
+	<20061108082722.GH8394166@melbourne.sgi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754550AbWKHMMd@vger.kernel.org>
-In-Reply-To: <20061108023039.GF30653@agk.surrey.redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>
+In-Reply-To: <20061108082722.GH8394166@melbourne.sgi.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: David Chinner <dgc@sgi.com>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Ingo Molnar <mingo@elte.hu>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wednesday, 8 November 2006 03:30, Alasdair G Kergon wrote:
-> On Tue, Nov 07, 2006 at 11:49:51PM +0000, Alasdair G Kergon wrote:
-> > I hadn't noticed that -mm patch.  I'll take a look.  
-> 
-> swsusp-freeze-filesystems-during-suspend-rev-2.patch
-> 
-> I think you need to give more thought to device-mapper
-> interactions here.  If an underlying device is suspended
-> by device-mapper without freezing the filesystem (the
-> normal state) and you issue a freeze_bdev on a device
-> above it, the freeze_bdev may never return if it attempts
-> any synchronous I/O (as it should).
+On Wed, Nov 08, 2006 at 07:27:22PM +1100, David Chinner wrote:
+> But it's trivial to detect this condition - if (sb->s_frozen != SB_UNFROZEN)
+> then the filesystem is already frozen and you shouldn't try to freeze
+> it again. It's simple to do, and the whole problem then just goes away....
+ 
+So is that another vote in support of explicitly supporting multiple concurrent
+freeze requests, letting them all succeed, and only thawing after the last one
+has requested its thaw?  (It's not enough just to check SB_UNFROZEN - also need
+to track whether any other outstanding requests to avoid risk of it getting
+unfrozen while something independent believes it still to be frozen.)
 
-Well, it looks like the interactions with dm add quite a bit of
-complexity here.
-
-> Try:
->   while process generating I/O to filesystem on LVM
->   issue dmsetup suspend --nolockfs (which the lvm2 tools often do)
->   try your freeze_filesystems()
-
-Okay, I will.
-
-> Maybe: don't allow freeze_filesystems() to run when the system is in that
-> state;
-
-I'd like to avoid that (we may be running out of battery power at this point).
-
-> or, use device-mapper suspend instead of freeze_bdev directly where 
-> dm is involved;
-
-How do I check if dm is involved?
-
-> or skip dm devices that are already frozen - all with 
-> appropriate dependency tracking to process devices in the right order.
-
-I'd prefer this one, but probably the previous one is simpler to start with.
-
-Greetings,
-Rafael
-
-
+Alasdair
 -- 
-You never change things by fighting the existing reality.
-		R. Buckminster Fuller
+agk@redhat.com
