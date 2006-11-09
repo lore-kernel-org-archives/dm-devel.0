@@ -1,11 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 3/3] Update HP HSV200 hardware table
-Date: Thu, 09 Nov 2006 11:32:01 +0100
-Message-ID: <455303A1.4030906@suse.de>
+From: "Stepan, Troy" <troy.stepan@unisys.com>
+Subject: rr_min_io does not take effect
+Date: Thu, 9 Nov 2006 10:01:24 -0500
+Message-ID: <94C8C9E8B25F564F95185BDA64AB05F60461DB2F@USTR-EXCH5.na.uis.unisys.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------040805080108070409060801"
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,39 +18,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------040805080108070409060801
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Hi--
 
-This patch updates the hardware table for HP HSV200.
+I've played around with changing rr_min_io values in multipath.conf on
+SLES10 and even after a reboot, it appears the change does not take hold
+and the default of 1000 remains unchanged.  Here is the output from
+multipath -v3:
 
-Cheers,
+(beginning removed)
+mpath1: pgfailback =3D -2 (controler setting)
+mpath1: pgpolicy =3D group_by_prio (controler setting)
+mpath1: selector =3D round-robin 0 (controler setting)
+mpath1: features =3D 1 queue_if_no_path (controler setting)
+mpath1: hwhandler =3D 1 emc (controler setting)
+mpath1: rr_weight =3D 1 (controler setting)
+mpath1: minio =3D 1000 (controler setting) =20
+mpath1: no_path_retry =3D 60 (controler setting)
+mpath1: set ACT_NOTHING (map unchanged)
 
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+I would tend to think that "minio" is the equivalent of rr_min_io, but
+cannot be sure.  I am leaning towards this assumption because even after
+adjusting rr_min_io to an absurdly high value, I am still seeing I/Os
+spread across both paths in under a couple seconds.  Please note that
+this was just a test to verify rr_min_io taking effect.
 
---------------040805080108070409060801
-Content-Type: text/plain;
-	name*0="0003-libmultipath-Update-hardware-table-for-HP-HSV200.txt"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename*0="0003-libmultipath-Update-hardware-table-for-HP-HSV200.txt"
+Any idea on how to override the "controler setting"?  FYI, I'm using a
+dual-port Emulex LP10000 as my HBA.  I took a look at the Emulex docs
+and I don't see any parameters worth throwing in modprobe.conf.
 
-
---------------040805080108070409060801
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------040805080108070409060801--
+Thanks for looking.
