@@ -1,11 +1,11 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipath devices are not created for the Luns
-	having 8 paths
-Date: Thu, 9 Nov 2006 22:16:15 +0000 (UTC)
-Message-ID: <20061109221551.D285773C48@hormel.redhat.com>
+Subject: [PATCH 4/4] [libmultipath] Update hardware table for HP
+	HSV200
+Date: Thu, 9 Nov 2006 22:16:21 +0000 (UTC)
+Message-ID: <20061109221555.D899B73C90@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Date: Wed Nov 8 09:40:12 2006 +0100
+Date: Thu Nov 9 11:09:38 2006 +0100
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,72 +17,91 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 List-Id: dm-devel.ids
 
-When setting the rr_weight to 'priorities' multipath fails to
-setup a device-mapper table. This is due to a missing initialization
-of the minio field, which will be multiplied by the path priority
-for each path. This results in an eventual overflow of the minio
-field and an invalid device mapper table.
+According to HP the behaviour of the HSV200 depends on the software
+release; all revisions smaller or equal to '3000' have active/passive
+support; all revisions above that have active/active support.
+Translated it means that the older firmware uses the HP-style
+'START_STOP_UNIT' command to switch paths, while the newer firmware
+supports ALUA.
+So we should update the hardware tables accordingly.
 
-References: 203823
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 
 ---
 
- libmultipath/dmparser.c |   19 +++++++++++++------
- 1 files changed, 13 insertions(+), 6 deletions(-)
+ libmultipath/hwtable.c |   49 +++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 48 insertions(+), 1 deletions(-)
 
-df3c39a22efd7e028aca40320ab2cbbd1c4b3bd5
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index 2b170c6..c450882 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -84,11 +84,14 @@ assemble_map (struct multipath * mp)
- 		freechar -= shift;
- 
- 		vector_foreach_slot (pgp->paths, pp, j) {
--			if (mp->rr_weight == RR_WEIGHT_PRIO && pp->priority)
--				minio *= pp->priority;
-+			int tmp_minio = minio;
-+
-+			if (mp->rr_weight == RR_WEIGHT_PRIO 
-+			    && pp->priority > 0)
-+				tmp_minio = minio * pp->priority;
- 
- 			shift = snprintf(p, freechar, " %s %d",
--					 pp->dev_t, minio);
-+					 pp->dev_t, tmp_minio);
- 			if (shift >= freechar) {
- 				fprintf(stderr, "mp->params too small\n");
- 				return 1;
-@@ -117,6 +120,7 @@ disassemble_map (vector pathvec, char * 
- 	int num_pg_args = 0;
- 	int num_paths = 0;
- 	int num_paths_args = 0;
-+	int def_minio = 0;
- 	struct path * pp;
- 	struct pathgroup * pgp;
- 
-@@ -305,12 +309,15 @@ #endif
- 				if (k == 0 && !strncmp(mpp->selector,
- 						       "round-robin", 11)) {
- 					p += get_word(p, &word);
--					mpp->minio = atoi(word);
-+					def_minio = atoi(word);
- 
--					if (mpp->rr_weight)
--						mpp->minio /= mpp->rr_weight;
-+					if (mpp->rr_weight == RR_WEIGHT_PRIO 
-+					    && pp->priority > 0)
-+						def_minio /= pp->priority;
- 
- 					FREE(word);
-+					if (def_minio != mpp->minio)
-+						mpp->minio = def_minio;
- 				}
- 				else
- 					p += get_word(p, NULL);
+19c1285b869bfe42b3605c2fee73bb4b416c4c40
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index b56c231..8c8699d 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -91,7 +91,7 @@ static struct hwentry default_hw[] = {
+ 	},
+ 	{
+ 		.vendor        = "HP",
+-		.product       = "(HSV2.*|A6189A)",
++		.product       = "A6189A",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = NULL,
+ 		.features      = DEFAULT_FEATURES,
+@@ -104,6 +104,53 @@ static struct hwentry default_hw[] = {
+ 		.minio         = DEFAULT_MINIO,
+ 		.checker_name  = READSECTOR0,
+ 	},
++	{
++		.vendor        = "HP",
++		.product       = "HSV20.*",
++		.revision      = "[123].*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = NULL,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = MULTIBUS,
++		.pgfailback    = FAILBACK_UNDEF,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = HP_SW,
++	},
++	{
++		.vendor        = "HP",
++		.product       = "HSV20.*",
++		.revision      = "[^123].*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = MULTIBUS,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_PRIORITIES,
++		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = TUR,
++	},
++	{
++		.vendor        = "HP",
++		.product       = "HSV21.*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = FAILBACK_UNDEF,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = TUR,
++	},
+ 	/*
+ 	 * DDN controller family
+ 	 *
 -- 
 1.3.1
 
 
---------------010500070209030807080204--
+--------------040805080108070409060801--
