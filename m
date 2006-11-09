@@ -1,39 +1,59 @@
-From: Pavel Machek <pavel@ucw.cz>
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
 Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
-Date: Thu, 9 Nov 2006 17:00:03 +0100
-Message-ID: <20061109160003.GA24156@elf.ucw.cz>
-References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611081310.19100.rjw@sisk.pl> <20061108180921.GA7708@ucw.cz> <200611091652.34649.rjw@sisk.pl>
+Date: Thu, 9 Nov 2006 20:59:47 +0100
+Message-ID: <200611092059.48722.rjw@sisk.pl>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611091652.34649.rjw@sisk.pl> <20061109160003.GA24156@elf.ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1424089AbWKIQAS@vger.kernel.org>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1161209AbWKIUCO@vger.kernel.org>
+In-Reply-To: <20061109160003.GA24156@elf.ucw.cz>
 Content-Disposition: inline
-In-Reply-To: <200611091652.34649.rjw@sisk.pl>
 Sender: linux-kernel-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@sisk.pl>
+To: Pavel Machek <pavel@ucw.cz>
 Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>
 List-Id: dm-devel.ids
 
-Hi!
+Hi,
 
-> > > Well, it looks like the interactions with dm add quite a bit of
-> > > complexity here.
-> > 
-> > What about just fixing xfs (thou shall not write to disk when kernel
-> > threads are frozen), and getting rid of blockdev freezing?
+On Thursday, 9 November 2006 17:00, Pavel Machek wrote:
+> Hi!
 > 
-> Well, first I must admit you were absolutely right being suspicious with
-> respect to this stuff.
+> > > > Well, it looks like the interactions with dm add quite a bit of
+> > > > complexity here.
+> > > 
+> > > What about just fixing xfs (thou shall not write to disk when kernel
+> > > threads are frozen), and getting rid of blockdev freezing?
+> > 
+> > Well, first I must admit you were absolutely right being suspicious with
+> > respect to this stuff.
+> 
+> (OTOH your patch found real bugs in suspend.c, so...)
+> 
+> > OTOH I have no idea _how_ we can tell xfs that the processes have been
+> > frozen.  Should we introduce a global flag for that or something?
+> 
+> I guess XFS should just do all the writes from process context, and
+> refuse any writing when its threads are frozen... I actually still
+> believe it is doing the right thing, because you can't really write to
+> disk from timer.
 
-(OTOH your patch found real bugs in suspend.c, so...)
+This is from a work queue, so in fact from a process context, but from
+a process that is running with PF_NOFREEZE.
 
-> OTOH I have no idea _how_ we can tell xfs that the processes have been
-> frozen.  Should we introduce a global flag for that or something?
+And I don't think we can forbid filesystems to use work queues.  IMO it's
+a legitimate thing to do for an fs.
 
-I guess XFS should just do all the writes from process context, and
-refuse any writing when its threads are frozen... I actually still
-believe it is doing the right thing, because you can't really write to
-disk from timer.
-								Pavel
+_But_.
+
+Alasdair, do I think correctly that if there's a suspended device-mapper
+device below an non-frozen filesystem, then sys_sync() would block just
+as well as freeze_bdev() on this filesystem?
+
+Rafael
+
+
 -- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+You never change things by fighting the existing reality.
+		R. Buckminster Fuller
