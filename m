@@ -1,7 +1,7 @@
 From: akpm@osdl.org
-Subject: - dm-suspend-fix-error-path.patch removed from -mm tree
-Date: Thu, 09 Nov 2006 00:44:50 -0800
-Message-ID: <200611090844.kA98io1T010575@shell0.pdx.osdl.net>
+Subject: - dm-fix-find_device-race.patch removed from -mm tree
+Date: Thu, 09 Nov 2006 00:44:48 -0800
+Message-ID: <200611090844.kA98imN8010572@shell0.pdx.osdl.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,51 +18,57 @@ List-Id: dm-devel.ids
 
 
 The patch titled
-     dm: suspend: fix error path
+     dm: fix find_device race
 has been removed from the -mm tree.  Its filename was
-     dm-suspend-fix-error-path.patch
+     dm-fix-find_device-race.patch
 
 This patch was dropped because it was merged into mainline or a subsystem tree
 
 ------------------------------------------------------
-Subject: dm: suspend: fix error path
+Subject: dm: fix find_device race
 From: Alasdair G Kergon <agk@redhat.com>
 
-If the device is already suspended, just return the error and skip the code
-that would incorrectly wipe md->suspended_bdev.
+There is a race between dev_create() and find_device().
 
-(This isn't currently a problem because existing code avoids calling this
-function if the device is already suspended.)
+If the mdptr has not yet been stored against a device, find_device() needs to
+behave as though no device was found.  It already returns NULL, but there is a
+dm_put() missing: it must drop the reference dm_get_md() took.
+
+The bug was introduced by dm-fix-mapped-device-ref-counting.patch.
+
+It manifests itself if another dm ioctl attempts to reference a newly-created
+device while the device creation ioctl is still running.  The consequence is
+that the device cannot be removed until the machine is rebooted.  Certain udev
+configurations can lead to this happening.
 
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 Cc: <dm-devel@redhat.com>
 Signed-off-by: Andrew Morton <akpm@osdl.org>
 ---
 
- drivers/md/dm.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ drivers/md/dm-ioctl.c |    9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff -puN drivers/md/dm.c~dm-suspend-fix-error-path drivers/md/dm.c
---- a/drivers/md/dm.c~dm-suspend-fix-error-path
-+++ a/drivers/md/dm.c
-@@ -1285,7 +1285,7 @@ int dm_suspend(struct mapped_device *md,
- 	down(&md->suspend_lock);
+diff -puN drivers/md/dm-ioctl.c~dm-fix-find_device-race drivers/md/dm-ioctl.c
+--- a/drivers/md/dm-ioctl.c~dm-fix-find_device-race
++++ a/drivers/md/dm-ioctl.c
+@@ -606,9 +606,14 @@ static struct hash_cell *__find_device_h
+ 		return __get_name_cell(param->name);
  
- 	if (dm_suspended(md))
--		goto out;
-+		goto out_unlock;
+ 	md = dm_get_md(huge_decode_dev(param->dev));
+-	if (md)
+-		mdptr = dm_get_mdptr(md);
++	if (!md)
++		goto out;
  
- 	map = dm_get_table(md);
- 
-@@ -1361,6 +1361,8 @@ out:
- 	}
- 
- 	dm_table_put(map);
++	mdptr = dm_get_mdptr(md);
++	if (!mdptr)
++		dm_put(md);
 +
-+out_unlock:
- 	up(&md->suspend_lock);
- 	return r;
++out:
+ 	return mdptr;
  }
+ 
 _
 
 Patches currently in -mm which might be from agk@redhat.com are
