@@ -1,35 +1,49 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
-Date: Wed, 8 Nov 2006 18:09:22 +0000
-Message-ID: <20061108180921.GA7708@ucw.cz>
-References: <20061107183459.GG6993@agk.surrey.redhat.com> <20061107234951.GD30653@agk.surrey.redhat.com> <20061108023039.GF30653@agk.surrey.redhat.com> <200611081310.19100.rjw@sisk.pl>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 0/3] HP HSV200 update
+Date: Thu, 09 Nov 2006 11:28:22 +0100
+Message-ID: <455302C6.9090207@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754430AbWKIJMU@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <200611081310.19100.rjw@sisk.pl>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Rafael J. Wysocki" <rjw@sisk.pl>
-Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi!
+Hi Christophe,
 
-> > swsusp-freeze-filesystems-during-suspend-rev-2.patch
-> > 
-> > I think you need to give more thought to device-mapper
-> > interactions here.  If an underlying device is suspended
-> > by device-mapper without freezing the filesystem (the
-> > normal state) and you issue a freeze_bdev on a device
-> > above it, the freeze_bdev may never return if it attempts
-> > any synchronous I/O (as it should).
-> 
-> Well, it looks like the interactions with dm add quite a bit of
-> complexity here.
+this patchset implements a new field 'revision' for the hardware table,=20
+which is filled with the 'revision' field from the SCSI Inquiry. The=20
+reason for this is that HP switched the behaviour during a firmware=20
+update (ie from using START_STOP_UNIT to ALUA). And to support this=20
+properly we'll have to match against the 'revision' field, too.
 
-What about just fixing xfs (thou shall not write to disk when kernel
-threads are frozen), and getting rid of blockdev freezing?
+In doing so I've found a bug in load_config(). Currently, we're loading
+the default hardware table with comparing via regex. However, as the=20
+default table also contains regexp we'll end up comparing _two_ regexps,
+the outcome of which is a quite peculiar to say the least. We should=20
+rather be using a simple string match to avoid this pitfall.
 
-						Pavel
--- 
-Thanks for all the (sleeping) penguins.
+So, this patchset does
+- Correct load_config() to compare entries via string match
+- Implements matching against the revision field
+- Updates the hardware table for HP HSV200 support.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke			hare@suse.de
+SuSE Linux Products GmbH		S390 & zSeries
+Maxfeldstra=DFe 5				+49 911 74053 688
+90409 N=FCrnberg				http://www.suse.de
