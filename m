@@ -1,107 +1,61 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 4/4] [libmultipath] Update hardware table for HP
-	HSV200
-Date: Thu, 9 Nov 2006 22:16:21 +0000 (UTC)
-Message-ID: <20061109221555.D899B73C90@hormel.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-Date: Thu Nov 9 11:09:38 2006 +0100
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Thu, 9 Nov 2006 23:21:46 +0100
+Message-ID: <200611092321.47728.rjw@sisk.pl>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611092218.58970.rjw@sisk.pl> <20061109214159.GB2616@elf.ucw.cz>
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1424191AbWKIWYX@vger.kernel.org>
+In-Reply-To: <20061109214159.GB2616@elf.ucw.cz>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>
 List-Id: dm-devel.ids
 
-According to HP the behaviour of the HSV200 depends on the software
-release; all revisions smaller or equal to '3000' have active/passive
-support; all revisions above that have active/active support.
-Translated it means that the older firmware uses the HP-style
-'START_STOP_UNIT' command to switch paths, while the newer firmware
-supports ALUA.
-So we should update the hardware tables accordingly.
+On Thursday, 9 November 2006 22:41, Pavel Machek wrote:
+> Hi!
+> 
+> > > > This is from a work queue, so in fact from a process context, but from
+> > > > a process that is running with PF_NOFREEZE.
+> > > 
+> > > Why not simply &~ PF_NOFREEZE on that particular process? Filesystems
+> > > are free to use threads/work queues/whatever, but refrigerator should
+> > > mean "no writes to filesystem" for them...
+> > 
+> > But how we differentiate worker_threads used by filesystems from the
+> > other ones?
+> 
+> I'd expect filesystems to do &~ PF_NOFREEZE by hand.
+> 
+> > BTW, I think that worker_threads run with PF_NOFREEZE for a reason,
+> > but what exactly is it?
+> 
+> I do not think we had particulary good reasons...
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Well, it looks like quite a lot of drivers depend on them, including libata.
 
----
+I think we can add a flag to __create_workqueue() that will indicate if
+this one is to be running with PF_NOFREEZE and a corresponding macro like
+create_freezable_workqueue() to be used wherever we want the worker thread
+to freeze (in which case it should be calling try_to_freeze() somewhere).
+Then, we can teach filesystems to use this macro instead of
+create_workqueue().
 
- libmultipath/hwtable.c |   49 +++++++++++++++++++++++++++++++++++++++++++++++-
- 1 files changed, 48 insertions(+), 1 deletions(-)
+Having done that we'd be able to drop the freezing of bdevs patch and forget
+about the dm-related complexity.
 
-19c1285b869bfe42b3605c2fee73bb4b416c4c40
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index b56c231..8c8699d 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -91,7 +91,7 @@ static struct hwentry default_hw[] = {
- 	},
- 	{
- 		.vendor        = "HP",
--		.product       = "(HSV2.*|A6189A)",
-+		.product       = "A6189A",
- 		.getuid        = DEFAULT_GETUID,
- 		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
-@@ -104,6 +104,53 @@ static struct hwentry default_hw[] = {
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = READSECTOR0,
- 	},
-+	{
-+		.vendor        = "HP",
-+		.product       = "HSV20.*",
-+		.revision      = "[123].*",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = NULL,
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = MULTIBUS,
-+		.pgfailback    = FAILBACK_UNDEF,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_UNDEF,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = HP_SW,
-+	},
-+	{
-+		.vendor        = "HP",
-+		.product       = "HSV20.*",
-+		.revision      = "[^123].*",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = MULTIBUS,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_PRIORITIES,
-+		.no_path_retry = NO_PATH_RETRY_UNDEF,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = TUR,
-+	},
-+	{
-+		.vendor        = "HP",
-+		.product       = "HSV21.*",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = FAILBACK_UNDEF,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_UNDEF,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = TUR,
-+	},
- 	/*
- 	 * DDN controller family
- 	 *
+[Still I wonder if the sys_sync() in freeze_processes() is actually safe if
+there's a suspended dm device somewhere in the stack, because in the other
+case the freezing of bdevs would be no more dangerous than the thing
+that we're already doing.]
+
+Greetings,
+Rafael
+
+
 -- 
-1.3.1
-
-
---------------040805080108070409060801--
+You never change things by fighting the existing reality.
+		R. Buckminster Fuller
