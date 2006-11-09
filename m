@@ -1,52 +1,49 @@
-From: "Stepan, Troy" <troy.stepan@unisys.com>
-Subject: rr_min_io does not take effect
-Date: Thu, 9 Nov 2006 10:01:24 -0500
-Message-ID: <94C8C9E8B25F564F95185BDA64AB05F60461DB2F@USTR-EXCH5.na.uis.unisys.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Rafael J. Wysocki" <rjw@sisk.pl>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Thu, 9 Nov 2006 16:52:33 +0100
+Message-ID: <200611091652.34649.rjw@sisk.pl>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <200611081310.19100.rjw@sisk.pl> <20061108180921.GA7708@ucw.cz>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1424081AbWKIPy6@vger.kernel.org>
+In-Reply-To: <20061108180921.GA7708@ucw.cz>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>
 List-Id: dm-devel.ids
 
-Hi--
+Hi,
 
-I've played around with changing rr_min_io values in multipath.conf on
-SLES10 and even after a reboot, it appears the change does not take hold
-and the default of 1000 remains unchanged.  Here is the output from
-multipath -v3:
+On Wednesday, 8 November 2006 19:09, Pavel Machek wrote:
+> Hi!
+> 
+> > > swsusp-freeze-filesystems-during-suspend-rev-2.patch
+> > > 
+> > > I think you need to give more thought to device-mapper
+> > > interactions here.  If an underlying device is suspended
+> > > by device-mapper without freezing the filesystem (the
+> > > normal state) and you issue a freeze_bdev on a device
+> > > above it, the freeze_bdev may never return if it attempts
+> > > any synchronous I/O (as it should).
+> > 
+> > Well, it looks like the interactions with dm add quite a bit of
+> > complexity here.
+> 
+> What about just fixing xfs (thou shall not write to disk when kernel
+> threads are frozen), and getting rid of blockdev freezing?
 
-(beginning removed)
-mpath1: pgfailback =3D -2 (controler setting)
-mpath1: pgpolicy =3D group_by_prio (controler setting)
-mpath1: selector =3D round-robin 0 (controler setting)
-mpath1: features =3D 1 queue_if_no_path (controler setting)
-mpath1: hwhandler =3D 1 emc (controler setting)
-mpath1: rr_weight =3D 1 (controler setting)
-mpath1: minio =3D 1000 (controler setting) =20
-mpath1: no_path_retry =3D 60 (controler setting)
-mpath1: set ACT_NOTHING (map unchanged)
+Well, first I must admit you were absolutely right being suspicious with
+respect to this stuff.
 
-I would tend to think that "minio" is the equivalent of rr_min_io, but
-cannot be sure.  I am leaning towards this assumption because even after
-adjusting rr_min_io to an absurdly high value, I am still seeing I/Os
-spread across both paths in under a couple seconds.  Please note that
-this was just a test to verify rr_min_io taking effect.
+OTOH I have no idea _how_ we can tell xfs that the processes have been
+frozen.  Should we introduce a global flag for that or something?
 
-Any idea on how to override the "controler setting"?  FYI, I'm using a
-dual-port Emulex LP10000 as my HBA.  I took a look at the Emulex docs
-and I don't see any parameters worth throwing in modprobe.conf.
+Rafael
 
-Thanks for looking.
+
+-- 
+You never change things by fighting the existing reality.
+		R. Buckminster Fuller
