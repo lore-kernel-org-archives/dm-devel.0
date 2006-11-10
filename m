@@ -1,15 +1,13 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: patch for handling CLARiiON I/O to inactive snapshot
-	logical units
-Date: Fri, 10 Nov 2006 23:00:08 +0100
-Message-ID: <1163196008.10466.26.camel@localhost.localdomain>
-References: <6CCEAEDF4D06984A83F427424F47D6E4013D152B@CORPUSMX40A.corp.emc.com>
+From: Edward Goggin <egoggin@emc.com>
+Subject: patch to readsector0.c to allow use of sg_read() from
+	other multipath-tools path checkers
+Date: Fri, 10 Nov 2006 17:55:46 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1534@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C7051B.5B91A32D"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D152B@CORPUSMX40A.corp.emc.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Goggin <egoggin@emc.com>
+To: christophe.varoqui@free.fr
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Le vendredi 10 novembre 2006 =C3=A0 14:58 -0500, Edward Goggin a =C3=A9cr=
-it :
-> Christophe,
->=20
-> Here is my 2nd attempt at a patch which attempts to prevent an I/O hang
-> which can occur with host I/O to an inactive CLARiiON snapshot logical
-> unit.
+This is a multi-part message in MIME format.
 
-Hi Edward,
+------_=_NextPart_001_01C7051B.5B91A32D
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 
-I think the diff is line-wrapped. Would you care to resend it as an
-attachment, or unwrapped.
+Christophe,
 
->   While the inactive snapshot LU is presented to a host, inquiry,
-> TUR, and read capacity commands succeed, but read and write commands ar=
-e
-> failed.  Complicating the matter is the fact that read/write to the
-> active paths fails with a particular sense code/asc/ascq combination
-> while read/write to the passive paths does not.
->=20
-> Unlike the previous patch, I've tried to make this one CLARiiON
-> specific.  Two exceptions though.  First, I did keep the change to
-> libcheckers/readsector0.c to allow other checkers than readsector0 to
-> use sg_read().
+Here is the patch to readsector0.c isolated from the rest.
 
-Right. I'll merge this one first. Feel free to submit it as a seperate
-patch.
+ <<readsector0.c.diff>>=20
 
->   Second, I changed libmultipath/discovery.c to allow
-> pathinfo() to invoke the path priority callout function of a path with =
-a
-> path state of PATH_DOWN since some paths (e.g., paths to inactive
-> snapshot LU on CLARiiON) may have their state set to PATH_DOWN for
-> reasons other than transport connectivity failure.  Without the latter
-> change, it is possible to create a situation whereby there are paths of
-> different priorities in the same path group even though the path group
-> policy is priority based grouping.  This is certainly the case for path=
-s
-> to a multipath mapped device for an inactive snapshot CLARiiON LUs when
-> the paths change to a healthy state as soon as the snapshot is
-> activated.
->=20
-Ok, RedHat people working on the HSG/HSV hardware support might want to
-test for regression with that part applied. I'll happily take reports as
-I no longer have access to such hardware.
+------_=_NextPart_001_01C7051B.5B91A32D
+Content-Type: application/octet-stream;
+	name="readsector0.c.diff"
+Content-Transfer-Encoding: base64
+Content-Description: readsector0.c.diff
+Content-Disposition: attachment;
+	filename="readsector0.c.diff"
 
-Now I still have to read through the clariion checker changes.
+ZGlmZiAtLWdpdCBhL2xpYmNoZWNrZXJzL3JlYWRzZWN0b3IwLmMgYi9saWJjaGVja2Vycy9yZWFk
+c2VjdG9yMC5jCmluZGV4IGIwYWNlYzkuLmRkMTg1MjggMTAwNjQ0Ci0tLSBhL2xpYmNoZWNrZXJz
+L3JlYWRzZWN0b3IwLmMKKysrIGIvbGliY2hlY2tlcnMvcmVhZHNlY3RvcjAuYwpAQCAtMzQsOCAr
+MzQsOCBAQCB2b2lkIHJlYWRzZWN0b3IwX2ZyZWUgKHN0cnVjdCBjaGVja2VyICogCiAJcmV0dXJu
+OwogfQogCi1zdGF0aWMgaW50Ci1zZ19yZWFkIChpbnQgc2dfZmQsIHVuc2lnbmVkIGNoYXIgKiBi
+dWZmKQoraW50CitzZ19yZWFkIChpbnQgc2dfZmQsIHVuc2lnbmVkIGNoYXIgKiBidWZmLCB1bnNp
+Z25lZCBjaGFyICogc2Vuc2VCdWZmKQogewogCS8qIGRlZmF1bHRzICovCiAJaW50IGJsb2NrcyA9
+IDE7CkBAIC00NSw3ICs0NSw2IEBAIHNnX3JlYWQgKGludCBzZ19mZCwgdW5zaWduZWQgY2hhciAq
+IGJ1ZmYKIAlpbnQgKiBkaW9wID0gTlVMTDsKIAogCXVuc2lnbmVkIGNoYXIgcmRDbWRbY2Ric3pd
+OwotCXVuc2lnbmVkIGNoYXIgc2Vuc2VCdWZmW1NFTlNFX0JVRkZfTEVOXTsKIAlzdHJ1Y3Qgc2df
+aW9faGRyIGlvX2hkcjsKIAlpbnQgcmVzOwogCWludCByZF9vcGNvZGVbXSA9IHsweDgsIDB4Mjgs
+IDB4YTgsIDB4ODh9OwpAQCAtOTcsOSArOTYsMTAgQEAgZXh0ZXJuIGludAogcmVhZHNlY3RvcjAg
+KHN0cnVjdCBjaGVja2VyICogYykKIHsKIAl1bnNpZ25lZCBjaGFyIGJ1Zls1MTJdOworCXVuc2ln
+bmVkIGNoYXIgc2J1ZltTRU5TRV9CVUZGX0xFTl07CiAJaW50IHJldDsKIAotCXJldCA9IHNnX3Jl
+YWQoYy0+ZmQsICZidWZbMF0pOworCXJldCA9IHNnX3JlYWQoYy0+ZmQsICZidWZbMF0sICZzYnVm
+WzBdKTsKIAogCXN3aXRjaCAocmV0KQogCXsK
 
-Thanks,
-cvaroqui
+------_=_NextPart_001_01C7051B.5B91A32D
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_001_01C7051B.5B91A32D--
