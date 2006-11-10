@@ -1,14 +1,15 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: boot scripts and dm-multipath
-Date: Fri, 10 Nov 2006 15:11:35 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D152C@CORPUSMX40A.corp.emc.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: patch for handling CLARiiON I/O to inactive snapshot
+	logical units
+Date: Fri, 10 Nov 2006 23:00:08 +0100
+Message-ID: <1163196008.10466.26.camel@localhost.localdomain>
+References: <6CCEAEDF4D06984A83F427424F47D6E4013D152B@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D152B@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,31 +19,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Edward Goggin <egoggin@emc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Resending this since I think I got no feedback last time.
+Le vendredi 10 novembre 2006 =C3=A0 14:58 -0500, Edward Goggin a =C3=A9cr=
+it :
+> Christophe,
+>=20
+> Here is my 2nd attempt at a patch which attempts to prevent an I/O hang
+> which can occur with host I/O to an inactive CLARiiON snapshot logical
+> unit.
 
-Linux distributions currently invoke /sbin/multipath fairly early in the
-boot sequence, followed sometime later by /sbin/multipathd.  I think
-that these distributions run the risk of incurring a boot-time hang
-when/if read I/Os issued (by kpartx in /etc/boot.multipath for instance)
-to dm-multipath devices before multipathd is started, fail (due to
-failures which are not SCSI transport related) when sent to storage
-targets configured with the dm-multipath queue_if_no_path feature.
-Without multipathd running there is no ability to timeout the "queue I/O
-forever" behavior during an all-paths-down use case.
+Hi Edward,
 
-In these cases, the dm-multipath device is created because the storage
-target responds successfully to the device id inquiry request for each
-path but all path tests and read/write I/O requests issued on all paths
-to the device will fail.  If the dm-multipath device was configured with
-the queue_if_no_path feature, the kernel dm-multipath code will queue
-the failed read/write I/O indefinitely.
+I think the diff is line-wrapped. Would you care to resend it as an
+attachment, or unwrapped.
 
-Newer versions of multipathd (that is, ones based on
-multipath-tools-0.4.7) do not need to invoke multipath in order to
-configure the dm-multipath, simply invoking multipathd suffices.  Is it
-reasonable to change these scripts to invoke multipathd instead of
-multipath at early boot and not invoke multipath at all from these
-scripts?
+>   While the inactive snapshot LU is presented to a host, inquiry,
+> TUR, and read capacity commands succeed, but read and write commands ar=
+e
+> failed.  Complicating the matter is the fact that read/write to the
+> active paths fails with a particular sense code/asc/ascq combination
+> while read/write to the passive paths does not.
+>=20
+> Unlike the previous patch, I've tried to make this one CLARiiON
+> specific.  Two exceptions though.  First, I did keep the change to
+> libcheckers/readsector0.c to allow other checkers than readsector0 to
+> use sg_read().
+
+Right. I'll merge this one first. Feel free to submit it as a seperate
+patch.
+
+>   Second, I changed libmultipath/discovery.c to allow
+> pathinfo() to invoke the path priority callout function of a path with =
+a
+> path state of PATH_DOWN since some paths (e.g., paths to inactive
+> snapshot LU on CLARiiON) may have their state set to PATH_DOWN for
+> reasons other than transport connectivity failure.  Without the latter
+> change, it is possible to create a situation whereby there are paths of
+> different priorities in the same path group even though the path group
+> policy is priority based grouping.  This is certainly the case for path=
+s
+> to a multipath mapped device for an inactive snapshot CLARiiON LUs when
+> the paths change to a healthy state as soon as the snapshot is
+> activated.
+>=20
+Ok, RedHat people working on the HSG/HSV hardware support might want to
+test for regression with that part applied. I'll happily take reports as
+I no longer have access to such hardware.
+
+Now I still have to read through the clariion checker changes.
+
+Thanks,
+cvaroqui
