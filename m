@@ -1,19 +1,19 @@
 From: Pavel Machek <pavel@ucw.cz>
 Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
 	not mutex
-Date: Fri, 10 Nov 2006 11:36:50 +0100
-Message-ID: <20061110103650.GE3196@elf.ucw.cz>
+Date: Fri, 10 Nov 2006 11:38:35 +0100
+Message-ID: <20061110103835.GF3196@elf.ucw.cz>
 References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<200611081310.19100.rjw@sisk.pl> <20061108180921.GA7708@ucw.cz>
 	<200611091652.34649.rjw@sisk.pl>
 	<20061109160003.GA24156@elf.ucw.cz>
-	<200611092059.48722.rjw@sisk.pl> <20061109211722.GA2616@elf.ucw.cz>
-	<1163154249.7900.19.camel@localhost.localdomain>
+	<20061110003332.GM8394166@melbourne.sgi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1163154249.7900.19.camel@localhost.localdomain>
+In-Reply-To: <20061110003332.GM8394166@melbourne.sgi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,28 +23,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alan Cox <alan@lxorguk.ukuu.org.uk>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
+To: David Chinner <dgc@sgi.com>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-HI!
+Hi!
 
-> > Why not simply &~ PF_NOFREEZE on that particular process? Filesystems
-> > are free to use threads/work queues/whatever, but refrigerator should
-> > mean "no writes to filesystem" for them...
+> > > OTOH I have no idea _how_ we can tell xfs that the processes have been
+> > > frozen.  Should we introduce a global flag for that or something?
+> > 
+> > I guess XFS should just do all the writes from process context, and
+> > refuse any writing when its threads are frozen... I actually still
+> > believe it is doing the right thing, because you can't really write to
+> > disk from timer.
 > 
-> You can't go around altering the flags of another process - what locking
-> are you relying upon for this ?
+> As per the recent thread about this, XFS threads suspend correctly
+> and XFS doesn't issue I/O from timers.
+> 
+> The problem appears to be per-cpu workqueues that don't get
+> suspended because suspend does not shut down workqueue threads. You
 
-Well, my idea was for process to &~ PF_NOFREEZE on itself.
-
-We are currently (kernel/power/process.c) using &p->sighand->siglock
-for some accesses, and no locking for others. There were some attempts
-to fix this, but they led to problems, and we are not hitting any
-problems... part of reason is that we hot-unplug non-boot cpus before
-freezing processes, so we are running UP at that point.
-
+Workqueues should be easy to handle. current->flags &= ~PF_NONFREEZE,
+and problem should be solved.
 								Pavel
+
 -- 
 (english) http://www.livejournal.com/~pavelmachek
 (cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
