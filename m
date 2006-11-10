@@ -1,13 +1,14 @@
 From: Edward Goggin <egoggin@emc.com>
-Subject: patch to readsector0.c to allow use of sg_read() from
-	other multipath-tools path checkers
-Date: Fri, 10 Nov 2006 17:55:46 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1534@CORPUSMX40A.corp.emc.com>
+Subject: patch to discovery.c to still get path priority for
+	paths with path state of PATH_DOWN
+Date: Fri, 10 Nov 2006 18:01:25 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1535@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C7051B.5B91A32D"
+Content-Type: multipart/mixed; boundary="===============2140881416=="
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
+Content-Description: discovery.c.diff
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +22,35 @@ To: christophe.varoqui@free.fr
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C7051B.5B91A32D
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
-
-Christophe,
-
-Here is the patch to readsector0.c isolated from the rest.
-
- <<readsector0.c.diff>>=20
-
-------_=_NextPart_001_01C7051B.5B91A32D
+--===============2140881416==
+Content-class: urn:content-classes:message
 Content-Type: application/octet-stream;
-	name="readsector0.c.diff"
+	name="discovery.c.diff"
 Content-Transfer-Encoding: base64
-Content-Description: readsector0.c.diff
+Content-Description: discovery.c.diff
 Content-Disposition: attachment;
-	filename="readsector0.c.diff"
+	filename="discovery.c.diff"
 
-ZGlmZiAtLWdpdCBhL2xpYmNoZWNrZXJzL3JlYWRzZWN0b3IwLmMgYi9saWJjaGVja2Vycy9yZWFk
-c2VjdG9yMC5jCmluZGV4IGIwYWNlYzkuLmRkMTg1MjggMTAwNjQ0Ci0tLSBhL2xpYmNoZWNrZXJz
-L3JlYWRzZWN0b3IwLmMKKysrIGIvbGliY2hlY2tlcnMvcmVhZHNlY3RvcjAuYwpAQCAtMzQsOCAr
-MzQsOCBAQCB2b2lkIHJlYWRzZWN0b3IwX2ZyZWUgKHN0cnVjdCBjaGVja2VyICogCiAJcmV0dXJu
-OwogfQogCi1zdGF0aWMgaW50Ci1zZ19yZWFkIChpbnQgc2dfZmQsIHVuc2lnbmVkIGNoYXIgKiBi
-dWZmKQoraW50CitzZ19yZWFkIChpbnQgc2dfZmQsIHVuc2lnbmVkIGNoYXIgKiBidWZmLCB1bnNp
-Z25lZCBjaGFyICogc2Vuc2VCdWZmKQogewogCS8qIGRlZmF1bHRzICovCiAJaW50IGJsb2NrcyA9
-IDE7CkBAIC00NSw3ICs0NSw2IEBAIHNnX3JlYWQgKGludCBzZ19mZCwgdW5zaWduZWQgY2hhciAq
-IGJ1ZmYKIAlpbnQgKiBkaW9wID0gTlVMTDsKIAogCXVuc2lnbmVkIGNoYXIgcmRDbWRbY2Ric3pd
-OwotCXVuc2lnbmVkIGNoYXIgc2Vuc2VCdWZmW1NFTlNFX0JVRkZfTEVOXTsKIAlzdHJ1Y3Qgc2df
-aW9faGRyIGlvX2hkcjsKIAlpbnQgcmVzOwogCWludCByZF9vcGNvZGVbXSA9IHsweDgsIDB4Mjgs
-IDB4YTgsIDB4ODh9OwpAQCAtOTcsOSArOTYsMTAgQEAgZXh0ZXJuIGludAogcmVhZHNlY3RvcjAg
-KHN0cnVjdCBjaGVja2VyICogYykKIHsKIAl1bnNpZ25lZCBjaGFyIGJ1Zls1MTJdOworCXVuc2ln
-bmVkIGNoYXIgc2J1ZltTRU5TRV9CVUZGX0xFTl07CiAJaW50IHJldDsKIAotCXJldCA9IHNnX3Jl
-YWQoYy0+ZmQsICZidWZbMF0pOworCXJldCA9IHNnX3JlYWQoYy0+ZmQsICZidWZbMF0sICZzYnVm
-WzBdKTsKIAogCXN3aXRjaCAocmV0KQogCXsK
+ZGlmZiAtLWdpdCBhL2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYyBiL2xpYm11bHRpcGF0aC9kaXNj
+b3ZlcnkuYw0KaW5kZXggZWZjMjAxNi4uMTVmZTg5YiAxMDA2NDQNCi0tLSBhL2xpYm11bHRpcGF0
+aC9kaXNjb3ZlcnkuYw0KKysrIGIvbGlibXVsdGlwYXRoL2Rpc2NvdmVyeS5jDQpAQCAtNzAxLDcg
+KzcwMSwxNCBAQCBwYXRoaW5mbyAoc3RydWN0IHBhdGggKnBwLCB2ZWN0b3IgaHd0YWJsDQogCWlm
+IChtYXNrICYgRElfQ0hFQ0tFUiAmJiBnZXRfc3RhdGUocHApKQ0KIAkJZ290byBibGFuazsNCiAJ
+DQotCWlmIChtYXNrICYgRElfUFJJTyAmJiBwcC0+c3RhdGUgIT0gUEFUSF9ET1dOKQ0KKw0KKwkv
+Kg0KKwkgKiBQYXRoIHN0YXRlIG9mIFBBVEhfRE9XTiBkb2VzIG5vdCBuZWNlc3NhcmlseSBwcmV2
+ZW50DQorCSAqIHBhdGggcHJpb3JpdHkgY2FsbG91dCAob3IgZ2V0dWlkIGNhbGxvdW90KSBmcm9t
+DQorCSAqIHN1Y2NlZWRpbmcgc2luY2UgdGhlIHBhdGggbWF5IGJlIGJlaW5nIGNvbnNpZGVyZWQN
+CisJICogZmFpbGVkIGZvciByZWFzb25zIG90aGVyIHRoYW4gdHJhbnNwb3J0IGNvbm5lY3Rpdml0
+eS4NCisJICovDQorCWlmIChtYXNrICYgRElfUFJJTyAvKiYmIHBwLT5zdGF0ZSAhPSBQQVRIX0RP
+V04qLykNCiAJCWdldF9wcmlvKHBwKTsNCiANCiAJaWYgKG1hc2sgJiBESV9XV0lEICYmICFzdHJs
+ZW4ocHAtPnd3aWQpKQ==
 
-------_=_NextPart_001_01C7051B.5B91A32D
+
+--===============2140881416==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
-------_=_NextPart_001_01C7051B.5B91A32D--
+--===============2140881416==--
