@@ -1,18 +1,19 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
+From: David Chinner <dgc@sgi.com>
 Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
 	not mutex
-Date: Sun, 12 Nov 2006 22:53:56 +0100
-Message-ID: <200611122253.57201.rjw@sisk.pl>
+Date: Mon, 13 Nov 2006 09:30:13 +1100
+Message-ID: <20061112223012.GH11034@melbourne.sgi.com>
 References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<200611101303.33685.rjw@sisk.pl> <20061112184310.GC5081@ucw.cz>
+	<200611092218.58970.rjw@sisk.pl> <20061109214159.GB2616@elf.ucw.cz>
+	<200611092321.47728.rjw@sisk.pl>
+	<20061110005749.GO8394166@melbourne.sgi.com>
+	<20061110103942.GG3196@elf.ucw.cz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061112184310.GC5081@ucw.cz>
 Content-Disposition: inline
+In-Reply-To: <20061110103942.GG3196@elf.ucw.cz>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,62 +23,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Pavel Machek <pavel@suse.cz>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
+To: Pavel Machek <pavel@ucw.cz>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-On Sunday, 12 November 2006 19:43, Pavel Machek wrote:
-> Hi!
-> 
-> > > Okay, so you claim that sys_sync can stall, waiting for administator?
-> > > 
-> > > In such case we can simply do one sys_sync() before we start freezing
-> > > userspace... or just more the only sys_sync() there. That way, admin
-> > > has chance to unlock his system.
+On Fri, Nov 10, 2006 at 11:39:42AM +0100, Pavel Machek wrote:
+> On Fri 2006-11-10 11:57:49, David Chinner wrote:
+> > On Thu, Nov 09, 2006 at 11:21:46PM +0100, Rafael J. Wysocki wrote:
+> > > I think we can add a flag to __create_workqueue() that will indicate if
+> > > this one is to be running with PF_NOFREEZE and a corresponding macro like
+> > > create_freezable_workqueue() to be used wherever we want the worker thread
+> > > to freeze (in which case it should be calling try_to_freeze() somewhere).
+> > > Then, we can teach filesystems to use this macro instead of
+> > > create_workqueue().
 > > 
-> > Well, this is a different story.
-> > 
-> > My point is that if we call sys_sync() _anyway_ before calling
-> > freeze_filesystems(), then freeze_filesystems() is _safe_ (either the
-> > sys_sync() blocks, or it doesn't in which case freeze_filesystems() won't
-> > block either).
-> > 
-> > This means, however, that we can leave the patch as is (well, with the minor
-> > fix I have already posted), for now, because it doesn't make things worse a
-> > bit, but:
-> > (a) it prevents xfs from being corrupted and
+> > At what point does the workqueue get frozen? i.e. how does this
+> > guarantee an unfrozen filesystem will end up in a consistent
+> > state?
 > 
-> I'd really prefer it to be fixed by 'freezeable workqueues'. Can you
-> point me into sources -- which xfs workqueues are problematic?
+> Snapshot is atomic; workqueue will be unfrozen with everyone else, but
+> as there were no writes in the meantime, there should be no problems.
 
-I think these:
+That doesn't answer my question - when in the sequence of freezing
+do you propose diasbling the workqueues? before the kernel threads,
+after the kernel threads, before you sync the filesystem? And how does
+freezing them at that point in time guarantee consistent filesystem state?
 
-http://www.linux-m32r.org/lxr/http/source/fs/xfs/linux-2.6/xfs_buf.c?a=x86_64#L1829
+Cheers,
 
-But then, there's also this one
-
-http://www.linux-m32r.org/lxr/http/source/fs/reiserfs/journal.c?a=x86_64#L2837
-
-and some others that I had no time to trace.
-
-> (It would be nice to fix that for 2.6.19, and full bdev freezing looks
-> intrusive to me).
-
-IMHO changing __create_workqueue() will be even more intrusive.
-
-> > (b) it prevents journaling filesystems in general from replaying journals
-> > after a failing resume.
-> 
-> I do not see b) as an useful goal.
-
-Okay, let's forget it.
-
-Greetings,
-Rafael
-
-
+Dave.
 -- 
-You never change things by fighting the existing reality.
-		R. Buckminster Fuller
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
