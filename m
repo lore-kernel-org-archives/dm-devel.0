@@ -1,18 +1,14 @@
-From: David Chinner <dgc@sgi.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Mon, 13 Nov 2006 10:30:54 +1100
-Message-ID: <20061112233054.GI11034@melbourne.sgi.com>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<20061109232438.GS30653@agk.surrey.redhat.com>
-	<20061109233258.GH2616@elf.ucw.cz>
-	<200611101303.33685.rjw@sisk.pl> <20061112184310.GC5081@ucw.cz>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: patch to CLARiiON path checker to handle inactive
+	snapshhots
+Date: Mon, 13 Nov 2006 00:38:16 +0100
+Message-ID: <1163374696.10466.73.camel@localhost.localdomain>
+References: <6CCEAEDF4D06984A83F427424F47D6E4013D1536@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="=-hRgxIbfHBwL8Zdsz2soD"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20061112184310.GC5081@ucw.cz>
+In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D1536@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,82 +18,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Pavel Machek <pavel@suse.cz>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
+To: Edward Goggin <egoggin@emc.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Nov 12, 2006 at 06:43:10PM +0000, Pavel Machek wrote:
-> Hi!
-> 
-> > > Okay, so you claim that sys_sync can stall, waiting for administator?
-> > > 
-> > > In such case we can simply do one sys_sync() before we start freezing
-> > > userspace... or just more the only sys_sync() there. That way, admin
-> > > has chance to unlock his system.
-> > 
-> > Well, this is a different story.
-> > 
-> > My point is that if we call sys_sync() _anyway_ before calling
-> > freeze_filesystems(), then freeze_filesystems() is _safe_ (either the
-> > sys_sync() blocks, or it doesn't in which case freeze_filesystems() won't
-> > block either).
-> > 
-> > This means, however, that we can leave the patch as is (well, with the minor
-> > fix I have already posted), for now, because it doesn't make things worse a
-> > bit, but:
-> > (a) it prevents xfs from being corrupted and
-> 
-> I'd really prefer it to be fixed by 'freezeable workqueues'.
 
-I'd prefer that you just freeze the filesystem and let the
-filesystem do things correctly.
+--=-hRgxIbfHBwL8Zdsz2soD
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-> Can you
-> point me into sources -- which xfs workqueues are problematic?
+Le vendredi 10 novembre 2006 =C3=A0 18:02 -0500, Edward Goggin a =C3=A9cr=
+it :
+...
 
-AFAIK, its the I/O completion workqueues that are causing problems.
-(fs/xfs/linux-2.6/xfs_buf.c) However, thinking about it, I'm not
-sure that the work queues being left unfrozen is the real problem.
+Ok, I aknowledge this approach is far more complex than your 1st
+attempt.
 
-i.e. after a sync there's still I/O outstanding (e.g. metadata in
-the log but not on disk), and because the kernel threads are frozen
-some time after the sync, we could have issued this delayed write
-metadata to disk after the sync. With XFS, we can have a of queue of
-thousands of metadata buffers for delwri, and they are all issued
-async and can take many seconds for the I/O to complete.
+If I read correctly the two candidate patches, the clariion checker need
+to share information with the other path chechers attached to the same
+multipath to decide for a state to return.
 
-The I/O completion workqueues will continue to run until all I/O
-stops, and metadata I/O completion will change the state of the
-filesystem in memory.
+If so, let's pretend another checker might one day stress the same
+need :)
 
-However, even if you stop the workqueue processing, you're still
-going to have to wait for all I/O completion to occur before
-snapshotting memory because having any I/O complete changes memory
-state.  Hence I fail to see how freezing the workqueues really helps
-at all here....
+What do you think of a facility like the following (completely untested
+and surely semi-bogus) patch sketches ? Would it make your patch as
+straight as your first attempt ?
 
-Given that the only way to track and block on these delwri metadata
-buffers is to issue a sync flush rather than a async flush, suspend
-has to do something different to guarantee that we block until all
-those I/Os have completed. i.e. freeze the filesystem.
+It seems to take care of our griefs with "container_of" and the
+clariion-centric additions to "struct multipath".
 
-So the problem, IMO, is suspend is not telling the filesystem
-to stop doing stuff and so we are getting caught out by doing
-stuff that suspend assumes won't happen but does nothing
-to prevent.
+Anyway, I'm sorry for keeping you walking in circles there.
+Regards,
+cvaroqui
 
-> > (b) it prevents journaling filesystems in general from replaying journals
-> > after a failing resume.
 
-This is incorrect.  Freezing an XFS filesystem _ensures_ that log
-replay occurs on thaw or a failed resume.  XFS specifically dirties
-the log after a freeze down to a consistent state so that the
-unlinked inode lists get processed by recovery on thaw/next mount.
 
-Cheers,
 
-Dave.
--- 
-Dave Chinner
-Principal Engineer
-SGI Australian Software Group
+
+--=-hRgxIbfHBwL8Zdsz2soD
+Content-Disposition: attachment; filename=multipath-wide-checher-context.patch
+Content-Type: text/x-patch; name=multipath-wide-checher-context.patch;
+	charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+diff --git a/libcheckers/checkers.c b/libcheckers/checkers.c
+index 53770a6..ee4d7fb 100644
+--- a/libcheckers/checkers.c
++++ b/libcheckers/checkers.c
+@@ -75,8 +75,9 @@ struct checker * checker_lookup (char * 
+ 	return NULL;
+ }
+ 
+-int checker_init (struct checker * c)
++int checker_init (struct checker * c, void * mpctxt)
+ {
++	c->mpcontext = mpctxt;
+ 	return c->init(c);
+ }
+ 
+diff --git a/libcheckers/checkers.h b/libcheckers/checkers.h
+index 15bac1a..7b49b7a 100644
+--- a/libcheckers/checkers.h
++++ b/libcheckers/checkers.h
+@@ -46,6 +46,8 @@ struct checker {
+ 	char name[CHECKER_NAME_LEN];
+ 	char message[CHECKER_MSG_LEN];       /* comm with callers */
+ 	void * context;                      /* store for persistent data */
++	void * mpcontext;                    /* store for persistent data */
++                                             /* shared multipath-wide */
+ 	int (*check)(struct checker *);
+ 	int (*init)(struct checker *);       /* to allocate the context */
+ 	void (*free)(struct checker *);      /* to free the context */
+@@ -53,7 +55,7 @@ struct checker {
+ 
+ #define MSG(c, a) snprintf((c)->message, CHECKER_MSG_LEN, a);
+ 
+-int checker_init (struct checker *);
++int checker_init (struct checker *, void *);
+ void checker_put (struct checker *);
+ void checker_reset (struct checker * c);
+ void checker_set_fd (struct checker *, int);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 69c9bc3..1893851 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -610,13 +610,16 @@ static int
+ get_state (struct path * pp)
+ {
+ 	struct checker * c = &pp->checker;
++	void * mpctxt = NULL;
+ 
+ 	if (!checker_selected(c)) {
+ 		select_checker(pp);
+ 		if (!checker_selected(c))
+ 			return 1;
+ 		checker_set_fd(c, pp->fd);
+-		if (checker_init(c))
++		if (pp->mpp)
++			mpctxt = pp->mpp->mpcontext;
++		if (checker_init(c, mpctxt))
+ 			return 1;
+ 	}
+ 	pp->state = checker_check(c);
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index faa2b8f..45dbf85 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -151,6 +151,9 @@ struct multipath {
+ 	unsigned int stat_map_loads;
+ 	unsigned int stat_total_queueing_time;
+ 	unsigned int stat_queueing_timeouts;
++
++	/* checkers shared data */
++	void * mpcontext;
+ };
+ 
+ struct pathgroup {
+
+--=-hRgxIbfHBwL8Zdsz2soD
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-hRgxIbfHBwL8Zdsz2soD--
