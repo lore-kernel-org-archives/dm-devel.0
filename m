@@ -1,14 +1,18 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: patch to CLARiiON path checker to handle inactive
-	snapshhots
-Date: Mon, 13 Nov 2006 00:38:16 +0100
-Message-ID: <1163374696.10466.73.camel@localhost.localdomain>
-References: <6CCEAEDF4D06984A83F427424F47D6E4013D1536@CORPUSMX40A.corp.emc.com>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Mon, 13 Nov 2006 16:43:40 +1100
+Message-ID: <20061113054340.GP11034@melbourne.sgi.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<20061110103942.GG3196@elf.ucw.cz>
+	<20061112223012.GH11034@melbourne.sgi.com>
+	<200611122343.06625.rjw@sisk.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-hRgxIbfHBwL8Zdsz2soD"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D1536@CORPUSMX40A.corp.emc.com>
+Content-Disposition: inline
+In-Reply-To: <200611122343.06625.rjw@sisk.pl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,129 +22,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Goggin <egoggin@emc.com>
-Cc: dm-devel@redhat.com
+To: "Rafael J. Wysocki" <rjw@sisk.pl>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Pavel Machek <pavel@ucw.cz>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Sun, Nov 12, 2006 at 11:43:05PM +0100, Rafael J. Wysocki wrote:
+> On Sunday, 12 November 2006 23:30, David Chinner wrote:
+> > On Fri, Nov 10, 2006 at 11:39:42AM +0100, Pavel Machek wrote:
+> > > On Fri 2006-11-10 11:57:49, David Chinner wrote:
+> > > > On Thu, Nov 09, 2006 at 11:21:46PM +0100, Rafael J. Wysocki wrote:
+> > > > > I think we can add a flag to __create_workqueue() that will indicate if
+> > > > > this one is to be running with PF_NOFREEZE and a corresponding macro like
+> > > > > create_freezable_workqueue() to be used wherever we want the worker thread
+> > > > > to freeze (in which case it should be calling try_to_freeze() somewhere).
+> > > > > Then, we can teach filesystems to use this macro instead of
+> > > > > create_workqueue().
+> > > > 
+> > > > At what point does the workqueue get frozen? i.e. how does this
+> > > > guarantee an unfrozen filesystem will end up in a consistent
+> > > > state?
+> > > 
+> > > Snapshot is atomic; workqueue will be unfrozen with everyone else, but
+> > > as there were no writes in the meantime, there should be no problems.
+> > 
+> > That doesn't answer my question - when in the sequence of freezing
+> > do you propose diasbling the workqueues? before the kernel threads,
+> > after the kernel threads, before you sync the filesystem?
+> 
+> After the sync, along with the freezing of kernel threads.
 
---=-hRgxIbfHBwL8Zdsz2soD
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Before or after freezing of the kthreads? Order _could_ be
+important, and different filesystems might require different
+orders. What then?
 
-Le vendredi 10 novembre 2006 =C3=A0 18:02 -0500, Edward Goggin a =C3=A9cr=
-it :
-...
+> > And how does freezing them at that point in time guarantee consistent
+> > filesystem state?
+> 
+> If the work queues are frozen, there won't be any fs-related activity _after_
+> we create the suspend image.
 
-Ok, I aknowledge this approach is far more complex than your 1st
-attempt.
+What about if there is still I/O in progress (i.e. kthread wins race and
+issues async I/O after the sync but before it's frozen) - freezing the
+workqueues does not prevent this activity and memory state will continue to
+change as long as there is I/O completing...
 
-If I read correctly the two candidate patches, the clariion checker need
-to share information with the other path chechers attached to the same
-multipath to decide for a state to return.
+> The sync is done after the userland has been
+> frozen, so if the resume is unsuccessful, we'll be able to recover the state
+> of the fs right before the sync,
 
-If so, let's pretend another checker might one day stress the same
-need :)
+Yes, in most cases.
 
-What do you think of a facility like the following (completely untested
-and surely semi-bogus) patch sketches ? Would it make your patch as
-straight as your first attempt ?
+> and if the resume is successful, we'll be
+> able to continue (the state of memory will be the same as before the creation
+> of the suspend image and the state of the disk will be the same as before the
+> creation of the suspend image).
 
-It seems to take care of our griefs with "container_of" and the
-clariion-centric additions to "struct multipath".
+Assuming that you actually suspended an idle filesystem, which sync does not
+guarantee you.  Rather than assuming the filesystem is idle, why not guarantee
+that it is idle by freezing it?
 
-Anyway, I'm sorry for keeping you walking in circles there.
-Regards,
-cvaroqui
+Cheers,
 
-
-
-
-
---=-hRgxIbfHBwL8Zdsz2soD
-Content-Disposition: attachment; filename=multipath-wide-checher-context.patch
-Content-Type: text/x-patch; name=multipath-wide-checher-context.patch;
-	charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-diff --git a/libcheckers/checkers.c b/libcheckers/checkers.c
-index 53770a6..ee4d7fb 100644
---- a/libcheckers/checkers.c
-+++ b/libcheckers/checkers.c
-@@ -75,8 +75,9 @@ struct checker * checker_lookup (char * 
- 	return NULL;
- }
- 
--int checker_init (struct checker * c)
-+int checker_init (struct checker * c, void * mpctxt)
- {
-+	c->mpcontext = mpctxt;
- 	return c->init(c);
- }
- 
-diff --git a/libcheckers/checkers.h b/libcheckers/checkers.h
-index 15bac1a..7b49b7a 100644
---- a/libcheckers/checkers.h
-+++ b/libcheckers/checkers.h
-@@ -46,6 +46,8 @@ struct checker {
- 	char name[CHECKER_NAME_LEN];
- 	char message[CHECKER_MSG_LEN];       /* comm with callers */
- 	void * context;                      /* store for persistent data */
-+	void * mpcontext;                    /* store for persistent data */
-+                                             /* shared multipath-wide */
- 	int (*check)(struct checker *);
- 	int (*init)(struct checker *);       /* to allocate the context */
- 	void (*free)(struct checker *);      /* to free the context */
-@@ -53,7 +55,7 @@ struct checker {
- 
- #define MSG(c, a) snprintf((c)->message, CHECKER_MSG_LEN, a);
- 
--int checker_init (struct checker *);
-+int checker_init (struct checker *, void *);
- void checker_put (struct checker *);
- void checker_reset (struct checker * c);
- void checker_set_fd (struct checker *, int);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 69c9bc3..1893851 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -610,13 +610,16 @@ static int
- get_state (struct path * pp)
- {
- 	struct checker * c = &pp->checker;
-+	void * mpctxt = NULL;
- 
- 	if (!checker_selected(c)) {
- 		select_checker(pp);
- 		if (!checker_selected(c))
- 			return 1;
- 		checker_set_fd(c, pp->fd);
--		if (checker_init(c))
-+		if (pp->mpp)
-+			mpctxt = pp->mpp->mpcontext;
-+		if (checker_init(c, mpctxt))
- 			return 1;
- 	}
- 	pp->state = checker_check(c);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index faa2b8f..45dbf85 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -151,6 +151,9 @@ struct multipath {
- 	unsigned int stat_map_loads;
- 	unsigned int stat_total_queueing_time;
- 	unsigned int stat_queueing_timeouts;
-+
-+	/* checkers shared data */
-+	void * mpcontext;
- };
- 
- struct pathgroup {
-
---=-hRgxIbfHBwL8Zdsz2soD
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-hRgxIbfHBwL8Zdsz2soD--
+Dave.
+-- 
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
