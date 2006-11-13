@@ -1,17 +1,15 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: patch to CLARiiON path checker to handle inactive
-	snapshhots
-Date: Mon, 13 Nov 2006 14:15:38 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D153E@CORPUSMX40A.corp.emc.com>
-References: <1163374696.10466.73.camel@localhost.localdomain>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: James Smart <James.Smart@Emulex.Com>
+Subject: Re: multipath and san fabric
+Date: Mon, 13 Nov 2006 14:18:01 -0500
+Message-ID: <4558C4E9.9020901@emulex.com>
+References: <200611131135.32473.jslittl@hendricks.org>
+Reply-To: James.Smart@Emulex.Com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <1163374696.10466.73.camel@localhost.localdomain>
+In-Reply-To: <200611131135.32473.jslittl@hendricks.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,84 +19,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr
-Cc: dm-devel@redhat.com
+To: jslittl@hendricks.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-=20
+If the hba's are on different fabrics - why would you ever put an hba
+that is not in the fabric in a zone in that fabric ?  (e.g. your second
+option makes no sense).
 
-> -----Original Message-----
-> From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
-> Sent: Sunday, November 12, 2006 6:38 PM
-> To: goggin, edward
-> Cc: dm-devel@redhat.com
-> Subject: Re: patch to CLARiiON path checker to handle=20
-> inactive snapshhots
->=20
-> Le vendredi 10 novembre 2006 =E0 18:02 -0500, Edward Goggin a =E9crit :
-> ...
->=20
-> Ok, I aknowledge this approach is far more complex than your 1st
-> attempt.
->=20
-> If I read correctly the two candidate patches, the clariion=20
-> checker need
-> to share information with the other path chechers attached to the same
-> multipath to decide for a state to return.
+If you are stating that the 2hba's are on different fabrics (and in zones
+within those fabric) - but they are seeing the same Storage device on both
+fabrics - then the dm config (note: I'm not talking about zoning anymore)
+would have a path per I_T nexus. I state it this way to account for dual-ported
+controllers, which may appear as separate targets, may exist within the fabric.
 
-Yes.  This is only because for the passive paths, the clariion
-is not returning a specific sensecode/asc/ascq combination to
-indicate an illegal attempt to read/write from/to an inactive
-snapshot LU.  If it did so, the clariion path checker code
-could continue to rely simply on testing each path independently.
+Example 1:
+   Fabric A contains HBA1 and TargetPort1. Typically a zone would exist
+     within Fabric A that contains these 2 ports.
+   Fabric B contains HBA2 and TargetPort2. Typically a zone would exist
+     within Fabric B that contains these 2 ports.
+   The storage array contains 2 controllers with 1 port per controller, or
+     is a single controller with 2 ports. Either way, the two ports are
+     TargetPort1 and TargetPort2, are on the same array, and all storage
+     can be seen from any port.
+   --
+   This would have 2 DM paths.
+   The I_T nexus's are:
+      HBA1_TargetPort1
+      HBA2_TargetPort2
 
-By the way, since none of these solutions deal correctly with
-the use case where /sbin/multipath is checking the path status
-of a passive path to an inactive snapshot before any active
-paths to that LU have been checked, /sbin/multipath will show
-the passive path (or those passive paths) as ready when it
-(they) are really faulty.  I think the best solution for this
-is to have the /sbin/multipath (or its equivalent like
-"multipathd -k") get the path state(s) from /sbin/multipathd
-instead of re-calculating its own states.  What do you think?
+Example 2:
+   Fabric A contains HBA1, TargetPort1, and TargetPort3. Typically a zone
+     would exist within Fabric A that contains these 3 ports.
+   Fabric B contains HBA2, TargetPort2, and TargetPort4. Typically a zone
+     would exist within Fabric B that contains these 3 ports.
+   The storage array contains 2 controllers, with 2 ports per controller.
+     Meaning TargetPort1 and TargetPort2 are on controller A, and TargetPort3
+     and TargetPort4 are on controller B. The ports are cross connected on
+     the fabrics for redundancy. All storage can be seen from any port.
+   --
+   This would ahve 4 DM paths
+   The I_T nexus's are:
+      HBA1_TargetPort1
+      HBA1_TargetPort2
+      HBA2_TargetPort3
+      HBA2_TargetPort4
 
-Also, what about the idea of the distributions no longer starting
-/sbin/multipath before /sbin/multipathd in order to avoid cases
-where multipathing is started without having the full feature
-set of multipathd (e.g., queue_if_no_path timeout feature).  This
-is after initrd so there shouldn't be restricted user environment
-issues involved with providing multipathing for the root device
-from the ram disk.
+-- james
 
->=20
-> If so, let's pretend another checker might one day stress the same
-> need :)
->=20
-> What do you think of a facility like the following=20
-> (completely untested
-> and surely semi-bogus) patch sketches ? Would it make your patch as
-> straight as your first attempt ?
-
-Yes.
-
->=20
-> It seems to take care of our griefs with "container_of" and the
-> clariion-centric additions to "struct multipath".
-
-Yes.  I like your idea, it adds generic value whereas my 1st solution
-did not.  Will you be checking in this code soon?
-
->=20
-> Anyway, I'm sorry for keeping you walking in circles there.
-
-That's ok.  I learned some things and we have a better solution now.
-
-Thanks for your help!
-
-> Regards,
-> cvaroqui
->=20
->=20
->=20
->=20
->=20
+John Little wrote:
+> Hi all
+> 
+> Admittedly this is not the correct forum for this question but I have googled 
+> this and the only people I have to ask around here are people who won't touch 
+> it because it is Linux.
+> 
+> My question is this:  I'm using SLES10 with two emulex hbas, one connected to 
+> fabric a and one to fabric b.  When zoning the switch for the hbas do I put 
+> in only one path to the fabric per hba or do I put in two, one to each of the 
+> separate fabrics?
+> 
+> Again I realize this is not exactly the correct forum but since I couldn't 
+> find an answer anywhere else I figured you guys would be the most 
+> knowledgeable.  If there are some docs somewhere that you could point me to I 
+> would appreciate it.
+> 
+> John
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
