@@ -1,17 +1,17 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: patch to discovery.c to still get path priority
-	forpaths with path state of PATH_DOWN
-Date: Mon, 13 Nov 2006 15:47:35 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1540@CORPUSMX40A.corp.emc.com>
-References: <1163448272.5006.48.camel@linux-cxyg.rtp.netapp.com>
+From: "Reilly, Stephen (MRO)" <Steve.Reilly@hp.com>
+Subject: RE: [PATCH 4/4] [libmultipath] Update hardware table for
+	HPHSV200
+Date: Mon, 13 Nov 2006 14:44:58 -0500
+Message-ID: <0E766B4D32E1BC4A877197B95A04A25A9B31A6@tayexc14.americas.cpqcorp.net>
+References: <20061109221555.ED66173C93@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="US-ASCII"
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <1163448272.5006.48.camel@linux-cxyg.rtp.netapp.com>
+In-Reply-To: <20061109221555.ED66173C93@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +21,110 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: christophe.varoqui@free.fr
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dave,
+The product name does change if the firmware uses 'START_STOP_UNIT' or
+ALUA... so why are we adding the revision?
 
-Sorry for the confusion.
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Hannes Reinecke
+Sent: Thursday, November 09, 2006 5:10 AM
+Subject: [dm-devel] [PATCH 4/4] [libmultipath] Update hardware table for
+HPHSV200
 
-I realize that at first glance the patch may not make sense, but it
-is an attempt to avoid the case of not being able to properly assign
-path groups with a group_by_priority path grouping policy if any of
-the paths respond successfully to scsi_id(8) and mpath_prio_* but not
-their multipath path checker.  Such is the case for LUNZ and inactive
-snapshot logical units on CLARiiON.
+According to HP the behaviour of the HSV200 depends on the software
+release; all revisions smaller or equal to '3000' have active/passive
+support; all revisions above that have active/active support.
+Translated it means that the older firmware uses the HP-style
+'START_STOP_UNIT' command to switch paths, while the newer firmware
+supports ALUA.
+So we should update the hardware tables accordingly.
 
-Ed
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com=20
-> [mailto:dm-devel-bounces@redhat.com] On Behalf Of Dave Wysochanski
-> Sent: Monday, November 13, 2006 3:05 PM
-> To: device-mapper development
-> Cc: christophe.varoqui@free.fr
-> Subject: Re: [dm-devel] patch to discovery.c to still get=20
-> path priority forpaths with path state of PATH_DOWN
->=20
-> Ed, I am looking through your patches and in particular this change,
-> which reverts a previous change I submitted a little while back.
->=20
-> Maybe we can do something better like clarify states.  Looking through
-> the code now and will have more feedback.
->=20
->=20
->=20
-> On Fri, 2006-11-10 at 18:01 -0500, Edward Goggin wrote:
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
->=20
+---
+
+ libmultipath/hwtable.c |   49
++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 48 insertions(+), 1 deletions(-)
+
+19c1285b869bfe42b3605c2fee73bb4b416c4c40
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index b56c231..8c8699d 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -91,7 +91,7 @@ static struct hwentry default_hw[] =3D {
+ 	},
+ 	{
+ 		.vendor        =3D "HP",
+-		.product       =3D "(HSV2.*|A6189A)",
++		.product       =3D "A6189A",
+ 		.getuid        =3D DEFAULT_GETUID,
+ 		.getprio       =3D NULL,
+ 		.features      =3D DEFAULT_FEATURES,
+@@ -104,6 +104,53 @@ static struct hwentry default_hw[] =3D {
+ 		.minio         =3D DEFAULT_MINIO,
+ 		.checker_name  =3D READSECTOR0,
+ 	},
++	{
++		.vendor        =3D "HP",
++		.product       =3D "HSV20.*",
++		.revision      =3D "[123].*",
++		.getuid        =3D DEFAULT_GETUID,
++		.getprio       =3D NULL,
++		.features      =3D DEFAULT_FEATURES,
++		.hwhandler     =3D DEFAULT_HWHANDLER,
++		.selector      =3D DEFAULT_SELECTOR,
++		.pgpolicy      =3D MULTIBUS,
++		.pgfailback    =3D FAILBACK_UNDEF,
++		.rr_weight     =3D RR_WEIGHT_NONE,
++		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
++		.minio         =3D DEFAULT_MINIO,
++		.checker_name  =3D HP_SW,
++	},
++	{
++		.vendor        =3D "HP",
++		.product       =3D "HSV20.*",
++		.revision      =3D "[^123].*",
++		.getuid        =3D DEFAULT_GETUID,
++		.getprio       =3D "/sbin/mpath_prio_alua /dev/%n",
++		.features      =3D DEFAULT_FEATURES,
++		.hwhandler     =3D DEFAULT_HWHANDLER,
++		.selector      =3D DEFAULT_SELECTOR,
++		.pgpolicy      =3D MULTIBUS,
++		.pgfailback    =3D -FAILBACK_IMMEDIATE,
++		.rr_weight     =3D RR_WEIGHT_PRIORITIES,
++		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
++		.minio         =3D DEFAULT_MINIO,
++		.checker_name  =3D TUR,
++	},
++	{
++		.vendor        =3D "HP",
++		.product       =3D "HSV21.*",
++		.getuid        =3D DEFAULT_GETUID,
++		.getprio       =3D "/sbin/mpath_prio_alua /dev/%n",
++		.features      =3D DEFAULT_FEATURES,
++		.hwhandler     =3D DEFAULT_HWHANDLER,
++		.selector      =3D DEFAULT_SELECTOR,
++		.pgpolicy      =3D GROUP_BY_PRIO,
++		.pgfailback    =3D FAILBACK_UNDEF,
++		.rr_weight     =3D RR_WEIGHT_NONE,
++		.no_path_retry =3D NO_PATH_RETRY_UNDEF,
++		.minio         =3D DEFAULT_MINIO,
++		.checker_name  =3D TUR,
++	},
+ 	/*
+ 	 * DDN controller family
+ 	 *
+--=20
+1.3.1
+
+
+--------------040805080108070409060801--
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
