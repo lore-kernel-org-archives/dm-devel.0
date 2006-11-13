@@ -1,90 +1,38 @@
-From: David Chinner <dgc@sgi.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Mon, 13 Nov 2006 16:43:40 +1100
-Message-ID: <20061113054340.GP11034@melbourne.sgi.com>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<20061110103942.GG3196@elf.ucw.cz>
-	<20061112223012.GH11034@melbourne.sgi.com>
-	<200611122343.06625.rjw@sisk.pl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Stefan Seyfried <seife@suse.de>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Mon, 13 Nov 2006 08:35:33 +0100
+Message-ID: <20061113073533.GA18022@suse.de>
+References: <20061107183459.GG6993@agk.surrey.redhat.com> <20061109232438.GS30653@agk.surrey.redhat.com> <20061109233258.GH2616@elf.ucw.cz> <200611101303.33685.rjw@sisk.pl> <20061112184310.GC5081@ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754228AbWKMHjN@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <200611122343.06625.rjw@sisk.pl>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Rafael J. Wysocki" <rjw@sisk.pl>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Pavel Machek <pavel@ucw.cz>, Alasdair G Kergon <agk@redhat.com>
+In-Reply-To: <20061112184310.GC5081@ucw.cz>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Pavel Machek <pavel@suse.cz>
+Cc: Alasdair G Kergon <agk@redhat.com>, Eric Sandeen <sandeen@redhat.com>, Andrew Morton <akpm@osdl.org>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, "Rafael J. Wysocki" <rjw@sisk.pl>
 List-Id: dm-devel.ids
 
-On Sun, Nov 12, 2006 at 11:43:05PM +0100, Rafael J. Wysocki wrote:
-> On Sunday, 12 November 2006 23:30, David Chinner wrote:
-> > On Fri, Nov 10, 2006 at 11:39:42AM +0100, Pavel Machek wrote:
-> > > On Fri 2006-11-10 11:57:49, David Chinner wrote:
-> > > > On Thu, Nov 09, 2006 at 11:21:46PM +0100, Rafael J. Wysocki wrote:
-> > > > > I think we can add a flag to __create_workqueue() that will indicate if
-> > > > > this one is to be running with PF_NOFREEZE and a corresponding macro like
-> > > > > create_freezable_workqueue() to be used wherever we want the worker thread
-> > > > > to freeze (in which case it should be calling try_to_freeze() somewhere).
-> > > > > Then, we can teach filesystems to use this macro instead of
-> > > > > create_workqueue().
-> > > > 
-> > > > At what point does the workqueue get frozen? i.e. how does this
-> > > > guarantee an unfrozen filesystem will end up in a consistent
-> > > > state?
-> > > 
-> > > Snapshot is atomic; workqueue will be unfrozen with everyone else, but
-> > > as there were no writes in the meantime, there should be no problems.
-> > 
-> > That doesn't answer my question - when in the sequence of freezing
-> > do you propose diasbling the workqueues? before the kernel threads,
-> > after the kernel threads, before you sync the filesystem?
-> 
-> After the sync, along with the freezing of kernel threads.
+On Sun, Nov 12, 2006 at 06:43:10PM +0000, Pavel Machek wrote:
+> Hi!
+=20
+> > (b) it prevents journaling filesystems in general from replaying jo=
+urnals
+> > after a failing resume.
+>=20
+> I do not see b) as an useful goal.
 
-Before or after freezing of the kthreads? Order _could_ be
-important, and different filesystems might require different
-orders. What then?
+I'm not sure, but i guess it also solves "GRUB takes a minute to load k=
+ernel
+and initrd from /boot on suspended reiserfs"-problem, which i see as a =
+_very_
+useful goal.
 
-> > And how does freezing them at that point in time guarantee consistent
-> > filesystem state?
-> 
-> If the work queues are frozen, there won't be any fs-related activity _after_
-> we create the suspend image.
-
-What about if there is still I/O in progress (i.e. kthread wins race and
-issues async I/O after the sync but before it's frozen) - freezing the
-workqueues does not prevent this activity and memory state will continue to
-change as long as there is I/O completing...
-
-> The sync is done after the userland has been
-> frozen, so if the resume is unsuccessful, we'll be able to recover the state
-> of the fs right before the sync,
-
-Yes, in most cases.
-
-> and if the resume is successful, we'll be
-> able to continue (the state of memory will be the same as before the creation
-> of the suspend image and the state of the disk will be the same as before the
-> creation of the suspend image).
-
-Assuming that you actually suspended an idle filesystem, which sync does not
-guarantee you.  Rather than assuming the filesystem is idle, why not guarantee
-that it is idle by freezing it?
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-Principal Engineer
-SGI Australian Software Group
+Often, most of the time needed for resume is spent by GRUB loading the
+kernel/initrd from a journaled FS.
+--=20
+Stefan Seyfried
+QA / R&D Team Mobile Devices        |              "Any ideas, John?"
+SUSE LINUX Products GmbH, N=FCrnberg  | "Well, surrounding them's out."=
+=20
