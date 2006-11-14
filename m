@@ -1,59 +1,77 @@
-From: Jure =?UTF-8?B?UGXEjWFy?= <pegasus@nerv.eu.org>
-Subject: Re: bio too big device dm-XX (256 > 255) on 2.6.17
-Date: Tue, 14 Nov 2006 00:41:20 +0100
-Message-ID: <20061114004120.30c821c8.pegasus@nerv.eu.org>
-References: <20061109005227.73b4fd14.pegasus@nerv.eu.org>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Tue, 14 Nov 2006 11:10:07 +1100
+Message-ID: <20061114001007.GZ8394166@melbourne.sgi.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<200611122343.06625.rjw@sisk.pl>
+	<20061113054340.GP11034@melbourne.sgi.com>
+	<200611131722.55446.rjw@sisk.pl>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20061109005227.73b4fd14.pegasus@nerv.eu.org>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-raid@vger.kernel.org
-Cc: evms-devel@lists.sourceforge.net, dm-devel@redhat.com, reiserfs-list@namesys.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <200611131722.55446.rjw@sisk.pl>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Rafael J. Wysocki" <rjw@sisk.pl>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Pavel Machek <pavel@ucw.cz>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Mon, Nov 13, 2006 at 05:22:54PM +0100, Rafael J. Wysocki wrote:
+> On Monday, 13 November 2006 06:43, David Chinner wrote:
+> > On Sun, Nov 12, 2006 at 11:43:05PM +0100, Rafael J. Wysocki wrote:
+> > Before or after freezing of the kthreads? Order _could_ be
+> > important, and different filesystems might require different
+> > orders. What then?
+> 
+> Well, I don't really think the order is important.  If the freezing of work
+> queues is done by the freezing of their respective worker threads, the
+> other threads won't even know they have been frozen.
 
-Hello,
+True - I just think that some defined ordering semantics might be
+helpful for people trying to use workqueues and kthreads in
+the future. It would also help us determine if the current usage
+is safe as well...
 
-this is getting more and more annoying.
+> > > and if the resume is successful, we'll be
+> > > able to continue (the state of memory will be the same as before the creation
+> > > of the suspend image and the state of the disk will be the same as before the
+> > > creation of the suspend image).
+> > 
+> > Assuming that you actually suspended an idle filesystem, which sync does not
+> > guarantee you.
+> 
+> Even if it's not idle, we are safe as long as the I/O activity doesn't
+> continue after the suspend image has been created.
 
-Somewhere in the stack reiserfs-dm-md-hd[bd] lies the problem that's ca=
-using "bio too big device dm-10 (256 > 255)" errors, which cause i/o fa=
-ilures.
+And that is my great concern - there really is nothing to prevent
+a fs from having I/O outstanding while the suspend image is being
+created.
 
-It works as expected on reiserfs-dm-sda and on ext3-dm-md-hd[bd].
+> > Rather than assuming the filesystem is idle, why not guarantee 
+> > that it is idle by freezing it?
+> 
+> Well, _I_ personally think that the freezing of filesystems is the right thing
+> to do, although it may lead to some complications down the road.
 
-Debian Etch, 2.6.17-2.
+*nod*
 
+I would also prefer to start with something we know is safe and work from
+there.
 
+Cheers,
 
-On Thu, 9 Nov 2006 00:52:27 +0100
-Jure Pe=C4=8Dar <pegasus@nerv.eu.org> wrote:
-
->=20
-> Hello,
->=20
-> Recently I upgraded my home server. I moved EVMS volumes from 3ware h=
-w
-> mirrors (lvm2) to a md raid1 (lvm2) and am now getting lots of these
-> errors, which result in Input/output errors trying to read files from
-> those volumes. It's kind of ugly because I have all the data, I just
-> cannot read it ...
->=20
-> Google comes up with mails from 2003 mentioning such problems. Are th=
-ere
-> any known such problems in recent kernels or am I hitting something n=
-ew
-> here?
-
-
---=20
-
-Jure Pe=C4=8Dar
-http://jure.pecar.org/
--
-To unsubscribe from this list: send the line "unsubscribe linux-raid" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Dave.
+-- 
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
