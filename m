@@ -1,15 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 4/4] [libmultipath] Update hardware table for
-	HPHSV200
-Date: Tue, 14 Nov 2006 08:21:12 +0100
-Message-ID: <45596E68.30901@suse.de>
-References: <0E766B4D32E1BC4A877197B95A04A25A9B31A6@tayexc14.americas.cpqcorp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: John Little <jslittl@hendricks.org>
+Subject: RE: multipath and san fabric
+Date: Tue, 14 Nov 2006 08:09:20 -0500
+Message-ID: <200611140809.21110.jslittl@hendricks.org>
+Reply-To: jslittl@hendricks.org,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0E766B4D32E1BC4A877197B95A04A25A9B31A6@tayexc14.americas.cpqcorp.net>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,28 +19,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: James.Smart@emulex.com, egoggin@emc.com
 List-Id: dm-devel.ids
 
-Reilly, Stephen (MRO) wrote:
-> The product name does change if the firmware uses 'START_STOP_UNIT' or
-> ALUA... so why are we adding the revision?
->=20
-Ah, that's news to me.
-How does the product name change?
-My contacts at HP Boeblingen said that the revision number indicated the=20
-behaviour.
-What are the names of the fw using START_STOP_UNIT?
-And what are those for using ALUA?
+Hi all
 
-And irrespective of this I think matching by revision is still a valid=20
-addition to the hardware table mechanism.
+Wow.  thanks for the responses...
 
-Cheers,
+James Smart <James.Smart@Emulex.Com> wrote on 11/13/2006 02:54:15 PM:
 
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+> >>> Example 2:
+> >>>    Fabric A contains HBA1, TargetPort1, and TargetPort3. 
+> >>> Typically a zone
+> >>>      would exist within Fabric A that contains these 3 ports.
+> >>>    Fabric B contains HBA2, TargetPort2, and TargetPort4. 
+> >>> Typically a zone
+> >>>      would exist within Fabric B that contains these 3 ports.
+> >>>    The storage array contains 2 controllers, with 2 ports per 
+> >>> controller.
+> >>>      Meaning TargetPort1 and TargetPort2 are on controller A, 
+> >>> and TargetPort3
+> >>>      and TargetPort4 are on controller B. The ports are cross 
+> >>> connected on
+> >>>      the fabrics for redundancy. All storage can be seen from 
+> >>> any port.
+> >>>    --
+> >>>    This would ahve 4 DM paths
+> >>>    The I_T nexus's are:
+> >>>       HBA1_TargetPort1
+> >>>       HBA1_TargetPort3
+> >>>       HBA2_TargetPort2
+> >>>       HBA2_TargetPort4
+
+Ok I'm new to SAN and multipathing so maybe it's just the way it is worded.  
+Here is what we have and the instructions that were given to me.
+####
+FCSW00 xxx.xxx.xxx.233 Fabric A 
+FCSW01 xxx.xxx.xxx.234 Fabric B
+FCSW02 xxx.xxx.xxx.235 Fabric A
+FCSW03 xxx.xxx.xxx.236 Fabric B
+
+Summary: One HBA is attached to each fabric; two zones per HBA. One is zoned 
+to a port on SPA and one is zoned to a port on SPB We have a CX600 which has 
+4 ports per SP. So, it could be zoned to SPA0 (0-3)and SPB0(0-3)
+####
+
+If I understand correctly what I have is Example 2 (typo corrected).  Then I 
+would, for an hba connected to Fabric A on a port on FCSW00, setup a zone on 
+FCSW00 and another on FCSW02.  The same would apply for the hba in Fabric B 
+using FCSW01 and FCSW03.
+
+Is this correct or am I still lost?
+
+Thanks,
+John
