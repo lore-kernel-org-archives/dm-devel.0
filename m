@@ -1,15 +1,14 @@
-From: John Little <jslittl@hendricks.org>
-Subject: RE: multipath and san fabric
-Date: Tue, 14 Nov 2006 08:09:20 -0500
-Message-ID: <200611140809.21110.jslittl@hendricks.org>
-Reply-To: jslittl@hendricks.org,
-	device-mapper development <dm-devel@redhat.com>
+From: Dave Wysochanski <dave.wysochanski@redhat.com>
+Subject: RE: patch to discovery.c to still get path priority
+	forpaths with path state of PATH_DOWN
+Date: Tue, 14 Nov 2006 09:26:32 -0500
+Message-ID: <1163514392.4850.22.camel@linux-cxyg.rtp.netapp.com>
+References: <6CCEAEDF4D06984A83F427424F47D6E4013D1540@CORPUSMX40A.corp.emc.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-/3m2jQnSWyZXDtgWKo1L"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D1540@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,58 +18,152 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: James.Smart@emulex.com, egoggin@emc.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Hi all
 
-Wow.  thanks for the responses...
+--=-/3m2jQnSWyZXDtgWKo1L
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-James Smart <James.Smart@Emulex.Com> wrote on 11/13/2006 02:54:15 PM:
+Ed,
 
-> >>> Example 2:
-> >>>    Fabric A contains HBA1, TargetPort1, and TargetPort3. 
-> >>> Typically a zone
-> >>>      would exist within Fabric A that contains these 3 ports.
-> >>>    Fabric B contains HBA2, TargetPort2, and TargetPort4. 
-> >>> Typically a zone
-> >>>      would exist within Fabric B that contains these 3 ports.
-> >>>    The storage array contains 2 controllers, with 2 ports per 
-> >>> controller.
-> >>>      Meaning TargetPort1 and TargetPort2 are on controller A, 
-> >>> and TargetPort3
-> >>>      and TargetPort4 are on controller B. The ports are cross 
-> >>> connected on
-> >>>      the fabrics for redundancy. All storage can be seen from 
-> >>> any port.
-> >>>    --
-> >>>    This would ahve 4 DM paths
-> >>>    The I_T nexus's are:
-> >>>       HBA1_TargetPort1
-> >>>       HBA1_TargetPort3
-> >>>       HBA2_TargetPort2
-> >>>       HBA2_TargetPort4
+Are you saying that there's no way in the path checker to distinguish
+between this kind of path and a path that is genuinely down?  By "down",
+I mean "fails ioctl" either directly or with an unexpected
+CHECK_CONDITION (this seems to be what PATH_DOWN means in the code today
+for all the path checkers).  Can you return another state in your path
+checker for this type of path/LUN?
 
-Ok I'm new to SAN and multipathing so maybe it's just the way it is worded.  
-Here is what we have and the instructions that were given to me.
-####
-FCSW00 xxx.xxx.xxx.233 Fabric A 
-FCSW01 xxx.xxx.xxx.234 Fabric B
-FCSW02 xxx.xxx.xxx.235 Fabric A
-FCSW03 xxx.xxx.xxx.236 Fabric B
+IMO, if at all possible, it would be good to leave "PATH_DOWN" with its
+current meaning and not call the priority callouts for paths in this
+state.  If the priority callouts could obtain priorities without SG_IO
+succeeding, it might make sense, but this is not the case today.  If you
+once had a good priority because you could get a command through, now
+you call it when the path is down it will be replaced with an incorrect
+one.
 
-Summary: One HBA is attached to each fabric; two zones per HBA. One is zoned 
-to a port on SPA and one is zoned to a port on SPB We have a CX600 which has 
-4 ports per SP. So, it could be zoned to SPA0 (0-3)and SPB0(0-3)
-####
+Arguably the states are fuzzy and "types of paths" are mixed in with
+"path states" which leads to the fuzzyness/confusion.  Right now I don't
+have a good enough feel for it to offer clarifying suggestions though
+other than the attached comment patch which tries to clarify the meaning
+of each state as it is in the code today.
 
-If I understand correctly what I have is Example 2 (typo corrected).  Then I 
-would, for an hba connected to Fabric A on a port on FCSW00, setup a zone on 
-FCSW00 and another on FCSW02.  The same would apply for the hba in Fabric B 
-using FCSW01 and FCSW03.
 
-Is this correct or am I still lost?
+On Mon, 2006-11-13 at 15:47 -0500, Edward Goggin wrote:
+> Dave,
+> 
+> Sorry for the confusion.
+> 
+> I realize that at first glance the patch may not make sense, but it
+> is an attempt to avoid the case of not being able to properly assign
+> path groups with a group_by_priority path grouping policy if any of
+> the paths respond successfully to scsi_id(8) and mpath_prio_* but not
+> their multipath path checker.  Such is the case for LUNZ and inactive
+> snapshot logical units on CLARiiON.
+> 
+> Ed
+> 
+> > -----Original Message-----
+> > From: dm-devel-bounces@redhat.com 
+> > [mailto:dm-devel-bounces@redhat.com] On Behalf Of Dave Wysochanski
+> > Sent: Monday, November 13, 2006 3:05 PM
+> > To: device-mapper development
+> > Cc: christophe.varoqui@free.fr
+> > Subject: Re: [dm-devel] patch to discovery.c to still get 
+> > path priority forpaths with path state of PATH_DOWN
+> > 
+> > Ed, I am looking through your patches and in particular this change,
+> > which reverts a previous change I submitted a little while back.
+> > 
+> > Maybe we can do something better like clarify states.  Looking through
+> > the code now and will have more feedback.
+> > 
+> > 
+> > 
+> > On Fri, 2006-11-10 at 18:01 -0500, Edward Goggin wrote:
+> > > --
+> > > dm-devel mailing list
+> > > dm-devel@redhat.com
+> > > https://www.redhat.com/mailman/listinfo/dm-devel
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> > 
+> > 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-Thanks,
-John
+--=-/3m2jQnSWyZXDtgWKo1L
+Content-Disposition: attachment; filename=clarify-path-states.patch
+Content-Type: text/x-patch; name=clarify-path-states.patch; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+Index: multipath-tools/libcheckers/checkers.h
+===================================================================
+--- multipath-tools.orig/libcheckers/checkers.h	2006-10-17 18:28:05.000000000 -0400
++++ multipath-tools/libcheckers/checkers.h	2006-11-14 09:18:39.000000000 -0500
+@@ -2,7 +2,47 @@
+ #define _CHECKERS_H
+ 
+ /*
+- * path states
++ *
++ * Userspace (multipath/multipathd) path states
++ *
++ * PATH_WILD:
++ * Use: None of the checkers (returned if we don't have an fd)
++ * Description: Corner case where "fd <= 0" for path fd (see checker_check())
++ * ??? Might need clarification (when does it happen, etc)
++ *
++ * PATH_UNCHECKED:
++ * - Use: Only in directio checker
++ * - Description: set when fcntl(F_GETFL) fails to return flags or O_DIRECT
++ *   not include in flags, or O_DIRECT read fails
++ * - Notes:
++ *   - multipathd: uses it to skip over paths in sync_map_state()
++ *   - multipath: used in update_paths(); if state==PATH_UNCHECKED, call
++ *     pathinfo()
++ * ??? Might need clarification
++ *
++ * PATH_DOWN
++ * - Use: All checkers (directio, emc_clariion, hp_sw, readsector0, tur)
++ * - Description: Either a) SG_IO ioctl failed, or b) check condition on some
++ *   SG_IO ioctls that succeed (tur, readsector0 checkers); path is down and
++ *   you shouldn't try to send commands to it
++ *
++ * PATH_UP
++ * - Use: All checkers (directio, emc_clariion, hp_sw, readsector0, tur)
++ * - Description: Path is up and I/O can be sent to it
++ *
++ * PATH_SHAKY
++ * - Use: Only emc_clariion
++ * - Description: Indicates path not available for "normal" operations
++ * ??? Probably needs a little clarification
++ *
++ * PATH_GHOST
++ * - Use: Only hp_sw
++ * - Description: Indicates a "passive/standby" path on active/passive HP
++ *   arrays.  These paths will return valid answers to certain SCSI commands
++ *   (tur, read_capacity, inquiry, start_stop), but will fail I/O commands.
++ *   The path needs an initialization command to be sent to it in order for
++ *   I/Os to succeed.
++ *
+  */
+ #define PATH_WILD	-1
+ #define PATH_UNCHECKED	0
+
+--=-/3m2jQnSWyZXDtgWKo1L
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-/3m2jQnSWyZXDtgWKo1L--
