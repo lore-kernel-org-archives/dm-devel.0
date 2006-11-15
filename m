@@ -1,15 +1,13 @@
-From: Dave Wysochanski <dave.wysochanski@redhat.com>
-Subject: RE: patch to discovery.c to still
-	getpathpriorityforpaths with path state of PATH_DOWN
-Date: Wed, 15 Nov 2006 18:09:59 -0500
-Message-ID: <1163632199.8310.15.camel@linux-cxyg.rtp.netapp.com>
-References: <6CCEAEDF4D06984A83F427424F47D6E4013D1554@CORPUSMX40A.corp.emc.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [PATCH 1/1] Resend RTPG command if buffer short
+Date: Thu, 16 Nov 2006 00:17:51 +0100
+Message-ID: <1163632672.10466.150.camel@localhost.localdomain>
+References: <2F9C0315D2701343B960848AD8A6111495009C@exch-2003.incipient.waltham>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="=-6M712xpEclEyqR5Xl2Jw"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D1554@CORPUSMX40A.corp.emc.com>
+In-Reply-To: <2F9C0315D2701343B960848AD8A6111495009C@exch-2003.incipient.waltham>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,79 +17,113 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Edward Goggin <egoggin@emc.com>
-Cc: dm-devel@redhat.com, christophe.varoqui@free.fr
+To: Brian Geisel <brian.geisel@incipient.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2006-11-15 at 17:48 -0500, Edward Goggin wrote:
-> OK.  I was trying not to have to introduce another
-> prio state because that approach just seems prone
-> to error.
+
+--=-6M712xpEclEyqR5Xl2Jw
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+Le mardi 14 novembre 2006 =C3=A0 19:04 -0500, Brian Geisel a =C3=A9crit :
+> Hi Christophe,
 >=20
-> I'll give it a try tomorrow.
+> The following patch adds error and size checking to the REPORT TARGET
+> PORT GROUPS command issued by rtpg.c.  The old code issued a buffer of
+> 128 bytes, but never checked the return length.  The new code starts
+> with a buffer of 128 bytes, but reallocates it if the buffer is too
+> small (SCSI returns the necessary length in the response data).  This i=
+s
+> more robust as it handles devices that consume more than 128 bytes for
+> RTPG, like the Incipient NSP.
 >=20
+> I tried to handle errors, etc. as closely as I could to what is already
+> there in the code.  Let me know if you'd prefer anything written
+> differently.
+>=20
+I merged a slightly modified version.
+Please report about possible regressions.
 
-Ed has a point.
+Thanks,
+cvaroqui
 
-An effect of using the special value approach over the flag is a
-potential conflict with the callouts using the same values.  The flag
-approach isolates his initialization case better.
+--=-6M712xpEclEyqR5Xl2Jw
+Content-Disposition: attachment; filename=0011-alua-adjust-buffer-size.diff
+Content-Type: text/x-patch; name=0011-alua-adjust-buffer-size.diff;
+	charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+diff --git a/path_priority/pp_alua/rtpg.c b/path_priority/pp_alua/rtpg.c
+index 6922d9a..701f9d5 100644
+--- a/path_priority/pp_alua/rtpg.c
++++ b/path_priority/pp_alua/rtpg.c
+@@ -21,6 +21,7 @@ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <unistd.h>
+ #include <errno.h>
++#include <inttypes.h>
+ 
+ #define __user
+ #include <scsi/sg.h>
+@@ -251,14 +252,38 @@ do_rtpg(int fd, void* resp, long resplen
+ int
+ get_asymmetric_access_state(int fd, unsigned int tpg)
+ {
+-	unsigned char		buf[128];
++	unsigned char		*buf;
+ 	struct rtpg_data *	tpgd;
+ 	struct rtpg_tpg_dscr *	dscr;
+ 	int			rc;
+-
+-	rc = do_rtpg(fd, buf, sizeof(buf));
++	int			buflen;
++	uint32_t		scsi_buflen;
++
++	buflen = 128; /* Initial value from old code */
++	buf = (unsigned char *)malloc(buflen);
++	if (!buf) {
++		PRINT_DEBUG ("malloc failed: could not allocate"
++			"%u bytes\n", buflen);
++		return -RTPG_RTPG_FAILED;
++	}
++	rc = do_rtpg(fd, buf, buflen);
+ 	if (rc < 0)
+ 		return rc;
++	scsi_buflen = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
++	if (buflen < (scsi_buflen + 4)) {
++		free(buf);
++		buf = (unsigned char *)malloc(scsi_buflen);
++		if (!buf) {
++			PRINT_DEBUG ("malloc failed: could not allocate"
++				"%u bytes\n", scsi_buflen);
++			return -RTPG_RTPG_FAILED;
++		}
++		buflen = scsi_buflen;
++		rc = do_rtpg(fd, buf, buflen);
++		if (rc < 0)
++			goto out;
++	}
++		
+ 
+ 	tpgd = (struct rtpg_data *) buf;
+ 	rc   = -RTPG_TPG_NOT_FOUND;
+@@ -274,7 +299,8 @@ get_asymmetric_access_state(int fd, unsi
+ 			}
+ 		}
+ 	}
+-
++out:
++	free(buf);
+ 	return rc;
+ }
+ 
+
+--=-6M712xpEclEyqR5Xl2Jw
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-> > -----Original Message-----
-> > From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
-> > Sent: Wednesday, November 15, 2006 5:34 PM
-> > To: goggin, edward
-> > Cc: dave.wysochanski@redhat.com; dm-devel@redhat.com
-> > Subject: RE: [dm-devel] patch to discovery.c to still=20
-> > getpathpriorityforpaths with path state of PATH_DOWN
-> >=20
-> > Le mercredi 15 novembre 2006 =C3=A0 14:48 -0500, Edward Goggin a =C3=A9=
-crit :
-> > > On Wednesday, November 15, 2006 1:49 AM, Dave Wysochanski wrote
-> > >=20
-> > > > One other thought I had was the notion of a "priority valid"=20
-> > > > flag (or a
-> > > > special priority value) in the path for the case of=20
-> > > > group_by_prio.  Set
-> > > > it to invalid in alloc_path(), then just don't add the path to th=
-e
-> > > > multipath struct in coalesce_paths() if the priority value=20
-> > > > was invalid.
-> > > > Then over in checkerloop(), add the path to the multipath=20
-> > map when you
-> > > > get a valid priority.
-> > > >=20
-> > > > It is more complicated than that I'm sure (e.g.=20
-> > checkerloop() assumes
-> > > > pp->mpp is non-null in places, etc) but seemed like a half-decent
-> > > > approach to at least consider.
-> > > >=20
-> > > > This approach doesn't take into consideration the general=20
-> > case of a
-> > > > change in path priority though.
-> > >=20
-> > > I very much like the first part of your "priority valid" idea
-> > > mentioned above.
-> > >=20
-> > > I've enclosed a patch for the first part of your idea.  The patch
-> > > should address the concern you had about recalculating priority
-> > > for a path when its path state changes from not PATH_DOWN to
-> > > PATH_DOWN.  It now only retrieves the priority for PATH_DOWN
-> > > paths if the path's priority has never been successfully
-> > > retrieved before.
-> > >=20
-> > How about the following, clarifying PRIO values and avoiding the
-> > additional "struct path" element ?
-> >=20
-> > Please have a careful look at the=20
-> > multipath/main.c:update_paths change,
-> > because the (!pp->priority) that was there awfully looks like=20
-> > a bug (as
-> > 0 is not a defined prio value).
-> >=20
-> > Regards,
-> > cvaroqui
-> >=20
-> >=20
-> >=20
+--=-6M712xpEclEyqR5Xl2Jw--
