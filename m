@@ -1,18 +1,14 @@
-From: "Rafael J. Wysocki" <rjw@sisk.pl>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Wed, 15 Nov 2006 22:58:51 +0100
-Message-ID: <200611152258.52160.rjw@sisk.pl>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<200611152100.35054.rjw@sisk.pl> <20061115202348.GB3875@elf.ucw.cz>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: RE: patch to discovery.c to still get
+	pathpriorityforpaths with path state of PATH_DOWN
+Date: Wed, 15 Nov 2006 23:33:43 +0100
+Message-ID: <1163630023.10466.141.camel@localhost.localdomain>
+References: <6CCEAEDF4D06984A83F427424F47D6E4013D1552@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-wuDxynyUsFoXy6kTlR2X"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061115202348.GB3875@elf.ucw.cz>
-Content-Disposition: inline
+In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D1552@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,173 +18,173 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Pavel Machek <pavel@ucw.cz>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
+To: Edward Goggin <egoggin@emc.com>
+Cc: dm-devel@redhat.com, dave.wysochanski@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
 
-On Wednesday, 15 November 2006 21:23, Pavel Machek wrote:
-> Hi!
-> 
-> > > There's one more thing, actually.  If the on-disk data and metadata are
-> > > changed _after_ the sync we do and _before_ we create the snapshot image,
-> > > and the subsequent  resume fails,
-> > 
-> > Well, but this is equivalent to a power failure immediately after the sync, so
-> > there _must_ be a way to recover the filesystem from that, no?
-> 
-> Exactly.
-> 
-> > I think I'll prepare a patch for freezing the work queues and we'll see what
-> > to do next.
-> 
-> Thanks!
+--=-wuDxynyUsFoXy6kTlR2X
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-Okay, the patch follows.
+Le mercredi 15 novembre 2006 =C3=A0 14:48 -0500, Edward Goggin a =C3=A9cr=
+it :
+> On Wednesday, November 15, 2006 1:49 AM, Dave Wysochanski wrote
+>=20
+> > One other thought I had was the notion of a "priority valid"=20
+> > flag (or a
+> > special priority value) in the path for the case of=20
+> > group_by_prio.  Set
+> > it to invalid in alloc_path(), then just don't add the path to the
+> > multipath struct in coalesce_paths() if the priority value=20
+> > was invalid.
+> > Then over in checkerloop(), add the path to the multipath map when yo=
+u
+> > get a valid priority.
+> >=20
+> > It is more complicated than that I'm sure (e.g. checkerloop() assumes
+> > pp->mpp is non-null in places, etc) but seemed like a half-decent
+> > approach to at least consider.
+> >=20
+> > This approach doesn't take into consideration the general case of a
+> > change in path priority though.
+>=20
+> I very much like the first part of your "priority valid" idea
+> mentioned above.
+>=20
+> I've enclosed a patch for the first part of your idea.  The patch
+> should address the concern you had about recalculating priority
+> for a path when its path state changes from not PATH_DOWN to
+> PATH_DOWN.  It now only retrieves the priority for PATH_DOWN
+> paths if the path's priority has never been successfully
+> retrieved before.
+>=20
+How about the following, clarifying PRIO values and avoiding the
+additional "struct path" element ?
 
-I've been running it for some time on my boxes and it doesn't seem to break
-anything.  However, I don't use XFS, so well ...
+Please have a careful look at the multipath/main.c:update_paths change,
+because the (!pp->priority) that was there awfully looks like a bug (as
+0 is not a defined prio value).
 
-Greetings,
-Rafael
+Regards,
+cvaroqui
 
 
-Signed-off-by: Rafael J. Wysocki <rjw@sisk.pl>
----
- fs/xfs/linux-2.6/xfs_buf.c |    4 ++--
- include/linux/workqueue.h  |    8 +++++---
- kernel/workqueue.c         |   20 ++++++++++++++------
- 3 files changed, 21 insertions(+), 11 deletions(-)
 
-Index: linux-2.6.19-rc5-mm2/include/linux/workqueue.h
-===================================================================
---- linux-2.6.19-rc5-mm2.orig/include/linux/workqueue.h	2006-09-20 05:42:06.000000000 +0200
-+++ linux-2.6.19-rc5-mm2/include/linux/workqueue.h	2006-11-15 21:58:40.000000000 +0100
-@@ -55,9 +55,11 @@ struct execute_work {
- 	} while (0)
+--=-wuDxynyUsFoXy6kTlR2X
+Content-Disposition: attachment; filename=0010-prio-defines.diff
+Content-Type: text/x-patch; name=0010-prio-defines.diff; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index b66cf23..9d17022 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -441,7 +441,7 @@ coalesce_paths (struct vectors * vecs, v
+ 		if ((mpp = add_map_with_path(vecs, pp1, 0)) == NULL)
+ 			return 1;
  
- extern struct workqueue_struct *__create_workqueue(const char *name,
--						    int singlethread);
--#define create_workqueue(name) __create_workqueue((name), 0)
--#define create_singlethread_workqueue(name) __create_workqueue((name), 1)
-+						    int singlethread,
-+						    int freezeable);
-+#define create_workqueue(name) __create_workqueue((name), 0, 0)
-+#define create_freezeable_workqueue(name) __create_workqueue((name), 0, 1)
-+#define create_singlethread_workqueue(name) __create_workqueue((name), 1, 0)
+-		if (pp1->priority < 0)
++		if (pp1->priority == PRIO_UNDEF)
+ 			mpp->action = ACT_REJECT;
  
- extern void destroy_workqueue(struct workqueue_struct *wq);
- 
-Index: linux-2.6.19-rc5-mm2/kernel/workqueue.c
-===================================================================
---- linux-2.6.19-rc5-mm2.orig/kernel/workqueue.c	2006-11-15 21:32:13.000000000 +0100
-+++ linux-2.6.19-rc5-mm2/kernel/workqueue.c	2006-11-15 22:27:40.000000000 +0100
-@@ -31,6 +31,7 @@
- #include <linux/mempolicy.h>
- #include <linux/kallsyms.h>
- #include <linux/debug_locks.h>
-+#include <linux/freezer.h>
- 
- /*
-  * The per-CPU workqueue (if single thread, we always use the first
-@@ -57,6 +58,8 @@ struct cpu_workqueue_struct {
- 	struct task_struct *thread;
- 
- 	int run_depth;		/* Detect run_workqueue() recursion depth */
-+
-+	int freezeable;		/* Freeze the thread during suspend */
- } ____cacheline_aligned;
- 
- /*
-@@ -251,7 +254,8 @@ static int worker_thread(void *__cwq)
- 	struct k_sigaction sa;
- 	sigset_t blocked;
- 
--	current->flags |= PF_NOFREEZE;
-+	if (!cwq->freezeable)
-+		current->flags |= PF_NOFREEZE;
- 
- 	set_user_nice(current, -5);
- 
-@@ -274,6 +278,9 @@ static int worker_thread(void *__cwq)
- 
- 	set_current_state(TASK_INTERRUPTIBLE);
- 	while (!kthread_should_stop()) {
-+		if (cwq->freezeable)
-+			try_to_freeze();
-+
- 		add_wait_queue(&cwq->more_work, &wait);
- 		if (list_empty(&cwq->worklist))
- 			schedule();
-@@ -350,7 +357,7 @@ void fastcall flush_workqueue(struct wor
- EXPORT_SYMBOL_GPL(flush_workqueue);
- 
- static struct task_struct *create_workqueue_thread(struct workqueue_struct *wq,
--						   int cpu)
-+						   int cpu, int freezeable)
- {
- 	struct cpu_workqueue_struct *cwq = per_cpu_ptr(wq->cpu_wq, cpu);
- 	struct task_struct *p;
-@@ -360,6 +367,7 @@ static struct task_struct *create_workqu
- 	cwq->thread = NULL;
- 	cwq->insert_sequence = 0;
- 	cwq->remove_sequence = 0;
-+	cwq->freezeable = freezeable;
- 	INIT_LIST_HEAD(&cwq->worklist);
- 	init_waitqueue_head(&cwq->more_work);
- 	init_waitqueue_head(&cwq->work_done);
-@@ -375,7 +383,7 @@ static struct task_struct *create_workqu
- }
- 
- struct workqueue_struct *__create_workqueue(const char *name,
--					    int singlethread)
-+					    int singlethread, int freezeable)
- {
- 	int cpu, destroy = 0;
- 	struct workqueue_struct *wq;
-@@ -395,7 +403,7 @@ struct workqueue_struct *__create_workqu
- 	mutex_lock(&workqueue_mutex);
- 	if (singlethread) {
- 		INIT_LIST_HEAD(&wq->list);
--		p = create_workqueue_thread(wq, singlethread_cpu);
-+		p = create_workqueue_thread(wq, singlethread_cpu, freezeable);
- 		if (!p)
- 			destroy = 1;
- 		else
-@@ -403,7 +411,7 @@ struct workqueue_struct *__create_workqu
- 	} else {
- 		list_add(&wq->list, &workqueues);
- 		for_each_online_cpu(cpu) {
--			p = create_workqueue_thread(wq, cpu);
-+			p = create_workqueue_thread(wq, cpu, freezeable);
- 			if (p) {
- 				kthread_bind(p, cpu);
- 				wake_up_process(p);
-@@ -657,7 +665,7 @@ static int __devinit workqueue_cpu_callb
- 		mutex_lock(&workqueue_mutex);
- 		/* Create a new workqueue thread for it. */
- 		list_for_each_entry(wq, &workqueues, list) {
--			if (!create_workqueue_thread(wq, hotcpu)) {
-+			if (!create_workqueue_thread(wq, hotcpu, 0)) {
- 				printk("workqueue for %i failed\n", hotcpu);
- 				return NOTIFY_BAD;
+ 		if (!mpp->paths) {
+@@ -468,7 +468,7 @@ coalesce_paths (struct vectors * vecs, v
+ 					mpp->size);
+ 				mpp->action = ACT_REJECT;
  			}
-Index: linux-2.6.19-rc5-mm2/fs/xfs/linux-2.6/xfs_buf.c
-===================================================================
---- linux-2.6.19-rc5-mm2.orig/fs/xfs/linux-2.6/xfs_buf.c	2006-11-15 21:32:08.000000000 +0100
-+++ linux-2.6.19-rc5-mm2/fs/xfs/linux-2.6/xfs_buf.c	2006-11-15 22:12:43.000000000 +0100
-@@ -1826,11 +1826,11 @@ xfs_buf_init(void)
- 	if (!xfs_buf_zone)
- 		goto out_free_trace_buf;
+-			if (pp2->priority < 0)
++			if (pp2->priority == PRIO_UNDEF)
+ 				mpp->action = ACT_REJECT;
+ 		}
+ 		verify_paths(mpp, vecs, NULL);
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 69c9bc3..f21e5bc 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -638,14 +638,14 @@ get_prio (struct path * pp)
+ 		pp->getprio_selected = 1;
+ 	}
+ 	if (!pp->getprio) {
+-		pp->priority = 1;
++		pp->priority = PRIO_DEFAULT;
+ 	} else if (apply_format(pp->getprio, &buff[0], pp)) {
+ 		condlog(0, "error formatting prio callout command");
+-		pp->priority = -1;
++		pp->priority = PRIO_UNDEF;
+ 		return 1;
+ 	} else if (execute_program(buff, prio, 16)) {
+ 		condlog(0, "error calling out %s", buff);
+-		pp->priority = -1;
++		pp->priority = PRIO_UNDEF;
+ 		return 1;
+ 	} else
+ 		pp->priority = atoi(prio);
+@@ -701,13 +701,12 @@ pathinfo (struct path *pp, vector hwtabl
+ 	if (mask & DI_CHECKER && get_state(pp))
+ 		goto blank;
+ 	
+-	/*
+-	 * Path state of PATH_DOWN does not necessarily prevent
+-	 * path priority callout (or getuid callouot) from
+-	 * succeeding since the path may be being considered
+-	 * failed for reasons other than transport connectivity.
+-	 */
+-	if (mask & DI_PRIO)
++	 /*
++	  * Retrieve path priority for even PATH_DOWN paths if it has never
++	  * been successfully obtained before.
++	  */
++	if (mask & DI_PRIO &&
++	    (pp->state != PATH_DOWN || pp->priority != PRIO_UNDEF))
+ 		get_prio(pp);
  
--	xfslogd_workqueue = create_workqueue("xfslogd");
-+	xfslogd_workqueue = create_freezeable_workqueue("xfslogd");
- 	if (!xfslogd_workqueue)
- 		goto out_free_buf_zone;
+ 	if (mask & DI_WWID && !strlen(pp->wwid))
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index f0564c2..db3f824 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -31,6 +31,7 @@ alloc_path (void)
+ 		pp->sg_id.scsi_id = -1;
+ 		pp->sg_id.lun = -1;
+ 		pp->fd = -1;
++		pp->priority = PRIO_UNDEF;
+ 	}
+ 	return pp;
+ }
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index faa2b8f..7db7faa 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -18,6 +18,9 @@ #define NO_PATH_RETRY_UNDEF	0
+ #define NO_PATH_RETRY_FAIL	-1
+ #define NO_PATH_RETRY_QUEUE	-2
  
--	xfsdatad_workqueue = create_workqueue("xfsdatad");
-+	xfsdatad_workqueue = create_freezeable_workqueue("xfsdatad");
- 	if (!xfsdatad_workqueue)
- 		goto out_destroy_xfslogd_workqueue;
++#define PRIO_UNDEF		-1
++#define PRIO_DEFAULT		1
++
+ enum free_path_switch {
+ 	KEEP_PATHS,
+ 	FREE_PATHS
+diff --git a/multipath/main.c b/multipath/main.c
+index a5f122e..accb230 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -134,7 +134,7 @@ update_paths (struct multipath * mpp)
+ 			if (pp->state == PATH_UNCHECKED)
+ 				pathinfo(pp, conf->hwtable, DI_CHECKER);
  
+-			if (!pp->priority)
++			if (pp->priority == PRIO_UNDEF)
+ 				pathinfo(pp, conf->hwtable, DI_PRIO);
+ 		}
+ 	}
+
+--=-wuDxynyUsFoXy6kTlR2X
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-wuDxynyUsFoXy6kTlR2X--
