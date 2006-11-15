@@ -1,14 +1,15 @@
-From: "Brian Geisel" <brian.geisel@incipient.com>
-Subject: [PATCH 1/1] Resend RTPG command if buffer short
-Date: Tue, 14 Nov 2006 19:04:54 -0500
-Message-ID: <2F9C0315D2701343B960848AD8A6111495009C@exch-2003.incipient.waltham>
+From: Dave Wysochanski <dave.wysochanski@redhat.com>
+Subject: RE: patch to discovery.c to still get path
+	priorityforpaths with path state of PATH_DOWN
+Date: Wed, 15 Nov 2006 01:48:41 -0500
+Message-ID: <1163573321.4917.13.camel@linux-cxyg.rtp.netapp.com>
+References: <6CCEAEDF4D06984A83F427424F47D6E4013D154C@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <6CCEAEDF4D06984A83F427424F47D6E4013D154C@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,78 +19,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@free.fr>
+To: Edward Goggin <egoggin@emc.com>
+Cc: dm-devel@redhat.com, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Hi Christophe,
+On Tue, 2006-11-14 at 15:09 -0500, Edward Goggin wrote:
+> On Tuesday, November 14, 2006 9:27 AM, Dave Wysochanski wrote:
+> > Are you saying that there's no way in the path checker to distinguish
+> > between this kind of path and a path that is genuinely down?
+> 
+> No, I'm certainly not saying that at all.  I would rather not
+> complicate matters by adding yet another path state though.
+> 
+> The particular problem I'm trying to fix is that the path group
+> membership for a multipath map can be incorrectly initially set
+> up if scsi_id(8) is successful but the paths are all failed.
+> When the paths return to a ready state, the path group membership
+> is not corrected by reloading the map -- this only happens if the
+> paths are removed and later added back.
+> 
+> What do you think of a fix involving changing need_switch_pathgroup()
+> in multipathd to check and reload a corrected version of the map
+> in this case?
+>  
 
-The following patch adds error and size checking to the REPORT TARGET
-PORT GROUPS command issued by rtpg.c.  The old code issued a buffer of
-128 bytes, but never checked the return length.  The new code starts
-with a buffer of 128 bytes, but reallocates it if the buffer is too
-small (SCSI returns the necessary length in the response data).  This is
-more robust as it handles devices that consume more than 128 bytes for
-RTPG, like the Incipient NSP.
-
-I tried to handle errors, etc. as closely as I could to what is already
-there in the code.  Let me know if you'd prefer anything written
-differently.
-
-Thanks,
-Brian Geisel
+Maybe something like that yes.  It doesn't look like the code handles a
+switch in priority of a path really at all so putting that in there
+somewhere (checkerloop?) seems worth doing.  Such an approach would have
+to be careful that triggering off a change in priority wouldn't cause
+other problems if the priority callout fails in a transient way (e.g. if
+the priority goes to -1, you probably don't want to modify anything).
 
 
---- a/path_priority/pp_alua/rtpg.c
-+++ b/path_priority/pp_alua/rtpg.c
-@@ -21,6 +21,7 @@
- #include <sys/stat.h>
- #include <unistd.h>
- #include <errno.h>
-+#include <inttypes.h>
-=20
- #define __user
- #include <scsi/sg.h>
-@@ -251,14 +252,33 @@
- int
- get_asymmetric_access_state(int fd, unsigned int tpg)
- {
--	unsigned char		buf[128];
-+	unsigned char		*buf;
- 	struct rtpg_data *	tpgd;
- 	struct rtpg_tpg_dscr *	dscr;
- 	int			rc;
-+	int			buflen;
-+	uint32_t		scsi_buflen;
-=20
--	rc =3D do_rtpg(fd, buf, sizeof(buf));
-+	buflen =3D 128; /* Initial value from old code */
-+	buf =3D (unsigned char *)malloc(buflen);
-+	rc =3D do_rtpg(fd, buf, buflen);
- 	if (rc < 0)
- 		return rc;
-+	scsi_buflen =3D buf[0] << 24 | buf[1] << 16 | buf[2] << 8 |
-buf[3];
-+	if (buflen < (scsi_buflen + 4)) {
-+		free(buf);
-+		buf =3D (unsigned char *)malloc(scsi_buflen);
-+		if (buf =3D=3D NULL) {
-+			PRINT_DEBUG ("malloc failed: could not allocate"
-+				"%u bytes\n", scsi_buflen);
-+			return -RTPG_RTPG_FAILED;
-+		}
-+		buflen =3D scsi_buflen;
-+		rc =3D do_rtpg(fd, buf, buflen);
-+		if (rc < 0)
-+			return rc;
-+	}
-+	=09
-=20
- 	tpgd =3D (struct rtpg_data *) buf;
- 	rc   =3D -RTPG_TPG_NOT_FOUND;
-@@ -275,6 +295,7 @@
- 		}
- 	}
-=20
-+	free(buf);
- 	return rc;
- }
+>  
+> > By "down",
+> > I mean "fails ioctl" either directly or with an unexpected
+> > CHECK_CONDITION (this seems to be what PATH_DOWN means in the 
+> > code today
+> > for all the path checkers).  Can you return another state in your path
+> > checker for this type of path/LUN?
+> > 
+> > IMO, if at all possible, it would be good to leave 
+> > "PATH_DOWN" with its
+> > current meaning and not call the priority callouts for paths in this
+> > state.  If the priority callouts could obtain priorities without SG_IO
+> > succeeding, it might make sense, but this is not the case 
+> > today.  If you
+> > once had a good priority because you could get a command through, now
+> > you call it when the path is down it will be replaced with an 
+> > incorrect
+> > one.
+> 
+> Yes, good point.  The converse of this statement is indeed what my
+> patch is trying to prevent.  That is, initially having an incorrect
+> priority before the path groups are created then having the good or
+> correct priority calculated only after the path groups are already
+> created.
+> 
+
+One other thought I had was the notion of a "priority valid" flag (or a
+special priority value) in the path for the case of group_by_prio.  Set
+it to invalid in alloc_path(), then just don't add the path to the
+multipath struct in coalesce_paths() if the priority value was invalid.
+Then over in checkerloop(), add the path to the multipath map when you
+get a valid priority.
+
+It is more complicated than that I'm sure (e.g. checkerloop() assumes
+pp->mpp is non-null in places, etc) but seemed like a half-decent
+approach to at least consider.
+
+This approach doesn't take into consideration the general case of a
+change in path priority though.
+
+
+> > 
+> > Arguably the states are fuzzy and "types of paths" are mixed in with
+> > "path states" which leads to the fuzzyness/confusion.  Right 
+> > now I don't
+> > have a good enough feel for it to offer clarifying suggestions though
+> > other than the attached comment patch which tries to clarify 
+> > the meaning
+> > of each state as it is in the code today.
