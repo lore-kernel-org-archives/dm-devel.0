@@ -1,17 +1,17 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: patch to discovery.c to still getpathpriorityforpaths
-	with path state of PATH_DOWN
-Date: Wed, 15 Nov 2006 17:48:05 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1554@CORPUSMX40A.corp.emc.com>
-References: <1163630023.10466.141.camel@localhost.localdomain>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Wed, 15 Nov 2006 23:49:26 +0100
+Message-ID: <20061115224926.GA4302@elf.ucw.cz>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<200611152100.35054.rjw@sisk.pl> <20061115202348.GB3875@elf.ucw.cz>
+	<200611152258.52160.rjw@sisk.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <1163630023.10466.141.camel@localhost.localdomain>
+Content-Disposition: inline
+In-Reply-To: <200611152258.52160.rjw@sisk.pl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,68 +21,166 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr
-Cc: dm-devel@redhat.com, dave.wysochanski@redhat.com
+To: "Rafael J. Wysocki" <rjw@sisk.pl>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-OK.  I was trying not to have to introduce another
-prio state because that approach just seems prone
-to error.
+Hi!
 
-I'll give it a try tomorrow.
+> > > > There's one more thing, actually.  If the on-disk data and metadata are
+> > > > changed _after_ the sync we do and _before_ we create the snapshot image,
+> > > > and the subsequent  resume fails,
+> > > 
+> > > Well, but this is equivalent to a power failure immediately after the sync, so
+> > > there _must_ be a way to recover the filesystem from that, no?
+> > 
+> > Exactly.
+> > 
+> > > I think I'll prepare a patch for freezing the work queues and we'll see what
+> > > to do next.
+> > 
+> > Thanks!
+> 
+> Okay, the patch follows.
+> 
+> I've been running it for some time on my boxes and it doesn't seem to break
+> anything.  However, I don't use XFS, so well ...
 
-> -----Original Message-----
-> From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
-> Sent: Wednesday, November 15, 2006 5:34 PM
-> To: goggin, edward
-> Cc: dave.wysochanski@redhat.com; dm-devel@redhat.com
-> Subject: RE: [dm-devel] patch to discovery.c to still=20
-> getpathpriorityforpaths with path state of PATH_DOWN
->=20
-> Le mercredi 15 novembre 2006 =E0 14:48 -0500, Edward Goggin a =E9crit :
-> > On Wednesday, November 15, 2006 1:49 AM, Dave Wysochanski wrote
-> >=20
-> > > One other thought I had was the notion of a "priority valid"=20
-> > > flag (or a
-> > > special priority value) in the path for the case of=20
-> > > group_by_prio.  Set
-> > > it to invalid in alloc_path(), then just don't add the path to the
-> > > multipath struct in coalesce_paths() if the priority value=20
-> > > was invalid.
-> > > Then over in checkerloop(), add the path to the multipath=20
-> map when you
-> > > get a valid priority.
-> > >=20
-> > > It is more complicated than that I'm sure (e.g.=20
-> checkerloop() assumes
-> > > pp->mpp is non-null in places, etc) but seemed like a half-decent
-> > > approach to at least consider.
-> > >=20
-> > > This approach doesn't take into consideration the general=20
-> case of a
-> > > change in path priority though.
-> >=20
-> > I very much like the first part of your "priority valid" idea
-> > mentioned above.
-> >=20
-> > I've enclosed a patch for the first part of your idea.  The patch
-> > should address the concern you had about recalculating priority
-> > for a path when its path state changes from not PATH_DOWN to
-> > PATH_DOWN.  It now only retrieves the priority for PATH_DOWN
-> > paths if the path's priority has never been successfully
-> > retrieved before.
-> >=20
-> How about the following, clarifying PRIO values and avoiding the
-> additional "struct path" element ?
->=20
-> Please have a careful look at the=20
-> multipath/main.c:update_paths change,
-> because the (!pp->priority) that was there awfully looks like=20
-> a bug (as
-> 0 is not a defined prio value).
->=20
-> Regards,
-> cvaroqui
->=20
->=20
->=20
+Seems like a way to go, thanks!
+									Pavel
+
+> Index: linux-2.6.19-rc5-mm2/include/linux/workqueue.h
+> ===================================================================
+> --- linux-2.6.19-rc5-mm2.orig/include/linux/workqueue.h	2006-09-20 05:42:06.000000000 +0200
+> +++ linux-2.6.19-rc5-mm2/include/linux/workqueue.h	2006-11-15 21:58:40.000000000 +0100
+> @@ -55,9 +55,11 @@ struct execute_work {
+>  	} while (0)
+>  
+>  extern struct workqueue_struct *__create_workqueue(const char *name,
+> -						    int singlethread);
+> -#define create_workqueue(name) __create_workqueue((name), 0)
+> -#define create_singlethread_workqueue(name) __create_workqueue((name), 1)
+> +						    int singlethread,
+> +						    int freezeable);
+> +#define create_workqueue(name) __create_workqueue((name), 0, 0)
+> +#define create_freezeable_workqueue(name) __create_workqueue((name), 0, 1)
+> +#define create_singlethread_workqueue(name) __create_workqueue((name), 1, 0)
+>  
+>  extern void destroy_workqueue(struct workqueue_struct *wq);
+>  
+> Index: linux-2.6.19-rc5-mm2/kernel/workqueue.c
+> ===================================================================
+> --- linux-2.6.19-rc5-mm2.orig/kernel/workqueue.c	2006-11-15 21:32:13.000000000 +0100
+> +++ linux-2.6.19-rc5-mm2/kernel/workqueue.c	2006-11-15 22:27:40.000000000 +0100
+> @@ -31,6 +31,7 @@
+>  #include <linux/mempolicy.h>
+>  #include <linux/kallsyms.h>
+>  #include <linux/debug_locks.h>
+> +#include <linux/freezer.h>
+>  
+>  /*
+>   * The per-CPU workqueue (if single thread, we always use the first
+> @@ -57,6 +58,8 @@ struct cpu_workqueue_struct {
+>  	struct task_struct *thread;
+>  
+>  	int run_depth;		/* Detect run_workqueue() recursion depth */
+> +
+> +	int freezeable;		/* Freeze the thread during suspend */
+>  } ____cacheline_aligned;
+>  
+>  /*
+> @@ -251,7 +254,8 @@ static int worker_thread(void *__cwq)
+>  	struct k_sigaction sa;
+>  	sigset_t blocked;
+>  
+> -	current->flags |= PF_NOFREEZE;
+> +	if (!cwq->freezeable)
+> +		current->flags |= PF_NOFREEZE;
+>  
+>  	set_user_nice(current, -5);
+>  
+> @@ -274,6 +278,9 @@ static int worker_thread(void *__cwq)
+>  
+>  	set_current_state(TASK_INTERRUPTIBLE);
+>  	while (!kthread_should_stop()) {
+> +		if (cwq->freezeable)
+> +			try_to_freeze();
+> +
+>  		add_wait_queue(&cwq->more_work, &wait);
+>  		if (list_empty(&cwq->worklist))
+>  			schedule();
+> @@ -350,7 +357,7 @@ void fastcall flush_workqueue(struct wor
+>  EXPORT_SYMBOL_GPL(flush_workqueue);
+>  
+>  static struct task_struct *create_workqueue_thread(struct workqueue_struct *wq,
+> -						   int cpu)
+> +						   int cpu, int freezeable)
+>  {
+>  	struct cpu_workqueue_struct *cwq = per_cpu_ptr(wq->cpu_wq, cpu);
+>  	struct task_struct *p;
+> @@ -360,6 +367,7 @@ static struct task_struct *create_workqu
+>  	cwq->thread = NULL;
+>  	cwq->insert_sequence = 0;
+>  	cwq->remove_sequence = 0;
+> +	cwq->freezeable = freezeable;
+>  	INIT_LIST_HEAD(&cwq->worklist);
+>  	init_waitqueue_head(&cwq->more_work);
+>  	init_waitqueue_head(&cwq->work_done);
+> @@ -375,7 +383,7 @@ static struct task_struct *create_workqu
+>  }
+>  
+>  struct workqueue_struct *__create_workqueue(const char *name,
+> -					    int singlethread)
+> +					    int singlethread, int freezeable)
+>  {
+>  	int cpu, destroy = 0;
+>  	struct workqueue_struct *wq;
+> @@ -395,7 +403,7 @@ struct workqueue_struct *__create_workqu
+>  	mutex_lock(&workqueue_mutex);
+>  	if (singlethread) {
+>  		INIT_LIST_HEAD(&wq->list);
+> -		p = create_workqueue_thread(wq, singlethread_cpu);
+> +		p = create_workqueue_thread(wq, singlethread_cpu, freezeable);
+>  		if (!p)
+>  			destroy = 1;
+>  		else
+> @@ -403,7 +411,7 @@ struct workqueue_struct *__create_workqu
+>  	} else {
+>  		list_add(&wq->list, &workqueues);
+>  		for_each_online_cpu(cpu) {
+> -			p = create_workqueue_thread(wq, cpu);
+> +			p = create_workqueue_thread(wq, cpu, freezeable);
+>  			if (p) {
+>  				kthread_bind(p, cpu);
+>  				wake_up_process(p);
+> @@ -657,7 +665,7 @@ static int __devinit workqueue_cpu_callb
+>  		mutex_lock(&workqueue_mutex);
+>  		/* Create a new workqueue thread for it. */
+>  		list_for_each_entry(wq, &workqueues, list) {
+> -			if (!create_workqueue_thread(wq, hotcpu)) {
+> +			if (!create_workqueue_thread(wq, hotcpu, 0)) {
+>  				printk("workqueue for %i failed\n", hotcpu);
+>  				return NOTIFY_BAD;
+>  			}
+> Index: linux-2.6.19-rc5-mm2/fs/xfs/linux-2.6/xfs_buf.c
+> ===================================================================
+> --- linux-2.6.19-rc5-mm2.orig/fs/xfs/linux-2.6/xfs_buf.c	2006-11-15 21:32:08.000000000 +0100
+> +++ linux-2.6.19-rc5-mm2/fs/xfs/linux-2.6/xfs_buf.c	2006-11-15 22:12:43.000000000 +0100
+> @@ -1826,11 +1826,11 @@ xfs_buf_init(void)
+>  	if (!xfs_buf_zone)
+>  		goto out_free_trace_buf;
+>  
+> -	xfslogd_workqueue = create_workqueue("xfslogd");
+> +	xfslogd_workqueue = create_freezeable_workqueue("xfslogd");
+>  	if (!xfslogd_workqueue)
+>  		goto out_free_buf_zone;
+>  
+> -	xfsdatad_workqueue = create_workqueue("xfsdatad");
+> +	xfsdatad_workqueue = create_freezeable_workqueue("xfsdatad");
+>  	if (!xfsdatad_workqueue)
+>  		goto out_destroy_xfslogd_workqueue;
+>  
+
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
