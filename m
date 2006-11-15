@@ -1,15 +1,16 @@
-From: David Wysochanski <dave.wysochanski@redhat.com>
-Subject: RE: patch to discovery.c to still get
-	pathpriorityforpaths with path state of PATH_DOWN
-Date: Wed, 15 Nov 2006 17:43:35 -0500
-Message-ID: <1163630615.14577.4.camel@dhcp59-220.rdu.redhat.com>
-References: <6CCEAEDF4D06984A83F427424F47D6E4013D1552@CORPUSMX40A.corp.emc.com>
-	<1163630023.10466.141.camel@localhost.localdomain>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: patch to discovery.c to still getpathpriorityforpaths
+	with path state of PATH_DOWN
+Date: Wed, 15 Nov 2006 17:48:05 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1554@CORPUSMX40A.corp.emc.com>
+References: <1163630023.10466.141.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain;
+	charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 In-Reply-To: <1163630023.10466.141.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,13 +21,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@free.fr>
-Cc: dm-devel@redhat.com, Edward Goggin <egoggin@emc.com>
+To: christophe.varoqui@free.fr
+Cc: dm-devel@redhat.com, dave.wysochanski@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2006-11-15 at 23:33 +0100, Christophe Varoqui wrote:
-> Le mercredi 15 novembre 2006 =C3=A0 14:48 -0500, Edward Goggin a =C3=A9=
-crit :
+OK.  I was trying not to have to introduce another
+prio state because that approach just seems prone
+to error.
+
+I'll give it a try tomorrow.
+
+> -----Original Message-----
+> From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
+> Sent: Wednesday, November 15, 2006 5:34 PM
+> To: goggin, edward
+> Cc: dave.wysochanski@redhat.com; dm-devel@redhat.com
+> Subject: RE: [dm-devel] patch to discovery.c to still=20
+> getpathpriorityforpaths with path state of PATH_DOWN
+>=20
+> Le mercredi 15 novembre 2006 =E0 14:48 -0500, Edward Goggin a =E9crit :
 > > On Wednesday, November 15, 2006 1:49 AM, Dave Wysochanski wrote
 > >=20
 > > > One other thought I had was the notion of a "priority valid"=20
@@ -36,16 +49,17 @@ crit :
 > > > it to invalid in alloc_path(), then just don't add the path to the
 > > > multipath struct in coalesce_paths() if the priority value=20
 > > > was invalid.
-> > > Then over in checkerloop(), add the path to the multipath map when =
-you
+> > > Then over in checkerloop(), add the path to the multipath=20
+> map when you
 > > > get a valid priority.
 > > >=20
-> > > It is more complicated than that I'm sure (e.g. checkerloop() assum=
-es
+> > > It is more complicated than that I'm sure (e.g.=20
+> checkerloop() assumes
 > > > pp->mpp is non-null in places, etc) but seemed like a half-decent
 > > > approach to at least consider.
 > > >=20
-> > > This approach doesn't take into consideration the general case of a
+> > > This approach doesn't take into consideration the general=20
+> case of a
 > > > change in path priority though.
 > >=20
 > > I very much like the first part of your "priority valid" idea
@@ -61,18 +75,14 @@ es
 > How about the following, clarifying PRIO values and avoiding the
 > additional "struct path" element ?
 >=20
-> Please have a careful look at the multipath/main.c:update_paths change,
-> because the (!pp->priority) that was there awfully looks like a bug (as
+> Please have a careful look at the=20
+> multipath/main.c:update_paths change,
+> because the (!pp->priority) that was there awfully looks like=20
+> a bug (as
 > 0 is not a defined prio value).
 >=20
-
-0 is the value you'll get though after alloc_path and before anyone
-calls pathinfo right?
-
-Your patch should be equivalent though and is clearer.
-
-
 > Regards,
 > cvaroqui
+>=20
 >=20
 >=20
