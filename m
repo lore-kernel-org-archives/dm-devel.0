@@ -1,17 +1,17 @@
-From: "Reilly, Stephen (MRO)" <Steve.Reilly@hp.com>
-Subject: RE: [PATCH 4/4] [libmultipath] Update hardware
-	table	forHPHSV200
-Date: Thu, 16 Nov 2006 08:42:55 -0500
-Message-ID: <0E766B4D32E1BC4A877197B95A04A25A9F56A4@tayexc14.americas.cpqcorp.net>
-References: <455B0CE9.8040103@suse.de>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Fri, 17 Nov 2006 10:20:57 +1100
+Message-ID: <20061116232057.GH11034@melbourne.sgi.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<200611152100.35054.rjw@sisk.pl> <20061115202348.GB3875@elf.ucw.cz>
+	<200611152258.52160.rjw@sisk.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <455B0CE9.8040103@suse.de>
+Content-Disposition: inline
+In-Reply-To: <200611152258.52160.rjw@sisk.pl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,73 +21,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: "Rafael J. Wysocki" <rjw@sisk.pl>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Pavel Machek <pavel@ucw.cz>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, Nov 15, 2006 at 10:58:51PM +0100, Rafael J. Wysocki wrote:
+> On Wednesday, 15 November 2006 21:23, Pavel Machek wrote:
+> > > I think I'll prepare a patch for freezing the work queues and we'll see what
+> > > to do next.
+> > 
+> > Thanks!
+> 
+> Okay, the patch follows.
+> 
+> I've been running it for some time on my boxes and it doesn't seem to break
+> anything.  However, I don't use XFS, so well ...
 
-
------Original Message-----
-From: Hannes Reinecke [mailto:hare@suse.de]=20
-Sent: Wednesday, November 15, 2006 7:50 AM
-To: Reilly, Stephen (MRO)
-Cc: device-mapper development
-Subject: Re: [dm-devel] [PATCH 4/4] [libmultipath] Update hardware table =
-forHPHSV200
-
-Reilly, Stephen (MRO) wrote:
-[ Quoting appears to be a lost art ... ]
->=20
-> Hannes Reinecke wrote:
- >> Reilly, Stephen (MRO) wrote:
->>> The product name does change if the firmware uses 'START_STOP_UNIT' o=
-r
->>> ALUA... so why are we adding the revision?
->>
->> Ah, that's news to me.
->> How does the product name change?
- >
-> The firmware will change the name
- >
-Oh, that's nice.
-
->> My contacts at HP Boeblingen said that the revision number indicated t=
-he=20
->> behaviour.
->> What are the names of the fw using START_STOP_UNIT?
-> HSV100 and HSV110 EVA3000/5000
-EVA is the name of the machine; HSV is the SCSI model name, right?
-[Reilly, Stephen (MRO)] Correct, presented both for reference
-
->> And what are those for using ALUA?
-> HSV101, HSV111, HSV200 and HSV210 EVA 3000/5000  EVA4000/6000/8000
->=20
-What about the old MSA ones? Is there a firmware upgrade available?
-If so, will the name change there, too?
-
-			 Vendor Id: 		Product Id:=20
-MSA1500 A-A -      "HP      "		      "MSA VOLUME      "
-
-MSA1000 A-P - 	 "COMPAQ  "			"MSA1000 VOLUME  "
-MSA1500 A-P -      "COMPAQ  "			"MSA1000 VOLUME  "
-
-
->> And irrespective of this I think matching by revision is still a valid=
-=20
->> addition to the hardware table mechanism.
-> However I would not use it determine the START_STOP_UNIT or ALUA implem=
-entation
->=20
-I was under the impression that the name would stay the same. If that's=20
-not the case then of course we should match onto the name.
-
-Please check the attached patch if it updates the hwtables correctly.
+So you haven't actually tested whether it fixes anything or whether
+it introduces any regressions?
 
 Cheers,
 
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+Dave.
+-- 
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
