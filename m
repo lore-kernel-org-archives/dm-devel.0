@@ -1,17 +1,21 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: patch to discovery.c to stillgetpathpriorityforpaths
-	with path state of PATH_DOWN
-Date: Fri, 17 Nov 2006 08:49:27 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D155C@CORPUSMX40A.corp.emc.com>
-References: <1163632199.8310.15.camel@linux-cxyg.rtp.netapp.com>
+From: Pavel Machek <pavel@ucw.cz>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
+	not mutex
+Date: Fri, 17 Nov 2006 16:13:48 +0100
+Message-ID: <20061117151348.GA8859@elf.ucw.cz>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>
+	<20061110103942.GG3196@elf.ucw.cz>
+	<20061112223012.GH11034@melbourne.sgi.com>
+	<200611122343.06625.rjw@sisk.pl>
+	<20061116232349.GI11034@melbourne.sgi.com>
+	<20061116234053.GC6757@elf.ucw.cz>
+	<20061117014051.GM11034@melbourne.sgi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <1163632199.8310.15.camel@linux-cxyg.rtp.netapp.com>
+Content-Disposition: inline
+In-Reply-To: <20061117014051.GM11034@melbourne.sgi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,42 +25,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dave.wysochanski@redhat.com
-Cc: dm-devel@redhat.com, christophe.varoqui@free.fr
+To: David Chinner <dgc@sgi.com>
+Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wednesday, November 15, 2006 6:10 PM, Dave Wysochanski wrote:
+On Fri 2006-11-17 12:40:51, David Chinner wrote:
+> On Fri, Nov 17, 2006 at 12:40:53AM +0100, Pavel Machek wrote:
+> > On Fri 2006-11-17 10:23:49, David Chinner wrote:
+> > > On Sun, Nov 12, 2006 at 11:43:05PM +0100, Rafael J. Wysocki wrote:
+> > > > On Sunday, 12 November 2006 23:30, David Chinner wrote:
+> > > > > And how does freezing them at that point in time guarantee consistent
+> > > > > filesystem state?
+> > > > 
+> > > > If the work queues are frozen, there won't be any fs-related activity _after_
+> > > > we create the suspend image. 
+> > > 
+> > > fs-related activity before or after the suspend image is captured is
+> > > not a problem - it's fs-related activity _during_ the suspend that
+> > > is an issue here. If we have async I/O completing during the suspend
+> > > image capture, we've got problems....
+> > 
+> > fs-related activity _after_ image is captured definitely is a problem
+> > -- it breaks swsusp invariants.
+> > 
+> > During image capture, any fs-related activity is not possible, as we
+> > are running interrupts disabled, DMA disabled.
+> 
+> Ok, so the I/o that finishes during the image capture won't be reported
+> until after the capture completes. that means we lose the capability
 
-> On Wed, 2006-11-15 at 17:48 -0500, Edward Goggin wrote:
-> > OK.  I was trying not to have to introduce another
-> > prio state because that approach just seems prone
-> > to error.
-> >=20
-> > I'll give it a try tomorrow.
-> >=20
->=20
-> Ed has a point.
->=20
-> An effect of using the special value approach over the flag is a
-> potential conflict with the callouts using the same values.  The flag
-> approach isolates his initialization case better.
+There's no I/O in flight during image capture. Interrupts are
+disabled, DMAs are stopped, and drivers were told to shut down (that
+includes finishing any outstanding work, and drivers do that
+currently; but perhaps docs should be more explicit about it).
+								Pavel
 
-That's OK I think.  I like this approach better since it seems cleaner
-as long as the callouts stay away from PRIO_UNDEF literal (-1).
-
-I tested with inactive snapshots and just have one minor (but important)
-adjustment to what is in source control at the moment.
-
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index f21e5bc..6f2059a 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -706,7 +706,7 @@ pathinfo (struct path *pp, vector hwtabl
- 	  * been successfully obtained before.
- 	  */
- 	if (mask & DI_PRIO &&
--	    (pp->state !=3D PATH_DOWN || pp->priority !=3D PRIO_UNDEF))
-+	    (pp->state !=3D PATH_DOWN || pp->priority =3D=3D PRIO_UNDEF))
- 		get_prio(pp);
-=20
- 	if (mask & DI_WWID && !strlen(pp->wwid))
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
