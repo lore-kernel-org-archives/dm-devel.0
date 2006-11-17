@@ -1,112 +1,62 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: bio too big device dm-XX (256 > 255) on 2.6.17
-Date: Fri, 17 Nov 2006 16:54:23 +1100
-Message-ID: <17757.20111.137896.276508@cse.unsw.edu.au>
-References: <20061109005227.73b4fd14.pegasus@nerv.eu.org>
-	<20061114004120.30c821c8.pegasus@nerv.eu.org>
-	<17753.17700.818164.511147@cse.unsw.edu.au>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: patch to discovery.c to stillgetpathpriorityforpaths
+	with path state of PATH_DOWN
+Date: Fri, 17 Nov 2006 08:49:27 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D155C@CORPUSMX40A.corp.emc.com>
+References: <1163632199.8310.15.camel@linux-cxyg.rtp.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <evms-devel-bounces@lists.sourceforge.net>
-In-Reply-To: message from Neil Brown on Tuesday November 14
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/evms-devel>,
-	<mailto:evms-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum=evms-devel>
-List-Post: <mailto:evms-devel@lists.sourceforge.net>
-List-Help: <mailto:evms-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/evms-devel>,
-	<mailto:evms-devel-request@lists.sourceforge.net?subject=subscribe>
-Sender: evms-devel-bounces@lists.sourceforge.net
-Errors-To: evms-devel-bounces@lists.sourceforge.net
-To: Jure =?UTF-8?B?UGXEjWFy?= <pegasus@nerv.eu.org>, linux-raid@vger.kernel.org, evms-devel@lists.sourceforge.net, dm-devel@redhat.com
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <1163632199.8310.15.camel@linux-cxyg.rtp.netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dave.wysochanski@redhat.com
+Cc: dm-devel@redhat.com, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-On Tuesday November 14, neilb@suse.de wrote:
-> On Tuesday November 14, pegasus@nerv.eu.org wrote:
-> > 
-> > Hello,
-> > 
-> > this is getting more and more annoying.
-> > 
-> > Somewhere in the stack reiserfs-dm-md-hd[bd] lies the problem that's causing "bio too big device dm-10 (256 > 255)" errors, which cause i/o failures.
-> > 
-> > It works as expected on reiserfs-dm-sda and on ext3-dm-md-hd[bd].
-> > 
-> > Debian Etch, 2.6.17-2.
-> > 
-> 
-> Please try this patch (I can give more detailed instructions if needed).
-> 
+On Wednesday, November 15, 2006 6:10 PM, Dave Wysochanski wrote:
 
-Of course, that patch didn't even compile :-(
+> On Wed, 2006-11-15 at 17:48 -0500, Edward Goggin wrote:
+> > OK.  I was trying not to have to introduce another
+> > prio state because that approach just seems prone
+> > to error.
+> >=20
+> > I'll give it a try tomorrow.
+> >=20
+>=20
+> Ed has a point.
+>=20
+> An effect of using the special value approach over the flag is a
+> potential conflict with the callouts using the same values.  The flag
+> approach isolates his initialization case better.
 
-This one does.
+That's OK I think.  I like this approach better since it seems cleaner
+as long as the callouts stay away from PRIO_UNDEF literal (-1).
 
-NeilBrown
+I tested with inactive snapshots and just have one minor (but important)
+adjustment to what is in source control at the moment.
 
--------------------
-Make sure dm honours max_hw_sectors of underlying devices
-
-
-Signed-off-by: Neil Brown <neilb@suse.de>
-
-### Diffstat output
- ./drivers/md/dm-table.c         |    7 +++++++
- ./include/linux/device-mapper.h |    1 +
- 2 files changed, 8 insertions(+)
-
-diff .prev/drivers/md/dm-table.c ./drivers/md/dm-table.c
---- .prev/drivers/md/dm-table.c	2006-11-17 16:48:34.000000000 +1100
-+++ ./drivers/md/dm-table.c	2006-11-17 16:45:53.000000000 +1100
-@@ -99,6 +99,9 @@ static void combine_restrictions_low(str
- 	lhs->max_segment_size =
- 		min_not_zero(lhs->max_segment_size, rhs->max_segment_size);
- 
-+	lhs->max_hw_sectors =
-+		min_not_zero(lhs->max_hw_sectors, rhs->max_hw_sectors);
-+
- 	lhs->seg_boundary_mask =
- 		min_not_zero(lhs->seg_boundary_mask, rhs->seg_boundary_mask);
- 
-@@ -561,6 +564,9 @@ void dm_set_device_limits(struct dm_targ
- 	rs->max_segment_size =
- 		min_not_zero(rs->max_segment_size, q->max_segment_size);
- 
-+	rs->max_hw_sectors =
-+		min_not_zero(rs->max_hw_sectors, q->max_hw_sectors);
-+
- 	rs->seg_boundary_mask =
- 		min_not_zero(rs->seg_boundary_mask,
- 			     q->seg_boundary_mask);
-@@ -889,6 +895,7 @@ void dm_table_set_restrictions(struct dm
- 	q->max_hw_segments = t->limits.max_hw_segments;
- 	q->hardsect_size = t->limits.hardsect_size;
- 	q->max_segment_size = t->limits.max_segment_size;
-+	q->max_hw_sectors = t->limits.max_hw_sectors;
- 	q->seg_boundary_mask = t->limits.seg_boundary_mask;
- 	if (t->limits.no_cluster)
- 		q->queue_flags &= ~(1 << QUEUE_FLAG_CLUSTER);
-
-diff .prev/include/linux/device-mapper.h ./include/linux/device-mapper.h
---- .prev/include/linux/device-mapper.h	2006-11-17 16:48:34.000000000 +1100
-+++ ./include/linux/device-mapper.h	2006-11-17 16:48:41.000000000 +1100
-@@ -113,6 +113,7 @@ struct io_restrictions {
- 	unsigned short		max_hw_segments;
- 	unsigned short		hardsect_size;
- 	unsigned int		max_segment_size;
-+	unsigned int		max_hw_sectors;
- 	unsigned long		seg_boundary_mask;
- 	unsigned char		no_cluster; /* inverted so that 0 is default */
- };
-
--------------------------------------------------------------------------
-Take Surveys. Earn Cash. Influence the Future of IT
-Join SourceForge.net's Techsay panel and you'll get the chance to share your
-opinions on IT & business topics through brief surveys - and earn cash
-http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
-_______________________________________________
-Evms-devel mailing list
-Evms-devel@lists.sourceforge.net
-To subscribe/unsubscribe, please visit:
-https://lists.sourceforge.net/lists/listinfo/evms-devel
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index f21e5bc..6f2059a 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -706,7 +706,7 @@ pathinfo (struct path *pp, vector hwtabl
+ 	  * been successfully obtained before.
+ 	  */
+ 	if (mask & DI_PRIO &&
+-	    (pp->state !=3D PATH_DOWN || pp->priority !=3D PRIO_UNDEF))
++	    (pp->state !=3D PATH_DOWN || pp->priority =3D=3D PRIO_UNDEF))
+ 		get_prio(pp);
+=20
+ 	if (mask & DI_WWID && !strlen(pp->wwid))
