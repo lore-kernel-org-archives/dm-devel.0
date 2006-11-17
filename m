@@ -1,21 +1,12 @@
-From: Pavel Machek <pavel@ucw.cz>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Fri, 17 Nov 2006 16:13:48 +0100
-Message-ID: <20061117151348.GA8859@elf.ucw.cz>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>
-	<20061110103942.GG3196@elf.ucw.cz>
-	<20061112223012.GH11034@melbourne.sgi.com>
-	<200611122343.06625.rjw@sisk.pl>
-	<20061116232349.GI11034@melbourne.sgi.com>
-	<20061116234053.GC6757@elf.ucw.cz>
-	<20061117014051.GM11034@melbourne.sgi.com>
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
+Subject: 2.6.19-rc6 -- dm: possible recursive locking detected
+Date: Fri, 17 Nov 2006 16:30:03 +0100
+Message-ID: <20061117153003.GB7131@osiris.boeblingen.de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20061117014051.GM11034@melbourne.sgi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,41 +16,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: David Chinner <dgc@sgi.com>
-Cc: Andrew Morton <akpm@osdl.org>, Eric Sandeen <sandeen@redhat.com>, Nigel Cunningham <nigel@suspend2.net>, linux-kernel@vger.kernel.org, "Rafael J. Wysocki" <rjw@sisk.pl>, dm-devel@redhat.com, Srinivasa DS <srinivasa@in.ibm.com>, Alasdair G Kergon <agk@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>, Ingo Molnar <mingo@elte.hu>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri 2006-11-17 12:40:51, David Chinner wrote:
-> On Fri, Nov 17, 2006 at 12:40:53AM +0100, Pavel Machek wrote:
-> > On Fri 2006-11-17 10:23:49, David Chinner wrote:
-> > > On Sun, Nov 12, 2006 at 11:43:05PM +0100, Rafael J. Wysocki wrote:
-> > > > On Sunday, 12 November 2006 23:30, David Chinner wrote:
-> > > > > And how does freezing them at that point in time guarantee consistent
-> > > > > filesystem state?
-> > > > 
-> > > > If the work queues are frozen, there won't be any fs-related activity _after_
-> > > > we create the suspend image. 
-> > > 
-> > > fs-related activity before or after the suspend image is captured is
-> > > not a problem - it's fs-related activity _during_ the suspend that
-> > > is an issue here. If we have async I/O completing during the suspend
-> > > image capture, we've got problems....
-> > 
-> > fs-related activity _after_ image is captured definitely is a problem
-> > -- it breaks swsusp invariants.
-> > 
-> > During image capture, any fs-related activity is not possible, as we
-> > are running interrupts disabled, DMA disabled.
-> 
-> Ok, so the I/o that finishes during the image capture won't be reported
-> until after the capture completes. that means we lose the capability
+Sent this a few days ago, but got no response. Probably because I addressed
+this to the wrong persons. So, next try.
 
-There's no I/O in flight during image capture. Interrupts are
-disabled, DMAs are stopped, and drivers were told to shut down (that
-includes finishing any outstanding work, and drivers do that
-currently; but perhaps docs should be more explicit about it).
-								Pavel
+With current git tree as of today I get this:
 
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+=============================================
+[ INFO: possible recursive locking detected ]
+2.6.19-rc6-g1b9bb3c1 #28
+---------------------------------------------
+kpartx/945 is trying to acquire lock:
+ (&md->io_lock){----}, at: [<00000000001f8faa>] dm_request+0x42/0x24c
+
+but task is already holding lock:
+ (&md->io_lock){----}, at: [<00000000001f8faa>] dm_request+0x42/0x24c
+
+other info that might help us debug this:
+1 lock held by kpartx/945:
+ #0:  (&md->io_lock){----}, at: [<00000000001f8faa>] dm_request+0x42/0x24c
+
+stack backtrace:
+0000000000000000 0000000000000000 0000000000000000 0000000000000000 
+       0000000000000000 00000000003a4d68 00000000003a4d68 0000000000016272 
+       040000000d983280 00000000006d93e8 0000000000000000 0000000000477620 
+       0000000000000000 000000000000000d 000000000d983380 000000000d9833f8 
+       0000000000372450 0000000000016272 000000000d983380 000000000d9833d0 
+Call Trace:
+([<00000000000161d8>] show_trace+0xc0/0xdc)
+ [<0000000000016294>] show_stack+0xa0/0xd0
+ [<00000000000162f2>] dump_stack+0x2e/0x3c
+ [<0000000000063244>] __lock_acquire+0xa80/0xeac
+ [<0000000000063c10>] lock_acquire+0x90/0xc0
+ [<000000000005d540>] down_read+0x54/0x9c
+ [<00000000001f8faa>] dm_request+0x42/0x24c
+ [<000000000017e528>] generic_make_request+0x174/0x1fc
+ [<00000000001f88ee>] __map_bio+0x7e/0xec
+ [<00000000001f8f44>] __split_bio+0x510/0x534
+ [<00000000001f915c>] dm_request+0x1f4/0x24c
+ [<000000000017e528>] generic_make_request+0x174/0x1fc
+ [<000000000017e672>] submit_bio+0xc2/0x18c
+ [<00000000000d7a00>] submit_bh+0x13c/0x1d8
+ [<00000000000da95c>] block_read_full_page+0x3f0/0x470
+ [<00000000000dd2e0>] blkdev_readpage+0x30/0x40
+ [<0000000000084638>] __do_page_cache_readahead+0x190/0x300
+ [<0000000000084976>] blockable_page_cache_readahead+0x7a/0x104
+ [<0000000000084db4>] page_cache_readahead+0x29c/0x328
+ [<000000000007c14c>] do_generic_mapping_read+0x428/0x51c
+ [<000000000007e8fc>] generic_file_aio_read+0x160/0x244
+ [<00000000000a9cac>] do_sync_read+0xd8/0x130
+ [<00000000000a9dac>] vfs_read+0xa8/0x188
+ [<00000000000aa19a>] sys_read+0x56/0x88
+ [<0000000000020d40>] sysc_noemu+0x10/0x16
