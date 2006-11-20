@@ -1,60 +1,36 @@
-From: Bill Davidsen <davidsen@tmr.com>
-Subject: Re: Problem booting linux 2.6.19-rc5, 2.6.19-rc5-git6,      2.6.19-rc5-mm2
- with md raid 1 over lvm root
-Date: Mon, 20 Nov 2006 14:33:19 -0500
-Message-ID: <456202FF.8060709@tmr.com>
-References: <41884.81.64.156.37.1163631254.squirrel@rousalka.dyndns.org> <455BB01B.2080309@gmail.com>
+From: Nicolas Mailhot <nicolas.mailhot@laposte.net>
+Subject: Re: Problem booting linux 2.6.19-rc5, 2.6.19-rc5-git6,
+	2.6.19-rc5-mm2 with md raid 1 over lvm root
+Date: Mon, 20 Nov 2006 20:46:11 +0100
+Message-ID: <1164051973.3004.22.camel@rousalka.dyndns.org>
+References: <41884.81.64.156.37.1163631254.squirrel@rousalka.dyndns.org>
+	 <1164048555.30805.78.camel@mindpipe>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <455BB01B.2080309@gmail.com>
+In-Reply-To: <1164048555.30805.78.camel@mindpipe>
 Sender: linux-ide-owner@vger.kernel.org
-To: Tejun Heo <htejun@gmail.com>
-Cc: Nicolas Mailhot <nicolas.mailhot@laposte.net>, linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, neilb@cse.unsw.edu.au, mingo@redhat.com, dm-devel@redhat.com
+To: Lee Revell <rlrevell@joe-job.com>
+Cc: linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, neilb@cse.unsw.edu.au, mingo@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Tejun Heo wrote:
-> Nicolas Mailhot wrote:
->> The failing kernels (I tried -rc5, -rc5-git6, -rc5-mm2 only print :
->>
->> %<----
->> device-mapper: ioctl: 4.7.0-ioctl (2006-06-24) initialised:
->> dm-devel@redhat.com
->> md: Autodetecting RAID arrays.
->> md: autorun ...
->> md: ... autorun DONE.
->> %<-----
->>
->> (I didn't bother copying the rest of the failing kernel dmesg, as sa=
-ta
->> initialisation fills the first half of the screen, then dm is=20
->> initialised,
->> then you only get the logical consequences of failing to detect the =
-/
->> volume. The sata part seems fine =E2=80=93 it prints the name of the=
- hard drives
->> we want to use)
->>
->> I'm attaching the dmesg for the working distro kernel (yes I know no=
-t=20
->> 100%
->> distro kernel, but very close to one), distro config , and the confi=
-g I
->> used in my test. If anyone could help me to figure what's wrong I'd =
-be
->> grateful.
->
-> Say 'y' not 'm' to SCSI disk support.
->
-That will probably work, but just building a new initrd is probably a=20
-lot easier. Although I thought the SCSI modules were included if built=20
-and installed if present.
+Le lundi 20 novembre 2006 =C3=A0 13:49 -0500, Lee Revell a =C3=A9crit :
+> On Wed, 2006-11-15 at 23:54 +0100, Nicolas Mailhot wrote:
+> > I have the following problem : based on the news that a working als=
+a
+> > driver had just been published and pushed 2.6.19-way, I bought a ne=
+w
+> > sound card (expensive pro, if used one). Unfortunately using the
+> > out-of-tree driver fails, so its author suggested to just try build=
+ing
+> > one of the 2.6.19 rcs.=20
+>=20
+> Just out of curiosity, which soundcard/driver?  I'm not aware of any =
+pro
+> soundcards that got ALSA support recently, just cheap consumer stuff.
+
+E-MU 1820m
 
 --=20
-bill davidsen <davidsen@tmr.com>
-  CTO TMR Associates, Inc
-  Doing interesting things with small computers since 1979
-
-
+Nicolas Mailhot
