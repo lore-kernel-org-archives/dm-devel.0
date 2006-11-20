@@ -1,51 +1,28 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: Re: 2.6.19-rc6 -- dm: possible recursive locking detected
-Date: Mon, 20 Nov 2006 09:49:06 +0100
-Message-ID: <20061120084906.GB17447@osiris.boeblingen.de.ibm.com>
-References: <20061117153003.GB7131@osiris.boeblingen.de.ibm.com>
-	<20061117194303.GB4409@agk.surrey.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Lee Revell <rlrevell@joe-job.com>
+Subject: Re: Problem booting linux 2.6.19-rc5, 2.6.19-rc5-git6,
+	2.6.19-rc5-mm2 with md raid 1 over lvm root
+Date: Mon, 20 Nov 2006 13:49:15 -0500
+Message-ID: <1164048555.30805.78.camel@mindpipe>
+References: <41884.81.64.156.37.1163631254.squirrel@rousalka.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20061117194303.GB4409@agk.surrey.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Andrew Morton <akpm@osdl.org>, Ingo Molnar <mingo@elte.hu>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <41884.81.64.156.37.1163631254.squirrel@rousalka.dyndns.org>
+Sender: linux-raid-owner@vger.kernel.org
+To: Nicolas Mailhot <nicolas.mailhot@laposte.net>
+Cc: linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, linux-raid@vger.kernel.org, neilb@cse.unsw.edu.au, mingo@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Nov 17, 2006 at 07:43:03PM +0000, Alasdair G Kergon wrote:
-> On Fri, Nov 17, 2006 at 04:30:03PM +0100, Heiko Carstens wrote:
-> > =============================================
-> > [ INFO: possible recursive locking detected ]
-> > 2.6.19-rc6-g1b9bb3c1 #28
-> > ---------------------------------------------
-> > kpartx/945 is trying to acquire lock:
-> >  (&md->io_lock){----}, at: [<00000000001f8faa>] dm_request+0x42/0x24c
-> > 
-> > but task is already holding lock:
-> >  (&md->io_lock){----}, at: [<00000000001f8faa>] dm_request+0x42/0x24c
-> 
-> Known problem - nobody's written a patch to fix it yet to my knowledge,
-> but I don't recall any reports of real world lock-ups related to this - just
-> several reports of the debug warning messages:-)
-> 
-> Simply ignore the message for now - or submit a patch that fixes the
-> underlying problem:-)
+On Wed, 2006-11-15 at 23:54 +0100, Nicolas Mailhot wrote:
+> I have the following problem : based on the news that a working alsa
+> driver had just been published and pushed 2.6.19-way, I bought a new
+> sound card (expensive pro, if used one). Unfortunately using the
+> out-of-tree driver fails, so its author suggested to just try building
+> one of the 2.6.19 rcs. 
 
-Ignoring would be good, but this problem renders lockdep useless since it
-stops working after it found the first possible bug.
+Just out of curiosity, which soundcard/driver?  I'm not aware of any pro
+soundcards that got ALSA support recently, just cheap consumer stuff.
 
-While we are at it:
+Lee
 
-this one is sitting since ages in -mm and probably waiting for your approval:
-http://www.kernel.org/pub/linux/kernel/people/akpm/patches/2.6/2.6.19-rc5/2.6.19-rc5-mm2/broken-out/md-dm-reduce-stack-usage-with-stacked-block-devices.patch
