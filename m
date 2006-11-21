@@ -1,13 +1,16 @@
-From: Kalpak Shah <kalpak@linsyssoft.com>
-Subject: Breaking of large IO requests into small bios by
-	device-mapper
-Date: Tue, 21 Nov 2006 19:20:10 +0800
-Message-ID: <1164108010.2925.15.camel@garfield>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: Re: update for shared path checker context
+Date: Tue, 21 Nov 2006 09:14:28 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1570@CORPUSMX40A.corp.emc.com>
+References: <1164067375.25061.7.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <1164067375.25061.7.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,24 +20,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: christophe.varoqui@free.fr
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+On Monday, November 20, 2006 7:03 PM, Christophe Varoqui wrote:
+> To: goggin, edward
+> Cc: dm-devel@redhat.com
+> Subject: [dm-devel] Re: update for shared path checker context
+>=20
+> Le vendredi 17 novembre 2006 =E0 11:21 -0500, Edward Goggin a =E9crit :
+> > Christophe,
+> >=20
+> > I made the following changes.
+> >=20
+> > modified the path checker interface so that each path checker
+> > type could specify the size of their shared path context area
+> >=20
+> > discovery.c:get_state() now returns without setting path state
+> > if the path's mpp pointer is not set (IFF PP_DAEMON) else it
+> > becomes tricky to update the path checker's ptr to the shared
+> > context area after the path checker has been already initialized.
+> >=20
+> > structs.c:free_multipath() now frees shared context area if it was
+> > allocated.
+> >=20
+> Wouldn't a void** mpcontext in struct multipath instead of a=20
+> void* keep
+> us from resorting to those ->size_scxt fonctions ?
 
-Hi I am checking if device-mapper breaks down the reads/writes which are
-sent by the file system. For example if an FS like Lustre sends a 1MB
-read/write whether the request goes to the disk as a single request or
-is it broken down into many small requests.
+Yes, much better idea!
 
-I have put some printks in __map_bio, __split_bio, etc. It seems that
-even though 1 MB writes are sent to the device mapper the bios that are
-sent to generic_make_request in __map_bio are at max 8k in size. In
-function max_io_len(), ti->split_io is just 16 sectors at max, hich is
-why the requests get broken down.
+>=20
+> - mpcontext allocation is deported insode the checker, so only the
+> checker needing the facility have to care.
 
-Why is this ->split_io variable set to 16 sectors? Can it  be more (arnd
-2048 sectors) without affecting the stability?
+OK.
 
-Thanks,
-Kalpak.
+> - mpcontext freeing in free_multipath is ok, I guess
+
+Given your approach, should free mpcontext in the path checker
+free functions ...
+
+>=20
+> Something like the attached patch, for example.
+> (extreme hack to readsector0 to showcase the facility)
+
+I'll try this out with the clariion inactive snapshot stuff
+and let you know.
+
+>=20
+> Regards,
+> cvaroqui
+>=20
+>=20
