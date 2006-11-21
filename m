@@ -1,12 +1,12 @@
 From: Yonathan Cohen <yonic@voltaire.com>
 Subject: Re: Re: open-iscsi + multipath
-Date: Tue, 21 Nov 2006 10:46:04 +0200
-Message-ID: <4562BCCC.8010706@Voltaire.COM>
+Date: Tue, 21 Nov 2006 11:55:15 +0200
+Message-ID: <4562CD03.10806@Voltaire.COM>
 References: <1164025524.104073.215440@f16g2000cwb.googlegroups.com>
 	<4561F63F.2020900@cs.wisc.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=windows-1251; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <4561F63F.2020900@cs.wisc.edu>
@@ -19,7 +19,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, open-iscsi@googlegroups.com
 List-Id: dm-devel.ids
 
 Mike Christie wrote:
@@ -1763,11 +1763,11 @@ configuration
 
 /etc/multipath.conf:
 defaults {
-        polling_interval 5
-        udev_dir /dev
-        default_path_grouping_policy failover
-        rr_weight priorities
-        failback immediate
+       polling_interval 5
+       udev_dir /dev
+       default_path_grouping_policy failover
+       rr_weight priorities
+       failback immediate
 }
 
 The multipathd daemon is responsible for checking the availability of 
