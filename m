@@ -1,14 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-tools with STK FLEXLINE 380
-Date: Wed, 22 Nov 2006 16:29:16 +0100
-Message-ID: <45646CCC.3070601@suse.de>
-References: <1164132148.2066.19.camel@localhost.localdomain>
+From: Dave Wysochanski <dave.wysochanski@redhat.com>
+Subject: Re: Breaking of large IO requests into small bios by
+	device-mapper
+Date: Wed, 22 Nov 2006 12:36:35 -0500
+Message-ID: <1164216995.4473.19.camel@linux-cxyg.rtp.netapp.com>
+References: <1164108010.2925.15.camel@garfield>
+	<1164132122.4874.14.camel@linux-cxyg.rtp.netapp.com>
+	<1164176719.2956.13.camel@garfield>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1164132148.2066.19.camel@localhost.localdomain>
+In-Reply-To: <1164176719.2956.13.camel@garfield>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,74 +21,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: tony.lapointe@connexim.ca, daniel.milani@connexim.ca
+To: Kalpak Shah <kalpak@linsyssoft.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Tony Lapointe wrote:
->                 Do not use 'rr_weight=3Dpriorities'. The priorities
->                 handling is currently buggered; or, put it the other wa=
-y
->                 round, you will need at least my latest fix to get it
->                 working. Just remove that line and stay with the
->                 defaults. That should work.
->                =20
->                 And as a sidenote: Using 'group_by_prio' and
->                 'rr_weight=3Dpriorities' is completely pointless, even =
-if
->                 'rr_weight=3Dpriorities' should be working.'group_by_pr=
-io'
->                 will lump all devices with the same priority into one
->                 group. And 'rr_weight=3Dpriorities' will then modify th=
-e
->                 'minio' based on the priority. So you can as well
->                 directly modify the 'minio'
->                 parameter.'rr_weight=3Dpriorities' only makes sense if =
-you
->                 have path with different priorities in one group, ie
->                 when using 'multibus' or 'group_by_serial'.
->                 Cheers,
->                =20
->                 Hannes
->                 --
->                 Dr. Hannes Reinecke			hare suse de
->                 SuSE Linux Products GmbH		S390 & zSeries
->                 Maxfeldstra=DFe 5				+49 911 74053 688
->                 90409 N=FCrnberg				http://www.suse.de
->=20
->=20
->=20
->=20
-> Hi Hannes,
->=20
-> thanks for the reply.
->=20
-> I've tried without "rr_weight=3Dpriorities" in my multipath.conf but  i=
-t does
- > not work either.
-> The only difference it makes is that "multipath -v3" now output :=20
- > "rr_weight =3D 1 (internal default)"
-> instead of "rr_weight =3D 2 (config file default)".
->=20
-> I was thinking that "group_by_prio" is use to group together devices wi=
-th
- > differents priorities, with the one with the highest priority first,=20
-is it wrong?
->=20
-Yes. It groups devices with _identical_ priorities together.
+Yeah, snapshots was the other possibility and I should have looked
+closer in the code -- you are getting the default chunksize.
 
-> The output of "multipath -d -v2" seems to reflect this :
->=20
-[ .. ]
+You can specify the chunksize when you create the logical volumes below
+but as you said it's limited to 512K at the upper end.  I briefly looked
+at some of the kernel code to try and understand this limitation.  I'm
+just guessing but perhaps the 512K limit is because of the vmalloc in
+dm-exception-store.c?  (maybe someone else on this list more familiar
+with this code can confirm and/or explain the limit)
 
-The output is correct. You have two paths to each disk, and each path=20
-has a different priority. So the multipath topology is correct.
+There is a simple piece of code in lvcreate.c that was changed around
+9/2005 to impose the limitation.  If you want to _experiment_ in a
+simpler way you might think about changing this, rebuilding lvm, and
+using the chunksize param to create your lvs.
 
-Cheers,
 
-Hannes
---=20
-Dr. Hannes Reinecke			hare@suse.de
-SuSE Linux Products GmbH		S390 & zSeries
-Maxfeldstra=DFe 5				+49 911 74053 688
-90409 N=FCrnberg				http://www.suse.de
+
+On Wed, 2006-11-22 at 14:25 +0800, Kalpak Shah wrote:
+> Hi,
+> 
+> Thanks for your reply Dave.
+> 
+> I am not using a striped target. The command I used for creating the
+> logical volume was: 
+> 
+> 1) lvcreate -nMDT -s500M volLustre
+> 2) lvcreate -nOST0 -s500M volLustre
+> 
+> Then I created snapshot LVs for the above two LVs.
+> 
+> 1) lvcreate -L200M -s -n MDTb1 /dev/volLustre/MDT
+> 2) lvcreate -L200M -s -n OST0b1 /dev/volLustre/OST0
+>  
+> I tried to give a chunksize of 1024 but the lvcreate command segfaults.
+> I googled and found that it works only uptil 512K(1024 sectors). 
+> 
+> Let me explain the problem in depth. Lustre sends writes of 1MB, which
+> are getting broken down (max size could be 512KB) into smaller sizes
+> reducing the overall throughput. In function max_io_len() I returned len
+> as it was without splitting it further. In that case the writes/reads
+> sent by Lustre do not get broken down and performance improves
+> considerably. Note that the reads/writes may be bigger in some cases.
+> 
+> Thanks,
+> Kalpak.
+> 
+> On Tue, 2006-11-21 at 13:02 -0500, Dave Wysochanski wrote:
+> > On Tue, 2006-11-21 at 19:20 +0800, Kalpak Shah wrote:
+> > > Hi,ate
+> > > 
+> > > Hi I am checking if device-mapper breaks down the reads/writes which are
+> > > sent by the file system. For example if an FS like Lustre sends a 1MB
+> > > read/write whether the request goes to the disk as a single request or
+> > > is it broken down into many small requests.
+> > > 
+> > It depends how you create the logical volume on which you put the
+> > filesystem.
+> > 
+> > > I have put some printks in __map_bio, __split_bio, etc. It seems that
+> > > even though 1 MB writes are sent to the device mapper the bios that are
+> > > sent to generic_make_request in __map_bio are at max 8k in size. In
+> > > function max_io_len(), ti->split_io is just 16 sectors at max, hich is
+> > > why the requests get broken down.
+> > > 
+> > > Why is this ->split_io variable set to 16 sectors? Can it  be more (arnd
+> > > 2048 sectors) without affecting the stability?
+> > > 
+> > 
+> > That sounds like you created a logical volume with stripe size (in
+> > device mapper it's termed "chunk size") of 8KB.
+> > What is the output of "dmsetup table" for the volume in question?
+> > 
+> > The default stripe size is 64KB (128 sectors) but you can change it when
+> > you create the lv.  An example on my setup I got this for one lv I
+> > created (notice the 16 in the output):
+> > # lvcreate -L 296M -i 2 --stripesize 8K -n lv0 vg0
+> >   Logical volume "lv0" created
+> > # dmsetup table
+> > vg0-lv0: 0 606208 striped 2 16 7:3 384 7:4 384
+> > 
+> > The format for the striped target is:
+> > /*
+> >  * Construct a striped mapping.
+> >  * <number of stripes> <chunk size (2^^n)> [<dev_path> <offset>]+
+> >  */
+> > 
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> > 
+> > 
+> 
