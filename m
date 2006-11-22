@@ -1,16 +1,14 @@
-From: Kalpak Shah <kalpak@linsyssoft.com>
-Subject: Re: Breaking of large IO requests into small bios by
-	device-mapper
-Date: Wed, 22 Nov 2006 14:25:19 +0800
-Message-ID: <1164176719.2956.13.camel@garfield>
-References: <1164108010.2925.15.camel@garfield>
-	<1164132122.4874.14.camel@linux-cxyg.rtp.netapp.com>
+From: Roland Paterson-Jones <roland@rolandpj.com>
+Subject: Re: Help/Info on basic snapshot for CoW
+Date: Wed, 22 Nov 2006 13:47:08 +0200
+Message-ID: <456438BC.1090603@rolandpj.com>
+References: <45632199.9000308@amazon.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1164132122.4874.14.camel@linux-cxyg.rtp.netapp.com>
+In-Reply-To: <45632199.9000308@amazon.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,82 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dave.wysochanski@redhat.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Roland Paterson-Jones wrote:
 
-Thanks for your reply Dave.
+> So, where is the overlay mapping stored? I believe that this is known 
+> as the 'exception store', and I can see some stuff about it in the 
+> source, but where does a persistent overlay map end up?
+>
+> Also, how is the overlay (snapshot) device used? Is there a one-to-one 
+> mapping of (logical device) block offsets onto the overlay (snapshot) 
+> device? If so, where does the overlay map fit in?
 
-I am not using a striped target. The command I used for creating the
-logical volume was: 
+OK, so nobody wants to talk to me :( I'll answer myself, just in case 
+anyone is interested.
 
-1) lvcreate -nMDT -s500M volLustre
-2) lvcreate -nOST0 -s500M volLustre
+It seems that the exception store is maintained in a header at the start 
+of the overlay device, and that CoW writes are done in chunks mapped 
+from the header. There's an in-memory cache of one 'map' area to avoid 
+going to the device for the mapping for every request. So, it seems to 
+be for now that:
+    1. There's no linearity between device offsets on the logical 
+snapshot device, and chunk offsets on the (real) overlay device. It 
+simply depends on access patterns. I'm guessing that this could cause 
+odd head thrashing in obscure cases.
+    2. To support the full logical device extent, the real overlay 
+device has to have enough space for the header plus the device extent. 
+How big is the header?
 
-Then I created snapshot LVs for the above two LVs.
+> Lastly, how do I flush the overlay mapping? Suppose I have had quite 
+> enough of the (modified) snapshot and I want to revert to the original 
+> origin in a snapshot using the same overlay (snapshot) device. I 
+> notice empirically that if I 'dmsetup remove' then 'dmsetup create ... 
+> n ...', then 'dmsetup remove ...' once more, and finally 'dmsetup 
+> create ... p ...', then I have a clean snapshot of the origin again. 
+> I'm guessing there's a better way ;)
 
-1) lvcreate -L200M -s -n MDTb1 /dev/volLustre/MDT
-2) lvcreate -L200M -s -n OST0b1 /dev/volLustre/OST0
- 
-I tried to give a chunksize of 1024 but the lvcreate command segfaults.
-I googled and found that it works only uptil 512K(1024 sectors). 
+Writing over the header at the start of the overlay device does the 
+trick. I'm not sure that the above will work in all cases?\
 
-Let me explain the problem in depth. Lustre sends writes of 1MB, which
-are getting broken down (max size could be 512KB) into smaller sizes
-reducing the overall throughput. In function max_io_len() I returned len
-as it was without splitting it further. In that case the writes/reads
-sent by Lustre do not get broken down and performance improves
-considerably. Note that the reads/writes may be bigger in some cases.
+I'm quite keen on a dm-cow plugin that maintains sector offsets (well 
+linearity at least) between the origin and the CoW overlay for 
+consistent performance. I'd be happy in this case to put the CoW mapping 
+on a separate (small) device, or to put it at the front of the overlay 
+and use a linear bump for all sectors.
 
-Thanks,
-Kalpak.
+The current snapshot facility seems oriented towards taking a small 
+snapshot of a big origin, where all the subsequent action is on the 
+origin. My use case is a sparse origin that I want to CoW over, where 
+all the action is in the CoW overlay.
 
-On Tue, 2006-11-21 at 13:02 -0500, Dave Wysochanski wrote:
-> On Tue, 2006-11-21 at 19:20 +0800, Kalpak Shah wrote:
-> > Hi,ate
-> > 
-> > Hi I am checking if device-mapper breaks down the reads/writes which are
-> > sent by the file system. For example if an FS like Lustre sends a 1MB
-> > read/write whether the request goes to the disk as a single request or
-> > is it broken down into many small requests.
-> > 
-> It depends how you create the logical volume on which you put the
-> filesystem.
-> 
-> > I have put some printks in __map_bio, __split_bio, etc. It seems that
-> > even though 1 MB writes are sent to the device mapper the bios that are
-> > sent to generic_make_request in __map_bio are at max 8k in size. In
-> > function max_io_len(), ti->split_io is just 16 sectors at max, hich is
-> > why the requests get broken down.
-> > 
-> > Why is this ->split_io variable set to 16 sectors? Can it  be more (arnd
-> > 2048 sectors) without affecting the stability?
-> > 
-> 
-> That sounds like you created a logical volume with stripe size (in
-> device mapper it's termed "chunk size") of 8KB.
-> What is the output of "dmsetup table" for the volume in question?
-> 
-> The default stripe size is 64KB (128 sectors) but you can change it when
-> you create the lv.  An example on my setup I got this for one lv I
-> created (notice the 16 in the output):
-> # lvcreate -L 296M -i 2 --stripesize 8K -n lv0 vg0
->   Logical volume "lv0" created
-> # dmsetup table
-> vg0-lv0: 0 606208 striped 2 16 7:3 384 7:4 384
-> 
-> The format for the striped target is:
-> /*
->  * Construct a striped mapping.
->  * <number of stripes> <chunk size (2^^n)> [<dev_path> <offset>]+
->  */
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> 
+The only previous CoW endeavour I can find is the dm-userspace one. I 
+don't really have a need to poke through into user-space tho.
+
+Has anyone else persued a basic dm-cow like this. Otherwise I might just 
+have to write some code =8-O.
+
+Regards
+Roland
