@@ -1,17 +1,16 @@
-From: Roland Paterson-Jones <roland@rolandpj.com>
-Subject: Re: Re: device mapper integrated loops - and one more
-	year !
-Date: Wed, 22 Nov 2006 10:29:02 +0200
-Message-ID: <45640A4E.9090509@rolandpj.com>
-References: <1439173022@web.de>
-	<45636B89.7080407@redhat.com>	<456375CF.10006@rolandpj.com>
-	<456389C4.9000902@redhat.com>
+From: Kalpak Shah <kalpak@linsyssoft.com>
+Subject: Re: Breaking of large IO requests into small bios by
+	device-mapper
+Date: Wed, 22 Nov 2006 14:25:19 +0800
+Message-ID: <1164176719.2956.13.camel@garfield>
+References: <1164108010.2925.15.camel@garfield>
+	<1164132122.4874.14.camel@linux-cxyg.rtp.netapp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <456389C4.9000902@redhat.com>
+In-Reply-To: <1164132122.4874.14.camel@linux-cxyg.rtp.netapp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,52 +20,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dave.wysochanski@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Bryn
+Hi,
 
-Bryn M. Reeves wrote:
+Thanks for your reply Dave.
 
->>Does this mean that dm-loop does not support sparse loop-back files?
->>    
->>
->
->This version doesn't, no. It's not hard to add this though, although it
->does have some implications if they are used. We've had some discussions
->over whether this is necessary/desirable - is this something you'd like
->to see?
->  
->
-We very much need sparse files for our use-case (fairly dynamically 
-setting up (fake) devices on demand). Sparse files save time to copy, 
-for example.
+I am not using a striped target. The command I used for creating the
+logical volume was: 
 
-Would you do this by using file ops to lazily fill holes on first write? 
-Is this compatible with S_SWAPFILE? For read purposes, holes can be 
-mapped to zero device, I presume.
+1) lvcreate -nMDT -s500M volLustre
+2) lvcreate -nOST0 -s500M volLustre
 
->The bmap approach is also used for swapfiles (mm/swapfile.c) - the
->S_SWAPFILE inode flag was added in 2.6.16 when the changeover to mutexes
->happened.
->  
->
-Ah. I did see that - should have made the connection. So which file 
-systems support (obey?) S_SWAPFILE?
+Then I created snapshot LVs for the above two LVs.
 
-I much prefer the approach of mapping to underlying device, cos it 
-sidesteps the file/page cache (loopback causes OOM!). The other annoying 
-thing about loopback is that it re-nices itself to super-low (should 
-that be high?) priority, so we can starve other system daemons by 
-banging on the loopback device.
+1) lvcreate -L200M -s -n MDTb1 /dev/volLustre/MDT
+2) lvcreate -L200M -s -n OST0b1 /dev/volLustre/OST0
+ 
+I tried to give a chunksize of 1024 but the lvcreate command segfaults.
+I googled and found that it works only uptil 512K(1024 sectors). 
 
->There are patches to dmsetup that allow it to be called as "losetup" or
->"dmlosetup", providing the same options as the regular version, so it
->should be straightforward to compare.
->  
->
-Cool. Where can I get a patch to play with? I presume device-mapper 
-plug-ins can be compiled as modules?
+Let me explain the problem in depth. Lustre sends writes of 1MB, which
+are getting broken down (max size could be 512KB) into smaller sizes
+reducing the overall throughput. In function max_io_len() I returned len
+as it was without splitting it further. In that case the writes/reads
+sent by Lustre do not get broken down and performance improves
+considerably. Note that the reads/writes may be bigger in some cases.
 
-Regards
-Roland #2
+Thanks,
+Kalpak.
+
+On Tue, 2006-11-21 at 13:02 -0500, Dave Wysochanski wrote:
+> On Tue, 2006-11-21 at 19:20 +0800, Kalpak Shah wrote:
+> > Hi,ate
+> > 
+> > Hi I am checking if device-mapper breaks down the reads/writes which are
+> > sent by the file system. For example if an FS like Lustre sends a 1MB
+> > read/write whether the request goes to the disk as a single request or
+> > is it broken down into many small requests.
+> > 
+> It depends how you create the logical volume on which you put the
+> filesystem.
+> 
+> > I have put some printks in __map_bio, __split_bio, etc. It seems that
+> > even though 1 MB writes are sent to the device mapper the bios that are
+> > sent to generic_make_request in __map_bio are at max 8k in size. In
+> > function max_io_len(), ti->split_io is just 16 sectors at max, hich is
+> > why the requests get broken down.
+> > 
+> > Why is this ->split_io variable set to 16 sectors? Can it  be more (arnd
+> > 2048 sectors) without affecting the stability?
+> > 
+> 
+> That sounds like you created a logical volume with stripe size (in
+> device mapper it's termed "chunk size") of 8KB.
+> What is the output of "dmsetup table" for the volume in question?
+> 
+> The default stripe size is 64KB (128 sectors) but you can change it when
+> you create the lv.  An example on my setup I got this for one lv I
+> created (notice the 16 in the output):
+> # lvcreate -L 296M -i 2 --stripesize 8K -n lv0 vg0
+>   Logical volume "lv0" created
+> # dmsetup table
+> vg0-lv0: 0 606208 striped 2 16 7:3 384 7:4 384
+> 
+> The format for the striped target is:
+> /*
+>  * Construct a striped mapping.
+>  * <number of stripes> <chunk size (2^^n)> [<dev_path> <offset>]+
+>  */
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
