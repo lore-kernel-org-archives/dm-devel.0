@@ -1,17 +1,12 @@
-From: Dave Wysochanski <dave.wysochanski@redhat.com>
-Subject: Re: Breaking of large IO requests into small bios by
-	device-mapper
-Date: Wed, 22 Nov 2006 12:36:35 -0500
-Message-ID: <1164216995.4473.19.camel@linux-cxyg.rtp.netapp.com>
-References: <1164108010.2925.15.camel@garfield>
-	<1164132122.4874.14.camel@linux-cxyg.rtp.netapp.com>
-	<1164176719.2956.13.camel@garfield>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [PATCH 01/11] dm io: fix bi_max_vecs
+Date: Wed, 22 Nov 2006 18:59:36 +0000
+Message-ID: <20061122185936.GR6993@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1164176719.2956.13.camel@garfield>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,101 +16,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kalpak Shah <kalpak@linsyssoft.com>
-Cc: dm-devel@redhat.com
+To: Andrew Morton <akpm@osdl.org>
+Cc: Heinz Mauelshagen <hjm@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Yeah, snapshots was the other possibility and I should have looked
-closer in the code -- you are getting the default chunksize.
+From: Heinz Mauelshagen <hjm@redhat.com>
 
-You can specify the chunksize when you create the logical volumes below
-but as you said it's limited to 512K at the upper end.  I briefly looked
-at some of the kernel code to try and understand this limitation.  I'm
-just guessing but perhaps the 512K limit is because of the vmalloc in
-dm-exception-store.c?  (maybe someone else on this list more familiar
-with this code can confirm and/or explain the limit)
+The existing code allocates an extra slot in bi_io_vec[] and uses it to
+store the region number.
 
-There is a simple piece of code in lvcreate.c that was changed around
-9/2005 to impose the limitation.  If you want to _experiment_ in a
-simpler way you might think about changing this, rebuilding lvm, and
-using the chunksize param to create your lvs.
+This patch hides the extra slot from bio_add_page() so the region number
+can't get overwritten.
 
+Also remove a hard-coded SECTOR_SHIFT and fix a typo in a comment.
 
+Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+Cc: Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com
 
-On Wed, 2006-11-22 at 14:25 +0800, Kalpak Shah wrote:
-> Hi,
-> 
-> Thanks for your reply Dave.
-> 
-> I am not using a striped target. The command I used for creating the
-> logical volume was: 
-> 
-> 1) lvcreate -nMDT -s500M volLustre
-> 2) lvcreate -nOST0 -s500M volLustre
-> 
-> Then I created snapshot LVs for the above two LVs.
-> 
-> 1) lvcreate -L200M -s -n MDTb1 /dev/volLustre/MDT
-> 2) lvcreate -L200M -s -n OST0b1 /dev/volLustre/OST0
->  
-> I tried to give a chunksize of 1024 but the lvcreate command segfaults.
-> I googled and found that it works only uptil 512K(1024 sectors). 
-> 
-> Let me explain the problem in depth. Lustre sends writes of 1MB, which
-> are getting broken down (max size could be 512KB) into smaller sizes
-> reducing the overall throughput. In function max_io_len() I returned len
-> as it was without splitting it further. In that case the writes/reads
-> sent by Lustre do not get broken down and performance improves
-> considerably. Note that the reads/writes may be bigger in some cases.
-> 
-> Thanks,
-> Kalpak.
-> 
-> On Tue, 2006-11-21 at 13:02 -0500, Dave Wysochanski wrote:
-> > On Tue, 2006-11-21 at 19:20 +0800, Kalpak Shah wrote:
-> > > Hi,ate
-> > > 
-> > > Hi I am checking if device-mapper breaks down the reads/writes which are
-> > > sent by the file system. For example if an FS like Lustre sends a 1MB
-> > > read/write whether the request goes to the disk as a single request or
-> > > is it broken down into many small requests.
-> > > 
-> > It depends how you create the logical volume on which you put the
-> > filesystem.
-> > 
-> > > I have put some printks in __map_bio, __split_bio, etc. It seems that
-> > > even though 1 MB writes are sent to the device mapper the bios that are
-> > > sent to generic_make_request in __map_bio are at max 8k in size. In
-> > > function max_io_len(), ti->split_io is just 16 sectors at max, hich is
-> > > why the requests get broken down.
-> > > 
-> > > Why is this ->split_io variable set to 16 sectors? Can it  be more (arnd
-> > > 2048 sectors) without affecting the stability?
-> > > 
-> > 
-> > That sounds like you created a logical volume with stripe size (in
-> > device mapper it's termed "chunk size") of 8KB.
-> > What is the output of "dmsetup table" for the volume in question?
-> > 
-> > The default stripe size is 64KB (128 sectors) but you can change it when
-> > you create the lv.  An example on my setup I got this for one lv I
-> > created (notice the 16 in the output):
-> > # lvcreate -L 296M -i 2 --stripesize 8K -n lv0 vg0
-> >   Logical volume "lv0" created
-> > # dmsetup table
-> > vg0-lv0: 0 606208 striped 2 16 7:3 384 7:4 384
-> > 
-> > The format for the striped target is:
-> > /*
-> >  * Construct a striped mapping.
-> >  * <number of stripes> <chunk size (2^^n)> [<dev_path> <offset>]+
-> >  */
-> > 
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> > 
-> 
+Index: linux-2.6.19-rc6/drivers/md/dm-io.c
+===================================================================
+--- linux-2.6.19-rc6.orig/drivers/md/dm-io.c	2006-11-22 17:26:47.000000000 +0000
++++ linux-2.6.19-rc6/drivers/md/dm-io.c	2006-11-22 17:26:53.000000000 +0000
+@@ -92,12 +92,12 @@ void dm_io_put(unsigned int num_pages)
+  *---------------------------------------------------------------*/
+ static inline void bio_set_region(struct bio *bio, unsigned region)
+ {
+-	bio->bi_io_vec[bio->bi_max_vecs - 1].bv_len = region;
++	bio->bi_io_vec[bio->bi_max_vecs].bv_len = region;
+ }
+ 
+ static inline unsigned bio_get_region(struct bio *bio)
+ {
+-	return bio->bi_io_vec[bio->bi_max_vecs - 1].bv_len;
++	return bio->bi_io_vec[bio->bi_max_vecs].bv_len;
+ }
+ 
+ /*-----------------------------------------------------------------
+@@ -136,6 +136,7 @@ static int endio(struct bio *bio, unsign
+ 		zero_fill_bio(bio);
+ 
+ 	dec_count(io, bio_get_region(bio), error);
++	bio->bi_max_vecs++;
+ 	bio_put(bio);
+ 
+ 	return 0;
+@@ -250,16 +251,18 @@ static void do_region(int rw, unsigned i
+ 
+ 	while (remaining) {
+ 		/*
+-		 * Allocate a suitably sized bio, we add an extra
+-		 * bvec for bio_get/set_region().
++		 * Allocate a suitably sized-bio: we add an extra
++		 * bvec for bio_get/set_region() and decrement bi_max_vecs
++		 * to hide it from bio_add_page().
+ 		 */
+-		num_bvecs = (remaining / (PAGE_SIZE >> 9)) + 2;
++		num_bvecs = (remaining / (PAGE_SIZE >> SECTOR_SHIFT)) + 2;
+ 		bio = bio_alloc_bioset(GFP_NOIO, num_bvecs, _bios);
+ 		bio->bi_sector = where->sector + (where->count - remaining);
+ 		bio->bi_bdev = where->bdev;
+ 		bio->bi_end_io = endio;
+ 		bio->bi_private = io;
+ 		bio->bi_destructor = dm_bio_destructor;
++		bio->bi_max_vecs--;
+ 		bio_set_region(bio, region);
+ 
+ 		/*
+@@ -302,7 +305,7 @@ static void dispatch_io(int rw, unsigned
+ 	}
+ 
+ 	/*
+-	 * Drop the extra refence that we were holding to avoid
++	 * Drop the extra reference that we were holding to avoid
+ 	 * the io being completed too early.
+ 	 */
+ 	dec_count(io, 0, 0);
