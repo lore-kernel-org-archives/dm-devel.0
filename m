@@ -1,12 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [PATCH 11/11] dm: raid1: reset sync_search on resume
-Date: Wed, 22 Nov 2006 19:05:22 +0000
-Message-ID: <20061122190522.GB6993@agk.surrey.redhat.com>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: Re: update for shared path checker context
+Date: Wed, 22 Nov 2006 14:07:41 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D157A@CORPUSMX40A.corp.emc.com>
+References: <1164067375.25061.7.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C70E69.7C02182A"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
+In-Reply-To: <1164067375.25061.7.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,51 +18,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@osdl.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Jonathan E Brassow <jbrassow@redhat.com>
+This is a multi-part message in MIME format.
 
-Reset sync_search on resume.
-The effect is to retry syncing all out-of-sync regions when a mirror is resumed,
-including ones that previously failed.
+------_=_NextPart_001_01C70E69.7C02182A
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Jonathan E Brassow <jbrassow@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+On Monday, November 20, 2006 7:03 PM, Christophe Varoui wrote
+> Something like the attached patch, for example.
+> (extreme hack to readsector0 to showcase the facility)
 
-Index: linux-2.6.19-rc6/drivers/md/dm-log.c
-===================================================================
---- linux-2.6.19-rc6.orig/drivers/md/dm-log.c	2006-11-22 17:27:01.000000000 +0000
-+++ linux-2.6.19-rc6/drivers/md/dm-log.c	2006-11-22 17:27:02.000000000 +0000
-@@ -466,6 +466,7 @@ static int disk_resume(struct dirty_log 
- 	/* copy clean across to sync */
- 	memcpy(lc->sync_bits, lc->clean_bits, size);
- 	lc->sync_count = count_bits32(lc->clean_bits, lc->bitset_uint32_count);
-+	lc->sync_search = 0;
- 
- 	/* set the correct number of regions in the header */
- 	lc->header.nr_regions = lc->region_count;
-@@ -480,6 +481,13 @@ static uint32_t core_get_region_size(str
- 	return lc->region_size;
- }
- 
-+static int core_resume(struct dirty_log *log)
-+{
-+	struct log_c *lc = (struct log_c *) log->context;
-+	lc->sync_search = 0;
-+	return 0;
-+}
-+
- static int core_is_clean(struct dirty_log *log, region_t region)
- {
- 	struct log_c *lc = (struct log_c *) log->context;
-@@ -621,6 +629,7 @@ static struct dirty_log_type _core_type 
- 	.module = THIS_MODULE,
- 	.ctr = core_ctr,
- 	.dtr = core_dtr,
-+	.resume = core_resume,
- 	.get_region_size = core_get_region_size,
- 	.is_clean = core_is_clean,
- 	.in_sync = core_in_sync,
+Looks good, except for ...
+
+.. just a simple change to multipath/main.c:update_paths()
+to set the mpp field of each path so that the immediately
+following call to pathinfo() will call get_state() on a
+path with its  mpp field set.  This enables "multipath -ll"
+to utilize the shared context field of the multipath struct.
+
+------_=_NextPart_001_01C70E69.7C02182A
+Content-Type: application/octet-stream;
+	name="patch"
+Content-Transfer-Encoding: base64
+Content-Description: patch
+Content-Disposition: attachment;
+	filename="patch"
+
+ZGlmZiAtclU1IG11bHRpcGF0aC10b29scy4xMTIyMjAwNi9tdWx0aXBhdGgvbWFpbi5jIG11bHRp
+cGF0aC10b29scy9tdWx0aXBhdGgvbWFpbi5jCi0tLSBtdWx0aXBhdGgtdG9vbHMuMTEyMjIwMDYv
+bXVsdGlwYXRoL21haW4uYwkyMDA2LTExLTIwIDIwOjI3OjAyLjAwMDAwMDAwMCAtMDYwMAorKysg
+bXVsdGlwYXRoLXRvb2xzL211bHRpcGF0aC9tYWluLmMJMjAwNi0xMS0yMCAyMzoxNTozMi4wMDAw
+MDAwMDAgLTA2MDAKQEAgLTEyOSwxMCArMTI5LDEzIEBACiAJCQkJCWNvbnRpbnVlOwogCQkJCX0K
+IAkJCQlwYXRoaW5mbyhwcCwgY29uZi0+aHd0YWJsZSwgRElfQUxMKTsKIAkJCQljb250aW51ZTsK
+IAkJCX0KKworCQkJcHAtPm1wcCA9IG1wcDsKKwogCQkJaWYgKHBwLT5zdGF0ZSA9PSBQQVRIX1VO
+Q0hFQ0tFRCkKIAkJCQlwYXRoaW5mbyhwcCwgY29uZi0+aHd0YWJsZSwgRElfQ0hFQ0tFUik7CiAK
+IAkJCWlmIChwcC0+cHJpb3JpdHkgPT0gUFJJT19VTkRFRikKIAkJCQlwYXRoaW5mbyhwcCwgY29u
+Zi0+aHd0YWJsZSwgRElfUFJJTyk7Cg==
+
+------_=_NextPart_001_01C70E69.7C02182A
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_001_01C70E69.7C02182A--
