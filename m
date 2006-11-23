@@ -1,16 +1,9 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: [PATCH 01/11] dm io: fix bi_max_vecs
-Date: Thu, 23 Nov 2006 16:26:38 +0100
-Message-ID: <20061123152638.GA3245@redhat.com>
-References: <20061122185936.GR6993@agk.surrey.redhat.com>
-	<20061123091957.GM4999@kernel.dk>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW man/dmsetup.8
+Date: 23 Nov 2006 20:34:16 -0000
+Message-ID: <20061123203416.29198.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20061123091957.GM4999@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,51 +13,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Andrew Morton <akpm@osdl.org>, Heinz Mauelshagen <hjm@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 23, 2006 at 10:19:57AM +0100, Jens Axboe wrote:
-> On Wed, Nov 22 2006, Alasdair G Kergon wrote:
-> > From: Heinz Mauelshagen <hjm@redhat.com>
-> > 
-> > The existing code allocates an extra slot in bi_io_vec[] and uses it to
-> > store the region number.
-> > 
-> > This patch hides the extra slot from bio_add_page() so the region number
-> > can't get overwritten.
-> > 
-> > Also remove a hard-coded SECTOR_SHIFT and fix a typo in a comment.
-> >
-> > Index: linux-2.6.19-rc6/drivers/md/dm-io.c
-> > ===================================================================
-> > --- linux-2.6.19-rc6.orig/drivers/md/dm-io.c	2006-11-22 17:26:47.000000000 +0000
-> > +++ linux-2.6.19-rc6/drivers/md/dm-io.c	2006-11-22 17:26:53.000000000 +0000
-> > @@ -92,12 +92,12 @@ void dm_io_put(unsigned int num_pages)
-> >   *---------------------------------------------------------------*/
-> >  static inline void bio_set_region(struct bio *bio, unsigned region)
-> >  {
-> > -	bio->bi_io_vec[bio->bi_max_vecs - 1].bv_len = region;
-> > +	bio->bi_io_vec[bio->bi_max_vecs].bv_len = region;
-> >  }
-> >  
-> 
-> Ehm eww, that is really ugly code imo.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2006-11-23 20:34:16
 
-Got an idea to squirrel the region more beautiful ?
+Modified files:
+	.              : WHATS_NEW 
+	man            : dmsetup.8 
 
-Heinz
+Log message:
+	Update dmsetup man page (setgeometry & message)
 
-> 
-> -- 
-> Jens Axboe
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.134&r2=1.135
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/man/dmsetup.8.diff?cvsroot=dm&r1=1.15&r2=1.16
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+--- device-mapper/WHATS_NEW	2006/10/19 16:50:05	1.134
++++ device-mapper/WHATS_NEW	2006/11/23 20:34:16	1.135
+@@ -1,5 +1,6 @@
+ Version 1.02.13 - 
+ =============================
++  Update dmsetup man page (setgeometry & message).
+   Fix dmsetup free after getline with debug.
+   Suppress encryption key in 'dmsetup table' output unless --showkeys supplied.
+ 
+--- device-mapper/man/dmsetup.8	2006/10/12 15:42:25	1.15
++++ device-mapper/man/dmsetup.8	2006/11/23 20:34:16	1.16
+@@ -30,6 +30,9 @@
+ .B dmsetup rename
+ .I device_name new_name
+ .br
++.B dmsetup message
++.I device_name sector message
++.br
+ .B dmsetup ls [--target target_type] [--exec command] [--tree [-o options]]
+ .br
+ .B dmsetup info 
+@@ -58,6 +61,9 @@
+ .br
+ .B dmsetup version
+ .br
++.B dmsetup setgeometry
++.I device_name cyl head sect start
++.br
+ 
+ .B devmap_name
+ .I major minor
+@@ -167,6 +173,10 @@
+ .br
+ Loads <table> or table_file into the inactive table slot for device_name.
+ If neither is supplied, reads a table from standard input.
++.IP \fBmessage
++.I device_name sector message
++.br
++Send message to target. If sector not needed use 0.
+ .IP \fBmknodes
+ .I [device_name]
+ .br
+@@ -205,6 +215,10 @@
+ Un-suspends a device.  
+ If an inactive table has been loaded, it becomes live.
+ Postponed I/O then gets re-queued for processing.
++.IP \fBsetgeometry
++.I device_name cyl head sect start
++.br
++Sets the device geometry to C/H/S.
+ .IP \fBstatus
+ .I [--target target_type]
+ .I [device_name]
