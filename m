@@ -1,14 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: multipath-tools - checker for DDN S2A8500
-Date: Fri, 24 Nov 2006 00:25:09 +0100
-Message-ID: <1164324309.25061.67.camel@localhost.localdomain>
-References: <44C75AC0.1030905@ext.bull.net>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: RFC: dm patches for 2.6.16
+Date: Fri, 24 Nov 2006 04:24:44 +0100
+Message-ID: <20061124032444.GH28363@stusta.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="WIyZ46R2i8wDzkSu"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <44C75AC0.1030905@ext.bull.net>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,35 +16,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Frederic TEMPORELLI <frederic.temporelli@ext.bull.net>
-Cc: Ludovic =?ISO-8859-1?Q?Fran=E7ois?= <lfrancois@datadirectnet.com>, dm-devel@redhat.com, Alain Moulle <Alain.Moulle@bull.net>
+To: dm-devel@redhat.com
+Cc: Mark McLoughlin <markmc@redhat.com>, Michal Miroslaw <mirq-linux@rere.qmqm.pl>, Daniel Kobras <kobras@linux.de>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Le mercredi 26 juillet 2006 =C3=A0 14:06 +0200, Frederic TEMPORELLI a =C3=
-=A9crit :
-> Hello,
->=20
->=20
-> When using multipath-tools 0.4.7, I would like to reports that DDN S2A8=
-500 disk=20
-> array reports a wrong status whith 'readsector0' checker. 'directio' se=
-ems to be=20
-> the right checker for such storage system (see following logs).
-> Can you update hwtable.c in this way ?
->=20
-Ok, will do.
 
-BTW, I'm enlisted as maintainer of the tools defaults for this hardware
-but I never came close to one of these beasts.
+--WIyZ46R2i8wDzkSu
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-If you happen to have a long/mid-term access to DDN arrays, I'd be happy
-to enlist you, or whoever Bull engineer, as maintainer.
+The following attached patches seem to make sense for 2.6.16:
 
-This charge is nothing formal nor heavy : just be prepared to receive
-one mail a year asking the hows and whys of Linux multipath on this
-hardware :)
+Added in 2.6.17.11 and 2.6.18:
+dm: BUG/OOPS fix
 
-Please let me know how you feel about that.
+Added in 2.6.17.12 and 2.6.18:
+dm snapshot: unify chunk_size
+dm: add module ref counting
+dm: mirror sector offset fix
+dm: Fix deadlock under high i/o load in raid1 setup.
 
-Regards,
-cvaroqui
+Added in 2.6.19:
+dm snapshot: fix metadata writing when suspending
+
+
+For an easier review, I've attached the patches.
+
+Do these patches look OK for 2.6.16, or should I not apply some or all?
+
+Are there any critical patches I missed?
+
+TIA
+Adrian
+
+-- 
+
+       "Is there not promise of rain?" Ling Tan asked suddenly out
+        of the darkness. There had been need of rain for many days.
+       "Only a promise," Lao Er said.
+                                       Pearl S. Buck - Dragon Seed
+
+
+--WIyZ46R2i8wDzkSu
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="dm-bug-oops-fix.patch"
+
+
+--WIyZ46R2i8wDzkSu
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--WIyZ46R2i8wDzkSu--
