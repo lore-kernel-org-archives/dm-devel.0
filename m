@@ -1,8 +1,10 @@
-From: akpm@osdl.org
-Subject: [patch 170/215] dm: mirror sector offset fix
-Date: Mon, 26 Jun 2006 00:27:26 -0700
-Message-ID: <200606260727.k5Q7RQhI030222@shell0.pdx.osdl.net>
+From: "Claudio Tassini" <claudio.tassini@gmail.com>
+Subject: device multipath configuration file problem
+Date: Fri, 24 Nov 2006 12:39:16 +0100
+Message-ID: <39fdf1c70611240339m36909175hf248829c8554257@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0891940732=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,124 +15,196 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: torvalds@osdl.org
-Cc: stable@kernel.org, agk@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+--===============0891940732==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_24556_27849376.1164368356468"
 
-From: Neil Brown <neilb@suse.de>
+------=_Part_24556_27849376.1164368356468
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-The device-mapper core does not perform any remapping of bios before passing
-them to the targets.  If a particular mapping begins part-way into a device,
-targets obtain the sector relative to the start of the mapping by subtracting
-ti->begin.
+Hi all
 
-The dm-raid1 target didn't do this everywhere: this patch fixes it, taking
-care to subtract ti->begin exactly once for each bio.
+I'm trying to understand how dm works on a RHEL 4u4, ( and RHCS and GFS
+too). I have two QLC HBAs connected to a Sun Storage 3510 via a couple of
+SANBOX2 switches. Initially I uncommented all the entries in the
+configuration file to make some test and I manage to discover the three luns
+which where recognized correctly whit their path:
 
-[akpm: too late for 2.6.17 - suitable for 2.6.17.x after it has settled]
+[root@store1 ~]# multipath -ll
+3600c0ff00000000009897a30ae0b0401
+[size=369 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:1:1 sde 8:64  [active][ready]
+ \_ 2:0:1:1 sdh 8:112 [active][ready]
 
-Signed-off-by: Neil Brown <neilb@suse.de>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Andrew Morton <akpm@osdl.org>
-Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
----
+3600c0ff00000000009897a30ae0b0400
+[size=40 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:1:0 sdd 8:48  [active][ready]
+ \_ 2:0:1:0 sdg 8:96  [active][ready]
 
- drivers/md/dm-raid1.c |   63 +++++++++++++++++++++++++-------------------------
- 1 file changed, 32 insertions(+), 31 deletions(-)
+3600c0ff00000000009897a5a29e3f800
+[size=1091 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:0:0 sdc 8:32  [active][ready]
+ \_ 2:0:0:0 sdf 8:80  [active][ready]
 
---- linux-2.6.17.11.orig/drivers/md/dm-raid1.c
-+++ linux-2.6.17.11/drivers/md/dm-raid1.c
-@@ -106,12 +106,42 @@ struct region {
- 	struct bio_list delayed_bios;
- };
- 
-+
-+/*-----------------------------------------------------------------
-+ * Mirror set structures.
-+ *---------------------------------------------------------------*/
-+struct mirror {
-+	atomic_t error_count;
-+	struct dm_dev *dev;
-+	sector_t offset;
-+};
-+
-+struct mirror_set {
-+	struct dm_target *ti;
-+	struct list_head list;
-+	struct region_hash rh;
-+	struct kcopyd_client *kcopyd_client;
-+
-+	spinlock_t lock;	/* protects the next two lists */
-+	struct bio_list reads;
-+	struct bio_list writes;
-+
-+	/* recovery */
-+	region_t nr_regions;
-+	int in_sync;
-+
-+	struct mirror *default_mirror;	/* Default mirror */
-+
-+	unsigned int nr_mirrors;
-+	struct mirror mirror[0];
-+};
-+
- /*
-  * Conversion fns
-  */
- static inline region_t bio_to_region(struct region_hash *rh, struct bio *bio)
- {
--	return bio->bi_sector >> rh->region_shift;
-+	return (bio->bi_sector - rh->ms->ti->begin) >> rh->region_shift;
- }
- 
- static inline sector_t region_to_sector(struct region_hash *rh, region_t region)
-@@ -541,35 +571,6 @@ static void rh_start_recovery(struct reg
- 	wake();
- }
- 
--/*-----------------------------------------------------------------
-- * Mirror set structures.
-- *---------------------------------------------------------------*/
--struct mirror {
--	atomic_t error_count;
--	struct dm_dev *dev;
--	sector_t offset;
--};
--
--struct mirror_set {
--	struct dm_target *ti;
--	struct list_head list;
--	struct region_hash rh;
--	struct kcopyd_client *kcopyd_client;
--
--	spinlock_t lock;	/* protects the next two lists */
--	struct bio_list reads;
--	struct bio_list writes;
--
--	/* recovery */
--	region_t nr_regions;
--	int in_sync;
--
--	struct mirror *default_mirror;	/* Default mirror */
--
--	unsigned int nr_mirrors;
--	struct mirror mirror[0];
--};
--
- /*
-  * Every mirror should look like this one.
-  */
-@@ -1115,7 +1116,7 @@ static int mirror_map(struct dm_target *
- 	struct mirror *m;
- 	struct mirror_set *ms = ti->private;
- 
--	map_context->ll = bio->bi_sector >> ms->rh.region_shift;
-+	map_context->ll = bio_to_region(&ms->rh, bio);
- 
- 	if (rw == WRITE) {
- 		queue_bio(ms, bio, rw);
+Now, the problem is:
+1) the default configuration should provide a failover policy, but it seems
+that it is actually using an active-active one
+2) Any change I make to /etc/multipath.conf , the output of multipath -ll
+remains the same. Also tried to flush and reload, restart the daemon etc..
+Always the same.
+3) If even I REMOVE the configuration file and reboot the server, it keeps
+discovering the same paths! :
 
---WIyZ46R2i8wDzkSu
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="dm-fix-deadlock-under-high-i-o-load-in-raid1-setup.patch"
+[root@store1 ~]# ls /etc/multipath.conf
+ls: /etc/multipath.conf: No such file or directory
+[root@store1 ~]# multipath -ll
+3600c0ff00000000009897a30ae0b0401
+[size=369 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:1:1 sde 8:64  [active][ready]
+ \_ 2:0:1:1 sdh 8:112 [active][ready]
+
+3600c0ff00000000009897a30ae0b0400
+[size=40 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:1:0 sdd 8:48  [active][ready]
+ \_ 2:0:1:0 sdg 8:96  [active][ready]
+
+3600c0ff00000000009897a5a29e3f800
+[size=1091 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:0:0 sdc 8:32  [active][ready]
+ \_ 2:0:0:0 sdf 8:80  [active][ready]
+[root@store1 ~]# multipath -v2 -F
+[root@store1 ~]#
+[root@store1 ~]# multipath -ll
+[root@store1 ~]#
+[root@store1 ~]# /etc/init.d/multipathd restart
+Stopping multipathd daemon:                                [  OK  ]
+Starting multipathd daemon:                                [  OK  ]
+[root@store1 ~]#
+[root@store1 ~]# multipath -v2 -ll
+[root@store1 ~]# multipath -v2 -d
+create: SSEAGATE_ST973401LSUN72G0210CB0H____________3LB0CB0H
+[size=68 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=1]
+ \_ 0:0:0:0 sda 8:0   [ready]
+
+create: SSEAGATE_ST973401LSUN72G0210BTPF____________3LB0BTPF
+[size=68 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=1]
+ \_ 0:0:1:0 sdb 8:16  [ready]
+
+create: 3600c0ff00000000009897a5a29e3f800
+[size=1091 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2]
+ \_ 1:0:0:0 sdc 8:32  [ready]
+ \_ 2:0:0:0 sdf 8:80  [ready]
+
+create: 3600c0ff00000000009897a30ae0b0400
+[size=40 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2]
+ \_ 1:0:1:0 sdd 8:48  [ready]
+ \_ 2:0:1:0 sdg 8:96  [ready]
+
+create: 3600c0ff00000000009897a30ae0b0401
+[size=369 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2]
+ \_ 1:0:1:1 sde 8:64  [ready]
+ \_ 2:0:1:1 sdh 8:112 [ready]
+[root@store1 ~]# multipath -v2 -ll
+[root@store1 ~]# multipath -v2
+create: 3600c0ff00000000009897a5a29e3f800
+[size=1091 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2]
+ \_ 1:0:0:0 sdc 8:32  [ready]
+ \_ 2:0:0:0 sdf 8:80  [ready]
+
+create: 3600c0ff00000000009897a30ae0b0400
+[size=40 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2]
+ \_ 1:0:1:0 sdd 8:48  [ready]
+ \_ 2:0:1:0 sdg 8:96  [ready]
+
+create: 3600c0ff00000000009897a30ae0b0401
+[size=369 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2]
+ \_ 1:0:1:1 sde 8:64  [ready]
+ \_ 2:0:1:1 sdh 8:112 [ready]
+
+[root@store1 ~]# multipath -v2 -ll
+3600c0ff00000000009897a30ae0b0401
+[size=369 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:1:1 sde 8:64  [active][ready]
+ \_ 2:0:1:1 sdh 8:112 [active][ready]
+
+3600c0ff00000000009897a30ae0b0400
+[size=40 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:1:0 sdd 8:48  [active][ready]
+ \_ 2:0:1:0 sdg 8:96  [active][ready]
+
+3600c0ff00000000009897a5a29e3f800
+[size=1091 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [prio=2][active]
+ \_ 1:0:0:0 sdc 8:32  [active][ready]
+ \_ 2:0:0:0 sdf 8:80  [active][ready]
+
+[root@store1 ~]#
+
+
+How is it possible??
+
+Thanks in advance
+
+-- 
+Claudio Tassini
+
+------=_Part_24556_27849376.1164368356468
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Hi all<br><br>I'm trying to understand how dm works on a RHEL 4u4, ( and RHCS and GFS too). I have two QLC HBAs connected to a Sun Storage 3510 via a couple of SANBOX2 switches. Initially I uncommented all the entries in the configuration file to make some test and I manage to discover the three luns which where recognized correctly whit their path:
+<br><br clear="all">[root@store1 ~]# multipath -ll<br>3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [active][ready]
+<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [active][ready]<br><br>3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [active][ready]
+<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [active][ready]<br><br>3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [active][ready]
+<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [active][ready]<br><br>Now, the problem is:<br>1) the default configuration should provide a failover policy, but it seems that it is actually using an active-active one<br>2) Any change I make to /etc/multipath.conf , the output of multipath -ll remains the same. Also tried to flush and reload, restart the daemon etc.. Always the same.
+<br>3) If even I REMOVE the configuration file and reboot the server, it keeps discovering the same paths! :<br><br>[root@store1 ~]# ls /etc/multipath.conf<br>ls: /etc/multipath.conf: No such file or directory<br>[root@store1
+ ~]# multipath -ll<br>3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [active][ready]
+<br><br>3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [active][ready]
+<br><br>3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [active][ready]<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [active][ready]
+<br>[root@store1 ~]# multipath -v2 -F<br>[root@store1 ~]#<br>[root@store1 ~]# multipath -ll<br>[root@store1 ~]#<br>[root@store1 ~]# /etc/init.d/multipathd restart<br>Stopping multipathd daemon:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [&nbsp; OK&nbsp; ]
+<br>Starting multipathd daemon:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [&nbsp; OK&nbsp; ]<br>[root@store1 ~]#<br>[root@store1 ~]# multipath -v2 -ll<br>[root@store1 ~]# multipath -v2 -d<br>create: SSEAGATE_ST973401LSUN72G0210CB0H____________3LB0CB0H
+<br>[size=68 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=1]<br>&nbsp;\_ 0:0:0:0 sda 8:0&nbsp;&nbsp; [ready]<br><br>create: SSEAGATE_ST973401LSUN72G0210BTPF____________3LB0BTPF<br>[size=68 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]
+<br>\_ round-robin 0 [prio=1]<br>&nbsp;\_ 0:0:1:0 sdb 8:16&nbsp; [ready]<br><br>create: 3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [ready]
+<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [ready]<br><br>create: 3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [ready]
+<br><br>create: 3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [ready]<br>[root@store1
+ ~]# multipath -v2 -ll<br>[root@store1 ~]# multipath -v2<br>create: 3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [ready]
+<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [ready]<br><br>create: 3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [ready]
+<br><br>create: 3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [ready]<br><br>[root@store1
+ ~]# multipath -v2 -ll<br>3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [active][ready]
+<br><br>3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [active][ready]
+<br><br>3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [active][ready]<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [active][ready]
+<br><br>[root@store1 ~]#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br><br><br>How is it possible??<br><br>Thanks in advance<br><br>-- <br>Claudio Tassini
+
+------=_Part_24556_27849376.1164368356468--
+
+
+--===============0891940732==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0891940732==--
