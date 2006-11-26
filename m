@@ -1,10 +1,12 @@
-From: "Claudio Tassini" <claudio.tassini@gmail.com>
-Subject: device multipath configuration file problem
-Date: Fri, 24 Nov 2006 12:39:16 +0100
-Message-ID: <39fdf1c70611240339m36909175hf248829c8554257@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Petteri Heinonen <petteri.j.heinonen@kolumbus.fi>
+Subject: I/O error during path failover
+Date: Sun, 26 Nov 2006 15:27:08 +0200 (EET)
+Message-ID: <27284436.1305071164547629015.JavaMail.petteri.j.heinonen@kolumbus.fi>
+Reply-To: petteri.j.heinonen@kolumbus.fi,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0891940732=="
+Content-Type: text/plain; Charset=iso-8859-1; Format=Flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,193 +20,83 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0891940732==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_24556_27849376.1164368356468"
+Hello,
 
-------=_Part_24556_27849376.1164368356468
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+I have a system with Qlogic QLA2312 HBAs. System is running RHEL 4u4:
 
-Hi all
+[root@cpn-0 etc]# uname -a
+Linux cpn-0.chas1A.ucs2.net 2.6.9-42.ELsmp #1 SMP Wed Jul 12 23:27:17 EDT 2006 i686 i686 i386 GNU/Linux
+[root@cpn-0 etc]# rpm -qa | grep device
+device-mapper-1.02.07-4.0.RHEL4
+device-mapper-multipath-0.4.5-18.1.RHEL4
+[root@cpn-0 etc]#
 
-I'm trying to understand how dm works on a RHEL 4u4, ( and RHCS and GFS
-too). I have two QLC HBAs connected to a Sun Storage 3510 via a couple of
-SANBOX2 switches. Initially I uncommented all the entries in the
-configuration file to make some test and I manage to discover the three luns
-which where recognized correctly whit their path:
+Storage is EMC Cx500. Multipath.conf is at the end of the mail. I have tested the system by running I/O directly to multipath device file, e.g. like this:
 
-[root@store1 ~]# multipath -ll
-3600c0ff00000000009897a30ae0b0401
-[size=369 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:1:1 sde 8:64  [active][ready]
- \_ 2:0:1:1 sdh 8:112 [active][ready]
+dd if=/dev/mpath/dm-0 of=/dev/null count=10000000
 
-3600c0ff00000000009897a30ae0b0400
-[size=40 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:1:0 sdd 8:48  [active][ready]
- \_ 2:0:1:0 sdg 8:96  [active][ready]
+Now, when I pull the cable to cause path change, dd usually stops in the middle, and gives error message indicating I/O error. Any suggestions?
 
-3600c0ff00000000009897a5a29e3f800
-[size=1091 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:0:0 sdc 8:32  [active][ready]
- \_ 2:0:0:0 sdf 8:80  [active][ready]
+- Petteri Heinonen
 
-Now, the problem is:
-1) the default configuration should provide a failover policy, but it seems
-that it is actually using an active-active one
-2) Any change I make to /etc/multipath.conf , the output of multipath -ll
-remains the same. Also tried to flush and reload, restart the daemon etc..
-Always the same.
-3) If even I REMOVE the configuration file and reboot the server, it keeps
-discovering the same paths! :
+[root@cpn-0 etc]# cat /etc/multipath.conf
+defaults {
+  multipath_tool                  "/sbin/multipath -v0"
+  udev_dir                        /dev
+  polling_interval                10
+}
 
-[root@store1 ~]# ls /etc/multipath.conf
-ls: /etc/multipath.conf: No such file or directory
-[root@store1 ~]# multipath -ll
-3600c0ff00000000009897a30ae0b0401
-[size=369 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:1:1 sde 8:64  [active][ready]
- \_ 2:0:1:1 sdh 8:112 [active][ready]
+devnode_blacklist {
+  devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+  devnode "^hd[a-z][[0-9]*]"
+  devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
+}
 
-3600c0ff00000000009897a30ae0b0400
-[size=40 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:1:0 sdd 8:48  [active][ready]
- \_ 2:0:1:0 sdg 8:96  [active][ready]
+multipaths {
+  multipath {
+    wwid                    360060160df651000a83bbca2f1eeda11
+    alias                   global_data
+    path_grouping_policy    failover
+    no_path_retry           fail
+    path_selector           "round-robin 0"
+    failback                manual
+  }
 
-3600c0ff00000000009897a5a29e3f800
-[size=1091 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:0:0 sdc 8:32  [active][ready]
- \_ 2:0:0:0 sdf 8:80  [active][ready]
-[root@store1 ~]# multipath -v2 -F
-[root@store1 ~]#
-[root@store1 ~]# multipath -ll
-[root@store1 ~]#
-[root@store1 ~]# /etc/init.d/multipathd restart
-Stopping multipathd daemon:                                [  OK  ]
-Starting multipathd daemon:                                [  OK  ]
-[root@store1 ~]#
-[root@store1 ~]# multipath -v2 -ll
-[root@store1 ~]# multipath -v2 -d
-create: SSEAGATE_ST973401LSUN72G0210CB0H____________3LB0CB0H
-[size=68 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=1]
- \_ 0:0:0:0 sda 8:0   [ready]
+  multipath {
+    wwid                    360060160df651000a2dac95713d1da11
+    alias                   global_sw
+    path_grouping_policy    failover
+    no_path_retry           fail
+    path_selector           "round-robin 0"
+    failback                manual
+  }
 
-create: SSEAGATE_ST973401LSUN72G0210BTPF____________3LB0BTPF
-[size=68 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=1]
- \_ 0:0:1:0 sdb 8:16  [ready]
+  multipath {
+    wwid                    360060160df651000a93bbca2f1eeda11
+    alias                   global_log
+    path_grouping_policy    failover
+    no_path_retry           fail
+    path_selector           "round-robin 0"
+    failback                manual
+  }
 
-create: 3600c0ff00000000009897a5a29e3f800
-[size=1091 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2]
- \_ 1:0:0:0 sdc 8:32  [ready]
- \_ 2:0:0:0 sdf 8:80  [ready]
+  multipath {
+    wwid                    360060160df651000445c248c15d1da11
+    alias                   global_backup
+    path_grouping_policy    failover
+    no_path_retry           fail
+    path_selector           "round-robin 0"
+    failback                manual
+  }
 
-create: 3600c0ff00000000009897a30ae0b0400
-[size=40 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2]
- \_ 1:0:1:0 sdd 8:48  [ready]
- \_ 2:0:1:0 sdg 8:96  [ready]
-
-create: 3600c0ff00000000009897a30ae0b0401
-[size=369 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2]
- \_ 1:0:1:1 sde 8:64  [ready]
- \_ 2:0:1:1 sdh 8:112 [ready]
-[root@store1 ~]# multipath -v2 -ll
-[root@store1 ~]# multipath -v2
-create: 3600c0ff00000000009897a5a29e3f800
-[size=1091 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2]
- \_ 1:0:0:0 sdc 8:32  [ready]
- \_ 2:0:0:0 sdf 8:80  [ready]
-
-create: 3600c0ff00000000009897a30ae0b0400
-[size=40 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2]
- \_ 1:0:1:0 sdd 8:48  [ready]
- \_ 2:0:1:0 sdg 8:96  [ready]
-
-create: 3600c0ff00000000009897a30ae0b0401
-[size=369 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2]
- \_ 1:0:1:1 sde 8:64  [ready]
- \_ 2:0:1:1 sdh 8:112 [ready]
-
-[root@store1 ~]# multipath -v2 -ll
-3600c0ff00000000009897a30ae0b0401
-[size=369 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:1:1 sde 8:64  [active][ready]
- \_ 2:0:1:1 sdh 8:112 [active][ready]
-
-3600c0ff00000000009897a30ae0b0400
-[size=40 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:1:0 sdd 8:48  [active][ready]
- \_ 2:0:1:0 sdg 8:96  [active][ready]
-
-3600c0ff00000000009897a5a29e3f800
-[size=1091 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [prio=2][active]
- \_ 1:0:0:0 sdc 8:32  [active][ready]
- \_ 2:0:0:0 sdf 8:80  [active][ready]
-
-[root@store1 ~]#
-
-
-How is it possible??
-
-Thanks in advance
-
--- 
-Claudio Tassini
-
-------=_Part_24556_27849376.1164368356468
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-Hi all<br><br>I'm trying to understand how dm works on a RHEL 4u4, ( and RHCS and GFS too). I have two QLC HBAs connected to a Sun Storage 3510 via a couple of SANBOX2 switches. Initially I uncommented all the entries in the configuration file to make some test and I manage to discover the three luns which where recognized correctly whit their path:
-<br><br clear="all">[root@store1 ~]# multipath -ll<br>3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [active][ready]
-<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [active][ready]<br><br>3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [active][ready]
-<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [active][ready]<br><br>3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [active][ready]
-<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [active][ready]<br><br>Now, the problem is:<br>1) the default configuration should provide a failover policy, but it seems that it is actually using an active-active one<br>2) Any change I make to /etc/multipath.conf , the output of multipath -ll remains the same. Also tried to flush and reload, restart the daemon etc.. Always the same.
-<br>3) If even I REMOVE the configuration file and reboot the server, it keeps discovering the same paths! :<br><br>[root@store1 ~]# ls /etc/multipath.conf<br>ls: /etc/multipath.conf: No such file or directory<br>[root@store1
- ~]# multipath -ll<br>3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [active][ready]
-<br><br>3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [active][ready]
-<br><br>3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [active][ready]<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [active][ready]
-<br>[root@store1 ~]# multipath -v2 -F<br>[root@store1 ~]#<br>[root@store1 ~]# multipath -ll<br>[root@store1 ~]#<br>[root@store1 ~]# /etc/init.d/multipathd restart<br>Stopping multipathd daemon:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [&nbsp; OK&nbsp; ]
-<br>Starting multipathd daemon:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [&nbsp; OK&nbsp; ]<br>[root@store1 ~]#<br>[root@store1 ~]# multipath -v2 -ll<br>[root@store1 ~]# multipath -v2 -d<br>create: SSEAGATE_ST973401LSUN72G0210CB0H____________3LB0CB0H
-<br>[size=68 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=1]<br>&nbsp;\_ 0:0:0:0 sda 8:0&nbsp;&nbsp; [ready]<br><br>create: SSEAGATE_ST973401LSUN72G0210BTPF____________3LB0BTPF<br>[size=68 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]
-<br>\_ round-robin 0 [prio=1]<br>&nbsp;\_ 0:0:1:0 sdb 8:16&nbsp; [ready]<br><br>create: 3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [ready]
-<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [ready]<br><br>create: 3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [ready]
-<br><br>create: 3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [ready]<br>[root@store1
- ~]# multipath -v2 -ll<br>[root@store1 ~]# multipath -v2<br>create: 3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [ready]
-<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [ready]<br><br>create: 3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [ready]
-<br><br>create: 3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [ready]<br><br>[root@store1
- ~]# multipath -v2 -ll<br>3600c0ff00000000009897a30ae0b0401<br>[size=369 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:1 sde 8:64&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:1 sdh 8:112 [active][ready]
-<br><br>3600c0ff00000000009897a30ae0b0400<br>[size=40 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:1:0 sdd 8:48&nbsp; [active][ready]<br>&nbsp;\_ 2:0:1:0 sdg 8:96&nbsp; [active][ready]
-<br><br>3600c0ff00000000009897a5a29e3f800<br>[size=1091 GB][features=&quot;0&quot;][hwhandler=&quot;0&quot;]<br>\_ round-robin 0 [prio=2][active]<br>&nbsp;\_ 1:0:0:0 sdc 8:32&nbsp; [active][ready]<br>&nbsp;\_ 2:0:0:0 sdf 8:80&nbsp; [active][ready]
-<br><br>[root@store1 ~]#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br><br><br>How is it possible??<br><br>Thanks in advance<br><br>-- <br>Claudio Tassini
-
-------=_Part_24556_27849376.1164368356468--
-
-
---===============0891940732==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0891940732==--
+}
+devices {
+  device {
+    vendor                  "DGC"
+    product                 "*"
+    getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+    prio_callout            "/sbin/mpath_prio_emc /dev/%n"
+    path_checker            emc_clariion
+    hardware_handler        "1 emc"
+  }
+}
