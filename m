@@ -1,17 +1,14 @@
-From: "Eric Van Hensbergen" <ericvh@gmail.com>
-Subject: Re: [RFC][PATCH] dm-cache: block level disk cache target
-	for device mapper
-Date: Mon, 27 Nov 2006 13:55:58 -0600
-Message-ID: <a4e6962a0611271155q55adf6fftd489de84d6ae7e88@mail.gmail.com>
-References: <200611271826.kARIQYRi032717@hera.kernel.org>
-	<20061127184748.GA11219@outpost.ds9a.nl>
+From: Luca Berra <bluca@comedia.it>
+Subject: Re: Where did /dev/dm-X go?
+Date: Mon, 27 Nov 2006 21:30:37 +0100
+Message-ID: <20061127203037.GA27595@percy.comedia.it>
+References: <20061126210911.GA8818@imp.flyn.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061127184748.GA11219@outpost.ds9a.nl>
 Content-Disposition: inline
+In-Reply-To: <20061126210911.GA8818@imp.flyn.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,33 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bert hubert <bert.hubert@netherlabs.nl>, dm-devel@redhat.com, ming@acis.ufl.edu, Linux Kernel <linux-kernel@vger.kernel.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/27/06, bert hubert <bert.hubert@netherlabs.nl> wrote:
-> On Mon, Nov 27, 2006 at 06:26:34PM +0000, Eric Van Hensbergen wrote:
-> > This is the first cut of a device-mapper target which provides a write-back
-> > or write-through block cache.  It is intended to be used in conjunction with
-> > remote block devices such as iSCSI or ATA-over-Ethernet, particularly in
-> > cluster situations.
+On Sun, Nov 26, 2006 at 03:09:11PM -0600, W. Michael Petullo wrote:
+>I have been using the dm-crypt interface to perform disk encryption.
+>For example, I helped add dm-crypt/LUKS support to HAL[1].
 >
-> How does this work in practice? In other words, what is a typical actual
-> configuration?
+>Recently, I have found the cryptsetup no longer creates /dev/dm-X.
+>Instead, the only device node created by the utility is /dev/mapper/Y
+>(both were created previously.)  I am using an up to date Fedora Core 6.
 >
-> There is a remote block device, and a local one, and these are kept into
-> sync in some way?
->
+>I am trying to figure out what user-space tool/library was responsible
+>for creating /dev/dm-X and why this device node is no longer created when
+>I create a dm-crypt device.  Could anyone point me in the right direction?
+you probably have an udev rule that ignores dm-[0-9]
+L.
 
-That's the basic idea.  In our testbed, we had a single iSCSI server
-exporting block devices to several clients -- each maintaining their
-own local disk cache of the server exported block devices.  You can
-configured either write-through or write-back policies -- write-back
-has better performance, but somewhat obvious consistency issues in
-failure cases.
 
-The original intent was to combine this with the dm-cow target (which
-I posted a few hours before the dm-cache patch) to provide a scalable
-cluster deployment system based on back-end iSCSI or ATA-over-Ethernet
-storage.
-
-          -eric
+-- 
+Luca Berra -- bluca@comedia.it
+        Communication Media & Services S.r.l.
+ /"\
+ \ /     ASCII RIBBON CAMPAIGN
+  X        AGAINST HTML MAIL
+ / \
