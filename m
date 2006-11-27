@@ -1,14 +1,9 @@
-From: Luca Berra <bluca@comedia.it>
-Subject: Re: Where did /dev/dm-X go?
-Date: Mon, 27 Nov 2006 21:30:37 +0100
-Message-ID: <20061127203037.GA27595@percy.comedia.it>
-References: <20061126210911.GA8818@imp.flyn.org>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipath multipath.rules
+Date: 27 Nov 2006 21:51:26 -0000
+Message-ID: <20061127215126.23731.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20061126210911.GA8818@imp.flyn.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,28 +13,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Sun, Nov 26, 2006 at 03:09:11PM -0600, W. Michael Petullo wrote:
->I have been using the dm-crypt interface to perform disk encryption.
->For example, I helped add dm-crypt/LUKS support to HAL[1].
->
->Recently, I have found the cryptsetup no longer creates /dev/dm-X.
->Instead, the only device node created by the utility is /dev/mapper/Y
->(both were created previously.)  I am using an up to date Fedora Core 6.
->
->I am trying to figure out what user-space tool/library was responsible
->for creating /dev/dm-X and why this device node is no longer created when
->I create a dm-crypt device.  Could anyone point me in the right direction?
-you probably have an udev rule that ignores dm-[0-9]
-L.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Changes by:	bmarzins@sourceware.org	2006-11-27 21:51:26
 
+Modified files:
+	multipath      : multipath.rules 
 
--- 
-Luca Berra -- bluca@comedia.it
-        Communication Media & Services S.r.l.
- /"\
- \ /     ASCII RIBBON CAMPAIGN
-  X        AGAINST HTML MAIL
- / \
+Log message:
+	Fix for 199924. kpartx uses the p delimiter by default. To change it, you must
+	edit /etc/rc.sysinit and /etc/udev/rules.d/40-multipath.rules
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.rules.diff?cvsroot=dm&r1=1.10&r2=1.11
+
+--- multipath-tools/multipath/multipath.rules	2006/10/06 16:38:01	1.10
++++ multipath-tools/multipath/multipath.rules	2006/11/27 21:51:25	1.11
+@@ -4,7 +4,7 @@
+ KERNEL!="dm-[0-9]*", ACTION=="add", PROGRAM=="/bin/bash -c '/sbin/lsmod | /bin/grep ^dm_multipath'", RUN+="/sbin/multipath -v0 %M:%m"
+ KERNEL!="dm-[0-9]*", GOTO="end_mpath"
+ PROGRAM!="/sbin/mpath_wait %M %m", GOTO="end_mpath"
+-ACTION=="add", RUN+="/sbin/dmsetup ls --target multipath --exec '/sbin/kpartx -a' -j %M -m %m"
++ACTION=="add", RUN+="/sbin/dmsetup ls --target multipath --exec '/sbin/kpartx -a -p p' -j %M -m %m"
+ PROGRAM=="/sbin/dmsetup ls --target multipath --exec /bin/basename -j %M -m %m", RESULT=="?*", NAME="%k", SYMLINK="mpath/%c", OPTIONS="last_rule"
+ PROGRAM!="/bin/bash -c '/sbin/dmsetup info -c --noheadings -j %M -m %m | /bin/grep -q .*:.*:.*:.*:.*:.*:.*:part[0-9]*-mpath-'", GOTO="end_mpath"
+ PROGRAM=="/sbin/dmsetup ls --target linear --exec /bin/basename -j %M -m %m", NAME="%k", RESULT=="?*", SYMLINK="mpath/%c", OPTIONS="last_rule"
