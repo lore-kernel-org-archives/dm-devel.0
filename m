@@ -1,7 +1,7 @@
 From: agk@sourceware.org
 Subject: device-mapper VERSION WHATS_NEW
-Date: 28 Nov 2006 22:49:58 -0000
-Message-ID: <20061128224958.1213.qmail@sourceware.org>
+Date: 28 Nov 2006 22:51:02 -0000
+Message-ID: <20061128225102.2567.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,28 +18,29 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2006-11-28 22:49:58
+Changes by:	agk@sourceware.org	2006-11-28 22:51:01
 
 Modified files:
 	.              : VERSION WHATS_NEW 
 
 Log message:
-	pre-release
+	post-release
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.107&r2=1.108
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.135&r2=1.136
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.108&r2=1.109
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.136&r2=1.137
 
---- device-mapper/VERSION	2006/10/13 18:43:53	1.107
-+++ device-mapper/VERSION	2006/11/28 22:49:58	1.108
+--- device-mapper/VERSION	2006/11/28 22:49:58	1.108
++++ device-mapper/VERSION	2006/11/28 22:51:01	1.109
 @@ -1 +1 @@
--1.02.12-cvs (2006-10-13)
-+1.02.13-cvs (2006-11-28)
---- device-mapper/WHATS_NEW	2006/11/23 20:34:16	1.135
-+++ device-mapper/WHATS_NEW	2006/11/28 22:49:58	1.136
-@@ -1,4 +1,4 @@
--Version 1.02.13 - 
-+Version 1.02.13 - 28 Nov 2006
+-1.02.13-cvs (2006-11-28)
++1.02.14-cvs (2006-11-28)
+--- device-mapper/WHATS_NEW	2006/11/28 22:49:58	1.136
++++ device-mapper/WHATS_NEW	2006/11/28 22:51:01	1.137
+@@ -1,3 +1,6 @@
++Version 1.02.14 - 
++=============================
++
+ Version 1.02.13 - 28 Nov 2006
  =============================
    Update dmsetup man page (setgeometry & message).
-   Fix dmsetup free after getline with debug.
