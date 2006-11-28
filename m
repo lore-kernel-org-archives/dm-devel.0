@@ -1,16 +1,14 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: I/O error during path failover
-Date: Tue, 28 Nov 2006 13:50:07 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1592@CORPUSMX40A.corp.emc.com>
-References: <31167844.735111164706862589.JavaMail.petteri.j.heinonen@kolumbus.fi>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: device multipath configuration file problem
+Date: Tue, 28 Nov 2006 14:10:12 -0600
+Message-ID: <20061128201011.GA14134@ether.msp.redhat.com>
+References: <39fdf1c70611240339m36909175hf248829c8554257@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <31167844.735111164706862589.JavaMail.petteri.j.heinonen@kolumbus.fi>
+Content-Disposition: inline
+In-Reply-To: <39fdf1c70611240339m36909175hf248829c8554257@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,45 +18,185 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: petteri.j.heinonen@kolumbus.fi
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tuesday, November 28, 2006 4:41 AM, Petteri Heinonen wrote:
-> To: goggin, edward
-> Cc: dm-devel@redhat.com
-> Subject: RE: [dm-devel] I/O error during path failover
->=20
-> But couple of additional questions. I have tried to specify=20
-> that additional feature "queue_if_no_path" in several places=20
-> in multipath.conf, but no matter where I specify it, it does=20
-> not appear in "multipath -ll" nor "dmsetup table" outputs. Is=20
-> there some known bug in RHEL4u4 for this?
+On Fri, Nov 24, 2006 at 12:39:16PM +0100, Claudio Tassini wrote:
+>    Hi all
+> 
+>    I'm trying to understand how dm works on a RHEL 4u4, ( and RHCS and GFS
+>    too). I have two QLC HBAs connected to a Sun Storage 3510 via a couple of
+>    SANBOX2 switches. Initially I uncommented all the entries in the
+>    configuration file to make some test and I manage to discover the three
+>    luns which where recognized correctly whit their path:
+> 
+>    [root@store1 ~]# multipath -ll
+>    3600c0ff00000000009897a30ae0b0401
+>    [size=369 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:1:1 sde 8:64  [active][ready]
+>     \_ 2:0:1:1 sdh 8:112 [active][ready]
+> 
+>    3600c0ff00000000009897a30ae0b0400
+>    [size=40 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:1:0 sdd 8:48  [active][ready]
+>     \_ 2:0:1:0 sdg 8:96  [active][ready]
+> 
+>    3600c0ff00000000009897a5a29e3f800
+>    [size=1091 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:0:0 sdc 8:32  [active][ready]
+>     \_ 2:0:0:0 sdf 8:80  [active][ready]
+> 
+>    Now, the problem is:
+>    1) the default configuration should provide a failover policy, but it
+>    seems that it is actually using an active-active one
 
-Try adding the two directives below to the CLARiiON device or
-multipath config entries in /etc/multipath.conf.  The combination
-of these 2 directives will queue I/O for up to 5 minutes (that
-is, 30 times the 10 second polling interval you have configured)
-whenever all paths to the block device are failed.
+Your problem is that the compiled in default configuration for the SUN
+StorEdge 3510 is 'multibus' (active-active). To see what compiled in defaults
+are, look in:
+/usr/share/doc/device-mapper-multipath-0.4.5/multipath.conf.defaults
 
-	features		"1 queue_if_no_path"
-	no_path_retry	30
+You will see
 
->=20
-> I have also tried to specify parameter no_path_retry with=20
-> several  different values, but it doesn't change the output=20
-> of "dmsetup table" in any way. Is this ok?
+...
+devices {
+...
+	device {
+               vendor                  "SUN"
+               product                 "StorEdge 3510"
+               path_grouping_policy    multibus
+               getuid_callout          "/sbin/scsi_id -g -u -s"
+       }
+...
+}
 
-No.
+>    2) Any change I make to /etc/multipath.conf , the output of multipath -ll
+>    remains the same. Also tried to flush and reload, restart the daemon etc..
+>    Always the same.
 
-> I guess that there=20
-> should be some visible changes in "dmsetup table",
+To change this, you need to override the compiled in defaults for your SUN
+controllers. Put the following lines in your /etc/multipath.conf
 
-Yes, IFF the queue_if_no_path attribute is enabled, "dmsetup table"
-should return the string "1 queue_if_no_path".
+devices {
+	device {
+		vendor                  "SUN"
+		product                 "StorEdge 3510"
+		path_grouping_policy    failover
+		getuid_callout          "/sbin/scsi_id -g -u -s"
+	}
+}
 
-> as dm_*=20
-> kernel modules do not read multipath.conf directly, do they?
+>    3) If even I REMOVE the configuration file and reboot the server, it keeps
+>    discovering the same paths! :
+> 
+>    [root@store1 ~]# ls /etc/multipath.conf
+>    ls: /etc/multipath.conf: No such file or directory
+>    [root@store1 ~]# multipath -ll
+>    3600c0ff00000000009897a30ae0b0401
+>    [size=369 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:1:1 sde 8:64  [active][ready]
+>     \_ 2:0:1:1 sdh 8:112 [active][ready]
+> 
+>    3600c0ff00000000009897a30ae0b0400
+>    [size=40 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:1:0 sdd 8:48  [active][ready]
+>     \_ 2:0:1:0 sdg 8:96  [active][ready]
+> 
+>    3600c0ff00000000009897a5a29e3f800
+>    [size=1091 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:0:0 sdc 8:32  [active][ready]
+>     \_ 2:0:0:0 sdf 8:80  [active][ready]
+>    [root@store1 ~]# multipath -v2 -F
+>    [root@store1 ~]#
+>    [root@store1 ~]# multipath -ll
+>    [root@store1 ~]#
+>    [root@store1 ~]# /etc/init.d/multipathd restart
+>    Stopping multipathd daemon:                                [  OK  ]
+>    Starting multipathd daemon:                                [  OK  ]
+>    [root@store1 ~]#
+>    [root@store1 ~]# multipath -v2 -ll
+>    [root@store1 ~]# multipath -v2 -d
+>    create: SSEAGATE_ST973401LSUN72G0210CB0H____________3LB0CB0H
+>    [size=68 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=1]
+>     \_ 0:0:0:0 sda 8:0   [ready]
+> 
+>    create: SSEAGATE_ST973401LSUN72G0210BTPF____________3LB0BTPF
+>    [size=68 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=1]
+>     \_ 0:0:1:0 sdb 8:16  [ready]
+> 
+>    create: 3600c0ff00000000009897a5a29e3f800
+>    [size=1091 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2]
+>     \_ 1:0:0:0 sdc 8:32  [ready]
+>     \_ 2:0:0:0 sdf 8:80  [ready]
+> 
+>    create: 3600c0ff00000000009897a30ae0b0400
+>    [size=40 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2]
+>     \_ 1:0:1:0 sdd 8:48  [ready]
+>     \_ 2:0:1:0 sdg 8:96  [ready]
+> 
+>    create: 3600c0ff00000000009897a30ae0b0401
+>    [size=369 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2]
+>     \_ 1:0:1:1 sde 8:64  [ready]
+>     \_ 2:0:1:1 sdh 8:112 [ready]
+>    [root@store1 ~]# multipath -v2 -ll
+>    [root@store1 ~]# multipath -v2
+>    create: 3600c0ff00000000009897a5a29e3f800
+>    [size=1091 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2]
+>     \_ 1:0:0:0 sdc 8:32  [ready]
+>     \_ 2:0:0:0 sdf 8:80  [ready]
+> 
+>    create: 3600c0ff00000000009897a30ae0b0400
+>    [size=40 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2]
+>     \_ 1:0:1:0 sdd 8:48  [ready]
+>     \_ 2:0:1:0 sdg 8:96  [ready]
+> 
+>    create: 3600c0ff00000000009897a30ae0b0401
+>    [size=369 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2]
+>     \_ 1:0:1:1 sde 8:64  [ready]
+>     \_ 2:0:1:1 sdh 8:112 [ready]
+> 
+>    [root@store1 ~]# multipath -v2 -ll
+>    3600c0ff00000000009897a30ae0b0401
+>    [size=369 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:1:1 sde 8:64  [active][ready]
+>     \_ 2:0:1:1 sdh 8:112 [active][ready]
+> 
+>    3600c0ff00000000009897a30ae0b0400
+>    [size=40 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:1:0 sdd 8:48  [active][ready]
+>     \_ 2:0:1:0 sdg 8:96  [active][ready]
+> 
+>    3600c0ff00000000009897a5a29e3f800
+>    [size=1091 GB][features="0"][hwhandler="0"]
+>    \_ round-robin 0 [prio=2][active]
+>     \_ 1:0:0:0 sdc 8:32  [active][ready]
+>     \_ 2:0:0:0 sdf 8:80  [active][ready]
+> 
+>    [root@store1 ~]#
+> 
+>    How is it possible??
+> 
+>    Thanks in advance
+> 
+>    --
+>    Claudio Tassini
 
-No they don't ... only multipathd threads in user space read
-/etc/multipath.conf.
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
