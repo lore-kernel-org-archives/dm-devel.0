@@ -1,18 +1,16 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [PATCH 1/2] dm-userspace: use ring buffer instead
-	of	system call
-Date: Tue, 28 Nov 2006 10:34:58 -0800
-Message-ID: <m37ixfa08d.fsf@guaranine.beaverton.ibm.com>
-References: <20061025194412J.fujita.tomonori@lab.ntt.co.jp>
-	<m31wotsvqy.fsf@guaranine.beaverton.ibm.com>
-	<200610271436.k9REaVOC020547@r-dd.iij4u.or.jp>
-	<20061129032635J.fujita.tomonori@lab.ntt.co.jp>
+From: Edward Goggin <egoggin@emc.com>
+Subject: RE: I/O error during path failover
+Date: Tue, 28 Nov 2006 13:50:07 -0500
+Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D1592@CORPUSMX40A.corp.emc.com>
+References: <31167844.735111164706862589.JavaMail.petteri.j.heinonen@kolumbus.fi>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1704050148=="
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061129032635J.fujita.tomonori@lab.ntt.co.jp> (FUJITA
-	Tomonori's message of "Wed, 29 Nov 2006 03:26:35 +0900")
+Content-class: urn:content-classes:message
+In-Reply-To: <31167844.735111164706862589.JavaMail.petteri.j.heinonen@kolumbus.fi>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,52 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+To: petteri.j.heinonen@kolumbus.fi
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1704050148==
-Content-Type: multipart/signed; boundary="=-=-=";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+On Tuesday, November 28, 2006 4:41 AM, Petteri Heinonen wrote:
+> To: goggin, edward
+> Cc: dm-devel@redhat.com
+> Subject: RE: [dm-devel] I/O error during path failover
+>=20
+> But couple of additional questions. I have tried to specify=20
+> that additional feature "queue_if_no_path" in several places=20
+> in multipath.conf, but no matter where I specify it, it does=20
+> not appear in "multipath -ll" nor "dmsetup table" outputs. Is=20
+> there some known bug in RHEL4u4 for this?
 
---=-=-=
-Content-Transfer-Encoding: quoted-printable
+Try adding the two directives below to the CLARiiON device or
+multipath config entries in /etc/multipath.conf.  The combination
+of these 2 directives will queue I/O for up to 5 minutes (that
+is, 30 times the 10 second polling interval you have configured)
+whenever all paths to the block device are failed.
 
-FT> Hey Dan, Has there been any progress on this?
+	features		"1 queue_if_no_path"
+	no_path_retry	30
 
-Unfortunately not.  I've been temporarily re-tasked to some other
-items for the remainder of the year.  I still have it on my to-do list
-to try your patch.
+>=20
+> I have also tried to specify parameter no_path_retry with=20
+> several  different values, but it doesn't change the output=20
+> of "dmsetup table" in any way. Is this ok?
 
-I will try to get around to testing it in a couple of weeks, when
-things start to settle down.
+No.
 
-Sorry for the delay...
+> I guess that there=20
+> should be some visible changes in "dmsetup table",
 
-=2D-=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
+Yes, IFF the queue_if_no_path attribute is enabled, "dmsetup table"
+should return the string "1 queue_if_no_path".
 
---=-=-=
-Content-Type: application/pgp-signature
+> as dm_*=20
+> kernel modules do not read multipath.conf directly, do they?
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-
-iD8DBQFFbIFVwtEf7b4GJVQRAjoRAJwNRWZL83+wnFMVMZ944xfaBnJOAACdFfAV
-InYgBMLzm4782W6of7/XlAo=
-=AVOm
------END PGP SIGNATURE-----
---=-=-=--
-
-
---===============1704050148==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1704050148==--
+No they don't ... only multipathd threads in user space read
+/etc/multipath.conf.
