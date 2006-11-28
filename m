@@ -1,14 +1,15 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: device multipath configuration file problem
-Date: Tue, 28 Nov 2006 14:10:12 -0600
-Message-ID: <20061128201011.GA14134@ether.msp.redhat.com>
-References: <39fdf1c70611240339m36909175hf248829c8554257@mail.gmail.com>
+Subject: Re: system freeze/console flood when unplugging one path
+	of multipath disk array
+Date: Tue, 28 Nov 2006 15:11:21 -0600
+Message-ID: <20061128211121.GB14134@ether.msp.redhat.com>
+References: <456C1B1B.5030109@pclella.cern.ch>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <39fdf1c70611240339m36909175hf248829c8554257@mail.gmail.com>
+In-Reply-To: <456C1B1B.5030109@pclella.cern.ch>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,181 +22,79 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Nov 24, 2006 at 12:39:16PM +0100, Claudio Tassini wrote:
->    Hi all
+On Tue, Nov 28, 2006 at 12:18:51PM +0100, Rainer Toebbicke wrote:
+> Hello,
 > 
->    I'm trying to understand how dm works on a RHEL 4u4, ( and RHCS and GFS
->    too). I have two QLC HBAs connected to a Sun Storage 3510 via a couple of
->    SANBOX2 switches. Initially I uncommented all the entries in the
->    configuration file to make some test and I manage to discover the three
->    luns which where recognized correctly whit their path:
+> I've got a Sun 3510 disk array and a dual-channel Qlogic FC HBA, in a 
+> Sun X4100 under RHEL4 U4,  each path connected to the array over a 
+> qlogic 5600 switch.
 > 
->    [root@store1 ~]# multipath -ll
->    3600c0ff00000000009897a30ae0b0401
->    [size=369 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:1:1 sde 8:64  [active][ready]
->     \_ 2:0:1:1 sdh 8:112 [active][ready]
+> The devices are seen correctly with multipath -l as far as I can judge.
 > 
->    3600c0ff00000000009897a30ae0b0400
->    [size=40 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:1:0 sdd 8:48  [active][ready]
->     \_ 2:0:1:0 sdg 8:96  [active][ready]
 > 
->    3600c0ff00000000009897a5a29e3f800
->    [size=1091 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:0:0 sdc 8:32  [active][ready]
->     \_ 2:0:0:0 sdf 8:80  [active][ready]
+> When I disable one of the paths during a stress test (in this case, an 
+> fsck -y), the system "freezes". Actually, it just sends enough 
+> (thousands) error messages of the style
 > 
->    Now, the problem is:
->    1) the default configuration should provide a failover policy, but it
->    seems that it is actually using an active-active one
+> end_request: I/O error, dev sdb, sector 279446024
+> Buffer I/O error on device sdb1, logical block 279445961
 
-Your problem is that the compiled in default configuration for the SUN
-StorEdge 3510 is 'multibus' (active-active). To see what compiled in defaults
-are, look in:
-/usr/share/doc/device-mapper-multipath-0.4.5/multipath.conf.defaults
+You wouldn't happen to be doing IO directly to /dev/sdb1, would you? If
+so, you need to be doing IO to a kpartx created device on top of your
+multipathed device.
 
-You will see
-
-...
-devices {
-...
-	device {
-               vendor                  "SUN"
-               product                 "StorEdge 3510"
-               path_grouping_policy    multibus
-               getuid_callout          "/sbin/scsi_id -g -u -s"
-       }
-...
-}
-
->    2) Any change I make to /etc/multipath.conf , the output of multipath -ll
->    remains the same. Also tried to flush and reload, restart the daemon etc..
->    Always the same.
-
-To change this, you need to override the compiled in defaults for your SUN
-controllers. Put the following lines in your /etc/multipath.conf
-
-devices {
-	device {
-		vendor                  "SUN"
-		product                 "StorEdge 3510"
-		path_grouping_policy    failover
-		getuid_callout          "/sbin/scsi_id -g -u -s"
-	}
-}
-
->    3) If even I REMOVE the configuration file and reboot the server, it keeps
->    discovering the same paths! :
+> lost page write due to I/O error on sdb1
+> SCSI error : <1 0 0 1> return code = 0x10000
+> end_request: I/O error, dev sdb, sector 279446025
+> Buffer I/O error on device sdb1, logical block 279445962
+> lost page write due to I/O error on sdb1
+> SCSI error : <1 0 0 1> return code = 0x10000
+> end_request: I/O error, dev sdb, sector 279446026
+> Buffer I/O error on device sdb1, logical block 279445963
+> lost page write due to I/O error on sdb1
+> SCSI error : <1 0 0 1> return code = 0x10000
+> end_request: I/O error, dev sdb, sector 279446027
+> Buffer I/O error on device sdb1, logical block 279445964
+> lost page write due to I/O error on sdb1
+> SCSI error : <1 0 0 1> return code = 0x10000
 > 
->    [root@store1 ~]# ls /etc/multipath.conf
->    ls: /etc/multipath.conf: No such file or directory
->    [root@store1 ~]# multipath -ll
->    3600c0ff00000000009897a30ae0b0401
->    [size=369 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:1:1 sde 8:64  [active][ready]
->     \_ 2:0:1:1 sdh 8:112 [active][ready]
 > 
->    3600c0ff00000000009897a30ae0b0400
->    [size=40 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:1:0 sdd 8:48  [active][ready]
->     \_ 2:0:1:0 sdg 8:96  [active][ready]
+> to the serial console to make it appear completely stuck for hours.
 > 
->    3600c0ff00000000009897a5a29e3f800
->    [size=1091 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:0:0 sdc 8:32  [active][ready]
->     \_ 2:0:0:0 sdf 8:80  [active][ready]
->    [root@store1 ~]# multipath -v2 -F
->    [root@store1 ~]#
->    [root@store1 ~]# multipath -ll
->    [root@store1 ~]#
->    [root@store1 ~]# /etc/init.d/multipathd restart
->    Stopping multipathd daemon:                                [  OK  ]
->    Starting multipathd daemon:                                [  OK  ]
->    [root@store1 ~]#
->    [root@store1 ~]# multipath -v2 -ll
->    [root@store1 ~]# multipath -v2 -d
->    create: SSEAGATE_ST973401LSUN72G0210CB0H____________3LB0CB0H
->    [size=68 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=1]
->     \_ 0:0:0:0 sda 8:0   [ready]
+> The fsck does not finish, BTW, it restarts from the beginning as soon 
+> as I re-enable the port in the switch.
 > 
->    create: SSEAGATE_ST973401LSUN72G0210BTPF____________3LB0BTPF
->    [size=68 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=1]
->     \_ 0:0:1:0 sdb 8:16  [ready]
+> root@afs26 ~]# multipath -l
+> mpath2 (3600c0ff0000000000a792a1887b34100)
+> [size=136 GB][features="1 queue_if_no_path"][hwhandler="0"]
+> \_ round-robin 0 [active]
+>  \_ 1:0:0:3  sdc 8:32  [active][ready]
+>  \_ 2:0:0:3  sdi 8:128 [active][ready]
 > 
->    create: 3600c0ff00000000009897a5a29e3f800
->    [size=1091 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2]
->     \_ 1:0:0:0 sdc 8:32  [ready]
->     \_ 2:0:0:0 sdf 8:80  [ready]
+> mpath1 (3600c0ff0000000000a792a0aac9b4200)
+> [size=136 GB][features="1 queue_if_no_path"][hwhandler="0"]
+> \_ round-robin 0 [active]
+>  \_ 1:0:0:1  sdb 8:16  [active][ready]
+>  \_ 2:0:0:1  sdh 8:112 [active][ready]
+> ....
 > 
->    create: 3600c0ff00000000009897a30ae0b0400
->    [size=40 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2]
->     \_ 1:0:1:0 sdd 8:48  [ready]
->     \_ 2:0:1:0 sdg 8:96  [ready]
+> /etc/multipath.conf just contains
+> defaults {
+>         default_features "1 queue_if_no_path"
+>         user_friendly_names yes
 > 
->    create: 3600c0ff00000000009897a30ae0b0401
->    [size=369 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2]
->     \_ 1:0:1:1 sde 8:64  [ready]
->     \_ 2:0:1:1 sdh 8:112 [ready]
->    [root@store1 ~]# multipath -v2 -ll
->    [root@store1 ~]# multipath -v2
->    create: 3600c0ff00000000009897a5a29e3f800
->    [size=1091 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2]
->     \_ 1:0:0:0 sdc 8:32  [ready]
->     \_ 2:0:0:0 sdf 8:80  [ready]
+> }
 > 
->    create: 3600c0ff00000000009897a30ae0b0400
->    [size=40 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2]
->     \_ 1:0:1:0 sdd 8:48  [ready]
->     \_ 2:0:1:0 sdg 8:96  [ready]
+> besides the usual blacklist.
 > 
->    create: 3600c0ff00000000009897a30ae0b0401
->    [size=369 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2]
->     \_ 1:0:1:1 sde 8:64  [ready]
->     \_ 2:0:1:1 sdh 8:112 [ready]
+> Any ideas?
 > 
->    [root@store1 ~]# multipath -v2 -ll
->    3600c0ff00000000009897a30ae0b0401
->    [size=369 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:1:1 sde 8:64  [active][ready]
->     \_ 2:0:1:1 sdh 8:112 [active][ready]
+> -- 
+> =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+> Rainer Toebbicke
+> European Laboratory for Particle Physics(CERN) - Geneva, Switzerland
+> Phone: +41 22 767 8985       Fax: +41 22 767 7155
 > 
->    3600c0ff00000000009897a30ae0b0400
->    [size=40 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:1:0 sdd 8:48  [active][ready]
->     \_ 2:0:1:0 sdg 8:96  [active][ready]
-> 
->    3600c0ff00000000009897a5a29e3f800
->    [size=1091 GB][features="0"][hwhandler="0"]
->    \_ round-robin 0 [prio=2][active]
->     \_ 1:0:0:0 sdc 8:32  [active][ready]
->     \_ 2:0:0:0 sdf 8:80  [active][ready]
-> 
->    [root@store1 ~]#
-> 
->    How is it possible??
-> 
->    Thanks in advance
-> 
->    --
->    Claudio Tassini
-
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
