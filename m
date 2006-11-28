@@ -1,17 +1,13 @@
-From: Edward Goggin <egoggin@emc.com>
-Subject: RE: [Bug 217014] Setting "user_friendly_names" to "yes"
-	causesdm-mp to occasionally miss a mpath device during configuration
-Date: Mon, 27 Nov 2006 17:32:44 -0500
-Message-ID: <6CCEAEDF4D06984A83F427424F47D6E4013D158C@CORPUSMX40A.corp.emc.com>
-References: <1164665396.25061.104.camel@localhost.localdomain>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Petteri Heinonen <petteri.j.heinonen@kolumbus.fi>
+Subject: RE: I/O error during path failover
+Date: Tue, 28 Nov 2006 11:41:02 +0200 (EET)
+Message-ID: <31167844.735111164706862589.JavaMail.petteri.j.heinonen@kolumbus.fi>
+Reply-To: petteri.j.heinonen@kolumbus.fi,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; Charset=iso-8859-1; Format=Flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <1164665396.25061.104.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,250 +17,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr
+To: Edward Goggin <egoggin@emc.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Sorry, but I didn't send it to you directly since I mistakenly
-thought you had already merged in the fix after I had
-initially sent out this patch to the dm-devel list on 7/17.=20
+Hello,
 
-> -----Original Message-----
-> From: Christophe Varoqui [mailto:christophe.varoqui@free.fr]=20
-> Sent: Monday, November 27, 2006 5:10 PM
-> To: goggin, edward
-> Cc: device-mapper development
-> Subject: Re: [Bug 217014] Setting "user_friendly_names" to=20
-> "yes" causesdm-mp to occasionally miss a mpath device during=20
-> configuration
->=20
-> Nice fix, thank you.
-> Merged.
->=20
-> Le lundi 27 novembre 2006 =E0 11:30 -0500, bugzilla@redhat.com a =E9cri=
-t :
-> > Please do not reply directly to this email. All additional
-> > comments should be made in the comments box of this bug report.
-> >=20
-> > Summary: Setting "user_friendly_names" to "yes" causes=20
-> dm-mp to occasionally miss a mpath device during configuration
-> >=20
-> >=20
-> > https://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=3D217014
-> >=20
-> >=20
-> >=20
-> >=20
-> >=20
-> > ------- Additional Comments From egoggin@emc.com =20
-> 2006-11-27 11:29 EST -------
-> > The posix file byte range locks used to provide atomicity=20
-> for accessing the=20
-> > entries in the multipath bindings file get released from=20
-> whenever __any__=20
-> > descriptor or FILE structure for that file is closed.  This=20
-> patch delays the=20
-> > fclose() for the FILE structures used within lookup_binding() and=20
-> > rlookup_binding() until there is no more need for the atomicity.
-> >=20
-> > Without this patch I could fairly easily get two multipath=20
-> mpath0 entries=20
-> > in /var/lib/multipath/bindings by running 8 concurrent=20
-> instances of multipath
-> > (8) while with the patch I cannot get this problem to occur.
-> >=20
-> > diff --git a/libmultipath/alias.c b/libmultipath/alias.c
-> > index 6d103d7..86cae9b 100644
-> > --- a/libmultipath/alias.c
-> > +++ b/libmultipath/alias.c
-> > @@ -166,28 +166,14 @@ fail:
-> > =20
-> >=20
-> >  static int
-> > -lookup_binding(int fd, char *map_wwid, char **map_alias)
-> > +lookup_binding(FILE *f, char *map_wwid, char **map_alias)
-> >  {
-> >  	char buf[LINE_MAX];
-> > -	FILE *f;
-> >  	unsigned int line_nr =3D 0;
-> > -	int scan_fd;
-> >  	int id =3D 0;
-> > =20
-> >  	*map_alias =3D NULL;
-> > -	scan_fd =3D dup(fd);
-> > -	if (scan_fd < 0) {
-> > -		condlog(0, "Cannot dup bindings file descriptor : %s",
-> > -			strerror(errno));
-> > -		return -1;
-> > -	}
-> > -	f =3D fdopen(scan_fd, "r");
-> > -	if (!f) {
-> > -		condlog(0, "cannot fdopen on bindings file=20
-> descriptor : %s",
-> > -			strerror(errno));
-> > -		close(scan_fd);
-> > -		return -1;
-> > -	}
-> > +
-> >  	while (fgets(buf, LINE_MAX, f)) {
-> >  		char *c, *alias, *wwid;
-> >  		int curr_id;
-> > @@ -215,38 +201,22 @@ lookup_binding(int fd, char *map_wwid, c
-> >  			if (*map_alias =3D=3D NULL)
-> >  				condlog(0, "Cannot copy alias=20
-> from bindings "
-> >  					"file : %s", strerror(errno));
-> > -			fclose(f);
-> >  			return id;
-> >  		}
-> >  	}
-> >  	condlog(3, "No matching wwid [%s] in bindings file.", map_wwid);
-> > -	fclose(f);
-> >  	return id;
-> >  }=09
-> > =20
-> >  static int
-> > -rlookup_binding(int fd, char **map_wwid, char *map_alias)
-> > +rlookup_binding(FILE *f, char **map_wwid, char *map_alias)
-> >  {
-> >  	char buf[LINE_MAX];
-> > -	FILE *f;
-> >  	unsigned int line_nr =3D 0;
-> > -	int scan_fd;
-> >  	int id =3D 0;
-> > =20
-> >  	*map_wwid =3D NULL;
-> > -	scan_fd =3D dup(fd);
-> > -	if (scan_fd < 0) {
-> > -		condlog(0, "Cannot dup bindings file descriptor : %s",
-> > -			strerror(errno));
-> > -		return -1;
-> > -	}
-> > -	f =3D fdopen(scan_fd, "r");
-> > -	if (!f) {
-> > -		condlog(0, "cannot fdopen on bindings file=20
-> descriptor : %s",
-> > -			strerror(errno));
-> > -		close(scan_fd);
-> > -		return -1;
-> > -	}
-> > +
-> >  	while (fgets(buf, LINE_MAX, f)) {
-> >  		char *c, *alias, *wwid;
-> >  		int curr_id;
-> > @@ -274,12 +244,10 @@ rlookup_binding(int fd, char **map_wwid,
-> >  			if (*map_wwid =3D=3D NULL)
-> >  				condlog(0, "Cannot copy alias=20
-> from bindings "
-> >  					"file : %s", strerror(errno));
-> > -			fclose(f);
-> >  			return id;
-> >  		}
-> >  	}
-> >  	condlog(3, "No matching alias [%s] in bindings file.",=20
-> map_alias);
-> > -	fclose(f);
-> >  	return id;
-> >  }=09
-> > =20
-> > @@ -327,7 +295,8 @@ char *
-> >  get_user_friendly_alias(char *wwid, char *file)
-> >  {
-> >  	char *alias;
-> > -	int fd, id;
-> > +	int fd, scan_fd, id;
-> > +	FILE *f;
-> > =20
-> >  	if (!wwid || *wwid =3D=3D '\0') {
-> >  		condlog(3, "Cannot find binding for empty WWID");
-> > @@ -337,14 +306,37 @@ get_user_friendly_alias(char *wwid, char
-> >  	fd =3D open_bindings_file(file);
-> >  	if (fd < 0)
-> >  		return NULL;
-> > -	id =3D lookup_binding(fd, wwid, &alias);
-> > +
-> > +	scan_fd =3D dup(fd);
-> > +	if (scan_fd < 0) {
-> > +		condlog(0, "Cannot dup bindings file descriptor : %s",
-> > +			strerror(errno));
-> > +		close(fd);
-> > +		return NULL;
-> > +	}
-> > +
-> > +	f =3D fdopen(scan_fd, "r");
-> > +	if (!f) {
-> > +		condlog(0, "cannot fdopen on bindings file=20
-> descriptor : %s",
-> > +			strerror(errno));
-> > +		close(scan_fd);
-> > +		close(fd);
-> > +		return NULL;
-> > +	}
-> > +
-> > +	id =3D lookup_binding(f, wwid, &alias);
-> >  	if (id < 0) {
-> > +		fclose(f);
-> > +		close(scan_fd);
-> >  		close(fd);
-> >  		return NULL;
-> >  	}
-> > +
-> >  	if (!alias)
-> >  		alias =3D allocate_binding(fd, wwid, id);
-> > =20
-> > +	fclose(f);
-> > +	close(scan_fd);
-> >  	close(fd);
-> >  	return alias;
-> >  }
-> > @@ -353,7 +345,8 @@ char *
-> >  get_user_friendly_wwid(char *alias, char *file)
-> >  {
-> >  	char *wwid;
-> > -	int fd, id;
-> > +	int fd, scan_fd, id;
-> > +	FILE *f;
-> > =20
-> >  	if (!alias || *alias =3D=3D '\0') {
-> >  		condlog(3, "Cannot find binding for empty alias");
-> > @@ -363,12 +356,34 @@ get_user_friendly_wwid(char *alias, char
-> >  	fd =3D open_bindings_file(file);
-> >  	if (fd < 0)
-> >  		return NULL;
-> > -	id =3D rlookup_binding(fd, &wwid, alias);
-> > +
-> > +	scan_fd =3D dup(fd);
-> > +	if (scan_fd < 0) {
-> > +		condlog(0, "Cannot dup bindings file descriptor : %s",
-> > +			strerror(errno));
-> > +		close(fd);
-> > +		return NULL;
-> > +	}
-> > +
-> > +	f =3D fdopen(scan_fd, "r");
-> > +	if (!f) {
-> > +		condlog(0, "cannot fdopen on bindings file=20
-> descriptor : %s",
-> > +			strerror(errno));
-> > +		close(scan_fd);
-> > +		close(fd);
-> > +		return NULL;
-> > +	}
-> > +
-> > +	id =3D rlookup_binding(f, &wwid, alias);
-> >  	if (id < 0) {
-> > +		fclose(f);
-> > +		close(scan_fd);
-> >  		close(fd);
-> >  		return NULL;
-> >  	}
-> > =20
-> > +	fclose(f);
-> > +	close(scan_fd);
-> >  	close(fd);
-> >  	return wwid;
-> >  }
-> >=20
->=20
->=20
->=20
+and thanks for the help.
+I also noticed that "group_by_prio" issue, will change to that. 
+
+Also, the actual problem of IO errors seems to be solved by now. The problem was in my own script, which is used to restore the paths after a failed path comes back. As the system is running OCFS2 on those multipathed LUNs, we need to have a constant knowledge over all nodes of the cluster about the states of the paths, before default paths can be restored. There was a bug in that script, causing it to try path restoration even though all paths in all nodes were actually not accessible yet. I also fixed this, and it looks much better now.
+
+But couple of additional questions. I have tried to specify that additional feature "queue_if_no_path" in several places in multipath.conf, but no matter where I specify it, it does not appear in "multipath -ll" nor "dmsetup table" outputs. Is there some known bug in RHEL4u4 for this?
+
+I have also tried to specify parameter no_path_retry with several  different values, but it doesn't change the output of "dmsetup table" in any way. Is this ok? I guess that there should be some visible changes in "dmsetup table", as dm_* kernel modules do not read multipath.conf directly, do they?
+
+-Petteri
+
+Edward Goggin <egoggin@emc.com> kirjoitti: 
+> On Sunday, November 26, 2006 8:27 AM, Petteri Heinonen wrote
+> 
+> > I have a system with Qlogic QLA2312 HBAs. System is running RHEL 4u4:
+> > 
+> > [root@cpn-0 etc]# uname -a
+> > Linux cpn-0.chas1A.ucs2.net 2.6.9-42.ELsmp #1 SMP Wed Jul 12 
+> > 23:27:17 EDT 2006 i686 i686 i386 GNU/Linux
+> > [root@cpn-0 etc]# rpm -qa | grep device
+> > device-mapper-1.02.07-4.0.RHEL4
+> > device-mapper-multipath-0.4.5-18.1.RHEL4
+> > [root@cpn-0 etc]#
+> > 
+> > Storage is EMC Cx500. Multipath.conf is at the end of the 
+> > mail. I have tested the system by running I/O directly to 
+> > multipath device file, e.g. like this:
+> > 
+> > dd if=/dev/mpath/dm-0 of=/dev/null count=10000000
+> > 
+> > Now, when I pull the cable to cause path change, dd usually 
+> > stops in the middle, and gives error message indicating I/O 
+> > error. Any suggestions?
+> >
+> 
+> The CLARiiON should only be configured with a dm-multipath path
+> grouping policy of "group_by_prio".
+> 
+> Using a no_path_retry value of "fail" may prevent a CLARiiON ucode
+> from being updated in an application transparent manner.  Should set
+> CLARiiON features to "1 queue_if_no_path".
