@@ -1,15 +1,17 @@
-From: Christoph Hellwig <hch@infradead.org>
+From: "Eric Van Hensbergen" <ericvh@gmail.com>
 Subject: Re: [RFC][PATCH] dm-cache: block level disk cache target
 	for device mapper
-Date: Thu, 30 Nov 2006 14:48:07 +0000
-Message-ID: <20061130144807.GA16474@infradead.org>
+Date: Thu, 30 Nov 2006 10:24:27 -0600
+Message-ID: <a4e6962a0611300824qdfa43cbja783da86fe6eb5cf@mail.gmail.com>
 References: <200611271826.kARIQYRi032717@hera.kernel.org>
+	<200611301232.57966.jens.wilke@de.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <200611301232.57966.jens.wilke@de.ibm.com>
 Content-Disposition: inline
-In-Reply-To: <200611271826.kARIQYRi032717@hera.kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +21,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Van Hensbergen <ericvh@hera.kernel.org>
-Cc: dm-devel@redhat.com, ming@acis.ufl.edu, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Eric Van Hensbergen <ericvh@hera.kernel.org>, ming@acis.ufl.edu, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Nov 27, 2006 at 06:26:34PM +0000, Eric Van Hensbergen wrote:
-> This is the first cut of a device-mapper target which provides a write-back
-> or write-through block cache.  It is intended to be used in conjunction with
-> remote block devices such as iSCSI or ATA-over-Ethernet, particularly in
-> cluster situations.
-> 
-> In performance tests with iSCSI, gave peformance improvements of 2-10x that
-> of iSCSI alone when Postmark or Bonnie loads were applied from 8 clients to
-> a single server.  Evidence suggests even greater differences on larger
-> clusters.  A detailed performance analysis will be vailable shortly via a
-> technical report on IBM's CyberDigest.
-> 
-> This module was developed during an intership at IBM Research by
-> Ming Zhao.  Please direct comments to both Ming and myself.
+On 11/30/06, Jens Wilke <jens.wilke@de.ibm.com> wrote:
+> On Monday 27 November 2006 19:26, Eric Van Hensbergen wrote:
+>
+> If this is intended to speed up remote disks, is it possible that the cache content
+> can be paged out on local disks in low-mem situations?
+>
 
-I don't quite understand the need for this.  Do you need this module
-because your iscsi target doesn't use the pagecache on the server?
+The main intent was to use local disks as cache to offload centralized
+remote disks.  The logic was that most systems have local disks, if
+only for swap -- so why not use them as a cache to help offload
+centralized storage.  While the in-memory page cache works perfectly
+fine in certain situations -- we were dealing with workloads in which
+the in-memory page-cache wasn't sufficient to hold all the data.
+
+There are also some additional possibilities we've thought through and
+have been playing with including allowing the local disk cache to be
+persistent across reboots (with varying validation schemes).
+
+             -eric
