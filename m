@@ -1,20 +1,23 @@
-From: Ming Zhang <blackmagic02881@gmail.com>
-Subject: Re: Re: [RFC][PATCH] dm-cache: block level disk cache
-	target for device mapper
-Date: Sat, 02 Dec 2006 13:35:36 -0500
-Message-ID: <1165084536.5456.9.camel@localhost.localdomain>
-References: <200611271826.kARIQYRi032717@hera.kernel.org>
-	<20061127184748.GA11219@outpost.ds9a.nl>
-	<a4e6962a0611271155q55adf6fftd489de84d6ae7e88@mail.gmail.com>
-	<1165022497.2761.216.camel@localhost.localdomain>
-	<b1e142760612021028t522ba3ffs485bc70d93a85774@mail.gmail.com>
-Reply-To: blackmagic02881@gmail.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Christophe Saout <christophe@saout.de>
+Subject: [stable][PATCH < 2.6.19] Fix data corruption with
+	dm-crypt over RAID5
+Date: Sat, 02 Dec 2006 03:27:56 +0100
+Message-ID: <1165026476.29307.23.camel__11373.9606728361$1165106096$gmane$org@leto.intern.saout.de>
+References: <456B732F.6080906@lelik.org>
+	<20061129145208.GQ4409@agk.surrey.redhat.com>
+	<456F46E3.6030702@lelik.org>
+	<1164983209.24524.20.camel@leto.intern.saout.de>
+	<20061201152143.GE4409@agk.surrey.redhat.com>
+	<45704B95.3020308@lelik.org>
+	<1165026116.29307.18.camel@leto.intern.saout.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <b1e142760612021028t522ba3ffs485bc70d93a85774@mail.gmail.com>
+In-Reply-To: <1165026116.29307.18.camel@leto.intern.saout.de>
+Resent-To: dm-devel@redhat.com
+Resent-Message-Id: <E1GqfJb-0007Al-Vs@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,31 +27,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ming Zhao <mingzhao99th@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ming@acis.ufl.edu, Linux Kernel <linux-kernel@vger.kernel.org>, bert hubert <bert.hubert@netherlabs.nl>
+To: linux-kernel@vger.kernel.org
+Cc: Andrew Morton <akpm@osdl.org>, Chris Wright <chrisw@sous-sol.org>, dm-crypt@saout.de, Andrey <dm-crypt-revealed-address@lelik.org>, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com
 List-Id: dm-devel.ids
 
+Fix corruption issue with dm-crypt on top of software raid5. Cancelled
+readahead bio's that report no error, just have BIO_UPTODATE cleared
+were reported as successful reads to the higher layers (and leaving
+random content in the buffer cache). Already fixed in 2.6.19.
 
-On Sat, 2006-12-02 at 13:28 -0500, Ming Zhao wrote:
-> On 12/1/06, Ming Zhang <blackmagic02881@gmail.com> wrote:
-> > like to see this idea but any similarity with
-> > http://www.ele.uri.edu/Research/hpcl/STICS/stics.pdf?
-> >
-> > STICS is patent pending so not sure if kernel can be free to merge this
-> > dm-cache.
-> 
-> I like the idea of STICS, an efficient bridge between SCSI and IP. But
-> I think its only similarity with dm-cache is the use of nonvolatile
-> caching.
-> 
-> Dm-cache is a generic block-level disk cache that supports a variety
-> of SAN technologies and is not tied to any particular one.
-> 
+Signed-off-by: Christophe Saout <christophe@saout.de>
 
 
-great. as long as you are aware of this and can find the difference,
-then fine.
-
-> 
-> Best regards,
-> Ming Zhao
+--- linux-2.6.18.orig/drivers/md/dm-crypt.c	2006-09-20 05:42:06.000000000 +0200
++++ linux-2.6.18/drivers/md/dm-crypt.c	2006-12-02 03:03:36.000000000 +0100
+@@ -717,13 +717,15 @@
+ 	if (bio->bi_size)
+ 		return 1;
+ 
++	if (!bio_flagged(bio, BIO_UPTODATE) && !error)
++		error = -EIO;
++                        
+ 	bio_put(bio);
+ 
+ 	/*
+ 	 * successful reads are decrypted by the worker thread
+ 	 */
+-	if ((bio_data_dir(bio) == READ)
+-	    && bio_flagged(bio, BIO_UPTODATE)) {
++	if (bio_data_dir(io->bio) == READ && !error) {
+ 		kcryptd_queue_io(io);
+ 		return 0;
+ 	}
