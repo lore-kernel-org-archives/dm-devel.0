@@ -1,9 +1,12 @@
 From: "Rik Snel" <rsnel@cube.dyndns.org>
-Subject: ABL-{32,*}-AES
-Date: Sun,  3 Dec 2006 13:48:20 +0100
-Message-ID: <11651501031841-git-send-email-rsnel@cube.dyndns.org>
+Subject: [PATCH] crypto: bewbi IV,
+	big endian wide block count for ABL-32-AES
+Date: Sun,  3 Dec 2006 13:48:21 +0100
+Message-ID: <11651501113230-git-send-email-rsnel@cube.dyndns.org>
+References: <11651501031841-git-send-email-rsnel@cube.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <11651501031841-git-send-email-rsnel@cube.dyndns.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,38 +20,81 @@ To: dm-devel@redhat.com
 Cc: herbert@gondor.apana.org.au
 List-Id: dm-devel.ids
 
+From: Rik Snel <rsnel@cube.dyndns.org>
 
-Hello list,
+ABL-32-AES needs a certain IV. This IV should be provided dm-crypt.
+The block cipher mode could, in principle, generate the correct IV from
+the plain IV, but I think that it is cleaner to supply the right IV
+directly.
 
-I'm working on an ABL-32-AES (and a more general ABL-*-AES) implementation
-for the Linux kernel as proposed by John Viega and David McGrew in
-http://grouper.ieee.org/groups/1619/email/rtf00000.rtf (October 28, 2004) and
-http://grouper.ieee.org/groups/1619/email/pdf00005.pdf (April 15, 2004).
-The spec is not sufficiently reviewed and the two documents seem to 
-contradict eachother in a few places. Therefore the implementation
-of the ABL blockcipher mode itself is preliminary.
+The sector -> wide block calculation is currently just a conversion
+to bigendian and an increment, but if dm-crypt will support cypher
+blocksizes larger than 512 bytes (which would be interesting for
+wide blocks) the conversion will include a shift also.
 
-ABL allows to turn a blockcipher with a blocksize of 16 bytes into a 
-blockcipher of arbitrary block size (for example 512 (dm sector size) 
-and 4k (x86 page size)). The mode is (according to it's creators)
-unencumbered by patents (other well known modes, CMC, EME, EME* and
-XCB, are).
+Signed-off-by: Rik Snel <rsnel@cube.dyndns.org>
+---
+ drivers/md/dm-crypt.c |   20 +++++++++++++++++++-
+ 1 files changed, 19 insertions(+), 1 deletions(-)
 
-To get ABL-32-AES to work, a new IV is needed: 'bewbi' ('big-endian' wide 
-block count'). It counts the number of wide blocks in bigendian format
-starting at 1. The first patch adds this IV mode.
-
-For 4k blocks (cipherblocksize equal to PAGE_SIZE and ext3fs max blocksize
-on x86) another change is needed to dm-crypt, it adds an optional argument
-to dm-crypt (the extra shift, eg extra_shift=1 gives cipherblocks of 1k).
-It works for me, but I don't know if my implementation is correct.
-
-For completeness I include the patch that introduces the ABL blockcipher 
-mode itself.
-
-The patches are against the current cryptodev-2.6 tree, and if no-one objects
-the dm-crypt patches will probably go there. 
-
-Greetings,
-
-Rik.
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 2c7aaac..a88dc95 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -117,6 +117,9 @@ static kmem_cache_t *_crypt_io_pool;
+  * benbi: the 64-bit "big-endian 'narrow block'-count", starting at 1
+  *        (needed for LRW-32-AES and possible other narrow block modes)
+  *
++ * bewbi: the 64-bit "big-endian 'wide block'-count", starting at 1
++ *        (needed for ABL-32-AES and possible other wide block modes)
++ *
+  * plumb: unimplemented, see:
+  * http://article.gmane.org/gmane.linux.kernel.device-mapper.dm-crypt/454
+  */
+@@ -251,6 +254,14 @@ static int crypt_iv_benbi_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
+ 	return 0;
+ }
+ 
++static int crypt_iv_bewbi_gen(struct crypt_config *cc, u8 *iv, sector_t sector)
++{
++	memset(iv, 0, cc->iv_size - sizeof(u32));
++	*((u32*)iv + 3) = cpu_to_be32((sector & 0xffffffff) + 1);
++
++	return 0;
++}
++
+ static struct crypt_iv_operations crypt_iv_plain_ops = {
+ 	.generator = crypt_iv_plain_gen
+ };
+@@ -267,6 +278,10 @@ static struct crypt_iv_operations crypt_iv_benbi_ops = {
+ 	.generator = crypt_iv_benbi_gen
+ };
+ 
++static struct crypt_iv_operations crypt_iv_bewbi_ops = {
++	.generator = crypt_iv_bewbi_gen
++};
++
+ static int
+ crypt_convert_scatterlist(struct crypt_config *cc, struct scatterlist *out,
+                           struct scatterlist *in, unsigned int length,
+@@ -815,7 +830,8 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	cc->tfm = tfm;
+ 
+ 	/*
+-	 * Choose ivmode. Valid modes: "plain", "essiv:<esshash>", "benbi".
++	 * Choose ivmode. Valid modes: "plain", "essiv:<esshash>", "benbi",
++	 *	"bewbi".
+ 	 * See comments at iv code
+ 	 */
+ 
+@@ -827,6 +843,8 @@ static int crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		cc->iv_gen_ops = &crypt_iv_essiv_ops;
+ 	else if (strcmp(ivmode, "benbi") == 0)
+ 		cc->iv_gen_ops = &crypt_iv_benbi_ops;
++	else if (strcmp(ivmode, "bewbi") == 0)
++		cc->iv_gen_ops = &crypt_iv_bewbi_ops;
+ 	else {
+ 		ti->error = "Invalid IV mode";
+ 		goto bad2;
+-- 
+1.4.4.1
