@@ -1,23 +1,9 @@
-From: Christophe Saout <christophe@saout.de>
-Subject: [stable][PATCH < 2.6.19] Fix data corruption with
-	dm-crypt over RAID5
-Date: Sat, 02 Dec 2006 03:27:56 +0100
-Message-ID: <1165026476.29307.23.camel__11373.9606728361$1165106096$gmane$org@leto.intern.saout.de>
-References: <456B732F.6080906@lelik.org>
-	<20061129145208.GQ4409@agk.surrey.redhat.com>
-	<456F46E3.6030702@lelik.org>
-	<1164983209.24524.20.camel@leto.intern.saout.de>
-	<20061201152143.GE4409@agk.surrey.redhat.com>
-	<45704B95.3020308@lelik.org>
-	<1165026116.29307.18.camel@leto.intern.saout.de>
+From: "Rik Snel" <rsnel@cube.dyndns.org>
+Subject: ABL-{32,*}-AES
+Date: Sun,  3 Dec 2006 13:48:20 +0100
+Message-ID: <11651501031841-git-send-email-rsnel@cube.dyndns.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1165026116.29307.18.camel@leto.intern.saout.de>
-Resent-To: dm-devel@redhat.com
-Resent-Message-Id: <E1GqfJb-0007Al-Vs@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,35 +13,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@osdl.org>, Chris Wright <chrisw@sous-sol.org>, dm-crypt@saout.de, Andrey <dm-crypt-revealed-address@lelik.org>, Jens Axboe <jens.axboe@oracle.com>, agk@redhat.com
+To: dm-devel@redhat.com
+Cc: herbert@gondor.apana.org.au
 List-Id: dm-devel.ids
 
-Fix corruption issue with dm-crypt on top of software raid5. Cancelled
-readahead bio's that report no error, just have BIO_UPTODATE cleared
-were reported as successful reads to the higher layers (and leaving
-random content in the buffer cache). Already fixed in 2.6.19.
 
-Signed-off-by: Christophe Saout <christophe@saout.de>
+Hello list,
 
+I'm working on an ABL-32-AES (and a more general ABL-*-AES) implementation
+for the Linux kernel as proposed by John Viega and David McGrew in
+http://grouper.ieee.org/groups/1619/email/rtf00000.rtf (October 28, 2004) and
+http://grouper.ieee.org/groups/1619/email/pdf00005.pdf (April 15, 2004).
+The spec is not sufficiently reviewed and the two documents seem to 
+contradict eachother in a few places. Therefore the implementation
+of the ABL blockcipher mode itself is preliminary.
 
---- linux-2.6.18.orig/drivers/md/dm-crypt.c	2006-09-20 05:42:06.000000000 +0200
-+++ linux-2.6.18/drivers/md/dm-crypt.c	2006-12-02 03:03:36.000000000 +0100
-@@ -717,13 +717,15 @@
- 	if (bio->bi_size)
- 		return 1;
- 
-+	if (!bio_flagged(bio, BIO_UPTODATE) && !error)
-+		error = -EIO;
-+                        
- 	bio_put(bio);
- 
- 	/*
- 	 * successful reads are decrypted by the worker thread
- 	 */
--	if ((bio_data_dir(bio) == READ)
--	    && bio_flagged(bio, BIO_UPTODATE)) {
-+	if (bio_data_dir(io->bio) == READ && !error) {
- 		kcryptd_queue_io(io);
- 		return 0;
- 	}
+ABL allows to turn a blockcipher with a blocksize of 16 bytes into a 
+blockcipher of arbitrary block size (for example 512 (dm sector size) 
+and 4k (x86 page size)). The mode is (according to it's creators)
+unencumbered by patents (other well known modes, CMC, EME, EME* and
+XCB, are).
+
+To get ABL-32-AES to work, a new IV is needed: 'bewbi' ('big-endian' wide 
+block count'). It counts the number of wide blocks in bigendian format
+starting at 1. The first patch adds this IV mode.
+
+For 4k blocks (cipherblocksize equal to PAGE_SIZE and ext3fs max blocksize
+on x86) another change is needed to dm-crypt, it adds an optional argument
+to dm-crypt (the extra shift, eg extra_shift=1 gives cipherblocks of 1k).
+It works for me, but I don't know if my implementation is correct.
+
+For completeness I include the patch that introduces the ABL blockcipher 
+mode itself.
+
+The patches are against the current cryptodev-2.6 tree, and if no-one objects
+the dm-crypt patches will probably go there. 
+
+Greetings,
+
+Rik.
