@@ -1,13 +1,14 @@
-From: "Dan Kegel" <dank06@kegel.com>
-Subject: Snapshots and resizing
-Date: Mon, 4 Dec 2006 22:24:33 -0800
-Message-ID: <a71bd89a0612042224obc42c63ld5656752e1d3c03d@mail.gmail.com>
+From: Luca Berra <bluca@comedia.it>
+Subject: Re: DM-MP cannot be run on either the root or boot device
+Date: Tue, 5 Dec 2006 09:25:50 +0100
+Message-ID: <20061205082549.GA14699@percy.comedia.it>
+References: <EA4ABA1D3EF49C4993A576069C887B2BCCCF23@mail.corp.criadvantage.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <EA4ABA1D3EF49C4993A576069C887B2BCCCF23@mail.corp.criadvantage.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,8 +21,16 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Inquiring minds want to know:
-if you take a snapshot of an ext3 volume,
-and then you resize the volume (say, you need to add a disk),
-does the snapshot remain valid?
-- Dan
+On Thu, Nov 30, 2006 at 03:28:12PM -0700, Wayne Cass wrote:
+>DM-MP cannot be run on either the root or boot device
+why not?
+
+L.
+
+-- 
+Luca Berra -- bluca@comedia.it
+        Communication Media & Services S.r.l.
+ /"\
+ \ /     ASCII RIBBON CAMPAIGN
+  X        AGAINST HTML MAIL
+ / \
