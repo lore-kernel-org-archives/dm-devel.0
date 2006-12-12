@@ -1,15 +1,12 @@
-From: Eckebrecht von Pappenheim <evp@heise.de>
-Subject: Re: 2tb-limit in dm-multipath?
-Date: Tue, 12 Dec 2006 19:37:34 +0100
-Message-ID: <DD0793FBAAB6DD80CBDDE9F4@[192.168.12.2]>
-References: <786EB72C710DF5BB0694C505@sigh.heise.de> <457EDC9E.8020705@bzed.de>
+From: Daryl Fenton <dfenton@ucalgary.ca>
+Subject: qla2xxx and lun issue
+Date: Tue, 12 Dec 2006 16:46:04 -0700
+Message-ID: <457F3F3C.7040106@ucalgary.ca>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <457EDC9E.8020705@bzed.de>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,28 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+hey,
+we have multiple machines running multipath with rhel 4U3 and 4U4 and 
+using qla2xxx FC cards that are hooked upto a dell EMC CX700 SAN. When 
+we add LUNs to these machines it works fine. When we take them away 
+though they seem to see a ghost LUN of 1gb and it's of type LUN Z. These 
+cause the machine to hang on boot until you go into single user mode and 
+hit ctrl-c on boot up, after that you need to blacklist the mpath to the 
+lun that is no longer there. Is there any way to just blacklist all 
+things of type LUN Z? I was just wondering if anyone else has had this 
+issue/ knows of a fix being built.
 
->> I had no problems setting this up (despite some udev-trouble due to an
->> older dmsetup). But when I try to access volumes > 2tb I get something
->> like
->>   
-> do you have "Support for Large Block Devices" activated in your kernel
-> config?
-
-yes, I have. I can and do use the big partitions directly without any
-problems. The trouble starts when I try to use them through multipath.
-
-Best regards,
-Eckebrecht
-
-
--- 
-Eckebrecht von Pappenheim, network administration 
-Heise Zeitschriften Verlag GmbH & Co KG
-Helstorferstr. 7, D-30625 Hannover, FRG
-E-Mail: evp@heise.de  - Tel: +49 511 5352 242  -  FAX: +49 511 5352 479
-http://www.heise.de/
+thanks
+Daryl
