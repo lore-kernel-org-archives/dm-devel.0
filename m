@@ -1,17 +1,12 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: Re: [RFC][PATCH] dm-cache: block level disk cache
-	target for device mapper
-Date: Mon, 11 Dec 2006 23:31:32 +0100
-Message-ID: <20061211223132.GA14495@redhat.com>
-References: <200611271826.kARIQYRi032717@hera.kernel.org>
-	<a4e6962a0612111054j6741c70cja1aa96ebee124e63@mail.gmail.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Hadders <dmraid@workingwithit.com>
+Subject: newbie:  Target Length not divisble error
+Date: Tue, 12 Dec 2006 22:21:11 +0800
+Message-ID: <457EBAD7.1020708@workingwithit.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <a4e6962a0612111054j6741c70cja1aa96ebee124e63@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,51 +16,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Eric Van Hensbergen <ericvh@hera.kernel.org>, ming@acis.ufl.edu, linux-kernel@vger.kernel.org
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi all,
+  I'm new to trying to get my Intel SATA RAID 0 container working.  I 
+want to use the "hardware" mode as oppossed to software RAID so I can 
+share it with my Windows setups.
+I've just spent the last three days banging my head against a brick wall.
+In short, I'm using FC5 and am looking to get the latest kernel, 
+2.6.18-1.2239.fc5smp working with this container.  I don't understand 
+why it doesn't, the base FC5 kernel does.
+I've just got my SATAII disks and setup the container in the Intel BIOS. 
+I've installed FC5 from scratch and used anaconda to setup the partitions.
+When I reboot into my new kernel, I get an error when it tries to 
+activate the container,  that is
 
-Hrm,
+device-mapper: table: 253:0 striped: Target length not divisble by chunk 
+size
 
-I finally got onto one of my TODO items a while ago which is an
-HSM (IOW: cache) target for device-mapper ;)
-The design of my HSM target covers remote storage as well as arbitrary
-slow local storage hierachies.
+then I get growled at for using parted and not knowing what I'm doing. I 
+didn't! honest, I used anaconda.
+the lines for setting up the container in the init file of the initrd are
+rmparts sdb
+rmparts sda
+dm create isw_cdgbeijgjh_iaa 0 1250275846 striped 2 256 8:0 8:16 0
+dm partadd isw_cdgbeijgjh_iaa
 
-Let's compare our code and see if there's any mutual stuff to merge
-or pros and cons of the different approaches when I post something shortly.
+Here's the details of my setup that I can access under 2.6.15-1.2054 
+(base FC5) kernel
 
-Heinz
+dmraid -V
+dmraid version:        1.0.0.rc11 (2006.05.15) debug
+dmraid library version:    1.0.0.rc11 (2006.05.15)
+device-mapper version:    4.5.0
 
-On Mon, Dec 11, 2006 at 12:54:33PM -0600, Eric Van Hensbergen wrote:
-> On 11/27/06, Eric Van Hensbergen <ericvh@hera.kernel.org> wrote:
-> >This is the first cut of a device-mapper target which provides a write-back
-> >or write-through block cache.  It is intended to be used in conjunction 
-> >with
-> >remote block devices such as iSCSI or ATA-over-Ethernet, particularly in
-> >cluster situations.
-> >
-> 
-> The technical paper describing our motivations and some performance
-> results has finally made it through IBM's clearance process.  It is
-> available here:
-> 
-> http://domino.research.ibm.com/library/cyberdig.nsf/1e4115aea78b6e7c85256b360066f0d4/ba52bef8b940e7438525723c006bafea?OpenDocument
-> 
->               -eric
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+dmraid -rD
+/dev/sda: isw, "isw_cdgbeijgjh", GROUP, ok, 625142446 sectors, data@ 0
+/dev/sdb: isw, "isw_cdgbeijgjh", GROUP, ok, 625142446 sectors, data@ 0
 
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+dmraid -s -g
+*** Superset
+name   : isw_cdgbeijgjh
+size   : 1250284892
+stride : 0
+type   : GROUP
+status : ok
+subsets: 1
+devs   : 2
+spares : 0
+--> Active Subset
+name   : isw_cdgbeijgjh_iaa
+size   : 1250275840
+stride : 256
+type   : stripe
+status : ok
+subsets: 0
+devs   : 2
+spares : 0
 
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+dmsetup status
+isw_cdgbeijgjh_iaap6: 0 4498137 linear
+isw_cdgbeijgjh_iaap5: 0 204796557 linear
+isw_cdgbeijgjh_iaa: 0 1250275846 striped
+isw_cdgbeijgjh_iaap4: 0 1044947925 linear
+isw_cdgbeijgjh_iaap3: 0 102398310 linear
+isw_cdgbeijgjh_iaap2: 0 102398310 linear
+isw_cdgbeijgjh_iaap1: 0 530082 linear
+
+I think the 18-1 kernel uses device-mapper v4.7
+
+However, I'm lost as to what to do now. Help! Please!
+
+Thanks in advance. Hadley
