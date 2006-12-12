@@ -1,15 +1,13 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: newbie:  Target Length not divisble error
-Date: Tue, 12 Dec 2006 14:43:00 +0100
-Message-ID: <20061212134300.GB14495@redhat.com>
-References: <457EBAD7.1020708@workingwithit.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Eckebrecht von Pappenheim <evp@heise.de>
+Subject: 2tb-limit in dm-multipath?
+Date: Tue, 12 Dec 2006 16:33:08 +0100
+Message-ID: <786EB72C710DF5BB0694C505@sigh.heise.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <457EBAD7.1020708@workingwithit.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,108 +17,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hello,
 
-Hrm, dmraid-1.0.0.rc11 has the stride size fix in,
-which *should* prevent that kernel message to occur.
+I run a setup with 2 SAN-boxes attached to a server using the multipath-tools
+version 0.4.7 and kernel 2.6.17 (the qlogic-drivers do not compile against
+2.6.18 ff.).
 
-Can you send me your metadata created with "dmraid -rD" 
-for analysis, please ?
+I had no problems setting this up (despite some udev-trouble due to an older
+dmsetup). But when I try to access volumes > 2tb I get something like
 
-Pack the *.{dat,size,offset} files into isw-Hadders-raid0.tar.bz2
-before sending.
+[root@backup]/var/log> fsck /dev/san/estor02lun0p1 
+fsck 1.37 (21-Mar-2005)
+e2fsck 1.37 (21-Mar-2005)
+The filesystem size (according to the superblock) is 1202399223 blocks
+The physical size of the device is 128657399 blocks
+Either the superblock or the partition table is likely to be corrupt!
+
+Without multipath the device is accessible and fsck'ble. I suspect a 32bit-wrap
+because of
+
+[root@backup]~> bc
+bc 1.06
+Copyright 1991-1994, 1997, 1998, 2000 Free Software Foundation, Inc.
+This is free software with ABSOLUTELY NO WARRANTY.
+For details type `warranty'. 
+# 4k blocks to volume size
+1202399223 * 4
+4809596892
+# wrap
+4809596892 - (2^32)
+514629596
+# back to blocks
+514629596 / 4
+# qed...
+128657399
+
+My device map for this device is
+[root@backup]/~> multipath -l 3600d0230000000000083591ea0567c00
+3600d0230000000000083591ea0567c00dm-5 IFT,A24F-R2224-1
+[size=4.5T][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][active]
+ \_ 3:0:1:0 sdp 8:240 [active][undef]
+
+(I don't have actually a multipath for this device, but I'd like to have...)
+
+Any idea which part of the multipath puzzle is the 32bit bottleneck?
 
 Regards,
-Heinz    -- The LVM Guy --
+Eckebrecht
 
-On Tue, Dec 12, 2006 at 10:21:11PM +0800, Hadders wrote:
-> Hi all,
->  I'm new to trying to get my Intel SATA RAID 0 container working.  I 
-> want to use the "hardware" mode as oppossed to software RAID so I can 
-> share it with my Windows setups.
-> I've just spent the last three days banging my head against a brick wall.
-> In short, I'm using FC5 and am looking to get the latest kernel, 
-> 2.6.18-1.2239.fc5smp working with this container.  I don't understand 
-> why it doesn't, the base FC5 kernel does.
-> I've just got my SATAII disks and setup the container in the Intel BIOS. 
-> I've installed FC5 from scratch and used anaconda to setup the partitions.
-> When I reboot into my new kernel, I get an error when it tries to 
-> activate the container,  that is
-> 
-> device-mapper: table: 253:0 striped: Target length not divisble by chunk 
-> size
-> 
-> then I get growled at for using parted and not knowing what I'm doing. I 
-> didn't! honest, I used anaconda.
-> the lines for setting up the container in the init file of the initrd are
-> rmparts sdb
-> rmparts sda
-> dm create isw_cdgbeijgjh_iaa 0 1250275846 striped 2 256 8:0 8:16 0
-> dm partadd isw_cdgbeijgjh_iaa
-> 
-> Here's the details of my setup that I can access under 2.6.15-1.2054 
-> (base FC5) kernel
-> 
-> dmraid -V
-> dmraid version:        1.0.0.rc11 (2006.05.15) debug
-> dmraid library version:    1.0.0.rc11 (2006.05.15)
-> device-mapper version:    4.5.0
-> 
-> dmraid -rD
-> /dev/sda: isw, "isw_cdgbeijgjh", GROUP, ok, 625142446 sectors, data@ 0
-> /dev/sdb: isw, "isw_cdgbeijgjh", GROUP, ok, 625142446 sectors, data@ 0
-> 
-> dmraid -s -g
-> *** Superset
-> name   : isw_cdgbeijgjh
-> size   : 1250284892
-> stride : 0
-> type   : GROUP
-> status : ok
-> subsets: 1
-> devs   : 2
-> spares : 0
-> --> Active Subset
-> name   : isw_cdgbeijgjh_iaa
-> size   : 1250275840
-> stride : 256
-> type   : stripe
-> status : ok
-> subsets: 0
-> devs   : 2
-> spares : 0
-> 
-> dmsetup status
-> isw_cdgbeijgjh_iaap6: 0 4498137 linear
-> isw_cdgbeijgjh_iaap5: 0 204796557 linear
-> isw_cdgbeijgjh_iaa: 0 1250275846 striped
-> isw_cdgbeijgjh_iaap4: 0 1044947925 linear
-> isw_cdgbeijgjh_iaap3: 0 102398310 linear
-> isw_cdgbeijgjh_iaap2: 0 102398310 linear
-> isw_cdgbeijgjh_iaap1: 0 530082 linear
-> 
-> I think the 18-1 kernel uses device-mapper v4.7
-> 
-> However, I'm lost as to what to do now. Help! Please!
-> 
-> Thanks in advance. Hadley
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-*** Software bugs are stupid.
-    Nevertheless it needs not so stupid people to solve them ***
-
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-Heinz Mauelshagen                                 Red Hat GmbH
-Consulting Development Engineer                   Am Sonnenhang 11
-Storage Development                               56242 Marienrachdorf
-                                                  Germany
-Mauelshagen@RedHat.com                            PHONE +49  171 7803392
-                                                  FAX   +49 2626 924446
-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
+-- 
+Eckebrecht von Pappenheim, network administration 
+Heise Zeitschriften Verlag GmbH & Co KG
+Helstorferstr. 7, D-30625 Hannover, FRG
+E-Mail: evp@heise.de  - Tel: +49 511 5352 242  -  FAX: +49 511 5352 479
+http://www.heise.de/
