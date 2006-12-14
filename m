@@ -1,17 +1,15 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] dm-userspace: use ring buffer instead
-	of	system call
-Date: Thu, 14 Dec 2006 19:36:15 +0900
-Message-ID: <20061214193615W.fujita.tomonori@lab.ntt.co.jp>
-References: <m3lklj2u81.fsf@guaranine.beaverton.ibm.com>
-	<20061208095939I.fujita.tomonori@lab.ntt.co.jp>
-	<m3y7pi1fhx.fsf@guaranine.beaverton.ibm.com>
+From: Adrian Bunk <bunk@stusta.de>
+Subject: Re: RFC: dm patches for 2.6.16
+Date: Thu, 14 Dec 2006 23:13:27 +0100
+Message-ID: <20061214221327.GP3388@stusta.de>
+References: <20061124032444.GH28363@stusta.de>
+	<20061205202559.GY4409@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3y7pi1fhx.fsf@guaranine.beaverton.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <20061205202559.GY4409@agk.surrey.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,53 +19,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel@redhat.com, Jeff Mahoney <jeffm@suse.com>, Alasdair G Kergon <agk@redhat.com>, Michal Miroslaw <mirq-linux@rere.qmqm.pl>, Daniel Kobras <kobras@linux.de>, Neil Brown <neilb@suse.de>, Mark McLoughlin <markmc@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] [PATCH 1/2] dm-userspace: use ring buffer instead	of	system call
-Date: Fri, 08 Dec 2006 09:09:30 -0800
-
-> FT> Of course I'm interested. Please post a patch. I still have some
-> FT> other stuff that I want to do for dmu.
+On Tue, Dec 05, 2006 at 08:25:59PM +0000, Alasdair G Kergon wrote:
+> On Fri, Nov 24, 2006 at 04:24:44AM +0100, Adrian Bunk wrote:
+> > The following attached patches seem to make sense for 2.6.16:
+> > 
+> > Added in 2.6.17.11 and 2.6.18:
+> > dm: BUG/OOPS fix
+> > 
+> > Added in 2.6.17.12 and 2.6.18:
+> > dm snapshot: unify chunk_size
+> > dm: add module ref counting
+> > dm: mirror sector offset fix
+> > dm: Fix deadlock under high i/o load in raid1 setup.
+> > 
+> > Added in 2.6.19:
+> > dm snapshot: fix metadata writing when suspending
+> > 
+> > Do these patches look OK for 2.6.16, 
 > 
-> Patch included below.
-> 
-> I've also posted my full source tree so that you can see the library
-> interface (tools/cowd/libdmu/dmu.{c,h}):
-> 
->   http://static.danplanet.com/hg/dm-userspace.ring
-> 
-> I would really like to get some feedback about the library interface.
+> Yes.
 
-Thanks a lot. I'll do later. But before that, one non-technical
-comment.
+Thanks, I've applied them.
 
+> > Are there any critical patches I missed?
+>  
+> The general rule for patches I send to linux-kernel is that any patch with
+> 'fix' in the title is a candidate for stable trees (together with any
+> earlier patches they depend upon).
 
-> diff --git a/include/linux/dm-userspace.h b/include/linux/dm-userspace.h
-> new file mode 100644
-> index 0000000..a4a6ea3
-> --- /dev/null
-> +++ b/include/linux/dm-userspace.h
-> @@ -0,0 +1,134 @@
-> +/*
-> + * Copyright (C) International Business Machines Corp., 2006
-> + * Author: Dan Smith <danms@us.ibm.com>
-> + *
-> + * This program is free software; you can redistribute it and/or modify
-> + * it under the terms of the GNU General Public License as published by
-> + * the Free Software Foundation; under version 2 of the License.
-> + *
-> + * This program is distributed in the hope that it will be useful,
-> + * but WITHOUT ANY WARRANTY; without even the implied warranty of
-> + * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-> + * GNU General Public License for more details.
-> + *
-> + * You should have received a copy of the GNU General Public License
-> + * along with this program; if not, write to the Free Software
-> + * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-> + *
-> + */
+I do _sometimes_ find patches for 2.6.16 on linux-kernel.
+I'm regularly going through the patches that have been applied to 
+-stable.
 
-include/linux/dm-userspace.h is included by libdevmapper. So does it 
-need to be released under LGPL, doesn't it?
+AFAIK Greg and Chris only apply patches to -stable that were explicitely 
+sent to stable@kernel.org.
+
+It would therefore be good, if you could send such patches explicitely 
+to stable@kernel.org.
+
+> Alasdair
+
+cu
+Adrian
+
+-- 
+
+       "Is there not promise of rain?" Ling Tan asked suddenly out
+        of the darkness. There had been need of rain for many days.
+       "Only a promise," Lao Er said.
+                                       Pearl S. Buck - Dragon Seed
