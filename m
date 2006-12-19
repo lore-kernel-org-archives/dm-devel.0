@@ -1,44 +1,181 @@
-From: Chris Wright <chrisw@sous-sol.org>
-Subject: [patch 12/24] dm snapshot: fix freeing pending exception
-Date: Thu, 14 Dec 2006 17:33:49 -0800
-Message-ID: <20061215013648.197529000@sous-sol.org>
-References: <20061215013337.823935000@sous-sol.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S964947AbWLOBeH@vger.kernel.org>
-Content-Disposition: inline; filename=dm-snapshot-fix-freeing-pending-exception.patch
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@kernel.org
-Cc: Justin Forbes <jmforbes@linuxtx.org>, Zwane Mwaikambo <zwane@arm.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Randy Dunlap <rdunlap@xenotime.net>, Dave Jones <davej@redhat.com>, Chuck Wolber <chuckw@quantumlinux.com>, Chris Wedgwood <reviews@ml.cw.f00f.org>, Michael Krufky <mkrufky@linuxtv.org>, torvalds@osdl.org, akpm@osdl.org, alan@lxorguk.ukuu.org.uk, Milan Broz <mbroz@redhat.com>, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [RFC PATCH 0/8] rqbased-dm: request-based device-mapper
+Date: Tue, 19 Dec 2006 17:10:26 -0500 (EST)
+Message-ID: <20061219.171026.115904158.k-ueda@ct.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: jens.axboe@oracle.com, agk@redhat.com, mchristi@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-2.6.18-stable review patch.  If anyone has any objections, please let us know.
-------------------
+Hello,
 
-From: Milan Broz <mbroz@redhat.com>
+I'm working on device-mapper multipath (dm-multipath).
+This patch set adds a new hook for device-mapper below I/O scheduler
+and enables mapping at request level instead of bio level.
+The patch could be a basis of better dynamic load balancing.
 
-Fix oops when removing full snapshot
-kernel bugzilla bug 7040
+This patch set is preliminary tested on active-active 2 paths storage.
+But the patch set still needs work and is not ready for inclusion.
+I'm posting it because I'd like to get comments about high-level
+design before going further in details.
 
-If a snapshot became invalid (full) while there is outstanding 
-pending_exception, pending_complete() forgets to remove
-the corresponding exception from its exception table before freeing it.
+The list below is the items which I'd especially like to get comments.
 
-Already fixed in 2.6.19.
+For block layer maintainer and developers:
+  This patch set has 2 block layer changes below.
+    - Changed blk_get_request() to allow calls from interrupt context
+      so that queue's request_fn can use it.  (PATCH 1/8)
+      (*) The behaviour of CFQ (or other scheduler which depends on
+          "current") may be affected when blk_get_request() is called
+          in interrupt context, because "current" is not the process
+          which issue the original request.
+    - Added new "end_io_first" hook to __end_that_request_first()
+      and struct request.  (PATCH 2/8)
+  And I'm thinking about:
+    - Moving blk_clone_rq() to ll_rw_blk.c from dm.c. (PATCH 7/8)
+  Are these acceptable changes?
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Chris Wright <chrisw@sous-sol.org>
----
- drivers/md/dm-snap.c |    1 +
- 1 file changed, 1 insertion(+)
+For dm maintainer and developers:
+    - About splitting 'map' method into 'prep_map' and 'map'.
+    - About I/O spanning across targets.
+  Please see "Possible discussion items" section below for details.
 
---- linux-2.6.18.5.orig/drivers/md/dm-snap.c
-+++ linux-2.6.18.5/drivers/md/dm-snap.c
-@@ -691,6 +691,7 @@ static void pending_complete(struct pend
- 
- 		free_exception(e);
- 
-+		remove_exception(&pe->e);
- 		error_snapshot_bios(pe);
- 		goto out;
- 	}
+This patch set should be applied on top of 2.6.19.1.
 
---
+
+====================================================================
+Background
+=-=-=-=-=-=
+
+Current device-mapper is bio-based and dm-multipath has some issues
+below.
+
+  - Because hook for I/O mapping is above block layer __make_request(),
+    contiguous bios can be mapped to different underlying devices
+    and these bios aren't merged into a request.
+    Dynamic load balancing could happen this situation, though
+    it has not been implemented yet.
+    Therefore, I/O mapping after bio merged is needed for better
+    dynamic load balancing.
+
+  - There is no feature of error code (sense key) escalation
+    to device-mapper from SCSI layer, though storage dependent error
+    code handling is needed for some storages.
+    Though there was a patch piggybacking error code to struct bio,
+    it was rejected and the comment at the time was "struct request
+    would be better if this feature is implemented."
+
+To resolve the issues, the block layer (request-based) multipath
+patch was posted by Mike Christie before.
+(http://marc.theaimsgroup.com/?l=linux-scsi&m=115520444515914&w=2)
+
+Though Mike's patch added new block layer device for multipath and
+didn't have device-mapper interface, I modified his patch to be used
+from dm-multipath.
+
+
+=====================================================================
+Design Overview
+=-=-=-=-=-=-=-=-=
+
+Overview of the request-based device-mapper patch:
+  - Mapping is done in a unit of struct request, instead of struct bio.
+  - Hook for I/O mapping is at request_fn after merging and sorting by
+    I/O scheduler, instead of make_request_fn.
+  - Hook for I/O finishing is at end_that_request_*, instead of bio_endio.
+  - Whether the dm device is bio-based or request-based is specified
+    at device creation by ioctl parameter.
+  - Keep user interface same (table/message/status).
+  - Any dm/md devices can be stacked on request-based dm device.
+    Request-based dm device *cannot* be stacked on bio-based dm device.
+  - Use block device queue instead of multipath target's internal queue.
+  - Currently no work is done for hw_handler.
+    Mike Christie is moving them to scsi layer.
+  - Difference in the target driver methods:
+      current (bio-based)       this patch (request-based)
+      ----------------------------------------------------------
+      map                       prep_map (decides target device)
+                                map      (translate cloned request)
+
+      end_io                    end_io_first (error check)
+                                end_io       (free memory/retry)
+
+Expected benefit:
+  - better load balancing
+  - affinity to I/O scheduler
+  - user space tools need minimum change
+  - could be a basis of error code escalation feature
+
+
+=====================================================================
+Possible discussion items
+=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+About splitting 'map' method into 'prep_map' and 'map'
+-------------------------------------------------------
+In current bio-based dm, clone of bio is made in dm core and
+passed to target's map function.
+Whereas in request-based dm, clone of request must be gotten
+from mapped underlying device's queue.
+
+So I added prep_map function for targets to decide devices
+to which the I/O should be directed in advance so that dm core
+can get clone of request before map function call.
+Though I think this prep_map approach is the best way,
+I'd like to get comments if you have any other ideas.
+
+
+About I/O spanning across targets
+----------------------------------
+Currently, splitting of I/O spanning across targets has not
+implemented yet, but it should be needed.
+There are 2 ways to implement it:
+  1). Do in request_fn (request level splitting)
+  2). Do in make_request_fn (bio level splitting)
+
+Request level splitting is difficult because:
+  - Need to split bios in the request too
+  - There is an assumption in block layer that request finishes
+    from head to tail in order.  If the request is splitted and
+    the latter half finishes first, it breaks this assumption.
+    Changing it will require major modification in block layer.
+
+Bio level splitting can be done in the following way:
+  - Create dm_make_request() and set it for make_request_fn
+  - Like what dm_request() currently does, dm_make_request() will
+    split bio and clone.  NO_MERGE flag is set for the cloned bio
+    so that it can't be merged again in the generic __make_request().
+  - The cloned bio is taken over to the I/O scheduler of the mapped
+    device by calling __make_request() for it as same as bio not
+    spanning targets.
+  - When the cloned bio is returned, end_io hook function is called
+    and wait for finishing all splitted clones.
+    (This is like current clone_endio() implementation.)
+
+So I think bio level splitting is better.
+What do you think about?
+
+
+=====================================================================
+TODO
+=-=-=
+
+o Support I/O spanning across targets (dm core)
+o Support noflush suspend (dm core)
+o Support HW handler for path changing (multipath)
+
+
+Thanks in advance,
+Kiyoshi Ueda
