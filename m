@@ -1,11 +1,8 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [RFC PATCH APPENDIX] rqbased-dm: add API to libdevmapper
-Date: Tue, 19 Dec 2006 17:15:41 -0500 (EST)
-Message-ID: <20061219.171541.102766013.k-ueda@ct.jp.nec.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 19 Dec 2006 22:51:32 -0000
+Message-ID: <20061219225132.6981.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,162 +13,572 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jens.axboe@oracle.com, agk@redhat.com, mchristi@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch adds the feature to use the kernel request-based dm feature
-to the device-mapper user-space tool.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2006-12-19 22:51:32
 
-For dmsetup:
-    # dmsetup --rqbase create <device name>
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
 
-For library users:
-    int dm_task_request_base(struct dm_task *dmt);
+Log message:
+	Fix for bz #219804. multipath no longer blacklists s/390 DASDs by default.
 
-This patch is for device-mapper-1.02.13.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5&r2=1.5.4.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.1&r2=1.20.2.2
 
-
-diff -rupN dm-1.02.13/dmsetup/dmsetup.c dm-1.02.13.rqbase/dmsetup/dmsetup.c
---- dm-1.02.13/dmsetup/dmsetup.c	2006-10-19 11:34:50.000000000 -0400
-+++ dm-1.02.13.rqbase/dmsetup/dmsetup.c	2006-12-12 16:39:35.000000000 -0500
-@@ -114,6 +114,7 @@ enum {
- 	NOOPENCOUNT_ARG,
- 	NOTABLE_ARG,
- 	OPTIONS_ARG,
-+	RQBASE_ARG,
- 	SHOWKEYS_ARG,
- 	TABLE_ARG,
- 	TARGET_ARG,
-@@ -458,6 +459,9 @@ static int _create(int argc, char **argv
- 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
- 		goto out;
- 
-+	if (_switches[RQBASE_ARG] && !dm_task_request_base(dmt))
-+		goto out;
-+
- 	if (!dm_task_run(dmt))
- 		goto out;
- 
-@@ -1522,7 +1526,7 @@ struct command {
- static struct command _commands[] = {
- 	{"create", "<dev_name> [-j|--major <major> -m|--minor <minor>]\n"
- 	  "\t                  [-U|--uid <uid>] [-G|--gid <gid>] [-M|--mode <octal_mode>]\n"
--	  "\t                  [-u|uuid <uuid>]\n"
-+	  "\t                  [-u|uuid <uuid>] [--rqbase]\n"
- 	  "\t                  [--notable | --table <table> | <table_file>]",
- 	 1, 2, _create},
- 	{"remove", "[-f|--force] <device>", 0, 1, _remove},
-@@ -1884,6 +1888,7 @@ static int _process_switches(int *argc, 
- 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
- 		{"notable", 0, &ind, NOTABLE_ARG},
- 		{"options", 1, &ind, OPTIONS_ARG},
-+		{"rqbase", 0, &ind, RQBASE_ARG},
- 		{"showkeys", 0, &ind, SHOWKEYS_ARG},
- 		{"table", 1, &ind, TABLE_ARG},
- 		{"target", 1, &ind, TARGET_ARG},
-@@ -2005,6 +2010,8 @@ static int _process_switches(int *argc, 
- 			_switches[NOLOCKFS_ARG]++;
- 		if ((ind == NOOPENCOUNT_ARG))
- 			_switches[NOOPENCOUNT_ARG]++;
-+		if ((ind == RQBASE_ARG))
-+			_switches[RQBASE_ARG]++;
- 		if ((ind == SHOWKEYS_ARG))
- 			_switches[SHOWKEYS_ARG]++;
- 		if ((ind == TABLE_ARG)) {
-diff -rupN dm-1.02.13/kernel/ioctl/dm-ioctl.h dm-1.02.13.rqbase/kernel/ioctl/dm-ioctl.h
---- dm-1.02.13/kernel/ioctl/dm-ioctl.h	2006-10-12 11:42:24.000000000 -0400
-+++ dm-1.02.13.rqbase/kernel/ioctl/dm-ioctl.h	2006-12-12 16:42:18.000000000 -0500
-@@ -330,4 +330,9 @@ typedef char ioctl_struct[308];
-  */
- #define DM_NOFLUSH_FLAG		(1 << 11) /* In */
- 
-+/*
-+ * Set this to create request based device-mapper device.
-+ */
-+#define DM_REQUEST_BASE_FLAG	(1 << 12) /* In */
-+
- #endif				/* _LINUX_DM_IOCTL_H */
-diff -rupN dm-1.02.13/lib/.exported_symbols dm-1.02.13.rqbase/lib/.exported_symbols
---- dm-1.02.13/lib/.exported_symbols	2006-10-12 11:42:24.000000000 -0400
-+++ dm-1.02.13.rqbase/lib/.exported_symbols	2006-12-12 16:43:18.000000000 -0500
-@@ -30,6 +30,7 @@ dm_task_suppress_identical_reload
- dm_task_add_target
- dm_task_no_flush
- dm_task_no_open_count
-+dm_task_request_base
- dm_task_skip_lockfs
- dm_task_update_nodes
- dm_task_run
-diff -rupN dm-1.02.13/lib/ioctl/libdm-iface.c dm-1.02.13.rqbase/lib/ioctl/libdm-iface.c
---- dm-1.02.13/lib/ioctl/libdm-iface.c	2006-10-12 13:29:05.000000000 -0400
-+++ dm-1.02.13.rqbase/lib/ioctl/libdm-iface.c	2006-12-12 17:02:43.000000000 -0500
-@@ -1040,6 +1040,13 @@ int dm_task_no_open_count(struct dm_task
- 	return 1;
- }
- 
-+int dm_task_request_base(struct dm_task *dmt)
-+{
-+	dmt->request_base = 1;
-+
-+	return 1;
-+}
-+
- int dm_task_skip_lockfs(struct dm_task *dmt)
- {
- 	dmt->skip_lockfs = 1;
-@@ -1283,6 +1290,8 @@ static struct dm_ioctl *_flatten(struct 
- 		dmi->flags |= DM_READONLY_FLAG;
- 	if (dmt->skip_lockfs)
- 		dmi->flags |= DM_SKIP_LOCKFS_FLAG;
-+	if (dmt->request_base)
-+		dmi->flags |= DM_REQUEST_BASE_FLAG;
- 
- 	dmi->target_count = count;
- 	dmi->event_nr = dmt->event_nr;
-@@ -1415,6 +1424,7 @@ static int _create_and_load_v4(struct dm
- 	task->uid = dmt->uid;
- 	task->gid = dmt->gid;
- 	task->mode = dmt->mode;
-+	task->request_base = dmt->request_base;
- 
- 	r = dm_task_run(task);
- 	dm_task_destroy(task);
-@@ -1552,7 +1562,7 @@ static struct dm_ioctl *_do_dm_ioctl(str
- 		dmi->flags |= DM_SKIP_BDGET_FLAG;
- 
- 	log_debug("dm %s %s %s%s%s %s%.0d%s%.0d%s"
--		  "%s%c%c%s %.0llu %s [%u]",
-+		  "%s%c%c%c%s %.0llu %s [%u]",
- 		  _cmd_data_v4[dmt->type].name,
- 		  dmi->name, dmi->uuid, dmt->newname ? " " : "",
- 		  dmt->newname ? dmt->newname : "",
-@@ -1564,6 +1574,7 @@ static struct dm_ioctl *_do_dm_ioctl(str
- 		  dmt->major > 0 ? ") " : "",
- 		  dmt->no_open_count ? 'N' : 'O',
- 		  dmt->no_flush ? 'N' : 'F',
-+		  dmt->request_base ? 'R' : 'B',
- 		  dmt->skip_lockfs ? "S " : "",
- 		  dmt->sector, dmt->message ? dmt->message : "",
- 		  dmi->data_size);
-diff -rupN dm-1.02.13/lib/ioctl/libdm-targets.h dm-1.02.13.rqbase/lib/ioctl/libdm-targets.h
---- dm-1.02.13/lib/ioctl/libdm-targets.h	2006-10-12 13:29:05.000000000 -0400
-+++ dm-1.02.13.rqbase/lib/ioctl/libdm-targets.h	2006-12-12 16:59:28.000000000 -0500
-@@ -54,6 +54,7 @@ struct dm_task {
- 	uint64_t sector;
- 	int no_flush;
- 	int no_open_count;
-+	int request_base;
- 	int skip_lockfs;
- 	int suppress_identical_reload;
- 
-diff -rupN dm-1.02.13/lib/libdevmapper.h dm-1.02.13.rqbase/lib/libdevmapper.h
---- dm-1.02.13/lib/libdevmapper.h	2006-10-12 11:42:24.000000000 -0400
-+++ dm-1.02.13.rqbase/lib/libdevmapper.h	2006-12-12 17:00:04.000000000 -0500
-@@ -153,6 +153,7 @@ int dm_task_set_message(struct dm_task *
- int dm_task_set_sector(struct dm_task *dmt, uint64_t sector);
- int dm_task_no_flush(struct dm_task *dmt);
- int dm_task_no_open_count(struct dm_task *dmt);
-+int dm_task_request_base(struct dm_task *dmt);
- int dm_task_skip_lockfs(struct dm_task *dmt);
- int dm_task_suppress_identical_reload(struct dm_task *dmt);
- 
+--- multipath-tools/multipath.conf.defaults	2006/05/12 02:03:59	1.5
++++ multipath-tools/multipath.conf.defaults	2006/12/19 22:51:31	1.5.4.1
+@@ -11,7 +11,7 @@
+ #	path_checker		readsector0
+ #	rr_min_io		1000
+ #	rr_weight		uniform
+-#	failback		immediate
++#	failback		manual
+ #	no_path_retry		fail
+ #	user_friendly_names	no
+ #}
+@@ -24,228 +24,348 @@
+ #
+ #devices {
+ #       device {
++#		vendor			"APPLE.*"
++#		product			"Xserve RAID"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
++#	}
++#       device {
+ #		vendor			"3PARdata"
+ #		product			"VV"
+-#               path_grouping_policy    multibus
+ #		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #	}
+ #       device {
+-#               vendor                  "COMPAQ"
+-#               product                 "HSV110 \(C\)COMPAQ"
+-#               path_grouping_policy    group_by_serial
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#               vendor                  "(COMPAQ|HP)"
++#               product                 "MSA1.*"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"1 hp_sw"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		hp_sw
+ #       }
+ #       device {
+-#               vendor                  "HP"
+-#               product                 "HSV101"
+-#               path_grouping_policy    group_by_prio
++#               vendor                  "(COMPAQ|HP)"
++#               product                 "HSV(1|2).*"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
+ #               prio_callout            "/sbin/mpath_prio_alua %d"	
+-#               path_checker            tur
+-#               no_path_retry		60 
+-#        }
+-#       device {
+-#               vendor                  "COMPAQ"
+-#               product                 "HSV111 \(C\)COMPAQ"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    group_by_prio
+-#               prio_callout            "/sbin/mpath_prio_alua %d"      
+-#               path_checker            tur
+-#               no_path_retry           60 
+-#       }
+-#       device {
+-#               vendor                  "HP"
+-#               product                 "HSV200"
+-#               path_grouping_policy    group_by_prio
+-#               prio_callout            "/sbin/mpath_prio_alua %d"      
+-#               path_checker            tur
+-#               no_path_retry           60 
+-#        }
+-#       device {
+-#               vendor                  "HP"
+-#               product                 "HSV210"
+-#               path_grouping_policy    group_by_prio
+-#               prio_callout            "/sbin/mpath_prio_alua %d"      
++#		failback		immediate
++#		rr_weight		uniform
++#               no_path_retry		60 
++#		rr_min_io		1000
+ #               path_checker            tur
+-#               no_path_retry           60 
+ #        }
+ #       device {
+-#                vendor                 "HP"
+-#                product                "OPEN-."
+-#                path_grouping_policy   multibus
+-#                path_checker           tur
+-#        }
+-#       device {
+-#                vendor                 "HP"
+-#                product                "*33[89]0*"
+-#                path_grouping_policy   multibus
+-#                path_checker           tur
+-#        }
+-#      device {
+-#               vendor                  "HP"
+-#               product                 "MSA VOLUME"
+-#               path_grouping_policy    group_by_prio
+-#               prio_callout            "/sbin/mpath_prio_alua %d"      
+-#               path_checker            tur
+-#       }
++#		vendor			"HP"
++#		product			"A6189A"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
++#	}
+ #       device {
+-#               vendor                  "COMPAQ"
+-#               product                 "MSA1000"
+-#               path_grouping_policy    group_by_serial
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#       }
++#		vendor			"(HITACHI|HP)"
++#		product			"OPEN-.*"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		100
++#		path_checker		tur
++#	}
+ #       device {
+ #               vendor                  "DDN"
+ #               product                 "SAN DataDirector"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #       device {
+ #               vendor                  "DEC"
+ #               product                 "HSG80"
+-#               path_grouping_policy    group_by_serial
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"1 hp_sw"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		hp_sw
+ #       }
+ #       device {
+ #               vendor                  "DGC"
+-#		product			"*"
++#		product			".*"
+ #		bl_product		"LUN_Z"
+-#		path_grouping_policy	group_by_prio
+ #		getuid_callout          "/sbin/scsi_id -g -u -s"
+ #		prio_callout		"/sbin/mpath_prio_emc /dev/%n"
+-#		hardware_handler	"1 emc"
+ #		features		"1 queue_if_no_path"
+-#		path_checker		emc_clariion
++#		hardware_handler	"1 emc"
++#		path_grouping_policy	group_by_prio
+ #		failback		immediate
++#		rr_weight		uniform
++#		no_path_retry		60
++#		rr_min_io		1000
++#		path_checker		emc_clariion
+ #	}
+ #       device {
+ #               vendor                  "EMC"
+ #               product                 "SYMMETRIX"
+-#               path_grouping_policy    multibus
+ #               getuid_callout          "/sbin/scsi_id -g -u -ppre-spc3-83 -s /block/%n"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #       device {
+ #               vendor                  "FSC"
+ #               product                 "CentricStor"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    group_by_serial
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #       device {
+ #               vendor                  "HITACHI"
+-#               product                 "DF400"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#               product                 "DF.*"
++#		getuid_callout          "/sbin/scsi_id -g -u -s"
++#		prio_callout		"/sbin/mpath_prio_hds_modular %d"
++#		features		"0"
++#		hardware_handler	"0"
++#		path_grouping_policy	group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #       device {
+-#               vendor                  "HITACHI"
+-#               product                 "DF500"
++#               vendor                  "IBM"
++#               product                 "ProFibre 4000R"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #       device {
+-#               vendor                  "HITACHI"
+-#               product                 "DF600"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#       }
+-#	device {
+-#		vendor			"HITACHI"
+-#		product			"CF600F*"
+-#		path_grouping_policy	group_by_prio
+-#		prio_callout		"/sbin/mpath_prio_hds_modular %d"
+-#		path_checker		"readsector0"
++#               vendor                  "IBM"
++#               product                 "1742"
+ #		getuid_callout		"/sbin/scsi_id -g -u -s"
++#               prio_callout            "/sbin/mpath_prio_tpc /dev/%n"	
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
+ #		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
++#               path_checker            tur
+ #	}
+ #       device {
+-#               vendor                  "HP"
+-#               product                 "HSV110"
++#               vendor                  "IBM"
++#               product                 "3526"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#               prio_callout            "/sbin/mpath_prio_tpc /dev/%n"	
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
++#               path_checker            tur
++#	}
++#	device {
++#		vendor			"IBM"
++#		product			"3542"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    group_by_serial
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#       }
+-#       device {
+-#               vendor                  "HP"
+-#               product                 "A6189A"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#       }
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		tur
++#	}
++#	device {
++#		vendor			"IBM"
++#		product			"2105(800|F20)"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"1 queue_if_no_path"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_serial
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		tur
++#	}
++#	device {
++#		vendor			"IBM"
++#		product			"1750500"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#               prio_callout            "/sbin/mpath_prio_alua %d"	
++#		features		"1 queue_if_no_path"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
++#               path_checker            tur
++#	}
+ #       device {
+ #               vendor                  "IBM"
+-#               product                 "ProFibre 4000R"
++#               product                 "2107900"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"1 queue_if_no_path"
++#		hardware_handler	"0"
+ #               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		tur
+ #       }
+ #	device {
+ #		vendor			"IBM"
+-#		product			"3542"
+-#		path_grouping_policy	group_by_serial
++#		product			"2145"
+ #		getuid_callout		"/sbin/scsi_id -g -u -s"
+-#		path_checker		tur
++#               prio_callout            "/sbin/mpath_prio_alua /dev/%n"	
++#		features		"1 queue_if_no_path"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
++#               path_checker            tur
++#	}
++#	device {
++#		vendor			"IBM"
++#		product			"S/390 DASD ECKD"
++#		getuid_callout		"/sbin/dasd_id /dev/%n"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
++#               path_checker            directio
+ #	}
+ #	device {
+ #		vendor			"NETAPP"
+ #		product			"LUN"
++#		getuid_callout          "/sbin/scsi_id -g -u -s"
++#		prio_callout		"/sbin/mpath_prio_netapp /dev/%n"
++#		features		"1 queue_if_no_path"
++#		hardware_handler	"0"
+ #		path_grouping_policy	group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		128
++#		path_checker		readsector0
++#	}
++#	device {
++#		vendor			"IBM"
++#		product			"Nseries.*"
+ #		getuid_callout          "/sbin/scsi_id -g -u -s"
+ #		prio_callout		"/sbin/mpath_prio_netapp /dev/%n"
+ #		features		"1 queue_if_no_path"
++#		hardware_handler	"0"
++#		path_grouping_policy	group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		128
+ #		path_checker		readsector0
+ #	}
+ #	device {
+ #		vendor			"Pillar"
+ #		product			"Axiom 500"
+-#		path_grouping_policy    group_by_prio
+-#		getuid_callout          "/sbin/scsi_id -g -u -s"
+-#		prio_callout		"/sbin/mpath_prio_alua %d"
+-#		path_checker		tur
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#               prio_callout            "/sbin/mpath_prio_alua %d"	
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
++#		rr_weight		uniform
++#		rr_min_io		1000
++#               path_checker            tur
+ #	}
+ #       device {
+ #               vendor                  "SGI"
+-#               product                 "TP9100"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#       }
+-#       device {
+-#               vendor                  "SGI"
+-#               product                 "TP9300"
++#               product                 "TP9[13]00"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #       device {
+ #               vendor                  "SGI"
+-#               product                 "TP9400"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#		path_checker		tur
+-#	}
+-#       device {
+-#               vendor                  "SGI"
+-#               product                 "TP9500"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#               product                 "TP9[45]00"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#               prio_callout            "/sbin/mpath_prio_tpc /dev/%n"	
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
+ #               path_checker            tur
+-#       }
++#	}
+ #       device {
+ #               vendor                  "STK"
+ #               product                 "OPENstorage D280"
+-#               path_grouping_policy    group_by_serial
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
+-#       }
+-#       device {
+-#               vendor                  "SUN"
+-#               product                 "StorEdge 3510"
+-#               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#               prio_callout            "/sbin/mpath_prio_tpc /dev/%n"	
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    group_by_prio
++#		failback		immediate
++#		rr_weight		uniform
++#		rr_min_io		1000
+ #       }
+ #       device {
+ #               vendor                  "SUN"
+-#               product                 "T4"
++#               product                 "(StorEdge 3510|T4)"
++#		getuid_callout		"/sbin/scsi_id -g -u -s"
++#		features		"0"
++#		hardware_handler	"0"
+ #               path_grouping_policy    multibus
+-#               getuid_callout          "/sbin/scsi_id -g -u -s"
++#		rr_weight		uniform
++#		rr_min_io		1000
++#		path_checker		readsector0
+ #       }
+ #	device {
+ #		vendor			"GNBD"
+ #		product			"GNBD"
+-#		path_grouping_policy	multibus
+-#		getuid_callout		"/sbin/gnbd_import -U /block/%n"
++#		getuid_callout		"/sbin/gnbd_import -q -U /block/%n"
++#		features		"0"
++#		hardware_handler	"0"
++#               path_grouping_policy    multibus
++#		rr_weight		uniform
++#		rr_min_io		1000
+ #		path_checker		directio
+ #	}
+ #}
+--- multipath-tools/libmultipath/hwtable.c	2006/12/14 23:44:33	1.20.2.1
++++ multipath-tools/libmultipath/hwtable.c	2006/12/19 22:51:32	1.20.2.2
+@@ -76,7 +76,7 @@
+ 	},
+ 	{
+ 		.vendor        = "(COMPAQ|HP)",
+-		.product       = "(MSA|HSV)1.*",
++		.product       = "MSA1.*",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = NULL,
+ 		.features      = DEFAULT_FEATURES,
+@@ -90,8 +90,23 @@
+ 		.checker_name  = HP_SW,
+ 	},
+ 	{
++		.vendor        = "(COMPAQ|HP)",
++		.product       = "HSV(1|2).*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 60,
++		.minio         = 100,
++		.checker_name  = TUR,
++	},
++	{
+ 		.vendor        = "HP",
+-		.product       = "(HSV2.*|A6189A)",
++		.product       = "A6189A",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = NULL,
+ 		.features      = DEFAULT_FEATURES,
+@@ -198,11 +213,11 @@
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+-		.pgfailback    = FAILBACK_UNDEF,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
+-		.checker_name  = READSECTOR0,
++		.minio         = 100,
++		.checker_name  = TUR,
+ 	},
+ 	{
+ 		.vendor        = "HITACHI",
+@@ -356,7 +371,6 @@
+ 		/* IBM S/390 ECKD DASD */
+ 		.vendor        = "IBM",
+ 		.product       = "S/390 DASD ECKD",
+-		.bl_product       = "S/390.*",
+ 		.getuid        = "/sbin/dasd_id /dev/%n",
+ 		.getprio       = NULL,
+ 		.features      = DEFAULT_FEATURES,
