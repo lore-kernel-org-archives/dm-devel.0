@@ -1,16 +1,15 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [RFC PATCH 1/8] rqbased-dm: allow blk_get_request()
-	to be called from interrupt context
-Date: Wed, 20 Dec 2006 20:17:33 +0100
-Message-ID: <20061220191730.GL10535@kernel.dk>
-References: <20061220.125002.71083198.k-ueda@ct.jp.nec.com>
-	<000001c7246a$ae31c8a0$ff0da8c0@amr.corp.intel.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC PATCH 2/8] rqbased-dm: add block layer hook
+Date: Wed, 20 Dec 2006 16:52:46 -0500 (EST)
+Message-ID: <20061220.165246.85417944.k-ueda@ct.jp.nec.com>
+References: <20061219.171150.75425661.k-ueda@ct.jp.nec.com>
+	<20061220134924.GG10535@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <000001c7246a$ae31c8a0$ff0da8c0@amr.corp.intel.com>
+In-Reply-To: <20061220134924.GG10535@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,41 +19,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Chen, Kenneth W" <kenneth.w.chen@intel.com>
+To: jens.axboe@oracle.com
 Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, mchristi@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Dec 20 2006, Chen, Kenneth W wrote:
-> Kiyoshi Ueda wrote on Wednesday, December 20, 2006 9:50 AM
-> > On Wed, 20 Dec 2006 14:48:49 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
-> > > Big NACK on this - it's not only really ugly, it's also buggy to pass
-> > > interrupt flags as function arguments. As you also mention in the 0/1
-> > > mail, this also breaks CFQ.
-> > > 
-> > > Why do you need in-interrupt request allocation?
-> >  
-> > Because I'd like to use blk_get_request() in q->request_fn()
-> > which can be called from interrupt context like below:
-> >   scsi_io_completion -> scsi_end_request -> scsi_next_command
-> >   -> scsi_run_queue -> blk_run_queue -> q->request_fn
-> > 
-> > [ ...]
-> > 
-> > Do you think creating another function like blk_get_request_nowait()
-> > is acceptable?
+Hi Jens,
+
+Sorry for the less explanation.
+
+On Wed, 20 Dec 2006 14:49:24 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
+> On Tue, Dec 19 2006, Kiyoshi Ueda wrote:
+> > This patch adds new "end_io_first" hook in __end_that_request_first()
+> > for request-based device-mapper.
 > 
-> You don't need to create another function.  blk_get_request already
-> have both wait and nowait semantics via gfp_mask argument. If you can
-> not block, then clear __GFP_WAIT bit in the mask before calling
-> blk_get_request.
+> What's this for, lack of stacking?
 
-Doesn't work, get_request() assumes that the caller grabbed the queue
-lock and disabled interrupts, and does an unconditionaly
+I don't understand the meaning of "lack of stacking" well but
+I guess that it means "Is the existing hook in end_that_request_last()
+not enough?"  If so, the answer is no.
+(If the geuss is wrong, please let me know.)
 
-        spin_unlock_irq()
+The new hook is needed for error handling in dm.
+For example, when an error occurred on a request, dm-multipath
+wants to try another path before returning EIO to application.
+Without the new hook, at the point of end_that_request_last(),
+the bios are already finished with error and can't be retried.
 
-inside it. So you can NEVER use get_request() for even GFP_ATOMIC
-allocations, as it assumes the original context was a process context.
-
--- 
-Jens Axboe
+Thanks,
+Kiyoshi Ueda
