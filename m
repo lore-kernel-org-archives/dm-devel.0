@@ -1,188 +1,76 @@
-From: Martin Michlmayr <tbm@cyrius.com>
-Subject: Bug#403426: kernel corrupts LUKS partition header on arm
-Date: Wed, 20 Dec 2006 17:15:29 +0100
-Message-ID: <20061220161529.GA10820@deprecation.cyrius.com>
-References: <20061217022906.2434.60658.reportbug@LKG8A754B.example.org>
-Reply-To: Martin Michlmayr <tbm@cyrius.com>, 403426@bugs.debian.org
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC PATCH 1/8] rqbased-dm: allow blk_get_request()
+ to be called from interrupt context
+Date: Wed, 20 Dec 2006 12:50:02 -0500 (EST)
+Message-ID: <20061220.125002.71083198.k-ueda@ct.jp.nec.com>
+References: <20061219.171119.18572687.k-ueda@ct.jp.nec.com>
+	<20061220134848.GF10535@kernel.dk>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <bounce-debian-bugs-rc=glddbr-debian-bugs-rc=gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.403426.B403426.116663135531394@bugs.debian.org>
-Content-Disposition: inline
-In-Reply-To: <20061217022906.2434.60658.reportbug@LKG8A754B.example.org>
-List-Post: <mailto:debian-bugs-rc@lists.debian.org>
-List-Help: <mailto:debian-bugs-rc-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-rc-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-rc-request@lists.debian.org?subject=unsubscribe>
-To: dm-devel@redhat.com, Clemens Fruhwirth <clemens@endorphin.org>
-Cc: Brian Brunswick <bdb-reportbug@forbidden.co.uk>, 403426@bugs.debian.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20061220134848.GF10535@kernel.dk>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: jens.axboe@oracle.com
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, mchristi@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-We're seeing corruption of LUKS partition headers on ARM.  I've
-confirmed this on two different ARM platforms (IXP4xx and IOP32x) and
-with 2.6.17 and 2.6.18.
+Hi Jens,
 
-Basically, when you create a LUKS partition on a PC and then connect
-it to an ARM box and open it, you get an "automatic header conversion
-from 0.99 to 0.991 triggered" message and afterwards the LUKS
-partition header is corrupted.
+Thank you for the comment.
 
-Here are steps to reproduce this:
+On Wed, 20 Dec 2006 14:48:49 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
+> >  static struct request *get_request(request_queue_t *q, int rw, struct bio *bio,
+> > -				   gfp_t gfp_mask)
+> > +				   gfp_t gfp_mask, unsigned long *flags)
+> >  {
+> >  	struct request *rq = NULL;
+> >  	struct request_list *rl = &q->rq;
+> > @@ -2119,7 +2120,10 @@ static struct request *get_request(reque
+> >  	if (priv)
+> >  		rl->elvpriv++;
+> >  
+> > -	spin_unlock_irq(q->queue_lock);
+> > +	if (flags)
+> > +		spin_unlock_irqrestore(q->queue_lock, *flags);
+> > +	else
+> > +		spin_unlock_irq(q->queue_lock);
+> 
+> Big NACK on this - it's not only really ugly, it's also buggy to pass
+> interrupt flags as function arguments. As you also mention in the 0/1
+> mail, this also breaks CFQ.
+> 
+> Why do you need in-interrupt request allocation?
+ 
+Because I'd like to use blk_get_request() in q->request_fn()
+which can be called from interrupt context like below:
+  scsi_io_completion -> scsi_end_request -> scsi_next_command
+  -> scsi_run_queue -> blk_run_queue -> q->request_fn
 
-On the PC:
+Generally, device-mapper (dm) clones an original I/O and dispatches
+the clones to underlying destination devices.
+In the request-based dm patch, the clone creation and the dispatch
+are done in q->request_fn().  To create the clone, blk_get_request()
+is used to get a request from underlying destination device's queue.
+By doing that in q->request_fn(), dm can deal with struct request
+after bios are merged by __make_request().
 
-27340:tbm@deprecation: ] sudo cryptsetup luksFormat /dev/sda6
+Do you think creating another function like blk_get_request_nowait()
+is acceptable?
+Or request should not be allocated in q->request_fn() anyway?
+Do you have any other ideas?
 
-WARNING!
-========
-This will overwrite data on /dev/sda6 irrevocably.
+> -- 
+> Jens Axboe
 
-Are you sure? (Type uppercase yes): YES
-Enter LUKS passphrase:
-Verify passphrase:
-Command successful.
-27348:tbm@deprecation: ~] sudo cryptsetup luksOpen /dev/sda6 x
-Enter LUKS passphrase:
-key slot 0 unlocked.
-Command successful.
-27351:tbm@deprecation: ~] sudo cryptsetup luksClose x
-27352:tbm@deprecation: ~]
-
-Connect the drive to the ARM box:
-
-debian:~# cryptsetup luksOpen /dev/sdb6 x
-Enter LUKS passphrase:
-automatic header conversion from 0.99 to 0.991 triggered
-[here it appears to hang; I press ctrl-c]
-debian:~# cryptsetup luksOpen /dev/sdb6 x
-Enter LUKS passphrase:
-unknown hash spec in phdrEnter LUKS passphrase:
-unknown hash spec in phdrEnter LUKS passphrase:
-unknown hash spec in phdrCommand failed: No key available with this passphrase.
-
-debian:~#
-
-The original bug report with some more info:
-
-* Brian Brunswick <bdb-reportbug@forbidden.co.uk> [2006-12-17 02:29]:
-> Package: linux-image-2.6.18-3-ixp4xx
-> Version: 2.6.18-8
-> Severity: critical
-> Justification: causes serious data loss
-> 
-> This is on an NSLU2, I wanted to use it to access some disks that I
-> had used previously on another system that had encrypted partitons.
-> However, when I tried cryptsetup luksOpen, I got a automatic header
-> conversion from 0.99 to 0.991 triggered message, and then an infinite
-> loop. Trying the same partition on the other system, now I get the
-> same thing - its header is corrupted. Luckily, I'm paranoid and had a
-> backup of the LUKS header! If I didn't have this, the whole
-> partition's data would probably be lost.
-> 
-> Here's the result of some tests - and its stranger than you think...
-> 
-> Used cryptsetup luksFormat on another system to set up a partition..
-> 
-> LKG8A754B:~# uname -a
-> Linux LKG8A754B 2.6.18-3-ixp4xx #1 Mon Dec 11 17:20:00 UTC 2006 armv5tel GNU/Linux
-> 
-> !!! ... after some experiments corrupting it... now I restore it again
-> and decide to strace things... !!!
-> 
-> LKG8A754B:~# dd < sde4-luks-header-backup  > /dev/sde4
-> 150+0 records in
-> 150+0 records out
-> 76800 bytes (77 kB) copied, 0.0148216 seconds, 5.2 MB/s
-> LKG8A754B:~# strace 2>trace cryptsetup luksOpen /dev/sde4 sde4
-> Enter LUKS passphrase: 
-> key slot 0 unlocked.
-> 
-> !!! Hey, that just worked !!!
-> 
-> LKG8A754B:~# ls -l /dev/mapper/sde4
-> brw-rw---- 1 root disk 254, 0 Dec 17 02:00 /dev/mapper/sde4
-> LKG8A754B:~# cmp -l /dev/sde4 sde4-luks-header-backup 
-> cmp: EOF on sde4-luks-header-backup
-> 
-> !!! But: !!!
-> 
-> LKG8A754B:~# cryptsetup remove sde4
-> !!! no strace !!!
-> LKG8A754B:~# cryptsetup luksOpen /dev/sde4 sde4
-> Enter LUKS passphrase: 
-> automatic header conversion from 0.99 to 0.991 triggered
-> <ctrl-c>
-> LKG8A754B:~# cmp -l /dev/sde4 sde4-luks-header-backup        
->   168   0  12
->   513 114   0
->   514 125   0
->   515 113   0
->   516 123   0
->   517 272   0
->   518 276   0
->   520   1   0
->   521 141   0
->   522 145   0
->   523 163   0
->   539   0   3
->   540   0  10
->   543   0  17
->   544   0 240
->   553 143   0
->   554 142   0
->   555 143   0
->   556  55   0
->   557 145   0
->   558 163   0
->   559 163   0
->   560 151   0
->   561 166   0
->   562  72   0
->   563 163   0
->   564 150   0
->   565 141   0
->   566  62   0
->   567  65   0
->   568  66   0
->   585 163   0
->   586 150   0
->   587 141   3
->   588  61 210
->   591   0  17
->   592   0 240
-> cmp: EOF on sde4-luks-header-backup
-> LKG8A754B:~# 
-> 
-> !!!
-> 
-> Its done something like overwrite the second sector of the header with
-> the first one. I had a look at the cryptsetup code, and the conversion
-> message is triggered by it finding the wrong state code for the
-> passphrase slot - so the data has been overwritten by the time its got
-> there.
-> 
-> This is reliable - it always seems to corrupt it without strace,
-> always works with!???
-> 
-> Err....
-
-According to the orignal bug reporter, cryptsetup hangs when it shows
-"automatic header conversion from 0.99 to 0.991 triggered".  However,
-I tried it with a small partition now (ca 90 MB) and it doesn't hang.
-I got:
-
-foobar:~# cryptsetup luksOpen /dev/sda5 x
-Enter LUKS passphrase:
-automatic header conversion from 0.99 to 0.991 triggereddevice-mapper: crypt: Device lookup failed
-device-mapper: error adding target to table
-device-mapper: device doesn't appear to be in the dev hash table.
-Failed to setup dm-crypt key mapping.
-Check kernel for support for the aes-cbc-essiv:sha256 cipher spec and verify that /dev/sda5 contains at least 133 sectors.
-Failed to read from key storage
-Enter LUKS passphrase:
-unknown hash spec in phdrEnter LUKS passphrase:
-
--- 
-Martin Michlmayr
-http://www.cyrius.com/
+Thanks,
+Kiyoshi Ueda
