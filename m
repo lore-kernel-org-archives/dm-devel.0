@@ -1,49 +1,40 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [RFC PATCH 0/8] rqbased-dm: request-based
-	device-mapper
-Date: Wed, 20 Dec 2006 19:51:43 +0100
-Message-ID: <20061220185143.GK10535@kernel.dk>
-References: <20061219.171026.115904158.k-ueda@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Chen, Kenneth W" <kenneth.w.chen@intel.com>
+Subject: RE: [RFC PATCH 1/8] rqbased-dm: allow blk_get_request() to be called from interrupt context
+Date: Wed, 20 Dec 2006 11:11:40 -0800
+Message-ID: <000001c7246a$ae31c8a0$ff0da8c0@amr.corp.intel.com>
+References: <20061220.125002.71083198.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20061219.171026.115904158.k-ueda@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: dm-devel@redhat.com, mchristi@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1030269AbWLTTLm@vger.kernel.org>
+In-Reply-To: <20061220.125002.71083198.k-ueda@ct.jp.nec.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: 'Kiyoshi Ueda' <k-ueda@ct.jp.nec.com>, jens.axboe@oracle.com
+Cc: agk@redhat.com, mchristi@redhat.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 19 2006, Kiyoshi Ueda wrote:
-> For block layer maintainer and developers:
->   This patch set has 2 block layer changes below.
->     - Changed blk_get_request() to allow calls from interrupt context
->       so that queue's request_fn can use it.  (PATCH 1/8)
->       (*) The behaviour of CFQ (or other scheduler which depends on
->           "current") may be affected when blk_get_request() is called
->           in interrupt context, because "current" is not the process
->           which issue the original request.
+Kiyoshi Ueda wrote on Wednesday, December 20, 2006 9:50 AM
+> On Wed, 20 Dec 2006 14:48:49 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
+> > Big NACK on this - it's not only really ugly, it's also buggy to pass
+> > interrupt flags as function arguments. As you also mention in the 0/1
+> > mail, this also breaks CFQ.
+> > 
+> > Why do you need in-interrupt request allocation?
+>  
+> Because I'd like to use blk_get_request() in q->request_fn()
+> which can be called from interrupt context like below:
+>   scsi_io_completion -> scsi_end_request -> scsi_next_command
+>   -> scsi_run_queue -> blk_run_queue -> q->request_fn
+> 
+> [ ...]
+> 
+> Do you think creating another function like blk_get_request_nowait()
+> is acceptable?
 
-This we already covered.
+You don't need to create another function.  blk_get_request already
+have both wait and nowait semantics via gfp_mask argument. If you can
+not block, then clear __GFP_WAIT bit in the mask before calling
+blk_get_request.
 
->     - Added new "end_io_first" hook to __end_that_request_first()
->       and struct request.  (PATCH 2/8)
-
-This I still need an explanation for.
-
->   And I'm thinking about:
->     - Moving blk_clone_rq() to ll_rw_blk.c from dm.c. (PATCH 7/8)
-
-That definitely should be core code. I see no problem in that.
-
--- 
-Jens Axboe
+- Ken
