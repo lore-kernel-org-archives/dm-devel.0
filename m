@@ -1,17 +1,16 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [RFC PATCH 1/8] rqbased-dm: allow blk_get_request()
- to be called from interrupt context
-Date: Wed, 20 Dec 2006 16:55:49 -0500 (EST)
-Message-ID: <20061220.165549.39151582.k-ueda@ct.jp.nec.com>
-References: <20061220134848.GF10535@kernel.dk>
-	<20061220.125002.71083198.k-ueda@ct.jp.nec.com>
-	<20061220184917.GJ10535@kernel.dk>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [RFC PATCH 2/8] rqbased-dm: add block layer hook
+Date: Thu, 21 Dec 2006 08:49:47 +0100
+Message-ID: <20061221074947.GC17199@kernel.dk>
+References: <20061219.171150.75425661.k-ueda@ct.jp.nec.com>
+	<20061220134924.GG10535@kernel.dk>
+	<20061220.165246.85417944.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061220184917.GJ10535@kernel.dk>
+Content-Disposition: inline
+In-Reply-To: <20061220.165246.85417944.k-ueda@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,56 +20,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jens.axboe@oracle.com
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, mchristi@redhat.com, agk@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: dm-devel@redhat.com, mchristi@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jens,
-
-On Wed, 20 Dec 2006 19:49:17 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
-> > > Big NACK on this - it's not only really ugly, it's also buggy to pass
-> > > interrupt flags as function arguments. As you also mention in the 0/1
-> > > mail, this also breaks CFQ.
-> > > 
-> > > Why do you need in-interrupt request allocation?
-> >  
-> > Because I'd like to use blk_get_request() in q->request_fn()
-> > which can be called from interrupt context like below:
-> >   scsi_io_completion -> scsi_end_request -> scsi_next_command
-> >   -> scsi_run_queue -> blk_run_queue -> q->request_fn
+On Wed, Dec 20 2006, Kiyoshi Ueda wrote:
+> Hi Jens,
+> 
+> Sorry for the less explanation.
+> 
+> On Wed, 20 Dec 2006 14:49:24 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
+> > On Tue, Dec 19 2006, Kiyoshi Ueda wrote:
+> > > This patch adds new "end_io_first" hook in __end_that_request_first()
+> > > for request-based device-mapper.
 > > 
-> > Generally, device-mapper (dm) clones an original I/O and dispatches
-> > the clones to underlying destination devices.
-> > In the request-based dm patch, the clone creation and the dispatch
-> > are done in q->request_fn().  To create the clone, blk_get_request()
-> > is used to get a request from underlying destination device's queue.
-> > By doing that in q->request_fn(), dm can deal with struct request
-> > after bios are merged by __make_request().
-> > 
-> > Do you think creating another function like blk_get_request_nowait()
-> > is acceptable?
-> > Or request should not be allocated in q->request_fn() anyway?
+> > What's this for, lack of stacking?
 > 
-> You should not be allocating requests from that path, for a number of
-> reasons.
-
-Could I hear the reasons for my further work if possible?
-Because of breaking current CFQ?  And is there any reason?
-
-
-> The design isn't very nice either.
+> I don't understand the meaning of "lack of stacking" well but
+> I guess that it means "Is the existing hook in end_that_request_last()
+> not enough?"  If so, the answer is no.
+> (If the geuss is wrong, please let me know.)
 > 
-> The easy way out would be to punt to a workqueue to handle the requests.
-> 
-> An alternative way would be to set aside some requests that you can get
-> at without allocation (maintain a little freelist of manually allocated
-> requests), and retrieve a free one from there when inside request_fn. If
-> you run out, just bail out of request_fn and make sure to reinvoke it
-> when some of your previously issued requests complete and are added back
-> to that freelist.
+> The new hook is needed for error handling in dm.
+> For example, when an error occurred on a request, dm-multipath
+> wants to try another path before returning EIO to application.
+> Without the new hook, at the point of end_that_request_last(),
+> the bios are already finished with error and can't be retried.
 
-Thank you for the suggestions.
-OK, I'll think other designs based on your suggestions.
- 
-Thanks,
-Kiyoshi Ueda
+Ok, I see what you are getting at. The current ->end_io() is called when
+the request has fully completed, you want notification for each chunk
+potentially completed.
+
+I think a better design here would be to use ->end_io() as the full
+completion handler, similar to how bio->bi_end_io() works. A request
+originating from __make_request() would set something ala:
+
+int fs_end_io(struct request *rq, int error, unsigned int nr_bytes)
+{
+        if (!__end_that_request_first(rq, err, nr_bytes)) {
+                end_that_request_last(rq, error);
+                return 0;
+        }
+
+        return 1;
+}
+
+and normal io completion from a driver would use a helper:
+
+int blk_complete_io(struct request *rq, int error, unsigned int nr_bytes)
+{
+        return rq->end_io(rq, error, nr_bytes);
+}
+
+instead of calling the functions manually. That would allow you to get
+notification right at the beginning and do what you need, without adding
+a special hook for this.
+
+When designing these things, never be afraid to change some of the core
+bits. It is a lot better than hacking around the current code, if it
+doesn't quite fit your needs.
+
+-- 
+Jens Axboe
