@@ -1,16 +1,12 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [RFC PATCH 2/8] rqbased-dm: add block layer hook
-Date: Thu, 21 Dec 2006 17:22:46 -0500 (EST)
-Message-ID: <20061221.172246.21934588.k-ueda@ct.jp.nec.com>
-References: <20061220134924.GG10535@kernel.dk>
-	<20061220.165246.85417944.k-ueda@ct.jp.nec.com>
-	<20061221074947.GC17199@kernel.dk>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: HP array multipath defaults.
+Date: Thu, 21 Dec 2006 16:34:19 -0600
+Message-ID: <20061221223419.GB14860@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="0F1p//8PRICkK4MW"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061221074947.GC17199@kernel.dk>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,91 +16,339 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: jens.axboe@oracle.com
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, mchristi@redhat.com, agk@redhat.com
+To: Stephen Reilly <steve.reilly@hp.com>
+Cc: dm-devel@redhat.com, Christophe Varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-Hi Jens,
 
-On Thu, 21 Dec 2006 08:49:47 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
-> > The new hook is needed for error handling in dm.
-> > For example, when an error occurred on a request, dm-multipath
-> > wants to try another path before returning EIO to application.
-> > Without the new hook, at the point of end_that_request_last(),
-> > the bios are already finished with error and can't be retried.
-> 
-> Ok, I see what you are getting at. The current ->end_io() is called when
-> the request has fully completed, you want notification for each chunk
-> potentially completed.
-> 
-> I think a better design here would be to use ->end_io() as the full
-> completion handler, similar to how bio->bi_end_io() works. A request
-> originating from __make_request() would set something ala:
-> 
-> int fs_end_io(struct request *rq, int error, unsigned int nr_bytes)
-> {
->         if (!__end_that_request_first(rq, err, nr_bytes)) {
->                 end_that_request_last(rq, error);
->                 return 0;
->         }
-> 
->         return 1;
-> }
-> 
-> and normal io completion from a driver would use a helper:
-> 
-> int blk_complete_io(struct request *rq, int error, unsigned int nr_bytes)
-> {
->         return rq->end_io(rq, error, nr_bytes);
-> }
-> 
-> instead of calling the functions manually. That would allow you to get
-> notification right at the beginning and do what you need, without adding
-> a special hook for this.
+--0F1p//8PRICkK4MW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-I'm not confident about what you mean.
-Something like this?
-  - __make_request() sets fs_end_io() to req->end_io()
-  - The driver calls blk_complete_io()
-       * if it succeeds, the request is done
-       * if it fails, the request is not completed
-         and the driver needs retry or something
-  - Current users of req->end_io() have to update/rewrite thier end_io.
-  - Features like mine will set its own end_io.
-    It checks error and decides whether calling fs_end_io() or not.
+In Redhat bz #215509, you asked for changes to the default configurations for
+some of the HP Arrays for RHEL4. Currently in the upstream Multipath code, the
+defaults for the HP Arrays are:
 
-Depending on drivers, there are some functions called between
-__end_that_request_first() and end_that_request_last().
-For example:
-  - add_disk_randomness()
-  - blk_queue_end_tag()
-  - floppy_off()
-So they might prevent such generalization.
-
-
-In addition to the suggested approach, what do you think about
-adding a new flag to req->cmd_flags which lets the end_io() handler
-not to return bio to upper layer?
-It will be useful for multipathing and can be done even within
-the current __end_that_request_first().
-For example,
-
-static int __end_that_request_first()
 {
-	.....
-	error = 0;
-	if (end_io_error(uptodate))
-		error = !uptodate ? -EIO : uptodate;
-	.....
-	if (error && (req->cmd_flags & "NEW_FLAG"))
-		return 0; /* Tell the driver to call end_that_request_last() */
+                .vendor        = "(COMPAQ|HP)",
+                .product       = "(MSA|HSV)1.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = "1 hp_sw",
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = HP_SW,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "A6189A",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = READSECTOR0,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "HSV20.*",
+                .revision      = "[123].*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = HP_SW,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "HSV20.*",
+                .revision      = "[^123].*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = "mpath_prio_alua /dev/%n",
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = -FAILBACK_IMMEDIATE,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = TUR,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "HSV21.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = "mpath_prio_alua /dev/%n",
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = GROUP_BY_PRIO,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = TUR,
+        },
+        {
+                .vendor        = "(HITACHI|HP)",
+                .product       = "OPEN-.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = READSECTOR0,
+        },
 
-	total_types = bio_nbytes = 0;
-	while ((bio = req->bio) != NULL) {
-		..... /* process of finishing bios */
-	}
-	.....
-}
+These values are different than those you specified in the bugzilla. I assume
+that you want the configuration values from that bugzilla to also be used in
+future releases, where appropriate. However, I still have some quesions. Here is
+a possible set of configuration values, that includes the changes listed in the bugzilla.
 
-Thanks,
-Kiyoshi Ueda
+        {
+                .vendor        = "(COMPAQ|HP)",
+                .product       = "MSA1.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = "1 hp_sw",
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = HP_SW,
+        },
+        {
+                .vendor        = "(COMPAQ|HP)",
+                .product       = "HSV1.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = "/sbin/mpath_prio_alua /dev/%n",
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = GROUP_BY_PRIO,
+                .pgfailback    = -FAILBACK_IMMEDIATE,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = 60,
+                .minio         = 100,
+                .checker_name  = TUR,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "A6189A",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = DEFAULT_MINIO,
+                .checker_name  = READSECTOR0,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "HSV20.*",
+                .revision      = "[123].*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = FAILBACK_UNDEF,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = 60,
+                .minio         = 100,
+                .checker_name  = HP_SW,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "HSV20.*",
+                .revision      = "[^123].*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = "/sbin/mpath_prio_alua /dev/%n",
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = GROUP_BY_PRIO,
+                .pgfailback    = -FAILBACK_IMMEDIATE,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = 60,
+                .minio         = 100,
+                .checker_name  = TUR,
+        },
+        {
+                .vendor        = "HP",
+                .product       = "HSV21.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = "/sbin/mpath_prio_alua /dev/%n",
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = GROUP_BY_PRIO,
+                .pgfailback    = -FAILBACK_IMMEDIATE,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = 60,
+                .minio         = 100,
+                .checker_name  = TUR,
+        },
+        {
+                .vendor        = "(HITACHI|HP)",
+                .product       = "OPEN-.*",
+                .getuid        = DEFAULT_GETUID,
+                .getprio       = NULL,
+                .features      = DEFAULT_FEATURES,
+                .hwhandler     = DEFAULT_HWHANDLER,
+                .selector      = DEFAULT_SELECTOR,
+                .pgpolicy      = MULTIBUS,
+                .pgfailback    = -FAILBACK_IMMEDIATE,
+                .rr_weight     = RR_WEIGHT_NONE,
+                .no_path_retry = NO_PATH_RETRY_UNDEF,
+                .minio         = 100,
+                .checker_name  = TUR,
+        },
+
+
+Is the MSA configuration correct?
+Should the MSA and A6189A devices also have a no_path_retry of 60, and a minio
+of 100?
+Are their certain revisions for the HSV devices that should still use the old
+configuration, like certain revisions of the HSV20.* devices do?
+
+Attached is a patch to replace the existing set of HP device configurations
+with the ones I proposed above.
+
+-Ben
+
+Benjamin E. Marzinski
+bmarzins@redhat.com
+(612) 638-0517
+
+--0F1p//8PRICkK4MW
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: attachment; filename="mpath_hp.patch"
+
+--- hwtable.c	2006-11-27 17:16:41.000000000 -0600
++++ hwtable-patched.c	2006-12-21 14:28:21.000000000 -0600
+@@ -76,7 +76,7 @@
+ 	},
+ 	{
+ 		.vendor        = "(COMPAQ|HP)",
+-		.product       = "(MSA|HSV)1.*",
++		.product       = "MSA1.*",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = NULL,
+ 		.features      = DEFAULT_FEATURES,
+@@ -90,6 +90,21 @@
+ 		.checker_name  = HP_SW,
+ 	},
+ 	{
++		.vendor        = "(COMPAQ|HP)",
++		.product       = "HSV1.*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 60,
++		.minio         = 100,
++		.checker_name  = TUR,
++	},
++	{
+ 		.vendor        = "HP",
+ 		.product       = "A6189A",
+ 		.getuid        = DEFAULT_GETUID,
+@@ -116,8 +131,8 @@
+ 		.pgpolicy      = MULTIBUS,
+ 		.pgfailback    = FAILBACK_UNDEF,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
++		.no_path_retry = 60,
++		.minio         = 100,
+ 		.checker_name  = HP_SW,
+ 	},
+ 	{
+@@ -129,11 +144,11 @@
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+-		.pgpolicy      = MULTIBUS,
++		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
++		.no_path_retry = 60,
++		.minio         = 100,
+ 		.checker_name  = TUR,
+ 	},
+ 	{
+@@ -145,10 +160,10 @@
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = GROUP_BY_PRIO,
+-		.pgfailback    = FAILBACK_UNDEF,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
++		.no_path_retry = 60,
++		.minio         = 100,
+ 		.checker_name  = TUR,
+ 	},
+ 	/*
+@@ -245,11 +260,11 @@
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+ 		.pgpolicy      = MULTIBUS,
+-		.pgfailback    = FAILBACK_UNDEF,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+ 		.no_path_retry = NO_PATH_RETRY_UNDEF,
+-		.minio         = DEFAULT_MINIO,
+-		.checker_name  = READSECTOR0,
++		.minio         = 100,
++		.checker_name  = TUR,
+ 	},
+ 	{
+ 		.vendor        = "HITACHI",
+
+--0F1p//8PRICkK4MW
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--0F1p//8PRICkK4MW--
