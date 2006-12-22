@@ -1,15 +1,17 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: Re: [RFC PATCH 2/8] rqbased-dm: add block layer hook
-Date: Fri, 22 Dec 2006 01:18:44 -0600
-Message-ID: <458B86D4.3000107@cs.wisc.edu>
-References: <20061220134924.GG10535@kernel.dk>	<20061220.165246.85417944.k-ueda@ct.jp.nec.com>	<20061221074947.GC17199@kernel.dk>
-	<20061221.172246.21934588.k-ueda@ct.jp.nec.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [RFC PATCH 1/8] rqbased-dm: allow blk_get_request()
+	to be called from interrupt context
+Date: Fri, 22 Dec 2006 14:01:39 +0000
+Message-ID: <20061222140139.GA26033@infradead.org>
+References: <20061219.171119.18572687.k-ueda@ct.jp.nec.com>
+	<20061220134848.GF10535@kernel.dk>
+	<20061220.125002.71083198.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20061221.172246.21934588.k-ueda@ct.jp.nec.com>
+Content-Disposition: inline
+In-Reply-To: <20061220.125002.71083198.k-ueda@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,113 +21,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: mchristi@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com, jens.axboe@oracle.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, mchristi@redhat.com, jens.axboe@oracle.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Kiyoshi Ueda wrote:
-> Hi Jens,
-> 
-> On Thu, 21 Dec 2006 08:49:47 +0100, Jens Axboe <jens.axboe@oracle.com> wrote:
->>> The new hook is needed for error handling in dm.
->>> For example, when an error occurred on a request, dm-multipath
->>> wants to try another path before returning EIO to application.
->>> Without the new hook, at the point of end_that_request_last(),
->>> the bios are already finished with error and can't be retried.
->> Ok, I see what you are getting at. The current ->end_io() is called when
->> the request has fully completed, you want notification for each chunk
->> potentially completed.
->>
->> I think a better design here would be to use ->end_io() as the full
->> completion handler, similar to how bio->bi_end_io() works. A request
->> originating from __make_request() would set something ala:
->>
->> int fs_end_io(struct request *rq, int error, unsigned int nr_bytes)
->> {
->>         if (!__end_that_request_first(rq, err, nr_bytes)) {
->>                 end_that_request_last(rq, error);
->>                 return 0;
->>         }
->>
->>         return 1;
->> }
->>
->> and normal io completion from a driver would use a helper:
->>
->> int blk_complete_io(struct request *rq, int error, unsigned int nr_bytes)
->> {
->>         return rq->end_io(rq, error, nr_bytes);
->> }
->>
->> instead of calling the functions manually. That would allow you to get
->> notification right at the beginning and do what you need, without adding
->> a special hook for this.
-> 
-> I'm not confident about what you mean.
-> Something like this?
->   - __make_request() sets fs_end_io() to req->end_io()
->   - The driver calls blk_complete_io()
->        * if it succeeds, the request is done
->        * if it fails, the request is not completed
->          and the driver needs retry or something
->   - Current users of req->end_io() have to update/rewrite thier end_io.
->   - Features like mine will set its own end_io.
->     It checks error and decides whether calling fs_end_io() or not.
-> 
-> Depending on drivers, there are some functions called between
-> __end_that_request_first() and end_that_request_last().
-> For example:
->   - add_disk_randomness()
->   - blk_queue_end_tag()
->   - floppy_off()
-> So they might prevent such generalization.
-> 
-> 
-> In addition to the suggested approach, what do you think about
-> adding a new flag to req->cmd_flags which lets the end_io() handler
-> not to return bio to upper layer?
-> It will be useful for multipathing and can be done even within
-> the current __end_that_request_first().
-> For example,
-> 
-> static int __end_that_request_first()
-> {
-> 	.....
-> 	error = 0;
-> 	if (end_io_error(uptodate))
-> 		error = !uptodate ? -EIO : uptodate;
-> 	.....
-> 	if (error && (req->cmd_flags & "NEW_FLAG"))
-> 		return 0; /* Tell the driver to call end_that_request_last() */
-> 
-> 	total_types = bio_nbytes = 0;
-> 	while ((bio = req->bio) != NULL) {
-> 		..... /* process of finishing bios */
-> 	}
-> 	.....
-> }
-> 
+On Wed, Dec 20, 2006 at 12:50:02PM -0500, Kiyoshi Ueda wrote:
+> Because I'd like to use blk_get_request() in q->request_fn()
+> which can be called from interrupt context like below:
+>   scsi_io_completion -> scsi_end_request -> scsi_next_command
+>   -> scsi_run_queue -> blk_run_queue -> q->request_fn
 
-Who would call end_that_request_first with the new flag set? The scsi
-layer or multipath layer?
+> Or request should not be allocated in q->request_fn() anyway?
+> Do you have any other ideas?
 
-The end_io_first callout was a hack around the lack of stacking and
-because I was not yet sure how to handle medium errors.
-
-We hooked into end_that_request_first, because for SCSI we can get a
-medium error and the scsi layer will complete the first X bytes of a
-request, then retry the leftover part itself. For this error we want to
-update the request and bio fields so that when the request is resent by
-the scsi layer, the scatterlist will get made with the updated values.
-
-Maybe if FAILFAST is made to cover all errors then we would not need
-this type of hack. Having multipath handle medium errors seems a little
-silly though since the scsi layer knows better what to do there.
-
-Another alternative is to do something similar to what bio based dm does
-today. The bio/bvec update code and bio mapping and stacking has a
-similar problem. In dm we have that bio record/details code which copies
-some of the bio fields and dm-mpath also does not do partial retries.
-For example, on a medium error where part of a bio is successful but the
-end part fails because of a transport error and needs to be retried this
-will result in the entire bio being redriven.
+The right long-term fix is to make sure request_fn is only ever called
+from process context.  This means moving retry handling to a thread instead
+of a softirq, but this will need careful performance testing and tweaking.
