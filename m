@@ -1,19 +1,18 @@
-From: Martin Michlmayr <tbm@cyrius.com>
-Subject: Re: Bug#403426: kernel corrupts LUKS partition header on
-	arm
-Date: Sat, 30 Dec 2006 14:13:42 +0100
-Message-ID: <20061230131342.GF4981@deprecation.cyrius.com>
-References: <20061217022906.2434.60658.reportbug@LKG8A754B.example.org>
-	<20061220161529.GA10820@deprecation.cyrius.com>
-	<87lkkrgej4.wl%clemens@endorphin.org>
-	<20061229202434.GD23246@deprecation.cyrius.com>
-	<87vejt64kc.wl%clemens@endorphin.org>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [PATCH 1/2] dm-userspace: use ring buffer instead
+	of	system call
+Date: Tue, 02 Jan 2007 08:06:16 -0800
+Message-ID: <m3mz51jtvr.fsf@guaranine.beaverton.ibm.com>
+References: <m3lklj2u81.fsf@guaranine.beaverton.ibm.com>
+	<20061208095939I.fujita.tomonori@lab.ntt.co.jp>
+	<m3y7pi1fhx.fsf@guaranine.beaverton.ibm.com>
+	<20061214193615W.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============1366364393=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <87vejt64kc.wl%clemens@endorphin.org>
+In-Reply-To: <20061214193615W.fujita.tomonori@lab.ntt.co.jp> (FUJITA
+	Tomonori's message of "Thu, 14 Dec 2006 19:36:15 +0900")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,44 +22,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Clemens Fruhwirth <clemens@endorphin.org>
-Cc: 403426@bugs.debian.org, dm-devel@redhat.com, Brian Brunswick <bdb-reportbug@forbidden.co.uk>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* Clemens Fruhwirth <clemens@endorphin.org> [2006-12-30 11:50]:
-> > Is there anything else I should try?
-> > foobar:~# cryptsetup luksOpen /dev/sda5 x
-> > Enter LUKS passphrase:
-> > device-mapper: table: 254:0: crypt: Device lookup failed
+--===============1366364393==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-Strange.  I haven't changed cryptsetup but now I don't get this
-message anymore.  I simply get:
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-foobar:~# cryptsetup luksOpen /dev/sdb2 x
-Enter LUKS passphrase:
-Enter LUKS passphrase:
-Enter LUKS passphrase:
-Command failed: No key available with this passphrase.
+FT> include/linux/dm-userspace.h is included by libdevmapper. So does
+FT> it need to be released under LGPL, doesn't it?
 
-But I'm sure I've typed the passphrase correctly, and it works on my
-x86 box (on which I created the LUKS partition).
+Actually, I think that include/linux/dm-userspace.h *must* be GPL'd to
+be included in the kernel.  Am I wrong?
 
-> dmsetup create mappingname dm-table-file
-> 
-> If that does not work, we are seeing a dm-crypt layer problem here.
+I imagine that since libdevmapper is LGPL, dm-userspace.h will need to
+be replicated in the libdevmapper tree.  Maybe someone with more
+experience in this area could chime in.
 
-This works:
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
 
-foobar:~# cat map
-0 1954808 crypt aes-cbc-essiv:sha256 a0671e89e060742caf3f9a3e7d762b24 0 /dev/sdb2 1032
-foobar:~# dmsetup create x map
-foobar:~# mount /dev/mapper/x /mnt
-foobar:~# ls -l /mnt
-total 20
-drwx------ 2 root root 16384 Dec 30  2006 lost+found
--rw-r--r-- 1 root root     5 Dec 30  2006 x
-foobar:~#
+--=-=-=
+Content-Type: application/pgp-signature
 
--- 
-Martin Michlmayr
-http://www.cyrius.com/
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
+
+iD8DBQFFmoL9wtEf7b4GJVQRAskTAJ9bEtPGivjjA14ioiG/l4VECK7/QwCfQaAK
+GEf2gmwTEqelu5aJ5zV5vhQ=
+=QjjT
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1366364393==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1366364393==--
