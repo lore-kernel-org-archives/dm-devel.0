@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools kpartx/dasd.c multipath/multip ...
-Date: 4 Jan 2007 19:02:31 -0000
-Message-ID: <20070104190231.14198.qmail@sourceware.org>
+Subject: multipath-tools/kpartx dasd.c
+Date: 4 Jan 2007 19:03:28 -0000
+Message-ID: <20070104190328.14354.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,27 +18,24 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-01-04 19:02:30
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-01-04 19:03:28
 
 Modified files:
 	kpartx         : dasd.c 
-	multipath      : multipath.conf.redhat 
 
 Log message:
-	Add Stefan Bader's dasd partition fix, and some clarifications to
-	multipath.conf
+	Add Stefan Bader's dasd partition fix.
 	
 	Note: with the dasd partition fix, it may be necessary to remake the file
 	system on the device, because the superblock may no longer be at the same
 	location in the partition.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/dasd.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1.2.1&r2=1.1.2.2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5&r2=1.5.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/dasd.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.4.1
 
---- multipath-tools/kpartx/dasd.c	2006/09/19 21:06:40	1.1.2.1
-+++ multipath-tools/kpartx/dasd.c	2007/01/04 19:02:30	1.1.2.2
+--- multipath-tools/kpartx/dasd.c	2006/06/06 18:46:38	1.1
++++ multipath-tools/kpartx/dasd.c	2007/01/04 19:03:28	1.1.4.1
 @@ -40,14 +40,20 @@
  #include "byteorder.h"
  #include "dasd.h"
@@ -104,19 +101,3 @@ http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.con
  		retval = 1;
  	}
  
---- multipath-tools/multipath/multipath.conf.redhat	2006/04/19 18:58:28	1.5
-+++ multipath-tools/multipath/multipath.conf.redhat	2007/01/04 19:02:30	1.5.2.1
-@@ -36,7 +36,12 @@
- ##
- ## The wwid line in the following blacklist section is shown as an example
- ## of how to blacklist devices by wwid.  The 3 devnode lines are the
--## compiled in default blacklist.
-+## compiled in default blacklist. If you want to blacklist entire types
-+## of devices, such as all scsi devices, you should use a devnode line.
-+## However, if you want to blacklist specific devices, you should use
-+## a wwid line.  Since there is no guarantee that a specific device will
-+## not change names on reboot (from /dev/sda to /dev/sdb for example)
-+## devnode lines are not recommended for blacklisting specific devices.
- ##
- #devnode_blacklist {
- #       wwid 26353900f02796769
