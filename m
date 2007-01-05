@@ -1,9 +1,15 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/.exported_symbol ...
-Date: 9 Jan 2007 19:44:07 -0000
-Message-ID: <20070109194407.12218.qmail@sourceware.org>
+From: "Maupin, Chase" <Chase.Maupin@hp.com>
+Subject: FW: [Bug 7763] kernel panic on writing to
+	dm-crypt->cciss partition
+Date: Fri, 5 Jan 2007 10:50:13 -0600
+Message-ID: <54D33DF96D82FC4799283C875B243853035486CF@cceexc13.americas.cpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,131 +19,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: "Miller, Mike (OS Dev)" <mike.miller@hp.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-09 19:44:07
+I am forwarding this e-mail to let you know about a bugzilla that was
+filled involving the dm-crypt driver and cciss.  From my testing and the
+debug I have put into the kernel it seems that when the dm-crypt driver
+is sitting on top of the  cciss driver it is not adhering to our scatter
+gather element limitation of 31.  I see that the bio that is created and
+turned into a request by the dm-crypt driver can contain 64 sg elements
+which causes us to throw a bug in our request routine.
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : .exported_symbols libdevmapper.h 
-	                 libdm-deptree.c 
+I noticed that the comments in crypt_alloc_buffer say not to violate the
+device limitations but I did not see any code that actually checks those
+limitations.  In other dm modules I noticed code such a __split_bio
+which seemed to be breaking up bio's based on the limitations of the
+lower level.
 
-Log message:
-	Add dm_tree_use_no_flush_suspend().
+Could you please have someone join this bugzilla and look into this
+issue?
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.139&r2=1.140
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/.exported_symbols.diff?cvsroot=dm&r1=1.24&r2=1.25
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.60&r2=1.61
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.29&r2=1.30
+I have attached the debug output from the serial console on my system to
+the issue.  Please let me know what I can do to help.=20
 
---- device-mapper/WHATS_NEW	2007/01/08 15:18:52	1.139
-+++ device-mapper/WHATS_NEW	2007/01/09 19:44:07	1.140
-@@ -1,5 +1,6 @@
- Version 1.02.14 - 
- =============================
-+  Add dm_tree_use_no_flush_suspend().
-   Lots of dmevent changes.
-   Export dm_basename().
-   Cope with a trailing space when comparing tables prior to possible reload.
---- device-mapper/lib/.exported_symbols	2007/01/08 15:18:52	1.24
-+++ device-mapper/lib/.exported_symbols	2007/01/09 19:44:07	1.25
-@@ -66,6 +66,7 @@
- dm_tree_node_add_mirror_target_log
- dm_tree_node_add_target_area
- dm_tree_skip_lockfs
-+dm_tree_use_no_flush_suspend
- dm_is_dm_major
- dm_mknodes
- dm_malloc_aux
---- device-mapper/lib/libdevmapper.h	2007/01/08 15:18:52	1.60
-+++ device-mapper/lib/libdevmapper.h	2007/01/09 19:44:07	1.61
-@@ -316,6 +316,16 @@
- void dm_tree_skip_lockfs(struct dm_tree_node *dnode);
- 
- /*
-+ * Set the 'noflush' flag when suspending devices.
-+ * If the kernel supports it, instead of erroring outstanding I/O that
-+ * cannot be completed, the I/O is queued and resubmitted when the
-+ * device is resumed.  This affects multipath devices when all paths
-+ * have failed and queue_if_no_path is set, and mirror devices when
-+ * block_on_error is set and the mirror log has failed.
-+ */
-+void dm_tree_use_no_flush_suspend(struct dm_tree_node *dnode);
-+
-+/*
-  * Is the uuid prefix present in the tree?
-  * Only returns 0 if every node was checked successfully.
-  * Returns 1 if the tree walk has to be aborted.
---- device-mapper/lib/libdm-deptree.c	2006/10/13 14:03:35	1.29
-+++ device-mapper/lib/libdm-deptree.c	2007/01/09 19:44:07	1.30
-@@ -130,6 +130,7 @@
- 	struct dm_hash_table *uuids;
- 	struct dm_tree_node root;
- 	int skip_lockfs;		/* 1 skips lockfs (for non-snapshots) */
-+	int no_flush;		/* 1 sets noflush (mirrors/multipath) */
- };
- 
- /* FIXME Consider exporting this */
-@@ -162,6 +163,7 @@
- 	list_init(&dtree->root.uses);
- 	list_init(&dtree->root.used_by);
- 	dtree->skip_lockfs = 0;
-+	dtree->no_flush = 0;
- 
- 	if (!(dtree->mem = dm_pool_create("dtree", 1024))) {
- 		log_error("dtree pool creation failed");
-@@ -903,13 +905,15 @@
- }
- 
- static int _suspend_node(const char *name, uint32_t major, uint32_t minor,
--			 int skip_lockfs, struct dm_info *newinfo)
-+			 int skip_lockfs, int no_flush, struct dm_info *newinfo)
- {
- 	struct dm_task *dmt;
- 	int r;
- 
--	log_verbose("Suspending %s (%" PRIu32 ":%" PRIu32 ")%s", name, major,
--		    minor, skip_lockfs ? "" : " with filesystem sync.");
-+	log_verbose("Suspending %s (%" PRIu32 ":%" PRIu32 ")%s%s",
-+		    name, major, minor,
-+		    skip_lockfs ? "" : " with filesystem sync",
-+		    no_flush ? "" : " without device flush");
- 
- 	if (!(dmt = dm_task_create(DM_DEVICE_SUSPEND))) {
- 		log_error("Suspend dm_task creation failed for %s", name);
-@@ -928,6 +932,9 @@
- 	if (skip_lockfs && !dm_task_skip_lockfs(dmt))
- 		log_error("Failed to set skip_lockfs flag.");
- 
-+	if (no_flush && !dm_task_no_flush(dmt))
-+		log_error("Failed to set no_flush flag.");
-+
- 	if ((r = dm_task_run(dmt)))
- 		r = dm_task_get_info(dmt, newinfo);
- 
-@@ -991,6 +998,11 @@
- 	dnode->dtree->skip_lockfs = 1;
- }
- 
-+void dm_tree_use_no_flush_suspend(struct dm_tree_node *dnode)
-+{
-+	dnode->dtree->no_flush = 1;
-+}
-+
- int dm_tree_suspend_children(struct dm_tree_node *dnode,
- 				   const char *uuid_prefix,
- 				   size_t uuid_prefix_len)
-@@ -1032,7 +1044,8 @@
- 			continue;
- 
- 		if (!_suspend_node(name, info.major, info.minor,
--				   child->dtree->skip_lockfs, &newinfo)) {
-+				   child->dtree->skip_lockfs,
-+				   child->dtree->no_flush, &newinfo)) {
- 			log_error("Unable to suspend %s (%" PRIu32
- 				  ":%" PRIu32 ")", name, info.major,
- 				  info.minor);
+
+Thank You,
+Chase Maupin
+HP Linux Storage Drivers
+Houston, TX=20
+-----Original Message-----
+From: bugme-daemon@bugzilla.kernel.org
+[mailto:bugme-daemon@bugzilla.kernel.org]=20
+Sent: Friday, January 05, 2007 10:42 AM
+To: Maupin, Chase
+Subject: [Bug 7763] kernel panic on writing to dm-crypt->cciss partition
+
+http://bugzilla.kernel.org/show_bug.cgi?id=3D7763
+
+
+
+
+
+------- Additional Comments From chase.maupin@hp.com  2007-01-05 08:35
+------- Hermann,
+
+I have found that the dm-crypt module is violating our queue limitations
+for the number of scatter gather elements we can handle per request.  I
+have captured this in the debug output I have attached to this issue.  I
+am going to work with the RedHat dm development to get this resolved as
+this issue does not seem to be present in other dm modules.  I have seen
+some code in these other modules such as __split_bio which seems to
+break up the data based on the low level device limitations as reported
+by the driver.
+
+The crypt function crypt_alloc_buffer says in the comments that it
+should not violate these limits, but I did not find code to verify that
+this is true.  I found that in the crypt_alloc_buffer function we are
+seeing bio structures with more than 31 segments which later get sent to
+the cciss driver as requests. =20
+
+I will send this bugzilla to the RedHat dm mailing list so that they can
+keep it up to date.  Thanks for your help on this.
+
+Chase
+
+------- You are receiving this mail because: ------- You are the
+assignee for the bug, or are watching the assignee.
