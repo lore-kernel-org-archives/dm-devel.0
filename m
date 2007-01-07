@@ -1,58 +1,99 @@
-From: "Gordon Farquharson" <gordonfarquharson@gmail.com>
-Subject: Bug#403426: kernel corrupts LUKS partition header on arm
-Date: Sat, 6 Jan 2007 22:47:06 -0700
-Message-ID: <97a0a9ac0701062147s5d122d85v98141b30c5786b2f@mail.gmail.com>
-References: <20061229202434.GD23246@deprecation.cyrius.com>
-	 <87odph5ppk.wl%clemens@endorphin.org>
-	 <20070102180440.GB4216@deprecation.cyrius.com>
-	 <87hcv859nm.wl%clemens@endorphin.org>
-	 <20070103191442.GA28165@deprecation.cyrius.com>
-	 <87fyar6h49.wl%clemens@endorphin.org>
-	 <20070103193722.GC27931@deprecation.cyrius.com>
-	 <87ejqb57k4.wl%clemens@endorphin.org>
-	 <20070104150951.GM27931@deprecation.cyrius.com>
-	 <97a0a9ac0701050036l7def022dr9d45ab8bde787da5@mail.gmail.com>
-Reply-To: "Gordon Farquharson" <gordonfarquharson@gmail.com>,
-	403426@bugs.debian.org
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [Patch] mp-tools: exception list handling
+Date: Mon, 08 Jan 2007 00:08:13 +0100
+Message-ID: <1168211293.29097.11.camel@localhost.localdomain>
+References: <20061207150313.8b4c4f5b.sameske@de.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <bounce-debian-bugs-rc=glddbr-debian-bugs-rc=gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.403426.B403426.116814882814803@bugs.debian.org>
-In-Reply-To: <97a0a9ac0701050036l7def022dr9d45ab8bde787da5@mail.gmail.com>
-Content-Disposition: inline
-List-Post: <mailto:debian-bugs-rc@lists.debian.org>
-List-Help: <mailto:debian-bugs-rc-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-rc-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-rc-request@lists.debian.org?subject=unsubscribe>
-To: Martin Michlmayr <tbm@cyrius.com>
-Cc: Clemens Fruhwirth <clemens@endorphin.org>, dm-devel@redhat.com, Brian Brunswick <bdb-reportbug@forbidden.co.uk>, 403426@bugs.debian.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20061207150313.8b4c4f5b.sameske@de.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Volker Sameske <sameske@de.ibm.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 1/5/07, Gordon Farquharson <gordonfarquharson@gmail.com> wrote:
+Le jeudi 07 d=C3=A9cembre 2006 =C3=A0 15:03 +0100, Volker Sameske a =C3=A9=
+crit :
 
-> However, I have found that I am unable to access the LUKS partition
-> when the system is under heavy load and swapping.
->
-> Martin, I wonder if this has anything to do with the virtual memory
-> bug in the kernel that we experienced with apt. It could be that this
-> bug existed before 2.6.19 but was much harder to trigger (e.g. see
-> http://lkml.org/lkml/2007/1/3/285). It would be interesting to try
-> accessing a LUKS partition under heavy load while running 2.6.20-git,
-> but that will have to wait until the weekend for me to test it.
+> On IBM System z we often have the problem that we have attached
+> several hundred devices. In case we want to use only a few of them
+> with mp-tools, we have to blacklist all others. For that reason I have
+> introduced a blacklist_exception keyword for the multipath.conf  which
+> fills an internal exception list.
+>=20
+> Additionally this patch adds two commands to the multipathd cli to=20
+> display blacklist rules and blacklisted devices.
+>=20
+> ------------------- snip --------------------
+> blacklist {
+>         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+>         devnode "^hd[a-z][[0-9]*]"
+>         devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
+>         devnode "^dasd[a-z]+[0-9]*"
+> }
+> blacklist_exceptions {
+>         devnode "^dasd[c-d]+[0-9]*"
+> }
+...
+> multipathd> show blacklist
+> device node rules:
+> - blacklist:
+>         (config file rule) ^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*
+>         (config file rule) ^hd[a-z][[0-9]*]
+>         (config file rule) ^cciss!c[0-9]d[0-9]*[p[0-9]*]
+>         (config file rule) ^dasd[a-z]+[0-9]*
+>         (default rule)     ^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*
+>         (default rule)     ^hd[a-z]
+>         (default rule)     ^cciss!c[0-9]d[0-9]*
+> - exceptions:
+>         (config file rule) ^dasd[c-d]+[0-9]*
+> wwid rules:
+> - blacklist:
+>         <empty>
+> - exceptions:
+>         <empty>
+> device rules:
+> - blacklist:
+>         (default rule)     DGC:LUNZ
+> multipathd>
+>=20
+> multipathd> show devices
+> available block devices:
+>     dasda (blacklisted)
+>     dasdb (blacklisted)
+>     dasdc
+>     dasdd
+>     dm-0 (blacklisted)
+...
+> =20
+> ------------------- snap --------------------
+>=20
+Hello,
 
-Ok, I tested 2.6.19-1~experimental.1 +
+I merged the latest version of your patch.
 
-   vm-fix-nasty-and-subtle-race-in-shared-mmap-ed-page-writeback.patch
-   flush_anon_page-generic.patch
-   flush_anon_page-arm.patch
+Minor mangling : I had to rename your snprint_blacklist() rewrite to
+snprint_blacklist_report() because the "show config" CLI command purpose
+is to dump a config file in sync with the daemon actual configuration.
+Your stealing the snprint_blacklist() fn name made for your blacklist
+"report" to be included in this dump in place of the correct "blacklist
+{}" block.
 
-and I am still unable to access the LUKS paritition under heavy load
-and swapping, so it appears that there is someting else causing this
-problem.
+I also implemented the missing snprint_blacklist_exceptions() for config
+dump completeness.
 
-Gordon
+Please verify everything is still working for you.
 
--- 
-Gordon Farquharson
+Thanks for this nicely crafted work.
+Regards,
+cvaroqui
