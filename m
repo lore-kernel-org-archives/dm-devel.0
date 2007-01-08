@@ -1,9 +1,12 @@
-From: agk@sourceware.org
-Subject: device-mapper dmeventd/dmeventd.c lib/libdm-st ...
-Date: 8 Jan 2007 15:35:08 -0000
-Message-ID: <20070108153508.21205.qmail@sourceware.org>
+From: Mike Anderson <andmike@us.ibm.com>
+Subject: [PATCH] dm: Allow tables to have devices with zero size
+Date: Mon, 8 Jan 2007 14:57:46 -0800
+Message-ID: <20070108225746.GA3966@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,60 +16,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-08 15:35:08
+From: Mike Anderson <andmike@us.ibm.com>
 
-Modified files:
-	dmeventd       : dmeventd.c 
-	lib            : libdm-string.c 
+Allow check_device_area to succeed if a device has an i_size of zero. This
+addresses an issue seen on DASD devices setting up a multipath table for
+paths in online and offline state.
 
-Log message:
-	fix last checkin
+Signed-off-by: Mike Anderson <andmike@us.ibm.com>
+---
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.26&r2=1.27
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-string.c.diff?cvsroot=dm&r1=1.3&r2=1.4
+ drivers/md/dm-table.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
---- device-mapper/dmeventd/dmeventd.c	2007/01/08 15:18:52	1.26
-+++ device-mapper/dmeventd/dmeventd.c	2007/01/08 15:35:08	1.27
-@@ -40,6 +40,8 @@
- #include <sys/types.h>
- #include <sys/stat.h>
- #include <sys/wait.h>
-+
-+#include <sys/resource.h>
- #include <unistd.h>
- #include <stdarg.h>
- #include <arpa/inet.h> /* for htonl, ntohl */
-@@ -1453,7 +1455,7 @@
- 
- 	init_fifos(&fifos);
- 
--	pthread_mutex_init(&mutex, NULL);
-+	pthread_mutex_init(&_global_mutex, NULL);
- 
- #ifdef MCL_CURRENT
- 	if (mlockall(MCL_CURRENT | MCL_FUTURE) == -1)
-@@ -1481,7 +1483,7 @@
- #ifdef MCL_CURRENT
- 	munlockall();
- #endif
--	pthread_mutex_destroy(&_mutex);
-+	pthread_mutex_destroy(&_global_mutex);
- 
- 	syslog(LOG_INFO, "dmeventd shutting down.");
- 	closelog();
---- device-mapper/lib/libdm-string.c	2007/01/08 15:18:52	1.3
-+++ device-mapper/lib/libdm-string.c	2007/01/08 15:35:08	1.4
-@@ -126,6 +126,6 @@
+Index: linux-2.6-patched/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6-patched.orig/drivers/md/dm-table.c	2006-12-31 16:53:20.000000000 -0800
++++ linux-2.6-patched/drivers/md/dm-table.c	2007-01-08 08:15:33.000000000 -0800
+@@ -432,7 +432,8 @@
  {
- 	char *p = strrchr(path, '/');
- 
--	return p ? p + 1 : path;
-+	return p ? p + 1 : (char *) path;
+ 	sector_t dev_size;
+ 	dev_size = dd->bdev->bd_inode->i_size >> SECTOR_SHIFT;
+-	return ((start < dev_size) && (len <= (dev_size - start)));
++	return dev_size ?
++		((start < dev_size) && (len <= (dev_size - start))) : 1;
  }
  
+ /*
