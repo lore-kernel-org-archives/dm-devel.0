@@ -1,48 +1,92 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [RFC PATCH 3/3] blk_end_request: caller change
-Date: Thu, 11 Jan 2007 09:34:31 +0100
-Message-ID: <20070111083430.GD11203@kernel.dk>
-References: <20070110.180859.78702215.k-ueda@ct.jp.nec.com>
+From: TGrozev@mohegansun.com
+Subject: DS4000 with multipath-tools 0.4.5
+Date: Thu, 11 Jan 2007 09:28:07 -0500
+Message-ID: <OFFB7A5A44.FA4CC8A7-ON85257260.004E61B6-85257260.004F7AA6@mohegansun.com>
+References: <20070111083430.GD11203@kernel.dk>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20070110.180859.78702215.k-ueda@ct.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
+Content-Type: multipart/mixed; boundary="===============0208105825=="
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070111083430.GD11203@kernel.dk>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jan 10 2007, Kiyoshi Ueda wrote:
-> +static int end_request_callback(void *arg)
-> +{
-> +	struct request *req = (struct request *)arg;
-> +
-> +	add_disk_randomness(req->rq_disk);
-> +	blkdev_dequeue_request(req);
-> +
-> +	return 0;
-> +}
+This is a multipart message in MIME format.
+--===============0208105825==
+Content-Type: multipart/alternative;
+	boundary="=_alternative 004F7AA185257260_="
 
-This is bad, don't pass void * around.
+This is a multipart message in MIME format.
+--=_alternative 004F7AA185257260_=
+Content-Type: text/plain;
+	charset="US-ASCII"
 
-> +static int cdrom_newpc_intr_dma_callback(void *arg)
-> +{
-> +	void **argv = (void **)arg;
-> +	struct request *rq = (struct request *)*argv++;
-> +	ide_drive_t *drive = (ide_drive_t *)argv++;
-> +	spinlock_t *ide_lock = (spinlock_t *)argv;
-> +
-> +	rq->data_len = 0;
-> +
-> +	cdrom_newpc_intr_callback_common(rq, drive, ide_lock);
-> +
-> +	return 0;
-> +}
+Hi, all!
 
-And this is why, down right horrible. The callback should be correctly
-typed, pass down a request pointer ALWAYS.
+I've been trying to get dm-multipath working with an IBM DS4800 
+(previously IBM FAStT) for some time now, and I'm still having some 
+issues. The main problem is the lack of a suitable prioritizer. I've read 
+that the recommended prioritizer for DS4000 is pp_tpc, which, however, 
+appears in 0.4.7. I'm kinda stuck with 0.4.5, though, since I'm using 
+RHEL4 (2.6.9) with RedHat Cluster.
+Is there a way to use pp_tpc with 0.4.5? I'd really like to use 
+dm-multipath instead of the IBM RDAC multipath.
 
--- 
-Jens Axboe
+Thanks much,
+Tenyo
+**************************************************************************************************
+The information contained in this message may be privileged and confidential and 
+protected from disclosure. If the reader of this message is not the intended recipient, or 
+an employee or agent responsible for delivering this message to the intended recipient, 
+you are hereby notified that any dissemination, distribution, or copy of this 
+communication is strictly prohibited. If you have received this communication in error, 
+please notify us immediately by replying to the message and deleting it from your 
+computer.
+**************************************************************************************************
+--=_alternative 004F7AA185257260_=
+Content-Type: text/html;
+	charset="US-ASCII"
 
+
+<br><font size=2 face="sans-serif">Hi, all!</font>
+<br>
+<br><font size=2 face="sans-serif">I've been trying to get dm-multipath
+working with an IBM DS4800 (previously IBM FAStT) for some time now, and
+I'm still having some issues. The main problem is the lack of a suitable
+prioritizer. I've read that the recommended prioritizer for DS4000 is pp_tpc,
+which, however, appears in 0.4.7. I'm kinda stuck with 0.4.5, though, since
+I'm using RHEL4 (2.6.9) with RedHat Cluster.</font>
+<br><font size=2 face="sans-serif">Is there a way to use pp_tpc with 0.4.5?
+I'd really like to use dm-multipath instead of the IBM RDAC multipath.</font>
+<br>
+<br><font size=2 face="sans-serif">Thanks much,</font>
+<br><font size=2 face="sans-serif">Tenyo</font>
+**************************************************************************************************
+The information contained in this message may be privileged and confidential and 
+protected from disclosure. If the reader of this message is not the intended recipient, or 
+an employee or agent responsible for delivering this message to the intended recipient, 
+you are hereby notified that any dissemination, distribution, or copy of this 
+communication is strictly prohibited. If you have received this communication in error, 
+please notify us immediately by replying to the message and deleting it from your 
+computer.
+**************************************************************************************************
+--=_alternative 004F7AA185257260_=--
+
+
+--===============0208105825==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0208105825==--
