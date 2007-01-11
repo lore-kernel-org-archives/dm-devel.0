@@ -1,13 +1,9 @@
-From: TGrozev@mohegansun.com
-Subject: DS4000 with multipath-tools 0.4.5
-Date: Thu, 11 Jan 2007 09:28:07 -0500
-Message-ID: <OFFB7A5A44.FA4CC8A7-ON85257260.004E61B6-85257260.004F7AA6@mohegansun.com>
-References: <20070111083430.GD11203@kernel.dk>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW ./make.tmpl.in dmeve ...
+Date: 11 Jan 2007 16:23:23 -0000
+Message-ID: <20070111162323.13495.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0208105825=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070111083430.GD11203@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,76 +13,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============0208105825==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 004F7AA185257260_="
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-01-11 16:23:22
 
-This is a multipart message in MIME format.
---=_alternative 004F7AA185257260_=
-Content-Type: text/plain;
-	charset="US-ASCII"
+Modified files:
+	.              : WHATS_NEW make.tmpl.in 
+	dmeventd       : Makefile.in 
+	dmsetup        : Makefile.in 
+	lib            : Makefile.in 
 
-Hi, all!
+Log message:
+	Use CFLAGS when linking so mixed sparc builds can supply -m64.
 
-I've been trying to get dm-multipath working with an IBM DS4800 
-(previously IBM FAStT) for some time now, and I'm still having some 
-issues. The main problem is the lack of a suitable prioritizer. I've read 
-that the recommended prioritizer for DS4000 is pp_tpc, which, however, 
-appears in 0.4.7. I'm kinda stuck with 0.4.5, though, since I'm using 
-RHEL4 (2.6.9) with RedHat Cluster.
-Is there a way to use pp_tpc with 0.4.5? I'd really like to use 
-dm-multipath instead of the IBM RDAC multipath.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.140&r2=1.141
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/make.tmpl.in.diff?cvsroot=dm&r1=1.30&r2=1.31
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/Makefile.in.diff?cvsroot=dm&r1=1.17&r2=1.18
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/Makefile.in.diff?cvsroot=dm&r1=1.15&r2=1.16
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/Makefile.in.diff?cvsroot=dm&r1=1.29&r2=1.30
 
-Thanks much,
-Tenyo
-**************************************************************************************************
-The information contained in this message may be privileged and confidential and 
-protected from disclosure. If the reader of this message is not the intended recipient, or 
-an employee or agent responsible for delivering this message to the intended recipient, 
-you are hereby notified that any dissemination, distribution, or copy of this 
-communication is strictly prohibited. If you have received this communication in error, 
-please notify us immediately by replying to the message and deleting it from your 
-computer.
-**************************************************************************************************
---=_alternative 004F7AA185257260_=
-Content-Type: text/html;
-	charset="US-ASCII"
-
-
-<br><font size=2 face="sans-serif">Hi, all!</font>
-<br>
-<br><font size=2 face="sans-serif">I've been trying to get dm-multipath
-working with an IBM DS4800 (previously IBM FAStT) for some time now, and
-I'm still having some issues. The main problem is the lack of a suitable
-prioritizer. I've read that the recommended prioritizer for DS4000 is pp_tpc,
-which, however, appears in 0.4.7. I'm kinda stuck with 0.4.5, though, since
-I'm using RHEL4 (2.6.9) with RedHat Cluster.</font>
-<br><font size=2 face="sans-serif">Is there a way to use pp_tpc with 0.4.5?
-I'd really like to use dm-multipath instead of the IBM RDAC multipath.</font>
-<br>
-<br><font size=2 face="sans-serif">Thanks much,</font>
-<br><font size=2 face="sans-serif">Tenyo</font>
-**************************************************************************************************
-The information contained in this message may be privileged and confidential and 
-protected from disclosure. If the reader of this message is not the intended recipient, or 
-an employee or agent responsible for delivering this message to the intended recipient, 
-you are hereby notified that any dissemination, distribution, or copy of this 
-communication is strictly prohibited. If you have received this communication in error, 
-please notify us immediately by replying to the message and deleting it from your 
-computer.
-**************************************************************************************************
---=_alternative 004F7AA185257260_=--
-
-
---===============0208105825==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0208105825==--
+--- device-mapper/WHATS_NEW	2007/01/09 19:44:07	1.140
++++ device-mapper/WHATS_NEW	2007/01/11 16:23:21	1.141
+@@ -1,5 +1,6 @@
+ Version 1.02.14 - 
+ =============================
++  Use CFLAGS when linking so mixed sparc builds can supply -m64.
+   Add dm_tree_use_no_flush_suspend().
+   Lots of dmevent changes.
+   Export dm_basename().
+--- device-mapper/make.tmpl.in	2006/05/10 19:38:25	1.30
++++ device-mapper/make.tmpl.in	2007/01/11 16:23:21	1.31
+@@ -163,13 +163,13 @@
+ ifeq ("@LIB_SUFFIX@","so")
+ $(LIB_SHARED): $(OBJECTS) $(LDDEPS)
+ 	$(CC) -shared -Wl,-soname,$(notdir $@).$(LIB_VERSION) \
+-	$(CLDFLAGS) $(OBJECTS) $(LIBS) -o $@
++	$(CFLAGS) $(CLDFLAGS) $(OBJECTS) $(LIBS) -o $@
+ endif
+ 
+ ifeq ("@LIB_SUFFIX@","dylib")
+ $(LIB_SHARED): $(OBJECTS) $(LDDEPS)
+ 	$(CC) -dynamiclib -dylib_current_version,$(LIB_VERSION) \
+-	$(CLDFLAGS) $(OBJECTS) $(LIBS) -o $@
++	$(CFLAGS) $(CLDFLAGS) $(OBJECTS) $(LIBS) -o $@
+ endif
+ 
+ $(LIB_STATIC): $(OBJECTS)
+--- device-mapper/dmeventd/Makefile.in	2007/01/08 15:18:52	1.17
++++ device-mapper/dmeventd/Makefile.in	2007/01/11 16:23:22	1.18
+@@ -34,7 +34,7 @@
+ CLDFLAGS += -ldl -ldevmapper -lpthread
+ 
+ dmeventd: $(LIB_SHARED) dmeventd.o
+-	$(CC) -o $@ dmeventd.o $(LDFLAGS) \
++	$(CC) -o $@ dmeventd.o $(CFLAGS) $(LDFLAGS) \
+ 	-L. -ldevmapper-event $(LIBS) -rdynamic
+ 
+ .PHONY: install_dynamic install_static install_include \
+--- device-mapper/dmsetup/Makefile.in	2005/01/27 16:16:52	1.15
++++ device-mapper/dmsetup/Makefile.in	2007/01/11 16:23:22	1.16
+@@ -30,11 +30,11 @@
+ include ../make.tmpl
+ 
+ dmsetup: $(OBJECTS) $(interfacedir)/libdevmapper.$(LIB_SUFFIX)
+-	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) \
++	$(CC) -o $@ $(OBJECTS) $(CFLAGS) $(LDFLAGS) \
+ 	      -L$(interfacedir) -L$(DESTDIR)/lib -ldevmapper $(LIBS)
+ 
+ dmsetup.static: $(OBJECTS) $(interfacedir)/libdevmapper.a
+-	$(CC) -o $@ $(OBJECTS) $(LDFLAGS) -static \
++	$(CC) -o $@ $(OBJECTS) $(CFLAGS) $(LDFLAGS) -static \
+ 	      -L$(interfacedir) -L$(DESTDIR)/lib -ldevmapper $(LIBS)
+ 
+ install: $(INSTALL_TYPE)
+--- device-mapper/lib/Makefile.in	2006/08/21 12:04:49	1.29
++++ device-mapper/lib/Makefile.in	2007/01/11 16:23:22	1.30
+@@ -38,8 +38,8 @@
+   LIB_SHARED = $(interface)/libdevmapper.so
+ endif
+ 
+-CFLAGS += -DDEVICE_UID=@DEVICE_UID@ -DDEVICE_GID=@DEVICE_GID@ \
+-	  -DDEVICE_MODE=@DEVICE_MODE@
++DEFS += -DDEVICE_UID=@DEVICE_UID@ -DDEVICE_GID=@DEVICE_GID@ \
++	-DDEVICE_MODE=@DEVICE_MODE@
+ 
+ include ../make.tmpl
+ 
