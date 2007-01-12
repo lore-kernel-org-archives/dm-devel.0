@@ -1,30 +1,20 @@
 From: Srinivasa Ds <srinivasa@in.ibm.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore
-	not mutex
-Date: Fri, 12 Jan 2007 11:53:36 +0530
-Message-ID: <45A72968.9030401@in.ibm.com>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>	<20061107122837.54828e24.akpm@osdl.org>	<45510C73.7060408@redhat.com>
-	<20061107150017.fb78a327.akpm@osdl.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
+Date: Fri, 12 Jan 2007 15:46:38 +0530
+Message-ID: <45A76006.5070504@in.ibm.com>
+References: <20061107183459.GG6993@agk.surrey.redhat.com>	<20061107122837.54828e24.akpm@osdl.org>	<45510C73.7060408@redhat.com> <20061107150017.fb78a327.akpm@osdl.org>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------010901070406040705030908"
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: multipart/mixed;
+ boundary="------------010702040602090709050200"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1161049AbXALJwQ@vger.kernel.org>
 In-Reply-To: <20061107150017.fb78a327.akpm@osdl.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Sender: linux-kernel-owner@vger.kernel.org
 To: Andrew Morton <akpm@osdl.org>
-Cc: Eric Sandeen <sandeen@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Alasdair G Kergon <agk@redhat.com>, arjan@infradead.org
+Cc: Eric Sandeen <sandeen@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------010901070406040705030908
+--------------010702040602090709050200
 Content-Type: text/plain; charset=US-ASCII; format=flowed
 Content-Transfer-Encoding: 7bit
 
@@ -47,11 +37,19 @@ Andrew Morton wrote:
 >>>> +		return -EBUSY;
 >>>> +
 >>>>         
+>>> This is a functional change which isn't described in the changelog.  What's
+>>> happening here?
+>>>       
+>> Only allow one bdev-freezer in at a time, rather than queueing them up?
+>>
+>>     
 >
+> You're asking me? ;)
 >
 > Guys, I'm going to park this patch pending a full description of what it
 > does, a description of what the above hunk is doing 
-Iam really sorry for delayed reply. Here is my full explanation on my patch.
+Iam really sorry for delayed reply. Here is my full explanation on my 
+patch.
 Patch, that I have proposed replaces the mutex on bd_mount_mutex with 
 the semaphore (bd_mount_sem). It was(bd_mount_sem) used to be a 
 semaphore earlier and then Ingo's patch changed it to mutex. Hence we 
@@ -63,10 +61,10 @@ patch doesn't hurt XFS code which access the freeze_bdev().
 As for as the above code is concerned,Iam using down_trylock() to allow 
 only one process to freeze the filesystem at a time and hence stops the 
 other process from queuing up.
-
 > and pending an
 > examination of whether we'd be better off changing the mutex-debugging code
 > rather than switching to semaphores.
+>
 >   
 Regarding this one,I agree with what Arjan has told.
 " It's not used as a mutex. Sad but true. It's not so easy to say "just
@@ -97,8 +95,7 @@ Cc: dm-devel@redhat.com
 
 
 
-
---------------010901070406040705030908
+--------------010702040602090709050200
 Content-Type: text/plain;
  name="dm.fix"
 Content-Transfer-Encoding: 7bit
@@ -178,11 +175,4 @@ Index: linux-2.6.20-rc4/fs/super.c
  		goto error_s;
  
 
---------------010901070406040705030908
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------010901070406040705030908--
+--------------010702040602090709050200--
