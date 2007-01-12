@@ -1,9 +1,15 @@
-From: agk@sourceware.org
-Subject: device-mapper ./VERSION ./WHATS_NEW dmeventd/. ...
-Date: 12 Jan 2007 20:22:12 -0000
-Message-ID: <20070112202212.16024.qmail@sourceware.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: DS4000 with multipath-tools 0.4.5
+Date: Fri, 12 Jan 2007 15:01:48 -0600
+Message-ID: <20070112210148.GA7441@ether.msp.redhat.com>
+References: <20070111083430.GD11203@kernel.dk>
+	<OFFB7A5A44.FA4CC8A7-ON85257260.004E61B6-85257260.004F7AA6@mohegansun.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <OFFB7A5A44.FA4CC8A7-ON85257260.004E61B6-85257260.004F7AA6@mohegansun.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,79 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-12 20:22:11
+On Thu, Jan 11, 2007 at 09:28:07AM -0500, TGrozev@mohegansun.com wrote:
+>    Hi, all!
+> 
+>    I've been trying to get dm-multipath working with an IBM DS4800
+>    (previously IBM FAStT) for some time now, and I'm still having some
+>    issues. The main problem is the lack of a suitable prioritizer. I've read
+>    that the recommended prioritizer for DS4000 is pp_tpc, which, however,
+>    appears in 0.4.7. I'm kinda stuck with 0.4.5, though, since I'm using
+>    RHEL4 (2.6.9) with RedHat Cluster.
+>    Is there a way to use pp_tpc with 0.4.5? I'd really like to use
+>    dm-multipath instead of the IBM RDAC multipath.
 
-Modified files:
-	.              : VERSION WHATS_NEW 
-	dmeventd       : .exported_symbols libdevmapper-event.c 
-	                 libdevmapper-event.h 
+The path prioritizer is simply a external program that is called by
+dm-multipath. All you need  to do is compile and install pp_tpc, and add a
+configuration for your device that uses it to /etc/multipath.conf
 
-Log message:
-	Reinstate dm_event_get_registered_device
+ 
+>    Thanks much,
+>    Tenyo
+>    **************************************************************************************************
+>    The information contained in this message may be privileged and
+>    confidential and protected from disclosure. If the reader of this message
+>    is not the intended recipient, or an employee or agent responsible for
+>    delivering this message to the intended recipient, you are hereby notified
+>    that any dissemination, distribution, or copy of this communication is
+>    strictly prohibited. If you have received this communication in error,
+>    please notify us immediately by replying to the message and deleting it
+>    from your computer.
+>    **************************************************************************************************
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.111&r2=1.112
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.144&r2=1.145
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/.exported_symbols.diff?cvsroot=dm&r1=1.5&r2=1.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.11&r2=1.12
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.h.diff?cvsroot=dm&r1=1.5&r2=1.6
-
---- device-mapper/VERSION	2007/01/11 23:19:08	1.111
-+++ device-mapper/VERSION	2007/01/12 20:22:11	1.112
-@@ -1 +1 @@
--1.02.15-cvs (2007-01-07)
-+1.02.15-cvs (2007-01-12)
---- device-mapper/WHATS_NEW	2007/01/11 23:19:08	1.144
-+++ device-mapper/WHATS_NEW	2007/01/12 20:22:11	1.145
-@@ -1,5 +1,6 @@
- Version 1.02.15 -
- ===================================
-+  Reinstate dm_event_get_registered_device.
- 
- Version 1.02.14 - 11th January 2007
- ===================================
---- device-mapper/dmeventd/.exported_symbols	2007/01/11 21:54:52	1.5
-+++ device-mapper/dmeventd/.exported_symbols	2007/01/12 20:22:11	1.6
-@@ -14,3 +14,4 @@
- dm_event_handler_get_events
- dm_event_register
- dm_event_unregister
-+dm_event_get_registered_device
---- device-mapper/dmeventd/libdevmapper-event.c	2007/01/11 21:54:52	1.11
-+++ device-mapper/dmeventd/libdevmapper-event.c	2007/01/12 20:22:11	1.12
-@@ -510,8 +510,6 @@
- 	return ret;
- }
- 
--#if 0				/* left out for now */
--
- /* Fetch a string off src and duplicate it into *dest. */
- /* FIXME: move to seperate module to share with the daemon. */
- static const char delimiter = ' ';
-@@ -592,6 +590,8 @@
- 	return ret;
- }
- 
-+#if 0				/* left out for now */
-+
- int dm_event_set_timeout(const char *device_path, uint32_t timeout)
- {
- 	struct dm_event_daemon_message msg;
---- device-mapper/dmeventd/libdevmapper-event.h	2007/01/11 21:54:52	1.5
-+++ device-mapper/dmeventd/libdevmapper-event.h	2007/01/12 20:22:11	1.6
-@@ -78,6 +78,10 @@
- int dm_event_handler_get_minor(const struct dm_event_handler *h);
- enum dm_event_type dm_event_handler_get_events(const struct dm_event_handler *h);
- 
-+/* FIXME */
-+int dm_event_get_registered_device(char **dso_name, char **device_path,
-+				   enum dm_event_type *events, int next);
-+
- /* Call out to dmeventd to register or unregister a handler. If
-    dmeventd is not running, it is spawned first. */
- int dm_event_register(const struct dm_event_handler *h);
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
