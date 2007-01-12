@@ -1,178 +1,93 @@
-From: Srinivasa Ds <srinivasa@in.ibm.com>
-Subject: Re: [PATCH 2.6.19 5/5] fs: freeze_bdev with semaphore not mutex
-Date: Fri, 12 Jan 2007 15:46:38 +0530
-Message-ID: <45A76006.5070504@in.ibm.com>
-References: <20061107183459.GG6993@agk.surrey.redhat.com>	<20061107122837.54828e24.akpm@osdl.org>	<45510C73.7060408@redhat.com> <20061107150017.fb78a327.akpm@osdl.org>
+From: Ming Zhang <blackmagic02881@gmail.com>
+Subject: Re: [dm-devel] [RFC] Out of order snapshot deletion
+Date: Fri, 12 Jan 2007 13:37:56 -0500
+Message-ID: <1168627076.2805.125.camel@localhost.localdomain>
+References: <45A766F3.A9E3.000B.0@novell.com>
+Reply-To: blackmagic02881@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------010702040602090709050200"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1161049AbXALJwQ@vger.kernel.org>
-In-Reply-To: <20061107150017.fb78a327.akpm@osdl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@osdl.org>
-Cc: Eric Sandeen <sandeen@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <evms-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <45A766F3.A9E3.000B.0@novell.com>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/evms-devel>,
+	<mailto:evms-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum=evms-devel>
+List-Post: <mailto:evms-devel@lists.sourceforge.net>
+List-Help: <mailto:evms-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/evms-devel>,
+	<mailto:evms-devel-request@lists.sourceforge.net?subject=subscribe>
+Sender: evms-devel-bounces@lists.sourceforge.net
+Errors-To: evms-devel-bounces@lists.sourceforge.net
+To: device-mapper development <dm-devel@redhat.com>
+Cc: evms-devel@lists.sourceforge.net, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------010702040602090709050200
-Content-Type: text/plain; charset=US-ASCII; format=flowed
-Content-Transfer-Encoding: 7bit
+On Thu, 2007-01-11 at 22:19 -0700, Vijai Babu Madhavan wrote:
+> Hi,
+> 
+> I thought I would bring this topic in a separate thread so that 
+> it can be discussed independently.
+> 
+> As users start taking a bunch of snapshots and keep them as 
+> backups, we see the following use pattern when the snapshots 
+> get recycled.
+> 
+> Different snapshots have different life cycle. When some one 
+> decides to keep 'x' snapshots, at the recycle phase, the least 
+> recent does not necessarily get deleted.
+> 
+> As users want to keep the daily snapshots for a much longer period
+> than the bi-hourly snapshots. In the same way, weekly snapshots 
+> live longer than daily snapshots.
+> 
+> I think this is pretty much similar to the way the current backup tapes
+> are managed.
 
-Andrew Morton wrote:
-> On Tue, 07 Nov 2006 16:45:07 -0600
-> Eric Sandeen <sandeen@redhat.com> wrote:
->
->   
->> Andrew Morton wrote:
->>
->>     
->>>> --- linux-2.6.19-rc4.orig/fs/buffer.c	2006-11-07 17:06:20.000000000 +0000
->>>> +++ linux-2.6.19-rc4/fs/buffer.c	2006-11-07 17:26:04.000000000 +0000
->>>> @@ -188,7 +188,9 @@ struct super_block *freeze_bdev(struct b
->>>>  {
->>>>  	struct super_block *sb;
->>>>  
->>>> -	mutex_lock(&bdev->bd_mount_mutex);
->>>> +	if (down_trylock(&bdev->bd_mount_sem))
->>>> +		return -EBUSY;
->>>> +
->>>>         
->>> This is a functional change which isn't described in the changelog.  What's
->>> happening here?
->>>       
->> Only allow one bdev-freezer in at a time, rather than queueing them up?
->>
->>     
->
-> You're asking me? ;)
->
-> Guys, I'm going to park this patch pending a full description of what it
-> does, a description of what the above hunk is doing 
-Iam really sorry for delayed reply. Here is my full explanation on my 
-patch.
-Patch, that I have proposed replaces the mutex on bd_mount_mutex with 
-the semaphore (bd_mount_sem). It was(bd_mount_sem) used to be a 
-semaphore earlier and then Ingo's patch changed it to mutex. Hence we 
-had the problem in device mapper commands. But now, the proposed patch 
-allows two separate device mapper commands to suspend and resume the 
-logical devices. Even though this explaination is from deveice mapper 
-perspective, since semaphore(bd_mount_sem) existed earlier, proposed 
-patch doesn't hurt XFS code which access the freeze_bdev().
-As for as the above code is concerned,Iam using down_trylock() to allow 
-only one process to freeze the filesystem at a time and hence stops the 
-other process from queuing up.
-> and pending an
-> examination of whether we'd be better off changing the mutex-debugging code
-> rather than switching to semaphores.
->
->   
-Regarding this one,I agree with what Arjan has told.
-" It's not used as a mutex. Sad but true. It's not so easy to say "just
-shut up the debug code", because it's just not that easy: The interface
-allows double "unlock", which is fine for semaphores for example. There
-fundamentally is no "owner" for this case, and all the mutex concepts
-assume that there is an owner. If the owner goes away, pointers to their
-task struct for example are no longer valid (used by lockdep and the
-other debugging parts). It's what makes the difference between a mutex
-and a semaphore: a mutex has an owner and several semantics follow from
-that. These semantics allow a more efficient implementation (no multiple
-"owners" possible) but once you go away from that fundamental property,
-soon we'll see "oh and it needs <this extra code> to cover the wider
-semantics correctly.. and soon you have a semaphore again.
+make sense.
 
-Let true semaphores be semaphores, and make all real mutexes mutexes.
-But lets not make actual semaphores use mutex code... ".
+> 
+> I want to know if this is the kind of use case that users are having or 
+> the developers are thinking.
+> 
+> The reason why I am posting this is that this out of snapshot deletion
+> scenario, poses some interesting challenges in the design on the solution 
+> of multiple snapshots that share blocks with each other, as it is a lot easier 
+> to design a solution where the least recent gets deleted always.
 
-So Iam reproposing my patch(taken against latest kernel) here. Please 
-let me know your comments on this.
+this does not hold true. for snapshot used as backup purpose, you 100%
+can not assume the oldest or newest will be delete first. there is no
+such rule.
 
-Signed-off-by: Srinivasa DS <srinivasa@in.ibm.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Cc: Ingo Molnar <mingo@elte.hu>
-Cc: Eric Sandeen <sandeen@sandeen.net>
-Cc: dm-devel@redhat.com
+and possibly, you create one snapshot base on policy and later mount it
+and check data consistency. if it turns out to be a bad one, you want to
+delete it. then you have no order to follow at all.
+
+ps, any comment on http://sourceware.org/cluster/csnap/? this also try
+to solve the current multiple snapshot issues.
+
+thanks
+
+Ming
+
+> 
+> Vijai
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+http://blackmagic02881.wordpress.com/
 
 
-
-
---------------010702040602090709050200
-Content-Type: text/plain;
- name="dm.fix"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm.fix"
-
- fs/block_dev.c     |    2 +-
- fs/buffer.c        |    6 ++++--
- fs/super.c         |    4 ++--
- include/linux/fs.h |    2 +-
- 4 files changed, 8 insertions(+), 6 deletions(-)
-
-Index: linux-2.6.20-rc4/fs/block_dev.c
-===================================================================
---- linux-2.6.20-rc4.orig/fs/block_dev.c
-+++ linux-2.6.20-rc4/fs/block_dev.c
-@@ -411,7 +411,7 @@ static void init_once(void * foo, struct
- 	{
- 		memset(bdev, 0, sizeof(*bdev));
- 		mutex_init(&bdev->bd_mutex);
--		mutex_init(&bdev->bd_mount_mutex);
-+		sema_init(&bdev->bd_mount_sem, 1);
- 		INIT_LIST_HEAD(&bdev->bd_inodes);
- 		INIT_LIST_HEAD(&bdev->bd_list);
- #ifdef CONFIG_SYSFS
-Index: linux-2.6.20-rc4/fs/buffer.c
-===================================================================
---- linux-2.6.20-rc4.orig/fs/buffer.c
-+++ linux-2.6.20-rc4/fs/buffer.c
-@@ -189,7 +189,9 @@ struct super_block *freeze_bdev(struct b
- {
- 	struct super_block *sb;
- 
--	mutex_lock(&bdev->bd_mount_mutex);
-+	if (down_trylock(&bdev->bd_mount_sem))
-+		return -EBUSY;
-+
- 	sb = get_super(bdev);
- 	if (sb && !(sb->s_flags & MS_RDONLY)) {
- 		sb->s_frozen = SB_FREEZE_WRITE;
-@@ -231,7 +233,7 @@ void thaw_bdev(struct block_device *bdev
- 		drop_super(sb);
- 	}
- 
--	mutex_unlock(&bdev->bd_mount_mutex);
-+	up(&bdev->bd_mount_sem);
- }
- EXPORT_SYMBOL(thaw_bdev);
- 
-Index: linux-2.6.20-rc4/include/linux/fs.h
-===================================================================
---- linux-2.6.20-rc4.orig/include/linux/fs.h
-+++ linux-2.6.20-rc4/include/linux/fs.h
-@@ -458,7 +458,7 @@ struct block_device {
- 	struct inode *		bd_inode;	/* will die */
- 	int			bd_openers;
- 	struct mutex		bd_mutex;	/* open/close mutex */
--	struct mutex		bd_mount_mutex;	/* mount mutex */
-+	struct semaphore	bd_mount_sem;
- 	struct list_head	bd_inodes;
- 	void *			bd_holder;
- 	int			bd_holders;
-Index: linux-2.6.20-rc4/fs/super.c
-===================================================================
---- linux-2.6.20-rc4.orig/fs/super.c
-+++ linux-2.6.20-rc4/fs/super.c
-@@ -753,9 +753,9 @@ int get_sb_bdev(struct file_system_type 
- 	 * will protect the lockfs code from trying to start a snapshot
- 	 * while we are mounting
- 	 */
--	mutex_lock(&bdev->bd_mount_mutex);
-+	down(&bdev->bd_mount_sem);
- 	s = sget(fs_type, test_bdev_super, set_bdev_super, bdev);
--	mutex_unlock(&bdev->bd_mount_mutex);
-+	up(&bdev->bd_mount_sem);
- 	if (IS_ERR(s))
- 		goto error_s;
- 
-
---------------010702040602090709050200--
+-------------------------------------------------------------------------
+Take Surveys. Earn Cash. Influence the Future of IT
+Join SourceForge.net's Techsay panel and you'll get the chance to share your
+opinions on IT & business topics through brief surveys - and earn cash
+http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
+_______________________________________________
+Evms-devel mailing list
+Evms-devel@lists.sourceforge.net
+To subscribe/unsubscribe, please visit:
+https://lists.sourceforge.net/lists/listinfo/evms-devel
