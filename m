@@ -1,8 +1,11 @@
-From: agk@sourceware.org
-Subject: device-mapper VERSION WHATS_NEW
-Date: 17 Jan 2007 17:50:54 -0000
-Message-ID: <20070117175054.31846.qmail@sourceware.org>
+From: "Dmitry Y. Labutin" <dmitry@incub.ru>
+Subject: device-mapper error
+Date: Sat, 13 Jan 2007 17:04:45 +0300
+Message-ID: <959119734.20070113170445@incub.ru>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,33 +16,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-17 17:50:54
+Hi.
 
-Modified files:
-	.              : VERSION WHATS_NEW 
+I see this logs in dmesg on Fedora Core 6. Can you help me?
 
-Log message:
-	post-release
+device-mapper: table: device /dev/mapper/pdc_bdeigaaigj too small for target
+device-mapper: table: 253:3: linear: dm-linear: Device lookup failed
+device-mapper: ioctl: error adding target to table
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.113&r2=1.114
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.150&r2=1.151
-
---- device-mapper/VERSION	2007/01/17 17:47:25	1.113
-+++ device-mapper/VERSION	2007/01/17 17:50:54	1.114
-@@ -1 +1 @@
--1.02.15-cvs (2007-01-17)
-+1.02.16-cvs (2007-01-17)
---- device-mapper/WHATS_NEW	2007/01/17 17:47:25	1.150
-+++ device-mapper/WHATS_NEW	2007/01/17 17:50:54	1.151
-@@ -1,3 +1,5 @@
-+Version 1.02.16 -
-+===================================
- Version 1.02.15 - 17th January 2007
- ===================================
-   Add basic reporting functions to libdevmapper.
+-- 
+Dmitry Labutin
+dmitry@incub.ru
+ICQ: 711153
