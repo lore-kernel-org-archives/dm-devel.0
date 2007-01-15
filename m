@@ -1,10 +1,8 @@
-From: "Bryn M. Reeves" <breeves@redhat.com>
-Subject: [PATCH] multipath assumes pathnames are block devices
-Date: Mon, 15 Jan 2007 20:36:15 +0000
-Message-ID: <45ABE5BF.3090708@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.annotated ./m ...
+Date: 15 Jan 2007 21:52:22 -0000
+Message-ID: <20070115215222.15762.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------010502010001080409060304"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,102 +13,1002 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------010502010001080409060304
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Changes by:	bmarzins@sourceware.org	2007-01-15 21:52:20
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Modified files:
+	.              : multipath.conf.annotated 
+	                 multipath.conf.synthetic 
+	libmultipath   : blacklist.c blacklist.h config.c config.h 
+	                 dict.c discovery.c print.c print.h 
+	multipath      : main.c multipath.conf.redhat 
+	multipathd     : cli.c cli.h cli_handlers.c cli_handlers.h 
+	                 main.c multipathd.8 
 
-When a name is passed on the multipath command line, multipath assumes
-it is a block device if it appears in the filesystem:
+Log message:
+	updated to latest upstream code
 
-multipath/main.c:386:
-if (filepresent(conf->dev))
-        conf->dev_type = DEV_DEVNODE;
-else if (sscanf(conf->dev, "%d:%d", &i, &i) == 2)
-                conf->dev_type = DEV_DEVT;
-        else
-                conf->dev_type = DEV_DEVMAP;
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&r1=1.18&r2=1.19
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.synthetic.diff?cvsroot=dm&r1=1.11&r2=1.12
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/blacklist.c.diff?cvsroot=dm&r1=1.11&r2=1.12
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/blacklist.h.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.c.diff?cvsroot=dm&r1=1.20&r2=1.21
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/config.h.diff?cvsroot=dm&r1=1.19&r2=1.20
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/dict.c.diff?cvsroot=dm&r1=1.17&r2=1.18
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&r1=1.33&r2=1.34
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/print.c.diff?cvsroot=dm&r1=1.5&r2=1.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/print.h.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/main.c.diff?cvsroot=dm&r1=1.45&r2=1.46
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.c.diff?cvsroot=dm&r1=1.5&r2=1.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.h.diff?cvsroot=dm&r1=1.5&r2=1.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.c.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.h.diff?cvsroot=dm&r1=1.3&r2=1.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&r1=1.69&r2=1.70
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/multipathd.8.diff?cvsroot=dm&r1=1.5&r2=1.6
 
-This conflicts with the use of "-f" (flush map by name), in the case
-that a file of the same name as the map exists in the current directory:
-
-$ multipath -f mpath0
-$ touch mpath0
-$ multipath -f mpath0
-must provide a map name to remove
-
-The attached patch avoids this by adding a new function isblockdev() to
-libmultipath/util.c and adding this to the DEV_DEVNODE condition. This
-also means that we check for the case that what the user passed was a
-character device, fifo etc.
-
-It's probably also worth changing "-f" option to take an explicit
-mapname argument, rather than just using argv[optind] after option
-processing - I'll send another patch for that.
-
-Kind regards,
-
-Bryn.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
-
-iD8DBQFFq+W/6YSQoMYUY94RAojDAKDD+0xeACwY8S/ommZw6SX0pw8Z1gCcDzhV
-ZkYc0ZtRHPxRQzk+JO5zDkU=
-=azH8
------END PGP SIGNATURE-----
-
---------------010502010001080409060304
-Content-Type: text/x-patch;
-	name="multipath-tools-0.4.7-check_path_is_blockdev.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename="multipath-tools-0.4.7-check_path_is_blockdev.patch"
-
-diff -Nurp multipath-tools-0.4.7.orig/libmultipath/util.c multipath-tools-0.4.7/libmultipath/util.c
---- multipath-tools-0.4.7.orig/libmultipath/util.c	2007-01-15 20:21:05.000000000 +0000
-+++ multipath-tools-0.4.7/libmultipath/util.c	2007-01-15 20:22:07.000000000 +0000
-@@ -53,6 +53,16 @@ filepresent (char * run) {
+--- multipath-tools/multipath.conf.annotated	2006/08/02 21:37:22	1.18
++++ multipath-tools/multipath.conf.annotated	2007/01/15 21:52:19	1.19
+@@ -142,6 +142,22 @@
+ #               product MSA[15]00
+ #       }
+ #}
++##
++## name    : blacklist_exceptions
++## scope   : multipath & multipathd
++## desc    : list of device names to be treated as multipath candidates
++##           even if they are on the blacklist.
++##           Note: blacklist exceptions are only valid in the same class.
++##           It is not possible to blacklist devices using the devnode keyword
++##           and to exclude some devices of them using the wwid keyword.
++## default : -
++##
++#blacklist_exceptions {
++#       devnode "^dasd[c-d]+[0-9]*"
++#       wwid    "IBM.75000000092461.4d00.34"
++#       wwid    "IBM.75000000092461.4d00.35"
++#       wwid    "IBM.75000000092461.4d00.36"
++#}
+ #
+ ##
+ ## name    : multipaths
+--- multipath-tools/multipath.conf.synthetic	2006/06/06 18:32:43	1.11
++++ multipath-tools/multipath.conf.synthetic	2007/01/15 21:52:19	1.12
+@@ -16,7 +16,7 @@
+ #	no_path_retry		fail
+ #	user_friendly_names	no
+ #}
+-#devnode_blacklist {
++#blacklist {
+ #       wwid 26353900f02796769
+ #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+ #	devnode "^hd[a-z][[0-9]*]"
+@@ -26,6 +26,10 @@
+ #		product MSA[15]00
+ #	}
+ #}
++#blacklist_exceptions {
++#       devnode "^dasd[c-d]+[0-9]*"
++#       wwid    "IBM.75000000092461.4d00.34"
++#}
+ #multipaths {
+ #	multipath {
+ #		wwid			3600508b4000156d700012000000b0000
+--- multipath-tools/libmultipath/blacklist.c	2006/06/06 18:32:43	1.11
++++ multipath-tools/libmultipath/blacklist.c	2007/01/15 21:52:20	1.12
+@@ -2,7 +2,6 @@
+  * Copyright (c) 2004, 2005 Christophe Varoqui
+  */
+ #include <stdio.h>
+-
+ #include <checkers.h>
+ 
+ #include "memory.h"
+@@ -14,7 +13,7 @@
+ #include "blacklist.h"
+ 
+ extern int
+-store_ble (vector blist, char * str)
++store_ble (vector blist, char * str, int origin)
+ {
+ 	struct blentry * ble;
+ 	
+@@ -36,6 +35,7 @@
+ 		goto out1;
+ 
+ 	ble->str = str;
++	ble->origin = origin;
+ 	vector_set_slot(blist, ble);
+ 	return 0;
+ out1:
+@@ -63,7 +63,7 @@
+ }
+ 	
+ extern int
+-set_ble_device (vector blist, char * vendor, char * product)
++set_ble_device (vector blist, char * vendor, char * product, int origin)
+ {
+ 	struct blentry_device * ble;
+ 	
+@@ -91,6 +91,7 @@
+ 		}
+ 		ble->product = product;
+ 	}
++	ble->origin = origin;
+ 	return 0;
+ }
+ 
+@@ -105,19 +106,19 @@
+ 	str = STRDUP("^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*");
+ 	if (!str)
+ 		return 1;
+-	if (store_ble(conf->blist_devnode, str))
++	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ 		return 1;
+ 
+ 	str = STRDUP("^hd[a-z]");
+ 	if (!str)
+ 		return 1;
+-	if (store_ble(conf->blist_devnode, str))
++	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ 		return 1;
+ 	
+ 	str = STRDUP("^cciss!c[0-9]d[0-9]*");
+ 	if (!str)
+ 		return 1;
+-	if (store_ble(conf->blist_devnode, str))
++	if (store_ble(conf->blist_devnode, str, ORIGIN_DEFAULT))
+ 		return 1;
+ 
+ 	vector_foreach_slot (conf->hwtable, hwe, i) {
+@@ -128,7 +129,8 @@
+ 					  VECTOR_SIZE(conf->blist_device) -1);
+ 			if (set_ble_device(conf->blist_device,
+ 					   STRDUP(hwe->vendor),
+-					   STRDUP(hwe->bl_product))) {
++					   STRDUP(hwe->bl_product),
++					   ORIGIN_DEFAULT)) {
+ 				FREE(ble);
+ 				return 1;
+ 			}
+@@ -139,11 +141,29 @@
  }
  
  int
-+isblockdev (char * run) {
-+	struct stat buf;
-+	
-+	if(stat(run, &buf))
-+		return 0;
+-blacklist (vector blist, char * str)
++blacklist_exceptions (vector elist, char * str)
++{
++        int i;
++        struct blentry * ele;
 +
-+	return S_ISBLK(buf.st_mode);
++        vector_foreach_slot (elist, ele, i) {
++                if (!regexec(&ele->regex, str, 0, NULL, 0)) {
++			condlog(3, "%s: exception-listed", str);
++			return 1;
++		}
++	}
++        return 0;
 +}
 +
 +int
- get_word (char * sentence, char ** word)
++blacklist (vector blist, vector elist, char * str)
  {
- 	char * p;
-diff -Nurp multipath-tools-0.4.7.orig/multipath/main.c multipath-tools-0.4.7/multipath/main.c
---- multipath-tools-0.4.7.orig/multipath/main.c	2007-01-15 20:21:05.000000000 +0000
-+++ multipath-tools-0.4.7/multipath/main.c	2007-01-15 20:22:07.000000000 +0000
-@@ -383,7 +383,7 @@ main (int argc, char *argv[])
+ 	int i;
+ 	struct blentry * ble;
  
- 		strncpy(conf->dev, argv[optind], FILE_NAME_SIZE);
++	if (blacklist_exceptions(elist, str))
++		return 0;
++
+ 	vector_foreach_slot (blist, ble, i) {
+ 		if (!regexec(&ble->regex, str, 0, NULL, 0)) {
+ 			condlog(3, "%s: blacklisted", str);
+@@ -154,11 +174,30 @@
+ }
  
--		if (filepresent(conf->dev))
-+		if (filepresent(conf->dev) && isblockdev(conf->dev))
- 			conf->dev_type = DEV_DEVNODE;
- 		else if (sscanf(conf->dev, "%d:%d", &i, &i) == 2)
- 			conf->dev_type = DEV_DEVT;
-
---------------010502010001080409060304
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------010502010001080409060304--
+ int
+-blacklist_device (vector blist, char * vendor, char * product)
++blacklist_exceptions_device(vector elist, char * vendor, char * product)
++{
++	int i;
++	struct blentry_device * ble;
++
++	vector_foreach_slot (elist, ble, i) {
++		if (!regexec(&ble->vendor_reg, vendor, 0, NULL, 0) &&
++		    !regexec(&ble->product_reg, product, 0, NULL, 0)) {
++			condlog(3, "%s:%s: exception-listed", vendor, product);
++			return 1;
++		}
++	}
++	return 0;
++}
++
++int
++blacklist_device (vector blist, vector elist, char * vendor, char * product)
+ {
+ 	int i;
+ 	struct blentry_device * ble;
+ 
++	if (blacklist_exceptions_device(elist, vendor, product))
++		return 0;
++
+ 	vector_foreach_slot (blist, ble, i) {
+ 		if (!regexec(&ble->vendor_reg, vendor, 0, NULL, 0) &&
+ 		    !regexec(&ble->product_reg, product, 0, NULL, 0)) {
+@@ -172,14 +211,14 @@
+ int
+ blacklist_path (struct config * conf, struct path * pp)
+ {
+-	if (blacklist(conf->blist_devnode, pp->dev))
++	if (blacklist(conf->blist_devnode, conf->elist_devnode, pp->dev))
+ 		return 1;
+ 
+-	if (blacklist(conf->blist_wwid, pp->wwid))
++	if (blacklist(conf->blist_wwid, conf->elist_wwid, pp->wwid))
+ 		return 1;
+ 
+ 	if (pp->vendor_id && pp->product_id &&
+-	    blacklist_device(conf->blist_device, pp->vendor_id, pp->product_id))
++	    blacklist_device(conf->blist_device, conf->elist_device, pp->vendor_id, pp->product_id))
+ 		return 1;
+ 
+ 	return 0;
+--- multipath-tools/libmultipath/blacklist.h	2006/06/06 18:32:43	1.6
++++ multipath-tools/libmultipath/blacklist.h	2007/01/15 21:52:20	1.7
+@@ -6,6 +6,7 @@
+ struct blentry {
+ 	char * str;
+ 	regex_t regex;
++	int origin;
+ };
+ 
+ struct blentry_device {
+@@ -13,15 +14,16 @@
+ 	char * product;
+ 	regex_t vendor_reg;
+ 	regex_t product_reg;
++	int origin;
+ };
+ 
+ int setup_default_blist (struct config *);
+ int alloc_ble_device (vector);
+-int blacklist (vector, char *);
+-int blacklist_device (vector, char *, char *);
++int blacklist (vector, vector, char *);
++int blacklist_device (vector, vector, char *, char *);
+ int blacklist_path (struct config *, struct path *);
+-int store_ble (vector, char *);
+-int set_ble_device (vector, char *, char *);
++int store_ble (vector, char *, int);
++int set_ble_device (vector, char *, char *, int);
+ void free_blacklist (vector);
+ void free_blacklist_device (vector);
+ 
+--- multipath-tools/libmultipath/config.c	2006/12/13 00:02:59	1.20
++++ multipath-tools/libmultipath/config.c	2007/01/15 21:52:20	1.21
+@@ -333,6 +333,11 @@
+ 	free_blacklist(conf->blist_devnode);
+ 	free_blacklist(conf->blist_wwid);
+ 	free_blacklist_device(conf->blist_device);
++
++	free_blacklist(conf->elist_devnode);
++	free_blacklist(conf->elist_wwid);
++	free_blacklist_device(conf->elist_device);
++
+ 	free_mptable(conf->mptable);
+ 	free_hwtable(conf->hwtable);
+ 	free_keywords(conf->keywords);
+@@ -403,6 +408,26 @@
+ 	if (setup_default_blist(conf))
+ 		goto out;
+ 
++	if (conf->elist_devnode == NULL) {
++                conf->elist_devnode = vector_alloc();
++
++                if (!conf->elist_devnode)
++			goto out;
++	}
++	if (conf->elist_wwid == NULL) {
++		conf->elist_wwid = vector_alloc();
++
++                if (!conf->elist_wwid)
++			goto out;
++	}
++
++	if (conf->elist_device == NULL) {
++		conf->elist_device = vector_alloc();
++		
++		if (!conf->elist_device)
++			goto out;
++	}
++
+ 	if (conf->mptable == NULL) {
+ 		conf->mptable = vector_alloc();
+ 
+--- multipath-tools/libmultipath/config.h	2006/12/13 00:02:59	1.19
++++ multipath-tools/libmultipath/config.h	2007/01/15 21:52:20	1.20
+@@ -1,6 +1,9 @@
+ #ifndef _CONFIG_H
+ #define _CONFIG_H
+ 
++#define ORIGIN_DEFAULT 0
++#define ORIGIN_CONFIG  1
++
+ enum devtypes {
+ 	DEV_NONE,
+ 	DEV_DEVT,
+@@ -78,6 +81,9 @@
+ 	vector blist_devnode;
+ 	vector blist_wwid;
+ 	vector blist_device;
++	vector elist_devnode;
++	vector elist_wwid;
++	vector elist_device;
+ };
+ 
+ struct config * conf;
+--- multipath-tools/libmultipath/dict.c	2006/06/06 18:32:43	1.17
++++ multipath-tools/libmultipath/dict.c	2007/01/15 21:52:20	1.18
+@@ -264,6 +264,19 @@
+ }
+ 
+ static int
++blacklist_exceptions_handler(vector strvec)
++{
++        conf->elist_devnode = vector_alloc();
++        conf->elist_wwid = vector_alloc();
++	conf->elist_device = vector_alloc();
++
++        if (!conf->elist_devnode || !conf->elist_wwid || !conf->blist_device)
++                return 1;
++
++        return 0;
++}
++
++static int
+ ble_devnode_handler(vector strvec)
+ {
+ 	char * buff;
+@@ -273,7 +286,20 @@
+ 	if (!buff)
+ 		return 1;
+ 
+-	return store_ble(conf->blist_devnode, buff);
++	return store_ble(conf->blist_devnode, buff, ORIGIN_CONFIG);
++}
++
++static int
++ble_except_devnode_handler(vector strvec)
++{
++        char * buff;
++
++        buff = set_value(strvec);
++
++        if (!buff)
++                return 1;
++
++	return store_ble(conf->elist_devnode, buff, ORIGIN_CONFIG);
+ }
+ 
+ static int
+@@ -286,7 +312,20 @@
+ 	if (!buff)
+ 		return 1;
+ 
+-	return store_ble(conf->blist_wwid, buff);
++	return store_ble(conf->blist_wwid, buff, ORIGIN_CONFIG);
++}
++
++static int
++ble_except_wwid_handler(vector strvec)
++{
++        char * buff;
++
++        buff = set_value(strvec);
++
++        if (!buff)
++                return 1;
++
++	return store_ble(conf->elist_wwid, buff, ORIGIN_CONFIG);
+ }
+ 
+ static int
+@@ -296,6 +335,12 @@
+ }
+ 
+ static int
++ble_except_device_handler(vector strvec)
++{
++	return alloc_ble_device(conf->elist_device);
++}
++
++static int
+ ble_vendor_handler(vector strvec)
+ {
+ 	char * buff;
+@@ -305,7 +350,21 @@
+ 	if (!buff)
+ 		return 1;
+ 
+-	return set_ble_device(conf->blist_device, buff, NULL);
++	return set_ble_device(conf->blist_device, buff, NULL, ORIGIN_CONFIG);
++}
++
++static int
++ble_except_vendor_handler(vector strvec)
++{
++	char * buff;
++	int r;
++
++	buff = set_value(strvec);
++
++	if (!buff)
++		return 1;
++
++	return set_ble_device(conf->elist_device, buff, NULL, ORIGIN_CONFIG);
+ }
+ 
+ static int
+@@ -318,7 +377,20 @@
+ 	if (!buff)
+ 		return 1;
+ 
+-	return set_ble_device(conf->blist_device, NULL, buff);
++	return set_ble_device(conf->blist_device, NULL, buff, ORIGIN_CONFIG);
++}
++
++static int
++ble_except_product_handler(vector strvec)
++{
++	char * buff;
++
++	buff = set_value(strvec);
++
++	if (!buff)
++		return 1;
++
++	return set_ble_device(conf->elist_device, NULL, buff, ORIGIN_CONFIG);
+ }
+ 
+ /*
+@@ -1476,6 +1548,14 @@
+ 	install_keyword("vendor", &ble_vendor_handler, &snprint_bled_vendor);
+ 	install_keyword("product", &ble_product_handler, &snprint_bled_product);
+ 	install_sublevel_end();
++	install_keyword_root("blacklist_exceptions", &blacklist_exceptions_handler);
++	install_keyword("devnode", &ble_except_devnode_handler, &snprint_ble_simple);
++	install_keyword("wwid", &ble_except_wwid_handler, &snprint_ble_simple);
++	install_keyword("device", &ble_except_device_handler, NULL);
++	install_sublevel();
++	install_keyword("vendor", &ble_except_vendor_handler, &snprint_bled_vendor);
++	install_keyword("product", &ble_except_product_handler, &snprint_bled_product);
++	install_sublevel_end();
+ 
+ #if 0
+ 	__deprecated install_keyword_root("devnode_blacklist", &blacklist_handler);
+--- multipath-tools/libmultipath/discovery.c	2006/12/13 00:02:59	1.33
++++ multipath-tools/libmultipath/discovery.c	2007/01/15 21:52:20	1.34
+@@ -104,7 +104,7 @@
+ 	if (!devname)
+ 		return 0;
+ 
+-	if (blacklist(conf->blist_devnode, devname))
++	if (blacklist(conf->blist_devnode, conf->elist_devnode, devname))
+ 		return 0;
+ 
+ 	if(safe_sprintf(path, "%s/block/%s/device", sysfs_path,
+@@ -426,7 +426,7 @@
+ 	if (sscanf(pp->dev, "gnbd%u", &unused) == 1){
+ 		strcpy(pp->vendor_id,  "GNBD");
+ 		strcpy(pp->product_id, "GNBD");
+-		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id);
++		pp->hwe = find_hwe(conf->hwtable, pp->vendor_id, pp->product_id, NULL);
+ 		return 0;
+ 	}
+ 	/*
+--- multipath-tools/libmultipath/print.c	2006/07/13 19:49:23	1.5
++++ multipath-tools/libmultipath/print.c	2007/01/15 21:52:20	1.6
+@@ -5,6 +5,8 @@
+ #include <string.h>
+ #include <libdevmapper.h>
+ #include <stdarg.h>
++#include <sysfs/dlist.h>
++#include <sysfs/libsysfs.h>
+ 
+ #include <checkers.h>
+ 
+@@ -18,6 +20,7 @@
+ #include "pgpolicies.h"
+ #include "defaults.h"
+ #include "parser.h"
++#include "blacklist.h"
+ 
+ #define MAX(x,y) (x > y) ? x : y
+ #define TAIL     (line + len - 1 - c)
+@@ -850,6 +853,110 @@
+ 	
+ }
+ 
++static int
++snprint_blacklist_group (char *buff, int len, int *fwd, vector *vec)
++{
++	int threshold = MAX_LINE_LEN;
++	struct blentry * ble;
++	int pos;
++	int i;
++
++	pos = *fwd;
++	if (!VECTOR_SIZE(*vec)) {
++		if ((len - pos - threshold) <= 0)
++			return 0;
++		pos += snprintf(buff + pos, len - pos, "        <empty>\n");
++	} else vector_foreach_slot (*vec, ble, i) {
++		if ((len - pos - threshold) <= 0)
++			return 0;
++		if (ble->origin == ORIGIN_CONFIG)
++			pos += snprintf(buff + pos, len - pos, "        (config file rule) ");
++		else if (ble->origin == ORIGIN_DEFAULT)
++			pos += snprintf(buff + pos, len - pos, "        (default rule)     ");
++		pos += snprintf(buff + pos, len - pos, "%s\n", ble->str);
++	}
++
++	*fwd = pos;
++	return pos;
++}
++
++static int
++snprint_blacklist_devgroup (char *buff, int len, int *fwd, vector *vec)
++{
++	int threshold = MAX_LINE_LEN;
++	struct blentry_device * bled;
++	int pos;
++	int i;
++
++	pos = *fwd;
++	if (!VECTOR_SIZE(*vec)) {
++		if ((len - pos - threshold) <= 0)
++			return 0;
++		pos += snprintf(buff + pos, len - pos, "        <empty>\n");
++	} else vector_foreach_slot (*vec, bled, i) {
++		if ((len - pos - threshold) <= 0)
++			return 0;
++		if (bled->origin == ORIGIN_CONFIG)
++			pos += snprintf(buff + pos, len - pos, "        (config file rule) ");
++		else if (bled->origin == ORIGIN_DEFAULT)
++			pos += snprintf(buff + pos, len - pos, "        (default rule)     ");
++		pos += snprintf(buff + pos, len - pos, "%s:%s\n", bled->vendor, bled->product);
++	}
++
++	*fwd = pos;
++	return pos;
++}
++
++extern int
++snprint_blacklist_report (char * buff, int len)
++{
++	int threshold = MAX_LINE_LEN;
++	int fwd = 0;
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "device node rules:\n"
++			                       "- blacklist:\n");
++	if (!snprint_blacklist_group(buff, len, &fwd, &conf->blist_devnode))
++		return len;
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "- exceptions:\n");
++	if (snprint_blacklist_group(buff, len, &fwd, &conf->elist_devnode) == 0)
++		return len;
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "wwid rules:\n"
++			                       "- blacklist:\n");
++	if (snprint_blacklist_group(buff, len, &fwd, &conf->blist_wwid) == 0)
++		return len;
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "- exceptions:\n");
++	if (snprint_blacklist_group(buff, len, &fwd, &conf->elist_wwid) == 0)
++		return len;
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "device rules:\n"
++			                       "- blacklist:\n");
++	if (snprint_blacklist_devgroup(buff, len, &fwd, &conf->blist_device) == 0)
++		return len;
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "- exceptions:\n");
++	if (snprint_blacklist_devgroup(buff, len, &fwd, &conf->elist_device) == 0)
++		return len;
++
++	if (fwd > len)
++		return len;
++	return fwd;
++}
++
+ extern int
+ snprint_blacklist (char * buff, int len)
+ {
+@@ -912,12 +1019,123 @@
+ 		if (fwd > len)
+ 			return len;
+ 	}
++	fwd += snprintf(buff + fwd, len - fwd, "}\n");
++	if (fwd > len)
++		return len;
++	return fwd;
++}
+ 
++extern int
++snprint_blacklist_except (char * buff, int len)
++{
++	int i;
++	struct blentry * ele;
++	struct blentry_device * eled;
++	int fwd = 0;
++	struct keyword *rootkw;
++	struct keyword *kw;
++
++	rootkw = find_keyword(NULL, "blacklist_exceptions");
++	if (!rootkw)
++		return 0;
++
++	fwd += snprintf(buff + fwd, len - fwd, "blacklist_exceptions {\n");
++	if (fwd > len)
++		return len;
++
++	vector_foreach_slot (conf->elist_devnode, ele, i) {
++		kw = find_keyword(rootkw->sub, "devnode");
++		if (!kw)
++			return 0;
++		fwd += snprint_keyword(buff + fwd, len - fwd, "\t%k %v\n",
++				       kw, ele);
++		if (fwd > len)
++			return len;
++	}
++	vector_foreach_slot (conf->elist_wwid, ele, i) {
++		kw = find_keyword(rootkw->sub, "wwid");
++		if (!kw)
++			return 0;
++		fwd += snprint_keyword(buff + fwd, len - fwd, "\t%k %v\n",
++				       kw, ele);
++		if (fwd > len)
++			return len;
++	}
++	rootkw = find_keyword(rootkw->sub, "device");
++	if (!rootkw)
++		return 0;
++
++	vector_foreach_slot (conf->elist_device, eled, i) {
++		fwd += snprintf(buff + fwd, len - fwd, "\tdevice {\n");
++		if (fwd > len)
++			return len;
++		kw = find_keyword(rootkw->sub, "vendor");
++		if (!kw)
++			return 0;
++		fwd += snprint_keyword(buff + fwd, len - fwd, "\t\t%k %v\n",
++				       kw, eled);
++		if (fwd > len)
++			return len;
++		kw = find_keyword(rootkw->sub, "product");
++		if (!kw)
++			return 0;
++		fwd += snprint_keyword(buff + fwd, len - fwd, "\t\t%k %v\n",
++				       kw, eled);
++		if (fwd > len)
++			return len;
++		fwd += snprintf(buff + fwd, len - fwd, "\t}\n");
++		if (fwd > len)
++			return len;
++	}
+ 	fwd += snprintf(buff + fwd, len - fwd, "}\n");
+ 	if (fwd > len)
+ 		return len;
+ 	return fwd;
+-	
++}
++
++extern int
++snprint_devices (char * buff, int len, struct vectors *vecs)
++{
++        struct dlist * ls;
++        struct sysfs_class * class;
++        struct sysfs_class_device * dev;
++	int threshold = MAX_LINE_LEN;
++	int fwd = 0;
++
++
++	struct path * pp;
++
++
++
++        if (!(class = sysfs_open_class("block")))
++                return 0;
++
++        if (!(ls = sysfs_get_class_devices(class))) {
++                sysfs_close_class(class);
++                return 0;
++        }
++
++	if ((len - fwd - threshold) <= 0)
++		return len;
++	fwd += snprintf(buff + fwd, len - fwd, "available block devices:\n");
++
++        dlist_for_each_data(ls, dev, struct sysfs_class_device) {
++		if ((len - fwd - threshold)  <= 0)
++			return len;
++		fwd += snprintf(buff + fwd, len - fwd, "    %s ", dev->name);
++		pp = find_path_by_dev(vecs->pathvec, dev->name);
++		if (blacklist(conf->blist_devnode, conf->elist_devnode,
++			      dev->name) || pp == NULL)
++			fwd += snprintf(buff + fwd, len - fwd,
++					"(blacklisted)\n");
++                else
++			fwd += snprintf(buff + fwd, len - fwd, "\n");
++        }
++        sysfs_close_class(class);
++
++	if (fwd > len)
++		return len;
++	return fwd;
+ }
+ 
+ extern int
+--- multipath-tools/libmultipath/print.h	2006/06/06 18:32:43	1.3
++++ multipath-tools/libmultipath/print.h	2007/01/15 21:52:20	1.4
+@@ -42,6 +42,9 @@
+ 				int verbosity);
+ int snprint_defaults (char *, int);
+ int snprint_blacklist (char *, int);
++int snprint_blacklist_except (char *, int);
++int snprint_blacklist_report (char *, int);
++int snprint_devices (char *, int, struct vectors *);
+ int snprint_hwtable (char *, int, vector);
+ int snprint_mptable (char *, int, vector);
+ 
+--- multipath-tools/multipath/main.c	2006/12/13 00:02:59	1.45
++++ multipath-tools/multipath/main.c	2007/01/15 21:52:20	1.46
+@@ -1,7 +1,7 @@
+ /*
+  * Soft:        multipath device mapper target autoconfig
+  *
+- * Version:     $Id: main.c,v 1.45 2006/12/13 00:02:59 bmarzins Exp $
++ * Version:     $Id: main.c,v 1.46 2007/01/15 21:52:20 bmarzins Exp $
+  *
+  * Author:      Christophe Varoqui
+  *
+@@ -234,7 +234,7 @@
+ 			dev = conf->dev;
+ 	}
+ 	
+-	if (dev && blacklist(conf->blist_devnode, dev))
++	if (dev && blacklist(conf->blist_devnode, conf->elist_devnode, dev))
+ 		goto out;
+ 	
+ 	/*
+@@ -250,7 +250,7 @@
+ 		}
+ 		condlog(3, "scope limited to %s", refwwid);
+ 
+-		if (blacklist(conf->blist_wwid, refwwid))
++		if (blacklist(conf->blist_wwid, conf->elist_wwid, refwwid))
+ 			goto out;
+ 	}
+ 
+--- multipath-tools/multipath/multipath.conf.redhat	2006/07/17 21:09:08	1.6
++++ multipath-tools/multipath/multipath.conf.redhat	2007/01/15 21:52:20	1.7
+@@ -36,7 +36,12 @@
+ ##
+ ## The wwid line in the following blacklist section is shown as an example
+ ## of how to blacklist devices by wwid.  The 3 devnode lines are the
+-## compiled in default blacklist.
++## compiled in default blacklist. If you want to blacklist entire types
++## of devices, such as all scsi devices, you should use a devnode line.
++## However, if you want to blacklist specific devices, you should use
++## a wwid line.  Since there is no guarantee that a specific device will
++## not change names on reboot (from /dev/sda to /dev/sdb for example)
++## devnode lines are not recommended for blacklisting specific devices.
+ ##
+ #devnode_blacklist {
+ #       wwid 26353900f02796769
+--- multipath-tools/multipathd/cli.c	2006/06/06 18:32:44	1.5
++++ multipath-tools/multipathd/cli.c	2007/01/15 21:52:20	1.6
+@@ -141,6 +141,8 @@
+ 	r += add_key(keys, "stats", STATS, 0);
+ 	r += add_key(keys, "topology", TOPOLOGY, 0);
+ 	r += add_key(keys, "config", CONFIG, 0);
++	r += add_key(keys, "blacklist", BLACKLIST, 0);
++	r += add_key(keys, "devices", DEVICES, 0);
+ 
+ 	if (r) {
+ 		free_keys(keys);
+--- multipath-tools/multipathd/cli.h	2006/06/06 18:32:44	1.5
++++ multipath-tools/multipathd/cli.h	2007/01/15 21:52:20	1.6
+@@ -17,6 +17,8 @@
+ 	__STATS,
+ 	__TOPOLOGY,
+ 	__CONFIG,
++	__BLACKLIST,
++	__DEVICES,
+ };
+ 
+ #define LIST		(1 << __LIST)
+@@ -37,6 +39,8 @@
+ #define STATS		(1 << __STATS)
+ #define TOPOLOGY	(1 << __TOPOLOGY)
+ #define CONFIG		(1 << __CONFIG)
++#define BLACKLIST	(1 << __BLACKLIST)
++#define DEVICES  	(1 << __DEVICES)
+ 
+ #define INITIAL_REPLY_LEN 1000
+ 
+--- multipath-tools/multipathd/cli_handlers.c	2006/07/13 19:49:23	1.6
++++ multipath-tools/multipathd/cli_handlers.c	2007/01/15 21:52:20	1.7
+@@ -143,6 +143,12 @@
+ 			reply = REALLOC(reply, maxlen *= 2);
+ 			continue;
+ 		}
++		c += snprint_blacklist_except(c, reply + maxlen - c);
++		again = ((c - reply) == maxlen);
++		if (again) {
++			reply = REALLOC(reply, maxlen *= 2);
++			continue;
++		}
+ 		c += snprint_hwtable(c, reply + maxlen - c, conf->hwtable);
+ 		again = ((c - reply) == maxlen);
+ 		if (again) {
+@@ -280,7 +286,7 @@
+ 
+ 	condlog(2, "%s: add path (operator)", param);
+ 
+-	if (blacklist(conf->blist_devnode, param) ||
++	if (blacklist(conf->blist_devnode, conf->elist_devnode, param) ||
+ 	    (r = ev_add_path(param, vecs)) == 2) {
+ 		*reply = strdup("blacklisted");
+ 		*len = strlen(*reply) + 1;
+@@ -309,7 +315,7 @@
+ 
+ 	condlog(2, "%s: add map (operator)", param);
+ 
+-	if (blacklist(conf->blist_wwid, param)) {
++	if (blacklist(conf->blist_wwid, conf->elist_wwid, param)) {
+ 		*reply = strdup("blacklisted");
+ 		*len = strlen(*reply) + 1;
+ 		condlog(2, "%s: map blacklisted", param);
+@@ -433,3 +439,79 @@
+ 
+ 	return dm_fail_path(pp->mpp->alias, pp->dev_t);
+ }
++
++int
++show_blacklist (char ** r, int * len)
++{
++        char *c = NULL;
++        char *reply = NULL;
++        unsigned int maxlen = INITIAL_REPLY_LEN;
++        int again = 1;
++
++        while (again) {
++		reply = MALLOC(maxlen);
++		if (!reply)
++			return 1;
++
++                c = reply;
++                c += snprint_blacklist_report(c, maxlen);
++                again = ((c - reply) == maxlen);
++                if (again) {
++			maxlen  *= 2;
++			FREE(reply);
++                        continue;
++                }
++        }
++
++        *r = reply;
++        *len = (int)(c - reply + 1);
++
++        return 0;
++}
++
++int
++cli_list_blacklist (void * v, char ** reply, int * len, void * data)
++{
++        condlog(3, "list blacklist (operator)");
++
++        return show_blacklist(reply, len);
++}
++
++int
++show_devices (char ** r, int * len, struct vectors *vecs)
++{
++        char *c = NULL;
++        char *reply = NULL;
++        unsigned int maxlen = INITIAL_REPLY_LEN;
++        int again = 1;
++
++        while (again) {
++                reply = MALLOC(maxlen);
++                if (!reply)
++                        return 1;
++
++                c = reply;
++                c += snprint_devices(c, maxlen, vecs);
++                again = ((c - reply) == maxlen);
++                if (again) {
++                        maxlen  *= 2;
++                        FREE(reply);
++                        continue;
++                }
++        }
++
++        *r = reply;
++        *len = (int)(c - reply + 1);
++
++        return 0;
++}
++
++int
++cli_list_devices (void * v, char ** reply, int * len, void * data)
++{
++	struct vectors * vecs = (struct vectors *)data;
++
++        condlog(3, "list devices (operator)");
++
++        return show_devices(reply, len, vecs);
++}
+--- multipath-tools/multipathd/cli_handlers.h	2006/06/06 18:32:44	1.3
++++ multipath-tools/multipathd/cli_handlers.h	2007/01/15 21:52:20	1.4
+@@ -5,6 +5,8 @@
+ int cli_list_map_topology (void * v, char ** reply, int * len, void * data);
+ int cli_list_maps_topology (void * v, char ** reply, int * len, void * data);
+ int cli_list_config (void * v, char ** reply, int * len, void * data);
++int cli_list_blacklist (void * v, char ** reply, int * len, void * data);
++int cli_list_devices (void * v, char ** reply, int * len, void * data);
+ int cli_add_path (void * v, char ** reply, int * len, void * data);
+ int cli_del_path (void * v, char ** reply, int * len, void * data);
+ int cli_add_map (void * v, char ** reply, int * len, void * data);
+--- multipath-tools/multipathd/main.c	2006/10/12 16:16:09	1.69
++++ multipath-tools/multipathd/main.c	2007/01/15 21:52:20	1.70
+@@ -675,7 +675,7 @@
+ 	/*
+ 	 * path add/remove event
+ 	 */
+-	if (blacklist(conf->blist_devnode, devname))
++	if (blacklist(conf->blist_devnode, conf->elist_devnode, devname))
+ 		goto out;
+ 
+ 	if (!strncmp(uev->action, "add", 3)) {
+@@ -718,6 +718,8 @@
+ 	add_handler(LIST+TOPOLOGY, cli_list_maps_topology);
+ 	add_handler(LIST+MAP+TOPOLOGY, cli_list_map_topology);
+ 	add_handler(LIST+CONFIG, cli_list_config);
++	add_handler(LIST+BLACKLIST, cli_list_blacklist);
++	add_handler(LIST+DEVICES, cli_list_devices);
+ 	add_handler(ADD+PATH, cli_add_path);
+ 	add_handler(DEL+PATH, cli_del_path);
+ 	add_handler(ADD+MAP, cli_add_map);
+--- multipath-tools/multipathd/multipathd.8	2006/12/13 00:02:59	1.5
++++ multipath-tools/multipathd/multipathd.8	2007/01/15 21:52:20	1.6
+@@ -57,6 +57,12 @@
+ .B list|show config
+ Show the currently used configuration, derived from default values and values specified within the configuration file /etc/multipath.conf.
+ .TP
++.B list|show blacklist
++Show the currently used blacklist rules, derived from default values and values specified within the configuration file /etc/multipath.conf.
++.TP
++.B list|show devices
++Show all available block devices by name including the information if they are blacklisted or not.
++.TP
+ .B add path $path
+ Add a path to the list of monitored paths. $path is as listed in /sys/block (e.g. sda).
+ .TP 
