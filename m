@@ -1,12 +1,8 @@
-From: Yury Konovalov <ykonovalov@gmail.com>
-Subject: IBM x460 with directly attached IBM DS4300 (turbo)
-	multipathd TUR path checker problem
-Date: Mon, 15 Jan 2007 20:17:48 +0300
-Message-ID: <200701152017.57247.YKonovalov@gmail.com>
-Reply-To: YKonovalov@gmail.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0808452412=="
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmeventd/.exported_s ...
+Date: 15 Jan 2007 18:21:02 -0000
+Message-ID: <20070115182102.8949.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,281 +13,788 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0808452412==
-Content-Type: multipart/signed; boundary="nextPart20887667.nTqsMaVrj7";
-	protocol="application/pgp-signature"; micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-01-15 18:21:02
 
---nextPart20887667.nTqsMaVrj7
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+Modified files:
+	.              : WHATS_NEW 
+	dmeventd       : .exported_symbols dmeventd.c 
+	                 libdevmapper-event.c libdevmapper-event.h 
+	lib            : .exported_symbols libdevmapper.h libdm-string.c 
 
-Hi!
+Log message:
+	More libdevmapper-event interface changes and fixes.
+	Rename dm_saprintf() to dm_asprintf().
 
- I faced with weird problem using multipath-tools and IBM DS4300 turbo stor=
-age=20
-system.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.146&r2=1.147
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/.exported_symbols.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.28&r2=1.29
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.12&r2=1.13
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.h.diff?cvsroot=dm&r1=1.6&r2=1.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/.exported_symbols.diff?cvsroot=dm&r1=1.26&r2=1.27
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.62&r2=1.63
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-string.c.diff?cvsroot=dm&r1=1.5&r2=1.6
 
-|      Ctrl A |--ptp fc--| qla2400 HBA-->IBM x460 (first brick) |
-|DS4300(turbo)|          | IBM x460 (dual brick configuration)  |
-|      Ctrl B |--ptp fc--| qla2400 HBA-->IBM x460 (second brick)|=20
-=20
- Operating system:              SLES9 SP3 x86 (32-bit)
- HBA drivers:                   Native SuSe kernel driver (qla2400)
- DS4300 target type:            Linux (AVT is enabled)
-
- The problem: Unpredictable path failures detected by TUR path checker,=20
- which is resulted in suspending IO to corresponding filesystem. The failed=
- =20
-path is reinstated by multipathd on the next turn tur checker invoked by=20
-multipathd (10 sec).
- If I increase path checking freq (by reducing polling_interval to 2 as it=
-=20
-shown in config below), it doesn't help. In fact, it becomes even worse: I=
-=20
-faced with situation when all path to LUN were failed by TUR checker at  th=
-e=20
-same time. If not specifying "queue_if_no_path" feature, this leads to IO=20
-error reported to upper level (FS). It could work quite good for a day or s=
-o,=20
-and then *bum*.
-=46rom DS4300 controller logs I see numerous AVT event happening on various=
- LUNs=20
-from time to time. The interesting thing is that, according to Linux logs,=
-=20
-the majority of volume transfers were not initiated by multipathd (actually=
-,=20
-they were not even detected by multipathd). Another strange thing is that=20
-many of AVT transfers ended up on the same controller on which it was start=
-ed=20
-(as it seems to me). I have DS4300 controller log, which is just to big to=
-=20
-paste here.
-=20
-What I have already tried:
-1) Replace 4G HBA's (qla2400) with 2G HBA's (qla2300). Problem remains.
-2) IOZONE tests. Works great. No path failures were detected during tests
-3) Play with polling_interval. Didn't help.
-
-I have similar configuration working good at some other site. The differenc=
-e=20
-between two installations:
-1) Single brick configuration of IBM x460
-2) Different HBA type (qla2300) installed in host.
-3) One HBA instead of two.
-4) There is FC-switch between DS4300 controllers and HBA.
-5) RHEL4 U4 x86_64 instead of SLES9 SP3 x86
-=20
- Questions:
-1) What else I can try to resolve this problem?
-2) Is it true, that AVT mode could not be used in cluster environment (when=
-=20
-two or more nodes are accessing the same LUN's, and thus can trigger AVT) ?
-3) Is there any hope (or need) to add RDAC hw handler to dm-multipath? It=20
-seems like some part of the work already done by Mike Christie=20
-(http://www.redhat.com/archives/dm-devel/2005-October/msg00020.html).
-Do you have any plans to include this code? Is it in usable state?
-
-=20
- /var/log/messages
- -------------
- Dec 27 07:30:08 tpc1 multipathd: 8:48: tur checker reports path is down
-  Dec 27 07:30:08 tpc1 multipathd: checker failed path 8:48 in map oradata1
- Dec 27 07:30:08 tpc1 kernel: device-mapper: dm-multipath: Failing path 8:48
- Dec 27 07:30:08 tpc1 multipathd: 8:96: tur checker reports path is down=20
- Dec 27 07:30:08 tpc1 multipathd: checker failed path 8:96 in map oradata1
-  Dec 27 07:30:08 tpc1 kernel: device-mapper: dm-multipath: Failing path 8:=
-96
- Dec 27 07:30:09 tpc1 multipathd: 8:112: tur checker reports path is down
- Dec 27 07:30:09 tpc1 multipathd: checker failed path 8:112 in map oraredo=
-=20
- Dec 27 07:30:09 tpc1 kernel: device-mapper: dm-multipath: Failing path 8:1=
-12
-  Dec 27 07:30:09 tpc1 kernel: Buffer I/O error on device dm-9, logical blo=
-ck=20
-27696
- Dec 27 07:30:09 tpc1 kernel: lost page write due to I/O error on dm-9
- Dec 27 07:30:09 tpc1 kernel: Aborting journal on device dm-9.=20
- Dec 27 07:30:11 tpc1 kernel: ext3_abort called.
- Dec 27 07:30:11 tpc1 kernel: EXT3-fs abort (device dm-9): ext3_journal_sta=
-rt:=20
-Detected aborted journal
- Dec 27 07:30:11 tpc1 kernel: Remounting filesystem read-only=20
- Dec 27 07:30:12 tpc1 multipathd: 8:64: tur checker reports path is down
-  Dec 27 07:30:12 tpc1 kernel: device-mapper: dm-multipath: Failing path 8:=
-64
- Dec 27 07:30:12 tpc1 multipathd: checker failed path 8:64 in map oraredo
- Dec 27 07:30:13 tpc1 multipathd: 8:48: tur checker reports path is up=20
- Dec 27 07:30:13 tpc1 multipathd: 8:48: reinstated
- Dec 27 07:30:13 tpc1 multipathd: oradata1: switch to path group #2
- Dec 27 07:30:13 tpc1 multipathd: oradata1: switch to path group #2=20
- Dec 27 07:30:13 tpc1 multipathd: 8:96: tur checker reports path is up
-  Dec 27 07:30:13 tpc1 multipathd: 8:96: reinstated
- Dec 27 07:30:13 tpc1 multipathd: oradata1: switch to path group #1=20
- Dec 27 07:30:14 tpc1 multipathd: oradata1: switch to path group #1
-  -------------
-=20
- multipath.conf :
- ---------------
- defaults {
-         udev_dir        /dev
-          multipath_tool  "/sbin/multipath -v 0 -S"
-         polling_interval 2
-          default_path_grouping_policy    multibus
-         default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"=20
-=20
-         rr_min_io 100
-          failback                immediate
-         no_path_retry           fail=20
+--- device-mapper/WHATS_NEW	2007/01/15 14:39:11	1.146
++++ device-mapper/WHATS_NEW	2007/01/15 18:21:01	1.147
+@@ -1,5 +1,7 @@
+ Version 1.02.15 -
+ ===================================
++  More libdevmapper-event interface changes and fixes.
++  Rename dm_saprintf() to dm_asprintf().
+   Report error if NULL pointer is supplied to dm_strdup_aux().
+   Reinstate dm_event_get_registered_device.
+ 
+--- device-mapper/dmeventd/.exported_symbols	2007/01/12 20:22:11	1.6
++++ device-mapper/dmeventd/.exported_symbols	2007/01/15 18:21:01	1.7
+@@ -1,17 +1,17 @@
+ dm_event_handler_create
+ dm_event_handler_destroy
+ dm_event_handler_set_dso
+-dm_event_handler_set_name
++dm_event_handler_set_devname
+ dm_event_handler_set_uuid
+ dm_event_handler_set_major
+ dm_event_handler_set_minor
+-dm_event_handler_set_events
++dm_event_handler_set_event_mask
+ dm_event_handler_get_dso
+-dm_event_handler_get_name
++dm_event_handler_get_devname
+ dm_event_handler_get_uuid
+ dm_event_handler_get_major
+ dm_event_handler_get_minor
+-dm_event_handler_get_events
+-dm_event_register
+-dm_event_unregister
++dm_event_handler_get_event_mask
++dm_event_register_handler
++dm_event_unregister_handler
+ dm_event_get_registered_device
+--- device-mapper/dmeventd/dmeventd.c	2007/01/11 21:54:52	1.28
++++ device-mapper/dmeventd/dmeventd.c	2007/01/15 18:21:01	1.29
+@@ -96,7 +96,7 @@
+ 	 * DM_DEVICE_STATUS). It should not destroy it.
+ 	 * The caller must dispose of the task.
+ 	 */
+-	void (*process_event)(struct dm_task *dmt, enum dm_event_type event);
++	void (*process_event)(struct dm_task *dmt, enum dm_event_mask event);
+ 
+ 	/*
+ 	 * Device registration.
+@@ -127,7 +127,7 @@
+ 	char *device_uuid;	/* Mapped device path. */
+ 	union {
+ 		char *str;	/* Events string as fetched from message. */
+-		enum dm_event_type field;	/* Events bitfield. */
++		enum dm_event_mask field;	/* Events bitfield. */
+ 	} events;
+ 	union {
+ 		char *str;
+@@ -157,8 +157,8 @@
+ 	uint32_t event_nr;	/* event number */
+ 	int processing;		/* Set when event is being processed */
+ 	int status;		/* running/shutdown/done */
+-	enum dm_event_type events;	/* bitfield for event filter. */
+-	enum dm_event_type current_events;	/* bitfield for occured events. */
++	enum dm_event_mask events;	/* bitfield for event filter. */
++	enum dm_event_mask current_events;	/* bitfield for occured events. */
+ 	struct dm_task *current_task;
+ 	time_t next_time;
+ 	uint32_t timeout;
+@@ -291,7 +291,7 @@
+ 	    fetch_string(&message_data->events.str, &p) &&
+ 	    fetch_string(&message_data->timeout.str, &p)) {
+ 		if (message_data->events.str) {
+-			enum dm_event_type i = atoi(message_data->events.str);
++			enum dm_event_mask i = atoi(message_data->events.str);
+ 
+ 			/*
+ 			 * Free string representaion of events.
+@@ -775,7 +775,7 @@
+ 		syslog(LOG_ERR, "dmeventd %s dlopen failed: %s", data->dso_name,
+ 		       dlerr);
+ 		data->msg->size =
+-		    dm_saprintf(&(data->msg->data), "%s dlopen failed: %s",
++		    dm_asprintf(&(data->msg->data), "%s dlopen failed: %s",
+ 				data->dso_name, dlerr);
+ 		return NULL;
+ 	}
+@@ -954,7 +954,7 @@
+ 	if (msg->data)
+ 		dm_free(msg->data);
+ 
+-	msg->size = dm_saprintf(&(msg->data), fmt, dso, dev, events);
++	msg->size = dm_asprintf(&(msg->data), fmt, dso, dev, events);
+ 
+ 	unlock_mutex();
+ 
+@@ -1049,7 +1049,7 @@
+ 	lock_mutex();
+ 	if ((thread = lookup_thread_status(message_data))) {
+ 		msg->size =
+-		    dm_saprintf(&(msg->data), "%" PRIu32, thread->timeout);
++		    dm_asprintf(&(msg->data), "%" PRIu32, thread->timeout);
+ 	} else {
+ 		msg->data = NULL;
+ 		msg->size = 0;
+--- device-mapper/dmeventd/libdevmapper-event.c	2007/01/12 20:22:11	1.12
++++ device-mapper/dmeventd/libdevmapper-event.c	2007/01/15 18:21:01	1.13
+@@ -32,108 +32,114 @@
+ 
+ struct dm_event_handler {
+ 	const char *dso;
+-	const char *device;
++
++	const char *devname;
++
+ 	const char *uuid;
+ 	int major;
+ 	int minor;
+-	enum dm_event_type events;
++
++	enum dm_event_mask mask;
+ };
+ 
+-static void dm_event_handler_clear_device(struct dm_event_handler *h)
++static void dm_event_handler_clear_devname(struct dm_event_handler *dmevh)
+ {
+-	h->device = h->uuid = NULL;
+-	h->major = h->minor = 0;
++	dmevh->devname = dmevh->uuid = NULL;
++	dmevh->major = dmevh->minor = 0;
  }
-=20
- devnode_blacklist {
-         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-          devnode "^hd[a-z][[0-9]*]"
-         devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"=20
-         devnode sda
-          devnode fd
-         devnode hd
-          devnode md
-         devnode dm
-          devnode sr
-         devnode scd
-          devnode st
-         devnode ram
-          devnode raw
-         devnode loop
+ 
+ struct dm_event_handler *dm_event_handler_create(void)
+ {
+-	struct dm_event_handler *ret = 0;
++	struct dm_event_handler *dmevh = NULL;
+ 
+-	if (!(ret = dm_malloc(sizeof(*ret))))
++	if (!(dmevh = dm_malloc(sizeof(*dmevh))))
+ 		return NULL;
+ 
+-	ret->dso = ret->device = ret->uuid = NULL;
+-	ret->major = ret->minor = 0;
+-	ret->events = 0;
++	dmevh->dso = dmevh->devname = dmevh->uuid = NULL;
++	dmevh->major = dmevh->minor = 0;
++	dmevh->mask = 0;
+ 
+-	return ret;
++	return dmevh;
  }
-=20
- devices {
-=20
-         device {
-                  vendor                  "IBM     "
-                 product                 "1722-600        "=20
-                 path_grouping_policy    group_by_prio
-                  path_checker            tur
-                 path_selector           "round-robin 0"=20
-                 prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
-                  failback                immediate
-                 rr_min_io               1000=20
-                  features                "1 queue_if_no_path"
-                  no_path_retry           300
-         }
-  }
-=20
- multipaths {=20
-     multipath {
-         wwid    3600a0b80001ff32a000020c2456bf8a0=20
-         alias   oradata1
-      }
-     multipath {
-          wwid    3600a0b80001ff3de000042ba456bfcbc
-         alias   oradata2
-      }
-     multipath {
-          wwid    3600a0b80001ff32a000020c5456bf952
-         alias   oraredo=20
-     }
-     multipath {=20
-         wwid    3600a0b80001ff32a000020c7456bf980
-          alias   oraarch1
-     }
-      multipath {
-         wwid    3600a0b80001ff3de000042bc456bfcf0
-          alias   oraarch2
-     }
-  }
-
-multipath -ll output (with no "queue_if_no_path" feature)
-=2D--------------------------------------------------------
-dm names   N
- dm table oraarch2  N
-dm table oraarch2  N
- dm status oraarch2  N
-dm info oraarch2  O
- dm table oraredo  N
-dm table oraredo  N
- dm status oraredo  N
-dm info oraredo  O
- dm table oraarch1  N
-dm table oraarch1  N
- dm status oraarch1  N
-dm info oraarch1  O
- dm table oradata2  N
-dm table oradata2  N
- dm status oradata2  N
-dm info oradata2  O
- dm table oraarch1p1  N
-dm table oradata1  N
- dm table oradata1  N
-dm status oradata1  N
- dm info oradata1  O
-dm table oraarch2p1  N
- dm table oradata1p1  N
-dm table oradata2p1  N
- dm table oraredo1  N
-oraarch2 (3600a0b80001ff3de000042bc456bfcf0)=20
-[size=3D136 GB][features=3D"0"][hwhandler=3D"0"]
- \_ round-robin 0 [prio=3D6][active]
- \_ 1:0:0:4 sdc 8:32  [active][ready]
- \_ round-robin 0 [prio=3D1][enabled]
- \_ 4:0:0:4 sdk 8:160 [active][ready]=20
-
-oraredo (3600a0b80001ff32a000020c5456bf952)
- [size=3D136 GB][features=3D"0"][hwhandler=3D"0"]
-\_ round-robin 0 [prio=3D6][active]=20
- \_ 3:0:0:1 sdh 8:112 [active][ready]
- \_ round-robin 0 [prio=3D1][enabled]
- \_ 2:0:0:1 sde 8:64  [active][ready]
-=20
-oraarch1 (3600a0b80001ff32a000020c7456bf980)
- [size=3D136 GB][features=3D"0"][hwhandler=3D"0"]
-\_ round-robin 0 [prio=3D6][active]
-  \_ 2:0:0:2 sdf 8:80  [active][ready]
-\_ round-robin 0 [prio=3D1][enabled]=20
- \_ 3:0:0:2 sdi 8:128 [active][ready]
-
- oradata2 (3600a0b80001ff3de000042ba456bfcbc)
-[size=3D817 GB][features=3D"0"][hwhandler=3D"0"]=20
-\_ round-robin 0 [prio=3D6][active]
-  \_ 4:0:0:3 sdj 8:144 [active][ready]
-\_ round-robin 0 [prio=3D1][enabled]
-  \_ 1:0:0:3 sdb 8:16  [active][ready]
-
- oradata1 (3600a0b80001ff32a000020c2456bf8a0)
-[size=3D681 GB][features=3D"0"][hwhandler=3D"0"]
- \_ round-robin 0 [prio=3D6][enabled]
- \_ 3:0:0:0 sdg 8:96  [active][ready]=20
-\_ round-robin 0 [prio=3D1][enabled]
-  \_ 2:0:0:0 sdd 8:48  [active][ready]
-
-
-Best Regards,
-Yury.
-
---nextPart20887667.nTqsMaVrj7
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.1 (GNU/Linux)
-
-iD8DBQBFq7dFBMpuqP3w7LgRApq2AJsFEhdWPcOfsgFMWNNyoy2feTQ6KACfZybY
-4a+Zz83UC+t7GnLnYtwXLZA=
-=JUT6
------END PGP SIGNATURE-----
-
---nextPart20887667.nTqsMaVrj7--
-
-
---===============0808452412==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0808452412==--
+ 
+-void dm_event_handler_destroy(struct dm_event_handler *h)
++void dm_event_handler_destroy(struct dm_event_handler *dmevh)
+ {
+-	dm_free(h);
++	dm_free(dmevh);
+ }
+ 
+-void dm_event_handler_set_dso(struct dm_event_handler *h, const char *path)
++void dm_event_handler_set_dso(struct dm_event_handler *dmevh, const char *path)
+ {
+-	h->dso = path;
++	dmevh->dso = path;
+ }
+ 
+-void dm_event_handler_set_name(struct dm_event_handler *h, const char *name)
++void dm_event_handler_set_devname(struct dm_event_handler *dmevh, const char *devname)
+ {
+-	dm_event_handler_clear_device(h);
+-	h->device = name;
++	dm_event_handler_clear_devname(dmevh);
++
++	dmevh->devname = devname;
+ }
+ 
+-void dm_event_handler_set_uuid(struct dm_event_handler *h, const char *uuid)
++void dm_event_handler_set_uuid(struct dm_event_handler *dmevh, const char *uuid)
+ {
+-	dm_event_handler_clear_device(h);
+-	h->uuid = uuid;
++	dm_event_handler_clear_devname(dmevh);
++
++	dmevh->uuid = uuid;
+ }
+ 
+-void dm_event_handler_set_major(struct dm_event_handler *h, int major)
++void dm_event_handler_set_major(struct dm_event_handler *dmevh, int major)
+ {
+-	int minor = h->minor;
++	int minor = dmevh->minor;
+ 
+-	dm_event_handler_clear_device(h);
+-	h->major = major;
+-	h->minor = minor;
++	dm_event_handler_clear_devname(dmevh);
++
++	dmevh->major = major;
++	dmevh->minor = minor;
+ }
+ 
+-void dm_event_handler_set_minor(struct dm_event_handler *h, int minor)
++void dm_event_handler_set_minor(struct dm_event_handler *dmevh, int minor)
+ {
+-	int major = h->major;
++	int major = dmevh->major;
+ 
+-	dm_event_handler_clear_device(h);
++	dm_event_handler_clear_devname(dmevh);
+ 
+-	h->major = major;
+-	h->minor = minor;
++	dmevh->major = major;
++	dmevh->minor = minor;
+ }
+ 
+-void dm_event_handler_set_events(struct dm_event_handler *h,
+-				 enum dm_event_type event)
++void dm_event_handler_set_event_mask(struct dm_event_handler *dmevh,
++				     enum dm_event_mask evmask)
+ {
+-	h->events = event;
++	dmevh->mask = evmask;
+ }
+ 
+-const char *dm_event_handler_get_dso(const struct dm_event_handler *h)
++const char *dm_event_handler_get_dso(const struct dm_event_handler *dmevh)
+ {
+-	return h->dso;
++	return dmevh->dso;
+ }
+ 
+-const char *dm_event_handler_get_name(const struct dm_event_handler *h)
++const char *dm_event_handler_get_devname(const struct dm_event_handler *dmevh)
+ {
+-	return h->device;
++	return dmevh->devname;
+ }
+ 
+-const char *dm_event_handler_get_uuid(const struct dm_event_handler *h)
++const char *dm_event_handler_get_uuid(const struct dm_event_handler *dmevh)
+ {
+-	return h->uuid;
++	return dmevh->uuid;
+ }
+ 
+-int dm_event_handler_get_major(const struct dm_event_handler *h)
++int dm_event_handler_get_major(const struct dm_event_handler *dmevh)
+ {
+-	return h->major;
++	return dmevh->major;
+ }
+ 
+-int dm_event_handler_get_minor(const struct dm_event_handler *h)
++int dm_event_handler_get_minor(const struct dm_event_handler *dmevh)
+ {
+-	return h->minor;
++	return dmevh->minor;
+ }
+ 
+-enum dm_event_type dm_event_handler_get_events(const struct dm_event_handler *h)
++enum dm_event_mask dm_event_handler_get_event_mask(const struct dm_event_handler *dmevh)
+ {
+-	return h->events;
++	return dmevh->mask;
+ }
+ 
+ /*
+@@ -145,8 +151,8 @@
+  *
+  * Returns: 0 on failure, 1 on success
+  */
+-static int daemon_read(struct dm_event_fifos *fifos,
+-		       struct dm_event_daemon_message *msg)
++static int _daemon_read(struct dm_event_fifos *fifos,
++			struct dm_event_daemon_message *msg)
+ {
+ 	unsigned bytes = 0;
+ 	int ret, i;
+@@ -205,8 +211,8 @@
+ }
+ 
+ /* Write message to daemon. */
+-static int daemon_write(struct dm_event_fifos *fifos,
+-			struct dm_event_daemon_message *msg)
++static int _daemon_write(struct dm_event_fifos *fifos,
++			 struct dm_event_daemon_message *msg)
+ {
+ 	unsigned bytes = 0;
+ 	int ret = 0;
+@@ -248,13 +254,13 @@
+ 	return bytes == size;
+ }
+ 
+-static int daemon_talk(struct dm_event_fifos *fifos,
+-		       struct dm_event_daemon_message *msg, int cmd,
+-		       const char *dso_name, const char *device,
+-		       enum dm_event_type events, uint32_t timeout)
++static int _daemon_talk(struct dm_event_fifos *fifos,
++			struct dm_event_daemon_message *msg, int cmd,
++			const char *dso_name, const char *devname,
++			enum dm_event_mask evmask, uint32_t timeout)
+ {
+ 	const char *dso = dso_name ? dso_name : "";
+-	const char *dev = device ? device : "";
++	const char *dev = devname ? devname : "";
+ 	const char *fmt = "%s %s %u %" PRIu32;
+ 	memset(msg, 0, sizeof(*msg));
+ 
+@@ -263,18 +269,21 @@
+ 	 * into ASCII message string.
+ 	 */
+ 	msg->cmd = cmd;
+-	msg->size = dm_saprintf(&(msg->data), fmt, dso, dev, events, timeout);
++	if ((msg->size = dm_asprintf(&(msg->data), fmt, dso, dev, evmask,
++				     timeout)) < 0) {
++		log_error("_daemon_talk: message allocation failed");
++	}
+ 
+ 	/*
+ 	 * Write command and message to and
+ 	 * read status return code from daemon.
+ 	 */
+-	if (!daemon_write(fifos, msg)) {
++	if (!_daemon_write(fifos, msg)) {
+ 		stack;
+ 		return -EIO;
+ 	}
+ 
+-	if (!daemon_read(fifos, msg)) {
++	if (!_daemon_read(fifos, msg)) {
+ 		stack;
+ 		return -EIO;
+ 	}
+@@ -294,7 +303,7 @@
+  *
+  * Returns: 1 on success, 0 otherwise
+  */
+-static int start_daemon(struct dm_event_fifos *fifos)
++static int _start_daemon(struct dm_event_fifos *fifos)
+ {
+ 	int pid, ret = 0;
+ 	int status;
+@@ -349,7 +358,7 @@
+ }
+ 
+ /* Initialize client. */
+-static int init_client(struct dm_event_fifos *fifos)
++static int _init_client(struct dm_event_fifos *fifos)
+ {
+ 	/* FIXME? Is fifo the most suitable method? Why not share
+ 	   comms/daemon code with something else e.g. multipath? */
+@@ -359,7 +368,7 @@
+ 	fifos->client_path = DM_EVENT_FIFO_CLIENT;
+ 	fifos->server_path = DM_EVENT_FIFO_SERVER;
+ 
+-	if (!start_daemon(fifos)) {
++	if (!_start_daemon(fifos)) {
+ 		stack;
+ 		return 0;
+ 	}
+@@ -391,7 +400,7 @@
+ 	return 1;
+ }
+ 
+-static void dtr_client(struct dm_event_fifos *fifos)
++static void _dtr_client(struct dm_event_fifos *fifos)
+ {
+ 	if (flock(fifos->server, LOCK_UN))
+ 		log_error("flock unlock %s", fifos->server_path);
+@@ -400,76 +409,91 @@
+ 	close(fifos->server);
+ }
+ 
+-/* Get uuid of a device, if it exists (otherwise NULL). */
+-static struct dm_task *get_device_info(const struct dm_event_handler *h)
++/* Get uuid of a device */
++static struct dm_task *_get_device_info(const struct dm_event_handler *dmevh)
+ {
+-	struct dm_task *dmt = dm_task_create(DM_DEVICE_INFO);
+-	struct dm_task *ret;
++	struct dm_task *dmt;
++	struct dm_info info;
+ 
+-	if (!dmt)
++	if (!(dmt = dm_task_create(DM_DEVICE_INFO))) {
++		log_error("_get_device_info: dm_task creation for info failed");
+ 		return NULL;
++	}
+ 
+-	if (h->uuid)
+-		dm_task_set_uuid(dmt, h->uuid);
+-	else if (h->device)
+-		dm_task_set_name(dmt, h->device);
+-	else if (h->major && h->minor) {
+-		dm_task_set_major(dmt, h->major);
+-		dm_task_set_minor(dmt, h->minor);
++	if (dmevh->uuid)
++		dm_task_set_uuid(dmt, dmevh->uuid);
++	else if (dmevh->devname)
++		dm_task_set_name(dmt, dmevh->devname);
++	else if (dmevh->major && dmevh->minor) {
++		dm_task_set_major(dmt, dmevh->major);
++		dm_task_set_minor(dmt, dmevh->minor);
++
++	/* FIXME Add name or uuid or devno to messages */
++	if (!dm_task_run(dmt)) {
++		log_error("_get_device_info: dm_task_run() failed");
++		goto failed;
+ 	}
+ 
+-	if (!dm_task_run(dmt))
+-		ret = NULL;
+-	else
+-		ret = dmt;
++	if (!dm_task_get_info(dmt, &info))
++		log_error("_get_device_info: failed to get info for device");
++		goto failed;
++	}
+ 
+-	return ret;
++	if (!info.exists) {
++		log_error("_get_device_info: device not found");
++		goto failed;
++	}
++
++	return dmt;
++
++failed:
++	dm_task_destroy(dmt);
++	return NULL;
+ }
+ 
+ /* Handle the event (de)registration call and return negative error codes. */
+-static int do_event(int cmd, struct dm_event_daemon_message *msg,
+-		    const char *dso_name, const char *device,
+-		    enum dm_event_type events, uint32_t timeout)
++static int _do_event(int cmd, struct dm_event_daemon_message *msg,
++		    const char *dso_name, const char *devname,
++		    enum dm_event_mask evmask, uint32_t timeout)
+ {
+ 	int ret;
+ 	struct dm_event_fifos fifos;
+ 
+-	if (!init_client(&fifos)) {
++	if (!_init_client(&fifos)) {
+ 		stack;
+ 		return -ESRCH;
+ 	}
+ 
+-	ret = daemon_talk(&fifos, msg, cmd, dso_name, device, events, timeout);
++	ret = _daemon_talk(&fifos, msg, cmd, dso_name, devname, evmask, timeout);
+ 
+ 	/* what is the opposite of init? */
+-	dtr_client(&fifos);
++	_dtr_client(&fifos);
+ 
+ 	return ret;
+ }
+ 
+ /* External library interface. */
+-int dm_event_register(const struct dm_event_handler *h)
++int dm_event_register_handler(const struct dm_event_handler *dmevh)
+ {
+-	int ret, err;
++	int ret = 1, err;
+ 	const char *uuid;
+ 	struct dm_task *dmt;
+ 	struct dm_event_daemon_message msg;
+ 
+-	if (!(dmt = get_device_info(h))) {
+-		log_error("%s: device not found", h->device);
++	if (!(dmt = _get_device_info(dmevh))) {
++		stack;
+ 		return 0;
+ 	}
+ 
+ 	uuid = dm_task_get_uuid(dmt);
+ 
+-	if ((err = do_event(DM_EVENT_CMD_REGISTER_FOR_EVENT, &msg,
+-			    h->dso, uuid, h->events, 0)) < 0) {
++	if ((err = _do_event(DM_EVENT_CMD_REGISTER_FOR_EVENT, &msg,
++			     dmevh->dso, uuid, dmevh->mask, 0)) < 0) {
+ 		log_error("%s: event registration failed: %s",
+ 			  dm_task_get_name(dmt),
+ 			  msg.data ? msg.data : strerror(-err));
+ 		ret = 0;
+-	} else
+-		ret = 1;
++	}
+ 
+ 	if (msg.data)
+ 		dm_free(msg.data);
+@@ -479,28 +503,27 @@
+ 	return ret;
+ }
+ 
+-int dm_event_unregister(const struct dm_event_handler *h)
++int dm_event_unregister_handler(const struct dm_event_handler *dmevh)
+ {
+-	int ret, err;
++	int ret = 1, err;
+ 	const char *uuid;
+ 	struct dm_task *dmt;
+ 	struct dm_event_daemon_message msg;
+ 
+-	if (!(dmt = get_device_info(h))) {
+-		log_error("%s: device not found", dm_task_get_name(dmt));
++	if (!(dmt = _get_device_info(dmevh))) {
++		stack;
+ 		return 0;
+ 	}
+ 
+ 	uuid = dm_task_get_uuid(dmt);
+ 
+-	if ((err = do_event(DM_EVENT_CMD_UNREGISTER_FOR_EVENT, &msg,
+-			    h->dso, uuid, h->events, 0)) < 0) {
++	if ((err = _do_event(DM_EVENT_CMD_UNREGISTER_FOR_EVENT, &msg,
++			    dmevh->dso, uuid, dmevh->mask, 0)) < 0) {
+ 		log_error("%s: event deregistration failed: %s",
+ 			  dm_task_get_name(dmt),
+ 			  msg.data ? msg.data : strerror(-err));
+ 		ret = 0;
+-	} else
+-		ret = 1;
++	}
+ 
+ 	if (msg.data)
+ 		dm_free(msg.data);
+@@ -511,9 +534,8 @@
+ }
+ 
+ /* Fetch a string off src and duplicate it into *dest. */
+-/* FIXME: move to seperate module to share with the daemon. */
+-static const char delimiter = ' ';
+-static char *fetch_string(char **src)
++/* FIXME: move to separate module to share with the daemon. */
++static char *_fetch_string(char **src, const char delimiter)
+ {
+ 	char *p, *ret;
+ 
+@@ -530,13 +552,14 @@
+ }
+ 
+ /* Parse a device message from the daemon. */
+-static int parse_message(struct dm_event_daemon_message *msg, char **dso_name,
+-			 char **device, enum dm_event_type *events)
++static int _parse_message(struct dm_event_daemon_message *msg, char **dso_name,
++			 char **devname, enum dm_event_mask *evmask)
+ {
+ 	char *p = msg->data;
+ 
+-	if ((*dso_name = fetch_string(&p)) && (*device = fetch_string(&p))) {
+-		*events = atoi(p);
++	if ((*dso_name = _fetch_string(&p, ' ')) &&
++	    (*devname = _fetch_string(&p, ' '))) {
++		*evmask = atoi(p);
+ 
+ 		return 0;
+ 	}
+@@ -548,7 +571,7 @@
+  * dm_event_get_registered_device
+  * @dso_name
+  * @device_path
+- * @events
++ * @mask
+  * @next
+  *
+  * FIXME: This function sucks.
+@@ -556,17 +579,17 @@
+  * Returns: 1 if device found, 0 otherwise (even on error)
+  */
+ int dm_event_get_registered_device(char **dso_name, char **device_path,
+-				   enum dm_event_type *events, int next)
++				   enum dm_event_mask *mask, int next)
+ {
+ 	int ret;
+ 	char *dso_name_arg = NULL, *device_path_arg = NULL;
+ 	struct dm_event_daemon_message msg;
+ 
+-	if (!(ret = do_event(next ? DM_EVENT_CMD_GET_NEXT_REGISTERED_DEVICE :
++	if (!(ret = _do_event(next ? DM_EVENT_CMD_GET_NEXT_REGISTERED_DEVICE :
+ 			     DM_EVENT_CMD_GET_REGISTERED_DEVICE,
+-			     &msg, *dso_name, *device_path, *events, 0))) {
+-		ret = !parse_message(&msg, &dso_name_arg, &device_path_arg,
+-				     events);
++			     &msg, *dso_name, *device_path, *mask, 0))) {
++		ret = !_parse_message(&msg, &dso_name_arg, &device_path_arg,
++				     mask);
+ 	} else			/* FIXME: Make sure this is ENOENT */
+ 		ret = 0;
+ 
+@@ -598,7 +621,7 @@
+ 
+ 	if (!device_exists(device_path))
+ 		return -ENODEV;
+-	return do_event(DM_EVENT_CMD_SET_TIMEOUT, &msg,
++	return _do_event(DM_EVENT_CMD_SET_TIMEOUT, &msg,
+ 			NULL, device_path, 0, timeout);
+ }
+ 
+@@ -609,7 +632,7 @@
+ 
+ 	if (!device_exists(device_path))
+ 		return -ENODEV;
+-	if (!(ret = do_event(DM_EVENT_CMD_GET_TIMEOUT, &msg, NULL, device_path,
++	if (!(ret = _do_event(DM_EVENT_CMD_GET_TIMEOUT, &msg, NULL, device_path,
+ 			     0, 0)))
+ 		*timeout = atoi(msg.data);
+ 	if (msg.data)
+--- device-mapper/dmeventd/libdevmapper-event.h	2007/01/12 20:22:11	1.6
++++ device-mapper/dmeventd/libdevmapper-event.h	2007/01/15 18:21:01	1.7
+@@ -23,8 +23,11 @@
+ 
+ #include <stdint.h>
+ 
+-/* Event type definitions. */
+-enum dm_event_type {
++/*
++ * Event library interface.
++ */
++
++enum dm_event_mask {
+ 	DM_EVENT_SETTINGS_MASK  = 0x0000FF,
+ 	DM_EVENT_SINGLE		= 0x000001, /* Report multiple errors just once. */
+ 	DM_EVENT_MULTI		= 0x000002, /* Report all of them. */
+@@ -33,7 +36,7 @@
+ 	DM_EVENT_SECTOR_ERROR	= 0x000100, /* Failure on a particular sector. */
+ 	DM_EVENT_DEVICE_ERROR	= 0x000200, /* Device failure. */
+ 	DM_EVENT_PATH_ERROR	= 0x000400, /* Failure on an io path. */
+-	DM_EVENT_ADAPTOR_ERROR	= 0x000800, /* Failure off a host adaptor. */
++	DM_EVENT_ADAPTOR_ERROR	= 0x000800, /* Failure of a host adaptor. */
+ 
+ 	DM_EVENT_STATUS_MASK    = 0xFF0000,
+ 	DM_EVENT_SYNC_STATUS	= 0x010000, /* Mirror synchronization completed/failed. */
+@@ -44,54 +47,55 @@
+ 
+ #define DM_EVENT_ALL_ERRORS DM_EVENT_ERROR_MASK
+ 
+-/* Prototypes for event lib interface. */
+-
+ struct dm_event_handler;
+ 
+-/* Create and destroy dm_event_handler struct, which is passed to
+-   register/unregister functions below */
+ struct dm_event_handler *dm_event_handler_create(void);
+-void dm_event_handler_destroy(struct dm_event_handler *h);
++void dm_event_handler_destroy(struct dm_event_handler *dmevh);
+ 
+-/* Set parameters of a handler:
+-   - dso - shared library path to handle the events
+-   (only one of the following three needs to be set)
+-   - name - device name or path
+-   - uuid - device uuid
+-   - major and minor - device major/minor numbers
+-   - events - a bitfield defining which events to handle (see
+-              enum dm_event_type above)
+-*/
+-void dm_event_handler_set_dso(struct dm_event_handler *h, const char *path);
+-void dm_event_handler_set_name(struct dm_event_handler *h, const char *name);
+-void dm_event_handler_set_uuid(struct dm_event_handler *h, const char *uuid);
+-void dm_event_handler_set_major(struct dm_event_handler *h, int major);
+-void dm_event_handler_set_minor(struct dm_event_handler *h, int minor);
+-void dm_event_handler_set_events(struct dm_event_handler *h,
+-				 enum dm_event_type event);
+-
+-/* Get parameters of a handler, same as above */
+-const char *dm_event_handler_get_dso(const struct dm_event_handler *h);
+-const char *dm_event_handler_get_name(const struct dm_event_handler *h);
+-const char *dm_event_handler_get_uuid(const struct dm_event_handler *h);
+-int dm_event_handler_get_major(const struct dm_event_handler *h);
+-int dm_event_handler_get_minor(const struct dm_event_handler *h);
+-enum dm_event_type dm_event_handler_get_events(const struct dm_event_handler *h);
++/*
++ * Path of shared library to handle events.
++ */
++void dm_event_handler_set_dso(struct dm_event_handler *dmevh, const char *path);
++
++/*
++ * Identify the device to monitor by exactly one of
++ * devname, uuid or device number.
++ */
++void dm_event_handler_set_devname(struct dm_event_handler *dmevh, const char *devname);
++
++void dm_event_handler_set_uuid(struct dm_event_handler *dmevh, const char *uuid);
++
++void dm_event_handler_set_major(struct dm_event_handler *dmevh, int major);
++void dm_event_handler_set_minor(struct dm_event_handler *dmevh, int minor);
++
++/*
++ * Specify mask for events to monitor.
++ */
++void dm_event_handler_set_event_mask(struct dm_event_handler *dmevh,
++				     enum dm_event_mask evmask);
++
++const char *dm_event_handler_get_dso(const struct dm_event_handler *dmevh);
++const char *dm_event_handler_get_devname(const struct dm_event_handler *dmevh);
++const char *dm_event_handler_get_uuid(const struct dm_event_handler *dmevh);
++int dm_event_handler_get_major(const struct dm_event_handler *dmevh);
++int dm_event_handler_get_minor(const struct dm_event_handler *dmevh);
++enum dm_event_mask dm_event_handler_get_event_mask(const struct dm_event_handler *dmevh);
+ 
+-/* FIXME */
++/* FIXME Review interface */
+ int dm_event_get_registered_device(char **dso_name, char **device_path,
+-				   enum dm_event_type *events, int next);
++				   enum dm_event_mask *evmask, int next);
+ 
+-/* Call out to dmeventd to register or unregister a handler. If
+-   dmeventd is not running, it is spawned first. */
+-int dm_event_register(const struct dm_event_handler *h);
+-int dm_event_unregister(const struct dm_event_handler *h);
++/*
++ * Initiate monitoring using dmeventd.
++ */
++int dm_event_register_handler(const struct dm_event_handler *dmevh);
++int dm_event_unregister_handler(const struct dm_event_handler *dmevh);
+ 
+ /* Prototypes for DSO interface, see dmeventd.c, struct dso_data for
+    detailed descriptions. */
+-void process_event(struct dm_task *dmt, enum dm_event_type event);
+-int register_device(const char *device, const char *uuid, int major, int minor);
+-int unregister_device(const char *device, const char *uuid, int major,
++void process_event(struct dm_task *dmt, enum dm_event_mask evmask);
++int register_device(const char *devname, const char *uuid, int major, int minor);
++int unregister_device(const char *devname, const char *uuid, int major,
+ 		      int minor);
+ 
+ #endif
+--- device-mapper/lib/.exported_symbols	2007/01/11 21:54:53	1.26
++++ device-mapper/lib/.exported_symbols	2007/01/15 18:21:01	1.27
+@@ -115,4 +115,4 @@
+ dm_split_words
+ dm_snprintf
+ dm_basename
+-dm_saprintf
++dm_asprintf
+--- device-mapper/lib/libdevmapper.h	2007/01/11 21:54:53	1.62
++++ device-mapper/lib/libdevmapper.h	2007/01/15 18:21:01	1.63
+@@ -626,7 +626,8 @@
+ /*
+  * Returns size of a buffer which is allocated with dm_malloc.
+  * Pointer to the buffer is stored in *buf.
++ * Returns -1 on failure leaving buf undefined.
+  */
+-int dm_saprintf(char **buf, const char *format, ...);
++int dm_asprintf(char **buf, const char *format, ...);
+ 
+ #endif				/* LIB_DEVICE_MAPPER_H */
+--- device-mapper/lib/libdm-string.c	2007/01/11 21:54:53	1.5
++++ device-mapper/lib/libdm-string.c	2007/01/15 18:21:01	1.6
+@@ -129,7 +129,7 @@
+ 	return p ? p + 1 : (char *) path;
+ }
+ 
+-int dm_saprintf(char **result, const char *format, ...)
++int dm_asprintf(char **result, const char *format, ...)
+ {
+ 	int n, ok = 0, size = 32;
+ 	va_list ap;
