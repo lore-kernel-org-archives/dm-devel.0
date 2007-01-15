@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper/dmeventd dmeventd.c
-Date: 15 Jan 2007 19:19:31 -0000
-Message-ID: <20070115191931.17375.qmail@sourceware.org>
+Subject: device-mapper/dmeventd libdevmapper-event.c
+Date: 15 Jan 2007 19:11:59 -0000
+Message-ID: <20070115191159.11619.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,53 +18,26 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-15 19:19:31
+Changes by:	agk@sourceware.org	2007-01-15 19:11:58
 
 Modified files:
-	dmeventd       : dmeventd.c 
+	dmeventd       : libdevmapper-event.c 
 
 Log message:
-	fail registration if timeout thread cannot be started
+	use DMEVENTD_PATH
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.30&r2=1.31
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.13&r2=1.14
 
---- device-mapper/dmeventd/dmeventd.c	2007/01/15 18:58:40	1.30
-+++ device-mapper/dmeventd/dmeventd.c	2007/01/15 19:19:31	1.31
-@@ -849,6 +849,20 @@
+--- device-mapper/dmeventd/libdevmapper-event.c	2007/01/15 18:21:01	1.13
++++ device-mapper/dmeventd/libdevmapper-event.c	2007/01/15 19:11:58	1.14
+@@ -341,8 +341,7 @@
+ 		log_error("Unable to fork.");
  
- 	_lock_mutex();
- 
-+	/* If creation of timeout thread fails (as it may), we fail
-+	   here completely. The client is responsible for either
-+	   retrying later or trying to register without timeout
-+	   events. However, if timeout thread cannot be started, it
-+	   usually means we are so starved on resources that we are
-+	   almost as good as dead already... */
-+	if (thread->events & DM_EVENT_TIMEOUT) {
-+		ret = -_register_for_timeout(thread);
-+                if (ret) {
-+                    _unlock_mutex();
-+                    goto out;
-+                }
-+        }
-+
- 	if (!(thread = _lookup_thread_status(message_data))) {
- 		_unlock_mutex();
- 
-@@ -874,15 +888,6 @@
- 
- 	_unlock_mutex();
- 
--	/* FIXME - If you fail to register for timeout events, you
--	   still monitor all the other events. Is this the right
--	   action for newly created devices?  Also, you are still
--	   on the timeout registry, so if a timeout thread is
--	   successfully started up later, you will start receiving
--	   DM_EVENT_TIMEOUT events */
--	if (thread->events & DM_EVENT_TIMEOUT)
--		ret = -_register_for_timeout(thread);
--
-       out:
- 	/*
- 	 * Deallocate thread status after releasing
+ 	else if (!pid) {
+-		/* FIXME configure path (cf. lvm2 modprobe) */
+-		execvp("dmeventd", NULL);
++		execvp(DMEVENTD_PATH, NULL);
+ 		exit(EXIT_FAILURE);
+ 	} else {
+ 		if (waitpid(pid, &status, 0) < 0)
