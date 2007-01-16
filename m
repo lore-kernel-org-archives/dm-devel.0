@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmeventd/.exported_s ...
-Date: 16 Jan 2007 18:03:42 -0000
-Message-ID: <20070116180342.21072.qmail@sourceware.org>
+Subject: device-mapper/lib libdm-report.c
+Date: 16 Jan 2007 18:04:16 -0000
+Message-ID: <20070116180416.21773.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,365 +18,470 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-16 18:03:40
+Changes by:	agk@sourceware.org	2007-01-16 18:04:16
 
-Modified files:
-	.              : WHATS_NEW 
-	dmeventd       : .exported_symbols dmeventd.c 
-	                 libdevmapper-event.c libdevmapper-event.h 
-	lib            : .exported_symbols Makefile.in libdevmapper.h 
+Added files:
+	lib            : libdm-report.c 
 
 Log message:
 	Add basic reporting functions to libdevmapper.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.148&r2=1.149
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/.exported_symbols.diff?cvsroot=dm&r1=1.7&r2=1.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.34&r2=1.35
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.15&r2=1.16
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.h.diff?cvsroot=dm&r1=1.7&r2=1.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/.exported_symbols.diff?cvsroot=dm&r1=1.27&r2=1.28
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/Makefile.in.diff?cvsroot=dm&r1=1.30&r2=1.31
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.63&r2=1.64
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=NONE&r2=1.1
 
---- device-mapper/WHATS_NEW	2007/01/15 22:05:50	1.148
-+++ device-mapper/WHATS_NEW	2007/01/16 18:03:39	1.149
-@@ -1,5 +1,6 @@
- Version 1.02.15 -
- ===================================
-+  Add basic reporting functions to libdevmapper.
-   Fix a malloc error path in dmsetup message.
-   More libdevmapper-event interface changes and fixes.
-   Rename dm_saprintf() to dm_asprintf().
---- device-mapper/dmeventd/.exported_symbols	2007/01/15 18:21:01	1.7
-+++ device-mapper/dmeventd/.exported_symbols	2007/01/16 18:03:40	1.8
-@@ -1,7 +1,7 @@
- dm_event_handler_create
- dm_event_handler_destroy
- dm_event_handler_set_dso
--dm_event_handler_set_devname
-+dm_event_handler_set_dev_name
- dm_event_handler_set_uuid
- dm_event_handler_set_major
- dm_event_handler_set_minor
---- device-mapper/dmeventd/dmeventd.c	2007/01/15 22:37:40	1.34
-+++ device-mapper/dmeventd/dmeventd.c	2007/01/16 18:03:40	1.35
-@@ -31,8 +31,10 @@
- #include <errno.h>
- #include <pthread.h>
- #include <sys/file.h>
-+#include <sys/stat.h>
- #include <sys/wait.h>
--
-+#include <sys/time.h>
-+#include <sys/resource.h>
- #include <unistd.h>
- #include <arpa/inet.h>		/* for htonl, ntohl */
- 
---- device-mapper/dmeventd/libdevmapper-event.c	2007/01/15 19:47:49	1.15
-+++ device-mapper/dmeventd/libdevmapper-event.c	2007/01/16 18:03:40	1.16
-@@ -33,7 +33,7 @@
- struct dm_event_handler {
- 	const char *dso;
- 
--	const char *devname;
-+	const char *dev_name;
- 
- 	const char *uuid;
- 	int major;
-@@ -42,9 +42,9 @@
- 	enum dm_event_mask mask;
- };
- 
--static void dm_event_handler_clear_devname(struct dm_event_handler *dmevh)
-+static void dm_event_handler_clear_dev_name(struct dm_event_handler *dmevh)
- {
--	dmevh->devname = dmevh->uuid = NULL;
-+	dmevh->dev_name = dmevh->uuid = NULL;
- 	dmevh->major = dmevh->minor = 0;
- }
- 
-@@ -55,7 +55,7 @@
- 	if (!(dmevh = dm_malloc(sizeof(*dmevh))))
- 		return NULL;
- 
--	dmevh->dso = dmevh->devname = dmevh->uuid = NULL;
-+	dmevh->dso = dmevh->dev_name = dmevh->uuid = NULL;
- 	dmevh->major = dmevh->minor = 0;
- 	dmevh->mask = 0;
- 
-@@ -72,16 +72,16 @@
- 	dmevh->dso = path;
- }
- 
--void dm_event_handler_set_devname(struct dm_event_handler *dmevh, const char *devname)
-+void dm_event_handler_set_dev_name(struct dm_event_handler *dmevh, const char *dev_name)
- {
--	dm_event_handler_clear_devname(dmevh);
-+	dm_event_handler_clear_dev_name(dmevh);
- 
--	dmevh->devname = devname;
-+	dmevh->dev_name = dev_name;
- }
- 
- void dm_event_handler_set_uuid(struct dm_event_handler *dmevh, const char *uuid)
- {
--	dm_event_handler_clear_devname(dmevh);
-+	dm_event_handler_clear_dev_name(dmevh);
- 
- 	dmevh->uuid = uuid;
- }
-@@ -90,7 +90,7 @@
- {
- 	int minor = dmevh->minor;
- 
--	dm_event_handler_clear_devname(dmevh);
-+	dm_event_handler_clear_dev_name(dmevh);
- 
- 	dmevh->major = major;
- 	dmevh->minor = minor;
-@@ -100,7 +100,7 @@
- {
- 	int major = dmevh->major;
- 
--	dm_event_handler_clear_devname(dmevh);
-+	dm_event_handler_clear_dev_name(dmevh);
- 
- 	dmevh->major = major;
- 	dmevh->minor = minor;
-@@ -117,9 +117,9 @@
- 	return dmevh->dso;
- }
- 
--const char *dm_event_handler_get_devname(const struct dm_event_handler *dmevh)
-+const char *dm_event_handler_get_dev_name(const struct dm_event_handler *dmevh)
- {
--	return dmevh->devname;
-+	return dmevh->dev_name;
- }
- 
- const char *dm_event_handler_get_uuid(const struct dm_event_handler *dmevh)
-@@ -256,11 +256,11 @@
- 
- static int _daemon_talk(struct dm_event_fifos *fifos,
- 			struct dm_event_daemon_message *msg, int cmd,
--			const char *dso_name, const char *devname,
-+			const char *dso_name, const char *dev_name,
- 			enum dm_event_mask evmask, uint32_t timeout)
- {
- 	const char *dso = dso_name ? dso_name : "";
--	const char *dev = devname ? devname : "";
-+	const char *dev = dev_name ? dev_name : "";
- 	const char *fmt = "%s %s %u %" PRIu32;
- 	memset(msg, 0, sizeof(*msg));
- 
-@@ -421,8 +421,8 @@
- 
- 	if (dmevh->uuid)
- 		dm_task_set_uuid(dmt, dmevh->uuid);
--	else if (dmevh->devname)
--		dm_task_set_name(dmt, dmevh->devname);
-+	else if (dmevh->dev_name)
-+		dm_task_set_name(dmt, dmevh->dev_name);
- 	else if (dmevh->major && dmevh->minor) {
- 		dm_task_set_major(dmt, dmevh->major);
- 		dm_task_set_minor(dmt, dmevh->minor);
-@@ -453,7 +453,7 @@
- 
- /* Handle the event (de)registration call and return negative error codes. */
- static int _do_event(int cmd, struct dm_event_daemon_message *msg,
--		    const char *dso_name, const char *devname,
-+		    const char *dso_name, const char *dev_name,
- 		    enum dm_event_mask evmask, uint32_t timeout)
- {
- 	int ret;
-@@ -464,7 +464,7 @@
- 		return -ESRCH;
- 	}
- 
--	ret = _daemon_talk(&fifos, msg, cmd, dso_name, devname, evmask, timeout);
-+	ret = _daemon_talk(&fifos, msg, cmd, dso_name, dev_name, evmask, timeout);
- 
- 	/* what is the opposite of init? */
- 	_dtr_client(&fifos);
-@@ -553,12 +553,12 @@
- 
- /* Parse a device message from the daemon. */
- static int _parse_message(struct dm_event_daemon_message *msg, char **dso_name,
--			 char **devname, enum dm_event_mask *evmask)
-+			 char **dev_name, enum dm_event_mask *evmask)
- {
- 	char *p = msg->data;
- 
- 	if ((*dso_name = _fetch_string(&p, ' ')) &&
--	    (*devname = _fetch_string(&p, ' '))) {
-+	    (*dev_name = _fetch_string(&p, ' '))) {
- 		*evmask = atoi(p);
- 
- 		return 0;
---- device-mapper/dmeventd/libdevmapper-event.h	2007/01/15 18:21:01	1.7
-+++ device-mapper/dmeventd/libdevmapper-event.h	2007/01/16 18:03:40	1.8
-@@ -59,9 +59,9 @@
- 
- /*
-  * Identify the device to monitor by exactly one of
-- * devname, uuid or device number.
-+ * dev_name, uuid or device number.
-  */
--void dm_event_handler_set_devname(struct dm_event_handler *dmevh, const char *devname);
-+void dm_event_handler_set_dev_name(struct dm_event_handler *dmevh, const char *dev_name);
- 
- void dm_event_handler_set_uuid(struct dm_event_handler *dmevh, const char *uuid);
- 
-@@ -75,7 +75,7 @@
- 				     enum dm_event_mask evmask);
- 
- const char *dm_event_handler_get_dso(const struct dm_event_handler *dmevh);
--const char *dm_event_handler_get_devname(const struct dm_event_handler *dmevh);
-+const char *dm_event_handler_get_dev_name(const struct dm_event_handler *dmevh);
- const char *dm_event_handler_get_uuid(const struct dm_event_handler *dmevh);
- int dm_event_handler_get_major(const struct dm_event_handler *dmevh);
- int dm_event_handler_get_minor(const struct dm_event_handler *dmevh);
-@@ -94,8 +94,8 @@
- /* Prototypes for DSO interface, see dmeventd.c, struct dso_data for
-    detailed descriptions. */
- void process_event(struct dm_task *dmt, enum dm_event_mask evmask);
--int register_device(const char *devname, const char *uuid, int major, int minor);
--int unregister_device(const char *devname, const char *uuid, int major,
-+int register_device(const char *dev_name, const char *uuid, int major, int minor);
-+int unregister_device(const char *dev_name, const char *uuid, int major,
- 		      int minor);
- 
- #endif
---- device-mapper/lib/.exported_symbols	2007/01/15 18:21:01	1.27
-+++ device-mapper/lib/.exported_symbols	2007/01/16 18:03:40	1.28
-@@ -116,3 +116,14 @@
- dm_snprintf
- dm_basename
- dm_asprintf
-+dm_report_init
-+dm_report_object
-+dm_report_output
-+dm_report_free
-+dm_report_get_private
-+dm_report_field_string
-+dm_report_field_int
-+dm_report_field_int32
-+dm_report_field_uint32
-+dm_report_field_uint64
-+dm_report_field_set_value
---- device-mapper/lib/Makefile.in	2007/01/11 16:23:22	1.30
-+++ device-mapper/lib/Makefile.in	2007/01/16 18:03:40	1.31
-@@ -24,6 +24,7 @@
- 	libdm-file.c \
- 	libdm-deptree.c \
- 	libdm-string.c \
-+	libdm-report.c \
- 	mm/dbg_malloc.c \
- 	mm/pool.c \
- 	$(interface)/libdm-iface.c
---- device-mapper/lib/libdevmapper.h	2007/01/15 18:21:01	1.63
-+++ device-mapper/lib/libdevmapper.h	2007/01/16 18:03:40	1.64
-@@ -124,10 +124,10 @@
- };
- 
- struct dm_versions {
--        uint32_t next;		/* Offset to next struct from start of this struct */
--        uint32_t version[3];
-+	uint32_t next;		/* Offset to next struct from start of this struct */
-+	uint32_t version[3];
- 
--        char name[0];
-+	char name[0];
- };
- 
- int dm_get_library_version(char *version, size_t size);
-@@ -236,12 +236,12 @@
-  * Add a new node to the tree if it doesn't already exist.
-  */
- struct dm_tree_node *dm_tree_add_new_dev(struct dm_tree *tree,
--                                            const char *name,
--                                            const char *uuid,
--                                            uint32_t major, uint32_t minor,
--                                            int read_only,
--                                            int clear_inactive,
--                                            void *context);
-+					 const char *name,
-+					 const char *uuid,
-+					 uint32_t major, uint32_t minor,
-+					 int read_only,
-+					 int clear_inactive,
-+					 void *context);
- 
- /*
-  * Search for a node in the tree.
-@@ -289,16 +289,16 @@
-  * Ignores devices that don't have a uuid starting with uuid_prefix.
-  */
- int dm_tree_preload_children(struct dm_tree_node *dnode,
--                                 const char *uuid_prefix,
--                                 size_t uuid_prefix_len);
-+			     const char *uuid_prefix,
-+			     size_t uuid_prefix_len);
- 
- /*
-  * Resume a device plus all dependencies.
-  * Ignores devices that don't have a uuid starting with uuid_prefix.
-  */
- int dm_tree_activate_children(struct dm_tree_node *dnode,
--                                 const char *uuid_prefix,
--                                 size_t uuid_prefix_len);
-+			      const char *uuid_prefix,
-+			      size_t uuid_prefix_len);
- 
- /*
-  * Suspend a device plus all dependencies.
-@@ -630,4 +630,81 @@
-  */
- int dm_asprintf(char **buf, const char *format, ...);
- 
-+/*********************
-+ * reporting functions
-+ *********************/
+/cvs/dm/device-mapper/lib/libdm-report.c,v  -->  standard output
+revision 1.1
+--- device-mapper/lib/libdm-report.c
++++ -	2007-01-16 18:04:16.524364000 +0000
+@@ -0,0 +1,811 @@
++/*
++ * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
++ * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
++ *
++ * This file is part of device-mapper userspace tools.
++ * The code is based on LVM2 report function.
++ *
++ * This copyrighted material is made available to anyone wishing to use,
++ * modify, copy, or redistribute it subject to the terms and conditions
++ * of the GNU General Public License v.2.
++ *
++ * You should have received a copy of the GNU General Public License
++ * along with this program; if not, write to the Free Software Foundation,
++ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ */
 +
-+struct dm_report_object_type {
-+	uint32_t id;			/* Powers of 2 */
-+	const char *desc;
-+	const char *prefix;		/* field id string prefix (optional) */
-+	void *(*data_fn)(void *object);	/* callback from report_object() */
-+};
-+
-+struct dm_report_field;
++#include "libdevmapper.h"
++#include "list.h"
++#include "log.h"
 +
 +/*
-+ * dm_report_field_type flags
++ * Internal flags
 + */
-+#define DM_REPORT_FIELD_MASK		0x0000000F
-+#define DM_REPORT_FIELD_ALIGN_LEFT	0x00000001
-+#define DM_REPORT_FIELD_ALIGN_RIGHT	0x00000002
-+#define DM_REPORT_FIELD_STRING		0x00000004
-+#define DM_REPORT_FIELD_NUMBER		0x00000008
++#define RH_SORT_REQUIRED	0x00000100
++#define RH_HEADINGS_PRINTED	0x00000200
 +
-+struct dm_report;
-+struct dm_report_field_type {
-+	uint32_t type;		/* object type id */
-+	const char id[32];	/* string used to specify the field */
-+	unsigned int offset;	/* byte offset in the object */
-+	const char heading[32];	/* string printed in header */
-+	int width;		/* default width */
-+	uint32_t flags;		/* DM_REPORT_FIELD_* */
-+	int (*report_fn)(struct dm_report *rh, struct dm_pool *mem,
-+			 struct dm_report_field *field, const void *data,
-+			 void *private);
++struct dm_report {
++	struct dm_pool *mem;
++
++	uint32_t report_types;
++	const char *field_prefix;
++	uint32_t flags;
++	const char *separator;
++
++	uint32_t keys_count;
++
++	/* Ordered list of fields needed for this report */
++	struct list field_props;
++
++	/* Rows of report data */
++	struct list rows;
++
++	/* Array of field definitions */
++	const struct dm_report_field_type *fields;
++	const struct dm_report_object_type *types;
++
++	/* To store caller private data */
++	void *private;
 +};
 +
 +/*
-+ * dm_report_init output_flags
++ * Internal per-field flags
 + */
-+#define DM_REPORT_OUTPUT_MASK		0x00000007
-+#define DM_REPORT_OUTPUT_ALIGNED	0x00000001
-+#define DM_REPORT_OUTPUT_BUFFERED	0x00000002
-+#define DM_REPORT_OUTPUT_HEADINGS	0x00000004
++#define FLD_HIDDEN	0x00000100
++#define FLD_SORT_KEY	0x00000200
++#define FLD_ASCENDING	0x00000400
++#define FLD_DESCENDING	0x00000800
++
++struct field_properties {
++	struct list list;
++	uint32_t field_num;
++	uint32_t sort_posn;
++	int width;
++	const struct dm_report_object_type *type;
++	uint32_t flags;
++};
++
++/*
++ * Report data field
++ */
++struct dm_report_field {
++	struct list list;
++	struct field_properties *props;
++
++	const char *report_string;	/* Formatted ready for display */
++	const void *sort_value;		/* Raw value for sorting */
++};
++
++struct row {
++	struct list list;
++	struct dm_report *rh;
++	struct list fields;			  /* Fields in display order */
++	struct dm_report_field *(*sort_fields)[]; /* Fields in sort order */
++};
++
++static const struct dm_report_object_type *_find_type(struct dm_report *rh,
++						      uint32_t report_type)
++{
++	const struct dm_report_object_type *t;
++
++	for (t = rh->types; t->data_fn; t++)
++		if (t->id == report_type)
++			return t;
++
++	return NULL;
++}
++
++/*
++ * Data-munging functions to prepare each data type for display and sorting
++ */
++
++int dm_report_field_string(struct dm_report *rh, struct dm_pool *mem,
++			   struct dm_report_field *field, const void *data)
++{
++	char *repstr;
++
++	if (!(repstr = dm_pool_strdup(rh->mem, *(const char **) data))) {
++		log_error("dm_report_field_string: dm_pool_strdup failed");
++		return 0;
++	}
++
++	field->report_string = repstr;
++	field->sort_value = (const void *) field->report_string;
++
++	return 1;
++}
++
++int dm_report_field_int(struct dm_report *rh, struct dm_pool *mem,
++			struct dm_report_field *field, const void *data)
++{
++	const int value = *(const int *) data;
++	uint64_t *sortval;
++	char *repstr;
++
++	if (!(repstr = dm_pool_zalloc(rh->mem, 13))) {
++		log_error("dm_report_field_int: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (!(sortval = dm_pool_alloc(rh->mem, sizeof(int64_t)))) {
++		log_error("dm_report_field_int: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (dm_snprintf(repstr, 12, "%d", value) < 0) {
++		log_error("dm_report_field_int: int too big: %d", value);
++		return 0;
++	}
++
++	*sortval = (const uint64_t) value;
++	field->sort_value = sortval;
++	field->report_string = repstr;
++
++	return 1;
++}
++
++int dm_report_field_uint32(struct dm_report *rh, struct dm_pool *mem,
++			   struct dm_report_field *field, const void *data)
++{
++	const uint32_t value = *(const uint32_t *) data;
++	uint64_t *sortval;
++	char *repstr;
++
++	if (!(repstr = dm_pool_zalloc(rh->mem, 12))) {
++		log_error("dm_report_field_uint32: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (!(sortval = dm_pool_alloc(rh->mem, sizeof(uint64_t)))) {
++		log_error("dm_report_field_uint32: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (dm_snprintf(repstr, 11, "%u", value) < 0) {
++		log_error("dm_report_field_uint32: uint32 too big: %u", value);
++		return 0;
++	}
++
++	*sortval = (const uint64_t) value;
++	field->sort_value = sortval;
++	field->report_string = repstr;
++
++	return 1;
++}
++
++int dm_report_field_int32(struct dm_report *rh, struct dm_pool *mem,
++			  struct dm_report_field *field, const void *data)
++{
++	const int32_t value = *(const int32_t *) data;
++	uint64_t *sortval;
++	char *repstr;
++
++	if (!(repstr = dm_pool_zalloc(rh->mem, 13))) {
++		log_error("dm_report_field_int32: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (!(sortval = dm_pool_alloc(rh->mem, sizeof(int64_t)))) {
++		log_error("dm_report_field_int32: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (dm_snprintf(repstr, 12, "%d", value) < 0) {
++		log_error("dm_report_field_int32: int32 too big: %d", value);
++		return 0;
++	}
++
++	*sortval = (const uint64_t) value;
++	field->sort_value = sortval;
++	field->report_string = repstr;
++
++	return 1;
++}
++
++int dm_report_field_uint64(struct dm_report *rh, struct dm_pool *mem,
++			   struct dm_report_field *field, const void *data)
++{
++	const int value = *(const uint64_t *) data;
++	uint64_t *sortval;
++	char *repstr;
++
++	if (!(repstr = dm_pool_zalloc(rh->mem, 22))) {
++		log_error("dm_report_field_uint64: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (!(sortval = dm_pool_alloc(rh->mem, sizeof(uint64_t)))) {
++		log_error("dm_report_field_uint64: dm_pool_alloc failed");
++		return 0;
++	}
++
++	if (dm_snprintf(repstr, 21, "%d", value) < 0) {
++		log_error("dm_report_field_uint64: uint64 too big: %d", value);
++		return 0;
++	}
++
++	*sortval = (const uint64_t) value;
++	field->sort_value = sortval;
++	field->report_string = repstr;
++
++	return 1;
++}
++
++/*
++ * Helper functions for custom report functions
++ */
++void dm_report_field_set_value(struct dm_report_field *field, const void *value, const void *sortvalue)
++{
++	field->report_string = (const char *) value;
++	field->sort_value = sortvalue ? : value;
++}
++
++/*
++ * show help message
++ */
++static void _display_fields(struct dm_report *rh)
++{
++	uint32_t f;
++	const struct dm_report_object_type *type;
++	const char *desc, *last_desc = "";
++
++	for (f = 0; rh->fields[f].report_fn; f++) {
++		if ((type = _find_type(rh, rh->fields[f].type)) && type->desc)
++			desc = type->desc;
++		else
++			desc = " ";
++		if (desc != last_desc) {
++			if (*last_desc)
++				log_print(" ");
++			log_print("%s Fields", desc);
++		}
++
++		log_print("- %s", rh->fields[f].id);
++		last_desc = desc;
++	}
++}
++
++/*
++ * Initialise report handle
++ */
++static int _copy_field(struct dm_report *rh, struct field_properties *dest,
++		       uint32_t field_num)
++{
++	dest->field_num = field_num;
++	dest->width = rh->fields[field_num].width;
++	dest->flags = rh->fields[field_num].flags & DM_REPORT_FIELD_MASK;
++
++	/* set object type method */
++	dest->type = _find_type(rh, rh->fields[field_num].type);
++	if (!dest->type) {
++		log_error("dm_report: field not match: %s",
++			  rh->fields[field_num].id);
++		return 0;
++	}
++
++	return 1;
++}
++
++static int _field_match(struct dm_report *rh, const char *field, size_t flen)
++{
++	uint32_t f, l;
++	struct field_properties *fp;
++
++	if (!flen)
++		return 0;
++
++	for (f = 0; rh->fields[f].report_fn; f++) {
++		if ((!strncasecmp(rh->fields[f].id, field, flen) &&
++		     strlen(rh->fields[f].id) == flen) ||
++		    (l = strlen(rh->field_prefix),
++		     !strncasecmp(rh->field_prefix, rh->fields[f].id, l) &&
++		     !strncasecmp(rh->fields[f].id + l, field, flen) &&
++		     strlen(rh->fields[f].id) == l + flen)) {
++			rh->report_types |= rh->fields[f].type;
++			if (!(fp = dm_pool_zalloc(rh->mem, sizeof(*fp)))) {
++				log_error("dm_report: "
++					  "struct field_properties allocation "
++					  "failed");
++				return 0;
++			}
++			if (!_copy_field(rh, fp, f))
++				return 0;
++
++			list_add(&rh->field_props, &fp->list);
++			return 1;
++		}
++	}
++
++	return 0;
++}
++
++static int _add_sort_key(struct dm_report *rh, uint32_t field_num,
++			 uint32_t flags)
++{
++	struct field_properties *fp, *found = NULL;
++
++	list_iterate_items(fp, &rh->field_props) {
++		if (fp->field_num == field_num) {
++			found = fp;
++			break;
++		}
++	}
++
++	if (!found) {
++		rh->report_types |= rh->fields[field_num].type;
++		if (!(found = dm_pool_zalloc(rh->mem, sizeof(*found)))) {
++			log_error("dm_report: "
++				  "struct field_properties allocation failed");
++			return 0;
++		}
++		if (!_copy_field(rh, found, field_num))
++			return 0;
++
++		/* Add as a non-display field */
++		found->flags |= FLD_HIDDEN;
++
++		list_add(&rh->field_props, &found->list);
++	}
++
++	if (found->flags & FLD_SORT_KEY) {
++		log_error("dm_report: Ignoring duplicate sort field: %s",
++			  rh->fields[field_num].id);
++		return 1;
++	}
++
++	found->flags |= FLD_SORT_KEY;
++	found->sort_posn = rh->keys_count++;
++	found->flags |= flags;
++
++	return 1;
++}
++
++static int _key_match(struct dm_report *rh, const char *key, size_t len)
++{
++	uint32_t f, l;
++	uint32_t flags;
++
++	if (!len)
++		return 0;
++
++	if (*key == '+') {
++		key++;
++		len--;
++		flags = FLD_ASCENDING;
++	} else if (*key == '-') {
++		key++;
++		len--;
++		flags = FLD_DESCENDING;
++	} else
++		flags = FLD_ASCENDING;
++
++	if (!len) {
++		log_error("dm_report: Missing sort field name");
++		return 0;
++	}
++
++	for (f = 0; rh->fields[f].report_fn; f++) {
++		if ((!strncasecmp(rh->fields[f].id, key, len) &&
++		     strlen(rh->fields[f].id) == len) ||
++		    (l = strlen(rh->field_prefix),
++		     !strncasecmp(rh->field_prefix, rh->fields[f].id, l) &&
++		     !strncasecmp(rh->fields[f].id + l, key, len) &&
++		     strlen(rh->fields[f].id) == l + len)) {
++			return _add_sort_key(rh, f, flags);
++		}
++	}
++
++	return 0;
++}
++
++static int _parse_options(struct dm_report *rh, const char *format)
++{
++	const char *ws;		/* Word start */
++	const char *we = format;	/* Word end */
++
++	while (*we) {
++		/* Allow consecutive commas */
++		while (*we && *we == ',')
++			we++;
++
++		/* start of the field name */
++		ws = we;
++		while (*we && *we != ',')
++			we++;
++
++		if (!_field_match(rh, ws, (size_t) (we - ws))) {
++			_display_fields(rh);
++			log_print(" ");
++			log_error("dm_report: Unrecognised field: %.*s",
++				  (int) (we - ws), ws);
++			return 0;
++		}
++	}
++
++	return 1;
++}
++
++static int _parse_keys(struct dm_report *rh, const char *keys)
++{
++	const char *ws;		/* Word start */
++	const char *we = keys;	/* Word end */
++
++	while (*we) {
++		/* Allow consecutive commas */
++		while (*we && *we == ',')
++			we++;
++		ws = we;
++		while (*we && *we != ',')
++			we++;
++		if (!_key_match(rh, ws, (size_t) (we - ws))) {
++			log_error("dm_report: Unrecognised field: %.*s",
++				  (int) (we - ws), ws);
++			return 0;
++		}
++	}
++
++	return 1;
++}
 +
 +struct dm_report *dm_report_init(uint32_t *report_types,
 +				 const struct dm_report_object_type *types,
@@ -385,31 +490,358 @@ http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?c
 +				 const char *output_separator,
 +				 uint32_t output_flags,
 +				 const char *sort_keys,
-+				 void *private);
-+int dm_report_object(struct dm_report *rh, void *object);
-+int dm_report_output(struct dm_report *rh);
-+void dm_report_free(struct dm_report *rh);
++				 void *private)
++{
++	struct dm_report *rh;
++	const struct dm_report_object_type *type;
 +
-+/* report functions for common types */
-+int dm_report_field_string(struct dm_report *rh, struct dm_pool *mem,
-+			   struct dm_report_field *field, const void *data);
-+int dm_report_field_int32(struct dm_report *rh, struct dm_pool *mem,
-+			  struct dm_report_field *field, const void *data);
-+int dm_report_field_uint32(struct dm_report *rh, struct dm_pool *mem,
-+			   struct dm_report_field *field, const void *data);
-+int dm_report_field_int(struct dm_report *rh, struct dm_pool *mem,
-+			struct dm_report_field *field, const void *data);
-+int dm_report_field_uint64(struct dm_report *rh, struct dm_pool *mem,
-+			struct dm_report_field *field, const void *data);
++	if (!(rh = dm_malloc(sizeof(*rh)))) {
++		log_error("dm_report_init: dm_malloc failed");
++		return 0;
++	}
++	memset(rh, 0, sizeof(*rh));
++
++	/*
++	 * rh->report_types is updated in _parse_options() and _parse_keys()
++	 * to contain all types corresponding to the fields specified by
++	 * options or keys.
++	 */
++	if (report_types)
++		rh->report_types = *report_types;
++
++	rh->separator = output_separator;
++	rh->fields = fields;
++	rh->types = types;
++	rh->private = private;
++
++	rh->flags |= output_flags & DM_REPORT_OUTPUT_MASK;
++
++	if (output_flags & DM_REPORT_OUTPUT_BUFFERED)
++		rh->flags |= RH_SORT_REQUIRED;
++
++	list_init(&rh->field_props);
++	list_init(&rh->rows);
++
++	if ((type = _find_type(rh, rh->report_types)) && type->prefix)
++		rh->field_prefix = type->prefix;
++	else
++		rh->field_prefix = "";
++
++	if (!(rh->mem = dm_pool_create("report", 10 * 1024))) {
++		log_error("dm_report_init: allocation of memory pool failed");
++		return NULL;
++	}
++
++	/* Generate list of fields for output based on format string & flags */
++	if (!_parse_options(rh, output_fields))
++		return NULL;
++
++	if (!_parse_keys(rh, sort_keys))
++		return NULL;
++
++	/* Return updated types value for further compatility check by caller */
++	if (report_types)
++		*report_types = rh->report_types;
++
++	return rh;
++}
++
++void dm_report_free(struct dm_report *rh)
++{
++	dm_pool_destroy(rh->mem);
++	dm_free(rh);
++}
 +
 +/*
-+ * Helper function for custom reporting functions
++ * Create a row of data for an object
 + */
++static void * _report_get_field_data(struct dm_report *rh,
++			      struct field_properties *fp, void *object)
++{
++	void *ret = fp->type->data_fn(object);
++
++	if (!ret)
++		return NULL;
++
++	return ret + rh->fields[fp->field_num].offset;
++}
++
++int dm_report_object(struct dm_report *rh, void *object)
++{
++	struct field_properties *fp;
++	struct row *row;
++	struct dm_report_field *field;
++	void *data = NULL;
++
++	if (!(row = dm_pool_zalloc(rh->mem, sizeof(*row)))) {
++		log_error("dm_report_object: struct row allocation failed");
++		return 0;
++	}
++
++	row->rh = rh;
++
++	if ((rh->flags & RH_SORT_REQUIRED) &&
++	    !(row->sort_fields =
++		dm_pool_zalloc(rh->mem, sizeof(struct dm_report_field *) *
++			       rh->keys_count))) {
++		log_error("dm_report_object: "
++			  "row sort value structure allocation failed");
++		return 0;
++	}
++
++	list_init(&row->fields);
++	list_add(&rh->rows, &row->list);
++
++	/* For each field to be displayed, call its report_fn */
++	list_iterate_items(fp, &rh->field_props) {
++		if (!(field = dm_pool_zalloc(rh->mem, sizeof(*field)))) {
++			log_error("dm_report_object: "
++				  "struct dm_report_field allocation failed");
++			return 0;
++		}
++		field->props = fp;
++
++		data = _report_get_field_data(rh, fp, object);
++		if (!data)
++			return 0;
++
++		if (!rh->fields[fp->field_num].report_fn(rh, rh->mem,
++							 field, data,
++							 rh->private)) {
++			log_error("dm_report_object: "
++				  "report function failed for field %s",
++				  rh->fields[fp->field_num].id);
++			return 0;
++		}
++
++		if ((strlen(field->report_string) > field->props->width))
++			field->props->width = strlen(field->report_string);
++
++		if ((rh->flags & RH_SORT_REQUIRED) &&
++		    (field->props->flags & FLD_SORT_KEY)) {
++			(*row->sort_fields)[field->props->sort_posn] = field;
++		}
++		list_add(&row->fields, &field->list);
++	}
++
++	if (!(rh->flags & DM_REPORT_OUTPUT_BUFFERED))
++		return dm_report_output(rh);
++
++	return 1;
++}
 +
 +/*
-+ * sortvalue may be NULL if it's the same as value
++ * Print row of headings
 + */
-+void dm_report_field_set_value(struct dm_report_field *field,
-+			       const void *value, const void *sortvalue);
++static int _report_headings(struct dm_report *rh)
++{
++	struct field_properties *fp;
++	const char *heading;
++	char buf[1024];
 +
- #endif				/* LIB_DEVICE_MAPPER_H */
++	if (rh->flags & RH_HEADINGS_PRINTED)
++		return 1;
++
++	rh->flags |= RH_HEADINGS_PRINTED;
++
++	if (!(rh->flags & DM_REPORT_OUTPUT_HEADINGS))
++		return 1;
++
++	if (!dm_pool_begin_object(rh->mem, 128)) {
++		log_error("dm_report: "
++			  "dm_pool_begin_object failed for headings");
++		return 0;
++	}
++
++	/* First heading line */
++	list_iterate_items(fp, &rh->field_props) {
++		if (fp->flags & FLD_HIDDEN)
++			continue;
++
++		heading = rh->fields[fp->field_num].heading;
++		if (rh->flags & DM_REPORT_OUTPUT_ALIGNED) {
++			if (dm_snprintf(buf, sizeof(buf), "%-*.*s",
++					 fp->width, fp->width, heading) < 0) {
++				log_error("dm_report: snprintf heading failed");
++				goto bad;
++			}
++			if (!dm_pool_grow_object(rh->mem, buf, fp->width)) {
++				log_error("dm_report: Failed to generate report headings for printing");
++				goto bad;
++			}
++		} else if (!dm_pool_grow_object(rh->mem, heading,
++						strlen(heading))) {
++			log_error("dm_report: Failed to generate report headings for printing");
++			goto bad;
++		}
++
++		if (!list_end(&rh->field_props, &fp->list))
++			if (!dm_pool_grow_object(rh->mem, rh->separator,
++					      strlen(rh->separator))) {
++				log_error("dm_report: Failed to generate report headings for printing");
++				goto bad;
++			}
++	}
++	if (!dm_pool_grow_object(rh->mem, "\0", 1)) {
++		log_error("dm_report: Failed to generate report headings for printing");
++		goto bad;
++	}
++	log_print("%s", (char *) dm_pool_end_object(rh->mem));
++
++	return 1;
++
++      bad:
++	dm_pool_abandon_object(rh->mem);
++	return 0;
++}
++
++/*
++ * Sort rows of data
++ */
++static int _row_compare(const void *a, const void *b)
++{
++	const struct row *rowa = *(const struct row **) a;
++	const struct row *rowb = *(const struct row **) b;
++	const struct dm_report_field *sfa, *sfb;
++	int32_t cnt = -1;
++
++	for (cnt = 0; cnt < rowa->rh->keys_count; cnt++) {
++		sfa = (*rowa->sort_fields)[cnt];
++		sfb = (*rowb->sort_fields)[cnt];
++		if (sfa->props->flags & DM_REPORT_FIELD_NUMBER) {
++			const uint64_t numa =
++			    *(const uint64_t *) sfa->sort_value;
++			const uint64_t numb =
++			    *(const uint64_t *) sfb->sort_value;
++
++			if (numa == numb)
++				continue;
++
++			if (sfa->props->flags & FLD_ASCENDING) {
++				return (numa > numb) ? 1 : -1;
++			} else {	/* FLD_DESCENDING */
++				return (numa < numb) ? 1 : -1;
++			}
++		} else {	/* DM_REPORT_FIELD_STRING */
++			const char *stra = (const char *) sfa->sort_value;
++			const char *strb = (const char *) sfb->sort_value;
++			int cmp = strcmp(stra, strb);
++
++			if (!cmp)
++				continue;
++
++			if (sfa->props->flags & FLD_ASCENDING) {
++				return (cmp > 0) ? 1 : -1;
++			} else {	/* FLD_DESCENDING */
++				return (cmp < 0) ? 1 : -1;
++			}
++		}
++	}
++
++	return 0;		/* Identical */
++}
++
++static int _sort_rows(struct dm_report *rh)
++{
++	struct row *(*rows)[];
++	uint32_t count = 0;
++	struct row *row;
++
++	if (!(rows = dm_pool_alloc(rh->mem, sizeof(**rows) *
++				list_size(&rh->rows)))) {
++		log_error("dm_report: sort array allocation failed");
++		return 0;
++	}
++
++	list_iterate_items(row, &rh->rows)
++		(*rows)[count++] = row;
++
++	qsort(rows, count, sizeof(**rows), _row_compare);
++
++	list_init(&rh->rows);
++	while (count--)
++		list_add_h(&rh->rows, &(*rows)[count]->list);
++
++	return 1;
++}
++
++/*
++ * Produce report output
++ */
++int dm_report_output(struct dm_report *rh)
++{
++	struct list *fh, *rowh, *ftmp, *rtmp;
++	struct row *row = NULL;
++	struct dm_report_field *field;
++	const char *repstr;
++	char buf[4096];
++	int width;
++
++	if (list_empty(&rh->rows))
++		return 1;
++
++	/* Sort rows */
++	if ((rh->flags & RH_SORT_REQUIRED))
++		_sort_rows(rh);
++
++	/* If headings not printed yet, calculate field widths and print them */
++	if (!(rh->flags & RH_HEADINGS_PRINTED))
++		_report_headings(rh);
++
++	/* Print and clear buffer */
++	list_iterate_safe(rowh, rtmp, &rh->rows) {
++		if (!dm_pool_begin_object(rh->mem, 512)) {
++			log_error("dm_report: "
++				  "dm_pool_begin_object failed for row");
++			return 0;
++		}
++		row = list_item(rowh, struct row);
++		list_iterate_safe(fh, ftmp, &row->fields) {
++			field = list_item(fh, struct dm_report_field);
++			if (field->props->flags & FLD_HIDDEN)
++				continue;
++
++			repstr = field->report_string;
++			width = field->props->width;
++			if (!(rh->flags & DM_REPORT_OUTPUT_ALIGNED)) {
++				if (!dm_pool_grow_object(rh->mem, repstr,
++						      strlen(repstr)))
++					goto bad_grow;
++			} else if (field->props->flags & DM_REPORT_FIELD_ALIGN_LEFT) {
++				if (dm_snprintf(buf, sizeof(buf), "%-*.*s",
++						 width, width, repstr) < 0)
++					goto bad_snprintf;
++				if (!dm_pool_grow_object(rh->mem, buf, width))
++					goto bad_grow;
++			} else if (field->props->flags & DM_REPORT_FIELD_ALIGN_RIGHT) {
++				if (dm_snprintf(buf, sizeof(buf), "%*.*s",
++						 width, width, repstr) < 0)
++					goto bad_snprintf;
++				if (!dm_pool_grow_object(rh->mem, buf, width))
++					goto bad_grow;
++			}
++
++			if (!list_end(&row->fields, fh))
++				if (!dm_pool_grow_object(rh->mem, rh->separator,
++						      strlen(rh->separator)))
++					goto bad_grow;
++			list_del(&field->list);
++		}
++		if (!dm_pool_grow_object(rh->mem, "\0", 1))
++			goto bad_grow;
++		log_print("%s", (char *) dm_pool_end_object(rh->mem));
++		list_del(&row->list);
++	}
++
++	if (row)
++		dm_pool_free(rh->mem, row);
++
++	return 1;
++
++      bad_snprintf:
++	log_error("dm_report: snprintf row failed");
++      bad_grow:
++	log_error("dm_report: Failed to generate row for printing");
++	dm_pool_abandon_object(rh->mem);
++	return 0;
++}
