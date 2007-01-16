@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper/dmeventd dmeventd.c
-Date: 16 Jan 2007 20:27:08 -0000
-Message-ID: <20070116202708.9667.qmail@sourceware.org>
+Subject: device-mapper dmeventd/dmeventd.c dmeventd/lib ...
+Date: 16 Jan 2007 21:13:08 -0000
+Message-ID: <20070116211308.10387.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,151 +18,103 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-16 20:27:08
+Changes by:	agk@sourceware.org	2007-01-16 21:13:08
 
 Modified files:
-	dmeventd       : dmeventd.c 
+	dmeventd       : dmeventd.c libdevmapper-event.c 
+	dmsetup        : dmsetup.c 
+	lib            : libdm-report.c 
 
 Log message:
-	clean up global mutex usage and fix a race in thread finalisation code
-	properly clean up thread status when thread terminates from within
+	more little fixes
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.36&r2=1.37
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.37&r2=1.38
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.16&r2=1.17
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.75&r2=1.76
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.1&r2=1.2
 
---- device-mapper/dmeventd/dmeventd.c	2007/01/16 20:13:04	1.36
-+++ device-mapper/dmeventd/dmeventd.c	2007/01/16 20:27:07	1.37
-@@ -59,14 +59,21 @@
- 
- #define DAEMON_NAME "dmeventd"
- 
--/* Global mutex for list accesses. */
-+/*
-+  Global mutex for thread list access. Has to be held when: 
-+  - iterating thread list
-+  - adding or removing elements from thread list
-+  - changing or reading thread_status's fields:
-+    processing, status, events
-+  Use _lock_mutex() and _unlock_mutex() to hold/release it
-+*/
- static pthread_mutex_t _global_mutex;
- 
- #define DM_THREAD_RUNNING  0
- #define DM_THREAD_SHUTDOWN 1
- #define DM_THREAD_DONE     2
- 
--#define THREAD_STACK_SIZE 300*1024
-+#define THREAD_STACK_SIZE (300*1024)
- 
- /* Data kept about a DSO. */
- struct dso_data {
-@@ -220,6 +227,9 @@
+--- device-mapper/dmeventd/dmeventd.c	2007/01/16 20:27:07	1.37
++++ device-mapper/dmeventd/dmeventd.c	2007/01/16 21:13:07	1.38
+@@ -246,7 +246,7 @@
+  */
+ /* FIXME? move to libdevmapper to share with the client lib (need to
+    make delimiter a parameter then) */
+-static int _fetch_string(char **ptr, char **src, const char delimiter)
++static int _fetch_string(char **ptr, char **src, const int delimiter)
  {
- 	pthread_attr_t attr;
- 	pthread_attr_init(&attr);
-+	/*
-+	 * We use a smaller stack since it gets preallocated in its entirety
-+	 */
- 	pthread_attr_setstacksize(&attr, THREAD_STACK_SIZE);
- 	return pthread_create(t, &attr, fun, arg);
- }
-@@ -318,7 +328,8 @@
- 	return ret;
+ 	int ret = 0;
+ 	char *p;
+--- device-mapper/dmeventd/libdevmapper-event.c	2007/01/16 18:03:40	1.16
++++ device-mapper/dmeventd/libdevmapper-event.c	2007/01/16 21:13:07	1.17
+@@ -262,6 +262,7 @@
+ 	const char *dso = dso_name ? dso_name : "";
+ 	const char *dev = dev_name ? dev_name : "";
+ 	const char *fmt = "%s %s %u %" PRIu32;
++	int msg_size;
+ 	memset(msg, 0, sizeof(*msg));
+ 
+ 	/*
+@@ -269,10 +270,12 @@
+ 	 * into ASCII message string.
+ 	 */
+ 	msg->cmd = cmd;
+-	if ((msg->size = dm_asprintf(&(msg->data), fmt, dso, dev, evmask,
++	if ((msg_size = dm_asprintf(&(msg->data), fmt, dso, dev, evmask,
+ 				     timeout)) < 0) {
+ 		log_error("_daemon_talk: message allocation failed");
++		return -ENOMEM;
+ 	}
++	msg->size = msg_size;
+ 
+ 	/*
+ 	 * Write command and message to and
+@@ -535,7 +538,7 @@
+ 
+ /* Fetch a string off src and duplicate it into *dest. */
+ /* FIXME: move to separate module to share with the daemon. */
+-static char *_fetch_string(char **src, const char delimiter)
++static char *_fetch_string(char **src, const int delimiter)
+ {
+ 	char *p, *ret;
+ 
+--- device-mapper/dmsetup/dmsetup.c	2007/01/15 22:05:50	1.75
++++ device-mapper/dmsetup/dmsetup.c	2007/01/16 21:13:07	1.76
+@@ -1673,7 +1673,7 @@
+ 	char *buf;
+ 	char *device;
+ 
+-	if (!(buf = dm_malloc(PATH_MAX)));
++	if (!(buf = dm_malloc(PATH_MAX)))
+ 		return NULL;
+ 
+ 	if (dev[0] == '/') {
+--- device-mapper/lib/libdm-report.c	2007/01/16 18:04:15	1.1
++++ device-mapper/lib/libdm-report.c	2007/01/16 21:13:07	1.2
+@@ -60,7 +60,7 @@
+ 	struct list list;
+ 	uint32_t field_num;
+ 	uint32_t sort_posn;
+-	int width;
++	unsigned width;
+ 	const struct dm_report_object_type *type;
+ 	uint32_t flags;
  };
+@@ -667,7 +667,7 @@
+ 	const struct row *rowa = *(const struct row **) a;
+ 	const struct row *rowb = *(const struct row **) b;
+ 	const struct dm_report_field *sfa, *sfb;
+-	int32_t cnt = -1;
++	uint32_t cnt;
  
--/* Global mutex to lock access to lists et al. */
-+/* Global mutex to lock access to lists et al. See _global_mutex
-+   above. */
- static int _lock_mutex(void)
- {
- 	return pthread_mutex_lock(&_global_mutex);
-@@ -612,7 +623,7 @@
- /* Thread cleanup handler to unregister device. */
- static void _monitor_unregister(void *arg)
- {
--	struct thread_status *thread = arg;
-+	struct thread_status *thread = arg, *thread_iter;
+ 	for (cnt = 0; cnt < rowa->rh->keys_count; cnt++) {
+ 		sfa = (*rowa->sort_fields)[cnt];
+@@ -739,7 +739,7 @@
+ 	struct dm_report_field *field;
+ 	const char *repstr;
+ 	char buf[4096];
+-	int width;
++	unsigned width;
  
- 	if (!_do_unregister_device(thread))
- 		syslog(LOG_ERR, "%s: %s unregister failed\n", __func__,
-@@ -620,6 +631,28 @@
- 	if (thread->current_task)
- 		dm_task_destroy(thread->current_task);
- 	thread->current_task = NULL;
-+
-+	_lock_mutex();
-+	if (thread->events & DM_EVENT_TIMEOUT) {
-+		/* _unregister_for_timeout locks another mutex, we
-+		   don't want to deadlock so we release our mutex for
-+		   a bit */
-+		_unlock_mutex();
-+		_unregister_for_timeout(thread);
-+		_lock_mutex();
-+	}
-+	/* we may have been relinked to unused registry since we were
-+	   called, so check that */
-+	list_iterate_items(thread_iter, &_thread_registry_unused)
-+		if (thread_iter == thread) {
-+			thread->status = DM_THREAD_DONE;
-+			_unlock_mutex();
-+			return;
-+		}
-+	thread->status = DM_THREAD_DONE;
-+	UNLINK_THREAD(thread);
-+	LINK(thread, &_thread_registry_unused);
-+	_unlock_mutex();
- }
- 
- /* Device monitoring thread. */
-@@ -686,10 +719,6 @@
- 		}
- 	}
- 
--	_lock_mutex();
--	thread->status = DM_THREAD_DONE;
--	_unlock_mutex();
--
- 	pthread_cleanup_pop(1);
- 
- 	return NULL;
-@@ -711,7 +740,7 @@
- 	return pthread_kill(thread->thread, SIGALRM);
- }
- 
--/* DSO reference counting. */
-+/* DSO reference counting. Call with _global_mutex locked! */
- static void _lib_get(struct dso_data *data)
- {
- 	data->ref_count++;
-@@ -731,8 +760,6 @@
- {
- 	struct dso_data *dso_data, *ret = NULL;
- 
--	_lock_mutex();
--
- 	list_iterate_items(dso_data, &_dso_registry)
- 	    if (!strcmp(data->dso_name, dso_data->dso_name)) {
- 		_lib_get(dso_data);
-@@ -740,8 +767,6 @@
- 		break;
- 	}
- 
--	_unlock_mutex();
--
- 	return ret;
- }
- 
-@@ -922,6 +947,13 @@
- 		goto out;
- 	}
- 
-+	if (thread->status == DM_THREAD_DONE) {
-+		/* the thread has terminated while we were not
-+		   watching */
-+		_unlock_mutex();
-+		return 0;
-+	}
-+
- 	thread->events &= ~message_data->events.field;
- 
- 	if (!(thread->events & DM_EVENT_TIMEOUT))
+ 	if (list_empty(&rh->rows))
+ 		return 1;
