@@ -1,15 +1,9 @@
-From: "Amit K. Arora" <aarora@linux.vnet.ibm.com>
-Subject: Re: multipath's "-l" option behaves differently from
-	"-ll" - for blacklisted devices
-Date: Fri, 19 Jan 2007 14:04:11 +0530
-Message-ID: <20070119083411.GA28912@amitarora.in.ibm.com>
-References: <20070119082636.GA28714@amitarora.in.ibm.com>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW ./configure ./config ...
+Date: 19 Jan 2007 15:53:02 -0000
+Message-ID: <20070119155302.27598.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20070119082636.GA28714@amitarora.in.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,71 +13,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: shenlinf@cn.ibm.com, christophe.varoqui@free.fr, aarora@in.ibm.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Can someone please comment on this behavior ? Please let me know if the
-question is not clear and I need to rephrase it in different words.
-Thanks!
---
-Regards,
-Amit Arora
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-01-19 15:53:01
 
-> Hello,
-> 
-> A little bit of background first...
-> 
-> If we have blacklisted devices in /etc/multipath.conf, "multipath -l"
-> output looks like this (please note "#"s below) :
-> # multipath -l
-> mpath2 () dm-4 ,
-> [size=15G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=0][active]
->  \_ #:#:#:# -   #:#   [active][undef]
->  \_ #:#:#:# -   #:#   [active][undef]
-> mpath1 () dm-1 ,
-> [size=15G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=0][active]
->  \_ #:#:#:# -   #:#   [active][undef]
->  \_ #:#:#:# -   #:#   [active][undef]
-> mpath3 () dm-7 ,
-> [size=15G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=0][active]
->  \_ #:#:#:# -   #:#   [active][undef]
->  \_ #:#:#:# -   #:#   [active][undef]
-> 
-> 
-> And, for these blacklisted devices, "multipath -ll" gives full output
-> (i.e. no "#"s in the result) :
-> # multipath -ll
-> mpath2 () dm-4 IBM,1724-100  FAStT
-> [size=15G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=2][active]
->  \_ 1:0:0:2 sdd 8:48  [active][ready]
->  \_ 1:0:1:2 sdh 8:112 [active][ready]
-> mpath1 () dm-1 IBM,1724-100  FAStT
-> [size=15G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=2][active]
->  \_ 1:0:0:1 sdc 8:32  [active][ready]
->  \_ 1:0:1:1 sdg 8:96  [active][ready]
-> mpath3 () dm-7 IBM,1724-100  FAStT
-> [size=15G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=2][active]
->  \_ 1:0:0:3 sde 8:64  [active][ready]
->  \_ 1:0:1:3 sdi 8:128 [active][ready]
-> 
-> >From the source code we can see that in both cases (-l and -ll),
-> path_discovery() and get_dm_mpvec() get called. The only difference is
-> that -ll will result in a call to update_paths() in get_dm_mpvec(),
-> after multipath maps have been disassembled/discovered.
-> 
-> The question is that, is this behavior intended, a bug or a "feature" as
-> a result of the design of the tool ? And, does it make sense to keep the
-> behavior identical for -l and -ll options (of multipath tool) incase of
-> blacklisted devices ?
-> 
-> Thanks!
-> --
-> Regards,
-> Amit Arora
+Modified files:
+	.              : WHATS_NEW configure configure.in 
+	include        : configure.h.in 
+Added files:
+	lib            : libdm-common.h 
+Removed files:
+	lib            : libdm-common.h.in 
+
+Log message:
+	Add DM_LIB_VERSION definition to configure.h.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.153&r2=1.154
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/configure.diff?cvsroot=dm&r1=1.40&r2=1.41
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/configure.in.diff?cvsroot=dm&r1=1.42&r2=1.43
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/include/configure.h.in.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-common.h.diff?cvsroot=dm&r1=1.2&r2=1.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-common.h.in.diff?cvsroot=dm&r1=1.13&r2=NONE
+
+--- device-mapper/WHATS_NEW	2007/01/18 22:15:04	1.153
++++ device-mapper/WHATS_NEW	2007/01/19 15:53:00	1.154
+@@ -1,5 +1,6 @@
+ Version 1.02.16 -
+ ===================================
++  Add DM_LIB_VERSION definition to configure.h.
+   Suppress 'Unrecognised field' error if report field is 'help'.
+   Add --separator and --sort to dmsetup (unused).
+   Make alignment flag optional when specifying report fields.
+--- device-mapper/configure	2007/01/15 19:06:59	1.40
++++ device-mapper/configure	2007/01/19 15:53:00	1.41
+@@ -6038,6 +6038,11 @@
+ fi
+ 
+ 
++cat >>confdefs.h <<_ACEOF
++#define DM_LIB_VERSION $DM_LIB_VERSION
++_ACEOF
++
++
+ ################################################################################
+ 
+ 
+@@ -6115,7 +6120,7 @@
+ 
+ 
+ ################################################################################
+-                                                                                                                        ac_config_files="$ac_config_files Makefile make.tmpl include/Makefile dmsetup/Makefile lib/Makefile lib/libdevmapper.pc lib/libdm-common.h dmeventd/Makefile dmeventd/libdevmapper-event.pc kernel/Makefile man/Makefile po/Makefile"
++                                                                                                              ac_config_files="$ac_config_files Makefile make.tmpl include/Makefile dmsetup/Makefile lib/Makefile lib/libdevmapper.pc dmeventd/Makefile dmeventd/libdevmapper-event.pc kernel/Makefile man/Makefile po/Makefile"
+ cat >confcache <<\_ACEOF
+ # This file is a shell script that caches the results of configure
+ # tests run on this system so they can be shared between configure
+@@ -6647,7 +6652,6 @@
+   "dmsetup/Makefile" ) CONFIG_FILES="$CONFIG_FILES dmsetup/Makefile" ;;
+   "lib/Makefile" ) CONFIG_FILES="$CONFIG_FILES lib/Makefile" ;;
+   "lib/libdevmapper.pc" ) CONFIG_FILES="$CONFIG_FILES lib/libdevmapper.pc" ;;
+-  "lib/libdm-common.h" ) CONFIG_FILES="$CONFIG_FILES lib/libdm-common.h" ;;
+   "dmeventd/Makefile" ) CONFIG_FILES="$CONFIG_FILES dmeventd/Makefile" ;;
+   "dmeventd/libdevmapper-event.pc" ) CONFIG_FILES="$CONFIG_FILES dmeventd/libdevmapper-event.pc" ;;
+   "kernel/Makefile" ) CONFIG_FILES="$CONFIG_FILES kernel/Makefile" ;;
+--- device-mapper/configure.in	2007/01/15 19:06:59	1.42
++++ device-mapper/configure.in	2007/01/19 15:53:01	1.43
+@@ -357,6 +357,7 @@
+   DM_LIB_VERSION="Unknown version ($interface)"
+ fi
+ 
++AC_DEFINE_UNQUOTED(DM_LIB_VERSION, $DM_LIB_VERSION, [Library version])
+ 
+ ################################################################################
+ dnl -- dmeventd pidfile and executable path
+@@ -423,7 +424,6 @@
+ dmsetup/Makefile							\
+ lib/Makefile							 	\
+ lib/libdevmapper.pc							\
+-lib/libdm-common.h						 	\
+ dmeventd/Makefile						 	\
+ dmeventd/libdevmapper-event.pc						\
+ kernel/Makefile								\
+--- device-mapper/include/configure.h.in	2007/01/15 19:06:59	1.4
++++ device-mapper/include/configure.h.in	2007/01/19 15:53:01	1.5
+@@ -9,6 +9,9 @@
+ /* Path to dmeventd pidfile. */
+ #undef DMEVENTD_PIDFILE
+ 
++/* Library version */
++#undef DM_LIB_VERSION
++
+ /* Define to 1 if canonicalize_file_name is available. */
+ #undef HAVE_CANONICALIZE_FILE_NAME
+ 
+@@ -174,11 +177,9 @@
+ /* Define to empty if `const' does not conform to ANSI C. */
+ #undef const
+ 
+-/* Define to `__inline__' or `__inline' if that's what the C compiler
+-   calls it, or to nothing if 'inline' is not supported under any name.  */
+-#ifndef __cplusplus
++/* Define as `__inline' if that's what the C compiler calls it, or to nothing
++   if it is not supported. */
+ #undef inline
+-#endif
+ 
+ /* Define to rpl_malloc if the replacement function should be used. */
+ #undef malloc
+--- device-mapper/lib/libdm-common.h	2002/01/17 14:13:25	1.2
++++ device-mapper/lib/libdm-common.h	2007/01/19 15:53:01	1.3
+@@ -1,16 +1,31 @@
+ /*
+- * Copyright (C) 2001 Sistina Software (UK) Limited.
++ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
++ * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.
+  *
+- * This file is released under the LGPL.
++ * This file is part of the device-mapper userspace tools.
++ *
++ * This copyrighted material is made available to anyone wishing to use,
++ * modify, copy, or redistribute it subject to the terms and conditions
++ * of the GNU Lesser General Public License v.2.1.
++ *
++ * You should have received a copy of the GNU Lesser General Public License
++ * along with this program; if not, write to the Free Software Foundation,
++ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+-extern dm_log_fn _log;
+-#define log(msg, x...) _log(1, __FILE__, __LINE__, msg, ## x)
++#ifndef LIB_DMCOMMON_H
++#define LIB_DMCOMMON_H
++
++#include "libdevmapper.h"
+ 
+-extern struct target *create_target(uint64_t start,
+-                                     uint64_t len,
+-                                     const char *type, const char *params);
++struct target *create_target(uint64_t start,
++			     uint64_t len,
++			     const char *type, const char *params);
+ 
+-int add_dev_node(const char *dev_name, dev_t dev);
++int add_dev_node(const char *dev_name, uint32_t minor, uint32_t major,
++		 uid_t uid, gid_t gid, mode_t mode);
+ int rm_dev_node(const char *dev_name);
++int rename_dev_node(const char *old_name, const char *new_name);
++void update_devs(void);
+ 
++#endif
