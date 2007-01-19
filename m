@@ -1,9 +1,15 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdm-report.c
-Date: 18 Jan 2007 22:15:04 -0000
-Message-ID: <20070118221504.32628.qmail@sourceware.org>
+From: "Amit K. Arora" <aarora@linux.vnet.ibm.com>
+Subject: Re: multipath's "-l" option behaves differently from
+	"-ll" - for blacklisted devices
+Date: Fri, 19 Jan 2007 14:04:11 +0530
+Message-ID: <20070119083411.GA28912@amitarora.in.ibm.com>
+References: <20070119082636.GA28714@amitarora.in.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20070119082636.GA28714@amitarora.in.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,44 +19,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: shenlinf@cn.ibm.com, christophe.varoqui@free.fr, aarora@in.ibm.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-18 22:15:04
+Can someone please comment on this behavior ? Please let me know if the
+question is not clear and I need to rephrase it in different words.
+Thanks!
+--
+Regards,
+Amit Arora
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdm-report.c 
-
-Log message:
-	Suppress 'Unrecognised field' error if report field is 'help'.
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.152&r2=1.153
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.4&r2=1.5
-
---- device-mapper/WHATS_NEW	2007/01/18 17:47:56	1.152
-+++ device-mapper/WHATS_NEW	2007/01/18 22:15:04	1.153
-@@ -1,5 +1,6 @@
- Version 1.02.16 -
- ===================================
-+  Suppress 'Unrecognised field' error if report field is 'help'.
-   Add --separator and --sort to dmsetup (unused).
-   Make alignment flag optional when specifying report fields.
- 
---- device-mapper/lib/libdm-report.c	2007/01/18 21:59:02	1.4
-+++ device-mapper/lib/libdm-report.c	2007/01/18 22:15:04	1.5
-@@ -416,8 +416,9 @@
- 		if (!_field_match(rh, ws, (size_t) (we - ws))) {
- 			_display_fields(rh);
- 			log_print(" ");
--			log_error("dm_report: Unrecognised field: %.*s",
--				  (int) (we - ws), ws);
-+			if (strcasecmp(ws, "help") && strcmp(ws, "?"))
-+				log_error("Unrecognised field: %.*s",
-+					  (int) (we - ws), ws);
- 			return 0;
- 		}
- 	}
+> Hello,
+> 
+> A little bit of background first...
+> 
+> If we have blacklisted devices in /etc/multipath.conf, "multipath -l"
+> output looks like this (please note "#"s below) :
+> # multipath -l
+> mpath2 () dm-4 ,
+> [size=15G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=0][active]
+>  \_ #:#:#:# -   #:#   [active][undef]
+>  \_ #:#:#:# -   #:#   [active][undef]
+> mpath1 () dm-1 ,
+> [size=15G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=0][active]
+>  \_ #:#:#:# -   #:#   [active][undef]
+>  \_ #:#:#:# -   #:#   [active][undef]
+> mpath3 () dm-7 ,
+> [size=15G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=0][active]
+>  \_ #:#:#:# -   #:#   [active][undef]
+>  \_ #:#:#:# -   #:#   [active][undef]
+> 
+> 
+> And, for these blacklisted devices, "multipath -ll" gives full output
+> (i.e. no "#"s in the result) :
+> # multipath -ll
+> mpath2 () dm-4 IBM,1724-100  FAStT
+> [size=15G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=2][active]
+>  \_ 1:0:0:2 sdd 8:48  [active][ready]
+>  \_ 1:0:1:2 sdh 8:112 [active][ready]
+> mpath1 () dm-1 IBM,1724-100  FAStT
+> [size=15G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=2][active]
+>  \_ 1:0:0:1 sdc 8:32  [active][ready]
+>  \_ 1:0:1:1 sdg 8:96  [active][ready]
+> mpath3 () dm-7 IBM,1724-100  FAStT
+> [size=15G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=2][active]
+>  \_ 1:0:0:3 sde 8:64  [active][ready]
+>  \_ 1:0:1:3 sdi 8:128 [active][ready]
+> 
+> >From the source code we can see that in both cases (-l and -ll),
+> path_discovery() and get_dm_mpvec() get called. The only difference is
+> that -ll will result in a call to update_paths() in get_dm_mpvec(),
+> after multipath maps have been disassembled/discovered.
+> 
+> The question is that, is this behavior intended, a bug or a "feature" as
+> a result of the design of the tool ? And, does it make sense to keep the
+> behavior identical for -l and -ll options (of multipath tool) incase of
+> blacklisted devices ?
+> 
+> Thanks!
+> --
+> Regards,
+> Amit Arora
