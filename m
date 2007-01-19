@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper/dmeventd dmeventd.c
-Date: 19 Jan 2007 18:08:37 -0000
-Message-ID: <20070119180837.25196.qmail@sourceware.org>
+Subject: device-mapper/dmeventd libdevmapper-event.h
+Date: 19 Jan 2007 20:42:10 -0000
+Message-ID: <20070119204210.6294.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,42 +18,48 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-19 18:08:37
+Changes by:	agk@sourceware.org	2007-01-19 20:42:09
 
 Modified files:
-	dmeventd       : dmeventd.c 
+	dmeventd       : libdevmapper-event.h 
 
 Log message:
-	fix exit status; always print message on child failure
+	var dev_name->device_name (lvm2 has dev_name())
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.41&r2=1.42
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.h.diff?cvsroot=dm&r1=1.10&r2=1.11
 
---- device-mapper/dmeventd/dmeventd.c	2007/01/19 17:22:17	1.41
-+++ device-mapper/dmeventd/dmeventd.c	2007/01/19 18:08:36	1.42
-@@ -1558,22 +1558,19 @@
- 		/* Problem with child.  Determine what it is by exit code */
- 		switch (WEXITSTATUS(child_status)) {
- 		case EXIT_LOCKFILE_INUSE:
-+			fprintf(stderr, "Another dmeventd daemon is already running\n");
- 			break;
- 		case EXIT_DESC_CLOSE_FAILURE:
--			break;
- 		case EXIT_DESC_OPEN_FAILURE:
--			break;
- 		case EXIT_OPEN_PID_FAILURE:
--			break;
- 		case EXIT_FIFO_FAILURE:
--			break;
- 		case EXIT_CHDIR_FAILURE:
--			break;
- 		default:
-+			fprintf(stderr, "Child exited with code %d\n", WEXITSTATUS(child_status));
- 			break;
- 		}
+--- device-mapper/dmeventd/libdevmapper-event.h	2007/01/17 14:45:10	1.10
++++ device-mapper/dmeventd/libdevmapper-event.h	2007/01/19 20:42:09	1.11
+@@ -55,17 +55,17 @@
+ /*
+  * Path of shared library to handle events.
+  *
+- * All of dso, dev_name and uuid strings are duplicated, you do not
++ * All of dso, device_name and uuid strings are duplicated, you do not
+  * need to keep the pointers valid after the call succeeds. Thes may
+  * return -ENOMEM though.
+  */
+ int dm_event_handler_set_dso(struct dm_event_handler *dmevh, const char *path);
  
--		exit(child_status);
-+		exit(WEXITSTATUS(child_status));
- 	}
+ /*
+- * Identify the device to monitor by exactly one of dev_name, uuid or
++ * Identify the device to monitor by exactly one of device_name, uuid or
+  * device number. String arguments are duplicated, see above.
+  */
+-int dm_event_handler_set_dev_name(struct dm_event_handler *dmevh, const char *dev_name);
++int dm_event_handler_set_dev_name(struct dm_event_handler *dmevh, const char *device_name);
  
- 	if (chdir("/"))
+ int dm_event_handler_set_uuid(struct dm_event_handler *dmevh, const char *uuid);
+ 
+@@ -97,8 +97,8 @@
+ /* Prototypes for DSO interface, see dmeventd.c, struct dso_data for
+    detailed descriptions. */
+ void process_event(struct dm_task *dmt, enum dm_event_mask evmask);
+-int register_device(const char *dev_name, const char *uuid, int major, int minor);
+-int unregister_device(const char *dev_name, const char *uuid, int major,
++int register_device(const char *device_name, const char *uuid, int major, int minor);
++int unregister_device(const char *device_name, const char *uuid, int major,
+ 		      int minor);
+ 
+ #endif
