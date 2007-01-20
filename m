@@ -1,11 +1,12 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH 2.6.20-rc5] dm-multipath: fix stall on noflush
-	suspend/resume
-Date: Fri, 19 Jan 2007 19:47:27 -0500
-Message-ID: <45B1669F.90102@ce.jp.nec.com>
+From: devzero@web.de
+Subject: Re: Re: device mapper integrated loops - and one more
+	year !
+Date: Sat, 20 Jan 2007 15:57:23 +0100
+Message-ID: <1572893983@web.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------080906070406080902050500"
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,121 +17,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, Andrew Morton <akpm@osdl.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: breeves@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------080906070406080902050500
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-
-Allow noflush suspend/resume of device-mapper device only for
-the case where the device size is unchanged.
-
-Otherwise, dm-multipath devices can stall when resumed if noflush
-was used when suspending them, all paths have failed and
-queue_if_no_path is set.
-
-Explanation:
- 1. Something is doing fsync() on the block dev,
-    holding inode->i_sem
- 2. The fsync write is blocked by all-paths-down and queue_if_no_path
- 3. Someone requests to suspend the dm device with noflush.
-    Pending writes are left in queue.
- 4. In the middle of dm_resume(), __bind() tries to get
-    inode->i_sem to do __set_size() and waits forever.
-
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-
----
-'noflush suspend' is a new device-mapper feature introduced in
-early 2.6.20. So I hope the fix being included before 2.6.20 is
-released.
-
-Example of reproducer:
- 1. Create a multipath device by dmsetup
- 2. Fail all paths during mkfs
- 3. Do dmsetup suspend --noflush and load new map with healthy paths
- 4. Do dmsetup resume
+Hello Bryn,=20
 
 
- drivers/md/dm.c |   27 +++++++++++++++++++--------
- 1 file changed, 19 insertions(+), 8 deletions(-)
+>I'll see if we can get a revised version of the current patch for wider
+>testing in the next couple of weeks - let me know if you would be
+>interested in trying this out.
+
+not sure if i sent a reply to this or have missed this -  but, yes - i`m =
+still interested very much in using dm-loop !
+
+is there anything new with this?
+do i have to expect issues with files >2gb ? (i need to loopback mount dv=
+d iso-images)
+
+is there a download url for the latest dm-loop patch so i can do some tes=
+ts and report feedback ?
+
+i couldn`t find it at http://sources.redhat.com/cgi-bin/cvsweb.cgi/device=
+-mapper/?cvsroot=3Ddm  and i`m not sure if i should take that one from ht=
+tp://kernel.org/pub/linux/kernel/people/agk/patches/2.6/
+
+TIA
+roland
 
 
---------------080906070406080902050500
-Content-Type: text/x-patch;
- name="dm-noflush-fix-stall-on-resume.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm-noflush-fix-stall-on-resume.patch"
 
-Index: linux-2.6.19/drivers/md/dm.c
-===================================================================
---- linux-2.6.19.orig/drivers/md/dm.c	2006-12-12 22:02:29.000000000 +0000
-+++ linux-2.6.19/drivers/md/dm.c	2007-01-05 15:15:53.000000000 +0000
-@@ -1116,7 +1116,8 @@ static int __bind(struct mapped_device *
- 	if (size != get_capacity(md->disk))
- 		memset(&md->geometry, 0, sizeof(md->geometry));
- 
--	__set_size(md, size);
-+	if (md->suspended_bdev)
-+		__set_size(md, size);
- 	if (size == 0)
- 		return 0;
- 
-@@ -1265,6 +1266,11 @@ int dm_swap_table(struct mapped_device *
- 	if (!dm_suspended(md))
- 		goto out;
- 
-+	/* without bdev, the device size cannot be changed */
-+	if (!md->suspended_bdev)
-+		if (get_capacity(md->disk) != dm_table_get_size(table))
-+			goto out;
-+
- 	__unbind(md);
- 	r = __bind(md, table);
- 
-@@ -1342,11 +1348,14 @@ int dm_suspend(struct mapped_device *md,
- 	/* This does not get reverted if there's an error later. */
- 	dm_table_presuspend_targets(map);
- 
--	md->suspended_bdev = bdget_disk(md->disk, 0);
--	if (!md->suspended_bdev) {
--		DMWARN("bdget failed in dm_suspend");
--		r = -ENOMEM;
--		goto flush_and_out;
-+	/* bdget() can stall if the pending I/Os are not flushed */
-+	if (!noflush) {
-+		md->suspended_bdev = bdget_disk(md->disk, 0);
-+		if (!md->suspended_bdev) {
-+			DMWARN("bdget failed in dm_suspend");
-+			r = -ENOMEM;
-+			goto flush_and_out;
-+		}
- 	}
- 
- 	/*
-@@ -1474,8 +1483,10 @@ int dm_resume(struct mapped_device *md)
- 
- 	unlock_fs(md);
- 
--	bdput(md->suspended_bdev);
--	md->suspended_bdev = NULL;
-+	if (md->suspended_bdev) {
-+		bdput(md->suspended_bdev);
-+		md->suspended_bdev = NULL;
-+	}
- 
- 	clear_bit(DMF_SUSPENDED, &md->flags);
- 
+> Hello !
+>=20
+> after desparately seeking for a solution to have more than 256 loop
+> devices (for a huge cd-rom server), i have recently come across
+> dm-loop, which looks very promising (to replace loop.c)
+>=20
+> can i have more than 256 devices which this?
 
---------------080906070406080902050500
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hi Roland,
 
+Yes, dm-loop will support as many loop devices as device-mapper can allow=
+.
 
---------------080906070406080902050500--
+> our cd-rom server is going to have more than 256 iso-images soon and
+> i need to upgrade to a more recent OS, anyway, so this won`t be a=20
+> problem that dm-loop is so brand new.
+>=20
+> but - any timeline for dm-loop mainline inclusion ?
+>=20
+> should i wait for 2.6.19 or 2.6.20 ?
+
+There isn't a fixed timeline. We are currently working to improve the
+lookup code - the prototype patch uses a linear search which doesn't
+scale well for large/fragmented image files. I have some tests running
+at the moment and we hope to have something soon - the results so far
+are good, it's just a case of selecting between a couple of different
+methods.
+
+The changes dm-loop requires in device-mapper core are pretty minor and
+have already been merged in 2.6.19, so it's just the dm-loop patch
+itself remaining.
+
+> is it already useable with less recent kernels, i.e. can i download
+> dm-loop patch and recent dmsetup tool and use with older kernel ?
+
+This should work fine - there are a couple of known issues with the
+existing patch, but unless you are using large images (>2G), or have a
+severely fragmented filesystem you shouldn't run into these.
+
+I'll see if we can get a revised version of the current patch for wider
+testing in the next couple of weeks - let me know if you would be
+interested in trying this out.
+
+Thanks,
+
+Bryn.
+_________________________________________________________________________=
+_
+Erweitern Sie FreeMail zu einem noch leistungsst=E4rkeren E-Mail-Postfach=
+!	=09
+Mehr Infos unter http://freemail.web.de/home/landingpad/?mc=3D021131
