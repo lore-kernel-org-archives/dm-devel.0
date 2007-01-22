@@ -1,14 +1,14 @@
 From: "Bryn M. Reeves" <breeves@redhat.com>
-Subject: Re: device mapper integrated loops - and one more year !
-Date: Mon, 22 Jan 2007 09:43:24 +0000
-Message-ID: <45B4873C.8030504@redhat.com>
-References: <1572893983@web.de>
+Subject: Re: bug in dm-loop? - was:Re: Re: device mapper
+ integrated loops - and one more year !
+Date: Mon, 22 Jan 2007 10:00:48 +0000
+Message-ID: <45B48B50.8070009@redhat.com>
+References: <1574903375@web.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------050105090203080607020502"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1572893983@web.de>
+In-Reply-To: <1574903375@web.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +19,225 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: devzero@web.de
-Cc: device-mapper development <dm-devel@redhat.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
+
+This is a multi-part message in MIME format.
+--------------050105090203080607020502
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
 
 -----BEGIN PGP SIGNED MESSAGE-----
 Hash: SHA1
 
 devzero@web.de wrote:
-> Hello Bryn, 
+> 
+> i was doing some testing of dm-loop with latest dmsetup on a 2.6.20-rc5 system.
+> 
+> i did some basic test, which seems to work ok.
+> 
+> i can now map a file to become /dev/mapper/loop0
+> 
+> dmlosetup loop0 test.img 
+> 
+> -> device-mapper: loop: Finalized extent map of 1232 bytes, 44 entries.
+> 
+> root@localhost ~ # ls -la /dev/mapper/loop0
+> brw------- 1 root root 252, 0 21. Jan 17:25 /dev/mapper/loop0
+
+Great! Am glad this much is working for you!
+
+> 
+> while fiddling around a little bit, i accidentally tried to map that file a second time - anyway, i would expect this is quite ok and should work.
+> 
+> dmlosetup loop1 test.img 
+> 
+> this bails out with the following error, leaving trace in dmesg:  
+> 
+> device-mapper: loop: file is already in use: /root/device-mapper/dmsetup/test.dat
+> BUG: unable to handle kernel NULL pointer dereference at virtual address 00000000
+>  printing eip:
+> d097589c
+> *pde = 00000000
+> Oops: 0000 [#1]
+
+The dm-loop target only allows a file to be mapped once. That said, it
+should just return the error, not oops the kernel!
+
+This is fixed in my CVS copy of this patch - I'm attaching a patch that
+you can apply on top of the one that you already have that includes this
+fix plus a couple of other minor fixes/enhancements.
+
+I'll also get the version on kernel.org updated - thanks for catching this!
+
+> after this, if i do 
+> dmlosetup -d loop1
+> dmlosetup -d loop0
+> 
+> i cannot "rmmod dm-loop" , now telling me "device is in use", but it isn`t ! 
+> 
+> so, this looks like a bug to me, leaving dm-loop in an inconsitent state.
+
+Unfortunately, after an oops in a kernel module you're pretty much
+forced to reboot - the kernel terminates the code path that caused the
+fault, leaving a hanging reference count on the module.
+
+> furthermore, one question about naming conventions :
+> 
+> dmlosetup testloop1 test.dat
+> dmlosetup: Could not parse loop_device testloop1
+> Usage:
+> 
+> losetup [-d|-a] [-e encryption] [-o offset] [-f|loop_device] [file]
+> 
+> Couldn't process command line.
 > 
 > 
->> I'll see if we can get a revised version of the current patch for wider
->> testing in the next couple of weeks - let me know if you would be
->> interested in trying this out.
+> so, it`s mandatory that loop_device needs to begin with "loop...." !?
 > 
-> not sure if i sent a reply to this or have missed this -  but, yes - i`m still interested very much in using dm-loop !
 
-Hi Roland,
+It is at the moment :) The current command line parameters try to be as
+faithful as possible to the nomrmal losetup, where devices are normally
+named as (/dev/)loopN. We can't exactly match that without disrupting
+users of the regular loop driver though, so this should probably be relaxed.
 
-No, you've not missed anything!
-
-I've got an updated version of the patch with some enhancements Heinz
-(lvmguy) has been working on to improve the driver's lookup performance.
-This is still being worked on at the moment.
-
-> is there anything new with this?
-> do i have to expect issues with files >2gb ? (i need to loopback mount dvd iso-images)
-> 
-> is there a download url for the latest dm-loop patch so i can do some tests and report feedback ?
-
-This patch is a little out of date now - I'll get a later version
-(bugfixes mainly - the new lookup code is still being tested) made
-available here.
-
-Thanks,
+Thanks for testing!
 
 Bryn.
+
+
+
+
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1.4.5 (GNU/Linux)
 Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
 
-iD8DBQFFtIcl6YSQoMYUY94RAsRqAJ4iKrXKW5IYe0S9NlUofBp1QpzoiQCgxxba
-gfoC4jE1+anDhZwz/+MFtUs=
-=IBSf
+iD8DBQFFtItQ6YSQoMYUY94RAijWAJ47OJL21+0W3yiMqbq51k3EHAw0WACfaefN
+PjSa8djCMZuyZ/gGyUAikp0=
+=3bv3
 -----END PGP SIGNATURE-----
+
+--------------050105090203080607020502
+Content-Type: text/x-patch;
+ name="dm-loop.fix_busy_image.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-loop.fix_busy_image.patch"
+
+--- drivers/md/dm-loop.c.rel	2007-01-22 09:45:04.000000000 +0000
++++ drivers/md/dm-loop.c	2007-01-22 09:45:10.000000000 +0000
+@@ -22,7 +22,7 @@
+ #include "dm-bio-record.h"
+ 
+ #define DM_MSG_PREFIX "loop"
+-#define LOOP_MAX_EXTENTS 1024
++#define LOOP_MAX_EXTENTS 2048
+ 
+ #define	DMLOOP_READONLY	0x01
+ #define	DMLOOP_SYNC	0x02
+@@ -69,7 +69,7 @@ struct loop_c {
+ };
+ 
+ #ifdef CONFIG_DM_DEBUG
+-static void dump_extent(struct extent *e)
++static void dump_extent(unsigned i, struct extent *e)
+ {
+ 	const char types[] = { 'f', 'd' };
+ 
+@@ -81,8 +81,8 @@ static void dump_extent(struct extent *e
+ 		return;
+ 	}
+ 
+-	DMDEBUG("start: %8llu len: %4llu %4c.rstart: %8llu",
+-				e->start, e->len, types[e->type],
++	DMDEBUG(" [%u] start: %8llu len: %4llu %4c.rstart: %8llu",
++				i, e->start, e->len, types[e->type],
+ 				(sector_t)e->data );
+ }
+ 
+@@ -97,7 +97,7 @@ static void dump_extent_map(struct exten
+ 			map->nr_extents, map->cur_extent);
+ 
+ 	for (i = 0; i < map->nr_extents; i++)
+-		dump_extent(DMLOOP_EXTENT(i));
++		dump_extent(i, DMLOOP_EXTENT(i));
+ }
+ 
+ #else /* CONFIG_DM_DEBUG */
+@@ -228,16 +228,25 @@ reprobe:
+ 		continue;
+ 	}
+ 
++	if (nr_extents == LOOP_MAX_EXTENTS && probe_block < last_block){
++		DMERR("Loopfile contains more than LOOP_MAX_EXTENTS (%d) fragments\n",
++					LOOP_MAX_EXTENTS);
++		goto out_free;
++	}
++
+ 	map->nr_extents = nr_extents;
+ 	map->cur_extent = 0;
+ 
+ 	DMDEBUG("created initial extent map, finalizing.");
+ 	map = finalize_map(map);
++	if (!map)
++		return -ENOMEM;
++
++	//dump_extent_map(map);
+ 	DMINFO("Finalized extent map of %u bytes, %d entries.",
+ 			(map->nr_extents * sizeof(struct extent)),
+ 			map->nr_extents);
+ 
+-	dump_extent_map(map);
+ 	lc->blkbits = blkbits;
+ 	lc->map = map;
+ 
+@@ -408,7 +417,7 @@ static struct file *loop_get_file(char *
+ {
+ 	struct file *filp;
+ 	struct inode *inode;
+-	int r;
++	int r = 0;
+ 
+ 	filp = filp_open(loop_path,
+ 			 ((*flags & DMLOOP_READONLY) ? O_RDONLY : O_RDWR) |
+@@ -434,6 +443,7 @@ static struct file *loop_get_file(char *
+ 
+ 	if (IS_SWAPFILE(inode)) {
+ 		DMERR("file is already in use: %s", loop_path);
++		r = -EBUSY;
+ 		goto out;
+ 	}
+ 
+@@ -461,7 +471,7 @@ static int loop_setup_size(struct loop_c
+ 	lc->size = i_size_read(inode);
+ 	lc->blkbits = inode->i_blkbits;
+ 
+-	if (lc->offset & (1 << lc->blkbits - 1)) {
++	if (lc->offset & ((1 << lc->blkbits) - 1)) {
+ 		DMERR("Backing file offset of %lld bytes not a multiple of "
+ 			"filesystem blocksize (%d)", lc->offset,
+ 			1 << lc->blkbits);
+@@ -565,8 +575,11 @@ static int loop_ctr(struct dm_target *ti
+ 		goto out_putf;
+ 
+ 	r = setup_loop_extents(lc);
+-	if (r) {
+-		ti->error = "Could not create extent map";
++	if (r == -EINVAL) {
++		ti->error = "Could not create extent map - invalid argument";
++		goto out_putf;
++	} else if (r == -ENOMEM) {
++		ti->error = "Could not allocate extent map";
+ 		goto out_putf;
+ 	}
+ 
+
+--------------050105090203080607020502
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------050105090203080607020502--
