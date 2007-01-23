@@ -1,18 +1,24 @@
-From: "Bryn M. Reeves" <breeves@redhat.com>
-Subject: Re: bug in dm-loop? - was:Re: Re: device mapper
- integrated loops - and one more year !
-Date: Mon, 22 Jan 2007 23:20:06 +0000
-Message-ID: <45B546A6.3030608@redhat.com>
-References: <1574903375@web.de> <45B48B50.8070009@redhat.com>
-	<083901c73e70$ccd85f60$eeeea8c0@aldipc>
-	<45B53655.1040209@redhat.com>
-	<087b01c73e76$9ccf68d0$eeeea8c0@aldipc>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Piet Delaney <piet@bluelane.com>
+Subject: Re: [dm-crypt] Re: [stable][PATCH < 2.6.19] Fix data
+	corruption with dm-crypt over RAID5
+Date: Mon, 22 Jan 2007 18:19:04 -0800
+Message-ID: <1169518745.23559.2.camel@piet2.bluelane.com>
+References: <456B732F.6080906@lelik.org>
+	<20061129145208.GQ4409@agk.surrey.redhat.com>
+	<456F46E3.6030702@lelik.org>
+	<1164983209.24524.20.camel@leto.intern.saout.de>
+	<20061201152143.GE4409@agk.surrey.redhat.com>
+	<45704B95.3020308@lelik.org>
+	<1165026116.29307.18.camel@leto.intern.saout.de>
+	<1165026476.29307.23.camel@leto.intern.saout.de>
+	<1169023448.10964.244.camel@piet2.bluelane.com>
+	<1169473139.1772.5.camel@leto.intern.saout.de>
+Reply-To: piet@bluelane.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0500596529=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <087b01c73e76$9ccf68d0$eeeea8c0@aldipc>
+In-Reply-To: <1169473139.1772.5.camel@leto.intern.saout.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +28,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: roland <devzero@web.de>
+To: Christophe Saout <christophe@saout.de>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
 
-roland wrote:
->> You're particularly likely to see these problems with large images such
->> as DVD ISOs, as the number of entries in the lookup table is
->> proportional to the size of the image and the degree of fragmentation of
->> the filesystem on which it is stored.
-> uuuhhhhh - mhhhh - this sounds bad, since the testfiles i created were
-> all sized 100k each.
+--===============0500596529==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-i8BOxT0qBJRJHqizMwDU"
 
-With ~3000 of them active concurrently on a machine with 256M of RAM,
-I'm not that surprised that you hit this limit!
 
-Again, to keep things simple in the prototype, we grab the biggest
-possible table size when we create a new device and then re-allocate it
-to the correct size when we finish building the map - that's what the
-"Finalized extent map of 56 bytes, 2 entries." messages refer to.
+--=-i8BOxT0qBJRJHqizMwDU
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-If debugging was enabled when the module was built, you should also see
-messages like:
+On Mon, 2007-01-22 at 14:38 +0100, Christophe Saout wrote:
+> > I'm wondering about trying out your patch with dm-crypt on 2.6.12.=20
+> > The code in drivers/md/dm-crypt.c`crypt_endio() appears to be the
+> same.
+>=20
+> Yes, it should apply as well.
 
- loop: [DEBUG] setup_loop_extents:Allocated initial extent map of 57352
-bytes, 2048 entries.
+Christophe Saout wrote:
 
-It's these initial large allocations that are causing the errors you see.
+> Am Mittwoch, den 17.01.2007, 00:44 -0800 schrieb Piet Delaney:
+>=20
+>> I'm wondering about trying out your patch with dm-crypt on 2.6.12.
+>> The code in drivers/md/dm-crypt.c`crypt_endio() appears to be the
+same.
+>=20
+> Yes, it should apply as well.
 
-The code's pretty dumb in this area at the moment - improving memory
-allocation and the time spent looking up entries in the table are our
-current goals for dm-loop.
+I'll assume that also means that applying the patch is reasonable.
 
-> i think i need to attach a big disk and create some more big files to
-> test with....
+In our case we aren't using raid5; how ever we are using raid to mirror
+two root partitions. Your explanation to Andrew indicates the problem
+should only occur when using raid5. So applying the patch should be only
+have the effect of making it now possible to use raid5 with dm-crypt.
+Since we are currently running raid with root encryption it feels like
+it's better to include your patch.
 
-The code will fail if it needs >2048 table entries to describe the file
-- - depending on the filesystem used and how fragmented it is this will
-limit you to files of a few gigabytes. This is another arbitrary limit
-in this version that will go away in later dm-loop releases.
+-piet
 
-Kind regards,
+--=20
+Piet Delaney                                    Phone: (408) 200-5256
+Blue Lane Technologies                          Fax:   (408) 200-5299
+10450 Bubb Rd.
+Cupertino, Ca. 95014                            Email: piet@bluelane.com
 
-Bryn.
+--=-i8BOxT0qBJRJHqizMwDU
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+Version: GnuPG v1.4.0 (GNU/Linux)
 
-iD8DBQFFtUam6YSQoMYUY94RAlMnAJ9C3fivcmwgcWiA8G5UIULB1BwnPgCgyrIO
-n1QfreVTGUNfMHA6bRWdzwI=
-=AV8G
+iD8DBQBFtXCYJICwm/rv3hoRAt3mAJ9aFslGR3WHYqFaLZeFay2R63x33gCeM+ZR
+JS2UrxU7oagdl9ozcsFiwPc=
+=n3jN
 -----END PGP SIGNATURE-----
+
+--=-i8BOxT0qBJRJHqizMwDU--
+
+
+--===============0500596529==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0500596529==--
