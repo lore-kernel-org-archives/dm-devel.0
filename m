@@ -1,14 +1,9 @@
-From: "Bryn M. Reeves" <breeves@redhat.com>
-Subject: Re: Re: bug in dm-loop? - was:Re: Re: device mapper
-Date: Wed, 24 Jan 2007 18:38:26 +0000
-Message-ID: <45B7A7A2.9000106@redhat.com>
-References: <1581640279@web.de>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmeventd/dmeventd.c  ...
+Date: 25 Jan 2007 14:16:21 -0000
+Message-ID: <20070125141621.18784.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1581640279@web.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,53 +13,166 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: devzero@web.de
-Cc: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-01-25 14:16:21
 
-devzero@web.de wrote:
->> Again, to keep things simple in the prototype, we grab the biggest
->> possible table size when we create a new device and then re-allocate it
->> to the correct size when we finish building the map - that's what the
->> "Finalized extent map of 56 bytes, 2 entries." messages refer to.
-> 
-> may this be a reason why dmlosetup seems to be much slower than traditional losetup?
-> i did some tests with some larger images (100m, 1gig and 2,5gig) and dmlosetting them up took quite a while.....
-> 
+Modified files:
+	.              : WHATS_NEW 
+	dmeventd       : dmeventd.c 
+	dmsetup        : dmsetup.c 
+	lib/ioctl      : libdm-iface.c 
 
-Unfortunately, this is a more fundamental aspect of dm-loop. The way the
-code achieves better performance than the regular loop driver is by
-doing much of the work upfront when a device is first created. This does
-mean that initial setup for a loop device takes longer with dm-loop, and
-that time is again proportional to the size/fragmentation of the file.
+Log message:
+	Add some missing close() and fclose() return value checks.
 
-For many filesystems, you can make 'guesses' that will speed things up,
-but this comes at a heavy price. Guess wrong and it leads to data
-corruption, so this isn't something we'd feel happy about implementing.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.159&r2=1.160
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.44&r2=1.45
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.79&r2=1.80
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/ioctl/libdm-iface.c.diff?cvsroot=dm&r1=1.40&r2=1.41
 
->> the code will fail if it needs >2048 table entries to describe the file
->> - - depending on the filesystem used and how fragmented it is this will
->> limit you to files of a few gigabytes. This is another arbitrary limit
->> in this version that will go away in later dm-loop releases.
-> 
-> indeed, it looks like there is a real hard 2gb limit - i wasn`t able to dmlosetup the 2,5gig files i created
-
-It's not so much a  hard 2gb limit, but on a cleanly created ext3 or
-similar fs, it tends to be around that number. Different filesystem
-types or fragmentation levels change that number but they all stem from
-the same limitation.
-
-Kind regards,
-
-Bryn.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
-
-iD8DBQFFt6ei6YSQoMYUY94RAu6VAJ0fOkdxJFs2bYZQspfDyJcFxxphLQCgiQN0
-6VUI4+o6h/NtJ+bvAbnMjR0=
-=aIWR
------END PGP SIGNATURE-----
+--- device-mapper/WHATS_NEW	2007/01/24 18:09:06	1.159
++++ device-mapper/WHATS_NEW	2007/01/25 14:16:20	1.160
+@@ -1,5 +1,6 @@
+ Version 1.02.16 -
+ ===================================
++  Add some missing close() and fclose() return value checks.
+   Migrate dmsetup column-based output over to new libdevmapper report framework.
+   Add descriptions to reporting field definitions.
+   Add a dso-private variable to dmeventd dso interface.
+--- device-mapper/dmeventd/dmeventd.c	2007/01/23 17:38:39	1.44
++++ device-mapper/dmeventd/dmeventd.c	2007/01/25 14:16:20	1.45
+@@ -1566,7 +1566,8 @@
+ 	}
+ 
+ 	fprintf(fp, "%i", val);
+-	fclose(fp);
++	if (fclose(fp))
++		perror(OOM_ADJ_FILE ": fclose failed");
+ 
+ 	return 1;
+ }
+@@ -1583,7 +1584,7 @@
+ 
+ 	sigemptyset(&my_sigset);
+ 	if (sigprocmask(SIG_SETMASK, &my_sigset, NULL) < 0) {
+-		fprintf(stderr, "Unable to restore signals.");
++		fprintf(stderr, "Unable to restore signals.\n");
+ 		exit(EXIT_FAILURE);
+ 	}
+ 	signal(SIGTERM, &_exit_handler);
+--- device-mapper/dmsetup/dmsetup.c	2007/01/24 18:09:07	1.79
++++ device-mapper/dmsetup/dmsetup.c	2007/01/25 14:16:20	1.80
+@@ -231,8 +231,9 @@
+ #else
+ 	free(buffer);
+ #endif
+-	if (file)
+-		fclose(fp);
++	if (file && fclose(fp))
++		fprintf(stderr, "%s: fclose failed: %s", file, strerror(errno));
++
+ 	return r;
+ }
+ 
+@@ -1479,7 +1480,7 @@
+ static int _int32_disp(struct dm_report *rh,
+ 		       struct dm_pool *mem __attribute((unused)),
+ 		       struct dm_report_field *field, const void *data,
+-		       void *private)
++		       void *private __attribute((unused)))
+ {
+ 	const int32_t value = *(const int32_t *)data;
+ 
+@@ -1489,7 +1490,7 @@
+ static int _uint32_disp(struct dm_report *rh,
+ 			struct dm_pool *mem __attribute((unused)),
+ 		        struct dm_report_field *field, const void *data,
+-		        void *private)
++		        void *private __attribute((unused)))
+ {
+ 	const uint32_t value = *(const int32_t *)data;
+ 
+@@ -1499,7 +1500,7 @@
+ static int _dm_name_disp(struct dm_report *rh,
+ 			 struct dm_pool *mem __attribute((unused)),
+ 			 struct dm_report_field *field, const void *data,
+-			 void *private)
++			 void *private __attribute((unused)))
+ {
+ 	const char *name = dm_task_get_name((struct dm_task *) data);
+ 
+@@ -1509,7 +1510,7 @@
+ static int _dm_uuid_disp(struct dm_report *rh,
+ 			 struct dm_pool *mem __attribute((unused)),
+ 			 struct dm_report_field *field,
+-			 const void *data, void *private)
++			 const void *data, void *private __attribute((unused)))
+ {
+ 	const char *uuid = dm_task_get_uuid((struct dm_task *) data);
+ 
+@@ -1522,7 +1523,7 @@
+ static int _dm_info_status_disp(struct dm_report *rh,
+ 				struct dm_pool *mem __attribute((unused)),
+ 				struct dm_report_field *field, const void *data,
+-				void *private)
++				void *private __attribute((unused)))
+ {
+ 	char buf[5];
+ 	const char *s = buf;
+@@ -1607,7 +1608,7 @@
+ 			options = _string_args[OPTIONS_ARG];
+ 		else {
+ 			len = strlen(default_report_options) +
+-			      strlen(_string_args[OPTIONS_ARG]);
++			      strlen(_string_args[OPTIONS_ARG]) + 1;
+ 			if (!(options = dm_malloc(len))) {
+ 				err("Failed to allocate option string.");
+ 				return 0;
+--- device-mapper/lib/ioctl/libdm-iface.c	2007/01/08 15:18:52	1.40
++++ device-mapper/lib/ioctl/libdm-iface.c	2007/01/25 14:16:20	1.41
+@@ -149,7 +149,8 @@
+ 			if (!strcmp(name, nm)) {
+ 				if (number) {
+ 					*number = num;
+-					fclose(fl);
++					if (fclose(fl))
++						log_error("%s: fclose failed: %s", file, strerror(errno));
+ 					return 1;
+ 				}
+ 				dm_bit_set(_dm_bitset, num);
+@@ -158,7 +159,8 @@
+ 			c = fgetc(fl);
+ 		} while (c != EOF && c != '\n');
+ 	}
+-	fclose(fl);
++	if (fclose(fl))
++		log_error("%s: fclose failed: %s", file, strerror(errno));
+ 
+ 	if (number) {
+ 		log_error("%s: No entry for %s found", file, name);
+@@ -1322,7 +1324,7 @@
+ 
+ 	dir = dm_dir();
+ 	if (!(d = opendir(dir))) {
+-		fprintf(stderr, "opendir %s: %s", dir, strerror(errno));
++		log_error("opendir %s: %s", dir, strerror(errno));
+ 		return 0;
+ 	}
+ 
+@@ -1335,9 +1337,8 @@
+ 		dm_task_run(dmt);
+ 	}
+ 
+-	if (closedir(d)) {
+-		fprintf(stderr, "closedir %s: %s", dir, strerror(errno));
+-	}
++	if (closedir(d))
++		log_error("closedir %s: %s", dir, strerror(errno));
+ 
+ 	return r;
+ }
