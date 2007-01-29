@@ -1,16 +1,9 @@
-From: "Eric Van Hensbergen" <ericvh@gmail.com>
-Subject: Re: [RFC][PATCH] dm-cow: copy-on-write stackable target
-	for device-mapper
-Date: Fri, 26 Jan 2007 11:07:28 -0600
-Message-ID: <a4e6962a0701260907j786215adl9b4dbf1927c0195f@mail.gmail.com>
-References: <200611271659.kARGx5qb017564@hera.kernel.org>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW lib/libdevmapper.h l ...
+Date: 29 Jan 2007 17:23:55 -0000
+Message-ID: <20070129172355.16230.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200611271659.kARGx5qb017564@hera.kernel.org>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,64 +13,68 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eric Van Hensbergen <ericvh@hera.kernel.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, paurea@gmail.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 11/27/06, Eric Van Hensbergen <ericvh@hera.kernel.org> wrote:
-> Subject: [RFC] [PATCH] dm-cow: copy-on-write stackable target for device-mapper
->
-> +
-> +A simple script file is included to format WB.
-> +The way it works is the standard dmsetup calls for
-> +the device mapper. The arguments are
-> +
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-01-29 17:23:54
 
-There have been several requests for the "simple" script file.
-Portions of its implementation are somewhat specific to our
-installation (like the use of the rc shell).  I'm including it inline
-here - not sure where else to put it -- perhaps in the Documentation:
+Modified files:
+	.              : WHATS_NEW 
+	lib            : libdevmapper.h libdm-report.c 
 
-#!/usr/bin/rc
+Log message:
+	Use fixed-size fields in report interface.
 
-tableboth ='0 devblksz cow devread 0 devwrite devbmapw 0'
-devsize = `{sfdisk -s $1}
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.162&r2=1.163
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.67&r2=1.68
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.10&r2=1.11
 
-fn wipeoutdev{
-        bmapsize = `{echo $devsize / 512 /2 |bc}
-        echo dd 'if=/dev/zero' 'of='^$1 'count='^$bmapsize 'bs=512'
-        dd 'if=/dev/zero' 'of='^$1 'count='^$bmapsize 'bs=512'
-}
-
-fn escapedev{
-    echo $1|sed 's/\//\\\//g'
-}
-
-
-fn setcow{
-        devread = `{escapedev $1}
-        devwrite = `{escapedev $2}
-        devbmapw = `{escapedev $3}
-        tableset = `{echo $tableboth|sed -r 's/devread/'^$devread^'/'}
-        tableset = `{echo $tableset|sed -r 's/devwrite/'^$devwrite^'/'}
-        tableset = `{echo $tableset|sed -r 's/devbmapw/'^$devbmapw^'/'}
-        devblksz = `{expr $devsize '*' 2}
-        tableset = `{echo $tableset|sed -r 's/devblksz/'^$devblksz^'/'}
-        echo trying to set $tableset
-        echo $tableset > /tmp/tableset
-        echo trying to dmsetup create $4
-        dmsetup create $4 << EOF
-$tableset
-EOF
-        dmsetup table
-}
-
-if(! ~ $#* 4){
-        echo usage: newcow origdev destdev bmapdest namecow
-        exit 1
-}
-
-namecow=$4
-origdev=$1
-wipeoutdev $2
-setcow $1 $2 $3 $namecow
+--- device-mapper/WHATS_NEW	2007/01/25 23:36:05	1.162
++++ device-mapper/WHATS_NEW	2007/01/29 17:23:54	1.163
+@@ -1,5 +1,6 @@
+ Version 1.02.17 -
+ ===================================
++  Use fixed-size fields in report interface.
+ 
+ Version 1.02.16 - 25th January 2007
+ ===================================
+--- device-mapper/lib/libdevmapper.h	2007/01/23 19:18:52	1.67
++++ device-mapper/lib/libdevmapper.h	2007/01/29 17:23:54	1.68
+@@ -657,11 +657,11 @@
+ struct dm_report;
+ struct dm_report_field_type {
+ 	uint32_t type;		/* object type id */
++	uint32_t flags;		/* DM_REPORT_FIELD_* */
++	uint32_t offset;	/* byte offset in the object */
++	int32_t width;		/* default width */
+ 	const char id[32];	/* string used to specify the field */
+-	unsigned int offset;	/* byte offset in the object */
+ 	const char heading[32];	/* string printed in header */
+-	int width;		/* default width */
+-	uint32_t flags;		/* DM_REPORT_FIELD_* */
+ 	int (*report_fn)(struct dm_report *rh, struct dm_pool *mem,
+ 			 struct dm_report_field *field, const void *data,
+ 			 void *private);
+--- device-mapper/lib/libdm-report.c	2007/01/24 16:41:33	1.10
++++ device-mapper/lib/libdm-report.c	2007/01/29 17:23:54	1.11
+@@ -60,7 +60,7 @@
+ 	struct list list;
+ 	uint32_t field_num;
+ 	uint32_t sort_posn;
+-	unsigned width;
++	int32_t width;
+ 	const struct dm_report_object_type *type;
+ 	uint32_t flags;
+ };
+@@ -750,7 +750,7 @@
+ 	struct dm_report_field *field;
+ 	const char *repstr;
+ 	char buf[4096];
+-	unsigned width;
++	int32_t width;
+ 	uint32_t align;
+ 
+ 	if (list_empty(&rh->rows))
