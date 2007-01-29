@@ -1,7 +1,7 @@
 From: agk@sourceware.org
 Subject: device-mapper/dmsetup dmsetup.c
-Date: 29 Jan 2007 18:37:59 -0000
-Message-ID: <20070129183759.32512.qmail@sourceware.org>
+Date: 29 Jan 2007 18:43:28 -0000
+Message-ID: <20070129184328.3784.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,56 +18,27 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-29 18:37:58
+Changes by:	agk@sourceware.org	2007-01-29 18:43:27
 
 Modified files:
 	dmsetup        : dmsetup.c 
 
 Log message:
-	add help -c for field list
+	help unused attr
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.82&r2=1.83
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.83&r2=1.84
 
---- device-mapper/dmsetup/dmsetup.c	2007/01/29 18:18:41	1.82
-+++ device-mapper/dmsetup/dmsetup.c	2007/01/29 18:37:57	1.83
-@@ -1625,7 +1625,7 @@
- 	if (_switches[SORT_ARG] && _string_args[SORT_ARG]) {
- 		keys = _string_args[SORT_ARG];
- 		buffered = 1;
--		if (!strcmp(c->name, "status") || !strcmp(c->name, "table")) {
-+		if (c && (!strcmp(c->name, "status") || !strcmp(c->name, "table"))) {
- 			err("--sort is not yet supported with status and table");
- 			goto out;
- 		}
-@@ -1714,12 +1714,13 @@
- 	fprintf(out, "Usage:\n\n");
- 	fprintf(out, "dmsetup [--version] [-v|--verbose [-v|--verbose ...]]\n"
- 		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
--		"        [-c|--columns] [-o <fields>] [--noheadings] [--separator <separator>]\n\n");
-+		"        [-c|--columns] [-o <fields>] [-O|--sort <sort_fields>]\n"
-+		"        [--noheadings] [--separator <separator>]\n\n");
- 	for (i = 0; _commands[i].name; i++)
- 		fprintf(out, "\t%s %s\n", _commands[i].name, _commands[i].help);
- 	fprintf(out, "\n<device> may be device name or -u <uuid> or "
- 		     "-j <major> -m <minor>\n");
--	fprintf(out, "<fields> are comma-separated.  Use -c -o help for list.\n");
-+	fprintf(out, "<fields> are comma-separated.  Use 'help -c' for list.\n");
- 	fprintf(out, "Table_file contents may be supplied on stdin.\n");
- 	fprintf(out, "Tree options are: ascii, utf, vt100; compact, inverted, notrunc;\n"
- 		     "                  [no]device, active, open, rw and uuid.\n");
-@@ -1738,6 +1739,14 @@
+--- device-mapper/dmsetup/dmsetup.c	2007/01/29 18:37:57	1.83
++++ device-mapper/dmsetup/dmsetup.c	2007/01/29 18:43:27	1.84
+@@ -1735,7 +1735,9 @@
+ 		     "[-o offset] [-f|loop_device] [file]\n\n");
+ }
+ 
+-static int _help(int argc, char **argv, void *data)
++static int _help(int argc __attribute((unused)),
++		 char **argv __attribute((unused)),
++		 void *data __attribute((unused)))
  {
  	_usage(stderr);
- 
-+	if (_switches[COLS_ARG]) {
-+		_switches[OPTIONS_ARG] = 1;
-+		_string_args[OPTIONS_ARG] = (char *) "help";
-+		_switches[SORT_ARG] = 0;
-+	
-+		(void) _report_init(NULL);
-+	}
-+
- 	return 1;
- }
  
