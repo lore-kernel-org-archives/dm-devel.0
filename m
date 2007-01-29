@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmsetup/dmsetup.c ma ...
-Date: 29 Jan 2007 19:35:24 -0000
-Message-ID: <20070129193524.6864.qmail@sourceware.org>
+Subject: device-mapper ./VERSION ./WHATS_NEW po/device- ...
+Date: 29 Jan 2007 19:57:24 -0000
+Message-ID: <20070129195724.16935.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,138 +18,920 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-01-29 19:35:24
+Changes by:	agk@sourceware.org	2007-01-29 19:57:24
 
 Modified files:
-	.              : WHATS_NEW 
-	dmsetup        : dmsetup.c 
-	man            : dmsetup.8 
+	.              : VERSION WHATS_NEW 
+	po             : device-mapper.po 
 
 Log message:
-	Add recent reporting options to dmsetup man page.
-	Revise some report fields names.
+	pre-release
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.165&r2=1.166
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.85&r2=1.86
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/man/dmsetup.8.diff?cvsroot=dm&r1=1.16&r2=1.17
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.116&r2=1.117
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.166&r2=1.167
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/po/device-mapper.po.diff?cvsroot=dm&r1=1.1&r2=1.2
 
---- device-mapper/WHATS_NEW	2007/01/29 18:18:40	1.165
-+++ device-mapper/WHATS_NEW	2007/01/29 19:35:23	1.166
-@@ -1,5 +1,7 @@
- Version 1.02.17 -
+--- device-mapper/VERSION	2007/01/25 23:36:05	1.116
++++ device-mapper/VERSION	2007/01/29 19:57:24	1.117
+@@ -1 +1 @@
+-1.02.17-cvs (2007-01-25)
++1.02.17-cvs (2007-01-29)
+--- device-mapper/WHATS_NEW	2007/01/29 19:35:23	1.166
++++ device-mapper/WHATS_NEW	2007/01/29 19:57:24	1.167
+@@ -1,4 +1,4 @@
+-Version 1.02.17 -
++Version 1.02.17 - 29th January 2007
  ===================================
-+  Add recent reporting options to dmsetup man page.
-+  Revise some report fields names.
-   Add dmsetup 'help' command and update usage text.
-   Use fixed-size fields in report interface and reorder.
+   Add recent reporting options to dmsetup man page.
+   Revise some report fields names.
+--- device-mapper/po/device-mapper.po	2004/04/02 15:19:23	1.1
++++ device-mapper/po/device-mapper.po	2007/01/29 19:57:24	1.2
+@@ -1,12 +1,14 @@
+ # SOME DESCRIPTIVE TITLE.
+-# Copyright (C) YEAR Free Software Foundation, Inc.
++# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
++# This file is distributed under the same license as the PACKAGE package.
+ # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+ #
+ #, fuzzy
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: PACKAGE VERSION\n"
+-"POT-Creation-Date: 2004-02-24 15:16+0000\n"
++"Report-Msgid-Bugs-To: \n"
++"POT-Creation-Date: 2007-01-29 19:56+0000\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -14,138 +16,829 @@
+ "Content-Type: text/plain; charset=CHARSET\n"
+ "Content-Transfer-Encoding: 8bit\n"
  
---- device-mapper/dmsetup/dmsetup.c	2007/01/29 18:45:08	1.85
-+++ device-mapper/dmsetup/dmsetup.c	2007/01/29 19:35:24	1.86
-@@ -1568,12 +1568,12 @@
- /* *INDENT-OFF* */
- FIELD_F(TASK, STR, "Name", 16, dm_name, "name", "Name of mapped device.")
- FIELD_F(TASK, STR, "UUID", 32, dm_uuid, "uuid", "Unique (optional) identifier for mapped device.")
--FIELD_F(INFO, STR, "Stat", 4, dm_info_status, "status", "(L)ive, (I)nactive, (s)uspended, (r)ead-only, read-(w)rite.")
-+FIELD_F(INFO, STR, "Stat", 4, dm_info_status, "attr", "(L)ive, (I)nactive, (s)uspended, (r)ead-only, read-(w)rite.")
- FIELD_O(INFO, dm_info, NUM, "Maj", major, 3, int32, "major", "Block device major number.")
- FIELD_O(INFO, dm_info, NUM, "Min", minor, 3, int32, "minor", "Block device minor number.")
--FIELD_O(INFO, dm_info, NUM, "Open", open_count, 4, int32, "open_count", "Number of references to open device, if requested.")
--FIELD_O(INFO, dm_info, NUM, "Targ", target_count, 4, int32, "target_count", "Number of segments in live table, if present.")
--FIELD_O(INFO, dm_info, NUM, "Event", event_nr, 6, uint32, "event_nr", "Current event number.")
-+FIELD_O(INFO, dm_info, NUM, "Open", open_count, 4, int32, "open", "Number of references to open device, if requested.")
-+FIELD_O(INFO, dm_info, NUM, "Targ", target_count, 4, int32, "segments", "Number of segments in live table, if present.")
-+FIELD_O(INFO, dm_info, NUM, "Event", event_nr, 6, uint32, "events", "Number of most recent event.")
- {0, 0, 0, 0, "", "", NULL, NULL},
- /* *INDENT-ON* */
- };
-@@ -1583,7 +1583,7 @@
- #undef FIELD_O
- #undef FIELD_F
+-#: ioctl/libdevmapper.c:113
++#: datastruct/hash.c:96 datastruct/hash.c:109 ioctl/libdm-iface.c:247
++#: libdm-deptree.c:471 libdm-deptree.c:475 libdm-deptree.c:481
++#: libdm-deptree.c:491 libdm-deptree.c:502 libdm-deptree.c:594
++#: libdm-deptree.c:598 libdm-deptree.c:614 libdm-deptree.c:712
++#: libdm-deptree.c:721 libdm-deptree.c:863 libdm-deptree.c:959
++#: libdm-deptree.c:964 libdm-deptree.c:969 libdm-deptree.c:1020
++#: libdm-deptree.c:1025 libdm-deptree.c:1030 libdm-deptree.c:1064
++#: libdm-deptree.c:1093 libdm-deptree.c:1109 libdm-deptree.c:1120
++#: libdm-deptree.c:1226 libdm-deptree.c:1230 libdm-deptree.c:1267
++#: libdm-deptree.c:1279 libdm-deptree.c:1283 libdm-deptree.c:1290
++#: libdm-deptree.c:1297 libdm-deptree.c:1304 libdm-deptree.c:1312
++#: libdm-deptree.c:1318 libdm-deptree.c:1326 libdm-deptree.c:1333
++#: libdm-deptree.c:1341 libdm-deptree.c:1343 libdm-deptree.c:1348
++#: libdm-deptree.c:1354 libdm-deptree.c:1357 libdm-deptree.c:1365
++#: libdm-deptree.c:1381 libdm-deptree.c:1391 libdm-deptree.c:1415
++#: libdm-deptree.c:1460 libdm-deptree.c:1504 libdm-deptree.c:1511
++#: libdm-deptree.c:1518 libdm-deptree.c:1609 libdm-deptree.c:1618
++#: libdm-deptree.c:1637 libdm-deptree.c:1646 libdm-deptree.c:1655
++#: libdm-deptree.c:1667 libdm-deptree.c:1676 libdm-deptree.c:1685
++#: libdm-deptree.c:1697 libdm-deptree.c:1733 libdm-deptree.c:1752
++#: libdm-deptree.c:1795 libdm-deptree.c:1809 libdm-deptree.c:1820
++msgid "<backtrace>"
++msgstr ""
++
++#: ioctl/libdm-iface.c:143
+ #, c-format
+-msgid "%s: open failed: %s"
++msgid "%s: fopen failed: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:153 ioctl/libdm-iface.c:163
++#, c-format
++msgid "%s: fclose failed: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:166
++#, c-format
++msgid "%s: No entry for %s found"
++msgstr ""
++
++#: ioctl/libdm-iface.c:193
++#, c-format
++msgid "%s: stat failed: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:199
++#, c-format
++msgid "%s: Wrong inode type"
++msgstr ""
++
++#: ioctl/libdm-iface.c:202 ioctl/libdm-iface.c:214
++#, c-format
++msgid "%s: unlink failed: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:208
++#, c-format
++msgid "%s: Wrong device number: (%u, %u) instead of (%u, %u)"
++msgstr ""
++
++#: ioctl/libdm-iface.c:237
++#, c-format
++msgid "Creating device %s (%u, %u)"
+ msgstr ""
  
--static const char *default_report_options = "name,major,minor,status,open_count,target_count,event_nr,uuid";
-+static const char *default_report_options = "name,major,minor,attr,open,segments,events,uuid";
+-#: ioctl/libdevmapper.c:114
++#: ioctl/libdm-iface.c:241
++#, c-format
++msgid "%s: mknod failed: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:297
+ msgid "Is device-mapper driver missing from kernel?"
+ msgstr ""
  
- static int _report_init(struct command *c)
- {
---- device-mapper/man/dmsetup.8	2006/11/23 20:34:16	1.16
-+++ device-mapper/man/dmsetup.8	2007/01/29 19:35:24	1.17
-@@ -3,6 +3,9 @@
- dmsetup \- low level logical volume management
- .SH SYNOPSIS
- .ad l
-+.B dmsetup help
-+.I [-c|-C|--columns]
-+.br
- .B dmsetup create 
- .I device_name [-u uuid] [--notable | --table <table> | table_file]
- .br
-@@ -33,21 +36,25 @@
- .B dmsetup message
- .I device_name sector message
- .br
--.B dmsetup ls [--target target_type] [--exec command] [--tree [-o options]]
-+.B dmsetup ls
-+.I [--target target_type] [--exec command] [--tree [-o options]]
- .br
- .B dmsetup info 
- .I [device_name]
- .br
--.B dmsetup info -c|-C|--columns [--noheadings] [-o name]
-+.B dmsetup info -c|-C|--columns
-+.I [--noheadings] [--separator separator] [-o fields] [-O|--sort sort_fields]
- .I [device_name]
- .br
- .B dmsetup deps
- .I [device_name]
- .br
--.B dmsetup status [--target target_type]
-+.B dmsetup status
-+.I [--target target_type]
- .I [device_name]
- .br
--.B dmsetup table [--target target_type]
-+.B dmsetup table
-+.I [--target target_type]
- .I [device_name]
- .br
- .B dmsetup wait
-@@ -103,7 +110,7 @@
- When creating a device, don't load any table.
- .IP \fB-o|--options
- .br
--Specify which fields to display.  Only \fB-o\ name\fP is supported.
-+Specify which fields to display.
- .IP \fB-r|--readonly
- .br
- Set the table being loaded read-only.
-@@ -136,6 +143,11 @@
- .br
- Outputs a list of (major, minor) pairs for devices referenced by the
- live table for the specified device.
-+.IP \fBhelp
-+.I [-c|-C|--columns]
-+.br
-+Outputs a summary of the commands available, optionally including
-+the list of report fields.
- .IP \fBinfo
- .I [device_name]
- .br
-@@ -154,6 +166,17 @@
-     Number of targets in the live table
- .br
-     UUID
-+.IP \fBinfo -c|-C|--columns
-+.I [--noheadings] [--separator separator] [-o fields] [-O|--sort sort_fields]
-+.I [device_name]
-+.br
-+Output you can customise.
-+Fields are comma-separated and chosen from the following list:
-+name, major, minor, attr, open, segments, events, uuid.
-+Attributes are: (L)ive, (I)nactive, (s)uspended, (r)ead-only, read-(w)rite.
-+Precede the list with '+' to append
-+to the default selection of columns instead of replacing it.
-+Precede any sort_field with - for a reverse sort on that column.
- .IP \fBls
- .I [--target target_type]
- .I [--exec command]
+-#: ioctl/libdevmapper.c:555
++#: ioctl/libdm-iface.c:304
++#, c-format
++msgid "%s: open failed: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:309
++msgid "Failed to set up list of device-mapper major numbers"
++msgstr ""
++
++#: ioctl/libdm-iface.c:316
++msgid "Failure to communicate with kernel device-mapper driver."
++msgstr ""
++
++#: ioctl/libdm-iface.c:778
+ msgid "Failed to get device-mapper version"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:591
++#: ioctl/libdm-iface.c:814
+ #, c-format
+ msgid ""
+-"device-mapper ioctl protocol version %d failed. Trying protocol version 1."
++"device-mapper ioctl protocol version %u failed. Trying protocol version 1."
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:595
++#: ioctl/libdm-iface.c:818
+ msgid "Using device-mapper ioctl protocol version 1"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:603
++#: ioctl/libdm-iface.c:826
+ #, c-format
+ msgid "Incompatible libdevmapper %s%s and kernel driver %s"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:760
++#: ioctl/libdm-iface.c:990
+ #, c-format
+ msgid "dm_task_set_newname: strdup(%s) failed"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:780
++#: ioctl/libdm-iface.c:1000
++#, c-format
++msgid "dm_task_set_message: strdup(%s) failed"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1019
++msgid "dm_task_set_geometry: dm_malloc failed"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1024
++msgid "dm_task_set_geometry: sprintf failed"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1065
+ #, c-format
+-msgid "create_target: malloc(%d) failed"
++msgid "create_target: malloc(%zu) failed"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:787
++#: ioctl/libdm-iface.c:1073
+ msgid "create_target: strdup(params) failed"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:792
++#: ioctl/libdm-iface.c:1078
+ msgid "create_target: strdup(type) failed"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:831
++#: ioctl/libdm-iface.c:1117
+ #, c-format
+ msgid "t->params= '%s'"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:864
++#: ioctl/libdm-iface.c:1185
++msgid "targets and message are incompatible"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1190
+ msgid "targets and newname are incompatible"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:902
+-msgid "Missing major number for persistent device"
++#: ioctl/libdm-iface.c:1195
++msgid "targets and geometry are incompatible"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:939 ioctl/libdevmapper.c:964
+-msgid "Failed to create device-mapper task struct"
++#: ioctl/libdm-iface.c:1200
++msgid "message and newname are incompatible"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1205
++msgid "geometry and newname are incompatible"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1210
++msgid "geometry and message are incompatible"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1215
++msgid "message is required with sector"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:1008
++#: ioctl/libdm-iface.c:1255
++msgid "Missing major number for persistent device."
++msgstr ""
++
++#: ioctl/libdm-iface.c:1265
+ #, c-format
+-msgid "Internal error: unknown device-mapper task %d"
++msgid "Unable to find name for device (%u:%u)"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1269
++#, c-format
++msgid "device (%u:%u) is %s for compatibility with old kernel"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1327
++#, c-format
++msgid "opendir %s: %s"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:1024
+-msgid "Couldn't create ioctl argument"
++#: ioctl/libdm-iface.c:1341
++#, c-format
++msgid "closedir %s: %s"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1399 ioctl/libdm-iface.c:1427 ioctl/libdm-iface.c:1478
++msgid "Failed to create device-mapper task struct"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1465
++msgid "Failed to revert device creation."
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:1032
++#: ioctl/libdm-iface.c:1545
++msgid "Couldn't create ioctl argument."
++msgstr ""
++
++#: ioctl/libdm-iface.c:1557
++#, c-format
++msgid "dm %s %s %s%s%s %s%.0d%s%.0d%s%s%c%c%s %.0llu %s [%u]"
++msgstr ""
++
++#: ioctl/libdm-iface.c:1581 ioctl/libdm-iface.c:1586
+ #, c-format
+-msgid "dm %s %s %s %s"
++msgid "device-mapper: %s ioctl failed: %s"
+ msgstr ""
+ 
+-#: ioctl/libdevmapper.c:1041 ioctl/libdevmapper.c:1044
++#: ioctl/libdm-iface.c:1616
+ #, c-format
+-msgid "device-mapper ioctl cmd %d failed: %s"
++msgid "Internal error: unknown device-mapper task %d"
+ msgstr ""
+ 
+-#: libdm-common.c:94
++#: ioctl/libdm-iface.c:1653
++msgid "Warning: libdevmapper buffer too small for data"
++msgstr ""
++
++#: libdm-common.c:99
+ #, c-format
+-msgid "dm_task_create: malloc(%d) failed"
++msgid "dm_task_create: malloc(%zu) failed"
+ msgstr ""
+ 
+-#: libdm-common.c:126
++#: libdm-common.c:141
+ #, c-format
+ msgid "dm_task_set_name: Device %s not found"
+ msgstr ""
+ 
+-#: libdm-common.c:135
++#: libdm-common.c:150
+ #, c-format
+ msgid "dm_task_set_name: strdup(%s) failed"
+ msgstr ""
+ 
+-#: libdm-common.c:150
++#: libdm-common.c:165
+ #, c-format
+ msgid "dm_task_set_uuid: strdup(%s) failed"
+ msgstr ""
+ 
+-#: libdm-common.c:160
++#: libdm-common.c:234
++#, c-format
++msgid "%s: matchpathcon %07o failed: %s"
++msgstr ""
++
++#: libdm-common.c:239
+ #, c-format
+-msgid "Setting major: %d"
++msgid "Setting SELinux context for %s to %s."
+ msgstr ""
+ 
+-#: libdm-common.c:168
++#: libdm-common.c:242
+ #, c-format
+-msgid "Setting minor: %d"
++msgid "%s: lsetfilecon failed: %s"
+ msgstr ""
+ 
+-#: libdm-common.c:201 libdm-common.c:235
++#: libdm-common.c:264 libdm-common.c:311
+ #, c-format
+ msgid "A non-block device file at '%s' is already present"
+ msgstr ""
+ 
+-#: libdm-common.c:210 libdm-common.c:245 libdm-common.c:271
++#: libdm-common.c:274 libdm-common.c:321 libdm-common.c:347
+ #, c-format
+ msgid "Unable to unlink device node for '%s'"
+ msgstr ""
+ 
+-#: libdm-common.c:217
++#: libdm-common.c:282
+ #, c-format
+ msgid "Unable to make device node for '%s'"
+ msgstr ""
+ 
+-#: libdm-common.c:252
++#: libdm-common.c:288
++#, c-format
++msgid "%s: chown failed: %s"
++msgstr ""
++
++#: libdm-common.c:328
+ #, c-format
+ msgid "Unable to rename device node from '%s' to '%s'"
+ msgstr ""
+ 
+-#: libdm-common.c:326
++#: libdm-common.c:407
+ msgid "Insufficient memory to stack mknod operation"
+ msgstr ""
++
++#: libdm-common.c:504
++msgid "Failed to get driver version"
++msgstr ""
++
++#: libdm-deptree.c:157
++msgid "dm_tree_create malloc failed"
++msgstr ""
++
++#: libdm-deptree.c:169
++msgid "dtree pool creation failed"
++msgstr ""
++
++#: libdm-deptree.c:175
++msgid "dtree hash creation failed"
++msgstr ""
++
++#: libdm-deptree.c:182
++msgid "dtree uuid hash creation failed"
++msgstr ""
++
++#: libdm-deptree.c:220
++msgid "dtree link allocation failed"
++msgstr ""
++
++#: libdm-deptree.c:314
++msgid "_create_dm_tree_node alloc failed"
++msgstr ""
++
++#: libdm-deptree.c:334
++msgid "dtree node hash insertion failed"
++msgstr ""
++
++#: libdm-deptree.c:341
++msgid "dtree uuid hash insertion failed"
++msgstr ""
++
++#: libdm-deptree.c:394
++msgid "deps dm_task creation failed"
++msgstr ""
++
++#: libdm-deptree.c:399
++#, c-format
++msgid "_deps: failed to set major for (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:405
++#, c-format
++msgid "_deps: failed to set minor for (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:411
++#, c-format
++msgid "_deps: task run failed for (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:417
++#, c-format
++msgid "_deps: failed to get info for (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:428
++#, c-format
++msgid "Inconsistent dtree major number: %u != %u"
++msgstr ""
++
++#: libdm-deptree.c:433
++#, c-format
++msgid "Inconsistent dtree minor number: %u != %u"
++msgstr ""
++
++#: libdm-deptree.c:438 libdm-deptree.c:577 libdm-deptree.c:606
++msgid "name pool_strdup failed"
++msgstr ""
++
++#: libdm-deptree.c:442 libdm-deptree.c:581
++msgid "uuid pool_strdup failed"
++msgstr ""
++
++#: libdm-deptree.c:520
++msgid "_node_clear_table failed: missing info"
++msgstr ""
++
++#: libdm-deptree.c:525
++msgid "_node_clear_table failed: missing name"
++msgstr ""
++
++#: libdm-deptree.c:533
++#, c-format
++msgid "Clearing inactive table %s (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:538
++#, c-format
++msgid "Table clear dm_task creation failed for %s"
++msgstr ""
++
++#: libdm-deptree.c:544
++#, c-format
++msgid "Failed to set device number for %s table clear"
++msgstr ""
++
++#: libdm-deptree.c:552
++#, c-format
++msgid "_node_clear_table failed: info missing after running task for %s"
++msgstr ""
++
++#: libdm-deptree.c:791
++msgid "_info_by_dev: dm_task creation failed"
++msgstr ""
++
++#: libdm-deptree.c:796
++msgid "_info_by_dev: Failed to set device number"
++msgstr ""
++
++#: libdm-deptree.c:802 libdm-deptree.c:831 libdm-deptree.c:866
++#: libdm-deptree.c:897 libdm-deptree.c:930 libdm-deptree.c:1191
++#: libdm-deptree.c:1456
++msgid "Failed to disable open_count"
++msgstr ""
++
++#: libdm-deptree.c:817
++#, c-format
++msgid "Removing %s (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:820
++#, c-format
++msgid "Deactivation dm_task creation failed for %s"
++msgstr ""
++
++#: libdm-deptree.c:825
++#, c-format
++msgid "Failed to set device number for %s deactivation"
++msgstr ""
++
++#: libdm-deptree.c:850
++#, c-format
++msgid "Renaming %s (%u:%u) to %s"
++msgstr ""
++
++#: libdm-deptree.c:853
++#, c-format
++msgid "Rename dm_task creation failed for %s"
++msgstr ""
++
++#: libdm-deptree.c:858
++#, c-format
++msgid "Failed to set name for %s rename."
++msgstr ""
++
++#: libdm-deptree.c:883
++#, c-format
++msgid "Resuming %s (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:886 libdm-deptree.c:919
++#, c-format
++msgid "Suspend dm_task creation failed for %s"
++msgstr ""
++
++#: libdm-deptree.c:891
++#, c-format
++msgid "Failed to set device number for %s resumption."
++msgstr ""
++
++#: libdm-deptree.c:913
++#, c-format
++msgid "Suspending %s (%u:%u)%s%s"
++msgstr ""
++
++#: libdm-deptree.c:924
++#, c-format
++msgid "Failed to set device number for %s suspension."
++msgstr ""
++
++#: libdm-deptree.c:933
++msgid "Failed to set skip_lockfs flag."
++msgstr ""
++
++#: libdm-deptree.c:936
++msgid "Failed to set no_flush flag."
++msgstr ""
++
++#: libdm-deptree.c:983
++#, c-format
++msgid "Unable to deactivate %s (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:1049
++#, c-format
++msgid "Unable to suspend %s (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:1127
++#, c-format
++msgid "Failed to rename %s (%u:%u) to %s"
++msgstr ""
++
++#: libdm-deptree.c:1140 libdm-deptree.c:1531
++#, c-format
++msgid "Unable to resume %s (%u:%u)"
++msgstr ""
++
++#: libdm-deptree.c:1161
++#, c-format
++msgid "Creating %s"
++msgstr ""
++
++#: libdm-deptree.c:1164
++#, c-format
++msgid "Create dm_task creation failed for %s"
++msgstr ""
++
++#: libdm-deptree.c:1169
++#, c-format
++msgid "Failed to set device name for %s"
++msgstr ""
++
++#: libdm-deptree.c:1174
++#, c-format
++msgid "Failed to set uuid for %s"
++msgstr ""
++
++#: libdm-deptree.c:1181
++#, c-format
++msgid "Failed to set device number for %s creation."
++msgstr ""
++
++#: libdm-deptree.c:1186 libdm-deptree.c:1451
++#, c-format
++msgid "Failed to set read only flag for %s"
++msgstr ""
++
++#: libdm-deptree.c:1206
++#, c-format
++msgid "Failed to format %s device number for %s as dm target (%u,%u)"
++msgstr ""
++
++#: libdm-deptree.c:1387
++#, c-format
++msgid "Adding target: %lu %lu %s %s"
++msgstr ""
++
++#: libdm-deptree.c:1407
++msgid "Insufficient space for target parameters."
++msgstr ""
++
++#: libdm-deptree.c:1420
++#, c-format
++msgid "Insufficient space in params[%zu] for target parameters."
++msgstr ""
++
++#: libdm-deptree.c:1426
++msgid "Target parameter size too big. Aborting."
++msgstr ""
++
++#: libdm-deptree.c:1437
++#, c-format
++msgid "Loading %s table"
++msgstr ""
++
++#: libdm-deptree.c:1440
++#, c-format
++msgid "Reload dm_task creation failed for %s"
++msgstr ""
++
++#: libdm-deptree.c:1446
++#, c-format
++msgid "Failed to set device number for %s reload."
++msgstr ""
++
++#: libdm-deptree.c:1463
++msgid "Failed to suppress reload of identical tables."
++msgstr ""
++
++#: libdm-deptree.c:1468
++#, c-format
++msgid "Suppressed %s identical table reload."
++msgstr ""
++
++#: libdm-deptree.c:1559
++msgid "Failed to get uuid for dtree node."
++msgstr ""
++
++#: libdm-deptree.c:1581
++msgid "dtree node segment allocation failed"
++msgstr ""
++
++#: libdm-deptree.c:1612 libdm-deptree.c:1640 libdm-deptree.c:1649
++#, c-format
++msgid "Couldn't find snapshot origin uuid %s."
++msgstr ""
++
++#: libdm-deptree.c:1715 libdm-deptree.c:1813
++msgid "Internal error: Attempt to add target area to missing segment."
++msgstr ""
++
++#: libdm-deptree.c:1723
++msgid "log uuid pool_strdup failed"
++msgstr ""
++
++#: libdm-deptree.c:1728
++#, c-format
++msgid "Couldn't find mirror log uuid %s."
++msgstr ""
++
++#: libdm-deptree.c:1762
++msgid "Failed to allocate target segment area."
++msgstr ""
++
++#: libdm-deptree.c:1785
++msgid "dm_tree_node_add_target_area called without device"
++msgstr ""
++
++#: libdm-deptree.c:1791
++#, c-format
++msgid "Couldn't find area uuid %s."
++msgstr ""
++
++#: libdm-deptree.c:1798
++#, c-format
++msgid "Device %s not found."
++msgstr ""
++
++#: libdm-deptree.c:1803
++#, c-format
++msgid "Device %s is not a block device."
++msgstr ""
++
++#: libdm-file.c:28
++#, c-format
++msgid "Creating directory \"%s\""
++msgstr ""
++
++#: libdm-file.c:36 libdm-file.c:47
++#, c-format
++msgid "%s: mkdir failed: %s"
++msgstr ""
++
++#: libdm-file.c:71
++#, c-format
++msgid "Directory \"%s\" not found"
++msgstr ""
++
++#: libdm-report.c:108
++msgid "dm_report_field_string: dm_pool_strdup failed"
++msgstr ""
++
++#: libdm-report.c:126 libdm-report.c:131
++msgid "dm_report_field_int: dm_pool_alloc failed"
++msgstr ""
++
++#: libdm-report.c:136
++#, c-format
++msgid "dm_report_field_int: int too big: %d"
++msgstr ""
++
++#: libdm-report.c:155 libdm-report.c:160
++msgid "dm_report_field_uint32: dm_pool_alloc failed"
++msgstr ""
++
++#: libdm-report.c:165
++#, c-format
++msgid "dm_report_field_uint32: uint32 too big: %u"
++msgstr ""
++
++#: libdm-report.c:184 libdm-report.c:189
++msgid "dm_report_field_int32: dm_pool_alloc failed"
++msgstr ""
++
++#: libdm-report.c:194
++#, c-format
++msgid "dm_report_field_int32: int32 too big: %d"
++msgstr ""
++
++#: libdm-report.c:213 libdm-report.c:218
++msgid "dm_report_field_uint64: dm_pool_alloc failed"
++msgstr ""
++
++#: libdm-report.c:223
++#, c-format
++msgid "dm_report_field_uint64: uint64 too big: %d"
++msgstr ""
++
++#: libdm-report.c:264 libdm-report.c:428
++msgid " "
++msgstr ""
++
++#: libdm-report.c:265
++#, c-format
++msgid "%s Fields"
++msgstr ""
++
++#: libdm-report.c:266
++#, c-format
++msgid "%*.*s"
++msgstr ""
++
++#: libdm-report.c:273
++#, c-format
++msgid "  %-*s - %s"
++msgstr ""
++
++#: libdm-report.c:291
++#, c-format
++msgid "dm_report: field not match: %s"
++msgstr ""
++
++#: libdm-report.c:316 libdm-report.c:347
++msgid "dm_report: struct field_properties allocation failed"
++msgstr ""
++
++#: libdm-report.c:361
++#, c-format
++msgid "dm_report: Ignoring duplicate sort field: %s"
++msgstr ""
++
++#: libdm-report.c:393
++msgid "dm_report: Missing sort field name"
++msgstr ""
++
++#: libdm-report.c:430
++#, c-format
++msgid "Unrecognised field: %.*s"
++msgstr ""
++
++#: libdm-report.c:452
++#, c-format
++msgid "dm_report: Unrecognised field: %.*s"
++msgstr ""
++
++#: libdm-report.c:474
++msgid "dm_report_init: dm_malloc failed"
++msgstr ""
++
++#: libdm-report.c:506
++msgid "dm_report_init: allocation of memory pool failed"
++msgstr ""
++
++#: libdm-report.c:552
++msgid "dm_report_object: struct row allocation failed"
++msgstr ""
++
++#: libdm-report.c:562
++msgid "dm_report_object: row sort value structure allocation failed"
++msgstr ""
++
++#: libdm-report.c:573
++msgid "dm_report_object: struct dm_report_field allocation failed"
++msgstr ""
++
++#: libdm-report.c:586
++#, c-format
++msgid "dm_report_object: report function failed for field %s"
++msgstr ""
++
++#: libdm-report.c:626
++msgid "dm_report: dm_pool_begin_object failed for headings"
++msgstr ""
++
++#: libdm-report.c:640
++msgid "dm_report: snprintf heading failed"
++msgstr ""
++
++#: libdm-report.c:644 libdm-report.c:649 libdm-report.c:656 libdm-report.c:661
++msgid "dm_report: Failed to generate report headings for printing"
++msgstr ""
++
++#: libdm-report.c:664 libdm-report.c:826
++#, c-format
++msgid "%s"
++msgstr ""
++
++#: libdm-report.c:727
++msgid "dm_report: sort array allocation failed"
++msgstr ""
++
++#: libdm-report.c:770
++msgid "dm_report: Unable to allocate output line"
++msgstr ""
++
++#: libdm-report.c:784 libdm-report.c:798 libdm-report.c:808 libdm-report.c:817
++msgid "dm_report: Unable to extend output line"
++msgstr ""
++
++#: libdm-report.c:794
++msgid "dm_report: left-aligned snprintf() failed"
++msgstr ""
++
++#: libdm-report.c:804
++msgid "dm_report: right-aligned snprintf() failed"
++msgstr ""
++
++#: libdm-report.c:823
++msgid "dm_report: Unable to terminate output line"
++msgstr ""
++
++#: mm/dbg_malloc.c:26
++msgid "Internal error: dm_strdup called with NULL pointer"
++msgstr ""
++
++#: mm/dbg_malloc.c:63 mm/dbg_malloc.c:238
++#, c-format
++msgid "Huge memory allocation (size %zu) rejected - metadata corruption?"
++msgstr ""
++
++#: mm/dbg_malloc.c:69
++#, c-format
++msgid "couldn't allocate any memory, size = %zu"
++msgstr ""
++
++#: mm/dbg_malloc.c:193
++msgid "You have a memory leak:"
++msgstr ""
++
++#: mm/dbg_malloc.c:208
++#, c-format
++msgid "block %d at %p, size %zu\t [%s]"
++msgstr ""
++
++#: mm/dbg_malloc.c:215
++#, c-format
++msgid "%ld bytes leaked in total"
++msgstr ""
++
++#: mm/pool-fast.c:43
++#, c-format
++msgid "Couldn't create memory pool %s (size %zu)"
++msgstr ""
++
++#: mm/pool-fast.c:132
++msgid "Internal error: pool_free asked to free pointer not in pool"
++msgstr ""
++
++#: mm/pool-fast.c:221
++#, c-format
++msgid "Out of memory.  Requested %zu bytes."
++msgstr ""
