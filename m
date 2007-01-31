@@ -1,15 +1,13 @@
-From: "Mike Snitzer" <snitzer@gmail.com>
-Subject: Re: [RFC] Multiple Snapshots - Manageability problem
-Date: Mon, 29 Jan 2007 23:39:43 -0500
-Message-ID: <170fa0d20701292039u144d29dcq86133ebe2514ff57@mail.gmail.com>
-References: <45A6CC0F.A9E3.000B.0@novell.com>
-	<20070112215917.GB7441@ether.msp.redhat.com>
+From: =?iso-8859-1?Q?Lo=EFc?= Minier <lool+redhat@via.ecp.fr>
+Subject: Weird discrepancy between /dev/mapper/* and /dev/dm-*
+	devices breaks lilo
+Date: Wed, 31 Jan 2007 11:47:37 +0100
+Message-ID: <20070131104737.GA29370@bee.dooz.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070112215917.GB7441@ether.msp.redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,41 +18,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 1/12/07, Benjamin Marzinski <bmarzins@redhat.com> wrote:
-> On Thu, Jan 11, 2007 at 11:18:13AM -0700, Vijai Babu Madhavan wrote:
+        Hi,
 
-> > I would like to receive some comments about what users, developers
-> > and others think about this.
-> >
->
-> Have you taken a look at Daniel Phillips cluster snapshot work?
->
-> http://sources.redhat.com/cluster/csnap/index.html
->
-> The code is not complete, and am not sure if Daniel is doing any work on it at
-> all, but it has a nice design to store the cow data, and that URL contains the
-> design documents. In brief:
->
-> There is one device that stores all cow data (the snapstore). It has three
-> main parts, an allocation bitmap, a superblock that stores metadata, and
-> an exception btree. The exception btree is indexed by the location of the data
-> on the origin. For each chuck on the origin device that has cow data for one or
-> more snapshots, there is an exception in the btree that lists the location of
-> the cow data on the snapstore device, and the snapshots which are using that
-> exception.  This list of snapshots is stored as a bitmask.
->
-> This means that no matter now many snapshots you have, all you need to do to
-> write to the origin is check the btree.
+ When issuing the same dmsetup commands on two device nodes with the
+ same major/minor, the results are puzzling:
+ bee:~# file /dev/dm-1
+ /dev/dm-1: block special (254/1)
+ bee:~# file /dev/mapper/bee--sata-refuge
+ /dev/mapper/bee--sata-refuge: block special (254/1)
+ bee:~# dmsetup table /dev/mapper/bee--sata-refuge
+ 0 131072 linear 8:2 117440896
+ bee:~# dmsetup table /dev/dm-1
+ dm_task_set_name: Device /dev/dm-1 not found
+ Command failed
 
-Daniel's work has become an integral part of the hotcakes project:
-http://code.google.com/p/hotcakes/
+ (Same problem with short names:)
+ bee:~# dmsetup table bee--sata-refuge
+ 0 131072 linear 8:2 117440896
+ bee:~# dmsetup table dm-1
+ device-mapper: table ioctl failed: No such device or address
+ Command failed
 
-There was/is talk of making the dm targets used for ddsnap work
-locally as a replacement for dm-snapshot.  It might be wise to catch
-up with the hotcakes people to see if you could leverage it as the
-basis for a dm-snapshot++
 
-Mike
+ This is a problem hitting lilo relatively hard as it has logic to
+ ignore devices with the same major/minor; that is, if lilo sees "dm-1"
+ first and then the corresponding /dev/mapper device, it will drop any
+ reference to the mapper device.  As having /boot on RAID 1 for lilo
+ requires calling "dmsetup table" on the root device, this breaks lilo
+ for a lot of people.
+
+ Of course, it would be possible to patch lilo to explicitely skip
+ /dev/dm-* devices, but it seems this would be a workaround instead of
+ the real fix.
+
+
+ This is under 2.6.18 and libdevmapper 1.02.12-1.
+
+
+ You can find more details in Debian bug
+ <http://bugs.debian.org/401393>, the bug was triggered by the addition
+ of the /dev/dm-* device in udev (see <http://bugs.debian.org/392623>),
+ and affects other distributions as well,
+ <https://launchpad.net/distros/ubuntu/+source/lilo-installer/+bug/23835>=
+.
+
+
+ (RAID 1 support in lilo comes from a third-party patch added in the
+ Debian packaging.)
+
+   Bye,
+--=20
+Lo=EFc Minier <lool@dooz.org>
