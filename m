@@ -1,14 +1,16 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] Add userspace device-mapper target
-Date: Wed, 31 Jan 2007 21:39:46 +0900
-Message-ID: <20070131213946H.fujita.tomonori@lab.ntt.co.jp>
-References: <m3lkjltq1x.fsf@guaranine.beaverton.ibm.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Weird discrepancy between /dev/mapper/* and /dev/dm-*
+	devices breaks lilo
+Date: Wed, 31 Jan 2007 15:06:35 +0000
+Message-ID: <20070131150635.GB21980@agk.surrey.redhat.com>
+References: <20070131104737.GA29370@bee.dooz.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3lkjltq1x.fsf@guaranine.beaverton.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <20070131104737.GA29370@bee.dooz.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,12 +23,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: [dm-devel] [PATCH 1/2] Add userspace device-mapper target
-Date: Mon, 29 Jan 2007 14:40:26 -0800
+On Wed, Jan 31, 2007 at 11:47:37AM +0100, Lo=EFc Minier wrote:
+>  When issuing the same dmsetup commands on two device nodes with the
+>  same major/minor, the results are puzzling:
 
-> This adds the dm-userspace kernel device-mapper target.  It contains
-> my latest changes, as well as Fujita's ringbuffer transport.
+The device-mapper ioctls allow mapped devices to be referenced in three w=
+ays:
+  name
+  uuid
+  major+minor
 
-I can't apply both cleanly. Can you resend them as an attachment
-(though I don't like attachments).
+The uuid is optional.
+
+dmsetup provides a command line wrapper around the ioctls.  It also
+maintains the /dev/mapper directory, creating inodes there called 'name'.
+It understands the above three ways of referencing devices: it does not
+depend on the existing contents of '/dev'.
+
+Some distributions chose to configure udev to create /dev/dm-N inodes whe=
+re
+N is the minor number.  (I have always discouraged that as a recipe for
+confusion: I believe that using configurable names is a better approach.)
+
+Alasdair
+--=20
+agk@redhat.com
