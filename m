@@ -1,16 +1,14 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 1/2] Add userspace device-mapper target
-Date: Fri, 02 Feb 2007 00:47:19 +0900
-Message-ID: <20070202004719P.fujita.tomonori@lab.ntt.co.jp>
-References: <m3lkjltq1x.fsf@guaranine.beaverton.ibm.com>
-	<20070131213946H.fujita.tomonori@lab.ntt.co.jp>
-	<m3d54vqkvc.fsf@guaranine.beaverton.ibm.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: no_path_retry question
+Date: Thu, 1 Feb 2007 20:17:16 -0600
+Message-ID: <20070202021716.GA3141@ether.msp.redhat.com>
+References: <OFA96391CF.1F30E02D-ON87257274.007B864A-87257274.007BD911@seagate.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3d54vqkvc.fsf@guaranine.beaverton.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <OFA96391CF.1F30E02D-ON87257274.007B864A-87257274.007BD911@seagate.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,17 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [dm-devel] [PATCH 1/2] Add userspace device-mapper target
-Date: Wed, 31 Jan 2007 07:25:11 -0800
-
-> FT> I can't apply both cleanly. 
+On Wed, Jan 31, 2007 at 03:32:43PM -0700, Dale.R.Fowle@seagate.com wrote:
 > 
-> Hmm, really?  The kernel patch is against 2.6.20-rc6 and the library
-> patch is against device-mapper CVS from January 29th.
+> Hi all, I have a question on what the retry in the no_path_retry option
+> refers to. If we use a number like 60, instead of "fail" or "queue", does
+> Multipath Tools retry an IO at one second intervals? Or is this retry based
+> off of the SCSI timeout value within the kernel?
 
-I meant that your patches look corrupted. Are you sure that you can
-apply previous your mails as a patch?
+It refers to the number of times that multipath will check for a path before
+failing. So it is approximately no_path_retry * polling_interval seconds.
+
+-Ben
+> 
+> Thanks,
+> Dale
+> 
+> 
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
