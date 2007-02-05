@@ -1,9 +1,12 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmeventd/dmeventd.c  ...
-Date: 2 Feb 2007 17:08:52 -0000
-Message-ID: <20070202170852.22514.qmail@sourceware.org>
+From: "Srinivas Ramani" <sramani@pillardata.com>
+Subject: Changes hwtable.c to Support New Pillar Hardware
+Date: Mon, 5 Feb 2007 13:52:35 -0800
+Message-ID: <35D744B011AD9A4A86B5962E85181C781091B776@caex02.trans.corp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C7496F.F28ED879"
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,379 +16,821 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com, christophe.varoqui@free.fr, bmarzins@redhat.com, lmb@suse.de, dmo@osdl.org, mbroz@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-02-02 17:08:51
+This is a multi-part message in MIME format.
 
-Modified files:
-	.              : WHATS_NEW 
-	dmeventd       : dmeventd.c dmeventd.h libdevmapper-event.c 
+------_=_NextPart_001_01C7496F.F28ED879
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_002_01C7496F.F28ED879"
 
-Log message:
-	Improve dmeventd messaging protocol: drain pipe and tag messages.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.168&r2=1.169
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.45&r2=1.46
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.h.diff?cvsroot=dm&r1=1.3&r2=1.4
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.20&r2=1.21
+------_=_NextPart_002_01C7496F.F28ED879
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
---- device-mapper/WHATS_NEW	2007/01/29 20:25:19	1.168
-+++ device-mapper/WHATS_NEW	2007/02/02 17:08:51	1.169
-@@ -1,5 +1,6 @@
- Version 1.02.18 -
- ===================================
-+  Improve dmeventd messaging protocol: drain pipe and tag messages.
- 
- Version 1.02.17 - 29th January 2007
- ===================================
---- device-mapper/dmeventd/dmeventd.c	2007/01/25 14:16:20	1.45
-+++ device-mapper/dmeventd/dmeventd.c	2007/02/02 17:08:51	1.46
-@@ -146,6 +146,7 @@
- 
- /* Structure to keep parsed register variables from client message. */
- struct message_data {
-+	char *id;
- 	char *dso_name;		/* Name of DSO. */
- 	char *device_uuid;	/* Mapped device path. */
- 	union {
-@@ -320,6 +321,8 @@
- /* Free message memory. */
- static void _free_message(struct message_data *message_data)
- {
-+	if (message_data->id)
-+		dm_free(message_data->id);
- 	if (message_data->dso_name)
- 		dm_free(message_data->dso_name);
- 
-@@ -342,7 +345,8 @@
- 	 * Retrieve application identifier, mapped device
- 	 * path and events # string from message.
- 	 */
--	if (_fetch_string(&message_data->dso_name, &p, ' ') &&
-+	if (_fetch_string(&message_data->id, &p, ' ') &&
-+	    _fetch_string(&message_data->dso_name, &p, ' ') &&
- 	    _fetch_string(&message_data->device_uuid, &p, ' ') &&
- 	    _fetch_string(&message_data->events.str, &p, ' ') &&
- 	    _fetch_string(&message_data->timeout.str, &p, ' ')) {
-@@ -875,8 +879,8 @@
- 		syslog(LOG_ERR, "dmeventd %s dlopen failed: %s", data->dso_name,
- 		       dlerr);
- 		data->msg->size =
--		    dm_asprintf(&(data->msg->data), "%s dlopen failed: %s",
--				data->dso_name, dlerr);
-+		    dm_asprintf(&(data->msg->data), "%s %s dlopen failed: %s",
-+				data->id, data->dso_name, dlerr);
- 		return NULL;
- 	}
- 
-@@ -1056,7 +1060,8 @@
- {
- 	struct dm_event_daemon_message *msg = message_data->msg;
- 
--	const char *fmt = "%s %s %u";
-+	const char *fmt = "%s %s %s %u";
-+	const char *id = message_data->id;
- 	const char *dso = thread->dso_data->dso_name;
- 	const char *dev = thread->device.uuid;
- 	unsigned events = ((thread->status == DM_THREAD_RUNNING)
-@@ -1066,7 +1071,7 @@
- 	if (msg->data)
- 		dm_free(msg->data);
- 
--	msg->size = dm_asprintf(&(msg->data), fmt, dso, dev, events);
-+	msg->size = dm_asprintf(&(msg->data), fmt, id, dso, dev, events);
- 
- 	_unlock_mutex();
- 
-@@ -1180,7 +1185,8 @@
- 	_lock_mutex();
- 	if ((thread = _lookup_thread_status(message_data))) {
- 		msg->size =
--		    dm_asprintf(&(msg->data), "%" PRIu32, thread->timeout);
-+		    dm_asprintf(&(msg->data), "%s %" PRIu32, message_data->id,
-+				thread->timeout);
- 	} else {
- 		msg->data = NULL;
- 		msg->size = 0;
-@@ -1375,17 +1381,32 @@
- static int _do_process_request(struct dm_event_daemon_message *msg)
- {
- 	int ret;
-+	char *answer;
- 	static struct message_data message_data;
- 
- 	/* Parse the message. */
- 	memset(&message_data, 0, sizeof(message_data));
- 	message_data.msg = msg;
--	if (msg->cmd != DM_EVENT_CMD_ACTIVE && !_parse_message(&message_data)) {
-+	if (msg->cmd == DM_EVENT_CMD_HELLO)  {
-+		ret = 0;
-+		answer = dm_strdup(msg->data);
-+		if (answer) {
-+			msg->size = dm_asprintf(&(msg->data), "%s HELLO", answer);
-+			dm_free(answer);
-+		} else {
-+			msg->size = 0;
-+			msg->data = NULL;
-+		}
-+	} else if (msg->cmd != DM_EVENT_CMD_ACTIVE && !_parse_message(&message_data)) {
- 		stack;
- 		ret = -EINVAL;
- 	} else
- 		ret = _handle_request(msg, &message_data);
- 
-+	msg->cmd = ret;
-+	if (!msg->data)
-+		msg->size = dm_asprintf(&(msg->data), "%s %s", message_data.id, strerror(-ret));
-+
- 	_free_message(&message_data);
- 
- 	return ret;
-@@ -1405,16 +1426,9 @@
- 	if (!_client_read(fifos, &msg))
- 		return;
- 
--	msg.cmd = _do_process_request(&msg);
--	if (!msg.data) {
--		msg.data = dm_strdup(strerror(-msg.cmd));
--		if (msg.data)
--			msg.size = strlen(msg.data) + 1;
--		else {
--			msg.size = 0;
--			stack;
--		}
--	}
-+	/* _do_process_request fills in msg (if memory allows for
-+	   data, otherwise just cmd and size = 0) */
-+	_do_process_request(&msg);
- 
- 	if (!_client_write(fifos, &msg))
- 		stack;
---- device-mapper/dmeventd/dmeventd.h	2007/01/08 15:18:52	1.3
-+++ device-mapper/dmeventd/dmeventd.h	2007/02/02 17:08:51	1.4
-@@ -20,6 +20,7 @@
- 	DM_EVENT_CMD_GET_NEXT_REGISTERED_DEVICE,
- 	DM_EVENT_CMD_SET_TIMEOUT,
- 	DM_EVENT_CMD_GET_TIMEOUT,
-+	DM_EVENT_CMD_HELLO,
- };
- 
- /* Message passed between client and daemon. */
---- device-mapper/dmeventd/libdevmapper-event.c	2007/01/22 15:03:57	1.20
-+++ device-mapper/dmeventd/libdevmapper-event.c	2007/02/02 17:08:51	1.21
-@@ -30,6 +30,8 @@
- #include <sys/wait.h>
- #include <arpa/inet.h>		/* for htonl, ntohl */
- 
-+static int _sequence_nr = 0;
-+
- struct dm_event_handler {
- 	char *dso;
- 
-@@ -182,6 +184,21 @@
- 	return dmevh->mask;
- }
- 
-+static int _check_message_id(struct dm_event_daemon_message *msg)
-+{
-+	int pid, seq_nr;
-+
-+	if ((sscanf(msg->data, "%d:%d", &pid, &seq_nr) != 2) ||
-+	    (pid != getpid()) || (seq_nr != _sequence_nr)) {
-+		log_error("Ignoring out-of-sequence reply from dmeventd. "
-+			  "Expected %d:%d but received %s", getpid(),
-+			  _sequence_nr, msg->data);
-+		return 0;
-+	}
-+
-+	return 1;
-+}
-+
- /*
-  * daemon_read
-  * @fifos
-@@ -260,11 +277,28 @@
- 
- 	size_t size = 2 * sizeof(uint32_t) + msg->size;
- 	char *buf = alloca(size);
-+	char drainbuf[128];
-+	struct timeval tval = { 0, 0 };
- 
- 	*((uint32_t *)buf) = htonl(msg->cmd);
- 	*((uint32_t *)buf + 1) = htonl(msg->size);
- 	memcpy(buf + 2 * sizeof(uint32_t), msg->data, msg->size);
- 
-+	/* drain the answer fifo */
-+	while (1) {
-+		FD_ZERO(&fds);
-+		FD_SET(fifos->server, &fds);
-+		tval.tv_usec = 100;
-+		ret = select(fifos->server + 1, &fds, NULL, NULL, &tval);
-+		if ((ret < 0) && (errno != EINTR)) {
-+			log_error("Unable to talk to event daemon");
-+			return 0;
-+		}
-+		if (ret == 0)
-+			break;
-+		read(fifos->server, drainbuf, 127);
-+	}
-+
- 	while (bytes < size) {
- 		do {
- 			/* Watch daemon write FIFO to be ready for output. */
-@@ -301,7 +335,7 @@
- {
- 	const char *dso = dso_name ? dso_name : "";
- 	const char *dev = dev_name ? dev_name : "";
--	const char *fmt = "%s %s %u %" PRIu32;
-+	const char *fmt = "%d:%d %s %s %u %" PRIu32;
- 	int msg_size;
- 	memset(msg, 0, sizeof(*msg));
- 
-@@ -310,8 +344,10 @@
- 	 * into ASCII message string.
- 	 */
- 	msg->cmd = cmd;
--	if ((msg_size = dm_asprintf(&(msg->data), fmt, dso, dev, evmask,
--				     timeout)) < 0) {
-+	if (cmd == DM_EVENT_CMD_HELLO)
-+		fmt = "%d:%d HELLO";
-+	if ((msg_size = dm_asprintf(&(msg->data), fmt, getpid(), _sequence_nr,
-+				    dso, dev, evmask, timeout)) < 0) {
- 		log_error("_daemon_talk: message allocation failed");
- 		return -ENOMEM;
- 	}
-@@ -326,10 +362,14 @@
- 		return -EIO;
- 	}
- 
--	if (!_daemon_read(fifos, msg)) {
--		stack;
--		return -EIO;
--	}
-+	do {
-+		if (!_daemon_read(fifos, msg)) {
-+			stack;
-+			return -EIO;
-+		}
-+	} while (!_check_message_id(msg));
-+
-+	_sequence_nr++;
- 
- 	return (int32_t) msg->cmd;
- }
-@@ -507,7 +547,9 @@
- 		return -ESRCH;
- 	}
- 
--	ret = _daemon_talk(&fifos, msg, cmd, dso_name, dev_name, evmask, timeout);
-+	ret = _daemon_talk(&fifos, msg, DM_EVENT_CMD_HELLO, 0, 0, 0, 0);
-+	if (!ret)
-+		ret = _daemon_talk(&fifos, msg, cmd, dso_name, dev_name, evmask, timeout);
- 
- 	/* what is the opposite of init? */
- 	_dtr_client(&fifos);
-@@ -521,7 +563,7 @@
- 	int ret = 1, err;
- 	const char *uuid;
- 	struct dm_task *dmt;
--	struct dm_event_daemon_message msg;
-+	struct dm_event_daemon_message msg = { 0, 0, NULL };
- 
- 	if (!(dmt = _get_device_info(dmevh))) {
- 		stack;
-@@ -551,7 +593,7 @@
- 	int ret = 1, err;
- 	const char *uuid;
- 	struct dm_task *dmt;
--	struct dm_event_daemon_message msg;
-+	struct dm_event_daemon_message msg = { 0, 0, NULL };
- 
- 	if (!(dmt = _get_device_info(dmevh))) {
- 		stack;
-@@ -598,15 +640,20 @@
- static int _parse_message(struct dm_event_daemon_message *msg, char **dso_name,
- 			 char **uuid, enum dm_event_mask *evmask)
- {
-+	char *id = NULL;
- 	char *p = msg->data;
- 
--	if ((*dso_name = _fetch_string(&p, ' ')) &&
-+	if ((id = _fetch_string(&p, ' ')) &&
-+	    (*dso_name = _fetch_string(&p, ' ')) &&
- 	    (*uuid = _fetch_string(&p, ' '))) {
- 		*evmask = atoi(p);
- 
-+		dm_free(id);
- 		return 0;
- 	}
- 
-+	if (id)
-+		dm_free(id);
- 	return -ENOMEM;
- }
- 
-@@ -621,12 +668,12 @@
-  */
- int dm_event_get_registered_device(struct dm_event_handler *dmevh, int next)
- {
--	int ret;
-+	int ret = 0;
- 	const char *uuid = NULL;
- 	char *reply_dso = NULL, *reply_uuid = NULL;
--	enum dm_event_mask reply_mask;
--	struct dm_task *dmt;
--	struct dm_event_daemon_message msg;
-+	enum dm_event_mask reply_mask = 0;
-+	struct dm_task *dmt = NULL;
-+	struct dm_event_daemon_message msg = { 0, 0, NULL };
- 
- 	if (!(dmt = _get_device_info(dmevh))) {
- 		stack;
-@@ -696,9 +743,17 @@
- 
- #if 0				/* left out for now */
- 
-+static char *_skip_string(char *src, const int delimiter)
-+{
-+	src = srtchr(src, delimiter);
-+	if (src && *(src + 1))
-+		return src + 1;
-+	return NULL;
-+}
-+
- int dm_event_set_timeout(const char *device_path, uint32_t timeout)
- {
--	struct dm_event_daemon_message msg;
-+	struct dm_event_daemon_message msg = { 0, 0, NULL };
- 
- 	if (!device_exists(device_path))
- 		return -ENODEV;
-@@ -710,13 +765,20 @@
- int dm_event_get_timeout(const char *device_path, uint32_t *timeout)
- {
- 	int ret;
--	struct dm_event_daemon_message msg;
-+	struct dm_event_daemon_message msg = { 0, 0, NULL };
- 
- 	if (!device_exists(device_path))
- 		return -ENODEV;
- 	if (!(ret = _do_event(DM_EVENT_CMD_GET_TIMEOUT, &msg, NULL, device_path,
--			     0, 0)))
--		*timeout = atoi(msg.data);
-+			     0, 0))) {
-+		char *p = _skip_string(msg.data, ' ');
-+		if (!p) {
-+			log_error("malformed reply from dmeventd '%s'\n",
-+				  msg.data);
-+			return -EIO;
-+		}
-+		*timeout = atoi(p);
-+	}
- 	if (msg.data)
- 		dm_free(msg.data);
- 	return ret;
+Hi Folks;
+
+                 I am Srinivasan Ramani  from Pillar Data Systems .
+
+=20
+
+                 I am submitting code changes to support  the=20
+
+                 new Pillar  Axiom 300 and Axiom 550 arrays .
+
+=20
+
+                  I request the following change to hwtable.c file .
+
+=20
+
+                  This change has been tested at Pillar Data Systems  on
+RHEL 4 and 5 beta.
+
+=20
+
+                   If you have any comments or  suggestions please let
+me know.
+
+            =20
+
+=20
+
+/*
+
+       * Pillar Data controller family
+
+       *
+
+       * Maintainer : Srinivasan Ramani
+
+       * Mail : sramani@pillardata.com
+
+       */
+
+      {
+
+            .vendor        =3D "Pillar",
+
+            .product       =3D "*",
+
+            .getuid        =3D DEFAULT_GETUID,
+
+            .getprio       =3D "mpath_prio_alua %n",
+
+            .features      =3D DEFAULT_FEATURES,
+
+            .hwhandler     =3D DEFAULT_HWHANDLER,
+
+            .selector      =3D DEFAULT_SELECTOR,
+
+            .pgpolicy      =3D GROUP_BY_PRIO,
+
+            .pgfailback    =3D FAILBACK_UNDEF,
+
+            .rr_weight     =3D RR_WEIGHT_NONE,
+
+            .no_path_retry =3D NO_PATH_RETRY_UNDEF,
+
+            .minio         =3D DEFAULT_MINIO,
+
+            .checker_name  =3D TUR,
+
+      },
+
+=20
+
+=20
+
+=20
+
+        =20
+
+Also enclosed is the hwtable.c file.
+
+=20
+
+=20
+
+=20
+
+With Best Regards
+
+=20
+
+Srinivasan Ramani
+
+Pillar Data Systems
+2840 Junction Ave
+San Jose, CA 95134
+
+Ph: 408-518-4456
+
+=20
+
+=20
+
+=20
+
+                                          =20
+
+
+------_=_NextPart_002_01C7496F.F28ED879
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:st1=3D"urn:schemas-microsoft-com:office:smarttags" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"PostalCode"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"State"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"City"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"Street"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"place"/>
+<o:SmartTagType =
+namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags"
+ name=3D"address"/>
+<!--[if !mso]>
+<style>
+st1\:*{behavior:url(#default#ieooui) }
+</style>
+<![endif]-->
+<style>
+<!--
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:12.0pt;
+	font-family:"Times New Roman";}
+a:link, span.MsoHyperlink
+	{color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:Arial;
+	color:windowtext;}
+span.body1
+	{font-family:Arial;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.25in 1.0in 1.25in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Hi Folks;<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I
+am Srinivasan Ramani &nbsp;from Pillar Data Systems =
+.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+I am submitting code changes to support &nbsp;the =
+<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+new Pillar &nbsp;Axiom 300 and Axiom 550 arrays =
+.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;I request the following change to hwtable.c file =
+.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+This change has been tested at Pillar Data Systems &nbsp;on RHEL 4 and 5 =
+beta.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&nbsp;&nbsp;If you have any comments or &nbsp;suggestions please let me =
+know.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;
+<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>/*<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;*
+Pillar Data controller family<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+&nbsp;*<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;*
+Maintainer : Srinivasan Ramani<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;*
+Mail : sramani@pillardata.com<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+&nbsp;*/<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.vendor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D &quot;Pillar&quot;,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.product&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D &quot;*&quot;,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.getuid&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D DEFAULT_GETUID,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.getprio&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D &quot;mpath_prio_alua %n&quot;,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.features&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D DEFAULT_FEATURES,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.hwhandler&nbsp;&nbsp;&nbsp;&nbsp;
+=3D DEFAULT_HWHANDLER,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.selector&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D DEFAULT_SELECTOR,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.pgpolicy&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D GROUP_BY_PRIO,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.pgfailback&nbsp;&nbsp;&nbsp;
+=3D FAILBACK_UNDEF,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.rr_weight&nbsp;&nbsp;&nbsp;&nbsp;
+=3D RR_WEIGHT_NONE,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.no_path_retry
+=3D NO_PATH_RETRY_UNDEF,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.minio&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+=3D DEFAULT_MINIO,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+.checker_name&nbsp;
+=3D TUR,<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 =
+face=3D"Courier New"><span
+style=3D'font-size:10.0pt;font-family:"Courier =
+New"'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; },<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>Also enclosed is the hwtable.c =
+file.<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>With Best Regards<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><b><font size=3D1 color=3Dblue face=3DArial><span
+style=3D'font-size:9.0pt;font-family:Arial;color:blue;font-weight:bold'>S=
+rinivasan
+Ramani<o:p></o:p></span></font></b></p>
+
+<p class=3DMsoNormal><span class=3Dbody1><font size=3D1 =
+face=3DArial><span
+style=3D'font-size:6.5pt'>Pillar Data Systems</span></font></span><font =
+size=3D1
+face=3DArial><span style=3D'font-size:6.5pt;font-family:Arial'><br>
+<st1:Street w:st=3D"on"><st1:address w:st=3D"on"><span =
+class=3Dbody1><font
+  face=3DArial>2840 Junction =
+Ave</font></span></st1:address></st1:Street><br>
+<st1:place w:st=3D"on"><st1:City w:st=3D"on"><span class=3Dbody1><font =
+face=3DArial>San
+  Jose</font></span></st1:City><span class=3Dbody1><font face=3DArial>, =
+<st1:State
+ w:st=3D"on">CA</st1:State> <st1:PostalCode =
+w:st=3D"on">95134</st1:PostalCode></font></span></st1:place></span></font=
+><b><font
+size=3D2 color=3Dblue face=3DArial><span =
+style=3D'font-size:10.0pt;font-family:Arial;
+color:blue;font-weight:bold'><o:p></o:p></span></font></b></p>
+
+<p class=3DMsoNormal><font size=3D1 color=3Dblack face=3DArial><span =
+style=3D'font-size:
+9.0pt;font-family:Arial;color:black'>Ph: =
+408-518-4456<o:p></o:p></span></font></p>
+
+<p class=3DMsoNormal><b><font size=3D2 color=3Dblue face=3DArial><span
+style=3D'font-size:10.0pt;font-family:Arial;color:blue;font-weight:bold'>=
+<o:p>&nbsp;</o:p></span></font></b></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
+
+<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
+style=3D'font-size:10.0pt;
+font-family:Arial'>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
+nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
+bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+<o:p></o:p></span></font></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_002_01C7496F.F28ED879--
+
+------_=_NextPart_001_01C7496F.F28ED879
+Content-Type: application/octet-stream;
+	name="hwtable.c"
+Content-Transfer-Encoding: base64
+Content-Description: hwtable.c
+Content-Disposition: attachment;
+	filename="hwtable.c"
+
+I2luY2x1ZGUgPHN0ZGlvLmg+IA0KI2luY2x1ZGUgPGNoZWNrZXJzLmg+IA0KDQojaW5jbHVkZSAi
+dmVjdG9yLmgiDQojaW5jbHVkZSAiZGVmYXVsdHMuaCINCiNpbmNsdWRlICJzdHJ1Y3RzLmgiDQoj
+aW5jbHVkZSAiY29uZmlnLmgiDQojaW5jbHVkZSAicGdwb2xpY2llcy5oIg0KDQovKg0KICogVHVu
+aW5nIHN1Z2dlc3Rpb25zIG9uIHRoZXNlIHBhcmFtZXRlcnMgc2hvdWxkIGdvIHRvDQogKiBkbS1k
+ZXZlbEByZWRoYXQuY29tDQogKiANCiAqIFlvdSBhcmUgd2VsY29tZSB0byBjbGFpbSBtYWludGFp
+bmVyc2hpcCBvdmVyIGEgY29udHJvbGxlcg0KICogZmFtaWx5LiBQbGVhc2UgbWFpbCB0aGUgY3Vy
+cmVudGx5IGVubGlzdGVkIG1haW50YWluZXIgYW5kDQogKiB0aGUgdXBzdHJlYW0gcGFja2FnZSBt
+YWludGFpbmVyLg0KICovDQpzdGF0aWMgc3RydWN0IGh3ZW50cnkgZGVmYXVsdF9od1tdID0gew0K
+CS8qDQoJICogQXBwbGUgY29udHJvbGxlciBmYW1pbHkNCgkgKg0KCSAqIE1haW50YWluZXIgOiBT
+aHlhbSBTdW5kYXINCgkgKiBNYWlsIDogZy5zaHlhbXN1bmRhckB5YWhvby5jby5pbg0KCSAqLw0K
+CXsNCgkJLnZlbmRvciAgICAgICAgPSAiQVBQTEUqIiwNCgkJLnByb2R1Y3QgICAgICAgPSAiWHNl
+cnZlIFJBSUQgIiwNCgkJLmdldHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHBy
+aW8gICAgICAgPSBOVUxMLA0KCQkuZmVhdHVyZXMgICAgICA9IERFRkFVTFRfRkVBVFVSRVMsDQoJ
+CS5od2hhbmRsZXIgICAgID0gREVGQVVMVF9IV0hBTkRMRVIsDQoJCS5zZWxlY3RvciAgICAgID0g
+REVGQVVMVF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAgPSBNVUxUSUJVUywNCgkJLnBnZmFp
+bGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRf
+Tk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQkubWluaW8g
+ICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0gREVGQVVMVF9DSEVD
+S0VSLA0KCX0sDQoJLyoNCgkgKiBTdG9yYWdlV29ya3MgY29udHJvbGxlciBmYW1pbHkNCgkgKg0K
+CSAqIE1haW50YWluZXIgOiBDaHJpc3RvcGhlIFZhcm9xdWkNCgkgKiBNYWlsIDogY2hyaXN0b3Bo
+ZS52YXJvcXVpQGZyZWUuZnINCgkgKi8NCgl7DQoJCS52ZW5kb3IgICAgICAgID0gIjNQQVJkYXRh
+IiwNCgkJLnByb2R1Y3QgICAgICAgPSAiVlYiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRf
+R0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5mZWF0dXJlcyAgICAgID0gREVG
+QVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hXSEFORExFUiwNCgkJ
+LnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xpY3kgICAgICA9IE1V
+TFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KCQkucnJfd2VpZ2h0
+ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllf
+VU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJLmNoZWNrZXJfbmFt
+ZSAgPSBERUZBVUxUX0NIRUNLRVIsDQoJfSwNCgl7DQoJCS52ZW5kb3IgICAgICAgID0gIkRFQyIs
+DQoJCS5wcm9kdWN0ICAgICAgID0gIkhTRzgwIiwNCgkJLmdldHVpZCAgICAgICAgPSBERUZBVUxU
+X0dFVFVJRCwNCgkJLmdldHByaW8gICAgICAgPSBOVUxMLA0KCQkuZmVhdHVyZXMgICAgICA9IERF
+RkFVTFRfRkVBVFVSRVMsDQoJCS5od2hhbmRsZXIgICAgID0gIjEgaHBfc3ciLA0KCQkuc2VsZWN0
+b3IgICAgICA9IERFRkFVTFRfU0VMRUNUT1IsDQoJCS5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllf
+U0VSSUFMLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KCQkucnJfd2VpZ2h0
+ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllf
+VU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJLmNoZWNrZXJfbmFt
+ZSAgPSBIUF9TVywNCgl9LA0KCXsNCgkJLnZlbmRvciAgICAgICAgPSAiKENPTVBBUXxIUCkiLA0K
+CQkucHJvZHVjdCAgICAgICA9ICIoTVNBfEhTVikxLioiLA0KCQkuZ2V0dWlkICAgICAgICA9IERF
+RkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5mZWF0dXJlcyAgICAg
+ID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSAiMSBocF9zdyIsDQoJCS5z
+ZWxlY3RvciAgICAgID0gREVGQVVMVF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAgPSBNVUxU
+SUJVUywNCgkJLnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwNCgkJLnJyX3dlaWdodCAg
+ICAgPSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VO
+REVGLA0KCQkubWluaW8gICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUg
+ID0gSFBfU1csDQoJfSwNCgl7DQoJCS52ZW5kb3IgICAgICAgID0gIkhQIiwNCgkJLnByb2R1Y3Qg
+ICAgICAgPSAiQTYxODlBIiwNCgkJLmdldHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJ
+LmdldHByaW8gICAgICAgPSBOVUxMLA0KCQkuZmVhdHVyZXMgICAgICA9IERFRkFVTFRfRkVBVFVS
+RVMsDQoJCS5od2hhbmRsZXIgICAgID0gREVGQVVMVF9IV0hBTkRMRVIsDQoJCS5zZWxlY3RvciAg
+ICAgID0gREVGQVVMVF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAgPSBNVUxUSUJVUywNCgkJ
+LnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9X
+RUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQku
+bWluaW8gICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0gUkVBRFNF
+Q1RPUjAsDQoJfSwNCgl7DQoJCS52ZW5kb3IgICAgICAgID0gIkhQIiwNCgkJLnByb2R1Y3QgICAg
+ICAgPSAiSFNWMjAuKiIsDQoJCS5yZXZpc2lvbiAgICAgID0gIlsxMjNdLioiLA0KCQkuZ2V0dWlk
+ICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5m
+ZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZB
+VUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQku
+cGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VO
+REVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRy
+eSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5J
+TywNCgkJLmNoZWNrZXJfbmFtZSAgPSBIUF9TVywNCgl9LA0KCXsNCgkJLnZlbmRvciAgICAgICAg
+PSAiSFAiLA0KCQkucHJvZHVjdCAgICAgICA9ICJIU1YyMC4qIiwNCgkJLnJldmlzaW9uICAgICAg
+PSAiW14xMjNdLioiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0
+cHJpbyAgICAgICA9ICIvc2Jpbi9tcGF0aF9wcmlvX2FsdWEgL2Rldi8lbiIsDQoJCS5mZWF0dXJl
+cyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hX
+SEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xp
+Y3kgICAgICA9IE1VTFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1FRElB
+VEUsDQoJCS5ycl93ZWlnaHQgICAgID0gUlJfV0VJR0hUX05PTkUsDQoJCS5ub19wYXRoX3JldHJ5
+ID0gTk9fUEFUSF9SRVRSWV9VTkRFRiwNCgkJLm1pbmlvICAgICAgICAgPSBERUZBVUxUX01JTklP
+LA0KCQkuY2hlY2tlcl9uYW1lICA9IFRVUiwNCgl9LA0KCXsNCgkJLnZlbmRvciAgICAgICAgPSAi
+SFAiLA0KCQkucHJvZHVjdCAgICAgICA9ICJIU1YyMS4qIiwNCgkJLmdldHVpZCAgICAgICAgPSBE
+RUZBVUxUX0dFVFVJRCwNCgkJLmdldHByaW8gICAgICAgPSAiL3NiaW4vbXBhdGhfcHJpb19hbHVh
+IC9kZXYvJW4iLA0KCQkuZmVhdHVyZXMgICAgICA9IERFRkFVTFRfRkVBVFVSRVMsDQoJCS5od2hh
+bmRsZXIgICAgID0gREVGQVVMVF9IV0hBTkRMRVIsDQoJCS5zZWxlY3RvciAgICAgID0gREVGQVVM
+VF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAgPSBHUk9VUF9CWV9QUklPLA0KCQkucGdmYWls
+YmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9O
+T05FLA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAg
+ICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBUVVIsDQoJfSwNCgkv
+Kg0KCSAqIERETiBjb250cm9sbGVyIGZhbWlseQ0KCSAqDQoJICogTWFpbnRhaW5lciA6IENocmlz
+dG9waGUgVmFyb3F1aQ0KCSAqIE1haWwgOiBjaHJpc3RvcGhlLnZhcm9xdWlAZnJlZS5mcg0KCSAq
+Lw0KCXsNCgkJLnZlbmRvciAgICAgICAgPSAiREROIiwNCgkJLnByb2R1Y3QgICAgICAgPSAiU0FO
+IERhdGFEaXJlY3RvciIsDQoJCS5nZXR1aWQgICAgICAgID0gREVGQVVMVF9HRVRVSUQsDQoJCS5n
+ZXRwcmlvICAgICAgID0gTlVMTCwNCgkJLmZlYXR1cmVzICAgICAgPSBERUZBVUxUX0ZFQVRVUkVT
+LA0KCQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdIQU5ETEVSLA0KCQkuc2VsZWN0b3IgICAg
+ICA9IERFRkFVTFRfU0VMRUNUT1IsDQoJCS5wZ3BvbGljeSAgICAgID0gTVVMVElCVVMsDQoJCS5w
+Z2ZhaWxiYWNrICAgID0gRkFJTEJBQ0tfVU5ERUYsDQoJCS5ycl93ZWlnaHQgICAgID0gUlJfV0VJ
+R0hUX05PTkUsDQoJCS5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9VTkRFRiwNCgkJLm1p
+bmlvICAgICAgICAgPSBERUZBVUxUX01JTklPLA0KCQkuY2hlY2tlcl9uYW1lICA9IERJUkVDVElP
+LA0KCX0sDQoJLyoNCgkgKiBFTUMgLyBDbGFyaWlvbiBjb250cm9sbGVyIGZhbWlseQ0KCSAqDQoJ
+ICogTWFpbnRhaW5lciA6IEVkd2FyZCBHb2dnaW4sIEVNQw0KCSAqIE1haWwgOiBlZ29nZ2luQGVt
+Yy5jb20NCgkgKi8NCgl7DQoJCS52ZW5kb3IgICAgICAgID0gIkVNQyIsDQoJCS5wcm9kdWN0ICAg
+ICAgID0gIlNZTU1FVFJJWCIsDQoJCS5nZXR1aWQgICAgICAgID0gInNjc2lfaWQgLWcgLXUgLXBw
+cmUtc3BjMy04MyAtcyAvYmxvY2svJW4iLA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5m
+ZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZB
+VUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQku
+cGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VO
+REVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRy
+eSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5J
+TywNCgkJLmNoZWNrZXJfbmFtZSAgPSBSRUFEU0VDVE9SMCwNCgl9LA0KCXsNCgkJLnZlbmRvciAg
+ICAgICAgPSAiREdDIiwNCgkJLnByb2R1Y3QgICAgICAgPSAiLioiLA0KCQkuYmxfcHJvZHVjdCAg
+ICA9ICJMVU5aIiwNCgkJLmdldHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHBy
+aW8gICAgICAgPSAibXBhdGhfcHJpb19lbWMgL2Rldi8lbiIsDQoJCS5mZWF0dXJlcyAgICAgID0g
+IjEgcXVldWVfaWZfbm9fcGF0aCIsDQoJCS5od2hhbmRsZXIgICAgID0gIjEgZW1jIiwNCgkJLnNl
+bGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xpY3kgICAgICA9IEdST1VQ
+X0JZX1BSSU8sDQoJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwNCgkJLnJy
+X3dlaWdodCAgICAgPSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSAoMzAwIC8g
+REVGQVVMVF9DSEVDS0lOVCksDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJ
+LmNoZWNrZXJfbmFtZSAgPSBFTUNfQ0xBUklJT04sDQoJfSwNCgkvKg0KCSAqIEZ1aml0c3UgY29u
+dHJvbGxlciBmYW1pbHkNCgkgKg0KCSAqIE1haW50YWluZXIgOiBDaHJpc3RvcGhlIFZhcm9xdWkN
+CgkgKiBNYWlsIDogY2hyaXN0b3BoZS52YXJvcXVpQGZyZWUuZnINCgkgKi8NCgl7DQoJCS52ZW5k
+b3IgICAgICAgID0gIkZTQyIsDQoJCS5wcm9kdWN0ICAgICAgID0gIkNlbnRyaWNTdG9yIiwNCgkJ
+LmdldHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHByaW8gICAgICAgPSBOVUxM
+LA0KCQkuZmVhdHVyZXMgICAgICA9IERFRkFVTFRfRkVBVFVSRVMsDQoJCS5od2hhbmRsZXIgICAg
+ID0gREVGQVVMVF9IV0hBTkRMRVIsDQoJCS5zZWxlY3RvciAgICAgID0gREVGQVVMVF9TRUxFQ1RP
+UiwNCgkJLnBncG9saWN5ICAgICAgPSBHUk9VUF9CWV9TRVJJQUwsDQoJCS5wZ2ZhaWxiYWNrICAg
+ID0gRkFJTEJBQ0tfVU5ERUYsDQoJCS5ycl93ZWlnaHQgICAgID0gUlJfV0VJR0hUX05PTkUsDQoJ
+CS5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9VTkRFRiwNCgkJLm1pbmlvICAgICAgICAg
+PSBERUZBVUxUX01JTklPLA0KCQkuY2hlY2tlcl9uYW1lICA9IFJFQURTRUNUT1IwLA0KCX0sDQoJ
+LyoNCgkgKiBIaXRhY2hpIGNvbnRyb2xsZXIgZmFtaWx5DQoJICoNCgkgKiBNYWludGFpbmVyIDog
+TWF0dGhpYXMgUnVkb2xwaA0KCSAqIE1haWwgOiBtYXR0aGlhcy5ydWRvbHBoQGhkcy5jb20NCgkg
+Ki8NCgl7DQoJCS52ZW5kb3IgICAgICAgID0gIihISVRBQ0hJfEhQKSIsDQoJCS5wcm9kdWN0ICAg
+ICAgID0gIk9QRU4tLioiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQku
+Z2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5mZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJF
+UywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAg
+ICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLA0KCQku
+cGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dF
+SUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5t
+aW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBSRUFEU0VD
+VE9SMCwNCgl9LA0KCXsNCgkJLnZlbmRvciAgICAgICAgPSAiSElUQUNISSIsDQoJCS5wcm9kdWN0
+ICAgICAgID0gIkRGLioiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQku
+Z2V0cHJpbyAgICAgICA9ICJtcGF0aF9wcmlvX2hkc19tb2R1bGFyICVkIiwNCgkJLmZlYXR1cmVz
+ICAgICAgPSBERUZBVUxUX0ZFQVRVUkVTLA0KCQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdI
+QU5ETEVSLA0KCQkuc2VsZWN0b3IgICAgICA9IERFRkFVTFRfU0VMRUNUT1IsDQoJCS5wZ3BvbGlj
+eSAgICAgID0gR1JPVVBfQllfUFJJTywNCgkJLnBnZmFpbGJhY2sgICAgPSAtRkFJTEJBQ0tfSU1N
+RURJQVRFLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9y
+ZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9N
+SU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBSRUFEU0VDVE9SMCwNCgl9LA0KCS8qDQoJICogSUJN
+IGNvbnRyb2xsZXIgZmFtaWx5DQoJICoNCgkgKiBNYWludGFpbmVyIDogSGFubmVzIFJlaW5lY2tl
+LCBTdVNFDQoJICogTWFpbCA6IGhhcmVAc3VzZS5kZQ0KCSAqLw0KCXsNCgkJLnZlbmRvciAgICAg
+ICAgPSAiSUJNIiwNCgkJLnByb2R1Y3QgICAgICAgPSAiUHJvRmlicmUgNDAwMFIiLA0KCQkuZ2V0
+dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJ
+CS5mZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBE
+RUZBVUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0K
+CQkucGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNL
+X1VOREVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9y
+ZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9N
+SU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBSRUFEU0VDVE9SMCwNCgl9LA0KCXsNCgkJLyogSUJN
+IERTNDEwMCAvIEZBU3RUMTAwICovDQoJCS52ZW5kb3IgICAgICAgID0gIklCTSIsDQoJCS5wcm9k
+dWN0ICAgICAgID0gIjE3NDIiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0K
+CQkuZ2V0cHJpbyAgICAgICA9ICJtcGF0aF9wcmlvX3RwYyAvZGV2LyVuIiwNCgkJLmZlYXR1cmVz
+ICAgICAgPSBERUZBVUxUX0ZFQVRVUkVTLA0KCQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdI
+QU5ETEVSLA0KCQkuc2VsZWN0b3IgICAgICA9IERFRkFVTFRfU0VMRUNUT1IsDQoJCS5wZ3BvbGlj
+eSAgICAgID0gR1JPVVBfQllfUFJJTywNCgkJLnBnZmFpbGJhY2sgICAgPSAtRkFJTEJBQ0tfSU1N
+RURJQVRFLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9y
+ZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9N
+SU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBUVVIsDQoJfSwNCgl7DQoJCS8qIElCTSBOZXRmaW5p
+dHkgRmlicmUgQ2hhbm5lbCBSQUlEIENvbnRyb2xsZXIgVW5pdCAqLw0KCQkudmVuZG9yICAgICAg
+ICA9ICJJQk0iLA0KCQkucHJvZHVjdCAgICAgICA9ICIzNTI2IiwNCgkJLmdldHVpZCAgICAgICAg
+PSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHByaW8gICAgICAgPSAibXBhdGhfcHJpb190cGMgL2Rl
+di8lbiIsDQoJCS5mZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxl
+ciAgICAgPSBERUZBVUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NF
+TEVDVE9SLA0KCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sDQoJCS5wZ2ZhaWxiYWNr
+ICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRf
+Tk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQkubWluaW8g
+ICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0gVFVSLA0KCX0sDQoJ
+ew0KCQkvKiBJQk0gRFM0MjAwIC8gRkFTdFQyMDAgKi8NCgkJLnZlbmRvciAgICAgICAgPSAiSUJN
+IiwNCgkJLnByb2R1Y3QgICAgICAgPSAiMzU0MiIsDQoJCS5nZXR1aWQgICAgICAgID0gREVGQVVM
+VF9HRVRVSUQsDQoJCS5nZXRwcmlvICAgICAgID0gTlVMTCwNCgkJLmZlYXR1cmVzICAgICAgPSBE
+RUZBVUxUX0ZFQVRVUkVTLA0KCQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdIQU5ETEVSLA0K
+CQkuc2VsZWN0b3IgICAgICA9IERFRkFVTFRfU0VMRUNUT1IsDQoJCS5wZ3BvbGljeSAgICAgID0g
+R1JPVVBfQllfU0VSSUFMLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KCQku
+cnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BB
+VEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJLmNo
+ZWNrZXJfbmFtZSAgPSBUVVIsDQoJfSwNCgl7DQoJCS8qIElCTSBFU1MgRjIwIGFrYSBTaGFyayAq
+Lw0KCQkudmVuZG9yICAgICAgICA9ICJJQk0iLA0KCQkucHJvZHVjdCAgICAgICA9ICIyMTA1KDgw
+MHxGMjApIiwNCgkJLmdldHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHByaW8g
+ICAgICAgPSBOVUxMLA0KCQkuZmVhdHVyZXMgICAgICA9ICIxIHF1ZXVlX2lmX25vX3BhdGgiLA0K
+CQkuaHdoYW5kbGVyICAgICA9IERFRkFVTFRfSFdIQU5ETEVSLA0KCQkuc2VsZWN0b3IgICAgICA9
+IERFRkFVTFRfU0VMRUNUT1IsDQoJCS5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfU0VSSUFMLA0K
+CQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJS
+X1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJ
+CS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBUVVIs
+DQoJfSwNCgl7DQoJCS8qIElCTSBEUzYwMDAgKi8NCgkJLnZlbmRvciAgICAgICAgPSAiSUJNIiwN
+CgkJLnByb2R1Y3QgICAgICAgPSAiMTc1MDUwMCIsDQoJCS5nZXR1aWQgICAgICAgID0gREVGQVVM
+VF9HRVRVSUQsDQoJCS5nZXRwcmlvICAgICAgID0gIm1wYXRoX3ByaW9fYWx1YSAvZGV2LyVuIiwN
+CgkJLmZlYXR1cmVzICAgICAgPSAiMSBxdWV1ZV9pZl9ub19wYXRoIiwNCgkJLmh3aGFuZGxlciAg
+ICAgPSBERUZBVUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVD
+VE9SLA0KCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sDQoJCS5wZ2ZhaWxiYWNrICAg
+ID0gLUZBSUxCQUNLX0lNTUVESUFURSwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRfTk9O
+RSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQkubWluaW8gICAg
+ICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0gVFVSLA0KCX0sDQoJew0K
+CQkvKiBJQk0gRFM4MDAwICovDQoJCS52ZW5kb3IgICAgICAgID0gIklCTSIsDQoJCS5wcm9kdWN0
+ICAgICAgID0gIjIxMDc5MDAiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0K
+CQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5mZWF0dXJlcyAgICAgID0gIjEgcXVldWVfaWZf
+bm9fcGF0aCIsDQoJCS5od2hhbmRsZXIgICAgID0gREVGQVVMVF9IV0hBTkRMRVIsDQoJCS5zZWxl
+Y3RvciAgICAgID0gREVGQVVMVF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAgPSBNVUxUSUJV
+UywNCgkJLnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwNCgkJLnJyX3dlaWdodCAgICAg
+PSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVG
+LA0KCQkubWluaW8gICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0g
+VFVSLA0KCX0sDQoJew0KCQkvKiBJQk0gU0FOIFZvbHVtZSBDb250cm9sbGVyICovDQoJCS52ZW5k
+b3IgICAgICAgID0gIklCTSIsDQoJCS5wcm9kdWN0ICAgICAgID0gIjIxNDUiLA0KCQkuZ2V0dWlk
+ICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9ICJtcGF0aF9wcmlv
+X2FsdWEgL2Rldi8lbiIsDQoJCS5mZWF0dXJlcyAgICAgID0gIjEgcXVldWVfaWZfbm9fcGF0aCIs
+DQoJCS5od2hhbmRsZXIgICAgID0gREVGQVVMVF9IV0hBTkRMRVIsDQoJCS5zZWxlY3RvciAgICAg
+ID0gREVGQVVMVF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAgPSBHUk9VUF9CWV9QUklPLA0K
+CQkucGdmYWlsYmFjayAgICA9IC1GQUlMQkFDS19JTU1FRElBVEUsDQoJCS5ycl93ZWlnaHQgICAg
+ID0gUlJfV0VJR0hUX05PTkUsDQoJCS5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9VTkRF
+RiwNCgkJLm1pbmlvICAgICAgICAgPSBERUZBVUxUX01JTklPLA0KCQkuY2hlY2tlcl9uYW1lICA9
+IFRVUiwNCgl9LA0KCXsNCgkJLyogSUJNIFMvMzkwIEVDS0QgREFTRCAqLw0KCQkudmVuZG9yICAg
+ICAgICA9ICJJQk0iLA0KCQkucHJvZHVjdCAgICAgICA9ICJTLzM5MCBEQVNEIEVDS0QiLA0KCQku
+YmxfcHJvZHVjdCAgICAgICA9ICJTLzM5MC4qIiwNCgkJLmdldHVpZCAgICAgICAgPSAiZGFzZF9p
+ZCAvZGV2LyVuIiwNCgkJLmdldHByaW8gICAgICAgPSBOVUxMLA0KCQkuZmVhdHVyZXMgICAgICA9
+IERFRkFVTFRfRkVBVFVSRVMsDQoJCS5od2hhbmRsZXIgICAgID0gREVGQVVMVF9IV0hBTkRMRVIs
+DQoJCS5zZWxlY3RvciAgICAgID0gREVGQVVMVF9TRUxFQ1RPUiwNCgkJLnBncG9saWN5ICAgICAg
+PSBNVUxUSUJVUywNCgkJLnBnZmFpbGJhY2sgICAgPSBGQUlMQkFDS19VTkRFRiwNCgkJLnJyX3dl
+aWdodCAgICAgPSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JF
+VFJZX1VOREVGLA0KCQkubWluaW8gICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2Vy
+X25hbWUgID0gRElSRUNUSU8sDQoJfSwNCiAJLyoNCgkgKiBORVRBUFAgY29udHJvbGxlciBmYW1p
+bHkNCgkgKg0KCSAqIE1haW50YWluZXIgOiBEYXZlIFd5c29jaGFuc2tpDQoJICogTWFpbCA6IGRh
+dmlkd0BuZXRhcHAuY29tDQoJICovDQoJew0KCQkudmVuZG9yICAgICAgICA9ICJORVRBUFAiLA0K
+CQkucHJvZHVjdCAgICAgICA9ICJMVU4uKiIsDQoJCS5nZXR1aWQgICAgICAgID0gREVGQVVMVF9H
+RVRVSUQsDQoJCS5nZXRwcmlvICAgICAgID0gIm1wYXRoX3ByaW9fbmV0YXBwIC9kZXYvJW4iLA0K
+CQkuZmVhdHVyZXMgICAgICA9ICIxIHF1ZXVlX2lmX25vX3BhdGgiLA0KCQkuaHdoYW5kbGVyICAg
+ICA9IERFRkFVTFRfSFdIQU5ETEVSLA0KCQkuc2VsZWN0b3IgICAgICA9IERFRkFVTFRfU0VMRUNU
+T1IsDQoJCS5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfUFJJTywNCgkJLnBnZmFpbGJhY2sgICAg
+PSAtRkFJTEJBQ0tfSU1NRURJQVRFLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05F
+LA0KCQkubm9fcGF0aF9yZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAg
+ICAgID0gMTI4LA0KCQkuY2hlY2tlcl9uYW1lICA9IFJFQURTRUNUT1IwLA0KCX0sDQogCS8qDQoJ
+ICogSUJNIE5TZXJpZXMgKE5FVEFQUCkgY29udHJvbGxlciBmYW1pbHkNCgkgKg0KCSAqIE1haW50
+YWluZXIgOiBEYXZlIFd5c29jaGFuc2tpDQoJICogTWFpbCA6IGRhdmlkd0BuZXRhcHAuY29tDQoJ
+ICovDQoJew0KCQkudmVuZG9yICAgICAgICA9ICJJQk0iLA0KCQkucHJvZHVjdCAgICAgICA9ICJO
+c2VyaWVzLioiLA0KCQkuZ2V0dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJp
+byAgICAgICA9ICJtcGF0aF9wcmlvX25ldGFwcCAvZGV2LyVuIiwNCgkJLmZlYXR1cmVzICAgICAg
+PSAiMSBxdWV1ZV9pZl9ub19wYXRoIiwNCgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hXSEFO
+RExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xpY3kg
+ICAgICA9IEdST1VQX0JZX1BSSU8sDQoJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVE
+SUFURSwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0
+cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQkubWluaW8gICAgICAgICA9IDEyOCwNCgkJLmNo
+ZWNrZXJfbmFtZSAgPSBSRUFEU0VDVE9SMCwNCgl9LA0KCS8qDQoJICogUGlsbGFyIERhdGEgY29u
+dHJvbGxlciBmYW1pbHkNCgkgKg0KCSAqIE1haW50YWluZXIgOiBTcmluaXZhc2FuIFJhbWFuaQ0K
+CSAqIE1haWwgOiBzcmFtYW5pQHBpbGxhcmRhdGEuY29tDQoJICovDQoJew0KCQkudmVuZG9yICAg
+ICAgICA9ICJQaWxsYXIiLA0KCQkucHJvZHVjdCAgICAgICA9ICIqIiwNCgkJLmdldHVpZCAgICAg
+ICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHByaW8gICAgICAgPSAibXBhdGhfcHJpb19hbHVh
+ICVuIiwNCgkJLmZlYXR1cmVzICAgICAgPSBERUZBVUxUX0ZFQVRVUkVTLA0KCQkuaHdoYW5kbGVy
+ICAgICA9IERFRkFVTFRfSFdIQU5ETEVSLA0KCQkuc2VsZWN0b3IgICAgICA9IERFRkFVTFRfU0VM
+RUNUT1IsDQoJCS5wZ3BvbGljeSAgICAgID0gR1JPVVBfQllfUFJJTywNCgkJLnBnZmFpbGJhY2sg
+ICAgPSBGQUlMQkFDS19VTkRFRiwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRfTk9ORSwN
+CgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQkubWluaW8gICAgICAg
+ICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0gVFVSLA0KCX0sDQoJLyoNCgkg
+KiBTR0kgYXJyYXlzDQoJICoNCgkgKiBNYWludGFpbmVyIDogQ2hyaXN0b3BoZSBWYXJvcXVpDQoJ
+ICogTWFpbCA6IGNocmlzdG9waGUudmFyb3F1aUBmcmVlLmZyDQoJICovDQoJew0KCQkudmVuZG9y
+ICAgICAgICA9ICJTR0kiLA0KCQkucHJvZHVjdCAgICAgICA9ICJUUDlbMTNdMDAiLA0KCQkuZ2V0
+dWlkICAgICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJ
+CS5mZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBE
+RUZBVUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0K
+CQkucGdwb2xpY3kgICAgICA9IE1VTFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNL
+X1VOREVGLA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9y
+ZXRyeSA9IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9N
+SU5JTywNCgkJLmNoZWNrZXJfbmFtZSAgPSBSRUFEU0VDVE9SMCwNCgl9LA0KCXsNCgkJLnZlbmRv
+ciAgICAgICAgPSAiU0dJIiwNCgkJLnByb2R1Y3QgICAgICAgPSAiVFA5WzQ1XTAwIiwNCgkJLmdl
+dHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJLmdldHByaW8gICAgICAgPSAibXBhdGhf
+cHJpb190cGMgL2Rldi8lbiIsDQoJCS5mZWF0dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywN
+CgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAg
+PSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xpY3kgICAgICA9IEdST1VQX0JZX1BSSU8sDQoJ
+CS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVESUFURSwNCgkJLnJyX3dlaWdodCAgICAg
+PSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0cnkgPSBOT19QQVRIX1JFVFJZX1VOREVG
+LA0KCQkubWluaW8gICAgICAgICA9IERFRkFVTFRfTUlOSU8sDQoJCS5jaGVja2VyX25hbWUgID0g
+VFVSLA0KCX0sDQoJLyoNCgkgKiBTVEsgYXJyYXlzDQoJICoNCgkgKiBNYWludGFpbmVyIDogQ2hy
+aXN0b3BoZSBWYXJvcXVpDQoJICogTWFpbCA6IGNocmlzdG9waGUudmFyb3F1aUBmcmVlLmZyDQoJ
+ICovDQoJew0KCQkudmVuZG9yICAgICAgICA9ICJTVEsiLA0KCQkucHJvZHVjdCAgICAgICA9ICJP
+UEVOc3RvcmFnZSBEMjgwIiwNCgkJLmdldHVpZCAgICAgICAgPSBERUZBVUxUX0dFVFVJRCwNCgkJ
+LmdldHByaW8gICAgICAgPSAibXBhdGhfcHJpb190cGMgL2Rldi8lbiIsDQoJCS5mZWF0dXJlcyAg
+ICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hXSEFO
+RExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdwb2xpY3kg
+ICAgICA9IEdST1VQX0JZX1BSSU8sDQoJCS5wZ2ZhaWxiYWNrICAgID0gLUZBSUxCQUNLX0lNTUVE
+SUFURSwNCgkJLnJyX3dlaWdodCAgICAgPSBSUl9XRUlHSFRfTk9ORSwNCgkJLm5vX3BhdGhfcmV0
+cnkgPSBOT19QQVRIX1JFVFJZX1VOREVGLA0KCQkubWluaW8gICAgICAgICA9IERFRkFVTFRfTUlO
+SU8sDQoJCS5jaGVja2VyX25hbWUgID0gVFVSLA0KCX0sDQoJLyoNCgkgKiBTVU4gYXJyYXlzDQoJ
+ICoNCgkgKiBNYWludGFpbmVyIDogQ2hyaXN0b3BoZSBWYXJvcXVpDQoJICogTWFpbCA6IGNocmlz
+dG9waGUudmFyb3F1aUBmcmVlLmZyDQoJICovDQoJew0KCQkudmVuZG9yICAgICAgICA9ICJTVU4i
+LA0KCQkucHJvZHVjdCAgICAgICA9ICIoU3RvckVkZ2UgMzUxMHxUNCkiLA0KCQkuZ2V0dWlkICAg
+ICAgICA9IERFRkFVTFRfR0VUVUlELA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5mZWF0
+dXJlcyAgICAgID0gREVGQVVMVF9GRUFUVVJFUywNCgkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxU
+X0hXSEFORExFUiwNCgkJLnNlbGVjdG9yICAgICAgPSBERUZBVUxUX1NFTEVDVE9SLA0KCQkucGdw
+b2xpY3kgICAgICA9IE1VTFRJQlVTLA0KCQkucGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVG
+LA0KCQkucnJfd2VpZ2h0ICAgICA9IFJSX1dFSUdIVF9OT05FLA0KCQkubm9fcGF0aF9yZXRyeSA9
+IE5PX1BBVEhfUkVUUllfVU5ERUYsDQoJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywN
+CgkJLmNoZWNrZXJfbmFtZSAgPSBSRUFEU0VDVE9SMCwNCgl9LA0KCS8qDQoJICogRU9MDQoJICov
+DQoJew0KCQkudmVuZG9yICAgICAgICA9IE5VTEwsDQoJCS5wcm9kdWN0ICAgICAgID0gTlVMTCwN
+CgkJLmdldHVpZCAgICAgICAgPSBOVUxMLA0KCQkuZ2V0cHJpbyAgICAgICA9IE5VTEwsDQoJCS5m
+ZWF0dXJlcyAgICAgID0gTlVMTCwNCgkJLmh3aGFuZGxlciAgICAgPSBOVUxMLA0KCQkuc2VsZWN0
+b3IgICAgICA9IE5VTEwsDQoJCS5wZ3BvbGljeSAgICAgID0gMCwNCgkJLnBnZmFpbGJhY2sgICAg
+PSAwLA0KCQkucnJfd2VpZ2h0ICAgICA9IDAsDQoJCS5ub19wYXRoX3JldHJ5ID0gMCwNCgkJLm1p
+bmlvICAgICAgICAgPSAwLA0KCQkuY2hlY2tlcl9uYW1lICA9IE5VTEwsDQoJfSwNCn07DQoNCmV4
+dGVybiBpbnQNCnNldHVwX2RlZmF1bHRfaHd0YWJsZSAodmVjdG9yIGh3KQ0Kew0KCWludCByID0g
+MDsNCglzdHJ1Y3QgaHdlbnRyeSAqIGh3ZSA9IGRlZmF1bHRfaHc7DQoNCgl3aGlsZSAoaHdlLSZn
+dDt2ZW5kb3IpIHsNCgkJaHdlLSZndDtjaGVja2VyID0gY2hlY2tlcl9sb29rdXAoaHdlLSZndDtj
+aGVja2VyX25hbWUpOw0KCQlyICs9IHN0b3JlX2h3ZShodywgaHdlKTsNCgkJaHdlKys7DQoJfQ0K
+CXJldHVybiByOw0KfQ0K
+
+------_=_NextPart_001_01C7496F.F28ED879
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_001_01C7496F.F28ED879--
