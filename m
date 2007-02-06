@@ -1,12 +1,11 @@
-From: "Amit K. Arora" <aarora@linux.vnet.ibm.com>
-Subject: garbled output after rename map and rerun
-Date: Tue, 6 Feb 2007 15:30:47 +0530
-Message-ID: <20070206100047.GA2513@amitarora.in.ibm.com>
+From: "Bryn M. Reeves" <breeves@redhat.com>
+Subject: [PATCH] additional bio list helpers
+Date: Tue, 06 Feb 2007 11:00:15 +0000
+Message-ID: <45C85FBF.7060207@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="------------050101020607080309040502"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,51 +15,151 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Heinz Mauelshagen <mauelshagen@redhat.com>
 List-Id: dm-devel.ids
 
-Last year in June, Lan Tran had submitted this patch. Unfortunately, it
-didn't get any response. This problem is still hanging around.
-I am resubmitting the same patch again, hoping that it may get some
-attention this time.
+This is a multi-part message in MIME format.
+--------------050101020607080309040502
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-This is a simple and straight forward fix. So, please include it in the
-next release of multipath tools. Thanks!
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-Below is the original mail (with patch) that Lan had posted on 6th June,
-2006:
+Add a couple of extra helper routines to drivers/md/dm-bio-list.h. This
+patch is required for the current dm-loop patch.
 
------------------------------------------------------------------------
-There was some garbled output after renaming a multipath device and
-rerunning multipath.
-This is just a minor fix to add some actions that were missing.
+Kind regards,
 
-Thanks,
-lan
+Bryn.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
 
---- multipath-git/libmultipath/print.c	2006-06-05 14:26:52.000000000 -0700
-+++ multipath-tools-2006.6.5-changed/libmultipath/print.c	2006-06-06 13:48:54.000000000 -0700
-@@ -211,12 +211,16 @@
- snprint_action (char * buff, size_t len, struct multipath * mpp)
+iD8DBQFFyF+/6YSQoMYUY94RAnB0AJ9CUAbLJhy9sGeAkQuKvjfPOcXFhgCfXqXT
+td9QjIOQK+ECBVf3H0Wl83g=
+=NX1z
+-----END PGP SIGNATURE-----
+
+--------------050101020607080309040502
+Content-Type: text/x-patch;
+ name="dm-bio-list-helpers.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-bio-list-helpers.patch"
+
+Add additional bio list helpers to dm-bio-list.h:
+
+bio_list_empty
+bio_list_nr
+bio_list_join
+bio_list_join_init
+bio_list_merge_init
+bio_list_push
+
+These are used by dm-loop for manipulating lists of bios to be
+resubmitted by the fs I/O code.
+
+Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
+Signed-off-by: Bryn Reeves <breeves@redhat.com>
+
+===================================================================
+diff --git a/drivers/md/dm-bio-list.h b/drivers/md/dm-bio-list.h
+index da43496..301efae 100644
+--- a/drivers/md/dm-bio-list.h
++++ b/drivers/md/dm-bio-list.h
+@@ -14,11 +14,33 @@ struct bio_list {
+ 	struct bio *tail;
+ };
+ 
++static inline int  bio_list_empty(struct bio_list *bl)
++{
++	return bl->head == NULL && bl->tail == NULL;
++}
++
++#define BIO_LIST_HEAD(bl)	struct bio_list bl = { NULL, NULL }
++
+ static inline void bio_list_init(struct bio_list *bl)
  {
- 	switch (mpp->action) {
-+	case ACT_REJECT: 
-+		return snprint_str(buff, len, ACT_REJECT_STR); 
- 	case ACT_RELOAD:
- 		return snprint_str(buff, len, ACT_RELOAD_STR);
--	case ACT_CREATE:
--		return snprint_str(buff, len, ACT_CREATE_STR);
- 	case ACT_SWITCHPG:
- 		return snprint_str(buff, len, ACT_SWITCHPG_STR);
-+	case ACT_RENAME: 
-+		return snprint_str(buff, len, ACT_RENAME_STR); 
-+	case ACT_CREATE:
-+		return snprint_str(buff, len, ACT_CREATE_STR);
- 	default:
- 		return 0;
- 	}
------------------------------------------------------------------------
+ 	bl->head = bl->tail = NULL;
+ }
+ 
++#define bio_for_each(bio, bl) \
++	for (bio = (bl)->head; bio; bio = bio->bi_next)
++
++static inline int bio_list_nr(struct bio_list *bl)
++{
++	int i=0;
++	struct bio *bio;
++
++	if(bio_list_empty(bl))
++		return i;
++	bio_for_each(bio, bl)
++		i++;
++	return i;
++}
++
+ static inline void bio_list_add(struct bio_list *bl, struct bio *bio)
+ {
+ 	bio->bi_next = NULL;
+@@ -33,9 +55,6 @@ static inline void bio_list_add(struct bio_list *bl, struct bio *bio)
+ 
+ static inline void bio_list_merge(struct bio_list *bl, struct bio_list *bl2)
+ {
+-	if (!bl2->head)
+-		return;
+-
+ 	if (bl->tail)
+ 		bl->tail->bi_next = bl2->head;
+ 	else
+@@ -58,6 +77,40 @@ static inline void bio_list_merge_head(struct bio_list *bl,
+ 	bl->head = bl2->head;
+ }
+ 
++static inline void bio_list_join(struct bio_list *bl, struct bio_list *bl2)
++{
++	if (bio_list_empty(bl2))
++		return;
++
++	bl2->tail->bi_next = bl->head;
++	bl->head = bl2->head;
++
++	if (!bl->tail)
++		bl->tail = bl2->tail;
++}
++
++static inline void bio_list_join_init(struct bio_list *bl, struct bio_list *bl2)
++{
++	bio_list_join(bl, bl2);
++	bio_list_init(bl2);
++}
++
++static inline void bio_list_merge_init(struct bio_list *bl,
++				       struct bio_list *bl2)
++{
++	bio_list_merge(bl, bl2);
++	bio_list_init(bl2);
++}
++
++static inline void bio_list_push(struct bio_list *bl, struct bio *bio)
++{
++	bio->bi_next = bl->head;
++	bl->head = bio;
++
++	if (!bl->tail)
++		bl->tail = bio;
++}
++
+ static inline struct bio *bio_list_pop(struct bio_list *bl)
+ {
+ 	struct bio *bio = bl->head;
 
---
-Regards,
-Amit Arora <aarora@in.ibm.com>
+--------------050101020607080309040502
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------050101020607080309040502--
