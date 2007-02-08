@@ -1,14 +1,14 @@
-From: "Bryn M. Reeves" <breeves@redhat.com>
-Subject: Re: [PATCH] additional bio list helpers
-Date: Wed, 07 Feb 2007 11:26:14 +0000
-Message-ID: <45C9B756.4090408@redhat.com>
-References: <45C85FBF.7060207@redhat.com>
-	<20070206.160524.39151213.k-ueda@ct.jp.nec.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 1/2] Add userspace device-mapper target
+Date: Fri, 9 Feb 2007 00:48:01 +0900 (JST)
+Message-ID: <20070209004800A.fujita.tomonori@lab.ntt.co.jp>
+References: <m3lkjltq1x.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------000600090005000909050208"
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070206.160524.39151213.k-ueda@ct.jp.nec.com>
+In-Reply-To: <m3lkjltq1x.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,143 +18,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: dm-devel@redhat.com, mauelshagen@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------000600090005000909050208
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+From: Dan Smith <danms@us.ibm.com>
+Subject: [dm-devel] [PATCH 1/2] Add userspace device-mapper target
+Date: Mon, 29 Jan 2007 14:40:26 -0800
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+> This adds the dm-userspace kernel device-mapper target.  It contains
+> my latest changes, as well as Fujita's ringbuffer transport.
 
-Hi Kiyoshi,
+Some comments:
 
-Kiyoshi Ueda wrote:
-> This one breaks the bio_list if bl2 is a empty list.
-> Probably missed to add like below?
-> -----------------------------------
-> +	if (bio_list_empty(bl2))
-> +		return;
-> -----------------------------------
+- The current ring buffer interface is the producer/consumer pointer
+scheme. It's simple but it doesn't work for multi processes/threads.
+Seems that kevent has a better ring buffer interface. And it's trying
+to introduce new system calls for its ring buffer. They might work for
+dm-user.
 
-Quite right - fixed, thanks!
+- DMU_FLAG_SYNC needs two round-trips between kernel and user
+space. This leads to large latency (the poor performance of CoW). 
+DMU_FLAG_SYNC COW scheme (user space needs AIO writes to perform
+another I/O from kernel) doen't sound good (dead lock prone).
 
-> I think that bl->tail is always NULL when bl->head is NULL,
-> unless the bio_list is corrupted.  So no need to check bl->tail.
+With two minor modifications, dmu can do more efficiently, I think.
 
-This was actually already changed in my git copy, but I forgot to
-re-generate the patch before posting - apologies!
+  - enable an user-space to pass the kernel data to write
 
-> I think that this check in not needed because it is covered
-> by bio_for_each() below.
+    If you add u64 (user's address) to struct dmu_msg_map_response,
+    the kernel can map user's pages and add them to a bio. the write
+    is done in a zero-copy manner. A user-space process can simply
+    mmap a file and pass the address of the metadata (for CoW) to the
+    kernel. 2.6.20/drivers/scsi/scsi_tgt_lib.c does the same thing.
 
-Agreed!
+  - Introduing DMU_FLAG_LINKED
 
-> I think that bio_list_join() is same as existing bio_list_merge_head().
+    If userspace uses DMU_FLAG_LINKED to ask the kernel to perform
+    multiple commands atomically and sequentially. For example, if
+    userspace needs to one data block and a metadata block (for the
+    data block) for CoW, userspace can send two dmu_msg_map_response
+    to the kernel. The former for the data block is with DMU_FLAG_LINKED and
+    the latter is for the metadata block (usespace uses the above
+    feature). The kernel performs two writes sequentially and then
+    completes the original I/O (endio).
 
-Also agreed - thanks for catching these. This one also isn't used by
-dm-loop anyway.
-
-Revised patch attached - this time just including the changes actually
-needed by the dm-loop patch:
-
-bio_list_empty
-bio_for_each
-bio_list_nr
-bio_list_merge_init
-
-Kind regards,
-
-Bryn.
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
-
-iD8DBQFFybdW6YSQoMYUY94RAgZxAKChuSEQAP0zs+f9/yzjCf92beTkJQCdEQBq
-oxBR+Xsj1V6Fj4r9ec3sPZ0=
-=nIAj
------END PGP SIGNATURE-----
-
---------------000600090005000909050208
-Content-Type: text/x-patch;
- name="dm-bio-list-helpers.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="dm-bio-list-helpers.patch"
-
-Add additional bio list helpers to dm-bio-list.h:
-
-bio_list_empty
-bio_for_each
-bio_list_nr
-bio_list_merge_init
-
-These are used by dm-loop for manipulating lists of bios to be
-resubmitted by the fs I/O code.
-
-Signed-off-by: Bryn Reeves <breeves@redhat.com>
-
-===================================================================
-diff --git a/drivers/md/dm-bio-list.h b/drivers/md/dm-bio-list.h
-index da43496..6db7644 100644
---- a/drivers/md/dm-bio-list.h
-+++ b/drivers/md/dm-bio-list.h
-@@ -14,11 +14,31 @@ struct bio_list {
- 	struct bio *tail;
- };
- 
-+static inline int  bio_list_empty(struct bio_list *bl)
-+{
-+	return bl->head == NULL;
-+}
-+
-+#define BIO_LIST_HEAD(bl)	struct bio_list bl = { NULL, NULL }
-+
- static inline void bio_list_init(struct bio_list *bl)
- {
- 	bl->head = bl->tail = NULL;
- }
- 
-+#define bio_for_each(bio, bl) \
-+	for (bio = (bl)->head; bio; bio = bio->bi_next)
-+
-+static inline int bio_list_nr(struct bio_list *bl)
-+{
-+	int i=0;
-+	struct bio *bio;
-+
-+	bio_for_each(bio, bl)
-+		i++;
-+	return i;
-+}
-+
- static inline void bio_list_add(struct bio_list *bl, struct bio *bio)
- {
- 	bio->bi_next = NULL;
-@@ -58,6 +78,13 @@ static inline void bio_list_merge_head(struct bio_list *bl,
- 	bl->head = bl2->head;
- }
- 
-+static inline void bio_list_merge_init(struct bio_list *bl,
-+				       struct bio_list *bl2)
-+{
-+	bio_list_merge(bl, bl2);
-+	bio_list_init(bl2);
-+}
-+
- static inline struct bio *bio_list_pop(struct bio_list *bl)
- {
- 	struct bio *bio = bl->head;
-
---------------000600090005000909050208
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------000600090005000909050208--
+    DMU_FLAG_LINKED can be usefule for something like RAID
+    (possibly it would be better to split DMU_FLAG_LINKED into
+    DMU_FLAG_LINKED and DMU_FLAG_ORDERED).
