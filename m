@@ -1,62 +1,71 @@
-From: David =?UTF-8?Q?H=C3=A4rdeman?= <david@hardeman.nu>
-Subject: Bug#409875: [Pkg-cryptsetup-devel] Bug#409875: bug #409875
-Date: Fri, 9 Feb 2007 22:28:26 +0100
-Message-ID: <20070209212826.GA10396@hardeman.nu>
-References: <20070208213609.GA6406@hardeman.nu> <20070208215149.GL32661@doriath.informatik.uni-erlangen.de> <22206.145.64.134.242.1171025126.squirrel@www.hardeman.nu> <20070209134251.GO32661@doriath.informatik.uni-erlangen.de> <35325.145.64.134.242.1171035160.squirrel@www.hardeman.nu> <20070209155857.GP32661@doriath.informatik.uni-erlangen.de> <56504.145.64.134.242.1171044839.squirrel@www.hardeman.nu> <20070209183546.GQ32661@doriath.informatik.uni-erlangen.de> <20070209203247.GA5378@hardeman.nu> <20070209204431.GR32661@doriath.informatik.uni-erlangen.de>
-Reply-To: David =?UTF-8?Q?H=C3=A4rdeman?= <david@hardeman.nu>,
-	409875@bugs.debian.org
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 1/2] Add userspace device-mapper target
+Date: Sat, 10 Feb 2007 09:34:43 +0900
+Message-ID: <20070210093443Q.fujita.tomonori@lab.ntt.co.jp>
+References: <m31wl0k3rn.fsf@guaranine.beaverton.ibm.com>
+	<20070209081137X.fujita.tomonori@lab.ntt.co.jp>
+	<m3k5yrgwdg.fsf@guaranine.beaverton.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
-Return-path: <bounce-debian-bugs-dist=glddb-debian-bugs-dist=m.gmane.org@lists.debian.org>
-Resent-To: debian-bugs-dist@lists.debian.org
-Resent-Message-ID: <handler.409875.B409875.11710564862336@bugs.debian.org>
-Content-Disposition: inline
-In-Reply-To: <20070209204431.GR32661@doriath.informatik.uni-erlangen.de>
-List-Post: <mailto:debian-bugs-dist@lists.debian.org>
-List-Help: <mailto:debian-bugs-dist-request@lists.debian.org?subject=help>
-List-Subscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=subscribe>
-List-Unsubscribe: <mailto:debian-bugs-dist-request@lists.debian.org?subject=unsubscribe>
-To: Johannes Schlumberger <asso@doriath.informatik.uni-erlangen.de>, 409875@bugs.debian.org
-Cc: waldi@debian.org, debian-devel@lists.debian.org, pkg-lvm-maintainers@lists.alioth.debian.org, dm-devel@redhat.com, lool+alioth@via.ecp.fr, agk@redhat.com
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <m3k5yrgwdg.fsf@guaranine.beaverton.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-reassign 409875 libdevmapper1.02
-retitle 409875 libdevmapper should provide more helpful error messages
-severity 409875 minor
-thanks
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [dm-devel] [PATCH 1/2] Add userspace device-mapper target
+Date: Fri, 09 Feb 2007 07:54:03 -0800
 
-On Fri, Feb 09, 2007 at 09:44:32PM +0100, Johannes Schlumberger wrote:
->> Thanks, this looks mighty suspicious...it looks like /dev/md0 is mount=
-ed=20
->> as your root partition by the initramfs? Please provide me with "ls -a=
-l=20
->> /dev/root" and "cat /proc/cmdline" as well as the contents of your gru=
-b=20
->> or lilo config file.
->
->I am so sorry for stealing yours and other persons time like this. I had
->root=3D/dev/md0 in my menu.lst and / as /dev/hdd6 in my fstab. I have to=
- say I am
->strongly embarassed.
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+> 
+> FT> We need a pointer and length (or size) but not an offset. This
+> FT> enables an user-space to pass the kernel data to write. 
+> 
+> Why not an offset?  If the kernel knows nothing of the format of the
+> metadata, then userspace needs to be able to say "Put 512 bytes from
+> this buffer at sector 23 on the disk".
 
-No problem, it happends to all of us. There still is a bug here=20
-though...the error messages from libdevmapper are obtuse to say the=20
-least.
+Oops, I thought that we are talking about what to add to
+dmu_msg_map_response structure. We need an offset for this feature,
+but we already have it.
 
-libdevmapper explained that /dev/md0 is in use with the message:
-"Command failed: device-mapper: reload ioctl failed: Invalid argument"
 
-That is a bug in my book.
+> FT> You need to set bio->bi_sector. bio_map_user() just grabs user's
+> FT> pages and put them into a bio. Users of blk_rq_map_user (like
+> FT> SG_IO) doesn't need bio->bi_sector.
+> 
+> Right, ok, I've looked through scsi_ioctl.c and cdrom.c and I have a
+> much better idea of how it is currently used.
 
-I'll reassign this bug to libdevmapper (and retitle it accordingly).
+Yeah, they are better examples.
 
-I'll also CC all people that I've bugged earlier so that they know that=20
-this issue is no more.
 
->Thank you a lot for figuring this out and all your patience.
+> FT> Yeah, as you said, you can just allocate buffer and use it. If
+> FT> buffer is properly aligned, we can do zero-copy. But if not, the
+> FT> kernel allocates pages and copies user's pages
+> FT> (bio_copy_user).
+> 
+> Right.  I think this would be very good for both performance and ease
+> of use.  Keeping track of requests in userspace to properly handle the
+> endio and corresponding metadata flush can be a pain.  I don't think,
+> however, that we should completely get rid of the DMU_FLAG_SYNC
+> behavior, because if someone wanted to use dm-userspace block block
+> debugging or something, they may want to be able to intercept both the
+> request and the endio.
+> 
+> I'll take a stab at making this change and will post it when I have
+> something working...
 
-That's ok, you just owe me a beer.
-
---=20
-David H=E4rdeman
+Great! Thanks.
