@@ -1,15 +1,12 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: Re: -mm merge plans for 2.6.21 --
-	md-dm-reduce-stack-usage-with-stacked-block-devices.patch
-Date: Sat, 10 Feb 2007 10:58:58 +0100
-Message-ID: <20070210095858.GA8145@osiris.boeblingen.de.ibm.com>
-References: <20070208150710.1324f6b4.akpm@linux-foundation.org>
+From: Harald Milz <hm@seneca.muc.de>
+Subject: Followup: multipath setup with emc clariion
+Date: Sat, 10 Feb 2007 15:19:59 +0100
+Message-ID: <20070210141959.GA24225@seneca.muc.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20070208150710.1324f6b4.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +16,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Neil Brown <neilb@suse.de>
-Cc: linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Feb 08, 2007 at 03:07:10PM -0800, Andrew Morton wrote:
-> drivers-mdc-use-array_size-macro-when-appropriate.patch
-> md-dm-reduce-stack-usage-with-stacked-block-devices.patch
->  
->  -> neilb
->  
->  (The second one is getting idiotic.  When are we going to fix this??)
+Hi,
 
-Since it was me who asked to have the stack usage reduced and Neil was
-kind enough to fix this, I'm wondering what the state of dm is.
+I had a problem similar to the one described in
+http://www.redhat.com/archives/dm-devel/2006-July/msg00034.html at  a
+customer site (RHEL/RHCS 4.4) and found out that the solution is actually
+quite easy. You just have to blacklist the LUNZ's WWID. Since I found
+no related information anywhere I thought I'd post it here.
 
-I think more than a year ago we had this:
+Our setup: a pair of Sun x4200 servers w/ Emulex LP11000 HBAs, RHEL4.4,
+CLARiiON CX3-20, EMC / Broadcom FC Switches.
 
-Alasdair G Kergon <agk@redhat.com> said:
+So what I did was:
+- boot up the machine with FC cables pulled
+- rmmod / modprobe lpfc - this re-scans the bus and creates the necessary
+  kernel devices. You'll see the LUNZ's in /proc/scsi/scsi. 
+- modprobe dm-multipath and run "multipath -v2" with just sda and sdb 
+  blacklisted (internal disks)
+- the command gives you the WWID of the LUNZ (size 1 GB, it's almost
+  certainly mpath0), plus lots of error messages that dm-emc (or was it
+  dm-multipath itself?) has failed paths for one of the devices. 
+- add this WWID to the blacklist in /etc/multipath.conf
+- you'll have to reset the machine or switch it off hard because kpartx is
+  sitting on /dev/mapper/mpath0 in state "D". RHEL will wait forever and
+  not shut down if you only do a "halt". 
+- next time the box comes up, everything is fine. 
+- I usually give all other WWIDs aliases in a multipaths{} section in order
+  to have a consistent naming scheme, and use the alias names in /etc/fstab
+  or wherever. Very handy in a HA/failover setup. 
 
- I can see nothing wrong with this in principle.
 
- For device-mapper at the moment though it's essential that, while the bio
- mappings may now get delayed, they still get processed in exactly
- the same order as they were passed to generic_make_request().
+Strange thing is, and this is almost certainly related to the CLARiiON
+CX3-20 setup, on a second pair of machines attached to the same CX box, we
+have no LUNZ whatsoever. Any insight why and when this is so? The point is,
+you usually don't want the LUNZ devices if you want to do multipathing. 
 
- My main concern is whether the timing changes implicit in this patch
- will make the rare data-corrupting races in the existing snapshot code
- more likely. (I'm working on a fix for these races, but the unfinished
- patch is already several hundred lines long.)
 
- It would be helpful if some people on this mailing list would test
- this patch in various scenarios and report back.
 
-Alasdair, is dm already fixed or is there any chance that it will
-ever get fixed?
+
+-- 
+Harris's Lament:
+	All the good ones are taken.
