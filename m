@@ -1,14 +1,14 @@
 From: "Yury Konovalov" <ykonovalov@gmail.com>
-Subject: Re: Followup: multipath setup with emc clariion
-Date: Mon, 12 Feb 2007 10:06:28 +0300
-Message-ID: <744db6db0702112306k1ef0ccd8v4864024303193c03@mail.gmail.com>
-References: <20070210141959.GA24225@seneca.muc.de>
+Subject: Re: Question about dm-multipath and Sun StorageTek 6140
+Date: Mon, 12 Feb 2007 10:36:07 +0300
+Message-ID: <744db6db0702112336r4d83ed3eucaa590975e5f0b52@mail.gmail.com>
+References: <45CC4540.7020707@informatik.uni-stuttgart.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070210141959.GA24225@seneca.muc.de>
+In-Reply-To: <45CC4540.7020707@informatik.uni-stuttgart.de>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,17 +22,26 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Harald,
+Hi Ralf,
 
-2007/2/10, Harald Milz <hm@seneca.muc.de>:
-> Strange thing is, and this is almost certainly related to the CLARiiON
-> CX3-20 setup, on a second pair of machines attached to the same CX box, we
-> have no LUNZ whatsoever. Any insight why and when this is so? The point is,
-> you usually don't want the LUNZ devices if you want to do multipathing.
+2007/2/9, Ralf Aum=C3=BCller <Ralf.Aumueller@informatik.uni-stuttgart.de>=
+:
 
-You have to present your real LUN's using LUN number starting from "0",  to get
-rid of LUNZ.  This is how EMC CX behave: If you don't put anything at
-LUN 0, it will
-contain LUNZ.
--- 
+> - is it true that I need a hardware-specific handler for arrays running
+>   with active/passive controllers (like the Sun StorageTek 6140) to
+>   get the the LUN trespassing working?
+
+It's true only for non-AVT mode (set host type to Linux to turn AVT mode =
+on)
+
+> - did someone get the Sun StorageTek 6140 configured for dm-multipath?
+>   (so that the LUN trespassing works)
+
+It should work as it does for other boxes with LSILogic controllers.
+
+path_grouping_policy    group_by_prio
+path_checker            tur
+prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
+
+--=20
 Best Regards.
