@@ -1,47 +1,43 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: Re: [BUG?] register_blkdev: failed to get major for
-	device mapper
-Date: Fri, 16 Feb 2007 08:16:44 -0800
-Message-ID: <m3bqju6psj.fsf@guaranine.beaverton.ibm.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [BUG?] register_blkdev: failed to get major for device mapper
+Date: Fri, 16 Feb 2007 16:09:20 -0800
+Message-ID: <20070216160920.27c1167a.akpm@linux-foundation.org>
 References: <200702161437.34063.eike-kernel@sf-tec.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200702161437.34063.eike-kernel@sf-tec.de> (Rolf Eike Beer's
-	message of "Fri, 16 Feb 2007 14:37:28 +0100")
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1946323AbXBQAJg@vger.kernel.org>
+In-Reply-To: <200702161437.34063.eike-kernel@sf-tec.de>
+Sender: linux-kernel-owner@vger.kernel.org
 To: Rolf Eike Beer <eike-kernel@sf-tec.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Fri, 16 Feb 2007 14:37:28 +0100
+Rolf Eike Beer <eike-kernel@sf-tec.de> wrote:
 
-RB> The error message is quoted in subject.
+> I can't bring up my machine with root LVM anymore using x86_64. The same 
+> machine from same kernel tree boots fine as x86. The error message is quoted 
+> in subject. The tree is at 86a71dbd3e81e8870d0f0e56b87875f57e58222b (for 
+> those not using git: somewhere after 2.6.20).
 
-I was seeing this behavior a couple days ago.  I had been ignoring the
-warnings about using the known-broken gcc 4.1.0; updating to 4.1.1
-fixed it for me.
+Does this fix it?  I don't see why it would, but this was recently added.
 
-- --=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
-
-iD8DBQFF1djxwtEf7b4GJVQRAlUAAKCHIuPS5dRCXxiw5yHEMleGZlV3wQCeM8Xu
-Z8T/nOT2L9Pe0O3ItMBu9pY=3D
-=3Dgn5n
------END PGP SIGNATURE-----
+--- a/block/genhd.c~a
++++ a/block/genhd.c
+@@ -61,14 +61,6 @@ int register_blkdev(unsigned int major, 
+ 	/* temporary */
+ 	if (major == 0) {
+ 		for (index = ARRAY_SIZE(major_names)-1; index > 0; index--) {
+-			/*
+-			 * Disallow the LANANA-assigned LOCAL/EXPERIMENTAL
+-			 * majors
+-			 */
+-			if ((60 <= index && index <= 63) ||
+-					(120 <= index && index <= 127) ||
+-					(240 <= index && index <= 254))
+-				continue;
+ 			if (major_names[index] == NULL)
+ 				break;
+ 		}
+_
