@@ -1,18 +1,16 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [BUG?] register_blkdev: failed to get major for
-	device mapper
-Date: Mon, 19 Feb 2007 11:59:52 -0800
-Message-ID: <20070219115952.a06be52c.akpm@linux-foundation.org>
-References: <200702161437.34063.eike-kernel@sf-tec.de>
-	<20070219022955.f734006a.akpm@linux-foundation.org>
-	<200702191340.56855.eike-kernel@sf-tec.de>
-	<200702191539.38902.eike-kernel@sf-tec.de>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 1/2] Add userspace device-mapper target
+Date: Tue, 20 Feb 2007 08:55:22 +0900
+Message-ID: <20070220085522I.fujita.tomonori@lab.ntt.co.jp>
+References: <20070209081137X.fujita.tomonori@lab.ntt.co.jp>
+	<m3k5yrgwdg.fsf@guaranine.beaverton.ibm.com>
+	<m3odnq5gaa.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200702191539.38902.eike-kernel@sf-tec.de>
+In-Reply-To: <m3odnq5gaa.fsf@guaranine.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,117 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Rolf Eike Beer <eike-kernel@sf-tec.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 19 Feb 2007 15:39:38 +0100 Rolf Eike Beer <eike-kernel@sf-tec.de> wrote:
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: [dm-devel] [PATCH 1/2] Add userspace device-mapper target
+Date: Mon, 19 Feb 2007 07:16:29 -0800
 
-> > It's totally weird. It prints the "skipped" message for every (!) number,
-> > not just for the blacklisted ones. And I've triple checked that I don't
-> > have missed the '{'.
-> >
-> > Compiler is SuSEs 4.1.0 from their 10.1. I remember some rumors that this
-> > thing is just broken?
+> I've got a hacked-up version running that allows userspace to provide
+> a pointer to a buffer to be written after the original bio completes.
+
+Great.
+
+
+> This seems to work pretty well, but I haven't added support to the
+> library or my cow application, so I'm not sure how the performance
+> differs.
 > 
-> Ok, I'm using the compiler from SuSE 10.2 now and it works. Time that we 
-> refuse to build if it's a 4.1.0.
+> There is something that needs to be resolved, however.  Currently,
+> bio_map_user() assumes it is being run in process context.  Since we
+> defer to a kthread for all ring buffer processing, we can't easily
+> construct the extra bios.  So, there are two paths forward that I can
+> think of:
+> 
+> 1. Redesign how we process messages going to the kernel.  Userspace
+>    could mark them as "tentatively ready" and then do the write()
+>    which just goes through and constructs extra bios and marks them
+>    "ready".  This seems undesirable to me, because we're increasing
+>    the amount of time that userspace is blocked in the kernel.
 
-argh, I was down to suspecting gcc.
+Yeah, it's not the best way for the performance perspective. But your
+original code used this logic, didn't it? I guess that the code
+doesn't give notable performance difference even if dmu_ctl_write
+checks new requests and calls bio_map_user if necessary.
 
-I suppose we can just stir the code around to make it go away.  Like this?
 
+> 2. Add a bio_map_user_from() call to the kernel, which behaves just
+>    like bio_map_user(), but takes a struct task struct pointer to the
+>    process to map from, thus allowing the kthread to construct the
+>    bios asynchronously.  I have a patch cooked up to do this, but I'm
+>    worried that it might be rather controversial.
 
- block/genhd.c          |    9 ++-------
- drivers/base/core.c    |   14 ++++++++++++++
- fs/char_dev.c          |    8 ++------
- include/linux/kdev_t.h |    1 +
- 4 files changed, 19 insertions(+), 13 deletions(-)
-
-diff -puN block/genhd.c~rework-reserved-major-handling block/genhd.c
---- a/block/genhd.c~rework-reserved-major-handling
-+++ a/block/genhd.c
-@@ -5,6 +5,7 @@
- #include <linux/module.h>
- #include <linux/fs.h>
- #include <linux/genhd.h>
-+#include <linux/kdev_t.h>
- #include <linux/kernel.h>
- #include <linux/blkdev.h>
- #include <linux/init.h>
-@@ -61,13 +62,7 @@ int register_blkdev(unsigned int major, 
- 	/* temporary */
- 	if (major == 0) {
- 		for (index = ARRAY_SIZE(major_names)-1; index > 0; index--) {
--			/*
--			 * Disallow the LANANA-assigned LOCAL/EXPERIMENTAL
--			 * majors
--			 */
--			if ((60 <= index && index <= 63) ||
--					(120 <= index && index <= 127) ||
--					(240 <= index && index <= 254))
-+			if (is_lanana_major(index))
- 				continue;
- 			if (major_names[index] == NULL)
- 				break;
-diff -puN fs/char_dev.c~rework-reserved-major-handling fs/char_dev.c
---- a/fs/char_dev.c~rework-reserved-major-handling
-+++ a/fs/char_dev.c
-@@ -6,6 +6,7 @@
- 
- #include <linux/init.h>
- #include <linux/fs.h>
-+#include <linux/kdev_t.h>
- #include <linux/slab.h>
- #include <linux/string.h>
- 
-@@ -108,12 +109,7 @@ __register_chrdev_region(unsigned int ma
- 	/* temporary */
- 	if (major == 0) {
- 		for (i = ARRAY_SIZE(chrdevs)-1; i > 0; i--) {
--			/*
--			 * Disallow the LANANA-assigned LOCAL/EXPERIMENTAL
--			 * majors
--			 */
--			if ((60 <= i && i <= 63) || (120 <= i && i <= 127) ||
--					(240 <= i && i <= 254))
-+			if (is_lanana_major(i))
- 				continue;
- 			if (chrdevs[i] == NULL)
- 				break;
-diff -puN drivers/base/core.c~rework-reserved-major-handling drivers/base/core.c
---- a/drivers/base/core.c~rework-reserved-major-handling
-+++ a/drivers/base/core.c
-@@ -28,6 +28,20 @@ int (*platform_notify)(struct device * d
- int (*platform_notify_remove)(struct device * dev) = NULL;
- 
- /*
-+ * Detect the LANANA-assigned LOCAL/EXPERIMENTAL majors
-+ */
-+bool is_lanana_major(unsigned int major)
-+{
-+	if (major >= 60 && major <= 63)
-+		return 1;
-+	if (major >= 120 && major <= 127)
-+		return 1;
-+	if (major >= 240 && major <= 254)
-+		return 1;
-+	return 0;
-+}
-+
-+/*
-  * sysfs bindings for devices.
-  */
- 
-diff -puN include/linux/kdev_t.h~rework-reserved-major-handling include/linux/kdev_t.h
---- a/include/linux/kdev_t.h~rework-reserved-major-handling
-+++ a/include/linux/kdev_t.h
-@@ -87,6 +87,7 @@ static inline unsigned sysv_minor(u32 de
- 	return dev & 0x3ffff;
- }
- 
-+bool is_lanana_major(unsigned int major);
- 
- #else /* __KERNEL__ */
- 
-_
+This path isn't easy,
