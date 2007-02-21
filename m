@@ -1,16 +1,14 @@
-From: Rolf Eike Beer <eike-kernel@sf-tec.de>
-Subject: Re: [BUG?] register_blkdev: failed to get major for
-	device mapper
-Date: Tue, 20 Feb 2007 08:24:01 +0100
-Message-ID: <200702200824.06728.eike-kernel@sf-tec.de>
-References: <200702161437.34063.eike-kernel@sf-tec.de>
-	<200702191539.38902.eike-kernel@sf-tec.de>
-	<20070219115952.a06be52c.akpm@linux-foundation.org>
+From: "roland" <devzero@web.de>
+Subject: Re: [PATCH 2.6.20] updated dm-loop patch
+Date: Wed, 21 Feb 2007 01:14:27 +0100
+Message-ID: <005901c7554d$403757c0$eeeea8c0@aldipc>
+References: <1628079706@web.de> <45D451DA.2000106@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1020767379=="
+Content-Type: text/plain; format=flowed; charset="iso-8859-15";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070219115952.a06be52c.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,65 +18,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: "Bryn M. Reeves" <breeves@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1020767379==
-Content-Type: multipart/signed; boundary="nextPart2104166.tgITizfczl";
-	protocol="application/pgp-signature"; micalg=pgp-sha1
-Content-Transfer-Encoding: 7bit
+Hi !
 
---nextPart2104166.tgITizfczl
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+Just wanted to let you know that i'm running dm-loop for some days now, 
+being very lucky with it and not having any problems !  :)
 
-Am Montag, 19. Februar 2007 schrieben Sie:
-> On Mon, 19 Feb 2007 15:39:38 +0100 Rolf Eike Beer <eike-kernel@sf-tec.de>=
-=20
-wrote:
-> > > It's totally weird. It prints the "skipped" message for every (!)
-> > > number, not just for the blacklisted ones. And I've triple checked th=
-at
-> > > I don't have missed the '{'.
-> > >
-> > > Compiler is SuSEs 4.1.0 from their 10.1. I remember some rumors that
-> > > this thing is just broken?
-> >
-> > Ok, I'm using the compiler from SuSE 10.2 now and it works. Time that we
-> > refuse to build if it's a 4.1.0.
+Good work, Bryn!
+
+regards
+Roland
+
+ps:
+There`s only one issue being left:
+It`s not in mainline ;)
+
+
+
+----- Original Message ----- 
+From: "Bryn M. Reeves" <breeves@redhat.com>
+To: <devzero@web.de>
+Cc: "device-mapper development" <dm-devel@redhat.com>
+Sent: Thursday, February 15, 2007 1:28 PM
+Subject: Re: [dm-devel] [PATCH 2.6.20] updated dm-loop patch
+
+
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
 >
-> argh, I was down to suspecting gcc.
+> devzero@web.de wrote:
+>> Hi Bryn,
+>>
+>> with this patch and also with 0.415 i have the following problem when 
+>> compiling it with stock 2.6.20 :
+>>
+>>   Building modules, stage 2.
+>>   MODPOST 1 modules
+>> WARNING: "invalidate_mapping_pages" [drivers/md/dm-loop.ko] undefined!
+>> make[1]: *** [__modpost] Error 1
+>> make: *** [modules] Error 2
+>>
+>> i found , that this was due to missing
+>>
+>> EXPORT_SYMBOL(invalidate_mapping_pages);
+>>
+>> in mm/truncate.c
+>>
+>> i found
+>> http://lkml.org/lkml/2007/1/3/154
+>>
+>> it looks that this didn`t go into 2.6.20 and we need at least 
+>> 2.6.20-git11 ?
+>> changelog at 
+>> http://www.kernel.org/pub/linux/kernel/v2.6/snapshots/patch-2.6.20-git11.log 
+>> telling that it had just had been merged on 10th of february:
+>>
 >
-> I suppose we can just stir the code around to make it go away.  Like this?
-
-Too late, sorry. I've upgraded to 4.1.3 and it works fine now. Maybe I'll f=
-ind=20
-time to check again but this will take some days.
-
-Eike
-
---nextPart2104166.tgITizfczl
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.2 (GNU/Linux)
-
-iD8DBQBF2qIWXKSJPmm5/E4RAkcDAKCCt4WNOZu+iq2epwGXwnVXiWtzagCfSChJ
-/VR11Lp21D0vlhxQZL5gp40=
-=tjKB
------END PGP SIGNATURE-----
-
---nextPart2104166.tgITizfczl--
-
-
---===============1020767379==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1020767379==--
+> Hi Roland,
+>
+> That's right - I keep my git tree fairly close to upstream, so as soon
+> as the patch that deprecated invalidate_inode_pages was merged, I
+> converted dm-loop to use invalidate_mapping_pages instead.
+>
+> This means that dm-loop will build without warnings on the latest
+> kernel.org tree but it does mean that you will need the additional patch
+> you referenced if you want to apply it to a plain 2.6.20 kernel.
+>
+> Kind regards,
+>
+> Bryn.
+>
+>
+> -----BEGIN PGP SIGNATURE-----
+> Version: GnuPG v1.4.6 (GNU/Linux)
+> Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+>
+> iD8DBQFF1FHa6YSQoMYUY94RAl2iAKDAlrTqxDCNP7i/bhexl6JJGW1rNwCgksXz
+> 5limiJOmDRoBKdHDUsU0pFE=
+> =HwdH
+> -----END PGP SIGNATURE----- 
