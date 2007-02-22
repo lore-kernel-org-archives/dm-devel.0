@@ -1,1046 +1,1343 @@
-From: Dan Smith <danms@us.ibm.com>
-Subject: [PATCH] Add dm-userspace support to libdevmapper
-Date: Thu, 22 Feb 2007 10:15:53 -0800
-Message-ID: <m3y7mqdpnq.fsf@guaranine.beaverton.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Piet Delaney <piet@bluelane.com>
+Subject: Re: [dm-devel] [PATCH] device-mapper: Bad Block
+	relocation target
+Date: Thu, 22 Feb 2007 15:27:51 -0800
+Message-ID: <1172186872.8709.114.camel@piet2.bluelane.com>
+References: <20070210010159.835207B409F@zog.reactivated.net>
+Reply-To: piet@bluelane.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Alasdair G. Kergon" <agk@redhat.com>
+Content-Type: multipart/mixed; boundary="===============0777968439=="
+Return-path: <evms-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20070210010159.835207B409F@zog.reactivated.net>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/evms-devel>,
+	<mailto:evms-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum=evms-devel>
+List-Post: <mailto:evms-devel@lists.sourceforge.net>
+List-Help: <mailto:evms-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/evms-devel>,
+	<mailto:evms-devel-request@lists.sourceforge.net?subject=subscribe>
+Sender: evms-devel-bounces@lists.sourceforge.net
+Errors-To: evms-devel-bounces@lists.sourceforge.net
+To: device-mapper development <dm-devel@redhat.com>, Daniel Drake <dsd@gentoo.org>
+Cc: akpm@osdl.org, evms-devel@lists.sourceforge.net, Piet Delaney <piet@bluelane.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
 
-This is my latest revision of changes against libdevmapper to add
-dm-userspace support.  This version adds the ability to tag extra
-writes to a map response (see the dmu_write_alloc(), dmu_write_set(),
-and dmu_add_writes() functions).
+--===============0777968439==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature";
+	boundary="=-PnQz2yWWpwT5Oqrnad+/"
 
 
-Comments appreciated.
+--=-PnQz2yWWpwT5Oqrnad+/
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-- --=20
-Dan Smith
-IBM Linux Technology Center
-Open Hypervisor Team
-email: danms@us.ibm.com
+On Sat, 2007-02-10 at 01:01 +0000, Daniel Drake wrote:
 
-Signed-off-by: Dan Smith <danms@us.ibm.com>
-diff -r 4b8428722a88 -r f6597a1ebce4 configure
-- --- a/configure	Wed Feb 14 15:12:14 2007 +0000
-+++ b/configure	Wed Feb 21 14:12:11 2007 -0800
-@@ -310,7 +310,7 @@ ac_includes_default=3D"\
- #endif"
-=20
- ac_default_prefix=3D/usr
-- -ac_subst_vars=3D'SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PAC=
-KAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_=
-transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedi=
-r localstatedir libdir includedir oldincludedir infodir mandir build_alia=
-s host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu =
-build_vendor build_os host host_cpu host_vendor host_os target target_cpu=
- target_vendor target_os AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT O=
-BJEXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE=
- RANLIB ac_ct_RANLIB LIBOBJS MSGFMT usrlibdir JOBS STATIC_LINK OWNER GROU=
-P interface kerneldir missingkernel kernelvsn tmpdir COPTIMISE_FLAG CLDFL=
-AGS LDDEPS LIB_SUFFIX DEBUG DM_LIB_VERSION COMPAT DMIOCTLS LOCALEDIR INTL=
-_PACKAGE INTL DEVICE_UID DEVICE_GID DEVICE_MODE DMEVENTD PKGCONFIG LTLIBO=
-BJS'
-+ac_subst_vars=3D'SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKA=
-GE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_tr=
-ansform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir =
-localstatedir libdir includedir oldincludedir infodir mandir build_alias =
-host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu bu=
-ild_vendor build_os host host_cpu host_vendor host_os target target_cpu t=
-arget_vendor target_os AWK CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJ=
-EXT CPP EGREP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA LN_S SET_MAKE R=
-ANLIB ac_ct_RANLIB LIBOBJS MSGFMT usrlibdir JOBS STATIC_LINK OWNER GROUP =
-interface kerneldir missingkernel kernelvsn tmpdir COPTIMISE_FLAG CLDFLAG=
-S LDDEPS LIB_SUFFIX DEBUG DM_LIB_VERSION COMPAT DMIOCTLS LOCALEDIR INTL_P=
-ACKAGE INTL DEVICE_UID DEVICE_GID DEVICE_MODE DMEVENTD PKGCONFIG DMU LTLI=
-BOBJS'
- ac_subst_files=3D''
-=20
- # Initialize some variables set by options.
-@@ -856,6 +856,7 @@ Optional Features:
-                           statically.  Default is dynamic linking
-   --disable-selinux       Disable selinux support
-   --enable-nls            Enable Native Language Support
-+  --disable-dmu        Disable dm-userspace support
-=20
- Optional Packages:
-   --with-PACKAGE[=3DARG]    use PACKAGE [ARG=3Dyes]
-@@ -1445,7 +1446,8 @@ case "$host_os" in
- 		LDDEPS=3D"$LDDEPS .export.sym"
- 		LIB_SUFFIX=3D"so"
- 		DMIOCTLS=3D"yes"
-- -		SELINUX=3D"yes" ;;
-+		SELINUX=3D"yes"
-+		DMU=3D"yes" ;;
- 	darwin*)
- 		CFLAGS=3D"$CFLAGS -no-cpp-precomp -fno-common"
- 		COPTIMISE_FLAG=3D"-O2"
-@@ -1453,7 +1455,8 @@ case "$host_os" in
- 		LDDEPS=3D"$LDDEPS"
- 		LIB_SUFFIX=3D"dylib"
- 		DMIOCTLS=3D"no"
-- -		SELINUX=3D"no" ;;
-+		SELINUX=3D"no"
-+		DMU=3D"no" ;;
- esac
-=20
- ########################################################################=
-########
-@@ -5963,6 +5966,26 @@ fi
- fi
-=20
- ########################################################################=
-########
-+echo "$as_me:$LINENO: checking whether to enable dm-userspace" >&5
-+echo $ECHO_N "checking whether to enable dm-userspace... $ECHO_C" >&6
-+# Check whether --enable-dmu or --disable-dmu was given.
-+if test "${enable_dmu+set}" =3D set; then
-+  enableval=3D"$enable_dmu"
-+  DMU=3D$enableval
-+fi;
-+echo "$as_me:$LINENO: result: $DMU" >&5
-+echo "${ECHO_T}$DMU" >&6
-+
-+if test "x${DMU}" =3D "xyes"; then
-+	if test "x${missingkernel}" =3D xyes; then
-+		{ { echo "$as_me:$LINENO: error: \"Kernel source required to build dm-=
-userspace tools\"" >&5
-+echo "$as_me: error: \"Kernel source required to build dm-userspace tool=
-s\"" >&2;}
-+   { (exit 1); exit 1; }; }
-+	fi
-+fi
-+
-+
-+########################################################################=
-########
- echo "$as_me:$LINENO: checking for kernel version" >&5
- echo $ECHO_N "checking for kernel version... $ECHO_C" >&6
-=20
-@@ -6044,6 +6067,7 @@ _ACEOF
-=20
-=20
- ########################################################################=
-########
-+
-=20
-=20
- if test "$DMEVENTD" =3D yes; then
-@@ -6799,6 +6823,7 @@ s,@DEVICE_MODE@,$DEVICE_MODE,;t t
- s,@DEVICE_MODE@,$DEVICE_MODE,;t t
- s,@DMEVENTD@,$DMEVENTD,;t t
- s,@PKGCONFIG@,$PKGCONFIG,;t t
-+s,@DMU@,$DMU,;t t
- s,@LTLIBOBJS@,$LTLIBOBJS,;t t
- CEOF
-=20
-diff -r 4b8428722a88 -r f6597a1ebce4 configure.in
-- --- a/configure.in	Wed Feb 14 15:12:14 2007 +0000
-+++ b/configure.in	Wed Feb 21 14:12:11 2007 -0800
-@@ -38,7 +38,8 @@ case "$host_os" in
- 		LDDEPS=3D"$LDDEPS .export.sym"
- 		LIB_SUFFIX=3D"so"
- 		DMIOCTLS=3D"yes"
-- -		SELINUX=3D"yes" ;;
-+		SELINUX=3D"yes"
-+		DMU=3D"yes" ;;
- 	darwin*)
- 		CFLAGS=3D"$CFLAGS -no-cpp-precomp -fno-common"
- 		COPTIMISE_FLAG=3D"-O2"
-@@ -46,7 +47,8 @@ case "$host_os" in
- 		LDDEPS=3D"$LDDEPS"
- 		LIB_SUFFIX=3D"dylib"
- 		DMIOCTLS=3D"no"
-- -		SELINUX=3D"no" ;;
-+		SELINUX=3D"no"
-+		DMU=3D"no" ;;
- esac
-=20
- ########################################################################=
-########
-@@ -296,6 +298,20 @@ else
- else
-   test -d "${kerneldir}" || { AC_MSG_WARN(kernel dir $kerneldir not foun=
-d); missingkernel=3Dyes ; }
- fi
-+
-+########################################################################=
-########
-+dnl -- Disable dm-userspace
-+AC_MSG_CHECKING(whether to enable dm-userspace)
-+AC_ARG_ENABLE(dmu, [  --disable-dmu        Disable dm-userspace support]=
+Nice patch Daniel, wondering about using it in 2.6.12.=20
+
+You code is very nicely commented, a feature I personally
+find more important than the redundant brackets on one line
+'if' statements. Over in Germany some of our best kernel programmers
+considered the extra braces a cleaner coding style. I continue to
+share that point of view. Feels like my eyes can parse the code a bit
+faster. One of the very few things I like about Larry Wall's Perl
+language it the required brackets on if statements.
+
+If I was to add this to our dm components I was wondering how I'd
+test it. No idea on how to get the hardware BBR replacement sectors
+to be used up.=20
+
+I'll look around for the EVMS tar ball you mentioned.
+
+Thanks for the nicely documented code. I'll re-read it this evening.
+
+-piet
+
+
+> The BBR target is designed to remap I/O write failures to another safe
+> location on disk. Note that most disk drives have BBR built into them,
+> this means that our software BBR will be only activated when all hardware
+> BBR replacement sectors have been used.
+>=20
+> This patch is included in the EVMS tarball, and Gentoo have been shipping
+> it as part of the default kernel for a long time. I know that some users
+> are running it, and haven't seen any reported bugs in a long time.
+>=20
+> Please consider this for -mm and possible later inclusion in mainline.
+>=20
+> I haven't been involved in the development of this target, but have brush=
+ed
+> it up a little from the one included in the EVMS tarball.
+>=20
+> Kevin, I see from mailing list archives that you were somehow involved in
+> this project. Can you clarify who the main developers were so that we can
+> include this in the history if it gets merged?
+>=20
+> Signed-off-by: Daniel Drake <dsd@gentoo.org>
+>=20
+> Index: linux-2.6.20-git4/drivers/md/Kconfig
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.20-git4.orig/drivers/md/Kconfig
+> +++ linux-2.6.20-git4/drivers/md/Kconfig
+> @@ -262,6 +262,17 @@ config DM_MULTIPATH_EMC
+>  	---help---
+>  	  Multipath support for EMC CX/AX series hardware.
+> =20
+> +config BLK_DEV_DM_BBR
+> +	tristate "Bad Block Relocation Device Target (EXPERIMENTAL)"
+> +	depends on BLK_DEV_DM && EXPERIMENTAL
+> +	---help---
+> +	  Support for devices with software-based bad-block-relocation.
+> +
+> +	  To compile this as a module, choose M here: the module will be
+> +	  called dm-bbr.
+> +
+> +	  If unsure, say N.
+> +
+>  endmenu
+> =20
+>  endif
+> Index: linux-2.6.20-git4/drivers/md/Makefile
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.20-git4.orig/drivers/md/Makefile
+> +++ linux-2.6.20-git4/drivers/md/Makefile
+> @@ -36,6 +36,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+=3D dm-emc
+>  obj-$(CONFIG_DM_SNAPSHOT)	+=3D dm-snapshot.o
+>  obj-$(CONFIG_DM_MIRROR)		+=3D dm-mirror.o
+>  obj-$(CONFIG_DM_ZERO)		+=3D dm-zero.o
+> +obj-$(CONFIG_BLK_DEV_DM_BBR)	+=3D dm-bbr.o
+> =20
+>  quiet_cmd_unroll =3D UNROLL  $@
+>        cmd_unroll =3D $(PERL) $(srctree)/$(src)/unroll.pl $(UNROLL) \
+> Index: linux-2.6.20-git4/drivers/md/dm-bbr.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- /dev/null
+> +++ linux-2.6.20-git4/drivers/md/dm-bbr.c
+> @@ -0,0 +1,1004 @@
+> +/*
+> + *   (C) Copyright IBM Corp. 2002, 2004
+> + *
+> + *   This program is free software;  you can redistribute it and/or modi=
+fy
+> + *   it under the terms of the GNU General Public License as published b=
+y
+> + *   the Free Software Foundation; either version 2 of the License, or
+> + *   (at your option) any later version.
+> + *
+> + *   This program is distributed in the hope that it will be useful,
+> + *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
+> + *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+> + *   the GNU General Public License for more details.
+> + *
+> + *   You should have received a copy of the GNU General Public License
+> + *   along with this program;  if not, write to the Free Software
+> + *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307=
+ USA
+> + *
+> + * linux/drivers/md/dm-bbr.c
+> + *
+> + * Bad-block-relocation (BBR) target for device-mapper.
+> + *
+> + * The BBR target is designed to remap I/O write failures to another saf=
+e
+> + * location on disk. Note that most disk drives have BBR built into them=
 ,
-+DMU=3D$enableval)
-+AC_MSG_RESULT($DMU)
-+
-+if test "x${DMU}" =3D "xyes"; then
-+	if test "x${missingkernel}" =3D xyes; then
-+		AC_ERROR("Kernel source required to build dm-userspace tools")
-+	fi
-+fi
-+=09
-=20
- ########################################################################=
-########
- dnl -- Kernel version string
-@@ -413,6 +429,7 @@ AC_SUBST(DEVICE_MODE)
- AC_SUBST(DEVICE_MODE)
- AC_SUBST(DMEVENTD)
- AC_SUBST(PKGCONFIG)
-+AC_SUBST(DMU)
-=20
- ########################################################################=
-########
- dnl -- First and last lines should not contain files to generate in orde=
-r to=20
-diff -r 4b8428722a88 -r f6597a1ebce4 lib/.exported_symbols
-- --- a/lib/.exported_symbols	Wed Feb 14 15:12:14 2007 +0000
-+++ b/lib/.exported_symbols	Wed Feb 21 14:12:11 2007 -0800
-@@ -127,3 +127,29 @@ dm_report_field_uint32
- dm_report_field_uint32
- dm_report_field_uint64
- dm_report_field_set_value
-+dmu_async_map
-+dmu_async_map_done
-+dmu_ctl_close
-+dmu_ctl_open
-+dmu_ctl_send_queue
-+dmu_events_pending
-+dmu_get_ctl_fd
-+dmu_kill_mapping
-+dmu_make_mapping
-+dmu_map_dup
-+dmu_map_get_block
-+dmu_map_get_id
-+dmu_map_is_write
-+dmu_map_set_block
-+dmu_map_set_copy_src_dev
-+dmu_map_set_dest_dev
-+dmu_map_set_offset
-+dmu_map_set_origin_block
-+dmu_map_set_sync
-+dmu_map_set_writable
-+dmu_map_add_writes
-+dmu_process_events
-+dmu_register_map_done_handler
-+dmu_register_map_handler
-+dmu_write_alloc
-+dmu_write_set
-\ No newline at end of file
-diff -r 4b8428722a88 -r f6597a1ebce4 lib/Makefile.in
-- --- a/lib/Makefile.in	Wed Feb 14 15:12:14 2007 +0000
-+++ b/lib/Makefile.in	Wed Feb 21 14:12:11 2007 -0800
-@@ -16,6 +16,7 @@ top_srcdir =3D @top_srcdir@
- top_srcdir =3D @top_srcdir@
- VPATH =3D @srcdir@
- interface =3D @interface@
-+kerneldir =3D @kerneldir@
-=20
- SOURCES =3D\
- 	datastruct/bitset.c \
-@@ -30,6 +31,11 @@ SOURCES =3D\
- 	$(interface)/libdm-iface.c
-=20
- INCLUDES =3D -I$(interface)
-+
-+ifeq ("@DMU@", "yes")
-+  INCLUDES +=3D -I$(kerneldir)/include
-+  SOURCES +=3D dmu.c
-+endif
-=20
- LIB_STATIC =3D $(interface)/libdevmapper.a
-=20
-diff -r 4b8428722a88 -r f6597a1ebce4 lib/dmu.c
-- --- /dev/null	Thu Jan 01 00:00:00 1970 +0000
-+++ b/lib/dmu.c	Wed Feb 21 14:12:11 2007 -0800
-@@ -0,0 +1,674 @@
-+/*
-+ * Copyright IBM Corp., 2006
-+ * Author: Dan Smith <danms@us.ibm.com>
-+ *
-+ * This file is subject to the terms and conditions of the GNU Lesser
-+ * General Public License. See the file COPYING in the main directory
-+ * of this archive for more details.
-+ *
-+ */
-+
-+#include <stdio.h>
-+#include <fcntl.h>
-+#include <linux/fs.h>
-+#include <sys/stat.h>
-+#include <sys/sysmacros.h>
-+#include <errno.h>
-+#include <stdint.h>
-+#include <string.h>
-+#include <unistd.h>
-+#include <stdlib.h>
-+#include <libdevmapper.h>
-+#include <linux/dm-userspace.h>
-+#include <sys/mman.h>
-+
-+#define PAGE_SHIFT 12
-+#define PAGE_SIZE (1UL << PAGE_SHIFT)
-+
-+#define MAX_MAJ_VER 0
-+#define MAX_MIN_VER 1
-+
-+#define DMU_MSG_DEBUG 0
-+
-+struct uring {
-+        uint32_t idx;
-+        char *buf;
-+        int size;
-+};
-+
-+#if DMU_MSG_DEBUG
-+#define DPRINTF( s, arg... ) fprintf(stderr, s, ##arg)
-+#else
-+#define DPRINTF( s, arg... )
-+#endif
-+
-+struct dmu_events {
-+	map_done_handler_t map_done_fn;
-+	map_req_handler_t map_fn;
-+};
-+
-+struct dmu_event_data {
-+	void *map_done_user_data;
-+	void *map_user_data;
-+};
-+
-+struct dmu_context {
-+	int fd;
-+	uint32_t id_ctr;
-+	struct dmu_events events;
-+	struct dmu_event_data event_data;
-+=09
-+	struct uring ukring;
-+	struct uring kuring;
-+
-+	uint32_t pending;
-+};
-+
-+struct dmu_map_data {
-+	uint64_t org_block;
-+	uint64_t block;
-+	int64_t offset;
-+	uint32_t id;
-+	uint32_t flags;
-+	dev_t dest_dev;
-+	dev_t copy_src_dev;
-+	void *writes;
-+	int num_writes;
-+};
-+
-+void dmu_map_set_origin_block(struct dmu_map_data *data, uint64_t block)
-+{
-+	data->org_block =3D block;
-+}
-+
-+void dmu_map_set_writable(struct dmu_map_data *data, int rw)
-+{
-+	dmu_set_flag(&data->flags, DMU_FLAG_WR);
-+}
-+
-+void dmu_map_set_block(struct dmu_map_data *data, uint64_t block)
-+{
-+	data->block =3D block;
-+}
-+
-+uint64_t dmu_map_get_block(struct dmu_map_data *data)
-+{
-+	return data->block;
-+}
-+
-+void dmu_map_set_offset(struct dmu_map_data *data, int64_t offset)
-+{
-+	data->offset =3D offset;
-+}
-+
-+uint32_t dmu_map_get_id(struct dmu_map_data *data)
-+{
-+	return data->id;
-+}
-+
-+void dmu_map_set_dest_dev(struct dmu_map_data *data, dev_t dev)
-+{
-+	data->dest_dev =3D dev;
-+}
-+
-+void dmu_map_set_copy_src_dev(struct dmu_map_data *data, dev_t dev)
-+{
-+	data->copy_src_dev =3D dev;
-+	dmu_set_flag(&data->flags, DMU_FLAG_COPY_FIRST);
-+}
-+
-+int dmu_map_is_write(struct dmu_map_data *data)
-+{
-+	return dmu_get_flag(&data->flags, DMU_FLAG_WR);
-+}
-+
-+void dmu_map_set_sync(struct dmu_map_data *data)
-+{
-+	dmu_set_flag(&data->flags, DMU_FLAG_SYNC);
-+}
-+
-+struct dmu_map_data *dmu_map_dup(struct dmu_map_data *data)
-+{
-+	struct dmu_map_data *dup;
-+
-+	dup =3D malloc(sizeof(*dup));
-+	if (!dup)
-+		return NULL;
-+
-+	if (data)
-+		memcpy(dup, data, sizeof(*dup));
-+
-+	return dup;
-+}
-+
-+/*
-+ * Get the major/minor of the character control device that @dm_device
-+ * has exported for us.  We do this by looking at the device status
-+ * string.
-+ */
-+static int get_dm_control_dev(char *dm_device,
-+			       unsigned *maj, unsigned *min)
-+{
-+	struct dm_task *task;
-+	int ret;
-+	void *next =3D NULL;
-+	uint64_t start, length;
-+	char *ttype =3D NULL, *params =3D NULL;
-+
-+	task =3D dm_task_create(DM_DEVICE_STATUS);
-+
-+	ret =3D dm_task_set_name(task, dm_device);
-+	if (!ret) {
-+		DPRINTF("Failed to set device-mapper target name\n");
-+		dm_task_destroy(task);
-+		return -1;
-+	}
-+
-+	ret =3D dm_task_run(task);
-+	if (!ret) {
-+		DPRINTF("Failed to run device-mapper task\n");
-+		dm_task_destroy(task);
-+		return -1;
-+	}
-+
-+	ret =3D 0;
-+	do {
-+		next =3D dm_get_next_target(task, next, &start, &length,
-+					  &ttype, &params);
-+
-+		if (strcmp(ttype, "userspace") =3D=3D 0) {
-+			ret =3D sscanf(params, "%x:%x", maj, min);
-+			if (ret =3D=3D 2)
-+				break;
-+		}
-+
-+	} while (next);
-+
-+	return 0;
-+}
-+
-+/*
-+ * Create the character device node for our control channel
-+ */
-+static int make_device_node(unsigned major, unsigned minor)
-+{
-+	char path[256];
-+
-+	sprintf(path, "/dev/dmu%i", minor);
-+
-+	return mknod(path, S_IFCHR, makedev(major, minor));
-+}
-+
-+static char *dmu_get_ctl_device(char *dm_device)
-+{
-+	unsigned ctl_major, ctl_minor;
-+	static char path[256];
-+
-+	if (get_dm_control_dev(dm_device, &ctl_major, &ctl_minor) < 0)
-+		return NULL;
-+
-+	if (ctl_major =3D=3D 0) {
-+		DPRINTF("Unable to get device number\n");
-+		return NULL;
-+	}
-+
-+	sprintf(path, "/dev/dmu%i", ctl_minor);
-+
-+	if (access(path, R_OK | W_OK)) {
-+		if (make_device_node(ctl_major, ctl_minor)) {
-+			DPRINTF("Failed to create device node: %s",
-+				strerror(errno));
-+			return NULL;
-+		}
-+	}
-+
-+	return path;
-+}
-+
-+static void dmu_split_dev(dev_t dev, uint32_t *maj, uint32_t *min)
-+{
-+	*maj =3D (dev & 0xFF00) >> 8;
-+	*min =3D (dev & 0x00FF);
-+}
-+
-+static inline void ring_index_inc(struct uring *ring)
-+{
-+        ring->idx =3D (ring->idx =3D=3D DMU_MAX_EVENTS - 1) ? 0 : ring->=
-idx + 1;
-+}
-+
-+static inline struct dmu_msg *head_ring_hdr(struct uring *ring)
-+{
-+        uint32_t pidx, off, pos;
-+
-+        pidx =3D ring->idx / DMU_EVENT_PER_PAGE;
-+        off =3D ring->idx % DMU_EVENT_PER_PAGE;
-+        pos =3D pidx * PAGE_SIZE + off * sizeof(struct dmu_msg);
-+
-+        return (struct dmu_msg *) (ring->buf + pos);
-+}
-+
-+/* Queue a message for sending */
-+static int dmu_ctl_queue_msg(struct dmu_context *ctx, int type, void *ms=
-gbuf)
-+{
-+	struct dmu_msg *msg;
-+
-+	msg =3D (struct dmu_msg *)head_ring_hdr(&ctx->ukring);
-+	if (msg->hdr.status) {
-+		DPRINTF("No room in ring, flushing...\n");
-+		dmu_ctl_send_queue(ctx);
-+
-+		/* FIXME: Need a better way to wait for space to free up */
-+		usleep(50000);
-+
-+		msg =3D (struct dmu_msg *)head_ring_hdr(&ctx->ukring);
-+		if (msg->hdr.status) {
-+			printf("#################### Still no room!\n");
-+			return -ENOMEM;
-+		}
-+	}
-+
-+	msg->hdr.msg_type =3D type;
-+	msg->hdr.id =3D ctx->id_ctr++;
-+
-+	memcpy(&msg->payload, msgbuf, sizeof(msg->payload));
-+
-+	ring_index_inc(&ctx->ukring);
-+	msg->hdr.status =3D 1;
-+	ctx->pending++;
-+
-+	return 1;
-+}
-+
-+/* Flush queue of messages to the kernel */
-+int dmu_ctl_send_queue(struct dmu_context *ctx)
-+{
-+	int r;
-+
-+	DPRINTF("Flushing outgoing queue\n");
-+
-+	r =3D write(ctx->fd, &r, 1);
-+
-+	ctx->pending =3D 0;
-+
-+	return r;
-+}
-+
-+static int check_version(char *dev)
-+{
-+	struct dm_task *task;
-+	struct dm_versions *target, *last;
-+	int ret;
-+
-+	task =3D dm_task_create(DM_DEVICE_LIST_VERSIONS);
-+
-+	ret =3D dm_task_set_name(task, dev);
-+	if (!ret) {
-+		DPRINTF("Failed to set device-mapper target name\n");
-+		dm_task_destroy(task);
-+		return -1;
-+	}
-+
-+	ret =3D dm_task_run(task);
-+	if (!ret) {
-+		DPRINTF("Failed to run device-mapper task\n");
-+		dm_task_destroy(task);
-+		return -1;
-+	}
-+
-+	target =3D dm_task_get_versions(task);
-+
-+	do {
-+		last =3D target;
-+	=09
-+		if (strcmp(target->name, "userspace") =3D=3D 0) {
-+			DPRINTF("%s version: %i.%i.%i\n",
-+				target->name,
-+				target->version[0],
-+				target->version[1],
-+				target->version[2]);
-+			break;
-+		}
-+
-+		target =3D (void *) target + target->next;
-+	} while (last !=3D target);
-+
-+	if (!target) {
-+		DPRINTF("userspace target not found\n");
-+		return -1;
-+	}
-+=09
-+	if ((target->version[0] =3D=3D MAX_MAJ_VER) &&=20
-+	    (target->version[1] =3D=3D MAX_MIN_VER))
-+		return 1;
-+	else
-+		return 0; /* Unsupported */
-+}
-+
-+struct dmu_context *dmu_ctl_open(char *dev, int flags)
-+{
-+	int fd, r;
-+	struct dmu_context *ctx =3D NULL;
-+	char *ctl_dev;
-+	char *ringbuf;
-+
-+	r =3D check_version(dev);
-+	if (r <=3D 0) {
-+		return NULL;
-+	}
-+=09
-+	ctl_dev =3D dmu_get_ctl_device(dev);
-+	if (ctl_dev =3D=3D NULL)
-+		return NULL;
-+	else if (access(ctl_dev, R_OK | W_OK))
-+		return NULL;
-+
-+	fd =3D open(ctl_dev, O_RDWR | flags);
-+	if (fd < 0)
-+		goto out;
-+
-+	ctx =3D calloc(sizeof(*ctx), 1);
-+	if (!ctx)
-+		goto out;
-+
-+	ctx->fd =3D fd;
-+	ctx->id_ctr =3D 0;
-+	memset(&ctx->events, 0, sizeof(ctx->events));
-+	memset(&ctx->event_data, 0, sizeof(ctx->event_data));
-+
-+	ringbuf =3D mmap(NULL, DMU_RING_SIZE * 2, PROT_READ | PROT_WRITE,
-+		       MAP_SHARED, fd, 0);
-+        if (ringbuf =3D=3D MAP_FAILED) {
-+                printf("fail to mmap, %m\n");
-+                return NULL;
-+        }
-+
-+	ctx->kuring.idx =3D ctx->ukring.idx =3D 0;
-+	ctx->kuring.buf =3D ringbuf;
-+	ctx->ukring.buf =3D ringbuf + DMU_RING_SIZE;
-+
-+	return ctx;
-+
-+ out:
-+	if (ctx)
-+		free(ctx);
-+
-+	return NULL;
-+}
-+
-+int dmu_ctl_close(struct dmu_context *ctx)
-+{
-+	return close(ctx->fd);
-+}
-+
-+void dmu_register_map_done_handler(struct dmu_context *ctx,
-+				   map_done_handler_t handler,
-+				   void *data)
-+{
-+	ctx->events.map_done_fn =3D handler;
-+	ctx->event_data.map_done_user_data =3D data;
-+}
-+
-+void dmu_register_map_handler(struct dmu_context *ctx,
-+			      map_req_handler_t handler,
-+			      void *data)
-+{
-+	ctx->events.map_fn =3D handler;
-+	ctx->event_data.map_user_data =3D data;
-+}
-+
-+int dmu_make_mapping(struct dmu_context *ctx,
-+		     struct dmu_map_data *data)
-+{
-+	struct dmu_msg_make_mapping msg;
-+	int r;
-+
-+	msg.org_block =3D data->org_block;
-+	msg.new_block =3D data->block;
-+	msg.offset =3D data->offset;
-+	dmu_split_dev(data->dest_dev, &msg.dev_maj, &msg.dev_min);
-+	msg.flags =3D 0;
-+	dmu_cpy_flag(&msg.flags, data->flags, DMU_FLAG_WR);
-+
-+	r =3D dmu_ctl_queue_msg(ctx, DM_USERSPACE_MAKE_MAPPING, &msg);
-+
-+	return r;
-+}
-+
-+int dmu_kill_mapping(struct dmu_context *ctx,
-+		     struct dmu_map_data *data)
-+{
-+	struct dmu_msg_make_mapping msg;
-+	int r;
-+
-+	msg.org_block =3D data->org_block;
-+
-+	r =3D dmu_ctl_queue_msg(ctx, DM_USERSPACE_KILL_MAPPING, &msg);
-+
-+	return r;
-+}
-+
-+int dmu_async_map_done(struct dmu_context *ctx, uint64_t id, int fail)
-+{
-+	struct dmu_msg_map_done msg;
-+	int r;
-+
-+	msg.org_block =3D 0;
-+	msg.flags =3D 0;
-+	msg.id_of_op =3D id;
-+
-+	if (fail)
-+		r =3D dmu_ctl_queue_msg(ctx, DM_USERSPACE_MAP_DONE_FAILED, &msg);
-+	else
-+		r =3D dmu_ctl_queue_msg(ctx, DM_USERSPACE_MAP_DONE, &msg);
-+
-+	return r;
-+}
-+
-+int dmu_async_map(struct dmu_context *ctx,=20
-+		  struct dmu_map_data *data,
-+		  int fail)
-+{
-+	struct dmu_msg_map_response msg;
-+	int r;
-+
-+	if (dmu_map_is_write(data)) {
-+		msg.extra_writes =3D (uint64_t)data->writes;
-+		msg.extra_count =3D data->num_writes;
-+
-+	} else=20
-+		msg.extra_count =3D 0;
-+
-+	msg.new_block =3D data->block;
-+	msg.offset =3D data->offset;
-+	msg.flags =3D data->flags;
-+	msg.id_of_req =3D data->id;
-+
-+	dmu_split_dev(data->copy_src_dev, &msg.src_maj, &msg.src_min);
-+	dmu_split_dev(data->dest_dev, &msg.dst_maj, &msg.dst_min);
-+
-+	if (fail)
-+		r =3D dmu_ctl_queue_msg(ctx, DM_USERSPACE_MAP_FAILED, &msg);
-+	else
-+		r =3D dmu_ctl_queue_msg(ctx, DM_USERSPACE_MAP_BLOCK_RESP, &msg);
-+
-+	return r;
-+}
-+
-+int dmu_events_pending(struct dmu_context *ctx, unsigned int msec)
-+{
-+	fd_set fds;
-+	struct timeval tv;
-+
-+	FD_ZERO(&fds);
-+	FD_SET(ctx->fd, &fds);
-+
-+	tv.tv_sec =3D msec / 1000;
-+	tv.tv_usec =3D (msec % 1000) * 1000;
-+
-+	if (select(ctx->fd + 1, &fds, NULL, NULL, &tv) < 0)
-+		return 0;
-+
-+	if (FD_ISSET(ctx->fd, &fds))
-+		return 1;
-+	else
-+		return 0;
-+}
-+
-+static int fire_map_req_event(struct dmu_context *ctx,
-+			      struct dmu_msg_map_request *req,
-+			      uint64_t id)
-+{
-+	struct dmu_map_data data;
-+	int ret;
-+
-+	if (!ctx->events.map_fn)
-+		return 1;
-+
-+	DPRINTF("Map event for %llu %c\n",
-+		req->org_block,
-+		dmu_get_flag(&req->flags, DMU_FLAG_WR) ? 'W':'R');
-+
-+	data.block =3D req->org_block;
-+	data.offset =3D 0;
-+	data.id =3D id;
-+	data.flags =3D req->flags;
-+	data.dest_dev =3D data.copy_src_dev =3D 0;
-+	data.num_writes =3D 0;
-+
-+	dmu_clr_flag(&data.flags, DMU_FLAG_COPY_FIRST);
-+	dmu_clr_flag(&data.flags, DMU_FLAG_SYNC);
-+
-+	ret =3D ctx->events.map_fn(ctx->event_data.map_user_data, &data);
-+
-+	if (ret !=3D 0) {
-+		/* If the handler returns 0, we assume they will
-+		 * complete the operation later=20
-+		 */
-+		dmu_async_map(ctx, &data, ret < 0);
-+		DPRINTF("Mapped %llu\n", data.block);
-+	}
-+
-+	return ret !=3D 0;
-+}
-+
-+static int fire_map_done_event(struct dmu_context *ctx,
-+			       struct dmu_msg_map_done *msg,
-+			       uint64_t id)
-+{
-+	struct dmu_map_data data;
-+	int ret =3D 1;
-+
-+	if (ctx->events.map_done_fn) {
-+		data.block =3D msg->org_block;
-+		data.offset =3D 0;
-+		data.id =3D msg->id_of_op;
-+		data.flags =3D msg->flags;
-+		data.dest_dev =3D data.copy_src_dev =3D 0;
-+	=09
-+		ret =3D ctx->events.map_done_fn(ctx->event_data.map_done_user_data,=20
-+					      &data);
-+	}
-+
-+	if (ret > 0) {
-+		/* If the handler returns 0, we assume they will
-+		 * complete the operation later=20
-+		 */
-+		dmu_async_map_done(ctx, msg->id_of_op, ret < 0);
-+		DPRINTF("Completed %llu (%llu)\n",=20
-+			msg->org_block, msg->id_of_op);
-+	}
-+
-+	return ret !=3D 0;
-+}
-+
-+static int decode_message(struct dmu_context *ctx, int type, uint64_t id=
+> + * this means that our software BBR will be only activated when all hard=
+ware
+> + * BBR replacement sectors have been used.
+> + */
+> +
+> +#include <linux/module.h>
+> +#include <linux/init.h>
+> +#include <linux/bio.h>
+> +#include <linux/spinlock.h>
+> +#include <linux/slab.h>
+> +#include <linux/mempool.h>
+> +#include <linux/workqueue.h>
+> +#include <linux/vmalloc.h>
+> +
+> +#include "dm.h"
+> +#include "dm-bio-list.h"
+> +#include "dm-bio-record.h"
+> +#include "dm-bbr.h"
+> +#include "dm-io.h"
+> +
+> +#define DM_MSG_PREFIX "bbr"
+> +#define SECTOR_SIZE (1 << SECTOR_SHIFT)
+> +
+> +static struct workqueue_struct *dm_bbr_wq =3D NULL;
+> +static void bbr_remap_handler(void *data);
+> +static kmem_cache_t *bbr_remap_cache;
+> +static kmem_cache_t *bbr_io_cache;
+> +static mempool_t *bbr_io_pool;
+> +
+> +/**
+> + * bbr_binary_tree_destroy
+> + *
+> + * Destroy the binary tree.
+> + **/
+> +static void bbr_binary_tree_destroy(struct bbr_runtime_remap *root)
+> +{
+> +	struct bbr_runtime_remap **link =3D NULL;
+> +	struct bbr_runtime_remap *node =3D root;
+> +
+> +	while (node) {
+> +		if (node->left) {
+> +			link =3D &(node->left);
+> +			node =3D node->left;
+> +			continue;
+> +		}
+> +		if (node->right) {
+> +			link =3D &(node->right);
+> +			node =3D node->right;
+> +			continue;
+> +		}
+> +
+> +		kmem_cache_free(bbr_remap_cache, node);
+> +		if (node =3D=3D root) {
+> +			/* If root is deleted, we're done. */
+> +			break;
+> +		}
+> +
+> +		/* Back to root. */
+> +		node =3D root;
+> +		*link =3D NULL;
+> +	}
+> +}
+> +
+> +static void bbr_free_remap(struct bbr_private *bbr_id)
+> +{
+> +	spin_lock_irq(&bbr_id->remap_root_lock);
+> +	bbr_binary_tree_destroy(bbr_id->remap_root);
+> +	bbr_id->remap_root =3D NULL;
+> +	spin_unlock_irq(&bbr_id->remap_root_lock);
+> +}
+> +
+> +static struct bbr_private *bbr_alloc_private(void)
+> +{
+> +	struct bbr_private *bbr_id;
+> +
+> +	bbr_id =3D kmalloc(sizeof(*bbr_id), GFP_KERNEL);
+> +	if (bbr_id) {
+> +		memset(bbr_id, 0, sizeof(*bbr_id));
+> +		INIT_WORK(&bbr_id->remap_work, bbr_remap_handler, bbr_id);
+> +		bbr_id->remap_root_lock =3D SPIN_LOCK_UNLOCKED;
+> +		bbr_id->remap_ios_lock =3D SPIN_LOCK_UNLOCKED;
+> +		bbr_id->in_use_replacement_blks =3D (atomic_t)ATOMIC_INIT(0);
+> +	}
+> +
+> +	return bbr_id;
+> +}
+> +
+> +static void bbr_free_private(struct bbr_private *bbr_id)
+> +{
+> +	if (bbr_id->bbr_table) {
+> +		vfree(bbr_id->bbr_table);
+> +	}
+> +	bbr_free_remap(bbr_id);
+> +	kfree(bbr_id);
+> +}
+> +
+> +static u32 crc_table[256];
+> +static u32 crc_table_built =3D 0;
+> +
+> +static void build_crc_table(void)
+> +{
+> +	u32 i, j, crc;
+> +
+> +	for (i =3D 0; i <=3D 255; i++) {
+> +		crc =3D i;
+> +		for (j =3D 8; j > 0; j--) {
+> +			if (crc & 1)
+> +				crc =3D (crc >> 1) ^ CRC_POLYNOMIAL;
+> +			else
+> +				crc >>=3D 1;
+> +		}
+> +		crc_table[i] =3D crc;
+> +	}
+> +	crc_table_built =3D 1;
+> +}
+> +
+> +static u32 calculate_crc(u32 crc, void *buffer, u32 buffersize)
+> +{
+> +	unsigned char *current_byte;
+> +	u32 temp1, temp2, i;
+> +
+> +	current_byte =3D (unsigned char *) buffer;
+> +	/* Make sure the crc table is available */
+> +	if (!crc_table_built)
+> +		build_crc_table();
+> +	/* Process each byte in the buffer. */
+> +	for (i =3D 0; i < buffersize; i++) {
+> +		temp1 =3D (crc >> 8) & 0x00FFFFFF;
+> +		temp2 =3D crc_table[(crc ^ (u32) * current_byte) &
+> +				  (u32) 0xff];
+> +		current_byte++;
+> +		crc =3D temp1 ^ temp2;
+> +	}
+> +	return crc;
+> +}
+> +
+> +/**
+> + * le_bbr_table_sector_to_cpu
+> + *
+> + * Convert bbr meta data from on-disk (LE) format
+> + * to the native cpu endian format.
+> + **/
+> +static void le_bbr_table_sector_to_cpu(struct bbr_table *p)
+> +{
+> +	int i;
+> +	p->signature		=3D le32_to_cpup(&p->signature);
+> +	p->crc			=3D le32_to_cpup(&p->crc);
+> +	p->sequence_number	=3D le32_to_cpup(&p->sequence_number);
+> +	p->in_use_cnt		=3D le32_to_cpup(&p->in_use_cnt);
+> +	for (i =3D 0; i < BBR_ENTRIES_PER_SECT; i++) {
+> +		p->entries[i].bad_sect =3D
+> +			le64_to_cpup(&p->entries[i].bad_sect);
+> +		p->entries[i].replacement_sect =3D
+> +			le64_to_cpup(&p->entries[i].replacement_sect);
+> +	}
+> +}
+> +
+> +/**
+> + * cpu_bbr_table_sector_to_le
+> + *
+> + * Convert bbr meta data from cpu endian format to on-disk (LE) format
+> + **/
+> +static void cpu_bbr_table_sector_to_le(struct bbr_table *p,
+> +				       struct bbr_table *le)
+> +{
+> +	int i;
+> +	le->signature		=3D cpu_to_le32p(&p->signature);
+> +	le->crc			=3D cpu_to_le32p(&p->crc);
+> +	le->sequence_number	=3D cpu_to_le32p(&p->sequence_number);
+> +	le->in_use_cnt		=3D cpu_to_le32p(&p->in_use_cnt);
+> +	for (i =3D 0; i < BBR_ENTRIES_PER_SECT; i++) {
+> +		le->entries[i].bad_sect =3D
+> +			cpu_to_le64p(&p->entries[i].bad_sect);
+> +		le->entries[i].replacement_sect =3D
+> +			cpu_to_le64p(&p->entries[i].replacement_sect);
+> +	}
+> +}
+> +
+> +/**
+> + * validate_bbr_table_sector
+> + *
+> + * Check the specified BBR table sector for a valid signature and CRC. I=
+f it's
+> + * valid, endian-convert the table sector.
+> + **/
+> +static int validate_bbr_table_sector(struct bbr_table *p)
+> +{
+> +	int rc =3D 0;
+> +	int org_crc, final_crc;
+> +
+> +	if (le32_to_cpup(&p->signature) !=3D BBR_TABLE_SIGNATURE) {
+> +		DMERR("dm-bbr: BBR table signature doesn't match!");
+> +		DMERR("dm-bbr: Found 0x%x. Expecting 0x%x",
+> +		      le32_to_cpup(&p->signature), BBR_TABLE_SIGNATURE);
+> +		rc =3D -EINVAL;
+> +		goto out;
+> +	}
+> +
+> +	if (!p->crc) {
+> +		DMERR("dm-bbr: BBR table sector has no CRC!");
+> +		rc =3D -EINVAL;
+> +		goto out;
+> +	}
+> +
+> +	org_crc =3D le32_to_cpup(&p->crc);
+> +	p->crc =3D 0;
+> +	final_crc =3D calculate_crc(INITIAL_CRC, (void *)p, sizeof(*p));
+> +	if (final_crc !=3D org_crc) {
+> +		DMERR("dm-bbr: CRC failed!");
+> +		DMERR("dm-bbr: Found 0x%x. Expecting 0x%x",
+> +		      org_crc, final_crc);
+> +		rc =3D -EINVAL;
+> +		goto out;
+> +	}
+> +
+> +	p->crc =3D cpu_to_le32p(&org_crc);
+> +	le_bbr_table_sector_to_cpu(p);
+> +
+> +out:
+> +	return rc;
+> +}
+> +
+> +/**
+> + * bbr_binary_tree_insert
+> + *
+> + * Insert a node into the binary tree.
+> + **/
+> +static void bbr_binary_tree_insert(struct bbr_runtime_remap **root,
+> +				   struct bbr_runtime_remap *newnode)
+> +{
+> +	struct bbr_runtime_remap **node =3D root;
+> +	while (node && *node) {
+> +		if (newnode->remap.bad_sect > (*node)->remap.bad_sect) {
+> +			node =3D &((*node)->right);
+> +		} else {
+> +			node =3D &((*node)->left);
+> +		}
+> +	}
+> +
+> +	newnode->left =3D newnode->right =3D NULL;
+> +	*node =3D newnode;
+> +}
+> +
+> +/**
+> + * bbr_binary_search
+> + *
+> + * Search for a node that contains bad_sect =3D=3D lsn.
+> + **/
+> +static struct bbr_runtime_remap *bbr_binary_search(
+> +	struct bbr_runtime_remap *root,
+> +	u64 lsn)
+> +{
+> +	struct bbr_runtime_remap *node =3D root;
+> +	while (node) {
+> +		if (node->remap.bad_sect =3D=3D lsn) {
+> +			break;
+> +		}
+> +		if (lsn > node->remap.bad_sect) {
+> +			node =3D node->right;
+> +		} else {
+> +			node =3D node->left;
+> +		}
+> +	}
+> +	return node;
+> +}
+> +
+> +/**
+> + * bbr_insert_remap_entry
+> + *
+> + * Create a new remap entry and add it to the binary tree for this node.
+> + **/
+> +static int bbr_insert_remap_entry(struct bbr_private *bbr_id,
+> +				  struct bbr_table_entry *new_bbr_entry)
+> +{
+> +	struct bbr_runtime_remap *newnode;
+> +
+> +	newnode =3D kmem_cache_alloc(bbr_remap_cache, GFP_NOIO);
+> +	if (!newnode) {
+> +		DMERR("dm-bbr: Could not allocate from remap cache!");
+> +		return -ENOMEM;
+> +	}
+> +	newnode->remap.bad_sect  =3D new_bbr_entry->bad_sect;
+> +	newnode->remap.replacement_sect =3D new_bbr_entry->replacement_sect;
+> +	spin_lock_irq(&bbr_id->remap_root_lock);
+> +	bbr_binary_tree_insert(&bbr_id->remap_root, newnode);
+> +	spin_unlock_irq(&bbr_id->remap_root_lock);
+> +	return 0;
+> +}
+> +
+> +/**
+> + * bbr_table_to_remap_list
+> + *
+> + * The on-disk bbr table is sorted by the replacement sector LBA. In ord=
+er to
+> + * improve run time performance, the in memory remap list must be sorted=
+ by
+> + * the bad sector LBA. This function is called at discovery time to init=
+ialize
+> + * the remap list. This function assumes that at least one copy of meta =
+data
+> + * is valid.
+> + **/
+> +static u32 bbr_table_to_remap_list(struct bbr_private *bbr_id)
+> +{
+> +	u32 in_use_blks =3D 0;
+> +	int i, j;
+> +	struct bbr_table *p;
+> +
+> +	for (i =3D 0, p =3D bbr_id->bbr_table;
+> +	     i < bbr_id->nr_sects_bbr_table;
+> +	     i++, p++) {
+> +		if (!p->in_use_cnt) {
+> +			break;
+> +		}
+> +		in_use_blks +=3D p->in_use_cnt;
+> +		for (j =3D 0; j < p->in_use_cnt; j++) {
+> +			bbr_insert_remap_entry(bbr_id, &p->entries[j]);
+> +		}
+> +	}
+> +	if (in_use_blks) {
+> +		char b[32];
+> +		DMWARN("dm-bbr: There are %u BBR entries for device %s",
+> +		       in_use_blks, format_dev_t(b, bbr_id->dev->bdev->bd_dev));
+> +	}
+> +
+> +	return in_use_blks;
+> +}
+> +
+> +/**
+> + * bbr_search_remap_entry
+> + *
+> + * Search remap entry for the specified sector. If found, return a point=
+er to
+> + * the table entry. Otherwise, return NULL.
+> + **/
+> +static struct bbr_table_entry *bbr_search_remap_entry(
+> +	struct bbr_private *bbr_id,
+> +	u64 lsn)
+> +{
+> +	struct bbr_runtime_remap *p;
+> +
+> +	spin_lock_irq(&bbr_id->remap_root_lock);
+> +	p =3D bbr_binary_search(bbr_id->remap_root, lsn);
+> +	spin_unlock_irq(&bbr_id->remap_root_lock);
+> +	if (p) {
+> +		return (&p->remap);
+> +	} else {
+> +		return NULL;
+> +	}
+> +}
+> +
+> +/**
+> + * bbr_remap
+> + *
+> + * If *lsn is in the remap table, return TRUE and modify *lsn,
+> + * else, return FALSE.
+> + **/
+> +static inline int bbr_remap(struct bbr_private *bbr_id,
+> +			    u64 *lsn)
+> +{
+> +	struct bbr_table_entry *e;
+> +
+> +	if (atomic_read(&bbr_id->in_use_replacement_blks)) {
+> +		e =3D bbr_search_remap_entry(bbr_id, *lsn);
+> +		if (e) {
+> +			*lsn =3D e->replacement_sect;
+> +			return 1;
+> +		}
+> +	}
+> +	return 0;
+> +}
+> +
+> +/**
+> + * bbr_remap_probe
+> + *
+> + * If any of the sectors in the range [lsn, lsn+nr_sects] are in the rem=
+ap
+> + * table return TRUE, Else, return FALSE.
+> + **/
+> +static inline int bbr_remap_probe(struct bbr_private *bbr_id,
+> +				  u64 lsn, u64 nr_sects)
+> +{
+> +	u64 tmp, cnt;
+> +
+> +	if (atomic_read(&bbr_id->in_use_replacement_blks)) {
+> +		for (cnt =3D 0, tmp =3D lsn;
+> +		     cnt < nr_sects;
+> +		     cnt +=3D bbr_id->blksize_in_sects, tmp =3D lsn + cnt) {
+> +			if (bbr_remap(bbr_id,&tmp)) {
+> +				return 1;
+> +			}
+> +		}
+> +	}
+> +	return 0;
+> +}
+> +
+> +/**
+> + * bbr_setup
+> + *
+> + * Read the remap tables from disk and set up the initial remap tree.
+> + **/
+> +static int bbr_setup(struct bbr_private *bbr_id)
+> +{
+> +	struct bbr_table *table =3D bbr_id->bbr_table;
+> +	struct io_region job;
+> +	unsigned long error;
+> +	int i, rc =3D 0;
+> +
+> +	job.bdev =3D bbr_id->dev->bdev;
+> +	job.count =3D 1;
+> +
+> +	/* Read and verify each BBR table sector individually. */
+> +	for (i =3D 0; i < bbr_id->nr_sects_bbr_table; i++, table++) {
+> +		job.sector =3D bbr_id->lba_table1 + i;
+> +		rc =3D dm_io_sync_vm(1, &job, READ, table, &error);
+> +		if (rc && bbr_id->lba_table2) {
+> +			job.sector =3D bbr_id->lba_table2 + i;
+> +			rc =3D dm_io_sync_vm(1, &job, READ, table, &error);
+> +		}
+> +		if (rc) {
+> +			goto out;
+> +		}
+> +
+> +		rc =3D validate_bbr_table_sector(table);
+> +		if (rc) {
+> +			goto out;
+> +		}
+> +	}
+> +	atomic_set(&bbr_id->in_use_replacement_blks,
+> +		   bbr_table_to_remap_list(bbr_id));
+> +
+> +out:
+> +	if (rc) {
+> +		DMERR("dm-bbr: error during device setup: %d", rc);
+> +	}
+> +	return rc;
+> +}
+> +
+> +/**
+> + * bbr_io_remap_error
+> + * @bbr_id:		Private data for the BBR node.
+> + * @rw:			READ or WRITE.
+> + * @starting_lsn:	Starting sector of request to remap.
+> + * @count:		Number of sectors in the request.
+> + * @page:		Page containing the data for the request.
+> + * @offset:		Byte-offset of the data within the page.
+> + *
+> + * For the requested range, try to write each sector individually. For e=
+ach
+> + * sector that fails, find the next available remap location and write t=
+he
+> + * data to that new location. Then update the table and write both copie=
+s
+> + * of the table to disk. Finally, update the in-memory mapping and do an=
+y
+> + * other necessary bookkeeping.
+> + **/
+> +static int bbr_io_remap_error(struct bbr_private *bbr_id,
+> +			      int rw,
+> +			      u64 starting_lsn,
+> +			      u64 count,
+> +			      struct page *page,
+> +			      unsigned int offset)
+> +{
+> +	struct bbr_table *bbr_table;
+> +	struct io_region job;
+> +	struct page_list pl;
+> +	unsigned long table_sector_index;
+> +	unsigned long table_sector_offset;
+> +	unsigned long index;
+> +	unsigned long error;
+> +	u64 lsn, new_lsn;
+> +	char b[32];
+> +	int rc;
+> +
+> +	job.bdev =3D bbr_id->dev->bdev;
+> +	job.count =3D 1;
+> +	pl.page =3D page;
+> +	pl.next =3D NULL;
+> +
+> +	/* For each sector in the request. */
+> +	for (lsn =3D 0; lsn < count; lsn++, offset +=3D SECTOR_SIZE) {
+> +		job.sector =3D starting_lsn + lsn;
+> +		rc =3D dm_io_sync(1, &job, rw, &pl, offset, &error);
+> +		while (rc) {
+> +			/* Find the next available relocation sector. */
+> +			new_lsn =3D atomic_read(&bbr_id->in_use_replacement_blks);
+> +			if (new_lsn >=3D bbr_id->nr_replacement_blks) {
+> +				/* No more replacement sectors available. */
+> +				return -EIO;
+> +			}
+> +			new_lsn +=3D bbr_id->start_replacement_sect;
+> +
+> +			/* Write the data to its new location. */
+> +			DMWARN("dm-bbr: device %s: Trying to remap bad sector "PFU64" to sect=
+or "PFU64,
+> +			       format_dev_t(b, bbr_id->dev->bdev->bd_dev),
+> +			       starting_lsn + lsn, new_lsn);
+> +			job.sector =3D new_lsn;
+> +			rc =3D dm_io_sync(1, &job, rw, &pl, offset, &error);
+> +			if (rc) {
+> +				/* This replacement sector is bad.
+> +				 * Try the next one.
+> +				 */
+> +				DMERR("dm-bbr: device %s: replacement sector "PFU64" is bad. Skippin=
+g.",
+> +				      format_dev_t(b, bbr_id->dev->bdev->bd_dev), new_lsn);
+> +				atomic_inc(&bbr_id->in_use_replacement_blks);
+> +				continue;
+> +			}
+> +
+> +			/* Add this new entry to the on-disk table. */
+> +			table_sector_index =3D new_lsn -
+> +					     bbr_id->start_replacement_sect;
+> +			table_sector_offset =3D table_sector_index /
+> +					      BBR_ENTRIES_PER_SECT;
+> +			index =3D table_sector_index % BBR_ENTRIES_PER_SECT;
+> +
+> +			bbr_table =3D &bbr_id->bbr_table[table_sector_offset];
+> +			bbr_table->entries[index].bad_sect =3D starting_lsn + lsn;
+> +			bbr_table->entries[index].replacement_sect =3D new_lsn;
+> +			bbr_table->in_use_cnt++;
+> +			bbr_table->sequence_number++;
+> +			bbr_table->crc =3D 0;
+> +			bbr_table->crc =3D calculate_crc(INITIAL_CRC,
+> +						       bbr_table,
+> +						       sizeof(struct bbr_table));
+> +
+> +			/* Write the table to disk. */
+> +			cpu_bbr_table_sector_to_le(bbr_table, bbr_table);
+> +			if (bbr_id->lba_table1) {
+> +				job.sector =3D bbr_id->lba_table1 + table_sector_offset;
+> +				rc =3D dm_io_sync_vm(1, &job, WRITE, bbr_table, &error);
+> +			}
+> +			if (bbr_id->lba_table2) {
+> +				job.sector =3D bbr_id->lba_table2 + table_sector_offset;
+> +				rc |=3D dm_io_sync_vm(1, &job, WRITE, bbr_table, &error);
+> +			}
+> +			le_bbr_table_sector_to_cpu(bbr_table);
+> +
+> +			if (rc) {
+> +				/* Error writing one of the tables to disk. */
+> +				DMERR("dm-bbr: device %s: error updating BBR tables on disk.",
+> +				      format_dev_t(b, bbr_id->dev->bdev->bd_dev));
+> +				return rc;
+> +			}
+> +
+> +			/* Insert a new entry in the remapping binary-tree. */
+> +			rc =3D bbr_insert_remap_entry(bbr_id,
+> +						    &bbr_table->entries[index]);
+> +			if (rc) {
+> +				DMERR("dm-bbr: device %s: error adding new entry to remap tree.",
+> +				      format_dev_t(b, bbr_id->dev->bdev->bd_dev));
+> +				return rc;
+> +			}
+> +
+> +			atomic_inc(&bbr_id->in_use_replacement_blks);
+> +		}
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * bbr_io_process_request
+> + *
+> + * For each sector in this request, check if the sector has already
+> + * been remapped. If so, process all previous sectors in the request,
+> + * followed by the remapped sector. Then reset the starting lsn and
+> + * count, and keep going with the rest of the request as if it were
+> + * a whole new request. If any of the sync_io's return an error,
+> + * call the remapper to relocate the bad sector(s).
+> + *
+> + * 2.5 Note: When switching over to bio's for the I/O path, we have made
+> + * the assumption that the I/O request described by the bio is one
+> + * virtually contiguous piece of memory (even though the bio vector
+> + * describes it using a series of physical page addresses).
+> + **/
+> +static int bbr_io_process_request(struct bbr_private *bbr_id,
+> +				  struct bio *bio)
+> +{
+> +	struct io_region job;
+> +	u64 starting_lsn =3D bio->bi_sector;
+> +	u64 count, lsn, remapped_lsn;
+> +	struct page_list pl;
+> +	unsigned int offset;
+> +	unsigned long error;
+> +	int i, rw =3D bio_data_dir(bio);
+> +	int rc =3D 0;
+> +
+> +	job.bdev =3D bbr_id->dev->bdev;
+> +	pl.next =3D NULL;
+> +
+> +	/* Each bio can contain multiple vectors, each with a different page.
+> +	 * Treat each vector as a separate request.
+> +	 */
+> +	/* KMC: Is this the right way to walk the bvec list? */
+> +	for (i =3D 0;
+> +	     i < bio->bi_vcnt;
+> +	     i++, bio->bi_idx++, starting_lsn +=3D count) {
+> +
+> +		/* Bvec info: number of sectors, page,
+> +		 * and byte-offset within page.
+> +		 */
+> +		count =3D bio_iovec(bio)->bv_len >> SECTOR_SHIFT;
+> +		pl.page =3D bio_iovec(bio)->bv_page;
+> +		offset =3D bio_iovec(bio)->bv_offset;
+> +
+> +		/* For each sector in this bvec, check if the sector has
+> +		 * already been remapped. If so, process all previous sectors
+> +		 * in this request, followed by the remapped sector. Then reset
+> +		 * the starting lsn and count and keep going with the rest of
+> +		 * the request as if it were a whole new request.
+> +		 */
+> +		for (lsn =3D 0; lsn < count; lsn++) {
+> +			remapped_lsn =3D starting_lsn + lsn;
+> +			rc =3D bbr_remap(bbr_id, &remapped_lsn);
+> +			if (!rc) {
+> +				/* This sector is fine. */
+> +				continue;
+> +			}
+> +
+> +			/* Process all sectors in the request up to this one. */
+> +			if (lsn > 0) {
+> +				job.sector =3D starting_lsn;
+> +				job.count =3D lsn;
+> +				rc =3D dm_io_sync(1, &job, rw, &pl,
+> +						offset, &error);
+> +				if (rc) {
+> +					/* If this I/O failed, then one of the
+> +					 * sectors in this request needs to be
+> +					 * relocated.
+> +					 */
+> +					rc =3D bbr_io_remap_error(bbr_id, rw,
+> +								starting_lsn,
+> +								lsn, pl.page,
+> +								offset);
+> +					if (rc) {
+> +						/* KMC: Return? Or continue to next bvec? */
+> +						return rc;
+> +					}
+> +				}
+> +				offset +=3D (lsn << SECTOR_SHIFT);
+> +			}
+> +
+> +			/* Process the remapped sector. */
+> +			job.sector =3D remapped_lsn;
+> +			job.count =3D 1;
+> +			rc =3D dm_io_sync(1, &job, rw, &pl, offset, &error);
+> +			if (rc) {
+> +				/* BUGBUG - Need more processing if this caused
+> +				 * an error. If this I/O failed, then the
+> +				 * existing remap is now bad, and we need to
+> +				 * find a new remap. Can't use
+> +				 * bbr_io_remap_error(), because the existing
+> +				 * map entry needs to be changed, not added
+> +				 * again, and the original table entry also
+> +				 * needs to be changed.
+> +				 */
+> +				return rc;
+> +			}
+> +
+> +			starting_lsn	+=3D (lsn + 1);
+> +			count		-=3D (lsn + 1);
+> +			lsn		=3D -1;
+> +			offset		+=3D SECTOR_SIZE;
+> +		}
+> +
+> +		/* Check for any remaining sectors after the last split. This
+> +		 * could potentially be the whole request, but that should be a
+> +		 * rare case because requests should only be processed by the
+> +		 * thread if we know an error occurred or they contained one or
+> +		 * more remapped sectors.
+> +		 */
+> +		if (count) {
+> +			job.sector =3D starting_lsn;
+> +			job.count =3D count;
+> +			rc =3D dm_io_sync(1, &job, rw, &pl, offset, &error);
+> +			if (rc) {
+> +				/* If this I/O failed, then one of the sectors
+> +				 * in this request needs to be relocated.
+> +				 */
+> +				rc =3D bbr_io_remap_error(bbr_id, rw, starting_lsn,
+> +							count, pl.page, offset);
+> +				if (rc) {
+> +					/* KMC: Return? Or continue to next bvec? */
+> +					return rc;
+> +				}
+> +			}
+> +		}
+> +	}
+> +
+> +	return 0;
+> +}
+> +
+> +static void bbr_io_process_requests(struct bbr_private *bbr_id,
+> +				    struct bio *bio)
+> +{
+> +	struct bio *next;
+> +	int rc;
+> +
+> +	while (bio) {
+> +		next =3D bio->bi_next;
+> +		bio->bi_next =3D NULL;
+> +
+> +		rc =3D bbr_io_process_request(bbr_id, bio);
+> +
+> +		bio_endio(bio, bio->bi_size, rc);
+> +
+> +		bio =3D next;
+> +	}
+> +}
+> +
+> +/**
+> + * bbr_remap_handler
+> + *
+> + * This is the handler for the bbr work-queue.
+> + *
+> + * I/O requests should only be sent to this handler if we know that:
+> + * a) the request contains at least one remapped sector.
+> + *   or
+> + * b) the request caused an error on the normal I/O path.
+> + *
+> + * This function uses synchronous I/O, so sending a request to this
+> + * thread that doesn't need special processing will cause severe
+> + * performance degredation.
+> + **/
+> +static void bbr_remap_handler(void *data)
+> +{
+> +	struct bbr_private *bbr_id =3D data;
+> +	struct bio *bio;
+> +	unsigned long flags;
+> +
+> +	spin_lock_irqsave(&bbr_id->remap_ios_lock, flags);
+> +	bio =3D bio_list_get(&bbr_id->remap_ios);
+> +	spin_unlock_irqrestore(&bbr_id->remap_ios_lock, flags);
+> +
+> +	bbr_io_process_requests(bbr_id, bio);
+> +}
+> +
+> +/**
+> + * bbr_endio
+> + *
+> + * This is the callback for normal write requests. Check for an error
+> + * during the I/O, and send to the thread for processing if necessary.
+> + **/
+> +static int bbr_endio(struct dm_target *ti, struct bio *bio,
+> +		     int error, union map_info *map_context)
+> +{
+> +	struct bbr_private *bbr_id =3D ti->private;
+> +	struct dm_bio_details *bbr_io =3D map_context->ptr;
+> +
+> +	if (error && bbr_io) {
+> +		unsigned long flags;
+> +		char b[32];
+> +
+> +		dm_bio_restore(bbr_io, bio);
+> +		map_context->ptr =3D NULL;
+> +
+> +		DMERR("dm-bbr: device %s: I/O failure on sector %lu. "
+> +		      "Scheduling for retry.",
+> +		      format_dev_t(b, bbr_id->dev->bdev->bd_dev),
+> +		      (unsigned long)bio->bi_sector);
+> +
+> +		spin_lock_irqsave(&bbr_id->remap_ios_lock, flags);
+> +		bio_list_add(&bbr_id->remap_ios, bio);
+> +		spin_unlock_irqrestore(&bbr_id->remap_ios_lock, flags);
+> +
+> +		queue_work(dm_bbr_wq, &bbr_id->remap_work);
+> +
+> +		error =3D 1;
+> +	}
+> +
+> +	if (bbr_io)
+> +		mempool_free(bbr_io, bbr_io_pool);
+> +
+> +	return error;
+> +}
+> +
+> +/**
+> + * Construct a bbr mapping
+> + **/
+> +static int bbr_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+> +{
+> +	struct bbr_private *bbr_id;
+> +	unsigned long block_size;
+> +	char *end;
+> +	int rc =3D -EINVAL;
+> +
+> +	if (argc !=3D 8) {
+> +		ti->error =3D "dm-bbr requires exactly 8 arguments: "
+> +			    "device offset table1_lsn table2_lsn table_size start_replacement=
+ nr_replacement_blks block_size";
+> +		goto out1;
+> +	}
+> +
+> +	bbr_id =3D bbr_alloc_private();
+> +	if (!bbr_id) {
+> +		ti->error =3D "dm-bbr: Error allocating bbr private data.";
+> +		goto out1;
+> +	}
+> +
+> +	bbr_id->offset =3D simple_strtoull(argv[1], &end, 10);
+> +	bbr_id->lba_table1 =3D simple_strtoull(argv[2], &end, 10);
+> +	bbr_id->lba_table2 =3D simple_strtoull(argv[3], &end, 10);
+> +	bbr_id->nr_sects_bbr_table =3D simple_strtoull(argv[4], &end, 10);
+> +	bbr_id->start_replacement_sect =3D simple_strtoull(argv[5], &end, 10);
+> +	bbr_id->nr_replacement_blks =3D simple_strtoull(argv[6], &end, 10);
+> +	block_size =3D simple_strtoul(argv[7], &end, 10);
+> +	bbr_id->blksize_in_sects =3D (block_size >> SECTOR_SHIFT);
+> +
+> +	bbr_id->bbr_table =3D vmalloc(bbr_id->nr_sects_bbr_table << SECTOR_SHIF=
+T);
+> +	if (!bbr_id->bbr_table) {
+> +		ti->error =3D "dm-bbr: Error allocating bbr table.";
+> +		goto out2;
+> +	}
+> +
+> +	if (dm_get_device(ti, argv[0], 0, ti->len,
+> +			  dm_table_get_mode(ti->table), &bbr_id->dev)) {
+> +		ti->error =3D "dm-bbr: Device lookup failed";
+> +		goto out2;
+> +	}
+> +
+> +	rc =3D bbr_setup(bbr_id);
+> +	if (rc) {
+> +		ti->error =3D "dm-bbr: Device setup failed";
+> +		goto out3;
+> +	}
+> +
+> +	ti->private =3D bbr_id;
+> +	return 0;
+> +
+> +out3:
+> +	dm_put_device(ti, bbr_id->dev);
+> +out2:
+> +	bbr_free_private(bbr_id);
+> +out1:
+> +	return rc;
+> +}
+> +
+> +static void bbr_dtr(struct dm_target *ti)
+> +{
+> +	struct bbr_private *bbr_id =3D ti->private;
+> +
+> +	dm_put_device(ti, bbr_id->dev);
+> +	bbr_free_private(bbr_id);
+> +}
+> +
+> +static int bbr_map(struct dm_target *ti, struct bio *bio,
+> +		   union map_info *map_context)
+> +{
+> +	struct bbr_private *bbr_id =3D ti->private;
+> +	struct dm_bio_details *bbr_io;
+> +	unsigned long flags;
+> +	int rc =3D 1;
+> +
+> +	bio->bi_sector +=3D bbr_id->offset;
+> +
+> +	if (atomic_read(&bbr_id->in_use_replacement_blks) =3D=3D 0 ||
+> +	    !bbr_remap_probe(bbr_id, bio->bi_sector, bio_sectors(bio))) {
+> +		/* No existing remaps or this request doesn't
+> +		 * contain any remapped sectors.
+> +		 */
+> +		bio->bi_bdev =3D bbr_id->dev->bdev;
+> +
+> +		bbr_io =3D mempool_alloc(bbr_io_pool, GFP_NOIO);
+> +		dm_bio_record(bbr_io, bio);
+> +		map_context->ptr =3D bbr_io;
+> +	} else {
+> +		/* This request has at least one remapped sector.
+> +		 * Give it to the work-queue for processing.
+> +		 */
+> +		map_context->ptr =3D NULL;
+> +		spin_lock_irqsave(&bbr_id->remap_ios_lock, flags);
+> +		bio_list_add(&bbr_id->remap_ios, bio);
+> +		spin_unlock_irqrestore(&bbr_id->remap_ios_lock, flags);
+> +
+> +		queue_work(dm_bbr_wq, &bbr_id->remap_work);
+> +		rc =3D 0;
+> +	}
+> +
+> +	return rc;
+> +}
+> +
+> +static int bbr_status(struct dm_target *ti, status_type_t type,
+> +		      char *result, unsigned int maxlen)
+> +{
+> +	struct bbr_private *bbr_id =3D ti->private;
+> +	char b[BDEVNAME_SIZE];
+> +
+> +	switch (type) {
+> +	case STATUSTYPE_INFO:
+> +		result[0] =3D '\0';
+> +		break;
+> +
+> +	case STATUSTYPE_TABLE:
+> +		snprintf(result, maxlen, "%s "PFU64" "PFU64" "PFU64" "PFU64" "PFU64" "=
+PFU64" %u",
+> +			 format_dev_t(b, bbr_id->dev->bdev->bd_dev),
+> +			 bbr_id->offset, bbr_id->lba_table1, bbr_id->lba_table2,
+> +			 bbr_id->nr_sects_bbr_table,
+> +			 bbr_id->start_replacement_sect,
+> +			 bbr_id->nr_replacement_blks,
+> +			 bbr_id->blksize_in_sects << SECTOR_SHIFT);
+> +		 break;
+> +	}
+> +	return 0;
+> +}
+> +
+> +static struct target_type bbr_target =3D {
+> +	.name	=3D "bbr",
+> +	.version=3D {1, 0, 1},
+> +	.module	=3D THIS_MODULE,
+> +	.ctr	=3D bbr_ctr,
+> +	.dtr	=3D bbr_dtr,
+> +	.map	=3D bbr_map,
+> +	.end_io	=3D bbr_endio,
+> +	.status	=3D bbr_status,
+> +};
+> +
+> +int __init dm_bbr_init(void)
+> +{
+> +	int rc;
+> +
+> +	rc =3D dm_register_target(&bbr_target);
+> +	if (rc) {
+> +		DMERR("dm-bbr: error registering target.");
+> +		goto err1;
+> +	}
+> +
+> +	bbr_remap_cache =3D kmem_cache_create("bbr-remap",
+> +					    sizeof(struct bbr_runtime_remap),
+> +					    0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+> +	if (!bbr_remap_cache) {
+> +		DMERR("dm-bbr: error creating remap cache.");
+> +		rc =3D ENOMEM;
+> +		goto err2;
+> +	}
+> +
+> +	bbr_io_cache =3D kmem_cache_create("bbr-io", sizeof(struct dm_bio_detai=
+ls),
+> +					 0, SLAB_HWCACHE_ALIGN, NULL, NULL);
+> +	if (!bbr_io_cache) {
+> +		DMERR("dm-bbr: error creating io cache.");
+> +		rc =3D ENOMEM;
+> +		goto err3;
+> +	}
+> +
+> +	bbr_io_pool =3D mempool_create(256, mempool_alloc_slab,
+> +				     mempool_free_slab, bbr_io_cache);
+> +	if (!bbr_io_pool) {
+> +		DMERR("dm-bbr: error creating io mempool.");
+> +		rc =3D ENOMEM;
+> +		goto err4;
+> +	}
+> +
+> +	dm_bbr_wq =3D create_workqueue("dm-bbr");
+> +	if (!dm_bbr_wq) {
+> +		DMERR("dm-bbr: error creating work-queue.");
+> +		rc =3D ENOMEM;
+> +		goto err5;
+> +	}
+> +
+> +	rc =3D dm_io_get(1);
+> +	if (rc) {
+> +		DMERR("dm-bbr: error initializing I/O service.");
+> +		goto err6;
+> +	}
+> +
+> +	return 0;
+> +
+> +err6:
+> +	destroy_workqueue(dm_bbr_wq);
+> +err5:
+> +	mempool_destroy(bbr_io_pool);
+> +err4:
+> +	kmem_cache_destroy(bbr_io_cache);
+> +err3:
+> +	kmem_cache_destroy(bbr_remap_cache);
+> +err2:
+> +	dm_unregister_target(&bbr_target);
+> +err1:
+> +	return rc;
+> +}
+> +
+> +void __exit dm_bbr_exit(void)
+> +{
+> +	dm_io_put(1);
+> +	destroy_workqueue(dm_bbr_wq);
+> +	mempool_destroy(bbr_io_pool);
+> +	kmem_cache_destroy(bbr_io_cache);
+> +	kmem_cache_destroy(bbr_remap_cache);
+> +	dm_unregister_target(&bbr_target);
+> +}
+> +
+> +module_init(dm_bbr_init);
+> +module_exit(dm_bbr_exit);
+> +MODULE_LICENSE("GPL");
+> Index: linux-2.6.20-git4/drivers/md/dm-bbr.h
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- /dev/null
+> +++ linux-2.6.20-git4/drivers/md/dm-bbr.h
+> @@ -0,0 +1,125 @@
+> +/*
+> + *   (C) Copyright IBM Corp. 2002, 2004
+> + *
+> + *   This program is free software;  you can redistribute it and/or modi=
+fy
+> + *   it under the terms of the GNU General Public License as published b=
+y
+> + *   the Free Software Foundation; either version 2 of the License, or
+> + *   (at your option) any later version.
+> + *
+> + *   This program is distributed in the hope that it will be useful,
+> + *   but WITHOUT ANY WARRANTY;  without even the implied warranty of
+> + *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See
+> + *   the GNU General Public License for more details.
+> + *
+> + *   You should have received a copy of the GNU General Public License
+> + *   along with this program;  if not, write to the Free Software
+> + *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307=
+ USA
+> + *
+> + * linux/drivers/md/dm-bbr.h
+> + *
+> + * Bad-block-relocation (BBR) target for device-mapper.
+> + *
+> + * The BBR target is designed to remap I/O write failures to another saf=
+e
+> + * location on disk. Note that most disk drives have BBR built into them=
 ,
-+			  uint8_t *msg)
-+{
-+	switch (type) {
-+	case DM_USERSPACE_MAP_BLOCK_REQ:
-+		DPRINTF("Request event: %u\n", id);
-+		return fire_map_req_event(ctx,
-+					  (struct dmu_msg_map_request *)msg,
-+					  id);
-+	case DM_USERSPACE_MAP_DONE:
-+		DPRINTF("Map Done event\n");
-+		return fire_map_done_event(ctx,
-+					 (struct dmu_msg_map_done *)msg,
-+					 id);
-+	default:
-+		printf("Unknown message type: %i\n", type);
-+		return -1; /* Unknown message type */
-+	};
-+}
-+
-+static int dmu_process_event(struct dmu_context *ctx)
-+{
-+	struct dmu_msg *msg;
-+	int ret;
-+
-+	msg =3D head_ring_hdr(&ctx->kuring);
-+	if (!msg->hdr.status)
-+		return -1;
-+
-+	ret =3D decode_message(ctx, msg->hdr.msg_type, msg->hdr.id,
-+			     (uint8_t *)&msg->payload);
-+
-+	msg->hdr.status =3D 0;
-+	ring_index_inc(&ctx->kuring);
-+
-+	return ret;
-+}
-+
-+int dmu_process_events(struct dmu_context *ctx)
-+{
-+	int ret, do_flush =3D 1;
-+	uint32_t count;
-+
-+	//DPRINTF("Processing events\n");
-+
-+	for (count =3D 0; count < DMU_MAX_EVENTS; count++) {
-+		ret =3D dmu_process_event(ctx);
-+	=09
-+		if (ret > 0)
-+			do_flush =3D 1;
-+	}
-+
-+	DPRINTF("Pending events: %u\n", ctx->pending);
-+	if (ctx->pending)
-+		dmu_ctl_send_queue(ctx);
-+
-+	//DPRINTF("Finished processing events\n");
-+
-+	return 1;
-+}
-+
-+int dmu_get_ctl_fd(struct dmu_context *ctx)
-+{
-+	return ctx->fd;
-+}
-+
-+struct dmu_write *dmu_write_alloc(int count)
-+{
-+	return (struct dmu_write *)calloc(sizeof(struct dmu_extra_write),
-+					  count);
-+}
-+
-+
-+void dmu_write_set(struct dmu_write *wr,
-+		   void *buf, uint64_t offset, uint64_t len)
-+{
-+	struct dmu_extra_write *ewr =3D (struct dmu_extra_write *)wr;
-+
-+	ewr->buf =3D (uint64_t)buf;
-+	ewr->offset =3D offset;
-+	ewr->len =3D len;
-+}
-+
-+void dmu_map_add_writes(struct dmu_map_data *data,
-+			struct dmu_write *writes,
-+			int count)
-+{
-+	data->num_writes =3D count;
-+	data->writes =3D writes;
-+}
-+
-diff -r 4b8428722a88 -r f6597a1ebce4 lib/libdevmapper.h
-- --- a/lib/libdevmapper.h	Wed Feb 14 15:12:14 2007 +0000
-+++ b/lib/libdevmapper.h	Wed Feb 21 14:12:11 2007 -0800
-@@ -1,6 +1,7 @@
- /*
-  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-  * Copyright (C) 2004-2005 Red Hat, Inc. All rights reserved.
-+ * Copyright IBM Corp., 2006
-  *
-  * This file is part of the device-mapper userspace tools.
-  *
-@@ -27,6 +28,7 @@
- #include <limits.h>
- #include <string.h>
- #include <stdlib.h>
-+#include <stdint.h>
-=20
- /*****************************************************************
-  * The first section of this file provides direct access to the=20
-@@ -711,4 +713,65 @@ void dm_report_field_set_value(struct dm
- void dm_report_field_set_value(struct dm_report_field *field, const void=
- *value,
- 			       const void *sortvalue);
-=20
-+
-+/**************
-+ * dm-userspace
-+ **************/
-+
-+struct dmu_context;
-+struct dmu_map_data;
-+struct dmu_write;
-+
-+/* Returns 1 to allow IO to complete, 0 to delay */
-+typedef int (*map_done_handler_t)(void *data, struct dmu_map_data *map_d=
-ata);
-+
-+/* Returns 1 to map IO, -1 to fail IO, 0 to delay */
-+typedef int (*map_req_handler_t)(void *data, struct dmu_map_data *map_da=
-ta);
-+
-+/* High-level control operations */
-+struct dmu_context *dmu_ctl_open(char *dev, int flags);
-+int dmu_ctl_close(struct dmu_context *ctx);
-+int dmu_ctl_send_queue(struct dmu_context *ctx);
-+void dmu_register_map_done_handler(struct dmu_context *ctx,
-+				   map_done_handler_t handler,
-+				   void *data);
-+void dmu_register_map_handler(struct dmu_context *ctx,
-+                              map_req_handler_t handler,
-+                              void *data);
-+int dmu_invalidate_block(struct dmu_context *ctx, uint64_t block);
-+int dmu_events_pending(struct dmu_context *ctx, unsigned int msec);
-+int dmu_process_events(struct dmu_context *ctx);
-+int dmu_get_ctl_fd(struct dmu_context *ctx);
-+
-+/* Map manipulation functions */
-+void dmu_map_set_block(struct dmu_map_data *data, uint64_t block);
-+void dmu_map_set_origin_block(struct dmu_map_data *data, uint64_t block)=
-;
-+uint64_t dmu_map_get_block(struct dmu_map_data *data);
-+void dmu_map_set_offset(struct dmu_map_data *data, int64_t offset);
-+uint32_t dmu_map_get_id(struct dmu_map_data *data);
-+void dmu_map_set_dest_dev(struct dmu_map_data *data, dev_t dev);
-+void dmu_map_set_copy_src_dev(struct dmu_map_data *data, dev_t dev);
-+int dmu_map_is_write(struct dmu_map_data *data);
-+void dmu_map_set_sync(struct dmu_map_data *data);
-+void dmu_map_set_writable(struct dmu_map_data *data, int rw);
-+void dmu_map_add_writes(struct dmu_map_data *data,
-+                        struct dmu_write *writes,
-+                        int count);
-+struct dmu_map_data *dmu_map_dup(struct dmu_map_data *data);
-+
-+/* Functions for submitting out-of-order events */
-+int dmu_async_map(struct dmu_context *ctx,=20
-+		  struct dmu_map_data *data,=20
-+		  int fail);
-+int dmu_async_map_done(struct dmu_context *ctx, uint64_t id, int fail);
-+
-+/* Functions to manipulate the kernel map cache */
-+int dmu_make_mapping(struct dmu_context *ctx,
-+		     struct dmu_map_data *data);
-+int dmu_kill_mapping(struct dmu_context *ctx,
-+		     struct dmu_map_data *data);
-+struct dmu_write *dmu_write_alloc(int count);
-+void dmu_write_set(struct dmu_write *write,
-+                   void *buf, uint64_t offset, uint64_t len);
-+
- #endif				/* LIB_DEVICE_MAPPER_H */
+> + * this means that our software BBR will be only activated when all hard=
+ware
+> + * BBR replacement sectors have been used.
+> + */
+> +
+> +#define BBR_TABLE_SIGNATURE		0x42627254 /* BbrT */
+> +#define BBR_ENTRIES_PER_SECT		31
+> +#define INITIAL_CRC			0xFFFFFFFF
+> +#define CRC_POLYNOMIAL			0xEDB88320L
+> +
+> +/**
+> + * Macros to cleanly print 64-bit numbers on both 32-bit and 64-bit mach=
+ines.
+> + * Use these in place of %Ld, %Lu, and %Lx.
+> + **/
+> +#if BITS_PER_LONG > 32
+> +#define PFU64 "%lu"
+> +#else
+> +#define PFU64 "%Lu"
+> +#endif
+> +
+> +/**
+> + * struct bbr_table_entry
+> + * @bad_sect:		LBA of bad location.
+> + * @replacement_sect:	LBA of new location.
+> + *
+> + * Structure to describe one BBR remap.
+> + **/
+> +struct bbr_table_entry {
+> +	u64 bad_sect;
+> +	u64 replacement_sect;
+> +};
+> +
+> +/**
+> + * struct bbr_table
+> + * @signature:		Signature on each BBR table sector.
+> + * @crc:		CRC for this table sector.
+> + * @sequence_number:	Used to resolve conflicts when primary and secondar=
+y
+> + *			tables do not match.
+> + * @in_use_cnt:		Number of in-use table entries.
+> + * @entries:		Actual table of remaps.
+> + *
+> + * Structure to describe each sector of the metadata table. Each sector =
+in this
+> + * table can describe 31 remapped sectors.
+> + **/
+> +struct bbr_table {
+> +	u32			signature;
+> +	u32			crc;
+> +	u32			sequence_number;
+> +	u32			in_use_cnt;
+> +	struct bbr_table_entry	entries[BBR_ENTRIES_PER_SECT];
+> +};
+> +
+> +/**
+> + * struct bbr_runtime_remap
+> + *
+> + * Node in the binary tree used to keep track of remaps.
+> + **/
+> +struct bbr_runtime_remap {
+> +	struct bbr_table_entry		remap;
+> +	struct bbr_runtime_remap	*left;
+> +	struct bbr_runtime_remap	*right;
+> +};
+> +
+> +/**
+> + * struct bbr_private
+> + * @dev:			Info about underlying device.
+> + * @bbr_table:			Copy of metadata table.
+> + * @remap_root:			Binary tree containing all remaps.
+> + * @remap_root_lock:		Lock for the binary tree.
+> + * @remap_work:			For adding work items to the work-queue.
+> + * @remap_ios:			List of I/Os for the work-queue to handle.
+> + * @remap_ios_lock:		Lock for the remap_ios list.
+> + * @offset:			LBA of data area.
+> + * @lba_table1:			LBA of primary BBR table.
+> + * @lba_table2:			LBA of secondary BBR table.
+> + * @nr_sects_bbr_table:		Size of each BBR table.
+> + * @nr_replacement_blks:	Number of replacement blocks.
+> + * @start_replacement_sect:	LBA of start of replacement blocks.
+> + * @blksize_in_sects:		Size of each block.
+> + * @in_use_replacement_blks:	Current number of remapped blocks.
+> + *
+> + * Private data for each BBR target.
+> + **/
+> +struct bbr_private {
+> +	struct dm_dev			*dev;
+> +	struct bbr_table		*bbr_table;
+> +	struct bbr_runtime_remap	*remap_root;
+> +	spinlock_t			remap_root_lock;
+> +
+> +	struct work_struct		remap_work;
+> +	struct bio_list			remap_ios;
+> +	spinlock_t			remap_ios_lock;
+> +
+> +	u64				offset;
+> +	u64				lba_table1;
+> +	u64				lba_table2;
+> +	u64				nr_sects_bbr_table;
+> +	u64				start_replacement_sect;
+> +	u64				nr_replacement_blks;
+> +	u32				blksize_in_sects;
+> +	atomic_t			in_use_replacement_blks;
+> +};
+> +
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+--=20
+Piet Delaney                                    Phone: (408) 200-5256
+Blue Lane Technologies                          Fax:   (408) 200-5299
+10450 Bubb Rd.
+Cupertino, Ca. 95014                            Email: piet@bluelane.com
+
+--=-PnQz2yWWpwT5Oqrnad+/
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.5 (GNU/Linux)
+Version: GnuPG v1.4.0 (GNU/Linux)
 
-iD8DBQFF3d3iwtEf7b4GJVQRAgM3AKCGlQJ+lGQ/smpdzrRmR1ddYQUBLgCfQStr
-WWB+MCiEQDAk0J7drJJaY/c=3D
-=3DVnSq
+iD8DBQBF3ib3JICwm/rv3hoRApM+AJ9OT9PiwC9uQIJ/ZMwRDKLcuWADFQCbBhWv
+ngv/CpED8IpUpCdQ5vW48+0=
+=C/gh
 -----END PGP SIGNATURE-----
+
+--=-PnQz2yWWpwT5Oqrnad+/--
+
+
+
+--===============0777968439==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+-------------------------------------------------------------------------
+Take Surveys. Earn Cash. Influence the Future of IT
+Join SourceForge.net's Techsay panel and you'll get the chance to share your
+opinions on IT & business topics through brief surveys-and earn cash
+http://www.techsay.com/default.php?page=join.php&p=sourceforge&CID=DEVDEV
+--===============0777968439==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+Evms-devel mailing list
+Evms-devel@lists.sourceforge.net
+To subscribe/unsubscribe, please visit:
+https://lists.sourceforge.net/lists/listinfo/evms-devel
+
+--===============0777968439==--
