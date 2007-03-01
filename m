@@ -1,14 +1,14 @@
-From: Dave Wysochanski <dwysocha@redhat.com>
-Subject: Re: Multipath pathcheck behavior
-Date: Wed, 28 Feb 2007 14:58:51 -0500
-Message-ID: <1172692731.4270.39.camel@linux-cxyg.rtp.netapp.com>
-References: <1D80D4F6D179BD4D869FE807A5BF8336D34668@EXCNYSM0A1AN.nysemail.nyenet>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: add IV generation method null
+Date: Thu, 1 Mar 2007 14:41:12 +0000
+Message-ID: <20070301144112.GE3319@agk.surrey.redhat.com>
+References: <20070216142112.GA924@suse.de> <20070228144754.GA24504@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1D80D4F6D179BD4D869FE807A5BF8336D34668@EXCNYSM0A1AN.nysemail.nyenet>
+Content-Disposition: inline
+In-Reply-To: <20070228144754.GA24504@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,17 +18,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 2007-02-28 at 14:31 -0500, Romanowski, John (OFT) wrote:
-> Hi list,
-> multipath-tools tests the LUN paths every "polling_interval" (default 5
-> secs) for failover/failback purposes.
-> 
-> My question is: 
-> Does it omit testing paths that have completed I/O's in the past 5 secs?
-> or does it test paths every 5 secs regardless of recent I/O's on the
-> path?
+On Wed, Feb 28, 2007 at 03:47:54PM +0100, Ludwig Nussel wrote:
+> Any comments/objections on the patch? Is there any additional action
+> from my side required to get this into the mainline kernel?
 
-It tests regardless of I/O completion.
+This comment ought to be more descriptive:
+
+  null: For mounting legacy images only.
+
+
+I'll include it in the next set of patches I send upstream.
+ 
+Alasdair
+-- 
+agk@redhat.com
