@@ -1,17 +1,9 @@
-From: "Dan Kegel" <dank06@kegel.com>
-Subject: Re: [RFC] Multiple Snapshots - Manageability problem
-Date: Sun, 4 Mar 2007 07:55:35 -0800
-Message-ID: <a71bd89a0703040755x35c1e697g7513d9e486ac0c8c@mail.gmail.com>
-References: <45A6CC0F.A9E3.000B.0@novell.com>
-	<20070112215917.GB7441@ether.msp.redhat.com>
-	<170fa0d20701292039u144d29dcq86133ebe2514ff57@mail.gmail.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath hwtable.c
+Date: 7 Mar 2007 16:12:46 -0000
+Message-ID: <20070307161246.26226.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <170fa0d20701292039u144d29dcq86133ebe2514ff57@mail.gmail.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,16 +13,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 1/29/07, Mike Snitzer <snitzer@gmail.com> wrote:
-> > Have you taken a look at Daniel Phillips cluster snapshot work?
-> > http://sources.redhat.com/cluster/csnap/index.html
-> ...
-> Daniel's work has become an integral part of the hotcakes project:
-> http://code.google.com/p/hotcakes/
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2007-03-07 16:12:46
 
-That URL is now
-http://code.google.com/p/zumastor/
-- the other Dan
+Modified files:
+	libmultipath   : hwtable.c 
+
+Log message:
+	Changed the bl_product string back to LUNZ as per Ed Goggins comments in
+	BZ#174441
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.7&r2=1.16.2.8
+
+--- multipath-tools/libmultipath/hwtable.c	2007/02/13 18:50:37	1.16.2.7
++++ multipath-tools/libmultipath/hwtable.c	2007/03/07 16:12:46	1.16.2.8
+@@ -51,7 +51,7 @@
+ 		    "tur", FAILBACK_UNDEF, NULL, 0, 0, 0);
+ 	r += store_hwe_ext(hw, "DGC", "*", GROUP_BY_PRIO,
+                    DEFAULT_GETUID, "/sbin/mpath_prio_emc /dev/%n", "1 emc",
+-		   "1 queue_if_no_path", "emc_clariion", -FAILBACK_IMMEDIATE, "LUN_Z",
++		   "1 queue_if_no_path", "emc_clariion", -FAILBACK_IMMEDIATE, "LUNZ",
+ 		   0, 0, 0);
+ 	r += store_hwe_ext(hw, "IBM", "3542", GROUP_BY_SERIAL, DEFAULT_GETUID,
+ 		   NULL, "0", "0", "tur", FAILBACK_UNDEF, NULL, 0, 0, 0);
