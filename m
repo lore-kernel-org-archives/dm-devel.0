@@ -1,8 +1,11 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath structs.h
-Date: 7 Mar 2007 19:01:21 -0000
-Message-ID: <20070307190121.6601.qmail@sourceware.org>
+From: Elliot Lee <sopwith@gmail.com>
+Subject: DM performance issues
+Date: Wed, 7 Mar 2007 19:36:25 -0500
+Message-ID: <45FA1454-F5C7-45AD-8BCA-B4EDCC955EFF@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v752.3)
+Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,31 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-03-07 19:01:17
+Hi all,
 
-Modified files:
-	libmultipath   : structs.h 
+I've got a 1.8TB LVM-on-RAID filesystem that was performing OK but  
+really didn't seem like it was going as fast as it should. I ran the  
+commands below and got some pretty startling results...
 
-Log message:
-	change wwid size to 128 to allow for devices with large WWIDS. Fixes bz #149406
+A 60% performance hit for a linear mapping is heinous. What can I do  
+to help get this fixed?
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.17.2.3&r2=1.17.2.4
+Best,
+-- Elliot
 
---- multipath-tools/libmultipath/structs.h	2006/12/01 23:45:18	1.17.2.3
-+++ multipath-tools/libmultipath/structs.h	2007/03/07 19:01:17	1.17.2.4
-@@ -1,7 +1,7 @@
- #ifndef _STRUCTS_H
- #define _STRUCTS_H
- 
--#define WWID_SIZE		64
-+#define WWID_SIZE		128
- #define SERIAL_SIZE		64
- #define NODE_NAME_SIZE		19
- #define PATH_STR_SIZE  		16
+# dmsetup create foo --table '0 3880910848 linear 9:0 0'
+
+# dd if=/dev/md0 of=/dev/null bs=1048576 count=4096
+4096+0 records in
+4096+0 records out
+4294967296 bytes (4.3 GB) copied, 20.2362 seconds, 212 MB/s
+
+# dd if=/dev/mapper/foo of=/dev/null bs=1048576 count=4096
+4096+0 records in
+4096+0 records out
+4294967296 bytes (4.3 GB) copied, 55.3597 seconds, 77.6 MB/s
