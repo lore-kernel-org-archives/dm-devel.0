@@ -1,14 +1,9 @@
-From: AJ Lewis <alewis@rackable.com>
-Subject: Re: tiny patch: avoid an unnecessary test
-Date: Fri, 16 Mar 2007 09:25:29 -0500
-Message-ID: <20070316142528.GD5454@fenrir.local>
-References: <87fy85bnic.fsf@rho.meyering.net>
-	<20070316134701.GA5454@fenrir.local>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmeventd/dmeventd.c  ...
+Date: 16 Mar 2007 14:36:18 -0000
+Message-ID: <20070316143618.15927.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0608831823=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070316134701.GA5454@fenrir.local>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,101 +13,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-03-16 14:36:16
 
---===============0608831823==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="J9fO++IT6debZ01Z"
-Content-Disposition: inline
+Modified files:
+	.              : WHATS_NEW 
+	dmeventd       : dmeventd.c 
+	multilog       : libmultilog.c 
+	multilog/pthread_lock: pthread_lock.c 
 
+Log message:
+	Remove unnecessary memset() return value checks.  [Jim Meyering]
 
---J9fO++IT6debZ01Z
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.172&r2=1.173
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.46&r2=1.47
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/multilog/libmultilog.c.diff?cvsroot=dm&r1=1.17&r2=1.18
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/multilog/pthread_lock/pthread_lock.c.diff?cvsroot=dm&r1=1.1&r2=1.2
 
-Never mind - looking at the optimistic memory allocation stuff again, you'll
-just get OOMed.
-
-On Fri, Mar 16, 2007 at 08:47:02AM -0500, AJ Lewis wrote:
-> Actually, there's a chance you'd get a NULL pointer error if you don't ha=
-ve
-> that check if I'm reading the context right.  Linux doesn't guarantee mal=
-loc
-> will return NULL if memory is unavailable, you only get the error when you
-> attempt to write to memory.  So if there is an allocation error, you're o=
-nly
-> going to see it in the memset.
->=20
-> --
-> AJ
->=20
-> On Fri, Mar 16, 2007 at 09:28:43AM +0100, Jim Meyering wrote:
-> > Not a big deal (barely worth mentioning), but it might save
-> > someone else a little time wondering "why".
-> >=20
-> > 2007-03-11  Jim Meyering  <jim@meyering.net>
-> >=20
-> > 	Remove unnecessary test.
-> > 	* dmeventd/dmeventd.c (_alloc_dso_data): Don't test known-non-NULL
-> > 	memset return value.
-> >=20
-> > 2007-03-11  Jim Meyering  <jim@meyering.net>
-> > Index: dmeventd/dmeventd.c
-> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > RCS file: /cvs/dm/device-mapper/dmeventd/dmeventd.c,v
-> > retrieving revision 1.46
-> > diff -u -p -r1.46 dmeventd.c
-> > --- dmeventd/dmeventd.c	2 Feb 2007 17:08:51 -0000	1.46
-> > +++ dmeventd/dmeventd.c	12 Mar 2007 14:39:35 -0000
-> > @@ -258,8 +258,8 @@ static struct dso_data *_alloc_dso_data(
-> >  	if (!ret)
-> >  		return NULL;
-> >=20
-> > -	if (!memset(ret, 0, sizeof(*ret)) ||
-> > -	    !(ret->dso_name =3D dm_strdup(data->dso_name))) {
-> > +	memset(ret, 0, sizeof(*ret));
-> > +	if (!(ret->dso_name =3D dm_strdup(data->dso_name))) {
-> >  		dm_free(ret);
-> >  		return NULL;
-> >  	}
-> >=20
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-
-
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
---J9fO++IT6debZ01Z
-Content-Type: application/pgp-signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.1 (Darwin)
-
-iD8DBQFF+qjYn95okVnkz6cRAiWcAJ9lC1DDiXtxSxIjFFvtlDSt3tM/wgCeMKGZ
-/QU14+MnEp+L4ir2qfRNZ9I=
-=30lF
------END PGP SIGNATURE-----
-
---J9fO++IT6debZ01Z--
-
-
---===============0608831823==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0608831823==--
+--- device-mapper/WHATS_NEW	2007/02/14 15:12:14	1.172
++++ device-mapper/WHATS_NEW	2007/03/16 14:36:14	1.173
+@@ -1,5 +1,6 @@
+ Version 1.02.19 -
+ ====================================
++  Remove unnecessary memset() return value checks.
+   Fix a few leaks in reporting error paths. [1.02.15+]
+ 
+ Version 1.02.18 - 13th February 2007
+--- device-mapper/dmeventd/dmeventd.c	2007/02/02 17:08:51	1.46
++++ device-mapper/dmeventd/dmeventd.c	2007/03/16 14:36:14	1.47
+@@ -226,8 +226,8 @@
+ 	if (!ret)
+ 		return NULL;
+ 
+-	if (!memset(ret, 0, sizeof(*ret)) ||
+-	    !(ret->device.uuid = dm_strdup(data->device_uuid))) {
++	memset(ret, 0, sizeof(*ret));
++	if (!(ret->device.uuid = dm_strdup(data->device_uuid))) {
+ 		dm_free(ret);
+ 		return NULL;
+ 	}
+@@ -258,8 +258,8 @@
+ 	if (!ret)
+ 		return NULL;
+ 
+-	if (!memset(ret, 0, sizeof(*ret)) ||
+-	    !(ret->dso_name = dm_strdup(data->dso_name))) {
++	memset(ret, 0, sizeof(*ret));
++	if (!(ret->dso_name = dm_strdup(data->dso_name))) {
+ 		dm_free(ret);
+ 		return NULL;
+ 	}
+--- device-mapper/multilog/libmultilog.c	2005/06/08 15:11:21	1.17
++++ device-mapper/multilog/libmultilog.c	2007/03/16 14:36:16	1.18
+@@ -294,10 +294,11 @@
+ 	/*
+ 	 * Preallocate because we don't want to sleep holding a lock.
+ 	 */
+-	if (!(logl = malloc(sizeof(*logl))) ||
+-	    !(memset(logl, 0, sizeof(*logl))))
++	if (!(logl = malloc(sizeof(*logl))))
+ 		return 0;
+ 
++	memset(logl, 0, sizeof(*logl));
++
+ 	/*
+ 	 * If the type has already been registered, it doesn't need to
+ 	 * be registered again.  This means the caller will need to
+@@ -315,11 +316,7 @@
+ 
+ 	logl->type = type;
+ 
+-	if(!memset(&logl->data, 0, sizeof(logl->data))) {
+-		/* Should never get here */
+-		free(logl);
+-		return 0;
+-	}
++	memset(&logl->data, 0, sizeof(logl->data));
+ 
+ 	logl->data.verbose_level = DEFAULT_VERBOSITY;
+ 	logl->log = nop_log;
+--- device-mapper/multilog/pthread_lock/pthread_lock.c	2005/05/04 17:55:12	1.1
++++ device-mapper/multilog/pthread_lock/pthread_lock.c	2007/03/16 14:36:16	1.2
+@@ -28,8 +28,8 @@
+ 	pthread_mutex_t *mutex;
+ 	if(!(mutex = malloc(sizeof(*mutex))))
+ 		return NULL;
+-	if(!memset(mutex, 0, sizeof(*mutex)))
+-		return NULL;
++	memset(mutex, 0, sizeof(*mutex));
++
+ 	/*
+ 	 * Hack to ensure DSO loading fails if not linked with
+ 	 * libpthread
