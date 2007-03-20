@@ -1,7 +1,7 @@
 From: Olaf Kirch <olaf.kirch@oracle.com>
-Subject: [PATCH 1/3] Call clone_init early
-Date: Tue, 20 Mar 2007 20:54:57 +0100
-Message-ID: <200703202054.58559.olaf.kirch@oracle.com>
+Subject: [PATCH 3/3] Get rid of first_clone in dm-crypt
+Date: Tue, 20 Mar 2007 20:55:08 +0100
+Message-ID: <200703202055.09519.olaf.kirch@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -21,86 +21,108 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Call clone_init early
+Get rid of first_clone in dm-crypt
 
-We need to call clone_init as early as possible - at least
-before call bio_put(clone) in any error path. Otherwise,
-the destructor will try to dereference bi_private, which
-may still be NULL.
+This gets rid of first_clone, which is not really needed.  Apparently,
+cloned bios used to share their bvec some time way in the past - this is
+no longer the case. Contrarily, this even hurts us if we try to create
+a clone off first_clone after it has completed, and crypt_endio has
+destroyed its bvec.
 
 Signed-off-by: olaf.kirch@oracle.com
-
 ---
- drivers/md/dm-crypt.c |   12 +++++++-----
- 1 file changed, 7 insertions(+), 5 deletions(-)
+ drivers/md/dm-crypt.c |   32 +++++---------------------------
+ 1 file changed, 5 insertions(+), 27 deletions(-)
 
 Index: linux-2.6.20/drivers/md/dm-crypt.c
 ===================================================================
 --- linux-2.6.20.orig/drivers/md/dm-crypt.c
 +++ linux-2.6.20/drivers/md/dm-crypt.c
-@@ -107,6 +107,8 @@ struct crypt_config {
- 
- static struct kmem_cache *_crypt_io_pool;
- 
-+static void clone_init(struct crypt_io *, struct bio *);
-+
- /*
-  * Different IV generation algorithms:
-  *
-@@ -379,9 +381,10 @@ static int crypt_convert(struct crypt_co
+@@ -33,7 +33,6 @@
+ struct crypt_io {
+ 	struct dm_target *target;
+ 	struct bio *base_bio;
+-	struct bio *first_clone;
+ 	struct work_struct work;
+ 	atomic_t pending;
+ 	int error;
+@@ -381,8 +380,7 @@ static int crypt_convert(struct crypt_co
   * May return a smaller bio when running out of pages
   */
  static struct bio *
--crypt_alloc_buffer(struct crypt_config *cc, unsigned int size,
-+crypt_alloc_buffer(struct crypt_io *io, unsigned int size,
-                    struct bio *base_bio, unsigned int *bio_vec_idx)
+-crypt_alloc_buffer(struct crypt_io *io, unsigned int size,
+-                   struct bio *base_bio, unsigned int *bio_vec_idx)
++crypt_alloc_buffer(struct crypt_io *io, unsigned int size, unsigned int 
+*bio_vec_idx)
  {
-+	struct crypt_config *cc = io->target->private;
+ 	struct crypt_config *cc = io->target->private;
  	struct bio *clone;
- 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+@@ -390,12 +388,7 @@ crypt_alloc_buffer(struct crypt_io *io, 
  	gfp_t gfp_mask = GFP_NOIO | __GFP_HIGHMEM;
-@@ -396,7 +399,7 @@ crypt_alloc_buffer(struct crypt_config *
+ 	unsigned int i;
+ 
+-	if (base_bio) {
+-		clone = bio_alloc_bioset(GFP_NOIO, base_bio->bi_max_vecs, cc->bs);
+-		__bio_clone(clone, base_bio);
+-	} else
+-		clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
+-
++	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
  	if (!clone)
  		return NULL;
  
--	clone->bi_destructor = dm_crypt_bio_destructor;
-+	clone_init(io, clone);
+@@ -498,9 +491,6 @@ static void dec_pending(struct crypt_io 
+ 	if (!atomic_dec_and_test(&io->pending))
+ 		return;
  
- 	/* if the last bio was not complete, continue where that one ended */
- 	clone->bi_idx = *bio_vec_idx;
-@@ -562,6 +565,7 @@ static void clone_init(struct crypt_io *
- 	clone->bi_end_io  = crypt_endio;
- 	clone->bi_bdev    = cc->dev->bdev;
- 	clone->bi_rw      = io->base_bio->bi_rw;
-+	clone->bi_destructor = dm_crypt_bio_destructor;
- }
+-	if (io->first_clone)
+-		bio_put(io->first_clone);
+-
+ 	bio_endio(io->base_bio, io->base_bio->bi_size, io->error);
  
- static void process_read(struct crypt_io *io)
-@@ -585,7 +589,6 @@ static void process_read(struct crypt_io
- 	}
- 
- 	clone_init(io, clone);
--	clone->bi_destructor = dm_crypt_bio_destructor;
- 	clone->bi_idx = 0;
- 	clone->bi_vcnt = bio_segments(base_bio);
- 	clone->bi_size = base_bio->bi_size;
-@@ -615,7 +618,7 @@ static void process_write(struct crypt_i
+ 	mempool_free(io, cc->io_pool);
+@@ -618,8 +608,7 @@ static void process_write(struct crypt_i
  	 * so repeat the whole process until all the data can be handled.
  	 */
  	while (remaining) {
--		clone = crypt_alloc_buffer(cc, base_bio->bi_size,
-+		clone = crypt_alloc_buffer(io, base_bio->bi_size,
- 					   io->first_clone, &bvec_idx);
+-		clone = crypt_alloc_buffer(io, base_bio->bi_size,
+-					   io->first_clone, &bvec_idx);
++		clone = crypt_alloc_buffer(io, base_bio->bi_size, &bvec_idx);
  		if (unlikely(!clone)) {
  			dec_pending(io, -ENOMEM);
-@@ -631,7 +634,6 @@ static void process_write(struct crypt_i
  			return;
+@@ -635,21 +624,11 @@ static void process_write(struct crypt_i
  		}
  
--		clone_init(io, clone);
  		clone->bi_sector = cc->start + sector;
+-
+-		if (!io->first_clone) {
+-			/*
+-			 * hold a reference to the first clone, because it
+-			 * holds the bio_vec array and that can't be freed
+-			 * before all other clones are released
+-			 */
+-			bio_get(clone);
+-			io->first_clone = clone;
+-		}
+-
+ 		remaining -= clone->bi_size;
+ 		sector += bio_sectors(clone);
  
- 		if (!io->first_clone) {
+-		/* prevent bio_put of first_clone */
++		/* Grab another reference to the io struct
++		 * before we kick off the request */
+ 		if (remaining)
+ 			atomic_inc(&io->pending);
+ 
+@@ -962,7 +941,6 @@ static int crypt_map(struct dm_target *t
+ 	io = mempool_alloc(cc->io_pool, GFP_NOIO);
+ 	io->target = ti;
+ 	io->base_bio = bio;
+-	io->first_clone = NULL;
+ 	io->error = io->post_process = 0;
+ 	atomic_set(&io->pending, 0);
+ 	kcryptd_queue_io(io);
 
 -- 
 Olaf Kirch  |  --- o --- Nous sommes du soleil we love when we play
