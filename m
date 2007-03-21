@@ -1,12 +1,15 @@
-From: Alexander Benaguev <zul@sigmatrans.ru>
-Subject: multipath device won't assemble
-Date: Wed, 21 Mar 2007 14:43:31 +0300
-Message-ID: <46011A63.5010102@sigmatrans.ru>
+From: Jim Meyering <jim@meyering.net>
+Subject: Re: Re: [PATCH 0/3] Fix SMP races in dm-crypt
+Date: Wed, 21 Mar 2007 14:32:42 +0100
+Message-ID: <87y7lqhgcl.fsf@rho.meyering.net>
+References: <200703210806.30499.okir@lst.de>
+	<20070321100312.GF27600@agk.surrey.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070321100312.GF27600@agk.surrey.redhat.com> (Alasdair
+	G. Kergon's message of "Wed, 21 Mar 2007 10:03:12 +0000")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,60 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Alasdair G Kergon <agk@redhat.com> wrote:
+> On Wed, Mar 21, 2007 at 08:06:29AM +0100, Olaf Kirch wrote:
+>> (I'm resending this, because it seems mailman ate this posting
 
-hi list. I'm working with fastt storage and experience some problems with multipath-tools. as you
-can see bellow, multapath can't create mpath0, but mpath1 successful created. I can't understand
-why. googling around two days without any result. help me, please;(
+On a similar note, I sent two patches on Mar 12.
+While they did reach the archive, perhaps you haven't seen them?
 
-alexander
-info-------------------------------------------------------------------------------------------------
-OS: CentOS 4.92
-kernel: 2.6.18-1.2747.el5xen
-multipath.conf (default):
-defaults {
-        user_friendly_names yes
-}
-defaults {
-        udev_dir                /dev
-        polling_interval        10
-        selector                "round-robin 0"
-        path_grouping_policy    multibus
-        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-        prio_callout            /bin/true
-        path_checker            readsector0
-        rr_min_io               1000
-        rr_weight               priorities
-        failback                immediate
-        no_path_retry           fail
-        user_friendly_name      yes
-}
+    https://www.redhat.com/archives/dm-devel/2007-March/msg00010.html
+    https://www.redhat.com/archives/dm-devel/2007-March/msg00011.html
 
-multipath -v3 output:
-mpath0: pgfailback = -2 (config file default)
-mpath0: pgpolicy = multibus (config file default)
-mpath0: selector = round-robin 0 (internal default)
-mpath0: features = 0 (internal default)
-mpath0: hwhandler = 0 (internal default)
-mpath0: rr_weight = 2 (config file default)
-mpath0: minio = 1000 (config file default)
-mpath0: no_path_retry = -1 (config file default)
-pg_timeout = NONE (internal default)
-mpath0: set ACT_CREATE (map does not exist)
-mpath0: domap (0) failure for create/reload map
+2007-03-12  Jim Meyering  <jim@meyering.net>
 
-dmesg output:
-device-mapper: table: 253:5: multipath: error getting device
-device-mapper: ioctl: error adding target to table
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+        * lib/fs/libdevmapper.c (do_suspend): Detect write failure reliably.
+        (do_load): Likewise.
+        (find_mount_point): Avoid buffer overrun for unusually long inputs.
 
-iD8DBQFGARpi4DJ/LCkjclMRAnHOAKCUEwV8STX7lMTMISg2ReFqMIejngCcDy9O
-DAgCHTj4cgkQDOqWE1cyczA=
-=53zF
------END PGP SIGNATURE-----
+2007-03-11  Jim Meyering  <meyering@redhat.com>
+
+        * dmsetup/dmsetup.c (_loop_table): Detect close failure.
