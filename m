@@ -1,8 +1,7 @@
 From: Olaf Kirch <okir@lst.de>
-Subject: [PATCH 2/3] Do not access the bio after
-	generic_make_request
-Date: Wed, 21 Mar 2007 08:06:44 +0100
-Message-ID: <200703210806.45522.okir@lst.de>
+Subject: [PATCH 0/3] Fix SMP races in dm-crypt
+Date: Wed, 21 Mar 2007 08:06:29 +0100
+Message-ID: <200703210806.30499.okir@lst.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -22,35 +21,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, Andrew Morton <akpm@linux-foundation.org>
 List-Id: dm-devel.ids
 
-Do not access the bio after generic_make_request
+(I'm resending this, because it seems mailman ate this posting
+the first time around - apologies if you're seeing this twice).
 
-We should never access a bio after generic_make_request - there's
-no guarantee it still exists.
+I investigated kernel Bug 5948 (Oops when accessing SATA with device mapper on
+AMD 64 X2) to help cut down on the number of open bugs.
 
-Signed-off-by: olaf.kirch@oracle.com
----
- drivers/md/dm-crypt.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+The problem reported in that bug seems to be caused by memory pressure
+when writing - crypt_alloc_buffer can return less than the full number of
+pages required. In that case, the bio is split, but we're keeping a pointer
+to the first chunk of the request around in first_clone, and copy it. If the
+first clone completes I/O while we're cloning it, we oops on garbage in
+the bvec.
 
-Index: linux-2.6.20/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.20.orig/drivers/md/dm-crypt.c
-+++ linux-2.6.20/drivers/md/dm-crypt.c
-@@ -655,9 +655,12 @@ static void process_write(struct crypt_i
- 
- 		generic_make_request(clone);
- 
-+		/* Do not reference clone after this - it
-+		 * may be gone already. */
-+
- 		/* out of memory -> run queues */
- 		if (remaining)
--			congestion_wait(bio_data_dir(clone), HZ/100);
-+			congestion_wait(WRITE, HZ/100);
- 	}
- }
- 
+I was able to reproduce this on 2.6.20 - and the following patches
+seem to fix it for me.
 
+dm-crypt-clone_init-early
+	We need to call clone_init early on, before we can conceivably
+	ever call bio_put on the clone
+
+dm-crypt-clone-race
+	Do no access bios after generic_make_request
+
+dm-crypt-drop-first_clone
+	Drop the first_clone business, and always allocate a fresh bio.
+
+Olaf
 -- 
 Olaf Kirch  |  --- o --- Nous sommes du soleil we love when we play
 okir@lst.de |    / | \   sol.dhoop.naytheet.ah kin.ir.samse.qurax
