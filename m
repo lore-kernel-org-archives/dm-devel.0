@@ -1,10 +1,12 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 0/3] Changes to Userspace multipath code to
-	support lsi-rdac
-Date: Wed, 21 Mar 2007 11:38:33 -0800
-Message-ID: <20070321193833.24487.76682.sendpatchset@localhost.localdomain>
+Subject: [PATCH 2/3] Fix the priority calculation to use
+	PATH_GHOST state
+Date: Wed, 21 Mar 2007 11:38:45 -0800
+Message-ID: <20070321193845.24487.53463.sendpatchset@localhost.localdomain>
+References: <20070321193833.24487.76682.sendpatchset@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070321193833.24487.76682.sendpatchset@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +20,32 @@ To: dm-devel@redhat.com
 Cc: andmike@us.ibm.com, michaelc@cs.wisc.edu, christophe.varoqui@free.fr, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi All,
-
-While working on lsi-rdac hardware handler, I found that the checkers "tur"
-and "readsector0" are not serving the lsi-rdac properly. Also, the storage
-device has a active/passive state which need to be handled properly.
-
-So, I wrote a new path checker for lsi-rdac, to use the C4 inquiry page to get
-the current owner of the lun and set the state as UP(active) or GHOST(passive).
-Changes are in patch 1/3.
-
-After applying the above patch, I realized the priorities are not set properly.
-Made some changes to use the GHOST state while setting priorities. Changes are
-in patch 2/3.
-
-Debugging the above patches found that the wait time (5 seconds) in multipathd
-was not sufficient for the devices to appear in /dev/ It was taking about 20
-seconds. Changed the wait time to be 60 seconds. Change in patch 3/3.
-
-Please provide me with your feedback/comment on these changes regarding
-correctness, completeness etc.,
-
-Thanks & regards,
-
-chandra
+Index: multipath-tools-0.4.7/libmultipath/discovery.c
+===================================================================
+--- multipath-tools-0.4.7.orig/libmultipath/discovery.c	2007-03-20 14:45:21.000000000 -0700
++++ multipath-tools-0.4.7/libmultipath/discovery.c	2007-03-20 14:45:41.000000000 -0700
+@@ -699,7 +699,7 @@
+ 	if (mask & DI_CHECKER && get_state(pp))
+ 		goto blank;
+ 	
+-	if (mask & DI_PRIO && pp->state != PATH_DOWN)
++	if (mask & DI_PRIO && pp->state == PATH_UP)
+ 		get_prio(pp);
+ 
+ 	if (mask & DI_WWID && !strlen(pp->wwid))
+Index: multipath-tools-0.4.7/libmultipath/switchgroup.c
+===================================================================
+--- multipath-tools-0.4.7.orig/libmultipath/switchgroup.c	2007-03-20 14:45:21.000000000 -0700
++++ multipath-tools-0.4.7/libmultipath/switchgroup.c	2007-03-20 14:45:41.000000000 -0700
+@@ -28,7 +28,7 @@
+ 		priority = 0;
+ 
+ 		vector_foreach_slot (pgp->paths, pp, j) {
+-			if (pp->state != PATH_DOWN)
++			if (pp->state == PATH_UP)
+ 				priority += pp->priority;
+ 		}
+ 		pgp->priority = priority;
 
 -- 
 
