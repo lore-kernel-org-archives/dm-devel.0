@@ -1,16 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/3] Fix SMP races in dm-crypt
-Date: Thu, 22 Mar 2007 21:53:53 +0000
-Message-ID: <20070322215352.GP27600@agk.surrey.redhat.com>
-References: <200703210806.30499.okir@lst.de>
-	<1174595296.2458.13.camel@leto.intern.saout.de>
-	<20070322134122.ee9834fb.akpm@linux-foundation.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: dm-multipath based engenio-lsi hardware handler
+Date: Thu, 22 Mar 2007 15:37:06 -0800
+Message-ID: <1174606627.14100.7.camel@linuxchandra>
+References: <1174589692.22545.33.camel@linuxchandra>
+	<4602C533.3010908@cs.wisc.edu>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20070322134122.ee9834fb.akpm@linux-foundation.org>
+In-Reply-To: <4602C533.3010908@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Saout <christophe@saout.de>
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: Mike Anderson <andmike@us.ibm.com>, dm-devel <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Mar 22, 2007 at 01:41:22PM -0700, Andrew Morton wrote:
-> On Thu, 22 Mar 2007 21:28:16 +0100
-> Christophe Saout <christophe@saout.de> wrote:
-> I'm hunting around, but cannot find the patches to which you refer.  Maybe
-> they're on dm-devel only?
+On Thu, 2007-03-22 at 13:04 -0500, Mike Christie wrote:
+Mike,
 
-These four:
-  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-fix-call-to-clone_init.patch
-  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-fix-avoid-cloned-bio-ref-after-free.patch
-  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-fix-remove-first_clone.patch
-  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-use-smaller-bvecs-in-clones.patch
+Thanks for your comments.
 
-Grab them from there, or I'll send you them properly at the start of next
-week as part of the next dm patch set.
+> Chandra Seetharaman wrote:
+> 
+> Did you see may later revisions on this or Ed's updated handler? In the
+> current kernel we do not need to allocate or manage our own bios. That
+> was a old old hack from when the request did not have a end io. The hack
+> is probably only needed for old distros. It is not needed upstream.
+> 
+> For dm based hw handlers you want to do something more like this:
+> http://www.cs.wisc.edu/~michaelc/block/dm/v4/
 
-Alasdair
+Looks simpler. Can do it.
+
+But, I am little confused though. I do not see the underlying functions
+like dm_scsi_init/destroy_context_pool(), dm_scsi_execute_rq() etc., in
+2.6.20/21-rc4 tree. Where is it available ?
+
+Also, dm-emc.c (in 2.6.20/21-rc4) doesn't seem to use that model.
+
+<snip>
+> > 
+> > static void rdac_pg_init(struct hw_handler *hwh, unsigned bypassed,
+> > 			struct path *path)
+> > {
+> > 	struct rdac_handler *h = hwh->context;
+> > 
+> > 	switch (h->lun) {
+> > 	case UNINITIALIZED_LUN:
+> > 		submit_c8_inquiry(h, path);
+> > 		break;
+> > 	case UNSUPPORTED_LUN:
+> > 		dm_pg_init_complete(path, MP_FAIL_PATH);
+> > 		break;
+> > 	default:
+> > 		submit_c9_inquiry(h, path);
+> > 	}
+> > }
+> > 
+> 
+> Why not just have userspace check and pass the LUN to the create
+> function? This is not a review comment to do it. I am just asking if it
+> is difficult to gather info in userspace and pass it down?
+
+It should be possible to get the inquiry page from user space and
+implement what you suggest. But, there is currently no storage device
+specific interface (like path checkers) to do this. We have to either
+add that interface or hack somewhere else(like path checkers) to do it.
+Do you think it is worth it ?
+
+Also, is it possible to get the lun info from user space without getting
+the inquiry page ?
+
+chandra
 -- 
-agk@redhat.com
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
