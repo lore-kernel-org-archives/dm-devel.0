@@ -1,17 +1,17 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH 0/3] Fix SMP races in dm-crypt
-Date: Thu, 22 Mar 2007 15:44:08 -0700
-Message-ID: <20070322154408.7e7afe1a.akpm@linux-foundation.org>
-References: <200703210806.30499.okir@lst.de>
-	<1174595296.2458.13.camel@leto.intern.saout.de>
-	<20070322134122.ee9834fb.akpm@linux-foundation.org>
-	<20070322215352.GP27600@agk.surrey.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH 0/3] Changes to Userspace multipath code to
+	support lsi-rdac
+Date: Thu, 22 Mar 2007 15:45:41 -0800
+Message-ID: <1174607141.14100.9.camel@linuxchandra>
+References: <20070321193833.24487.76682.sendpatchset@localhost.localdomain>
+	<1174518416.6218.35.camel@localhost.localdomain>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070322215352.GP27600@agk.surrey.redhat.com>
+In-Reply-To: <1174518416.6218.35.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,33 +21,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Christophe Saout <christophe@saout.de>, Olaf Kirch <olaf.kirch@oracle.com>
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: Mike Anderson <andmike@us.ibm.com>, dm-devel@redhat.com, michaelc@cs.wisc.edu, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 22 Mar 2007 21:53:53 +0000
-Alasdair G Kergon <agk@redhat.com> wrote:
+Cool,
 
-> On Thu, Mar 22, 2007 at 01:41:22PM -0700, Andrew Morton wrote:
-> > On Thu, 22 Mar 2007 21:28:16 +0100
-> > Christophe Saout <christophe@saout.de> wrote:
-> > I'm hunting around, but cannot find the patches to which you refer.  Maybe
-> > they're on dm-devel only?
-> 
-> These four:
->   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-fix-call-to-clone_init.patch
->   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-fix-avoid-cloned-bio-ref-after-free.patch
->   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-fix-remove-first_clone.patch
->   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-crypt-use-smaller-bvecs-in-clones.patch
-> 
-> Grab them from there, or I'll send you them properly at the start of next
-> week as part of the next dm patch set.
-> 
+Thanks.
 
-yup, thanks - Christophe forwarded them.
+chandra
+On Thu, 2007-03-22 at 00:06 +0100, Christophe Varoqui wrote:
+> Le mercredi 21 mars 2007 =C3=A0 11:38 -0800, Chandra Seetharaman a =C3=A9=
+crit :
+> > Hi All,
+> >=20
+> > While working on lsi-rdac hardware handler, I found that the checkers=
+ "tur"
+> > and "readsector0" are not serving the lsi-rdac properly. Also, the st=
+orage
+> > device has a active/passive state which need to be handled properly.
+> >=20
+> > So, I wrote a new path checker for lsi-rdac, to use the C4 inquiry pa=
+ge to get
+> > the current owner of the lun and set the state as UP(active) or GHOST=
+(passive).
+> > Changes are in patch 1/3.
+> >=20
+> > After applying the above patch, I realized the priorities are not set=
+ properly.
+> > Made some changes to use the GHOST state while setting priorities. Ch=
+anges are
+> > in patch 2/3.
+> >=20
+> > Debugging the above patches found that the wait time (5 seconds) in m=
+ultipathd
+> > was not sufficient for the devices to appear in /dev/ It was taking a=
+bout 20
+> > seconds. Changed the wait time to be 60 seconds. Change in patch 3/3.
+> >=20
+> > Please provide me with your feedback/comment on these changes regardi=
+ng
+> > correctness, completeness etc.,
+> >=20
+> Looks very good. I merged the 3 patches.
+>=20
+> In 1/3, I changed the DEF_TIMEOUT name to avoid surcharging the one in
+> checker.h
+>=20
+> I'm having a hard time push to kernel.org, so don't expect to see the
+> git tree updated soon.
+>=20
+> Thanks,
+> cvaroqui
+>=20
+--=20
 
-(And I merged them with the wrong From: attribution (fixes that))
-
-btw, should I include
-http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/* in
-the -mm lineup?  It's easy to do from this end.
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
