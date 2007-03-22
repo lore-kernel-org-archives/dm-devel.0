@@ -1,15 +1,16 @@
-From: Andrew Morton <akpm@linux-foundation.org>
+From: Christophe Saout <christophe@saout.de>
 Subject: Re: [PATCH 0/3] Fix SMP races in dm-crypt
-Date: Thu, 22 Mar 2007 13:41:22 -0700
-Message-ID: <20070322134122.ee9834fb.akpm@linux-foundation.org>
+Date: Thu, 22 Mar 2007 21:51:16 +0100
+Message-ID: <1174596676.2458.37.camel@leto.intern.saout.de>
 References: <200703210806.30499.okir@lst.de>
 	<1174595296.2458.13.camel@leto.intern.saout.de>
+	<20070322134122.ee9834fb.akpm@linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1174595296.2458.13.camel@leto.intern.saout.de>
+In-Reply-To: <20070322134122.ee9834fb.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,52 +20,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Saout <christophe@saout.de>
+To: Andrew Morton <akpm@linux-foundation.org>, Olaf Kirch <okir@lst.de>
 Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 22 Mar 2007 21:28:16 +0100
-Christophe Saout <christophe@saout.de> wrote:
+Am Donnerstag, den 22.03.2007, 13:41 -0700 schrieb Andrew Morton:
 
-> Hi Olaf,
+> > Hi Olaf,
+> 
+> err, which Olaf are you addressing?  He is not cc'ed.
 
-err, which Olaf are you addressing?  He is not cc'ed.
+Stupid client... didn't notice. Thanks .
 
-> > (I'm resending this, because it seems mailman ate this posting
-> > the first time around - apologies if you're seeing this twice).
+> > > (I'm resending this, because it seems mailman ate this posting
+> > > the first time around - apologies if you're seeing this twice).
+> > > 
+> > > I investigated kernel Bug 5948 (Oops when accessing SATA with device mapper on
+> > > AMD 64 X2) to help cut down on the number of open bugs.
+> > > 
+> > > The problem reported in that bug seems to be caused by memory pressure
+> > > when writing - crypt_alloc_buffer can return less than the full number of
+> > > pages required. In that case, the bio is split, but we're keeping a pointer
+> > > to the first chunk of the request around in first_clone, and copy it. If the
+> > > first clone completes I/O while we're cloning it, we oops on garbage in
+> > > the bvec.
+> > > 
+> > > I was able to reproduce this on 2.6.20 - and the following patches
+> > > seem to fix it for me.
+> > > 
+> > > dm-crypt-clone_init-early
+> > > 	We need to call clone_init early on, before we can conceivably
+> > > 	ever call bio_put on the clone
+> > > 
+> > > dm-crypt-clone-race
+> > > 	Do no access bios after generic_make_request
+> > > 
+> > > dm-crypt-drop-first_clone
+> > > 	Drop the first_clone business, and always allocate a fresh bio.
 > > 
-> > I investigated kernel Bug 5948 (Oops when accessing SATA with device mapper on
-> > AMD 64 X2) to help cut down on the number of open bugs.
+> > I fully agree. I didn't notice when the sharing of the bvec went away,
+> > but it's no longer needed and the code is simpler. As for the other two
+> > - ouch, you're right.
 > > 
-> > The problem reported in that bug seems to be caused by memory pressure
-> > when writing - crypt_alloc_buffer can return less than the full number of
-> > pages required. In that case, the bio is split, but we're keeping a pointer
-> > to the first chunk of the request around in first_clone, and copy it. If the
-> > first clone completes I/O while we're cloning it, we oops on garbage in
-> > the bvec.
+> > Thanks for investigating fixing these things.
 > > 
-> > I was able to reproduce this on 2.6.20 - and the following patches
-> > seem to fix it for me.
+> > All four patches are
 > > 
-> > dm-crypt-clone_init-early
-> > 	We need to call clone_init early on, before we can conceivably
-> > 	ever call bio_put on the clone
-> > 
-> > dm-crypt-clone-race
-> > 	Do no access bios after generic_make_request
-> > 
-> > dm-crypt-drop-first_clone
-> > 	Drop the first_clone business, and always allocate a fresh bio.
+> > Acked-By: Christophe Saout <christophe@saout.de>
 > 
-> I fully agree. I didn't notice when the sharing of the bvec went away,
-> but it's no longer needed and the code is simpler. As for the other two
-> - ouch, you're right.
-> 
-> Thanks for investigating fixing these things.
-> 
-> All four patches are
-> 
-> Acked-By: Christophe Saout <christophe@saout.de>
+> I'm hunting around, but cannot find the patches to which you refer.  Maybe
+> they're on dm-devel only?
 
-I'm hunting around, but cannot find the patches to which you refer.  Maybe
-they're on dm-devel only?
+Yes, but Olaf also Cc'ed you. Didn't you get them?
