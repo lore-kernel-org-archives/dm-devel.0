@@ -1,8 +1,11 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath hwtable.c
-Date: 4 Apr 2007 22:28:31 -0000
-Message-ID: <20070404222831.20564.qmail@sourceware.org>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: dm-raid1:  Fix to commit pending clear region requests
+Date: Thu, 05 Apr 2007 10:12:31 -0500
+Message-ID: <1175785951.23622.1.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,32 +16,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-04-04 23:28:30
+ brassow
 
-Modified files:
-	libmultipath   : hwtable.c 
+With the code as it is, it is possible for clear region request to never get flushed at the
+end of the life of a mirror.  When deactivating or suspending, the mirror may have issued
+clear region requests to the log, but it will never flush them.  This means there will
+always be some resync work required when a mirror is activated - even though it may very
+well be in-sync.
 
-Log message:
-	Fix for bz #233629. Change pgpolicy from DS8000 from GROUP_BY_SERIAL to
-	MULTIBUS.
+Always performing the flush doesn't hurt us.  This is because the log keeps track of
+any changes that occur.  If there are no changes, the log does not flush to disk.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.8&r2=1.16.2.9
-
---- multipath-tools/libmultipath/hwtable.c	2007/03/07 16:12:46	1.16.2.8
-+++ multipath-tools/libmultipath/hwtable.c	2007/04/04 22:28:30	1.16.2.9
-@@ -62,7 +62,7 @@
- 		   DEFAULT_GETUID, "/sbin/mpath_prio_alua /dev/%n", "0",
- 		   "1 queue_if_no_path", "tur", -FAILBACK_IMMEDIATE, NULL, 0, 0,
- 		   0);
--	r += store_hwe_ext(hw, "IBM", "2107900", GROUP_BY_SERIAL,
-+	r += store_hwe_ext(hw, "IBM", "2107900", MULTIBUS,
- 		   DEFAULT_GETUID, NULL, "0", "1 queue_if_no_path", "tur",
- 		   FAILBACK_UNDEF, NULL, 0, 0, 0);
- 	r += store_hwe_ext(hw, "IBM", "2145", GROUP_BY_PRIO, DEFAULT_GETUID,
+Index: linux-2.6.21-rc5-mm4/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.21-rc5-mm4.orig/drivers/md/dm-raid1.c
++++ linux-2.6.21-rc5-mm4/drivers/md/dm-raid1.c
+@@ -405,8 +405,7 @@ static void rh_update_states(struct regi
+ 		mempool_free(reg, rh->region_pool);
+ 	}
+ 
+-	if (!list_empty(&recovered))
+-		rh->log->type->flush(rh->log);
++	rh->log->type->flush(rh->log);
+ 
+ 	list_for_each_entry_safe (reg, next, &clean, list)
+ 		mempool_free(reg, rh->region_pool);
