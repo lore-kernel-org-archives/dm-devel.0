@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] dm-log-fix-uninitialized-state.patch
-Date: Thu, 05 Apr 2007 11:33:05 -0500
-Message-ID: <1175790785.24640.2.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH] dm-core-add-ratelimit-printing.patch
+Date: Thu, 05 Apr 2007 11:36:52 -0500
+Message-ID: <1175791012.24640.6.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,40 +19,29 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Applies to linux-2.6.21-rc5-mm4
+This patch adds macros for ratelimiting messages.
 
  brassow
 
-This patch removes the possibility of having uninitialized
-log state if the log device has failed.
-
-When a mirror resumes operation, it calls 'resume' on the
-logging module.  If disk based logging is being used, the
-log device is read to fill in the log state.  If the log
-device has failed, we cannot simply return, because this
-would leave the in-memory log state uninitialized.  Instead,
-we assume all regions are out-of-sync and reset the log
-state.  Failure to do this could result in the logging code
-reporting a region as in-sync, even though it isn't; which
-could result in a corrupted mirror.
-
-Index: linux-2.6.21-rc5-mm4/drivers/md/dm-log.c
+Index: linux-2.6.19-rc4-mm2/drivers/md/dm.h
 ===================================================================
---- linux-2.6.21-rc5-mm4.orig/drivers/md/dm-log.c
-+++ linux-2.6.21-rc5-mm4/drivers/md/dm-log.c
-@@ -478,7 +478,14 @@ static int disk_resume(struct dirty_log 
- 		DMWARN("%s: Failed to read header on mirror log device",
- 		       lc->log_dev->name);
- 		fail_log_device(lc);
--		return r;
-+		/*
-+		 * If the log device cannot be read, we must assume
-+		 * all regions are out-of-sync.  If we simply return
-+		 * here, the state will be uninitialized and could
-+		 * lead us to return 'in-sync' status for regions
-+		 * that are actually 'out-of-sync'.
-+		 */
-+		lc->header.nr_regions = 0;
- 	}
+--- linux-2.6.19-rc4-mm2.orig/drivers/md/dm.h	2006-11-07 09:22:45.000000000 -0600
++++ linux-2.6.19-rc4-mm2/drivers/md/dm.h	2006-11-27 15:08:38.000000000 -0600
+@@ -19,8 +19,17 @@
+ #define DM_NAME "device-mapper"
  
- 	/* set or clear any new bits -- device has grown */
+ #define DMERR(f, arg...) printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
++#define DMERR_LIMIT(f, arg...) \
++	if (printk_ratelimit())	\
++		printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ #define DMWARN(f, arg...) printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
++#define DMWARN_LIMIT(f, arg...) \
++	if (printk_ratelimit())	\
++		printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ #define DMINFO(f, arg...) printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
++#define DMINFO_LIMIT(f, arg...) \
++	if (printk_ratelimit())	\
++		printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
+ #ifdef CONFIG_DM_DEBUG
+ #  define DMDEBUG(f, arg...) printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX " DEBUG: " f "\n", ## arg)
+ #else
