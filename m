@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: dm-raid1:  Fix to commit pending clear region requests
-Date: Thu, 05 Apr 2007 10:12:31 -0500
-Message-ID: <1175785951.23622.1.camel@hydrogen.msp.redhat.com>
+Subject: RFC: switch rh_in_sync to blocking in do_reads
+Date: Thu, 05 Apr 2007 10:22:27 -0500
+Message-ID: <1175786547.23622.5.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,28 +19,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+I think this was an oversight and the rh_in_sync call should be allowed
+to block in do_reads.  Any reason why it is not coded that way?
+
  brassow
 
-With the code as it is, it is possible for clear region request to never get flushed at the
-end of the life of a mirror.  When deactivating or suspending, the mirror may have issued
-clear region requests to the log, but it will never flush them.  This means there will
-always be some resync work required when a mirror is activated - even though it may very
-well be in-sync.
+do_reads happens in the mirror worker thread and operations there are
+allowed to block.  The call to rh_in_sync should be allowed to block.
 
-Always performing the flush doesn't hurt us.  This is because the log keeps track of
-any changes that occur.  If there are no changes, the log does not flush to disk.
+This is especially important for cluster mirroring.  Since the
+cluster log must ensure the region is in_sync cluster-wide and
+must do network operations to ensure that, it will always return
+-EWOULDBLOCK if 0 is given for the blocking argument.  The way
+the code is written, a cluster mirror would never be allowed to
+'choose_mirror'.
 
 Index: linux-2.6.21-rc5-mm4/drivers/md/dm-raid1.c
 ===================================================================
 --- linux-2.6.21-rc5-mm4.orig/drivers/md/dm-raid1.c
 +++ linux-2.6.21-rc5-mm4/drivers/md/dm-raid1.c
-@@ -405,8 +405,7 @@ static void rh_update_states(struct regi
- 		mempool_free(reg, rh->region_pool);
- 	}
- 
--	if (!list_empty(&recovered))
--		rh->log->type->flush(rh->log);
-+	rh->log->type->flush(rh->log);
- 
- 	list_for_each_entry_safe (reg, next, &clean, list)
- 		mempool_free(reg, rh->region_pool);
+@@ -741,7 +741,7 @@ static void do_reads(struct mirror_set *
+ 		/*
+ 		 * We can only read balance if the region is in sync.
+ 		 */
+-		if (rh_in_sync(&ms->rh, region, 0))
++		if (rh_in_sync(&ms->rh, region, 1))
+ 			m = choose_mirror(ms, bio->bi_sector);
+ 		else
+ 			m = ms->default_mirror;
