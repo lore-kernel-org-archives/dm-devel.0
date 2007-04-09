@@ -1,11 +1,11 @@
-From: D Canfield <canfield@uindy.edu>
-Subject: DS4400 Strangeness
-Date: Mon, 09 Apr 2007 15:26:19 -0400
-Message-ID: <461A935B.3060903@uindy.edu>
+From: "Paul Tader" <ptader@linuxscope.com>
+Subject: New disk under /dev/mapper control??
+Date: Mon, 9 Apr 2007 16:29:26 -0500 (CDT)
+Message-ID: <44864.131.225.80.2.1176154166.squirrel@mail.linuxscope.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,71 +19,94 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Not sure if this is a RHEL5 issue, or a DS4000 issue, or what...
+I've added a new, single IDE disk to a system.  I've run though fdisk,
+mkfs and then attempted a mount command but mount failed with "already
+mounted or /mnt/ busy".  I see that now device-mapper is "claiming" this
+disk and newly created partitions and doesn't allow me to mount the
+partitions by addressing the /dev/hdb1 device file. In other words,
+/dev/mapper files are being automatically created only for this (new)
+disk.  Is there a way to have device-mapper relinquish control of this
+disk?
 
-Basically, I have a bladecenter booting from a DS4000 SAN.  I've muddled 
-by through RHEL3 & RHEL4 with the qlogic drivers half working, but with 
-RHEL 5 thing pretty much seem to work out of the box when installing 
-with the mpath install-time argument.
+I've tried removing and clearing the devices with dmsetup, all to no avai=
+l.
 
-After the install, I comment out the blacklist line in multipath.conf 
-and thing look the way I'd expect for an active/passive array:
-[root@gimli ~]# multipath -l
-mpath0 () dm-0 IBM,1742
-[size=8.0G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][enabled]
- \_ 0:0:0:0 sda 8:0   [active][undef]
-\_ round-robin 0 [prio=0][enabled]
- \_ 1:0:0:0 sdb 8:16  [active][undef]
+Thanks much,
+Paul
 
-At this point things seem to work properly, and while the paths may not 
-be the preferred paths, I can wait until RHEL 5.1 for the RDAC support 
-that's been added to the multipath tools (I've been told a kernel patch 
-is also required, or I would just upgrade the tools myself).
 
-However, I then attempted to install the first RHEL5 errata kernel, and 
-during the upgrade, the paths failed and the filesystem was labeled 
-read-only.  The kernel install finished, but after the reboot I have a 
-bit of a mess.  Notably, during boot the following errors are displayed:
+(device files removed and no paritions present on /dev/hdb):
+[root@server ~]# ls -l /dev/mapper/
+total 0
+crw-------  1 root root 10, 63 Apr  9 12:03 control
 
-Cannot open bindings file [/var/lib/multipath/bindings] : Read-only file 
-system
-/dev/sda2: open failed: No such device or address
-Found duplicate PV  using /dev/dm-7 not /dev/mapper/mpath0p2
 
-And the multipath output is a mess as well (though better after a -F run):
+(after a reboot a new device appears (for the hdb device?))
+[root@server ~]# ls -l /dev/mapper/
+total 0
+crw-------  1 root root  10, 63 Apr  9 15:04 control
+brw-rw----  1 root disk 253,  0 Apr  9 15:04 pdc_bjajcgbifh
 
-[root@gimli ~]# multipath -l
-mpath0 () dm-0 IBM,1742
-[size=8.0G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][active]
- \_ 0:0:0:0 sda 8:0   [active][undef]
- \_ 1:0:0:0 sdb 8:16  [active][undef]
-3600a0b80000f82ce0000006241e539ccdm-5 IBM,1742
-[size=8.0G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][active]
- \_ 0:0:0:0 sda 8:0   [active][undef]
-\_ round-robin 0 [prio=0][enabled]
- \_ 1:0:0:0 sdb 8:16  [active][undef]
 
-[root@gimli ~]# multipath -F
-mpath0: map in use
+(Now fdisk, create a new primary partition, mkfs, and then mount attempte=
+d):
+[root@server ~]# mount /dev/hdb1 /mnt/
+mount: /dev/hdb1 already mounted or /mnt/ busy
 
-[root@gimli ~]# multipath -l
-mpath0 () dm-0 IBM,1742
-[size=8.0G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][active]
- \_ 0:0:0:0 sda 8:0   [active][undef]
- \_ 1:0:0:0 sdb 8:16  [active][undef]
+(no device for the new partition, yet)
+[root@server ~]# ls -l /dev/mapper
+total 0
+crw-------  1 root root  10, 63 Apr  9 15:04 control
+brw-rw----  1 root disk 253,  0 Apr  9 15:04 pdc_bjajcgbifh
 
-Rebooting to the original kernel has no effect, and this process is 
-reproducible (I've done about 3 clean installs). My only guess is that 
-it has something to do with mkinitrd not taking into account the 
-multipathing the same way RHEL5 anaconda does.  But that doesn't explain 
-to me why the old kernel doesn't work, nor why the paths fail during the 
-kernel upgrade.
+(..but after a reboot, a new mapper device is present)
+[root@server ~]# ls -l /dev/mapper
+total 0
+crw-------  1 root root  10, 63 Apr  9 15:54 control
+brw-rw----  1 root disk 253,  0 Apr  9 15:54 pdc_bjajcgbifh
+brw-rw----  1 root disk 253,  1 Apr  9 15:54 pdc_bjajcgbifh1
 
-Any guesses/insights/suggestions?
+(still can't mount using traditional device)
+[root@server ~]# mount /dev/hdb1 /mnt/
+mount: /dev/hdb1 already mounted or /mnt/ busy
 
-Thanks
-Dana
+(...but can using the special mapper device)
+[root@server ~]# mount /dev/mapper/pdc_bjajcgbifh1 /mnt
+[root@server ~]# df -k
+Filesystem           1K-blocks      Used Available Use% Mounted on
+...
+/dev/mapper/pdc_bjajcgbifh1
+                      23078680     77800  23000880   1% /mnt
+
+
+-------------------------
+Linux 2.6.9-42.0.10.ELsmp #1 SMP Tue Feb 27 12:38:15 EST 2007 x86_64
+x86_64 x86_64 GNU/Linux
+
+# rpm -q device-mapper
+device-mapper-1.02.07-4.0.RHEL4
+device-mapper-1.02.07-4.0.RHEL4
+
+64bit and 32bit RPM's installed.
+
+
+[root@server ~]# fdisk -l
+
+Disk /dev/hdb: 400.0 GB, 400088457216 bytes
+255 heads, 63 sectors/track, 48641 cylinders
+Units =3D cylinders of 16065 * 512 =3D 8225280 bytes
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/hdb1               1        2919    23446836   83  Linux
+
+Disk /dev/sda: 120.0 GB, 120033075200 bytes
+255 heads, 63 sectors/track, 14593 cylinders
+Units =3D cylinders of 16065 * 512 =3D 8225280 bytes
+
+   Device Boot      Start         End      Blocks   Id  System
+/dev/sda1   *           1        1044     8385898+  83  Linux
+/dev/sda2            1045        2088     8385930   82  Linux swap
+/dev/sda3            2089        3132     8385930   83  Linux
+/dev/sda4            3133       14593    92060482+   5  Extended
+/dev/sda5            3133        3654     4192933+  83  Linux
+/dev/sda6            3655        4176     4192933+  83  Linux
