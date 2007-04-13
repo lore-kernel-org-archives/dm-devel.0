@@ -1,15 +1,12 @@
-From: "Paul Tader" <ptader@linuxscope.com>
-Subject: Re: New disk under /dev/mapper control?? [RESOLVED]
-Date: Tue, 10 Apr 2007 10:01:52 -0500 (CDT)
-Message-ID: <43710.131.225.80.2.1176217312.squirrel@mail.linuxscope.com>
-References: <44864.131.225.80.2.1176154166.squirrel@mail.linuxscope.com>
-	<20070410052536.GA1464@percy.comedia.it>
+From: Harald Milz <hm@seneca.muc.de>
+Subject: SLES9 DM-Multipath strange behaviour
+Date: Fri, 13 Apr 2007 11:35:32 +0200
+Message-ID: <20070413093532.GA15359@seneca.muc.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070410052536.GA1464@percy.comedia.it>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,65 +19,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> On Mon, Apr 09, 2007 at 04:29:26PM -0500, Paul Tader wrote:
->>I've added a new, single IDE disk to a system.  I've run though fdisk,
-> It does not look "new" to me...
->
->>mkfs and then attempted a mount command but mount failed with "already
->>mounted or /mnt/ busy".  I see that now device-mapper is "claiming" thi=
-s
->>disk and newly created partitions and doesn't allow me to mount the
->>partitions by addressing the /dev/hdb1 device file. In other words,
->>/dev/mapper files are being automatically created only for this (new)
->>disk.  Is there a way to have device-mapper relinquish control of this
->>disk?
-> it is not device mapper, but dmraid
-> i believe your ide disk was 'touched' by a promise fakeraid controller.
-> your init scripts probably call dmraid during boot and finding a promis=
-e
-> fakeraid metadata on the disk dmraid activates it.
->
->>I've tried removing and clearing the devices with dmsetup, all to no
->> avail.
-> you could try removing the fakeraid metadata with dmraid -E.
-> if the promise fakeraid adapter is installed in your PC you might have
-> to disable fakeraid in the bios first.
->
+... or maybe it isn't that strange, and it's just a feature. 
 
-Thanks Luca, the dmraid command corrected things.
+Until recently, we using a single 200GB SAN volume with our heartbeat
+cluster. The SAN ist a (yuck) Datacor SANsymphony Windows-based crap, but
+so be it. Everything was working fine. Multipath just rocked. The volume is
+seen twice, and dm-0 was nicely created. 
 
-[root@server ~]# dmraid -r
-/dev/hdb: pdc, "pdc_bjajcgbifh", stripe, ok, 781422592 sectors, data@ 0
-[root@server ~]# dmraid -rE
-Do you really want to erase "pdc" ondisk metadata on /dev/hdb ? [y/n] :y
+Later, a second 50GB volume was added from the same SAN controller -
+everything worked OK. 
 
-...then I ran:
+After that, 3 TB sized volumes were added from a Nexsan controller. These
+were handled fine but the first 2 Datacor volumes were gone, i.e. no dm-X
+was created! Identical behaviour on both machines in the cluster. No
+changes whatsoever in any config file compared to the original setup
+(single volume). 
 
-[root@server ~]# dmsetup remove /dev/mapper/pdc_bjajcgbifh1
-[root@server ~]# dmsetup remove /dev/mapper/pdc_bjajcgbifh
+Analysis revealed that the /dev/sdX block devices were still present (sdb -
+sde, respectively) but all 4 devices had the same UUID! As soon as I
+removed one of the volumes, the remaining volume worked just fine. We even
+assigned the second volume to a different controller port, thus forcing a
+different WWN for the volume, but the UUID (scsi_id -gus <device>) remained
+the same. 
 
-and rebooted.  This time the /dev/mapper devices were not recreated and I
-was able to mount the partition using the standard device file, /dev/hdb1=
-.
+What can be wrong here? 
 
-Thanks again,
-Paul Tader
+I assume dm-multipath refuses to work with what looks like the same device
+(by UUID) but 2 different sizes. 
 
---
-www.linuxscope.com
+But why is the same UUID calculated (how?) for 2 apparently different
+volumes? 
 
-> L.
->
-> --
-> Luca Berra -- bluca@comedia.it
->         Communication Media & Services S.r.l.
->  /"\
->  \ /     ASCII RIBBON CAMPAIGN
->   X        AGAINST HTML MAIL
->  / \
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+
+Strangely, another HB cluster with 3 Datacor SAN volumes has no such
+problems. 
+
+
+Appreciate any help :-) TIA!
+
+
+-- 
+Fortune's Law of the Week (this week, from Kentucky):
+	No female shall appear in a bathing suit at any airport in this
+State unless she is escorted by two officers or unless she is armed
+with a club.  The provisions of this statute shall not apply to females
+weighing less than 90 pounds nor exceeding 200 pounds, nor shall it
+apply to female horses.
