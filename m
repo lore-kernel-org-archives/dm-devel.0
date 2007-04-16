@@ -1,31 +1,29 @@
-From: "Gaston, Jason D" <jason.d.gaston@intel.com>
-Subject: will dm-raid45 patch be accepted into base kernel?
-Date: Fri, 13 Apr 2007 10:41:02 -0700
-Message-ID: <39B20DF628532344BC7A2692CB6AEE07012DBB5D@orsmsx420.amr.corp.intel.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Herbert Xu <herbert.xu@redhat.com>
+Subject: [0/3] [DM] dm-crypt: Add async blkcipher support
+Date: Mon, 16 Apr 2007 20:58:23 +1000
+Message-ID: <20070416105823.GA11225@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-crypto-owner@vger.kernel.org
+To: Linux Crypto Mailing List <linux-crypto@vger.kernel.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Does anyone know when the dm-raid45 patch will be accepted into the base
-kernel?
+Hi:
 
-What needs to be done to get this accepted, even as experimental?
+These three patches convert dm-crypt from a synchronous blkcipher user
+to an asynchronous one.  Due to the design of of the async blkcipher
+interface, synchronous block ciphers are still supported by the same
+code.  In fact, the dm-crypt performance is slightly better compared
+to the previous synchronous interface.
 
-Thanks,
+With this change dm-crypt will support any asynchronous crypto drivers
+that are added to Linux.
 
-Jason Gaston
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
