@@ -1,9 +1,13 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools libcheckers/emc_clariion.c pat ...
-Date: 16 Apr 2007 18:44:50 -0000
-Message-ID: <20070416184450.10242.qmail@sourceware.org>
+From: "Penguin Lin" <penguin.taiwan@gmail.com>
+Subject: Some questions in dm-riad1.c
+Date: Tue, 17 Apr 2007 22:54:39 +0800
+Message-ID: <f535b83b0704170754t31abd62dn619cb1e796949927@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,57 +17,126 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-04-16 19:44:50
+Dear all :
 
-Modified files:
-	libcheckers    : emc_clariion.c 
-	path_priority/pp_emc: pp_emc.c 
+I have some(or lots, more precisely) questions when tracing the mirror code!
 
-Log message:
-	Applied patch from comment #5 of bz #231546. This allows compatablity with the
-	new EMC arrays.
+file : dm-raid.c
+function : mirror_map
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/emc_clariion.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.3&r2=1.3.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_emc/pp_emc.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1&r2=1.1.2.1
+1.===================================
 
---- multipath-tools/libcheckers/emc_clariion.c	2005/11/16 20:24:57	1.3
-+++ multipath-tools/libcheckers/emc_clariion.c	2007/04/16 18:44:50	1.3.2.1
-@@ -99,8 +99,12 @@
- 
- 	if ( /* Effective initiator type */
- 	    	sense_buffer[27] != 0x03
--		/* Failover mode should be set to 1 */        
--		|| (sense_buffer[28] & 0x07) != 0x04
-+		/*
-+		 * Failover mode should be set to 1 (PNR failover mode)
-+		 * or 4 (ALUA failover mode).
-+		 */
-+		|| (((sense_buffer[28] & 0x07) != 0x04) &&
-+		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
- 		MSG("emc_clariion_checker: Path not correctly configured for failover");
---- multipath-tools/path_priority/pp_emc/pp_emc.c	2005/04/19 13:26:49	1.1
-+++ multipath-tools/path_priority/pp_emc/pp_emc.c	2007/04/16 18:44:50	1.1.2.1
-@@ -60,8 +60,12 @@
- 	
- 	if ( /* Effective initiator type */
- 	    	sense_buffer[27] != 0x03
--		/* Failover mode should be set to 1 */        
--		|| (sense_buffer[28] & 0x07) != 0x04
-+		/*
-+		 * Failover mode should be set to 1 (PNR failover mode)
-+		 * or 4 (ALUA failover mode).
-+		 */
-+		|| (((sense_buffer[28] & 0x07) != 0x04) &&
-+		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
- 		fprintf(stderr, "Path not correctly configured for failover");
+Dose there any better solution to test the performance of the device-mapper core
+and all target type module ?
+
+====================================
+
+
+2. ===================================
+
+First is the kcopyd necessary in dm-mirror (in previous mail)?
+Because dm-mirror will submit each writing bio to all mirror block devices.
+It seems kcopyd does not have any works to do in mirror_map().
+
+More precisely :
+
+In log ctr, all region will be logged as non-sync(core-log) or
+previous setting(disk-log).
+When starting mirror, mirror daemon will recovery these non-sync
+region by invoking kcopyd daemon
+accroding to the dirty log object. But after these regions are all in
+synchronous.... kcopyd has nothing to do... Is that right ?
+
+Here are some problems that confuses me for a log time...
+
+1. The only work of kcopyd is only available in configure time  (after
+log->ctr, since all in-sync bits are set to 0, whatever core-log or
+disk-log) ?
+    On the other hand, Does kcopyd work nothing after the mirror
+configure time ?
+1-1. We have to re-sync all regions after re-booting if we use core-log ?
+1-2. Even for disk-log...... kcopyd wroks only in configure time
+(first time to construct a disk log) ?
+
+2. There seems a lack for dm-mirror interface (dm-raid1.c)
+    to set/clear the sync state for a region.
+
+Under what other conditions the kcopyd will work ?
+
+Whould we implement as following :
+s1. write bio to default mirror device.
+s2. set the corresponding region to non-sync state
+s3. invoke kcopyd to recovery this region to all mirror devices (set
+the region in recovering.)
+s4. kcopyd callback function set the region in-sync.
+
+Is this better ? Any issue (like read/write race in default mirror device) ?
+In my option, it would make the use of kcopyd more, and determine the
+region state
+(in-sync, non-sync) more precisely...
+But any racing condition occurs (read/write race...etc)?
+
+====================================
+
+
+In mirror_map function
+
+3. =====================
+        r = ms->rh.log->type->in_sync(ms->rh.log,
+                                      bio_to_region(&ms->rh, bio), 0);
+
+        /*
+          *   *********** HERE ***********
+          *   When does the in_sync() return  < 1  ?
+          *   It is strange here since in_sync(core_in_sync) return
+          *   either 0(non-sync) or 1(in-sync).
+          */
+        if (r < 0 && r != -EWOULDBLOCK)
+                return r;
+
+        /* Simply return -EIO ? */
+        if (r == -EWOULDBLOCK)  /* FIXME: ugly */
+                r = DM_MAPIO_SUBMITTED;
+
+        /*
+         * We don't want to fast track a recovery just for a read
+         * ahead.  So we just let it silently fail.
+         * FIXME: get rid of this.
+         */
+        if (!r && rw == READA)
+                return -EIO;
+
+4.  =============================================
+
+        /*
+          *    *********** HERE ***********
+          *    What followed seems duplicate in do_read().
+          *    Why not implemented as follows as simple:
+          *
+          *    queue_bio(ms, bio, rw);
+           *    return DM_MAPIO_SUBMITTED;
+          *
+          *    and let daemon to process reading ? Any performance issue ?
+          */
+        if (!r) {
+                /* Pass this io over to the daemon */
+                queue_bio(ms, bio, rw);
+                return DM_MAPIO_SUBMITTED;
+        }
+
+        m = choose_mirror(ms, bio->bi_sector);
+        if (!m)
+                return -EIO;
+
+        map_bio(ms, m, bio);
+        return DM_MAPIO_REMAPPED;
+
+===================================================
+
+
+regard.
+
+By Penguin, Kaohsiung, Taiwan.
