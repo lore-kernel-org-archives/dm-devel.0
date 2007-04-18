@@ -1,14 +1,14 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] libdevmapper: (7/6) Add
-	dm_report_get_report_types()
-Date: Wed, 18 Apr 2007 15:23:00 -0400
-Message-ID: <46267014.9050100@ce.jp.nec.com>
-References: <46264A57.1020800@ce.jp.nec.com>
+From: Dan Smith <danms@us.ibm.com>
+Subject: Re: DmUserspace and the device mapper.
+Date: Wed, 18 Apr 2007 16:13:32 -0700
+Message-ID: <m3wt09mg2r.fsf@guaranine.beaverton.ibm.com>
+References: <31436f4a0703211016y46f1af17i15d0513f1dde98c4@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------080909040106000109040603"
+Content-Type: multipart/mixed; boundary="===============1908476046=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46264A57.1020800@ce.jp.nec.com>
+In-Reply-To: <31436f4a0703211016y46f1af17i15d0513f1dde98c4@mail.gmail.com>
+	(David Shwatrz's message of "Wed, 21 Mar 2007 19:16:49 +0200")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,99 +18,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------080909040106000109040603
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+--===============1908476046==
+Content-Type: multipart/signed; boundary="=-=-=";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
 
-Hi,
+--=-=-=
+Content-Transfer-Encoding: quoted-printable
 
-This patch was missing from the last post...
+DS> My quesitons is: it seems that this is a good tool for utilization
+DS> of CoW system images and also for native access to popular disk
+DS> formats (like QEMU qcow and VMware vmdk).
 
-Since rh->report_types can be updated after dm_report_init(),
-we need an interface to obtain it later.
+That was the original idea (among other uses), although I have not
+implemented vmdk, and qcow support is suffering from a bad case of bit
+rot right now.
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation of America
+DS> My question is: are there intentions to integrate the DmUserspace in
+DS> the device mapper ? are there reasons for not doing so ?
 
---------------080909040106000109040603
-Content-Type: text/x-patch;
- name="libdm-report-get-types.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="libdm-report-get-types.patch"
+That's a good question.  It's /my/ intent to get it merged upstream :)
 
-Add dm_report_get_report_types() to obtain updated report_types field
-after dm_report_set_filter() call.
+=2D-=20
+Dan Smith
+IBM Linux Technology Center
+Open Hypervisor Team
+email: danms@us.ibm.com
 
----
- dmsetup/dmsetup.c     |    1 +
- lib/.exported_symbols |    1 +
- lib/libdevmapper.h    |    1 +
- lib/libdm-report.c    |    5 +++++
- 4 files changed, 8 insertions(+)
+--=-=-=
+Content-Type: application/pgp-signature
 
-Index: device-mapper.work/lib/.exported_symbols
-===================================================================
---- device-mapper.work.orig/lib/.exported_symbols
-+++ device-mapper.work/lib/.exported_symbols
-@@ -128,5 +128,6 @@ dm_report_field_uint32
- dm_report_field_uint64
- dm_report_field_set_value
- dm_report_set_filter
-+dm_report_get_report_types
- dm_regex_create
- dm_regex_match
-Index: device-mapper.work/lib/libdm-report.c
-===================================================================
---- device-mapper.work.orig/lib/libdm-report.c
-+++ device-mapper.work/lib/libdm-report.c
-@@ -88,6 +88,11 @@ struct row {
- 	struct dm_report_field *(*sort_fields)[]; /* Fields in sort order */
- };
- 
-+uint32_t dm_report_get_report_types(struct dm_report *rh)
-+{
-+	return rh->report_types;
-+}
-+
- static const struct dm_report_object_type *_find_type(struct dm_report *rh,
- 						      uint32_t report_type)
- {
-Index: device-mapper.work/lib/libdevmapper.h
-===================================================================
---- device-mapper.work.orig/lib/libdevmapper.h
-+++ device-mapper.work/lib/libdevmapper.h
-@@ -687,6 +687,7 @@ struct dm_report *dm_report_init(uint32_
- int dm_report_object(struct dm_report *rh, void *object);
- int dm_report_output(struct dm_report *rh);
- void dm_report_free(struct dm_report *rh);
-+uint32_t dm_report_get_report_types(struct dm_report *rh);
- 
- /* Set filter */
- int dm_report_set_filter(struct dm_report *rh,
-Index: device-mapper.work/dmsetup/dmsetup.c
-===================================================================
---- device-mapper.work.orig/dmsetup/dmsetup.c
-+++ device-mapper.work/dmsetup/dmsetup.c
-@@ -1924,6 +1924,7 @@ static int _report_init(struct command *
- 		goto out;
- 	}
- 
-+	report_type = dm_report_get_report_types(_report);
- 	r = 1;
- 
- out:
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.5 (GNU/Linux)
 
---------------080909040106000109040603
+iD8DBQFGJqYewtEf7b4GJVQRAjNOAJ93boBA2Ox+WywEugqUHt5IUA5BwgCdGVNs
+6ce0Ihpi6ueVh17UPn0icj8=
+=6E5p
+-----END PGP SIGNATURE-----
+--=-=-=--
+
+
+--===============1908476046==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------080909040106000109040603--
+--===============1908476046==--
