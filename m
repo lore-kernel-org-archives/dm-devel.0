@@ -1,15 +1,14 @@
-From: Olaf Kirch <olaf.kirch@oracle.com>
-Subject: [PATCH 2/3] Do not access the bio after
-	generic_make_request
-Date: Tue, 20 Mar 2007 20:55:03 +0100
-Message-ID: <200703202055.03613.olaf.kirch@oracle.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] libdevmapper: (7/6) Add
+	dm_report_get_report_types()
+Date: Wed, 18 Apr 2007 15:23:00 -0400
+Message-ID: <46267014.9050100@ce.jp.nec.com>
+References: <46264A57.1020800@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="------------080909040106000109040603"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <46264A57.1020800@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +18,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Do not access the bio after generic_make_request
+This is a multi-part message in MIME format.
+--------------080909040106000109040603
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 
-We should never access a bio after generic_make_request - there's
-no guarantee it still exists.
+Hi,
 
-Signed-off-by: olaf.kirch@oracle.com
----
- drivers/md/dm-crypt.c |    5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+This patch was missing from the last post...
 
-Index: linux-2.6.20/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.20.orig/drivers/md/dm-crypt.c
-+++ linux-2.6.20/drivers/md/dm-crypt.c
-@@ -655,9 +655,12 @@ static void process_write(struct crypt_i
- 
- 		generic_make_request(clone);
- 
-+		/* Do not reference clone after this - it
-+		 * may be gone already. */
-+
- 		/* out of memory -> run queues */
- 		if (remaining)
--			congestion_wait(bio_data_dir(clone), HZ/100);
-+			congestion_wait(WRITE, HZ/100);
- 	}
- }
- 
+Since rh->report_types can be updated after dm_report_init(),
+we need an interface to obtain it later.
 
+Thanks,
 -- 
-Olaf Kirch  |  --- o --- Nous sommes du soleil we love when we play
-okir@lst.de |    / | \   sol.dhoop.naytheet.ah kin.ir.samse.qurax
+Jun'ichi Nomura, NEC Corporation of America
+
+--------------080909040106000109040603
+Content-Type: text/x-patch;
+ name="libdm-report-get-types.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="libdm-report-get-types.patch"
+
+Add dm_report_get_report_types() to obtain updated report_types field
+after dm_report_set_filter() call.
+
+---
+ dmsetup/dmsetup.c     |    1 +
+ lib/.exported_symbols |    1 +
+ lib/libdevmapper.h    |    1 +
+ lib/libdm-report.c    |    5 +++++
+ 4 files changed, 8 insertions(+)
+
+Index: device-mapper.work/lib/.exported_symbols
+===================================================================
+--- device-mapper.work.orig/lib/.exported_symbols
++++ device-mapper.work/lib/.exported_symbols
+@@ -128,5 +128,6 @@ dm_report_field_uint32
+ dm_report_field_uint64
+ dm_report_field_set_value
+ dm_report_set_filter
++dm_report_get_report_types
+ dm_regex_create
+ dm_regex_match
+Index: device-mapper.work/lib/libdm-report.c
+===================================================================
+--- device-mapper.work.orig/lib/libdm-report.c
++++ device-mapper.work/lib/libdm-report.c
+@@ -88,6 +88,11 @@ struct row {
+ 	struct dm_report_field *(*sort_fields)[]; /* Fields in sort order */
+ };
+ 
++uint32_t dm_report_get_report_types(struct dm_report *rh)
++{
++	return rh->report_types;
++}
++
+ static const struct dm_report_object_type *_find_type(struct dm_report *rh,
+ 						      uint32_t report_type)
+ {
+Index: device-mapper.work/lib/libdevmapper.h
+===================================================================
+--- device-mapper.work.orig/lib/libdevmapper.h
++++ device-mapper.work/lib/libdevmapper.h
+@@ -687,6 +687,7 @@ struct dm_report *dm_report_init(uint32_
+ int dm_report_object(struct dm_report *rh, void *object);
+ int dm_report_output(struct dm_report *rh);
+ void dm_report_free(struct dm_report *rh);
++uint32_t dm_report_get_report_types(struct dm_report *rh);
+ 
+ /* Set filter */
+ int dm_report_set_filter(struct dm_report *rh,
+Index: device-mapper.work/dmsetup/dmsetup.c
+===================================================================
+--- device-mapper.work.orig/dmsetup/dmsetup.c
++++ device-mapper.work/dmsetup/dmsetup.c
+@@ -1924,6 +1924,7 @@ static int _report_init(struct command *
+ 		goto out;
+ 	}
+ 
++	report_type = dm_report_get_report_types(_report);
+ 	r = 1;
+ 
+ out:
+
+--------------080909040106000109040603
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------080909040106000109040603--
