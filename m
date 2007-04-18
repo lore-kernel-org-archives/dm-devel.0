@@ -1,11 +1,12 @@
 From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] libdevmapper: (3/6) Move lib/regex from LVM2
-Date: Wed, 18 Apr 2007 12:47:34 -0400
-Message-ID: <46264BA6.3050104@ce.jp.nec.com>
+Subject: [PATCH] libdevmapper: (4/6) Add filtering feature to
+	dm_report
+Date: Wed, 18 Apr 2007 12:47:40 -0400
+Message-ID: <46264BAC.3000504@ce.jp.nec.com>
 References: <46264A57.1020800@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------080309060207020107040404"
+Content-Type: multipart/mixed; boundary="------------070806050706080103000409"
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <46264A57.1020800@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -21,1042 +22,960 @@ To: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------080309060207020107040404
+--------------070806050706080103000409
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 
 Hi,
 
-This patch just moves lib/regex from LVM2 as a preparation for
-the filtering feature of dm_report.
+This patch adds a filtering feature to dm_report.
 
-Now, the following functions are exported:
-  - dm_regex_create()
-  - dm_regex_match()
+  - Add dm_report_set_filter() API.
+    By calling this, dm_report_object() omits rows which doesn't
+    match the condition specified by the filter.
 
-Corresponding patch to LVM2 will be posted to lvm-devel.
+  - Fitlers can be composed with the following components:
+      * Simple comparison of field value
+          '==', '!=', '>', '>=', '<', '<='
+          Strings should be quoted by either ' or ".
+          Only decimal, non-negative integers are currently allowed.
+      * Regular expression
+          '=~', '!~'
+          Regular expression can be quoted by '/', '|', '#', or any
+          other characters.
+      * Logical combinations of the expressions
+          'and', 'or', '!', '(', ')'
 
 Thanks,
 -- 
 Jun'ichi Nomura, NEC Corporation of America
 
---------------080309060207020107040404
+--------------070806050706080103000409
 Content-Type: text/x-patch;
- name="libdm-regex.patch"
+ name="libdm-report-add-filter.patch"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="libdm-regex.patch"
+ filename="libdm-report-add-filter.patch"
 
-Moved lib/regex from LVM2
+Add filtering feature to dm_report.
 
-Exported functions and a structure are renamed:
-  - matcher_create() -> dm_regex_create()
-  - matcher_run()    -> dm_regex_match()
-  - struct matcher   -> struct dm_regex
-
+Filter is set by dm_report_set_filters()
 ---
- lib/.exported_symbols |    2 
- lib/Makefile.in       |    3 
- lib/libdevmapper.h    |    7 
- lib/regex/matcher.c   |  366 ++++++++++++++++++++++++++++++++++++++++++++++++++
- lib/regex/parse_rx.c  |  360 +++++++++++++++++++++++++++++++++++++++++++++++++
- lib/regex/parse_rx.h  |   52 +++++++
- lib/regex/ttree.c     |  117 +++++++++++++++
- lib/regex/ttree.h     |   26 +++
- 8 files changed, 933 insertions(+)
+ lib/.exported_symbols |    1 
+ lib/libdevmapper.h    |    4 
+ lib/libdm-report.c    |  783 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 781 insertions(+), 7 deletions(-)
 
 Index: device-mapper.work/lib/.exported_symbols
 ===================================================================
 --- device-mapper.work.orig/lib/.exported_symbols
 +++ device-mapper.work/lib/.exported_symbols
-@@ -127,3 +127,5 @@ dm_report_field_int32
+@@ -127,5 +127,6 @@ dm_report_field_int32
  dm_report_field_uint32
  dm_report_field_uint64
  dm_report_field_set_value
-+dm_regex_create
-+dm_regex_match
++dm_report_set_filter
+ dm_regex_create
+ dm_regex_match
 Index: device-mapper.work/lib/libdevmapper.h
 ===================================================================
 --- device-mapper.work.orig/lib/libdevmapper.h
 +++ device-mapper.work/lib/libdevmapper.h
-@@ -711,4 +711,11 @@ int dm_report_field_uint64(struct dm_rep
- void dm_report_field_set_value(struct dm_report_field *field, const void *value,
- 			       const void *sortvalue);
+@@ -688,6 +688,10 @@ int dm_report_object(struct dm_report *r
+ int dm_report_output(struct dm_report *rh);
+ void dm_report_free(struct dm_report *rh);
+ 
++/* Set filter */
++int dm_report_set_filter(struct dm_report *rh,
++			 const char *filter, uint32_t flags);
++
+ /*
+  * Report functions are provided for simple data types.
+  * They take care of allocating copies of the data.
+Index: device-mapper.work/lib/libdm-report.c
+===================================================================
+--- device-mapper.work.orig/lib/libdm-report.c
++++ device-mapper.work/lib/libdm-report.c
+@@ -1,6 +1,7 @@
+ /*
+  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
+- * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
++ * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
++ * Copyright (C) 2007 NEC Corporation
+  *
+  * This file is part of device-mapper userspace tools.
+  * The code is based on LVM2 report function.
+@@ -14,6 +15,7 @@
+  * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
++#include <ctype.h>
+ #include "libdevmapper.h"
+ #include "list.h"
+ #include "log.h"
+@@ -24,6 +26,7 @@
+ #define RH_SORT_REQUIRED	0x00000100
+ #define RH_HEADINGS_PRINTED	0x00000200
+ 
++struct filter_node;
+ struct dm_report {
+ 	struct dm_pool *mem;
+ 
+@@ -46,6 +49,8 @@ struct dm_report {
+ 
+ 	/* To store caller private data */
+ 	void *private;
++
++	struct filter_node *filter_root;
+ };
+ 
+ /*
+@@ -474,6 +479,653 @@ static int _parse_keys(struct dm_report 
+ 	return 1;
+ }
  
 +/*
-+ * dm_regex
++ * Filter tokens
 + */
-+struct dm_regex;
-+struct dm_regex *dm_regex_create(struct dm_pool *mem, const char **patterns,
-+				 unsigned num);
-+int dm_regex_match(struct dm_regex *regex, const char *s);
- #endif				/* LIB_DEVICE_MAPPER_H */
-Index: device-mapper.work/lib/regex/matcher.c
-===================================================================
---- /dev/null
-+++ device-mapper.work/lib/regex/matcher.c
-@@ -0,0 +1,366 @@
++
 +/*
-+ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-+ * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-+ *
-+ * This file is part of the device-mapper userspace tools.
-+ *
-+ * This copyrighted material is made available to anyone wishing to use,
-+ * modify, copy, or redistribute it subject to the terms and conditions
-+ * of the GNU General Public License v.2.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software Foundation,
-+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
++ * Comparison and logical operation tokens
++ *   OP_CMP := '==' | '!=' | '>' | '>=' | '<' | '<=' | '=~' | '!~'
++ *   OP_LOG := '!' | '(' | ')' | ',' | 'and' | 'or' | '&&' | '||'
 + */
 +
-+#include "lib.h"
-+#include "parse_rx.h"
-+#include "ttree.h"
-+
-+#define assert(x) do { if (!(x)) log_error("assertion failed"); } while(0)
-+
-+struct dfa_state {
-+	int final;
-+	struct dfa_state *lookup[256];
++struct op_def {
++	const char *string;
++	uint32_t flags;
++	const char *desc;
 +};
 +
-+struct state_queue {
-+	struct dfa_state *s;
-+	dm_bitset_t bits;
-+	struct state_queue *next;
-+};
-+
-+struct dm_regex {		/* Instance variables for the lexer */
-+	struct dfa_state *start;
-+	unsigned num_nodes;
-+	int nodes_entered;
-+	struct rx_node **nodes;
-+	struct dm_pool *scratch, *mem;
-+};
-+
-+#define TARGET_TRANS '\0'
-+
-+static int _count_nodes(struct rx_node *rx)
++static const char * _skip_space(const char *s)
 +{
-+	int r = 1;
-+
-+	if (rx->left)
-+		r += _count_nodes(rx->left);
-+
-+	if (rx->right)
-+		r += _count_nodes(rx->right);
-+
-+	return r;
++	while (*s && isspace(*s))
++		s++;
++	return s;
 +}
 +
-+static void _fill_table(struct dm_regex *m, struct rx_node *rx)
++static const char * _token_match(const char *s, const char *token)
 +{
-+	assert((rx->type != OR) || (rx->left && rx->right));
++	s = _skip_space(s);
 +
-+	if (rx->left)
-+		_fill_table(m, rx->left);
++	if (!strncmp(s, token, strlen(token)))
++		return s + strlen(token);
 +
-+	if (rx->right)
-+		_fill_table(m, rx->right);
-+
-+	m->nodes[m->nodes_entered++] = rx;
-+}
-+
-+static void _create_bitsets(struct dm_regex *m)
-+{
-+	int i;
-+
-+	for (i = 0; i < m->num_nodes; i++) {
-+		struct rx_node *n = m->nodes[i];
-+		n->firstpos = dm_bitset_create(m->scratch, m->num_nodes);
-+		n->lastpos = dm_bitset_create(m->scratch, m->num_nodes);
-+		n->followpos = dm_bitset_create(m->scratch, m->num_nodes);
-+	}
-+}
-+
-+static void _calc_functions(struct dm_regex *m)
-+{
-+	int i, j, final = 1;
-+	struct rx_node *rx, *c1, *c2;
-+
-+	for (i = 0; i < m->num_nodes; i++) {
-+		rx = m->nodes[i];
-+		c1 = rx->left;
-+		c2 = rx->right;
-+
-+		if (dm_bit(rx->charset, TARGET_TRANS))
-+			rx->final = final++;
-+
-+		switch (rx->type) {
-+		case CAT:
-+			if (c1->nullable)
-+				dm_bit_union(rx->firstpos,
-+					  c1->firstpos, c2->firstpos);
-+			else
-+				dm_bit_copy(rx->firstpos, c1->firstpos);
-+
-+			if (c2->nullable)
-+				dm_bit_union(rx->lastpos,
-+					  c1->lastpos, c2->lastpos);
-+			else
-+				dm_bit_copy(rx->lastpos, c2->lastpos);
-+
-+			rx->nullable = c1->nullable && c2->nullable;
-+			break;
-+
-+		case PLUS:
-+			dm_bit_copy(rx->firstpos, c1->firstpos);
-+			dm_bit_copy(rx->lastpos, c1->lastpos);
-+			rx->nullable = c1->nullable;
-+			break;
-+
-+		case OR:
-+			dm_bit_union(rx->firstpos, c1->firstpos, c2->firstpos);
-+			dm_bit_union(rx->lastpos, c1->lastpos, c2->lastpos);
-+			rx->nullable = c1->nullable || c2->nullable;
-+			break;
-+
-+		case QUEST:
-+		case STAR:
-+			dm_bit_copy(rx->firstpos, c1->firstpos);
-+			dm_bit_copy(rx->lastpos, c1->lastpos);
-+			rx->nullable = 1;
-+			break;
-+
-+		case CHARSET:
-+			dm_bit_set(rx->firstpos, i);
-+			dm_bit_set(rx->lastpos, i);
-+			rx->nullable = 0;
-+			break;
-+
-+		default:
-+			log_error("Internal error: Unknown calc node type");
-+		}
-+
-+		/*
-+		 * followpos has it's own switch
-+		 * because PLUS and STAR do the
-+		 * same thing.
-+		 */
-+		switch (rx->type) {
-+		case CAT:
-+			for (j = 0; j < m->num_nodes; j++) {
-+				if (dm_bit(c1->lastpos, j)) {
-+					struct rx_node *n = m->nodes[j];
-+					dm_bit_union(n->followpos,
-+						  n->followpos, c2->firstpos);
-+				}
-+			}
-+			break;
-+
-+		case PLUS:
-+		case STAR:
-+			for (j = 0; j < m->num_nodes; j++) {
-+				if (dm_bit(rx->lastpos, j)) {
-+					struct rx_node *n = m->nodes[j];
-+					dm_bit_union(n->followpos,
-+						  n->followpos, rx->firstpos);
-+				}
-+			}
-+			break;
-+		}
-+	}
-+}
-+
-+static struct dfa_state *_create_dfa_state(struct dm_pool *mem)
-+{
-+	return dm_pool_zalloc(mem, sizeof(struct dfa_state));
-+}
-+
-+static struct state_queue *_create_state_queue(struct dm_pool *mem,
-+					       struct dfa_state *dfa,
-+					       dm_bitset_t bits)
-+{
-+	struct state_queue *r = dm_pool_alloc(mem, sizeof(*r));
-+
-+	if (!r) {
-+		stack;
-+		return NULL;
-+	}
-+
-+	r->s = dfa;
-+	r->bits = dm_bitset_create(mem, bits[0]);	/* first element is the size */
-+	dm_bit_copy(r->bits, bits);
-+	r->next = 0;
-+	return r;
-+}
-+
-+static int _calc_states(struct dm_regex *m, struct rx_node *rx)
-+{
-+	unsigned iwidth = (m->num_nodes / DM_BITS_PER_INT) + 1;
-+	struct ttree *tt = ttree_create(m->scratch, iwidth);
-+	struct state_queue *h, *t, *tmp;
-+	struct dfa_state *dfa, *ldfa;
-+	int i, a, set_bits = 0, count = 0;
-+	dm_bitset_t bs, dfa_bits;
-+
-+	if (!tt)
-+		return_0;
-+
-+	if (!(bs = dm_bitset_create(m->scratch, m->num_nodes)))
-+		return_0;
-+
-+	/* create first state */
-+	dfa = _create_dfa_state(m->mem);
-+	m->start = dfa;
-+	ttree_insert(tt, rx->firstpos + 1, dfa);
-+
-+	/* prime the queue */
-+	h = t = _create_state_queue(m->scratch, dfa, rx->firstpos);
-+	while (h) {
-+		/* pop state off front of the queue */
-+		dfa = h->s;
-+		dfa_bits = h->bits;
-+		h = h->next;
-+
-+		/* iterate through all the inputs for this state */
-+		dm_bit_clear_all(bs);
-+		for (a = 0; a < 256; a++) {
-+			/* iterate through all the states in firstpos */
-+			for (i = dm_bit_get_first(dfa_bits);
-+			     i >= 0; i = dm_bit_get_next(dfa_bits, i)) {
-+				if (dm_bit(m->nodes[i]->charset, a)) {
-+					if (a == TARGET_TRANS)
-+						dfa->final = m->nodes[i]->final;
-+
-+					dm_bit_union(bs, bs,
-+						  m->nodes[i]->followpos);
-+					set_bits = 1;
-+				}
-+			}
-+
-+			if (set_bits) {
-+				ldfa = ttree_lookup(tt, bs + 1);
-+				if (!ldfa) {
-+					/* push */
-+					ldfa = _create_dfa_state(m->mem);
-+					ttree_insert(tt, bs + 1, ldfa);
-+					tmp =
-+					    _create_state_queue(m->scratch,
-+								ldfa, bs);
-+					if (!h)
-+						h = t = tmp;
-+					else {
-+						t->next = tmp;
-+						t = tmp;
-+					}
-+
-+					count++;
-+				}
-+
-+				dfa->lookup[a] = ldfa;
-+				set_bits = 0;
-+				dm_bit_clear_all(bs);
-+			}
-+		}
-+	}
-+
-+	log_debug("Matcher built with %d dfa states", count);
-+	return 1;
-+}
-+
-+struct dm_regex *dm_regex_create(struct dm_pool *mem, const char **patterns,
-+				unsigned num)
-+{
-+	char *all, *ptr;
-+	int i;
-+	size_t len = 0;
-+	struct rx_node *rx;
-+	struct dm_pool *scratch = dm_pool_create("regex matcher", 10 * 1024);
-+	struct dm_regex *m;
-+
-+	if (!scratch) {
-+		stack;
-+		return NULL;
-+	}
-+
-+	if (!(m = dm_pool_alloc(mem, sizeof(*m)))) {
-+		stack;
-+		dm_pool_destroy(scratch);
-+		return NULL;
-+	}
-+
-+	memset(m, 0, sizeof(*m));
-+
-+	/* join the regexps together, delimiting with zero */
-+	for (i = 0; i < num; i++)
-+		len += strlen(patterns[i]) + 8;
-+
-+	ptr = all = dm_pool_alloc(scratch, len + 1);
-+
-+	if (!all) {
-+		stack;
-+		goto bad;
-+	}
-+
-+	for (i = 0; i < num; i++) {
-+		ptr += sprintf(ptr, "(.*(%s)%c)", patterns[i], TARGET_TRANS);
-+		if (i < (num - 1))
-+			*ptr++ = '|';
-+	}
-+
-+	/* parse this expression */
-+	if (!(rx = rx_parse_tok(scratch, all, ptr))) {
-+		log_error("Couldn't parse regex");
-+		goto bad;
-+	}
-+
-+	m->mem = mem;
-+	m->scratch = scratch;
-+	m->num_nodes = _count_nodes(rx);
-+	m->nodes = dm_pool_alloc(scratch, sizeof(*m->nodes) * m->num_nodes);
-+
-+	if (!m->nodes) {
-+		stack;
-+		goto bad;
-+	}
-+
-+	_fill_table(m, rx);
-+	_create_bitsets(m);
-+	_calc_functions(m);
-+	_calc_states(m, rx);
-+	dm_pool_destroy(scratch);
-+	m->scratch = NULL;
-+
-+	return m;
-+
-+      bad:
-+	dm_pool_destroy(scratch);
-+	dm_pool_destroy(mem);
 +	return NULL;
 +}
 +
-+static struct dfa_state *_step_matcher(int c, struct dfa_state *cs, int *r)
++static int _tok_op(struct op_def *t, const char *s, const char **end,
++		   uint32_t expect)
 +{
-+	if (!(cs = cs->lookup[(unsigned char) c]))
-+		return NULL;
++	const char *next;
 +
-+	if (cs->final && (cs->final > *r))
-+		*r = cs->final;
++	for (; t->string; t++) {
++ 		if (expect && !(t->flags & expect))
++			continue;
 +
-+	return cs;
++		if ((next = _token_match(s, t->string))) {
++			*end = next;
++			return t->flags;
++		}
++	}
++
++	*end = s;
++	return 0;
 +}
 +
-+int dm_regex_match(struct dm_regex *m, const char *b)
-+{
-+	struct dfa_state *cs = m->start;
-+	int r = 0;
++/* OP_CMP definition and matcher function */
 +
-+	if (!(cs = _step_matcher(HAT_CHAR, cs, &r)))
-+		goto out;
++#define FLD_CMP_MASK	0x000FF000
++#define FLD_CMP_EQUAL	0x00001000
++#define FLD_CMP_NOT	0x00002000
++#define FLD_CMP_GT	0x00004000
++#define FLD_CMP_LT	0x00008000
++#define FLD_CMP_REGEX	0x00010000
 +
-+	for (; *b; b++)
-+		if (!(cs = _step_matcher(*b, cs, &r)))
-+			goto out;
-+
-+	_step_matcher(DOLLAR_CHAR, cs, &r);
-+
-+      out:
-+	/* subtract 1 to get back to zero index */
-+	return r - 1;
-+}
-Index: device-mapper.work/lib/regex/parse_rx.c
-===================================================================
---- /dev/null
-+++ device-mapper.work/lib/regex/parse_rx.c
-@@ -0,0 +1,360 @@
-+/*
-+ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-+ * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-+ *
-+ * This file is part of the device-mapper userspace tools.
-+ *
-+ * This copyrighted material is made available to anyone wishing to use,
-+ * modify, copy, or redistribute it subject to the terms and conditions
-+ * of the GNU General Public License v.2.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software Foundation,
-+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+ */
-+
-+#include "lib.h"
-+#include "parse_rx.h"
-+
-+struct parse_sp {		/* scratch pad for the parsing process */
-+	struct dm_pool *mem;
-+	int type;		/* token type, 0 indicates a charset */
-+	dm_bitset_t charset;	/* The current charset */
-+	const char *cursor;	/* where we are in the regex */
-+	const char *rx_end;	/* 1pte for the expression being parsed */
++/* _tok_op() tries to match from the first of this list.
++ * So longer one should come first.
++ * e.g. ">=" should appear earlier in the list than ">". */
++static struct op_def _op_cmp[] = {
++	{ "==", FLD_CMP_EQUAL, "Equal to" },
++	{ "!=", FLD_CMP_NOT|FLD_CMP_EQUAL, "Not equal" },
++	{ ">=", FLD_CMP_GT|FLD_CMP_EQUAL|DM_REPORT_FIELD_TYPE_NUMBER,
++	  "Greater than or equal to" },
++	{ ">", FLD_CMP_GT|DM_REPORT_FIELD_TYPE_NUMBER, "Greater than" },
++	{ "<=", FLD_CMP_LT|FLD_CMP_EQUAL|DM_REPORT_FIELD_TYPE_NUMBER,
++	  "Lesser than or equal to" },
++	{ "<", FLD_CMP_LT|DM_REPORT_FIELD_TYPE_NUMBER, "Lesser than" },
++	{ "=~", FLD_CMP_REGEX|DM_REPORT_FIELD_TYPE_STRING,
++	  "Matching regular expression" },
++	{ "!~", FLD_CMP_REGEX|FLD_CMP_NOT|DM_REPORT_FIELD_TYPE_STRING,
++	  "Not matching regular expression" },
++	{ NULL, 0, NULL }
 +};
 +
-+static struct rx_node *_or_term(struct parse_sp *ps);
-+
-+static void _single_char(struct parse_sp *ps, unsigned int c, const char *ptr)
++static uint32_t _tok_op_cmp(const char *s, const char **end)
 +{
-+	ps->type = 0;
-+	ps->cursor = ptr + 1;
-+	dm_bit_clear_all(ps->charset);
-+	dm_bit_set(ps->charset, c);
++	return _tok_op(_op_cmp, s, end, 0);
++}
++
++/* OP_LOG definitions and matcher functions */
++
++#define FILTER_TYPE_MASK	0x00FF
++#define FILTER_COND	0x0001
++#define FILTER_AND	0x0002
++#define FILTER_OR	0x0004
++#define FILTER_MODIFIER_MASK	0x0F00
++#define FILTER_NOT	0x0100
++#define FILTER_DELIMITER_MASK	0xF000
++#define FILTER_PS	0x1000
++#define FILTER_PE	0x2000
++
++static struct op_def _op_log[] = {
++	{ "&&",  FILTER_AND, NULL },
++	{ "and", FILTER_AND, NULL },
++	{ ",",   FILTER_AND, NULL },
++	{ "||",  FILTER_OR,  NULL },
++	{ "or",  FILTER_OR,  NULL },
++	{ "!",   FILTER_NOT, NULL },
++	{ "(",   FILTER_PS,  NULL },
++	{ ")",   FILTER_PE,  NULL },
++	{ NULL,  0, NULL},
++};
++
++static int _tok_op_log(const char *s, const char **end, uint32_t expect)
++{
++	return _tok_op(_op_log, s, end, expect);
 +}
 +
 +/*
-+ * Get the next token from the regular expression.
-+ * Returns: 1 success, 0 end of input, -1 error.
++ * Other tokens (FIELD, VALUE, STRING, NUMBER, REGEX)
++ *     FIELD := <strings of alphabet, number and '_'>
++ *     VALUE := NUMBER | STRING
++ *     REGEX := <strings quoted by any character>
++ *     NUMBER := <strings of [0-9]> (because sort_value is unsigned)
++ *     STRING := <strings quoted by '"' or '\''>
++ *
++ * _tok_* functions
++ *
++ *   Input:
++ *     s             - a pointer to the parsed string
++ *   Output:
++ *     begin         - a pointer to the beginning of the token
++ *     end           - a pointer to the end of the token + 1
++ *                     or undefined if return value is NULL
++ *     return value  - a starting point of the next parsing
++ *                     NULL if s doesn't match with token type
++ *                     (the parsing should be terminated)
 + */
-+static int _rx_get_token(struct parse_sp *ps)
++
++static const char * _tok_number(const char *s,
++			        const char **begin, const char **end)
 +{
-+	int neg = 0, range = 0;
-+	char c, lc = 0;
-+	const char *ptr = ps->cursor;
-+	if (ptr == ps->rx_end) {	/* end of input ? */
-+		ps->type = -1;
++	*begin = s;
++	while (*s && isdigit(*s))
++		s++;
++	*end = s;
++
++	return s;
++}
++
++static const char * _tok_string(const char *s,
++			        const char **begin, const char **end,
++			        const char endchar)
++{
++	*begin = s;
++	while (*s && *s != endchar)
++		s++;
++	*end = s;
++
++	return s;
++}
++
++static const char * _tok_regex(const char *s,
++			       const char **begin, const char **end,
++			       char *quote)
++{
++	s = _skip_space(s);
++
++	if (!*s) {
++		log_error("Regular expression expected");
++		return NULL;
++	}
++
++	switch (*s) {
++		case '(': *quote = ')'; break;
++		case '{': *quote = '}'; break;
++		case '[': *quote = ']'; break;
++		default:  *quote = *s;
++	}
++
++	s = _tok_string(s + 1, begin, end, *quote);
++	if (!*s) {
++		log_error("Missing end quote of regex");
++		return NULL;
++	}
++	s++;
++
++	return s;
++}
++
++static const char * _tok_value(const char *s,
++			       const char **begin, const char **end,
++			       char *quote)
++{
++	s = _skip_space(s);
++
++	if (*s == '"' || *s == '\'') { /* quoted string */
++		*quote = *s;
++		s = _tok_string(s + 1, begin, end, *quote);
++		if (!*s) {
++			log_error("Missing end quote of string");
++			return NULL;
++		}
++		s++;
++	} else { /* number */
++		*quote = 0;
++		s = _tok_number(s, begin, end);
++		if (*begin == *end) {
++			log_error("Empty value or unquoted string");
++			return NULL;
++		}
++	}
++
++	return s;
++}
++
++static int _field_name_char(const char c)
++{
++	return (isalnum(c) || c == '_' || c == '-');
++}
++
++static const char * _tok_field_name(const char *s,
++				    const char **begin, const char **end)
++{
++	s = _skip_space(s);
++
++	*begin = s;
++	while (*s && _field_name_char(*s))
++		s++;
++	*end = s;
++
++	if (*begin == *end)
++		return NULL;
++
++	return s;
++}
++
++static void _display_operators(void)
++{
++	int i;
++
++	log_print(" ");
++	log_print("Comparison operators");
++	log_print("--------------------");
++
++	for (i = 0; _op_cmp[i].string; i++)
++		log_print("  %-4s - %s%s%s", _op_cmp[i].string, _op_cmp[i].desc,
++			_op_cmp[i].flags & DM_REPORT_FIELD_TYPE_NUMBER ?
++				" (numeric field only)" : "",
++			_op_cmp[i].flags & DM_REPORT_FIELD_TYPE_STRING ?
++				" (string field only)" : "");
++
++	log_print(" ");
++	log_print("Comparison operands");
++	log_print("-------------------");
++	log_print("  numbers            - decimal, non-negative, integer only");
++	log_print("  strings            - characters quoted by ' or \"");
++	log_print("  regular expression - characters quoted by any character");
++
++	log_print(" ");
++	log_print("Combining comparison");
++	log_print("--------------------");
++	log_print("  and, &&  - logical AND");
++	log_print("  or, ||   - logical OR");
++	log_print("  ()       - grouping expressions");
++	log_print("  !        - logical NOT");
++}
++
++/*
++ * Filter components
++ */
++
++/* a comparison condition */
++struct field_filter {
++	struct field_properties *fp;
++	uint32_t flags; /* see _op_cmp[] */
++	union {
++		const char *string;
++		uint64_t number;
++		struct dm_regex *regex;
++	} v;
++};
++
++/* an expression: either comparison condition, and-clause or or-clause */
++struct filter_node {
++	uint32_t type; /* FILTER_* */
++	struct list list;
++	union {
++		struct field_filter * f; /* type is COND */
++		struct list l; /* type is AND or OR */
++	} e;
++};
++
++static struct field_filter *_create_field_filter(struct dm_report *rh,
++						 uint32_t field_num,
++						 const char *v, size_t len,
++						 uint32_t flags)
++{
++	struct field_properties *fp, *found = NULL;
++	struct field_filter *filter;
++	char *s;
++
++	list_iterate_items(fp, &rh->field_props) {
++		if (fp->field_num == field_num) {
++			found = fp;
++			break;
++		}
++	}
++
++	/* The field is neither used in display options nor sort keys. */
++	if (!found) {
++		if (!(found = _add_field(rh, field_num, FLD_HIDDEN)))
++			return NULL;
++	}
++
++	if (!(found->flags & flags & DM_REPORT_FIELD_TYPE_MASK)) {
++		log_error("dm_report: Incompatible comparison type");
++		return NULL;
++	}
++
++	/* set up filter */
++	if (!(filter = dm_pool_zalloc(rh->mem, sizeof(struct field_filter)))) {
++		log_error("dm_report: struct field_filter allocation failed");
++		return NULL;
++	}
++	filter->fp = found;
++	filter->flags = flags;
++
++	/* store comparison operand */
++	if (flags & FLD_CMP_REGEX) {
++		if (!(s = dm_malloc(len + 1))) {
++			log_error("dm_report: dm_malloc failed");
++			goto out_free_filter;
++		}
++		memcpy(s, v, len);
++		s[len] = '\0';
++
++		filter->v.regex = dm_regex_create(rh->mem,
++						  (const char **) &s, 1);
++		dm_free(s);
++		if (!filter->v.regex) {
++			log_error("dm_report: failed to create matcher");
++			goto out_free_filter;
++		}
++	} else {
++		if (!(s = dm_pool_alloc(rh->mem, len + 1))) {
++			log_error("dm_report: dm_pool_alloc failed");
++			goto out_free_filter;
++		}
++		memcpy(s, v, len);
++		s[len] = '\0';
++
++		if (flags & DM_REPORT_FIELD_TYPE_STRING) {
++				filter->v.string = s;
++		} else {
++			filter->v.number = strtoul(s, NULL, 0);
++			dm_pool_free(rh->mem, s);
++		}
++	}
++
++	return filter;
++
++  out_free_filter:
++	dm_pool_free(rh->mem, filter);
++	return NULL;
++}
++
++static struct field_filter * _filter_match(struct dm_report *rh,
++					   const char *field, size_t flen,
++					   const char *value, size_t vlen,
++					   uint32_t flags)
++{
++	uint32_t f;
++
++	if (!flen)
++		return NULL;
++
++	for (f = 0; rh->fields[f].report_fn; f++)
++		if (_is_same_field(rh->fields[f].id,
++				   field, flen, rh->field_prefix))
++			return _create_field_filter(rh, f, value, vlen, flags);
++
++	log_print("Undefined field name");
++	return NULL;
++}
++
++static struct filter_node * _alloc_filter_node(struct dm_pool *mem,
++					       uint32_t type)
++{
++	struct filter_node *n;
++
++	if (!(n = dm_pool_zalloc(mem, sizeof(struct filter_node)))) {
++		log_error("dm_report: struct filter_node allocation failed");
++		return NULL;
++	}
++
++	list_init(&n->list);
++
++	n->type = type;
++	if (!(type & FILTER_COND))
++		list_init(&n->e.l);
++	return n;
++}
++
++/*
++ * Filter parser
++ *
++ * _parse_* functions
++ *
++ *   Input:
++ *     s             - a pointer to the parsed string
++ *   Output:
++ *     next          - a pointer used for next _parse_*'s input,
++ *                     next == s if return value is NULL
++ *     return value  - a filter node pointer,
++ *                     NULL if s doesn't match
++ */
++
++/*
++ * CONDITION := FIELD_NAME OP_CMP STRING |
++ *              FIELD_NAME OP_CMP NUMBER  |
++ *              FIELD_NAME OP_REGEX REGEX
++ */
++static struct filter_node * _parse_condition(struct dm_report *rh,
++					     const char *s, const char **next)
++{
++	struct field_filter *f;
++	struct filter_node *n;
++	const char *ws, *we; /* field name */
++	const char *vs, *ve; /* value */
++	const char *last;
++	uint32_t flags;
++	char quote;
++
++	/* field name */
++	if (!(last = _tok_field_name(s, &ws, &we))) {
++		log_error("Expecting field name");
++		goto syntax_error;
++	}
++	if (!last) {
++		log_error("Missing operator after the field name");
++		goto syntax_error;
++	}
++
++	/* comparison operator */
++	if (!(flags = _tok_op_cmp(we, &last))) {
++		log_error("Unrecognized comparison operator: %s", s);
++		goto syntax_error;
++	}
++	if (!last) {
++		log_error("Missing value after operator");
++		goto syntax_error;
++	}
++
++	/* comparison value */
++	if (flags & FLD_CMP_REGEX) {
++		if (!(last = _tok_regex(last, &vs, &ve, &quote)))
++			goto syntax_error;
++	} else {
++		if (!(last = _tok_value(last, &vs, &ve, &quote)))
++			goto syntax_error;
++
++		if (quote) {
++			/* the token is strings */
++			if (flags & DM_REPORT_FIELD_TYPE_NUMBER) {
++				log_print("The operator requires number");
++				goto syntax_error;
++			}
++			flags |= DM_REPORT_FIELD_TYPE_STRING;
++		} else {
++			/* the token is number */
++			if (flags & DM_REPORT_FIELD_TYPE_STRING) {
++				log_print("The operator requires string");
++				goto syntax_error;
++			}
++			flags |= DM_REPORT_FIELD_TYPE_NUMBER;
++		}
++	}
++	*next = _skip_space(last);
++
++	/* store condition */
++	f = _filter_match(rh, ws, (size_t) (we - ws),
++			  vs, (size_t) (ve - vs), flags);
++	if (!f)
++		goto syntax_error;
++
++	if (!(n = _alloc_filter_node(rh->mem, FILTER_COND)))
++		return NULL;
++	n->e.f = f;
++	return n;
++
++  syntax_error:
++	log_error("Filter syntax error at %s", s);
++	*next = s;
++	return NULL;
++}
++
++/* EX := CONDITION | '!'? '(' EXPRESSION ')' */
++static struct filter_node * _parse_or_ex(struct dm_report *,
++					 const char *, const char **,
++					 struct filter_node *);
++
++static struct filter_node * _parse_ex(struct dm_report *rh,
++					 const char *s, const char **next)
++{
++	struct filter_node *n = NULL;
++	uint32_t t;
++	const char *tmp;
++
++	t = _tok_op_log(s, next, FILTER_NOT|FILTER_PS);
++	if (t == FILTER_NOT) {
++		/* '!' '(' EXPRESSION ')' */
++		if (!_tok_op_log(*next, &tmp, FILTER_PS)) {
++			log_error("Syntax error: '(' expected");
++			goto out_error;
++		}
++		if (!(n = _parse_or_ex(rh, tmp, next, NULL)))
++			goto out_error;
++		n->type |= FILTER_NOT;
++		if (!_tok_op_log(*next, &tmp, FILTER_PE)) {
++			log_error("Syntax error: ')' expected");
++			goto out_error;
++		}
++		*next = tmp;
++	} else if (t == FILTER_PS) {
++		/* '(' EXPRESSION ')' */
++		if (!(n = _parse_or_ex(rh, *next, &tmp, NULL)))
++			goto out_error;
++		if (!_tok_op_log(tmp, next, FILTER_PE)) {
++			log_error("Syntax error: ')' expected");
++			goto out_error;
++		}
++	} else if ((s = _skip_space(s))) {
++		/* CONDITION */
++		n = _parse_condition(rh, s, next);
++	} else {
++		n = NULL;
++		*next = s;
++	}
++
++	return n;
++
++  out_error:
++	*next = s;
++	return NULL;
++}
++
++/* AND_EXPRESSION := EX (AND_OP AND_EXPRSSION) */
++static struct filter_node * _parse_and_ex(struct dm_report *rh,
++					  const char *s, const char **next,
++					  struct filter_node *and_n)
++{
++	struct filter_node *n;
++	const char *tmp;
++
++	n = _parse_ex(rh, s, next);
++	if (!n)
++		goto out_error;
++
++	if (!_tok_op_log(*next, &tmp, FILTER_AND)) {
++		if (!and_n)
++			return n;
++		list_add(&and_n->e.l, &n->list);
++		return and_n;
++	}
++
++	if (!and_n) {
++		if (!(and_n = _alloc_filter_node(rh->mem, FILTER_AND)))
++			goto out_error;
++	}
++	list_add(&and_n->e.l, &n->list);
++
++	return _parse_and_ex(rh, tmp, next, and_n);
++
++  out_error:
++	*next = s;
++	return NULL;
++}
++
++/* OR_EXPRESSION := AND_EXPRESSION (OR_OP OR_EXPRESSION) */
++static struct filter_node * _parse_or_ex(struct dm_report *rh,
++					 const char *s, const char **next,
++					 struct filter_node *or_n)
++{
++	struct filter_node *n;
++	const char *tmp;
++
++	n = _parse_and_ex(rh, s, next, NULL);
++	if (!n)
++		goto out_error;
++
++	if (!_tok_op_log(*next, &tmp, FILTER_OR)) {
++		if (!or_n)
++			return n;
++		list_add(&or_n->e.l, &n->list);
++		return or_n;
++	}
++
++	if (!or_n) {
++		if (!(or_n = _alloc_filter_node(rh->mem, FILTER_OR)))
++			goto out_error;
++	}
++	list_add(&or_n->e.l, &n->list);
++
++	return _parse_or_ex(rh, tmp, next, or_n);
++
++  out_error:
++	*next = s;
++	return NULL;
++}
++
++
++int dm_report_set_filter(struct dm_report *rh, const char *string,
++			 uint32_t flags)
++{
++	const char *fin;
++	struct filter_node *root;
++
++	if (flags) {
++		log_error("dm_report_set_filter: flags not supported");
 +		return 0;
 +	}
 +
-+	switch (*ptr) {
-+		/* charsets and ncharsets */
-+	case '[':
-+		ptr++;
-+		if (*ptr == '^') {
-+			dm_bit_set_all(ps->charset);
++	if (rh->filter_root) {
++		log_error("dm_report_set_filter: filter already set");
++		return 0;
++	}
 +
-+			/* never transition on zero */
-+			dm_bit_clear(ps->charset, 0);
-+			neg = 1;
-+			ptr++;
++	/* null string means no filter */
++	if (!string || !string[0])
++		return 1;
 +
-+		} else
-+			dm_bit_clear_all(ps->charset);
++	if (!(root = _alloc_filter_node(rh->mem, FILTER_OR)))
++		goto out_error;
 +
-+		while ((ptr < ps->rx_end) && (*ptr != ']')) {
-+			if (*ptr == '\\') {
-+				/* an escaped character */
-+				ptr++;
-+				switch (*ptr) {
-+				case 'n':
-+					c = '\n';
-+					break;
-+				case 'r':
-+					c = '\r';
-+					break;
-+				case 't':
-+					c = '\t';
-+					break;
-+				default:
-+					c = *ptr;
-+				}
-+			} else if (*ptr == '-' && lc) {
-+				/* we've got a range on our hands */
-+				range = 1;
-+				ptr++;
-+				if (ptr == ps->rx_end) {
-+					log_error("Incomplete range"
-+						  "specification");
-+					return -1;
-+				}
-+				c = *ptr;
-+			} else
-+				c = *ptr;
++	if (!_parse_or_ex(rh, string, &fin, root) || *_skip_space(fin)) {
++		dm_pool_free(rh->mem, root);
++		goto out_error;
++	}
 +
-+			if (range) {
-+				/* add lc - c into the bitset */
-+				if (lc > c) {
-+					char tmp = c;
-+					c = lc;
-+					lc = tmp;
-+				}
++	rh->filter_root = root;
++	return 1;
 +
-+				for (; lc <= c; lc++) {
-+					if (neg)
-+						dm_bit_clear(ps->charset, lc);
-+					else
-+						dm_bit_set(ps->charset, lc);
-+				}
-+				range = 0;
-+			} else {
-+				/* add c into the bitset */
-+				if (neg)
-+					dm_bit_clear(ps->charset, c);
-+				else
-+					dm_bit_set(ps->charset, c);
++  out_error:
++	_display_operators();
++	log_print(" ");
++	_display_fields(rh);
++	log_print(" ");
++	return 0;
++}
++
+ struct dm_report *dm_report_init(uint32_t *report_types,
+ 				 const struct dm_report_object_type *types,
+ 				 const struct dm_report_field_type *fields,
+@@ -551,6 +1203,65 @@ void dm_report_free(struct dm_report *rh
+ /*
+  * Create a row of data for an object
+  */
++static int _cmp_field_number(uint64_t a, uint64_t b, uint32_t flags)
++{
++	switch (flags & FLD_CMP_MASK) {
++	case FLD_CMP_EQUAL:
++		return a == b;
++	case FLD_CMP_NOT|FLD_CMP_EQUAL:
++		return a != b;
++	case FLD_CMP_GT:
++		return a > b;
++	case FLD_CMP_GT|FLD_CMP_EQUAL:
++		return a >= b;
++	case FLD_CMP_LT:
++		return a < b;
++	case FLD_CMP_LT|FLD_CMP_EQUAL:
++		return a <= b;
++	default:
++		log_error("Unsupported comparison type for number");
++	}
++	return 0;
++}
++
++static int _cmp_field_string(const char *a, const char *b, uint32_t flags)
++{
++	switch (flags & FLD_CMP_MASK) {
++	case FLD_CMP_EQUAL:
++		return !strcmp(a, b);
++	case FLD_CMP_NOT|FLD_CMP_EQUAL:
++		return strcmp(a, b);
++	default:
++		log_error("Unsupported comparison type for string");
++	}
++	return 0;
++}
++
++static int _cmp_field_regex(const char *s, struct dm_regex *r, uint32_t flags)
++{
++	return (dm_regex_match(r, s) >= 0) ^ ((flags & FLD_CMP_NOT) != 0);
++}
++
++static int _compare_field(struct dm_report_field *field,
++			  struct field_filter *filter)
++{
++	if (!field->sort_value) {
++		log_error("dm_report: field without value: %d",
++			  field->props->field_num);
++		return 0;
++	}
++
++	if (filter->flags & FLD_CMP_REGEX)
++		return _cmp_field_regex((const char *) field->sort_value,
++					filter->v.regex, filter->flags);
++	else if (field->props->flags & DM_REPORT_FIELD_TYPE_NUMBER)
++		return _cmp_field_number(*(const uint64_t *)field->sort_value,
++					 filter->v.number, filter->flags);
++	else /* DM_REPORT_FIELD_TYPE_STRING */
++		return _cmp_field_string((const char *) field->sort_value,
++					 filter->v.string, filter->flags);
++}
++
+ static void * _report_get_field_data(struct dm_report *rh,
+ 			      struct field_properties *fp, void *object)
+ {
+@@ -562,6 +1273,51 @@ static void * _report_get_field_data(str
+ 	return ret + rh->fields[fp->field_num].offset;
+ }
+ 
++static int _filter(struct filter_node *n, struct list *fields)
++{
++	int r;
++	struct filter_node *f;
++	struct dm_report_field *field;
++
++	switch (n->type & FILTER_TYPE_MASK) {
++		case FILTER_COND:
++			r = 1;
++			list_iterate_items(field, fields) {
++				if (n->e.f->fp != field->props)
++					continue;
++				if (!_compare_field(field, n->e.f))
++					r = 0;
 +			}
-+			ptr++;
-+			lc = c;
-+		}
-+
-+		if (ptr >= ps->rx_end) {
-+			ps->type = -1;
-+			return -1;
-+		}
-+
-+		ps->type = 0;
-+		ps->cursor = ptr + 1;
-+		break;
-+
-+		/* These characters are special, we just return their ASCII
-+		   codes as the type.  Sorted into ascending order to help the
-+		   compiler */
-+	case '(':
-+	case ')':
-+	case '*':
-+	case '+':
-+	case '?':
-+	case '|':
-+		ps->type = (int) *ptr;
-+		ps->cursor = ptr + 1;
-+		break;
-+
-+	case '^':
-+		_single_char(ps, HAT_CHAR, ptr);
-+		break;
-+
-+	case '$':
-+		_single_char(ps, DOLLAR_CHAR, ptr);
-+		break;
-+
-+	case '.':
-+		/* The 'all but newline' character set */
-+		ps->type = 0;
-+		ps->cursor = ptr + 1;
-+		dm_bit_set_all(ps->charset);
-+		dm_bit_clear(ps->charset, (int) '\n');
-+		dm_bit_clear(ps->charset, (int) '\r');
-+		dm_bit_clear(ps->charset, 0);
-+		break;
-+
-+	case '\\':
-+		/* escaped character */
-+		ptr++;
-+		if (ptr >= ps->rx_end) {
-+			log_error("Badly quoted character at end "
-+				  "of expression");
-+			ps->type = -1;
-+			return -1;
-+		}
-+
-+		ps->type = 0;
-+		ps->cursor = ptr + 1;
-+		dm_bit_clear_all(ps->charset);
-+		switch (*ptr) {
-+		case 'n':
-+			dm_bit_set(ps->charset, (int) '\n');
 +			break;
-+		case 'r':
-+			dm_bit_set(ps->charset, (int) '\r');
++		case FILTER_OR:
++			r = 0;
++			list_iterate_items(f, &n->e.l)
++				if ((r |= _filter(f, fields)))
++					break;
 +			break;
-+		case 't':
-+			dm_bit_set(ps->charset, (int) '\t');
++		case FILTER_AND:
++			r = 1;
++			list_iterate_items(f, &n->e.l)
++				if (!(r &= _filter(f, fields)))
++					break;
 +			break;
 +		default:
-+			dm_bit_set(ps->charset, (int) *ptr);
-+		}
-+		break;
-+
-+	default:
-+		/* add a single character to the bitset */
-+		ps->type = 0;
-+		ps->cursor = ptr + 1;
-+		dm_bit_clear_all(ps->charset);
-+		dm_bit_set(ps->charset, (int) *ptr);
-+		break;
-+	}
-+
-+	return 1;
-+}
-+
-+static struct rx_node *_node(struct dm_pool *mem, int type,
-+			     struct rx_node *l, struct rx_node *r)
-+{
-+	struct rx_node *n = dm_pool_zalloc(mem, sizeof(*n));
-+
-+	if (n) {
-+		if (!(n->charset = dm_bitset_create(mem, 256))) {
-+			dm_pool_free(mem, n);
-+			return NULL;
-+		}
-+
-+		n->type = type;
-+		n->left = l;
-+		n->right = r;
-+	}
-+
-+	return n;
-+}
-+
-+static struct rx_node *_term(struct parse_sp *ps)
-+{
-+	struct rx_node *n;
-+
-+	switch (ps->type) {
-+	case 0:
-+		if (!(n = _node(ps->mem, CHARSET, NULL, NULL))) {
-+			stack;
-+			return NULL;
-+		}
-+
-+		dm_bit_copy(n->charset, ps->charset);
-+		_rx_get_token(ps);	/* match charset */
-+		break;
-+
-+	case '(':
-+		_rx_get_token(ps);	/* match '(' */
-+		n = _or_term(ps);
-+		if (ps->type != ')') {
-+			log_error("missing ')' in regular expression");
++			log_error("Unsupported filter type");
 +			return 0;
-+		}
-+		_rx_get_token(ps);	/* match ')' */
-+		break;
-+
-+	default:
-+		n = 0;
 +	}
 +
-+	return n;
++	return (n->type & FILTER_NOT) ? !r : r;
 +}
 +
-+static struct rx_node *_closure_term(struct parse_sp *ps)
++/* the object is given as a list of "struct field"s */
++static int _filter_object(struct dm_report *rh, struct list *fields)
 +{
-+	struct rx_node *l, *n;
++	if (!rh->filter_root)
++		return 1;
 +
-+	if (!(l = _term(ps)))
-+		return NULL;
++	return _filter(rh->filter_root, fields);
++}
 +
-+	for (;;) {
-+		switch (ps->type) {
-+		case '*':
-+			n = _node(ps->mem, STAR, l, NULL);
-+			break;
-+
-+		case '+':
-+			n = _node(ps->mem, PLUS, l, NULL);
-+			break;
-+
-+		case '?':
-+			n = _node(ps->mem, QUEST, l, NULL);
-+			break;
-+
-+		default:
-+			return l;
-+		}
-+
-+		if (!n) {
-+			stack;
-+			return NULL;
-+		}
-+
-+		_rx_get_token(ps);
-+		l = n;
+ int dm_report_object(struct dm_report *rh, void *object)
+ {
+ 	struct field_properties *fp;
+@@ -582,24 +1338,23 @@ int dm_report_object(struct dm_report *r
+ 			       rh->keys_count))) {
+ 		log_error("dm_report_object: "
+ 			  "row sort value structure allocation failed");
+-		return 0;
++		goto out_free_row;
+ 	}
+ 
+ 	list_init(&row->fields);
+-	list_add(&rh->rows, &row->list);
+ 
+ 	/* For each field to be displayed, call its report_fn */
+ 	list_iterate_items(fp, &rh->field_props) {
+ 		if (!(field = dm_pool_zalloc(rh->mem, sizeof(*field)))) {
+ 			log_error("dm_report_object: "
+ 				  "struct dm_report_field allocation failed");
+-			return 0;
++			goto out_free_row;
+ 		}
+ 		field->props = fp;
+ 
+ 		data = _report_get_field_data(rh, fp, object);
+ 		if (!data)
+-			return 0;
++			goto out_free_row;
+ 
+ 		if (!rh->fields[fp->field_num].report_fn(rh, rh->mem,
+ 							 field, data,
+@@ -607,9 +1362,20 @@ int dm_report_object(struct dm_report *r
+ 			log_error("dm_report_object: "
+ 				  "report function failed for field %s",
+ 				  rh->fields[fp->field_num].id);
+-			return 0;
++			goto out_free_row;
+ 		}
+ 
++		list_add(&row->fields, &field->list);
 +	}
 +
-+	return n;
-+}
++	/* Check filter and decide whether to display or not */
++	if (!_filter_object(rh, &row->fields))
++		goto out_free_row;
 +
-+static struct rx_node *_cat_term(struct parse_sp *ps)
-+{
-+	struct rx_node *l, *r, *n;
++	list_add(&rh->rows, &row->list);
 +
-+	if (!(l = _closure_term(ps)))
-+		return NULL;
++	/* For the object to be displayed, udpate width and record sort value */
++	list_iterate_items(field, &row->fields) {
+ 		if ((strlen(field->report_string) > field->props->width))
+ 			field->props->width = strlen(field->report_string);
+ 
+@@ -617,13 +1383,16 @@ int dm_report_object(struct dm_report *r
+ 		    (field->props->flags & FLD_SORT_KEY)) {
+ 			(*row->sort_fields)[field->props->sort_posn] = field;
+ 		}
+-		list_add(&row->fields, &field->list);
+ 	}
+ 
+ 	if (!(rh->flags & DM_REPORT_OUTPUT_BUFFERED))
+ 		return dm_report_output(rh);
+ 
+ 	return 1;
 +
-+	if (ps->type == '|')
-+		return l;
-+
-+	if (!(r = _cat_term(ps)))
-+		return l;
-+
-+	if (!(n = _node(ps->mem, CAT, l, r)))
-+		stack;
-+
-+	return n;
-+}
-+
-+static struct rx_node *_or_term(struct parse_sp *ps)
-+{
-+	struct rx_node *l, *r, *n;
-+
-+	if (!(l = _cat_term(ps)))
-+		return NULL;
-+
-+	if (ps->type != '|')
-+		return l;
-+
-+	_rx_get_token(ps);		/* match '|' */
-+
-+	if (!(r = _or_term(ps))) {
-+		log_error("Badly formed 'or' expression");
-+		return NULL;
-+	}
-+
-+	if (!(n = _node(ps->mem, OR, l, r)))
-+		stack;
-+
-+	return n;
-+}
-+
-+struct rx_node *rx_parse_tok(struct dm_pool *mem,
-+			     const char *begin, const char *end)
-+{
-+	struct rx_node *r;
-+	struct parse_sp *ps = dm_pool_zalloc(mem, sizeof(*ps));
-+
-+	if (!ps) {
-+		stack;
-+		return NULL;
-+	}
-+
-+	ps->mem = mem;
-+	ps->charset = dm_bitset_create(mem, 256);
-+	ps->cursor = begin;
-+	ps->rx_end = end;
-+	_rx_get_token(ps);		/* load the first token */
-+
-+	if (!(r = _or_term(ps))) {
-+		log_error("Parse error in regex");
-+		dm_pool_free(mem, ps);
-+	}
-+
-+	return r;
-+}
-+
-+struct rx_node *rx_parse_str(struct dm_pool *mem, const char *str)
-+{
-+	return rx_parse_tok(mem, str, str + strlen(str));
-+}
-Index: device-mapper.work/lib/regex/parse_rx.h
-===================================================================
---- /dev/null
-+++ device-mapper.work/lib/regex/parse_rx.h
-@@ -0,0 +1,52 @@
-+/*
-+ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-+ * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-+ *
-+ * This file is part of the device-mapper userspace tools.
-+ *
-+ * This copyrighted material is made available to anyone wishing to use,
-+ * modify, copy, or redistribute it subject to the terms and conditions
-+ * of the GNU General Public License v.2.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software Foundation,
-+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+ */
-+
-+#ifndef _LVM_PARSE_REGEX_H
-+#define _LVM_PARSE_REGEX_H
-+
-+enum {
-+	CAT,
-+	STAR,
-+	PLUS,
-+	OR,
-+	QUEST,
-+	CHARSET
-+};
-+
-+/*
-+ * We're never going to be running the regex on non-printable
-+ * chars, so we can use a couple of these chars to represent the
-+ * start and end of a string.
-+ */
-+#define HAT_CHAR 0x2
-+#define DOLLAR_CHAR 0x3
-+
-+struct rx_node {
-+	int type;
-+	dm_bitset_t charset;
-+	struct rx_node *left, *right;
-+
-+	/* used to build the dfa for the toker */
-+	int nullable, final;
-+	dm_bitset_t firstpos;
-+	dm_bitset_t lastpos;
-+	dm_bitset_t followpos;
-+};
-+
-+struct rx_node *rx_parse_str(struct dm_pool *mem, const char *str);
-+struct rx_node *rx_parse_tok(struct dm_pool *mem,
-+			     const char *begin, const char *end);
-+
-+#endif
-Index: device-mapper.work/lib/regex/ttree.c
-===================================================================
---- /dev/null
-+++ device-mapper.work/lib/regex/ttree.c
-@@ -0,0 +1,117 @@
-+/*
-+ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-+ * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-+ *
-+ * This file is part of the device-mapper userspace tools.
-+ *
-+ * This copyrighted material is made available to anyone wishing to use,
-+ * modify, copy, or redistribute it subject to the terms and conditions
-+ * of the GNU General Public License v.2.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software Foundation,
-+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+ */
-+
-+#include "lib.h"
-+#include "ttree.h"
-+
-+struct node {
-+	unsigned k;
-+	struct node *l, *m, *r;
-+	void *data;
-+};
-+
-+struct ttree {
-+	int klen;
-+	struct dm_pool *mem;
-+	struct node *root;
-+};
-+
-+static struct node **_lookup_single(struct node **c, unsigned int k)
-+{
-+	while (*c) {
-+		if (k < (*c)->k)
-+			c = &((*c)->l);
-+
-+		else if (k > (*c)->k)
-+			c = &((*c)->r);
-+
-+		else {
-+			c = &((*c)->m);
-+			break;
-+		}
-+	}
-+
-+	return c;
-+}
-+
-+void *ttree_lookup(struct ttree *tt, unsigned *key)
-+{
-+	struct node **c = &tt->root;
-+	int count = tt->klen;
-+
-+	while (*c && count) {
-+		c = _lookup_single(c, *key++);
-+		count--;
-+	}
-+
-+	return *c ? (*c)->data : NULL;
-+}
-+
-+static struct node *_tree_node(struct dm_pool *mem, unsigned int k)
-+{
-+	struct node *n = dm_pool_zalloc(mem, sizeof(*n));
-+
-+	if (n)
-+		n->k = k;
-+
-+	return n;
-+}
-+
-+int ttree_insert(struct ttree *tt, unsigned int *key, void *data)
-+{
-+	struct node **c = &tt->root;
-+	int count = tt->klen;
-+	unsigned int k;
-+
-+	do {
-+		k = *key++;
-+		c = _lookup_single(c, k);
-+		count--;
-+
-+	} while (*c && count);
-+
-+	if (!*c) {
-+		count++;
-+
-+		while (count--) {
-+			if (!(*c = _tree_node(tt->mem, k))) {
-+				stack;
-+				return 0;
-+			}
-+
-+			k = *key++;
-+
-+			if (count)
-+				c = &((*c)->m);
-+		}
-+	}
-+	(*c)->data = data;
-+
-+	return 1;
-+}
-+
-+struct ttree *ttree_create(struct dm_pool *mem, unsigned int klen)
-+{
-+	struct ttree *tt;
-+
-+	if (!(tt = dm_pool_zalloc(mem, sizeof(*tt)))) {
-+		stack;
-+		return NULL;
-+	}
-+
-+	tt->klen = klen;
-+	tt->mem = mem;
-+	return tt;
-+}
-Index: device-mapper.work/lib/regex/ttree.h
-===================================================================
---- /dev/null
-+++ device-mapper.work/lib/regex/ttree.h
-@@ -0,0 +1,26 @@
-+/*
-+ * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
-+ * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-+ *
-+ * This file is part of the device-mapper userspace tools.
-+ *
-+ * This copyrighted material is made available to anyone wishing to use,
-+ * modify, copy, or redistribute it subject to the terms and conditions
-+ * of the GNU General Public License v.2.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software Foundation,
-+ * Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-+ */
-+
-+#ifndef _LVM_TTREE_H
-+#define _LVM_TTREE_H
-+
-+struct ttree;
-+
-+struct ttree *ttree_create(struct dm_pool *mem, unsigned int klen);
-+
-+void *ttree_lookup(struct ttree *tt, unsigned *key);
-+int ttree_insert(struct ttree *tt, unsigned *key, void *data);
-+
-+#endif
-Index: device-mapper.work/lib/Makefile.in
-===================================================================
---- device-mapper.work.orig/lib/Makefile.in
-+++ device-mapper.work/lib/Makefile.in
-@@ -25,6 +25,9 @@ SOURCES =\
- 	libdm-deptree.c \
- 	libdm-string.c \
- 	libdm-report.c \
-+	regex/matcher.c \
-+	regex/parse_rx.c \
-+	regex/ttree.c \
- 	mm/dbg_malloc.c \
- 	mm/pool.c \
- 	$(interface)/libdm-iface.c
++  out_free_row:
++	dm_pool_free(rh->mem, row);
++	return 0;
+ }
+ 
+ /*
 
---------------080309060207020107040404
+--------------070806050706080103000409
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------080309060207020107040404--
+--------------070806050706080103000409--
