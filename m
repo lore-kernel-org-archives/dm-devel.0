@@ -1,14 +1,9 @@
-From: berthiaume_wayne@emc.com
-Subject: RE: Device mapper multipathing
-Date: Thu, 19 Apr 2007 12:11:46 -0400
-Message-ID: <D364D39DAD21D444BAE2C70919B62809052118FA@CORPUSMX40A.corp.emc.com>
-References: <OFE3710C17.67A37F9F-ONC12572A4.0039E7BA-C12572A4.003A4CDE@domino.globalone.net>
+From: mbroz@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmeventd/libdevmappe ...
+Date: 19 Apr 2007 19:10:21 -0000
+Message-ID: <20070419191021.616.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0392221504=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <OFE3710C17.67A37F9F-ONC12572A4.0039E7BA-C12572A4.003A4CDE@domino.globalone.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,140 +13,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	mbroz@sourceware.org	2007-04-19 20:10:19
 
---===============0392221504==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C7829D.6DC2BA44"
+Modified files:
+	.              : WHATS_NEW 
+	dmeventd       : libdevmapper-event.c 
 
-This is a multi-part message in MIME format.
+Log message:
+	Fix libdevmapper-event memory leaks
 
-------_=_NextPart_001_01C7829D.6DC2BA44
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.173&r2=1.174
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.21&r2=1.22
 
-Hi Nicolas.
-=20
-    DM-MPIO has been tested and certified by EMC for specific
-configurations. Please consult EMC's Support Matrix (ESM) via the eLab
-Interoperability Navigator:
-https://elabnavigator.emc.com/do/navigator.jsp
-=20
-Regards,
-Wayne.
-
-________________________________
-
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of GEORGEL Nicolas ORANGE-FTGROUP
-Sent: Tuesday, March 20, 2007 6:37 AM
-To: dm-devel@redhat.com
-Subject: [dm-devel] Device mapper multipathing
-
-
-
-Hi all,=20
-
-        Does someone know, if device mapper multipathing is certified by
-EMC ?=20
-
-Nicolas
-
-*********************************
-This message and any attachments (the "message") are confidential and
-intended solely for the addressees. Any unauthorised
-use or dissemination is prohibited.
-Messages are susceptible to alteration. France Telecom Group shall not
-be liable for the message if altered, changed or
-falsified.
-If you are not the intended addressee of this message, please cancel it
-immediately and inform the sender.
-********************************
-=09
-
-------_=_NextPart_001_01C7829D.6DC2BA44
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<META content=3D"MSHTML 6.00.2800.1589" name=3DGENERATOR></HEAD>
-<BODY>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D974031016-19042007><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2>Hi Nicolas.</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D974031016-19042007><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN =
-class=3D974031016-19042007>&nbsp;&nbsp;&nbsp; <FONT=20
-face=3DArial color=3D#0000ff size=3D2>DM-MPIO has been tested and =
-certified by EMC for=20
-specific configurations. Please consult EMC's Support Matrix (ESM) via =
-the eLab=20
-Interoperability Navigator: <A=20
-href=3D"https://elabnavigator.emc.com/do/navigator.jsp">https://elabnavig=
-ator.emc.com/do/navigator.jsp</A></FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D974031016-19042007><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D974031016-19042007><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2>Regards,</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D974031016-19042007><FONT =
-face=3DArial=20
-color=3D#0000ff size=3D2>Wayne.</FONT></SPAN></DIV><BR>
-<DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr align=3Dleft>
-<HR tabIndex=3D-1>
-<FONT face=3DTahoma size=3D2><B>From:</B> dm-devel-bounces@redhat.com=20
-[mailto:dm-devel-bounces@redhat.com] <B>On Behalf Of </B>GEORGEL Nicolas =
-
-ORANGE-FTGROUP<BR><B>Sent:</B> Tuesday, March 20, 2007 6:37 =
-AM<BR><B>To:</B>=20
-dm-devel@redhat.com<BR><B>Subject:</B> [dm-devel] Device mapper=20
-multipathing<BR></FONT><BR></DIV>
-<DIV></DIV><BR><FONT face=3Dsans-serif size=3D2>Hi all,</FONT> =
-<BR><BR><FONT=20
-face=3Dsans-serif size=3D2>&nbsp; &nbsp; &nbsp; &nbsp; Does someone =
-know, if device=20
-mapper multipathing is certified by EMC ?</FONT> <BR><FONT =
-face=3Dsans-serif=20
-size=3D2><BR>Nicolas<BR></FONT>
-<TABLE>
-  <TBODY>
-  <TR>
-    <TD bgColor=3D#ffffff><FONT=20
-      color=3D#000000>*********************************<BR>This message =
-and any=20
-      attachments (the "message") are confidential and intended solely =
-for the=20
-      addressees. Any unauthorised<BR>use or dissemination is=20
-      prohibited.<BR>Messages are susceptible to alteration. France =
-Telecom=20
-      Group shall not be liable for the message if altered, changed=20
-      or<BR>falsified.<BR>If you are not the intended addressee of this =
-message,=20
-      please cancel it immediately and inform the=20
-      =
-sender.<BR>********************************<BR></FONT></TD></TR></TBODY><=
-/TABLE></BODY></HTML>
-
-------_=_NextPart_001_01C7829D.6DC2BA44--
-
-
---===============0392221504==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0392221504==--
+--- device-mapper/WHATS_NEW	2007/03/16 14:36:14	1.173
++++ device-mapper/WHATS_NEW	2007/04/19 19:10:19	1.174
+@@ -1,5 +1,6 @@
+ Version 1.02.19 -
+ ====================================
++  Fix libdevmapper-event memory leaks
+   Remove unnecessary memset() return value checks.
+   Fix a few leaks in reporting error paths. [1.02.15+]
+ 
+--- device-mapper/dmeventd/libdevmapper-event.c	2007/02/02 17:08:51	1.21
++++ device-mapper/dmeventd/libdevmapper-event.c	2007/04/19 19:10:19	1.22
+@@ -359,10 +359,17 @@
+ 	 */
+ 	if (!_daemon_write(fifos, msg)) {
+ 		stack;
++		dm_free(msg->data);
++		msg->data = 0;
+ 		return -EIO;
+ 	}
+ 
+ 	do {
++
++		if (msg->data)
++			dm_free(msg->data);
++		msg->data = 0;
++
+ 		if (!_daemon_read(fifos, msg)) {
+ 			stack;
+ 			return -EIO;
+@@ -548,6 +555,11 @@
+ 	}
+ 
+ 	ret = _daemon_talk(&fifos, msg, DM_EVENT_CMD_HELLO, 0, 0, 0, 0);
++
++	if (msg->data)
++		dm_free(msg->data);
++	msg->data = 0;
++
+ 	if (!ret)
+ 		ret = _daemon_talk(&fifos, msg, cmd, dso_name, dev_name, evmask, timeout);
+ 
+@@ -714,6 +726,12 @@
+ 
+ 	dm_event_handler_set_dso(dmevh, reply_dso);
+ 	dm_event_handler_set_event_mask(dmevh, reply_mask);
++
++	if (reply_dso)
++		dm_free(reply_dso);
++	if (reply_uuid)
++		dm_free(reply_uuid);
++
+ 	dmevh->dev_name = dm_strdup(dm_task_get_name(dmt));
+ 	if (!dmevh->dev_name) {
+ 		ret = -ENOMEM;
+@@ -736,6 +754,10 @@
+  fail:
+ 	if (msg.data)
+ 		dm_free(msg.data);
++	if (reply_dso)
++		dm_free(reply_dso);
++	if (reply_uuid)
++		dm_free(reply_uuid);
+ 	_dm_event_handler_clear_dev_info(dmevh);
+ 	dm_task_destroy(dmt);
+ 	return ret;
