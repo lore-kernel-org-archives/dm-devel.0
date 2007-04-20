@@ -1,8 +1,11 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdm-report.c
-Date: 19 Apr 2007 20:24:01 -0000
-Message-ID: <20070419202401.29622.qmail@sourceware.org>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] dmsetup: fix 'dmsetup status' for crypt filling
+ '0' in wrong area
+Date: Fri, 20 Apr 2007 12:07:04 -0400
+Message-ID: <4628E528.1070900@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="------------000406090203030507050309"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,178 +16,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-04-19 21:24:00
+This is a multi-part message in MIME format.
+--------------000406090203030507050309
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdm-report.c 
+Hi,
 
-Log message:
-	Introduce _add_field() and _is_same_field() to libdm-report.c.
+dmsetup tries to suppress encryption key of crypt target in the table
+by filling '0' in params buffer.
+However, the code assumes the case for showing table only and will
+fill '0' beyond the params buffer when it's showing status, where
+the params is "".
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.174&r2=1.175
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.12&r2=1.13
+The patch fixes it.
+The suppression is not necessary for showing status as
+no encryption key is included in status line.
 
---- device-mapper/WHATS_NEW	2007/04/19 19:10:19	1.174
-+++ device-mapper/WHATS_NEW	2007/04/19 20:24:00	1.175
-@@ -1,6 +1,7 @@
- Version 1.02.19 -
- ====================================
--  Fix libdevmapper-event memory leaks
-+  Introduce _add_field() and _is_same_field() to libdm-report.c.
-+  Fix some libdevmapper-event memory leaks.
-   Remove unnecessary memset() return value checks.
-   Fix a few leaks in reporting error paths. [1.02.15+]
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation of America
+
+--------------000406090203030507050309
+Content-Type: text/x-patch; name="dmsetup-status-crypt-suppression-bug.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+	filename="dmsetup-status-crypt-suppression-bug.patch"
+
+dmsetup tries to suppress encryption key of crypt target.
+However, the code overruns the params buffer if the command
+is showing 'status', in that case params is "".
+
+---
+ dmsetup/dmsetup.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+Index: device-mapper.work/dmsetup/dmsetup.c
+===================================================================
+--- device-mapper.work.orig/dmsetup/dmsetup.c
++++ device-mapper.work/dmsetup/dmsetup.c
+@@ -964,12 +964,14 @@ static int _status(int argc, char **argv
+ 			if (target_type) {
  
---- device-mapper/lib/libdm-report.c	2007/02/14 15:12:16	1.12
-+++ device-mapper/lib/libdm-report.c	2007/04/19 20:24:00	1.13
-@@ -296,36 +296,67 @@
- 	return 1;
- }
- 
--static int _field_match(struct dm_report *rh, const char *field, size_t flen)
-+static struct field_properties * _add_field(struct dm_report *rh,
-+					    uint32_t field_num, uint32_t flags)
- {
--	uint32_t f, l;
- 	struct field_properties *fp;
- 
--	if (!flen)
--		return 0;
-+	rh->report_types |= rh->fields[field_num].type;
- 
--	for (f = 0; rh->fields[f].report_fn; f++) {
--		if ((!strncasecmp(rh->fields[f].id, field, flen) &&
--		     strlen(rh->fields[f].id) == flen) ||
--		    (l = strlen(rh->field_prefix),
--		     !strncasecmp(rh->field_prefix, rh->fields[f].id, l) &&
--		     !strncasecmp(rh->fields[f].id + l, field, flen) &&
--		     strlen(rh->fields[f].id) == l + flen)) {
--			rh->report_types |= rh->fields[f].type;
--			if (!(fp = dm_pool_zalloc(rh->mem, sizeof(*fp)))) {
--				log_error("dm_report: "
--					  "struct field_properties allocation "
--					  "failed");
--				return 0;
--			}
--			if (!_copy_field(rh, fp, f))
--				return 0;
-+	if (!(fp = dm_pool_zalloc(rh->mem, sizeof(struct field_properties)))) {
-+		log_error("dm_report: struct field_properties allocation "
-+			  "failed");
-+		return NULL;
-+	}
- 
--			list_add(&rh->field_props, &fp->list);
--			return 1;
--		}
-+	if (!_copy_field(rh, fp, field_num)) {
-+		stack;
-+		dm_pool_free(rh->mem, fp);
-+		return NULL;
- 	}
- 
-+	fp->flags |= flags;
-+	list_add(&rh->field_props, &fp->list);
-+
-+	return fp;
-+}
-+
-+/*
-+ * Compare name1 against name2 or prefix plus name2
-+ * name2 is not necessarily null-terminated.
-+ * len2 is the length of name2.
-+ */
-+static int _is_same_field(const char *name1, const char *name2,
-+			  size_t len2, const char *prefix)
-+{
-+	size_t prefix_len;
-+
-+	/* Exact match? */
-+	if (!strncasecmp(name1, name2, len2) && strlen(name1) == len2)
-+		return 1;
-+
-+	/* Match including prefix? */
-+	prefix_len = strlen(prefix);
-+	if (!strncasecmp(prefix, name1, prefix_len) &&
-+	    !strncasecmp(name1 + prefix_len, name2, len2) &&
-+	    strlen(name1) == prefix_len + len2)
-+		return 1;
-+
-+	return 0;
-+}
-+
-+static int _field_match(struct dm_report *rh, const char *field, size_t flen)
-+{
-+	uint32_t f;
-+
-+	if (!flen)
-+		return 0;
-+
-+	for (f = 0; rh->fields[f].report_fn; f++)
-+		if (_is_same_field(rh->fields[f].id, field, flen,
-+				   rh->field_prefix))
-+			return _add_field(rh, f, 0) ? 1 : 0;
-+
- 	return 0;
- }
- 
-@@ -341,21 +372,8 @@
- 		}
- 	}
- 
--	if (!found) {
--		rh->report_types |= rh->fields[field_num].type;
--		if (!(found = dm_pool_zalloc(rh->mem, sizeof(*found)))) {
--			log_error("dm_report: "
--				  "struct field_properties allocation failed");
--			return 0;
--		}
--		if (!_copy_field(rh, found, field_num))
--			return 0;
--
--		/* Add as a non-display field */
--		found->flags |= FLD_HIDDEN;
--
--		list_add(&rh->field_props, &found->list);
--	}
-+	if (!found && !(found = _add_field(rh, field_num, FLD_HIDDEN)))
-+		return_0;
- 
- 	if (found->flags & FLD_SORT_KEY) {
- 		log_error("dm_report: Ignoring duplicate sort field: %s",
-@@ -372,7 +390,7 @@
- 
- static int _key_match(struct dm_report *rh, const char *key, size_t len)
- {
--	uint32_t f, l;
-+	uint32_t f;
- 	uint32_t flags;
- 
- 	if (!len)
-@@ -394,16 +412,10 @@
- 		return 0;
- 	}
- 
--	for (f = 0; rh->fields[f].report_fn; f++) {
--		if ((!strncasecmp(rh->fields[f].id, key, len) &&
--		     strlen(rh->fields[f].id) == len) ||
--		    (l = strlen(rh->field_prefix),
--		     !strncasecmp(rh->field_prefix, rh->fields[f].id, l) &&
--		     !strncasecmp(rh->fields[f].id + l, key, len) &&
--		     strlen(rh->fields[f].id) == l + len)) {
-+	for (f = 0; rh->fields[f].report_fn; f++)
-+		if (_is_same_field(rh->fields[f].id, key, len,
-+				   rh->field_prefix))
- 			return _add_sort_key(rh, f, flags);
--		}
--	}
- 
- 	return 0;
- }
+ 			/* Suppress encryption key */
+-			if (!_switches[SHOWKEYS_ARG] &&
++			if (cmd == DM_DEVICE_TABLE &&
++			    !_switches[SHOWKEYS_ARG] &&
+ 			    !strcmp(target_type, "crypt")) {
+ 				c = params;
+ 				while (*c && *c != ' ')
+ 					c++;
+-				c++;
++				if (*c)
++					c++;
+ 				while (*c && *c != ' ')
+ 					*c++ = '0';
+ 			}
+
+--------------000406090203030507050309
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------000406090203030507050309--
