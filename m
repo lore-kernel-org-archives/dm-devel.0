@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper/dmsetup dmsetup.c
-Date: 27 Apr 2007 18:01:46 -0000
-Message-ID: <20070427180146.23234.qmail@sourceware.org>
+Subject: device-mapper/lib/regex
+Date: 27 Apr 2007 18:39:11 -0000
+Message-ID: <20070427183911.15504.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,25 +18,12 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-04-27 19:01:46
+Changes by:	agk@sourceware.org	2007-04-27 19:39:11
 
-Modified files:
-	dmsetup        : dmsetup.c 
+device-mapper/lib/regex
 
-Log message:
-	configure.h isn't a system header
+Update of /cvs/dm/device-mapper/lib/regex
+In directory sourceware.org:/tmp/cvs-serv15496/regex
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.89&r2=1.90
-
---- device-mapper/dmsetup/dmsetup.c	2007/04/27 15:12:26	1.89
-+++ device-mapper/dmsetup/dmsetup.c	2007/04/27 18:01:45	1.90
-@@ -19,7 +19,7 @@
- #define _GNU_SOURCE
- #define _FILE_OFFSET_BITS 64
- 
--#include <configure.h>
-+#include "configure.h"
- 
- #include "libdevmapper.h"
- #include "log.h"
+Log Message:
+Directory /cvs/dm/device-mapper/lib/regex added to the repository
