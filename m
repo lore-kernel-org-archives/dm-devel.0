@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmsetup/dmsetup.c
-Date: 27 Apr 2007 15:12:27 -0000
-Message-ID: <20070427151227.24704.qmail@sourceware.org>
+Subject: device-mapper ./WHATS_NEW lib/libdm-report.c
+Date: 27 Apr 2007 15:22:27 -0000
+Message-ID: <20070427152227.27655.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,57 +18,44 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-04-27 16:12:26
+Changes by:	agk@sourceware.org	2007-04-27 16:22:27
 
 Modified files:
 	.              : WHATS_NEW 
-	dmsetup        : dmsetup.c 
+	lib            : libdm-report.c 
 
 Log message:
-	Fix segfault in 'dmsetup status' without --showkeys against crypt target. [nec]
+	Avoid trailing separator in reports when there are hidden sort fields.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.177&r2=1.178
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.88&r2=1.89
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.178&r2=1.179
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.13&r2=1.14
 
---- device-mapper/WHATS_NEW	2007/04/27 14:52:40	1.177
-+++ device-mapper/WHATS_NEW	2007/04/27 15:12:26	1.178
+--- device-mapper/WHATS_NEW	2007/04/27 15:12:26	1.178
++++ device-mapper/WHATS_NEW	2007/04/27 15:22:27	1.179
 @@ -1,5 +1,6 @@
  Version 1.02.19 -
  ====================================
-+  Fix segfault in 'dmsetup status' without --showkeys against crypt target.
++  Avoid trailing separator in reports when there are hidden sort fields.
+   Fix segfault in 'dmsetup status' without --showkeys against crypt target.
    Deal with some more compiler warnings.
    Introduce _add_field() and _is_same_field() to libdm-report.c.
-   Fix some libdevmapper-event and dmeventd memory leaks.
---- device-mapper/dmsetup/dmsetup.c	2007/04/27 14:52:40	1.88
-+++ device-mapper/dmsetup/dmsetup.c	2007/04/27 15:12:26	1.89
-@@ -962,17 +962,18 @@
- 			if (data && !_switches[VERBOSE_ARG])
- 				printf("%s: ", name);
- 			if (target_type) {
--
--			/* Suppress encryption key */
--			if (!_switches[SHOWKEYS_ARG] &&
--			    !strcmp(target_type, "crypt")) {
--				c = params;
--				while (*c && *c != ' ')
--					c++;
--				c++;
--				while (*c && *c != ' ')
--					*c++ = '0';
--			}
-+				/* Suppress encryption key */
-+				if (!_switches[SHOWKEYS_ARG] &&
-+				    cmd == DM_DEVICE_TABLE &&
-+				    !strcmp(target_type, "crypt")) {
-+					c = params;
-+					while (*c && *c != ' ')
-+						c++;
-+					if (*c)
-+						c++;
-+					while (*c && *c != ' ')
-+						*c++ = '0';
-+				}
- 				printf("%" PRIu64 " %" PRIu64 " %s %s",
- 				       start, length, target_type, params);
- 			}
+--- device-mapper/lib/libdm-report.c	2007/04/19 20:24:00	1.13
++++ device-mapper/lib/libdm-report.c	2007/04/27 15:22:27	1.14
+@@ -316,7 +316,15 @@
+ 	}
+ 
+ 	fp->flags |= flags;
+-	list_add(&rh->field_props, &fp->list);
++
++	/*
++	 * Place hidden fields at the front so list_end() will
++	 * tell us when we've reached the last visible field.
++	 */
++	if (fp->flags & FLD_HIDDEN)
++		list_add_h(&rh->field_props, &fp->list);
++	else
++		list_add(&rh->field_props, &fp->list);
+ 
+ 	return fp;
+ }
