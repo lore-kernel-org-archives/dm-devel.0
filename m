@@ -1,13 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] dm-multipath: patch to keep multipath working
-	with new Clariion firmware
-Date: Thu, 26 Apr 2007 15:20:01 -0500
-Message-ID: <20070426202001.GC28331@ether.msp.redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: Strange problem with Device Mapper
+Date: Thu, 26 Apr 2007 21:04:55 -0700
+Message-ID: <20070426210455.05400edf.akpm@linux-foundation.org>
+References: <006001c78826$13f50cf0$4b00a8c0@donald>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="n8g4imXOkfNTN/H1"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <006001c78826$13f50cf0$4b00a8c0@donald>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,66 +18,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: rol@as2917.net
+Cc: dm-devel@redhat.com, 'LKML' <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
+On Thu, 26 Apr 2007 19:12:27 +0200 "Paul Rolland" <rol@as2917.net> wrote:
 
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> Hello,
+> 
+> I've a machine that has been installed with Intel Soft Raid on top
+> of 2 SATA disks.
+> I'm trying to have this work as a RAID-1 array. 
+> Bios configuration has been done, using 128K chunk, and the kernel
+> (2.6.20.7) sees perfectly /dev/mapper/isw_xxxxxxxx_RAID1
+> 
+> But, I'm facing two problems :
+> 1 - If i try to create partitions on this device, it does fail (the 
+>     values are not interpreted correctly)
+> 
+> 2 - To avoid 1), I stop the RAID array (dmraid -an), then I do create
+>     exactly the same partition set on /dev/sda, and /dev/sdb, and
+>     then I reactivate RAID (dmraid -ay).
+>     This allows me to see all the /dev/mapper/isw_xxxxxxx_RAID1p1, p2, ...
+>     But, running fsck -t ext2 /dev/mapper/isw_xxxxxxx_RAID1p1
+>     ends in a lock when the partition is larger than 10Go (well, it is
+>     Ok on the 10Go one, and it locks on the 100Go).
+>     Not a real hardlock, I still can switch to a new VC, but it's not
+>     more possible to start a new command or to stop fsck.
+> 
+> Should I do everything on the physical disks before activating RAID ?
+> Is it a normal behavior ?
+> 
+> BTW, I also noticed that such a device doesn't support BLKRRPART ioctl...
+> So it is possible that what I'm doing is wrong...
+> 
+> Any idea ?
+> 
 
-This is the patch that EMC posted in the redhat bugzilla #231545, to deal with
-their new Clariion firmware that supports ALUA mode. It simply allows multipath
-to continue running with in the way in currently does.
-
--Ben
-
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="ALUA-mode-CLARiiON.cg-diff.patch"
-
-diff -urpN a/libcheckers/emc_clariion.c b/libcheckers/emc_clariion.c
---- a/libcheckers/emc_clariion.c	2006-11-27 17:16:40.000000000 -0600
-+++ b/libcheckers/emc_clariion.c	2007-04-26 15:08:22.000000000 -0500
-@@ -129,8 +129,12 @@ int emc_clariion(struct checker * c)
- 
- 	if ( /* Effective initiator type */
- 	    	sense_buffer[27] != 0x03
--		/* Failover mode should be set to 1 */        
--		|| (sense_buffer[28] & 0x07) != 0x04
-+		/*
-+		 * Failover mode should be set to 1 (PNR failover mode)
-+		 * or 4 (ALUA failover mode).
-+		 */
-+		|| (((sense_buffer[28] & 0x07) != 0x04) &&
-+		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
- 		MSG(c, "emc_clariion_checker: Path not correctly configured "
-diff -urpN a/path_priority/pp_emc/pp_emc.c b/path_priority/pp_emc/pp_emc.c
---- a/path_priority/pp_emc/pp_emc.c	2006-02-02 19:54:58.000000000 -0600
-+++ b/path_priority/pp_emc/pp_emc.c	2007-04-26 15:08:22.000000000 -0500
-@@ -60,8 +60,12 @@ int emc_clariion_prio(const char *dev)
- 	
- 	if ( /* Effective initiator type */
- 	    	sense_buffer[27] != 0x03
--		/* Failover mode should be set to 1 */        
--		|| (sense_buffer[28] & 0x07) != 0x04
-+		/*
-+		 * Failover mode should be set to 1 (PNR failover mode)
-+		 * or 4 (ALUA failover mode).
-+		 */
-+		|| (((sense_buffer[28] & 0x07) != 0x04) &&
-+		    ((sense_buffer[28] & 0x07) != 0x06))
- 		/* Arraycommpath should be set to 1 */
- 		|| (sense_buffer[30] & 0x04) != 0x04) {
- 		fprintf(stderr, "Path not correctly configured for failover");
-
---n8g4imXOkfNTN/H1
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---n8g4imXOkfNTN/H1--
+cc added.
