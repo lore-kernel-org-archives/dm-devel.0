@@ -1,13 +1,9 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] dm-multipath: fix multipath description with
-	system-config-services
-Date: Mon, 30 Apr 2007 13:23:10 -0500
-Message-ID: <20070430182309.GB7089@ether.msp.redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libmultipath discovery.c structs.c
+Date: 2 May 2007 00:16:37 -0000
+Message-ID: <20070502001637.22340.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="eAbsdosE1cNLO4uF"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,39 +13,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-05-02 00:16:36
 
---eAbsdosE1cNLO4uF
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+Modified files:
+	libmultipath   : discovery.c structs.c 
 
-The multipath description doesn't correctly appear in system-config-services on
-redhat machines, due to a blank line in /etc/init.d/multipath.d. This patch
-from bz #237429 removes the line.
+Log message:
+	Fix for 223762. Multipath no longer silently fails on paths in can't get
+	information for.
 
--Ben
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.2&r2=1.32.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/structs.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.14&r2=1.14.2.1
 
---eAbsdosE1cNLO4uF
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="multipath_s-c-s_description.patch"
-
-diff -urpN a/multipathd/multipathd.init.redhat b/multipathd/multipathd.init.redhat
---- a/multipathd/multipathd.init.redhat	2006-02-02 19:54:57.000000000 -0600
-+++ b/multipathd/multipathd.init.redhat	2007-04-30 13:15:13.000000000 -0500
-@@ -1,5 +1,4 @@
- #!/bin/bash
--
- #
- #	/etc/rc.d/init.d/multipathd
- #
-
---eAbsdosE1cNLO4uF
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---eAbsdosE1cNLO4uF--
+--- multipath-tools/libmultipath/discovery.c	2007/04/24 18:49:16	1.32.2.2
++++ multipath-tools/libmultipath/discovery.c	2007/05/02 00:16:36	1.32.2.3
+@@ -116,8 +116,11 @@
+ 	if (!filepresent(path)){
+ 		unsigned int val;
+ 		int ret;
+-		if (sscanf(devname, "gnbd%u", &val) != 1)
+-			return 1;
++		if (sscanf(devname, "gnbd%u", &val) != 1){
++			condlog(3, "%s doesn't exit, not adding %s", path,
++				devname);
++			return 0;
++		}
+ 		ret = device_ok_to_add(devname);
+ 		if (ret == -1)
+ 			return 1;
+@@ -760,8 +763,7 @@
+ 	if (mask & DI_CHECKER && get_state(pp))
+ 		goto blank;
+ 	
+-	if (mask & DI_PRIO &&
+-	    (pp->state == PATH_UP || pp->priority == PRIO_UNDEF))
++	if (mask & DI_PRIO && pp->state == PATH_UP)
+ 		get_prio(pp);
+ 
+ 	if (mask & DI_WWID && !strlen(pp->wwid))
+--- multipath-tools/libmultipath/structs.c	2006/06/06 18:32:43	1.14
++++ multipath-tools/libmultipath/structs.c	2007/05/02 00:16:36	1.14.2.1
+@@ -218,8 +218,10 @@
+ int
+ store_path (vector pathvec, struct path * pp)
+ {
+-	if (!vector_alloc_slot(pathvec))
++	if (!vector_alloc_slot(pathvec)){
++		condlog(0, "unable to allocate space for path");
+ 		return 1;
++	}
+ 
+ 	vector_set_slot(pathvec, pp);
+ 
