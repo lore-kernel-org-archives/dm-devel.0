@@ -1,12 +1,9 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.22 PATCH 26/26] dm log: fix resume failed log device
-Date: Tue, 8 May 2007 20:49:27 +0100
-Message-ID: <20070508194927.GG24114@agk.fab.redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools libmultipath/hwtable.c multipa ...
+Date: 8 May 2007 20:16:00 -0000
+Message-ID: <20070508201600.25940.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,49 +13,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Jonathan Brassow <jbrassow@redhat.com>
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-05-08 20:15:59
 
-This patch removes the possibility of having uninitialized
-log state if the log device has failed.
+Modified files:
+	libmultipath   : hwtable.c 
+	multipath      : multipath.conf.redhat 
 
-When a mirror resumes operation, it calls 'resume' on the
-logging module.  If disk based logging is being used, the
-log device is read to fill in the log state.  If the log
-device has failed, we cannot simply return, because this
-would leave the in-memory log state uninitialized.  Instead,
-we assume all regions are out-of-sync and reset the log
-state.  Failure to do this could result in the logging code
-reporting a region as in-sync, even though it isn't; which
-could result in a corrupted mirror.
+Log message:
+	Fixed bz #223150: changed config defaults for HP Arrays to requested defaults.
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.3&r2=1.20.2.4
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.2&r2=1.6.2.3
 
----
- drivers/md/dm-log.c |    9 ++++++++-
- 1 files changed, 8 insertions(+), 1 deletion(-)
-
-Index: linux-2.6.21/drivers/md/dm-log.c
-===================================================================
---- linux-2.6.21.orig/drivers/md/dm-log.c	2007-05-01 19:20:13.000000000 +0100
-+++ linux-2.6.21/drivers/md/dm-log.c	2007-05-01 19:20:21.000000000 +0100
-@@ -478,7 +478,14 @@ static int disk_resume(struct dirty_log 
- 		DMWARN("%s: Failed to read header on mirror log device",
- 		       lc->log_dev->name);
- 		fail_log_device(lc);
--		return r;
-+		/*
-+		 * If the log device cannot be read, we must assume
-+		 * all regions are out-of-sync.  If we simply return
-+		 * here, the state will be uninitialized and could
-+		 * lead us to return 'in-sync' status for regions
-+		 * that are actually 'out-of-sync'.
-+		 */
-+		lc->header.nr_regions = 0;
- 	}
- 
- 	/* set or clear any new bits -- device has grown */
+--- multipath-tools/libmultipath/hwtable.c	2007/01/10 20:08:08	1.20.2.3
++++ multipath-tools/libmultipath/hwtable.c	2007/05/08 20:15:58	1.20.2.4
+@@ -93,7 +93,7 @@
+ 		.vendor        = "(COMPAQ|HP)",
+ 		.product       = "HSV(1|2).*",
+ 		.getuid        = DEFAULT_GETUID,
+-		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
++		.getprio       = "/sbin/mpath_prio_alua %n",
+ 		.features      = DEFAULT_FEATURES,
+ 		.hwhandler     = DEFAULT_HWHANDLER,
+ 		.selector      = DEFAULT_SELECTOR,
+--- multipath-tools/multipath/multipath.conf.redhat	2007/01/10 20:08:08	1.6.2.2
++++ multipath-tools/multipath/multipath.conf.redhat	2007/05/08 20:15:59	1.6.2.3
+@@ -53,7 +53,7 @@
+ ## not change names on reboot (from /dev/sda to /dev/sdb for example)
+ ## devnode lines are not recommended for blacklisting specific devices.
+ ##
+-#devnode_blacklist {
++#blacklist {
+ #       wwid 26353900f02796769
+ #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+ #	devnode "^hd[a-z]"
