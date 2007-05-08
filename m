@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.22 PATCH 11/26] dm log: fault detection
-Date: Tue, 8 May 2007 20:46:34 +0100
-Message-ID: <20070508194634.GR24114@agk.fab.redhat.com>
+Subject: [2.6.22 PATCH 12/26] dm log: report fault status
+Date: Tue, 8 May 2007 20:46:51 +0100
+Message-ID: <20070508194651.GS24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,91 +22,88 @@ List-Id: dm-devel.ids
 
 From: Jonathan E Brassow <jbrassow@redhat.com>
 
-This patch gives the disk logging code the ability to store the fact
-that an error occured on the log device.  In addition, an event is
-raised when an error is encountered during I/O to the log device.
+This patch reports the status of the log device so that userspace
+can detect the error and take appropriate action.
 
 Signed-off-by: Jonathan E Brassow <jbrassow@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
 
- drivers/md/dm-log.c |   30 +++++++++++++++++++++++++++---
- 1 files changed, 27 insertions(+), 3 deletions(-)
+ drivers/md/dm-log.c   |    7 ++++---
+ drivers/md/dm-raid1.c |   11 +++++++----
+ 2 files changed, 11 insertions(+), 7 deletions(-)
 
 Index: linux-2.6.21/drivers/md/dm-log.c
 ===================================================================
---- linux-2.6.21.orig/drivers/md/dm-log.c	2007-05-01 17:38:32.000000000 +0100
+--- linux-2.6.21.orig/drivers/md/dm-log.c	2007-05-01 17:40:51.000000000 +0100
 +++ linux-2.6.21/drivers/md/dm-log.c	2007-05-01 17:40:51.000000000 +0100
-@@ -152,6 +152,7 @@ struct log_c {
- 	/*
- 	 * Disk log fields
- 	 */
-+	int log_dev_failed;
- 	struct dm_dev *log_dev;
- 	struct log_header header;
+@@ -615,6 +615,7 @@ static int core_status(struct dirty_log 
  
-@@ -315,6 +316,7 @@ static int create_log_context(struct dir
- 		lc->disk_header = NULL;
- 	} else {
- 		lc->log_dev = dev;
-+		lc->log_dev_failed = 0;
- 		lc->header_location.bdev = lc->log_dev->bdev;
- 		lc->header_location.sector = 0;
+ 	switch(status) {
+ 	case STATUSTYPE_INFO:
++		DMEMIT("1 %s", log->type->name);
+ 		break;
  
-@@ -437,6 +439,15 @@ static int count_bits32(uint32_t *addr, 
- 	return count;
- }
- 
-+static void fail_log_device(struct log_c *lc)
-+{
-+	if (lc->log_dev_failed)
-+		return;
-+
-+	lc->log_dev_failed = 1;
-+	dm_table_event(lc->ti->table);
-+}
-+
- static int disk_resume(struct dirty_log *log)
+ 	case STATUSTYPE_TABLE:
+@@ -630,17 +631,17 @@ static int disk_status(struct dirty_log 
+ 		       char *result, unsigned int maxlen)
  {
- 	int r;
-@@ -446,8 +457,12 @@ static int disk_resume(struct dirty_log 
+ 	int sz = 0;
+-	char buffer[16];
+ 	struct log_c *lc = log->context;
  
- 	/* read the disk header */
- 	r = read_header(lc);
--	if (r)
-+	if (r) {
-+		DMWARN("%s: Failed to read header on mirror log device",
-+		       lc->log_dev->name);
-+		fail_log_device(lc);
- 		return r;
-+	}
+ 	switch(status) {
+ 	case STATUSTYPE_INFO:
++		DMEMIT("3 %s %s %c", log->type->name, lc->log_dev->name,
++		       lc->log_dev_failed ? 'D' : 'A');
+ 		break;
  
- 	/* set or clear any new bits -- device has grown */
- 	if (lc->sync == NOSYNC)
-@@ -472,7 +487,14 @@ static int disk_resume(struct dirty_log 
- 	lc->header.nr_regions = lc->region_count;
+ 	case STATUSTYPE_TABLE:
+-		format_dev_t(buffer, lc->log_dev->bdev->bd_dev);
+ 		DMEMIT("%s %u %s %u ", log->type->name,
+-		       lc->sync == DEFAULTSYNC ? 2 : 3, buffer,
++		       lc->sync == DEFAULTSYNC ? 2 : 3, lc->log_dev->name,
+ 		       lc->region_size);
+ 		DMEMIT_SYNC;
+ 	}
+Index: linux-2.6.21/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.21.orig/drivers/md/dm-raid1.c	2007-05-01 17:40:46.000000000 +0100
++++ linux-2.6.21/drivers/md/dm-raid1.c	2007-05-01 17:40:51.000000000 +0100
+@@ -1205,11 +1205,9 @@ static void mirror_resume(struct dm_targ
+ static int mirror_status(struct dm_target *ti, status_type_t type,
+ 			 char *result, unsigned int maxlen)
+ {
+-	unsigned int m, sz;
++	unsigned int m, sz = 0;
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
  
- 	/* write the new header */
--	return write_header(lc);
-+	r = write_header(lc);
-+	if (r) {
-+		DMWARN("%s: Failed to write header on mirror log device",
-+		       lc->log_dev->name);
-+		fail_log_device(lc);
-+	}
+-	sz = ms->rh.log->type->status(ms->rh.log, type, result, maxlen);
+-
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+ 		DMEMIT("%d ", ms->nr_mirrors);
+@@ -1220,9 +1218,14 @@ static int mirror_status(struct dm_targe
+ 			(unsigned long long)ms->rh.log->type->
+ 				get_sync_count(ms->rh.log),
+ 			(unsigned long long)ms->nr_regions);
 +
-+	return r;
- }
++		sz = ms->rh.log->type->status(ms->rh.log, type, result, maxlen);
++
+ 		break;
  
- static uint32_t core_get_region_size(struct dirty_log *log)
-@@ -516,7 +538,9 @@ static int disk_flush(struct dirty_log *
- 		return 0;
+ 	case STATUSTYPE_TABLE:
++		sz = ms->rh.log->type->status(ms->rh.log, type, result, maxlen);
++
+ 		DMEMIT("%d", ms->nr_mirrors);
+ 		for (m = 0; m < ms->nr_mirrors; m++)
+ 			DMEMIT(" %s %llu", ms->mirror[m].dev->name,
+@@ -1234,7 +1237,7 @@ static int mirror_status(struct dm_targe
  
- 	r = write_header(lc);
--	if (!r)
-+	if (r)
-+		fail_log_device(lc);
-+	else
- 		lc->touched = 0;
- 
- 	return r;
+ static struct target_type mirror_target = {
+ 	.name	 = "mirror",
+-	.version = {1, 0, 2},
++	.version = {1, 0, 3},
+ 	.module	 = THIS_MODULE,
+ 	.ctr	 = mirror_ctr,
+ 	.dtr	 = mirror_dtr,
