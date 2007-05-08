@@ -1,8 +1,8 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.22 PATCH 24/26] dm raid1: fix to commit pending
-	clear region requests
-Date: Tue, 8 May 2007 20:49:09 +0100
-Message-ID: <20070508194909.GE24114@agk.fab.redhat.com>
+Subject: [2.6.22 PATCH 25/26] dm raid1: switch rh_in_sync to
+	blocking in do_reads
+Date: Tue, 8 May 2007 20:49:17 +0100
+Message-ID: <20070508194917.GF24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -23,32 +23,28 @@ List-Id: dm-devel.ids
 
 From: Jonathan Brassow <jbrassow@redhat.com>
 
-With the code as it is, it is possible for oustanding clear region
-requests never to get flushed when a mirror is deactivated or suspended.
-This means there will always be some resync work required when a mirror
-is activated, even though it may very well be in-sync.
-
-Always requesting the flush doesn't hurt us.  This is because the log
-tracks whether any changes occurred and, if not, no flush is performed.
+The call to rh_in_sync() in do_reads() should be allowed to block.  It
+is in the mirror worker thread which already permits blocking
+operations.  This will be needed to support clustered mirroring which
+will perform network operations.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
 ---
- drivers/md/dm-raid1.c |    3 +--
- 1 files changed, 1 insertion(+), 2 deletions(-)
+ drivers/md/dm-raid1.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
 
 Index: linux-2.6.21/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.21.orig/drivers/md/dm-raid1.c	2007-05-01 19:20:13.000000000 +0100
-+++ linux-2.6.21/drivers/md/dm-raid1.c	2007-05-01 19:20:17.000000000 +0100
-@@ -405,8 +405,7 @@ static void rh_update_states(struct regi
- 		mempool_free(reg, rh->region_pool);
- 	}
- 
--	if (!list_empty(&recovered))
--		rh->log->type->flush(rh->log);
-+	rh->log->type->flush(rh->log);
- 
- 	list_for_each_entry_safe (reg, next, &clean, list)
- 		mempool_free(reg, rh->region_pool);
+--- linux-2.6.21.orig/drivers/md/dm-raid1.c	2007-05-01 19:20:17.000000000 +0100
++++ linux-2.6.21/drivers/md/dm-raid1.c	2007-05-01 19:20:19.000000000 +0100
+@@ -741,7 +741,7 @@ static void do_reads(struct mirror_set *
+ 		/*
+ 		 * We can only read balance if the region is in sync.
+ 		 */
+-		if (rh_in_sync(&ms->rh, region, 0))
++		if (rh_in_sync(&ms->rh, region, 1))
+ 			m = choose_mirror(ms, bio->bi_sector);
+ 		else
+ 			m = ms->default_mirror;
