@@ -1,9 +1,14 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools libmultipath/hwtable.c multipa ...
-Date: 8 May 2007 20:16:00 -0000
-Message-ID: <20070508201600.25940.qmail@sourceware.org>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [2.6.22 PATCH 01/26] dm: merge max_hw_sector
+Date: Wed, 9 May 2007 08:15:42 +1000
+Message-ID: <17984.63118.524928.921502@notabene.brown>
+References: <20070508194015.GH24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: message from Alasdair G Kergon on Tuesday May 8
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,44 +18,100 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-05-08 20:15:59
+On Tuesday May 8, agk@redhat.com wrote:
+> From: Neil Brown <neilb@suse.de>
+> 
+> Make sure dm honours max_hw_sectors of underlying devices
 
-Modified files:
-	libmultipath   : hwtable.c 
-	multipath      : multipath.conf.redhat 
+I think I want to un-ack this patch (if that makes sense).
 
-Log message:
-	Fixed bz #223150: changed config defaults for HP Arrays to requested defaults.
+I don't think max_hw_sectors is at all relevant to dm or md.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.3&r2=1.20.2.4
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.2&r2=1.6.2.3
+I looked back at the mail thread that sparked this.  Someone reported
+a problem.  I suggested this patch based on differences between
+combine_restrictions_low and blk_queue_stack_limits, and we never
+heard anything more.
 
---- multipath-tools/libmultipath/hwtable.c	2007/01/10 20:08:08	1.20.2.3
-+++ multipath-tools/libmultipath/hwtable.c	2007/05/08 20:15:58	1.20.2.4
-@@ -93,7 +93,7 @@
- 		.vendor        = "(COMPAQ|HP)",
- 		.product       = "HSV(1|2).*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
-+		.getprio       = "/sbin/mpath_prio_alua %n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
---- multipath-tools/multipath/multipath.conf.redhat	2007/01/10 20:08:08	1.6.2.2
-+++ multipath-tools/multipath/multipath.conf.redhat	2007/05/08 20:15:59	1.6.2.3
-@@ -53,7 +53,7 @@
- ## not change names on reboot (from /dev/sda to /dev/sdb for example)
- ## devnode lines are not recommended for blacklisting specific devices.
- ##
--#devnode_blacklist {
-+#blacklist {
- #       wwid 26353900f02796769
- #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #	devnode "^hd[a-z]"
+As far as I can tell, max_hw_sectors is only used by bio_add_pc_page
+which is only used for the scsi SG_IO ioctl.  i.e. it is only needed
+when bypassing the block layer and talking very directly to a low
+level device.
+(Did I get that right Jens?)
+
+So I'm sure this patch doesn't fix the original problem, and I don't
+think we really want this patch (it won't hurt, except that it might
+confuse readers).  We should probably remove
+	t->max_hw_sectors = min_not_zero(t->max_hw_sectors,b->max_hw_sectors);
+from blk_queue_stack_limits.
+
+NeilBrown
+
+
+
+> 
+> Signed-off-by: Neil Brown <neilb@suse.de>
+> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+> ---
+> 
+> ### Diffstat output
+>  drivers/md/dm-table.c         |    9 +++++++++
+>  include/linux/device-mapper.h |    1 +
+>  2 files changed, 10 insertions(+)
+> 
+> Index: linux-2.6.21/drivers/md/dm-table.c
+> ===================================================================
+> --- linux-2.6.21.orig/drivers/md/dm-table.c	2007-05-01 17:38:32.000000000 +0100
+> +++ linux-2.6.21/drivers/md/dm-table.c	2007-05-01 17:40:45.000000000 +0100
+> @@ -99,6 +99,9 @@ static void combine_restrictions_low(str
+>  	lhs->max_segment_size =
+>  		min_not_zero(lhs->max_segment_size, rhs->max_segment_size);
+>  
+> +	lhs->max_hw_sectors =
+> +		min_not_zero(lhs->max_hw_sectors, rhs->max_hw_sectors);
+> +
+>  	lhs->seg_boundary_mask =
+>  		min_not_zero(lhs->seg_boundary_mask, rhs->seg_boundary_mask);
+>  
+> @@ -561,6 +564,9 @@ void dm_set_device_limits(struct dm_targ
+>  	rs->max_segment_size =
+>  		min_not_zero(rs->max_segment_size, q->max_segment_size);
+>  
+> +	rs->max_hw_sectors =
+> +		min_not_zero(rs->max_hw_sectors, q->max_hw_sectors);
+> +
+>  	rs->seg_boundary_mask =
+>  		min_not_zero(rs->seg_boundary_mask,
+>  			     q->seg_boundary_mask);
+> @@ -696,6 +702,8 @@ static void check_for_valid_limits(struc
+>  {
+>  	if (!rs->max_sectors)
+>  		rs->max_sectors = SAFE_MAX_SECTORS;
+> +	if (!rs->max_hw_sectors)
+> +		rs->max_hw_sectors = SAFE_MAX_SECTORS;
+>  	if (!rs->max_phys_segments)
+>  		rs->max_phys_segments = MAX_PHYS_SEGMENTS;
+>  	if (!rs->max_hw_segments)
+> @@ -889,6 +897,7 @@ void dm_table_set_restrictions(struct dm
+>  	q->max_hw_segments = t->limits.max_hw_segments;
+>  	q->hardsect_size = t->limits.hardsect_size;
+>  	q->max_segment_size = t->limits.max_segment_size;
+> +	q->max_hw_sectors = t->limits.max_hw_sectors;
+>  	q->seg_boundary_mask = t->limits.seg_boundary_mask;
+>  	if (t->limits.no_cluster)
+>  		q->queue_flags &= ~(1 << QUEUE_FLAG_CLUSTER);
+> Index: linux-2.6.21/include/linux/device-mapper.h
+> ===================================================================
+> --- linux-2.6.21.orig/include/linux/device-mapper.h	2007-05-01 17:38:32.000000000 +0100
+> +++ linux-2.6.21/include/linux/device-mapper.h	2007-05-01 17:40:45.000000000 +0100
+> @@ -115,6 +115,7 @@ struct io_restrictions {
+>  	unsigned short		max_hw_segments;
+>  	unsigned short		hardsect_size;
+>  	unsigned int		max_segment_size;
+> +	unsigned int		max_hw_sectors;
+>  	unsigned long		seg_boundary_mask;
+>  	unsigned char		no_cluster; /* inverted so that 0 is default */
+>  };
