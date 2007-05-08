@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.22 PATCH 09/26] dm mpath: log device name
-Date: Tue, 8 May 2007 20:45:54 +0100
-Message-ID: <20070508194554.GP24114@agk.fab.redhat.com>
+Subject: [2.6.22 PATCH 10/26] dm: allow offline devices
+Date: Tue, 8 May 2007 20:46:10 +0100
+Message-ID: <20070508194610.GQ24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -17,58 +17,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Edward Goggin <egoggin@emc.com>
+Cc: Mike Anderson <andmike@us.ibm.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Edward Goggin <egoggin@emc.com>
+From: Mike Anderson <andmike@us.ibm.com>
 
-Make the mapped device structure accessible to hardware
-handlers so error messages can include the device name.
+Allow check_device_area to succeed if a device has an i_size of zero. This
+addresses an issue seen on DASD devices setting up a multipath table for
+paths in online and offline state.
 
-Signed-off-by: Edward Goggin <egoggin@emc.com>
+Signed-off-by: Mike Anderson <andmike@us.ibm.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
 
- drivers/md/dm-hw-handler.h |    1 +
- drivers/md/dm-mpath.c      |    3 +++
- drivers/md/dm.c            |    1 +
- 3 files changed, 5 insertions(+)
+ drivers/md/dm-table.c |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
 
-Index: linux-2.6.21/drivers/md/dm-hw-handler.h
+Index: linux-2.6.21/drivers/md/dm-table.c
 ===================================================================
---- linux-2.6.21.orig/drivers/md/dm-hw-handler.h	2007-05-01 17:38:32.000000000 +0100
-+++ linux-2.6.21/drivers/md/dm-hw-handler.h	2007-05-01 17:40:50.000000000 +0100
-@@ -16,6 +16,7 @@
- struct hw_handler_type;
- struct hw_handler {
- 	struct hw_handler_type *type;
-+	struct mapped_device *md;
- 	void *context;
- };
- 
-Index: linux-2.6.21/drivers/md/dm-mpath.c
-===================================================================
---- linux-2.6.21.orig/drivers/md/dm-mpath.c	2007-05-01 17:38:32.000000000 +0100
-+++ linux-2.6.21/drivers/md/dm-mpath.c	2007-05-01 17:40:50.000000000 +0100
-@@ -668,6 +668,9 @@ static int parse_hw_handler(struct arg_s
- 		return -EINVAL;
- 	}
- 
-+	m->hw_handler.md = dm_table_get_md(ti->table);
-+	dm_put(m->hw_handler.md);
-+
- 	r = hwht->create(&m->hw_handler, hw_argc - 1, as->argv);
- 	if (r) {
- 		dm_put_hw_handler(hwht);
-Index: linux-2.6.21/drivers/md/dm.c
-===================================================================
---- linux-2.6.21.orig/drivers/md/dm.c	2007-05-01 17:38:32.000000000 +0100
-+++ linux-2.6.21/drivers/md/dm.c	2007-05-01 17:40:50.000000000 +0100
-@@ -1236,6 +1236,7 @@ void dm_put(struct mapped_device *md)
- 		free_dev(md);
- 	}
+--- linux-2.6.21.orig/drivers/md/dm-table.c	2007-05-01 17:40:45.000000000 +0100
++++ linux-2.6.21/drivers/md/dm-table.c	2007-05-01 17:40:50.000000000 +0100
+@@ -428,13 +428,15 @@ static void close_dev(struct dm_dev *d, 
  }
-+EXPORT_SYMBOL_GPL(dm_put);
  
  /*
-  * Process the deferred bios
+- * If possible (ie. blk_size[major] is set), this checks an area
+- * of a destination device is valid.
++ * If possible, this checks an area of a destination device is valid.
+  */
+ static int check_device_area(struct dm_dev *dd, sector_t start, sector_t len)
+ {
+-	sector_t dev_size;
+-	dev_size = dd->bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	sector_t dev_size = dd->bdev->bd_inode->i_size >> SECTOR_SHIFT;
++
++	if (!dev_size)
++		return 1;
++
+ 	return ((start < dev_size) && (len <= (dev_size - start)));
+ }
+ 
