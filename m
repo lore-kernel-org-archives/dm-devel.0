@@ -1,8 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.22 PATCH 18/26] dm exception store: update dm io
-	interface
-Date: Tue, 8 May 2007 20:47:58 +0100
-Message-ID: <20070508194758.GY24114@agk.fab.redhat.com>
+Subject: [2.6.22 PATCH 19/26] dm log: update dm io interface
+Date: Tue, 8 May 2007 20:48:07 +0100
+Message-ID: <20070508194807.GZ24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -18,146 +17,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Heinz Mauelshagen <hjm@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Heinz Mauelshagen <hjm@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
 
-This patch ports dm-exception-store.c to the new, scalable dm_io() interface.
+This patch ports dm-log.c to the new dm-io interface in order to make
+it scalable to have a large number of persistent dirty logs active in
+parallel.
 
-It replaces dm_io_get()/dm_io_put() by
-dm_io_client_create()/dm_io_client_destroy() calls and
-dm_io_sync_vm() by dm_io() to achive this.
-
-Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
 Cc: Milan Broz <mbroz@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
 
- drivers/md/dm-exception-store.c |   52 +++++++++++++++++++++-------------------
- 1 files changed, 28 insertions(+), 24 deletions(-)
+ drivers/md/dm-log.c |   31 ++++++++++++++++++++++++-------
+ 1 files changed, 24 insertions(+), 7 deletions(-)
 
-Index: linux-2.6.21/drivers/md/dm-exception-store.c
+Index: linux-2.6.21/drivers/md/dm-log.c
 ===================================================================
---- linux-2.6.21.orig/drivers/md/dm-exception-store.c	2007-05-01 17:38:31.000000000 +0100
-+++ linux-2.6.21/drivers/md/dm-exception-store.c	2007-05-01 17:40:53.000000000 +0100
-@@ -1,7 +1,8 @@
- /*
-- * dm-snapshot.c
-+ * dm-exception-store.c
-  *
-  * Copyright (C) 2001-2002 Sistina Software (UK) Limited.
-+ * Copyright (C) 2006 Red Hat GmbH
-  *
-  * This file is released under the GPL.
-  */
-@@ -123,6 +124,7 @@ struct pstore {
- 	atomic_t pending_count;
- 	uint32_t callback_count;
- 	struct commit_callback *callbacks;
-+	struct dm_io_client *io_client;
- };
+--- linux-2.6.21.orig/drivers/md/dm-log.c	2007-05-01 17:40:51.000000000 +0100
++++ linux-2.6.21/drivers/md/dm-log.c	2007-05-01 17:40:54.000000000 +0100
+@@ -149,6 +149,8 @@ struct log_c {
+ 		FORCESYNC,	/* Force a sync to happen */
+ 	} sync;
  
- static inline unsigned int sectors_to_pages(unsigned int sectors)
-@@ -159,14 +161,20 @@ static void free_area(struct pstore *ps)
-  */
- static int chunk_io(struct pstore *ps, uint32_t chunk, int rw)
- {
--	struct io_region where;
--	unsigned long bits;
-+	struct io_region where = {
-+		.bdev = ps->snap->cow->bdev,
-+		.sector = ps->snap->chunk_size * chunk,
-+		.count = ps->snap->chunk_size,
-+	};
-+	struct dm_io_request io_req = {
-+		.bi_rw = rw,
-+		.mem.type = DM_IO_VMA,
-+		.mem.ptr.vma = ps->area,
-+		.client = ps->io_client,
-+		.notify.fn = NULL,
-+	};
- 
--	where.bdev = ps->snap->cow->bdev;
--	where.sector = ps->snap->chunk_size * chunk;
--	where.count = ps->snap->chunk_size;
--
--	return dm_io_sync_vm(1, &where, rw, ps->area, &bits);
-+	return dm_io(&io_req, 1, &where, NULL);
++	struct dm_io_request io_req;
++
+ 	/*
+ 	 * Disk log fields
+ 	 */
+@@ -200,13 +202,20 @@ static void header_from_disk(struct log_
+ 	core->nr_regions = le64_to_cpu(disk->nr_regions);
  }
  
- /*
-@@ -213,17 +221,18 @@ static int read_header(struct pstore *ps
- 		chunk_size_supplied = 0;
- 	}
++static int rw_header(struct log_c *lc, int rw)
++{
++	lc->io_req.bi_rw = rw;
++	lc->io_req.mem.ptr.vma = lc->disk_header;
++	lc->io_req.notify.fn = NULL;
++
++	return dm_io(&lc->io_req, 1, &lc->header_location, NULL);
++}
++
+ static int read_header(struct log_c *log)
+ {
+ 	int r;
+-	unsigned long ebits;
  
--	r = dm_io_get(sectors_to_pages(ps->snap->chunk_size));
--	if (r)
--		return r;
-+	ps->io_client = dm_io_client_create(sectors_to_pages(ps->snap->
-+							     chunk_size));
-+	if (IS_ERR(ps->io_client))
-+		return PTR_ERR(ps->io_client);
- 
- 	r = alloc_area(ps);
- 	if (r)
--		goto bad1;
-+		return r;
- 
- 	r = chunk_io(ps, 0, READ);
- 	if (r)
--		goto bad2;
-+		goto bad;
- 
- 	dh = (struct disk_header *) ps->area;
- 
-@@ -235,7 +244,7 @@ static int read_header(struct pstore *ps
- 	if (le32_to_cpu(dh->magic) != SNAP_MAGIC) {
- 		DMWARN("Invalid or corrupt snapshot");
- 		r = -ENXIO;
--		goto bad2;
-+		goto bad;
- 	}
- 
- 	*new_snapshot = 0;
-@@ -252,27 +261,22 @@ static int read_header(struct pstore *ps
- 	       (unsigned long long)ps->snap->chunk_size);
- 
- 	/* We had a bogus chunk_size. Fix stuff up. */
--	dm_io_put(sectors_to_pages(ps->snap->chunk_size));
- 	free_area(ps);
- 
- 	ps->snap->chunk_size = chunk_size;
- 	ps->snap->chunk_mask = chunk_size - 1;
- 	ps->snap->chunk_shift = ffs(chunk_size) - 1;
- 
--	r = dm_io_get(sectors_to_pages(chunk_size));
-+	r = dm_io_client_resize(sectors_to_pages(ps->snap->chunk_size),
-+				ps->io_client);
+-	r = dm_io_sync_vm(1, &log->header_location, READ,
+-			  log->disk_header, &ebits);
++	r = rw_header(log, READ);
  	if (r)
  		return r;
  
- 	r = alloc_area(ps);
--	if (r)
--		goto bad1;
--
--	return 0;
-+	return r;
+@@ -234,11 +243,8 @@ static int read_header(struct log_c *log
  
--bad2:
-+bad:
- 	free_area(ps);
--bad1:
--	dm_io_put(sectors_to_pages(ps->snap->chunk_size));
- 	return r;
+ static inline int write_header(struct log_c *log)
+ {
+-	unsigned long ebits;
+-
+ 	header_to_disk(&log->header, log->disk_header);
+-	return dm_io_sync_vm(1, &log->header_location, WRITE,
+-			     log->disk_header, &ebits);
++	return rw_header(log, WRITE);
  }
  
-@@ -405,7 +409,7 @@ static void persistent_destroy(struct ex
- {
- 	struct pstore *ps = get_info(store);
+ /*----------------------------------------------------------------
+@@ -257,6 +263,7 @@ static int create_log_context(struct dir
+ 	uint32_t region_size;
+ 	unsigned int region_count;
+ 	size_t bitset_size, buf_size;
++	int r;
  
--	dm_io_put(sectors_to_pages(ps->snap->chunk_size));
-+	dm_io_client_destroy(ps->io_client);
- 	vfree(ps->callbacks);
- 	free_area(ps);
- 	kfree(ps);
+ 	if (argc < 1 || argc > 2) {
+ 		DMWARN("wrong number of arguments to mirror log");
+@@ -326,6 +333,15 @@ static int create_log_context(struct dir
+ 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
+ 				       bitset_size, ti->limits.hardsect_size);
+ 		lc->header_location.count = buf_size >> SECTOR_SHIFT;
++		lc->io_req.mem.type = DM_IO_VMA;
++		lc->io_req.client = dm_io_client_create(dm_div_up(buf_size,
++								   PAGE_SIZE));
++		if (IS_ERR(lc->io_req.client)) {
++			r = PTR_ERR(lc->io_req.client);
++			DMWARN("couldn't allocate disk io client");
++			kfree(lc);
++			return -ENOMEM;
++		}
+ 
+ 		lc->disk_header = vmalloc(buf_size);
+ 		if (!lc->disk_header) {
+@@ -426,6 +442,7 @@ static void disk_dtr(struct dirty_log *l
+ 
+ 	dm_put_device(lc->ti, lc->log_dev);
+ 	vfree(lc->disk_header);
++	dm_io_client_destroy(lc->io_req.client);
+ 	destroy_log_context(lc);
+ }
+ 
