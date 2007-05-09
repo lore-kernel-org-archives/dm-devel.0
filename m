@@ -1,9 +1,12 @@
-From: mornfall@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmeventd/dmeventd.c
-Date: 23 Apr 2007 15:06:04 -0000
-Message-ID: <20070423150604.1505.qmail@sourceware.org>
+From: <ashok.shanmugam@wipro.com>
+Subject: (no subject)
+Date: Wed, 9 May 2007 12:31:09 +0530
+Message-ID: <0979DBFA8BDCD347A56A077BE6D98C099B6905@BLR-SJP-MBX01.wipro.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0475526378=="
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,64 +16,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: akpm@linux-foundation.org
+Cc: dm-devel@redhat.com, hjm@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	mornfall@sourceware.org	2007-04-23 16:06:03
+This is a multi-part message in MIME format.
 
-Modified files:
-	.              : WHATS_NEW 
-	dmeventd       : dmeventd.c 
+--===============0475526378==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C79207.D25F9ABE"
 
-Log message:
-	Fix some memory leaks in dmeventd.
+This is a multi-part message in MIME format.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.175&r2=1.176
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.47&r2=1.48
+------_=_NextPart_001_01C79207.D25F9ABE
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
---- device-mapper/WHATS_NEW	2007/04/19 20:24:00	1.175
-+++ device-mapper/WHATS_NEW	2007/04/23 15:06:03	1.176
-@@ -1,7 +1,7 @@
- Version 1.02.19 -
- ====================================
-   Introduce _add_field() and _is_same_field() to libdm-report.c.
--  Fix some libdevmapper-event memory leaks.
-+  Fix some libdevmapper-event and dmeventd memory leaks.
-   Remove unnecessary memset() return value checks.
-   Fix a few leaks in reporting error paths. [1.02.15+]
- 
---- device-mapper/dmeventd/dmeventd.c	2007/03/16 14:36:14	1.47
-+++ device-mapper/dmeventd/dmeventd.c	2007/04/23 15:06:03	1.48
-@@ -245,6 +245,8 @@
- 
- static void _free_thread_status(struct thread_status *thread)
- {
-+	if (thread->current_task)
-+		dm_task_destroy(thread->current_task);
- 	dm_free(thread->device.uuid);
- 	dm_free(thread->device.name);
- 	dm_free(thread);
-@@ -811,11 +813,6 @@
- 
- static int _terminate_thread(struct thread_status *thread)
- {
--	int ret;
--
--	if ((ret = pthread_cancel(thread->thread)))
--		return ret;
--
- 	return pthread_kill(thread->thread, SIGALRM);
- }
- 
-@@ -1389,7 +1386,7 @@
- 	message_data.msg = msg;
- 	if (msg->cmd == DM_EVENT_CMD_HELLO)  {
- 		ret = 0;
--		answer = dm_strdup(msg->data);
-+		answer = msg->data;
- 		if (answer) {
- 			msg->size = dm_asprintf(&(msg->data), "%s HELLO", answer);
- 			dm_free(answer);
+
+
+hi all
+  i am a kernel newbie,
+  I wanted to know is there any way to create our own fileoperations on =
+a particular disk partition. Please let me know..
+
+Thanks
+Ashok
+
+------_=_NextPart_001_01C79207.D25F9ABE
+Content-Type: text/html;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Diso-8859-1">
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+6.5.7651.59">
+<TITLE></TITLE>
+</HEAD>
+<BODY>
+<!-- Converted from text/plain format -->
+<BR>
+<BR>
+
+<P><FONT SIZE=3D2>hi all<BR>
+&nbsp; i am a kernel newbie,<BR>
+&nbsp; I wanted to know is there any way to create our own =
+fileoperations on a particular disk partition. Please let me know..<BR>
+<BR>
+Thanks<BR>
+Ashok</FONT>
+</P>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01C79207.D25F9ABE--
+
+
+--===============0475526378==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0475526378==--
