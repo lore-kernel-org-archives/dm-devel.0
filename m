@@ -1,8 +1,8 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 4/21] [libmultipath] Fix overflow in circular
-	queue
-Date: Mon, 21 May 2007 11:23:25 +0200
-Message-ID: <20070521092325.DB7E2D44CB@pentland.suse.de>
+Subject: [PATCH 5/21] [kpartx] Use mapname for device-mapper
+	devices
+Date: Mon, 21 May 2007 11:23:30 +0200
+Message-ID: <20070521092330.8A9C9D44CB@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,35 +22,75 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-Multipathd has a circular buffer where messages are stored prior to being
-passed into the system logs. Under certain circumstances the circular buffer
-fills up; and the intention appears to be that new messages are dropped until
-space is freed in the buffer.
-
-However sometimes the result of a full circular buffer is to overwrite the
-earlier messages before they have been passed to the system buffer; resulting
-in the loss of early messages and corruption of later messages.
+When kpartx is run on a device-mapper device it makes more sense
+to use the mapname for generating the device name, not the supplied
+commandline arguments. This way we can run kpartx on '/dev/dm-X'
+and still get sensible names.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/log.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ kpartx/kpartx.c |   16 ++++++++++++----
+ 1 files changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/log.c b/libmultipath/log.c
-index 8b339d7..90e4d1f 100644
---- a/libmultipath/log.c
-+++ b/libmultipath/log.c
-@@ -118,6 +118,11 @@ int log_enqueue (int prio, const char *
- 	/* not enough space on tail : rewind */
- 	if (la->head <= la->tail && len > (la->end - la->tail)) {
- 		logdbg(stderr, "enqueue: rewind tail to %p\n", la->tail);
-+                if (la->head == la->start ) {
-+                        logdbg(stderr, "enqueue: can not rewind tail, drop msg\n");
-+                        la->tail = lastmsg;
-+                        return 1;  /* can't reuse */
-+                }
- 		la->tail = la->start;
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 0ee0cb3..b406b95 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -193,6 +193,7 @@ main(int argc, char **argv){
+ 	char * loopdev = NULL;
+ 	char * delim = NULL;
+ 	char *uuid = NULL;
++	char *mapname = NULL;
+ 	int loopro = 0;
+ 	int hotplug = 0;
+ 	struct stat buf;
+@@ -310,12 +311,19 @@ main(int argc, char **argv){
+ 	
+ 	off = find_devname_offset(device);
  
- 		if (la->empty)
+-	if (!loopdev)
++	if (!loopdev) {
+ 		uuid = dm_mapuuid((unsigned int)MAJOR(buf.st_rdev),
+ 				  (unsigned int)MINOR(buf.st_rdev));
++		mapname = dm_mapname((unsigned int)MAJOR(buf.st_rdev),
++				     (unsigned int)MINOR(buf.st_rdev));
++	}
++
+ 	if (!uuid)
+ 		uuid = device + off;
+ 		
++	if (!mapname)
++		mapname = device + off;
++
+ 	fd = open(device, O_RDONLY);
+ 
+ 	if (fd == -1) {
+@@ -365,7 +373,7 @@ main(int argc, char **argv){
+ 					continue;
+ 
+ 				printf("%s%s%d : 0 %lu %s %lu\n",
+-					device + off, delim, j+1,
++					mapname, delim, j+1,
+ 					(unsigned long) slices[j].size, device,
+ 				        (unsigned long) slices[j].start);
+ 			}
+@@ -374,7 +382,7 @@ main(int argc, char **argv){
+ 		case DELETE:
+ 			for (j = 0; j < n; j++) {
+ 				if (safe_sprintf(partname, "%s%s%d",
+-					     device + off , delim, j+1)) {
++					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+ 					exit(1);
+ 				}
+@@ -407,7 +415,7 @@ main(int argc, char **argv){
+ 					continue;
+ 
+ 				if (safe_sprintf(partname, "%s%s%d",
+-					     device + off , delim, j+1)) {
++					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+ 					exit(1);
+ 				}
 -- 
 1.4.3.4
