@@ -1,11 +1,11 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH 0/21] SUSE multipath-tools resync
-Date: Mon, 21 May 2007 11:22:59 +0200
-Message-ID: <465164F3.7000408@suse.de>
+From: hare@suse.de (Hannes Reinecke)
+Subject: [PATCH 1/21] kpartx: fix crash during boot
+Date: Mon, 21 May 2007 11:23:05 +0200
+Message-ID: <20070521092305.D7A79D44CB@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,49 +16,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Christophe Varoqui <cvaroqui@free.fr>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe,
 
-there have been quite some fixes accumulating here; and as I finally
-found some time I thought it a nice idea to have them sent upstream.
-There are fixes for various bits and pieces; mostly no big deal.
-Most important of these are the following:
+kpartx will crash during boot as device-mapper insists on freeing
+all passed memory upon exit. So we don't have to do it.
 
-- Added an option '-t' to dump the internal hardware table to multipath.
-  This is quite helpful when generating your own multipath-tools.conf
-  and you'd like to start with some sensible defaults.
-- We now got a manpage multipath.conf.5 !
-- New priority checker 'hp_sw' which will allow us to group these
-  machines by priority, too.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+---
+ kpartx/devmapper.c |    7 ++-----
+ 1 files changed, 2 insertions(+), 5 deletions(-)
 
-Some patches might be a bit controversial; they make sense to me, but
-others might think otherwise:
-
-- I've removed libsysfs and implemented the sysfs handling internally.
-  With the current changes in sysfs the older libsysfs doesn't work
-  anymore and in either case it was just a big annoyance.
-- I've hacked up kpartx to handle extended partitions as well.
-  Currently it's quite peculiar with kpartx; we'd be generating
-  tables for all partitions _unless_ it's an extended one.
-  So we won't be getting any symlinks to the extended partition
-  when we're using kpartx, although the device itself is present.
-
-Feel free to omit them if you don't agree.
-And of course, feedback etc is welcome.
-
-Christophe, please pull from
-
-git://git.kernel.org/pub/scm/linux/kernel/hare/multipath-tools/.git
-#upstream-fixes.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 5b27487..4b228ed 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -95,19 +95,16 @@ dm_addmap (int task, const char *name, c
+ 		}
+ 		sprintf(prefixed_uuid, UUID_PREFIX "%s", part, uuid);
+ 		if (!dm_task_set_uuid(dmt, prefixed_uuid))
+-			goto freeout;
++			goto addout;
+ 	}
+ 
+ 	dm_task_no_open_count(dmt);
+ 
+ 	r = dm_task_run (dmt);
+ 
+-	freeout:
+-	if (prefixed_uuid)
+-		free(prefixed_uuid);
+-
+ 	addout:
+ 	dm_task_destroy (dmt);
++
+ 	return r;
+ }
+ 
+-- 
+1.4.3.4
