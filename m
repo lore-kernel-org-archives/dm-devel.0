@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 12/21] [hwtable] Update SGI entries
+Subject: [PATCH 15/21] [multipath] Add multipath.conf.5 manpage
 Date: Mon, 21 May 2007 11:24:23 +0200
-Message-ID: <20070521092423.89C61D44CC@pentland.suse.de>
+Message-ID: <20070521092423.992D6D44CE@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,44 +21,435 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-Add new entry for SGI Infinite Storage machines; and we should also
-use the 'RDAC' path checker for SGI storage.
+We finally have a manpage for multipath.conf.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/hwtable.c |   19 +++++++++++++++++--
- 1 files changed, 17 insertions(+), 2 deletions(-)
+ Makefile.inc               |    1 +
+ multipath/Makefile         |    3 +
+ multipath/multipath.conf.5 |  384 ++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 388 insertions(+), 0 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 9354a8e..5e04d95 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -511,9 +511,24 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
--		.no_path_retry = NO_PATH_RETRY_UNDEF,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = TUR,
-+		.checker_name  = RDAC,
-+	},
-+	{
-+		.vendor        = "SGI",
-+		.product       = "IS.*",
-+		.getuid        = DEFAULT_GETUID,
-+		.getprio       = "/sbin/mpath_prio_tpc /dev/%n",
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_QUEUE,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = RDAC,
- 	},
- 	/*
- 	 * STK arrays
+diff --git a/Makefile.inc b/Makefile.inc
+index 4a705aa..71970ef 100644
+--- a/Makefile.inc
++++ b/Makefile.inc
+@@ -26,6 +26,7 @@ bindir      = $(exec_prefix)/sbin
+ checkersdir = $(TOPDIR)/libcheckers
+ multipathdir = $(TOPDIR)/libmultipath
+ mandir      = $(prefix)/usr/share/man/man8
++man5dir     = $(prefix)/usr/share/man/man5
+ rcdir	    = $(prefix)/etc/init.d
+ 
+ GZIP        = /bin/gzip -9 -c
+diff --git a/multipath/Makefile b/multipath/Makefile
+index 646dfc2..2afa6ad 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -44,11 +44,14 @@ install:
+ 	install -m 644 multipath.rules $(DESTDIR)/etc/udev/rules.d/
+ 	install -d $(DESTDIR)$(mandir)
+ 	install -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
++	install -d $(DESTDIR)$(man5dir)
++	install -m 644 $(EXEC).conf.5.gz $(DESTDIR)$(man5dir)
+ 
+ uninstall:
+ 	rm $(DESTDIR)/etc/udev/rules.d/multipath.rules
+ 	rm $(DESTDIR)$(bindir)/$(EXEC)
+ 	rm $(DESTDIR)$(mandir)/$(EXEC).8.gz
++	rm $(DESTDIR)$(man5dir)/$(EXEC).conf.5.gz
+ 
+ clean:
+ 	rm -f core *.o $(EXEC) *.gz
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+new file mode 100644
+index 0000000..1c1c0db
+--- /dev/null
++++ b/multipath/multipath.conf.5
+@@ -0,0 +1,384 @@
++.TH MULTIPATH.CONF 5 "30 November 2006"
++.SH NAME
++multipath.conf \- multipath daemon configuration file
++.SH DESCRIPTION
++.B "multipath.conf"
++is the configuration file for the multipath daemon. It is used to
++overwrite the built-in configuration table of \fBmultipathd\fP.
++Any line whose first non-white-space character is a '#' is considered
++a comment line. Empty lines are ignored.
++.SH SYNTAX
++The configuration file contains entries of the form:
++.RS
++.nf
++.ft B
++.sp
++<section> {
++.RS
++.ft B
++<attribute> <value>
++.I "..."
++.ft B
++<subsection> {
++.RS
++.ft B
++<attribute> <value>
++.I "..."
++.RE
++}
++.RE
++}
++.ft R
++.fi
++.RE
++.LP
++Each \fIsection\fP contains one or more attributes or subsections. The
++recognized keywords for attributes or subsections depend on the
++section in which they occor.
++.LP
++The following \fIsection\fP keywords are recognized:
++.TP 17
++.B defaults
++This section defines default values for attributes which are used
++whenever no specific setting is given.
++.TP
++.B blacklist
++This section defines which devices should be excluded from the
++multipath topology discovery.
++.TP
++.B blacklist_exceptions
++This section defines which devices should be included in the
++multipath topology discovery, despite being listed in the
++.I blacklist
++section.
++.TP
++.B multipaths
++This section defines the multipath topologies. They are indexed by a
++\fIWorld Wide Identifier\fR(wwid), which is the result of the
++\fIgetuid_callout\fR program.
++.TP
++.B devices
++This section defines the device-specific settings.
++.RE
++.LP
++.SH "defaults section"
++The
++.B defaults
++section recognizes the following keywords:
++.TP 17
++.B polling_interval
++interval between two path checks in seconds; default is
++.I 5
++.TP
++.B udev_dir
++directory where udev creates its device nodes; default is
++.I /dev
++.TP
++.B selector
++The default path selector algorithm to use; they are offered by the
++kernel multipath target. The only currently implemented is
++.I "round-robin 0"
++.TP
++.B path_grouping_policy
++The default path grouping policy to apply to unspecified
++multipaths. Possible values are
++.RS
++.TP 12
++.B failover
++1 path per priority group
++.TP
++.B multibus
++all paths in 1 priority group
++.TP
++.B group_by_serial
++1 priority group per serial number
++.TP
++.B group_by_prio
++1 priority group per priority value. Priorities are determined by
++callout programs specified as a global, per-controller or
++per-multipath option in the configuration file.
++.TP
++.B group_by_node_name
++1 priority group per target node name. Target node names are fetched
++in /sys/class/fc_transport/target*/node_name.
++.TP
++Default value is \fImultibus\fR.
++.RE
++.TP
++.B getuid_callout
++The default program and args to callout to obtain a unique path
++identifier. Should be specified with an absolute path. Default value
++is
++.I /sbin/scsi_id -g -u -s
++.TP
++.B prio_callout
++The default program and args to callout to obtain a path priority
++value. The specified program will be executed and should return a
++numeric value specifying the relative priority of this path. Higher
++number have a higher priority. A '%n' in the command line will be expanded
++to the device name, a '%b' will be expanded to the device number in
++.I major:minor
++format.
++.I "none"
++is a valid value. Currently the following path priority programs are
++implemented:
++.RS
++.TP 12
++.B mpath_prio_emc /dev/%n
++Generate the path priority for EMC arrays
++.TP
++.B mpath_prio_alua /dev/%n
++Generate the path priority based on the SCSI-3 ALUA settings.
++.TP
++.B mpath_prio_netapp /dev/%n
++Generate the path priority for NetApp arrays.
++.TP
++.B mpath_prio_tpc /dev/%n
++Generate the path priority for LSI/Engenio RDAC controller.
++.TP
++.B mpath_prio_hp_sw /dev/%n
++Generate the path priority for Compaq/HP controller in
++active/standby mode.
++.TP
++.B mpath_prio_hds_modular %b
++Generate the path priority for Hitachi HDS Modular storage arrays.
++.TP
++Default value is \fBnone\fR.
++.RE
++.TP
++.B features
++Specify any device-mapper features to be used. The most common of
++these features is
++.I "1 queue_if_no_path" 
++Note that this can also be set via the
++.I no_path_retry
++keyword.
++.TP
++.B path_checker
++The default method used to determine the paths' state. Possible values
++are
++.RS
++.TP 12
++.B readsector0
++Read the first sector of the device
++.TP
++.B tur
++Issue a
++.I TEST UNIT READY
++command to the device.
++.TP
++.B emc_clariion
++Query the EMC Clariion specific EVPD page 0xC0 to determine the path
++state.
++.TP
++.B hp_sw
++Check the path state for HP storage arrays with Active/Standby firmware.
++.TP
++.B rdac
++Check the path state for LSI/Engenio RDAC storage controller.
++.TP
++.B directio
++Read the first sector with direct I/O.
++.TP
++Default value is \fIreadsector0\fR.
++.RE
++.TP
++.B failback
++Tell the daemon to manage path group failback, or not to. 0 or
++.I immediate
++means immediate failback, values >0 means deferred failback (in
++seconds).
++.I manual
++means no failback. Default value is
++.I manual
++.TP
++.B  rr_min_io
++The number of IO to route to a path before switching to the next in
++the same path group. Default is
++.I 1000
++.TP
++.B rr_weight
++If set to \fIpriorities\fR the multipath configurator will assign
++path weights as "path prio * rr_min_io". Possible values are
++.I priorities
++or
++.I uniform
++. Default is
++.I uniform
++.TP
++.B no_path_retry
++Specify the number of retries until disable queueing, or
++.I fail
++for immediate failure (no queueing),
++.I queue
++for never stop queueing. Default is 0.
++.TP
++.B user_friendly_names
++If set to 
++.I yes
++, using the bindings file
++.I /var/lib/multipath/bindings
++to assign a persistent and unique alias to the multipath, in the form of mpath<n>.
++If set to 
++.I no
++use the WWID as the alias. In either case this be will
++be overriden by any specific aliases in the \fImultipaths\fR section.
++Default is
++.I no
++.
++.SH "blacklist section"
++The
++.I blacklist
++section is used to exclude specific device from inclusion in the
++multipath topology. It is most commonly used to exclude local disks or
++LUNs for the array controller.
++.LP
++The following keywords are recognized:
++.TP 17
++.B wwid
++The \fIWorld Wide Identification\fR of a device.
++.TP
++.B devnode
++Regular expression of the device nodes to be excluded.
++.TP
++.B device
++Subsection for the device description. This subsection recognizes the
++.I vendor
++and
++.I product
++keywords. For a full description of these keywords please see the
++.I devices
++section description.
++.SH "blacklist_exceptions section"
++The
++.I blacklist_exceptions
++section is used to revert the actions of the
++.I blacklist
++section, ie to include specific device in the
++multipath topology. This allows to selectively include devices which
++would normally be excluded via the
++.I blacklist
++section.
++.LP
++The following keywords are recognized:
++.TP 17
++.B wwid
++The \fIWorld Wide Identification\fR of a device.
++.TP
++.B devnode
++Regular expression of the device nodes to be excluded.
++.TP
++.B device
++Subsection for the device description. This subsection recognizes the
++.I vendor
++and
++.I product
++keywords. For a full description of these keywords please see the
++.I devices
++section description.
++.SH "multipaths section"
++The only recognized attribute for the
++.B multipaths
++section is the
++.I multipath
++subsection.
++.LP
++The
++.B multipath
++subsection recognizes the following attributes:
++.TP 17
++.B wwid
++Index of the container. Mandatory for this subsection.
++.TP
++.B alias
++(Optional) symbolic name for the multipath map.
++.LP
++The following attributes are optional; if not set the default values
++are taken from the
++.I defaults
++section:
++.sp 1
++.PD .1v
++.RS
++.TP 18
++.B path_grouping_policy
++.TP
++.B path_checker
++.TP
++.B path_selector
++.TP
++.B failback
++.TP
++.B no_path_retry
++.TP
++.B rr_min_io
++.RE
++.PD
++.LP
++.SH "devices section"
++The only recognized attribute for the
++.B devices
++section is the
++.I device
++subsection.
++.LP
++The
++.I device
++subsection recognizes the following attributes:
++.TP 17
++.B vendor
++(Mandatory) Vendor identifier
++.TP
++.B product
++(Mandatory) Product identifier
++.TP
++.B product_blacklist
++Product strings to blacklist for this vendor
++.TP
++.B hardware_handler
++(Optional) The hardware handler to use for this device type.
++The following hardware handler are implemented:
++.RS
++.TP 12
++.B 1 emc
++Hardware handler for EMC storage arrays.
++.RE
++.LP
++The following attributes are optional; if not set the default values
++are taken from the
++.I defaults
++section:
++.sp 1
++.PD .1v
++.RS
++.TP 18
++.B path_grouping_policy
++.TP
++.B getuid_callout
++.TP
++.B path_selector
++.TP
++.B path_checker
++.TP
++.B features
++.TP
++.B prio_callout
++.TP
++.B failback
++.TP
++.B rr_weight
++.TP
++.B no_path_retry
++.TP
++.B rr_min_io
++.RE
++.PD
++.LP
++.SH "SEE ALSO"
++.BR udev (8),
++.BR dmsetup (8)
++.BR multipath (8)
++.BR multipathd (8)
++.SH AUTHORS
++.B multipath
++was developed by Christophe Varoqui, <christophe.varoqui@free.fr> and others.
 -- 
 1.4.3.4
