@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 10/21] [hwtable] Update S/390 DASD entry
+Subject: [PATCH 18/21] [libmultipath] Fix pp_alua install target
 Date: Mon, 21 May 2007 11:24:23 +0200
-Message-ID: <20070521092423.83F0FD44CB@pentland.suse.de>
+Message-ID: <20070521092423.A58ABD44CE@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,31 +21,27 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-Current s390-tools contain a program 'dasdinfo', which should be used
-instead of the older 'dasd_id' program from udev.
-And we should be using 'queue_if_no_path', too.
+The install target in the pp_alua Makefile should reference the
+program, not the build target. Otherwise the program gets recompiled
+on each install.
 
-Signed-off-by: Stefan Bader <bader@de.ibm.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/hwtable.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ path_priority/pp_alua/Makefile |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index df6f5aa..9354a8e 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -404,9 +404,9 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "IBM",
- 		.product       = "S/390 DASD ECKD",
- 		.bl_product       = "S/390.*",
--		.getuid        = "/sbin/dasd_id /dev/%n",
-+		.getuid        = "/sbin/dasdinfo -u -b %n",
- 		.getprio       = NULL,
--		.features      = DEFAULT_FEATURES,
-+		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
- 		.pgpolicy      = MULTIBUS,
+diff --git a/path_priority/pp_alua/Makefile b/path_priority/pp_alua/Makefile
+index 983ffe3..6f356a1 100644
+--- a/path_priority/pp_alua/Makefile
++++ b/path_priority/pp_alua/Makefile
+@@ -35,7 +35,7 @@ glibc:	$(OBJS)
+ klibc:	$(OBJS)
+ 	$(CC) -static -o $(EXEC) $(OBJS)
+ 
+-install: $(BUILD) $(EXEC).8.gz
++install: $(EXEC) $(EXEC).8.gz
+ 	$(INSTALL) -s -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
+ 	$(INSTALL) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)/$(EXEC).8.gz
+ 
 -- 
 1.4.3.4
