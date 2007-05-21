@@ -1,12 +1,8 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [2.6.22-rc1-mm1 PATCH] fix missing '}' in new ratelimit
-	macros
-Date: Mon, 21 May 2007 15:02:57 -0500
-Message-ID: <1179777777.13913.6.camel@hydrogen.msp.redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH 0/2] Path priority for RDAC devices
+Date: Mon, 21 May 2007 14:50:31 -0700
+Message-ID: <20070521215031.29373.63818.sendpatchset@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,49 +13,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-devel@redhat.com, christophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-dm-add-ratelimit-logging-macros-fix.patch
- brassow
+Hi Christophe,
 
-Index: linux-2.6.22-rc1-mm1/drivers/md/dm.h
-===================================================================
---- linux-2.6.22-rc1-mm1.orig/drivers/md/dm.h
-+++ linux-2.6.22-rc1-mm1/drivers/md/dm.h
-@@ -25,7 +25,7 @@
- 		if (printk_ratelimit())	\
- 			printk(KERN_ERR DM_NAME ": " DM_MSG_PREFIX ": " \
- 			       f "\n", ## arg); \
--	while (0)
-+	} while (0)
- 
- #define DMWARN(f, arg...) \
- 	printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
-@@ -34,7 +34,7 @@
- 		if (printk_ratelimit())	\
- 			printk(KERN_WARNING DM_NAME ": " DM_MSG_PREFIX ": " \
- 			       f "\n", ## arg); \
--	while (0)
-+	} while (0)
- 
- #define DMINFO(f, arg...) \
- 	printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f "\n", ## arg)
-@@ -43,7 +43,7 @@
- 		if (printk_ratelimit())	\
- 			printk(KERN_INFO DM_NAME ": " DM_MSG_PREFIX ": " f \
- 			       "\n", ## arg); \
--	while (0)
-+	} while (0)
- 
- #ifdef CONFIG_DM_DEBUG
- #  define DMDEBUG(f, arg...) \
-@@ -53,7 +53,7 @@
- 		if (printk_ratelimit())	\
- 			printk(KERN_DEBUG DM_NAME ": " DM_MSG_PREFIX ": " f \
- 			       "\n", ## arg); \
--	while (0)
-+	} while (0)
- #else
- #  define DMDEBUG(f, arg...) do {} while (0)
- #  define DMDEBUG_LIMIT(f, arg...) do {} while (0)
+Few months ago I submitted path checker code for RDAC devices.
+
+Recently I found that the priority of the paths are not being set properly.
+
+Here are 2 patches that fix the problem and set the priority appropriately.
+
+Please let me know what do you think.
+
+Thanks
+
+chandra
+
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
