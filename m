@@ -1,8 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 11/21] [libmultipath] Fix typo on
- blacklist_exceptions handler
+Subject: [PATCH 12/21] [hwtable] Update SGI entries
 Date: Mon, 21 May 2007 11:24:23 +0200
-Message-ID: <20070521092423.86CE6D44CA@pentland.suse.de>
+Message-ID: <20070521092423.89C61D44CC@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,26 +21,44 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-blacklist_exceptions_handler() has a typo which prevents the handler
-from working.
+Add new entry for SGI Infinite Storage machines; and we should also
+use the 'RDAC' path checker for SGI storage.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/dict.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ libmultipath/hwtable.c |   19 +++++++++++++++++--
+ 1 files changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index c705cc6..4572a7d 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -270,7 +270,7 @@ blacklist_exceptions_handler(vector strv
- 	conf->elist_wwid = vector_alloc();
- 	conf->elist_device = vector_alloc();
- 
--	if (!conf->elist_devnode || !conf->elist_wwid || !conf->blist_device)
-+	if (!conf->elist_devnode || !conf->elist_wwid || !conf->elist_device)
- 		return 1;
- 
- 	return 0;
+diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
+index 9354a8e..5e04d95 100644
+--- a/libmultipath/hwtable.c
++++ b/libmultipath/hwtable.c
+@@ -511,9 +511,24 @@ static struct hwentry default_hw[] = {
+ 		.pgpolicy      = GROUP_BY_PRIO,
+ 		.pgfailback    = -FAILBACK_IMMEDIATE,
+ 		.rr_weight     = RR_WEIGHT_NONE,
+-		.no_path_retry = NO_PATH_RETRY_UNDEF,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
+ 		.minio         = DEFAULT_MINIO,
+-		.checker_name  = TUR,
++		.checker_name  = RDAC,
++	},
++	{
++		.vendor        = "SGI",
++		.product       = "IS.*",
++		.getuid        = DEFAULT_GETUID,
++		.getprio       = "/sbin/mpath_prio_tpc /dev/%n",
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = DEFAULT_HWHANDLER,
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
+ 	},
+ 	/*
+ 	 * STK arrays
 -- 
 1.4.3.4
