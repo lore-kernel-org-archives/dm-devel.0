@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 15/21] [multipath] Add multipath.conf.5 manpage
+Subject: [PATCH 19/21] [kpartx] Update extended partition handling
 Date: Mon, 21 May 2007 11:24:23 +0200
-Message-ID: <20070521092423.992D6D44CE@pentland.suse.de>
+Message-ID: <20070521092423.A7E8FD44CF@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,435 +21,377 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-We finally have a manpage for multipath.conf.
+Currently we don't handle extended partitions at all.
+This patch implements a proper handling for extended partitions so that we
+first create the dm device for the extended partitions and then the logical
+partitions as dm devices on top of the device for the extended partition.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- Makefile.inc               |    1 +
- multipath/Makefile         |    3 +
- multipath/multipath.conf.5 |  384 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 388 insertions(+), 0 deletions(-)
+ kpartx/devmapper.c |   29 ++++++++++
+ kpartx/devmapper.h |    1 +
+ kpartx/dos.c       |    7 +--
+ kpartx/kpartx.c    |  153 ++++++++++++++++++++++++++++++++++++++++-----------
+ kpartx/kpartx.h    |    3 +
+ 5 files changed, 156 insertions(+), 37 deletions(-)
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 4a705aa..71970ef 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -26,6 +26,7 @@ bindir      = $(exec_prefix)/sbin
- checkersdir = $(TOPDIR)/libcheckers
- multipathdir = $(TOPDIR)/libmultipath
- mandir      = $(prefix)/usr/share/man/man8
-+man5dir     = $(prefix)/usr/share/man/man5
- rcdir	    = $(prefix)/etc/init.d
- 
- GZIP        = /bin/gzip -9 -c
-diff --git a/multipath/Makefile b/multipath/Makefile
-index 646dfc2..2afa6ad 100644
---- a/multipath/Makefile
-+++ b/multipath/Makefile
-@@ -44,11 +44,14 @@ install:
- 	install -m 644 multipath.rules $(DESTDIR)/etc/udev/rules.d/
- 	install -d $(DESTDIR)$(mandir)
- 	install -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
-+	install -d $(DESTDIR)$(man5dir)
-+	install -m 644 $(EXEC).conf.5.gz $(DESTDIR)$(man5dir)
- 
- uninstall:
- 	rm $(DESTDIR)/etc/udev/rules.d/multipath.rules
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
- 	rm $(DESTDIR)$(mandir)/$(EXEC).8.gz
-+	rm $(DESTDIR)$(man5dir)/$(EXEC).conf.5.gz
- 
- clean:
- 	rm -f core *.o $(EXEC) *.gz
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-new file mode 100644
-index 0000000..1c1c0db
---- /dev/null
-+++ b/multipath/multipath.conf.5
-@@ -0,0 +1,384 @@
-+.TH MULTIPATH.CONF 5 "30 November 2006"
-+.SH NAME
-+multipath.conf \- multipath daemon configuration file
-+.SH DESCRIPTION
-+.B "multipath.conf"
-+is the configuration file for the multipath daemon. It is used to
-+overwrite the built-in configuration table of \fBmultipathd\fP.
-+Any line whose first non-white-space character is a '#' is considered
-+a comment line. Empty lines are ignored.
-+.SH SYNTAX
-+The configuration file contains entries of the form:
-+.RS
-+.nf
-+.ft B
-+.sp
-+<section> {
-+.RS
-+.ft B
-+<attribute> <value>
-+.I "..."
-+.ft B
-+<subsection> {
-+.RS
-+.ft B
-+<attribute> <value>
-+.I "..."
-+.RE
+diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
+index 4b228ed..6cbb8eb 100644
+--- a/kpartx/devmapper.c
++++ b/kpartx/devmapper.c
+@@ -219,3 +219,32 @@ out:
+ 	dm_task_destroy(dmt);
+ 	return uuid;
+ }
++
++int
++dm_devn (char * mapname, int *major, int *minor)
++{
++	int r = 1;
++	struct dm_task *dmt;
++	struct dm_info info;
++
++	if (!(dmt = dm_task_create(DM_DEVICE_INFO)))
++		return 0;
++
++	if (!dm_task_set_name(dmt, mapname))
++		goto out;
++
++	if (!dm_task_run(dmt))
++		goto out;
++
++	if (!dm_task_get_info(dmt, &info))
++		goto out;
++
++	*major = info.major;
++	*minor = info.minor;
++
++	r = 0;
++out:
++	dm_task_destroy(dmt);
++	return r;
 +}
-+.RE
-+}
-+.ft R
-+.fi
-+.RE
-+.LP
-+Each \fIsection\fP contains one or more attributes or subsections. The
-+recognized keywords for attributes or subsections depend on the
-+section in which they occor.
-+.LP
-+The following \fIsection\fP keywords are recognized:
-+.TP 17
-+.B defaults
-+This section defines default values for attributes which are used
-+whenever no specific setting is given.
-+.TP
-+.B blacklist
-+This section defines which devices should be excluded from the
-+multipath topology discovery.
-+.TP
-+.B blacklist_exceptions
-+This section defines which devices should be included in the
-+multipath topology discovery, despite being listed in the
-+.I blacklist
-+section.
-+.TP
-+.B multipaths
-+This section defines the multipath topologies. They are indexed by a
-+\fIWorld Wide Identifier\fR(wwid), which is the result of the
-+\fIgetuid_callout\fR program.
-+.TP
-+.B devices
-+This section defines the device-specific settings.
-+.RE
-+.LP
-+.SH "defaults section"
-+The
-+.B defaults
-+section recognizes the following keywords:
-+.TP 17
-+.B polling_interval
-+interval between two path checks in seconds; default is
-+.I 5
-+.TP
-+.B udev_dir
-+directory where udev creates its device nodes; default is
-+.I /dev
-+.TP
-+.B selector
-+The default path selector algorithm to use; they are offered by the
-+kernel multipath target. The only currently implemented is
-+.I "round-robin 0"
-+.TP
-+.B path_grouping_policy
-+The default path grouping policy to apply to unspecified
-+multipaths. Possible values are
-+.RS
-+.TP 12
-+.B failover
-+1 path per priority group
-+.TP
-+.B multibus
-+all paths in 1 priority group
-+.TP
-+.B group_by_serial
-+1 priority group per serial number
-+.TP
-+.B group_by_prio
-+1 priority group per priority value. Priorities are determined by
-+callout programs specified as a global, per-controller or
-+per-multipath option in the configuration file.
-+.TP
-+.B group_by_node_name
-+1 priority group per target node name. Target node names are fetched
-+in /sys/class/fc_transport/target*/node_name.
-+.TP
-+Default value is \fImultibus\fR.
-+.RE
-+.TP
-+.B getuid_callout
-+The default program and args to callout to obtain a unique path
-+identifier. Should be specified with an absolute path. Default value
-+is
-+.I /sbin/scsi_id -g -u -s
-+.TP
-+.B prio_callout
-+The default program and args to callout to obtain a path priority
-+value. The specified program will be executed and should return a
-+numeric value specifying the relative priority of this path. Higher
-+number have a higher priority. A '%n' in the command line will be expanded
-+to the device name, a '%b' will be expanded to the device number in
-+.I major:minor
-+format.
-+.I "none"
-+is a valid value. Currently the following path priority programs are
-+implemented:
-+.RS
-+.TP 12
-+.B mpath_prio_emc /dev/%n
-+Generate the path priority for EMC arrays
-+.TP
-+.B mpath_prio_alua /dev/%n
-+Generate the path priority based on the SCSI-3 ALUA settings.
-+.TP
-+.B mpath_prio_netapp /dev/%n
-+Generate the path priority for NetApp arrays.
-+.TP
-+.B mpath_prio_tpc /dev/%n
-+Generate the path priority for LSI/Engenio RDAC controller.
-+.TP
-+.B mpath_prio_hp_sw /dev/%n
-+Generate the path priority for Compaq/HP controller in
-+active/standby mode.
-+.TP
-+.B mpath_prio_hds_modular %b
-+Generate the path priority for Hitachi HDS Modular storage arrays.
-+.TP
-+Default value is \fBnone\fR.
-+.RE
-+.TP
-+.B features
-+Specify any device-mapper features to be used. The most common of
-+these features is
-+.I "1 queue_if_no_path" 
-+Note that this can also be set via the
-+.I no_path_retry
-+keyword.
-+.TP
-+.B path_checker
-+The default method used to determine the paths' state. Possible values
-+are
-+.RS
-+.TP 12
-+.B readsector0
-+Read the first sector of the device
-+.TP
-+.B tur
-+Issue a
-+.I TEST UNIT READY
-+command to the device.
-+.TP
-+.B emc_clariion
-+Query the EMC Clariion specific EVPD page 0xC0 to determine the path
-+state.
-+.TP
-+.B hp_sw
-+Check the path state for HP storage arrays with Active/Standby firmware.
-+.TP
-+.B rdac
-+Check the path state for LSI/Engenio RDAC storage controller.
-+.TP
-+.B directio
-+Read the first sector with direct I/O.
-+.TP
-+Default value is \fIreadsector0\fR.
-+.RE
-+.TP
-+.B failback
-+Tell the daemon to manage path group failback, or not to. 0 or
-+.I immediate
-+means immediate failback, values >0 means deferred failback (in
-+seconds).
-+.I manual
-+means no failback. Default value is
-+.I manual
-+.TP
-+.B  rr_min_io
-+The number of IO to route to a path before switching to the next in
-+the same path group. Default is
-+.I 1000
-+.TP
-+.B rr_weight
-+If set to \fIpriorities\fR the multipath configurator will assign
-+path weights as "path prio * rr_min_io". Possible values are
-+.I priorities
-+or
-+.I uniform
-+. Default is
-+.I uniform
-+.TP
-+.B no_path_retry
-+Specify the number of retries until disable queueing, or
-+.I fail
-+for immediate failure (no queueing),
-+.I queue
-+for never stop queueing. Default is 0.
-+.TP
-+.B user_friendly_names
-+If set to 
-+.I yes
-+, using the bindings file
-+.I /var/lib/multipath/bindings
-+to assign a persistent and unique alias to the multipath, in the form of mpath<n>.
-+If set to 
-+.I no
-+use the WWID as the alias. In either case this be will
-+be overriden by any specific aliases in the \fImultipaths\fR section.
-+Default is
-+.I no
-+.
-+.SH "blacklist section"
-+The
-+.I blacklist
-+section is used to exclude specific device from inclusion in the
-+multipath topology. It is most commonly used to exclude local disks or
-+LUNs for the array controller.
-+.LP
-+The following keywords are recognized:
-+.TP 17
-+.B wwid
-+The \fIWorld Wide Identification\fR of a device.
-+.TP
-+.B devnode
-+Regular expression of the device nodes to be excluded.
-+.TP
-+.B device
-+Subsection for the device description. This subsection recognizes the
-+.I vendor
-+and
-+.I product
-+keywords. For a full description of these keywords please see the
-+.I devices
-+section description.
-+.SH "blacklist_exceptions section"
-+The
-+.I blacklist_exceptions
-+section is used to revert the actions of the
-+.I blacklist
-+section, ie to include specific device in the
-+multipath topology. This allows to selectively include devices which
-+would normally be excluded via the
-+.I blacklist
-+section.
-+.LP
-+The following keywords are recognized:
-+.TP 17
-+.B wwid
-+The \fIWorld Wide Identification\fR of a device.
-+.TP
-+.B devnode
-+Regular expression of the device nodes to be excluded.
-+.TP
-+.B device
-+Subsection for the device description. This subsection recognizes the
-+.I vendor
-+and
-+.I product
-+keywords. For a full description of these keywords please see the
-+.I devices
-+section description.
-+.SH "multipaths section"
-+The only recognized attribute for the
-+.B multipaths
-+section is the
-+.I multipath
-+subsection.
-+.LP
-+The
-+.B multipath
-+subsection recognizes the following attributes:
-+.TP 17
-+.B wwid
-+Index of the container. Mandatory for this subsection.
-+.TP
-+.B alias
-+(Optional) symbolic name for the multipath map.
-+.LP
-+The following attributes are optional; if not set the default values
-+are taken from the
-+.I defaults
-+section:
-+.sp 1
-+.PD .1v
-+.RS
-+.TP 18
-+.B path_grouping_policy
-+.TP
-+.B path_checker
-+.TP
-+.B path_selector
-+.TP
-+.B failback
-+.TP
-+.B no_path_retry
-+.TP
-+.B rr_min_io
-+.RE
-+.PD
-+.LP
-+.SH "devices section"
-+The only recognized attribute for the
-+.B devices
-+section is the
-+.I device
-+subsection.
-+.LP
-+The
-+.I device
-+subsection recognizes the following attributes:
-+.TP 17
-+.B vendor
-+(Mandatory) Vendor identifier
-+.TP
-+.B product
-+(Mandatory) Product identifier
-+.TP
-+.B product_blacklist
-+Product strings to blacklist for this vendor
-+.TP
-+.B hardware_handler
-+(Optional) The hardware handler to use for this device type.
-+The following hardware handler are implemented:
-+.RS
-+.TP 12
-+.B 1 emc
-+Hardware handler for EMC storage arrays.
-+.RE
-+.LP
-+The following attributes are optional; if not set the default values
-+are taken from the
-+.I defaults
-+section:
-+.sp 1
-+.PD .1v
-+.RS
-+.TP 18
-+.B path_grouping_policy
-+.TP
-+.B getuid_callout
-+.TP
-+.B path_selector
-+.TP
-+.B path_checker
-+.TP
-+.B features
-+.TP
-+.B prio_callout
-+.TP
-+.B failback
-+.TP
-+.B rr_weight
-+.TP
-+.B no_path_retry
-+.TP
-+.B rr_min_io
-+.RE
-+.PD
-+.LP
-+.SH "SEE ALSO"
-+.BR udev (8),
-+.BR dmsetup (8)
-+.BR multipath (8)
-+.BR multipathd (8)
-+.SH AUTHORS
-+.B multipath
-+was developed by Christophe Varoqui, <christophe.varoqui@free.fr> and others.
++
+diff --git a/kpartx/devmapper.h b/kpartx/devmapper.h
+index e20e456..ccdbead 100644
+--- a/kpartx/devmapper.h
++++ b/kpartx/devmapper.h
+@@ -6,3 +6,4 @@ int dm_map_present (char *);
+ char * dm_mapname(int major, int minor);
+ dev_t dm_get_first_dep(char *devname);
+ char * dm_mapuuid(int major, int minor);
++int dm_devn (char * mapname, int *major, int *minor);
+diff --git a/kpartx/dos.c b/kpartx/dos.c
+index a707423..1691105 100644
+--- a/kpartx/dos.c
++++ b/kpartx/dos.c
+@@ -16,7 +16,7 @@ is_extended(int type) {
+ }
+ 
+ static int
+-read_extended_partition(int fd, struct partition *ep,
++read_extended_partition(int fd, struct partition *ep, int en,
+ 			struct slice *sp, int ns)
+ {
+ 	struct partition p;
+@@ -53,6 +53,7 @@ read_extended_partition(int fd, struct p
+ 			if (n < ns) {
+ 				sp[n].start = here + le32_to_cpu(p.start_sect);
+ 				sp[n].size = le32_to_cpu(p.nr_sects);
++				sp[n].container = en + 1;
+ 				n++;
+ 			} else {
+ 				fprintf(stderr,
+@@ -97,9 +98,7 @@ read_dos_pt(int fd, struct slice all, st
+ 			break;
+ 		}
+ 		if (is_extended(p.sys_type)) {
+-			n += read_extended_partition(fd, &p, sp+n, ns-n);
+-			/* hide the extended partition itself */
+-			sp[i].size = 0;
++			n += read_extended_partition(fd, &p, i, sp+n, ns-n);
+ 		}
+ 	}
+ 	return n;
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index b406b95..48169f1 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -115,7 +115,7 @@ strip_slash (char * device)
+ 	char * p = device;
+ 
+ 	while (*(p++) != 0x0) {
+-		
++
+ 		if (*p == '/')
+ 			*p = '!';
+ 	}
+@@ -125,9 +125,9 @@ static int
+ find_devname_offset (char * device)
+ {
+ 	char *p, *q = NULL;
+-	
++
+ 	p = device;
+-	
++
+ 	while (*p++)
+ 		if (*p == '/')
+ 			q = p;
+@@ -182,7 +182,7 @@ get_hotplug_device(void)
+ 
+ int
+ main(int argc, char **argv){
+-        int fd, i, j, k, n, op, off, arg;
++	int fd, i, j, k, m, n, op, off, arg, c, d;
+ 	struct slice all;
+ 	struct pt *ptp;
+ 	enum action what = LIST;
+@@ -205,7 +205,7 @@ main(int argc, char **argv){
+ 	type = device = diskdevice = NULL;
+ 	memset(&all, 0, sizeof(all));
+ 	memset(&partname, 0, sizeof(partname));
+-	
++
+ 	/* Check whether hotplug mode. */
+ 	progname = strrchr(argv[0], '/');
+ 
+@@ -291,7 +291,7 @@ main(int argc, char **argv){
+ 
+ 		if (!loopdev && what == DELETE)
+ 			exit (0);
+-				
++
+ 		if (!loopdev) {
+ 			loopdev = find_unused_loop_device();
+ 
+@@ -308,7 +308,7 @@ main(int argc, char **argv){
+ 		memset(delim, 0, DELIM_SIZE);
+ 		set_delimiter(device, delim);
+ 	}
+-	
++
+ 	off = find_devname_offset(device);
+ 
+ 	if (!loopdev) {
+@@ -320,7 +320,7 @@ main(int argc, char **argv){
+ 
+ 	if (!uuid)
+ 		uuid = device + off;
+-		
++
+ 	if (!mapname)
+ 		mapname = device + off;
+ 
+@@ -339,7 +339,7 @@ main(int argc, char **argv){
+ 
+ 		if (type && strcmp(type, ptp->type))
+ 			continue;
+-		
++
+ 		/* here we get partitions */
+ 		n = ptp->fn(fd, all, slices, SIZE(slices));
+ 
+@@ -353,30 +353,47 @@ main(int argc, char **argv){
+ 		else
+ 			continue;
+ 
+-		/*
+-		 * test for overlap, as in the case of an extended partition
+-		 * zero their size to avoid mapping
+-		 */
+-		for (j=0; j<n; j++) {
+-			for (k=j+1; k<n; k++) {
+-				if (slices[k].start > slices[j].start &&
+-				    slices[k].start < slices[j].start +
+-				    slices[j].size)
+-					slices[j].size = 0;
+-			}
+-		}
+-
+ 		switch(what) {
+ 		case LIST:
+-			for (j = 0; j < n; j++) {
++			for (j = 0, c = 0, m = 0; j < n; j++) {
+ 				if (slices[j].size == 0)
+ 					continue;
++				if (slices[j].container > 0) {
++					c++;
++					continue;
++				}
++
++				slices[j].minor = m++;
+ 
+ 				printf("%s%s%d : 0 %lu %s %lu\n",
+-					mapname, delim, j+1,
+-					(unsigned long) slices[j].size, device,
+-				        (unsigned long) slices[j].start);
++				       mapname, delim, j+1,
++				       (unsigned long) slices[j].size, device,
++				       (unsigned long) slices[j].start);
++			}
++			/* Loop to resolve contained slices */
++			d = c;
++			while (c) {
++				for (j = 0; j < n; j++) {
++					if (slices[j].size == 0)
++						continue;
++					if (slices[j].minor > 0)
++						continue;
++					if (slices[j].container == 0)
++						continue;
++					slices[j].minor = m++;
++
++					printf("%s%s%d : 0 %lu /dev/dm-%d %lu\n",
++					       mapname, delim, j+1,
++					       (unsigned long) slices[j].size,
++					       slices[j].minor,
++					       (unsigned long) slices[j].start);
++					c--;
++				}
++				/* Terminate loop if nothing more to resolve */
++				if (d == c)
++					break;
+ 			}
++
+ 			break;
+ 
+ 		case DELETE:
+@@ -401,7 +418,7 @@ main(int argc, char **argv){
+ 			if (S_ISREG (buf.st_mode)) {
+ 				if (del_loop(device)) {
+ 					if (verbose)
+-				    		printf("can't del loop : %s\n",
++						printf("can't del loop : %s\n",
+ 							device);
+ 					exit(1);
+ 				}
+@@ -410,17 +427,23 @@ main(int argc, char **argv){
+ 			break;
+ 
+ 		case ADD:
+-			for (j=0; j<n; j++) {
++			for (j=0, c = 0; j<n; j++) {
+ 				if (slices[j].size == 0)
+ 					continue;
+ 
++				/* Skip all contained slices */
++				if (slices[j].container > 0) {
++					c++;
++					continue;
++				}
++
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
+ 					exit(1);
+ 				}
+ 				strip_slash(partname);
+-				
++
+ 				if (safe_sprintf(params, "%s %lu", device,
+ 					     (unsigned long)slices[j].start)) {
+ 					fprintf(stderr, "params too small\n");
+@@ -437,10 +460,74 @@ main(int argc, char **argv){
+ 					dm_simplecmd(DM_DEVICE_RESUME,
+ 							partname);
+ 
++				dm_devn(partname, &slices[j].major,
++					&slices[j].minor);
++
+ 				if (verbose)
+-					printf("add map %s : 0 %lu %s %s\n",
+-						partname, slices[j].size,
+-						DM_TARGET, params);
++					printf("add map %s (%d:%d): 0 %lu %s %s\n",
++					       partname, slices[j].major,
++					       slices[j].minor, slices[j].size,
++					       DM_TARGET, params);
++			}
++			/* Loop to resolve contained slices */
++			d = c;
++			while (c) {
++				for (j = 0; j < n; j++) {
++					int k = slices[j].container - 1;
++
++					if (slices[j].size == 0)
++						continue;
++
++					/* Skip all existing slices */
++					if (slices[j].minor > 0)
++						continue;
++
++					/* Skip all simple slices */
++					if (k < 0)
++						continue;
++
++					/* Check container slice */
++					if (slices[k].size == 0)
++						fprintf(stderr, "Invalid slice %d\n",
++							k);
++
++					if (safe_sprintf(partname, "%s%s%d",
++							 mapname, delim, j+1)) {
++						fprintf(stderr, "partname too small\n");
++						exit(1);
++					}
++					strip_slash(partname);
++
++					if (safe_sprintf(params, "%d:%d %lu",
++							 slices[k].major,
++							 slices[k].minor,
++							 (unsigned long)slices[j].start)) {
++						fprintf(stderr, "params too small\n");
++						exit(1);
++					}
++
++					op = (dm_map_present(partname) ?
++					      DM_DEVICE_RELOAD : DM_DEVICE_CREATE);
++
++					dm_addmap(op, partname, DM_TARGET, params,
++						  slices[j].size, uuid, j+1);
++
++					if (op == DM_DEVICE_RELOAD)
++						dm_simplecmd(DM_DEVICE_RESUME,
++							     partname);
++
++					dm_devn(partname, &slices[j].major,
++						&slices[j].minor);
++
++					if (verbose)
++						printf("add map %s : 0 %lu %s %s\n",
++						       partname, slices[j].size,
++						       DM_TARGET, params);
++					c--;
++				}
++				/* Terminate loop */
++				if (d == c)
++					break;
+ 			}
+ 			break;
+ 
+@@ -516,7 +603,7 @@ getblock (int fd, unsigned int secnr) {
+ 	bp->next = blockhead;
+ 	blockhead = bp;
+ 	bp->block = (char *) xmalloc(READ_SIZE);
+-	
++
+ 	if (read(fd, bp->block, READ_SIZE) != READ_SIZE) {
+ 		fprintf(stderr, "read error, sector %d\n", secnr);
+ 		bp->block = NULL;
+diff --git a/kpartx/kpartx.h b/kpartx/kpartx.h
+index 6a715de..b49c543 100644
+--- a/kpartx/kpartx.h
++++ b/kpartx/kpartx.h
+@@ -22,6 +22,9 @@
+ struct slice {
+ 	unsigned long start;
+ 	unsigned long size;
++	int container;
++	int major;
++	int minor;
+ };
+ 
+ typedef int (ptreader)(int fd, struct slice all, struct slice *sp, int ns);
 -- 
 1.4.3.4
