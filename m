@@ -1,7 +1,8 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 18/21] [libmultipath] Fix pp_alua install target
+Subject: [PATCH 11/21] [libmultipath] Fix typo on
+ blacklist_exceptions handler
 Date: Mon, 21 May 2007 11:24:23 +0200
-Message-ID: <20070521092423.A58ABD44CE@pentland.suse.de>
+Message-ID: <20070521092423.86CE6D44CA@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,27 +22,26 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-The install target in the pp_alua Makefile should reference the
-program, not the build target. Otherwise the program gets recompiled
-on each install.
+blacklist_exceptions_handler() has a typo which prevents the handler
+from working.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- path_priority/pp_alua/Makefile |    2 +-
+ libmultipath/dict.c |    2 +-
  1 files changed, 1 insertions(+), 1 deletions(-)
 
-diff --git a/path_priority/pp_alua/Makefile b/path_priority/pp_alua/Makefile
-index 983ffe3..6f356a1 100644
---- a/path_priority/pp_alua/Makefile
-+++ b/path_priority/pp_alua/Makefile
-@@ -35,7 +35,7 @@ glibc:	$(OBJS)
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index c705cc6..4572a7d 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -270,7 +270,7 @@ blacklist_exceptions_handler(vector strv
+ 	conf->elist_wwid = vector_alloc();
+ 	conf->elist_device = vector_alloc();
  
--install: $(BUILD) $(EXEC).8.gz
-+install: $(EXEC) $(EXEC).8.gz
- 	$(INSTALL) -s -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
- 	$(INSTALL) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)/$(EXEC).8.gz
+-	if (!conf->elist_devnode || !conf->elist_wwid || !conf->blist_device)
++	if (!conf->elist_devnode || !conf->elist_wwid || !conf->elist_device)
+ 		return 1;
  
+ 	return 0;
 -- 
 1.4.3.4
