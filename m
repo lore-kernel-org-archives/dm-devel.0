@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 14/21] [hwtable] Update entries for HP arrays
-Date: Mon, 21 May 2007 11:24:23 +0200
-Message-ID: <20070521092423.949A9D44CB@pentland.suse.de>
+Subject: [PATCH 20/21] [kpartx] Update BSD slice handling
+Date: Mon, 21 May 2007 11:24:32 +0200
+Message-ID: <20070521092432.E2077D44CB@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,135 +21,79 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-I finally figured out the different versions of HP storage
-arrays. Thanks to Stephen Reilly of HP for this.
+Now that we have the logic to stack dm-tables for partitions we can
+handle BSD 'c' slices (which span the entire disk) properly.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/hwtable.c |   54 ++++++++++++++++++++++++-----------------------
- 1 files changed, 28 insertions(+), 26 deletions(-)
+ kpartx/bsd.c |   39 +++++++++++++++++++++++++++++++++++----
+ 1 files changed, 35 insertions(+), 4 deletions(-)
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 5e04d95..2a5f2d5 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -63,11 +63,11 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "DEC",
- 		.product       = "HSG80",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
--		.features      = DEFAULT_FEATURES,
-+		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
-+		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp_sw",
- 		.selector      = DEFAULT_SELECTOR,
--		.pgpolicy      = GROUP_BY_SERIAL,
-+		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
-@@ -75,61 +75,62 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = HP_SW,
- 	},
- 	{
--		.vendor        = "(COMPAQ|HP)",
--		.product       = "(MSA|HSV)1.*",
-+		.vendor        = "HP",
-+		.product       = "A6189A",
- 		.getuid        = DEFAULT_GETUID,
- 		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
--		.hwhandler     = "1 hp_sw",
-+		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
- 		.pgpolicy      = MULTIBUS,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = HP_SW,
-+		.checker_name  = READSECTOR0,
- 	},
- 	{
--		.vendor        = "HP",
--		.product       = "A6189A",
-+		/* MSA 1000/MSA1500 EVA 3000/5000 with old firmware */
-+		.vendor        = "(COMPAQ|HP)",
-+		.product       = "(MSA|HSV)1.0.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
--		.features      = DEFAULT_FEATURES,
--		.hwhandler     = DEFAULT_HWHANDLER,
-+		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
-+		.features      = "1 queue_if_no_path",
-+		.hwhandler     = "1 hp_sw",
- 		.selector      = DEFAULT_SELECTOR,
--		.pgpolicy      = MULTIBUS,
-+		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = FAILBACK_UNDEF,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = HP_SW,
- 	},
- 	{
-+		/* MSA 1000/1500 with new firmware */
- 		.vendor        = "HP",
--		.product       = "HSV20.*",
--		.revision      = "[123].*",
-+		.product       = "MSA VOLUME",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
-+		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
--		.pgpolicy      = MULTIBUS,
--		.pgfailback    = FAILBACK_UNDEF,
-+		.pgpolicy      = GROUP_BY_PRIO,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = HP_SW,
-+		.checker_name  = TUR,
- 	},
- 	{
--		.vendor        = "HP",
--		.product       = "HSV20.*",
--		.revision      = "[^123].*",
-+		/* EVA 3000/5000 with new firmware */
-+		.vendor        = "(COMPAQ|HP)",
-+		.product       = "(MSA|HSV)1.1.*",
- 		.getuid        = DEFAULT_GETUID,
- 		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
--		.pgpolicy      = MULTIBUS,
-+		.pgpolicy      = GROUP_BY_PRIO,
- 		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
-@@ -137,15 +138,16 @@ static struct hwentry default_hw[] = {
- 		.checker_name  = TUR,
- 	},
- 	{
-+		/* EVA 4000/6000/8000 */
- 		.vendor        = "HP",
--		.product       = "HSV21.*",
-+		.product       = "HSV2.*",
- 		.getuid        = DEFAULT_GETUID,
- 		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
- 		.pgpolicy      = GROUP_BY_PRIO,
--		.pgfailback    = FAILBACK_UNDEF,
-+		.pgfailback    = -FAILBACK_IMMEDIATE,
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
+diff --git a/kpartx/bsd.c b/kpartx/bsd.c
+index 3ae2dc4..f87175e 100644
+--- a/kpartx/bsd.c
++++ b/kpartx/bsd.c
+@@ -10,7 +10,7 @@ struct bsd_disklabel {
+ 	short int	d_type;		/* drive type */
+ 	short int	d_subtype;	/* controller/d_type specific */
+ 	char	d_typename[16];		/* type name, e.g. "eagle" */
+-	char	d_packname[16];		/* pack identifier */ 
++	char	d_packname[16];		/* pack identifier */
+ 	unsigned int	d_secsize;	/* # of bytes per sector */
+ 	unsigned int	d_nsectors;	/* # of data sectors per track */
+ 	unsigned int	d_ntracks;	/* # of tracks per cylinder */
+@@ -50,12 +50,12 @@ int
+ read_bsd_pt(int fd, struct slice all, struct slice *sp, int ns) {
+ 	struct bsd_disklabel *l;
+ 	struct bsd_partition *p;
+-	unsigned int offset = all.start;
++	unsigned int offset = all.start, end;
+ 	int max_partitions;
+ 	char *bp;
+-	int n = 0;
++	int n = 0, i, j;
+ 
+-	bp = getblock(fd, offset+1); 	/* 1 sector suffices */
++	bp = getblock(fd, offset+1);    /* 1 sector suffices */
+ 	if (bp == NULL)
+ 		return -1;
+ 
+@@ -79,5 +79,36 @@ read_bsd_pt(int fd, struct slice all, st
+ 			break;
+ 		}
+ 	}
++	/*
++	 * Convention has it that the bsd disklabel will always have
++	 * the 'c' partition spanning the entire disk.
++	 * So we have to check for contained slices.
++	 */
++	for(i = 0; i < n; i++) {
++		if (sp[i].size == 0)
++			continue;
++
++		end = sp[i].start + sp[i].size;
++		for(j = 0; j < n; j ++) {
++			if ( i == j )
++				continue;
++			if (sp[j].size == 0)
++				continue;
++
++			if (sp[i].start < sp[j].start) {
++				if (end > sp[j].start &&
++				    end < sp[j].start + sp[j].size) {
++					/* Invalid slice */
++					fprintf(stderr,
++						"bsd_disklabel: slice %d overlaps with %d\n", i , j);
++					sp[i].size = 0;
++				}
++			} else {
++				if (end <= sp[j].start + sp[j].size) {
++					sp[i].container = j + 1;
++				}
++			}
++		}
++	}
+ 	return n;
+ }
 -- 
 1.4.3.4
