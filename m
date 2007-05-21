@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 2/21] [kpartx] fix install target
-Date: Mon, 21 May 2007 11:23:18 +0200
-Message-ID: <20070521092318.3FCB8D44CB@pentland.suse.de>
+Subject: [PATCH 3/21] [libmultipath] Fixup EMC ALUA mode handling
+Date: Mon, 21 May 2007 11:23:21 +0200
+Message-ID: <20070521092321.96EFFD44CB@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,43 +21,55 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-The install target should refer the executable, otherwise it'll trigger
-an entire rebuild.
+Modern EMC machines support ALUA in addition to the vendor-specific
+PNR (passive/not ready) method. Machines in ALUA mode will understand
+PNR commands, too, so we only need to relax the check to operate
+them correctly.
 
+Signed-off-by: Ed Goggin <egoggin@vmware.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- devmap_name/Makefile |    4 ++--
- kpartx/Makefile      |    2 +-
- 2 files changed, 3 insertions(+), 3 deletions(-)
+ libcheckers/emc_clariion.c    |    8 ++++++--
+ path_priority/pp_emc/pp_emc.c |    8 ++++++--
+ 2 files changed, 12 insertions(+), 4 deletions(-)
 
-diff --git a/devmap_name/Makefile b/devmap_name/Makefile
-index 380c85b..d8d8b09 100644
---- a/devmap_name/Makefile
-+++ b/devmap_name/Makefile
-@@ -28,9 +28,9 @@ klibc: prepare $(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
+diff --git a/libcheckers/emc_clariion.c b/libcheckers/emc_clariion.c
+index 384a943..d801b42 100644
+--- a/libcheckers/emc_clariion.c
++++ b/libcheckers/emc_clariion.c
+@@ -129,8 +129,12 @@ int emc_clariion(struct checker * c)
  
--install:
-+install: $(EXEC) $(EXEC).8
- 	install -d $(DESTDIR)$(bindir)
--	install -s -m 755 $(EXEC) $(DESTDIR)$(bindir)/
-+	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/
- 	install -d $(DESTDIR)$(mandir)
- 	install -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
- 
-diff --git a/kpartx/Makefile b/kpartx/Makefile
-index bf6e6c1..a43f881 100644
---- a/kpartx/Makefile
-+++ b/kpartx/Makefile
-@@ -36,7 +36,7 @@ klibc: prepare $(OBJS)
- $(MULTIPATHLIB)-$(BUILD).a:
- 	make -C $(multipathdir) BUILD=$(BUILD)
- 
--install:
-+install: $(EXEC) $(EXEC).8
- 	install -d $(DESTDIR)$(bindir)
- 	install -s -m 755 $(EXEC) $(DESTDIR)$(bindir)
- 	install -d $(DESTDIR)$(mandir)
+ 	if ( /* Effective initiator type */
+ 	    	sense_buffer[27] != 0x03
+-		/* Failover mode should be set to 1 */        
+-		|| (sense_buffer[28] & 0x07) != 0x04
++		/*
++		 * Failover mode should be set to 1 (PNR failover mode)
++		 * or 4 (ALUA failover mode).
++		 */
++		|| (((sense_buffer[28] & 0x07) != 0x04) &&
++		    ((sense_buffer[28] & 0x07) != 0x06))
+ 		/* Arraycommpath should be set to 1 */
+ 		|| (sense_buffer[30] & 0x04) != 0x04) {
+ 		MSG(c, "emc_clariion_checker: Path not correctly configured "
+diff --git a/path_priority/pp_emc/pp_emc.c b/path_priority/pp_emc/pp_emc.c
+index dd58424..4031720 100644
+--- a/path_priority/pp_emc/pp_emc.c
++++ b/path_priority/pp_emc/pp_emc.c
+@@ -60,8 +60,12 @@ int emc_clariion_prio(const char *dev)
+ 	
+ 	if ( /* Effective initiator type */
+ 	    	sense_buffer[27] != 0x03
+-		/* Failover mode should be set to 1 */        
+-		|| (sense_buffer[28] & 0x07) != 0x04
++		/*
++		 * Failover mode should be set to 1 (PNR failover mode)
++		 * or 4 (ALUA failover mode).
++		 */
++		|| (((sense_buffer[28] & 0x07) != 0x04) &&
++		    ((sense_buffer[28] & 0x07) != 0x06))
+ 		/* Arraycommpath should be set to 1 */
+ 		|| (sense_buffer[30] & 0x04) != 0x04) {
+ 		fprintf(stderr, "Path not correctly configured for failover");
 -- 
 1.4.3.4
