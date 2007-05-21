@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 1/21] kpartx: fix crash during boot
-Date: Mon, 21 May 2007 11:23:05 +0200
-Message-ID: <20070521092305.D7A79D44CB@pentland.suse.de>
+Subject: [PATCH 2/21] [kpartx] fix install target
+Date: Mon, 21 May 2007 11:23:18 +0200
+Message-ID: <20070521092318.3FCB8D44CB@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,39 +21,43 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-kpartx will crash during boot as device-mapper insists on freeing
-all passed memory upon exit. So we don't have to do it.
+The install target should refer the executable, otherwise it'll trigger
+an entire rebuild.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- kpartx/devmapper.c |    7 ++-----
- 1 files changed, 2 insertions(+), 5 deletions(-)
+ devmap_name/Makefile |    4 ++--
+ kpartx/Makefile      |    2 +-
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/kpartx/devmapper.c b/kpartx/devmapper.c
-index 5b27487..4b228ed 100644
---- a/kpartx/devmapper.c
-+++ b/kpartx/devmapper.c
-@@ -95,19 +95,16 @@ dm_addmap (int task, const char *name, c
- 		}
- 		sprintf(prefixed_uuid, UUID_PREFIX "%s", part, uuid);
- 		if (!dm_task_set_uuid(dmt, prefixed_uuid))
--			goto freeout;
-+			goto addout;
- 	}
+diff --git a/devmap_name/Makefile b/devmap_name/Makefile
+index 380c85b..d8d8b09 100644
+--- a/devmap_name/Makefile
++++ b/devmap_name/Makefile
+@@ -28,9 +28,9 @@ klibc: prepare $(OBJS)
+ 	$(CC) -static -o $(EXEC) $(OBJS)
+ 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
  
- 	dm_task_no_open_count(dmt);
+-install:
++install: $(EXEC) $(EXEC).8
+ 	install -d $(DESTDIR)$(bindir)
+-	install -s -m 755 $(EXEC) $(DESTDIR)$(bindir)/
++	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/
+ 	install -d $(DESTDIR)$(mandir)
+ 	install -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
  
- 	r = dm_task_run (dmt);
+diff --git a/kpartx/Makefile b/kpartx/Makefile
+index bf6e6c1..a43f881 100644
+--- a/kpartx/Makefile
++++ b/kpartx/Makefile
+@@ -36,7 +36,7 @@ klibc: prepare $(OBJS)
+ $(MULTIPATHLIB)-$(BUILD).a:
+ 	make -C $(multipathdir) BUILD=$(BUILD)
  
--	freeout:
--	if (prefixed_uuid)
--		free(prefixed_uuid);
--
- 	addout:
- 	dm_task_destroy (dmt);
-+
- 	return r;
- }
- 
+-install:
++install: $(EXEC) $(EXEC).8
+ 	install -d $(DESTDIR)$(bindir)
+ 	install -s -m 755 $(EXEC) $(DESTDIR)$(bindir)
+ 	install -d $(DESTDIR)$(mandir)
 -- 
 1.4.3.4
