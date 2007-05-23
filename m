@@ -1,14 +1,13 @@
-From: "Kumar, Vijay (STSD)" <vijay.kumar7@hp.com>
-Subject: RE: multipath-tools multipath.conf.defaults
-Date: Tue, 22 May 2007 15:33:24 +0530
-Message-ID: <58FE8766C9D3FE4E8AF6B6B75A74AF8F097FE4E3@BGEEXC02.asiapacific.cpqcorp.net>
+From: "Xyber Blue" <xyberblue@gmail.com>
+Subject: Compiling libdevmapper based application using C++
+Date: Wed, 23 May 2007 11:30:31 +0800
+Message-ID: <45ea3f390705222030s65989947ta35b136a90451b57@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,64 +17,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Hello people,
 
-Below, is it not /block/%n missing here.
+I hope someone have had done this one. I am developing application
+that uses libdevmapper for accesing kernel based device mapper. Im
+having problem compiling my program which is coded using C++ and it
+seems that it can't link to libdevmapper libraries.
 
->  #		getuid_callout		"/sbin/scsi_id -g -u -s"
-
-Rather I would say, it should be as "/sbin/scsi_id -g -u -s /block/%n"
-for getuid_callout.
-
+Did someone experienced this one? It would be very much help if
+someone here can give me some tips on compiling my libdevmapper based
+application using C++.
 
 Thanks,
-Vijay Kumar
-
-
-
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com=20
-> [mailto:dm-devel-bounces@redhat.com] On Behalf Of=20
-> bmarzins@sourceware.org
-> Sent: Friday, May 18, 2007 1:17 AM
-> To: dm-cvs@sourceware.org; dm-devel@redhat.com
-> Subject: [dm-devel] multipath-tools multipath.conf.defaults
->=20
-> CVSROOT:	/cvs/dm
-> Module name:	multipath-tools
-> Branch: 	RHEL5_FC6
-> Changes by:	bmarzins@sourceware.org	2007-05-17 19:47:24
->=20
-> Modified files:
-> 	.              : multipath.conf.defaults=20
->=20
-> Log message:
-> 	Fixing typo in multipath.conf.defaults
->=20
-> Patches:
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multi
-> path.conf.defaults.diff?cvsroot=3Ddm&only_with_tag=3DRHEL5_FC6&r1=3D
-> 1.5.4.2&r2=3D1.5.4.3
->=20
-> --- multipath-tools/multipath.conf.defaults	2007/01/10=20
-> 20:08:07	1.5.4.2
-> +++ multipath-tools/multipath.conf.defaults	2007/05/17=20
-> 19:47:24	1.5.4.3
-> @@ -60,7 +60,7 @@
->  #               vendor                  "(COMPAQ|HP)"
->  #               product                 "HSV(1|2).*"
->  #		getuid_callout		"/sbin/scsi_id -g -u -s"
-> -#               prio_callout            "/sbin/mpath_prio_alua %d"=09
-> +#               prio_callout            "/sbin/mpath_prio_alua %n"=09
->  #		features		"0"
->  #		hardware_handler	"0"
->  #               path_grouping_policy    group_by_prio
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->=20
+xyber
+-- 
+If you want to become somebody
+Display your best ability
