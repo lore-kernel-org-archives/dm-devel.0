@@ -1,9 +1,9 @@
 From: dwysocha@redhat.com
 Subject: [patch 2/3] Add MP_RETRY_PG_INIT flag for hw handlers to
 	tell dm-mpath to retry pg_init.
-Date: Thu, 24 May 2007 01:24:04 -0400
-Message-ID: <20070524052419.595099764@redhat.com>
-References: <20070524052402.946400092@redhat.com>
+Date: Thu, 24 May 2007 01:17:49 -0400
+Message-ID: <20070524051813.788262011@redhat.com>
+References: <20070524051747.219219749@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline; filename=dm-mpath-add-retry-pg-init.patch
@@ -17,12 +17,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Mike Christie <michaelc@cs.wisc.edu>, Dave Wysochanski <dave.wysochanski@redhat.com>
 List-Id: dm-devel.ids
 
 Useful for cases where a hw handler sends a path initialization command to
 the storage and it completes with an error code indicating the command should
 be retried.
 
+Signed-off-by: Dave Wysochanski <dave.wysochanski@redhat.com>
+Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
+
+--
 Index: linux-2.6.22-rc1/drivers/md/dm-hw-handler.h
 ===================================================================
 --- linux-2.6.22-rc1.orig/drivers/md/dm-hw-handler.h
