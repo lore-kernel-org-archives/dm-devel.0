@@ -1,15 +1,16 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [2.6.22-rc1 PATCH] dm-hp-sw: HP Active/Passive hardware
-	handler baseline
-Date: Wed, 23 May 2007 16:17:37 -0500
-Message-ID: <4654AF71.90401@cs.wisc.edu>
-References: <1179951517.6397.11.camel@linux-cxyg>
+From: "Xyber Blue" <xyberblue@gmail.com>
+Subject: Re: Compiling libdevmapper based application using C++
+Date: Thu, 24 May 2007 08:35:52 +0800
+Message-ID: <45ea3f390705231735r4a7aab0dj831f5cd19bbc552@mail.gmail.com>
+References: <45ea3f390705222030s65989947ta35b136a90451b57@mail.gmail.com>
+	<465488F5.4030405@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1179951517.6397.11.camel@linux-cxyg>
+In-Reply-To: <465488F5.4030405@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,140 +23,61 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dave Wysochanski wrote:
-> +#include <scsi/scsi.h>
-> +#include <scsi/scsi_cmnd.h>
-> +#include <scsi/scsi_dbg.h>
-> +#include <scsi/scsi_device.h>
-> +#include <scsi/scsi_host.h>
-> +#include <scsi/scsi_transport_fc.h>
-> +#include <linux/list.h>
-> +#include <linux/types.h>
+Bryn,
 
-you should do linux includes then scsi ones. Do you even need the fc,
-host or cmnd includes?
+Thanks man, it really works. Now I know that's the use of extern C.
 
-> +
-> +#include "dm.h"
-> +#include "dm-hw-handler.h"
-> +
-> +#define DM_MSG_PREFIX "multipath hp"
-> +
-> +struct hp_sw_context {
-> +	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
-> +};
-> +
-> +
-> +/**
-> + * hp_sw_end_io - Completion handler for HP path activation.
-> + * @req: failover request
-> + * @error: scsi-ml error
-> + *
-> + *  Check sense data, free request structure, and notify dm that
-> + *  pg initialization has completed.
-> + *
-> + * Context: scsi-ml softirq
-> + *
-> + * Possible optimizations
-> + * 1. Actually check sense data for retryable error (e.g. NOT_READY)
-> + */
-> +static void hp_sw_end_io(struct request *req, int error)
-> +{
-> +	struct dm_path *path = req->end_io_data;
-> +	unsigned err_flags;
-> +
-> +	if (!error) {
-> +		err_flags = 0;
-> +		DMDEBUG("hp_sw: path activation command on %s - success",
-> +		       	path->dev->name);
-> +	}
-> +	else {
+Thanks again,
+Ervin
 
-else should be on the same line as "{"
+On 5/24/07, Bryn M. Reeves <breeves@redhat.com> wrote:
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+> Xyber Blue wrote:
+> > Hello people,
+> >
+> > I hope someone have had done this one. I am developing application
+> > that uses libdevmapper for accesing kernel based device mapper. Im
+> > having problem compiling my program which is coded using C++ and it
+> > seems that it can't link to libdevmapper libraries.
+> >
+> > Did someone experienced this one? It would be very much help if
+> > someone here can give me some tips on compiling my libdevmapper based
+> > application using C++.
+> >
+> > Thanks,
+> > xyber
+>
+> You'll need to wrap the libdevmapper.h include in the usual extern "C"
+> block like this:
+>
+> extern "C" {
+>         #include "libdevmapper.h"
+> }
+>
+> But beyond that I don't know of any specific problems and you didn't
+> describe what actually goes wrong so it's hard to make a more definite
+> suggestion.
+>
+> Kind regards,
+> Bryn.
+> -----BEGIN PGP SIGNATURE-----
+> Version: GnuPG v1.4.7 (GNU/Linux)
+> Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
+>
+> iD8DBQFGVIj16YSQoMYUY94RAimxAJ9v51hfQ7xh4+NTQTp30sAXu+MvvQCg1U8W
+> u+qfat5tIIto+/jwP8cAaWQ=
+> =8nrT
+> -----END PGP SIGNATURE-----
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
 
 
-I also think we should handle the NOT_READY case that was reported before.
-
-
-> +		DMWARN("hp_sw: path activation command on %s - error=0x%x",
-> +		       path->dev->name, error);
-> +		err_flags = MP_FAIL_PATH;
-> +	}
-> +
-> +	req->end_io_data = NULL;
-> +	__blk_put_request(req->q, req);
-> +	dm_pg_init_complete(path, err_flags);
-> +}
-> +
-> +/**
-> + * hp_sw_get_request - Allocate an HP specific path activation request
-> + * @path: path on which request will be sent (needed for request queue)
-> + *
-> + * The START command is used for path activation request.
-> + * These arrays are controller-based failover, not LUN based.
-> + * One START command issued to a single path will fail over all
-> + * LUNs for the same controller.
-> + *
-> + * Possible optimizations
-> + * 1. Make timeout configurable
-> + * 2. Preallocate request
-> + */
-> +static struct request *hp_sw_get_request(struct dm_path *path)
-> +{
-> +	struct request *req=NULL;
-> +	struct block_device *bdev = path->dev->bdev;
-> +	struct request_queue *q = bdev_get_queue(bdev);
-> +	struct hp_sw_context *h = path->hwhcontext;
-> +
-> +	req = blk_get_request(q, WRITE, GFP_ATOMIC);
-> +	if (req == NULL)
-> +		goto exit;
-> +
-> +	req->timeout = 60*HZ;
-> +
-> +	req->errors = 0;
-> +	req->cmd_type = REQ_TYPE_BLOCK_PC;
-> +	req->cmd_flags |= REQ_FAILFAST | REQ_NOMERGE;
-> +	req->end_io = hp_sw_end_io;
-> +	req->end_io_data = path;
-> +	req->sense = h->sense;
-> +	memset(req->sense, 0, SCSI_SENSE_BUFFERSIZE);
-> +
-> +	memset(&req->cmd, 0, BLK_MAX_CDB);
-> +	req->cmd[0] = START_STOP;
-> +	req->cmd[4] = 1;
-> +	req->cmd_len = COMMAND_SIZE(req->cmd[0]);
-> +exit:
-> +	return req;
-> +}
-> +
-> +/**
-> + * hp_sw_pg_init - HP path activation implementation.
-> + * @hwh: hardware handler specific data
-> + * @bypassed: unused; is the path group bypassed? (see dm-mpath.c)
-> + * @path: path to send initialization command
-> + *
-> + * Send an HP-specific path activation command on 'path'.
-> + * Do not try to optimize in any way, just send the activation command.
-> + * More than one path activation command may be sent to the same controller.
-> + * This seems to work fine for basic failover support.
-> + *
-> + * Possible optimizations
-> + * 1. Detect an in-progress activation request and avoid submitting another one
-> + * 2. Model the controller and only send a single activation request at a time
-> + * 3. Determine the state of a path before sending an activation request
-> + *
-> + * Context: kmpathd (see process_queued_ios() in dm-mpath.c)
-> + */
-> +static void hp_sw_pg_init(struct hw_handler *hwh, unsigned bypassed,
-> +			  struct dm_path *path)
-> +{
-> +	struct request *req;
-> +	struct hp_sw_context *h;
-> +	unsigned err_flags;
-> +
-> +	path->hwhcontext = hwh->context;
-> +	h = (struct hp_sw_context *) hwh->context;
-> +
-
-you do not need the case do you?
+-- 
+If you want to become somebody
+Display your best ability
