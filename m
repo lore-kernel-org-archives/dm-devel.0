@@ -1,13 +1,12 @@
-From: dwysocha@redhat.com
-Subject: [patch 3/3] Add retries to hp hardware handler when path
-	activation command completes w/err
-Date: Thu, 24 May 2007 01:17:50 -0400
-Message-ID: <20070524051814.331323536@redhat.com>
-References: <20070524051747.219219749@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [RFC] dm-raid1-mark-and-clear-nosync-writes.patch
+Date: Thu, 24 May 2007 15:30:58 -0500
+Message-ID: <1180038658.25041.28.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline;
-	filename=dm-hp-sw-add-retries-handle-not-ready.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,182 +17,119 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Mike Christie <michaelc@cs.wisc.edu>, Dave Wysochanski <dave.wysochanski@redhat.com>
 List-Id: dm-devel.ids
 
-This patch depends on the following patch:
-dm-mpath: Add MP_RETRY_PG_INIT flag for hw handlers to tell dm-mpath to retry
+This is an enabler patch for cluster mirroring.
 
-Add retries to hp hardware handler if path initialization command completes
-with a check condition.  For now we just assume we can retry the command
-because we only have partial information on the check conditions of the 
-HP hardware.  Testing has shown that sending additional path initialization
-commands do no extra harm so we just be conservative and retry 5 times.
+Mirroring can be used in a cluster if the log is cluster-aware.
+However, to properly handle write/recovery conflicts from different
+machines we must mark and clear regions that are in the RH_NOSYNC state.
 
-Signed-off-by: Dave Wysochanski <dave.wysochanski@redhat.com>
-Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
+This patch adds that capability.  However, it is possible to get a
+situation where a "double mark" happens on a region:
+1) mark region in rh_inc
+2) rh_dec decrements pending count
+3) mark before clear (rh_inc runs before rh_update_states)
+The double mark isn't really a problem and is already handled by the
+currently logging implementations... but it isn't something that has
+happened before.
 
---
-Index: linux-2.6.22-rc1/drivers/md/dm-hp-sw.c
+Comments welcome,
+ brassow
+
+Index: linux-2.6.22-rc1-mm1/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.22-rc1.orig/drivers/md/dm-hp-sw.c
-+++ linux-2.6.22-rc1/drivers/md/dm-hp-sw.c
-@@ -17,20 +17,58 @@
- #include <linux/types.h>
- #include <scsi/scsi.h>
- #include <scsi/scsi_cmnd.h>
-+#include <scsi/scsi_dbg.h>
- 
- #include "dm.h"
- #include "dm-hw-handler.h"
- 
- #define DM_MSG_PREFIX "multipath hp"
- 
-+#define HP_SW_PG_INIT_RETRIES 5
-+
- struct hp_sw_context {
- 	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
-+	unsigned pg_init_count;
- };
- 
-+/**
-+ * hp_sw_error_is_retryable - Is an HP-specific check condition retryable?
-+ * @req: path activation request
-+ *
-+ * Examine error codes of request and determine whether the error is retryable.
-+ * Some error codes are already retried by scsi-ml (see
-+ * scsi_decide_disposition), but some HP specific codes are not.
-+ * The intent of this routine is to supply the logic for the HP specific
-+ * check conditions.
-+ *
-+ * Returns:
-+ *  1 - command completed with retryable error
-+ *  0 - command completed with non-retryable error
-+ *
-+ * Possible optimizations
-+ * 1. More hardware-specific error codes
-+ */
-+static int hp_sw_error_is_retryable(struct request *req)
-+{
-+	/*
-+	 * NOT_READY is known to be retryable
-+	 * For now we just dump out the sense data and call it retryable
-+	 */
-+	if ((status_byte(req->errors) == CHECK_CONDITION) &&
-+	    (driver_byte(req->errors) & DRIVER_SENSE))
-+		__scsi_print_sense("hp_sw", req->sense, req->sense_len);
-+
-+	/*
-+	 * At this point we don't have complete information about all the error
-+	 * codes from this hardware, so we are just conservative and retry
-+	 * when in doubt.
-+	 */
-+	return 1;
-+}
- 
- /**
-  * hp_sw_end_io - Completion handler for HP path activation.
-- * @req: failover request
-+ * @req: path activation request
-  * @error: scsi-ml error
-  *
-  *  Check sense data, free request structure, and notify dm that
-@@ -38,24 +76,38 @@ struct hp_sw_context {
-  *
-  * Context: scsi-ml softirq
-  *
-- * Possible optimizations
-- * 1. Actually check sense data for retryable error (e.g. NOT_READY)
-  */
- static void hp_sw_end_io(struct request *req, int error)
- {
- 	struct dm_path *path = req->end_io_data;
-+	struct hp_sw_context *h = path->hwhcontext;
- 	unsigned err_flags;
- 
- 	if (!error) {
-+		h->pg_init_count = 0;
- 		err_flags = 0;
--		DMDEBUG("hp_sw: path activation command on %s - success",
-+		DMDEBUG("hp_sw: %s path activation command - success",
- 		       	path->dev->name);
- 	} else {
--		DMWARN("hp_sw: path activation command on %s - error=0x%x",
-+		DMWARN("hp_sw: %s path activation command - error=0x%x",
- 		       path->dev->name, error);
-+		if (hp_sw_error_is_retryable(req)) {
-+			if (h->pg_init_count <= HP_SW_PG_INIT_RETRIES) {
-+				DMWARN("hp_sw: %s path activation command "
-+				       "count=%d",
-+				       path->dev->name, h->pg_init_count);
-+				err_flags = MP_RETRY_PG_INIT;
-+				goto exit;
-+			} else
-+				DMWARN("hp_sw: %s path activation command "
-+				       "out of retries",
-+				       path->dev->name);
-+		}
-+		DMWARN("hp_sw: %s path activation fail", path->dev->name);
-+		h->pg_init_count = 0;
- 		err_flags = MP_FAIL_PATH;
- 	}
--
-+ exit:
- 	req->end_io_data = NULL;
- 	__blk_put_request(req->q, req);
- 	dm_pg_init_complete(path, err_flags);
-@@ -126,25 +178,31 @@ static void hp_sw_pg_init(struct hw_hand
- {
- 	struct request *req;
- 	struct hp_sw_context *h;
-+	unsigned err_flags;
- 
- 	path->hwhcontext = hwh->context;
- 	h = (struct hp_sw_context *) hwh->context;
-+	h->pg_init_count++;
- 
- 	req = hp_sw_get_request(path);
- 	if (!req) {
--		DMERR("hp_sw: path activation command allocation fail on %s ",
-+		DMERR("hp_sw: %s path activation command allocation fail ",
- 		      path->dev->name);
- 		goto fail;
+--- linux-2.6.22-rc1-mm1.orig/drivers/md/dm-raid1.c
++++ linux-2.6.22-rc1-mm1/drivers/md/dm-raid1.c
+@@ -425,8 +425,8 @@ static void rh_update_states(struct regi
+ 	 * any more locking.
+ 	 */
+ 	list_for_each_entry_safe (reg, next, &recovered, list) {
+-		rh->log->type->clear_region(rh->log, reg->key);
+ 		complete_resync_work(reg, 1);
++		rh->log->type->clear_region(rh->log, reg->key);
+ 		mempool_free(reg, rh->region_pool);
  	}
  
--	DMDEBUG("hp_sw: path activation command sent on %s",
--		path->dev->name);
-+	DMDEBUG("hp_sw: %s path activation command sent, pg_init_count=%d",
-+		path->dev->name, h->pg_init_count);
+@@ -448,13 +448,14 @@ static void rh_update_states(struct regi
  
- 	elv_add_request(req->q, req, ELEVATOR_INSERT_FRONT, 1);
- 	return;
+ static void rh_inc(struct region_hash *rh, region_t region)
+ {
++	int r;
+ 	struct region *reg;
  
-  fail:
--	dm_pg_init_complete(path, MP_FAIL_PATH);
-+	if (h->pg_init_count <= HP_SW_PG_INIT_RETRIES)
-+		err_flags = MP_RETRY_PG_INIT;
-+	else
-+		err_flags = MP_FAIL_PATH;
-+	dm_pg_init_complete(path, err_flags);
+ 	read_lock(&rh->hash_lock);
+ 	reg = __rh_find(rh, region);
+ 
+ 	spin_lock_irq(&rh->region_lock);
+-	atomic_inc(&reg->pending);
++	r = atomic_inc_return(&reg->pending);
+ 
+ 	if (reg->state == RH_CLEAN) {
+ 		reg->state = RH_DIRTY;
+@@ -462,6 +463,11 @@ static void rh_inc(struct region_hash *r
+ 		spin_unlock_irq(&rh->region_lock);
+ 
+ 		rh->log->type->mark_region(rh->log, reg->key);
++	} else if ((reg->state == RH_NOSYNC) && (r == 1)) {
++		list_del_init(&reg->list);	/* take off the clean list */
++		spin_unlock_irq(&rh->region_lock);
++
++		rh->log->type->mark_region(rh->log, reg->key);
+ 	} else
+ 		spin_unlock_irq(&rh->region_lock);
+ 
+@@ -493,20 +499,16 @@ static void rh_dec(struct region_hash *r
+ 		 * There is no pending I/O for this region.
+ 		 * We can move the region to corresponding list for next action.
+ 		 * At this point, the region is not yet connected to any list.
+-		 *
+-		 * If the state is RH_NOSYNC, the region should be kept off
+-		 * from clean list.
+-		 * The hash entry for RH_NOSYNC will remain in memory
+-		 * until the region is recovered or the map is reloaded.
+ 		 */
+ 
+-		/* do nothing for RH_NOSYNC */
+ 		if (reg->state == RH_RECOVERING) {
+ 			list_add_tail(&reg->list, &rh->quiesced_regions);
+ 		} else if (reg->state == RH_DIRTY) {
+ 			reg->state = RH_CLEAN;
+ 			list_add(&reg->list, &rh->clean_regions);
+-		}
++		} else if (reg->state == RH_NOSYNC)
++			list_add(&reg->list, &rh->clean_regions);
++
+ 		should_wake = 1;
+ 	}
+ 	spin_unlock_irqrestore(&rh->region_lock, flags);
+Index: linux-2.6.22-rc1-mm1/drivers/md/dm-log.c
+===================================================================
+--- linux-2.6.22-rc1-mm1.orig/drivers/md/dm-log.c
++++ linux-2.6.22-rc1-mm1/drivers/md/dm-log.c
+@@ -579,7 +579,10 @@ static void core_mark_region(struct dirt
+ static void core_clear_region(struct dirty_log *log, region_t region)
+ {
+ 	struct log_c *lc = (struct log_c *) log->context;
+-	log_set_bit(lc, lc->clean_bits, region);
++
++	/* Only clear the region if it is also in sync */
++	if (log_test_bit(lc->sync_bits, region))
++		log_set_bit(lc, lc->clean_bits, region);
  }
  
- static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
-@@ -155,6 +213,7 @@ static int hp_sw_create(struct hw_handle
- 	if (!h)
- 		return -ENOMEM;
- 	hwh->context = h;
-+	h->pg_init_count = 0;
- 	return 0;
- }
- 
-@@ -182,7 +241,7 @@ static int __init hp_sw_init(void)
- 	if (r < 0)
- 		DMERR("hp_sw: register failed %d", r);
- 
--	DMINFO("hp_sw version 0.0.2 loaded");
-+	DMINFO("hp_sw version 0.0.3 loaded");
- 
- 	return r;
- }
-
--- 
+ static int core_get_resync_work(struct dirty_log *log, region_t *region)
+Index: linux-2.6.22-rc1-mm1/drivers/md/dm-log.h
+===================================================================
+--- linux-2.6.22-rc1-mm1.orig/drivers/md/dm-log.h
++++ linux-2.6.22-rc1-mm1/drivers/md/dm-log.h
+@@ -72,6 +72,9 @@ struct dirty_log_type {
+ 	 * block, though for performance reasons blocking should
+ 	 * be extremely rare (eg, allocating another chunk of
+ 	 * memory for some reason).
++	 *
++	 * clear_region will only clear the region if it
++	 * is also in-sync.
+ 	 */
+ 	void (*mark_region)(struct dirty_log *log, region_t region);
+ 	void (*clear_region)(struct dirty_log *log, region_t region);
