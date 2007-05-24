@@ -1,7 +1,7 @@
 From: dwysocha@redhat.com
 Subject: [patch 0/3] Add HP hardware handler support to dm-mp
-Date: Thu, 24 May 2007 01:17:47 -0400
-Message-ID: <20070524051747.219219749@redhat.com>
+Date: Thu, 24 May 2007 01:24:02 -0400
+Message-ID: <20070524052402.946400092@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
