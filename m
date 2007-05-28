@@ -1,46 +1,58 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
+From: Nikita Danilov <nikita@clusterfs.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
 	filesystems, and dm/md.
-Date: Mon, 28 May 2007 10:43:58 +0100
-Message-ID: <20070528094358.GM25091@agk.fab.redhat.com>
+Date: Mon, 28 May 2007 15:17:41 +0400
+Message-ID: <18010.47701.751118.336431@gargle.gargle.HOWL>
 References: <18006.38689.818186.221707@notabene.brown>
-	<18010.12472.209452.148229@notabene.brown>
-Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <18010.12472.209452.148229@notabene.brown>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, David Chinner <dgc@sgi.com>, Phillip Susi <psusi@cfl.rr.com>, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <18006.38689.818186.221707@notabene.brown>
+Sender: linux-raid-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Mon, May 28, 2007 at 11:30:32AM +1000, Neil Brown wrote:
-> 1/ A BIO_RW_BARRIER request should never fail with -EOPNOTSUP.
- 
-The device-mapper position has always been that we require
+Neil Brown writes:
+ > 
 
->  a zero-length BIO_RW_BARRIER 
+[...]
 
-(i.e. containing no data to read or write - or emulated, possibly
-device-specific)
+ > Thus the general sequence might be:
+ > 
+ >   a/ issue all "preceding writes".
+ >   b/ issue the commit write with BIO_RW_BARRIER
+ >   c/ wait for the commit to complete.
+ >          If it was successful - done.
+ >          If it failed other than with EOPNOTSUPP, abort
+ >          else continue
+ >   d/ wait for all 'preceding writes' to complete
+ >   e/ call blkdev_issue_flush
+ >   f/ issue commit write without BIO_RW_BARRIER
+ >   g/ wait for commit write to complete
+ >        if it failed, abort
+ >   h/ call blkdev_issue
+ >   DONE
+ > 
+ > steps b and c can be left out if it is known that the device does not
+ > support barriers.  The only way to discover this to try and see if it
+ > fails.
+ > 
+ > I don't think any filesystem follows all these steps.
 
-before we can provide full barrier support.
-  (Consider multiple active paths - each must see barrier.)
+It seems that steps b/ -- h/ are quite generic, and can be implemented
+once in a generic code (with some synchronization mechanism like
+wait-queue at d/).
 
-Until every device supports barriers -EOPNOTSUP support is required.
-  (Consider reconfiguration of stacks of devices - barrier support is a
-   dynamic block device property that can switch between available and
-   unavailable at any time.)
+Nikita.
 
-Alasdair
--- 
-agk@redhat.com
+[...]
+
+ > 
+ > Thank you for your attention.
+ > 
+ > NeilBrown
+ > 
+
+Nikita.
