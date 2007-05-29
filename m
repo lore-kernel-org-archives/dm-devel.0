@@ -1,52 +1,54 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
-	filesystems, and dm/md.
-Date: Tue, 29 May 2007 23:05:00 +0100
-Message-ID: <20070529220500.GA6513@agk.fab.redhat.com>
-References: <18006.38689.818186.221707@notabene.brown>
-	<18010.12472.209452.148229@notabene.brown>
-	<20070528094358.GM25091@agk.fab.redhat.com>
-	<5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems, and dm/md.
+Date: Wed, 30 May 2007 09:48:32 +1000
+Message-ID: <20070529234832.GT85884050@sgi.com>
+References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528024559.GA85884050@sgi.com> <465C871F.708@cfl.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Stefan Bader <sbader3@googlemail.com>
-Cc: Tejun Heo <htejun@gmail.com>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, linux-fsdevel@vger.kernel.org, Andreas Dilger <adilger@clusterfs.com>
+In-Reply-To: <465C871F.708@cfl.rr.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Phillip Susi <psusi@cfl.rr.com>
+Cc: David Chinner <dgc@sgi.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
 List-Id: dm-devel.ids
 
-On Tue, May 29, 2007 at 11:25:42AM +0200, Stefan Bader wrote:
-> doing a sort of suspend, issuing the
-> barrier request, calling flush to all mapped devices and then wait for
-> in-flight I/O to go to zero? 
+On Tue, May 29, 2007 at 04:03:43PM -0400, Phillip Susi wrote:
+> David Chinner wrote:
+> >The use of barriers in XFS assumes the commit write to be on stable
+> >storage before it returns.  One of the ordering guarantees that we
+> >need is that the transaction (commit write) is on disk before the
+> >metadata block containing the change in the transaction is written
+> >to disk and the current barrier behaviour gives us that.
+> 
+> Barrier != synchronous write,
 
-Something like that is needed for some dm targets to support barriers.
-(We needn't always wait for *all* in-flight I/O.)
-When faced with -EOPNOTSUP, do all callers fall back to a sync in
-the places a barrier would have been used, or are there any more
-sophisticated strategies attempting to optimise code without barriers?
+Of course. FYI, XFS only issues barriers on *async* writes.
 
-> I am not a hundred percent sure about
-> that but I think that just passing the barrier flag on to mapped
-> devices might in some (maybe they are rare) cases cause a layer above
-> to think all data is on-disk while this isn't necessarily true (see my
-> previous post). What do you think?
+But barrier semantics - as far as they've been described by everyone
+but you indicate that the barrier write is guaranteed to be on stable
+storage when it returns.
 
-An efficient I/O barrier implementation would not normally involve
-flushing AFAIK: dm surely wouldn't "cause" a higher layer to assume
-stronger semantics than are provided.
- 
-Alasdair
+> so if XFS relies on that block being on 
+> the media when the request is completed, then it is broken.
+
+XFS relies on the block being stable before any other write
+goes to disk. That is the semantic that the barrier I/Os currently
+have. How that is implemented in the device is irrelevant to me,
+but if I issue a barrier I/O, I do not expect *any* I/O to be
+reordered around it.
+
+> It should 
+> only care that the ordering of log-data-log is maintained, not exactly 
+> when each specific request completes.
+
+Yes, and that is provided to XFS by the fact that barrier I/Os are
+full barriers....
+
+Cheers,
+
+Dave.
 -- 
-agk@redhat.com
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
