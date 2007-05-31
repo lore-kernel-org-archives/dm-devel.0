@@ -1,88 +1,91 @@
-From: Kevin Jamieson <kjamieson@bycast.com>
-Subject: kcopyd performance
-Date: Wed, 30 May 2007 15:56:42 -0700
-Message-ID: <465E012A.5080905@bycast.com>
-Reply-To: kjamieson@bycast.com,
-	device-mapper development <dm-devel@redhat.com>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems, and dm/md.
+Date: Thu, 31 May 2007 10:20:11 +1000
+Message-ID: <20070531002011.GC85884050@sgi.com>
+References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528024559.GA85884050@sgi.com> <465C871F.708@cfl.rr.com> <20070529234832.GT85884050@sgi.com> <Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm> <20070530061723.GY85884050@sgi.com> <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm>
+Sender: linux-raid-owner@vger.kernel.org
+To: david@lang.hm
+Cc: David Chinner <dgc@sgi.com>, Phillip Susi <psusi@cfl.rr.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
 List-Id: dm-devel.ids
 
-Hi,
+On Wed, May 30, 2007 at 09:52:49AM -0700, david@lang.hm wrote:
+> On Wed, 30 May 2007, David Chinner wrote:
+> >with the barrier is on stable storage when I/o completion is
+> >signalled.  The existing barrier implementation (where it works)
+> >provide these requirements. We need barriers to retain these
+> >semantics, otherwise we'll still have to do special stuff in
+> >the filesystems to get the semantics that we need.
+> 
+> one of us is misunderstanding barriers here.
 
-I've been investigating some performance issues with writes to a LVM2
-snapshot origin volume being much slower than one would expect (i.e.,
-10-50x slower for a logical volume with a single snapshot volume).
+No, I thinkwe are both on the same level here - it's what
+barriers are used for that is not clear understood, I think.
 
-Using a simple dd test (I get similar numbers with other tools like
-bonnie) on a P4 3GHz w/SATA disks (no RAID):
+> you are understanding barriers to be the same as syncronous writes. (and 
+> therefor the data is on persistant media before the call returns)
 
-dd if=/dev/zero of=/vol/file bs=1M count=1000
+No, I'm describing the high level behaviour that is expected by
+a filesystem. The reasons for this are below....
 
-Logical volume w/o snapshot: 45.4 MB/s
-LV w/snapshot on same disk, chunksize=8K: 1.1 MB/s
-LV w/snapshot on same disk, chunksize=512K: 4.0 MB/s
-LV w/snapshot on separate disk, chunksize=8K: 1.2 MB/s
-LV w/snapshot on separate disk, chunksize=512K: 5.6 MB/s
+> I am understanding barriers to only indicate ordering requirements. things 
+> before the barrier can be reordered freely, things after the barrier can 
+> be reordered freely, but things cannot be reordered across the barrier.
 
-I tracked the main cause of the poor performance to the behaviour of
-process_jobs() in kcopyd. If kcopyd's page pool has no free pages, it
-moves the next job in the _pages_jobs list to the tail of the list.
-New jobs are also added to the tail of the _pages_jobs list (in
-dispatch_job()). This re-ordering of the I/Os results in a lot of extra
-seek activity for workloads consisting of sequential writes.
+Ok, that's my understanding of how *device based barriers* can work,
+but there's more to it than that. As far as the filesystem is
+concerned the barrier write needs to *behave* exactly like a sync
+write because of the guarantees the filesystem has to provide
+userspace. Specifically - sync, sync writes and fsync.
 
-The below patch modifies process_jobs() to push the job back to the head
-of the list instead of the tail when there are no free pages. I see
-significantly improved performance with this change:
+This is the big problem, right? If we use barriers for commit
+writes, the filesystem can return to userspace after a sync write or
+fsync() and an *ordered barrier device implementation* may not have
+written the blocks to persistent media. If we then pull the plug on
+the box, we've just lost data that sync or fsync said was
+successfully on disk. That's BAD.
 
-LV w/snapshot on same disk, chunksize=8K: 9.6 MB/s
-LV w/snapshot on same disk, chunksize=512K: 8.4 MB/s
-LV w/snapshot on separate disk, chunksize=8K: 17.2 MB/s
-LV w/snapshot on separate disk, chunksize=512K: 14.5 MB/s
+Right now a barrier write on the last block of the fsync/sync write
+is sufficient to prevent that because of the FUA on the barrier
+block write. A purely ordered barrier implementation does not
+provide this guarantee.
 
-Thanks,
-Kevin
+This is the crux of my argument - from a filesystem perspective,
+there is a *major* difference between a barrier implemented to just
+guaranteeing ordering and a barrier implemented with a flush+FUA or
+flush+write+flush.
 
+IOWs, there are two parts to the problem:
 
---- linux/drivers/md/kcopyd.c.bak	2007-05-30 14:18:36.000000000 -0700
-+++ linux/drivers/md/kcopyd.c	2007-05-30 15:54:33.000000000 -0700
-@@ -280,6 +280,15 @@
- 	spin_unlock_irqrestore(&_job_lock, flags);
- }
- 
-+static inline void push_head(struct list_head *jobs, struct kcopyd_job *job)
-+{
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&_job_lock, flags);
-+	list_add(&job->list, jobs);
-+	spin_unlock_irqrestore(&_job_lock, flags);
-+}
-+
- /*
-  * These three functions process 1 item from the corresponding
-  * job list.
-@@ -404,7 +413,7 @@
- 			 * We couldn't service this job ATM, so
- 			 * push this job back onto the list.
- 			 */
--			push(jobs, job);
-+			push_head(jobs, job);
- 			break;
- 		}
- 
+	1 - guaranteeing I/O ordering
+	2 - guaranteeing blocks are on persistent storage.
 
- 
+Right now, a single barrier I/O is used to provide both of these
+guarantees. In most cases, all we really need to provide is 1); the
+need for 2) is a much rarer condition but still needs to be
+provided.
+
+> if I am understanding it correctly, the big win for barriers is that you 
+> do NOT have to stop and wait until the data is on persistant media before 
+> you can continue.
+
+Yes, if we define a barrier to only guarantee 1), then yes this
+would be a big win (esp. for XFS). But that requires all filesystems
+to handle sync writes differently, and sync_blockdev() needs to
+call blkdev_issue_flush() as well....
+
+So, what do we do here? Do we define a barrier I/O to only provide
+ordering, or do we define it to also provide persistent storage
+writeback? Whatever we decide, it needs to be documented....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
