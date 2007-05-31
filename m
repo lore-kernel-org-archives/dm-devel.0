@@ -1,72 +1,55 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
 	filesystems, and dm/md.
-Date: Thu, 31 May 2007 13:31:00 +1000
-Message-ID: <18014.16756.192137.738569@notabene.brown>
+Date: Thu, 31 May 2007 08:24:04 +0200
+Message-ID: <20070531062404.GH32105@kernel.dk>
 References: <18006.38689.818186.221707@notabene.brown>
-	<18010.47701.751118.336431@gargle.gargle.HOWL>
+	<18010.12472.209452.148229@notabene.brown>
+	<20070528024559.GA85884050@sgi.com> <465C871F.708@cfl.rr.com>
+	<20070529234832.GT85884050@sgi.com>
+	<465DAA15.3070703@cfl.rr.com> <465DDE1D.3000809@cfl.rr.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: message from Nikita Danilov on Monday May 28
-Sender: linux-raid-owner@vger.kernel.org
-To: Nikita Danilov <nikita@clusterfs.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-raid@vger.kernel.org, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <465DDE1D.3000809@cfl.rr.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Phillip Susi <psusi@cfl.rr.com>
+Cc: Tejun Heo <htejun@gmail.com>, David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-On Monday May 28, nikita@clusterfs.com wrote:
-> Neil Brown writes:
->  > 
+On Wed, May 30 2007, Phillip Susi wrote:
+> >That would be the exactly how I understand Documentation/block/barrier.txt:
+> >
+> >"In other words, I/O barrier requests have the following two properties.
+> >1. Request ordering
+> >...
+> >2. Forced flushing to physical medium"
+> >
+> >"So, I/O barriers need to guarantee that requests actually get written
+> >to non-volatile medium in order." 
 > 
-> [...]
-> 
->  > Thus the general sequence might be:
->  > 
->  >   a/ issue all "preceding writes".
->  >   b/ issue the commit write with BIO_RW_BARRIER
->  >   c/ wait for the commit to complete.
->  >          If it was successful - done.
->  >          If it failed other than with EOPNOTSUPP, abort
->  >          else continue
->  >   d/ wait for all 'preceding writes' to complete
->  >   e/ call blkdev_issue_flush
->  >   f/ issue commit write without BIO_RW_BARRIER
->  >   g/ wait for commit write to complete
->  >        if it failed, abort
->  >   h/ call blkdev_issue
->  >   DONE
->  > 
->  > steps b and c can be left out if it is known that the device does not
->  > support barriers.  The only way to discover this to try and see if it
->  > fails.
->  > 
->  > I don't think any filesystem follows all these steps.
-> 
-> It seems that steps b/ -- h/ are quite generic, and can be implemented
-> once in a generic code (with some synchronization mechanism like
-> wait-queue at d/).
+> I think you misinterpret this, and it probably could be worded a bit 
+> better.  The barrier request is about constraining the order.  The 
+> forced flushing is one means to implement that constraint.  The other 
+> alternative mentioned there is to use ordered tags.  The key part there 
+> is "requests actually get written to non-volatile medium _in order_", 
+> not "before the request completes", which would be synchronous IO.
 
-Yes and no.
-It depends on what you mean by "preceding write".
+No Stephan is right, the barrier is both an ordering and integrity
+constraint. If a driver completes a barrier request before that request
+and previously submitted requests are on STABLE storage, then it
+violates that principle. Look at the code and the various ordering
+options.
 
-If you implement this in the filesystem, the filesystem can wait only
-for those writes where it has an ordering dependency.   If you
-implement it in common code, then you have to wait for all writes
-that were previously issued.
-
-e.g.
-  If you have two different filesystems on two different partitions on
-  the one device, why should writes in one filesystem wait for a
-  barrier issued in the other filesystem.
-  If you have a single filesystem with one thread doing lot of
-  over-writes (no metadata changes) and the another doing lots of
-  metadata changes (requiring journalling and barriers) why should the
-  data write be held up by the metadata updates?
-
-So I'm not actually convinced that doing this is common code is the
-best approach.  But it is the easiest.  The common code should provide
-the barrier and flushing primitives, and the filesystem gets to use
-them however it likes.
-
-NeilBrown
+-- 
+Jens Axboe
