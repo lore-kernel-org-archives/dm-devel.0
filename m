@@ -1,8 +1,8 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
 	filesystems, and dm/md.
-Date: Thu, 31 May 2007 01:57:37 +0100
-Message-ID: <20070531005737.GQ25091@agk.fab.redhat.com>
+Date: Thu, 31 May 2007 02:07:39 +0100
+Message-ID: <20070531010739.GR25091@agk.fab.redhat.com>
 References: <18006.38689.818186.221707@notabene.brown>
 	<18010.12472.209452.148229@notabene.brown>
 	<20070528024559.GA85884050@sgi.com>
@@ -29,10 +29,12 @@ Cc: Tejun Heo <htejun@gmail.com>, David Chinner <dgc@sgi.com>, linux-kernel@vger
 List-Id: dm-devel.ids
 
 On Thu, May 31, 2007 at 10:46:04AM +1000, Neil Brown wrote:
-> What if the truth changes (as can happen with md or dm)?
+> If a filesystem cares, it could 'ask' as suggested above.
+> What would be a good interface for asking?
 
-You get notified in endio() that the barrier had to be emulated?
- 
+XFS already tests:
+  bd_disk->queue->ordered == QUEUE_ORDERED_NONE
+
 Alasdair
 -- 
 agk@redhat.com
