@@ -1,91 +1,101 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,  and dm/md.
-Date: Thu, 31 May 2007 15:36:50 +0200
-Message-ID: <20070531133649.GY32105@kernel.dk>
-References: <465C871F.708@cfl.rr.com> <20070529234832.GT85884050@sgi.com> <Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm> <20070530061723.GY85884050@sgi.com> <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm> <20070531002011.GC85884050@sgi.com> <20070531062644.GI32105@kernel.dk> <20070531070307.GK85884050@sgi.com> <20070531070656.GK32105@kernel.dk> <465ECDDB.9030304@tmr.com>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
+ filesystems, and dm/md.
+Date: Thu, 31 May 2007 14:24:40 -0400
+Message-ID: <465F12E8.9080203@cfl.rr.com>
+References: <18006.38689.818186.221707@notabene.brown>
+	<18010.12472.209452.148229@notabene.brown>
+	<20070528024559.GA85884050@sgi.com> <465C871F.708@cfl.rr.com>
+	<20070529234832.GT85884050@sgi.com>
+	<Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm>
+	<20070530061723.GY85884050@sgi.com>
+	<Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm>
+	<20070531002011.GC85884050@sgi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-raid-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <465ECDDB.9030304@tmr.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Bill Davidsen <davidsen@tmr.com>
-Cc: David Chinner <dgc@sgi.com>, david@lang.hm, Phillip Susi <psusi@cfl.rr.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070531002011.GC85884050@sgi.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: David Chinner <dgc@sgi.com>
+Cc: david@lang.hm, Tejun Heo <htejun@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>, linux-fsdevel@vger.kernel.org, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-On Thu, May 31 2007, Bill Davidsen wrote:
-> Jens Axboe wrote:
-> >On Thu, May 31 2007, David Chinner wrote:
-> >  
-> >>On Thu, May 31, 2007 at 08:26:45AM +0200, Jens Axboe wrote:
-> >>    
-> >>>On Thu, May 31 2007, David Chinner wrote:
-> >>>      
-> >>>>IOWs, there are two parts to the problem:
-> >>>>
-> >>>>	1 - guaranteeing I/O ordering
-> >>>>	2 - guaranteeing blocks are on persistent storage.
-> >>>>
-> >>>>Right now, a single barrier I/O is used to provide both of these
-> >>>>guarantees. In most cases, all we really need to provide is 1); the
-> >>>>need for 2) is a much rarer condition but still needs to be
-> >>>>provided.
-> >>>>
-> >>>>        
-> >>>>>if I am understanding it correctly, the big win for barriers is that 
-> >>>>>you do NOT have to stop and wait until the data is on persistant media 
-> >>>>>before you can continue.
-> >>>>>          
-> >>>>Yes, if we define a barrier to only guarantee 1), then yes this
-> >>>>would be a big win (esp. for XFS). But that requires all filesystems
-> >>>>to handle sync writes differently, and sync_blockdev() needs to
-> >>>>call blkdev_issue_flush() as well....
-> >>>>
-> >>>>So, what do we do here? Do we define a barrier I/O to only provide
-> >>>>ordering, or do we define it to also provide persistent storage
-> >>>>writeback? Whatever we decide, it needs to be documented....
-> >>>>        
-> >>>The block layer already has a notion of the two types of barriers, with
-> >>>a very small amount of tweaking we could expose that. There's absolutely
-> >>>zero reason we can't easily support both types of barriers.
-> >>>      
-> >>That sounds like a good idea - we can leave the existing
-> >>WRITE_BARRIER behaviour unchanged and introduce a new WRITE_ORDERED
-> >>behaviour that only guarantees ordering. The filesystem can then
-> >>choose which to use where appropriate....
-> >>    
-> >
-> >Precisely. The current definition of barriers are what Chris and I came
-> >up with many years ago, when solving the problem for reiserfs
-> >originally. It is by no means the only feasible approach.
-> >
-> >I'll add a WRITE_ORDERED command to the #barrier branch, it already
-> >contains the empty-bio barrier support I posted yesterday (well a
-> >slightly modified and cleaned up version).
-> >
-> >  
-> Wait. Do filesystems expect (depend on) anything but ordering now? Does 
-> md? Having users of barriers as they currently behave suddenly getting 
-> SYNC behavior where they expect ORDERED is likely to have a negative 
-> effect on performance. Or do I misread what is actually guaranteed by 
-> WRITE_BARRIER now, and a flush is currently happening in all cases?
+David Chinner wrote:
+>> you are understanding barriers to be the same as syncronous writes. (and 
+>> therefor the data is on persistant media before the call returns)
+> 
+> No, I'm describing the high level behaviour that is expected by
+> a filesystem. The reasons for this are below....
 
-See the above stuff you quote, it's answered there. It's not a change,
-this is how the Linux barrier write has always worked since I first
-implemented it. What David and I are talking about is adding a more
-relaxed version as well, that just implies ordering.
+You say no, but then you go on to contradict yourself below.
 
-> And will this also be available to user space f/s, since I just proposed 
-> a project which uses one? :-(
+> Ok, that's my understanding of how *device based barriers* can work,
+> but there's more to it than that. As far as the filesystem is
+> concerned the barrier write needs to *behave* exactly like a sync
+> write because of the guarantees the filesystem has to provide
+> userspace. Specifically - sync, sync writes and fsync.
 
-I see several uses for that, so I'd hope so.
+There, you just ascribed the synchronous property to barrier requests. 
+This is false.  Barriers are about ordering, synchronous writes are 
+another thing entirely.  The filesystem is supposed to use barriers to 
+maintain ordering for journal data.  If you are trying to handle a 
+synchronous write request, that's another flag.
 
-> I think the goal is good, more choice is almost always better choice, I 
-> just want to be sure there won't be big disk performance regressions.
+> This is the big problem, right? If we use barriers for commit
+> writes, the filesystem can return to userspace after a sync write or
+> fsync() and an *ordered barrier device implementation* may not have
+> written the blocks to persistent media. If we then pull the plug on
+> the box, we've just lost data that sync or fsync said was
+> successfully on disk. That's BAD.
 
-We can't get more heavy weight than the current barrier, it's about as
-conservative as you can get.
+That's why for synchronous writes, you set the flag to mark the request 
+as synchronous, which has nothing at all to do with barriers.  You are 
+trying to use barriers to solve two different problems.  Use one flag to 
+indicate ordering, and another to indicate synchronisity.
 
--- 
-Jens Axboe
+> Right now a barrier write on the last block of the fsync/sync write
+> is sufficient to prevent that because of the FUA on the barrier
+> block write. A purely ordered barrier implementation does not
+> provide this guarantee.
 
+This is a side effect of the implementation of the barrier, not part of 
+the semantics of barriers, so you shouldn't rely on this behavior.  You 
+don't have to use FUA to handle the barrier request, and if you don't, 
+then the request can be completed while the data is still in the write 
+cache.  You just have to make sure to flush it before any subsequent 
+requests.
+
+> IOWs, there are two parts to the problem:
+> 
+> 	1 - guaranteeing I/O ordering
+> 	2 - guaranteeing blocks are on persistent storage.
+> 
+> Right now, a single barrier I/O is used to provide both of these
+> guarantees. In most cases, all we really need to provide is 1); the
+> need for 2) is a much rarer condition but still needs to be
+> provided.
+
+Yep... two problems... two flags.
+
+> Yes, if we define a barrier to only guarantee 1), then yes this
+> would be a big win (esp. for XFS). But that requires all filesystems
+> to handle sync writes differently, and sync_blockdev() needs to
+> call blkdev_issue_flush() as well....
+> 
+> So, what do we do here? Do we define a barrier I/O to only provide
+> ordering, or do we define it to also provide persistent storage
+> writeback? Whatever we decide, it needs to be documented....
+
+We do the former or we end up in the same boat as O_DIRECT; where you 
+have one flag that means several things, and no way to specify you only 
+need some of those and not the others.
