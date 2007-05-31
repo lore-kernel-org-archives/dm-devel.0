@@ -1,102 +1,82 @@
 From: Bill Davidsen <davidsen@tmr.com>
-Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
- filesystems, and dm/md.
-Date: Thu, 31 May 2007 08:28:02 -0400
-Message-ID: <465EBF52.5010204@tmr.com>
-References: <18006.38689.818186.221707@notabene.brown>	<465AEAA5.7000407@tmr.com>
-	<18014.6347.753050.606896@notabene.brown>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
+ and dm/md.
+Date: Thu, 31 May 2007 09:30:03 -0400
+Message-ID: <465ECDDB.9030304@tmr.com>
+References: <18010.12472.209452.148229@notabene.brown> <20070528024559.GA85884050@sgi.com> <465C871F.708@cfl.rr.com> <20070529234832.GT85884050@sgi.com> <Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm> <20070530061723.GY85884050@sgi.com> <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm> <20070531002011.GC85884050@sgi.com> <20070531062644.GI32105@kernel.dk> <20070531070307.GK85884050@sgi.com> <20070531070656.GK32105@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <18014.6347.753050.606896@notabene.brown>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>
-Cc: David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>, linux-fsdevel@vger.kernel.org
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20070531070656.GK32105@kernel.dk>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: David Chinner <dgc@sgi.com>, david@lang.hm, Phillip Susi <psusi@cfl.rr.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
 List-Id: dm-devel.ids
 
-Neil Brown wrote:
-> On Monday May 28, davidsen@tmr.com wrote:
+Jens Axboe wrote:
+> On Thu, May 31 2007, David Chinner wrote:
 >   
->> There are two things I'm not sure you covered.
->>
->> First, disks which don't support flush but do have a "cache dirty" 
->> status bit you can poll at times like shutdown. If there are no drivers 
->> which support these, it can be ignored.
+>> On Thu, May 31, 2007 at 08:26:45AM +0200, Jens Axboe wrote:
+>>     
+>>> On Thu, May 31 2007, David Chinner wrote:
+>>>       
+>>>> IOWs, there are two parts to the problem:
+>>>>
+>>>> 	1 - guaranteeing I/O ordering
+>>>> 	2 - guaranteeing blocks are on persistent storage.
+>>>>
+>>>> Right now, a single barrier I/O is used to provide both of these
+>>>> guarantees. In most cases, all we really need to provide is 1); the
+>>>> need for 2) is a much rarer condition but still needs to be
+>>>> provided.
+>>>>
+>>>>         
+>>>>> if I am understanding it correctly, the big win for barriers is that you 
+>>>>> do NOT have to stop and wait until the data is on persistant media before 
+>>>>> you can continue.
+>>>>>           
+>>>> Yes, if we define a barrier to only guarantee 1), then yes this
+>>>> would be a big win (esp. for XFS). But that requires all filesystems
+>>>> to handle sync writes differently, and sync_blockdev() needs to
+>>>> call blkdev_issue_flush() as well....
+>>>>
+>>>> So, what do we do here? Do we define a barrier I/O to only provide
+>>>> ordering, or do we define it to also provide persistent storage
+>>>> writeback? Whatever we decide, it needs to be documented....
+>>>>         
+>>> The block layer already has a notion of the two types of barriers, with
+>>> a very small amount of tweaking we could expose that. There's absolutely
+>>> zero reason we can't easily support both types of barriers.
+>>>       
+>> That sounds like a good idea - we can leave the existing
+>> WRITE_BARRIER behaviour unchanged and introduce a new WRITE_ORDERED
+>> behaviour that only guarantees ordering. The filesystem can then
+>> choose which to use where appropriate....
 >>     
 >
-> There are really devices like that?  So to implement a flush, you have
-> to stop sending writes and wait and poll - maybe poll every
-> millisecond?
->   
-
-Yes, there really are (or were). But I don't think that there are 
-drivers, so it's not an issue.
-> That wouldn't be very good for performance....  maybe you just
-> wouldn't bother with barriers on that sort of device?
->   
-
-That is why there are no drivers...
-> Which reminds me:  What is the best way to turn off barriers?
-> Several filesystems have "-o nobarriers" or "-o barriers=0",
-> or the inverse.
->   
-
-If they can function usefully without, the admin gets to make that choice.
-> md/raid currently uses barriers to write metadata, and there is no
-> way to turn that off.  I'm beginning to wonder if that is best.
->   
-
-I don't see how you can have reliable operation without it, particularly 
-WRT bitmap.
-> Maybe barrier support should be a function of the device.  i.e. the
-> filesystem or whatever always sends barrier requests where it thinks
-> it is appropriate, and the block device tries to honour them to the
-> best of its ability, but if you run
->    blockdev --enforce-barriers=no /dev/sda
-> then you lose some reliability guarantees, but gain some throughput (a
-> bit like the 'async' export option for nfsd).
+> Precisely. The current definition of barriers are what Chris and I came
+> up with many years ago, when solving the problem for reiserfs
+> originally. It is by no means the only feasible approach.
+>
+> I'll add a WRITE_ORDERED command to the #barrier branch, it already
+> contains the empty-bio barrier support I posted yesterday (well a
+> slightly modified and cleaned up version).
 >
 >   
-Since this is device dependent, it really should be in the device 
-driver, and requests should have status of success, failure, or feature 
-unavailability.
+Wait. Do filesystems expect (depend on) anything but ordering now? Does 
+md? Having users of barriers as they currently behave suddenly getting 
+SYNC behavior where they expect ORDERED is likely to have a negative 
+effect on performance. Or do I misread what is actually guaranteed by 
+WRITE_BARRIER now, and a flush is currently happening in all cases?
 
-
->> Second, NAS (including nbd?). Is there enough information to handle this  "really right?"
->>     
->
-> NAS means lots of things, including NFS and CIFS where this doesn't
-> apply.
->   
-
-Well, we're really talking about network attached devices rather than 
-network filesystems. I guess people do lump them together.
-
-> For 'nbd', it is entirely up to the protocol.  If the protocol allows
-> a barrier flag to be sent to the server, then barriers should just
-> work.  If it doesn't, then either the server disables write-back
-> caching, or flushes every request, or you lose all barrier
-> guarantees. 
->   
-
-Pretty much agrees with what I said above, it's at a level closer to the 
-device, and status should come back from the physical i/o request.
-> For 'iscsi', I guess it works just the same as SCSI...
->   
-
-Hopefully.
+And will this also be available to user space f/s, since I just proposed 
+a project which uses one? :-(
+I think the goal is good, more choice is almost always better choice, I 
+just want to be sure there won't be big disk performance regressions.
 
 -- 
 bill davidsen <davidsen@tmr.com>
   CTO TMR Associates, Inc
   Doing interesting things with small computers since 1979
+
