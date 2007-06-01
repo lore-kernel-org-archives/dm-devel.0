@@ -1,49 +1,54 @@
-From: Tejun Heo <htejun@gmail.com>
-Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices,
- filesystems, and dm/md.
-Date: Sat, 02 Jun 2007 03:09:06 +0900
-Message-ID: <466060C2.4060506@gmail.com>
-References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528094358.GM25091@agk.fab.redhat.com> <5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com> <20070529220500.GA6513@agk.fab.redhat.com> <5201e28f0705300212g3be16464u5ee1a4c80db27a11@mail.gmail.com> <465DAC72.1010201@cfl.rr.com> <5201e28f0705310414u1a9aebc4je135748274543946@mail.gmail.com> <465F9197.7060002@gmail.com> <Pine.LNX.4.64.0705312144400.6705@asgard.lang.hm>            <465FC7B1.3060309@gmail.com> <10553.1180717627@turing-police.cc.vt.edu>
+From: Bill Davidsen <davidsen@tmr.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
+ and dm/md.
+Date: Fri, 01 Jun 2007 19:56:13 -0400
+Message-ID: <4660B21D.9030801@tmr.com>
+References: <20070528024559.GA85884050@sgi.com>	<465C871F.708@cfl.rr.com>	<20070529234832.GT85884050@sgi.com>	<Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm>	<20070530061723.GY85884050@sgi.com>	<Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm>	<20070531002011.GC85884050@sgi.com>	<20070531062644.GI32105@kernel.dk>	<20070531070307.GK85884050@sgi.com>	<465F1479.70100@cfl.rr.com>	<20070531233449.GT86004887@sgi.com> <18015.46551.209946.204238@notabene.brown>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <10553.1180717627@turing-police.cc.vt.edu>
+In-Reply-To: <18015.46551.209946.204238@notabene.brown>
 Sender: linux-raid-owner@vger.kernel.org
-To: Valdis.Kletnieks@vt.edu
-Cc: david@lang.hm, Stefan Bader <Stefan.Bader@de.ibm.com>, Phillip Susi <psusi@cfl.rr.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, David Chinner <dgc@sgi.com>, Andreas Dilger <adilger@clusterfs.com>, ric@emc.com
+To: Neil Brown <neilb@suse.de>
+Cc: David Chinner <dgc@sgi.com>, Phillip Susi <psusi@cfl.rr.com>, Jens Axboe <jens.axboe@oracle.com>, david@lang.hm, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
 List-Id: dm-devel.ids
 
-Valdis.Kletnieks@vt.edu wrote:
-> On Fri, 01 Jun 2007 16:16:01 +0900, Tejun Heo said:
->> Don't those thingies usually have NV cache or backed by battery such
->> that ORDERED_DRAIN is enough?
-> 
-> Probably *most* do, but do you really want to bet the user's data on it?
+Neil Brown wrote:
+> On Friday June 1, dgc@sgi.com wrote:
+>   
+>> On Thu, May 31, 2007 at 02:31:21PM -0400, Phillip Susi wrote:
+>>     
+>>> David Chinner wrote:
+>>>       
+>>>> That sounds like a good idea - we can leave the existing
+>>>> WRITE_BARRIER behaviour unchanged and introduce a new WRITE_ORDERED
+>>>> behaviour that only guarantees ordering. The filesystem can then
+>>>> choose which to use where appropriate....
+>>>>         
+>>> So what if you want a synchronous write, but DON'T care about the order? 
+>>>       
+>> submit_bio(WRITE_SYNC, bio);
+>>
+>> Already there, already used by XFS, JFS and direct I/O.
+>>     
+>
+> Are you sure?
+>
+> You seem to be saying that WRITE_SYNC causes the write to be safe on
+> media before the request returns.  That isn't my understanding.
+> I think (from comments near the definition and a quick grep through
+> the code) that WRITE_SYNC expedites the delivery of the request
+> through the elevator, but doesn't do anything special about getting it
+> onto the media.
 
-Thought we were talking about high-end storage stuff.  I don't think
-I'll be too uncomfortable.  The reason why we're talking about this at
-all is because high-end stuff with fancy NV cache and a hunk of battery
-will unnecessarily suffer from the current barrier implementation.
-
->> The problem is that the interface between the host and a storage device
->> (ATA or SCSI) is not built to communicate that kind of information
->> (grouped flush, relaxed ordering...).  I think battery backed
->> ORDERED_DRAIN combined with fine-grained host queue flush would be
->> pretty good.  It doesn't require some fancy new interface which isn't
->> gonna be used widely anyway and can achieve most of performance gain if
->> the storage plays it smart.
-> 
-> Yes, that would probably be "pretty good".  But how do you get the storage
-> device to *reliably* tell the truth about what it actually implements? (Consider
-> the number of devices that downright lie about their implementation of cache
-> flushing....)
-
-SCSI NV bit or report write through cache?  Again, we're talking about
-large arrays and we already trust the write through thing even on cheap
-single spindle drives.  sd currently doesn't honor NV bit and it's
-causing some troubles on some arrays.  We'll probably have to honor them
-at least conditionally.
+My impression is that the sync will return when the i/o has been 
+delivered to the device, and will get special treatment by the elevator 
+code (I looked quickly, more is needed). I'm sore someone will tell me 
+if I misread this. ;-)
 
 -- 
-tejun
+bill davidsen <davidsen@tmr.com>
+  CTO TMR Associates, Inc
+  Doing interesting things with small computers since 1979
+
