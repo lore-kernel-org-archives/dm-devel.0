@@ -1,143 +1,53 @@
-From: Bill Davidsen <davidsen@tmr.com>
-Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
-  and dm/md.
-Date: Fri, 01 Jun 2007 12:04:50 -0400
-Message-ID: <466043A2.5040002@tmr.com>
-References: <465C871F.708@cfl.rr.com> <20070529234832.GT85884050@sgi.com> <Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm> <20070530061723.GY85884050@sgi.com> <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm> <20070531002011.GC85884050@sgi.com> <20070531062644.GI32105@kernel.dk> <20070531070307.GK85884050@sgi.com> <20070531070656.GK32105@kernel.dk> <465ECDDB.9030304@tmr.com> <20070531133649.GY32105@kernel.dk>
+From: Valdis.Kletnieks@vt.edu
+Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems, and dm/md.
+Date: Fri, 01 Jun 2007 13:07:07 -0400
+Message-ID: <10553.1180717627@turing-police.cc.vt.edu>
+References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528094358.GM25091@agk.fab.redhat.com> <5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com> <20070529220500.GA6513@agk.fab.redhat.com> <5201e28f0705300212g3be16464u5ee1a4c80db27a11@mail.gmail.com> <465DAC72.1010201@cfl.rr.com> <5201e28f0705310414u1a9aebc4je135748274543946@mail.gmail.com> <465F9197.7060002@gmail.com> <Pine.LNX.4.64.0705312144400.6705@asgard.lang.hm>
+            <465FC7B1.3060309@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: multipart/signed; boundary="==_Exmh_1180717627_9513P";
+	 micalg=pgp-sha1; protocol="application/pgp-signature"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20070531133649.GY32105@kernel.dk>
-Sender: linux-raid-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: David Chinner <dgc@sgi.com>, david@lang.hm, Phillip Susi <psusi@cfl.rr.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762807AbXFARIq@vger.kernel.org>
+In-Reply-To: Your message of "Fri, 01 Jun 2007 16:16:01 +0900."
+             <465FC7B1.3060309@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Tejun Heo <htejun@gmail.com>
+Cc: david@lang.hm, Stefan Bader <Stefan.Bader@de.ibm.com>, Phillip Susi <psusi@cfl.rr.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, David Chinner <dgc@sgi.com>, Andreas Dilger <adilger@clusterfs.com>, ric@emc.com
 List-Id: dm-devel.ids
 
-Jens Axboe wrote:
-> On Thu, May 31 2007, Bill Davidsen wrote:
->   
->> Jens Axboe wrote:
->>     
->>> On Thu, May 31 2007, David Chinner wrote:
->>>  
->>>       
->>>> On Thu, May 31, 2007 at 08:26:45AM +0200, Jens Axboe wrote:
->>>>    
->>>>         
->>>>> On Thu, May 31 2007, David Chinner wrote:
->>>>>      
->>>>>           
->>>>>> IOWs, there are two parts to the problem:
->>>>>>
->>>>>> 	1 - guaranteeing I/O ordering
->>>>>> 	2 - guaranteeing blocks are on persistent storage.
->>>>>>
->>>>>> Right now, a single barrier I/O is used to provide both of these
->>>>>> guarantees. In most cases, all we really need to provide is 1); the
->>>>>> need for 2) is a much rarer condition but still needs to be
->>>>>> provided.
->>>>>>
->>>>>>        
->>>>>>             
->>>>>>> if I am understanding it correctly, the big win for barriers is that 
->>>>>>> you do NOT have to stop and wait until the data is on persistant media 
->>>>>>> before you can continue.
->>>>>>>          
->>>>>>>               
->>>>>> Yes, if we define a barrier to only guarantee 1), then yes this
->>>>>> would be a big win (esp. for XFS). But that requires all filesystems
->>>>>> to handle sync writes differently, and sync_blockdev() needs to
->>>>>> call blkdev_issue_flush() as well....
->>>>>>
->>>>>> So, what do we do here? Do we define a barrier I/O to only provide
->>>>>> ordering, or do we define it to also provide persistent storage
->>>>>> writeback? Whatever we decide, it needs to be documented....
->>>>>>        
->>>>>>             
->>>>> The block layer already has a notion of the two types of barriers, with
->>>>> a very small amount of tweaking we could expose that. There's absolutely
->>>>> zero reason we can't easily support both types of barriers.
->>>>>      
->>>>>           
->>>> That sounds like a good idea - we can leave the existing
->>>> WRITE_BARRIER behaviour unchanged and introduce a new WRITE_ORDERED
->>>> behaviour that only guarantees ordering. The filesystem can then
->>>> choose which to use where appropriate....
->>>>    
->>>>         
->>> Precisely. The current definition of barriers are what Chris and I came
->>> up with many years ago, when solving the problem for reiserfs
->>> originally. It is by no means the only feasible approach.
->>>
->>> I'll add a WRITE_ORDERED command to the #barrier branch, it already
->>> contains the empty-bio barrier support I posted yesterday (well a
->>> slightly modified and cleaned up version).
->>>
->>>  
->>>       
->> Wait. Do filesystems expect (depend on) anything but ordering now? Does 
->> md? Having users of barriers as they currently behave suddenly getting 
->> SYNC behavior where they expect ORDERED is likely to have a negative 
->> effect on performance. Or do I misread what is actually guaranteed by 
->> WRITE_BARRIER now, and a flush is currently happening in all cases?
->>     
->
-> See the above stuff you quote, it's answered there. It's not a change,
-> this is how the Linux barrier write has always worked since I first
-> implemented it. What David and I are talking about is adding a more
-> relaxed version as well, that just implies ordering.
->   
+--==_Exmh_1180717627_9513P
+Content-Type: text/plain; charset=us-ascii
 
-I was reading the documentation in block/biodoc.txt, which seems to just 
-say ordered:
+On Fri, 01 Jun 2007 16:16:01 +0900, Tejun Heo said:
+> Don't those thingies usually have NV cache or backed by battery such
+> that ORDERED_DRAIN is enough?
 
-    1.2.1 I/O Barriers
+Probably *most* do, but do you really want to bet the user's data on it?
 
-    There is a way to enforce strict ordering for i/os through barriers.
-    All requests before a barrier point must be serviced before the barrier
-    request and any other requests arriving after the barrier will not be
-    serviced until after the barrier has completed. This is useful for
-    higher
-    level control on write ordering, e.g flushing a log of committed updates
-    to disk before the corresponding updates themselves.
+> The problem is that the interface between the host and a storage device
+> (ATA or SCSI) is not built to communicate that kind of information
+> (grouped flush, relaxed ordering...).  I think battery backed
+> ORDERED_DRAIN combined with fine-grained host queue flush would be
+> pretty good.  It doesn't require some fancy new interface which isn't
+> gonna be used widely anyway and can achieve most of performance gain if
+> the storage plays it smart.
 
-    A flag in the bio structure, BIO_BARRIER is used to identify a
-    barrier i/o.
-    The generic i/o scheduler would make sure that it places the barrier
-    request and
-    all other requests coming after it after all the previous requests
-    in the
-    queue. Barriers may be implemented in different ways depending on the
-    driver. A SCSI driver for example could make use of ordered tags to
-    preserve the necessary ordering with a lower impact on throughput.
-    For IDE
-    this might be two sync cache flush: a pre and post flush when
-    encountering
-    a barrier write.
+Yes, that would probably be "pretty good".  But how do you get the storage
+device to *reliably* tell the truth about what it actually implements? (Consider
+the number of devices that downright lie about their implementation of cache
+flushing....)
 
-The "flush" comment is associated with IDE, so it wasn't clear that the 
-device cache is always cleared to force the data to the platter.
+--==_Exmh_1180717627_9513P
+Content-Type: application/pgp-signature
 
->> And will this also be available to user space f/s, since I just proposed 
->> a project which uses one? :-(
->>     
->
-> I see several uses for that, so I'd hope so.
->
->   
->> I think the goal is good, more choice is almost always better choice, I 
->> just want to be sure there won't be big disk performance regressions.
->>     
->
-> We can't get more heavy weight than the current barrier, it's about as
-> conservative as you can get.
->
->   
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
+Comment: Exmh version 2.5 07/13/2001
 
+iD8DBQFGYFI7cC3lWbTT17ARAhCrAKCXsUNK/FKgCgP7h3595UvrISnw+QCg3+P5
+1+0QmgTXUfe91UZEeK9GIVE=
+=BTOx
+-----END PGP SIGNATURE-----
 
--- 
-bill davidsen <davidsen@tmr.com>
-  CTO TMR Associates, Inc
-  Doing interesting things with small computers since 1979
-
+--==_Exmh_1180717627_9513P--
