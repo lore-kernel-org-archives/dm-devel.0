@@ -1,54 +1,51 @@
-From: david@lang.hm
-Subject: Re: Re: [RFD] BIO_RW_BARRIER - what it means for devices,
-	filesystems, and dm/md.
-Date: Thu, 31 May 2007 22:55:58 -0700 (PDT)
-Message-ID: <Pine.LNX.4.64.0705312144400.6705@asgard.lang.hm>
-References: <18006.38689.818186.221707@notabene.brown>
-	<18010.12472.209452.148229@notabene.brown>
-	<20070528094358.GM25091@agk.fab.redhat.com>
-	<5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com>
-	<20070529220500.GA6513@agk.fab.redhat.com>
-	<5201e28f0705300212g3be16464u5ee1a4c80db27a11@mail.gmail.com>
-	<465DAC72.1010201@cfl.rr.com>
-	<5201e28f0705310414u1a9aebc4je135748274543946@mail.gmail.com>
-	<465F9197.7060002@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Neil Brown <neilb@suse.de>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems, and dm/md.
+Date: Fri, 1 Jun 2007 15:59:51 +1000
+Message-ID: <18015.46551.209946.204238@notabene.brown>
+References: <20070528024559.GA85884050@sgi.com>
+	<465C871F.708@cfl.rr.com>
+	<20070529234832.GT85884050@sgi.com>
+	<Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm>
+	<20070530061723.GY85884050@sgi.com>
+	<Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm>
+	<20070531002011.GC85884050@sgi.com>
+	<20070531062644.GI32105@kernel.dk>
+	<20070531070307.GK85884050@sgi.com>
+	<465F1479.70100@cfl.rr.com>
+	<20070531233449.GT86004887@sgi.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <465F9197.7060002@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Tejun Heo <htejun@gmail.com>
-Cc: David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, linux-fsdevel@vger.kernel.org, Andreas Dilger <adilger@clusterfs.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: message from David Chinner on Friday June 1
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: David Chinner <dgc@sgi.com>
+Cc: Phillip Susi <psusi@cfl.rr.com>, Jens Axboe <jens.axboe@oracle.com>, david@lang.hm, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>, Tejun Heo <htejun@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, 1 Jun 2007, Tejun Heo wrote:
+On Friday June 1, dgc@sgi.com wrote:
+> On Thu, May 31, 2007 at 02:31:21PM -0400, Phillip Susi wrote:
+> > David Chinner wrote:
+> > >That sounds like a good idea - we can leave the existing
+> > >WRITE_BARRIER behaviour unchanged and introduce a new WRITE_ORDERED
+> > >behaviour that only guarantees ordering. The filesystem can then
+> > >choose which to use where appropriate....
+> > 
+> > So what if you want a synchronous write, but DON'T care about the order? 
+> 
+> submit_bio(WRITE_SYNC, bio);
+> 
+> Already there, already used by XFS, JFS and direct I/O.
 
-> but one
-> thing we should bear in mind is that harddisks don't have humongous
-> caches or very smart controller / instruction set.  No matter how
-> relaxed interface the block layer provides, in the end, it just has to
-> issue whole-sale FLUSH CACHE on the device to guarantee data ordering on
-> the media.
+Are you sure?
 
-if you are talking about individual drives you may be right for the moment 
-(but 16M cache on drives is a _lot_ larger then people imagined would be 
-there a few years ago)
+You seem to be saying that WRITE_SYNC causes the write to be safe on
+media before the request returns.  That isn't my understanding.
+I think (from comments near the definition and a quick grep through
+the code) that WRITE_SYNC expedites the delivery of the request
+through the elevator, but doesn't do anything special about getting it
+onto the media.
+It essentially say "Submit this request now, don't wait for more
+request to bundle with it for better bandwidth utilisation"
 
-but when you consider the self-contained disk arrays it's an entirely 
-different story. you can easily have a few gig of cache and a complete OS 
-pretending to be a single drive as far as you are concerned.
-
-and the price of such devices is plummeting (in large part thanks to Linux 
-moving into this space), you can now readily buy a 10TB array for $10k 
-that looks like a single drive.
-
-David Lang
+NeilBrown
