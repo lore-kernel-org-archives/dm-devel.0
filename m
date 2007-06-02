@@ -1,53 +1,45 @@
-From: Bill Davidsen <davidsen@tmr.com>
-Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices,
-  filesystems, and dm/md.
-Date: Fri, 01 Jun 2007 20:04:19 -0400
-Message-ID: <4660B403.3000202@tmr.com>
-References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528024559.GA85884050@sgi.com> <465C871F.708@cfl.rr.com> <20070529234832.GT85884050@sgi.com> <465DAA15.3070703@cfl.rr.com> <465DDE1D.3000809@cfl.rr.com> <20070531062404.GH32105@kernel.dk> <465F15ED.1070304@cfl.rr.com> <20070531185836.GC32105@kernel.dk>
+From: Tejun Heo <htejun@gmail.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
+  and dm/md.
+Date: Sat, 02 Jun 2007 18:20:38 +0900
+Message-ID: <46613666.7010800@gmail.com>
+References: <465C871F.708@cfl.rr.com> <20070529234832.GT85884050@sgi.com> <Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm> <20070530061723.GY85884050@sgi.com> <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm> <20070531002011.GC85884050@sgi.com> <20070531062644.GI32105@kernel.dk> <20070531070307.GK85884050@sgi.com> <20070531070656.GK32105@kernel.dk> <465F8F71.20302@gmail.com> <20070601082140.GP32105@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20070531185836.GC32105@kernel.dk>
+In-Reply-To: <20070601082140.GP32105@kernel.dk>
 Sender: linux-fsdevel-owner@vger.kernel.org
 To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Phillip Susi <psusi@cfl.rr.com>, device-mapper development <dm-devel@redhat.com>, David Chinner <dgc@sgi.com>, Tejun Heo <htejun@gmail.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, linux-fsdevel@vger.kernel.org, Andreas Dilger <adilger@clusterfs.com>, Stefan Bader <Stefan.Bader@de.ibm.com>
+Cc: David Chinner <dgc@sgi.com>, david@lang.hm, Phillip Susi <psusi@cfl.rr.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-Jens Axboe wrote:
-> On Thu, May 31 2007, Phillip Susi wrote:
->   
->> Jens Axboe wrote:
->>     
->>> No Stephan is right, the barrier is both an ordering and integrity
->>> constraint. If a driver completes a barrier request before that request
->>> and previously submitted requests are on STABLE storage, then it
->>> violates that principle. Look at the code and the various ordering
->>> options.
->>>       
->> I am saying that is the wrong thing to do.  Barrier should be about 
->> ordering only.  So long as the order they hit the media is maintained, 
->> the order the requests are completed in can change.  barrier.txt bears 
->>     
->
-> But you can't guarentee ordering without flushing the data out as well.
-> It all depends on the type of cache on the device, of course. If you
-> look at the ordinary sata/ide drive with write back caching, you can't
-> just issue the requests in order and pray that the drive cache will make
-> it to platter.
->
-> If you don't have write back caching, or if the cache is battery backed
-> and thus guarenteed to never be lost, maintaining order is naturally
-> enough.
->   
+Hello,
 
-Do I misread this? If ordered doesn't reach all the way to the platter 
-then there will be failure modes which result in order not preserved. 
-Battery backed cache doesn't prevect failures between the cache and the 
-platter.
+Jens Axboe wrote:
+>> Would that be very different from issuing barrier and not waiting for
+>> its completion?  For ATA and SCSI, we'll have to flush write back cache
+>> anyway, so I don't see how we can get performance advantage by
+>> implementing separate WRITE_ORDERED.  I think zero-length barrier
+>> (haven't looked at the code yet, still recovering from jet lag :-) can
+>> serve as genuine barrier without the extra write tho.
+> 
+> As always, it depends :-)
+> 
+> If you are doing pure flush barriers, then there's no difference. Unless
+> you only guarantee ordering wrt previously submitted requests, in which
+> case you can eliminate the post flush.
+> 
+> If you are doing ordered tags, then just setting the ordered bit is
+> enough. That is different from the barrier in that we don't need a flush
+> of FUA bit set.
+
+Hmmm... I'm feeling dense.  Zero-length barrier also requires only one
+flush to separate requests before and after it (haven't looked at the
+code yet, will soon).  Can you enlighten me?
+
+Thanks.
 
 -- 
-bill davidsen <davidsen@tmr.com>
-  CTO TMR Associates, Inc
-  Doing interesting things with small computers since 1979
+tejun
 
