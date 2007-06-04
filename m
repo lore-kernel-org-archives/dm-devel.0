@@ -1,48 +1,58 @@
-From: Tejun Heo <htejun@gmail.com>
-Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
-   and dm/md.
-Date: Mon, 04 Jun 2007 16:39:45 +0900
-Message-ID: <4663C1C1.5000009@gmail.com>
-References: <Pine.LNX.4.64.0705291653230.31474@asgard.lang.hm> <20070530061723.GY85884050@sgi.com> <Pine.LNX.4.64.0705300946220.8246@asgard.lang.hm> <20070531002011.GC85884050@sgi.com> <20070531062644.GI32105@kernel.dk> <20070531070307.GK85884050@sgi.com> <20070531070656.GK32105@kernel.dk> <465F8F71.20302@gmail.com> <20070601082140.GP32105@kernel.dk> <46613666.7010800@gmail.com> <20070602143438.GB32105@kernel.dk>
+From: "Wood, Brian J" <brian.j.wood@intel.com>
+Subject: dmeventd - High level documentation,
+	any kind of design documents
+Date: Mon, 4 Jun 2007 09:21:25 -0700
+Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CCF796D8@orsmsx418.amr.corp.intel.com>
+References: <4628E528.1070900@ce.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20070602143438.GB32105@kernel.dk>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: David Chinner <dgc@sgi.com>, david@lang.hm, Phillip Susi <psusi@cfl.rr.com>, Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <4628E528.1070900@ce.jp.nec.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Jens Axboe wrote:
-> On Sat, Jun 02 2007, Tejun Heo wrote:
->> Hello,
->>
->> Jens Axboe wrote:
->>>> Would that be very different from issuing barrier and not waiting for
->>>> its completion?  For ATA and SCSI, we'll have to flush write back cache
->>>> anyway, so I don't see how we can get performance advantage by
->>>> implementing separate WRITE_ORDERED.  I think zero-length barrier
->>>> (haven't looked at the code yet, still recovering from jet lag :-) can
->>>> serve as genuine barrier without the extra write tho.
->>> As always, it depends :-)
->>>
->>> If you are doing pure flush barriers, then there's no difference. Unless
->>> you only guarantee ordering wrt previously submitted requests, in which
->>> case you can eliminate the post flush.
->>>
->>> If you are doing ordered tags, then just setting the ordered bit is
->>> enough. That is different from the barrier in that we don't need a flush
->>> of FUA bit set.
->> Hmmm... I'm feeling dense.  Zero-length barrier also requires only one
->> flush to separate requests before and after it (haven't looked at the
->> code yet, will soon).  Can you enlighten me?
-> 
-> Yeah, that's what the zero-length barrier implementation I posted does.
-> Not sure if you have a question beyond that, if so fire away :-)
+Hello, I was wondering if there were any kinds of design documents,
+etc... types of notes on how the device mapper event daemon was
+thought-up/designed? Or if anyone is working on documentation?=20
 
-I thought you were talking about adding BIO_RW_ORDERED instead of
-exposing zero length BIO_RW_BARRIER.  Sorry about the confusion.  :-)
+From what I've gathered so far (by reading the code) is that dmeventd is
+designed around a plug-in type model (and that LVM has a plugin for this
+that I could possibly trace through to see how this all works). Also,
+I've dug in enough to see that error event handling and failure handling
+for dmraid is not implemented (correct me if I'm wrong, please :) ) and
+that there is some very simple event handling for LVM (just userspace
+mirroring from what I've found)?
 
--- 
-tejun
+Ideally what I would like to help out with is developing a shared
+library for the dmeventd daemon for dmraid so events could be reported
+for the various raid levels. From what I understand Jonathan Brassow did
+the initial work on dmeventd and might be my best resource in finding
+implementation details. =20
+
+Until I can put together a High-Level document that management can
+understand about dmeventd's current functionality I'm sort of in a catch
+22...I am being tasked with adding functionality to this project, but
+can't start working until they know what is currently there and how it
+was designed. Any help with guidance would be greatly appreciated.=20
+
+
+
+
+Brian Wood
+Intel Corporation=20
+Digital Enterprise Group
+Manageability & Platform Software Division
+brian.j.wood@intel.com
