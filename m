@@ -1,7 +1,7 @@
 From: "Xyber Blue" <xyberblue@gmail.com>
-Subject: (no subject)
-Date: Tue, 5 Jun 2007 08:32:05 +0800
-Message-ID: <45ea3f390706041732l7df87ecak37a1e9f506c0271b@mail.gmail.com>
+Subject: Device Mapper Documents
+Date: Tue, 5 Jun 2007 08:32:59 +0800
+Message-ID: <45ea3f390706041732j74bbcdbam21c34028eb2bd5d6@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
@@ -27,7 +27,6 @@ subsystems hardware in creating device mapper multipath DSM or
 Hardware Handler. I have just read from the linux symposium document
 about the implementation of the Linux Multipathing solution that the
 Device Specific Module allows the ff:
-
    a) Specification of kernel resident storage system specific path
 group initialization
    b) IO completion filtering
@@ -40,4 +39,4 @@ Another Question:
    How do I test these Hardware Handler in userspace?
 
 Thanks and Best Regards,
-xyber
+xyberblue
