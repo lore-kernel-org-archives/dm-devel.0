@@ -1,9 +1,14 @@
-From: meyering@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmeventd/dmeventd.c  ...
-Date: 24 Jul 2007 14:16:48 -0000
-Message-ID: <20070724141648.18945.qmail@sourceware.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/3]: region based notifications for dm-io
+Date: Thu, 7 Jun 2007 23:57:44 +0100
+Message-ID: <20070607225744.GF25091@agk.fab.redhat.com>
+References: <5201e28f0706050605o1861d942te501266671c344f4@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <5201e28f0706050605o1861d942te501266671c344f4@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,62 +18,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Stefan Bader <Stefan.Bader@de.ibm.com>
+Cc: wein@de.ibm.com, heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	meyering@sourceware.org	2007-07-24 14:16:48
+On Tue, Jun 05, 2007 at 03:05:30PM +0200, Stefan Bader wrote:
+> This patch adds the new interface to dm-io.
 
-Modified files:
-	.              : WHATS_NEW 
-	dmeventd       : dmeventd.c 
-	lib/fs         : libdevmapper.c 
+And also undoes some formatting, comments, variable name changes etc.
+that I made when preparing earlier patches for upstream.  Please revert
+those changes and also look at what I changed last time, and make
+similar changes to this code.
 
-Log message:
-	libdevmapper, dmeventd: be paranoid about detecting write failure
-	* dmeventd/dmeventd.c (_set_oom_adj): When writing to /proc/self/oom_adj,
-	detect failure even if it's hidden behind ferror.  [Using dm_fclose's
-	extra ferror test here is probably not needed, since the amount written
-	is nowhere near BUFSIZ, but use it regardless, for consistency. ]
-	* lib/fs/libdevmapper.c (do_suspend): Detect fclose failure when
-	writing to suspend.
+Please avoid embedding enum definitions inside structs, for example.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.192&r2=1.193
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.49&r2=1.50
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/fs/libdevmapper.c.diff?cvsroot=dm&r1=1.13&r2=1.14
+-       int bi_rw;                      /* READ|WRITE - not READA */
++       int                     bi_rw;  /* READ|WRITE + bio flags */
 
---- device-mapper/WHATS_NEW	2007/07/24 14:15:45	1.192
-+++ device-mapper/WHATS_NEW	2007/07/24 14:16:48	1.193
-@@ -1,6 +1,7 @@
- Version 1.02.22 - 
- ================================
-   dm_fclose: new function
-+  libdevmapper, dmeventd: be paranoid about detecting write failure
- 
- Version 1.02.21 - 13th July 2007
- ================================
---- device-mapper/dmeventd/dmeventd.c	2007/04/24 13:29:02	1.49
-+++ device-mapper/dmeventd/dmeventd.c	2007/07/24 14:16:48	1.50
-@@ -1579,7 +1579,7 @@
- 	}
- 
- 	fprintf(fp, "%i", val);
--	if (fclose(fp))
-+	if (dm_fclose(fp))
- 		perror(OOM_ADJ_FILE ": fclose failed");
- 
- 	return 1;
---- device-mapper/lib/fs/libdevmapper.c	2004/03/30 19:08:57	1.13
-+++ device-mapper/lib/fs/libdevmapper.c	2007/07/24 14:16:48	1.14
-@@ -150,7 +150,8 @@
- 			ret = 1;
- 		else
- 			log_error("%s: fputc failed: %s", path, strerror(errno));
--		fclose(fp);
-+		if (fclose(fp))
-+			log_error("%s: write failed: %s", path, strerror(errno));
- 	} else
- 		log_error("%s: fopen failed: %s", path, strerror(errno));
- 
+Do we now support READA?
+
+-       io_notify_fn fn;        /* Callback for asynchronous requests */
+-       void *context;          /* Passed to callback */
++       io_notify_fn                    fn;      /* Callback for async req */
++       void *                          context; /* Passed to callback */
+
+Please don't make format changes like that.
+
+And things like these need resolving before inclusion:
+
++                       //spin_lock(&sio->lock);
++       /* FIXME: This might me unnecessary. */
++       /* FIXME: really need this ? */
+
++       unsigned                flags;          /* Future use...  */
+
+Why do we need that *today* rather than adding it in future when we need
+it?
+
+This first patch is large and it would be nice to see it broken down
+further.   For example, get any renaming / function moving out of the
+way before making substantive code changes.
+
+But before that, let's examine and understand the proposed interface
+changes in dm-io.h.  The patch is unfortunately not easy to read in its
+current form.  Adding the new interface in parallel with the old was
+appropriate previously (change to nature of interface, and we needed to
+retain the original interface in RHEL) but I don't think it works very
+well this time.
+
+Alasdair
+-- 
+agk@redhat.com
