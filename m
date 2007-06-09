@@ -1,16 +1,9 @@
-From: "Vassar, Bob" <Robert.Vassar@am.sony.com>
-Subject: 4k block LUN problem
-Date: Mon, 4 Jun 2007 17:08:29 -0400
-Message-ID: <3DB43EBAF77555449D828440C12F8E7E0332E31C@usbmaxms02.am.sony.com>
-References: <1888A5CA2B0AD311AD520090274069940AA82789@usbmaxms02.am.sony.com>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: [PATCH] Fix segfault on disappearing paths
+Date: Sat,  9 Jun 2007 17:29:20 +0200
+Message-ID: <11814029602134-git-send-email-agx@sigxcpu.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <1888A5CA2B0AD311AD520090274069940AA82789@usbmaxms02.am.sony.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +13,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+The path might already be gone when we process the udev event, in this case
+sysfs_device_get return NULL:
 
-I have a problem with a SAN array. I need LUNs over 2TB (15TB is my targe=
-t) so my LUN block size is set to 4096. When I remove the black list entr=
-y for this device Linux won't boot until the fiber channel lane times out=
-. My SAN appliance is reporting under run errors with a read that is not =
-a multiple of 4096 and debug shows a read of length:0. I think this is co=
-ming from the path checker since when I change this to "tur" the system b=
-oots and dm sees the equal UUID's and creates the dm-x device.=A0 When I =
-try to create a file system on the dm device this fails writing the super=
- blocks.=A0=20
+Jun 09 16:56:06 | ID_FS_LABEL=
+Jun 09 16:56:06 | ID_FS_LABEL_SAFE=
+Jun 09 16:56:06 | DEVLINKS=/dev/disk/by-id/scsi-1494554000000000000000000000000010000069d0000000d /dev/disk/by-path/ip-10.0.0.3:3260-iscsi-iqn.2006-12.nix.rs45:storage.disk1-lun-0 /dev/disk/by-uuid/c8db60a3-7795-45cd-8369-a0f9ee876032
+Jun 09 16:56:06 | DEVNAME=/dev/sda
+/block/sda
+open '/block/sda'
+stat '/sys/block/sda' failed: No such file or directory
+Segmentation fault (core dumped)
 
-It appears that some dm function can not handle 4096 block size correctly=
- since if I remake my LUN's at 512byte the dm device is created and boots=
- with readsector0 as path checker and I can create an ext file system wit=
-h no problem.=A0 Does any know if dm only works on 512 block devices or i=
-s there a configuration parameter to handle block sizes other than 512 on=
- the physical device (not file system block). I have been back and forth =
-with RH support for over a week and getting very frustrated.=A0=20
+Signed-off-by: Guido Guenther <agx@sigxcpu.org>
+---
+ multipathd/main.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-Thanks,
-Bob
-=A0
+diff --git a/multipathd/main.c b/multipathd/main.c
+index a173da3..c432331 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -635,6 +635,9 @@ uev_trigger (struct uevent * uev, void * trigger_data)
+ 		return 0;
+ 
+ 	sysdev = sysfs_device_get(uev->devpath);
++	if(!sysdev)
++		return 0;	
++
+ 	lock(vecs->lock);
+ 
+ 	/*
+-- 
+1.5.2.1
