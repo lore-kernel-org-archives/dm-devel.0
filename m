@@ -1,7 +1,7 @@
 From: Guido Guenther <agx@sigxcpu.org>
-Subject: [PATCH] Fix segfault on disappearing paths
-Date: Sat,  9 Jun 2007 17:29:20 +0200
-Message-ID: <11814029602134-git-send-email-agx@sigxcpu.org>
+Subject: [PATCH] fix debugging macro
+Date: Sat,  9 Jun 2007 17:30:38 +0200
+Message-ID: <11814030382850-git-send-email-agx@sigxcpu.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,36 +17,28 @@ To: Christophe Varoqui <christophe.varoqui@free.fr>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The path might already be gone when we process the udev event, in this case
-sysfs_device_get return NULL:
-
-Jun 09 16:56:06 | ID_FS_LABEL=
-Jun 09 16:56:06 | ID_FS_LABEL_SAFE=
-Jun 09 16:56:06 | DEVLINKS=/dev/disk/by-id/scsi-1494554000000000000000000000000010000069d0000000d /dev/disk/by-path/ip-10.0.0.3:3260-iscsi-iqn.2006-12.nix.rs45:storage.disk1-lun-0 /dev/disk/by-uuid/c8db60a3-7795-45cd-8369-a0f9ee876032
-Jun 09 16:56:06 | DEVNAME=/dev/sda
-/block/sda
-open '/block/sda'
-stat '/sys/block/sda' failed: No such file or directory
-Segmentation fault (core dumped)
+Minor cleanup: let the macro do something useful when DEBUG is defined
 
 Signed-off-by: Guido Guenther <agx@sigxcpu.org>
 ---
- multipathd/main.c |    3 +++
- 1 files changed, 3 insertions(+), 0 deletions(-)
+ libmultipath/sysfs.h |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index a173da3..c432331 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -635,6 +635,9 @@ uev_trigger (struct uevent * uev, void * trigger_data)
- 		return 0;
+diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
+index cf3af36..2625ee5 100644
+--- a/libmultipath/sysfs.h
++++ b/libmultipath/sysfs.h
+@@ -6,9 +6,9 @@
+ #define _LIBMULTIPATH_SYSFS_H
  
- 	sysdev = sysfs_device_get(uev->devpath);
-+	if(!sysdev)
-+		return 0;	
-+
- 	lock(vecs->lock);
+ #ifdef DEBUG
+-# define dbg printf
++# define dbg(format, args...) printf(format "\n", ##args)
+ #else
+-# define dbg(format, arg...) do {} while (0)
++# define dbg(format, args...) do {} while (0)
+ #endif
  
- 	/*
+ int sysfs_init(char *path, size_t len);
 -- 
 1.5.2.1
