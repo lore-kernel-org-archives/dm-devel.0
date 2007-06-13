@@ -1,16 +1,15 @@
-From: "Vassar, Bob" <Robert.Vassar@am.sony.com>
-Subject: RE: 4k block LUN problem
-Date: Wed, 13 Jun 2007 15:17:25 -0400
-Message-ID: <3DB43EBAF77555449D828440C12F8E7E034406D1@usbmaxms02.am.sony.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: 4k block LUN problem
+Date: Wed, 13 Jun 2007 20:34:33 +0100
+Message-ID: <20070613193433.GG18457@agk.fab.redhat.com>
 References: <20070613185651.GF18457@agk.fab.redhat.com>
+	<3DB43EBAF77555449D828440C12F8E7E034406D1@usbmaxms02.am.sony.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20070613185651.GF18457@agk.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <3DB43EBAF77555449D828440C12F8E7E034406D1@usbmaxms02.am.sony.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,43 +22,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello Alasdair,
+On Wed, Jun 13, 2007 at 03:17:25PM -0400, Vassar, Bob wrote:
+> I have used tur and this allows the system to boot. When I run "ll
+> /dev/mpath* I see the dm device created. All appears to be working OK. 
 
-I have used tur and this allows the system to boot. When I run "ll
-/dev/mpath* I see the dm device created. All appears to be working OK.
-Fdisk also reports the same number of devices as paths to the device. =20
-When I try to make the file system (ext2 or 3) the make fails on writing
-super blocks.=20
+So use tur then.  First problem solved.
 
-If I remove the multipath.conf file and make a file system on the 4k
-block sd device the file system makes and I can read/write to the
-device. As soon as try this again with the device-mapper the process
-fails.=20
+> Fdisk also reports the same number of devices as paths to the device.  
 
-If I reformat the LUN as 512byte blocks the device-mapper works and I
-can make the file system. =20
-
-Thanks,
-
-Bob
+Fdisk?  Don't partition it: use logical volumes instead:
+pvcreate/vgcreate/lvcreate.
+- You'd need parted (gpt) rather than fdisk to partition large devices
+and then kpartx.
 
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Alasdair G Kergon
-Sent: Wednesday, June 13, 2007 1:57 PM
-To: device-mapper development
-Subject: Re: [dm-devel] 4k block LUN problem
-
-Try using an alternative path checker like tur or directio.
-
-readsector0 seems to have '512' hard-coded - this ought to get fixed.
+Now run 'blockdev --getss' to check whether or not the sector size gets
+propagated correctly from the underlying device to the multipath device.
 
 Alasdair
---=20
+-- 
 agk@redhat.com
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
