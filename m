@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: 4k block LUN problem
-Date: Wed, 13 Jun 2007 20:55:50 +0100
-Message-ID: <20070613195550.GI18457@agk.fab.redhat.com>
-References: <20070613193433.GG18457@agk.fab.redhat.com>
-	<3DB43EBAF77555449D828440C12F8E7E034406FD@usbmaxms02.am.sony.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: [multipath-tools] asynchronous path checking
+Date: Fri, 15 Jun 2007 01:28:43 +0200
+Message-ID: <1181863723.20149.194.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <3DB43EBAF77555449D828440C12F8E7E034406FD@usbmaxms02.am.sony.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,17 +19,20 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Jun 13, 2007 at 03:47:15PM -0400, Vassar, Bob wrote:
-> I didn't partition the dm device. I used fdisk to create the sda[1]
-> partition on the lun. The dm device is then created on sda[1]. I then
-> simply mkfs on the dm partition.  
- 
-If the lun appears as sda, then multipath will present it to you as
-a dm multipath device.  Never run anything on /dev/sda - always use
-the /dev/mpath one instead.
+Hi,
 
-Then you should do the pvcreate against the /dev/mpath device etc.
+I would like to highlight the need to review and comment the direction
+of commit 8a9de22b049f332a574eead7fa738678397f47fc in the korg git tree.
 
-Alasdair
--- 
-agk@redhat.com
+http://git.kernel.org/?p=linux/storage/multipath-tools/.git;a=commit;h=8a9de22b049f332a574eead7fa738678397f47fc
+
+This work addresses a long-standing short-coming of the path checking
+subsystem, inducing unreliable behaviour in face of over-burdened
+storage hardware and long hangs in CLI and multipath.8 interactions.
+
+I posted on linux-scsi ml to try and gather information on SG/AIO
+programming, but still no luck. If someone there happen to know the
+subject, please feed data.
+
+Regards,
+cvaroqui
