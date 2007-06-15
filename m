@@ -1,11 +1,8 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: [multipath-tools] asynchronous path checking
-Date: Fri, 15 Jun 2007 01:28:43 +0200
-Message-ID: <1181863723.20149.194.camel@localhost.localdomain>
+From: agk@sourceware.org
+Subject: device-mapper VERSION WHATS_NEW
+Date: 15 Jun 2007 18:40:13 -0000
+Message-ID: <20070615184013.22417.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,23 +13,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-06-15 18:40:13
 
-I would like to highlight the need to review and comment the direction
-of commit 8a9de22b049f332a574eead7fa738678397f47fc in the korg git tree.
+Modified files:
+	.              : VERSION WHATS_NEW 
 
-http://git.kernel.org/?p=linux/storage/multipath-tools/.git;a=commit;h=8a9de22b049f332a574eead7fa738678397f47fc
+Log message:
+	pre-release
 
-This work addresses a long-standing short-coming of the path checking
-subsystem, inducing unreliable behaviour in face of over-burdened
-storage hardware and long hangs in CLI and multipath.8 interactions.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.122&r2=1.123
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.185&r2=1.186
 
-I posted on linux-scsi ml to try and gather information on SG/AIO
-programming, but still no luck. If someone there happen to know the
-subject, please feed data.
-
-Regards,
-cvaroqui
+--- device-mapper/VERSION	2007/04/27 20:09:08	1.122
++++ device-mapper/VERSION	2007/06/15 18:40:13	1.123
+@@ -1 +1 @@
+-1.02.20-cvs (2007-04-27)
++1.02.20-cvs (2007-06-15)
+--- device-mapper/WHATS_NEW	2007/06/15 18:20:28	1.185
++++ device-mapper/WHATS_NEW	2007/06/15 18:40:13	1.186
+@@ -1,5 +1,5 @@
+-Version 1.02.20 -
+-=================================
++Version 1.02.20 - 15th June 2007
++================================
+   Fix default dmsetup report buffering and add --unbuffered.
+   Add tree-based and dependency fields to dmsetup reports.
+ 
