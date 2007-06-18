@@ -1,16 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: queue_if_no_path question
-Date: Mon, 18 Jun 2007 12:29:40 -0700
-Message-ID: <20070618192940.GA3160@us.ibm.com>
-References: <1835490703.20070616220741@netvision.net.il>
+From: bmarzins@sourceware.org
+Subject: multipath-tools libcheckers/rdac.c multipathd/ ...
+Date: 18 Jun 2007 21:12:55 -0000
+Message-ID: <20070618211255.591.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Resent-Message-ID: <20070618193056.GB3160@us.ibm.com>
-Resent-To: dm-devel@redhat.com
-Content-Disposition: inline
-In-Reply-To: <1835490703.20070616220741@netvision.net.il>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +13,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Maxim Kozover <maximkoz@netvision.net.il>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-That is probably not unexpected! Use crash and see what other threads
-are doing. They were probably waiting on pages that were supposed to be
-completed by the DM devices (the pages won't be completed because you
-put them in a queue)
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-06-18 21:12:55
 
-Thanks, Malahal.
+Modified files:
+	libcheckers    : rdac.c 
+	multipathd     : multipathd.init.redhat 
 
-Maxim Kozover [maximkoz@netvision.net.il] wrote:
-> Hi!
-> I have a question regarding queue_if_no_path behavior.
-> I tried either Red Hat 5.0 2.6.18-8.el5 kernel and more or less recent multipath-tools.
-> Set no_path_retry queue in multipath.conf and tried losing all paths
-> to a SAN device, while I'm dd-ing from /dev/zero to /dev/mapper/...
-> 
-> What's strange is that not only ios to that device got blocked, but
-> also ios to /tmp and /var/log/messages etc that reside on local drive.
-> When I return some paths to the SAN device, all ios resume, both ios
-> to that device and those unexpectedly blocked.
-> HBA used is QLE2462, I'm not sure if this happened with 2Gb QLogic
-> also.
-> 
-> Please tell me if this is an expected behavior and if not, how could
-> we find a source of the problem and fix it?
-> 
-> # ps aux | grep D
-> USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
-> root      2872  0.0  0.0  10064   748 ?        Ds   21:58   0:00 syslogd -m 0
-> root      3800 24.9  0.0  63300  1592 ttyS0    D    22:01   0:22 dd if
-> /dev/zero of /dev/mapper/...
-> root      3990  0.0  0.0  58020   476 ttyS0    D    22:02   0:00 tail -f /var/log/messages
-> 
-> Thanks much,
-> 
-> Maxim.
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Log message:
+	Pulled in a fix from upstream, and modified the redhat init script to
+	standardise return codes for bz #242723
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/rdac.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.1&r2=1.1.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/multipathd.init.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.4.1&r2=1.2.4.2
+
+--- multipath-tools/libcheckers/Attic/rdac.c	2007/04/24 18:50:42	1.1.2.1
++++ multipath-tools/libcheckers/Attic/rdac.c	2007/06/18 21:12:54	1.1.2.2
+@@ -18,7 +18,7 @@
+ #define INQUIRY_CMDLEN		6
+ #define INQUIRY_CMD		0x12
+ #define SENSE_BUFF_LEN		32
+-#define DEF_TIMEOUT		60000
++#define RDAC_DEF_TIMEOUT	60000
+ #define SCSI_CHECK_CONDITION	0x2
+ #define SCSI_COMMAND_TERMINATED	0x22
+ #define SG_ERR_DRIVER_SENSE	0x08
+@@ -61,7 +61,7 @@
+ 	io_hdr.dxferp = resp;
+ 	io_hdr.cmdp = inqCmdBlk;
+ 	io_hdr.sbp = sense_b;
+-	io_hdr.timeout = DEF_TIMEOUT;
++	io_hdr.timeout = RDAC_DEF_TIMEOUT;
+ 
+ 	if (ioctl(sg_fd, SG_IO, &io_hdr) < 0)
+ 		return 1;
+--- multipath-tools/multipathd/multipathd.init.redhat	2007/04/30 18:06:52	1.2.4.1
++++ multipath-tools/multipathd/multipathd.init.redhat	2007/06/18 21:12:54	1.2.4.2
+@@ -22,7 +22,6 @@
+ 	. $initdir/functions
+ fi
+  
+-test -x $DAEMON || exit 0
+ test -r $sysconfig/$prog && . $sysconfig/$prog
+ 
+ RETVAL=0
+@@ -32,6 +31,7 @@
+ #
+ 
+ start() {
++	test -x $DAEMON || exit 5
+ 	echo -n $"Starting $prog daemon: "
+ 	daemon $DAEMON
+ 	RETVAL=$?
+@@ -84,7 +84,7 @@
+ 	;;
+ *)
+ 	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
+-	RETVAL=1
++	RETVAL=3
+ esac
+ 
+ exit $RETVAL
