@@ -1,15 +1,17 @@
-From: "Wilson, Christopher J" <chris.j.wilson@verizonbusiness.com>
-Subject: Device mapper devices not created before fsck at boot
-Date: Tue, 19 Jun 2007 22:29:21 +0100
-Message-ID: <500DD6DE2DFA8E40A33E5898D9471B9702268C21@ASHEVS006.mcilink.com>
-References: <20070619181216.6671.qmail@sourceware.org>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: multipath-tools Makefile
+Date: Tue, 19 Jun 2007 23:34:25 +0200
+Message-ID: <1182288865.20149.259.camel@localhost.localdomain>
+References: <20070618225947.26450.qmail@sourceware.org>
+	<1182214679.5301.88.camel@linuxchandra>
+	<1182287728.20149.255.camel@localhost.localdomain>
+	<1182288343.5301.111.camel@linuxchandra>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-reply-to: <20070619181216.6671.qmail@sourceware.org>
-Content-class: urn:content-classes:message
+In-Reply-To: <1182288343.5301.111.camel@linuxchandra>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,112 +21,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: sekharan@us.ibm.com
+Cc: dm-cvs@sourceware.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I have a system(s) which is failing to fsck /dev/mapper/<wwn> devices
-during boot time.  The dev-mapper devices are not created from the time
-dmsetup is run in rc.sysinit until the device fsck is run (next block).
-The only device in /dev/mapper is /dev/mapper/control, none of the <wwn>
-devices exist before fsck attempts to run.  I have put in a "sleep 10"
-in between the two code blocks and this has worked on one system and not
-others. =20
+Le mardi 19 juin 2007 =C3=A0 14:25 -0700, Chandra Seetharaman a =C3=A9cri=
+t :
+> On Tue, 2007-06-19 at 23:15 +0200, Christophe Varoqui wrote:
+> > Le lundi 18 juin 2007 =C3=A0 17:57 -0700, Chandra Seetharaman a =C3=A9=
+crit :
+> > > Hi,
+> > >=20
+> > > Sorry about the late response. I just realized that pp_rdac has bee=
+n
+> > > added to the multipath tree.
+> > >=20
+> > > pp_rdac is not needed to support lsi-rdac devices. pp_tpc performs
+> > > equally good. I repeated my tests with pp_tpc and they did work wel=
+l.
+> > >=20
+> > rdac has superseded the tpc checker in the upstream tree.
+> >=20
+>=20
+> (A):
+> > This checker is currently the only one usable with LSI Engenio hardwa=
+re
+> > integrated by either IBM or SGI. As such I don't plan on removing it
+> > from the tree, if it's ok with you.
+> >=20
+>=20
+> I am little confused here.
+>=20
+> Background info:
+> ------
+> (1) When I said we do _not_ need pp_rdac, I am referring to path
+> priority callout code(the code I submitted on May 21st). Code under the
+> directory path_priority/pp_rdac.
+>=20
+> (2) The path checker code I submitted on March 23rd is needed to suppor=
+t
+> the LSI Engenio hardware. This code resides in libcheckers/rdac.c
+> ------
+>=20
+> (2) is needed and I presume you are referring to that at (A)=20
+>=20
+> (1) is not needed and we can achieve the same with
+> path_priority/pp_tpc/mpath_prio_tpc
+>=20
 
-From our research our understanding is that there is a race condition
-somewhere in udev and dmsetup.  Does anyone know if there is a fix for
-this issue or have encountered anything similar?  Is there anything I
-can pass to dmsetup to ensure that devices are created before it
-returns?  This appears to be specific to the latest generation HP
-servers for some reason (faster procs?).
-
-Information about the system and lsmod and ls -al /dev/mapper/ commands
-inserted in rc.sysinit below.
-
-OS: RHAS 4
-Kernel: 2.6.9-42.Elsmp and 2.6.9-55.Elsmp
-
-Hardware: HP DL380G5
-		2x proc (latest multi-core)
-		external disk: 3PARdata
-		HBA: Qlogic 2460 PCI-x
-		HBA driver: 8.01.04-d7
-
-Tue Jun 19 17:12:09 EDT 2007
-
->> ls -al /dev/mapper/* is run here
-
-crw-------  1 root root 10, 63 Jun 19 13:11 /dev/mapper/control
-
->> lsmod is run here - note dm_round_robin is not loaded
-
-Module                  Size  Used by
-dm_mirror              32465  0
-dm_multipath           21841  0
-button                  9057  0
-battery                11209  0
-ac                      6729  0
-hw_random               7137  0
-bnx2                  147253  0
-qla2400               201025  0
-ext3                  137809  2
-jbd                    69104  1 ext3
-dm_mod                 68097  2 dm_mirror,dm_multipath
-ata_piix               14405  0
-libata                 78473  1 ata_piix
-qla2300               127425  0
-qla2322               137537  0
-cciss                  69809  3
-qla2xxx               183201  3 qla2400,qla2300,qla2322
-scsi_transport_fc      11841  1 qla2xxx
-sd_mod                 19393  0
-scsi_mod              141457  5
-libata,cciss,qla2xxx,scsi_transport_fc,sd_mod
-
-Tue Jun 19 17:12:19 EDT 2007
-
->> ls -al /dev/mapper/* run again 10 seconds later
-
-brw-rw----  1 root disk 253,  0 Jun 19 17:12
-/dev/mapper/350002ac0000c03fd
-brw-rw----  1 root disk 253,  1 Jun 19 17:12
-/dev/mapper/350002ac0000c03fd1
-crw-------  1 root root  10, 63 Jun 19 13:11 /dev/mapper/control
-
->> dm_round_robin is loaded
-
-Module                  Size  Used by
-dm_round_robin          4929  1
-dm_mirror              32465  0
-dm_multipath           21841  2 dm_round_robin
-button                  9057  0
-battery                11209  0
-ac                      6729  0
-hw_random               7137  0
-bnx2                  147253  0
-qla2400               201025  0
-ext3                  137809  2
-jbd                    69104  1 ext3
-dm_mod                 68097  6 dm_mirror,dm_multipath
-ata_piix               14405  0
-libata                 78473  1 ata_piix
-qla2300               127425  0
-qla2322               137537  0
-cciss                  69809  3
-qla2xxx               183201  5 qla2400,qla2300,qla2322
-scsi_transport_fc      11841  1 qla2xxx
-sd_mod                 19393  2
-scsi_mod              141457  5
-libata,cciss,qla2xxx,scsi_transport_fc,sd_mod
-
-Christopher Wilson
-Storage Architect
-Verizon Business
-IT Solutions - IP Application Hosting
-
-
-______________________________________________________________________
-This e-mail has been scanned by Verizon Managed Email Content Service, us=
-ing Skeptic=99 technology powered by MessageLabs. For more information on=
- Verizon Managed Email Content Service, visit http://www.verizonbusiness.=
-com.
-______________________________________________________________________
+The confusion was on my side, thank you for pointing it.
+I'll get back to my homework then.
