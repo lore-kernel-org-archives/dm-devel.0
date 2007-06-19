@@ -1,9 +1,12 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools Makefile
-Date: 18 Jun 2007 22:59:47 -0000
-Message-ID: <20070618225947.26450.qmail@sourceware.org>
+From: malahal@us.ibm.com
+Subject: how do I re-synchronize with the Master mirror device?
+Date: Mon, 18 Jun 2007 17:14:10 -0700
+Message-ID: <20070619001410.GA4442@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,36 +16,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-06-18 22:59:47
+I have a dm-mirror setup where the mirror devices could occasionally
+timeout due to network congestion or recovery at the device. If a device
+times out, it goes out of sync with the Master. How do I sync it back?
+Only few regions would have gone out of sync with the Master. Is it
+possible to sync only the regions that have gone out of sync?
 
-Modified files:
-	.              : Makefile 
+Thank you for your time.
 
-Log message:
-	added missing pp_rdac directory to Makefile
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7.2.1&r2=1.7.2.2
-
---- multipath-tools/Makefile	2007/06/18 17:37:17	1.7.2.1
-+++ multipath-tools/Makefile	2007/06/18 22:59:47	1.7.2.2
-@@ -21,11 +21,11 @@
- export KRNLOBJ
- BUILDDIRS = multipath multipathd kpartx cciss_id path_priority/pp_alua \
- 	    path_priority/pp_emc path_priority/pp_hds_modular \
--	    path_priority/pp_netapp path_priority/pp_tpc
-+	    path_priority/pp_netapp path_priority/pp_rdac path_priority/pp_tpc
- 
- ALLDIRS = multipath multipathd kpartx cciss_id path_priority/pp_alua \
- 	  path_priority/pp_emc path_priority/pp_hds_modular \
--	  path_priority/pp_netapp path_priority/pp_tpc \
-+	  path_priority/pp_netapp path_priority/pp_rdac path_priority/pp_tpc \
- 	  libmultipath libcheckers
- 
- VERSION = $(shell basename ${PWD} | cut -d'-' -f3)
+--Malahal.
