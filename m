@@ -1,9 +1,14 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.annotated ./m ...
-Date: 19 Jun 2007 18:12:16 -0000
-Message-ID: <20070619181216.6671.qmail@sourceware.org>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: how do I re-synchronize with the Master mirror device?
+Date: Tue, 19 Jun 2007 13:20:01 -0500
+Message-ID: <57F02999-B101-42EC-BFE9-3A59CB8FBCAF@redhat.com>
+References: <20070619001410.GA4442@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v752.3)
+Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070619001410.GA4442@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,73 +18,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-06-19 18:12:15
+Are you using disk logging?
 
-Modified files:
-	.              : multipath.conf.annotated 
-	                 multipath.conf.defaults 
-	                 multipath.conf.synthetic 
-	multipath      : multipath.conf.redhat 
+Are you using LVM to setup the mirrors, or are you doing it yourself  
+through dmsetup?
 
-Log message:
-	Pulled out cciss blacklist info from files.
+  brassow
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.1&r2=1.18.2.2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.3&r2=1.5.4.4
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.synthetic.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.1&r2=1.11.2.2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.3&r2=1.6.2.4
+On Jun 18, 2007, at 7:14 PM, malahal@us.ibm.com wrote:
 
---- multipath-tools/multipath.conf.annotated	2007/01/10 20:08:07	1.18.2.1
-+++ multipath-tools/multipath.conf.annotated	2007/06/19 18:12:15	1.18.2.2
-@@ -130,13 +130,12 @@
- ## name    : blacklist
- ## scope   : multipath & multipathd
- ## desc    : list of device names to discard as not multipath candidates
--## default : cciss, fd, hd, md, dm, sr, scd, st, ram, raw, loop
-+## default : fd, hd, md, dm, sr, scd, st, ram, raw, loop
- ##
- #blacklist {
- #       wwid 26353900f02796769
- #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #	devnode "^hd[a-z][[0-9]*]"
--#	devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
- #       device {
- #               vendor DEC.*
- #               product MSA[15]00
---- multipath-tools/multipath.conf.defaults	2007/05/17 19:47:24	1.5.4.3
-+++ multipath-tools/multipath.conf.defaults	2007/06/19 18:12:15	1.5.4.4
-@@ -19,7 +19,6 @@
- #blacklist {
- #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #       devnode "^hd[a-z]"
--#       devnode "^cciss!c[0-9]d[0-9]*"
- #}
- #
- #devices {
---- multipath-tools/multipath.conf.synthetic	2007/01/10 20:08:07	1.11.2.1
-+++ multipath-tools/multipath.conf.synthetic	2007/06/19 18:12:15	1.11.2.2
-@@ -20,7 +20,6 @@
- #       wwid 26353900f02796769
- #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #	devnode "^hd[a-z][[0-9]*]"
--#	devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
- #	device {
- #		vendor DEC.*
- #		product MSA[15]00
---- multipath-tools/multipath/multipath.conf.redhat	2007/05/08 20:15:59	1.6.2.3
-+++ multipath-tools/multipath/multipath.conf.redhat	2007/06/19 18:12:15	1.6.2.4
-@@ -57,7 +57,6 @@
- #       wwid 26353900f02796769
- #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #	devnode "^hd[a-z]"
--#	devnode "^cciss!c[0-9]d[0-9]*"
- #}
- #multipaths {
- #	multipath {
+> I have a dm-mirror setup where the mirror devices could occasionally
+> timeout due to network congestion or recovery at the device. If a  
+> device
+> times out, it goes out of sync with the Master. How do I sync it back?
+> Only few regions would have gone out of sync with the Master. Is it
+> possible to sync only the regions that have gone out of sync?
+>
+> Thank you for your time.
+>
+> --Malahal.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
