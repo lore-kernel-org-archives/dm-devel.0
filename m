@@ -1,13 +1,11 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: [PATCH 1/3]: region based notifications for dm-io
-Date: Wed, 13 Jun 2007 14:11:23 +0200
-Message-ID: <OFA96D78FE.81BE23D6-ONC12572F8.005346DC-C12572F9.0042E410@de.ibm.com>
-References: <20070607225744.GF25091@agk.fab.redhat.com>
+From: "Ethan John" <ethan.john@gmail.com>
+Subject: Designing a new prio_callout
+Date: Thu, 21 Jun 2007 14:42:54 -0700
+Message-ID: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: multipart/mixed; boundary="===============0417699720=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070607225744.GF25091@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,46 +15,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: Stefan Weinhuber <wein@de.ibm.com>, heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Alasdair G Kergon <agk@redhat.com> wrote on 08.06.2007 00:57:44:
+--===============0417699720==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_86376_11008485.1182462174612"
 
-> On Tue, Jun 05, 2007 at 03:05:30PM +0200, Stefan Bader wrote:
-> > This patch adds the new interface to dm-io.
-> 
-> And also undoes some formatting, comments, variable name changes etc.
-> that I made when preparing earlier patches for upstream.  Please revert
-> those changes and also look at what I changed last time, and make
-> similar changes to this code.
-> 
-Ok, I will see to modify the patch based on your comments.
+------=_Part_86376_11008485.1182462174612
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> 
-> -       int bi_rw;                      /* READ|WRITE - not READA */
-> +       int                     bi_rw;  /* READ|WRITE + bio flags */
-> 
-> Do we now support READA?
-> 
-If I am not mistaken the only reason READA wasn't working were some
-places that compared against READ or WRITE. I changed those to test
-the bit values.
+I hope I found the right list for this.
 
-> 
-> But before that, let's examine and understand the proposed interface
-> changes in dm-io.h.  The patch is unfortunately not easy to read in its
-> current form.  Adding the new interface in parallel with the old was
-> appropriate previously (change to nature of interface, and we needed to
-> retain the original interface in RHEL) but I don't think it works very
-> well this time.
-> 
-The main goal of the interface changes was to have more flexibility for
-the caller. Specifically it should be possible to get more information
-on the outcome of a region operation (error code). At the same time I
-tried to add additional notification calls for regions. But that probably
-is to much for one step. So I rework the whole patch for smaller steps. If
-that is okay this time I will just modify the interface without retaining
-the old one for the process. I guess this will make things simpler.
+My company is developing an iSCSI solution, and in looking into Linux
+compatability and performance, we're concerned that our architecture doesn't
+play well with the existing multipath configurations that are available.
 
-Stefan
+We cannot support what Linux calls multibus, or what the fiber world seems
+to call active/active. We will need folks to configure failover exclusively.
+
+It appears that the current multipathing failover configuration assigns a
+priority to each path (by default, just assigns the same priority to all
+paths). This is bad for us, as we're presenting iSCSI targets across
+multiple machines in a cluster; ideally, a user will have multiple devices,
+each with a separate path to a separate machine, with failover to the other
+machines in the cluster. The default setup of multipath will map all
+connections to a single machine, which is no load balancing at all.
+
+I've fooled around with various other values for default_prio_callot
+(besides the /bin/true), and the one that seems to work best is actually
+mpath_prio_random.
+
+In fact, mpath_prio_random would actually work perfectly, except that it
+seems to swap path priorities extremely often -- several times a minute. So
+my company needs to develop a new script, probably much like the
+mpath_prio_emc or mpath_prio_netapp ones, so that we can hint at load
+balancing across devices with failover as the multipathing policy.
+
+I've been completely unable to find documentation on this. Where might I
+look? Is this even the right direction in which to be looking for a solution
+to this problem?
+
+Let me know if anything above needs to be more clear.
+
+-- 
+Ethan John
+
+------=_Part_86376_11008485.1182462174612
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+I hope I found the right list for this.<br><br>My company is developing an iSCSI solution, and in looking into Linux compatability and performance, we&#39;re concerned that our architecture doesn&#39;t play well with the existing multipath configurations that are available.
+<br><br>We cannot support what Linux calls multibus, or what the fiber world seems to call active/active. We will need folks to configure failover exclusively.<br><br>It appears that the current multipathing failover configuration assigns a priority to each path (by default, just assigns the same priority to all paths). This is bad for us, as we&#39;re presenting iSCSI targets across multiple machines in a cluster; ideally, a user will have multiple devices, each with a separate path to a separate machine, with failover to the other machines in the cluster. The default setup of multipath will map all connections to a single machine, which is no load balancing at all.
+<br><br>I&#39;ve fooled around with various other values for default_prio_callot (besides the /bin/true), and the one that seems to work best is actually mpath_prio_random.<br><br>In fact, mpath_prio_random would actually work perfectly, except that it seems to swap path priorities extremely often -- several times a minute. So my company needs to develop a new script, probably much like the mpath_prio_emc or mpath_prio_netapp ones, so that we can hint at load balancing across devices with failover as the multipathing policy.
+<br><br>I&#39;ve been completely unable to find documentation on this. Where might I look? Is this even the right direction in which to be looking for a solution to this problem?<br><br>Let me know if anything above needs to be more clear.
+<br clear="all"><br>-- <br>Ethan John<br>
+
+------=_Part_86376_11008485.1182462174612--
+
+
+--===============0417699720==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0417699720==--
