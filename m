@@ -1,15 +1,14 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: setup Pathpriority manually
-Date: Thu, 21 Jun 2007 11:57:47 -0700
-Message-ID: <1182452267.5301.123.camel@linuxchandra>
-References: <e9cb6ff40706211113p3ea83a3di35658b19c5145b4d@mail.gmail.com>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Christophe Saout <christophe@saout.de>
+Subject: Re: Partition tables on devices
+Date: Thu, 21 Jun 2007 22:14:36 +0200
+Message-ID: <1182456876.14602.13.camel@leto.intern.saout.de>
+References: <Pine.LNX.4.62.0706211726260.3710@pademelon.sonytel.be>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <e9cb6ff40706211113p3ea83a3di35658b19c5145b4d@mail.gmail.com>
+In-Reply-To: <Pine.LNX.4.62.0706211726260.3710@pademelon.sonytel.be>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +18,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: dm-cvs@sourceware.org
+To: Geert Uytterhoeven <Geert.Uytterhoeven@sonycom.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2007-06-21 at 20:13 +0200, Markus wrote:
-> Hi,
-> 
-> i do have an active-passive Storage where the LUN could be used by
-> both Controllers but one is bloody slow. I tried all
-> /sbin/mpath_prio_* ways do determin which is the "active" one but none
-> of them worked. Is there a way to set this manually? Is there a
-> different way to determin which is which rather than using the
-> existing Commands?
+Hi Geert,
 
-If your device is not one of the supported devices, you can ask the
-vendor about how to determine the active and passive paths.
-
-mpath_prio_tpc is a good example of how the active/passive device
-information is used to determine the path priority.
-  
+> I have a disk that embeds another disk image (including a partition table and
+> partitions).  Using dmsetup and the linear target I created a new device to
+> access the embedded disk image. Cfdisk shows me the partitions on the new
+> device, but the kernel didn't scan for partitions and hence didn't created
+> devices for them.
 > 
-> Thanks in advance
-> Markus
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
+> Does there exist a way to let the kernel scan for partition tables on a device
+> created using dmsetup? Or should I use a script like the one proposed by
+> Christophe Saout in http://lkml.org/lkml/2003/7/18/141?
 
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+There's a small tool
+"kpartx" ( http://www.die.net/doc/linux/man/man8/kpartx.8.html ), which
+I think, IIRC is a simple port of the kernel partition detection code to
+userspace, which uses the device mapper to set things up. I have used it
+at times, it works nicely (it can even replace the kernel detection code
+seamlessly, if put into an initramfs for instance). 
+
+There's a copy of it in the distributed with the multipath tools.
