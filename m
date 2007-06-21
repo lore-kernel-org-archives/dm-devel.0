@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [2.6.22-rc4-mm2 PATCH 0/11] Mirror fault handling code
-	repost.
-Date: Thu, 21 Jun 2007 10:51:38 -0500
-Message-ID: <1182441098.29257.7.camel@hydrogen.msp.redhat.com>
+Subject: [2.6.22-rc4-mm2 PATCH 1/11]
+	dm-raid1-handle_resync_failures.patch
+Date: Thu, 21 Jun 2007 10:53:33 -0500
+Message-ID: <1182441213.29257.11.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -20,12 +20,140 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-This is a repost of the patches sent May 21st, 2007.
-
-They include some minor code updates, but mostly updates to the patch
-headers.
-
-I've also added a patch at the end that I had previously posted as an
-RFC.
-
+Header change and comment change.
  brassow
+
+Device-mapper mirroring currently takes a best effort approach to
+recovery - failures during mirror synchronization are completely ignored.
+This means that regions are marked 'in-sync' and 'clean' and removed
+from the hash list.  Future reads and writes that query the region
+will incorrectly interpret the region as in-sync.
+
+This patch handles failures during the recovery process.  If a failure
+occurs, the region is marked as 'not-in-sync' (aka RH_NOSYNC) and added
+to a new list 'failed_recovered_regions'.
+
+Regions on the 'failed_recovered_regions' list are not marked as 'clean'
+upon removal from the list.  Furthermore, if the DM_RAID1_HANDLE_ERRORS
+flag is set, the region is marked as 'not-in-sync'.  This action prevents
+any future read-balancing from choosing an invalid device because of the
+'not-in-sync' status.
+
+If "handle_errors" is not specified when creating a mirror (leaving
+the DM_RAID1_HANDLE_ERRORS flag unset), failures will be ignored as
+they are without this patch.  This is to preserve backwards compatibility
+with user-space tools, such as 'pvmove'.  However, since future
+read-balancing policies will rely on the correct sync status of a region,
+a user must choose "handle_errors" when using read-balancing.  This has
+been noted in a comment for future reference.
+Index: linux-2.6.22-rc4-mm2/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.22-rc4-mm2.orig/drivers/md/dm-raid1.c
++++ linux-2.6.22-rc4-mm2/drivers/md/dm-raid1.c
+@@ -85,6 +85,7 @@ struct region_hash {
+ 	struct list_head clean_regions;
+ 	struct list_head quiesced_regions;
+ 	struct list_head recovered_regions;
++	struct list_head failed_recovered_regions;
+ };
+ 
+ enum {
+@@ -204,6 +205,7 @@ static int rh_init(struct region_hash *r
+ 	INIT_LIST_HEAD(&rh->clean_regions);
+ 	INIT_LIST_HEAD(&rh->quiesced_regions);
+ 	INIT_LIST_HEAD(&rh->recovered_regions);
++	INIT_LIST_HEAD(&rh->failed_recovered_regions);
+ 
+ 	rh->region_pool = mempool_create_kmalloc_pool(MIN_REGIONS,
+ 						      sizeof(struct region));
+@@ -368,6 +370,7 @@ static void rh_update_states(struct regi
+ 
+ 	LIST_HEAD(clean);
+ 	LIST_HEAD(recovered);
++	LIST_HEAD(failed_recovered);
+ 
+ 	/*
+ 	 * Quickly grab the lists.
+@@ -389,6 +392,15 @@ static void rh_update_states(struct regi
+ 		list_for_each_entry (reg, &recovered, list)
+ 			list_del(&reg->hash_list);
+ 	}
++
++	if (!list_empty(&rh->failed_recovered_regions)) {
++		list_splice(&rh->failed_recovered_regions, &failed_recovered);
++		INIT_LIST_HEAD(&rh->failed_recovered_regions);
++
++		list_for_each_entry (reg, &failed_recovered, list)
++			list_del(&reg->hash_list);
++	}
++
+ 	spin_unlock(&rh->region_lock);
+ 	write_unlock_irq(&rh->hash_lock);
+ 
+@@ -403,6 +415,14 @@ static void rh_update_states(struct regi
+ 		mempool_free(reg, rh->region_pool);
+ 	}
+ 
++	list_for_each_entry_safe (reg, next, &failed_recovered, list) {
++		if (rh->ms->features & DM_RAID1_HANDLE_ERRORS)
++			complete_resync_work(reg, 0);
++		else
++			complete_resync_work(reg, 1);
++		mempool_free(reg, rh->region_pool);
++	}
++
+ 	list_for_each_entry_safe (reg, next, &clean, list) {
+ 		rh->log->type->clear_region(rh->log, reg->key);
+ 		mempool_free(reg, rh->region_pool);
+@@ -555,13 +575,17 @@ static struct region *rh_recovery_start(
+ 	return reg;
+ }
+ 
+-/* FIXME: success ignored for now */
+ static void rh_recovery_end(struct region *reg, int success)
+ {
+ 	struct region_hash *rh = reg->rh;
+ 
+ 	spin_lock_irq(&rh->region_lock);
+-	list_add(&reg->list, &reg->rh->recovered_regions);
++	if (success)
++		list_add(&reg->list, &reg->rh->recovered_regions);
++	else {
++		reg->state = RH_NOSYNC;
++		list_add(&reg->list, &reg->rh->failed_recovered_regions);
++	}
+ 	spin_unlock_irq(&rh->region_lock);
+ 
+ 	wake(rh->ms);
+@@ -633,7 +657,14 @@ static void recovery_complete(int read_e
+ {
+ 	struct region *reg = (struct region *) context;
+ 
+-	/* FIXME: better error handling */
++	if (read_err)
++		/* Read error means the failure of default mirror. */
++		DMERR_LIMIT("Unable to read primary mirror during recovery");
++
++	if (write_err)
++		DMERR_LIMIT("Write error during recovery (error = 0x%x)",
++			    write_err);
++
+ 	rh_recovery_end(reg, !(read_err || write_err));
+ }
+ 
+@@ -1145,6 +1176,15 @@ static int mirror_ctr(struct dm_target *
+ 	argv += args_used;
+ 	argc -= args_used;
+ 
++	/*
++	 * Any read-balancing addition depends on the
++	 * DM_RAID1_HANDLE_ERRORS flag being present.
++	 * This is because the decision to balance depends
++	 * on the sync state of a region.  If the above
++	 * flag is not present, we ignore errors; and
++	 * the sync state may not properly be reflected.
++	 */
++
+ 	if (argc) {
+ 		ti->error = "Too many mirror arguments";
+ 		free_context(ms, ti, ms->nr_mirrors);
