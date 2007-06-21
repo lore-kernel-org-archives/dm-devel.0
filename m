@@ -1,10 +1,11 @@
-From: "Ethan John" <ethan.john@gmail.com>
-Subject: Designing a new prio_callout
-Date: Thu, 21 Jun 2007 14:42:54 -0700
-Message-ID: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
+From: Geert Uytterhoeven <Geert.Uytterhoeven@sonycom.com>
+Subject: Partition tables on devices
+Date: Thu, 21 Jun 2007 17:32:46 +0200 (CEST)
+Message-ID: <Pine.LNX.4.62.0706211726260.3710@pademelon.sonytel.be>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0417699720=="
+Content-Type: MULTIPART/MIXED;
+	BOUNDARY="-584337861-1794152911-1182439966=:3710"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,72 +17,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Geert Uytterhoeven <Geert.Uytterhoeven@sonycom.com>, Christophe Saout <christophe@saout.de>
 List-Id: dm-devel.ids
 
---===============0417699720==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_86376_11008485.1182462174612"
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-------=_Part_86376_11008485.1182462174612
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+---584337861-1794152911-1182439966=:3710
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-I hope I found the right list for this.
+	Hi,
 
-My company is developing an iSCSI solution, and in looking into Linux
-compatability and performance, we're concerned that our architecture doesn't
-play well with the existing multipath configurations that are available.
+I have a disk that embeds another disk image (including a partition table=
+ and
+partitions).  Using dmsetup and the linear target I created a new device =
+to
+access the embedded disk image. Cfdisk shows me the partitions on the new
+device, but the kernel didn't scan for partitions and hence didn't create=
+d
+devices for them.
 
-We cannot support what Linux calls multibus, or what the fiber world seems
-to call active/active. We will need folks to configure failover exclusively.
+Does there exist a way to let the kernel scan for partition tables on a d=
+evice
+created using dmsetup? Or should I use a script like the one proposed by
+Christophe Saout in http://lkml.org/lkml/2003/7/18/141?
 
-It appears that the current multipathing failover configuration assigns a
-priority to each path (by default, just assigns the same priority to all
-paths). This is bad for us, as we're presenting iSCSI targets across
-multiple machines in a cluster; ideally, a user will have multiple devices,
-each with a separate path to a separate machine, with failover to the other
-machines in the cluster. The default setup of multipath will map all
-connections to a single machine, which is no load balancing at all.
+Thanks in advance!
 
-I've fooled around with various other values for default_prio_callot
-(besides the /bin/true), and the one that seems to work best is actually
-mpath_prio_random.
+With kind regards,
+=20
+Geert Uytterhoeven
+Software Architect
 
-In fact, mpath_prio_random would actually work perfectly, except that it
-seems to swap path priorities extremely often -- several times a minute. So
-my company needs to develop a new script, probably much like the
-mpath_prio_emc or mpath_prio_netapp ones, so that we can hint at load
-balancing across devices with failover as the multipathing policy.
-
-I've been completely unable to find documentation on this. Where might I
-look? Is this even the right direction in which to be looking for a solution
-to this problem?
-
-Let me know if anything above needs to be more clear.
-
--- 
-Ethan John
-
-------=_Part_86376_11008485.1182462174612
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-I hope I found the right list for this.<br><br>My company is developing an iSCSI solution, and in looking into Linux compatability and performance, we&#39;re concerned that our architecture doesn&#39;t play well with the existing multipath configurations that are available.
-<br><br>We cannot support what Linux calls multibus, or what the fiber world seems to call active/active. We will need folks to configure failover exclusively.<br><br>It appears that the current multipathing failover configuration assigns a priority to each path (by default, just assigns the same priority to all paths). This is bad for us, as we&#39;re presenting iSCSI targets across multiple machines in a cluster; ideally, a user will have multiple devices, each with a separate path to a separate machine, with failover to the other machines in the cluster. The default setup of multipath will map all connections to a single machine, which is no load balancing at all.
-<br><br>I&#39;ve fooled around with various other values for default_prio_callot (besides the /bin/true), and the one that seems to work best is actually mpath_prio_random.<br><br>In fact, mpath_prio_random would actually work perfectly, except that it seems to swap path priorities extremely often -- several times a minute. So my company needs to develop a new script, probably much like the mpath_prio_emc or mpath_prio_netapp ones, so that we can hint at load balancing across devices with failover as the multipathing policy.
-<br><br>I&#39;ve been completely unable to find documentation on this. Where might I look? Is this even the right direction in which to be looking for a solution to this problem?<br><br>Let me know if anything above needs to be more clear.
-<br clear="all"><br>-- <br>Ethan John<br>
-
-------=_Part_86376_11008485.1182462174612--
-
-
---===============0417699720==
+Sony Network and Software Technology Center Europe
+The Corporate Village =C2=B7 Da Vincilaan 7-D1 =C2=B7 B-1935 Zaventem =C2=
+=B7 Belgium
+=20
+Phone:    +32 (0)2 700 8453=09
+Fax:      +32 (0)2 700 8622=09
+E-mail:   Geert.Uytterhoeven@sonycom.com=09
+Internet: http://www.sony-europe.com/
+ =09
+Sony Network and Software Technology Center Europe=09
+A division of Sony Service Centre (Europe) N.V.=09
+Registered office: Technologielaan 7 =C2=B7 B-1840 Londerzeel =C2=B7 Belg=
+ium=09
+VAT BE 0413.825.160 =C2=B7 RPR Brussels=09
+Fortis Bank Zaventem =C2=B7 Swift GEBABEBB08A =C2=B7 IBAN BE3900138235861=
+9
+---584337861-1794152911-1182439966=:3710
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0417699720==--
+---584337861-1794152911-1182439966=:3710--
