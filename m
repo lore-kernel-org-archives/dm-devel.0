@@ -1,16 +1,15 @@
-From: "Trantow, Wayne D" <wayne.d.trantow@intel.com>
-Subject: RAID1 Recovery
-Date: Wed, 27 Jun 2007 11:16:26 -0700
-Message-ID: <4AFE4AEEFA305C4BB82F73F4D819506001D9A10E@orsmsx420.amr.corp.intel.com>
-References: <20070626160032.0337973E8D@hormel.redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: dm-multipath MP_RETRY_PG_INIT patch
+Date: Wed, 27 Jun 2007 13:54:35 -0500
+Message-ID: <4682B26B.4090401@cs.wisc.edu>
+References: <50d45ed90706210718y4ef5d66en433c9444d227ff65@mail.gmail.com>
+	<50d45ed90706262325k3bfcdf9em14c6a3eaffb3d895@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-reply-to: <20070626160032.0337973E8D@hormel.redhat.com>
+In-Reply-To: <50d45ed90706262325k3bfcdf9em14c6a3eaffb3d895@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Jitendra Bhivare <jitendra.bhivare@gmail.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
-I am studying the dmraid-1.0.0.rc14, device-mapper_CVS Latest, and
-Fedora 6 (2.6.18-1.2798) kernel dmraid code to understand the recovery
-logic for a RAID1 set.  The usage scenario is where one disk in a mirror
-dies, the user swaps in a clean disk and then invokes dmraid app to
-copy/sync data to the new disk.
+Jitendra Bhivare wrote:
+> Hi,
+> 
+> In dm-multipath framework, using the hw-handler's error-function entry
+> point, nothing can be known about the reason for IO failure. From this
+> function MP_FAIL_PATH/MP_BYPASS_PG/MP_ERROR_IO can returned.
+> If the same path needs to be tried (i.e. in pg_init) to figure out the
+> reason for failure there is no way to tell that to dm-multipath.
+> 
+> One way to do so, is to return MP_RETRY_PG_INIT from hw_handler's
+> error function. This would set current_pgpath and current_pg to NULL
+> which would trigger pg_init. The path won't fail until pg_init says so.
+> 
+> Should this option MP_RETRY_PG_INIT be added to dm-multipath?
+> 
 
-Within this context I have a couple questions:
-
-- In kernel space, it looks like a recovery operation (RH_RECOVERING)
-will take place if the mirror_target.resume (mirror_resume) handler is
-called.  In user space, in dmraid/reconfig.c add_dev_to_set() func sets
-up handler add_dev_to_raid1() which should start the recovery.  However,
-as far as I can see, add_dev_to_set is not wired in to the rest of the
-dmraid code (i.e., nothing calls it).  What was the intent here? =20
-
-- If you follow the call chain from add_dev_to_raid1 into device-mapper
-it sets up a 'resume' call via an DM_DEV_RESUME ioctl dm_task, however,
-in the device-mapper _cmd_data_v4 struct (in libdm-iface.c) the 'resume'
-handler func is associated with the DM_DEV_SUSPEND ioctl not
-DM_DEV_RESUME. Hence, even if you invoked add_dev_to_raid1, a direct
-ioctl call to the kernel mirror_target.resume func is not possible.  Is
-this a bug or intentional? Or am I not seeing it correctly?
-
-Regards,
-Skip Trantow
-Manageability and Platform Software Division
-Intel Corporation
-Email: wayne.d.trantow@intel.com
+I think we need something like it. What hw handler is this for? Dave W, 
+sent a hw handler for old boxes that need START_STOP and he sent a patch 
+which worked like what you describe? Have you seen his patch to this list?
