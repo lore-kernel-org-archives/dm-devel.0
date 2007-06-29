@@ -1,12 +1,14 @@
 From: Bastian Blank <bastian@waldi.eu.org>
-Subject: __kernel_dev_t not exported
-Date: Fri, 29 Jun 2007 14:14:47 +0200
-Message-ID: <20070629121447.GA22700@wavehammer.waldi.eu.org>
+Subject: Re: __kernel_dev_t not exported
+Date: Fri, 29 Jun 2007 14:16:42 +0200
+Message-ID: <20070629121642.GA26471@wavehammer.waldi.eu.org>
+References: <20070629121447.GA22700@wavehammer.waldi.eu.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20070629121447.GA22700@wavehammer.waldi.eu.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,19 +21,18 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi folks
+On Fri, Jun 29, 2007 at 02:14:47PM +0200, Bastian Blank wrote:
+> It is pretty undefined if linux/types.h exports __kernel_dev_t (and some
+> other definitions) or not. This is controlled by a define which is set
+> in feature.h from the glibc (__KERNEL_STRICT_NAMES).
 
-It is pretty undefined if linux/types.h exports __kernel_dev_t (and some
-other definitions) or not. This is controlled by a define which is set
-in feature.h from the glibc (__KERNEL_STRICT_NAMES).
-
-Some arches include feature.h in the gcc headers, some not.
-
-I'm not sure if this should be fixed in the kernel. Userspace should
-never see this standard definitions (dev_t, mode_t, off_t and so on).
+Forgot to say, that this breaks devmapper:
+| In file included from ioctl/libdm-iface.c:22:
+| ioctl/libdm-compat.h:43: error: expected specifier-qualifier-list before '__kernel_dev_t'
+| ioctl/libdm-compat.h:63: error: expected specifier-qualifier-list before '__kernel_dev_t'
 
 Bastian
 
 -- 
-Extreme feminine beauty is always disturbing.
-		-- Spock, "The Cloud Minders", stardate 5818.4
+Emotions are alien to me.  I'm a scientist.
+		-- Spock, "This Side of Paradise", stardate 3417.3
