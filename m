@@ -1,35 +1,46 @@
-From: "Grant Likely" <grant.likely@secretlab.ca>
-Subject: Re: [PATCH 2/4] void unregister_blkdev - delete redundant messages
-Date: Sat, 30 Jun 2007 10:12:53 -0400
-Message-ID: <fa686aa40706300712w306243e0ob1242ebc28442071@mail.gmail.com>
-References: <20070630031013.GC4045@APFDCB5C> <20070630031212.GD4045@APFDCB5C>
-	 <fa686aa40706292314g3323c98dxdecd8b5a289f1c64@mail.gmail.com>
-	 <961aa3350706300708l3bd4ab31ob9646847ea4f4537@mail.gmail.com>
+From: Ross Vandegrift <ross@kallisti.us>
+Subject: dump of ext3 very slow from dm LV
+Date: Sat, 30 Jun 2007 16:28:21 -0400
+Message-ID: <20070630202821.GA2770@kallisti.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758380AbXF3ONG@vger.kernel.org>
-In-Reply-To: <961aa3350706300708l3bd4ab31ob9646847ea4f4537@mail.gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753947AbXF3Uwb@vger.kernel.org>
 Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
-To: Akinobu Mita <akinobu.mita@gmail.com>
-Cc: linux-kernel@vger.kernel.org, Eberhard Moenkeberg <emoenke@gwdg.de>, Joe Thornber <dm-devel@redhat.com>
+To: linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On 6/30/07, Akinobu Mita <akinobu.mita@gmail.com> wrote:
-> > Seeing as none of the callers check the error code; why does the
-> > function return anything at all?
->
-> Right. This series of patches is trying to make it return void.
->
-> http://lkml.org/lkml/2007/6/29/320
+Hello everyone,
 
-Heh, cool.  I should do more research before I reply blindly.  :-)
+A while back I asked about this on the LVM mailing list, but didn't
+receive a response.  Am revisiting it now, so would like a broader
+audience.
 
-g.
+I've run into some substantial read slowness when using dump or tar
+to backup filesystems that are stored on LVM2 LVs.  All of my tests
+are dumping ext3 filesystems to /dev/null.
 
+I'm seeing speeds in the range of 3-4MiB/s.  If I increase dump's
+blocksize to 128KiB records, speed jumps up to about 20KiB/s, which
+is better but still frustratingly slow. Going to 1024KiB gets me
+about 28MiB/s.
+
+Today I loop mounted a file on my LVM, filled it up with some crap
+from urandom and dumped it out.  I was able to get 50-60MiB/s.  
+
+Is this amount of performance loss due to dm expected? My LV is just two
+SATA hard disks that I put into a VG. Stupid benchmarks with dd gives me
+a raw read speed from the LV of about 60MiB/sec.
+
+I'm using kernel 2.6.18-4-686 from debian.  Any ideas on what's
+slowing down dump? 
 -- 
-Grant Likely, B.Sc., P.Eng.
-Secret Lab Technologies Ltd.
-grant.likely@secretlab.ca
-(403) 399-0195
+Ross Vandegrift
+ross@kallisti.us
+
+"The good Christian should beware of mathematicians, and all those who
+make empty prophecies. The danger already exists that the mathematicians
+have made a covenant with the devil to darken the spirit and to confine
+man in the bonds of Hell."
+	--St. Augustine, De Genesi ad Litteram, Book II, xviii, 37
