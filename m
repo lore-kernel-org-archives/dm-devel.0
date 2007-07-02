@@ -1,46 +1,78 @@
-From: Ross Vandegrift <ross@kallisti.us>
-Subject: dump of ext3 very slow from dm LV
-Date: Sat, 30 Jun 2007 16:28:21 -0400
-Message-ID: <20070630202821.GA2770@kallisti.us>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Reply-to munging
+Date: Mon, 02 Jul 2007 15:55:56 -0400
+Message-ID: <4689584C.4030500@cfl.rr.com>
+References: <46785289.6010602@cfl.rr.com>
+	<20070620144458.GH25016@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753947AbXF3Uwb@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070620144458.GH25016@agk.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello everyone,
+Alasdair G Kergon wrote:
+> And here are some counter-arguments:
+>   http://www.metasystema.net/essays/reply-to.mhtml
 
-A while back I asked about this on the LVM mailing list, but didn't
-receive a response.  Am revisiting it now, so would like a broader
-audience.
+And they would be wrong:
 
-I've run into some substantial read slowness when using dump or tar
-to backup filesystems that are stored on LVM2 LVs.  All of my tests
-are dumping ext3 filesystems to /dev/null.
+> The Principle of Minimal Bandwidth
 
-I'm seeing speeds in the range of 3-4MiB/s.  If I increase dump's
-blocksize to 128KiB records, speed jumps up to about 20KiB/s, which
-is better but still frustratingly slow. Going to 1024KiB gets me
-about 28MiB/s.
+I don't see how forcing a reply that otherwise was intended to go only 
+to one recipient to be sent out to the entire list saves bandwidth.
 
-Today I loop mounted a file on my LVM, filled it up with some crap
-from urandom and dumped it out.  I was able to get 50-60MiB/s.  
+> Reply-To Munging Adds Something
 
-Is this amount of performance loss due to dm expected? My LV is just two
-SATA hard disks that I put into a VG. Stupid benchmarks with dd gives me
-a raw read speed from the LV of about 60MiB/sec.
+No, it does not; it takes away something.  If you want to reply publicly 
+then you use reply-to-all.  It is up to the SENDER to set their 
+Reply-To: header if they do NOT want a reply going to them as well as 
+the list.  They should make that choice, not the replier.  Users also 
+are supposed to be able to use Reply-To: to direct replies to the 
+correct sender in the event that they forward a message on someone 
+else's behalf.  Thirdly, munging the header breaks the reply 
+functionality of the client by making it behave like reply-to-all.
 
-I'm using kernel 2.6.18-4-686 from debian.  Any ideas on what's
-slowing down dump? 
--- 
-Ross Vandegrift
-ross@kallisti.us
+> It Doesn't Break Reasonable Mailers
 
-"The good Christian should beware of mathematicians, and all those who
-make empty prophecies. The danger already exists that the mathematicians
-have made a covenant with the devil to darken the spirit and to confine
-man in the bonds of Hell."
-	--St. Augustine, De Genesi ad Litteram, Book II, xviii, 37
+Yes, it does.  This argument boils down to "Breaking the reply function 
+isn't really breaking it because some mailers have added a 
+reply-ignoring-broken-munged-reply-to function that you can use 
+instead".  If the headers weren't munged in the first place this option 
+would not be needed.
+
+> Freedom of Choice
+
+This one could not be more of a bold faced lie.  The only "freedom" it 
+adds is the replier's freedom to take away the freedom of the sender and 
+force a reply only to the list despite their wishes otherwise, as 
+reflected by the reply-to: header they did or did not set.
+
+> Some Mailers are Broken
+
+Same fallacious argument as "It Doesn't Break Reasonable Mailers".  It 
+is mailing lists that munge that are broken, not clients that have not 
+added a 3rd reply option specifically to deal with such broken lists.
+
+> Principle of Least Total Work
+
+Again, it is up to the poster to decide if they want a reply directly to 
+them, or only to the list, not the replier.  If they want their own 
+reply, then give it to them.
+
+> People are Responsible for Their Own Mistakes
+
+This item simply dismisses the principal of least surprise in favor of 
+codling the ignorant.  User mistakes are no longer their fault when your 
+mailing list causes an unexpected change in the behavior of their mailer.
