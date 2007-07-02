@@ -1,15 +1,16 @@
-From: Phillip Susi <psusi@cfl.rr.com>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: Reply-to munging
-Date: Mon, 02 Jul 2007 15:55:56 -0400
-Message-ID: <4689584C.4030500@cfl.rr.com>
+Date: Mon, 2 Jul 2007 21:48:33 +0100
+Message-ID: <20070702204833.GQ30047@agk.fab.redhat.com>
 References: <46785289.6010602@cfl.rr.com>
 	<20070620144458.GH25016@agk.fab.redhat.com>
+	<4689584C.4030500@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070620144458.GH25016@agk.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <4689584C.4030500@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,57 +23,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Alasdair G Kergon wrote:
-> And here are some counter-arguments:
->   http://www.metasystema.net/essays/reply-to.mhtml
+On Mon, Jul 02, 2007 at 03:55:56PM -0400, Phillip Susi wrote:
+> Alasdair G Kergon wrote:
+> >And here are some counter-arguments:
+> >  http://www.metasystema.net/essays/reply-to.mhtml
+> And they would be wrong:
+ 
+[snip]
 
-And they would be wrong:
+This won't be changing while I'm around until mailman is enhanced to
+allow the list owner to permit individual subscribers to choose.  I
+looked into writing mailman patches for this some time ago (for
+lug.org.uk lists) and it seemed pretty straightforward - but it's not
+something I'm ever likely to find the time to write these days, I'm
+afraid.
 
-> The Principle of Minimal Bandwidth
-
-I don't see how forcing a reply that otherwise was intended to go only 
-to one recipient to be sent out to the entire list saves bandwidth.
-
-> Reply-To Munging Adds Something
-
-No, it does not; it takes away something.  If you want to reply publicly 
-then you use reply-to-all.  It is up to the SENDER to set their 
-Reply-To: header if they do NOT want a reply going to them as well as 
-the list.  They should make that choice, not the replier.  Users also 
-are supposed to be able to use Reply-To: to direct replies to the 
-correct sender in the event that they forward a message on someone 
-else's behalf.  Thirdly, munging the header breaks the reply 
-functionality of the client by making it behave like reply-to-all.
-
-> It Doesn't Break Reasonable Mailers
-
-Yes, it does.  This argument boils down to "Breaking the reply function 
-isn't really breaking it because some mailers have added a 
-reply-ignoring-broken-munged-reply-to function that you can use 
-instead".  If the headers weren't munged in the first place this option 
-would not be needed.
-
-> Freedom of Choice
-
-This one could not be more of a bold faced lie.  The only "freedom" it 
-adds is the replier's freedom to take away the freedom of the sender and 
-force a reply only to the list despite their wishes otherwise, as 
-reflected by the reply-to: header they did or did not set.
-
-> Some Mailers are Broken
-
-Same fallacious argument as "It Doesn't Break Reasonable Mailers".  It 
-is mailing lists that munge that are broken, not clients that have not 
-added a 3rd reply option specifically to deal with such broken lists.
-
-> Principle of Least Total Work
-
-Again, it is up to the poster to decide if they want a reply directly to 
-them, or only to the list, not the replier.  If they want their own 
-reply, then give it to them.
-
-> People are Responsible for Their Own Mistakes
-
-This item simply dismisses the principal of least surprise in favor of 
-codling the ignorant.  User mistakes are no longer their fault when your 
-mailing list causes an unexpected change in the behavior of their mailer.
+Alasdair
+-- 
+agk@redhat.com
