@@ -1,49 +1,46 @@
-From: Tejun Heo <htejun@gmail.com>
-Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
- and dm/md.
-Date: Thu, 05 Jul 2007 21:28:17 +0900
-Message-ID: <468CE3E1.3000503@gmail.com>
-References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070530093503.GA15559@kernel.dk>
+From: Alexander Benaguev <zul@sigmatrans.ru>
+Subject: Re: online disk resizing
+Date: Thu, 05 Jul 2007 16:43:51 +0400
+Message-ID: <468CE787.6040500@sigmatrans.ru>
+References: <E43E8EC1853DF64D8DF70C7FDC14E92A027093C5@dewdfe26.wdf.sap.corp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <20070530093503.GA15559@kernel.dk>
-Sender: linux-raid-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, David Chinner <dgc@sgi.com>, Phillip Susi <psusi@cfl.rr.com>, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <E43E8EC1853DF64D8DF70C7FDC14E92A027093C5@dewdfe26.wdf.sap.corp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello, Jens.
-
-Jens Axboe wrote:
-> On Mon, May 28 2007, Neil Brown wrote:
->> I think the implementation priorities here are:
->>
->> 1/ implement a zero-length BIO_RW_BARRIER option.
->> 2/ Use it (or otherwise) to make all dm and md modules handle
->>    barriers (and loop?).
->> 3/ Devise and implement appropriate fall-backs with-in the block layer
->>    so that  -EOPNOTSUP is never returned.
->> 4/ Remove unneeded cruft from filesystems (and elsewhere).
+Raayman, Sebastian wrote:
+> this is also dependant on the HBA you are using. With a Qlogic adapter
+> you can simply send an:
 > 
-> This is the start of 1/ above. It's very lightly tested, it's verified
-> to DTRT here at least and not crash :-)
+> echo scsi-qlascan 
 > 
-> It gets rid of the ->issue_flush_fn() queue callback, all the driver
-> knowledge resides in ->prepare_flush_fn() anyways. blkdev_issue_flush()
-> then just reuses the empty-bio approach to queue an empty barrier, this
-> should work equally well for stacked and non-stacked devices.
-> 
-> While this patch isn't complete yet, it's clearly the right direction to
-> go.
+> to your Qlogic adapter (for example under /proc/scsqi/qla2xxx)
 
-Finally took a brief look. :-) I think the sequencing for zero-length
-barrier can be better done by pre-setting QUEUE_ORDSEQ_BAR in
-start_ordered() rather than short circuiting the request after it's
-issued.  What do you think?
+thanks for attention, guys
 
-Thanks.
+Sebastian, yes, I use qlogic, but, you will laught, I have not /proc/scsqi/qla2xxx. googling around 
+shows that:
+"as of RHEL4 U3 (and I'd imagine upstream kernel.org kernels) the 'scsi-qlascan' no longer works 
+with the qla2xxx driver. The new method is:
 
--- 
-tejun
+echo 1 > /sys/class/fc_host/host<ID>/issue_lip
+echo "- - -" > /sys/class/scsi_host/host<ID>/scan" but it does not work for me.
+I tried "echo 1 > 
+/sys/devices/pci0000:00/0000:00:03.0/0000:04:00.0/0000:06:01.0/host1/rport-1:0-1/target1:0:1/1:0:1:2/rescan" 
+too. so, it was much better: dmesg showed me disks with new capacity, but "fdisk -l" still showing 
+old capacity;( any thoughts?
+
+alexander
