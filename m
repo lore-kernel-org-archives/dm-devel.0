@@ -1,12 +1,16 @@
-From: Alexander Benaguev <zul@sigmatrans.ru>
-Subject: online disk resizing
-Date: Wed, 04 Jul 2007 21:16:34 +0400
-Message-ID: <468BD5F2.8040001@sigmatrans.ru>
+From: "Roland Mieslinger" <roland.mieslinger@interoute.com>
+Subject: RE: online disk resizing
+Date: Thu, 5 Jul 2007 09:31:19 +0200
+Message-ID: <7531FC6D348A2F4A9670BBC9BCB3250802B3E2D6@cm050024.europede.psinet.dc>
+References: <468BD5F2.8040001@sigmatrans.ru>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <468BD5F2.8040001@sigmatrans.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,13 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-hi, list
+I did the same with HP MSA in the past, but without dm involved.
 
-I have fc-based SAN which has ability to resizing logical disks online (IBM DS4000). is this a 
-method tell about resizing to host system (centOS 5) without reboot or echo "scsi 
-remove(add)-single-device 0 1 2 3"? I use multipath if this matters. will apprecate any help
+You can use "blockdev --rereadpt <blockdevice>" to make the the kernel
+recognise the new disk size (geometery). The nasty thing is that you
+have to stop all I/O to the blocdevice.=20
 
-alexander
+Roland Mieslinger
+
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com=20
+> [mailto:dm-devel-bounces@redhat.com] On Behalf Of Alexander Benaguev
+> Sent: Mittwoch, 4. Juli 2007 19:17
+> To: dm-devel@redhat.com
+> Subject: [dm-devel] online disk resizing
+>=20
+> hi, list
+>=20
+> I have fc-based SAN which has ability to resizing logical=20
+> disks online (IBM DS4000). is this a method tell about=20
+> resizing to host system (centOS 5) without reboot or echo=20
+> "scsi remove(add)-single-device 0 1 2 3"? I use multipath if=20
+> this matters. will apprecate any help
+>=20
+> alexander
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>=20
