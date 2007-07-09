@@ -1,53 +1,52 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: online disk resizing
-Date: Fri, 06 Jul 2007 08:19:24 +0200
-Message-ID: <468DDEEC.1030701@suse.de>
-References: <E43E8EC1853DF64D8DF70C7FDC14E92A027093C5@dewdfe26.wdf.sap.corp>	<468CE787.6040500@sigmatrans.ru><7531FC6D348A2F4A9670BBC9BCB3250802B3E2E8@cm050024.europede.psinet.dc>	<468CFB57.4050508@sigmatrans.ru><7531FC6D348A2F4A9670BBC9BCB3250802B3E2EC@cm050024.europede.psinet.dc>	<468CFDFC.7000807@sigmatrans.ru>
-	<7531FC6D348A2F4A9670BBC9BCB3250802B3E2ED@cm050024.europede.psinet.dc>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems,
+	and dm/md.
+Date: Mon, 9 Jul 2007 14:27:35 +0200
+Message-ID: <20070709122735.GZ5267@kernel.dk>
+References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070530093503.GA15559@kernel.dk> <468CE3E1.3000503@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <7531FC6D348A2F4A9670BBC9BCB3250802B3E2ED@cm050024.europede.psinet.dc>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-raid-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <468CE3E1.3000503@gmail.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Tejun Heo <htejun@gmail.com>
+Cc: Neil Brown <neilb@suse.de>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, linux-raid@vger.kernel.org, David Chinner <dgc@sgi.com>, Phillip Susi <psusi@cfl.rr.com>, Stefan Bader <Stefan.Bader@de.ibm.com>, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-Roland Mieslinger wrote:
->> -----Original Message-----
->> From: dm-devel-bounces@redhat.com=20
->> [mailto:dm-devel-bounces@redhat.com] On Behalf Of Alexander Benaguev
->> Sent: Donnerstag, 5. Juli 2007 16:20
->> To: device-mapper development
->> Subject: Re: [dm-devel] online disk resizing
->>
->> Roland Mieslinger wrote:
->>> Did you get a error from blockdev command?
->> none
->>> Did you stop all I/O to the device?=20
->> I can't!=3D) it's not online resizing, if I should stoping io;(
->=20
-> That's were i stuck too.=20
-> You can do it without reboot, but I've found no way to do it online.
->=20
-As already said: online resizing only works if there are _no_ references
-to that device. Ie no device-mapper tables referencing it etc.
-Otherwise any block device updates will be rejected by the kernel.
+On Thu, Jul 05 2007, Tejun Heo wrote:
+> Hello, Jens.
+> 
+> Jens Axboe wrote:
+> > On Mon, May 28 2007, Neil Brown wrote:
+> >> I think the implementation priorities here are:
+> >>
+> >> 1/ implement a zero-length BIO_RW_BARRIER option.
+> >> 2/ Use it (or otherwise) to make all dm and md modules handle
+> >>    barriers (and loop?).
+> >> 3/ Devise and implement appropriate fall-backs with-in the block layer
+> >>    so that  -EOPNOTSUP is never returned.
+> >> 4/ Remove unneeded cruft from filesystems (and elsewhere).
+> > 
+> > This is the start of 1/ above. It's very lightly tested, it's verified
+> > to DTRT here at least and not crash :-)
+> > 
+> > It gets rid of the ->issue_flush_fn() queue callback, all the driver
+> > knowledge resides in ->prepare_flush_fn() anyways. blkdev_issue_flush()
+> > then just reuses the empty-bio approach to queue an empty barrier, this
+> > should work equally well for stacked and non-stacked devices.
+> > 
+> > While this patch isn't complete yet, it's clearly the right direction to
+> > go.
+> 
+> Finally took a brief look. :-) I think the sequencing for zero-length
+> barrier can be better done by pre-setting QUEUE_ORDSEQ_BAR in
+> start_ordered() rather than short circuiting the request after it's
+> issued.  What do you think?
 
-Cheers,
+Yeah, that might be cleaner and should achieve the same effect. I'll
+test!
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+-- 
+Jens Axboe
+
