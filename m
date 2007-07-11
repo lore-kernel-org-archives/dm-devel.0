@@ -1,41 +1,135 @@
-From: Ric Wheeler <ric@emc.com>
-Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices,
- filesystems, and dm/md.
-Date: Wed, 11 Jul 2007 18:44:21 -0400
-Message-ID: <46955D45.8010606@emc.com>
-References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528094358.GM25091@agk.fab.redhat.com> <5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com> <20070529220500.GA6513@agk.fab.redhat.com> <5201e28f0705300212g3be16464u5ee1a4c80db27a11@mail.gmail.com> <465DAC72.1010201@cfl.rr.com> <5201e28f0705310414u1a9aebc4je135748274543946@mail.gmail.com> <465F9197.7060002@gmail.com> <Pine.LNX.4.64.0705312144400.6705@asgard.lang.hm> <465FC7B1.3060309@gmail.com>            <4693D26D.2060004@emc.com> <4758.1184110800@turing-police.cc.vt.edu>
-Reply-To: ric@emc.com
+From: Mike Anderson <andmike@us.ibm.com>
+Subject: Re: [2.6.23 PATCH 13/18] dm: netlink
+Date: Wed, 11 Jul 2007 16:37:36 -0700
+Message-ID: <20070711233736.GA29241@us.ibm.com>
+References: <20070711210137.GE24114@agk.fab.redhat.com>
+	<20070711142712.e646995b.akpm@linux-foundation.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <4758.1184110800@turing-police.cc.vt.edu>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Valdis.Kletnieks@vt.edu
-Cc: Tejun Heo <htejun@gmail.com>, david@lang.hm, Stefan Bader <Stefan.Bader@de.ibm.com>, Phillip Susi <psusi@cfl.rr.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, David Chinner <dgc@sgi.com>, Andreas Dilger <adilger@clusterfs.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20070711142712.e646995b.akpm@linux-foundation.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: netdev@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-
-Valdis.Kletnieks@vt.edu wrote:
-> On Tue, 10 Jul 2007 14:39:41 EDT, Ric Wheeler said:
+Andrew Morton <akpm@linux-foundation.org> wrote:
+> On Wed, 11 Jul 2007 22:01:37 +0100
+> Alasdair G Kergon <agk@redhat.com> wrote:
 > 
->> All of the high end arrays have non-volatile cache (read, on power loss, it is a 
->> promise that it will get all of your data out to permanent storage). You don't 
->> need to ask this kind of array to drain the cache. In fact, it might just ignore 
->> you if you send it that kind of request ;-)
+> > From: Mike Anderson <andmike@us.ibm.com>
+> > 
+> > This patch adds a dm-netlink skeleton support to the Makefile, and the dm
+> > directory.
+> > 
+> > ...
+> >  
+> > +config DM_NETLINK
+> > +	bool "DM netlink events (EXPERIMENTAL)"
+> > +	depends on BLK_DEV_DM && EXPERIMENTAL
+> > +	---help---
+> > +	Generate netlink events for DM events.
 > 
-> OK, I'll bite - how does the kernel know whether the other end of that
-> fiberchannel cable is attached to a DMX-3 or to some no-name product that
-> may not have the same assurances?  Is there a "I'm a high-end array" bit
-> in the sense data that I'm unaware of?
+> Need a dependency on NET there?
 > 
 
-There are ways to query devices (think of hdparm -I in S-ATA/P-ATA drives, SCSI 
-has similar queries) to see what kind of device you are talking to. I am not 
-sure it is worth the trouble to do any automatic detection/handling of this.
+Yes.
 
-In this specific case, it is more a case of when you attach a high end (or 
-mid-tier) device to a server, you should configure it without barriers for its 
-exported LUNs.
+> > ...
+> >
+> > +#ifdef CONFIG_DM_NETLINK
+> > +
+> > +int dm_netlink_init(void);
+> > +void dm_netlink_exit(void);
+> > +
+> > +#else	/* CONFIG_DM_NETLINK */
+> > +
+> > +static inline int __init dm_netlink_init(void)
+> 
+> The __init here isn't needed (doesn't make sense, is missing the required
+> #include anyway)
+> 
+> > +{
+> > +	return 0;
+> > +}
+> > +static inline void dm_netlink_exit(void)
+> > +{
+> > +}
+> > +
+> > +#endif	/* CONFIG_DM_NETLINK */
+> > +
+> > +#endif	/* DM_NETLINK_H */
+> > Index: linux/drivers/md/dm.c
+> > ===================================================================
+> > --- linux.orig/drivers/md/dm.c	2007-07-11 21:37:47.000000000 +0100
+> > +++ linux/drivers/md/dm.c	2007-07-11 21:37:50.000000000 +0100
+> > @@ -7,6 +7,7 @@
+> >  
+> >  #include "dm.h"
+> >  #include "dm-bio-list.h"
+> > +#include "dm-netlink.h"
+> >  
+> >  #include <linux/init.h>
+> >  #include <linux/module.h>
+> > @@ -176,6 +177,7 @@ int (*_inits[])(void) __initdata = {
+> >  	dm_linear_init,
+> >  	dm_stripe_init,
+> >  	dm_interface_init,
+> > +	dm_netlink_init,
+> >  };
+> >  
+> >  void (*_exits[])(void) = {
+> > @@ -184,6 +186,7 @@ void (*_exits[])(void) = {
+> >  	dm_linear_exit,
+> >  	dm_stripe_exit,
+> >  	dm_interface_exit,
+> > +	dm_netlink_exit,
+> >  };
+> 
+> hm, so if CONFIG_DM_NETLINK=n we end up taking the address of an inlined
+> function.  So the __init above _did_ make sense, in a peculiar way.  I
+> don't know that gcc will actually put that converted-to-non-inline function
+> into the desired section though.
+> 
+> There's no way in which those inlined functions will ever get inlined.
+> Perhaps all this would be better if there was no implementation of
+> dm_netlink_init() and dm_netlink_exit() if CONFIG_DM_NETLINK=n and you just
+> whack the requisite ifdefs into these tables here?
+> 
 
-ric
+ok, I will switch to the ifdef CONFIG_DM_NETLINK in the tables.
+
+
+> >  static int __init dm_init(void)
+> > Index: linux/include/linux/netlink.h
+> > ===================================================================
+> > --- linux.orig/include/linux/netlink.h	2007-07-11 21:37:31.000000000 +0100
+> > +++ linux/include/linux/netlink.h	2007-07-11 21:37:50.000000000 +0100
+> > @@ -21,7 +21,7 @@
+> >  #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
+> >  #define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
+> >  #define NETLINK_GENERIC		16
+> > -/* leave room for NETLINK_DM (DM Events) */
+> > +#define NETLINK_DM		17	/* Device Mapper */
+> >  #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
+> >  #define NETLINK_ECRYPTFS	19
+> 
+> Have the net guys checked this?  
+
+No. The support is a derivative of the netlink support in
+scsi_transport_iscsi.c.
+
+-andmike
+--
+Michael Anderson
+andmike@us.ibm.com
