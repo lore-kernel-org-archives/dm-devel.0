@@ -1,12 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.23 PATCH 18/18] dm raid1: handle log failure
-Date: Wed, 11 Jul 2007 22:03:16 +0100
-Message-ID: <20070711210316.GJ24114@agk.fab.redhat.com>
+From: Christoph Lameter <clameter@sgi.com>
+Subject: Re: [2.6.23 PATCH 03/18] dm: use kmem_cache macro
+Date: Wed, 11 Jul 2007 14:03:44 -0700 (PDT)
+Message-ID: <Pine.LNX.4.64.0707111403360.19362@schroedinger.engr.sgi.com>
+References: <20070711205734.GU24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20070711205734.GU24114@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,72 +17,8 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Jonathan Brassow <jbrassow@redhat.com>
-
-When writing to a mirror, the log must be updated first.  Failure
-to update the log could result in the log not properly reflecting
-the state of the mirror if the machine should crash.
-
-We change the return type of the rh_flush function to give us
-the ability to check if a log write was successful.  If the
-log write was unsuccessful, we fail the writes to avoid the
-case where the log does not properly reflect the state of the
-mirror.
-
-A follow-up patch - which is dependent on the ability to
-requeue I/O's to core device-mapper - will requeue the I/O's
-for retry (allowing the mirror to be reconfigured.)
-
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-
----
- drivers/md/dm-raid1.c |   12 ++++++++----
- 1 files changed, 8 insertions(+), 4 deletions(-)
-
-Index: linux/drivers/md/dm-raid1.c
-===================================================================
---- linux.orig/drivers/md/dm-raid1.c	2007-07-11 21:37:56.000000000 +0100
-+++ linux/drivers/md/dm-raid1.c	2007-07-11 21:37:57.000000000 +0100
-@@ -134,6 +134,7 @@ struct mirror_set {
- 	/* recovery */
- 	region_t nr_regions;
- 	int in_sync;
-+	int log_failure;
- 
- 	struct mirror *default_mirror;	/* Default mirror */
- 
-@@ -589,9 +590,9 @@ static void rh_recovery_end(struct regio
- 	wake(rh->ms);
- }
- 
--static void rh_flush(struct region_hash *rh)
-+static int rh_flush(struct region_hash *rh)
- {
--	rh->log->type->flush(rh->log);
-+	return rh->log->type->flush(rh->log);
- }
- 
- static void rh_delay(struct region_hash *rh, struct bio *bio)
-@@ -892,12 +893,15 @@ static void do_writes(struct mirror_set 
- 	 */
- 	rh_inc_pending(&ms->rh, &sync);
- 	rh_inc_pending(&ms->rh, &nosync);
--	rh_flush(&ms->rh);
-+	ms->log_failure = rh_flush(&ms->rh) ? 1 : 0;
- 
- 	/*
- 	 * Dispatch io.
- 	 */
--	while ((bio = bio_list_pop(&sync)))
-+	if (unlikely(ms->log_failure))
-+		while ((bio = bio_list_pop(&sync)))
-+			bio_endio(bio, bio->bi_size, -EIO);
-+	else while ((bio = bio_list_pop(&sync)))
- 		do_write(ms, bio);
- 
- 	while ((bio = bio_list_pop(&recover)))
+Acked-by: Christoph Lameter <clameter@sgi.com>
