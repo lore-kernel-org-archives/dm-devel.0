@@ -1,213 +1,41 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Re: [2.6.23 PATCH 16/18] dm mpath: rdac
-Date: Wed, 11 Jul 2007 15:19:42 -0700
-Message-ID: <1184192382.5146.15.camel@linuxchandra>
-References: <20070711210242.GH24114@agk.fab.redhat.com>
-	<20070711144303.9400acba.akpm@linux-foundation.org>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Ric Wheeler <ric@emc.com>
+Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices,
+ filesystems, and dm/md.
+Date: Wed, 11 Jul 2007 18:44:21 -0400
+Message-ID: <46955D45.8010606@emc.com>
+References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528094358.GM25091@agk.fab.redhat.com> <5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com> <20070529220500.GA6513@agk.fab.redhat.com> <5201e28f0705300212g3be16464u5ee1a4c80db27a11@mail.gmail.com> <465DAC72.1010201@cfl.rr.com> <5201e28f0705310414u1a9aebc4je135748274543946@mail.gmail.com> <465F9197.7060002@gmail.com> <Pine.LNX.4.64.0705312144400.6705@asgard.lang.hm> <465FC7B1.3060309@gmail.com>            <4693D26D.2060004@emc.com> <4758.1184110800@turing-police.cc.vt.edu>
+Reply-To: ric@emc.com
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070711144303.9400acba.akpm@linux-foundation.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <4758.1184110800@turing-police.cc.vt.edu>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Valdis.Kletnieks@vt.edu
+Cc: Tejun Heo <htejun@gmail.com>, david@lang.hm, Stefan Bader <Stefan.Bader@de.ibm.com>, Phillip Susi <psusi@cfl.rr.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, David Chinner <dgc@sgi.com>, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-On Wed, 2007-07-11 at 14:43 -0700, Andrew Morton wrote:
-> On Wed, 11 Jul 2007 22:02:42 +0100
-> Alasdair G Kergon <agk@redhat.com> wrote:
-> 
-> > From: Mike Christie <michaelc@cs.wisc.edu>
-> > 
-> > This patch from Chandra Seetharaman and updated to upstream by me,
-> > supports LSI/Engenio devices in RDAC mode. Like dm-emc
-> > it requires userspace support. In your multipath.conf file you must have:
-> > 
-> > path_checker            rdac
-> > hardware_handler        "1 rdac"
-> > 
-> > And you also then must have a updated multipath tools release which
-> > has rdac support.
-> > 
-> > ...
-> >
-> > +static spinlock_t list_lock = SPIN_LOCK_UNLOCKED;
-> 
-> This defeats lockdep.  Please use DEFINE_SPINLOCK.
 
-Will do
+Valdis.Kletnieks@vt.edu wrote:
+> On Tue, 10 Jul 2007 14:39:41 EDT, Ric Wheeler said:
 > 
-> > +#define submit_c9_inquiry(h) \
-> > +	submit_inquiry(h, 0xC9, sizeof(struct c9_inquiry), c9_inquiry_endio)
-> > +#define submit_c4_inquiry(h) \
-> > +	submit_inquiry(h, 0xC4, sizeof(struct c4_inquiry), c4_inquiry_endio)
-> > +#define submit_c8_inquiry(h) \
-> > +	submit_inquiry(h, 0xC8, sizeof(struct c8_inquiry), c8_inquiry_endio)
-> > +#define submit_c2_inquiry(h) \
-> > +	submit_inquiry(h, 0xC2, sizeof(struct c2_inquiry), c2_inquiry_endio)
+>> All of the high end arrays have non-volatile cache (read, on power loss, it is a 
+>> promise that it will get all of your data out to permanent storage). You don't 
+>> need to ask this kind of array to drain the cache. In fact, it might just ignore 
+>> you if you send it that kind of request ;-)
 > 
-> These don't have to be implemented as macros.
+> OK, I'll bite - how does the kernel know whether the other end of that
+> fiberchannel cable is attached to a DMX-3 or to some no-name product that
+> may not have the same assurances?  Is there a "I'm a high-end array" bit
+> in the sense data that I'm unaware of?
+> 
 
-They were all spanning two lines, wanted to make it look clean were it
-was used.
+There are ways to query devices (think of hdparm -I in S-ATA/P-ATA drives, SCSI 
+has similar queries) to see what kind of device you are talking to. I am not 
+sure it is worth the trouble to do any automatic detection/handling of this.
 
-Will change.
+In this specific case, it is more a case of when you attach a high end (or 
+mid-tier) device to a server, you should configure it without barriers for its 
+exported LUNs.
 
-> 
-> > +static struct request *get_rdac_req(struct rdac_handler *h,
-> > +			void *buffer, unsigned buflen, int rw)
-> > +{
-> > +	struct request *rq;
-> > +	struct request_queue *q = bdev_get_queue(h->path->dev->bdev);
-> > +
-> > +	rq = blk_get_request(q, rw, GFP_ATOMIC);
-> 
-> GFP_ATOMIC is unreliable.  Is it really unavoidable?
-
-We can avoid it here.
-
-Will change.
-> 
-> > +	if (!rq) {
-> > +		DMINFO("get_rdac_req: blk_get_request failed");
-> > +		return NULL;
-> > +	}
-> > +
-> > +	if (buflen && blk_rq_map_kern(q, rq, buffer, buflen, GFP_ATOMIC)) {
-> > +		blk_put_request(rq);
-> > +		DMINFO("get_rdac_req: blk_rq_map_kern failed");
-> > +		return NULL;
-> > +	}
-> > +
-> > + 	memset(&rq->cmd, 0, BLK_MAX_CDB);
-> > +	rq->sense = h->sense;
-> > +	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
-> > +	rq->sense_len = 0;
-> > +
-> > +	rq->end_io_data = h;
-> > +	rq->timeout = h->timeout;
-> > +	rq->cmd_type = REQ_TYPE_BLOCK_PC;
-> > +	rq->cmd_flags = REQ_FAILFAST | REQ_NOMERGE;
-> > +	return rq;
-> > +}
-> > +
-> >
-> > ...
-> >
-> > +
-> > +/* Acquires h->ctlr->lock */
-> > +static void submit_mode_select(struct rdac_handler *h)
-> > +{
-> > +	struct request *rq;
-> > +	struct request_queue *q = bdev_get_queue(h->path->dev->bdev);
-> > +
-> > +	spin_lock(&h->ctlr->lock);
-> > +	if (h->ctlr->submitted) {
-> > +		list_add(&h->entry, &h->ctlr->cmd_list);
-> > +		goto drop_lock;
-> > +	}
-> > +
-> > +	if (!q) {
-> > +		DMINFO("submit_mode_select: no queue");
-> > +		goto fail_path;
-> > +	}
-> > +
-> > +	rq = rdac_failover_get(h);
-> > +	if (!rq) {
-> > +		DMERR("submit_mode_select: no rq");
-> > +		goto fail_path;
-> > +	}
-> > +
-> > +	DMINFO("queueing MODE_SELECT command on %s", h->path->dev->name);
-> > +
-> > +	blk_execute_rq_nowait(q, NULL, rq, 1, mode_select_endio);
-> 
-> I suspect we could call this after dropping the lock?
-
-We could.
-
-Will do.
-> 
-> > +	h->ctlr->submitted = 1;
-> > +	goto drop_lock;
-> > +fail_path:
-> > +	dm_pg_init_complete(h->path, MP_FAIL_PATH);
-> > +drop_lock:
-> > +	spin_unlock(&h->ctlr->lock);
-> > +}
-> > +
-> >
-> > ...
-> >
-> > +static void c2_inquiry_endio(struct request *req, int error)
-> > +{
-> > +	struct rdac_handler *h = req->end_io_data;
-> > +	struct c2_inquiry *sp;
-> > +
-> > +	if (had_failures(req, error)) {
-> > +		dm_pg_init_complete(h->path, MP_FAIL_PATH);
-> > +		goto done;
-> > +	}
-> > +
-> > +	sp = (struct c2_inquiry *)&h->inq;
-> 
-> That's funny-looking and un-typesafe.  Why not do
-> 
-> 	sp = &h->inq.c2;
-> 
-> ?
-> 
-> (Dittoes in various other places..)
-
-Will change.
-> 
-> > +
-> > +	/* If more than MODE6_MAX_LUN luns are supported, use mode select 10 */
-> > +	if (sp->max_lun_supported >= MODE6_MAX_LUN)
-> > +		h->ctlr->use_10_ms = 1;
-> > +	else
-> > +		h->ctlr->use_10_ms = 0;
-> > +
-> > +	h->cmd_to_send = SEND_MODE_SELECT;
-> > +	queue_work(rdac_wkqd, &h->work);
-> > +done:
-> > +	__blk_put_request(req->q, req);
-> > +}
-> > +
-> > +static void rdac_destroy(struct hw_handler *hwh)
-> > +{
-> > +	struct rdac_handler *h = (struct rdac_handler *) hwh->context;
-> 
-> Unneeded (and undesirable) cast of void*.  Please check the whole
-> patch(set) for this.
-
-Will do.
-> 
-> > +	if (h->ctlr)
-> > +		kref_put(&h->ctlr->kref, release_ctlr);
-> > +	kfree(h);
-> > +	hwh->context = NULL;
-> > +}
-> > +
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+ric
