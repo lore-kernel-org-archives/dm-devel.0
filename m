@@ -1,8 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.23 PATCH 10/18] dm raid1: clear region outside
-	spinlock
-Date: Wed, 11 Jul 2007 21:59:56 +0100
-Message-ID: <20070711205956.GB24114@agk.fab.redhat.com>
+Subject: [2.6.23 PATCH 11/18] dm: disable barriers
+Date: Wed, 11 Jul 2007 22:01:00 +0100
+Message-ID: <20070711210100.GC24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -18,63 +17,97 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Andrew Morton <akpm@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Stefan Bader <shbader@de.ibm.com>
 List-Id: dm-devel.ids
 
-From: Jonathan Brassow <jbrassow@redhat.com>
+From: Stefan Bader <shbader@de.ibm.com>
 
-A clear_region function is permitted to block (in practice, rare) but gets
-called in rh_update_states() with a spinlock held.
+This patch causes device-mapper to reject any barrier requests.  This is done
+since most of the targets won't handle this correctly anyway.  So until the
+situation improves it is better to reject these requests at the first place.
+Since barrier requests won't get to the targets, the checks there can be
+removed.
 
-The bits being marked and cleared by the above functions are used
-to update the on-disk log, but are never read directly.  We can
-perform these operations outside the spinlock since the
-bits are only changed within one thread viz.
-   - mark_region in rh_inc()
-   - clear_region in rh_update_states().
-
-So, we grab the clean_regions list items via list_splice() within the
-spinlock and defer clear_region() until we iterate over the list for
-deletion - similar to how the recovered_regions list is already handled.
-We then move the flush() call down to ensure it encapsulates the changes
-which are done by the later calls to clear_region().
-
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+Signed-off-by: Stefan Bader <shbader@de.ibm.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
 ---
- drivers/md/dm-raid1.c |   12 ++++++------
- 1 files changed, 6 insertions(+), 6 deletions(-)
 
-Index: linux/drivers/md/dm-raid1.c
+ drivers/md/dm-crypt.c |    3 ---
+ drivers/md/dm-mpath.c |    3 ---
+ drivers/md/dm-snap.c  |    6 ------
+ drivers/md/dm.c       |    9 +++++++++
+ 4 files changed, 9 insertions(+), 12 deletions(-)
+
+Index: linux/drivers/md/dm-crypt.c
 ===================================================================
---- linux.orig/drivers/md/dm-raid1.c	2007-07-11 21:37:42.000000000 +0100
-+++ linux/drivers/md/dm-raid1.c	2007-07-11 21:37:46.000000000 +0100
-@@ -378,10 +378,8 @@ static void rh_update_states(struct regi
- 		list_splice(&rh->clean_regions, &clean);
- 		INIT_LIST_HEAD(&rh->clean_regions);
+--- linux.orig/drivers/md/dm-crypt.c	2007-07-11 21:37:38.000000000 +0100
++++ linux/drivers/md/dm-crypt.c	2007-07-11 21:37:47.000000000 +0100
+@@ -941,9 +941,6 @@ static int crypt_map(struct dm_target *t
+ 	struct crypt_config *cc = ti->private;
+ 	struct dm_crypt_io *io;
  
--		list_for_each_entry (reg, &clean, list) {
--			rh->log->type->clear_region(rh->log, reg->key);
-+		list_for_each_entry(reg, &clean, list)
- 			list_del(&reg->hash_list);
--		}
- 	}
- 
- 	if (!list_empty(&rh->recovered_regions)) {
-@@ -405,10 +403,12 @@ static void rh_update_states(struct regi
- 		mempool_free(reg, rh->region_pool);
- 	}
- 
--	rh->log->type->flush(rh->log);
+-	if (bio_barrier(bio))
+-		return -EOPNOTSUPP;
 -
--	list_for_each_entry_safe (reg, next, &clean, list)
-+	list_for_each_entry_safe(reg, next, &clean, list) {
-+		rh->log->type->clear_region(rh->log, reg->key);
- 		mempool_free(reg, rh->region_pool);
+ 	io = mempool_alloc(cc->io_pool, GFP_NOIO);
+ 	io->target = ti;
+ 	io->base_bio = bio;
+Index: linux/drivers/md/dm-mpath.c
+===================================================================
+--- linux.orig/drivers/md/dm-mpath.c	2007-07-11 21:37:40.000000000 +0100
++++ linux/drivers/md/dm-mpath.c	2007-07-11 21:37:47.000000000 +0100
+@@ -798,9 +798,6 @@ static int multipath_map(struct dm_targe
+ 	struct dm_mpath_io *mpio;
+ 	struct multipath *m = (struct multipath *) ti->private;
+ 
+-	if (bio_barrier(bio))
+-		return -EOPNOTSUPP;
+-
+ 	mpio = mempool_alloc(m->mpio_pool, GFP_NOIO);
+ 	dm_bio_record(&mpio->details, bio);
+ 
+Index: linux/drivers/md/dm-snap.c
+===================================================================
+--- linux.orig/drivers/md/dm-snap.c	2007-07-11 21:37:45.000000000 +0100
++++ linux/drivers/md/dm-snap.c	2007-07-11 21:37:47.000000000 +0100
+@@ -889,9 +889,6 @@ static int snapshot_map(struct dm_target
+ 	if (!s->valid)
+ 		return -EIO;
+ 
+-	if (unlikely(bio_barrier(bio)))
+-		return -EOPNOTSUPP;
+-
+ 	/* FIXME: should only take write lock if we need
+ 	 * to copy an exception */
+ 	down_write(&s->lock);
+@@ -1162,9 +1159,6 @@ static int origin_map(struct dm_target *
+ 	struct dm_dev *dev = ti->private;
+ 	bio->bi_bdev = dev->bdev;
+ 
+-	if (unlikely(bio_barrier(bio)))
+-		return -EOPNOTSUPP;
+-
+ 	/* Only tell snapshots if this is a write */
+ 	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
+ }
+Index: linux/drivers/md/dm.c
+===================================================================
+--- linux.orig/drivers/md/dm.c	2007-07-11 21:37:38.000000000 +0100
++++ linux/drivers/md/dm.c	2007-07-11 21:37:47.000000000 +0100
+@@ -800,6 +800,15 @@ static int dm_request(request_queue_t *q
+ 	int rw = bio_data_dir(bio);
+ 	struct mapped_device *md = q->queuedata;
+ 
++	/*
++	 * There is no use in forwarding any barrier request since we can't
++	 * guarantee it is (or can be) handled by the targets correctly.
++	 */
++	if (unlikely(bio_barrier(bio))) {
++		bio_endio(bio, bio->bi_size, -EOPNOTSUPP);
++		return 0;
 +	}
 +
-+	rh->log->type->flush(rh->log);
- }
+ 	down_read(&md->io_lock);
  
- static void rh_inc(struct region_hash *rh, region_t region)
+ 	disk_stat_inc(dm_disk(md), ios[rw]);
