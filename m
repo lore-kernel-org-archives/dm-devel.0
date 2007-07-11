@@ -1,8 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.23 PATCH 05/18] dm: remove duplicate module name
-	from error msgs
-Date: Wed, 11 Jul 2007 21:58:13 +0100
-Message-ID: <20070711205813.GW24114@agk.fab.redhat.com>
+Subject: [2.6.23 PATCH 06/18] dm raid1: fix status
+Date: Wed, 11 Jul 2007 21:58:29 +0100
+Message-ID: <20070711205829.GX24114@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,84 +20,36 @@ To: Andrew Morton <akpm@linux-foundation.org>
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Alasdair G Kergon <agk@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
 
-Remove explicit module name from messages as the macro now includes it
-automatically.
+Fix mirror status line broken in dm-log-report-fault-status.patch:
+  - space missing between two words
+  - placeholder ("0") required for compatibility with a subsequent patch
+  - incorrect offset parameter
 
+Signed-off-by: Milan Broz <mbroz@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
 ---
- drivers/md/dm-mpath.c       |    8 +++-----
- drivers/md/dm-raid1.c       |    5 ++---
- drivers/md/dm-round-robin.c |    2 +-
- 3 files changed, 6 insertions(+), 9 deletions(-)
+ drivers/md/dm-raid1.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-Index: linux/drivers/md/dm-mpath.c
-===================================================================
---- linux.orig/drivers/md/dm-mpath.c	2007-07-11 21:37:38.000000000 +0100
-+++ linux/drivers/md/dm-mpath.c	2007-07-11 21:37:40.000000000 +0100
-@@ -1352,15 +1352,14 @@ static int __init dm_multipath_init(void
- 
- 	r = dm_register_target(&multipath_target);
- 	if (r < 0) {
--		DMERR("%s: register failed %d", multipath_target.name, r);
-+		DMERR("register failed %d", r);
- 		kmem_cache_destroy(_mpio_cache);
- 		return -EINVAL;
- 	}
- 
- 	kmultipathd = create_workqueue("kmpathd");
- 	if (!kmultipathd) {
--		DMERR("%s: failed to create workqueue kmpathd",
--				multipath_target.name);
-+		DMERR("failed to create workqueue kmpathd");
- 		dm_unregister_target(&multipath_target);
- 		kmem_cache_destroy(_mpio_cache);
- 		return -ENOMEM;
-@@ -1381,8 +1380,7 @@ static void __exit dm_multipath_exit(voi
- 
- 	r = dm_unregister_target(&multipath_target);
- 	if (r < 0)
--		DMERR("%s: target unregister failed %d",
--		      multipath_target.name, r);
-+		DMERR("target unregister failed %d", r);
- 	kmem_cache_destroy(_mpio_cache);
- }
- 
 Index: linux/drivers/md/dm-raid1.c
 ===================================================================
---- linux.orig/drivers/md/dm-raid1.c	2007-07-11 21:37:32.000000000 +0100
-+++ linux/drivers/md/dm-raid1.c	2007-07-11 21:37:40.000000000 +0100
-@@ -1335,8 +1335,7 @@ static int __init dm_mirror_init(void)
+--- linux.orig/drivers/md/dm-raid1.c	2007-07-11 21:37:40.000000000 +0100
++++ linux/drivers/md/dm-raid1.c	2007-07-11 21:37:42.000000000 +0100
+@@ -1288,12 +1288,12 @@ static int mirror_status(struct dm_targe
+ 		for (m = 0; m < ms->nr_mirrors; m++)
+ 			DMEMIT("%s ", ms->mirror[m].dev->name);
  
- 	r = dm_register_target(&mirror_target);
- 	if (r < 0) {
--		DMERR("%s: Failed to register mirror target",
--		      mirror_target.name);
-+		DMERR("Failed to register mirror target");
- 		dm_dirty_log_exit();
- 	}
+-		DMEMIT("%llu/%llu",
++		DMEMIT("%llu/%llu 0 ",
+ 			(unsigned long long)ms->rh.log->type->
+ 				get_sync_count(ms->rh.log),
+ 			(unsigned long long)ms->nr_regions);
  
-@@ -1349,7 +1348,7 @@ static void __exit dm_mirror_exit(void)
+-		sz = ms->rh.log->type->status(ms->rh.log, type, result, maxlen);
++		sz += ms->rh.log->type->status(ms->rh.log, type, result+sz, maxlen-sz);
  
- 	r = dm_unregister_target(&mirror_target);
- 	if (r < 0)
--		DMERR("%s: unregister failed %d", mirror_target.name, r);
-+		DMERR("unregister failed %d", r);
+ 		break;
  
- 	dm_dirty_log_exit();
- }
-Index: linux/drivers/md/dm-round-robin.c
-===================================================================
---- linux.orig/drivers/md/dm-round-robin.c	2007-07-11 21:37:32.000000000 +0100
-+++ linux/drivers/md/dm-round-robin.c	2007-07-11 21:37:40.000000000 +0100
-@@ -205,7 +205,7 @@ static void __exit dm_rr_exit(void)
- 	int r = dm_unregister_path_selector(&rr_ps);
- 
- 	if (r < 0)
--		DMERR("round-robin: unregister failed %d", r);
-+		DMERR("unregister failed %d", r);
- }
- 
- module_init(dm_rr_init);
