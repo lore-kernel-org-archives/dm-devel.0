@@ -1,43 +1,49 @@
-From: "Kay Sievers" <kay.sievers@vrfy.org>
-Subject: Re: [2.6.23 PATCH 13/18] dm: netlink
-Date: Fri, 13 Jul 2007 09:16:31 +0200
-Message-ID: <3ae72650707130016k3721e9ddube218a998a0db828@mail.gmail.com>
-References: <20070711210137.GE24114@agk.fab.redhat.com>
-	 <20070711142712.e646995b.akpm@linux-foundation.org>
-	 <20070712231920.GZ11166@waste.org>
-	 <20070712163115.ee686f8d.akpm@linux-foundation.org>
-	 <20070713070321.GA10361@2ka.mipt.ru>
+From: Johannes Berg <johannes@sipsolutions.net>
+Subject: Re: [2.6.23 PATCH 14/18] dm: netlink add to core
+Date: Fri, 13 Jul 2007 01:13:24 +0200
+Message-ID: <1184282004.24418.1.camel@johannes.berg>
+References: <20070711210159.GF24114@agk.fab.redhat.com>
+	 <20070711143423.36722a41.akpm@linux-foundation.org>
+	 <20070712004038.GB29241@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-t9G3crkbNyLNjUqzEUPn"
 Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20070713070321.GA10361@2ka.mipt.ru>
-Content-Disposition: inline
+In-Reply-To: <20070712004038.GB29241@us.ibm.com>
 Sender: netdev-owner@vger.kernel.org
-To: Evgeniy Polyakov <johnpol@2ka.mipt.ru>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Matt Mackall <mpm@selenic.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, netdev@vger.kernel.org
+To: Mike Anderson <andmike@us.ibm.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, netdev@vger.kernel.org
 List-Id: dm-devel.ids
 
-On 7/13/07, Evgeniy Polyakov <johnpol@2ka.mipt.ru> wrote:
-> On Thu, Jul 12, 2007 at 04:31:15PM -0700, Andrew Morton (akpm@linux-foundation.org) wrote:
-> > > > Need a dependency on NET there?
-> > >
-> > > It's really sad to make DM dependent on the network layer.
-> > >
-> >
-> > Yes, it would be somewhat sad.  However one can presumably continue to use
-> > DM, just without "DM netlink events".
->
-> On my machine device mapper (lvm, raid) does not work without sockets,
-> (maybe not dm, but hotplug, which creates nodes, or configuration)
-> so it already depends on it. Hotplug depends on networking.
->
-> You missed the day when everyone started to depend on networking :)
 
-Right, uevents (udev) depend on networking. One could still use the
-/sbin/hotplug fork-bomb, but boxes that don't want networking are
-often that small, that the amount of events the kernel creates today,
-leads immediately to OOM, because of too many event processes forked
-at the same time.
+--=-t9G3crkbNyLNjUqzEUPn
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-Kay
+On Wed, 2007-07-11 at 17:40 -0700, Mike Anderson wrote:
+
+> The pid is a hold over from older code. If this will cause issue for othe=
+r
+> users I can switch to using nlmsg_multicast (genlmsg_multicast depending
+> on the comment if I need to switch to the genl interface) and remove this
+> code all together.
+
+Another possible genl multicast user :)
+
+Has anybody had a chance to look at my patches for this?
+
+johannes
+
+--=-t9G3crkbNyLNjUqzEUPn
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Comment: Johannes Berg (powerbook)
+
+iD8DBQBGlrWT/ETPhpq3jKURAtPiAJ9606zXLNJMK7MjBx8vknr0Gk0oiQCfb6nh
+QgdqwgpyBxaVVpRPSw8ATt8=
+=bk+/
+-----END PGP SIGNATURE-----
+
+--=-t9G3crkbNyLNjUqzEUPn--
+
