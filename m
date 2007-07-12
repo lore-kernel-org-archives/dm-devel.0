@@ -1,77 +1,65 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: Re: [2.6.23 PATCH 14/18] dm: netlink add to core
-Date: Thu, 12 Jul 2007 10:34:10 -0700
-Message-ID: <20070712173410.GA2505@us.ibm.com>
-References: <20070711210159.GF24114@agk.fab.redhat.com>
-	<20070711143423.36722a41.akpm@linux-foundation.org>
-	<m1bqehfyp0.fsf@ebiederm.dsl.xmission.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Valdis.Kletnieks@vt.edu
+Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices, filesystems, and dm/md.
+Date: Thu, 12 Jul 2007 13:34:36 -0400
+Message-ID: <7718.1184261676@turing-police.cc.vt.edu>
+References: <18006.38689.818186.221707@notabene.brown> <18010.12472.209452.148229@notabene.brown> <20070528094358.GM25091@agk.fab.redhat.com> <5201e28f0705290225v14fdac44hb0382a4137a84d01@mail.gmail.com> <20070529220500.GA6513@agk.fab.redhat.com> <5201e28f0705300212g3be16464u5ee1a4c80db27a11@mail.gmail.com> <465DAC72.1010201@cfl.rr.com> <5201e28f0705310414u1a9aebc4je135748274543946@mail.gmail.com> <465F9197.7060002@gmail.com> <Pine.LNX.4.64.0705312144400.6705@asgard.lang.hm> <465FC7B1.3060309@gmail.com> <4693D26D.2060004@emc.com> <4758.1184110800@turing-police.cc.vt.edu>
+            <46955D45.8010606@emc.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <m1bqehfyp0.fsf@ebiederm.dsl.xmission.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Eric W. Biederman" <ebiederm@xmission.com>
-Cc: netdev@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: multipart/signed; boundary="==_Exmh_1184261676_3357P";
+	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: Your message of "Wed, 11 Jul 2007 18:44:21 EDT."
+             <46955D45.8010606@emc.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: ric@emc.com
+Cc: Tejun Heo <htejun@gmail.com>, david@lang.hm, Stefan Bader <Stefan.Bader@de.ibm.com>, Phillip Susi <psusi@cfl.rr.com>, device-mapper development <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, Jens Axboe <jens.axboe@oracle.com>, David Chinner <dgc@sgi.com>, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-Eric W. Biederman <ebiederm@xmission.com> wrote:
-> I may be a little off but looking at the events types defined.
-> device down, device up.  Defining a completely new interface for this
-> looks absolutely absurd.
+--==_Exmh_1184261676_3357P
+Content-Type: text/plain; charset=us-ascii
+
+On Wed, 11 Jul 2007 18:44:21 EDT, Ric Wheeler said:
+> Valdis.Kletnieks@vt.edu wrote:
+> > On Tue, 10 Jul 2007 14:39:41 EDT, Ric Wheeler said:
+> > 
+> >> All of the high end arrays have non-volatile cache (read, on power loss, it is a 
+> >> promise that it will get all of your data out to permanent storage). You don't 
+> >> need to ask this kind of array to drain the cache. In fact, it might just ignore 
+> >> you if you send it that kind of request ;-)
+> > 
+> > OK, I'll bite - how does the kernel know whether the other end of that
+> > fiberchannel cable is attached to a DMX-3 or to some no-name product that
+> > may not have the same assurances?  Is there a "I'm a high-end array" bit
+> > in the sense data that I'm unaware of?
+> > 
 > 
+> There are ways to query devices (think of hdparm -I in S-ATA/P-ATA drives, SCSI 
+> has similar queries) to see what kind of device you are talking to. I am not
+> sure it is worth the trouble to do any automatic detection/handling of this.
 > 
-> This is device hotplug isn't it?   As such we should be using the
-> hotplug infrastructure and not reinventing the wheel here.
-> 
+> In this specific case, it is more a case of when you attach a high end (or 
+> mid-tier) device to a server, you should configure it without barriers for its
+> exported LUNs.
 
-I assume device hotplug means kobject_uevent and KOBJ_* events. The
-original intent was to have a little more structure in the data format the
-env strings. I also wanted to reduce the number of allocations that where
-happening with GFP_KERNEL to send an event. 
+I don't have a problem with the sysadmin *telling* the system "the other end of
+that fiber cable has characteristics X, Y and Z".  What worried me was that it
+looked like conflating "device reported writeback cache" with "device actually
+has enough battery/hamster/whatever backup to flush everything on a power loss".
+(My back-of-envelope calculation shows for a worst-case of needing a 1ms seek
+for each 4K block, a 1G cache can take up to 4 1/2 minutes to sync.  That's
+a lot of battery..)
 
-Currently the patch is only supporting a couple of events with the intent of
-adding more over time. I see that I could map most events to KOBJ_CHANGE,
-previously it did not seem like the correct fit.  
+--==_Exmh_1184261676_3357P
+Content-Type: application/pgp-signature
 
-> If it isn't hotplug it looks like something that inotify should
-> handle.
-> 
-> If that isn't the case I am fairly certain that md already has a
-> mechanism to handle this, and those two should stay in sync
-> if at all possible on this kind of thing.
-> 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
+Comment: Exmh version 2.5 07/13/2001
 
-Device mapper does have a "event happened" interface today, but post the
-event the user must determine the context of the event (dm also sends a
-kobject_uevent KOBJ_CHANGE only for a resume event). This patch was only
-effecting dm, but I know the md has similar infrastructure. This patch
-was passing out the event context through netlink that already existed but
-was lost through the current generic event interface.
+iD8DBQFGlmYscC3lWbTT17ARAhGKAKCqb2Bwjf5tDn23VwUqo/+psmhXKACgwL6/
+2SYxKsqqkuqkVEgRS1HT1/U=
+=K0Ps
+-----END PGP SIGNATURE-----
 
-The existing event interfaces was left in place to not effect existing users
-allowing migration over to a netlink interface over time.
-
-> So this appears to be a gratuitous user interface addition.
-> Why do we need a new user interface for this?
-
-While I understand Evgeniy and Davids comment about utilizing the
-genetlink interface, I guess I am not seeing that utilizing a netlink
-channel for a subsystem as a gratuitous user interface addition vs.
-running everything through kobject_uevent.
-
-Thanks,
-
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+--==_Exmh_1184261676_3357P--
