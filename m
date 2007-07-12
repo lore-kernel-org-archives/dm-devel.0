@@ -1,61 +1,78 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: Re: [2.6.23 PATCH 13/18] dm: netlink
-Date: Thu, 12 Jul 2007 06:42:43 -0700
-Message-ID: <20070712134242.GA1671@us.ibm.com>
-References: <20070711142712.e646995b.akpm@linux-foundation.org>
-	<20070711233736.GA29241@us.ibm.com>
-	<20070712081028.GB25699@2ka.mipt.ru>
-	<20070712.032727.07453420.davem@davemloft.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: ebiederm@xmission.com (Eric W. Biederman)
+Subject: Re: [2.6.23 PATCH 14/18] dm: netlink add to core
+Date: Thu, 12 Jul 2007 09:07:07 -0600
+Message-ID: <m1bqehfyp0.fsf@ebiederm.dsl.xmission.com>
+References: <20070711210159.GF24114@agk.fab.redhat.com>
+	<20070711143423.36722a41.akpm@linux-foundation.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20070712.032727.07453420.davem@davemloft.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: David Miller <davem@davemloft.net>
-Cc: johnpol@2ka.mipt.ru, netdev@vger.kernel.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, akpm@linux-foundation.org, agk@redhat.com
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20070711143423.36722a41.akpm@linux-foundation.org> (Andrew
+	Morton's message of "Wed, 11 Jul 2007 14:34:23 -0700")
+Sender: netdev-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, netdev@vger.kernel.org
 List-Id: dm-devel.ids
 
-David Miller <davem@davemloft.net> wrote:
-> From: Evgeniy Polyakov <johnpol@2ka.mipt.ru>
-> Date: Thu, 12 Jul 2007 12:10:29 +0400
-> 
-> > On Wed, Jul 11, 2007 at 04:37:36PM -0700, Mike Anderson (andmike@us.ibm.com) wrote:
-> > > > > --- linux.orig/include/linux/netlink.h	2007-07-11 21:37:31.000000000 +0100
-> > > > > +++ linux/include/linux/netlink.h	2007-07-11 21:37:50.000000000 +0100
-> > > > > @@ -21,7 +21,7 @@
-> > > > >  #define NETLINK_DNRTMSG		14	/* DECnet routing messages */
-> > > > >  #define NETLINK_KOBJECT_UEVENT	15	/* Kernel messages to userspace */
-> > > > >  #define NETLINK_GENERIC		16
-> > > > > -/* leave room for NETLINK_DM (DM Events) */
-> > > > > +#define NETLINK_DM		17	/* Device Mapper */
-> > > > >  #define NETLINK_SCSITRANSPORT	18	/* SCSI Transports */
-> > > > >  #define NETLINK_ECRYPTFS	19
-> > > > 
-> > > > Have the net guys checked this?  
-> > > 
-> > > No. The support is a derivative of the netlink support in
-> > > scsi_transport_iscsi.c.
-> > 
-> > I'm not sure about all net guys, but the first question rised after
-> > reading this - why do you want special netlink family and do not want to
-> > use interfaces created on top of - like connector and genetlink?
-> 
-> I agree, there is really no reason to not at least use
-> genetlink.
+Andrew Morton <akpm@linux-foundation.org> writes:
 
-ok, I will switch over to using genetlink.
+> On Wed, 11 Jul 2007 22:01:59 +0100
+> Alasdair G Kergon <agk@redhat.com> wrote:
+>
+>> From: Mike Anderson <andmike@us.ibm.com>
+>> 
+>> This patch adds support for the dm_path_event dm_send_event funtions which
+>> create and send netlink attribute events.
+>> 
+>> ...
+>>
+>> --- linux.orig/drivers/md/dm-netlink.c 2007-07-11 21:37:50.000000000 +0100
+>> +++ linux/drivers/md/dm-netlink.c	2007-07-11 21:37:51.000000000 +0100
+>> @@ -40,6 +40,17 @@ struct dm_event_cache {
+>>  
+>>  static struct dm_event_cache _dme_cache;
+>>  
+>> +struct dm_event {
+>> +        struct dm_event_cache *cdata;
+>> +        struct mapped_device *md;
+>> +        struct sk_buff *skb;
+>> +        struct list_head elist;
+>> +};
+>> +
+>> +static struct sock *_dm_netlink_sock;
+>> +static uint32_t _dm_netlink_daemon_pid;
+>> +static DEFINE_SPINLOCK(_dm_netlink_pid_lock);
+>
+> The usage of this lock makes my head spin a bit.  It's a shame it wasn't
+> documented.
+>
+> There's obviously something very significant happening with process IDs in
+> here.  A description of the design would be helpful.  Especially for the
+> containerisation guys who no doubt will need to tear their hair out over it
+> all ;)
 
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+Andrew this actually has nothing to do with process IDs.  The pid
+referred to here is the netlink port number. It just happens to be called
+a pid.
+
+In this case netlink is being used to simply broadcast events.
+
+I may be a little off but looking at the events types defined.
+device down, device up.  Defining a completely new interface for this
+looks absolutely absurd.
+
+
+This is device hotplug isn't it?   As such we should be using the
+hotplug infrastructure and not reinventing the wheel here.
+
+If it isn't hotplug it looks like something that inotify should
+handle.
+
+If that isn't the case I am fairly certain that md already has a
+mechanism to handle this, and those two should stay in sync
+if at all possible on this kind of thing.
+
+So this appears to be a gratuitous user interface addition.
+Why do we need a new user interface for this?
+
+Eric
