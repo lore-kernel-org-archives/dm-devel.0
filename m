@@ -1,134 +1,52 @@
-From: Andrew Vasquez <andrew.vasquez@qlogic.com>
-Subject: Re: [dm-devel] dm-mpath-rdac.patch problem
-Date: Fri, 13 Jul 2007 09:12:53 -0700
-Message-ID: <20070713161253.GA20901@plap.qlogic.org>
-References: <4696D6CB.6050504@csupomona.edu> <1184292400.5146.45.camel@linuxchandra> <20070713023743.GA5350@us.ibm.com>
+From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
+Subject: zSeries zipl on a blacklisted multipath path.
+Date: Fri, 13 Jul 2007 12:40:55 -0400
+Message-ID: <1D80D4F6D179BD4D869FE807A5BF8336018C66DA@EXCNYSM0A1AN.nysemail.nyenet>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20070713023743.GA5350@us.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: sekharan@us.ibm.com
-Cc: linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Mike Anderson <andmike@us.ibm.com>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 12 Jul 2007, Mike Anderson wrote:
+Hi List,
+I run SLES9 on IBM zSeries and I'm trying to hack a way to have my boot
+partition on a multipath LUN and yet still be able to run IBM's zipl to
+update the boot loader on that LUN.
+The SLES9 has kernel 2.6.5-7.276-s390x, device-mapper-1.01.01-1.6,
+multipath-tools-0.4.5-0.20.
 
-> Copying this mail to linux-scsi and Ccing Andrew Vasquez to possibly
-> provide input on the Qlogic behavior.
-> 
-> Chandra Seetharaman <sekharan@us.ibm.com> wrote:
-> > On Thu, 2007-07-12 at 18:35 -0700, Brian De Wolf wrote:
-> > > Hello All,
-> > > 
-> > > I'm not sure if this is the right place for this, but it seems to be the only
-> > > mailing list related to dm, multipath, and rdac, as far as I can tell.  I've
-> > > been trying out the dm-mpath-rdac patch (both yesterday's and previous) with
-> > > gentoo's unstable 2.6.22 kernel, on a Sun x4100 through a QLA2422 HBA (firmware
-> > > ql2400_fw.bin.4.00.27) to an IBM DS4000.  I am using a version of
-> > > multipath-tools that I got with git a few days ago.
-> > > 
-> > > I've got multipath working, it reports the hwhandler correctly ([hwhandler=1
-> > > rdac]), and the volume is mountable, etc.  It also shows one link as active, the
-> > > other as ghost.  However, once the active link dies, the volume becomes read
-> > > only, and both connections are listed as failed.  Most importantly, something
-> > > like this shows up in the logs:
-> > > 
-> > > Jul 12 17:11:15 jimbo kernel: device-mapper: multipath rdac: queueing
-> > > MODE_SELECT command on 8:32
-> > 
-> > It does look like the rdac hardware handler is doing the right thing and
-> > the qlogic is dying for some reason.
-> > 
-> > I have tested this code in both RHEL5 and SLES10 environments (qla23xx)
-> > and they work fine. Can you try in one of those and see if it is any
-> > different.
-> > 
-> > Just an FYI w.r.t multipath tools: please remove the patch
-> > http://git.kernel.org/?p=linux/storage/multipath-
-> > tools/.git;a=commit;h=e1e1a1bfb2cf76bfd1a49335e3deec5360fb09db from your
-> > tree for the tools to calculate the path priorities properly.
-> > 
-> > 
-> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: ISP System Error - mbx1=0h
-> > > mbx2=8012h mbx3=8002h.
-> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: Firmware has been previously
-> > > dumped (ffffc2000171d000) -- ignoring request...
-> > > Jul 12 17:11:16 jimbo kernel: qla2xxx 0000:02:01.1: Performing ISP error
-> > > recovery - ha= ffff81007e85c530.
+zipl won't update a multipath boot partition, zipl can't get the
+geometry of a device-mapper device and quits with message
+"Error: Could not get disk geometry"; this is a device-mapper
+limitation, not zipl's fault.
+=20
+Since zipl needs a plain /dev/sdx boot device to update,
+my hack idea is to put the boot partition on the multipath LUN and in
+multipath.conf blacklist one of the LUN's paths (lets say /dev/sda) so
+zipl can use /dev/sda to update the boot loader. I would unmount the
+multipath boot partition device from /boot, mount /dev/sda at /boot and
+then run zipl.
 
-Hmm yes, there's some real problems going on within the firmware which
-we need to triage.  From the snippet above, the driver was able to
-capture a firmware-dump of a failure (not sure of the timing and how
-it relates to the window in which you recognized a 'problem'), but
-I'll need to to 'capture' the firmware trace and forward it along to
-us to inspect.
-
-1) download the following shell script:
-
-	ftp://ftp.qlogic.com/outgoing/linux/beta/8.x/test/qla_dmp.sh
-
-2) copy the script to the host (/tmp) which is experiencing the
-   problems.
-
-3) reboot and load the driver with the ql2xextended_error_logging
-   module parameter set to 1. e.g.:
-
-	$ insmod qla2xxx.ko ql2xextended_error_logging=1
-
-4) rerun your test and monitor the kernel-messages file for a message
-   similar to:
-
-        Firmware dump saved to temp buffer (1/adcdabcd)
-
-5) To retrieve the dump, go to a console and type the following:
-
-        # cd /tmp/
-        # ./qla_dmp.sh 1
-
-   The value passed to qla_dmp.sh should be the same as the first integer
-   in the 'saved to temp buffer' string (in this example, 1).  If the
-   operation was successful, a message like to following should be
-   displayed:
-
-        Firmware dumped to file fw_dump_1_20041217_023222.txt.gz
-
-   Formward the 
-   forward over the file.
-
-6) forward over the /var/log/messages file of the driver load and
-   failure snippet.
-
-
-Not sure which firmware version you are running, but an additional
-datapoint which may be useful after you send the firmware-dump is to
-download the latest 24xx firmware file from QLogic.com:
-
-	ftp://ftp.qlogic.com/outgoing/linux/firmware/ql2400_fw.bin
-
-and retry the test.  If you still see problems, and see a similar
-'Firmware dump saved...' messages.  Follow the steps above again and
-forward the same datapoints.
-
-> > > While this may be something for the maintainer of the qla2xxx module (I can't
-> > > figure out where I'd send it, in that case...) I think it may be of interest
-> > > that the dm_rdac module tries to push something over the HBA that causes it to
-> > > bail completely and start from scratch (it starts init processes and loading
-> > > firmware again).
-> > > 
-> > > Not to say that I'm not interested in any help getting this working, that is.
-> > > If you have any suggestions on how to get this working, I'd love to hear them.
-> > > I'm also willing to guinea pig some testing if you need it (This box still has a
-> > > bit before it will have to be put in use).  I may use redhat to ensure that it's
-> > > not just a broken HBA, but for the long run we would like it to join our gentoo
-> > > environment.
-> > > 
-> > > Thanks!
-> > > Brian De Wolf
-> > > 
-> > > PS- If the subject mislead you because you feel that this is just a qla2xxx
-> > > problem, I'm sorry for wasting your time.
-
-Regards,
-Andrew Vasquez
+Any ideas how risky this would be: I/O to the LUN's non-boot partitions
+via multipaths and zipl I/O to the LUN's boot partition via the
+blacklisted path?
+--------------------------------------------------------
+This e-mail, including any attachments, may be confidential, privileged o=
+r otherwise legally protected. It is intended only for the addressee. If =
+you received this e-mail in error or from someone who was not authorized =
+to send it to you, do not disseminate, copy or otherwise use this e-mail =
+or its attachments.  Please notify the sender immediately by reply e-mail=
+ and delete the e-mail from your system.
