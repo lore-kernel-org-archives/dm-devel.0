@@ -1,107 +1,87 @@
-From: Ric Wheeler <ric@emc.com>
-Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for devices,
- filesystems, and dm/md.
-Date: Fri, 13 Jul 2007 07:30:09 -0400
-Message-ID: <46976241.6040800@emc.com>
-References: <200707122310.l6CNAoo08224@www.watkins-home.com>
-Reply-To: ric@emc.com
+From: Trevor Astrope <astrope@tabbweb.com>
+Subject: Multipath with Hitachi DF600F
+Date: Fri, 13 Jul 2007 10:27:39 -0400 (EDT)
+Message-ID: <Pine.LNX.4.61.0707131007240.11794@jimi.tabbweb.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <200707122310.l6CNAoo08224@www.watkins-home.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: Guy Watkins <linux-raid@watkins-home.com>
-Cc: Valdis.Kletnieks@vt.edu, 'Tejun Heo' <htejun@gmail.com>, david@lang.hm, 'Stefan Bader' <Stefan.Bader@de.ibm.com>, 'Phillip Susi' <psusi@cfl.rr.com>, 'device-mapper development' <dm-devel@redhat.com>, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, 'Jens Axboe' <jens.axboe@oracle.com>, 'David Chinner' <dgc@sgi.com>, 'Andreas Dilger' <adilger@clusterfs.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hello,
+
+I would like to use device mapper multipath with our Hitachi DF600F under 
+rhel5 to avoid having to use Storage Foundation, as it is the only other 
+multipath option available, since hdlm isn't yet supported under rhel5.
+
+I spoke with my Hitachi rep who said that dm multipath also isn't 
+supported by Hitachi and that there are known issues with it where the 
+multipath fail over does not always work. I'm wondering if anyone could 
+tell me what these issues are and if anyone is using dm multipath in a 
+production environment and what their experiences are, both good and bad.
+
+We are using rhel5 x86_64 on a Sunfire X4600 machine with Emulex 
+LPE11000-S hba's that are directly attached to the DF600f. I am using 
+pp_hds_modular v1.14 that our Hitachi rep sent me instead of the 
+mpath_prio_hds_modular driver that came with the device-mapper-multipath 
+package, since it is only v1.12.
+
+Everything works fine when I disconnect one of the cables to an hba. The 
+lun is detected as faulty and the other path is used. The path switches 
+back when the cable is reconnected. The Hitachi rep is coming in next week 
+to do a microcode update, so I will see if it works then. He says he has 
+customers that use dm multipath that had problems when he did a microcode 
+update...
+
+One thing I did notice is that when the devices were marked as faulty, 
+multipath -ll still showed that path as being enabled. Shouldn't it 
+display the other path as enabled when a device is faulty?
+
+Here is the output:
+
+# multipath -ll
+sdb: checker msg is "readsector0 checker reports path is down"
+sdc: checker msg is "readsector0 checker reports path is down"
+sdd: checker msg is "readsector0 checker reports path is down"
+sde: checker msg is "readsector0 checker reports path is down"
+1HITACHI_D60052410002dm-2 HITACHI,DF600F
+[size=166G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=1][active]
+  \_ 2:0:0:2 sdg 8:96  [active][ready]
+\_ round-robin 0 [prio=0][enabled]
+  \_ 1:0:0:2 sdc 8:32  [failed][faulty]
+1HITACHI_D60052410001dm-1 HITACHI,DF600F
+[size=166G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][active]
+  \_ 1:0:0:1 sdb 8:16  [failed][faulty]
+\_ round-robin 0 [prio=0][enabled]
+  \_ 2:0:0:1 sdf 8:80  [active][ready]
+1HITACHI_D60052410004dm-4 HITACHI,DF600F
+[size=166G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=1][active]
+  \_ 2:0:0:4 sdi 8:128 [active][ready]
+\_ round-robin 0 [prio=0][enabled]
+  \_ 1:0:0:4 sde 8:64  [failed][faulty]
+1HITACHI_D60052410003dm-3 HITACHI,DF600F
+[size=166G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=0][active]
+  \_ 1:0:0:3 sdd 8:48  [failed][faulty]
+\_ round-robin 0 [prio=0][enabled]
+  \_ 2:0:0:3 sdh 8:112 [active][ready]
 
 
-Guy Watkins wrote:
-> } -----Original Message-----
-> } From: linux-raid-owner@vger.kernel.org [mailto:linux-raid-
-> } owner@vger.kernel.org] On Behalf Of Valdis.Kletnieks@vt.edu
-> } Sent: Thursday, July 12, 2007 1:35 PM
-> } To: ric@emc.com
-> } Cc: Tejun Heo; david@lang.hm; Stefan Bader; Phillip Susi; device-mapper
-> } development; linux-fsdevel@vger.kernel.org; linux-kernel@vger.kernel.org;
-> } linux-raid@vger.kernel.org; Jens Axboe; David Chinner; Andreas Dilger
-> } Subject: Re: [dm-devel] Re: [RFD] BIO_RW_BARRIER - what it means for
-> } devices, filesystems, and dm/md.
-> } 
-> } On Wed, 11 Jul 2007 18:44:21 EDT, Ric Wheeler said:
-> } > Valdis.Kletnieks@vt.edu wrote:
-> } > > On Tue, 10 Jul 2007 14:39:41 EDT, Ric Wheeler said:
-> } > >
-> } > >> All of the high end arrays have non-volatile cache (read, on power
-> } loss, it is a
-> } > >> promise that it will get all of your data out to permanent storage).
-> } You don't
-> } > >> need to ask this kind of array to drain the cache. In fact, it might
-> } just ignore
-> } > >> you if you send it that kind of request ;-)
-> } > >
-> } > > OK, I'll bite - how does the kernel know whether the other end of that
-> } > > fiberchannel cable is attached to a DMX-3 or to some no-name product
-> } that
-> } > > may not have the same assurances?  Is there a "I'm a high-end array"
-> } bit
-> } > > in the sense data that I'm unaware of?
-> } > >
-> } >
-> } > There are ways to query devices (think of hdparm -I in S-ATA/P-ATA
-> } drives, SCSI
-> } > has similar queries) to see what kind of device you are talking to. I am
-> } not
-> } > sure it is worth the trouble to do any automatic detection/handling of
-> } this.
-> } >
-> } > In this specific case, it is more a case of when you attach a high end
-> } (or
-> } > mid-tier) device to a server, you should configure it without barriers
-> } for its
-> } > exported LUNs.
-> } 
-> } I don't have a problem with the sysadmin *telling* the system "the other
-> } end of
-> } that fiber cable has characteristics X, Y and Z".  What worried me was
-> } that it
-> } looked like conflating "device reported writeback cache" with "device
-> } actually
-> } has enough battery/hamster/whatever backup to flush everything on a power
-> } loss".
-> } (My back-of-envelope calculation shows for a worst-case of needing a 1ms
-> } seek
-> } for each 4K block, a 1G cache can take up to 4 1/2 minutes to sync.
-> } That's
-> } a lot of battery..)
-> 
-> Most hardware RAID devices I know of use the battery to save the cache while
-> the power is off.  When the power is restored it flushes the cache to disk.
-> If the power failure lasts longer than the batteries then the cache data is
-> lost, but the batteries last 24+ hours I beleve.
+Any info or advice is appreciated.
 
-Most mid-range and high end arrays actually use that battery to insure that data 
-is all written out to permanent media when the power is lost. I won't go into 
-how that is done, but it clearly would not be a safe assumption to assume that 
-your power outage is only going to be a certain length of time (and if not, you 
-would lose data).
+Thanks,
 
-> 
-> A big EMC array we had had enough battery power to power about 400 disks
-> while the 16 Gig of cache was flushed.  I think EMC told me the batteries
-> would last about 20 minutes.  I don't recall if the array was usable during
-> the 20 minutes.  We never tested a power failure.
-> 
-> Guy
-
-I worked on the team that designed that big array.
-
-At one point, we had an array on loan to a partner who tried to put it in a very 
-small data center. A few weeks later, they brought in an electrician who needed 
-to run more power into the center.  It was pretty funny - he tried to find a 
-power button to turn it off and then just walked over and dropped power trying 
-to get the Symm to turn off.  When that didn't work, he was really, really 
-confused ;-)
-
-ric
+Trevor
