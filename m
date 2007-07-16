@@ -1,39 +1,36 @@
-From: "Wood, Brian J" <brian.j.wood@intel.com>
-Subject: Question about dmevents
-Date: Mon, 16 Jul 2007 08:08:56 -0700
-Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CC011B1C49@orsmsx418.amr.corp.intel.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jesper Juhl <jesper.juhl@gmail.com>
+Subject: [PATCH] Fix memory leak in dm_create_persistent() when starting metadata update thread fails.
+Date: Mon, 16 Jul 2007 21:41:43 +0200
+Message-ID: <200707162141.44229.jesper.juhl@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758450AbXGPTms@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, Jesper Juhl <jesper.juhl@gmail.com>
 List-Id: dm-devel.ids
 
-Hello everyone, I was wondering if someone could point me to a utility
-that I could look at that uses the dmeventd event registration. I asked
-Heinz M. if there were an LVM utilities that I could see sample code for
-and it sounded like there weren't any implementations currently in LVM
-(he did mention "mirrored.c" but that seems incomplete, unless I'm
-missing something). I'm wondering if someone on this list has made some
-sort of test utility that I could see the source code for (maybe a small
-application and a "hello world" type DSO that I could learn from :) ).=20
+If, in dm_create_persistent(), the call to 
+create_singlethread_workqueue() fails then we'll return without 
+freeing the memory allocated to 'ps', thus leaking 
+sizeof(struct pstore) bytes.
+This patch fixes the leak.
 
-Thank you,=20
+Signed-off-by: Jesper Juhl <jesper.juhl@gmail.com
+---
 
-Brian Wood
-Intel Corporation=20
-Digital Enterprise Group
-Manageability & Platform Software Division
-brian.j.wood@intel.com
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index 3d65917..8fe81e1 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -623,6 +623,7 @@ int dm_create_persistent(struct exception_store *store)
+ 
+ 	ps->metadata_wq = create_singlethread_workqueue("ksnaphd");
+ 	if (!ps->metadata_wq) {
++		kfree(ps);
+ 		DMERR("couldn't start header metadata update thread");
+ 		return -ENOMEM;
+ 	}
