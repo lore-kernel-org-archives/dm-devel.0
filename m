@@ -1,18 +1,14 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: Re: [2.6.23 PATCH 13/18] dm: netlink
-Date: Fri, 13 Jul 2007 16:12:58 -0400
-Message-ID: <6408.1184357578@turing-police.cc.vt.edu>
-References: <20070711210137.GE24114@agk.fab.redhat.com>
-	<20070711142712.e646995b.akpm@linux-foundation.org>
-	<20070712231920.GZ11166@waste.org>
-	<20070712163115.ee686f8d.akpm@linux-foundation.org>
-	<20070713020059.GA5402@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Kyungmin Park" <kyungmin.park@samsung.com>
+Subject: Where's the dm header files in distribution packages?
+Date: Mon, 16 Jul 2007 11:50:48 +0900
+Message-ID: <002801c7c754$1f580170$e1ac580a@swcenter.sec.samsung.co.kr>
+Reply-To: kmpark@infradead.org,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1246049560=="
+Content-Type: text/plain;
+	charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: Your message of "Thu, 12 Jul 2007 19:00:59 PDT."
-	<20070713020059.GA5402@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,50 +18,21 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Anderson <andmike@us.ibm.com>
-Cc: netdev@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Matt Mackall <mpm@selenic.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============1246049560==
-Content-Type: multipart/signed; boundary="==_Exmh_1184357578_3376P";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
-Content-Transfer-Encoding: 7bit
+Hi all,
 
---==_Exmh_1184357578_3376P
-Content-Type: text/plain; charset=us-ascii
+Now I'm working with device mapper framework. But I encountered the problem with dm header files.
+I want to test a module on several distributions such as fedora 4, 5, 6, and 7.
+But there're no dm header files in kernel header packages. So I have to install full kernel source for each system.
 
-On Thu, 12 Jul 2007 19:00:59 PDT, Mike Anderson said:
+My questions are
+1. Why the dm header files are missing in header files packages?
+2. Is there any plan to move dm header files to include/linux or include/linux/dm?
+3. Or other methods to compile the dm module?
 
-> No, all admin tools and interfaces function as they do today. The
-> dm-netlink patch series only contains 9 deletions (actual just one true
-> deletion of existing kernel code the others are due to break up of the
-> patch into compilable chunks). The intent was not to break users or force
-> migration.
+If you have other options, please let me know.
 
-OK, I'll bite - if the admin tools function as before, who is *using* the
-code?  Or do the admin tools have a preferred netlink component and a fallback
-set of code if that fails?
-
---==_Exmh_1184357578_3376P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.7 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFGl9zKcC3lWbTT17ARAn1TAJwK7uClY988U38VvooewVlui/+RpwCg3cJr
-DTxUbQjXfXFwFebgArnL3KM=
-=DJ4I
------END PGP SIGNATURE-----
-
---==_Exmh_1184357578_3376P--
-
-
---===============1246049560==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1246049560==--
+Thank you,
+Kyungmin Park
