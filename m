@@ -1,52 +1,52 @@
-From: Patrick McHardy <kaber@trash.net>
-Subject: Re: [2.6.23 PATCH 07/18] dm io: fix panic on large request
-Date: Tue, 17 Jul 2007 19:50:17 +0200
-Message-ID: <469D0159.1010506@trash.net>
-References: <20070711205846.GY24114@agk.fab.redhat.com> <469CC11B.2020103@trash.net> <469CF0CD.6060006@ce.jp.nec.com>
+From: Andrew Vasquez <andrew.vasquez@qlogic.com>
+Subject: [PATCH] dm-mpath-rdac: don't stomp on a request's transfer bit.
+Date: Tue, 17 Jul 2007 14:07:06 -0700
+Message-ID: <20070717210706.GA2277@plap.qlogic.org>
+References: <4696D6CB.6050504@csupomona.edu> <1184292400.5146.45.camel@linuxchandra> <20070713023743.GA5350@us.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S934242AbXGQRug@vger.kernel.org>
-In-Reply-To: <469CF0CD.6060006@ce.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20070713023743.GA5350@us.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Brian De Wolf <bldewolf@csupomona.edu>
+Cc: linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, sekharan@us.ibm.com, Mike Anderson <andmike@us.ibm.com>
 List-Id: dm-devel.ids
 
-Jun'ichi Nomura wrote:
->>>From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
->>>
->>>bio_alloc_bioset() will return NULL if 'num_vecs' is too large.
->>>Use bio_get_nr_vecs() to get estimation of maximum number.
->>>
->>>Signed-off-by: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
->>>Signed-off-by: Alasdair G Kergon <agk@redhat.com>
->>>
->>
->>This patch reproducibly oopses my box:
-> 
-> 
-> Thanks for the report.
-> But I'm not sure how the patch is related to the oops.
-> 
-> The stack trace shows the oops occurred in dm-crypt,
-> which doesn't use the part of the code modified by the patch
-> (dm-io).
+Signed-off-by: Andrew Vasquez <andrew.vasquez@qlogic.com>
+---
 
+	On Thu, 12 Jul 2007, Mike Anderson wrote:
 
-I tried reverting the individual patches until it stopped oopsing,
-it may have been by luck. I'll try if I can break it again by
-reverting the revert.
+	> Copying this mail to linux-scsi and Ccing Andrew Vasquez to possibly
+	> provide input on the Qlogic behavior.
+	...
 
-> Are you using other dm modules such as dm-multipath, dm-mirror
-> or dm-snapshot?
-> If so, can you take the output of 'dmsetup table' and 'dmsetup ls'?
+	> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: ISP System Error - mbx1=0h
+	> > > mbx2=8012h mbx3=8002h.
+	> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: Firmware has been previously
+	> > > dumped (ffffc2000171d000) -- ignoring request...
+	> > > Jul 12 17:11:16 jimbo kernel: qla2xxx 0000:02:01.1: Performing ISP error
+	> > > recovery - ha= ffff81007e85c530.
 
+	So what's happening here is the firmware is detecting a Xfer-ready
+	from the storage when in fact the data-direction for a mode-select
+	should be a write (DATA_OUT).
 
-No other modules.
+	The following patch fixes the problem (typo).  Verified by Brian, as
+	well.
 
-> Do you have a reliable way to reproduce the oops which I can try?
+diff --git a/drivers/md/dm-mpath-rdac.c b/drivers/md/dm-mpath-rdac.c
+index 8b776b8..16b1613 100644
+--- a/drivers/md/dm-mpath-rdac.c
++++ b/drivers/md/dm-mpath-rdac.c
+@@ -292,7 +292,7 @@ static struct request *get_rdac_req(struct rdac_handler *h,
+ 	rq->end_io_data = h;
+ 	rq->timeout = h->timeout;
+ 	rq->cmd_type = REQ_TYPE_BLOCK_PC;
+-	rq->cmd_flags = REQ_FAILFAST | REQ_NOMERGE;
++	rq->cmd_flags |= REQ_FAILFAST | REQ_NOMERGE;
+ 	return rq;
+ }
+ 
 
-
-"/etc/init.d/cryptdisk start" (debian) on a luks partition triggered
-it for me.
