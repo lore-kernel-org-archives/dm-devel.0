@@ -1,52 +1,50 @@
-From: Andrew Vasquez <andrew.vasquez@qlogic.com>
-Subject: [PATCH] dm-mpath-rdac: don't stomp on a request's transfer bit.
-Date: Tue, 17 Jul 2007 14:07:06 -0700
-Message-ID: <20070717210706.GA2277@plap.qlogic.org>
-References: <4696D6CB.6050504@csupomona.edu> <1184292400.5146.45.camel@linuxchandra> <20070713023743.GA5350@us.ibm.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [2.6.23 PATCH 07/18] dm io: fix panic on large
+	request
+Date: Tue, 17 Jul 2007 18:20:43 -0400
+Message-ID: <469D40BB.3030809@ce.jp.nec.com>
+References: <20070711205846.GY24114@agk.fab.redhat.com>
+	<469CC11B.2020103@trash.net> <469CF0CD.6060006@ce.jp.nec.com>
+	<469D0159.1010506@trash.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20070713023743.GA5350@us.ibm.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Brian De Wolf <bldewolf@csupomona.edu>
-Cc: linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, sekharan@us.ibm.com, Mike Anderson <andmike@us.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <469D0159.1010506@trash.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Patrick McHardy <kaber@trash.net>
+Cc: Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Signed-off-by: Andrew Vasquez <andrew.vasquez@qlogic.com>
----
+Patrick McHardy wrote:
+> Jun'ichi Nomura wrote:
+>> Are you using other dm modules such as dm-multipath, dm-mirror
+>> or dm-snapshot?
+>> If so, can you take the output of 'dmsetup table' and 'dmsetup ls'?
+> 
+> No other modules.
+> 
+>> Do you have a reliable way to reproduce the oops which I can try?
+> 
+> "/etc/init.d/cryptdisk start" (debian) on a luks partition triggered
+> it for me.
 
-	On Thu, 12 Jul 2007, Mike Anderson wrote:
+With today's git HEAD (commit 49c13b51a15f1ba9f6d47e26e4a3886c4f3931e2),
+I tried the following but could not reproduce the oops here.
+  # cryptsetup luksFormat /dev/sdb1
+  # cryptsetup luksOpen /dev/sdb1 c
+  # mkfs.ext3 /dev/mapper/c
+  <mount it and do some I/O>
 
-	> Copying this mail to linux-scsi and Ccing Andrew Vasquez to possibly
-	> provide input on the Qlogic behavior.
-	...
-
-	> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: ISP System Error - mbx1=0h
-	> > > mbx2=8012h mbx3=8002h.
-	> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: Firmware has been previously
-	> > > dumped (ffffc2000171d000) -- ignoring request...
-	> > > Jul 12 17:11:16 jimbo kernel: qla2xxx 0000:02:01.1: Performing ISP error
-	> > > recovery - ha= ffff81007e85c530.
-
-	So what's happening here is the firmware is detecting a Xfer-ready
-	from the storage when in fact the data-direction for a mode-select
-	should be a write (DATA_OUT).
-
-	The following patch fixes the problem (typo).  Verified by Brian, as
-	well.
-
-diff --git a/drivers/md/dm-mpath-rdac.c b/drivers/md/dm-mpath-rdac.c
-index 8b776b8..16b1613 100644
---- a/drivers/md/dm-mpath-rdac.c
-+++ b/drivers/md/dm-mpath-rdac.c
-@@ -292,7 +292,7 @@ static struct request *get_rdac_req(struct rdac_handler *h,
- 	rq->end_io_data = h;
- 	rq->timeout = h->timeout;
- 	rq->cmd_type = REQ_TYPE_BLOCK_PC;
--	rq->cmd_flags = REQ_FAILFAST | REQ_NOMERGE;
-+	rq->cmd_flags |= REQ_FAILFAST | REQ_NOMERGE;
- 	return rq;
- }
- 
-
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation of America
