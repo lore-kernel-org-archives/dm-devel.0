@@ -1,7 +1,7 @@
 From: Jens Axboe <jens.axboe@oracle.com>
 Subject: Re: [PATCH] block: factor out bio_check_eod()
-Date: Wed, 18 Jul 2007 13:49:56 +0200
-Message-ID: <20070718114955.GS11657@kernel.dk>
+Date: Wed, 18 Jul 2007 14:31:17 +0200
+Message-ID: <20070718123117.GU11657@kernel.dk>
 References: <20070530093503.GA15559@kernel.dk> <20070718105655.GB22374@htj.dyndns.org> <20070718105946.GC22374@htj.dyndns.org> <20070718110619.GM11657@kernel.dk> <469DF700.4030806@gmail.com> <20070718113103.GO11657@kernel.dk> <469DFA75.6070205@gmail.com> <20070718113450.GP11657@kernel.dk> <469DFC61.2070301@gmail.com> <20070718114558.GR11657@kernel.dk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -44,20 +44,8 @@ On Wed, Jul 18 2007, Jens Axboe wrote:
 > > zero length barrier implementation and issue_flush conversion.
 > 
 > Yes that's true, I could split that in two as well. Will do so!
-> 
-> > Anyways, how do I pull from git.kernel.dk?
-> > git://git.kernel.dk/linux-2.6-block.git gives me connection reset by server.
-> 
-> git://git.kernel.dk/data/git/linux-2.6-block.git
-> 
-> somewhat annoying, I'll see if I can prefix it with git-daemon in the
-> future.
 
-OK, now skip the /data/git/ stuff and just use
-
-git://git.kernel.dk/linux-2.6-block.git
-
-:-)
+Done, result in the same location.
 
 -- 
 Jens Axboe
