@@ -1,45 +1,57 @@
-From: Patrick McHardy <kaber@trash.net>
-Subject: Re: [2.6.23 PATCH 07/18] dm io: fix panic on large request
-Date: Wed, 18 Jul 2007 12:08:48 +0200
-Message-ID: <469DE6B0.60807@trash.net>
-References: <20070711205846.GY24114@agk.fab.redhat.com> <469CC11B.2020103@trash.net> <469CF0CD.6060006@ce.jp.nec.com> <469D0159.1010506@trash.net> <469D40BB.3030809@ce.jp.nec.com>
+From: Tejun Heo <htejun@gmail.com>
+Subject: [PATCH] block: cosmetic changes
+Date: Wed, 18 Jul 2007 19:56:55 +0900
+Message-ID: <20070718105655.GB22374@htj.dyndns.org>
+References: <18006.38689.818186.221707@notabene.brown>
+	<18010.12472.209452.148229@notabene.brown>
+	<20070530093503.GA15559@kernel.dk>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761418AbXGRKJX@vger.kernel.org>
-In-Reply-To: <469D40BB.3030809@ce.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20070530093503.GA15559@kernel.dk>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: David Chinner <dgc@sgi.com>, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Phillip Susi <psusi@cfl.rr.com>, Andreas Dilger <adilger@clusterfs.com>
 List-Id: dm-devel.ids
 
-Jun'ichi Nomura wrote:
-> Patrick McHardy wrote:
-> 
->>Jun'ichi Nomura wrote:
->>
->>>Are you using other dm modules such as dm-multipath, dm-mirror
->>>or dm-snapshot?
->>>If so, can you take the output of 'dmsetup table' and 'dmsetup ls'?
->>
->>No other modules.
->>
->>
->>>Do you have a reliable way to reproduce the oops which I can try?
->>
->>"/etc/init.d/cryptdisk start" (debian) on a luks partition triggered
->>it for me.
-> 
-> 
-> With today's git HEAD (commit 49c13b51a15f1ba9f6d47e26e4a3886c4f3931e2),
-> I tried the following but could not reproduce the oops here.
->   # cryptsetup luksFormat /dev/sdb1
->   # cryptsetup luksOpen /dev/sdb1 c
->   # mkfs.ext3 /dev/mapper/c
->   <mount it and do some I/O>
+Cosmetic changes.  This is taken from Jens' zero-length barrier patch.
 
+Signed-off-by: Tejun Heo <htejun@gmail.com>
+Cc: Jens Axboe <jes.axboe@oracle.com>
+---
+ block/ll_rw_blk.c |    5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-I put in the patch again and it doesn't oops anymore, so sorry for
-the false alarm. I did got the oops I pasted several times before
-that though, I'll keep an eye on it and try to gather more information
-in case it happens again.
+Index: work/block/ll_rw_blk.c
+===================================================================
+--- work.orig/block/ll_rw_blk.c
++++ work/block/ll_rw_blk.c
+@@ -443,7 +443,8 @@ static inline struct request *start_orde
+ 	rq_init(q, rq);
+ 	if (bio_data_dir(q->orig_bar_rq->bio) == WRITE)
+ 		rq->cmd_flags |= REQ_RW;
+-	rq->cmd_flags |= q->ordered & QUEUE_ORDERED_FUA ? REQ_FUA : 0;
++	if (q->ordered & QUEUE_ORDERED_FUA)
++		rq->cmd_flags |= REQ_FUA;
+ 	rq->elevator_private = NULL;
+ 	rq->elevator_private2 = NULL;
+ 	init_request_from_bio(rq, q->orig_bar_rq->bio);
+@@ -3167,7 +3168,7 @@ end_io:
+ 			break;
+ 		}
+ 
+-		if (unlikely(bio_sectors(bio) > q->max_hw_sectors)) {
++		if (unlikely(nr_sectors > q->max_hw_sectors)) {
+ 			printk("bio too big device %s (%u > %u)\n", 
+ 				bdevname(bio->bi_bdev, b),
+ 				bio_sectors(bio),
