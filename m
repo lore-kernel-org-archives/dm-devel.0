@@ -1,16 +1,13 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-tool udev rules require missing dmsetup
-	features
-Date: Thu, 19 Jul 2007 08:16:22 +0200
-Message-ID: <20070719061622.GB21899@pentland.suse.de>
-References: <469EB881.6070207@csupomona.edu>
+From: Brian De Wolf <bldewolf@csupomona.edu>
+Subject: multipath-tools causes path to come back as different
+	block device
+Date: Thu, 19 Jul 2007 15:54:51 -0700
+Message-ID: <469FEBBB.5040507@csupomona.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="Dxnq1zWXvFF0Q93v"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <469EB881.6070207@csupomona.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,212 +20,120 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hello again,
 
---Dxnq1zWXvFF0Q93v
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+I've been testing multipath-tool's rdac capability with a qla2xxx HBA and an IBM
+DS4800 some more and I've hit another stumbling block.  When I test unplugging
+one of the HBA ports and plugging it back in with multipath running, it seems to
+cause bad things to happen.  Here is what the syslog looks like (note:  sdb is a
+path, sdd is initially unused, and sde is the second path):
 
-On Wed, Jul 18, 2007 at 06:04:01PM -0700, Brian De Wolf wrote:
-> Hello,
->=20
-> Recently I've been using the latest git versions of multipath-tools and=
- I've
-> noticed that the udev rules that are included, specifically those for k=
-partx,
-> refer to environment variables such as DM_TABLE_STATE, DM_PART, DM_UUID=
-, etc.
-> However, the kpartx.rules file contains nothing that would bring those
-> environment variables into the environment.  After some googling, I fou=
-nd
-> http://ftp.frugalware.org/pub/frugalware/frugalware-current/source/lib/=
-device-mapper/
-> which has a patch that adds a command to dmsetup called 'export'.  I've=
- found
-> various udev scripts that use this command to pull the environment vari=
-ables I
-> listed before for use in udev rules and the multipath-tools kpartx.rule=
-s file
-> itself works perfectly when the correct 'dmsetup export' command is imp=
-orted.
->=20
-Errm. Oops.
+Jul 19 14:30:35 jimbo kernel: qla2xxx 0000:02:01.1: LOOP DOWN detected (2).
+Jul 19 14:30:41 jimbo kernel: rport-4:0-0: blocked FC remote port time out:
+removing target and saving binding
+Jul 19 14:30:41 jimbo kernel: sd 4:0:0:0: [sde] Synchronizing SCSI cache
+Jul 19 14:30:41 jimbo kernel: sd 4:0:0:0: [sde] Result: hostbyte=0x01
+driverbyte=0x00
+Jul 19 14:30:48 jimbo multipathd: sde: rdac checker reports path is down
+Jul 19 14:30:48 jimbo multipathd: checker failed path 8:64 in map test
+Jul 19 14:30:48 jimbo kernel: scsi 4:0:0:0: rejecting I/O to dead device
+Jul 19 14:30:48 jimbo kernel: device-mapper: multipath: Failing path 8:64.
+Jul 19 14:30:48 jimbo multipathd: test: remaining active paths: 1
+Jul 19 14:30:48 jimbo multipathd: test: switch to path group #2
+Jul 19 14:30:52 jimbo kernel: qla2xxx 0000:02:01.1: LIP reset occured (f700).
+Jul 19 14:30:52 jimbo kernel: qla2xxx 0000:02:01.1: LIP occured (f700).
+Jul 19 14:30:52 jimbo kernel: qla2xxx 0000:02:01.1: LIP reset occured (f7f7).
+Jul 19 14:30:53 jimbo kernel: scsi 4:0:0:0: rejecting I/O to dead device
+Jul 19 14:30:53 jimbo multipathd: sde: rdac checker reports path is down
+Jul 19 14:30:53 jimbo kernel: qla2xxx 0000:02:01.1: LOOP UP detected (4 Gbps).
+Jul 19 14:30:53 jimbo kernel: scsi 4:0:0:0: Direct-Access     IBM      1815
+ FAStT  0914 PQ: 0 ANSI: 3
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] 6291456 512-byte hardware
+sectors (3221 MB)
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Write Protect is off
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Mode Sense: 77 00 10 08
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Write cache: enabled, read
+cache: enabled, supports DPO and FUA
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] 6291456 512-byte hardware
+sectors (3221 MB)
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Write Protect is off
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Mode Sense: 77 00 10 08
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Write cache: enabled, read
+cache: enabled, supports DPO and FUA
+Jul 19 14:30:53 jimbo kernel: sdd: sdd1
+Jul 19 14:30:53 jimbo kernel: sd 4:0:0:0: [sdd] Attached SCSI disk
+Jul 19 14:30:53 jimbo kernel: scsi 4:0:0:0: Direct-Access     IBM      1815
+ FAStT  0914 PQ: 0 ANSI: 3
+Jul 19 14:30:53 jimbo kernel: kobject_add failed for 4:0:0:0 with -EEXIST, don't
+try to register things with the same name in the same directory.
+Jul 19 14:30:53 jimbo kernel:
+Jul 19 14:30:53 jimbo kernel: Call Trace:
+Jul 19 14:30:53 jimbo kernel: [<ffffffff802e1d9b>] kobject_shadow_add+0x187/0x191
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8033a495>] device_add+0xa1/0x59d
+Jul 19 14:30:53 jimbo kernel: [<ffffffff803638e8>] scsi_sysfs_add_sdev+0x2e/0x24a
+Jul 19 14:30:53 jimbo kernel: [<ffffffff80361f18>]
+scsi_probe_and_add_lun+0x6ff/0x80f
+Jul 19 14:30:53 jimbo kernel: [<ffffffff803612c8>] scsi_alloc_sdev+0x195/0x1ea
+Jul 19 14:30:53 jimbo kernel: [<ffffffff80362580>] __scsi_scan_target+0x3e9/0x549
+Jul 19 14:30:53 jimbo kernel: [<ffffffff80416d83>] thread_return+0x0/0xe2
+Jul 19 14:30:53 jimbo kernel: [<ffffffff80362777>] scsi_scan_target+0x97/0xbc
+Jul 19 14:30:53 jimbo kernel: [<ffffffff88003668>]
+:scsi_transport_fc:fc_scsi_scan_rport+0x59/0x79
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8800360f>]
+:scsi_transport_fc:fc_scsi_scan_rport+0x0/0x79
+Jul 19 14:30:53 jimbo kernel: [<ffffffff802379c4>] run_workqueue+0x84/0x105
+Jul 19 14:30:53 jimbo kernel: [<ffffffff80237a45>] worker_thread+0x0/0xf4
+Jul 19 14:30:53 jimbo kernel: [<ffffffff80237b2f>] worker_thread+0xea/0xf4
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8023addd>] autoremove_wake_function+0x0/0x2e
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8023addd>] autoremove_wake_function+0x0/0x2e
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8023a888>] kthread+0x3d/0x63
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8020a338>] child_rip+0xa/0x12
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8023a84b>] kthread+0x0/0x63
+Jul 19 14:30:53 jimbo kernel: [<ffffffff8020a32e>] child_rip+0x0/0x12
+Jul 19 14:30:53 jimbo kernel:
+Jul 19 14:30:53 jimbo kernel: error 1
+Jul 19 14:30:53 jimbo kernel: scsi 4:0:0:0: Unexpected response from lun 0 while
+scanning, scan aborted
+Jul 19 14:30:53 jimbo scsi.agent[8613]: disk at
+/devices/pci0000:00/0000:00:02.0/0000:02:01.1/host4/rport-4:0-0/target4:0:0/4:0:0:0
+Jul 19 14:30:53 jimbo multipathd: sdd: add path (uevent)
+Jul 19 14:30:53 jimbo kernel: scsi 4:0:0:0: rejecting I/O to dead device
+Jul 19 14:30:53 jimbo multipathd: sde: checker msg is "rdac checker reports path
+is down"
+Jul 19 14:30:53 jimbo kernel: device-mapper: multipath rdac: using RDAC command
+with timeout 15000
+Jul 19 14:30:53 jimbo kernel: device-mapper: table: 254:6: multipath: error
+getting device
+Jul 19 14:30:53 jimbo kernel: device-mapper: ioctl: error adding target to table
+Jul 19 14:30:53 jimbo multipathd: test: failed in domap for addition of new path sdd
+Jul 19 14:30:53 jimbo multipathd: test: uev_add_path sleep
+...
 
-Well, I'm to blame here. When creating the rules I totally forgot that we=
-'ve hacked
-dmsetup to provide an 'export' switch.
+From here, the last 5 lines get repeated until I 'kill -9' the multipathd
+process.  I'm not too keen on kernel internals (though playing with multipathing
+is bringing me up to speed pretty quick), but I'm wondering if multipathd is
+causing the call trace by not letting /dev/sde disappear so that the HBA's scsi
+device can grab that name again.  I noticed this via lsof:
+multipath 8390     root    5r      BLK               8,64              22254
+/dev/sde (deleted)
+multipath 8390     root    6r      BLK               8,16               1100
+/dev/sdb
+multipath 8390     root   10r      BLK               8,48              23647
+/dev/sdd
 
-> What really puzzles me is that this patch was very difficult to find, b=
-ut is
-> essential to the 'official' multipath-tools udev rules.  Is there somet=
-hing that
-> I'm missing that makes this all make sense?
->=20
-As already said, it totally makes sense when you hack up dmsetup and then=
- forget
-about the patch. Sorry about this.
+When multipathd is running, unplugging and plugging in one of the ports causes
+it to grab the next sd* device name.  As this is repeated, the number of deleted
+block devices multipathd holds on to grows, along with the number of unhappy
+rdac checkers.  As I said before, it takes a 'kill -9' to stop multipathd, and
+subsequent plugging ins choose sd* names that were previously used but were held
+onto as (deleted) by multipathd.
 
-Alasdair, care to incorporate it?
+However, this behavior is not seen when multipathd is not running.  When the
+port is unplugged, the /dev/sd* device disappears, and when it is plugged back
+in, it takes the same name it had before (I assume it's just taking the lowest
+name, and its old name has been freed) cleanly, with no call traces or anything.
 
-Cheers,
+Any ideas on how to correct this behavior?
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=EF=BF=BDrnberg
-GF: Markus Rex, HRB 16746 (AG N=EF=BF=BDrnberg)
-
---Dxnq1zWXvFF0Q93v
-Content-Type: text/x-patch; charset=us-ascii
-Content-Disposition: attachment; filename="device-mapper-dmsetup-export.patch"
-
-diff --git a/dmsetup/dmsetup.c b/dmsetup/dmsetup.c
-index 25f14a6..b693008 100644
---- a/dmsetup/dmsetup.c
-+++ b/dmsetup/dmsetup.c
-@@ -995,6 +995,94 @@ static int _status(int argc, char **argv
- 	return r;
- }
- 
-+static int _export(int argc, char **argv, void *data)
-+{
-+	int r = 0;
-+	struct dm_task *dmt = NULL;
-+	void *next = NULL;
-+	uint64_t start, length;
-+	char *target_type = NULL;
-+	char *params;
-+	struct dm_names *names = (struct dm_names *) data;
-+	const char *name = NULL;
-+	const char *uuid = NULL;
-+	struct dm_info info;
-+
-+	if (data)
-+		name = names->name;
-+	else if (argc == 2)
-+		name = argv[1];
-+
-+	if (!(dmt = dm_task_create(DM_DEVICE_STATUS)))
-+		goto out;
-+
-+	if (!_set_task_device(dmt, name, 0))
-+		goto out;
-+
-+	if (!dm_task_run(dmt))
-+		goto out;
-+
-+	if (!dm_task_get_info(dmt, &info) || !info.exists)
-+		goto out;
-+
-+	if (!name)
-+		name = dm_task_get_name(dmt);
-+
-+	uuid = dm_task_get_uuid(dmt);
-+	printf("DM_NAME=%s\n", name);
-+
-+	if ((uuid = dm_task_get_uuid(dmt)) && *uuid)
-+		printf("DM_UUID=%s\n", uuid);
-+
-+	if (!info.exists) {
-+		printf("DM_STATE=NOTPRESENT\n");
-+		goto out;
-+	}
-+
-+	printf("DM_STATE=%s\n",
-+	       info.suspended ? "SUSPENDED" :
-+	       (info.read_only ? " READONLY" : "ACTIVE"));
-+
-+	if (!info.live_table && !info.inactive_table)
-+		printf("DM_TABLE_STATE=NONE\n");
-+	else
-+		printf("DM_TABLE_STATE=%s%s%s\n",
-+		       info.live_table ? "LIVE" : "",
-+		       info.live_table && info.inactive_table ? "/" : "",
-+		       info.inactive_table ? "INACTIVE" : "");
-+
-+	if (info.open_count != -1)
-+		printf("DM_OPENCOUNT=%d\n", info.open_count);
-+
-+	printf("DM_LAST_EVENT_NR=%" PRIu32 "\n", info.event_nr);
-+
-+	printf("DM_MAJOR=%d\n", info.major);
-+	printf("DM_MINOR=%d\n", info.minor);
-+
-+	if (info.target_count != -1)
-+		printf("DM_TARGET_COUNT=%d\n", info.target_count);
-+
-+	/* export all table types */
-+	next = dm_get_next_target(dmt, next, &start, &length,
-+				  &target_type, &params);
-+	if (target_type) {
-+		printf("DM_TARGET_TYPES=%s", target_type);
-+		while (next) {
-+			next = dm_get_next_target(dmt, next, &start, &length,
-+						  &target_type, &params);
-+			if (target_type)
-+				printf(",%s", target_type);
-+		}
-+		printf("\n");
-+	}
-+
-+	r = 1;
-+      out:
-+	if (dmt)
-+		dm_task_destroy(dmt);
-+	return r;
-+}
-+
- /* Show target names and their version numbers */
- static int _targets(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
- {
-@@ -1699,6 +1787,7 @@ static struct command _commands[] = {
- 	{"info", "[<device>]", 0, 1, _info},
- 	{"deps", "[<device>]", 0, 1, _deps},
- 	{"status", "[<device>] [--target <target_type>]", 0, 1, _status},
-+	{"export", "[<device>]", 0, 1, _export},
- 	{"table", "[<device>] [--target <target_type>] [--showkeys]", 0, 1, _status},
- 	{"wait", "<device> [<event_nr>]", 0, 2, _wait},
- 	{"mknodes", "[<device>]", 0, 1, _mknodes},
-diff --git a/man/dmsetup.8 b/man/dmsetup.8
-index 5b2ed9f..c4524aa 100644
---- a/man/dmsetup.8
-+++ b/man/dmsetup.8
-@@ -39,13 +39,16 @@ dmsetup \- low level logical volume mana
- .B dmsetup ls
- .I [--target target_type] [--exec command] [--tree [-o options]]
- .br
--.B dmsetup info 
-+.B dmsetup info
- .I [device_name]
- .br
- .B dmsetup info -c|-C|--columns
- .I [--noheadings] [--separator separator] [-o fields] [-O|--sort sort_fields]
- .I [device_name]
- .br
-+.B dmsetup export
-+.I [device_name]
-+.br
- .B dmsetup deps
- .I [device_name]
- .br
-@@ -138,6 +141,10 @@ device_name in subsequent dmsetup comman
- If successful a device will appear as
- /dev/device-mapper/<device-name>.  
- See below for information on the table format.
-+.IP \fBexport
-+.I [device_name]
-+.br
-+Outputs information in key/value format to be imported by other programs.
- .IP \fBdeps
- .I [device_name]
- .br
-
---Dxnq1zWXvFF0Q93v
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---Dxnq1zWXvFF0Q93v--
+Thanks!
+Brian De Wolf
