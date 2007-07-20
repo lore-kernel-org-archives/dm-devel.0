@@ -1,16 +1,18 @@
-From: Heinz Mauelshagen <mauelshagen@redhat.com>
-Subject: Re: dm-raid45 patch for 2.6.22
-Date: Sat, 21 Jul 2007 00:24:59 +0200
-Message-ID: <20070720222459.GD2982@redhat.com>
-References: <20070720091439.GC2982@redhat.com>
-	<39B20DF628532344BC7A2692CB6AEE0701905C6D@orsmsx420.amr.corp.intel.com>
-Reply-To: mauelshagen@redhat.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Brian De Wolf <bldewolf@csupomona.edu>
+Subject: Re: [PATCH] dm-mpath-rdac: don't stomp on a request's
+	transfer bit.
+Date: Fri, 20 Jul 2007 16:05:23 -0700
+Message-ID: <46A13FB3.2070704@csupomona.edu>
+References: <4696D6CB.6050504@csupomona.edu>
+	<1184292400.5146.45.camel@linuxchandra>
+	<20070713023743.GA5350@us.ibm.com>
+	<20070717210706.GA2277@plap.qlogic.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <39B20DF628532344BC7A2692CB6AEE0701905C6D@orsmsx420.amr.corp.intel.com>
+In-Reply-To: <20070717210706.GA2277@plap.qlogic.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,57 +22,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Gaston, Jason D" <jason.d.gaston@intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>, hjm@redhat.com, mauelshagen@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 20, 2007 at 11:22:26AM -0700, Gaston, Jason D wrote:
-> >-----Original Message-----
-> >From: dm-devel-bounces@redhat.com 
-> >[mailto:dm-devel-bounces@redhat.com] On Behalf Of Heinz Mauelshagen
-> >Sent: Friday, July 20, 2007 2:15 AM
-> >To: dm-devel@redhat.com
-> >Cc: hjm@redhat.com
-> >Subject: [dm-devel] dm-raid45 patch for 2.6.22
-> >
-> >
-> >
-> >dm-raid45 patch for 2.6.22 up on my people page
-> ><http://people.redhat.com/heinzm/sw/dm/dm-raid45/>.
-> >
-> >Regards,
-> >Heinz    -- The LVM Guy --
-> >
-> >*** Software bugs are stupid.
-> >    Nevertheless it needs not so stupid people to solve them ***
-> >
-> >=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-> >-=-=-=-=-=-=-=-
-> >
-> >Heinz Mauelshagen                                 Red Hat GmbH
-> >Consulting Development Engineer                   Am Sonnenhang 11
-> >Storage Development                               56242 Marienrachdorf
-> >                                                  Germany
-> >Mauelshagen@RedHat.com                            PHONE +49  
-> >171 7803392
-> >                                                  FAX   +49 2626 924446
-> >=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
-> >-=-=-=-=-=-=-=-
-> >
-> >--
-> >dm-devel mailing list
-> >dm-devel@redhat.com
-> >https://www.redhat.com/mailman/listinfo/dm-devel
-> >
+Andrew Vasquez wrote:
+> Signed-off-by: Andrew Vasquez <andrew.vasquez@qlogic.com>
+> ---
 > 
-> Do we know when this will make it upstream, into device-mapper and a
-> kernel release?
-
-Once Alasdair does it ;)
-
-Heinz
-
+> 	On Thu, 12 Jul 2007, Mike Anderson wrote:
 > 
-> Thanks,
+> 	> Copying this mail to linux-scsi and Ccing Andrew Vasquez to possibly
+> 	> provide input on the Qlogic behavior.
+> 	...
 > 
-> Jason
+> 	> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: ISP System Error - mbx1=0h
+> 	> > > mbx2=8012h mbx3=8002h.
+> 	> > > Jul 12 17:11:15 jimbo kernel: qla2xxx 0000:02:01.1: Firmware has been previously
+> 	> > > dumped (ffffc2000171d000) -- ignoring request...
+> 	> > > Jul 12 17:11:16 jimbo kernel: qla2xxx 0000:02:01.1: Performing ISP error
+> 	> > > recovery - ha= ffff81007e85c530.
+> 
+> 	So what's happening here is the firmware is detecting a Xfer-ready
+> 	from the storage when in fact the data-direction for a mode-select
+> 	should be a write (DATA_OUT).
+> 
+> 	The following patch fixes the problem (typo).  Verified by Brian, as
+> 	well.
+> 
+> diff --git a/drivers/md/dm-mpath-rdac.c b/drivers/md/dm-mpath-rdac.c
+> index 8b776b8..16b1613 100644
+> --- a/drivers/md/dm-mpath-rdac.c
+> +++ b/drivers/md/dm-mpath-rdac.c
+> @@ -292,7 +292,7 @@ static struct request *get_rdac_req(struct rdac_handler *h,
+>  	rq->end_io_data = h;
+>  	rq->timeout = h->timeout;
+>  	rq->cmd_type = REQ_TYPE_BLOCK_PC;
+> -	rq->cmd_flags = REQ_FAILFAST | REQ_NOMERGE;
+> +	rq->cmd_flags |= REQ_FAILFAST | REQ_NOMERGE;
+>  	return rq;
+>  }
+>  
+> 
+
+Is this patch going to be adopted into the official linux kernel?  I only see
+the big dm-mpath-rdac patch, but I don't think that one works properly without
+this one.
