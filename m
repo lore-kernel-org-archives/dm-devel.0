@@ -1,16 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [multipath 1/1] cache sysfs_devices
-Date: Sat, 21 Jul 2007 00:18:21 +0200
-Message-ID: <1184969901.26617.139.camel@localhost.localdomain>
-References: <20070720172919.GA2497@bogon.ms20.nix>
-	<11849647793576-git-send-email--s>
-	<20070720210343.GA11879@bogon.ms20.nix>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <mauelshagen@redhat.com>
+Subject: Re: dm-raid45 patch for 2.6.22
+Date: Sat, 21 Jul 2007 00:24:59 +0200
+Message-ID: <20070720222459.GD2982@redhat.com>
+References: <20070720091439.GC2982@redhat.com>
+	<39B20DF628532344BC7A2692CB6AEE0701905C6D@orsmsx420.amr.corp.intel.com>
+Reply-To: mauelshagen@redhat.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070720210343.GA11879@bogon.ms20.nix>
+Content-Disposition: inline
+In-Reply-To: <39B20DF628532344BC7A2692CB6AEE0701905C6D@orsmsx420.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +20,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guido Guenther <agx@sigxcpu.org>
-Cc: dm-devel@redhat.com
+To: "Gaston, Jason D" <jason.d.gaston@intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>, hjm@redhat.com, mauelshagen@redhat.com
 List-Id: dm-devel.ids
 
-Le vendredi 20 juillet 2007 =C3=A0 23:03 +0200, Guido Guenther a =C3=A9cr=
-it :
-> I give up on git-send-email - it always fools me. Nevertheless this one
-> fixes the described bug of paths coming back as different block
-> devices:
->=20
-Merged, thanks.
+On Fri, Jul 20, 2007 at 11:22:26AM -0700, Gaston, Jason D wrote:
+> >-----Original Message-----
+> >From: dm-devel-bounces@redhat.com 
+> >[mailto:dm-devel-bounces@redhat.com] On Behalf Of Heinz Mauelshagen
+> >Sent: Friday, July 20, 2007 2:15 AM
+> >To: dm-devel@redhat.com
+> >Cc: hjm@redhat.com
+> >Subject: [dm-devel] dm-raid45 patch for 2.6.22
+> >
+> >
+> >
+> >dm-raid45 patch for 2.6.22 up on my people page
+> ><http://people.redhat.com/heinzm/sw/dm/dm-raid45/>.
+> >
+> >Regards,
+> >Heinz    -- The LVM Guy --
+> >
+> >*** Software bugs are stupid.
+> >    Nevertheless it needs not so stupid people to solve them ***
+> >
+> >=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+> >-=-=-=-=-=-=-=-
+> >
+> >Heinz Mauelshagen                                 Red Hat GmbH
+> >Consulting Development Engineer                   Am Sonnenhang 11
+> >Storage Development                               56242 Marienrachdorf
+> >                                                  Germany
+> >Mauelshagen@RedHat.com                            PHONE +49  
+> >171 7803392
+> >                                                  FAX   +49 2626 924446
+> >=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+> >-=-=-=-=-=-=-=-
+> >
+> >--
+> >dm-devel mailing list
+> >dm-devel@redhat.com
+> >https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+> 
+> Do we know when this will make it upstream, into device-mapper and a
+> kernel release?
 
-Would "git-show --pretty=3Demail <sha>" be what you need ?
+Once Alasdair does it ;)
+
+Heinz
+
+> 
+> Thanks,
+> 
+> Jason
