@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipath-tools causes path to come back as	different
-	block device
-Date: Fri, 20 Jul 2007 16:40:11 +0200
-Message-ID: <46A0C94B.4010905@suse.de>
-References: <469FEBBB.5040507@csupomona.edu> <46A0631F.4030404@suse.de>
-	<20070720115315.GA26421@bogon.ms20.nix>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: [2.6.23 PATCH 07/18] dm io: fix panic on large
+	request
+Date: Fri, 20 Jul 2007 17:07:31 +0200
+Message-ID: <46A0CFB3.1090004@redhat.com>
+References: <20070711205846.GY24114@agk.fab.redhat.com>
+	<469CC11B.2020103@trash.net> <469E305D.8060003@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070720115315.GA26421@bogon.ms20.nix>
+In-Reply-To: <469E305D.8060003@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Chuck Ebbert <cebbert@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Patrick McHardy <kaber@trash.net>
 List-Id: dm-devel.ids
 
-Guido Guenther wrote:
-> Hi Hannes,
-> On Fri, Jul 20, 2007 at 09:24:15AM +0200, Hannes Reinecke wrote:
->> Hmm. multipathd really should react to the 'remove' events for sdX.
->> Checking ...
->>
->> Looks as if it does. And it even is supposed to stop the path checker.
->>
->> Care to run multipathd with full debugging (ie -v 4) and post the outp=
-ut?
->> My guess is that somehow the path checker is not stopped and the fd is=
- kept
->> open, so that the device is not released properly.
-> This even happens with no multipathd running on a Clariion with qla2xx.
-> So multipathd can't be at fault here, can it? Also with multipathd
-> running the device nodes in /dev/ and the sysfs nodes in /sys/block get
-> removed properly (at least it looks like to me). Any hints where else t=
-o
-> start digging?
-Removing from /dev and /sys in not sufficient, sadly.
-The memory is only released after the last reference has gone.
-So all fd's have to be closed (ie multipathd and the path checkers have
-to have this path disabled) and no device-mapper table must reference it.
+Chuck Ebbert wrote:
 
-So easiest way is infact to have multipathd run with -v 4, as this will
-tell you exactly if multipathd has stopped the path checker.
-The device-mapper tables can be checked manually with dmsetup.
+>> [  126.754204] BUG: unable to handle kernel NULL pointer dereference at
+>> virtual address 00000000
+>>     
+...
 
-Cheers,
+> mempool_free() was called with a NULL pool. That can't be good.
+Yes, it is really not good :)
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Bug http://bugzilla.kernel.org/show_bug.cgi?id=7388
+Attached patch fixes this problem, fix needed for stable tree too,
+this is not regression, just very old bug...
+
+Milan
+--
+mbroz@redhat.com
+
+--
+From: Milan Broz <mbroz@redhat.com>
+
+Flush workqueue before releasing bioset and mopools
+in dm-crypt.
+There can be finished but not yet released request.
+
+Call chain causing oops:
+  run workqueue
+    dec_pending
+      bio_endio(...);
+      	<remove device request - remove mempool>
+      mempool_free(io, cc->io_pool);
+
+This usually happens when cryptsetup create temporary
+luks mapping in the beggining of crypt device activation.
+
+When dm-core calls destructor crypt_dtr, no new request
+are possible.
+
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+
+---
+ drivers/md/dm-crypt.c |    2 ++
+ 1 file changed, 2 insertions(+)
+
+Index: linux-2.6.22/drivers/md/dm-crypt.c
+===================================================================
+--- linux-2.6.22.orig/drivers/md/dm-crypt.c	2007-07-17 21:56:36.000000000 +0200
++++ linux-2.6.22/drivers/md/dm-crypt.c	2007-07-19 11:55:13.000000000 +0200
+@@ -920,6 +920,8 @@ static void crypt_dtr(struct dm_target *
+ {
+ 	struct crypt_config *cc = (struct crypt_config *) ti->private;
+ 
++	flush_workqueue(_kcryptd_workqueue);
++
+ 	bioset_free(cc->bs);
+ 	mempool_destroy(cc->page_pool);
+ 	mempool_destroy(cc->io_pool);
