@@ -1,16 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: multipath-tool udev rules require missing dmsetup
-	features
-Date: Fri, 20 Jul 2007 17:46:35 +0100
-Message-ID: <20070720164635.GB459@agk.fab.redhat.com>
-References: <469EB881.6070207@csupomona.edu>
-	<20070719061622.GB21899@pentland.suse.de>
+From: "Wood, Brian J" <brian.j.wood@intel.com>
+Subject: RE: Question about dmevents
+Date: Fri, 20 Jul 2007 09:57:28 -0700
+Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CC0122633A@orsmsx418.amr.corp.intel.com>
+References: <20070720162626.GA459@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20070719061622.GB21899@pentland.suse.de>
+Content-class: urn:content-classes:message
+In-Reply-To: <20070720162626.GA459@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,21 +23,35 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jul 19, 2007 at 08:16:22AM +0200, Hannes Reinecke wrote:
-> As already said, it totally makes sense when you hack up dmsetup and then forget
-> about the patch. Sorry about this.
-> Alasdair, care to incorporate it?
+Hi Alasdair, I also read in the definition of DM_DEV_CREATE that the
+uuid is optional. Since that is the case shouldn't the failure for not
+having a uuid in "_alloc_thread_status()" be taken out?
 
-Kay mentioned this patch to me at OLS.
+Thank you,=20
 
-My answer was that I want to see a generic implementation within the reporting
-code.  In other words a new command line flag would instruct the reporting code
-to produce its output in this sort of format.  The output needs to be useful
-when reporting on multiple objects at once, so to guarantee unique output
-lines, you might want to include fields acting as a unique key inside the
-variable names, which can be all-caps versions of the existing reporting field
-names.
- 
-Alasdair
--- 
-agk@redhat.com
+Brian Wood
+Intel Corporation=20
+Digital Enterprise Group
+Manageability & Platform Software Division
+brian.j.wood@intel.com
+
+>-----Original Message-----
+>From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On
+>Behalf Of Alasdair G Kergon
+>Sent: Friday, July 20, 2007 9:26 AM
+>To: device-mapper development
+>Subject: Re: [dm-devel] Question about dmevents
+>
+>See http://people.redhat.com/agk/talks/FOSDEM_2005/text41.html for info
+>about
+>how devices are referenced.
+>
+>Alasdair
+>--
+>agk@redhat.com
+>
+>--
+>dm-devel mailing list
+>dm-devel@redhat.com
+>https://www.redhat.com/mailman/listinfo/dm-devel
