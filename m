@@ -1,11 +1,15 @@
-From: -s@bogon.ms20.nix.redhat.com
-Subject: [multipath 1/1] cache sysfs_devices
-Date: Fri, 20 Jul 2007 22:52:59 +0200
-Message-ID: <32618.0349373773$1184964943@news.gmane.org>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: Re: [multipath 1/1] cache sysfs_devices
+Date: Fri, 20 Jul 2007 23:03:44 +0200
+Message-ID: <20070720210343.GA11879@bogon.ms20.nix>
 References: <20070720172919.GA2497@bogon.ms20.nix>
+	<11849647793576-git-send-email--s>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070720172919.GA2497@bogon.ms20.nix>
+Content-Disposition: inline
+In-Reply-To: <11849647793576-git-send-email--s>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,10 +23,18 @@ To: Christophe Varoqui <christophe.varoqui@free.fr>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Guido Guenther <agx@sigxcpu.org>
+I give up on git-send-email - it always fools me. Nevertheless this one
+fixes the described bug of paths coming back as different block
+devices:
+
+Keep a list of sysfs devices for sysfs_device_get() so uev_trigger() can look
+up the necessary information for proper path removal in case of a 'remove'
+uevent - the sysfs files in the filesystem might be long gone at this point.
 
 This also plugs a memory leak where we'd malloc space for the same sysfs device
 over and over again for every processed uevent.
+
+Signed-off-by: Guido Guenther <agx@sigxcpu.org>
 ---
  libmultipath/sysfs.c |   47 +++++++++++++++++++++++++++++++++++++++--------
  1 files changed, 39 insertions(+), 8 deletions(-)
