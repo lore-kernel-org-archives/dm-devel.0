@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: Question about dmevents
-Date: Fri, 20 Jul 2007 17:16:24 +0100
-Message-ID: <20070720161624.GY459@agk.fab.redhat.com>
+Date: Fri, 20 Jul 2007 17:22:09 +0100
+Message-ID: <20070720162209.GZ459@agk.fab.redhat.com>
 References: <D44F48C7D79D2943A073C8FA0F49A3CC0122629E@orsmsx418.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,10 +21,11 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jul 20, 2007 at 09:02:18AM -0700, Wood, Brian J wrote:
->  	/* FIXME Add name or uuid or devno to messages */
+Obvious question - but first check your device actually has a uuid.
+(Does 'dmsetup info' report it?)
 
-'messages' just refers to the log messages - they don't provide sufficient context
+Kernel-side, uuids are optional, but userspace applications are likely
+to find it difficult to function reliably without them.
 
 Alasdair
 -- 
