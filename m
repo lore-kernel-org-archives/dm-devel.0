@@ -1,7 +1,7 @@
 From: meyering@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/.exported_symbol ...
-Date: 24 Jul 2007 14:15:46 -0000
-Message-ID: <20070724141546.18751.qmail@sourceware.org>
+Subject: device-mapper ./WHATS_NEW dmeventd/dmeventd.c  ...
+Date: 24 Jul 2007 14:16:48 -0000
+Message-ID: <20070724141648.18945.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,91 +18,57 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	meyering@sourceware.org	2007-07-24 14:15:45
+Changes by:	meyering@sourceware.org	2007-07-24 14:16:48
 
 Modified files:
 	.              : WHATS_NEW 
-	lib            : .exported_symbols libdevmapper.h libdm-file.c 
+	dmeventd       : dmeventd.c 
+	lib/fs         : libdevmapper.c 
 
 Log message:
-	dm_fclose: new function
-	* lib/libdevmapper.h: Declare it.
-	* lib/libdm-file.c (dm_fclose): Define it.
-	* lib/.exported_symbols: Add dm_fclose.
+	libdevmapper, dmeventd: be paranoid about detecting write failure
+	* dmeventd/dmeventd.c (_set_oom_adj): When writing to /proc/self/oom_adj,
+	detect failure even if it's hidden behind ferror.  [Using dm_fclose's
+	extra ferror test here is probably not needed, since the amount written
+	is nowhere near BUFSIZ, but use it regardless, for consistency. ]
+	* lib/fs/libdevmapper.c (do_suspend): Detect fclose failure when
+	writing to suspend.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.191&r2=1.192
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/.exported_symbols.diff?cvsroot=dm&r1=1.29&r2=1.30
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.70&r2=1.71
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-file.c.diff?cvsroot=dm&r1=1.4&r2=1.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.192&r2=1.193
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.49&r2=1.50
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/fs/libdevmapper.c.diff?cvsroot=dm&r1=1.13&r2=1.14
 
---- device-mapper/WHATS_NEW	2007/07/13 16:10:24	1.191
-+++ device-mapper/WHATS_NEW	2007/07/24 14:15:45	1.192
-@@ -1,5 +1,6 @@
+--- device-mapper/WHATS_NEW	2007/07/24 14:15:45	1.192
++++ device-mapper/WHATS_NEW	2007/07/24 14:16:48	1.193
+@@ -1,6 +1,7 @@
  Version 1.02.22 - 
  ================================
-+  dm_fclose: new function
+   dm_fclose: new function
++  libdevmapper, dmeventd: be paranoid about detecting write failure
  
  Version 1.02.21 - 13th July 2007
  ================================
---- device-mapper/lib/.exported_symbols	2007/04/27 18:40:23	1.29
-+++ device-mapper/lib/.exported_symbols	2007/07/24 14:15:45	1.30
-@@ -1,6 +1,7 @@
- dm_lib_release
- dm_lib_exit
- dm_driver_version
-+dm_fclose
- dm_get_library_version
- dm_log
- dm_log_init
---- device-mapper/lib/libdevmapper.h	2007/04/27 18:40:23	1.70
-+++ device-mapper/lib/libdevmapper.h	2007/07/24 14:15:45	1.71
-@@ -27,6 +27,7 @@
- #include <limits.h>
- #include <string.h>
- #include <stdlib.h>
-+#include <stdio.h>
+--- device-mapper/dmeventd/dmeventd.c	2007/04/24 13:29:02	1.49
++++ device-mapper/dmeventd/dmeventd.c	2007/07/24 14:16:48	1.50
+@@ -1579,7 +1579,7 @@
+ 	}
  
- /*****************************************************************
-  * The first section of this file provides direct access to the 
-@@ -623,6 +624,21 @@
-  */
- char *dm_basename(const char *path);
+ 	fprintf(fp, "%i", val);
+-	if (fclose(fp))
++	if (dm_fclose(fp))
+ 		perror(OOM_ADJ_FILE ": fclose failed");
  
-+/**************************
-+ * file/stream manipulation
-+ **************************/
-+
-+/*
-+ * Close a stream, with nicer error checking than fclose's.
-+ * Derived from gnulib's close-stream.c.
-+ *
-+ * Close "stream".  Return 0 if successful, and EOF (setting errno)
-+ * otherwise.  Upon failure, set errno to 0 if the error number
-+ * cannot be determined.  Useful mainly for writable streams.
-+ */
-+int dm_fclose(FILE *stream);
-+
-+
- /*
-  * Returns size of a buffer which is allocated with dm_malloc.
-  * Pointer to the buffer is stored in *buf.
---- device-mapper/lib/libdm-file.c	2006/05/10 16:23:41	1.4
-+++ device-mapper/lib/libdm-file.c	2007/07/24 14:15:45	1.5
-@@ -72,3 +72,16 @@
- 	return 0;
- }
+ 	return 1;
+--- device-mapper/lib/fs/libdevmapper.c	2004/03/30 19:08:57	1.13
++++ device-mapper/lib/fs/libdevmapper.c	2007/07/24 14:16:48	1.14
+@@ -150,7 +150,8 @@
+ 			ret = 1;
+ 		else
+ 			log_error("%s: fputc failed: %s", path, strerror(errno));
+-		fclose(fp);
++		if (fclose(fp))
++			log_error("%s: write failed: %s", path, strerror(errno));
+ 	} else
+ 		log_error("%s: fopen failed: %s", path, strerror(errno));
  
-+int dm_fclose(FILE *stream)
-+{
-+	int prev_fail = ferror(stream);
-+	int fclose_fail = fclose(stream);
-+
-+	/* If there was a previous failure, but fclose succeeded,
-+	   clear errno, since ferror does not set it, and its value
-+	   may be unrelated to the ferror-reported failure.  */
-+	if (prev_fail && !fclose_fail)
-+		errno = 0;
-+
-+	return prev_fail || fclose_fail ? EOF : 0;
-+}
