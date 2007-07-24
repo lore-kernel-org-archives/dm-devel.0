@@ -1,11 +1,11 @@
 From: Dmitry Monakhov <dmonakhov@openvz.org>
-Subject: [PATCH 1/8] dm: Add missing 'kfree' to dm-crypt target constructor.
-Date: Tue, 24 Jul 2007 12:55:40 +0400
-Message-ID: <20070724085540.GA16507@dnb.sw.ru>
+Subject: [PATCH 2/8] dm: Fix workqueue leak for raid5
+Date: Tue, 24 Jul 2007 12:56:42 +0400
+Message-ID: <20070724085642.GB16507@dnb.sw.ru>
 References: <20070724085106.GD20538@dnb.sw.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S934923AbXGXIzm@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S935014AbXGXI42@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <20070724085106.GD20538@dnb.sw.ru>
 Sender: linux-kernel-owner@vger.kernel.org
@@ -15,20 +15,21 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
 ---
- drivers/md/dm-crypt.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
+ drivers/md/raid5.c |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index cdd3f2c..1315002 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -175,6 +175,7 @@ static int crypt_iv_essiv_ctr(struct crypt_config *cc, struct dm_target *ti,
- 
- 	if (err) {
- 		ti->error = "Error calculating hash in ESSIV";
-+		kfree(salt);
- 		return err;
- 	}
- 
+diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
+index 0f30826..79dd2c7 100644
+--- a/drivers/md/raid5.c
++++ b/drivers/md/raid5.c
+@@ -4985,6 +4985,8 @@ static int run(mddev_t *mddev)
+ abort:
+ 	if (conf) {
+ 		print_raid5_conf(conf);
++		if (conf->workqueue)
++			destroy_workqueue(conf->workqueue);
+ 		safe_put_page(conf->spare_page);
+ 		kfree(conf->disks);
+ 		kfree(conf->stripe_hashtbl);
 -- 
 1.5.2.2
