@@ -1,11 +1,17 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] multipathd: whitespace issues
-Date: Tue, 24 Jul 2007 08:43:47 +0200
-Message-ID: <46A59FA3.9040101@suse.de>
+From: "Matthias Rudolph" <Matthias.Rudolph@hds.com>
+Subject: Re: Problem with Multipath on Hitachi DF600F (Stefan
+	Bader)
+Date: Tue, 24 Jul 2007 09:06:55 +0100
+Message-ID: <C67364BD62907640A033D1F4094CA7B708E7D0DB@UKSPKEVS101.corp.hds.com>
+References: <20070723160033.44E0B7363C@hormel.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------070905020208000808010408"
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20070723160033.44E0B7363C@hormel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,43 +21,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------070905020208000808010408
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
 
-Hi Christophe,
+Sometimes it happens that both pathes to a SAN LUN are not available for
+a short time. Because it is not possible to enable any timeouts inside
+the HBA driver (QLogic) you have to handle this situation a layer above.
+You can do it with the DM Multipath feature "queue_if_no_path".
 
-multipathd/main.c has quite some lines with 'interesting' whitespace usag=
-e.
-This patch cleans it up.
+I have upgraded the HDS prioritizer to version 2.00. You will find all
+the stuff on:
 
-Cheers,
+http://homepage.mac.com/i_am_fable/FileSharing36.html
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Regards
 
---------------070905020208000808010408
-Content-Type: text/plain;
- name="multipath-tools-cleanup-whitespace"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="multipath-tools-cleanup-whitespace"
-
-
---------------070905020208000808010408
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------070905020208000808010408--
+Matthias Rudolph
+Country Support Germany
+HITACHI DATA SYSTEMS
+matthias.rudolph@hds.com
