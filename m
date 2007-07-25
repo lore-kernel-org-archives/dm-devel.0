@@ -1,14 +1,15 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Designing a new prio_callout
-Date: Wed, 25 Jul 2007 13:37:05 +0200
-Message-ID: <46A735E1.4070206@suse.de>
-References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: Re: Re: [multipath 1/1] cache sysfs_devices
+Date: Wed, 25 Jul 2007 18:37:49 +0200
+Message-ID: <20070725163749.GA23411@bogon.ms20.nix>
+References: <20070720172919.GA2497@bogon.ms20.nix>
+	<20070720210343.GA11879@bogon.ms20.nix> <46A59DA4.1010703@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <46A59DA4.1010703@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,72 +20,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-Ethan John wrote:
-> I hope I found the right list for this.
->=20
-> My company is developing an iSCSI solution, and in looking into Linux
-> compatability and performance, we're concerned that our architecture
-> doesn't
-> play well with the existing multipath configurations that are available=
-.
->=20
-> We cannot support what Linux calls multibus, or what the fiber world se=
-ems
-> to call active/active. We will need folks to configure failover
-> exclusively.
->=20
-> It appears that the current multipathing failover configuration assigns=
- a
-> priority to each path (by default, just assigns the same priority to al=
-l
-> paths). This is bad for us, as we're presenting iSCSI targets across
-> multiple machines in a cluster; ideally, a user will have multiple devi=
-ces,
-> each with a separate path to a separate machine, with failover to the o=
-ther
-> machines in the cluster. The default setup of multipath will map all
-> connections to a single machine, which is no load balancing at all.
->=20
-> I've fooled around with various other values for default_prio_callot
-> (besides the /bin/true), and the one that seems to work best is actuall=
-y
-> mpath_prio_random.
->=20
-Argl.
+On Tue, Jul 24, 2007 at 08:35:16AM +0200, Hannes Reinecke wrote:
+> Guido Guenther wrote:
+> > I give up on git-send-email - it always fools me. Nevertheless this one
+> > fixes the described bug of paths coming back as different block
+> > devices:
+> > 
+> > Keep a list of sysfs devices for sysfs_device_get() so uev_trigger() can look
+> > up the necessary information for proper path removal in case of a 'remove'
+> > uevent - the sysfs files in the filesystem might be long gone at this point.
+> > 
+> > This also plugs a memory leak where we'd malloc space for the same sysfs device
+> > over and over again for every processed uevent.
+> > 
+> Hmm. But now we're running into the opposite trap: memory for a block device once
+> existing will never be freed. So over time we're likely to become a memory hog.
+So far we did not free any memory _and_ we would end up allocating memory
+for every path that comes back up over and over again.
 
-> In fact, mpath_prio_random would actually work perfectly, except that i=
-t
-> seems to swap path priorities extremely often -- several times a minute=
-. So
-> my company needs to develop a new script, probably much like the
-> mpath_prio_emc or mpath_prio_netapp ones, so that we can hint at load
-> balancing across devices with failover as the multipathing policy.
->=20
-> I've been completely unable to find documentation on this. Where might =
-I
-> look? Is this even the right direction in which to be looking for a
-> solution to this problem?
->=20
-Have you looked a ALUA ?
-It's in SPC-3 section 5.8: 'Target port group access states'.
-
-This is the preferred way of handling these things.
-And is supported by multipath-tools.
-
-Mind you, only implicit ALUA is supported. Explicit ALUA
-support will be implemented, too, once someone actually
-uses it :-)
-
-Please do not design your own way of handling failover. This
-has shown too many difficulties in the past.
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+> Better it would be to remove the sysfs device from the cache once we're done
+> with it.
+Fair enough, we won't need the information then anyway.
+Thanks,
+ -- Guido
