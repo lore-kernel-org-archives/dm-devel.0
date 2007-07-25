@@ -1,51 +1,34 @@
-From: "Dan Williams" <dan.j.williams@intel.com>
-Subject: Re: [PATCH 2/8] dm: Fix workqueue leak for raid5
-Date: Tue, 24 Jul 2007 15:27:05 -0700
-Message-ID: <e9c3a7c20707241527o55f3b2dbh4d218c96c6bb612b@mail.gmail.com>
-References: <20070724085106.GD20538@dnb.sw.ru>
-	<20070724085642.GB16507@dnb.sw.ru>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Herbert Xu <herbert.xu@redhat.com>
+Subject: Re: [0/3] [DM] dm-crypt: Add async crypto support
+Date: Wed, 25 Jul 2007 17:23:32 +0800
+Message-ID: <20070725092332.GA21912@gondor.apana.org.au>
+References: <20070711030303.GA6730@gondor.apana.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070724085642.GB16507@dnb.sw.ru>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20070711030303.GA6730@gondor.apana.org.au>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+Cc: Christophe Saout <christophe@saout.de>, Linux Crypto Mailing List <linux-crypto@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On 7/24/07, Dmitry Monakhov <dmonakhov@openvz.org> wrote:
-> Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
-> ---
->  drivers/md/raid5.c |    2 ++
->  1 files changed, 2 insertions(+), 0 deletions(-)
->
-> diff --git a/drivers/md/raid5.c b/drivers/md/raid5.c
-> index 0f30826..79dd2c7 100644
-> --- a/drivers/md/raid5.c
-> +++ b/drivers/md/raid5.c
-> @@ -4985,6 +4985,8 @@ static int run(mddev_t *mddev)
->  abort:
->         if (conf) {
->                 print_raid5_conf(conf);
-> +               if (conf->workqueue)
-> +                       destroy_workqueue(conf->workqueue);
->                 safe_put_page(conf->spare_page);
->                 kfree(conf->disks);
->                 kfree(conf->stripe_hashtbl);
-> --
-I assume this patch is against -mm.  I will fold it into:
+On Wed, Jul 11, 2007 at 11:03:03AM +0800, Herbert Xu wrote:
+> 
+> I've rebased the async dm-crypt patches for 2.6.22.  In doing
+> so I've refactored the kcryptd split so that all crypto operations
+> happen in kcryptd while all IO submissions occur in kcryptd-io.
 
-git://lost.foo-projects.org/~dwillia2/git/iop md-for-linus
+Hi Alasdair:
+
+Do you have any further comments on these patches?
+
+If you're OK with them then I could drop them into
+the cryptodev tree.
 
 Thanks,
-Dan
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
