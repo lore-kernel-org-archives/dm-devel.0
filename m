@@ -1,11 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] Remove devices from sysfs cache
-Date: Wed, 25 Jul 2007 12:59:39 +0200
-Message-ID: <46A72D1B.1040408@suse.de>
+Subject: Re: Designing a new prio_callout
+Date: Wed, 25 Jul 2007 13:37:05 +0200
+Message-ID: <46A735E1.4070206@suse.de>
+References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------040209060108080309060307"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,24 +18,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe varoqui <christophe.varoqui@free.fr>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------040209060108080309060307
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Ethan John wrote:
+> I hope I found the right list for this.
+>=20
+> My company is developing an iSCSI solution, and in looking into Linux
+> compatability and performance, we're concerned that our architecture
+> doesn't
+> play well with the existing multipath configurations that are available=
+.
+>=20
+> We cannot support what Linux calls multibus, or what the fiber world se=
+ems
+> to call active/active. We will need folks to configure failover
+> exclusively.
+>=20
+> It appears that the current multipathing failover configuration assigns=
+ a
+> priority to each path (by default, just assigns the same priority to al=
+l
+> paths). This is bad for us, as we're presenting iSCSI targets across
+> multiple machines in a cluster; ideally, a user will have multiple devi=
+ces,
+> each with a separate path to a separate machine, with failover to the o=
+ther
+> machines in the cluster. The default setup of multipath will map all
+> connections to a single machine, which is no load balancing at all.
+>=20
+> I've fooled around with various other values for default_prio_callot
+> (besides the /bin/true), and the one that seems to work best is actuall=
+y
+> mpath_prio_random.
+>=20
+Argl.
 
-Hi Christophe,
+> In fact, mpath_prio_random would actually work perfectly, except that i=
+t
+> seems to swap path priorities extremely often -- several times a minute=
+. So
+> my company needs to develop a new script, probably much like the
+> mpath_prio_emc or mpath_prio_netapp ones, so that we can hint at load
+> balancing across devices with failover as the multipathing policy.
+>=20
+> I've been completely unable to find documentation on this. Where might =
+I
+> look? Is this even the right direction in which to be looking for a
+> solution to this problem?
+>=20
+Have you looked a ALUA ?
+It's in SPC-3 section 5.8: 'Target port group access states'.
 
-whenever a device is finally removed from a multipath map we should also =
-remove it from the sysfs cache. Otherwise we'll hogging up memory with mu=
-ltipathd. And we might rely on wrong information as the device in the sys=
-fs cache might in fact be a different device if the system decided to ass=
-ign the same number to a different device or if some values have changed.
+This is the preferred way of handling these things.
+And is supported by multipath-tools.
 
-Please apply.
+Mind you, only implicit ALUA is supported. Explicit ALUA
+support will be implemented, too, once someone actually
+uses it :-)
+
+Please do not design your own way of handling failover. This
+has shown too many difficulties in the past.
 
 Cheers,
 
@@ -42,88 +88,3 @@ Dr. Hannes Reinecke		      zSeries & Storage
 hare@suse.de			      +49 911 74053 688
 SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
 GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
-
---------------040209060108080309060307
-Content-Type: text/plain; name="multipath-tools-remove-sysfs-device-from-cache"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
-	filename="multipath-tools-remove-sysfs-device-from-cache"
-
-multipathd: remove sysfs devices from cache
-
-Whenever a device is really removed from any multipath map we should
-also remove it from the cache. Otherwise we'll induce a memory leak.
-
-Signed-off-by: Hannes Reinecke <hare@suse.de>
-
-diff --git a/libmultipath/sysfs.c b/libmultipath/sysfs.c
-index d8c65b2..b9621ac 100644
---- a/libmultipath/sysfs.c
-+++ b/libmultipath/sysfs.c
-@@ -342,6 +342,25 @@ struct sysfs_device *sysfs_device_get_parent_with_subsystem(struct sysfs_device
- 	return NULL;
- }
- 
-+void sysfs_device_put(struct sysfs_device *dev)
-+{
-+	struct sysfs_dev *sysdev_loop;
-+
-+	list_for_each_entry(sysdev_loop, &sysfs_dev_list, node) {
-+		if (&sysdev_loop->dev == dev) {
-+			dbg("removed dev '%s' from cache",
-+			    sysdev_loop->dev.devpath);
-+			list_del(&sysdev_loop->node);
-+			free(sysdev_loop);
-+			return;
-+		}
-+	}
-+	dbg("dev '%s' not found in cache",
-+	    sysdev_loop->dev.devpath);
-+
-+	return;
-+}
-+
- char *sysfs_attr_get_value(const char *devpath, const char *attr_name)
- {
- 	char path_full[PATH_SIZE];
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index 6d83489..e7fa3e7 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -18,6 +18,7 @@ void sysfs_device_set_values(struct sysfs_device *dev, const char *devpath,
- struct sysfs_device *sysfs_device_get(const char *devpath);
- struct sysfs_device *sysfs_device_get_parent(struct sysfs_device *dev);
- struct sysfs_device *sysfs_device_get_parent_with_subsystem(struct sysfs_device *dev, const char *subsystem);
-+void sysfs_device_put(struct sysfs_device *dev);
- char *sysfs_attr_get_value(const char *devpath, const char *attr_name);
- int sysfs_resolve_link(char *path, size_t size);
- 
-diff --git a/multipathd/main.c b/multipathd/main.c
-index b1620b5..da5fd8f 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -442,8 +442,14 @@ out:
- static int
- uev_remove_path (struct sysfs_device * dev, struct vectors * vecs)
- {
-+	int retval;
-+
- 	condlog(2, "%s: remove path (uevent)", dev->kernel);
--	return ev_remove_path(dev->kernel, vecs);
-+	retval = ev_remove_path(dev->kernel, vecs);
-+	if (!retval)
-+		sysfs_device_put(dev);
-+
-+	return retval;
- }
- 
- int
-
---------------040209060108080309060307
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------040209060108080309060307--
