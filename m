@@ -1,17 +1,9 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [patch 3/3] Add retries to hp hardware handler if
-	path initialization command completes with a check condition.
-Date: Thu, 26 Jul 2007 12:19:03 -0700
-Message-ID: <1185477543.17399.59.camel@linuxchandra>
-References: <20070726044447.846195205@redhat.com>
-	<20070726044720.980015296@redhat.com>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+From: bmarzins@sourceware.org
+Subject: multipath-tools/libcheckers directio.c
+Date: 26 Jul 2007 19:27:15 -0000
+Message-ID: <20070726192715.27202.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070726044720.980015296@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,147 +13,275 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2007-07-26 at 00:44 -0400, dwysocha@redhat.com wrote:
-> plain text document attachment (dm-hp-sw-add-retries-handle-not-
-> ready.patch)
-> This patch adds retries to the hp hardware handler, and utilizes the 
-> MP_RETRY flag of dm-multipath.  For now in the hp handler, if we get a 
-> pg_init completed with a check condition we just assume we can retry the
-> pg_init command.  We make this assumption because of incomplete data on
-> specific check condition code of the HP hardware, and because testing
-> has shown the HP path initialization command to be idempotent.
-> The number of times we retry is settable via the "pg_init_retries"
-> multipath map feature.
-> 
-> 
-> Index: linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
-> ===================================================================
-> --- linux-2.6.23-rc1.orig/drivers/md/dm-hp-sw.c
-> +++ linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
-> @@ -18,6 +18,7 @@
->  #include <linux/types.h>
->  #include <scsi/scsi.h>
->  #include <scsi/scsi_cmnd.h>
-> +#include <scsi/scsi_dbg.h>
-> 
->  #include "dm.h"
->  #include "dm-hw-handler.h"
-> @@ -26,8 +27,42 @@
-> 
->  struct hp_sw_context {
->  	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
-> +	unsigned argc;
->  };
-> 
-> +/**
-> + * hp_sw_error_is_retryable - Is an HP-specific check condition retryable?
-> + * @req: path activation request
-> + *
-> + * Examine error codes of request and determine whether the error is retryable.
-> + * Some error codes are already retried by scsi-ml (see
-> + * scsi_decide_disposition), but some HP specific codes are not.
-> + * The intent of this routine is to supply the logic for the HP specific
-> + * check conditions.
-> + *
-> + * Returns:
-> + *  1 - command completed with retryable error
-> + *  0 - command completed with non-retryable error
-> + *
-> + * Possible optimizations
-> + * 1. More hardware-specific error codes
-> + */
-> +static int hp_sw_error_is_retryable(struct request *req)
-> +{
-> +	/*
-> +	 * NOT_READY is known to be retryable
-> +	 * For now we just dump out the sense data and call it retryable
-> +	 */
-> +	if (status_byte(req->errors) == CHECK_CONDITION)
-> +		__scsi_print_sense("hp_sw", req->sense, req->sense_len);
-> +
-> +	/*
-> +	 * At this point we don't have complete information about all the error
-> +	 * codes from this hardware, so we are just conservative and retry
-> +	 * when in doubt.
-> +	 */
-> +	return 1;
-> +}
-> 
->  /**
->   * hp_sw_end_io - Completion handler for HP path activation.
-> @@ -39,8 +74,6 @@ struct hp_sw_context {
->   *
->   * Context: scsi-ml softirq
->   *
-> - * Possible optimizations
-> - * 1. Actually check sense data for retryable error (e.g. NOT_READY)
->   */
->  static void hp_sw_end_io(struct request *req, int error)
->  {
-> @@ -52,11 +85,17 @@ static void hp_sw_end_io(struct request 
->  		DMDEBUG("%s path activation command - success",
->  		       	path->dev->name);
->  	} else {
-> -		DMWARN("path activation command on %s - error=0x%x",
-> -		       path->dev->name, error);
-> +		if (hp_sw_error_is_retryable(req)) {
-> +			DMDEBUG("%s path activation command retry",
-> +			       path->dev->name);
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2007-07-26 19:27:14
 
-mixed use of space and tabs
-> +			err_flags = MP_RETRY;
-> +			goto out;
-> +		}
-> +		DMWARN("%s path activation fail - error=0x%x",
-> +			path->dev->name, error);
->  		err_flags = MP_FAIL_PATH;
->  	}
-> -
-> + out:
+Modified files:
+	libcheckers    : directio.c 
 
-space in front of label
+Log message:
+	Fix for #235081. Now using async directio callout.
 
->  	req->end_io_data = NULL;
->  	__blk_put_request(req->q, req);
->  	dm_pg_init_complete(path, err_flags);
-> @@ -134,17 +173,16 @@ static void hp_sw_pg_init(struct hw_hand
->  	if (!req) {
->  		DMERR("%s path activation command allocation fail ",
->  		      path->dev->name);
-> -		goto fail;
-> +		goto retry;
->  	}
-> 
-> -	DMDEBUG("path activation command sent on %s",
-> -		path->dev->name);
-> +	DMDEBUG("%s path activation command sent", path->dev->name);
-> 
->  	blk_execute_rq_nowait(req->q, NULL, req, 1, hp_sw_end_io);
->  	return;
-> 
-> - fail:
-> -	dm_pg_init_complete(path, MP_FAIL_PATH);
-> + retry:
-> +	dm_pg_init_complete(path, MP_RETRY);
->  }
-> 
->  static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
-> @@ -181,7 +219,7 @@ static int __init hp_sw_init(void)
->  	if (r < 0)
->  		DMERR("register failed %d", r);
->  	else
-> -		DMINFO("version 0.0.2 loaded");
-> +		DMINFO("version 0.0.3 loaded");
-> 
->  	return r;
->  }
-> 
--- 
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/directio.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.2&r2=1.2.2.1
 
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+--- multipath-tools/libcheckers/directio.c	2005/11/16 20:24:57	1.2
++++ multipath-tools/libcheckers/directio.c	2007/07/26 19:27:13	1.2.2.1
+@@ -12,90 +12,149 @@
+ #include <sys/ioctl.h>
+ #include <linux/fs.h>
+ #include <errno.h>
++#include <linux/kdev_t.h>
++#include <asm/unistd.h>
+ 
++#include "libaio.h"
+ #include "path_state.h"
+ #include "checkers.h"
++#include "../libmultipath/debug.h"
+ 
+ #define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
+ #define MSG_DIRECTIO_UP		"directio checker reports path is up"
+ #define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
+ 
+-struct readsector0_checker_context {
+-	void * dummy;
++struct directio_context {
++	int             running;
++	int             blksize;
++	unsigned char * buf;
++	unsigned char * ptr;
++	io_context_t    ioctx;
++	struct iocb     io;
+ };
+ 
+ static int
+-direct_read (int fd, unsigned char * buff, int size)
++check_state(int fd, struct directio_context *ct)
+ {
+ 	long flags;
+ 	int reset_flags = 0;
+-	int res, retval;
++	struct timespec timeout = { .tv_sec = 2 };
++	struct io_event event;
++	struct stat     sb;
++	int             rc = PATH_UNCHECKED;
++	long            r;
+ 
+-	flags = fcntl(fd,F_GETFL);
+-
+-	if (flags < 0) {
+-		return PATH_UNCHECKED;
+-	}
++	flags = fcntl(fd, F_GETFL);
++	if (flags < 0)
++		goto out;
+ 
+ 	if (!(flags & O_DIRECT)) {
+ 		flags |= O_DIRECT;
+-		if (fcntl(fd,F_SETFL,flags) < 0) {
+-			return PATH_UNCHECKED;
+-		}
++		if (fcntl(fd, F_SETFL, flags) < 0)
++			goto out;
+ 		reset_flags = 1;
+ 	}
+ 
+-	while ( (res = read(fd,buff,size)) < 0 && errno == EINTR );
+-	if (res < 0) {
+-		if (errno == EINVAL) {
+-			/* O_DIRECT is not available */
+-			retval = PATH_UNCHECKED;
+-		} else if (errno == ENOMEM) {
+-			retval = PATH_UP;
+-		} else {
+-			retval = PATH_DOWN;
++	if (fstat(fd, &sb) == 0) {
++		condlog(4, "directio: called for %x", (unsigned) sb.st_rdev);
++	}
++
++	if (!ct->running) {
++		struct iocb *ios[1] = { &ct->io };
++
++		condlog(3, "directio: starting new request");
++		memset(&ct->io, 0, sizeof(struct iocb));
++		io_prep_pread(&ct->io, fd, ct->ptr, ct->blksize, 0);
++		if (syscall(__NR_io_submit, ct->ioctx, 1, ios) != 1) {
++			condlog(3, "directio: io_submit error %i", errno);
++			rc = PATH_UNCHECKED;
++			goto out;
+ 		}
++	}
++	ct->running = 1;
++
++	r = syscall(__NR_io_getevents, ct->ioctx, 1L, 1L, &event, &timeout);
++	if (r < 1L) {
++		condlog(3, "directio: timeout r=%li errno=%i", r, errno);
++		rc = PATH_DOWN;
+ 	} else {
+-		retval = PATH_UP;
++		condlog(3, "directio: io finished %lu/%lu", event.res,
++				event.res2);
++		ct->running = 0;
++		rc = (event.res == ct->blksize) ? PATH_UP : PATH_DOWN;
+ 	}
+-	
++
++out:
+ 	if (reset_flags) {
+ 		flags &= ~O_DIRECT;
+ 		/* No point in checking for errors */
+-		fcntl(fd,F_SETFL,flags);
++		fcntl(fd, F_SETFL, flags);
+ 	}
++	return rc;
++}
+ 
+-	return retval;
++void
++cleanup_context (struct directio_context *ctxt)
++{
++	if (ctxt->buf)
++		free(ctxt->buf);
++	syscall(__NR_io_destroy, ctxt->ioctx);
++	free(ctxt);
+ }
+ 
+ extern int
+ directio (int fd, char *msg, void **context)
+ {
+-	unsigned char *buf, *ptr;
+-	struct readsector0_checker_context * ctxt = NULL;
+-	unsigned long pgsize, numsect;
+-	int ret, blksize;
+-
+-	pgsize = getpagesize();
++	struct directio_context * ctxt = NULL;
++	int ret;
+ 	
+ 	/*
+ 	 * caller passed in a context : use its address
+ 	 */
+ 	if (context)
+-		ctxt = (struct readsector0_checker_context *) (*context);
++		ctxt = (struct directio_context *) (*context);
+ 
+ 	/*
+ 	 * passed in context is uninitialized or volatile context :
+ 	 * initialize it
+ 	 */
+ 	if (!ctxt) {
+-		ctxt = malloc(sizeof(struct readsector0_checker_context));
+-		memset(ctxt, 0, sizeof(struct readsector0_checker_context));
+-
++		unsigned long pgsize = getpagesize();
++	
++		ctxt = malloc(sizeof(struct directio_context));
+ 		if (!ctxt) {
+-			MSG("cannot allocate context");
+-			return -1;
++			condlog(0, "cannot allocate context");
++			goto fail;
++		}
++		memset(ctxt, 0, sizeof(struct directio_context));
++		if (syscall(__NR_io_setup, 1, &ctxt->ioctx) != 0) {
++			condlog(0, "io_setup failed");
++			goto fail;
++		}
++		if (ioctl(fd, BLKBSZGET, &ctxt->blksize) < 0) {
++			condlog(3, "cannot get blocksize, set default");
++			ctxt->blksize = 512;
+ 		}
++		if (ctxt->blksize > 4096) {
++			/*
++			 * Sanity check for DASD; BSZGET is broken
++			 */
++			ctxt->blksize = 4096;
++		}
++		if (!ctxt->blksize){
++			condlog(3, "blocksize is zero? Assuming path down\n");
++			MSG(MSG_DIRECTIO_DOWN);
++			ret = PATH_DOWN;
++			goto out;
++		}
++		ctxt->buf = (unsigned char *)malloc(ctxt->blksize + pgsize);
++		if (!ctxt->buf){
++			condlog(0, "cannot allocate context buffer\n");
++			goto fail;
++		}
++
++		ctxt->ptr = (unsigned char *) (((unsigned long)ctxt->buf + pgsize - 1) & (~(pgsize - 1)));
++
+ 		if (context)
+ 			*context = ctxt;
+ 	}
+@@ -104,41 +163,7 @@
+ 		ret = -1;
+ 		goto out;
+ 	}
+-	
+-	if (ioctl(fd, BLKGETSIZE, &numsect) < 0) {
+-		MSG("cannot get number of sectors, set default");
+-		numsect = 0;
+-	}
+-
+-	if (ioctl(fd, BLKBSZGET, &blksize) < 0) {
+-		MSG("cannot get blocksize, set default");
+-		blksize = 512;
+-	}
+-
+-	if (blksize > 4096) {
+-		/*
+-		 * Sanity check for DASD; BSZGET is broken
+-		 */
+-		blksize = 4096;
+-	}
+-
+-	if (!blksize) {
+-		/*
+-		 * Blocksize is 0, assume we can't write
+-		 * to this device.
+-		 */
+-		MSG(MSG_DIRECTIO_DOWN);
+-		ret = PATH_DOWN;
+-		goto out;
+-	}
+-
+-	buf = (unsigned char *)malloc(blksize + pgsize);
+-	if (!buf){
+-		goto out;
+-	}
+-	ptr = (unsigned char *)(((unsigned long)buf + pgsize - 1) &
+-				(~(pgsize - 1))); 
+-	ret = direct_read(fd, ptr, blksize);
++	ret = check_state(fd, ctxt);
+ 
+ 	switch (ret)
+ 	{
+@@ -154,7 +179,6 @@
+ 	default:
+ 		break;
+ 	}
+-	free(buf);
+ 
+ out:
+ 	/*
+@@ -162,7 +186,13 @@
+ 	 * free it
+ 	 */
+ 	if (!context)
+-		free(ctxt);
++		cleanup_context(ctxt);
+ 
+ 	return ret;
++fail:
++	if (context)
++		*context = NULL;
++	if (ctxt)
++		cleanup_context(ctxt);
++	return -1;
+ }
