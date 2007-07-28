@@ -1,15 +1,12 @@
 From: Jim Meyering <jim@meyering.net>
-Subject: Re: [lvm-devel] new device-mapper required to build
-	latest lvm from cvs
-Date: Sat, 28 Jul 2007 15:06:46 +0200
-Message-ID: <87sl78wuc9.fsf@rho.meyering.net>
-References: <87wswplmgl.fsf@rho.meyering.net> <46A7AB23.7050306@ce.jp.nec.com>
+Subject: unofficial git mirror of LVM2 and device-mapper CVS
+	repositories
+Date: Sat, 28 Jul 2007 15:07:18 +0200
+Message-ID: <87odhwwubd.fsf@rho.meyering.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46A7AB23.7050306@ce.jp.nec.com> (Jun'ichi Nomura's message of
-	"Wed\, 25 Jul 2007 15\:57\:23 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: device-mapper development <dm-devel@redhat.com>, LVM2 development <lvm-devel@redhat.com>
+To: LVM <lvm-devel@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-"Jun'ichi Nomura" <j-nomura@ce.jp.nec.com> wrote:
-> Jim Meyering wrote:
->> FYI, with the change I've just committed,
->>
->>   http://sources.redhat.com/ml/lvm2-cvs/2007-07/msg00035.html
->>
->> you now need a device-mapper library and headers built from
->> today's cvs sources.  Otherwise, you'll get compile warnings
->> and eventually a link error complaining about missing dm_fclose.
->
-> This change introduces an error for static build.
+I've set up an automatically-sync'd git mirror for each of the
+device-mapper and LVM2 cvs repositories.  Each mirror is updated
+approximately every 15 minutes.  You can view the summaries via these
+URLs:
 
-Thank you for the report and the patches.
-I've applied four of your patches, three for device-mapper
-and one for lvm2:
+    http://git.et.redhat.com/?p=lvm2.git
+    http://git.et.redhat.com/?p=device-mapper.git
 
-dm
-  Export dm_create_dir (was create_dir) to help fix LVM2 link error
-    http://git.et.redhat.com/?p=device-mapper.git;a=commitdiff;h=8748390a79f
-  Don't log mkdir fail-with-EROFS, to make create_dir equiv to that in LVM2
-    http://git.et.redhat.com/?p=device-mapper.git;a=commitdiff;h=81d93dd4717
-  Introduce and use log_sys_* macros from LVM2
-    http://git.et.redhat.com/?p=device-mapper.git;a=commitdiff;h=5edca96def8
+You can get a copy of either repository like this:
+(this uses the efficient "git://" protocol, and is sort of
+analogous to CVS pserver, i.e. anonymous, for read-only access)
 
-lvm2
-  Remove create_dir function; use now-equivalent dm_create_dir instead
-    http://git.et.redhat.com/?p=lvm2.git;a=commitdiff;h=7d85f48b35b7
+    git clone git://et.redhat.com/lvm2
+    git clone git://et.redhat.com/device-mapper
+
+They're not big, just 6.6MB and 6.1MB respectively, yet
+each contains the entire revision history for its project.
+[For the record, each size above include a checked out copy of the
+ sources as well as the ".git" repository.  Each repository itself
+ is only 20-25% the size of the corresponding CVS repository. ]
+
+Note, if you're new to "git", you typically do the "git clone" only
+once, initially, and from then on, you "cd" into the directory and
+download/merge the latest sources via "git pull".
+
+Also, for now, these two repository mirrors are no more than a
+personal project/service that I find useful.  Eventually, they may
+be classified as "supported", but perhaps via a different host, e.g.,
+git.fedoraproject.org.  If/when anything changes, I'll announce it here.
