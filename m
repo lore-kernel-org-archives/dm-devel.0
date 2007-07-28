@@ -1,7 +1,7 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libcheckers directio.c
-Date: 26 Jul 2007 19:27:15 -0000
-Message-ID: <20070726192715.27202.qmail@sourceware.org>
+From: meyering@sourceware.org
+Subject: device-mapper ./WHATS_NEW include/log.h lib/li ...
+Date: 28 Jul 2007 10:23:04 -0000
+Message-ID: <20070728102304.10269.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,271 +17,286 @@ To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-07-26 19:27:14
+Module name:	device-mapper
+Changes by:	meyering@sourceware.org	2007-07-28 10:23:02
 
 Modified files:
-	libcheckers    : directio.c 
+	.              : WHATS_NEW 
+	include        : log.h 
+	lib            : libdm-common.c libdm-file.c 
+	lib/fs         : libdevmapper.c 
+	lib/ioctl      : libdm-iface.c 
 
 Log message:
-	Fix for #235081. Now using async directio callout.
+	Introduce log_sys_* macros from LVM2.
+	Convert existing "<string>: <function> failed: <strerror>" type messages
+	to use this macro.  Patch by Jun'ichi Nomura.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/directio.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.2&r2=1.2.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.193&r2=1.194
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/include/log.h.diff?cvsroot=dm&r1=1.9&r2=1.10
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-common.c.diff?cvsroot=dm&r1=1.44&r2=1.45
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-file.c.diff?cvsroot=dm&r1=1.5&r2=1.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/fs/libdevmapper.c.diff?cvsroot=dm&r1=1.14&r2=1.15
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/ioctl/libdm-iface.c.diff?cvsroot=dm&r1=1.43&r2=1.44
 
---- multipath-tools/libcheckers/directio.c	2005/11/16 20:24:57	1.2
-+++ multipath-tools/libcheckers/directio.c	2007/07/26 19:27:13	1.2.2.1
-@@ -12,90 +12,149 @@
- #include <sys/ioctl.h>
- #include <linux/fs.h>
- #include <errno.h>
-+#include <linux/kdev_t.h>
-+#include <asm/unistd.h>
+--- device-mapper/WHATS_NEW	2007/07/24 14:16:48	1.193
++++ device-mapper/WHATS_NEW	2007/07/28 10:23:01	1.194
+@@ -1,5 +1,6 @@
+ Version 1.02.22 - 
+ ================================
++  Introduce and use log_sys_* macros from LVM2
+   dm_fclose: new function
+   libdevmapper, dmeventd: be paranoid about detecting write failure
  
-+#include "libaio.h"
- #include "path_state.h"
- #include "checkers.h"
-+#include "../libmultipath/debug.h"
+--- device-mapper/include/log.h	2007/06/28 17:27:01	1.9
++++ device-mapper/include/log.h	2007/07/28 10:23:01	1.10
+@@ -38,6 +38,14 @@
+ #define log_very_verbose(x...) plog(_LOG_INFO, x)
+ #define log_debug(x...) plog(_LOG_DEBUG, x)
  
- #define MSG_DIRECTIO_UNKNOWN	"directio checker is not available"
- #define MSG_DIRECTIO_UP		"directio checker reports path is up"
- #define MSG_DIRECTIO_DOWN	"directio checker reports path is down"
++/* System call equivalents */
++#define log_sys_error(x, y) \
++		log_error("%s: %s failed: %s", y, x, strerror(errno))
++#define log_sys_very_verbose(x, y) \
++		log_info("%s: %s failed: %s", y, x, strerror(errno))
++#define log_sys_debug(x, y) \
++		log_debug("%s: %s failed: %s", y, x, strerror(errno))
++
+ #define stack log_debug("<backtrace>")  /* Backtrace on error */
  
--struct readsector0_checker_context {
--	void * dummy;
-+struct directio_context {
-+	int             running;
-+	int             blksize;
-+	unsigned char * buf;
-+	unsigned char * ptr;
-+	io_context_t    ioctx;
-+	struct iocb     io;
- };
+ #define return_0	do { stack; return 0; } while (0)
+--- device-mapper/lib/libdm-common.c	2007/06/28 17:27:02	1.44
++++ device-mapper/lib/libdm-common.c	2007/07/28 10:23:01	1.45
+@@ -242,7 +242,7 @@
+ 	log_debug("Setting SELinux context for %s to %s.", path, scontext);
  
- static int
--direct_read (int fd, unsigned char * buff, int size)
-+check_state(int fd, struct directio_context *ct)
- {
- 	long flags;
- 	int reset_flags = 0;
--	int res, retval;
-+	struct timespec timeout = { .tv_sec = 2 };
-+	struct io_event event;
-+	struct stat     sb;
-+	int             rc = PATH_UNCHECKED;
-+	long            r;
+ 	if ((lsetfilecon(path, scontext) < 0) && (errno != ENOTSUP)) {
+-		log_error("%s: lsetfilecon failed: %s", path, strerror(errno));
++		log_sys_error("lsetfilecon", path);
+ 		freecon(scontext);
+ 		return 0;
+ 	}
+@@ -288,7 +288,7 @@
+ 	umask(old_mask);
  
--	flags = fcntl(fd,F_GETFL);
--
--	if (flags < 0) {
--		return PATH_UNCHECKED;
--	}
-+	flags = fcntl(fd, F_GETFL);
-+	if (flags < 0)
-+		goto out;
- 
- 	if (!(flags & O_DIRECT)) {
- 		flags |= O_DIRECT;
--		if (fcntl(fd,F_SETFL,flags) < 0) {
--			return PATH_UNCHECKED;
--		}
-+		if (fcntl(fd, F_SETFL, flags) < 0)
-+			goto out;
- 		reset_flags = 1;
+ 	if (chown(path, uid, gid) < 0) {
+-		log_error("%s: chown failed: %s", path, strerror(errno));
++		log_sys_error("chown", path);
+ 		return 0;
  	}
  
--	while ( (res = read(fd,buff,size)) < 0 && errno == EINTR );
--	if (res < 0) {
--		if (errno == EINVAL) {
--			/* O_DIRECT is not available */
--			retval = PATH_UNCHECKED;
--		} else if (errno == ENOMEM) {
--			retval = PATH_UP;
--		} else {
--			retval = PATH_DOWN;
-+	if (fstat(fd, &sb) == 0) {
-+		condlog(4, "directio: called for %x", (unsigned) sb.st_rdev);
-+	}
-+
-+	if (!ct->running) {
-+		struct iocb *ios[1] = { &ct->io };
-+
-+		condlog(3, "directio: starting new request");
-+		memset(&ct->io, 0, sizeof(struct iocb));
-+		io_prep_pread(&ct->io, fd, ct->ptr, ct->blksize, 0);
-+		if (syscall(__NR_io_submit, ct->ioctx, 1, ios) != 1) {
-+			condlog(3, "directio: io_submit error %i", errno);
-+			rc = PATH_UNCHECKED;
-+			goto out;
+--- device-mapper/lib/libdm-file.c	2007/07/24 14:15:45	1.5
++++ device-mapper/lib/libdm-file.c	2007/07/28 10:23:01	1.6
+@@ -33,8 +33,7 @@
+ 		if (*orig) {
+ 			rc = mkdir(orig, 0777);
+ 			if (rc < 0 && errno != EEXIST) {
+-				log_error("%s: mkdir failed: %s", orig,
+-					  strerror(errno));
++				log_sys_error("mkdir", orig);
+ 				goto out;
+ 			}
  		}
-+	}
-+	ct->running = 1;
-+
-+	r = syscall(__NR_io_getevents, ct->ioctx, 1L, 1L, &event, &timeout);
-+	if (r < 1L) {
-+		condlog(3, "directio: timeout r=%li errno=%i", r, errno);
-+		rc = PATH_DOWN;
- 	} else {
--		retval = PATH_UP;
-+		condlog(3, "directio: io finished %lu/%lu", event.res,
-+				event.res2);
-+		ct->running = 0;
-+		rc = (event.res == ct->blksize) ? PATH_UP : PATH_DOWN;
- 	}
--	
-+
-+out:
- 	if (reset_flags) {
- 		flags &= ~O_DIRECT;
- 		/* No point in checking for errors */
--		fcntl(fd,F_SETFL,flags);
-+		fcntl(fd, F_SETFL, flags);
- 	}
-+	return rc;
-+}
- 
--	return retval;
-+void
-+cleanup_context (struct directio_context *ctxt)
-+{
-+	if (ctxt->buf)
-+		free(ctxt->buf);
-+	syscall(__NR_io_destroy, ctxt->ioctx);
-+	free(ctxt);
- }
- 
- extern int
- directio (int fd, char *msg, void **context)
- {
--	unsigned char *buf, *ptr;
--	struct readsector0_checker_context * ctxt = NULL;
--	unsigned long pgsize, numsect;
--	int ret, blksize;
--
--	pgsize = getpagesize();
-+	struct directio_context * ctxt = NULL;
-+	int ret;
- 	
- 	/*
- 	 * caller passed in a context : use its address
- 	 */
- 	if (context)
--		ctxt = (struct readsector0_checker_context *) (*context);
-+		ctxt = (struct directio_context *) (*context);
- 
- 	/*
- 	 * passed in context is uninitialized or volatile context :
- 	 * initialize it
- 	 */
- 	if (!ctxt) {
--		ctxt = malloc(sizeof(struct readsector0_checker_context));
--		memset(ctxt, 0, sizeof(struct readsector0_checker_context));
--
-+		unsigned long pgsize = getpagesize();
-+	
-+		ctxt = malloc(sizeof(struct directio_context));
- 		if (!ctxt) {
--			MSG("cannot allocate context");
--			return -1;
-+			condlog(0, "cannot allocate context");
-+			goto fail;
-+		}
-+		memset(ctxt, 0, sizeof(struct directio_context));
-+		if (syscall(__NR_io_setup, 1, &ctxt->ioctx) != 0) {
-+			condlog(0, "io_setup failed");
-+			goto fail;
-+		}
-+		if (ioctl(fd, BLKBSZGET, &ctxt->blksize) < 0) {
-+			condlog(3, "cannot get blocksize, set default");
-+			ctxt->blksize = 512;
- 		}
-+		if (ctxt->blksize > 4096) {
-+			/*
-+			 * Sanity check for DASD; BSZGET is broken
-+			 */
-+			ctxt->blksize = 4096;
-+		}
-+		if (!ctxt->blksize){
-+			condlog(3, "blocksize is zero? Assuming path down\n");
-+			MSG(MSG_DIRECTIO_DOWN);
-+			ret = PATH_DOWN;
-+			goto out;
-+		}
-+		ctxt->buf = (unsigned char *)malloc(ctxt->blksize + pgsize);
-+		if (!ctxt->buf){
-+			condlog(0, "cannot allocate context buffer\n");
-+			goto fail;
-+		}
-+
-+		ctxt->ptr = (unsigned char *) (((unsigned long)ctxt->buf + pgsize - 1) & (~(pgsize - 1)));
-+
- 		if (context)
- 			*context = ctxt;
- 	}
-@@ -104,41 +163,7 @@
- 		ret = -1;
+@@ -44,8 +43,7 @@
+ 	/* Create final directory */
+ 	rc = mkdir(dir, 0777);
+ 	if (rc < 0 && errno != EEXIST) {
+-		log_error("%s: mkdir failed: %s", orig,
+-			  strerror(errno));
++		log_sys_error("mkdir", orig);
  		goto out;
  	}
--	
--	if (ioctl(fd, BLKGETSIZE, &numsect) < 0) {
--		MSG("cannot get number of sectors, set default");
--		numsect = 0;
--	}
--
--	if (ioctl(fd, BLKBSZGET, &blksize) < 0) {
--		MSG("cannot get blocksize, set default");
--		blksize = 512;
--	}
--
--	if (blksize > 4096) {
--		/*
--		 * Sanity check for DASD; BSZGET is broken
--		 */
--		blksize = 4096;
--	}
--
--	if (!blksize) {
--		/*
--		 * Blocksize is 0, assume we can't write
--		 * to this device.
--		 */
--		MSG(MSG_DIRECTIO_DOWN);
--		ret = PATH_DOWN;
--		goto out;
--	}
--
--	buf = (unsigned char *)malloc(blksize + pgsize);
--	if (!buf){
--		goto out;
--	}
--	ptr = (unsigned char *)(((unsigned long)buf + pgsize - 1) &
--				(~(pgsize - 1))); 
--	ret = direct_read(fd, ptr, blksize);
-+	ret = check_state(fd, ctxt);
  
- 	switch (ret)
- 	{
-@@ -154,7 +179,6 @@
- 	default:
- 		break;
+--- device-mapper/lib/fs/libdevmapper.c	2007/07/24 14:16:48	1.14
++++ device-mapper/lib/fs/libdevmapper.c	2007/07/28 10:23:01	1.15
+@@ -149,11 +149,11 @@
+ 		if (fputc(c, fp) == (int)c)
+ 			ret = 1;
+ 		else
+-			log_error("%s: fputc failed: %s", path, strerror(errno));
++			log_sys_error("fputc", path);
+ 		if (fclose(fp))
+-			log_error("%s: write failed: %s", path, strerror(errno));
++			log_sys_error("write", path);
+ 	} else
+-		log_error("%s: fopen failed: %s", path, strerror(errno));
++		log_sys_error("fopen", path);
+ 
+ 	free(path);
+ 
+@@ -174,10 +174,10 @@
+ 			if (errno == EEXIST && !stat(path, &st) &&
+ 			    S_ISDIR(st.st_mode)) 
+ 				ret = 1;
+-			log_error("%s: mkdir failed: %s", path, strerror(errno));
++			log_sys_error("mkdir", path);
+ 		}
+ 	} else if ((ret = rmdir(path)) < 0)
+-		log_error("%s: rmdir failed: %s", path, strerror(errno));
++		log_sys_error("rmdir", path);
+ 
+ 	free(path);
+ 
+@@ -216,10 +216,10 @@
+ 		if (fscanf(fp, "%d", &info->suspended) == 1)
+ 			ret = 1;
+ 		else
+-			log_error("%s fscanf failed: %s", path, strerror(errno));
++			log_sys_error("fscanf", path);
+ 		fclose(fp);
+ 	} else
+-		log_error("%s: fopen failed: %s", path, strerror(errno));
++		log_sys_error("fopen", path);
+ 
+ 	free(path);
+ 
+@@ -288,7 +288,7 @@
+ 
+ 	if ((fd = open(path, O_RDWR)) != -1) {
+ 		if (!(ret = write_data(fd, dmt)))
+-			log_error("%s: write failed: %s", path, strerror(errno));
++			log_sys_error("write", path);
+ 		close(fd);
  	}
--	free(buf);
  
- out:
- 	/*
-@@ -162,7 +186,13 @@
- 	 * free it
- 	 */
- 	if (!context)
--		free(ctxt);
-+		cleanup_context(ctxt);
+@@ -315,7 +315,7 @@
+ 		return 0;
  
- 	return ret;
-+fail:
-+	if (context)
-+		*context = NULL;
-+	if (ctxt)
-+		cleanup_context(ctxt);
-+	return -1;
+ 	if (!(fp = fopen(path, "r"))) {
+-		log_error("%s: fopen failed: %s", path, strerror(errno));
++		log_sys_error("fopen", path);
+ 		free(path);
+ 		return 0;
+ 	}
+@@ -338,7 +338,7 @@
+ 	char fstype[30];
+ 
+ 	if (!(fp = fopen("/proc/mounts", "r"))) {
+-		log_error("/proc/mounts: fopen failed: %s", strerror(errno));
++		log_sys_error("fopen", "/proc/mounts");
+ 		return NULL;
+ 	}
+ 
+--- device-mapper/lib/ioctl/libdm-iface.c	2007/06/28 17:27:02	1.43
++++ device-mapper/lib/ioctl/libdm-iface.c	2007/07/28 10:23:02	1.44
+@@ -140,7 +140,7 @@
+ 	uint32_t num;
+ 
+ 	if (!(fl = fopen(file, "r"))) {
+-		log_error("%s: fopen failed: %s", file, strerror(errno));
++		log_sys_error("fopen", file);
+ 		return 0;
+ 	}
+ 
+@@ -150,7 +150,7 @@
+ 				if (number) {
+ 					*number = num;
+ 					if (fclose(fl))
+-						log_error("%s: fclose failed: %s", file, strerror(errno));
++						log_sys_error("fclose", file);
+ 					return 1;
+ 				}
+ 				dm_bit_set(_dm_bitset, num);
+@@ -160,7 +160,7 @@
+ 		} while (c != EOF && c != '\n');
+ 	}
+ 	if (fclose(fl))
+-		log_error("%s: fclose failed: %s", file, strerror(errno));
++		log_sys_error("fclose", file);
+ 
+ 	if (number) {
+ 		log_error("%s: No entry for %s found", file, name);
+@@ -190,8 +190,7 @@
+ 
+ 	if (stat(control, &buf) < 0) {
+ 		if (errno != ENOENT)
+-			log_error("%s: stat failed: %s", control,
+-				  strerror(errno));
++			log_sys_error("stat", control);
+ 		return 0;
+ 	}
+ 
+@@ -199,8 +198,7 @@
+ 		log_verbose("%s: Wrong inode type", control);
+ 		if (!unlink(control))
+ 			return 0;
+-		log_error("%s: unlink failed: %s", control,
+-			  strerror(errno));
++		log_sys_error("unlink", control);
+ 		return -1;
+ 	}
+ 
+@@ -211,8 +209,7 @@
+ 			    major, minor);
+ 		if (!unlink(control))
+ 			return 0;
+-		log_error("%s: unlink failed: %s", control,
+-			  strerror(errno));
++		log_sys_error("unlink", control);
+ 		return -1;
+ 	}
+ 
+@@ -238,7 +235,7 @@
+ 
+ 	if (mknod(control, S_IFCHR | S_IRUSR | S_IWUSR,
+ 		  MKDEV(major, minor)) < 0)  {
+-		log_error("%s: mknod failed: %s", control, strerror(errno));
++		log_sys_error("mknod", control);
+ 		return 0;
+ 	}
+ 
+@@ -301,7 +298,7 @@
+ 		goto error;
+ 
+ 	if ((_control_fd = open(control, O_RDWR)) < 0) {
+-		log_error("%s: open failed: %s", control, strerror(errno));
++		log_sys_error("open", control);
+ 		goto error;
+ 	}
+ 
+@@ -597,7 +594,7 @@
+ 	log_warn("Please upgrade your kernel device-mapper driver.");
+ 
+ 	if (!(d = opendir(dev_dir))) {
+-		log_error("%s: opendir failed: %s", dev_dir, strerror(errno));
++		log_sys_error("opendir", dev_dir);
+ 		return 0;
+ 	}
+ 
+@@ -616,7 +613,7 @@
+ 						      (void *) old_names);
+ 		snprintf(path, sizeof(path), "%s/%s", dev_dir, name);
+ 		if (stat(path, &buf)) {
+-			log_error("%s: stat failed: %s", path, strerror(errno));
++			log_sys_error("stat", path);
+ 			continue;
+ 		}
+ 		if (!S_ISBLK(buf.st_mode))
+@@ -637,7 +634,7 @@
+ 	}
+ 
+ 	if (closedir(d))
+-		log_error("%s: closedir failed: %s", dev_dir, strerror(errno));
++		log_sys_error("closedir", dev_dir);
+ 
+ 	return r;
+ }
+@@ -1324,7 +1321,7 @@
+ 
+ 	dir = dm_dir();
+ 	if (!(d = opendir(dir))) {
+-		log_error("opendir %s: %s", dir, strerror(errno));
++		log_sys_error("opendir", dir);
+ 		return 0;
+ 	}
+ 
+@@ -1338,7 +1335,7 @@
+ 	}
+ 
+ 	if (closedir(d))
+-		log_error("closedir %s: %s", dir, strerror(errno));
++		log_sys_error("closedir", dir);
+ 
+ 	return r;
  }
