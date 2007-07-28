@@ -1,9 +1,15 @@
-From: meyering@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/.exported_symbol ...
-Date: 28 Jul 2007 10:48:37 -0000
-Message-ID: <20070728104837.20636.qmail@sourceware.org>
+From: Jim Meyering <jim@meyering.net>
+Subject: Re: [lvm-devel] new device-mapper required to build
+	latest lvm from cvs
+Date: Sat, 28 Jul 2007 15:06:46 +0200
+Message-ID: <87sl78wuc9.fsf@rho.meyering.net>
+References: <87wswplmgl.fsf@rho.meyering.net> <46A7AB23.7050306@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <46A7AB23.7050306@ce.jp.nec.com> (Jun'ichi Nomura's message of
+	"Wed\, 25 Jul 2007 15\:57\:23 -0400")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,87 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	meyering@sourceware.org	2007-07-28 10:48:37
+"Jun'ichi Nomura" <j-nomura@ce.jp.nec.com> wrote:
+> Jim Meyering wrote:
+>> FYI, with the change I've just committed,
+>>
+>>   http://sources.redhat.com/ml/lvm2-cvs/2007-07/msg00035.html
+>>
+>> you now need a device-mapper library and headers built from
+>> today's cvs sources.  Otherwise, you'll get compile warnings
+>> and eventually a link error complaining about missing dm_fclose.
+>
+> This change introduces an error for static build.
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : .exported_symbols libdevmapper.h libdm-file.c 
-	lib/ioctl      : libdm-iface.c 
+Thank you for the report and the patches.
+I've applied four of your patches, three for device-mapper
+and one for lvm2:
 
-Log message:
-	Export dm_create_dir (was create_dir) to help fix LVM2 link error
-	* lib/libdm-file.c (dm_create_dir): Rename from create_dir.
-	* lib/libdevmapper.h (dm_create_dir): Declare.
-	* lib/.exported_symbols: Add dm_create_dir.
-	* lib/ioctl/libdm-iface.c (_create_control): Update sole use.
-	Patch by Jun'ichi Nomura.  Details in
-	http://www.redhat.com/archives/lvm-devel/2007-July/msg00040.html
+dm
+  Export dm_create_dir (was create_dir) to help fix LVM2 link error
+    http://git.et.redhat.com/?p=device-mapper.git;a=commitdiff;h=8748390a79f
+  Don't log mkdir fail-with-EROFS, to make create_dir equiv to that in LVM2
+    http://git.et.redhat.com/?p=device-mapper.git;a=commitdiff;h=81d93dd4717
+  Introduce and use log_sys_* macros from LVM2
+    http://git.et.redhat.com/?p=device-mapper.git;a=commitdiff;h=5edca96def8
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.195&r2=1.196
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/.exported_symbols.diff?cvsroot=dm&r1=1.30&r2=1.31
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.71&r2=1.72
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-file.c.diff?cvsroot=dm&r1=1.7&r2=1.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/ioctl/libdm-iface.c.diff?cvsroot=dm&r1=1.44&r2=1.45
-
---- device-mapper/WHATS_NEW	2007/07/28 10:27:34	1.195
-+++ device-mapper/WHATS_NEW	2007/07/28 10:48:36	1.196
-@@ -1,5 +1,6 @@
- Version 1.02.22 - 
- ================================
-+  Export dm_create_dir (was create_dir) to help fix LVM2 link error
-   Don't log mkdir fail-with-EROFS, to make create_dir equiv to the one in LVM2
-   Introduce and use log_sys_* macros from LVM2
-   dm_fclose: new function
---- device-mapper/lib/.exported_symbols	2007/07/24 14:15:45	1.30
-+++ device-mapper/lib/.exported_symbols	2007/07/28 10:48:36	1.31
-@@ -1,6 +1,7 @@
- dm_lib_release
- dm_lib_exit
- dm_driver_version
-+dm_create_dir
- dm_fclose
- dm_get_library_version
- dm_log
---- device-mapper/lib/libdevmapper.h	2007/07/24 14:15:45	1.71
-+++ device-mapper/lib/libdevmapper.h	2007/07/28 10:48:36	1.72
-@@ -629,6 +629,12 @@
-  **************************/
- 
- /*
-+ * Create a directory (with parent directories if necessary).
-+ * Returns 1 on success, 0 on failure.
-+ */
-+int dm_create_dir(const char *dir);
-+
-+/*
-  * Close a stream, with nicer error checking than fclose's.
-  * Derived from gnulib's close-stream.c.
-  *
---- device-mapper/lib/libdm-file.c	2007/07/28 10:27:34	1.7
-+++ device-mapper/lib/libdm-file.c	2007/07/28 10:48:36	1.8
-@@ -55,7 +55,7 @@
- 	return r;
- }
- 
--int create_dir(const char *dir)
-+int dm_create_dir(const char *dir)
- {
- 	struct stat info;
- 
---- device-mapper/lib/ioctl/libdm-iface.c	2007/07/28 10:23:02	1.44
-+++ device-mapper/lib/ioctl/libdm-iface.c	2007/07/28 10:48:36	1.45
-@@ -225,7 +225,7 @@
- 		return 0;
- 
- 	old_umask = umask(0022);
--	ret = create_dir(dm_dir());
-+	ret = dm_create_dir(dm_dir());
- 	umask(old_umask);
- 
- 	if (!ret)
+lvm2
+  Remove create_dir function; use now-equivalent dm_create_dir instead
+    http://git.et.redhat.com/?p=lvm2.git;a=commitdiff;h=7d85f48b35b7
