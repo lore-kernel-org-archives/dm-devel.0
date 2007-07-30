@@ -1,16 +1,19 @@
-From: Dave Wysochanski <dwysocha@redhat.com>
-Subject: Re: [patch 3/3] Add retries to hp hardware handler if
-	path initialization command completes with a check condition.
-Date: Mon, 30 Jul 2007 15:10:36 -0400
-Message-ID: <1185822636.4547.8.camel@linux-cxyg>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [patch 1/3] Extremely basic hp hardware handler (no
+	retries, no error handling, etc).
+Date: Mon, 30 Jul 2007 12:25:19 -0700
+Message-ID: <1185823520.17399.63.camel@linuxchandra>
 References: <20070726044447.846195205@redhat.com>
-	<20070726044720.980015296@redhat.com>
-	<1185477543.17399.59.camel@linuxchandra>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	<20070726044720.403731599@redhat.com>
+	<1185476962.17399.52.camel@linuxchandra>
+	<1185818805.4547.2.camel@linux-cxyg>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-gxjaCZ5FaV7dRDwIwvak"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1185477543.17399.59.camel@linuxchandra>
+In-Reply-To: <1185818805.4547.2.camel@linux-cxyg>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,293 +23,287 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: Dave Wysochanski <dwysocha@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Do you want to keep the DMDEBUG in this patch ?
 
---=-gxjaCZ5FaV7dRDwIwvak
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Other than that it looks good...
 
-On Thu, 2007-07-26 at 12:19 -0700, Chandra Seetharaman wrote:
-> On Thu, 2007-07-26 at 00:44 -0400, dwysocha@redhat.com wrote:
-> > plain text document attachment (dm-hp-sw-add-retries-handle-not-
-> > ready.patch)
-> > This patch adds retries to the hp hardware handler, and utilizes the 
-> > MP_RETRY flag of dm-multipath.  For now in the hp handler, if we get a 
-> > pg_init completed with a check condition we just assume we can retry the
-> > pg_init command.  We make this assumption because of incomplete data on
-> > specific check condition code of the HP hardware, and because testing
-> > has shown the HP path initialization command to be idempotent.
-> > The number of times we retry is settable via the "pg_init_retries"
-> > multipath map feature.
+Thanks
+
+chandra
+On Mon, 2007-07-30 at 14:06 -0400, Dave Wysochanski wrote:
+> On Thu, 2007-07-26 at 12:09 -0700, Chandra Seetharaman wrote:
+> > Hi Dave,
 > > 
+> > some coding style related comments (below).
 > > 
-> > Index: linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
-> > ===================================================================
-> > --- linux-2.6.23-rc1.orig/drivers/md/dm-hp-sw.c
-> > +++ linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
-> > @@ -18,6 +18,7 @@
-> >  #include <linux/types.h>
-> >  #include <scsi/scsi.h>
-> >  #include <scsi/scsi_cmnd.h>
-> > +#include <scsi/scsi_dbg.h>
+> > On Thu, 2007-07-26 at 00:44 -0400, dwysocha@redhat.com wrote:
+> > > plain text document attachment (dm-hp-sw-v0.0.2.patch)
+> > > This patch adds the most basic dm-multipath hardware support for the 
+> > > HP active/passive arrays.
+> > > 
+> > > 
+> > > Index: linux-2.6.23-rc1/drivers/md/Makefile
+> > > ===================================================================
+> > > --- linux-2.6.23-rc1.orig/drivers/md/Makefile
+> > > +++ linux-2.6.23-rc1/drivers/md/Makefile
+> > > @@ -35,6 +35,7 @@ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+> > >  obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+> > >  obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+> > >  obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
+> > > +obj-$(CONFIG_DM_MULTIPATH_HP)	+= dm-hp-sw.o
+> > >  obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rdac.o
+> > >  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+> > >  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
+> > > Index: linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
+> > > ===================================================================
+> > > --- /dev/null
+> > > +++ linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
+> > > @@ -0,0 +1,203 @@
+> > > +/*
+> > > + * Copyright (C) 2005 Mike Christie, All rights reserved.
+> > > + * Copyright (C) 2007 Red Hat, Inc. All rights reserved.
+> > > + * Authors: Mike Christie
+> > > + *          Dave Wysochanski
+> > > + *
+> > > + * This file is released under the GPL.
+> > > + *
+> > > + * This module implements the specific path activation code for
+> > > + * HP StorageWorks and FSC FibreCat Asymmetric (Active/Passive)
+> > > + * storage arrays.
+> > > + * These storage arrays have controller-based failover, not
+> > > + * LUN-based failover.  However, LUN-based failover is the design
+> > > + * of dm-multipath. Thus, this module is written for LUN-based failover.
+> > > + */
+> > > +#include <linux/blkdev.h>
+> > > +#include <linux/list.h>
+> > > +#include <linux/types.h>
+> > > +#include <scsi/scsi.h>
+> > > +#include <scsi/scsi_cmnd.h>
+> > > +
+> > > +#include "dm.h"
+> > > +#include "dm-hw-handler.h"
+> > > +
+> > > +#define DM_MSG_PREFIX "multipath hp_sw"
+> > > +
+> > > +struct hp_sw_context {
+> > > +	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
+> > > +};
+> > > +
+> > > +
+> > > +/**
+> > > + * hp_sw_end_io - Completion handler for HP path activation.
+> > > + * @req: path activation request
+> > > + * @error: scsi-ml error
+> > > + *
+> > > + *  Check sense data, free request structure, and notify dm that
+> > > + *  pg initialization has completed.
+> > > + *
+> > > + * Context: scsi-ml softirq
+> > > + *
+> > > + * Possible optimizations
+> > > + * 1. Actually check sense data for retryable error (e.g. NOT_READY)
+> > > + */
+> > > +static void hp_sw_end_io(struct request *req, int error)
+> > > +{
+> > > +	struct dm_path *path = req->end_io_data;
+> > > +	unsigned err_flags;
+> > > +
+> > > +	if (!error) {
+> > > +		err_flags = 0;
+> > > +		DMDEBUG("%s path activation command - success",
+> > > +		       	path->dev->name);
 > > 
-> >  #include "dm.h"
-> >  #include "dm-hw-handler.h"
-> > @@ -26,8 +27,42 @@
+> > Mixed use of space and tab for indentation (many other places too).
 > > 
-> >  struct hp_sw_context {
-> >  	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
-> > +	unsigned argc;
-> >  };
+> > > +	} else {
+> > > +		DMWARN("path activation command on %s - error=0x%x",
 > > 
-> > +/**
-> > + * hp_sw_error_is_retryable - Is an HP-specific check condition retryable?
-> > + * @req: path activation request
-> > + *
-> > + * Examine error codes of request and determine whether the error is retryable.
-> > + * Some error codes are already retried by scsi-ml (see
-> > + * scsi_decide_disposition), but some HP specific codes are not.
-> > + * The intent of this routine is to supply the logic for the HP specific
-> > + * check conditions.
-> > + *
-> > + * Returns:
-> > + *  1 - command completed with retryable error
-> > + *  0 - command completed with non-retryable error
-> > + *
-> > + * Possible optimizations
-> > + * 1. More hardware-specific error codes
-> > + */
-> > +static int hp_sw_error_is_retryable(struct request *req)
-> > +{
-> > +	/*
-> > +	 * NOT_READY is known to be retryable
-> > +	 * For now we just dump out the sense data and call it retryable
-> > +	 */
-> > +	if (status_byte(req->errors) == CHECK_CONDITION)
-> > +		__scsi_print_sense("hp_sw", req->sense, req->sense_len);
-> > +
-> > +	/*
-> > +	 * At this point we don't have complete information about all the error
-> > +	 * codes from this hardware, so we are just conservative and retry
-> > +	 * when in doubt.
-> > +	 */
-> > +	return 1;
-> > +}
+> > Could use the same format like "%s: path activation command - status",
+> > you made changes towards that in the next patch. Could make is
+> > consistent.
 > > 
-> >  /**
-> >   * hp_sw_end_io - Completion handler for HP path activation.
-> > @@ -39,8 +74,6 @@ struct hp_sw_context {
-> >   *
-> >   * Context: scsi-ml softirq
-> >   *
-> > - * Possible optimizations
-> > - * 1. Actually check sense data for retryable error (e.g. NOT_READY)
-> >   */
-> >  static void hp_sw_end_io(struct request *req, int error)
-> >  {
-> > @@ -52,11 +85,17 @@ static void hp_sw_end_io(struct request 
-> >  		DMDEBUG("%s path activation command - success",
-> >  		       	path->dev->name);
-> >  	} else {
-> > -		DMWARN("path activation command on %s - error=0x%x",
-> > -		       path->dev->name, error);
-> > +		if (hp_sw_error_is_retryable(req)) {
-> > +			DMDEBUG("%s path activation command retry",
-> > +			       path->dev->name);
+> > > +		       path->dev->name, error);
+> > > +		err_flags = MP_FAIL_PATH;
+> > > +	}
+> > > +
+> > > +	req->end_io_data = NULL;
+> > > +	__blk_put_request(req->q, req);
+> > > +	dm_pg_init_complete(path, err_flags);
+> > > +}
+> > > +
+> > > +/**
+> > > + * hp_sw_get_request - Allocate an HP specific path activation request
+> > > + * @path: path on which request will be sent (needed for request queue)
+> > > + *
+> > > + * The START command is used for path activation request.
+> > > + * These arrays are controller-based failover, not LUN based.
+> > > + * One START command issued to a single path will fail over all
+> > > + * LUNs for the same controller.
+> > > + *
+> > > + * Possible optimizations
+> > > + * 1. Make timeout configurable
+> > > + * 2. Preallocate request
+> > > + */
+> > > +static struct request *hp_sw_get_request(struct dm_path *path)
+> > > +{
+> > > +	struct request *req;
+> > > +	struct block_device *bdev = path->dev->bdev;
+> > > +	struct request_queue *q = bdev_get_queue(bdev);
+> > > +	struct hp_sw_context *h = path->hwhcontext;
+> > > +
+> > > +	req = blk_get_request(q, WRITE, GFP_NOIO);
+> > > +	if (!req)
+> > > +		goto out;
+> > > +
+> > > +	req->timeout = 60*HZ;
+> > > +
+> > > +	req->errors = 0;
+> > > +	req->cmd_type = REQ_TYPE_BLOCK_PC;
+> > > +	req->cmd_flags |= REQ_FAILFAST | REQ_NOMERGE;
+> > > +	req->end_io_data = path;
+> > > +	req->sense = h->sense;
+> > > +	memset(req->sense, 0, SCSI_SENSE_BUFFERSIZE);
+> > > +
+> > > +	memset(&req->cmd, 0, BLK_MAX_CDB);
+> > > +	req->cmd[0] = START_STOP;
+> > > +	req->cmd[4] = 1;
+> > > +	req->cmd_len = COMMAND_SIZE(req->cmd[0]);
+> > > + out:
+> > 
+> > I think there will be no space before the label (one more below).
+> > 
+> > > +	return req;
+> > > +}
+> > > +
+> > > +/**
+> > > + * hp_sw_pg_init - HP path activation implementation.
+> > > + * @hwh: hardware handler specific data
+> > > + * @bypassed: unused; is the path group bypassed? (see dm-mpath.c)
+> > > + * @path: path to send initialization command
+> > > + *
+> > > + * Send an HP-specific path activation command on 'path'.
+> > > + * Do not try to optimize in any way, just send the activation command.
+> > > + * More than one path activation command may be sent to the same controller.
+> > > + * This seems to work fine for basic failover support.
+> > > + *
+> > > + * Possible optimizations
+> > > + * 1. Detect an in-progress activation request and avoid submitting another one
+> > > + * 2. Model the controller and only send a single activation request at a time
+> > > + * 3. Determine the state of a path before sending an activation request
+> > > + *
+> > > + * Context: kmpathd (see process_queued_ios() in dm-mpath.c)
+> > > + */
+> > > +static void hp_sw_pg_init(struct hw_handler *hwh, unsigned bypassed,
+> > > +			  struct dm_path *path)
+> > > +{
+> > > +	struct request *req;
+> > > +	struct hp_sw_context *h;
+> > > +
+> > > +	path->hwhcontext = hwh->context;
+> > > +	h = hwh->context;
+> > > +
+> > > +	req = hp_sw_get_request(path);
+> > > +	if (!req) {
+> > > +		DMERR("%s path activation command allocation fail ",
+> > > +		      path->dev->name);
+> > > +		goto fail;
+> > > +	}
+> > > +
+> > > +	DMDEBUG("path activation command sent on %s",
+> > > +		path->dev->name);
+> > > +
+> > > +	blk_execute_rq_nowait(req->q, NULL, req, 1, hp_sw_end_io);
+> > > +	return;
+> > > +
+> > > + fail:
+> > > +	dm_pg_init_complete(path, MP_FAIL_PATH);
+> > > +}
+> > > +
+> > > +static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
+> > > +{
+> > > +	struct hp_sw_context *h;
+> > > +
+> > > +	h = kmalloc(sizeof(*h), GFP_KERNEL);
+> > > +	if (!h)
+> > > +		return -ENOMEM;
+> > > +	hwh->context = h;
+> > > +	return 0;
+> > > +}
+> > > +
+> > > +static void hp_sw_destroy(struct hw_handler *hwh)
+> > > +{
+> > > +	struct hp_sw_context *h = hwh->context;
+> > > +
+> > > +	kfree(h);
+> > > +}
+> > > +
+> > > +static struct hw_handler_type hp_sw_hwh = {
+> > > +	.name = "hp_sw",
+> > > +	.module = THIS_MODULE,
+> > > +	.create = hp_sw_create,
+> > > +	.destroy = hp_sw_destroy,
+> > > +	.pg_init = hp_sw_pg_init,
+> > > +};
+> > > +
+> > > +static int __init hp_sw_init(void)
+> > > +{
+> > > +	int r;
+> > > +
+> > > +	r = dm_register_hw_handler(&hp_sw_hwh);
+> > > +	if (r < 0)
+> > > +		DMERR("register failed %d", r);
+> > > +	else
+> > > +		DMINFO("version 0.0.2 loaded");
+> > > +
+> > > +	return r;
+> > > +}
+> > > +
+> > > +static void __exit hp_sw_exit(void)
+> > > +{
+> > > +	int r;
+> > > +
+> > > +	r = dm_unregister_hw_handler(&hp_sw_hwh);
+> > > +	if (r < 0)
+> > > +		DMERR("unregister failed %d", r);
+> > > +}
+> > > +
+> > > +module_init(hp_sw_init);
+> > > +module_exit(hp_sw_exit);
+> > > +
+> > > +MODULE_DESCRIPTION("HP StorageWorks and FSC FibreCat (A/P) support for dm-multipath");
+> > > +MODULE_AUTHOR("Mike Christie <michaelc@cs.wisc.edu>");
+> > > +MODULE_LICENSE("GPL");
+> > > Index: linux-2.6.23-rc1/drivers/md/Kconfig
+> > > ===================================================================
+> > > --- linux-2.6.23-rc1.orig/drivers/md/Kconfig
+> > > +++ linux-2.6.23-rc1/drivers/md/Kconfig
+> > > @@ -267,6 +267,12 @@ config DM_MULTIPATH_RDAC
+> > >  	---help---
+> > >  	  Multipath support for LSI/Engenio RDAC.
+> > > 
+> > > +config DM_MULTIPATH_HP
+> > > +        tristate "HP MSA multipath support (EXPERIMENTAL)"
+> > > +        depends on DM_MULTIPATH && BLK_DEV_DM && EXPERIMENTAL
+> > > +        ---help---
+> > > +          Multipath support for HP MSA (Active/Passive) series hardware.
+> > > +
+> > >  config DM_DELAY
+> > >  	tristate "I/O delaying target (EXPERIMENTAL)"
+> > >  	depends on BLK_DEV_DM && EXPERIMENTAL
+> > > 
+> > -- 
+> > 
 > 
-> mixed use of space and tabs
-> > +			err_flags = MP_RETRY;
-> > +			goto out;
-> > +		}
-> > +		DMWARN("%s path activation fail - error=0x%x",
-> > +			path->dev->name, error);
-> >  		err_flags = MP_FAIL_PATH;
-> >  	}
-> > -
-> > + out:
+> I think the attached patch addresses all of your comments.
 > 
-> space in front of label
 > 
-> >  	req->end_io_data = NULL;
-> >  	__blk_put_request(req->q, req);
-> >  	dm_pg_init_complete(path, err_flags);
-> > @@ -134,17 +173,16 @@ static void hp_sw_pg_init(struct hw_hand
-> >  	if (!req) {
-> >  		DMERR("%s path activation command allocation fail ",
-> >  		      path->dev->name);
-> > -		goto fail;
-> > +		goto retry;
-> >  	}
-> > 
-> > -	DMDEBUG("path activation command sent on %s",
-> > -		path->dev->name);
-> > +	DMDEBUG("%s path activation command sent", path->dev->name);
-> > 
-> >  	blk_execute_rq_nowait(req->q, NULL, req, 1, hp_sw_end_io);
-> >  	return;
-> > 
-> > - fail:
-> > -	dm_pg_init_complete(path, MP_FAIL_PATH);
-> > + retry:
-> > +	dm_pg_init_complete(path, MP_RETRY);
-> >  }
-> > 
-> >  static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
-> > @@ -181,7 +219,7 @@ static int __init hp_sw_init(void)
-> >  	if (r < 0)
-> >  		DMERR("register failed %d", r);
-> >  	else
-> > -		DMINFO("version 0.0.2 loaded");
-> > +		DMINFO("version 0.0.3 loaded");
-> > 
-> >  	return r;
-> >  }
-> > 
+-- 
 
-Attached should fix the whitespace issues mentioned.
-
-
-
---=-gxjaCZ5FaV7dRDwIwvak
-Content-Disposition: attachment;
-	filename=dm-hp-sw-add-retries-handle-not-ready.patch
-Content-Type: text/x-patch; name=dm-hp-sw-add-retries-handle-not-ready.patch;
-	charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-Add retries to hp hardware handler if path initialization command completes
-with a check condition.  
-
-This patch adds retries to the hp hardware handler, and utilizes the 
-MP_RETRY flag of dm-multipath.  For now in the hp handler, if we get a 
-pg_init completed with a check condition we just assume we can retry the
-pg_init command.  We make this assumption because of incomplete data on
-specific check condition code of the HP hardware, and because testing
-has shown the HP path initialization command to be idempotent.
-The number of times we retry is settable via the "pg_init_retries"
-multipath map feature.
-
-Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
-
----
-Index: linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
-===================================================================
---- linux-2.6.23-rc1.orig/drivers/md/dm-hp-sw.c
-+++ linux-2.6.23-rc1/drivers/md/dm-hp-sw.c
-@@ -18,6 +18,7 @@
- #include <linux/types.h>
- #include <scsi/scsi.h>
- #include <scsi/scsi_cmnd.h>
-+#include <scsi/scsi_dbg.h>
- 
- #include "dm.h"
- #include "dm-hw-handler.h"
-@@ -28,6 +29,39 @@ struct hp_sw_context {
- 	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
- };
- 
-+/**
-+ * hp_sw_error_is_retryable - Is an HP-specific check condition retryable?
-+ * @req: path activation request
-+ *
-+ * Examine error codes of request and determine whether the error is retryable.
-+ * Some error codes are already retried by scsi-ml (see
-+ * scsi_decide_disposition), but some HP specific codes are not.
-+ * The intent of this routine is to supply the logic for the HP specific
-+ * check conditions.
-+ *
-+ * Returns:
-+ *  1 - command completed with retryable error
-+ *  0 - command completed with non-retryable error
-+ *
-+ * Possible optimizations
-+ * 1. More hardware-specific error codes
-+ */
-+static int hp_sw_error_is_retryable(struct request *req)
-+{
-+	/*
-+	 * NOT_READY is known to be retryable
-+	 * For now we just dump out the sense data and call it retryable
-+	 */
-+	if (status_byte(req->errors) == CHECK_CONDITION)
-+		__scsi_print_sense("hp_sw", req->sense, req->sense_len);
-+
-+	/*
-+	 * At this point we don't have complete information about all the error
-+	 * codes from this hardware, so we are just conservative and retry
-+	 * when in doubt.
-+	 */
-+	return 1;
-+}
- 
- /**
-  * hp_sw_end_io - Completion handler for HP path activation.
-@@ -39,8 +73,6 @@ struct hp_sw_context {
-  *
-  * Context: scsi-ml softirq
-  *
-- * Possible optimizations
-- * 1. Actually check sense data for retryable error (e.g. NOT_READY)
-  */
- static void hp_sw_end_io(struct request *req, int error)
- {
-@@ -52,11 +84,17 @@ static void hp_sw_end_io(struct request 
- 		DMDEBUG("%s path activation command - success",
- 			path->dev->name);
- 	} else {
--		DMWARN("%s path activation command - error=0x%x",
-+		if (hp_sw_error_is_retryable(req)) {
-+			DMDEBUG("%s path activation command - retry",
-+				path->dev->name);
-+			err_flags = MP_RETRY;
-+			goto out;
-+		}
-+		DMWARN("%s path activation fail - error=0x%x",
- 			path->dev->name, error);
- 		err_flags = MP_FAIL_PATH;
- 	}
--
-+out:
- 	req->end_io_data = NULL;
- 	__blk_put_request(req->q, req);
- 	dm_pg_init_complete(path, err_flags);
-@@ -134,7 +172,7 @@ static void hp_sw_pg_init(struct hw_hand
- 	if (!req) {
- 		DMERR("%s path activation command - allocation fail",
- 			path->dev->name);
--		goto fail;
-+		goto retry;
- 	}
- 
- 	DMDEBUG("%s path activation command - sent", path->dev->name);
-@@ -142,8 +180,8 @@ static void hp_sw_pg_init(struct hw_hand
- 	blk_execute_rq_nowait(req->q, NULL, req, 1, hp_sw_end_io);
- 	return;
- 
--fail:
--	dm_pg_init_complete(path, MP_FAIL_PATH);
-+retry:
-+	dm_pg_init_complete(path, MP_RETRY);
- }
- 
- static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
-@@ -180,7 +218,7 @@ static int __init hp_sw_init(void)
- 	if (r < 0)
- 		DMERR("register failed %d", r);
- 	else
--		DMINFO("version 0.0.2 loaded");
-+		DMINFO("version 0.0.3 loaded");
- 
- 	return r;
- }
-
---=-gxjaCZ5FaV7dRDwIwvak
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-gxjaCZ5FaV7dRDwIwvak--
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
