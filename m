@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Designing a new prio_callout
-Date: Mon, 30 Jul 2007 08:31:01 +0200
-Message-ID: <46AD85A5.1060609@suse.de>
-References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>	<46A735E1.4070206@suse.de>
-	<d61540a40707290903q359cc7c8g52f07627b4b9fba7@mail.gmail.com>
+Subject: Re: New multipath-tools release?
+Date: Mon, 30 Jul 2007 16:49:07 +0200
+Message-ID: <46ADFA63.9020403@suse.de>
+References: <46A72D1B.1040408@suse.de> <20070728161353.GA21276@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d61540a40707290903q359cc7c8g52f07627b4b9fba7@mail.gmail.com>
+In-Reply-To: <20070728161353.GA21276@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,27 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-Ethan John wrote:
-> Thanks for the heads-up about ALUA. We're looking into it.
->=20
-> What is the purpose of the custom mpio_prio_* applications that ship
-> with open-iscsi if not to handle multipathing?
->=20
-It is. mpath_prio_* are the priority callouts for multipathing.
-They determine the layout of the multipath map.
-Theory is that mpath_prio_* will return the priority for a
-given path in relation to the entire multipath layout.
+Guido Guenther wrote:
+> Hi Christophe,
+> On Wed, Jul 25, 2007 at 12:59:39PM +0200, Hannes Reinecke wrote:
+>> Hi Christophe,
+>>
+>> whenever a device is finally removed from a multipath map we should
+>> also remove it from the sysfs cache. Otherwise we'll hogging up memory
+>> with multipathd. And we might rely on wrong information as the device
+>> in the sysfs cache might in fact be a different device if the system
+>> decided to assign the same number to a different device or if some
+>> values have changed.
+> Now with this fix in, would it make any sense to tag a 0.4.8-rc1? The
+> last multipath-tools release has been about a year ago and it would
+> really be nice to have a new release, so there's a new base to diff
+> against.
 
-If used with 'group_by_prio' all paths with the same
-priority will be grouped into one multipath group, and
-the group with the highest priority will become active.
+In priciple a good idea. However, I do have some to-do items on my list
+yet:
 
-When all paths in a group fail, the group with the next
-highest priority will become active. Additionally some
-failover command (as determined by the hardware handler)
-may be send to the target.
+- netlink messages: The FC transport class has a netlink interface
+  nowadays. It may be an idea to utilize this information in to update
+  the path status.
+- Enhance path checker. Currently the path checker is run at periodic
+  intervals regardless of the path state. This leads to quite some
+  load on systems with many paths, even when all paths are healthy.
+  We should rather call the path checker only if a path has failed,
+  as we're being notified by a failed path soon enough via I/O errors.
+  And we might even be using the netlink events from FC here, too.
 
 Cheers,
 
