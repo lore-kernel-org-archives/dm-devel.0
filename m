@@ -1,11 +1,11 @@
-From: "Adrian B" <adriab@gmail.com>
-Subject: very slow dm-crypt write operation
-Date: Mon, 30 Jul 2007 07:58:36 -0700
-Message-ID: <9d8ecb6c0707300758s59f335b1k4010f7664a3c6340@mail.gmail.com>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: [multipath 1/1] EMC Clariion path checker: change scsi
+	read buffer size to 4096 bytes
+Date: Mon, 30 Jul 2007 18:04:11 +0200
+Message-ID: <20070730160411.GA15413@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,47 +17,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: christophe varoqui <christophe.varoqui@free.fr>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+648833108fc5a95cbe15bd779289e98165c34d25 changed the scsi read buffer to 4096
+bytes but forgot the emc patch checker. This fixes an immediate segfault on
+startup.
 
-  I am seeing very slow dm-crypt writes on a machine where CPU, disk
-speed and even dm-crypt reads are normal.
-  It appears that kcryptd is scheduled insufficiently on the CPU(s)
-when writing to dm-crypt devices. While reading, kcryptd is taking a
-lot of CPU time, most of the time (top). But when writing, kcryptd is
-taking a lot of pauses - I see intermittent activity where it uses the
-CPU for a few seconds, then pauses for a long time, then it's up
-again.
-  Any idea what's going on?
+Signed-off-by: Guido Guenther <agx@bogon.sigxcpu.org>
+---
+ libcheckers/emc_clariion.c |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
 
-  Writing a 1 GB file to dm-crypt takes 5 min (!):
-
-time cp /tmp/1GB_File /mnt/dm-crypt/tmp/
-
-real    5m21.123s
-user    0m0.119s
-sys     0m7.762s
-
-  Reading the same 1 GB file back from dm-crypt takes only 1.5 min:
-
-time cp /mnt/dm-crypt/tmp/1GB_File /tmp
-
-real    1m30.147s
-user    0m0.125s
-sys     0m7.522s
-
-  Copying the file without dm-crypt takes about 1 min:
-
-time cp /tmp/1GB_File /tmp/Copy01
-
-real    1m12.334s
-user    0m0.090s
-sys     0m5.856s
-
-  This is Fedora 7, kernel 2.6.22.1-33.fc7 #1 SMP Mon Jul 23 17:33:07
-EDT 2007 i686 i686 i386 GNU/Linux.
-  Hardware is Intel 865G chipset, Pentium 4 CPU (HT), 2 GB RAM, ATA drive udma5.
-
-  Thank you.
+diff --git a/libcheckers/emc_clariion.c b/libcheckers/emc_clariion.c
+index d801b42..6c7167e 100644
+--- a/libcheckers/emc_clariion.c
++++ b/libcheckers/emc_clariion.c
+@@ -176,7 +176,7 @@ int emc_clariion(struct checker * c)
+ 	 * Issue read on active path to determine if inactive snapshot.
+ 	 */
+ 	if (sense_buffer[4] == 2) {/* if active path */
+-		unsigned char buf[512];
++		unsigned char buf[4096];
+ 
+ 		ret = sg_read(c->fd, &buf[0], sbb = &sb[0]);
+ 		if (ret == PATH_DOWN) {
+-- 
+1.5.2.4
