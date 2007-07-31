@@ -1,16 +1,19 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: New multipath-tools release?
-Date: Tue, 31 Jul 2007 17:16:19 +0200
-Message-ID: <46AF5243.2080102@suse.de>
-References: <46A72D1B.1040408@suse.de>
-	<20070728161353.GA21276@bogon.ms20.nix>	<46ADFA63.9020403@suse.de>
-	<20070731071830.GA15099@bogon.ms20.nix>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [patch 1/3] Extremely basic hp hardware handler (no
+	retries, no error handling, etc).
+Date: Tue, 31 Jul 2007 10:35:32 -0700
+Message-ID: <1185903332.17399.92.camel@linuxchandra>
+References: <20070726044447.846195205@redhat.com>
+	<20070726044720.403731599@redhat.com>
+	<1185476962.17399.52.camel@linuxchandra> <46AE5353.2050002@cs.wisc.edu>
+	<1185838035.17399.80.camel@linuxchandra> <46AEAE06.8080809@cs.wisc.edu>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070731071830.GA15099@bogon.ms20.nix>
+In-Reply-To: <46AEAE06.8080809@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +23,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: christophe varoqui <christophe.varoqui@free.fr>
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Guido Guenther wrote:
-> On Mon, Jul 30, 2007 at 04:49:07PM +0200, Hannes Reinecke wrote:
->> In priciple a good idea. However, I do have some to-do items on my lis=
-t
->> yet:
->>
->> - netlink messages: The FC transport class has a netlink interface
->>   nowadays. It may be an idea to utilize this information in to update
->>   the path status.
->> - Enhance path checker. Currently the path checker is run at periodic
->>   intervals regardless of the path state. This leads to quite some
->>   load on systems with many paths, even when all paths are healthy.
->>   We should rather call the path checker only if a path has failed,
->>   as we're being notified by a failed path soon enough via I/O errors.
->>   And we might even be using the netlink events from FC here, too.
->>
-> My point exactly: let's tag a new stable version and add these nice
-> things to the (then) next release. I think the stability of the master
-> branch improved quiet a bit during the last couple of commits, It'd be
-> nice to have this out of the door for distributions to build upon befor=
-e
-> doing more intrusive changes again.
+On Mon, 2007-07-30 at 22:35 -0500, Mike Christie wrote:
+> Chandra Seetharaman wrote:
+> > On Mon, 2007-07-30 at 16:08 -0500, Mike Christie wrote:
+> >> Chandra Seetharaman wrote:
+> >>> Hi Dave,
+> >>>
+> >>> some coding style related comments (below).
+> >>>
+> >>
+> >>>> +	if (!error) {
+> >>>> +		err_flags = 0;
+> >>>> +		DMDEBUG("%s path activation command - success",
+> >>>> +		       	path->dev->name);
+> >>> Mixed use of space and tab for indentation (many other places too).
+> >>>
+> >> Where is that rule for this type of plcae?
+> > 
+> > Documentation/CodingStyle:
+> > "Outside of comments, documentation and except in Kconfig, spaces are
+> > never used for indentation, and the above example is deliberately
+> > broken."
+> 
+> Ah I see. I still think it is ok for this type of case though. Well, the 
 
-(Ah, so there is an RHEL update coming :-)
+I see what you mean and agree with you.
 
-But yes, you are right. Putting out a new version before adding those
-is probably a good thing.
+> above chunk of code should actually be tabbed because it lines up 
+> perfectly (I think there are 8 spaces in the above snippet), but some of 
+> the other places are not. checkpatch.pl did not care about the others 
+> and it looks like reviewers like Andrew Morton did not care about some 
+> of the wierder spacing used in dm-mpath-rdac which did not fit the 
+> coding style doc or the existing code :)
 
-Cheers,
+I will check it out
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+> 
+> If we are getting all picky about that coding style I guess Dave should 
+
+No, I am not getting all picky :). Was trying to help to avoid some
+churn when sent to mainline.
+
+> run scripts/checkpatch.pl over his patches, because I think there are 
+> some other issues.
+> 
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
