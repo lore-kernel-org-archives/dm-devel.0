@@ -1,37 +1,62 @@
-From: Satyam Sharma <satyam@infradead.org>
-Subject: Re: Crypto API Weirdnesses
-Date: Tue, 31 Jul 2007 19:33:23 +0530 (IST)
-Message-ID: <alpine.LFD.0.999.0707311930340.26032@enigma.security.iitk.ac.in>
-References: <31e679430707301336v37bc7433jed09451ab60ad89a@mail.gmail.com>
- <alpine.LFD.0.999.0707311837470.26032@enigma.security.iitk.ac.in>
- <961aa3350707310626l24d1d910u75ed703d8d422082@mail.gmail.com>
- <31e679430707310632u52f43fefg8313143953ccb9b3@mail.gmail.com>
- <alpine.LFD.0.999.0707311916150.26032@enigma.security.iitk.ac.in>
- <31e679430707310643h670ffb1bg852f0e14eafa11a9@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: New multipath-tools release?
+Date: Tue, 31 Jul 2007 17:16:19 +0200
+Message-ID: <46AF5243.2080102@suse.de>
+References: <46A72D1B.1040408@suse.de>
+	<20070728161353.GA21276@bogon.ms20.nix>	<46ADFA63.9020403@suse.de>
+	<20070731071830.GA15099@bogon.ms20.nix>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=us-ascii
-Return-path: <linux-crypto-owner@vger.kernel.org>
-In-Reply-To: <31e679430707310643h670ffb1bg852f0e14eafa11a9@mail.gmail.com>
-Sender: linux-crypto-owner@vger.kernel.org
-To: Felipe Balbi <felipebalbi@users.sourceforge.net>
-Cc: Akinobu Mita <akinobu.mita@gmail.com>, linux-kernel@vger.kernel.org, Herbert Xu <herbert@gondor.apana.org.au>, linux-crypto@vger.kernel.org, dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070731071830.GA15099@bogon.ms20.nix>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
+Guido Guenther wrote:
+> On Mon, Jul 30, 2007 at 04:49:07PM +0200, Hannes Reinecke wrote:
+>> In priciple a good idea. However, I do have some to-do items on my lis=
+t
+>> yet:
+>>
+>> - netlink messages: The FC transport class has a netlink interface
+>>   nowadays. It may be an idea to utilize this information in to update
+>>   the path status.
+>> - Enhance path checker. Currently the path checker is run at periodic
+>>   intervals regardless of the path state. This leads to quite some
+>>   load on systems with many paths, even when all paths are healthy.
+>>   We should rather call the path checker only if a path has failed,
+>>   as we're being notified by a failed path soon enough via I/O errors.
+>>   And we might even be using the netlink events from FC here, too.
+>>
+> My point exactly: let's tag a new stable version and add these nice
+> things to the (then) next release. I think the stability of the master
+> branch improved quiet a bit during the last couple of commits, It'd be
+> nice to have this out of the door for distributions to build upon befor=
+e
+> doing more intrusive changes again.
 
+(Ah, so there is an RHEL update coming :-)
 
-On Tue, 31 Jul 2007, Felipe Balbi wrote:
+But yes, you are right. Putting out a new version before adding those
+is probably a good thing.
 
-> On 7/31/07, Satyam Sharma <satyam@infradead.org> wrote:
-> > [...]
-> > Ugh, you should at least be checking if you've built the kernel with the
-> > same config options :-) Of course, if you did a simple "make oldconfig"
-> > but still lost some config options, then that's definitely a regression...
-> > (was that the case here, btw?)
-> 
-> yeah... I was make oldconfig'ing :-p
+Cheers,
 
-Hmm, can you send the 2.6.22-rc7 .config too? I'll try and reproduce
-this so we can see what went wrong ...
-
-
-Satyam
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
