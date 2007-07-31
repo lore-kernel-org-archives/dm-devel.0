@@ -1,18 +1,10 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [patch 1/3] Extremely basic hp hardware handler (no
-	retries, no error handling, etc).
-Date: Mon, 30 Jul 2007 16:27:15 -0700
-Message-ID: <1185838035.17399.80.camel@linuxchandra>
-References: <20070726044447.846195205@redhat.com>
-	<20070726044720.403731599@redhat.com>
-	<1185476962.17399.52.camel@linuxchandra> <46AE5353.2050002@cs.wisc.edu>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+From: Diego Woitasen <diego@woitasen.com.ar>
+Subject: [PATCH] remove unneded lock_kernel in drivers/md/dm.c
+	and use unlocked_ioctl.
+Date: Mon, 30 Jul 2007 23:23:49 -0300
+Message-ID: <11858486294133-git-send-email-diego@woitasen.com.ar>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46AE5353.2050002@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +14,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 2007-07-30 at 16:08 -0500, Mike Christie wrote:
-> Chandra Seetharaman wrote:
-> > Hi Dave,
-> > 
-> > some coding style related comments (below).
-> > 
-> 
-> 
-> >> +	if (!error) {
-> >> +		err_flags = 0;
-> >> +		DMDEBUG("%s path activation command - success",
-> >> +		       	path->dev->name);
-> > 
-> > Mixed use of space and tab for indentation (many other places too).
-> > 
-> 
-> Where is that rule for this type of plcae?
 
-Documentation/CodingStyle:
-"Outside of comments, documentation and except in Kconfig, spaces are
-never used for indentation, and the above example is deliberately
-broken."
+Signed-off-by: Diego Woitasen <diego@woitasen.com.ar>
+---
+ drivers/md/dm.c |   10 ++++------
+ 1 files changed, 4 insertions(+), 6 deletions(-)
 
-> 
-> I think that is fine in those types of places. In fact I would leave it 
-> with mixed because that is how the rest of the dm code does it.
-> 
-> 
-> >> +	memset(&req->cmd, 0, BLK_MAX_CDB);
-> >> +	req->cmd[0] = START_STOP;
-> >> +	req->cmd[4] = 1;
-> >> +	req->cmd_len = COMMAND_SIZE(req->cmd[0]);
-> >> + out:
-> > 
-> > I think there will be no space before the label (one more below).
-> > 
-> 
-> Either is normally fine, but in this case to fit with the other dm code 
-> that is best.
-
-It is not explicitly stated in CodingStyle. But, the example under
-"goto" section does have the label start at column 0 (that is why I said
-"I think" :).
-
-
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 141ff9f..aebb207 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -282,17 +282,16 @@ static int dm_blk_getgeo(struct block_device *bdev, struct hd_geometry *geo)
+ 	return dm_get_geometry(md, geo);
+ }
+ 
+-static int dm_blk_ioctl(struct inode *inode, struct file *file,
+-			unsigned int cmd, unsigned long arg)
++static long dm_blk_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
+ {
+ 	struct mapped_device *md;
+ 	struct dm_table *map;
+ 	struct dm_target *tgt;
++	struct inode *inode;
+ 	int r = -ENOTTY;
+ 
+-	/* We don't really need this lock, but we do need 'inode'. */
+-	unlock_kernel();
+ 
++	inode = file->f_path.dentry->d_inode;
+ 	md = inode->i_bdev->bd_disk->private_data;
+ 
+ 	map = dm_get_table(md);
+@@ -317,7 +316,6 @@ static int dm_blk_ioctl(struct inode *inode, struct file *file,
+ out:
+ 	dm_table_put(map);
+ 
+-	lock_kernel();
+ 	return r;
+ }
+ 
+@@ -1550,7 +1548,7 @@ EXPORT_SYMBOL_GPL(dm_noflush_suspending);
+ static struct block_device_operations dm_blk_dops = {
+ 	.open = dm_blk_open,
+ 	.release = dm_blk_close,
+-	.ioctl = dm_blk_ioctl,
++	.unlocked_ioctl = dm_blk_ioctl,
+ 	.getgeo = dm_blk_getgeo,
+ 	.owner = THIS_MODULE
+ };
 -- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+1.5.2.4
