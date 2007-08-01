@@ -1,15 +1,14 @@
-From: Bernd Zeimetz <bernd@bzed.de>
-Subject: Re: RH 4 and HSG80
-Date: Wed, 01 Aug 2007 22:20:53 +0200
-Message-ID: <46B0EB25.90103@bzed.de>
-References: <OFD9DA3C9D.6E99EABB-ONC125732A.005472D4-C125732A.0055D34C@de.ibm.com>
-	<46B0BEB9.4060303@interactivebrokers.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: LVM on dmraid breakage
+Date: Wed, 1 Aug 2007 15:29:47 -0500
+Message-ID: <0EAFEA7F-BC32-4256-9C8E-3086756293C8@redhat.com>
+References: <46B0EAEF.6090305@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Mime-Version: 1.0 (Apple Message framework v752.3)
+Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46B0BEB9.4060303@interactivebrokers.com>
+In-Reply-To: <46B0EAEF.6090305@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,21 +21,25 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Eric Ritchie wrote:
-> Thanks for the help. Unfortunately, I don't have /sbin/mpath_prio_hp_sw.
-> I have other mpath_prio files but not the hp one. I guess that means I
-> need a newer version of multipath-tools. How can I upgrade to the latest
-> version?
+I'm not aware of a mechanism that LVM used to skip over owned  
+devices... there may exist one.  However, you could use lvm filters  
+to skip those underlying devices.
 
-you'll have to build it from git.
-Also you need to build the hp_sw module for your kernel, patches which
-at least build with 2.6.21 and .22 were posted on this list some days ago.
+  brassow
 
+On Aug 1, 2007, at 3:19 PM, Phillip Susi wrote:
 
-Cheers,
-
-Bernd
-
--- 
-Bernd Zeimetz
-<bernd@bzed.de>                         <http://bzed.de/>
+> I am investigating a bug report involving the combination of lvm  
+> and dmraid, and it seems to me that the problem is that lvm is  
+> detecting the underlying partition on the primary disk and  
+> accessing it directly rather than going through the raid device  
+> made by dmraid.  I think that the problem is there is no facility  
+> for dmraid to "claim" the physical disk so that lvm does not look  
+> at it, and also to have lvm scan the raid device for physical volumes.
+>
+> Does anyone have any thoughts on how this might be accomplished?
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
