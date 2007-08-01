@@ -1,8 +1,11 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath devmapper.c
-Date: 31 Jul 2007 22:19:56 -0000
-Message-ID: <20070731221956.2267.qmail@sourceware.org>
+From: chris <chris@parallelsw.com>
+Subject: encrypted filesystem not encrypted?
+Date: Tue, 31 Jul 2007 19:08:56 -0600
+Message-ID: <46AFDD28.40203@parallelsw.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,79 +16,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com, redhat-list@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-07-31 22:19:56
+Hi all,
 
-Modified files:
-	libmultipath   : devmapper.c 
+I was not sure which list to send this to, so I choose a couple that 
+looked like decent fits, please advise if there is one more specific to 
+the encryption.
 
-Log message:
-	Just added some condlog messages to check for dm problems.
+I am currently working on a project where we are converting some of our 
+filesystems to an encrypted fs using LVM2.  We are running RHEL:  
+"2.6.9-55.0.2.ELsmp #1 SMP Tue Jun 12 17:59:08 EDT 2007 i686 i686 i386 
+GNU/Linux"
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.18&r2=1.18.2.1
+We setup an encrypted filesystem using one of the open partitions on the 
+physical hard drive using "cryptsetup create /dev/sda3"  We have 
+verified this using the cryptsetup status, This shows the filesystem as 
+being encrypted as aes_plain 256 bit key.  We then created an LVM and 
+mounted the filesystem using the LVM.
 
---- multipath-tools/libmultipath/devmapper.c	2006/03/28 05:45:23	1.18
-+++ multipath-tools/libmultipath/devmapper.c	2007/07/31 22:19:56	1.18.2.1
-@@ -670,11 +670,15 @@
- 
- 	dm_task_no_open_count(dmt);
- 
--	if (!dm_task_run(dmt))
-+	if (!dm_task_run(dmt)) {
-+		condlog(0, "can't get dm device list");
- 		goto out;
-+	}
- 
--	if (!(names = dm_task_get_names(dmt)))
-+	if (!(names = dm_task_get_names(dmt))){ 
-+		condlog(0, "can't get dm device names\n");
- 		goto out;
-+	}
- 
- 	if (!names->dev) {
- 		r = 0; /* this is perfectly valid */
-@@ -689,8 +693,10 @@
- 
- 		mpp = alloc_multipath();
- 
--		if (!mpp)
-+		if (!mpp) {
-+			condlog(0, "can't allocate multipath device\n");
- 			goto out;
-+		}
- 
- 		mpp->alias = STRDUP(names->name);
- 
-@@ -698,17 +704,21 @@
- 			goto out1;
- 
- 		if (info > 0) {
--			if (dm_get_map(names->name, &mpp->size, mpp->params))
-+			if (dm_get_map(names->name, &mpp->size, mpp->params)) {
-+				condlog(0, "can't get multipath parameters\n");
- 				goto out1;
--
--			if (dm_get_status(names->name, mpp->status))
-+			}
-+			if (dm_get_status(names->name, mpp->status)) {
-+				condlog(0, "can't get multipath status\n");
- 				goto out1;
--
-+			}
- 			dm_get_uuid(names->name, mpp->wwid);
- 		}
- 
--		if (!vector_alloc_slot(mp))
-+		if (!vector_alloc_slot(mp)){
-+			condlog(0, "can't allocate space for multipath device\n");
- 			goto out1;
-+		}
- 
- 		vector_set_slot(mp, mpp);
- 		mpp = NULL;
+All seems to be well, except when our testers ran the following command:
+head -c 5000 /dev/sda3
+
+They got some output that includes clear text and obviously not 
+encrypted data (along with encrypted data).  Some things are date 
+formatted strings like 20050912 which appears quite a few times in the 
+mounted filesystem, and in the raw device (/dev/sda3).
+
+I can post the exact commands that were used to create the filesystem, 
+but they are basically
+create partition ...sda3
+cryptsetup create /dev/sda3 (prompts for passphrase)
+pvcreate
+vgcreate
+lvcreate
+mount
+
+(TIA) any help (or light shed on this) is greatly appreciated!
+
+-chris
