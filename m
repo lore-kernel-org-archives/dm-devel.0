@@ -1,14 +1,14 @@
-From: "Ellison, Bob" <bob.ellison@ccur.com>
-Subject: RE: encrypted filesystem not encrypted?
-Date: Wed, 1 Aug 2007 12:12:04 -0400
-Message-ID: <E5C8AFD1ADF9DF48AD935F49588E895506B36FFD@gamx.iccur.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [RFC] Naming of dm-multipath hardware handler modules
+Date: Wed, 01 Aug 2007 11:39:13 -0500
+Message-ID: <46B0B731.1070601@cs.wisc.edu>
+References: <1185913012.4392.46.camel@linux-cxyg>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-content-class: urn:content-classes:message
+In-Reply-To: <1185913012.4392.46.camel@linux-cxyg>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,81 +21,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Also, did you initialize the partition with random data before the
-cryptsetup step? If not, you could be looking at stale, unencrypted
-data.
-e.g
-       dd if=3D/dev/urandom of=3D/dev/sda3=20
-    or
-       /sbin/badblocks -c 10240 -s -w -t random -v /dev/sda3
+Dave Wysochanski wrote:
+> Do we have an agreed upon scheme?
+> 
+> I noticed in 2.6.23-rc1, the RDAC module is named "dm-mpath-rdac.ko",
+> but the source file is "dm-rdac.c".  Should we be naming things
 
-Either will do; the choice is how secure you want your actual data
-and/or how long you're willing to wait for the seeding to complete.
---
-bob
+Are you sure about that? In linus's tree it is named dm-mpath-rdac.c. 
+The module that is created is named dm-rdac.ko.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Jonathan Brassow
-Sent: Wednesday, August 01, 2007 10:43 AM
-To: device-mapper development
-Subject: Re: [dm-devel] encrypted filesystem not encrypted?
+> "dm-mpath-hwhname" everywhere?  If so, should we rename dm-emc?
+> 
+> I was not sure exactly what was correct for the HP handler.  Currently
+> it follows the dm-emc scheme, which is probably wrong.
+> 
 
-I'm guessing that you are bypassing your crypt device.  Depends on =20
-what your arguments are to the LVM commands.
+Alasdair, initially wanted the modules and file names to have dm-mpath 
+prefixes, but userspace for emc is already passing in "emc" and 
+dm_get_hw_handler does request_module("dm-%s", name) and 
+__find_hw_handler_type does strcmp(name, hwhi->hwht.name).
 
-cryptsetup will create a new device that sits on top of sda3 - you =20
-should use that one.  Do not use sda3 directly.
+So we ended up doing a partial conversion leaving userspace alone, but 
+changing the filenames to what Alasdair wanted. So rdac got the source 
+filename dm-mpath-rdac.c, but its module gets the name dm-rdac.ko.
 
-  brassow
+So yeah, I forgot about that in the review, and instead of
 
-On Jul 31, 2007, at 8:08 PM, chris wrote:
+obj-$(CONFIG_DM_MULTIPATH_HP)	+= dm-hp-sw.o
 
-> Hi all,
->
-> I was not sure which list to send this to, so I choose a couple =20
-> that looked like decent fits, please advise if there is one more =20
-> specific to the encryption.
->
-> I am currently working on a project where we are converting some of =20
-> our filesystems to an encrypted fs using LVM2.  We are running =20
-> RHEL:  "2.6.9-55.0.2.ELsmp #1 SMP Tue Jun 12 17:59:08 EDT 2007 i686 =20
-> i686 i386 GNU/Linux"
->
-> We setup an encrypted filesystem using one of the open partitions =20
-> on the physical hard drive using "cryptsetup create /dev/sda3"  We =20
-> have verified this using the cryptsetup status, This shows the =20
-> filesystem as being encrypted as aes_plain 256 bit key.  We then =20
-> created an LVM and mounted the filesystem using the LVM.
->
-> All seems to be well, except when our testers ran the following =20
-> command:
-> head -c 5000 /dev/sda3
->
-> They got some output that includes clear text and obviously not =20
-> encrypted data (along with encrypted data).  Some things are date =20
-> formatted strings like 20050912 which appears quite a few times in =20
-> the mounted filesystem, and in the raw device (/dev/sda3).
->
-> I can post the exact commands that were used to create the =20
-> filesystem, but they are basically
-> create partition ...sda3
-> cryptsetup create /dev/sda3 (prompts for passphrase)
-> pvcreate
-> vgcreate
-> lvcreate
-> mount
->
-> (TIA) any help (or light shed on this) is greatly appreciated!
->
-> -chris
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+you should do
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+dm-hw-objs	:= dm-mpath-hw.o
+
+......
+
+
+obj-$(CONFIG_DM_MULTIPATH_HP_SW) += dm-hp-sw.o
+
+In the Makefile, and the source filename for should be dm-mpath-hp-sw.c.
+
+And dm-emc.c should probably be changed, although we could probably do 
+it after the logical unit follow-over cap patch is cleaned up and merged.
