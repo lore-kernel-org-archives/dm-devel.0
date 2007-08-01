@@ -1,12 +1,15 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: LVM on dmraid breakage
-Date: Wed, 01 Aug 2007 16:19:59 -0400
-Message-ID: <46B0EAEF.6090305@cfl.rr.com>
+From: Bernd Zeimetz <bernd@bzed.de>
+Subject: Re: RH 4 and HSG80
+Date: Wed, 01 Aug 2007 22:20:53 +0200
+Message-ID: <46B0EB25.90103@bzed.de>
+References: <OFD9DA3C9D.6E99EABB-ONC125732A.005472D4-C125732A.0055D34C@de.ibm.com>
+	<46B0BEB9.4060303@interactivebrokers.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <46B0BEB9.4060303@interactivebrokers.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,15 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I am investigating a bug report involving the combination of lvm and 
-dmraid, and it seems to me that the problem is that lvm is detecting the 
-underlying partition on the primary disk and accessing it directly 
-rather than going through the raid device made by dmraid.  I think that 
-the problem is there is no facility for dmraid to "claim" the physical 
-disk so that lvm does not look at it, and also to have lvm scan the raid 
-device for physical volumes.
+Eric Ritchie wrote:
+> Thanks for the help. Unfortunately, I don't have /sbin/mpath_prio_hp_sw.
+> I have other mpath_prio files but not the hp one. I guess that means I
+> need a newer version of multipath-tools. How can I upgrade to the latest
+> version?
 
-Does anyone have any thoughts on how this might be accomplished?
+you'll have to build it from git.
+Also you need to build the hp_sw module for your kernel, patches which
+at least build with 2.6.21 and .22 were posted on this list some days ago.
+
+
+Cheers,
+
+Bernd
+
+-- 
+Bernd Zeimetz
+<bernd@bzed.de>                         <http://bzed.de/>
