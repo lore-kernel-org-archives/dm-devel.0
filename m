@@ -1,10 +1,13 @@
 From: dwysocha@redhat.com
-Subject: [patch 0/0] Add HP hardware handler support to
-	dm-multipath
-Date: Thu, 02 Aug 2007 12:10:21 -0400
-Message-ID: <20070802161021.981536805@redhat.com>
+Subject: [patch 3/3] Add retries to hp hardware handler if path
+	initialization command completes with a check condition.
+Date: Thu, 02 Aug 2007 12:15:04 -0400
+Message-ID: <20070802161538.198067714@redhat.com>
+References: <20070802161501.113656160@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline;
+	filename=dm-hp-sw-add-retries-handle-not-ready.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,12 +20,125 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The following 3 patches add HP hardware handler support to dm-multipath.
-The first patch is very basic and provides a baseline of support but it is not
-complete (has no retries, error code handling, etc).  Second and third patches
-add retries and some error code handling.
+This patch adds retries to the hp hardware handler, and utilizes the 
+MP_RETRY flag of dm-multipath.  For now in the hp handler, if we get a 
+pg_init completed with a check condition we just assume we can retry the
+pg_init command.  We make this assumption because of incomplete data on
+specific check condition code of the HP hardware, and because testing
+has shown the HP path initialization command to be idempotent.
+The number of times we retry is settable via the "pg_init_retries"
+multipath map feature.
 
-I believe all comments to date have been addressed, including whitespace
-issues, and passing of scripts/checkpatch.pl.
+Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
+Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+
+---
+Index: linux-2.6.23-rc1/drivers/md/dm-mpath-hp-sw.c
+===================================================================
+--- linux-2.6.23-rc1.orig/drivers/md/dm-mpath-hp-sw.c
++++ linux-2.6.23-rc1/drivers/md/dm-mpath-hp-sw.c
+@@ -18,18 +18,52 @@
+ #include <linux/types.h>
+ #include <scsi/scsi.h>
+ #include <scsi/scsi_cmnd.h>
++#include <scsi/scsi_dbg.h>
+ 
+ #include "dm.h"
+ #include "dm-hw-handler.h"
+ 
+ #define DM_MSG_PREFIX "multipath hp_sw"
+ #define HP_DM_HWH_NAME "hp_sw"
+-#define HP_DM_HWH_VER "0.0.3"
++#define HP_DM_HWH_VER "1.0.0"
+ 
+ struct hp_sw_context {
+ 	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
+ };
+ 
++/**
++ * hp_sw_error_is_retryable - Is an HP-specific check condition retryable?
++ * @req: path activation request
++ *
++ * Examine error codes of request and determine whether the error is retryable.
++ * Some error codes are already retried by scsi-ml (see
++ * scsi_decide_disposition), but some HP specific codes are not.
++ * The intent of this routine is to supply the logic for the HP specific
++ * check conditions.
++ *
++ * Returns:
++ *  1 - command completed with retryable error
++ *  0 - command completed with non-retryable error
++ *
++ * Possible optimizations
++ * 1. More hardware-specific error codes
++ */
++static int hp_sw_error_is_retryable(struct request *req)
++{
++	/*
++	 * NOT_READY is known to be retryable
++	 * For now we just dump out the sense data and call it retryable
++	 */
++	if (status_byte(req->errors) == CHECK_CONDITION)
++		__scsi_print_sense("hp_sw", req->sense, req->sense_len);
++
++	/*
++	 * At this point we don't have complete information about all the error
++	 * codes from this hardware, so we are just conservative and retry
++	 * when in doubt.
++	 */
++	return 1;
++}
+ 
+ /**
+  * hp_sw_end_io - Completion handler for HP path activation.
+@@ -41,8 +75,6 @@ struct hp_sw_context {
+  *
+  * Context: scsi-ml softirq
+  *
+- * Possible optimizations
+- * 1. Actually check sense data for retryable error (e.g. NOT_READY)
+  */
+ static void hp_sw_end_io(struct request *req, int error)
+ {
+@@ -54,11 +86,17 @@ static void hp_sw_end_io(struct request 
+ 		DMDEBUG("%s path activation command - success",
+ 			path->dev->name);
+ 	} else {
+-		DMWARN("%s path activation command - error=0x%x",
++		if (hp_sw_error_is_retryable(req)) {
++			DMDEBUG("%s path activation command - retry",
++				path->dev->name);
++			err_flags = MP_RETRY;
++			goto out;
++		}
++		DMWARN("%s path activation fail - error=0x%x",
+ 		       path->dev->name, error);
+ 		err_flags = MP_FAIL_PATH;
+ 	}
+-
++out:
+ 	req->end_io_data = NULL;
+ 	__blk_put_request(req->q, req);
+ 	dm_pg_init_complete(path, err_flags);
+@@ -136,7 +174,7 @@ static void hp_sw_pg_init(struct hw_hand
+ 	if (!req) {
+ 		DMERR("%s path activation command - allocation fail",
+ 		      path->dev->name);
+-		goto fail;
++		goto retry;
+ 	}
+ 
+ 	DMDEBUG("%s path activation command - sent", path->dev->name);
+@@ -144,8 +182,8 @@ static void hp_sw_pg_init(struct hw_hand
+ 	blk_execute_rq_nowait(req->q, NULL, req, 1, hp_sw_end_io);
+ 	return;
+ 
+-fail:
+-	dm_pg_init_complete(path, MP_FAIL_PATH);
++retry:
++	dm_pg_init_complete(path, MP_RETRY);
+ }
+ 
+ static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
 
 -- 
