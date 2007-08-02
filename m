@@ -1,7 +1,7 @@
-From: mornfall@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmeventd/libdevmappe ...
-Date: 2 Aug 2007 22:31:59 -0000
-Message-ID: <20070802223159.24050.qmail@sourceware.org>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults mult ...
+Date: 2 Aug 2007 23:00:52 -0000
+Message-ID: <20070802230052.29184.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,47 +17,38 @@ To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	mornfall@sourceware.org	2007-08-02 22:31:59
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2007-08-02 23:00:52
 
 Modified files:
-	.              : WHATS_NEW 
-	dmeventd       : libdevmapper-event.c 
+	.              : multipath.conf.defaults 
+	multipath      : multipath.conf.redhat 
 
 Log message:
-	Fix a possible segfault in libdevmapper-event. Thanks to Brian J. Wood
-	for noticing this.
+	Updating some comments
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.196&r2=1.197
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.22&r2=1.23
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.4&r2=1.5.2.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.3&r2=1.5.2.4
 
---- device-mapper/WHATS_NEW	2007/07/28 10:48:36	1.196
-+++ device-mapper/WHATS_NEW	2007/08/02 22:31:59	1.197
-@@ -1,5 +1,6 @@
- Version 1.02.22 - 
- ================================
-+  Fix a possible segfault in libdevmapper-event
-   Export dm_create_dir (was create_dir) to help fix LVM2 link error
-   Don't log mkdir fail-with-EROFS, to make create_dir equiv to the one in LVM2
-   Introduce and use log_sys_* macros from LVM2
---- device-mapper/dmeventd/libdevmapper-event.c	2007/04/19 19:10:19	1.22
-+++ device-mapper/dmeventd/libdevmapper-event.c	2007/08/02 22:31:59	1.23
-@@ -706,6 +706,7 @@
- 	}
- 
- 	dm_task_destroy(dmt);
-+	dmt = 0;
- 
- 	if (msg.data) {
- 		dm_free(msg.data);
-@@ -759,7 +760,8 @@
- 	if (reply_uuid)
- 		dm_free(reply_uuid);
- 	_dm_event_handler_clear_dev_info(dmevh);
--	dm_task_destroy(dmt);
-+	if (dmt)
-+		dm_task_destroy(dmt);
- 	return ret;
- }
- 
+--- multipath-tools/multipath.conf.defaults	2007/05/07 17:59:46	1.5.2.4
++++ multipath-tools/multipath.conf.defaults	2007/08/02 23:00:52	1.5.2.5
+@@ -19,7 +19,6 @@
+ #blacklist {
+ #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+ #       devnode "^hd[a-z]"
+-#       devnode "^cciss!c[0-9]d[0-9]*"
+ #}
+ #
+ #devices {
+--- multipath-tools/multipath/multipath.conf.redhat	2007/05/07 17:59:46	1.5.2.3
++++ multipath-tools/multipath/multipath.conf.redhat	2007/08/02 23:00:52	1.5.2.4
+@@ -63,7 +63,6 @@
+ #       wwid 26353900f02796769
+ #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+ #	devnode "^hd[a-z]"
+-#	devnode "^cciss!c[0-9]d[0-9]*"
+ #}
+ #multipaths {
+ #	multipath {
