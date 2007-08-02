@@ -1,9 +1,12 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults mult ...
-Date: 2 Aug 2007 23:00:52 -0000
-Message-ID: <20070802230052.29184.qmail@sourceware.org>
+From: "Wood, Brian J" <brian.j.wood@intel.com>
+Subject: [PATCH] Error check for NULL pointer libdm-iface.c
+Date: Thu, 2 Aug 2007 16:21:35 -0700
+Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CC012EF0AF@orsmsx418.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C7D55B.DE5FB250"
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,42 +16,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-08-02 23:00:52
+This is a multi-part message in MIME format.
 
-Modified files:
-	.              : multipath.conf.defaults 
-	multipath      : multipath.conf.redhat 
+------_=_NextPart_001_01C7D55B.DE5FB250
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Log message:
-	Updating some comments
+Hi everyone, I've made a patch for the NULL pointer segmentation fault
+error I found in the file libdm-iface.c. Here's the patch text:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.4&r2=1.5.2.5
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.3&r2=1.5.2.4
+--- device-mapper.orig/lib/ioctl/libdm-iface.c	2007-08-02
+15:58:25.000000000 -0700
++++ device-mapper/lib/ioctl/libdm-iface.c	2007-08-02
+15:59:59.000000000 -0700
+@@ -321,6 +321,9 @@
+ {
+ 	struct target *t, *n;
+=20
++	if(!dmt)
++		return; /* NULL pointer would cause segfault */
++=09
+ 	for (t =3D dmt->head; t; t =3D n) {
+ 		n =3D t->next;
+ 		dm_free(t->params);
 
---- multipath-tools/multipath.conf.defaults	2007/05/07 17:59:46	1.5.2.4
-+++ multipath-tools/multipath.conf.defaults	2007/08/02 23:00:52	1.5.2.5
-@@ -19,7 +19,6 @@
- #blacklist {
- #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #       devnode "^hd[a-z]"
--#       devnode "^cciss!c[0-9]d[0-9]*"
- #}
- #
- #devices {
---- multipath-tools/multipath/multipath.conf.redhat	2007/05/07 17:59:46	1.5.2.3
-+++ multipath-tools/multipath/multipath.conf.redhat	2007/08/02 23:00:52	1.5.2.4
-@@ -63,7 +63,6 @@
- #       wwid 26353900f02796769
- #	devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
- #	devnode "^hd[a-z]"
--#	devnode "^cciss!c[0-9]d[0-9]*"
- #}
- #multipaths {
- #	multipath {
+
+Is there a contact person that I would submit userspace patches to? I
+know Alasdair is the device-mapper maintainer, so is he the contact I
+should submit to instead of the mailing list?
+
+Thank you, =20
+
+Brian Wood
+Intel Corporation=20
+Digital Enterprise Group
+Manageability & Platform Software Division
+brian.j.wood@intel.com
+
+
+------_=_NextPart_001_01C7D55B.DE5FB250
+Content-Type: application/octet-stream;
+	name="libdm-iface_fix_segfault_dm_task_destroy.patch"
+Content-Transfer-Encoding: base64
+Content-Description: libdm-iface_fix_segfault_dm_task_destroy.patch
+Content-Disposition: attachment;
+	filename="libdm-iface_fix_segfault_dm_task_destroy.patch"
+
+LS0tIGRldmljZS1tYXBwZXIub3JpZy9saWIvaW9jdGwvbGliZG0taWZhY2UuYwkyMDA3LTA4LTAy
+IDE1OjU4OjI1LjAwMDAwMDAwMCAtMDcwMAorKysgZGV2aWNlLW1hcHBlci9saWIvaW9jdGwvbGli
+ZG0taWZhY2UuYwkyMDA3LTA4LTAyIDE1OjU5OjU5LjAwMDAwMDAwMCAtMDcwMApAQCAtMzIxLDYg
+KzMyMSw5IEBACiB7CiAJc3RydWN0IHRhcmdldCAqdCwgKm47CiAKKwlpZighZG10KQorCQlyZXR1
+cm47IC8qIE5VTEwgcG9pbnRlciB3b3VsZCBjYXVzZSBzZWdmYXVsdCAqLworCQogCWZvciAodCA9
+IGRtdC0+aGVhZDsgdDsgdCA9IG4pIHsKIAkJbiA9IHQtPm5leHQ7CiAJCWRtX2ZyZWUodC0+cGFy
+YW1zKTsK
+
+------_=_NextPart_001_01C7D55B.DE5FB250
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_001_01C7D55B.DE5FB250--
