@@ -1,11 +1,8 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: [ANNOUNCE] multipath-tools-0.4.8
-Date: Fri, 03 Aug 2007 00:27:05 +0200
-Message-ID: <1186093625.20108.69.camel@localhost.localdomain>
+From: mornfall@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmeventd/libdevmappe ...
+Date: 2 Aug 2007 22:31:59 -0000
+Message-ID: <20070802223159.24050.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,85 +13,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello,
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	mornfall@sourceware.org	2007-08-02 22:31:59
 
-here goes multipath-tools-0.4.8.
+Modified files:
+	.              : WHATS_NEW 
+	dmeventd       : libdevmapper-event.c 
 
-Well, a year after the last release, let's see what changed in the
-multipath tools package.
+Log message:
+	Fix a possible segfault in libdevmapper-event. Thanks to Brian J. Wood
+	for noticing this.
 
-Changes that may require your altering your config file :
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.196&r2=1.197
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/libdevmapper-event.c.diff?cvsroot=dm&r1=1.22&r2=1.23
 
-* seed cciss multipathing support for recent MSA hardware : warning, the
-cciss blacklist is not hardcoded anymore. Proliant owners should add it
-to your config file if you don't want surprises.
-* pp_sgi renamed to pp_rdac : no behaviour change otherwise
-* Add "^dcssblk[0-9]*" to default blacklist
-* Directio is now the default checker
-* Move id callouts to standardized /lib/udev
-* Adopt Suse udev rules
-* Add path group timeout handling (pg_timeout keyword)
-* Add blacklist exceptions
-* Almost every vendor updated the internal defaults for their hardware
-("show config" cli command is your friend)
-* We support matching by SCSI revision now, in addition to Vendor and
-Product. No rev specified means all rev matches.
-* Blacklist entries and other strings in the config file are true
-regular expressions, not shell expansion syntax
-
-Features :
-
-* prio: add a prioritizer for HP storageworks arrays
-* prio: add a prioritizer for HDS modular arrays
-* checkers: asynchronous checker framework. Directio is the first and
-only user. Means no more checking loop blocking (while holding lock the
-cli tries to acquire for example).
-* checkers: EMC checker support for ALUA EMC arrays
-* checkers: add RDAC path checker
-* lib: pick up existing alias (if any) from current dm config
-* cli: add syntax auto-completion
-* cli: new command, show blacklist
-* doc: More man pages
-* kpartx: handling for SUN partition tables
-* kpartx: c-slice handling for BSD partition tables
-* kpartx: handling for extended partitions
-* kpartx: accept /dev/dm-* as arg
-
-Fixes :
-
-* checkers: add a timeout to SG_IO ioctls
-* checkers: read buffer size bumped to 4096 bytes (Infiniband)
-* checkers: handling CLARiiON I/O to inactive snapshot logical units
-* lib: support newer kernels sysfs layout (remove libsysfs dependency)
-* lib: we keep stale paths in multipaths in case they get back online,
-but multipathd had trouble dealing with device name change in this
-situation : fixed
-* lib: listen events from udev socket instead of netlink : proper
-serialization allows to remove wait_for_devnode_appearance() hacks
-* lib: fix user_friendly_names race leading to a mpathX being served
-multiple times
-* lib: fix bug limiting to <8 paths luns
-* lib: don't discard paths with large uuid
-* lib: don't segfault when no config file
-* kpartx: large file support
-* kpartx: fix partition calculations of DASD partitions
-* prio: fix ALUA for minor >256
-
-Developers changes :
-
-* checkers: Checkers attached to different paths of a same multipath can
-share information through a context pointer in "struct multipath"
-* lib: use DM uuid "mpath-" prefix
-* kpartx: use DM uuid "part%d-" prefix
-
-
-As usual, doc and download at :
-http://christophe.varoqui.free.fr/
-
-Archive mirror at ftp://sources.redhat.com/pub/dm/multipath-tools/
-
-Regards,
-cvaroqui
+--- device-mapper/WHATS_NEW	2007/07/28 10:48:36	1.196
++++ device-mapper/WHATS_NEW	2007/08/02 22:31:59	1.197
+@@ -1,5 +1,6 @@
+ Version 1.02.22 - 
+ ================================
++  Fix a possible segfault in libdevmapper-event
+   Export dm_create_dir (was create_dir) to help fix LVM2 link error
+   Don't log mkdir fail-with-EROFS, to make create_dir equiv to the one in LVM2
+   Introduce and use log_sys_* macros from LVM2
+--- device-mapper/dmeventd/libdevmapper-event.c	2007/04/19 19:10:19	1.22
++++ device-mapper/dmeventd/libdevmapper-event.c	2007/08/02 22:31:59	1.23
+@@ -706,6 +706,7 @@
+ 	}
+ 
+ 	dm_task_destroy(dmt);
++	dmt = 0;
+ 
+ 	if (msg.data) {
+ 		dm_free(msg.data);
+@@ -759,7 +760,8 @@
+ 	if (reply_uuid)
+ 		dm_free(reply_uuid);
+ 	_dm_event_handler_clear_dev_info(dmevh);
+-	dm_task_destroy(dmt);
++	if (dmt)
++		dm_task_destroy(dmt);
+ 	return ret;
+ }
+ 
