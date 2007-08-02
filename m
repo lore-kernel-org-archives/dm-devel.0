@@ -1,78 +1,41 @@
-From: Petr Rockai <prockai@redhat.com>
-Subject: Re: Segmentation Fault Question
-Date: Thu, 02 Aug 2007 23:40:31 +0200
-Message-ID: <87myx9ipio.fsf@eriador.mornfall.net>
-References: <D44F48C7D79D2943A073C8FA0F49A3CC012EECCA@orsmsx418.amr.corp.intel.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: LVM on dmraid breakage
+Date: Thu, 02 Aug 2007 17:50:51 -0400
+Message-ID: <46B251BB.1010004@cfl.rr.com>
+References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>
+	<46B1B5E1.1050406@redhat.com>
+Reply-To: "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC012EECCA@orsmsx418.amr.corp.intel.com>
-	(Brian J. Wood's message of "Thu, 2 Aug 2007 10:38:43 -0700")
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <ataraid-list-bounces@redhat.com>
+In-Reply-To: <46B1B5E1.1050406@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/ataraid-list>
+List-Post: <mailto:ataraid-list@redhat.com>
+List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
+	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
+Sender: ataraid-list-bounces@redhat.com
+Errors-To: ataraid-list-bounces@redhat.com
+To: "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-"Wood, Brian J" <brian.j.wood@intel.com> writes:
+Bryn M. Reeves wrote:
+> But device-mapper already opens devices exclusively when a target claims
+> them.
+> 
+> The problem here sounds more like it's down to ordering; LVM2 is being
+> given a chance to scan the devices & build LVs / claim devices before
+> dmraid gets a look at them.
 
-> Hello everyone, I think I've found an issue in libdevmapper-event.c that
-> is generating a segmentation fault condition for me during some boundary
-> testing. I wanted to get some advice on how the patch I'm going to make
-> should fix this. Here's the snippet that leads to the segfault:
-Hi. Great that someone is giving a run to this part of the API...
 
-> In the file libdevmapper-event.c at line 722 the _get_device_info() call
-> can return NULL to dmt on failure. This causes the leap to the "fail"
-> label where the null pointer is passed into dm_task_destroy(). 
-Good catch, yes, i have overlooked that problem, blindly assuming
-free() semantics (ie, NULL pointers accepted). Also, since the first
-instance of _get_device_info(...) failure is handled by return 0, i
-may have assumed that it's always valid at that point. There's even
-more bogosity in the code, looking at it now, since there's a call to
-dm_task_destroy(dmt); on line 708 and a possible goto fail after that,
-which calls dm_task_destroy twice on the same pointer (which looks
-like a bad thing). I have commited a fix to cvs, please update -- i
-think it fixes the problem, but i only tried to compile it, not to
-reproduce. If you encounter any further problems with this, please
-yell.
+I think the "exclusive" open only prevents you from mounting a 
+filesystem on the device.  It does not stop you from opening the device 
+and accessing it from user mode, nor does it apparently prevent dm from 
+(re)using the device.
 
-[snip]
->       fail:
-> 	if (msg.data)
-> 		dm_free(msg.data);
-> 	if (reply_dso)
-> 		dm_free(reply_dso);
-> 	if (reply_uuid)
-> 		dm_free(reply_uuid);
-> 	_dm_event_handler_clear_dev_info(dmevh);
-> 	dm_task_destroy(dmt);
-[snip]
-> My question is should the patch insert a test condition of the pointer
-> before using it in the "for" loop (which is where I want to put the
-> fix)? Or is there another preferred way the maintainers of device-mapper
-> would like to handle error checking in this case?
-
-I'd say fixing the caller is good enough. Although making
-dm_task_destroy return silently if it gets a NULL pointer would be an
-option, too. I'll let that decision to someone else though :-).
-
-Yours, Peter.
-
-PS: I haven't forgotten about your other report, i've gotten it marked
-as TODO, somehow i managed to not fix it yet. Soon...
-
--- 
-Peter Rockai | me()mornfall!net | prockai()redhat!com
- http://blog.mornfall.net | http://web.mornfall.net
-
-"In My Egotistical Opinion, most people's C programs should be
- indented six feet downward and covered with dirt."
-     -- Blair P. Houghton on the subject of C program indentation
+The problem is that lvm is looking at the physical disks at all.  It 
+needs to scan the dmraid device, not the underlying disks.
