@@ -1,16 +1,14 @@
-From: Guido Guenther <agx@sigxcpu.org>
-Subject: Re: New multipath-tools release?
-Date: Thu, 2 Aug 2007 19:08:18 +0200
-Message-ID: <20070802170818.GA1224@bogon.ms20.nix>
-References: <46A72D1B.1040408@suse.de> <20070728161353.GA21276@bogon.ms20.nix>
-	<46ADFA63.9020403@suse.de> <20070731071830.GA15099@bogon.ms20.nix>
-	<46AF5243.2080102@suse.de>
+From: "Wood, Brian J" <brian.j.wood@intel.com>
+Subject: Segmentation Fault Question
+Date: Thu, 2 Aug 2007 10:38:43 -0700
+Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CC012EECCA@orsmsx418.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <46AF5243.2080102@suse.de>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,13 +19,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-On Tue, Jul 31, 2007 at 05:16:19PM +0200, Hannes Reinecke wrote:
-> (Ah, so there is an RHEL update coming :-)
-Hmm..no, the kids called lenny and still has some months before it has
-to grow up but given that 0.4.7 doesn't even work with current kernels,
-a release would actually make some sense.
-Cheers,
- -- Guido
+Hello everyone, I think I've found an issue in libdevmapper-event.c that
+is generating a segmentation fault condition for me during some boundary
+testing. I wanted to get some advice on how the patch I'm going to make
+should fix this. Here's the snippet that leads to the segfault:
+
+In the file libdevmapper-event.c at line 722 the _get_device_info() call
+can return NULL to dmt on failure. This causes the leap to the "fail"
+label where the null pointer is passed into dm_task_destroy().=20
+
+   int dm_event_get_registered_device(struct dm_event_handler *dmevh,
+int next)
+   {
+      .
+      .
+      .
+      if (!(dmt =3D _get_device_info(dmevh))) {
+		ret =3D -ENXIO; /* dmeventd probably gave us bogus uuid
+back */
+		goto fail;
+	}
+      .
+      .
+      .
+      fail:
+	if (msg.data)
+		dm_free(msg.data);
+	if (reply_dso)
+		dm_free(reply_dso);
+	if (reply_uuid)
+		dm_free(reply_uuid);
+	_dm_event_handler_clear_dev_info(dmevh);
+	dm_task_destroy(dmt);
+
+
+In the file libdm-iface.c at line 320 where dm_task_destroy() resides it
+blindly uses the passed in pointer without checking if its NULL; this is
+where the segmentation fault occurs.
+
+   void dm_task_destroy(struct dm_task *dmt)
+   {
+	struct target *t, *n;
+
+	for (t =3D dmt->head; t; t =3D n) {
+      .
+      .
+      .
+
+
+My question is should the patch insert a test condition of the pointer
+before using it in the "for" loop (which is where I want to put the
+fix)? Or is there another preferred way the maintainers of device-mapper
+would like to handle error checking in this case?
+
+=20
+
+Brian Wood
+Intel Corporation=20
+Digital Enterprise Group
+Manageability & Platform Software Division
+brian.j.wood@intel.com
