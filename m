@@ -1,12 +1,12 @@
-From: Dave Wysochanski <dwysocha@redhat.com>
+From: dwysocha@redhat.com
 Subject: [patch 1/3] Extremely basic hp hardware handler (no
-	retries, no error handling, etc)
-Date: Thu, 02 Aug 2007 12:25:31 -0400
-Message-ID: <1186071931.7173.5.camel@linux-cxyg>
+	retries, no error handling, etc).
+Date: Thu, 02 Aug 2007 12:15:02 -0400
+Message-ID: <20070802161537.098384123@redhat.com>
+References: <20070802161501.113656160@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-5j1FAbq+P+zr2Mi2sL8+"
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline; filename=dm-hp-sw-v0.0.2.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,22 +16,9 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Mike Christie <michaelc@cs.wisc.edu>
 List-Id: dm-devel.ids
-
-
---=-5j1FAbq+P+zr2Mi2sL8+
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-
-
---=-5j1FAbq+P+zr2Mi2sL8+
-Content-Disposition: attachment; filename=dm-hp-sw-v0.0.2.patch
-Content-Type: text/x-patch; name=dm-hp-sw-v0.0.2.patch; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-
-Extremely basic hp hardware handler (no retries, no error handling, etc).
 
 This patch adds the most basic dm-multipath hardware support for the 
 HP active/passive arrays.
@@ -289,11 +276,4 @@ Index: linux-2.6.23-rc1/drivers/md/dm-mpath-hp-sw.c
 +MODULE_LICENSE("GPL");
 +MODULE_VERSION(HP_DM_HWH_VER);
 
---=-5j1FAbq+P+zr2Mi2sL8+
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-5j1FAbq+P+zr2Mi2sL8+--
+-- 
