@@ -1,16 +1,14 @@
-From: Luca Berra <bluca@comedia.it>
-Subject: Re: Re: LVM on dmraid breakage
-Date: Fri, 3 Aug 2007 10:11:34 +0200
-Message-ID: <20070803081133.GB939@percy.comedia.it>
-References: <46B0EAEF.6090305@cfl.rr.com>
-	<20070802065012.GA28687@percy.comedia.it>
-	<46B254E4.60700@cfl.rr.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: PROBLEM: Oops when using dm-crypt with dpt_i2o
+Date: Fri, 3 Aug 2007 11:04:30 -0700
+Message-ID: <20070803110430.88a4b543.akpm@linux-foundation.org>
+References: <46B0D4B4.2040809@web.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <46B254E4.60700@cfl.rr.com>
+In-Reply-To: <46B0D4B4.2040809@web.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,61 +18,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>, linux-lvm@redhat.com
+To: Philipp =?ISO-8859-1?Q?T=F6lke?= <philipptoelke@web.de>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Christophe Saout <christophe@saout.de>
 List-Id: dm-devel.ids
 
-On Thu, Aug 02, 2007 at 06:04:20PM -0400, Phillip Susi wrote:
->Luca Berra wrote:
->>Two things come to mind
->>1) dmraid should use ioctl BLKPG_DEL_PARTITION, to clean up any eventual
->>partition table on component devices
->
->How will this play out in terms of udev plug events?  Can it be relied 
->on that udev will process the disk first, before the partitions?  If the 
->partitions are deleted during the processing of the disk, does udev 
->still try to process their add events?  Will it then process the delete 
->events?  If so then this is problematic.
-I really have no clue, fortunately dmraid is usually used for boot
-disks, so it should be started before udev has a chance of messing with
-devices. btw, md already does this, and redhat's initrd does this as
-well.
-The real solution to this is so simple.
-Just ditch the partition detection code from the kernel, and move it to
-userspace where it belongs.
-For the time being use BLKPG_DEL_PARTITION, to undo what the kernel
-should not have done.
+On Wed, 01 Aug 2007 20:45:08 +0200
+Philipp T__lke <philipptoelke@web.de> wrote:
 
->>2) lvm tool filter could be modified to check if a device has been
->>already claimed by device-mapper.
->>
->>something along the lines of:
->>ioctl DM_LIST_DEVICES
->>while (...)
->>  ioctl DM_TABLE_DEPS
->>
->>the above would probably require a cache.
->
->I'd rather not see it that tightly coupled to dm.  I was thinking 
->perhaps of something involving udev attributes so that udev would know 
->not to run pvscan on that device.  Though it looks like pvscan also 
->needs reworked so it plays nice with udev, being called to scan a given 
->device as detected rather than looking for all well known physical 
->device names in /dev.
-i'd rather not see it coupled with udev :P
-maybe i am limited, but i really fail to see how an event driven model
-could be at all useful in this cases, and i am really convinced that the
-effort needed to make i work is too high compared to possible benefits.
-The biggest question being: How do you know you have scanned all
-possible PV for a given volume group, and you have to activate it.
-Anyway i still think my proposal is sensible and adapts to the current
-paradigm of lvm2.
+> Hello everybody,
+> 
+> if I mount a dm-crypt-encrypted Harddisk/RAID-Array on an Adaptec 3200S,
+> and produce load (for example with bonnie++) the kernel crashes.
+> 
+> This is always reproducible. To reproduce simply mount an dm-crypt
+> encrypted device and produce load -- I always used bonnie++.
+> 
+> Unencrypted volumes work fine. Every kind of load I threw at the System
+> worked fine.
+> 
+> I would be very glad, if some kind of solution for this can be found.
+> 
 
-L.
+Gee we get a lot of bug reports involving dm-crypt.
 
--- 
-Luca Berra -- bluca@comedia.it
-        Communication Media & Services S.r.l.
- /"\
- \ /     ASCII RIBBON CAMPAIGN
-  X        AGAINST HTML MAIL
- / \
+> 
+> The oopses:
+> 
+> #v+
+> BUG: unable to handle kernel paging request at virtual address 14001000
+> printing eip:
+> *pde = 00000000
+> Oops: 0000 [#1]
+> Modules linked in: dm_crypt dm_mod capability commoncap ipv6 pcspkr
+> ppdev lp parport_pc parport rtc_cmos ppp_generic rtc_core rtc_lib
+> i2c_viapro i2o_core i2c_core via_ircc irda crc_ccitt sg shpchp
+> pci_hotplug evdev thermal processor fan button battery ac slhc r8169
+> usbcore jfs sr_mod cdrom sd_mod sym53c8xx dpt_i2o ata_generic pata_via
+> libata
+> CPU:    0
+> EIP:    0060:[<14001000>]    Not tainted VLI
+> EFLAGS: 00010082   (2.6.22.1 #2)
+> EIP is at 0x14001000
+> eax: 00000000   ebx: 14001000   ecx: 00000000   edx: 0002bc00
+> esi: 5b51c000   edi: 14001000   ebp: 5b51b000   esp: dfe21f08
+> ds: 007b   es: 007b   fs: 0000  gs: 0000  ss: 0068
+> Process kblockd/0 (pid: 31, ti=dfe20000 task=c1cfca50 task.ti=dfe20000)
+> 
+> Stack: 5b51a000 14001000 5b519000 14001000 5b518000 d4001000 5b517000
+> 00000086
+> c1d0b534 c1d0b424 c1d0b490 c1da7834 c1da7834 c1da7834 00000000 07000000
+> c022aac5 c1da78b8 c022b696 c022c762 00000046 c1d0b534 c1d0b424 c1d0b490
+> 
+> Call Trace:
+> [<c022aac5>] __generic_unplug_device+0x25/0x30
+> [<c022b696>] generic_unplug_device+0x6/0x10
+> [<c022c762>] blk_unplug_work+0x42/0xa0
+> [<c022c720>] blk_unplug_work+0x0/0xa0
+> [<c012a307>] run_workqueue+0x97/0x110
+> [<c012aa00>] worker_thread+0x0/0xe0
+> [<c012aa7d>] worker_thread+0x7d/0xe0
+> [<c012d5e0>] autoremove_wake_function+0x0/0x40
+> [<c012aa00>] worker_thread+0x0/0xe0
+> [<c012d292>] kthread+0x42/0x70
+> [<c012d250>] kthread+0x0/0x70
+> [<c01041df>] kernel_thread_helper+0x7/0x18
+> =======================
+> Code:  Bad EIP value.
+> EIP: [<14001000>] 0x14001000 SS:ESP 0068:dfe21f08
+> 
+
+So it looks like q->request_fn points at 0x14001000, which is in outer
+space.
+
+I wonder how that could happen, in the middle of heavy IO operations. 
+Possibly a memory scribble.  I'd suggest you enable CONFIG_SLAB,
+CONFIG_DEBUG_SLAB, CONFIG_DEBUG_PAGEALLOC.  You could also try switching
+from CONFIG_SLAB to CONFIG_SLUB, then enable CONFIG_SLUB_DEBUG.
