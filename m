@@ -1,14 +1,15 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: PROBLEM: Oops when using dm-crypt with dpt_i2o
-Date: Fri, 3 Aug 2007 11:04:30 -0700
-Message-ID: <20070803110430.88a4b543.akpm@linux-foundation.org>
-References: <46B0D4B4.2040809@web.de>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Re: LVM on dmraid breakage
+Date: Fri, 03 Aug 2007 14:10:02 -0400
+Message-ID: <46B36F7A.2090601@cfl.rr.com>
+References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>	<46B254E4.60700@cfl.rr.com>
+	<20070803081133.GB939@percy.comedia.it>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46B0D4B4.2040809@web.de>
+In-Reply-To: <20070803081133.GB939@percy.comedia.it>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,79 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Philipp =?ISO-8859-1?Q?T=F6lke?= <philipptoelke@web.de>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>, Christophe Saout <christophe@saout.de>
+To: dm-devel@redhat.com, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 01 Aug 2007 20:45:08 +0200
-Philipp T__lke <philipptoelke@web.de> wrote:
+Luca Berra wrote:
+> I really have no clue, fortunately dmraid is usually used for boot
+> disks, so it should be started before udev has a chance of messing with
+> devices. btw, md already does this, and redhat's initrd does this as
+> well.
 
-> Hello everybody,
-> 
-> if I mount a dm-crypt-encrypted Harddisk/RAID-Array on an Adaptec 3200S,
-> and produce load (for example with bonnie++) the kernel crashes.
-> 
-> This is always reproducible. To reproduce simply mount an dm-crypt
-> encrypted device and produce load -- I always used bonnie++.
-> 
-> Unencrypted volumes work fine. Every kind of load I threw at the System
-> worked fine.
-> 
-> I would be very glad, if some kind of solution for this can be found.
-> 
+I don't know about redhat, but Ubuntu uses udev in the initramfs. 
+Currently the boot scripts wait for udevsettle, then run dmraid and 
+pvscan to search out all detected devices, then tries to mount the root 
+fs, but this setup is less than ideal.  Our goal is to move towards full 
+udev plug and play, where devices are detected by the kernel, processed, 
+and as soon as the one(s) needed for the root have been enumerated, 
+mount the root fs and run-init.
 
-Gee we get a lot of bug reports involving dm-crypt.
+> The real solution to this is so simple.
+> Just ditch the partition detection code from the kernel, and move it to
+> userspace where it belongs.
+> For the time being use BLKPG_DEL_PARTITION, to undo what the kernel
+> should not have done.
 
-> 
-> The oopses:
-> 
-> #v+
-> BUG: unable to handle kernel paging request at virtual address 14001000
-> printing eip:
-> *pde = 00000000
-> Oops: 0000 [#1]
-> Modules linked in: dm_crypt dm_mod capability commoncap ipv6 pcspkr
-> ppdev lp parport_pc parport rtc_cmos ppp_generic rtc_core rtc_lib
-> i2c_viapro i2o_core i2c_core via_ircc irda crc_ccitt sg shpchp
-> pci_hotplug evdev thermal processor fan button battery ac slhc r8169
-> usbcore jfs sr_mod cdrom sd_mod sym53c8xx dpt_i2o ata_generic pata_via
-> libata
-> CPU:    0
-> EIP:    0060:[<14001000>]    Not tainted VLI
-> EFLAGS: 00010082   (2.6.22.1 #2)
-> EIP is at 0x14001000
-> eax: 00000000   ebx: 14001000   ecx: 00000000   edx: 0002bc00
-> esi: 5b51c000   edi: 14001000   ebp: 5b51b000   esp: dfe21f08
-> ds: 007b   es: 007b   fs: 0000  gs: 0000  ss: 0068
-> Process kblockd/0 (pid: 31, ti=dfe20000 task=c1cfca50 task.ti=dfe20000)
-> 
-> Stack: 5b51a000 14001000 5b519000 14001000 5b518000 d4001000 5b517000
-> 00000086
-> c1d0b534 c1d0b424 c1d0b490 c1da7834 c1da7834 c1da7834 00000000 07000000
-> c022aac5 c1da78b8 c022b696 c022c762 00000046 c1d0b534 c1d0b424 c1d0b490
-> 
-> Call Trace:
-> [<c022aac5>] __generic_unplug_device+0x25/0x30
-> [<c022b696>] generic_unplug_device+0x6/0x10
-> [<c022c762>] blk_unplug_work+0x42/0xa0
-> [<c022c720>] blk_unplug_work+0x0/0xa0
-> [<c012a307>] run_workqueue+0x97/0x110
-> [<c012aa00>] worker_thread+0x0/0xe0
-> [<c012aa7d>] worker_thread+0x7d/0xe0
-> [<c012d5e0>] autoremove_wake_function+0x0/0x40
-> [<c012aa00>] worker_thread+0x0/0xe0
-> [<c012d292>] kthread+0x42/0x70
-> [<c012d250>] kthread+0x0/0x70
-> [<c01041df>] kernel_thread_helper+0x7/0x18
-> =======================
-> Code:  Bad EIP value.
-> EIP: [<14001000>] 0x14001000 SS:ESP 0068:dfe21f08
-> 
+I agree with moving the partition detection code to user space, but 
+trying to undo it after the fact doesn't help because udev is already 
+processing the add events.  Also you do not need to remove the 
+partitions so long as pvscan understands that it shouldn't be using them.
 
-So it looks like q->request_fn points at 0x14001000, which is in outer
-space.
+> i'd rather not see it coupled with udev :P
+> maybe i am limited, but i really fail to see how an event driven model
+> could be at all useful in this cases, and i am really convinced that the
+> effort needed to make i work is too high compared to possible benefits.
+> The biggest question being: How do you know you have scanned all
+> possible PV for a given volume group, and you have to activate it.
+> Anyway i still think my proposal is sensible and adapts to the current
+> paradigm of lvm2.
 
-I wonder how that could happen, in the middle of heavy IO operations. 
-Possibly a memory scribble.  I'd suggest you enable CONFIG_SLAB,
-CONFIG_DEBUG_SLAB, CONFIG_DEBUG_PAGEALLOC.  You could also try switching
-from CONFIG_SLAB to CONFIG_SLUB, then enable CONFIG_SLUB_DEBUG.
+Udev is supposed to be the new model for enumerating devices and 
+performing plug and play actions on them, rather than "ls /dev/hd?".  To 
+answer your specific question, lvm would know it has enumerated all the 
+required pvs because the vg information tells it how many pvs are 
+supposed to be there so it can check the udevdb to see if they have all 
+been added yet.  If they have, activate the vg, otherwise do nothing 
+until another pv is detected.
+
+The event driven model is useful in that it allows faster boot times ( 
+don't need to detect ALL devices before activating and mounting the root 
+), and allows runtime plug and play.  Where does lvm store state 
+information right now?  In conf files in /etc isn't it?  Why use its own 
+database for that when it could just keep the information in udevdb?
+Keeping the information in udevdb makes it easily available to things 
+like hal in gnome, which in turn allows things like desktop popups when 
+a mirror has a drive fail, which changes the state of the vg in udevdb, 
+which pushes that update to any monitoring applications.  It also allows 
+lvm to share information such as whether or not the device is "claimed" 
+with other components, without those components having to be 
+specifically aware of lvm and mess with its conf files.  Specifically, 
+both dmraid and mdraid ( nor any other future components ) do not have 
+to be taught how to edit lvm's conf files to tell it not to access the 
+underlying physical disks but to use the virtual devices instead.
