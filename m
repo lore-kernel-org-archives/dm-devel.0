@@ -1,81 +1,245 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: Re: LVM on dmraid breakage
-Date: Fri, 03 Aug 2007 14:10:02 -0400
-Message-ID: <46B36F7A.2090601@cfl.rr.com>
-References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>	<46B254E4.60700@cfl.rr.com>
-	<20070803081133.GB939@percy.comedia.it>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Juergen Kreileder <jk@blackdown.de>
+Subject: lvcreate on 2.6.22.1: kernel tried to execute NX-protected page
+Date: Fri, 03 Aug 2007 21:10:59 +0200
+Message-ID: <87sl70zb5o.fsf@blackdown.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070803081133.GB939@percy.comedia.it>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>, linux-lvm@redhat.com
+Content-Type: multipart/mixed; boundary="=-=-="
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762936AbXHCTmG@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Luca Berra wrote:
-> I really have no clue, fortunately dmraid is usually used for boot
-> disks, so it should be started before udev has a chance of messing with
-> devices. btw, md already does this, and redhat's initrd does this as
-> well.
+--=-=-=
 
-I don't know about redhat, but Ubuntu uses udev in the initramfs. 
-Currently the boot scripts wait for udevsettle, then run dmraid and 
-pvscan to search out all detected devices, then tries to mount the root 
-fs, but this setup is less than ideal.  Our goal is to move towards full 
-udev plug and play, where devices are detected by the kernel, processed, 
-and as soon as the one(s) needed for the root have been enumerated, 
-mount the root fs and run-init.
+Hi,
 
-> The real solution to this is so simple.
-> Just ditch the partition detection code from the kernel, and move it to
-> userspace where it belongs.
-> For the time being use BLKPG_DEL_PARTITION, to undo what the kernel
-> should not have done.
+I got the appended BUG from a 32-bit 2.6.22.1 kernel (with exec-shield
+patch and PAE enabled) on an Athlon64 with dmsetup 1.02.03 and lvm2
+v2.02.02.
+(Note, the message comes from the vanilla kernel, not from the
+exec-shiled patch.)
 
-I agree with moving the partition detection code to user space, but 
-trying to undo it after the fact doesn't help because udev is already 
-processing the add events.  Also you do not need to remove the 
-partitions so long as pvscan understands that it shouldn't be using them.
+I wasn't able to reproduce the problem so far.  The machine creates
+several snapshot volumes every 4 hours and worked fine with the new
+kernel for several days.  It had 2.6.16.12+exec-shield before and ran
+flawlessy for over a year.
 
-> i'd rather not see it coupled with udev :P
-> maybe i am limited, but i really fail to see how an event driven model
-> could be at all useful in this cases, and i am really convinced that the
-> effort needed to make i work is too high compared to possible benefits.
-> The biggest question being: How do you know you have scanned all
-> possible PV for a given volume group, and you have to activate it.
-> Anyway i still think my proposal is sensible and adapts to the current
-> paradigm of lvm2.
 
-Udev is supposed to be the new model for enumerating devices and 
-performing plug and play actions on them, rather than "ls /dev/hd?".  To 
-answer your specific question, lvm would know it has enumerated all the 
-required pvs because the vg information tells it how many pvs are 
-supposed to be there so it can check the udevdb to see if they have all 
-been added yet.  If they have, activate the vg, otherwise do nothing 
-until another pv is detected.
+kernel tried to execute NX-protected page - exploit attempt? (uid: 0)
+BUG: unable to handle kernel paging request at virtual address f551df78
+ printing eip:
+f551df78
+*pdpt = 0000000000001001
+*pde = 80000000354001e3
+*pte = 9293396c5d22e546
+Oops: 0011 [#1]
+CPU:    0
+EIP:    0060:[<f551df78>]    Not tainted VLI
+EFLAGS: 00010286   (2.6.22.1-jk1-exec-shield #1)
+EIP is at 0xf551df78
+eax: f551df4c   ebx: f551df4c   ecx: 00000000   edx: f551df78
+esi: f551df78   edi: 00000000   ebp: 00000000   esp: e8ee5db4
+ds: 007b   es: 007b   fs: 0000  gs: 0033  ss: 0068
+Process lvcreate (pid: 25916, ti=e8ee4000 task=f7358a00 task.ti=e8ee4000)
+Stack: c02088c4 f551df64 c02088d0 c03dd95e c64ccf00 c0209118 00000287 c03dd95e
+       00000287 c018e38b c03dd952 d3e460e8 c018e393 c192a90c 00000000 c192b900
+       c03dd952 f557a600 f59bbcc0 00000000 c0157664 f557a64c f557a600 c01575be
+Call Trace:
+ [kobject_cleanup+116/128] kobject_cleanup+0x74/0x80
+ [kobject_release+0/16] kobject_release+0x0/0x10
+ [kref_put+56/160] kref_put+0x38/0xa0
+ [sysfs_hash_and_remove+267/320] sysfs_hash_and_remove+0x10b/0x140
+ [sysfs_hash_and_remove+275/320] sysfs_hash_and_remove+0x113/0x140
+ [sysfs_slab_alias+100/128] sysfs_slab_alias+0x64/0x80
+ [sysfs_slab_add+174/208] sysfs_slab_add+0xae/0xd0
+ [kmem_cache_create+236/320] kmem_cache_create+0xec/0x140
+ [jobs_init+46/128] jobs_init+0x2e/0x80
+ [kcopyd_init+45/176] kcopyd_init+0x2d/0xb0
+ [kcopyd_client_create+28/208] kcopyd_client_create+0x1c/0xd0
+ [init_hash_tables+142/192] init_hash_tables+0x8e/0xc0
+ [snapshot_ctr+506/752] snapshot_ctr+0x1fa/0x2f0
+ [dm_split_args+47/272] dm_split_args+0x2f/0x110
+ [dm_table_add_target+252/400] dm_table_add_target+0xfc/0x190
+ [vmalloc+32/48] vmalloc+0x20/0x30
+ [populate_table+98/192] populate_table+0x62/0xc0
+ [table_load+82/240] table_load+0x52/0xf0
+ [table_load+0/240] table_load+0x0/0xf0
+ [ctl_ioctl+209/288] ctl_ioctl+0xd1/0x120
+ [ctl_ioctl+0/288] ctl_ioctl+0x0/0x120
+ [do_ioctl+59/96] do_ioctl+0x3b/0x60
+ [vfs_ioctl+94/416] vfs_ioctl+0x5e/0x1a0
+ [sys_ioctl+61/128] sys_ioctl+0x3d/0x80
+ [sysenter_past_esp+95/133] sysenter_past_esp+0x5f/0x85
+ =======================
+Code: 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 <78> df 51 f5 78 df 51 f5 74 1b 8b f7 00 00 00 00 00 00 00 00 32
+EIP: [<f551df78>] 0xf551df78 SS:ESP 0068:e8ee5db4
 
-The event driven model is useful in that it allows faster boot times ( 
-don't need to detect ALL devices before activating and mounting the root 
-), and allows runtime plug and play.  Where does lvm store state 
-information right now?  In conf files in /etc isn't it?  Why use its own 
-database for that when it could just keep the information in udevdb?
-Keeping the information in udevdb makes it easily available to things 
-like hal in gnome, which in turn allows things like desktop popups when 
-a mirror has a drive fail, which changes the state of the vg in udevdb, 
-which pushes that update to any monitoring applications.  It also allows 
-lvm to share information such as whether or not the device is "claimed" 
-with other components, without those components having to be 
-specifically aware of lvm and mess with its conf files.  Specifically, 
-both dmraid and mdraid ( nor any other future components ) do not have 
-to be taught how to edit lvm's conf files to tell it not to access the 
-underlying physical disks but to use the virtual devices instead.
+
+        Juergen
+
+
+--=-=-=
+Content-Type: application/octet-stream
+Content-Disposition: attachment;
+ filename=config-2.6.22.1-jk1-exec-shield.gz
+Content-Transfer-Encoding: base64
+
+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
+--=-=-=
+
+
+
+-- 
+Juergen Kreileder, Blackdown Java-Linux Team
+http://blog.blackdown.de/
+
+--=-=-=--
