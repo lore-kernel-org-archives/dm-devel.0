@@ -1,15 +1,12 @@
-From: "A, Rajashekhar" <Rajashekhar.A@netapp.com>
-Subject: In discovery.c,
-	Sysfs attribute is not closed while collecting target node name...
-Date: Sun, 5 Aug 2007 23:33:01 +0530
-Message-ID: <7026BCCA258BA2438F885772CA0B43130B1ECA57@exbtc01.hq.netapp.com>
+From: Juergen Kreileder <jk@blackdown.de>
+Subject: Re: lvcreate on 2.6.22.1: kernel tried to execute
+	NX-protected page
+Date: Sun, 05 Aug 2007 21:03:22 +0200
+Message-ID: <87y7gperd1.fsf@blackdown.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,116 +16,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
 
-Here is the code snippet from scsi_sysfs_pathinfo function.
-attr is not closed when target node name is collected successfully. The
-function just returns 0 at the end.=20
-Shouldn't it be sysfs_close_attribute(attr); and then return 0; ???
+I've upgraded devmapper to 1.02.20 and lvm2 to 2.02.26.  Didn't help much,
+I just got a the same BUG again:
 
-	/*
-	 * target node name
-	 */
-	if(safe_sprintf(attr_path,
-=09
-"%s/class/fc_transport/target%i:%i:%i/node_name",
-			sysfs_path,
-			pp->sg_id.host_no,
-			pp->sg_id.channel,
-			pp->sg_id.scsi_id)) {
-		condlog(0, "attr_path too small");
-		return 1;
-	}
-	if (!(attr =3D sysfs_open_attribute(attr_path)))
-		return 0;
+kernel tried to execute NX-protected page - exploit attempt? (uid: 0)
+BUG: unable to handle kernel paging request at virtual address f492c1f8
+ printing eip:
+f492c1f8
+*pdpt = 0000000000001001
+*pde = 80000000348001e3
+*pte = ec1c7da0ec1c7da0
+Oops: 0011 [#1]
+CPU:    0
+EIP:    0060:[<f492c1f8>]    Not tainted VLI
+EFLAGS: 00010282   (2.6.22.1-jk1-exec-shield #1)
+EIP is at 0xf492c1f8
+eax: f492c1cc   ebx: f492c1cc   ecx: 00000000   edx: f492c1f8
+esi: f492c1f8   edi: 00000000   ebp: 00000000   esp: d4177db4
+ds: 007b   es: 007b   fs: 0000  gs: 0033  ss: 0068
+Process lvcreate (pid: 2303, ti=d4176000 task=d1c88a00 task.ti=d4176000)
+Stack: c02088c4 f492c1e4 c02088d0 c03dd95e c2969f60 c0209118 ce684800 e5436280 
+       00000287 c03dd952 c03dd952 f6a44548 c018e393 c19ea90c 00000000 c19eb900 
+       c03dd952 c18f9780 f45cb300 00000000 c0157664 c18f97cc c18f9780 c01575be 
+Call Trace:
+ [kobject_cleanup+116/128] kobject_cleanup+0x74/0x80
+ [kobject_release+0/16] kobject_release+0x0/0x10
+ [kref_put+56/160] kref_put+0x38/0xa0
+ [sysfs_hash_and_remove+275/320] sysfs_hash_and_remove+0x113/0x140
+ [sysfs_slab_alias+100/128] sysfs_slab_alias+0x64/0x80
+ [sysfs_slab_add+174/208] sysfs_slab_add+0xae/0xd0
+ [kmem_cache_create+236/320] kmem_cache_create+0xec/0x140
+ [jobs_init+46/128] jobs_init+0x2e/0x80
+ [kcopyd_init+45/176] kcopyd_init+0x2d/0xb0
+ [kcopyd_client_create+28/208] kcopyd_client_create+0x1c/0xd0
+ [init_hash_tables+142/192] init_hash_tables+0x8e/0xc0
+ [snapshot_ctr+506/752] snapshot_ctr+0x1fa/0x2f0
+ [dm_split_args+47/272] dm_split_args+0x2f/0x110
+ [dm_table_add_target+252/400] dm_table_add_target+0xfc/0x190
+ [vmalloc+32/48] vmalloc+0x20/0x30
+ [populate_table+98/192] populate_table+0x62/0xc0
+ [table_load+82/240] table_load+0x52/0xf0
+ [table_load+0/240] table_load+0x0/0xf0
+ [ctl_ioctl+209/288] ctl_ioctl+0xd1/0x120
+ [ctl_ioctl+0/288] ctl_ioctl+0x0/0x120
+ [do_ioctl+59/96] do_ioctl+0x3b/0x60
+ [vfs_ioctl+94/416] vfs_ioctl+0x5e/0x1a0
+ [sys_ioctl+61/128] sys_ioctl+0x3d/0x80
+ [sysenter_past_esp+95/133] sysenter_past_esp+0x5f/0x85
+ =======================
+Code: 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 20 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 <f8> c1 92 f4 f8 c1 92 f4 4c 16 b6 f5 00 00 00 00 00 00 00 00 00 
+EIP: [<f492c1f8>] 0xf492c1f8 SS:ESP 0068:d4177db4
 
-	if (sysfs_read_attribute(attr))
-		goto err;
 
-	if (attr->len > 0)
-		strncpy(pp->tgt_node_name, attr->value, attr->len - 1);
+> I got the appended BUG from a 32-bit 2.6.22.1 kernel (with exec-shield
+> patch and PAE enabled) on an Athlon64 with dmsetup 1.02.03 and lvm2
+> v2.02.02.
+> (Note, the message comes from the vanilla kernel, not from the
+> exec-shiled patch.)
+> 
+> I wasn't able to reproduce the problem so far.  The machine creates
+> several snapshot volumes every 4 hours and worked fine with the new
+> kernel for several days.  It had 2.6.16.12+exec-shield before and ran
+> flawlessy for over a year.
+> 
+> 
+> kernel tried to execute NX-protected page - exploit attempt? (uid: 0)
+> BUG: unable to handle kernel paging request at virtual address f551df78
+>  printing eip:
+> f551df78
+> *pdpt = 0000000000001001
+> *pde = 80000000354001e3
+> *pte = 9293396c5d22e546
+> Oops: 0011 [#1]
+> CPU:    0
+> EIP:    0060:[<f551df78>]    Not tainted VLI
+> EFLAGS: 00010286   (2.6.22.1-jk1-exec-shield #1)
+> EIP is at 0xf551df78
+> eax: f551df4c   ebx: f551df4c   ecx: 00000000   edx: f551df78
+> esi: f551df78   edi: 00000000   ebp: 00000000   esp: e8ee5db4
+> ds: 007b   es: 007b   fs: 0000  gs: 0033  ss: 0068
+> Process lvcreate (pid: 25916, ti=e8ee4000 task=f7358a00 task.ti=e8ee4000)
+> Stack: c02088c4 f551df64 c02088d0 c03dd95e c64ccf00 c0209118 00000287 c03dd95e
+>        00000287 c018e38b c03dd952 d3e460e8 c018e393 c192a90c 00000000 c192b900
+>        c03dd952 f557a600 f59bbcc0 00000000 c0157664 f557a64c f557a600 c01575be
+> Call Trace:
+>  [kobject_cleanup+116/128] kobject_cleanup+0x74/0x80
+>  [kobject_release+0/16] kobject_release+0x0/0x10
+>  [kref_put+56/160] kref_put+0x38/0xa0
+>  [sysfs_hash_and_remove+267/320] sysfs_hash_and_remove+0x10b/0x140
+>  [sysfs_hash_and_remove+275/320] sysfs_hash_and_remove+0x113/0x140
+>  [sysfs_slab_alias+100/128] sysfs_slab_alias+0x64/0x80
+>  [sysfs_slab_add+174/208] sysfs_slab_add+0xae/0xd0
+>  [kmem_cache_create+236/320] kmem_cache_create+0xec/0x140
+>  [jobs_init+46/128] jobs_init+0x2e/0x80
+>  [kcopyd_init+45/176] kcopyd_init+0x2d/0xb0
+>  [kcopyd_client_create+28/208] kcopyd_client_create+0x1c/0xd0
+>  [init_hash_tables+142/192] init_hash_tables+0x8e/0xc0
+>  [snapshot_ctr+506/752] snapshot_ctr+0x1fa/0x2f0
+>  [dm_split_args+47/272] dm_split_args+0x2f/0x110
+>  [dm_table_add_target+252/400] dm_table_add_target+0xfc/0x190
+>  [vmalloc+32/48] vmalloc+0x20/0x30
+>  [populate_table+98/192] populate_table+0x62/0xc0
+>  [table_load+82/240] table_load+0x52/0xf0
+>  [table_load+0/240] table_load+0x0/0xf0
+>  [ctl_ioctl+209/288] ctl_ioctl+0xd1/0x120
+>  [ctl_ioctl+0/288] ctl_ioctl+0x0/0x120
+>  [do_ioctl+59/96] do_ioctl+0x3b/0x60
+>  [vfs_ioctl+94/416] vfs_ioctl+0x5e/0x1a0
+>  [sys_ioctl+61/128] sys_ioctl+0x3d/0x80
+>  [sysenter_past_esp+95/133] sysenter_past_esp+0x5f/0x85
+>  =======================
+> Code: 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 20 00 00 00 00 00 00 \
+> 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 <78> df 51 f5 78 df 51 f5 74 1b 8b \
+>                 f7 00 00 00 00 00 00 00 00 32
+> EIP: [<f551df78>] 0xf551df78 SS:ESP 0068:e8ee5db4
 
-	condlog(3, "%s: tgt_node_name =3D %s",
-		pp->dev, pp->tgt_node_name);
+        Juergen
 
-	return 0;
-err:
-	sysfs_close_attribute(attr);
-	return 1;
-
-Best Regards,
-Rajashekhar M A
-
------Original Message-----
-From: bmarzins@sourceware.org [mailto:bmarzins@sourceware.org]=20
-Sent: Friday, June 01, 2007 5:57 AM
-To: dm-cvs@sourceware.org; dm-devel@redhat.com
-Subject: [dm-devel] multipath-tools libmultipath/discovery.c libmu ...
-
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-06-01 00:26:42
-
-Modified files:
-	libmultipath   : discovery.c switchgroup.c=20
-Added files:
-	path_priority/pp_rdac: Makefile pp_rdac.c=20
-
-Log message:
-	Reverting the earlier RDAC related path priority fixes, and
-addning the new
-	priority callout.
-
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/di
-scovery.c.diff?cvsroot=3Ddm&only_with_tag=3DRHEL5_FC6&r1=3D1.32.2.3&r2=3D=
-1.32.2.
-4
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/sw
-itchgroup.c.diff?cvsroot=3Ddm&only_with_tag=3DRHEL5_FC6&r1=3D1.5.2.1&r2=3D=
-1.5.2.
-2
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/p
-p_rdac/Makefile.diff?cvsroot=3Ddm&only_with_tag=3DRHEL5_FC6&r1=3DNONE&r2=3D=
-1.1.2
-.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/p
-p_rdac/pp_rdac.c.diff?cvsroot=3Ddm&only_with_tag=3DRHEL5_FC6&r1=3DNONE&r2=
-=3D1.1.
-2.1
-
---- multipath-tools/libmultipath/discovery.c	2007/05/02 00:16:36
-1.32.2.3
-+++ multipath-tools/libmultipath/discovery.c	2007/06/01 00:26:41
-1.32.2.4
-@@ -763,7 +763,7 @@
- 	if (mask & DI_CHECKER && get_state(pp))
- 		goto blank;
- =09
--	if (mask & DI_PRIO && pp->state =3D=3D PATH_UP)
-+	if (mask & DI_PRIO && pp->state !=3D PATH_DOWN)
- 		get_prio(pp);
-=20
- 	if (mask & DI_WWID && !strlen(pp->wwid))
---- multipath-tools/libmultipath/switchgroup.c	2007/04/24 18:49:16
-1.5.2.1
-+++ multipath-tools/libmultipath/switchgroup.c	2007/06/01 00:26:41
-1.5.2.2
-@@ -28,7 +28,7 @@
- 		priority =3D 0;
-=20
- 		vector_foreach_slot (pgp->paths, pp, j) {
--			if (pp->state =3D=3D PATH_UP)
-+			if (pp->state !=3D PATH_DOWN)
- 				priority +=3D pp->priority;
- 		}
- 		pgp->priority =3D priority;
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+Juergen Kreileder, Blackdown Java-Linux Team
+http://blog.blackdown.de/
