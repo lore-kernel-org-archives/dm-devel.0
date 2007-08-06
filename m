@@ -1,9 +1,16 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdevmapper.h
-Date: 6 Aug 2007 13:09:47 -0000
-Message-ID: <20070806130947.11057.qmail@sourceware.org>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Re: LVM on dmraid breakage
+Date: Mon, 06 Aug 2007 10:45:02 -0400
+Message-ID: <46B733EE.4090507@cfl.rr.com>
+References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>	<46B254E4.60700@cfl.rr.com>
+	<20070803081133.GB939@percy.comedia.it>	<46B36F7A.2090601@cfl.rr.com>	<20070803195749.GA27271@percy.comedia.it>	<46B39E58.2040305@cfl.rr.com>
+	<20070804065047.GA29541@percy.comedia.it>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20070804065047.GA29541@percy.comedia.it>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,50 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com, ataraid-list@redhat.com, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-08-06 13:09:46
+Luca Berra wrote:
+> the above is called FUD
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdevmapper.h 
+No, it is called extensible design.  I didn't make claims that the sky 
+is falling or any other such nonsense, I simply pointed out what new 
+requirements may be added in the future, and that if it isn't too hard, 
+we should design the system now to be able to handle those new 
+requirements.
 
-Log message:
-	improve changelog
+> udev is not the only thing on earth that wants to activate a volume
+> group. what if i wanted to do it manually?
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.197&r2=1.198
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.72&r2=1.73
+Then you do so manually.  This discussion is about what the system does 
+automatically.
 
---- device-mapper/WHATS_NEW	2007/08/02 22:31:59	1.197
-+++ device-mapper/WHATS_NEW	2007/08/06 13:09:45	1.198
-@@ -1,11 +1,10 @@
- Version 1.02.22 - 
- ================================
--  Fix a possible segfault in libdevmapper-event
--  Export dm_create_dir (was create_dir) to help fix LVM2 link error
--  Don't log mkdir fail-with-EROFS, to make create_dir equiv to the one in LVM2
--  Introduce and use log_sys_* macros from LVM2
--  dm_fclose: new function
--  libdevmapper, dmeventd: be paranoid about detecting write failure
-+  Avoid repeated dm_task free on some dm_event_get_registered_device errors.
-+  Introduce log_sys_* macros from LVM2.
-+  Export dm_fclose and dm_create_dir.
-+  Don't log EROFS mkdir failures in _create_dir_recursive (for LVM2).
-+  Add fclose wrapper dm_fclose that catches write failures (using ferror).
- 
- Version 1.02.21 - 13th July 2007
- ================================
---- device-mapper/lib/libdevmapper.h	2007/07/28 10:48:36	1.72
-+++ device-mapper/lib/libdevmapper.h	2007/08/06 13:09:46	1.73
-@@ -644,7 +644,6 @@
-  */
- int dm_fclose(FILE *stream);
- 
--
- /*
-  * Returns size of a buffer which is allocated with dm_malloc.
-  * Pointer to the buffer is stored in *buf.
+> whoever wrote about editing the conf file?
+> i wrote about detecting that a device is already in user by
+> device-mapper and skipping that.
+
+Johnathan Brassow suggested adding the devices claimed by dmraid to 
+lvm's filter spec in its conf file.
+
+What I am saying is to generalize your suggestion.  Rather than 
+specifically code the lvm tools to use the dm ioctls to check if a 
+device is in use and avoid using it, take a more general approach that 
+will work on similar problems as well, that don't involve device mapper 
+targeting the underlying device, and may be easier to implement.
+
+If udev uses pvscan on each disk to find out if it is a member of a vg, 
+it can then note which vg it is a member of in its db.  Then it can 
+invoke lvm to attempt to activate that vg, explicitly telling lvm which 
+devices comprise the known pvs of that vg ( since it knows this 
+information ), rather than letting lvm scan /dev/sd*.  When dmraid 
+activates a raid set, udev can note that the physical disk is claimed by 
+dmraid, and it will never ask lvm to do anything with it.
+
+Not only does that solve the lvm/dmraid problem, but any future reasons 
+that arise for lvm NOT to scan a given volume can be solved using the 
+same udev attributes rather than having to patch lvm ( and dmraid ).
