@@ -1,10 +1,10 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: [PATCH] kpartx: Handle extended partitions correctly
-Date: Mon, 06 Aug 2007 13:21:16 +0200
-Message-ID: <46B7042C.5080609@suse.de>
+Subject: [PATCH] Fixup kpartx rules for dmraid
+Date: Mon, 06 Aug 2007 13:22:27 +0200
+Message-ID: <46B70473.2030406@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------040606090909000004080605"
+Content-Type: multipart/mixed; boundary="------------060800000301050000090400"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,15 +20,14 @@ Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
---------------040606090909000004080605
+--------------060800000301050000090400
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
 Hi Christophe,
 
-there is actually a small bug in kpartx; it calculates the size
-for an extended partition relative to the entire disk, not
-the contained partition. This patch fixes this.
+the kpartx rules do not detect dmraid properly. This patch
+fixes this.
 
 Cheers,
 
@@ -39,108 +38,49 @@ hare@suse.de			      +49 911 74053 688
 SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
 GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
 
---------------040606090909000004080605
+--------------060800000301050000090400
 Content-Type: text/plain;
- name="kpartx-fixup-extended-partitions"
+ name="kpartx-fix-rules-for-dmraid"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline;
- filename="kpartx-fixup-extended-partitions"
+ filename="kpartx-fix-rules-for-dmraid"
 
-kpartx: Handle extended partitions correctly
+[kpartx] Fix udev rules for dmraid
 
-When creating the device-mapper table for an extended partition we
-should calculate the size relative to the containing partition, not
-to the entire device.
+The kpartx_id program is located under /lib/udev, so we don't need to
+call it with the full pathname.
+And we should also create persistent links for dmraid tables.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index dbe2ee2..f60e5f4 100644
---- a/kpartx/kpartx.c
-+++ b/kpartx/kpartx.c
-@@ -265,7 +265,7 @@ main(int argc, char **argv){
- 	}
+diff --git a/kpartx/kpartx.rules b/kpartx/kpartx.rules
+index f32c718..9ab9a49 100644
+--- a/kpartx/kpartx.rules
++++ b/kpartx/kpartx.rules
+@@ -9,7 +9,7 @@ ACTION=="remove", GOTO="kpartx_end"
  
- 	if (dm_prereq(DM_TARGET, 0, 0, 0) && (what == ADD || what == DELETE)) {
--		fprintf(stderr, "device mapper prerequisites not met\n"); 
-+		fprintf(stderr, "device mapper prerequisites not met\n");
- 		exit(1);
- 	}
+ ENV{DM_TABLE_STATE}!="LIVE", GOTO="kpartx_end"
  
-@@ -387,10 +387,10 @@ main(int argc, char **argv){
- 					slices[j].minor = m++;
+-ENV{DM_UUID}=="?*", IMPORT{program}=="/lib/udev/kpartx_id %M %m $env{DM_UUID}"
++ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
  
- 					start = slices[j].start - slices[k].start;
--					printf("%s%s%d : 0 %lu /dev/dm-%d %lu\n",
-+					printf("%s%s%d : 0 %lu %s%s%d %lu\n",
- 					       mapname, delim, j+1,
- 					       (unsigned long) slices[j].size,
--					       slices[k].minor, start);
-+					       mapname, delim, k, start);
- 					c--;
- 				}
- 				/* Terminate loop if nothing more to resolve */
-@@ -431,7 +431,7 @@ main(int argc, char **argv){
- 			break;
+ OPTIONS="link_priority=50"
  
- 		case ADD:
--			for (j=0, c = 0; j<n; j++) {
-+			for (j = 0, c = 0; j < n; j++) {
- 				if (slices[j].size == 0)
- 					continue;
+@@ -18,7 +18,7 @@ ENV{DM_UUID}=="mpath-*", \
+ 	SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
  
-@@ -477,6 +477,7 @@ main(int argc, char **argv){
- 			d = c;
- 			while (c) {
- 				for (j = 0; j < n; j++) {
-+					unsigned long start;
- 					int k = slices[j].container - 1;
+ # Create persistent links for dmraid tables
+-ENV{DM_UUID}=="mpath-*", \
++ENV{DM_UUID}=="dmraid-*", \
+         SYMLINK+="disk/by-id/$env{DM_TYPE}-$env{DM_NAME}"
  
- 					if (slices[j].size == 0)
-@@ -487,7 +488,7 @@ main(int argc, char **argv){
- 						continue;
- 
- 					/* Skip all simple slices */
--					if (k < 0)
-+					if (slices[j].container == 0)
- 						continue;
- 
- 					/* Check container slice */
-@@ -502,10 +503,11 @@ main(int argc, char **argv){
- 					}
- 					strip_slash(partname);
- 
-+					start = slices[j].start - slices[k].start;
- 					if (safe_sprintf(params, "%d:%d %lu",
- 							 slices[k].major,
- 							 slices[k].minor,
--							 (unsigned long)slices[j].start)) {
-+							 start)) {
- 						fprintf(stderr, "params too small\n");
- 						exit(1);
- 					}
-@@ -524,9 +526,12 @@ main(int argc, char **argv){
- 						&slices[j].minor);
- 
- 					if (verbose)
--						printf("add map %s : 0 %lu %s %s\n",
--						       partname, slices[j].size,
--						       DM_TARGET, params);
-+						printf("add map %s (%d:%d): 0 %lu %s\n",
-+						       partname, 
-+						       slices[j].major,
-+						       slices[j].minor,
-+						       slices[j].size,
-+						       params);
- 					c--;
- 				}
- 				/* Terminate loop */
+ # Create persistent links for partitions
 
---------------040606090909000004080605
+--------------060800000301050000090400
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---------------040606090909000004080605--
+--------------060800000301050000090400--
