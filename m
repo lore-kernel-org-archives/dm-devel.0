@@ -1,15 +1,14 @@
-From: Srini <v.vvsrini@gmail.com>
-Subject: Fwd: Maximum number of MD devices
-Date: Tue, 7 Aug 2007 09:46:55 +0530
-Message-ID: <25b3869e0708062116y72c026c8uef406d94525f774d@mail.gmail.com>
-References: <25b3869e0708021904jdb9777cj9d6ea918cc92deb9@mail.gmail.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] Fixup kpartx rules for dmraid
+Date: Tue, 07 Aug 2007 08:06:47 +0200
+Message-ID: <46B80BF7.1010904@suse.de>
+References: <46B70473.2030406@suse.de> <20070806184554.GA4415@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <25b3869e0708021904jdb9777cj9d6ea918cc92deb9@mail.gmail.com>
-Content-Disposition: inline
+In-Reply-To: <20070806184554.GA4415@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,36 +19,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: christophe varoqui <christophe.varoqui@free.fr>
 List-Id: dm-devel.ids
 
-Again retrying to see if some one can offer some clues here...
+Guido Guenther wrote:
+> On Mon, Aug 06, 2007 at 01:22:27PM +0200, Hannes Reinecke wrote:
+>> -ENV{DM_UUID}=3D=3D"?*", IMPORT{program}=3D=3D"/lib/udev/kpartx_id %M =
+%m $env{DM_UUID}"
+>> +ENV{DM_UUID}=3D=3D"?*", IMPORT{program}=3D=3D"kpartx_id %M %m $env{DM=
+_UUID}"
+> /lib/udev/kpartx_id isn't in $PATH. This patch breaks the udev rule.
 
-Thanks in advance for your inputs,
+And /lib/udev is the standard path prefix since udev-0.89.
 
-Srini
+So?
 
----------- Forwarded message ----------
-From: Srini <v.vvsrini@gmail.com>
-Date: Aug 3, 2007 7:34 AM
-Subject: Maximum number of MD devices
-To: device-mapper development <dm-devel@redhat.com>
+Cheers,
 
-
-Hi all,
-
-We are currently using Linux kernel 2.6.20-rc6 and EVMS 2.5.4 (which
-internally uses device mapper) for volume management. On running the
-command for creating volumes in EVMS, we find that after around 230
-volumes, EVMS starts reporting that the whole region (md/md0 for
-example) has become corrupt.
-
-Is there a maximum limit on the number of devices that device mapper
-will create that is triggering this error message? If so, are there
-ways to increase the limit?
-
-Please let us know your inputs as it is very critical for us to
-increase this limit.
-
-Thanks in advance,
-
-Srini
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
