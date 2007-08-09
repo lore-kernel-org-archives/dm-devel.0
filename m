@@ -1,15 +1,16 @@
-From: Guido Guenther <agx@sigxcpu.org>
-Subject: Re: [PATCH] Fixup kpartx rules for dmraid
-Date: Thu, 9 Aug 2007 13:36:33 +0200
-Message-ID: <20070809113633.GA12768@bogon.ms20.nix>
-References: <46B70473.2030406@suse.de> <20070806184554.GA4415@bogon.ms20.nix>
-	<46B80BF7.1010904@suse.de>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Re: LVM on dmraid breakage
+Date: Thu, 09 Aug 2007 13:27:34 -0400
+Message-ID: <46BB4E86.7090000@cfl.rr.com>
+References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>	<46B1B5E1.1050406@redhat.com>
+	<46B251BB.1010004@cfl.rr.com>	<20070807210359.GA2064@agk.fab.redhat.com>	<46BA2FCC.1040001@cfl.rr.com>
+	<20070808214538.GR2064@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <46B80BF7.1010904@suse.de>
+In-Reply-To: <20070808214538.GR2064@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,18 +20,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: christophe varoqui <christophe.varoqui@free.fr>
+To: device-mapper development <dm-devel@redhat.com>, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Aug 07, 2007 at 08:06:47AM +0200, Hannes Reinecke wrote:
-> Guido Guenther wrote:
-> > On Mon, Aug 06, 2007 at 01:22:27PM +0200, Hannes Reinecke wrote:
-> >> -ENV{DM_UUID}=="?*", IMPORT{program}=="/lib/udev/kpartx_id %M %m $env{DM_UUID}"
-> >> +ENV{DM_UUID}=="?*", IMPORT{program}=="kpartx_id %M %m $env{DM_UUID}"
-> > /lib/udev/kpartx_id isn't in $PATH. This patch breaks the udev rule.
-> 
-> And /lib/udev is the standard path prefix since udev-0.89.
-Ahh...right, IMPORT prefixes with /lib/udev, didn't know that, but it's
-actually in the changelog. Sorry.
- -- Guido
+Alasdair G Kergon wrote:
+> But I don't yet see why it didn't also open the other devices, write a warning
+> message about duplicate IDs, and do the right thing and give them
+> precedence.
+
+Why would it open the other devices?  LVM does not scan /dev/mapper/*, 
+only /dev/sd*.  Since it does not scan the /dev/mapper devices for pvs, 
+it sees no duplicates and can not "do the right thing".
