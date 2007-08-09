@@ -1,24 +1,13 @@
-From: "Stefan Bader" <Stefan.Bader@de.ibm.com>
-Subject: Re: Designing a new prio_callout
-Date: Thu, 16 Aug 2007 12:58:21 +0200
-Message-ID: <5201e28f0708160358h15124fb5u836b1700b8b823c7@mail.gmail.com>
-References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
-	<46A735E1.4070206@suse.de>
-	<d61540a40707290903q359cc7c8g52f07627b4b9fba7@mail.gmail.com>
-	<46AD85A5.1060609@suse.de>
-	<d61540a40708091055u725fa5e4wa182ac1d778323be@mail.gmail.com>
-	<46BC7F14.80302@suse.de>
-	<d61540a40708100840m541e198dg88c12d031febf968@mail.gmail.com>
-	<d61540a40708141005n4eb06cebx14559f055b0df3d6@mail.gmail.com>
-	<5201e28f0708150145s42ff46a5t8dab865931cb09d@mail.gmail.com>
-	<d61540a40708150857v3182b221sa0c91d0cf90fd162@mail.gmail.com>
+From: Roger Heflin <rheflin@atipa.com>
+Subject: Buffer I/o error on device dm-0 with no underlying
+	hardware errors
+Date: Thu, 09 Aug 2007 12:55:03 -0500
+Message-ID: <46BB54F7.2030800@atipa.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d61540a40708150857v3182b221sa0c91d0cf90fd162@mail.gmail.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -31,60 +20,44 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> Now what happens? If mytarget has multiple LUs associated with it, the
-> multipath output will look like it did below if failover is being used --
-> two paths for each of two devices. The problem for us is that by default,
-> multipath just uses the first path that it sees. Which means that for every
-> device in mytarget, all data will be read and written across just the first
-> path -- 10.53.151.22, in this case.
->
-> We need a way to load balance connections across all available connections.
->
-> There are several ways that I can see to do this. Ideally, we would
-> implement ALUA on our end and advise people to use mpath_prio_alua as their
-> callout. But this has a development cost. We could also implement a custom
-> system as your suggest, but this also has a development cost.
->
-> If we could advise users to manually set priorities on the client side, that
-> would be acceptable, but this is impossible with the current version of
-> multipath.
->
+I have a customer running a 2.6.9-42.0.10.ELsmp kernel,
+with a MPT scsi card connected to an external array, several
+times so far they have gotten an error similar to this:
+  Buffer I/O error on device dm-0, logical block 742625682
 
-Can you find the IP address and UID of a device with the node name?
-For example you get /dev/sdc and then look for UID (can be retrieved
-with scsi_id) and the IP address of the connection (not sure this is
-possible). Then manually create a file containing mappings:
+There are no errors of any type before this error, and the
+machine stays up and continues logging all errors
+(this is not the boot device).  After 10-15 of these
+errors with various block numbers ext3 of course notices
+and starts giving errors that result in the filesystem
+failing.
 
-<uid>:<ip>:<priority>
-...
+The setup is ext3 -> LVM -> sda
 
-Create a script that is used as the callout which takes a node name
-looks into the file and prints out the priority. This way the priority
-of a path does not change like it does with random priorities. The
-other path will only be used on failure and switched back as soon as
-the other one is back again (with failback immediate).
+NFS is also being used but I don't think it plays any part
+in the problem.
 
+No errors of any type are being logged for sda, and
+doing a dd if=/dev/sda of=/dev/null after the problem has
+occured before the reboot finishes with no
+errors being generated.
 
-> On a related note, I've read the reports of people experiencing higher
-> levels of performance with lower settings of rr_min_io, but it seems to me
-> that as rr_min_io gets smaller, the system becomes less like active/passive
-> MPIO and more like active/active MPIO, so users experiencing this
-> performance improvement would be better off using group_by_serial, so that
-> all paths are excitable simultaneously.
->
+They previously used XFS and got similar failures.
 
-The setting of rr_min_io only matters if you have more than one path
-per path group. Otherwise  you only can use one path at a time and
-there is no round-robin. If you have more than one path in a group
-then lower values help since paths are more likely to be used
-concurrently. The default of 1000 is to high. Kiyoshi Ueda and
-Jun'ichi Nomura have done some measurements while looking for a way to
-improve performance more generally
-(https://ols2006.108.redhat.com/2007/Reprints/ueda-Reprint.pdf). But
-again, rr_min_io is only relevant to load-balance paths within the
-same path group (multibus or as you mentioned group_by_serial). The
-reason for you path changes (except for real failures) might be rather
-that random_prio results in different priorities whenever any priority
-value is checked again.
+I have searched everything I can find, and can only find
+that this error should not be possible by itself.
 
-Stefan
+Rebooting the machine fixes the problem until it happens
+again several days to a week later.
+
+Given no scsi errors and that the dm layer does not
+yell about the scsi layer below it, it really does not
+look like a hardware error.
+
+So far nothing synthetic has been able to duplicate the
+error.
+
+The machine has ecc and it is being monitored by they
+bluesmoke/edac modules and it not getting any memory errors.
+
+                             Roger
