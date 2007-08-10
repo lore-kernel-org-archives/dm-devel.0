@@ -1,11 +1,11 @@
 From: Jan Blunck <jblunck@suse.de>
-Subject: [patch 08/11] dm: remove SECTOR_SHIFT define
-Date: Fri, 10 Aug 2007 22:02:12 +0200
-Message-ID: <42082.7044094496$1186776762@news.gmane.org>
+Subject: [patch 03/11] dm-snap: Remove dead queued_bios code
+Date: Fri, 10 Aug 2007 22:02:07 +0200
+Message-ID: <15399.1507985213$1186776762@news.gmane.org>
 References: <20070810200204.455820246@suse.de>>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm/dm-remove-SECTOR_SHIFT.diff
+Content-Disposition: inline; filename=dm/dm-snap-remove-queued_bios.diff
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,82 +19,105 @@ To: agk@redhat.com
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Sector size on Linux is always 512 bytes. Don't even try to give the
-impression this is changeable.
+This patch removes the unused queued_bios handling code.
 
 Signed-off-by: Jan Blunck <jblunck@suse.de>
 ---
- drivers/md/dm-io.c     |    3 +--
- drivers/md/dm-stripe.c |    2 +-
- drivers/md/dm-table.c  |    4 ++--
- drivers/md/dm.c        |    2 +-
- drivers/md/dm.h        |    2 --
- 5 files changed, 5 insertions(+), 8 deletions(-)
+ drivers/md/dm-snap.c |   33 ---------------------------------
+ drivers/md/dm-snap.h |    4 ----
+ 2 files changed, 37 deletions(-)
 
---- a/drivers/md/dm-io.c
-+++ b/drivers/md/dm-io.c
-@@ -293,8 +293,7 @@ static void do_region(int rw, unsigned i
- 		 * bvec for bio_get/set_region() and decrement bi_max_vecs
- 		 * to hide it from bio_add_page().
- 		 */
--		num_bvecs = dm_sector_div_up(remaining,
--					     (PAGE_SIZE >> SECTOR_SHIFT));
-+		num_bvecs = dm_sector_div_up(remaining, PAGE_SIZE >> 9);
- 		num_bvecs = 1 + min_t(int, bio_get_nr_vecs(where->bdev),
- 				      num_bvecs);
- 		bio = bio_alloc_bioset(GFP_NOIO, num_bvecs, io->client->bios);
---- a/drivers/md/dm-stripe.c
-+++ b/drivers/md/dm-stripe.c
-@@ -100,7 +100,7 @@ static int stripe_ctr(struct dm_target *
- 	 * chunk_size is a power of two
- 	 */
- 	if (!chunk_size || (chunk_size & (chunk_size - 1)) ||
--	    (chunk_size < (PAGE_SIZE >> SECTOR_SHIFT))) {
-+	    (chunk_size < (PAGE_SIZE >> 9))) {
- 		ti->error = "Invalid chunk size";
- 		return -EINVAL;
- 	}
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -428,7 +428,7 @@ static void close_dev(struct dm_dev *d, 
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -39,9 +39,6 @@
   */
- static int check_device_area(struct dm_dev *dd, sector_t start, sector_t len)
+ #define SNAPSHOT_PAGES 256
+ 
+-static struct workqueue_struct *ksnapd;
+-static void flush_queued_bios(struct work_struct *work);
+-
+ struct dm_snap_pending_exception {
+ 	struct dm_snap_exception e;
+ 
+@@ -511,9 +508,6 @@ static int snapshot_ctr(struct dm_target
+ 		DMWARN("Snapshot is marked invalid.");
+ 	}
+ 
+-	bio_list_init(&s->queued_bios);
+-	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
+-
+ 	/* Add snapshot to the list of snapshots for this origin */
+ 	/* Exceptions aren't triggered till snapshot_resume() is called */
+ 	if (register_snapshot(s)) {
+@@ -563,8 +557,6 @@ static void snapshot_dtr(struct dm_targe
  {
--	sector_t dev_size = dd->bdev->bd_inode->i_size >> SECTOR_SHIFT;
-+	sector_t dev_size = dd->bdev->bd_inode->i_size >> 9;
+ 	struct dm_snapshot *s = ti->private;
  
- 	if (!dev_size)
- 		return 1;
-@@ -702,7 +702,7 @@ static void check_for_valid_limits(struc
- 	if (!rs->max_hw_segments)
- 		rs->max_hw_segments = MAX_HW_SEGMENTS;
- 	if (!rs->hardsect_size)
--		rs->hardsect_size = 1 << SECTOR_SHIFT;
-+		rs->hardsect_size = 512;
- 	if (!rs->max_segment_size)
- 		rs->max_segment_size = MAX_SEGMENT_SIZE;
- 	if (!rs->seg_boundary_mask)
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1104,7 +1104,7 @@ static void __set_size(struct mapped_dev
- 	set_capacity(md->disk, size);
- 
- 	mutex_lock(&md->suspended_bdev->bd_inode->i_mutex);
--	i_size_write(md->suspended_bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
-+	i_size_write(md->suspended_bdev->bd_inode, (loff_t)size << 9);
- 	mutex_unlock(&md->suspended_bdev->bd_inode->i_mutex);
+-	flush_workqueue(ksnapd);
+-
+ 	/* Prevent further origin writes from using this snapshot. */
+ 	/* After this returns there can be no new kcopyd jobs. */
+ 	unregister_snapshot(s);
+@@ -592,20 +584,6 @@ static void flush_bios(struct bio *bio)
+ 	}
  }
  
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -62,8 +62,6 @@
- #define DMEMIT(x...) sz += ((sz >= maxlen) ? \
- 			  0 : scnprintf(result + sz, maxlen - sz, x))
- 
--#define SECTOR_SHIFT 9
+-static void flush_queued_bios(struct work_struct *work)
+-{
+-	struct dm_snapshot *s =
+-		container_of(work, struct dm_snapshot, queued_bios_work);
+-	struct bio *queued_bios;
+-	unsigned long flags;
+-
+-	spin_lock_irqsave(&s->pe_lock, flags);
+-	queued_bios = bio_list_get(&s->queued_bios);
+-	spin_unlock_irqrestore(&s->pe_lock, flags);
+-
+-	flush_bios(queued_bios);
+-}
 -
  /*
-  * Definitions of return values from target end_io function.
+  * Error a list of buffers.
   */
+@@ -1249,17 +1227,8 @@ static int __init dm_snapshot_init(void)
+ 		goto bad5;
+ 	}
+ 
+-	ksnapd = create_singlethread_workqueue("ksnapd");
+-	if (!ksnapd) {
+-		DMERR("Failed to create ksnapd workqueue.");
+-		r = -ENOMEM;
+-		goto bad6;
+-	}
+-
+ 	return 0;
+ 
+-      bad6:
+-	mempool_destroy(pending_pool);
+       bad5:
+ 	kmem_cache_destroy(pending_cache);
+       bad4:
+@@ -1277,8 +1246,6 @@ static void __exit dm_snapshot_exit(void
+ {
+ 	int r;
+ 
+-	destroy_workqueue(ksnapd);
+-
+ 	r = dm_unregister_target(&snapshot_target);
+ 	if (r)
+ 		DMERR("snapshot unregister failed %d", r);
+--- a/drivers/md/dm-snap.h
++++ b/drivers/md/dm-snap.h
+@@ -124,10 +124,6 @@ struct dm_snapshot {
+ 	struct exception_store store;
+ 
+ 	struct kcopyd_client *kcopyd_client;
+-
+-	/* Queue of snapshot writes for ksnapd to flush */
+-	struct bio_list queued_bios;
+-	struct work_struct queued_bios_work;
+ };
+ 
+ /*
 
 -- 
