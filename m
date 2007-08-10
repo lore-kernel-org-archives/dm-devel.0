@@ -1,16 +1,11 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: fix dmsetup link failure with --enable-static_link on
-	Debian unstable
-Date: Fri, 10 Aug 2007 21:08:29 +0100
-Message-ID: <20070810200829.GS29894@agk.fab.redhat.com>
-References: <873ayrmapd.fsf@meyering.net>
-	<20070810200624.GF2064@agk.fab.redhat.com>
+From: Jan Blunck <jblunck@suse.de>
+Subject: [patch 06/11] dm-log: remove SECTOR_SHIFT define
+Date: Fri, 10 Aug 2007 22:02:10 +0200
+Message-ID: <38628.779949113$1186776749@news.gmane.org>
+References: <20070810200204.455820246@suse.de>>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20070810200624.GF2064@agk.fab.redhat.com>
+Content-Disposition: inline; filename=dm/dm-log-remove-SECTOR_SHIFT.diff
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +15,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: agk@redhat.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Aug 10, 2007 at 09:06:24PM +0100, Alasdair G Kergon wrote:
-> Only if dmeventd is enabled?  If so, the check must take that into account.
-> If not, I'm curious what's pulling that in.
- 
-If it's selinux, then restrict pulling it in to the cases when selinux
-is enabled.
+Sector size on Linux is always 512 bytes. Don't even try to give the
+impression this is changeable.
 
-Alasdair
+Signed-off-by: Jan Blunck <jblunck@suse.de>
+---
+ drivers/md/dm-log.c |    9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -330,9 +330,9 @@ static int create_log_context(struct dir
+ 		/*
+ 		 * Buffer holds both header and bitset.
+ 		 */
+-		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
+-				       bitset_size, ti->limits.hardsect_size);
+-		lc->header_location.count = buf_size >> SECTOR_SHIFT;
++		buf_size = dm_round_up((LOG_OFFSET << 9) + bitset_size,
++				       ti->limits.hardsect_size);
++		lc->header_location.count = buf_size >> 9;
+ 		lc->io_req.mem.type = DM_IO_VMA;
+ 		lc->io_req.client = dm_io_client_create(dm_div_up(buf_size,
+ 								   PAGE_SIZE));
+@@ -350,8 +350,7 @@ static int create_log_context(struct dir
+ 			return -ENOMEM;
+ 		}
+ 
+-		lc->clean_bits = (void *)lc->disk_header +
+-				 (LOG_OFFSET << SECTOR_SHIFT);
++		lc->clean_bits = (void *)lc->disk_header + (LOG_OFFSET << 9);
+ 	}
+ 
+ 	memset(lc->clean_bits, -1, bitset_size);
+
 -- 
-agk@redhat.com
