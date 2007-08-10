@@ -1,12 +1,16 @@
-From: Jan Blunck <jblunck@suse.de>
-Subject: [patch 11/11] dm-snap: Fix snapshot compilation with
-	CONFIG_LBD
-Date: Fri, 10 Aug 2007 22:02:15 +0200
-Message-ID: <37888.8756306425$1186776775@news.gmane.org>
-References: <20070810200204.455820246@suse.de>>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Re: LVM on dmraid breakage
+Date: Fri, 10 Aug 2007 16:15:57 -0400
+Message-ID: <46BCC77D.8070205@cfl.rr.com>
+References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>	<46B1B5E1.1050406@redhat.com>
+	<46B251BB.1010004@cfl.rr.com>	<20070807210359.GA2064@agk.fab.redhat.com>	<46BA2FCC.1040001@cfl.rr.com>	<20070808214538.GR2064@agk.fab.redhat.com>	<46BB4E86.7090000@cfl.rr.com>
+	<20070810134954.GC2064@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm/dm-snap-CONFIG_LBD-fix.diff
+In-Reply-To: <20070810134954.GC2064@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,30 +20,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>, linux-lvm@redhat.com
 List-Id: dm-devel.ids
 
-The snapshot code validates the snapshot chunksize against the device block
-size. Since the block size is usually a power of 2 we don't need to use modulo
-here which would let the compiler emit a call to __umoddi3(). Therefore this
-patch changes to the test to use a bitmask instead.
+Alasdair G Kergon wrote:
+> Upstream lvm2 has done for a long time (since 2.02.00 with quite a few
+> fixes and tweaks after that, and one known problem still outstanding).
+> I can't speak for any customisation done in ubuntu or on the machine
+> with the problem - hence my request for full version and configuration
+> information.
 
-Signed-off-by: Jan Blunck <jblunck@suse.de>
----
- drivers/md/dm-snap.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+It scans everything in /dev and all subdirectories?  Wow that would be 
+colossally slow and prone to hang.  Imagine trying to access a nd device 
+whose server is down.
 
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -397,7 +397,7 @@ static int set_chunk_size(struct dm_snap
- 	}
- 
- 	/* Validate the chunk size against the device block size */
--	if (chunk_size % (bdev_hardsect_size(s->cow->bdev) >> 9)) {
-+	if (chunk_size & ((bdev_hardsect_size(s->cow->bdev) >> 9) - 1)) {
- 		*error = "Chunk size is not a multiple of device blocksize";
- 		return -EINVAL;
- 	}
+In any case, if it did scan the dmraid device, it would just complain 
+about finding duplicates; it has no way of knowing which one it should 
+use.
 
--- 
+Also it looks like feisty used 2.2.06 and the config files shipped in 
+the package can be found here:
+
+http://packages.ubuntu.com/feisty/admin/lvm2
