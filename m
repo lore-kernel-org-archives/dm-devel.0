@@ -1,11 +1,11 @@
 From: Jan Blunck <jblunck@suse.de>
-Subject: [patch 09/11] dm-snap: use is_power_of_2()
-Date: Fri, 10 Aug 2007 22:02:13 +0200
-Message-ID: <41656.1918137178$1186776750@news.gmane.org>
+Subject: [patch 01/11] dm-snap: Replace special round_down()
+Date: Fri, 10 Aug 2007 22:02:05 +0200
+Message-ID: <25205.2138712772$1186776751@news.gmane.org>
 References: <20070810200204.455820246@suse.de>>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm/dm-snap-use-is_power_of_2.diff
+Content-Disposition: inline; filename=dm/dm-snap-remove-round_down.diff
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +19,42 @@ To: agk@redhat.com
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Use is_power_of_2().
+This patch removes the special round_down() to next power of 2 implementation
+used only at one place in the snapshot target. It is replaced by an equivalent
+1 << fls() which might use an architecture specific implementation.
 
 Signed-off-by: Jan Blunck <jblunck@suse.de>
 ---
- drivers/md/dm-snap.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+ drivers/md/dm-snap.c |   12 +-----------
+ 1 file changed, 1 insertion(+), 11 deletions(-)
 
 --- a/drivers/md/dm-snap.c
 +++ b/drivers/md/dm-snap.c
-@@ -391,8 +391,7 @@ static int set_chunk_size(struct dm_snap
- 	 */
- 	chunk_size = roundup(chunk_size, PAGE_SIZE >> 9);
+@@ -333,16 +333,6 @@ static int calc_max_buckets(void)
+ }
  
--	/* Check chunk_size is a power of 2 */
--	if (chunk_size & (chunk_size - 1)) {
-+	if (!is_power_of_2(chunk_size)) {
- 		*error = "Chunk size is not a power of 2";
- 		return -EINVAL;
- 	}
+ /*
+- * Rounds a number down to a power of 2.
+- */
+-static uint32_t round_down(uint32_t n)
+-{
+-	while (n & (n - 1))
+-		n &= (n - 1);
+-	return n;
+-}
+-
+-/*
+  * Allocate room for a suitable hash table.
+  */
+ static int init_hash_tables(struct dm_snapshot *s)
+@@ -361,7 +351,7 @@ static int init_hash_tables(struct dm_sn
+ 	hash_size = min(hash_size, max_buckets);
+ 
+ 	/* Round it down to a power of 2 */
+-	hash_size = round_down(hash_size);
++	hash_size = 1 << fls(hash_size);
+ 	if (init_exception_table(&s->complete, hash_size))
+ 		return -ENOMEM;
+ 
 
 -- 
