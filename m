@@ -1,16 +1,15 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: Re: LVM on dmraid breakage
-Date: Fri, 10 Aug 2007 16:15:57 -0400
-Message-ID: <46BCC77D.8070205@cfl.rr.com>
-References: <46B0EAEF.6090305@cfl.rr.com>	<20070802065012.GA28687@percy.comedia.it>	<46B1B5E1.1050406@redhat.com>
-	<46B251BB.1010004@cfl.rr.com>	<20070807210359.GA2064@agk.fab.redhat.com>	<46BA2FCC.1040001@cfl.rr.com>	<20070808214538.GR2064@agk.fab.redhat.com>	<46BB4E86.7090000@cfl.rr.com>
-	<20070810134954.GC2064@agk.fab.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [patch 05/11] dm-snap: remove SECTOR_SHIFT define
+Date: Fri, 10 Aug 2007 21:38:54 +0100
+Message-ID: <20070810203854.GG2064@agk.fab.redhat.com>
+References: <20070810200204.455820246@suse.de>>
+	<20070810200205.703776854@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070810134954.GC2064@agk.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20070810200205.703776854@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +19,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>, linux-lvm@redhat.com
+To: Jan Blunck <jblunck@suse.de>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Alasdair G Kergon wrote:
-> Upstream lvm2 has done for a long time (since 2.02.00 with quite a few
-> fixes and tweaks after that, and one known problem still outstanding).
-> I can't speak for any customisation done in ubuntu or on the machine
-> with the problem - hence my request for full version and configuration
-> information.
+On Fri, Aug 10, 2007 at 10:02:09PM +0200, Jan Blunck wrote:
+> Sector size on Linux is always 512 bytes. Don't even try to give the
+> impression this is changeable.
 
-It scans everything in /dev and all subdirectories?  Wow that would be 
-colossally slow and prone to hang.  Imagine trying to access a nd device 
-whose server is down.
+If that's what worries you, add a comment next to the definition,
+perhaps?
 
-In any case, if it did scan the dmraid device, it would just complain 
-about finding duplicates; it has no way of knowing which one it should 
-use.
+It's there so you can easily locate all the places within dm that
+perform these conversions by using a simple search.  Searching for '9'
+wouldn't be as easy.  (I don't know about other people, but I find the
+code easier to read the way it is.)
 
-Also it looks like feisty used 2.2.06 and the config files shipped in 
-the package can be found here:
+BTW When changing one thing across the whole of dm, you may combine
+the sub-component patches into a single patch.
 
-http://packages.ubuntu.com/feisty/admin/lvm2
+Alasdair
+-- 
+agk@redhat.com
