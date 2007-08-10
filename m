@@ -1,12 +1,14 @@
 From: "S. J. van Harmelen" <svanharmelen@xillan.nl>
-Subject: Multipath-tools errors
-Date: Fri, 10 Aug 2007 16:50:47 +0200
-Message-ID: <1186757447.17449.24.camel@sanderbal>
+Subject: Re: Multipath-tools
+Date: Fri, 10 Aug 2007 11:47:00 +0200
+Message-ID: <1186739220.6431.22.camel@sanderbal>
+References: <1186734435.6431.14.camel@sanderbal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1186734435.6431.14.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,39 +20,6 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
-
-Oke, got a bit further...
-
-I now understand how to use the disks. Only thing thats not going oke is
-that I get these errors constantly (while formatting):
-
-end_request: I/O error, dev sdf, sector 30408704
-end_request: I/O error, dev sdf, sector 30670848
-end_request: I/O error, dev sdf, sector 30932992
-end_request: I/O error, dev sdf, sector 31195136
-end_request: I/O error, dev sdf, sector 31457280
-
-or (while editting a file):
-
-end_request: I/O error, dev sdc, sector 966656
-device-mapper: multipath: Failing path 8:32.
-end_request: I/O error, dev sdc, sector 966720
-device-mapper: multipath: Failing path 8:32.
-end_request: I/O error, dev sdc, sector 96665
-
-And the device seems very slow...
-
-And also stil having this error: "error calling out mpath_prio_rdac"
-
-Any tips, pointers?
-
-Sander
-
--------- Forwarded Message --------
-From: S. J. van Harmelen <svanharmelen@xillan.nl>
-To: dm-devel@redhat.com
-Subject: Re: Multipath-tools
-Date: Fri, 10 Aug 2007 11:47:01 +0200
 
 Hi again,
 
