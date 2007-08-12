@@ -1,14 +1,14 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: BUG in dm/dm-mirror module?
-Date: Sat, 11 Aug 2007 10:52:07 +0200
-Message-ID: <46BD78B7.3080200@redhat.com>
-References: <20070811010853.GA9952@us.ibm.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Using device-mapper with many targets
+Date: Sun, 12 Aug 2007 15:32:13 +0100
+Message-ID: <20070812143213.GJ2064@agk.fab.redhat.com>
+References: <46AFA7D0.8040900@tevp.net> <46BCFA8D.4070607@tevp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070811010853.GA9952@us.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <46BCFA8D.4070607@tevp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,32 +21,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-malahal@us.ibm.com wrote:
-> Hi, I am trying to create a mirrored disk log. I have four block
-> devices, two for the log (which is a mirror!) and two for the actual
-> mirror device.  But I can't use the mirror device at all. It just hangs
-> for any read/write. Here are the details of dmsetup calls. I am using
-> RHEL5 (2.6.18-8.el5). Looks like a mirror module bug and I appreciate
-> any help.
-> 
-> dev1="/dev/sda1"
-> dev2="/dev/sdb1"
-> dev3="/dev/sdc1"
-> dev4="/dev/sdd1"
-> echo "0 8192 mirror core 1 512 2 $dev1 0 $dev2 0" | dmsetup create log
-> echo "0 24576 mirror disk 2 /dev/mapper/log 512 2 $dev3 0 $dev4 0" | dmsetup create mirror
+On Sat, Aug 11, 2007 at 01:53:49AM +0200, Tom Parker wrote:
+> Additionally, the dm-raid1.c in the device-mapper CVS 
+> appears to be out of sync with current kernels. 
 
-Hi,
+It's the 2.4 version - dating from before dm got into the kernel upstream.
 
-yes, there is known problem with one kmirrord thread and using mirrored log.
-(i.e. mirror over mirror)
-
-For problem description see this patch for upstream kernel
-http://www2.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.21/dm-raid1-one-kmirrord-per-mirror.patch
-
-All testing RHEL5 kernels from 2.6.18-18 has this fix included,
-so for testing purposes you can try RHEL5.1 beta kernel.
-
-Milan
---
-mbroz@redhat.com
+Alasdair
+-- 
+agk@redhat.com
