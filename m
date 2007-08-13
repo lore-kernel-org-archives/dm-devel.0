@@ -1,14 +1,16 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [PATCH] Fix remap handling by blktrace
-Date: Mon, 13 Aug 2007 14:16:09 +0200
-Message-ID: <20070813121608.GR23758@kernel.dk>
-References: <46B87357.8040802@hp.com> <20070807133252.GY5245@kernel.dk>
+From: Srini <v.vvsrini@gmail.com>
+Subject: Re: Maximum number of MD devices
+Date: Mon, 13 Aug 2007 20:15:04 +0530
+Message-ID: <25b3869e0708130745x44b3245ctdb4aee5f30163f7c@mail.gmail.com>
+References: <25b3869e0708021904jdb9777cj9d6ea918cc92deb9@mail.gmail.com>
+	<25b3869e0708062116y72c026c8uef406d94525f774d@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <25b3869e0708062116y72c026c8uef406d94525f774d@mail.gmail.com>
 Content-Disposition: inline
-In-Reply-To: <20070807133252.GY5245@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,28 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
-Cc: dm-devel@redhat.com, btrace <linux-btrace@vger.kernel.org>, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Aug 07 2007, Jens Axboe wrote:
-> On Tue, Aug 07 2007, Alan D. Brunelle wrote:
-> > 
-> 
-> > 
-> > This patch provides more information concerning REMAP operations on block
-> > IOs. The additional information provides clearer details at the user level,
-> > and supports post-processing analysis in btt.
-> > 
-> > o  Adds in partition remaps on the same device.
-> > o  Fixed up the remap information in DM to be in the right order
-> > o  Sent up mapped-from and mapped-to device information
-> > 
-> > Signed-off-by: Alan D. Brunelle <alan.brunelle@hp.com>
-> 
-> Thanks (again) Alan, applied!
+We have found out that that up to Linux kernel 2.6.16, this problem is
+not appearing. However, when the Linux kernel is UPGRADED to Linux
+kernel 2.6.17 onwards, we seem to be hitting upon the error.
 
-And it was merged over the weekend, better late than never :-)
+This clearly indicates that the problem is arising IN BETWEEN the
+changes from 2.6.16 to 2.6.17 versions.
 
--- 
-Jens Axboe
+Can someone please help and throw some lights what could trigger this situation?
+
+Thanks,
+
+Srini
+
+On 8/7/07, Srini <v.vvsrini@gmail.com> wrote:
+> Again retrying to see if some one can offer some clues here...
+>
+> Thanks in advance for your inputs,
+>
+> Srini
+>
+> ---------- Forwarded message ----------
+> From: Srini <v.vvsrini@gmail.com>
+> Date: Aug 3, 2007 7:34 AM
+> Subject: Maximum number of MD devices
+> To: device-mapper development <dm-devel@redhat.com>
+>
+>
+> Hi all,
+>
+> We are currently using Linux kernel 2.6.20-rc6 and EVMS 2.5.4 (which
+> internally uses device mapper) for volume management. On running the
+> command for creating volumes in EVMS, we find that after around 230
+> volumes, EVMS starts reporting that the whole region (md/md0 for
+> example) has become corrupt.
+>
+> Is there a maximum limit on the number of devices that device mapper
+> will create that is triggering this error message? If so, are there
+> ways to increase the limit?
+>
+> Please let us know your inputs as it is very critical for us to
+> increase this limit.
+>
+> Thanks in advance,
+>
+> Srini
+>
