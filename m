@@ -1,11 +1,11 @@
 From: Mike Anderson <andmike@us.ibm.com>
-Subject: [RFC 1/3] dm: add dm uevent base
-Date: Tue, 14 Aug 2007 13:05:45 -0700
-Message-ID: <41682.3599524379$1187122030@news.gmane.org>
+Subject: [RFC 2/3] dm: add support for event functions
+Date: Tue, 14 Aug 2007 13:05:46 -0700
+Message-ID: <42800.9174917408$1187122037@news.gmane.org>
 References: <20070814200544.963756967@us.ibm.com>>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline; filename=dm-uevent.patch
+Content-Disposition: inline; filename=dm-uevent-add-to-core.patch
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,210 +19,279 @@ To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 Cc: Greg KH <greg@kroah.com>, Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
-This patch adds dm-uevent base support to the Makefile, and the dm
-directory.
+This patch adds support for the dm_path_event dm_send_event functions which
+create and send udev events.
 
 Signed-off-by: Mike Anderson <andmike@us.ibm.com>
+
 ---
 
- drivers/md/Kconfig     |    6 +++
- drivers/md/Makefile    |    4 ++
- drivers/md/dm-uevent.c |   76 +++++++++++++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-uevent.h |   41 ++++++++++++++++++++++++++
- drivers/md/dm.c        |   10 ++++++
- 5 files changed, 137 insertions(+)
+ drivers/md/dm-uevent.c        |  121 ++++++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-uevent.h        |   18 ++++++
+ drivers/md/dm.c               |   28 +++++++++
+ include/linux/device-mapper.h |    2 
+ 4 files changed, 169 insertions(+)
 
-Index: b/drivers/md/Kconfig
-===================================================================
---- a/drivers/md/Kconfig
-+++ b/drivers/md/Kconfig
-@@ -276,4 +276,10 @@ config DM_DELAY
- 
- 	If unsure, say N.
- 
-+config DM_UEVENT
-+	bool "DM uevents (EXPERIMENTAL)"
-+	depends on BLK_DEV_DM && EXPERIMENTAL
-+	---help---
-+	Generate udev events for DM events.
-+
- endif # MD
-Index: b/drivers/md/Makefile
-===================================================================
---- a/drivers/md/Makefile
-+++ b/drivers/md/Makefile
-@@ -48,6 +48,10 @@ ifeq ($(CONFIG_ALTIVEC),y)
- altivec_flags := -maltivec -mabi=altivec
- endif
- 
-+ifeq ($(CONFIG_DM_UEVENT),y)
-+dm-mod-objs			+= dm-uevent.o
-+endif
-+
- targets += raid6int1.c
- $(obj)/raid6int1.c:   UNROLL := 1
- $(obj)/raid6int1.c:   $(src)/raid6int.uc $(src)/unroll.pl FORCE
 Index: b/drivers/md/dm-uevent.c
 ===================================================================
---- /dev/null
+--- a/drivers/md/dm-uevent.c
 +++ b/drivers/md/dm-uevent.c
-@@ -0,0 +1,76 @@
-+/*
-+ * Device Mapper Uevent Support (dm-uevent)
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-+ *
-+ * Copyright IBM Corporation, 2007
-+ * 	Author: Mike Anderson <andmike@us.ibm.com>
-+ */
-+#include <linux/list.h>
-+#include <linux/slab.h>
-+#include <linux/kobject.h>
-+
-+#include "dm.h"
-+#include "dm-uevent.h"
-+
-+#define DM_MSG_PREFIX "uevent"
-+
-+#define DM_UE_BUF_SIZE 2048
-+#define DM_NUM_ENVP 10
-+
-+static struct kmem_cache *_dme_cache;
-+
-+struct dm_uevent {
-+	struct mapped_device *md;
-+	enum kobject_action action;
-+	char buffer[DM_UE_BUF_SIZE];
-+	char *envp[DM_NUM_ENVP];
-+	struct list_head elist;
+@@ -30,6 +30,16 @@
+ #define DM_UE_BUF_SIZE 2048
+ #define DM_NUM_ENVP 10
+ 
++static struct {
++	enum dm_uevent_type	type;
++	enum kobject_action	action;
++	char			*name;
++} dm_uevent_type_names[] = {
++	{DM_UEVENT_UNKNOWN, KOBJ_CHANGE, "UNKNOWN"},
++	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
++	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
 +};
 +
-+static void dm_uevent_free(struct dm_uevent *evt)
-+{
-+	kmem_cache_free(_dme_cache, evt);
-+}
-+
-+static struct dm_uevent *dm_uevent_alloc(struct mapped_device *md)
+ static struct kmem_cache *_dme_cache;
+ 
+ struct dm_uevent {
+@@ -59,6 +69,117 @@ static struct dm_uevent *dm_uevent_alloc
+ 	return evt;
+ }
+ 
++static struct dm_uevent *dm_build_path_uevent(struct mapped_device *md,
++					enum kobject_action action,
++					const char *dm_action,
++					const char *path,
++					int nr_valid_paths)
 +{
 +	struct dm_uevent *evt;
++	char **envp;
++	char *buffer;
++	int i = 0;
++	int length = 0;
 +
-+	evt = kmem_cache_zalloc(_dme_cache, GFP_ATOMIC);
-+	if (!evt)
-+		return NULL;
++	evt = dm_uevent_alloc(md);
++	if (!evt) {
++		DMERR("%s: dm_uevent_alloc() failed", __FUNCTION__);
++		goto out_nomem;
++	}
 +
-+	INIT_LIST_HEAD(&evt->elist);
-+	evt->md = md;
++	evt->action = action;
++	envp = evt->envp;
++	buffer = evt->buffer;
++
++	if (add_uevent_var(envp, DM_NUM_ENVP, &i, buffer, DM_UE_BUF_SIZE,
++		       &length, "DM_ACTION=%s", dm_action)) {
++		DMERR("%s: add_uevent_var() for DM_ACTION failed",
++		      __FUNCTION__);
++		goto out_add;
++	}
++
++	if (add_uevent_var(envp, DM_NUM_ENVP, &i, buffer, DM_UE_BUF_SIZE,
++		       &length, "DM_SEQNUM=%u", dm_next_uevent_seq(md))) {
++		DMERR("%s: add_uevent_var() for DM_SEQNUM failed",
++		      __FUNCTION__);
++		goto out_add;
++	}
++
++	if (add_uevent_var(envp, DM_NUM_ENVP, &i, buffer, DM_UE_BUF_SIZE,
++		       &length, "DM_PATH=%s", path)) {
++		DMERR("%s: add_uevent_var() for DM_PATH failed",
++		      __FUNCTION__);
++		goto out_add;
++	}
++
++	if (add_uevent_var(envp, DM_NUM_ENVP, &i, buffer, DM_UE_BUF_SIZE,
++			   &length, "DM_PATHS=%d", nr_valid_paths)) {
++		DMERR("%s: add_uevent_var() for DM_PATHS failed",
++		      __FUNCTION__);
++		goto out_add;
++	}
++
++	envp[i] = NULL;
 +
 +	return evt;
++
++out_add:
++	dm_uevent_free(evt);
++out_nomem:
++	return ERR_PTR(-ENOMEM);
 +}
 +
-+int dm_uevent_init(void)
++/**
++ * dm_send_uevents - send uevents for given list
++ *
++ * @events:	list of events to send
++ * @kobj:	kobject generating event
++ *
++ **/
++void dm_send_uevents(struct list_head *events, struct kobject *kobj)
 +{
-+	_dme_cache = KMEM_CACHE(dm_uevent, 0);
-+	if (!_dme_cache)
-+		return -ENOMEM;
++	int r;
++	struct dm_uevent *evt, *next;
 +
-+	DMINFO("version 1.0.0 inited");
-+
-+	return 0;
++	list_for_each_entry_safe(evt, next, events, elist) {
++		list_del_init(&evt->elist);
++		r = kobject_uevent_env(kobj, evt->action, evt->envp);
++		if (r)
++			DMERR("%s: kobject_uevent_env failed", __FUNCTION__);
++		dm_uevent_free(evt);
++	}
 +}
++EXPORT_SYMBOL_GPL(dm_send_uevents);
 +
-+void dm_uevent_exit(void)
++/**
++ * dm_path_uevent - called to create a new path event and queue it
++ *
++ * @evt_type:		path event type enum
++ * @t:			pointer to a dm_table
++ * @path:		string containing pathname
++ * @nr_valid_paths:	number of valid paths remaining
++ *
++ **/
++void dm_path_uevent(enum dm_uevent_type evt_type, struct dm_table *t,
++		   const char *path, int nr_valid_paths)
 +{
-+	kmem_cache_destroy(_dme_cache);
++	struct mapped_device *md = dm_table_get_md(t);
++	struct dm_uevent *evt;
++
++	if (evt_type < ARRAY_SIZE(dm_uevent_type_names)) {
++		evt = dm_build_path_uevent(md,
++				   dm_uevent_type_names[evt_type].action,
++				   dm_uevent_type_names[evt_type].name,
++				   path,
++				   nr_valid_paths);
++		if (!IS_ERR(evt))
++			dm_uevent_add(md, &evt->elist);
++	} else
++		DMERR("%s: Invalid evt_type %d", __FUNCTION__, evt_type);
++	dm_put(md);
 +}
++EXPORT_SYMBOL_GPL(dm_path_uevent);
++
+ int dm_uevent_init(void)
+ {
+ 	_dme_cache = KMEM_CACHE(dm_uevent, 0);
 Index: b/drivers/md/dm-uevent.h
 ===================================================================
---- /dev/null
+--- a/drivers/md/dm-uevent.h
 +++ b/drivers/md/dm-uevent.h
-@@ -0,0 +1,41 @@
-+/*
-+ * Device Mapper Uevent Support
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ *
-+ * You should have received a copy of the GNU General Public License
-+ * along with this program; if not, write to the Free Software
-+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-+ *
-+ * Copyright IBM Corporation, 2007
-+ * 	Author: Mike Anderson <andmike@us.ibm.com>
-+ */
-+#ifndef DM_UEVENT_H
-+#define DM_UEVENT_H
+@@ -21,10 +21,19 @@
+ #ifndef DM_UEVENT_H
+ #define DM_UEVENT_H
+ 
++enum dm_uevent_type {
++	DM_UEVENT_UNKNOWN,
++	DM_UEVENT_PATH_FAILED,
++	DM_UEVENT_PATH_REINSTATED,
++};
 +
-+#ifdef CONFIG_DM_UEVENT
-+
-+extern int dm_uevent_init(void);
-+extern void dm_uevent_exit(void);
-+
-+#else
-+
-+static inline int dm_uevent_init(void)
-+{
-+	return 0;
-+}
-+static inline void dm_uevent_exit(void)
+ #ifdef CONFIG_DM_UEVENT
+ 
+ extern int dm_uevent_init(void);
+ extern void dm_uevent_exit(void);
++extern void dm_send_uevents(struct list_head *events, struct kobject *kobj);
++extern void dm_path_uevent(enum dm_uevent_type evt_type, struct dm_table *t,
++			   const char *path, int nr_valid_paths);
+ 
+ #else
+ 
+@@ -35,6 +44,15 @@ static inline int dm_uevent_init(void)
+ static inline void dm_uevent_exit(void)
+ {
+ }
++static inline void dm_send_uevents(struct list_head *events,
++				   struct kobject *kobj)
 +{
 +}
-+
-+#endif	/* CONFIG_DM_UEVENT */
-+
-+#endif	/* DM_UEVENT_H */
++static inline void dm_path_uevent(enum dm_uevent_type evt_type,
++				  struct dm_table *t, const char *path,
++				  int nr_valid_paths)
++{
++}
+ 
+ #endif	/* CONFIG_DM_UEVENT */
+ 
 Index: b/drivers/md/dm.c
 ===================================================================
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -7,6 +7,7 @@
+@@ -113,6 +113,9 @@ struct mapped_device {
+ 	 */
+ 	atomic_t event_nr;
+ 	wait_queue_head_t eventq;
++	atomic_t uevent_seq;
++	struct list_head uevent_list;
++	spinlock_t uevent_lock; /* Protect access to uevent_list */
  
- #include "dm.h"
- #include "dm-bio-list.h"
-+#include "dm-uevent.h"
+ 	/*
+ 	 * freeze/thaw support require holding onto a super block
+@@ -1006,6 +1009,9 @@ static struct mapped_device *alloc_dev(i
+ 	atomic_set(&md->holders, 1);
+ 	atomic_set(&md->open_count, 0);
+ 	atomic_set(&md->event_nr, 0);
++	atomic_set(&md->uevent_seq, 0);
++	INIT_LIST_HEAD(&md->uevent_list);
++	spin_lock_init(&md->uevent_lock);
  
- #include <linux/init.h>
- #include <linux/module.h>
-@@ -151,6 +152,14 @@ static int __init local_init(void)
- 		return r;
- 	}
- 
-+	r = dm_uevent_init();
-+	if (r < 0) {
-+		kmem_cache_destroy(_tio_cache);
-+		kmem_cache_destroy(_io_cache);
-+		unregister_blkdev(_major, _name);
-+		return r;
-+	}
-+
- 	if (!_major)
- 		_major = r;
- 
-@@ -159,6 +168,7 @@ static int __init local_init(void)
- 
- static void local_exit(void)
+ 	md->queue = blk_alloc_queue(GFP_KERNEL);
+ 	if (!md->queue)
+@@ -1103,8 +1109,16 @@ static void free_dev(struct mapped_devic
+  */
+ static void event_callback(void *context)
  {
-+	dm_uevent_exit();
- 	kmem_cache_destroy(_tio_cache);
- 	kmem_cache_destroy(_io_cache);
- 	unregister_blkdev(_major, _name);
++	unsigned long flags;
++	LIST_HEAD(uevents);
+ 	struct mapped_device *md = (struct mapped_device *) context;
+ 
++	spin_lock_irqsave(&md->uevent_lock, flags);
++	list_splice_init(&md->uevent_list, &uevents);
++	spin_unlock_irqrestore(&md->uevent_lock, flags);
++
++	dm_send_uevents(&uevents, &md->disk->kobj);
++
+ 	atomic_inc(&md->event_nr);
+ 	wake_up(&md->eventq);
+ }
+@@ -1521,6 +1535,11 @@ out:
+ /*-----------------------------------------------------------------
+  * Event notification.
+  *---------------------------------------------------------------*/
++uint32_t dm_next_uevent_seq(struct mapped_device *md)
++{
++	return atomic_add_return(1, &md->uevent_seq);
++}
++
+ uint32_t dm_get_event_nr(struct mapped_device *md)
+ {
+ 	return atomic_read(&md->event_nr);
+@@ -1532,6 +1551,15 @@ int dm_wait_event(struct mapped_device *
+ 			(event_nr != atomic_read(&md->event_nr)));
+ }
+ 
++void dm_uevent_add(struct mapped_device *md, struct list_head *elist)
++{
++	unsigned long flags;
++
++	spin_lock_irqsave(&md->uevent_lock, flags);
++	list_add(elist, &md->uevent_list);
++	spin_unlock_irqrestore(&md->uevent_lock, flags);
++}
++
+ /*
+  * The gendisk is only valid as long as you have a reference
+  * count on 'md'.
+Index: b/include/linux/device-mapper.h
+===================================================================
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -183,6 +183,8 @@ int dm_resume(struct mapped_device *md);
+  */
+ uint32_t dm_get_event_nr(struct mapped_device *md);
+ int dm_wait_event(struct mapped_device *md, int event_nr);
++uint32_t dm_next_uevent_seq(struct mapped_device *md);
++void dm_uevent_add(struct mapped_device *md, struct list_head *elist);
+ 
+ /*
+  * Info functions.
 
 -- 
