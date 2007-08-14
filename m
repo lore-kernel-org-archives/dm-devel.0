@@ -1,49 +1,36 @@
-From: malahal@us.ibm.com
-Subject: Re: BUG in dm/dm-mirror module?
-Date: Tue, 14 Aug 2007 08:55:34 -0700
-Message-ID: <20070814155534.GA31052@us.ibm.com>
-References: <20070811010853.GA9952@us.ibm.com> <46BD78B7.3080200@redhat.com>
-	<45517CCC-7B68-4B0F-92EC-04F4E81CDA0E@redhat.com>
-	<46C08B46.8040401@cfl.rr.com>
-	<B9BBD91E-F103-40DA-85BA-4FBAF0BB0F59@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Joe Perches <joe@perches.com>
+Subject: Re: [PATCH] [153/2many] MAINTAINERS - DEVICE-MAPPER  (LVM)
+Date: Tue, 14 Aug 2007 09:19:23 -0700
+Message-ID: <1187108363.32555.45.camel@localhost>
+References: <46bff986.szARdClTcYqQa8So%joe@perches.com>
+	 <46C1888E.4060501@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <B9BBD91E-F103-40DA-85BA-4FBAF0BB0F59@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764154AbXHNQT5@vger.kernel.org>
+In-Reply-To: <46C1888E.4060501@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Milan Broz <mbroz@redhat.com>
+Cc: torvalds@linux-foundation.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com, akpm@linux-foundation.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Jonathan Brassow [jbrassow@redhat.com] wrote:
-> 
-> On Aug 13, 2007, at 11:48 AM, Phillip Susi wrote:
-> 
-> >
-> >This is a problem with any mirror, not just one holding a mirror log.
-> 
-> It is a special problem with the mirror log.
-> 
-> Mirrors will recover themselves and become consistent upon a reboot.   
-> In the case of a mirror that holds a file system, if you lost some of  
-> your most recent writes, journaling/fsck will take care of it.  In  
+On Tue, 2007-08-14 at 12:48 +0200, Milan Broz wrote:
+> File pattern should be:
+> F:	drivers/md/dm*
+> F:	drivers/md/kcopyd*
+> F:	include/linux/device-mapper.h
+> F:	include/linux/dm-ioctl.h
+> F:	Documentation/device-mapper/
 
-I believe the mirror code handles errors at region level. So one region
-could be out of sync while the other regions are updated with the latest
-data if the disk failure(s) are transient. I don't think the disk with
-few 'out-of-sync' regions can be assumed to have consistent data.
+Thanks.  In my tree I've got:
 
-In any case, we need a better method to select the master mirror device.
-Does LVM have an extra sector or so to give it to the kernel module?
-
-Thanks, Malahal.
+DEVICE-MAPPER  (LVM)
+P:	Alasdair Kergon
+L:	dm-devel@redhat.com
+W:	http://sources.redhat.com/dm
+S:	Maintained
+F:      Documentation/device-mapper/
+F:      drivers/md/dm*
+F:      drivers/md/kcopyd*
+F:      include/linux/device-mapper.h
+F:      include/linux/dm-ioctl.h
