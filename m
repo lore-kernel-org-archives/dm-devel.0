@@ -1,9 +1,15 @@
-From: Mike Anderson <andmike@us.ibm.com>
-Subject: [RFC 0/3] dm: add path uevents
-Date: Tue, 14 Aug 2007 13:05:44 -0700
-Message-ID: <38449.9011947357$1187122037@news.gmane.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] remove unneded lock_kernel in
+	drivers/md/dm.c and use unlocked_ioctl.
+Date: Tue, 14 Aug 2007 21:12:20 +0100
+Message-ID: <20070814201220.GA30122@agk.fab.redhat.com>
+References: <11858486294133-git-send-email-diego@woitasen.com.ar>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <11858486294133-git-send-email-diego@woitasen.com.ar>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,61 +19,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
-Cc: Greg KH <greg@kroah.com>, Kay Sievers <kay.sievers@vrfy.org>
+To: Diego Woitasen <diego@woitasen.com.ar>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-This patch series enables device mapper (dm) to send kobject uevents for
-dm events. Currently only two new events are sent related to path state
-changes.
+On Mon, Jul 30, 2007 at 11:23:49PM -0300, Diego Woitasen wrote:
+> -static int dm_blk_ioctl(struct inode *inode, struct file *file,
+> -			unsigned int cmd, unsigned long arg)
+> +static long dm_blk_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
-A previous patch was posted to send these events out over netlink. It was
-suggested that the events could be sent using kboject_uevent which lead to
-the creation of this patch.
+> -	/* We don't really need this lock, but we do need 'inode'. */
+> -	unlock_kernel();
+> +	inode = file->f_path.dentry->d_inode;
 
-The previous posts can be found in this list archive
-http://thread.gmane.org/gmane.linux.kernel.device-mapper.devel/3588
+Have the call paths that pass a NULL 'file' parameter down all been
+changed?  If not, perhaps pass the 'inode' parameter into
+unlocked_ioctl(), as happens with ioctl(), to get rid of the lock.
 
-This patch leaves the existing dm ioctl event interface in place and
-allows user to pickup the new events when available. This would allow
-tools that are already processing uevents to pick up the context of the
-path events with a small addition to existing processing code.
-
-This patch series against linux-2.6.23-rc2-mm2 contains the following:
-- Add dm uevent skeleton.
-- Add support for the event functions.
-- Add event calls for failed and reinstated paths.
-
-An example of the uevents generated as captured by udevmonitor is shown
-below.
-
-1.) Path failure.
-UEVENT[1187096865.290808] change@/block/dm-0
-ACTION=change
-DEVPATH=/block/dm-0
-SUBSYSTEM=block
-DM_ACTION=PATH_FAILED
-DM_SEQNUM=1
-DM_PATH=8:48
-DM_PATHS=1
-SEQNUM=1774
-MINOR=0
-MAJOR=0
-
-2.) Path reinstate.
-UEVENT[1187097039.466958] change@/block/dm-0
-ACTION=change
-DEVPATH=/block/dm-0
-SUBSYSTEM=block
-DM_ACTION=PATH_REINSTATED
-DM_SEQNUM=2
-DM_PATH=8:48
-DM_PATHS=2
-SEQNUM=1775
-MINOR=0
-MAJOR=0
-
--andmike
---
-Michael Anderson
-andmike@us.ibm.com
+Alasdair
+-- 
+agk@redhat.com
