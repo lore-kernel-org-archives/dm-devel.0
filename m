@@ -1,7 +1,7 @@
-From: "Ethan John" <ethan.john@gmail.com>
+From: "Stefan Bader" <Stefan.Bader@de.ibm.com>
 Subject: Re: Designing a new prio_callout
-Date: Tue, 14 Aug 2007 10:05:13 -0700
-Message-ID: <d61540a40708141005n4eb06cebx14559f055b0df3d6@mail.gmail.com>
+Date: Wed, 15 Aug 2007 10:45:11 +0200
+Message-ID: <5201e28f0708150145s42ff46a5t8dab865931cb09d@mail.gmail.com>
 References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
 	<46A735E1.4070206@suse.de>
 	<d61540a40707290903q359cc7c8g52f07627b4b9fba7@mail.gmail.com>
@@ -9,11 +9,14 @@ References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
 	<d61540a40708091055u725fa5e4wa182ac1d778323be@mail.gmail.com>
 	<46BC7F14.80302@suse.de>
 	<d61540a40708100840m541e198dg88c12d031febf968@mail.gmail.com>
+	<d61540a40708141005n4eb06cebx14559f055b0df3d6@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1211045042=="
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d61540a40708100840m541e198dg88c12d031febf968@mail.gmail.com>
+In-Reply-To: <d61540a40708141005n4eb06cebx14559f055b0df3d6@mail.gmail.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,239 +29,39 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1211045042==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_43600_2862409.1187111113452"
+Hi Ethan,
 
-------=_Part_43600_2862409.1187111113452
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
+I might not understand the problem completely but I do not understand
+the benefit of changing rr_min_io. As far as I can see from your
+multipath output, both of the devices consist of two path groups with
+one path. This means, as long as there is no path failure I/O will
+never be sent to the inactive group.
+I guess the only thing you need is a script that might find out from a
+given scsi device (like sdc) whether this would be the preferred path
+and then print a number that represents the priority (the lower, the
+higher). Then use this as priority callout and group by priority with
+failback set to immediate.
 
-For the record, setting rr_min_io to something extremely large (we're using
-2 billion now, since I'm assuming it's a C integer) solves the immediate
-problem that we're having (overhead in path switching causing poor
-performance). Telling people to use mpath_prio_random is still less than
-ideal for any small number of iSCSI targets, but it a better short-term
-solution for us than nothing.
+Regards,
+Stefan
 
-On 8/10/07, Ethan John <ethan.john@gmail.com> wrote:
->
-> Hannes, thanks again for your help with this.
->
-> I haven't noticed that failback does the right thing, but I'll try it out
-> again. Could be something we're doing wrong. In any case, there's very
-> little documentation on all this, and I'm trying to develop some kind of
-> strategy for our Linux customers to use until we get ALUA implemented.
->
-> Being able to set path priorities manually would be ideal, but it seems
-> like this is impossible, right?
->
-> Here's the situation we have right now. I initiate two connections to one
-> target, across two sessions with two different IPs, with two LUs. Multipa=
-th
-> looks like this:
-> mpath45 (20002c9020020001a00151b6b46bb57b0) dm-1 company,iSCSI target
-> [size=3D15G][features=3D0][hwhandler=3D0]
-> \_ round-robin 0 [prio=3D1][active]
->  \_ 22:0:0:1 sdc 8:32  [active][ready]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 23:0:0:1 sde 8:64  [active][ready]
-> mpath44 (20002c9020020001200151b6b46bb57ae) dm-0 company,iSCSI target
-> [size=3D15G][features=3D0][hwhandler=3D0]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 22:0:0:0 sdb 8:16  [active][ready]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 23:0:0:0 sdd 8:48  [active][ready]
->
-> Note that there are only two active sessions:
-> # iscsiadm -m session
-> tcp: [20] 10.53.152.22:3260 ,1 iqn.2001-07.com.company:qaiscsi2:blah1
-> tcp: [21] 10.53.152.23:3260,2 iqn.2001-07.com.company:qaiscsi2:blah1
->
-> So the result is that all activity is routed to the first session that wa=
-s
-> initiated. I want to change the priorities of the paths to allow for traf=
-fic
-> to go to the first IP for mpath45 and the second IP for mpath46.
->
-> Obviously ALUA is the way to go for this in the future, but we won't have
-> the resources to implement that, so I'm looking for an interim solution t=
-hat
-> will scale to thousands of clients. Right now, the only thing I can tell
-> people is to manually initiate connections to certain targets through
-> certain IP addresses -- basically, doing the load balancing themselves. I=
-s
-> there a better way?
->
-> On 8/10/07, Hannes Reinecke <hare@suse.de> wrote:
+2007/8/14, Ethan John <ethan.john@gmail.com>:
+> For the record, setting rr_min_io to something extremely large (we're using
+> 2 billion now, since I'm assuming it's a C integer) solves the immediate
+> problem that we're having (overhead in path switching causing poor
+
+> > mpath45 (20002c9020020001a00151b6b46bb57b0) dm-1
+> company,iSCSI target
+> > [size=15G][features=0][hwhandler=0]
+> > \_ round-robin 0 [prio=1][active]
+> >  \_ 22:0:0:1 sdc 8:32  [active][ready]
+> > \_ round-robin 0 [prio=1][enabled]
+> >  \_ 23:0:0:1 sde 8:64  [active][ready]
+> > mpath44 (20002c9020020001200151b6b46bb57ae) dm-0
+> company,iSCSI target
+> > [size=15G][features=0][hwhandler=0]
+> > \_ round-robin 0 [prio=1][enabled]
+> >  \_ 22:0:0:0 sdb 8:16  [active][ready]
+> > \_ round-robin 0 [prio=1][enabled]
+> >  \_ 23:0:0:0 sdd 8:48  [active][ready]
 > >
-> > Ethan John wrote:
-> > > Is it possible to manually set the priority of a path after a
-> > connection has
-> > > been established?
-> > >
-> > > Since we're doing failover-only (only 1 active path at a time), it
-> > would be
-> > > nice to tell users that they can manually reset priority after a
-> > failure.
-> > > For example, in a configuration with two paths, where one is active
-> > and the
-> > > other is passive for two differeent volumes, a failure of one path
-> > will
-> > > result in all traffic going through the one remaining path. After the
-> > second
-> > > path comes back up, all traffic will still be written to the first
-> > path
-> > > (paths are not rebalanced after a failure).
-> > >
-> > Not necessarily. There is the keyword 'failback', which can be set to
-> > IMMEDIATE, causing all paths to fail back to the original path once it
-> > comes back.
-> >
-> > And as you don't actually need to send any commands for facilitate
-> > the failover I doubt you'd need to develop your own hardware handler.
-> >
-> > The existing tweaks should be enough, I think.
-> >
-> > Cheers,
-> >
-> > Hannes
-> > --
-> > Dr. Hannes Reinecke                   zSeries & Storage
-> > hare@suse.de                          +49 911 74053 688
-> > SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-> > GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> >
->
->
->
-> --
-> Ethan John
-> http://www.flickr.com/photos/thaen/
-> (206) 841.4157
->
-
-
-
---=20
-Ethan John
-http://www.flickr.com/photos/thaen/
-(206) 841.4157
-
-------=_Part_43600_2862409.1187111113452
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Content-Disposition: inline
-
-For the record, setting rr_min_io to something extremely large (we&#39;re u=
-sing 2 billion now, since I&#39;m assuming it&#39;s a C integer) solves the=
- immediate problem that we&#39;re having (overhead in path switching causin=
-g poor performance). Telling people to use mpath_prio_random is still less =
-than ideal for any small number of iSCSI targets, but it a better short-ter=
-m solution for us than nothing.
-<br><br><div><span class=3D"gmail_quote">On 8/10/07, <b class=3D"gmail_send=
-ername">Ethan John</b> &lt;<a href=3D"mailto:ethan.john@gmail.com">ethan.jo=
-hn@gmail.com</a>&gt; wrote:</span><blockquote class=3D"gmail_quote" style=
-=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; p=
-adding-left: 1ex;">
-Hannes, thanks again for your help with this.<br>&nbsp;<br>I haven&#39;t no=
-ticed that failback does the right thing, but I&#39;ll try it out again. Co=
-uld be something we&#39;re doing wrong. In any case, there&#39;s very littl=
-e documentation on all this, and I&#39;m trying to develop some kind of str=
-ategy for our Linux customers to use until we get ALUA implemented.
-<br><br>Being able to set path priorities manually would be ideal, but it s=
-eems like this is impossible, right?<br><br>Here&#39;s the situation we hav=
-e right now. I initiate two connections to one target, across two sessions =
-with two different IPs, with two LUs. Multipath looks like this:
-<br>mpath45 (20002c9020020001a00151b6b46bb57b0) dm-1 company,iSCSI target<b=
-r>[size=3D15G][features=3D0][hwhandler=3D0]<br>\_ round-robin 0 [prio=3D1][=
-active]<br>&nbsp;\_ 22:0:0:1 sdc 8:32&nbsp; [active][ready]<br>\_ round-rob=
-in 0 [prio=3D1][enabled]
-<br>&nbsp;\_ 23:0:0:1 sde 8:64&nbsp; [active][ready]<br>mpath44 (20002c9020=
-020001200151b6b46bb57ae) dm-0 company,iSCSI target<br>[size=3D15G][features=
-=3D0][hwhandler=3D0]<br>\_ round-robin 0 [prio=3D1][enabled]<br>&nbsp;\_ 22=
-:0:0:0 sdb 8:16&nbsp; [active][ready]
-<br>\_ round-robin 0 [prio=3D1][enabled]<br>&nbsp;\_ 23:0:0:0 sdd 8:48&nbsp=
-; [active][ready]<br><br>Note that there are only two active sessions:<br>#=
- iscsiadm -m session<br>tcp: [20] <a href=3D"http://10.53.152.22:3260" targ=
-et=3D"_blank" onclick=3D"return top.js.OpenExtLink(window,event,this)">
-10.53.152.22:3260
-</a>,1 iqn.2001-07.com.company:qaiscsi2:blah1<br>tcp: [21] <a href=3D"http:=
-//10.53.152.23:3260" target=3D"_blank" onclick=3D"return top.js.OpenExtLink=
-(window,event,this)">10.53.152.23:3260</a>,2 iqn.2001-07.com.company:qaiscs=
-i2:blah1
-<br><br>So the result is that all activity is routed to the first session t=
-hat was initiated. I want to change the priorities of the paths to allow fo=
-r traffic to go to the first IP for mpath45 and the second IP for mpath46.
-<br><br>Obviously ALUA is the way to go for this in the future, but we won&=
-#39;t have the resources to implement that, so I&#39;m looking for an inter=
-im solution that will scale to thousands of clients. Right now, the only th=
-ing I can tell people is to manually initiate connections to certain target=
-s through certain IP addresses -- basically, doing the load balancing thems=
-elves. Is there a better way?
-<div><span class=3D"e" id=3D"q_114506f4b1a5ad6a_1"><br><br><div><span class=
-=3D"gmail_quote">On 8/10/07, <b class=3D"gmail_sendername">Hannes Reinecke<=
-/b> &lt;<a href=3D"mailto:hare@suse.de" target=3D"_blank" onclick=3D"return=
- top.js.OpenExtLink(window,event,this)">
-hare@suse.de</a>&gt; wrote:</span><blockquote class=3D"gmail_quote" style=
-=3D"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; p=
-adding-left: 1ex;">
-Ethan John wrote:<br>&gt; Is it possible to manually set the priority of a =
-path after a connection has<br>&gt; been established?<br>&gt;<br>&gt; Since=
- we&#39;re doing failover-only (only 1 active path at a time), it would be
-<br>&gt; nice to tell users that they can manually reset priority after a f=
-ailure.<br>&gt; For example, in a configuration with two paths, where one i=
-s active and the<br>&gt; other is passive for two differeent volumes, a fai=
-lure of one path will
-<br>&gt; result in all traffic going through the one remaining path. After =
-the second<br>&gt; path comes back up, all traffic will still be written to=
- the first path<br>&gt; (paths are not rebalanced after a failure).<br>
-
-&gt;<br>Not necessarily. There is the keyword &#39;failback&#39;, which can=
- be set to<br>IMMEDIATE, causing all paths to fail back to the original pat=
-h once it<br>comes back.<br><br>And as you don&#39;t actually need to send =
-any commands for facilitate
-<br>the failover I doubt you&#39;d need to develop your own hardware handle=
-r.<br><br>The existing tweaks should be enough, I think.<br><br>Cheers,<br>=
-<br>Hannes<br>--<br>Dr. Hannes Reinecke&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; zS=
-eries &amp; Storage
-<br><a href=3D"mailto:hare@suse.de" target=3D"_blank" onclick=3D"return top=
-.js.OpenExtLink(window,event,this)">hare@suse.de</a>&nbsp;&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+49 911 74053 688=
-<br>SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-<br>GF: Markus Rex, HRB 16746 (AG N=FCrnberg)<br><br>--<br>dm-devel mailing=
- list
-<br><a href=3D"mailto:dm-devel@redhat.com" target=3D"_blank" onclick=3D"ret=
-urn top.js.OpenExtLink(window,event,this)">dm-devel@redhat.com</a><br><a hr=
-ef=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_blank" o=
-nclick=3D"return top.js.OpenExtLink(window,event,this)">
-https://www.redhat.com/mailman/listinfo/dm-devel</a><br></blockquote></div>=
-<br><br clear=3D"all">
-<br></span></div><div><span class=3D"e" id=3D"q_114506f4b1a5ad6a_2">-- <br>=
-Ethan John<br><a href=3D"http://www.flickr.com/photos/thaen/" target=3D"_bl=
-ank" onclick=3D"return top.js.OpenExtLink(window,event,this)">http://www.fl=
-ickr.com/photos/thaen/
-</a><br>(206) 841.4157
-</span></div></blockquote></div><br><br clear=3D"all"><br>-- <br>Ethan John=
-<br><a href=3D"http://www.flickr.com/photos/thaen/">http://www.flickr.com/p=
-hotos/thaen/</a><br>(206) 841.4157
-
-------=_Part_43600_2862409.1187111113452--
-
-
---===============1211045042==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1211045042==--
