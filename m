@@ -1,18 +1,23 @@
 From: "Stefan Bader" <Stefan.Bader@de.ibm.com>
-Subject: Re: Re: [PATCH] dm: Fix deadlock under high i/o load in
-	raid1 setup.
-Date: Thu, 16 Aug 2007 09:09:24 +0200
-Message-ID: <5201e28f0708160009n2ef3ffc8ie4ce4133cc9c3a13@mail.gmail.com>
-References: <20070813113340.GB30198@osiris.boeblingen.de.ibm.com>
-	<20070815155604.87318305.akpm@linux-foundation.org>
-	<20070815235956.GD8741@osiris.ibm.com>
-	<20070815201029.fb965871.akpm@linux-foundation.org>
+Subject: Re: Designing a new prio_callout
+Date: Thu, 16 Aug 2007 12:58:21 +0200
+Message-ID: <5201e28f0708160358h15124fb5u836b1700b8b823c7@mail.gmail.com>
+References: <d61540a40706211442w1ef3bacflddd44f74c8883a3f@mail.gmail.com>
+	<46A735E1.4070206@suse.de>
+	<d61540a40707290903q359cc7c8g52f07627b4b9fba7@mail.gmail.com>
+	<46AD85A5.1060609@suse.de>
+	<d61540a40708091055u725fa5e4wa182ac1d778323be@mail.gmail.com>
+	<46BC7F14.80302@suse.de>
+	<d61540a40708100840m541e198dg88c12d031febf968@mail.gmail.com>
+	<d61540a40708141005n4eb06cebx14559f055b0df3d6@mail.gmail.com>
+	<5201e28f0708150145s42ff46a5t8dab865931cb09d@mail.gmail.com>
+	<d61540a40708150857v3182b221sa0c91d0cf90fd162@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070815201029.fb965871.akpm@linux-foundation.org>
+In-Reply-To: <d61540a40708150857v3182b221sa0c91d0cf90fd162@mail.gmail.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,54 +29,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Stefan Weinhuber <wein@de.ibm.com>, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-mm@kvack.org, Daniel Kobras <kobras@linux.de>, Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
->>> How come my computer is the only one with a reply button?
-
-Hey, I've got one. ;-)
-
-2007/8/16, Andrew Morton <akpm@linux-foundation.org>:
-> On Thu, 16 Aug 2007 01:59:56 +0200 Heiko Carstens <heiko.carstens@de.ibm.com> wrote:
+> Now what happens? If mytarget has multiple LUs associated with it, the
+> multipath output will look like it did below if failover is being used --
+> two paths for each of two devices. The problem for us is that by default,
+> multipath just uses the first path that it sees. Which means that for every
+> device in mytarget, all data will be read and written across just the first
+> path -- 10.53.151.22, in this case.
 >
-> > > So yes, I'd say this is a bug in DM.
-> > >
-> > > Also, __rh_alloc() is called under read_lock(), via __rh_find().  If
-> > > __rh_alloc()'s mempool_alloc() fails, it will perform a sleeping allocation
-> > > under read_lock(), which is deadlockable and will generate might_sleep()
-> > > warnings
-> >
-> > The read_lock() is unlocked at the beginning of the function.
+> We need a way to load balance connections across all available connections.
 >
-> Oh, OK.  Looks odd, but whatever.
+> There are several ways that I can see to do this. Ideally, we would
+> implement ALUA on our end and advise people to use mpath_prio_alua as their
+> callout. But this has a development cost. We could also implement a custom
+> system as your suggest, but this also has a development cost.
 >
-
-The major trick, if I am not wrong, is to use GFP_ATOMIC on that
-mempool_alloc(). This prevents the sleeping allocation but fails, if
-memory as well as the pool is exhausted.
-
->
-> It'd be better to fix the kmirrord design so that it can use mempools
-> properly.  One possible way of doing that might be to notice when mempool
-> exhaustion happens, submit whatever IO is thus-far buffered up and then do
-> a sleeping mempool allocation, to wait for that memory to come free (via IO
-> completion).
->
-> That would be a bit abusive of the mempool intent though.  A more idiomatic
-> fix would be to change kmirrord so that it no longer can consume all of the
-> mempool's reserves without having submitted any I/O (which is what I assume
-> it is doing).
+> If we could advise users to manually set priorities on the client side, that
+> would be acceptable, but this is impossible with the current version of
+> multipath.
 >
 
-The problem is, that only the same thread, that allocates from the
-pool would return memory back. This would be done before the new
-allocations. But, if there is very high memory pressure, the pool
-might get drained in the allocation cycle. Then mempool_alloc() waits
-to be woken from mempool_free(). And this never happens, since the
-thread will be stuck. So I guess the fix would be to somehow separate
-the allocation and freeing functionality. If I remember correctly
-back, the patch was always seen as "not quite correctly, but seems to
-work". However, due to lack of time, nobody ever came up with a better
-solution.
+Can you find the IP address and UID of a device with the node name?
+For example you get /dev/sdc and then look for UID (can be retrieved
+with scsi_id) and the IP address of the connection (not sure this is
+possible). Then manually create a file containing mappings:
+
+<uid>:<ip>:<priority>
+...
+
+Create a script that is used as the callout which takes a node name
+looks into the file and prints out the priority. This way the priority
+of a path does not change like it does with random priorities. The
+other path will only be used on failure and switched back as soon as
+the other one is back again (with failback immediate).
+
+
+> On a related note, I've read the reports of people experiencing higher
+> levels of performance with lower settings of rr_min_io, but it seems to me
+> that as rr_min_io gets smaller, the system becomes less like active/passive
+> MPIO and more like active/active MPIO, so users experiencing this
+> performance improvement would be better off using group_by_serial, so that
+> all paths are excitable simultaneously.
+>
+
+The setting of rr_min_io only matters if you have more than one path
+per path group. Otherwise  you only can use one path at a time and
+there is no round-robin. If you have more than one path in a group
+then lower values help since paths are more likely to be used
+concurrently. The default of 1000 is to high. Kiyoshi Ueda and
+Jun'ichi Nomura have done some measurements while looking for a way to
+improve performance more generally
+(https://ols2006.108.redhat.com/2007/Reprints/ueda-Reprint.pdf). But
+again, rr_min_io is only relevant to load-balance paths within the
+same path group (multibus or as you mentioned group_by_serial). The
+reason for you path changes (except for real failures) might be rather
+that random_prio results in different priorities whenever any priority
+value is checked again.
 
 Stefan
