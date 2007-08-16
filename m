@@ -1,9 +1,15 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath devmapper.c
-Date: 16 Aug 2007 16:41:58 -0000
-Message-ID: <20070816164158.32613.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Multipath-tools errors
+Date: Thu, 16 Aug 2007 10:26:28 -0700
+Message-ID: <1187285188.17399.255.camel@linuxchandra>
+References: <1186757447.17449.24.camel@sanderbal>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1186757447.17449.24.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,32 +19,133 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-08-16 16:41:58
+First off, the "mpath_prio_rdac" is the path checker for the lsi engenio
+controller. Is the Dell MD300 based on that controller ?
 
-Modified files:
-	libmultipath   : devmapper.c 
+If it is _not_, then you should _not_ be using mpath_prio_rdac.
 
-Log message:
-	typo.
+If it is, read on.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.2&r2=1.22.2.3
+You need to use the hardware handler for the same controller, you can
+setup your multipath.conf to use the "rdac" hardware handler.
 
---- multipath-tools/libmultipath/devmapper.c	2007/08/14 18:08:54	1.22.2.2
-+++ multipath-tools/libmultipath/devmapper.c	2007/08/16 16:41:58	1.22.2.3
-@@ -676,8 +676,7 @@
- 		}
- 
- 		if (!vector_alloc_slot(mp)) {
--			condlog(0, "can't allocate slot for multipath
--				    device\n");
-+			condlog(0, "can't allocate slot for multipath device\n");
- 			goto out1;
- 		}
- 
+Here is how your multipath.conf should look like:
+-----------
+devices {
+        device {
+                vendor                  "$vendor_name"
+                product                 "$product_name"
+                hardware_handler        "1 rdac"
+                path_checker            rdac
+                path_grouping_policy    group_by_prio
+                prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
+        }
+}
+-----------
+
+Note: replace $vendor_name and $product_name with appropriate vendor and
+product information for the storage.
+
+Hardware handler for rdac is available only in 2.6.23-rc1 and onwards
+(if you are not using this version, do let me know which version of the
+kernel you are using, even if it is in distro).
+
+Where did you get the multipath-tools from ? From Christophe's website
+or any distro(RedHat/SuSE) ?
+
+And, as Malahal pointed, make sure you have /sbin/mpath_prio_rdac
+available and is an executable.
+
+Hope this helps,
+
+chandra
+On Fri, 2007-08-10 at 16:50 +0200, S. J. van Harmelen wrote:
+> Oke, got a bit further...
+> 
+> I now understand how to use the disks. Only thing thats not going oke is
+> that I get these errors constantly (while formatting):
+> 
+> end_request: I/O error, dev sdf, sector 30408704
+> end_request: I/O error, dev sdf, sector 30670848
+> end_request: I/O error, dev sdf, sector 30932992
+> end_request: I/O error, dev sdf, sector 31195136
+> end_request: I/O error, dev sdf, sector 31457280
+> 
+> or (while editting a file):
+> 
+> end_request: I/O error, dev sdc, sector 966656
+> device-mapper: multipath: Failing path 8:32.
+> end_request: I/O error, dev sdc, sector 966720
+> device-mapper: multipath: Failing path 8:32.
+> end_request: I/O error, dev sdc, sector 96665
+> 
+> And the device seems very slow...
+> 
+> And also stil having this error: "error calling out mpath_prio_rdac"
+> 
+> Any tips, pointers?
+> 
+> Sander
+> 
+> -------- Forwarded Message --------
+> From: S. J. van Harmelen <svanharmelen@xillan.nl>
+> To: dm-devel@redhat.com
+> Subject: Re: Multipath-tools
+> Date: Fri, 10 Aug 2007 11:47:01 +0200
+> 
+> Hi again,
+> 
+> Seem to have found the solution for the first question. Got
+> multipath-tools up and running now :)
+> 
+> But please do answer the others questions if you have a minute to
+> spare...
+> 
+> Also I'm seeing "error calling out mpath_prio_rdac" when starting
+> multipathd?! Any word on that one?
+> 
+> Regards,
+> 
+> Sander
+> 
+> 
+> 
+> On Fri, 2007-08-10 at 10:27 +0200, S. J. van Harmelen wrote:
+> > Hey guys,
+> > 
+> > Sorry to bother you, but I have a question I think you can answer. I
+> > also send this message to Christophe, but I don't know how long he takes
+> > to respond. I'm trying to set up a Dell NX1950 which has an RDAC MD300
+> > array connected with linux.
+> > 
+> > Now I got all thinks working, but the RDAC driver. I'm trying to use the
+> > opensource multipath-tools (which I want to compile myself), but I have
+> > some questions about it:
+> > 
+> > 1) While compiling I get an error saying: "/usr/bin/ld: cannot find
+> > -ldevmapper" Can you tell me what I can do to fix this error?
+> > 
+> > 2) Can you tell me if there is a mailinglist for the multipath-tools?
+> > 
+> > 3) Can you point me to some documentation about configuring the
+> > multipath-tools with the new RDAC path checker?
+> > 
+> > Thanks very much for your time!
+> > 
+> > Kind regards,
+> > 
+> > Sander van Harmelen
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
