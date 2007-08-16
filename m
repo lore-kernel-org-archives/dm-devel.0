@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath hwtable.c
-Date: 16 Aug 2007 16:30:12 -0000
-Message-ID: <20070816163012.6166.qmail@sourceware.org>
+Subject: multipath-tools/libmultipath devmapper.c
+Date: 16 Aug 2007 16:41:58 -0000
+Message-ID: <20070816164158.32613.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,26 +19,26 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-08-16 16:30:12
+Changes by:	bmarzins@sourceware.org	2007-08-16 16:41:58
 
 Modified files:
-	libmultipath   : hwtable.c 
+	libmultipath   : devmapper.c 
 
 Log message:
-	Fix for bz 245019. The alua  callout for the IBM 2145 now has a fully qualified
-	path name.
+	typo.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.5&r2=1.20.2.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.2&r2=1.22.2.3
 
---- multipath-tools/libmultipath/hwtable.c	2007/08/14 18:08:54	1.20.2.5
-+++ multipath-tools/libmultipath/hwtable.c	2007/08/16 16:30:11	1.20.2.6
-@@ -356,7 +356,7 @@
- 		.vendor        = "IBM",
- 		.product       = "2145",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "mpath_prio_alua /dev/%n",
-+		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
+--- multipath-tools/libmultipath/devmapper.c	2007/08/14 18:08:54	1.22.2.2
++++ multipath-tools/libmultipath/devmapper.c	2007/08/16 16:41:58	1.22.2.3
+@@ -676,8 +676,7 @@
+ 		}
+ 
+ 		if (!vector_alloc_slot(mp)) {
+-			condlog(0, "can't allocate slot for multipath
+-				    device\n");
++			condlog(0, "can't allocate slot for multipath device\n");
+ 			goto out1;
+ 		}
+ 
