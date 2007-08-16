@@ -1,16 +1,15 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Multipath-tools errors
-Date: Thu, 16 Aug 2007 20:36:24 +0200
-Message-ID: <1187289384.5915.22.camel@sanderbal>
-References: <1186757447.17449.24.camel@sanderbal>
-	<1187285188.17399.255.camel@linuxchandra>
-	<1187287105.5915.12.camel@sanderbal>
-	<1187288613.17399.283.camel@linuxchandra>
+From: Juergen Kreileder <jk@blackdown.de>
+Subject: SLUB problems (was Re: lvcreate on 2.6.22.1: kernel
+ tried to execute NX-protected page)
+Date: Thu, 16 Aug 2007 20:45:27 +0200
+Message-ID: <46C49B47.8000805@blackdown.de>
+References: <87y7gperd1.fsf@blackdown.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-NWkETFTNQawU69ugQ/Nx"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1187288613.17399.283.camel@linuxchandra>
+In-Reply-To: <87y7gperd1.fsf@blackdown.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,288 +19,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+I got a few more oopses like the one in the original message (see below)
+and one with a different call trace but that happened while creating a
+snapshot too.
 
---=-NWkETFTNQawU69ugQ/Nx
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-
-In my last lines I meant that it looked okay:
-
-root@storage:~# multipath -ll
-backup (360019b9000d7e1100000444b46be82c4) dm-0 DELL    ,MD3000        
-[size=200G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=3][active]
- \_ 1:0:1:2 sdg 8:96  [active][ready]
-\_ round-robin 0 [prio=0][enabled]
- \_ 1:0:0:2 sdd 8:48  [active][ghost]
-vmware (360019b9000d7e1100000444846be81b6) dm-2 DELL    ,MD3000        
-[size=200G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=3][active]
- \_ 1:0:0:0 sdb 8:16  [active][ready]
-\_ round-robin 0 [prio=0][enabled]
- \_ 1:0:1:0 sde 8:64  [active][ghost]
-data (360019b9000d7ddab0000493846be81e5) dm-1 DELL    ,MD3000        
-[size=200G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=3][active]
- \_ 1:0:1:1 sdf 8:80  [active][ready]
-\_ round-robin 0 [prio=0][enabled]
- \_ 1:0:0:1 sdc 8:32  [active][ghost]
-
-As you can see it show's all paths correctly and also show's them as
-active/ready and active/ghost. Attached is my multipath.conf b.t.w.
-
-But I understand path failover/failback will not work without without
-the hardware handler :( I am planning this machine for a production
-environment, so I quess I have to wait till 2.6.23.1 comes out.
-
-Any idea when that should be? Or are there any kernel patches I could
-use for 2.6.22.2? Or does it not work that way?
-
-Thanks,
-
-Sander
+After that I rebuilt the kernel with SLAB instead of SLUB.  The system
+is running fine for a week now.
 
 
+BUG: unable to handle kernel NULL pointer dereference at virtual address
+00000013
+ printing eip:
+c0118ef5
+*pdpt = 000000001d044001
+*pde = 0000000020946067
+*pte = 0000000000000000
+Oops: 0002 [#1]
+CPU:    0
+EIP:    0060:[dup_fd+181/432]    Not tainted VLI
+EFLAGS: 00010286   (2.6.22.1-jk1-exec-shield #1)
+EIP is at dup_fd+0xb5/0x1b0
+eax: f0f30128   ebx: 00000013   ecx: ffffffff   edx: 0000000c
+esi: f0f300ec   edi: f537b7ac   ebp: f537b7e4   esp: d94cbef8
+ds: 007b   es: 007b   fs: 0000  gs: 0033  ss: 0068
+Process udev (pid: 9491, ti=d94ca000 task=f6b36a00 task.ti=d94ca000)
+Stack: 00000001 f537b788 00000020 f0f30128 f537b780 f5784f00 00000000
+c18e5370
+       01200011 c0119034 fffffff4 f5784f00 c0119360 dd044270 de5469a0
+f2b82a80
+       0000251a f5784fbc d94cbfb8 bfb1bbe8 c040d0d0 c18e5370 01200011
+b7f734a8
+Call Trace:
+ [copy_files+68/96] copy_files+0x44/0x60
+ [copy_process+624/2752] copy_process+0x270/0xac0
+ [do_fork+100/496] do_fork+0x64/0x1f0
+ [sys_clone+50/64] sys_clone+0x32/0x40
+ [sysenter_past_esp+95/133] sysenter_past_esp+0x5f/0x85
+ =======================
+Code: 08 f3 a5 89 c1 83 e1 03 74 02 f3 a4 8b 5c 24 08 85 db 74 23 89 f6
+8b 44 24 0c 8b 08 83 c0 04 89 44 24 0c 85 c9 0f 84 a1 00 00 00 <ff> 41
+14 89 4d 00 83 c5 04 4b 75 df 8b 4c 24 04 31 f6 89 ef 8b
+EIP: [dup_fd+181/432] dup_fd+0xb5/0x1b0 SS:ESP 0068:d94cbef8
 
 
-On Thu, 2007-08-16 at 11:23 -0700, Chandra Seetharaman wrote:
-> On Thu, 2007-08-16 at 19:58 +0200, S. J. van Harmelen wrote:
-> > Hi Chandra,
-> > 
-> > Thanks for your reply! As far as I know it does use a LSI Engenio. I
-> > asked Dell if they can confirm this, but I didn't get any reply yet.
-> > Will get back with the answer as soon as I get it.
-> > 
-> My reply below is based on the assumption that it does use LSI Engenio.
-> 
-> > Besides that it seems to be working now. I don't have any errors anymore
-> > and it's not as slow as before. It's now doing something like 120M/sec,
-> > but don't know if thats good or not (don't know how fast this device
-> > should be)...
-> > 
-> > I did leave out the hardware_handler line because of the error it gives.
-> > But I understand that is because of my kernel? I'm using the package
-> > from Christophe's website version 0.4.8 on a Debian Etch 64bit machine
-> > with a 2.6.22.2 kernel.
-> 
-> Yes, you need a 2.6.23-rc1 (or upwards) kernel to have the rdac hardware
-> handler support.
-> > 
-> > I quess I need the hardware_handler to make it work as it should? Al
-> 
-> Yes, without the hardware handler, path failover/failback will not work.
-> 
-> > true it sees all paths and says that both active. Where one is
-> > active/ready and the other is active/ghost. 
-> > 
-> > Anything I can do about this? 
-> 
-> I do not understand the problem you are mentioning here. Will be easier
-> to follow if you can copy the o/p of "multipath -ll" and explain your
-> issue w.r.t that.
-> 
-> Also, attaching your multipath.conf would also be useful.
-> 
-> chandra
-> > 
-> > Sander
-> > 
-> > 
-> > 
-> > 
-> > 
-> > 
-> > On Thu, 2007-08-16 at 10:26 -0700, Chandra Seetharaman wrote:
-> > > First off, the "mpath_prio_rdac" is the path checker for the lsi engenio
-> > > controller. Is the Dell MD300 based on that controller ?
-> > > 
-> > > If it is _not_, then you should _not_ be using mpath_prio_rdac.
-> > > 
-> > > If it is, read on.
-> > > 
-> > > You need to use the hardware handler for the same controller, you can
-> > > setup your multipath.conf to use the "rdac" hardware handler.
-> > > 
-> > > Here is how your multipath.conf should look like:
-> > > -----------
-> > > devices {
-> > >         device {
-> > >                 vendor                  "$vendor_name"
-> > >                 product                 "$product_name"
-> > >                 hardware_handler        "1 rdac"
-> > >                 path_checker            rdac
-> > >                 path_grouping_policy    group_by_prio
-> > >                 prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
-> > >         }
-> > > }
-> > > -----------
-> > > 
-> > > Note: replace $vendor_name and $product_name with appropriate vendor and
-> > > product information for the storage.
-> > > 
-> > > Hardware handler for rdac is available only in 2.6.23-rc1 and onwards
-> > > (if you are not using this version, do let me know which version of the
-> > > kernel you are using, even if it is in distro).
-> > > 
-> > > Where did you get the multipath-tools from ? From Christophe's website
-> > > or any distro(RedHat/SuSE) ?
-> > > 
-> > > And, as Malahal pointed, make sure you have /sbin/mpath_prio_rdac
-> > > available and is an executable.
-> > > 
-> > > Hope this helps,
-> > > 
-> > > chandra
-> > > On Fri, 2007-08-10 at 16:50 +0200, S. J. van Harmelen wrote:
-> > > > Oke, got a bit further...
-> > > > 
-> > > > I now understand how to use the disks. Only thing thats not going oke is
-> > > > that I get these errors constantly (while formatting):
-> > > > 
-> > > > end_request: I/O error, dev sdf, sector 30408704
-> > > > end_request: I/O error, dev sdf, sector 30670848
-> > > > end_request: I/O error, dev sdf, sector 30932992
-> > > > end_request: I/O error, dev sdf, sector 31195136
-> > > > end_request: I/O error, dev sdf, sector 31457280
-> > > > 
-> > > > or (while editting a file):
-> > > > 
-> > > > end_request: I/O error, dev sdc, sector 966656
-> > > > device-mapper: multipath: Failing path 8:32.
-> > > > end_request: I/O error, dev sdc, sector 966720
-> > > > device-mapper: multipath: Failing path 8:32.
-> > > > end_request: I/O error, dev sdc, sector 96665
-> > > > 
-> > > > And the device seems very slow...
-> > > > 
-> > > > And also stil having this error: "error calling out mpath_prio_rdac"
-> > > > 
-> > > > Any tips, pointers?
-> > > > 
-> > > > Sander
-> > > > 
-> > > > -------- Forwarded Message --------
-> > > > From: S. J. van Harmelen <svanharmelen@xillan.nl>
-> > > > To: dm-devel@redhat.com
-> > > > Subject: Re: Multipath-tools
-> > > > Date: Fri, 10 Aug 2007 11:47:01 +0200
-> > > > 
-> > > > Hi again,
-> > > > 
-> > > > Seem to have found the solution for the first question. Got
-> > > > multipath-tools up and running now :)
-> > > > 
-> > > > But please do answer the others questions if you have a minute to
-> > > > spare...
-> > > > 
-> > > > Also I'm seeing "error calling out mpath_prio_rdac" when starting
-> > > > multipathd?! Any word on that one?
-> > > > 
-> > > > Regards,
-> > > > 
-> > > > Sander
-> > > > 
-> > > > 
-> > > > 
-> > > > On Fri, 2007-08-10 at 10:27 +0200, S. J. van Harmelen wrote:
-> > > > > Hey guys,
-> > > > > 
-> > > > > Sorry to bother you, but I have a question I think you can answer. I
-> > > > > also send this message to Christophe, but I don't know how long he takes
-> > > > > to respond. I'm trying to set up a Dell NX1950 which has an RDAC MD300
-> > > > > array connected with linux.
-> > > > > 
-> > > > > Now I got all thinks working, but the RDAC driver. I'm trying to use the
-> > > > > opensource multipath-tools (which I want to compile myself), but I have
-> > > > > some questions about it:
-> > > > > 
-> > > > > 1) While compiling I get an error saying: "/usr/bin/ld: cannot find
-> > > > > -ldevmapper" Can you tell me what I can do to fix this error?
-> > > > > 
-> > > > > 2) Can you tell me if there is a mailinglist for the multipath-tools?
-> > > > > 
-> > > > > 3) Can you point me to some documentation about configuring the
-> > > > > multipath-tools with the new RDAC path checker?
-> > > > > 
-> > > > > Thanks very much for your time!
-> > > > > 
-> > > > > Kind regards,
-> > > > > 
-> > > > > Sander van Harmelen
-> > > > 
-> > > > --
-> > > > dm-devel mailing list
-> > > > dm-devel@redhat.com
-> > > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > > -- 
-> > > 
-> > > ----------------------------------------------------------------------
-> > >     Chandra Seetharaman               | Be careful what you choose....
-> > >               - sekharan@us.ibm.com   |      .......you may get it.
-> > > ----------------------------------------------------------------------
-> > > 
-> > > 
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
+Juergen Kreileder wrote:
+> I got the appended BUG from a 32-bit 2.6.22.1 kernel (with exec-shield
+> patch and PAE enabled) on an Athlon64 with dmsetup 1.02.03 and lvm2
+> v2.02.02.
+> (Note, the message comes from the vanilla kernel, not from the
+> exec-shiled patch.)
+>
+> I wasn't able to reproduce the problem so far.  The machine creates
+> several snapshot volumes every 4 hours and worked fine with the new
+> kernel for several days.  It had 2.6.16.12+exec-shield before and ran
+> flawlessy for over a year.
+>
+>
+> kernel tried to execute NX-protected page - exploit attempt? (uid: 0)
+> BUG: unable to handle kernel paging request at virtual address f551df78
+>  printing eip:
+> f551df78
+> *pdpt = 0000000000001001
+> *pde = 80000000354001e3
+> *pte = 9293396c5d22e546
+> Oops: 0011 [#1]
+> CPU:    0
+> EIP:    0060:[<f551df78>]    Not tainted VLI
+> EFLAGS: 00010286   (2.6.22.1-jk1-exec-shield #1)
+> EIP is at 0xf551df78
+> eax: f551df4c   ebx: f551df4c   ecx: 00000000   edx: f551df78
+> esi: f551df78   edi: 00000000   ebp: 00000000   esp: e8ee5db4
+> ds: 007b   es: 007b   fs: 0000  gs: 0033  ss: 0068
+> Process lvcreate (pid: 25916, ti=e8ee4000 task=f7358a00 task.ti=e8ee4000)
+> Stack: c02088c4 f551df64 c02088d0 c03dd95e c64ccf00 c0209118 00000287 c03dd95e
+>        00000287 c018e38b c03dd952 d3e460e8 c018e393 c192a90c 00000000 c192b900
+>        c03dd952 f557a600 f59bbcc0 00000000 c0157664 f557a64c f557a600 c01575be
+> Call Trace:
+>  [kobject_cleanup+116/128] kobject_cleanup+0x74/0x80
+>  [kobject_release+0/16] kobject_release+0x0/0x10
+>  [kref_put+56/160] kref_put+0x38/0xa0
+>  [sysfs_hash_and_remove+267/320] sysfs_hash_and_remove+0x10b/0x140
+>  [sysfs_hash_and_remove+275/320] sysfs_hash_and_remove+0x113/0x140
+>  [sysfs_slab_alias+100/128] sysfs_slab_alias+0x64/0x80
+>  [sysfs_slab_add+174/208] sysfs_slab_add+0xae/0xd0
+>  [kmem_cache_create+236/320] kmem_cache_create+0xec/0x140
+>  [jobs_init+46/128] jobs_init+0x2e/0x80
+>  [kcopyd_init+45/176] kcopyd_init+0x2d/0xb0
+>  [kcopyd_client_create+28/208] kcopyd_client_create+0x1c/0xd0
+>  [init_hash_tables+142/192] init_hash_tables+0x8e/0xc0
+>  [snapshot_ctr+506/752] snapshot_ctr+0x1fa/0x2f0
+>  [dm_split_args+47/272] dm_split_args+0x2f/0x110
+>  [dm_table_add_target+252/400] dm_table_add_target+0xfc/0x190
+>  [vmalloc+32/48] vmalloc+0x20/0x30
+>  [populate_table+98/192] populate_table+0x62/0xc0
+>  [table_load+82/240] table_load+0x52/0xf0
+>  [table_load+0/240] table_load+0x0/0xf0
+>  [ctl_ioctl+209/288] ctl_ioctl+0xd1/0x120
+>  [ctl_ioctl+0/288] ctl_ioctl+0x0/0x120
+>  [do_ioctl+59/96] do_ioctl+0x3b/0x60
+>  [vfs_ioctl+94/416] vfs_ioctl+0x5e/0x1a0
+>  [sys_ioctl+61/128] sys_ioctl+0x3d/0x80
+>  [sysenter_past_esp+95/133] sysenter_past_esp+0x5f/0x85
+>  =======================
+> Code: 00 00 00 00 00 00 00 ff ff ff ff 00 00 00 00 00 00 00 00 20 00 00 00 00 00 00 \
+> 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 <78> df 51 f5 78 df 51 f5 74 1b 8b \
+>                 f7 00 00 00 00 00 00 00 00 32
+> EIP: [<f551df78>] 0xf551df78 SS:ESP 0068:e8ee5db4
 
---=-NWkETFTNQawU69ugQ/Nx
-Content-Disposition: attachment; filename=multipath.conf
-Content-Type: text/plain; name=multipath.conf; charset=utf-8
-Content-Transfer-Encoding: 7bit
+	Juergen
 
-defaults {
-        polling_interval        1
-        udev_dir                /dev
-}
-
-blacklist {
-        wwid 360019b90d736e1000e1c348acb03df8d
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-        devnode "^hd[a-z][[0-9]*]"
-}
-
-multipaths {
-        multipath {
-                wwid            360019b9000d7e1100000444846be81b6
-                alias           vmware
-        }
-        multipath {
-                wwid            360019b9000d7ddab0000493846be81e5
-                alias           data
-        }
-        multipath {
-                wwid            360019b9000d7e1100000444b46be82c4
-                alias           backup
-        }
-
-}
-
-devices {
-        device {
-                vendor                  "DELL"
-                product                 "MD3000"
-                getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-                prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
-                features                "0"
-                #hardware_handler        "1 rdac"
-                path_grouping_policy    group_by_prio
-                failback                manual
-                path_checker            rdac
-        }
-}
-
---=-NWkETFTNQawU69ugQ/Nx
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-NWkETFTNQawU69ugQ/Nx--
+-- 
+Juergen Kreileder, Blackdown Java-Linux Team
+http://blog.blackdown.de/
