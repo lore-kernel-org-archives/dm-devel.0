@@ -1,19 +1,11 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Multipath-tools errors
-Date: Thu, 16 Aug 2007 21:21:08 +0200
-Message-ID: <1187292068.5915.39.camel@sanderbal>
-References: <1186757447.17449.24.camel@sanderbal>
-	<1187285188.17399.255.camel@linuxchandra>
-	<1187287105.5915.12.camel@sanderbal>
-	<1187288613.17399.283.camel@linuxchandra>
-	<1187289384.5915.22.camel@sanderbal>
-	<1187291140.17399.295.camel@linuxchandra>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: dmsetup export option
+Date: Mon, 20 Aug 2007 03:12:55 +0200
+Message-ID: <1187572375.4419.127.camel@lov.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-tTHngaJTO8mZjXqbpzzg"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1187291140.17399.295.camel@linuxchandra>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,261 +15,195 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-It's configured for RDAC as far as I know, and I'm not sure if I can
-change this. This is another question for Dell I quess :)
 
-So I'll just have to wait about a month or so...
+--=-tTHngaJTO8mZjXqbpzzg
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 
-Thanks very much for your help!!
+Here is the "export" patch we currently use to import device mapper
+properties into the udev event environment.
+
+It looks like this:
+  $ dmsetup export luks
+  DM_NAME=luks
+  DM_STATE=ACTIVE
+  DM_TABLE_STATE=LIVE
+  DM_OPENCOUNT=0
+  DM_LAST_EVENT_NR=0
+  DM_MAJOR=254
+  DM_MINOR=0
+  DM_TARGET_COUNT=1
+  DM_TARGET_TYPES=crypt
+
+Alasdair, I remember vaguely while we talked about that at OLS, you
+wanted to see that implemented using some other backend functions. Let
+me know, if I need to change something.
+
+Thanks,
+Kay
+
+--=-tTHngaJTO8mZjXqbpzzg
+Content-Disposition: inline; filename=device-mapper-dmsetup-export.patch
+Content-Type: message/rfc822; name=device-mapper-dmsetup-export.patch
+
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: add export command to print status in environment key-value format
+Date: Mon, 20 Aug 2007 03:00:04 +0200
+Message-Id: <1187571604.4419.115.camel@lov.localdomain>
+Mime-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+Signed-off-by: Kay Sievers <kay.sievers@vrfy.org>
+---
+ dmsetup/dmsetup.c |   89 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ man/dmsetup.8     |    9 ++++-
+ 2 files changed, 97 insertions(+), 1 deletion(-)
+
+--- a/dmsetup/dmsetup.c
++++ b/dmsetup/dmsetup.c
+@@ -1055,6 +1055,94 @@
+ 	return r;
+ }
+ 
++static int _export(int argc, char **argv, void *data)
++{
++	int r = 0;
++	struct dm_task *dmt = NULL;
++	void *next = NULL;
++	uint64_t start, length;
++	char *target_type = NULL;
++	char *params;
++	struct dm_names *names = (struct dm_names *) data;
++	const char *name = NULL;
++	const char *uuid = NULL;
++	struct dm_info info;
++
++	if (data)
++		name = names->name;
++	else if (argc == 2)
++		name = argv[1];
++
++	if (!(dmt = dm_task_create(DM_DEVICE_STATUS)))
++		goto out;
++
++	if (!_set_task_device(dmt, name, 0))
++		goto out;
++
++	if (!dm_task_run(dmt))
++		goto out;
++
++	if (!dm_task_get_info(dmt, &info) || !info.exists)
++		goto out;
++
++	if (!name)
++		name = dm_task_get_name(dmt);
++
++	uuid = dm_task_get_uuid(dmt);
++	printf("DM_NAME=%s\n", name);
++
++	if ((uuid = dm_task_get_uuid(dmt)) && *uuid)
++		printf("DM_UUID=%s\n", uuid);
++
++	if (!info.exists) {
++		printf("DM_STATE=NOTPRESENT\n");
++		goto out;
++	}
++
++	printf("DM_STATE=%s\n",
++	       info.suspended ? "SUSPENDED" :
++	       (info.read_only ? " READONLY" : "ACTIVE"));
++
++	if (!info.live_table && !info.inactive_table)
++		printf("DM_TABLE_STATE=NONE\n");
++	else
++		printf("DM_TABLE_STATE=%s%s%s\n",
++		       info.live_table ? "LIVE" : "",
++		       info.live_table && info.inactive_table ? "/" : "",
++		       info.inactive_table ? "INACTIVE" : "");
++
++	if (info.open_count != -1)
++		printf("DM_OPENCOUNT=%d\n", info.open_count);
++
++	printf("DM_LAST_EVENT_NR=%" PRIu32 "\n", info.event_nr);
++
++	printf("DM_MAJOR=%d\n", info.major);
++	printf("DM_MINOR=%d\n", info.minor);
++
++	if (info.target_count != -1)
++		printf("DM_TARGET_COUNT=%d\n", info.target_count);
++
++	/* export all table types */
++	next = dm_get_next_target(dmt, next, &start, &length,
++				  &target_type, &params);
++	if (target_type) {
++		printf("DM_TARGET_TYPES=%s", target_type);
++		while (next) {
++			next = dm_get_next_target(dmt, next, &start, &length,
++						  &target_type, &params);
++			if (target_type)
++				printf(",%s", target_type);
++		}
++		printf("\n");
++	}
++
++	r = 1;
++      out:
++	if (dmt)
++		dm_task_destroy(dmt);
++	return r;
++}
++
+ /* Show target names and their version numbers */
+ static int _targets(int argc __attribute((unused)), char **argv __attribute((unused)), void *data __attribute((unused)))
+ {
+@@ -1994,6 +2082,7 @@
+ 	{"info", "[<device>]", 0, 1, _info},
+ 	{"deps", "[<device>]", 0, 1, _deps},
+ 	{"status", "[<device>] [--target <target_type>]", 0, 1, _status},
++	{"export", "[<device>]", 0, 1, _export},
+ 	{"table", "[<device>] [--target <target_type>] [--showkeys]", 0, 1, _status},
+ 	{"wait", "<device> [<event_nr>]", 0, 2, _wait},
+ 	{"mknodes", "[<device>]", 0, 1, _mknodes},
+--- a/man/dmsetup.8
++++ b/man/dmsetup.8
+@@ -39,13 +39,16 @@
+ .B dmsetup ls
+ .I [--target target_type] [--exec command] [--tree [-o options]]
+ .br
+-.B dmsetup info 
++.B dmsetup info
+ .I [device_name]
+ .br
+ .B dmsetup info -c|-C|--columns
+ .I [--noheadings] [--separator separator] [-o fields] [-O|--sort sort_fields]
+ .I [device_name]
+ .br
++.B dmsetup export
++.I [device_name]
++.br
+ .B dmsetup deps
+ .I [device_name]
+ .br
+@@ -138,6 +141,10 @@
+ If successful a device will appear as
+ /dev/device-mapper/<device-name>.  
+ See below for information on the table format.
++.IP \fBexport
++.I [device_name]
++.br
++Outputs information in key/value format to be imported by other programs.
+ .IP \fBdeps
+ .I [device_name]
+ .br
+
+--=-tTHngaJTO8mZjXqbpzzg
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-On Thu, 2007-08-16 at 12:05 -0700, Chandra Seetharaman wrote:
-> On Thu, 2007-08-16 at 20:36 +0200, S. J. van Harmelen wrote:
-> > In my last lines I meant that it looked okay:
-> > 
-> > root@storage:~# multipath -ll
-> > backup (360019b9000d7e1100000444b46be82c4) dm-0 DELL    ,MD3000        
-> > [size=200G][features=0][hwhandler=0]
-> > \_ round-robin 0 [prio=3][active]
-> >  \_ 1:0:1:2 sdg 8:96  [active][ready]
-> > \_ round-robin 0 [prio=0][enabled]
-> >  \_ 1:0:0:2 sdd 8:48  [active][ghost]
-> > vmware (360019b9000d7e1100000444846be81b6) dm-2 DELL    ,MD3000        
-> > [size=200G][features=0][hwhandler=0]
-> > \_ round-robin 0 [prio=3][active]
-> >  \_ 1:0:0:0 sdb 8:16  [active][ready]
-> > \_ round-robin 0 [prio=0][enabled]
-> >  \_ 1:0:1:0 sde 8:64  [active][ghost]
-> > data (360019b9000d7ddab0000493846be81e5) dm-1 DELL    ,MD3000        
-> > [size=200G][features=0][hwhandler=0]
-> > \_ round-robin 0 [prio=3][active]
-> >  \_ 1:0:1:1 sdf 8:80  [active][ready]
-> > \_ round-robin 0 [prio=0][enabled]
-> >  \_ 1:0:0:1 sdc 8:32  [active][ghost]
-> > 
-> > As you can see it show's all paths correctly and also show's them as
-> 
-> Yes, they all look good.
-> 
-> > active/ready and active/ghost. Attached is my multipath.conf b.t.w.
-> > 
-> Your multipath.conf looks good too.
-> 
-> > But I understand path failover/failback will not work without without
-> > the hardware handler :( I am planning this machine for a production
-> 
-> Your storage is configured in AVT mode or rdac mode ?
-> 
-> You wont need the handler if your storage is configured in AVT mode.
->  
-> > environment, so I quess I have to wait till 2.6.23.1 comes out.
-> 
-> If you are using it in rdac mode, then you have to wait.
-> 
-> > 
-> > Any idea when that should be? Or are there any kernel patches I could
-> 
-> Usually they are released within 2-3 months of the last release. 2.6.22
-> was released on Jul 8th. So, it should be somewhere between Sep 8th and
-> Oct 8th :)...
-> 
-> > use for 2.6.22.2? Or does it not work that way?
-> 
-> It would work, but I would not suggest it :), especially for a
-> production system.
-> 
-> chandra
-> > 
-> > Thanks,
-> > 
-> > Sander
-> > 
-> > 
-> > 
-> > 
-> > On Thu, 2007-08-16 at 11:23 -0700, Chandra Seetharaman wrote:
-> > > On Thu, 2007-08-16 at 19:58 +0200, S. J. van Harmelen wrote:
-> > > > Hi Chandra,
-> > > > 
-> > > > Thanks for your reply! As far as I know it does use a LSI Engenio. I
-> > > > asked Dell if they can confirm this, but I didn't get any reply yet.
-> > > > Will get back with the answer as soon as I get it.
-> > > > 
-> > > My reply below is based on the assumption that it does use LSI Engenio.
-> > > 
-> > > > Besides that it seems to be working now. I don't have any errors anymore
-> > > > and it's not as slow as before. It's now doing something like 120M/sec,
-> > > > but don't know if thats good or not (don't know how fast this device
-> > > > should be)...
-> > > > 
-> > > > I did leave out the hardware_handler line because of the error it gives.
-> > > > But I understand that is because of my kernel? I'm using the package
-> > > > from Christophe's website version 0.4.8 on a Debian Etch 64bit machine
-> > > > with a 2.6.22.2 kernel.
-> > > 
-> > > Yes, you need a 2.6.23-rc1 (or upwards) kernel to have the rdac hardware
-> > > handler support.
-> > > > 
-> > > > I quess I need the hardware_handler to make it work as it should? Al
-> > > 
-> > > Yes, without the hardware handler, path failover/failback will not work.
-> > > 
-> > > > true it sees all paths and says that both active. Where one is
-> > > > active/ready and the other is active/ghost. 
-> > > > 
-> > > > Anything I can do about this? 
-> > > 
-> > > I do not understand the problem you are mentioning here. Will be easier
-> > > to follow if you can copy the o/p of "multipath -ll" and explain your
-> > > issue w.r.t that.
-> > > 
-> > > Also, attaching your multipath.conf would also be useful.
-> > > 
-> > > chandra
-> > > > 
-> > > > Sander
-> > > > 
-> > > > 
-> > > > 
-> > > > 
-> > > > 
-> > > > 
-> > > > On Thu, 2007-08-16 at 10:26 -0700, Chandra Seetharaman wrote:
-> > > > > First off, the "mpath_prio_rdac" is the path checker for the lsi engenio
-> > > > > controller. Is the Dell MD300 based on that controller ?
-> > > > > 
-> > > > > If it is _not_, then you should _not_ be using mpath_prio_rdac.
-> > > > > 
-> > > > > If it is, read on.
-> > > > > 
-> > > > > You need to use the hardware handler for the same controller, you can
-> > > > > setup your multipath.conf to use the "rdac" hardware handler.
-> > > > > 
-> > > > > Here is how your multipath.conf should look like:
-> > > > > -----------
-> > > > > devices {
-> > > > >         device {
-> > > > >                 vendor                  "$vendor_name"
-> > > > >                 product                 "$product_name"
-> > > > >                 hardware_handler        "1 rdac"
-> > > > >                 path_checker            rdac
-> > > > >                 path_grouping_policy    group_by_prio
-> > > > >                 prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
-> > > > >         }
-> > > > > }
-> > > > > -----------
-> > > > > 
-> > > > > Note: replace $vendor_name and $product_name with appropriate vendor and
-> > > > > product information for the storage.
-> > > > > 
-> > > > > Hardware handler for rdac is available only in 2.6.23-rc1 and onwards
-> > > > > (if you are not using this version, do let me know which version of the
-> > > > > kernel you are using, even if it is in distro).
-> > > > > 
-> > > > > Where did you get the multipath-tools from ? From Christophe's website
-> > > > > or any distro(RedHat/SuSE) ?
-> > > > > 
-> > > > > And, as Malahal pointed, make sure you have /sbin/mpath_prio_rdac
-> > > > > available and is an executable.
-> > > > > 
-> > > > > Hope this helps,
-> > > > > 
-> > > > > chandra
-> > > > > On Fri, 2007-08-10 at 16:50 +0200, S. J. van Harmelen wrote:
-> > > > > > Oke, got a bit further...
-> > > > > > 
-> > > > > > I now understand how to use the disks. Only thing thats not going oke is
-> > > > > > that I get these errors constantly (while formatting):
-> > > > > > 
-> > > > > > end_request: I/O error, dev sdf, sector 30408704
-> > > > > > end_request: I/O error, dev sdf, sector 30670848
-> > > > > > end_request: I/O error, dev sdf, sector 30932992
-> > > > > > end_request: I/O error, dev sdf, sector 31195136
-> > > > > > end_request: I/O error, dev sdf, sector 31457280
-> > > > > > 
-> > > > > > or (while editting a file):
-> > > > > > 
-> > > > > > end_request: I/O error, dev sdc, sector 966656
-> > > > > > device-mapper: multipath: Failing path 8:32.
-> > > > > > end_request: I/O error, dev sdc, sector 966720
-> > > > > > device-mapper: multipath: Failing path 8:32.
-> > > > > > end_request: I/O error, dev sdc, sector 96665
-> > > > > > 
-> > > > > > And the device seems very slow...
-> > > > > > 
-> > > > > > And also stil having this error: "error calling out mpath_prio_rdac"
-> > > > > > 
-> > > > > > Any tips, pointers?
-> > > > > > 
-> > > > > > Sander
-> > > > > > 
-> > > > > > -------- Forwarded Message --------
-> > > > > > From: S. J. van Harmelen <svanharmelen@xillan.nl>
-> > > > > > To: dm-devel@redhat.com
-> > > > > > Subject: Re: Multipath-tools
-> > > > > > Date: Fri, 10 Aug 2007 11:47:01 +0200
-> > > > > > 
-> > > > > > Hi again,
-> > > > > > 
-> > > > > > Seem to have found the solution for the first question. Got
-> > > > > > multipath-tools up and running now :)
-> > > > > > 
-> > > > > > But please do answer the others questions if you have a minute to
-> > > > > > spare...
-> > > > > > 
-> > > > > > Also I'm seeing "error calling out mpath_prio_rdac" when starting
-> > > > > > multipathd?! Any word on that one?
-> > > > > > 
-> > > > > > Regards,
-> > > > > > 
-> > > > > > Sander
-> > > > > > 
-> > > > > > 
-> > > > > > 
-> > > > > > On Fri, 2007-08-10 at 10:27 +0200, S. J. van Harmelen wrote:
-> > > > > > > Hey guys,
-> > > > > > > 
-> > > > > > > Sorry to bother you, but I have a question I think you can answer. I
-> > > > > > > also send this message to Christophe, but I don't know how long he takes
-> > > > > > > to respond. I'm trying to set up a Dell NX1950 which has an RDAC MD300
-> > > > > > > array connected with linux.
-> > > > > > > 
-> > > > > > > Now I got all thinks working, but the RDAC driver. I'm trying to use the
-> > > > > > > opensource multipath-tools (which I want to compile myself), but I have
-> > > > > > > some questions about it:
-> > > > > > > 
-> > > > > > > 1) While compiling I get an error saying: "/usr/bin/ld: cannot find
-> > > > > > > -ldevmapper" Can you tell me what I can do to fix this error?
-> > > > > > > 
-> > > > > > > 2) Can you tell me if there is a mailinglist for the multipath-tools?
-> > > > > > > 
-> > > > > > > 3) Can you point me to some documentation about configuring the
-> > > > > > > multipath-tools with the new RDAC path checker?
-> > > > > > > 
-> > > > > > > Thanks very much for your time!
-> > > > > > > 
-> > > > > > > Kind regards,
-> > > > > > > 
-> > > > > > > Sander van Harmelen
-> > > > > > 
-> > > > > > --
-> > > > > > dm-devel mailing list
-> > > > > > dm-devel@redhat.com
-> > > > > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > > > > -- 
-> > > > > 
-> > > > > ----------------------------------------------------------------------
-> > > > >     Chandra Seetharaman               | Be careful what you choose....
-> > > > >               - sekharan@us.ibm.com   |      .......you may get it.
-> > > > > ----------------------------------------------------------------------
-> > > > > 
-> > > > > 
-> > > > > --
-> > > > > dm-devel mailing list
-> > > > > dm-devel@redhat.com
-> > > > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > > > 
+--=-tTHngaJTO8mZjXqbpzzg--
