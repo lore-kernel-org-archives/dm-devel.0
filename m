@@ -1,7 +1,7 @@
 From: agk@sourceware.org
 Subject: device-mapper VERSION WHATS_NEW
-Date: 21 Aug 2007 16:33:20 -0000
-Message-ID: <20070821163320.21975.qmail@sourceware.org>
+Date: 21 Aug 2007 17:03:08 -0000
+Message-ID: <20070821170308.29800.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,30 +18,29 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-08-21 16:33:18
+Changes by:	agk@sourceware.org	2007-08-21 17:03:08
 
 Modified files:
 	.              : VERSION WHATS_NEW 
 
 Log message:
-	pre-release
+	post-release
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.126&r2=1.127
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.200&r2=1.201
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.127&r2=1.128
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.201&r2=1.202
 
---- device-mapper/VERSION	2007/07/13 16:10:24	1.126
-+++ device-mapper/VERSION	2007/08/21 16:33:18	1.127
+--- device-mapper/VERSION	2007/08/21 16:33:18	1.127
++++ device-mapper/VERSION	2007/08/21 17:03:07	1.128
 @@ -1 +1 @@
--1.02.22-cvs (2007-07-13)
-+1.02.22-cvs (2007-08-21)
---- device-mapper/WHATS_NEW	2007/08/21 16:26:06	1.200
-+++ device-mapper/WHATS_NEW	2007/08/21 16:33:18	1.201
-@@ -1,5 +1,5 @@
--Version 1.02.22 - 
--================================
-+Version 1.02.22 - 21st August 2007
+-1.02.22-cvs (2007-08-21)
++1.02.23-cvs (2007-08-21)
+--- device-mapper/WHATS_NEW	2007/08/21 16:33:18	1.201
++++ device-mapper/WHATS_NEW	2007/08/21 17:03:07	1.202
+@@ -1,3 +1,6 @@
++Version 1.02.23 - 
 +==================================
++
+ Version 1.02.22 - 21st August 2007
+ ==================================
    Fix inconsistent licence notices: executables are GPLv2; libraries LGPLv2.1.
-   Update to use autoconf 2.61, while still supporting 2.57.
-   Avoid repeated dm_task free on some dm_event_get_registered_device errors.
