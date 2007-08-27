@@ -1,16 +1,16 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: Resizing multipath maps: reload ioctl failed: Invalid
-	argument
-Date: Mon, 27 Aug 2007 16:29:46 -0400
-Message-ID: <46D3343A.6030302@ce.jp.nec.com>
-References: <46D2CB7F.80900@linpro.no> <46D2ED07.2080003@ce.jp.nec.com>
-	<46D31C24.4030201@linpro.no>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: dm-rdac not working?
+Date: Mon, 27 Aug 2007 14:26:05 -0700
+Message-ID: <1188249965.9504.45.camel@linuxchandra>
+References: <46D2E298.1020702@linpro.no>
+	<1188236026.9504.10.camel@linuxchandra>  <46D3188A.3090405@linpro.no>
+	<1188245328.9504.41.camel@linuxchandra>  <46D33BAA.8090807@linpro.no>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-KOyP5zrHwHNXVKmS9D+g"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46D31C24.4030201@linpro.no>
+In-Reply-To: <46D33BAA.8090807@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,60 +20,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Tore Anderson <tore@linpro.no>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
 
-Tore Anderson wrote:
->> It's due to kernel device-mapper restriction.
->>
->> multipath-tools uses no_flush suspend of device-mapper device to save
->> I/O errors in all-paths-down case. (Without the option, device-mapper
->> needs to flush all pending I/Os, that will result in I/O errors if
->> there is no working path.)
->>
->> For no_flush suspend, resizing is disabled because of known
->> dead-lock: it requires a lock that can be kept hold until the pending
->> I/Os are flushed.
+--=-KOyP5zrHwHNXVKmS9D+g
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+
+On Mon, 2007-08-27 at 23:01 +0200, Tore Anderson wrote:
+> * Chandra Seetharaman
 > 
->   Hmm.  So this deadlock is a kernel bug that (hopefully) will be fixed
->  in the future, so resizing can again be enabled, or is this a design
->  limitation that it's impossible to do something about?
-
-IMO, it's not a design limitation and should be solved in future.
-
->   Can the no_flush thing be toggled online;  that is, would it be
->  possible to alter multipath-tools so that when it attempted to resize a
->  map, it would disable no_flush, resize it, and then re-enable it?  I
->  think a two-second window of vulnerability to all-paths-down is
->  acceptable...
-
-Everywhen you suspend the device, there is a possibility of
-all paths being down. So as far as you don't want to lose data,
-you have to use no_flush option.
-
->   Similarily, if this no_flush option is relevant only when
->  features=queue_if_no_paths (at least that's the impression I get from
->  your description of it), would it work to temporarily reload the map
->  without this feature, resize the volume, than re-add queue_if_no_path?
-
-Current code uses 'no_flush' unconditionally.
-I think it's possible to improve it to do that only when
-queue_if_no_path is enabled.
-
->> A workaround for it would be using modified multipath-tools which
->> doesn't use no_noflush.
+> > tur checker just sends a test unit ready to see if the path is good. 
+> > Whereas rdac sends a c9 page inquiry and determines the state of the 
+> > path.
 > 
->   I grepped for noflush and no_flush (and so on) in the multipath-tools
->  source code but can't really find where it is set..?
+>    Okay.  I'm not really sure if I understand what practical difference
+>   there is between the two, though...  The TUR check seems to fail like
+>   it's supposed to if the path goes bad.
 
-Hmm, sorry. I misread your first message.
-Since the feature is added after 0.4.7, your problem may be caused
-by other reason.
-The call to dm_task_no_flush() is added after the release of 0.4.7.
-It should be in dm_simplecmd() in libmultipath/devmapper.c.
+In RDAC mode, tur will always fail on the passive path. You do not see
+that ?
 
-Thanks,
+> 
+> > That is true. But, I am wondering if what you have is based on the
+> > LSI Engenio based controller (and hence the controller does not
+> > understand the MODE_SELECT command).
+> 
+>    It's an Engenio 3994 that came with a sticker on it that says Sun
+>   StorageTek 6140.
+> 
+> > What mode do you have your storage device configured in ? rdac or AVT
+> > ?
+> 
+>    Host-type "Linux", which means RDAC (AVT is mostly unusable for
+>   clusters because of all the unwanted volume transfers it causes).  It's
+>   supposed to be used with LSI's RDAC 09.01.B2.xx driver, but that one
+>   doesn't work with recent kernels unfortunately.
+> 
+> > Where did you get mpath_prio_rdac from ?
+> > 
+> > In 0.4.7 you could use mpath_prio_tpc instead (it behaves exactly as 
+> > mpath_prio_rdac in 0.4.8).
+> 
+>    I got it from the 0.4.8 sources - mpath_prio_tpc complained a lot
+>   about AVT mode being disabled, which screwed up my multipath -ll output
+>   so I just got the new version instead.
+
+You mean mpath_prio_tpc from 0.4.7 ? I use it all the time in both RDAC
+and AVT mode with no issues.
+
+> 
+> > Can you apply the attached debug patch, repeat your test and send me
+> > the log.
+> 
+>    Sure, but I think you forgot to actually attach the patch... (Happens
+>   to me too all the time!)
+
+oops :)... attached
+> 
+> Regards
 -- 
-Jun'ichi Nomura, NEC Corporation of America
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
+
+
+--=-KOyP5zrHwHNXVKmS9D+g
+Content-Disposition: attachment; filename=debug
+Content-Type: text/x-patch; name=debug; charset=utf-8
+Content-Transfer-Encoding: 7bit
+
+Index: linux-2.6.22/drivers/md/dm-mpath-rdac.c
+===================================================================
+--- linux-2.6.22.orig/drivers/md/dm-mpath-rdac.c
++++ linux-2.6.22/drivers/md/dm-mpath-rdac.c
+@@ -229,6 +229,13 @@ static void mode_select_endio(struct req
+ 	struct scsi_sense_hdr sense_hdr;
+ 	int sense = 0, fail = 0;
+ 
++	DMINFO("MODE_SELECT of %s returned error %d; host_byte 0x%x, "
++		"msg_byte 0x%x, status_byte 0x%x\n",
++		h->path->dev->name, error,
++		host_byte(req->errors),
++		msg_byte(req->errors),
++		status_byte(req->errors));
++
+ 	if (had_failures(req, error)) {
+ 		fail = 1;
+ 		goto failed;
+
+--=-KOyP5zrHwHNXVKmS9D+g
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--=-KOyP5zrHwHNXVKmS9D+g--
