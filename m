@@ -1,16 +1,16 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: dm-rdac not working?
-Date: Mon, 27 Aug 2007 14:26:05 -0700
-Message-ID: <1188249965.9504.45.camel@linuxchandra>
-References: <46D2E298.1020702@linpro.no>
-	<1188236026.9504.10.camel@linuxchandra>  <46D3188A.3090405@linpro.no>
-	<1188245328.9504.41.camel@linuxchandra>  <46D33BAA.8090807@linpro.no>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: Resizing multipath maps: reload ioctl failed: Invalid
+	argument
+Date: Mon, 27 Aug 2007 18:44:12 -0400
+Message-ID: <46D353BC.3060805@ce.jp.nec.com>
+References: <46D2CB7F.80900@linpro.no>	<46D2ED07.2080003@ce.jp.nec.com>	<46D31C24.4030201@linpro.no>	<46D3343A.6030302@ce.jp.nec.com>
+	<46D33FA6.5000304@linpro.no>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-KOyP5zrHwHNXVKmS9D+g"
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46D33BAA.8090807@linpro.no>
+In-Reply-To: <46D33FA6.5000304@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,104 +20,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Tore Anderson <tore@linpro.no>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi,
 
---=-KOyP5zrHwHNXVKmS9D+g
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Tore Anderson wrote:
+>> Current code uses 'no_flush' unconditionally.
+>> I think it's possible to improve it to do that only when
+>> queue_if_no_path is enabled.
+> 
+>   It certainly would be an improvement if no_flush and queue_if_no_path
+>  could be automatically disabled in the short time it will take to
+>  reload the multipath map with an increased size.  For extra safety the
+>  tool could also verify that no paths were failed before doing so,
+>  maybe.  If everything is working fine it seems rather unlikely that all
+>  paths will fail and all HBA driver timeouts will expire in the second
+>  it takes to reload the multipath map.
 
-On Mon, 2007-08-27 at 23:01 +0200, Tore Anderson wrote:
-> * Chandra Seetharaman
-> 
-> > tur checker just sends a test unit ready to see if the path is good. 
-> > Whereas rdac sends a c9 page inquiry and determines the state of the 
-> > path.
-> 
->    Okay.  I'm not really sure if I understand what practical difference
->   there is between the two, though...  The TUR check seems to fail like
->   it's supposed to if the path goes bad.
+It's not good to override a policy about queue_if_no_path, that will
+create a small window of data loss.
+Even the small window could result in a disaster.
+I meant in the previous mail that there is no need for multipath-tools
+to use no_flush if a user explicitly configures the device without
+queue_if_no_path.
+Assuming that users sensitive to the system availability would set
+queue_if_no_path, I'm not sure how useful the improvement is.
 
-In RDAC mode, tur will always fail on the passive path. You do not see
-that ?
+>> Since the feature is added after 0.4.7, your problem may be caused
+>> by other reason.
+>> The call to dm_task_no_flush() is added after the release of 0.4.7.
+>> It should be in dm_simplecmd() in libmultipath/devmapper.c.
+> 
+>   Interesting.  I sent an email titled "dm-rdac not working?" earlier
+>  today, where I described another problem with the RDAC hwhandler that
+>  also caused I/O errors to propagate up from device-mapper into VFS,
+>  even though queue_if_no_path was in use.  Is it possible, you think,
+>  that this misbehaviour was due to having loaded the multipath maps
+>  using 0.4.7 and therefore without no_flush being set?  (Or in other
+>  words:  Is 0.4.8 a requirement for queue_if_no_path to work correctly?)
 
-> 
-> > That is true. But, I am wondering if what you have is based on the
-> > LSI Engenio based controller (and hence the controller does not
-> > understand the MODE_SELECT command).
-> 
->    It's an Engenio 3994 that came with a sticker on it that says Sun
->   StorageTek 6140.
-> 
-> > What mode do you have your storage device configured in ? rdac or AVT
-> > ?
-> 
->    Host-type "Linux", which means RDAC (AVT is mostly unusable for
->   clusters because of all the unwanted volume transfers it causes).  It's
->   supposed to be used with LSI's RDAC 09.01.B2.xx driver, but that one
->   doesn't work with recent kernels unfortunately.
-> 
-> > Where did you get mpath_prio_rdac from ?
-> > 
-> > In 0.4.7 you could use mpath_prio_tpc instead (it behaves exactly as 
-> > mpath_prio_rdac in 0.4.8).
-> 
->    I got it from the 0.4.8 sources - mpath_prio_tpc complained a lot
->   about AVT mode being disabled, which screwed up my multipath -ll output
->   so I just got the new version instead.
+As far as the table is not suspended, e.g. just failing or reinstating
+paths, queue_if_no_path works correctly without no_flush.
+When the table is suspended, e.g. a path is added or removed, pending
+I/Os will be flushed on suspend even if queue_if_no_path is specified.
+That's the situation no_flush solves.
 
-You mean mpath_prio_tpc from 0.4.7 ? I use it all the time in both RDAC
-and AVT mode with no issues.
+Easiest check is perhaps stracing multipath/multipathd and see what
+ioctls they issue. If they do DM_DEV_SUSPEND, using 0.4.8 might be a
+solution. If they don't, the cause is in other place.
 
-> 
-> > Can you apply the attached debug patch, repeat your test and send me
-> > the log.
-> 
->    Sure, but I think you forgot to actually attach the patch... (Happens
->   to me too all the time!)
-
-oops :)... attached
-> 
-> Regards
+Thanks,
 -- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
-
-
---=-KOyP5zrHwHNXVKmS9D+g
-Content-Disposition: attachment; filename=debug
-Content-Type: text/x-patch; name=debug; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-Index: linux-2.6.22/drivers/md/dm-mpath-rdac.c
-===================================================================
---- linux-2.6.22.orig/drivers/md/dm-mpath-rdac.c
-+++ linux-2.6.22/drivers/md/dm-mpath-rdac.c
-@@ -229,6 +229,13 @@ static void mode_select_endio(struct req
- 	struct scsi_sense_hdr sense_hdr;
- 	int sense = 0, fail = 0;
- 
-+	DMINFO("MODE_SELECT of %s returned error %d; host_byte 0x%x, "
-+		"msg_byte 0x%x, status_byte 0x%x\n",
-+		h->path->dev->name, error,
-+		host_byte(req->errors),
-+		msg_byte(req->errors),
-+		status_byte(req->errors));
-+
- 	if (had_failures(req, error)) {
- 		fail = 1;
- 		goto failed;
-
---=-KOyP5zrHwHNXVKmS9D+g
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-KOyP5zrHwHNXVKmS9D+g--
+Jun'ichi Nomura, NEC Corporation of America
