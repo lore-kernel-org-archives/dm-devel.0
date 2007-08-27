@@ -1,14 +1,11 @@
-From: Douglas McClendon <dmc.fedora@filteredperception.org>
-Subject: Re: recent bug in dmsetup status of mirror
-Date: Mon, 27 Aug 2007 04:07:56 -0500
-Message-ID: <46D2946C.1040801@filteredperception.org>
-References: <46CCCD28.4090201@filteredperception.org>
+From: "Denis Richard" <drich68@gmail.com>
+Subject: Restore snapshot
+Date: Mon, 27 Aug 2007 13:00:27 +0200
+Message-ID: <f90461730708270400t3c639343q52b893892396f0f7@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0802759861=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46CCCD28.4090201@filteredperception.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,46 +15,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Douglas McClendon wrote:
+--===============0802759861==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_89585_26441370.1188212427505"
 
-> 
-> Unfortunately, it appears that between the stock F7 kernel -
-> 2.6.21-1.3194.fc7, and the updated F7 kernel 2.6.22.1-41.fc7, the
-> dmsetup status results on a mirror have regressed.  The userspace tools
-> are the same in both cases - device-mapper-1.02.17-7.fc7
-> 
-> With the 2.6.21 kernel, after creating a mirror, dmsetup status shows
-> the mirroring progress, e.g. [1234/56789].  With the 2.6.22 kernel, it
-> does not.  I don't have the exact output handy to cut and paste, if need
-> be I can do that, or file a bug.
+------=_Part_89585_26441370.1188212427505
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-just noticed it is fixed as of 2.6.22.4-65.fc7
+Hi all,
+I use LVM snapshot to install a new software version.
+So I create a snapshot of the partition where the soft is installed.
+If the install finishes without any problem, I remove the snapshot.
+But, if the install has a problem, I would like to restore the snapshot on
+the initial partition,
+to restore the old version of the soft.
+Is there a command to do that "easily", different that copying the whole
+snapshot partition on the initial one ?
 
-I'm still curious whether write-throttling a mirror is possible. 
-Anybody have any ideas?  Can the dm thread be ionice-d?  Can the 
-destination device be throttled at the block layer independent of dm? 
-Can the table just be reloaded rapidly, increasing the device size 
-incrementally?  It sure does seem to make the system unusable.  I.e. 
-when running the following test, it took 10 seconds to open another tab 
-in a gnome-terminal, and then 30+ seconds to launch gedit.  (core duo 
-laptop with 1G ram, and reasonably modern sata drive).
+Thanks for your answers.
 
-#!/bin/bash
-dd if=/dev/zero of=./test10ga bs=1k count=1 seek=$(( 1024 * 1024 * 10))
-dd if=/dev/zero of=./test10gb bs=1k count=1 seek=$(( 1024 * 1024 * 10))
-loa=$( losetup -f )
-losetup ${loa} ./test10ga
-lob=$( losetup -f )
-losetup ${lob} ./test10gb
-echo "0 $( blockdev --getsize ${loa} ) mirror core 2 32 sync 2 ${loa} 0 
-${lob} 0" | dmsetup create testmir
-echo "testmir created"
-dmsetup status testmir
+Denis
+
+------=_Part_89585_26441370.1188212427505
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Hi all,<br>I use LVM snapshot to install a new software version.<br>So I create a snapshot of the partition where the soft is installed.<br>If the install finishes without any problem, I remove the snapshot.<br>But, if the install has a problem, I would like to restore the snapshot on the initial partition,
+<br>to restore the old version of the soft.<br>Is there a command to do that &quot;easily&quot;, different that copying the whole snapshot partition on the initial one ?<br><br>Thanks for your answers.<br><br>Denis<br>
+
+------=_Part_89585_26441370.1188212427505--
 
 
-thanks,
+--===============0802759861==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
--dmc
+
+--===============0802759861==--
