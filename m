@@ -1,7 +1,7 @@
 From: "Jeffry Bilder" <jbilder@g2switchworks.com>
 Subject: RE: Multipath issues with kernel device errors
-Date: Wed, 29 Aug 2007 08:29:51 -0500
-Message-ID: <8CED8CEBA23FC0409E1A3009F7F47BE5024710E0@exchange.g2switchworks.com>
+Date: Wed, 29 Aug 2007 11:58:14 -0500
+Message-ID: <8CED8CEBA23FC0409E1A3009F7F47BE5024711B7@exchange.g2switchworks.com>
 References: <8CED8CEBA23FC0409E1A3009F7F47BE502471065@exchange.g2switchworks.com>	<1188333723.12737.7.camel@linuxchandra>	<8CED8CEBA23FC0409E1A3009F7F47BE502471086@exchange.g2switchworks.com><1188338656.12737.18.camel@linuxchandra>
 	<46D50ECF.6020701@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -24,11 +24,100 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thank you!!  mpath_prio_hp_sw was certainly missing, so I just used the f=
-ailover option and commented it out.  Those errors are gone now!  Thanks =
-so much for your help!
+Are the errors in the kernel log normal:
 
-- JB
+
+Aug 28 10:30:15 rac02 kernel: end_request: I/O error, dev sdf, sector 513=
+824
+Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64228
+Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64229
+Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64230
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64231
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64232
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64233
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64234
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64235
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64236
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64237
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64238
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64239
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64240
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64241
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64242
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64243
+Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513=
+824
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64228
+Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513=
+824
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64228
+Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 514=
+064
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64258
+Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513=
+680
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64210
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64211
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64212
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64213
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64214
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64215
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64216
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64217
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64218
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64219
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64220
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64221
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64222
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64223
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64224
+Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical blo=
+ck 64225
+Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+
+
+Thanks,
+
+JB
+
 
 -----Original Message-----
 From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On=
