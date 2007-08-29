@@ -1,21 +1,17 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: dm-rdac not working?
-Date: Wed, 29 Aug 2007 09:10:03 +0200
-Message-ID: <46D51BCB.6070006@linpro.no>
-References: <46D2E298.1020702@linpro.no>	
-	<1188236026.9504.10.camel@linuxchandra>
-	<46D3188A.3090405@linpro.no>	
-	<1188245328.9504.41.camel@linuxchandra>
-	<46D33BAA.8090807@linpro.no>	
-	<1188249965.9504.45.camel@linuxchandra>
-	<46D3C099.7080504@linpro.no>
-	<1188326877.12737.1.camel@linuxchandra>
+From: "Jeffry Bilder" <jbilder@g2switchworks.com>
+Subject: RE: Multipath issues with kernel device errors
+Date: Wed, 29 Aug 2007 08:29:51 -0500
+Message-ID: <8CED8CEBA23FC0409E1A3009F7F47BE5024710E0@exchange.g2switchworks.com>
+References: <8CED8CEBA23FC0409E1A3009F7F47BE502471065@exchange.g2switchworks.com>	<1188333723.12737.7.camel@linuxchandra>	<8CED8CEBA23FC0409E1A3009F7F47BE502471086@exchange.g2switchworks.com><1188338656.12737.18.camel@linuxchandra>
+	<46D50ECF.6020701@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1188326877.12737.1.camel@linuxchandra>
+Content-class: urn:content-classes:message
+In-Reply-To: <46D50ECF.6020701@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,34 +21,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* Chandra Seetharaman
+Thank you!!  mpath_prio_hp_sw was certainly missing, so I just used the f=
+ailover option and commented it out.  Those errors are gone now!  Thanks =
+so much for your help!
 
-> Do you see multiple failures like shown below during the device probe
-> time ?
+- JB
 
-  Yes, on all paths to the passive controller I get numerous I/O errors,
- which happens when the kernel attempts to read in the partition table,
- when LVM wants to look for PV signatures, and so on.  This is the
- behaviour I expect when using RDAC mode.
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On=
+ Behalf Of Hannes Reinecke
+Sent: Wednesday, August 29, 2007 1:15 AM
+To: device-mapper development
+Subject: Re: [dm-devel] Multipath issues with kernel device errors
 
-> Hmm. In my storage it is enabled. That is why I do not see that issue.
-> May be multipath tools should read and ignore the stderr.
+Chandra Seetharaman wrote:
+> You do not have the latest table.=20
+> Try with the table below (converted from 0.4.8 version's hwtable.c)
+> devices {
+> 	device {
+> 		vendor 		"COMPAQ"
+> 		product		"MSA1000"
+> 		path_grouping_policy	group_by_prio
+> 		path_checker	tur
+> 		prio_callout	"/sbin/mpath_prio_alua /dev/%n"
+> 		getuid_callout	"/sbin/scsi_id -g -u -s /block/%n"
+> 		failback	immediate
+> 	}
+> }
+>=20
+Errm. Not quite. My sources indicate that this machine
+runs the older active/passive firmware, which requires
+the 'hp_sw' hardware handler to run properly.
 
-  If AVT is enabled in your storage, you shouldn't need the RDAC
- hardware handler.  When dm-multipath switches pg and starts sending I/O
- to the passive paths they should go live automatically, at least they
- do so for me...
+So better use this:
+devices {
+	device {
+		vendor 		"COMPAQ"
+		product		"MSA1000"
+		hardware_handler	"1 hp_sw"
+		path_grouping_policy	group_by_prio
+		path_checker	hp_sw
+ 		prio_callout	"/sbin/mpath_prio_hp_sw /dev/%n"
+ 		getuid_callout	"/sbin/scsi_id -g -u -s /block/%n"
+ 		failback	manual
+ 	}
+}
 
-  Bad thing about AVT is of course that when node X in a cluster boots,
- the partition table scanning will transfer the volume, making the
- active controller that e.g. nodes Y and Z was using heavily go passive,
- disrupting I/O and making everything wobbly until node X has finished
- its bootup procedure.
+if mpath_prio_hp_sw is missing complain to Ben Marzinski :-)
+Alternatively you can use
 
-Regards
--- 
-Tore Anderson
+path_grouping_policy	failover
+
+and omit the prio_callout altogether. But then only one path
+per SP are used.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
