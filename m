@@ -1,13 +1,14 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [APPENDIX PATCH 5/5] blk_end_request: userspace
- multipath-tools for request-based dm
-Date: Fri, 31 Aug 2007 18:46:16 -0400 (EDT)
-Message-ID: <20070831.184616.111210109.k-ueda@ct.jp.nec.com>
+From: Satyam Sharma <satyam@infradead.org>
+Subject: [PATCH -mm] drivers/md/: Shut up uninitialized variable
+	warnings
+Date: Mon, 3 Sep 2007 01:52:21 +0530 (IST)
+Message-ID: <alpine.LFD.0.999.0709030151320.29617@enigma.security.iitk.ac.in>
+References: <alpine.LFD.0.999.0709022344550.27844@enigma.security.iitk.ac.i n>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: MULTIPART/MIXED; BOUNDARY="464262402-440205242-1188764544=:29617"
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.LFD.0.999.0709022344550.27844@enigma.security.iitk.ac.in>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,38 +18,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, jens.axboe@oracle.com
-Cc: dm-devel@redhat.com
+To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This patch changes multipath-tools to use request-based dm-multipath.
-This patch should be applied on top of 8/28/2007 git multipath-tools.
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Request-based dm itself is still under development and not ready
-for inclusion.
+--464262402-440205242-1188764544=:29617
+Content-Type: TEXT/PLAIN; charset=iso-2022-jp
 
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+
+drivers/md/dm-exception-store.c: In function ‘persistent_read_metadata’:
+drivers/md/dm-exception-store.c:452: warning: ‘new_snapshot’ may be used uninitialized in this function
+
+drivers/md/dm-ioctl.c: In function ‘ctl_ioctl’:
+drivers/md/dm-ioctl.c:1407: warning: ‘param’ may be used uninitialized in this function
+
+[ For these, I'd like to especially add -- shame on you, gcc! ]
+
+drivers/md/dm-table.c: In function ‘dm_get_device’:
+drivers/md/dm-table.c:472: warning: ‘dev’ may be used uninitialized in this function
+
+are all verified to be bogus warnings. Let's shut them up.
+
 ---
- devmapper.c |    2 ++
- 1 files changed, 2 insertions(+)
 
-diff -rupN git-multipath-tools-20070828/libmultipath/devmapper.c rqdm-multipath-tools/libmultipath/devmapper.c
---- git-multipath-tools-20070828/libmultipath/devmapper.c	2007-08-28 17:05:25.000000000 -0400
-+++ rqdm-multipath-tools/libmultipath/devmapper.c	2007-08-28 17:50:47.000000000 -0400
-@@ -174,6 +174,7 @@ dm_simplecmd (int task, const char *name
- #ifdef LIBDM_API_FLUSH
- 	dm_task_no_flush(dmt);          /* for DM_DEVICE_SUSPEND/RESUME */
- #endif
-+	dm_task_request_base(dmt);
+ drivers/md/dm-exception-store.c |    3 ++-
+ drivers/md/dm-ioctl.c |    2 +-
+ drivers/md/dm-table.c |    2 +-
+ 3 file changed, 4 insertions(+), 3 deletion(-)
+
+--- linux-2.6.23-rc4-mm1/drivers/md/dm-exception-store.c~fix	2007-09-03 01:05:12.000000000 +0530
++++ linux-2.6.23-rc4-mm1/drivers/md/dm-exception-store.c	2007-09-03 01:11:37.000000000 +0530
+@@ -449,7 +449,8 @@ static void persistent_destroy(struct ex
  
- 	r = dm_task_run (dmt);
+ static int persistent_read_metadata(struct exception_store *store)
+ {
+-	int r, new_snapshot;
++	int r;
++	int uninitialized_var(new_snapshot);
+ 	struct pstore *ps = get_info(store);
  
-@@ -211,6 +212,7 @@ dm_addmap (int task, const char *name, c
- 	}
+ 	/*
+--- linux-2.6.23-rc4-mm1/drivers/md/dm-ioctl.c~fix	2007-09-03 01:04:58.000000000 +0530
++++ linux-2.6.23-rc4-mm1/drivers/md/dm-ioctl.c	2007-09-03 01:07:04.000000000 +0530
+@@ -1404,7 +1404,7 @@ static int ctl_ioctl(struct inode *inode
+ {
+ 	int r = 0;
+ 	unsigned int cmd;
+-	struct dm_ioctl *param;
++	struct dm_ioctl * uninitialized_var(param);
+ 	struct dm_ioctl __user *user = (struct dm_ioctl __user *) u;
+ 	ioctl_fn fn = NULL;
+ 	size_t param_size;
+--- linux-2.6.23-rc4-mm1/drivers/md/dm-table.c~fix	2007-09-03 00:56:05.000000000 +0530
++++ linux-2.6.23-rc4-mm1/drivers/md/dm-table.c	2007-09-03 00:57:15.000000000 +0530
+@@ -469,7 +469,7 @@ static int __table_get_device(struct dm_
+ 			      int mode, struct dm_dev **result)
+ {
+ 	int r;
+-	dev_t dev;
++	dev_t uninitialized_var(dev);
+ 	struct dm_dev *dd;
+ 	unsigned int major, minor;
  
- 	dm_task_no_open_count(dmt);
-+	dm_task_request_base(dmt);
- 
- 	r = dm_task_run (dmt);
- 
+--464262402-440205242-1188764544=:29617
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--464262402-440205242-1188764544=:29617--
