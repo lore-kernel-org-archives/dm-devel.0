@@ -1,57 +1,89 @@
-From: Jeff Garzik <jeff@garzik.org>
-Subject: Re: [PATCH -mm] drivers/md/: Shut up uninitialized variable warnings
-Date: Sun, 02 Sep 2007 16:34:36 -0400
-Message-ID: <46DB1E5C.2080107@garzik.org>
-References: <alpine.LFD.0.999.0709022344550.27844@enigma.security.iitk.ac.i n> <alpine.LFD.0.999.0709030151320.29617@enigma.security.iitk.ac.in>
+From: Satyam Sharma <satyam@infradead.org>
+Subject: Re: [PATCH -mm] drivers/md/: Shut up uninitialized
+ variable warnings
+Date: Mon, 3 Sep 2007 02:27:48 +0530 (IST)
+Message-ID: <alpine.LFD.0.999.0709030220210.29617@enigma.security.iitk.ac.in>
+References: <alpine.LFD.0.999.0709022344550.27844@enigma.security.iitk.ac.i
+	n> <alpine.LFD.0.999.0709030151320.29617@enigma.security.iitk.ac.in>
+	<46DB1E5C.2080107@garzik.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759456AbXIBUes@vger.kernel.org>
-In-Reply-To: <alpine.LFD.0.999.0709030151320.29617@enigma.security.iitk.ac.in>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Satyam Sharma <satyam@infradead.org>
-Cc: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="464262402-514402326-1188766671=:29617"
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <46DB1E5C.2080107@garzik.org>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jeff Garzik <jeff@garzik.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Satyam Sharma wrote:
-> drivers/md/dm-exception-store.c: In function =91persistent_read_metad=
-ata=92:
-> drivers/md/dm-exception-store.c:452: warning: =91new_snapshot=92 may =
-be used uninitialized in this function
->=20
-> drivers/md/dm-ioctl.c: In function =91ctl_ioctl=92:
-> drivers/md/dm-ioctl.c:1407: warning: =91param=92 may be used uninitia=
-lized in this function
->=20
-> [ For these, I'd like to especially add -- shame on you, gcc! ]
->=20
-> drivers/md/dm-table.c: In function =91dm_get_device=92:
-> drivers/md/dm-table.c:472: warning: =91dev=92 may be used uninitializ=
-ed in this function
->=20
-> are all verified to be bogus warnings. Let's shut them up.
->=20
-> ---
->=20
->  drivers/md/dm-exception-store.c |    3 ++-
->  drivers/md/dm-ioctl.c |    2 +-
->  drivers/md/dm-table.c |    2 +-
->  3 file changed, 4 insertions(+), 3 deletion(-)
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-same comment as with the last uninit'd var patch:  these markers should=
-=20
-be used sparingly.  Try it on multiple compiler versions, see if it's a=
-=20
-new behavior.
+--464262402-514402326-1188766671=:29617
+Content-Type: TEXT/PLAIN; charset=iso-2022-jp
 
-Quite realistically, you might actually be finding gcc bugs, implying=20
-the proper path is to file a gcc bug report (and they are _very_=20
-diligent about handling these, its impressive) rather than to patch the=
-=20
-Linux kernel.
 
-Overall, for any uninitialized_var() patch, we need more info on=20
-platform/compiler version/analysis methods/etc.
 
-	Jeff
+On Sun, 2 Sep 2007, Jeff Garzik wrote:
+
+> Satyam Sharma wrote:
+> > drivers/md/dm-exception-store.c: In function ‘persistent_read_metadata’:
+> > drivers/md/dm-exception-store.c:452: warning: ‘new_snapshot’ may be used
+> > uninitialized in this function
+> > 
+> > drivers/md/dm-ioctl.c: In function ‘ctl_ioctl’:
+> > drivers/md/dm-ioctl.c:1407: warning: ‘param’ may be used uninitialized in
+> > this function
+> > 
+> > [ For these, I'd like to especially add -- shame on you, gcc! ]
+> > 
+> > drivers/md/dm-table.c: In function ‘dm_get_device’:
+> > drivers/md/dm-table.c:472: warning: ‘dev’ may be used uninitialized in this
+> > function
+> > 
+> > are all verified to be bogus warnings. Let's shut them up.
+> > 
+> > ---
+> > 
+> >  drivers/md/dm-exception-store.c |    3 ++-
+> >  drivers/md/dm-ioctl.c |    2 +-
+> >  drivers/md/dm-table.c |    2 +-
+> >  3 file changed, 4 insertions(+), 3 deletion(-)
+> 
+> same comment as with the last uninit'd var patch:  these markers should be
+> used sparingly.  Try it on multiple compiler versions, see if it's a new
+> behavior.
+> 
+> Quite realistically, you might actually be finding gcc bugs,
+
+Definitely -- a lot of these patches are purely a result of gcc's shoddy
+inadequacies. I do intend filing reports with gcc, however ...
+
+> implying the
+> proper path is to file a gcc bug report (and they are _very_ diligent about
+> handling these, its impressive) rather than to patch the Linux kernel.
+
+My experience (regarding gcc's diligence in dealing with bug reports) has
+been otherwise :-)
+
+Anyway, I once had a _very_ similar discussion with Andrew (regarding some
+other gcc bug) previously, and the (completely correct) point he made was
+that: firstly, there's no guarantee they'll get this sorted out asap, and
+even if they did, we'll still not be dropping support for older gcc
+versions anyway ...
+--464262402-514402326-1188766671=:29617
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--464262402-514402326-1188766671=:29617--
