@@ -1,89 +1,150 @@
-From: Satyam Sharma <satyam@infradead.org>
-Subject: Re: [PATCH -mm] drivers/md/: Shut up uninitialized
- variable warnings
-Date: Mon, 3 Sep 2007 02:27:48 +0530 (IST)
-Message-ID: <alpine.LFD.0.999.0709030220210.29617@enigma.security.iitk.ac.in>
-References: <alpine.LFD.0.999.0709022344550.27844@enigma.security.iitk.ac.i
-	n> <alpine.LFD.0.999.0709030151320.29617@enigma.security.iitk.ac.in>
-	<46DB1E5C.2080107@garzik.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH 1/7] blk_end_request: add new request completion
+	interface
+Date: Mon, 3 Sep 2007 09:45:45 +0200
+Message-ID: <20070903074545.GH4253@kernel.dk>
+References: <20070831.184112.45519768.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="464262402-514402326-1188766671=:29617"
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46DB1E5C.2080107@garzik.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jeff Garzik <jeff@garzik.org>
-Cc: Andrew Morton <akpm@linux-foundation.org>, dm-devel@redhat.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ide-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20070831.184112.45519768.k-ueda@ct.jp.nec.com>
+Sender: linux-ide-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, mike.miller@hp.com, grant.likely@secretlab.ca, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---464262402-514402326-1188766671=:29617
-Content-Type: TEXT/PLAIN; charset=iso-2022-jp
-
-
-
-On Sun, 2 Sep 2007, Jeff Garzik wrote:
-
-> Satyam Sharma wrote:
-> > drivers/md/dm-exception-store.c: In function ‘persistent_read_metadata’:
-> > drivers/md/dm-exception-store.c:452: warning: ‘new_snapshot’ may be used
-> > uninitialized in this function
-> > 
-> > drivers/md/dm-ioctl.c: In function ‘ctl_ioctl’:
-> > drivers/md/dm-ioctl.c:1407: warning: ‘param’ may be used uninitialized in
-> > this function
-> > 
-> > [ For these, I'd like to especially add -- shame on you, gcc! ]
-> > 
-> > drivers/md/dm-table.c: In function ‘dm_get_device’:
-> > drivers/md/dm-table.c:472: warning: ‘dev’ may be used uninitialized in this
-> > function
-> > 
-> > are all verified to be bogus warnings. Let's shut them up.
-> > 
-> > ---
-> > 
-> >  drivers/md/dm-exception-store.c |    3 ++-
-> >  drivers/md/dm-ioctl.c |    2 +-
-> >  drivers/md/dm-table.c |    2 +-
-> >  3 file changed, 4 insertions(+), 3 deletion(-)
+On Fri, Aug 31 2007, Kiyoshi Ueda wrote:
+> This patch adds 2 new interfaces for request completion:
+>   o blk_end_request()   : called without queue lock
+>   o __blk_end_request() : called with queue lock held
 > 
-> same comment as with the last uninit'd var patch:  these markers should be
-> used sparingly.  Try it on multiple compiler versions, see if it's a new
-> behavior.
+> Some device drivers call some generic functions below between
+> end_that_request_{first/chunk} and end_that_request_last().
+>   o add_disk_randomness()
+>   o blk_queue_end_tag()
+>   o blkdev_dequeue_request()
+> These are called in the blk_end_request() as a part of generic
+> request completion.
+> So all device drivers become to call above functions.
 > 
-> Quite realistically, you might actually be finding gcc bugs,
+> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> ---
+>  block/ll_rw_blk.c      |   82 +++++++++++++++++++++++++++++++++++++++++++++++++ include/linux/blkdev.h |    2 +
+>  2 files changed, 84 insertions(+)
+> 
+> diff -rupN 2.6.23-rc3-mm1/block/ll_rw_blk.c 01-blkendreq-interface/block/ll_rw_blk.c
+> --- 2.6.23-rc3-mm1/block/ll_rw_blk.c	2007-08-22 18:54:03.000000000 -0400
+> +++ 01-blkendreq-interface/block/ll_rw_blk.c	2007-08-23 17:19:20.000000000 -0400
+> @@ -3669,6 +3669,88 @@ void end_request(struct request *req, in
+>  
+>  EXPORT_SYMBOL(end_request);
+>  
+> +/**
+> + * ____blk_end_request - Generic end_io function to complete a request.
+> + * @rq:           the request being processed
+> + * @uptodate:     1 for success, 0 for I/O error, < 0 for specific error
+> + * @nr_bytes:     number of bytes to complete
+> + * @needlock:     1 for queue lock need to be held.
+> + *                0 for queue lock held already.
+> + *
+> + * Description:
+> + *     Ends I/O on a number of bytes attached to @rq.
+> + *     If @rq has leftover, sets it up for the next range of segments.
+> + *
+> + * Return:
+> + *     0 - we are done with this request
+> + *     1 - this request is not freed yet, it still has pending buffers.
+> + **/
+> +static int ____blk_end_request(struct request *rq, int uptodate, int nr_bytes,
+> +			       int needlock)
+> +{
+> +	struct request_queue *q = rq->q;
+> +	unsigned long flags = 0UL;
+> +
+> +	if (blk_fs_request(rq) || blk_pc_request(rq)) {
+> +		if (__end_that_request_first(rq, uptodate, nr_bytes))
+> +			return 1;
+> +	}
+> +
+> +	/*
+> +	 * No need to check the argument here because it is done
+> +	 * in add_disk_randomness().
+> +	 */
+> +	add_disk_randomness(rq->rq_disk);
+> +
+> +	if (needlock)
+> +		spin_lock_irqsave(q->queue_lock, flags);
+> +
+> +	if (blk_rq_tagged(rq))
+> +		blk_queue_end_tag(q, rq);
+> +
+> +	if (!list_empty(&rq->queuelist))
+> +		blkdev_dequeue_request(rq);
+> +
+> +	end_that_request_last(rq, uptodate);
+> +
+> +	if (needlock)
+> +		spin_unlock_irqrestore(q->queue_lock, flags);
+> +
+> +	return 0;
+> +}
+> +
+> +/**
+> + * blk_end_request - Helper function for drivers to complete the request.
+> + * @rq:       the request being processed
+> + * @uptodate: 1 for success, 0 for I/O error, < 0 for specific error
+> + * @nr_bytes: number of bytes to complete
+> + *
+> + * Description:
+> + *     Ends I/O on a number of bytes attached to @rq.
+> + *     If @rq has leftover, sets it up for the next range of segments.
+> + *
+> + * Return:
+> + *     0 - we are done with this request
+> + *     1 - still buffers pending for this request
+> + **/
+> +int blk_end_request(struct request *rq, int uptodate, int nr_bytes)
+> +{
+> +	return ____blk_end_request(rq, uptodate, nr_bytes, 1);
+> +}
+> +EXPORT_SYMBOL_GPL(blk_end_request);
+> +
+> +/**
+> + * __blk_end_request - Helper function for drivers to complete the request.
+> + *
+> + * Description:
+> + *     Must be called with queue lock held unlike blk_end_request().
+> + **/
+> +int __blk_end_request(struct request *rq, int uptodate, int nr_bytes)
+> +{
+> +	return ____blk_end_request(rq, uptodate, nr_bytes, 0);
+> +}
+> +EXPORT_SYMBOL_GPL(__blk_end_request);
+> +
+>  void blk_rq_bio_prep(struct request_queue *q, struct request *rq,
+>  		     struct bio *bio)
+>  {
+> diff -rupN 2.6.23-rc3-mm1/include/linux/blkdev.h 01-blkendreq-interface/include/linux/blkdev.h
+> --- 2.6.23-rc3-mm1/include/linux/blkdev.h	2007-08-13 00:25:24.000000000 -0400
+> +++ 01-blkendreq-interface/include/linux/blkdev.h	2007-08-23 17:22:50.000000000 -0400
+> @@ -728,6 +728,8 @@ static inline void blk_run_address_space
+>   * for parts of the original function. This prevents
+>   * code duplication in drivers.
+>   */
+> +extern int blk_end_request(struct request *rq, int uptodate, int nr_bytes);
+> +extern int __blk_end_request(struct request *rq, int uptodate, int nr_bytes);
+>  extern int end_that_request_first(struct request *, int, int);
+>  extern int end_that_request_chunk(struct request *, int, int);
+>  extern void end_that_request_last(struct request *, int);
 
-Definitely -- a lot of these patches are purely a result of gcc's shoddy
-inadequacies. I do intend filing reports with gcc, however ...
+We get in to way too many levels of underscores here. Please changes
+this to be blk_end_request() and blk_end_request_locked(), where the
+former grabs the queue lock but the latter assumes it's held. Then have
+the static __blk_end_request() where the lock MUST be held - do this in
+the caller, don't pass it as an argument!
 
-> implying the
-> proper path is to file a gcc bug report (and they are _very_ diligent about
-> handling these, its impressive) rather than to patch the Linux kernel.
+-- 
+Jens Axboe
 
-My experience (regarding gcc's diligence in dealing with bug reports) has
-been otherwise :-)
-
-Anyway, I once had a _very_ similar discussion with Andrew (regarding some
-other gcc bug) previously, and the (completely correct) point he made was
-that: firstly, there's no guarantee they'll get this sorted out asap, and
-even if they did, we'll still not be dropping support for older gcc
-versions anyway ...
---464262402-514402326-1188766671=:29617
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---464262402-514402326-1188766671=:29617--
