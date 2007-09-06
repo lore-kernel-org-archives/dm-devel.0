@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath hwtable.c
-Date: 6 Sep 2007 16:21:39 -0000
-Message-ID: <20070906162139.21322.qmail@sourceware.org>
+Subject: multipath-tools multipath.conf.defaults
+Date: 6 Sep 2007 16:22:25 -0000
+Message-ID: <20070906162225.21502.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,27 +19,25 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-09-06 16:21:38
+Changes by:	bmarzins@sourceware.org	2007-09-06 16:22:25
 
 Modified files:
-	libmultipath   : hwtable.c 
+	.              : multipath.conf.defaults 
 
 Log message:
-	Changed the default checker function for NETAPP devices from readsector0 to
-	directio.
-	Resolves: bz #247443
+	Whoops! Forgot to update the multipath.conf.defaults file.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.6&r2=1.20.2.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.5&r2=1.5.4.6
 
---- multipath-tools/libmultipath/hwtable.c	2007/08/16 16:30:11	1.20.2.6
-+++ multipath-tools/libmultipath/hwtable.c	2007/09/06 16:21:38	1.20.2.7
-@@ -403,7 +403,7 @@
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = 128,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
- 	},
-  	/*
- 	 * IBM NSeries (NETAPP) controller family
+--- multipath-tools/multipath.conf.defaults	2007/08/14 18:08:54	1.5.4.5
++++ multipath-tools/multipath.conf.defaults	2007/09/06 16:22:25	1.5.4.6
+@@ -294,7 +294,7 @@
+ #		failback		immediate
+ #		rr_weight		uniform
+ #		rr_min_io		128
+-#		path_checker		readsector0
++#		path_checker		directio
+ #	}
+ #	device {
+ #		vendor			"IBM"
