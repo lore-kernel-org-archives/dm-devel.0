@@ -1,42 +1,56 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: rdac mode on SLES10SP1
-Date: Tue, 11 Sep 2007 10:12:14 +0200
-Message-ID: <46E64DDE.7040705@linpro.no>
-References: <OF7370E75F.A98D07BF-ONC1257353.002B4C4D-C1257353.002B6A87@amadeus.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] [PATCH 7/7] blk_end_request: change rq->end_io to
+	cover request completion as a whole
+Date: Tue, 11 Sep 2007 11:22:40 +0200
+Message-ID: <20070911112240.pe40oufzz4k8wsg8@imap.suse.de>
+References: <20070831.184357.125900174.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <OF7370E75F.A98D07BF-ONC1257353.002B4C4D-C1257353.002B6A87@amadeus.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain;
+	charset=UTF-8;
+	DelSp="Yes";
+	format="flowed"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20070831.184357.125900174.k-ueda@ct.jp.nec.com>
+Content-Disposition: inline
+Sender: linux-scsi-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, jens.axboe@oracle.com, mike.miller@hp.com, grant.likely@secretlab.ca, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-* Kirill Cherkashin
+Am Sat 01 Sep 2007 12:43:57 AM CEST schrieb Kiyoshi Ueda  
+<k-ueda@ct.jp.nec.com>:
 
-> Could you advise me on next matter.
-> We have DS4800 connected to SLES10&9. At the moment we're using 'native'
-> IBM  rdac driver but we're going to soon jump to Linux mpio.
-> According to Novell's support site in SP1(with kernel 2.6.16)  MPIO
-> would be supported by in rdac mode.
-> 
-> 
-> However, here I found  that it should happened only with 2.6.23 kernel.
+> This patch moves the rq->end_io() calling point to the top of
+> blk_end_request() from the last of end_that_request_last().
+> This means that whole request completion can be hooked by rq->end_io()
+> because all device drivers call blk_end_request() to complete request.
+>
+> Because the meaning of rq->end_io() is changed, existing rq->end_io()
+> users are changed as below:
+>   o Create a new end_io handler using blk_end_io().
+>     blk_end_io() is a default rq->end_io() handler and can take
+>     a callback function, which is called after end_that_request_last().
+>     So the old end_io() handler can be used as the callback.
+>   o Set the new end_io handler to rq->end_io.
+>
+Hmm. I must say I don't really like it.
+Defining a callback function which itself takes a callback as an argument
+looks like a conceptual weakness.
 
-  The RDAC hardware handler is included (in a usable form) in the
- kernel.org kernels starting from 2.6.23-rc4, if I recall correctly.
+It's actually possible to solve it differently: We could insert a bio in
+front of the bio list of the cloned request, which can take a pointer to
+the request in it's ->bi_endio callback. This way, the bio can serve as
+a meta-callback for the request and everything can be done there.
 
-  I assume SuSE has simply backported it to their 2.6.16 kernel.  I know
- Red Hat has done the same for RHEL5.1, at least.
+This way we don't have to change the interface at all and everything
+works as expected.
 
--- 
-Tore Anderson
+I'll post a patch shortly.
+
+Cheers,
+
+Hannes
+---
+No .sig today, my .message went away ...
+
