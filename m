@@ -1,17 +1,14 @@
-From: "Hall, Eric R" <eric.r.hall@intel.com>
-Subject: RE: Question about NetLink
-Date: Tue, 11 Sep 2007 09:45:11 -0700
-Message-ID: <4AFE4AEEFA305C4BB82F73F4D8195060029DC0CD@orsmsx420.amr.corp.intel.com>
-References: <118141608864-git-send-email-michaelc@cs.wisc.edu><D44F48C7D79D2943A073C8FA0F49A3CCFE5DC9@orsmsx418.amr.corp.intel.com><20070612193745.GA14958@us.ibm.com>
-	<D44F48C7D79D2943A073C8FA0F49A3CC01546C08@orsmsx418.amr.corp.intel.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH][RFC] Use bio markers for request callback
+Date: Tue, 11 Sep 2007 12:49:13 -0400 (EDT)
+Message-ID: <20070911.124913.59650277.k-ueda@ct.jp.nec.com>
+References: <20070911124446.qs5cek5mskowckcc@imap.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC01546C08@orsmsx418.amr.corp.intel.com>
+In-Reply-To: <20070911124446.qs5cek5mskowckcc@imap.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,73 +18,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Wood, Brian J" <brian.j.wood@intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: hare@suse.de
+Cc: michaelc@cs.wisc.edu, linux-scsi@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-First link on Google when searching for "Mike Anderson libnl":
+Hi Hannes,
 
-http://www.redhat.com/archives/dm-devel/2005-November/msg00128.html
+On Tue, 11 Sep 2007 12:44:46 +0200, Hannes Reinecke <hare@suse.de> wrote:
+> this is a proposal for a different implementation of request  
+> callbacks. The existing ->endio callback of a request is actually a  
+> destructor function, to be called to terminate a request and free all  
+> structures.
+> 
+> However, on certain occasions (like request-based multipathing) it is  
+> desirable to have a callback function for a request which is called  
+> right after the request is finished, ie in end_that_request_first()  
+> before any bio->bi_endio callback is called.
+> 
+> So a simple solution for this is to clone the request and add a new  
+> 'marker' bio in front of the bio list of the request. This callback  
+> will be attached a structure in bi_private which keeps a pointer to  
+> the cloned and the original request, thus serving as a callback for  
+> the request itself.
+
+Thank you for another idea for request-based multipath.
+
+However, I disagree with the idea.
+I think the design (bio->bi_end_io() completes a request) is complex
+a little bit and is breaking layer stacking.
+Also, I think that the design of completion handling by 2 hooks,
+bio->bi_end_io() and rq->end_io(), makes error handing in dm-multipath
+complex.
+e.g. Even if we detect an error on the first bio->bi_end_io() hook,
+     the request can't be retried until the second rq->end_io() hook
+     is called, because the ownership of the request is still on
+     low level drivers until the low level driver calls
+     end_that_request_last().
 
 
+Although this is just implementation issue, I think that the patch
+can't handle leftover.
+SCSI, scsi_end_request(), may have some leftovers in the request.
+Then, the marker bio is freed in bio->bi_end_io() and the request
+is resubmitted in SCSI level.  So the resubmitted request
+doesn't have the marker bio any more.
 
->-----Original Message-----
->From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On
->Behalf Of Wood, Brian J
->Sent: Tuesday, September 11, 2007 8:48 AM
->To: device-mapper development
->Subject: RE: [dm-devel] Question about NetLink
->
->>-----Original Message-----
->>From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
->On
->>Behalf Of Mike Anderson
->>Sent: Tuesday, June 12, 2007 12:38 PM
->>To: device-mapper development
->>Subject: Re: [dm-devel] Question about NetLink
->>
->>Wood, Brian J <brian.j.wood@intel.com> wrote:
->>> Hello, Alasdair recently said that device-mapper was moving to the a
->>> netlink event reporting model (and I see the patches have been
->posted).
->>> I found an article (2 years old) describing this at:
->>> http://www.linuxjournal.com/article/7356. I wanted to read up on
-this
->>> and wondered if this article was a good starting point.
->>>
->>
->>I found that it was easier to use the libnl interface.
->>http://people.suug.ch/~tgr/libnl/
->>
->>I have previously posted a test program using the libnl interface with
->the
->>dm netlink patches. You should be able to find the program in the
->>archives.
->>
->>or
->>
->>I updated the demo program some so ping me if you would like an
-updated
->>copy.
->
->Hello Michael, I just found this email sorted into a folder by mistake.
->Could you send me an updated copy of this program (or a link to a site
->where it might be posted)? I would like to see netlink in action.
->
->
->>
->>-andmike
->>--
->>Michael Anderson
->>andmike@us.ibm.com
->>
->>--
->>dm-devel mailing list
->>dm-devel@redhat.com
->>https://www.redhat.com/mailman/listinfo/dm-devel
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks,
+Kiyoshi Ueda
