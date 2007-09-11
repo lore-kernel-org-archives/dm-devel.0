@@ -1,14 +1,9 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH][RFC] Use bio markers for request callback
-Date: Tue, 11 Sep 2007 12:49:13 -0400 (EDT)
-Message-ID: <20070911.124913.59650277.k-ueda@ct.jp.nec.com>
-References: <20070911124446.qs5cek5mskowckcc@imap.suse.de>
+From: bmarzins@sourceware.org
+Subject: multipath-tools ./multipath.conf.defaults libm ...
+Date: 11 Sep 2007 18:06:04 -0000
+Message-ID: <20070911180604.7142.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20070911124446.qs5cek5mskowckcc@imap.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,50 +13,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: hare@suse.de
-Cc: michaelc@cs.wisc.edu, linux-scsi@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Hannes,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2007-09-11 18:06:02
 
-On Tue, 11 Sep 2007 12:44:46 +0200, Hannes Reinecke <hare@suse.de> wrote:
-> this is a proposal for a different implementation of request  
-> callbacks. The existing ->endio callback of a request is actually a  
-> destructor function, to be called to terminate a request and free all  
-> structures.
-> 
-> However, on certain occasions (like request-based multipathing) it is  
-> desirable to have a callback function for a request which is called  
-> right after the request is finished, ie in end_that_request_first()  
-> before any bio->bi_endio callback is called.
-> 
-> So a simple solution for this is to clone the request and add a new  
-> 'marker' bio in front of the bio list of the request. This callback  
-> will be attached a structure in bi_private which keeps a pointer to  
-> the cloned and the original request, thus serving as a callback for  
-> the request itself.
+Modified files:
+	.              : multipath.conf.defaults 
+	libmultipath   : hwtable.c 
 
-Thank you for another idea for request-based multipath.
+Log message:
+	Changed "foo*" regular expressions to "foo.*". Pulled from upstream
+	Resolves: bz 233629
 
-However, I disagree with the idea.
-I think the design (bio->bi_end_io() completes a request) is complex
-a little bit and is breaking layer stacking.
-Also, I think that the design of completion handling by 2 hooks,
-bio->bi_end_io() and rq->end_io(), makes error handing in dm-multipath
-complex.
-e.g. Even if we detect an error on the first bio->bi_end_io() hook,
-     the request can't be retried until the second rq->end_io() hook
-     is called, because the ownership of the request is still on
-     low level drivers until the low level driver calls
-     end_that_request_last().
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.5&r2=1.5.2.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.11&r2=1.16.2.12
 
-
-Although this is just implementation issue, I think that the patch
-can't handle leftover.
-SCSI, scsi_end_request(), may have some leftovers in the request.
-Then, the marker bio is freed in bio->bi_end_io() and the request
-is resubmitted in SCSI level.  So the resubmitted request
-doesn't have the marker bio any more.
-
-Thanks,
-Kiyoshi Ueda
+--- multipath-tools/multipath.conf.defaults	2007/08/02 23:00:52	1.5.2.5
++++ multipath-tools/multipath.conf.defaults	2007/09/11 18:06:01	1.5.2.6
+@@ -62,7 +62,7 @@
+ #        }
+ #       device {
+ #                vendor                 "{HITACHI|HP}"
+-#                product                "OPEN-*"
++#                product                "OPEN-.*"
+ #                path_grouping_policy   multibus
+ #                path_checker           tur
+ #        }
+@@ -133,7 +133,7 @@
+ #       }
+ #	device {
+ #		vendor			"HITACHI"
+-#		product			"DF*"
++#		product			"DF.*"
+ #		path_grouping_policy	group_by_prio
+ #		prio_callout		"/sbin/mpath_prio_hds_modular %d"
+ #		path_checker		"readsector0"
+@@ -167,7 +167,7 @@
+ #	}
+ #	device {
+ #		vendor			"IBM"
+-#		product			"2105*"
++#		product			"2105.*"
+ #		path_grouping_policy	group_by_serial
+ #		getuid_callout		"/sbin/scsi_id -g -u -s"
+ #		features		"1 queue_if_no_path"
+--- multipath-tools/libmultipath/hwtable.c	2007/05/15 16:42:26	1.16.2.11
++++ multipath-tools/libmultipath/hwtable.c	2007/09/11 18:06:01	1.16.2.12
+@@ -13,7 +13,7 @@
+ 
+ 	r += store_hwe(hw, "3PARdata", "VV", MULTIBUS, DEFAULT_GETUID);
+ 	r += store_hwe(hw, "APPLE*", "Xserve RAID ", MULTIBUS, DEFAULT_GETUID);
+-	r += store_hwe(hw, "COMPAQ", "HSV110*", GROUP_BY_SERIAL, DEFAULT_GETUID);
++	r += store_hwe(hw, "COMPAQ", "HSV110.*", GROUP_BY_SERIAL, DEFAULT_GETUID);
+ 	r += store_hwe(hw, "COMPAQ", "MSA1000", GROUP_BY_SERIAL, DEFAULT_GETUID);
+ 	r += store_hwe(hw, "DDN", "SAN DataDirector", MULTIBUS, DEFAULT_GETUID);
+ 	r += store_hwe(hw, "DEC", "HSG80", GROUP_BY_SERIAL, DEFAULT_GETUID);
+@@ -44,7 +44,7 @@
+ 	r += store_hwe_ext(hw, "COMPAQ", "HSV111", GROUP_BY_PRIO,
+ 		DEFAULT_GETUID, "/sbin/mpath_prio_alua %n", "0", "0", "tur",
+ 		-FAILBACK_IMMEDIATE, NULL, 60, 0, 100);
+-	r += store_hwe_ext(hw, "{HITACHI,HP}", "OPEN-*", MULTIBUS,
++	r += store_hwe_ext(hw, "{HITACHI,HP}", "OPEN-.*", MULTIBUS,
+ 		DEFAULT_GETUID, NULL, "0", "0", "tur", -FAILBACK_IMMEDIATE,
+ 		NULL, 60, 0, 100);
+         r += store_hwe_ext(hw, "HP", "*33[89]0*", MULTIBUS, DEFAULT_GETUID, NULL, "0", "0",
+@@ -55,7 +55,7 @@
+ 		   0, 0, 0);
+ 	r += store_hwe_ext(hw, "IBM", "3542", GROUP_BY_SERIAL, DEFAULT_GETUID,
+ 		   NULL, "0", "0", "tur", FAILBACK_UNDEF, NULL, 0, 0, 0);
+-	r += store_hwe_ext(hw, "IBM", "2105*", GROUP_BY_SERIAL, DEFAULT_GETUID,
++	r += store_hwe_ext(hw, "IBM", "2105.*", GROUP_BY_SERIAL, DEFAULT_GETUID,
+ 		   NULL, "0", "1 queue_if_no_path", "tur", FAILBACK_UNDEF, NULL,
+ 		   0, 0, 0);
+ 	r += store_hwe_ext(hw, "IBM", "1750500", GROUP_BY_PRIO,
+@@ -85,7 +85,7 @@
+ 		   NULL, "0", "0", "tur", FAILBACK_UNDEF, NULL, 0, 0, 0);
+ 	r += store_hwe_ext(hw, "SGI", "TP9500", FAILOVER, DEFAULT_GETUID,
+ 		   NULL, "0", "0", "tur", FAILBACK_UNDEF, NULL, 0, 0, 0);
+-	r += store_hwe_ext(hw, "HITACHI", "DF*", GROUP_BY_PRIO,
++	r += store_hwe_ext(hw, "HITACHI", "DF.*", GROUP_BY_PRIO,
+ 		   DEFAULT_GETUID, "/sbin/mpath_prio_hds_modular %d", "0", "0",
+ 		   "readsector0", -FAILBACK_IMMEDIATE, NULL, 0, 0, 0);
+ 
