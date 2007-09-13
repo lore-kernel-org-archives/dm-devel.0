@@ -1,14 +1,9 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: defining paths with DDN 8500
-Date: Thu, 13 Sep 2007 10:33:11 +0200
-Message-ID: <46E8F5C7.6050005@linpro.no>
-References: <43123.80742.qm@web51104.mail.re2.yahoo.com>
+From: Mike Anderson <andmike@us.ibm.com>
+Subject: [PATCH 0/4] dm: add path uevents
+Date: Thu, 13 Sep 2007 08:07:10 -0700
+Message-ID: <1561.29846950552$1189696783@news.gmane.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <43123.80742.qm@web51104.mail.re2.yahoo.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +13,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Kay Sievers <kay.sievers@vrfy.org>
 List-Id: dm-devel.ids
 
-* Mike White
+This patch series enables device mapper (dm) to send kobject uevents for
+dm events. Currently only two new events are sent related to path state
+changes.
 
-> I'm working with the multipathing package and a DDN 8500.  I've been
-> able to successfully configure  failover and failback.  The system is
-> configured as such:
->     qla_port_1 ----  ctrl A port 4 ---- LUN 3 (LUN 7)
->     qla_port_2 ----  ctrl B port 4 ---- LUN 7 (LUN 3)
-> 
-> Where LUN 3 is on a dedicated port to qla_port_1 and qla_port_2 is
-> dedicated to LUN 7.
-> 
-> The problem that I'm having is all the traffic is going through
-> qla_port_1, qla_port_2 appears to be sitting idle until a failover.
-> 
-> To compensate, I've been using dmsetup to force the qla_port_2 ----
-> LUN 7 path.
-> 
-> Is there a better way than using dmsetup to do this?  multipath isn't
-> an option, as it negatively impacts performance.
+The previous RFC posts can be found in this list archive
+http://article.gmane.org/gmane.linux.kernel.device-mapper.devel/3949
 
-  Sounds like you're in need of a prio_callout.  I'm not familiar with
- your hardware so I don't know if there's already one available, if not,
- make a simple script that for example prints "2" for the paths you want
- to prefer and "1" for the ones you want to use as backups.  Then set
- path_grouping_policy to "failover".  You might also want to set
- failback to "immediate".
+This patch leaves the existing dm ioctl event interface in place and
+allows user to pickup the new events when available. This would allow
+tools that are already processing uevents to pick up the context of the
+path events with a small addition to existing processing code.
 
-Regards
+This patch series is against linux-2.6.23-rc4-mm1 and contains the
+following:
+1 Add dm uevent skeleton.
+2 Add support for the event functions.
+3 Add dm name and uuid to event output.
+4 Add event calls for failed and reinstated paths in mpath target.
+
+An example of the uevents generated as captured by udevmonitor is shown
+below.
+
+1.) Path failure.
+# UEVENT[1189606553.769166] change@/block/dm-0
+ACTION=change
+DEVPATH=/block/dm-0
+SUBSYSTEM=block
+DM_ACTION=PATH_FAILED
+DM_SEQNUM=1
+DM_PATH=8:16
+DM_PATHS=1
+DM_NAME=3600a0b8000173c960000001845bf88b4
+DM_UUID=mpath-3600a0b8000173c960000001845bf88b4
+MINOR=0
+MAJOR=0
+SEQNUM=1699
+
+2.) Path reinstate.
+UEVENT[1189635862.724786] change@/block/dm-0
+ACTION=change
+DEVPATH=/block/dm-0
+SUBSYSTEM=block
+DM_ACTION=PATH_REINSTATED
+DM_SEQNUM=10
+DM_PATH=8:16
+DM_PATHS=2
+DM_NAME=3600a0b8000173c960000001845bf88b4
+DM_UUID=mpath-3600a0b8000173c960000001845bf88b4
+MINOR=0
+MAJOR=0
+SEQNUM=1713
+
+The uevent output uses the same env name for the dm name and uuid as the
+ones created with the dmsetup export option. Some env values where not
+appropriate in the uevent or dmsetup export so there is not a full mapping
+between the two outputs. The major minor env values where not repeated in
+DM_ env values for uevents, but this could be added if more capability was
+needed between uevents and the export output.
+
+Output from dmsetup export on the same device enabled through the use of
+Kay's patch
+
+./dmsetup export 3600a0b8000173c960000001845bf88b4
+DM_NAME=3600a0b8000173c960000001845bf88b4
+DM_UUID=mpath-3600a0b8000173c960000001845bf88b4
+DM_STATE=ACTIVE
+DM_TABLE_STATE=LIVE
+DM_OPENCOUNT=0
+DM_LAST_EVENT_NR=2
+DM_MAJOR=0
+DM_MINOR=0
+DM_TARGET_COUNT=1
+DM_TARGET_TYPES=multipath
+
+-andmike
+--
+Michael Anderson
+andmike@us.ibm.com
 -- 
-Tore Anderson
