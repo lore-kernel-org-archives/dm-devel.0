@@ -1,12 +1,15 @@
-From: Mike White <homebrewmike@yahoo.com>
-Subject: Re: defining paths with DDN 8500
-Date: Thu, 13 Sep 2007 14:59:45 -0700 (PDT)
-Message-ID: <51462.26372.qm@web51111.mail.re2.yahoo.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: rdac mode on SLES10SP1
+Date: Fri, 14 Sep 2007 09:06:22 +0200
+Message-ID: <46EA32EE.8060102@suse.de>
+References: <OF7370E75F.A98D07BF-ONC1257353.002B4C4D-C1257353.002B6A87@amadeus.com>
+	<46E64DDE.7040705@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <46E64DDE.7040705@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +22,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks Tore and Christophe.  Unless someone has something for DDN, I'll h=
-ave to roll my own (and share, of course.)
-
-On a somewhat related note - do you know if there a concise description o=
-f the existing prio's - outside of what's in the /* */'s?
-
-Thanks-
-  -Mike
-
------ Original Message ----
-From: Tore Anderson <tore@linpro.no>
-To: device-mapper development <dm-devel@redhat.com>
-Sent: Thursday, September 13, 2007 3:33:11 AM
-Subject: Re: [dm-devel] defining paths with DDN 8500
-
-* Mike White
-
-> I'm working with the multipathing package and a DDN 8500.  I've been
-> able to successfully configure  failover and failback.  The system is
-> configured as such:
->     qla_port_1 ----  ctrl A port 4 ---- LUN 3 (LUN 7)
->     qla_port_2 ----  ctrl B port 4 ---- LUN 7 (LUN 3)
+Tore Anderson wrote:
+> * Kirill Cherkashin
 >=20
-> Where LUN 3 is on a dedicated port to qla_port_1 and qla_port_2 is
-> dedicated to LUN 7.
+>> Could you advise me on next matter.
+>> We have DS4800 connected to SLES10&9. At the moment we're using 'nativ=
+e'
+>> IBM  rdac driver but we're going to soon jump to Linux mpio.
+>> According to Novell's support site in SP1(with kernel 2.6.16)  MPIO
+>> would be supported by in rdac mode.
+>>
+>>
+>> However, here I found  that it should happened only with 2.6.23 kernel=
+.
 >=20
-> The problem that I'm having is all the traffic is going through
-> qla_port_1, qla_port_2 appears to be sitting idle until a failover.
+>   The RDAC hardware handler is included (in a usable form) in the
+>  kernel.org kernels starting from 2.6.23-rc4, if I recall correctly.
 >=20
-> To compensate, I've been using dmsetup to force the qla_port_2 ----
-> LUN 7 path.
+>   I assume SuSE has simply backported it to their 2.6.16 kernel.  I kno=
+w
+>  Red Hat has done the same for RHEL5.1, at least.
 >=20
-> Is there a better way than using dmsetup to do this?  multipath isn't
-> an option, as it negatively impacts performance.
+This is the case. RDAC mode work with SP1.
 
-  Sounds like you're in need of a prio_callout.  I'm not familiar with
- your hardware so I don't know if there's already one available, if not,
- make a simple script that for example prints "2" for the paths you want
- to prefer and "1" for the ones you want to use as backups.  Then set
- path_grouping_policy to "failover".  You might also want to set
- failback to "immediate".
+Occasionally documentation is correct :-)
 
-Regards
+Cheers,
+
+Hannes
 --=20
-Tore Anderson
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
+GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
