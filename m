@@ -1,14 +1,15 @@
-From: "James Fillman" <JFillman@cucbc.com>
-Subject: path priorities on Sun's 6140
-Date: Fri, 14 Sep 2007 15:02:02 -0700
-Message-ID: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com>
+From: Eckebrecht von Pappenheim <evp@heise.de>
+Subject: Re: path priorities on Sun's 6140
+Date: Sat, 15 Sep 2007 08:26:03 +0200
+Message-ID: <29A5BF0F72CEC4FE750AD8C7@[192.168.12.2]>
+References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-content-class: urn:content-classes:message
+In-Reply-To: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,105 +19,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: James Fillman <JFillman@cucbc.com>
 List-Id: dm-devel.ids
 
-I'm running RHEL5 with QLogic HBA's and a Sun 6140 SAN. The host type
-I'm using for my servers is 'Solaris (with DMP)'. This turns AVT mode
-one. For some reason, the two controllers are returning the same
-priority value to my priority call out program (mpath_prio_tpc).
+Hi,
 
-Can anyone briefly explain what the mpath_prio_tpc utility does and
-where these priority values come from?
+> Can anyone briefly explain what the mpath_prio_tpc utility does and
+> where these priority values come from?
+>=20
+> The output of multipath -v2 -ll is:
+>=20
+> [root@vlxq02md cluster]# multipath -v2 -ll
+> mdi_logging (3600a0b800029f8e80000064d46e565e7) dm-9 SUN,CSM200_R
+> [size=3D100G][features=3D1 queue_if_no_path][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 1:0:0:2 sdd 8:48  [active][ready]
+>  \_ 1:0:1:2 sdg 8:96  [active][ready]
 
-The output of multipath -v2 -ll is:
+you are sure your two pathes are using different controllers? A SAN setup
+problem which makes the HBA use only 1 of the two controllers seems to be=
+ a
+very good reason for this multipath output.
 
-[root@vlxq02md cluster]# multipath -v2 -ll
-mdi_logging (3600a0b800029f8e80000064d46e565e7) dm-9 SUN,CSM200_R
-[size=3D100G][features=3D1 queue_if_no_path][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 1:0:0:2 sdd 8:48  [active][ready]
- \_ 1:0:1:2 sdg 8:96  [active][ready]
+Do you use a single-port HBA?=20
 
-Where is should be:
+With my dual-port HBA I get:
 
-[root@vlxq02md cluster]# multipath -v2 -ll
-mdi_logging (3600a0b800029f8e80000064d46e565e7) dm-9 SUN,CSM200_R
-[size=3D100G][features=3D1 queue_if_no_path][hwhandler=3D0]
-\_ round-robin 0 [prio=3D3][active]
- \_ 1:0:0:2 sdd 8:48  [active][ready]
-\_ round-robin 0 [prio=3D0][active]
- \_ 1:0:1:2 sdg 8:96  [active][ready]
+Raid5_for_IMAP-Volume (3600a0b80002906e20000089345bf1a2b) dm-1 SUN,CSM200=
+_R
+[size=3D1.4T][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D12][active]
+ \_ 7:0:1:1  sdac 65:192 [active][ready]=20
+ \_ 6:0:3:1  sds  65:32  [active][ready]=20
+\_ round-robin 0 [prio=3D2][enabled]
+ \_ 7:0:3:1  sdam 66:96  [active][ready]=20
+ \_ 6:0:1:1  sdi  8:128  [active][ready]
 
-I've gotten this working at my other data center with the same
-hardware/software configuration. At the moment, I'm pointing my finger
-at the SAN hardware but I don't have much to back it up with.
 
-here's my multipath.conf file:
+with multipath.conf:
 
-blacklist
-{
-         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|sda)[0-9]*"
-}
-
-defaults
-{
-        udev_dir                /dev
-        polling_interval        10
-        selector                "round-robin 0"
-        path_grouping_policy    group_by_prio
-        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-        prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
-        path_checker            readsector0
-        rr_min_io               100
-        rr_weight               priorities
-        failback                immediate
-        no_path_retry           queue
-        user_friendly_name      yes
-}
-
-devnode_blacklist
-{
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|sda)[0-9]*"
-        devnode "^hd[a-z][0-9]*"
-        devnode "^cciss!c[0-9]d[0-9]*"
-}
-
-multipaths
-{
-         multipath
-        {
-                wwid                   3600a0b800029cc400000120946e56616
-                alias                  mdi_deploys
-        }
-         multipath
-        {
-                wwid                   3600a0b800029f8e80000064d46e565e7
-                alias                  mdi_logging
-        }
-         multipath
-        {
-                wwid                   3600a0b800029cc4000001140468531fa
-                alias                  primary_logging
+devices {
+        device {
+                vendor SUN
+                product CSM200_R
+                path_grouping_policy group_by_prio
+                path_checker tur
+                prio_callout "mpath_prio_tpc /dev/%n"
+                features "1 queue_if_no_path"
         }
 }
 
-devices
-{
-        device
-        {
-                vendor                  "SUN"
-                product                 "CSM200_R"
-                path_grouping_policy    group_by_prio
-                path_checker            readsector0
-                prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
-                getuid_callout          "/sbin/scsi_id -g -u -s
-/block/%n"
-                rr_weight               uniform
-                rr_min_io               1000
-                features                "1 queue_if_no_path"
-        }
-}
 
-cheers,
---james
+BTW: A polling interval of 10 seconds is too slow for 6140 firmware
+updates,=20
+I had to use 5 seconds because the controllers are rebooting quite fast..=
+.
+
+regards,
+Eckebrecht
+
+--=20
+Eckebrecht von Pappenheim
+Netzwerkadministration
+Heise Zeitschriften Verlag GmbH & Co KG
+Helstorferstr. 7, D-30625 Hannover, FRG
+E-Mail: evp@heise.de  - Tel: +49 511 5352 242  -  Fax: +49 511 5352 479
+http://www.heise.de/
+
+Registergericht: Amtsgericht Hannover HRA 26709
+=20
+Pers=F6nlich haftende Gesellschafterin: =20
+Heise Zeitschriften Verlag Gesch=E4ftsf=FChrung GmbH
+Registergericht: Amtsgericht Hannover, HRB 60405
+Gesch=E4ftsf=FChrer: Ansgar Heise, Steven P. Steinkraus, Dr. Alfons Schr=E4=
+der
