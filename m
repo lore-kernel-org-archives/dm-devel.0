@@ -1,9 +1,9 @@
 From: "James Fillman" <JFillman@cucbc.com>
 Subject: RE: path priorities on Sun's 6140
-Date: Mon, 17 Sep 2007 11:17:53 -0700
-Message-ID: <66F461DD7EDEEF4AA928FCC80B425B520468B8@c2kp01mail.cucbc.com>
-References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com>
-	<46EBA114.10408@linpro.no>
+Date: Mon, 17 Sep 2007 11:36:32 -0700
+Message-ID: <66F461DD7EDEEF4AA928FCC80B425B520468B9@c2kp01mail.cucbc.com>
+References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com><46EBA114.10408@linpro.no>
+	<66F461DD7EDEEF4AA928FCC80B425B520468B8@c2kp01mail.cucbc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -22,6 +22,28 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+Ok. So I just realized that if I want to try the new RDAC support, then
+I have to install the new beta kernel as well. It includes the RDAC
+hardware handler.
+
+I'm under serious pressure to get my cluster up and running asap and I
+don't think I want to be installing a bunch of beta packages onto my
+production servers. Especially kernels.
+
+So this might mean not exploring the RDAC solution. Redhat's docs say
+that they support a Sun OpenStorage D280 and our Sun rep says the 6140
+is essentially identical. If that's the case, what am I don't wrong?
+
+cheers,
+--james
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of James Fillman
+Sent: Monday, September 17, 2007 11:18 AM
+To: device-mapper development
+Subject: RE: [dm-devel] path priorities on Sun's 6140
 
 Thanks for getting back to me Tore, Hannes, and Eckebrecht.
 
@@ -79,3 +101,9 @@ devices
 
 cheers,
 --james
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
