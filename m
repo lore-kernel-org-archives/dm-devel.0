@@ -1,12 +1,14 @@
-From: Manish Gaikwad <mgaikwad@redhat.com>
-Subject: Looking for list of supported storage arrays with dm-mp
-Date: Thu, 20 Sep 2007 16:22:32 +0530
-Message-ID: <46F250F0.1070903@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: dm-ioctl on amd64 with 32bit userspace
+Date: Thu, 20 Sep 2007 16:32:10 +0100
+Message-ID: <20070920153210.GP18444@agk.fab.redhat.com>
+References: <20070917165726.GA11958@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20070917165726.GA11958@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,21 +18,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Guido Guenther <agx@sigxcpu.org>
+Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, Sep 17, 2007 at 06:57:26PM +0200, Guido Guenther wrote:
+> -	if (new_name < (char *) (param + 1) ||
+> +	if (new_name < (char *) ((void*)(param + 1) - 4) ||
 
-I am looking for *complete* list of storage arrays that are supported by=20
-DM-MP under RHEL, I found the approved list in the =93Device Mapper=20
-Multipath Usage=94 document at following link.
+Does this (untested) also work for you?
 
-http://www.redhat.com/docs/manuals/csgfs/browse/rh-cs-en/ap-rhcs-dm-multi=
-path-usagetxt.html=20
-but
++	if (new_name < (char *) (align_ptr(param + 1) - 4) ||
 
-It is a old list if some one can provide the latest list of supported=20
-storage arrays with dm-mp will be a great help.
+I think that's slightly better as it should leave the 32-bit
+case unchanged.
 
-Regards,
-Manish Gaikwad
+One day, we'll fix all this properly by making the structure size in the
+interface architecture-independent as it should have been in the first
+place...
+
+[http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-ioctl-fix-compat-bounds-test.patch
+but wait for it to resync]
+
+Alasdair
+-- 
+agk@redhat.com
