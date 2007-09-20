@@ -1,15 +1,14 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: bio too big device md0 (248 > 240) - lvm on top of
-	raid1
-Date: Wed, 19 Sep 2007 10:35:35 +0200
-Message-ID: <46F0DF57.7060207@redhat.com>
-References: <87ejgv27nb.fsf@thialfi.karme-net.hirschau>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: dm-ioctl on amd64 with 32bit userspace
+Date: Wed, 19 Sep 2007 17:26:50 -0700
+Message-ID: <20070919172650.72df609f.akpm@linux-foundation.org>
+References: <20070917165726.GA11958@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <87ejgv27nb.fsf@thialfi.karme-net.hirschau>
+In-Reply-To: <20070917165726.GA11958@bogon.ms20.nix>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +18,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Guido Guenther <agx@sigxcpu.org>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, 17 Sep 2007 18:57:26 +0200
+Guido Guenther <agx@sigxcpu.org> wrote:
 
-Jens Thiele wrote:
-> I think I run into the same problem as described in a thread on the lkml:
-> "[dm-devel] bio too big device md1 (16 > 8)"
-> Message-Id   <87irc84bcq.87hcrs4bcq@87fy7c4bcq.message.id>
-> http://lkml.org/lkml/2007/4/7/81
+> using something like:
 > 
-> A related thread on dm-devel about a patch that probably doesn't help:
-> "[dm-devel] [2.6.22 PATCH 01/26] dm: merge max_hw_sector"
-> http://www.redhat.com/archives/dm-devel/2007-May/msg00007.html
+> dmsetup message <mpath> 0 fail_if_no_path
 > 
-> Any news regarding this one?
-> Should I file a bug on http://bugzilla.kernel.org/ ?
-> (It seems there is no entry yet)
+> on a 32 bit dmsetup with a amd64 kernel currently fails with:
+>  "Invalid target message parameters."
+> 
+> since the structure padding is 8 bytes and so we're looking at a 4 byte
+> to high address in target_message() - this also affects dev_rename() and
+> dev_set_geometry(). The attached patch works around the problem but
+> doesn't look like a proper fix. But since all the 32bit to 64bit ioctl
+> conversion in device mapper seems a bit strange, I'm not sure where to
+> fix this properly.
+> 
+> The bad thing about this is that multipath failover after a trespas on
+> such a system won't work (among other things). This at least has been
+> broken since 2.6.18 (I doubt it ever worked) and is still broken in
+> 2.6.23-rc6-git7. With this patch, failover after a trespas and device
+> renaming works as expected.
 
-Yes,  if you can reproduce it, report it to bugzilla please.
+I don't understand why people aren't running around with their hair on fire
+over this bug.    Is everyone running 64-bit dmsetup, or what?
 
-Please attach kernel version, "dmsetup table", syslog... etc. 
-(you can use lvmdump command to grab all informantion and
-attach it to the bug).
-
-> PS: if I have a LVM snapshot the message disappears
-
-so please describe this too with informations above.
-
-Thanks,
-Milan
---
-mbroz@redhat.com
+This looks like 2.6.22 and 2.6.23 material to me.  Alasdair?
