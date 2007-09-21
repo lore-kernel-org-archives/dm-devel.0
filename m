@@ -1,12 +1,16 @@
-From: Jim Meyering <jim@meyering.net>
-Subject: NEW git mirrors of the lvm2 and device-mapper CVS
-	repositories
-Date: Thu, 20 Sep 2007 22:44:12 +0200
-Message-ID: <87zlzhf4o3.fsf@rho.meyering.net>
+From: "Eric Stephenson" <Eric.Stephenson@hds.com>
+Subject: RE: Looking for list of supported storage arrays with dm-mp
+Date: Thu, 20 Sep 2007 17:30:37 -0700
+Message-ID: <6A350A8A1FDA114584DAF19472E9175702E261C3@USSCCEVS101.corp.hds.com>
+References: <46F250F0.1070903@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <46F250F0.1070903@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,24 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: LVM <lvm-devel@redhat.com>, device-mapper development <dm-devel@redhat.com>
-Cc: "Frank Ch. Eigler" <fche@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-You may recall that I set up git mirrors of the lvm2 and
-device-mapper CVS repositories:
+Find hwtable.c =20
 
-    http://thread.gmane.org/gmane.linux.kernel.device-mapper.devel/3758
 
-The repositories mentioned there will continue to work indefinitely,
-but now, there are new, more reliable ones.  They're hosted on the
-same system as the CVS repositories:
+  --eric
 
-    git-clone git://sources.redhat.com/git/dm
-    http://sources.redhat.com/git/gitweb.cgi?p=dm.git
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Manish Gaikwad
+Sent: Thursday, September 20, 2007 3:53 AM
+To: dm-devel@redhat.com
+Subject: [dm-devel] Looking for list of supported storage arrays with
+dm-mp
 
-    git-clone git://sources.redhat.com/git/lvm2
-    http://sources.redhat.com/git/gitweb.cgi?p=lvm2.git
+Hi,
 
-Thanks to Frank Ch. Eigler for setting up for git service
-on sources.redhat.com (aka sourceware.org).
+I am looking for *complete* list of storage arrays that are supported by
+DM-MP under RHEL, I found the approved list in the "Device Mapper
+Multipath Usage" document at following link.
+
+http://www.redhat.com/docs/manuals/csgfs/browse/rh-cs-en/ap-rhcs-dm-mult
+ipath-usagetxt.html
+but
+
+It is a old list if some one can provide the latest list of supported
+storage arrays with dm-mp will be a great help.
+
+Regards,
+Manish Gaikwad
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
