@@ -1,13 +1,16 @@
-From: "Sunil Joshi" <mail2joshi@gmail.com>
-Subject: Re: RHEL5 and RDAC/Multipath
-Date: Mon, 24 Sep 2007 22:04:40 +0530
-Message-ID: <778391c50709240934x11d6436cs5f5f6f4a56b8751f@mail.gmail.com>
-References: <200709241439.12426.npf-mlists@eurotux.com>
+From: "James Fillman" <JFillman@cucbc.com>
+Subject: RE: path priorities on Sun's 6140
+Date: Mon, 24 Sep 2007 09:56:40 -0700
+Message-ID: <66F461DD7EDEEF4AA928FCC80B425B52AFCBED@c2kp01mail.cucbc.com>
+References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com><46EBA114.10408@linpro.no>	<66F461DD7EDEEF4AA928FCC80B425B520468B8@c2kp01mail.cucbc.com><66F461DD7EDEEF4AA928FCC80B425B520468B9@c2kp01mail.cucbc.com>	<46EF80BA.1020605@linpro.no><66F461DD7EDEEF4AA928FCC80B425B520468BB@c2kp01mail.cucbc.com>
+	<46F75D8D.3050809@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1560471131=="
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200709241439.12426.npf-mlists@eurotux.com>
+content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,114 +23,86 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1560471131==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_20574_6919146.1190651680900"
+I'm happy to say that I've gotten things working. Friday night I
+grabbled the src RPM from the RHEL5.1 beta channel for the 2.6.36
+kernel, pulled out the patch file for the rdac hardware handler, applied
+it to the current 2.6.18-8.1.10 kernel, rebuilt the rpm and voila.
+Things work great. I also had to install the beta
+device-mapper-multipath and kpartx rpm's to get it working but after
+some extensive testing, thing are working exactly as expected.
 
-------=_Part_20574_6919146.1190651680900
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Thanks for all your help. It's much appreciated.
 
-Could you try using in your default settings
+FYI: The reason why I had to install a bunch of addition cluster and lvm
+beta rpm's along with the beta kernel is because the dlm kernel modules
+in the beta kernel are too new for the userland tools. clvmd reported
+version mismatches and all the cman stuff was just too unstable.
 
- no_path_retry           queue
+cheers,
+--james
 
 
 
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Tore Anderson
+Sent: Sunday, September 23, 2007 11:48 PM
+To: device-mapper development
+Subject: Re: [dm-devel] path priorities on Sun's 6140
+
+* James Fillman
+
+> Ok, I've made the attempt to install all the necessary RHEL5.1 beta=20
+> rpm's to get rdac working and unfortunately I had roll back. I had to
+> install a bunch of gfs, cluster, and lvm rpm's, along with the new=20
+> kernel and it seemed to work at first. I then fired up my cluster and
+> it was very unstable.
+
+Hm.  I thought it would work to upgrade only the kernel.  It seems very
+strange that you have to upgrade all those userland utilities.  Did you
+try with some RPM frontend like up2date that makes "clever" choices for
+you, mayhaps?  If so try downloading the RPM and installing it directly
+with the rpm utility.
+
+When looking at the package description of the 2.6.18-36 RPM, I don't
+really see any conflict that should cause this - the conflicts are the
+exact same as in the latest RHEL5 non-beta kernel (2.6.18-8.1.10), so
+there's no reason why it wouldn't work to install the beta kernel
+directly without upgrading any other packages.  I can't see any, at
+least.
+
+> I've downloaded and compiled the latest multipath source (0.4.8). Now
+> I need to compile the rdac hardware handler against my current kernel
+> source. Can anyone provide me with the latest, patched source?
+
+The source RPM is available from RHN.  Go to Channels, then All
+channels, find Red Hat Enterprise Linux (v. 5 for [your arch here]),
+expand it and find the associated beta channel.  Enter it, go to
+Packages and search for "kernel", follow the appropriate link and you
+should have a source RPM download link there.
+
+> Tore, I know you have it! After scanning through the posts, it looks=20
+> like you've had the same problems I have and you're running the same=20
+> hardware(Sun 6140). I could really use your help getting rdac
+> working. Redhat totally gave me the cold shoulder when I opened a
+> ticket with them. At this point, I need to keep the stock redhat
+> kernel but am willing to build all the multipath stuff against it.
+> I've got all the userland stuff compiled. Now I'm hoping I can get
+> instructions on how to compile the rdac hw handler against my kernel.
+
+I'm using 2.6.23-rcX or the kernel from RHEL 5.1 beta.  Or you can try
+to grab the RHEL5 (2.6.18-8.1.10) kernel sources as well as the source
+RPM for 2.6.18-36, copy over driver/md/dm-mpath-rdac.c and also add the
+relevant changes to Makefile and Kconfig, and with some luck you'll be
+able to build a module that's insertable on 2.6.18-8.1.10.  But first
+I'd try some more to install the kernel from 5.1 beta.  I'm quite
+confident it should work just fine.
 
 Regards
-Sunil Joshi
+--=20
+Tore Anderson
 
-
-On 9/24/07, Nuno Fernandes <npf-mlists@eurotux.com> wrote:
->
-> Hi,
->
-> We've bought and IBM BladecenterH and IBM DS4700 storage.
-> We are using Redhat Enterprise Linux 5 and we are trying to put multipath
-> working.
->
-> RHEL5 we are using uses 2.6.18-8.1.3.el5xen. We've ported rdac patch
-> (
-> http://kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.21/dm-mpath-rdac.patch
-> )
-> to RHEL5 kernel. We've also updated multipath-tools to support
-> mpath_prio_rdac.
->
-> Our multipath.conf is:
->
-> devnode_blacklist {
->   devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
->   devnode "^hd[a-z]"
->   devnode "^cciss!c[0-9]d[0-9]*"
->   #USB 4G Flash drive inside HS21
->   devnode "sda"
-> }
->
-> defaults {
->   multipath_tool "/sbin/multipath -v0"
->   udev_dir /dev
->   polling_interval 5
->   default_selector "round-robin 0"
->   default_getuid_callout "/sbin/scsi_id -g -u -s /block/%n"
->   #default_prio_callout "/bin/true"
->   failback immediate
->   path_checker rdac
->   hardware_handler "1 rdac"
->   prio_callout "/sbin/mpath_prio_tpc /dev/%n"
->   path_grouping_policy group_by_prio
-> }
->
-> multipaths {
->   multipath {
->   wwid 3600a0b8000320bea0000048f46e52137
->   alias client_data
->   }
-> }
->
-> When we start multipath -v2 it creates multipath devices. I can see 2
-> active
-> paths (active controler) and 2 ghost paths (standby controler).
-> When i unplug 2 active fibre that connect the fabric to DS4700, multipath
-> reports I/O errors and doesn't failover the controler.
->
-> Any ideas?
->
-> Thanks for any help
-> Nuno Fernandes
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
-------=_Part_20574_6919146.1190651680900
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-Could you try using in your default settings<br><pre> no_path_retry           queue</pre><br><br><br>Regards<br>Sunil Joshi<br><br><br><div><span class="gmail_quote">On 9/24/07, <b class="gmail_sendername">Nuno Fernandes</b>
- &lt;<a href="mailto:npf-mlists@eurotux.com">npf-mlists@eurotux.com</a>&gt; wrote:</span><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">Hi,
-<br><br>We&#39;ve bought and IBM BladecenterH and IBM DS4700 storage.<br>We are using Redhat Enterprise Linux 5 and we are trying to put multipath<br>working.<br><br>RHEL5 we are using uses 2.6.18-8.1.3.el5xen. We&#39;ve ported rdac patch
-<br>(<a href="http://kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.21/dm-mpath-rdac.patch">http://kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.21/dm-mpath-rdac.patch</a>)<br>to RHEL5 kernel. We&#39;ve also updated multipath-tools to support
-<br>mpath_prio_rdac.<br><br>Our multipath.conf is:<br><br>devnode_blacklist {<br>&nbsp;&nbsp;devnode &quot;^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*&quot;<br>&nbsp;&nbsp;devnode &quot;^hd[a-z]&quot;<br>&nbsp;&nbsp;devnode &quot;^cciss!c[0-9]d[0-9]*&quot;
-<br>&nbsp;&nbsp;#USB 4G Flash drive inside HS21<br>&nbsp;&nbsp;devnode &quot;sda&quot;<br>}<br><br>defaults {<br>&nbsp;&nbsp;multipath_tool &quot;/sbin/multipath -v0&quot;<br>&nbsp;&nbsp;udev_dir /dev<br>&nbsp;&nbsp;polling_interval 5<br>&nbsp;&nbsp;default_selector &quot;round-robin 0&quot;
-<br>&nbsp;&nbsp;default_getuid_callout &quot;/sbin/scsi_id -g -u -s /block/%n&quot;<br>&nbsp;&nbsp;#default_prio_callout &quot;/bin/true&quot;<br>&nbsp;&nbsp;failback immediate<br>&nbsp;&nbsp;path_checker rdac<br>&nbsp;&nbsp;hardware_handler &quot;1 rdac&quot;<br>&nbsp;&nbsp;prio_callout &quot;/sbin/mpath_prio_tpc /dev/%n&quot;
-<br>&nbsp;&nbsp;path_grouping_policy group_by_prio<br>}<br><br>multipaths {<br>&nbsp;&nbsp;multipath {<br>&nbsp;&nbsp;wwid 3600a0b8000320bea0000048f46e52137<br>&nbsp;&nbsp;alias client_data<br>&nbsp;&nbsp;}<br>}<br><br>When we start multipath -v2 it creates multipath devices. I can see 2 active
-<br>paths (active controler) and 2 ghost paths (standby controler).<br>When i unplug 2 active fibre that connect the fabric to DS4700, multipath<br>reports I/O errors and doesn&#39;t failover the controler.<br><br>Any ideas?
-<br><br>Thanks for any help<br>Nuno Fernandes<br><br>--<br>dm-devel mailing list<br><a href="mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br><a href="https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.com/mailman/listinfo/dm-devel
-</a><br></blockquote></div><br>
-
-------=_Part_20574_6919146.1190651680900--
-
-
---===============1560471131==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1560471131==--
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
