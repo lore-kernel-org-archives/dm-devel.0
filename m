@@ -1,16 +1,15 @@
-From: "James Fillman" <JFillman@cucbc.com>
-Subject: RE: path priorities on Sun's 6140
-Date: Fri, 21 Sep 2007 15:55:47 -0700
-Message-ID: <66F461DD7EDEEF4AA928FCC80B425B520468BB@c2kp01mail.cucbc.com>
-References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com><46EBA114.10408@linpro.no>	<66F461DD7EDEEF4AA928FCC80B425B520468B8@c2kp01mail.cucbc.com><66F461DD7EDEEF4AA928FCC80B425B520468B9@c2kp01mail.cucbc.com>
-	<46EF80BA.1020605@linpro.no>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: path priorities on Sun's 6140
+Date: Mon, 24 Sep 2007 08:47:41 +0200
+Message-ID: <46F75D8D.3050809@linpro.no>
+References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com><46EBA114.10408@linpro.no>	<66F461DD7EDEEF4AA928FCC80B425B520468B8@c2kp01mail.cucbc.com><66F461DD7EDEEF4AA928FCC80B425B520468B9@c2kp01mail.cucbc.com>	<46EF80BA.1020605@linpro.no>
+	<66F461DD7EDEEF4AA928FCC80B425B520468BB@c2kp01mail.cucbc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-content-class: urn:content-classes:message
+In-Reply-To: <66F461DD7EDEEF4AA928FCC80B425B520468BB@c2kp01mail.cucbc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,104 +22,53 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Ok, I've made the attempt to install all the necessary RHEL5.1 beta
-rpm's to get rdac working and unfortunately I had roll back. I had to
-install a bunch of gfs, cluster, and lvm rpm's, along with the new
-kernel and it seemed to work at first. I then fired up my cluster and it
-was very unstable.
-
-I've downloaded and compiled the latest multipath source (0.4.8). Now I
-need to compile the rdac hardware handler against my current kernel
-source. Can anyone provide me with the latest, patched source?=20
-
-Tore, I know you have it! After scanning through the posts, it looks
-like you've had the same problems I have and you're running the same
-hardware(Sun 6140). I could really use your help getting rdac working.
-Redhat totally gave me the cold shoulder when I opened a ticket with
-them. At this point, I need to keep the stock redhat kernel but am
-willing to build all the multipath stuff against it. I've got all the
-userland stuff compiled. Now I'm hoping I can get instructions on how to
-compile the rdac hw handler against my kernel.
-
-Thanks,
---james
-
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Tore Anderson
-Sent: Tuesday, September 18, 2007 12:40 AM
-To: device-mapper development
-Subject: Re: [dm-devel] path priorities on Sun's 6140
-
 * James Fillman
 
-> Ok. So I just realized that if I want to try the new RDAC support,
-> then I have to install the new beta kernel as well. It includes the
-> RDAC hardware handler.
->=20
-> I'm under serious pressure to get my cluster up and running asap and
-> I don't think I want to be installing a bunch of beta packages onto
-> my production servers. Especially kernels.
+> Ok, I've made the attempt to install all the necessary RHEL5.1 beta 
+> rpm's to get rdac working and unfortunately I had roll back. I had to
+> install a bunch of gfs, cluster, and lvm rpm's, along with the new 
+> kernel and it seemed to work at first. I then fired up my cluster and
+> it was very unstable.
 
-To me the benefit of RDAC mode would far outweigh the disadvantage of
-knowing you're running a beta kernel, but that's your call...
+Hm.  I thought it would work to upgrade only the kernel.  It seems very
+strange that you have to upgrade all those userland utilities.  Did you
+try with some RPM frontend like up2date that makes "clever" choices for
+you, mayhaps?  If so try downloading the RPM and installing it directly
+with the rpm utility.
 
-With AVT mode you will have I/O interruptions and volume failovers when
-a node in your cluster boots.  It's unavoidable.  You'll probably want
-to test really well how the rest of the cluster behaves in such
-situations.
+When looking at the package description of the 2.6.18-36 RPM, I don't
+really see any conflict that should cause this - the conflicts are the
+exact same as in the latest RHEL5 non-beta kernel (2.6.18-8.1.10), so
+there's no reason why it wouldn't work to install the beta kernel
+directly without upgrading any other packages.  I can't see any, at least.
 
-> So this might mean not exploring the RDAC solution. Redhat's docs say
-> that they support a Sun OpenStorage D280 and our Sun rep says the
-> 6140 is essentially identical. If that's the case, what am I don't
-> wrong?
+> I've downloaded and compiled the latest multipath source (0.4.8). Now
+> I need to compile the rdac hardware handler against my current kernel
+> source. Can anyone provide me with the latest, patched source?
 
-The original hardware is called Engenio 3994 - you might be able to
-confirm that the D280 is the same by Googling some.  (The IBM DS4700
-model 72 is also the same, by the way).  RH probably supports it in AVT
-mode.  Your configuration looks okay to me, different
-path_grouping_policy then what I use but as long as the prio_callout
-works correctly the end result should be the same.  My config looks like
-this on a RHEL4 box running in AVT mode:
+The source RPM is available from RHN.  Go to Channels, then All
+channels, find Red Hat Enterprise Linux (v. 5 for [your arch here]),
+expand it and find the associated beta channel.  Enter it, go to
+Packages and search for "kernel", follow the appropriate link and you
+should have a source RPM download link there.
 
-device {
-        vendor                  SUN.*
-        product                 CSM200_R.*
-        path_grouping_policy    group_by_serial
-        path_checker            tur
-        prio_callout            "/usr/local/sbin/mpath_prio_tpc /dev/%n"
-        failback                immediate
-        no_path_retry           queue
-}
+> Tore, I know you have it! After scanning through the posts, it looks 
+> like you've had the same problems I have and you're running the same 
+> hardware(Sun 6140). I could really use your help getting rdac
+> working. Redhat totally gave me the cold shoulder when I opened a
+> ticket with them. At this point, I need to keep the stock redhat
+> kernel but am willing to build all the multipath stuff against it.
+> I've got all the userland stuff compiled. Now I'm hoping I can get
+> instructions on how to compile the rdac hw handler against my kernel.
 
-This gives me output from 'multipath -ll' like this in a dual fabric
-topology:
-
-nfs_ny (3600a0b80002625ae0000080745dbe5ca)
-[size=3D100 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"0"]
-\_ round-robin 0 [prio=3D2][enabled]
- \_ 1:0:0:1 sdc 8:32  [active][ready]
- \_ 2:0:1:1 sdi 8:128 [active][ready]
-\_ round-robin 0 [prio=3D12][active]
- \_ 1:0:1:1 sde 8:64  [active][ready]
- \_ 2:0:0:1 sdg 8:96  [active][ready]
-
-SCSI targets 1:0:0 and 2:0:1 are to controller A, 1:0:1 and 2:0:0 are to
-controller B (the preferred one for LUN 1).  I can verify that the
-prio_callout works correctly by testing one path:
-
-$ /usr/local/sbin/mpath_prio_tpc /dev/sde
-6
-
-Did you try host type AIX_FO, by the way?  That was the one I found to
-work the best with AVT mode.
+I'm using 2.6.23-rcX or the kernel from RHEL 5.1 beta.  Or you can try
+to grab the RHEL5 (2.6.18-8.1.10) kernel sources as well as the source
+RPM for 2.6.18-36, copy over driver/md/dm-mpath-rdac.c and also add the
+relevant changes to Makefile and Kconfig, and with some luck you'll be
+able to build a module that's insertable on 2.6.18-8.1.10.  But first
+I'd try some more to install the kernel from 5.1 beta.  I'm quite
+confident it should work just fine.
 
 Regards
---=20
+-- 
 Tore Anderson
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
