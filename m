@@ -1,9 +1,8 @@
 From: "James Fillman" <JFillman@cucbc.com>
-Subject: RE: path priorities on Sun's 6140
-Date: Mon, 24 Sep 2007 09:56:40 -0700
-Message-ID: <66F461DD7EDEEF4AA928FCC80B425B52AFCBED@c2kp01mail.cucbc.com>
-References: <66F461DD7EDEEF4AA928FCC80B425B520468B7@c2kp01mail.cucbc.com><46EBA114.10408@linpro.no>	<66F461DD7EDEEF4AA928FCC80B425B520468B8@c2kp01mail.cucbc.com><66F461DD7EDEEF4AA928FCC80B425B520468B9@c2kp01mail.cucbc.com>	<46EF80BA.1020605@linpro.no><66F461DD7EDEEF4AA928FCC80B425B520468BB@c2kp01mail.cucbc.com>
-	<46F75D8D.3050809@linpro.no>
+Subject: RE: Device-mapper-multipath RDAC
+Date: Mon, 24 Sep 2007 10:01:15 -0700
+Message-ID: <66F461DD7EDEEF4AA928FCC80B425B52AFCBEE@c2kp01mail.cucbc.com>
+References: <200709241706.26322.npf-mlists@eurotux.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -23,84 +22,37 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I'm happy to say that I've gotten things working. Friday night I
-grabbled the src RPM from the RHEL5.1 beta channel for the 2.6.36
-kernel, pulled out the patch file for the rdac hardware handler, applied
-it to the current 2.6.18-8.1.10 kernel, rebuilt the rpm and voila.
-Things work great. I also had to install the beta
-device-mapper-multipath and kpartx rpm's to get it working but after
-some extensive testing, thing are working exactly as expected.
-
-Thanks for all your help. It's much appreciated.
-
-FYI: The reason why I had to install a bunch of addition cluster and lvm
-beta rpm's along with the beta kernel is because the dlm kernel modules
-in the beta kernel are too new for the userland tools. clvmd reported
-version mismatches and all the cman stuff was just too unstable.
+I've just finished going through the process of getting our SAN gear
+working on RHEL5 with multipathing. I've got a Sun 6140 which I think is
+very similar to yours. They both are from ingenia. You'll want to use a
+*NON* AVT host type on the SAN.  I've set mine to type "Linux" and it
+works great.
 
 cheers,
 --james
 
-
-
 -----Original Message-----
 From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Tore Anderson
-Sent: Sunday, September 23, 2007 11:48 PM
+On Behalf Of Nuno Fernandes
+Sent: Monday, September 24, 2007 9:06 AM
 To: device-mapper development
-Subject: Re: [dm-devel] path priorities on Sun's 6140
+Subject: [dm-devel] Device-mapper-multipath RDAC
 
-* James Fillman
+hello,
 
-> Ok, I've made the attempt to install all the necessary RHEL5.1 beta=20
-> rpm's to get rdac working and unfortunately I had roll back. I had to
-> install a bunch of gfs, cluster, and lvm rpm's, along with the new=20
-> kernel and it seemed to work at first. I then fired up my cluster and
-> it was very unstable.
+Just a question:
 
-Hm.  I thought it would work to upgrade only the kernel.  It seems very
-strange that you have to upgrade all those userland utilities.  Did you
-try with some RPM frontend like up2date that makes "clever" choices for
-you, mayhaps?  If so try downloading the RPM and installing it directly
-with the rpm utility.
+With recent support for rdac hardware handler in kernel 2.6.23-rc7, what
 
-When looking at the package description of the 2.6.18-36 RPM, I don't
-really see any conflict that should cause this - the conflicts are the
-exact same as in the latest RHEL5 non-beta kernel (2.6.18-8.1.10), so
-there's no reason why it wouldn't work to install the beta kernel
-directly without upgrading any other packages.  I can't see any, at
-least.
+configuration should be in storage DS4700? AVT (Automatic Volume
+transfer)=20
+turned on or off?
 
-> I've downloaded and compiled the latest multipath source (0.4.8). Now
-> I need to compile the rdac hardware handler against my current kernel
-> source. Can anyone provide me with the latest, patched source?
+When it's turned on, luns keep on jumping from controller to
+controller..
 
-The source RPM is available from RHN.  Go to Channels, then All
-channels, find Red Hat Enterprise Linux (v. 5 for [your arch here]),
-expand it and find the associated beta channel.  Enter it, go to
-Packages and search for "kernel", follow the appropriate link and you
-should have a source RPM download link there.
-
-> Tore, I know you have it! After scanning through the posts, it looks=20
-> like you've had the same problems I have and you're running the same=20
-> hardware(Sun 6140). I could really use your help getting rdac
-> working. Redhat totally gave me the cold shoulder when I opened a
-> ticket with them. At this point, I need to keep the stock redhat
-> kernel but am willing to build all the multipath stuff against it.
-> I've got all the userland stuff compiled. Now I'm hoping I can get
-> instructions on how to compile the rdac hw handler against my kernel.
-
-I'm using 2.6.23-rcX or the kernel from RHEL 5.1 beta.  Or you can try
-to grab the RHEL5 (2.6.18-8.1.10) kernel sources as well as the source
-RPM for 2.6.18-36, copy over driver/md/dm-mpath-rdac.c and also add the
-relevant changes to Makefile and Kconfig, and with some luck you'll be
-able to build a module that's insertable on 2.6.18-8.1.10.  But first
-I'd try some more to install the kernel from 5.1 beta.  I'm quite
-confident it should work just fine.
-
-Regards
---=20
-Tore Anderson
+Thanks
+Nuno Fernandes
 
 --
 dm-devel mailing list
