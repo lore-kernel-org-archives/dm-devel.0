@@ -1,16 +1,14 @@
-From: Nuno Fernandes <npf-mlists@eurotux.com>
-Subject: Re: RHEL5 and RDAC/Multipath
-Date: Tue, 25 Sep 2007 11:00:38 +0100
-Message-ID: <200709251100.38096.npf-mlists@eurotux.com>
-References: <200709241439.12426.npf-mlists@eurotux.com>
-	<1190658631.1933.137.camel@linuxchandra>
+From: "Akinobu Mita" <akinobu.mita@gmail.com>
+Subject: Re: [PATCH] dm: fix freeze_bdev() return value check
+Date: Tue, 25 Sep 2007 23:23:03 +0900
+Message-ID: <961aa3350709250723q14308a41hfebbae60e0cabe53@mail.gmail.com>
+References: <20070924105636.GA30406@APFDCB5C>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="utf-8"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1190658631.1933.137.camel@linuxchandra>
+In-Reply-To: <20070924105636.GA30406@APFDCB5C>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -21,103 +19,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+2007/9/24, Akinobu Mita <akinobu.mita@gmail.com>:
+> freeze_bdev() does not return errno as pointer on failure.
+> This patch fixes the return value check.
 
-It's working. For IBM DS4700 i only had to  change in the multipath.conf
+I misunderstood the meaning of the return value of freeze_bdev().
+I thought NULL returned by freeze_bdev means error. But it is wrong.
+freeze_bdev returns NULL when there is no filesystem mounted on the
+device with holding bd_mount_sem.
+So this patch is totally broken.
 
-vendor "IBM"
-product "1814*"
+But there is no reason to check the return value with IS_ERR().
+Because freeze_bdev return NULL or valid super block
 
-I didn't try it but shouln't be using prio_callout /sbin/mpath_prio_rdac??
+Subject: [PATCH] dm: remove freeze_bdev() return value check
+From: Akinobu Mita <akinobu.mita@gmail.com>
 
-Thanks
-Nuno Fernandes
+There is no reason to check the return value with IS_ERR().
+Because freeze_bdev return NULL or valid super block.
 
+Signed-off-by: Akinobu Mita <akinobu.mita@gmail.com>
 
-On Monday 24 September 2007 19:30:31 Chandra Seetharaman wrote:
-> Hi Nuno,
->
-> I would suggest you to move the rdac specific configuration information
-> to device section and retry.
->
-> Are you running the multipathd command ?
->
-> Here is how my rdac configuration looks in multipath.conf
-> --------------------------
-> devices {
->         device {
->                 vendor                  "IBM"
->                 product                 "1815"
->                 hardware_handler        "1 rdac"
->                 path_checker            rdac
->                 failback                immediate
->                 path_grouping_policy    group_by_prio
->                 prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
->         }
-> }
-> -----------------------------
-> Let me know how it goes,
->
-> chandra
->
-> On Mon, 2007-09-24 at 14:39 +0100, Nuno Fernandes wrote:
-> > Hi,
-> >
-> > We've bought and IBM BladecenterH and IBM DS4700 storage.
-> > We are using Redhat Enterprise Linux 5 and we are trying to put multipath
-> > working.
-> >
-> > RHEL5 we are using uses 2.6.18-8.1.3.el5xen. We've ported rdac patch
-> > (http://kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.21/dm-mpat
-> >h-rdac.patch) to RHEL5 kernel. We've also updated multipath-tools to
-> > support
-> > mpath_prio_rdac.
-> >
-> > Our multipath.conf is:
-> >
-> > devnode_blacklist {
-> >         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-> >         devnode "^hd[a-z]"
-> >         devnode "^cciss!c[0-9]d[0-9]*"
-> >         #USB 4G Flash drive inside HS21
-> >         devnode "sda"
-> > }
-> >
-> > defaults {
-> >         multipath_tool  "/sbin/multipath -v0"
-> >         udev_dir        /dev
-> >         polling_interval 5
-> >         default_selector        "round-robin 0"
-> >         default_getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
-> >         #default_prio_callout    "/bin/true"
-> >         failback                immediate
-> >         path_checker            rdac
-> >         hardware_handler        "1 rdac"
-> >         prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
-> >         path_grouping_policy    group_by_prio
-> > }
-> >
-> > multipaths {
-> >         multipath {
-> >                 wwid                    3600a0b8000320bea0000048f46e52137
-> >                 alias                   client_data
-> >         }
-> > }
-> >
-> > When we start multipath -v2 it creates multipath devices. I can see 2
-> > active paths (active controler) and 2 ghost paths (standby controler).
-> > When i unplug 2 active fibre that connect the fabric to DS4700, multipath
-> > reports I/O errors and doesn't failover the controler.
-> >
-> > Any ideas?
-> >
-> > Thanks for any help
-> > Nuno Fernandes
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
+---
+ drivers/md/dm.c |    7 -------
+ 1 file changed, 7 deletions(-)
+
+Index: 2.6-git/drivers/md/dm.c
+===================================================================
+--- 2.6-git.orig/drivers/md/dm.c
++++ 2.6-git/drivers/md/dm.c
+@@ -1290,16 +1290,9 @@ out:
+  */
+ static int lock_fs(struct mapped_device *md)
+ {
+-	int r;
+-
+ 	WARN_ON(md->frozen_sb);
+
+ 	md->frozen_sb = freeze_bdev(md->suspended_bdev);
+-	if (IS_ERR(md->frozen_sb)) {
+-		r = PTR_ERR(md->frozen_sb);
+-		md->frozen_sb = NULL;
+-		return r;
+-	}
+
+ 	set_bit(DMF_FROZEN, &md->flags);
