@@ -1,7 +1,7 @@
 From: Nuno Fernandes <npf-mlists@eurotux.com>
-Subject: Re: Device-mapper-multipath RDAC
-Date: Tue, 25 Sep 2007 09:05:50 +0100
-Message-ID: <200709250905.50349.npf-mlists@eurotux.com>
+Subject: Re: Device-mapper-multipath RDAC [SOLVED]
+Date: Tue, 25 Sep 2007 10:57:54 +0100
+Message-ID: <200709251057.55273.npf-mlists@eurotux.com>
 References: <200709241706.26322.npf-mlists@eurotux.com>
 	<46F8A29F.6060803@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -44,16 +44,11 @@ On Tuesday 25 September 2007 06:54:39 Hannes Reinecke wrote:
 > As a rule:
 >
 > - With rdac hardware handler: AVT off
-I'm in the process of testing avt in the kernel.
+Working..
 
-> - Without hardware handler: AVT on
-With this situation i don't have any point of failure but the lun keeps on 
-jumping (because of the alive path check of multipathd) and the performance 
-is awfull.
-
-Best regards
+Thanks
 Nuno Fernandes
-
+> - Without hardware handler: AVT on
 >
 > Cheers,
 >
