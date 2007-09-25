@@ -1,13 +1,12 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: Device-mapper-multipath RDAC
-Date: Mon, 24 Sep 2007 11:33:32 -0700
-Message-ID: <1190658812.1933.141.camel@linuxchandra>
+Date: Tue, 25 Sep 2007 07:54:39 +0200
+Message-ID: <46F8A29F.6060803@suse.de>
 References: <200709241706.26322.npf-mlists@eurotux.com>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <200709241706.26322.npf-mlists@eurotux.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -22,36 +21,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2007-09-24 at 17:06 +0100, Nuno Fernandes wrote:
+Nuno Fernandes wrote:
 > hello,
-> 
+>=20
 > Just a question:
-> 
-> With recent support for rdac hardware handler in kernel 2.6.23-rc7, what 
-> configuration should be in storage DS4700? AVT (Automatic Volume transfer) 
+>=20
+> With recent support for rdac hardware handler in kernel 2.6.23-rc7, wha=
+t=20
+> configuration should be in storage DS4700? AVT (Automatic Volume transf=
+er)=20
 > turned on or off?
+>=20
+Off. AVT is the acronym for 'Automated Volume Transfer', ie the array tri=
+es
+to transfer the volumes from one controller to the other automatically.
 
-Hardware handler is needed only for RDAC mode, AVT would work without
-the hardware handler.
+> When it's turned on, luns keep on jumping from controller to controller=
+..
+>=20
+Indeed. That's to be expected.
 
-The decision to use RDAC or AVT depends on your configuration.
+As a rule:
 
-> 
-> When it's turned on, luns keep on jumping from controller to controller..
+- With rdac hardware handler: AVT off
+- Without hardware handler: AVT on
 
-dm-multipath will use the other path (in AVT mode, IOW, jump) only if
-I/O in the current path fails.
-> 
-> Thanks
-> Nuno Fernandes
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
+Cheers,
 
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
