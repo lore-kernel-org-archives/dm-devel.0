@@ -1,16 +1,16 @@
 From: Nuno Fernandes <npf-mlists@eurotux.com>
 Subject: Re: Device-mapper-multipath RDAC
-Date: Tue, 25 Sep 2007 08:50:22 +0100
-Message-ID: <200709250850.23018.npf-mlists@eurotux.com>
+Date: Tue, 25 Sep 2007 09:05:50 +0100
+Message-ID: <200709250905.50349.npf-mlists@eurotux.com>
 References: <200709241706.26322.npf-mlists@eurotux.com>
-	<1190658812.1933.141.camel@linuxchandra>
+	<46F8A29F.6060803@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-  charset="utf-8"
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1190658812.1933.141.camel@linuxchandra>
+In-Reply-To: <46F8A29F.6060803@suse.de>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,8 +24,8 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Monday 24 September 2007 19:33:32 Chandra Seetharaman wrote:
-> On Mon, 2007-09-24 at 17:06 +0100, Nuno Fernandes wrote:
+On Tuesday 25 September 2007 06:54:39 Hannes Reinecke wrote:
+> Nuno Fernandes wrote:
 > > hello,
 > >
 > > Just a question:
@@ -34,31 +34,27 @@ On Monday 24 September 2007 19:33:32 Chandra Seetharaman wrote:
 > > configuration should be in storage DS4700? AVT (Automatic Volume
 > > transfer) turned on or off?
 >
-> Hardware handler is needed only for RDAC mode, AVT would work without
-> the hardware handler.
->
-> The decision to use RDAC or AVT depends on your configuration.
+> Off. AVT is the acronym for 'Automated Volume Transfer', ie the array tries
+> to transfer the volumes from one controller to the other automatically.
 >
 > > When it's turned on, luns keep on jumping from controller to controller..
 >
-> dm-multipath will use the other path (in AVT mode, IOW, jump) only if
-> I/O in the current path fails.
-Yes, but it keeps on jumping because of the multipathd monitoring of alive 
-paths.
+> Indeed. That's to be expected.
+>
+> As a rule:
+>
+> - With rdac hardware handler: AVT off
+I'm in the process of testing avt in the kernel.
 
-I'm was already in the process of using
-linux-2.6-md-add-dm-rdac-hardware-handler.patch from 
-kernel-2.6.18-36.el5.src.rpm (from RHEL5U1 Beta) to rebuild RHEL5.0 stable 
-kernel.. Hope it works..
+> - Without hardware handler: AVT on
+With this situation i don't have any point of failure but the lun keeps on 
+jumping (because of the alive path check of multipathd) and the performance 
+is awfull.
 
-Best rgds
+Best regards
 Nuno Fernandes
 
 >
-> > Thanks
-> > Nuno Fernandes
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
+> Cheers,
+>
+> Hannes
