@@ -1,15 +1,15 @@
-From: Stefan Bader <Stefan.Bader@de.ibm.com>
-Subject: Re: fdisk on a multipath device fails kernel partition
-	re-read
-Date: Mon, 1 Oct 2007 14:59:35 +0200
-Message-ID: <OF10AFAEEE.C15672A1-ONC1257367.00466788-C1257367.004736AC@de.ibm.com>
-References: <448b15030709281328i104c04f0te6dd1ef333b825a3@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: RDAC 09.01.B5.55 with RHEL4 reboot time
+Date: Mon, 01 Oct 2007 10:20:29 -0700
+Message-ID: <1191259229.1933.180.camel@linuxchandra>
+References: <1403218a0710010540r25c03c45ndf5cf08dcbddc7e4@mail.gmail.com>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <448b15030709281328i104c04f0te6dd1ef333b825a3@mail.gmail.com>
+In-Reply-To: <1403218a0710010540r25c03c45ndf5cf08dcbddc7e4@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,48 +22,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Using device-mapper volumes for partioning is wrong in the way DM works.
-DM devices do not use partitions and do not support the ioctl used to
-update the partition table (exception for linear mappings with single
-devices).  Partitions on multipath volumes are created by kpartx as
-linear targets after creating the base multipath target.
-The only safe way that should always be used is to remove the multipath
-volume (multipath -f <mpname>), then call fdisk on the sd device=20
-(optionally
-call blockdev --rereadpt <dev> on all other paths) and the recreate the
-multipath volume by calling multipath.
+Hi,
 
-Mit freundlichem Gru=DF / Regards,
-Stefan Bader
+The RDAC driver you are referring to is an independent driver that
+supports DS4K.
 
-SW Linux on zSeries Development
-Stefan.Bader@de.ibm.com
+Whereas the RDAC driver being talked in this mailing list works under
+DM-Multipath.
 
-IBM Deutschland Entwicklung GmbH
-Vorsitzender des Aufsichtsrats: Martin Jetter
-Gesch=E4ftsf=FChrung: Herbert Kircher
-Sitz der Gesellschaft: B=F6blingen
-Registergericht: Amtsgericht Stuttgart, HRB 243294
--------------------------------------------------------------------------=
----------
-  When all other means of communication fail, try words.
+Please contact your IBM contacts w.r.t the differences in behavior w.r.t
+the different RDAC driver versions you have.
 
-dm-devel-bounces@redhat.com wrote on 28.09.2007 22:28:06:
+regards,
 
-> When I perform an fdisk or sfdisk on a /dev/mapper/ multipath device I
-> get a warning about it failing to re-read the partition information.
-> With fdisk it warns that I'll need to reboot before using the device,
-> with sfdisk it just complains about the ioctl that failed:
->=20
-> Re-reading the partition table ...
-> BLKRRPART: Invalid argument
->=20
-> Is it possible I have something configured wrong? Or is this a problem
-> with the way /dev/mapper nodes work? I get the same result when using
-> /dev/dm-* nodes. With the raw device nodes such as /dev/sd* it works
-> ok.
->=20
+chandra
+On Mon, 2007-10-01 at 15:40 +0300, Voiper wrote:
+> Dear,
+> 
+> Sorry if this is not the proper list, but I have seen people here
+> talking about RDAC, and some of them are IBM engineers.
+> 
+> We have a linux RHEL4 cluster connected to DS4800
+> We have RDAC version 09.01.B5.55, and Qlogic 2300 drivers, kernel
+> 2.6.9-42.ELsmp.
+> We have noticed that the reboot might take 30 minutes, while with RDAC
+> version 09.01.B5.30 it takes much shorter time.
+> 
+> Anyone has experienced this before ??
+> 
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
