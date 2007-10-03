@@ -1,16 +1,9 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Device-mapper-multipath RDAC
-Date: Tue, 02 Oct 2007 10:13:34 -0700
-Message-ID: <1191345214.5831.2.camel@linuxchandra>
-References: <200709241706.26322.npf-mlists@eurotux.com>
-	<46F8A29F.6060803@suse.de>  <200709250852.08464.npf@eurotux.com>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+From: mbroz@sourceware.org
+Subject: device-mapper make.tmpl.in
+Date: 3 Oct 2007 09:00:46 -0000
+Message-ID: <20071003090046.24546.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200709250852.08464.npf@eurotux.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +13,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 2007-09-25 at 08:52 +0100, Nuno Fernandes wrote:
-> On Tuesday 25 September 2007 06:54:39 Hannes Reinecke wrote:
-> > Nuno Fernandes wrote:
-> > > hello,
-> > >
-> > > Just a question:
-> > >
-> > > With recent support for rdac hardware handler in kernel 2.6.23-rc7, what
-> > > configuration should be in storage DS4700? AVT (Automatic Volume
-> > > transfer) turned on or off?
-> >
-> > Off. AVT is the acronym for 'Automated Volume Transfer', ie the array tries
-> > to transfer the volumes from one controller to the other automatically.
-> >
-> > > When it's turned on, luns keep on jumping from controller to controller..
-> >
-> > Indeed. That's to be expected.
-> >
-> > As a rule:
-> >
-> > - With rdac hardware handler: AVT off
-> I'm in the process of testing avt in the kernel.
-> 
-> > - Without hardware handler: AVT on
-> With this situation i don't have any point of failure but the lun keeps on 
-> jumping (because of the alive path check of multipathd) and the performance 
-> is awfull.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	mbroz@sourceware.org	2007-10-03 09:00:45
 
-Hmm... Did you have the configuration entries in multipath.conf (same as
-that of the RDAC case - with the exception of the hardware handler) ?
-> 
-> Best regards
-> Nuno Fernandes
-> 
-> >
-> > Cheers,
-> >
-> > Hannes
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
+Modified files:
+	.              : make.tmpl.in 
 
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+Log message:
+	Fix build, symlink removal used old argument.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/make.tmpl.in.diff?cvsroot=dm&r1=1.34&r2=1.35
+
+--- device-mapper/make.tmpl.in	2007/09/18 14:27:33	1.34
++++ device-mapper/make.tmpl.in	2007/10/03 09:00:45	1.35
+@@ -173,7 +173,7 @@
+ endif
+ 
+ $(VERSIONED_SHLIB): %.$(LIB_SUFFIX).$(LIB_VERSION): %.$(LIB_SUFFIX)
+-	rm -f $@
++	rm -f $(notdir $@)
+ 	$(LN_S) $< $(notdir $@)
+ 
+ $(LIB_STATIC): $(OBJECTS)
