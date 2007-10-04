@@ -1,19 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: dm-ioctl on amd64 with 32bit userspace
-Date: Thu, 4 Oct 2007 18:28:24 +0100
-Message-ID: <20071004172824.GV18444@agk.fab.redhat.com>
-References: <20070917165726.GA11958@bogon.ms20.nix>
-	<20070920153210.GP18444@agk.fab.redhat.com>
-	<20070920184641.GA5869@bogon.ms20.nix>
-	<20070929132754.GA19089@bogon.ms20.nix>
-	<20071002010519.GB18444@agk.fab.redhat.com>
-	<20071002071647.GA11183@bogon.ms20.nix>
+From: Dave Wysochanski <dwysocha@redhat.com>
+Subject: RE: Multipath issues with kernel device errors
+Date: Thu, 04 Oct 2007 14:49:06 -0400
+Message-ID: <1191523746.4406.15.camel@linux-cxyg>
+References: <8CED8CEBA23FC0409E1A3009F7F47BE502471065@exchange.g2switchworks.com>
+	<1188333723.12737.7.camel@linuxchandra>
+	<8CED8CEBA23FC0409E1A3009F7F47BE502471086@exchange.g2switchworks.com>
+	<1188338656.12737.18.camel@linuxchandra> <46D50ECF.6020701@suse.de>
+	<8CED8CEBA23FC0409E1A3009F7F47BE5024711B7@exchange.g2switchworks.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20071002071647.GA11183@bogon.ms20.nix>
+In-Reply-To: <8CED8CEBA23FC0409E1A3009F7F47BE5024711B7@exchange.g2switchworks.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,100 +22,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Guido Guenther <agx@sigxcpu.org>
-Cc: Andrew Morton <akpm@osdl.org>, dm-devel@redhat.com, Kevin Corry <kevcorry@us.ibm.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Here's the latest - hopefully final - incarnation of the patch.
+On Wed, 2007-08-29 at 11:58 -0500, Jeffry Bilder wrote:
+> Are the errors in the kernel log normal:
+> 
+> 
+> Aug 28 10:30:15 rac02 kernel: end_request: I/O error, dev sdf, sector 513824
+> Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical block 64228
+> Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical block 64229
+> Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical block 64230
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64231
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64232
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64233
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64234
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64235
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64236
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64237
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64238
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64239
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64240
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64241
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64242
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64243
+> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513824
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64228
+> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513824
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64228
+> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 514064
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64258
+> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513680
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64210
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64211
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64212
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64213
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64214
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64215
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64216
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64217
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64218
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64219
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64220
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64221
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64222
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64223
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64224
+> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64225
+> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
+> 
+> 
 
-Alasdair.
-
-
-From: Milan Broz <mbroz@redhat.com>
-
-Make size of dm_ioctl struct always 312 bytes on all supported
-architectures.
-
-This change retains compatibility with already-compiled code because
-it uses an embedded offset to locate the payload that follows the
-structure.
-
-On 64-bit architectures there is no change at all; on 32-bit
-we are increasing the size of dm-ioctl from 308 to 312 bytes.
-
-Currently with 32-bit userspace / 64-bit kernel on x86_64
-some ioctls (including rename, message) are incorrectly rejected
-by the comparison against 'param + 1'.  This breaks userspace
-lvrename and multipath 'fail_if_no_path' changes, for example.
-
-(BTW Device-mapper uses its own versioning and ignores the ioctl
-size bits.  Only the generic ioctl compat code on mixed arches
-checks them, and that will continue to accept both sizes for now,
-but we intend to list 308 as deprecated and eventually remove it.)
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Cc: Guido Guenther <agx@sigxcpu.org>
-Cc: Kevin Corry <kevcorry@us.ibm.com>
-Cc: stable@kernel.org
-
----
- drivers/md/dm-ioctl.c    |    6 +++---
- include/linux/dm-ioctl.h |    5 +++--
- 2 files changed, 6 insertions(+), 5 deletions(-)
-
-Index: linux-2.6.23-rc8/drivers/md/dm-ioctl.c
-===================================================================
---- linux-2.6.23-rc8.orig/drivers/md/dm-ioctl.c	2007-10-04 17:24:00.000000000 +0100
-+++ linux-2.6.23-rc8/drivers/md/dm-ioctl.c	2007-10-04 17:24:02.000000000 +0100
-@@ -700,7 +700,7 @@ static int dev_rename(struct dm_ioctl *p
- 	int r;
- 	char *new_name = (char *) param + param->data_start;
- 
--	if (new_name < (char *) (param + 1) ||
-+	if (new_name < (char *) param->data ||
- 	    invalid_str(new_name, (void *) param + param_size)) {
- 		DMWARN("Invalid new logical volume name supplied.");
- 		return -EINVAL;
-@@ -726,7 +726,7 @@ static int dev_set_geometry(struct dm_io
- 	if (!md)
- 		return -ENXIO;
- 
--	if (geostr < (char *) (param + 1) ||
-+	if (geostr < (char *) param->data ||
- 	    invalid_str(geostr, (void *) param + param_size)) {
- 		DMWARN("Invalid geometry supplied.");
- 		goto out;
-@@ -1233,7 +1233,7 @@ static int target_message(struct dm_ioct
- 	if (r)
- 		goto out;
- 
--	if (tmsg < (struct dm_target_msg *) (param + 1) ||
-+	if (tmsg < (struct dm_target_msg *) param->data ||
- 	    invalid_str(tmsg->message, (void *) param + param_size)) {
- 		DMWARN("Invalid target message parameters.");
- 		r = -EINVAL;
-Index: linux-2.6.23-rc8/include/linux/dm-ioctl.h
-===================================================================
---- linux-2.6.23-rc8.orig/include/linux/dm-ioctl.h	2007-10-04 17:24:00.000000000 +0100
-+++ linux-2.6.23-rc8/include/linux/dm-ioctl.h	2007-10-04 17:24:02.000000000 +0100
-@@ -131,6 +131,7 @@ struct dm_ioctl {
- 	char name[DM_NAME_LEN];	/* device name */
- 	char uuid[DM_UUID_LEN];	/* unique identifier for
- 				 * the block device */
-+	char data[7];		/* padding or data */
- };
- 
- /*
-@@ -285,9 +286,9 @@ typedef char ioctl_struct[308];
- #define DM_DEV_SET_GEOMETRY	_IOWR(DM_IOCTL, DM_DEV_SET_GEOMETRY_CMD, struct dm_ioctl)
- 
- #define DM_VERSION_MAJOR	4
--#define DM_VERSION_MINOR	11
-+#define DM_VERSION_MINOR	12
- #define DM_VERSION_PATCHLEVEL	0
--#define DM_VERSION_EXTRA	"-ioctl (2006-10-12)"
-+#define DM_VERSION_EXTRA	"-ioctl (2007-10-02)"
- 
- /* Status bits */
- #define DM_READONLY_FLAG	(1 << 0) /* In/Out */
+Yes unfortunately these are normal for this array and any array that has
+passive paths.  There are fixes needed in the kernel to eliminate these
+errors.
