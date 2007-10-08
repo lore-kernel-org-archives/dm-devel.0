@@ -1,18 +1,16 @@
-From: Dave Wysochanski <dwysocha@redhat.com>
-Subject: RE: Multipath issues with kernel device errors
-Date: Thu, 04 Oct 2007 14:49:06 -0400
-Message-ID: <1191523746.4406.15.camel@linux-cxyg>
-References: <8CED8CEBA23FC0409E1A3009F7F47BE502471065@exchange.g2switchworks.com>
-	<1188333723.12737.7.camel@linuxchandra>
-	<8CED8CEBA23FC0409E1A3009F7F47BE502471086@exchange.g2switchworks.com>
-	<1188338656.12737.18.camel@linuxchandra> <46D50ECF.6020701@suse.de>
-	<8CED8CEBA23FC0409E1A3009F7F47BE5024711B7@exchange.g2switchworks.com>
+From: Voiper <eldesoky.lists@gmail.com>
+Subject: Re: RDAC 09.01.B5.55 with RHEL4 reboot time
+Date: Mon, 8 Oct 2007 11:39:17 +0300
+Message-ID: <1403218a0710080139y3a257bc8lde1666f289131b96@mail.gmail.com>
+References: <1403218a0710010540r25c03c45ndf5cf08dcbddc7e4@mail.gmail.com>
+	<1191259229.1933.180.camel@linuxchandra>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <8CED8CEBA23FC0409E1A3009F7F47BE5024711B7@exchange.g2switchworks.com>
+In-Reply-To: <1191259229.1933.180.camel@linuxchandra>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,61 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2007-08-29 at 11:58 -0500, Jeffry Bilder wrote:
-> Are the errors in the kernel log normal:
-> 
-> 
-> Aug 28 10:30:15 rac02 kernel: end_request: I/O error, dev sdf, sector 513824
-> Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical block 64228
-> Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical block 64229
-> Aug 28 10:30:15 rac02 kernel: Buffer I/O error on device sdf, logical block 64230
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64231
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64232
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64233
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64234
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64235
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64236
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64237
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64238
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64239
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64240
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64241
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64242
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64243
-> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
-> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513824
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64228
-> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
-> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513824
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64228
-> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
-> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 514064
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64258
-> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
-> Aug 28 10:30:16 rac02 kernel: end_request: I/O error, dev sdf, sector 513680
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64210
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64211
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64212
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64213
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64214
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64215
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64216
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64217
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64218
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64219
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64220
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64221
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64222
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64223
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64224
-> Aug 28 10:30:16 rac02 kernel: Buffer I/O error on device sdf, logical block 64225
-> Aug 28 10:30:16 rac02 kernel: Device sdf not ready.
-> 
-> 
+Sorry, you mean there are two different RDAC products ???
 
-Yes unfortunately these are normal for this array and any array that has
-passive paths.  There are fixes needed in the kernel to eliminate these
-errors.
+On 10/1/07, Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+> Hi,
+>
+> The RDAC driver you are referring to is an independent driver that
+> supports DS4K.
+>
+> Whereas the RDAC driver being talked in this mailing list works under
+> DM-Multipath.
+>
+> Please contact your IBM contacts w.r.t the differences in behavior w.r.t
+> the different RDAC driver versions you have.
+>
+> regards,
+>
+> chandra
+> On Mon, 2007-10-01 at 15:40 +0300, Voiper wrote:
+> > Dear,
+> >
+> > Sorry if this is not the proper list, but I have seen people here
+> > talking about RDAC, and some of them are IBM engineers.
+> >
+> > We have a linux RHEL4 cluster connected to DS4800
+> > We have RDAC version 09.01.B5.55, and Qlogic 2300 drivers, kernel
+> > 2.6.9-42.ELsmp.
+> > We have noticed that the reboot might take 30 minutes, while with RDAC
+> > version 09.01.B5.30 it takes much shorter time.
+> >
+> > Anyone has experienced this before ??
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> --
+>
+> ----------------------------------------------------------------------
+>     Chandra Seetharaman               | Be careful what you choose....
+>               - sekharan@us.ibm.com   |      .......you may get it.
+> ----------------------------------------------------------------------
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
