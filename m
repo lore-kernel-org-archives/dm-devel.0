@@ -1,8 +1,11 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 9 Oct 2007 21:48:20 -0000
-Message-ID: <20071009214820.18363.qmail@sourceware.org>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: [PATCH] dmeventd: fix typo in configure.in causing
+	monitoring failure
+Date: Tue, 09 Oct 2007 18:46:06 -0400
+Message-ID: <470C04AE.3060701@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="------------030903010309020004030105"
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,112 +16,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-10-09 21:48:20
+This is a multi-part message in MIME format.
+--------------030903010309020004030105
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
-	multipath      : multipath.conf.redhat 
-	path_priority/pp_netapp: Makefile 
+Hi,
 
-Log message:
-	add symlink for mpath_prio_ontap and clean up default config file.
+Attached patch fixes a typo in configure.in of device-mapper.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.6&r2=1.5.4.7
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.7&r2=1.20.2.8
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.4&r2=1.6.2.5
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.2&r2=1.2.2.3
+As a result of the typo, DMEVENTD_PATH in libdevmapper-event
+could be set ignoring "exec_prefix" and the monitoring may not
+work.
 
---- multipath-tools/multipath.conf.defaults	2007/09/06 16:22:25	1.5.4.6
-+++ multipath-tools/multipath.conf.defaults	2007/10/09 21:48:19	1.5.4.7
-@@ -287,7 +287,7 @@
- #		vendor			"NETAPP"
- #		product			"LUN"
- #		getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
--#		prio_callout		"/sbin/mpath_prio_netapp /dev/%n"
-+#		prio_callout		"/sbin/mpath_prio_ontap /dev/%n"
- #		features		"1 queue_if_no_path"
- #		hardware_handler	"0"
- #		path_grouping_policy	group_by_prio
-@@ -300,7 +300,7 @@
- #		vendor			"IBM"
- #		product			"Nseries.*"
- #		getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
--#		prio_callout		"/sbin/mpath_prio_netapp /dev/%n"
-+#		prio_callout		"/sbin/mpath_prio_ontap /dev/%n"
- #		features		"1 queue_if_no_path"
- #		hardware_handler	"0"
- #		path_grouping_policy	group_by_prio
---- multipath-tools/libmultipath/hwtable.c	2007/09/06 16:21:38	1.20.2.7
-+++ multipath-tools/libmultipath/hwtable.c	2007/10/09 21:48:19	1.20.2.8
-@@ -394,7 +394,7 @@
- 		.vendor        = "NETAPP",
- 		.product       = "LUN.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_netapp /dev/%n",
-+		.getprio       = "/sbin/mpath_prio_ontap /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -415,7 +415,7 @@
- 		.vendor        = "IBM",
- 		.product       = "Nseries.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_netapp /dev/%n",
-+		.getprio       = "/sbin/mpath_prio_ontap /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
---- multipath-tools/multipath/multipath.conf.redhat	2007/06/19 18:12:15	1.6.2.4
-+++ multipath-tools/multipath/multipath.conf.redhat	2007/10/09 21:48:20	1.6.2.5
-@@ -1,8 +1,9 @@
--# This is an example configuration file for device mapper multipath.
-+# This is a basic configuration file with some examples, for device mapper
-+# multipath.
- # For a complete list of the default configuration values, see
--# /usr/share/doc/device-mapper-multipath-0.4.5/multipath.conf.defaults
-+# /usr/share/doc/device-mapper-multipath-0.4.7/multipath.conf.defaults
- # For a list of configuration options with descriptions, see
--# /usr/share/doc/device-mapper-multipath-0.4.5/multipath.conf.annotated
-+# /usr/share/doc/device-mapper-multipath-0.4.7/multipath.conf.annotated
+For example, LVM2 may complain it can't communicate with dmeventd:
+
+# lvm.static lvcreate -m1 -l1 testvg
+  Unable to read from event server.
+  Unable to read from event server.
+  testvg-lvol0: event registration failed: Input/output error
+  testvg/lvol0: mirror segment monitoring function failed.
+  Logical volume "lvol0" created
+
+while in the background, dmeventd caused segfault soon after startup:
+
+From syslog:
+  dmeventd[688]: dmeventd ready for processing.
+  kernel: dmeventd[688]: segfault at 08000000 eip 4ff615a7 esp bfafe2f8 error 4
+
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation of America
+
+--------------030903010309020004030105
+Content-Type: text/x-patch;
+ name="dm-fix-configure-dmeventd-prefix.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline; filename="dm-fix-configure-dmeventd-prefix.patch"
+
+Fix a typo in configure.in ("dmeventd_pref" should be "dmeventd_prefix")
+
+As a result of this typo, LVM2 commands might try to invoke dmeventd
+which doesn't match to the library version and monitoring fails to work.
+
+Index: device-mapper.work/configure.in
+===================================================================
+--- device-mapper.work.orig/configure.in
++++ device-mapper.work/configure.in
+@@ -394,7 +394,7 @@ if test "$DMEVENTD" = yes; then
+ 	AC_ARG_WITH(dmeventd-path,
+   		    [  --with-dmeventd-path=PATH       dmeventd path [[${exec_prefix}/sbin/dmeventd]] ],
+   		    [ AC_DEFINE_UNQUOTED(DMEVENTD_PATH,"$withval") ],
+-  		    [ AC_DEFINE_UNQUOTED(DMEVENTD_PATH,"$dmeventd_pref/sbin/dmeventd") ])
++  		    [ AC_DEFINE_UNQUOTED(DMEVENTD_PATH,"$dmeventd_prefix/sbin/dmeventd") ])
+ fi
+ ################################################################################
+ AC_SUBST(usrlibdir)
+Index: device-mapper.work/configure
+===================================================================
+--- device-mapper.work.orig/configure
++++ device-mapper.work/configure
+@@ -6646,7 +6646,7 @@ _ACEOF
  
+ else
+    cat >>confdefs.h <<_ACEOF
+-#define DMEVENTD_PATH "$dmeventd_pref/sbin/dmeventd"
++#define DMEVENTD_PATH "$dmeventd_prefix/sbin/dmeventd"
+ _ACEOF
  
- # Blacklist all devices by default. Remove this to enable multipathing
-@@ -26,9 +27,9 @@
- 	user_friendly_names yes
- }
- ##
--## This is a template multipath-tools configuration file
--## Uncomment the lines relevent to your environment
-+## Here is an example of how to configure some standard options.
- ##
-+#
- #defaults {
- #	udev_dir		/dev
- #	polling_interval 	10
-@@ -45,7 +46,7 @@
- #}
- ##
- ## The wwid line in the following blacklist section is shown as an example
--## of how to blacklist devices by wwid.  The 3 devnode lines are the
-+## of how to blacklist devices by wwid.  The 2 devnode lines are the
- ## compiled in default blacklist. If you want to blacklist entire types
- ## of devices, such as all scsi devices, you should use a devnode line.
- ## However, if you want to blacklist specific devices, you should use
---- multipath-tools/path_priority/pp_netapp/Makefile	2007/06/15 21:03:14	1.2.2.2
-+++ multipath-tools/path_priority/pp_netapp/Makefile	2007/10/09 21:48:20	1.2.2.3
-@@ -17,6 +17,7 @@
- install: $(EXEC)
- 	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
- 	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
-+	ln -s $(DESTDIR)$(bindir)/$(EXEC) $(DESTDIR)$(bindir)/mpath_prio_ontap
- 
- uninstall:
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
+ fi
+
+--------------030903010309020004030105
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--------------030903010309020004030105--
