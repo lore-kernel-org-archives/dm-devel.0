@@ -1,15 +1,9 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [lvm-devel] Allow $DM_DEVDIR envvar to override
-	default of "/dev".
-Date: Tue, 9 Oct 2007 03:00:40 +0100
-Message-ID: <20071009020040.GR10006@agk.fab.redhat.com>
-References: <87przp1psr.fsf@rho.meyering.net>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/path_priority/pp_netapp pp_net ...
+Date: 9 Oct 2007 05:13:45 -0000
+Message-ID: <20071009051345.17082.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <87przp1psr.fsf@rho.meyering.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +13,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jim Meyering <jim@meyering.net>
-Cc: device-mapper development <dm-devel@redhat.com>, LVM <lvm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Oct 08, 2007 at 07:25:56PM +0200, Jim Meyering wrote:
-> any existing LVM set-up, I've been using LVM_SYSTEM_DIR to specify
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-10-09 05:13:45
 
-> Here's a patch to make dmsetup honor a new DM_DEVDIR envvar,
+Modified files:
+	path_priority/pp_netapp: pp_netapp.c 
 
-Small point, but should that be DM_DEV_DIR for consistency with
-LVM_SYSTEM_DIR ?
+Log message:
+	Pulled in the bugfixes from the netapp patch in bz282131.
 
-> +	} else {
-> +		dev_dir = "/dev";
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/pp_netapp.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.4.1
 
-Can you make that a #define at the top of the file?
-(Try to keep hard-coded values easy to spot.)
-
-> +	if (*dev_dir != '/')
-> +		return 0;
-
-log_error ?
-(Functions should produce an error message as close as possible to the
-place the problem is detected; all functions that return failure must
-log a message before returning - using a macro like 'stack' if you don't
-want the user to see it.  The only exceptions (very rare) are functions
-expected to fail frequently that would produce too many log messages.)
-
-> +	if (snprintf(_dm_dir, sizeof _dm_dir, "%s%s%s", dev_dir, slash, DM_DIR)
-> +	    >= sizeof _dm_dir)
-> +		return 0;
-
-and here
-
-Also consider dm_snprintf rather than snprintf.
-[lvm2 uses this, but bits of dm haven't been converted]
-
-Alasdair
--- 
-agk@redhat.com
+--- multipath-tools/path_priority/pp_netapp/pp_netapp.c	2005/11/21 23:28:32	1.1
++++ multipath-tools/path_priority/pp_netapp/pp_netapp.c	2007/10/09 05:13:44	1.1.4.1
+@@ -29,7 +29,7 @@
+ #define INQUIRY_CMDLEN	6
+ #define DEFAULT_PRIO	10
+ #define RESULTS_MAX	256
+-#define SG_TIMEOUT	30000
++#define SG_TIMEOUT	60000
+ 
+ 
+ static void dump_cdb(unsigned char *cdb, int size)
+@@ -209,7 +209,7 @@
+ 
+ 	memset(&results, 0, sizeof (results));
+ 	rc = send_gva(dev, 0x41, results, &results_size);
+-	if (rc == 0) {
++	if (rc >= 0) {
+ 		tot_len = results[0] << 24 | results[1] << 16 |
+ 			  results[2] << 8 | results[3];
+ 		if (tot_len <= 8) {
+@@ -229,12 +229,16 @@
+ 			is_iscsi_hardware = 1;
+ 			goto prio_select;
+ 		}
++	} else {
++		return 0;
+ 	}
+ 	
+  try_fcp_proxy:	
+ 	rc = get_proxy(dev);
+ 	if (rc >= 0) {
+ 		is_proxy = rc;
++	} else {
++		return 0;
+ 	}
+ 
+  prio_select:
