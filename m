@@ -1,12 +1,15 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] device-mapper: fix bd_mount_sem corruption
-Date: Mon, 08 Oct 2007 19:31:49 -0400
-Message-ID: <470ABDE5.30200@ce.jp.nec.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [lvm-devel] Allow $DM_DEVDIR envvar to override
+	default of "/dev".
+Date: Tue, 9 Oct 2007 03:00:40 +0100
+Message-ID: <20071009020040.GR10006@agk.fab.redhat.com>
+References: <87przp1psr.fsf@rho.meyering.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <87przp1psr.fsf@rho.meyering.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,63 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: Jim Meyering <jim@meyering.net>
+Cc: device-mapper development <dm-devel@redhat.com>, LVM <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, Oct 08, 2007 at 07:25:56PM +0200, Jim Meyering wrote:
+> any existing LVM set-up, I've been using LVM_SYSTEM_DIR to specify
 
-This patch fixes a bd_mount_sem counter corruption bug in device-mapper.
+> Here's a patch to make dmsetup honor a new DM_DEVDIR envvar,
 
-thaw_bdev() should be called only when freeze_bdev() was called for the
-device.
-Otherwise, thaw_bdev() will up bd_mount_sem and corrupt the semaphore counter.
-struct block_device with the corrupted semaphore may remain in slab cache
-and be reused later.
+Small point, but should that be DM_DEV_DIR for consistency with
+LVM_SYSTEM_DIR ?
 
-Attached patch will fix it by calling unlock_fs() instead.
-unlock_fs() will determine whether it should call thaw_bdev()
-by checking the device is frozen or not.
+> +	} else {
+> +		dev_dir = "/dev";
 
-Easy reproducer is:
-  #!/bin/sh
-  while [ 1 ]; do
-     dmsetup --notable create a
-     dmsetup --nolockfs suspend a
-     dmsetup remove a
-  done
+Can you make that a #define at the top of the file?
+(Try to keep hard-coded values easy to spot.)
 
-It's not easy to see the effect of corrupted semaphore.
-So I have tested with putting printk below in bdev_alloc_inode():
-        if (atomic_read(&ei->bdev.bd_mount_sem.count) != 1)
-                printk(KERN_DEBUG "Incorrect semaphore count = %d (%p)\n",
-                        atomic_read(&ei->bdev.bd_mount_sem.count),
-                        &ei->bdev);
+> +	if (*dev_dir != '/')
+> +		return 0;
 
-Without the patch, I saw something like:
- Incorrect semaphore count = 17 (f2ab91c0)
+log_error ?
+(Functions should produce an error message as close as possible to the
+place the problem is detected; all functions that return failure must
+log a message before returning - using a macro like 'stack' if you don't
+want the user to see it.  The only exceptions (very rare) are functions
+expected to fail frequently that would produce too many log messages.)
 
-With the patch, the message didn't appear.
+> +	if (snprintf(_dm_dir, sizeof _dm_dir, "%s%s%s", dev_dir, slash, DM_DIR)
+> +	    >= sizeof _dm_dir)
+> +		return 0;
 
+and here
 
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Also consider dm_snprintf rather than snprintf.
+[lvm2 uses this, but bits of dm haven't been converted]
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 2120155..998d450 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1064,12 +1064,14 @@ static struct mapped_device *alloc_dev(int minor)
- 	return NULL;
- }
- 
-+static void unlock_fs(struct mapped_device *md);
-+
- static void free_dev(struct mapped_device *md)
- {
- 	int minor = md->disk->first_minor;
- 
- 	if (md->suspended_bdev) {
--		thaw_bdev(md->suspended_bdev, NULL);
-+		unlock_fs(md);
- 		bdput(md->suspended_bdev);
- 	}
- 	mempool_destroy(md->tio_pool);
+Alasdair
+-- 
+agk@redhat.com
