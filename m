@@ -1,8 +1,10 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/path_priority/pp_netapp pp_net ...
-Date: 9 Oct 2007 05:13:45 -0000
-Message-ID: <20071009051345.17082.qmail@sourceware.org>
+From: =?GBK?B?tq266ces?= <dhongqian@163.com>
+Subject: device-mapper: dm-multipath: Failing path
+Date: Tue, 9 Oct 2007 18:16:10 +0800 (CST)
+Message-ID: <10010466.349431191924970937.JavaMail.coremail@bj163app24.163.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0618787611=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,57 +15,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-10-09 05:13:45
+--===============0618787611==
+Content-Type: multipart/Alternative;
+	boundary="----=_Part_38074_25790811.1191924970934"
 
-Modified files:
-	path_priority/pp_netapp: pp_netapp.c 
+------=_Part_38074_25790811.1191924970934
+Content-Type: text/plain; charset=gbk
+Content-Transfer-Encoding: 7bit
 
-Log message:
-	Pulled in the bugfixes from the netapp patch in bz282131.
+Hi, All:     Some servers's message have the following problem: Jul 29 15:55:19 nd04 kernel: sd 0:0:3:0: SCSI error: return code = 0x20000
+Jul 29 15:55:19 nd04 kernel: end_request: I/O error, dev sdc, sector 1673673255
+Jul 29 15:55:19 nd04 kernel: end_request: I/O error, dev sdc, sector 1673673263
+Jul 29 15:55:19 nd04 kernel: device-mapper: dm-multipath: Failing path 8:32.
+Jul 29 15:55:19 nd04 multipathd: 8:32: mark as failed
+Jul 29 15:55:19 nd04 multipathd: STOYOU___NetStor_DA9420F0CAC746E073C4300: Entering recovery mode: max_retries=100
+Jul 29 15:55:19 nd04 multipathd: STOYOU___NetStor_DA9420F0CAC746E073C4300: remaining active paths: 0
+Jul 29 15:55:20 nd04 multipathd: sdc: readsector0 checker reports path is up     The problem occurs quite often, especially when it has heavy business.        My OS is CentOS 4,     Thanks and regards                    hongqina           
+------=_Part_38074_25790811.1191924970934
+Content-Type: text/html; charset=gbk
+Content-Transfer-Encoding: quoted-printable
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/pp_netapp.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.4.1
+<DIV>Hi, All:</DIV>
+<DIV>&nbsp;&nbsp; </DIV>
+<DIV>&nbsp;&nbsp; Some servers's message have the following problem:</DIV>
+<DIV>&nbsp;</DIV>
+<DIV>Jul 29 15:55:19 nd04 kernel: sd 0:0:3:0: SCSI error: return code =3D 0=
+x20000<BR>Jul 29 15:55:19 nd04 kernel: end_request: I/O error, dev sdc, sec=
+tor 1673673255<BR>Jul 29 15:55:19 nd04 kernel: end_request: I/O error, dev =
+sdc, sector 1673673263<BR>Jul 29 15:55:19 nd04 kernel: device-mapper: dm-mu=
+ltipath: Failing path 8:32.<BR>Jul 29 15:55:19 nd04 multipathd: 8:32: mark =
+as failed<BR>Jul 29 15:55:19 nd04 multipathd: STOYOU___NetStor_DA9420F0CAC7=
+46E073C4300: Entering recovery mode: max_retries=3D100<BR>Jul 29 15:55:19 n=
+d04 multipathd: STOYOU___NetStor_DA9420F0CAC746E073C4300: remaining active =
+paths: 0<BR>Jul 29 15:55:20 nd04 multipathd: sdc: readsector0 checker repor=
+ts path is up </DIV>
+<DIV>&nbsp;</DIV>
+<DIV>&nbsp;&nbsp;&nbsp; The problem occurs quite often, especially when it =
+has heavy business. </DIV>
+<DIV>&nbsp;</DIV>
+<DIV>&nbsp;&nbsp;&nbsp; </DIV>
+<DIV>&nbsp;&nbsp;&nbsp; My OS is CentOS 4, </DIV>
+<DIV>&nbsp;</DIV>
+<DIV>&nbsp;&nbsp;&nbsp; Thanks and regards</DIV>
+<DIV>&nbsp;</DIV>
+<DIV>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
+p;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; hongqina</DIV>
+<DIV>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DIV>
+<DIV>&nbsp;</DIV>
+<DIV>&nbsp;</DIV><br><!-- footer --><br>
+<hr>
+<table width=3D"100%%" border=3D"0" cellspacing=3D"0" cellpadding=3D"0">
+  <tr>
+    <td width=3D"50" height=3D"50"><img src=3D"http://mimg.163.com/hd/163/1=
+63footer/163footer_50.jpg" alt=3D"LOGO" width=3D"50" height=3D"50"></td>
+    <td style=3D"padding:5px;"><a style=3D"font-size:12px;color:black; line=
+-height:20px;text-decoration:none;" href=3D"http://popme.163.com/link/00351=
+5_0929_938.html">=B0=D1=B0=AE=D0=C4=D7=A2=C8=EB=C5=A3=C4=CC=A3=AC=B9=B2=CD=
+=AC=C4=FD=BE=DB=D5=E2=B7=DD=C1=A6=C1=BF</a><br /><a style=3D"font-size:12px=
+;line-height:20px; color:black; text-decoration:none;" href=3D"http://popme=
+163.com/link/003515_0929_938.html">=BF=EC=C0=B4=B2=CE=BC=D3=C3=C9=C5=A3=C3=
+=E2=B7=D1=D4=F9=C4=CC=B0=AE=D0=C4=D0=D0=B6=AF </a></td>
+  </tr>
+</table>
 
---- multipath-tools/path_priority/pp_netapp/pp_netapp.c	2005/11/21 23:28:32	1.1
-+++ multipath-tools/path_priority/pp_netapp/pp_netapp.c	2007/10/09 05:13:44	1.1.4.1
-@@ -29,7 +29,7 @@
- #define INQUIRY_CMDLEN	6
- #define DEFAULT_PRIO	10
- #define RESULTS_MAX	256
--#define SG_TIMEOUT	30000
-+#define SG_TIMEOUT	60000
- 
- 
- static void dump_cdb(unsigned char *cdb, int size)
-@@ -209,7 +209,7 @@
- 
- 	memset(&results, 0, sizeof (results));
- 	rc = send_gva(dev, 0x41, results, &results_size);
--	if (rc == 0) {
-+	if (rc >= 0) {
- 		tot_len = results[0] << 24 | results[1] << 16 |
- 			  results[2] << 8 | results[3];
- 		if (tot_len <= 8) {
-@@ -229,12 +229,16 @@
- 			is_iscsi_hardware = 1;
- 			goto prio_select;
- 		}
-+	} else {
-+		return 0;
- 	}
- 	
-  try_fcp_proxy:	
- 	rc = get_proxy(dev);
- 	if (rc >= 0) {
- 		is_proxy = rc;
-+	} else {
-+		return 0;
- 	}
- 
-  prio_select:
+------=_Part_38074_25790811.1191924970934--
+
+
+--===============0618787611==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0618787611==--
