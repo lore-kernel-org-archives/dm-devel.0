@@ -1,12 +1,8 @@
-From: Eddie Williams <Eddie.Williams@steeleye.com>
-Subject: should the tur libchecker handle unit attention
-	conditions?
-Date: Wed, 10 Oct 2007 11:48:59 -0400
-Message-ID: <1192031339.4086.37.camel@gator.sc.steeleye.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/path_priority/pp_netapp Makefile
+Date: 10 Oct 2007 16:52:42 -0000
+Message-ID: <20071010165242.11324.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,12 +13,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-10-10 16:52:41
 
-I have noticed situations where paths bounce using the tur libchecker
-due to unit attention conditions.  Would there be any objection for
-attempting an automatic single retry in tur.c for a UA condition?
+Modified files:
+	path_priority/pp_netapp: Makefile 
 
-Eddie Williams
+Log message:
+	O.k. mpath_prio_netapp is now a symlink to mpath_prio_ontap.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.3&r2=1.2.2.4
+
+--- multipath-tools/path_priority/pp_netapp/Makefile	2007/10/09 21:48:20	1.2.2.3
++++ multipath-tools/path_priority/pp_netapp/Makefile	2007/10/10 16:52:41	1.2.2.4
+@@ -1,4 +1,4 @@
+-EXEC		= mpath_prio_netapp
++EXEC		= mpath_prio_ontap
+ BUILD		= glibc
+ OBJS		= pp_netapp.o
+ 
+@@ -17,7 +17,8 @@
+ install: $(EXEC)
+ 	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
+ 	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
+-	ln -s $(DESTDIR)$(bindir)/$(EXEC) $(DESTDIR)$(bindir)/mpath_prio_ontap
++	ln -sf $(DESTDIR)$(bindir)/$(EXEC) $(DESTDIR)$(bindir)/mpath_prio_netapp
++	ln -sf $(DESTDIR)$(bindir)/$(EXEC).static $(DESTDIR)$(bindir)/mpath_prio_netapp.static
+ 
+ uninstall:
+ 	rm $(DESTDIR)$(bindir)/$(EXEC)
