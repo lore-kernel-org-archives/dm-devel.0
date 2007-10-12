@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.24 PATCH 21/25] dm mpath: add retry pg init
-Date: Fri, 12 Oct 2007 18:22:08 +0100
-Message-ID: <20071012172208.GG24157@agk.fab.redhat.com>
+Subject: [2.6.24 PATCH 22/25] dm mpath: add hp handler
+Date: Fri, 12 Oct 2007 18:23:05 +0100
+Message-ID: <20071012172305.GH24157@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,202 +22,265 @@ List-Id: dm-devel.ids
 
 From: Dave Wysochanski <dwysocha@redhat.com>
 
-This patch allows a failed path group initialisation command to be retried.
-
-It adds a generic MP_RETRY flag and a "pg_init_retries" feature to
-device-mapper multipath which limits the number of retries.
-
-1. A hw handler sends a path initialization command to the storage and
-the command completes with an error code indicating the command
-should be retried.  
-
-2. The hardware handler calls dm_pg_init_complete() with MP_RETRY
-set in err_flags to ask the dm multipath core to retry.
-
-3. If the retry limit has not been exceeded, pg_init() is retried.
-Otherwise fail_path() is called.
-
-
-If you are using the userspace multipath-tools or device-mapper-multipath
-package, you can set pg_init_retries in the 'device' section of your
-/etc/multipath.conf file. For example:
-
-features                "2 pg_init_retries 7"
-
-The number of PG retries attempted is reported in the 'dmsetup status' output.
+This patch adds the most basic dm-multipath hardware support for the 
+HP active/passive arrays.
 
 Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
-Acked-by: Mike Christie <michaelc@cs.wisc.edu>
+Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
 Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
 ---
+ drivers/md/Kconfig          |    6 +
+ drivers/md/Makefile         |    2 
+ drivers/md/dm-mpath-hp-sw.c |  206 ++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 214 insertions(+)
 
-[AGK TODO: Perform a fresh review of the state machine changes related to dm_pg_init_complete.]
-
- drivers/md/dm-hw-handler.h |    1 
- drivers/md/dm-mpath.c      |   81 +++++++++++++++++++++++++++++++++++++--------
- 2 files changed, 68 insertions(+), 14 deletions(-)
-
-Index: linux-2.6.23/drivers/md/dm-hw-handler.h
+Index: linux-2.6.23/drivers/md/Kconfig
 ===================================================================
---- linux-2.6.23.orig/drivers/md/dm-hw-handler.h	2007-10-12 12:36:14.000000000 +0100
-+++ linux-2.6.23/drivers/md/dm-hw-handler.h	2007-10-12 15:03:28.000000000 +0100
-@@ -58,5 +58,6 @@ unsigned dm_scsi_err_handler(struct hw_h
- #define MP_FAIL_PATH 1
- #define MP_BYPASS_PG 2
- #define MP_ERROR_IO  4	/* Don't retry this I/O */
-+#define MP_RETRY 8
+--- linux-2.6.23.orig/drivers/md/Kconfig	2007-10-12 12:36:14.000000000 +0100
++++ linux-2.6.23/drivers/md/Kconfig	2007-10-12 15:03:29.000000000 +0100
+@@ -267,6 +267,12 @@ config DM_MULTIPATH_RDAC
+ 	---help---
+ 	  Multipath support for LSI/Engenio RDAC.
  
- #endif
-Index: linux-2.6.23/drivers/md/dm-mpath.c
++config DM_MULTIPATH_HP
++        tristate "HP MSA multipath support (EXPERIMENTAL)"
++        depends on DM_MULTIPATH && BLK_DEV_DM && EXPERIMENTAL
++        ---help---
++          Multipath support for HP MSA (Active/Passive) series hardware.
++
+ config DM_DELAY
+ 	tristate "I/O delaying target (EXPERIMENTAL)"
+ 	depends on BLK_DEV_DM && EXPERIMENTAL
+Index: linux-2.6.23/drivers/md/Makefile
 ===================================================================
---- linux-2.6.23.orig/drivers/md/dm-mpath.c	2007-10-12 13:14:40.000000000 +0100
-+++ linux-2.6.23/drivers/md/dm-mpath.c	2007-10-12 15:03:28.000000000 +0100
-@@ -75,6 +75,8 @@ struct multipath {
- 	unsigned queue_io;		/* Must we queue all I/O? */
- 	unsigned queue_if_no_path;	/* Queue I/O if last path fails? */
- 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
-+	unsigned pg_init_retries;	/* Number of times to retry pg_init */
-+	unsigned pg_init_count;		/* Number of times pg_init called */
- 
- 	struct work_struct process_queued_ios;
- 	struct bio_list queued_ios;
-@@ -225,6 +227,8 @@ static void __switch_pg(struct multipath
- 		m->pg_init_required = 0;
- 		m->queue_io = 0;
- 	}
-+
-+	m->pg_init_count = 0;
- }
- 
- static int __choose_path_in_pg(struct multipath *m, struct priority_group *pg)
-@@ -424,6 +428,7 @@ static void process_queued_ios(struct wo
- 		must_queue = 0;
- 
- 	if (m->pg_init_required && !m->pg_init_in_progress) {
-+		m->pg_init_count++;
- 		m->pg_init_required = 0;
- 		m->pg_init_in_progress = 1;
- 		init_required = 1;
-@@ -689,9 +694,11 @@ static int parse_features(struct arg_set
- 	int r;
- 	unsigned argc;
- 	struct dm_target *ti = m->ti;
-+	const char *param_name;
- 
- 	static struct param _params[] = {
--		{0, 1, "invalid number of feature args"},
-+		{0, 3, "invalid number of feature args"},
-+		{1, 50, "pg_init_retries must be between 1 and 50"},
- 	};
- 
- 	r = read_param(_params, shift(as), &argc, &ti->error);
-@@ -701,12 +708,28 @@ static int parse_features(struct arg_set
- 	if (!argc)
- 		return 0;
- 
--	if (!strnicmp(shift(as), MESG_STR("queue_if_no_path")))
--		return queue_if_no_path(m, 1, 0);
--	else {
-+	do {
-+		param_name = shift(as);
-+		argc--;
-+
-+		if (!strnicmp(param_name, MESG_STR("queue_if_no_path"))) {
-+			r = queue_if_no_path(m, 1, 0);
-+			continue;
-+		}
-+
-+		if (!strnicmp(param_name, MESG_STR("pg_init_retries")) &&
-+		    (argc >= 1)) {
-+			r = read_param(_params + 1, shift(as),
-+				       &m->pg_init_retries, &ti->error);
-+			argc--;
-+			continue;
-+		}
-+
- 		ti->error = "Unrecognised multipath feature request";
--		return -EINVAL;
--	}
-+		r = -EINVAL;
-+	} while (argc && !r);
-+
-+	return r;
- }
- 
- static int multipath_ctr(struct dm_target *ti, unsigned int argc,
-@@ -976,6 +999,26 @@ static int bypass_pg_num(struct multipat
- }
- 
- /*
-+ * Should we retry pg_init immediately?
+--- linux-2.6.23.orig/drivers/md/Makefile	2007-10-12 12:36:14.000000000 +0100
++++ linux-2.6.23/drivers/md/Makefile	2007-10-12 15:03:29.000000000 +0100
+@@ -8,6 +8,7 @@ dm-multipath-objs := dm-hw-handler.o dm-
+ dm-snapshot-objs := dm-snap.o dm-exception-store.o
+ dm-mirror-objs	:= dm-log.o dm-raid1.o
+ dm-rdac-objs	:= dm-mpath-rdac.o
++dm-hp-sw-objs	:= dm-mpath-hp-sw.o
+ md-mod-objs     := md.o bitmap.o
+ raid456-objs	:= raid5.o raid6algos.o raid6recov.o raid6tables.o \
+ 		   raid6int1.o raid6int2.o raid6int4.o \
+@@ -35,6 +36,7 @@ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+ obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
++obj-$(CONFIG_DM_MULTIPATH_HP)	+= dm-hp-sw.o
+ obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rdac.o
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
+Index: linux-2.6.23/drivers/md/dm-mpath-hp-sw.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.23/drivers/md/dm-mpath-hp-sw.c	2007-10-12 15:03:29.000000000 +0100
+@@ -0,0 +1,206 @@
++/*
++ * Copyright (C) 2005 Mike Christie, All rights reserved.
++ * Copyright (C) 2007 Red Hat, Inc. All rights reserved.
++ * Authors: Mike Christie
++ *          Dave Wysochanski
++ *
++ * This file is released under the GPL.
++ *
++ * This module implements the specific path activation code for
++ * HP StorageWorks and FSC FibreCat Asymmetric (Active/Passive)
++ * storage arrays.
++ * These storage arrays have controller-based failover, not
++ * LUN-based failover.  However, LUN-based failover is the design
++ * of dm-multipath. Thus, this module is written for LUN-based failover.
 + */
-+static int pg_init_limit_reached(struct multipath *m, struct pgpath *pgpath)
++#include <linux/blkdev.h>
++#include <linux/list.h>
++#include <linux/types.h>
++#include <scsi/scsi.h>
++#include <scsi/scsi_cmnd.h>
++
++#include "dm.h"
++#include "dm-hw-handler.h"
++
++#define DM_MSG_PREFIX "multipath hp-sw"
++#define DM_HP_HWH_NAME "hp-sw"
++#define DM_HP_HWH_VER "0.0.3"
++
++struct hp_sw_context {
++	unsigned char sense[SCSI_SENSE_BUFFERSIZE];
++};
++
++/*
++ * hp_sw_end_io - Completion handler for HP path activation.
++ * @req: path activation request
++ * @error: scsi-ml error
++ *
++ *  Check sense data, free request structure, and notify dm that
++ *  pg initialization has completed.
++ *
++ * Context: scsi-ml softirq
++ *
++ * Possible optimizations
++ * 1. Actually check sense data for retryable error (e.g. NOT_READY)
++ */
++static void hp_sw_end_io(struct request *req, int error)
 +{
-+	unsigned long flags;
-+	int limit_reached = 0;
++	struct dm_path *path = req->end_io_data;
++	unsigned err_flags = 0;
 +
-+	spin_lock_irqsave(&m->lock, flags);
++	if (!error)
++		DMDEBUG("%s path activation command - success",
++			path->dev->name);
++	else {
++		DMWARN("%s path activation command - error=0x%x",
++		       path->dev->name, error);
++		err_flags = MP_FAIL_PATH;
++	}
 +
-+	if (m->pg_init_count <= m->pg_init_retries)
-+		m->pg_init_required = 1;
-+	else
-+		limit_reached = 1;
-+
-+	spin_unlock_irqrestore(&m->lock, flags);
-+
-+	return limit_reached;
++	req->end_io_data = NULL;
++	__blk_put_request(req->q, req);
++	dm_pg_init_complete(path, err_flags);
 +}
 +
 +/*
-  * pg_init must call this when it has completed its initialisation
-  */
- void dm_pg_init_complete(struct dm_path *path, unsigned err_flags)
-@@ -985,8 +1028,14 @@ void dm_pg_init_complete(struct dm_path 
- 	struct multipath *m = pg->m;
- 	unsigned long flags;
- 
--	/* We insist on failing the path if the PG is already bypassed. */
--	if (err_flags && pg->bypassed)
-+	/*
-+	 * If requested, retry pg_init until maximum number of retries exceeded.
-+	 * If retry not requested and PG already bypassed, always fail the path.
-+	 */
-+	if (err_flags & MP_RETRY) {
-+		if (pg_init_limit_reached(m, pgpath))
-+			err_flags |= MP_FAIL_PATH;
-+	} else if (err_flags && pg->bypassed)
- 		err_flags |= MP_FAIL_PATH;
- 
- 	if (err_flags & MP_FAIL_PATH)
-@@ -996,7 +1045,7 @@ void dm_pg_init_complete(struct dm_path 
- 		bypass_pg(m, pg, 1);
- 
- 	spin_lock_irqsave(&m->lock, flags);
--	if (err_flags) {
-+	if (err_flags & ~MP_RETRY) {
- 		m->current_pgpath = NULL;
- 		m->current_pg = NULL;
- 	} else if (!m->pg_init_required)
-@@ -1148,11 +1197,15 @@ static int multipath_status(struct dm_ta
- 
- 	/* Features */
- 	if (type == STATUSTYPE_INFO)
--		DMEMIT("1 %u ", m->queue_size);
--	else if (m->queue_if_no_path)
--		DMEMIT("1 queue_if_no_path ");
--	else
--		DMEMIT("0 ");
-+		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
-+	else {
-+		DMEMIT("%u ", m->queue_if_no_path +
-+			      (m->pg_init_retries > 0) * 2);
-+		if (m->queue_if_no_path)
-+			DMEMIT("queue_if_no_path ");
-+		if (m->pg_init_retries)
-+			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
++ * hp_sw_get_request - Allocate an HP specific path activation request
++ * @path: path on which request will be sent (needed for request queue)
++ *
++ * The START command is used for path activation request.
++ * These arrays are controller-based failover, not LUN based.
++ * One START command issued to a single path will fail over all
++ * LUNs for the same controller.
++ *
++ * Possible optimizations
++ * 1. Make timeout configurable
++ * 2. Preallocate request
++ */
++static struct request *hp_sw_get_request(struct dm_path *path)
++{
++	struct request *req;
++	struct block_device *bdev = path->dev->bdev;
++	struct request_queue *q = bdev_get_queue(bdev);
++	struct hp_sw_context *h = path->hwhcontext;
++
++	req = blk_get_request(q, WRITE, GFP_NOIO);
++	if (!req)
++		goto out;
++
++	req->timeout = 60 * HZ;
++
++	req->errors = 0;
++	req->cmd_type = REQ_TYPE_BLOCK_PC;
++	req->cmd_flags |= REQ_FAILFAST | REQ_NOMERGE;
++	req->end_io_data = path;
++	req->sense = h->sense;
++	memset(req->sense, 0, SCSI_SENSE_BUFFERSIZE);
++
++	memset(&req->cmd, 0, BLK_MAX_CDB);
++	req->cmd[0] = START_STOP;
++	req->cmd[4] = 1;
++	req->cmd_len = COMMAND_SIZE(req->cmd[0]);
++
++out:
++	return req;
++}
++
++/*
++ * hp_sw_pg_init - HP path activation implementation.
++ * @hwh: hardware handler specific data
++ * @bypassed: unused; is the path group bypassed? (see dm-mpath.c)
++ * @path: path to send initialization command
++ *
++ * Send an HP-specific path activation command on 'path'.
++ * Do not try to optimize in any way, just send the activation command.
++ * More than one path activation command may be sent to the same controller.
++ * This seems to work fine for basic failover support.
++ *
++ * Possible optimizations
++ * 1. Detect an in-progress activation request and avoid submitting another one
++ * 2. Model the controller and only send a single activation request at a time
++ * 3. Determine the state of a path before sending an activation request
++ *
++ * Context: kmpathd (see process_queued_ios() in dm-mpath.c)
++ */
++static void hp_sw_pg_init(struct hw_handler *hwh, unsigned bypassed,
++			  struct dm_path *path)
++{
++	struct request *req;
++	struct hp_sw_context *h;
++
++	path->hwhcontext = hwh->context;
++	h = hwh->context;
++
++	req = hp_sw_get_request(path);
++	if (!req) {
++		DMERR("%s path activation command - allocation fail",
++		      path->dev->name);
++		goto fail;
 +	}
- 
- 	if (hwh->type && hwh->type->status)
- 		sz += hwh->type->status(hwh, type, result + sz, maxlen - sz);
++
++	DMDEBUG("%s path activation command - sent", path->dev->name);
++
++	blk_execute_rq_nowait(req->q, NULL, req, 1, hp_sw_end_io);
++	return;
++
++fail:
++	dm_pg_init_complete(path, MP_FAIL_PATH);
++}
++
++static int hp_sw_create(struct hw_handler *hwh, unsigned argc, char **argv)
++{
++	struct hp_sw_context *h;
++
++	h = kmalloc(sizeof(*h), GFP_KERNEL);
++	if (!h)
++		return -ENOMEM;
++
++	hwh->context = h;
++
++	return 0;
++}
++
++static void hp_sw_destroy(struct hw_handler *hwh)
++{
++	struct hp_sw_context *h = hwh->context;
++
++	kfree(h);
++}
++
++static struct hw_handler_type hp_sw_hwh = {
++	.name = DM_HP_HWH_NAME,
++	.module = THIS_MODULE,
++	.create = hp_sw_create,
++	.destroy = hp_sw_destroy,
++	.pg_init = hp_sw_pg_init,
++};
++
++static int __init hp_sw_init(void)
++{
++	int r;
++
++	r = dm_register_hw_handler(&hp_sw_hwh);
++	if (r < 0)
++		DMERR("register failed %d", r);
++	else
++		DMINFO("version " DM_HP_HWH_VER " loaded");
++
++	return r;
++}
++
++static void __exit hp_sw_exit(void)
++{
++	int r;
++
++	r = dm_unregister_hw_handler(&hp_sw_hwh);
++	if (r < 0)
++		DMERR("unregister failed %d", r);
++}
++
++module_init(hp_sw_init);
++module_exit(hp_sw_exit);
++
++MODULE_DESCRIPTION("DM Multipath HP StorageWorks / FSC FibreCat (A/P) support");
++MODULE_AUTHOR("Mike Christie, Dave Wysochanski <dm-devel@redhat.com>");
++MODULE_LICENSE("GPL");
++MODULE_VERSION(DM_HP_HWH_VER);
