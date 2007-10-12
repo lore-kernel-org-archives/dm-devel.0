@@ -1,8 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.24 PATCH 11/25] kcopyd use mutex instead of
-	semaphore
-Date: Fri, 12 Oct 2007 18:17:34 +0100
-Message-ID: <20071012171734.GV24157@agk.fab.redhat.com>
+Subject: [2.6.24 PATCH 14/25] dm: bio_list macro renaming
+Date: Fri, 12 Oct 2007 18:19:28 +0100
+Message-ID: <20071012171928.GZ24157@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -18,60 +17,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Matthias Kaehlcke <matthias.kaehlcke@gmail.com>, linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Jan Engelhardt <jengelh@linux01.gwdg.de>
 List-Id: dm-devel.ids
 
-From: Matthias Kaehlcke <matthias.kaehlcke@gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
 
-Kcopyd uses a semaphore as mutex.  Use the mutex API instead of the (binary)
-semaphore,
+Remove BIO_LIST and DEFINE_BIO_LIST macros that gain us nothing
+since contents are initialised to NULL.
 
-Signed-off-by: Matthias Kaehlcke <matthias.kaehlcke@gmail.com>
-Cc: Neil Brown <neilb@suse.de>
+Cc: Jan Engelhardt <jengelh@linux01.gwdg.de>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+
 ---
+ drivers/md/dm-bio-list.h |    5 -----
+ drivers/md/dm-delay.c    |    2 +-
+ 2 files changed, 1 insertion(+), 6 deletions(-)
 
- drivers/md/kcopyd.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
-
-Index: linux-2.6.23/drivers/md/kcopyd.c
+Index: linux-2.6.23/drivers/md/dm-bio-list.h
 ===================================================================
---- linux-2.6.23.orig/drivers/md/kcopyd.c	2007-10-12 12:36:14.000000000 +0100
-+++ linux-2.6.23/drivers/md/kcopyd.c	2007-10-12 13:15:41.000000000 +0100
-@@ -198,7 +198,7 @@ struct kcopyd_job {
- 	 * These fields are only used if the job has been split
- 	 * into more manageable parts.
- 	 */
--	struct semaphore lock;
-+	struct mutex lock;
- 	atomic_t sub_jobs;
- 	sector_t progress;
- };
-@@ -456,7 +456,7 @@ static void segment_complete(int read_er
- 	sector_t count = 0;
- 	struct kcopyd_job *job = (struct kcopyd_job *) context;
+--- linux-2.6.23.orig/drivers/md/dm-bio-list.h	2007-10-12 12:36:14.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-bio-list.h	2007-10-12 13:18:13.000000000 +0100
+@@ -21,11 +21,6 @@ static inline int bio_list_empty(const s
+ 	return bl->head == NULL;
+ }
  
--	down(&job->lock);
-+	mutex_lock(&job->lock);
+-#define BIO_LIST_INIT { .head = NULL, .tail = NULL }
+-
+-#define BIO_LIST(bl) \
+-	struct bio_list bl = BIO_LIST_INIT
+-
+ static inline void bio_list_init(struct bio_list *bl)
+ {
+ 	bl->head = bl->tail = NULL;
+Index: linux-2.6.23/drivers/md/dm-delay.c
+===================================================================
+--- linux-2.6.23.orig/drivers/md/dm-delay.c	2007-10-12 13:15:34.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-delay.c	2007-10-12 13:18:13.000000000 +0100
+@@ -83,7 +83,7 @@ static struct bio *flush_delayed_bios(st
+ 	struct dm_delay_info *delayed, *next;
+ 	unsigned long next_expires = 0;
+ 	int start_timer = 0;
+-	BIO_LIST(flush_bios);
++	struct bio_list flush_bios = { };
  
- 	/* update the error */
- 	if (read_err)
-@@ -480,7 +480,7 @@ static void segment_complete(int read_er
- 			job->progress += count;
- 		}
- 	}
--	up(&job->lock);
-+	mutex_unlock(&job->lock);
- 
- 	if (count) {
- 		int i;
-@@ -562,7 +562,7 @@ int kcopyd_copy(struct kcopyd_client *kc
- 		dispatch_job(job);
- 
- 	else {
--		init_MUTEX(&job->lock);
-+		mutex_init(&job->lock);
- 		job->progress = 0;
- 		split_job(job);
- 	}
+ 	mutex_lock(&delayed_bios_lock);
+ 	list_for_each_entry_safe(delayed, next, &dc->delayed_bios, list) {
