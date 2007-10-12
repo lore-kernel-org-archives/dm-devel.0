@@ -1,59 +1,88 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.24 PATCH 01/25] dm mpath: rdac fix init race
-Date: Fri, 12 Oct 2007 18:04:34 +0100
-Message-ID: <20071012170434.GL24157@agk.fab.redhat.com>
+Subject: [2.6.24 PATCH 05/25] dm raid1: fix leakage
+Date: Fri, 12 Oct 2007 18:07:08 +0100
+Message-ID: <20071012170708.GP24157@agk.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760940AbXJLREu@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932931AbXJLRIR@vger.kernel.org>
 Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Bryn M. Reeves" <breeves@redhat.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Dmitry Monakhov <dmonakhov@openvz.org>
 List-Id: dm-devel.ids
 
-From: Bryn M. Reeves <breeves@redhat.com>
+From: Dmitry Monakhov <dmonakhov@openvz.org>
 
-Re-order the initialisation of dm-rdac to avoid registering the hw
-handler before the workqueue has been initialised. Closes a race
-that would potentially give an oops.
+Add missing 'dm_io_client_destroy' to alloc_context error path.
+Reorganize mirror constructor error path in order to prevent
+workqueue leakage.
 
-Signed-off-by: Bryn M. Reeves <breeves@redhat.com>
+Signed-off-by: Dmitry Monakhov <dmonakhov@openvz.org>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-
 ---
- drivers/md/dm-mpath-rdac.c |   15 ++++++++-------
- 1 files changed, 8 insertions(+), 7 deletions(-)
+ drivers/md/dm-raid1.c |   28 +++++++++++++++-------------
+ 1 files changed, 15 insertions(+), 13 deletions(-)
 
-Index: linux-2.6.23/drivers/md/dm-mpath-rdac.c
+Index: linux-2.6.23/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.23.orig/drivers/md/dm-mpath-rdac.c	2007-10-12 13:15:23.000000000 +0100
-+++ linux-2.6.23/drivers/md/dm-mpath-rdac.c	2007-10-12 13:15:24.000000000 +0100
-@@ -664,20 +664,21 @@ static struct hw_handler_type rdac_handl
+--- linux-2.6.23.orig/drivers/md/dm-raid1.c	2007-10-12 13:15:18.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-raid1.c	2007-10-12 13:15:32.000000000 +0100
+@@ -974,6 +974,7 @@ static struct mirror_set *alloc_context(
  
- static int __init rdac_init(void)
- {
--	int r = dm_register_hw_handler(&rdac_handler);
--
--	if (r < 0) {
--		DMERR("%s: register failed %d", RDAC_DM_HWH_NAME, r);
+ 	if (rh_init(&ms->rh, ms, dl, region_size, ms->nr_regions)) {
+ 		ti->error = "Error creating dirty region hash";
++		dm_io_client_destroy(ms->io_client);
+ 		kfree(ms);
+ 		return NULL;
+ 	}
+@@ -1163,16 +1164,14 @@ static int mirror_ctr(struct dm_target *
+ 	ms->kmirrord_wq = create_singlethread_workqueue("kmirrord");
+ 	if (!ms->kmirrord_wq) {
+ 		DMERR("couldn't start kmirrord");
+-		free_context(ms, ti, m);
+-		return -ENOMEM;
++		r = -ENOMEM;
++		goto err_free_context;
+ 	}
+ 	INIT_WORK(&ms->kmirrord_work, do_mirror);
+ 
+ 	r = parse_features(ms, argc, argv, &args_used);
+-	if (r) {
+-		free_context(ms, ti, ms->nr_mirrors);
 -		return r;
 -	}
-+	int r;
++	if (r)
++		goto err_destroy_wq;
  
- 	rdac_wkqd = create_singlethread_workqueue("rdac_wkqd");
- 	if (!rdac_wkqd) {
- 		DMERR("Failed to create workqueue rdac_wkqd.");
--		dm_unregister_hw_handler(&rdac_handler);
- 		return -ENOMEM;
+ 	argv += args_used;
+ 	argc -= args_used;
+@@ -1188,19 +1187,22 @@ static int mirror_ctr(struct dm_target *
+ 
+ 	if (argc) {
+ 		ti->error = "Too many mirror arguments";
+-		free_context(ms, ti, ms->nr_mirrors);
+-		return -EINVAL;
++		r = -EINVAL;
++		goto err_destroy_wq;
  	}
  
-+	r = dm_register_hw_handler(&rdac_handler);
-+	if (r < 0) {
-+		DMERR("%s: register failed %d", RDAC_DM_HWH_NAME, r);
-+		destroy_workqueue(rdac_wkqd);
-+		return r;
-+	}
-+
- 	DMINFO("%s: version %s loaded", RDAC_DM_HWH_NAME, RDAC_DM_HWH_VER);
+ 	r = kcopyd_client_create(DM_IO_PAGES, &ms->kcopyd_client);
+-	if (r) {
+-		destroy_workqueue(ms->kmirrord_wq);
+-		free_context(ms, ti, ms->nr_mirrors);
+-		return r;
+-	}
++	if (r)
++		goto err_destroy_wq;
+ 
+ 	wake(ms);
  	return 0;
++
++err_destroy_wq:
++	destroy_workqueue(ms->kmirrord_wq);
++err_free_context:
++	free_context(ms, ti, ms->nr_mirrors);
++	return r;
  }
+ 
+ static void mirror_dtr(struct dm_target *ti)
