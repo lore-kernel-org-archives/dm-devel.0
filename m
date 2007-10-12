@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.24 PATCH 20/25] dm crypt: tidy labels
-Date: Fri, 12 Oct 2007 18:21:36 +0100
-Message-ID: <20071012172136.GF24157@agk.fab.redhat.com>
+Subject: [2.6.24 PATCH 21/25] dm mpath: add retry pg init
+Date: Fri, 12 Oct 2007 18:22:08 +0100
+Message-ID: <20071012172208.GG24157@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -17,150 +17,207 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Herbert Xu <herbert@gondor.apana.org.au>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+Cc: Mike Christie <michaelc@cs.wisc.edu>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Milan Broz <mbroz@redhat.com>
+From: Dave Wysochanski <dwysocha@redhat.com>
 
-Replace numbers with names in labels in error paths, to avoid confusion
-when new one get added between existing ones.
+This patch allows a failed path group initialisation command to be retried.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
+It adds a generic MP_RETRY flag and a "pg_init_retries" feature to
+device-mapper multipath which limits the number of retries.
+
+1. A hw handler sends a path initialization command to the storage and
+the command completes with an error code indicating the command
+should be retried.  
+
+2. The hardware handler calls dm_pg_init_complete() with MP_RETRY
+set in err_flags to ask the dm multipath core to retry.
+
+3. If the retry limit has not been exceeded, pg_init() is retried.
+Otherwise fail_path() is called.
+
+
+If you are using the userspace multipath-tools or device-mapper-multipath
+package, you can set pg_init_retries in the 'device' section of your
+/etc/multipath.conf file. For example:
+
+features                "2 pg_init_retries 7"
+
+The number of PG retries attempted is reported in the 'dmsetup status' output.
+
+Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
+Acked-by: Mike Christie <michaelc@cs.wisc.edu>
+Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm-crypt.c |   38 +++++++++++++++++++-------------------
- 1 files changed, 19 insertions(+), 19 deletions(-)
 
-Index: linux-2.6.23/drivers/md/dm-crypt.c
+---
+
+[AGK TODO: Perform a fresh review of the state machine changes related to dm_pg_init_complete.]
+
+ drivers/md/dm-hw-handler.h |    1 
+ drivers/md/dm-mpath.c      |   81 +++++++++++++++++++++++++++++++++++++--------
+ 2 files changed, 68 insertions(+), 14 deletions(-)
+
+Index: linux-2.6.23/drivers/md/dm-hw-handler.h
 ===================================================================
---- linux-2.6.23.orig/drivers/md/dm-crypt.c	2007-10-12 15:03:23.000000000 +0100
-+++ linux-2.6.23/drivers/md/dm-crypt.c	2007-10-12 15:03:26.000000000 +0100
-@@ -792,7 +792,7 @@ static int crypt_ctr(struct dm_target *t
+--- linux-2.6.23.orig/drivers/md/dm-hw-handler.h	2007-10-12 12:36:14.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-hw-handler.h	2007-10-12 15:03:28.000000000 +0100
+@@ -58,5 +58,6 @@ unsigned dm_scsi_err_handler(struct hw_h
+ #define MP_FAIL_PATH 1
+ #define MP_BYPASS_PG 2
+ #define MP_ERROR_IO  4	/* Don't retry this I/O */
++#define MP_RETRY 8
  
-  	if (crypt_set_key(cc, argv[1])) {
- 		ti->error = "Error decoding key";
--		goto bad1;
-+		goto bad_cipher;
+ #endif
+Index: linux-2.6.23/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.23.orig/drivers/md/dm-mpath.c	2007-10-12 13:14:40.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-mpath.c	2007-10-12 15:03:28.000000000 +0100
+@@ -75,6 +75,8 @@ struct multipath {
+ 	unsigned queue_io;		/* Must we queue all I/O? */
+ 	unsigned queue_if_no_path;	/* Queue I/O if last path fails? */
+ 	unsigned saved_queue_if_no_path;/* Saved state during suspension */
++	unsigned pg_init_retries;	/* Number of times to retry pg_init */
++	unsigned pg_init_count;		/* Number of times pg_init called */
+ 
+ 	struct work_struct process_queued_ios;
+ 	struct bio_list queued_ios;
+@@ -225,6 +227,8 @@ static void __switch_pg(struct multipath
+ 		m->pg_init_required = 0;
+ 		m->queue_io = 0;
  	}
++
++	m->pg_init_count = 0;
+ }
  
- 	/* Compatiblity mode for old dm-crypt cipher strings */
-@@ -803,19 +803,19 @@ static int crypt_ctr(struct dm_target *t
+ static int __choose_path_in_pg(struct multipath *m, struct priority_group *pg)
+@@ -424,6 +428,7 @@ static void process_queued_ios(struct wo
+ 		must_queue = 0;
  
- 	if (strcmp(chainmode, "ecb") && !ivmode) {
- 		ti->error = "This chaining mode requires an IV mechanism";
--		goto bad1;
-+		goto bad_cipher;
- 	}
+ 	if (m->pg_init_required && !m->pg_init_in_progress) {
++		m->pg_init_count++;
+ 		m->pg_init_required = 0;
+ 		m->pg_init_in_progress = 1;
+ 		init_required = 1;
+@@ -689,9 +694,11 @@ static int parse_features(struct arg_set
+ 	int r;
+ 	unsigned argc;
+ 	struct dm_target *ti = m->ti;
++	const char *param_name;
  
- 	if (snprintf(cc->cipher, CRYPTO_MAX_ALG_NAME, "%s(%s)",
- 		     chainmode, cipher) >= CRYPTO_MAX_ALG_NAME) {
- 		ti->error = "Chain mode + cipher name is too long";
--		goto bad1;
-+		goto bad_cipher;
- 	}
+ 	static struct param _params[] = {
+-		{0, 1, "invalid number of feature args"},
++		{0, 3, "invalid number of feature args"},
++		{1, 50, "pg_init_retries must be between 1 and 50"},
+ 	};
  
- 	tfm = crypto_alloc_blkcipher(cc->cipher, 0, CRYPTO_ALG_ASYNC);
- 	if (IS_ERR(tfm)) {
- 		ti->error = "Error allocating crypto tfm";
--		goto bad1;
-+		goto bad_cipher;
- 	}
+ 	r = read_param(_params, shift(as), &argc, &ti->error);
+@@ -701,12 +708,28 @@ static int parse_features(struct arg_set
+ 	if (!argc)
+ 		return 0;
  
- 	strcpy(cc->cipher, cipher);
-@@ -839,12 +839,12 @@ static int crypt_ctr(struct dm_target *t
- 		cc->iv_gen_ops = &crypt_iv_null_ops;
- 	else {
- 		ti->error = "Invalid IV mode";
--		goto bad2;
-+		goto bad_ivmode;
- 	}
+-	if (!strnicmp(shift(as), MESG_STR("queue_if_no_path")))
+-		return queue_if_no_path(m, 1, 0);
+-	else {
++	do {
++		param_name = shift(as);
++		argc--;
++
++		if (!strnicmp(param_name, MESG_STR("queue_if_no_path"))) {
++			r = queue_if_no_path(m, 1, 0);
++			continue;
++		}
++
++		if (!strnicmp(param_name, MESG_STR("pg_init_retries")) &&
++		    (argc >= 1)) {
++			r = read_param(_params + 1, shift(as),
++				       &m->pg_init_retries, &ti->error);
++			argc--;
++			continue;
++		}
++
+ 		ti->error = "Unrecognised multipath feature request";
+-		return -EINVAL;
+-	}
++		r = -EINVAL;
++	} while (argc && !r);
++
++	return r;
+ }
  
- 	if (cc->iv_gen_ops && cc->iv_gen_ops->ctr &&
- 	    cc->iv_gen_ops->ctr(cc, ti, ivopts) < 0)
--		goto bad2;
-+		goto bad_ivmode;
+ static int multipath_ctr(struct dm_target *ti, unsigned int argc,
+@@ -976,6 +999,26 @@ static int bypass_pg_num(struct multipat
+ }
  
- 	cc->iv_size = crypto_blkcipher_ivsize(tfm);
- 	if (cc->iv_size)
-@@ -863,13 +863,13 @@ static int crypt_ctr(struct dm_target *t
- 	cc->io_pool = mempool_create_slab_pool(MIN_IOS, _crypt_io_pool);
- 	if (!cc->io_pool) {
- 		ti->error = "Cannot allocate crypt io mempool";
--		goto bad3;
-+		goto bad_slab_pool;
- 	}
+ /*
++ * Should we retry pg_init immediately?
++ */
++static int pg_init_limit_reached(struct multipath *m, struct pgpath *pgpath)
++{
++	unsigned long flags;
++	int limit_reached = 0;
++
++	spin_lock_irqsave(&m->lock, flags);
++
++	if (m->pg_init_count <= m->pg_init_retries)
++		m->pg_init_required = 1;
++	else
++		limit_reached = 1;
++
++	spin_unlock_irqrestore(&m->lock, flags);
++
++	return limit_reached;
++}
++
++/*
+  * pg_init must call this when it has completed its initialisation
+  */
+ void dm_pg_init_complete(struct dm_path *path, unsigned err_flags)
+@@ -985,8 +1028,14 @@ void dm_pg_init_complete(struct dm_path 
+ 	struct multipath *m = pg->m;
+ 	unsigned long flags;
  
- 	cc->page_pool = mempool_create_page_pool(MIN_POOL_PAGES, 0);
- 	if (!cc->page_pool) {
- 		ti->error = "Cannot allocate page mempool";
--		goto bad4;
-+		goto bad_page_pool;
- 	}
+-	/* We insist on failing the path if the PG is already bypassed. */
+-	if (err_flags && pg->bypassed)
++	/*
++	 * If requested, retry pg_init until maximum number of retries exceeded.
++	 * If retry not requested and PG already bypassed, always fail the path.
++	 */
++	if (err_flags & MP_RETRY) {
++		if (pg_init_limit_reached(m, pgpath))
++			err_flags |= MP_FAIL_PATH;
++	} else if (err_flags && pg->bypassed)
+ 		err_flags |= MP_FAIL_PATH;
  
- 	cc->bs = bioset_create(MIN_IOS, MIN_IOS);
-@@ -880,25 +880,25 @@ static int crypt_ctr(struct dm_target *t
+ 	if (err_flags & MP_FAIL_PATH)
+@@ -996,7 +1045,7 @@ void dm_pg_init_complete(struct dm_path 
+ 		bypass_pg(m, pg, 1);
  
- 	if (crypto_blkcipher_setkey(tfm, cc->key, key_size) < 0) {
- 		ti->error = "Error setting key";
--		goto bad5;
-+		goto bad_device;
- 	}
+ 	spin_lock_irqsave(&m->lock, flags);
+-	if (err_flags) {
++	if (err_flags & ~MP_RETRY) {
+ 		m->current_pgpath = NULL;
+ 		m->current_pg = NULL;
+ 	} else if (!m->pg_init_required)
+@@ -1148,11 +1197,15 @@ static int multipath_status(struct dm_ta
  
- 	if (sscanf(argv[2], "%llu", &tmpll) != 1) {
- 		ti->error = "Invalid iv_offset sector";
--		goto bad5;
-+		goto bad_device;
- 	}
- 	cc->iv_offset = tmpll;
+ 	/* Features */
+ 	if (type == STATUSTYPE_INFO)
+-		DMEMIT("1 %u ", m->queue_size);
+-	else if (m->queue_if_no_path)
+-		DMEMIT("1 queue_if_no_path ");
+-	else
+-		DMEMIT("0 ");
++		DMEMIT("2 %u %u ", m->queue_size, m->pg_init_count);
++	else {
++		DMEMIT("%u ", m->queue_if_no_path +
++			      (m->pg_init_retries > 0) * 2);
++		if (m->queue_if_no_path)
++			DMEMIT("queue_if_no_path ");
++		if (m->pg_init_retries)
++			DMEMIT("pg_init_retries %u ", m->pg_init_retries);
++	}
  
- 	if (sscanf(argv[4], "%llu", &tmpll) != 1) {
- 		ti->error = "Invalid device sector";
--		goto bad5;
-+		goto bad_device;
- 	}
- 	cc->start = tmpll;
- 
- 	if (dm_get_device(ti, argv[3], cc->start, ti->len,
- 			  dm_table_get_mode(ti->table), &cc->dev)) {
- 		ti->error = "Device lookup failed";
--		goto bad5;
-+		goto bad_device;
- 	}
- 
- 	if (ivmode && cc->iv_gen_ops) {
-@@ -907,7 +907,7 @@ static int crypt_ctr(struct dm_target *t
- 		cc->iv_mode = kmalloc(strlen(ivmode) + 1, GFP_KERNEL);
- 		if (!cc->iv_mode) {
- 			ti->error = "Error kmallocing iv_mode string";
--			goto bad_iv_mode;
-+			goto bad_ivmode_string;
- 		}
- 		strcpy(cc->iv_mode, ivmode);
- 	} else
-@@ -932,20 +932,20 @@ bad_crypt_queue:
- 	destroy_workqueue(cc->io_queue);
- bad_io_queue:
- 	kfree(cc->iv_mode);
--bad_iv_mode:
-+bad_ivmode_string:
- 	dm_put_device(ti, cc->dev);
--bad5:
-+bad_device:
- 	bioset_free(cc->bs);
- bad_bs:
- 	mempool_destroy(cc->page_pool);
--bad4:
-+bad_page_pool:
- 	mempool_destroy(cc->io_pool);
--bad3:
-+bad_slab_pool:
- 	if (cc->iv_gen_ops && cc->iv_gen_ops->dtr)
- 		cc->iv_gen_ops->dtr(cc);
--bad2:
-+bad_ivmode:
- 	crypto_free_blkcipher(tfm);
--bad1:
-+bad_cipher:
- 	/* Must zero key material before freeing */
- 	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
- 	kfree(cc);
+ 	if (hwh->type && hwh->type->status)
+ 		sz += hwh->type->status(hwh, type, result + sz, maxlen - sz);
