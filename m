@@ -1,56 +1,38 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath parser.c
-Date: 12 Oct 2007 17:18:15 -0000
-Message-ID: <20071012171815.23921.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [2.6.24 PATCH 07/25] dm delay: fix status
+Date: Fri, 12 Oct 2007 18:14:55 +0100
+Message-ID: <20071012171455.GR24157@agk.fab.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760018AbXJLRP1@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Milan Broz <mbroz@redhat.com>, stable@kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2007-10-12 17:18:14
+From: Milan Broz <mbroz@redhat.com>
 
-Modified files:
-	libmultipath   : parser.c 
+Fix missing space in dm-delay target status output
+if separate read and write delay are configured.
 
-Log message:
-	Oops. Missed a spot with the ascii checking.
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/parser.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.17.2.1&r2=1.17.2.2
+---
+ drivers/md/dm-delay.c |    2 +-
+ 1 files changed, 1 insertion(+), 1 deletion(-)
 
---- multipath-tools/libmultipath/parser.c	2007/10/11 20:17:17	1.17.2.1
-+++ multipath-tools/libmultipath/parser.c	2007/10/12 17:18:14	1.17.2.2
-@@ -2,7 +2,7 @@
-  * Part:        Configuration file parser/reader. Place into the dynamic
-  *              data structure representation the conf file
-  *  
-- * Version:     $Id: parser.c,v 1.17.2.1 2007/10/11 20:17:17 bmarzins Exp $
-+ * Version:     $Id: parser.c,v 1.17.2.2 2007/10/12 17:18:14 bmarzins Exp $
-  * 
-  * Author:      Alexandre Cassen, <acassen@linux-vs.org>
-  *              
-@@ -157,8 +157,10 @@
- 				in_string = 1;
- 
- 		} else {
--			while ((in_string || !isspace((int) *cp)) && *cp
--				!= '\0' && *cp != '"')
-+			while ((in_string ||
-+				(!isspace((int) *cp) && isascii((int) *cp) &&
-+				 *cp != '!' && *cp != '#')) &&
-+			       *cp != '\0' && *cp != '"')
- 				cp++;
- 			strlen = cp - start;
- 			token = MALLOC(strlen + 1);
+Index: linux-2.6.23/drivers/md/dm-delay.c
+===================================================================
+--- linux-2.6.23.orig/drivers/md/dm-delay.c	2007-10-12 13:15:33.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-delay.c	2007-10-12 13:15:34.000000000 +0100
+@@ -308,7 +308,7 @@ static int delay_status(struct dm_target
+ 		       (unsigned long long) dc->start_read,
+ 		       dc->read_delay);
+ 		if (dc->dev_write)
+-			DMEMIT("%s %llu %u", dc->dev_write->name,
++			DMEMIT(" %s %llu %u", dc->dev_write->name,
+ 			       (unsigned long long) dc->start_write,
+ 			       dc->write_delay);
+ 		break;
