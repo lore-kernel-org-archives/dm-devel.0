@@ -1,12 +1,13 @@
-From: "Bryn M. Reeves" <breeves@redhat.com>
-Subject: Re: dup mpath?
-Date: Fri, 12 Oct 2007 14:28:54 +0100
-Message-ID: <470F7696.9080208@redhat.com>
+From: "Domenico Viggiani" <dviggiani@tiscali.it>
+Subject: RE: dup mpath?
+Date: Fri, 12 Oct 2007 16:39:07 +0200
+Message-ID: <000101c80cdd$a4de0aa0$222813ac@pitagora.it>
 References: <000001c80ca5$9e4ef150$222813ac@pitagora.it>
 	<470F744F.5080709@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <470F744F.5080709@redhat.com>
@@ -19,42 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+> Looks like you have a problem with your bindings 
+> (/var/lib/mpath/bindings). This can happen if, for e.g. the 
+> /var tree is a separate file system.
+> 
+> In this case, multipath devices are created by rc.sysinit 
+> before /var is mounted. Later on, if the wwid to mpath names 
+> in the bindings file are different from those that mpath 
+> auto-detected in rc.sysinit you end up with conflicts like 
+> this - multipath is trying to re-name the mpath devices 
+> according to the entries in the bindings file.
+> 
+> If LVM has already activated volume groups on the devices 
+> this gives you the "map in use" errors you noted above.
+> 
+> See this bugzilla:
+> 
+> https://bugzilla.redhat.com/show_bug.cgi?id=320151
 
-Bryn M. Reeves wrote:
-> There are a couple of workarounds you can use: make /var part of the
-> root file system, configure your bindings via /etc/multipath.conf
-> instead (use device { /* ... */ wwid = } blocks), or copy the bindings
-> file from the /var file system into a location named
-> /var/lib/mpath/bindings on the root file system (although I would not
-> recommend this last option as it can become confusing).
+It's amazing the way you answer me with this wonderful description of the
+problem after only a few tens of minutes while regular Red Hat support is
+struggling with my call since many days!
+In my opinion, this is a limit to the adoption of Linux in the enterprise
+environment: it needs too technical involvement from specialized personnel.
+I hope that Red Hat will understand that it needs more expert engineers in
+the frontline.
 
-Blech - I meant "multipath" blocks, not "device" blocks, e.g., putting
-something like this into multipath.conf:
-
-multipaths {
-    multipath {
-        wwid 360060480000190102501530123456789
-        alias  mpath0
-    }
-
-    multipath {
-        wwid    360060480000190102501530123456799
-        alias   mpath1
-    }
-}
-
-Kind regards,
-Bryn.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.7 (GNU/Linux)
-Comment: Using GnuPG with Fedora - http://enigmail.mozdev.org
-
-iD8DBQFHD3aW6YSQoMYUY94RArcjAJ9H7fPbMfoaCK+v0HlVISrF8lLhnwCg1FTB
-goQimrLbcWfNoh526bkEyGo=
-=ynBE
------END PGP SIGNATURE-----
+Heartfelt thanks and sorry for my bad english
+..
+Domenico Viggiani
