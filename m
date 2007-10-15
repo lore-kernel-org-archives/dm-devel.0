@@ -1,79 +1,72 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: 2.6.23-mm1
-Date: Mon, 15 Oct 2007 09:45:01 +0200
-Message-ID: <20071015074500.GE5380@kernel.dk>
-References: <47110500.8050503@garzik.org>
-	<64bb37e0710131105m7c64fca0kb71f3955170e8bec@mail.gmail.com>
-	<20071013111853.7e67c6c3.akpm@linux-foundation.org>
-	<64bb37e0710140454s61325fdfya43179b14ea26dc4@mail.gmail.com>
-	<20071014113914.7654759d.akpm@linux-foundation.org>
-	<64bb37e0710141212k58c5fc66s620d1f28e80bb40@mail.gmail.com>
-	<20071014122613.5bbe4fc3.akpm@linux-foundation.org>
-	<4712922F.6010005@redhat.com> <20071015065022.GC5380@kernel.dk>
-	<18195.5992.545271.871100@notabene.brown>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Zan Lynx <zlynx@acm.org>
+Subject: Re: WANTED: kernel projects for CS students
+Date: Mon, 15 Oct 2007 11:10:32 -0600
+Message-ID: <1192468232.8642.39.camel@localhost>
+References: <20071014190128.6e3cdb44@bree.surriel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <18195.5992.545271.871100@notabene.brown>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>
-Cc: linux-kernel@vger.kernel.org, Torsten Kaiser <just.for.lkml@googlemail.com>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: multipart/signed; micalg=pgp-sha1; protocol="application/pgp-signature"; boundary="=-K6uLPj3enC5h1iRdtyhd"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1765582AbXJORLD@vger.kernel.org>
+In-Reply-To: <20071014190128.6e3cdb44@bree.surriel.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Rik van Riel <riel@surriel.com>
+Cc: linux-kernel@vger.kernel.org, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Oct 15 2007, Neil Brown wrote:
-> On Monday October 15, jens.axboe@oracle.com wrote:
-> > On Mon, Oct 15 2007, Milan Broz wrote:
-> > > 
-> > > clone->bi_size is zero here now, so crypt_free_buffer_pages will not
-> > > work correctly (previously there was count of processed bytes).
-> > > 
-> > > But because it seems that bio cannot be processed partially now, we can
-> > > simplify crypt_free_buffer_pages to always remove all allocated pages.
-> > 
-> > Neil, this doesn't look very good. dm-crypt needs to know the clone io
-> > size, so ->bi_size was definitely used properly in this context before.
-> > Now it's gone. Suggestions on how to fix that up?
-> 
-> How about the following - even more code simplification gained by this
-> approach :-)
 
-Looks good to me.
+--=-K6uLPj3enC5h1iRdtyhd
+Content-Type: text/plain
+Content-Transfer-Encoding: quoted-printable
 
-> I originally had the patch for removing the 'size' argument after a
-> patch (series) that made bi_size unchanged.   It seemed that patch
-> would face a harder path upstream so I re-ordered them and missed this
-> dependency.  Mea Culpa.
-> 
-> > 
-> > I've been less than impressed with the bi_end_io() patchset so far, it's
-> > been full of typos and bad conversions. I'm tempted to revert the whole
-> > thing, clearly it wasn't ready for merge.
-> 
-> I must have missed something ....
-> 
-> I've seen:  A fix for a bi_end_io in jfs that I missed.
->             A correction for that fix ("return 0" was remove instead
->                of just the '0' removed)
->             Some fixed for code that is only in -mm (which I didn't do
->               because I thought you wanted it against a non-mm tree).
+On Sun, 2007-10-14 at 19:01 -0400, Rik van Riel wrote:
+> The kernel newbies community often gets inquiries from CS students who
+> need a project for their studies and would like to do something with
+> the Linux kernel, but would also like their code to be useful to the
+> community afterwards.
+>=20
+> In order to make it easier for them, I am trying to put together a
+> page with projects that:
+> - Are self contained enough that the students can implement the
+>   project by themselves, since that is often a university requirement.
+> - Are self contained enough that Linux could merge the code (maybe
+>   with additional changes) after the student has been working on it
+>   for a few months.
+> - Are large enough to qualify as a student project, luckily there is
+>   flexibility here since we get inquiries for anything from 6 week
+>   projects to 6 month projects.
+>=20
+> If you have ideas on what projects would be useful, please add them
+> to this page (or email me):
+>=20
+> http://kernelnewbies.org/KernelProjects
 
-XFS update, s390 block driver, gfs2 update, ocfs2 update, powerpc
-axonram block driver.
+How about this in the Device Mapper raid-1/mirror code?
+	/* FIXME: add read balancing */
 
-> I think it was definitely ready for merging in -mm.  Possibly not for
-> mainline just yet.
+That comment has been in there for many releases.  I've wanted read
+balancing for several servers and had all sorts of ideas about it, like
+adding functions to the underlying device queues to return a "queuing
+cost" to determine which is the best queue to add the read request.  I
+think that could work better for queues like CFQ than the MD
+closest-head.
 
-What's done is done, I just hope we've seen the last of it now.
+An implementation would also need to be benchmarked against the MD
+raid-1.
 
--- 
-Jens Axboe
+Along with the time to submit it to LKML, get it reviewed and polish it
+up, it might make a good student project.
+--=20
+Zan Lynx <zlynx@acm.org>
+
+--=-K6uLPj3enC5h1iRdtyhd
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.7 (GNU/Linux)
+
+iD8DBQBHE58IG8fHaOLTWwgRAtOfAJ9EAkLcicDb7dv9DQSq7SrzYiyukwCeJt83
+Dl95wjgr/JEQPFzYpQxJu54=
+=ufyD
+-----END PGP SIGNATURE-----
+
+--=-K6uLPj3enC5h1iRdtyhd--
