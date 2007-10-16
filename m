@@ -1,12 +1,14 @@
-From: bart brooks <bart_brooks@hotmail.com>
-Subject: PATCH to Add Pivot3 to multipath-tools
-Date: Tue, 16 Oct 2007 14:37:15 +0000
-Message-ID: <BAY128-W24E8AABE2F45CCD4AA1A369D9C0@phx.gbl>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Multipath on boot and root partition with Redhat5.0
+Date: Tue, 16 Oct 2007 16:27:33 -0500
+Message-ID: <20071016212733.GD32092@ether.msp.redhat.com>
+References: <470CB061.5000902@univ-tln.fr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="_7868979e-3340-44f5-9fed-e7a19ab1871a_"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <470CB061.5000902@univ-tln.fr>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,75 +18,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: christophe.varoqui@free.fr
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---_7868979e-3340-44f5-9fed-e7a19ab1871a_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+On Wed, Oct 10, 2007 at 12:58:41PM +0200, Sandrine Twardy wrote:
+> Hello,
+> 
+> I have a SAN Eva 5000 HP And I have installed a redhat 5.0 on my server 
+> with "linux mpath", so far all is fine.
+> I have an os device multipathed as follow :
+> 
+> > multipath -ll
+> mpath0 () dm-0 COMPAQ,HSV110 (C)COMPAQ
+> [size=7.0G][features=0][hwhandler=0]
+> \_ round-robin 0 [prio=0][active]
+> \_ 3:0:0:1 sdb 8:16  [active][ready]
+> \_ 4:0:0:1 sdc 8:32  [active][ready]
+> 
+> But when I presents a new lun to my host and scans again the scsi lun, I 
+> am losing the multipath on the disk (/ and /boot)
+> (possibly because the name of device is changed from sdb/sdc to sdc/sde ? )
+> 
+> Here's an extract of my multipath.conf:
+> 
+> multipath {
+>              wwid                    3600508b40000c1c50001c000000b0000
+>              path_grouping_policy    group_by_serial
+>              rr_weight               uniform
+>              prio_callout            /bin/true
+>              alias                   os_lun
+>      }
+>     But it's seems that on boot the mutlipath.conf file is not read.  
+> Am I right?
+> When the system is booted, multipathd cannot use the boot device ...
+> What can I do to fix the boot device name persistence? Where is supposed 
+> to be configuration file that defines the multipath options of the boot 
+> device ?
+> 
+> Right now, the server can boot because my fstab is like this:
+> LABEL=/1                /                      LABEL=/boot             
+> /boot
+> 
+> Thanks you for your help
 
+Multipathed root support in kind of rough in RHEL5.0.  It is much nicer in
+5.1.  When you say "But when I presents a new lun to my host and scans again
+the scsi lun, I am losing the multipath on the disk" do you mean that if
+you add the lun, and rescan without rebooting, that you lose your root
+filesystem?  If so, that's strange.  Multipath shouldn't remove the device if
+it is currently being used.
 
-Hello,
+Assuming that the problem happens on reboot, the best way to deal with it is to
+get your multipaths set up the way you want, and remake the initrd with
+mkinitrd.  You should save a backup of your old initrd, so that if there is a
+problem with the new initrd, you can still boot your system with the old one.
+You might even want to have a seperate grub.conf entry for each initrd.
 
-I have put together a patch, which adds Pivot3 RAIGE support to multipath-t=
-ools.
+-Ben
 
-Could you please apply.
-
-Thanks,
-
-Bart
-
-_________________________________________________________________
-Boo!=A0Scare away worms, viruses and so much more! Try Windows Live OneCare=
-!
-http://onecare.live.com/standard/en-us/purchase/trial.aspx?s_cid=3Dwl_hotma=
-ilnews=
-
---_7868979e-3340-44f5-9fed-e7a19ab1871a_
-Content-Type: text/plain
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="pivot3-multipath-tools"
-
-ZGlmZiAtTmF1cnAgbXVsdGlwYXRoLXRvb2xzLTAuNC44LW9yaWcvbGlibXVsdGlwYXRoL2h3dGFi
-bGUuYyBtdWx0aXBhdGgtdG9vbHMtMC40LjgvbGlibXVsdGlwYXRoL2h3dGFibGUuYw0KLS0tIG11
-bHRpcGF0aC10b29scy0wLjQuOC1vcmlnL2xpYm11bHRpcGF0aC9od3RhYmxlLmMJMjAwNy0xMC0x
-MiAxODoyMDozMC4wMDAwMDAwMDAgLTA0MDANCisrKyBtdWx0aXBhdGgtdG9vbHMtMC40LjgvbGli
-bXVsdGlwYXRoL2h3dGFibGUuYwkyMDA3LTEwLTEyIDE5OjU0OjA4LjAwMDAwMDAwMCAtMDQwMA0K
-QEAgLTU5MCw2ICs1OTAsMjcgQEAgc3RhdGljIHN0cnVjdCBod2VudHJ5IGRlZmF1bHRfaHdbXSA9
-IHsNCiAJCS5taW5pbyAgICAgICAgID0gREVGQVVMVF9NSU5JTywNCiAJCS5jaGVja2VyX25hbWUg
-ID0gUkVBRFNFQ1RPUjAsDQogCX0sDQorIAkvKg0KKwkgKiBQaXZvdDMgUkFJR0UNCisJICoNCisJ
-ICogTWFpbnRhaW5lciA6IEJhcnQgQnJvb2tzLCBQaXZvdDMNCisJICogTWFpbCA6IGJhcnRiQHBp
-dm90My5jb20NCisJICovDQorCXsNCisJCS52ZW5kb3IgICAgICAgID0gIlBJVk9UMyIsDQorCQku
-cHJvZHVjdCAgICAgICA9ICJSQUlHRSBWT0xVTUUiLA0KKwkJLmdldHVpZCAgICAgICAgPSAiL3Ni
-aW4vc2NzaV9pZC1wMyAtcCAweDgwIC1nIC11IC1zIC9ibG9jay8lbiIsDQorCQkuZ2V0cHJpbyAg
-ICAgICA9IE5VTEwsDQorCQkuZmVhdHVyZXMgICAgICA9ICIxIHF1ZXVlX2lmX25vX3BhdGgiLA0K
-KwkJLmh3aGFuZGxlciAgICAgPSBERUZBVUxUX0hXSEFORExFUiwNCisJCS5zZWxlY3RvciAgICAg
-ID0gREVGQVVMVF9TRUxFQ1RPUiwNCisJCS5wZ3BvbGljeSAgICAgID0gTVVMVElCVVMsDQorCQku
-cGdmYWlsYmFjayAgICA9IEZBSUxCQUNLX1VOREVGLA0KKwkJLnJyX3dlaWdodCAgICAgPSBSUl9X
-RUlHSFRfTk9ORSwNCisJCS5ub19wYXRoX3JldHJ5ID0gTk9fUEFUSF9SRVRSWV9VTkRFRiwNCisJ
-CS5taW5pbyAgICAgICAgID0gMTAwLA0KKwkJLmNoZWNrZXJfbmFtZSAgPSBUVVIsDQorCX0sDQog
-CS8qDQogCSAqIEVPTA0KIAkgKi8NCmRpZmYgLU5hdXJwIG11bHRpcGF0aC10b29scy0wLjQuOC1v
-cmlnL211bHRpcGF0aC5jb25mLnN5bnRoZXRpYyBtdWx0aXBhdGgtdG9vbHMtMC40LjgvbXVsdGlw
-YXRoLmNvbmYuc3ludGhldGljDQotLS0gbXVsdGlwYXRoLXRvb2xzLTAuNC44LW9yaWcvbXVsdGlw
-YXRoLmNvbmYuc3ludGhldGljCTIwMDctMTAtMTIgMTg6MjA6MzAuMDAwMDAwMDAwIC0wNDAwDQor
-KysgbXVsdGlwYXRoLXRvb2xzLTAuNC44L211bHRpcGF0aC5jb25mLnN5bnRoZXRpYwkyMDA3LTEw
-LTEyIDE5OjQ2OjU1LjAwMDAwMDAwMCAtMDQwMA0KQEAgLTY3LDQgKzY3LDE2IEBADQogIwkJcHJv
-ZHVjdAkJCSJNU0ExMDAwICAgICAgICAgIg0KICMJCXBhdGhfZ3JvdXBpbmdfcG9saWN5CW11bHRp
-YnVzDQogIwl9DQorIwlkZXZpY2Ugew0KKyMJCSMgUGl2b3QzIFJBSUdFICBhcnJheQ0KKyMJCXZl
-bmRvcgkJCSJQSVZPVDMiDQorIwkJcHJvZHVjdAkJCSJSQUlHRSBWT0xVTUUiDQorIwkJcGF0aF9n
-cm91cGluZ19wb2xpY3kJbXVsdGlidXMNCisjCQlnZXR1aWRfY2FsbG91dCAgICAgICAgICAiL3Ni
-aW4vc2NzaV9pZC1wMyAtcCAweDgwIC1nIC11IC1zIC9ibG9jay8lbiINCisjCQlwYXRoX2NoZWNr
-ZXIJCXR1cg0KKyMJCXBhdGhfc2VsZWN0b3IJCSJyb3VuZC1yb2JpbiAwIg0KKyMJCWhhcmR3YXJl
-X2hhbmRsZXIJIjEgcGl2b3QzIg0KKyMJCWZhaWxiYWNrCQlpbW1lZGlhdGUNCisjCQlycl9taW5f
-aW8JCTEwMA0KKyMJfQ0KICN9DQo=
-
---_7868979e-3340-44f5-9fed-e7a19ab1871a_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---_7868979e-3340-44f5-9fed-e7a19ab1871a_--
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
