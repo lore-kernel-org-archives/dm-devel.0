@@ -1,15 +1,12 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: multibus / failover and EMC CX600
-Date: Wed, 17 Oct 2007 14:32:55 +0200
-Message-ID: <471600F7.5090607@linpro.no>
-References: <061401c810a7$cac685d0$0a00a8c0@ALDI2>
-	<4715E6A4.7060308@linpro.no> <4715ED28.9020102@suse.de>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [2.6.24 PATCH 01/04] dm: export name and uuid
+Date: Wed, 17 Oct 2007 13:53:58 +0100
+Message-ID: <20071017125358.GM24157@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4715ED28.9020102@suse.de>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,26 +16,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Mike Anderson <andmike@linux.vnet.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-* Hannes Reinecke
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
 
-> That's the dev_loss_tmo setting. Just increase it to something to
-> your liking.
+This patch adds a function to obtain a copy of a mapped device's name and uuid.
 
-Oh, sweet.  This knob won't affect how long the layer will hold I/O
-before failing it (like lpfc_nodev_tmo), I assume?  (I'm worried about
-it taking longer for dm-multipath to detect failed paths).
+Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+---
 
-I wish it could've been set to unlimited, though.  Seems like there's
-always some kind of trouble with re-adding the devices, either I run
-into that -EEXIST bug, or udev doesn't do it's job properly and the
-revived device isn't added back into the dm-multipath map.  In addition
-it somtimes breaks queue_if_no_path with earlier multipath-tools that
-doesn't use no_flush on suspend.  Those versions are of course included
-in most server distributions...  Sigh.
+ drivers/md/dm-ioctl.c         |   32 ++++++++++++++++++++++++++++++++
+ include/linux/device-mapper.h |    1 +
+ 2 files changed, 33 insertions(+)
 
-Regards
--- 
-Tore Anderson
+Index: linux-2.6.23/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.23.orig/drivers/md/dm-ioctl.c	2007-10-14 00:08:12.000000000 +0100
++++ linux-2.6.23/drivers/md/dm-ioctl.c	2007-10-16 13:09:27.000000000 +0100
+@@ -1515,3 +1515,35 @@ void dm_interface_exit(void)
+ 
+ 	dm_hash_exit();
+ }
++
++/**
++ * dm_copy_name_and_uuid - Copy mapped device name & uuid into supplied buffers
++ * @md: Pointer to mapped_device
++ * @name: Buffer (size DM_NAME_LEN) for name
++ * @uuid: Buffer (size DM_UUID_LEN) for uuid or empty string if uuid not defined
++ */
++int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid)
++{
++	int r = 0;
++	struct hash_cell *hc;
++
++	if (!md)
++		return -ENXIO;
++
++	dm_get(md);
++	down_read(&_hash_lock);
++	hc = dm_get_mdptr(md);
++	if (!hc || hc->md != md) {
++		r = -ENXIO;
++		goto out;
++	}
++
++	strcpy(name, hc->name);
++	strcpy(uuid, hc->uuid ? : "");
++
++out:
++	up_read(&_hash_lock);
++	dm_put(md);
++
++	return r;
++}
+Index: linux-2.6.23/include/linux/device-mapper.h
+===================================================================
+--- linux-2.6.23.orig/include/linux/device-mapper.h	2007-10-09 21:31:38.000000000 +0100
++++ linux-2.6.23/include/linux/device-mapper.h	2007-10-14 00:08:31.000000000 +0100
+@@ -188,6 +188,7 @@ int dm_wait_event(struct mapped_device *
+  * Info functions.
+  */
+ const char *dm_device_name(struct mapped_device *md);
++int dm_copy_name_and_uuid(struct mapped_device *md, char *name, char *uuid);
+ struct gendisk *dm_disk(struct mapped_device *md);
+ int dm_suspended(struct mapped_device *md);
+ int dm_noflush_suspending(struct dm_target *ti);
