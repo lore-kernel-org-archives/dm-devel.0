@@ -1,12 +1,12 @@
 From: "Gerald Nowitzky" <Nowitzky@igne.de>
 Subject: Re: multibus / failover and EMC CX600
-Date: Wed, 17 Oct 2007 20:04:12 +0200
-Message-ID: <068301c810e8$1f4e6e70$0a00a8c0@ALDI2>
+Date: Wed, 17 Oct 2007 21:38:56 +0200
+Message-ID: <06b201c810f5$5b7782d0$0a00a8c0@ALDI2>
 References: <061401c810a7$cac685d0$0a00a8c0@ALDI2><4715E6A4.7060308@linpro.no>	<4715ED28.9020102@suse.de><471600F7.5090607@linpro.no>
 	<066001c810cc$cd9f6f90$0a00a8c0@ALDI2> <471631E5.9050603@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0378461437=="
+Content-Type: multipart/mixed; boundary="===============1152962555=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,101 +22,55 @@ List-Id: dm-devel.ids
 
 This is a multi-part message in MIME format.
 
---===============0378461437==
+--===============1152962555==
 Content-Type: multipart/alternative;
-	boundary="----=_NextPart_000_0680_01C810F8.E2A04FF0"
+	boundary="----=_NextPart_000_06AF_01C81106.1EAF4CA0"
 
 This is a multi-part message in MIME format.
 
-------=_NextPart_000_0680_01C810F8.E2A04FF0
+------=_NextPart_000_06AF_01C81106.1EAF4CA0
 Content-Type: text/plain;
 	charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
 
-I'm afraid the patch did not work for me. I'ts still the same.
+not much difference with 2.6.23.1:
 
-I am using kernel 2.6.22.2 at the moment. Should I upgrade to 2.6.23 ?
-
-Anybody any Ideas?
-The system is not in production at the moment. We could do some testing.
-
-(Gerald)
-
-Oct 17 20:57:09 SANfile_m kernel: kobject_add failed for 1:0:1:0 with =
--EEXIST, don't try to register things with the same name in the same =
-directory.
-Oct 17 20:57:09 SANfile_m kernel:  [number+85/816] =
+Oct 17 22:33:56 SANfile_m kernel: kobject_add failed for 1:0:1:0 with =
+-EEXIST, don't try to register things with
+the same name in the same directory.
+Oct 17 22:33:56 SANfile_m kernel:  [<c03074d5>] =
 kobject_shadow_add+0x115/0x1b0
-Oct 17 20:57:09 SANfile_m kernel:  [<c02f95f5>] =
-kobject_shadow_add+0x115/0x1b0
-Oct 17 20:57:09 SANfile_m kernel:  [lo_ioctl+1125/2528] =
-device_add+0xc5/0x570
-Oct 17 20:57:09 SANfile_m kernel:  [<c03aefd5>] device_add+0xc5/0x570
-Oct 17 20:57:09 SANfile_m kernel:  [fc_remote_port_rolechg+127/320] =
-scsi_adjust_queue_depth+0x9f/0xf0
-Oct 17 20:57:09 SANfile_m kernel:  [<c03f9d7f>] =
-scsi_adjust_queue_depth+0x9f/0xf0
-Oct 17 20:57:09 SANfile_m kernel:  [blk_register_region+18/64] =
+Oct 17 22:33:56 SANfile_m kernel:  [<c03a8f58>] device_add+0xa8/0x5a0
+Oct 17 22:33:56 SANfile_m kernel:  [<c02fc582>] =
 __blk_queue_init_tags+0x32/0x70
-Oct 17 20:57:09 SANfile_m kernel:  [<c02eeb72>] =
-__blk_queue_init_tags+0x32/0x70
-Oct 17 20:57:09 SANfile_m kernel:  [sr_get_mcn+50/240] =
-scsi_sysfs_add_sdev+0x32/0x230
-Oct 17 20:57:09 SANfile_m kernel:  [<c04028b2>] =
-scsi_sysfs_add_sdev+0x32/0x230
-Oct 17 20:57:09 SANfile_m kernel:  [<f99445b7>] =
+Oct 17 22:33:56 SANfile_m kernel:  [<c03fb8af>] =
+scsi_sysfs_add_sdev+0x4f/0x220
+Oct 17 22:33:56 SANfile_m kernel:  [<f99498b7>] =
 qla2xxx_slave_configure+0x77/0x110 [qla2xxx]
-Oct 17 20:57:09 SANfile_m kernel:  [sd_init_command+313/1088] =
-scsi_probe_and_add_lun+0x8c9/0x940
-Oct 17 20:57:09 SANfile_m kernel:  [<c0400859>] =
-scsi_probe_and_add_lun+0x8c9/0x940
-Oct 17 20:57:09 SANfile_m kernel:  [sr_probe+72/1472] =
-__scsi_scan_target+0x518/0x5c0
-Oct 17 20:57:09 SANfile_m kernel:  [<c04012c8>] =
-__scsi_scan_target+0x518/0x5c0
-Oct 17 20:57:09 SANfile_m kernel:  [kallsyms_addresses+36323/130252] =
-schedule+0x2df/0x940
-Oct 17 20:57:09 SANfile_m kernel:  [<c053699f>] schedule+0x2df/0x940
-Oct 17 20:57:09 SANfile_m kernel:  [sr_init_command+128/944] =
-scsi_scan_target+0xd0/0xe0
-Oct 17 20:57:09 SANfile_m kernel:  [<c0401a40>] =
-scsi_scan_target+0xd0/0xe0
-Oct 17 20:57:09 SANfile_m kernel:  [SendIocInit+272/784] =
+Oct 17 22:33:56 SANfile_m kernel:  [<c03f986a>] =
+scsi_probe_and_add_lun+0x92a/0x950
+Oct 17 22:33:56 SANfile_m kernel:  [<c03fa26d>] =
+__scsi_scan_target+0x4fd/0x5b0
+Oct 17 22:33:56 SANfile_m kernel:  [<c03fa954>] =
+scsi_scan_target+0x94/0xc0
+Oct 17 22:33:56 SANfile_m kernel:  [<c04014f0>] =
 fc_scsi_scan_rport+0x0/0x90
-Oct 17 20:57:09 SANfile_m kernel:  [<c04084e0>] =
-fc_scsi_scan_rport+0x0/0x90
-Oct 17 20:57:09 SANfile_m kernel:  [SendIocInit+392/784] =
+Oct 17 22:33:56 SANfile_m kernel:  [<c0401568>] =
 fc_scsi_scan_rport+0x78/0x90
-Oct 17 20:57:09 SANfile_m kernel:  [<c0408558>] =
-fc_scsi_scan_rport+0x78/0x90
-Oct 17 20:57:09 SANfile_m kernel:  [run_workqueue+131/256] =
-run_workqueue+0x73/0x100
-Oct 17 20:57:09 SANfile_m kernel:  [<c0131dc3>] run_workqueue+0x73/0x100
-Oct 17 20:57:09 SANfile_m kernel:  [autoremove_wake_function+16/80] =
+Oct 17 22:33:56 SANfile_m kernel:  [<c013e963>] run_workqueue+0x73/0x100
+Oct 17 22:33:56 SANfile_m kernel:  [<c0142350>] =
 autoremove_wake_function+0x0/0x50
-Oct 17 20:57:09 SANfile_m kernel:  [<c01354e0>] =
+Oct 17 22:33:56 SANfile_m kernel:  [<c013f3dc>] worker_thread+0x9c/0x100
+Oct 17 22:33:56 SANfile_m kernel:  [<c0142350>] =
 autoremove_wake_function+0x0/0x50
-Oct 17 20:57:09 SANfile_m kernel:  [worker_thread+172/256] =
-worker_thread+0x9c/0x100
-Oct 17 20:57:09 SANfile_m kernel:  [<c01326dc>] worker_thread+0x9c/0x100
-Oct 17 20:57:09 SANfile_m kernel:  [autoremove_wake_function+16/80] =
-autoremove_wake_function+0x0/0x50
-Oct 17 20:57:09 SANfile_m kernel:  [<c01354e0>] =
-autoremove_wake_function+0x0/0x50
-Oct 17 20:57:09 SANfile_m kernel:  [worker_thread+16/256] =
-worker_thread+0x0/0x100
-Oct 17 20:57:09 SANfile_m kernel:  [<c0132640>] worker_thread+0x0/0x100
-Oct 17 20:57:09 SANfile_m kernel:  [kthread+82/112] kthread+0x42/0x70
-Oct 17 20:57:09 SANfile_m kernel:  [<c0135212>] kthread+0x42/0x70
-Oct 17 20:57:09 SANfile_m kernel:  [kthread+16/112] kthread+0x0/0x70
-Oct 17 20:57:09 SANfile_m kernel:  [<c01351d0>] kthread+0x0/0x70
-Oct 17 20:57:09 SANfile_m kernel:  [print_trace_stack+3/16] =
-kernel_thread_helper+0x7/0x14
-Oct 17 20:57:09 SANfile_m kernel:  [<c0104763>] =
-kernel_thread_helper+0x7/0x14
-Oct 17 20:57:09 SANfile_m kernel:  =
+Oct 17 22:33:56 SANfile_m kernel:  [<c013f340>] worker_thread+0x0/0x100
+Oct 17 22:33:56 SANfile_m kernel:  [<c0142082>] kthread+0x42/0x70
+Oct 17 22:33:56 SANfile_m kernel:  [<c0142040>] kthread+0x0/0x70
+Oct 17 22:33:56 SANfile_m kernel:  [<c0105e6f>] =
+kernel_thread_helper+0x7/0x18
+Oct 17 22:33:56 SANfile_m kernel:  =
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-Oct 17 20:57:09 SANfile_m kernel: error 1
+Oct 17 22:33:56 SANfile_m kernel: error 1
 
   ----- Original Message -----=20
   From: Tore Anderson=20
@@ -185,7 +139,7 @@ digit in =C2=AB1:0:1:0=C2=BB,
   dm-devel mailing list
   dm-devel@redhat.com
   https://www.redhat.com/mailman/listinfo/dm-devel
-------=_NextPart_000_0680_01C810F8.E2A04FF0
+------=_NextPart_000_06AF_01C81106.1EAF4CA0
 Content-Type: text/html;
 	charset="utf-8"
 Content-Transfer-Encoding: quoted-printable
@@ -197,113 +151,54 @@ Content-Transfer-Encoding: quoted-printable
 <STYLE></STYLE>
 </HEAD>
 <BODY bgColor=3D#ffffff>
-<DIV><FONT face=3DArial size=3D2>I'm afraid the patch did not =
-work&nbsp;for me. I'ts=20
-still the same.</FONT></DIV>
+<DIV><FONT face=3DArial size=3D2>not much&nbsp;difference with=20
+2.6.23.1:</FONT></DIV>
 <DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV>
-<DIV>
-<DIV><FONT face=3DArial size=3D2>I am using kernel 2.6.22.2 at the =
-moment. Should I=20
-upgrade to 2.6.23 ?</FONT></DIV>
-<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV></DIV>
-<DIV><FONT face=3DArial size=3D2>Anybody any Ideas?</FONT></DIV>
-<DIV><FONT face=3DArial size=3D2>The system is not in production at the =
-moment. We=20
-could do some testing.</FONT></DIV>
-<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2>(Gerald)</FONT></DIV>
-<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV>
-<DIV><FONT face=3DArial size=3D2>Oct 17 20:57:09 SANfile_m kernel: =
+<DIV><FONT face=3DArial size=3D2>Oct 17 22:33:56 SANfile_m kernel: =
 kobject_add=20
-failed for 1:0:1:0 with -EEXIST, don't try to register things with the =
-same name=20
-in the same directory.<BR>Oct 17 20:57:09 SANfile_m kernel:&nbsp;=20
-[number+85/816] kobject_shadow_add+0x115/0x1b0<BR>Oct 17 20:57:09 =
+failed for 1:0:1:0 with -EEXIST, don't try to register things =
+with<BR>the same=20
+name in the same directory.<BR>Oct 17 22:33:56 SANfile_m kernel:&nbsp;=20
+[&lt;c03074d5&gt;] kobject_shadow_add+0x115/0x1b0<BR>Oct 17 22:33:56 =
 SANfile_m=20
-kernel:&nbsp; [&lt;c02f95f5&gt;] kobject_shadow_add+0x115/0x1b0<BR>Oct =
-17=20
-20:57:09 SANfile_m kernel:&nbsp; [lo_ioctl+1125/2528]=20
-device_add+0xc5/0x570<BR>Oct 17 20:57:09 SANfile_m kernel:&nbsp;=20
-[&lt;c03aefd5&gt;] device_add+0xc5/0x570<BR>Oct 17 20:57:09 SANfile_m=20
-kernel:&nbsp; [fc_remote_port_rolechg+127/320]=20
-scsi_adjust_queue_depth+0x9f/0xf0<BR>Oct 17 20:57:09 SANfile_m =
+kernel:&nbsp; [&lt;c03a8f58&gt;] device_add+0xa8/0x5a0<BR>Oct 17 =
+22:33:56=20
+SANfile_m kernel:&nbsp; [&lt;c02fc582&gt;]=20
+__blk_queue_init_tags+0x32/0x70<BR>Oct 17 22:33:56 SANfile_m =
 kernel:&nbsp;=20
-[&lt;c03f9d7f&gt;] scsi_adjust_queue_depth+0x9f/0xf0<BR>Oct 17 20:57:09=20
-SANfile_m kernel:&nbsp; [blk_register_region+18/64]=20
-__blk_queue_init_tags+0x32/0x70<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[&lt;c02eeb72&gt;] __blk_queue_init_tags+0x32/0x70<BR>Oct 17 20:57:09 =
+[&lt;c03fb8af&gt;] scsi_sysfs_add_sdev+0x4f/0x220<BR>Oct 17 22:33:56 =
 SANfile_m=20
-kernel:&nbsp; [sr_get_mcn+50/240] scsi_sysfs_add_sdev+0x32/0x230<BR>Oct =
-17=20
-20:57:09 SANfile_m kernel:&nbsp; [&lt;c04028b2&gt;]=20
-scsi_sysfs_add_sdev+0x32/0x230<BR>Oct 17 20:57:09 SANfile_m =
+kernel:&nbsp; [&lt;f99498b7&gt;] qla2xxx_slave_configure+0x77/0x110=20
+[qla2xxx]<BR>Oct 17 22:33:56 SANfile_m kernel:&nbsp; [&lt;c03f986a&gt;]=20
+scsi_probe_and_add_lun+0x92a/0x950<BR>Oct 17 22:33:56 SANfile_m =
 kernel:&nbsp;=20
-[&lt;f99445b7&gt;] qla2xxx_slave_configure+0x77/0x110 [qla2xxx]<BR>Oct =
-17=20
-20:57:09 SANfile_m kernel:&nbsp; [sd_init_command+313/1088]=20
-scsi_probe_and_add_lun+0x8c9/0x940<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[&lt;c0400859&gt;] scsi_probe_and_add_lun+0x8c9/0x940<BR>Oct 17 20:57:09 =
+[&lt;c03fa26d&gt;] __scsi_scan_target+0x4fd/0x5b0<BR>Oct 17 22:33:56 =
+SANfile_m=20
+kernel:&nbsp; [&lt;c03fa954&gt;] scsi_scan_target+0x94/0xc0<BR>Oct 17 =
+22:33:56=20
+SANfile_m kernel:&nbsp; [&lt;c04014f0&gt;] =
+fc_scsi_scan_rport+0x0/0x90<BR>Oct 17=20
+22:33:56 SANfile_m kernel:&nbsp; [&lt;c0401568&gt;]=20
+fc_scsi_scan_rport+0x78/0x90<BR>Oct 17 22:33:56 SANfile_m kernel:&nbsp;=20
+[&lt;c013e963&gt;] run_workqueue+0x73/0x100<BR>Oct 17 22:33:56 SANfile_m =
 
-SANfile_m kernel:&nbsp; [sr_probe+72/1472] =
-__scsi_scan_target+0x518/0x5c0<BR>Oct=20
-17 20:57:09 SANfile_m kernel:&nbsp; [&lt;c04012c8&gt;]=20
-__scsi_scan_target+0x518/0x5c0<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[kallsyms_addresses+36323/130252] schedule+0x2df/0x940<BR>Oct 17 =
-20:57:09=20
-SANfile_m kernel:&nbsp; [&lt;c053699f&gt;] schedule+0x2df/0x940<BR>Oct =
-17=20
-20:57:09 SANfile_m kernel:&nbsp; [sr_init_command+128/944]=20
-scsi_scan_target+0xd0/0xe0<BR>Oct 17 20:57:09 SANfile_m kernel:&nbsp;=20
-[&lt;c0401a40&gt;] scsi_scan_target+0xd0/0xe0<BR>Oct 17 20:57:09 =
-SANfile_m=20
-kernel:&nbsp; [SendIocInit+272/784] fc_scsi_scan_rport+0x0/0x90<BR>Oct =
-17=20
-20:57:09 SANfile_m kernel:&nbsp; [&lt;c04084e0&gt;]=20
-fc_scsi_scan_rport+0x0/0x90<BR>Oct 17 20:57:09 SANfile_m kernel:&nbsp;=20
-[SendIocInit+392/784] fc_scsi_scan_rport+0x78/0x90<BR>Oct 17 20:57:09 =
-SANfile_m=20
-kernel:&nbsp; [&lt;c0408558&gt;] fc_scsi_scan_rport+0x78/0x90<BR>Oct 17 =
-20:57:09=20
-SANfile_m kernel:&nbsp; [run_workqueue+131/256] =
-run_workqueue+0x73/0x100<BR>Oct=20
-17 20:57:09 SANfile_m kernel:&nbsp; [&lt;c0131dc3&gt;]=20
-run_workqueue+0x73/0x100<BR>Oct 17 20:57:09 SANfile_m kernel:&nbsp;=20
-[autoremove_wake_function+16/80] =
+kernel:&nbsp; [&lt;c0142350&gt;] =
 autoremove_wake_function+0x0/0x50<BR>Oct 17=20
-20:57:09 SANfile_m kernel:&nbsp; [&lt;c01354e0&gt;]=20
-autoremove_wake_function+0x0/0x50<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[worker_thread+172/256] worker_thread+0x9c/0x100<BR>Oct 17 20:57:09 =
-SANfile_m=20
-kernel:&nbsp; [&lt;c01326dc&gt;] worker_thread+0x9c/0x100<BR>Oct 17 =
-20:57:09=20
-SANfile_m kernel:&nbsp; [autoremove_wake_function+16/80]=20
-autoremove_wake_function+0x0/0x50<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[&lt;c01354e0&gt;] autoremove_wake_function+0x0/0x50<BR>Oct 17 20:57:09=20
-SANfile_m kernel:&nbsp; [worker_thread+16/256] =
+22:33:56 SANfile_m kernel:&nbsp; [&lt;c013f3dc&gt;]=20
+worker_thread+0x9c/0x100<BR>Oct 17 22:33:56 SANfile_m kernel:&nbsp;=20
+[&lt;c0142350&gt;] autoremove_wake_function+0x0/0x50<BR>Oct 17 22:33:56=20
+SANfile_m kernel:&nbsp; [&lt;c013f340&gt;] =
 worker_thread+0x0/0x100<BR>Oct 17=20
-20:57:09 SANfile_m kernel:&nbsp; [&lt;c0132640&gt;]=20
-worker_thread+0x0/0x100<BR>Oct 17 20:57:09 SANfile_m kernel:&nbsp;=20
-[kthread+82/112] kthread+0x42/0x70<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[&lt;c0135212&gt;] kthread+0x42/0x70<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[kthread+16/112] kthread+0x0/0x70<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[&lt;c01351d0&gt;] kthread+0x0/0x70<BR>Oct 17 20:57:09 SANfile_m =
-kernel:&nbsp;=20
-[print_trace_stack+3/16] kernel_thread_helper+0x7/0x14<BR>Oct 17 =
-20:57:09=20
-SANfile_m kernel:&nbsp; [&lt;c0104763&gt;] =
-kernel_thread_helper+0x7/0x14<BR>Oct=20
-17 20:57:09 SANfile_m kernel:&nbsp; =
+22:33:56 SANfile_m kernel:&nbsp; [&lt;c0142082&gt;] =
+kthread+0x42/0x70<BR>Oct 17=20
+22:33:56 SANfile_m kernel:&nbsp; [&lt;c0142040&gt;] =
+kthread+0x0/0x70<BR>Oct 17=20
+22:33:56 SANfile_m kernel:&nbsp; [&lt;c0105e6f&gt;]=20
+kernel_thread_helper+0x7/0x18<BR>Oct 17 22:33:56 SANfile_m kernel:&nbsp; =
+
 =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D<BR>=
-Oct 17 20:57:09=20
-SANfile_m kernel: error 1<BR></FONT></DIV>
+Oct 17 22:33:56 SANfile_m kernel: error=20
+1<BR></FONT></DIV>
 <BLOCKQUOTE=20
 style=3D"PADDING-RIGHT: 0px; PADDING-LEFT: 5px; MARGIN-LEFT: 5px; =
 BORDER-LEFT: #000000 2px solid; MARGIN-RIGHT: 0px">
@@ -388,14 +283,14 @@ href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</A><BR><A=20
 href=3D"https://www.redhat.com/mailman/listinfo/dm-devel">https://www.red=
 hat.com/mailman/listinfo/dm-devel</A></BLOCKQUOTE></BODY></HTML>
 
-------=_NextPart_000_0680_01C810F8.E2A04FF0--
+------=_NextPart_000_06AF_01C81106.1EAF4CA0--
 
 
---===============0378461437==
+--===============1152962555==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0378461437==--
+--===============1152962555==--
