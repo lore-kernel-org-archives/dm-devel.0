@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Tore Anderson <tore@linpro.no>
 Subject: Re: multibus / failover and EMC CX600
-Date: Thu, 18 Oct 2007 08:19:07 +0200
-Message-ID: <20071018061907.GA22562@pentland.suse.de>
-References: <066001c810cc$cd9f6f90$0a00a8c0@ALDI2> <471631E5.9050603@linpro.no>
-	<068301c810e8$1f4e6e70$0a00a8c0@ALDI2>
+Date: Thu, 18 Oct 2007 08:19:17 +0200
+Message-ID: <4716FAE5.4010904@linpro.no>
+References: <061401c810a7$cac685d0$0a00a8c0@ALDI2><4715E6A4.7060308@linpro.no>	<4715ED28.9020102@suse.de><471600F7.5090607@linpro.no>	<066001c810cc$cd9f6f90$0a00a8c0@ALDI2>
+	<471631E5.9050603@linpro.no> <06b201c810f5$5b7782d0$0a00a8c0@ALDI2>
+	<4716F6C3.2040100@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <068301c810e8$1f4e6e70$0a00a8c0@ALDI2>
+In-Reply-To: <4716F6C3.2040100@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,34 +23,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 17, 2007 at 08:04:12PM +0200, Gerald Nowitzky wrote:
-> I'm afraid the patch did not work for me. I'ts still the same.
->=20
-> I am using kernel 2.6.22.2 at the moment. Should I upgrade to 2.6.23 ?
->=20
-> Anybody any Ideas?
-> The system is not in production at the moment. We could do some testing=
-.
->=20
-Well, yes. By the looks of if the problem is with multipathing still hold=
-ing
-references to the stale devices.
-IE after dev_loss_tmo kicks in, the devices are removed from sysfs.
-But multipathing does _not_ update it's device-mapper tables (that's why
-you see all the '#' in the output), so there's still a refence on the
-removed device and the in-kernel resources can't be freed.
+* Tore Anderson
 
-So when the device is re-registered, you're getting this Oops.
+> Hmm - maybe this patch helps (needs Wilcox' patch to be applied first):
+> <http://www.mail-archive.com/linux-scsi@vger.kernel.org/msg09458.html>.
 
-Try to update the multipath information by running 'multipath' after the
-devices have been removed. Once the '#' in the output are gone, you can
-savely re-add the devices.
+By the way - did you try with async SCSI scanning enabled?  Worth a shot...
 
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+-- 
+Tore Anderson
