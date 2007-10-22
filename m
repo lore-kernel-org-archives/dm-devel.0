@@ -1,11 +1,8 @@
-From: DJ <dancelicious@gmail.com>
-Subject: Help with writing dm hardware handler
-Date: Wed, 17 Oct 2007 12:55:26 -0700
-Message-ID: <6b70dfe80710171255h89850f5u73017e6c8505a5af@mail.gmail.com>
-Reply-To: dancelicious@gmail.com,
-	device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0052192246=="
+From: bmarzins@sourceware.org
+Subject: multipath-tools/kpartx Makefile kpartx.conf
+Date: 22 Oct 2007 18:44:32 -0000
+Message-ID: <20071022184432.17462.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,56 +13,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0052192246==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_45919_25685615.1192650927412"
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2007-10-22 18:44:31
 
-------=_Part_45919_25685615.1192650927412
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Modified files:
+	kpartx         : Makefile 
+Added files:
+	kpartx         : kpartx.conf 
 
-Hi All,
+Log message:
+	add default kpartx.conf.
 
-I am writing a hardware handler for dm multipath support, but I am getting
-the following error everytime.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/kpartx.conf.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=NONE&r2=1.1.2.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/kpartx/Makefile.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.5.2.1&r2=1.5.2.2
 
-"kernel: device-mapper: table: 253:0: multipath: unknown hardware handler
-type"
-
-My module name is dm-smaple.ko (which shows as dm_smaple in lsmod), code
-name is dm-sample.c and the in code the module name I am specifying is
-"sample".
-I have also modified the multipath.conf to have the following entry:
-
-hardware_handler "1 sample"
-
-Could someone please let me know what am I doing wrong here?
-If needed I can paste the code here.
-
-Thanks in advance.
-DJ.
-
-------=_Part_45919_25685615.1192650927412
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-<div>Hi All,<br><br>I am writing a hardware handler for dm multipath support, but I am getting the following error everytime.<br><br>&quot;kernel: device-mapper: table: 253:0: multipath: unknown hardware handler type&quot;
-<br><br>My module name is dm-smaple.ko (which shows as dm_smaple in lsmod), code name is dm-sample.c and the in code the module name I am specifying is &quot;sample&quot;. <br>I have also modified the multipath.conf to have the following entry:
-<br><br>hardware_handler &quot;1 sample&quot; <br><br>Could someone please let me know what am I doing wrong here?<br>If needed I can paste the code here.<br><br>Thanks in advance.<br>DJ.</div>
-
-------=_Part_45919_25685615.1192650927412--
-
-
---===============0052192246==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0052192246==--
+--- multipath-tools/kpartx/Makefile	2006/09/19 21:06:40	1.5.2.1
++++ multipath-tools/kpartx/Makefile	2007/10/22 18:44:31	1.5.2.2
+@@ -43,6 +43,9 @@
+ 	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)
+ 	install -d $(DESTDIR)$(mandir)
+ 	install -m 644 $(EXEC).8 $(DESTDIR)$(mandir)
++	@if [ ! -e $(DESTDIR)/etc/kpartx.conf ]; then \
++		install -m 644 kpartx.conf $(DESTDIR)/etc/kpartx.conf; \
++	fi
+ 
+ uninstall:
+ 	rm -f $(DESTDIR)$(bindir)/$(EXEC)
