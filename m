@@ -1,15 +1,14 @@
-From: Chip Coldwell <coldwell@redhat.com>
-Subject: Re: Explicit ALUA handling
-Date: Tue, 23 Oct 2007 15:57:16 -0400 (EDT)
-Message-ID: <alpine.LRH.0.9999.0710231554090.16194@bogart.boston.redhat.com>
-References: <E88AE5BB44F80746A49345D6CC73334005D8B3A3@CORPUSMX30A.corp.emc.com>
-	<471D8E55.5040109@suse.de>
-	<alpine.LRH.0.9999.0710230914080.15410@bogart.boston.redhat.com>
+From: "Domenico Viggiani" <dviggiani@tiscali.it>
+Subject: Resizing multipath maps: reload ioctl failed: Invalid
+	argument
+Date: Wed, 24 Oct 2007 16:17:10 +0200
+Message-ID: <000101c81648$917e2980$cf42e3c1@pitagora.it>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LRH.0.9999.0710230914080.15410@bogart.boston.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,68 +21,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, 23 Oct 2007, Chip Coldwell wrote:
+Hi,
+I'm trying to resize a multipath map (an EMC Clariion LUN) but something
+goes wrong with ioctl call. 
+After resizing LUN by EMC Navisphere, I rescanned four paths using:
+ echo "1" > /sys/bus/scsi/drivers/sd/<h>\:<b>\:<t>\:<l>/block/device/rescan
+ ...
+I noticed (in /var/log/messages) that kernel "sees" new size only for two
+paths, surely the active ones (Clariion is an active/passive array).
+Then, I trespassed LUN on the other storage processor and rescanned all
+paths a second time: all sizes was updated.
+But, re-running 'multipath -v2', I got:
+ # multipath -v 2
+ device-mapper: reload ioctl failed: Invalid argument
+I found no other way to make this work but umounting filesystem,
+deactivating LVM and ran 'multipath -f ... && multipath -v2' (and then other
+regular LVM stuffs).
+OS is Red Hat 4.5.
 
-> On Tue, 23 Oct 2007, Hannes Reinecke wrote:
-> 
-> > Hi Chip,
-> > 
-> > the folks from EMC have forwarded your request to me.
-> > You already might have seen the initial posting to
-> > dm-devel, so there's at least some code to get a start.
-> > 
-> > Currently I'm working on implementing a generic
-> > command queue framework for hardware handler, so that
-> > the rdac and alua handler don't have to implement their
-> > own handling but rather can use some generic functions.
-> > 
-> > So, how can I help you?
-> 
-> Well, you just did.  I think I found your posting here
-> 
-> https://www.redhat.com/archives/dm-devel/2007-October/msg00033.html
-> 
-> So now I will take a little time to read and understand the code.
-> Then perhaps we should take our conversation over to the dm-devel
-> mailing list.
+About this, I found this message in archives:
+ http://www.redhat.com/archives/dm-devel/2007-August/msg00188.html
 
-Apropos this
+Is it confirmed that online resizing with multipath is impossible?
 
-+/*
-+ * Evaluate SET TARGET GROUP STATES
-+ *
-+ * We only have to test here if we should resubmit the command;
-+ * any other error is assumed as a failure.
-+ * Maybe we should analyze the sensebuffer here, too.
-+ */
-+static void alua_stpg(struct alua_handler *h, enum tpgs_state n)
-+{
-+	unsigned error;
-+	int retry = 5;
-+
-+ retry:
-+	error = submit_stpg(h);
-+	switch(host_byte(error)) {
-+	case DID_BUS_BUSY:
-+		if (!retry)
-+			break;
-+		retry++;
-+	case DID_REQUEUE:
-+	case DID_IMM_RETRY:
-+		goto retry;
-+	}
+If yes, in my opinion, this is a serious limitation to a serious enterprise
+use of Linux.
 
-Didn't you mean to use "retry--" instead of "retry++"?  Otherwise, I
-think you'll get a few more retries than you planned.
-
-Also, I note that the tpgs_state parameter isn't used; submit_stpg
-will always try to put the port group into the OPTIMIZED state.  Is
-that the intention?
-
-Chip
-
+Thanks in advance for any help
 -- 
-Charles M. "Chip" Coldwell
-Senior Software Engineer
-Red Hat, Inc
-978-392-2426
+Domenico Viggiani
