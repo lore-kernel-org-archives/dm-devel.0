@@ -1,9 +1,15 @@
-From: Paul Jimenez <pj@place.org>
-Subject: [PATCH] KJ: md-table use list_for_each
-Date: Sat, 27 Oct 2007 01:42:26 -0500
-Message-ID: <20071027064226.81C9E8AFC@place.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Re: dm: bounce_pfn limit added
+Date: Tue, 30 Oct 2007 23:26:17 +0000
+Message-ID: <20071030232617.GJ10006@agk.fab.redhat.com>
+References: <47257E4B.4080904@sw.ru>
+	<20071030131138.3ba59731.akpm@linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20071030131138.3ba59731.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,58 +19,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: kernel-janitors@vger.kernel.org
+To: Vasily Averin <vvs@sw.ru>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, stable@kernel.org, devel@openvz.org
 List-Id: dm-devel.ids
 
+On Tue, Oct 30, 2007 at 01:11:38PM -0700, Andrew Morton wrote:
+> On Mon, 29 Oct 2007 09:31:39 +0300
+> Vasily Averin <vvs@sw.ru> wrote:
+> > Device mapper uses its own bounce_pfn that may differ from one on underlying
+> > device. In that way dm can build incorrect requests that contain sg elements
+> > greater than underlying device is able to handle.
+> > This is the cause of slab corruption in i2o layer, occurred on i386 arch when
+> > very long direct IO requests are addressed to dm-over-i2o device.
 
-A minor bit of cleanup, suitable for a first KJ submission.
-Let me know if I forgot to dot an i or cross a t somewhere in
-the submission process!
+Interesting.  When this patch was originally proposed a couple of years ago, we
+did this instead:
+  http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=daef265f1590cf3e6de989d074041a280c82d58b;hp=00d6da9b4d6707b808481372537adb0fb38f99b3
 
-  --pj
+) DM doesn't need to bounce bio's on its own, but the block layer defaults
+) to that in blk_queue_make_request(). The lower level drivers should
+) bounce ios themselves, that is what they need to do if not layered below
+) dm anyways.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 8939e61..1a735bb 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -280,9 +280,8 @@ static void free_devices(struct list_head *devices)
- {
- 	struct list_head *tmp, *next;
- 
--	for (tmp = devices->next; tmp != devices; tmp = next) {
-+	list_for_each_safe(tmp, next, devices) {	
- 		struct dm_dev *dd = list_entry(tmp, struct dm_dev, list);
--		next = tmp->next;
- 		kfree(dd);
- 	}
- }
-@@ -972,12 +971,11 @@ int dm_table_resume_targets(struct dm_table *t)
- 
- int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- {
--	struct list_head *d, *devices;
-+	struct dm_dev *dd;
-+	struct list_head *devices = dm_table_get_devices(t);
- 	int r = 0;
- 
--	devices = dm_table_get_devices(t);
--	for (d = devices->next; d != devices; d = d->next) {
--		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
-+	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
- 		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
- 	}
-@@ -987,10 +985,10 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
- 
- void dm_table_unplug_all(struct dm_table *t)
- {
-+	struct dm_dev *dd;
- 	struct list_head *d, *devices = dm_table_get_devices(t);
- 
--	for (d = devices->next; d != devices; d = d->next) {
--		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
-+	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
- 
- 		if (q->unplug_fn)
+Alasdair
+-- 
+agk@redhat.com
