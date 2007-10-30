@@ -1,7 +1,7 @@
-From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: Problem with DM hardware handler
-Date: Mon, 29 Oct 2007 16:45:01 -0700
-Message-ID: <110b17190710291645l42e98bc5i6089102bb1e15f9@mail.gmail.com>
+From: "Scott Moseman" <scmoseman@gmail.com>
+Subject: NIC and HBA based multipathing
+Date: Tue, 30 Oct 2007 11:56:08 -0500
+Message-ID: <342d47870710300956k3bde2d06j7a50acc6c8225fe5@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -20,32 +20,24 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi All,
+Device-mapper multipathing in RHEL 4
+http://kbase.redhat.com/faq/FAQ_51_7170.shtm
 
-I am writing a DM Hardware handler; so to start with I took, dm-emc.c
-code and replaced emc by sample. I also renamed the file to dm-sample
-and the module name is dm-sample.ko.
+I can (and have) setup a NIC based iSCSI SAN connection.  I can (and
+have) setup an HBA based iSCSI SAN connection.  Now I'm trying to get
+a machine to connect using multipath with both a NIC and an HBA.  What
+are the prerequisites that I should have running before I attempt to
+go through the above knowledge base procedure?
 
-The code compiles fine and even loads okay. I modiefied the
-/etc/multipath.conf to point the hardware_handler to my sample
-handler.
+I put IPs on both the NIC and HBA on the SAN network.  The SAN is
+showing both IPs as trying to access the volume in question.  iscsi-ls
+only shows 1 device (/dev/sdb), and it's taking the path through the
+NIC to reach the SAN.  I can verify this by watching the SAN volume to
+see which of the IP addresses is sending traffic.
 
- hardware_handler        "1 sample"
+Should my HBA show up as another device (/dev/sdc) before I start
+attempting to multipath?  Or is multipathd going to link both NIC and
+HBA to the /dev/sdb device?
 
-Now when I run the command,
-# multipath -F
-# multipath -ll
-# multipath -v3
-
-It shows me the following error in the /var/log/messages
-Oct 29 16:33:23 localhost kernel: device-mapper: table: 253:0:
-multipath: unknown hardware handler type
-Oct 29 16:33:23 localhost kernel: device-mapper: ioctl: error adding
-target to table
-
-Same works fine, if I add emc as hardware handler.
-
-Any idea, why am I getting this error?
-
-Thanks and Regards,
-Pradipmaya.
+Thanks,
+Scott
