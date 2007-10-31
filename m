@@ -1,11 +1,8 @@
-From: Scott.Rozek@mmc.com
-Subject: Scott Rozek is out of the office.
-Date: Tue, 30 Oct 2007 19:32:55 -0500
-Message-ID: <OFB35A901E.1BA1BFA7-ON85257385.000303B8-85257385.000303B9@marsh.com>
+From: Paul Jimenez <pj@place.org>
+Subject: [PATCH] KJ: dm-table use list_for_each [RESEND]
+Date: Tue, 30 Oct 2007 20:03:11 -0500
+Message-ID: <20071031010311.65E298B2A@place.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,25 +14,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: kernel-janitors@vger.kernel.org
 List-Id: dm-devel.ids
 
 
-I will be out of the office starting  10/30/2007 and will not return until
-11/01/2007.
+This patch is some minor janitorish cleanup, using some macros
+from linux/list.h (already #included via dm.h) to improve
+readability.
 
-I will respond to your message when I return.  Please contact the support
-desk if this is urgent.
-**********************************************************************
-This e-mail transmission and any attachments that accompany it may 
-contain information that is privileged, confidential or otherwise 
-exempt from disclosure under applicable law and is intended solely for
-the use of the individual(s) to whom it was intended to be addressed.
-If you have received this e-mail by mistake, or you are not the
-intended recipient, any disclosure, dissemination, distribution, 
-copying or other use or retention of this communication or its 
-substance is prohibited.  If you have received this communication in
-error, please immediately reply to the author via e-mail that you 
-received this message by mistake and also permanently delete the 
-original and all copies of this e-mail and any attachments from your
-computer. Thank you.
-**********************************************************************
+Signed-off-by: Paul Jimenez <pj@place.org>
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 8939e61..e252d1a 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -280,9 +280,8 @@ static void free_devices(struct list_head *devices)
+ {
+ 	struct list_head *tmp, *next;
+ 
+-	for (tmp = devices->next; tmp != devices; tmp = next) {
++	list_for_each_safe(tmp, next, devices) {
+ 		struct dm_dev *dd = list_entry(tmp, struct dm_dev, list);
+-		next = tmp->next;
+ 		kfree(dd);
+ 	}
+ }
+@@ -972,12 +971,11 @@ int dm_table_resume_targets(struct dm_table *t)
+ 
+ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
+ {
+-	struct list_head *d, *devices;
++	struct dm_dev *dd;
++	struct list_head *devices = dm_table_get_devices(t);
+ 	int r = 0;
+ 
+-	devices = dm_table_get_devices(t);
+-	for (d = devices->next; d != devices; d = d->next) {
+-		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
++	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->bdev);
+ 		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
+ 	}
+@@ -987,10 +985,10 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits)
+ 
+ void dm_table_unplug_all(struct dm_table *t)
+ {
+-	struct list_head *d, *devices = dm_table_get_devices(t);
++	struct dm_dev *dd;
++	struct list_head *devices = dm_table_get_devices(t);
+ 
+-	for (d = devices->next; d != devices; d = d->next) {
+-		struct dm_dev *dd = list_entry(d, struct dm_dev, list);
++	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->bdev);
+ 
+ 		if (q->unplug_fn)
