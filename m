@@ -1,15 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: dm: bounce_pfn limit added
-Date: Tue, 30 Oct 2007 23:26:17 +0000
-Message-ID: <20071030232617.GJ10006@agk.fab.redhat.com>
-References: <47257E4B.4080904@sw.ru>
-	<20071030131138.3ba59731.akpm@linux-foundation.org>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: Re: Problem with DM hardware handler
+Date: Tue, 30 Oct 2007 17:16:50 -0700
+Message-ID: <20071031001650.GA20710@linux.vnet.ibm.com>
+References: <110b17190710291645l42e98bc5i6089102bb1e15f9@mail.gmail.com>
+	<20071030064930.GA5002@us.ibm.com>
+	<110b17190710301021g75b2f3acy87a226510937361e@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20071030131138.3ba59731.akpm@linux-foundation.org>
+In-Reply-To: <110b17190710301021g75b2f3acy87a226510937361e@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,28 +20,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Vasily Averin <vvs@sw.ru>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Jens Axboe <jens.axboe@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, stable@kernel.org, devel@openvz.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Oct 30, 2007 at 01:11:38PM -0700, Andrew Morton wrote:
-> On Mon, 29 Oct 2007 09:31:39 +0300
-> Vasily Averin <vvs@sw.ru> wrote:
-> > Device mapper uses its own bounce_pfn that may differ from one on underlying
-> > device. In that way dm can build incorrect requests that contain sg elements
-> > greater than underlying device is able to handle.
-> > This is the cause of slab corruption in i2o layer, occurred on i386 arch when
-> > very long direct IO requests are addressed to dm-over-i2o device.
+Pradipmaya Maharana <pradipmaya@gmail.com> wrote:
+> The handler did register okay; I saw the following message in /var/log/messages.
+> 
+> Oct 29 16:32:39 localhost kernel: device-mapper: multipath sample:
+> version 0.0.0 loaded.
+> 
 
-Interesting.  When this patch was originally proposed a couple of years ago, we
-did this instead:
-  http://git.kernel.org/?p=linux/kernel/git/torvalds/linux-2.6.git;a=commitdiff;h=daef265f1590cf3e6de989d074041a280c82d58b;hp=00d6da9b4d6707b808481372537adb0fb38f99b3
+I did just as you described and it worked for me. I will send you a patch
+version of the changes in my version dm-emc.c dm-sample.c off list.
 
-) DM doesn't need to bounce bio's on its own, but the block layer defaults
-) to that in blk_queue_make_request(). The lower level drivers should
-) bounce ios themselves, that is what they need to do if not layered below
-) dm anyways.
+1.) dmesg out
+...
+[764248.618295] device-mapper: multipath sample: version 0.0.3 loaded
+...
+[764743.244154] device-mapper: multipath sample: long trespass command
+will be send
+[764743.288411] device-mapper: multipath sample: honor reservation bit
+will not be set (default)
+[764743.344077] device-mapper: multipath sample: long trespass command
+will be send
 
-Alasdair
--- 
-agk@redhat.com
+2.) multipath -l
+...
+mpath1 (35333333000001f40) dm-2 Linux,scsi_debug
+[size=8.0M][features=0][hwhandler=1 sample]
+\_ round-robin 0 [prio=0][active]
+ \_ 3:0:0:0 sdb 8:16  [active][undef]
+
+3.) /etc/multipath.conf
+/etc/multipath.conf
+...
+      device {
+                vendor                  "Linux.*"
+                product                 "scsi.*"
+                hardware_handler        "1 sample"
+        }
+
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
