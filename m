@@ -1,15 +1,16 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: how to flush device with no paths but
-	no_path_retry=queue
-Date: Fri, 2 Nov 2007 13:01:33 -0700
-Message-ID: <20071102200133.GB3712@linux.vnet.ibm.com>
-References: <1194019311.6006.23.camel@eddie-laptop.sc.steeleye.com>
+Subject: Re: Does dm handle tape devices?
+Date: Fri, 2 Nov 2007 14:20:48 -0700
+Message-ID: <20071102212048.GA4711@linux.vnet.ibm.com>
+References: <B6FF36386FC9AC4BB098A4528811409F4B7802@CORPUSMX40A.corp.emc.com>
+	<20071102195126.GA3712@linux.vnet.ibm.com>
+	<B6FF36386FC9AC4BB098A4528811409F4B7882@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1194019311.6006.23.camel@eddie-laptop.sc.steeleye.com>
+In-Reply-To: <B6FF36386FC9AC4BB098A4528811409F4B7882@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,21 +23,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Eddie Williams <Eddie.Williams@steeleye.com> wrote:
+lemons_terry@emc.com <lemons_terry@emc.com> wrote:
+> A third application, alas, uses SCSI IDs to refer to the tape devices.
+> I've been instructed to seek a persistent naming solution for this
+> application, too, one that (hopefully) won't require modification of the
+> application.  I started out looking at the QLogic FC HBA's persistence
+> capability, and saw that it functions at the target level within a
+> single HBA.  But I found that some vendors don't support this method of
+> persistence, opting instead to use device mapper.
 > 
-> If you have a device configured with no_path_retry=queue but you can not
-> repair the connections is there any way to flush the IO's?  
-> 
-> I can not find a way to force the device offline so that it will
-> flush/fail all of the pending IO's so I can shutdown or clean up the
-> mess.
-> 
-> Is there a way?
 
-There maybe a cleaner way, but you should be able to do:
-	dmsetup message ${device} 0 fail_if_no_path
+If the "third application" is wanting a I:T:L nexus for some type of
+passthrough SG_IO operation I assume someone must provide the device nodes
+to the application to open for its operations (config file??).
 
-It worked on my test config, but it was a pretty simple config.
+Since this is not device mapper specific maybe send me a reply offlist and
+maybe I can help guide your request back to the proper list for more
+discussion.
 
 -andmike
 --
