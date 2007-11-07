@@ -1,13 +1,23 @@
-From: "Vega Forneris" <vega.forneris@sic.rm.cnr.it>
-Subject: - info about dm
-Date: Wed, 7 Nov 2007 14:51:52 +0100
-Message-ID: <00c401c82145$5a337180$27819296@wegaprise>
+From: "Scott Moseman" <scmoseman@gmail.com>
+Subject: Re: NIC and HBA based multipathing
+Date: Wed, 7 Nov 2007 09:07:41 -0600
+Message-ID: <342d47870711070707s7ac0fca2w1fdda12fb73fc548@mail.gmail.com>
+References: <342d47870710301211y42200594u444b7af7ae870e7@mail.gmail.com>
+	<342d47870711011321j1ff065c3jb54589988f3c499f@mail.gmail.com>
+	<20071101215726.GB11002@linux.vnet.ibm.com>
+	<342d47870711061308p77655083y7ac30a9e9e2a3b72@mail.gmail.com>
+	<20071106222043.GA23178@linux.vnet.ibm.com>
+	<342d47870711061433h6dce42baj705aca5ae7baa466@mail.gmail.com>
+	<20071106230157.GA23800@linux.vnet.ibm.com>
+	<342d47870711061746s64daeaa0wcb6adf060506686c@mail.gmail.com>
+	<20071107025935.GA22697@us.ibm.com>
+	<20071107050925.GA25156@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed;
+	boundary="----=_Part_34290_30564644.1194448061826"
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20071107050925.GA25156@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,80 +27,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Dear all,
+------=_Part_34290_30564644.1194448061826
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I just installed Scientific Linux 5 and I used for the first time DM
-drivers for working with the embedded RAID (the servers are IBM xSeries,
-with an Adaptec HostRAID ASR - SATA). I really appreciate the fact that
-now Linux is able to recognize such devices, but I had some troubles
-configuring it and I=92d like to have some info for better understanding
-how things work.=20
+Ok, if multipath is grabbing the HBA device so I'm unable to mount it,
+that's fine, I will go with that.  So I re-enabled the iSCSI initiator
+so that the NIC device would become active and I can see if multipath
+will grab both of them.  No luck, but I'm ahead of where I was
+previously, so here's my status.
 
-I=92ll be a little =93verbose=94 for clarifying what I did and which are =
-my
-doubts=85
+In dmesg, both of the devices are being found on boot...
 
-1) Installation & Configuration
-I installed SL5 on a system which was running SL3 with HW drivers
-released by IBM. Linux was able to identify correctly the device
-(installed through CD), mapped it as /dev/mapper/asr_ and proceeded with
-he installation.
+HBA-
 
-Anyway, I found a little problematic configuring it manually: I tried to
-install SL5 on a node which was misconfigured: instead of seeing one
-device, it was managing the 2 HD (/dev/sda and /dev/sdb) as 2 separate
-devices an if I tried to configure them (at install time, via CD or
-network boot) with  DM, I got many errors about the RAID table (=93ERROR:
-asr: Invalid RAID config table checksum on /dev/sda=94 or even =93asr:
-Invalid magic number in RAID table; saw 0x0 expected=85=94). I tried to
-reconfigure the RAID card first via BIOS and then trying again to
-configure it via Linux (=93dmsetup create =85=94) but even if it seemed
-working (exit code 0), then querying the device asr_ (i.e. =93dmraid =96r=
-=94)
-resulted in errors as reported above=85or better, dmraid commands (-r,
--ay, -tay,=85) reported errors, while dmsetup commands  (status, ls,=85)
-worked normally. The only way I found for well-configuring the device
-was to install SL3 with specific drivers, and then to install SL5 with
-DM=85both commands now work perfectly
+scsi1 : qla4xxx
+ QLogic iSCSI HBA Driver version: 5.01.00.08
+  QLogic ISP4032 @ 0000:14:01.1 hdma+, host#=1, fw=03.00.01.24
+  Vendor: EQLOGIC   Model: 100E-00           Rev: 2.3
+  Type:   Direct-Access                      ANSI SCSI revision: 05
+qla4xxx 0000:14:01.1: scsi(1:0:1:0): Enabled tagged queuing, queue depth 32.
+SCSI device sdb: 8417280 512-byte hdwr sectors (4310 MB)
+SCSI device sdb: drive cache: write through
+ sdb: sdb1
+Attached scsi disk sdb at scsi1, channel 0, id 1, lun 0
 
-In brief:
+NIC-
 
-If I try to configure DM-RAID from scratch and I get such errors, how
-can I do? What=92s that =93RAID table=94? Where is it written? Not in the=
- MBR
-of an HD, =91cause I tried to copy the MBR of the cloned disk which had n=
-o
-problem (still recognized as =93good=94 for RAID and DM) and nothing
-changed=85
+scsi3 : SFNet iSCSI driver
+  Vendor: EQLOGIC   Model: 100E-00           Rev: 2.3
+  Type:   Direct-Access                      ANSI SCSI revision: 05
+SCSI device sdc: 8417280 512-byte hdwr sectors (4310 MB)
+SCSI device sdc: drive cache: write through
+ sdc: sdc1
+Attached scsi disk sdc at scsi3, channel 0, id 0, lun 0
 
-2) Managing disks
-I configured disks in RAID 1 (mirror) but I wonder how to manage this
-RAID; in particular, how can I do for:
- - stopping a device (disk) and put it offline/and viceversa?=20
- - reconfiguring/rebuilding it (due to broken/faulting HD)?=20
+# multipath -l
+30690a018f015191a6472441d1500f057
+[size=4 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 1:0:1:0     sdb 8:16 [active][ready]
 
-At the moment I should change a couple of disks (SMARTD warnings
-reported), but I=92m scared about the =93RAID table error=94=85
+I'm attaching the output of "multipath -v4" since it's lengthy.
+There's some references to sdc (although [faulty]) that I don't
+understand, but maybe it will help troubleshoot?
 
-Many Thanks in advance for all help you can give me=85
+My multipath.conf is setup in accordance with
+http://kbase.redhat.com/faq/FAQ_51_7170.shtm .
 
-Best Regards
-Vega Forneris
+Thanks,
+Scott
 
-+--------------------------------------+
-=A0Vega Forneris
+------=_Part_34290_30564644.1194448061826
+Content-Type: text/plain; name=multipath.txt
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_f8pzdvf80
+Content-Disposition: attachment; filename=multipath.txt
 
-=A0CNR =96 Servizi Informatici di Campo
-=A0Gestione servizi GRID
+DQojIG11bHRpcGF0aCAtdjQNCmxvYWQgcGF0aCBpZGVudGlmaWVycyBjYWNoZQ0KIw0KIyBhbGwg
+cGF0aHMgaW4gY2FjaGUgOg0KIw0KICAjOiM6IzojICBoZGEgMzowICBbZmF1bHR5XSAvLw0KMzA2
+OTBhMDE4ZjAxNTE5MWE2NDcyNDQxZDE1MDBmMDU3ICAxOjA6MTowIHNkYiA4OjE2ICBbYWN0aXZl
+XVtyZWFkeV0gRVFMT0dJQyAvDQogIDM6MDowOjAgc2RjIDg6MzIgIFtmYXVsdHldIEVRTE9HSUMg
+LzEwMEUtMDAgICAgICAgICAvMi4zIA0KPT09PT0gcGF0aCBpbmZvIGhkYSAobWFzayAweDFmKSA9
+PT09PQ0KYnVzID0gMg0KZGV2X3QgPSAzOjANCnNpemUgPSA4Mzg4NjA0DQpzZGEgYmxhY2tsaXN0
+ZWQNCj09PT09IHBhdGggaW5mbyBzZGIgKG1hc2sgMHgxZikgPT09PT0NCmJ1cyA9IDENCmRldl90
+ID0gODoxNg0Kc2l6ZSA9IDg0MTcyODANCnZlbmRvciA9IEVRTE9HSUMgDQpwcm9kdWN0ID0gMTAw
+RS0wMCAgICAgICAgIA0KcmV2ID0gMi4zIA0KaDpiOnQ6bCA9IDE6MDoxOjANCnRndF9ub2RlX25h
+bWUgPSANCnNlcmlhbCA9IDA2OTBBMDE4RjAxNTE5MUE2NDcyNDQxRDE1MDBGMDU3DQpwYXRoIGNo
+ZWNrZXIgPSByZWFkc2VjdG9yMCAoaW50ZXJuYWwgZGVmYXVsdCkNCnN0YXRlID0gMg0KZ2V0cHJp
+byA9IC9iaW4vdHJ1ZSAoaW50ZXJuYWwgZGVmYXVsdCkNCnByaW8gPSAwDQp1aWQgPSAzMDY5MGEw
+MThmMDE1MTkxYTY0NzI0NDFkMTUwMGYwNTcgKGNhY2hlKQ0KPT09PT0gcGF0aCBpbmZvIHNkYyAo
+bWFzayAweDFmKSA9PT09PQ0KYnVzID0gMQ0KZGV2X3QgPSA4OjMyDQpzaXplID0gODQxNzI4MA0K
+dmVuZG9yID0gRVFMT0dJQyANCnByb2R1Y3QgPSAxMDBFLTAwICAgICAgICAgDQpyZXYgPSAyLjMg
+DQpoOmI6dDpsID0gMzowOjA6MA0KdGd0X25vZGVfbmFtZSA9IA0KIw0KIyBhbGwgcGF0aHMgOg0K
+Iw0KICAjOiM6IzojICBoZGEgMzowICBbZmF1bHR5XSAvLw0KMzA2OTBhMDE4ZjAxNTE5MWE2NDcy
+NDQxZDE1MDBmMDU3ICAxOjA6MTowIHNkYiA4OjE2ICBbYWN0aXZlXVtyZWFkeV0gRVFMT0dJQyAv
+DQogIDM6MDowOjAgc2RjIDg6MzIgIFtmYXVsdHldIEVRTE9HSUMgLzEwMEUtMDAgICAgICAgICAv
+Mi4zIA0KcGFyYW1zID0gMCAwIDEgMSByb3VuZC1yb2JpbiAwIDEgMSA4OjE2IDEwMCANCnN0YXR1
+cyA9IDEgMCAwIDEgMSBBIDAgMSAwIDg6MTYgQSAwIA0KKndvcmQgPSAwLCBsZW4gPSAxDQoqd29y
+ZCA9IDAsIGxlbiA9IDENCip3b3JkID0gMSwgbGVuID0gMQ0KKndvcmQgPSAxLCBsZW4gPSAxDQoq
+d29yZCA9IHJvdW5kLXJvYmluLCBsZW4gPSAxMQ0KKndvcmQgPSAwLCBsZW4gPSAxDQoqd29yZCA9
+IDEsIGxlbiA9IDENCip3b3JkID0gMSwgbGVuID0gMQ0KKndvcmQgPSA4OjE2LCBsZW4gPSA0DQo9
+PT09PSBwYXRoIGluZm8gc2RiIChtYXNrIDB4OCkgPT09PT0NCnByaW8gPSAwDQp1aWQgPSAzMDY5
+MGEwMThmMDE1MTkxYTY0NzI0NDFkMTUwMGYwNTcgKGNhY2hlKQ0KKndvcmQgPSAxLCBsZW4gPSAx
+DQoqd29yZCA9IDAsIGxlbiA9IDENCip3b3JkID0gMSwgbGVuID0gMQ0KKndvcmQgPSBBLCBsZW4g
+PSAxDQoqd29yZCA9IDEsIGxlbiA9IDENCip3b3JkID0gMCwgbGVuID0gMQ0KKndvcmQgPSBBLCBs
+ZW4gPSAxDQoqd29yZCA9IDAsIGxlbiA9IDENCnBncG9saWN5ID0gZmFpbG92ZXIgKGNvbmZpZyBm
+aWxlIGRlZmF1bHQpDQpzZWxlY3RvciA9IHJvdW5kLXJvYmluIDAgKGludGVybmFsIGRlZmF1bHQp
+DQpmZWF0dXJlcyA9IDAgKGludGVybmFsIGRlZmF1bHQpDQpod2hhbmRsZXIgPSAwIChpbnRlcm5h
+bCBkZWZhdWx0KQ0KcnJfd2VpZ2h0ID0gMSAoaW50ZXJuYWwgZGVmYXVsdCkNCm5vX3BhdGhfcmV0
+cnkgPSBOT05FIChpbnRlcm5hbCBkZWZhdWx0KQ0KcGdfdGltZW91dCA9IE5PTkUgKGludGVybmFs
+IGRlZmF1bHQpDQowIDg0MTcyODAgbXVsdGlwYXRoIDAgMCAxIDEgcm91bmQtcm9iaW4gMCAxIDEg
+ODoxNiAxMDANCnNldCBBQ1RfTk9USElORzogbWFwIHVuY2hhbmdlZA0K
+------=_Part_34290_30564644.1194448061826
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-=A0Area di Ricerca Roma II - Tor Vergata
-=A0Via del Fosso del Cavaliere, 100
-=A000133 Roma
 
-=A0Tel:=A0 =A0+39 06 4993 4667
-=A0Fax:=A0=A0 +39 06 4993 4650
-=A0Email: Vega.Forneris@sic.rm.cnr.it
-+--------------------------------------+
+------=_Part_34290_30564644.1194448061826--
