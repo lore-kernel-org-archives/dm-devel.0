@@ -1,44 +1,48 @@
-From: malahal@us.ibm.com
-Subject: Re: Reloading multipathd?
-Date: Wed, 7 Nov 2007 08:55:26 -0800
-Message-ID: <20071107165526.GA25329@us.ibm.com>
-References: <940B4FF1F5958E4F96FC83C055A2F2611B8B8C@exch-2003.incipient.waltham>
-	<1194448727.6012.18.camel@sanderbal>
-	<000301c82155$0de88c60$cf42e3c1@pitagora.it>
-	<1194451276.6012.30.camel@sanderbal>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: linas@austin.ibm.com (Linas Vepstas)
+Subject: Re: [Kernel PATCH] emit change on devmapper devices
+Date: Wed, 7 Nov 2007 11:18:09 -0600
+Message-ID: <20071107171809.GA4239@austin.ibm.com>
+References: <1194454207.6273.5.camel@wing-commander>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-hotplug-devel-bounces@lists.sourceforge.net>
 Content-Disposition: inline
-In-Reply-To: <1194451276.6012.30.camel@sanderbal>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "S. J. van Harmelen" <svh@dds.nl>
-Cc: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <1194454207.6273.5.camel@wing-commander>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
+	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-hotplug-devel>
+List-Post: <mailto:linux-hotplug-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
+	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=subscribe>
+Sender: linux-hotplug-devel-bounces@lists.sourceforge.net
+Errors-To: linux-hotplug-devel-bounces@lists.sourceforge.net
+To: Scott James Remnant <scott@ubuntu.com>
+Cc: linux-hotplug-devel@lists.sourceforge.net, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-S. J. van Harmelen [svh@dds.nl] wrote:
+On Wed, Nov 07, 2007 at 11:50:07AM -0500, Scott James Remnant wrote:
+> Hi guys,
 > 
-> Thanks for you help. But the MD3000 has SAS HBA's, so I don't have the
-> issue_lip file on my system.
-> 
-> Any other way to get the same results for a SAS HBA?
-> 
-> And once again... Does this interrupt the LUN's that are already
-> attached and in use?
+> I've had this patch sitting on my disk for a few months, and haven't
+....
 
-LIP does interrupt the communication for a while, but ideally everything
-would be retried on block devices at least. I don't think you need to
-generate LIP in some instances (depends on how you added your LUN, E.g.
-if you added new FC disk to FC Fabric switch, the Fabic would generate
-an event, RSCN, without interrupting anything).
+On my email reader, I see the following:
 
-I don't know SAS world equivalents...
+
+[-- PGP output follows (current time: Wed 07 Nov 2007 11:16:06 AM CST) --]
+gpg: Signature made Wed 07 Nov 2007 10:50:07 AM CST using DSA key ID C978C8AE
+gpg: BAD signature from "Scott James Remnant <scott@ubuntu.com>"
+[-- End of PGP output --]
+
+I've never seen a bad signature before ... I thought that was weird.
+
+--linas
+
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Splunk Inc.
+Still grepping through log files to find problems?  Stop.
+Now Search log events and configuration files using AJAX and a browser.
+Download your FREE copy of Splunk now >> http://get.splunk.com/
