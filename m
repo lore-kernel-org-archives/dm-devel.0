@@ -1,48 +1,50 @@
-From: linas@austin.ibm.com (Linas Vepstas)
-Subject: Re: [Kernel PATCH] emit change on devmapper devices
-Date: Wed, 7 Nov 2007 11:18:09 -0600
-Message-ID: <20071107171809.GA4239@austin.ibm.com>
-References: <1194454207.6273.5.camel@wing-commander>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Supporto for EVA3000?
+Date: Wed, 7 Nov 2007 12:03:21 -0600
+Message-ID: <20071107180321.GE28113@ether.msp.redhat.com>
+References: <000101c82065$6e410600$cf42e3c1@pitagora.it>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-hotplug-devel-bounces@lists.sourceforge.net>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1194454207.6273.5.camel@wing-commander>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
-	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-hotplug-devel>
-List-Post: <mailto:linux-hotplug-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
-	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=subscribe>
-Sender: linux-hotplug-devel-bounces@lists.sourceforge.net
-Errors-To: linux-hotplug-devel-bounces@lists.sourceforge.net
-To: Scott James Remnant <scott@ubuntu.com>
-Cc: linux-hotplug-devel@lists.sourceforge.net, dm-devel@redhat.com
+In-Reply-To: <000101c82065$6e410600$cf42e3c1@pitagora.it>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 07, 2007 at 11:50:07AM -0500, Scott James Remnant wrote:
-> Hi guys,
+On Tue, Nov 06, 2007 at 12:08:59PM +0100, Domenico Viggiani wrote:
+> Good morning,
+> does anyone know if the old HP EVA3000 (HSV100) disk-array is supported with
+> dm-multipath shipped with Red Hat 4?
+
+If the product name comes up as HSV100, then this version of the
+firmware needs the storageworks hardware handler module to function optimally.
+This is not available on the RHEL4 kernel. I have never actually used
+one of these disk-arrays, but I believe that there is a firmware update for the
+EVA3000 that solves this problem. You should see the product name change to
+HSV110, and the device will be properly autoconfigured in RHEL4.
+
+If for some reason you cannot update the firmware, I believe that you
+can still use multipath with the device at a performance penalty. I
+don't recall the best configuration for that scenario off the top of my
+head.
+
+-Ben
+ 
+> Thanks
+> -- 
+> Domenico Viggiani
 > 
-> I've had this patch sitting on my disk for a few months, and haven't
-....
-
-On my email reader, I see the following:
-
-
-[-- PGP output follows (current time: Wed 07 Nov 2007 11:16:06 AM CST) --]
-gpg: Signature made Wed 07 Nov 2007 10:50:07 AM CST using DSA key ID C978C8AE
-gpg: BAD signature from "Scott James Remnant <scott@ubuntu.com>"
-[-- End of PGP output --]
-
-I've never seen a bad signature before ... I thought that was weird.
-
---linas
-
-
--------------------------------------------------------------------------
-This SF.net email is sponsored by: Splunk Inc.
-Still grepping through log files to find problems?  Stop.
-Now Search log events and configuration files using AJAX and a browser.
-Download your FREE copy of Splunk now >> http://get.splunk.com/
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
