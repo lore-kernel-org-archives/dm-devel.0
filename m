@@ -1,16 +1,15 @@
-From: "Paul Cote" <paul.cote@incipient.com>
-Subject: RE: Reloading multipathd?
-Date: Wed, 7 Nov 2007 18:55:02 -0500
-Message-ID: <940B4FF1F5958E4F96FC83C055A2F2611B8BA4@exch-2003.incipient.waltham>
-References: <1194448727.6012.18.camel@sanderbal>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Supporto for EVA3000?
+Date: Thu, 08 Nov 2007 08:22:58 +0100
+Message-ID: <4732B952.2030500@suse.de>
+References: <000101c82065$6e410600$cf42e3c1@pitagora.it>
+	<20071107180321.GE28113@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <1194448727.6012.18.camel@sanderbal>
+In-Reply-To: <20071107180321.GE28113@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,64 +22,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
->could you tell me how to do that?=20
-
-You can use the 'rescan SCSI Bus" script found at:
-http://www.garloff.de/kurt/linux/
-
-Optionally; if you have FC HBA's ... Emulex and Qlogic both have their
-home grown rescan scripts as well.
-
->and does a rescan have any effect on already active LUN's?
-
-No.
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of S. J. van Harmelen
-Sent: Wednesday, November 07, 2007 10:19 AM
-To: device-mapper development
-Subject: RE: [dm-devel] Reloading multipathd?
-
-
-On Wed, 2007-11-07 at 08:33 -0500, Paul Cote wrote:
-> Did you do a rescan so that the O/S "sees" the new LUN?
-
-Nope... Could you tell me how to do that? And does a rescan have any
-effect on already active LUN's?
-
-
-> If so; simply do
-> a multipath -v2 to build the new path list.
+Benjamin Marzinski wrote:
+> On Tue, Nov 06, 2007 at 12:08:59PM +0100, Domenico Viggiani wrote:
+>> Good morning,
+>> does anyone know if the old HP EVA3000 (HSV100) disk-array is supporte=
+d with
+>> dm-multipath shipped with Red Hat 4?
 >=20
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of S. J. van Harmelen
-> Sent: Wednesday, November 07, 2007 8:08 AM
-> To: device-mapper development
-> Subject: [dm-devel] Reloading multipathd?
+> If the product name comes up as HSV100, then this version of the
+> firmware needs the storageworks hardware handler module to function opt=
+imally.
+> This is not available on the RHEL4 kernel. I have never actually used
+> one of these disk-arrays, but I believe that there is a firmware update=
+ for the
+> EVA3000 that solves this problem. You should see the product name chang=
+e to
+> HSV110, and the device will be properly autoconfigured in RHEL4.
 >=20
-> Hi...
+> If for some reason you cannot update the firmware, I believe that you
+> can still use multipath with the device at a performance penalty. I
+> don't recall the best configuration for that scenario off the top of my
+> head.
 >=20
-> I just added another LUN on our storage (MD3000). But now that I run=20
-> multipath -ll I don't see the new LUN.
->=20
-> Do I need to reload something (like /etc/init.d/multipath-tools reload
+No, you can't. The ominous 'Storageworks handler' Ben referred to is
+actually the hp_sw hardware handler available in later versions.
+This firmware requires a 'START STOP UNIT' command to be send to the
+inactive path; the firmware will then activate it (and deactivate the
+old path).
+Hence you're pretty much stuck without it.
+So a firmware update would be your best option here.
 
-> maybe)? And if so, can I do this without it interrupting the=20
-> connectivity of the other (production) LUN's?
->=20
-> Sander
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com https://www.redhat.com/mailman/listinfo/dm-devel
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com https://www.redhat.com/mailman/listinfo/dm-devel
+Cheers,
 
---
-dm-devel mailing list
-dm-devel@redhat.com https://www.redhat.com/mailman/listinfo/dm-devel
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
