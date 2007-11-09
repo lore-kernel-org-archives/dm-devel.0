@@ -1,14 +1,13 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: device-errors and multipath device access issue
-Date: Fri, 09 Nov 2007 09:28:45 +0100
-Message-ID: <47341A3D.2040804@linpro.no>
-References: <2072641508@web.de>
+From: "Stefan Bader" <sbader3@googlemail.com>
+Subject: Re: Multipath blacklist exceptions issues
+Date: Fri, 9 Nov 2007 15:20:08 +0100
+Message-ID: <5201e28f0711090620i7f6360dfr3c0ffa6307ab91e0@mail.gmail.com>
+References: <20071109002347.GG28113@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2109237426=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2072641508@web.de>
+In-Reply-To: <20071109002347.GG28113@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,53 +20,69 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* devzero@web.de
+--===============2109237426==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_41488_33386855.1194618008987"
 
-> on boot, we get lot`s of error messages like
-> 
->> [...]
-> 
-> for each alternative path to a lun.
+------=_Part_41488_33386855.1194618008987
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I assume you mean "for each path to the alternate controller of the volume".
+2007/11/9, Benjamin Marzinski <bmarzins@redhat.com>:
+>
+> <snip>.
+>
+> If I recall correctly, blacklist exceptions were originally proposed as
+> a solution to the problem of not being able to remove the bl_product
+> lines from the default device configuration, without reentering the
+> whole configuration for that device.  They were specifically designed so
+> that you could still blacklist the device by wwid and devnode rules.
 
-> we also get those messages when the system is up and running because
-> some proprietary monitoring software is checking for device
-> availability in regular intervals and there seems no way to tell that
-> software to skip certain devices - so we get spammed with this
-> messages like this in /var/log/messages and are not able to see the
-> real errors anymore.
-> 
-> is there a way to hide those "classic" scsi devices from userspace? 
-> i`m not sure if "blacklist" in multipath.conf is what i need here (?)
-> or if i safely could delete those device-nodes - i`m not very deep
-> into multipathing for now.
 
-I don't think you can (without at the same time taking away
-dm-multipath's ability to fail over I/O to those paths...
+The blacklist exceptions originally  were introduced as  both: a solution to
+remove a product blacklist without having to specify the other pre-defined
+settings and a way to enable some devices specifically without having to
+create a blacklist with holes in it.
+The way this currently works is a bit surprising. Although there are
+comments in the annotated config file these are easily missed and this
+probably should be improved. At the moment devnode black and whitelist has a
+higher priority than wwid and wwid a higher priority than product blacklist.
+This means, if you have a devnode blacklist that matches a device, the wwid
+black and whitelist is never considered.
+What would work is to blacklist all wwid's and then whitelist the ones that
+should be used. Usings wwid's instead of the devnodes has the advantage that
+these are consistent, regardless of the order the devices are added.
+I am not quite sure which way is better. Should we change the code so a
+whitelisting is always preceding a blacklist entry or is there a way to
+point out that there is a certain workflow and mixing devnode and wwid black
+and whitelists is not working well? Personally I would go for the first
+option.
 
-You're not saying which kind of storage hardware this is.  Maybe it has
-a way of being configured in a fake active/active configuration where
-I/O can be processed on both controllers at the same time.  I believe
-newer EMC CLARiiON and HP EVA can be set up in ALUA mode which does the
-trick. HDS AMS does something similar which work mostly the same way.
 
-You might also be able to filter out those lines from the logs, too.  I
-think at least syslog-ng can be made to do that.
+Stefan
 
-> in our case, kpartx doesn`t seem to be launched by udev but from
-> within boot.multipath, but it looks like a timing issue because it
-> sometimes happens and sometimes not.
-> 
-> any help or some input (links?docs?) to enlighten me would be highly
-> appreciated
+------=_Part_41488_33386855.1194618008987
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I'd suggest simply not making partitions - make several smaller volumes
-on your storage array instead.  That'll make it easier to expand them
-individually if the need should arise, and you won't have to deal with
-kpartx at all.  There's always some kind of trouble with it, in my
-experience.  Same goes for udev...
+<br><br><div><span class="gmail_quote">2007/11/9, Benjamin Marzinski &lt;<a href="mailto:bmarzins@redhat.com">bmarzins@redhat.com</a>&gt;:</span><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
+&lt;snip&gt;.<br><br>If I recall correctly, blacklist exceptions were originally proposed as<br>a solution to the problem of not being able to remove the bl_product<br>lines from the default device configuration, without reentering the
+<br>whole configuration for that device.&nbsp;&nbsp;They were specifically designed so<br>that you could still blacklist the device by wwid and devnode rules.</blockquote><div><br>The blacklist exceptions originally&nbsp; were introduced as&nbsp; both: a solution to remove a product blacklist without having to specify the other pre-defined settings and a way to enable some devices specifically without having to create a blacklist with holes in it.
+<br>The way this currently works is a bit surprising. Although there are comments in the annotated config file these are easily missed and this probably should be improved. At the moment devnode black and whitelist has a higher priority than wwid and wwid a higher priority than product blacklist. This means, if you have a devnode blacklist that matches a device, the wwid black and whitelist is never considered.
+<br>What would work is to blacklist all wwid&#39;s and then whitelist the ones that should be used. Usings wwid&#39;s instead of the devnodes has the advantage that these are consistent, regardless of the order the devices are added.
+<br>I am not quite sure which way is better. Should we change the code so a whitelisting is always preceding a blacklist entry or is there a way to point out that there is a certain workflow and mixing devnode and wwid black and whitelists is not working well? Personally I would go for the first option.
+<br><br></div></div><br>Stefan
 
-Regards
--- 
-Tore Anderson
+------=_Part_41488_33386855.1194618008987--
+
+
+--===============2109237426==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2109237426==--
