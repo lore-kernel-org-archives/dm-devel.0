@@ -1,9 +1,16 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdevmapper.h
-Date: 9 Nov 2007 16:52:36 -0000
-Message-ID: <20071109165236.2861.qmail@sourceware.org>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: Problem with ALUA Handler
+Date: Fri, 9 Nov 2007 11:48:46 -0800
+Message-ID: <110b17190711091148t4c59ccfxfd59ab6298c10cc0@mail.gmail.com>
+References: <110b17190711081232p41664102tfc0f3dea861d322a@mail.gmail.com>
+	<47340EB2.5090109@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <47340EB2.5090109@suse.de>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,42 +20,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-11-09 16:52:36
+Thanks Hannes.
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdevmapper.h 
+Actually I could get it to work after making some changes;
+In the function prepare_req(), I replaced
 
-Log message:
-	Define DM_READ_AHEAD_AUTO and DM_READ_AHEAD_NONE.
+//rq->cmd_flags |=3D REQ_FAILFAST | REQ_NOMERGE;
+	rq->flags |=3D REQ_FAILFAST | REQ_NOMERGE;
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.207&r2=1.208
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.74&r2=1.75
+with following:
 
---- device-mapper/WHATS_NEW	2007/10/10 00:02:03	1.207
-+++ device-mapper/WHATS_NEW	2007/11/09 16:52:36	1.208
-@@ -1,5 +1,6 @@
- Version 1.02.23 - 
- ==================================
-+  Define DM_READ_AHEAD_AUTO and DM_READ_AHEAD_NONE.
-   Fix configure --with-dmeventd-path substitution.
-   Allow $DM_DEV_DIR envvar to override default of "/dev".
-   Create e.g., libdevmapper.so.1.02, in build dir alongside the .so file.
---- device-mapper/lib/libdevmapper.h	2007/08/21 16:26:06	1.74
-+++ device-mapper/lib/libdevmapper.h	2007/11/09 16:52:36	1.75
-@@ -141,6 +141,9 @@
- struct dm_names *dm_task_get_names(struct dm_task *dmt);
- struct dm_versions *dm_task_get_versions(struct dm_task *dmt);
- 
-+#define DM_READ_AHEAD_AUTO UINT32_MAX	/* Use kernel default readahead */
-+#define DM_READ_AHEAD_NONE 0		/* Disable readahead */
-+
- int dm_task_set_ro(struct dm_task *dmt);
- int dm_task_set_newname(struct dm_task *dmt, const char *newname);
- int dm_task_set_minor(struct dm_task *dmt, int minor);
+rq->flags |=3D REQ_BLOCK_PC | REQ_SPECIAL | REQ_QUIET;
+
+This worked for me.
+
+Thanks for your support.
+Regards,
+Pradipmaya.
+
+On 11/9/07, Hannes Reinecke <hare@suse.de> wrote:
+> Pradipmaya Maharana wrote:
+> > Hi,
+> >
+> > I tried compiling ALUA handler code from Hannes Reincke
+> > (https://www.redhat.com/archives/dm-devel/2007-October/msg00033.html)
+> > on kernel 2.6.18 and with few modifications it did fine.
+> >
+> > I was even able to load it, but it fails for the std inquiry and henc=
+e
+> > does not do anything further. It returns error that the controller
+> > does not support TPGS.
+> >
+> This is preliminary code only. I've done a rework of the ALUA handler
+> and will post the updated code here shortly.
+>
+> Cheers,
+>
+> Hannes
+> --
+> Dr. Hannes Reinecke                   zSeries & Storage
+> hare@suse.de                          +49 911 74053 688
+> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
