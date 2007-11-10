@@ -1,15 +1,16 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
+From: Benjamin Marzinski <bmarzins@redhat.com>
 Subject: Re: Multipath blacklist exceptions issues
-Date: Sat, 10 Nov 2007 02:17:45 +0100
-Message-ID: <1194657466.6724.49.camel@localhost.localdomain>
+Date: Fri, 9 Nov 2007 19:48:42 -0600
+Message-ID: <20071110014842.GI28113@ether.msp.redhat.com>
 References: <20071109002347.GG28113@ether.msp.redhat.com>
 	<5201e28f0711090620i7f6360dfr3c0ffa6307ab91e0@mail.gmail.com>
 	<20071109202044.GH28113@ether.msp.redhat.com>
 	<5201e28f0711091520o3da59658kc41a39bc7e7b855b@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-tqL2/kwkSJ7avmoRG7GY"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 In-Reply-To: <5201e28f0711091520o3da59658kc41a39bc7e7b855b@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -20,162 +21,155 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Stefan Bader <Stefan.Bader@de.ibm.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Sat, Nov 10, 2007 at 12:20:31AM +0100, Stefan Bader wrote:
+>      Any thoughts on this? Good Idea? Worth doing?
+> 
+>    To be honest, I do not see the real simplification in that many changes.
+>    Spreading black- and/or white-lists over so many places seems rather
+>    confusion to me. I agree that using devnode names is not ideal for the
+>    reasons you mentioned. That was done mainly to have an internal blacklist
+>    of known devices that are known not to work. Potentially this could be a
+>    device type (= driver name?). But would this not also be possible as a new
+>    element of the blacklist? E.g.:
+> 
+>    blacklist {
+>        driver fd
+>        driver device-mapper
+>        ...
+>    }
+> 
+>    The problem with the current implementation, in my thinking, is that we
+>    have a dependency between two sections (blacklist and
+>    blacklist_exceptions) and the keywords within. Without reading any further
+>    documentation it seems awkward that it is not possible to blacklist device
+>    nodes and punch holes by certain wwid numbers. When I think about it, I
+>    guess (any other opinions welcome) that a exception is what is really
+>    intended to be used. So that should always have more priority than a
+>    blacklist. So if the filter finds a matching entry in the
+>    blacklist_exceptions section, the device should be used.
+> 
+>    So my proposal would be:
+> 
+>    1. process the blacklist_exceptions (any match enables the device)
+>    2. process the blacklist
+>    3. any device dropping through is also used.
+> 
+>    Additionally I like the idea of a match-by-driver extension.
 
---=-tqL2/kwkSJ7avmoRG7GY
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+The issue I see with doing this is it messes with the one of the reasons
+for having the blacklist_exceptions in the first place.
 
-Indeed the current situation is fishy. Ben pointed a true braino in the
-code I introduced when restructuring the blacklist lib :
+IBM asked for the ability to let customers do
 
-in _filter_path(), I test each _filter_*() for r!=3D0 , where I intented
-to check for r>0.
+blacklist_exceptions {
+       device {
+               vendor  "IBM"
+               product "S/390.*"
+       }
+}
 
-r=3D=3D0 implements  : "exit on first blacklist or exception match".
- r>0 implements  : "exit on first blacklist match".
+So that they could undo the product_blacklist line in the
+"IBM:S/390 DASD ECKD" default device configuration.  With the method you
+propose, customers will be able to undo that blacklist line. However,
+they will either have to use an exception like the one above, which
+makes it impossible to then blacklist any of those devices, or they will
+have to use an exceptions like
 
-With this later behaviour I can set things like that for max safety and
-efficiency :
+blacklist_exceptions {
+	wwid "foo"
+	wwid "bar"
+	wwid "xyzzy"
+	...
+}
+
+To manually allow each device. If you have lots of devices, and you want
+almost but not all of them multipathed, you no longer have to freedom to
+simply blacklist the ones you don't want. With the original method, the
+blacklist_exception simply makes it like the product_blacklist line
+didn't exist. I'm not sure how much of a bid deal this is.
+
+I agree that it seems wrong that you can't blacklist devices by
+devnode, and then punch some holes through by wwid.  However, you are
+perfectly able to blacklist devices by wwid and then puch holes through
+by wwid, for instance
 
 blacklist {
-        devnode .*
-        device {
-                vendor .*
-                product .*
-        }
-        wwid .*
+	wwid ".*"
 }
+
 blacklist_exceptions {
-        devnode sd.*
-        device {
-                vendor IET.*
-                product .*
-        }
-        wwid "1646561646265.*"
-}
-
-or pragmatically :
-
-blacklist {
-        devnode .*
-        wwid .*
-}
-blacklist_exceptions {
-        devnode sd.*
-        wwid "1646561646265.*"
+	wwid "foo"
 }
 
 
+Another possible redesign, which can do even more complex filtering than
+my last method, does away with any need for product_blacklist lines, and
+also keeps all the filtering information in one place is to simply have
+a two top level sections in the config file, "invalid_drivers" and
+"filter"
 
-Working that out, I also realized there may be another small
-misbehaviour :
+invalid_drivers {
+	driver "string"
+}
 
-First, a little background on path discovery operations :
+filter {
+	blacklist_driver "string"
+	blacklist_wwid "regexp"
+	blacklist_device {
+		vendor "regexp"
+		product "regexp"
+	}
+	whitelist_driver "string"
+	whitelist_wwid "regexp"
+	whitelist_device {
+		vendor "regexp"
+		product "regexp"
+	}
+}
 
-1) /sys/block parsing shows devnode names
-2) devnode names examination shows device identification strings
-3) these strings help us choose a getuid helper, which finally shows
-wwids
+devices whose driver matches a rule in "invalid_drivers" are totally
+ignored by multipath.
 
-Meaning we want the devnode blacklisting to prevail over device and
-wwid, in case we know we don't have device strings available (loop, dm-,
-raw, ...)
+In the "filter" section, the blacklist_* rules blacklist devices just
+like you would expect, and the whitelist_* rules whitelist them.  The
+important thing is that the rules are checked in order, and the first
+one to match is used.  The existing "product_blacklist" lines just turn
+into "blacklist_device" lines that are checked after all the lines in
+multipath.conf. If a device doesn't match any rules, it's allowed.
 
-Similarily, we want the device blacklist to prevail over wwid, in case
-we know we don't have getuid callout available. I have no example for
-this case though, so it shouldn't be as important as the previous one.
+This works like the lvm.conf filter line, and makes it easy to either
+blacklist a group of devices and then whitelist a few of them, or
+whitelist a group devices which were blacklisted by default and then
+blacklist a few of them. The only downside is that, with this method,
+order suddenly matters. Hopefully a helpful comment in the config file
+will keep this from confusing people.
 
-Problem is we challenge _filter_device() after _filter_wwid().
-This can be easily shufled around.
+# blacklist all scsi devices except the device with wwid "foo"
+filter {
+	whitelist_wwid "foo"
+	blacklist_driver "sd"
+}
 
+# Remove the default blacklist for "IBM:S/390 DASD ECKD" devices, and
+# then blacklist only the device named "bar"
+filter {
+	blacklist_wwid "bar"
+	whitelist_device {
+		vendor "IBM"
+		product "S/390.*"
+	}
+}
 
-So, I submit this (attached) patch to your review.
+Or we can just leave well enough alone.
 
-regards,
-cvaroqui
+-Ben
 
-=09
-Le samedi 10 novembre 2007 =C3=A0 00:20 +0100, Stefan Bader a =C3=A9crit =
-:
->=20
->        =20
->         Any thoughts on this? Good Idea? Worth doing?
->=20
-> To be honest, I do not see the real simplification in that many
-> changes. Spreading black- and/or white-lists over so many places seems
-> rather confusion to me. I agree that using devnode names is not ideal
-> for the reasons you mentioned. That was done mainly to have an
-> internal blacklist of known devices that are known not to work.
-> Potentially this could be a device type (=3D driver name?). But would
-> this not also be possible as a new element of the blacklist? E.g.:
->=20
-> blacklist {
->     driver fd
->     driver device-mapper
->     ...
-> }
->=20
-> The problem with the current implementation, in my thinking, is that
-> we have a dependency between two sections (blacklist and
-> blacklist_exceptions) and the keywords within. Without reading any
-> further=20
-> documentation it seems awkward that it is not possible to blacklist
-> device nodes and punch holes by certain wwid numbers. When I think
-> about it, I guess (any other opinions welcome) that a exception is
-> what is really intended to be used. So that should always have more
-> priority than a blacklist. So if the filter finds a matching entry in
-> the blacklist_exceptions section, the device should be used.=20
->=20
-> So my proposal would be:
->=20
-> 1. process the blacklist_exceptions (any match enables the device)
-> 2. process the blacklist
-> 3. any device dropping through is also used.
->=20
-> Additionally I like the idea of a match-by-driver extension.=20
->=20
-> Stefan
+>    Stefan
 
---=-tqL2/kwkSJ7avmoRG7GY
-Content-Disposition: attachment; filename=blacklist-misbehave.patch
-Content-Type: text/x-patch; name=blacklist-misbehave.patch; charset=utf-8
-Content-Transfer-Encoding: 7bit
-
-diff --git a/libmultipath/blacklist.c b/libmultipath/blacklist.c
-index 9a058f7..6297516 100644
---- a/libmultipath/blacklist.c
-+++ b/libmultipath/blacklist.c
-@@ -297,16 +297,14 @@ _filter_path (struct config * conf, struct path * pp)
- 	int r;
- 
- 	r = _filter_devnode(conf->blist_devnode, conf->elist_devnode,pp->dev);
--	if (r)
--		return r;
--	r = _filter_wwid(conf->blist_wwid, conf->elist_wwid, pp->wwid);
--	if (r)
-+	if (r > 0)
- 		return r;
- 	r = _filter_device(conf->blist_device, conf->elist_device,
- 		 	   pp->vendor_id, pp->product_id);
--	if (r)
-+	if (r > 0)
- 		return r;
--	return 0;
-+	r = _filter_wwid(conf->blist_wwid, conf->elist_wwid, pp->wwid);
-+	return r;
- }
- 
- int
-
---=-tqL2/kwkSJ7avmoRG7GY
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---=-tqL2/kwkSJ7avmoRG7GY--
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
