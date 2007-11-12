@@ -1,24 +1,15 @@
-From: "Scott Moseman" <scmoseman@gmail.com>
-Subject: Re: NIC and HBA based multipathing
-Date: Mon, 12 Nov 2007 11:54:39 -0600
-Message-ID: <342d47870711120954p56f41b30ob2c0956d11740244@mail.gmail.com>
-References: <342d47870710301211y42200594u444b7af7ae870e7@mail.gmail.com>
-	<20071101215726.GB11002@linux.vnet.ibm.com>
-	<342d47870711061308p77655083y7ac30a9e9e2a3b72@mail.gmail.com>
-	<20071106222043.GA23178@linux.vnet.ibm.com>
-	<342d47870711061433h6dce42baj705aca5ae7baa466@mail.gmail.com>
-	<20071106230157.GA23800@linux.vnet.ibm.com>
-	<342d47870711061746s64daeaa0wcb6adf060506686c@mail.gmail.com>
-	<20071107025935.GA22697@us.ibm.com>
-	<20071107050925.GA25156@linux.vnet.ibm.com>
-	<342d47870711070707s7ac0fca2w1fdda12fb73fc548@mail.gmail.com>
+From: Toralf =?iso-8859-1?q?F=F6rster?= <toralf.foerster@gmx.de>
+Subject: Re: build #338 failed for 2.6.24-rc2-g6e800af in
+	linux/drivers/md/dm-mpath-hp-sw.c
+Date: Mon, 12 Nov 2007 20:25:49 +0100
+Message-ID: <200711122025.53221.toralf.foerster@gmx.de>
+References: <200711121333.24398.toralf.foerster@gmx.de>
+	<20071112152100.GA22847@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0084655175=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <342d47870711070707s7ac0fca2w1fdda12fb73fc548@mail.gmail.com>
-Content-Disposition: inline
+In-Reply-To: <20071112152100.GA22847@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,73 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Nov 7, 2007 9:07 AM, Scott Moseman <scmoseman@gmail.com> wrote:
->
-> Ok, if multipath is grabbing the HBA device so I'm unable to mount it,
-> that's fine, I will go with that.  So I re-enabled the iSCSI initiator
-> so that the NIC device would become active and I can see if multipath
-> will grab both of them.  No luck, but I'm ahead of where I was
-> previously, so here's my status.
->
-> In dmesg, both of the devices are being found on boot...
->
-> HBA-
->
-> scsi1 : qla4xxx
->  QLogic iSCSI HBA Driver version: 5.01.00.08
->   QLogic ISP4032 @ 0000:14:01.1 hdma+, host#=1, fw=03.00.01.24
->   Vendor: EQLOGIC   Model: 100E-00           Rev: 2.3
->   Type:   Direct-Access                      ANSI SCSI revision: 05
-> qla4xxx 0000:14:01.1: scsi(1:0:1:0): Enabled tagged queuing, queue depth 32.
-> SCSI device sdb: 8417280 512-byte hdwr sectors (4310 MB)
-> SCSI device sdb: drive cache: write through
->  sdb: sdb1
-> Attached scsi disk sdb at scsi1, channel 0, id 1, lun 0
->
-> NIC-
->
-> scsi3 : SFNet iSCSI driver
->   Vendor: EQLOGIC   Model: 100E-00           Rev: 2.3
->   Type:   Direct-Access                      ANSI SCSI revision: 05
-> SCSI device sdc: 8417280 512-byte hdwr sectors (4310 MB)
-> SCSI device sdc: drive cache: write through
->  sdc: sdc1
-> Attached scsi disk sdc at scsi3, channel 0, id 0, lun 0
->
-> # multipath -l
-> 30690a018f015191a6472441d1500f057
-> [size=4 GB][features="0"][hwhandler="0"]
-> \_ round-robin 0 [active]
->  \_ 1:0:1:0     sdb 8:16 [active][ready]
->
-> I'm attaching the output of "multipath -v4" since it's lengthy.
-> There's some references to sdc (although [faulty]) that I don't
-> understand, but maybe it will help troubleshoot?
->
-> My multipath.conf is setup in accordance with
-> http://kbase.redhat.com/faq/FAQ_51_7170.shtm .
->
-> Thanks,
-> Scott
->
+--===============0084655175==
+Content-Type: multipart/signed; boundary="nextPart2346727.1e5LIsNFWz";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
 
-Maybe no one wants to open my attachment, here's an abbreviated
-version of the "multipath -v" output...
+--nextPart2346727.1e5LIsNFWz
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-# multipath -v4
-load path identifiers cache
-#
-# all paths in cache :
-#
-  #:#:#:#  hda 3:0  [faulty] //
-30690a018f015191a6472441d1500f057  1:0:1:0 sdb 8:16  [active][ready] EQLOGIC /
-  3:0:0:0 sdc 8:32  [faulty] EQLOGIC /100E-00         /2.3
+Am Montag, 12. November 2007 schrieb Alasdair G Kergon:
+> On Mon, Nov 12, 2007 at 01:33:21PM +0100, Toralf F=F6rster wrote:
+> > the build with the attached .config failed, make ends with:
+> > drivers/built-in.o: In function `hp_sw_end_io':
+> > dm-mpath-hp-sw.c:(.text+0xb0596): undefined reference to `__scsi_print_=
+sense'
+> > make: *** [.tmp_vmlinux1] Error 1
+> =20
+> Does this patch fix it?
+>   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/d=
+m-mpath-hp-requires-scsi.patch
+>=20
+> Alasdair
+>=20
 
-Per my previous email, the "sdc" device is the iSCSI connection
-through the NIC.  The HBA connection, "sdb", is working fine.
+Oh yes :-)
 
-Thanks,
-Scott
+=2D-=20
+MfG/Sincerely
+
+Toralf F=F6rster
+pgp finger print: 7B1A 07F4 EC82 0F90 D4C2 8936 872A E508 7DB6 9DA3
+
+--nextPart2346727.1e5LIsNFWz
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
+
+iD8DBQBHOKi9hyrlCH22naMRAg4GAKCqPVhcCiC8TwV/hSBsUO7nDKCKewCfZU3k
+TiIhP0mdph3wiOVrlLkN/7Q=
+=W8nR
+-----END PGP SIGNATURE-----
+
+--nextPart2346727.1e5LIsNFWz--
+
+
+--===============0084655175==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0084655175==--
