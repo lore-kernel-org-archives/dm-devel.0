@@ -1,15 +1,15 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [RFC] How to fix system stall on root volume multipath
-Date: Tue, 13 Nov 2007 02:01:24 +0100
-Message-ID: <1194915684.6724.66.camel@localhost.localdomain>
-References: <20071109.181719.115904569.k-ueda@ct.jp.nec.com>
-	<20071110033113.GA22843@agk.fab.redhat.com>
-	<20071112.112454.71086888.k-ueda@ct.jp.nec.com>
+From: "Vega Forneris" <vega.forneris@sic.rm.cnr.it>
+Subject: R: - info about dm
+Date: Tue, 13 Nov 2007 16:52:12 +0100
+Message-ID: <003d01c8260d$27a8e6b0$27819296@wegaprise>
+References: <4738C28C.1090300@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-o5lqgnAnnxe2GrTWtdQz"
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071112.112454.71086888.k-ueda@ct.jp.nec.com>
+In-Reply-To: <4738C28C.1090300@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,1136 +19,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: 'device-mapper development' <dm-devel@redhat.com>, ataraid-list@redhat.com
 List-Id: dm-devel.ids
 
+Dear Philip, Sean and all,
 
---=-o5lqgnAnnxe2GrTWtdQz
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+First of all I apologize for what I wrote: I recognize that's not
+clear...
 
+However at the moment I cannot reproduce the error because I solved the
+issue through a workaround and I (stupid) didn't save any log of that.
 
-Le lundi 12 novembre 2007 =C3=A0 11:24 -0500, Kiyoshi Ueda a =C3=A9crit :
-> Hi Alasdair,
->=20
-> On Sat, 10 Nov 2007 03:31:13 +0000, Alasdair G Kergon <agk@redhat.com> =
-wrote:
-> > On Fri, Nov 09, 2007 at 06:17:19PM -0500, Kiyoshi Ueda wrote:
-> > > If we use multipath for "/", temporal all-paths failure could lead =
+Instead of trying to explain better what I wrote (in a mess!!!), can you
+explain how to work with dmraid? Is there any official HowTo?
+Man pages don't give us a step by step procedure and that's what I need
+now
+
+Some info about the machines:
+HW: IBM x306 - 2 HD 160GB SATA - Adaptec HostRAID ASR (onboard)
+
+# dmraid -tay
+cl->raidtype=3D1 rd_type=3D64
+cl->raidtype=3D1 rd_type=3D64
+cl->raidtype=3D1 rd_type=3D64
+cl->raidtype=3D1 rd_type=3D64
+asr_: 0 312580096 mirror core 2 131072 nosync 2 /dev/sda 0 /dev/sdb 0
+asr_1: 0 71681967 linear /dev/mapper/asr_ 63
+asr_2: 0 4096575 linear /dev/mapper/asr_ 71682030
+asr_3: 0 236798100 linear /dev/mapper/asr_ 75778605
+
+# dmraid -r
+cl->raidtype=3D1 rd_type=3D64
+cl->raidtype=3D1 rd_type=3D64
+/dev/sda: asr, "asr_", mirror, ok, 312580096 sectors, data@ 0
+/dev/sdb: asr, "asr_", mirror, ok, 312580096 sectors, data@ 0
+
+# dmsetup status
+asr_p1: 0 71681967 linear=20
+asr_: 0 312580096 mirror 2 8:0 8:16 2385/2385 1 AA 1 core
+asr_p3: 0 236798100 linear=20
+asr_p2: 0 4096575 linear=20
+
+# dmsetup ls
+asr_p1  (253, 1)
+asr_    (253, 0)
+asr_p3  (253, 3)
+asr_p2  (253, 2)
+
+Let's handle a couple of doubts I have:
+
+1) I need to change an HD which has problems...here the steps I guess
+from what I read in these days:
+- halt the machine (ok, ok it's obvious ;-P )
+- change the faulty HD
+- boot
+- when BIOS starts the RAID manager, enter and rebuild the RAID (1:
+mirror)
+- after the rebuilding, everything should be ok.
+
+...is it correct?
+
+2) I have a machine with 2 HD SATA, on the first we have the OS
+installed (and working!), the second is blank (just added), I want to
+create a RAID 1 (mirror) of the whole disk:
+- ...
+I don't want to guess ;-P
+
+I know how to manage grub for booting from the new device, but I'm not
+sure how to create such device...
+
+Any tip is welcome!
+
+Cheers and thanks
+Vega
+
+-----Messaggio originale-----
+Da: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] Per
+conto di Phillip Susi
+Inviato: luned=EC 12 novembre 2007 22.16
+A: dm-devel@redhat.com; ataraid-list@redhat.com
+Oggetto: Re: [dm-devel] - info about dm
+
+Luca Berra wrote:
+>> Anyway, I found a little problematic configuring it manually: I tried
 to
-> > > system stall because multipathd depends on callout programs on "/".
-> > > I would like to hear your comments about my idea to fix it.
-> > =20
-> > I thought it avoided that problem by pre-loading everything into a ra=
-mdisk:
-> > did that code get dropped for some reason?
->=20
-> Thank you for the information!  I had forgotten it!
-> Yes, we used to have it, and it seems to be removed by the commit below=
-:
->     http://git.kernel.org/gitweb.cgi?p=3Dlinux/storage/multipath-tools/=
-.git;a=3Dcommitdiff;h=3Dcad20ecf8919b2126ab6f4f793a1a738e9864f59
->=20
-> And probably the following thread is related to the commit.
->     https://www.redhat.com/archives/dm-devel/2005-July/msg00044.html
->=20
->=20
-> Ben, Christophe,
-> Is that code still problem for current multipathd?
-> And what do you think about my proposal?
->=20
-I'm not found of yet-another user-visible ramfs for multipathd use,
-that's why I started with the private namespace tricks. The problems are
-still there, and will stay till we stop using pthreads.
+>> install SL5 on a node which was misconfigured: instead of seeing one
+>> device, it was managing the 2 HD (/dev/sda and /dev/sdb) as 2
+separate
 
-That may happen someday, as one of the main reason for pthread was the
-(blocking ioctl) libdevmapper event collection. And this is being
-superseded by path status uevents.
+This is as expected.  The hardware is just a sata controller with two=20
+disks attached, so that is what the kernel sees.  dmraid is used to=20
+recognize the bios information on the disk and configure the device=20
+mapper driver to create a raid virtual device.
 
-But not soon enough, and the private namespace stuff suffers from lack
-of friendliness anyway : we can't expect users to grasp easily that
-changing their prioritizer in /sbin won't be seen by the multipath
-daemon till restart, for example.
+>> devices an if I tried to configure them (at install time, via CD or
+>> network boot) with  DM, I got many errors about the RAID table
+(=93ERROR:
+>> asr: Invalid RAID config table checksum on /dev/sda=94 or even =93asr:
+>> Invalid magic number in RAID table; saw 0x0 expected=85=94). I tried t=
+o
+>> reconfigure the RAID card first via BIOS and then trying again to
+>> configure it via Linux (=93dmsetup create =85=94) but even if it seeme=
+d
 
-So I propose to start playing with your prioritizers-as-lib idea to see
-if it's practical.
+dmsetup create creates a new dm device.  Generally this command is for=20
+debugging and testing, so you should not use it.  It has nothing to do=20
+with dmraid other than they are both clients of the device mapper kernel
 
-I prepared the following patch to that effect. It is not complete
-(actually segfaults, no useful prioritizer ported) but can start fixing
-bugs and go where ever your personnal interest leads.
+driver.
 
-Looking forward to your fixes,
-Thanks,
-cvaroqui
+>> working (exit code 0), then querying the device asr_ (i.e. =93dmraid
+=96r=94)
+>> resulted in errors as reported above=85or better, dmraid commands (-r,
+>> -ay, -tay,=85) reported errors, while dmsetup commands  (status, ls,=85=
+)
 
---=-o5lqgnAnnxe2GrTWtdQz
-Content-Disposition: attachment; filename=libprio.patch
-Content-Type: text/x-patch; name=libprio.patch; charset=utf-8
-Content-Transfer-Encoding: 7bit
+What where the exact commands and errors the generated?
 
-diff --git a/Makefile.inc b/Makefile.inc
-index 7e2d4e6..1b07ab0 100644
---- a/Makefile.inc
-+++ b/Makefile.inc
-@@ -24,6 +24,7 @@ exec_prefix = $(prefix)
- bindir      = $(exec_prefix)/sbin
- libudevdir  = ${prefix}/lib/udev
- checkersdir = $(TOPDIR)/libcheckers
-+libpriodir  = $(TOPDIR)/libprio
- multipathdir = $(TOPDIR)/libmultipath
- mandir      = $(prefix)/usr/share/man/man8
- man5dir     = $(prefix)/usr/share/man/man5
-@@ -33,6 +34,7 @@ GZIP        = /bin/gzip -9 -c
- 
- CHECKERSLIB = $(checkersdir)/libcheckers
- MULTIPATHLIB = $(multipathdir)/libmultipath
-+LIBPRIO = $(libpriodir)/libprio
- 
- INSTALL_PROGRAM = install -s
- 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index 511f5ad..04761e4 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -6,7 +6,7 @@ BUILD = glibc
- 
- include ../Makefile.inc
- 
--CFLAGS += -I$(checkersdir)
-+CFLAGS += -I$(checkersdir) -I$(libpriodir)
- 
- OBJS = memory.o parser.o vector.o devmapper.o callout.o \
-        hwtable.o blacklist.o util.o dmparser.o config.o \
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index a39af8a..fcca5d8 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -135,9 +135,6 @@ free_hwe (struct hwentry * hwe)
- 	if (hwe->getuid)
- 		FREE(hwe->getuid);
- 
--	if (hwe->getprio)
--		FREE(hwe->getprio);
--
- 	if (hwe->features)
- 		FREE(hwe->features);
- 
-@@ -265,9 +262,6 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
- 	if (dhwe->getuid && !(hwe->getuid = set_param_str(dhwe->getuid)))
- 		goto out;
- 
--	if (dhwe->getprio && !(hwe->getprio = set_param_str(dhwe->getprio)))
--		goto out;
--				
- 	if (dhwe->features && !(hwe->features = set_param_str(dhwe->features)))
- 		goto out;
- 	
-@@ -283,6 +277,7 @@ store_hwe (vector hwtable, struct hwentry * dhwe)
- 	hwe->no_path_retry = dhwe->no_path_retry;
- 	hwe->minio = dhwe->minio;
- 	hwe->checker = dhwe->checker;
-+	hwe->prio = dhwe->prio;
- 
- 	if (dhwe->bl_product && !(hwe->bl_product = set_param_str(dhwe->bl_product)))
- 		goto out;
-@@ -321,9 +316,6 @@ free_config (struct config * conf)
- 	if (conf->getuid)
- 		FREE(conf->getuid);
- 
--	if (conf->getprio)
--		FREE(conf->getprio);
--
- 	if (conf->features)
- 		FREE(conf->features);
- 
-diff --git a/libmultipath/config.h b/libmultipath/config.h
-index a25b3ad..7f7b2a9 100644
---- a/libmultipath/config.h
-+++ b/libmultipath/config.h
-@@ -16,11 +16,11 @@ struct hwentry {
- 	char * product;
- 	char * revision;
- 	char * getuid;
--	char * getprio;
- 	char * features;
- 	char * hwhandler;
- 	char * selector;
- 	char * checker_name;
-+	char * prio_name;
- 
- 	int pgpolicy;
- 	int pgfailback;
-@@ -28,6 +28,7 @@ struct hwentry {
- 	int no_path_retry;
- 	int minio;
- 	int pg_timeout;
-+	struct prio * prio;
- 	struct checker * checker;
- 	char * bl_product;
- };
-@@ -53,6 +54,7 @@ struct config {
- 	int pgpolicy_flag;
- 	int with_sysfs;
- 	int pgpolicy;
-+	struct prio * prio;
- 	struct checker * checker;
- 	enum devtypes dev_type;
- 	int minio;
-@@ -70,7 +72,6 @@ struct config {
- 	char * udev_dir;
- 	char * selector;
- 	char * getuid;
--	char * getprio;
- 	char * features;
- 	char * hwhandler;
- 	char * bindings_file;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index df7d971..97a3dd7 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -4,7 +4,6 @@
- #define DEFAULT_FEATURES	"0"
- #define DEFAULT_HWHANDLER	"0"
- #define DEFAULT_MINIO		1000
--#define DEFAULT_GETPRIO		NULL
- #define DEFAULT_PGPOLICY       FAILOVER
- #define DEFAULT_FAILBACK       -FAILBACK_MANUAL
- #define DEFAULT_RR_WEIGHT      RR_WEIGHT_NONE
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 4572a7d..bf08a44 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -5,6 +5,7 @@
-  * Copyright (c) 2005 Kiyoshi Ueda, NEC
-  */
- #include <checkers.h>
-+#include <libprio.h>
- 
- #include "vector.h"
- #include "hwtable.h"
-@@ -82,19 +83,16 @@ def_getuid_callout_handler(vector strvec)
- }
- 
- static int
--def_prio_callout_handler(vector strvec)
-+def_prio_handler(vector strvec)
- {
--	conf->getprio = set_value(strvec);
-+	char * buff;
- 
--	if (!conf->getprio)
-+	buff = set_value(strvec);
-+	if (!buff)
- 		return 1;
--	
--	if (strlen(conf->getprio) == 4 &&
--	    !strcmp(conf->getprio, "none")) {
--		FREE(conf->getprio);
--		conf->getprio = NULL;
--	}
--		
-+
-+	conf->prio = prio_lookup(buff);
-+	FREE(buff);
- 	return 0;
- }
- 
-@@ -571,23 +569,20 @@ hw_handler_handler(vector strvec)
- }
- 
- static int
--prio_callout_handler(vector strvec)
-+prio_handler(vector strvec)
- {
- 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
-+	char * buff;
- 	
- 	if (!hwe)
- 		return 1;
- 
--	hwe->getprio = set_value(strvec);
--
--	if (!hwe->getprio)
-+	buff = set_value(strvec);
-+	if (!buff)
- 		return 1;
--
--	if (strlen(hwe->getprio) == 4 && !strcmp(hwe->getprio, "none")) {
--		FREE(hwe->getprio);
--		hwe->getprio = NULL;
--	}
--
-+	
-+	hwe->prio = prio_lookup(buff);
-+	FREE(buff);
- 	return 0;
- }
- 
-@@ -1115,23 +1110,18 @@ snprint_hw_getuid_callout (char * buff, int len, void * data)
- }
- 
- static int
--snprint_hw_prio_callout (char * buff, int len, void * data)
-+snprint_hw_prio (char * buff, int len, void * data)
- {
- 	struct hwentry * hwe = (struct hwentry *)data;
- 
--	if (!conf->getprio && !hwe->getprio)
-+	if (!hwe->prio)
- 		return 0;
--	if (!conf->getprio && hwe->getprio)
--		return snprintf(buff, len, "%s", hwe->getprio);
--	if (conf->getprio && !hwe->getprio)
--		return snprintf(buff, len, "none");
--
--	/* conf->getprio && hwe->getprio */
--	if (strlen(hwe->getprio) == strlen(conf->getprio) &&
--	    !strcmp(hwe->getprio, conf->getprio))
-+	if (!prio_selected(hwe->prio))
- 		return 0;
--
--	return snprintf(buff, len, "%s", hwe->getprio);
-+	if (hwe->prio == conf->prio)
-+		return 0;
-+	
-+	return snprintf(buff, len, "%s", prio_name(hwe->prio));
- }
- 
- static int
-@@ -1364,12 +1354,12 @@ snprint_def_getuid_callout (char * buff, int len, void * data)
- }
- 
- static int
--snprint_def_getprio_callout (char * buff, int len, void * data)
-+snprint_def_prio (char * buff, int len, void * data)
- {
--	if (!conf->getprio)
-+	if (!conf->prio)
- 		return 0;
- 
--	return snprintf(buff, len, "%s", conf->getprio);
-+	return snprintf(buff, len, "%s", prio_name(conf->prio));
- }
- 
- static int
-@@ -1523,7 +1513,7 @@ init_keywords(void)
- 	install_keyword("selector", &def_selector_handler, &snprint_def_selector);
- 	install_keyword("path_grouping_policy", &def_pgpolicy_handler, &snprint_def_path_grouping_policy);
- 	install_keyword("getuid_callout", &def_getuid_callout_handler, &snprint_def_getuid_callout);
--	install_keyword("prio_callout", &def_prio_callout_handler, &snprint_def_getprio_callout);
-+	install_keyword("prio", &def_prio_handler, &snprint_def_prio);
- 	install_keyword("features", &def_features_handler, &snprint_def_features);
- 	install_keyword("path_checker", &def_path_checker_handler, &snprint_def_path_checker);
- 	install_keyword("failback", &default_failback_handler, &snprint_def_failback);
-@@ -1535,7 +1525,7 @@ init_keywords(void)
- 	__deprecated install_keyword("default_selector", &def_selector_handler, NULL);
- 	__deprecated install_keyword("default_path_grouping_policy", &def_pgpolicy_handler, NULL);
- 	__deprecated install_keyword("default_getuid_callout", &def_getuid_callout_handler, NULL);
--	__deprecated install_keyword("default_prio_callout", &def_prio_callout_handler, NULL);
-+	__deprecated install_keyword("default_prio", &def_prio_handler, NULL);
- 	__deprecated install_keyword("default_features", &def_features_handler, NULL);
- 	__deprecated install_keyword("default_path_checker", &def_path_checker_handler, NULL);
- 
-@@ -1579,7 +1569,7 @@ init_keywords(void)
- 	install_keyword("path_checker", &hw_path_checker_handler, &snprint_hw_path_checker);
- 	install_keyword("features", &hw_features_handler, &snprint_hw_features);
- 	install_keyword("hardware_handler", &hw_handler_handler, &snprint_hw_hardware_handler);
--	install_keyword("prio_callout", &prio_callout_handler, &snprint_hw_prio_callout);
-+	install_keyword("prio", &prio_handler, &snprint_hw_prio);
- 	install_keyword("failback", &hw_failback_handler, &snprint_hw_failback);
- 	install_keyword("rr_weight", &hw_weight_handler, &snprint_hw_rr_weight);
- 	install_keyword("no_path_retry", &hw_no_path_retry_handler, &snprint_hw_no_path_retry);
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index c842eb0..eb096ef 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -12,6 +12,7 @@
- #include <errno.h>
- 
- #include <checkers.h>
-+#include <libprio.h>
- 
- #include "vector.h"
- #include "memory.h"
-@@ -626,27 +627,16 @@ get_state (struct path * pp)
- static int
- get_prio (struct path * pp)
- {
--	char buff[CALLOUT_MAX_SIZE];
--	char prio[16];
--
--	if (!pp->getprio_selected) {
--		select_getprio(pp);
--		pp->getprio_selected = 1;
--	}
--	if (!pp->getprio) {
--		pp->priority = PRIO_DEFAULT;
--	} else if (apply_format(pp->getprio, &buff[0], pp)) {
--		condlog(0, "error formatting prio callout command");
--		pp->priority = PRIO_UNDEF;
--		return 1;
--	} else if (execute_program(buff, prio, 16)) {
--		condlog(0, "error calling out %s", buff);
-+	if (!prio_selected(pp->prio))
-+		select_prio(pp);
-+	pp->priority = prio_getprio(pp->prio, pp);
-+	if (pp->priority < 0) {
-+		condlog(0, "%s: %s prio error", pp->dev, prio_name(pp->prio));
- 		pp->priority = PRIO_UNDEF;
- 		return 1;
--	} else
--		pp->priority = atoi(prio);
--
--	condlog(3, "%s: prio = %u", pp->dev, pp->priority);
-+	}
-+	condlog(3, "%s: %s prio = %u",
-+		pp->dev, prio_name(pp->prio), pp->priority);
- 	return 0;
- }
- 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index 43c1310..80b8dd2 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -1,6 +1,7 @@
- #include <stdio.h>
- 
- #include <checkers.h>
-+#include <libprio.h>
- 
- #include "vector.h"
- #include "defaults.h"
-@@ -27,7 +28,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "APPLE*",
- 		.product       = "Xserve RAID ",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -37,6 +37,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = DEFAULT_CHECKER,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	/*
- 	 * StorageWorks controller family
-@@ -48,7 +49,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "3PARdata",
- 		.product       = "VV",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -58,12 +58,12 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = DEFAULT_CHECKER,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		.vendor        = "DEC",
- 		.product       = "HSG80",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp-sw",
- 		.selector      = DEFAULT_SELECTOR,
-@@ -73,12 +73,12 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = HP_SW,
-+		.prio_name     = PRIO_HP_SW,
- 	},
- 	{
- 		.vendor        = "HP",
- 		.product       = "A6189A",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -87,14 +87,14 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		/* MSA 1000/MSA1500 EVA 3000/5000 with old firmware */
- 		.vendor        = "(COMPAQ|HP)",
- 		.product       = "(MSA|HSV)1.0.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_hp_sw /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 hp-sw",
- 		.selector      = DEFAULT_SELECTOR,
-@@ -104,13 +104,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = HP_SW,
-+		.prio_name     = PRIO_HP_SW,
- 	},
- 	{
- 		/* MSA 1000/1500 with new firmware */
- 		.vendor        = "HP",
- 		.product       = "MSA VOLUME",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -120,12 +120,12 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	{
- 		.vendor        = "HP",
- 		.product       = "MSA2000s*",
- 		.getuid        = "/sbin/cciss_id %n",
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -135,13 +135,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 12,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		/* EVA 3000/5000 with new firmware */
- 		.vendor        = "(COMPAQ|HP)",
- 		.product       = "(MSA|HSV)1.1.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -151,13 +151,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	{
- 		/* EVA 4000/6000/8000 */
- 		.vendor        = "HP",
- 		.product       = "HSV2.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -167,13 +167,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	{
- 		/* HP Smart Array */
- 		.vendor        = "HP",
- 		.product       = "LOGICAL VOLUME.*",
- 		.getuid        = "/lib/udev/scsi_id -n -g -u -s /block/%n",
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -183,6 +183,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	/*
- 	 * DDN controller family
-@@ -194,7 +195,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "DDN",
- 		.product       = "SAN DataDirector",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -204,6 +204,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	/*
- 	 * EMC / Clariion controller family
-@@ -215,7 +216,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "EMC",
- 		.product       = "SYMMETRIX",
- 		.getuid        = "/lib/udev/scsi_id -g -u -ppre-spc3-83 -s /block/%n",
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -224,14 +224,14 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		.vendor        = "DGC",
- 		.product       = ".*",
- 		.bl_product    = "LUNZ",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_emc /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = "1 emc",
- 		.selector      = DEFAULT_SELECTOR,
-@@ -241,6 +241,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = (300 / DEFAULT_CHECKINT),
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = EMC_CLARIION,
-+		.prio_name     = PRIO_EMC,
- 	},
- 	/*
- 	 * Fujitsu controller family
-@@ -252,7 +253,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "FSC",
- 		.product       = "CentricStor",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -261,7 +261,8 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	/*
- 	 * Hitachi controller family
-@@ -273,7 +274,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "(HITACHI|HP)",
- 		.product       = "OPEN-.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -283,12 +283,12 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		.vendor        = "HITACHI",
- 		.product       = "DF.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_hds_modular /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -298,6 +298,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_HDS,
- 	},
- 	/*
- 	 * IBM controller family
-@@ -309,7 +310,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "IBM",
- 		.product       = "ProFibre 4000R",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -318,14 +318,14 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		/* IBM DS4100 / FAStT100 */
- 		.vendor        = "IBM",
- 		.product       = "1742",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -335,13 +335,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_RDAC,
- 	},
- 	{
- 		/* IBM Netfinity Fibre Channel RAID Controller Unit */
- 		.vendor        = "IBM",
- 		.product       = "3526",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -351,13 +351,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_RDAC,
- 	},
- 	{
- 		/* IBM DS4200 / FAStT200 */
- 		.vendor        = "IBM",
- 		.product       = "3542",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -367,13 +367,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		/* IBM ESS F20 aka Shark */
- 		.vendor        = "IBM",
- 		.product       = "2105(800|F20)",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -383,13 +383,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		/* IBM DS6000 */
- 		.vendor        = "IBM",
- 		.product       = "1750500",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -399,13 +399,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	{
- 		/* IBM DS8000 */
- 		.vendor        = "IBM",
- 		.product       = "2107900",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -415,13 +415,13 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		/* IBM SAN Volume Controller */
- 		.vendor        = "IBM",
- 		.product       = "2145",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -431,6 +431,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	{
- 		/* IBM S/390 ECKD DASD */
-@@ -438,7 +439,6 @@ static struct hwentry default_hw[] = {
- 		.product       = "S/390 DASD ECKD",
- 		.bl_product       = "S/390.*",
- 		.getuid        = "/sbin/dasdinfo -u -b %n",
--		.getprio       = NULL,
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -448,6 +448,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
-  	/*
- 	 * NETAPP controller family
-@@ -459,7 +460,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "NETAPP",
- 		.product       = "LUN.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_netapp /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -468,7 +468,8 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = 128,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = PRIO_NETAPP,
- 	},
-  	/*
- 	 * IBM NSeries (NETAPP) controller family
-@@ -480,7 +481,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "IBM",
- 		.product       = "Nseries.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_netapp /dev/%n",
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -489,7 +489,8 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = 128,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = PRIO_NETAPP,
- 	},
- 	/*
- 	 * Pillar Data controller family
-@@ -501,7 +502,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "Pillar",
- 		.product       = "Axiom.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_alua %n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -511,6 +511,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_ALUA,
- 	},
- 	/*
- 	 * SGI arrays
-@@ -522,7 +523,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "SGI",
- 		.product       = "TP9[13]00",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -531,13 +531,13 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	{
- 		.vendor        = "SGI",
- 		.product       = "TP9[45]00",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -547,12 +547,12 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = RDAC,
-+		.prio_name     = PRIO_RDAC,
- 	},
- 	{
- 		.vendor        = "SGI",
- 		.product       = "IS.*",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -562,6 +562,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_QUEUE,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = RDAC,
-+		.prio_name     = PRIO_RDAC,
- 	},
- 	/*
- 	 * STK arrays
-@@ -573,7 +574,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "STK",
- 		.product       = "OPENstorage D280",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = "/sbin/mpath_prio_rdac /dev/%n",
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -583,6 +583,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = TUR,
-+		.prio_name     = PRIO_RDAC,
- 	},
- 	/*
- 	 * SUN arrays
-@@ -594,7 +595,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "SUN",
- 		.product       = "(StorEdge 3510|T4)",
- 		.getuid        = DEFAULT_GETUID,
--		.getprio       = NULL,
- 		.features      = DEFAULT_FEATURES,
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -603,7 +603,8 @@ static struct hwentry default_hw[] = {
- 		.rr_weight     = RR_WEIGHT_NONE,
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = DEFAULT_MINIO,
--		.checker_name  = READSECTOR0,
-+		.checker_name  = DIRECTIO,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
-  	/*
- 	 * Pivot3 RAIGE
-@@ -615,7 +616,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = "PIVOT3",
- 		.product       = "RAIGE VOLUME",
- 		.getuid        = "/sbin/scsi_id -p 0x80 -g -u -s /block/%n",
--		.getprio       = NULL,
- 		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
-@@ -625,6 +625,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = NO_PATH_RETRY_UNDEF,
- 		.minio         = 100,
- 		.checker_name  = TUR,
-+		.prio_name     = DEFAULT_PRIO,
- 	},
- 	/*
- 	 * EOL
-@@ -633,7 +634,6 @@ static struct hwentry default_hw[] = {
- 		.vendor        = NULL,
- 		.product       = NULL,
- 		.getuid        = NULL,
--		.getprio       = NULL,
- 		.features      = NULL,
- 		.hwhandler     = NULL,
- 		.selector      = NULL,
-@@ -643,6 +643,7 @@ static struct hwentry default_hw[] = {
- 		.no_path_retry = 0,
- 		.minio         = 0,
- 		.checker_name  = NULL,
-+		.prio_name     = NULL,
- 	},
- };
- 
-diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
-index 45a3728..bb2b2b7 100644
---- a/libmultipath/propsel.c
-+++ b/libmultipath/propsel.c
-@@ -6,6 +6,7 @@
- #include <stdio.h>
- 
- #include <checkers.h>
-+#include <libprio.h>
- 
- #include "memory.h"
- #include "vector.h"
-@@ -257,22 +258,23 @@ select_getuid (struct path * pp)
- }
- 
- extern int
--select_getprio (struct path * pp)
-+select_prio (struct path * pp)
- {
--	if (pp->hwe && pp->hwe->getprio) {
--		pp->getprio = pp->hwe->getprio;
--		condlog(3, "%s: getprio = %s (controller setting)",
--			pp->dev, pp->getprio);
-+	if (pp->hwe && pp->hwe->prio) {
-+		pp->prio = pp->hwe->prio;
-+		condlog(3, "%s: prio = %s (controller setting)",
-+			pp->dev, prio_name(pp->prio));
- 		return 0;
- 	}
--	if (conf->getprio) {
--		pp->getprio = conf->getprio;
--		condlog(3, "%s: getprio = %s (config file default)",
--			pp->dev, pp->getprio);
-+	if (conf->prio) {
-+		pp->prio = conf->prio;
-+		condlog(3, "%s: prio = %s (config file default)",
-+			pp->dev, prio_name(pp->prio));
- 		return 0;
- 	}
--	pp->getprio = DEFAULT_GETPRIO;
--	condlog(3, "%s: getprio = NULL (internal default)", pp->dev);
-+	pp->prio = prio_default();
-+	condlog(3, "%s: prio = %s (internal default)",
-+		pp->dev, prio_name(pp->prio));
- 	return 0;
- }
- 
-diff --git a/libmultipath/propsel.h b/libmultipath/propsel.h
-index afd1f88..62802f8 100644
---- a/libmultipath/propsel.h
-+++ b/libmultipath/propsel.h
-@@ -7,7 +7,7 @@ int select_features (struct multipath * mp);
- int select_hwhandler (struct multipath * mp);
- int select_checker(struct path *pp);
- int select_getuid (struct path * pp);
--int select_getprio (struct path * pp);
-+int select_prio (struct path * pp);
- int select_no_path_retry(struct multipath *mp);
- int select_pg_timeout(struct multipath *mp);
- int select_minio(struct multipath *mp);
-diff --git a/libmultipath/structs.h b/libmultipath/structs.h
-index f821f87..90605c6 100644
---- a/libmultipath/structs.h
-+++ b/libmultipath/structs.h
-@@ -121,8 +121,7 @@ struct path {
- 	int priority;
- 	int pgindex;
- 	char * getuid;
--	char * getprio;
--	int getprio_selected;
-+	struct prio * prio;
- 	struct checker checker;
- 	struct multipath * mpp;
- 	int fd;
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index 1cc6028..a5dc573 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -3,6 +3,7 @@
- #include <unistd.h>
- 
- #include <checkers.h>
-+#include <libprio.h>
- 
- #include "vector.h"
- #include "defaults.h"
-@@ -81,8 +82,7 @@ orphan_path (struct path * pp)
- 	pp->mpp = NULL;
- 	pp->dmstate = PSTATE_UNDEF;
- 	pp->getuid = NULL;
--	pp->getprio = NULL;
--	pp->getprio_selected = 0;
-+	prio_put(pp->prio);
- 	checker_put(&pp->checker);
- 	if (pp->fd >= 0)
- 		close(pp->fd);
-diff --git a/multipath.conf.annotated b/multipath.conf.annotated
-index e6cfe9a..f617876 100644
---- a/multipath.conf.annotated
-+++ b/multipath.conf.annotated
-@@ -52,14 +52,14 @@
- #	getuid_callout	"/lib/udev/scsi_id -g -u -s /block/%n"
- #
- #	#
--#	# name    : prio_callout
-+#	# name    : prio
- #	# scope   : multipath
--#	# desc    : the default program and args to callout to obtain a path 
-+#	# desc    : the default function to call to obtain a path 
- #	#           priority value. The ALUA bits in SPC-3 provide an
--#	#           exploitable prio value for example. "none" is a valid value
-+#	#           exploitable prio value for example.
- #	# default : (null)
- #	#
--#	#prio_callout	"/bin/true"
-+#	#prio	"alua"
- #
- #	#
- #	# name    : path_checker
-@@ -296,15 +296,14 @@
- #		getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
- #
- #		#
--#		# name    : prio_callout
-+#		# name    : prio
- #		# scope   : multipath
--#		# desc    : the program and args to callout to obtain a path 
-+#		# desc    : the function to call to obtain a path 
- #		#           weight. Weights are summed for each path group to
- #		#	    determine the next PG to use case of failure.
--#		#	    "none" is a valid value.
- #		# default : no callout, all paths equals
- #		#
--#		prio_callout          "/sbin/mpath_prio_balance_units %d"
-+#		prio          "hp_sw"
- #
- #		#
- #		# name    : path_checker
-diff --git a/multipath.conf.synthetic b/multipath.conf.synthetic
-index 633d625..0c05b4c 100644
---- a/multipath.conf.synthetic
-+++ b/multipath.conf.synthetic
-@@ -8,7 +8,7 @@
- #	selector		"round-robin 0"
- #	path_grouping_policy	multibus
- #	getuid_callout		"/lib/udev/scsi_id -g -u -s /block/%n"
--#	prio_callout		/bin/true
-+#	prio			const
- #	path_checker		directio
- #	rr_min_io		100
- #	rr_weight		priorities
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index b430b94..b82f159 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -21,6 +21,7 @@ LDFLAGS = -lpthread -ldevmapper -lreadline -lncurses -laio
- #
- OBJS = main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o \
-        $(MULTIPATHLIB)-glibc.a $(CHECKERSLIB)-glibc.a \
-+       $(LIBPRIO)-glibc.a
- 
- 
- #
-@@ -37,6 +38,9 @@ $(EXEC): clean $(OBJS)
- 	$(CC) $(OBJS) -o $(EXEC) $(LDFLAGS)
- 	$(GZIP) $(EXEC).8 > $(EXEC).8.gz
- 
-+$(LIBPRIO)-glibc.a:
-+	$(MAKE) -C $(libpriodir) BUILD=glibc glibc
-+
- $(CHECKERSLIB)-glibc.a:
- 	$(MAKE) -C $(checkersdir) BUILD=glibc glibc
- 
+I am also confused because the first thing you said was that the system=20
+DID correctly recognize the raid array as /dev/mapper/asr_xxxx.
 
---=-o5lqgnAnnxe2GrTWtdQz
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+>> 2) Managing disks
+>> I configured disks in RAID 1 (mirror) but I wonder how to manage this
+>> RAID; in particular, how can I do for:
+>> - stopping a device (disk) and put it offline/and viceversa? -=20
+>> reconfiguring/rebuilding it (due to broken/faulting HD)?
+>> At the moment I should change a couple of disks (SMARTD warnings
+>> reported), but I=92m scared about the =93RAID table error=94=85
+
+Currently the only way is to do so in the bios.  Some systems the bios=20
+will begin rebuilding when you tell it to, and you need to wait for it=20
+to finish.  On others, it only marks the disk as needing rebuilt and=20
+relies on the windows driver to do the rebuilding.  Currently dmraid=20
+does not perform rebuilding.
 
 
---=-o5lqgnAnnxe2GrTWtdQz--
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
