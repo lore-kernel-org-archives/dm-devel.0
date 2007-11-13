@@ -1,49 +1,78 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: R: [dm-devel] - info about dm
-Date: Tue, 13 Nov 2007 13:22:18 -0500
-Message-ID: <4739EB5A.9050102@cfl.rr.com>
-References: <003d01c8260d$27a8e6b0$27819296@wegaprise>
-Reply-To: "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC] How to fix system stall on root volume multipath
+Date: Tue, 13 Nov 2007 14:30:33 -0500 (EST)
+Message-ID: <20071113.143033.74751626.k-ueda@ct.jp.nec.com>
+References: <20071110033113.GA22843@agk.fab.redhat.com>
+	<20071112.112454.71086888.k-ueda@ct.jp.nec.com>
+	<1194915684.6724.66.camel@localhost.localdomain>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <ataraid-list-bounces@redhat.com>
-In-Reply-To: <003d01c8260d$27a8e6b0$27819296@wegaprise>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
-	<mailto:ataraid-list-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/ataraid-list>
-List-Post: <mailto:ataraid-list@redhat.com>
-List-Help: <mailto:ataraid-list-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/ataraid-list>,
-	<mailto:ataraid-list-request@redhat.com?subject=subscribe>
-Sender: ataraid-list-bounces@redhat.com
-Errors-To: ataraid-list-bounces@redhat.com
-To: "ATARAID (eg, Promise Fasttrak,  Highpoint 370) related discussions" <ataraid-list@redhat.com>
-Cc: 'device-mapper development' <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1194915684.6724.66.camel@localhost.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: christophe.varoqui@free.fr
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Vega Forneris wrote:
-> 1) I need to change an HD which has problems...here the steps I guess
-> from what I read in these days:
-> - halt the machine (ok, ok it's obvious ;-P )
-> - change the faulty HD
-> - boot
-> - when BIOS starts the RAID manager, enter and rebuild the RAID (1:
-> mirror)
-> - after the rebuilding, everything should be ok.
+Hi Christophe,
+
+On Tue, 13 Nov 2007 02:01:24 +0100, Christophe Varoqui <christophe.varoqui@free.fr> wrote:
+> Le lundi 12 novembre 2007  11:24 -0500, Kiyoshi Ueda a crit :
+> > Hi Alasdair,
+> > 
+> > On Sat, 10 Nov 2007 03:31:13 +0000, Alasdair G Kergon <agk@redhat.com> wrote:
+> > > On Fri, Nov 09, 2007 at 06:17:19PM -0500, Kiyoshi Ueda wrote:
+> > > > If we use multipath for "/", temporal all-paths failure could lead to
+> > > > system stall because multipathd depends on callout programs on "/".
+> > > > I would like to hear your comments about my idea to fix it.
+> > >  
+> > > I thought it avoided that problem by pre-loading everything into a ramdisk:
+> > > did that code get dropped for some reason?
+> > 
+> > Thank you for the information!  I had forgotten it!
+> > Yes, we used to have it, and it seems to be removed by the commit below:
+> >     http://git.kernel.org/gitweb.cgi?p=linux/storage/multipath-tools/.git;a=commitdiff;h=cad20ecf8919b2126ab6f4f793a1a738e9864f59
+> > 
+> > And probably the following thread is related to the commit.
+> >     https://www.redhat.com/archives/dm-devel/2005-July/msg00044.html
+> > 
+> > 
+> > Ben, Christophe,
+> > Is that code still problem for current multipathd?
+> > And what do you think about my proposal?
+>
+> I'm not found of yet-another user-visible ramfs for multipathd use,
+> that's why I started with the private namespace tricks. The problems are
+> still there, and will stay till we stop using pthreads.
 > 
-> ...is it correct?
+> That may happen someday, as one of the main reason for pthread was the
+> (blocking ioctl) libdevmapper event collection. And this is being
+> superseded by path status uevents.
+> 
+> But not soon enough, and the private namespace stuff suffers from lack
+> of friendliness anyway : we can't expect users to grasp easily that
+> changing their prioritizer in /sbin won't be seen by the multipath
+> daemon till restart, for example.
+> 
+> So I propose to start playing with your prioritizers-as-lib idea to see
+> if it's practical.
+> 
+> I prepared the following patch to that effect. It is not complete
+> (actually segfaults, no useful prioritizer ported) but can start fixing
+> bugs and go where ever your personnal interest leads.
 
-Yes... at least if your bios actually starts the rebuild process instead 
-of just marking the array as needing rebuilt and relying on the OS to do 
-it.
+Thank you for the patch.
+OK, I'll try the implementation.
 
-> 2) I have a machine with 2 HD SATA, on the first we have the OS
-> installed (and working!), the second is blank (just added), I want to
-> create a RAID 1 (mirror) of the whole disk:
-> - ...
-> I don't want to guess ;-P
-
-The same way you did it the first time: in the bios.  Doing so will 
-destroy the existing data on the drive though, so you will want to 
-backup first.
+Thanks,
+Kiyoshi Ueda
