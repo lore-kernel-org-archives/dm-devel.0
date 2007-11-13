@@ -1,16 +1,18 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: Multipath blacklist exceptions issues
-Date: Tue, 13 Nov 2007 17:29:36 -0500 (EST)
-Message-ID: <20071113.172936.104030489.k-ueda@ct.jp.nec.com>
-References: <20071110014842.GI28113@ether.msp.redhat.com>
-	<5201e28f0711101625r19ceaf11yd3727c424f27b7d8@mail.gmail.com>
-	<20071113201804.GJ28113@ether.msp.redhat.com>
+From: Greg KH <greg@kroah.com>
+Subject: Re: [stable] [2.6.24 PATCH 02/25] dm io:ctl use constant
+	struct size
+Date: Tue, 13 Nov 2007 14:22:42 -0800
+Message-ID: <20071113222242.GB6132@kroah.com>
+References: <20071012170509.GM24157@agk.fab.redhat.com>
+	<200710130016.29937.arnd@arndb.de>
+	<20071015012621.GD10006@agk.fab.redhat.com>
+	<200710150934.09842.arnd@arndb.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071113201804.GJ28113@ether.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <200710150934.09842.arnd@arndb.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +22,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmarzins@redhat.com
-Cc: dm-devel@redhat.com
+To: Arnd Bergmann <arnd@arndb.de>
+Cc: Kevin Corry <kevcorry@us.ibm.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Linus Torvalds <torvalds@linux-foundation.org>, stable@kernel.org
 List-Id: dm-devel.ids
 
-Hi Ben,
-
-On Tue, 13 Nov 2007 14:18:04 -0600, Benjamin Marzinski <bmarzins@redhat.com> wrote:
-> multipath will suddenly start spitting out warning messages.  This is
-> another issue that would be solved by having an invalid_drivers section.
-
-I agree with separating those filters.
-Those filters are used for different purposes, one is to avoid
-the getuid callout, the other is to decide whether use the device
-for multipath.
-Merging those different purpose filters into one structure will mess
-things up.
-
-I think that the following rule which you proposed is simple enough:
-  o unneeded devices are dropped first by the invalid_drivers section
-  o First match of the filter section is used for each device like LVM2
-
- 
-> Finally, you mentioned devnode rules.  Do you think that they are
-> necessary?  The purpose of the driver rules is to replace the devnode
-> rules with ones that don't allow users to do things like
+On Mon, Oct 15, 2007 at 09:34:09AM +0200, Arnd Bergmann wrote:
+> On Monday 15 October 2007, Alasdair G Kergon wrote:
+> > The underlying ABI is not changing, I hope - the trailing padding in the
+> > struct should not affect the processing of the data by dm, and I see no
+> > reason to continue maintaining the fiction that the 32-bit and 64-bit
+> > ioctls are in some way incompatible with each other when they aren't
+> > AFAIK.
 > 
-> blacklist {
-> 	devnode "sdc"
-> }
+> It's a corner case of some sort, as DM uses ioctl numbers differently
+> from most subsystems by splitting to code from the size argument
+> during processing. Your change is certainly not an _incompatible_
+> change to the ABI, but 32 bit binaries compiled against the new
+> headers will use different ioctl numbers from those built against
+> older headers.
 > 
-> which can be done other ways, and might end up doing the wrong thing
-> later if their device names change.
+> This may break other code that expects a specific number, even
+> if your handler does not care. The old compat code handles both
+> variants (no variable size arguments), but /usr/bin/strace may have
+> encoded only one set of numbers AFAICT.
+> 
+> > And yes, a follow-up patch can clean up our use of the compatibility
+> > mechanism, going a little bit further than the patch you attached, I
+> > hope.
+> 
+> Ok, sounds good. I don't think it's the kind of patch that should go
+> into stable backports though.
 
-Although I'm not sure it's necessary, I prefer to leave it.
-I sometimes use devnode rules just for testing, like creating a map
-including only a part of paths (not all-paths).
-That sort of mapping is not possible without devnode rule now.
+Ok, I've not added this patch (2/25) to the queue at all.  If this is
+incorrect, please let me know.
 
-Thanks,
-Kiyoshi Ueda
+thanks,
+
+greg k-h
