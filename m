@@ -1,19 +1,12 @@
-From: "Stefan Bader" <sbader3@googlemail.com>
-Subject: Re: Multipath blacklist exceptions issues
-Date: Wed, 14 Nov 2007 00:17:25 +0100
-Message-ID: <5201e28f0711131517p79fc4a8dk1da9bda922c3093e@mail.gmail.com>
-References: <20071109002347.GG28113@ether.msp.redhat.com>
-	<5201e28f0711090620i7f6360dfr3c0ffa6307ab91e0@mail.gmail.com>
-	<20071109202044.GH28113@ether.msp.redhat.com>
-	<5201e28f0711091520o3da59658kc41a39bc7e7b855b@mail.gmail.com>
-	<20071110014842.GI28113@ether.msp.redhat.com>
-	<5201e28f0711101625r19ceaf11yd3727c424f27b7d8@mail.gmail.com>
-	<20071113201804.GJ28113@ether.msp.redhat.com>
+From: Michael Vallaly <vaio@nolatency.com>
+Subject: DM-Multipath path failure questions..
+Date: Wed, 14 Nov 2007 00:07:43 -0600
+Message-ID: <20071114000743.3b2d36a5.vaio@nolatency.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0236430065=="
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071113201804.GJ28113@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,164 +16,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
---===============0236430065==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_1852_11634039.1194995845521"
 
-------=_Part_1852_11634039.1194995845521
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hello,
 
->
->
-> Um. Mostly because I just thought up this idea to address the issues you
-> had with my first idea.  I though it would be nice if multipath had a
-> clearly defined set of devices it didn't need to bother checking, and
-> then it would only need to look at the filter rules after all the path
-> information had been gathered.  However, you are correct.  Multipath can
-> just check the blacklist_driver rules at the beginning of the filter
-> section before gathering path information, and the rest of the rules
-> afterwards, to achieve the same effect. As a side note, blacklist_driver
-> should also allow the special string "*", which blacklists all devices.
-> Also, whitelist_driver rules don't make any sense.
+I am currently using the dm-multipather (multipath-tools) to allow high-availability / increased capacity to our Equallogic iSCSI SAN. I was wondering if anyone had come across a way to re-instantiate a failed path / paths from a multipath target, when the backend device (iscsi initiator) goes away. 
 
+All goes well until we have a lengthy network hiccup or non-recoverable iSCSI error in which case the multipather seems to get wedged. The path seems to get stuck in a [active][faulty] state and the backend block device (sdX) actually gets removed from the system. I have tried reconnecting the iSCSI session, after this happens, and get a new (different IE: sdg vs. sdf) backend block level device, but the multipather never picks it up / never resumes IO operations, and I generally have then to power cycle the box.
 
-I tried to avoid having multiple filter-defining sections but I must admit
-having everything in one section might be confusing as well. The problem is,
-that there are three stages at which a decission has to be made to continue
-or not. First by driver or node name (Kiyoshi has a valid argument there).
-Every match at this early stage prevents useless work. Whitelist rules for
-driver and devnode make sense if internal rules have to be reversed (e.g.
-internal blacklist uses blacklist_driver "*").
-Second stage is to check whether it makes sense to continue with a certain
-class of devices (from vendor, model). At this point I do not think it makes
-sense to look at the driver and devnode rules again.
-And finally, if the UID information has been gathered, there would be the
-moment to check which of them should be used.
+We have anywhere from 2 to 4 iSCSI sessions open per multipath target, but even one path failing seems to cause the whole multipath to die. I am hoping there is a way to continue on after a path failure, rather than the power cycle. I have tried multipath-tools 0.4.6/0.4.7/0.4.8, and almost every permutation of the configuration I can think of. Maybe I am missing something quite obvious.  
 
-When the current code does the final filtering it goes again through all
-stacked filters and by that a whitelist for a devnode(range) cannot be
-limited by a wwid blacklist.
+Working Multipather
+<snip>
+mpath89 (36090a0281051367df57194d2a37392d5) dm-4 EQLOGIC ,100E-00       
+[size=300G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=2][active]
+ \_ 5:0:0:0  sdf 8:80  [active][ready]
+ \_ 6:0:0:0  sdg 8:96  [active][ready]
+</snip>
 
-There are some minor issues that crop up, if we do away with
-> invalid_drivers.
->
-> Without the invalid_drivers section, the current default devnode
-> blacklist rules would turn into blacklist_driver rules that were
-> automatically appended to the beginning of the filter section.  The
+Wedged Multipather (when a iSCSI session terminates) (All IO queues indefinitely)
+<snip>
+mpath94 (36090a0180087e6045673743d3c01401c) dm-10 ,
+[size=600G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=0][enabled]
+ \_ #:#:#:#  -   #:#   [active][faulty]
+</snip>
 
+Our multipath.conf looks like this: 
+<snip>
+defaults {
+        udev_dir                /dev
+        polling_interval        10
+        selector                "round-robin 0"
+        path_grouping_policy    multibus
+        getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
+        #prio_callout            /bin/true
+        #path_checker            readsector0
+        path_checker            directio
+        rr_min_io               100
+        rr_weight               priorities
+        failback                immediate
+        no_path_retry           fail
+        #user_friendly_names     no
+        user_friendly_names     yes
+}
 
-Not appended at the beginning, because that could never be changed by
-user-specified  rules. Everything pre-defined would have to get appended
-after the user defined list.
-
-users' inability to whitelist certain devices seems like it would be
-> less obvious in this situation than it would be if there was a specific
-> section for invalid devices. But this does seem to be a pretty minor
-> fault. As a side note, the product_blacklist rules would still need to
-> become blacklist_device rules that are appended to the end of the filter
-> section, so it is possible to override them.
+blacklist {
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|sda)[0-9]*"
+        devnode "^hd[a-z][[0-9]*]"
+        devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
+}
 
 
-Yes.
+devices {
+        device {
+                vendor                  "EQLOGIC"
+                product                 "100E-00"
+                path_grouping_policy    multibus
+                getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
+                #path_checker            directio
+                path_checker            readsector0
+                path_selector           "round-robin 0"
+                ##hardware_handler        "0"
+                failback                immediate
+                rr_weight               priorities
+                no_path_retry           queue
+                #no_path_retry           fail
+                rr_min_io               100
+                product_blacklist       LUN_Z
+        }
+}
 
-There is also the issue of how to keep multipath from doing anything.
-> Currently, you need to use
->
-> blacklist {
->         devnode "*"
-> }
->
-> to keep multipath from doing anything to your devices. Unfortunately, if
-> you use the following
->
-> blacklist {
->         wwid "*"
-> }
->
-> it doesn't keep multipath from touching your devices (for instance, the
-> getuid callout is still run on them), although customers might naively
-> think that it should. With invalid_drivers, it is obvious how to keep
-> multipath from touching the devices. Without it, you are forced to do
+</snip>
 
+Thanks for your help.
 
-Not if devnode (and driver) rules are checked before the other rules.
-
-filter {
->         blacklist_driver "*"
-> }
-
-
-
-
-
-> If I understand what your idea is, I'm not sure that it's what we want
-> to do. In my mind, any of the following filters should allow you to
-> create a multipath device for the device with the wwid "foo"
-
-
-I admit my idea had a major flaw. It is just not compatible with the way
-device detection is run. It might turn out that the only thing that has to
-be changed is to change which filter rules are used at a certain point of
-the detection.
-
-Decide which device to ignore at all:
-- look at the whitelist entries for devnode (and driver), continue to check
-if found
-- look at the blacklist entries for devnode (and driver), do not use if
-found
-- no match, continue
-Decide for which devices to call getuid:
-- look at the whitelist entries for device, continue to check if found
-- look at the blacklist entries for device, do not use if found
-- no match, continue
-Decide which UIDs should be used:
-- look at the whitelist entries for wwid, use if found
-- look at the blacklist entries for wwid, do not use if found
-- no match, use device
-
-
-Stefan
-
-------=_Part_1852_11634039.1194995845521
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-<div><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;"><br>Um. Mostly because I just thought up this idea to address the issues you<br>had with my first idea.&nbsp;&nbsp;I though it would be nice if multipath had a
-<br>clearly defined set of devices it didn&#39;t need to bother checking, and<br>then it would only need to look at the filter rules after all the path<br>information had been gathered.&nbsp;&nbsp;However, you are correct.&nbsp;&nbsp;Multipath can
-<br>just check the blacklist_driver rules at the beginning of the filter<br>section before gathering path information, and the rest of the rules<br>afterwards, to achieve the same effect. As a side note, blacklist_driver<br>
-should also allow the special string &quot;*&quot;, which blacklists all devices.<br>Also, whitelist_driver rules don&#39;t make any sense.</blockquote><div><br>I tried to avoid having multiple filter-defining sections but I must admit having everything in one section might be confusing as well. The problem is, that there are three stages at which a decission has to be made to continue or not. First by driver or node name (Kiyoshi has a valid argument there). Every match at this early stage prevents useless work. Whitelist rules for driver and devnode make sense if internal rules have to be reversed (
-e.g. internal blacklist uses blacklist_driver &quot;*&quot;).<br>Second stage is to check whether it makes sense to continue with a certain class of devices (from vendor, model). At this point I do not think it makes sense to look at the driver and devnode rules again.
-<br>And finally, if the UID information has been gathered, there would be the moment to check which of them should be used.<br><br>When the current code does the final filtering it goes again through all stacked filters and by that a whitelist for a devnode(range) cannot be limited by a wwid blacklist.
-<br></div><br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">There are some minor issues that crop up, if we do away with<br>invalid_drivers.
-<br><br>Without the invalid_drivers section, the current default devnode<br>blacklist rules would turn into blacklist_driver rules that were<br>automatically appended to the beginning of the filter section.&nbsp;&nbsp;The</blockquote>
-<div><br>Not appended at the beginning, because that could never be changed by&nbsp; user-specified&nbsp; rules. Everything pre-defined would have to get appended after the user defined list.<br></div><br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
-users&#39; inability to whitelist certain devices seems like it would be<br>less obvious in this situation than it would be if there was a specific<br>section for invalid devices. But this does seem to be a pretty minor<br>
-fault. As a side note, the product_blacklist rules would still need to<br>become blacklist_device rules that are appended to the end of the filter<br>section, so it is possible to override them.</blockquote><div><br>Yes. 
-<br></div><br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">There is also the issue of how to keep multipath from doing anything.<br>Currently, you need to use
-<br><br>blacklist {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;devnode &quot;*&quot;<br>}<br><br>to keep multipath from doing anything to your devices. Unfortunately, if<br>you use the following<br><br>blacklist {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wwid &quot;*&quot;<br>}<br><br>
-it doesn&#39;t keep multipath from touching your devices (for instance, the<br>getuid callout is still run on them), although customers might naively<br>think that it should. With invalid_drivers, it is obvious how to keep
-<br>multipath from touching the devices. Without it, you are forced to do</blockquote><div><br>Not if devnode (and driver) rules are checked before the other rules.<br></div><br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
-filter {<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;blacklist_driver &quot;*&quot;<br>}</blockquote><div><br>&nbsp;</div><br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;"><br>
-If I understand what your idea is, I&#39;m not sure that it&#39;s what we want<br>to do. In my mind, any of the following filters should allow you to<br>create a multipath device for the device with the wwid &quot;foo&quot;
-</blockquote><div><br>I admit my idea had a major flaw. It is just not compatible with the way device detection is run. It might turn out that the only thing that has to be changed is to change which filter rules are used at a certain point of the detection.
-<br><br>Decide which device to ignore at all:<br>- look at the whitelist entries for devnode (and driver), continue to check if found<br>- look at the blacklist entries for devnode (and driver), do not use if found<br>- no match, continue
-<br>Decide for which devices to call getuid:<br>- look at the whitelist entries for device, continue to check if found<br>- look at the blacklist entries for device, do not use if found<br>- no match, continue<br>Decide which UIDs should be used:
-<br>- look at the whitelist entries for wwid, use if found<br>- look at the blacklist entries for wwid, do not use if found<br>- no match, use device<br><br></div></div><br>Stefan
-
-------=_Part_1852_11634039.1194995845521--
-
-
---===============0236430065==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0236430065==--
+- Mike Vallaly
