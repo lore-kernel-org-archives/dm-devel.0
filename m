@@ -1,14 +1,15 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
+From: "Kevin Foote" <kevin.foote@gmail.com>
 Subject: Re: DM-Multipath path failure questions..
-Date: Wed, 14 Nov 2007 11:28:37 -0600
-Message-ID: <473B3045.8060406@cs.wisc.edu>
+Date: Wed, 14 Nov 2007 13:26:32 -0500
+Message-ID: <5fb0f77b0711141026w327195f3rd9a7a4d1ec9ba716@mail.gmail.com>
 References: <20071114000743.3b2d36a5.vaio@nolatency.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <20071114000743.3b2d36a5.vaio@nolatency.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,26 +22,120 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Michael Vallaly wrote:
+Mike,
+If you are going for failover things should look like this..
+We go to an Equallogic PS box as well .. through a QLA4052 HBA
+
+You need to change this line in your /etc/multipath.conf file to
+reflect what you want multipathd to do.
+>         path_grouping_policy    multibus
+should read ...
+         path_grouping_policy    failover
+
+In turn your maps will look like this ..  (multipath -ll)
+media-oracle (30690a018a0b3d369dd4f04191c4090f9)
+[size=8 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+  \_ 2:0:8:0 sdj 8:144 [active][ready]
+\_ round-robin 0 [enabled]
+  \_ 3:0:8:0 sdr 65:16 [active][ready]
+
+and dmsetup table <dev>
+#> dmsetup table /dev/mapper/media-oracle
+0 16803840 multipath 0 0 2 1 round-robin 0 1 1 8:144 100 round-robin 0
+1 1 65:16 100
+
+will show a multipath failover setup
+
+
+-- 
+:wq!
+kevin.foote
+
+On Nov 14, 2007 1:07 AM, Michael Vallaly <vaio@nolatency.com> wrote:
+>
 > Hello,
-> 
-> I am currently using the dm-multipather (multipath-tools) to allow high-availability / increased capacity to our Equallogic iSCSI SAN. I was wondering if anyone had come across a way to re-instantiate a failed path / paths from a multipath target, when the backend device (iscsi initiator) goes away. 
-> 
+>
+> I am currently using the dm-multipather (multipath-tools) to allow high-availability / increased capacity to our Equallogic iSCSI SAN. I was wondering if anyone had come across a way to re-instantiate a failed path / paths from a multipath target, when the backend device (iscsi initiator) goes away.
+>
 > All goes well until we have a lengthy network hiccup or non-recoverable iSCSI error in which case the multipather seems to get wedged. The path seems to get stuck in a [active][faulty] state and the backend block device (sdX) actually gets removed from the system. I have tried reconnecting the iSCSI session, after this happens, and get a new (different IE: sdg vs. sdf) backend block level device, but the multipather never picks it up / never resumes IO operations, and I generally have then to power cycle the box.
-> 
-> We have anywhere from 2 to 4 iSCSI sessions open per multipath target, but even one path failing seems to cause the whole multipath to die. I am hoping there is a way to continue on after a path failure, rather than the power cycle. I have tried multipath-tools 0.4.6/0.4.7/0.4.8, and almost every permutation of the configuration I can think of. Maybe I am missing something quite obvious.  
-> 
-
-I was wondering what you are doing on the target to cause the device/sdX 
-to be removed or what error you get? Normally that only happens if you 
-run the iscsiadm logout command, or if the target is sends the initiator 
-a error indicating that is going away for good, or there is some other 
-error like the CHAP values changed on the target. And in older versions 
-of open-iscsi there is a bug where it kills the session and removes sdXs 
-a little early on errors that should be recoverable (We found the bug in 
-865-* but this is fixed in the open-iscsi git tree and will be fixed in 
-the new release), so I just want to make sure I got all the recoverable 
-errors.
-
-What kernel are you using, and what happens when you reconnect the 
-session and get a new sdX if you run the multipath command by hand?
+>
+> We have anywhere from 2 to 4 iSCSI sessions open per multipath target, but even one path failing seems to cause the whole multipath to die. I am hoping there is a way to continue on after a path failure, rather than the power cycle. I have tried multipath-tools 0.4.6/0.4.7/0.4.8, and almost every permutation of the configuration I can think of. Maybe I am missing something quite obvious.
+>
+> Working Multipather
+> <snip>
+> mpath89 (36090a0281051367df57194d2a37392d5) dm-4 EQLOGIC ,100E-00
+> [size=300G][features=1 queue_if_no_path][hwhandler=0]
+> \_ round-robin 0 [prio=2][active]
+>  \_ 5:0:0:0  sdf 8:80  [active][ready]
+>  \_ 6:0:0:0  sdg 8:96  [active][ready]
+> </snip>
+>
+> Wedged Multipather (when a iSCSI session terminates) (All IO queues indefinitely)
+> <snip>
+> mpath94 (36090a0180087e6045673743d3c01401c) dm-10 ,
+> [size=600G][features=1 queue_if_no_path][hwhandler=0]
+> \_ round-robin 0 [prio=0][enabled]
+>  \_ #:#:#:#  -   #:#   [active][faulty]
+> </snip>
+>
+> Our multipath.conf looks like this:
+> <snip>
+> defaults {
+>         udev_dir                /dev
+>         polling_interval        10
+>         selector                "round-robin 0"
+>         path_grouping_policy    multibus
+>         getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
+>         #prio_callout            /bin/true
+>         #path_checker            readsector0
+>         path_checker            directio
+>         rr_min_io               100
+>         rr_weight               priorities
+>         failback                immediate
+>         no_path_retry           fail
+>         #user_friendly_names     no
+>         user_friendly_names     yes
+> }
+>
+> blacklist {
+>         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|sda)[0-9]*"
+>         devnode "^hd[a-z][[0-9]*]"
+>         devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
+> }
+>
+>
+> devices {
+>         device {
+>                 vendor                  "EQLOGIC"
+>                 product                 "100E-00"
+>                 path_grouping_policy    multibus
+>                 getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
+>                 #path_checker            directio
+>                 path_checker            readsector0
+>                 path_selector           "round-robin 0"
+>                 ##hardware_handler        "0"
+>                 failback                immediate
+>                 rr_weight               priorities
+>                 no_path_retry           queue
+>                 #no_path_retry           fail
+>                 rr_min_io               100
+>                 product_blacklist       LUN_Z
+>         }
+> }
+>
+> </snip>
+>
+> Thanks for your help.
+>
+> - Mike Vallaly
+>
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
