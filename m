@@ -1,14 +1,16 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: Creation of the mpath# devices
-Date: Thu, 15 Nov 2007 15:29:43 -0600
-Message-ID: <20071115212943.GF4900@ether.msp.redhat.com>
-References: <342d47870711151302o68e3172fn92c8c1e323812905@mail.gmail.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: Multipath blacklist exceptions issues
+Date: Thu, 15 Nov 2007 17:03:42 -0500 (EST)
+Message-ID: <20071115.170342.104029392.k-ueda@ct.jp.nec.com>
+References: <5201e28f0711131517p79fc4a8dk1da9bda922c3093e@mail.gmail.com>
+	<20071114.154456.71084719.k-ueda@ct.jp.nec.com>
+	<20071115192428.GD4900@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <342d47870711151302o68e3172fn92c8c1e323812905@mail.gmail.com>
+In-Reply-To: <20071115192428.GD4900@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,80 +20,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com, bmarzins@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Nov 15, 2007 at 03:02:45PM -0600, Scott Moseman wrote:
-> I guess my problems are never completely eliminated... :)
+Hi Ben,
+
+On Thu, 15 Nov 2007 13:24:28 -0600, Benjamin Marzinski <bmarzins@redhat.com> wrote:
+> On Wed, Nov 14, 2007 at 03:44:56PM -0500, Kiyoshi Ueda wrote:
+> > 
+> > Why do you need to separate the first stage and the second stage?
+> > I don't think we need to separate them.
+> > I think the point is whether execute getuid callout or not.
+> > So we should need just 2 stages like below:
+> > (The keyword "pre_getuid_filter" is not so good, just a example.)
+> > 
+> > ----------------------- /etc/multipath.conf -------------------------
+> > # First stage filter.  Drop unneeded devices on this stage
+> > pre_getuid_filter {
+> > 	whitelist_driver "scsi|cciss"
+> > 	whitelist_device {
+> > 		vendor	"IBM"
+> > 		model	"S/390 DASD ECKD"
+> > 	}
+> > 	blacklist_driver "*"
+> > }
+> > 
+> > # Second stage filter
+> > filter {
+> > 	blacklist_devnode "sda"
+> > 	whitelist_wwid "012345"
+> > 	blacklist_wwid "*"
+> > 	# only wwid filter may be enough in this stage
+> > }
+> > ---------------------------------------------------------------------
+> > 
+> > ---------------------------- multipathd -----------------------------
+> > for_each_devnode in /sys/block {
+> >     o gather all sysfs information including vendor and model
+> >     o decide whether it is needed using the first stage filter
+> >       (the matching rule is that first match is used)
+> >     o store it in pathvec if needed
+> > }
+> > 
+> > for_each_remained_devnode in pathvec {
+> >     o run getuid callout
+> >     o decide whether it should be used for map by the second stage filter
+> >       (the matching rule is that first match is used)
+> > }
+> > ---------------------------------------------------------------------
+> > 
+> > What do you think?
 > 
-> Setup device-mapper multipathing in RHEL 4
-> http://kbase.redhat.com/faq/FAQ_51_7170.shtm
+> This method has a lot going for it.  I like the ability to override the
+> default blacklisted drivers, even if it's almost never used, which you
+> couldn't do with an "invalid_drivers" section. I also like the finer
+> granularity on which devices to run the getuid callout on.
 > 
-> Per the above KB, after the multipath daemon is configured and
-> started, "The multipath -v2 command prints out multipathed paths that
-> show which devices are multipathed. If the command does not print
-> anything out, ensure that all SAN connections are set up properly and
-> the system is multipathed."
-> 
-> # multipath -v2
-> 
-> I get nothing on my server.  Although here's what I do get.
-> 
-> # multipath -l
-> 30690a018f015191a6472441d1500f057
-> [size=4 GB][features="0"][hwhandler="0"]
-> \_ round-robin 0 [active]
->  \_ 3:0:0:0 sdc 8:32 [active][ready]
-> \_ round-robin 0 [enabled]
->  \_ 1:0:1:0 sdb 8:16 [active][ready]
-> 
-> # multipath -v3
-> --- snipped ---
-> #
-> # all paths in cache :
-> #
-> 30690a018f015191a6472441d1500f057  1:0:1:0 sdb 8:16  [active][ready] EQLOGIC /
-> 30690a018f015191a6472441d1500f057  3:0:0:0 sdc 8:32  [active][ready] EQLOGIC /
-> hda blacklisted
-> sda blacklisted
-> --- snipped ---
-> 
-> What am I missing?  As far as I can tell, I'm following the RHEL KB
-> perfectly and it's still not working as expected (although now I'm
-> much farther than before!).
+> On the other hand, I agree with Stefan that there will be issues with
+> trying to gather the sysfs information for devices that just don't have
+> it.  Like he said, you can ignore them, but I wonder if this might cause
+> problems for the rare, but still possible, case where you expect that
+> a device should properly provide all its sysfs information, but for some
+> reason, you can't get it. In this case the device would most likely be
+> silently ignored.  Obviously, we can provide the information if you run
+> the commands with a higher verbosity.
 
-If you were only expecting to have /dev/sdb and /dev/sdc multipathed,
-then you are fine.  The problem is in the Knowledge Base article.
+I think it's no problem because of the reason below.
 
-# multipath -v2
+It depends on subsystem type whether vendor/model information exist
+in sysfs or not.
+Multipath-tools already has sysfs scanners for each subsystem type
+(e.g. scsi_sysfs_pathinfo, ccw_sysfs_pathinfo, cciss_sysfs_pathinfo).
+When there is no vendor/model information, each scanner can make
+appropriate decision: for example,
+  - scsi scanner will take it as error and drop the device
+  - cciss scanner won't care about it and use the device
 
-only prints out the multipath maps that it creates.  If, as in your
-case, the map already exists, it should print nothing.
+After that, devices without vendor/model information don't match
+any "device" rules, either blacklist nor whitelist.
+They can match other rules like "devnode" and "driver".
 
-# multipath -l
-
-prints out all the existing multipath devices.
-You should see the device node
-
-/dev/mapper/30690a018f015191a6472441d1500f057
-
-and the symbolic link
-
-/dev/mpath/30690a018f015191a6472441d1500f057
-
-Which you can use to access the device. If you don't like dealing with
-such a cumbersome name, you can always add
-
-      user_friendly_names yes
-
-to the defaults section of /etc/multipath.conf
-
--Ben
- 
-> Thanks!
-> Scott
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks,
+Kiyoshi Ueda
