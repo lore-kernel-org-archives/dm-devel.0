@@ -1,50 +1,38 @@
-From: Greg Kroah-Hartman <gregkh@suse.de>
-Subject: [patch 15/40] dm delay: fix status
-Date: Wed, 14 Nov 2007 22:44:41 -0800
-Message-ID: <20071115064441.GP19218@kroah.com>
-References: <20071115062710.885284510@mini.kroah.org>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Help needed with RDAC in production environment!!
+Date: Thu, 15 Nov 2007 08:33:34 +0100
+Message-ID: <473BF64E.1030008@linpro.no>
+References: <1195072704.5881.16.camel@sanderbal>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932127AbXKOG61@vger.kernel.org>
-Content-Disposition: inline; filename="dm-delay-fix-status.patch"
-In-Reply-To: <20071115064302.GA19218@kroah.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, stable@kernel.org, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Justin Forbes <jmforbes@linuxtx.org>, Zwane Mwaikambo <zwane@arm.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Randy Dunlap <rdunlap@xenotime.net>, Dave Jones <davej@redhat.com>, Chuck Wolber <chuckw@quantumlinux.com>, Chris Wedgwood <reviews@ml.cw.f00f.org>, Michael Krufky <mkrufky@linuxtv.org>, Chuck Ebbert <cebbert@redhat.com>, Domenico Andreoli <cavokz@gmail.com>, akpm@linux-foundation.org, alan@lxorguk.ukuu.org.uk, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1195072704.5881.16.camel@sanderbal>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+* S. J. van Harmelen
 
+> See the xen and vmware disks. They both display enable / enable instead
+> of active / enable. Is this correct? Or is a disaster waiting to happen?
 
--stable review patch.  If anyone has any objections, please let us know.
+If I understand correctly, "enabled" means something like "ready to use,
+but not in active use".  The preferred PG will become active ("in active
+use") once you send some I/O there.  Try "dd if=/dev/mapper/wmware
+of=/dev/null count=10" or something like that, see if they go active then.
 
-------------------
-From: Milan Broz <mbroz@redhat.com>
+The semantics had me confused for a while too.  :-)
 
-patch 79662d1ea37392651f2cff08626cab6a40ba3adc in mainline.
-
-
-Fix missing space in dm-delay target status output
-if separate read and write delay are configured.
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
-
-
----
- drivers/md/dm-delay.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/drivers/md/dm-delay.c
-+++ b/drivers/md/dm-delay.c
-@@ -305,7 +305,7 @@ static int delay_status(struct dm_target
- 		       (unsigned long long) dc->start_read,
- 		       dc->read_delay);
- 		if (dc->dev_write)
--			DMEMIT("%s %llu %u", dc->dev_write->name,
-+			DMEMIT(" %s %llu %u", dc->dev_write->name,
- 			       (unsigned long long) dc->start_write,
- 			       dc->write_delay);
- 		break;
-
+Regards
 -- 
+Tore Anderson
