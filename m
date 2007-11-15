@@ -1,15 +1,24 @@
-From: Michael Vallaly <mvallaly@cashnetusa.com>
-Subject: Re: DM-Multipath path failure questions..
-Date: Wed, 14 Nov 2007 15:44:41 -0600
-Message-ID: <20071114154441.0f30c99b.mvallaly@cashnetusa.com>
-References: <20071114000743.3b2d36a5.vaio@nolatency.com>
-	<5fb0f77b0711141026w327195f3rd9a7a4d1ec9ba716@mail.gmail.com>
+From: "Scott Moseman" <scmoseman@gmail.com>
+Subject: Re: NIC and HBA based multipathing
+Date: Thu, 15 Nov 2007 14:26:44 -0600
+Message-ID: <342d47870711151226r77e754e9n78a6491bdc30fd56@mail.gmail.com>
+References: <342d47870711061746s64daeaa0wcb6adf060506686c@mail.gmail.com>
+	<20071107050925.GA25156@linux.vnet.ibm.com>
+	<342d47870711070707s7ac0fca2w1fdda12fb73fc548@mail.gmail.com>
+	<342d47870711120954p56f41b30ob2c0956d11740244@mail.gmail.com>
+	<20071112201835.GB23668@linux.vnet.ibm.com>
+	<342d47870711121234o3aa82f95vc248308ef30097a3@mail.gmail.com>
+	<342d47870711130852x4352d55axd2a0759cba9aa79@mail.gmail.com>
+	<342d47870711151000o8bc5e6aw31394e039370c42c@mail.gmail.com>
+	<473C939E.10609@cs.wisc.edu>
+	<20071115191638.GB29968@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5fb0f77b0711141026w327195f3rd9a7a4d1ec9ba716@mail.gmail.com>
+In-Reply-To: <20071115191638.GB29968@linux.vnet.ibm.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,154 +28,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Kevin,
+On Nov 15, 2007 1:16 PM, Mike Anderson <andmike@linux.vnet.ibm.com> wrote:
+>
+> > >> I can use 'mknod sdc b 8 32' to generate a new /dev/sdc, which I can
+> > >> fdisk and the data looks good, but once I reboot the /dev/sdc device
+> > >> is once again removed (or not re-created, whichever the case may be).
+>
+> I would agree that we should look to see what udev is doing when it
+> receives the events.
+>
+> Since I believe this is failing on a RHEL4 sytem we cannot use
+> udevmonitor. If you unload the iSCSI module, edit /etc/udev/udev.conf to
+> set udev_log="yes", and then load the module again you should get some info
+> in /var/log/message on what udev is doing.
+>
 
-Correct me if im wrong, but I if I changed the path_grouping_policy to "failover" I lose the ability to aggregate IO traffic across multiple active paths at once. Unfortunately in our situation the performance hit would be undesirable.
+Hey Mike,
 
-With your setup do your backend block device names ever change? Say if you had an extended network outage and had to manually reconnect to the SAN?
+Here's the guts of what happened...
 
--Mike
+# cat /var/log/messages | grep udev
+Nov 13 15:39:01 ems1 udevsend[1185]: starting udevd daemon
+Nov 13 15:39:02 ems1 start_udev: Starting udev:  succeeded
+Nov 13 15:39:06 ems1 udevsend[1691]: starting udevd daemon
+Nov 15 20:13:58 ems1 udev[30499]: creating device node '/dev/iscsictl'
+Nov 15 20:13:58 ems1 udev[30509]: creating device node '/dev/iscsictl'
+Nov 15 20:14:03 ems1 udev[30551]: configured rule in
+'/etc/udev/rules.d/20-local.rules' at line 2 applied, 'sdc' is ignored
+Nov 15 20:14:03 ems1 udev[30552]: configured rule in
+'/etc/udev/rules.d/51-by-id.rules' at line 4 applied, added symlink
+'disk/by-id/scsi-%c-part%n'
+Nov 15 20:14:03 ems1 udev[30552]: creating device node '/dev/sdc1'
 
-On Wed, 14 Nov 2007 13:26:32 -0500
-"Kevin Foote" <kevin.foote@gmail.com> wrote:
+# cat /etc/udev/rules.d/20-local.rules
+BUS="scsi", SYSFS{vendor}="EQLOGIC", SYSFS{model}="100E-00",
+PROGRAM="/sbin/scsi_id -g -u -s /block/%k",
+RESULT="30690a018f015191a6472441d1500f057", NAME=""
 
-> Mike,
-> If you are going for failover things should look like this..
-> We go to an Equallogic PS box as well .. through a QLA4052 HBA
-> 
-> You need to change this line in your /etc/multipath.conf file to
-> reflect what you want multipathd to do.
-> >         path_grouping_policy    multibus
-> should read ...
->          path_grouping_policy    failover
-> 
-> In turn your maps will look like this ..  (multipath -ll)
-> media-oracle (30690a018a0b3d369dd4f04191c4090f9)
-> [size=8 GB][features="0"][hwhandler="0"]
-> \_ round-robin 0 [active]
->   \_ 2:0:8:0 sdj 8:144 [active][ready]
-> \_ round-robin 0 [enabled]
->   \_ 3:0:8:0 sdr 65:16 [active][ready]
-> 
-> and dmsetup table <dev>
-> #> dmsetup table /dev/mapper/media-oracle
-> 0 16803840 multipath 0 0 2 1 round-robin 0 1 1 8:144 100 round-robin 0
-> 1 1 65:16 100
-> 
-> will show a multipath failover setup
-> 
-> 
-> -- 
-> :wq!
-> kevin.foote
-> 
-> On Nov 14, 2007 1:07 AM, Michael Vallaly <vaio@nolatency.com> wrote:
-> >
-> > Hello,
-> >
-> > I am currently using the dm-multipather (multipath-tools) to allow high-availability / increased capacity to our Equallogic iSCSI SAN. I was wondering if anyone had come across a way to re-instantiate a failed path / paths from a multipath target, when the backend device (iscsi initiator) goes away.
-> >
-> > All goes well until we have a lengthy network hiccup or non-recoverable iSCSI error in which case the multipather seems to get wedged. The path seems to get stuck in a [active][faulty] state and the backend block device (sdX) actually gets removed from the system. I have tried reconnecting the iSCSI session, after this happens, and get a new (different IE: sdg vs. sdf) backend block level device, but the multipather never picks it up / never resumes IO operations, and I generally have then to power cycle the box.
-> >
-> > We have anywhere from 2 to 4 iSCSI sessions open per multipath target, but even one path failing seems to cause the whole multipath to die. I am hoping there is a way to continue on after a path failure, rather than the power cycle. I have tried multipath-tools 0.4.6/0.4.7/0.4.8, and almost every permutation of the configuration I can think of. Maybe I am missing something quite obvious.
-> >
-> > Working Multipather
-> > <snip>
-> > mpath89 (36090a0281051367df57194d2a37392d5) dm-4 EQLOGIC ,100E-00
-> > [size=300G][features=1 queue_if_no_path][hwhandler=0]
-> > \_ round-robin 0 [prio=2][active]
-> >  \_ 5:0:0:0  sdf 8:80  [active][ready]
-> >  \_ 6:0:0:0  sdg 8:96  [active][ready]
-> > </snip>
-> >
-> > Wedged Multipather (when a iSCSI session terminates) (All IO queues indefinitely)
-> > <snip>
-> > mpath94 (36090a0180087e6045673743d3c01401c) dm-10 ,
-> > [size=600G][features=1 queue_if_no_path][hwhandler=0]
-> > \_ round-robin 0 [prio=0][enabled]
-> >  \_ #:#:#:#  -   #:#   [active][faulty]
-> > </snip>
-> >
-> > Our multipath.conf looks like this:
-> > <snip>
-> > defaults {
-> >         udev_dir                /dev
-> >         polling_interval        10
-> >         selector                "round-robin 0"
-> >         path_grouping_policy    multibus
-> >         getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
-> >         #prio_callout            /bin/true
-> >         #path_checker            readsector0
-> >         path_checker            directio
-> >         rr_min_io               100
-> >         rr_weight               priorities
-> >         failback                immediate
-> >         no_path_retry           fail
-> >         #user_friendly_names     no
-> >         user_friendly_names     yes
-> > }
-> >
-> > blacklist {
-> >         devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st|sda)[0-9]*"
-> >         devnode "^hd[a-z][[0-9]*]"
-> >         devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
-> > }
-> >
-> >
-> > devices {
-> >         device {
-> >                 vendor                  "EQLOGIC"
-> >                 product                 "100E-00"
-> >                 path_grouping_policy    multibus
-> >                 getuid_callout          "/lib/udev/scsi_id -g -u -s /block/%n"
-> >                 #path_checker            directio
-> >                 path_checker            readsector0
-> >                 path_selector           "round-robin 0"
-> >                 ##hardware_handler        "0"
-> >                 failback                immediate
-> >                 rr_weight               priorities
-> >                 no_path_retry           queue
-> >                 #no_path_retry           fail
-> >                 rr_min_io               100
-> >                 product_blacklist       LUN_Z
-> >         }
-> > }
-> >
-> > </snip>
-> >
-> > Thanks for your help.
-> >
-> > - Mike Vallaly
-> >
-> >
-> >
-> >
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> >
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Maybe I shot myself in the foot.  While I don't necessarily recall
+very putting that entry in there, I'm not going to exclude myself as
+the cause of the problem (seeing how many steps I jumped through when
+playing with all of this HBA, NIC and MPIO stuff).
 
+Should I comment out that line, reboot (or restart iscsi) and see what happens?
 
--- 
-
-Michael Vallaly
-Senior System Administrator
-CashNetUSA
-200 W Jackson Blvd, Suite 2400
-Chicago, IL 60606
-mvallaly@cashnetusa.com
-(W) 312-568-4230 
-(P) 312-933-9589
-(C) 847-769-5568
-
-This e-mail contains proprietary information and may be confidential.  If you are not the intended recipient of this e-mail, you are hereby notified that any dissemination, distribution or copying of this message is strictly prohibited.  If you received this message in error, please delete it immediately.
+Thanks!
+Scott
