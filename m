@@ -1,15 +1,14 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
-Date: Mon, 19 Nov 2007 22:19:53 +0100
-Message-ID: <1195507193.11489.27.camel@sanderbal>
-References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
-	<1195484847.6074.16.camel@sanderbal>  <4741D96F.7080502@linpro.no>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: Re: Multipath v. 0.4.7 trips over USB flash drive
+Date: Mon, 19 Nov 2007 13:32:30 -0800
+Message-ID: <20071119213230.GA829@linux.vnet.ibm.com>
+References: <3A7658DE9640014CB055D6299B111F9C1EF588@CORPUSMX20B.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4741D96F.7080502@linpro.no>
+Content-Disposition: inline
+In-Reply-To: <3A7658DE9640014CB055D6299B111F9C1EF588@CORPUSMX20B.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +21,70 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Tore,
+usvyatsky_ilya@emc.com <usvyatsky_ilya@emc.com> wrote:
+> Hi there,
+> 
+> I am using DM MPIO for quite a while now and in general it works.
+> Lately I encountered a problem with one of my boxes that is equipped
+> with USB flash drive and is connected to a disk array.
+> Namely, the flash drive has an empty bcdDevice entry, which translates
+> into empty /sys/block/sdXX/device/rev file.
+> As a result, the 'multipath -ll' command trips over this device and
+> bails out without listing any array mpathXX devices.
+> The devices are created in /dev/disk/by-name/ directory, so it's just
+> the userland tool issue.
+> 
+> I've built debug version of multipath and found the following:
+> 
+> 1. The function sysfs_get_rev() (which is generated from macro
+> declare_sysfs_get_str()) assumes that the rev has to have at least 2
+> characters. Since in the case of my device this assumption is false, the
+> function returns 1.
+> 2. The caller function is scsi_sysfs_pathinfo() and it returns 1 as
+> well.
+> 3. The caller function is sysfs_pathinfo(), which returns 1 as well.
+> 4. The caller function is pathinfo(), which also returns 1.
+> 5. The caller function is store_pathinfo(). Here the pathinfo is not
+> stored and NULL is returned to the caller.
+> 6. The caller is path_discover() that returns 1.
+> 7. The caller is path_discovery() that returns non-zero result.
+> 8. The caller is configure() that bails out on this result.
+> 
+> I have tried to work around this issue by blacklisting the device, but
+> unfortunately the only blacklist check that is done prior to call to
+> store_pathinfo() in the path_discover() is based on the devnode. 
+> This means that effectively I cannot use this workaround since with USB
+> device I cannot guarantee that it will always be mapped to the same
+> devnode.
+> 
+> I'd like to propose a couple of options for a fix for this issue:
+> 
+> 1. Re-implement sysfs_get_rev() in such a way that rev filed minimal
+> length is no longer required. 
+>    Please see attached a patch that is supposed to take care of this.
+> 2. Re-implement pathinfo() to check whether vendor and/or product are
+> blacklisted. 
+>    This way non-compliant devices may be blacklisted based on vendor
+> and/or product name.
+> 
+> I am not sure, which option is preferable, but I clearly need at least
+> one of them in the product.
+> 
+> Your comments are greatly appreciated. 
+> 
+> Please note that my patch is against v. 0.4.7 of the multipath tool. 
+> I realize that upstream may differ significantly, so if option (1) makes
+> sense I'll revalidate with the latest version and submit the patch if
+> necessary.
 
-Please take a look at my reply to Malaha. This is also a reply to your
-message...
+The upstream version already removes the minimum size.
 
-Hope you have the time to read it.
+You should try the multipath-tools git tree version to see if it addresses
+your issue.
 
-Thanks,
+http://git.kernel.org/?p=linux/storage/multipath-tools/.git;a=summary
 
-Sander
-
-
-On Mon, 2007-11-19 at 19:43 +0100, Tore Anderson wrote:
-> * S. J. van Harmelen
-> 
-> > Thanks for your help!
-> > 
-> > I executed the pvs command and it did find a few partitions. I use
-> > iSCSI to share the LUN's to a XenSource server, and XenSource creates
-> > the PV's and LV's in order to provision VM's. Didn't think of that,
-> > but that's on the disk of course.
-> > 
-> > Is there any way to configure snapshots for these already created LVM
-> > partitions? Or do I have to whipe the disk clean (rather not do
-> > that, but if I have to it can be done), then create the pv's and lv's
-> > and then share the lv's true iSCSI?
-> > 
-> > In that case XenSource will again create pv's and lv's in the shared
-> > lv. Ain't that a problem?
-> 
-> You really need a filter line in /etc/lvm/lvm.conf, to keep LVM from 
-> claiming 1) individual paths to a dm-multipath controlled LUN, and 2) 
-> LUNs that are PVs used by the LVM implementation in your domUs.
-> 
-> You don't want LVM to be claiming the paths directly, because you'd no 
-> longer have any redundancy - it will override dm-multipath.  You also 
-> don't want the LVM implementation in your dom0 to be using the same 
-> block device as LVM in your domU as physical volumes, as LVM is designed 
-> to have exclusive access to its PVs (you might get around this with 
-> CLVM, though).
-> 
-> Do I understand correctly if you have one LUN that contains your domO 
-> (having its file systems in LVs), and several LUNs that contain your 
-> domUs, which again are PVs that are supposed to be used by your domU 
-> kernels?
-> 
-> If so you will want to keep your dom0 from claiming the domU PVs.  Use a 
-> filter line that accepts only the multipath'ed volume that contains the 
-> dom0 installation, and drop the rest.  For instance:
-> 
-> filter = [ "a|^/dev/mapper/domzero$", "r|.*" ]
-> 
-> ...assuming your dom0 data volume is called "domzero" in multipath.conf.
-> 
-> Regards
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
