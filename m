@@ -1,13 +1,18 @@
-From: "Stefan Bader" <Stefan.Bader@de.ibm.com>
-Subject: Re: Question about work queues
-Date: Fri, 16 Nov 2007 21:15:09 +0100
-Message-ID: <5201e28f0711161215v56fb574cte46db56dbf748b8d@mail.gmail.com>
-References: <D44F48C7D79D2943A073C8FA0F49A3CC0194E46D@orsmsx418.amr.corp.intel.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [RFC] How to fix system stall on root volume multipath
+Date: Mon, 19 Nov 2007 01:17:41 +0100
+Message-ID: <1195431462.27535.43.camel@localhost.localdomain>
+References: <20071109.181719.115904569.k-ueda@ct.jp.nec.com>
+	<20071110033113.GA22843@agk.fab.redhat.com>
+	<20071112.112454.71086888.k-ueda@ct.jp.nec.com>
+	<1194915684.6724.66.camel@localhost.localdomain>
+	<1195202472.27535.27.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2012991149=="
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC0194E46D@orsmsx418.amr.corp.intel.com>
+In-Reply-To: <1195202472.27535.27.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,63 +22,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
---===============2012991149==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_11322_760249.1195244109320"
 
-------=_Part_11322_760249.1195244109320
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Le vendredi 16 novembre 2007 =C3=A0 09:41 +0100, Christophe Varoqui a =C3=
+=A9crit :
+> > > Ben, Christophe,
+> > > Is that code still problem for current multipathd?
+> > > And what do you think about my proposal?
+> > >=20
+> > I'm not found of yet-another user-visible ramfs for multipathd use,
+> > that's why I started with the private namespace tricks. The problems =
+are
+> > still there, and will stay till we stop using pthreads.
+> >=20
+> > That may happen someday, as one of the main reason for pthread was th=
+e
+> > (blocking ioctl) libdevmapper event collection. And this is being
+> > superseded by path status uevents.
+> >=20
+> > But not soon enough, and the private namespace stuff suffers from lac=
+k
+> > of friendliness anyway : we can't expect users to grasp easily that
+> > changing their prioritizer in /sbin won't be seen by the multipath
+> > daemon till restart, for example.
+> >=20
+> > So I propose to start playing with your prioritizers-as-lib idea to s=
+ee
+> > if it's practical.
+> >=20
+> > I prepared the following patch to that effect. It is not complete
+> > (actually segfaults, no useful prioritizer ported) but can start fixi=
+ng
+> > bugs and go where ever your personnal interest leads.
+> >=20
+> I'm sorry I forgot to post the git-cached part of the changeset, i.e.
+> libprio/ files.
+>=20
+> There it goes.
 
-Hi Brian,
+Upstream git hosts the initial libprio/ commit.
 
-not sure this solves the problem but:
+I ported all useful prioritizers, leaving balance_units in the dark.
+(If someone is actually using it, please say so)
 
-2007/11/16, Wood, Brian J <brian.j.wood@intel.com>:
->
->
-> static void trigger_event(struct work_struct *work);
+This time, I cared for a bit of testing and the stuff seems to actually
+work.
 
-
-This should be
-static void trigger_event(void *data);
-
-/* Initialize the work_struct */
-> INIT_WORK(&sc->trigger_event, trigger_event);
-
-
-INIT_WORK takes three arguments:
-
-INIT_WORK(&sc->trigger_event, trigger_event,  xxx);
-
-xxx is the pointer passed to the function call. Might probably be ti...
-
+Now I'm interested in feedback from the Netapp fault injection team.
+And any other feedback.
 
 Regards,
-Stefan
-
-------=_Part_11322_760249.1195244109320
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-Hi Brian,<br><br>not sure this solves the problem but:<br><br><div><span class="gmail_quote">2007/11/16, Wood, Brian J &lt;<a href="mailto:brian.j.wood@intel.com">brian.j.wood@intel.com</a>&gt;:</span><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
-<br>static void trigger_event(struct work_struct *work);</blockquote><div><br>This should be<br>static void trigger_event(void *data);<br><br></div><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
-/* Initialize the work_struct */<br> INIT_WORK(&amp;sc-&gt;trigger_event, trigger_event);</blockquote><div><br>INIT_WORK takes three arguments:<br><br>INIT_WORK(&amp;sc-&gt;trigger_event, trigger_event,&nbsp; xxx);<br><br>xxx is the pointer passed to the function call. Might probably be ti... 
-<br></div></div><br><br>Regards,<br>Stefan<br>
-
-------=_Part_11322_760249.1195244109320--
-
-
---===============2012991149==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2012991149==--
+cvaroqui
+>=20
