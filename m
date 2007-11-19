@@ -1,13 +1,14 @@
-From: "Scott Moseman" <scmoseman@gmail.com>
-Subject: Failing on NIC removal
-Date: Mon, 19 Nov 2007 11:16:24 -0600
-Message-ID: <342d47870711190916x1c3bb959s7e9a45a1312d4701@mail.gmail.com>
+From: malahal@us.ibm.com
+Subject: Re: Use LVM on /dev/mapper/diskname
+Date: Mon, 19 Nov 2007 09:22:19 -0800
+Message-ID: <20071119172219.GA22727@us.ibm.com>
+References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <47419854.2000508@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,43 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Tore Anderson <tore@linpro.no>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-So I finally got my multipath running through both the NIC and HBA
-interfaces, but I'm not having any luck going through testing to
-verify it's actually failing over between the connections.
+Tore Anderson [tore@linpro.no] wrote:
+> * S. J. van Harmelen
+> 
+> > I have a couple of LUN's that are handled by the multipath driver.
+> > This works great, but now I want to use LVM so I can take snapshots
+> > of one LUN to another LUN.
+> > 
+> > Can someone tell me how to do this?
+> > 
+> > When I do pvcreate /dev/mapper/diskname I get an error that the disk
+> > is already part of an volume group. But I sertainly did not configure
+> > that.
+> > 
+> > Can it be that the multipath driver of devmapper did that?
+> 
+> If you have a PV signature on the volume, LVM might have used one of the
+> paths instead of using the multipath'ed device under /dev/mapper.  You
+> should be able to check this by running the command "pvs" - it should
+> list all the detected PVs on your system.
 
-# multipath -l
-mpath0 (30690a018f015191a6472441d1500f057)
-[size=4 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [active]
- \_ 3:0:0:0 sdc 8:32 [active][ready]
-\_ round-robin 0 [enabled]
- \_ 1:0:1:0 sdb 8:16 [active][ready]
+If LVM uses single pathed disks like /dev/sda, then multipath can't use
+the same path to make a multipathed device, right? My guess is that
+/dev/mapper/multipath-name is indeed part of the LVM in your case. I
+would like to know what happened otherwise. Thank you.
 
-I can unplug the HBA (see below) and the connection to the SAN remains.
-
-# multipath -l
-mpath0 (30690a018f015191a6472441d1500f057)
-[size=4 GB][features="0"][hwhandler="0"]
-\_ round-robin 0 [active]
- \_ 3:0:0:0 sdc 8:32 [active][ready]
-\_ round-robin 0 [enabled]
- \_ 1:0:1:0 sdb 8:16 [failed][faulty]
-
-But when I unplug the NIC connection, the multipath command hands,
-trying to list files on the SAN partition hangs, and I'm getting these
-messages:
-
-Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: Connect failed with rc
--113: No route to host
-Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: establish_session
-failed. Could not connect to target
-Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: Waiting 10 seconds
-before next login attempt
-
-How to troubleshoot this situation?
-
-Thanks,
-Scott
+--Malahal.
