@@ -1,7 +1,7 @@
 From: "S. J. van Harmelen" <svh@dds.nl>
 Subject: Re: Use LVM on /dev/mapper/diskname
-Date: Mon, 19 Nov 2007 19:13:25 +0100
-Message-ID: <1195496005.6074.41.camel@sanderbal>
+Date: Mon, 19 Nov 2007 19:16:49 +0100
+Message-ID: <1195496209.6074.44.camel@sanderbal>
 References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
 	<20071119172219.GA22727@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -21,6 +21,33 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+P.S. When I run pvscan I get this output:
+
+root@storage:~# pvscan
+  /dev/sdc: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdc: read failed after 0 of 4096 at 214748299264: Input/output
+error
+  /dev/sdc: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdd: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdd: read failed after 0 of 4096 at 214748299264: Input/output
+error
+  /dev/sdd: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdf: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdf: read failed after 0 of 4096 at 214748299264: Input/output
+error
+  /dev/sdf: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdi: read failed after 0 of 4096 at 0: Input/output error
+  /dev/sdi: read failed after 0 of 4096 at 214748299264: Input/output
+error
+  /dev/sdi: read failed after 0 of 4096 at 0: Input/output error
+  PV /dev/dm-0   VG VG_XenStorage-755d6649-e770-6f01-5e17-fd7f8dcd8651
+lvm2 [199.99 GB / 185.49 GB free]
+  Total: 1 [199.99 GB] / in use: 1 [199.99 GB] / in no VG: 0 [0   ]
+
+So here it does see the dm-0? Please advice...
+
+Sander
 
 
 On Mon, 2007-11-19 at 09:22 -0800, malahal@us.ibm.com wrote:
@@ -48,41 +75,6 @@ On Mon, 2007-11-19 at 09:22 -0800, malahal@us.ibm.com wrote:
 > the same path to make a multipathed device, right? My guess is that
 > /dev/mapper/multipath-name is indeed part of the LVM in your case. I
 > would like to know what happened otherwise. Thank you.
-
-I already send this in a reply to the list, but will mail it to you
-directly in case you missed it:
-
-I executed the pvs command and it did find a few partitions. I use iSCSI
-to share the LUN's to a XenSource server (I use the /dev/mapper/diskname
-as sharing point for iSCSI), and XenSource creates the PV's
-and LV's in order to provision VM's. Didn't think of that, but that's on
-the disk of course.
-
-Here's the output of pvs:
-
-root@storage:~# pvs
-  /dev/sdc: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdf: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdi: read failed after 0 of 4096 at 0: Input/output error
-  PV         VG                                                 Fmt
-Attr PSize   PFree  
-  /dev/sde   VG_XenStorage-755d6649-e770-6f01-5e17-fd7f8dcd8651 lvm2 a-
-199.99G 185.49G
-
-The four disks that give a "read failed" error are the redundant disk,
-so this is no problem.
-
-Now is there any way to configure snapshots for these already created
-LVM partitions? Or do I have to whipe the disk clean (rather not do
-that, but if I have to it can be done), then create the pv's and lv's
-and then share the lv's true iSCSI?
-
-In that case XenSource will again create pv's and lv's in the shared lv.
-Ain't that a problem?
-
-Sander
-
 > 
 > --Malahal.
 > 
