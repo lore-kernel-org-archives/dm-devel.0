@@ -1,17 +1,14 @@
-From: malahal@us.ibm.com
-Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
-Date: Mon, 19 Nov 2007 14:36:13 -0800
-Message-ID: <20071119223612.GA23779@us.ibm.com>
-References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
-	<1195484847.6074.16.camel@sanderbal>
-	<20071119185021.GA23100@us.ibm.com>
-	<1195506996.11489.23.camel@sanderbal>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Ray Lauff" <spudly.mcgruff@gmail.com>
+Subject: Device too small for target
+Date: Mon, 19 Nov 2007 17:48:53 -0500
+Message-ID: <c01151d00711191448u5ee6b92buec5b336133736060@mail.gmail.com>
+Reply-To: spudly.mcgruff@gmail.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1195506996.11489.23.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,32 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-S. J. van Harmelen [svh@dds.nl] wrote:
-> 
-> On the XenSource server I use a shared iSCSI storage so multiple servers
-> can access the same data so I can do live migrations. When I add the
-> storage XenSource creates a PV and then when I create a VM, it creates
-> LV's for each virtual harddisk.
-> 
-> So far so good I guess, as the XenSource machine uses the multipathed
-> drive, right?
+Hello all-
 
-Should.
- 
-> Now I would like to take snapshots of the whole PV so I can make
-> backups. My thoughts where to make a PV on /dev/mapper/xen that spans
-> the whole disk, and then create a single LV on it. 
-> 
-> If I then take the path to that single LV, say /dev/volumegroup/disk1 as
-> target for iSCSI, then the XenSsource server should only see that LV as
-> the shared iSCSI repository.
-> 
-> But then XenSource wil create a PV and a couple of LV's in the existing
-> LV (created on the storage server and shared true iSCSI). Could that
-> create any problems or can I just do that?
+I have a 7.4Tb lvm2 volume that was working fine until this morning,
+when I rebooted the server.  It was a 600Gb disk that I did a
 
-I don't see any problem. You should be able to do that, but then I am
-not an expert. Give it a try.
+     lvextend -L+6.7T /dev/homegroup/home
+     resize2fs /dev/homegroup/home
+
+on last week, and that disk worked fine all week.  During reboot, I
+get the messages
+
+    kernel: device-mapper: table: device 8:193 too small for target
+    kernel: device-mapper: table: 253:0: linear: dm-linear: Device lookup failed
+    kernel: device-mapper: ioctl: error adding target to table
+
+and, needless to say, the disk won't come up
+
+    # mount /dev/mapper/homegroup-home /home -t ext3
+    mount: wrong fs type, bad option, bad superblock on
+/dev/mapper/homegroup-home,
+           missing codepage or other error
+           (could this be the IDE device where you in fact use
+           ide-scsi so that sr0 or sda or so is needed?)
+           In some cases useful info is found in syslog - try
+           dmesg | tail  or so
+
+I've also tried a fsck, but that comes back with
+
+    fsck -t ext3 /dev/mapper/homegroup-home
+    fsck 1.39 (29-May-2006)
+    e2fsck 1.39 (29-May-2006)
+    fsck.ext3: Invalid argument while trying to open /dev/mapper/homegroup-home
+
+     The superblock could not be read or does not describe a correct ext2
+    filesystem.  If the device is valid and it really contains an ext2
+    filesystem (and not swap or ufs or something else), then the superblock
+    is corrupt, and you might try running e2fsck with an alternate superblock:
+        e2fsck -b 8193 <device>
+
+Kernel is 2.6.18-8.1.10.el5PAE.
+
+Is there something else I need to do with the device mapper to change
+the size of something for this larger lvm?
+
+    # lvs
+    LV   VG        Attr   LSize Origin Snap%  Move Log Copy%
+    home homegroup -wi-d- 7.35T
+
+The hardware all appears to be fine (it's an EMC SAN).
+
+I apologize if this isn't the best place to ask this, but if anyone
+has any experience with this error I'd appreciate any help on
+correcting it.  If there's a better list for this question please
+point me there and I'll go away.
+
+Thanks.
