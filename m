@@ -1,18 +1,12 @@
-From: "Scott Moseman" <scmoseman@gmail.com>
-Subject: Re: Creation of the mpath# devices
-Date: Mon, 19 Nov 2007 09:30:27 -0600
-Message-ID: <342d47870711190730m57badf48jf0c3758f5b4dde31@mail.gmail.com>
-References: <342d47870711151302o68e3172fn92c8c1e323812905@mail.gmail.com>
-	<20071115212943.GF4900@ether.msp.redhat.com>
-	<342d47870711151436l1f49e2d3od0aa6e99bd599b37@mail.gmail.com>
-	<5fb0f77b0711160555n2fc523a3v44650307911ec489@mail.gmail.com>
+From: "Paul Cote" <paul.cote@incipient.com>
+Subject: CLARiiON failover modes and DM.
+Date: Mon, 19 Nov 2007 11:14:56 -0500
+Message-ID: <940B4FF1F5958E4F96FC83C055A2F2611B8C5F@exch-2003.incipient.waltham>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1582338429=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5fb0f77b0711160555n2fc523a3v44650307911ec489@mail.gmail.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,20 +19,70 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Nov 16, 2007 7:55 AM, Kevin Foote <kevin.foote@gmail.com> wrote:
->
-> What does your output of this command show.. just currious as I have
-> multiple devices on an equallogic and I'm trying to figure out an issue
-> with multipath thinking the path is down when its not..
->
-> command => dmsetup table /dev/mapper/<yourdevice>
->
+This is a multi-part message in MIME format.
 
-For what it's worth...
+--===============1582338429==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C82AC7.53142381"
 
-# dmsetup table /dev/mapper/mpath0
-0 8417280 multipath 0 0 2 1 round-robin 0 1 1 8:32 100 round-robin 0 1
-1 8:16 100
+This is a multi-part message in MIME format.
 
-Thanks,
-Scott
+------_=_NextPart_001_01C82AC7.53142381
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hi
+
+Is there a specific failover mode that the CX must be set for DM
+interoperability?
+
+thanks in advance,
+
+Paul
+
+
+------_=_NextPart_001_01C82AC7.53142381
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE id=3DridTitle>Message</TITLE>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<STYLE>BODY {
+	MARGIN-TOP: 25px; FONT-SIZE: 10pt; MARGIN-LEFT: 25px; COLOR: #000000; =
+FONT-FAMILY: Arial, Helvetica
+}
+P.msoNormal {
+	MARGIN-TOP: 0px; FONT-SIZE: 10pt; MARGIN-LEFT: 0px; COLOR: #ffffcc; =
+FONT-FAMILY: Helvetica, "Times New Roman"
+}
+LI.msoNormal {
+	MARGIN-TOP: 0px; FONT-SIZE: 10pt; MARGIN-LEFT: 0px; COLOR: #ffffcc; =
+FONT-FAMILY: Helvetica, "Times New Roman"
+}
+</STYLE>
+
+<META content=3D"MSHTML 6.00.2800.1126" name=3DGENERATOR></HEAD>
+<BODY id=3DridBody background=3D"">
+<P><SPAN class=3D144001316-19112007>Hi</SPAN></P>
+<P><SPAN class=3D144001316-19112007>Is there a specific failover mode =
+that the CX=20
+must be set for DM interoperability?</SPAN></P>
+<P><SPAN class=3D144001316-19112007>thanks in advance,</SPAN></P>
+<P><SPAN class=3D144001316-19112007>Paul</SPAN></P></BODY></HTML>
+=00
+------_=_NextPart_001_01C82AC7.53142381--
+
+
+--===============1582338429==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1582338429==--
