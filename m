@@ -1,15 +1,15 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Use LVM on /dev/mapper/diskname
-Date: Mon, 19 Nov 2007 19:16:49 +0100
-Message-ID: <1195496209.6074.44.camel@sanderbal>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
+Date: Mon, 19 Nov 2007 19:43:59 +0100
+Message-ID: <4741D96F.7080502@linpro.no>
 References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
-	<20071119172219.GA22727@us.ibm.com>
+	<1195484847.6074.16.camel@sanderbal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071119172219.GA22727@us.ibm.com>
+In-Reply-To: <1195484847.6074.16.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,63 +22,47 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-P.S. When I run pvscan I get this output:
+* S. J. van Harmelen
 
-root@storage:~# pvscan
-  /dev/sdc: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdc: read failed after 0 of 4096 at 214748299264: Input/output
-error
-  /dev/sdc: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdd: read failed after 0 of 4096 at 214748299264: Input/output
-error
-  /dev/sdd: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdf: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdf: read failed after 0 of 4096 at 214748299264: Input/output
-error
-  /dev/sdf: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdi: read failed after 0 of 4096 at 0: Input/output error
-  /dev/sdi: read failed after 0 of 4096 at 214748299264: Input/output
-error
-  /dev/sdi: read failed after 0 of 4096 at 0: Input/output error
-  PV /dev/dm-0   VG VG_XenStorage-755d6649-e770-6f01-5e17-fd7f8dcd8651
-lvm2 [199.99 GB / 185.49 GB free]
-  Total: 1 [199.99 GB] / in use: 1 [199.99 GB] / in no VG: 0 [0   ]
-
-So here it does see the dm-0? Please advice...
-
-Sander
-
-
-On Mon, 2007-11-19 at 09:22 -0800, malahal@us.ibm.com wrote:
-> Tore Anderson [tore@linpro.no] wrote:
-> > * S. J. van Harmelen
-> > 
-> > > I have a couple of LUN's that are handled by the multipath driver.
-> > > This works great, but now I want to use LVM so I can take snapshots
-> > > of one LUN to another LUN.
-> > > 
-> > > Can someone tell me how to do this?
-> > > 
-> > > When I do pvcreate /dev/mapper/diskname I get an error that the disk
-> > > is already part of an volume group. But I sertainly did not configure
-> > > that.
-> > > 
-> > > Can it be that the multipath driver of devmapper did that?
-> > 
-> > If you have a PV signature on the volume, LVM might have used one of the
-> > paths instead of using the multipath'ed device under /dev/mapper.  You
-> > should be able to check this by running the command "pvs" - it should
-> > list all the detected PVs on your system.
+> Thanks for your help!
 > 
-> If LVM uses single pathed disks like /dev/sda, then multipath can't use
-> the same path to make a multipathed device, right? My guess is that
-> /dev/mapper/multipath-name is indeed part of the LVM in your case. I
-> would like to know what happened otherwise. Thank you.
+> I executed the pvs command and it did find a few partitions. I use
+> iSCSI to share the LUN's to a XenSource server, and XenSource creates
+> the PV's and LV's in order to provision VM's. Didn't think of that,
+> but that's on the disk of course.
 > 
-> --Malahal.
+> Is there any way to configure snapshots for these already created LVM
+> partitions? Or do I have to whipe the disk clean (rather not do
+> that, but if I have to it can be done), then create the pv's and lv's
+> and then share the lv's true iSCSI?
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> In that case XenSource will again create pv's and lv's in the shared
+> lv. Ain't that a problem?
+
+You really need a filter line in /etc/lvm/lvm.conf, to keep LVM from 
+claiming 1) individual paths to a dm-multipath controlled LUN, and 2) 
+LUNs that are PVs used by the LVM implementation in your domUs.
+
+You don't want LVM to be claiming the paths directly, because you'd no 
+longer have any redundancy - it will override dm-multipath.  You also 
+don't want the LVM implementation in your dom0 to be using the same 
+block device as LVM in your domU as physical volumes, as LVM is designed 
+to have exclusive access to its PVs (you might get around this with 
+CLVM, though).
+
+Do I understand correctly if you have one LUN that contains your domO 
+(having its file systems in LVs), and several LUNs that contain your 
+domUs, which again are PVs that are supposed to be used by your domU 
+kernels?
+
+If so you will want to keep your dom0 from claiming the domU PVs.  Use a 
+filter line that accepts only the multipath'ed volume that contains the 
+dom0 installation, and drop the rest.  For instance:
+
+filter = [ "a|^/dev/mapper/domzero$", "r|.*" ]
+
+...assuming your dom0 data volume is called "domzero" in multipath.conf.
+
+Regards
+-- 
+Tore Anderson
