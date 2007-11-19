@@ -1,12 +1,16 @@
-From: usvyatsky_ilya@emc.com
-Subject: Multipath v. 0.4.7 trips over USB flash drive
-Date: Mon, 19 Nov 2007 15:43:04 -0500
-Message-ID: <3A7658DE9640014CB055D6299B111F9C1EF588@CORPUSMX20B.corp.emc.com>
+From: "S. J. van Harmelen" <svh@dds.nl>
+Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
+Date: Mon, 19 Nov 2007 22:16:36 +0100
+Message-ID: <1195506996.11489.23.camel@sanderbal>
+References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
+	<1195484847.6074.16.camel@sanderbal>
+	<20071119185021.GA23100@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C82AEC.C8898D4D"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <20071119185021.GA23100@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,108 +20,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: malahal@us.ibm.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
 
-------_=_NextPart_001_01C82AEC.C8898D4D
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+On Mon, 2007-11-19 at 10:50 -0800, malahal@us.ibm.com wrote:
+> S. J. van Harmelen [svh@dds.nl] wrote:
+> > Thanks for your help!
+> > 
+> > I executed the pvs command and it did find a few partitions. I use iSCSI
+> > to share the LUN's to a XenSource server, and XenSource creates the PV's
+> > and LV's in order to provision VM's. Didn't think of that, but that's on
+> > the disk of course. 
+> > 
+> > Is there any way to configure snapshots for these already created LVM
+> > partitions?
+> 
+> If I understand, you exported some LUNs to XenSource server. So you
+> should NOT be using those LUNs at this machine, right? You should be
+> able to create snapshots at the XenSource server though.
 
-Hi there,
+That is correct. Sorry if I did not give enough information to
+understand the problem at first, but what your saying now is correct.
 
-I am using DM MPIO for quite a while now and in general it works.
-Lately I encountered a problem with one of my boxes that is equipped
-with USB flash drive and is connected to a disk array.
-Namely, the flash drive has an empty bcdDevice entry, which translates
-into empty /sys/block/sdXX/device/rev file.
-As a result, the 'multipath -ll' command trips over this device and
-bails out without listing any array mpathXX devices.
-The devices are created in /dev/disk/by-name/ directory, so it's just
-the userland tool issue.
+I have a storage server with an MD3000 attached to it. This server runs
+the multipath-tools to create redundant paths:
 
-I've built debug version of multipath and found the following:
+root@storage:~# multipath -ll
+<snip>
+xen (360019b9000d7e11000004485473faa94) dm-0 DELL    ,MD3000        
+[size=200G][features=0][hwhandler=0]
+\_ round-robin 0 [prio=3][active]
+ \_ 1:0:0:3 sde 8:64  [active][ready]
+\_ round-robin 0 [prio=0][enabled]
+ \_ 1:0:1:3 sdi 8:128 [active][ghost]
+<snip>
 
-1. The function sysfs_get_rev() (which is generated from macro
-declare_sysfs_get_str()) assumes that the rev has to have at least 2
-characters. Since in the case of my device this assumption is false, the
-function returns 1.
-2. The caller function is scsi_sysfs_pathinfo() and it returns 1 as
-well.
-3. The caller function is sysfs_pathinfo(), which returns 1 as well.
-4. The caller function is pathinfo(), which also returns 1.
-5. The caller function is store_pathinfo(). Here the pathinfo is not
-stored and NULL is returned to the caller.
-6. The caller is path_discover() that returns 1.
-7. The caller is path_discovery() that returns non-zero result.
-8. The caller is configure() that bails out on this result.
+So the path that I use for sharing the LUN with the XenSource server
+is /dev/mapper/xen:
 
-I have tried to work around this issue by blacklisting the device, but
-unfortunately the only blacklist check that is done prior to call to
-store_pathinfo() in the path_discover() is based on the devnode.=20
-This means that effectively I cannot use this workaround since with USB
-device I cannot guarantee that it will always be mapped to the same
-devnode.
+root@storage:~# cat /etc/ietd.conf
+<snip>
+Target iqn.2007-11.local.xillan:storage.xen.disk1
+          Lun 0 Path=/dev/mapper/xen,Type=blockio
+<snip>
 
-I'd like to propose a couple of options for a fix for this issue:
+On the XenSource server I use a shared iSCSI storage so multiple servers
+can access the same data so I can do live migrations. When I add the
+storage XenSource creates a PV and then when I create a VM, it creates
+LV's for each virtual harddisk.
 
-1. Re-implement sysfs_get_rev() in such a way that rev filed minimal
-length is no longer required.=20
-   Please see attached a patch that is supposed to take care of this.
-2. Re-implement pathinfo() to check whether vendor and/or product are
-blacklisted.=20
-   This way non-compliant devices may be blacklisted based on vendor
-and/or product name.
+So far so good I guess, as the XenSource machine uses the multipathed
+drive, right?
 
-I am not sure, which option is preferable, but I clearly need at least
-one of them in the product.
+Now I would like to take snapshots of the whole PV so I can make
+backups. My thoughts where to make a PV on /dev/mapper/xen that spans
+the whole disk, and then create a single LV on it. 
 
-Your comments are greatly appreciated.=20
+If I then take the path to that single LV, say /dev/volumegroup/disk1 as
+target for iSCSI, then the XenSsource server should only see that LV as
+the shared iSCSI repository.
 
-Please note that my patch is against v. 0.4.7 of the multipath tool.=20
-I realize that upstream may differ significantly, so if option (1) makes
-sense I'll revalidate with the latest version and submit the patch if
-necessary.
+But then XenSource wil create a PV and a couple of LV's in the existing
+LV (created on the storage server and shared true iSCSI). Could that
+create any problems or can I just do that?
+
+In this way, I can take the snapshots on the storage server and I don't
+have to create a second iSCSI target for the XenSource server, And I
+don't have to make extensive use of the network (it can then be done on
+one machine directly connected to both LUN's).
+
+Sorry for the long post, but hope you give me some insight on this.
 
 Thanks,
 
-Ilya.
-
-------_=_NextPart_001_01C82AEC.C8898D4D
-Content-Type: application/octet-stream;
-	name="multipath-tools-0.4.7-empty-rev.diff"
-Content-Transfer-Encoding: base64
-Content-Description: multipath-tools-0.4.7-empty-rev.diff
-Content-Disposition: attachment;
-	filename="multipath-tools-0.4.7-empty-rev.diff"
-
-ZGlmZiAtciBtdWx0aXBhdGgtdG9vbHMtMC40LjctcGF0Y2hlZC9saWJtdWx0aXBhdGgvZGlzY292
-ZXJ5LmMgbXVsdGlwYXRoLXRvb2xzLTAuNC43L2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwoxNDVj
-MTQ1CjwgI2RlZmluZSBkZWNsYXJlX3N5c2ZzX2dldF9zdHIoZm5hbWUsIGZtdCwgbWluX2xlbikg
-XAotLS0KPiAjZGVmaW5lIGRlY2xhcmVfc3lzZnNfZ2V0X3N0cihmbmFtZSwgZm10KSBcCjE2NGMx
-NjQKPCAJaWYgKGF0dHItPmxlbiA8IG1pbl9sZW4gfHwgYXR0ci0+bGVuIC0gMSA+IGxlbikgXAot
-LS0KPiAJaWYgKGF0dHItPmxlbiA8IDIgfHwgYXR0ci0+bGVuIC0gMSA+IGxlbikgXAoxNzYsMTgx
-YzE3NiwxODEKPCBkZWNsYXJlX3N5c2ZzX2dldF9zdHIoZGV2dHlwZSwgIiVzL2Jsb2NrLyVzL2Rl
-dmljZS9kZXZ0eXBlIiwgMik7CjwgZGVjbGFyZV9zeXNmc19nZXRfc3RyKGN1dHlwZSwgIiVzL2Js
-b2NrLyVzL2RldmljZS9jdXR5cGUiLCAyKTsKPCBkZWNsYXJlX3N5c2ZzX2dldF9zdHIodmVuZG9y
-LCAiJXMvYmxvY2svJXMvZGV2aWNlL3ZlbmRvciIsIDIpOwo8IGRlY2xhcmVfc3lzZnNfZ2V0X3N0
-cihtb2RlbCwgIiVzL2Jsb2NrLyVzL2RldmljZS9tb2RlbCIsIDIpOwo8IGRlY2xhcmVfc3lzZnNf
-Z2V0X3N0cihyZXYsICIlcy9ibG9jay8lcy9kZXZpY2UvcmV2IiwgMCk7CjwgZGVjbGFyZV9zeXNm
-c19nZXRfc3RyKGRldiwgIiVzL2Jsb2NrLyVzL2RldiIsIDIpOwotLS0KPiBkZWNsYXJlX3N5c2Zz
-X2dldF9zdHIoZGV2dHlwZSwgIiVzL2Jsb2NrLyVzL2RldmljZS9kZXZ0eXBlIik7Cj4gZGVjbGFy
-ZV9zeXNmc19nZXRfc3RyKGN1dHlwZSwgIiVzL2Jsb2NrLyVzL2RldmljZS9jdXR5cGUiKTsKPiBk
-ZWNsYXJlX3N5c2ZzX2dldF9zdHIodmVuZG9yLCAiJXMvYmxvY2svJXMvZGV2aWNlL3ZlbmRvciIp
-Owo+IGRlY2xhcmVfc3lzZnNfZ2V0X3N0cihtb2RlbCwgIiVzL2Jsb2NrLyVzL2RldmljZS9tb2Rl
-bCIpOwo+IGRlY2xhcmVfc3lzZnNfZ2V0X3N0cihyZXYsICIlcy9ibG9jay8lcy9kZXZpY2UvcmV2
-Iik7Cj4gZGVjbGFyZV9zeXNmc19nZXRfc3RyKGRldiwgIiVzL2Jsb2NrLyVzL2RldiIpOwo=
-
-------_=_NextPart_001_01C82AEC.C8898D4D
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-------_=_NextPart_001_01C82AEC.C8898D4D--
+Sander
