@@ -1,16 +1,12 @@
-From: "Paul Cote" <paul.cote@incipient.com>
-Subject: RE: CLARiiON failover modes and DM.
-Date: Mon, 19 Nov 2007 15:20:14 -0500
-Message-ID: <940B4FF1F5958E4F96FC83C055A2F2611B8C6A@exch-2003.incipient.waltham>
-References: <4741DB30.8020009@linpro.no>
+From: usvyatsky_ilya@emc.com
+Subject: Multipath v. 0.4.7 trips over USB flash drive
+Date: Mon, 19 Nov 2007 15:43:04 -0500
+Message-ID: <3A7658DE9640014CB055D6299B111F9C1EF588@CORPUSMX20B.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C82AEC.C8898D4D"
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <4741DB30.8020009@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,64 +16,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
-Tore
+------_=_NextPart_001_01C82AEC.C8898D4D
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-I have found the definitions of all CX failover modes. The SAN admin
-assigned failover mode 3. Will DM support option 3 assuming that I
-follow EMC's guidance wrt the appropriate settings for the CX in
-multipath.conf? ... Or should we reassign the failover mode to 1 per
-your email? It seems to me that the path state status will differ
-significantly based on the failover modes; specifically 1 or 3. We don't
-have FLARE 26 so ALUA mode is N/A.
+Hi there,
 
-The failover definitions are:
-1) Passive not ready; a command failure when I/O issued to non-owning
-SP.
-2) quiet trespass on I/O to non-owning SP
-3) passive always ready; some commands (TUR) return "passive always
-ready" status.
+I am using DM MPIO for quite a while now and in general it works.
+Lately I encountered a problem with one of my boxes that is equipped
+with USB flash drive and is connected to a disk array.
+Namely, the flash drive has an empty bcdDevice entry, which translates
+into empty /sys/block/sdXX/device/rev file.
+As a result, the 'multipath -ll' command trips over this device and
+bails out without listing any array mpathXX devices.
+The devices are created in /dev/disk/by-name/ directory, so it's just
+the userland tool issue.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Tore Anderson
-Sent: Monday, November 19, 2007 1:51 PM
-To: device-mapper development
-Subject: Re: [dm-devel] CLARiiON failover modes and DM.
+I've built debug version of multipath and found the following:
+
+1. The function sysfs_get_rev() (which is generated from macro
+declare_sysfs_get_str()) assumes that the rev has to have at least 2
+characters. Since in the case of my device this assumption is false, the
+function returns 1.
+2. The caller function is scsi_sysfs_pathinfo() and it returns 1 as
+well.
+3. The caller function is sysfs_pathinfo(), which returns 1 as well.
+4. The caller function is pathinfo(), which also returns 1.
+5. The caller function is store_pathinfo(). Here the pathinfo is not
+stored and NULL is returned to the caller.
+6. The caller is path_discover() that returns 1.
+7. The caller is path_discovery() that returns non-zero result.
+8. The caller is configure() that bails out on this result.
+
+I have tried to work around this issue by blacklisting the device, but
+unfortunately the only blacklist check that is done prior to call to
+store_pathinfo() in the path_discover() is based on the devnode.=20
+This means that effectively I cannot use this workaround since with USB
+device I cannot guarantee that it will always be mapped to the same
+devnode.
+
+I'd like to propose a couple of options for a fix for this issue:
+
+1. Re-implement sysfs_get_rev() in such a way that rev filed minimal
+length is no longer required.=20
+   Please see attached a patch that is supposed to take care of this.
+2. Re-implement pathinfo() to check whether vendor and/or product are
+blacklisted.=20
+   This way non-compliant devices may be blacklisted based on vendor
+and/or product name.
+
+I am not sure, which option is preferable, but I clearly need at least
+one of them in the product.
+
+Your comments are greatly appreciated.=20
+
+Please note that my patch is against v. 0.4.7 of the multipath tool.=20
+I realize that upstream may differ significantly, so if option (1) makes
+sense I'll revalidate with the latest version and submit the patch if
+necessary.
+
+Thanks,
+
+Ilya.
+
+------_=_NextPart_001_01C82AEC.C8898D4D
+Content-Type: application/octet-stream;
+	name="multipath-tools-0.4.7-empty-rev.diff"
+Content-Transfer-Encoding: base64
+Content-Description: multipath-tools-0.4.7-empty-rev.diff
+Content-Disposition: attachment;
+	filename="multipath-tools-0.4.7-empty-rev.diff"
+
+ZGlmZiAtciBtdWx0aXBhdGgtdG9vbHMtMC40LjctcGF0Y2hlZC9saWJtdWx0aXBhdGgvZGlzY292
+ZXJ5LmMgbXVsdGlwYXRoLXRvb2xzLTAuNC43L2xpYm11bHRpcGF0aC9kaXNjb3ZlcnkuYwoxNDVj
+MTQ1CjwgI2RlZmluZSBkZWNsYXJlX3N5c2ZzX2dldF9zdHIoZm5hbWUsIGZtdCwgbWluX2xlbikg
+XAotLS0KPiAjZGVmaW5lIGRlY2xhcmVfc3lzZnNfZ2V0X3N0cihmbmFtZSwgZm10KSBcCjE2NGMx
+NjQKPCAJaWYgKGF0dHItPmxlbiA8IG1pbl9sZW4gfHwgYXR0ci0+bGVuIC0gMSA+IGxlbikgXAot
+LS0KPiAJaWYgKGF0dHItPmxlbiA8IDIgfHwgYXR0ci0+bGVuIC0gMSA+IGxlbikgXAoxNzYsMTgx
+YzE3NiwxODEKPCBkZWNsYXJlX3N5c2ZzX2dldF9zdHIoZGV2dHlwZSwgIiVzL2Jsb2NrLyVzL2Rl
+dmljZS9kZXZ0eXBlIiwgMik7CjwgZGVjbGFyZV9zeXNmc19nZXRfc3RyKGN1dHlwZSwgIiVzL2Js
+b2NrLyVzL2RldmljZS9jdXR5cGUiLCAyKTsKPCBkZWNsYXJlX3N5c2ZzX2dldF9zdHIodmVuZG9y
+LCAiJXMvYmxvY2svJXMvZGV2aWNlL3ZlbmRvciIsIDIpOwo8IGRlY2xhcmVfc3lzZnNfZ2V0X3N0
+cihtb2RlbCwgIiVzL2Jsb2NrLyVzL2RldmljZS9tb2RlbCIsIDIpOwo8IGRlY2xhcmVfc3lzZnNf
+Z2V0X3N0cihyZXYsICIlcy9ibG9jay8lcy9kZXZpY2UvcmV2IiwgMCk7CjwgZGVjbGFyZV9zeXNm
+c19nZXRfc3RyKGRldiwgIiVzL2Jsb2NrLyVzL2RldiIsIDIpOwotLS0KPiBkZWNsYXJlX3N5c2Zz
+X2dldF9zdHIoZGV2dHlwZSwgIiVzL2Jsb2NrLyVzL2RldmljZS9kZXZ0eXBlIik7Cj4gZGVjbGFy
+ZV9zeXNmc19nZXRfc3RyKGN1dHlwZSwgIiVzL2Jsb2NrLyVzL2RldmljZS9jdXR5cGUiKTsKPiBk
+ZWNsYXJlX3N5c2ZzX2dldF9zdHIodmVuZG9yLCAiJXMvYmxvY2svJXMvZGV2aWNlL3ZlbmRvciIp
+Owo+IGRlY2xhcmVfc3lzZnNfZ2V0X3N0cihtb2RlbCwgIiVzL2Jsb2NrLyVzL2RldmljZS9tb2Rl
+bCIpOwo+IGRlY2xhcmVfc3lzZnNfZ2V0X3N0cihyZXYsICIlcy9ibG9jay8lcy9kZXZpY2UvcmV2
+Iik7Cj4gZGVjbGFyZV9zeXNmc19nZXRfc3RyKGRldiwgIiVzL2Jsb2NrLyVzL2RldiIpOwo=
+
+------_=_NextPart_001_01C82AEC.C8898D4D
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-* Paul Cote
-
-> Is there a specific failover mode that the CX must be set for DM=20
-> interoperability?
-
-You have (at least) two options.  CLARiiON Open mode 1 is the=20
-traditional way where all paths to the passive controller is present but
-
-will refuse almost all I/O operations.  You'll need to be using the=20
-"emc" hardware handler for that to work, since a proprietary command=20
-needs to be sent to a path to the passive controller in order to=20
-trespass the volume there.
-
-The other option (which is only available in FLARE 26) is ALUA mode=20
-(CLARiiON Open mode 4), where I/O is accepted on both controllers even=20
-though only one is the one handling all the I/O.  You can use this=20
-without a hardware handler (there's one in developement, though), but=20
-you'll still want to be prioritising the paths to the preferred=20
-controller for optimal performance.  This is the mode I would prefer, at
-
-least.  I wrote a bit more about the ALUA mode a few days ago:
-
-http://thread.gmane.org/gmane.linux.kernel.device-mapper.devel/4366/focu
-s=3D4435
-
-Regards
---=20
-Tore Anderson
-
---
-dm-devel mailing list
-dm-devel@redhat.com https://www.redhat.com/mailman/listinfo/dm-devel
+------_=_NextPart_001_01C82AEC.C8898D4D--
