@@ -1,15 +1,14 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: [PATCH 0/3] Workqueue framework and ALUA hardware
-	handler
-Date: Mon, 19 Nov 2007 08:51:56 +0100
-Message-ID: <1195458716.5873.1.camel@sanderbal>
-References: <473C0DD0.7080702@suse.de>
+From: Chip Coldwell <coldwell@redhat.com>
+Subject: Re: [PATCH 3/3] multipath: implement controller framework
+	for hardware handlers (fwd)
+Date: Mon, 19 Nov 2007 08:41:46 -0500 (EST)
+Message-ID: <alpine.LFD.0.9999.0711190838590.3253@localhost.localdomain>
+References: <alpine.LFD.0.9999.0711190838370.3253@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <473C0DD0.7080702@suse.de>
+In-Reply-To: <alpine.LFD.0.9999.0711190838370.3253@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,45 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Christie <michaelc@cs.wisc.edu>, SCSI Mailing List <linux-scsi@vger.kernel.org>, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Hannes,
+From: Hannes Reinecke <hare@suse.de>
+diff --git a/drivers/md/dm-hw-handler.h b/drivers/md/dm-hw-handler.h
+> index 9216682..6f91b55 100644
+> --- a/drivers/md/dm-hw-handler.h
+> +++ b/drivers/md/dm-hw-handler.h
+> @@ -15,10 +15,31 @@
+>  
+>  struct hw_handler_type;
+>  
+> +#define CTLR_ID_LEN 256
+> +
+> +struct hw_controller {
+> +	struct list_head node;
+> +	struct hw_controller_type *type;
+> +	unsigned char ctlr_id[CTLR_ID_LEN];
+> +	struct kref kref;
+> +	spinlock_t lock;
+> +	struct list_head cmd_list;
+> +	int submitted;
+> +	void *context;
+> +};
+> +
+> +struct hw_controller_type {
+> +	char *name;
+> +
+> +	int (*create) (struct hw_controller *ctlr);
+> +	void (*destroy) (struct hw_controller *ctlr);
+> +};
+> +
 
-Can you tell me when these patches get in the kernel? Is that going to
-be 2.6.24.x or can we expect them before that?
+Would it make sense to make hw_controller_type a kobj_type?  That way,
+the controller topology could be reflected in sysfs, where it can be
+reached by tools such as lsscsi.
 
-Sander
+Chip
 
-
-
-On Thu, 2007-11-15 at 10:13 +0100, Hannes Reinecke wrote:
-> Hi all,
-> 
-> this patchset adds some more abstraction to the multipath
-> hardware handlers.
-> - A generic workqueue framework is added, which allows the
->   hardware handler to submit failover commands independent
->   from multipath I/O.
-> - The exsting RDAC hardware handler is converted to use that
->   framework
-> - A new SPC-3 ALUA hardware handler is added, using that
->   framework
-> - A controller abstraction is added to the framework, which
->   allows for command throttling based on the used controller.
-> - The RDAC hardware handler is modified to use the new
->   controller framework.
-> 
-> This patchset superseded my previous implementation of the
-> SPC-3 ALUA handler.
-> Next plans are to update the table definitions and multipath-tools
-> to allow for a passing of the controller ID from userland; ALUA
-> doesn't specify for any controller information, so we have to
-> do this by hand based on prior knowledge of the storage array.
-> 
-> As per normal, comments etc welcome.
-> 
-> Cheers,
-> 
-> Hannes
+-- 
+Charles M. "Chip" Coldwell
+Senior Software Engineer
+Red Hat, Inc
+978-392-2426
