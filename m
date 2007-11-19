@@ -1,12 +1,14 @@
-From: "Paul Cote" <paul.cote@incipient.com>
-Subject: CLARiiON failover modes and DM.
-Date: Mon, 19 Nov 2007 11:14:56 -0500
-Message-ID: <940B4FF1F5958E4F96FC83C055A2F2611B8C5F@exch-2003.incipient.waltham>
+From: "S. J. van Harmelen" <svh@dds.nl>
+Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
+Date: Mon, 19 Nov 2007 17:57:10 +0100
+Message-ID: <1195491430.6074.30.camel@sanderbal>
+References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1582338429=="
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <47419854.2000508@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,70 +21,52 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+P.S. pvs only scanned the real disks and not the /dev/mapper/diskname
+disks. So some of the scan's where rejected because the path to that
+path was the redudant path.
 
---===============1582338429==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C82AC7.53142381"
+But I assume that the /dev/mapper/diskname will have the exact same lvm
+info written on it, ass it is in fact the real disk (/dev/sdi for
+example)?
 
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C82AC7.53142381
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-Hi
-
-Is there a specific failover mode that the CX must be set for DM
-interoperability?
-
-thanks in advance,
-
-Paul
+Sander
 
 
-------_=_NextPart_001_01C82AC7.53142381
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><TITLE id=3DridTitle>Message</TITLE>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<STYLE>BODY {
-	MARGIN-TOP: 25px; FONT-SIZE: 10pt; MARGIN-LEFT: 25px; COLOR: #000000; =
-FONT-FAMILY: Arial, Helvetica
-}
-P.msoNormal {
-	MARGIN-TOP: 0px; FONT-SIZE: 10pt; MARGIN-LEFT: 0px; COLOR: #ffffcc; =
-FONT-FAMILY: Helvetica, "Times New Roman"
-}
-LI.msoNormal {
-	MARGIN-TOP: 0px; FONT-SIZE: 10pt; MARGIN-LEFT: 0px; COLOR: #ffffcc; =
-FONT-FAMILY: Helvetica, "Times New Roman"
-}
-</STYLE>
-
-<META content=3D"MSHTML 6.00.2800.1126" name=3DGENERATOR></HEAD>
-<BODY id=3DridBody background=3D"">
-<P><SPAN class=3D144001316-19112007>Hi</SPAN></P>
-<P><SPAN class=3D144001316-19112007>Is there a specific failover mode =
-that the CX=20
-must be set for DM interoperability?</SPAN></P>
-<P><SPAN class=3D144001316-19112007>thanks in advance,</SPAN></P>
-<P><SPAN class=3D144001316-19112007>Paul</SPAN></P></BODY></HTML>
-=00
-------_=_NextPart_001_01C82AC7.53142381--
-
-
---===============1582338429==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1582338429==--
+On Mon, 2007-11-19 at 15:06 +0100, Tore Anderson wrote:
+> * S. J. van Harmelen
+> 
+> > I have a couple of LUN's that are handled by the multipath driver.
+> > This works great, but now I want to use LVM so I can take snapshots
+> > of one LUN to another LUN.
+> > 
+> > Can someone tell me how to do this?
+> > 
+> > When I do pvcreate /dev/mapper/diskname I get an error that the disk
+> > is already part of an volume group. But I sertainly did not configure
+> > that.
+> > 
+> > Can it be that the multipath driver of devmapper did that?
+> 
+> If you have a PV signature on the volume, LVM might have used one of the
+> paths instead of using the multipath'ed device under /dev/mapper.  You
+> should be able to check this by running the command "pvs" - it should
+> list all the detected PVs on your system.
+> 
+> If this was the problem, you can avoid it by instructing LVM to not scan
+> SCSI devices directly, by adding a line in /etc/lvm/lvm.conf like this:
+> 
+> device {
+>   filter = [ "a|^/dev/mapper/.*|", "r|.*|" ]
+> }
+> 
+> This will make LVM only look at devices in /dev/mapper/ as possible PV
+> candidates, ignoring all other devices.  Beware if you have a PV on the
+> internal drives though, you might want to have something like this
+> instead in that case (if that PV is on /dev/sda2, for instance):
+> 
+>   filter = [ "a|^/dev/mapper/.*|", "a|^/dev/sda2$|", "r|.*|" ]
+> 
+> Make sure lvm.conf makes its way into the initramfs if you start the LVM
+> stuff there.  I know Ubuntu doesn't include this file by default, at least.
+> 
+> Regards
