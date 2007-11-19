@@ -1,14 +1,13 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
-Date: Mon, 19 Nov 2007 17:57:10 +0100
-Message-ID: <1195491430.6074.30.camel@sanderbal>
-References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
+From: "Scott Moseman" <scmoseman@gmail.com>
+Subject: Failing on NIC removal
+Date: Mon, 19 Nov 2007 11:16:24 -0600
+Message-ID: <342d47870711190916x1c3bb959s7e9a45a1312d4701@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47419854.2000508@linpro.no>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,52 +20,40 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-P.S. pvs only scanned the real disks and not the /dev/mapper/diskname
-disks. So some of the scan's where rejected because the path to that
-path was the redudant path.
+So I finally got my multipath running through both the NIC and HBA
+interfaces, but I'm not having any luck going through testing to
+verify it's actually failing over between the connections.
 
-But I assume that the /dev/mapper/diskname will have the exact same lvm
-info written on it, ass it is in fact the real disk (/dev/sdi for
-example)?
+# multipath -l
+mpath0 (30690a018f015191a6472441d1500f057)
+[size=4 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 3:0:0:0 sdc 8:32 [active][ready]
+\_ round-robin 0 [enabled]
+ \_ 1:0:1:0 sdb 8:16 [active][ready]
 
-Sander
+I can unplug the HBA (see below) and the connection to the SAN remains.
 
+# multipath -l
+mpath0 (30690a018f015191a6472441d1500f057)
+[size=4 GB][features="0"][hwhandler="0"]
+\_ round-robin 0 [active]
+ \_ 3:0:0:0 sdc 8:32 [active][ready]
+\_ round-robin 0 [enabled]
+ \_ 1:0:1:0 sdb 8:16 [failed][faulty]
 
-On Mon, 2007-11-19 at 15:06 +0100, Tore Anderson wrote:
-> * S. J. van Harmelen
-> 
-> > I have a couple of LUN's that are handled by the multipath driver.
-> > This works great, but now I want to use LVM so I can take snapshots
-> > of one LUN to another LUN.
-> > 
-> > Can someone tell me how to do this?
-> > 
-> > When I do pvcreate /dev/mapper/diskname I get an error that the disk
-> > is already part of an volume group. But I sertainly did not configure
-> > that.
-> > 
-> > Can it be that the multipath driver of devmapper did that?
-> 
-> If you have a PV signature on the volume, LVM might have used one of the
-> paths instead of using the multipath'ed device under /dev/mapper.  You
-> should be able to check this by running the command "pvs" - it should
-> list all the detected PVs on your system.
-> 
-> If this was the problem, you can avoid it by instructing LVM to not scan
-> SCSI devices directly, by adding a line in /etc/lvm/lvm.conf like this:
-> 
-> device {
->   filter = [ "a|^/dev/mapper/.*|", "r|.*|" ]
-> }
-> 
-> This will make LVM only look at devices in /dev/mapper/ as possible PV
-> candidates, ignoring all other devices.  Beware if you have a PV on the
-> internal drives though, you might want to have something like this
-> instead in that case (if that PV is on /dev/sda2, for instance):
-> 
->   filter = [ "a|^/dev/mapper/.*|", "a|^/dev/sda2$|", "r|.*|" ]
-> 
-> Make sure lvm.conf makes its way into the initramfs if you start the LVM
-> stuff there.  I know Ubuntu doesn't include this file by default, at least.
-> 
-> Regards
+But when I unplug the NIC connection, the multipath command hands,
+trying to list files on the SAN partition hangs, and I'm getting these
+messages:
+
+Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: Connect failed with rc
+-113: No route to host
+Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: establish_session
+failed. Could not connect to target
+Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: Waiting 10 seconds
+before next login attempt
+
+How to troubleshoot this situation?
+
+Thanks,
+Scott
