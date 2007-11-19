@@ -1,16 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 3/3] multipath: implement controller framework
-	for hardware handlers (fwd)
-Date: Mon, 19 Nov 2007 15:00:08 +0100
-Message-ID: <474196E8.5020503@suse.de>
-References: <alpine.LFD.0.9999.0711190838370.3253@localhost.localdomain>
-	<alpine.LFD.0.9999.0711190838590.3253@localhost.localdomain>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Use LVM on /dev/mapper/diskname
+Date: Mon, 19 Nov 2007 15:06:12 +0100
+Message-ID: <47419854.2000508@linpro.no>
+References: <1195480602.6074.3.camel@sanderbal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.LFD.0.9999.0711190838590.3253@localhost.localdomain>
+In-Reply-To: <1195480602.6074.3.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,58 +21,42 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Chip Coldwell wrote:
-> From: Hannes Reinecke <hare@suse.de>
-> diff --git a/drivers/md/dm-hw-handler.h b/drivers/md/dm-hw-handler.h
->> index 9216682..6f91b55 100644
->> --- a/drivers/md/dm-hw-handler.h
->> +++ b/drivers/md/dm-hw-handler.h
->> @@ -15,10 +15,31 @@
->> =20
->>  struct hw_handler_type;
->> =20
->> +#define CTLR_ID_LEN 256
->> +
->> +struct hw_controller {
->> +	struct list_head node;
->> +	struct hw_controller_type *type;
->> +	unsigned char ctlr_id[CTLR_ID_LEN];
->> +	struct kref kref;
->> +	spinlock_t lock;
->> +	struct list_head cmd_list;
->> +	int submitted;
->> +	void *context;
->> +};
->> +
->> +struct hw_controller_type {
->> +	char *name;
->> +
->> +	int (*create) (struct hw_controller *ctlr);
->> +	void (*destroy) (struct hw_controller *ctlr);
->> +};
->> +
->=20
-> Would it make sense to make hw_controller_type a kobj_type?  That way,
-> the controller topology could be reflected in sysfs, where it can be
-> reached by tools such as lsscsi.
->=20
-Eventually, maybe.
+* S. J. van Harmelen
 
-Plan is to add userland support to manually declare and assign
-controller to each priority group.
-But I haven't really sorted out the details there (how to pass
-information etc) and I really would like to have the basic
-infrastructure agreed upon first.
-And implementing a kobj_type at this point would be a bit
-over the top as we are in the very preliminary stages here.
+> I have a couple of LUN's that are handled by the multipath driver.
+> This works great, but now I want to use LVM so I can take snapshots
+> of one LUN to another LUN.
+> 
+> Can someone tell me how to do this?
+> 
+> When I do pvcreate /dev/mapper/diskname I get an error that the disk
+> is already part of an volume group. But I sertainly did not configure
+> that.
+> 
+> Can it be that the multipath driver of devmapper did that?
 
-Once the controller framework is accepted we can think about it.
+If you have a PV signature on the volume, LVM might have used one of the
+paths instead of using the multipath'ed device under /dev/mapper.  You
+should be able to check this by running the command "pvs" - it should
+list all the detected PVs on your system.
 
-Cheers,
+If this was the problem, you can avoid it by instructing LVM to not scan
+SCSI devices directly, by adding a line in /etc/lvm/lvm.conf like this:
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+device {
+  filter = [ "a|^/dev/mapper/.*|", "r|.*|" ]
+}
+
+This will make LVM only look at devices in /dev/mapper/ as possible PV
+candidates, ignoring all other devices.  Beware if you have a PV on the
+internal drives though, you might want to have something like this
+instead in that case (if that PV is on /dev/sda2, for instance):
+
+  filter = [ "a|^/dev/mapper/.*|", "a|^/dev/sda2$|", "r|.*|" ]
+
+Make sure lvm.conf makes its way into the initramfs if you start the LVM
+stuff there.  I know Ubuntu doesn't include this file by default, at least.
+
+Regards
+-- 
+Tore Anderson
