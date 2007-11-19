@@ -1,15 +1,17 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: Failing on NIC removal
-Date: Mon, 19 Nov 2007 15:58:21 -0600
-Message-ID: <474206FD.3050402@cs.wisc.edu>
-References: <342d47870711190916x1c3bb959s7e9a45a1312d4701@mail.gmail.com>
-	<20071119214601.GB829@linux.vnet.ibm.com>
+From: malahal@us.ibm.com
+Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
+Date: Mon, 19 Nov 2007 14:36:13 -0800
+Message-ID: <20071119223612.GA23779@us.ibm.com>
+References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
+	<1195484847.6074.16.camel@sanderbal>
+	<20071119185021.GA23100@us.ibm.com>
+	<1195506996.11489.23.camel@sanderbal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071119214601.GB829@linux.vnet.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <1195506996.11489.23.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +22,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: open-iscsi@googlegroups.com
 List-Id: dm-devel.ids
 
-Mike Anderson wrote:
-> cc'ing open-iscsi
+S. J. van Harmelen [svh@dds.nl] wrote:
 > 
-> Scott Moseman <scmoseman@gmail.com> wrote:
->> So I finally got my multipath running through both the NIC and HBA
->> interfaces, but I'm not having any luck going through testing to
->> verify it's actually failing over between the connections.
->>
->> # multipath -l
->> mpath0 (30690a018f015191a6472441d1500f057)
->> [size=4 GB][features="0"][hwhandler="0"]
->> \_ round-robin 0 [active]
->>  \_ 3:0:0:0 sdc 8:32 [active][ready]
->> \_ round-robin 0 [enabled]
->>  \_ 1:0:1:0 sdb 8:16 [active][ready]
->>
->> I can unplug the HBA (see below) and the connection to the SAN remains.
->>
->> # multipath -l
->> mpath0 (30690a018f015191a6472441d1500f057)
->> [size=4 GB][features="0"][hwhandler="0"]
->> \_ round-robin 0 [active]
->>  \_ 3:0:0:0 sdc 8:32 [active][ready]
->> \_ round-robin 0 [enabled]
->>  \_ 1:0:1:0 sdb 8:16 [failed][faulty]
->>
->> But when I unplug the NIC connection, the multipath command hands,
->> trying to list files on the SAN partition hangs, and I'm getting these
->> messages:
->>
->> Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: Connect failed with rc
->> -113: No route to host
->> Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: establish_session
->> failed. Could not connect to target
->> Nov 19 17:15:13 ems1 kernel: iscsi-sfnet:host3: Waiting 10 seconds
->> before next login attempt
->>
->> How to troubleshoot this situation?
+> On the XenSource server I use a shared iSCSI storage so multiple servers
+> can access the same data so I can do live migrations. When I add the
+> storage XenSource creates a PV and then when I create a VM, it creates
+> LV's for each virtual harddisk.
 > 
-> The IO is hanging waiting for the connection to be reestablished. 
-> 
-> You may need to set ConnFailTimeout to a non-zero value as indicated in
-> http://people.redhat.com/mchristi/iscsi/RHEL4/doc/readme
-> 
+> So far so good I guess, as the XenSource machine uses the multipathed
+> drive, right?
 
-Mike Anderson is right. If you are using multipath you should set 
-ConnFailTimeout to a low value like 3 or 5 seconds, because we want to 
-fail commands quickly to the multipath layer. For dm-multipath you want 
-to then set no_path_retry to either queue IO forever (or until the paths 
-come back), or to some timeout.
+Should.
+ 
+> Now I would like to take snapshots of the whole PV so I can make
+> backups. My thoughts where to make a PV on /dev/mapper/xen that spans
+> the whole disk, and then create a single LV on it. 
+> 
+> If I then take the path to that single LV, say /dev/volumegroup/disk1 as
+> target for iSCSI, then the XenSsource server should only see that LV as
+> the shared iSCSI repository.
+> 
+> But then XenSource wil create a PV and a couple of LV's in the existing
+> LV (created on the storage server and shared true iSCSI). Could that
+> create any problems or can I just do that?
+
+I don't see any problem. You should be able to do that, but then I am
+not an expert. Give it a try.
