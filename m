@@ -1,7 +1,7 @@
 From: "S. J. van Harmelen" <svh@dds.nl>
 Subject: Re: Possible bug in multipathd (getting a segfault)
-Date: Tue, 20 Nov 2007 12:25:50 +0100
-Message-ID: <1195557950.6329.56.camel@sanderbal>
+Date: Tue, 20 Nov 2007 12:28:07 +0100
+Message-ID: <1195558087.6329.59.camel@sanderbal>
 References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
 	<1195484847.6074.16.camel@sanderbal>	<20071119185021.GA23100@us.ibm.com>
 	<1195506996.11489.23.camel@sanderbal> <47428E96.2090008@linpro.no>
@@ -25,7 +25,6 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
-
 
 On Tue, 2007-11-20 at 12:15 +0100, Tore Anderson wrote:
 > * S. J. van Harmelen
@@ -55,10 +54,12 @@ On Tue, 2007-11-20 at 12:15 +0100, Tore Anderson wrote:
 > If everything is running stable with all paths alive and well,
 > restarting multipathd is nothing to worry about.
 
-Oke, then I will give this a try this evening and post the results here
-for de developers...
+Oeps... How stupid of me! I'm running the 2.6.22.2 kernel now, so I will
+have to reboot to get kernel 2.6.23.1 running.
 
-Thanks!
+So I will have to wait a few days for this...
+
+Thanks again :)
 
 > 
 > Regards
