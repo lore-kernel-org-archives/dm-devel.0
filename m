@@ -1,18 +1,14 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: Possible bug in multipathd (getting a segfault)
-Date: Tue, 20 Nov 2007 12:15:09 +0100
-Message-ID: <4742C1BD.2000904@linpro.no>
-References: <1195480602.6074.3.camel@sanderbal>
-	<47419854.2000508@linpro.no>	<1195484847.6074.16.camel@sanderbal>	<20071119185021.GA23100@us.ibm.com>	<1195506996.11489.23.camel@sanderbal>
-	<47428E96.2090008@linpro.no>	<1195551419.6329.14.camel@sanderbal>
-	<4742AD9E.7060601@linpro.no>	<1195553418.6329.23.camel@sanderbal>
-	<4742B51F.2050907@linpro.no> <1195554877.6329.31.camel@sanderbal>
+From: Stephan =?UTF-8?Q?Austerm=C3=BChle?= <au@hcsd.de>
+Subject: Re: CLARiiON failover modes and DM.
+Date: Tue, 20 Nov 2007 12:20:43 +0100 (CET)
+Message-ID: <58049.155.56.68.220.1195557643.squirrel@www.hcsd.de>
+References: <940B4FF1F5958E4F96FC83C055A2F2611B8C5F@exch-2003.incipient.waltham>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1195554877.6329.31.camel@sanderbal>
+In-Reply-To: <940B4FF1F5958E4F96FC83C055A2F2611B8C5F@exch-2003.incipient.waltham>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,33 +21,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* S. J. van Harmelen
+Hi Paul,
 
-> I guess I don't have to do that as I compiled the multipath-tools 
-> myself?
+> Is there a specific failover mode that the CX must be set for DM
+> interoperability?
 
-Then you should have the debugging symbols in place, yes.
+We are using the defaults:
 
-> I did compile them when running the 2.6.22.2 kernel though. Should I 
-> recompile them when running the 2.6.23.1 kernel, or doesn't that
-> matter?
+Initiator Type: 3 (Clariion Open)
+Array Comm Path: 1 (enabled)
+Failover Mode: 1
+Unit Serial Number: Array
 
-Doesn't matter.
+These settings work reliably for some hundred Linux servers and about two
+years.
 
-> Oke, the segfault happens right at the start (and only at the start),
-> so that shouldn't be a problem. But I have to stop the running
-> mulipathd and that seems like a problem. This machine is running in
-> production :)
-> 
-> So that will have to wait until I get a maintance window I guess...
+Kind regards,
 
-Stopping multipathd isn't problematic.  It is only responsible for
-periodically testing paths to pre-emptively fail non-active paths or
-re-instate paths that has been failed by the kernel's dm-multipath layer.
-
-If everything is running stable with all paths alive and well,
-restarting multipathd is nothing to worry about.
-
-Regards
--- 
-Tore Anderson
+Stephan
