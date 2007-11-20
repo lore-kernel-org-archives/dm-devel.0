@@ -1,14 +1,16 @@
-From: "Ray Lauff" <spudly.mcgruff@gmail.com>
-Subject: Device too small for target
-Date: Mon, 19 Nov 2007 17:48:53 -0500
-Message-ID: <c01151d00711191448u5ee6b92buec5b336133736060@mail.gmail.com>
-Reply-To: spudly.mcgruff@gmail.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
+Date: Tue, 20 Nov 2007 08:36:54 +0100
+Message-ID: <47428E96.2090008@linpro.no>
+References: <1195480602.6074.3.camel@sanderbal>
+	<47419854.2000508@linpro.no>	<1195484847.6074.16.camel@sanderbal>	<20071119185021.GA23100@us.ibm.com>
+	<1195506996.11489.23.camel@sanderbal>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <1195506996.11489.23.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,62 +20,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello all-
+* S. J. van Harmelen
 
-I have a 7.4Tb lvm2 volume that was working fine until this morning,
-when I rebooted the server.  It was a 600Gb disk that I did a
+> I have a storage server with an MD3000 attached to it. This server
+> runs the multipath-tools to create redundant paths:
+>=20
+> root@storage:~# multipath -ll
+> <snip>
+> xen (360019b9000d7e11000004485473faa94) dm-0 DELL    ,MD3000       =20
+> [size=3D200G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D3][active]
+>  \_ 1:0:0:3 sde 8:64  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 1:0:1:3 sdi 8:128 [active][ghost]
+> <snip>
 
-     lvextend -L+6.7T /dev/homegroup/home
-     resize2fs /dev/homegroup/home
+I think you need hwhandler =3D "1 rdac" for the MD3000 to be able to fail
+over properly.  At least a colleague that have played with it told me so.
 
-on last week, and that disk worked fine all week.  During reboot, I
-get the messages
+> On the XenSource server I use a shared iSCSI storage so multiple
+> servers can access the same data so I can do live migrations. When I
+> add the storage XenSource creates a PV and then when I create a VM,
+> it creates LV's for each virtual harddisk.
+>=20
+> So far so good I guess, as the XenSource machine uses the multipathed
+> drive, right?
 
-    kernel: device-mapper: table: device 8:193 too small for target
-    kernel: device-mapper: table: 253:0: linear: dm-linear: Device lookup failed
-    kernel: device-mapper: ioctl: error adding target to table
+You absolutely need to keep LVM (in dom0) from using /dev/sde or
+/dev/sdi as the PV (instead of /dev/mapper/xen).  You can accomplish
+this with a filter line in lvm.conf:
 
-and, needless to say, the disk won't come up
+filter =3D [ "a|^/dev/mapper/xen$|", "r|.*|" ]
 
-    # mount /dev/mapper/homegroup-home /home -t ext3
-    mount: wrong fs type, bad option, bad superblock on
-/dev/mapper/homegroup-home,
-           missing codepage or other error
-           (could this be the IDE device where you in fact use
-           ide-scsi so that sr0 or sda or so is needed?)
-           In some cases useful info is found in syslog - try
-           dmesg | tail  or so
+Which means that a device node that is exactly =C2=AB/dev/mapper/xen=C2=BB=
+ is
+considered a valid PV candidate, all other devices are rejected.
 
-I've also tried a fsck, but that comes back with
+From the email you sent with earlier pvscan output you got /dev/dm-0 as
+the active PV, with pvs you got /dev/sde (and with both you got I/O
+errors to the passive paths).  It can't be relied upon that you'll get
+dm-0 (which is absolutely necessary if you want dm-multipath to serve
+any purpose) in the future unless you force LVM to only look for PVs in
+the multipath'ed block devices.
 
-    fsck -t ext3 /dev/mapper/homegroup-home
-    fsck 1.39 (29-May-2006)
-    e2fsck 1.39 (29-May-2006)
-    fsck.ext3: Invalid argument while trying to open /dev/mapper/homegroup-home
+> Now I would like to take snapshots of the whole PV so I can make=20
+> backups. My thoughts where to make a PV on /dev/mapper/xen that spans
+> the whole disk, and then create a single LV on it.
 
-     The superblock could not be read or does not describe a correct ext2
-    filesystem.  If the device is valid and it really contains an ext2
-    filesystem (and not swap or ufs or something else), then the superblock
-    is corrupt, and you might try running e2fsck with an alternate superblock:
-        e2fsck -b 8193 <device>
+You can only take snapshots of LVs, not PVs.  And you would have to
+create a VG first with /dev/mapper/xen as a PV (you can't add LVs
+directly on PVs).  But I think you've got the basic idea correct.  :-)
 
-Kernel is 2.6.18-8.1.10.el5PAE.
+> If I then take the path to that single LV, say /dev/volumegroup/disk1
+> as target for iSCSI, then the XenSsource server should only see that
+> LV as the shared iSCSI repository.
+>=20
+> But then XenSource wil create a PV and a couple of LV's in the
+> existing LV (created on the storage server and shared true iSCSI).
+> Could that create any problems or can I just do that?
 
-Is there something else I need to do with the device mapper to change
-the size of something for this larger lvm?
+I see no reason why that wouldn't work.  Try it and see?  Inside the
+domU the Linux kernel won't know that its available block devices are
+really mapped to another LVM implementation that runs in dom0.  LVM is
+probably clever enough to disregard that LV-containing-a-PV as a valid
+PV candidate, but if not the filter line in lvm.conf should handle it.
 
-    # lvs
-    LV   VG        Attr   LSize Origin Snap%  Move Log Copy%
-    home homegroup -wi-d- 7.35T
-
-The hardware all appears to be fine (it's an EMC SAN).
-
-I apologize if this isn't the best place to ask this, but if anyone
-has any experience with this error I'd appreciate any help on
-correcting it.  If there's a better list for this question please
-point me there and I'll go away.
-
-Thanks.
+Regards
+--=20
+Tore Anderson
