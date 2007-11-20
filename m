@@ -1,19 +1,15 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Possible bug in multipathd (getting a segfault)
-Date: Tue, 20 Nov 2007 12:28:07 +0100
-Message-ID: <1195558087.6329.59.camel@sanderbal>
+From: Chip Coldwell <coldwell@redhat.com>
+Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
+Date: Tue, 20 Nov 2007 09:14:02 -0500 (EST)
+Message-ID: <alpine.LRH.0.9999.0711200912560.14385@bogart.boston.redhat.com>
 References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
-	<1195484847.6074.16.camel@sanderbal>	<20071119185021.GA23100@us.ibm.com>
-	<1195506996.11489.23.camel@sanderbal> <47428E96.2090008@linpro.no>
-	<1195551419.6329.14.camel@sanderbal> <4742AD9E.7060601@linpro.no>
-	<1195553418.6329.23.camel@sanderbal> <4742B51F.2050907@linpro.no>
-	<1195554877.6329.31.camel@sanderbal>  <4742C1BD.2000904@linpro.no>
+	<1195484847.6074.16.camel@sanderbal> <4741D96F.7080502@linpro.no>
+	<1195507193.11489.27.camel@sanderbal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4742C1BD.2000904@linpro.no>
+In-Reply-To: <1195507193.11489.27.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,43 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "S. J. van Harmelen" <svh@dds.nl>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2007-11-20 at 12:15 +0100, Tore Anderson wrote:
-> * S. J. van Harmelen
+On Mon, 19 Nov 2007, S. J. van Harmelen wrote:
+
+> Tore,
 > 
-> > I guess I don't have to do that as I compiled the multipath-tools 
-> > myself?
+> Please take a look at my reply to Malaha. This is also a reply to your
+> message...
 > 
-> Then you should have the debugging symbols in place, yes.
+> Hope you have the time to read it.
 > 
-> > I did compile them when running the 2.6.22.2 kernel though. Should I 
-> > recompile them when running the 2.6.23.1 kernel, or doesn't that
-> > matter?
+> Thanks,
 > 
-> Doesn't matter.
+> Sander
 > 
-> > Oke, the segfault happens right at the start (and only at the start),
-> > so that shouldn't be a problem. But I have to stop the running
-> > mulipathd and that seems like a problem. This machine is running in
-> > production :)
+> 
+> On Mon, 2007-11-19 at 19:43 +0100, Tore Anderson wrote:
+> > * S. J. van Harmelen
 > > 
-> > So that will have to wait until I get a maintance window I guess...
-> 
-> Stopping multipathd isn't problematic.  It is only responsible for
-> periodically testing paths to pre-emptively fail non-active paths or
-> re-instate paths that has been failed by the kernel's dm-multipath layer.
-> 
-> If everything is running stable with all paths alive and well,
-> restarting multipathd is nothing to worry about.
+> > > Thanks for your help!
+> > > 
+> > > I executed the pvs command and it did find a few partitions. I use
+> > > iSCSI to share the LUN's to a XenSource server, and XenSource creates
+> > > the PV's and LV's in order to provision VM's. Didn't think of that,
+> > > but that's on the disk of course.
 
-Oeps... How stupid of me! I'm running the 2.6.22.2 kernel now, so I will
-have to reboot to get kernel 2.6.23.1 running.
 
-So I will have to wait a few days for this...
+Sander: As a matter of netiquette, please don't top-post.
 
-Thanks again :)
+A: Because it messes up the order in which people normally read text.
+Q: Why is top-posting such a bad thing?
+A: Top-posting.
+Q: What is the most annoying thing in e-mail?
 
-> 
-> Regards
+Chip
+
+-- 
+Charles M. "Chip" Coldwell
+Senior Software Engineer
+Red Hat, Inc
+978-392-2426
