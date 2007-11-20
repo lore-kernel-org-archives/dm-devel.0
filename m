@@ -1,18 +1,16 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
+From: Tore Anderson <tore@linpro.no>
 Subject: Re: Use LVM on /dev/mapper/diskname and iSCSI
-Date: Tue, 20 Nov 2007 10:38:11 +0100
-Message-ID: <1195551491.6329.16.camel@sanderbal>
-References: <1195480602.6074.3.camel@sanderbal> <47419854.2000508@linpro.no>
-	<1195484847.6074.16.camel@sanderbal>
-	<20071119185021.GA23100@us.ibm.com>
-	<1195506996.11489.23.camel@sanderbal>
-	<20071119223612.GA23779@us.ibm.com>
+Date: Tue, 20 Nov 2007 10:49:18 +0100
+Message-ID: <4742AD9E.7060601@linpro.no>
+References: <1195480602.6074.3.camel@sanderbal>
+	<47419854.2000508@linpro.no>	<1195484847.6074.16.camel@sanderbal>	<20071119185021.GA23100@us.ibm.com>	<1195506996.11489.23.camel@sanderbal>
+	<47428E96.2090008@linpro.no> <1195551419.6329.14.camel@sanderbal>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071119223612.GA23779@us.ibm.com>
+In-Reply-To: <1195551419.6329.14.camel@sanderbal>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,34 +23,20 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2007-11-19 at 14:36 -0800, malahal@us.ibm.com wrote:
-> S. J. van Harmelen [svh@dds.nl] wrote:
-> > 
-> > On the XenSource server I use a shared iSCSI storage so multiple servers
-> > can access the same data so I can do live migrations. When I add the
-> > storage XenSource creates a PV and then when I create a VM, it creates
-> > LV's for each virtual harddisk.
-> > 
-> > So far so good I guess, as the XenSource machine uses the multipathed
-> > drive, right?
-> 
-> Should.
->  
-> > Now I would like to take snapshots of the whole PV so I can make
-> > backups. My thoughts where to make a PV on /dev/mapper/xen that spans
-> > the whole disk, and then create a single LV on it. 
-> > 
-> > If I then take the path to that single LV, say /dev/volumegroup/disk1 as
-> > target for iSCSI, then the XenSsource server should only see that LV as
-> > the shared iSCSI repository.
-> > 
-> > But then XenSource wil create a PV and a couple of LV's in the existing
-> > LV (created on the storage server and shared true iSCSI). Could that
-> > create any problems or can I just do that?
-> 
-> I don't see any problem. You should be able to do that, but then I am
-> not an expert. Give it a try.
+* S. J. van Harmelen
 
-Thanks, I will give it a try then!
+> When I do use a 2.6.23.x kernel with the RDAC hardware handler I get the
+> following error: multipathd[6895]: segfault at
+> 000000000000000a rip 00002b251f24394f rsp 00007fff8bfaa730 error 4 
 
-Sander
+This is indicative of a bug in multipathd.  It might or might not be
+serious, but I guess Christophe Varoqui would be interested in seeing a
+backtrace of the segfault in any case...
+
+Try running multipathd (make sure it's not stripped of debugging
+symbols) with core dumps enabled ("ulimit -c unlimited"), and get a
+backtrace ("gdb /sbin/multipathd core" - then run "bt full").
+
+Regards
+-- 
+Tore Anderson
