@@ -1,50 +1,59 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: CLARiiON failover modes and DM.
-Date: Wed, 21 Nov 2007 08:20:50 +0100
-Message-ID: <4743DC52.8050809@linpro.no>
-References: <940B4FF1F5958E4F96FC83C055A2F2611B8C84@exch-2003.incipient.waltham>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Toralf =?iso-8859-1?q?F=F6rster?= <toralf.foerster@gmx.de>
+Subject: Re: build #338 failed for 2.6.24-rc2-g6e800af in linux/drivers/md/dm-mpath-hp-sw.c
+Date: Wed, 21 Nov 2007 10:25:59 +0100
+Message-ID: <200711211026.04363.toralf.foerster@gmx.de>
+References: <200711121333.24398.toralf.foerster@gmx.de> <20071112152100.GA22847@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: multipart/signed;
+  boundary="nextPart4418656.7OE01SeIUG";
+  protocol="application/pgp-signature";
+  micalg=pgp-sha1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <940B4FF1F5958E4F96FC83C055A2F2611B8C84@exch-2003.incipient.waltham>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758125AbXKUJ0Y@vger.kernel.org>
+In-Reply-To: <20071112152100.GA22847@agk.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-* Paul Cote
+--nextPart4418656.7OE01SeIUG
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-> Thanks for all the info ... Setting the CX FO mode to 1 appears to
-> have clear up the mess. One thing I've noticed after doing a dynamic 
-> discovery of newly provisioned CX LUNs in that path state is
-> generally wrong. It will come up as [active][faulty]and to correct
-> that requires a reboot of the server. Don't know if that's a bug or
-> not ... But I'm not opposed to a reboot.
+Am Montag, 12. November 2007 schrieb Alasdair G Kergon:
+> On Mon, Nov 12, 2007 at 01:33:21PM +0100, Toralf F=F6rster wrote:
+> > the build with the attached .config failed, make ends with:
+> > drivers/built-in.o: In function `hp_sw_end_io':
+> > dm-mpath-hp-sw.c:(.text+0xb0596): undefined reference to `__scsi_print_=
+sense'
+> > make: *** [.tmp_vmlinux1] Error 1
+> =20
+> Does this patch fix it?
+>   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/d=
+m-mpath-hp-requires-scsi.patch
+>=20
+> Alasdair
+>=20
 
-That's odd, never had that problem myself.  I rescan like this:
+oh yes :-)
 
-(where hostN is a FC adapter, repeat for all of them but give it some
-time between iterations as you'll see paths failing for a short while):
+=2D-=20
+MfG/Sincerely
 
-echo 1 > /sys/class/fc_host/hostN/issue_lip
-echo - - - > /sys/class/scsi_host/hostN/scan
+Toralf F=F6rster
+pgp finger print: 7B1A 07F4 EC82 0F90 D4C2 8936 872A E508 7DB6 9DA3
 
-Usually only these steps are required to discover new volumes properly,
-but you can also force a rediscovery of the multipath topology and maybe
-also do a restart of multipathd:
+--nextPart4418656.7OE01SeIUG
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
 
-multipath -v2
-pkill multipathd && multipathd
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (GNU/Linux)
 
-Regards
--- 
-Tore Anderson
+iD8DBQBHQ/mohyrlCH22naMRAvNBAKCJHmHYqMD6pqiEeGL4G46Aduyw1QCfReCI
+SrU8bRWrFZCWL34fxTAkIbY=
+=fNyf
+-----END PGP SIGNATURE-----
+
+--nextPart4418656.7OE01SeIUG--
