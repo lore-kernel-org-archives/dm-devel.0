@@ -1,7 +1,7 @@
-From: "Ivan Lezhnjov Jr." <ivan.lezhnjov.jr@gmail.com>
+From: xCrucialDudex <xcrucialdudex@gmail.com>
 Subject: Name change: '/dev/dm-0' -> '/dev/lvm/home'
-Date: Sat, 24 Nov 2007 02:23:06 +0200
-Message-ID: <200711240223.06412.ivan.lezhnjov.jr@gmail.com>
+Date: Sun, 25 Nov 2007 10:02:34 +0200
+Message-ID: <200711251002.34895.xcrucialdudex@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -23,7 +23,7 @@ List-Id: dm-devel.ids
 
 Hello,
 
-I'm using LVM on my system and I've faced an issue that I set myself to 
+I'm using LVM2 on my system and I faced an issue that I've set myself to 
 resolve. The essence of the issue is shown in the following /sbin/lilo -t 
 command output: 
 
@@ -182,18 +182,10 @@ Logical Volumes themselves
 > Library version:   1.02.22 (2007-08-21)
 > Driver version:    4.11.0
 
-This is it. If I missed anything let me know, please.
-I'm really looking forward to getting answers to the questions I've got. 
-Whatever it may take :) I'm more than just curious now since I spent quite a 
-period of time trying to figure out the answers on my own, bothered random 
-people in real life and on the Internet in forums, IRC and now in 
-mailing-list :)
+This is it. If I missed anything, please, let me know.
+I'm really looking forward to getting answers to my questions. I'm more than 
+just curious now since I've spent quite a period of time already trying to 
+figure out the answers on my own, bothered random people in real life and on 
+the Internet in forums, IRC and now in mailing-list :)
 
--- 
-Ivan Lezhnjov Jr.
-
-Europe, Ukraine, Simferopol. Local Time:
-Sat Nov 24 01:56:42 EET 2007
-
-Source Mage GNU/Linux 0.9.6.3, linux-2.6.23 #8
-Disassemble To Assemble Something Pure
+I really want to know what these warnings are all about :)
