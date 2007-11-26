@@ -1,7 +1,8 @@
 From: Guido Guenther <agx@sigxcpu.org>
-Subject: [PATCH 2/3] kpartx: remove unused "-n" code
-Date: Mon, 26 Nov 2007 16:20:37 +0100
-Message-ID: <20071126152037.GB13674@bogon.ms20.nix>
+Subject: [PATCH 3/3] kpartx: on delete process partitions in
+	reverse order
+Date: Mon, 26 Nov 2007 16:27:32 +0100
+Message-ID: <20071126152732.GC13674@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -20,60 +21,22 @@ To: Christophe Varoqui <christophe.varoqui@free.fr>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+otherwise we try to remove the extended partition of MSDOS labels
+(/dev/mapper/mpathX-part[1-4]) before the logical partition
+/dev/mapper/mpathX-partY (Y>5) which fails.
+
 Signed-Off-By: Guido Guenther <agx@sigxcpu.org>
 
 diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 6d64e30..554f742 100644
+index 554f742..7098d65 100644
 --- a/kpartx/kpartx.c
 +++ b/kpartx/kpartx.c
-@@ -83,7 +83,7 @@ initpts(void)
- 	addpts("sun", read_sun_pt);
- }
- 
--static char short_opts[] = "ladgvnp:t:";
-+static char short_opts[] = "ladgvp:t:";
- 
- /* Used in gpt.c */
- int force_gpt=0;
-@@ -189,8 +189,7 @@ main(int argc, char **argv){
- 	struct slice all;
- 	struct pt *ptp;
- 	enum action what = LIST;
--	char *p, *type, *diskdevice, *device, *progname;
--	int lower, upper;
-+	char *type, *diskdevice, *device, *progname;
- 	int verbose = 0;
- 	char partname[PARTNAME_SIZE], params[PARTNAME_SIZE + 16];
- 	char * loopdev = NULL;
-@@ -204,7 +203,6 @@ main(int argc, char **argv){
- 	initpts();
- 	init_crc32();
- 
--	lower = upper = 0;
- 	type = device = diskdevice = NULL;
- 	memset(&all, 0, sizeof(all));
- 	memset(&partname, 0, sizeof(partname));
-@@ -241,14 +239,6 @@ main(int argc, char **argv){
- 		case 'v':
- 			verbose = 1;
+@@ -391,7 +391,7 @@ main(int argc, char **argv){
  			break;
--		case 'n':
--			p = optarg;
--			lower = atoi(p);
--			if ((p[1] == '-') && p[2])
--				upper = atoi(p+2);
--			else
--				upper = lower;
--			break;
- 		case 'p':
- 			delim = optarg;
- 			break;
-@@ -333,8 +323,6 @@ main(int argc, char **argv){
- 		perror(device);
- 		exit(1);
- 	}
--	if (!lower)
--		lower = 1;
  
- 	/* add/remove partitions to the kernel devmapper tables */
- 	for (i = 0; i < ptct; i++) {
+ 		case DELETE:
+-			for (j = 0; j < n; j++) {
++			for (j = n-1; j >= 0; j--) {
+ 				if (safe_sprintf(partname, "%s%s%d",
+ 					     mapname, delim, j+1)) {
+ 					fprintf(stderr, "partname too small\n");
