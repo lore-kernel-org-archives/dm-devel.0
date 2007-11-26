@@ -1,7 +1,7 @@
 From: Guido Guenther <agx@sigxcpu.org>
-Subject: [PATCH 1/3] kpartx: document "-g"
-Date: Mon, 26 Nov 2007 16:20:16 +0100
-Message-ID: <20071126152015.GA13674@bogon.ms20.nix>
+Subject: [PATCH 2/3] kpartx: remove unused "-n" code
+Date: Mon, 26 Nov 2007 16:20:37 +0100
+Message-ID: <20071126152037.GB13674@bogon.ms20.nix>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,29 +22,58 @@ List-Id: dm-devel.ids
 
 Signed-Off-By: Guido Guenther <agx@sigxcpu.org>
 
-diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
-index 87b07ce..c61f312 100644
---- a/kpartx/kpartx.8
-+++ b/kpartx/kpartx.8
-@@ -26,6 +26,9 @@ List partition mappings that would be added -a
- .B \-p
- set device name-partition number delimiter
- .TP
-+.B \-g
-+force GUID partition table (GPT)
-+.TP
- .B \-v
- Operate verbosely
- .SH "SEE ALSO"
 diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
-index 72ca81d..6d64e30 100644
+index 6d64e30..554f742 100644
 --- a/kpartx/kpartx.c
 +++ b/kpartx/kpartx.c
-@@ -95,6 +95,7 @@ usage(void) {
- 	printf("\t-d del partition devmappings\n");
- 	printf("\t-l list partitions devmappings that would be added by -a\n");
- 	printf("\t-p set device name-partition number delimiter\n");
-+	printf("\t-g force GUID partition table (GPT)\n");
- 	printf("\t-v verbose\n");
- 	return 1;
+@@ -83,7 +83,7 @@ initpts(void)
+ 	addpts("sun", read_sun_pt);
  }
+ 
+-static char short_opts[] = "ladgvnp:t:";
++static char short_opts[] = "ladgvp:t:";
+ 
+ /* Used in gpt.c */
+ int force_gpt=0;
+@@ -189,8 +189,7 @@ main(int argc, char **argv){
+ 	struct slice all;
+ 	struct pt *ptp;
+ 	enum action what = LIST;
+-	char *p, *type, *diskdevice, *device, *progname;
+-	int lower, upper;
++	char *type, *diskdevice, *device, *progname;
+ 	int verbose = 0;
+ 	char partname[PARTNAME_SIZE], params[PARTNAME_SIZE + 16];
+ 	char * loopdev = NULL;
+@@ -204,7 +203,6 @@ main(int argc, char **argv){
+ 	initpts();
+ 	init_crc32();
+ 
+-	lower = upper = 0;
+ 	type = device = diskdevice = NULL;
+ 	memset(&all, 0, sizeof(all));
+ 	memset(&partname, 0, sizeof(partname));
+@@ -241,14 +239,6 @@ main(int argc, char **argv){
+ 		case 'v':
+ 			verbose = 1;
+ 			break;
+-		case 'n':
+-			p = optarg;
+-			lower = atoi(p);
+-			if ((p[1] == '-') && p[2])
+-				upper = atoi(p+2);
+-			else
+-				upper = lower;
+-			break;
+ 		case 'p':
+ 			delim = optarg;
+ 			break;
+@@ -333,8 +323,6 @@ main(int argc, char **argv){
+ 		perror(device);
+ 		exit(1);
+ 	}
+-	if (!lower)
+-		lower = 1;
+ 
+ 	/* add/remove partitions to the kernel devmapper tables */
+ 	for (i = 0; i < ptct; i++) {
