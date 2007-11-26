@@ -1,12 +1,12 @@
-From: Pedro Bandim Faustino <pedro.faustino@fccn.pt>
-Subject: user defined device name and table
-Date: Mon, 26 Nov 2007 14:53:03 +0000
-Message-ID: <474ADDCF.8030703@fccn.pt>
-Reply-To: pedro.faustino@fccn.pt,
-	device-mapper development <dm-devel@redhat.com>
+From: Guido Guenther <agx@sigxcpu.org>
+Subject: [PATCH 1/3] kpartx: document "-g"
+Date: Mon, 26 Nov 2007 16:20:16 +0100
+Message-ID: <20071126152015.GA13674@bogon.ms20.nix>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1773539827=="
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,152 +16,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a cryptographically signed message in MIME format.
+Signed-Off-By: Guido Guenther <agx@sigxcpu.org>
 
---===============1773539827==
-Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
-	micalg=sha1; boundary="------------ms070008070805030804050702"
-
-This is a cryptographically signed message in MIME format.
-
---------------ms070008070805030804050702
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-
-Hi All,
-
-I have a working multipath on root, but some questions still unanswered.
-I'm hoping you can help me out ;)
-
-My setup details:
-Machine: IBM Blade Server HS21 with two Qlogic HBAs each connected to a 
-FC switch with two active ports
-Storage IBM DS4700 with two controllers
-OS: Fedora 7
-DM packages:
-    - device-mapper-1.02.17-7.fc7
-    - device-mapper-libs-1.02.17-7.fc7
-    - device-mapper-multipath-0.4.7-11.fc7
-uname -r: 2.6.23.1-21.fc7
-
-At the moment this is what I have:
-
-Output of multipath -ll:
-mpath0 () dm-0 IBM,1814      FAStT
-[size=4.0G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=4][active]
- \_ 2:0:0:0 sda 8:0   [active][ready]
- \_ 2:0:1:0 sdb 8:16  [active][ready]
- \_ 3:0:0:0 sdc 8:32  [active][ready]
- \_ 3:0:1:0 sdd 8:48  [active][ready]
-
-Output of df -k:
-Filesystem           1K-blocks      Used Available Use% Mounted on
-/dev/dm-2              3960348   1772124   1983800  48% /
-/dev/dm-1               101086     17593     78274  19% /boot
-tmpfs                  1037416         0   1037416   0% /dev/shm
-
-Contents of /dev/mapper/:
-crw-------  1 root root  10, 63 2007-11-26 13:58 control
-brw-rw----  1 root disk 253,  0 2007-11-26 13:58 mpath0
-brw-rw----  1 root disk 253,  1 2007-11-26 13:58 mpath0p1
-brw-rw----  1 root disk 253,  2 2007-11-26 13:58 mpath0p2
-
-But this is what I really would like to have:
-
-Output of multipath -ll:
-SRV07_BOOT (3600a0b8000295d64000009304742b4c8) dm-0 IBM,1814      FAStT
-[size=4.0G][features=1 queue_if_no_path][hwhandler=0]
-\_ round-robin 0 [prio=0][enabled]
- \_ 2:0:0:0 sda 8:0   [active][ready]
- \_ 3:0:0:0 sdc 8:32  [active][ready]
-\_ round-robin 0 [prio=6][active]
- \_ 2:0:1:0 sdb 8:16  [active][ready]
- \_ 3:0:1:0 sdd 8:48  [active][ready]
-
-
-I can modify the table by modifying the init script in the initrd image 
-and then booting with the modified initrd image but I don't know how to 
-change the name from mpath0 to SRV07_BOOT.
-
-Any help will be very appreciated!!
-
-Thank you,
-Pedro Faustino
-
---------------ms070008070805030804050702
-Content-Type: application/x-pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: S/MIME Cryptographic Signature
-
-MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIIgzCC
-ApwwggIFoAMCAQICEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEFBQAwYjELMAkGA1UE
-BhMCWkExJTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMT
-I1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBJc3N1aW5nIENBMB4XDTA3MDMwODE3MDMzN1oX
-DTA4MDMwNzE3MDMzN1owgYExGDAWBgNVBAQTD0JhbmRpbSBGYXVzdGlubzEWMBQGA1UEKhMN
-UGVkcm8gRW1hbnVlbDEmMCQGA1UEAxMdUGVkcm8gRW1hbnVlbCBCYW5kaW0gRmF1c3Rpbm8x
-JTAjBgkqhkiG9w0BCQEWFnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwgZ8wDQYJKoZIhvcNAQEB
-BQADgY0AMIGJAoGBALs9bU3kCFFNuwq4D31is437qoll+zTat9251PNiVr9tvgJVUcCXVXWh
-RA6Vtg9ZM3h6ojtSAWKKmBHwPI5tpbDSGiTxk/jZDmR3YnpGIJV/6ajVLqwOcPGAdtbC/KzU
-8QKxvM3e5ned845LALXxhF15HhJMq2qremQvx2czCfNNAgMBAAGjMzAxMCEGA1UdEQQaMBiB
-FnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQUFAAOB
-gQBSo8NmLL0DB6y/hfUP1gPE4NVlcEFanJNP5BMHbxdnhpoQ5DSKIfXxtivbt4VROgcpWAmO
-S8BVI0P7TDKoZV37lptD1A5QTsaR24f4zj/h57MvDx5RowUMcTv+WLWTB4hQ6vEXQnAj25ka
-lx1aRWclOBP6t5UmuLlmwhOEEwrvxTCCApwwggIFoAMCAQICEHdhA6xMoKDlvViilbLaSmYw
-DQYJKoZIhvcNAQEFBQAwYjELMAkGA1UEBhMCWkExJTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0
-aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMTI1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBJc3N1
-aW5nIENBMB4XDTA3MDMwODE3MDMzN1oXDTA4MDMwNzE3MDMzN1owgYExGDAWBgNVBAQTD0Jh
-bmRpbSBGYXVzdGlubzEWMBQGA1UEKhMNUGVkcm8gRW1hbnVlbDEmMCQGA1UEAxMdUGVkcm8g
-RW1hbnVlbCBCYW5kaW0gRmF1c3Rpbm8xJTAjBgkqhkiG9w0BCQEWFnBlZHJvLmZhdXN0aW5v
-QGZjY24ucHQwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALs9bU3kCFFNuwq4D31is437
-qoll+zTat9251PNiVr9tvgJVUcCXVXWhRA6Vtg9ZM3h6ojtSAWKKmBHwPI5tpbDSGiTxk/jZ
-DmR3YnpGIJV/6ajVLqwOcPGAdtbC/KzU8QKxvM3e5ned845LALXxhF15HhJMq2qremQvx2cz
-CfNNAgMBAAGjMzAxMCEGA1UdEQQaMBiBFnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwDAYDVR0T
-AQH/BAIwADANBgkqhkiG9w0BAQUFAAOBgQBSo8NmLL0DB6y/hfUP1gPE4NVlcEFanJNP5BMH
-bxdnhpoQ5DSKIfXxtivbt4VROgcpWAmOS8BVI0P7TDKoZV37lptD1A5QTsaR24f4zj/h57Mv
-Dx5RowUMcTv+WLWTB4hQ6vEXQnAj25kalx1aRWclOBP6t5UmuLlmwhOEEwrvxTCCAz8wggKo
-oAMCAQICAQ0wDQYJKoZIhvcNAQEFBQAwgdExCzAJBgNVBAYTAlpBMRUwEwYDVQQIEwxXZXN0
-ZXJuIENhcGUxEjAQBgNVBAcTCUNhcGUgVG93bjEaMBgGA1UEChMRVGhhd3RlIENvbnN1bHRp
-bmcxKDAmBgNVBAsTH0NlcnRpZmljYXRpb24gU2VydmljZXMgRGl2aXNpb24xJDAiBgNVBAMT
-G1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBDQTErMCkGCSqGSIb3DQEJARYccGVyc29uYWwt
-ZnJlZW1haWxAdGhhd3RlLmNvbTAeFw0wMzA3MTcwMDAwMDBaFw0xMzA3MTYyMzU5NTlaMGIx
-CzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSww
-KgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNzdWluZyBDQTCBnzANBgkqhkiG
-9w0BAQEFAAOBjQAwgYkCgYEAxKY8VXNV+065yplaHmjAdQRwnd/p/6Me7L3N9VvyGna9fww6
-YfK/Uc4B1OVQCjDXAmNaLIkVcI7dyfArhVqqP3FWy688Cwfn8R+RNiQqE88r1fOCdz0Dviv+
-uxg+B79AgAJk16emu59l0cUqVIUPSAR/p7bRPGEEQB5kGXJgt/sCAwEAAaOBlDCBkTASBgNV
-HRMBAf8ECDAGAQH/AgEAMEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwudGhhd3RlLmNv
-bS9UaGF3dGVQZXJzb25hbEZyZWVtYWlsQ0EuY3JsMAsGA1UdDwQEAwIBBjApBgNVHREEIjAg
-pB4wHDEaMBgGA1UEAxMRUHJpdmF0ZUxhYmVsMi0xMzgwDQYJKoZIhvcNAQEFBQADgYEASIzR
-UIPqCy7MDaNmrGcPf6+svsIXoUOWlJ1/TCG4+DYfqi2fNi/A9BxQIJNwPP2t4WFiw9k6GX6E
-sZkbAMUaC4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341Yh
-eILcIRk13iSx0x1G/11fZU8xggLjMIIC3wIBATB2MGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQK
-ExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29u
-YWwgRnJlZW1haWwgSXNzdWluZyBDQQIQd2EDrEygoOW9WKKVstpKZjAJBgUrDgMCGgUAoIIB
-wzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0wNzExMjYxNDUz
-MDNaMCMGCSqGSIb3DQEJBDEWBBQfi9a/b+FuAi1C5QwJ8Jaw9p0MvTBSBgkqhkiG9w0BCQ8x
-RTBDMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMC
-BzANBggqhkiG9w0DAgIBKDCBhQYJKwYBBAGCNxAEMXgwdjBiMQswCQYDVQQGEwJaQTElMCMG
-A1UEChMcVGhhd3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBl
-cnNvbmFsIEZyZWVtYWlsIElzc3VpbmcgQ0ECEHdhA6xMoKDlvViilbLaSmYwgYcGCyqGSIb3
-DQEJEAILMXigdjBiMQswCQYDVQQGEwJaQTElMCMGA1UEChMcVGhhd3RlIENvbnN1bHRpbmcg
-KFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFsIEZyZWVtYWlsIElzc3Vpbmcg
-Q0ECEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEBBQAEgYC5et+NOSm7WZ4cjbxkB5sx
-jmVbwvlyGxz44Hlg9yyRz4CcBvgK0ArxnQO2kWHryM5eHH+fC5Bw1Dh53C6asmDjbAZ609r9
-/yMb4HbGpTjNnTHsxRQB7P/GvyClJDcDRC4ZSwBsC/7hvqqqO5qDkwjMLZTkQ0lpAjUCowh6
-8qY8zwAAAAAAAA==
---------------ms070008070805030804050702--
-
-
---===============1773539827==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1773539827==--
+diff --git a/kpartx/kpartx.8 b/kpartx/kpartx.8
+index 87b07ce..c61f312 100644
+--- a/kpartx/kpartx.8
++++ b/kpartx/kpartx.8
+@@ -26,6 +26,9 @@ List partition mappings that would be added -a
+ .B \-p
+ set device name-partition number delimiter
+ .TP
++.B \-g
++force GUID partition table (GPT)
++.TP
+ .B \-v
+ Operate verbosely
+ .SH "SEE ALSO"
+diff --git a/kpartx/kpartx.c b/kpartx/kpartx.c
+index 72ca81d..6d64e30 100644
+--- a/kpartx/kpartx.c
++++ b/kpartx/kpartx.c
+@@ -95,6 +95,7 @@ usage(void) {
+ 	printf("\t-d del partition devmappings\n");
+ 	printf("\t-l list partitions devmappings that would be added by -a\n");
+ 	printf("\t-p set device name-partition number delimiter\n");
++	printf("\t-g force GUID partition table (GPT)\n");
+ 	printf("\t-v verbose\n");
+ 	return 1;
+ }
