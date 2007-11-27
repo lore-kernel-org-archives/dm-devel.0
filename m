@@ -1,14 +1,15 @@
-From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
-Subject: how to change/query  current path_checker
-Date: Mon, 26 Nov 2007 15:21:46 -0500
-Message-ID: <1D80D4F6D179BD4D869FE807A5BF8336018C6A0C@EXCNYSM0A1AN.nysemail.nyenet>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pedro Bandim Faustino <pedro.faustino@fccn.pt>
+Subject: Re: user defined device name and table
+Date: Tue, 27 Nov 2007 09:31:51 +0000
+Message-ID: <474BE407.4050206@fccn.pt>
+References: <474ADDCF.8030703@fccn.pt>
+	<5201e28f0711260844r425847c0ta28ee0f988c5906@mail.gmail.com>
+Reply-To: pedro.faustino@fccn.pt,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============0475892079=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <5201e28f0711260844r425847c0ta28ee0f988c5906@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,26 +19,191 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Stefan Bader <sbader3@googlemail.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Running SLES9 and multipath-tools-0.4.5-0.28.
+This is a cryptographically signed message in MIME format.
 
-I want to change path_checker from tur to readsector0 and have updated
-my multipath.conf file to specify readsector0.
+--===============0475892079==
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
+	micalg=sha1; boundary="------------ms040706040608050707070901"
 
-1) Will /sbin/multipathd -k"reconfigure" make multipathd re-read the
-multipath.conf and start using readsector0?
-(man page for multipathd is very skimpy at this level.)
+This is a cryptographically signed message in MIME format.
 
-2) Is there a way to display which path_checker is actually being used?
-multipath -v3 seems to report the current contents of multipath.conf for
-path_checker and not what path_checker it's using: it reports whatever I
-just set path_checker to in the file.
---------------------------------------------------------
-This e-mail, including any attachments, may be confidential, privileged o=
-r otherwise legally protected. It is intended only for the addressee. If =
-you received this e-mail in error or from someone who was not authorized =
-to send it to you, do not disseminate, copy or otherwise use this e-mail =
-or its attachments.  Please notify the sender immediately by reply e-mail=
- and delete the e-mail from your system.
+--------------ms040706040608050707070901
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+
+
+Stefan Bader wrote:
+>
+>
+> 2007/11/26, Pedro Bandim Faustino <pedro.faustino@fccn.pt 
+> <mailto:pedro.faustino@fccn.pt>>:
+>
+>     Hi All,
+>
+>     I have a working multipath on root, but some questions still
+>     unanswered.
+>     I'm hoping you can help me out ;)
+>
+>     My setup details:
+>     Machine: IBM Blade Server HS21 with two Qlogic HBAs each connected
+>     to a
+>     FC switch with two active ports
+>     Storage IBM DS4700 with two controllers
+>     OS: Fedora 7
+>     DM packages:
+>         - device-mapper-1.02.17-7.fc7
+>         - device-mapper-libs-1.02.17-7.fc7
+>         - device-mapper-multipath-0.4.7-11.fc7
+>     uname -r: 2.6.23.1-21.fc7
+>
+>     At the moment this is what I have:
+>
+>     Output of multipath -ll:
+>     mpath0 () dm-0 IBM,1814      FAStT
+>     [size=4.0G][features=0][hwhandler=0]
+>     \_ round-robin 0 [prio=4][active]
+>     \_ 2:0:0:0 sda 8:0   [active][ready]
+>     \_ 2:0:1:0 sdb 8:16  [active][ready]
+>     \_ 3:0:0:0 sdc 8:32  [active][ready]
+>     \_ 3:0:1:0 sdd 8:48  [active][ready]
+>
+>     Output of df -k:
+>     Filesystem           1K-blocks      Used Available Use% Mounted on
+>     /dev/dm-2              3960348   1772124   1983800  48% /
+>     /dev/dm-1               101086     17593     78274  19% /boot
+>     tmpfs                  1037416         0   1037416   0% /dev/shm
+>
+>     Contents of /dev/mapper/:
+>     crw-------  1 root root  10, 63 2007-11-26 13:58 control
+>     brw-rw----  1 root disk 253,  0 2007-11-26 13:58 mpath0
+>     brw-rw----  1 root disk 253,  1 2007-11-26 13:58 mpath0p1
+>     brw-rw----  1 root disk 253,  2 2007-11-26 13:58 mpath0p2
+>
+>     But this is what I really would like to have:
+>
+>     Output of multipath -ll:
+>     SRV07_BOOT (3600a0b8000295d64000009304742b4c8) dm-0
+>     IBM,1814      FAStT
+>     [size=4.0G][features=1 queue_if_no_path][hwhandler=0]
+>     \_ round-robin 0 [prio=0][enabled]
+>     \_ 2:0:0:0 sda 8:0   [active][ready]
+>     \_ 3:0:0:0 sdc 8:32  [active][ready]
+>     \_ round-robin 0 [prio=6][active]
+>     \_ 2:0:1:0 sdb 8:16  [active][ready]
+>     \_ 3:0:1:0 sdd 8:48  [active][ready]
+>
+>
+>     I can modify the table by modifying the init script in the initrd
+>     image
+>     and then booting with the modified initrd image but I don't know
+>     how to
+>     change the name from mpath0 to SRV07_BOOT.
+>
+>
+> You should be able to change the name by creating a multipaths section 
+> like below
+>
+> multipaths {
+>     multipath {
+>         wwid "3600a0b8000295d64000009304742b4c8"
+>         alias "SRV07_BOOT"
+>     }
+> }
+>
+> If that does not work as expected, you might have to say "no" to the 
+> user friendly names option.
+Hi Stefan,
+I've tried that, but what happens is that once the multipathd starts 
+I'll have duplicate multipaths, the one at boot time and this one by 
+multipathd, with different names.
+
+>
+>     Any help will be very appreciated!!
+>
+>     Thank you,
+>     Pedro Faustino
+>
+>     --
+>     dm-devel mailing list
+>     dm-devel@redhat.com <mailto:dm-devel@redhat.com>
+>     https://www.redhat.com/mailman/listinfo/dm-devel
+>
+>
+
+--------------ms040706040608050707070901
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIIgzCC
+ApwwggIFoAMCAQICEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEFBQAwYjELMAkGA1UE
+BhMCWkExJTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMT
+I1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBJc3N1aW5nIENBMB4XDTA3MDMwODE3MDMzN1oX
+DTA4MDMwNzE3MDMzN1owgYExGDAWBgNVBAQTD0JhbmRpbSBGYXVzdGlubzEWMBQGA1UEKhMN
+UGVkcm8gRW1hbnVlbDEmMCQGA1UEAxMdUGVkcm8gRW1hbnVlbCBCYW5kaW0gRmF1c3Rpbm8x
+JTAjBgkqhkiG9w0BCQEWFnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwgZ8wDQYJKoZIhvcNAQEB
+BQADgY0AMIGJAoGBALs9bU3kCFFNuwq4D31is437qoll+zTat9251PNiVr9tvgJVUcCXVXWh
+RA6Vtg9ZM3h6ojtSAWKKmBHwPI5tpbDSGiTxk/jZDmR3YnpGIJV/6ajVLqwOcPGAdtbC/KzU
+8QKxvM3e5ned845LALXxhF15HhJMq2qremQvx2czCfNNAgMBAAGjMzAxMCEGA1UdEQQaMBiB
+FnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQUFAAOB
+gQBSo8NmLL0DB6y/hfUP1gPE4NVlcEFanJNP5BMHbxdnhpoQ5DSKIfXxtivbt4VROgcpWAmO
+S8BVI0P7TDKoZV37lptD1A5QTsaR24f4zj/h57MvDx5RowUMcTv+WLWTB4hQ6vEXQnAj25ka
+lx1aRWclOBP6t5UmuLlmwhOEEwrvxTCCApwwggIFoAMCAQICEHdhA6xMoKDlvViilbLaSmYw
+DQYJKoZIhvcNAQEFBQAwYjELMAkGA1UEBhMCWkExJTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0
+aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMTI1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBJc3N1
+aW5nIENBMB4XDTA3MDMwODE3MDMzN1oXDTA4MDMwNzE3MDMzN1owgYExGDAWBgNVBAQTD0Jh
+bmRpbSBGYXVzdGlubzEWMBQGA1UEKhMNUGVkcm8gRW1hbnVlbDEmMCQGA1UEAxMdUGVkcm8g
+RW1hbnVlbCBCYW5kaW0gRmF1c3Rpbm8xJTAjBgkqhkiG9w0BCQEWFnBlZHJvLmZhdXN0aW5v
+QGZjY24ucHQwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALs9bU3kCFFNuwq4D31is437
+qoll+zTat9251PNiVr9tvgJVUcCXVXWhRA6Vtg9ZM3h6ojtSAWKKmBHwPI5tpbDSGiTxk/jZ
+DmR3YnpGIJV/6ajVLqwOcPGAdtbC/KzU8QKxvM3e5ned845LALXxhF15HhJMq2qremQvx2cz
+CfNNAgMBAAGjMzAxMCEGA1UdEQQaMBiBFnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwDAYDVR0T
+AQH/BAIwADANBgkqhkiG9w0BAQUFAAOBgQBSo8NmLL0DB6y/hfUP1gPE4NVlcEFanJNP5BMH
+bxdnhpoQ5DSKIfXxtivbt4VROgcpWAmOS8BVI0P7TDKoZV37lptD1A5QTsaR24f4zj/h57Mv
+Dx5RowUMcTv+WLWTB4hQ6vEXQnAj25kalx1aRWclOBP6t5UmuLlmwhOEEwrvxTCCAz8wggKo
+oAMCAQICAQ0wDQYJKoZIhvcNAQEFBQAwgdExCzAJBgNVBAYTAlpBMRUwEwYDVQQIEwxXZXN0
+ZXJuIENhcGUxEjAQBgNVBAcTCUNhcGUgVG93bjEaMBgGA1UEChMRVGhhd3RlIENvbnN1bHRp
+bmcxKDAmBgNVBAsTH0NlcnRpZmljYXRpb24gU2VydmljZXMgRGl2aXNpb24xJDAiBgNVBAMT
+G1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBDQTErMCkGCSqGSIb3DQEJARYccGVyc29uYWwt
+ZnJlZW1haWxAdGhhd3RlLmNvbTAeFw0wMzA3MTcwMDAwMDBaFw0xMzA3MTYyMzU5NTlaMGIx
+CzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSww
+KgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNzdWluZyBDQTCBnzANBgkqhkiG
+9w0BAQEFAAOBjQAwgYkCgYEAxKY8VXNV+065yplaHmjAdQRwnd/p/6Me7L3N9VvyGna9fww6
+YfK/Uc4B1OVQCjDXAmNaLIkVcI7dyfArhVqqP3FWy688Cwfn8R+RNiQqE88r1fOCdz0Dviv+
+uxg+B79AgAJk16emu59l0cUqVIUPSAR/p7bRPGEEQB5kGXJgt/sCAwEAAaOBlDCBkTASBgNV
+HRMBAf8ECDAGAQH/AgEAMEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwudGhhd3RlLmNv
+bS9UaGF3dGVQZXJzb25hbEZyZWVtYWlsQ0EuY3JsMAsGA1UdDwQEAwIBBjApBgNVHREEIjAg
+pB4wHDEaMBgGA1UEAxMRUHJpdmF0ZUxhYmVsMi0xMzgwDQYJKoZIhvcNAQEFBQADgYEASIzR
+UIPqCy7MDaNmrGcPf6+svsIXoUOWlJ1/TCG4+DYfqi2fNi/A9BxQIJNwPP2t4WFiw9k6GX6E
+sZkbAMUaC4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341Yh
+eILcIRk13iSx0x1G/11fZU8xggLjMIIC3wIBATB2MGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQK
+ExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29u
+YWwgRnJlZW1haWwgSXNzdWluZyBDQQIQd2EDrEygoOW9WKKVstpKZjAJBgUrDgMCGgUAoIIB
+wzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0wNzExMjcwOTMx
+NTFaMCMGCSqGSIb3DQEJBDEWBBTx/uwRHD3NHmWqf++S0npblPEaijBSBgkqhkiG9w0BCQ8x
+RTBDMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMC
+BzANBggqhkiG9w0DAgIBKDCBhQYJKwYBBAGCNxAEMXgwdjBiMQswCQYDVQQGEwJaQTElMCMG
+A1UEChMcVGhhd3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBl
+cnNvbmFsIEZyZWVtYWlsIElzc3VpbmcgQ0ECEHdhA6xMoKDlvViilbLaSmYwgYcGCyqGSIb3
+DQEJEAILMXigdjBiMQswCQYDVQQGEwJaQTElMCMGA1UEChMcVGhhd3RlIENvbnN1bHRpbmcg
+KFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFsIEZyZWVtYWlsIElzc3Vpbmcg
+Q0ECEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEBBQAEgYAPJionPuKQ97rz2RGEtNix
+qhYqXHHsyS+9SDuiBjw60CxaImfiMYDlet+E2DdkXJOBAMKlZcnhb2WICkbcagiCqEfCYzzo
+pRch3152xVxh0QFqYsBcMkm8xEYASDDJQzy8tvjpjERYJK37FIPnsNXrUSiiYroIempLLgEk
+qpNIRgAAAAAAAA==
+--------------ms040706040608050707070901--
+
+
+--===============0475892079==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0475892079==--
