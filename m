@@ -1,15 +1,14 @@
 From: Pedro Bandim Faustino <pedro.faustino@fccn.pt>
-Subject: Re: user defined device name and table
-Date: Tue, 27 Nov 2007 09:31:51 +0000
-Message-ID: <474BE407.4050206@fccn.pt>
-References: <474ADDCF.8030703@fccn.pt>
-	<5201e28f0711260844r425847c0ta28ee0f988c5906@mail.gmail.com>
+Subject: Re: user defined device name and table - SOLVED
+Date: Tue, 27 Nov 2007 10:00:04 +0000
+Message-ID: <474BEAA4.9010702@fccn.pt>
+References: <474ADDCF.8030703@fccn.pt> <20071126194624.GA23541@us.ibm.com>
 Reply-To: pedro.faustino@fccn.pt,
 	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0475892079=="
+Content-Type: multipart/mixed; boundary="===============0599890322=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <5201e28f0711260844r425847c0ta28ee0f988c5906@mail.gmail.com>
+In-Reply-To: <20071126194624.GA23541@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,122 +18,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Stefan Bader <sbader3@googlemail.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: malahal@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 This is a cryptographically signed message in MIME format.
 
---===============0475892079==
+--===============0599890322==
 Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
-	micalg=sha1; boundary="------------ms040706040608050707070901"
+	micalg=sha1; boundary="------------ms040605060506030000090901"
 
 This is a cryptographically signed message in MIME format.
 
---------------ms040706040608050707070901
+--------------ms040605060506030000090901
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 
+malahal@us.ibm.com wrote:
+> Pedro Bandim Faustino [pedro.faustino@fccn.pt] wrote:
+>   
+>> Hi All,
+>>
+>> I have a working multipath on root, but some questions still unanswered.
+>> I'm hoping you can help me out ;)
+>>
+>> But this is what I really would like to have:
+>>
+>> Output of multipath -ll:
+>> SRV07_BOOT (3600a0b8000295d64000009304742b4c8) dm-0 IBM,1814      FAStT
+>> [size=4.0G][features=1 queue_if_no_path][hwhandler=0]
+>> \_ round-robin 0 [prio=0][enabled]
+>> \_ 2:0:0:0 sda 8:0   [active][ready]
+>> \_ 3:0:0:0 sdc 8:32  [active][ready]
+>> \_ round-robin 0 [prio=6][active]
+>> \_ 2:0:1:0 sdb 8:16  [active][ready]
+>> \_ 3:0:1:0 sdd 8:48  [active][ready]
+>>
+>>
+>> I can modify the table by modifying the init script in the initrd image and 
+>> then booting with the modified initrd image but I don't know how to change 
+>> the name from mpath0 to SRV07_BOOT.
+>>     
+>
+> I don't know how Fedora Core 7 handles this in the initrd. Old RHEL
+> systems (prior to RHEL5.1) have nash commands to construct hard coded
+> multipath devices. You probably supply the name as part those commands.
+> If Fedora Core 7 uses something similar to RHEL5.2, then you could
+> probably use aliases in the multipath.conf file and rebuild initrd???
+>   
+Fedora does use nash commands in its mkinitrd script. From what I 
+understood Fedora 7 mkinitrd doesn't fetch multipath settings from the 
+conf file, instead it checks the current, in use, settings.
 
-Stefan Bader wrote:
->
->
-> 2007/11/26, Pedro Bandim Faustino <pedro.faustino@fccn.pt 
-> <mailto:pedro.faustino@fccn.pt>>:
->
->     Hi All,
->
->     I have a working multipath on root, but some questions still
->     unanswered.
->     I'm hoping you can help me out ;)
->
->     My setup details:
->     Machine: IBM Blade Server HS21 with two Qlogic HBAs each connected
->     to a
->     FC switch with two active ports
->     Storage IBM DS4700 with two controllers
->     OS: Fedora 7
->     DM packages:
->         - device-mapper-1.02.17-7.fc7
->         - device-mapper-libs-1.02.17-7.fc7
->         - device-mapper-multipath-0.4.7-11.fc7
->     uname -r: 2.6.23.1-21.fc7
->
->     At the moment this is what I have:
->
->     Output of multipath -ll:
->     mpath0 () dm-0 IBM,1814      FAStT
->     [size=4.0G][features=0][hwhandler=0]
->     \_ round-robin 0 [prio=4][active]
->     \_ 2:0:0:0 sda 8:0   [active][ready]
->     \_ 2:0:1:0 sdb 8:16  [active][ready]
->     \_ 3:0:0:0 sdc 8:32  [active][ready]
->     \_ 3:0:1:0 sdd 8:48  [active][ready]
->
->     Output of df -k:
->     Filesystem           1K-blocks      Used Available Use% Mounted on
->     /dev/dm-2              3960348   1772124   1983800  48% /
->     /dev/dm-1               101086     17593     78274  19% /boot
->     tmpfs                  1037416         0   1037416   0% /dev/shm
->
->     Contents of /dev/mapper/:
->     crw-------  1 root root  10, 63 2007-11-26 13:58 control
->     brw-rw----  1 root disk 253,  0 2007-11-26 13:58 mpath0
->     brw-rw----  1 root disk 253,  1 2007-11-26 13:58 mpath0p1
->     brw-rw----  1 root disk 253,  2 2007-11-26 13:58 mpath0p2
->
->     But this is what I really would like to have:
->
->     Output of multipath -ll:
->     SRV07_BOOT (3600a0b8000295d64000009304742b4c8) dm-0
->     IBM,1814      FAStT
->     [size=4.0G][features=1 queue_if_no_path][hwhandler=0]
->     \_ round-robin 0 [prio=0][enabled]
->     \_ 2:0:0:0 sda 8:0   [active][ready]
->     \_ 3:0:0:0 sdc 8:32  [active][ready]
->     \_ round-robin 0 [prio=6][active]
->     \_ 2:0:1:0 sdb 8:16  [active][ready]
->     \_ 3:0:1:0 sdd 8:48  [active][ready]
->
->
->     I can modify the table by modifying the init script in the initrd
->     image
->     and then booting with the modified initrd image but I don't know
->     how to
->     change the name from mpath0 to SRV07_BOOT.
->
->
-> You should be able to change the name by creating a multipaths section 
-> like below
->
-> multipaths {
->     multipath {
->         wwid "3600a0b8000295d64000009304742b4c8"
->         alias "SRV07_BOOT"
->     }
-> }
->
-> If that does not work as expected, you might have to say "no" to the 
-> user friendly names option.
-Hi Stefan,
-I've tried that, but what happens is that once the multipathd starts 
-I'll have duplicate multipaths, the one at boot time and this one by 
-multipathd, with different names.
+So, what I've done was change the table (at boot time, modifying the 
+init script of the initrd image) and rebooted with this new image.
+Then, I've changed the friendly name (using dmsetup rename command), 
+issued a mkinitrd and rebooted with this new image.
+(You can do the above by modifying the init script just once)
 
->
->     Any help will be very appreciated!!
->
->     Thank you,
->     Pedro Faustino
->
->     --
->     dm-devel mailing list
->     dm-devel@redhat.com <mailto:dm-devel@redhat.com>
->     https://www.redhat.com/mailman/listinfo/dm-devel
->
->
+So I finally got the what I wanted and also the desired names at 
+/dev/mapper and /dev/mpath.
+What I'm going to do now is configure the multipathd and multipath.conf 
+to finish my setup.
 
---------------ms040706040608050707070901
+Cheers and thanks for your help,
+Pedro Bandim Faustino
+
+--------------ms040605060506030000090901
 Content-Type: application/x-pkcs7-signature; name="smime.p7s"
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="smime.p7s"
@@ -184,26 +133,26 @@ sZkbAMUaC4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341Yh
 eILcIRk13iSx0x1G/11fZU8xggLjMIIC3wIBATB2MGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQK
 ExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29u
 YWwgRnJlZW1haWwgSXNzdWluZyBDQQIQd2EDrEygoOW9WKKVstpKZjAJBgUrDgMCGgUAoIIB
-wzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0wNzExMjcwOTMx
-NTFaMCMGCSqGSIb3DQEJBDEWBBTx/uwRHD3NHmWqf++S0npblPEaijBSBgkqhkiG9w0BCQ8x
+wzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0wNzExMjcxMDAw
+MDRaMCMGCSqGSIb3DQEJBDEWBBToDdC8QixZGv/69yjXcaOsStzPZTBSBgkqhkiG9w0BCQ8x
 RTBDMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMC
 BzANBggqhkiG9w0DAgIBKDCBhQYJKwYBBAGCNxAEMXgwdjBiMQswCQYDVQQGEwJaQTElMCMG
 A1UEChMcVGhhd3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBl
 cnNvbmFsIEZyZWVtYWlsIElzc3VpbmcgQ0ECEHdhA6xMoKDlvViilbLaSmYwgYcGCyqGSIb3
 DQEJEAILMXigdjBiMQswCQYDVQQGEwJaQTElMCMGA1UEChMcVGhhd3RlIENvbnN1bHRpbmcg
 KFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFsIEZyZWVtYWlsIElzc3Vpbmcg
-Q0ECEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEBBQAEgYAPJionPuKQ97rz2RGEtNix
-qhYqXHHsyS+9SDuiBjw60CxaImfiMYDlet+E2DdkXJOBAMKlZcnhb2WICkbcagiCqEfCYzzo
-pRch3152xVxh0QFqYsBcMkm8xEYASDDJQzy8tvjpjERYJK37FIPnsNXrUSiiYroIempLLgEk
-qpNIRgAAAAAAAA==
---------------ms040706040608050707070901--
+Q0ECEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEBBQAEgYAZPZ2TPyReAnWZpi1iiyH8
+KGlMmyjbvTzA1myq5CbpzLLM4yKoDjPqe68hLbKETOf5N5gDA0nl/PXzmKM4BjGL/9TIZ/sw
+pawxrC1lhJEToG8Vcxjk1igWmFvX7rzvTBwAWDwUKWkEniui/n15kNg39XF9ZOa+jtTcyMgw
+TaJesQAAAAAAAA==
+--------------ms040605060506030000090901--
 
 
---===============0475892079==
+--===============0599890322==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0475892079==--
+--===============0599890322==--
