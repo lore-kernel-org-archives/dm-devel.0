@@ -1,9 +1,17 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW dmsetup/dmsetup.c li ...
-Date: 27 Nov 2007 20:57:06 -0000
-Message-ID: <20071127205706.24376.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Pedro Bandim Faustino <pedro.faustino@fccn.pt>
+Subject: Re: user defined device name and table
+Date: Wed, 28 Nov 2007 10:32:00 +0000
+Message-ID: <474D43A0.8010602@fccn.pt>
+References: <474ADDCF.8030703@fccn.pt>
+	<5201e28f0711260844r425847c0ta28ee0f988c5906@mail.gmail.com>
+	<474BE407.4050206@fccn.pt>
+	<20071127194820.GA25939@ether.msp.redhat.com>
+Reply-To: pedro.faustino@fccn.pt,
+	device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1272674171=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20071127194820.GA25939@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,363 +21,224 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-11-27 20:57:05
+This is a cryptographically signed message in MIME format.
 
-Modified files:
-	.              : WHATS_NEW 
-	dmsetup        : dmsetup.c 
-	lib            : .exported_symbols libdevmapper.h libdm-common.c 
-	                 libdm-deptree.c 
-	lib/ioctl      : libdm-iface.c libdm-targets.h 
-	man            : dmsetup.8 
+--===============1272674171==
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
+	micalg=sha1; boundary="------------ms060602010600090404000009"
 
-Log message:
-	add read_ahead functions to library and dmsetup --readahead
-	(Not live yet.)
+This is a cryptographically signed message in MIME format.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.210&r2=1.211
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.96&r2=1.97
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/.exported_symbols.diff?cvsroot=dm&r1=1.31&r2=1.32
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdevmapper.h.diff?cvsroot=dm&r1=1.76&r2=1.77
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-common.c.diff?cvsroot=dm&r1=1.47&r2=1.48
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.32&r2=1.33
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/ioctl/libdm-iface.c.diff?cvsroot=dm&r1=1.46&r2=1.47
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/ioctl/libdm-targets.h.diff?cvsroot=dm&r1=1.21&r2=1.22
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/man/dmsetup.8.diff?cvsroot=dm&r1=1.18&r2=1.19
+--------------ms060602010600090404000009
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
---- device-mapper/WHATS_NEW	2007/11/27 12:26:06	1.210
-+++ device-mapper/WHATS_NEW	2007/11/27 20:57:04	1.211
-@@ -1,7 +1,8 @@
- Version 1.02.23 - 
- ==================================
--  Fix possible double-free in libdevmapper-event.
--  Define DM_READ_AHEAD_* values and flags.
-+  Add --readahead to dmsetup.
-+  Add external read_ahead library functions and DM_READ_AHEAD_* definitions.
-+  Fix double free in a libdevmapper-event error path.
-   Fix configure --with-dmeventd-path substitution.
-   Allow $DM_DEV_DIR envvar to override default of "/dev".
-   Create e.g., libdevmapper.so.1.02, in build dir alongside the .so file.
---- device-mapper/dmsetup/dmsetup.c	2007/10/09 12:14:48	1.96
-+++ device-mapper/dmsetup/dmsetup.c	2007/11/27 20:57:05	1.97
-@@ -120,6 +120,7 @@
- 	NOOPENCOUNT_ARG,
- 	NOTABLE_ARG,
- 	OPTIONS_ARG,
-+	READAHEAD_ARG,
- 	SEPARATOR_ARG,
- 	SHOWKEYS_ARG,
- 	SORT_ARG,
-@@ -336,6 +337,8 @@
- 	       info->suspended ? "SUSPENDED" : "ACTIVE",
- 	       info->read_only ? " (READ-ONLY)" : "");
- 
-+	printf("Read Ahead:       %d\n", (int) dm_task_get_read_ahead(dmt));
-+
- 	if (!info->live_table && !info->inactive_table)
- 		printf("Tables present:    None\n");
- 	else
-@@ -494,6 +497,11 @@
- 	if (_switches[NOOPENCOUNT_ARG] && !dm_task_no_open_count(dmt))
- 		goto out;
- 
-+	/* FIXME Provide way to set read_ahead_flags */
-+	if (_switches[READAHEAD_ARG] &&
-+	    !dm_task_set_read_ahead(dmt, _int_args[READAHEAD_ARG], 0))
-+		goto out;
-+
- 	if (!dm_task_run(dmt))
- 		goto out;
- 
-@@ -673,6 +681,11 @@
- 	if (_switches[NOLOCKFS_ARG] && !dm_task_skip_lockfs(dmt))
- 		goto out;
- 
-+	/* FIXME Provide way to set read_ahead_flags */
-+	if (_switches[READAHEAD_ARG] &&
-+	    !dm_task_set_read_ahead(dmt, _int_args[READAHEAD_ARG], 0))
-+		goto out;
-+
- 	r = dm_task_run(dmt);
- 
- 	if (r && display && _switches[VERBOSE_ARG])
-@@ -1594,6 +1607,16 @@
- 	return dm_report_field_string(rh, field, &uuid);
- }
- 
-+static int _dm_read_ahead_disp(struct dm_report *rh,
-+			       struct dm_pool *mem __attribute((unused)),
-+			       struct dm_report_field *field, const void *data,
-+			       void *private __attribute((unused)))
-+{
-+	int32_t value = (int32_t) dm_task_get_read_ahead((const struct dm_task *) data);
-+
-+	return dm_report_field_int32(rh, field, &value);
-+}
-+
- static int _dm_info_status_disp(struct dm_report *rh,
- 				struct dm_pool *mem __attribute((unused)),
- 				struct dm_report_field *field, const void *data,
-@@ -1849,6 +1872,10 @@
- /* *INDENT-OFF* */
- FIELD_F(TASK, STR, "Name", 16, dm_name, "name", "Name of mapped device.")
- FIELD_F(TASK, STR, "UUID", 32, dm_uuid, "uuid", "Unique (optional) identifier for mapped device.")
-+
-+/* FIXME Next one should be INFO */
-+FIELD_F(TASK, NUM, "RAhead", 6, dm_read_ahead, "readahead", "Read ahead in sectors.")
-+
- FIELD_F(INFO, STR, "Stat", 4, dm_info_status, "attr", "(L)ive, (I)nactive, (s)uspended, (r)ead-only, read-(w)rite.")
- FIELD_F(INFO, STR, "DevNo", 5, dm_info_devno, "devno", "Device major and minor numbers")
- FIELD_O(INFO, dm_info, NUM, "Maj", major, 3, int32, "major", "Block device major number.")
-@@ -2010,7 +2037,8 @@
- 
- 	fprintf(out, "Usage:\n\n");
- 	fprintf(out, "dmsetup [--version] [-v|--verbose [-v|--verbose ...]]\n"
--		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
-+		"        [-r|--readonly] [--noopencount] [--nolockfs] "
-+		    "[--readahead <sectors>]\n"
- 		"        [-c|-C|--columns] [-o <fields>] [-O|--sort <sort_fields>]\n"
- 		"        [--noheadings] [--separator <separator>]\n\n");
- 	for (i = 0; _commands[i].name; i++)
-@@ -2374,6 +2402,7 @@
- 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
- 		{"notable", 0, &ind, NOTABLE_ARG},
- 		{"options", 1, &ind, OPTIONS_ARG},
-+		{"readahead", 1, &ind, READAHEAD_ARG},
- 		{"separator", 1, &ind, SEPARATOR_ARG},
- 		{"showkeys", 0, &ind, SHOWKEYS_ARG},
- 		{"sort", 1, &ind, SORT_ARG},
-@@ -2506,6 +2535,11 @@
- 			_switches[NOLOCKFS_ARG]++;
- 		if ((ind == NOOPENCOUNT_ARG))
- 			_switches[NOOPENCOUNT_ARG]++;
-+		/* FIXME Accept auto/none & set read_ahead_flags too */
-+		if ((ind == READAHEAD_ARG)) {
-+			_switches[READAHEAD_ARG]++;
-+			_int_args[READAHEAD_ARG] = atoi(optarg);
-+		}
- 		if ((ind == SHOWKEYS_ARG))
- 			_switches[SHOWKEYS_ARG]++;
- 		if ((ind == TABLE_ARG)) {
---- device-mapper/lib/.exported_symbols	2007/07/28 10:48:36	1.31
-+++ device-mapper/lib/.exported_symbols	2007/11/27 20:57:05	1.32
-@@ -18,6 +18,7 @@
- dm_task_get_names
- dm_task_get_versions
- dm_task_get_uuid
-+dm_task_get_read_ahead
- dm_task_set_ro
- dm_task_set_newname
- dm_task_set_event_nr
-@@ -28,6 +29,7 @@
- dm_task_set_uid
- dm_task_set_gid
- dm_task_set_mode
-+dm_task_set_read_ahead
- dm_task_suppress_identical_reload
- dm_task_add_target
- dm_task_no_flush
-@@ -67,6 +69,7 @@
- dm_tree_node_add_mirror_target
- dm_tree_node_add_mirror_target_log
- dm_tree_node_add_target_area
-+dm_tree_node_set_read_ahead
- dm_tree_skip_lockfs
- dm_tree_use_no_flush_suspend
- dm_is_dm_major
---- device-mapper/lib/libdevmapper.h	2007/11/12 20:47:18	1.76
-+++ device-mapper/lib/libdevmapper.h	2007/11/27 20:57:05	1.77
-@@ -141,11 +141,6 @@
- struct dm_names *dm_task_get_names(struct dm_task *dmt);
- struct dm_versions *dm_task_get_versions(struct dm_task *dmt);
- 
--#define DM_READ_AHEAD_AUTO UINT32_MAX	/* Use kernel default readahead */
--#define DM_READ_AHEAD_NONE 0		/* Disable readahead */
--
--#define DM_READ_AHEAD_MINIMUM_FLAG	0x1	/* Value supplied is minimum */
--
- int dm_task_set_ro(struct dm_task *dmt);
- int dm_task_set_newname(struct dm_task *dmt, const char *newname);
- int dm_task_set_minor(struct dm_task *dmt, int minor);
-@@ -163,6 +158,18 @@
- int dm_task_suppress_identical_reload(struct dm_task *dmt);
- 
- /*
-+ * Control read_ahead.
-+ */
-+#define DM_READ_AHEAD_AUTO UINT32_MAX	/* Use kernel default readahead */
-+#define DM_READ_AHEAD_NONE 0		/* Disable readahead */
-+
-+#define DM_READ_AHEAD_MINIMUM_FLAG	0x1	/* Value supplied is minimum */
-+
-+int dm_task_set_read_ahead(struct dm_task *dmt, uint32_t read_ahead,
-+			   uint32_t read_ahead_flags);
-+uint32_t dm_task_get_read_ahead(const struct dm_task *dmt);
-+
-+/*
-  * Use these to prepare for a create or reload.
-  */
- int dm_task_add_target(struct dm_task *dmt,
-@@ -381,6 +388,13 @@
- 				    const char *dlid,
- 				    uint64_t offset);
- 
-+/*
-+ * Set readahead (in sectors) after loading the node.
-+ */
-+void dm_tree_node_set_read_ahead(struct dm_tree_node *dnode,
-+				 uint32_t read_ahead,
-+				 uint32_t read_ahead_flags);
-+
- /*****************************************************************************
-  * Library functions
-  *****************************************************************************/
---- device-mapper/lib/libdm-common.c	2007/10/09 12:14:48	1.47
-+++ device-mapper/lib/libdm-common.c	2007/11/27 20:57:05	1.48
-@@ -118,6 +118,8 @@
- 	dmt->gid = DEVICE_GID;
- 	dmt->mode = DEVICE_MODE;
- 	dmt->no_open_count = 0;
-+	dmt->read_ahead = DM_READ_AHEAD_AUTO;
-+	dmt->read_ahead_flags = 0;
- 
- 	return dmt;
- }
---- device-mapper/lib/libdm-deptree.c	2007/08/21 16:26:06	1.32
-+++ device-mapper/lib/libdm-deptree.c	2007/11/27 20:57:05	1.33
-@@ -95,6 +95,9 @@
- 	uint32_t major;
- 	uint32_t minor;
- 
-+	uint32_t read_ahead;
-+	uint32_t read_ahead_flags;
-+
- 	unsigned segment_count;
- 	struct list segs;
- 
-@@ -609,6 +612,8 @@
- 	}
- 
- 	dnode->props.read_only = read_only ? 1 : 0;
-+	dnode->props.read_ahead = DM_READ_AHEAD_AUTO;
-+	dnode->props.read_ahead_flags = 0;
- 
- 	if (clear_inactive && !_node_clear_table(dnode))
- 		return_NULL;
-@@ -618,6 +623,14 @@
- 	return dnode;
- }
- 
-+void dm_tree_node_set_read_ahead(struct dm_tree_node *dnode,
-+				 uint32_t read_ahead,
-+				 uint32_t read_ahead_flags)
-+{                          
-+	dnode->props.read_ahead = read_ahead;
-+	dnode->props.read_ahead_flags = read_ahead_flags;
-+}
-+
- int dm_tree_add_dev(struct dm_tree *dtree, uint32_t major, uint32_t minor)
- {
- 	return _add_dev(dtree, &dtree->root, major, minor) ? 1 : 0;
-@@ -875,6 +888,7 @@
- 
- /* FIXME Merge with _suspend_node? */
- static int _resume_node(const char *name, uint32_t major, uint32_t minor,
-+			uint32_t read_ahead, uint32_t read_ahead_flags,
- 			struct dm_info *newinfo)
- {
- 	struct dm_task *dmt;
-@@ -896,6 +910,9 @@
- 	if (!dm_task_no_open_count(dmt))
- 		log_error("Failed to disable open_count");
- 
-+	if (!dm_task_set_read_ahead(dmt, read_ahead, read_ahead_flags))
-+		log_error("Failed to set read ahead");
-+
- 	if ((r = dm_task_run(dmt)))
- 		r = dm_task_get_info(dmt, newinfo);
- 
-@@ -1136,7 +1153,9 @@
- 			if (!child->info.inactive_table && !child->info.suspended)
- 				continue;
- 
--			if (!_resume_node(name, child->info.major, child->info.minor, &newinfo)) {
-+			if (!_resume_node(name, child->info.major, child->info.minor,
-+					  child->props.read_ahead,
-+					  child->props.read_ahead_flags, &newinfo)) {
- 				log_error("Unable to resume %s (%" PRIu32
- 					  ":%" PRIu32 ")", name, child->info.major,
- 					  child->info.minor);
-@@ -1527,7 +1546,9 @@
- 		if (!child->info.inactive_table && !child->info.suspended)
- 			continue;
- 
--		if (!_resume_node(name, child->info.major, child->info.minor, &newinfo)) {
-+		if (!_resume_node(name, child->info.major, child->info.minor,
-+				  child->props.read_ahead,
-+				  child->props.read_ahead_flags, &newinfo)) {
- 			log_error("Unable to resume %s (%" PRIu32
- 				  ":%" PRIu32 ")", name, child->info.major,
- 				  child->info.minor);
---- device-mapper/lib/ioctl/libdm-iface.c	2007/08/21 16:26:07	1.46
-+++ device-mapper/lib/ioctl/libdm-iface.c	2007/11/27 20:57:05	1.47
-@@ -920,6 +920,14 @@
- 	return 1;
- }
- 
-+uint32_t dm_task_get_read_ahead(const struct dm_task *dmt)
-+{              
-+	uint32_t read_ahead = 0; //FIXME default?  How cope with failure below?
-+	// FIXME (void) dm_blockdev_get_read_ahead(dmt->dev_name, &read_ahead);
-+
-+	return read_ahead;
-+}
-+
- const char *dm_task_get_name(const struct dm_task *dmt)
- {
- #ifdef DM_COMPAT
-@@ -974,6 +982,15 @@
- 	return 1;
- }
- 
-+int dm_task_set_read_ahead(struct dm_task *dmt, uint32_t read_ahead,
-+			   uint32_t read_ahead_flags)
-+{
-+	dmt->read_ahead = read_ahead;
-+	dmt->read_ahead_flags = read_ahead_flags;
-+
-+	return 1;
-+}
-+
- int dm_task_suppress_identical_reload(struct dm_task *dmt)
- {
- 	dmt->suppress_identical_reload = 1;
---- device-mapper/lib/ioctl/libdm-targets.h	2007/08/21 16:26:07	1.21
-+++ device-mapper/lib/ioctl/libdm-targets.h	2007/11/27 20:57:05	1.22
-@@ -44,6 +44,8 @@
- 	uid_t uid;
- 	gid_t gid;
- 	mode_t mode;
-+	uint32_t read_ahead;
-+	uint32_t read_ahead_flags;
- 	union {
- 		struct dm_ioctl *v4;
- 		struct dm_ioctl_v1 *v1;
---- device-mapper/man/dmsetup.8	2007/10/09 12:14:48	1.18
-+++ device-mapper/man/dmsetup.8	2007/11/27 20:57:05	1.19
-@@ -114,6 +114,9 @@
- .IP \fB-r|--readonly
- .br
- Set the table being loaded read-only.
-+.IP \fB--readahead\ <sectors>
-+.br    
-+Specify read ahead size in units of sectors.
- .IP \fB--table\ <table>
- .br
- Specify a one-line table directly on the command line.
+Hi Ben,
+
+They do change names, the thing is that when the drivers are first=20
+loaded at boot time, /dev/dm-0 gets multipathed and mapped to=20
+/dev/mpath/mpath0 and /dev/mapper/mpath0
+Afterwards when there's a context switch to userspace, /dev/dm-2 gets=20
+multipathed and mapped to whatever alias I would have in multipath.conf=20
+(I could have blacklisted dm-2).
+
+[root@m07 ~]# df -h
+Filesystem            Size  Used Avail Use% Mounted on
+/dev/dm-2             3.8G  1.8G  1.9G  48% /
+/dev/dm-1              99M   24M   70M  26% /boot
+/dev/sde1              92G  188M   87G   1% /log
+tmpfs                1014M     0 1014M   0% /dev/shm
+
+
+So what I did was first change the table (modifying the init script of=20
+the initrd), and booted.
+Then I've issued a dmsetup rename and afterwards a mkinitrd. I've also=20
+edited the multipath.conf in order to blacklist by WWID the local SAS=20
+disk and the boot LUN, and also defined some policies for the FC SAN I'm =
+
+using (IBM DS4700), and booted.
+
+This is now what I have:
+
+[root@m07 ~]# multipath -ll
+SRV07_BOOT () dm-0 IBM,1814      FAStT
+[size=3D4.0G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 2:0:0:0 sda 8:0   [active][ready]
+ \_ 3:0:0:0 sdc 8:32  [active][ready]
+\_ round-robin 0 [prio=3D6][active]
+ \_ 2:0:1:0 sdb 8:16  [active][ready]
+ \_ 3:0:1:0 sdd 8:48  [active][ready]
+
+[root@m07 ~]# cat /etc/multipath.conf
+defaults {
+        udev_dir                /dev
+        polling_interval        2
+        selector                "round-robin 0"
+        path_grouping_policy    multibus
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        prio_callout            /bin/true
+        path_checker            readsector0
+        rr_min_io               100
+        rr_weight               priorities
+        failback                immediate
+        no_path_retry           fail
+        user_friendly_name      yes
+}
+
+blacklist {
+        # Blacklist the local disk
+        wwid 35000c500057cd8d3
+        # Blacklist the root disk
+        wwid 3600a0b8000295d64000009304742b4c8
+        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+        devnode "^hd[a-z]"
+        devnode "^cciss!c[0-9]d[0-9]*"
+}
+
+devices {
+        device {
+                vendor                  "IBM"
+                product                 "1814      FAStT"
+                path_grouping_policy    group_by_serial
+                path_checker            tur
+                prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
+                no_path_retry           queue
+        }
+}
+
+
+Pedro Bandim Faustino
+email/sip: pedro.faustino@fccn.pt
+www.fccn.pt
+=20
+Aviso de Confidencialidade
+=20
+Esta mensagem =E9 exclusivamente destinada ao seu destinat=E1rio, podendo=
+ conter informa=E7=E3o CONFIDENCIAL, cuja divulga=E7=E3o est=E1 expressam=
+ente vedada nos termos da lei. Caso tenha recepcionado indevidamente esta=
+ mensagem, solicitamos-lhe que nos comunique esse mesmo facto por esta vi=
+a ou para o telefone +351 218440100 devendo apagar o seu conte=FAdo de im=
+ediato. This message is intended exclusively for its addressee. It may co=
+ntain CONFIDENTIAL information protected by law. If this message has been=
+ received by error, please notify us via e-mail or by telephone +351 2184=
+40100 and delete it immediately.
+
+
+
+Benjamin Marzinski wrote:
+> On Tue, Nov 27, 2007 at 09:31:51AM +0000, Pedro Bandim Faustino wrote:
+>  =20
+>> Stefan Bader wrote:
+>>    =20
+>>> You should be able to change the name by creating a multipaths sectio=
+n=20
+>>> like below
+>>>
+>>> multipaths {
+>>>    multipath {
+>>>        wwid "3600a0b8000295d64000009304742b4c8"
+>>>        alias "SRV07_BOOT"
+>>>    }
+>>> }
+>>>
+>>> If that does not work as expected, you might have to say "no" to the =
+
+>>> user friendly names option.
+>>>      =20
+>> Hi Stefan,
+>> I've tried that, but what happens is that once the multipathd starts=20
+>> I'll have duplicate multipaths, the one at boot time and this one by=20
+>> multipathd, with different names.
+>>
+>>    =20
+>
+> If you add aliases to the multipaths section, like Stefan decribed, and=
+
+> then rerun multipath, do the devices change names to given aliases? The=
+y
+> should.  Then, you should be able to remake the initrd, and reboot and
+> just see the alias.  If you try this, and it doesn't work, let me know.=
+
+>
+> -Ben
+>  =20
+
+
+--------------ms060602010600090404000009
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIIgzCC
+ApwwggIFoAMCAQICEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEFBQAwYjELMAkGA1UE
+BhMCWkExJTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMT
+I1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBJc3N1aW5nIENBMB4XDTA3MDMwODE3MDMzN1oX
+DTA4MDMwNzE3MDMzN1owgYExGDAWBgNVBAQTD0JhbmRpbSBGYXVzdGlubzEWMBQGA1UEKhMN
+UGVkcm8gRW1hbnVlbDEmMCQGA1UEAxMdUGVkcm8gRW1hbnVlbCBCYW5kaW0gRmF1c3Rpbm8x
+JTAjBgkqhkiG9w0BCQEWFnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwgZ8wDQYJKoZIhvcNAQEB
+BQADgY0AMIGJAoGBALs9bU3kCFFNuwq4D31is437qoll+zTat9251PNiVr9tvgJVUcCXVXWh
+RA6Vtg9ZM3h6ojtSAWKKmBHwPI5tpbDSGiTxk/jZDmR3YnpGIJV/6ajVLqwOcPGAdtbC/KzU
+8QKxvM3e5ned845LALXxhF15HhJMq2qremQvx2czCfNNAgMBAAGjMzAxMCEGA1UdEQQaMBiB
+FnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwDAYDVR0TAQH/BAIwADANBgkqhkiG9w0BAQUFAAOB
+gQBSo8NmLL0DB6y/hfUP1gPE4NVlcEFanJNP5BMHbxdnhpoQ5DSKIfXxtivbt4VROgcpWAmO
+S8BVI0P7TDKoZV37lptD1A5QTsaR24f4zj/h57MvDx5RowUMcTv+WLWTB4hQ6vEXQnAj25ka
+lx1aRWclOBP6t5UmuLlmwhOEEwrvxTCCApwwggIFoAMCAQICEHdhA6xMoKDlvViilbLaSmYw
+DQYJKoZIhvcNAQEFBQAwYjELMAkGA1UEBhMCWkExJTAjBgNVBAoTHFRoYXd0ZSBDb25zdWx0
+aW5nIChQdHkpIEx0ZC4xLDAqBgNVBAMTI1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBJc3N1
+aW5nIENBMB4XDTA3MDMwODE3MDMzN1oXDTA4MDMwNzE3MDMzN1owgYExGDAWBgNVBAQTD0Jh
+bmRpbSBGYXVzdGlubzEWMBQGA1UEKhMNUGVkcm8gRW1hbnVlbDEmMCQGA1UEAxMdUGVkcm8g
+RW1hbnVlbCBCYW5kaW0gRmF1c3Rpbm8xJTAjBgkqhkiG9w0BCQEWFnBlZHJvLmZhdXN0aW5v
+QGZjY24ucHQwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALs9bU3kCFFNuwq4D31is437
+qoll+zTat9251PNiVr9tvgJVUcCXVXWhRA6Vtg9ZM3h6ojtSAWKKmBHwPI5tpbDSGiTxk/jZ
+DmR3YnpGIJV/6ajVLqwOcPGAdtbC/KzU8QKxvM3e5ned845LALXxhF15HhJMq2qremQvx2cz
+CfNNAgMBAAGjMzAxMCEGA1UdEQQaMBiBFnBlZHJvLmZhdXN0aW5vQGZjY24ucHQwDAYDVR0T
+AQH/BAIwADANBgkqhkiG9w0BAQUFAAOBgQBSo8NmLL0DB6y/hfUP1gPE4NVlcEFanJNP5BMH
+bxdnhpoQ5DSKIfXxtivbt4VROgcpWAmOS8BVI0P7TDKoZV37lptD1A5QTsaR24f4zj/h57Mv
+Dx5RowUMcTv+WLWTB4hQ6vEXQnAj25kalx1aRWclOBP6t5UmuLlmwhOEEwrvxTCCAz8wggKo
+oAMCAQICAQ0wDQYJKoZIhvcNAQEFBQAwgdExCzAJBgNVBAYTAlpBMRUwEwYDVQQIEwxXZXN0
+ZXJuIENhcGUxEjAQBgNVBAcTCUNhcGUgVG93bjEaMBgGA1UEChMRVGhhd3RlIENvbnN1bHRp
+bmcxKDAmBgNVBAsTH0NlcnRpZmljYXRpb24gU2VydmljZXMgRGl2aXNpb24xJDAiBgNVBAMT
+G1RoYXd0ZSBQZXJzb25hbCBGcmVlbWFpbCBDQTErMCkGCSqGSIb3DQEJARYccGVyc29uYWwt
+ZnJlZW1haWxAdGhhd3RlLmNvbTAeFw0wMzA3MTcwMDAwMDBaFw0xMzA3MTYyMzU5NTlaMGIx
+CzAJBgNVBAYTAlpBMSUwIwYDVQQKExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSww
+KgYDVQQDEyNUaGF3dGUgUGVyc29uYWwgRnJlZW1haWwgSXNzdWluZyBDQTCBnzANBgkqhkiG
+9w0BAQEFAAOBjQAwgYkCgYEAxKY8VXNV+065yplaHmjAdQRwnd/p/6Me7L3N9VvyGna9fww6
+YfK/Uc4B1OVQCjDXAmNaLIkVcI7dyfArhVqqP3FWy688Cwfn8R+RNiQqE88r1fOCdz0Dviv+
+uxg+B79AgAJk16emu59l0cUqVIUPSAR/p7bRPGEEQB5kGXJgt/sCAwEAAaOBlDCBkTASBgNV
+HRMBAf8ECDAGAQH/AgEAMEMGA1UdHwQ8MDowOKA2oDSGMmh0dHA6Ly9jcmwudGhhd3RlLmNv
+bS9UaGF3dGVQZXJzb25hbEZyZWVtYWlsQ0EuY3JsMAsGA1UdDwQEAwIBBjApBgNVHREEIjAg
+pB4wHDEaMBgGA1UEAxMRUHJpdmF0ZUxhYmVsMi0xMzgwDQYJKoZIhvcNAQEFBQADgYEASIzR
+UIPqCy7MDaNmrGcPf6+svsIXoUOWlJ1/TCG4+DYfqi2fNi/A9BxQIJNwPP2t4WFiw9k6GX6E
+sZkbAMUaC4J0niVQlGLH2ydxVyWN3amcOY6MIE9lX5Xa9/eH1sYITq726jTlEBpbNU1341Yh
+eILcIRk13iSx0x1G/11fZU8xggLjMIIC3wIBATB2MGIxCzAJBgNVBAYTAlpBMSUwIwYDVQQK
+ExxUaGF3dGUgQ29uc3VsdGluZyAoUHR5KSBMdGQuMSwwKgYDVQQDEyNUaGF3dGUgUGVyc29u
+YWwgRnJlZW1haWwgSXNzdWluZyBDQQIQd2EDrEygoOW9WKKVstpKZjAJBgUrDgMCGgUAoIIB
+wzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwGCSqGSIb3DQEJBTEPFw0wNzExMjgxMDMy
+MDBaMCMGCSqGSIb3DQEJBDEWBBSleJCWfmwdpBEtdHT7+VH0LhSWYTBSBgkqhkiG9w0BCQ8x
+RTBDMAoGCCqGSIb3DQMHMA4GCCqGSIb3DQMCAgIAgDANBggqhkiG9w0DAgIBQDAHBgUrDgMC
+BzANBggqhkiG9w0DAgIBKDCBhQYJKwYBBAGCNxAEMXgwdjBiMQswCQYDVQQGEwJaQTElMCMG
+A1UEChMcVGhhd3RlIENvbnN1bHRpbmcgKFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBl
+cnNvbmFsIEZyZWVtYWlsIElzc3VpbmcgQ0ECEHdhA6xMoKDlvViilbLaSmYwgYcGCyqGSIb3
+DQEJEAILMXigdjBiMQswCQYDVQQGEwJaQTElMCMGA1UEChMcVGhhd3RlIENvbnN1bHRpbmcg
+KFB0eSkgTHRkLjEsMCoGA1UEAxMjVGhhd3RlIFBlcnNvbmFsIEZyZWVtYWlsIElzc3Vpbmcg
+Q0ECEHdhA6xMoKDlvViilbLaSmYwDQYJKoZIhvcNAQEBBQAEgYAWJiacC9LzSPWm/i6QqW+t
+4h3JGaYhdg+z/VTnAJJcip0/A0ofXV6Baex3uUo1DwzNQa4XiGpllTZ8AU9K3FLZSygkW/Eo
+Dd04us06M2bZ9G1MhtB5JL93TnXfPk2HUirUM4B8DYq7/+s/7l7+STQUe0TEuHKVJPixY6Hk
+wybKTAAAAAAAAA==
+--------------ms060602010600090404000009--
+
+
+--===============1272674171==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1272674171==--
