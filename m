@@ -1,16 +1,9 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 09/28] blk_end_request: changing ps3disk
-	(take 3)
-Date: Mon, 03 Dec 2007 17:55:44 -0500 (EST)
-Message-ID: <20071203.175544.13775421.k-ueda@ct.jp.nec.com>
-References: <20071130.182810.98558485.k-ueda@ct.jp.nec.com>
-	<Pine.LNX.4.64.0712021032490.29349@anakin>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/path_priority/pp_netapp Makefile
+Date: 3 Dec 2007 23:11:52 -0000
+Message-ID: <20071203231152.23975.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0712021032490.29349@anakin>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,44 +13,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Geert.Uytterhoeven@sonycom.com
-Cc: linux-scsi@vger.kernel.org, linuxppc-dev@ozlabs.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, bharrosh@panasas.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Geert,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2007-12-03 23:11:51
 
-On Sun, 2 Dec 2007 10:34:56 +0100 (CET), Geert Uytterhoeven <Geert.Uytterhoeven@sonycom.com> wrote:
-> On Fri, 30 Nov 2007, Kiyoshi Ueda wrote:
-> > This patch converts ps3disk to use blk_end_request().
->                                      ^^^^^^^^^^^^^^^
-> Patch subject and description are inconsistent with actual change.
-> 
-> > Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-> > Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> > ---
-> >  drivers/block/ps3disk.c |    6 +-----
-> >  1 files changed, 1 insertion(+), 5 deletions(-)
-> > 
-> > Index: 2.6.24-rc3-mm2/drivers/block/ps3disk.c
-> > ===================================================================
-> > --- 2.6.24-rc3-mm2.orig/drivers/block/ps3disk.c
-> > +++ 2.6.24-rc3-mm2/drivers/block/ps3disk.c
-> > @@ -280,11 +280,7 @@ static irqreturn_t ps3disk_interrupt(int
-> >  	}
-> >  
-> >  	spin_lock(&priv->lock);
-> > -	if (!end_that_request_first(req, uptodate, num_sectors)) {
-> > -		add_disk_randomness(req->rq_disk);
-> > -		blkdev_dequeue_request(req);
-> > -		end_that_request_last(req, uptodate);
-> > -	}
-> > +	__blk_end_request(req, uptodate, num_sectors << 9);
->       ^^^^^^^^^^^^^^^^^
+Modified files:
+	path_priority/pp_netapp: Makefile 
 
-Thank you for the comment.
-The description meant the blk_end_request family, not actual function,
-blk_end_request().  But as you pointed out, it is misleading.
-I'll change the description of all related patches.
+Log message:
+	fix Makefile.
 
-Thanks,
-Kiyoshi Ueda
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.4&r2=1.2.2.5
+
+--- multipath-tools/path_priority/pp_netapp/Makefile	2007/10/10 16:52:41	1.2.2.4
++++ multipath-tools/path_priority/pp_netapp/Makefile	2007/12/03 23:11:51	1.2.2.5
+@@ -17,11 +17,14 @@
+ install: $(EXEC)
+ 	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
+ 	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
+-	ln -sf $(DESTDIR)$(bindir)/$(EXEC) $(DESTDIR)$(bindir)/mpath_prio_netapp
+-	ln -sf $(DESTDIR)$(bindir)/$(EXEC).static $(DESTDIR)$(bindir)/mpath_prio_netapp.static
++	ln -sf $(EXEC) $(DESTDIR)$(bindir)/mpath_prio_netapp
++	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/mpath_prio_netapp.static
+ 
+ uninstall:
+ 	rm $(DESTDIR)$(bindir)/$(EXEC)
+ 	rm $(DESTDIR)$(bindir)/$(EXEC).static
++	rm $(DESTDIR)$(bindir)/mpath_prio_netapp
++	rm $(DESTDIR)$(bindir)/mpath_prio_netapp.static
++
+ clean:	
+ 	rm -f *.o $(EXEC) $(EXEC).static
