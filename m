@@ -1,38 +1,41 @@
-From: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-Subject: Re: [PATCH 26/28] blk_end_request: changing ide-cd (take 3)
-Date: Mon, 03 Dec 2007 18:55:48 +0300
-Message-ID: <47542704.2030602@ru.mvista.com>
-References: <20071130.183447.82055860.k-ueda@ct.jp.nec.com> <200712012342.52134.bzolnier@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <200712012342.52134.bzolnier@gmail.com>
-Sender: linux-ide-owner@vger.kernel.org
-To: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, jens.axboe@oracle.com, bharrosh@panasas.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
+From: agk@sourceware.org
+Subject: device-mapper/lib libdm-common.c
+Date: 3 Dec 2007 17:56:37 -0000
+Message-ID: <20071203175637.2298.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Bartlomiej Zolnierkiewicz wrote:
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-12-03 17:56:37
 
-> [PATCH] ide-cd: remove dead post_transform_command()
+Modified files:
+	lib            : libdm-common.c 
 
-> post_transform_command() call in cdrom_newpc_intr() has no effect because
-> it is done after the request has already been fully completed (rq->bio and
-> rq->data are always NULL).  It was verified to be true regardless whether
-> INQUIRY command is using DMA or PIO to transfer data (by using modified
-> Tejun Heo's test-shortsg.c utility and adding a few printk()-s to ide-cd).
+Log message:
+	missing #include
 
-> This was uncovered thanks to the "blk_end_request: full I/O completion
-> handler (take 3)" patch series from Kiyoshi Ueda.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-common.c.diff?cvsroot=dm&r1=1.51&r2=1.52
 
-> Cc: jens.axboe@oracle.com
-> Cc: bharrosh@panasas.com
-> Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com
-> Cc: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Tejun Heo <htejun@gmail.com>
-> Signed-off-by: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-
-Acked-by: Sergei Shtylyov <sshtylyov@ru.mvista.com>
-
-MBR, Sergei
+--- device-mapper/lib/libdm-common.c	2007/11/30 16:44:42	1.51
++++ device-mapper/lib/libdm-common.c	2007/12/03 17:56:36	1.52
+@@ -21,6 +21,7 @@
+ 
+ #include <stdarg.h>
+ #include <sys/param.h>
++#include <sys/ioctl.h>
+ #include <fcntl.h>
+ 
+ #include <linux/dm-ioctl.h>
