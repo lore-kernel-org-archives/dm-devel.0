@@ -1,8 +1,8 @@
-From: Jens Axboe <jens.axboe@oracle.com>
+From: Jens Axboe <axboe@kernel.dk>
 Subject: Re: [PATCH 00/28] blk_end_request: full I/O completion handler
 	(take 3)
-Date: Tue, 4 Dec 2007 13:06:13 +0100
-Message-ID: <20071204120612.GP23294@kernel.dk>
+Date: Tue, 4 Dec 2007 13:16:23 +0100
+Message-ID: <20071204121623.GQ23294@kernel.dk>
 References: <20071130.182351.115904044.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -23,8 +23,27 @@ On Fri, Nov 30 2007, Kiyoshi Ueda wrote:
 > Do you agree the implementation of blk_end_request()?
 > If there's no problem, could you merge it to your tree?
 > Or does it have to be merged to -mm tree first?
+> 
+> 
+> Boaz,
+> Could you review the newly added PATCH 27 which converts the bidi part,
+> and give me your comments?
+> It uses blk_end_request_callback() in PATCH 25, which was only for
+> the tricky ide-cd driver.
+> If bidi added a 'resid' member to struct request instead of reusing
+> 'data_len' for the other purpose, it could use the standard
+> blk_end_request() instead.
+> 
+> ------------------ Changes from the previous post ---------------------
+> Changes between take2 and take3:
+>   o Rebased on top of 2.6.24-rc3-mm2
 
-Looks good to me now, I'll queue it up. Thanks!
+OK, so this means that I can't apply it unfortunately. It depends on
+other patches in -mm (bidi).
+
+SCSI sits on block, so the best approach imho is to base this patchset
+on mainline so I can include the block bits.
+
 
 -- 
 Jens Axboe
