@@ -1,9 +1,15 @@
-From: agk@sourceware.org
-Subject: device-mapper VERSION WHATS_NEW
-Date: 5 Dec 2007 17:14:31 -0000
-Message-ID: <20071205171431.25033.qmail@sourceware.org>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: Re: [PATCH 1/2] add stripe end_io function and event
+	trigger
+Date: Wed, 5 Dec 2007 09:57:08 -0800
+Message-ID: <20071205175708.GA12022@linux.vnet.ibm.com>
+References: <D44F48C7D79D2943A073C8FA0F49A3CC01A1DFE8@orsmsx418.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC01A1DFE8@orsmsx418.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,34 +19,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-12-05 17:14:31
+Wood, Brian J <brian.j.wood@intel.com> wrote:
+> +static void trigger_event(struct work_struct *work)
+> +{
+> +	int i, len;
+> +	char dev_path[DEV_STR_LEN];
+> +	struct stripe_c *sc = container_of(work, struct stripe_c,
+> kstriped_ws);
 
-Modified files:
-	.              : VERSION WHATS_NEW 
+It appears your mailer is breaking lines which leads to hand edits prior
+to trying to apply the patch.
 
-Log message:
-	post-release
+Your patch also appears to be adding extra whitespace. You want to run
+checkpatch.pl prior to sending the patch out and correct all issues
+listed.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.129&r2=1.130
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.213&r2=1.214
+> +		/* Finally as a last check, see if the inode mode is set
+> 
+> +		 * to be a block device, record error if not */
 
---- device-mapper/VERSION	2007/12/05 17:05:04	1.129
-+++ device-mapper/VERSION	2007/12/05 17:14:30	1.130
-@@ -1 +1 @@
--1.02.23-cvs (2007-12-05)
-+1.02.24-cvs (2007-12-05)
---- device-mapper/WHATS_NEW	2007/12/05 17:05:04	1.213
-+++ device-mapper/WHATS_NEW	2007/12/05 17:14:30	1.214
-@@ -1,3 +1,6 @@
-+Version 1.02.24 -
-+===================================
-+
- Version 1.02.23 - 5th December 2007
- ===================================
-   Update dm-ioctl.h after removal of compat code.
+> +		if (!S_ISBLK(inode->i_mode)) {
+> +			atomic_inc(&(sc->stripe[i].error_count));
+> +		}
+
+Code comment style and extra bracing.
+
+http://sources.redhat.com/lvm2/wiki/KernelPatchGuidelines
+
+
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
