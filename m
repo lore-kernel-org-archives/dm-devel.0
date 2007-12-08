@@ -1,9 +1,15 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath parser.c
-Date: 7 Dec 2007 23:57:05 -0000
-Message-ID: <20071207235705.5597.qmail@sourceware.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH 1/2] dm: add stripe end_io function and event
+	trigger
+Date: Sat, 8 Dec 2007 03:32:16 +0000
+Message-ID: <20071208033215.GF22311@agk.fab.redhat.com>
+References: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F93@orsmsx418.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F93@orsmsx418.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,64 +19,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: "Wood, Brian J" <brian.j.wood@intel.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2007-12-07 23:57:05
+On Fri, Dec 07, 2007 at 12:10:51PM -0800, Wood, Brian J wrote:
+> +static void trigger_event(struct work_struct *work)
 
-Modified files:
-	libmultipath   : parser.c 
+> +	/* Test to see which stripe drive triggered the event. */
+> +	for (i = 0; i < sc->stripes; i++) {
+> +		memset(dev_path, 0, DEV_STR_LEN);
+> +		memcpy(dev_path, "/dev/", len = strlen("/dev/"));
+> +		/* Copy name of the drive stored in the gendisk
+> structure
+> +		 * (this is the same name as what is stored in the
+> +		 * /proc and /sysfs filesystems */
+> +		memcpy(dev_path+len,
+> +			sc->stripe[i].dev->bdev->bd_disk->disk_name,
 
-Log message:
-	Fix for bz335021. Multipath not ignores nonascii characters in
-	/etc/multipath.conf
+I'm afraid I don't understand what's going on here.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/parser.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18&r2=1.18.2.1
+Inode/name lookups have caused dm plenty of trouble in the past from
+memory and locking problems so we go out of our way to avoid them.
+Only pre-existing fields (like 'name') should be used as device
+references.  (And how does that loop work with the error counting?)
 
---- multipath-tools/libmultipath/parser.c	2006/06/06 18:32:43	1.18
-+++ multipath-tools/libmultipath/parser.c	2007/12/07 23:57:03	1.18.2.1
-@@ -2,7 +2,7 @@
-  * Part:        Configuration file parser/reader. Place into the dynamic
-  *              data structure representation the conf file
-  *  
-- * Version:     $Id: parser.c,v 1.18 2006/06/06 18:32:43 bmarzins Exp $
-+ * Version:     $Id: parser.c,v 1.18.2.1 2007/12/07 23:57:03 bmarzins Exp $
-  * 
-  * Author:      Alexandre Cassen, <acassen@linux-vs.org>
-  *              
-@@ -203,7 +203,7 @@
- 	cp = string;
- 
- 	/* Skip white spaces */
--	while (isspace((int) *cp) && *cp != '\0')
-+	while ((isspace((int) *cp) || !isascii((int) *cp)) && *cp != '\0')
- 		cp++;
- 
- 	/* Return if there is only white spaces */
-@@ -241,8 +241,10 @@
- 				in_string = 1;
- 
- 		} else {
--			while ((in_string || !isspace((int) *cp)) && *cp
--				!= '\0' && *cp != '"')
-+			while ((in_string ||
-+				(!isspace((int) *cp) && isascii((int) *cp) &&
-+				 *cp != '!' && *cp != '#')) &&
-+			       *cp != '\0' && *cp != '"')
- 				cp++;
- 			strlen = cp - start;
- 			token = MALLOC(strlen + 1);
-@@ -255,7 +257,8 @@
- 		}
- 		vector_set_slot(strvec, token);
- 
--		while (isspace((int) *cp) && *cp != '\0')
-+		while ((isspace((int) *cp) || !isascii((int) *cp))
-+		       && *cp != '\0')
- 			cp++;
- 		if (*cp == '\0' || *cp == '!' || *cp == '#')
- 			return strvec;
+> +	/* Trigger event to let dmeventd daemon know to
+> +	 * check device status when stripe's DSO is registered*/
+
+(The kernel is independent of any userspace implementation, so we
+avoid references to specific choices of userspace daemons.  You
+can however include reference examples like that in the patch header.)
+
+> +	 * disconnected this sets "error == -5" */
+
+The symbolic representation of -5 is?
+
+Alasdair
+-- 
+agk@redhat.com
