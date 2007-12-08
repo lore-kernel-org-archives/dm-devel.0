@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 2/2] dm: add additional info to end of status
-	line
-Date: Sat, 8 Dec 2007 03:48:12 +0000
-Message-ID: <20071208034812.GG22311@agk.fab.redhat.com>
-References: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F94@orsmsx418.amr.corp.intel.com>
+From: Bob Bell <Bell_Robert@emc.com>
+Subject: dmsetup load not working?
+Date: Sat, 8 Dec 2007 11:24:40 -0500
+Message-ID: <20071208162439.GA3964@newbie.thebellsplace.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F94@orsmsx418.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,47 +16,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Wood, Brian J" <brian.j.wood@intel.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Dec 07, 2007 at 12:10:52PM -0800, Wood, Brian J wrote:
-> This patch adds additional information to the status line. 
+I'm using a SLES10 SP1 x86_64 system, and I'm been using dmsetup 
+intensively for the first time.  From what I can tell, `dmsetup load` 
+just doesn't seem to work; it doesn't seem to have any effect.
 
-Looks fine!
+Below is the simplest case I could think to come up with to illustrate 
+this issue.  Could anyone help me here?  Am I doing something wrong?
 
-> Here is a sample of what is returned with a mirror:
-> isw_eeaaabgfg_mirror: 0 488390920 mirror 2 8:16 8:32 3727/3727 1 AA 1
-> core
-> here is what is returned with this patch for a stripe:  
-> isw_dheeijjdej_stripe: 0 976783872 striped 2 8:16 8:32 AA
+brick14b:~ # dd if=/dev/zero of=loopfile bs=1M count=100
+100+0 records in
+100+0 records out
+104857600 bytes (105 MB) copied, 0.269968 seconds, 388 MB/s
+brick14b:~ # losetup /dev/loop1 loopfile
+brick14b:~ # dmsetup create loop --table "0 $(blockdev --getsize /dev/loop1) linear /dev/loop1 0"
+brick14b:~ # dmsetup create loop2 --notable
+brick14b:~ # dmsetup table loop
+0 204800 linear 7:1 0
+brick14b:~ # dmsetup table loop2
 
-Add a '1' (group word count) before the 'AA'?
-(For future compatibility - if we decided to drop it, we'd just change
-the 1 to 0 and add new parameters after that.)
- 
-The *_ctr functions have comments like:
-/*
- * Construct a mirror mapping:
- *
- * log_type #log_params <log_params>
- * #mirrors [mirror_path offset]{2,}
- * [#features <features>]
- *
- * log_type is "core" or "disk"
- * #log_params is between 1 and 3
- *
- * If present, features must be "handle_errors".
- */
+brick14b:~ # dmsetup table loop | dmsetup load loop2
+brick14b:~ # echo $?
+0
+brick14b:~ # dmsetup table loop2
 
-We should add similar comments to describe all the STATUSTYPE_INFO
-output some time.
+brick14b:~ # dmsetup info loop2
+Name:              loop2
+State:             ACTIVE
+Tables present:    INACTIVE
+Open count:        0
+Event number:      0
+Major, minor:      253, 11
+Number of targets: 0
 
-Also increment the minor version number (and reset patchlevel to 0)
-in this patch because it extends the userspace interface.
-(But if the two patches go in together, we only need to do this once
-- so I can take care of that.)
+brick14b:~ # 
 
-Alasdair
 -- 
-agk@redhat.com
+Bob Bell
