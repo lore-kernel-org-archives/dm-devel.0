@@ -1,15 +1,15 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/2] dm: add stripe end_io function and event
-	trigger
-Date: Sat, 8 Dec 2007 03:32:16 +0000
-Message-ID: <20071208033215.GF22311@agk.fab.redhat.com>
-References: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F93@orsmsx418.amr.corp.intel.com>
+Subject: Re: [PATCH 2/2] dm: add additional info to end of status
+	line
+Date: Sat, 8 Dec 2007 03:48:12 +0000
+Message-ID: <20071208034812.GG22311@agk.fab.redhat.com>
+References: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F94@orsmsx418.amr.corp.intel.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F93@orsmsx418.amr.corp.intel.com>
+In-Reply-To: <D44F48C7D79D2943A073C8FA0F49A3CC01A86F94@orsmsx418.amr.corp.intel.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,37 +23,42 @@ To: "Wood, Brian J" <brian.j.wood@intel.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Dec 07, 2007 at 12:10:51PM -0800, Wood, Brian J wrote:
-> +static void trigger_event(struct work_struct *work)
+On Fri, Dec 07, 2007 at 12:10:52PM -0800, Wood, Brian J wrote:
+> This patch adds additional information to the status line. 
 
-> +	/* Test to see which stripe drive triggered the event. */
-> +	for (i = 0; i < sc->stripes; i++) {
-> +		memset(dev_path, 0, DEV_STR_LEN);
-> +		memcpy(dev_path, "/dev/", len = strlen("/dev/"));
-> +		/* Copy name of the drive stored in the gendisk
-> structure
-> +		 * (this is the same name as what is stored in the
-> +		 * /proc and /sysfs filesystems */
-> +		memcpy(dev_path+len,
-> +			sc->stripe[i].dev->bdev->bd_disk->disk_name,
+Looks fine!
 
-I'm afraid I don't understand what's going on here.
+> Here is a sample of what is returned with a mirror:
+> isw_eeaaabgfg_mirror: 0 488390920 mirror 2 8:16 8:32 3727/3727 1 AA 1
+> core
+> here is what is returned with this patch for a stripe:  
+> isw_dheeijjdej_stripe: 0 976783872 striped 2 8:16 8:32 AA
 
-Inode/name lookups have caused dm plenty of trouble in the past from
-memory and locking problems so we go out of our way to avoid them.
-Only pre-existing fields (like 'name') should be used as device
-references.  (And how does that loop work with the error counting?)
+Add a '1' (group word count) before the 'AA'?
+(For future compatibility - if we decided to drop it, we'd just change
+the 1 to 0 and add new parameters after that.)
+ 
+The *_ctr functions have comments like:
+/*
+ * Construct a mirror mapping:
+ *
+ * log_type #log_params <log_params>
+ * #mirrors [mirror_path offset]{2,}
+ * [#features <features>]
+ *
+ * log_type is "core" or "disk"
+ * #log_params is between 1 and 3
+ *
+ * If present, features must be "handle_errors".
+ */
 
-> +	/* Trigger event to let dmeventd daemon know to
-> +	 * check device status when stripe's DSO is registered*/
+We should add similar comments to describe all the STATUSTYPE_INFO
+output some time.
 
-(The kernel is independent of any userspace implementation, so we
-avoid references to specific choices of userspace daemons.  You
-can however include reference examples like that in the patch header.)
-
-> +	 * disconnected this sets "error == -5" */
-
-The symbolic representation of -5 is?
+Also increment the minor version number (and reset patchlevel to 0)
+in this patch because it extends the userspace interface.
+(But if the two patches go in together, we only need to do this once
+- so I can take care of that.)
 
 Alasdair
 -- 
