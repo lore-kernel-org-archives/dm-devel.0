@@ -1,16 +1,14 @@
-From: Boaz Harrosh <bharrosh@panasas.com>
-Subject: Re: [PATCH 27/28] blk_end_request: changing scsi
- mid-layer for bidi (take 3)
-Date: Sun, 09 Dec 2007 11:43:31 +0200
-Message-ID: <475BB8C3.9040700@panasas.com>
-References: <47555880.9070902@panasas.com>	<20071205.192611.08317167.k-ueda@ct.jp.nec.com>	<4757BFDC.6090502@panasas.com>
-	<20071206.144417.41628995.k-ueda@ct.jp.nec.com>
+From: berthiaume_wayne@emc.com
+Subject: RE: Black listing CLARiiON "LUNZ"?
+Date: Mon, 10 Dec 2007 09:51:03 -0500
+Message-ID: <D364D39DAD21D444BAE2C70919B62809086CD7BC@CORPUSMX40A.corp.emc.com>
+References: <940B4FF1F5958E4F96FC83C055A2F2611B8DA9@exch-2003.incipient.waltham>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0975528259=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20071206.144417.41628995.k-ueda@ct.jp.nec.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <940B4FF1F5958E4F96FC83C055A2F2611B8DA9@exch-2003.incipient.waltham>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,213 +18,260 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Dec 06 2007 at 21:44 +0200, Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
-> Hi Boaz, Jens,
-> 
-> On Thu, 06 Dec 2007 11:24:44 +0200, Boaz Harrosh <bharrosh@panasas.com> wrote:
->>> Index: 2.6.24-rc3-mm2/drivers/scsi/scsi_lib.c
-<snip>
->> No I don't like it. The only client left for blk_end_request_callback()
->> is bidi,
-> 
-> ide-cd (cdrom_newpc_intr) is another client.
-> So I can't drop blk_end_request_callback() even if bidi doesn't use it.
-> 
-It looks like all is needed for the ide-cd case is a flag that says
-"don't complete the request". And the call-back is not actually used.
-(Inspecting the last: [PATCH 26/28] blk_end_request: changing ide-cd (take 3))
-The same exact flag could also help the bidi case. Perhaps have an API
-for that?
+This is a multi-part message in MIME format.
 
-<snip>
-> 
-> Index: 2.6.24-rc3-mm2/drivers/scsi/scsi_lib.c
-> ===================================================================
-> --- 2.6.24-rc3-mm2.orig/drivers/scsi/scsi_lib.c
-> +++ 2.6.24-rc3-mm2/drivers/scsi/scsi_lib.c
-> @@ -629,28 +629,6 @@ void scsi_run_host_queues(struct Scsi_Ho
->  		scsi_run_queue(sdev->request_queue);
->  }
->  
-> -static void scsi_finalize_request(struct scsi_cmnd *cmd, int uptodate)
-> -{
-> -	struct request_queue *q = cmd->device->request_queue;
-> -	struct request *req = cmd->request;
-> -	unsigned long flags;
-> -
-> -	add_disk_randomness(req->rq_disk);
-> -
-> -	spin_lock_irqsave(q->queue_lock, flags);
-> -	if (blk_rq_tagged(req))
-> -		blk_queue_end_tag(q, req);
-> -
-> -	end_that_request_last(req, uptodate);
-> -	spin_unlock_irqrestore(q->queue_lock, flags);
-> -
-> -	/*
-> -	 * This will goose the queue request function at the end, so we don't
-> -	 * need to worry about launching another command.
-> -	 */
-> -	scsi_next_command(cmd);
-> -}
-> -
->  /*
->   * Function:    scsi_end_request()
->   *
-> @@ -930,23 +908,25 @@ EXPORT_SYMBOL(scsi_release_buffers);
->  void scsi_end_bidi_request(struct scsi_cmnd *cmd)
->  {
->  	struct request *req = cmd->request;
-> +	unsigned int dlen = req->data_len;
-> +	unsigned int next_dlen = req->next_rq->data_len;
->  
-> -	end_that_request_chunk(req, 1, req->data_len);
->  	req->data_len = scsi_out(cmd)->resid;
-> -
-> -	end_that_request_chunk(req->next_rq, 1, req->next_rq->data_len);
->  	req->next_rq->data_len = scsi_in(cmd)->resid;
->  
-> -	scsi_release_buffers(cmd);
-> -
->  	/*
->  	 *FIXME: If ll_rw_blk.c is changed to also put_request(req->next_rq)
-> -	 *       in end_that_request_last() then this WARN_ON must be removed.
-> +	 *       in blk_end_bidi_request() then this WARN_ON must be removed.
->  	 *       for now, upper-driver must have registered an end_io.
->  	 */
->  	WARN_ON(!req->end_io);
->  
-> -	scsi_finalize_request(cmd, 1);
-> +	if (blk_end_bidi_request(req, 1, dlen, next_dlen))
-> +		/* req has not been completed */
-> +		BUG();
-> +
-> +	scsi_release_buffers(cmd);
-> +	scsi_next_command(cmd);
->  }
->  
->  /*
-> Index: 2.6.24-rc3-mm2/block/ll_rw_blk.c
-> ===================================================================
-> --- 2.6.24-rc3-mm2.orig/block/ll_rw_blk.c
-> +++ 2.6.24-rc3-mm2/block/ll_rw_blk.c
-> @@ -3792,24 +3792,17 @@ static void complete_request(struct requ
->  	if (!list_empty(&rq->queuelist))
->  		blkdev_dequeue_request(rq);
->  
-> +	if (blk_bidi_rq(rq) && !rq->end_io)
-> +		__blk_put_request(rq->next_rq->q, rq->next_rq);
-> +
->  	end_that_request_last(rq, uptodate);
->  }
->  
-> -/**
-> - * blk_end_request - Helper function for drivers to complete the request.
-> - * @rq:       the request being processed
-> - * @uptodate: 1 for success, 0 for I/O error, < 0 for specific error
-> - * @nr_bytes: number of bytes to complete
-> - *
-> - * Description:
-> - *     Ends I/O on a number of bytes attached to @rq.
-> - *     If @rq has leftover, sets it up for the next range of segments.
-> - *
-> - * Return:
-> - *     0 - we are done with this request
-> - *     1 - still buffers pending for this request
-> - **/
-> -int blk_end_request(struct request *rq, int uptodate, int nr_bytes)
-> +/*
-> + * Internal function
-> + */
-> +static int blk_end_io(struct request *rq, int uptodate, int nr_bytes,
-> +		      int bidi_bytes, int (drv_callback)(struct request *))
->  {
->  	struct request_queue *q = rq->q;
->  	unsigned long flags = 0UL;
-> @@ -3817,8 +3810,17 @@ int blk_end_request(struct request *rq, 
->  	if (blk_fs_request(rq) || blk_pc_request(rq)) {
->  		if (__end_that_request_first(rq, uptodate, nr_bytes))
->  			return 1;
-> +
-> +		/* Bidi request must be completed as a whole */
-> +		if (blk_bidi_rq(rq) &&
-> +		    __end_that_request_first(rq->next_rq, uptodate, bidi_bytes))
-> +			return 1;
->  	}
->  
-> +	/* Special feature for tricky drivers */
-> +	if (drv_callback && drv_callback(rq))
-> +		return 1;
-> +
->  	add_disk_randomness(rq->rq_disk);
->  
->  	spin_lock_irqsave(q->queue_lock, flags);
-> @@ -3827,6 +3829,32 @@ int blk_end_request(struct request *rq, 
->  
->  	return 0;
->  }
-> +
-> +int blk_end_bidi_request(struct request *rq, int uptodate, int nr_bytes,
-> +			 int bidi_bytes)
-> +{
-> +	return blk_end_io(rq, uptodate, nr_bytes, bidi_bytes, NULL);
-> +}
-> +EXPORT_SYMBOL_GPL(blk_end_bidi_request);
-> +
-> +/**
-> + * blk_end_request - Helper function for drivers to complete the request.
-> + * @rq:       the request being processed
-> + * @uptodate: 1 for success, 0 for I/O error, < 0 for specific error
-> + * @nr_bytes: number of bytes to complete
-> + *
-> + * Description:
-> + *     Ends I/O on a number of bytes attached to @rq.
-> + *     If @rq has leftover, sets it up for the next range of segments.
-> + *
-> + * Return:
-> + *     0 - we are done with this request
-> + *     1 - still buffers pending for this request
-> + **/
-> +int blk_end_request(struct request *rq, int uptodate, int nr_bytes)
-> +{
-> +	return blk_end_io(rq, uptodate, nr_bytes, 0, NULL);
-> +}
->  EXPORT_SYMBOL_GPL(blk_end_request);
->  
+--===============0975528259==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C83B3C.16138102"
 
-All above looks fine, thanks.
+This is a multi-part message in MIME format.
 
->  /**
-> @@ -3878,25 +3906,7 @@ EXPORT_SYMBOL_GPL(__blk_end_request);
->  int blk_end_request_callback(struct request *rq, int uptodate, int nr_bytes,
->  			     int (drv_callback)(struct request *))
->  {
-> -	struct request_queue *q = rq->q;
-> -	unsigned long flags = 0UL;
-> -
-> -	if (blk_fs_request(rq) || blk_pc_request(rq)) {
-> -		if (__end_that_request_first(rq, uptodate, nr_bytes))
-> -			return 1;
-> -	}
-> -
-> -	/* Special feature for tricky drivers */
-> -	if (drv_callback && drv_callback(rq))
-> -		return 1;
-> -
-> -	add_disk_randomness(rq->rq_disk);
-> -
-> -	spin_lock_irqsave(q->queue_lock, flags);
-> -	complete_request(rq, uptodate);
-> -	spin_unlock_irqrestore(q->queue_lock, flags);
-> -
-> -	return 0;
-> +	return blk_end_io(rq, uptodate, nr_bytes, 0, drv_callback);
->  }
->  EXPORT_SYMBOL_GPL(blk_end_request_callback);
->  
+------_=_NextPart_001_01C83B3C.16138102
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Boaz
+Hi Paul.
+=20
+    It has been fixed upstream and is filtering down to the distros.
+What version of distro are you seeing this issue in? We are currently
+testing this fix.
+=20
+Regards,
+Wayne.
+
+________________________________
+
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Paul Cote
+Sent: Wednesday, December 05, 2007 1:47 PM
+To: device-mapper development
+Subject: [dm-devel] Black listing CLARiiON "LUNZ"?
+
+
+
+=20
+
+Hi
+
+=20
+
+The array data struct for DGC (CLARiiON) shows that LUNZ is blacklisted;
+but any tine that LUN is "visible" during a reboot; the host will hang.
+
+=20
+
+EMC did state this was an issue in their DM config guide; but I thought
+black listing would circumvent the issue.
+
+=20
+
+Any suggestions?
+
+=20
+
+        }
+
+        device {
+
+                vendor DGC
+
+                product *
+
+                product_blacklist LUNZ
+
+                path_grouping_policy group_by_prio
+
+                path_checker emc_clariion
+
+                features 1 queue_if_no_path
+
+                hardware_handler 1 emc
+
+                prio_callout /sbin/mpath_prio_emc /dev/%n
+
+                no_path_retry 60
+
+                rr_min_io 1000
+
+        }
+
+
+------_=_NextPart_001_01C83B3C.16138102
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<META content=3D"MSHTML 6.00.2800.1601" name=3DGENERATOR>
+<STYLE>@page Section1 {size: 8.5in 11.0in; margin: 1.0in 1.25in 1.0in =
+1.25in; }
+P.MsoNormal {
+	FONT-SIZE: 12pt; MARGIN: 0in 0in 0pt; FONT-FAMILY: "Times New Roman"
+}
+LI.MsoNormal {
+	FONT-SIZE: 12pt; MARGIN: 0in 0in 0pt; FONT-FAMILY: "Times New Roman"
+}
+DIV.MsoNormal {
+	FONT-SIZE: 12pt; MARGIN: 0in 0in 0pt; FONT-FAMILY: "Times New Roman"
+}
+A:link {
+	COLOR: blue; TEXT-DECORATION: underline
+}
+SPAN.MsoHyperlink {
+	COLOR: blue; TEXT-DECORATION: underline
+}
+A:visited {
+	COLOR: purple; TEXT-DECORATION: underline
+}
+SPAN.MsoHyperlinkFollowed {
+	COLOR: purple; TEXT-DECORATION: underline
+}
+SPAN.EmailStyle17 {
+	COLOR: windowtext; FONT-FAMILY: Arial
+}
+DIV.Section1 {
+	page: Section1
+}
+</STYLE>
+</HEAD>
+<BODY lang=3DEN-US vLink=3Dpurple link=3Dblue>
+<DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+color=3D#0000ff size=3D2>Hi Paul.</FONT></SPAN></DIV>
+<DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV dir=3Dltr align=3Dleft><SPAN =
+class=3D790344914-10122007>&nbsp;&nbsp;&nbsp; <FONT=20
+face=3DArial color=3D#0000ff size=3D2>It has been fixed upstream and is =
+filtering down=20
+to the distros. What version of distro are you seeing this issue in? We =
+are=20
+currently testing this fix.</FONT></SPAN></DIV>
+<DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+color=3D#0000ff size=3D2>Regards,</FONT></SPAN></DIV>
+<DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+color=3D#0000ff size=3D2>Wayne.</FONT></SPAN></DIV><BR>
+<DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr align=3Dleft>
+<HR tabIndex=3D-1>
+<FONT face=3DTahoma size=3D2><B>From:</B> dm-devel-bounces@redhat.com=20
+[mailto:dm-devel-bounces@redhat.com] <B>On Behalf Of </B>Paul=20
+Cote<BR><B>Sent:</B> Wednesday, December 05, 2007 1:47 PM<BR><B>To:</B>=20
+device-mapper development<BR><B>Subject:</B> [dm-devel] Black listing =
+CLARiiON=20
+"LUNZ"?<BR></FONT><BR></DIV>
+<DIV></DIV>
+<DIV class=3DSection1>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">Hi</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">The array data struct for =
+DGC=20
+(CLARiiON) shows that LUNZ is blacklisted; but any tine that LUN is =
+&#8220;visible&#8221;=20
+during a reboot; the host will hang.</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">EMC did state this was an =
+issue in=20
+their DM config guide; but I thought black listing would circumvent the=20
+issue.</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">Any =
+suggestions?</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
+}</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
+device {</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+vendor DGC</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+product *</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+product_blacklist LUNZ</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+path_grouping_policy group_by_prio</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+path_checker emc_clariion</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+features 1 queue_if_no_path</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+hardware_handler 1 emc</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+prio_callout /sbin/mpath_prio_emc /dev/%n</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+no_path_retry 60</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+rr_min_io 1000</SPAN></FONT></P>
+<P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
+}</SPAN></FONT></P></DIV></BODY></HTML>
+
+------_=_NextPart_001_01C83B3C.16138102--
+
+
+--===============0975528259==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0975528259==--
