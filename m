@@ -1,14 +1,14 @@
-From: James Bottomley <James.Bottomley@SteelEye.com>
-Subject: Re: device-mapper multipath retry IO errors
-Date: Mon, 10 Dec 2007 09:18:07 -0600
-Message-ID: <1197299887.5169.21.camel@localhost.localdomain>
-References: <1197299207.6188.10.camel@eddie-laptop.sc.steeleye.com>
+From: "Paul Cote" <paul.cote@incipient.com>
+Subject: RE: Black listing CLARiiON "LUNZ"?
+Date: Mon, 10 Dec 2007 10:47:43 -0500
+Message-ID: <940B4FF1F5958E4F96FC83C055A2F2611B8E3A@exch-2003.incipient.waltham>
+References: <D364D39DAD21D444BAE2C70919B62809086CD7BC@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============0532924926=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1197299207.6188.10.camel@eddie-laptop.sc.steeleye.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <D364D39DAD21D444BAE2C70919B62809086CD7BC@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,39 +18,337 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Eddie Williams <Eddie.Williams@SteelEye.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
-On Mon, 2007-12-10 at 10:06 -0500, Eddie Williams wrote:
-> It looks to me like device mapper multipath will retry IO errors, no
-> matter what the error, indefinitely if no_path_retry is set to anything
-> other than 0 and the path checker does not detect the failure.
-> 
-> Say you run into a medium error, the particular IO will fail.  The path
-> will be marked failed and retried on another path.  This will exhaust
-> the list of paths since the medium error will happen on each path.  If
-> no_path_retry is set to 1 or more then the IO will be queued.  The path
-> checker will come along and the TUR or the IO to block 0 will pass so it
-> will mark the path as good, clearing the error.  The IO will then get
-> reissued, marking the paths failed, etc.
-> 
-> Am I missing something in the code that will catch this?
+--===============0532924926==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C83B44.00D6A5F7"
 
-I've been advocating for some time that we need to split our errors into
-transport related (and therefore potentially retryable over a different
-path) and device related (and therefore path independent and needing to
-be reported to the user).
+This is a multi-part message in MIME format.
 
-> I don't have a means to force a medium error but I was able to create
-> something similar by creating a reservation conflict.
+------_=_NextPart_001_01C83B44.00D6A5F7
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-Actually, just for the record, there is a way to force devices to report
-medium error using the READ LONG/WRITE LONG commands (these allow you to
-pull the "real" data off the drive including the crc information.  If
-you save the old data and fill it with random bits before writing it,
-the crc will inevitably mismatch and the device will signal a medium
-error for that sector (on a read, anyway).
+=20
+Hi Wayne;
+=20
+We're currently locked in with RHEL 4 / Update 4 (2.6.9-42.ELsmp) with
+multipath tools V4.7.
+=20
+I'm trying to make a play for a later release... but certainly would be
+quite helpful knowing which one has the fix!
+=20
+Much appreciated.
+=20
+Paul
+=20
+=20
 
-James
+	-----Original Message-----
+	From: dm-devel-bounces@redhat.com
+[mailto:dm-devel-bounces@redhat.com] On Behalf Of
+berthiaume_wayne@emc.com
+	Sent: Monday, December 10, 2007 9:51 AM
+	To: dm-devel@redhat.com
+	Subject: RE: [dm-devel] Black listing CLARiiON "LUNZ"?
+=09
+=09
+	Hi Paul.
+	=20
+	    It has been fixed upstream and is filtering down to the
+distros. What version of distro are you seeing this issue in? We are
+currently testing this fix.
+	=20
+	Regards,
+	Wayne.
+
+________________________________
+
+	From: dm-devel-bounces@redhat.com
+[mailto:dm-devel-bounces@redhat.com] On Behalf Of Paul Cote
+	Sent: Wednesday, December 05, 2007 1:47 PM
+	To: device-mapper development
+	Subject: [dm-devel] Black listing CLARiiON "LUNZ"?
+=09
+=09
+
+	=20
+
+	Hi
+
+	=20
+
+	The array data struct for DGC (CLARiiON) shows that LUNZ is
+blacklisted; but any tine that LUN is "visible" during a reboot; the
+host will hang.
+
+	=20
+
+	EMC did state this was an issue in their DM config guide; but I
+thought black listing would circumvent the issue.
+
+	=20
+
+	Any suggestions?
+
+	=20
+
+	        }
+
+	        device {
+
+	                vendor DGC
+
+	                product *
+
+	                product_blacklist LUNZ
+
+	                path_grouping_policy group_by_prio
+
+	                path_checker emc_clariion
+
+	                features 1 queue_if_no_path
+
+	                hardware_handler 1 emc
+
+	                prio_callout /sbin/mpath_prio_emc /dev/%n
+
+	                no_path_retry 60
+
+	                rr_min_io 1000
+
+	        }
+
+
+------_=_NextPart_001_01C83B44.00D6A5F7
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<HTML><HEAD><TITLE>Message</TITLE>
+<META http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<META content=3D"MSHTML 6.00.2800.1126" name=3DGENERATOR>
+<STYLE>@page Section1 {size: 8.5in 11.0in; margin: 1.0in 1.25in 1.0in =
+1.25in; }
+P.MsoNormal {
+	FONT-SIZE: 12pt; MARGIN: 0in 0in 0pt; FONT-FAMILY: "Times New Roman"
+}
+LI.MsoNormal {
+	FONT-SIZE: 12pt; MARGIN: 0in 0in 0pt; FONT-FAMILY: "Times New Roman"
+}
+DIV.MsoNormal {
+	FONT-SIZE: 12pt; MARGIN: 0in 0in 0pt; FONT-FAMILY: "Times New Roman"
+}
+A:link {
+	COLOR: blue; TEXT-DECORATION: underline
+}
+SPAN.MsoHyperlink {
+	COLOR: blue; TEXT-DECORATION: underline
+}
+A:visited {
+	COLOR: purple; TEXT-DECORATION: underline
+}
+SPAN.MsoHyperlinkFollowed {
+	COLOR: purple; TEXT-DECORATION: underline
+}
+SPAN.EmailStyle17 {
+	COLOR: windowtext; FONT-FAMILY: Arial
+}
+DIV.Section1 {
+	page: Section1
+}
+</STYLE>
+</HEAD>
+<BODY lang=3DEN-US vLink=3Dpurple link=3Dblue>
+<DIV><FONT face=3DArial color=3D#0000ff size=3D2></FONT>&nbsp;</DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+size=3D2>Hi=20
+Wayne;</FONT></SPAN></DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+size=3D2>We're=20
+currently&nbsp;locked in with RHEL 4 / Update 4 =
+(2.6.9-42.ELsmp)&nbsp;with=20
+multipath tools V4.7.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+size=3D2>I'm=20
+trying to make a play for a later release... but certainly would be =
+quite=20
+helpful knowing which one has the fix!</FONT></SPAN></DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+size=3D2>Much=20
+appreciated.</FONT></SPAN></DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2>Paul</FONT></SPAN></DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<DIV><SPAN class=3D897004415-10122007><FONT face=3DArial color=3D#0000ff =
+
+size=3D2></FONT></SPAN>&nbsp;</DIV>
+<BLOCKQUOTE dir=3Dltr style=3D"MARGIN-RIGHT: 0px">
+  <DIV></DIV>
+  <DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr =
+align=3Dleft><FONT=20
+  face=3DTahoma size=3D2>-----Original Message-----<BR><B>From:</B>=20
+  dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] <B>On =
+Behalf=20
+  Of </B>berthiaume_wayne@emc.com<BR><B>Sent:</B> Monday, December 10, =
+2007 9:51=20
+  AM<BR><B>To:</B> dm-devel@redhat.com<BR><B>Subject:</B> RE: [dm-devel] =
+Black=20
+  listing CLARiiON "LUNZ"?<BR><BR></FONT></DIV>
+  <DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+  color=3D#0000ff size=3D2>Hi Paul.</FONT></SPAN></DIV>
+  <DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+  color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
+  <DIV dir=3Dltr align=3Dleft><SPAN =
+class=3D790344914-10122007>&nbsp;&nbsp;&nbsp;=20
+  <FONT face=3DArial color=3D#0000ff size=3D2>It has been fixed upstream =
+and is=20
+  filtering down to the distros. What version of distro are you seeing =
+this=20
+  issue in? We are currently testing this fix.</FONT></SPAN></DIV>
+  <DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+  color=3D#0000ff size=3D2></FONT></SPAN>&nbsp;</DIV>
+  <DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+  color=3D#0000ff size=3D2>Regards,</FONT></SPAN></DIV>
+  <DIV dir=3Dltr align=3Dleft><SPAN class=3D790344914-10122007><FONT =
+face=3DArial=20
+  color=3D#0000ff size=3D2>Wayne.</FONT></SPAN></DIV><BR>
+  <DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr align=3Dleft>
+  <HR tabIndex=3D-1>
+  <FONT face=3DTahoma size=3D2><B>From:</B> dm-devel-bounces@redhat.com=20
+  [mailto:dm-devel-bounces@redhat.com] <B>On Behalf Of </B>Paul=20
+  Cote<BR><B>Sent:</B> Wednesday, December 05, 2007 1:47 =
+PM<BR><B>To:</B>=20
+  device-mapper development<BR><B>Subject:</B> [dm-devel] Black listing =
+CLARiiON=20
+  "LUNZ"?<BR></FONT><BR></DIV>
+  <DIV></DIV>
+  <DIV class=3DSection1>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">Hi</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">The array data struct =
+for DGC=20
+  (CLARiiON) shows that LUNZ is blacklisted; but any tine that LUN is =
+&#8220;visible&#8221;=20
+  during a reboot; the host will hang.</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">EMC did state this was =
+an issue in=20
+  their DM config guide; but I thought black listing would circumvent =
+the=20
+  issue.</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial">Any =
+suggestions?</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: Arial"></SPAN></FONT>&nbsp;</P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
+  }</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
+  device {</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  vendor DGC</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  product *</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  product_blacklist LUNZ</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  path_grouping_policy group_by_prio</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  path_checker emc_clariion</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  features 1 queue_if_no_path</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  hardware_handler 1 emc</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  prio_callout /sbin/mpath_prio_emc /dev/%n</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  no_path_retry 60</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=
+&nbsp;&nbsp;&nbsp;&nbsp;=20
+  rr_min_io 1000</SPAN></FONT></P>
+  <P class=3DMsoNormal><FONT face=3DArial size=3D2><SPAN=20
+  style=3D"FONT-SIZE: 10pt; FONT-FAMILY: =
+Arial">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=20
+  }</SPAN></FONT></P></DIV></BLOCKQUOTE></BODY></HTML>
+=00
+------_=_NextPart_001_01C83B44.00D6A5F7--
+
+
+--===============0532924926==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0532924926==--
