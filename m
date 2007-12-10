@@ -1,17 +1,16 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 27/28] blk_end_request: changing scsi
- mid-layer for bidi (take 3)
-Date: Mon, 10 Dec 2007 14:32:50 -0500 (EST)
-Message-ID: <20071210.143250.39153367.k-ueda@ct.jp.nec.com>
-References: <4757BFDC.6090502@panasas.com>
-	<20071206.144417.41628995.k-ueda@ct.jp.nec.com>
-	<475BB8C3.9040700@panasas.com>
+From: "Wood, Brian J" <brian.j.wood@intel.com>
+Subject: RE: libdevmapper documentation
+Date: Mon, 10 Dec 2007 12:02:24 -0800
+Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CC01A87731@orsmsx418.amr.corp.intel.com>
+References: <20071210185525.GA1198@newbie.thebellsplace.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <475BB8C3.9040700@panasas.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20071210185525.GA1198@newbie.thebellsplace.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,68 +20,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bharrosh@panasas.com
-Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Boaz,
-
-On Sun, 09 Dec 2007 11:43:31 +0200, Boaz Harrosh <bharrosh@panasas.com> wrote:
-> >>> Index: 2.6.24-rc3-mm2/drivers/scsi/scsi_lib.c
-> <snip>
-> >> No I don't like it. The only client left for blk_end_request_callback()
-> >> is bidi,
-> > 
-> > ide-cd (cdrom_newpc_intr) is another client.
-> > So I can't drop blk_end_request_callback() even if bidi doesn't use it.
+>-----Original Message-----
+>From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Bob Bell
+>Sent: Monday, December 10, 2007 10:55 AM
+>To: device-mapper development
+>Subject: [dm-devel] libdevmapper documentation
 >
-> It looks like all is needed for the ide-cd case is a flag that says
-> "don't complete the request". And the call-back is not actually used.
-> (Inspecting the last: [PATCH 26/28] blk_end_request: changing ide-cd (take 3))
-> The same exact flag could also help the bidi case. Perhaps have an API
-> for that?
+>I'd like to interact with the device mapper using a C API, rather than
+>invoking dmsetup.  Is there documentation anywhere on using
+>libdevmapper?  Or is it of the "read libdevmapper.h and figure it out"
+>variety?
 
-Thank you for looking at the ide-cd part, too.
+Hi Bob,=20
 
-But, no, I don't want to add the "don't complete" flag to the API.
-It could be an alternative, but having such a flag explicitly may blur
-the purpose of the blk_end_reuqest interfaces, which drivers give over
-the ownership of the request to the block-layer when calling
-blk_end_request interfaces.
-(With such a flag, the API looks like explicitly allowing drivers
- to have the ownership of the request even after the API is called,
- and it is like end_that_request_chunk().)
-And the API also looks easy to use for drivers and it might help
-to make other tricky drivers in the future.
+When I joined the project I was told it was the "dig in and ask
+questions" kind of documentation. :)
 
-I would like to go with the callback API, since the usege in ide-cd
-shows that the driver is very tricky and the API can be used for
-other requirements like "a driver wants to do something after data
-completion and before request completion."
-
-
-> > Index: 2.6.24-rc3-mm2/drivers/scsi/scsi_lib.c
-> > ===================================================================
-> > --- 2.6.24-rc3-mm2.orig/drivers/scsi/scsi_lib.c
-> > +++ 2.6.24-rc3-mm2/drivers/scsi/scsi_lib.c
-> > @@ -629,28 +629,6 @@ void scsi_run_host_queues(struct Scsi_Ho
-> >  		scsi_run_queue(sdev->request_queue);
-> >  }
-> >  
-snip
-> > +int blk_end_request(struct request *rq, int uptodate, int nr_bytes)
-> > +{
-> > +	return blk_end_io(rq, uptodate, nr_bytes, 0, NULL);
-> > +}
-> >  EXPORT_SYMBOL_GPL(blk_end_request);
-> >  
-> 
-> All above looks fine, thanks.
-
-OK, I'll update the patch-set using the bidi API and blk_end_io().
-I'm currently updating the patch-set based on 2.6.24-rc4, not -mm.
-So the new patch-set will include the blk_end_bidi_request() API
-but not the scsi bidi changes.
-
-Thanks,
-Kiyoshi Ueda
+>
+>TIA
+>
+>--
+>Bob Bell
+>
+>--
+>dm-devel mailing list
+>dm-devel@redhat.com
+>https://www.redhat.com/mailman/listinfo/dm-devel
