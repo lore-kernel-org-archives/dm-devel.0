@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: [PATCH] improve atomicity of device creation
-Date: Tue, 11 Dec 2007 19:13:21 +0000
-Message-ID: <20071211191321.GX22311@agk.fab.redhat.com>
+Date: Tue, 11 Dec 2007 19:43:25 +0000
+Message-ID: <20071211194325.GY22311@agk.fab.redhat.com>
 References: <1197389316.25082.27.camel@quest>
 	<20071211162538.GR22311@agk.fab.redhat.com>
 	<1197391333.25082.31.camel@quest>
@@ -30,21 +30,11 @@ Cc: device-mapper development <dm-devel@redhat.com>, linux-hotplug-devel@lists.s
 List-Id: dm-devel.ids
 
 On Tue, Dec 11, 2007 at 07:25:32PM +0100, Kay Sievers wrote:
-> Should we create an additional new iocl to request the device node
-> creation, or add that call to an existing one?
-
-Currently we get an ADD from alloc_dev -> add_disk -> register_disk.
-But the device is not usable until the dm resume ioctl, so ideally that
-one should be ignored, and it's the CHANGE issued by dm resume that udev
-should act upon.  (That's not essential though - the /dev node can be
-created in response to the ADD, but nothing in udev userspace should
-attempt to open it until after the CHANGE is received.)
-
-> Could it be that we want to pass more properties to the event, which are
-> added as environment keys?
+> So we would need to strip the upper 32 bit of the numbers we see from
+> udev, and handle the case where the 32 bit number wraps around.
  
-Don't think so - we'll be handing full control of ownership/permissions
-over to udev.
+Should be OK I think.  Otherwise we can append a 64-bit field to the 
+struct - with care, this can be done without breaking compatibility.
 
 Alasdair
 -- 
