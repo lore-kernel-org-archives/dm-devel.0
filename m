@@ -1,55 +1,71 @@
-From: Dane Miller <dane@greatschools.net>
-Subject: dm errors 'no longer valid device'
-Date: Tue, 11 Dec 2007 10:20:16 -0800
-Message-ID: <1197397216.30413.11.camel@danedesk.greatschools.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kay Sievers <kay.sievers@vrfy.org>
+Subject: Re: [dm-devel] [PATCH] improve atomicity of device creation
+Date: Tue, 11 Dec 2007 19:25:32 +0100
+Message-ID: <1197397532.2579.26.camel@lov.site>
+References: <1197389316.25082.27.camel@quest>
+	<20071211162538.GR22311@agk.fab.redhat.com>
+	<1197391333.25082.31.camel@quest>
+	<20071211170352.GS22311@agk.fab.redhat.com>
+	<1197393526.25082.36.camel@quest>
+	<3ae72650712110951h477d1fc0hd9abd39f069da105@mail.gmail.com>
+	<20071211180829.GW22311@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-hotplug-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20071211180829.GW22311@agk.fab.redhat.com>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
+	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-hotplug-devel>
+List-Post: <mailto:linux-hotplug-devel@lists.sourceforge.net>
+List-Help: <mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
+	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=subscribe>
+Sender: linux-hotplug-devel-bounces@lists.sourceforge.net
+Errors-To: linux-hotplug-devel-bounces@lists.sourceforge.net
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-hotplug-devel@lists.sourceforge.net
 List-Id: dm-devel.ids
 
-Hi,
+On Tue, 2007-12-11 at 18:08 +0000, Alasdair G Kergon wrote:
+> On Tue, Dec 11, 2007 at 06:51:31PM +0100, Kay Sievers wrote:
+> > We can make the kernel's kobject_uevent() return the generated seqnum to
+> > the caller.
+> 
+> Is 32 bits enough?
 
-I've recently started getting device mapper errors that I don't
-understand while creating a LVM snapshot.  I think I blew my chance at
-asking the linux-lvm list (list archives show my blunder), but this also
-seems like a device mapper issue.  Apologies in advance if this is the
-wrong list for such a question... I'm not really sure whom to ask.
+In the kernel it is 64 bit. Udev also uses 64bit number, but it does not
+care about the value these days (netlink is never out of order,
+unlike /sbin/hotplug). Only the udev queue export would break if the
+number wraps around and duplicates are generated in a window of 180
+seconds (the event process kills itself after that time). :)
 
-Here are the errors.  Anyone know what's going on?
+So we would need to strip the upper 32 bit of the numbers we see from
+udev, and handle the case where the 32 bit number wraps around.
 
-lvcreate --snapshot --name vm1optsnap --size 10G /dev/vg0/vm1opt
-  /dev/dm-9: stat failed: No such file or directory
-  Path /dev/dm-9 no longer valid for device(253,9)
-  Aborting - please provide new pathname for what used to be /dev/dm-9
-  /dev/dm-10: stat failed: No such file or directory
-  Path /dev/dm-10 no longer valid for device(253,10)
-  Aborting - please provide new pathname for what used to be /dev/dm-10
-  /dev/dm-11: stat failed: No such file or directory
-  Path /dev/dm-11 no longer valid for device(253,11)
-  Aborting - please provide new pathname for what used to be /dev/dm-11
-  Logical volume "vm1optsnap" created
+> We added 'uint32_t padding;' recently which we I reckon we could now use for
+> this.
+> 
+> dm_kobject_uevent() and alloc_dev() could keep a new field in
+> struct mapped_device up-to-date, and a new function could return its
+> value to dm-ioctl.c code to place into a renamed 'padding' field
+> before returning to userspace?
 
-Kernel: 2.6.9-42.0.10.ELsmp i686 athlon i386 GNU/Linux
-LVM2: lvm2-2.02.21-5.el4
-Device-mapper: device-mapper-1.02.17-3.0.1.el4
+Yes, we would return the kernel generated seqnum to the libdevmapper
+ioctl.
 
-Thanks for any suggestions or pointers,
-Dane
+Should we create an additional new iocl to request the device node
+creation, or add that call to an existing one?
 
--- 
-Dane Miller
-Systems Administartor
-Greatschools, Inc
-http://www.greatschools.net
+Could it be that we want to pass more properties to the event, which are
+added as environment keys?
+
+Kay
+
+
+-------------------------------------------------------------------------
+SF.Net email is sponsored by: 
+Check out the new SourceForge.net Marketplace.
+It's the best place to buy or sell services for
+just about anything Open Source.
+http://sourceforge.net/services/buy/index.php
