@@ -1,98 +1,51 @@
-From: Scott James Remnant <scott@ubuntu.com>
-Subject: Re: [dm-devel] [PATCH] improve atomicity of device creation
-Date: Tue, 11 Dec 2007 19:09:03 +0000
-Message-ID: <1197400143.25082.41.camel@quest>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] improve atomicity of device creation
+Date: Tue, 11 Dec 2007 19:13:21 +0000
+Message-ID: <20071211191321.GX22311@agk.fab.redhat.com>
 References: <1197389316.25082.27.camel@quest>
-	<3ae72650712110935n20398423t1da02c585a72aead@mail.gmail.com>
-	<1197394828.25082.39.camel@quest>
-	<20071211175359.GV22311@agk.fab.redhat.com>
+	<20071211162538.GR22311@agk.fab.redhat.com>
+	<1197391333.25082.31.camel@quest>
+	<20071211170352.GS22311@agk.fab.redhat.com>
+	<1197393526.25082.36.camel@quest>
+	<3ae72650712110951h477d1fc0hd9abd39f069da105@mail.gmail.com>
+	<20071211180829.GW22311@agk.fab.redhat.com>
+	<1197397532.2579.26.camel@lov.site>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1441742927=="
-Return-path: <linux-hotplug-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20071211175359.GV22311@agk.fab.redhat.com>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
-	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=linux-hotplug-devel>
-List-Post: <mailto:linux-hotplug-devel@lists.sourceforge.net>
-List-Help: <mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel>,
-	<mailto:linux-hotplug-devel-request@lists.sourceforge.net?subject=subscribe>
-Sender: linux-hotplug-devel-bounces@lists.sourceforge.net
-Errors-To: linux-hotplug-devel-bounces@lists.sourceforge.net
-To: Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1197397532.2579.26.camel@lov.site>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kay Sievers <kay.sievers@vrfy.org>
 Cc: device-mapper development <dm-devel@redhat.com>, linux-hotplug-devel@lists.sourceforge.net
 List-Id: dm-devel.ids
 
+On Tue, Dec 11, 2007 at 07:25:32PM +0100, Kay Sievers wrote:
+> Should we create an additional new iocl to request the device node
+> creation, or add that call to an existing one?
 
---===============1441742927==
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature";
-	boundary="=-G+5HLHlybAhkuN7gE2qg"
+Currently we get an ADD from alloc_dev -> add_disk -> register_disk.
+But the device is not usable until the dm resume ioctl, so ideally that
+one should be ignored, and it's the CHANGE issued by dm resume that udev
+should act upon.  (That's not essential though - the /dev node can be
+created in response to the ADD, but nothing in udev userspace should
+attempt to open it until after the CHANGE is received.)
 
+> Could it be that we want to pass more properties to the event, which are
+> added as environment keys?
+ 
+Don't think so - we'll be handing full control of ownership/permissions
+over to udev.
 
---=-G+5HLHlybAhkuN7gE2qg
-Content-Type: text/plain
-Content-Transfer-Encoding: quoted-printable
-
-On Tue, 2007-12-11 at 17:53 +0000, Alasdair G Kergon wrote:
-
-> On Tue, Dec 11, 2007 at 05:40:28PM +0000, Scott James Remnant wrote:
-> >  1) udev creates device node and sets permissions
-> >  2) devmapper no-ops since it already exists
-> =20
-> ...because libdevmapper has no notion that something other than itself
-> could have created it.  That's a bug, but provided the proper udev
-> integration isn't much longer in coming, I shan't bother to fix it.
->=20
-That's ok ;)  no pressure on the patch, I just wanted to make sure that
-we weren't carrying anything that hadn't at least been shown upstream to
-see whether you wanted it or not.
-
-Obviously we'd prefer the long-term solution, our patch is just a short
-term one since we're already relying on udev for devmapper work today.
-
-Scott
---=20
-Scott James Remnant
-scott@ubuntu.com
-
---=-G+5HLHlybAhkuN7gE2qg
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-
-iD8DBQBHXuBPSnQiFMl4yK4RAtDzAJ9Vui72N0rV3xguwJW/3jSEoGJ9nQCgi1X0
-jQfVVVHD7dCo0ySbTI5rHJE=
-=muVQ
------END PGP SIGNATURE-----
-
---=-G+5HLHlybAhkuN7gE2qg--
-
-
-
---===============1441742927==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
--------------------------------------------------------------------------
-SF.Net email is sponsored by: 
-Check out the new SourceForge.net Marketplace.
-It's the best place to buy or sell services for
-just about anything Open Source.
-http://sourceforge.net/services/buy/index.php
---===============1441742927==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-_______________________________________________
-Linux-hotplug-devel mailing list  http://linux-hotplug.sourceforge.net
-Linux-hotplug-devel@lists.sourceforge.net
-https://lists.sourceforge.net/lists/listinfo/linux-hotplug-devel
-
---===============1441742927==--
+Alasdair
+-- 
+agk@redhat.com
