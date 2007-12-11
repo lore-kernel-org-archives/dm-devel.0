@@ -1,19 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] improve atomicity of device creation
-Date: Tue, 11 Dec 2007 18:08:29 +0000
-Message-ID: <20071211180829.GW22311@agk.fab.redhat.com>
-References: <1197389316.25082.27.camel@quest>
-	<20071211162538.GR22311@agk.fab.redhat.com>
-	<1197391333.25082.31.camel@quest>
-	<20071211170352.GS22311@agk.fab.redhat.com>
-	<1197393526.25082.36.camel@quest>
-	<3ae72650712110951h477d1fc0hd9abd39f069da105@mail.gmail.com>
+From: Dane Miller <dane@greatschools.net>
+Subject: dm errors 'no longer valid device'
+Date: Tue, 11 Dec 2007 10:20:16 -0800
+Message-ID: <1197397216.30413.11.camel@danedesk.greatschools.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <3ae72650712110951h477d1fc0hd9abd39f069da105@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,24 +16,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Kay Sievers <kay.sievers@vrfy.org>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-hotplug-devel@lists.sourceforge.net
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Dec 11, 2007 at 06:51:31PM +0100, Kay Sievers wrote:
-> We can make the kernel's kobject_uevent() return the generated seqnum to
-> the caller.
+Hi,
 
-Is 32 bits enough?
+I've recently started getting device mapper errors that I don't
+understand while creating a LVM snapshot.  I think I blew my chance at
+asking the linux-lvm list (list archives show my blunder), but this also
+seems like a device mapper issue.  Apologies in advance if this is the
+wrong list for such a question... I'm not really sure whom to ask.
 
-We added 'uint32_t padding;' recently which we I reckon we could now use for
-this.
+Here are the errors.  Anyone know what's going on?
 
-dm_kobject_uevent() and alloc_dev() could keep a new field in
-struct mapped_device up-to-date, and a new function could return its
-value to dm-ioctl.c code to place into a renamed 'padding' field
-before returning to userspace?
+lvcreate --snapshot --name vm1optsnap --size 10G /dev/vg0/vm1opt
+  /dev/dm-9: stat failed: No such file or directory
+  Path /dev/dm-9 no longer valid for device(253,9)
+  Aborting - please provide new pathname for what used to be /dev/dm-9
+  /dev/dm-10: stat failed: No such file or directory
+  Path /dev/dm-10 no longer valid for device(253,10)
+  Aborting - please provide new pathname for what used to be /dev/dm-10
+  /dev/dm-11: stat failed: No such file or directory
+  Path /dev/dm-11 no longer valid for device(253,11)
+  Aborting - please provide new pathname for what used to be /dev/dm-11
+  Logical volume "vm1optsnap" created
 
-Alasdair
+Kernel: 2.6.9-42.0.10.ELsmp i686 athlon i386 GNU/Linux
+LVM2: lvm2-2.02.21-5.el4
+Device-mapper: device-mapper-1.02.17-3.0.1.el4
+
+Thanks for any suggestions or pointers,
+Dane
+
 -- 
-agk@redhat.com
+Dane Miller
+Systems Administartor
+Greatschools, Inc
+http://www.greatschools.net
