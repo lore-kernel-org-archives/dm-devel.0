@@ -1,41 +1,80 @@
-From: Pete Zaitcev <zaitcev@redhat.com>
-Subject: Re: [PATCH 12/30] blk_end_request: changing ub (take 4)
-Date: Tue, 11 Dec 2007 15:48:03 -0800
-Message-ID: <20071211154803.58beb681.zaitcev@redhat.com>
-References: <20071211.174647.75757994.k-ueda@ct.jp.nec.com>
+From: Boaz Harrosh <bharrosh@panasas.com>
+Subject: Re: [PATCH 20/30] blk_end_request: changing xsysace
+	(take 4)
+Date: Wed, 12 Dec 2007 11:09:12 +0200
+Message-ID: <475FA538.7000609@panasas.com>
+References: <20071211.174946.85815368.k-ueda@ct.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ide-owner@vger.kernel.org>
-In-Reply-To: <20071211.174647.75757994.k-ueda@ct.jp.nec.com>
-Sender: linux-ide-owner@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20071211.174946.85815368.k-ueda@ct.jp.nec.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com, zaitcev@redhat.com
+Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, grant.likely@secretlab.ca, linux-ide@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Tue, 11 Dec 2007 17:46:47 -0500 (EST), Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+Kiyoshi Ueda wrote:
+> This patch converts xsysace to use blk_end_request interfaces.
+> Related 'uptodate' arguments are converted to 'error'.
+> 
+> xsysace is a little bit different from "normal" drivers.
+> xsysace driver has a state machine in it.
+> It calls end_that_request_first() and end_that_request_last()
+> from different states. (ACE_FSM_STATE_REQ_TRANSFER and
+> ACE_FSM_STATE_REQ_COMPLETE, respectively.)
+> 
+> However, those states are consecutive and without any interruption
+> inbetween.
+> So we can just follow the standard conversion rule (b) mentioned in
+> the patch subject "[PATCH 01/30] blk_end_request: add new request
+> completion interface".
+> 
+> Cc: Grant Likely <grant.likely@secretlab.ca>
+> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> ---
+>  drivers/block/xsysace.c |    5 +----
+>  1 files changed, 1 insertion(+), 4 deletions(-)
+> 
+> Index: 2.6.24-rc4/drivers/block/xsysace.c
+> ===================================================================
+> --- 2.6.24-rc4.orig/drivers/block/xsysace.c
+> +++ 2.6.24-rc4/drivers/block/xsysace.c
+> @@ -703,7 +703,7 @@ static void ace_fsm_dostate(struct ace_d
+>  
+>  		/* bio finished; is there another one? */
+>  		i = ace->req->current_nr_sectors;
+> -		if (end_that_request_first(ace->req, 1, i)) {
+> +		if (__blk_end_request(ace->req, 0, i)) {
+end_that_request_first() took sectors __blk_end_request() now takes
+bytes
 
->  	if (scsi_status == 0) {
-> -		uptodate = 1;
-> +		error = 0;
->  	} else {
-> -		uptodate = 0;
-> +		error = -EIO;
->  		rq->errors = scsi_status;
->  	}
-> -	end_that_request_first(rq, uptodate, rq->hard_nr_sectors);
-> -	end_that_request_last(rq, uptodate);
-> +	if (__blk_end_request(rq, error, blk_rq_bytes(rq)))
-> +		BUG();
+>  			/* dev_dbg(ace->dev, "next block; h=%li c=%i\n",
+>  			 *      ace->req->hard_nr_sectors,
+>  			 *      ace->req->current_nr_sectors);
+> @@ -718,9 +718,6 @@ static void ace_fsm_dostate(struct ace_d
+>  		break;
+>  
+>  	case ACE_FSM_STATE_REQ_COMPLETE:
+> -		/* Complete the block request */
+> -		blkdev_dequeue_request(ace->req);
+> -		end_that_request_last(ace->req, 1);
+>  		ace->req = NULL;
+>  
+>  		/* Finished request; go to idle state */
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-Acked-by: Pete Zaitcev <zaitcev@redhat.com>
-
-I follow the discussion, actually, and wanted to ask someone to look
-closer if it's appropriate to use __blk_end_request() here.
-My understanding was, blk_end_request() is the same thing, only
-takes the queue lock. But then, should I refactor ub so that it
-calls __blk_end_request if request function ends with an error
-and blk_end_request if the end-of-IO even is processed? If not,
-and the above is sufficient, why have blk_end_request at all?
-
--- Pete
+Boaz
