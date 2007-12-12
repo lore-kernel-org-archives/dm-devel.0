@@ -1,28 +1,28 @@
-From: Jeff Dike <jdike@addtoit.com>
-Subject: Re: [PATCH 05/30] blk_end_request: changing um (take 4)
-Date: Wed, 12 Dec 2007 15:55:51 -0500
-Message-ID: <20071212205551.GC9244@c2.user-mode-linux.org>
-References: <20071211.174253.106440139.k-ueda@ct.jp.nec.com>
+From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+Subject: Re: [PATCH 19/30] blk_end_request: changing ide-scsi (take 4)
+Date: Wed, 12 Dec 2007 22:48:15 +0100
+Message-ID: <200712122248.15838.bzolnier@gmail.com>
+References: <20071211.174929.129777486.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761356AbXLLU55@vger.kernel.org>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20071211.174929.129777486.k-ueda@ct.jp.nec.com>
 Content-Disposition: inline
-In-Reply-To: <20071211.174253.106440139.k-ueda@ct.jp.nec.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-scsi-owner@vger.kernel.org
 To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Cc: jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 11, 2007 at 05:42:53PM -0500, Kiyoshi Ueda wrote:
-> This patch converts um to use blk_end_request interfaces.
+On Tuesday 11 December 2007, Kiyoshi Ueda wrote:
+> This patch converts ide-scsi to use blk_end_request interfaces.
 > Related 'uptodate' arguments are converted to 'error'.
 > 
-> As a result, the interface of internal function, ubd_end_request(),
-> is changed.
+> Cc: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 
-Looks OK to me...
+looks good, ACK
 
-		Jeff
-
--- 
-Work email - jdike at linux dot intel dot com
+ditto for patches #23 and #25
