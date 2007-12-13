@@ -1,7 +1,7 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.24 PATCH 04/06] dm: trigger change uevent on rename
-Date: Thu, 13 Dec 2007 14:43:26 +0000
-Message-ID: <20071213144326.GW24157@agk.fab.redhat.com>
+Subject: [2.6.24 PATCH 05/06] dm: merge max_hw_sector
+Date: Thu, 13 Dec 2007 14:43:52 +0000
+Message-ID: <20071213144352.GX24157@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -17,67 +17,74 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Scott James Remnant <scott@ubuntu.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Alasdair G Kergon <agk@redhat.com>
+From: Neil Brown <neilb@suse.de>
 
-Insert a missing KOBJ_CHANGE notification when a device is renamed.
+Make sure dm honours max_hw_sectors of underlying devices
 
-Cc: Scott James Remnant <scott@ubuntu.com> 
+  We still have no firm testing evidence in support of this patch but
+  believe it may help to resolve some bug reports.  - agk
+
+Signed-off-by: Neil Brown <neilb@suse.de>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm-ioctl.c |    2 ++
- drivers/md/dm.c       |    7 ++++++-
- drivers/md/dm.h       |    2 ++
- 3 files changed, 10 insertions(+), 1 deletion(-)
 
-Index: linux-2.6.24-rc5/drivers/md/dm-ioctl.c
+---
+ drivers/md/dm-table.c         |    9 +++++++++
+ include/linux/device-mapper.h |    1 +
+ 2 files changed, 10 insertions(+)
+
+Index: linux-2.6.24-rc5/drivers/md/dm-table.c
 ===================================================================
---- linux-2.6.24-rc5.orig/drivers/md/dm-ioctl.c	2007-12-12 15:43:06.000000000 +0000
-+++ linux-2.6.24-rc5/drivers/md/dm-ioctl.c	2007-12-12 15:43:13.000000000 +0000
-@@ -332,6 +332,8 @@ static int dm_hash_rename(const char *ol
- 		dm_table_put(table);
- 	}
+--- linux-2.6.24-rc5.orig/drivers/md/dm-table.c	2007-12-12 15:43:06.000000000 +0000
++++ linux-2.6.24-rc5/drivers/md/dm-table.c	2007-12-13 13:25:45.000000000 +0000
+@@ -99,6 +99,9 @@ static void combine_restrictions_low(str
+ 	lhs->max_segment_size =
+ 		min_not_zero(lhs->max_segment_size, rhs->max_segment_size);
  
-+	dm_kobject_uevent(hc->md);
++	lhs->max_hw_sectors =
++		min_not_zero(lhs->max_hw_sectors, rhs->max_hw_sectors);
 +
- 	dm_put(hc->md);
- 	up_write(&_hash_lock);
- 	kfree(old_name);
-Index: linux-2.6.24-rc5/drivers/md/dm.c
-===================================================================
---- linux-2.6.24-rc5.orig/drivers/md/dm.c	2007-12-12 15:43:06.000000000 +0000
-+++ linux-2.6.24-rc5/drivers/md/dm.c	2007-12-12 15:43:13.000000000 +0000
-@@ -1514,7 +1514,7 @@ int dm_resume(struct mapped_device *md)
+ 	lhs->seg_boundary_mask =
+ 		min_not_zero(lhs->seg_boundary_mask, rhs->seg_boundary_mask);
  
- 	dm_table_unplug_all(map);
+@@ -566,6 +569,9 @@ void dm_set_device_limits(struct dm_targ
+ 	rs->max_segment_size =
+ 		min_not_zero(rs->max_segment_size, q->max_segment_size);
  
--	kobject_uevent(&md->disk->kobj, KOBJ_CHANGE);
-+	dm_kobject_uevent(md);
- 
- 	r = 0;
- 
-@@ -1528,6 +1528,11 @@ out:
- /*-----------------------------------------------------------------
-  * Event notification.
-  *---------------------------------------------------------------*/
-+void dm_kobject_uevent(struct mapped_device *md)
-+{
-+	kobject_uevent(&md->disk->kobj, KOBJ_CHANGE);
-+}
++	rs->max_hw_sectors =
++		min_not_zero(rs->max_hw_sectors, q->max_hw_sectors);
 +
- uint32_t dm_next_uevent_seq(struct mapped_device *md)
+ 	rs->seg_boundary_mask =
+ 		min_not_zero(rs->seg_boundary_mask,
+ 			     q->seg_boundary_mask);
+@@ -703,6 +709,8 @@ static void check_for_valid_limits(struc
  {
- 	return atomic_add_return(1, &md->uevent_seq);
-Index: linux-2.6.24-rc5/drivers/md/dm.h
+ 	if (!rs->max_sectors)
+ 		rs->max_sectors = SAFE_MAX_SECTORS;
++	if (!rs->max_hw_sectors)
++		rs->max_hw_sectors = SAFE_MAX_SECTORS;
+ 	if (!rs->max_phys_segments)
+ 		rs->max_phys_segments = MAX_PHYS_SEGMENTS;
+ 	if (!rs->max_hw_segments)
+@@ -901,6 +909,7 @@ void dm_table_set_restrictions(struct dm
+ 	q->max_hw_segments = t->limits.max_hw_segments;
+ 	q->hardsect_size = t->limits.hardsect_size;
+ 	q->max_segment_size = t->limits.max_segment_size;
++	q->max_hw_sectors = t->limits.max_hw_sectors;
+ 	q->seg_boundary_mask = t->limits.seg_boundary_mask;
+ 	q->bounce_pfn = t->limits.bounce_pfn;
+ 	if (t->limits.no_cluster)
+Index: linux-2.6.24-rc5/include/linux/device-mapper.h
 ===================================================================
---- linux-2.6.24-rc5.orig/drivers/md/dm.h	2007-12-12 15:43:06.000000000 +0000
-+++ linux-2.6.24-rc5/drivers/md/dm.h	2007-12-12 15:43:13.000000000 +0000
-@@ -187,4 +187,6 @@ union map_info *dm_get_mapinfo(struct bi
- int dm_open_count(struct mapped_device *md);
- int dm_lock_for_deletion(struct mapped_device *md);
- 
-+void dm_kobject_uevent(struct mapped_device *md);
-+
- #endif
+--- linux-2.6.24-rc5.orig/include/linux/device-mapper.h	2007-12-12 15:40:33.000000000 +0000
++++ linux-2.6.24-rc5/include/linux/device-mapper.h	2007-12-13 13:25:44.000000000 +0000
+@@ -115,6 +115,7 @@ struct io_restrictions {
+ 	unsigned short		max_hw_segments;
+ 	unsigned short		hardsect_size;
+ 	unsigned int		max_segment_size;
++	unsigned int		max_hw_sectors;
+ 	unsigned long		seg_boundary_mask;
+ 	unsigned long		bounce_pfn;
+ 	unsigned char		no_cluster; /* inverted so that 0 is default */
