@@ -1,12 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.24 PATCH 06/06] dm crypt: use bio_add_page
-Date: Thu, 13 Dec 2007 14:44:18 +0000
-Message-ID: <20071213144418.GY24157@agk.fab.redhat.com>
+From: Pete Zaitcev <zaitcev@redhat.com>
+Subject: Re: [PATCH 12/30] blk_end_request: changing ub (take 4)
+Date: Thu, 13 Dec 2007 13:59:16 -0800
+Message-ID: <20071213135916.27ebe3f9.zaitcev@redhat.com>
+References: <20071211.174647.75757994.k-ueda@ct.jp.nec.com>
+	<20071211154803.58beb681.zaitcev@redhat.com>
+	<20071212.153815.39152138.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <20071212.153815.39152138.k-ueda@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,83 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-crypt@saout.de, stable@kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-ide@vger.kernel.org, dm-devel@redhat.com, zaitcev@redhat.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-From: Milan Broz <mbroz@redhat.com>
+On Wed, 12 Dec 2007 15:38:15 -0500 (EST), Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+> On Tue, 11 Dec 2007 15:48:03 -0800, Pete Zaitcev <zaitcev@redhat.com> wrote:
 
-Fix possible max_phys_segments violation in cloned dm-crypt bio.
+> > > -	end_that_request_first(rq, uptodate, rq->hard_nr_sectors);
+> > > -	end_that_request_last(rq, uptodate);
+> > > +	if (__blk_end_request(rq, error, blk_rq_bytes(rq)))
+> > > +		BUG();
 
-In write operation dm-crypt needs to allocate new bio request
-and run crypto operation on this clone. Cloned request has always
-the same size, but number of physical segments can be increased
-and violate max_phys_segments restriction.
+> > My understanding was, blk_end_request() is the same thing, only
+> > takes the queue lock. But then, should I refactor ub so that it
+> > calls __blk_end_request if request function ends with an error
+> > and blk_end_request if the end-of-IO even is processed?
 
-This can lead to data corruption and serious hardware malfunction.
-This was observed when using XFS over dm-crypt and at least
-two HBA controller drivers (arcmsr, cciss) recently.
+> I'm using __blk_end_request() here and I think it's sufficient, because:
+>   o end_that_request_last() must be called with the queue lock held
+>   o ub_end_rq() calls end_that_request_last() without taking
+>     the queue lock in itself.
+>     So the queue lock must have been taken outside ub_end_rq().
 
-Fix it by using bio_add_page() call (which tests for other
-restrictions too) instead of constructing own biovec.
+> But, if ub is calling end_that_request_last() without the queue lock,
+> it is a bug in the original code and we should use blk_end_request()
+> to fix that.
 
-All versions of dm-crypt are affected by this bug.
+So, I have to rewrite ub to split the paths after all, right?
+Let's do this then: I'll wait until your patch gets to Linus and
+then update it with the split. The reason is, I need the whole
+enchilada applied and I don't want to bother tracking iterations
+and all the little segments (of which you already have 30).
+Until then, ub will have a race by using your original small patch.
 
-Cc: stable@kernel.org
-Cc:  dm-crypt@saout.de
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm-crypt.c |   24 +++++++++++-------------
- 1 files changed, 11 insertions(+), 13 deletions(-)
-
-Index: linux-2.6.24-rc5/drivers/md/dm-crypt.c
-===================================================================
---- linux-2.6.24-rc5.orig/drivers/md/dm-crypt.c	2007-12-12 15:43:11.000000000 +0000
-+++ linux-2.6.24-rc5/drivers/md/dm-crypt.c	2007-12-12 15:43:15.000000000 +0000
-@@ -398,7 +398,8 @@ static struct bio *crypt_alloc_buffer(st
- 	struct bio *clone;
- 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
- 	gfp_t gfp_mask = GFP_NOIO | __GFP_HIGHMEM;
--	unsigned int i;
-+	unsigned i, len;
-+	struct page *page;
- 
- 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
- 	if (!clone)
-@@ -407,10 +408,8 @@ static struct bio *crypt_alloc_buffer(st
- 	clone_init(io, clone);
- 
- 	for (i = 0; i < nr_iovecs; i++) {
--		struct bio_vec *bv = bio_iovec_idx(clone, i);
--
--		bv->bv_page = mempool_alloc(cc->page_pool, gfp_mask);
--		if (!bv->bv_page)
-+		page = mempool_alloc(cc->page_pool, gfp_mask);
-+		if (!page)
- 			break;
- 
- 		/*
-@@ -421,15 +420,14 @@ static struct bio *crypt_alloc_buffer(st
- 		if (i == (MIN_BIO_PAGES - 1))
- 			gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
- 
--		bv->bv_offset = 0;
--		if (size > PAGE_SIZE)
--			bv->bv_len = PAGE_SIZE;
--		else
--			bv->bv_len = size;
-+		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
-+
-+		if (!bio_add_page(clone, page, len, 0)) {
-+			mempool_free(page, cc->page_pool);
-+			break;
-+		}
- 
--		clone->bi_size += bv->bv_len;
--		clone->bi_vcnt++;
--		size -= bv->bv_len;
-+		size -= len;
- 	}
- 
- 	if (!clone->bi_size) {
+Best wishes,
+-- Pete
