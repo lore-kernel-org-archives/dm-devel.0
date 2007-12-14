@@ -1,9 +1,15 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdm-common.c l ...
-Date: 14 Dec 2007 19:49:27 -0000
-Message-ID: <20071214194927.30197.qmail@sourceware.org>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Black listing CLARiiON "LUNZ"?
+Date: Fri, 14 Dec 2007 13:44:36 -0600
+Message-ID: <20071214194436.GE25939@ether.msp.redhat.com>
+References: <D364D39DAD21D444BAE2C70919B62809086CD7BC@CORPUSMX40A.corp.emc.com>
+	<940B4FF1F5958E4F96FC83C055A2F2611B8E3A@exch-2003.incipient.waltham>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <940B4FF1F5958E4F96FC83C055A2F2611B8E3A@exch-2003.incipient.waltham>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,130 +19,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2007-12-14 19:49:27
+On Mon, Dec 10, 2007 at 10:47:43AM -0500, Paul Cote wrote:
+> 
+>    Hi Wayne;
+> 
+>    We're currently locked in with RHEL 4 / Update 4 (2.6.9-42.ELsmp) with
+>    multipath tools V4.7.
+> 
+>    I'm trying to make a play for a later release... but certainly would be
+>    quite helpful knowing which one has the fix!
+> 
+>    Much appreciated.
+> 
+>    Paul
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdm-common.c libdm-deptree.c 
+Since backporting the product_blacklist changes to RHEL4 was too
+invasive, RHEL4 has it's own method of blacklisting certain products.
+It works largely the same as product_blacklist.  Here is the
+documentation from
+/usr/shar/doc/device-mapper-multipath-0.4.5/multipath.conf.annotated
 
-Log message:
-	more readahead node fixes/debug messages
+#
+# name    : bl_product
+# scope   : multipath & multipathd
+# desc    : a regular expression used to blacklist devices
+#           by vendor/product. NOTE For a device to get
+#           blacklisted, the vendor, product, and bl_product
+#           strings must all match, not just the vendor and
+#           bl_product strings as in the upstream version.
+# default : (null)
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.219&r2=1.220
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-common.c.diff?cvsroot=dm&r1=1.57&r2=1.58
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.35&r2=1.36
+Also, have you tried not including a devices section, and simply using
+the compiled in default?
 
---- device-mapper/WHATS_NEW	2007/12/14 17:57:04	1.219
-+++ device-mapper/WHATS_NEW	2007/12/14 19:49:26	1.220
-@@ -1,6 +1,7 @@
- Version 1.02.24 -
- ===================================
-   Fix deptree to pass new name to _resume_node after a rename.
-+  Suppress other node operations if node is deleted.
-   Add node operation stack debug messages.
-   Report error when empty device name passed to readahead functions.
-   Fix minimum readahead debug message.
---- device-mapper/lib/libdm-common.c	2007/12/14 17:26:09	1.57
-+++ device-mapper/lib/libdm-common.c	2007/12/14 19:49:27	1.58
-@@ -300,6 +300,8 @@
- 		return 0;
- 	}
- 
-+	log_debug("Created %s", path);
-+
- #ifdef HAVE_SELINUX
- 	if (!dm_set_selinux_context(path, S_IFBLK))
- 		return 0;
-@@ -341,6 +343,8 @@
- 		return 0;
- 	}
- 
-+	log_debug("Renamed %s to %s", oldpath, newpath);
-+
- 	return 1;
- }
- 
-@@ -359,6 +363,8 @@
- 		return 0;
- 	}
- 
-+	log_debug("Removed %s", path);
-+
- 	return 1;
- }
- 
-@@ -531,9 +537,23 @@
- 			  uint32_t read_ahead_flags)
- {
- 	struct node_op_parms *nop;
-+	struct list *noph, *nopht;
- 	size_t len = strlen(dev_name) + strlen(old_name) + 2;
- 	char *pos;
- 
-+	/*
-+	 * Ignore any outstanding operations on the node if deleting it
-+	 */
-+	if (type == NODE_DEL) {
-+		list_iterate_safe(noph, nopht, &_node_ops) {
-+			nop = list_item(noph, struct node_op_parms);
-+			if (!strcmp(dev_name, nop->dev_name)) {
-+				list_del(&nop->list);
-+				dm_free(nop);
-+			}
-+		}
-+	}
-+
- 	if (!(nop = dm_malloc(sizeof(*nop) + len))) {
- 		log_error("Insufficient memory to stack mknod operation");
- 		return 0;
-@@ -592,7 +612,7 @@
- 
- int rm_dev_node(const char *dev_name)
- {
--	log_debug("%s: Stacking NODE_DEL", dev_name);
-+	log_debug("%s: Stacking NODE_DEL (replaces other stacked ops)", dev_name);
- 
- 	return _stack_node_op(NODE_DEL, dev_name, 0, 0, 0, 0, 0, "", 0, 0);
- }
---- device-mapper/lib/libdm-deptree.c	2007/12/14 17:57:04	1.35
-+++ device-mapper/lib/libdm-deptree.c	2007/12/14 19:49:27	1.36
-@@ -1510,7 +1510,6 @@
- 	void *handle = NULL;
- 	struct dm_tree_node *child;
- 	struct dm_info newinfo;
--	const char *name;
- 
- 	/* Preload children first */
- 	while ((child = dm_tree_next_child(&handle, dnode, 0))) {
-@@ -1526,11 +1525,6 @@
- 		if (dm_tree_node_num_children(child, 0))
- 			dm_tree_preload_children(child, uuid_prefix, uuid_prefix_len);
- 
--		if (!(name = dm_tree_node_get_name(child))) {
--			stack;
--			continue;
--		}
--
- 		/* FIXME Cope if name exists with no uuid? */
- 		if (!child->info.exists) {
- 			if (!_create_node(child)) {
-@@ -1553,11 +1547,11 @@
- 		if (!child->info.inactive_table && !child->info.suspended)
- 			continue;
- 
--		if (!_resume_node(name, child->info.major, child->info.minor,
-+		if (!_resume_node(child->name, child->info.major, child->info.minor,
- 				  child->props.read_ahead,
- 				  child->props.read_ahead_flags, &newinfo)) {
- 			log_error("Unable to resume %s (%" PRIu32
--				  ":%" PRIu32 ")", name, child->info.major,
-+				  ":%" PRIu32 ")", child->name, child->info.major,
- 				  child->info.minor);
- 			continue;
- 		}
+What version of the device-mapper-multipath package are you using?
+
+Thanks.
+
+-Ben
