@@ -1,8 +1,11 @@
-From: Ritesh Raj Sarraf <rrs@researchut.com>
-Subject: [PATCH] Document queue_if_no_path behavior
-Date: Wed, 19 Dec 2007 01:12:33 +0530
-Message-ID: <1198006953-7677-1-git-send-email-rrs@researchut.com>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Snapshots
+Date: Tue, 18 Dec 2007 14:57:36 -0500
+Message-ID: <47682630.5060803@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,37 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ritesh Raj Sarraf <rrs@researchut.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Document the queue_if_no_path behavior in situations where
-all the paths to the LUN go offline.
+I have been playing around with the snapshot target with dmsetup, and I 
+can set up a snapshot that diverts writes to a backing file, so that 
+modifications to the snapshot device are discarded when I remove the 
+snapshot device and go back to using the origin device.  What I can't 
+figure out is how to keep the origin device mounted and have the 
+snapshot device appear to contain the origin's data at the time it was 
+created, even though the origin continues to be modified.
 
-Signed-off-by: Ritesh Raj Sarraf <rrs@researchut.com>
----
- multipath/multipath.conf.5 |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
-
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index c8ab6b0..c66d7fc 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -374,6 +374,15 @@ section:
- .RE
- .PD
- .LP
-+.SH "KNOWN ISSUES"
-+The usage of
-+.B queue_if_no_path
-+option can lead to
-+.B D state
-+processes being hung and not killable in situations where all the paths to the LUN go offline.
-+It is advisable to use the
-+.B no_path_retry
-+option instead.
- .SH "SEE ALSO"
- .BR udev (8),
- .BR dmsetup (8)
--- 
-1.5.3.7
+I thought one of the main ideas of the snapshot was to be able to backup 
+a consistent filesystem image even though the filesystem continues to be 
+written to, but it seems that having the origin device mounted gets an 
+exclusive lock on it so that the snapshot device can not be targeted at 
+it, so how do you do this?
