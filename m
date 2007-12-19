@@ -1,14 +1,15 @@
-From: Phillip Susi <psusi@cfl.rr.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
 Subject: Re: Snapshots
-Date: Wed, 19 Dec 2007 11:42:45 -0500
-Message-ID: <47694A05.9090202@cfl.rr.com>
+Date: Wed, 19 Dec 2007 15:59:25 -0500
+Message-ID: <4769862D.6090403@ce.jp.nec.com>
 References: <47682630.5060803@cfl.rr.com> <47684BE3.5060408@ce.jp.nec.com>
+	<47694A05.9090202@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47684BE3.5060408@ce.jp.nec.com>
+In-Reply-To: <47694A05.9090202@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,11 +22,20 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Jun'ichi Nomura wrote:
-> LVM2 does it by putting a linear mapping on top of the origin device.
+Phillip Susi wrote:
+> Jun'ichi Nomura wrote:
+>> LVM2 does it by putting a linear mapping on top of the origin device.
+> 
+> How does this work?  I'm trying to figure out the whole locking business
+> and it seems that mounting the device, or using it as a target in a dm
+> table place an exclusive lock on the device, so how can you add a linear
+> mapping to the origin device, if it is already used as a target in the
+> snapshot device, and thus locked?
 
-How does this work?  I'm trying to figure out the whole locking business
-and it seems that mounting the device, or using it as a target in a dm
-table place an exclusive lock on the device, so how can you add a linear
-mapping to the origin device, if it is already used as a target in the
-snapshot device, and thus locked?
+So, you have to put the linear mapping *before* that.
+Then, the top-level block device will be locked but you can
+still change the underlying mappings.
+
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation of America
