@@ -1,15 +1,13 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: Snapshots
-Date: Wed, 19 Dec 2007 15:59:25 -0500
-Message-ID: <4769862D.6090403@ce.jp.nec.com>
-References: <47682630.5060803@cfl.rr.com> <47684BE3.5060408@ce.jp.nec.com>
-	<47694A05.9090202@cfl.rr.com>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Configuring multipath for root device
+Date: Wed, 19 Dec 2007 13:02:47 -0800
+Message-ID: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47694A05.9090202@cfl.rr.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,20 +20,10 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Phillip Susi wrote:
-> Jun'ichi Nomura wrote:
->> LVM2 does it by putting a linear mapping on top of the origin device.
-> 
-> How does this work?  I'm trying to figure out the whole locking business
-> and it seems that mounting the device, or using it as a target in a dm
-> table place an exclusive lock on the device, so how can you add a linear
-> mapping to the origin device, if it is already used as a target in the
-> snapshot device, and thus locked?
+Hi All,
 
-So, you have to put the linear mapping *before* that.
-Then, the top-level block device will be locked but you can
-still change the underlying mappings.
+Is there a process/document that talks about how to configure
+root/boot device for multipath?
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation of America
+Thanks and Regards,
+Pradipmaya.
