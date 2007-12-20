@@ -1,17 +1,16 @@
-From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: Re: Configuring multipath for root device
-Date: Thu, 20 Dec 2007 08:46:41 -0800
-Message-ID: <110b17190712200846l50e4c4d8h51456b852f0c851d@mail.gmail.com>
-References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
-	<1198099093.26366.32.camel@linuxchandra>
-	<110b17190712191326x5d3a99e9gdf30e95716acd0e@mail.gmail.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [RFC] How to fix system stall on root volume multipath
+Date: Thu, 20 Dec 2007 13:10:39 -0500 (EST)
+Message-ID: <20071220.131039.41628927.k-ueda@ct.jp.nec.com>
+References: <1194915684.6724.66.camel@localhost.localdomain>
+	<1195202472.27535.27.camel@localhost.localdomain>
+	<1195431462.27535.43.camel@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <110b17190712191326x5d3a99e9gdf30e95716acd0e@mail.gmail.com>
-Content-Disposition: inline
+In-Reply-To: <1195431462.27535.43.camel@localhost.localdomain>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,78 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+Hi Christophe,
 
-Pardon my knowledge on Linux, but in your article did you mean that
-the /boot should be on a local disk and /root, swap can be on
-multipath device.
+On Mon, 19 Nov 2007 01:17:41 +0100, Christophe Varoqui wrote:
+> > > So I propose to start playing with your prioritizers-as-lib idea to see
+> > > if it's practical.
+> > > 
+> > > I prepared the following patch to that effect. It is not complete
+> > > (actually segfaults, no useful prioritizer ported) but can start fixing
+> > > bugs and go where ever your personnal interest leads.
+> >
+> > I'm sorry I forgot to post the git-cached part of the changeset, i.e.
+> > libprio/ files.
+> > 
+> > There it goes.
+> 
+> Upstream git hosts the initial libprio/ commit.
+> 
+> I ported all useful prioritizers, leaving balance_units in the dark.
+> (If someone is actually using it, please say so)
+> 
+> This time, I cared for a bit of testing and the stuff seems to actually
+> work.
+> 
+> Now I'm interested in feedback from the Netapp fault injection team.
+> And any other feedback.
 
-I am trying to install /boot, /root and swap all on one multipath
-device and try to boot from it. It does not boot, no error just blank
-screen. My equirement is to install everything on multipath device; so
-is it possible at all? I mean can I have the boot device (/boot) too
-on a multipath device.
+Thank you for the libprio coding.  And I'm sorry for my late reply.
 
-Following is what I tried on RHEL
- - selected "linux mpath"
- - I could see one local disk and 3 multipath devices
- - I chose custom partition type
- - instead of going for LVM, I selected one single multipath device
-and installed everything on it (/boot, / and swap).
- - Tried rebooting, it won't boot :(
-
-What am I missing here?
-
-Thanks and Regards,
-Pradipmaya.
+I checked the commit and found a bug during my small testing.
+I'll send a patch to fix it by another email.
 
 
-On 12/19/07, Pradipmaya Maharana <pradipmaya@gmail.com> wrote:
-> Hi Chandra,
->
-> Thanks. I will givei it a try.
->
-> Regards,
-> Pradipmaya.
->
-> On 12/19/07, Chandra Seetharaman <sekharan@us.ibm.com> wrote:
-> > I am working on a multipath usage document. Attached is the installation
-> > section of that document.
-> >
-> > Note that it is written for RHEL5 U1 and SLES10 SP1.
-> >
-> > Good Luck,
-> >
-> > chandra
-> >
-> > On Wed, 2007-12-19 at 13:02 -0800, Pradipmaya Maharana wrote:
-> > > Hi All,
-> > >
-> > > Is there a process/document that talks about how to configure
-> > > root/boot device for multipath?
-> > >
-> > > Thanks and Regards,
-> > > Pradipmaya.
-> > >
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > --
-> >
-> > ----------------------------------------------------------------------
-> >    Chandra Seetharaman               | Be careful what you choose....
-> >              - sekharan@us.ibm.com   |      .......you may get it.
-> > ----------------------------------------------------------------------
-> >
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> >
-> >
->
+I would like to note that we lost the priority callout feature
+completely to fix the stall problem of root multipath.
+
+Although below is just my humble opinion, I guess it was useful
+for people who want to use new prioritizers on official distro's
+environments until an update package including the prioritizer
+is released.
+So if such a case often happens, adding other ways to use external
+prioritizers (perhaps dynamic loading library module like LVM2)
+would be required in the near future.
+
+Thanks,
+Kiyoshi Ueda
