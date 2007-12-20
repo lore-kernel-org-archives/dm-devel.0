@@ -1,16 +1,9 @@
-From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: Re: Configuring multipath for root device
-Date: Wed, 19 Dec 2007 13:26:54 -0800
-Message-ID: <110b17190712191326x5d3a99e9gdf30e95716acd0e@mail.gmail.com>
-References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
-	<1198099093.26366.32.camel@linuxchandra>
+From: agk@sourceware.org
+Subject: device-mapper VERSION WHATS_NEW
+Date: 20 Dec 2007 15:12:58 -0000
+Message-ID: <20071220151258.31792.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1198099093.26366.32.camel@linuxchandra>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,50 +13,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Chandra,
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2007-12-20 15:12:58
 
-Thanks. I will givei it a try.
+Modified files:
+	.              : VERSION WHATS_NEW 
 
-Regards,
-Pradipmaya.
+Log message:
+	pre-release
 
-On 12/19/07, Chandra Seetharaman <sekharan@us.ibm.com> wrote:
-> I am working on a multipath usage document. Attached is the installation
-> section of that document.
->
-> Note that it is written for RHEL5 U1 and SLES10 SP1.
->
-> Good Luck,
->
-> chandra
->
-> On Wed, 2007-12-19 at 13:02 -0800, Pradipmaya Maharana wrote:
-> > Hi All,
-> >
-> > Is there a process/document that talks about how to configure
-> > root/boot device for multipath?
-> >
-> > Thanks and Regards,
-> > Pradipmaya.
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> --
->
-> ----------------------------------------------------------------------
->    Chandra Seetharaman               | Be careful what you choose....
->              - sekharan@us.ibm.com   |      .......you may get it.
-> ----------------------------------------------------------------------
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.130&r2=1.131
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.220&r2=1.221
+
+--- device-mapper/VERSION	2007/12/05 17:14:30	1.130
++++ device-mapper/VERSION	2007/12/20 15:12:57	1.131
+@@ -1 +1 @@
+-1.02.24-cvs (2007-12-05)
++1.02.24-cvs (2007-12-20)
+--- device-mapper/WHATS_NEW	2007/12/14 19:49:26	1.220
++++ device-mapper/WHATS_NEW	2007/12/20 15:12:57	1.221
+@@ -1,5 +1,5 @@
+-Version 1.02.24 -
+-===================================
++Version 1.02.24 - 20th December 2007
++====================================
+   Fix deptree to pass new name to _resume_node after a rename.
+   Suppress other node operations if node is deleted.
+   Add node operation stack debug messages.
