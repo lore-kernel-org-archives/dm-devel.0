@@ -1,13 +1,16 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH] multipath-tools: fix a porting bug for random
-	libprio
-Date: Thu, 20 Dec 2007 13:13:50 -0500 (EST)
-Message-ID: <20071220.131350.71084304.k-ueda@ct.jp.nec.com>
+From: Phillip Susi <psusi@cfl.rr.com>
+Subject: Re: Snapshots
+Date: Thu, 20 Dec 2007 14:45:54 -0500
+Message-ID: <476AC672.4030405@cfl.rr.com>
+References: <47682630.5060803@cfl.rr.com>
+	<47684BE3.5060408@ce.jp.nec.com>	<47694A05.9090202@cfl.rr.com>
+	<4769862D.6090403@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4769862D.6090403@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,30 +20,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Christophe,
+Jun'ichi Nomura wrote:
+> So, you have to put the linear mapping *before* that.
+> Then, the top-level block device will be locked but you can
+> still change the underlying mappings.
 
-The random prioritizer were not converted to the new scheme.
-It should return the priority instead of print it.
-
---- git-20071214/libprio/random.c	2007-12-14 15:48:28.000000000 -0500
-+++ random-prio-fix/libprio/random.c	2007-12-19 18:05:50.000000000 -0500
-@@ -7,10 +7,11 @@
- 
- int prio_random(struct path * pp)
- {
-+	int ret;
- 	struct timeval tv;
- 	
- 	gettimeofday(&tv, NULL);
- 	srand((unsigned int)tv.tv_usec);
--	printf("%i\n", 1+(int) (10.0*rand()/(RAND_MAX+1.0)));
--	return 0;
-+	ret = 1 + (int)(10.0 * rand() / (RAND_MAX + 1.0));
-+	return ret;
- }
-
-Thanks,
-Kiyoshi Ueda
+So using a disk device as a dm target locks it.  DM won't use a disk
+device as a target if it is locked.  Are you saying that dm can use
+another dm device as a target, even if it is already locked by being
+used as another dm target?
