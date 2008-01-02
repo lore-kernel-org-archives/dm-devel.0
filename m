@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/multipath multipath.conf.redhat
-Date: 2 Jan 2008 19:06:12 -0000
-Message-ID: <20080102190612.27694.qmail@sourceware.org>
+Subject: multipath-tools/libmultipath hwtable.c
+Date: 2 Jan 2008 23:38:44 -0000
+Message-ID: <20080102233844.23951.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,25 +19,34 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-01-02 19:06:12
+Changes by:	bmarzins@sourceware.org	2008-01-02 23:38:43
 
 Modified files:
-	multipath      : multipath.conf.redhat 
+	libmultipath   : hwtable.c 
 
 Log message:
-	Config file typeo, fixes bug #426799
+	Use the hp_sw hardware handler. Fixes bz #226791
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/multipath.conf.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.5&r2=1.6.2.6
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.9&r2=1.20.2.10
 
---- multipath-tools/multipath/multipath.conf.redhat	2007/10/09 21:48:20	1.6.2.5
-+++ multipath-tools/multipath/multipath.conf.redhat	2008/01/02 19:06:12	1.6.2.6
-@@ -42,7 +42,7 @@
- #	rr_weight		priorities
- #	failback		immediate
- #	no_path_retry		fail
--#	user_friendly_name	yes
-+#	user_friendly_names	yes
- #}
- ##
- ## The wwid line in the following blacklist section is shown as an example
+--- multipath-tools/libmultipath/hwtable.c	2007/10/29 20:03:08	1.20.2.9
++++ multipath-tools/libmultipath/hwtable.c	2008/01/02 23:38:43	1.20.2.10
+@@ -76,7 +76,7 @@
+ 	},
+ 	{
+ 		.vendor        = "(COMPAQ|HP)",
+-		.product       = "MSA1.*",
++		.product       = "(MSA|HSV)1.*",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = NULL,
+ 		.features      = DEFAULT_FEATURES,
+@@ -91,7 +91,7 @@
+ 	},
+ 	{
+ 		.vendor        = "(COMPAQ|HP)",
+-		.product       = "HSV(1|2).*",
++		.product       = "HSV2.*",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.getprio       = "/sbin/mpath_prio_alua %n",
+ 		.features      = DEFAULT_FEATURES,
