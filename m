@@ -1,14 +1,15 @@
-From: "Paul Cote" <paul.cote@incipient.com>
-Subject: RE: multipath tool 4.8 and RH 5.0
-Date: Fri, 4 Jan 2008 15:42:49 -0500
-Message-ID: <940B4FF1F5958E4F96FC83C055A2F261377D00@exch-2003.incipient.waltham>
-References: <940B4FF1F5958E4F96FC83C055A2F261377CFE@exch-2003.incipient.waltham>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: Configuring multipath for root device
+Date: Mon, 07 Jan 2008 08:38:01 +0100
+Message-ID: <4781D6D9.5030204@suse.de>
+References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
+	<1198099093.26366.32.camel@linuxchandra>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1075182917=="
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <940B4FF1F5958E4F96FC83C055A2F261377CFE@exch-2003.incipient.waltham>
+In-Reply-To: <1198099093.26366.32.camel@linuxchandra>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,392 +19,94 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
-
---===============1075182917==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C84F12.5F3F52FA"
-
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C84F12.5F3F52FA
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-That should have said: I've successfully compiled / link multipath tools
-v4.8 using RHEL 4 but ran into various issues with RHEL V5
-(2.6.18-8.el5)
-
-=20
-
-Friw: multipath tools v4.7 does not compile on RHEL V5.0 as well.
-
-=20
-
-________________________________
-
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Paul Cote
-Sent: Friday, January 04, 2008 2:50 PM
-To: dm-devel@redhat.com
-Subject: [dm-devel] multipath tool 4.8 and RH 5.0
-
-=20
-
-=20
-
-I've successfully compiled / link multipath tools v4.7 using RHEL 4 but
-ran into various issues with RHEL V5
-
-=20
-
-Is multipath tools supported with V5?=20
-
-=20
-
-I also had to remove the laio flag form the make file ... and now the
-undefined references.
-
-=20
-
-thanks
-
-=20
-
-=20
-
-make -C ../libmultipath DAEMON=3D1 BUILD=3Dglibc glibc
-
-make[2]: Entering directory
-`/root/mp48/multipath-tools-0.4.8/libmultipath'
-
-ar rs libmultipath-glibc.a *.o
-
-ar: creating libmultipath-glibc.a
-
-make[2]: Leaving directory
-`/root/mp48/multipath-tools-0.4.8/libmultipath'
-
-cc main.o pidfile.o uxlsnr.o uxclnt.o cli.o cli_handlers.o
-../libmultipath/libmultipath-glibc.a ../libcheckers/libcheckers-glibc.a
--o multipathd -lpthread -ldevmapper -lreadline -lncurses=20
-
-../libcheckers/libcheckers-glibc.a(directio.o): In function
-`directio_init':
-
-/root/mp48/multipath-tools-0.4.8/libcheckers/directio.c:51: undefined
-reference to `io_setup'
-
-/root/mp48/multipath-tools-0.4.8/libcheckers/directio.c:93: undefined
-reference to `io_destroy'
-
-../libcheckers/libcheckers-glibc.a(directio.o): In function
-`directio_free':
-
-/root/mp48/multipath-tools-0.4.8/libcheckers/directio.c:116: undefined
-reference to `io_destroy'
-
-../libcheckers/libcheckers-glibc.a(directio.o): In function
-`check_state':
-
-/root/mp48/multipath-tools-0.4.8/libcheckers/directio.c:144: undefined
-reference to `io_submit'
-
-/root/mp48/multipath-tools-0.4.8/libcheckers/directio.c:151: undefined
-reference to `io_getevents'
-
-collect2: ld returned 1 exit status
-
-make[1]: *** [multipathd] Error 1
-
-
-------_=_NextPart_001_01C84F12.5F3F52FA
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
-xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:st1=3D"urn:schemas-microsoft-com:office:smarttags" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<!--[if !mso]>
-<style>
-v\:* {behavior:url(#default#VML);}
-o\:* {behavior:url(#default#VML);}
-w\:* {behavior:url(#default#VML);}
-.shape {behavior:url(#default#VML);}
-</style>
-<![endif]--><o:SmartTagType
- namespaceuri=3D"urn:schemas-microsoft-com:office:smarttags" =
-name=3D"PersonName"/>
-<!--[if !mso]>
-<style>
-st1\:*{behavior:url(#default#ieooui) }
-</style>
-<![endif]-->
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:Tahoma;
-	panose-1:2 11 6 4 3 5 4 4 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal;
-	font-family:Arial;
-	color:windowtext;}
-span.EmailStyle18
-	{mso-style-type:personal-reply;
-	font-family:Arial;
-	color:navy;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-
-</head>
-
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span =
-style=3D'font-size:
-10.0pt;font-family:Arial;color:navy'>That should have said: =
-</span></font><font
-size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;font-family:Arial'>I&#8217;ve
-successfully compiled / link multipath tools v4.8 using RHEL 4 but ran =
-into
-various issues with RHEL V5 (2.6.18-8.el5)<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>Friw: multipath tools v4.7 does not compile on RHEL =
-V5.0 as
-well.<font color=3Dnavy><span =
-style=3D'color:navy'><o:p></o:p></span></font></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span =
-style=3D'font-size:
-10.0pt;font-family:Arial;color:navy'><o:p>&nbsp;</o:p></span></font></p>
-
-<div>
-
-<div class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font =
-size=3D3
-face=3D"Times New Roman"><span style=3D'font-size:12.0pt'>
-
-<hr size=3D2 width=3D"100%" align=3Dcenter tabindex=3D-1>
-
-</span></font></div>
-
-<p class=3DMsoNormal><b><font size=3D2 face=3DTahoma><span =
-style=3D'font-size:10.0pt;
-font-family:Tahoma;font-weight:bold'>From:</span></font></b><font =
-size=3D2
-face=3DTahoma><span style=3D'font-size:10.0pt;font-family:Tahoma'> =
-dm-devel-bounces@redhat.com
-[mailto:dm-devel-bounces@redhat.com] <b><span =
-style=3D'font-weight:bold'>On
-Behalf Of </span></b>Paul Cote<br>
-<b><span style=3D'font-weight:bold'>Sent:</span></b> Friday, January 04, =
-2008
-2:50 PM<br>
-<b><span style=3D'font-weight:bold'>To:</span></b> <st1:PersonName =
-w:st=3D"on">dm-devel@redhat.com</st1:PersonName><br>
-<b><span style=3D'font-weight:bold'>Subject:</span></b> [dm-devel] =
-multipath tool
-4.8 and RH 5.0</span></font><o:p></o:p></p>
-
-</div>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span =
-style=3D'font-size:
-12.0pt'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>I&#8217;ve successfully compiled / link multipath =
-tools v4.7
-using RHEL 4 but ran into various issues with RHEL =
-V5<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>Is multipath tools supported with V5? =
-<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>I also had to remove the laio flag form the make file
-&#8230; and now the undefined references.<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>thanks<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>make -C ../libmultipath DAEMON=3D1 BUILD=3Dglibc =
-glibc<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>make[2]: Entering directory
-`/root/mp48/multipath-tools-0.4.8/libmultipath'<o:p></o:p></span></font><=
-/p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>ar rs libmultipath-glibc.a =
-*.o<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>ar: creating =
-libmultipath-glibc.a<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>make[2]: Leaving directory
-`/root/mp48/multipath-tools-0.4.8/libmultipath'<o:p></o:p></span></font><=
-/p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>cc main.o pidfile.o uxlsnr.o uxclnt.o cli.o =
-cli_handlers.o
-../libmultipath/libmultipath-glibc.a =
-../libcheckers/libcheckers-glibc.a&nbsp;
--o multipathd -lpthread -ldevmapper -lreadline -lncurses =
-<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>../libcheckers/libcheckers-glibc.a(directio.o): In =
-function
-`directio_init':<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>/root/mp48/multipath-tools-0.4.8/libcheckers/directio.=
-c:51:
-undefined reference to `io_setup'<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>/root/mp48/multipath-tools-0.4.8/libcheckers/directio.=
-c:93:
-undefined reference to `io_destroy'<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>../libcheckers/libcheckers-glibc.a(directio.o): In =
-function
-`directio_free':<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>/root/mp48/multipath-tools-0.4.8/libcheckers/directio.=
-c:116:
-undefined reference to `io_destroy'<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>../libcheckers/libcheckers-glibc.a(directio.o): In =
-function
-`check_state':<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>/root/mp48/multipath-tools-0.4.8/libcheckers/directio.=
-c:144:
-undefined reference to `io_submit'<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>/root/mp48/multipath-tools-0.4.8/libcheckers/directio.=
-c:151:
-undefined reference to `io_getevents'<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>collect2: ld returned 1 exit =
-status<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 face=3DArial><span =
-style=3D'font-size:10.0pt;
-font-family:Arial'>make[1]: *** [multipathd] Error =
-1<o:p></o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
-------_=_NextPart_001_01C84F12.5F3F52FA--
-
-
---===============1075182917==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1075182917==--
+Chandra Seetharaman wrote:
+> I am working on a multipath usage document. Attached is the installatio=
+n
+> section of that document.
+>=20
+> Note that it is written for RHEL5 U1 and SLES10 SP1.
+>=20
+> Good Luck,
+>=20
+> chandra
+>=20
+> On Wed, 2007-12-19 at 13:02 -0800, Pradipmaya Maharana wrote:
+>> Hi All,
+>>
+>> Is there a process/document that talks about how to configure
+>> root/boot device for multipath?
+>>
+>> Thanks and Regards,
+>> Pradipmaya.
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
+>> ----------------------------------------------------------------------=
+--
+>>
+>> 4.1. Installation instructions for SLES10
+>>
+>> Note: This is tested on SLES10 SP1. If you have any other version, you=
+r
+>> mileage may vary.
+>>
+>>    1. Install the OS in a device that has multiple paths. Make sure th=
+e
+>> root device's "Mount by" option is set to "Device by-id" (this option =
+is
+>> available under "expert partitioner" as "fstab options").
+>>    2. Complete the installation. Let the system boot up in multiuser m=
+ode.
+>> Make sure the root device, swap device are all referenced by their by-=
+id
+>> device node entries instead of /dev/sd* type names. If they are not, f=
+ix
+>> them first.
+>>    3. Once booted, update /etc/multipath.conf If you have to make chan=
+ges
+>> to /etc/multipath.conf, make the changes.
+>>       Note: the option "user_friendly_names" is not supported by initr=
+d.
+>> So, if you have user_friendly_names in your /etc/multipath.conf file,
+>> comment it for now, you can uncomment it later.
+>>    4. Enable multipathing by running the following commands
+>>           * chkconfig boot.multipath on
+>>
+>>           * chkconfig multipathd on=20
+>>    5. Add multipath module to initrd
+>>
+>>       Edit the file /etc/sysconfig/kernel and add "dm-multipath" to
+>> INITRD_MODULES". Note: If your storage devices needs a hardware handle=
+r,
+>> add the corresponding module to INITRD_MODULES, in addition to
+>> "dm-multipath". For example add "dm-rdac" and "dm-multipath" to suppor=
+t
+>> IBM's DS4K storage devices
+>>    6.  Run mkinitrd
+>>       Note: You can uncomment the user friendly name if you have comme=
+nted it above.
+>>    7. Reboot=20
+>>
+>> The system will come up with the root disk on a multipathed device.
+>>
+>> Note: You can switch off multipathing to the root device by adding
+>> multipath=3Doff to the kernel command line.
+>>
+ACK. This is the correct way.
+
+Thanks for writing this up.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
