@@ -1,20 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: Configuring multipath for root device
-Date: Mon, 7 Jan 2008 13:57:46 -0800
-Message-ID: <20080107215746.GA16911@us.ibm.com>
-References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
-	<1198099093.26366.32.camel@linuxchandra>
-	<110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com>
-	<20080107202853.GA9833@us.ibm.com>
-	<110b17190801071240i1690a9a0ua3b26acd7c3b349a@mail.gmail.com>
-	<20080107204631.GA10495@us.ibm.com>
-	<110b17190801071256j429907e5iec4f35b74cfb73c8@mail.gmail.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools multipath.conf.annotated multi ...
+Date: 7 Jan 2008 22:22:53 -0000
+Message-ID: <20080107222253.29647.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <110b17190801071256j429907e5iec4f35b74cfb73c8@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,28 +13,50 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
-> I did exactly what you said for SLES 10.1,
-> - Create custom partition
-> - Created partitions for /boot, / and swap of 100MB, 5GB and 1024MB
-> respectively on /dev/sda. So /dev/sda1 is for "/boot", /dev/sda2 for
-> "/" and /dev/sda3 for "swap"
-> - Under fstab option, selected Mount by device-id for each of the partition
-> - Reboot is fine
-> - But as I said earlier, mount, fstab, everything shows devcie names, not id
-> 
-> Any way to mount it by device-id?
-> Is there a way that it can be chaned after installation? Or re-install
-> is the only way.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2008-01-07 22:22:53
 
-I would just replace sd* names by their equivalent by-id names in fstab
-and grub.conf. Do 'ls -l /dev/disk/by-id/*' to get the by-id names
-corresponding to your named partitions'
+Modified files:
+	.              : multipath.conf.annotated 
+	                 multipath.conf.defaults 
 
-No need to re-install.
+Log message:
+	Added bindings_file info to annoted and default config files.
 
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.2&r2=1.18.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.8&r2=1.5.4.9
 
--Malahal.
+--- multipath-tools/multipath.conf.annotated	2007/06/19 18:12:15	1.18.2.2
++++ multipath-tools/multipath.conf.annotated	2008/01/07 22:22:53	1.18.2.3
+@@ -124,6 +124,15 @@
+ #	# default : no
+ #	user_friendly_names no
+ #
++#	#
++#	# name    : bindings_file
++#	# scope   : multipath
++#	# desc    : The location of the bindings file that is used with
++#	#           the user_friendly_names option.
++#	# values  : <full_pathname>
++#	# default : "/var/lib/multipath/bindings"
++#	bindings_file "/etc/multipath_bindings"
++#
+ #}
+ #	
+ ##
+--- multipath-tools/multipath.conf.defaults	2008/01/03 20:16:05	1.5.4.8
++++ multipath-tools/multipath.conf.defaults	2008/01/07 22:22:53	1.5.4.9
+@@ -14,6 +14,7 @@
+ #	failback		manual
+ #	no_path_retry		fail
+ #	user_friendly_names	no
++#	bindings_file           "/var/lib/multipath/bindings"
+ #}
+ #
+ #blacklist {
