@@ -1,16 +1,15 @@
-From: "Urs Golla" <urs.golla@gmail.com>
-Subject: Re: boot from san & lvm
-Date: Mon, 7 Jan 2008 17:12:46 +0100
-Message-ID: <64e30f320801070812r3235338ap807110762ac14f5c@mail.gmail.com>
-References: <64e30f320801070736o62ec8b42q9db45f616f076a17@mail.gmail.com>
-	<20080107154418.GA29532@us.ibm.com>
-	<64e30f320801070802r46105cb1y107c2be17fdcc445@mail.gmail.com>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: Configuring multipath for root device
+Date: Mon, 7 Jan 2008 10:11:48 -0800
+Message-ID: <110b17190801071011saf2cdbcq3c3d400f3d846f04@mail.gmail.com>
+References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
+	<1198099093.26366.32.camel@linuxchandra> <4781D6D9.5030204@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <64e30f320801070802r46105cb1y107c2be17fdcc445@mail.gmail.com>
+In-Reply-To: <4781D6D9.5030204@suse.de>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -24,66 +23,109 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I just did a reboot. now i have tons of errors like:
+Hi All,
 
-device-mapper: table: 253:7: multipath: error getting device
-device-mapper: ioctl: error adding target to table
+Yes, I tried the steps and it worked for me.
+Thanks for your help.
+
+Regards,
+Pradipmaya.
 
 
-On Jan 7, 2008 5:02 PM, Urs Golla <urs.golla@gmail.com> wrote:
-> Hi
->
-> Thank you for your reply!
->
-> Using "mapper" instead of mpath did it!
->
-> hm... i think the partition (mpath0p1) is just "/boot" and mpath0p2 is
-> the rest. this would mean, everything is ok now?
->
-> cheers
->
->
->
->
-> On 1/7/08, malahal@us.ibm.com <malahal@us.ibm.com> wrote:
-> > Urs Golla [urs.golla@gmail.com] wrote:
-> > > Hi
-> > >
-> > > I would like to boot RHEL5 from SAN. If I install with the "mpath"
-> > > parameter I can see the mapper/mpath0 device and the installation
-> > > completes without any errors.
-> > >
-> > > It boots from SAN and everything looks ok (well, lets say its
-> > > working). If i add this lines to /etc/lvm/lvm.conf
-> > >
-> > > types = [ "device-mapper", 1]
-> > > "filter = [ "a/dev/mpath/.*/", "r/.*/" ]"
+On Jan 6, 2008 11:38 PM, Hannes Reinecke <hare@suse.de> wrote:
+> Chandra Seetharaman wrote:
+> > I am working on a multipath usage document. Attached is the installat=
+ion
+> > section of that document.
 > >
-> > Try "mapper" instead of "mpath" above to handle partitions on your
-> > devices.
+> > Note that it is written for RHEL5 U1 and SLES10 SP1.
 > >
-> > > and remove the blacklist lines from /etc/multipath.conf as described
-> > > in the "Native Multipath Failover Based on DM-MPIO for v2.6.x Linux
-> > > Kernel and EMC(R) Storage Arrays" manual the pvscan command returns
-> > > with " No matching physical volumes found". Why?
-> > >
-> > > If I remove the filter line from lvm.conf the pvscan & pvdisplay
-> > > command returns:
-> > >
-> > > (...)
-> > > PV Name               /dev/mapper/mpath0p2
-> > > (...)
-> > >
-> > > Why is it using mpath0p2 and not mpath0? /dev/mapper/mpath0 does exist
-> > > and points to the right disks, because "multipath -ll" gives me
-> > > something like that:
+> > Good Luck,
 > >
-> > You must be having partitions on your disk (either you did or the
-> > installer did for you).
+> > chandra
 > >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> >
+> > On Wed, 2007-12-19 at 13:02 -0800, Pradipmaya Maharana wrote:
+> >> Hi All,
+> >>
+> >> Is there a process/document that talks about how to configure
+> >> root/boot device for multipath?
+> >>
+> >> Thanks and Regards,
+> >> Pradipmaya.
+> >>
+> >> --
+> >> dm-devel mailing list
+> >> dm-devel@redhat.com
+> >> https://www.redhat.com/mailman/listinfo/dm-devel
+> >>
+> >> --------------------------------------------------------------------=
+----
+> >>
+> >> 4.1. Installation instructions for SLES10
+> >>
+> >> Note: This is tested on SLES10 SP1. If you have any other version, y=
+our
+> >> mileage may vary.
+> >>
+> >>    1. Install the OS in a device that has multiple paths. Make sure =
+the
+> >> root device's "Mount by" option is set to "Device by-id" (this optio=
+n is
+> >> available under "expert partitioner" as "fstab options").
+> >>    2. Complete the installation. Let the system boot up in multiuser=
+ mode.
+> >> Make sure the root device, swap device are all referenced by their b=
+y-id
+> >> device node entries instead of /dev/sd* type names. If they are not,=
+ fix
+> >> them first.
+> >>    3. Once booted, update /etc/multipath.conf If you have to make ch=
+anges
+> >> to /etc/multipath.conf, make the changes.
+> >>       Note: the option "user_friendly_names" is not supported by ini=
+trd.
+> >> So, if you have user_friendly_names in your /etc/multipath.conf file=
+,
+> >> comment it for now, you can uncomment it later.
+> >>    4. Enable multipathing by running the following commands
+> >>           * chkconfig boot.multipath on
+> >>
+> >>           * chkconfig multipathd on
+> >>    5. Add multipath module to initrd
+> >>
+> >>       Edit the file /etc/sysconfig/kernel and add "dm-multipath" to
+> >> INITRD_MODULES". Note: If your storage devices needs a hardware hand=
+ler,
+> >> add the corresponding module to INITRD_MODULES, in addition to
+> >> "dm-multipath". For example add "dm-rdac" and "dm-multipath" to supp=
+ort
+> >> IBM's DS4K storage devices
+> >>    6.  Run mkinitrd
+> >>       Note: You can uncomment the user friendly name if you have com=
+mented it above.
+> >>    7. Reboot
+> >>
+> >> The system will come up with the root disk on a multipathed device.
+> >>
+> >> Note: You can switch off multipathing to the root device by adding
+> >> multipath=3Doff to the kernel command line.
+> >>
+> ACK. This is the correct way.
+>
+> Thanks for writing this up.
+>
+> Cheers,
+>
+> Hannes
+> --
+> Dr. Hannes Reinecke                   zSeries & Storage
+> hare@suse.de                          +49 911 74053 688
+> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 >
