@@ -1,13 +1,14 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: possible snapshot corruption after system crash with bad
-	timing
-Date: Sat, 5 Jan 2008 23:41:05 +0100
-Message-ID: <20080105224105.GA1122@debian-etc-mailname>
+From: malahal@us.ibm.com
+Subject: Re: Use device mapper to redirect to cache server?
+Date: Tue, 8 Jan 2008 11:30:42 -0800
+Message-ID: <20080108193042.GA6223@us.ibm.com>
+References: <200801081030.20172.philipp.marek@bmlv.gv.at>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <200801081030.20172.philipp.marek@bmlv.gv.at>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,98 +19,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: philipp.marek@bmlv.gv.at
 List-Id: dm-devel.ids
 
-hi there,
+Ph. Marek [philipp.marek@bmlv.gv.at] wrote:
+> Hello everybody!
+> 
+> 
+> I'd like to mirror write accesses to a block-device to two devices, get all 
+> all *read* accesses from one of these, and if it fails, to fallback to the 
+> other device.
 
-I suspect that when using persistent snapshots,
-there is the (off?) chance for the snapshot to be corrupted
-after a system crash.
+This is exactly what 'mirror' target does (dm-raid1.c) without
+read-balancing. But read on...
 
-scenario described below.
+> The usage would be to use some kind of NAS box as persistent network block 
+> device, with some other machine with a lot of RAM as cache server; the cache 
+> server would get asked for data, and if it's not available, the request 
+> should go to the NAS directly.
 
-Am I missing somthing?
-
-Cheers,
-	Lars
-
-from current dm-exception-store.c:
-
-static void persistent_commit(struct exception_store *store,
-			      struct dm_snap_exception *e,
-			      void (*callback) (void *, int success),
-			      void *callback_context)
-{
-	int r;
-	unsigned int i;
-	struct pstore *ps = get_info(store);
-	struct disk_exception de;
-	struct commit_callback *cb;
-
-	de.old_chunk = e->old_chunk;
-	de.new_chunk = e->new_chunk;
-	write_exception(ps, ps->current_committed++, &de);
-
-	/*
-	 * Add the callback to the back of the array.  This code
-	 * is the only place where the callback array is
-	 * manipulated, and we know that it will never be called
-	 * multiple times concurrently.
-	 */
-	cb = ps->callbacks + ps->callback_count++;
-	cb->callback = callback;
-	cb->context = callback_context;
-
-	/*
-	 * If there are no more exceptions in flight, or we have
-	 * filled this metadata area we commit the exceptions to
-	 * disk.
-	 */
-	if (atomic_dec_and_test(&ps->pending_count) ||
-	    (ps->current_committed == ps->exceptions_per_area)) {
-		r = area_io(ps, ps->current_area, WRITE);
-		if (r)
-			ps->valid = 0;
-
-
-
-==== POSSIBLE CURRUPTION RIGHT HERE ======== 
-
-assume we crash right after we completely filled the current area,
-but before we had a chance to zero out the next area.
-
-further assume there has been old data garbage in the
-area mapped for this exception store.
-
-after reboot, the snapshot will be reassembled,
-but may not find the necessary zeros to terminate the 
-read_exceptions loop in insert_exceptions,
-thus may dm_add_exception bogus mappings,
-aka data corruption.
-
-===========================================
-
-
-		/*
-		 * Have we completely filled the current area ?
-		 */
-		if (ps->current_committed == ps->exceptions_per_area) {
-			ps->current_committed = 0;
-			r = zero_area(ps, ps->current_area + 1);
-			if (r)
-				ps->valid = 0;
-		}
-
-		for (i = 0; i < ps->callback_count; i++) {
-			cb = ps->callbacks + i;
-			cb->callback(cb->context, r == 0 ? 1 : 0);
-		}
-
-		ps->callback_count = 0;
-	}
-}
-
--- 
-: Lars Ellenberg                            Tel +43-1-8178292-55 :
-: LINBIT Information Technologies GmbH      Fax +43-1-8178292-82 :
-: Vivenotgasse 48, A-1120 Vienna/Europe    http://www.linbit.com :
+I think, you are better of using the cache server as some kind of NFS
+server as 'mirror' target's failure handling is heavy-weight.
