@@ -1,55 +1,45 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Configuring multipath for root device
-Date: Tue, 08 Jan 2008 08:17:48 +0100
-Message-ID: <4783239C.7020206@suse.de>
-References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>	<1198099093.26366.32.camel@linuxchandra>
-	<110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Ph. Marek" <philipp.marek@bmlv.gv.at>
+Subject: Use device mapper to redirect to cache server?
+Date: Tue, 8 Jan 2008 10:30:19 +0100
+Message-ID: <200801081030.20172.philipp.marek@bmlv.gv.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758239AbYAHJax@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Pradipmaya Maharana wrote:
-> RHEL Steps worked perfectly for me but i have a question for SLES insta=
-llation.
->=20
-> Question. While installing SLES on multipath devices, the second step s=
-ays:
->=20
-> " 2. Complete the installation. Let the system boot up in multiuser mod=
-e.
-> Make sure the root device, swap device are all referenced by their by-i=
-d
-> device node entries instead of /dev/sd* type names. If they are not, fi=
-x
-> them first."
->=20
-> How do you check that root device and swap device are referenced by the=
-ir by-id?
-> And if it is not referenced by the by-id, how do I fix it? Re-install?
->=20
-Check /etc/fstab. Those devices should be listed as /dev/disk/by-id/XXX.
-If not (ie if their names are /dev/sdXX) look for the appropriate symlink
-in /dev/disk/by-id and edit /etc/fstab.
+Hello everybody!
 
-Cheers,
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+I'd like to mirror write accesses to a block-device to two devices, get all 
+all *read* accesses from one of these, and if it fails, to fallback to the 
+other device.
+
+
+The usage would be to use some kind of NAS box as persistent network block 
+device, with some other machine with a lot of RAM as cache server; the cache 
+server would get asked for data, and if it's not available, the request 
+should go to the NAS directly.
+
+If I read the multipath documentation correctly (at 
+http://christophe.varoqui.free.fr/multipath.html):
+	For completion, here is an example of a pure failover target definition for
+ 	the same LU :
+	...
+multipath should do part of what I want - use another device if the first one 
+fails.
+But that doesn't account for pushing writes to both; and how is failing 
+defined for NBD? I don't see some configurable timeout.
+
+
+Thank you for all ideas/suggestions! [[ but please CC me ]]
+
+
+Regards,
+
+Phil
