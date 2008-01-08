@@ -1,9 +1,22 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools multipath.conf.annotated multi ...
-Date: 7 Jan 2008 22:22:53 -0000
-Message-ID: <20080107222253.29647.qmail@sourceware.org>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: Configuring multipath for root device
+Date: Mon, 7 Jan 2008 16:13:40 -0800
+Message-ID: <110b17190801071613q13e0d317pb792005ab724efa0@mail.gmail.com>
+References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
+	<1198099093.26366.32.camel@linuxchandra>
+	<110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com>
+	<20080107202853.GA9833@us.ibm.com>
+	<110b17190801071240i1690a9a0ua3b26acd7c3b349a@mail.gmail.com>
+	<20080107204631.GA10495@us.ibm.com>
+	<110b17190801071256j429907e5iec4f35b74cfb73c8@mail.gmail.com>
+	<20080107215746.GA16911@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080107215746.GA16911@us.ibm.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,50 +26,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-01-07 22:22:53
+Ok, so this is what the scene is :
 
-Modified files:
-	.              : multipath.conf.annotated 
-	                 multipath.conf.defaults 
+linux-g78h:~ # ls -al /dev/disk/by-id/
+total 0
+drwxr-xr-x 2 root root 220 Jan  7 12:44 .
+drwxr-xr-x 5 root root 100 Jan  7 12:44 ..
+lrwxrwxrwx 1 root root   9 Jan  7 12:44 edd-int13_dev80 -> ../../sda
+lrwxrwxrwx 1 root root  10 Jan  7 12:44 edd-int13_dev80-part1 -> ../../sda1
+lrwxrwxrwx 1 root root  10 Jan  7 12:44 edd-int13_dev80-part2 -> ../../sda2
+lrwxrwxrwx 1 root root  10 Jan  7 12:44 edd-int13_dev80-part3 -> ../../sda3
+lrwxrwxrwx 1 root root   9 Jan  7 12:44 scsi-2221b000155f5d2d4 -> ../../sdb
+lrwxrwxrwx 1 root root  10 Jan  7 12:44 scsi-2221b000155f5d2d4-part1
+-> ../../sda1
+lrwxrwxrwx 1 root root  10 Jan  7 12:44 scsi-2221b000155f5d2d4-part2
+-> ../../sda2
+lrwxrwxrwx 1 root root  10 Jan  7 12:44 scsi-2221b000155f5d2d4-part3
+-> ../../sda3
+lrwxrwxrwx 1 root root   9 Jan  7 12:44 usb-ASUS_CB-5216A_DEF10A4090DF
+-> ../../sr0
+linux-g78h:~ #
+linux-g78h:~ # uname -a
+Linux linux-g78h 2.6.16.46-0.12-smp #1 SMP Thu May 17 14:00:09 UTC
+2007 i686 i686 i386 GNU/Linux
+linux-g78h:~ #
+linux-g78h:~ # cat /etc/grub.conf
+setup --stage2=/boot/grub/stage2 (hd0,0) (hd0,0)
+quit
+linux-g78h:~ #
+linux-g78h:~ # cat /boot/grub/menu.lst
+# Modified by YaST2. Last modification on Mon Jan  7 19:40:30 UTC 2008
+default 0
+timeout 8
+##YaST - generic_mbr
+gfxmenu (hd0,0)/message
+##YaST - activate
 
-Log message:
-	Added bindings_file info to annoted and default config files.
+###Don't change this comment - YaST2 identifier: Original name: linux###
+title SUSE Linux Enterprise Server 10 SP1
+    root (hd0,0)
+    kernel /vmlinuz-2.6.16.46-0.12-smp root=/dev/sda2 vga=0x31a
+resume=/dev/sda3 showopts
+    initrd /initrd-2.6.16.46-0.12-smp
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.2&r2=1.18.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.8&r2=1.5.4.9
+###Don't change this comment - YaST2 identifier: Original name: failsafe###
+title Failsafe -- SUSE Linux Enterprise Server 10 SP1
+    root (hd0,0)
+    kernel /vmlinuz-2.6.16.46-0.12-smp root=/dev/sda2 vga=normal
+showopts ide=nodma apm=off acpi=off noresume nosmp noapic maxcpus=0
+edd=off 3
+    initrd /initrd-2.6.16.46-0.12-smp
 
---- multipath-tools/multipath.conf.annotated	2007/06/19 18:12:15	1.18.2.2
-+++ multipath-tools/multipath.conf.annotated	2008/01/07 22:22:53	1.18.2.3
-@@ -124,6 +124,15 @@
- #	# default : no
- #	user_friendly_names no
- #
-+#	#
-+#	# name    : bindings_file
-+#	# scope   : multipath
-+#	# desc    : The location of the bindings file that is used with
-+#	#           the user_friendly_names option.
-+#	# values  : <full_pathname>
-+#	# default : "/var/lib/multipath/bindings"
-+#	bindings_file "/etc/multipath_bindings"
-+#
- #}
- #	
- ##
---- multipath-tools/multipath.conf.defaults	2008/01/03 20:16:05	1.5.4.8
-+++ multipath-tools/multipath.conf.defaults	2008/01/07 22:22:53	1.5.4.9
-@@ -14,6 +14,7 @@
- #	failback		manual
- #	no_path_retry		fail
- #	user_friendly_names	no
-+#	bindings_file           "/var/lib/multipath/bindings"
- #}
- #
- #blacklist {
+###Don't change this comment - YaST2 identifier: Original name: linux###
+title SUSE Linux Enterprise Server 10 SP1 ORG
+    root (hd0,0)
+    kernel /vmlinuz-2.6.16.46-0.12-smp root=/dev/sda2 vga=0x31a
+resume=/dev/sda3 showopts
+    initrd /initrd-2.6.16.46-0.org.12-smp
+
+
+So, I modified the fstab and menu.lst to replace all /dev/sdaX with
+/dev/scsi-2221b000155f5d2d4-partX. It won't boot.
+
+Any comments?
+
+Thanks and Regards,
+Pradipmaya.
+
+On Jan 7, 2008 1:57 PM,  <malahal@us.ibm.com> wrote:
+> Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
+> > I did exactly what you said for SLES 10.1,
+> > - Create custom partition
+> > - Created partitions for /boot, / and swap of 100MB, 5GB and 1024MB
+> > respectively on /dev/sda. So /dev/sda1 is for "/boot", /dev/sda2 for
+> > "/" and /dev/sda3 for "swap"
+> > - Under fstab option, selected Mount by device-id for each of the partition
+> > - Reboot is fine
+> > - But as I said earlier, mount, fstab, everything shows devcie names, not id
+> >
+> > Any way to mount it by device-id?
+> > Is there a way that it can be chaned after installation? Or re-install
+> > is the only way.
+>
+> I would just replace sd* names by their equivalent by-id names in fstab
+> and grub.conf. Do 'ls -l /dev/disk/by-id/*' to get the by-id names
+> corresponding to your named partitions'
+>
+> No need to re-install.
+>
+>
+>
+> -Malahal.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
