@@ -1,10 +1,11 @@
-From: Tomasz Chmielewski <mangoo@wpkg.org>
-Subject: can I create static /dev/dm-XY device mappings?
-Date: Fri, 11 Jan 2008 14:52:41 +0100
-Message-ID: <478774A9.1010104@wpkg.org>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH] multipath-tools: fix wrong annotation about
+	default value
+Date: Fri, 11 Jan 2008 18:15:43 -0500 (EST)
+Message-ID: <20080111.181543.34766095.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,36 +20,49 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Is it possible to create static /dev/dm-XY device mappings?
+Hi Christophe,
 
-I have an encrypted disk, later partitioned, DRBD over it, and finally, 
-LVM2 over it.
+This patch fixes some wrong annotations about default value.
+It should be applied on top of your latest git.
 
-LVM2 gets confused, and detects physical volume with duplicate IDs 
-(/dev/drbd0 and /dev/dm-2).
+Thanks,
+Kiyoshi Ueda
 
-So far my only workaround was to filter out /dev/dm-2 in lvm.conf, but 
-as /dev/dm-XY are not static, this solution is not very reliable.
-
-
-This is a udev rule which creates these mappings, but I've no idea how 
-to change it to make all or certain mappings static.
-
-#
-# multipath and multipath partitions nodes are created in /dev/mapper/
-# this file should be installed in /etc/udev/rules.d
-#
-
-# take care of devmap partitioning
-ACTION=="add", SUBSYSTEM=="block", KERNEL=="dm-*", \
-         PROGRAM="/sbin/dmsetup -j %M -m %m --noopencount --noheadings 
--c -o name info", \
-         RUN+="/sbin/kpartx -a /dev/mapper/%c"
-
-
-Any clues?
-
-
--- 
-Tomasz Chmielewski
-http://wpkg.org
+--- git/multipath.conf.annotated	2008-01-11 17:46:17.000000000 -0500
++++ fix/multipath.conf.annotated	2008-01-11 17:57:48.000000000 -0500
+@@ -38,7 +38,7 @@
+ #	# scope   : multipath
+ #	# desc    : the default path grouping policy to apply to unspecified
+ #	#           multipaths
+-#	# default : multibus
++#	# default : failover
+ #	#
+ #	path_grouping_policy	multibus
+ #
+@@ -96,7 +96,7 @@
+ #	#	    0 means immediate failback, values >0 means deffered failback
+ #	#	    expressed in seconds.
+ #	# values  : manual|immediate|n > 0
+-#	# default : immediate
++#	# default : manual
+ #	#
+ #	failback	manual
+ #
+@@ -219,7 +219,7 @@
+ #		#	    0 means immediate failback, values >0 means deffered failback
+ #		#	    expressed in seconds.
+ #		# values  : manual|immediate|n > 0
+-#		# default : immediate
++#		# default : manual
+ #		#
+ #		failback		manual
+ #
+@@ -330,7 +330,7 @@
+ #		#	    0 means immediate failback, values >0 means deffered failback
+ #		#	    expressed in seconds.
+ #		# values  : manual|immediate|n > 0
+-#		# default : immediate
++#		# default : manual
+ #		#
+ #		failback		30
+ #
