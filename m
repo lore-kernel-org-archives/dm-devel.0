@@ -1,15 +1,12 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [patch] mpath_prio_pp
-Date: Thu, 10 Jan 2008 17:48:24 -0500 (EST)
-Message-ID: <20080110.174824.08317843.k-ueda@ct.jp.nec.com>
-References: <4640E676B7B93749BC82C75D50E500FB0570FBF4@BGEEXC07.asiapacific.cpqcorp.net>
-	<4640E676B7B93749BC82C75D50E500FB05B2EF5C@BGEEXC07.asiapacific.cpqcorp.net>
+From: Tomasz Chmielewski <mangoo@wpkg.org>
+Subject: can I create static /dev/dm-XY device mappings?
+Date: Fri, 11 Jan 2008 14:52:41 +0100
+Message-ID: <478774A9.1010104@wpkg.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4640E676B7B93749BC82C75D50E500FB05B2EF5C@BGEEXC07.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,66 +16,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: veena-s.t@hp.com
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Veena,
+Is it possible to create static /dev/dm-XY device mappings?
 
-On Wed, 9 Jan 2008 15:15:38 +0530, "T S, Veena (STSD)" wrote:
-> Purpose of the patch-
-> -- To introduce the prio_callout attribute into the multipath section of
-> the configuration file.
+I have an encrypted disk, later partitioned, DRBD over it, and finally, 
+LVM2 over it.
 
-The prio_callout feature has been changed to the libprio.
-Please check the latest Christophe's git.
+LVM2 gets confused, and detects physical volume with duplicate IDs 
+(/dev/drbd0 and /dev/dm-2).
 
-
-> -- To implement the preferred path feature in device mapper.
-> 
-> Uses of the patch-
-> -- Prio_callout attribute in the multipath section allows users to write
-> callout routines,which can be specific to a LUN.
-> -- When it is known the performance of one of the path is better than
-> the other available paths for a particular LUN, the user can set it as
-> preferred path.
-
-How about opposite case such as the performance of some paths are
-better than the one backup path for a particular LUN?
-So if we can specify some preferred paths, that may be more useful.
+So far my only workaround was to filter out /dev/dm-2 in lvm.conf, but 
+as /dev/dm-XY are not static, this solution is not very reliable.
 
 
-> +int main(int argc, char * argv[]) 
-> +{ 
-> + 
-> +       char path[FILE_NAME_SIZE]; 
-> +       
-> +       if(argv[1] && argv[2]) 
-> +       { 
-> +               if(!strncmp(argv[2],"/dev/",5)) 
-> +                       strcpy(path,argv[2]+5); 
-> + 
-> +               if(!strcmp(path,argv[1]) || !strcmp(argv[1],argv[2])) 
-> +               { 
-> +                       printf("%u\n", HIGH); 
-> +                       return 0; 
-> +               } 
-> +               else 
-> +               { 
-> +                       printf("%u\n", LOW); 
-> +                       return 0; 
-> +               } 
-> +       } 
-> +       return -1; 
-> +} 
+This is a udev rule which creates these mappings, but I've no idea how 
+to change it to make all or certain mappings static.
 
-This prioritizer looks that we need to specify the preferred path
-by devnode or major/minor, right?
-If so, it doesn't work reliably.
-Both devnode and major/minor may vary for each system reboot.
-It's horrible to check and change the config file after every reboot.
-We should be able to use more persistent name to specify a path,
-though I don't have a good idea now...
+#
+# multipath and multipath partitions nodes are created in /dev/mapper/
+# this file should be installed in /etc/udev/rules.d
+#
 
-Thanks,
-Kiyoshi Ueda
+# take care of devmap partitioning
+ACTION=="add", SUBSYSTEM=="block", KERNEL=="dm-*", \
+         PROGRAM="/sbin/dmsetup -j %M -m %m --noopencount --noheadings 
+-c -o name info", \
+         RUN+="/sbin/kpartx -a /dev/mapper/%c"
+
+
+Any clues?
+
+
+-- 
+Tomasz Chmielewski
+http://wpkg.org
