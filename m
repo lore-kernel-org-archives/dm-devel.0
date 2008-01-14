@@ -1,12 +1,8 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH] multipath-tools: fix wrong annotation about
-	default value
-Date: Fri, 11 Jan 2008 18:15:43 -0500 (EST)
-Message-ID: <20080111.181543.34766095.k-ueda@ct.jp.nec.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools multipath.conf.annotated
+Date: 14 Jan 2008 23:49:34 -0000
+Message-ID: <20080114234934.15141.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,19 +13,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Christophe,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2008-01-14 23:49:34
 
-This patch fixes some wrong annotations about default value.
-It should be applied on top of your latest git.
+Modified files:
+	.              : multipath.conf.annotated 
 
-Thanks,
-Kiyoshi Ueda
+Log message:
+	Fix wrong defaults in annotated config file.
 
---- git/multipath.conf.annotated	2008-01-11 17:46:17.000000000 -0500
-+++ fix/multipath.conf.annotated	2008-01-11 17:57:48.000000000 -0500
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.18.2.3&r2=1.18.2.4
+
+--- multipath-tools/multipath.conf.annotated	2008/01/07 22:22:53	1.18.2.3
++++ multipath-tools/multipath.conf.annotated	2008/01/14 23:49:34	1.18.2.4
 @@ -38,7 +38,7 @@
  #	# scope   : multipath
  #	# desc    : the default path grouping policy to apply to unspecified
@@ -39,25 +41,31 @@ Kiyoshi Ueda
  #	#
  #	path_grouping_policy	multibus
  #
-@@ -96,7 +96,7 @@
+@@ -96,9 +96,9 @@
  #	#	    0 means immediate failback, values >0 means deffered failback
  #	#	    expressed in seconds.
  #	# values  : manual|immediate|n > 0
 -#	# default : immediate
 +#	# default : manual
  #	#
- #	failback	manual
+-#	failback	manual
++#	failback	immediate
  #
-@@ -219,7 +219,7 @@
+ #	#
+ #	# name    : no_path_retry
+@@ -231,9 +231,9 @@
  #		#	    0 means immediate failback, values >0 means deffered failback
  #		#	    expressed in seconds.
  #		# values  : manual|immediate|n > 0
 -#		# default : immediate
 +#		# default : manual
  #		#
- #		failback		manual
+-#		failback		manual
++#		failback		immediate
  #
-@@ -330,7 +330,7 @@
+ #		#
+ #		# name    : no_path_retry
+@@ -343,7 +343,7 @@
  #		#	    0 means immediate failback, values >0 means deffered failback
  #		#	    expressed in seconds.
  #		# values  : manual|immediate|n > 0
