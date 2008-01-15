@@ -1,127 +1,64 @@
-From: Douglas McClendon <dmc.fedora@filteredperception.org>
-Subject: Re: possible snapshot corruption after system crash with
-	bad	timing
-Date: Mon, 14 Jan 2008 20:29:58 -0600
-Message-ID: <478C1AA6.2000500@filteredperception.org>
-References: <20080105224105.GA1122@debian-etc-mailname>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "K.Tanaka" <k-tanaka@ce.jp.nec.com>
+Subject: [RFC] A SCSI fault injection framework using SystemTap.
+Date: Tue, 15 Jan 2008 12:04:09 +0900
+Message-ID: <478C22A9.5000009@ce.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080105224105.GA1122@debian-etc-mailname>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Lars Ellenberg wrote:
-> hi there,
-> 
-> I suspect that when using persistent snapshots,
-> there is the (off?) chance for the snapshot to be corrupted
-> after a system crash.
 
-I hope someone can answer this, as I use persistent snapshots heavily 
-for LiveUSB persistence (rootfs on a persistent snapshot (on usbflash))
+I would like to introduce a SCSI fault injection framework using SystemTap.
 
-Currently things seem to be working fairly well for me, wheras about 6 
-months ago I would see corruption if I intentionally crashed the system 
-to see how it would respond.
+Currently, kernel has Fault-injection framework and Faulty mode for md,
+which can also be used for testing the error handling. But, they could
+only produce fixed type of errors stochastically. In order to simulate
+more realistic scsi disk faults, I have created a  new flexible fault injection
+framework using SystemTap.
 
-Still, this post worries me.  I hope someone else answers it.
+The new fault injection framework has the following features:
 
--dmc
+ 1) The new framework is flexible, easy to change the condition without changing
+    the kernel because actually they are SystemTap scripts.
+    For example, device faults resulting in scsi command timeout, and media
+    faults which could be corrected by writing data to the failed sector
+    could be simulated using this framework.
+
+ 2) The new framework generates "pseudo" faults in the SCSI mid-layer.
+    Any upper layer app/driver using the SCSI mid-layer can apply this framework.
+
+ 3) The new framework rewrite the status code and sense data for SCSI command and
+    pass it to the upper layer. So the real error handling routine of the upper
+    layer for I/O request can be tested.
+
+I have tested the software RAID (md/dm-mirror) using this framework
+and found some bugs.
+ e.g.
+  -The kernel thread for md RAID1 could cause a deadlock when the error handler for
+    md RAID1 contends with the write access to the md RAID1 array.
+
+  -dm-mirror's redundancy doesn't work. A read error from the disk consisting
+   the array will be directory passed to the userspace, without reading from
+   the other mirror.
+   (It turns out that this issue is a known issue, but the patch is not merged.
+    http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-raid1-handle-read-failures.patch)
+
+There are also some other bugs for error handling routine in the multiple
+fault situation. I will report the details about these bugs later.
+
+The new framework is tested on Fedora8(i386) running with kernel 2.6.23.12.
+So far, I'm cleaning up the tool set for release, and plan to post it in the near future.
+If you are interested, take a look at it.
+If you have any comments, please let me know.
+
+-- 
+------------------------------------------------------------------------
+Kenichi TANAKA    | Open Source Software Platform Development Division
+                  | Computers Software Operations Unit, NEC Corporation
+                  | k-tanaka@ce.jp.nec.com
 
 
-> 
-> scenario described below.
-> 
-> Am I missing somthing?
-> 
-> Cheers,
-> 	Lars
-> 
-> from current dm-exception-store.c:
-> 
-> static void persistent_commit(struct exception_store *store,
-> 			      struct dm_snap_exception *e,
-> 			      void (*callback) (void *, int success),
-> 			      void *callback_context)
-> {
-> 	int r;
-> 	unsigned int i;
-> 	struct pstore *ps = get_info(store);
-> 	struct disk_exception de;
-> 	struct commit_callback *cb;
-> 
-> 	de.old_chunk = e->old_chunk;
-> 	de.new_chunk = e->new_chunk;
-> 	write_exception(ps, ps->current_committed++, &de);
-> 
-> 	/*
-> 	 * Add the callback to the back of the array.  This code
-> 	 * is the only place where the callback array is
-> 	 * manipulated, and we know that it will never be called
-> 	 * multiple times concurrently.
-> 	 */
-> 	cb = ps->callbacks + ps->callback_count++;
-> 	cb->callback = callback;
-> 	cb->context = callback_context;
-> 
-> 	/*
-> 	 * If there are no more exceptions in flight, or we have
-> 	 * filled this metadata area we commit the exceptions to
-> 	 * disk.
-> 	 */
-> 	if (atomic_dec_and_test(&ps->pending_count) ||
-> 	    (ps->current_committed == ps->exceptions_per_area)) {
-> 		r = area_io(ps, ps->current_area, WRITE);
-> 		if (r)
-> 			ps->valid = 0;
-> 
-> 
-> 
-> ==== POSSIBLE CURRUPTION RIGHT HERE ======== 
-> 
-> assume we crash right after we completely filled the current area,
-> but before we had a chance to zero out the next area.
-> 
-> further assume there has been old data garbage in the
-> area mapped for this exception store.
-> 
-> after reboot, the snapshot will be reassembled,
-> but may not find the necessary zeros to terminate the 
-> read_exceptions loop in insert_exceptions,
-> thus may dm_add_exception bogus mappings,
-> aka data corruption.
-> 
-> ===========================================
-> 
-> 
-> 		/*
-> 		 * Have we completely filled the current area ?
-> 		 */
-> 		if (ps->current_committed == ps->exceptions_per_area) {
-> 			ps->current_committed = 0;
-> 			r = zero_area(ps, ps->current_area + 1);
-> 			if (r)
-> 				ps->valid = 0;
-> 		}
-> 
-> 		for (i = 0; i < ps->callback_count; i++) {
-> 			cb = ps->callbacks + i;
-> 			cb->callback(cb->context, r == 0 ? 1 : 0);
-> 		}
-> 
-> 		ps->callback_count = 0;
-> 	}
-> }
-> 
