@@ -1,19 +1,15 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Configuring multipath for root device
-Date: Tue, 15 Jan 2008 18:32:53 -0800
-Message-ID: <1200450773.7183.42.camel@linuxchandra>
-References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
-	<1198099093.26366.32.camel@linuxchandra>
-	<110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com>
-	<4783239C.7020206@suse.de>
-	<110b17190801151825ofd63e20yd9d4f01be7b67407@mail.gmail.com>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
+Subject: RE: Configuring multipath for root device
+Date: Tue, 15 Jan 2008 23:24:05 -0500
+Message-ID: <1D80D4F6D179BD4D869FE807A5BF833602616FB0@EXCNYSM0A1AN.nysemail.nyenet>
+References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com><1198099093.26366.32.camel@linuxchandra><110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com><4783239C.7020206@suse.de><110b17190801151825ofd63e20yd9d4f01be7b67407@mail.gmail
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain;
+	charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <110b17190801151825ofd63e20yd9d4f01be7b67407@mail.gmail.com>
+Content-Class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,9 +19,40 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+I'm very new to sles 10; sounds like you want to do root-on-LVM-on-multip=
+ath=20
+I don't know if sles10 supports that.
+
+Maybe 2 things to try:=20
+(1) if /dev/rootVG/rootLV has a /dev/disk/by-id/ link then use that persi=
+stent name along with putting dm-multipath in INITRD modules list; then r=
+un mkinitrd and zipl
+
+(2) Or, use the LVM persistent name, /dev/rootVG/rootLV, instead of a /de=
+v/disk/by-id/ name
+
+good luck.
+
+
+--------------------------------------------------------
+This e-mail, including any attachments, may be confidential, privileged o=
+r otherwise legally protected. It is intended only for the addressee. If =
+you received this e-mail in error or from someone who was not authorized =
+to send it to you, do not disseminate, copy or otherwise use this e-mail =
+or its attachments.  Please notify the sender immediately by reply e-mail=
+ and delete the e-mail from your system.
+
+
+-----Original Message-----
+
+From: dm-devel-bounces@redhat.com on behalf of Chandra Seetharaman
+Sent: Tue 1/15/2008 9:32 PM
+To: device-mapper development
+Subject: Re: [dm-devel] Configuring multipath for root device
+=20
 On Tue, 2008-01-15 at 18:25 -0800, Pradipmaya Maharana wrote:
 > Hi All,
 >=20
@@ -88,8 +115,8 @@ link
 > > --
 > > Dr. Hannes Reinecke                   zSeries & Storage
 > > hare@suse.de                          +49 911 74053 688
-> > SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-> > GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
+> > SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+> > GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
 > >
 > > --
 > >
@@ -108,3 +135,9 @@ link
     Chandra Seetharaman               | Be careful what you choose....
               - sekharan@us.ibm.com   |      .......you may get it.
 ----------------------------------------------------------------------
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
