@@ -1,15 +1,16 @@
-From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: Re: Need Help
-Date: Thu, 17 Jan 2008 10:24:52 -0800
-Message-ID: <110b17190801171024u337bc7fey272824c9258cbc61@mail.gmail.com>
-References: <EEBC5C82F965344199BFA3E6047FE13302E8B7@SAUSEXMB2.amd.com>
+From: "Nath, Varun" <varun.nath@amd.com>
+Subject: RE: Need Help
+Date: Thu, 17 Jan 2008 12:34:05 -0600
+Message-ID: <EEBC5C82F965344199BFA3E6047FE13302E8E0@SAUSEXMB2.amd.com>
+References: <110b17190801171024u337bc7fey272824c9258cbc61@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+ charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <EEBC5C82F965344199BFA3E6047FE13302E8B7@SAUSEXMB2.amd.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
+In-Reply-To: <110b17190801171024u337bc7fey272824c9258cbc61@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,8 +23,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Could you please share the fstab entry (also what you are trying to add to it).
-When are you getting the problem (not recognizing devices), is it at boot time?
+Hi,
+
+Can you please provide me with the process to add the dm-multipath in
+mkinitrd?
+
+I am sure that those devices are not getting loaded.=20
+
+Also regarding the fstab, I earlier had the LVM for those LUNs. But
+since I faced the problem of system not booting up, I removed them for
+the time being.
+
+Thanks,
+Varun Nath
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Pradipmaya Maharana
+Sent: Thursday, January 17, 2008 12:25 PM
+To: device-mapper development
+Subject: Re: [dm-devel] Need Help
+
+Could you please share the fstab entry (also what you are trying to add
+to it).
+When are you getting the problem (not recognizing devices), is it at
+boot time?
 
 I am new to Linux but my hunch is when you are booting, as multipath
 is loaded, these devices are not getting recognised. In this case you
@@ -58,13 +82,16 @@ Pradipmaya.
 >
 >
 >
-> The hardware is Sun x4600 and I am using QLA cards. The system has two LUNs
+> The hardware is Sun x4600 and I am using QLA cards. The system has two
+LUNs
 > presented to it of size 10 GB and size 90 GB
 >
 >
 >
-> There is a problem when I configure file system on it. I am able to access
-> and mount the file system. But when I add those entries in /etc/fstab, the
+> There is a problem when I configure file system on it. I am able to
+access
+> and mount the file system. But when I add those entries in /etc/fstab,
+the
 > system would not recognize those devices.
 >
 >
@@ -77,15 +104,15 @@ Pradipmaya.
 >
 > mpath5 (3600508b40010541d00009000065d0000)
 >
-> [size=90 GB][features="1 queue_if_no_path"][hwhandler="0"]
+> [size=3D90 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"0"]
 >
-> \_ round-robin 0 [prio=100][active]
+> \_ round-robin 0 [prio=3D100][active]
 >
 >  \_ 1:0:0:2 sdd 8:48  [active][ready]
 >
 >  \_ 2:0:0:2 sdh 8:112 [active][ready]
 >
-> \_ round-robin 0 [prio=20][enabled]
+> \_ round-robin 0 [prio=3D20][enabled]
 >
 >  \_ 1:0:1:2 sdf 8:80  [active][ready]
 >
@@ -95,15 +122,15 @@ Pradipmaya.
 >
 > mpath4 (3600508b40010541d00009000065a0000)
 >
-> [size=10 GB][features="1 queue_if_no_path"][hwhandler="0"]
+> [size=3D10 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"0"]
 >
-> \_ round-robin 0 [prio=100][enabled]
+> \_ round-robin 0 [prio=3D100][enabled]
 >
 >  \_ 1:0:1:1 sde 8:64  [active][ready]
 >
 >  \_ 2:0:1:1 sdi 8:128 [active][ready]
 >
-> \_ round-robin 0 [prio=20][enabled]
+> \_ round-robin 0 [prio=3D20][enabled]
 >
 >  \_ 1:0:0:1 sdc 8:32  [active][ready]
 >
@@ -125,7 +152,8 @@ Pradipmaya.
 >
 > # For a list of configuration options with descriptions, see
 >
-> # /usr/share/doc/device-mapper-multipath-0.4.5/multipath.conf.annotated
+> #
+/usr/share/doc/device-mapper-multipath-0.4.5/multipath.conf.annotated
 >
 >
 >
@@ -157,7 +185,8 @@ Pradipmaya.
 >
 >
 >
-> ## By default, devices with vendor = "IBM" and product = "S/390.*" are
+> ## By default, devices with vendor =3D "IBM" and product =3D "S/390.*" =
+are
 >
 > ## blacklisted. To enable mulitpathing on these devies, uncomment the
 >
@@ -223,21 +252,26 @@ Pradipmaya.
 >
 > ##
 >
-> ## The wwid line in the following blacklist section is shown as an example
+> ## The wwid line in the following blacklist section is shown as an
+example
 >
 > ## of how to blacklist devices by wwid.  The 3 devnode lines are the
 >
-> ## compiled in default blacklist. If you want to blacklist entire types
+> ## compiled in default blacklist. If you want to blacklist entire
+types
 >
-> ## of devices, such as all scsi devices, you should use a devnode line.
+> ## of devices, such as all scsi devices, you should use a devnode
+line.
 >
 > ## However, if you want to blacklist specific devices, you should use
 >
-> ## a wwid line.  Since there is no guarantee that a specific device will
+> ## a wwid line.  Since there is no guarantee that a specific device
+will
 >
 > ## not change names on reboot (from /dev/sda to /dev/sdb for example)
 >
-> ## devnode lines are not recommended for blacklisting specific devices.
+> ## devnode lines are not recommended for blacklisting specific
+devices.
 >
 > ##
 >
@@ -255,7 +289,8 @@ Pradipmaya.
 >
 > #       multipath {
 >
-> #               wwid                    3600508b4000156d700012000000b0000
+> #               wwid
+3600508b4000156d700012000000b0000
 >
 > #               alias                   yellow
 >
@@ -293,7 +328,8 @@ Pradipmaya.
 >
 > #               path_grouping_policy    multibus
 >
-> #               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+> #               getuid_callout          "/sbin/scsi_id -g -u -s
+/block/%n"
 >
 > #               path_checker            readsector0
 >
@@ -357,7 +393,8 @@ Pradipmaya.
 >
 >
 >
-> Can anyone please help me with this? I think I am missing some configuration
+> Can anyone please help me with this? I think I am missing some
+configuration
 > on the system which is causing this.
 >
 >
@@ -372,3 +409,8 @@ Pradipmaya.
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
 >
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
