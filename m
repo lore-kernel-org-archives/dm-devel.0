@@ -1,15 +1,16 @@
 From: malahal@us.ibm.com
 Subject: Re: Need Help
-Date: Thu, 17 Jan 2008 12:30:32 -0800
-Message-ID: <20080117203032.GA7307@us.ibm.com>
+Date: Thu, 17 Jan 2008 12:35:50 -0800
+Message-ID: <20080117203550.GB7307@us.ibm.com>
 References: <110b17190801171040h28736660m7d77c57ef40c316e@mail.gmail.com>
 	<EEBC5C82F965344199BFA3E6047FE13302E8F0@SAUSEXMB2.amd.com>
+	<110b17190801171228j78b97944ob6c71090d2f4403f@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <EEBC5C82F965344199BFA3E6047FE13302E8F0@SAUSEXMB2.amd.com>
+In-Reply-To: <110b17190801171228j78b97944ob6c71090d2f4403f@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,10 +23,13 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Nath, Varun [varun.nath@amd.com] wrote:
-> Hi,
+Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
+> Run the following:
 > 
-> I don't see any think like boot.multipathd. Is it some special rpm that
-> I need to install?
+> # chkconfig multipathd on
+> # /etc/init.d/ multipath status
 
-Example: /etc/rc.d/init.d/multipathd script is in device-mapper-multipath-0.4.5-27.RHEL4.i386.rpm RPM.
+The second command actually is "/etc/init.d/multipathd status"
+to get the status of the given rc script (multipathd in this case)
+
+--Malahal.
