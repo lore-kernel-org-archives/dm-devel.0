@@ -1,16 +1,16 @@
-From: malahal@us.ibm.com
-Subject: Re: Need Help
-Date: Thu, 17 Jan 2008 12:35:50 -0800
-Message-ID: <20080117203550.GB7307@us.ibm.com>
-References: <110b17190801171040h28736660m7d77c57ef40c316e@mail.gmail.com>
-	<EEBC5C82F965344199BFA3E6047FE13302E8F0@SAUSEXMB2.amd.com>
-	<110b17190801171228j78b97944ob6c71090d2f4403f@mail.gmail.com>
+From: "Nath, Varun" <varun.nath@amd.com>
+Subject: RE: Need Help
+Date: Thu, 17 Jan 2008 14:36:51 -0600
+Message-ID: <EEBC5C82F965344199BFA3E6047FE13302E8F3@SAUSEXMB2.amd.com>
+References: <20080117203032.GA7307@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+ charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <110b17190801171228j78b97944ob6c71090d2f4403f@mail.gmail.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20080117203032.GA7307@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,16 +20,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
-> Run the following:
-> 
-> # chkconfig multipathd on
-> # /etc/init.d/ multipath status
+Yes that script is there.
 
-The second command actually is "/etc/init.d/multipathd status"
-to get the status of the given rc script (multipathd in this case)
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of malahal@us.ibm.com
+Sent: Thursday, January 17, 2008 2:31 PM
+To: dm-devel@redhat.com
+Subject: Re: [dm-devel] Need Help
 
---Malahal.
+Nath, Varun [varun.nath@amd.com] wrote:
+> Hi,
+>=20
+> I don't see any think like boot.multipathd. Is it some special rpm
+that
+> I need to install?
+
+Example: /etc/rc.d/init.d/multipathd script is in
+device-mapper-multipath-0.4.5-27.RHEL4.i386.rpm RPM.
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
