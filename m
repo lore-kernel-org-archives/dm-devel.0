@@ -1,15 +1,22 @@
 From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: Re: Need Help
-Date: Thu, 17 Jan 2008 14:43:59 -0800
-Message-ID: <110b17190801171443j37861520m2bb23fac6114f578@mail.gmail.com>
-References: <1200605663.7183.81.camel@linuxchandra>
-	<EEBC5C82F965344199BFA3E6047FE13302E8FF@SAUSEXMB2.amd.com>
+Subject: Re: Configuring multipath for root device
+Date: Fri, 18 Jan 2008 13:52:39 -0800
+Message-ID: <110b17190801181352k4a3c2185j540bcb1d3014a730@mail.gmail.com>
+References: <110b17190712191302o60d521eaj693410c26d07c1ad@mail.gmail.com>
+	<1198099093.26366.32.camel@linuxchandra>
+	<110b17190801071219k11749b81n45a7d1d5d35b9413@mail.gmail.com>
+	<4783239C.7020206@suse.de>
+	<110b17190801151825ofd63e20yd9d4f01be7b67407@mail.gmail.com>
+	<20080116173649.GA30593@us.ibm.com>
+	<110b17190801161049o127a22edq1888f9184156b52@mail.gmail.com>
+	<20080117202145.GC7083@us.ibm.com>
+	<110b17190801171238n20563b9eo5090c5b7700fc10f@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <EEBC5C82F965344199BFA3E6047FE13302E8FF@SAUSEXMB2.amd.com>
+In-Reply-To: <110b17190801171238n20563b9eo5090c5b7700fc10f@mail.gmail.com>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -23,88 +30,63 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I am not sure it it will help here but could you try this:
+Any comment anyone?
 
-1. rename the exisiting multipath.conf to something (say multipath.conf.org)
-2. create a new /etc/multipath.conf (blank file, do not copy it from
-other multipath.conf.* files)
-3. Copy the following content into it:
-defaults {
-        user_friendly_names yes
-        selector   "round-robin 0"
-}
-
-devnode_blacklist {
-        wwid 3600508e000000000ed7fb52911133c06
-        devnode "^(ram|raw|loop|fd|md|sr|scd|st)[0-9]*"
-        devnode "^hd[a-z]"
-}
-4. reboot
-5. lsmod | grep dm (it must show dm-multipath loaded)
-6. run multipath -ll
-
-We had a similar issue where the multipath.conf file won't be read
-whatever you do, bu it went away after creating a new file (instead of
-copying). Though weird, worth giving it a try.
-
-Regards,
+Thanks,
 Pradipmaya.
 
-On Jan 17, 2008 1:37 PM, Nath, Varun <varun.nath@amd.com> wrote:
-> Default boot level is 3
+
+On Jan 17, 2008 12:38 PM, Pradipmaya Maharana <pradipmaya@gmail.com> wrote:
+> # ls -al /dev/system/
+> total 0
+> drwx------  2 root root   80 Jan 16 17:44 .
+> drwxr-xr-x 11 root root 6660 Jan 16 17:46 ..
+> lrwxrwxrwx  1 root root   23 Jan 16 17:44 root -> /dev/mapper/system-root
+> lrwxrwxrwx  1 root root   23 Jan 16 17:44 swap -> /dev/mapper/system-swap
 >
-> [root@x ~]# chkconfig multipathd --list
-> multipathd      0:off   1:off   2:on    3:on    4:on    5:on    6:off
-> [root@x ~]# who -r
->          run-level 3  Jan 17 15:04                   last=S
-> [root@ausb3ndadbp02 ~]#
+> Yes, /dev/system/root and swap are links, as shown above.
 >
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of Chandra Seetharaman
-> Sent: Thursday, January 17, 2008 3:34 PM
-> To: device-mapper development
-> Subject: RE: [dm-devel] Need Help
+> About volume labels, I tried assigning label to mount /dev/system/root
+> to label-root but it would fail.
+> I tried doing it through YaST/partitioner and it failed with the
+> following error:
+>
+> "Failure occurred during following action:
+> Setting label on /dev/system/root to label-root.
+>
+> System error code was : -3024"
+>
+> Is there any other way to change the label.
 >
 >
-> On Thu, 2008-01-17 at 15:10 -0600, Nath, Varun wrote:
-> > This is what is happening as soon as the system comes up.
+> Further information:
+> when I try to run "multipath -v3", it would not create any map , with
+> following error
+> 222f2000155c11879: set ACT_CREATE (map does not exist)
+> 222f2000155c11879: domap (0) failure for create/reload map
+>
+> Thanks and Regards,
+> Pradipmaya.
+>
+>
+> On Jan 17, 2008 12:21 PM,  <malahal@us.ibm.com> wrote:
+> > Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
+> > >
+> > > Let me know if you need any other information.
+> > >
+> > > Malahal, are you saying that I should mount the "/" and "swap" by
+> > > volume label and it should be able to boot fine?
 > >
-> > There are no multipathing devices created. Once I run the multipath
-> > command only then the /dev/mpath/mpath# devices get created. It looks
-> > like I am missing some thing when the system boots up. The system has
-> > the multipathd start up script in /etc/rc3.d.
->
-> What does "chkconfig --list multipathd" show ?
->
-> And what is default level you boot to (i.e what is initdefault
-> in /etc/inittab) ?
->
+> > What are /dev/system/root and /dev/system/swap? Are they symlinks or do
+> > they have same major/minor number of corresponding LVM LVs?
+> > Yes, volume labels may work but I never booted SLES with LVM.
 > >
-> > Any suggestions?
+> > -Malahal.
 > >
->
-> <snip>
->
-> --
->
-> ----------------------------------------------------------------------
->     Chandra Seetharaman               | Be careful what you choose....
->               - sekharan@us.ibm.com   |      .......you may get it.
-> ----------------------------------------------------------------------
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> >
 >
