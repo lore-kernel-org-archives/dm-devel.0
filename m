@@ -1,13 +1,9 @@
-From: "Michael Di Domenico" <mdidomenico@gmail.com>
-Subject: help with hds DF500F
-Date: Fri, 18 Jan 2008 22:27:31 -0500
-Message-ID: <97a7c7ed0801181927o226a1b4fm6acf8d64b80ec772@mail.gmail.com>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW lib/libdm-report.c
+Date: 20 Jan 2008 01:14:38 -0000
+Message-ID: <20080120011438.3568.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,222 +13,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I have a Hitachi DF500F that i'm trying to redundantly connect.  I've
-got a single QLogic HBA dual-port.  Both ports are connected to an FC
-switch.  The HDS unit has four ports, two per controller.  All four
-ports are connected to the FC switch also.  This is on RedHat 5
-x86_64.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2008-01-20 01:14:38
 
-I'm trying to setup multipath, but i can't seem to figure out the correct setup.
+Modified files:
+	.              : WHATS_NEW 
+	lib            : libdm-report.c 
 
-I also noted two things that seem like bugs.  I used the 'make rpm' to
-build and rpm of multipath, however there were several files not
-included in the rpm which caused it to fail, so i added those to the
-%files section.
+Log message:
+	Use log_warn for reporting field help text instead of log_print.
 
-Also the RPM doesnt seem to include the
-/etc/init.d/multipathd.init.redhat file for me, i had to hand copy it
-over.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.223&r2=1.224
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.15&r2=1.16
 
-I'm sure i'm doing something wrong, i just dont know what it is.
-
-Thanks
-
-Here is my /etc/multipath.conf file:
-
-defaults {
- polling_interval 120
- udev_dir /dev
- rr_weight priorities
- failback immediate
+--- device-mapper/WHATS_NEW	2008/01/15 22:48:11	1.223
++++ device-mapper/WHATS_NEW	2008/01/20 01:14:38	1.224
+@@ -1,5 +1,6 @@
+ Version 1.02.25 - 
+ ====================================
++  Use log_warn for reporting field help text instead of log_print.
+   Change cluster mirror log type name (s/clustered_/clustered-/)
+ 
+ Version 1.02.24 - 20th December 2007
+--- device-mapper/lib/libdm-report.c	2007/08/21 16:26:06	1.15
++++ device-mapper/lib/libdm-report.c	2008/01/20 01:14:38	1.16
+@@ -260,16 +260,16 @@
+ 			desc = " ";
+ 		if (desc != last_desc) {
+ 			if (*last_desc)
+-				log_print(" ");
+-			log_print("%s Fields", desc);
+-			log_print("%*.*s", (int) strlen(desc) + 7,
+-				  (int) strlen(desc) + 7,
+-				  "------------------------------------------");
++				log_warn(" ");
++			log_warn("%s Fields", desc);
++			log_warn("%*.*s", (int) strlen(desc) + 7,
++				 (int) strlen(desc) + 7,
++				 "------------------------------------------");
+ 				  
+ 		}
+ 
+ 		/* FIXME Add line-wrapping at terminal width (or 80 cols) */
+-		log_print("  %-*s - %s", (int) id_len, rh->fields[f].id, rh->fields[f].desc);
++		log_warn("  %-*s - %s", (int) id_len, rh->fields[f].id, rh->fields[f].desc);
+ 		last_desc = desc;
+ 	}
  }
-
-blacklist {
- devnode cciss
- devnode fd
- devnode hd
- devnode md
- devnode sr
- devnode scd
- devnode st
- devnode ram
- devnode raw
- devnode loop
- devnode "^sda$"
-}
-
-devices {
- device {
-  vendor "HITACHI"
-  product "DF500F"
-  path_grouping_policy group_by_prio
-  prio_callout "/sbin/mpath_prio_hds_modular %d"
-  getuid_callout "/sbin/scsi_id -g -u -s /block/%n"
- }
-}
-
-here is what happens when i run multipath:
-
-error calling out /sbin/mpath_prio_hds_modular 67:128
-error calling out /sbin/mpath_prio_hds_modular 67:112
-error calling out /sbin/mpath_prio_hds_modular 67:96
-error calling out /sbin/mpath_prio_hds_modular 67:80
-error calling out /sbin/mpath_prio_hds_modular 67:64
-error calling out /sbin/mpath_prio_hds_modular 67:48
-error calling out /sbin/mpath_prio_hds_modular 67:32
-error calling out /sbin/mpath_prio_hds_modular 67:16
-error calling out /sbin/mpath_prio_hds_modular 67:0
-error calling out /sbin/mpath_prio_hds_modular 66:240
-error calling out /sbin/mpath_prio_hds_modular 66:224
-error calling out /sbin/mpath_prio_hds_modular 66:208
-error calling out /sbin/mpath_prio_hds_modular 66:192
-error calling out /sbin/mpath_prio_hds_modular 66:176
-error calling out /sbin/mpath_prio_hds_modular 66:160
-error calling out /sbin/mpath_prio_hds_modular 66:144
-error calling out /sbin/mpath_prio_hds_modular 66:128
-error calling out /sbin/mpath_prio_hds_modular 66:112
-error calling out /sbin/mpath_prio_hds_modular 66:96
-error calling out /sbin/mpath_prio_hds_modular 66:80
-error calling out /sbin/mpath_prio_hds_modular 66:64
-error calling out /sbin/mpath_prio_hds_modular 66:48
-error calling out /sbin/mpath_prio_hds_modular 66:32
-error calling out /sbin/mpath_prio_hds_modular 66:16
-error calling out /sbin/mpath_prio_hds_modular 66:0
-error calling out /sbin/mpath_prio_hds_modular 65:240
-error calling out /sbin/mpath_prio_hds_modular 65:224
-error calling out /sbin/mpath_prio_hds_modular 65:208
-error calling out /sbin/mpath_prio_hds_modular 65:192
-error calling out /sbin/mpath_prio_hds_modular 65:176
-error calling out /sbin/mpath_prio_hds_modular 65:160
-error calling out /sbin/mpath_prio_hds_modular 65:144
-error calling out /sbin/mpath_prio_hds_modular 65:128
-error calling out /sbin/mpath_prio_hds_modular 65:112
-error calling out /sbin/mpath_prio_hds_modular 65:96
-error calling out /sbin/mpath_prio_hds_modular 65:80
-error calling out /sbin/mpath_prio_hds_modular 65:64
-error calling out /sbin/mpath_prio_hds_modular 65:48
-error calling out /sbin/mpath_prio_hds_modular 65:32
-error calling out /sbin/mpath_prio_hds_modular 65:16
-error calling out /sbin/mpath_prio_hds_modular 65:0
-error calling out /sbin/mpath_prio_hds_modular 8:240
-error calling out /sbin/mpath_prio_hds_modular 8:224
-error calling out /sbin/mpath_prio_hds_modular 8:208
-error calling out /sbin/mpath_prio_hds_modular 8:192
-error calling out /sbin/mpath_prio_hds_modular 8:176
-error calling out /sbin/mpath_prio_hds_modular 8:160
-error calling out /sbin/mpath_prio_hds_modular 8:144
-error calling out /sbin/mpath_prio_hds_modular 8:128
-error calling out /sbin/mpath_prio_hds_modular 8:112
-error calling out /sbin/mpath_prio_hds_modular 8:96
-error calling out /sbin/mpath_prio_hds_modular 8:80
-error calling out /sbin/mpath_prio_hds_modular 8:64
-error calling out /sbin/mpath_prio_hds_modular 8:48
-error calling out /sbin/mpath_prio_hds_modular 8:32
-error calling out /sbin/mpath_prio_hds_modular 8:16
-error calling out /sbin/mpath_prio_hds_modular 67:128
-error calling out /sbin/mpath_prio_hds_modular 67:112
-error calling out /sbin/mpath_prio_hds_modular 67:96
-error calling out /sbin/mpath_prio_hds_modular 67:80
-error calling out /sbin/mpath_prio_hds_modular 67:64
-error calling out /sbin/mpath_prio_hds_modular 67:48
-error calling out /sbin/mpath_prio_hds_modular 67:32
-error calling out /sbin/mpath_prio_hds_modular 67:16
-error calling out /sbin/mpath_prio_hds_modular 67:0
-error calling out /sbin/mpath_prio_hds_modular 66:240
-error calling out /sbin/mpath_prio_hds_modular 66:224
-error calling out /sbin/mpath_prio_hds_modular 66:208
-error calling out /sbin/mpath_prio_hds_modular 66:192
-error calling out /sbin/mpath_prio_hds_modular 66:176
-error calling out /sbin/mpath_prio_hds_modular 65:192
-error calling out /sbin/mpath_prio_hds_modular 65:176
-error calling out /sbin/mpath_prio_hds_modular 65:160
-error calling out /sbin/mpath_prio_hds_modular 65:144
-error calling out /sbin/mpath_prio_hds_modular 65:128
-error calling out /sbin/mpath_prio_hds_modular 65:112
-error calling out /sbin/mpath_prio_hds_modular 65:96
-error calling out /sbin/mpath_prio_hds_modular 65:80
-error calling out /sbin/mpath_prio_hds_modular 65:64
-error calling out /sbin/mpath_prio_hds_modular 65:48
-error calling out /sbin/mpath_prio_hds_modular 65:32
-error calling out /sbin/mpath_prio_hds_modular 65:16
-error calling out /sbin/mpath_prio_hds_modular 65:0
-error calling out /sbin/mpath_prio_hds_modular 8:240
-67:112: size 2097152, expected 487825408. Discard
-67:96: size 2097152, expected 487825408. Discard
-67:80: size 2097152, expected 487825408. Discard
-67:64: size 2097152, expected 487825408. Discard
-67:48: size 2097152, expected 487825408. Discard
-67:32: size 2097152, expected 487825408. Discard
-67:0: size 2097152, expected 487825408. Discard
-66:240: size 2097152, expected 487825408. Discard
-66:224: size 2097152, expected 487825408. Discard
-66:208: size 2097152, expected 487825408. Discard
-66:192: size 2097152, expected 487825408. Discard
-66:176: size 2097152, expected 487825408. Discard
-65:176: size 2097152, expected 487825408. Discard
-65:160: size 2097152, expected 487825408. Discard
-65:144: size 2097152, expected 487825408. Discard
-65:128: size 2097152, expected 487825408. Discard
-65:112: size 2097152, expected 487825408. Discard
-65:96: size 2097152, expected 487825408. Discard
-65:64: size 2097152, expected 487825408. Discard
-65:48: size 2097152, expected 487825408. Discard
-65:32: size 2097152, expected 487825408. Discard
-65:16: size 2097152, expected 487825408. Discard
-65:0: size 2097152, expected 487825408. Discard
-8:240: size 2097152, expected 487825408. Discard
-error calling out /sbin/mpath_prio_hds_modular 66:160
-error calling out /sbin/mpath_prio_hds_modular 66:144
-error calling out /sbin/mpath_prio_hds_modular 66:128
-error calling out /sbin/mpath_prio_hds_modular 66:112
-error calling out /sbin/mpath_prio_hds_modular 66:96
-error calling out /sbin/mpath_prio_hds_modular 66:80
-error calling out /sbin/mpath_prio_hds_modular 66:64
-error calling out /sbin/mpath_prio_hds_modular 66:48
-error calling out /sbin/mpath_prio_hds_modular 66:32
-error calling out /sbin/mpath_prio_hds_modular 66:16
-error calling out /sbin/mpath_prio_hds_modular 66:0
-error calling out /sbin/mpath_prio_hds_modular 65:240
-error calling out /sbin/mpath_prio_hds_modular 65:224
-error calling out /sbin/mpath_prio_hds_modular 65:208
-error calling out /sbin/mpath_prio_hds_modular 8:224
-error calling out /sbin/mpath_prio_hds_modular 8:208
-error calling out /sbin/mpath_prio_hds_modular 8:192
-error calling out /sbin/mpath_prio_hds_modular 8:176
-error calling out /sbin/mpath_prio_hds_modular 8:160
-error calling out /sbin/mpath_prio_hds_modular 8:144
-error calling out /sbin/mpath_prio_hds_modular 8:128
-error calling out /sbin/mpath_prio_hds_modular 8:112
-error calling out /sbin/mpath_prio_hds_modular 8:96
-error calling out /sbin/mpath_prio_hds_modular 8:80
-error calling out /sbin/mpath_prio_hds_modular 8:64
-error calling out /sbin/mpath_prio_hds_modular 8:48
-error calling out /sbin/mpath_prio_hds_modular 8:32
-error calling out /sbin/mpath_prio_hds_modular 8:16
-66:144: size 2097152, expected 487825408. Discard
-66:128: size 2097152, expected 487825408. Discard
-66:112: size 2097152, expected 487825408. Discard
-66:96: size 2097152, expected 487825408. Discard
-66:80: size 2097152, expected 487825408. Discard
-66:64: size 2097152, expected 487825408. Discard
-66:32: size 2097152, expected 487825408. Discard
-66:16: size 2097152, expected 487825408. Discard
-66:0: size 2097152, expected 487825408. Discard
-65:240: size 2097152, expected 487825408. Discard
-65:224: size 2097152, expected 487825408. Discard
-65:208: size 2097152, expected 487825408. Discard
-8:208: size 2097152, expected 487825408. Discard
-8:192: size 2097152, expected 487825408. Discard
-8:176: size 2097152, expected 487825408. Discard
-8:160: size 2097152, expected 487825408. Discard
-8:144: size 2097152, expected 487825408. Discard
-8:128: size 2097152, expected 487825408. Discard
-8:96: size 2097152, expected 487825408. Discard
-8:80: size 2097152, expected 487825408. Discard
-8:64: size 2097152, expected 487825408. Discard
-8:48: size 2097152, expected 487825408. Discard
-8:32: size 2097152, expected 487825408. Discard
-8:16: size 2097152, expected 487825408. Discard
+@@ -444,7 +444,7 @@
+ 
+ 		if (!_field_match(rh, ws, (size_t) (we - ws))) {
+ 			_display_fields(rh);
+-			log_print(" ");
++			log_warn(" ");
+ 			if (strcasecmp(ws, "help") && strcmp(ws, "?"))
+ 				log_error("Unrecognised field: %.*s",
+ 					  (int) (we - ws), ws);
