@@ -1,9 +1,16 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdm-report.c
-Date: 20 Jan 2008 01:14:38 -0000
-Message-ID: <20080120011438.3568.qmail@sourceware.org>
+From: "Nath, Varun" <varun.nath@amd.com>
+Subject: RE: Need Help
+Date: Mon, 21 Jan 2008 11:37:29 -0600
+Message-ID: <EEBC5C82F965344199BFA3E6047FE13302E98E@SAUSEXMB2.amd.com>
+References: <EEBC5C82F965344199BFA3E6047FE13302E8FC@SAUSEXMB2.amd.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+ charset=us-ascii
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <EEBC5C82F965344199BFA3E6047FE13302E8FC@SAUSEXMB2.amd.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,64 +20,122 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2008-01-20 01:14:38
+Hi,
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdm-report.c 
+I finally have a solution to this. We had the module for the QLA card
+missing in the /etc/modprobe.conf
 
-Log message:
-	Use log_warn for reporting field help text instead of log_print.
+Also, for the HP EVA we are using, we had to add that in the
+/etc/multipath.conf.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.223&r2=1.224
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.15&r2=1.16
+Thanks to all for the help.
 
---- device-mapper/WHATS_NEW	2008/01/15 22:48:11	1.223
-+++ device-mapper/WHATS_NEW	2008/01/20 01:14:38	1.224
-@@ -1,5 +1,6 @@
- Version 1.02.25 - 
- ====================================
-+  Use log_warn for reporting field help text instead of log_print.
-   Change cluster mirror log type name (s/clustered_/clustered-/)
- 
- Version 1.02.24 - 20th December 2007
---- device-mapper/lib/libdm-report.c	2007/08/21 16:26:06	1.15
-+++ device-mapper/lib/libdm-report.c	2008/01/20 01:14:38	1.16
-@@ -260,16 +260,16 @@
- 			desc = " ";
- 		if (desc != last_desc) {
- 			if (*last_desc)
--				log_print(" ");
--			log_print("%s Fields", desc);
--			log_print("%*.*s", (int) strlen(desc) + 7,
--				  (int) strlen(desc) + 7,
--				  "------------------------------------------");
-+				log_warn(" ");
-+			log_warn("%s Fields", desc);
-+			log_warn("%*.*s", (int) strlen(desc) + 7,
-+				 (int) strlen(desc) + 7,
-+				 "------------------------------------------");
- 				  
- 		}
- 
- 		/* FIXME Add line-wrapping at terminal width (or 80 cols) */
--		log_print("  %-*s - %s", (int) id_len, rh->fields[f].id, rh->fields[f].desc);
-+		log_warn("  %-*s - %s", (int) id_len, rh->fields[f].id, rh->fields[f].desc);
- 		last_desc = desc;
- 	}
- }
-@@ -444,7 +444,7 @@
- 
- 		if (!_field_match(rh, ws, (size_t) (we - ws))) {
- 			_display_fields(rh);
--			log_print(" ");
-+			log_warn(" ");
- 			if (strcasecmp(ws, "help") && strcmp(ws, "?"))
- 				log_error("Unrecognised field: %.*s",
- 					  (int) (we - ws), ws);
+-Varun=20
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Nath, Varun
+Sent: Thursday, January 17, 2008 3:14 PM
+To: device-mapper development
+Subject: RE: [dm-devel] Need Help
+
+Nopes. I still have to run the multipath command to see the LUNs.=20
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Pradipmaya Maharana
+Sent: Thursday, January 17, 2008 3:12 PM
+To: device-mapper development
+Subject: Re: [dm-devel] Need Help
+
+Ok. Let me go step-wise.
+
+First problem was multipath was not getting loaded at boot time, hence
+you had to run multipath after every boot.
+With the earlier suggestion, is this problem now gone?
+
+Thanks,
+Pradipmaya.
+
+
+On Jan 17, 2008 12:45 PM, Nath, Varun <varun.nath@amd.com> wrote:
+> I am also getting these errors when I try to access those LUNs
+>
+> Jan 17 14:39:29 x kernel: device-mapper: dm-multipath: error getting
+> device
+> Jan 17 14:39:29 x kernel: device-mapper: error adding target to table
+>
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of Nath, Varun
+> Sent: Thursday, January 17, 2008 2:39 PM
+> To: device-mapper development
+> Subject: RE: [dm-devel] Need Help
+>
+>
+> [root@x init.d]# /etc/init.d/multipathd status
+> multipathd (pid 4563) is running...
+> [root@x init.d]# /etc/init.d/multipath status
+> -bash: /etc/init.d/multipath: No such file or directory
+> [root@x init.d]# /etc/init.d/ multipath status
+> -bash: /etc/init.d/: is a directory
+> [root@x init.d]#
+>
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of malahal@us.ibm.com
+> Sent: Thursday, January 17, 2008 2:36 PM
+> To: dm-devel@redhat.com
+> Subject: Re: [dm-devel] Need Help
+>
+> Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
+> > Run the following:
+> >
+> > # chkconfig multipathd on
+> > # /etc/init.d/ multipath status
+>
+> The second command actually is "/etc/init.d/multipathd status"
+> to get the status of the given rc script (multipathd in this case)
+>
+> --Malahal.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
