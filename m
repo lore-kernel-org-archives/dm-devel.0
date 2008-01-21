@@ -1,16 +1,13 @@
-From: "Nath, Varun" <varun.nath@amd.com>
-Subject: RE: Need Help
-Date: Mon, 21 Jan 2008 11:37:29 -0600
-Message-ID: <EEBC5C82F965344199BFA3E6047FE13302E98E@SAUSEXMB2.amd.com>
-References: <EEBC5C82F965344199BFA3E6047FE13302E8FC@SAUSEXMB2.amd.com>
+From: "Michael Di Domenico" <mdidomenico@gmail.com>
+Subject: multiple paths question
+Date: Mon, 21 Jan 2008 12:45:17 -0500
+Message-ID: <97a7c7ed0801210945r46b1c363h11fcf3b92212f175@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=us-ascii
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <EEBC5C82F965344199BFA3E6047FE13302E8FC@SAUSEXMB2.amd.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,122 +17,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+I'm a little confused over how multipathing works.  I've got a host
+with a 2port HBA and a 4port Storage unit.  My multipath setup seems
+to create 8 LUNS and then splitting them up into two groups.  This is
+a single disk.  How do i get it to show me a single target instead of
+dm-0 and dm-1?
 
-I finally have a solution to this. We had the module for the QLA card
-missing in the /etc/modprobe.conf
-
-Also, for the HP EVA we are using, we had to add that in the
-/etc/multipath.conf.
-
-Thanks to all for the help.
-
--Varun=20
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Nath, Varun
-Sent: Thursday, January 17, 2008 3:14 PM
-To: device-mapper development
-Subject: RE: [dm-devel] Need Help
-
-Nopes. I still have to run the multipath command to see the LUNs.=20
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Pradipmaya Maharana
-Sent: Thursday, January 17, 2008 3:12 PM
-To: device-mapper development
-Subject: Re: [dm-devel] Need Help
-
-Ok. Let me go step-wise.
-
-First problem was multipath was not getting loaded at boot time, hence
-you had to run multipath after every boot.
-With the earlier suggestion, is this problem now gone?
-
-Thanks,
-Pradipmaya.
-
-
-On Jan 17, 2008 12:45 PM, Nath, Varun <varun.nath@amd.com> wrote:
-> I am also getting these errors when I try to access those LUNs
->
-> Jan 17 14:39:29 x kernel: device-mapper: dm-multipath: error getting
-> device
-> Jan 17 14:39:29 x kernel: device-mapper: error adding target to table
->
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of Nath, Varun
-> Sent: Thursday, January 17, 2008 2:39 PM
-> To: device-mapper development
-> Subject: RE: [dm-devel] Need Help
->
->
-> [root@x init.d]# /etc/init.d/multipathd status
-> multipathd (pid 4563) is running...
-> [root@x init.d]# /etc/init.d/multipath status
-> -bash: /etc/init.d/multipath: No such file or directory
-> [root@x init.d]# /etc/init.d/ multipath status
-> -bash: /etc/init.d/: is a directory
-> [root@x init.d]#
->
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of malahal@us.ibm.com
-> Sent: Thursday, January 17, 2008 2:36 PM
-> To: dm-devel@redhat.com
-> Subject: Re: [dm-devel] Need Help
->
-> Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
-> > Run the following:
-> >
-> > # chkconfig multipathd on
-> > # /etc/init.d/ multipath status
->
-> The second command actually is "/etc/init.d/multipathd status"
-> to get the status of the given rc script (multipathd in this case)
->
-> --Malahal.
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
-
-
-
-
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+[root@node1 ~]$ multipath -ll
+mpath2 (HITACHI_DF500_B_) dm-0 HITACHI ,DF500
+[size=1.0G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=0][active]
+ \_ 3:0:3:0 sdi 8:128 [active][ready]
+ \_ 3:0:2:0 sdh 8:112 [active][ready]
+ \_ 2:0:3:0 sde 8:64  [active][ready]
+ \_ 2:0:2:0 sdd 8:48  [active][ready]
+mpath3 (HITACHI_DF500_A_) dm-1 HITACHI ,DF500
+[size=1.0G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=0][active]
+ \_ 3:0:1:0 sdg 8:96  [active][ready]
+ \_ 3:0:0:0 sdf 8:80  [active][ready]
+ \_ 2:0:1:0 sdc 8:32  [active][ready]
+ \_ 2:0:0:0 sdb 8:16  [active][ready]
