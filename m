@@ -1,40 +1,80 @@
-From: "K.Tanaka" <k-tanaka@ce.jp.nec.com>
-Subject: Re: [RFC] A SCSI fault injection framework using SystemTap.
-Date: Tue, 22 Jan 2008 19:26:30 +0900
-Message-ID: <4795C4D6.9010904@ce.jp.nec.com>
-References: <478C22A9.5000009@ce.jp.nec.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: Root device multipathed host freeze with the latest
+ upstream multipath-tools package
+Date: Tue, 22 Jan 2008 13:14:36 -0500 (EST)
+Message-ID: <20080122.131436.85415012.k-ueda@ct.jp.nec.com>
+References: <7026BCCA258BA2438F885772CA0B431310523ACD@exbtc01.hq.netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: <478C22A9.5000009@ce.jp.nec.com>
-Sender: linux-raid-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <7026BCCA258BA2438F885772CA0B431310523ACD@exbtc01.hq.netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: marting@netapp.com
+Cc: Ritesh.Sarraf@netapp.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Hi Martin,
 
->The new framework is tested on Fedora8(i386) running with kernel 2.6.23.12.
->So far, I'm cleaning up the tool set for release, and plan to post it in the near future.
+Thank you for your testing.
+Please see my comments below.
 
-Now it's ready. The scsi fault injection tool is available from the following site.
-https://sourceforge.net/projects/scsifaultinjtst/
-If you have any comments, please let me know.
+On Tue, 22 Jan 2008 21:56:13 +0530, "Sarraf, Ritesh" wrote:
+> Hi Kiyoshi,
+>  
+> I took the latest upstream multipath-tools package (Jan 15, 2008) and
+> installed it on my RHEL 5.1 host to verify the libprio fix. To simulate
+> the FCP path faults, I ran your script (as attached in the mail) which
+> alternately offlined/onlined the corresponding SCSI paths of the root dm
+> device in the syfs. Listing my observations below:
+>  
+> 1) The freeze was still reproducible. On checking the sysrq dumps (as
+> attached), I could see it was the script itself i.e. test.sh which seems
+> to have stalled on the exec () system call perhaps waiting for inode
+> write out for updated access time (the script resides on my root dm
+> device itself). As suggested by you in the bugzilla, I remounted the
+> root device using the noatime option and then reran the script - I have
+> not hit the freeze yet. Is this the expected behavior? 
 
-Additionally, the deadlock problem reproduced also on md RAID10. I think that the
-same reason for RAID1 deadlock reported earlier cause this problem, because
-raid10.c is based on raid1.c.
-> e.g.
->  -The kernel thread for md RAID1 could cause a deadlock when the error handler for
->    md RAID1 contends with the write access to the md RAID1 array.
+As for your script, it is the expected behavior.
+I found that you added some sleep commands to my original script
+posted by the following email.
 
-I've reproduced the deadlock on RAID10 using this tool with a small shell script for
-automatically injecting a fault repeatedly. But I can't come up with any good
-idea for the patch to fix this problem so far.
+    http://marc.info/?l=dm-devel&m=119465024621783&w=2
 
--- 
-------------------------------------------------------------------------
-Kenichi TANAKA    | Open Source Software Platform Development Division
-                  | Computers Software Operations Unit, NEC Corporation
-                  | k-tanaka@ce.jp.nec.com
+sleep is not shell build-in command, so need to access the root device.
+I guess that is the reason of the freeze.
 
+Please retest using a script doesn't include any sleep command or
+your fault injection method.
+If you need to sleep anyway, empty while loop like below might be used
+though you have to change the '1000000' depending on your system:
+    i=0
+    while [ $i -lt 1000000 ]; do
+        i=$(($i + 1))
+    done
+
+
+> 2) With the latest upstream multipath-tools package, "multipath -ll"
+> displays all paths with the same priority - I am not able to prioritize
+> paths into primary/secondary despite the normal group_by_prio setting.
+> Does the libprio fix alter the behavior here?
+
+The keyword of libprio setting is "prio", and the name of the netapp
+prioritizer is "netapp".
+So you need to change your multipath.conf like this:
+
+    From: prio_callout    "/sbin/mpath_prio_netapp /dev/%n"
+    To:   prio            "netapp"
+
+Thanks,
+Kiyoshi Ueda
