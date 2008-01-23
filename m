@@ -1,59 +1,49 @@
-From: Tomasz Chmielewski <mangoo@wpkg.org>
-Subject: Re: [RFC] Multiple Snapshots - Manageability problem
-Date: Wed, 23 Jan 2008 17:16:42 +0100
-Message-ID: <4797686A.4000306@wpkg.org>
-Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: [dm-devel] [PATCH 0/2] dm-band: The I/O bandwidth controller:
+ Overview
+Date: Thu, 24 Jan 2008 01:21:03 +0900 (JST)
+Message-ID: <20080124.012103.105433865.taka@valinux.co.jp>
+References: <20080123.215350.193721890.ryov@valinux.co.jp>
+	<20080123144717.GS8075@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-lvm-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-lvm>
-List-Post: <mailto:linux-lvm@redhat.com>
-List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
-Sender: linux-lvm-bounces@redhat.com
-Errors-To: linux-lvm-bounces@redhat.com
-To: linux-lvm@redhat.com, mvijai@novell.com, dm-devel@redhat.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754832AbYAWQVU@vger.kernel.org>
+In-Reply-To: <20080123144717.GS8075@agk.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: agk@redhat.com
+Cc: ryov@valinux.co.jp, containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: dm-devel.ids
-
-Vijai Babu Madhavan, Thu, 11 Jan 2007 11:18:13 -0700, wrote:
-
-> The problem of DM snapshots with multiple snapshots have been discussed 
-> in the lists quiet a bit (Most recently @ 
-> https://www.redhat.com/archives/dm-devel/2006-October/msg00034.html).
-> 
-> We are currently in the process of building a DM snapshot target that scales 
-> well with many snapshots (so that the changed blocks don't get copied to each 
-> snapshot). In this process, I would also like to validate an assumption.
-> 
-> Today, when a single snapshot gets created, a new cow device of a given size 
-> is also created. IMO, there are two problems with this approach:
-> 
-> a) It is difficult to predict the size of the cow device, which requires a prediction 
-> of the number of writes would go into the origin volume during the snapshot 
-> life cycle. It is difficult to get this prediction right, as very high value reduces 
-> utilization and low value increases the chances of snapshot becoming full.
-> 
-> b) A new cow device needs to be created every time.
 
 Hi,
 
-Any news on that?
+> On Wed, Jan 23, 2008 at 09:53:50PM +0900, Ryo Tsuruta wrote:
+> > Dm-band gives bandwidth to each job according to its weight, 
+> > which each job can set its own value to.
+> > At this time, a job is a group of processes with the same pid or pgrp or uid.
+> 
+> It seems to rely on 'current' to classify bios and doesn't do it until the map
+> function is called, possibly in a different process context, so it won't
+> always identify the original source of the I/O correctly:
 
-Still, with multiple snapshots write performance degrades linearly - is 
-any work done to change that anytime soon?
+Yes, this should be mentioned in the document with the current implementation
+as you pointed out.
 
+By the way, I think once a memory controller of cgroup is introduced, it will
+help to track down which cgroup is the original source.
 
+> people need to take
+> this into account when designing their group configuration and so this should
+> be mentioned in the documentation.
+>
+> I've uploaded it here while we consider ways we might refine the architecture and
+> interfaces etc.:
+> 
+>   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-add-band-target.patch
+> 
+> Alasdair
+> -- 
+> agk@redhat.com
 
--- 
-Tomasz Chmielewski
-http://wpkg.org
-
-_______________________________________________
-linux-lvm mailing list
-linux-lvm@redhat.com
-https://www.redhat.com/mailman/listinfo/linux-lvm
-read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
+Thank you,
+Hirokazu Takahashi.
