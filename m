@@ -1,49 +1,37 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: [dm-devel] [PATCH 0/2] dm-band: The I/O bandwidth controller:
- Overview
-Date: Thu, 24 Jan 2008 01:21:03 +0900 (JST)
-Message-ID: <20080124.012103.105433865.taka@valinux.co.jp>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 0/2] dm-band: The I/O bandwidth controller:
+	Overview
+Date: Thu, 24 Jan 2008 02:25:15 +0900 (JST)
+Message-ID: <20080124.022515.226770887.ryov@valinux.co.jp>
 References: <20080123.215350.193721890.ryov@valinux.co.jp>
-	<20080123144717.GS8075@agk.fab.redhat.com>
+	<1201098755.6341.54.camel@lappy>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754832AbYAWQVU@vger.kernel.org>
-In-Reply-To: <20080123144717.GS8075@agk.fab.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: agk@redhat.com
-Cc: ryov@valinux.co.jp, containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <1201098755.6341.54.camel@lappy>
+List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: a.p.zijlstra@chello.nl
+Cc: containers@lists.linux-foundation.org, dm-devel@redhat.com, xen-devel@lists.xensource.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
-Hi,
+Hi Peter,
 
-> On Wed, Jan 23, 2008 at 09:53:50PM +0900, Ryo Tsuruta wrote:
-> > Dm-band gives bandwidth to each job according to its weight, 
-> > which each job can set its own value to.
-> > At this time, a job is a group of processes with the same pid or pgrp or uid.
-> 
-> It seems to rely on 'current' to classify bios and doesn't do it until the map
-> function is called, possibly in a different process context, so it won't
-> always identify the original source of the I/O correctly:
+> What definition of bandwidth does it use? Does it for example account
+> for seek latency?
 
-Yes, this should be mentioned in the document with the current implementation
-as you pointed out.
+The bandwidth in dm-band is determined by the proportion of the
+processing time of each device's tokens(I/Os) to the processing time
+of all device's tokens(I/Os).
+The processing time of one token(I/O) is determined by one I/O cycle 
+include seek latency, interrupt latency, etc...
 
-By the way, I think once a memory controller of cgroup is introduced, it will
-help to track down which cgroup is the original source.
-
-> people need to take
-> this into account when designing their group configuration and so this should
-> be mentioned in the documentation.
->
-> I've uploaded it here while we consider ways we might refine the architecture and
-> interfaces etc.:
-> 
->   http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/dm-add-band-target.patch
-> 
-> Alasdair
-> -- 
-> agk@redhat.com
-
-Thank you,
-Hirokazu Takahashi.
+Thanks,
+Ryo Tsuruta <ryov@valinux.co.jp>
