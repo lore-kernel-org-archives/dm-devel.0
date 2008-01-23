@@ -1,25 +1,89 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: [PATCH 2/2] dm-band: The I/O bandwidth controller: Document
-Date: Wed, 23 Jan 2008 20:57:57 +0100
-Message-ID: <p73lk6g9uwq.fsf@bingen.suse.de>
-References: <20080123.215350.193721890.ryov@valinux.co.jp>
-	<20080123.215844.71118155.ryov@valinux.co.jp>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: Root device multipathed host freeze with the latest
+ upstream multipath-tools package
+Date: Wed, 23 Jan 2008 15:28:50 -0500 (EST)
+Message-ID: <20080123.152850.74751092.k-ueda@ct.jp.nec.com>
+References: <20080122.131436.85415012.k-ueda@ct.jp.nec.com>
+	<47971DC8.1060209@netapp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752873AbYAWT6S@vger.kernel.org>
-In-Reply-To: <20080123.215844.71118155.ryov@valinux.co.jp> (Ryo Tsuruta's message of "Wed\, 23 Jan 2008 21\:58\:44 +0900 \(JST\)")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <47971DC8.1060209@netapp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: marting@netapp.com
+Cc: Ritesh.Sarraf@netapp.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ryo Tsuruta <ryov@valinux.co.jp> writes:
+Hi Martin,
 
-> Here is the document of dm-band.
+On Wed, 23 Jan 2008 16:28:16 +0530, Martin George wrote:
+> Kiyoshi Ueda wrote:
+> > Hi Martin,
+> > 
+> > Thank you for your testing.
+> > Please see my comments below.
+> > 
+> > On Tue, 22 Jan 2008 21:56:13 +0530, "Sarraf, Ritesh" wrote:
+> >  > Hi Kiyoshi,
+> >  > 
+> >  > I took the latest upstream multipath-tools package (Jan 15, 2008) and
+> >  > installed it on my RHEL 5.1 host to verify the libprio fix. To simulate
+> >  > the FCP path faults, I ran your script (as attached in the mail) which
+> >  > alternately offlined/onlined the corresponding SCSI paths of the root dm
+> >  > device in the syfs. Listing my observations below:
+> >  > 
+> >  > 1) The freeze was still reproducible. On checking the sysrq dumps (as
+> >  > attached), I could see it was the script itself i.e. test.sh which seems
+> >  > to have stalled on the exec () system call perhaps waiting for inode
+> >  > write out for updated access time (the script resides on my root dm
+> >  > device itself). As suggested by you in the bugzilla, I remounted the
+> >  > root device using the noatime option and then reran the script - I have
+> >  > not hit the freeze yet. Is this the expected behavior?
+> > 
+> > As for your script, it is the expected behavior.
+> > I found that you added some sleep commands to my original script
+> > posted by the following email.
+> > 
+> >     http://marc.info/?l=dm-devel&m=119465024621783&w=2 
+> > <http://marc.info/?l=dm-devel&m=119465024621783&w=2>
+> > 
+> > sleep is not shell build-in command, so need to access the root device.
+> > I guess that is the reason of the freeze.
+> 
+> So does that mean you should never access the root partition in such a 
+> scenario? What about utilities like syslogd which may access the root to 
+> log messages? There could be many such utilities for that matter which 
+> accesses the root and all would have to be stopped.
 
-Could you please address in the document how the intended use
-cases/feature set etc. differs from CFQ2 io priorities?
+No.
+Generally you can access the root.
+But you can't in your single-threaded test script.
+
+On your testing scenario, only your script would online/offline paths
+for the root like this:
+    while true; do
+        <offline all paths>
+        sleep
+        <online all paths>
+        sleep
+    done
+
+So if your script accesses to the root after it offlines all paths,
+it is freezed and nobody will online the paths.
+So you must avoid your script to be freezed.
+Other utilities accessing to the root don't matter.
+
+I guess that your script is freezed at the sleep after the offline.
 
 Thanks,
-
--Andi
+Kiyoshi Ueda
