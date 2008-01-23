@@ -1,66 +1,52 @@
-From: Tomasz Chmielewski <mangoo@wpkg.org>
-Subject: Re: Re: [RFC] Multiple Snapshots - Manageability problem
-Date: Thu, 24 Jan 2008 12:02:52 +0100
-Message-ID: <4798705C.4080802@wpkg.org>
-References: <4797686A.4000306@wpkg.org>
-	<a71bd89a0801231436k3653acfw9bd0a63f027daacf@mail.gmail.com>
-Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
+From: Andy <genanr@emsphone.com>
+Subject: multipath performance
+Date: Wed, 23 Jan 2008 10:38:20 -0600
+Message-ID: <20080123163820.GA1303@thumper2>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-lvm-bounces@redhat.com>
-In-Reply-To: <a71bd89a0801231436k3653acfw9bd0a63f027daacf@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-lvm>
-List-Post: <mailto:linux-lvm@redhat.com>
-List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
-Sender: linux-lvm-bounces@redhat.com
-Errors-To: linux-lvm-bounces@redhat.com
-To: LVM general discussion and development <linux-lvm@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dan Kegel schrieb:
-> On Jan 23, 2008 8:16 AM, Tomasz Chmielewski <mangoo@wpkg.org> wrote:
->> Vijai Babu Madhavan, Thu, 11 Jan 2007 11:18:13 -0700, wrote:
->>
->>> The problem of DM snapshots with multiple snapshots have been discussed
->>> in the lists quiet a bit (Most recently @
->>> https://www.redhat.com/archives/dm-devel/2006-October/msg00034.html).
->>>
->>> We are currently in the process of building a DM snapshot target that scales
->>> well with many snapshots (so that the changed blocks don't get copied to each
->>> snapshot). In this process, I would also like to validate an assumption.
->> Any news on that?
->>
->> Still, with multiple snapshots write performance degrades linearly - is
->> any work done to change that anytime soon?
-> 
-> Yes.  Dan Phillips has implemented a shared snapshot exception store.
-> You can try it out now if you like; it's at http://zumastor.org.
-> It feels a bit different from the user's point of view than LVM, though.
-> It plays well with the device mapper and can be used with any
-> block device (LVM or non-LVM).
+I did some basic dd tests to get an idea of the speed of multipath vs
+individual devices, some of the numbers seem not to make sense.
 
-Does it use device mapper (or it just "plays well with the device 
-mapper")? Or is it a totally different technology?
+I ran several test with dd, 4 at a time reading different parts of the
+device.
 
-I didn't find it explained very clearly in Zumastor HOWTO on 
-http://zumastor.googlecode.com/svn/trunk/doc/zumastor-howto.html (other 
-than pointers to /dev/mapper/zumatest, which probably means it uses 
-device mapper).
+multibus - round robin among paths rr_min_io=1, 4 paths
+individual - each dd going to a separate path
 
+dd with iflag=direct
+	multibus : 120 MB/s
+	individual : 115 MB/s
 
+dd without direct
+	multibus : 44MB/s (why is this so bad)
+	individual : 160MB/s (why is this so good)
 
--- 
-Tomasz Chmielewski
-http://wpkg.org
+Why is multibus without direct the worst, yet individual devices without
+direct is the fastest.  And why doesn't multibus perform about the same as
+going to the individual devices (25% performance hit using multibus)?
 
-_______________________________________________
-linux-lvm mailing list
-linux-lvm@redhat.com
-https://www.redhat.com/mailman/listinfo/linux-lvm
-read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
+Multibus is round-robin, how about a mode that sends io out on all paths
+simultaneously?
+
+Another thing I noticed during some of my test is that performance for a
+single dd will increase in the multibus mode as I up the blocksize parameter
+of dd.  
+
+Thanks,
+
+Andy
