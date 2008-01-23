@@ -1,92 +1,154 @@
-From: Martin George <marting@netapp.com>
-Subject: Re: Root device multipathed host freeze with the latest
- upstream multipath-tools package
-Date: Wed, 23 Jan 2008 16:28:16 +0530
-Message-ID: <47971DC8.1060209@netapp.com>
-References: <20080122.131436.85415012.k-ueda@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/2] dm-band: The I/O bandwidth controller:
+	Overview
+Date: Wed, 23 Jan 2008 21:53:50 +0900 (JST)
+Message-ID: <20080123.215350.193721890.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080122.131436.85415012.k-ueda@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: "Sarraf, Ritesh" <Ritesh.Sarraf@netapp.com>, dm-devel@redhat.com
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Kiyoshi Ueda wrote:
-> Hi Martin,
-> 
-> Thank you for your testing.
-> Please see my comments below.
-> 
-> On Tue, 22 Jan 2008 21:56:13 +0530, "Sarraf, Ritesh" wrote:
->  > Hi Kiyoshi,
->  > 
->  > I took the latest upstream multipath-tools package (Jan 15, 2008) and
->  > installed it on my RHEL 5.1 host to verify the libprio fix. To simulate
->  > the FCP path faults, I ran your script (as attached in the mail) which
->  > alternately offlined/onlined the corresponding SCSI paths of the root dm
->  > device in the syfs. Listing my observations below:
->  > 
->  > 1) The freeze was still reproducible. On checking the sysrq dumps (as
->  > attached), I could see it was the script itself i.e. test.sh which seems
->  > to have stalled on the exec () system call perhaps waiting for inode
->  > write out for updated access time (the script resides on my root dm
->  > device itself). As suggested by you in the bugzilla, I remounted the
->  > root device using the noatime option and then reran the script - I have
->  > not hit the freeze yet. Is this the expected behavior?
-> 
-> As for your script, it is the expected behavior.
-> I found that you added some sleep commands to my original script
-> posted by the following email.
-> 
->     http://marc.info/?l=dm-devel&m=119465024621783&w=2 
-> <http://marc.info/?l=dm-devel&m=119465024621783&w=2>
-> 
-> sleep is not shell build-in command, so need to access the root device.
-> I guess that is the reason of the freeze.
+Hi everyone,
 
-So does that mean you should never access the root partition in such a 
-scenario? What about utilities like syslogd which may access the root to 
-log messages? There could be many such utilities for that matter which 
-accesses the root and all would have to be stopped.
+I'm happy to announce that I've implemented a Block I/O bandwidth controller.
+The controller is designed to be of use in a cgroup or virtual machine
+environment. The current approach is that the controller is implemented as
+a device-mapper driver.
+
+What's dm-band all about?
+========================
+Dm-band is an I/O bandwidth controller implemented as a device-mapper driver.
+Several jobs using the same physical device have to share the bandwidth of
+the device. Dm-band gives bandwidth to each job according to its weight, 
+which each job can set its own value to.
+
+At this time, a job is a group of processes with the same pid or pgrp or uid.
+There is also a plan to make it support cgroup. A job can also be a virtual
+machine such as KVM or Xen.
+
+  +------+ +------+ +------+   +------+ +------+ +------+ 
+  |cgroup| |cgroup| | the  |   | pid  | | pid  | | the  |  jobs
+  |  A   | |  B   | |others|   |  X   | |  Y   | |others| 
+  +--|---+ +--|---+ +--|---+   +--|---+ +--|---+ +--|---+   
+  +--V----+---V---+----V---+   +--V----+---V---+----V---+   
+  | group | group | default|   | group | group | default|  band groups
+  |       |       |  group |   |       |       |  group | 
+  +-------+-------+--------+   +-------+-------+--------+
+  |         band1          |   |         band2          |  band devices
+  +-----------|------------+   +-----------|------------+
+  +-----------V--------------+-------------V------------+
+  |                          |                          |
+  |          sdb1            |           sdb2           |  physical devices
+  +--------------------------+--------------------------+
+
+
+How dm-band works.
+========================
+Every band device has one band group, which by default is called the default
+group.
+
+Band devices can also have extra band groups in them. Each band group
+has a job to support and a weight. Proportional to the weight, dm-band gives
+tokens to the group.
+
+A group passes on I/O requests that its job issues to the underlying
+layer so long as it has tokens left, while requests are blocked
+if there aren't any tokens left in the group. One token is consumed each
+time the group passes on a request. Dm-band will refill groups with tokens
+once all of groups that have requests on a given physical device use up their
+tokens.
+
+With this approach, a job running on a band group with large weight is
+guaranteed to be able to issue a large number of I/O requests.
+
+
+Getting started
+=============
+The following is a brief description how to control the I/O bandwidth of
+disks. In this description, we'll take one disk with two partitions as an
+example target.
+
+You can also check the manual at Document/device-mapper/band.txt of the
+linux kernel source tree for more information.
+
+
+Create and map band devices
+---------------------------
+Create two band devices "band1" and "band2" and map them to "/dev/sda1"
+and "/dev/sda2" respectively.
+
+ # echo "0 `blockdev --getsize /dev/sda1` band /dev/sda1 1" | dmsetup create band1
+ # echo "0 `blockdev --getsize /dev/sda2` band /dev/sda2 1" | dmsetup create band2
+
+If the commands are successful then the device files "/dev/mapper/band1"
+and "/dev/mapper/band2" will have been created.
+
+
+Bandwidth control
+----------------
+In this example weights of 40 and 10 will be assigned to "band1" and
+"band2" respectively. This is done using the following commands:
+
+ # dmsetup message band1 0 weight 40
+ # dmsetup message band2 0 weight 10
+
+After these commands, "band1" can use 80% --- 40/(40+10)*100 --- of the
+bandwidth of the physical disk "/dev/sda" while "band2" can use 20%.
+
+
+Additional bandwidth control
+---------------------------
+In this example two extra band groups are created on "band1".
+The first group consists of all the processes with user-id 1000 and the
+second group consists of all the processes with user-id 2000. Their
+weights are 30 and 20 respectively.
+
+Firstly the band group type of "band1" is set to "user".
+Then, the user-id 1000 and 2000 groups are attached to "band1".
+Finally, weights are assigned to the user-id 1000 and 2000 groups.
+
+ # dmsetup message band1 0 type user
+ # dmsetup message band1 0 attach 1000
+ # dmsetup message band1 0 attach 2000
+ # dmsetup message band1 0 weight 1000:30
+ # dmsetup message band1 0 weight 2000:20
+
+Now the processes in the user-id 1000 group can use 30% ---
+30/(30+20+40+10)*100 --- of the bandwidth of the physical disk.
+
+ Band Device    Band Group                     Weight
+  band1         user id 1000                     30
+  band1         user id 2000                     20
+  band1         default group(the other users)   40
+  band2         default group                    10
+
+
+Remove band devices
+-------------------
+Remove the band devices when no longer used.
+
+  # dmsetup remove band1
+  # dmsetup remove band2
+
+
+TODO
+========================
+  - Cgroup support. 
+  - Control read and write requests separately.
+  - Support WRITE_BARRIER.
+  - Optimization.
+  - More configuration tools. Or is the dmsetup command sufficient?
+  - Other policies to schedule BIOs. Or is the weight policy sufficient?
 
 Thanks,
--Martin
-
-> 
-> Please retest using a script doesn't include any sleep command or
-> your fault injection method.
-> If you need to sleep anyway, empty while loop like below might be used
-> though you have to change the '1000000' depending on your system:
->     i=0
->     while [ $i -lt 1000000 ]; do
->         i=$(($i + 1))
->     done
-> 
-> 
->  > 2) With the latest upstream multipath-tools package, "multipath -ll"
->  > displays all paths with the same priority - I am not able to prioritize
->  > paths into primary/secondary despite the normal group_by_prio setting.
->  > Does the libprio fix alter the behavior here?
-> 
-> The keyword of libprio setting is "prio", and the name of the netapp
-> prioritizer is "netapp".
-> So you need to change your multipath.conf like this:
-> 
->     From: prio_callout    "/sbin/mpath_prio_netapp /dev/%n"
->     To:   prio            "netapp"
-> 
-> Thanks,
-> Kiyoshi Ueda
-> 
+Ryo Tsuruta
