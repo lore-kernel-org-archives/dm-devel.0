@@ -1,80 +1,55 @@
-From: "K.Tanaka" <k-tanaka@ce.jp.nec.com>
-Subject: Re: [BUG] The kernel thread for md RAID1 could cause a md RAID1 array
- deadlock
-Date: Thu, 24 Jan 2008 18:32:39 +0900
-Message-ID: <47985B37.9000503@ce.jp.nec.com>
-References: <478C240F.8070004@ce.jp.nec.com> <18328.1473.26122.647283@notabene.brown>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: [dm-devel] [PATCH 0/2] dm-band: The I/O bandwidth
+ controller: Overview
+Date: Thu, 24 Jan 2008 19:14:56 +0900 (JST)
+Message-ID: <20080124.191456.119427875.taka@valinux.co.jp>
+References: <20080124.012103.105433865.taka@valinux.co.jp>
+	<20080124033807.42D7B1E3C0C@siro.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <18328.1473.26122.647283@notabene.brown>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Neil Brown <neilb@suse.de>
-Cc: linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, dm-devel@redhat.com
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20080124033807.42D7B1E3C0C@siro.lan>
+List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: yamamoto@valinux.co.jp
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
 Hi,
 
-Thank you for the patch.
-I have applied the patch to 2.6.23.14 and it works well.
+> > > On Wed, Jan 23, 2008 at 09:53:50PM +0900, Ryo Tsuruta wrote:
+> > > > Dm-band gives bandwidth to each job according to its weight, 
+> > > > which each job can set its own value to.
+> > > > At this time, a job is a group of processes with the same pid or pgrp or uid.
+> > > 
+> > > It seems to rely on 'current' to classify bios and doesn't do it until the map
+> > > function is called, possibly in a different process context, so it won't
+> > > always identify the original source of the I/O correctly:
+> > 
+> > Yes, this should be mentioned in the document with the current implementation
+> > as you pointed out.
+> > 
+> > By the way, I think once a memory controller of cgroup is introduced, it will
+> > help to track down which cgroup is the original source.
+> 
+> do you mean to make this a part of the memory subsystem?
 
-- In case of 2.6.23.14, the problem is reproduced.
-- In case of 2.6.23.14 with this patch, raid1 works well so far.
-  The fault injection script continues to run, and it doesn't deadlock.
-  I will keep it running for a while.
+I just think if the memory subsystem is in front of us, we don't need to
+reinvent the wheel.
 
-Also, md raid10 seems to have the same problem.
-I will test raid10 applying this patch as well.
+But I don't have a concrete image how the interface between dm-band and
+the memory subsystem should be designed yet. I'd be appreciate if some of
+the cgroup developers give some ideas about it.
+
+Thanks,
+Hirokazu Takahashi.
 
 
-Neil Brown wrote:
-> On Tuesday January 15, k-tanaka@ce.jp.nec.com wrote:
->> This message describes the details about md-RAID1 issue found by
->> testing the md RAID1 using the SCSI fault injection framework.
->>
->> Abstract:
->> Both the error handler for md RAID1 and write access request to the md RAID1
->> use raid1d kernel thread. The nr_pending flag could cause a race condition
->> in raid1d, results in a raid1d deadlock.
-> 
-> Thanks for finding and reporting this.
-> 
-> I believe the following patch should fix the deadlock.
-> 
-> If you are able to repeat your test and confirm this I would
-> appreciate it.
-> 
-> Thanks,
-> NeilBrown
-> 
-> 
-> 
-> Fix deadlock in md/raid1 when handling a read error.
-> 
-> When handling a read error, we freeze the array to stop any other
-> IO while attempting to over-write with correct data.
-> 
-> This is done in the raid1d thread and must wait for all submitted IO
-> to complete (except for requests that failed and are sitting in the
-> retry queue - these are counted in ->nr_queue and will stay there during
-> a freeze).
-> 
-> However write requests need attention from raid1d as bitmap updates
-> might be required.  This can cause a deadlock as raid1 is waiting for
-> requests to finish that themselves need attention from raid1d.
-> 
-> So we create a new function 'flush_pending_writes' to give that attention,
-> and call it in freeze_array to be sure that we aren't waiting on raid1d.
-> 
-> Thanks to "K.Tanaka" <k-tanaka@ce.jp.nec.com> for finding and reporting
-> this problem.
-> 
-> Cc: "K.Tanaka" <k-tanaka@ce.jp.nec.com>
-> Signed-off-by: Neil Brown <neilb@suse.de>
-> 
--- 
----------------------------------------------------------
-Kenichi TANAKA    | Open Source Software Platform Development Division
-                  | Computers Software Operations Unit, NEC Corporation
-                  | k-tanaka@ce.jp.nec.com
+> YAMAMOTO Takashi
