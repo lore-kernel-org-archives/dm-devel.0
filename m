@@ -1,52 +1,66 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Documenting Device Mapper Targets?
-Date: Wed, 23 Jan 2008 23:07:03 +0000
-Message-ID: <20080123230703.GU8075@agk.fab.redhat.com>
-References: <4797B277.30103@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4797B277.30103@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: slevine@redhat.com
-Cc: "Michael H. Smith" <mhideo@redhat.com>, mwhitehe@redhat.com, dm-devel@redhat.com, cluster-list@redhat.com, David Teigland <teigland@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH 0/9] scsi_dh: Move dm device handler to SCSI layer
+Date: Wed, 23 Jan 2008 16:30:10 -0800
+Message-ID: <20080124003010.18871.84095.sendpatchset@localhost.localdomain>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: andmike@us.ibm.com, michaelc@cs.wisc.edu, Chandra Seetharaman <sekharan@us.ibm.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 23, 2008 at 03:32:39PM -0600, Steven Levine wrote:
-> Matthew Whitehead wrote:
-> This includes the format of the 'dmsetup table' data for all the above.
-> Documentation for the table formats is very scarce! An typically cryptic
-> example is this:
-> 0 71014400 multipath 0 0 2 1 round-robin 0 2 1 66:128 1000 65:64 1000
-> round-robin 0 2 1 8:0 1000 67:192 1000
- 
-Those are internal structures that are designed to be (1) easy for the
-computer to process; (2) extendible.  Sysadmins should use the
-'multipath' tool to decode it.
+Hello,
 
-What I would like however, is an additional dmsetup command line option that
-would decode each of the table lines into a human-readable format.
-Something like:  dmsetup table --expanded
+The set of patches that follow this email facilitate movement of hardware
+handlers from dm layer to SCSI layer.
 
-[Details: libdevmapper will acquire a per-target-type built-in plug-in,
-one function of which will be to do this decoding.]
+Patches posted along with this email are based off of the patches
+Mike Christie posted on June 09, 2007. The first email Mike posted
+gives the rationale for moving the hardware handler from dm to SCSI.
 
-> You should show how to create a snapshot device using device-mapper. I have
-> only started to dabble with this one because documentation is nonexistant.
- 
-This one *is* documented in the tree:
-Documentation/device-mapper/snapshot.txt.
+Patches posted by Mike Christie:
+http://marc.info/?l=linux-scsi&m=118141609715090&w=2
+http://marc.info/?l=linux-scsi&m=118141614418681&w=2
+http://marc.info/?l=linux-scsi&m=118141614501241&w=2
+http://marc.info/?l=linux-scsi&m=118141614303990&w=2
+http://marc.info/?l=linux-scsi&m=118141614425996&w=2
+http://marc.info/?l=linux-scsi&m=118141802719861&w=2
+http://marc.info/?l=linux-scsi&m=118141614331436&w=2
+http://marc.info/?l=linux-scsi&m=118141614421759&w=2
 
-Alasdair
+Current set of patches has 3 additional advantages:
+ 1. It is totally compatible with the current multipath tools.
+ 2. Moving from dm hardware handler to SCSI hardware handler is not
+    imposed on the user community. They can use either of those by using
+    either of the modules.
+    dm hardware handler can be depracated slowly.
+ 3. It adds a new device state SDEV_PASSIVE which avoids I/O being sent
+    to the passive side of a multipath device, thereby reducing the device
+    probe time and boot time.
+    Booting a system with 40 luns with 1 active path and 1 inactive path
+    shows the following as the last printk before login prompt.
+    ------------
+    With SCSI HW Handler
+    [  171.702366] Buffer I/O error on device sdbl, logical block 262128
+
+    Without SCSI HW Handler
+    [ 1426.772390] end_request: I/O error, dev sdbm, sector 2097136
+    ------------
+
+Patches are created on top of 2.6.24-rc8-mm1.
+
+Testing has been done with a IBM DS4800 storage device, which means the
+infrastructure and the lsi_rdac hardware handler has been tested. Testing
+by someone with the EMC hardware and/or HP hardware would be appreciated.
+
+Comments, suggestions solicited.
+
+Thanks,
+
+chandra
+
 -- 
-agk@redhat.com
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
