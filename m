@@ -1,15 +1,18 @@
-From: "Sarraf, Ritesh" <Ritesh.Sarraf@netapp.com>
-Subject: RE: Root device multipathed host freeze with the latest
-	upstream multipath-tools package
-Date: Tue, 22 Jan 2008 21:56:13 +0530
-Message-ID: <7026BCCA258BA2438F885772CA0B431310523ACD@exbtc01.hq.netapp.com>
+From: "Dan Kegel" <dank@kegel.com>
+Subject: Re: [linux-lvm] Re: [RFC] Multiple Snapshots -
+	Manageability problem
+Date: Thu, 24 Jan 2008 05:18:58 -0800
+Message-ID: <a71bd89a0801240518i78f9d5fcj6173f663931fff55@mail.gmail.com>
+References: <4797686A.4000306@wpkg.org>
+	<a71bd89a0801231436k3653acfw9bd0a63f027daacf@mail.gmail.com>
+	<4798705C.4080802@wpkg.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <4798705C.4080802@wpkg.org>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +22,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "George, Martin" <marting@netapp.com>, k-ueda@ct.jp.nec.com
+To: LVM general discussion and development <linux-lvm@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Now that 'relatime' is pushed to all major distribuitons, should we just
-document and discourage 'noatime' ? (At least for SAN Boot)
-Apart from Backup softwares and tmpclean, I can't recollect any other
-user of it.
-OTOH LUNs would be easily backed by users on the target.
+Tomasz Chmielewski <mangoo@wpkg.org> wrote:
+> Dan Kegel schrieb:
+> > Yes.  Dan Phillips has implemented a shared snapshot exception store.
+> > You can try it out now if you like; it's at http://zumastor.org.
+> > It feels a bit different from the user's point of view than LVM, though.
+> > It plays well with the device mapper and can be used with any
+> > block device (LVM or non-LVM).
+>
+> Does it use device mapper (or it just "plays well with the device
+> mapper")? Or is it a totally different technology?
 
-Ritesh
+It is a device mapper target, so yeah, it uses device mapper.
 
-________________________________
+> I didn't find it explained very clearly in Zumastor HOWTO on
+> http://zumastor.googlecode.com/svn/trunk/doc/zumastor-howto.html (other
+> than pointers to /dev/mapper/zumatest, which probably means it uses
+> device mapper).
 
-From: George, Martin=20
-Sent: Tuesday, January 22, 2008 9:00 PM
-To: k-ueda@ct.jp.nec.com
-Cc: Sarraf, Ritesh
-Subject: Root device multipathed host freeze with the latest upstream
-multipath-tools package
-
-
-Hi Kiyoshi,
-=20
-I took the latest upstream multipath-tools package (Jan 15, 2008) and
-installed it on my RHEL 5.1 host to verify the libprio fix. To simulate
-the FCP path faults, I ran your script (as attached in the mail) which
-alternately offlined/onlined the corresponding SCSI paths of the root dm
-device in the syfs. Listing my observations below:
-=20
-1) The freeze was still reproducible. On checking the sysrq dumps (as
-attached), I could see it was the script itself i.e. test.sh which seems
-to have stalled on the exec () system call perhaps waiting for inode
-write out for updated access time (the script resides on my root dm
-device itself). As suggested by you in the bugzilla, I remounted the
-root device using the noatime option and then reran the script - I have
-not hit the freeze yet. Is this the expected behavior?=20
-=20
-2) With the latest upstream multipath-tools package, "multipath -ll"
-displays all paths with the same priority - I am not able to prioritize
-paths into primary/secondary despite the normal group_by_prio setting.
-Does the libprio fix alter the behavior here?
-=20
-Wanted to know your comments on the same.
-=20
-Thanks a lot,
--Martin
+A little further down the page, http://zumastor.org links to
+http://zumastor.googlecode.com/svn/trunk/doc/desimplnotes.html
+which does mention it explicitly.
+- Dan
