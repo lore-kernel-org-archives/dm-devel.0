@@ -1,17 +1,14 @@
-From: "Greene, Rick" <rick.greene@ncogroup.com>
-Subject: RE: Multipath and getuid_callout issues
-	withHPXP1024diskarray
-Date: Tue, 5 Feb 2008 07:21:50 -0500
-Message-ID: <2F1F44D192D1284BAA298E48C1B2A4F90234F17A@exchmail03.ncogroup.com>
-References: <DEB00BF6BD078A4EB280E07567BD7D2E08A8C8B3@bgeexc01.asiapacific.cpqcorp.net>
+From: "Mike Moerk" <Mike_Moerk@us.xyratex.com>
+Subject: Maps not created for read-only devices
+Date: Thu, 24 Jan 2008 08:25:19 -0800
+Message-ID: <9F94CC89AA0F524CBA8A619D43C4AED85C00BB@XYUS-EX22.xyus.xyratex.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	charset="us-ascii"
+	charset="iso-8859-1"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <DEB00BF6BD078A4EB280E07567BD7D2E08A8C8B3@bgeexc01.asiapacific.cpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,222 +18,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We submitted a ticket to the XP team at HP to set those options, but
-they said they didn't know what "system mode" was, and made some
-settings match what had been done for some VMWare servers we installed.
+Using SuSE10 with multipath-tools-0.4.6-25.8 and device-mapper-1.02.03-8.=
+2, I am having the following problem. =A0When I set a LUN to read-only on=
+ the storage controller, the LUN does not show up under "multipath -l".
 
-I'm still getting results like the following:
-# /sbin/scsi_id -g -u -s /block/sda
-0HP______OPEN-E__________50060e80039c5a0400000000000000000000e100
-# /sbin/scsi_id -g -u -s /block/sde
-0HP______OPEN-E__________50060e80039c5a1400000000000000000000c900
+The following debug messages show up from multipathd for the read-only de=
+vice:
 
-I know these two are the same LUN, for if I use the xpinfo command it'll
-show the same CU:LDev value for both devices.
+Jan 23 11:56:35 | mpath6: set ACT_CREATE (map does not exist)
+Jan 23 11:56:35 | mpath6: domap (0) failure for create/reload map
 
-I've got tickets open with HP now to try to address this from both
-angles, will update the dm-devel list if I get an answer different that
-what's been proposed.
+Meanwhile I see the following entries in /var/log/messages:
 
-Thanks,
-Rick
+Jan 24 08:58:36 suse10 kernel: device-mapper: dm-multipath: error getting=
+ device
+Jan 24 08:58:36 suse10 kernel: device-mapper: error adding target to tabl=
+e
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Balasubramanian, Vijayakumar (STSD)
-Sent: Tuesday, February 05, 2008 4:32 AM
-To: device-mapper development
-Subject: RE: [dm-devel] Multipath and getuid_callout issues
-withHPXP1024diskarray
+If the LUN is set to read/write access I have no problems.
 
-
-Rick,
-
-scsi_id does give unique id for HP XP array LUNs which can be used by
-device mapper. Following is the output that I get on my xp device:
-# /sbin/scsi_id -g -u -s /block/sdaq
-360060e8005276a000000276a0000030e
-
-Can you verify the LUN presentation/ Host mode settings on the array and
-the low level drivers on the host.
-
-Note: If you use XP128/1024, the system modes 140 and 293 must be
-switched on, otherwise
-the XP array does not respond to a SCSI inquiry to code page 0x83 with a
-unique serial number
-(scsi_id tool). This prevents the DM Multipath from detecting the
-redundant paths.
-
-Hope this helps.
-
--Vijay
-
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Greene, Rick
-Sent: Thursday, January 31, 2008 12:26 AM
-To: device-mapper development
-Subject: RE: [dm-devel] Multipath and getuid_callout issues with
-HPXP1024diskarray
-
-I've been trying to play with using a different command in the
-getuid_callout, but everything I try comes up with "error calling out".
-For example, I wrote my own little shell script that pushes out the same
-scsi_id string, plus some output from a vendor-supplied disk querying
-command, and this is what "multipath -v3" shows for one of the devices
-(they all display similar results):
-
-=3D=3D=3D=3D=3D path info sda (mask 0x1f) =3D=3D=3D=3D=3D
-bus =3D 1
-dev_t =3D 8:0
-size =3D 28452960
-vendor =3D HP
-product =3D OPEN-E
-rev =3D 2114
-h:b:t:l =3D 1:0:0:0
-tgt_node_name =3D 0x50060e80039c5a04
-serial =3D 40026
-path checker =3D readsector0 (internal default) state =3D 2 getprio =3D
-/bin/true (internal default) prio =3D 0 getuid =3D /sbin/xpdisk %n (inter=
-nal
-default) error calling out /sbin/xpdisk sda uid =3D  (callout)
-
-Run manually, it looks like this:
-# /sbin/xpdisk sda
-0HP_OPEN-E_50060e80039c5a0400000000000000000000e100_05:83
-
-I've tried various things with the script I wrote, including just
-spitting out the 05:83 (which is the CU:LDev values from the disk array,
-pretty much the most unique disk identifying info I can find)
-
-Not sure what else to do.
+Does anyone have any ideas why this might be happening?
 
 Thanks,
-Rick
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of malahal@us.ibm.com
-Sent: Wednesday, January 30, 2008 1:50 PM
-To: dm-devel@redhat.com
-Subject: Re: [dm-devel] Multipath and getuid_callout issues with
-HPXP1024disk array
-
-You have two default sections in your multipath.conf file, but that is
-not the problem though. The scsi_id output from each path looks
-different, that is why multipath treats them as different LUNs.
-
-Make sure you configure your storage properly or change the default
-getuid string that works for your storage.
-
-Thanks, Malahal.
-
-Greene, Rick [rick.greene@ncogroup.com] wrote:
-> Ok, some more background first:
->=20
-> System is an HP Proliant DL380 (or maybe DL580?), using Emulex fibre=20
-> channel cards (don't know exact model off-hand).
->=20
-> Running Red Hat Enterprise Linux 4, update 5.
->=20
-> Device-mapper-multipath was version 0.4.5-21, just updated it to
-> 0.4.5-27
->=20
-> There are 4 LUNs from an HP XP1024 disk array, each pathed to be
-visible
-> on each fibre channel.  LUN type is OPEN-E.
-> =20
-> Multipath now seems to accept the longer string returned by scsi_id,
-but
-> it doesn't seem able to tell that certain disks are the same.
->=20
-> Attached is the multipath.conf file I'm using and the output from=20
-> "multipath -v3". If the attachments don't come through, I'll send=20
-> separate emails with just the contents for each file.
->=20
-> Any aide gladly received, I'm in over my head on this one.
->=20
-> Thanks,
-> Rick
->=20
->=20
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of malahal@us.ibm.com
-> Sent: Tuesday, January 29, 2008 5:19 PM
-> To: dm-devel@redhat.com
-> Subject: Re: [dm-devel] Multipath and getuid_callout issues with HP=20
-> XP1024disk array
->=20
-> Greene, Rick [rick.greene@ncogroup.com] wrote:
-> >    I've done what I can to try to understand how all this works, but
-I
-> keep
-> >    getting "error calling out /sbin/scsi_id -g -u -s /block/sda"
-when
-> I run
-> >    the command "multipath -v2"
-> >=20
-> >=20
-> >=20
-> >    I've tried a number of different things in the
-/etc/multipath.conf
-> file,
-> >    but keep coming back to this same error.  If I run the command
-> manually I
-> >    get the following:
-> >=20
-> >=20
-> >=20
-> >    # /sbin/scsi_id -g -u -s /block/sda
-> >=20
-> >    0HP______OPEN-E__________50060e80039c5a0400000000000000000000e100
-> >=20
-> >=20
-> >=20
-> >    What's missing?  Any help greatly appreciated.
->=20
-> You are not missing anything. The device id is too big to fit in=20
-> multipath tools allocated memory. The program incorrectly prints that=20
-> there is a problem while executing /sbin/scsi_id but in fact the
-problem
-> lies in the program itself. You may have some old version of multipath
-
-> tools. WWID_SIZE was set to 64 bytes and that is small for your
-device.
-> Get the latest version where that macro is set to 128 or so.
->=20
-> Hope that helps!
->=20
-> --Malahal.
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Mike
 
 
+______________________________________________________________________
+This email may contain privileged or confidential information, which shou=
+ld only be used for the purpose for which it was sent by Xyratex. No furt=
+her rights or licenses are granted to use such information. If you are no=
+t the intended recipient of this message, please notify the sender by ret=
+urn and delete it. You may not use, copy, disclose or rely on the informa=
+tion contained in it.
 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Internet email is susceptible to data corruption, interception and unauth=
+orised amendment for which Xyratex does not accept liability. While we ha=
+ve taken reasonable precautions to ensure that this email is free of viru=
+ses, Xyratex does not accept liability for the presence of any computer v=
+iruses in this email, nor for any losses caused as a result of viruses.
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Xyratex Technology Limited (03134912), Registered in England & Wales, Reg=
+istered Office, Langstone Road, Havant, Hampshire, PO9 1SA.
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+The Xyratex group of companies also includes, Xyratex Ltd, registered in =
+Bermuda, Xyratex International Inc, registered in California, Xyratex (Ma=
+laysia) Sdn Bhd registered in Malaysia, Xyratex Technology (Wuxi) Co Ltd =
+registered in The People's Republic of China and Xyratex Japan Limited re=
+gistered in Japan.
+______________________________________________________________________
