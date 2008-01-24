@@ -1,15 +1,13 @@
-From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
-Subject: Re: Constructing RAID 1+0 w/ LVM2/DM
-Date: Thu, 24 Jan 2008 10:55:38 -0500
-Message-ID: <4798B4FA.40108@hp.com>
-References: <47989DA2.1070201@hp.com>	<20080124143540.GZ8075@agk.fab.redhat.com>	<4798A38E.2050206@hp.com>
-	<20080124145428.GA8075@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Multipath Usage Guide available at LVM wiki page
+Date: Thu, 24 Jan 2008 10:25:53 -0800
+Message-ID: <1201199153.2634.4.camel@linuxchandra>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080124145428.GA8075@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +17,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Alasdair G Kergon wrote:
-> On Thu, Jan 24, 2008 at 09:41:18AM -0500, Alan D. Brunelle wrote:
->   
->>            ignore_suspended_devices() && !device_is_usable(dev->dev)) {
->>     
->
-> If you know what you're doing and using upstream kernels without dmeventd, drop
-> the mirror test from device_is_usable().
->   
+Hi All,
 
-Thanks Alasdair!
+I put the Multipath Usage guide in the LVM wiki page. Here is the link:
+http://sources.redhat.com/lvm2/wiki/MultipathUsageGuide
 
-> (Are all those corelogs just while testing?)
->   
+One can reach the same from the lvm wiki homepage
+(http://sources.redhat.com/lvm2/wiki/HomePage) through the links "Usage
+Documentation" -> "Multipath Usage Guide"
 
-Most assuredly so...
+Let me know if you have any comments/suggestions.
 
-Alan
+regards,
 
-> Alasdair
->   
+chandra 
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
