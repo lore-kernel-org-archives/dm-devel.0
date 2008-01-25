@@ -1,18 +1,15 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Multipath Usage Guide available at LVM wiki page
-Date: Thu, 24 Jan 2008 18:32:20 -0800
-Message-ID: <1201228340.2634.43.camel@linuxchandra>
-References: <1201199153.2634.4.camel@linuxchandra>
-	<110b17190801241033t5f2cd140r65668a87357f30ad@mail.gmail.com>
-	<1201213292.2634.35.camel@linuxchandra>
-	<20080125021429.GC28785@us.ibm.com>
-Reply-To: sekharan@us.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: yamamoto@valinux.co.jp (YAMAMOTO Takashi)
+Subject: Re: [PATCH 0/2] dm-band: The I/O bandwidth controller:
+	Overview
+Date: Fri, 25 Jan 2008 15:26:41 +0900 (JST)
+Message-ID: <20080125062642.05E231E3C0C@siro.lan>
+References: <20080124.191456.119427875.taka@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: Text/Plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080125021429.GC28785@us.ibm.com>
+In-Reply-To: Your message of "Thu, 24 Jan 2008 19:14:56 +0900 (JST)"
+	<20080124.191456.119427875.taka@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,56 +19,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: taka@valinux.co.jp
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 2008-01-24 at 18:14 -0800, malahal@us.ibm.com wrote:
-> Chandra Seetharaman [sekharan@us.ibm.com] wrote:
-> > On Thu, 2008-01-24 at 10:33 -0800, Pradipmaya Maharana wrote:
-> > > Hi Chandra,
+> Hi,
+> 
+> > > > On Wed, Jan 23, 2008 at 09:53:50PM +0900, Ryo Tsuruta wrote:
+> > > > > Dm-band gives bandwidth to each job according to its weight, 
+> > > > > which each job can set its own value to.
+> > > > > At this time, a job is a group of processes with the same pid or pgrp or uid.
+> > > > 
+> > > > It seems to rely on 'current' to classify bios and doesn't do it until the map
+> > > > function is called, possibly in a different process context, so it won't
+> > > > always identify the original source of the I/O correctly:
 > > > 
-> > > Thanks for the document, it surely is helpful.
+> > > Yes, this should be mentioned in the document with the current implementation
+> > > as you pointed out.
 > > > 
-> > > I had a query (which I have asked in previous mails), the document
-> > > does not talk about how to install SLES on multipath devices with LVM.
-> > > Basically I tried installing with creating partitions (for both RHEL
-> > > and SLES) and it worked fine; LVM worked fine for RHEL but for SLES it
-> > > won't work.
-> > > 
-> > > - It won't let me mount-by device-id for LVM
-> > > - specifying the volume label won't help.
-> 
-> Are you saying it won't help or it did NOT help?
-> 
-> > You could put your lvm on top of the multipathed dm-device. For which
-> > you may have to disable lvm probing in the initrd phase. You can do this
-> > by changing your /etc/lvm/lvm.conf and then running mkinitrd.
+> > > By the way, I think once a memory controller of cgroup is introduced, it will
+> > > help to track down which cgroup is the original source.
 > > 
-> > You have to change the filter line to be like this:
-> > 
-> > filter = [ "a|/dev/mapper.*|", "a|/dev/disk/by-name/.*|", "r|.*|" ]
-> > 
-> > Let me know if this helps.
+> > do you mean to make this a part of the memory subsystem?
 > 
-> multipath should be run before lvm (even in initrd), if so, how does
-> this filter help?  LVM will not be able to claim plain devices in the
-> presence of multipath devices anyway, right?
+> I just think if the memory subsystem is in front of us, we don't need to
+> reinvent the wheel.
+> 
+> But I don't have a concrete image how the interface between dm-band and
+> the memory subsystem should be designed yet. I'd be appreciate if some of
+> the cgroup developers give some ideas about it.
 
-It can. I have seen it happen (in sles9 though). multipath opens the
-(sd) device and later lvm scans the same device, it fails (as there is
-already an open reference). 
+the current implementation of memory subsystem associates pages to
+cgroups directly, rather than via tasks.  so it isn't straightforward to
+use the information for other classification mechanisms like yours which
+might not share the view of "hierarchy" with the memory subsystem.
 
-The filter above helps in making lvm read the multipathed device instead
-of the underlying scsi device, and hence the lvm scan succeeds.
+YAMAMOTO Takashi
 
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+> Thanks,
+> Hirokazu Takahashi.
+> 
+> 
+> > YAMAMOTO Takashi
