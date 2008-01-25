@@ -1,14 +1,16 @@
 From: malahal@us.ibm.com
-Subject: Re: multipath performance
-Date: Thu, 24 Jan 2008 17:59:39 -0800
-Message-ID: <20080125015938.GB28785@us.ibm.com>
-References: <20080123163820.GA1303@thumper2>
+Subject: Re: Multipath Usage Guide available at LVM wiki page
+Date: Thu, 24 Jan 2008 18:14:29 -0800
+Message-ID: <20080125021429.GC28785@us.ibm.com>
+References: <1201199153.2634.4.camel@linuxchandra>
+	<110b17190801241033t5f2cd140r65668a87357f30ad@mail.gmail.com>
+	<1201213292.2634.35.camel@linuxchandra>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20080123163820.GA1303@thumper2>
+In-Reply-To: <1201213292.2634.35.camel@linuxchandra>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,38 +23,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Andy [genanr@emsphone.com] wrote:
-> I did some basic dd tests to get an idea of the speed of multipath vs
-> individual devices, some of the numbers seem not to make sense.
-> 
-> I ran several test with dd, 4 at a time reading different parts of the
-> device.
-> 
-> multibus - round robin among paths rr_min_io=1, 4 paths
-> individual - each dd going to a separate path
-> 
-> dd with iflag=direct
-> 	multibus : 120 MB/s
-> 	individual : 115 MB/s
-> 
-> dd without direct
-> 	multibus : 44MB/s (why is this so bad)
-> 	individual : 160MB/s (why is this so good)
-> 
-> Why is multibus without direct the worst, yet individual devices without
-> direct is the fastest.  And why doesn't multibus perform about the same as
-> going to the individual devices (25% performance hit using multibus)?
+Chandra Seetharaman [sekharan@us.ibm.com] wrote:
+> On Thu, 2008-01-24 at 10:33 -0800, Pradipmaya Maharana wrote:
+> > Hi Chandra,
+> > 
+> > Thanks for the document, it surely is helpful.
+> > 
+> > I had a query (which I have asked in previous mails), the document
+> > does not talk about how to install SLES on multipath devices with LVM.
+> > Basically I tried installing with creating partitions (for both RHEL
+> > and SLES) and it worked fine; LVM worked fine for RHEL but for SLES it
+> > won't work.
+> > 
+> > - It won't let me mount-by device-id for LVM
+> > - specifying the volume label won't help.
 
-I am assuming that you are only reading from the device based on your
-iflag. When you do O_DIRECT, you inherently disable read-ahead. Also
-note that the read-ahead benefit would be insignificant as you increase
-the block size.
+Are you saying it won't help or it did NOT help?
+ 
+> You could put your lvm on top of the multipathed dm-device. For which
+> you may have to disable lvm probing in the initrd phase. You can do this
+> by changing your /etc/lvm/lvm.conf and then running mkinitrd.
+> 
+> You have to change the filter line to be like this:
+> 
+> filter = [ "a|/dev/mapper.*|", "a|/dev/disk/by-name/.*|", "r|.*|" ]
+> 
+> Let me know if this helps.
 
-without direct I/O, you end up with very big I/O's in individual mode.
-Same can't be said in multibus mode as it tries to send small I/O's
-(actually bio's) on different paths and it makes the system not to merge
-any adjacent requests. Use iostat to see the average I/O size in each
-case.
-
-You should be able to get the same behavior even in direct I/O mode
-provided you use very block size with dd.
+multipath should be run before lvm (even in initrd), if so, how does
+this filter help?  LVM will not be able to claim plain devices in the
+presence of multipath devices anyway, right?
