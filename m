@@ -1,13 +1,15 @@
-From: "Erez Zilber" <erezz@voltaire.com>
-Subject: RE: About using multipath in SLES 10
-Date: Mon, 28 Jan 2008 20:05:14 +0200
-Message-ID: <39C75744D164D948A170E9792AF8E7CA110B92@exil.voltaire.com>
-References: <479DF5C8.6050909@Voltaire.COM> <20080128163651.GB17040@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: DM-Multipather with initialization probem ?
+Date: Mon, 28 Jan 2008 10:48:57 -0800
+Message-ID: <1201546137.2634.76.camel@linuxchandra>
+References: <OF8A591D76.E8A19332-ONC12573DE.005111F7-C12573DE.0051D727@de.ibm.com>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C861D8.54CCFD65"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <OF8A591D76.E8A19332-ONC12573DE.005111F7-C12573DE.0051D727@de.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,115 +22,66 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Hi Achim,
 
-------_=_NextPart_001_01C861D8.54CCFD65
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+What is the "failback" set to in your configuration file ?
 
-And another question:
-=20
-I've added the following entry to multipath.conf:
-=20
-        multipath {
-                wwid    3600c0ff000d508d7def2894702000000
-                alias   red
-        }
-=20
-which should represent the following device:
-=20
-3600c0ff000d508d7def2894702000000dm-1 DotHill,R/Evo 2730-2R
-[size=3D82G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 16:0:0:0 sdc 8:32  [failed][faulty]
-\_ round-robin 0 [prio=3D0][active]
- \_ 17:0:0:0 sdd 8:48  [active][undef]=20
-=20
-Where should I see "red"? Is it under /dev somewhere?
-=20
-Thanks,
-Erez
+If it is set to "manual" then the failed path will not become active by
+themselves. If you want them to be automatic, I would suggest setting it
+to "immediate".
 
-------_=_NextPart_001_01C861D8.54CCFD65
-Content-Type: application/ms-tnef;
-	name="winmail.dat"
-Content-Transfer-Encoding: base64
+More details can be found at
+http://sources.redhat.com/lvm2/wiki/MultipathUsageGuide
 
-eJ8+Ig8SAQaQCAAEAAAAAAABAAEAAQeQBgAIAAAA5AQAAAAAAADoAAEIgAcAGAAAAElQTS5NaWNy
-b3NvZnQgTWFpbC5Ob3RlADEIAQ2ABAACAAAAAgACAAEEgAEAMAAAAFJFOiBbZG0tZGV2ZWxdIEFi
-b3V0IHVzaW5nIG11bHRpcGF0aCBpbiBTTEVTIDEwAN8PAQWAAwAOAAAA2AcBABwAFAAFAA4AAQAk
-AQEggAMADgAAANgHAQAcABQABQAOAAEAJAEBCYABACEAAAA3RUU1MkNDQzg4NUU0QzQxODI5Nzk3
-MjFDNzZBOTMwNgAnBwEDkAYAGA4AADgAAAADADYAAAAAAEAAOQBl/cxU2GHIAR4APQABAAAABQAA
-AFJFOiAAAAAAAgFHAAEAAAA2AAAAYz1VUzthPSA7cD1Wb2x0YWlyZSBBZHZhbmNlO2w9RVhJTC0w
-ODAxMjgxODA1MTRaLTUzMzkAAAAeAEkAAQAAADAAAABSZTogW2RtLWRldmVsXSBBYm91dCB1c2lu
-ZyBtdWx0aXBhdGggaW4gU0xFUyAxMABAAE4AgFPA+8thyAEeAFoAAQAAABwAAABkbS1kZXZlbC1i
-b3VuY2VzQHJlZGhhdC5jb20AAgFbAAEAAABVAAAAAAAAAIErH6S+oxAZnW4A3QEPVAIAAAAAZG0t
-ZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tAFNNVFAAZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29t
-AAAAAAIBXAABAAAAIQAAAFNNVFA6RE0tREVWRUwtQk9VTkNFU0BSRURIQVQuQ09NAAAAAB4AXQAB
-AAAAEwAAAG1hbGFoYWxAdXMuaWJtLmNvbQAAAgFeAAEAAABDAAAAAAAAAIErH6S+oxAZnW4A3QEP
-VAIAAAAAbWFsYWhhbEB1cy5pYm0uY29tAFNNVFAAbWFsYWhhbEB1cy5pYm0uY29tAAACAV8AAQAA
-ABgAAABTTVRQOk1BTEFIQUxAVVMuSUJNLkNPTQAeAGYAAQAAAAUAAABTTVRQAAAAAB4AZwABAAAA
-HAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQAeAGgAAQAAAAUAAABTTVRQAAAAAB4AaQAB
-AAAAEwAAAG1hbGFoYWxAdXMuaWJtLmNvbQAAHgBwAAEAAAAsAAAAW2RtLWRldmVsXSBBYm91dCB1
-c2luZyBtdWx0aXBhdGggaW4gU0xFUyAxMAACAXEAAQAAABsAAAAByGHMJMKKMVD0mg9Juq5lOvPt
-9G0aAALMVhQAHgB0AAEAAAAUAAAAZG0tZGV2ZWxAcmVkaGF0LmNvbQAeABoMAQAAAAwAAABFcmV6
-IFppbGJlcgAeAB0OAQAAACwAAABbZG0tZGV2ZWxdIEFib3V0IHVzaW5nIG11bHRpcGF0aCBpbiBT
-TEVTIDEwAAIBCRABAAAAtQYAALEGAABKHgAATFpGdZaouDYDAAoAcmNwZzEyNYIyA0NodG1sMQMw
-PwEDAfcKgAKkA+MCAGNowQrAc2V0MCAHEwKA/xADAFAEVghVB7IR1Q5RAwHdENcyBgAGwxHVMwRG
-ENlvEusR4wjvCfc7GM8OMDU7EdIMYGMAUAsJAWQzNpMRYAulNCAQAipcDrIDAZAOEDkgPEhUTUBM
-IGRpcj0eMHI8Pn0d8wAhAzAfQWRv5wDgH0EKsVxxGLAfQRDwbwMwH6URYB2rMx2AHqBFTEFEH3Ad
-rDc3HpBUcElUTEUjnR1wDvBSgGU6IFtkbS0BALB2ZWxdEXAG4HUFQIJ1AJBuZyBtdR4w+QUgYXQh
-gAuABgAlAAXwpDEwI604NR6QLyTfux5CCuMgKu8r/w4QNg7wwDxNRVRBIAWgAjAxCfB0PSIF4B6z
-Ni6gMDAuMjkwITMdcCAzIiBuYQeAPUcARU5FUkFUT1J/I50mISpgI18l8S0vHkE1wRFgPEJPRFkj
-nRzxETSPZzk2HpBESVaJKJBkPTjgT1dBJlABC1B5VGV4dDU47DQ1DvAfDyAAACClIUP/IQEhnzav
-N784wDpfO288ejkdyTY0QFo8rx4kNDhBHpBGT05UIACQeh0xMDJASwviPIlBbmRaIABwbyhwEzFx
-ClBzqygwAiA6Haw1OHEvRfL/H3kfh0KbAcAfhwqiS9gKgPUdrDAjIS84oUsvRI89//8/D0AfQS9M
-D0NPUS9Fb0Z/P0eMSb9Kz1D/HgU6ACAmMG5ic3ACgB+YJ2H/AUBWn00PTh9PL1A/X09SX/9Tb1R/
-VY9h/1evZx9Zz1rf2Ud9SScm8EiQZAEASID1SNEgAhBsGGAD8CfRL0FUcnlzcG8n+C4vAWb/Sa9d
-30vPYt9j72T/Zg9uv/9oL2k/ak9rX2xvbX9uj2+f/3Cvcb9cz3bvfR9f/2EPgu//eV96b3t/io+L
-n36vf7+Az/+B345Pg/+Tb4x/jY+bX5xv/51/no+fn6Cvob+iz6PfpO//pf+nD6gfqS+qP6tPrFQn
-+fxcex2sLmA1wTHRH5kLgP5lCoGsL60/rk+zL7Q/tU//tl+3b7h/uY+6n7uvvL+9z/++37/vwP/C
-D8MfxC/FP8ZP/8dfyG/Jf8qPy5/Mr82/zs//z9/Q79H/0w/UH9Uv1j/XT6/YX9lv2n+vcXcD8GTb
-r//cv9rv3y/gP+FP4l/jb+R/x+WPjdwc0TBjMAEhMCAiZDWgOGQ3AQEyOPA5NDcwAdDsA7BvsX//
-so/nr+i/7t/v7/D/8g/zH//0L/U/9k/3X/hv+X/6j/uf//yv/b/+z//fAO8B/wMPBB//BS8GPwdP
-CF8Jbwp/C48Mn/8Nrw6/D88Q3xHvEv8UDxUfyxYvryZh7mBhcxevGL/vFu8bPxxPryZyc1Dsb+1/
-/+6PHf8fDyNfJG8lfyaPJ5//KK8pvyrPK98s7y3/Lw8wH88xLzI/M0+uzFx9jr+Pz/+Q35Hvkv+U
-D5Ufli+XP5hP/5lfmm81LzY/jf84jzmfOq//O79Ebz3fPu8//0EPQh9DLzFEOndoaVFwhtBob9ev
-sHNgILBwILBzdGFzfeVzQHZUsGU6R99I70n//0sPTB9NL04/T09QX1FvUn//U49E/0YPRx9Xr1i/
-Wc9a3/9jj1z/Xg9fH2AvYT9iT2NaA+pf625kbS0xIEQQb3RIaVZgLFIvAEV2byAyNzMwuC0yUiDv
-If8jDFuG44A4MkddW2ZlsABSdVWRPTB68GhUkGHwbmRsZW7Qe6B3b3h/cSMMXFxfIKBVEHwQLTV/
-0GIi8CB6QVWAaW/Te5JVwGFifDBkfI99n58i/2Q/ZU9+/IKgOjCIAgFU4GRjIDg6MzLvhM+F367b
-ewBhdlCBkYvhfa+xeYG/gs9+r3+/gMZh8mOv0HZljN+N74PfiR87ii+HDTeIB1VAiLA0OG+VD5Yf
-ixyRlVuQQetwXf9m72f/aQ9qH2svbD9tT25f/29vcH9xj3KflP+aP2YvnW//nn+fj6CfqU+iv6PP
-pN+l73em/6gPqRtXVhAgsFTmSZVU4GVWICIgsSI/ukC4cyBpVeCcsrMAL1bhsVTgb21lVJC5oT+s
-z/+t367vr/+xD7Ifsy+0P7VP/7Zft2+4f6nvqv+sD70vvj//v0/AX8kPwn/Dj8Sfxa/Gv4vHz8ja
-VHvxa3MszH//zY/On8+v0L/Rz9Lf0+/U/9fWD9cf2C9FILB62a/av3/bz9zf3e/pP+pP61/fYTXC
-OOzBQk9EWeHQ3stDdvDswUhUTUzh0H0B8ZAAAAAeADUQAQAAADsAAAA8MzlDNzU3NDREMTY0RDk0
-OEExNzBFOTc5MkFGOEU3Q0ExMTBCOTJAZXhpbC52b2x0YWlyZS5jb20+AAAeADkQAQAAAEQAAAA8
-NDc5REY1QzguNjA1MDkwOUBWb2x0YWlyZS5DT00+IDwyMDA4MDEyODE2MzY1MS5HQjE3MDQwQHVz
-LmlibS5jb20+AB4ARxABAAAADwAAAG1lc3NhZ2UvcmZjODIyAAALAPIQAQAAAB8A8xABAAAAbAAA
-AFIARQAlADMAQQAgAFsAZABtAC0AZABlAHYAZQBsAF0AIABBAGIAbwB1AHQAIAB1AHMAaQBuAGcA
-IABtAHUAbAB0AGkAcABhAHQAaAAgAGkAbgAgAFMATABFAFMAIAAxADAALgBFAE0ATAAAAAsA9hAA
-AAAAQAAHMLGxGlbXYcgBQAAIMENe7lTYYcgBAwDeP69vAAADAPE/CQQAAB4A+D8BAAAADAAAAEVy
-ZXogWmlsYmVyAAIB+T8BAAAAagAAAAAAAADcp0DIwEIQGrS5CAArL+GCAQAAAAAAAAAvTz1WT0xU
-QUlSRSBBRFZBTkNFRCBEQVRBIFNFQ1VSSVRZL09VPVZPTFRBSVJFL0NOPVJFQ0lQSUVOVFMvQ049
-RVJFWlowODUxMTMyMAAAAB4A+j8BAAAAFQAAAFN5c3RlbSBBZG1pbmlzdHJhdG9yAAAAAAIB+z8B
-AAAAHgAAAAAAAADcp0DIwEIQGrS5CAArL+GCAQAAAAAAAAAuAAAAAwD9P+QEAAADABlAAAAAAAMA
-GkAAAAAAAwAdQAAAAAADAB5AAAAAAB4AMEABAAAADgAAAEVSRVpaMDg1MTEzMjAAAAAeADFAAQAA
-AA4AAABFUkVaWjA4NTExMzIwAAAAHgAyQAEAAAAcAAAAZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQu
-Y29tAB4AM0ABAAAAEwAAAG1hbGFoYWxAdXMuaWJtLmNvbQAAHgA4QAEAAAAOAAAARVJFWlowODUx
-MTMyMAAAAB4AOUABAAAAAgAAAC4AAAADAHZA/////wsAKQAAAAAACwAjAAAAAAADAAYQ9OqZsgMA
-BxCMAQAAAwAQEAAAAAADABEQAAAAAB4ACBABAAAAZQAAAEFOREFOT1RIRVJRVUVTVElPTjpJVkVB
-RERFRFRIRUZPTExPV0lOR0VOVFJZVE9NVUxUSVBBVEhDT05GOk1VTFRJUEFUSFdXSUQzNjAwQzBG
-RjAwMEQ1MDhEN0RFRjI4OTQ3MDIAAAAAAgF/AAEAAAA7AAAAPDM5Qzc1NzQ0RDE2NEQ5NDhBMTcw
-RTk3OTJBRjhFN0NBMTEwQjkyQGV4aWwudm9sdGFpcmUuY29tPgAAa5Y=
+regards,
 
-------_=_NextPart_001_01C861D8.54CCFD65
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+chandra
+On Mon, 2008-01-28 at 15:53 +0100, Achim Warnecke wrote:
+> 
+> After setup of 40 vdisks, zoning of two switches, etc. and starting I/O I
+> did a goodpath-test with Redhat 5.1.
+> Everything worked fine. During running the failover test's the
+> dm-multipather didn't handle to re-establish
+> all paths correctly.
+> 
+> I tried running multipathd with "-v4" option for verbose logging. And
+> changed the
+> line "daemon $DAEMON" with "daemon $DAEMON -v4" in /etc/init.d/multipathd
+> file
+> and restarted the daemon by running "/etc/init.d/multipathd restart" again.
+> 
+> After that the failover worked fine, with and without the -v4 option.
+> In my setup this behavior is reproducible.
+> Could there be a connection with specifically starting the multipathd ?
+> 
+> --------before teststart--------
+> QL_0 (36005076801b080fb7000000000000dac) dm-16 IBM,2145
+> [size=500M][features=1 queue_if_no_path][hwhandler=0]
+> \_ round-robin 0 [prio=100][active]
+>  \_ 5:0:1:0  sdbu 68:128 [active][ready]
+>  \_ 4:0:0:0  sdci 69:96  [active][ready]
+> \_ round-robin 0 [prio=20][enabled]
+>  \_ 5:0:0:0  sdbg 67:160 [active][ready]
+>  \_ 4:0:1:0  sdcw 70:64  [active][ready]
+> QL_10 (36005076801b080fb7000000000000db5) dm-26 IBM,2145
+> [size=2.0G][features=1 queue_if_no_path][hwhandler=0]
+> \_ round-robin 0 [prio=100][active]
+>  \_ 5:0:0:10 sdbq 68:64  [active][ready]
+>  \_ 4:0:1:10 sddg 70:224 [active][ready]
+> \_ round-robin 0 [prio=20][enabled]
+>  \_ 5:0:1:10 sdce 69:32  [active][ready]
+>  \_ 4:0:0:10 sdcs 70:0   [active][ready]
+> [root@x455-tic-1 ~]#
+> 
+> Kind regards, Achim
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
 
-
-------_=_NextPart_001_01C861D8.54CCFD65--
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
