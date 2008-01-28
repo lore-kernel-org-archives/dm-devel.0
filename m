@@ -1,20 +1,15 @@
-From: "Erez Zilber" <erezz@voltaire.com>
-Subject: RE: multipath device name
-Date: Mon, 28 Jan 2008 22:30:08 +0200
-Message-ID: <39C75744D164D948A170E9792AF8E7CA110B97@exil.voltaire.com>
+From: malahal@us.ibm.com
+Subject: Re: About using multipath in SLES 10
+Date: Mon, 28 Jan 2008 13:14:39 -0800
+Message-ID: <20080128211439.GA18651@us.ibm.com>
 References: <479DF5C8.6050909@Voltaire.COM> <20080128163651.GB17040@us.ibm.com>
-	<39C75744D164D948A170E9792AF8E7CA110B92@exil.voltaire.com>
-	<20080128193045.GA17995@us.ibm.com>
-	<39C75744D164D948A170E9792AF8E7CA110B94@exil.voltaire.com>
-	<20080128194629.GB17995@us.ibm.com>
-	<39C75744D164D948A170E9792AF8E7CA110B95@exil.voltaire.com>
-	<20080128201548.GA18356@us.ibm.com>
-	<39C75744D164D948A170E9792AF8E7CA110B96@exil.voltaire.com>
+	<39C75744D164D948A170E9792AF8E7CA110B91@exil.voltaire.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C861EC.D663EE2F"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+Content-Disposition: inline
+In-Reply-To: <39C75744D164D948A170E9792AF8E7CA110B91@exil.voltaire.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,109 +19,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Erez Zilber [erezz@voltaire.com] wrote:
+> I understand. I've tried disktest, and it work ok. I have another
+> question - I'm running a single iSCSI initiator against 2 iSCSI
+> target. I started disktest on /dev/dm-1 and after a few seconds, I
+> disconnected the primary target. It took ~2 minutes until it failed
+> over to the secondary device. During these ~2 minutes, it seemed that
+> disktest is still reading data from the target, just slower. That's
+> very strange. After failover was completed, I was able to use the
+> secondary device.
 
-------_=_NextPart_001_01C861EC.D663EE2F
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+You said, "it seemed that disktest is still reading data from the
+target". Maybe it is reading some cached data (read-ahead or some other
+such thing...) Also, the multipath kernel module would not know that you
+have disconnected the target until an I/O fails. Depending on your error
+injection and the susystems design, the I/O failure could be as a result
+of a timeout (this depends on your/distro setting, generally 1 minute).
 
-> What is your multipath.conf file?
+> I have 2 questions:
+> 
+> 1.	> 	Which parameter in  multipath.conf do I need to change
+> in order to failover in a few seconds? Is it polling_interval? I saw
+> that the default value is 5 seconds, which should be ok.
 
-I'm using a conf file that looks like this:
-=20
-defaults {
-        user_friendly_names yes
-}
+Not an expert, but polling interval can't change the failover time. It
+may change the 'failback' time though!
 
-multipaths {
-        multipath {
-                wwid    3600c0ff000d508d7def2894702000000
-                alias   red
-        }
-}
+> 2.	Before multipath decided that it needs to failover, why did I
+> see that traffic is still running? It had no device to work with at
+> that time.
 
-------_=_NextPart_001_01C861EC.D663EE2F
-Content-Type: application/ms-tnef;
-	name="winmail.dat"
-Content-Transfer-Encoding: base64
-
-eJ8+IgIUAQaQCAAEAAAAAAABAAEAAQeQBgAIAAAA5AQAAAAAAADoAAEIgAcAGAAAAElQTS5NaWNy
-b3NvZnQgTWFpbC5Ob3RlADEIAQ2ABAACAAAAAgACAAEEgAEAJQAAAFJFOiBbZG0tZGV2ZWxdIG11
-bHRpcGF0aCBkZXZpY2UgbmFtZQAADQEFgAMADgAAANgHAQAcABYAHgAIAAEAOQEBIIADAA4AAADY
-BwEAHAAWACAAAQABADQBAQmAAQAhAAAAQkFBNDAxRjY1QjU5OTY0RThFN0E2RTQ2Mzc1RTBGQ0MA
-XAcBA5AGAOgNAAA4AAAAAwA2AAAAAABAADkABhThkuxhyAEeAD0AAQAAAAUAAABSRTogAAAAAAIB
-RwABAAAANgAAAGM9VVM7YT0gO3A9Vm9sdGFpcmUgQWR2YW5jZTtsPUVYSUwtMDgwMTI4MjAzMjAx
-Wi01MzgxAAAAHgBJAAEAAAAlAAAAUkU6IFtkbS1kZXZlbF0gbXVsdGlwYXRoIGRldmljZSBuYW1l
-AAAAAEAATgCGWzKQ62HIAR4AWgABAAAAHAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQAC
-AVsAAQAAAFUAAAAAAAAAgSsfpL6jEBmdbgDdAQ9UAgAAAABkbS1kZXZlbC1ib3VuY2VzQHJlZGhh
-dC5jb20AU01UUABkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5jb20AAAAAAgFcAAEAAAAhAAAAU01U
-UDpETS1ERVZFTC1CT1VOQ0VTQFJFREhBVC5DT00AAAAAHgBdAAEAAAAMAAAARXJleiBaaWxiZXIA
-AgFeAAEAAAA8AAAAAAAAAIErH6S+oxAZnW4A3QEPVAIAAAAARXJleiBaaWxiZXIAU01UUABlcmV6
-ekB2b2x0YWlyZS5jb20AAgFfAAEAAAAYAAAAU01UUDpFUkVaWkBWT0xUQUlSRS5DT00AHgBmAAEA
-AAAFAAAAU01UUAAAAAAeAGcAAQAAABwAAABkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5jb20AHgBo
-AAEAAAAFAAAAU01UUAAAAAAeAGkAAQAAABMAAABlcmV6ekB2b2x0YWlyZS5jb20AAB4AcAABAAAA
-IQAAAFtkbS1kZXZlbF0gbXVsdGlwYXRoIGRldmljZSBuYW1lAAAAAAIBcQABAAAAIAAAAAHIYeq0
-Ego5/binsEsskhGFIWVbgn8AADcIcQAAQKvBHgB0AAEAAAAaAAAAZGV2aWNlLW1hcHBlciBkZXZl
-bG9wbWVudAAAAB4AGgwBAAAADAAAAEVyZXogWmlsYmVyAB4AHQ4BAAAAIQAAAFtkbS1kZXZlbF0g
-bXVsdGlwYXRoIGRldmljZSBuYW1lAAAAAAIBCRABAAAAYAUAAFwFAACUGQAATFpGdfndaKMDAAoA
-cmNwZzEyNYIyA0NodG1sMQMwPwEDAfcKgAKkA+MCAGNowQrAc2V0MCAHEwKA/xADAFAEVghVB7IR
-1Q5RAwHdENcyBgAGwxHVMwRGENlvEusR4wjvCfc7GM8OMDU7EdIMYGMAUAsJAWQzNpMRYAulNCAQ
-AipcDrIDAZAOEDkgPEhUTUBMIGRpcj0eMHI8Pn0d8wAhAzAfQWRv5wDgH0EKsVxxGLAfQRDwbwMw
-H6URYB2rMx2AHqBFTEFEH3AdrDc3HpBUcElUTEUjnR1wDvBSgGU6IFtkbS0BAIB2ZWxdIG11HjA5
-BSBhdCGAJtEN4GUgTG5hB4AjrTg1HpAvdyTfHkIK4yAqPytPDhA2gQ7wPE1FVEEgBaBjAjAJ8HQ9
-IgXgHrM2QC4wMC4yOS9xMwkdcDMiKEM9R0VOwEVSQVRPUiOdJiFfKbAjXyXxLH8eQTURYDxwQk9E
-WSOdHPEz32cEOTYekERJViBpxGQ9ODBPV0EmUAtQAHlUZXh0Mzg5+ySgHw8gAAAgpSFDIQEhn381
-/zcPOBA5nzqvO7odyTZOND+aO+8eJDQ4HpBGUE9OVCAAkHowgDIvP4sL4jvPHgU4HYAmZ5Z0AoAf
-lz5HCCBXEQCzBUAEACB5CGEnOC4uUeUgAGYDEGU/HawtsDURdzEhH5kLgGUKgUcfHiQ1/TfBL0Uy
-H3kfh0P/RQ9GH/9Rr0/vUP9B2wHAH4cKolF46wqAHawwIyEvN/FXL1Vv/z0/Pk8/X0BvWA9Cj10v
-Ur+DU89U3EknbSB1AJCwbmcgYS5CS+QgJ7CzSmEYYG9rBCBOUGtqEv0EADpVv1bPV99Y71n/Ww//
-XB9kz14/X09gX2FvYn9jj/9kn2WvZr9nz2uPbJ9yz0gJEG5ic3BI2VwnYf8BQHhvbt9v73D/cg+B
-H3Qvf3U/dk93X4PPeX+I5wEBYfsnUQQhe4RfhW+Gf4ePiJ//ia+Kv4vPjN+N747/kA97H/98L30/
-ni+CL4M/og+jH6Qv/6U/pk+nX6hvqX+qj6ufrK//rb+uz6/fsO+x/0nkaRAEkKZfA1AIkG5kOOBf
-KFLfSqEHkExfTW9OfFwjrbif/7mvfq9/v22vki+TP5RPlV//vV+Xf5iPmZ+ar5u/nM+d3/+e75//
-oQ8nR5GCvd++77///8EPwh/DL8Q/zO/GX8dvyH//yY/Kn8uvzL/Nz87fz++zX/+0b7Kf5T/mT+df
-6G/pf+qP/+uf7K/tv+7P79/w7/H/8w//9B+1PydI0a67v7zP9i/3P//1b/0v/j//TwBfAW8CfwOP
-/wSfBa8GvwfPCN8J7wr/DA//DR8OLw8/EE8RXxJvE38Uj/8VnxavF78YzxnfGu8b/x0Pfx4fHy8g
-PyFPIl8jb0mZd/53ODAlHyYvJF8onymvKr8HK88s30oRMzYwMGMsMGYt0DEQZDTwOGSKN5ERMjlQ
-NDcw5BD/MqP53/rv+/8uPy9PNX82j/83nzivOb86zzvfPO89/z8P/0AfQS9CP0NPRF9Fb0Z/R4//
-SJ9Jr0q/S89M303vTv9QD/9RH1IvUz9UT1VfVm9Xf1iPX1mfWq9bv1zP+JZhNQBhP7esXx9dT2Gf
-Yq+1inJl/yg8M98072RfZW9jn2rPa9//bO9t/28PcB9xL3I/c090X/91b3Z/d494n3mver+6r9Kv
-/9O/1M/V39bv1//ZD9of2y//3D/dT95f32/gf+GP4p/jr/+6j3+fhc+Of4+PkJ+RpJO//4GPgp+D
-r4S/k++cL50/nk9djKMylcKTNYbLNaKCQkhPRFmjDTI3n9FIKFRNTJawfaYwHgA1EAEAAAA7AAAA
-PDM5Qzc1NzQ0RDE2NEQ5NDhBMTcwRTk3OTJBRjhFN0NBMTEwQjk3QGV4aWwudm9sdGFpcmUuY29t
-PgAAHgA5EAEAAACcAQAAPDQ3OURGNUM4LjYwNTA5MDlAVm9sdGFpcmUuQ09NPiA8MjAwODAxMjgx
-NjM2NTEuR0IxNzA0MEB1cy5pYm0uY29tPiA8MzlDNzU3NDREMTY0RDk0OEExNzBFOTc5MkFGOEU3
-Q0ExMTBCOTJAZXhpbC52b2x0YWlyZS5jb20+IDwyMDA4MDEyODE5MzA0NS5HQTE3OTk1QHVzLmli
-bS5jb20+IDwzOUM3NTc0NEQxNjREOTQ4QTE3MEU5NzkyQUY4RTdDQTExMEI5NEBleGlsLnZvbHRh
-aXJlLmNvbT4gPDIwMDgwMTI4MTk0NjI5LkdCMTc5OTVAdXMuaWJtLmNvbT4gPDM5Qzc1NzQ0RDE2
-NEQ5NDhBMTcwRTk3OTJBRjhFN0NBMTEwQjk1QGV4aWwudm9sdGFpcmUuY29tPiA8MjAwODAxMjgy
-MDE1NDguR0ExODM1NkB1cy5pYm0uY29tPiA8MzlDNzU3NDREMTY0RDk0OEExNzBFOTc5MkFGOEU3
-Q0ExMTBCOTZAZXhpbC52b2x0YWlyZS5jb20+AB4ARxABAAAADwAAAG1lc3NhZ2UvcmZjODIyAAAL
-APIQAQAAAB8A8xABAAAAVgAAAFIARQAlADMAQQAgAFsAZABtAC0AZABlAHYAZQBsAF0AIABtAHUA
-bAB0AGkAcABhAHQAaAAgAGQAZQB2AGkAYwBlACAAbgBhAG0AZQAuAEUATQBMAAAAAAALAPYQAAAA
-AEAABzAGFOGS7GHIAUAACDCTd23W7GHIAQMA3j+vbwAAAwDxPwkEAAAeAPg/AQAAAAwAAABFcmV6
-IFppbGJlcgACAfk/AQAAAGoAAAAAAAAA3KdAyMBCEBq0uQgAKy/hggEAAAAAAAAAL089Vk9MVEFJ
-UkUgQURWQU5DRUQgREFUQSBTRUNVUklUWS9PVT1WT0xUQUlSRS9DTj1SRUNJUElFTlRTL0NOPUVS
-RVpaMDg1MTEzMjAAAAAeAPo/AQAAABUAAABTeXN0ZW0gQWRtaW5pc3RyYXRvcgAAAAACAfs/AQAA
-AB4AAAAAAAAA3KdAyMBCEBq0uQgAKy/hggEAAAAAAAAALgAAAAMA/T/kBAAAAwAZQAAAAAADABpA
-AAAAAAMAHUAAAAAAAwAeQAAAAAAeADBAAQAAAA4AAABFUkVaWjA4NTExMzIwAAAAHgAxQAEAAAAO
-AAAARVJFWlowODUxMTMyMAAAAB4AMkABAAAAHAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNv
-bQAeADNAAQAAABMAAABlcmV6ekB2b2x0YWlyZS5jb20AAB4AOEABAAAADgAAAEVSRVpaMDg1MTEz
-MjAAAAAeADlAAQAAAAIAAAAuAAAAAwB2QP////8LACkAAAAAAAsAIwAAAAAAAwAGECFXPuYDAAcQ
-mgAAAAMAEBABAAAAAwAREAIAAAAeAAgQAQAAAGUAAABXSEFUSVNZT1VSTVVMVElQQVRIQ09ORkZJ
-TEU/SU1VU0lOR0FDT05GRklMRVRIQVRMT09LU0xJS0VUSElTOkRFRkFVTFRTVVNFUkZSSUVORExZ
-TkFNRVNZRVNNVUxUSVBBVEhTAAAAAAIBfwABAAAAOwAAADwzOUM3NTc0NEQxNjREOTQ4QTE3MEU5
-NzkyQUY4RTdDQTExMEI5N0BleGlsLnZvbHRhaXJlLmNvbT4AADkw
-
-------_=_NextPart_001_01C861EC.D663EE2F
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
-------_=_NextPart_001_01C861EC.D663EE2F--
+Depends on 'how you saw the traffic'! Could be false alarm.
