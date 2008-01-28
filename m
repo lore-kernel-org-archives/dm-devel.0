@@ -1,19 +1,19 @@
-From: malahal@us.ibm.com
-Subject: Re: multipath device name
-Date: Mon, 28 Jan 2008 12:15:48 -0800
-Message-ID: <20080128201548.GA18356@us.ibm.com>
+From: "Erez Zilber" <erezz@voltaire.com>
+Subject: RE: multipath device name
+Date: Mon, 28 Jan 2008 22:22:54 +0200
+Message-ID: <39C75744D164D948A170E9792AF8E7CA110B96@exil.voltaire.com>
 References: <479DF5C8.6050909@Voltaire.COM> <20080128163651.GB17040@us.ibm.com>
 	<39C75744D164D948A170E9792AF8E7CA110B92@exil.voltaire.com>
 	<20080128193045.GA17995@us.ibm.com>
 	<39C75744D164D948A170E9792AF8E7CA110B94@exil.voltaire.com>
 	<20080128194629.GB17995@us.ibm.com>
 	<39C75744D164D948A170E9792AF8E7CA110B95@exil.voltaire.com>
+	<20080128201548.GA18356@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C861EC.3C1E2542"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <39C75744D164D948A170E9792AF8E7CA110B95@exil.voltaire.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,23 +23,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Erez Zilber [erezz@voltaire.com] wrote:
-> > > > If it worked, it should be /dev/mapper/red, but I have a suspicion that it
-> > > > didn't work for you based on your above 'multipath -l' output.
-> > >
-> > > No, it didn't work. Do I need to do anything special to make it work?
-> > 
-> > Did you remove the old device and re-run 'multipath' after making that
-> > change to multipath.conf?
-> 
-> Do you mean 'multipath -F'? I did that and then ran ' multipath -p failover'.
+This is a multi-part message in MIME format.
 
-Yes, I meant the above. Check if you have any problems with your
-multipath.conf file. Make sure you enclose "multipath {}" within
-"multipaths {}" block. Run 'multipath -t' and make sure your changes are
-listed in its output.
+------_=_NextPart_001_01C861EC.3C1E2542
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-What is your multipath.conf file?
+> Yes, I meant the above. Check if you have any problems with your
+> multipath.conf file. Make sure you enclose "multipath {}" within
+> "multipaths {}" block. Run 'multipath -t' and make sure your changes =
+are
+> listed in its output.
+>=20
+> What is your multipath.conf file?
+
+Problem solved:
+I copied =
+/usr/share/doc/packages/multipath-tools/multipath.conf.annotated and =
+uncommented the block with the "red" device. The problem is that I =
+didn't remove the comments from 'multipaths {' and the '}' at the end of =
+the block. After uncommenting it, I see /dev/mapper/red.
+=20
+Any idea about the other question that I had on this thread (about slow =
+and strange fail over)? Any help will be appreciated.
+=20
+Thanks,
+Erez
+
+------_=_NextPart_001_01C861EC.3C1E2542
+Content-Type: application/ms-tnef;
+	name="winmail.dat"
+Content-Transfer-Encoding: base64
+
+eJ8+IiwUAQaQCAAEAAAAAAABAAEAAQeQBgAIAAAA5AQAAAAAAADoAAEIgAcAGAAAAElQTS5NaWNy
+b3NvZnQgTWFpbC5Ob3RlADEIAQ2ABAACAAAAAgACAAEEgAEAJQAAAFJFOiBbZG0tZGV2ZWxdIG11
+bHRpcGF0aCBkZXZpY2UgbmFtZQAADQEFgAMADgAAANgHAQAcABYAFgA2AAEAXwEBIIADAA4AAADY
+BwEAHAAWABsAKgABAFgBAQmAAQAhAAAANUE5OEQ0QzAxMTczOEE0NjgzOEQzMEFCMkQ0N0FGOEMA
+MQcBA5AGAPQNAAA4AAAAAwA2AAAAAABAADkAhlsykOthyAEeAD0AAQAAAAUAAABSRTogAAAAAAIB
+RwABAAAANgAAAGM9VVM7YT0gO3A9Vm9sdGFpcmUgQWR2YW5jZTtsPUVYSUwtMDgwMTI4MjAyNzQy
+Wi01Mzc4AAAAHgBJAAEAAAAlAAAAUmU6IFtkbS1kZXZlbF0gbXVsdGlwYXRoIGRldmljZSBuYW1l
+AAAAAEAATgAAcgOS6mHIAR4AWgABAAAAHAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQAC
+AVsAAQAAAFUAAAAAAAAAgSsfpL6jEBmdbgDdAQ9UAgAAAABkbS1kZXZlbC1ib3VuY2VzQHJlZGhh
+dC5jb20AU01UUABkbS1kZXZlbC1ib3VuY2VzQHJlZGhhdC5jb20AAAAAAgFcAAEAAAAhAAAAU01U
+UDpETS1ERVZFTC1CT1VOQ0VTQFJFREhBVC5DT00AAAAAHgBdAAEAAAATAAAAbWFsYWhhbEB1cy5p
+Ym0uY29tAAACAV4AAQAAAEMAAAAAAAAAgSsfpL6jEBmdbgDdAQ9UAgAAAABtYWxhaGFsQHVzLmli
+bS5jb20AU01UUABtYWxhaGFsQHVzLmlibS5jb20AAAIBXwABAAAAGAAAAFNNVFA6TUFMQUhBTEBV
+Uy5JQk0uQ09NAB4AZgABAAAABQAAAFNNVFAAAAAAHgBnAAEAAAAcAAAAZG0tZGV2ZWwtYm91bmNl
+c0ByZWRoYXQuY29tAB4AaAABAAAABQAAAFNNVFAAAAAAHgBpAAEAAAATAAAAbWFsYWhhbEB1cy5p
+Ym0uY29tAAAeAHAAAQAAACEAAABbZG0tZGV2ZWxdIG11bHRpcGF0aCBkZXZpY2UgbmFtZQAAAAAC
+AXEAAQAAABsAAAAByGHqtBIKOf24p7BLLJIRhSFlW4J/AAA3CHEAHgB0AAEAAAAUAAAAZG0tZGV2
+ZWxAcmVkaGF0LmNvbQAeABoMAQAAAAwAAABFcmV6IFppbGJlcgAeAB0OAQAAACEAAABbZG0tZGV2
+ZWxdIG11bHRpcGF0aCBkZXZpY2UgbmFtZQAAAAACAQkQAQAAAJ4FAACaBQAAZRIAAExaRnW7FlPR
+AwAKAHJjcGcxMjWCMgNDaHRtbDEDMD8BAwH3CoACpAPjAgBjaMEKwHNldDAgBxMCgP8QAwBQBFYI
+VQeyEdUOUQMB3RDXMgYABsMR1TMERhDZbxLrEeMI7wn3OxjPDjA1OxHSDGBjAFALCQFkMzaTEWAL
+pTQgEAIqXA6yAwGQDhA5IDxIVE1ATCBkaXI9HjByPD59HfMAIQMwH0Fkb+cA4B9BCrFccRiwH0EQ
+8G8DMB+lEWAdqzMdgB6gRUxBRB9wHaw3Nx6QVHBJVExFI50dcA7wUoBlOiBbZG0tAQCAdmVsXSBt
+dR4wOQUgYXQhgCbRDeBlIExuYQeAI604NR6QL3ck3x5CCuMgKj8rTw4QNoEO8DxNRVRBIAWgYwIw
+CfB0PSIF4B6zNkAuMDAuMjkvcTMJHXAzIihDPUdFTsBFUkFUT1IjnSYhXymwI18l8Sx/HkE1EWA8
+cEJPRFkjnRzxM99nBDk2HpBESVYgacRkPTgwT1dBJlALUAB5VGV4dDMzMfYxEWAfDyAAACClIUMh
+Af8hnzX/Nw84EDmvOr87yh3JnDY0P6o7/x4kNDgekKBGT05UIACQejCAXjI/mwviO98eBTgdgCYs
+Z3QCgB+XPkcYIFnRB5AsIEknMGUAcAVA1yewKDABoG8m8C4S0EswrGNrOCAgAHkIYCARAMMm8EtQ
+bnkgcANgAmC8ZW0EIAPwJ7FMYXIdrN8tsDURMSEfmQuAZQqBRy+3SD9JTydHLi5RIABmAxDRS6FN
+YWsoMHMIcCgwm0xiCfBjGGARMCAiJ0j6XAAAfTAwTcILgE5fT2//UH9Rj1KfSgNWqAQhV2MCYKUg
+cGtLsFJ1A6AnJ0joLXQnTOFkJzBVWgXA+RDxbmcHkQrAWkFYP1lP31pfW29cf0ohZFBzLoBgkJsL
+gDggdAQgCGB0cGjg/i5iX2NvZH9lj2afSgNpT99qX2tvbH9tj0oDVxEABUDvBABhRFP/TXA/bu9v
+/3EP9R3ZNTfBL0VCH3kfh0HrvwHAH4cKonu4CoAdrDAjIf4vN/F7D3lPPU8+Xz9vQH+/e+9Cn4EP
+RL9Fz0bcUE1E54qABvAm8GQ6gE98P31P/35ff2+N3yVNihF6tYGPgp//g6+Ev4XPht+H74j/ig+L
+Hzecp0qgBaBwCJBgkC91kHNyL3MRAWUvIGHeLwqwTAAeUAeQLydHYDAubwbworlUgy4AcG5v3wGQ
+aCJgcl9QBaBtB4Aucd9gkEsiXtNNtEsiIhjRMDD7J+RLsFRLMU01dMInsHSh40qgmDBkbicFQBjQ
+BGD/TMFLIqXFBCADUl95XlJgVH1LIidXcGBRSwQJ8GCQb/cgAKZnS7BBAYATMaWnC4D+Z2iBSoIR
+MCgwofAm4KLA6GFwcASQLxjRaT16f/+OD48fkC+RP5JPk1+V/5cP/5gfmS+aP5tPnF+db55/n48P
+wW+y77kfchxuYnNw8XMZXCdhAUC+77Vftm//t3+4j8efuq+7v7zPvd/KT9+//89vwh/DL8Q9QU0B
+ODB/StBLUmjgSxOk8EswBcBx+wpQaBBpAiCpVhEArjHdIvepMxjQ3cEo27PH/8kPyhrecxhgB+Bg
+cmgQcmHC30874F/KGmYLcAMgS4FyKaY/2xNLMGxwTbFsAyDuYktBsXAY0GMHMGghsf//xi+0H8sv
+zD/NT85f1w/Qf//Rj9Kf06/Uv9XP1t/X79j//9oPxR/pn+/P43/kj/Wf7A//7R/uL/0//k/xX/Jv
+83/0j/8A//avBh/4z/nf+uuocErg/mtKcPu//M/qvwHPAt8D7/8E/w2vBx8ILwk/Ck8LXwxvrw1/
+Do8PnxCvRapAehjf/xTPFd8W7xf/Jb+UD5UfKb+7Ks8aDDUs0jU/M4E3LnFQSFRNTCOAfTNAAAAe
+ADUQAQAAADsAAAA8MzlDNzU3NDREMTY0RDk0OEExNzBFOTc5MkFGOEU3Q0ExMTBCOTZAZXhpbC52
+b2x0YWlyZS5jb20+AAAeADkQAQAAAGEBAAA8NDc5REY1QzguNjA1MDkwOUBWb2x0YWlyZS5DT00+
+IDwyMDA4MDEyODE2MzY1MS5HQjE3MDQwQHVzLmlibS5jb20+IDwzOUM3NTc0NEQxNjREOTQ4QTE3
+MEU5NzkyQUY4RTdDQTExMEI5MkBleGlsLnZvbHRhaXJlLmNvbT4gPDIwMDgwMTI4MTkzMDQ1LkdB
+MTc5OTVAdXMuaWJtLmNvbT4gPDM5Qzc1NzQ0RDE2NEQ5NDhBMTcwRTk3OTJBRjhFN0NBMTEwQjk0
+QGV4aWwudm9sdGFpcmUuY29tPiA8MjAwODAxMjgxOTQ2MjkuR0IxNzk5NUB1cy5pYm0uY29tPiA8
+MzlDNzU3NDREMTY0RDk0OEExNzBFOTc5MkFGOEU3Q0ExMTBCOTVAZXhpbC52b2x0YWlyZS5jb20+
+IDwyMDA4MDEyODIwMTU0OC5HQTE4MzU2QHVzLmlibS5jb20+AAAAAB4ARxABAAAADwAAAG1lc3Nh
+Z2UvcmZjODIyAAALAPIQAQAAAB8A8xABAAAAVgAAAFIARQAlADMAQQAgAFsAZABtAC0AZABlAHYA
+ZQBsAF0AIABtAHUAbAB0AGkAcABhAHQAaAAgAGQAZQB2AGkAYwBlACAAbgBhAG0AZQAuAEUATQBM
+AAAAAAALAPYQAAAAAEAABzCGWzKQ62HIAUAACDCmric87GHIAQMA3j+vbwAAAwDxPwkEAAAeAPg/
+AQAAAAwAAABFcmV6IFppbGJlcgACAfk/AQAAAGoAAAAAAAAA3KdAyMBCEBq0uQgAKy/hggEAAAAA
+AAAAL089Vk9MVEFJUkUgQURWQU5DRUQgREFUQSBTRUNVUklUWS9PVT1WT0xUQUlSRS9DTj1SRUNJ
+UElFTlRTL0NOPUVSRVpaMDg1MTEzMjAAAAAeAPo/AQAAABUAAABTeXN0ZW0gQWRtaW5pc3RyYXRv
+cgAAAAACAfs/AQAAAB4AAAAAAAAA3KdAyMBCEBq0uQgAKy/hggEAAAAAAAAALgAAAAMA/T/kBAAA
+AwAZQAAAAAADABpAAAAAAAMAHUAAAAAAAwAeQAAAAAAeADBAAQAAAA4AAABFUkVaWjA4NTExMzIw
+AAAAHgAxQAEAAAAOAAAARVJFWlowODUxMTMyMAAAAB4AMkABAAAAHAAAAGRtLWRldmVsLWJvdW5j
+ZXNAcmVkaGF0LmNvbQAeADNAAQAAABMAAABtYWxhaGFsQHVzLmlibS5jb20AAB4AOEABAAAADgAA
+AEVSRVpaMDg1MTEzMjAAAAAeADlAAQAAAAIAAAAuAAAAAwB2QP////8LACkAAAAAAAsAIwAAAAAA
+AwAGEExPCQ0DAAcQLAIAAAMAEBABAAAAAwAREAAAAAAeAAgQAQAAAGUAAABZRVMsSU1FQU5UVEhF
+QUJPVkVDSEVDS0lGWU9VSEFWRUFOWVBST0JMRU1TV0lUSFlPVVJNVUxUSVBBVEhDT05GRklMRU1B
+S0VTVVJFWU9VRU5DTE9TRSJNVUxUSVBBVEgiV0lUAAAAAAIBfwABAAAAOwAAADwzOUM3NTc0NEQx
+NjREOTQ4QTE3MEU5NzkyQUY4RTdDQTExMEI5NkBleGlsLnZvbHRhaXJlLmNvbT4AAM8K
+
+------_=_NextPart_001_01C861EC.3C1E2542
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_001_01C861EC.3C1E2542--
