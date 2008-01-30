@@ -1,17 +1,16 @@
-From: "Hagmann, Michael" <Michael.Hagmann@hilti.com>
-Subject: HPDMmultipath-tools-3.0.0.xxx with HP XP12000 diskarray
-Date: Wed, 30 Jan 2008 23:32:30 +0100
-Message-ID: <9C203D6FD2BF9D49BFF3450201DEDA53024AC96A@LI-OWL.hag.hilti.com>
-References: <20080130185024.GA6165@us.ibm.com>
-	<2F1F44D192D1284BAA298E48C1B2A4F90234F14D@exchmail03.ncogroup.com>
+From: malahal@us.ibm.com
+Subject: Re: Multipath and getuid_callout issues
+	withHPXP1024disk array
+Date: Wed, 30 Jan 2008 15:33:13 -0800
+Message-ID: <20080130233313.GA9525@us.ibm.com>
+References: <20080130201115.GA6833@us.ibm.com>
+	<2F1F44D192D1284BAA298E48C1B2A4F90234F150@exchmail03.ncogroup.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F14D@exchmail03.ncogroup.com>
+Content-Disposition: inline
+In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F150@exchmail03.ncogroup.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,29 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi=20
+Greene, Rick [rick.greene@ncogroup.com] wrote:
+> create: mpath0 (05:83)
+> [size=13 GB][features="0"][hwhandler="0"]
+> \_ round-robin 0
+>  \_ 1:0:0:0 sda 8:0   [ready]
+> \_ round-robin 0
+>  \_ 2:0:0:0 sde 8:64  [ready]
 
-Does anyone has some experience with the "HPDMmultipath-tools-3.0.0.xxx"
-and a HP XP12000 Diskarray?
+The above out displays two states for me. Maybe your version only
+displays one.
 
-For me it's total unclear what's the difference between
-"HPDMmultipath-tools-3.0.0.xxx" and the normal "device-mapper-multipath"
-or the added value.
+> 1) does the actual WWID need to be in the "uid" value that multipath
+> gets from the callout, or is any value that is unique to the disk good
+> enough?
+ 
+I think, it can be anything. Doesn't need to match actual WWID.
 
-thx mike
+> 2) what is the character limit to the return value from the
+> getuid_callout?
 
-Michael Hagmann
-UNIX Systems Engineering
-Enterprise Systems Technology
+Old versions had it as 64 (63 actual chars) and the latest code has it
+set to 128 (maybe 127 real chars)
 
-Hilti Corporation
-9494 Schaan  Liechtenstein
+> 3) is there a specific format that multipath is looking at for parsing
+> the info in the uid value (such as vendor, model, type, serial number,
+> etc), or is the unique disk identifier all that is needed?
 
-Department FIBS
-Feldkircherstrasse 100   P.O.Box 333
-P +423-234 2467  F +423-234 6467
-E michael.hagmann@hilti.com
-www.hilti.com
+As far as I know, it doesn't parse anything inside WWID. Make sure you
+don't have any blanks in the WWID as the bindings file parser will have
+trouble if you do have.
