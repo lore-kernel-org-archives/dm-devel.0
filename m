@@ -1,87 +1,66 @@
-From: "K.Tanaka" <k-tanaka@ce.jp.nec.com>
-Subject: Re: [BUG] The kernel thread for md RAID1 could cause a
- md RAID1 array deadlock
-Date: Wed, 30 Jan 2008 11:02:16 +0900
-Message-ID: <479FDAA8.3030409@ce.jp.nec.com>
-References: <478C240F.8070004@ce.jp.nec.com>
-	<18328.1473.26122.647283@notabene.brown>
-	<47985B37.9000503@ce.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: dm-band: The I/O bandwidth controller: Performance
+	Report
+Date: Wed, 30 Jan 2008 12:32:02 +0900 (JST)
+Message-ID: <20080130.123202.189729685.ryov@valinux.co.jp>
+References: <20080123.215350.193721890.ryov@valinux.co.jp>
+	<20080125.160720.183032233.ryov@valinux.co.jp>
+	<479ECAC9.5070709@jp.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47985B37.9000503@ce.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Neil Brown <neilb@suse.de>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <479ECAC9.5070709@jp.fujitsu.com>
+List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: inakoshi.hiroya@jp.fujitsu.com
+Cc: containers@lists.linux-foundation.org, xen-devel@lists.xensource.com, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 Hi,
 
->Also, md raid10 seems to have the same problem.
->I will test raid10 applying this patch as well.
+> you mean that you run 128 processes on each user-device pairs?  Namely,
+> I guess that
+> 
+>   user1: 128 processes on sdb5,
+>   user2: 128 processes on sdb5,
+>   another: 128 processes on sdb5,
+>   user2: 128 processes on sdb6.
 
-Sorry for the late response. I had a trouble with reproducing the problem,
-but it turns out that the 2.6.24 kernel needs the latest (possibly testing)
-version of systemtap-0.6.1-1 to run systemtap for the fault injection tool.
+"User-device pairs" means "band groups", right?
+What I actually did is the followings:
 
-I've reproduced the stall on both raid1 and raid10 using 2.6.24.
-Also I've tested the patch applied to 2.6.24 and confirmed that
-it will fix the stall problem for both cases.
+  user1: 128 processes on sdb5,
+  user2: 128 processes on sdb5,
+  user3: 128 processes on sdb5,
+  user4: 128 processes on sdb6.
 
-K.Tanaka wrote:
-> Hi,
-> 
-> Thank you for the patch.
-> I have applied the patch to 2.6.23.14 and it works well.
-> 
-> - In case of 2.6.23.14, the problem is reproduced.
-> - In case of 2.6.23.14 with this patch, raid1 works well so far.
->   The fault injection script continues to run, and it doesn't deadlock.
->   I will keep it running for a while.
-> 
-> Also, md raid10 seems to have the same problem.
-> I will test raid10 applying this patch as well.
-> 
-> 
-> Neil Brown wrote:
->> On Tuesday January 15, k-tanaka@ce.jp.nec.com wrote:
->>> This message describes the details about md-RAID1 issue found by
->>> testing the md RAID1 using the SCSI fault injection framework.
->>>
->>> Abstract:
->>> Both the error handler for md RAID1 and write access request to the md RAID1
->>> use raid1d kernel thread. The nr_pending flag could cause a race condition
->>> in raid1d, results in a raid1d deadlock.
->> Thanks for finding and reporting this.
->>
->> I believe the following patch should fix the deadlock.
->>
->> If you are able to repeat your test and confirm this I would
->> appreciate it.
->>
->> Thanks,
->> NeilBrown
->>
->>
->>
->> Fix deadlock in md/raid1 when handling a read error.
->>
->> When handling a read error, we freeze the array to stop any other
->> IO while attempting to over-write with correct data.
->>
+> The second preliminary studies might be:
+> - What if you use a different I/O size on each device (or device-user pair)?
+> - What if you use a different number of processes on each device (or
+> device-user pair)?
 
--- 
----------------------------------------------------------
-Kenichi TANAKA    | Open Source Software Platform Development Division
-                  | Computers Software Operations Unit, NEC Corporation
-                  | k-tanaka@ce.jp.nec.com
+There are other ideas of controlling bandwidth, limiting bytes-per-sec,
+latency time or something. I think it is possible to implement it if 
+a lot of people really require it. I feel there wouldn't be a single
+correct answer for this issue. Posting good ideas how it should work
+and submitting patches for it are also welcome.
+
+> And my impression is that it's natural dm-band is in device-mapper,
+> separated from I/O scheduler.  Because bandwidth control and I/O
+> scheduling are two different things, it may be simpler that they are
+> implemented in different layers.
+
+I would like to know how dm-band works on various configurations on
+various type of hardware. I'll try running dm-band on with other
+configurations. Any reports or impressions of dm-band on your machines
+are also welcome.
+
+Thanks,
+Ryo Tsuruta
