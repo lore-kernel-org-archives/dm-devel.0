@@ -1,15 +1,17 @@
-From: malahal@us.ibm.com
-Subject: Re: Multipath and getuid_callout issues with HP XP1024
-	disk array
-Date: Tue, 29 Jan 2008 14:18:51 -0800
-Message-ID: <20080129221851.GA13346@us.ibm.com>
-References: <2F1F44D192D1284BAA298E48C1B2A4F90234F141@exchmail03.ncogroup.com>
+From: "K.Tanaka" <k-tanaka@ce.jp.nec.com>
+Subject: Re: [BUG] The kernel thread for md RAID1 could cause a
+ md RAID1 array deadlock
+Date: Wed, 30 Jan 2008 11:02:16 +0900
+Message-ID: <479FDAA8.3030409@ce.jp.nec.com>
+References: <478C240F.8070004@ce.jp.nec.com>
+	<18328.1473.26122.647283@notabene.brown>
+	<47985B37.9000503@ce.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F141@exchmail03.ncogroup.com>
+In-Reply-To: <47985B37.9000503@ce.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,37 +21,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Neil Brown <neilb@suse.de>
+Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Greene, Rick [rick.greene@ncogroup.com] wrote:
->    I've done what I can to try to understand how all this works, but I keep
->    getting "error calling out /sbin/scsi_id -g -u -s /block/sda" when I run
->    the command "multipath -v2"
-> 
-> 
-> 
->    I've tried a number of different things in the /etc/multipath.conf file,
->    but keep coming back to this same error.  If I run the command manually I
->    get the following:
-> 
-> 
-> 
->    # /sbin/scsi_id -g -u -s /block/sda
-> 
->    0HP______OPEN-E__________50060e80039c5a0400000000000000000000e100
-> 
-> 
-> 
->    What's missing?  Any help greatly appreciated.
+Hi,
 
-You are not missing anything. The device id is too big to fit in
-multipath tools allocated memory. The program incorrectly prints that
-there is a problem while executing /sbin/scsi_id but in fact the problem
-lies in the program itself. You may have some old version of multipath
-tools. WWID_SIZE was set to 64 bytes and that is small for your device.
-Get the latest version where that macro is set to 128 or so.
+>Also, md raid10 seems to have the same problem.
+>I will test raid10 applying this patch as well.
 
-Hope that helps!
+Sorry for the late response. I had a trouble with reproducing the problem,
+but it turns out that the 2.6.24 kernel needs the latest (possibly testing)
+version of systemtap-0.6.1-1 to run systemtap for the fault injection tool.
 
---Malahal.
+I've reproduced the stall on both raid1 and raid10 using 2.6.24.
+Also I've tested the patch applied to 2.6.24 and confirmed that
+it will fix the stall problem for both cases.
+
+K.Tanaka wrote:
+> Hi,
+> 
+> Thank you for the patch.
+> I have applied the patch to 2.6.23.14 and it works well.
+> 
+> - In case of 2.6.23.14, the problem is reproduced.
+> - In case of 2.6.23.14 with this patch, raid1 works well so far.
+>   The fault injection script continues to run, and it doesn't deadlock.
+>   I will keep it running for a while.
+> 
+> Also, md raid10 seems to have the same problem.
+> I will test raid10 applying this patch as well.
+> 
+> 
+> Neil Brown wrote:
+>> On Tuesday January 15, k-tanaka@ce.jp.nec.com wrote:
+>>> This message describes the details about md-RAID1 issue found by
+>>> testing the md RAID1 using the SCSI fault injection framework.
+>>>
+>>> Abstract:
+>>> Both the error handler for md RAID1 and write access request to the md RAID1
+>>> use raid1d kernel thread. The nr_pending flag could cause a race condition
+>>> in raid1d, results in a raid1d deadlock.
+>> Thanks for finding and reporting this.
+>>
+>> I believe the following patch should fix the deadlock.
+>>
+>> If you are able to repeat your test and confirm this I would
+>> appreciate it.
+>>
+>> Thanks,
+>> NeilBrown
+>>
+>>
+>>
+>> Fix deadlock in md/raid1 when handling a read error.
+>>
+>> When handling a read error, we freeze the array to stop any other
+>> IO while attempting to over-write with correct data.
+>>
+
+-- 
+---------------------------------------------------------
+Kenichi TANAKA    | Open Source Software Platform Development Division
+                  | Computers Software Operations Unit, NEC Corporation
+                  | k-tanaka@ce.jp.nec.com
