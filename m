@@ -1,11 +1,17 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: [PATCH] Add a debug message for tree-based deactivation
-Date: Wed, 30 Jan 2008 20:46:10 -0500
-Message-ID: <47A12862.1030205@ce.jp.nec.com>
+From: "Greene, Rick" <rick.greene@ncogroup.com>
+Subject: RE: Multipath and getuid_callout issueswithHPXP1024disk
+	array
+Date: Thu, 31 Jan 2008 07:30:46 -0500
+Message-ID: <2F1F44D192D1284BAA298E48C1B2A4F90234F155@exchmail03.ncogroup.com>
+References: <20080130233313.GA9525@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------020107090207060500060609"
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20080130233313.GA9525@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,104 +22,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: LVM2 development <lvm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------020107090207060500060609
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Thanks for the answers Malahal, you are a credit to the open source
+community!
 
-dm_tree_deactivate_children() of libdevmapper is a function
-to walk down the dm deptree and deactivate each child
-(i.e. remove dm device).
+Not sure I understand your comment here, can you clarify?
 
-Since a dm device with open count > 0 can't be removed, it checks
-info.open_count before the removal.
-info.open_count > 0 is valid if the device is shared from other parent.
+>Greene, Rick [rick.greene@ncogroup.com] wrote:
+>> create: mpath0 (05:83)
+>> [size=3D13 GB][features=3D"0"][hwhandler=3D"0"]
+>> \_ round-robin 0
+>>  \_ 1:0:0:0 sda 8:0   [ready]
+>> \_ round-robin 0
+>>  \_ 2:0:0:0 sde 8:64  [ready]
+>
+>The above out displays two states for me. Maybe your version only
+>displays one.
 
-However, even if it's not shared, the open count can be non 0 if
-something temporarily opens the device, for example.
-Printing the reason why it was not deactivated makes it easier
-to check whether the deptree was not correctly built or such
-access happened.
-
-The debug output will look like this:
-(in this case, vg-lvol0_mimage_0 and 1 had non-zero open count
- and were not removed after the deactivation of the tree)
-
-#ioctl/libdm-iface.c:1606         dm info   (253:14) OF   [16384]
-#libdm-deptree.c:830     Removing vg-lvol0 (253:14)
-#ioctl/libdm-iface.c:1606         dm remove   (253:14) NF   [16384]
-#ioctl/libdm-iface.c:1606         dm info   (253:16) OF   [16384]
-#libdm-deptree.c:830     Removing vg-lvol0_mimage_2 (253:16)
-#ioctl/libdm-iface.c:1606         dm remove   (253:16) NF   [16384]
-#ioctl/libdm-iface.c:1606         dm info   (253:15) OF   [16384]
-#libdm-deptree.c:830     Removing vg-lvol0_mimagetmp_2 (253:15)
-#ioctl/libdm-iface.c:1606         dm remove   (253:15) NF   [16384]
-#ioctl/libdm-iface.c:1606         dm info   (253:13) OF   [16384]
-#libdm-deptree.c:1009         vg-lvol0_mimage_1 (253:13) has open count 1
-#ioctl/libdm-iface.c:1606         dm info   (253:12) OF   [16384]
-#libdm-deptree.c:1009         vg-lvol0_mimage_0 (253:12) has open count 1
-#ioctl/libdm-iface.c:1606         dm info   (253:4) OF   [16384]
-#libdm-deptree.c:830     Removing vg-lvol0_mlog (253:4)
-#ioctl/libdm-iface.c:1606         dm remove   (253:4) NF   [16384]
-
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation of America
-
---------------020107090207060500060609
-Content-Type: text/x-patch;
- name="deptree-refcount-debug.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="deptree-refcount-debug.patch"
-
-Add a verbose message useful for debugging deactivation failure.
-
-dm_tree_deactivate_children() of libdevmapper is a function
-to walk down the dm deptree and deactivate each child
-(i.e. remove dm device).
-
-Since a dm device with open count > 0 can't be removed, it checks
-info.open_count before the removal.
-info.open_count > 0 is valid if the device is shared from other parent.
-
-However, even if it's not shared, the open count can be non 0 if
-something temporarily opens the device, for example.
-Printing the reason why it was not deactivated makes it easier
-to check whether the deptree was not correctly built or such
-access happened.
-
-Index: device-mapper.work/lib/libdm-deptree.c
-===================================================================
---- device-mapper.work.orig/lib/libdm-deptree.c
-+++ device-mapper.work/lib/libdm-deptree.c
-@@ -1000,9 +1000,16 @@ int dm_tree_deactivate_children(struct d
- 
- 		/* Refresh open_count */
- 		if (!_info_by_dev(dinfo->major, dinfo->minor, 1, &info) ||
--		    !info.exists || info.open_count)
-+		    !info.exists)
- 			continue;
- 
-+		if (info.open_count) {
-+			log_debug("%s (%" PRIu32 ":%" PRIu32 ") has open count"
-+				  " %d", name, info.major, info.minor,
-+				  info.open_count);
-+			continue;
-+		}
-+
- 		if (!_deactivate_node(name, info.major, info.minor)) {
- 			log_error("Unable to deactivate %s (%" PRIu32
- 				  ":%" PRIu32 ")", name, info.major,
-
---------------020107090207060500060609
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---------------020107090207060500060609--
+Rick
