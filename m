@@ -1,14 +1,13 @@
-From: "Greene, Rick" <rick.greene@ncogroup.com>
-Subject: RE: Multipath not rebuilding correctly on reboot
-Date: Thu, 31 Jan 2008 15:21:34 -0500
-Message-ID: <2F1F44D192D1284BAA298E48C1B2A4F90234F16F@exchmail03.ncogroup.com>
-References: <2F1F44D192D1284BAA298E48C1B2A4F90234F16E@exchmail03.ncogroup.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] multipath: Add compability 'command' prio handler
+Date: Fri, 1 Feb 2008 16:08:05 +0100
+Message-ID: <20080201150805.GK27779@ochil.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C86446.DFBFB028"
+Content-Type: multipart/mixed; boundary="82I3+IH0IqGh5yIs"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F16E@exchmail03.ncogroup.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,97 +20,355 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
 
-------_=_NextPart_001_01C86446.DFBFB028
-Content-Type: text/plain;
-	charset="us-ascii"
+--82I3+IH0IqGh5yIs
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
 Content-Transfer-Encoding: quoted-printable
 
-Ah nuts...forgot to save the one file before attaching.  Here is the
-missing manual_run.txt file
+Hi all,
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Greene, Rick
-Sent: Thursday, January 31, 2008 3:20 PM
-To: device-mapper development
-Subject: [dm-devel] Multipath not rebuilding correctly on reboot
+with the move to the libprio framework we change the layout of the
+configuration file. Without advance warning to the user.
 
-Now that I seem to have multipath and my XP 1024 working together, I've
-found a new issue.  Someone recently had a similar thread going, but I
-saw no ultimate resolution.
+Not good.
 
-My problem is that when I reboot my server, the multipath configuration
-is not coming back the way it was before.  I moved the two external
-tools I use to find the UID into /etc (they had bin in /usr/bin and
-/sbin), updated the multipath.conf file (and one of the scripts) to
-reflect this, but odd things are still happening.
+So here's a patch to implement a compatible 'command' prio handler,
+which re-implements the old 'getprio' keyword handling on top of
+the existing libprio framework.
+And we print a nice fat warning to the user.
 
-Attached is initial_view.txt, which shows what multipath is coming up
-with when I do the commands shown (the bulk of the file is multipath -v3
-output, but at the bottom of the file is a multipath -ll output as
-well).  It (seems to) correctly shows that I have 4 disks, each visible
-via two separate paths.
+As usual, comments etc are welcome.
 
-After I reboot, however, I get different results.  Once it showed 4
-paths for mpath0, and 2 paths for mpath1, 2, and 3.  Next time it
-correctly showed mpath0, mpath1, and mpath3, but didn't show mpath2 at
-all.  On the next attempt I got everything correct, and the very next
-one only showed mpath0 and mpath1.
+Cheers,
 
-The post_reboot.txt file shows the contents of the /var/log/boot.log
-file and the output of the dmesg command, along with the "multipath -ll"
-view from the most recent reboot.
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=EF=BF=BDrnberg
+GF: Markus Rex, HRB 16746 (AG N=EF=BF=BDrnberg)
 
-I then manually did a "multipath -v2" and the missing two paths then
-came back.  The file manual_run.txt shows those results plus the updated
-"multipath -ll".
-
-Do I need to just make my own /etc/init.d script to do a "multipath -v2"
-at the end of booting to make sure it all gets covered, along with the
-requisite LVM & mount commands to get the VG that is on these disks
-working right?
-
-Thanks in advance,
-Rick
-
-
-
-
-------_=_NextPart_001_01C86446.DFBFB028
-Content-Type: text/plain;
-	name="manual_run.txt"
-Content-Transfer-Encoding: base64
-Content-Description: manual_run.txt
+--82I3+IH0IqGh5yIs
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: attachment;
-	filename="manual_run.txt"
+	filename=multipath-tools-implement-command-prio
 
-IyBtdWx0aXBhdGggLXYyDQpjcmVhdGU6IG1wYXRoMiAoMDAwNDAwMjZfMDU6ODUpDQpbc2l6ZT0x
-MyBHQl1bZmVhdHVyZXM9IjAiXVtod2hhbmRsZXI9IjAiXQ0KXF8gcm91bmQtcm9iaW4gMA0KIFxf
-IDE6MDowOjIgc2RjIDg6MzIgIFtyZWFkeV0NCiBcXyAyOjA6MDoyIHNkZyA4Ojk2ICBbcmVhZHld
-DQoNCmNyZWF0ZTogbXBhdGgzICgwMDA0MDAyNl8wNTo4NikNCltzaXplPTEzIEdCXVtmZWF0dXJl
-cz0iMCJdW2h3aGFuZGxlcj0iMCJdDQpcXyByb3VuZC1yb2JpbiAwDQogXF8gMTowOjA6MyBzZGQg
-ODo0OCAgW3JlYWR5XQ0KIFxfIDI6MDowOjMgc2RoIDg6MTEyIFtyZWFkeV0NCg0KW3Jvb3RAY29y
-dXgzOCB+XSMgbXVsdGlwYXRoIC1sbA0KbXBhdGgyICgwMDA0MDAyNl8wNTo4NSkNCltzaXplPTEz
-IEdCXVtmZWF0dXJlcz0iMCJdW2h3aGFuZGxlcj0iMCJdDQpcXyByb3VuZC1yb2JpbiAwIFthY3Rp
-dmVdDQogXF8gMTowOjA6MiBzZGMgODozMiAgW2FjdGl2ZV1bcmVhZHldDQogXF8gMjowOjA6MiBz
-ZGcgODo5NiAgW2FjdGl2ZV1bcmVhZHldDQoNCm1wYXRoMSAoMDAwNDAwMjZfMDU6ODQpDQpbc2l6
-ZT0xMyBHQl1bZmVhdHVyZXM9IjAiXVtod2hhbmRsZXI9IjAiXQ0KXF8gcm91bmQtcm9iaW4gMCBb
-ZW5hYmxlZF0NCiBcXyAyOjA6MDoxIHNkZiA4OjgwICBbYWN0aXZlXVtyZWFkeV0NCiBcXyAxOjA6
-MDoxIHNkYiA4OjE2ICBbYWN0aXZlXVtyZWFkeV0NCg0KbXBhdGgwICgwMDA0MDAyNl8wNTo4MykN
-CltzaXplPTEzIEdCXVtmZWF0dXJlcz0iMCJdW2h3aGFuZGxlcj0iMCJdDQpcXyByb3VuZC1yb2Jp
-biAwIFtlbmFibGVkXQ0KIFxfIDI6MDowOjAgc2RlIDg6NjQgIFthY3RpdmVdW3JlYWR5XQ0KIFxf
-IDE6MDowOjAgc2RhIDg6MCAgIFthY3RpdmVdW3JlYWR5XQ0KDQptcGF0aDMgKDAwMDQwMDI2XzA1
-Ojg2KQ0KW3NpemU9MTMgR0JdW2ZlYXR1cmVzPSIwIl1baHdoYW5kbGVyPSIwIl0NClxfIHJvdW5k
-LXJvYmluIDAgW2FjdGl2ZV0NCiBcXyAxOjA6MDozIHNkZCA4OjQ4ICBbYWN0aXZlXVtyZWFkeV0N
-CiBcXyAyOjA6MDozIHNkaCA4OjExMiBbYWN0aXZlXVtyZWFkeV0NCg==
+tree d55d7fa57eb2e37a2963d58f3ffecc61a2dcfd19
+parent 435a721afbb87e1921637538668441726ccc1d9e
+author Hannes Reinecke <hare@suse.de> 1201878006 +0100
+committer Hannes Reinecke <hare@suse.de> 1201878006 +0100
 
-------_=_NextPart_001_01C86446.DFBFB028
+libprio: Add compability 'command' prio handler
+
+The old 'getprio' callout functionality should be provided, as we
+cannot guarantee that the config files will be up to date.
+So re-implement the getprio callout and make sure the user is
+notified on startup.
+
+Signed-off-by: Hannes Reinecke <hare@suse.de>
+0a2def51de718fbbc3629a02e14870d9f8af4c69
+ libmultipath/config.h  |    3 ++
+ libmultipath/dict.c    |   69 ++++++++++++++++++++++++++++++++++++++++++++++++
+ libmultipath/propsel.c |   16 +++++++++++
+ libmultipath/structs.h |    1 +
+ libprio/Makefile       |    2 +-
+ libprio/command.c      |   37 +++++++++++++++++++++++++
+ libprio/command.h      |    7 +++++
+ libprio/libprio.c      |    4 +++
+ libprio/libprio.h      |    1 +
+ 9 files changed, 139 insertions(+), 1 deletions(-)
+
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 7568d7b..d6403a8 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -16,6 +16,7 @@ struct hwentry {
+ 	char * product;
+ 	char * revision;
+ 	char * getuid;
++	char * getprio;
+ 	char * features;
+ 	char * hwhandler;
+ 	char * selector;
+@@ -37,6 +38,7 @@ struct mpentry {
+ 	char * wwid;
+ 	char * alias;
+ 	char * getuid;
++	char * getprio;
+ 	char * selector;
+ 
+ 	int pgpolicy;
+@@ -73,6 +75,7 @@ struct config {
+ 	char * udev_dir;
+ 	char * selector;
+ 	char * getuid;
++	char * getprio;
+ 	char * features;
+ 	char * hwhandler;
+ 	char * bindings_file;
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index fa37ee8..2e0e916 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -83,6 +83,23 @@ def_getuid_callout_handler(vector strvec)
+ }
+ 
+ static int
++def_prio_callout_handler(vector strvec)
++{
++	conf->getprio = set_value(strvec);
++
++	if (!conf->getprio)
++		return 1;
++
++	if (strlen(conf->getprio) == 4 &&
++	    !strcmp(conf->getprio, "none")) {
++		FREE(conf->getprio);
++		conf->getprio = NULL;
++	}
++
++	return 0;
++}
++
++static int
+ def_prio_handler(vector strvec)
+ {
+ 	char * buff;
+@@ -589,6 +606,27 @@ hw_handler_handler(vector strvec)
+ }
+ 
+ static int
++prio_callout_handler(vector strvec)
++{
++	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
++
++	if (!hwe)
++	       return 1;
++
++	hwe->getprio = set_value(strvec);
++
++	if (!hwe->getprio)
++		return 1;
++
++	if (strlen(hwe->getprio) == 4 && !strcmp(hwe->getprio, "none")) {
++		FREE(hwe->getprio);
++		hwe->getprio = NULL;
++	}
++
++	return 0;
++}
++
++static int
+ hw_prio_handler(vector strvec)
+ {
+ 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
+@@ -1130,6 +1168,26 @@ snprint_hw_getuid_callout (char * buff, int len, void * data)
+ }
+ 
+ static int
++snprint_hw_prio_callout (char * buff, int len, void * data)
++{
++	struct hwentry * hwe = (struct hwentry *)data;
++
++	if (!conf->getprio && !hwe->getprio)
++		return 0;
++	if (!conf->getprio && hwe->getprio)
++		return snprintf(buff, len, "%s", hwe->getprio);
++	if (conf->getprio && !hwe->getprio)
++		return snprintf(buff, len, "none");
++
++	/* conf->getprio && hwe->getprio */
++	if (strlen(hwe->getprio) == strlen(conf->getprio) &&
++	    !strcmp(hwe->getprio, conf->getprio))
++		return 0;
++
++	return snprintf(buff, len, "%s", hwe->getprio);
++}
++
++static int
+ snprint_hw_prio (char * buff, int len, void * data)
+ {
+ 	struct hwentry * hwe = (struct hwentry *)data;
+@@ -1372,6 +1430,15 @@ snprint_def_getuid_callout (char * buff, int len, void * data)
+ }
+ 
+ static int
++snprint_def_getprio_callout (char * buff, int len, void * data)
++{
++	if (!conf->getprio)
++		return 0;
++
++	return snprintf(buff, len, "%s", conf->getprio);
++}
++
++static int
+ snprint_def_prio (char * buff, int len, void * data)
+ {
+ 	if (!conf->prio)
+@@ -1542,6 +1609,7 @@ init_keywords(void)
+ 	install_keyword("selector", &def_selector_handler, &snprint_def_selector);
+ 	install_keyword("path_grouping_policy", &def_pgpolicy_handler, &snprint_def_path_grouping_policy);
+ 	install_keyword("getuid_callout", &def_getuid_callout_handler, &snprint_def_getuid_callout);
++	install_keyword("prio_callout", &def_prio_callout_handler, &snprint_def_getprio_callout);
+ 	install_keyword("prio", &def_prio_handler, &snprint_def_prio);
+ 	install_keyword("features", &def_features_handler, &snprint_def_features);
+ 	install_keyword("path_checker", &def_path_checker_handler, &snprint_def_path_checker);
+@@ -1598,6 +1666,7 @@ init_keywords(void)
+ 	install_keyword("path_checker", &hw_path_checker_handler, &snprint_hw_path_checker);
+ 	install_keyword("features", &hw_features_handler, &snprint_hw_features);
+ 	install_keyword("hardware_handler", &hw_handler_handler, &snprint_hw_hardware_handler);
++	install_keyword("prio_callout", &prio_callout_handler, &snprint_hw_prio_callout);
+ 	install_keyword("prio", &hw_prio_handler, &snprint_hw_prio);
+ 	install_keyword("failback", &hw_failback_handler, &snprint_hw_failback);
+ 	install_keyword("rr_weight", &hw_weight_handler, &snprint_hw_rr_weight);
+diff --git a/libmultipath/propsel.c b/libmultipath/propsel.c
+index bb2b2b7..7bc7083 100644
+--- a/libmultipath/propsel.c
++++ b/libmultipath/propsel.c
+@@ -266,12 +266,28 @@ select_prio (struct path * pp)
+ 			pp->dev, prio_name(pp->prio));
+ 		return 0;
+ 	}
++	if (pp->hwe && pp->hwe->getprio) {
++		pp->getprio = pp->hwe->getprio;
++		pp->prio = prio_lookup(PRIO_COMMAND);
++		condlog(1, "%s: Using deprecated prio_callout '%s' (controller setting)\n"
++			"\tPlease fixup /etc/multipath.conf",
++			pp->dev, pp->hwe->getprio);
++		return 0;
++	}
+ 	if (conf->prio) {
+ 		pp->prio = conf->prio;
+ 		condlog(3, "%s: prio = %s (config file default)",
+ 			pp->dev, prio_name(pp->prio));
+ 		return 0;
+ 	}
++	if (conf->getprio) {
++		pp->getprio = conf->getprio;
++		pp->prio = prio_lookup(PRIO_COMMAND);
++		condlog(1, "%s: Using deprecated prio_callout '%s' (controller setting)\n"
++			"\tPlease fixup /etc/multipath.conf",
++			pp->dev, pp->hwe->getprio);
++		return 0;
++	}
+ 	pp->prio = prio_default();
+ 	condlog(3, "%s: prio = %s (internal default)",
+ 		pp->dev, prio_name(pp->prio));
+diff --git a/libmultipath/structs.h b/libmultipath/structs.h
+index 2517782..6205f59 100644
+--- a/libmultipath/structs.h
++++ b/libmultipath/structs.h
+@@ -120,6 +120,7 @@ struct path {
+ 	int priority;
+ 	int pgindex;
+ 	char * getuid;
++	char * getprio;
+ 	struct prio * prio;
+ 	struct checker checker;
+ 	struct multipath * mpp;
+diff --git a/libprio/Makefile b/libprio/Makefile
+index 177a67b..127def6 100644
+--- a/libprio/Makefile
++++ b/libprio/Makefile
+@@ -6,7 +6,7 @@ BUILD = glibc
+ 
+ include ../Makefile.inc
+ 
+-OBJS = libprio.o random.o const.o hp_sw.o emc.o rdac.o alua.o alua_rtpg.o netapp.o hds.o
++OBJS = libprio.o random.o const.o hp_sw.o emc.o rdac.o alua.o alua_rtpg.o netapp.o hds.o command.o
+ 
+ CFLAGS += -I$(multipathdir)
+ 
+diff --git a/libprio/command.c b/libprio/command.c
+new file mode 100644
+index 0000000..1154c59
+--- /dev/null
++++ b/libprio/command.c
+@@ -0,0 +1,37 @@
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/ioctl.h>
++
++#include "../libcheckers/checkers.h"
++
++#include <vector.h>
++#include <structs.h>
++#include <callout.h>
++#include <debug.h>
++#include "libprio.h"
++
++int prio_command(struct path * pp)
++{
++	char buff[CALLOUT_MAX_SIZE];
++	char prio[16], *ptr;
++	int priority;
++
++	if (!pp->getprio)
++		return PRIO_UNDEF;
++
++	if (apply_format(pp->getprio, &buff[0], pp)) {
++		condlog(0, "error formatting prio callout command");
++		return PRIO_UNDEF;
++	} else if (execute_program(buff, prio, 16)) {
++		condlog(0, "error calling out %s", buff);
++		return PRIO_UNDEF;
++	}
++
++	condlog(3, "%s: priority %s", pp->dev, prio);
++	priority = strtoul(prio, &ptr, 10);
++	if (prio == ptr)
++		return PRIO_UNDEF;
++
++	return priority;
++}
+diff --git a/libprio/command.h b/libprio/command.h
+new file mode 100644
+index 0000000..a1af97e
+--- /dev/null
++++ b/libprio/command.h
+@@ -0,0 +1,7 @@
++#ifndef _COMMAND_H
++#define _COMMAND_H
++
++#define PRIO_COMMAND "command"
++int prio_command(struct path * pp);
++
++#endif
+diff --git a/libprio/libprio.c b/libprio/libprio.c
+index 2d7d479..bc79fa7 100644
+--- a/libprio/libprio.c
++++ b/libprio/libprio.c
+@@ -37,6 +37,10 @@ static struct prio prioritizers[] = {
+ 		.getprio = prio_hp_sw
+ 	},
+ 	{
++		.name    = PRIO_COMMAND,
++		.getprio = prio_command
++	},
++	{
+ 		.name    = "",
+ 		.getprio = NULL
+ 	},
+diff --git a/libprio/libprio.h b/libprio/libprio.h
+index 978e14e..36d1eff 100644
+--- a/libprio/libprio.h
++++ b/libprio/libprio.h
+@@ -16,6 +16,7 @@
+ #include "netapp.h"
+ #include "hds.h"
+ #include "rdac.h"
++#include "command.h"
+ 
+ #define DEFAULT_PRIO PRIO_CONST
+ 
+
+--82I3+IH0IqGh5yIs
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
-------_=_NextPart_001_01C86446.DFBFB028--
+--82I3+IH0IqGh5yIs--
