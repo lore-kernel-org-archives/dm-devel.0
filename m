@@ -1,70 +1,96 @@
-From: "Balasubramanian, Vijayakumar (STSD)" <vijayakumar@hp.com>
-Subject: RE: HPDMmultipath-tools-3.0.0.xxx with HP XP12000 diskarray
-Date: Mon, 4 Feb 2008 21:05:37 +0530
-Message-ID: <DEB00BF6BD078A4EB280E07567BD7D2E08A8C39F@bgeexc01.asiapacific.cpqcorp.net>
-References: <9C203D6FD2BF9D49BFF3450201DEDA53024AC96A@LI-OWL.hag.hilti.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH 4/9] scsi_dh: add skeleton for SCSI Device Handlers
+Date: Mon, 04 Feb 2008 10:54:40 -0800
+Message-ID: <1202151280.13537.1.camel@linuxchandra>
+References: <20080124003010.18871.84095.sendpatchset@localhost.localdomain>
+	 <20080124003115.18871.42778.sendpatchset@localhost.localdomain>
+	 <47A378C3.5030207@cs.wisc.edu>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <9C203D6FD2BF9D49BFF3450201DEDA53024AC96A@LI-OWL.hag.hilti.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <47A378C3.5030207@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-Mike,
-HPDM would provide enablement for HP array products and patches for
-issues found during product testing in addition to the normal
-device-mapper-multipath. Eventually these patches would go into OS
-vendor's multipath and the device mapper multipath development tree.
+On Fri, 2008-02-01 at 13:53 -0600, Mike Christie wrote:
+> Chandra Seetharaman wrote:
+> >  	 * mainly associated with tapes and returned SUCCESS.
+> > Index: linux-2.6.24-rc8/drivers/scsi/scsi_sysfs.c
+> > ===================================================================
+> > --- linux-2.6.24-rc8.orig/drivers/scsi/scsi_sysfs.c
+> > +++ linux-2.6.24-rc8/drivers/scsi/scsi_sysfs.c
+> > @@ -951,6 +951,49 @@ int scsi_register_interface(struct class
+> >  }
+> >  EXPORT_SYMBOL(scsi_register_interface);
+> >  
+> > +static int scsi_dh_notifier_add(struct device *dev, void *data)
+> > +{
+> > +	struct scsi_device_handler *sdev_dh = data;
+> > +
+> > +	sdev_dh->nb.notifier_call(&sdev_dh->nb, BUS_NOTIFY_ADD_DEVICE, dev);
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +int scsi_register_device_handler(struct scsi_device_handler *sdev_dh)
+> > +{
+> > +	int ret;
+> > +
+> > +	ret = bus_register_notifier(&scsi_bus_type, &sdev_dh->nb);
+> > +
+> > +	bus_for_each_dev(&scsi_bus_type, NULL, sdev_dh, scsi_dh_notifier_add);
+> > +
+> > +	return ret;
+> > +}
+> > +EXPORT_SYMBOL(scsi_register_device_handler);
+> > +
+> > +static int scsi_dh_notifier_remove(struct device *dev, void *data)
+> > +{
+> > +	struct scsi_device_handler *sdev_dh = data;
+> > +
+> > +	sdev_dh->nb.notifier_call(&sdev_dh->nb, BUS_NOTIFY_DEL_DEVICE, dev);
+> > +
+> > +	return 0;
+> > +}
+> > +
+> > +int scsi_unregister_device_handler(struct scsi_device_handler *sdev_dh)
+> > +{
+> > +	int ret;
+> > +
+> > +	ret = bus_unregister_notifier(&scsi_bus_type, &sdev_dh->nb);
+> > +
+> > +	bus_for_each_dev(&scsi_bus_type, NULL, sdev_dh,
+> > +					scsi_dh_notifier_remove);
+> > +
+> > +	return ret;
+> > +}
+> > +EXPORT_SYMBOL(scsi_unregister_device_handler);
+> > +
+> 
+> Did this end up solving the problem I was hitting where when using the 
+> other driver model stuff like is used with the SCSI upper layer drivers. 
+> The problem where the hw handler module had to be loaded before finding 
+> devices and had to be loaded before sd.c?
 
--Vijay
+Yes, As andmike pointed, it is coded and tested.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Hagmann, Michael
-Sent: Thursday, January 31, 2008 4:03 AM
-To: device-mapper development
-Subject: [dm-devel] HPDMmultipath-tools-3.0.0.xxx with HP XP12000
-diskarray
-
-Hi=20
-
-Does anyone has some experience with the "HPDMmultipath-tools-3.0.0.xxx"
-and a HP XP12000 Diskarray?
-
-For me it's total unclear what's the difference between
-"HPDMmultipath-tools-3.0.0.xxx" and the normal "device-mapper-multipath"
-or the added value.
-
-thx mike
-
-Michael Hagmann
-UNIX Systems Engineering
-Enterprise Systems Technology
-
-Hilti Corporation
-9494 Schaan  Liechtenstein
-
-Department FIBS
-Feldkircherstrasse 100   P.O.Box 333
-P +423-234 2467  F +423-234 6467
-E michael.hagmann@hilti.com
-www.hilti.com
+It works in both cases, module being inserted before sd is probed and
+module inserted after sd.
 
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
+
+
