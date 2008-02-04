@@ -1,77 +1,39 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 7/9] scsi_dh: Add support for SDEV_PASSIVE
-Date: Mon, 04 Feb 2008 13:19:30 -0800
-Message-ID: <1202159970.13537.19.camel@linuxchandra>
-References: <20080124003010.18871.84095.sendpatchset@localhost.localdomain>
-	 <20080124003203.18871.52040.sendpatchset@localhost.localdomain>
-	 <1202151498.3096.84.camel@localhost.localdomain>
-	 <1202156151.13537.14.camel@linuxchandra>
-	 <1202156914.3096.112.camel@localhost.localdomain>
-Reply-To: sekharan@us.ibm.com
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: SLES installation on dual controller subsystem
+Date: Mon, 4 Feb 2008 15:58:52 -0800
+Message-ID: <110b17190802041558y6b30e000x5a3e530f4c717d4e@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1202156914.3096.112.camel@localhost.localdomain>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, michaelc@cs.wisc.edu, jens.axboe@oracle.com
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2008-02-04 at 14:28 -0600, James Bottomley wrote:
-> On Mon, 2008-02-04 at 12:15 -0800, Chandra Seetharaman wrote:
-> > On Mon, 2008-02-04 at 12:58 -0600, James Bottomley wrote:
-> > > On Wed, 2008-01-23 at 16:32 -0800, Chandra Seetharaman wrote:
-> > > > Subject: scsi_dh: Add support for SDEV_PASSIVE
-> > > > 
-> > > > From: Chandra Seetharaman <sekharan@us.ibm.com>
-> > > > 
-> > > > This patch adds a new device state SDEV_PASSIVE, to correspond to the
-> > > > passive side access of an active/passive multipathed device.
-> > > 
-> > > Really, no; this isn't right.  The state field of a SCSI device is for
-> > > the SCSI state model.  Passive might be a valid device mapper state, but
-> > 
-> > Hi James,
-> > 
-> > It is not the "device mapper state", it is the state of the device
-> > itself. These devices have active/passive paths, the passive paths will
-> > be represented by SDEV_PASSIVE device state in SCSI.
-> 
-> Yes, it is .. you're killing commands on the basis of being in this
-> state, which nothing in SCSI ever sets.
-> 
-> A proper return from a passive path is the SCSI standard NOT_READY
-> LOGICAL UNIT NOT READY, INITIALIZING COMMAND REQUIRED.  We expect to see
-> this, not the command being killed.
+Hi All,
 
-The device does send these error messages currently, but it takes some
-time to get the check condition back, which adds up the time to boot
-especially when the # of LUNS is huge.
+I am trying to install SLES 10.1 on my dual controller subsystem. The
+subsystem is ALUA aware and hence shows me 2 LUNs for one while trying
+to install SLES on it.
 
-For example, in my test configuration, I had 40 luns, and the time
-difference (with this patch and without it) to boot is 171 seconds and
-1426 seconds.
+If my LUN's preferred controller is 1 then everything goes fine, but
+if the preferred controller of the LUN I am installing OS on is 2,
+then installation goes fine but the boot fails.
 
-We thought we will get it short circuited so as to return the failure
-back faster.
+It throws some errors like root (hd1,1) could not found. When I modify
+this to too(hd0,1) it boots fine.
 
-Also, we only short circuit REQ_TYPE_FS.
+What am I missing here?
 
-
-> 
-> James
-> 
-> 
-> -
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
--- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
-
-
+Regards,
+Pradipmaya.
