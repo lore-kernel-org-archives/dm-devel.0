@@ -1,11 +1,10 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
+From: James Bottomley <James.Bottomley@HansenPartnership.com>
 Subject: Re: [PATCH 3/9] scsi_dh: scsi handling of REQ_LB_OP_TRANSITION
-Date: Mon, 04 Feb 2008 10:59:12 -0800
-Message-ID: <1202151552.13537.5.camel@linuxchandra>
+Date: Mon, 04 Feb 2008 13:02:47 -0600
+Message-ID: <1202151767.3096.86.camel@localhost.localdomain>
 References: <20080124003010.18871.84095.sendpatchset@localhost.localdomain>
 	 <20080124003059.18871.89111.sendpatchset@localhost.localdomain>
 	 <47A37A65.8020500@cs.wisc.edu>
-Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
@@ -13,8 +12,9 @@ Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <47A37A65.8020500@cs.wisc.edu>
 Sender: linux-scsi-owner@vger.kernel.org
 To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, jens.axboe@oracle.com
+Cc: Chandra Seetharaman <sekharan@us.ibm.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, andmike@us.ibm.com, jens.axboe@oracle.com
 List-Id: dm-devel.ids
+
 
 On Fri, 2008-02-01 at 14:00 -0600, Mike Christie wrote:
 > Chandra Seetharaman wrote:
@@ -85,19 +85,11 @@ On Fri, 2008-02-01 at 14:00 -0600, Mike Christie wrote:
 > not devices we traditionally associated with queues like scsi_devices). 
 > Just a thought with no code :) that is why the ugly code existed still :)
 
-Can't it be done with this code itself ?
+We sort of do.  The bsg code in scsi_transport_sas to send SMP frames to
+expander devices would be an example of non-scsi commands going via a
+mechanism other than being encapsulated in SCSI.  I don't know if that's
+the complete solution in this case, but you could investigate it.
 
-If the underlying functionality is going to be provided by the hardware
-handler, then can't we add additional commands (like transition) when we
-need them ?
-
-Or am I missing something ?
-
--- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+James
 
 
