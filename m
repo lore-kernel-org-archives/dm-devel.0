@@ -1,17 +1,16 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: Both 2.6.24-mm1 and 2.6.24-git11 do NOT "see" any of
- mine LVM-2 disks
-Date: Mon, 4 Feb 2008 05:27:09 -0800
-Message-ID: <20080204052709.12f4e0d3.akpm@linux-foundation.org>
-References: <43d009740802022335y21c3f93ep4e444bef71338045@mail.gmail.com>
-	<20080202235103.20dd9768.akpm@linux-foundation.org>
-	<47A71040.5000300@gmail.com>
+From: "Balasubramanian, Vijayakumar (STSD)" <vijayakumar@hp.com>
+Subject: RE: HPDMmultipath-tools-3.0.0.xxx with HP XP12000 diskarray
+Date: Mon, 4 Feb 2008 21:05:37 +0530
+Message-ID: <DEB00BF6BD078A4EB280E07567BD7D2E08A8C39F@bgeexc01.asiapacific.cpqcorp.net>
+References: <9C203D6FD2BF9D49BFF3450201DEDA53024AC96A@LI-OWL.hag.hilti.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47A71040.5000300@gmail.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <9C203D6FD2BF9D49BFF3450201DEDA53024AC96A@LI-OWL.hag.hilti.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,50 +20,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: for.poige+linux@gmail.com
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 04 Feb 2008 20:16:48 +0700 Igor M Podlesny <for.poige+linux@gmail=
-.com> wrote:
+Mike,
+HPDM would provide enablement for HP array products and patches for
+issues found during product testing in addition to the normal
+device-mapper-multipath. Eventually these patches would go into OS
+vendor's multipath and the device mapper multipath development tree.
 
->    Hello, everybody! :-)
->=20
-> On 2008-02-03 14:51, Andrew Morton wrote:
-> > On Sun, 3 Feb 2008 14:35:23 +0700 Igor <for.poige+linux@gmail.com> wr=
-ote:
-> >> On 02/02/2008, Igor <for.poige+linux@gmail.com> wrote:
-> [...]
-> >>     And I've tried linux-2.6.24-rc8-mm1 =E2=80=94 it fails even runn=
-ing MDs saying
-> >> that do_md_run() returning -22.
-> >=20
-> > I'm pretty sure that got fixed, thanks.
-> >=20
-> > I'm trying to get 2.6.24-mm1 out.  Maybe tomorrow - please test that,=
- make
-> > sure that we fixed it.
->=20
->    Yeah, you've fixed it now, MD's are running OK.
->=20
->    Now I can say that both 2.6.24-mm1 and 2.6.24-git11 do NOT "see" any
-> of mine LVM-2 disks. pvscan, for e.g., finds nothing at all.
+-Vijay
 
-You may find that you need to update your lvm userspace tools.
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Hagmann, Michael
+Sent: Thursday, January 31, 2008 4:03 AM
+To: device-mapper development
+Subject: [dm-devel] HPDMmultipath-tools-3.0.0.xxx with HP XP12000
+diskarray
 
-Alasdair?  other-dm-people?  Did we break^Wchange the userspace interface=
-?
+Hi=20
 
-I don't think DM has merged yet, so maybe it was something else.
+Does anyone has some experience with the "HPDMmultipath-tools-3.0.0.xxx"
+and a HP XP12000 Diskarray?
 
->    Mine system's configuration is LVM-2 on MD (Software RAID); 2.6.24
-> handles it just fine.
+For me it's total unclear what's the difference between
+"HPDMmultipath-tools-3.0.0.xxx" and the normal "device-mapper-multipath"
+or the added value.
 
-I guess it would be helpful if you could tell us the version of your lvm
-userspace tools, and identify the distro.
+thx mike
 
->    P. S. I'm not subscribed to linux-kernel@vger.kernel.org (yet), so
-> please keep my e-mail address intact :-) when replying.
+Michael Hagmann
+UNIX Systems Engineering
+Enterprise Systems Technology
 
-Is OK, lots of people are in that situation.  We do reply-to-all as a
-matter of course.
+Hilti Corporation
+9494 Schaan  Liechtenstein
+
+Department FIBS
+Feldkircherstrasse 100   P.O.Box 333
+P +423-234 2467  F +423-234 6467
+E michael.hagmann@hilti.com
+www.hilti.com
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
