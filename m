@@ -1,48 +1,77 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: [PATCH 7/9] scsi_dh: Add support for SDEV_PASSIVE
-Date: Mon, 04 Feb 2008 14:28:34 -0600
-Message-ID: <1202156914.3096.112.camel@localhost.localdomain>
+Date: Mon, 04 Feb 2008 13:19:30 -0800
+Message-ID: <1202159970.13537.19.camel@linuxchandra>
 References: <20080124003010.18871.84095.sendpatchset@localhost.localdomain>
 	 <20080124003203.18871.52040.sendpatchset@localhost.localdomain>
 	 <1202151498.3096.84.camel@localhost.localdomain>
 	 <1202156151.13537.14.camel@linuxchandra>
+	 <1202156914.3096.112.camel@localhost.localdomain>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1202156151.13537.14.camel@linuxchandra>
+In-Reply-To: <1202156914.3096.112.camel@localhost.localdomain>
 Sender: linux-scsi-owner@vger.kernel.org
-To: sekharan@us.ibm.com
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
 Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, michaelc@cs.wisc.edu, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-
-On Mon, 2008-02-04 at 12:15 -0800, Chandra Seetharaman wrote:
-> On Mon, 2008-02-04 at 12:58 -0600, James Bottomley wrote:
-> > On Wed, 2008-01-23 at 16:32 -0800, Chandra Seetharaman wrote:
-> > > Subject: scsi_dh: Add support for SDEV_PASSIVE
+On Mon, 2008-02-04 at 14:28 -0600, James Bottomley wrote:
+> On Mon, 2008-02-04 at 12:15 -0800, Chandra Seetharaman wrote:
+> > On Mon, 2008-02-04 at 12:58 -0600, James Bottomley wrote:
+> > > On Wed, 2008-01-23 at 16:32 -0800, Chandra Seetharaman wrote:
+> > > > Subject: scsi_dh: Add support for SDEV_PASSIVE
+> > > > 
+> > > > From: Chandra Seetharaman <sekharan@us.ibm.com>
+> > > > 
+> > > > This patch adds a new device state SDEV_PASSIVE, to correspond to the
+> > > > passive side access of an active/passive multipathed device.
 > > > 
-> > > From: Chandra Seetharaman <sekharan@us.ibm.com>
-> > > 
-> > > This patch adds a new device state SDEV_PASSIVE, to correspond to the
-> > > passive side access of an active/passive multipathed device.
+> > > Really, no; this isn't right.  The state field of a SCSI device is for
+> > > the SCSI state model.  Passive might be a valid device mapper state, but
 > > 
-> > Really, no; this isn't right.  The state field of a SCSI device is for
-> > the SCSI state model.  Passive might be a valid device mapper state, but
+> > Hi James,
+> > 
+> > It is not the "device mapper state", it is the state of the device
+> > itself. These devices have active/passive paths, the passive paths will
+> > be represented by SDEV_PASSIVE device state in SCSI.
 > 
-> Hi James,
+> Yes, it is .. you're killing commands on the basis of being in this
+> state, which nothing in SCSI ever sets.
 > 
-> It is not the "device mapper state", it is the state of the device
-> itself. These devices have active/passive paths, the passive paths will
-> be represented by SDEV_PASSIVE device state in SCSI.
+> A proper return from a passive path is the SCSI standard NOT_READY
+> LOGICAL UNIT NOT READY, INITIALIZING COMMAND REQUIRED.  We expect to see
+> this, not the command being killed.
 
-Yes, it is .. you're killing commands on the basis of being in this
-state, which nothing in SCSI ever sets.
+The device does send these error messages currently, but it takes some
+time to get the check condition back, which adds up the time to boot
+especially when the # of LUNS is huge.
 
-A proper return from a passive path is the SCSI standard NOT_READY
-LOGICAL UNIT NOT READY, INITIALIZING COMMAND REQUIRED.  We expect to see
-this, not the command being killed.
+For example, in my test configuration, I had 40 luns, and the time
+difference (with this patch and without it) to boot is 171 seconds and
+1426 seconds.
 
-James
+We thought we will get it short circuited so as to return the failure
+back faster.
+
+Also, we only short circuit REQ_TYPE_FS.
+
+
+> 
+> James
+> 
+> 
+> -
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
 
 
