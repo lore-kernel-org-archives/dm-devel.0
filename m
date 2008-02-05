@@ -1,31 +1,78 @@
-From: Igor M Podlesny <for.poige+linux@gmail.com>
-Subject: > You may find that you need to update your lvm userspace tools.
-Date: Tue, 05 Feb 2008 12:32:11 +0700
-Message-ID: <47A7F4DB.3070406@gmail.com>
-References: <43d009740802022335y21c3f93ep4e444bef71338045@mail.gmail.com>	<20080202235103.20dd9768.akpm@linux-foundation.org>	<47A71040.5000300@gmail.com> <20080204052709.12f4e0d3.akpm@linux-foundation.org>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: SLES installation on dual controller subsystem
+Date: Mon, 4 Feb 2008 21:46:34 -0800
+Message-ID: <110b17190802042146o4a2c5fbcx315567ea73994d18@mail.gmail.com>
+References: <110b17190802041558y6b30e000x5a3e530f4c717d4e@mail.gmail.com>
+	<1202177454.13537.22.camel@linuxchandra>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754901AbYBEFcc@vger.kernel.org>
-In-Reply-To: <20080204052709.12f4e0d3.akpm@linux-foundation.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1202177454.13537.22.camel@linuxchandra>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On 2008-02-04 20:27, Andrew Morton wrote:
-> On Mon, 04 Feb 2008 20:16:48 +0700 Igor M Podlesny <for.poige+linux@gmail.com> wrote:
-[...]
->>    Now I can say that both 2.6.24-mm1 and 2.6.24-git11 do NOT "see" any
->> of mine LVM-2 disks. pvscan, for e.g., finds nothing at all.
-> 
-> You may find that you need to update your lvm userspace tools.
+Thanks for your response.
+RHEL works fine in same scenario; any explanation why? I mean what
+does RHEL do different here?
 
-	You're right; I've updated my initrd with fresh lvm
-userspace-counterpart and now the problem has been fixed. Sorry for
-groundless alert.
+Thanks and Regards,
+Pradipmaya.
 
-	Thanks!
 
--- 
-End of message. Next message?
+On Feb 4, 2008 6:10 PM, Chandra Seetharaman <sekharan@us.ibm.com> wrote:
+>
+> On Mon, 2008-02-04 at 15:58 -0800, Pradipmaya Maharana wrote:
+> > Hi All,
+> >
+> > I am trying to install SLES 10.1 on my dual controller subsystem. The
+> > subsystem is ALUA aware and hence shows me 2 LUNs for one while trying
+> > to install SLES on it.
+> >
+> > If my LUN's preferred controller is 1 then everything goes fine, but
+> > if the preferred controller of the LUN I am installing OS on is 2,
+> > then installation goes fine but the boot fails.
+> >
+> > It throws some errors like root (hd1,1) could not found. When I modify
+> > this to too(hd0,1) it boots fine.
+> >
+> > What am I missing here?
+>
+> >From what you explain, looks like the kernel doesn't boot at all. You
+> are getting error from your BIOS/firmware.
+>
+> Your BIOS/firmware may not be multipath aware.
+>
+> >
+> > Regards,
+> > Pradipmaya.
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> --
+>
+> ----------------------------------------------------------------------
+>    Chandra Seetharaman               | Be careful what you choose....
+>              - sekharan@us.ibm.com   |      .......you may get it.
+> ----------------------------------------------------------------------
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
