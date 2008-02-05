@@ -1,13 +1,14 @@
-From: malahal@us.ibm.com
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: SLES installation on dual controller subsystem
-Date: Mon, 4 Feb 2008 18:07:00 -0800
-Message-ID: <20080205020700.GA13946@us.ibm.com>
+Date: Mon, 04 Feb 2008 18:10:54 -0800
+Message-ID: <1202177454.13537.22.camel@linuxchandra>
 References: <110b17190802041558y6b30e000x5a3e530f4c717d4e@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: sekharan@us.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 In-Reply-To: <110b17190802041558y6b30e000x5a3e530f4c717d4e@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -18,10 +19,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
+On Mon, 2008-02-04 at 15:58 -0800, Pradipmaya Maharana wrote:
 > Hi All,
 > 
 > I am trying to install SLES 10.1 on my dual controller subsystem. The
@@ -34,12 +35,25 @@ Pradipmaya Maharana [pradipmaya@gmail.com] wrote:
 > 
 > It throws some errors like root (hd1,1) could not found. When I modify
 > this to too(hd0,1) it boots fine.
+> 
+> What am I missing here?
 
-Looks like a GRUB issue to me. Go into grub's interactive/editing mode
-while booting and try "root (hd<TAB>), it will tell you what partitions
-it sees. My guess is that GRUB can't find your other path and that is
-why it can't see (hd1,1). (hd0,1) works because it saw that path.
+From what you explain, looks like the kernel doesn't boot at all. You
+are getting error from your BIOS/firmware.
 
-If that is indeed right, it is a BIOS feature/problem.
+Your BIOS/firmware may not be multipath aware.
+ 
+> 
+> Regards,
+> Pradipmaya.
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+-- 
 
--Malahal.
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
