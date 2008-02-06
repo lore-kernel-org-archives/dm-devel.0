@@ -1,12 +1,12 @@
 From: Greg KH <gregkh@suse.de>
-Subject: [patch 03/73] dm crypt: fix write endio
-Date: Wed, 6 Feb 2008 15:50:55 -0800
-Message-ID: <20080206235055.GD13121@suse.de>
+Subject: [patch 04/73] dm crypt: use bio_add_page
+Date: Wed, 6 Feb 2008 15:50:58 -0800
+Message-ID: <20080206235058.GE13121@suse.de>
 References: <20080206234302.769849277@mini.kroah.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764434AbYBFXzd@vger.kernel.org>
-Content-Disposition: inline; filename="dm-crypt-fix-write-endio.patch"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764275AbYBFXz5@vger.kernel.org>
+Content-Disposition: inline; filename="dm-crypt-use-bio_add_page.patch"
 In-Reply-To: <20080206235015.GA13121@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@kernel.org, Linus Torvalds <torvalds@linux-foundation.org>
@@ -18,41 +18,79 @@ List-Id: dm-devel.ids
 ------------------
 From: Milan Broz <mbroz@redhat.com>
 
-patch adfe47702c4726b3e045f9f83178def02833be4c in mainline.
+patch 91e106259214b40e992a58fb9417da46868e19b2 in mainline.
 
-Fix BIO_UPTODATE test for write io.
+Fix possible max_phys_segments violation in cloned dm-crypt bio.
+
+In write operation dm-crypt needs to allocate new bio request
+and run crypto operation on this clone. Cloned request has always
+the same size, but number of physical segments can be increased
+and violate max_phys_segments restriction.
+
+This can lead to data corruption and serious hardware malfunction.
+This was observed when using XFS over dm-crypt and at least
+two HBA controller drivers (arcmsr, cciss) recently.
+
+Fix it by using bio_add_page() call (which tests for other
+restrictions too) instead of constructing own biovec.
+
+All versions of dm-crypt are affected by this bug.
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
 ---
- drivers/md/dm-crypt.c |    7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
+ drivers/md/dm-crypt.c |   24 +++++++++++-------------
+ 1 file changed, 11 insertions(+), 13 deletions(-)
 
 --- a/drivers/md/dm-crypt.c
 +++ b/drivers/md/dm-crypt.c
-@@ -515,6 +515,9 @@ static int crypt_endio(struct bio *clone
- 	struct crypt_config *cc = io->target->private;
- 	unsigned read_io = bio_data_dir(clone) == READ;
+@@ -399,7 +399,8 @@ static struct bio *crypt_alloc_buffer(st
+ 	struct bio *clone;
+ 	unsigned int nr_iovecs = (size + PAGE_SIZE - 1) >> PAGE_SHIFT;
+ 	gfp_t gfp_mask = GFP_NOIO | __GFP_HIGHMEM;
+-	unsigned int i;
++	unsigned i, len;
++	struct page *page;
  
-+	if (unlikely(!bio_flagged(clone, BIO_UPTODATE) && !error))
-+		error = -EIO;
+ 	clone = bio_alloc_bioset(GFP_NOIO, nr_iovecs, cc->bs);
+ 	if (!clone)
+@@ -408,10 +409,8 @@ static struct bio *crypt_alloc_buffer(st
+ 	clone_init(io, clone);
+ 
+ 	for (i = 0; i < nr_iovecs; i++) {
+-		struct bio_vec *bv = bio_iovec_idx(clone, i);
+-
+-		bv->bv_page = mempool_alloc(cc->page_pool, gfp_mask);
+-		if (!bv->bv_page)
++		page = mempool_alloc(cc->page_pool, gfp_mask);
++		if (!page)
+ 			break;
+ 
+ 		/*
+@@ -422,15 +421,14 @@ static struct bio *crypt_alloc_buffer(st
+ 		if (i == (MIN_BIO_PAGES - 1))
+ 			gfp_mask = (gfp_mask | __GFP_NOWARN) & ~__GFP_WAIT;
+ 
+-		bv->bv_offset = 0;
+-		if (size > PAGE_SIZE)
+-			bv->bv_len = PAGE_SIZE;
+-		else
+-			bv->bv_len = size;
++		len = (size > PAGE_SIZE) ? PAGE_SIZE : size;
 +
- 	/*
- 	 * free the processed pages, even if
- 	 * it's only a partially completed write
-@@ -529,10 +532,8 @@ static int crypt_endio(struct bio *clone
- 	if (!read_io)
- 		goto out;
++		if (!bio_add_page(clone, page, len, 0)) {
++			mempool_free(page, cc->page_pool);
++			break;
++		}
  
--	if (unlikely(!bio_flagged(clone, BIO_UPTODATE))) {
--		error = -EIO;
-+	if (unlikely(error))
- 		goto out;
--	}
+-		clone->bi_size += bv->bv_len;
+-		clone->bi_vcnt++;
+-		size -= bv->bv_len;
++		size -= len;
+ 	}
  
- 	bio_put(clone);
- 	io->post_process = 1;
+ 	if (!clone->bi_size) {
 
 -- 
