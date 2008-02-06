@@ -1,205 +1,58 @@
 From: Greg KH <gregkh@suse.de>
-Subject: [patch 02/73] dm: table detect io beyond device
-Date: Wed, 6 Feb 2008 15:50:51 -0800
-Message-ID: <20080206235051.GC13121@suse.de>
+Subject: [patch 03/73] dm crypt: fix write endio
+Date: Wed, 6 Feb 2008 15:50:55 -0800
+Message-ID: <20080206235055.GD13121@suse.de>
 References: <20080206234302.769849277@mini.kroah.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764337AbYBFXy6@vger.kernel.org>
-Content-Disposition: inline; filename="dm-table-detect-io-beyond-device.patch"
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764434AbYBFXzd@vger.kernel.org>
+Content-Disposition: inline; filename="dm-crypt-fix-write-endio.patch"
 In-Reply-To: <20080206235015.GA13121@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
 To: linux-kernel@vger.kernel.org, stable@kernel.org, Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Justin Forbes <jmforbes@linuxtx.org>, Zwane Mwaikambo <zwane@arm.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Randy Dunlap <rdunlap@xenotime.net>, Dave Jones <davej@redhat.com>, Chuck Wolber <chuckw@quantumlinux.com>, Chris Wedgwood <reviews@ml.cw.f00f.org>, Michael Krufky <mkrufky@linuxtv.org>, Chuck Ebbert <cebbert@redhat.com>, Domenico Andreoli <cavokz@gmail.com>, akpm@linux-foundation.org, alan@lxorguk.ukuu.org.uk, Junichi Nomura <j-nomura@ce.jp.nec.com>, dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Cc: Justin Forbes <jmforbes@linuxtx.org>, Zwane Mwaikambo <zwane@arm.linux.org.uk>, Theodore Ts'o <tytso@mit.edu>, Randy Dunlap <rdunlap@xenotime.net>, Dave Jones <davej@redhat.com>, Chuck Wolber <chuckw@quantumlinux.com>, Chris Wedgwood <reviews@ml.cw.f00f.org>, Michael Krufky <mkrufky@linuxtv.org>, Chuck Ebbert <cebbert@redhat.com>, Domenico Andreoli <cavokz@gmail.com>, akpm@linux-foundation.org, alan@lxorguk.ukuu.org.uk, dm-crypt@saout.de, dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
 
 2.6.23-stable review patch.  If anyone has any objections, please let us know.
 ------------------
-From: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+From: Milan Broz <mbroz@redhat.com>
 
-Patch 512875bd9661368da6f993205a61213b79ba1df0 in mainline.
+patch adfe47702c4726b3e045f9f83178def02833be4c in mainline.
 
-This patch fixes a panic on shrinking a DM device if there is
-outstanding I/O to the part of the device that is being removed.
-(Normally this doesn't happen - a filesystem would be resized first,
-for example.)
+Fix BIO_UPTODATE test for write io.
 
-The bug is that __clone_and_map() assumes dm_table_find_target()
-always returns a valid pointer.  It may fail if a bio arrives from the
-block layer but its target sector is no longer included in the DM
-btree.
-
-This patch appends an empty entry to table->targets[] which will
-be returned by a lookup beyond the end of the device.
-
-After calling dm_table_find_target(), __clone_and_map() and target_message()
-check for this condition using 
-dm_target_is_valid().
-
-Sample test script to trigger oops:
-
-#!/bin/bash
-
-FILE=$(mktemp)
-LODEV=$(losetup -f)
-MAP=$(basename ${FILE})
-SIZE=4M
-
-dd if=/dev/zero of=${FILE} bs=${SIZE} count=1
-losetup ${LODEV} ${FILE}
-
-echo "0 $(blockdev --getsz ${LODEV}) linear ${LODEV} 0" |dmsetup create ${MAP}
-dmsetup suspend ${MAP}
-echo "0 1 linear ${LODEV} 0" |dmsetup load ${MAP}
-dd if=/dev/zero of=/dev/mapper/${MAP} bs=${SIZE} count=1 &
-echo "Wait til dd push some I/O"
-sleep 5
-dmsetup resume ${MAP}
-
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Milan Broz <mbroz@redhat.com>
 Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 Signed-off-by: Greg Kroah-Hartman <gregkh@suse.de>
 
-
 ---
- drivers/md/dm-ioctl.c |   10 +++-------
- drivers/md/dm-table.c |    7 ++++++-
- drivers/md/dm.c       |   24 ++++++++++++++++++------
- drivers/md/dm.h       |    5 +++++
- 4 files changed, 32 insertions(+), 14 deletions(-)
+ drivers/md/dm-crypt.c |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
---- a/drivers/md/dm-ioctl.c
-+++ b/drivers/md/dm-ioctl.c
-@@ -1250,21 +1250,17 @@ static int target_message(struct dm_ioct
- 	if (!table)
- 		goto out_argv;
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -515,6 +515,9 @@ static int crypt_endio(struct bio *clone
+ 	struct crypt_config *cc = io->target->private;
+ 	unsigned read_io = bio_data_dir(clone) == READ;
  
--	if (tmsg->sector >= dm_table_get_size(table)) {
-+	ti = dm_table_find_target(table, tmsg->sector);
-+	if (!dm_target_is_valid(ti)) {
- 		DMWARN("Target message sector outside device.");
- 		r = -EINVAL;
--		goto out_table;
++	if (unlikely(!bio_flagged(clone, BIO_UPTODATE) && !error))
++		error = -EIO;
++
+ 	/*
+ 	 * free the processed pages, even if
+ 	 * it's only a partially completed write
+@@ -529,10 +532,8 @@ static int crypt_endio(struct bio *clone
+ 	if (!read_io)
+ 		goto out;
+ 
+-	if (unlikely(!bio_flagged(clone, BIO_UPTODATE))) {
+-		error = -EIO;
++	if (unlikely(error))
+ 		goto out;
 -	}
--
--	ti = dm_table_find_target(table, tmsg->sector);
--	if (ti->type->message)
-+	} else if (ti->type->message)
- 		r = ti->type->message(ti, argc, argv);
- 	else {
- 		DMWARN("Target type does not support messages");
- 		r = -EINVAL;
- 	}
  
-- out_table:
- 	dm_table_put(table);
-  out_argv:
- 	kfree(argv);
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -187,8 +187,10 @@ static int alloc_targets(struct dm_table
- 
- 	/*
- 	 * Allocate both the target array and offset array at once.
-+	 * Append an empty entry to catch sectors beyond the end of
-+	 * the device.
- 	 */
--	n_highs = (sector_t *) dm_vcalloc(num, sizeof(struct dm_target) +
-+	n_highs = (sector_t *) dm_vcalloc(num + 1, sizeof(struct dm_target) +
- 					  sizeof(sector_t));
- 	if (!n_highs)
- 		return -ENOMEM;
-@@ -862,6 +864,9 @@ struct dm_target *dm_table_get_target(st
- 
- /*
-  * Search the btree for the correct target.
-+ *
-+ * Caller should check returned pointer with dm_target_is_valid()
-+ * to trap I/O beyond end of device.
-  */
- struct dm_target *dm_table_find_target(struct dm_table *t, sector_t sector)
- {
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -663,13 +663,19 @@ static struct bio *clone_bio(struct bio 
- 	return clone;
- }
- 
--static void __clone_and_map(struct clone_info *ci)
-+static int __clone_and_map(struct clone_info *ci)
- {
- 	struct bio *clone, *bio = ci->bio;
--	struct dm_target *ti = dm_table_find_target(ci->map, ci->sector);
--	sector_t len = 0, max = max_io_len(ci->md, ci->sector, ti);
-+	struct dm_target *ti;
-+	sector_t len = 0, max;
- 	struct dm_target_io *tio;
- 
-+	ti = dm_table_find_target(ci->map, ci->sector);
-+	if (!dm_target_is_valid(ti))
-+		return -EIO;
-+
-+	max = max_io_len(ci->md, ci->sector, ti);
-+
- 	/*
- 	 * Allocate a target io object.
- 	 */
-@@ -727,6 +733,9 @@ static void __clone_and_map(struct clone
- 		do {
- 			if (offset) {
- 				ti = dm_table_find_target(ci->map, ci->sector);
-+				if (!dm_target_is_valid(ti))
-+					return -EIO;
-+
- 				max = max_io_len(ci->md, ci->sector, ti);
- 
- 				tio = alloc_tio(ci->md);
-@@ -750,6 +759,8 @@ static void __clone_and_map(struct clone
- 
- 		ci->idx++;
- 	}
-+
-+	return 0;
- }
- 
- /*
-@@ -758,6 +769,7 @@ static void __clone_and_map(struct clone
- static void __split_bio(struct mapped_device *md, struct bio *bio)
- {
- 	struct clone_info ci;
-+	int error = 0;
- 
- 	ci.map = dm_get_table(md);
- 	if (!ci.map) {
-@@ -777,11 +789,11 @@ static void __split_bio(struct mapped_de
- 	ci.idx = bio->bi_idx;
- 
- 	start_io_acct(ci.io);
--	while (ci.sector_count)
--		__clone_and_map(&ci);
-+	while (ci.sector_count && !error)
-+		error = __clone_and_map(&ci);
- 
- 	/* drop the extra reference count */
--	dec_pending(ci.io, 0);
-+	dec_pending(ci.io, error);
- 	dm_table_put(ci.map);
- }
- /*-----------------------------------------------------------------
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -113,6 +113,11 @@ int dm_table_any_congested(struct dm_tab
- void dm_table_unplug_all(struct dm_table *t);
- int dm_table_flush_all(struct dm_table *t);
- 
-+/*
-+ * To check the return value from dm_table_find_target().
-+ */
-+#define dm_target_is_valid(t) ((t)->table)
-+
- /*-----------------------------------------------------------------
-  * A registry of target types.
-  *---------------------------------------------------------------*/
+ 	bio_put(clone);
+ 	io->post_process = 1;
 
 -- 
