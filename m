@@ -1,10 +1,10 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH] dm core: remove dead codes
-Date: Fri, 15 Feb 2008 17:55:05 -0500 (EST)
-Message-ID: <20080215.175505.34761653.k-ueda@ct.jp.nec.com>
+From: Vu Pham <vuhuong@mellanox.com>
+Subject: Crash in dm-mod RHEL5,
+Date: Wed, 06 Feb 2008 17:08:12 -0800
+Message-ID: <47AA59FC.5080604@mellanox.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,79 +17,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+I performed cable pull test and hit this crash in RHEL 5
 
-This patch removes dead codes for the noflush suspend.
-No functional change.
+PID: 2752   TASK: ffff81023d018080  CPU: 3   COMMAND: 
+"multipathd"
+#0 [ffff81022f8efa60] crash_kexec at ffffffff800a959f
+#1 [ffff81022f8efae8] dm_swap_table at ffffffff88363380
+#2 [ffff81022f8efb20] __die at ffffffff80062e9d
+#3 [ffff81022f8efb60] do_page_fault at ffffffff80064827
+#4 [ffff81022f8efb90] physflat_send_IPI_allbutself at 
+ffffffff800765f4
+#5 [ffff81022f8efbf0] __smp_call_function at ffffffff800729b8
+#6 [ffff81022f8efc50] error_exit at ffffffff8005be1d
+    [exception RIP: dm_swap_table+119]
+    RIP: ffffffff88363380  RSP: ffff81022f8efd08  RFLAGS: 
+00010246
+    RAX: 0000000000000000  RBX: ffff81022dced600  RCX: 
+0000000000000000
+    RDX: 0000000000000000  RSI: 000000000740c620  RDI: 
+ffff81021ee28200
+    RBP: 0000000001387b00   R8: 0000000000000003   R9: 
+000000000000003d
+    R10: ffff81022f8efb58  R11: ffff810211681b80  R12: 
+ffff81021ee28200
+    R13: ffff81022dced618  R14: ffff81020171c088  R15: 
+ffffffff8836607e
+    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
+#7 [ffff81022f8efd00] dm_swap_table at ffffffff88363356
+#8 [ffff81022f8efd30] dev_suspend at ffffffff88366181
+#9 [ffff81022f8efd60] ctl_ioctl at ffffffff883669d8
+#10 [ffff81022f8efee0] do_ioctl at ffffffff8003fc73
+#11 [ffff81022f8eff00] vfs_ioctl at ffffffff8002fa45
+#12 [ffff81022f8eff40] sys_ioctl at ffffffff8004a24b
+#13 [ffff81022f8eff80] tracesys at ffffffff8005b2c1
+    RIP: 00000030578c5fd7  RSP: 0000000040052bc8  RFLAGS: 
+00000246
+    RAX: ffffffffffffffda  RBX: ffffffff8005b2c1  RCX: 
+ffffffffffffffff
+    RDX: 000000001868d7e0  RSI: 00000000c138fd06  RDI: 
+0000000000000008
+    RBP: 0000000000000000   R8: 0000003057c0c8da   R9: 
+000000001868d810
+    R10: 0000003057c0c78c  R11: 0000000000000246  R12: 
+0000003057c0c89e
+    R13: 0000000000000000  R14: 0000003057c0c78c  R15: 
+0000000000000000
+    ORIG_RAX: 0000000000000010  CS: 0033  SS: 002b
 
-The dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL) in dm_suspend()
-is never invoked because:
-  - The 'goto flush_and_out' is same as 'goto out', because
-    the 'goto flush_and_out' is called only when '!noflush'
-  - If the 'r && noflush' is true, the interrupt check code above
-    is invoked and 'goto out'
+Have anyone seen this crash before?
 
-The DM_WQ_FLUSH_ALL type is used only in dm_suspend().
-So no need any more.
-
-Should be applied on top of 2.6.25-rc1.
-Please review and apply.
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
----
- drivers/md/dm.c |   14 +-------------
- 1 files changed, 1 insertion(+), 13 deletions(-)
-
-Index: 2.6.25-rc1/drivers/md/dm.c
-===================================================================
---- 2.6.25-rc1.orig/drivers/md/dm.c
-+++ 2.6.25-rc1/drivers/md/dm.c
-@@ -76,7 +76,6 @@ union map_info *dm_get_mapinfo(struct bi
-  */
- struct dm_wq_req {
- 	enum {
--		DM_WQ_FLUSH_ALL,
- 		DM_WQ_FLUSH_DEFERRED,
- 	} type;
- 	struct work_struct work;
-@@ -1340,9 +1339,6 @@ static void dm_wq_work(struct work_struc
- 
- 	down_write(&md->io_lock);
- 	switch (req->type) {
--	case DM_WQ_FLUSH_ALL:
--		__merge_pushback_list(md);
--		/* pass through */
- 	case DM_WQ_FLUSH_DEFERRED:
- 		__flush_deferred_io(md);
- 		break;
-@@ -1472,7 +1468,7 @@ int dm_suspend(struct mapped_device *md,
- 		if (!md->suspended_bdev) {
- 			DMWARN("bdget failed in dm_suspend");
- 			r = -ENOMEM;
--			goto flush_and_out;
-+			goto out;
- 		}
- 
- 		/*
-@@ -1523,14 +1519,6 @@ int dm_suspend(struct mapped_device *md,
- 
- 	set_bit(DMF_SUSPENDED, &md->flags);
- 
--flush_and_out:
--	if (r && noflush)
--		/*
--		 * Because there may be already I/Os in the pushback list,
--		 * flush them before return.
--		 */
--		dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL);
--
- out:
- 	if (r && md->suspended_bdev) {
- 		bdput(md->suspended_bdev);
-
-Thanks,
-Kiyoshi Ueda
+thanks,
+    -vu
