@@ -1,50 +1,33 @@
-From: Luca Berra <bluca@comedia.it>
-Subject: Re: Multipath and getuid_callout issues with HPXP1024disk
-	array
-Date: Thu, 7 Feb 2008 09:39:03 +0100
-Message-ID: <20080207083902.GB7665@percy.comedia.it>
-References: <20080130185024.GA6165@us.ibm.com>
-	<2F1F44D192D1284BAA298E48C1B2A4F90234F14D@exchmail03.ncogroup.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Stefan Richter <stefanr@s5r6.in-berlin.de>
+Subject: no INQUIRY from userspace please (was Re: [PATCH 7/9] scsi_dh: Add
+ support for SDEV_PASSIVE)
+Date: Thu, 07 Feb 2008 11:08:24 +0100
+Message-ID: <47AAD898.30004@s5r6.in-berlin.de>
+References: <20080124003010.18871.84095.sendpatchset@localhost.localdomain> <20080124003203.18871.52040.sendpatchset@localhost.localdomain> <1202151498.3096.84.camel@localhost.localdomain> <1202156151.13537.14.camel@linuxchandra> <1202156914.3096.112.camel@localhost.localdomain> <47A8C14A.3030207@cs.wisc.edu> <20080205215657.GA20963@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F14D@exchmail03.ncogroup.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20080205215657.GA20963@linux.vnet.ibm.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: Mike Christie <michaelc@cs.wisc.edu>, James Bottomley <James.Bottomley@HansenPartnership.com>, sekharan@us.ibm.com, dm-devel@redhat.com, linux-scsi@vger.kernel.org, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Wed, Jan 30, 2008 at 01:56:09PM -0500, Greene, Rick wrote:
->I've been trying to play with using a different command in the
->getuid_callout, but everything I try comes up with "error calling out".
->For example, I wrote my own little shell script that pushes out the same
->scsi_id string, plus some output from a vendor-supplied disk querying
->command, and this is what "multipath -v3" shows for one of the devices
->(they all display similar results):
+Mike Anderson wrote:
+> A number of user apps like lvm scanning that execute media access commands
+> already have filter capability to filter devices that one does not want to
+> scan. Another class of device scanners just use inquiries which are not
+> effected by the passive state (though some could probably use udevinfo and
+> reduce the amount of repeated SCSI inquiries execute on the system.
 
-can you strace the multipath invocation, so maybe we will see if it
-really does execute your callout?
+To expand on this:
 
-I solved a problem similar to yours by using a custom script myself,
-about one year ago for a customer using an xp12000, unfortunately i
-don't have a copy of the script or of the multipath configuration at
-that site.
-
-L.
-
+At least on desktop systems and SOHO server systems, userspace should
+_never_ issue INQUIRY.  There are too many broken firmwares out there
+which assume that there will never be more than one INQUIRY sent.  They
+start to return garbled data or crash if they get a second INQUIRY.
 -- 
-Luca Berra -- bluca@comedia.it
-        Communication Media & Services S.r.l.
- /"\
- \ /     ASCII RIBBON CAMPAIGN
-  X        AGAINST HTML MAIL
- / \
+Stefan Richter
+-=====-==--- --=- --===
+http://arcgraph.de/sr/
