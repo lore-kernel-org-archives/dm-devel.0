@@ -1,65 +1,35 @@
-From: "Greene, Rick" <rick.greene@ncogroup.com>
-Subject: RE: Multipath and getuid_callout issues
-	withHPXP1024diskarray
-Date: Thu, 7 Feb 2008 15:05:30 -0500
-Message-ID: <2F1F44D192D1284BAA298E48C1B2A4F90234F1AA@exchmail03.ncogroup.com>
-References: <20080207195309.GA7566@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Luben Tuikov <ltuikov@yahoo.com>
+Subject: Re: no INQUIRY from userspace please (was Re: [PATCH 7/9] scsi_dh: Add support for SDEV_PASSIVE)
+Date: Thu, 7 Feb 2008 12:42:31 -0800 (PST)
+Message-ID: <157925.90863.qm@web31814.mail.mud.yahoo.com>
+References: <1202396490.3171.8.camel@localhost.localdomain>
+Reply-To: ltuikov@yahoo.com
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20080207195309.GA7566@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1202396490.3171.8.camel@localhost.localdomain>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Stefan Richter <stefanr@s5r6.in-berlin.de>, James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: Mike Anderson <andmike@linux.vnet.ibm.com>, Mike Christie <michaelc@cs.wisc.edu>, sekharan@us.ibm.com, dm-devel@redhat.com, linux-scsi@vger.kernel.org, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-The multipathd, on boot, seems to get some of the devices, but not all.
-To keep the thread clean, can you look for my email dated January 31
-with the subject "Multipath not rebuilding correctly on reboot"?  There
-is a full description there with output files showing the state things
-appear in at a several key points.
+--- On Thu, 2/7/08, James Bottomley <James.Bottomley@HansenPartnership.com> wrote:
+> This is all a tradeoff.  If you want userspace *never* to
+> issue raw SCSI
+> commands like INQUIRY, we're going to have to provide
+> the needed
+> information from the kernel via sysfs ... including VPD
+> strings.  This
+> is something we've always shovelled off into userspace
+> before.
 
-If you can't find that email, I'll resend.
+What if a user-space application client _does_ send an INQUIRY to
+a device anyway?
 
-Thanks,
-Rick
+It would probably be better to preserve application client behaviour
+and simulate/emulate n-th INQUIRY, after the 1st for such broken
+device firmwares that break on any subsequent INQUIRY.  Possibly
+in the LLDD or via blacklisting in the mid-layer.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of malahal@us.ibm.com
-Sent: Thursday, February 07, 2008 2:53 PM
-To: dm-devel@redhat.com
-Subject: Re: [dm-devel] Multipath and getuid_callout issues
-withHPXP1024diskarray
+   Luben
 
-Greene, Rick [rick.greene@ncogroup.com] wrote:
-> Works fine, except for an odd issue at reboot times, for which I've
-got
-> a separate unanswered query out to this list.
-
-Is it possible that your paths were not ready when multipath tried to
-configure your paths as part of the boot process? Will they get
-configured correctly when you restart the rc service (multipathd)?
-If they get configured correctly when you run 'service multipathd
-restart', I would assume that the problem is udev related, and a
-udevsettle in the /etc/init.d/multipathd init script may help!
-
-I am out of ideas and just shooting in the dark! :-)
-
---Malahal.
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
