@@ -1,242 +1,103 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/path_priority pp_alua/Makefile ...
-Date: 7 Feb 2008 22:18:48 -0000
-Message-ID: <20080207221848.23410.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [git pull] device-mapper update for 2.6.25
+Date: Fri, 8 Feb 2008 02:45:32 +0000
+Message-ID: <20080208024532.GC24157@agk.fab.redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763135AbYBHCrX@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Brian Wood <brian.j.wood@intel.com>, Daniel Walker <dwalker@mvista.com>, Herbert Xu <herbert@gondor.apana.org.au>, Jonathan Brassow <jbrassow@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>, Paul Jimenez <pj@place.org>, "Robert P. J. Day" <rpjday@crashcourse.ca>, Vasily Averin <vvs@sw.ru>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-02-07 22:18:47
+Please pull from:
 
-Modified files:
-	path_priority/pp_alua: Makefile 
-	path_priority/pp_balance_units: Makefile 
-	path_priority/pp_emc: Makefile 
-	path_priority/pp_hds_modular: Makefile 
-	path_priority/pp_netapp: Makefile 
-	path_priority/pp_rdac: Makefile 
-	path_priority/pp_tpc: Makefile 
+  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git
 
-Log message:
-	Fix for bz 428338.  Now all of multipath's non-static callouts are just links
-	to the static ones. This fixes lockups that were happening when access to the
-	root filesystem was lost for devices that needed priority callouts.
+to get the following device-mapper update for 2.6.25:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_balance_units/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.2&r2=1.2.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_emc/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.4.2.2&r2=1.4.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_hds_modular/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.2&r2=1.2.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_netapp/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.5&r2=1.2.2.6
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_rdac/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.2&r2=1.1.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_tpc/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1.2.2&r2=1.1.2.3
+Alasdair G Kergon (5):
+      dm: mark function lists static
+      dm ioctl: remove lock_kernel
+      dm: targets no longer experimental
+      dm mpath: add missing static
+      dm crypt: move queue functions
 
---- multipath-tools/path_priority/pp_alua/Makefile	2007/06/15 21:03:13	1.5.2.2
-+++ multipath-tools/path_priority/pp_alua/Makefile	2008/02/07 22:18:46	1.5.2.3
-@@ -30,15 +30,14 @@
- all: $(BUILD)
- 
- glibc:	$(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 
- install: $(BUILD) $(EXEC).8
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
--	$(INSTALL) -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
-+	$(INSTALL) -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
- 	$(INSTALL) -m 644 $(EXEC).8 $(DESTDIR)$(mandir)/$(EXEC).8
- 
- uninstall:
-@@ -47,7 +46,7 @@
- 	rm $(DESTDIR)$(mandir)/$(EXEC).8
- 
- clean:	
--	rm -f *.o *.gz $(EXEC) $(EXEC).static
-+	rm -f *.o *.gz $(EXEC).static
- 
- main.o:	main.c rtpg.h spc3.h
- 
---- multipath-tools/path_priority/pp_balance_units/Makefile	2007/06/15 21:03:14	1.2.2.2
-+++ multipath-tools/path_priority/pp_balance_units/Makefile	2008/02/07 22:18:46	1.2.2.3
-@@ -25,7 +25,6 @@
- 	rm -f core *.o *.gz
- 
- glibc: prepare $(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc: prepare $(OBJS)
-@@ -36,12 +35,12 @@
- 
- install:
- 	install -d $(DESTDIR)$(bindir)
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
--	install -s -m 755 $(EXEC) $(DESTDIR)$(bindir)/
-+	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
- 
- uninstall:
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
- 	rm $(DESTDIR)$(bindir)/$(EXEC).static
- 
- clean:
--	rm -f core *.o $(EXEC) $(EXEC).static *.gz
-+	rm -f core *.o $(EXEC).static *.gz
---- multipath-tools/path_priority/pp_emc/Makefile	2007/06/15 21:03:14	1.4.2.2
-+++ multipath-tools/path_priority/pp_emc/Makefile	2008/02/07 22:18:46	1.4.2.3
-@@ -8,21 +8,21 @@
- all: $(BUILD)
- 
- glibc:	$(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 
--install: $(EXEC)
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
--	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
-+install: $(BUILD)
-+	install -d $(DESTDIR)$(bindir)
-+	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
- 
- uninstall:
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
- 	rm $(DESTDIR)$(bindir)/$(EXEC).static
- clean:	
--	rm -f *.o $(EXEC) $(EXEC).static
-+	rm -f *.o $(EXEC).static
- 
- %.o:	%.c
- 	$(CC) $(CFLAGS) -c -o $@ $<
---- multipath-tools/path_priority/pp_hds_modular/Makefile	2007/06/15 21:03:14	1.2.2.2
-+++ multipath-tools/path_priority/pp_hds_modular/Makefile	2008/02/07 22:18:46	1.2.2.3
-@@ -8,18 +8,18 @@
- all: $(BUILD)
- 
- glibc:	$(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 
--install: $(EXEC)
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
--	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
-+install: $(BUILD)
-+	install -d $(DESTDIR)$(bindir)
-+	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
- 
- uninstall:
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
- 	rm $(DESTDIR)$(bindir)/$(EXEC).static
- clean:	
--	rm -f *.o $(EXEC) $(EXEC).static
-+	rm -f *.o $(EXEC).static
---- multipath-tools/path_priority/pp_netapp/Makefile	2007/12/03 23:11:51	1.2.2.5
-+++ multipath-tools/path_priority/pp_netapp/Makefile	2008/02/07 22:18:46	1.2.2.6
-@@ -8,16 +8,16 @@
- all: $(BUILD)
- 
- glibc:	$(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 
--install: $(EXEC)
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
--	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
--	ln -sf $(EXEC) $(DESTDIR)$(bindir)/mpath_prio_netapp
-+install: $(BUILD)
-+	install -d $(DESTDIR)$(bindir)
-+	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/mpath_prio_netapp
- 	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/mpath_prio_netapp.static
- 
- uninstall:
-@@ -27,4 +27,4 @@
- 	rm $(DESTDIR)$(bindir)/mpath_prio_netapp.static
- 
- clean:	
--	rm -f *.o $(EXEC) $(EXEC).static
-+	rm -f *.o $(EXEC).static
---- multipath-tools/path_priority/pp_rdac/Attic/Makefile	2007/06/15 21:03:14	1.1.2.2
-+++ multipath-tools/path_priority/pp_rdac/Attic/Makefile	2008/02/07 22:18:47	1.1.2.3
-@@ -8,22 +8,22 @@
- all: $(BUILD)
- 
- glibc:	$(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 
--install: $(EXEC)
--	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+install: $(BUILD)
-+	install -d $(DESTDIR)$(bindir)
-+	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
- 
- uninstall:
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
- 	rm $(DESTDIR)$(bindir)/$(EXEC).static
- 
- clean:
--	rm -f *.o $(EXEC) $(EXEC).static
-+	rm -f *.o $(EXEC).static
- 
- %.o:	%.c
- 	$(CC) $(CFLAGS) -c -o $@ $<
---- multipath-tools/path_priority/pp_tpc/Makefile	2007/06/15 21:03:14	1.1.2.2
-+++ multipath-tools/path_priority/pp_tpc/Makefile	2008/02/07 22:18:47	1.1.2.3
-@@ -8,18 +8,18 @@
- all: $(BUILD)
- 
- glibc:	$(OBJS)
--	$(CC) -o $(EXEC) $(OBJS) $(LDFLAGS)
- 	$(CC) -static -o $(EXEC).static $(OBJS) $(LDFLAGS)
- 
- klibc:	$(OBJS)
- 	$(CC) -static -o $(EXEC) $(OBJS)
- 
--install: $(EXEC)
--	[ -f $(EXEC).static ] && install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
--	install -m 755 $(EXEC) $(DESTDIR)$(bindir)/$(EXEC)
-+install: $(BUILD)
-+	install -d $(DESTDIR)$(bindir)
-+	install -m 755 $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC).static
-+	ln -sf $(EXEC).static $(DESTDIR)$(bindir)/$(EXEC)
- 
- uninstall:
- 	rm $(DESTDIR)$(bindir)/$(EXEC)
- 	rm $(DESTDIR)$(bindir)/$(EXEC).static
- clean:	
--	rm -f *.o $(EXEC) $(EXEC).static
-+	rm -f *.o $(EXEC).static
+Andrew Morton (3):
+      dm snapshot: use uninitialized_var
+      dm: table use uninitialized_var
+      dm ioctl: use uninitialized_var
+
+Brian Wood (2):
+      dm: stripe trigger event on failure
+      dm: stripe enhanced status return
+
+Daniel Walker (1):
+      dm: convert suspend_lock semaphore to mutex
+
+Jonathan Brassow (6):
+      dm log: auto load modules
+      dm raid1: handle write failures
+      dm raid1: handle recovery failures
+      dm raid1: fix EIO after log failure
+      dm raid1: handle read failures
+      dm raid1: report fault status
+
+Jun'ichi Nomura (1):
+      dm: table remove unused total
+
+Milan Broz (23):
+      dm: add missing memory barrier to dm_suspend
+      dm ioctl: move compat code
+      dm: tidy alloc_dev labels
+      dm: refactor deferred bio_list processing
+      dm: tidy dm_suspend
+      dm: split dm_suspend io_lock hold into two
+      dm: refactor dm_suspend completion wait
+      dm crypt: move convert_context inside dm_crypt_io
+      dm crypt: remove unnecessary crypt_context write parm
+      dm crypt: move error setting outside crypt_dec_pending
+      dm crypt: tidy crypt_endio
+      dm crypt: adjust io processing functions
+      dm crypt: store sector mapping in dm_crypt_io
+      dm crypt: abstract crypt_write_done
+      dm crypt: introduce crypt_write_io_loop
+      dm crypt: tidy io ref counting
+      dm crypt: extract scatterlist processing
+      dm crypt: add async request mempool
+      dm crypt: add completion for async
+      dm crypt: prepare async callback fn
+      dm crypt: use async crypto
+      dm: move deferred bio flushing to workqueue
+      dm snapshot: combine consecutive exceptions in memory
+
+Paul Jimenez (1):
+      dm: table use list_for_each
+
+Robert P. J. Day (1):
+      dm snapshot: use rounddown_pow_of_two
+
+Vasily Averin (1):
+      dm: table remove unused variable
+
+ drivers/md/Kconfig              |   24 +-
+ drivers/md/dm-crypt.c           |  486 +++++++++++++++++++----------
+ drivers/md/dm-exception-store.c |    2 +-
+ drivers/md/dm-ioctl.c           |   32 ++-
+ drivers/md/dm-log.c             |   51 +++-
+ drivers/md/dm-mpath.c           |    2 +-
+ drivers/md/dm-raid1.c           |  664 +++++++++++++++++++++++++++++++++-----
+ drivers/md/dm-snap.c            |   95 ++++--
+ drivers/md/dm-snap.h            |   50 +++-
+ drivers/md/dm-stripe.c          |  105 ++++++-
+ drivers/md/dm-table.c           |   20 +-
+ drivers/md/dm.c                 |  238 +++++++++------
+ fs/compat_ioctl.c               |   34 --
+ include/linux/device-mapper.h   |   18 +-
+ include/linux/dm-ioctl.h        |   34 +--
+ 15 files changed, 1372 insertions(+), 483 deletions(-)
+
+Alasdair
+-- 
+agk@redhat.com
