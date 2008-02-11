@@ -1,31 +1,122 @@
-From: Matthew Wilcox <matthew@wil.cx>
-Subject: Re: [PATCH 7/9] scsi_dh: Add support for SDEV_PASSIVE
-Date: Sat, 9 Feb 2008 05:45:11 -0700
-Message-ID: <20080209124511.GB28967@parisc-linux.org>
-References: <20080124003010.18871.84095.sendpatchset@localhost.localdomain> <20080124003203.18871.52040.sendpatchset@localhost.localdomain> <1202151498.3096.84.camel@localhost.localdomain> <1202156151.13537.14.camel@linuxchandra> <1202156914.3096.112.camel@localhost.localdomain> <1202159970.13537.19.camel@linuxchandra>
+From: Ritesh Raj Sarraf <rrs@researchut.com>
+Subject: [TAKE 2] Document queue_if_no_path behavior
+Date: Mon, 11 Feb 2008 20:09:42 +0530
+Message-ID: <200802112009.47308.rrs@researchut.com>
+Reply-To: Ritesh Raj Sarraf <rrs@researchut.com>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1202159970.13537.19.camel@linuxchandra>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Chandra Seetharaman <sekharan@us.ibm.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org, Mike Anderson <andmike@us.ibm.com>, michaelc@cs.wisc.edu, jens.axboe@oracle.com
+Content-Type: multipart/mixed; boundary="===============1323422654=="
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: rsarraf@netapp.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 04, 2008 at 01:19:30PM -0800, Chandra Seetharaman wrote:
-> The device does send these error messages currently, but it takes some
-> time to get the check condition back, which adds up the time to boot
-> especially when the # of LUNS is huge.
-> 
-> For example, in my test configuration, I had 40 luns, and the time
-> difference (with this patch and without it) to boot is 171 seconds and
-> 1426 seconds.
+--===============1323422654==
+Content-Type: multipart/signed; boundary="nextPart7970004.QUL9VOczJG";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
 
-Was that with sync or async SCSI bus scanning?
+--nextPart7970004.QUL9VOczJG
+Content-Type: multipart/mixed;
+  boundary="Boundary-01=_v4FsHPbz+c85xMd"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
--- 
-Intel are signing my paycheques ... these opinions are still mine
-"Bill, look, we understand that you're interested in selling us this
-operating system, but compare it to ours.  We can't possibly take such
-a retrograde step."
+--Boundary-01=_v4FsHPbz+c85xMd
+Content-Type: text/plain;
+  charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
+
+Hi Ben/Others,
+
+As discussed at:
+https://bugzilla.redhat.com/show_bug.cgi?id=3D419581
+
+Can we see it into the man pages ?
+
+Ritesh
+=2D-=20
+Ritesh Raj Sarraf
+RESEARCHUT - http://www.researchut.com
+"Necessity is the mother of invention."
+
+--Boundary-01=_v4FsHPbz+c85xMd
+Content-Type: text/x-diff; charset="us-ascii";
+	name="0001-Document-queue_if_no_path-behavior.patch"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: attachment;
+	filename="0001-Document-queue_if_no_path-behavior.patch"
+
+=46rom 6098672f9f22ad60dcab1fd46682b88b390d307c Mon Sep 17 00:00:00 2001
+=46rom: Ritesh Raj Sarraf <rrs@researchut.com>
+Date: Wed, 19 Dec 2007 00:50:22 +0530
+Subject: [PATCH] Document queue_if_no_path behavior
+
+Document the queue_if_no_path behavior in situations where
+all the paths to the LUN go offline.
+
+Signed-off-by: Ritesh Raj Sarraf <rrs@researchut.com>
+=2D--
+ multipath/multipath.conf.5 |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
+
+diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
+index c8ab6b0..c66d7fc 100644
+=2D-- a/multipath/multipath.conf.5
++++ b/multipath/multipath.conf.5
+@@ -374,6 +374,15 @@ section:
+ .RE
+ .PD
+ .LP
++.SH "KNOWN ISSUES"
++The usage of
++.B queue_if_no_path
++option can lead to
++.B D state
++processes being hung and not killable in situations where all the paths to=
+ the LUN go offline.
++It is advisable to use the
++.B no_path_retry
++option instead.
+ .SH "SEE ALSO"
+ .BR udev (8),
+ .BR dmsetup (8)
+=2D-=20
+1.5.3.8
+
+
+--Boundary-01=_v4FsHPbz+c85xMd--
+
+--nextPart7970004.QUL9VOczJG
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQBHsF4z4Rhi6gTxMLwRAudRAKCDw/YzEf1G6QwrdN1J3P/B/uxFIQCfeyEU
+SJjogpGVTu1V9D64KgRBA8A=
+=gWF4
+-----END PGP SIGNATURE-----
+
+--nextPart7970004.QUL9VOczJG--
+
+
+--===============1323422654==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1323422654==--
