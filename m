@@ -1,16 +1,16 @@
-From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
-Subject: RE: How to Resize Partition
-Date: Tue, 12 Feb 2008 11:08:41 -0500
-Message-ID: <1D80D4F6D179BD4D869FE807A5BF8336018C6C00@EXCNYSM0A1AN.nysemail.nyenet>
-References: <342d47870802120730h324dff50ic68f58a2fc20a98@mail.gmail.com>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: Multipath not rebuilding correctly on reboot
+Date: Tue, 12 Feb 2008 09:42:08 -0800
+Message-ID: <110b17190802120942u70700712oa38aabfba4a0172c@mail.gmail.com>
+References: <2F1F44D192D1284BAA298E48C1B2A4F90234F16E@exchmail03.ncogroup.com>
+	<2F1F44D192D1284BAA298E48C1B2A4F90234F1C3@exchmail03.ncogroup.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Class: urn:content-classes:message
-In-Reply-To: <342d47870802120730h324dff50ic68f58a2fc20a98@mail.gmail.com>
+In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F1C3@exchmail03.ncogroup.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,60 +23,71 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Maybe you're confusing the /san filesystem size with its partition's new
-size?
-Assuming the /san fs is ext2 or ext3, make the old /san fs aware of its
-partition's enlarged size by doing these:
-umount /san
-e2fsck -f  /dev/mapper/mpath0p1
-resize2fs /dev/mapper/mpath0p1
-mount /dev/mapper/mpath0p1 /san
-df -h /san
+Could you also share your multipath.conf file.
 
+Regards,
+Pradipmaya.
 
---------------------------------------------------------
-This e-mail, including any attachments, may be confidential, privileged o=
-r otherwise legally protected. It is intended only for the addressee. If =
-you received this e-mail in error or from someone who was not authorized =
-to send it to you, do not disseminate, copy or otherwise use this e-mail =
-or its attachments.  Please notify the sender immediately by reply e-mail=
- and delete the e-mail from your system.
-
-
------Original Message-----
-
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Scott Moseman
-Sent: Tuesday, February 12, 2008 10:31 AM
-To: device-mapper development
-Subject: [dm-devel] How to Resize Partition
-
-This is the original size of my partition, 50GB...
-
-# df -h | grep mpath
-/dev/mapper/mpath0p1   50G  2.1G   45G   5% /san
-
-I increased it to 60GB and am trying to resize.  Through my
-troubleshooting and various attempts, I've increased /dev/sdb1 (NIC),
-/dev/sdc1 (HBA) and /dev/mapper/mpath0p1 (MPIO).
-
-Disk /dev/sdb: 64.4 GB, 64424509440 bytes
-/dev/sdb1               1       61440    62914544   83  Linux
-
-Disk /dev/sdc: 64.4 GB, 64424509440 bytes
-/dev/sdc1               1       61440    62914544   83  Linux
-
-Disk /dev/mapper/mpath0: 64.4 GB, 64424509440 bytes
-/dev/mapper/mpath0p1               1       61440    62914544   83  Linux
-
-I unmount/mount, reboot, etc and the mounted partition keeps showing
-up as 50GB.  How do I get my additional 10GB?  This is on a CentOS 4.5
-server.
-
-Thanks,
-Scott
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+2008/2/12 Greene, Rick <rick.greene@ncogroup.com>:
+> I never saw any response on this, though a side comment on my other
+> thread did get one query that I tried to direct to here, so I figured
+> I'd repost and see if anyone had any ideas.
+>
+> Re-attaching the original docs as well.
+>
+> Thanks in advance,
+> Rick
+>
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of Greene, Rick
+> Sent: Thursday, January 31, 2008 3:20 PM
+> To: device-mapper development
+> Subject: [dm-devel] Multipath not rebuilding correctly on reboot
+>
+> Now that I seem to have multipath and my XP 1024 working together, I've
+> found a new issue.  Someone recently had a similar thread going, but I
+> saw no ultimate resolution.
+>
+> My problem is that when I reboot my server, the multipath configuration
+> is not coming back the way it was before.  I moved the two external
+> tools I use to find the UID into /etc (they had bin in /usr/bin and
+> /sbin), updated the multipath.conf file (and one of the scripts) to
+> reflect this, but odd things are still happening.
+>
+> Attached is initial_view.txt, which shows what multipath is coming up
+> with when I do the commands shown (the bulk of the file is multipath -v3
+> output, but at the bottom of the file is a multipath -ll output as
+> well).  It (seems to) correctly shows that I have 4 disks, each visible
+> via two separate paths.
+>
+> After I reboot, however, I get different results.  Once it showed 4
+> paths for mpath0, and 2 paths for mpath1, 2, and 3.  Next time it
+> correctly showed mpath0, mpath1, and mpath3, but didn't show mpath2 at
+> all.  On the next attempt I got everything correct, and the very next
+> one only showed mpath0 and mpath1.
+>
+> The post_reboot.txt file shows the contents of the /var/log/boot.log
+> file and the output of the dmesg command, along with the "multipath -ll"
+> view from the most recent reboot.
+>
+> I then manually did a "multipath -v2" and the missing two paths then
+> came back.  The file manual_run.txt shows those results plus the updated
+> "multipath -ll".
+>
+> Do I need to just make my own /etc/init.d script to do a "multipath -v2"
+> at the end of booting to make sure it all gets covered, along with the
+> requisite LVM & mount commands to get the VG that is on these disks
+> working right?
+>
+> Thanks in advance,
+> Rick
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
