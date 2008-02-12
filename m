@@ -1,16 +1,14 @@
-From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: Re: Multipath not rebuilding correctly on reboot
-Date: Tue, 12 Feb 2008 09:42:08 -0800
-Message-ID: <110b17190802120942u70700712oa38aabfba4a0172c@mail.gmail.com>
-References: <2F1F44D192D1284BAA298E48C1B2A4F90234F16E@exchmail03.ncogroup.com>
-	<2F1F44D192D1284BAA298E48C1B2A4F90234F1C3@exchmail03.ncogroup.com>
+From: "Greene, Rick" <rick.greene@ncogroup.com>
+Subject: RE: Multipath not rebuilding correctly on reboot
+Date: Tue, 12 Feb 2008 13:00:32 -0500
+Message-ID: <2F1F44D192D1284BAA298E48C1B2A4F90234F1CB@exchmail03.ncogroup.com>
+References: <110b17190802120942u70700712oa38aabfba4a0172c@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C86DA1.2927A7FC"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F1C3@exchmail03.ncogroup.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
+In-Reply-To: <110b17190802120942u70700712oa38aabfba4a0172c@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,71 +21,119 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C86DA1.2927A7FC
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Attached
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Pradipmaya Maharana
+Sent: Tuesday, February 12, 2008 12:42 PM
+To: device-mapper development
+Subject: Re: [dm-devel] Multipath not rebuilding correctly on reboot
+
 Could you also share your multipath.conf file.
 
 Regards,
 Pradipmaya.
 
-2008/2/12 Greene, Rick <rick.greene@ncogroup.com>:
-> I never saw any response on this, though a side comment on my other
-> thread did get one query that I tried to direct to here, so I figured
-> I'd repost and see if anyone had any ideas.
->
-> Re-attaching the original docs as well.
->
-> Thanks in advance,
-> Rick
->
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of Greene, Rick
-> Sent: Thursday, January 31, 2008 3:20 PM
-> To: device-mapper development
-> Subject: [dm-devel] Multipath not rebuilding correctly on reboot
->
-> Now that I seem to have multipath and my XP 1024 working together, I've
-> found a new issue.  Someone recently had a similar thread going, but I
-> saw no ultimate resolution.
->
-> My problem is that when I reboot my server, the multipath configuration
-> is not coming back the way it was before.  I moved the two external
-> tools I use to find the UID into /etc (they had bin in /usr/bin and
-> /sbin), updated the multipath.conf file (and one of the scripts) to
-> reflect this, but odd things are still happening.
->
-> Attached is initial_view.txt, which shows what multipath is coming up
-> with when I do the commands shown (the bulk of the file is multipath -v3
-> output, but at the bottom of the file is a multipath -ll output as
-> well).  It (seems to) correctly shows that I have 4 disks, each visible
-> via two separate paths.
->
-> After I reboot, however, I get different results.  Once it showed 4
-> paths for mpath0, and 2 paths for mpath1, 2, and 3.  Next time it
-> correctly showed mpath0, mpath1, and mpath3, but didn't show mpath2 at
-> all.  On the next attempt I got everything correct, and the very next
-> one only showed mpath0 and mpath1.
->
-> The post_reboot.txt file shows the contents of the /var/log/boot.log
-> file and the output of the dmesg command, along with the "multipath -ll"
-> view from the most recent reboot.
->
-> I then manually did a "multipath -v2" and the missing two paths then
-> came back.  The file manual_run.txt shows those results plus the updated
-> "multipath -ll".
->
-> Do I need to just make my own /etc/init.d script to do a "multipath -v2"
-> at the end of booting to make sure it all gets covered, along with the
-> requisite LVM & mount commands to get the VG that is on these disks
-> working right?
->
-> Thanks in advance,
-> Rick
->
->
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+------_=_NextPart_001_01C86DA1.2927A7FC
+Content-Type: application/octet-stream;
+	name="multipath.conf"
+Content-Transfer-Encoding: base64
+Content-Description: multipath.conf
+Content-Disposition: attachment;
+	filename="multipath.conf"
+
+IyBUaGlzIGlzIGFuIGV4YW1wbGUgY29uZmlndXJhdGlvbiBmaWxlIGZvciBkZXZpY2UgbWFwcGVy
+IG11bHRpcGF0aC4NCiMgRm9yIGEgY29tcGxldGUgbGlzdCBvZiB0aGUgZGVmYXVsdCBjb25maWd1
+cmF0aW9uIHZhbHVlcywgc2VlDQojIC91c3Ivc2hhcmUvZG9jL2RldmljZS1tYXBwZXItbXVsdGlw
+YXRoLTAuNC41L211bHRpcGF0aC5jb25mLmRlZmF1bHRzDQojIEZvciBhIGxpc3Qgb2YgY29uZmln
+dXJhdGlvbiBvcHRpb25zIHdpdGggZGVzY3JpcHRpb25zLCBzZWUNCiMgL3Vzci9zaGFyZS9kb2Mv
+ZGV2aWNlLW1hcHBlci1tdWx0aXBhdGgtMC40LjUvbXVsdGlwYXRoLmNvbmYuYW5ub3RhdGVkDQoN
+Cg0KIyBCbGFja2xpc3QgYWxsIGRldmljZXMgYnkgZGVmYXVsdC4gUmVtb3ZlIHRoaXMgdG8gZW5h
+YmxlIG11bHRpcGF0aGluZw0KIyBvbiB0aGUgZGVmYXVsdCBkZXZpY2VzLg0KI2Rldm5vZGVfYmxh
+Y2tsaXN0IHsNCiMgICAgICAgIGRldm5vZGUgIioiDQojfQ0KDQojIyBVc2UgdXNlciBmcmllbmRs
+eSBuYW1lcywgaW5zdGVhZCBvZiB1c2luZyBXV0lEcyBhcyBuYW1lcy4NCmRlZmF1bHRzIHsNCiAg
+ICAgICAgdXNlcl9mcmllbmRseV9uYW1lcyB5ZXMNCn0NCg0KDQojIyBCeSBkZWZhdWx0LCBkZXZp
+Y2VzIHdpdGggdmVuZG9yID0gIklCTSIgYW5kIHByb2R1Y3QgPSAiUy8zOTAuKiIgYXJlDQojIyBi
+bGFja2xpc3RlZC4gVG8gZW5hYmxlIG11bGl0cGF0aGluZyBvbiB0aGVzZSBkZXZpZXMsIHVuY29t
+bWVudCB0aGUNCiMjIGZvbGxvd2luZyBsaW5lcy4NCiNkZXZpY2VzIHsNCiMgICAgICAgZGV2aWNl
+IHsNCiMgICAgICAgICAgICAgICB2ZW5kb3IgICAgICAgICAgICAgICAgICAiSUJNIg0KIyAgICAg
+ICAgICAgICAgIHByb2R1Y3QgICAgICAgICAgICAgICAgICJTLzM5MCBEQVNEIEVDS0QiDQojICAg
+ICAgICAgICAgICAgcGF0aF9ncm91cGluZ19wb2xpY3kgICAgbXVsdGlidXMNCiMgICAgICAgICAg
+ICAgICBnZXR1aWRfY2FsbG91dCAgICAgICAgICAiL3NiaW4vZGFzZHZpZXcgLWogL2Rldi8lbiIN
+CiMgICAgICAgICAgICAgICBwYXRoX2NoZWNrZXIgICAgICAgICAgICBkaXJlY3Rpbw0KIyAgICAg
+ICB9DQojfQ0KDQoNCiMjDQojIyBUaGlzIGlzIGEgdGVtcGxhdGUgbXVsdGlwYXRoLXRvb2xzIGNv
+bmZpZ3VyYXRpb24gZmlsZQ0KIyMgVW5jb21tZW50IHRoZSBsaW5lcyByZWxldmVudCB0byB5b3Vy
+IGVudmlyb25tZW50DQojIw0KIyAgICAgICBwYXRoX2dyb3VwaW5nX3BvbGljeSAgICBtdWx0aWJ1
+cw0KIyAgICAgICBnZXR1aWRfY2FsbG91dCAgICAgICAgICAiL3NiaW4vc2NzaV9pZCAtZyAtdSAt
+cCAweDgzIC1zIC9ibG9jay8lbiINCmRlZmF1bHRzIHsNCiAgICAgICAgdWRldl9kaXIgICAgICAg
+ICAgICAgICAgL2Rldg0KICAgICAgICBwb2xsaW5nX2ludGVydmFsICAgICAgICAxMA0KICAgICAg
+ICBzZWxlY3RvciAgICAgICAgICAgICAgICAicm91bmQtcm9iaW4gMCINCiAgICAgICAgcGF0aF9n
+cm91cGluZ19wb2xpY3kgICAgZmFpbG92ZXINCiAgICAgICAgZ2V0dWlkX2NhbGxvdXQgICAgICAg
+ICAgIi9zYmluL3Njc2lfaWQgLWcgLXUgLXMgL2Jsb2NrLyVuIg0KIyAgICAgICBnZXR1aWRfY2Fs
+bG91dCAgICAgICAgICAiL2V0Yy94cGRpc2sgJW4iDQogICAgICAgIHByaW9fY2FsbG91dCAgICAg
+ICAgICAgIC9iaW4vdHJ1ZQ0KICAgICAgICBwYXRoX2NoZWNrZXIgICAgICAgICAgICByZWFkc2Vj
+dG9yMA0KICAgICAgICBycl9taW5faW8gICAgICAgICAgICAgICAxMDANCiAgICAgICAgcnJfd2Vp
+Z2h0ICAgICAgICAgICAgICAgcHJpb3JpdGllcw0KICAgICAgICBmYWlsYmFjayAgICAgICAgICAg
+ICAgICBpbW1lZGlhdGUNCiAgICAgICAgbm9fcGF0aF9yZXRyeSAgICAgICAgICAgZmFpbA0KICAg
+ICAgICB1c2VyX2ZyaWVuZGx5X25hbWUgICAgICB5ZXMNCn0NCiMjDQojIyBUaGUgd3dpZCBsaW5l
+IGluIHRoZSBmb2xsb3dpbmcgYmxhY2tsaXN0IHNlY3Rpb24gaXMgc2hvd24gYXMgYW4gZXhhbXBs
+ZQ0KIyMgb2YgaG93IHRvIGJsYWNrbGlzdCBkZXZpY2VzIGJ5IHd3aWQuICBUaGUgMyBkZXZub2Rl
+IGxpbmVzIGFyZSB0aGUNCiMjIGNvbXBpbGVkIGluIGRlZmF1bHQgYmxhY2tsaXN0LiBJZiB5b3Ug
+d2FudCB0byBibGFja2xpc3QgZW50aXJlIHR5cGVzDQojIyBvZiBkZXZpY2VzLCBzdWNoIGFzIGFs
+bCBzY3NpIGRldmljZXMsIHlvdSBzaG91bGQgdXNlIGEgZGV2bm9kZSBsaW5lLg0KIyMgSG93ZXZl
+ciwgaWYgeW91IHdhbnQgdG8gYmxhY2tsaXN0IHNwZWNpZmljIGRldmljZXMsIHlvdSBzaG91bGQg
+dXNlDQojIyBhIHd3aWQgbGluZS4gIFNpbmNlIHRoZXJlIGlzIG5vIGd1YXJhbnRlZSB0aGF0IGEg
+c3BlY2lmaWMgZGV2aWNlIHdpbGwNCiMjIG5vdCBjaGFuZ2UgbmFtZXMgb24gcmVib290IChmcm9t
+IC9kZXYvc2RhIHRvIC9kZXYvc2RiIGZvciBleGFtcGxlKQ0KIyMgZGV2bm9kZSBsaW5lcyBhcmUg
+bm90IHJlY29tbWVuZGVkIGZvciBibGFja2xpc3Rpbmcgc3BlY2lmaWMgZGV2aWNlcy4NCiMjDQpk
+ZXZub2RlX2JsYWNrbGlzdCB7DQogICAgICAgIHd3aWQgMjYzNTM5MDBmMDI3OTY3NjkNCiAgICAg
+ICAgZGV2bm9kZSAiXihyYW18cmF3fGxvb3B8ZmR8bWR8ZG0tfHNyfHNjZHxzdClbMC05XSoiDQog
+ICAgICAgIGRldm5vZGUgIl5oZFthLXpdIg0KICAgICAgICBkZXZub2RlICJeY2Npc3MhY1swLTld
+ZFswLTldKiINCn0NCiNtdWx0aXBhdGhzIHsNCiMgICAgICAgbXVsdGlwYXRoIHsNCiMgICAgICAg
+ICAgICAgICB3d2lkICAgICAgICAgICAgICAgICAgICAzNjAwNTA4YjQwMDAxNTZkNzAwMDEyMDAw
+MDAwYjAwMDANCiMgICAgICAgICAgICAgICBhbGlhcyAgICAgICAgICAgICAgICAgICB5ZWxsb3cN
+CiMgICAgICAgICAgICAgICBwYXRoX2dyb3VwaW5nX3BvbGljeSAgICBtdWx0aWJ1cw0KIyAgICAg
+ICAgICAgICAgIHBhdGhfY2hlY2tlciAgICAgICAgICAgIHJlYWRzZWN0b3IwDQojICAgICAgICAg
+ICAgICAgcGF0aF9zZWxlY3RvciAgICAgICAgICAgInJvdW5kLXJvYmluIDAiDQojICAgICAgICAg
+ICAgICAgZmFpbGJhY2sgICAgICAgICAgICAgICAgbWFudWFsDQojICAgICAgICAgICAgICAgcnJf
+d2VpZ2h0ICAgICAgICAgICAgICAgcHJpb3JpdGllcw0KIyAgICAgICAgICAgICAgIG5vX3BhdGhf
+cmV0cnkgICAgICAgICAgIDUNCiMgICAgICAgfQ0KIyAgICAgICBtdWx0aXBhdGggew0KIyAgICAg
+ICAgICAgICAgIHd3aWQgICAgICAgICAgICAgICAgICAgIDFERUNfX19fXzMyMTgxNjc1ODQ3NA0K
+IyAgICAgICAgICAgICAgIGFsaWFzICAgICAgICAgICAgICAgICAgIHJlZA0KIyAgICAgICB9DQoj
+fQ0KDQpkZXZpY2VzIHsNCiAgICAgICAgZGV2aWNlIHsNCiAgICAgICAgICAgICAgICB2ZW5kb3Ig
+ICAgICAgICAgICAgICAgICAie0hJVEFDSEl8SFB8MEhQfFNIUH0iDQogICAgICAgICAgICAgICAg
+cHJvZHVjdCAgICAgICAgICAgICAgICAgIk9QRU4tKiINCiAgICAgICAgICAgICAgICBnZXR1aWRf
+Y2FsbG91dCAgICAgICAgICAiL2V0Yy94cGRpc2sgJW4iDQogICAgICAgICAgICAgICAgcGF0aF9n
+cm91cGluZ19wb2xpY3kgICAgbXVsdGlidXMNCiAgICAgICAgICAgICAgICBwYXRoX2NoZWNrZXIg
+ICAgICAgICAgICB0dXINCiAgICAgICAgfQ0KfQ0KDQojZGV2aWNlcyB7DQojICAgICAgIGRldmlj
+ZSB7DQojICAgICAgICAgICAgICAgdmVuZG9yICAgICAgICAgICAgICAgICAgIkNPTVBBUSAgIg0K
+IyAgICAgICAgICAgICAgIHByb2R1Y3QgICAgICAgICAgICAgICAgICJIU1YxMTAgKEMpQ09NUEFR
+Ig0KIyAgICAgICAgICAgICAgIHBhdGhfZ3JvdXBpbmdfcG9saWN5ICAgIG11bHRpYnVzDQojICAg
+ICAgICAgICAgICAgZ2V0dWlkX2NhbGxvdXQgICAgICAgICAgIi9zYmluL3Njc2lfaWQgLWcgLXUg
+LXMgL2Jsb2NrLyVuIg0KIyAgICAgICAgICAgICAgIHBhdGhfY2hlY2tlciAgICAgICAgICAgIHJl
+YWRzZWN0b3IwDQojICAgICAgICAgICAgICAgcGF0aF9zZWxlY3RvciAgICAgICAgICAgInJvdW5k
+LXJvYmluIDAiDQojICAgICAgICAgICAgICAgaGFyZHdhcmVfaGFuZGxlciAgICAgICAgIjAiDQoj
+ICAgICAgICAgICAgICAgZmFpbGJhY2sgICAgICAgICAgICAgICAgMTUNCiMgICAgICAgICAgICAg
+ICBycl93ZWlnaHQgICAgICAgICAgICAgICBwcmlvcml0aWVzDQojICAgICAgICAgICAgICAgbm9f
+cGF0aF9yZXRyeSAgICAgICAgICAgcXVldWUNCiMgICAgICAgfQ0KIyAgICAgICBkZXZpY2Ugew0K
+IyAgICAgICAgICAgICAgIHZlbmRvciAgICAgICAgICAgICAgICAgICJDT01QQVEgICINCiMgICAg
+ICAgICAgICAgICBwcm9kdWN0ICAgICAgICAgICAgICAgICAiTVNBMTAwMCAgICAgICAgICINCiMg
+ICAgICAgICAgICAgICBwYXRoX2dyb3VwaW5nX3BvbGljeSAgICBtdWx0aWJ1cw0KIyAgICAgICB9
+DQojfQ0K
+
+------_=_NextPart_001_01C86DA1.2927A7FC
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+------_=_NextPart_001_01C86DA1.2927A7FC--
