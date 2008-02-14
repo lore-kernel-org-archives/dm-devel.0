@@ -1,18 +1,14 @@
-From: "S. J. van Harmelen" <svh@dds.nl>
-Subject: Re: Multipath-tools not seeing replaced RAID controller
-Date: Thu, 14 Feb 2008 09:04:38 +0100
-Message-ID: <1202976278.5919.7.camel@localhost>
-References: <200709241706.26322.npf-mlists@eurotux.com>
-	<46F8A29F.6060803@suse.de>  <200709250852.08464.npf@eurotux.com>
-	<1191345214.5831.2.camel@linuxchandra>
-	<1202940553.6733.7.camel@localhost>
-	<1202952602.13537.148.camel@linuxchandra>
+From: Jim Meyering <jim@meyering.net>
+Subject: [PATCH] Remove redundant if-before-free tests.
+Date: Thu, 14 Feb 2008 14:26:28 +0100
+Message-ID: <87lk5nhdob.fsf@rho.meyering.net>
+References: <871w7fit3o.fsf@rho.meyering.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1202952602.13537.148.camel@linuxchandra>
+In-Reply-To: <871w7fit3o.fsf@rho.meyering.net> (Jim Meyering's message of
+	"Thu, 14 Feb 2008 14:07:55 +0100")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,49 +18,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com
+To: LVM2 development <lvm-devel@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Chandra,
+[as I just wrote to lvm-devel:
+  http://www.redhat.com/archives/lvm-devel/2008-February/msg00017.html ]
 
-Your absolutely the best :) It works like a charm!! Thanks a lot...
+Jim Meyering <jim@meyering.net> wrote:
+> Since "free (NULL);" is universally safe these days, I propose
+> to remove all of lvm's redundant "if-before-free" tests.
+> If no one objects, I'll commit it tonight.
+>
+> In case you need more justification than "POSIX requires it",
+> (understandable, that :-), the following was enough for Wine
+> development a year and a half ago:
+>
+>     http://www.winehq.org/pipermail/wine-patches/2006-October/031544.html
+>
+> Sure, the extra test is not a big deal, but removing it does make the
+> code slightly smaller, and maybe even more readable (people won't wonder
+> about the test of such a pointer, when they know that free can handle
+> a NULL pointer).
 
-Sander
+Same for dm, but here there are only 3:
 
+---
+ dmeventd/old/dmevent.c               |    6 ++----
+ multilog/pthread_lock/pthread_lock.c |    3 +--
+ 2 files changed, 3 insertions(+), 6 deletions(-)
 
-On Wed, 2008-02-13 at 17:30 -0800, Chandra Seetharaman wrote:
-> On Wed, 2008-02-13 at 23:09 +0100, S. J. van Harmelen wrote:
-> > Hi Chandra,
-> > 
-> > I hope you can answer this question, but of course I'll be very happy if
-> > anyone on this list can answer my question.
-> > 
-> > I just replaced a faulty RAID controller in an MD3000 enclosure. Now
-> > after enabling it, I can't see it in the multipath driver (mutlipath
-> > -ll). Not even after restarting the multipath-tools (version 0.4.8)...
-> > 
-> > So what should I restart so that it sees the new controller? I rather
-> > not restart the host if possible...
-> > 
-> 
-> Do you see the disks ? (doing a lsscsi would show it). I guess not.
-> 
-> If not, you need to probe/hotplug the disks first
-> 
-> ho,
-> # echo "- - -" > /sys/class/scsi_host/host${host_no}/scan
->   ## the three -'s are for wildcards for channel, id and LUN.
-> 
-> If you don't know the "host_no", do it on for all the hosts under
-> scsi_host, it will not harm anything.
-> 
-> If you have multipathd running when you run the "echo" above you would
-> see all the dm devices when it completes (or soon thereafter).
-> 
-> You don't need to reboot the server.
-> 
-> > Thanks!!
-> > 
-> > Sander
-> > 
+diff --git a/dmeventd/old/dmevent.c b/dmeventd/old/dmevent.c
+index 6e9eb46..5d80410 100644
+--- a/dmeventd/old/dmevent.c
++++ b/dmeventd/old/dmevent.c
+@@ -220,10 +220,8 @@ int main(int argc, char **argv)
+    out:
+ 	multilog_del_type(standard);
+
+-	if (device)
+-		free(device);
+-	if (dso_name)
+-		free(dso_name);
++	free(device);
++	free(dso_name);
+
+ 	exit(ret);
+ }
+diff --git a/multilog/pthread_lock/pthread_lock.c b/multilog/pthread_lock/pthread_lock.c
+index b782301..c52050b 100644
+--- a/multilog/pthread_lock/pthread_lock.c
++++ b/multilog/pthread_lock/pthread_lock.c
+@@ -62,7 +62,6 @@ int unlock_fn(void *handle)
+ void destroy_locking(void *handle)
+ {
+         pthread_mutex_t *mutex = (pthread_mutex_t *)handle;
+-	if(mutex)
+-		free(mutex);
++	free(mutex);
+ }
+
+--
+1.5.4.1.98.gf3293
