@@ -1,11 +1,11 @@
-From: Ladislav Michnovic <lmichnovic@suse.cz>
-Subject: Probably broken device mapper in latest vanilla	kernel
-Date: Tue, 12 Feb 2008 12:52:10 +0100
-Message-ID: <47B1886A.2010308@suse.cz>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH] dm core: remove dead codes
+Date: Fri, 15 Feb 2008 17:55:05 -0500 (EST)
+Message-ID: <20080215.175505.34761653.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,35 +17,79 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Hi Alasdair,
 
-Hello.
+This patch removes dead codes for the noflush suspend.
+No functional change.
 
-I tried latest vanilla kernel 2.6.25_rc1 on the friend's notebook. The
-root partition is set on LVM and this kernel don't see it when booting.
-It doesn't creates /dev/mapper directory. The device mapper is probably
-broken in that kernel. The machine boots seamlessly with the latest
-2.6.24 kernel.
+The dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL) in dm_suspend()
+is never invoked because:
+  - The 'goto flush_and_out' is same as 'goto out', because
+    the 'goto flush_and_out' is called only when '!noflush'
+  - If the 'r && noflush' is true, the interrupt check code above
+    is invoked and 'goto out'
 
-- --
- Best Regards Ladislav Michnovi=C4=8D.
+The DM_WQ_FLUSH_ALL type is used only in dm_suspend().
+So no need any more.
 
-Package Maintainer
-- -----------------------------------------------------------------------
-SUSE LINUX, s.r.o.                         e-mail: lmichnovic@suse.cz
-Lihovarsk=C3=A1 1060/12                         tel: +420 284 028 950
-190 00 Prague 9                            fax: +420 284 028 951
-Czech Republic                             http://www.suse.cz/
-Key fingerprint:
-FF0B B0B7 7AFD D5FB 7A72 8B09 9035 2A8A 9AC3 D35A
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.4-svn0 (GNU/Linux)
-Comment: Using GnuPG with SUSE - http://enigmail.mozdev.org
+Should be applied on top of 2.6.25-rc1.
+Please review and apply.
 
-iD8DBQFHsYhqkDUqiprD01oRAk7qAJ0XG/ueSUPoiDP1YptYXbr/yBwynACeLTmw
-6WA265bgU5uJ0+SXO1Zkaz0=3D
-=3Dsr2P
------END PGP SIGNATURE-----
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+---
+ drivers/md/dm.c |   14 +-------------
+ 1 files changed, 1 insertion(+), 13 deletions(-)
+
+Index: 2.6.25-rc1/drivers/md/dm.c
+===================================================================
+--- 2.6.25-rc1.orig/drivers/md/dm.c
++++ 2.6.25-rc1/drivers/md/dm.c
+@@ -76,7 +76,6 @@ union map_info *dm_get_mapinfo(struct bi
+  */
+ struct dm_wq_req {
+ 	enum {
+-		DM_WQ_FLUSH_ALL,
+ 		DM_WQ_FLUSH_DEFERRED,
+ 	} type;
+ 	struct work_struct work;
+@@ -1340,9 +1339,6 @@ static void dm_wq_work(struct work_struc
+ 
+ 	down_write(&md->io_lock);
+ 	switch (req->type) {
+-	case DM_WQ_FLUSH_ALL:
+-		__merge_pushback_list(md);
+-		/* pass through */
+ 	case DM_WQ_FLUSH_DEFERRED:
+ 		__flush_deferred_io(md);
+ 		break;
+@@ -1472,7 +1468,7 @@ int dm_suspend(struct mapped_device *md,
+ 		if (!md->suspended_bdev) {
+ 			DMWARN("bdget failed in dm_suspend");
+ 			r = -ENOMEM;
+-			goto flush_and_out;
++			goto out;
+ 		}
+ 
+ 		/*
+@@ -1523,14 +1519,6 @@ int dm_suspend(struct mapped_device *md,
+ 
+ 	set_bit(DMF_SUSPENDED, &md->flags);
+ 
+-flush_and_out:
+-	if (r && noflush)
+-		/*
+-		 * Because there may be already I/Os in the pushback list,
+-		 * flush them before return.
+-		 */
+-		dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL);
+-
+ out:
+ 	if (r && md->suspended_bdev) {
+ 		bdput(md->suspended_bdev);
+
+Thanks,
+Kiyoshi Ueda
