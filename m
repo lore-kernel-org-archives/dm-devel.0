@@ -1,18 +1,9 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH] Implement barrier support for single
-	device DM devices
-Date: Fri, 15 Feb 2008 14:12:29 +0000
-Message-ID: <20080215141229.GB1788@agk.fab.redhat.com>
-References: <20080215120821.GA8267@basil.nowhere.org>
-	<20080215122002.GM29914@agk.fab.redhat.com>
-	<47B58EAA.8040405@msgid.tls.msk.ru>
-	<20080215142010.GA29552@one.firstfloor.org>
+From: meyering@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmeventd/old/dmevent ...
+Date: 15 Feb 2008 14:14:59 -0000
+Message-ID: <20080215141459.1832.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080215142010.GA29552@one.firstfloor.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,23 +13,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, Michael Tokarev <mjt@tls.msk.ru>, Andi Kleen <andi@firstfloor.org>, linux-kernel@vger.kernel.org
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 15, 2008 at 03:20:10PM +0100, Andi Kleen wrote:
-> On Fri, Feb 15, 2008 at 04:07:54PM +0300, Michael Tokarev wrote:
-> > I wonder if it's worth the effort to try to implement this.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	meyering@sourceware.org	2008-02-15 14:14:58
 
-My personal view (which seems to be in the minority) is that it's a
-waste of our development time *except* in the (rare?) cases similar to
-the ones Andi is talking about.
+Modified files:
+	.              : WHATS_NEW 
+	dmeventd/old   : dmevent.c 
+	multilog/pthread_lock: pthread_lock.c 
 
-But the decision has already been made for us in the block layer: 
-dm is now pretty much required to support (zero-length) barriers.
-Unfortunately we didn't get this finished in time for 2.6.25, but we
-intend to get it done for 2.6.26:  Woe betide any callers today that
-don't handle EOPNOTSUPP!
+Log message:
+	Remove redundant if-before-free tests.
 
-Alasdair
--- 
-agk@redhat.com
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.224&r2=1.225
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/old/dmevent.c.diff?cvsroot=dm&r1=1.1&r2=1.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/multilog/pthread_lock/pthread_lock.c.diff?cvsroot=dm&r1=1.3&r2=1.4
+
+--- device-mapper/WHATS_NEW	2008/01/20 01:14:38	1.224
++++ device-mapper/WHATS_NEW	2008/02/15 14:14:58	1.225
+@@ -1,5 +1,6 @@
+ Version 1.02.25 - 
+ ====================================
++  Remove redundant if-before-free tests.
+   Use log_warn for reporting field help text instead of log_print.
+   Change cluster mirror log type name (s/clustered_/clustered-/)
+ 
+@@ -35,7 +36,7 @@
+ Version 1.02.21 - 13th July 2007
+ ================================
+   Introduce _LOG_STDERR to send log_warn() messages to stderr not stdout.
+-  Fix dmsetup -o devno string termination. (1.02.20) 
++  Fix dmsetup -o devno string termination. (1.02.20)
+ 
+ Version 1.02.20 - 15th June 2007
+ ================================
+@@ -323,4 +324,3 @@
+   Fixed DESTDIR for make install/install_static_lib.
+   Updated README/INSTALL to reflect move to sources.redhat.com.
+   Updated autoconf files to 2003-06-17.
+-
+--- device-mapper/dmeventd/old/dmevent.c	2005/12/02 15:39:16	1.1
++++ device-mapper/dmeventd/old/dmevent.c	2008/02/15 14:14:58	1.2
+@@ -220,10 +220,8 @@
+    out:
+ 	multilog_del_type(standard);
+ 
+-	if (device)
+-		free(device);
+-	if (dso_name)
+-		free(dso_name);
++	free(device);
++	free(dso_name);
+ 
+ 	exit(ret);
+ }
+--- device-mapper/multilog/pthread_lock/pthread_lock.c	2007/08/21 16:26:07	1.3
++++ device-mapper/multilog/pthread_lock/pthread_lock.c	2008/02/15 14:14:58	1.4
+@@ -62,7 +62,6 @@
+ void destroy_locking(void *handle)
+ {
+         pthread_mutex_t *mutex = (pthread_mutex_t *)handle;
+-	if(mutex)
+-		free(mutex);
++	free(mutex);
+ }
+ 
