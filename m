@@ -1,44 +1,145 @@
-From: Randy Seamans <r.seamans@yahoo.com>
-Subject: dm-userspace
-Date: Thu, 14 Feb 2008 21:35:40 -0800 (PST)
-Message-ID: <953210.62731.qm@web45614.mail.sp1.yahoo.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: [PATCH] Implement barrier support for single device DM devices
+Date: Fri, 15 Feb 2008 13:08:21 +0100
+Message-ID: <20080215120821.GA8267@basil.nowhere.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933565AbYBOMIg@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+Implement barrier support for single device DM devices
 
-I need dm-userspace a recent linux kernel.=20
+This patch implements barrier support in DM for the common case of dm linear
+just remapping a single underlying device. In this case we can safely
+pass the barrier through because there can be no reordering between
+devices.
 
-<warning - am new to linux kernel builds, although an
-experience developer >=20
+Signed-off-by: Andi Kleen <ak@suse.de>
 
-Right now I have fedora 8 building 2.6.23.14....
+---
+ drivers/md/dm-linear.c |    1 +
+ drivers/md/dm-table.c  |   27 ++++++++++++++++++++++++++-
+ drivers/md/dm.c        |   14 ++++----------
+ drivers/md/dm.h        |    2 ++
+ 4 files changed, 33 insertions(+), 11 deletions(-)
 
-I don't believe the changes required to support
-dm-userspace are in device-mapper tree for this --- is
-this true?
-
-Any help for a semi-newbie?
-
-
-
-
-
-      ___________________________________________________________________=
-_________________
-Be a better friend, newshound, and=20
-know-it-all with Yahoo! Mobile.  Try it now.  http://mobile.yahoo.com/;_y=
-lt=3DAhu06i62sR8HDtDypao8Wcj9tAcJ=20
+Index: linux/drivers/md/dm-table.c
+===================================================================
+--- linux.orig/drivers/md/dm-table.c
++++ linux/drivers/md/dm-table.c
+@@ -38,6 +38,9 @@ struct dm_table {
+ 	sector_t *highs;
+ 	struct dm_target *targets;
+ 
++	unsigned single_device : 1;
++	unsigned barrier_supported : 1;
++
+ 	/*
+ 	 * Indicates the rw permissions for the new logical
+ 	 * device.  This should be a combination of FMODE_READ
+@@ -584,12 +587,21 @@ EXPORT_SYMBOL_GPL(dm_set_device_limits);
+ int dm_get_device(struct dm_target *ti, const char *path, sector_t start,
+ 		  sector_t len, int mode, struct dm_dev **result)
+ {
+-	int r = __table_get_device(ti->table, ti, path,
++	struct dm_table *t = ti->table;
++	int r = __table_get_device(t, ti, path,
+ 				   start, len, mode, result);
+ 
+ 	if (!r)
+ 		dm_set_device_limits(ti, (*result)->bdev);
+ 
++	if (!r) {
++		/* Only got single device? */
++		if (t->devices.next->next == &t->devices)
++			t->single_device = 1;
++		else
++			t->single_device = 0;
++	}
++
+ 	return r;
+ }
+ 
+@@ -1023,6 +1035,16 @@ struct mapped_device *dm_table_get_md(st
+ 	return t->md;
+ }
+ 
++int dm_table_barrier_ok(struct dm_table *t)
++{
++	return t->single_device && t->barrier_supported;
++}
++
++void dm_table_support_barrier(struct dm_table *t)
++{
++	t->barrier_supported = 1;
++}
++
+ EXPORT_SYMBOL(dm_vcalloc);
+ EXPORT_SYMBOL(dm_get_device);
+ EXPORT_SYMBOL(dm_put_device);
+@@ -1033,3 +1055,5 @@ EXPORT_SYMBOL(dm_table_get_md);
+ EXPORT_SYMBOL(dm_table_put);
+ EXPORT_SYMBOL(dm_table_get);
+ EXPORT_SYMBOL(dm_table_unplug_all);
++EXPORT_SYMBOL(dm_table_barrier_ok);
++EXPORT_SYMBOL(dm_table_support_barrier);
+Index: linux/drivers/md/dm.c
+===================================================================
+--- linux.orig/drivers/md/dm.c
++++ linux/drivers/md/dm.c
+@@ -801,7 +801,10 @@ static int __split_bio(struct mapped_dev
+ 	ci.map = dm_get_table(md);
+ 	if (unlikely(!ci.map))
+ 		return -EIO;
+-
++	if (unlikely(bio_barrier(bio) && !dm_table_barrier_ok(ci.map))) {
++		bio_endio(bio, -EOPNOTSUPP);
++		return 0;
++	}
+ 	ci.md = md;
+ 	ci.bio = bio;
+ 	ci.io = alloc_io(md);
+@@ -837,15 +840,6 @@ static int dm_request(struct request_que
+ 	int rw = bio_data_dir(bio);
+ 	struct mapped_device *md = q->queuedata;
+ 
+-	/*
+-	 * There is no use in forwarding any barrier request since we can't
+-	 * guarantee it is (or can be) handled by the targets correctly.
+-	 */
+-	if (unlikely(bio_barrier(bio))) {
+-		bio_endio(bio, -EOPNOTSUPP);
+-		return 0;
+-	}
+-
+ 	down_read(&md->io_lock);
+ 
+ 	disk_stat_inc(dm_disk(md), ios[rw]);
+Index: linux/drivers/md/dm.h
+===================================================================
+--- linux.orig/drivers/md/dm.h
++++ linux/drivers/md/dm.h
+@@ -116,6 +116,8 @@ void dm_table_unplug_all(struct dm_table
+  * To check the return value from dm_table_find_target().
+  */
+ #define dm_target_is_valid(t) ((t)->table)
++int dm_table_barrier_ok(struct dm_table *t);
++void dm_table_support_barrier(struct dm_table *t);
+ 
+ /*-----------------------------------------------------------------
+  * A registry of target types.
+Index: linux/drivers/md/dm-linear.c
+===================================================================
+--- linux.orig/drivers/md/dm-linear.c
++++ linux/drivers/md/dm-linear.c
+@@ -52,6 +52,7 @@ static int linear_ctr(struct dm_target *
+ 		ti->error = "dm-linear: Device lookup failed";
+ 		goto bad;
+ 	}
++	dm_table_support_barrier(ti->table);
+ 
+ 	ti->private = lc;
+ 	return 0;
