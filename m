@@ -1,96 +1,110 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath errors on first set-up
-Date: Fri, 15 Feb 2008 14:19:30 -0600
-Message-ID: <20080215201930.GG15608@ether.msp.redhat.com>
-References: <DFB2D7E03264FB4392B70A38BFF9FC7101FFB4C3@BRBSEVS20000.s2.ms.unilever.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [RFC PATCH 0/3] request stacking and request-based dm-multipath
+Date: Fri, 15 Feb 2008 17:26:31 -0500 (EST)
+Message-ID: <20080215.172631.85413800.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <DFB2D7E03264FB4392B70A38BFF9FC7101FFB4C3@BRBSEVS20000.s2.ms.unilever.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: jens.axboe@oracle.com, linux-kernel@vger.kernel.org
+Cc: linux-scsi@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com
 List-Id: dm-devel.ids
 
-On Fri, Feb 15, 2008 at 04:22:07PM -0000, Rogan, Julian wrote:
->    Hi,
->    I am using multipath for the first time with little joy.
+Hi Jens, list,
 
-<snip>
- 
->    based on some other documents I made the following changes to
->    /etc/multipath.conf
+I'm working on device-mapper multipath (dm-multipath) and trying to
+move its layer down below the I/O scheduler so that dm-multipath can
+make better multipathing decision.
+(This is subjected as request-based dm-multipath.)
 
-You can probably leave the entire /etc/multipath.conf commented out.
-Everything should just autodetect correctly.
- 
->    I ran
->    multipath -v3 to recreate I get the following:
+On that design, dm-multipath treats and submits struct request to
+underlying devices instead of struct bio.
+So requests are stacked while currently dm and md are stacking bios.
 
-<snip>
+The following 3 patches are implementation of the request stacking
+framework.
+  1/3: add rq->complete_io hook for request stacking
+  2/3: move block-layer internal request completion to kblockd
+  3/3: export driver's busy state and an example of scsi
 
->    device-mapper ioctl cmd 14 failed: Invalid argument
->    message 3600508b300930230a7495ae1b9500074 0 switch_group 1
->    failed
-> 
->    Note sure if "path sdX not found in pathvec" relevant
+The first 2 patches enable request stacking.
+The last 1 patch is necessary to avoid a performance problem,
+that requests are sent down too early while the underlying device
+is busy.
 
-No, that's supposed to be there.
- 
->    anyway no mpaths have been created.
-> 
->    I hope there is someone out there who can give me some help with this.
+I also attach the patch-set of request-based dm-multipath
+as appendix to show how the request stacking interfaces are used.
+(With this version of the patch-set, request-based dm-multipath
+ works without userspace (multipath-tools and libdevmapper) change.)
 
-No chance you can update to a more recent version of RHEL4?
+This patch-set should be applied on top of 2.6.25-rc1.
 
-The device-mapper message means the command you send to device-mapper
-didn't work.  However, it looks completely sensible.  What version
-of device-mapper are you using?
+Although I'm planning to discuss this topic in the Storage Workshop, too,
+any comments and feedbacks in advance are very appreciated and helpful.
 
-# rpm -q device-mapper
 
-I'm guessing that you will see something like
-device-mapper-1.01.04-1.0.RHEL4
+Below is the explanation about needs and details of the request stacking
+patches.
 
-device-mapper-multipath-0.4.5-6.0.RHEL4 needs
-device-mapper-1.02.*
+SUMMARY
+=======
+Request-based dm-multipath needs this patch-set to hook in before
+completing each chunk of request, check errors for it and retry it
+using another path if error is detected.
 
-Look at things from my side, it definitely seems like RHEL 4.2 says it
-uses device-mapper-1.01, which doesn't make any sense, since
-device-mapper-multipath-0.4.5-6.0.RHEL4 was definitely compiled against
-device-mapper-1.02, and I don't believe that the can both 1.01 and 1.02
-can coexist on a system.
 
-The easy solution is to upgrade to at least RHEL 4.3
+BACKGROUND
+==========
+The patch-set, which adds the rq->complete_io() hook, is necessary
+to allow device stacking at request level, that is request-based
+device-mapper multipath.
+Currently, device-mapper is implemented as a stacking block device
+at BIO level.  OTOH, request-based dm will stack at request level
+for better multipathing decision.
+To stack devices at request level, the completion procedure needs
+a hook for it.
+For example, dm-multipath has to check errors and retry with other
+paths if necessary before returning the I/O result to the upper layer.
+struct request has 'end_io' hook currently.  But it's called at
+the very late stage of completion handling where the I/O result
+is already returned to the upper layer.
+So we need something here.
 
-If that's impossible, you can try to upgrade device-mapper to
-device-mapper-1.02.02-1.0.RHEL4 or later.  This might cause all sorts of
-dependancy issues. It may be easier to downgrade device-mapper-multipath
-to device-mapper-multipath-0.4.5-5.2.RHEL4
+The first approach to hook in completion of each chunk of request
+was adding a new rq->end_io_first() hook and calling it on the top
+of __end_that_request_first().
+  - http://marc.info/?l=linux-kernel&m=116656637425880&w=2
+  - http://marc.info/?l=linux-scsi&m=115520444515914&w=2
+However, Jens pointed out that redesigning rq->end_io() as a full
+completion handler would be better:
 
-I'm not sure why this incompatibility exists now, since it obviously
-didn't when RHEL 4.2 was originally released. My best guess is that
-device-mapper-multipath-0.4.5-6.0.RHEL4 didn't really get released
-until RHEL 4.3, but that's just a guess.
+On Thu, 21 Dec 2006 08:49:47 +0100, Jens Axboe wrote:
+> Ok, I see what you are getting at. The current ->end_io() is called when
+> the request has fully completed, you want notification for each chunk
+> potentially completed.
+>
+> I think a better design here would be to use ->end_io() as the full
+> completion handler, similar to how bio->bi_end_io() works. A request
+> originating from __make_request() would set something ala:
+.....
+> instead of calling the functions manually. That would allow you to get
+> notification right at the beginning and do what you need, without adding
+> a special hook for this.
 
-Of course, if you already have device-mapper-1.02.* on your system, and
-are still seeing these issues, then something else is going on.
+I thought his comment was reasonable, and I modified the patches
+based on his suggestion:
+  - http://marc.info/?l=linux-kernel&m=118860086901958&w=2
 
--Ben
+But the patch was ugly.
+After considering the patch, I come to think changing the role
+of ->end_io() is not feasible.
+The role of ->end_io() is a destructor, and current users only
+want to do something at the destruction of struct request, don't
+want to do other works like data completion.
+So I think it's reasonable to add another hook for request stacking.
+(or rename the current ->end_io() to ->dtor() and make ->end_io()
+ a request stacking hook.)
 
->    with regards,
->    Julian Rogan
-
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Thanks,
+Kiyoshi Ueda
