@@ -1,73 +1,44 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH] dm core: remove dead codes
-Date: Mon, 18 Feb 2008 15:45:38 -0500 (EST)
-Message-ID: <20080218.154538.71086906.k-ueda@ct.jp.nec.com>
-References: <20080215.175505.34761653.k-ueda@ct.jp.nec.com>
-	<20080218122148.GI1788@agk.fab.redhat.com>
-	<20080218123403.GJ1788@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [dm-devel] Re: [PATCH] Implement barrier support for single device DM devices
+Date: Tue, 19 Feb 2008 09:16:44 +1100
+Message-ID: <20080218221644.GN155407@sgi.com>
+References: <20080215120821.GA8267@basil.nowhere.org> <20080215122002.GM29914@agk.fab.redhat.com> <47B58EAA.8040405@msgid.tls.msk.ru> <20080215142010.GA29552@one.firstfloor.org> <20080215141229.GB1788@agk.fab.redhat.com> <47B97E87.6040209@emc.com> <47B9870B.8060005@msgid.tls.msk.ru>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080218123403.GJ1788@agk.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, agk@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761836AbYBRWRT@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <47B9870B.8060005@msgid.tls.msk.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Michael Tokarev <mjt@tls.msk.ru>
+Cc: Ric Wheeler <ric@emc.com>, device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+On Mon, Feb 18, 2008 at 04:24:27PM +0300, Michael Tokarev wrote:
+> First, I still don't understand why in God's sake barriers are "working"
+> while regular cache flushes are not.  Almost no consumer-grade hard drive
+> supports write barriers, but they all support regular cache flushes, and
+> the latter should be enough (while not the most speed-optimal) to ensure
+> data safety.  Why to require write cache disable (like in XFS FAQ) instead
+> of going the flush-cache-when-appropriate (as opposed to write-barrier-
+> when-appropriate) way?
 
-On Mon, 18 Feb 2008 12:34:03 +0000, Alasdair G Kergon wrote:
-> On Mon, Feb 18, 2008 at 12:21:48PM +0000, Alasdair G Kergon wrote:
-> > On Fri, Feb 15, 2008 at 05:55:05PM -0500, Kiyoshi Ueda wrote:
-> > > This patch removes dead codes for the noflush suspend.
-> > I've been sent (unfinished) patches for 2.6.26 (or even 2.6.25 if people
-> > consider the reinstatement of flushing support important enough) that
-> > build on this one.
->  
-> That was ambiguous:-(  I meant that code has only just got added to the
-> kernel and there are patches waiting to be finished that use it - it's
-> not dead code.
+Devil's advocate:
 
-You mean that the DM_WQ_FLUSH_ALL will be used, but the code
-in dm_suspend() below won't be used, right?
+Why should we need to support multiple different block layer APIs
+to do the same thing? Surely any hardware that doesn't support barrier
+operations can emulate them with cache flushes when they receive a
+barrier I/O from the filesystem....
 
-If so, I'd like to remove only that part, since nobody won't run
-the 'flush_and_out' part.
-Is it OK for you?
+Also, given that disabling the write cache still allows CTQ/NCQ to
+operate effectively and that in most cases WCD+CTQ is as fast as
+WCE+barriers, the simplest thing to do is turn off volatile write
+caches and not require any extra software kludges for safe
+operation.
 
-> @@ -1472,7 +1468,7 @@ int dm_suspend(struct mapped_device *md,
->  		if (!md->suspended_bdev) {
->  			DMWARN("bdget failed in dm_suspend");
->  			r = -ENOMEM;
-> -			goto flush_and_out;
-> +			goto out;
->  		}
->  
->  		/*
-> @@ -1523,14 +1519,6 @@ int dm_suspend(struct mapped_device *md,
->  
->  	set_bit(DMF_SUSPENDED, &md->flags);
->  
-> -flush_and_out:
-> -	if (r && noflush)
-> -		/*
-> -		 * Because there may be already I/Os in the pushback list,
-> -		 * flush them before return.
-> -		 */
-> -		dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL);
-> -
->  out:
->  	if (r && md->suspended_bdev) {
->  		bdput(md->suspended_bdev);
+Cheers,
 
-Thanks,
-Kiyoshi Ueda
+Dave.
+-- 
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
