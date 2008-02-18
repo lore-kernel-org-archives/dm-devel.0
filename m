@@ -1,44 +1,34 @@
-From: David Chinner <dgc@sgi.com>
-Subject: Re: [dm-devel] Re: [PATCH] Implement barrier support for single device DM devices
-Date: Tue, 19 Feb 2008 09:16:44 +1100
-Message-ID: <20080218221644.GN155407@sgi.com>
-References: <20080215120821.GA8267@basil.nowhere.org> <20080215122002.GM29914@agk.fab.redhat.com> <47B58EAA.8040405@msgid.tls.msk.ru> <20080215142010.GA29552@one.firstfloor.org> <20080215141229.GB1788@agk.fab.redhat.com> <47B97E87.6040209@emc.com> <47B9870B.8060005@msgid.tls.msk.ru>
+From: malahal@us.ibm.com
+Subject: Re: Multipath not rebuilding correctly on reboot
+Date: Mon, 18 Feb 2008 14:20:14 -0800
+Message-ID: <20080218222014.GA26319@us.ibm.com>
+References: <20080217074708.GA17721@us.ibm.com>
+	<2F1F44D192D1284BAA298E48C1B2A4F90234F1FC@exchmail03.ncogroup.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761836AbYBRWRT@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <47B9870B.8060005@msgid.tls.msk.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Michael Tokarev <mjt@tls.msk.ru>
-Cc: Ric Wheeler <ric@emc.com>, device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, linux-kernel@vger.kernel.org
+In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F1FC@exchmail03.ncogroup.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Feb 18, 2008 at 04:24:27PM +0300, Michael Tokarev wrote:
-> First, I still don't understand why in God's sake barriers are "working"
-> while regular cache flushes are not.  Almost no consumer-grade hard drive
-> supports write barriers, but they all support regular cache flushes, and
-> the latter should be enough (while not the most speed-optimal) to ensure
-> data safety.  Why to require write cache disable (like in XFS FAQ) instead
-> of going the flush-cache-when-appropriate (as opposed to write-barrier-
-> when-appropriate) way?
+Greene, Rick [rick.greene@ncogroup.com] wrote:
+> Quick question...what RPM would I find udevsettle in? Doesn't appear to
+> be installed on my system (RedHat Enterprise Linux 4), nor can I find
+> reference to it on RedHat's site.
 
-Devil's advocate:
+Part of udev rpm (udev-085-30.37) on my system (SLES10 SP1). Maybe RHEL4
+has an older version of udev that lacks udevsettle. That explains why
+they used a "sleep"!
 
-Why should we need to support multiple different block layer APIs
-to do the same thing? Surely any hardware that doesn't support barrier
-operations can emulate them with cache flushes when they receive a
-barrier I/O from the filesystem....
-
-Also, given that disabling the write cache still allows CTQ/NCQ to
-operate effectively and that in most cases WCD+CTQ is as fast as
-WCE+barriers, the simplest thing to do is turn off volatile write
-caches and not require any extra software kludges for safe
-operation.
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-Principal Engineer
-SGI Australian Software Group
+--Malahal.
