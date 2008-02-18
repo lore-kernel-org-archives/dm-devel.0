@@ -1,11 +1,10 @@
-From: Chuck Lever <chuck.lever@oracle.com>
-Subject: 2.6.25-rc1 patch prevents booting on LVM-based devices
-Date: Wed, 20 Feb 2008 10:50:01 -0500
-Message-ID: <0EF16AFF-CC50-424A-84FF-3E477FB9645B@oracle.com>
+From: "Derek Sherlock" <derek@sherlockmail.com>
+Subject: Permissions of node files created by device-mapper
+Date: Sun, 17 Feb 2008 17:10:00 -0700
+Message-ID: <13033e750802171610g8e7c0a9sa7225dfa1f7e470e@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v753)
-Content-Type: text/plain; charset=US-ASCII; delsp=yes; format=flowed
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============1687367697=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -19,55 +18,45 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello-
+--===============1687367697==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_2373_30503030.1203293400138"
 
-I've got a Fedora 8 x86 test system that uses LVM volumes for all  
-it's file systems except /boot.  After commit bdc80787, 2.6.24+  
-doesn't boot on this system -- the LVM volume scan during start-up  
-can no longer find any physical volumes on the system.
+------=_Part_2373_30503030.1203293400138
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I'm not sure whether this is an LVM issue, or something else is  
-breaking during system init which prevents the LVM scan from  
-working.  I need some help troubleshooting the problem.
+Hi,
 
-bdc80787 is:
+Hope this is the right forum for this question.  If not, please redirect
+me.  I've tried googling for this information without success.
 
-commit bdc807871d58285737d50dc6163d0feb72cb0dc2
-Author: H. Peter Anvin <hpa@zytor.com>
-Date:   Fri Feb 8 04:21:26 2008 -0800
+When device mapper creates a node to represent a LVM logical volume (e.g.
+/dev/mapper/vgrp_name-lvol_name), how does it decide the owner/group for the
+node file.   Seems to be root/root by default, but I'm wondering if there's
+a way to override it?  Is there some method (e.g. configuration file, kernel
+parameter, etc.) that I should know about?
 
-     avoid overflows in kernel/time.c
+Thanks,
+Derek.
 
-     When the conversion factor between jiffies and milli- or  
-microseconds is
-     not a single multiply or divide, as for the case of HZ == 300,  
-we currently
-     do a multiply followed by a divide.  The intervening result,  
-however, is
-     subject to overflows, especially since the fraction is not  
-simplified (for
-     HZ == 300, we multiply by 300 and divide by 1000).
+------=_Part_2373_30503030.1203293400138
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-     This is exposed to the user when passing a large timeout to poll 
-(), for
-     example.
+Hi,<br><br>Hope this is the right forum for this question.&nbsp; If not, please redirect me.&nbsp; I&#39;ve tried googling for this information without success.<br><br>When device mapper creates a node to represent a LVM logical volume (e.g. /dev/mapper/vgrp_name-lvol_name), how does it decide the owner/group for the node file. &nbsp; Seems to be root/root by default, but I&#39;m wondering if there&#39;s&nbsp; a way to override it?&nbsp; Is there some method (e.g. configuration file, kernel parameter, etc.) that I should know about?<br>
+<br>Thanks,<br>Derek.<br><br>
 
-     This patch replaces the multiply-divide with a reciprocal  
-multiplication on
-     32-bit platforms.  When the input is an unsigned long, there is  
-no portable
-     way to do this on 64-bit platforms there is no portable way to  
-do this
-     since it requires a 128-bit intermediate result (which gcc does  
-support on
-     64-bit platforms but may generate libgcc calls, e.g.  on 64-bit  
-s390), but
-     since the output is a 32-bit integer in the cases affected, just  
-simplify
-     the multiply-divide (*3/10 instead of *300/1000).
+------=_Part_2373_30503030.1203293400138--
 
-and so on...
 
---
-Chuck Lever
-chuck[dot]lever[at]oracle[dot]com
+--===============1687367697==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1687367697==--
