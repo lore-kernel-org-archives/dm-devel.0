@@ -1,15 +1,17 @@
-From: malahal@us.ibm.com
-Subject: Re: Multipath not rebuilding correctly on reboot
-Date: Mon, 18 Feb 2008 14:20:14 -0800
-Message-ID: <20080218222014.GA26319@us.ibm.com>
-References: <20080217074708.GA17721@us.ibm.com>
-	<2F1F44D192D1284BAA298E48C1B2A4F90234F1FC@exchmail03.ncogroup.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Implement barrier support for single device
+	DM devices
+Date: Tue, 19 Feb 2008 02:39:00 +0000
+Message-ID: <20080219023900.GB4066@agk.fab.redhat.com>
+References: <20080215120821.GA8267@basil.nowhere.org>
+	<20080215122002.GM29914@agk.fab.redhat.com>
+	<47B58EAA.8040405@msgid.tls.msk.ru>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F1FC@exchmail03.ncogroup.com>
+In-Reply-To: <47B58EAA.8040405@msgid.tls.msk.ru>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,16 +21,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Michael Tokarev <mjt@tls.msk.ru>
+Cc: dm-devel@redhat.com, Andi Kleen <andi@firstfloor.org>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Greene, Rick [rick.greene@ncogroup.com] wrote:
-> Quick question...what RPM would I find udevsettle in? Doesn't appear to
-> be installed on my system (RedHat Enterprise Linux 4), nor can I find
-> reference to it on RedHat's site.
+On Fri, Feb 15, 2008 at 04:07:54PM +0300, Michael Tokarev wrote:
+> Alasdair G Kergon wrote:
+> > On Fri, Feb 15, 2008 at 01:08:21PM +0100, Andi Kleen wrote:
+> >> Implement barrier support for single device DM devices
+> > Thanks.  We've got some (more-invasive) dm patches in the works that
+> > attempt to use flushing to emulate barriers where we can't just
+> > pass them down like that.
+> I wonder if it's worth the effort to try to implement this.
 
-Part of udev rpm (udev-085-30.37) on my system (SLES10 SP1). Maybe RHEL4
-has an older version of udev that lacks udevsettle. That explains why
-they used a "sleep"!
+The decision got taken to allocate barrier bios to implement the basic
+flush so dm has little choice in this matter now.  (If you're going to
+implement barriers for flush, you might as well implement them more
+generally.)
 
---Malahal.
+Maybe I should spell this out more clearly for those who weren't
+tracking this block layer change:  AFAIK You cannot currently flush a
+device-mapper block device without doing some jiggery-pokery.
+
+> For example, how safe
+> xfs is if barriers are not supported or turned off?  
+
+The last time we tried xfs with dm it didn't seem to notice -EOPNOTSUPP
+everywhere it should => recovery may find corruption.
+
+Alasdair
+-- 
+agk@redhat.com
