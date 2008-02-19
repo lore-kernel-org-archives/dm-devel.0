@@ -1,16 +1,12 @@
-From: "Greene, Rick" <rick.greene@ncogroup.com>
-Subject: RE: Multipath not rebuilding correctly on reboot
-Date: Tue, 19 Feb 2008 07:21:19 -0500
-Message-ID: <2F1F44D192D1284BAA298E48C1B2A4F90234F203@exchmail03.ncogroup.com>
-References: <20080218222014.GA26319@us.ibm.com>
+From: Erez Zilber <erezz@voltaire.com>
+Subject: Throughput when using multibus
+Date: Tue, 19 Feb 2008 14:46:43 +0200
+Message-ID: <47BACFB3.5040300@Voltaire.COM>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20080218222014.GA26319@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,39 +16,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I just checked one of my RHEL5 servers, and it does have udevsettle, so
-it looks like I'm stuck with my current rc.local workaround.
+Hi,
 
-From what you said before, maybe sticking a sleep in rc.sysinit before
-the multipath.static is called could also help?  If so, how long a sleep
-would you suggest?
+I'd like to use my storage in active/active mode. I connected a machine
+with 2 FC cables to a switch and connected the FC storage with 2 cables
+to the same switch. I expected to get higher throughput from the device
+in active/active mode, but I get the same performance like I had without
+multipath.
 
-Thanks,
-Rick
+Here's the conf file that I use:
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of malahal@us.ibm.com
-Sent: Monday, February 18, 2008 5:20 PM
-To: dm-devel@redhat.com
-Subject: Re: [dm-devel] Multipath not rebuilding correctly on reboot
+defaults {
+        polling_interval 5
+        failback immediate
+        no_path_retry 3
+        user_friendly_names yes
+        path_grouping_policy    multibus
+}
 
-Greene, Rick [rick.greene@ncogroup.com] wrote:
-> Quick question...what RPM would I find udevsettle in? Doesn't appear
-to
-> be installed on my system (RedHat Enterprise Linux 4), nor can I find
-> reference to it on RedHat's site.
+I see the device 4 times (which is ok):
 
-Part of udev rpm (udev-085-30.37) on my system (SLES10 SP1). Maybe RHEL4
-has an older version of udev that lacks udevsettle. That explains why
-they used a "sleep"!
+path7 (3600c0ff000d508d7dff2894701000000) DotHill,R/Evo 2730-2R
+[size=82G][features=1 queue_if_no_path][hwhandler=0]
+\_ round-robin 0 [prio=4][active]
+ \_ 8:0:3:8 sdah 66:16  [active][ready]
+ \_ 9:0:1:8 sdar 66:176 [active][ready]
+ \_ 9:0:3:8 sdbb 67:80  [active][ready]
+ \_ 8:0:1:8 sdx  65:112 [active][ready]
 
---Malahal.
+BTW - I see the both FC ports of the FC storage are used, but with low
+utilization.
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Erez
