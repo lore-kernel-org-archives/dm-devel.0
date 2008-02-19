@@ -1,53 +1,58 @@
-From: Erez Zilber <erezz@voltaire.com>
-Subject: Throughput when using multibus
-Date: Tue, 19 Feb 2008 14:46:43 +0200
-Message-ID: <47BACFB3.5040300@Voltaire.COM>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
+Subject: [PATCH] dm raid1: bitops bug.
+Date: Tue, 19 Feb 2008 15:32:32 +0100
+Message-ID: <20080219143232.GA10994@osiris.boeblingen.de.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757932AbYBSOcp@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-kernel@vger.kernel.org, Jonathan Brassow <jbrassow@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+From: Heiko Carstens <heiko.carstens@de.ibm.com>
 
-I'd like to use my storage in active/active mode. I connected a machine
-with 2 FC cables to a switch and connected the FC storage with 2 cables
-to the same switch. I expected to get higher throughput from the device
-in active/active mode, but I get the same performance like I had without
-multipath.
+Commit 8f0205b798f926e2745de5fdebf0a8605c621de6
+"dm raid1: handle recovery failures" introduces a test_bit on an
+integer. test_bit is only defined to do something useful on arrays
+of long. Remove the test_bit code and use hand coded test bit
+instead.
 
-Here's the conf file that I use:
+Cc: Jonathan Brassow <jbrassow@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+Signed-off-by: Heiko Carstens <heiko.carstens@de.ibm.com>
+---
 
-defaults {
-        polling_interval 5
-        failback immediate
-        no_path_retry 3
-        user_friendly_names yes
-        path_grouping_policy    multibus
-}
+Completely untested, but should hopefully do what was intended.
 
-I see the device 4 times (which is ok):
+ drivers/md/dm-raid1.c |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-path7 (3600c0ff000d508d7dff2894701000000) DotHill,R/Evo 2730-2R
-[size=82G][features=1 queue_if_no_path][hwhandler=0]
-\_ round-robin 0 [prio=4][active]
- \_ 8:0:3:8 sdah 66:16  [active][ready]
- \_ 9:0:1:8 sdar 66:176 [active][ready]
- \_ 9:0:3:8 sdbb 67:80  [active][ready]
- \_ 8:0:1:8 sdx  65:112 [active][ready]
-
-BTW - I see the both FC ports of the FC storage are used, but with low
-utilization.
-
-Erez
+Index: linux-2.6/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid1.c
++++ linux-2.6/drivers/md/dm-raid1.c
+@@ -758,7 +758,8 @@ static void recovery_complete(int read_e
+ {
+ 	struct region *reg = (struct region *)context;
+ 	struct mirror_set *ms = reg->rh->ms;
+-	int m, bit = 0;
++	unsigned int mask = 1;
++	int m;
+ 
+ 	if (read_err) {
+ 		/* Read error means the failure of default mirror. */
+@@ -776,10 +777,10 @@ static void recovery_complete(int read_e
+ 		for (m = 0; m < ms->nr_mirrors; m++) {
+ 			if (&ms->mirror[m] == get_default_mirror(ms))
+ 				continue;
+-			if (test_bit(bit, &write_err))
++			if (write_err & mask)
+ 				fail_mirror(ms->mirror + m,
+ 					    DM_RAID1_SYNC_ERROR);
+-			bit++;
++			mask <<= 1;
+ 		}
+ 	}
+ 
