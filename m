@@ -1,58 +1,75 @@
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
-Subject: [PATCH] dm raid1: bitops bug.
-Date: Tue, 19 Feb 2008 15:32:32 +0100
-Message-ID: <20080219143232.GA10994@osiris.boeblingen.de.ibm.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Multipath not rebuilding correctly on reboot
+Date: Tue, 19 Feb 2008 11:21:45 -0600
+Message-ID: <20080219172145.GH15608@ether.msp.redhat.com>
+References: <20080218222014.GA26319@us.ibm.com>
+	<2F1F44D192D1284BAA298E48C1B2A4F90234F203@exchmail03.ncogroup.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757932AbYBSOcp@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: linux-kernel@vger.kernel.org, Jonathan Brassow <jbrassow@redhat.com>, Alasdair G Kergon <agk@redhat.com>, dm-devel@redhat.com
+In-Reply-To: <2F1F44D192D1284BAA298E48C1B2A4F90234F203@exchmail03.ncogroup.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Heiko Carstens <heiko.carstens@de.ibm.com>
+On Tue, Feb 19, 2008 at 07:21:19AM -0500, Greene, Rick wrote:
+> I just checked one of my RHEL5 servers, and it does have udevsettle, so
+> it looks like I'm stuck with my current rc.local workaround.
+> 
+> >From what you said before, maybe sticking a sleep in rc.sysinit before
+> the multipath.static is called could also help?  If so, how long a sleep
+> would you suggest?
 
-Commit 8f0205b798f926e2745de5fdebf0a8605c621de6
-"dm raid1: handle recovery failures" introduces a test_bit on an
-integer. test_bit is only defined to do something useful on arrays
-of long. Remove the test_bit code and use hand coded test bit
-instead.
+You'll probably need to experiment. Start with something like 5. If that
+works, try cutting it down.
 
-Cc: Jonathan Brassow <jbrassow@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
-Signed-off-by: Heiko Carstens <heiko.carstens@de.ibm.com>
----
+I'll try to get a test-rpm with the patch I sent earlier built
+soonish, so you can try that.
 
-Completely untested, but should hopefully do what was intended.
+I don't think udevsettle would help things anyway.  It looks like your
+devices may have come online before udev was started. In that case, udev
+won't handle them, which is why the multipath call exists in rc.sysinit.
 
- drivers/md/dm-raid1.c |    7 ++++---
- 1 file changed, 4 insertions(+), 3 deletions(-)
-
-Index: linux-2.6/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-raid1.c
-+++ linux-2.6/drivers/md/dm-raid1.c
-@@ -758,7 +758,8 @@ static void recovery_complete(int read_e
- {
- 	struct region *reg = (struct region *)context;
- 	struct mirror_set *ms = reg->rh->ms;
--	int m, bit = 0;
-+	unsigned int mask = 1;
-+	int m;
+-Ben
  
- 	if (read_err) {
- 		/* Read error means the failure of default mirror. */
-@@ -776,10 +777,10 @@ static void recovery_complete(int read_e
- 		for (m = 0; m < ms->nr_mirrors; m++) {
- 			if (&ms->mirror[m] == get_default_mirror(ms))
- 				continue;
--			if (test_bit(bit, &write_err))
-+			if (write_err & mask)
- 				fail_mirror(ms->mirror + m,
- 					    DM_RAID1_SYNC_ERROR);
--			bit++;
-+			mask <<= 1;
- 		}
- 	}
- 
+> Thanks,
+> Rick
+> 
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+> On Behalf Of malahal@us.ibm.com
+> Sent: Monday, February 18, 2008 5:20 PM
+> To: dm-devel@redhat.com
+> Subject: Re: [dm-devel] Multipath not rebuilding correctly on reboot
+> 
+> Greene, Rick [rick.greene@ncogroup.com] wrote:
+> > Quick question...what RPM would I find udevsettle in? Doesn't appear
+> to
+> > be installed on my system (RedHat Enterprise Linux 4), nor can I find
+> > reference to it on RedHat's site.
+> 
+> Part of udev rpm (udev-085-30.37) on my system (SLES10 SP1). Maybe RHEL4
+> has an older version of udev that lacks udevsettle. That explains why
+> they used a "sleep"!
+> 
+> --Malahal.
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
