@@ -1,15 +1,12 @@
-From: Domenico Viggiani <dviggiani@tiscali.it>
-Subject: RE: multipath errors on first set-up
-Date: Thu, 21 Feb 2008 10:43:08 +0100
-Message-ID: <000001c8746e$2acf1c60$cf42e3c1@pitagora.it>
-References: <20080219192317.GI15608@ether.msp.redhat.com>
-	<DFB2D7E03264FB4392B70A38BFF9FC710202657B@BRBSEVS20000.s2.ms.unilever.com>
+From: Burn Alting <burn@goldweb.com.au>
+Subject: RFC - new multi path scheduler - Striped
+Date: Thu, 21 Feb 2008 21:42:15 +1100
+Message-ID: <1203590536.7756.112.camel@swtf.comptex.com.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <DFB2D7E03264FB4392B70A38BFF9FC710202657B@BRBSEVS20000.s2.ms.unilever.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +16,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'device-mapper development' <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com 
-> [mailto:dm-devel-bounces@redhat.com] On Behalf Of Rogan, Julian
-> 
-> Hi,
-> Here is the output:
-> 
-> multipath -l
-> 3600508b300930230a7495ae1b9500074
-> [size=1 TB][features="0"][hwhandler="0"] \_ round-robin 0 [enabled]
->   \_ 0:0:0:1 sda  8:0     [active]
-> \_ round-robin 0 [enabled]
->   \_ 1:0:0:1 sdb  8:16    [active]
-> \_ round-robin 0 [enabled]
->   \_ 2:0:0:1 sdc  8:32    [active]
-> \_ round-robin 0 [enabled]
->   \_ 3:0:0:1 sdd  8:48    [active]
-> 
-> A map was created:
-> 
-> /dev/mapper/3600508b300930230a7495ae1b9500074
+I'd like to propose a new multipath scheduler - striped.  The idea is
+that, given a stripe size, S, we stripe the io in S block segments across
+the available multiple paths.  If a path fails then a pre-determined
+division of the stripe size reallocates which path gets the missing
+paths data.
 
-Sometime, on a system of mine 'udev' doesn't create device node under /dev
-and I need to run 'udevstart' but I hope it's a problem that will disappear
-at next reboot.
+Taking the case of two paths and a stripe size of S blocks,
 
---
-DV
+stripe number 0, blocks   0 thru   S - 1 goes via the first path;
+stripe number 1, blocks   S thru 2*S - 1 goes via the second path;
+stripe number 2, blocks 2*S thru 3*S - 1 goes via the first path and so forth.
+
+If a path fails, then the surviving path gets all io.
+
+Taking the general case of N paths and a stripe size of S blocks.
+
+stripe number   0, blocks       0 thru   S - 1 goes via the first path
+stripe number   1, blocks       S thru 2*S - 1 goes via the second path
+stripe number   2, blocks     2*S thru 3*S - 1 goes via the third path
+stripe number   3, blocks     3*S thru 4*S - 1 goes via the third path
+stripe number N-1, blocks (N-1)*S thru N*S - 1 goes via the (N-1)th path
+and so on
+
+If a path fails, then we could say flush/drain all io's, redirect the
+io's for the failed path to an adjacent path and then recompute the
+stripe from N to N - 1 - ie keep the io balanced.
+
+
+WHY?
+
+For active-active multi-controller raid environments. I believe, if
+we select an appropriate stripe size, then there would be minimal
+interlock/cache clashes on the raid controllers and so we lessening
+the chance of delay due to the raid controllers interlocking.
+
+Raids tend to have a set stripe size, so the 'S' stripe size one would choose for
+the multi-path driver would need to be a multiple of the raid controller's stripe size.
+
+Can people comment on this?
+
+Burn Alting
