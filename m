@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid/include/dmraid
+Subject: dmraid/lib/datastruct
 Date: 22 Feb 2008 16:50:10 -0000
-Message-ID: <20080222165010.22086.qmail@sourceware.org>
+Message-ID: <20080222165010.22167.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -20,10 +20,10 @@ CVSROOT:	/cvs/dm
 Module name:	dmraid
 Changes by:	heinzm@sourceware.org	2008-02-22 16:50:10
 
-dmraid/include/dmraid
+dmraid/lib/datastruct
 
-Update of /cvs/dm/dmraid/include/dmraid
-In directory sourceware.org:/tmp/cvs-serv22030/include/dmraid
+Update of /cvs/dm/dmraid/lib/datastruct
+In directory sourceware.org:/tmp/cvs-serv22030/lib/datastruct
 
 Log Message:
-Directory /cvs/dm/dmraid/include/dmraid added to the repository
+Directory /cvs/dm/dmraid/lib/datastruct added to the repository
