@@ -1,11 +1,8 @@
-From: Burn Alting <burn@goldweb.com.au>
-Subject: RFC - new multi path scheduler - Striped
-Date: Thu, 21 Feb 2008 21:42:15 +1100
-Message-ID: <1203590536.7756.112.camel@swtf.comptex.com.au>
+From: heinzm@sourceware.org
+Subject: dmraid README
+Date: 22 Feb 2008 16:48:27 -0000
+Message-ID: <20080222164827.20894.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,47 +13,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I'd like to propose a new multipath scheduler - striped.  The idea is
-that, given a stripe size, S, we stripe the io in S block segments across
-the available multiple paths.  If a path fails then a pre-determined
-division of the stripe size reallocates which path gets the missing
-paths data.
+CVSROOT:	/cvs/dm
+Module name:	dmraid
+Changes by:	heinzm@sourceware.org	2008-02-22 16:48:26
 
-Taking the case of two paths and a stripe size of S blocks,
+Modified files:
+	.              : README 
 
-stripe number 0, blocks   0 thru   S - 1 goes via the first path;
-stripe number 1, blocks   S thru 2*S - 1 goes via the second path;
-stripe number 2, blocks 2*S thru 3*S - 1 goes via the first path and so forth.
+Log message:
+	initial 1.0.0.rc11 checkin
 
-If a path fails, then the surviving path gets all io.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/README.diff?cvsroot=dm&r1=1.1&r2=1.2
 
-Taking the general case of N paths and a stripe size of S blocks.
-
-stripe number   0, blocks       0 thru   S - 1 goes via the first path
-stripe number   1, blocks       S thru 2*S - 1 goes via the second path
-stripe number   2, blocks     2*S thru 3*S - 1 goes via the third path
-stripe number   3, blocks     3*S thru 4*S - 1 goes via the third path
-stripe number N-1, blocks (N-1)*S thru N*S - 1 goes via the (N-1)th path
-and so on
-
-If a path fails, then we could say flush/drain all io's, redirect the
-io's for the failed path to an adjacent path and then recompute the
-stripe from N to N - 1 - ie keep the io balanced.
-
-
-WHY?
-
-For active-active multi-controller raid environments. I believe, if
-we select an appropriate stripe size, then there would be minimal
-interlock/cache clashes on the raid controllers and so we lessening
-the chance of delay due to the raid controllers interlocking.
-
-Raids tend to have a set stripe size, so the 'S' stripe size one would choose for
-the multi-path driver would need to be a multiple of the raid controller's stripe size.
-
-Can people comment on this?
-
-Burn Alting
+--- dmraid/README	2005/08/31 12:43:38	1.1
++++ dmraid/README	2008/02/22 16:48:26	1.2
+@@ -1 +1,106 @@
+-dmraid
++********************************************************************************
++*                                                                              *
++*   dmraid (Device-Mapper Software RAID support tool) 1.0.0.rc11  2006.05.15   *
++*                                                                              *
++*   (C)opyright 2004-2006  Heinz Mauelshagen, Red Hat GmbH.                    *
++*   All rights reserved.                                                       *
++*                                                                              *
++********************************************************************************
++
++Feature set:
++------------
++This software discovers, activates, deactivates and displays properties
++of software RAID sets (eg, ATARAID) and contained DOS partitions.
++
++dmraid uses libdevmapper and the device-mapper kernel runtime to create
++devices with respective mappings for the ATARAID sets discovered.
++
++The following ATARAID types are supported:
++
++Adaptec HostRAID ASR
++Highpoint HPT37X
++Highpoint HPT45X
++Intel Software RAID
++JMicron JMB36x
++LSI Logic MegaRAID
++NVidia NForce
++Promise FastTrack
++Silicon Image Medley
++VIA Software RAID
++
++Beside hints, enhancement proposals and patches, I want to know, if the mappings
++the tool creates ("dmraid -tay") are correct for your ATARAID configuration.
++
++Thank you for your support of dmraid.
++
++
++License/Disclaimer:
++-------------------
++This software is released under the GPL/LGPL respectively.
++
++See file headers, LICENSE, LICENSE_GPL and LICENSE_LGPL for details.
++
++This is Alpha software and it can destroy your data!
++
++So please take backups and start accessing your data in dmraid
++activated ATARAID sets READ-ONLY first before you try to write it!
++
++
++Minimum prerequisites to run this software:
++-------------------------------------------
++
++o a recent mainline Linux 2.6 kernel (includes needed
++  device-mapper mirror changes)
++
++
++Additional minimum prerequisites to build this software:
++--------------------------------------------------------
++o device mapper userpace installed (http://sources.redhat.com/dm/)
++
++o the i386 rpm or source tarball for dmraid from
++  http://people.redhat.com/heinzm/sw/dmraid/
++
++
++Build/Install:
++--------------
++To install the rpm
++
++rpm -i [--nodeps] dmraid-1.0.0.rc10.i386.rpm
++
++- or -
++
++to build in an empty directory and install from source
++
++tar jxvf dmraid-1.0.0.rc10.tar.bz2
++./configure	# see ./configure --help for options
++make
++make install
++
++
++In case you want to dietize dmraid, you need to build device-mapper with
++'make CC="diet cc"' *and* install libdevmapper.a as /lib/libdevmapper_dietc.a.
++
++Run "./configure --enable-dietlibc" before make.
++
++
++Howto start:
++------------
++See "dmraid -h" for the synopsis and "man dmraid" for more details
++including some usage examples.
++
++Your first command is probably "dmraid -s".
++
++See TODO for known outstanding issues.
++
++See doc/dmraid_design.txt for design notes.
++
++See lib/format/template/ if you want to start your own metadata format
++handler implementation :)
++
++
++Contacts:
++---------
++The author can be reached at <Mauelshagen@RedHat.com>.
++
++For discussions, questions, patches, enhancement requests etc.,
++please subscribe and mail to <ataraid-list@redhat.com>.
