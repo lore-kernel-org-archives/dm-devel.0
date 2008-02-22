@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid/lib/activate
+Subject: dmraid/lib
 Date: 22 Feb 2008 16:50:10 -0000
-Message-ID: <20080222165010.22137.qmail@sourceware.org>
+Message-ID: <20080222165010.22113.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -20,10 +20,10 @@ CVSROOT:	/cvs/dm
 Module name:	dmraid
 Changes by:	heinzm@sourceware.org	2008-02-22 16:50:10
 
-dmraid/lib/activate
+dmraid/lib
 
-Update of /cvs/dm/dmraid/lib/activate
-In directory sourceware.org:/tmp/cvs-serv22030/lib/activate
+Update of /cvs/dm/dmraid/lib
+In directory sourceware.org:/tmp/cvs-serv22030/lib
 
 Log Message:
-Directory /cvs/dm/dmraid/lib/activate added to the repository
+Directory /cvs/dm/dmraid/lib added to the repository
