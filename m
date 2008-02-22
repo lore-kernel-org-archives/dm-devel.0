@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid/lib/misc
-Date: 22 Feb 2008 16:50:12 -0000
-Message-ID: <20080222165012.22375.qmail@sourceware.org>
+Subject: dmraid/lib/metadata
+Date: 22 Feb 2008 16:50:11 -0000
+Message-ID: <20080222165011.22362.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,12 +18,12 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2008-02-22 16:50:12
+Changes by:	heinzm@sourceware.org	2008-02-22 16:50:11
 
-dmraid/lib/misc
+dmraid/lib/metadata
 
-Update of /cvs/dm/dmraid/lib/misc
-In directory sourceware.org:/tmp/cvs-serv22030/lib/misc
+Update of /cvs/dm/dmraid/lib/metadata
+In directory sourceware.org:/tmp/cvs-serv22030/lib/metadata
 
 Log Message:
-Directory /cvs/dm/dmraid/lib/misc added to the repository
+Directory /cvs/dm/dmraid/lib/metadata added to the repository
