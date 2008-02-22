@@ -1,7 +1,7 @@
 From: heinzm@sourceware.org
-Subject: dmraid/lib/format/ataraid .isw.c.swp .jm.c.swp
-Date: 22 Feb 2008 17:14:44 -0000
-Message-ID: <20080222171444.7832.qmail@sourceware.org>
+Subject: dmraid/lib/mm
+Date: 22 Feb 2008 16:50:12 -0000
+Message-ID: <20080222165012.22394.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,14 +18,12 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	dmraid
-Changes by:	heinzm@sourceware.org	2008-02-22 17:14:43
+Changes by:	heinzm@sourceware.org	2008-02-22 16:50:12
 
-Removed files:
-	lib/format/ataraid: .isw.c.swp .jm.c.swp 
+dmraid/lib/mm
 
-Log message:
-	o removed superfluous files
+Update of /cvs/dm/dmraid/lib/mm
+In directory sourceware.org:/tmp/cvs-serv22030/lib/mm
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/.isw.c.swp.diff?cvsroot=dm&r1=1.1&r2=NONE
-http://sourceware.org/cgi-bin/cvsweb.cgi/dmraid/lib/format/ataraid/.jm.c.swp.diff?cvsroot=dm&r1=1.1&r2=NONE
+Log Message:
+Directory /cvs/dm/dmraid/lib/mm added to the repository
