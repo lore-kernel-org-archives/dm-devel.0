@@ -1,136 +1,237 @@
-From: Peter Osterlund <petero2@telia.com>
-Subject: Re: 2.6.24.2: 4KSTACKS + pcdrw + dm + mount -> stack overflow: ide-cd related? dm-related?
-Date: Sun, 24 Feb 2008 17:56:09 +0100
-Message-ID: <m363wepa3a.fsf@telia.com>
-References: <87wsovkth5.fsf@hades.wkstn.nix> <87skzipcpw.fsf@hades.wkstn.nix>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: The I/O bandwidth controller: dm-ioband Performance
+	Report
+Date: Mon, 25 Feb 2008 19:29:14 +0900 (JST)
+Message-ID: <20080225.192914.193698917.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759840AbYBXSHA@vger.kernel.org>
-In-Reply-To: <87skzipcpw.fsf@hades.wkstn.nix> (nix@esperi.org.uk's message of "Sun\, 24 Feb 2008 15\:59\:23 +0000")
-Sender: linux-kernel-owner@vger.kernel.org
-To: Nix <nix@esperi.org.uk>
-Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Nix <nix@esperi.org.uk> writes:
+Hi All,
 
-> On 24 Feb 2008, nix@esperi.org.uk outgrape:
->
->> A loop mount/umounting a pcdrw or iso9660 (through the pktcdvd device)
->> sees a stack overflow in four or five tries. Doing the same thing with
->> the same CD in a normal non-pktcdvd-mounted drive doesn't cause a crash.
->
->> (This may or may not be PREEMPT+PREEMPT_BKL-specific: I'll try turning
->> them off tomorrow and repeating.)
->
-> It is not preempt-specific, nor dm-specific. Nor it is very easy to
-> capture tracebacks of: even netconsole generally gives up when faced
-> with a string of recursive tracebacks blurring past forever at blinding
-> speed.
->
-> But while I'd normally blame pktcdvd there's only one pktcdvd function
-> in these tracebacks (pkt_open) and it's not got a significant stack
-> footprint.
+I report new results of dm-ioband bandwidth control test. The previous
+test results were posted on Jan 25.
+I've got really good results as well as the last report. dm-ioband
+works well with Xen virtual disk.
 
-Did you verify that with "make checkstack" or just by looking at the
-source code? On my system, pkt_open() consumes 584 bytes because the
-compiler decides to inline lots of functions that would not normally
-be part of long call chains. The following patch fixes that problem on
-my system.
+I also announce that dm-ioband website has launched. The patches,
+the manual, the benchmark results and other related information are
+available through this site. Please check it out:
+    http://people.valinux.co.jp/~ryov/dm-ioband/
 
-> More notable is a great stack of mutual recursion between
-> dm_bio_destructor() and the CDROM code: it seems to burn most of the
-> stack on this sort of thrashing. Here's one of those tracebacks again:
+Bandwidth control on a per partition basis
+==========================================
 
-Maybe dm_bio_destructor() is just old cruft left on the stack from
-previous function calls?
+Test procedure
+--------------
+  o Prepare three partitions sda11, sda12 and sda13.
+  o Create three ioband devices ioband1, ioband2 and ioband3 on each
+    partition respectively.
+  o Give weights of 40, 20 and 10 to each ioband device respectively.
+  o Run 50, 100 and 200 processes issuing random read/write direct I/O
+    with 4KB data on each ioband device at the same time respectively.
+  o Count up the number of I/Os which have done in 60 seconds.
+
+  o For comparison, do this test under different conditions. The
+    conditions are:
+    - Direct access to the physical devices without dm-ioband.
+    - Give weights in equal proportion to each ioband devices.
+
+   Read/Write process   Read/Write process   Read/Write process    
+         x 50                 x 100                x 200
+           |                    |                    |
+  +--------V---------+ +--------V---------+ +--------V---------+
+  |     ioband1      | |     ioband2      | |     ioband3      | ioband devices
+  +------------------+ +------------------+ +------------------+
+  |   default group  | |   default group  | |   default group  | ioband groups
+  |       (40)       | |       (20)       | |       (10)       |   (weight)
+  +--------|---------+ +--------|---------+ +--------|---------+
+  +--------V---------+ +--------V---------+ +--------V---------+
+  |    /dev/sda11    | |    /dev/sda12    | |    /dev/sda13    | physical devs.
+  +------------------+ +------------------+ +------------------+
+
+Results
+-------
+                      Direct access without dm-ioband
+   -----------------------------------------------------------------------
+  |     device      |      sda11      |      sda12      |      sda13      |
+  |  I/O processes  |    50 (14.3%)   |   100 (28.6%)   |   200 (57.1%)   |
+  |-----------------+-----------------+-----------------+-----------------|
+  |      I/Os       |       1469      |       2486      |       5032      |  
+  |  ratio to total |      16.3%      |      27.7%      |      56.0%      |
+   -----------------------------------------------------------------------
+
+              Weights in inverse proportion to the number of processes
+   -----------------------------------------------------------------------
+  |     device      |      sda11      |      sda12      |      sda13      |
+  |     weight      |   40 (57.1%)    |    20 (28.6%)   |    10 (14.3%)   |
+  |-----------------+-----------------+-----------------+-----------------|
+  |      I/Os       |       5023      |       2654      |       1369      |  
+  |  ratio to total |      55.5%      |      29.3%      |      15.1%      |
+   -----------------------------------------------------------------------
+
+                         Weights in equal proportion
+   -----------------------------------------------------------------------
+  |     device      |      sda11      |      sda12      |      sda13      |
+  |     weight      |   10 (33.3%)    |    10 (33.3%)   |    10 (33.3%)   |
+  |-----------------+-----------------+-----------------+-----------------|
+  |      I/Os       |       2954      |       3004      |       2986      |  
+  |  ratio to total |      33.0%      |      33.6%      |      33.4%      |
+   -----------------------------------------------------------------------
 
 
-From: Peter Osterlund <petero2@telia.com>
 
-Signed-off-by: Peter Osterlund <petero2@telia.com>
----
+Bandwidth control on a per logical volume basis
+===============================================
 
- drivers/block/pktcdvd.c |   16 ++++++++--------
- 1 files changed, 8 insertions(+), 8 deletions(-)
+Test procedure
+--------------
+  o Prepare two partitions sda11 and sdb11.
+  o Create a volume group with the two partitions.
+  o Create two striped logical volumes on the volume group.
+  o Give weights of 20 and 10 to lv0 and lv1 respectively.
+  o Run 128 processes issuing random read/write direct I/O with 4KB data
+    on each ioband device at the same time respectively.
+  o Count up the number of I/Os which have done in 60 seconds.
 
-diff --git a/drivers/block/pktcdvd.c b/drivers/block/pktcdvd.c
-index 674cd66..f2510e7 100644
---- a/drivers/block/pktcdvd.c
-+++ b/drivers/block/pktcdvd.c
-@@ -849,7 +849,7 @@ static int pkt_flush_cache(struct pktcdvd_device *pd)
- /*
-  * speed is given as the normal factor, e.g. 4 for 4x
-  */
--static int pkt_set_speed(struct pktcdvd_device *pd, unsigned write_speed, unsigned read_speed)
-+static noinline int pkt_set_speed(struct pktcdvd_device *pd, unsigned write_speed, unsigned read_speed)
- {
- 	struct packet_command cgc;
- 	struct request_sense sense;
-@@ -1776,7 +1776,7 @@ static int pkt_get_track_info(struct pktcdvd_device *pd, __u16 track, __u8 type,
- 	return pkt_generic_packet(pd, &cgc);
- }
- 
--static int pkt_get_last_written(struct pktcdvd_device *pd, long *last_written)
-+static noinline int pkt_get_last_written(struct pktcdvd_device *pd, long *last_written)
- {
- 	disc_information di;
- 	track_information ti;
-@@ -1813,7 +1813,7 @@ static int pkt_get_last_written(struct pktcdvd_device *pd, long *last_written)
- /*
-  * write mode select package based on pd->settings
-  */
--static int pkt_set_write_settings(struct pktcdvd_device *pd)
-+static noinline int pkt_set_write_settings(struct pktcdvd_device *pd)
- {
- 	struct packet_command cgc;
- 	struct request_sense sense;
-@@ -1972,7 +1972,7 @@ static int pkt_writable_disc(struct pktcdvd_device *pd, disc_information *di)
- 	return 1;
- }
- 
--static int pkt_probe_settings(struct pktcdvd_device *pd)
-+static noinline int pkt_probe_settings(struct pktcdvd_device *pd)
- {
- 	struct packet_command cgc;
- 	unsigned char buf[12];
-@@ -2071,7 +2071,7 @@ static int pkt_probe_settings(struct pktcdvd_device *pd)
- /*
-  * enable/disable write caching on drive
-  */
--static int pkt_write_caching(struct pktcdvd_device *pd, int set)
-+static noinline int pkt_write_caching(struct pktcdvd_device *pd, int set)
- {
- 	struct packet_command cgc;
- 	struct request_sense sense;
-@@ -2116,7 +2116,7 @@ static int pkt_lock_door(struct pktcdvd_device *pd, int lockflag)
- /*
-  * Returns drive maximum write speed
-  */
--static int pkt_get_max_speed(struct pktcdvd_device *pd, unsigned *write_speed)
-+static noinline int pkt_get_max_speed(struct pktcdvd_device *pd, unsigned *write_speed)
- {
- 	struct packet_command cgc;
- 	struct request_sense sense;
-@@ -2177,7 +2177,7 @@ static char us_clv_to_speed[16] = {
- /*
-  * reads the maximum media speed from ATIP
-  */
--static int pkt_media_speed(struct pktcdvd_device *pd, unsigned *speed)
-+static noinline int pkt_media_speed(struct pktcdvd_device *pd, unsigned *speed)
- {
- 	struct packet_command cgc;
- 	struct request_sense sense;
-@@ -2249,7 +2249,7 @@ static int pkt_media_speed(struct pktcdvd_device *pd, unsigned *speed)
- 	}
- }
- 
--static int pkt_perform_opc(struct pktcdvd_device *pd)
-+static noinline int pkt_perform_opc(struct pktcdvd_device *pd)
- {
- 	struct packet_command cgc;
- 	struct request_sense sense;
+Block diagram
+-------------
 
--- 
-Peter Osterlund - petero2@telia.com
-http://web.telia.com/~u89404340
+   Read/Write process x 128       Read/Write process x 128
+                |                              |
+  +-------------V------------+   +-------------V------------+ 
+  |   /dev/mapper/ioband1    |   |   /dev/mapper/ioband2    | ioband devices
+  +--------------------------+   +--------------------------+
+  |       default group      |   |       default group      | ioband groups
+  |           (20)           |   |           (10)           |    (weight)
+  +-------------|------------+   +-------------|------------+
+  +-------------V------------+   +-------------V------------+
+  |      /dev/mapper/lv0     |   |     /dev/mapper/lv1      | striped logical
+  |                          |   |                          | volumes
+  +---------------------------------------------------------+
+  |                           vg0                           | volume group
+  +-------------|------------------------------|------------+
+  +-------------V------------+   +-------------V------------+
+  |         /dev/sda11       |   |         /dev/sdb11       | physical devices
+  +--------------------------+   +--------------------------+
+
+Result
+------
+   -----------------------------------------------------
+  |     device      |       lv0       |       lv1       |
+  |     weight      |   20 (66.6%)    |    10 (33.3%)   |
+  |-----------------+-----------------+-----------------|
+  |      I/Os       |      13508      |       6779      |
+  |  ratio to total |      66.6%      |      33.3%      |
+   -----------------------------------------------------
+
+
+
+Bandwidth control on a per Xen virtual block device basis
+=========================================================
+
+Test procedure
+--------------
+  o Prepare two partitions sda11 and sda12.
+  o Create two ioband devices ioband1 and ioband2 on each partition
+    respectively.
+  o Give weight of 20 and 10 to each ioband device respectively.
+  o Create two virtual machines that using the ioband device as Xen
+    virtual machine's disk.
+  o Run 128 processes issuing random read/write direct I/O with 4KB
+    data on each virtual machine at the same time respectively.
+  o Count up the number of I/Os which have done in 60 seconds.
+
+  +--------------------------+   +--------------------------+
+  |     Virtual Machine 1    |   |     Virtual Machine 2    | virtual machines
+  |                          |   |                          |
+  | Read/Write process x 128 |   | Read/Write process x 128 |
+  |             |            |   |             |            |
+  |  +----------V---------+  |   |  +----------V---------+  +
+  |  |     /dev/xvda1     |  |   |  |      /dev/xvda1    |  | virtual block
+  |  +----------|---------+  |   |  +----------|---------+  |    devices
+  +-------------|------------+   +-------------|------------+
+  +-------------V------------+   +-------------V------------+ 
+  |   /dev/mapper/ioband1    |   |   /dev/mapper/ioband2    | ioband devices
+  +--------------------------+   +--------------------------+
+  |       default group      |   |       default group      | ioband groups
+  |           (20)           |   |           (10)           |    (weight)
+  +-------------|------------+   +-------------|------------+
+  +-------------V------------+   +-------------V------------+
+  |        /dev/sda11        |   |        /dev/sda12        | physical device
+  +--------------------------+   +--------------------------+
+
+Result
+------
+   -----------------------------------------------------
+  | virtual machine |       VM1       |       VM2       |
+  |     weight      |   20 (66.6%)    |    10 (33.3%)   |
+  |-----------------+-----------------+-----------------|
+  |      I/Os       |       7140      |       3819      |
+  |  ratio to total |      65.2%      |      34.8%      |
+   -----------------------------------------------------
+
+
+
+Bandwidth control on a per Xen virtual block device basis
+=========================================================
+
+Test procedure
+--------------
+  o Prepare one partition sda11.
+  o Create two files on sda11 to use as virtual machine's disks.
+  o Create an ioband devices on sda11.
+  o Create two virtual machines that using the prepared files as Xen
+    virtual machine's disk.
+  o Create two extra ioband-groups on ioband1, the first is of process
+    tapdisk1 and the second is of process tapdisk2.
+  o Run 128 processes issuing random read/write direct I/O with 4KB
+    data on each virtual machine at the same time respectively.
+  o Count up the number of I/Os which have done in 60 seconds.
+
+  +--------------------------+   +--------------------------+
+  |     Virtual Machine 1    |   |     Virtual Machine 2    | virtual machines
+  |                          |   |                          |
+  | Read/Write process x 128 |   | Read/Write process x 128 |
+  |             |            |   |             |            |
+  |  +----------V---------+  |   |  +----------V---------+  +
+  |  |     /dev/xvda1     |  |   |  |      /dev/xvda1    |  | virtual block
+  |  +----------|---------+  |   |  +----------|---------+  |    devices
+  +-------------|------------+   +-------------|------------+
+  +-------------V------------+   +-------------V------------+
+  |         tapdisk1         |   |         tapdisk2         |    tapdisk
+  +-------------|------------+   +-------------|------------+   processes
+  +-------------V------------------------------V------------+
+  |    pid of tapdisk1         |      pid of tapdisk2       | ioband groups
+  |           (20)             |             (10)           |    (weight)
+  |                   /dev/mapper/ioband1                   | ioband device
+  +-------------|------------------------------|------------+
+  |  +----------V----------+        +----------V---------+  |
+  |  |       vm1.img       |        |       vm2.img      |  | disk image files
+  |  +---------------------+        +--------------------+  |
+  |                        /dev/sda11                        | physical device
+  +---------------------------------------------------------+
+
+Result
+------
+   -----------------------------------------------------
+  | virtual machine |       VM1       |       VM2       |
+  |     weight      |   20 (66.6%)    |    10 (33.3%)   |
+  |-----------------+-----------------+-----------------|
+  |      I/Os       |       7486      |       3895      |
+  |  ratio to total |      65.8%      |      34.2%      |
+   -----------------------------------------------------
+
+Thanks,
+Ryo Tsuruta
