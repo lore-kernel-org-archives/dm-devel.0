@@ -1,15 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: device mapper not reporting no-barrier-support?
-Date: Tue, 26 Feb 2008 01:36:56 +0000
-Message-ID: <20080226013656.GE1788@agk.fab.redhat.com>
-References: <20080225132615.GA21990@1und1.de>
-	<20080225152050.94788622.akpm@linux-foundation.org>
+From: "Cetnerowski, Adam" <adam.cetnerowski@intel.com>
+Subject: RE: RAID5 compatibility.
+Date: Tue, 26 Feb 2008 08:48:00 -0000
+Message-ID: <708F8794D464F346B28DF53E5CDD805F0343E4FA@swsmsx412.ger.corp.intel.com>
+References: <6696311.1515961203966402993.JavaMail.www@wwinf4623>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080225152050.94788622.akpm@linux-foundation.org>
+Content-class: urn:content-classes:message
+In-Reply-To: <6696311.1515961203966402993.JavaMail.www@wwinf4623>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,53 +20,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>, Anders Henke <anders.henke@1und1.de>, Jens Axboe <jens.axboe@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+To: silentphoebus@voila.fr, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Feb 25, 2008 at 03:20:50PM -0800, Andrew Morton wrote:
-> On Mon, 25 Feb 2008 14:26:15 +0100 Anders Henke <anders.henke@1und1.de> wrote:
-> > I'm currently stuck between Kernel LVM and DRBD, as I'm using Kernel
-> > 2.6.24.2 with DRBD 8.2.5 on top of an LVM2 device (LV).
-> > -LVM2/device mapper doesn't support write barriers
 
-That's right.
 
-> > -DRBD uses blkdev_issue_flush() to flush its metadata to disk.
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On > Behalf Of silentphoebus
+> Sent: Monday, February 25, 2008 8:07 PM
+> To: dm-devel@redhat.com
+> Subject: [dm-devel] RAID5 compatibility.
+>
+> Hi all,
+> i found a lot of informations on the internet for intel software raid5
+> with ICH controler.
+> So, the best is maybe to ask here.
+> Is it compatible with the dmraid mapper or not ?
+> Thank you for taking time to read.
 
-Which won't work if device-mapper is underneath.
+Hi,
 
-> >  On a no-barrier-device, DRBD should receive EOPNOTSUPP, but
-> >  it really does receive an EIO. Promptly, DRBD gives the
-> >  error message "drbd0: local disk flush failed with status -5".
-> > I've posted a lengty summary of my findings to
-> > http://lists.linbit.com/pipermail/drbd-user/2008-February/008665.html
-> > ... that DRBD does catch the EOPNOTSUPP for blkdev_issue_flush and
-> > BIO_RW_BARRIER, but the lvm implementation of blkdev_issue_flush in
-> > 2.6.24.2 aparently does return EIO for blkdev_issue_flush.
-> I'd say it's a DM bug.
+The software RAID 5 does indeed use device mapper. I would like to note
+that at the moment it is in the experimental stage, while we work on
+some of the features.
 
-The dm code is unchanged, but look at the limited endio handling in
-ll_rw_blk.c:
-
-static void bio_end_empty_barrier(struct bio *bio, int err)
-{
-        if (err)
-                clear_bit(BIO_UPTODATE, &bio->bi_flags);
-
-        complete(bio->bi_private);
-}
-
-int blkdev_issue_flush(struct block_device *bdev, sector_t *error_sector)
-{
-...
-        wait_for_completion(&wait);
-        if (error_sector)
-                *error_sector = bio->bi_sector;
-        ret = 0;
-        if (!bio_flagged(bio, BIO_UPTODATE))
-                ret = -EIO;
-
-Alasdair
--- 
-agk@redhat.com
+Adam Cetnerowski
+Intel Technology Poland
