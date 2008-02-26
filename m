@@ -1,85 +1,150 @@
-From: Daniel Hazelton <dhazelton@enter.net>
-Subject: Re: 2.6.24.2: 4KSTACKS + pcdrw + dm + mount -> stack overflow: ide-cd related? dm-related?
-Date: Tue, 26 Feb 2008 12:25:41 -0500
-Message-ID: <200802261225.41724.dhazelton@enter.net>
-References: <87wsovkth5.fsf@hades.wkstn.nix> <20080225224807.GA15700@atrey.karlin.mff.cuni.cz> <Pine.LNX.4.64.0802261207140.30955@jikos.suse.cz>
+From: Anders Henke <anders.henke@1und1.de>
+Subject: Re: [dm-devel] Re: device mapper not reporting no-barrier-support?
+Date: Tue, 26 Feb 2008 20:33:50 +0100
+Message-ID: <20080226193349.GQ13026@1und1.de>
+References: <20080225132615.GA21990@1und1.de> <20080225152050.94788622.akpm@linux-foundation.org> <20080226013656.GE1788@agk.fab.redhat.com> <20080226161741.GN6704@kernel.dk>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1763169AbYBZR0F@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.0802261207140.30955@jikos.suse.cz>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1764153AbYBZTea@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20080226161741.GN6704@kernel.dk>
 Sender: linux-kernel-owner@vger.kernel.org
-To: Jiri Kosina <jkosina@suse.cz>
-Cc: Jan Kara <jack@suse.cz>, Andrew Morton <akpm@linux-foundation.org>, Nix <nix@esperi.org.uk>, Peter Osterlund <petero2@telia.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Jan Kara <jack@ucw.cz>
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tuesday 26 February 2008 06:10:34 Jiri Kosina wrote:
-> On Mon, 25 Feb 2008, Jan Kara wrote:
-> >   Yes, exactly two of them. One is  non-trivial to get rid of - it's
-> > used for encoding of filename before we write it,
->
-> Why can't we do just
->
->
->
-> UDF: Optimize stack usage
->
-> Signed-off-by: Jiri Kosina <jkosina@suse.cz>
->
-> diff --git a/fs/udf/namei.c b/fs/udf/namei.c
-> index 112a5fb..706a2b5 100644
-> --- a/fs/udf/namei.c
-> +++ b/fs/udf/namei.c
-> @@ -336,7 +336,7 @@ static struct fileIdentDesc *udf_add_entry(struct inode
-> *dir, {
->  	struct super_block *sb = dir->i_sb;
->  	struct fileIdentDesc *fi = NULL;
-> -	char name[UDF_NAME_LEN], fname[UDF_NAME_LEN];
-> +	char *name, *fname;
->  	int namelen;
->  	loff_t f_pos;
->  	int flen;
-> @@ -352,6 +352,14 @@ static struct fileIdentDesc *udf_add_entry(struct
-> inode *dir, struct extent_position epos = {};
->  	struct udf_inode_info *dinfo;
->
-> +	name = kmalloc(sizeof(char) * UDF_NAME_LEN, GFP_KERNEL);
-> +	fname = kmalloc(sizeof(char) * UDF_NAME_LEN, GFP_KERNEL);
-> +
-> +	if (!name || !fname) {
-> +		*err = -ENOMEM;
-> +		return NULL;
-> +	}
-> +
+On Tue, Feb 26 2008 Jens Axboe wrote:
+> On Tue, Feb 26 2008, Alasdair G Kergon wrote:
+> > On Mon, Feb 25, 2008 at 03:20:50PM -0800, Andrew Morton wrote:
+> > > On Mon, 25 Feb 2008 14:26:15 +0100 Anders Henke <anders.henke@1und1.de> wrote:
+> > > > I'm currently stuck between Kernel LVM and DRBD, as I'm using Kernel
+> > > > 2.6.24.2 with DRBD 8.2.5 on top of an LVM2 device (LV).
+> > > > -LVM2/device mapper doesn't support write barriers
+> > 
+> > That's right.
+> > 
+> > > > -DRBD uses blkdev_issue_flush() to flush its metadata to disk.
+> > 
+> > Which won't work if device-mapper is underneath.
+> > 
+> > > >  On a no-barrier-device, DRBD should receive EOPNOTSUPP, but
+> > > >  it really does receive an EIO. Promptly, DRBD gives the
+> > > >  error message "drbd0: local disk flush failed with status -5".
+> > > > I've posted a lengty summary of my findings to
+> > > > http://lists.linbit.com/pipermail/drbd-user/2008-February/008665.html
+> > > > ... that DRBD does catch the EOPNOTSUPP for blkdev_issue_flush and
+> > > > BIO_RW_BARRIER, but the lvm implementation of blkdev_issue_flush in
+> > > > 2.6.24.2 aparently does return EIO for blkdev_issue_flush.
+> > > I'd say it's a DM bug.
+> > 
+> > The dm code is unchanged, but look at the limited endio handling in
+> > ll_rw_blk.c:
+> > 
+> > static void bio_end_empty_barrier(struct bio *bio, int err)
+> > {
+> >         if (err)
+> >                 clear_bit(BIO_UPTODATE, &bio->bi_flags);
+> > 
+> >         complete(bio->bi_private);
+> > }
+> > 
+> > int blkdev_issue_flush(struct block_device *bdev, sector_t *error_sector)
+> > {
+> > ...
+> >         wait_for_completion(&wait);
+> >         if (error_sector)
+> >                 *error_sector = bio->bi_sector;
+> >         ret = 0;
+> >         if (!bio_flagged(bio, BIO_UPTODATE))
+> >                 ret = -EIO;
+> 
+> You are right, the return value got broken there. Does this make it
+> return -EOPNOTSUPP properly for you?
 
-Wouldn't it be better to check each individually, so you do wind up leaking a 
-buffer here if one gets allocated and the other doesn't ?
 
->  	if (dentry) {
->  		if (!dentry->d_name.len) {
->  			*err = -EINVAL;
-> diff --git a/fs/udf/super.c b/fs/udf/super.c
-> index f3ac4ab..42e3ba8 100644
-> --- a/fs/udf/super.c
-> +++ b/fs/udf/super.c
-> @@ -1345,7 +1345,7 @@ static void udf_load_logicalvolint(struct super_block
-> *sb, kernel_extent_ad loc) *	July 1, 1997 - Andrew E. Mileski
->   *	Written, tested, and released.
->   */
-> -static int udf_process_sequence(struct super_block *sb, long block,
-> +static int noinline udf_process_sequence(struct super_block *sb, long
-> block, long lastblock, kernel_lb_addr *fileset)
+No, it doesn't.
+
+
+
+I've applied your patch manually, as 2.6.24.2. doesn't have a "blk-barrier.c":
+
+---cut
+--- linux-2.6.24.2/block/ll_rw_blk.c.prepatch   2008-02-11
+06:51:11.000000000 +0100
++++ linux-2.6.24.2/block/ll_rw_blk.c    2008-02-26 20:02:28.514641620
++0100
+@@ -2667,8 +2667,11 @@
+ 
+ static void bio_end_empty_barrier(struct bio *bio, int err)
+ {
+-       if (err)
++       if (err) {
++               if (err == -EOPNOTSUPP)
++                       set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
+                clear_bit(BIO_UPTODATE, &bio->bi_flags);
++       }
+ 
+        complete(bio->bi_private);
+ }
+---cut
+
+... and the resulting kernel shows exactly the same behaviour than before:
+
+[  752.301388] drbd0: Writing meta data super block now.
+[  752.349713] drbd0: local disk flush failed with status -5
+[  752.416256] drbd0: local disk flush failed with status -5
+[  753.419254] drbd0: local disk flush failed with status -5
+[  753.925726] drbd0: local disk flush failed with status -5
+[  754.551176] drbd0: local disk flush failed with status -5
+[  754.806052] drbd0: local disk flush failed with status -5
+[  755.327988] drbd0: local disk flush failed with status -5
+[  755.781863] drbd0: local disk flush failed with status -5
+[  756.266694] drbd0: local disk flush failed with status -5
+
+
+
+
+
+Anders
+
+> diff --git a/block/blk-barrier.c b/block/blk-barrier.c
+> index 6901eed..55c5f1f 100644
+> --- a/block/blk-barrier.c
+> +++ b/block/blk-barrier.c
+> @@ -259,8 +259,11 @@ int blk_do_ordered(struct request_queue *q, struct request **rqp)
+>  
+>  static void bio_end_empty_barrier(struct bio *bio, int err)
 >  {
->  	struct buffer_head *bh = NULL;
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
-
-DRH
-
+> -	if (err)
+> +	if (err) {
+> +		if (err == -EOPNOTSUPP)
+> +			set_bit(BIO_EOPNOTSUPP, &bio->bi_flags);
+>  		clear_bit(BIO_UPTODATE, &bio->bi_flags);
+> +	}
+>  
+>  	complete(bio->bi_private);
+>  }
+> @@ -309,7 +312,9 @@ int blkdev_issue_flush(struct block_device *bdev, sector_t *error_sector)
+>  		*error_sector = bio->bi_sector;
+>  
+>  	ret = 0;
+> -	if (!bio_flagged(bio, BIO_UPTODATE))
+> +	if (bio_flagged(bio, BIO_EOPNOTSUPP))
+> +		ret = -EOPNOTSUPP;
+> +	else if (!bio_flagged(bio, BIO_UPTODATE))
+>  		ret = -EIO;
+>  
+>  	bio_put(bio);
+> 
+> -- 
+> Jens Axboe
+> 
 -- 
-Dialup is like pissing through a pipette. Slow and excruciatingly painful.
+1&1 Internet AG              "Use the --force, Luke"
+Brauerstrasse 48             v://49.721.91374.50
+D-76135 Karlsruhe            f://49.721.91374.225
+
+Amtsgericht Montabaur HRB 6484
+Vorstand: Henning Ahlert, Ralph Dommermuth, Matthias Ehrlich, Andreas Gauger,
+Thomas Gottschlich, Matthias Greve, Robert Hoffmann, Markus Huhn, Achim Weiss
+Aufsichtsratsvorsitzender: Michael Scheeren
