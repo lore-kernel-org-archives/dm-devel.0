@@ -1,16 +1,12 @@
-From: "Wood, Brian J" <brian.j.wood@intel.com>
-Subject: RE: RE: RAID5 compatibility.
-Date: Wed, 27 Feb 2008 09:32:46 -0800
-Message-ID: <D44F48C7D79D2943A073C8FA0F49A3CC01EBDADA@orsmsx418.amr.corp.intel.com>
-References: <31325860.300541204131583899.JavaMail.www@wwinf4618>
+From: Dharmesh Kamdar <kamdard71@yahoo.com>
+Subject: UDEV with DM-MULTIPATH issue in RHEL 5.1....
+Date: Wed, 27 Feb 2008 10:10:22 -0800 (PST)
+Message-ID: <508552.23576.qm@web90611.mail.mud.yahoo.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="iso-8859-1"
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <31325860.300541204131583899.JavaMail.www@wwinf4618>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,103 +16,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-You need to use the raid 4/5 patch from the maintainers website to have d=
-mraid 4/5 support added. Here's the link:
+Hi,
 
-http://people.redhat.com/heinzm/sw/dm/dm-raid45/dm-raid45-2.6.25-rc2_2008=
-0221.patch.bz2=20
+This question is more in conjunction with DM-MULTIPATH
+and UDEV.
 
-Unzip this patch using bunzip2 and apply it to your 2.6.25-rc2 kernel. Th=
-en using "make gconfig" or "make menuconfig" go into "Device Drivers->Mul=
-tiple devices driver support (RAID and LVM)->Device mapper support" and s=
-elect "RAID 4/5 target".=20
+We are trying to set-up a Oracle 10g RAC (2 node)
+using RHEL 5.1 on an x86-64 hardware.=20
 
-Brian Wood
-Software Engineer
-Intel Corp., Manageability & Platform Software Division
-brian.j.wood@intel.com
+We are using DM-MULTIPATH for storage devices,
+including OCR and VOTING disk(s) that Oracle requires.
 
->-----Original Message-----
->From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] O=
-n Behalf Of silentphoebus
->Sent: Wednesday, February 27, 2008 9:00 AM
->To: dm-devel@redhat.com
->Subject: RE: RE: [dm-devel] RAID5 compatibility.
->
->Thank you for your answer.
->I can't manage the raid5 to work,
->here are what what i do :
->
->dmraid -s give me :
->*** Group superset isw_hdaagdcbc
->--> Subset
->name   : isw_hdaagdcbc_RAID5
->size   : 1465177344
->stride : 128
->type   : raid5_la
->status : ok
->subsets: 0
->devs   : 4
->spares : 0
->
->dmraid -tay give me :
->isw_hdaagdcbc_RAID5: 0 1465177344 raid45 core 2 131072 nosync raid5_la 1=
- 128 4 -1 /dev/sda 0
->/dev/sdb 0 /dev/sdc 0 /dev/sde 0
->
->and dmraid -ay give me :
->ERROR: device-mapper target type "raid45" not in kernel
->and the /dev/mapper/ show only the control file.
->
->i have try with the from the cvs tree and the current tools.
->i use the latest kernel with raid456 compiled as modules and loaded.
->
->What should i do to make the raid5 work.
->Thank you very much.
->>
->>
->> > Message du 26/02/08 =E0 10h00
->> > De : "Cetnerowski, Adam" <adam.cetnerowski@intel.com>
->> > A : silentphoebus@voila.fr, "device-mapper development" <dm-devel@re=
-dhat.com>
->> > Copie =E0 :
->> > Objet : RE: [dm-devel] RAID5 compatibility.
->> >
->> >
->> >
->> > > -----Original Message-----
->> > > From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.=
-com]
->> > On > Behalf Of silentphoebus
->> > > Sent: Monday, February 25, 2008 8:07 PM
->> > > To: dm-devel@redhat.com
->> > > Subject: [dm-devel] RAID5 compatibility.
->> > >
->> > > Hi all,
->> > > i found a lot of informations on the internet for intel software r=
-aid5
->> > > with ICH controler.
->> > > So, the best is maybe to ask here.
->> > > Is it compatible with the dmraid mapper or not ?
->> > > Thank you for taking time to read.
->> >
->> > Hi,
->> >
->> > The software RAID 5 does indeed use device mapper. I would like to n=
-ote
->> > that at the moment it is in the experimental stage, while we work on
->> > some of the features.
->> >
->> > Adam Cetnerowski
->> > Intel Technology Poland
->> >
->> >
->
->
->--
->dm-devel mailing list
->dm-devel@redhat.com
->https://www.redhat.com/mailman/listinfo/dm-devel
+Oracle OUI requires "OCR" and "VOTING" disk to be
+specified as "raw" devices for the installation (it
+does NOT accept the block device while
+installation)...Also it requires us to change the
+permissions on these devices such that the user
+"oracle" can access the OCR and VOTING  disks.
+
+We've created partitions on the OCR and VOTING disks
+and have defined an alias in /etc/multipath.conf
+
+After that, for persistency, we've defined following
+UDEV rules for it to=20
+1) create raw device binding in a persistent way (so
+that it survives reboot).
+
+2) it changes the permission that is acceptable to
+Oracle.
+
+The UDEV rules are as follows:
+/etc/udev/rules.d/51-oracle-raw.rules
+ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/OCR1p1",
+RUN+=3D"/bin/raw /dev/raw/rawX %N"
+ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/OCR2p1",
+RUN+=3D"/bin/raw /dev/raw/rawX %N"
+ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/VOTE1p1",
+RUN+=3D"/bin/raw /dev/raw/rawX %N"
+ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/VOTE2p1",
+RUN+=3D"/bin/raw /dev/raw/rawX %N"
+ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/VOTE3p1",
+RUN+=3D"/bin/raw /dev/raw/rawX %N"
+~                                                    =20
+2) /etc/udev/rules.d/99-raw.rules
+#-------------------------#
+#OCR disks --> raw1, raw2 #
+#-------------------------#
+
+KERNEL=3D=3D"raw[1-2]*", GROUP=3D"oinstall", MODE=3D"640"
+
+#------------------------------------#
+# Voting disks --> raw3, raw4, raw5. #
+#------------------------------------#
+KERNEL=3D=3D"raw[3-5]*", OWNER=3D"oracle", GROUP=3D"oinstall",
+MODE=3D"660"
+~                                                    =20
+                 =20
+
+But these rules do NOT get honored..It does NOT create
+any raw binding, neither does it change the
+permissions
+on the devices as specified. Even reboot of a system
+does NOT help.
+
+We've tried and experimented numerous ways, like
+specifiying /dev/mapper rather than /dev/mpath, also
+we have changed the UDEV rule names with various
+numbers...but all in vain so far.
+
+The only thing that seems to work is if we write some
+sort of script in /etc/rc.local, however, it then
+defeats the purpose of UDEV.
+
+We also updated  to the latest and greatest patches
+for RHEL 5.1, but no use...
+
+So, is there an issue with DM-MULTIPATH and UDEV in
+RHEL 5.1 ? or are we missing anything specific ?
+
+
+Here are the specifics:
+OS: RHEL 5.1
+
+uname -a : Linux arcx3550gxvg4 2.6.18-53.1.13.el5 #1
+SMP Mon Feb 11 13:27:27 EST 2008 x86_64 x86_64 x86_64
+GNU/Linux
+
+Multipath : device-mapper-multipath-0.4.7-12.el5_1.2
+
+Hardware: IBM xseries 3550 servers
+
+Will appreciate any help or tips/tricks on the
+subject.
+
+Thanks & Regards,
+Dharmesh.
+
+
+      ___________________________________________________________________=
+_________________
+Never miss a thing.  Make Yahoo your home page.=20
+http://www.yahoo.com/r/hs
