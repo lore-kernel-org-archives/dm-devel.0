@@ -1,12 +1,14 @@
 From: Dharmesh Kamdar <kamdard71@yahoo.com>
-Subject: UDEV with DM-MULTIPATH issue in RHEL 5.1....
-Date: Wed, 27 Feb 2008 10:10:22 -0800 (PST)
-Message-ID: <508552.23576.qm@web90611.mail.mud.yahoo.com>
+Subject: Re: mapper device perms on reboot
+Date: Wed, 27 Feb 2008 10:17:34 -0800 (PST)
+Message-ID: <788110.21147.qm@web90606.mail.mud.yahoo.com>
+References: <342d47870802261304s54c3650dv83216abd8ffaee8f@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <342d47870802261304s54c3650dv83216abd8ffaee8f@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,107 +18,72 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Hi Scott,
 
-This question is more in conjunction with DM-MULTIPATH
-and UDEV.
+This weblink may help -->
+http://www.ardentperf.com/2008/02/13/oracle-clusterware-on-rhel5oel5-with=
+-udev-and-multipath/
+I've not tried this, but the author of the article
+claims that it works..
 
-We are trying to set-up a Oracle 10g RAC (2 node)
-using RHEL 5.1 on an x86-64 hardware.=20
+We are also facing similar issue(s) with Oracle and
+RHEL 5.1 using UDEV/Device-mapper..I've also posted a
+query on the same
+(https://www.redhat.com/archives/dm-devel/2008-February/msg00201.html)
+...But it just discusses the changing of permissions,
+however creation of raw devices using UDEV is not
+specified, hence we are still looking for that answer.
 
-We are using DM-MULTIPATH for storage devices,
-including OCR and VOTING disk(s) that Oracle requires.
+Hope it helps somewhat.
 
-Oracle OUI requires "OCR" and "VOTING" disk to be
-specified as "raw" devices for the installation (it
-does NOT accept the block device while
-installation)...Also it requires us to change the
-permissions on these devices such that the user
-"oracle" can access the OCR and VOTING  disks.
+Let us know.
 
-We've created partitions on the OCR and VOTING disks
-and have defined an alias in /etc/multipath.conf
-
-After that, for persistency, we've defined following
-UDEV rules for it to=20
-1) create raw device binding in a persistent way (so
-that it survives reboot).
-
-2) it changes the permission that is acceptable to
-Oracle.
-
-The UDEV rules are as follows:
-/etc/udev/rules.d/51-oracle-raw.rules
-ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/OCR1p1",
-RUN+=3D"/bin/raw /dev/raw/rawX %N"
-ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/OCR2p1",
-RUN+=3D"/bin/raw /dev/raw/rawX %N"
-ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/VOTE1p1",
-RUN+=3D"/bin/raw /dev/raw/rawX %N"
-ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/VOTE2p1",
-RUN+=3D"/bin/raw /dev/raw/rawX %N"
-ACTION=3D=3D"add", KERNEL=3D"/dev/mpath/VOTE3p1",
-RUN+=3D"/bin/raw /dev/raw/rawX %N"
-~                                                    =20
-2) /etc/udev/rules.d/99-raw.rules
-#-------------------------#
-#OCR disks --> raw1, raw2 #
-#-------------------------#
-
-KERNEL=3D=3D"raw[1-2]*", GROUP=3D"oinstall", MODE=3D"640"
-
-#------------------------------------#
-# Voting disks --> raw3, raw4, raw5. #
-#------------------------------------#
-KERNEL=3D=3D"raw[3-5]*", OWNER=3D"oracle", GROUP=3D"oinstall",
-MODE=3D"660"
-~                                                    =20
-                 =20
-
-But these rules do NOT get honored..It does NOT create
-any raw binding, neither does it change the
-permissions
-on the devices as specified. Even reboot of a system
-does NOT help.
-
-We've tried and experimented numerous ways, like
-specifiying /dev/mapper rather than /dev/mpath, also
-we have changed the UDEV rule names with various
-numbers...but all in vain so far.
-
-The only thing that seems to work is if we write some
-sort of script in /etc/rc.local, however, it then
-defeats the purpose of UDEV.
-
-We also updated  to the latest and greatest patches
-for RHEL 5.1, but no use...
-
-So, is there an issue with DM-MULTIPATH and UDEV in
-RHEL 5.1 ? or are we missing anything specific ?
-
-
-Here are the specifics:
-OS: RHEL 5.1
-
-uname -a : Linux arcx3550gxvg4 2.6.18-53.1.13.el5 #1
-SMP Mon Feb 11 13:27:27 EST 2008 x86_64 x86_64 x86_64
-GNU/Linux
-
-Multipath : device-mapper-multipath-0.4.7-12.el5_1.2
-
-Hardware: IBM xseries 3550 servers
-
-Will appreciate any help or tips/tricks on the
-subject.
-
-Thanks & Regards,
+Regards,
 Dharmesh.
+
+
+--- Scott Moseman <scmoseman@gmail.com> wrote:
+
+> How can I get the mapper device permissions set on
+> reboot?
+>=20
+> When I attempted to try this...
+>=20
+> # cat /etc/udev/permissions.d/50-udev.permissions |
+> grep mapper
+> mapper/mpath*:oracle:dba:0660
+>=20
+> But it did not seem to work...
+>=20
+> # ls -l /dev/mapper/mpath*
+> brw-rw----  1 root disk 253, 2 Feb 26 20:56
+> /dev/mapper/mpath0
+> brw-rw----  1 root disk 253, 5 Feb 26 20:56
+> /dev/mapper/mpath0p1
+> brw-rw----  1 root disk 253, 3 Feb 26 20:56
+> /dev/mapper/mpath1
+> brw-rw----  1 root disk 253, 4 Feb 26 20:56
+> /dev/mapper/mpath1p1
+>=20
+> Am I doing something wrong?  Is there another way to
+> do this?
+>=20
+> Thanks,
+> Scott
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>=20
+
 
 
       ___________________________________________________________________=
 _________________
-Never miss a thing.  Make Yahoo your home page.=20
-http://www.yahoo.com/r/hs
+Be a better friend, newshound, and=20
+know-it-all with Yahoo! Mobile.  Try it now.  http://mobile.yahoo.com/;_y=
+lt=3DAhu06i62sR8HDtDypao8Wcj9tAcJ=20
