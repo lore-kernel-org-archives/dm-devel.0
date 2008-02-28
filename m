@@ -1,7 +1,7 @@
 From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
 Subject: Re: Installing RHEL with single controller
-Date: Thu, 28 Feb 2008 13:43:05 -0800
-Message-ID: <110b17190802281343p76655c2fk29c07c4571ba8ac@mail.gmail.com>
+Date: Thu, 28 Feb 2008 15:07:50 -0800
+Message-ID: <110b17190802281507l755d7bd0hb8fd9e83e5dc1374@mail.gmail.com>
 References: <110b17190802281008u6e5eeef4vccfb509be7ad4198@mail.gmail.com>
 	<20080228192135.GA13340@us.ibm.com>
 	<110b17190802281136k7f303322y28f9952c82366a0c@mail.gmail.com>
@@ -26,9 +26,16 @@ Errors-To: dm-devel-bounces@redhat.com
 To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks Malahal/Chandra. I will try this and let you know.
+Ok; this is what I did:
 
-Thanks again,
+mkinitrd   /boot/initrd.final.img   2.6.18-53.el5xen   --with=dm-multipath
+
+Changed the /boot/grub/menu.lst file to point to new initrd image file.
+Reboot is fine but multipath -ll is still null. :(
+
+What am I missing here.
+
+Regards,
 Pradipmaya.
 
 
