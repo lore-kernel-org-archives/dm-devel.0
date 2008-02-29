@@ -1,7 +1,8 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O in dm-crypt
-Date: Sat, 1 Mar 2008 02:15:51 +0800
-Message-ID: <20080229181551.GA28193@gondor.apana.org.au>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O in
+	dm-crypt
+Date: Fri, 29 Feb 2008 18:46:49 +0000
+Message-ID: <20080229184649.GJ1788@agk.fab.redhat.com>
 References: <200802281924.03996.rrs@researchut.com>
 	<20080228232048.51e28c1d.akpm@linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -19,23 +20,20 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Ritesh Raj Sarraf <rrs@researchut.com>, Christophe Saout <christophe@saout.de>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Ritesh Raj Sarraf <rrs@researchut.com>
+Cc: linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, Herbert Xu <herbert@gondor.apana.org.au>, Christophe Saout <christophe@saout.de>
 List-Id: dm-devel.ids
 
 On Thu, Feb 28, 2008 at 11:20:48PM -0800, Andrew Morton wrote:
->
-> Now, I'm assuming that it's just unreasonable for a machine to spend a full
-> 11 seconds crunching away on crypto in that code path.  Maybe it _is_
-> reasonable, and all we need to do is to poke a cond_resched() in there
-> somewhere.  Herbert, any thoughts?  What's the speed of that code?
+> On Thu, 28 Feb 2008 19:24:03 +0530 Ritesh Raj Sarraf <rrs@researchut.com> wrote:
+> > Kernel: 2.6.24
+> > Distribution: Debian Testing/Unstable
+> > Tainted: Yes (nvidia proprietary drivers)
 
-It encryps 512 bytes each time so it should definitely be pretty
-quick.  Perhaps the caller is disabling interrupts or something?
+Any chance you can try to reproduce it upstream e.g. in 2.6.25-rc3?
 
-Cheers,
+There have been significant changes in this area of the code.
+
+Alasdair
 -- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+agk@redhat.com
