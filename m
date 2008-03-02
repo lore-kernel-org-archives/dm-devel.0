@@ -1,53 +1,53 @@
-From: Gunter Ohrner <G.Ohrner-6V9naDJErT6662+jY7v6MhvVK+yQ3ZXh@public.gmane.org>
-Subject: Re: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O in	dm-crypt
-Date: Sat, 01 Mar 2008 22:59:33 +0100
-Message-ID: <fqcjj9$5bv$1@ger.gmane.org>
-References: <200802281924.03996.rrs@researchut.com>	<20080228232048.51e28c1d.akpm@linux-foundation.org>	<20080229184649.GJ1788@agk.fab.redhat.com>	<200803010029.18320.rrs@researchut.com> <47C9AEF3.7040507@redhat.com> <47C9AF8F.2050502@redhat.com>
-Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
+From: Anthony Liguori <anthony@codemonkey.ws>
+Subject: Re: I/O bandwidth control on KVM
+Date: Sat, 01 Mar 2008 22:18:03 -0600
+Message-ID: <47CA2A7B.8000400@codemonkey.ws>
+References: <20080229.210531.226799765.ryov__28298.7898834564$1204287044$gmane$org@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7Bit
-Return-path: <dm-crypt-return-2611-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
-List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
-Sender: news <news-dbVV3NMTNubNLxjTenLetw@public.gmane.org>
-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
-Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <kvm-devel-bounces@lists.sourceforge.net>
+In-Reply-To: <20080229.210531.226799765.ryov__28298.7898834564$1204287044$gmane$org@valinux.co.jp>
+List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/kvm-devel>,
+	<mailto:kvm-devel-request@lists.sourceforge.net?subject=unsubscribe>
+List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=kvm-devel>
+List-Post: <mailto:kvm-devel@lists.sourceforge.net>
+List-Help: <mailto:kvm-devel-request@lists.sourceforge.net?subject=help>
+List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/kvm-devel>,
+	<mailto:kvm-devel-request@lists.sourceforge.net?subject=subscribe>
+Sender: kvm-devel-bounces@lists.sourceforge.net
+Errors-To: kvm-devel-bounces@lists.sourceforge.net
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: kvm-devel@lists.sourceforge.net, dm-devel@redhat.com, virtualization <virtualization@lists.linux-foundation.org>
 List-Id: dm-devel.ids
 
-Milan Broz wrote:
-> (the same patch for 2.6.24)
+Hi Ryo,
 
-Observations using this patch:
+Ryo Tsuruta wrote:
+> Hello all,
+> 
+> I've implemented a block device which throttles block I/O bandwidth, 
+> which I called dm-ioband, and been trying to throttle I/O bandwidth on
+> KVM environment. But unfortunately it doesn't work well, the number of
+> issued I/Os is not according to the bandwidth setting.
+> On the other hand, I got the good result when accessing directly to
+> the local disk on the local machine.
+> 
+> I'm not so familiar with KVM. Could anyone give me any advice?
 
-* I did not get a Soft Lockup during my tests so far.
+If you are using virtio drivers in the guest (which I presume you are 
+given the reference to /dev/vda), try using the following -drive syntax:
 
-* The latency problems I experienced when writing massive amounts of data to
-  an encrypted partitions are improved, though not solved. Using the "dd
-  if=/dev/zero of=test.null bs=4M count=1024 ; rm test.null" approach
-  mentioned in the other thread, the system stays more responsive and even
-  listening to music works more or less, although there are still audible
-  interruptions. A few times during the write, CPU usage will spike and IO
-  (including music playing in Amarok) will stall for about 0.5 seconds or a
-  second.
+-drive file=/dev/mapper/ioband1,if=virtio,boot=on,cache=off
 
-* This patch seems to hurt performance, I got much lower thoughput and the
-  system was never fully loaded, ie. gkrellm showed both cores to run
-  between 10% and 40% with a combined CPU utilization fo 30% most of the
-  time.
-  I got unstable timings from my dd command, but targetting the reiserfs
-  partition I got around 18 MB/sec and 34 MB/sec instead of the 41 MB/sec I
-  achieved in my tests yesterday.
-  So this looks like a viable work around if it reliably avoids the Soft
-  Lockup, but it does not seem to be a perfect solution.
-  (Addendum: I just got 41 MB/sec with this patch, with an otherwise nearly
-  idle system, ie. lots of active processes but none doing anything serious.
-  The numbers before applying the patch were much more stable and generally
-  higher. Now simply playing or not playing an OGG seems to make the
-  difference between 40 MB/sec and 30 MB/sec.)
+This will force the use of O_DIRECT.  By default, QEMU does not open 
+with O_DIRECT so you'll see page cache effects.
 
-Greetings,
+Regards,
 
-  Gunter
+Anthony Liguori
+
+-------------------------------------------------------------------------
+This SF.net email is sponsored by: Microsoft
+Defy all challenges. Microsoft(R) Visual Studio 2008.
+http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
