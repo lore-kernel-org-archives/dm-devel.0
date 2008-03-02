@@ -1,53 +1,31 @@
-From: Anthony Liguori <anthony@codemonkey.ws>
-Subject: Re: I/O bandwidth control on KVM
-Date: Sat, 01 Mar 2008 22:18:03 -0600
-Message-ID: <47CA2A7B.8000400@codemonkey.ws>
-References: <20080229.210531.226799765.ryov__28298.7898834564$1204287044$gmane$org@valinux.co.jp>
+From: Gunter Ohrner <G.Ohrner-6V9naDJErT6662+jY7v6MhvVK+yQ3ZXh@public.gmane.org>
+Subject: Re: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O in	dm-crypt
+Date: Sun, 02 Mar 2008 08:58:52 +0100
+Message-ID: <fqdmmv$eov$1@ger.gmane.org>
+References: <200802281924.03996.rrs@researchut.com>	<20080228232048.51e28c1d.akpm@linux-foundation.org>	<20080229184649.GJ1788@agk.fab.redhat.com>	<200803010029.18320.rrs@researchut.com> <47C9AEF3.7040507@redhat.com> <47C9AF8F.2050502@redhat.com> <fqcjj9$5bv$1@ger.gmane.org>
+Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kvm-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <20080229.210531.226799765.ryov__28298.7898834564$1204287044$gmane$org@valinux.co.jp>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/kvm-devel>,
-	<mailto:kvm-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=kvm-devel>
-List-Post: <mailto:kvm-devel@lists.sourceforge.net>
-List-Help: <mailto:kvm-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/kvm-devel>,
-	<mailto:kvm-devel-request@lists.sourceforge.net?subject=subscribe>
-Sender: kvm-devel-bounces@lists.sourceforge.net
-Errors-To: kvm-devel-bounces@lists.sourceforge.net
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: kvm-devel@lists.sourceforge.net, dm-devel@redhat.com, virtualization <virtualization@lists.linux-foundation.org>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7Bit
+Return-path: <dm-crypt-return-2612-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
+List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
+Sender: news <news-dbVV3NMTNubNLxjTenLetw@public.gmane.org>
+To: dm-crypt-4q3lyFh4P1g@public.gmane.org
+Cc: dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hi Ryo,
+Gunter Ohrner wrote:
+> * This patch seems to hurt performance, I got much lower thoughput and the
 
-Ryo Tsuruta wrote:
-> Hello all,
-> 
-> I've implemented a block device which throttles block I/O bandwidth, 
-> which I called dm-ioband, and been trying to throttle I/O bandwidth on
-> KVM environment. But unfortunately it doesn't work well, the number of
-> issued I/Os is not according to the bandwidth setting.
-> On the other hand, I got the good result when accessing directly to
-> the local disk on the local machine.
-> 
-> I'm not so familiar with KVM. Could anyone give me any advice?
+Mh, strange, today I cannot reproduce the performance degradation...
 
-If you are using virtio drivers in the guest (which I presume you are 
-given the reference to /dev/vda), try using the following -drive syntax:
+There seem to have been some factors in effect during my yesterday's tests
+which I'm not aware of - anyway, currently throughput is fine while running
+a 2.6.24.3 kernel with this patch applied.
 
--drive file=/dev/mapper/ioband1,if=virtio,boot=on,cache=off
+Greetings,
 
-This will force the use of O_DIRECT.  By default, QEMU does not open 
-with O_DIRECT so you'll see page cache effects.
-
-Regards,
-
-Anthony Liguori
-
--------------------------------------------------------------------------
-This SF.net email is sponsored by: Microsoft
-Defy all challenges. Microsoft(R) Visual Studio 2008.
-http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+  Gunter
