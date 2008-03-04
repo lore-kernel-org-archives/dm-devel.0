@@ -1,8 +1,7 @@
 From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 3/4] dm-log: adjust dm-raid1.c to cope with
-	standalone dirty region log module
-Date: Tue,  4 Mar 2008 15:28:30 +0100
-Message-ID: <1204640911-28469-4-git-send-email-hjm@redhat.com>
+Subject: [RFC PATCH 4/4] dm-log: adjust makefile for dm-log module
+Date: Tue,  4 Mar 2008 15:28:31 +0100
+Message-ID: <1204640911-28469-5-git-send-email-hjm@redhat.com>
 References: <1204640911-28469-1-git-send-email-hjm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,43 +19,33 @@ To: dm-devel@redhat.com
 Cc: Heinz Mauelshagen <hjm@redhat.com>
 List-Id: dm-devel.ids
 
-Remove any dirty_log_{init,exit}() calls from dm-raid1.c to
-allow it to share the standalone dm-log.ko with other targets.
 
 Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
 ---
- drivers/md/dm-raid1.c |   10 +---------
- 1 files changed, 1 insertions(+), 9 deletions(-)
+ drivers/md/Makefile |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git 2.6.25-rc3.orig/drivers/md/dm-raid1.c 2.6.25-rc3/drivers/md/dm-raid1.c
-index 5160587..37afe35 100644
---- 2.6.25-rc3.orig/drivers/md/dm-raid1.c
-+++ 2.6.25-rc3/drivers/md/dm-raid1.c
-@@ -1864,15 +1864,9 @@ static int __init dm_mirror_init(void)
- {
- 	int r;
+diff --git 2.6.25-rc3.orig/drivers/md/Makefile 2.6.25-rc3/drivers/md/Makefile
+index d9aa7ed..be4b069 100644
+--- 2.6.25-rc3.orig/drivers/md/Makefile
++++ 2.6.25-rc3/drivers/md/Makefile
+@@ -6,7 +6,7 @@ dm-mod-objs	:= dm.o dm-table.o dm-target.o dm-linear.o dm-stripe.o \
+ 		   dm-ioctl.o dm-io.o kcopyd.o
+ dm-multipath-objs := dm-hw-handler.o dm-path-selector.o dm-mpath.o
+ dm-snapshot-objs := dm-snap.o dm-exception-store.o
+-dm-mirror-objs	:= dm-log.o dm-raid1.o
++dm-mirror-objs	:= dm-raid1.o
+ dm-rdac-objs	:= dm-mpath-rdac.o
+ dm-hp-sw-objs	:= dm-mpath-hp-sw.o
+ md-mod-objs     := md.o bitmap.o
+@@ -39,7 +39,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
+ obj-$(CONFIG_DM_MULTIPATH_HP)	+= dm-hp-sw.o
+ obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rdac.o
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+-obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
++obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
  
--	r = dm_dirty_log_init();
--	if (r)
--		return r;
--
- 	r = dm_register_target(&mirror_target);
--	if (r < 0) {
-+	if (r < 0)
- 		DMERR("Failed to register mirror target");
--		dm_dirty_log_exit();
--	}
- 
- 	return r;
- }
-@@ -1884,8 +1878,6 @@ static void __exit dm_mirror_exit(void)
- 	r = dm_unregister_target(&mirror_target);
- 	if (r < 0)
- 		DMERR("unregister failed %d", r);
--
--	dm_dirty_log_exit();
- }
- 
- /* Module hooks */
+ quiet_cmd_unroll = UNROLL  $@
 -- 
 1.5.4.1
