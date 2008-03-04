@@ -1,7 +1,7 @@
 From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 4/4] dm-log: adjust makefile for dm-log module
-Date: Tue,  4 Mar 2008 15:28:31 +0100
-Message-ID: <1204640911-28469-5-git-send-email-hjm@redhat.com>
+Subject: [RFC PATCH 1/4] dm-log: export dm_disk from dm.c
+Date: Tue,  4 Mar 2008 15:28:28 +0100
+Message-ID: <1204640911-28469-2-git-send-email-hjm@redhat.com>
 References: <1204640911-28469-1-git-send-email-hjm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,32 +20,25 @@ Cc: Heinz Mauelshagen <hjm@redhat.com>
 List-Id: dm-devel.ids
 
 
+Export dm_disk.
+
+
 Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
 ---
- drivers/md/Makefile |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+ drivers/md/dm.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
 
-diff --git 2.6.25-rc3.orig/drivers/md/Makefile 2.6.25-rc3/drivers/md/Makefile
-index d9aa7ed..be4b069 100644
---- 2.6.25-rc3.orig/drivers/md/Makefile
-+++ 2.6.25-rc3/drivers/md/Makefile
-@@ -6,7 +6,7 @@ dm-mod-objs	:= dm.o dm-table.o dm-target.o dm-linear.o dm-stripe.o \
- 		   dm-ioctl.o dm-io.o kcopyd.o
- dm-multipath-objs := dm-hw-handler.o dm-path-selector.o dm-mpath.o
- dm-snapshot-objs := dm-snap.o dm-exception-store.o
--dm-mirror-objs	:= dm-log.o dm-raid1.o
-+dm-mirror-objs	:= dm-raid1.o
- dm-rdac-objs	:= dm-mpath-rdac.o
- dm-hp-sw-objs	:= dm-mpath-hp-sw.o
- md-mod-objs     := md.o bitmap.o
-@@ -39,7 +39,7 @@ obj-$(CONFIG_DM_MULTIPATH_EMC)	+= dm-emc.o
- obj-$(CONFIG_DM_MULTIPATH_HP)	+= dm-hp-sw.o
- obj-$(CONFIG_DM_MULTIPATH_RDAC)	+= dm-rdac.o
- obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
--obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o
-+obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o
- obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+diff --git 2.6.25-rc3.orig/drivers/md/dm.c 2.6.25-rc3/drivers/md/dm.c
+index 6617ce4..30da5eb 100644
+--- 2.6.25-rc3.orig/drivers/md/dm.c
++++ 2.6.25-rc3/drivers/md/dm.c
+@@ -1626,6 +1626,7 @@ struct gendisk *dm_disk(struct mapped_device *md)
+ {
+ 	return md->disk;
+ }
++EXPORT_SYMBOL_GPL(dm_disk);
  
- quiet_cmd_unroll = UNROLL  $@
+ int dm_suspended(struct mapped_device *md)
+ {
 -- 
 1.5.4.1
