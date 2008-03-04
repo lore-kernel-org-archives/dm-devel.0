@@ -1,11 +1,15 @@
-From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 1/4] dm-log: export dm_disk from dm.c
-Date: Tue,  4 Mar 2008 15:28:28 +0100
-Message-ID: <1204640911-28469-2-git-send-email-hjm@redhat.com>
-References: <1204640911-28469-1-git-send-email-hjm@redhat.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: 2.6.25-rc regression: kernel panic on boot
+Date: Tue, 4 Mar 2008 10:43:12 -0800
+Message-ID: <20080304104312.457ba3a8.akpm@linux-foundation.org>
+References: <1204500349.10256.171.camel@acpi-hp-zz.sh.intel.com>
+	<20080303224259.GA27008@suse.de> <20080304135447.GD32383@elte.hu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1204640911-28469-1-git-send-email-hjm@redhat.com>
+In-Reply-To: <20080304135447.GD32383@elte.hu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,30 +19,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <hjm@redhat.com>
+To: Ingo Molnar <mingo@elte.hu>
+Cc: kay.sievers@vrfy.org, Greg KH <gregkh@suse.de>, linux-kernel <linux-kernel@vger.kernel.org>, "Rafael J. Wysocki" <rjw@sisk.pl>, Alexey Dobriyan <adobriyan@sw.ru>, dm-devel@redhat.com, "Zhang,
+	Rui" <rui.zhang@intel.com>, Linus Torvalds <torvalds@linux-foundation.org>
 List-Id: dm-devel.ids
 
+On Tue, 4 Mar 2008 14:54:47 +0100 Ingo Molnar <mingo@elte.hu> wrote:
 
-Export dm_disk.
+> * Greg KH <gregkh@suse.de> wrote:
+> 
+> > On Mon, Mar 03, 2008 at 07:25:49AM +0800, Zhang, Rui wrote:
+> > > Hi, all,
+> > > 
+> > > kernel panic on boot when I try to run 2.6.25-rc1 and later, but 2.6.24-rc8 boots okay.
+> > > The result of git-bisect shows that
+> > > edfaa7c36574f1bf09c65ad602412db9da5f96bf is first bad commit.
+> > > 
+> > > The git-bisect-result and the dmesg log when the kernel panic are 
+> > > attached. Any help on this please? :)
+> > 
+> > Are you using LVM?  If so, please either upgrade your userspace/initrd 
+> > stuff, or enable CONFIG_SYSFS_DEPCRECATED
+> 
+> we _really_ must handle this differently and this _is_ a regression that 
+> multiple people have spent hours on bisecting already ...
+> 
+> So "enable CONFIG_SYSFS_DEPCRECATED" is _NOT_ the right answer, and this 
+> has been pointed out to you in the past.
 
-
-Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
----
- drivers/md/dm.c |    1 +
- 1 files changed, 1 insertions(+), 0 deletions(-)
-
-diff --git 2.6.25-rc3.orig/drivers/md/dm.c 2.6.25-rc3/drivers/md/dm.c
-index 6617ce4..30da5eb 100644
---- 2.6.25-rc3.orig/drivers/md/dm.c
-+++ 2.6.25-rc3/drivers/md/dm.c
-@@ -1626,6 +1626,7 @@ struct gendisk *dm_disk(struct mapped_device *md)
- {
- 	return md->disk;
- }
-+EXPORT_SYMBOL_GPL(dm_disk);
- 
- int dm_suspended(struct mapped_device *md)
- {
--- 
-1.5.4.1
+Isn't the device-mapper kernel code capable of detecting the older userspace
+version and loudly warning about it?  That at least would prevent us from
+wasting lots of people's time like this.
