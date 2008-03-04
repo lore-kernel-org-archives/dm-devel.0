@@ -1,68 +1,50 @@
-From: Greg KH <gregkh@suse.de>
-Subject: Re: 2.6.25-rc regression: kernel panic on boot
-Date: Tue, 4 Mar 2008 11:33:48 -0800
-Message-ID: <20080304193348.GC5534@suse.de>
-References: <1204500349.10256.171.camel@acpi-hp-zz.sh.intel.com>
-	<20080303224259.GA27008@suse.de> <20080304135447.GD32383@elte.hu>
-	<20080304104312.457ba3a8.akpm@linux-foundation.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
+Subject: Re: [RFC PATCH 1/3] block: add rq->complete_io hook for request stacking
+Date: Tue, 04 Mar 2008 15:02:22 -0500
+Message-ID: <47CDAACE.3090203@ce.jp.nec.com>
+References: <20080215.172727.39155014.k-ueda@ct.jp.nec.com>	<47CC2652.1080601@suse.de> <20080303.140427.39152329.k-ueda@ct.jp.nec.com> <47CD03DE.3010703@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080304104312.457ba3a8.akpm@linux-foundation.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: kay.sievers@vrfy.org, linux-kernel <linux-kernel@vger.kernel.org>, "Rafael J. Wysocki" <rjw@sisk.pl>, Alexey Dobriyan <adobriyan@sw.ru>, dm-devel@redhat.com, Ingo Molnar <mingo@elte.hu>, Linus Torvalds <torvalds@linux-foundation.org>, "Zhang,
-	Rui" <rui.zhang@intel.com>
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <47CD03DE.3010703@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Hannes Reinecke <hare@suse.de>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, michaelc@cs.wisc.edu
 List-Id: dm-devel.ids
 
-On Tue, Mar 04, 2008 at 10:43:12AM -0800, Andrew Morton wrote:
-> On Tue, 4 Mar 2008 14:54:47 +0100 Ingo Molnar <mingo@elte.hu> wrote:
-> 
-> > * Greg KH <gregkh@suse.de> wrote:
-> > 
-> > > On Mon, Mar 03, 2008 at 07:25:49AM +0800, Zhang, Rui wrote:
-> > > > Hi, all,
-> > > > 
-> > > > kernel panic on boot when I try to run 2.6.25-rc1 and later, but 2.6.24-rc8 boots okay.
-> > > > The result of git-bisect shows that
-> > > > edfaa7c36574f1bf09c65ad602412db9da5f96bf is first bad commit.
-> > > > 
-> > > > The git-bisect-result and the dmesg log when the kernel panic are 
-> > > > attached. Any help on this please? :)
-> > > 
-> > > Are you using LVM?  If so, please either upgrade your userspace/initrd 
-> > > stuff, or enable CONFIG_SYSFS_DEPCRECATED
-> > 
-> > we _really_ must handle this differently and this _is_ a regression that 
-> > multiple people have spent hours on bisecting already ...
-> > 
-> > So "enable CONFIG_SYSFS_DEPCRECATED" is _NOT_ the right answer, and this 
-> > has been pointed out to you in the past.
-> 
-> Isn't the device-mapper kernel code capable of detecting the older userspace
-> version and loudly warning about it?  That at least would prevent us from
-> wasting lots of people's time like this.
+Hi Hannes,
 
-Yes, this is an LVM issue with older userspace provided by some
-distros, I think the dm code can notify the user about the problem, Kay
-would know more.
+Hannes Reinecke wrote:
+> Kiyoshi Ueda wrote:
+>> I'm thinking about an idea come from Mike and Jens after the session
+>> at LSF'08:
+>>   o stacking driver clones both bio and request and uses
+>>     bio->bi_end_io and rq->end_io
+>>   o stacking driver uses blk_complete_request() in rq->end_io
+>>     so that stacking driver can work without queue lock
+>> With this idea, we don't need to add the new hook to request,
+>> and we can use request stacking on drivers using __blk_end_request().
+>>
+> Huh? I can't really imagine how this should work. If you start using
+> bio->bi_end_io() for stacking usage you'll end up with doing weird thing
+> with the bios ... Can you elaborate a bit more here?
 
-The two distros I use here work just fine with this set to N :)
+Cloned bio's bi_end_io() can check the error.
 
-I have a patch queued up to change the wording of this config entry to
-not say 2006, as that's not true anymore, and it should hopefully fix
-some of the confusion here.
+For successful I/O, it calls something equivalent to
+end_that_request_first() for the original request,
+that may eventually complete the original bio and
+notify the submitter.
 
-thanks,
+For error, it can decide not to complete the original bio
+and record the error information.
 
-greg k-h
+When the clone request is finally completed and rq->end_io() is
+called, stacking driver can check the recorded error information
+and decide whether it should take any action or just complete
+the original request by blk_complete_request().
+
+Thanks,
+-- 
+Jun'ichi Nomura, NEC Corporation of America
