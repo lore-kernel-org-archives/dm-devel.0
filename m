@@ -1,45 +1,73 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: I/O bandwidth control on KVM
-Date: Tue, 04 Mar 2008 15:41:09 +0900 (JST)
-Message-ID: <20080304.154109.193687573.ryov@valinux.co.jp>
-References: <20080229.210531.226799765.ryov__28298.7898834564$1204287044$gmane$org@valinux.co.jp>
-	<47CA2A7B.8000400@codemonkey.ws>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [RFC PATCH 1/3] block: add rq->complete_io hook for request stacking
+Date: Tue, 04 Mar 2008 09:10:06 +0100
+Message-ID: <47CD03DE.3010703@suse.de>
+References: <20080215.172727.39155014.k-ueda@ct.jp.nec.com>	<47CC2652.1080601@suse.de> <20080303.140427.39152329.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Return-path: <kvm-devel-bounces@lists.sourceforge.net>
-In-Reply-To: <47CA2A7B.8000400@codemonkey.ws>
-List-Unsubscribe: <https://lists.sourceforge.net/lists/listinfo/kvm-devel>,
-	<mailto:kvm-devel-request@lists.sourceforge.net?subject=unsubscribe>
-List-Archive: <http://sourceforge.net/mailarchive/forum.php?forum_name=kvm-devel>
-List-Post: <mailto:kvm-devel@lists.sourceforge.net>
-List-Help: <mailto:kvm-devel-request@lists.sourceforge.net?subject=help>
-List-Subscribe: <https://lists.sourceforge.net/lists/listinfo/kvm-devel>,
-	<mailto:kvm-devel-request@lists.sourceforge.net?subject=subscribe>
-Sender: kvm-devel-bounces@lists.sourceforge.net
-Errors-To: kvm-devel-bounces@lists.sourceforge.net
-To: anthony@codemonkey.ws
-Cc: kvm-devel@lists.sourceforge.net, dm-devel@redhat.com, virtualization@lists.linux-foundation.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20080303.140427.39152329.k-ueda@ct.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com, michaelc@cs.wisc.edu
 List-Id: dm-devel.ids
 
-Hi,
+Hi Kiyoshi,
 
-> If you are using virtio drivers in the guest (which I presume you are given the reference to /dev/vda), try using the following -drive syntax:
->
-> -drive file=/dev/mapper/ioband1,if=virtio,boot=on,cache=off
->
-> This will force the use of O_DIRECT.  By default, QEMU does not open with O_DIRECT so you'll see page cache effects.
+Kiyoshi Ueda wrote:
+> Hi Hannes,
+>=20
+> On Mon, 03 Mar 2008 17:24:50 +0100, Hannes Reinecke wrote:
+>> Hi Kiyoshi,
+>>
+>> Kiyoshi Ueda wrote:
+>>> This patch adds ->complete_io() hook for request stacking.
+>>> Request stacking drivers (such as request-based dm) can set
+>>> a callback for completion.
+>>> (The hook is not called in blk_end_io(), since request-based dm use=
+s
+>>>  it for clone completion in the following appendix patches.)
+>>>
+>> [ .. ]
+>> I would rather have rq->complete_io() to be pointing to blk_end_io i=
+n the
+>> default case, this way rq->complete_io() would always be valid and w=
+e
+>> would be saving us the if() clause.
+>=20
+> Thank you for the comment.
+>=20
+> I'm thinking about an idea come from Mike and Jens after the session
+> at LSF'08:
+>   o stacking driver clones both bio and request and uses
+>     bio->bi_end_io and rq->end_io
+>   o stacking driver uses blk_complete_request() in rq->end_io
+>     so that stacking driver can work without queue lock
+> With this idea, we don't need to add the new hook to request,
+> and we can use request stacking on drivers using __blk_end_request().
+>=20
+Huh? I can't really imagine how this should work. If you start using
+bio->bi_end_io() for stacking usage you'll end up with doing weird thin=
+g
+with the bios ... Can you elaborate a bit more here?
 
-Thank you for your suggestion.
-I was using virtio drives as you wrote.
-I just thought that kvm would use O_DIRECT option when applications on
-the guest opened files with O_DIRECT option.
-I'll try the way you mentioned and report back.
+> Currently, I'm trying to convert request-based dm to use the idea abo=
+ve.
+> I'll post the new version as a RFC in the near future.
+>=20
+Oh, cool. Looking forward to it.
 
-Thanks,
-Ryo Tsuruta
+Cheers,
 
--------------------------------------------------------------------------
-This SF.net email is sponsored by: Microsoft
-Defy all challenges. Microsoft(R) Visual Studio 2008.
-http://clk.atdmt.com/MRT/go/vse0120000070mrt/direct/01/
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
