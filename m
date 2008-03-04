@@ -1,50 +1,69 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [RFC PATCH 1/3] block: add rq->complete_io hook for request stacking
-Date: Tue, 04 Mar 2008 15:02:22 -0500
-Message-ID: <47CDAACE.3090203@ce.jp.nec.com>
-References: <20080215.172727.39155014.k-ueda@ct.jp.nec.com>	<47CC2652.1080601@suse.de> <20080303.140427.39152329.k-ueda@ct.jp.nec.com> <47CD03DE.3010703@suse.de>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: 2.6.25-rc regression: kernel panic on boot
+Date: Tue, 4 Mar 2008 12:04:50 -0800 (PST)
+Message-ID: <alpine.LFD.1.00.0803041200390.12253@woody.linux-foundation.org>
+References: <1204500349.10256.171.camel@acpi-hp-zz.sh.intel.com>
+	<20080303224259.GA27008@suse.de> <20080304135447.GD32383@elte.hu>
+	<20080304104312.457ba3a8.akpm@linux-foundation.org>
+	<20080304193348.GC5534@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <47CD03DE.3010703@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, michaelc@cs.wisc.edu
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080304193348.GC5534@suse.de>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Greg KH <gregkh@suse.de>
+Cc: kay.sievers@vrfy.org, linux-kernel <linux-kernel@vger.kernel.org>, "Zhang,
+	Rui" <rui.zhang@intel.com>, "Rafael J. Wysocki" <rjw@sisk.pl>, Alexey Dobriyan <adobriyan@sw.ru>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Ingo Molnar <mingo@elte.hu>
 List-Id: dm-devel.ids
 
-Hi Hannes,
 
-Hannes Reinecke wrote:
-> Kiyoshi Ueda wrote:
->> I'm thinking about an idea come from Mike and Jens after the session
->> at LSF'08:
->>   o stacking driver clones both bio and request and uses
->>     bio->bi_end_io and rq->end_io
->>   o stacking driver uses blk_complete_request() in rq->end_io
->>     so that stacking driver can work without queue lock
->> With this idea, we don't need to add the new hook to request,
->> and we can use request stacking on drivers using __blk_end_request().
->>
-> Huh? I can't really imagine how this should work. If you start using
-> bio->bi_end_io() for stacking usage you'll end up with doing weird thing
-> with the bios ... Can you elaborate a bit more here?
 
-Cloned bio's bi_end_io() can check the error.
+On Tue, 4 Mar 2008, Greg KH wrote:
+> 
+> I have a patch queued up to change the wording of this config entry to
+> not say 2006, as that's not true anymore, and it should hopefully fix
+> some of the confusion here.
 
-For successful I/O, it calls something equivalent to
-end_that_request_first() for the original request,
-that may eventually complete the original bio and
-notify the submitter.
+Well, I think some of the confusion is simply from people who already 
+turned it off *before* (without problems), and now just do "make 
+oldconfig" or otherwise just keep it off, and it causes problems for them.
 
-For error, it can decide not to complete the original bio
-and record the error information.
+Updating the help text won't do squat, because those people won't be 
+reading it - maybe they read it back when it was a new option (and it 
+worked for them), but not any more.
 
-When the clone request is finally completed and rq->end_io() is
-called, stacking driver can check the recorded error information
-and decide whether it should take any action or just complete
-the original request by blk_complete_request().
+So I would almost suggest we simply force the option back on for now. 
+Then, in 2.6.26, we can make it a question again, and by that time, people 
+will have it as 'y' in their config files and will now have the option to 
+turn it off again.
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation of America
+In other words, how about just this diff?
+
+		Linus
+
+---
+ init/Kconfig |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/init/Kconfig b/init/Kconfig
+index f698a5a..a36e2e2 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -367,7 +367,7 @@ config RESOURCE_COUNTERS
+ 	depends on CGROUPS
+ 
+ config SYSFS_DEPRECATED
+-	bool "Create deprecated sysfs files"
++	bool "Create deprecated sysfs files" if EMBEDDED
+ 	depends on SYSFS
+ 	default y
+ 	help
