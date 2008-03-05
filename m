@@ -1,8 +1,8 @@
 From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 03/13] dm headers: adjust for
-	dm_kcopyd_client structure name
-Date: Wed,  5 Mar 2008 19:55:54 +0100
-Message-ID: <1204743364-3248-4-git-send-email-hjm@redhat.com>
+Subject: [RFC PATCH 0/13] dm headers: move headers to
+	include/linux
+Date: Wed,  5 Mar 2008 19:55:51 +0100
+Message-ID: <1204743364-3248-1-git-send-email-hjm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -15,37 +15,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <hjm@redhat.com>
 List-Id: dm-devel.ids
 
+Hi Alasdair,
 
-Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
----
- drivers/md/dm-snap.h |    7 +++----
- 1 files changed, 3 insertions(+), 4 deletions(-)
+this is a series of 13 patches, which move dm-{io,log}.h and kcopyd.h to
+include/linux, renaming the later to dm-kcopyd.h, to better allow for their
+interfaces to be sharable beyond the scope of Device-Mapper.
 
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-snap.h linux-2.6.25-rc4/drivers/md/dm-snap.h
-index 93bce5d..37d7eaf 100644
---- linux-2.6.25-rc4.orig/drivers/md/dm-snap.h
-+++ linux-2.6.25-rc4/drivers/md/dm-snap.h
-@@ -1,7 +1,6 @@
- /*
-- * dm-snapshot.c
-- *
-- * Copyright (C) 2001-2002 Sistina Software (UK) Limited.
-+ * Copyright (C) 2001-2003 Sistina Software (UK) Limited.
-+ * Copyright (C) 2004-2008 Red Hat GmbH
-  *
-  * This file is released under the GPL.
-  */
-@@ -169,7 +168,7 @@ struct dm_snapshot {
- 	/* The on disk metadata handler */
- 	struct exception_store store;
- 
--	struct kcopyd_client *kcopyd_client;
-+	struct dm_kcopyd_client *dm_kcopyd_client;
- 
- 	/* Queue of snapshot writes for ksnapd to flush */
- 	struct bio_list queued_bios;
--- 
-1.5.4.1
+Structure and function identifiers (e.g. io_region -> dm_io_region)
+get a "dm_", macros a "DM_" prefix respectively.
+
+Existing callers are adjusted to use the new structure/function/macro names.
+
+The Makefile now generates dm-{io,kcopyd,log} as kmods.
+This potentially needs a future change in case of a static kernel *and*
+more callers sharing the dm-{io,kcopyd,log} modules.
+
+dm_disk(), which belongs to our external interface since long time, is
+exported now to allow for future callers to actually be able to access it.
+
+If acceptable, please apply.
