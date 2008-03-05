@@ -1,19 +1,16 @@
-From: Ingo Molnar <mingo@elte.hu>
-Subject: Re: 2.6.25-rc regression: kernel panic on boot
-Date: Wed, 5 Mar 2008 14:25:37 +0100
-Message-ID: <20080305132537.GC11701@elte.hu>
-References: <1204500349.10256.171.camel@acpi-hp-zz.sh.intel.com>
-	<20080303224259.GA27008@suse.de> <20080304135447.GD32383@elte.hu>
-	<20080304104312.457ba3a8.akpm@linux-foundation.org>
-	<20080304193348.GC5534@suse.de>
-	<alpine.LFD.1.00.0803041200390.12253@woody.linux-foundation.org>
-	<20080304202436.GA29456@suse.de>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [kvm-devel] I/O bandwidth control on KVM
+Date: Thu, 06 Mar 2008 00:53:53 +0900 (JST)
+Message-ID: <20080306.005353.104038921.ryov@valinux.co.jp>
+References: <20080229.210531.226799765.ryov__28298.7898834564$1204287044$gmane$org@valinux.co.jp>
+	<47CA2A7B.8000400@codemonkey.ws>
+	<20080304.154109.193687573.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080304202436.GA29456@suse.de>
+In-Reply-To: <20080304.154109.193687573.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,28 +20,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Greg KH <gregkh@suse.de>
-Cc: kay.sievers@vrfy.org, linux-kernel <linux-kernel@vger.kernel.org>, "Rafael J. Wysocki" <rjw@sisk.pl>, Alexey Dobriyan <adobriyan@sw.ru>, dm-devel@redhat.com, Andrew Morton <akpm@linux-foundation.org>, Linus Torvalds <torvalds@linux-foundation.org>, "Zhang,
-	Rui" <rui.zhang@intel.com>
+To: anthony@codemonkey.ws
+Cc: kvm-devel@lists.sourceforge.net, dm-devel@redhat.com, virtualization@lists.linux-foundation.org
 List-Id: dm-devel.ids
 
+Hi,
 
-* Greg KH <gregkh@suse.de> wrote:
+> If you are using virtio drivers in the guest (which I presume you are 
+> given the reference to /dev/vda), try using the following -drive syntax:
+> 
+> -drive file=/dev/mapper/ioband1,if=virtio,boot=on,cache=off
+> 
+> This will force the use of O_DIRECT.  By default, QEMU does not open 
+> with O_DIRECT so you'll see page cache effects.
 
-> It's as if we should just change the config option name every kernel 
-> release to make sure that users keep things up to date.  So Ingo's 
-> original proposal makes sense to me, more so than this patch.
+I tried the test with "cache=off" option, here is the result. 
 
-this change is now upstream and included in -rc4:
+                       The number of issued I/Os
+     --------------------------------------------------------------------
+    |             device         |       sda11       |       sda12       |
+    |          weight setting    |        80%        |        20%        |
+    |----------------------------+-------------------+-------------------|
+    | KVM       |      I/Os      |       5217        |       5623        |
+    | cache=off | ratio to total |       48.1%       |       51.9%       |
+    |-----------+----------------+-------------------+-------------------|
+    | KVM       |      I/Os      |       4397        |       2902        |
+    | cache=on  | ratio to total |       60.2%       |       39.8%       |
+    |-----------+----------------+-------------------+-------------------|
+    |local      |      I/Os      |       5447        |       1314        |
+    |           | ratio to total |       80.6%       |       19.4%       |
+     --------------------------------------------------------------------
 
-  ------------------->
-  commit d47846c5866b7d98a1173c86a39d810a06647329
-  Author: Ingo Molnar <mingo@elte.hu>
-  Date:   Tue Mar 4 14:54:47 2008 +0100
+I could see the page cache effect through the /sys/block/sda/sda[12]/stat,
+O_DIRECT was taking effect. However, the bandwidth control didn't work.
 
-      sysfs: CONFIG_SYSFS_DEPRECATED fix
-  <------------------
+I also did another test. The difference from the previous test is that
+the weights were assigned on a per partition basis instead of a per
+cgroup basis.
+It worked fine on Xen and local processes, but unfortunately it didn't
+work on KVM.
 
-thanks Greg!
+                       The number of issued I/Os
+            The weights were assigned on a per partition basis
+     --------------------------------------------------------------------
+    |             device         |       sda11       |       sda12       |
+    |          weight setting    |        80%        |        20%        |
+    |----------------------------+-------------------+-------------------|
+    | KVM       |      I/Os      |       5905        |       5873        |
+    | cache=off | ratio to total |       50.1%       |       49.9%       |
+    |-----------+----------------+-------------------+-------------------|
+    |local      |      I/Os      |       6929        |       1629        |
+    |           | ratio to total |       81.0%       |       19.0%       |
+    |--------------------------------------------------------------------|
+    | Xen       |      I/Os      |       8534        |       2360        |
+    |           | ratio to total |       78.3%       |       21.7%       |
+     --------------------------------------------------------------------
 
-	Ingo
+I don't understand what was going on. I'd be appreciate if you could give
+me other suggestions.
+
+Thanks,
+Ryo Tsuruta
