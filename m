@@ -1,10 +1,8 @@
 From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 01/13] dm headers: move headers of modules
-	dm-io, dm-log and kcopyd to include/linux to allow for sharing;
-	rename kcopyd.h to dm-kcopyd.h to be consistent with other dm header
-	prefixes
-Date: Wed,  5 Mar 2008 19:55:52 +0100
-Message-ID: <1204743364-3248-2-git-send-email-hjm@redhat.com>
+Subject: [RFC PATCH 09/13] dm headers: adjust dm-raid1
+	identifiers to have "dm_" prefix
+Date: Wed,  5 Mar 2008 19:56:00 +0100
+Message-ID: <1204743364-3248-10-git-send-email-hjm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -23,559 +21,292 @@ List-Id: dm-devel.ids
 
 Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
 ---
- drivers/md/dm-io.h        |   79 ---------------------------
- drivers/md/dm-log.h       |  131 ---------------------------------------------
- drivers/md/kcopyd.h       |   42 --------------
- include/linux/dm-io.h     |   79 +++++++++++++++++++++++++++
- include/linux/dm-kcopyd.h |   42 ++++++++++++++
- include/linux/dm-log.h    |  131 +++++++++++++++++++++++++++++++++++++++++++++
- 6 files changed, 252 insertions(+), 252 deletions(-)
- delete mode 100644 drivers/md/dm-io.h
- delete mode 100644 drivers/md/dm-log.h
- delete mode 100644 drivers/md/kcopyd.h
- create mode 100644 include/linux/dm-io.h
- create mode 100644 include/linux/dm-kcopyd.h
- create mode 100644 include/linux/dm-log.h
+ drivers/md/dm-raid1.c |   73 +++++++++++++++++++++++++------------------------
+ 1 files changed, 37 insertions(+), 36 deletions(-)
 
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-io.h linux-2.6.25-rc4/drivers/md/dm-io.h
-deleted file mode 100644
-index f647e2c..0000000
---- linux-2.6.25-rc4.orig/drivers/md/dm-io.h
-+++ /dev/null
-@@ -1,79 +0,0 @@
--/*
-- * Copyright (C) 2003 Sistina Software
-- *
-- * This file is released under the GPL.
-- */
--
--#ifndef _DM_IO_H
--#define _DM_IO_H
--
--#include "dm.h"
--
--struct io_region {
--	struct block_device *bdev;
--	sector_t sector;
--	sector_t count;		/* If this is zero the region is ignored. */
--};
--
--struct page_list {
--	struct page_list *next;
--	struct page *page;
--};
--
--typedef void (*io_notify_fn)(unsigned long error, void *context);
--
--enum dm_io_mem_type {
--	DM_IO_PAGE_LIST,/* Page list */
--	DM_IO_BVEC,	/* Bio vector */
--	DM_IO_VMA,	/* Virtual memory area */
--	DM_IO_KMEM,	/* Kernel memory */
--};
--
--struct dm_io_memory {
--	enum dm_io_mem_type type;
--
--	union {
--		struct page_list *pl;
--		struct bio_vec *bvec;
--		void *vma;
--		void *addr;
--	} ptr;
--
--	unsigned offset;
--};
--
--struct dm_io_notify {
--	io_notify_fn fn;	/* Callback for asynchronous requests */
--	void *context;		/* Passed to callback */
--};
--
--/*
-- * IO request structure
-- */
--struct dm_io_client;
--struct dm_io_request {
--	int bi_rw;			/* READ|WRITE - not READA */
--	struct dm_io_memory mem;	/* Memory to use for io */
--	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
--	struct dm_io_client *client;	/* Client memory handler */
--};
--
--/*
-- * For async io calls, users can alternatively use the dm_io() function below
-- * and dm_io_client_create() to create private mempools for the client.
-- *
-- * Create/destroy may block.
-- */
--struct dm_io_client *dm_io_client_create(unsigned num_pages);
--int dm_io_client_resize(unsigned num_pages, struct dm_io_client *client);
--void dm_io_client_destroy(struct dm_io_client *client);
--
--/*
-- * IO interface using private per-client pools.
-- * Each bit in the optional 'sync_error_bits' bitset indicates whether an
-- * error occurred doing io to the corresponding region.
-- */
--int dm_io(struct dm_io_request *io_req, unsigned num_regions,
--	  struct io_region *region, unsigned long *sync_error_bits);
--
--#endif
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-log.h linux-2.6.25-rc4/drivers/md/dm-log.h
-deleted file mode 100644
-index 3fae87e..0000000
---- linux-2.6.25-rc4.orig/drivers/md/dm-log.h
-+++ /dev/null
-@@ -1,131 +0,0 @@
--/*
-- * Copyright (C) 2003 Sistina Software
-- *
-- * This file is released under the LGPL.
-- */
--
--#ifndef DM_DIRTY_LOG
--#define DM_DIRTY_LOG
--
--#include "dm.h"
--
--typedef sector_t region_t;
--
--struct dirty_log_type;
--
--struct dirty_log {
--	struct dirty_log_type *type;
--	void *context;
--};
--
--struct dirty_log_type {
--	struct list_head list;
--	const char *name;
--	struct module *module;
--	unsigned int use_count;
--
--	int (*ctr)(struct dirty_log *log, struct dm_target *ti,
--		   unsigned int argc, char **argv);
--	void (*dtr)(struct dirty_log *log);
--
--	/*
--	 * There are times when we don't want the log to touch
--	 * the disk.
--	 */
--	int (*presuspend)(struct dirty_log *log);
--	int (*postsuspend)(struct dirty_log *log);
--	int (*resume)(struct dirty_log *log);
--
--	/*
--	 * Retrieves the smallest size of region that the log can
--	 * deal with.
--	 */
--	uint32_t (*get_region_size)(struct dirty_log *log);
--
--        /*
--	 * A predicate to say whether a region is clean or not.
--	 * May block.
--	 */
--	int (*is_clean)(struct dirty_log *log, region_t region);
--
--	/*
--	 *  Returns: 0, 1, -EWOULDBLOCK, < 0
--	 *
--	 * A predicate function to check the area given by
--	 * [sector, sector + len) is in sync.
--	 *
--	 * If -EWOULDBLOCK is returned the state of the region is
--	 * unknown, typically this will result in a read being
--	 * passed to a daemon to deal with, since a daemon is
--	 * allowed to block.
--	 */
--	int (*in_sync)(struct dirty_log *log, region_t region, int can_block);
--
--	/*
--	 * Flush the current log state (eg, to disk).  This
--	 * function may block.
--	 */
--	int (*flush)(struct dirty_log *log);
--
--	/*
--	 * Mark an area as clean or dirty.  These functions may
--	 * block, though for performance reasons blocking should
--	 * be extremely rare (eg, allocating another chunk of
--	 * memory for some reason).
--	 */
--	void (*mark_region)(struct dirty_log *log, region_t region);
--	void (*clear_region)(struct dirty_log *log, region_t region);
--
--	/*
--	 * Returns: <0 (error), 0 (no region), 1 (region)
--	 *
--	 * The mirrord will need perform recovery on regions of
--	 * the mirror that are in the NOSYNC state.  This
--	 * function asks the log to tell the caller about the
--	 * next region that this machine should recover.
--	 *
--	 * Do not confuse this function with 'in_sync()', one
--	 * tells you if an area is synchronised, the other
--	 * assigns recovery work.
--	*/
--	int (*get_resync_work)(struct dirty_log *log, region_t *region);
--
--	/*
--	 * This notifies the log that the resync status of a region
--	 * has changed.  It also clears the region from the recovering
--	 * list (if present).
--	 */
--	void (*set_region_sync)(struct dirty_log *log,
--				region_t region, int in_sync);
--
--        /*
--	 * Returns the number of regions that are in sync.
--         */
--        region_t (*get_sync_count)(struct dirty_log *log);
--
--	/*
--	 * Support function for mirror status requests.
--	 */
--	int (*status)(struct dirty_log *log, status_type_t status_type,
--		      char *result, unsigned int maxlen);
--};
--
--int dm_register_dirty_log_type(struct dirty_log_type *type);
--int dm_unregister_dirty_log_type(struct dirty_log_type *type);
--
--
--/*
-- * Make sure you use these two functions, rather than calling
-- * type->constructor/destructor() directly.
-- */
--struct dirty_log *dm_create_dirty_log(const char *type_name, struct dm_target *ti,
--				      unsigned int argc, char **argv);
--void dm_destroy_dirty_log(struct dirty_log *log);
--
--/*
-- * init/exit functions.
-- */
--int dm_dirty_log_init(void);
--void dm_dirty_log_exit(void);
--
--#endif
-diff --git linux-2.6.25-rc4.orig/drivers/md/kcopyd.h linux-2.6.25-rc4/drivers/md/kcopyd.h
-deleted file mode 100644
-index 4621ea0..0000000
---- linux-2.6.25-rc4.orig/drivers/md/kcopyd.h
-+++ /dev/null
-@@ -1,42 +0,0 @@
--/*
-- * Copyright (C) 2001 Sistina Software
-- *
-- * This file is released under the GPL.
-- *
-- * Kcopyd provides a simple interface for copying an area of one
-- * block-device to one or more other block-devices, with an asynchronous
-- * completion notification.
-- */
--
--#ifndef DM_KCOPYD_H
--#define DM_KCOPYD_H
--
+diff --git linux-2.6.25-rc4.orig/drivers/md/dm-raid1.c linux-2.6.25-rc4/drivers/md/dm-raid1.c
+index 37afe35..0fa37f4 100644
+--- linux-2.6.25-rc4.orig/drivers/md/dm-raid1.c
++++ linux-2.6.25-rc4/drivers/md/dm-raid1.c
+@@ -1,5 +1,6 @@
+ /*
+  * Copyright (C) 2003 Sistina Software Limited.
++ * Copyright (C) 2004-2008 Red Hat GmbH
+  *
+  * This file is released under the GPL.
+  */
+@@ -7,10 +8,10 @@
+ #include "dm.h"
+ #include "dm-bio-list.h"
+ #include "dm-bio-record.h"
 -#include "dm-io.h"
--
--/* FIXME: make this configurable */
--#define KCOPYD_MAX_REGIONS 8
--
--#define KCOPYD_IGNORE_ERROR 1
--
--/*
-- * To use kcopyd you must first create a kcopyd client object.
-- */
--struct kcopyd_client;
--int kcopyd_client_create(unsigned int num_pages, struct kcopyd_client **result);
--void kcopyd_client_destroy(struct kcopyd_client *kc);
--
--/*
-- * Submit a copy job to kcopyd.  This is built on top of the
-- * previous three fns.
-- *
-- * read_err is a boolean,
-- * write_err is a bitset, with 1 bit for each destination region
-- */
--typedef void (*kcopyd_notify_fn)(int read_err,
--				 unsigned int write_err, void *context);
--
--int kcopyd_copy(struct kcopyd_client *kc, struct io_region *from,
--		unsigned int num_dests, struct io_region *dests,
--		unsigned int flags, kcopyd_notify_fn fn, void *context);
--
--#endif
-diff --git linux-2.6.25-rc4.orig/include/linux/dm-io.h linux-2.6.25-rc4/include/linux/dm-io.h
-new file mode 100644
-index 0000000..f647e2c
---- /dev/null
-+++ linux-2.6.25-rc4/include/linux/dm-io.h
-@@ -0,0 +1,79 @@
-+/*
-+ * Copyright (C) 2003 Sistina Software
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef _DM_IO_H
-+#define _DM_IO_H
-+
-+#include "dm.h"
-+
-+struct io_region {
-+	struct block_device *bdev;
-+	sector_t sector;
-+	sector_t count;		/* If this is zero the region is ignored. */
-+};
-+
-+struct page_list {
-+	struct page_list *next;
-+	struct page *page;
-+};
-+
-+typedef void (*io_notify_fn)(unsigned long error, void *context);
-+
-+enum dm_io_mem_type {
-+	DM_IO_PAGE_LIST,/* Page list */
-+	DM_IO_BVEC,	/* Bio vector */
-+	DM_IO_VMA,	/* Virtual memory area */
-+	DM_IO_KMEM,	/* Kernel memory */
-+};
-+
-+struct dm_io_memory {
-+	enum dm_io_mem_type type;
-+
-+	union {
-+		struct page_list *pl;
-+		struct bio_vec *bvec;
-+		void *vma;
-+		void *addr;
-+	} ptr;
-+
-+	unsigned offset;
-+};
-+
-+struct dm_io_notify {
-+	io_notify_fn fn;	/* Callback for asynchronous requests */
-+	void *context;		/* Passed to callback */
-+};
-+
-+/*
-+ * IO request structure
-+ */
-+struct dm_io_client;
-+struct dm_io_request {
-+	int bi_rw;			/* READ|WRITE - not READA */
-+	struct dm_io_memory mem;	/* Memory to use for io */
-+	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
-+	struct dm_io_client *client;	/* Client memory handler */
-+};
-+
-+/*
-+ * For async io calls, users can alternatively use the dm_io() function below
-+ * and dm_io_client_create() to create private mempools for the client.
-+ *
-+ * Create/destroy may block.
-+ */
-+struct dm_io_client *dm_io_client_create(unsigned num_pages);
-+int dm_io_client_resize(unsigned num_pages, struct dm_io_client *client);
-+void dm_io_client_destroy(struct dm_io_client *client);
-+
-+/*
-+ * IO interface using private per-client pools.
-+ * Each bit in the optional 'sync_error_bits' bitset indicates whether an
-+ * error occurred doing io to the corresponding region.
-+ */
-+int dm_io(struct dm_io_request *io_req, unsigned num_regions,
-+	  struct io_region *region, unsigned long *sync_error_bits);
-+
-+#endif
-diff --git linux-2.6.25-rc4.orig/include/linux/dm-kcopyd.h linux-2.6.25-rc4/include/linux/dm-kcopyd.h
-new file mode 100644
-index 0000000..4621ea0
---- /dev/null
-+++ linux-2.6.25-rc4/include/linux/dm-kcopyd.h
-@@ -0,0 +1,42 @@
-+/*
-+ * Copyright (C) 2001 Sistina Software
-+ *
-+ * This file is released under the GPL.
-+ *
-+ * Kcopyd provides a simple interface for copying an area of one
-+ * block-device to one or more other block-devices, with an asynchronous
-+ * completion notification.
-+ */
-+
-+#ifndef DM_KCOPYD_H
-+#define DM_KCOPYD_H
-+
-+#include "dm-io.h"
-+
-+/* FIXME: make this configurable */
-+#define KCOPYD_MAX_REGIONS 8
-+
-+#define KCOPYD_IGNORE_ERROR 1
-+
-+/*
-+ * To use kcopyd you must first create a kcopyd client object.
-+ */
-+struct kcopyd_client;
-+int kcopyd_client_create(unsigned int num_pages, struct kcopyd_client **result);
-+void kcopyd_client_destroy(struct kcopyd_client *kc);
-+
-+/*
-+ * Submit a copy job to kcopyd.  This is built on top of the
-+ * previous three fns.
-+ *
-+ * read_err is a boolean,
-+ * write_err is a bitset, with 1 bit for each destination region
-+ */
-+typedef void (*kcopyd_notify_fn)(int read_err,
-+				 unsigned int write_err, void *context);
-+
-+int kcopyd_copy(struct kcopyd_client *kc, struct io_region *from,
-+		unsigned int num_dests, struct io_region *dests,
-+		unsigned int flags, kcopyd_notify_fn fn, void *context);
-+
-+#endif
-diff --git linux-2.6.25-rc4.orig/include/linux/dm-log.h linux-2.6.25-rc4/include/linux/dm-log.h
-new file mode 100644
-index 0000000..3fae87e
---- /dev/null
-+++ linux-2.6.25-rc4/include/linux/dm-log.h
-@@ -0,0 +1,131 @@
-+/*
-+ * Copyright (C) 2003 Sistina Software
-+ *
-+ * This file is released under the LGPL.
-+ */
-+
-+#ifndef DM_DIRTY_LOG
-+#define DM_DIRTY_LOG
-+
-+#include "dm.h"
-+
-+typedef sector_t region_t;
-+
-+struct dirty_log_type;
-+
-+struct dirty_log {
-+	struct dirty_log_type *type;
-+	void *context;
-+};
-+
-+struct dirty_log_type {
-+	struct list_head list;
-+	const char *name;
-+	struct module *module;
-+	unsigned int use_count;
-+
-+	int (*ctr)(struct dirty_log *log, struct dm_target *ti,
-+		   unsigned int argc, char **argv);
-+	void (*dtr)(struct dirty_log *log);
-+
-+	/*
-+	 * There are times when we don't want the log to touch
-+	 * the disk.
-+	 */
-+	int (*presuspend)(struct dirty_log *log);
-+	int (*postsuspend)(struct dirty_log *log);
-+	int (*resume)(struct dirty_log *log);
-+
-+	/*
-+	 * Retrieves the smallest size of region that the log can
-+	 * deal with.
-+	 */
-+	uint32_t (*get_region_size)(struct dirty_log *log);
-+
-+        /*
-+	 * A predicate to say whether a region is clean or not.
-+	 * May block.
-+	 */
-+	int (*is_clean)(struct dirty_log *log, region_t region);
-+
-+	/*
-+	 *  Returns: 0, 1, -EWOULDBLOCK, < 0
-+	 *
-+	 * A predicate function to check the area given by
-+	 * [sector, sector + len) is in sync.
-+	 *
-+	 * If -EWOULDBLOCK is returned the state of the region is
-+	 * unknown, typically this will result in a read being
-+	 * passed to a daemon to deal with, since a daemon is
-+	 * allowed to block.
-+	 */
-+	int (*in_sync)(struct dirty_log *log, region_t region, int can_block);
-+
-+	/*
-+	 * Flush the current log state (eg, to disk).  This
-+	 * function may block.
-+	 */
-+	int (*flush)(struct dirty_log *log);
-+
-+	/*
-+	 * Mark an area as clean or dirty.  These functions may
-+	 * block, though for performance reasons blocking should
-+	 * be extremely rare (eg, allocating another chunk of
-+	 * memory for some reason).
-+	 */
-+	void (*mark_region)(struct dirty_log *log, region_t region);
-+	void (*clear_region)(struct dirty_log *log, region_t region);
-+
-+	/*
-+	 * Returns: <0 (error), 0 (no region), 1 (region)
-+	 *
-+	 * The mirrord will need perform recovery on regions of
-+	 * the mirror that are in the NOSYNC state.  This
-+	 * function asks the log to tell the caller about the
-+	 * next region that this machine should recover.
-+	 *
-+	 * Do not confuse this function with 'in_sync()', one
-+	 * tells you if an area is synchronised, the other
-+	 * assigns recovery work.
-+	*/
-+	int (*get_resync_work)(struct dirty_log *log, region_t *region);
-+
-+	/*
-+	 * This notifies the log that the resync status of a region
-+	 * has changed.  It also clears the region from the recovering
-+	 * list (if present).
-+	 */
-+	void (*set_region_sync)(struct dirty_log *log,
-+				region_t region, int in_sync);
-+
-+        /*
-+	 * Returns the number of regions that are in sync.
-+         */
-+        region_t (*get_sync_count)(struct dirty_log *log);
-+
-+	/*
-+	 * Support function for mirror status requests.
-+	 */
-+	int (*status)(struct dirty_log *log, status_type_t status_type,
-+		      char *result, unsigned int maxlen);
-+};
-+
-+int dm_register_dirty_log_type(struct dirty_log_type *type);
-+int dm_unregister_dirty_log_type(struct dirty_log_type *type);
-+
-+
-+/*
-+ * Make sure you use these two functions, rather than calling
-+ * type->constructor/destructor() directly.
-+ */
-+struct dirty_log *dm_create_dirty_log(const char *type_name, struct dm_target *ti,
-+				      unsigned int argc, char **argv);
-+void dm_destroy_dirty_log(struct dirty_log *log);
-+
-+/*
-+ * init/exit functions.
-+ */
-+int dm_dirty_log_init(void);
-+void dm_dirty_log_exit(void);
-+
-+#endif
+-#include "dm-log.h"
+-#include "kcopyd.h"
+ 
++#include <linux/dm-io.h>
++#include <linux/dm-log.h>
++#include <linux/dm-kcopyd.h>
+ #include <linux/ctype.h>
+ #include <linux/init.h>
+ #include <linux/mempool.h>
+@@ -49,9 +50,9 @@ static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
+  *   quiesced_regions: These regions have been spun down, ready
+  *   for recovery.  rh_recovery_start() will remove regions from
+  *   this list and hand them to kmirrord, which will schedule the
+- *   recovery io with kcopyd.
++ *   recovery io with dm-kcopyd.
+  *
+- *   recovered_regions: Regions that kcopyd has successfully
++ *   recovered_regions: Regions that dm-kcopyd has successfully
+  *   recovered.  rh_update_states() will now schedule any delayed
+  *   io, up the recovery_count, and remove the region from the
+  *   hash.
+@@ -74,7 +75,7 @@ struct region_hash {
+ 	unsigned region_shift;
+ 
+ 	/* holds persistent region state */
+-	struct dirty_log *log;
++	struct dm_dirty_log *log;
+ 
+ 	/* hash table */
+ 	rwlock_t hash_lock;
+@@ -133,7 +134,7 @@ struct mirror_set {
+ 	struct dm_target *ti;
+ 	struct list_head list;
+ 	struct region_hash rh;
+-	struct kcopyd_client *kcopyd_client;
++	struct dm_kcopyd_client *dm_kcopyd_client;
+ 	uint64_t features;
+ 
+ 	spinlock_t lock;	/* protects the lists */
+@@ -184,7 +185,7 @@ static void queue_bio(struct mirror_set *ms, struct bio *bio, int rw);
+ #define MIN_REGIONS 64
+ #define MAX_RECOVERY 1
+ static int rh_init(struct region_hash *rh, struct mirror_set *ms,
+-		   struct dirty_log *log, uint32_t region_size,
++		   struct dm_dirty_log *log, uint32_t region_size,
+ 		   region_t nr_regions)
+ {
+ 	unsigned int nr_buckets, max_buckets;
+@@ -249,7 +250,7 @@ static void rh_exit(struct region_hash *rh)
+ 	}
+ 
+ 	if (rh->log)
+-		dm_destroy_dirty_log(rh->log);
++		dm_dirty_log_destroy(rh->log);
+ 	if (rh->region_pool)
+ 		mempool_destroy(rh->region_pool);
+ 	vfree(rh->buckets);
+@@ -790,7 +791,7 @@ static int recover(struct mirror_set *ms, struct region *reg)
+ {
+ 	int r;
+ 	unsigned int i;
+-	struct io_region from, to[KCOPYD_MAX_REGIONS], *dest;
++	struct dm_io_region from, to[DM_KCOPYD_MAX_REGIONS], *dest;
+ 	struct mirror *m;
+ 	unsigned long flags = 0;
+ 
+@@ -821,10 +822,10 @@ static int recover(struct mirror_set *ms, struct region *reg)
+ 		dest++;
+ 	}
+ 
+-	/* hand to kcopyd */
+-	set_bit(KCOPYD_IGNORE_ERROR, &flags);
+-	r = kcopyd_copy(ms->kcopyd_client, &from, ms->nr_mirrors - 1, to, flags,
+-			recovery_complete, reg);
++	/* hand to dm-kcopyd */
++	set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
++	r = dm_kcopyd_copy(ms->dm_kcopyd_client, &from, ms->nr_mirrors - 1,
++			   to, flags, recovery_complete, reg);
+ 
+ 	return r;
+ }
+@@ -833,7 +834,7 @@ static void do_recovery(struct mirror_set *ms)
+ {
+ 	int r;
+ 	struct region *reg;
+-	struct dirty_log *log = ms->rh.log;
++	struct dm_dirty_log *log = ms->rh.log;
+ 
+ 	/*
+ 	 * Start quiescing some regions.
+@@ -909,7 +910,7 @@ static void map_bio(struct mirror *m, struct bio *bio)
+ 	bio->bi_sector = map_sector(m, bio);
+ }
+ 
+-static void map_region(struct io_region *io, struct mirror *m,
++static void map_region(struct dm_io_region *io, struct mirror *m,
+ 		       struct bio *bio)
+ {
+ 	io->bdev = m->dev->bdev;
+@@ -951,7 +952,7 @@ static void read_callback(unsigned long error, void *context)
+ /* Asynchronous read. */
+ static void read_async_bio(struct mirror *m, struct bio *bio)
+ {
+-	struct io_region io;
++	struct dm_io_region io;
+ 	struct dm_io_request io_req = {
+ 		.bi_rw = READ,
+ 		.mem.type = DM_IO_BVEC,
+@@ -997,7 +998,7 @@ static void do_reads(struct mirror_set *ms, struct bio_list *reads)
+  * We do different things with the write io depending on the
+  * state of the region that it's in:
+  *
+- * SYNC: 	increment pending, use kcopyd to write to *all* mirrors
++ * SYNC: 	increment pending, use dm-kcopyd to write to *all* mirrors
+  * RECOVERING:	delay the io until recovery completes
+  * NOSYNC:	increment pending, just write to the default mirror
+  *---------------------------------------------------------------*/
+@@ -1019,7 +1020,7 @@ static void __bio_mark_nosync(struct mirror_set *ms,
+ {
+ 	unsigned long flags;
+ 	struct region_hash *rh = &ms->rh;
+-	struct dirty_log *log = ms->rh.log;
++	struct dm_dirty_log *log = ms->rh.log;
+ 	struct region *reg;
+ 	region_t region = bio_to_region(rh, bio);
+ 	int recovering = 0;
+@@ -1107,7 +1108,7 @@ out:
+ static void do_write(struct mirror_set *ms, struct bio *bio)
+ {
+ 	unsigned int i;
+-	struct io_region io[ms->nr_mirrors], *dest = io;
++	struct dm_io_region io[ms->nr_mirrors], *dest = io;
+ 	struct mirror *m;
+ 	struct dm_io_request io_req = {
+ 		.bi_rw = WRITE,
+@@ -1303,7 +1304,7 @@ static void do_mirror(struct work_struct *work)
+ static struct mirror_set *alloc_context(unsigned int nr_mirrors,
+ 					uint32_t region_size,
+ 					struct dm_target *ti,
+-					struct dirty_log *dl)
++					struct dm_dirty_log *dl)
+ {
+ 	size_t len;
+ 	struct mirror_set *ms = NULL;
+@@ -1403,12 +1404,12 @@ static int get_mirror(struct mirror_set *ms, struct dm_target *ti,
+ /*
+  * Create dirty log: log_type #log_params <log_params>
+  */
+-static struct dirty_log *create_dirty_log(struct dm_target *ti,
++static struct dm_dirty_log *create_dirty_log(struct dm_target *ti,
+ 					  unsigned int argc, char **argv,
+ 					  unsigned int *args_used)
+ {
+ 	unsigned int param_count;
+-	struct dirty_log *dl;
++	struct dm_dirty_log *dl;
+ 
+ 	if (argc < 2) {
+ 		ti->error = "Insufficient mirror log arguments";
+@@ -1427,7 +1428,7 @@ static struct dirty_log *create_dirty_log(struct dm_target *ti,
+ 		return NULL;
+ 	}
+ 
+-	dl = dm_create_dirty_log(argv[0], ti, param_count, argv + 2);
++	dl = dm_dirty_log_create(argv[0], ti, param_count, argv + 2);
+ 	if (!dl) {
+ 		ti->error = "Error creating mirror dirty log";
+ 		return NULL;
+@@ -1435,7 +1436,7 @@ static struct dirty_log *create_dirty_log(struct dm_target *ti,
+ 
+ 	if (!_check_region_size(ti, dl->type->get_region_size(dl))) {
+ 		ti->error = "Invalid region size";
+-		dm_destroy_dirty_log(dl);
++		dm_dirty_log_destroy(dl);
+ 		return NULL;
+ 	}
+ 
+@@ -1496,7 +1497,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	int r;
+ 	unsigned int nr_mirrors, m, args_used;
+ 	struct mirror_set *ms;
+-	struct dirty_log *dl;
++	struct dm_dirty_log *dl;
+ 
+ 	dl = create_dirty_log(ti, argc, argv, &args_used);
+ 	if (!dl)
+@@ -1506,9 +1507,9 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	argc -= args_used;
+ 
+ 	if (!argc || sscanf(argv[0], "%u", &nr_mirrors) != 1 ||
+-	    nr_mirrors < 2 || nr_mirrors > KCOPYD_MAX_REGIONS + 1) {
++	    nr_mirrors < 2 || nr_mirrors > DM_KCOPYD_MAX_REGIONS + 1) {
+ 		ti->error = "Invalid number of mirrors";
+-		dm_destroy_dirty_log(dl);
++		dm_dirty_log_destroy(dl);
+ 		return -EINVAL;
+ 	}
+ 
+@@ -1516,13 +1517,13 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	if (argc < nr_mirrors * 2) {
+ 		ti->error = "Too few mirror arguments";
+-		dm_destroy_dirty_log(dl);
++		dm_dirty_log_destroy(dl);
+ 		return -EINVAL;
+ 	}
+ 
+ 	ms = alloc_context(nr_mirrors, dl->type->get_region_size(dl), ti, dl);
+ 	if (!ms) {
+-		dm_destroy_dirty_log(dl);
++		dm_dirty_log_destroy(dl);
+ 		return -ENOMEM;
+ 	}
+ 
+@@ -1571,7 +1572,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto err_destroy_wq;
+ 	}
+ 
+-	r = kcopyd_client_create(DM_IO_PAGES, &ms->kcopyd_client);
++	r = dm_kcopyd_client_create(DM_IO_PAGES, &ms->dm_kcopyd_client);
+ 	if (r)
+ 		goto err_destroy_wq;
+ 
+@@ -1590,7 +1591,7 @@ static void mirror_dtr(struct dm_target *ti)
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+ 
+ 	flush_workqueue(ms->kmirrord_wq);
+-	kcopyd_client_destroy(ms->kcopyd_client);
++	dm_kcopyd_client_destroy(ms->dm_kcopyd_client);
+ 	destroy_workqueue(ms->kmirrord_wq);
+ 	free_context(ms, ti, ms->nr_mirrors);
+ }
+@@ -1734,7 +1735,7 @@ out:
+ static void mirror_presuspend(struct dm_target *ti)
+ {
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+-	struct dirty_log *log = ms->rh.log;
++	struct dm_dirty_log *log = ms->rh.log;
+ 
+ 	atomic_set(&ms->suspend, 1);
+ 
+@@ -1763,7 +1764,7 @@ static void mirror_presuspend(struct dm_target *ti)
+ static void mirror_postsuspend(struct dm_target *ti)
+ {
+ 	struct mirror_set *ms = ti->private;
+-	struct dirty_log *log = ms->rh.log;
++	struct dm_dirty_log *log = ms->rh.log;
+ 
+ 	if (log->type->postsuspend && log->type->postsuspend(log))
+ 		/* FIXME: need better error handling */
+@@ -1773,7 +1774,7 @@ static void mirror_postsuspend(struct dm_target *ti)
+ static void mirror_resume(struct dm_target *ti)
+ {
+ 	struct mirror_set *ms = ti->private;
+-	struct dirty_log *log = ms->rh.log;
++	struct dm_dirty_log *log = ms->rh.log;
+ 
+ 	atomic_set(&ms->suspend, 0);
+ 	if (log->type->resume && log->type->resume(log))
+@@ -1811,7 +1812,7 @@ static int mirror_status(struct dm_target *ti, status_type_t type,
+ {
+ 	unsigned int m, sz = 0;
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+-	struct dirty_log *log = ms->rh.log;
++	struct dm_dirty_log *log = ms->rh.log;
+ 	char buffer[ms->nr_mirrors + 1];
+ 
+ 	switch (type) {
 -- 
 1.5.4.1
