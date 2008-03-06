@@ -1,10 +1,16 @@
-From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 1/1] dm-log(recover): avoid excessive
-	recovering_bits in dm-log.c
-Date: Thu,  6 Mar 2008 15:38:09 +0100
-Message-ID: <1204814289-29600-1-git-send-email-hjm@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ritesh Raj Sarraf <rrs@researchut.com>
+Subject: Re: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O
+	=?iso-8859-1?q?in=09dm-crypt?=
+Date: Thu, 6 Mar 2008 20:11:38 +0530
+Message-ID: <200803062011.45323.rrs@researchut.com>
+References: <200802281924.03996.rrs@researchut.com>
+	<47C9AEF3.7040507@redhat.com> <47C9AF8F.2050502@redhat.com>
+Reply-To: Ritesh Raj Sarraf <rrs@researchut.com>,
+	device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0415812003=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <47C9AF8F.2050502@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,118 +20,92 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Heinz Mauelshagen <hjm@redhat.com>
+To: Milan Broz <mbroz@redhat.com>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>, dm-crypt@saout.de, linux-kernel@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, akpm@linux-foundation.org, Alasdair G Kergon <agk@redhat.com>, Christophe Saout <christophe@saout.de>
 List-Id: dm-devel.ids
 
-Hi Alasdair et al,
+--===============0415812003==
+Content-Type: multipart/signed; boundary="nextPart3270476.Hljc4nDSfQ";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
 
-this patch avoids the excessive lc->recovering_bits array being used in
-the context of core_get_resync_work(), by basing the selection of regions
-to be synchronized purely on the lc->sync_bits array.
+--nextPart3270476.Hljc4nDSfQ
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-core_set_region_sync() adjusted lc->sync_search in order to allow for
-resynchronization of regions being set out-of-sync.
+I have a problem now.
+I'm not able to reproduce the bug on an IBM xSeries box.
 
-I'm interested, if resynchronization related semantics are sane.
+CPU: Dual Core 3.8 Ghz
+RAM: 1 GB
 
-If acceptable, please apply
-(applies on top of my previous dm header move patches).
+The big difference in the configuration is that the laptop read data from a=
+=20
+USB HDD and copied it to another USB HDD (dm-crypted)
+The IBM box reads it from an NFS share and copies it to the local hdd=20
+(dm-crypted)
 
-Heinz
+Ritesh
 
----
- drivers/md/dm-log.c |   40 +++++++++++-----------------------------
- 1 files changed, 11 insertions(+), 29 deletions(-)
 
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-log.c linux-2.6.25-rc4/drivers/md/dm-log.c
-index 6cc12c3..91a7f4a 100644
---- linux-2.6.25-rc4.orig/drivers/md/dm-log.c
-+++ linux-2.6.25-rc4/drivers/md/dm-log.c
-@@ -189,9 +189,8 @@ struct log_c {
- 	unsigned bitset_uint32_count;
- 	uint32_t *clean_bits;
- 	uint32_t *sync_bits;
--	uint32_t *recovering_bits;	/* FIXME: this seems excessive */
- 
--	int sync_search;
-+	unsigned sync_search;
- 
- 	/* Resync flag */
- 	enum sync {
-@@ -418,18 +417,6 @@ static int create_log_context(struct dm_dirty_log *log, struct dm_target *ti,
- 	}
- 	memset(lc->sync_bits, (sync == NOSYNC) ? -1 : 0, bitset_size);
- 	lc->sync_count = (sync == NOSYNC) ? region_count : 0;
--
--	lc->recovering_bits = vmalloc(bitset_size);
--	if (!lc->recovering_bits) {
--		DMWARN("couldn't allocate sync bitset");
--		vfree(lc->sync_bits);
--		if (!dev)
--			vfree(lc->clean_bits);
--		vfree(lc->disk_header);
--		kfree(lc);
--		return -ENOMEM;
--	}
--	memset(lc->recovering_bits, 0, bitset_size);
- 	lc->sync_search = 0;
- 	log->context = lc;
- 
-@@ -445,7 +432,6 @@ static int core_ctr(struct dm_dirty_log *log, struct dm_target *ti,
- static void destroy_log_context(struct log_c *lc)
- {
- 	vfree(lc->sync_bits);
--	vfree(lc->recovering_bits);
- 	kfree(lc);
- }
- 
-@@ -637,23 +623,17 @@ static int core_get_resync_work(struct dm_dirty_log *log, region_t *region)
- {
- 	struct log_c *lc = (struct log_c *) log->context;
- 
--	if (lc->sync_search >= lc->region_count)
--		return 0;
--
--	do {
-+	if (lc->sync_search < lc->region_count) {
- 		*region = ext2_find_next_zero_bit(
--					     (unsigned long *) lc->sync_bits,
--					     lc->region_count,
--					     lc->sync_search);
-+					(unsigned long *) lc->sync_bits,
-+					lc->region_count, lc->sync_search);
- 		lc->sync_search = *region + 1;
- 
--		if (*region >= lc->region_count)
--			return 0;
--
--	} while (log_test_bit(lc->recovering_bits, *region));
-+		if (*region < lc->region_count)
-+			return 1;
-+	}
- 
--	log_set_bit(lc, lc->recovering_bits, *region);
--	return 1;
-+	return 0;
- }
- 
- static void core_set_region_sync(struct dm_dirty_log *log, region_t region,
-@@ -661,12 +641,14 @@ static void core_set_region_sync(struct dm_dirty_log *log, region_t region,
- {
- 	struct log_c *lc = (struct log_c *) log->context;
- 
--	log_clear_bit(lc, lc->recovering_bits, region);
- 	if (in_sync) {
- 		log_set_bit(lc, lc->sync_bits, region);
-                 lc->sync_count++;
-         } else if (log_test_bit(lc->sync_bits, region)) {
- 		lc->sync_count--;
-+		if (lc->sync_search > region)
-+			lc->sync_search = region;
-+
- 		log_clear_bit(lc, lc->sync_bits, region);
- 	}
- }
--- 
-1.5.4.1
+On Sunday 02 March 2008, Milan Broz wrote:
+> (the same patch for 2.6.24)
+>
+> Milan
+> --
+> Add cond_resched() to prevent stuck in big bio processing.
+>
+> Signed-off-by: Milan Broz <mbroz@redhat.com>
+> ---
+>  drivers/md/dm-crypt.c |    1 +
+>  1 file changed, 1 insertion(+)
+>
+> Index: linux-2.6.24.3/drivers/md/dm-crypt.c
+> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
+=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
+> --- linux-2.6.24.3.orig/drivers/md/dm-crypt.c	2008-02-26 01:20:20.0000000=
+00
+> +0100 +++ linux-2.6.24.3/drivers/md/dm-crypt.c	2008-03-01
+> 16:46:24.000000000 +0100 @@ -374,6 +374,7 @@ static int
+> crypt_convert(struct crypt_co
+>  			break;
+>
+>  		ctx->sector++;
+> +		cond_resched();
+>  	}
+>
+>  	return r;
+
+
+
+=2D-=20
+Ritesh Raj Sarraf
+RESEARCHUT - http://www.researchut.com
+"Necessity is the mother of invention."
+
+--nextPart3270476.Hljc4nDSfQ
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iD8DBQBH0AKp4Rhi6gTxMLwRAgSRAJ9Qlkb+RLLiKsv5GaJkD1dqexTV+QCeO3dV
+grXG/Ddd7DkMnzHEI8D/cP4=
+=7S8l
+-----END PGP SIGNATURE-----
+
+--nextPart3270476.Hljc4nDSfQ--
+
+
+--===============0415812003==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0415812003==--
