@@ -1,9 +1,10 @@
 From: Heinz Mauelshagen <hjm@redhat.com>
-Subject: [RFC PATCH 1/6] dm headers(2nd): change name of "struct
-	io_region" to "struct dm_io_region" in dm-io.h to prepare for
-	move of the header to include/linux and adjust callers.
-Date: Thu,  6 Mar 2008 14:11:40 +0100
-Message-ID: <1204809105-22360-2-git-send-email-hjm@redhat.com>
+Subject: [RFC PATCH 2/6] dm headers(2nd): change names of
+	kcopyd_client, kcopyd_copy,
+	etc. in kcopyd.h to have "dm_" prefix in order to prepare for move of
+	the header to include/linux and adjust callers.
+Date: Thu,  6 Mar 2008 14:11:41 +0100
+Message-ID: <1204809105-22360-3-git-send-email-hjm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -20,227 +21,360 @@ Cc: Heinz Mauelshagen <hjm@redhat.com>
 List-Id: dm-devel.ids
 
 ---
- drivers/md/dm-exception-store.c |    4 ++--
- drivers/md/dm-io.c              |   10 +++++-----
- drivers/md/dm-io.h              |    7 +++++--
- drivers/md/dm-log.c             |    2 +-
- drivers/md/dm-raid1.c           |    8 ++++----
- drivers/md/dm-snap.c            |    2 +-
- drivers/md/kcopyd.c             |    8 ++++----
- drivers/md/kcopyd.h             |    4 ++--
- 8 files changed, 24 insertions(+), 21 deletions(-)
+ drivers/md/dm-raid1.c |   16 ++++++++--------
+ drivers/md/dm-snap.c  |    8 ++++----
+ drivers/md/dm-snap.h  |    2 +-
+ drivers/md/kcopyd.c   |   47 ++++++++++++++++++++++++-----------------------
+ drivers/md/kcopyd.h   |   37 ++++++++++++++++++++-----------------
+ 5 files changed, 57 insertions(+), 53 deletions(-)
 
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-exception-store.c linux-2.6.25-rc4/drivers/md/dm-exception-store.c
-index 5bbce29..b8e210e 100644
---- linux-2.6.25-rc4.orig/drivers/md/dm-exception-store.c
-+++ linux-2.6.25-rc4/drivers/md/dm-exception-store.c
-@@ -159,7 +159,7 @@ static void free_area(struct pstore *ps)
- }
- 
- struct mdata_req {
--	struct io_region *where;
-+	struct dm_io_region *where;
- 	struct dm_io_request *io_req;
- 	struct work_struct work;
- 	int result;
-@@ -177,7 +177,7 @@ static void do_metadata(struct work_struct *work)
-  */
- static int chunk_io(struct pstore *ps, uint32_t chunk, int rw, int metadata)
- {
--	struct io_region where = {
-+	struct dm_io_region where = {
- 		.bdev = ps->snap->cow->bdev,
- 		.sector = ps->snap->chunk_size * chunk,
- 		.count = ps->snap->chunk_size,
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-io.c linux-2.6.25-rc4/drivers/md/dm-io.c
-index b8e342f..fa9f4e6 100644
---- linux-2.6.25-rc4.orig/drivers/md/dm-io.c
-+++ linux-2.6.25-rc4/drivers/md/dm-io.c
-@@ -271,7 +271,7 @@ static void km_dp_init(struct dpages *dp, void *data)
- /*-----------------------------------------------------------------
-  * IO routines that accept a list of pages.
-  *---------------------------------------------------------------*/
--static void do_region(int rw, unsigned int region, struct io_region *where,
-+static void do_region(int rw, unsigned int region, struct dm_io_region *where,
- 		      struct dpages *dp, struct io *io)
- {
- 	struct bio *bio;
-@@ -320,7 +320,7 @@ static void do_region(int rw, unsigned int region, struct io_region *where,
- }
- 
- static void dispatch_io(int rw, unsigned int num_regions,
--			struct io_region *where, struct dpages *dp,
-+			struct dm_io_region *where, struct dpages *dp,
- 			struct io *io, int sync)
- {
- 	int i;
-@@ -347,7 +347,7 @@ static void dispatch_io(int rw, unsigned int num_regions,
- }
- 
- static int sync_io(struct dm_io_client *client, unsigned int num_regions,
--		   struct io_region *where, int rw, struct dpages *dp,
-+		   struct dm_io_region *where, int rw, struct dpages *dp,
- 		   unsigned long *error_bits)
- {
- 	struct io io;
-@@ -384,7 +384,7 @@ static int sync_io(struct dm_io_client *client, unsigned int num_regions,
- }
- 
- static int async_io(struct dm_io_client *client, unsigned int num_regions,
--		    struct io_region *where, int rw, struct dpages *dp,
-+		    struct dm_io_region *where, int rw, struct dpages *dp,
- 		    io_notify_fn fn, void *context)
- {
- 	struct io *io;
-@@ -438,7 +438,7 @@ static int dp_init(struct dm_io_request *io_req, struct dpages *dp)
-  * New collapsed (a)synchronous interface
-  */
- int dm_io(struct dm_io_request *io_req, unsigned num_regions,
--	  struct io_region *where, unsigned long *sync_error_bits)
-+	  struct dm_io_region *where, unsigned long *sync_error_bits)
- {
- 	int r;
- 	struct dpages dp;
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-io.h linux-2.6.25-rc4/drivers/md/dm-io.h
-index f647e2c..765c85c 100644
---- linux-2.6.25-rc4.orig/drivers/md/dm-io.h
-+++ linux-2.6.25-rc4/drivers/md/dm-io.h
-@@ -1,5 +1,8 @@
- /*
-  * Copyright (C) 2003 Sistina Software
-+ * Copyright (C) 2004-2008 Red Hat GmbH
-+ *
-+ * Device-Mapper low-level I/O.
-  *
-  * This file is released under the GPL.
-  */
-@@ -9,7 +12,7 @@
- 
- #include "dm.h"
- 
--struct io_region {
-+struct dm_io_region {
- 	struct block_device *bdev;
- 	sector_t sector;
- 	sector_t count;		/* If this is zero the region is ignored. */
-@@ -74,6 +77,6 @@ void dm_io_client_destroy(struct dm_io_client *client);
-  * error occurred doing io to the corresponding region.
-  */
- int dm_io(struct dm_io_request *io_req, unsigned num_regions,
--	  struct io_region *region, unsigned long *sync_error_bits);
-+	  struct dm_io_region *region, unsigned long *sync_error_bits);
- 
- #endif
-diff --git linux-2.6.25-rc4.orig/drivers/md/dm-log.c linux-2.6.25-rc4/drivers/md/dm-log.c
-index 2d3762e..ec73b34 100644
---- linux-2.6.25-rc4.orig/drivers/md/dm-log.c
-+++ linux-2.6.25-rc4/drivers/md/dm-log.c
-@@ -208,7 +208,7 @@ struct log_c {
- 	struct dm_dev *log_dev;
- 	struct log_header header;
- 
--	struct io_region header_location;
-+	struct dm_io_region header_location;
- 	struct log_header *disk_header;
- };
- 
 diff --git linux-2.6.25-rc4.orig/drivers/md/dm-raid1.c linux-2.6.25-rc4/drivers/md/dm-raid1.c
-index 37afe35..b594dee 100644
+index b594dee..fdb9f5f 100644
 --- linux-2.6.25-rc4.orig/drivers/md/dm-raid1.c
 +++ linux-2.6.25-rc4/drivers/md/dm-raid1.c
+@@ -133,7 +133,7 @@ struct mirror_set {
+ 	struct dm_target *ti;
+ 	struct list_head list;
+ 	struct region_hash rh;
+-	struct kcopyd_client *kcopyd_client;
++	struct dm_kcopyd_client *kcopyd_client;
+ 	uint64_t features;
+ 
+ 	spinlock_t lock;	/* protects the lists */
 @@ -790,7 +790,7 @@ static int recover(struct mirror_set *ms, struct region *reg)
  {
  	int r;
  	unsigned int i;
--	struct io_region from, to[KCOPYD_MAX_REGIONS], *dest;
-+	struct dm_io_region from, to[KCOPYD_MAX_REGIONS], *dest;
+-	struct dm_io_region from, to[KCOPYD_MAX_REGIONS], *dest;
++	struct dm_io_region from, to[DM_KCOPYD_MAX_REGIONS], *dest;
  	struct mirror *m;
  	unsigned long flags = 0;
  
-@@ -909,7 +909,7 @@ static void map_bio(struct mirror *m, struct bio *bio)
- 	bio->bi_sector = map_sector(m, bio);
- }
+@@ -822,9 +822,9 @@ static int recover(struct mirror_set *ms, struct region *reg)
+ 	}
  
--static void map_region(struct io_region *io, struct mirror *m,
-+static void map_region(struct dm_io_region *io, struct mirror *m,
- 		       struct bio *bio)
- {
- 	io->bdev = m->dev->bdev;
-@@ -951,7 +951,7 @@ static void read_callback(unsigned long error, void *context)
- /* Asynchronous read. */
- static void read_async_bio(struct mirror *m, struct bio *bio)
- {
--	struct io_region io;
-+	struct dm_io_region io;
- 	struct dm_io_request io_req = {
- 		.bi_rw = READ,
- 		.mem.type = DM_IO_BVEC,
-@@ -1107,7 +1107,7 @@ out:
- static void do_write(struct mirror_set *ms, struct bio *bio)
- {
- 	unsigned int i;
--	struct io_region io[ms->nr_mirrors], *dest = io;
-+	struct dm_io_region io[ms->nr_mirrors], *dest = io;
- 	struct mirror *m;
- 	struct dm_io_request io_req = {
- 		.bi_rw = WRITE,
+ 	/* hand to kcopyd */
+-	set_bit(KCOPYD_IGNORE_ERROR, &flags);
+-	r = kcopyd_copy(ms->kcopyd_client, &from, ms->nr_mirrors - 1, to, flags,
+-			recovery_complete, reg);
++	set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
++	r = dm_kcopyd_copy(ms->kcopyd_client, &from, ms->nr_mirrors - 1, to,
++			   flags, recovery_complete, reg);
+ 
+ 	return r;
+ }
+@@ -1506,7 +1506,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	argc -= args_used;
+ 
+ 	if (!argc || sscanf(argv[0], "%u", &nr_mirrors) != 1 ||
+-	    nr_mirrors < 2 || nr_mirrors > KCOPYD_MAX_REGIONS + 1) {
++	    nr_mirrors < 2 || nr_mirrors > DM_KCOPYD_MAX_REGIONS + 1) {
+ 		ti->error = "Invalid number of mirrors";
+ 		dm_destroy_dirty_log(dl);
+ 		return -EINVAL;
+@@ -1571,7 +1571,7 @@ static int mirror_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto err_destroy_wq;
+ 	}
+ 
+-	r = kcopyd_client_create(DM_IO_PAGES, &ms->kcopyd_client);
++	r = dm_kcopyd_client_create(DM_IO_PAGES, &ms->kcopyd_client);
+ 	if (r)
+ 		goto err_destroy_wq;
+ 
+@@ -1590,7 +1590,7 @@ static void mirror_dtr(struct dm_target *ti)
+ 	struct mirror_set *ms = (struct mirror_set *) ti->private;
+ 
+ 	flush_workqueue(ms->kmirrord_wq);
+-	kcopyd_client_destroy(ms->kcopyd_client);
++	dm_kcopyd_client_destroy(ms->kcopyd_client);
+ 	destroy_workqueue(ms->kmirrord_wq);
+ 	free_context(ms, ti, ms->nr_mirrors);
+ }
 diff --git linux-2.6.25-rc4.orig/drivers/md/dm-snap.c linux-2.6.25-rc4/drivers/md/dm-snap.c
-index ae24eab..7133ecf 100644
+index 7133ecf..3bd62db 100644
 --- linux-2.6.25-rc4.orig/drivers/md/dm-snap.c
 +++ linux-2.6.25-rc4/drivers/md/dm-snap.c
-@@ -824,7 +824,7 @@ static void copy_callback(int read_err, unsigned int write_err, void *context)
- static void start_copy(struct dm_snap_pending_exception *pe)
- {
- 	struct dm_snapshot *s = pe->snap;
--	struct io_region src, dest;
-+	struct dm_io_region src, dest;
- 	struct block_device *bdev = s->origin->bdev;
- 	sector_t dev_size;
+@@ -558,7 +558,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad4;
+ 	}
  
+-	r = kcopyd_client_create(SNAPSHOT_PAGES, &s->kcopyd_client);
++	r = dm_kcopyd_client_create(SNAPSHOT_PAGES, &s->kcopyd_client);
+ 	if (r) {
+ 		ti->error = "Could not create kcopyd client";
+ 		goto bad5;
+@@ -591,7 +591,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	return 0;
+ 
+  bad6:
+-	kcopyd_client_destroy(s->kcopyd_client);
++	dm_kcopyd_client_destroy(s->kcopyd_client);
+ 
+  bad5:
+ 	s->store.destroy(&s->store);
+@@ -613,7 +613,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ static void __free_exceptions(struct dm_snapshot *s)
+ {
+-	kcopyd_client_destroy(s->kcopyd_client);
++	dm_kcopyd_client_destroy(s->kcopyd_client);
+ 	s->kcopyd_client = NULL;
+ 
+ 	exit_exception_table(&s->pending, pending_cache);
+@@ -839,7 +839,7 @@ static void start_copy(struct dm_snap_pending_exception *pe)
+ 	dest.count = src.count;
+ 
+ 	/* Hand over to kcopyd */
+-	kcopyd_copy(s->kcopyd_client,
++	dm_kcopyd_copy(s->kcopyd_client,
+ 		    &src, 1, &dest, 0, copy_callback, pe);
+ }
+ 
+diff --git linux-2.6.25-rc4.orig/drivers/md/dm-snap.h linux-2.6.25-rc4/drivers/md/dm-snap.h
+index 93bce5d..214548e 100644
+--- linux-2.6.25-rc4.orig/drivers/md/dm-snap.h
++++ linux-2.6.25-rc4/drivers/md/dm-snap.h
+@@ -169,7 +169,7 @@ struct dm_snapshot {
+ 	/* The on disk metadata handler */
+ 	struct exception_store store;
+ 
+-	struct kcopyd_client *kcopyd_client;
++	struct dm_kcopyd_client *kcopyd_client;
+ 
+ 	/* Queue of snapshot writes for ksnapd to flush */
+ 	struct bio_list queued_bios;
 diff --git linux-2.6.25-rc4.orig/drivers/md/kcopyd.c linux-2.6.25-rc4/drivers/md/kcopyd.c
-index f3831f3..bbfd7ce 100644
+index bbfd7ce..aa1fbda 100644
 --- linux-2.6.25-rc4.orig/drivers/md/kcopyd.c
 +++ linux-2.6.25-rc4/drivers/md/kcopyd.c
-@@ -175,13 +175,13 @@ struct kcopyd_job {
- 	 * Either READ or WRITE
- 	 */
- 	int rw;
--	struct io_region source;
-+	struct dm_io_region source;
+@@ -38,7 +38,7 @@ static void wake(void)
+  * Each kcopyd client has its own little pool of preallocated
+  * pages for kcopyd io.
+  *---------------------------------------------------------------*/
+-struct kcopyd_client {
++struct dm_kcopyd_client {
+ 	struct list_head list;
  
- 	/*
+ 	spinlock_t lock;
+@@ -75,7 +75,7 @@ static void free_pl(struct page_list *pl)
+ 	kfree(pl);
+ }
+ 
+-static int kcopyd_get_pages(struct kcopyd_client *kc,
++static int kcopyd_get_pages(struct dm_kcopyd_client *kc,
+ 			    unsigned int nr, struct page_list **pages)
+ {
+ 	struct page_list *pl;
+@@ -98,7 +98,7 @@ static int kcopyd_get_pages(struct kcopyd_client *kc,
+ 	return 0;
+ }
+ 
+-static void kcopyd_put_pages(struct kcopyd_client *kc, struct page_list *pl)
++static void kcopyd_put_pages(struct dm_kcopyd_client *kc, struct page_list *pl)
+ {
+ 	struct page_list *cursor;
+ 
+@@ -126,7 +126,7 @@ static void drop_pages(struct page_list *pl)
+ 	}
+ }
+ 
+-static int client_alloc_pages(struct kcopyd_client *kc, unsigned int nr)
++static int client_alloc_pages(struct dm_kcopyd_client *kc, unsigned int nr)
+ {
+ 	unsigned int i;
+ 	struct page_list *pl = NULL, *next;
+@@ -147,7 +147,7 @@ static int client_alloc_pages(struct kcopyd_client *kc, unsigned int nr)
+ 	return 0;
+ }
+ 
+-static void client_free_pages(struct kcopyd_client *kc)
++static void client_free_pages(struct dm_kcopyd_client *kc)
+ {
+ 	BUG_ON(kc->nr_free_pages != kc->nr_pages);
+ 	drop_pages(kc->pages);
+@@ -161,7 +161,7 @@ static void client_free_pages(struct kcopyd_client *kc)
+  * ever having to do io (which could cause a deadlock).
+  *---------------------------------------------------------------*/
+ struct kcopyd_job {
+-	struct kcopyd_client *kc;
++	struct dm_kcopyd_client *kc;
+ 	struct list_head list;
+ 	unsigned long flags;
+ 
+@@ -181,7 +181,7 @@ struct kcopyd_job {
  	 * The destinations for the transfer.
  	 */
  	unsigned int num_dests;
--	struct io_region dests[KCOPYD_MAX_REGIONS];
-+	struct dm_io_region dests[KCOPYD_MAX_REGIONS];
+-	struct dm_io_region dests[KCOPYD_MAX_REGIONS];
++	struct dm_io_region dests[DM_KCOPYD_MAX_REGIONS];
  
  	sector_t offset;
  	unsigned int nr_pages;
-@@ -526,8 +526,8 @@ static void split_job(struct kcopyd_job *job)
+@@ -191,7 +191,7 @@ struct kcopyd_job {
+ 	 * Set this to ensure you are notified when the job has
+ 	 * completed.  'context' is for callback to use.
+ 	 */
+-	kcopyd_notify_fn fn;
++	dm_kcopyd_notify_fn fn;
+ 	void *context;
+ 
+ 	/*
+@@ -294,8 +294,8 @@ static int run_complete_job(struct kcopyd_job *job)
+ 	void *context = job->context;
+ 	int read_err = job->read_err;
+ 	unsigned int write_err = job->write_err;
+-	kcopyd_notify_fn fn = job->fn;
+-	struct kcopyd_client *kc = job->kc;
++	dm_kcopyd_notify_fn fn = job->fn;
++	struct dm_kcopyd_client *kc = job->kc;
+ 
+ 	kcopyd_put_pages(kc, job->pages);
+ 	mempool_free(job, _job_pool);
+@@ -317,7 +317,7 @@ static void complete_io(unsigned long error, void *context)
+ 		else
+ 			job->read_err = 1;
+ 
+-		if (!test_bit(KCOPYD_IGNORE_ERROR, &job->flags)) {
++		if (!test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) {
+ 			push(&_complete_jobs, job);
+ 			wake();
+ 			return;
+@@ -469,7 +469,7 @@ static void segment_complete(int read_err,
+ 	 * Only dispatch more work if there hasn't been an error.
+ 	 */
+ 	if ((!job->read_err && !job->write_err) ||
+-	    test_bit(KCOPYD_IGNORE_ERROR, &job->flags)) {
++	    test_bit(DM_KCOPYD_IGNORE_ERROR, &job->flags)) {
+ 		/* get the next chunk of work */
+ 		progress = job->progress;
+ 		count = job->source.count - progress;
+@@ -526,9 +526,9 @@ static void split_job(struct kcopyd_job *job)
  		segment_complete(0, 0u, job);
  }
  
--int kcopyd_copy(struct kcopyd_client *kc, struct io_region *from,
--		unsigned int num_dests, struct io_region *dests,
-+int kcopyd_copy(struct kcopyd_client *kc, struct dm_io_region *from,
-+		unsigned int num_dests, struct dm_io_region *dests,
- 		unsigned int flags, kcopyd_notify_fn fn, void *context)
+-int kcopyd_copy(struct kcopyd_client *kc, struct dm_io_region *from,
+-		unsigned int num_dests, struct dm_io_region *dests,
+-		unsigned int flags, kcopyd_notify_fn fn, void *context)
++int dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
++		   unsigned int num_dests, struct dm_io_region *dests,
++		   unsigned int flags, dm_kcopyd_notify_fn fn, void *context)
  {
  	struct kcopyd_job *job;
+ 
+@@ -588,14 +588,14 @@ int kcopyd_cancel(struct kcopyd_job *job, int block)
+ static DEFINE_MUTEX(_client_lock);
+ static LIST_HEAD(_clients);
+ 
+-static void client_add(struct kcopyd_client *kc)
++static void client_add(struct dm_kcopyd_client *kc)
+ {
+ 	mutex_lock(&_client_lock);
+ 	list_add(&kc->list, &_clients);
+ 	mutex_unlock(&_client_lock);
+ }
+ 
+-static void client_del(struct kcopyd_client *kc)
++static void client_del(struct dm_kcopyd_client *kc)
+ {
+ 	mutex_lock(&_client_lock);
+ 	list_del(&kc->list);
+@@ -649,10 +649,11 @@ static void kcopyd_exit(void)
+ 	mutex_unlock(&kcopyd_init_lock);
+ }
+ 
+-int kcopyd_client_create(unsigned int nr_pages, struct kcopyd_client **result)
++int dm_kcopyd_client_create(unsigned int nr_pages,
++			    struct dm_kcopyd_client **result)
+ {
+ 	int r = 0;
+-	struct kcopyd_client *kc;
++	struct dm_kcopyd_client *kc;
+ 
+ 	r = kcopyd_init();
+ 	if (r)
+@@ -691,7 +692,7 @@ int kcopyd_client_create(unsigned int nr_pages, struct kcopyd_client **result)
+ 	return 0;
+ }
+ 
+-void kcopyd_client_destroy(struct kcopyd_client *kc)
++void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc)
+ {
+ 	/* Wait for completion of all jobs submitted by this client. */
+ 	wait_event(kc->destroyq, !atomic_read(&kc->nr_jobs));
+@@ -703,6 +704,6 @@ void kcopyd_client_destroy(struct kcopyd_client *kc)
+ 	kcopyd_exit();
+ }
+ 
+-EXPORT_SYMBOL(kcopyd_client_create);
+-EXPORT_SYMBOL(kcopyd_client_destroy);
+-EXPORT_SYMBOL(kcopyd_copy);
++EXPORT_SYMBOL(dm_kcopyd_client_create);
++EXPORT_SYMBOL(dm_kcopyd_client_destroy);
++EXPORT_SYMBOL(dm_kcopyd_copy);
 diff --git linux-2.6.25-rc4.orig/drivers/md/kcopyd.h linux-2.6.25-rc4/drivers/md/kcopyd.h
-index 4621ea0..d30a893 100644
+index d30a893..eb998c0 100644
 --- linux-2.6.25-rc4.orig/drivers/md/kcopyd.h
 +++ linux-2.6.25-rc4/drivers/md/kcopyd.h
-@@ -35,8 +35,8 @@ void kcopyd_client_destroy(struct kcopyd_client *kc);
- typedef void (*kcopyd_notify_fn)(int read_err,
- 				 unsigned int write_err, void *context);
+@@ -1,11 +1,13 @@
+ /*
+- * Copyright (C) 2001 Sistina Software
++ * Copyright (C) 2001-2003 Sistina Software
++ * Copyright (C) 2004-2008 Red Hat GmbH
++ *
++ * dm-kcopyd provides a simple interface for copying an area of one
++ * block-device to one or more other block-devices, either synchronous
++ * or with an asynchronous completion notification.
+  *
+  * This file is released under the GPL.
+  *
+- * Kcopyd provides a simple interface for copying an area of one
+- * block-device to one or more other block-devices, with an asynchronous
+- * completion notification.
+  */
  
--int kcopyd_copy(struct kcopyd_client *kc, struct io_region *from,
--		unsigned int num_dests, struct io_region *dests,
-+int kcopyd_copy(struct kcopyd_client *kc, struct dm_io_region *from,
-+		unsigned int num_dests, struct dm_io_region *dests,
- 		unsigned int flags, kcopyd_notify_fn fn, void *context);
+ #ifndef DM_KCOPYD_H
+@@ -14,29 +16,30 @@
+ #include "dm-io.h"
+ 
+ /* FIXME: make this configurable */
+-#define KCOPYD_MAX_REGIONS 8
++#define DM_KCOPYD_MAX_REGIONS 8
+ 
+-#define KCOPYD_IGNORE_ERROR 1
++#define DM_KCOPYD_IGNORE_ERROR 1
+ 
+ /*
+- * To use kcopyd you must first create a kcopyd client object.
++ * To use dm-kcopyd you must first create a kcopyd client object.
+  */
+-struct kcopyd_client;
+-int kcopyd_client_create(unsigned int num_pages, struct kcopyd_client **result);
+-void kcopyd_client_destroy(struct kcopyd_client *kc);
++struct dm_kcopyd_client;
++int dm_kcopyd_client_create(unsigned int num_pages,
++			    struct dm_kcopyd_client **result);
++void dm_kcopyd_client_destroy(struct dm_kcopyd_client *kc);
+ 
+ /*
+- * Submit a copy job to kcopyd.  This is built on top of the
++ * Submit a copy job to dm-kcopyd.  This is built on top of the
+  * previous three fns.
+  *
+  * read_err is a boolean,
+- * write_err is a bitset, with 1 bit for each destination region
++ * write_err is a bitset, with 1 bit for each destination region.
+  */
+-typedef void (*kcopyd_notify_fn)(int read_err,
+-				 unsigned int write_err, void *context);
++typedef void (*dm_kcopyd_notify_fn)(int read_err,
++				    unsigned int write_err, void *context);
+ 
+-int kcopyd_copy(struct kcopyd_client *kc, struct dm_io_region *from,
+-		unsigned int num_dests, struct dm_io_region *dests,
+-		unsigned int flags, kcopyd_notify_fn fn, void *context);
++int dm_kcopyd_copy(struct dm_kcopyd_client *kc, struct dm_io_region *from,
++		   unsigned int num_dests, struct dm_io_region *dests,
++		   unsigned int flags, dm_kcopyd_notify_fn fn, void *context);
  
  #endif
 -- 
