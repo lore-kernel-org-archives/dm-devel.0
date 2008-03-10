@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: DMF_FREEING flag checking
-Date: Mon, 10 Mar 2008 12:29:46 +0000
-Message-ID: <20080310122946.GC1788@agk.fab.redhat.com>
-References: <746615.15795.qm@web31715.mail.mud.yahoo.com>
-	<20080310121800.GB1788@agk.fab.redhat.com>
+From: Bastian Blank <bastian@waldi.eu.org>
+Subject: [PATCH 1/3] devmapper - don't modify api on selinux
+	support
+Date: Mon, 10 Mar 2008 21:02:27 +0100
+Message-ID: <20080310200227.GA12454@wavehammer.waldi.eu.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============1580284891=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080310121800.GB1788@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,24 +16,85 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mai N <thumai9999@yahoo.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Mar 10, 2008 at 12:18:00PM +0000, Alasdair G Kergon wrote:
-> The question is, are there any
-> *actual* code paths which could lead to that happening, where existing
-> locking/serialisation is inadequate?
-  
-The final dm_put that triggers the deletion (md->holders dropping to 0)
-is in __hash_remove() while holding _hash_lock - so I don't think the dm_get()
-calls you mention can run in parallel.
 
-There are other dm_get() calls outside _hash_lock, but I think the
-argument is that the code paths containing them can't be reached
-if the final dm_put() has started - they all require something to have
-the device open.
+--===============1580284891==
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="lrZ03NoBR/3+SXJZ"
+Content-Disposition: inline
 
-Alasdair
--- 
-agk@redhat.com
+
+--lrZ03NoBR/3+SXJZ
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+Always include dm_set_selinux_context in libdevmapper.
+
+--- trunk.orig/lib/libdm-common.c
++++ trunk/lib/libdm-common.c
+@@ -233,9 +233,9 @@
+ 	return 1;
+ }
+=20
+-#ifdef HAVE_SELINUX
+ int dm_set_selinux_context(const char *path, mode_t mode)
+ {
++#ifdef HAVE_SELINUX
+ 	security_context_t scontext;
+=20
+ 	if (is_selinux_enabled() <=3D 0)
+@@ -256,9 +256,9 @@
+ 	}
+=20
+ 	freecon(scontext);
++#endif
+ 	return 1;
+ }
+-#endif
+=20
+ static int _add_dev_node(const char *dev_name, uint32_t major, uint32_t mi=
+nor,
+ 			 uid_t uid, gid_t gid, mode_t mode)
+@@ -302,10 +302,8 @@
+=20
+ 	log_debug("Created %s", path);
+=20
+-#ifdef HAVE_SELINUX
+ 	if (!dm_set_selinux_context(path, S_IFBLK))
+ 		return 0;
+-#endif
+=20
+ 	return 1;
+ }
+--=20
+We fight only when there is no other choice.  We prefer the ways of
+peaceful contact.
+		-- Kirk, "Spectre of the Gun", stardate 4385.3
+
+--lrZ03NoBR/3+SXJZ
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.6 (GNU/Linux)
+
+iEYEARECAAYFAkfVk9MACgkQnw66O/MvCNEuLgCglbk2VVluQBPNcnR2UwSZLsqD
+qwAAmgIuZViiTP0p/+cqbLIF/+gqyiR8
+=lhIg
+-----END PGP SIGNATURE-----
+
+--lrZ03NoBR/3+SXJZ--
+
+
+--===============1580284891==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1580284891==--
