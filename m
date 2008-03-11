@@ -1,17 +1,10 @@
-From: Nix <nix@esperi.org.uk>
-Subject: Re: 2.6.24.2: 4KSTACKS + pcdrw + dm + mount -> stack
-	overflow: ide-cd related? dm-related?
-Date: Mon, 10 Mar 2008 20:09:18 +0000
-Message-ID: <87iqzu5ok1.fsf@hades.wkstn.nix>
-References: <87wsovkth5.fsf@hades.wkstn.nix> <87skzipcpw.fsf@hades.wkstn.nix>
-	<m363wepa3a.fsf@telia.com> <87oda6p9st.fsf@hades.wkstn.nix>
-	<20080306161459.GB3702@atrey.karlin.mff.cuni.cz>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH 0/7] scsi_dh: Move hardware handlers from dm to
+	SCSI
+Date: Mon, 10 Mar 2008 18:33:28 -0700
+Message-ID: <20080311013328.23179.76692.sendpatchset@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080306161459.GB3702@atrey.karlin.mff.cuni.cz> (Jan Kara's
-	message of "Thu, 6 Mar 2008 17:14:59 +0100")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,24 +14,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jan Kara <jack@suse.cz>
-Cc: Peter Osterlund <petero2@telia.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: andmike@us.ibm.com, michaelc@cs.wisc.edu, James.Bottomley@HansenPartnership.com, jens.axboe@oracle.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On 6 Mar 2008, Jan Kara said:
->   If you are interested, linux-next or -mm tree should contain a patch now
-> that fixes the problem...
+Hello,
 
-As soon as I've figured out why dhclient is failing to establish DHCP
-connections from 2.6.14.3 (the DHCPOFFERs seem to get ignored, it's
-weird and the kernel shouldn't have anything to do with it, but it does)
-so I can actually compile something that works and doesn't knock me off
-the net every two minutes, I'll try it :)
+Set of patches that follow this email facilitate movement of hardware
+handlers from dm layer to SCSI layer.
 
-(yes, I could try -mm directly, but it's been some weeks since I backed
-up, thanks to an abruptly chocolate-filled CD-RW drive, so I'm being a
-bit cautious.)
+Previous set of patches that implemented this was posted on Feb 27:
+http://marc.info/?l=linux-scsi&m=120416126328081&w=2
+
+Changes have been made based on feedback received from James and Mike
+Anderson.
+
+Following are the changes:
+ - Reduced the number of pointers used in scsi_device data structure
+   from 2 to 1.
+ - Added a special return code for check_sense function to return when
+   the sense code is not handled by hardware handler's check_sense fucntion.
+ - Added a request pointer argument to hardware handler's prep_fn.
+ 
+Patches are created on top of 2.6.25-rc2-mm1.
+
+Testing has been done with a IBM DS4800 storage device, which means the
+infrastructure and the lsi_rdac hardware handler has been tested. Testing
+by someone with the EMC hardware and/or HP hardware would be appreciated.
+
+Comments, suggestions solicited.
+
+Thanks,
+
+chandra
+
 
 -- 
-`The rest is a tale of post and counter-post.' --- Ian Rawlings
-                                                   describes USENET
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
