@@ -1,100 +1,37 @@
-From: Jacek Lipkowski <sq5bpf@lipkowski.org>
-Subject: dm-rdac problem
-Date: Wed, 12 Mar 2008 16:36:20 +0100 (CET)
-Message-ID: <Pine.LNX.4.64.0803121506220.5697@paranoid.lipkowski.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Samuel Tardieu <sam@rfc1149.net>
+Subject: Re: INFO: task mount:11202 blocked for more than 120 seconds
+Date: Wed, 12 Mar 2008 19:03:51 +0100
+Message-ID: <2008-03-12-19-03-51+trackit+sam@rfc1149.net>
+References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de>
+	<20080307224040.GV155259@sgi.com>
+	<alpine.DEB.1.00.0803080032020.7723@sheep.housecafe.de>
+	<20080309213441.GQ155407@sgi.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753322AbYCLSEG@vger.kernel.org>
+In-Reply-To: <20080309213441.GQ155407@sgi.com> (David Chinner's message of "Mon\, 10 Mar 2008 08\:34\:41 +1100")
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Christian Kujau <lists@nerdbynature.de>, David Chinner <dgc@sgi.com>, LKML <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com
 List-Id: dm-devel.ids
 
-Hello,
+>>>>> "David" == David Chinner <dgc@sgi.com> writes:
 
-I'm having a problem with getting dm-rdac to work. I do realize that this 
-is a development list, but it seems like the only place to ask for help, 
-and http://christophe.varoqui.free.fr is down. In the logs i get the 
-following errors, after starting multipathd:
+>> No, no I/O errors at all. See the kern.log above, I could even do
+>> dd(1) from the md1 (dm-crypt on raid1), no errors either.
 
-device-mapper: multipath rdac: using RDAC command with timeout 60000
-device-mapper: table: 253:0: multipath: Unknown error
-device-mapper: ioctl: error adding target to table
+David> Oh, dm-crypt. Well, I'd definitely start looking there. XFS has
+David> a history of exposing dm-crypt bugs, and these hangs appear to
+David> be I/O congestion/scheduling related and not XFS. Also, we
+David> haven't changed anything related to plug/unplug of block
+David> devices in XFS recently, so that also points to some other
+David> change as well...
 
-multipath -ll doesn't show anything.
+For what it is worth, I notice the same error last week (with a kernel
+of the day) on my laptop but was too busy at work to investigate. And
+I use ext3... on dm-crypt.
 
-The system is the following:
-- centos 5.1, with kernel changed to vanilla 2.6.24.3
-- tried both multipath-tools from centos (patched 0.4.7), and vanilla 
-0.4.8
-- 2 qlogic QLA2340 hba's, connected to different fabrics
-- 2 IBM DS4500 Storage Servers (each connected to both fabrics), each 
-exports two luns, one 1.5TB lun, and one 100MB lun. I've also tried using 
-one IBM DS4500 Storage Server with one 1.5TB lun, and one 100MB lun.
-
-If i disable AVT (change the host type from Linux to LNXCLVMWARE) i also 
-get read errors from unavaliable paths:
-end_request: I/O error, dev sda, sector 0
-end_request: I/O error, dev sdd, sector 0
-etc... (this is normal).
-
-I can get multipath to work using the tur checker.
-
-my /etc/multipath.conf is the following:
-defaults {
-    multipath_tool "/sbin/multipath -v 0 -S"
-    udev_dir         /dev
-    polling_interval 10
-    default_selector         round-robin
-    default_selector_args 0
-    default_path_grouping_policy     failover
-    default_getuid_callout "/sbin/scsi_id -g -u -s"
-    default_prio_callout     "/bin/false"
-user_friendly_names yes
-}
-devnode_blacklist {
-    devnode fd
-    devnode hd
-    devnode dm
-    devnode sr
-    devnode scd
-    devnode st
-    devnode ram
-    devnode raw
-    devnode loop
-#root fs is on /dev/rd/c0d0
-#   devnode sda
-#   devnode sdb
-}
-
-
-devices {
-    device {
-       vendor IBM
-       product 1742-900
-       path_grouping_policy group_by_prio
-hardware_handler        "1 rdac"
-prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
-                 failback                immediate
-       path_checker rdac
-getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-    }
-}
-
-
-multipaths {
-         multipath {
-                 device {
-                         vendor IBM
-                         product 1742-900
-                 }
-         }
-}
+  Sam
+-- 
+Samuel Tardieu -- sam@rfc1149.net -- http://www.rfc1149.net/
