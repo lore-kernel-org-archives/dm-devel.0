@@ -1,7 +1,7 @@
 From: Samuel Tardieu <sam@rfc1149.net>
 Subject: Re: INFO: task mount:11202 blocked for more than 120 seconds
 Date: Wed, 12 Mar 2008 19:03:51 +0100
-Message-ID: <2008-03-12-19-03-51+trackit+sam@rfc1149.net>
+Message-ID: <2008-03-12-19-12-02+trackit+sam@rfc1149.net>
 References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de>
 	<20080307224040.GV155259@sgi.com>
 	<alpine.DEB.1.00.0803080032020.7723@sheep.housecafe.de>
@@ -9,9 +9,12 @@ References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 8bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753322AbYCLSEG@vger.kernel.org>
+Return-path: <xfs-bounce@oss.sgi.com>
+Resent-Message-ID: <20080312181202.GK4884@rfc1149.net>
+Resent-To: xfs@oss.sgi.com, dgc@sgi.com
 In-Reply-To: <20080309213441.GQ155407@sgi.com> (David Chinner's message of "Mon\, 10 Mar 2008 08\:34\:41 +1100")
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: xfs-bounce@oss.sgi.com
+Errors-to: xfs-bounce@oss.sgi.com
 To: device-mapper development <dm-devel@redhat.com>
 Cc: Christian Kujau <lists@nerdbynature.de>, David Chinner <dgc@sgi.com>, LKML <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com
 List-Id: dm-devel.ids
