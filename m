@@ -1,16 +1,11 @@
-From: "Scott Moseman" <scmoseman@gmail.com>
-Subject: Re: mapper device perms on reboot
-Date: Tue, 11 Mar 2008 15:14:13 -0500
-Message-ID: <342d47870803111314w6fced87v9215c7573fbb5002@mail.gmail.com>
-References: <342d47870802261304s54c3650dv83216abd8ffaee8f@mail.gmail.com>
-	<788110.21147.qm@web90606.mail.mud.yahoo.com>
+From: Jacek Lipkowski <sq5bpf@lipkowski.org>
+Subject: dm-rdac problem
+Date: Wed, 12 Mar 2008 16:36:20 +0100 (CET)
+Message-ID: <Pine.LNX.4.64.0803121506220.5697@paranoid.lipkowski.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <788110.21147.qm@web90606.mail.mud.yahoo.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,70 +15,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Thanks for the info.  Our problem has been isolated as lack of direct
-i/o support on our Red Hat box.  The problem does not appear to be
-MPIO related, at least not from what Oracle support is telling me.  So
-now I'm off to deal with Red Hat support to see how they counter.
+Hello,
 
-Thanks,
-Scott
+I'm having a problem with getting dm-rdac to work. I do realize that this 
+is a development list, but it seems like the only place to ask for help, 
+and http://christophe.varoqui.free.fr is down. In the logs i get the 
+following errors, after starting multipathd:
+
+device-mapper: multipath rdac: using RDAC command with timeout 60000
+device-mapper: table: 253:0: multipath: Unknown error
+device-mapper: ioctl: error adding target to table
+
+multipath -ll doesn't show anything.
+
+The system is the following:
+- centos 5.1, with kernel changed to vanilla 2.6.24.3
+- tried both multipath-tools from centos (patched 0.4.7), and vanilla 
+0.4.8
+- 2 qlogic QLA2340 hba's, connected to different fabrics
+- 2 IBM DS4500 Storage Servers (each connected to both fabrics), each 
+exports two luns, one 1.5TB lun, and one 100MB lun. I've also tried using 
+one IBM DS4500 Storage Server with one 1.5TB lun, and one 100MB lun.
+
+If i disable AVT (change the host type from Linux to LNXCLVMWARE) i also 
+get read errors from unavaliable paths:
+end_request: I/O error, dev sda, sector 0
+end_request: I/O error, dev sdd, sector 0
+etc... (this is normal).
+
+I can get multipath to work using the tur checker.
+
+my /etc/multipath.conf is the following:
+defaults {
+    multipath_tool "/sbin/multipath -v 0 -S"
+    udev_dir         /dev
+    polling_interval 10
+    default_selector         round-robin
+    default_selector_args 0
+    default_path_grouping_policy     failover
+    default_getuid_callout "/sbin/scsi_id -g -u -s"
+    default_prio_callout     "/bin/false"
+user_friendly_names yes
+}
+devnode_blacklist {
+    devnode fd
+    devnode hd
+    devnode dm
+    devnode sr
+    devnode scd
+    devnode st
+    devnode ram
+    devnode raw
+    devnode loop
+#root fs is on /dev/rd/c0d0
+#   devnode sda
+#   devnode sdb
+}
 
 
+devices {
+    device {
+       vendor IBM
+       product 1742-900
+       path_grouping_policy group_by_prio
+hardware_handler        "1 rdac"
+prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
+                 failback                immediate
+       path_checker rdac
+getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+    }
+}
 
-On Wed, Feb 27, 2008 at 1:17 PM, Dharmesh Kamdar <kamdard71@yahoo.com> wrote:
->
-> Hi Scott,
->
->  This weblink may help -->
->  http://www.ardentperf.com/2008/02/13/oracle-clusterware-on-rhel5oel5-with-udev-and-multipath/
->  I've not tried this, but the author of the article
->  claims that it works..
->
->  We are also facing similar issue(s) with Oracle and
->  RHEL 5.1 using UDEV/Device-mapper..I've also posted a
->  query on the same
->  (https://www.redhat.com/archives/dm-devel/2008-February/msg00201.html)
->  ...But it just discusses the changing of permissions,
->  however creation of raw devices using UDEV is not
->  specified, hence we are still looking for that answer.
->
->  Hope it helps somewhat.
->
->  Let us know.
->
->  Regards,
->  Dharmesh.
->
->
->  --- Scott Moseman <scmoseman@gmail.com> wrote:
->
->  > How can I get the mapper device permissions set on
->  > reboot?
->  >
->  > When I attempted to try this...
->  >
->  > # cat /etc/udev/permissions.d/50-udev.permissions |
->  > grep mapper
->  > mapper/mpath*:oracle:dba:0660
->  >
->  > But it did not seem to work...
->  >
->  > # ls -l /dev/mapper/mpath*
->  > brw-rw----  1 root disk 253, 2 Feb 26 20:56
->  > /dev/mapper/mpath0
->  > brw-rw----  1 root disk 253, 5 Feb 26 20:56
->  > /dev/mapper/mpath0p1
->  > brw-rw----  1 root disk 253, 3 Feb 26 20:56
->  > /dev/mapper/mpath1
->  > brw-rw----  1 root disk 253, 4 Feb 26 20:56
->  > /dev/mapper/mpath1p1
->  >
->  > Am I doing something wrong?  Is there another way to
->  > do this?
->  >
->  > Thanks,
->  > Scott
->  >
+
+multipaths {
+         multipath {
+                 device {
+                         vendor IBM
+                         product 1742-900
+                 }
+         }
+}
