@@ -1,11 +1,9 @@
-From: Alexander Warmuth <WARMUTH@de.ibm.com>
-Subject: Inconsistent results of different multipath options
-Date: Fri, 14 Mar 2008 12:02:21 +0100
-Message-ID: <OF4F96C5A5.DE843174-ONC125740C.00382EA3-C125740C.003CA421@de.ibm.com>
+From: Heinz Mauelshagen <hjm@redhat.com>
+Subject: [PATCH 1/1] dm-log: cleanup dity log external interface
+	from members with only internal scope
+Date: Fri, 14 Mar 2008 13:47:47 +0100
+Message-ID: <1205498867-31225-1-git-send-email-hjm@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -17,158 +15,320 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Heinz Mauelshagen <hjm@redhat.com>
 List-Id: dm-devel.ids
 
+Alasdair,
 
-Hello,
+this patch cleans the dirty log external interface up from members
+with only internal scope, such as list, name, module, ctr, dtr.
 
-I am doing some tests with SLES10 SP2 beta4 and an IBM DS4700 Storage
-system, particularly focusing on DM-MP with the DS4000.
-
-When configuring DM-MP I get inconsistent results when running multipath
-with various options. I also have a problem with path fail back, which I
-will describe in a separate mail to avoid confusion.
-
-Here's the setup:
-- IBM System x 3650 server with 2 QLA2460 HBAs
-- SLES10 SP2 beta4 X86_64 installed on internal disk
-  - kernel-smp-2.6.16.60-0.6
-  - multipath-tools-0.4.7-34.32
-  - qla2xxx 8.02.00-k6-SLES10.2-02
-- Brocade B32 4Gb switch, zoned that
-  each HBA can see one DS4700 controller
-- DS4700 presenting a 50 GB LUN to the server
-
-Another system is equipped with 2 Emulex LP1150 HBAs,
-running lpfc 8.2.0.19. All the rest is the same as above.
-
-I looked at the HW table of the multipath tools:
-
-device {
-                vendor "IBM"
-                product "1814"
-                path_grouping_policy "group_by_prio"
-                path_checker "rdac"
-                hardware_handler "1 rdac"
-                prio "rdac"
-                no_path_retry "queue"
-        }
-
-and decided that the internal defaults are ok for me with 2 exceptions:
-- I want immediate automatic fail back
-- I don't want "queue if no path".
-
-So my "/etc/multipath.conf" is quite simple and looks like this:
-
-x3650-lab-11:~ # cat /etc/multipath.conf
-defaults {
-        no_path_retry           300
-        features                "0"
-        failback                immediate
-        user_friendly_names     yes
-        }
-
-blacklist {
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-        devnode "^hd[a-z][[0-9]*]"
-        devnode "^cciss!c[0-9]d[0-9]*[p[0-9]*]"
-        wwid SServeRA_Daten_6673ADC0
-        wwid SServeRA_OS_77F79DC0
-        }
+Please apply,
+Heinz
 
 
-Here are the outputs of multipath with various options. Look at the
-priority values and the [features=3D...] statement. BTW - the results are=
- the
-same on the machine with LPFC HBAs and also if I use the mpath_prio_rdac
-callout.
+Signed-off-by: Heinz Mauelshagen <hjm@redhat.com>
+---
+ drivers/md/dm-log.c |  130 ++++++++++++++++++++++++++++++++-------------------
+ drivers/md/dm-log.h |   12 -----
+ 2 files changed, 81 insertions(+), 61 deletions(-)
 
-Dry-Run
--------
-
-x3650-lab-11:~ # multipath -d
-create: mpatha (3600a0b800011fa78000033d947d7650d) n/a IBM,1814      FASt=
-T
-[size=3D50G][features=3D0][hwhandler=3D1 rdac]
-\_ round-robin 0 [prio=3D2][undef]
- \_ 4:0:0:0 sdd 8:48  [undef][ghost]
-\_ round-robin 0 [prio=3D1][undef]
- \_ 3:0:0:0 sdc 8:32  [undef][ready]
-
-Configure DM-MP
----------------
-
-x3650-lab-11:~ # multipath
-create: mpatha (3600a0b800011fa78000033d947d7650d) n/a IBM,1814      FASt=
-T
-[size=3D50G][features=3D0][hwhandler=3D1 rdac]
-\_ round-robin 0 [prio=3D2][undef]
- \_ 4:0:0:0 sdd 8:48  [undef][ghost]
-\_ round-robin 0 [prio=3D1][undef]
- \_ 3:0:0:0 sdc 8:32  [undef][ready]
-
-Show multipath topology (sysfs and DM info)
--------------------------------------------
-
-x3650-lab-11:~ # multipath -l
-mpatha (3600a0b800011fa78000033d947d7650d) dm-0 IBM,1814      FAStT
-[size=3D50G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-\_ round-robin 0 [prio=3D-1][active]
- \_ 4:0:0:0 sdd 8:48  [active][undef]
-\_ round-robin 0 [prio=3D-1][enabled]
- \_ 3:0:0:0 sdc 8:32  [active][undef]
-
-Show multipath topology (maximum info)
---------------------------------------
-
-x3650-lab-11:~ # multipath -ll
-mpatha (3600a0b800011fa78000033d947d7650d) dm-0 IBM,1814      FAStT
-[size=3D50G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-\_ round-robin 0 [prio=3D3][active]
- \_ 4:0:0:0 sdd 8:48  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 3:0:0:0 sdc 8:32  [active][ghost]
-
-
-The resulting device mapper table looks like this
-
-x3650-lab-11:~ # dmsetup table mpatha
-0 104857600 multipath 1 queue_if_no_path 1 rdac 2 1 round-robin 0 1 1 8:4=
-8
-1000 round-robin 0 1 1 8:32 1000
-
-
-With this said, here are my questions:
-- How can I avoid that "queue if no path" is set?
-- Am I using an outdated version of multipath?
-- Which of the different outputs is the correct one?
-- What is the true configuration (I can't "read" the dm table)?
-- Are the differences in output a bug or are they correct and I can't
-interpret them?
-
-Many thanks in advance ........... Alex
-
-
-
-
-Mit freundlichen Gr=FC=DFen ... Kind regards ...
-Alexander Warmuth
-
-Advanced Technical Support System Storage Europe
-Enterprise Disk High End Solutions
-
-Mail: warmuth@de.ibm.com
-Phone: +49-6131-84-2887
-Mobile: +49-171-5506083
-
-Request ATS support at
-http://web.mainz.de.ibm.com/e_dir/esccw3.nsf/ContentDocsByTitle/Request+s=
-upport
-
-
-IBM Deutschland GmbH, Vorsitzender des Aufsichtsrats: Hans Ulrich Maerki,
-Gesch=E4ftsf=FChrung: Martin Jetter (Vorsitzender), Christian Diedrich,
-Christoph Grandpierre, Matthias Hartmann, Thomas Fell, Michael Diemer, Si=
-tz
-der Gesellschaft: Stuttgart, Registergericht: Amtsgericht Stuttgart, HRB
-14562, WEEE-Reg.-Nr. DE 99369940
+diff --git linux-2.6.25-rc5.orig/drivers/md/dm-log.c linux-2.6.25-rc5/drivers/md/dm-log.c
+index ab14ec3..e6662db 100644
+--- linux-2.6.25-rc5.orig/drivers/md/dm-log.c
++++ linux-2.6.25-rc5/drivers/md/dm-log.c
+@@ -19,7 +19,21 @@
+ static LIST_HEAD(_log_types);
+ static DEFINE_SPINLOCK(_lock);
+ 
+-int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
++struct dirty_log_type {
++	struct list_head list;
++	const char *name;
++	struct module *module;
++	unsigned use_count;
++
++	int (*ctr)(struct dm_dirty_log *log, struct dm_target *ti,
++		   unsigned argc, char **argv);
++	void (*dtr)(struct dm_dirty_log *log);
++
++	struct dm_dirty_log_type ext;
++};
++
++
++static int dirty_log_type_register(struct dirty_log_type *type)
+ {
+ 	spin_lock(&_lock);
+ 	type->use_count = 0;
+@@ -28,9 +42,8 @@ int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
+ 
+ 	return 0;
+ }
+-EXPORT_SYMBOL(dm_dirty_log_type_register);
+ 
+-int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type)
++static int dirty_log_type_unregister(struct dirty_log_type *type)
+ {
+ 	spin_lock(&_lock);
+ 
+@@ -43,11 +56,10 @@ int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type)
+ 
+ 	return 0;
+ }
+-EXPORT_SYMBOL(dm_dirty_log_type_unregister);
+ 
+-static struct dm_dirty_log_type *_get_type(const char *type_name)
++static struct dirty_log_type *_get_type(const char *type_name)
+ {
+-	struct dm_dirty_log_type *type;
++	struct dirty_log_type *type;
+ 
+ 	spin_lock(&_lock);
+ 	list_for_each_entry (type, &_log_types, list)
+@@ -56,6 +68,7 @@ static struct dm_dirty_log_type *_get_type(const char *type_name)
+ 				spin_unlock(&_lock);
+ 				return NULL;
+ 			}
++
+ 			type->use_count++;
+ 			spin_unlock(&_lock);
+ 			return type;
+@@ -82,10 +95,10 @@ static struct dm_dirty_log_type *_get_type(const char *type_name)
+  *
+  * Returns: dirty_log_type* on success, NULL on failure
+  */
+-static struct dm_dirty_log_type *get_type(const char *type_name)
++static struct dirty_log_type *get_type(const char *type_name)
+ {
+ 	char *p, *type_name_dup;
+-	struct dm_dirty_log_type *type;
++	struct dirty_log_type *type;
+ 
+ 	type = _get_type(type_name);
+ 	if (type)
+@@ -114,7 +127,7 @@ static struct dm_dirty_log_type *get_type(const char *type_name)
+ 	return type;
+ }
+ 
+-static void put_type(struct dm_dirty_log_type *type)
++static void put_type(struct dirty_log_type *type)
+ {
+ 	spin_lock(&_lock);
+ 	if (!--type->use_count)
+@@ -122,10 +135,12 @@ static void put_type(struct dm_dirty_log_type *type)
+ 	spin_unlock(&_lock);
+ }
+ 
+-struct dm_dirty_log *dm_dirty_log_create(const char *type_name, struct dm_target *ti,
+-				      unsigned int argc, char **argv)
++/* Create a dirty log. */
++struct dm_dirty_log *
++dm_dirty_log_create(const char *type_name, struct dm_target *ti,
++		    unsigned int argc, char **argv)
+ {
+-	struct dm_dirty_log_type *type;
++	struct dirty_log_type *type;
+ 	struct dm_dirty_log *log;
+ 
+ 	log = kmalloc(sizeof(*log), GFP_KERNEL);
+@@ -138,7 +153,7 @@ struct dm_dirty_log *dm_dirty_log_create(const char *type_name, struct dm_target
+ 		return NULL;
+ 	}
+ 
+-	log->type = type;
++	log->type = &type->ext;
+ 	if (type->ctr(log, ti, argc, argv)) {
+ 		kfree(log);
+ 		put_type(type);
+@@ -151,8 +166,11 @@ EXPORT_SYMBOL(dm_dirty_log_create);
+ 
+ void dm_dirty_log_destroy(struct dm_dirty_log *log)
+ {
+-	log->type->dtr(log);
+-	put_type(log->type);
++	struct dirty_log_type *type =
++		container_of(log->type, struct dirty_log_type, ext);
++
++	type->dtr(log);
++	put_type(type);
+ 	kfree(log);
+ }
+ EXPORT_SYMBOL(dm_dirty_log_destroy);
+@@ -690,15 +708,17 @@ static int core_status(struct dm_dirty_log *log, status_type_t status,
+ 		       char *result, unsigned int maxlen)
+ {
+ 	int sz = 0;
++	struct dirty_log_type *type =
++		container_of(log->type, struct dirty_log_type, ext);
+ 	struct log_c *lc = log->context;
+ 
+ 	switch(status) {
+ 	case STATUSTYPE_INFO:
+-		DMEMIT("1 %s", log->type->name);
++		DMEMIT("1 %s", type->name);
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT("%s %u %u ", log->type->name,
++		DMEMIT("%s %u %u ", type->name,
+ 		       lc->sync == DEFAULTSYNC ? 1 : 2, lc->region_size);
+ 		DMEMIT_SYNC;
+ 	}
+@@ -710,16 +730,18 @@ static int disk_status(struct dm_dirty_log *log, status_type_t status,
+ 		       char *result, unsigned int maxlen)
+ {
+ 	int sz = 0;
++	struct dirty_log_type *type =
++		container_of(log->type, struct dirty_log_type, ext);
+ 	struct log_c *lc = log->context;
+ 
+ 	switch(status) {
+ 	case STATUSTYPE_INFO:
+-		DMEMIT("3 %s %s %c", log->type->name, lc->log_dev->name,
++		DMEMIT("3 %s %s %c", type->name, lc->log_dev->name,
+ 		       lc->log_dev_failed ? 'D' : 'A');
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT("%s %u %s %u ", log->type->name,
++		DMEMIT("%s %u %s %u ", type->name,
+ 		       lc->sync == DEFAULTSYNC ? 2 : 3, lc->log_dev->name,
+ 		       lc->region_size);
+ 		DMEMIT_SYNC;
+@@ -728,55 +750,65 @@ static int disk_status(struct dm_dirty_log *log, status_type_t status,
+ 	return sz;
+ }
+ 
+-static struct dm_dirty_log_type _core_type = {
++static struct dirty_log_type _core_type = {
++	/* Internal members. */
+ 	.name = "core",
+ 	.module = THIS_MODULE,
+ 	.ctr = core_ctr,
+ 	.dtr = core_dtr,
+-	.resume = core_resume,
+-	.get_region_size = core_get_region_size,
+-	.is_clean = core_is_clean,
+-	.in_sync = core_in_sync,
+-	.flush = core_flush,
+-	.mark_region = core_mark_region,
+-	.clear_region = core_clear_region,
+-	.get_resync_work = core_get_resync_work,
+-	.set_region_sync = core_set_region_sync,
+-	.get_sync_count = core_get_sync_count,
+-	.status = core_status,
++
++	/* External interface. */
++	.ext = {
++		.resume = core_resume,
++		.get_region_size = core_get_region_size,
++		.is_clean = core_is_clean,
++		.in_sync = core_in_sync,
++		.flush = core_flush,
++		.mark_region = core_mark_region,
++		.clear_region = core_clear_region,
++		.get_resync_work = core_get_resync_work,
++		.set_region_sync = core_set_region_sync,
++		.get_sync_count = core_get_sync_count,
++		.status = core_status,
++	}
+ };
+ 
+-static struct dm_dirty_log_type _disk_type = {
++static struct dirty_log_type _disk_type = {
++	/* Internal members. */
+ 	.name = "disk",
+ 	.module = THIS_MODULE,
+ 	.ctr = disk_ctr,
+ 	.dtr = disk_dtr,
+-	.postsuspend = disk_flush,
+-	.resume = disk_resume,
+-	.get_region_size = core_get_region_size,
+-	.is_clean = core_is_clean,
+-	.in_sync = core_in_sync,
+-	.flush = disk_flush,
+-	.mark_region = core_mark_region,
+-	.clear_region = core_clear_region,
+-	.get_resync_work = core_get_resync_work,
+-	.set_region_sync = core_set_region_sync,
+-	.get_sync_count = core_get_sync_count,
+-	.status = disk_status,
++
++	/* External interface. */
++	.ext = {
++		.postsuspend = disk_flush,
++		.resume = disk_resume,
++		.get_region_size = core_get_region_size,
++		.is_clean = core_is_clean,
++		.in_sync = core_in_sync,
++		.flush = disk_flush,
++		.mark_region = core_mark_region,
++		.clear_region = core_clear_region,
++		.get_resync_work = core_get_resync_work,
++		.set_region_sync = core_set_region_sync,
++		.get_sync_count = core_get_sync_count,
++		.status = disk_status,
++	}
+ };
+ 
+ int __init dm_dirty_log_init(void)
+ {
+ 	int r;
+ 
+-	r = dm_dirty_log_type_register(&_core_type);
++	r = dirty_log_type_register(&_core_type);
+ 	if (r)
+ 		DMWARN("couldn't register core log");
+ 
+-	r = dm_dirty_log_type_register(&_disk_type);
++	r = dirty_log_type_register(&_disk_type);
+ 	if (r) {
+ 		DMWARN("couldn't register disk type");
+-		dm_dirty_log_type_unregister(&_core_type);
++		dirty_log_type_unregister(&_core_type);
+ 	}
+ 
+ 	return r;
+@@ -784,8 +816,8 @@ int __init dm_dirty_log_init(void)
+ 
+ void __exit dm_dirty_log_exit(void)
+ {
+-	dm_dirty_log_type_unregister(&_disk_type);
+-	dm_dirty_log_type_unregister(&_core_type);
++	dirty_log_type_unregister(&_disk_type);
++	dirty_log_type_unregister(&_core_type);
+ }
+ 
+ module_init(dm_dirty_log_init);
+diff --git linux-2.6.25-rc5.orig/drivers/md/dm-log.h linux-2.6.25-rc5/drivers/md/dm-log.h
+index a47a28d..d58acf0 100644
+--- linux-2.6.25-rc5.orig/drivers/md/dm-log.h
++++ linux-2.6.25-rc5/drivers/md/dm-log.h
+@@ -25,15 +25,6 @@ struct dm_dirty_log {
+ };
+ 
+ struct dm_dirty_log_type {
+-	struct list_head list;
+-	const char *name;
+-	struct module *module;
+-	unsigned use_count;
+-
+-	int (*ctr)(struct dm_dirty_log *log, struct dm_target *ti,
+-		   unsigned argc, char **argv);
+-	void (*dtr)(struct dm_dirty_log *log);
+-
+ 	/*
+ 	 * There are times when we don't want the log to touch
+ 	 * the disk.
+@@ -117,9 +108,6 @@ struct dm_dirty_log_type {
+ 		      char *result, unsigned maxlen);
+ };
+ 
+-int dm_dirty_log_type_register(struct dm_dirty_log_type *type);
+-int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type);
+-
+ /*
+  * Make sure you use these two functions, rather than calling
+  * type->constructor/destructor() directly.
+-- 
+1.5.4.1
