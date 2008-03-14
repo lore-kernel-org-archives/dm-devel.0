@@ -1,15 +1,18 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: Linux utility to determine WWN from a LUN number
-Date: Fri, 14 Mar 2008 08:12:59 +0100
-Message-ID: <47DA257B.70904@suse.de>
-References: <B6FF36386FC9AC4BB098A4528811409F022309BE@CORPUSMX40A.corp.emc.com>	<20080313214352.GA18433@us.ibm.com>
-	<B6FF36386FC9AC4BB098A4528811409F02230CC4@CORPUSMX40A.corp.emc.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: INFO: task mount:11202 blocked for more than 120
+	seconds
+Date: Fri, 14 Mar 2008 10:27:07 +0100
+Message-ID: <47DA44EB.8000307@redhat.com>
+References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de>
+	<20080307224040.GV155259@sgi.com>
+	<alpine.DEB.1.00.0803080032020.7723@sheep.housecafe.de>
+	<20080309213441.GQ155407@sgi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <B6FF36386FC9AC4BB098A4528811409F02230CC4@CORPUSMX40A.corp.emc.com>
+In-Reply-To: <20080309213441.GQ155407@sgi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,56 +22,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: David Chinner <dgc@sgi.com>
+Cc: Christian Kujau <lists@nerdbynature.de>, dm-devel@redhat.com, LKML <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com
 List-Id: dm-devel.ids
 
-lemons_terry@emc.com wrote:
->> lemons_terry@emc.com [lemons_terry@emc.com] wrote:
->>> Hi
->>>
->>> I want to have multipath manage only the CLARiiON LUN that I boot
-> from (LUN 0).  So I know that I can specify the following in
-> /etc/multipath.conf:
->>> blacklist {
->>> 	wwid *
->>> 	}
->>> blacklist_exceptions {
->>> 	wwid nnnnnnnnnn
->>> 	}
->>>
->>> The wwid value is different for every CLARiiON LUN.  So, if I want to
-> automate the process of adding the 'wwid' value to the blacklist, what
-> utility can I use to specify a LUN number, and find the WWN of the LUN?
->>> Thanks!
->>> tl
->> lsscsi, lists all your SCSI devices. It should have LUN number and
->> device name. You can use scsi_id to get WWN. lsscsi uses "sysfs" file
->> system (/sys/class/scsi_device/ etc), so you should be able to write
->> your own to suite your exact needs.
->=20
-> Sorry, but doesn't scsi_id only return what it finds in SCSI VPD pages
-> 80 or 83?  Not all devices provide a WWN in VPD page 83.
->=20
-The WWN is either in VPD page 0x83 or 0x80 (in that order of preference).
-You should be using the utility 'scsi_id' to generate the WWN for a given
-path (eg call it like 'scsi_id -g -u -s /block/sdX'), as this is the same
-program multipath is using.
+David Chinner wrote:
+>>> Also, the iolock can be held across I/O so it's possible you've lost an 
+>>> I/O. Any I/O errors in the syslog?
+>> No, no I/O errors at all. See the kern.log above, I could even do dd(1) 
+>> from the md1 (dm-crypt on raid1), no errors either.
+> 
+> Oh, dm-crypt. Well, I'd definitely start looking there. XFS has a
+> history of exposing dm-crypt bugs, and these hangs appear to be I/O
+> congestion/scheduling related and not XFS. Also, we haven't changed
+> anything related to plug/unplug of block devices in XFS recently, so
+> that also points to some other change as well...
 
-So the scsi_id program will give a you a mapping sdX -> WWN. And to get
-the mapping 'LUN -> sdX' you can simply do a
+Yes, there is bug in dm-crypt...
+Please try if the patch here helps: http://lkml.org/lkml/2008/3/14/71
 
-( cd -P /sys/block/sdX/device; echo ${PWD##*/} )
-
-which will display the SCSI ID of the device; the last number of which is
-the LUN presented to the OS.
-
-The remainder is left as an exercise to the reader :-)
-
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Thanks,
+Milan
+--
+mbroz@redhat.com
