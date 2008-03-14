@@ -1,16 +1,18 @@
-From: Chip Coldwell <coldwell@redhat.com>
-Subject: Re: Linux utility to determine WWN from a LUN number
-Date: Fri, 14 Mar 2008 10:24:43 -0400 (EDT)
-Message-ID: <alpine.LRH.1.00.0803140958110.23740@bogart.boston.redhat.com>
-References: <B6FF36386FC9AC4BB098A4528811409F022309BE@CORPUSMX40A.corp.emc.com>
-	<20080313214352.GA18433@us.ibm.com>
-	<B6FF36386FC9AC4BB098A4528811409F02230CC4@CORPUSMX40A.corp.emc.com>
-	<47DA257B.70904@suse.de>
+From: "Scott Moseman" <scmoseman@gmail.com>
+Subject: Re: mapper device perms on reboot
+Date: Fri, 14 Mar 2008 09:29:20 -0500
+Message-ID: <342d47870803140729r564431dejdf3340587e32727f@mail.gmail.com>
+References: <342d47870802261304s54c3650dv83216abd8ffaee8f@mail.gmail.com>
+	<788110.21147.qm@web90606.mail.mud.yahoo.com>
+	<342d47870803111314w6fced87v9215c7573fbb5002@mail.gmail.com>
+	<342d47870803121846j5306a20boab6ed9e5801d325a@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <47DA257B.70904@suse.de>
+In-Reply-To: <342d47870803121846j5306a20boab6ed9e5801d325a@mail.gmail.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,90 +25,97 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 14 Mar 2008, Hannes Reinecke wrote:
+I removed the multipath, rebooted, made successful tests the HBA and
+NIC, reinstalled multipath, rebooted and this time the I/O works fine!
+ After my initial multipath install, I partitioned, formated and
+mounted the LUNs to verify they were working.  I think that must've
+caused some kind of corruption that would not allow them to work with
+my Oracle installation until they were reset fresh.  Interesting.
+What a fun process that was to go through.
 
-> The WWN is either in VPD page 0x83 or 0x80 (in that order of preference).
-> You should be using the utility 'scsi_id' to generate the WWN for a given
-> path (eg call it like 'scsi_id -g -u -s /block/sdX'), as this is the same
-> program multipath is using.
+For the Oracle 10g record, I used the /dev/dm-* devices instead of the
+mapper devices.  Permissions were able to be set and there's no
+problem accessing the devices.
 
-scsi_id comes with udev, and uses an SG_IO to retrieve VPD page 0x83
-or 0x80.  It does a little bit more than that, however, and will
-return a slightly different WWN than sg3_utils.  According to SPC3, an
-Identification Descriptor on VPD page 0x83 begins with a 4-bit code
-set, then a 4-bit protocol identifier, then a 4-bit identifier type.
-The identifier types are
+Thanks,
+Scott
 
-0x00 vendor specific
-0x01 T10 vendor ID based
-0x02 EUI-64 based
-0x03 NAA (Name Assigning Authority?)
-0x04 relative target port id
-0x05 target port group
-0x06 logical unit group
-0x07 MD5 logical unit id
-0x08 SCSI name string
 
-When the scsi_id program parses the VPD 0x83 data, it will prepend
-this number to the identifier found in the VPD 0x83 descriptor.
-sg3_utils does not do this.  For example:
 
-# scsi_id -g -s /block/sda
-3600601601040190000c7da47f286dc11
-
-# sg_inq -p 0x83 /dev/sda
-VPD INQUIRY: Device Identification page
-  Designation descriptor number 1, descriptor length: 20
-    id_type: NAA,  code_set: Binary
-    associated with the addressed logical unit
-      NAA 6, IEEE Company_id: 0x6016
-      Vendor Specific Identifier: 0x10401900
-      Vendor Specific Identifier Extension: 0xc7da47f286dc11
-      [0x600601601040190000c7da47f286dc11]
-  Designation descriptor number 2, descriptor length: 20
-    id_type: vendor specific [0x0],  code_set: Binary
-    associated with the addressed logical unit
- 00     00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00    ................
-  Designation descriptor number 3, descriptor length: 8
-    id_type: Relative target port,  code_set: Binary
-    associated with the target port
-      Relative target port: 0x1
-  Designation descriptor number 4, descriptor length: 8
-    id_type: Target port group,  code_set: Binary
-    associated with the target port
-      Target port group: 0x1
-
-In my scsitool, I chose to emulate the scsi_id behavior
-
-# scsitool --devname=sda --hbtl --wwid
-sda 0:0:0:0 3600601601040190000c7da47f286dc11 
-
-> So the scsi_id program will give a you a mapping sdX -> WWN. And to get
-> the mapping 'LUN -> sdX' you can simply do a
-> 
-> ( cd -P /sys/block/sdX/device; echo ${PWD##*/} )
-> 
-> which will display the SCSI ID of the device; the last number of which is
-> the LUN presented to the OS.
+On Wed, Mar 12, 2008 at 8:46 PM, Scott Moseman <scmoseman@gmail.com> wrote:
 >
-> The remainder is left as an exercise to the reader :-)
-
-The --hbtl switch to scsitool gives host:bus:target:lun.  If the
-device is multipathed, you will see the same lun with different h:b:t
-combinations.  So what you could do is
-
-scsitool --wwid --hbtl | awk '/:2 $/ { print $1 }' | sort -u
-
-That gives you the WWID of LUN 2.  Unfortunately, there seems to be a
-trailing space in the output ... I'll fix that and turn a rev.
-
-Chip
-
--- 
-Charles M. "Chip" Coldwell
-Senior Software Engineer
-Red Hat, Inc
-978-392-2426
-
-GPG ID:  852E052F
-GPG FPR: 77E5 2B51 4907 F08A 7E92  DE80 AFA9 9A8F 852E 052F
+> Actually I need to take that back now.  The direct i/o support works
+>  fine on local disks and even my iSCSI SAN connections direct through
+>  an HBA or NIC.  But it's when I try to access them via multipath
+>  devices they fail and have the i/o errors.  I updated my ticket with
+>  Red Hat, but so far they're not coming back with anything at all.
+>
+>  Thanks,
+>  Scott
+>
+>
+>  On Tue, Mar 11, 2008 at 3:14 PM, Scott Moseman <scmoseman@gmail.com> wrote:
+>  >
+>  > Thanks for the info.  Our problem has been isolated as lack of direct
+>  >  i/o support on our Red Hat box.  The problem does not appear to be
+>  >  MPIO related, at least not from what Oracle support is telling me.  So
+>  >  now I'm off to deal with Red Hat support to see how they counter.
+>  >
+>  >  Thanks,
+>  >  Scott
+>  >
+>  >
+>  >  On Wed, Feb 27, 2008 at 1:17 PM, Dharmesh Kamdar <kamdard71@yahoo.com> wrote:
+>  >  >
+>  >  > Hi Scott,
+>  >  >
+>  >  >  This weblink may help -->
+>  >  >  http://www.ardentperf.com/2008/02/13/oracle-clusterware-on-rhel5oel5-with-udev-and-multipath/
+>  >  >  I've not tried this, but the author of the article
+>  >  >  claims that it works..
+>  >  >
+>  >  >  We are also facing similar issue(s) with Oracle and
+>  >  >  RHEL 5.1 using UDEV/Device-mapper..I've also posted a
+>  >  >  query on the same
+>  >  >  (https://www.redhat.com/archives/dm-devel/2008-February/msg00201.html)
+>  >  >  ...But it just discusses the changing of permissions,
+>  >  >  however creation of raw devices using UDEV is not
+>  >  >  specified, hence we are still looking for that answer.
+>  >  >
+>  >  >  Hope it helps somewhat.
+>  >  >
+>  >  >  Let us know.
+>  >  >
+>  >  >  Regards,
+>  >  >  Dharmesh.
+>  >  >
+>  >  >
+>  >  >  --- Scott Moseman <scmoseman@gmail.com> wrote:
+>  >  >
+>  >  >  > How can I get the mapper device permissions set on
+>  >  >  > reboot?
+>  >  >  >
+>  >  >  > When I attempted to try this...
+>  >  >  >
+>  >  >  > # cat /etc/udev/permissions.d/50-udev.permissions |
+>  >  >  > grep mapper
+>  >  >  > mapper/mpath*:oracle:dba:0660
+>  >  >  >
+>  >  >  > But it did not seem to work...
+>  >  >  >
+>  >  >  > # ls -l /dev/mapper/mpath*
+>  >  >  > brw-rw----  1 root disk 253, 2 Feb 26 20:56
+>  >  >  > /dev/mapper/mpath0
+>  >  >  > brw-rw----  1 root disk 253, 5 Feb 26 20:56
+>  >  >  > /dev/mapper/mpath0p1
+>  >  >  > brw-rw----  1 root disk 253, 3 Feb 26 20:56
+>  >  >  > /dev/mapper/mpath1
+>  >  >  > brw-rw----  1 root disk 253, 4 Feb 26 20:56
+>  >  >  > /dev/mapper/mpath1p1
+>  >  >  >
+>  >  >  > Am I doing something wrong?  Is there another way to
+>  >  >  > do this?
+>  >  >  >
+>  >  >  > Thanks,
+>  >  >  > Scott
+>  >  >  >
