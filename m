@@ -1,16 +1,20 @@
-From: Dave Wysochanski <dwysocha@redhat.com>
-Subject: Re: [PATCH 3/7] scsi_dh: add hp sw device handler -
-	testing and hit existing oops in radix_tree_gang_lookup (fix upstream)
-Date: Mon, 17 Mar 2008 16:34:15 -0400
-Message-ID: <1205786055.4408.22.camel@localhost.localdomain>
-References: <20080311013328.23179.76692.sendpatchset@localhost.localdomain>
-	<20080311013347.23179.15406.sendpatchset@localhost.localdomain>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [dm-crypt] INFO: task mount:11202 blocked for more
+	than 120 seconds
+Date: Tue, 18 Mar 2008 08:56:53 +0800
+Message-ID: <20080318005653.GA14575@gondor.apana.org.au>
+References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de>
+	<200803150108.04008.chunkeey@web.de>
+	<200803151432.11125.chunkeey@web.de>
+	<200803152234.53199.chunkeey@web.de>
+	<alpine.DEB.1.00.0803161406040.6213@sheep.housecafe.de>
+	<20080317173609.GD29322@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080311013347.23179.15406.sendpatchset@localhost.localdomain>
+Content-Disposition: inline
+In-Reply-To: <20080317173609.GD29322@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +24,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Christian Kujau <lists@nerdbynature.de>, Chr <chunkeey@web.de>, Milan Broz <mbroz@redhat.com>, David Chinner <dgc@sgi.com>, LKML <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, dm-de
 List-Id: dm-devel.ids
 
-On Mon, 2008-03-10 at 18:33 -0700, Chandra Seetharaman wrote:
-> Subject: scsi_dh: add hp sw device handler
+On Mon, Mar 17, 2008 at 05:36:09PM +0000, Alasdair G Kergon wrote:
+> Latest version for everyone to try:
 > 
-> From: Mike Christie <michaelc@cs.wisc.edu>
+> From: Milan Broz <mbroz@redhat.com>
 > 
-> This patch adds a very basic scsi device handler for older hp boxes which
-> cannot be upgraded.
+> Fix regression in dm-crypt introduced in commit
+> 3a7f6c990ad04e6f576a159876c602d14d6f7fef
+> (dm crypt: use async crypto).
 > 
-> Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
-> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> ---
-> 
->  
+> If write requests need to be split into pieces, the code must not
+> process them in parallel because the crypto context cannot be shared.
+> So there can be parallel crypto operations on one part of the write,
+> but only one write bio can be processed at a time.
 
-FYI, I am testing the hp portion and hit and existing oops in
-radix_tree_gang_lookup (fixed by upstream block layer patch):
-http://www.gossamer-threads.com/lists/linux/kernel/880705?page=last
+Could you explain this part please? Crypto tfm objects are meant
+to be reentrant, synchronous or not.
 
-I saw the problem when doing this sequence:
-1) multipath -F
-2) "rmmod qla2xxx"
-* This would trigger the oops
-
-I added the following upstream commit
-ffc4e7595734cf768fa60cea8a4d545dfef8231a on top of your patches and it
-seems to have fixed the problem:
-http://tinyurl.com/2bk392
-
-My full patch series (started with 2.6.25-rc2):
-# quilt series
-patches/2.6.25-rc2-mm1.bz2
-patches/scsi_dh-add-skeleton.patch
-patches/scsi_dh-add-lsi-rdac.patch
-patches/scsi_dh-add-hp-sw.patch
-patches/scsi_dh-add-emc.patch
-patches/scsi_dh-use-scsi-dh-in-dm-mpath.patch
-patches/scsi_dh-remove-hwh-from-dm.patch
-patches/scsi_dh-remove-hwh-infrastructure.patch
-patches/linux-2.6.git-ffc4e7595734cf768fa60cea8a4d545dfef8231a.patch
-#
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
