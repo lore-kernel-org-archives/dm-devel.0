@@ -1,34 +1,35 @@
-From: Achim Warnecke <achim.warnecke@de.ibm.com>
-Subject: Policy for using dm-multipather with SELinux enforced
-Date: Fri, 21 Mar 2008 13:42:06 +0100
-Message-ID: <OF4B4F2CA0.71297968-ONC1257413.00448630-C1257413.0045C56F@de.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Christian Kujau <lists@nerdbynature.de>
+Subject: Re: [dm-crypt] INFO: task mount:11202 blocked for more than 120
+ seconds
+Date: Sat, 22 Mar 2008 03:52:01 +0100 (CET)
+Message-ID: <alpine.DEB.1.00.0803220348520.17137@sheep.housecafe.de>
+References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de> <200803150108.04008.chunkeey@web.de> <200803151432.11125.chunkeey@web.de> <200803152234.53199.chunkeey@web.de> <alpine.DEB.1.00.0803161406040.6213@sheep.housecafe.de>
+ <20080317173609.GD29322@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755514AbYCVCw0@vger.kernel.org>
+In-Reply-To: <20080317173609.GD29322@agk.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Chr <chunkeey@web.de>, Milan Broz <mbroz@redhat.com>, David Chinner <dgc@sgi.com>, LKML <linux-kernel@vger.kernel.org>, xfs@oss.sgi.com, dm-devel@redhat.com, dm-crypt@saout.de, Herbert Xu <herbert@gondor.apana.org.au>, Ritesh Raj Sarraf <rrs@researchut.com>
 List-Id: dm-devel.ids
 
+On Mon, 17 Mar 2008, Alasdair G Kergon wrote:
+> From: Milan Broz <mbroz@redhat.com>
+>
+> Fix regression in dm-crypt introduced in commit
+> 3a7f6c990ad04e6f576a159876c602d14d6f7fef
+> (dm crypt: use async crypto).
 
-Hello all,
-is there a policy available which describes the setup of SELinux when used
-together with dm-multipather under RedHat 5.1 ?
-We saw the problem, that a enforced SELinux caused the multipather deamon
-to die. The messages log says:
-Mar 19 17:26:12 localhost setroubleshoot:      SELinux is preventing
-/sbin/multipathd (lvm_t) "write" to cache (var_t).
-     For complete SELinux messages. run sealert -l
-1635682f-989b-42e2-acc8-43cc8f80de6b
-The dm-multipather status shows:
-[root@x3655-lab-01a ~]# service multipathd status
-multipathd dead but pid file exists
-Kind regards, Achim
+I finally got around to test this - and yes, 2.6.25-rc6 with this patch 
+applied make the hangs go away. There are other problems now[0], but they 
+don't seem to be related, AFAICT.
+
+Thank you!
+Christian.
+
+[0] http://lkml.org/lkml/2008/3/21/408
+-- 
+BOFH excuse #197:
+
+I'm sorry a pentium won't do, you need an SGI to connect with us.
