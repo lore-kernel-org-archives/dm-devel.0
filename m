@@ -1,96 +1,153 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: Task blocked for more than 120 seconds
-Date: Tue, 25 Mar 2008 14:50:20 +1100
-Message-ID: <18408.30332.831113.447285@notabene.brown>
-References: <87eja0o20v.fsf@willow.rfc1149.net>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [RFC PATCH] sync code with RHEL 4.7
+Date: Tue, 25 Mar 2008 12:55:40 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0803251241510.3256@porkchop.devel.redhat.com>
+References: <Pine.LNX.4.64.0803201823290.11448@porkchop.devel.redhat.com>
+	<20080325121633.GZ12007@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-raid-owner@vger.kernel.org>
-In-Reply-To: message from Samuel Tardieu on Monday March 24
-Sender: linux-raid-owner@vger.kernel.org
-To: Samuel Tardieu <sam@rfc1149.net>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com
+Content-Type: MULTIPART/MIXED; BOUNDARY="168446244-787427121-1206463611=:3256"
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080325121633.GZ12007@agk.fab.redhat.com>
+Content-ID: <Pine.LNX.4.64.0803251247050.3256@porkchop.devel.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Wrong mailing list.
-copying to dm-devel@redhat.com
+--168446244-787427121-1206463611=:3256
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; format=flowed
+Content-ID: <Pine.LNX.4.64.0803251247051.3256@porkchop.devel.redhat.com>
 
-NeilBrown
+> Regardless, please create an equivalent upstream patch and submit it to
+> dm-devel for review.
+>
+> Alasdair
 
-On Monday March 24, sam@rfc1149.net wrote:
-> On my laptop, doing heavy C++ compilations in parallel with -j3 (this
-> is a dual core) often generates the following trace:
-> 
-> INFO: task g++:25119 blocked for more than 120 seconds.
-> "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this
-> message.
-> g++           D c03916c0     0 25119  25118
->        ecfef200 00200086 c038ef18 c03916c0 c03916c0 f77b2230 f77b2378 c17fa6c0 
->        00000000 f89817bc f7486280 000000ff f7a1eb20 00000000 00000000 00000000 
->        c17fa6c0 00000000 d1401e9c c17f0408 c02a2aa1 d1401e94 c0147100 c02a2c93 
-> Call Trace:
->  [<f89817bc>] dm_table_unplug_all+0x1e/0x2e [dm_mod]
->  [<c02a2aa1>] io_schedule+0x1b/0x24
->  [<c0147100>] sync_page+0x33/0x36
->  [<c02a2c93>] __wait_on_bit+0x33/0x58
->  [<c01470cd>] sync_page+0x0/0x36
->  [<c01472fd>] wait_on_page_bit+0x59/0x60
->  [<c012cf7b>] wake_bit_function+0x0/0x3c
->  [<c014e20d>] truncate_inode_pages_range+0x238/0x29f
->  [<c014e27d>] truncate_inode_pages+0x9/0xc
->  [<f8c67187>] ext2_delete_inode+0x12/0x6e [ext2]
->  [<f8c67175>] ext2_delete_inode+0x0/0x6e [ext2]
->  [<c0170ea5>] generic_delete_inode+0x8f/0xf3
->  [<c0170819>] iput+0x60/0x62
->  [<c0169aa5>] do_unlinkat+0xb7/0xf9
->  [<c0113a3e>] do_page_fault+0x1fa/0x4dc
->  [<c0104822>] sysenter_past_esp+0x5f/0x85
->  =======================
-> 
-> This is with 2.6.25-rc6 (SMP) and has been present, as far as I can
-> remember, since the beginning of the 2.6.25-rc series. It is not
-> always reproducible, but the trace is always the same.
-> 
-> My filesystem is stored on a ext3 (rw,noatime) dm_crypt'd partition
-> leaving in a LVM volume.
-> 
-> % lsmod | grep dm | grep -v ' 0 *$'
-> dm_crypt               14340  1 
-> crypto_blkcipher       18308  6 ecb,cbc,dm_crypt
-> dm_mod                 53008  26 dm_crypt,dm_mirror,dm_snapshot
-> 
-> Here is the code I have in dm-table.o:
-> 
-> 00001042 <dm_table_unplug_all>:
->     1042:       56                      push   %esi
->     1043:       53                      push   %ebx
->     1044:       8b 98 a0 00 00 00       mov    0xa0(%eax),%ebx
->     104a:       8d b0 a0 00 00 00       lea    0xa0(%eax),%esi
->     1050:       eb 10                   jmp    1062 <dm_table_unplug_all+0x20>
->     1052:       8b 43 10                mov    0x10(%ebx),%eax
->     1055:       8b 40 5c                mov    0x5c(%eax),%eax
->     1058:       8b 40 34                mov    0x34(%eax),%eax
->     105b:       e8 fc ff ff ff          call   105c <dm_table_unplug_all+0x1a>
->     1060:       8b 1b                   mov    (%ebx),%ebx
->     1062:       8b 03                   mov    (%ebx),%eax
->     1064:       0f 1f 40 00             nopl   0x0(%eax)
->     1068:       39 f3                   cmp    %esi,%ebx
->     106a:       75 e6                   jne    1052 <dm_table_unplug_all+0x10>
->     106c:       5b                      pop    %ebx
->     106d:       5e                      pop    %esi
->     106e:       c3                      ret    
-> 
-> The symbol in 105b call is, after relocation, blk_unplug.
-> 
-> It there anything else I can do to help debugging this?
-> 
->  Sam
-> -- 
-> Samuel Tardieu -- sam@rfc1149.net -- http://www.rfc1149.net/
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-raid" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Hi
+
+Here I'm submitting a patch to sync code with RHEL 4. The patch doesn't 
+fix any bug in upstream.
+
+RHEL 4/5 have a clustered mirror code that sometimes needs to periodically 
+poll until the remote node finishes recovery. Previously, the sleeping was 
+done in main kmirrord thread (with schedule_timeout(), and later 
+schedule()), but it caused very bad performance (even on non-clustered 
+configurations, because it was accidently triggered).
+
+So I reworked the code in RHEL 4 to use timer instead of 
+schedule_timeout() for sleeping, so when some code needs to delay the 
+request, it calls delayed_wake(). If some other code calls wake() 
+meanwhile, the thread is woken up immediatelly.
+
+Pls. ckeck the patch for correctness.
+
+Mikulas
+--168446244-787427121-1206463611=:3256
+Content-Type: TEXT/PLAIN; CHARSET=US-ASCII;
+	NAME=dm-mirror-sync-with-rhel4.patch
+Content-Transfer-Encoding: BASE64
+Content-ID: <Pine.LNX.4.64.0803251246511.3256@porkchop.devel.redhat.com>
+Content-Description: 
+Content-Disposition: ATTACHMENT; FILENAME=dm-mirror-sync-with-rhel4.patch
+
+VGhpcyBpcyByZXdvcmsgb2YgcGF0Y2ggZm9yIGJ6IDQzMjU2NiBmb3IgdXBz
+dHJlYW0uDQpUaGUgYnVnIGRvZXNuJ3QgcmVhbGx5IGV4aXN0IGluIHVwc3Ry
+ZWFtLCB0aGUgcGF0Y2gganVzdCBzeW5jcyBjb2RlLg0KDQotLS0NCiBkcml2
+ZXJzL21kL2RtLXJhaWQxLmMgfCAgIDQ2ICsrKysrKysrKysrKysrKysrKysr
+KysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAxIGZpbGUgY2hhbmdlZCwg
+MjYgaW5zZXJ0aW9ucygrKSwgMjAgZGVsZXRpb25zKC0pDQoNCkluZGV4OiBs
+aW51eC0yLjYuMjUtcmM2L2RyaXZlcnMvbWQvZG0tcmFpZDEuYw0KPT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PQ0KLS0tIGxpbnV4LTIuNi4yNS1yYzYub3JpZy9k
+cml2ZXJzL21kL2RtLXJhaWQxLmMJMjAwOC0wMy0xOSAyMjoxODo1My4wMDAw
+MDAwMDAgKzAxMDANCisrKyBsaW51eC0yLjYuMjUtcmM2L2RyaXZlcnMvbWQv
+ZG0tcmFpZDEuYwkyMDA4LTAzLTIxIDE2OjI2OjEzLjAwMDAwMDAwMCArMDEw
+MA0KQEAgLTE1NCw2ICsxNTQsOSBAQCBzdHJ1Y3QgbWlycm9yX3NldCB7DQog
+DQogCXN0cnVjdCB3b3JrcXVldWVfc3RydWN0ICprbWlycm9yZF93cTsNCiAJ
+c3RydWN0IHdvcmtfc3RydWN0IGttaXJyb3JkX3dvcms7DQorCXN0cnVjdCB0
+aW1lcl9saXN0IHRpbWVyOw0KKwl1bnNpZ25lZCBsb25nIHRpbWVyX3BlbmRp
+bmc7DQorDQogCXN0cnVjdCB3b3JrX3N0cnVjdCB0cmlnZ2VyX2V2ZW50Ow0K
+IA0KIAl1bnNpZ25lZCBpbnQgbnJfbWlycm9yczsNCkBAIC0xNzgsNiArMTgx
+LDIzIEBAIHN0YXRpYyB2b2lkIHdha2Uoc3RydWN0IG1pcnJvcl9zZXQgKm1z
+KQ0KIAlxdWV1ZV93b3JrKG1zLT5rbWlycm9yZF93cSwgJm1zLT5rbWlycm9y
+ZF93b3JrKTsNCiB9DQogDQorc3RhdGljIHZvaWQgZGVsYXllZF93YWtlX2Zu
+KHVuc2lnbmVkIGxvbmcgZGF0YSkNCit7DQorCXN0cnVjdCBtaXJyb3Jfc2V0
+ICptcyA9IChzdHJ1Y3QgbWlycm9yX3NldCAqKWRhdGE7DQorCWNsZWFyX2Jp
+dCgwLCAmbXMtPnRpbWVyX3BlbmRpbmcpOw0KKwl3YWtlKG1zKTsNCit9DQor
+DQorc3RhdGljIHZvaWQgZGVsYXllZF93YWtlKHN0cnVjdCBtaXJyb3Jfc2V0
+ICptcykNCit7DQorCWlmICghdGVzdF9hbmRfc2V0X2JpdCgwLCAmbXMtPnRp
+bWVyX3BlbmRpbmcpKSB7DQorCQltcy0+dGltZXIuZXhwaXJlcyA9IGppZmZp
+ZXMgKyBIWiAvIDU7DQorCQltcy0+dGltZXIuZGF0YSA9ICh1bnNpZ25lZCBs
+b25nKW1zOw0KKwkJbXMtPnRpbWVyLmZ1bmN0aW9uID0gZGVsYXllZF93YWtl
+X2ZuOw0KKwkJYWRkX3RpbWVyKCZtcy0+dGltZXIpOw0KKwl9DQorfQ0KKw0K
+IC8qIEZJWE1FIG1vdmUgdGhpcyAqLw0KIHN0YXRpYyB2b2lkIHF1ZXVlX2Jp
+byhzdHJ1Y3QgbWlycm9yX3NldCAqbXMsIHN0cnVjdCBiaW8gKmJpbywgaW50
+IHJ3KTsNCiANCkBAIC0xMTgyLDYgKzEyMDIsNyBAQCBzdGF0aWMgdm9pZCBk
+b193cml0ZXMoc3RydWN0IG1pcnJvcl9zZXQgDQogCQlzcGluX2xvY2tfaXJx
+KCZtcy0+bG9jayk7DQogCQliaW9fbGlzdF9tZXJnZSgmbXMtPmZhaWx1cmVz
+LCAmc3luYyk7DQogCQlzcGluX3VubG9ja19pcnEoJm1zLT5sb2NrKTsNCisJ
+CXdha2UobXMpOw0KIAl9IGVsc2UNCiAJCXdoaWxlICgoYmlvID0gYmlvX2xp
+c3RfcG9wKCZzeW5jKSkpDQogCQkJZG9fd3JpdGUobXMsIGJpbyk7DQpAQCAt
+MTI0MSw3ICsxMjYyLDcgQEAgc3RhdGljIHZvaWQgZG9fZmFpbHVyZXMoc3Ry
+dWN0IG1pcnJvcl9zZQ0KIAliaW9fbGlzdF9tZXJnZSgmbXMtPmZhaWx1cmVz
+LCBmYWlsdXJlcyk7DQogCXNwaW5fdW5sb2NrX2lycSgmbXMtPmxvY2spOw0K
+IA0KLQl3YWtlKG1zKTsNCisJZGVsYXllZF93YWtlKG1zKTsNCiB9DQogDQog
+c3RhdGljIHZvaWQgdHJpZ2dlcl9ldmVudChzdHJ1Y3Qgd29ya19zdHJ1Y3Qg
+KndvcmspDQpAQCAtMTI1NSw3ICsxMjc2LDcgQEAgc3RhdGljIHZvaWQgdHJp
+Z2dlcl9ldmVudChzdHJ1Y3Qgd29ya19zdA0KIC8qLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0NCiAgKiBrbWlycm9yZA0KICAqLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tKi8N
+Ci1zdGF0aWMgaW50IF9kb19taXJyb3Ioc3RydWN0IHdvcmtfc3RydWN0ICp3
+b3JrKQ0KK3N0YXRpYyB2b2lkIGRvX21pcnJvcihzdHJ1Y3Qgd29ya19zdHJ1
+Y3QgKndvcmspDQogew0KIAlzdHJ1Y3QgbWlycm9yX3NldCAqbXMgPWNvbnRh
+aW5lcl9vZih3b3JrLCBzdHJ1Y3QgbWlycm9yX3NldCwNCiAJCQkJCSAgICBr
+bWlycm9yZF93b3JrKTsNCkBAIC0xMjc2LDI0ICsxMjk3LDYgQEAgc3RhdGlj
+IGludCBfZG9fbWlycm9yKHN0cnVjdCB3b3JrX3N0cnVjdA0KIAlkb19yZWFk
+cyhtcywgJnJlYWRzKTsNCiAJZG9fd3JpdGVzKG1zLCAmd3JpdGVzKTsNCiAJ
+ZG9fZmFpbHVyZXMobXMsICZmYWlsdXJlcyk7DQotDQotCXJldHVybiAobXMt
+PmZhaWx1cmVzLmhlYWQpID8gMSA6IDA7DQotfQ0KLQ0KLXN0YXRpYyB2b2lk
+IGRvX21pcnJvcihzdHJ1Y3Qgd29ya19zdHJ1Y3QgKndvcmspDQotew0KLQkv
+Kg0KLQkgKiBJZiBfZG9fbWlycm9yIHJldHVybnMgMSwgd2UgZ2l2ZSBpdA0K
+LQkgKiBhbm90aGVyIHNob3QuICBUaGlzIGhlbHBzIGZvciBjYXNlcyBsaWtl
+DQotCSAqICdzdXNwZW5kJyB3aGVyZSB3ZSBjYWxsIGZsdXNoX3dvcmtxdWV1
+ZQ0KLQkgKiBhbmQgZXhwZWN0IGFsbCB3b3JrIHRvIGJlIGZpbmlzaGVkLiAg
+SWYNCi0JICogYSBmYWlsdXJlIGhhcHBlbnMgZHVyaW5nIGEgc3VzcGVuZCwg
+d2UNCi0JICogY291bGRuJ3QgaXNzdWUgYSAnd2FrZScgYmVjYXVzZSBpdCB3
+b3VsZA0KLQkgKiBub3QgYmUgaG9ub3JlZC4gIFRoZXJlZm9yZSwgd2UgcmV0
+dXJuICcxJw0KLQkgKiBmcm9tIF9kb19taXJyb3IsIGFuZCByZXRyeSBoZXJl
+Lg0KLQkgKi8NCi0Jd2hpbGUgKF9kb19taXJyb3Iod29yaykpDQotCQlzY2hl
+ZHVsZSgpOw0KIH0NCiANCiANCkBAIC0xNTQ3LDYgKzE1NTAsOCBAQCBzdGF0
+aWMgaW50IG1pcnJvcl9jdHIoc3RydWN0IGRtX3RhcmdldCAqDQogCQlnb3Rv
+IGVycl9mcmVlX2NvbnRleHQ7DQogCX0NCiAJSU5JVF9XT1JLKCZtcy0+a21p
+cnJvcmRfd29yaywgZG9fbWlycm9yKTsNCisJaW5pdF90aW1lcigmbXMtPnRp
+bWVyKTsNCisJbXMtPnRpbWVyX3BlbmRpbmcgPSAwOw0KIAlJTklUX1dPUkso
+Jm1zLT50cmlnZ2VyX2V2ZW50LCB0cmlnZ2VyX2V2ZW50KTsNCiANCiAJciA9
+IHBhcnNlX2ZlYXR1cmVzKG1zLCBhcmdjLCBhcmd2LCAmYXJnc191c2VkKTsN
+CkBAIC0xNTg5LDYgKzE1OTQsNyBAQCBzdGF0aWMgdm9pZCBtaXJyb3JfZHRy
+KHN0cnVjdCBkbV90YXJnZXQgDQogew0KIAlzdHJ1Y3QgbWlycm9yX3NldCAq
+bXMgPSAoc3RydWN0IG1pcnJvcl9zZXQgKikgdGktPnByaXZhdGU7DQogDQor
+CWRlbF90aW1lcl9zeW5jKCZtcy0+dGltZXIpOw0KIAlmbHVzaF93b3JrcXVl
+dWUobXMtPmttaXJyb3JkX3dxKTsNCiAJZG1fa2NvcHlkX2NsaWVudF9kZXN0
+cm95KG1zLT5rY29weWRfY2xpZW50KTsNCiAJZGVzdHJveV93b3JrcXVldWUo
+bXMtPmttaXJyb3JkX3dxKTsNCg==
+
+--168446244-787427121-1206463611=:3256
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--168446244-787427121-1206463611=:3256--
