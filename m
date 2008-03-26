@@ -1,106 +1,47 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [3/4] Internal device-mapper public interface: dm-io.h
-Date: Wed, 26 Mar 2008 14:13:57 +0000
-Message-ID: <20080326141357.GE12007@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chr <chunkeey@web.de>
+Subject: Re: [dm-crypt] INFO: task mount:11202 blocked for more than 120 seconds
+Date: Wed, 26 Mar 2008 17:57:53 +0100
+Message-ID: <200803261757.54069.chunkeey@web.de>
+References: <alpine.DEB.1.00.0803072116420.7723@sheep.housecafe.de> <alpine.DEB.1.00.0803161406040.6213@sheep.housecafe.de> <20080317173609.GD29322@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757371AbYCZQ6R@vger.kernel.org>
+In-Reply-To: <20080317173609.GD29322@agk.fab.redhat.com>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Christian Kujau <lists@nerdbynature.de>, Milan Broz <mbroz@redhat.com>, David Chinner <dgc@sgi.com>, LKML <linux-kernel@vger.kernel.org>, Ritesh Raj Sarraf <rrs@researchut.com>, dm-devel@redhat.com, dm-crypt@saout.de, Herbert Xu <herbert@gondor.apana.org.au>
 List-Id: dm-devel.ids
 
-/*
- * Copyright (C) 2003 Sistina Software
- * Copyright (C) 2004 - 2008 Red Hat, Inc. All rights reserved.
- *
- * Device-Mapper low-level I/O.
- *
- * This file is released under the GPL.
- */
+On Monday 17 March 2008 18:36:09 Alasdair G Kergon wrote:
+> Latest version for everyone to try:
+>
+> From: Milan Broz <mbroz@redhat.com>
+>
+> Fix regression in dm-crypt introduced in commit
+> 3a7f6c990ad04e6f576a159876c602d14d6f7fef
+> (dm crypt: use async crypto).
+>
+> If write requests need to be split into pieces, the code must not
+> process them in parallel because the crypto context cannot be shared.
+> So there can be parallel crypto operations on one part of the write,
+> but only one write bio can be processed at a time.
+>
+> This is not optimal and the workqueue code need to be optimized for
+> parallel processing, but for now it solves problem without affecting
+> the performance of synchronous crypto operation (most of current
+> dm-crypt users).
+>
+> Signed-off-by: Milan Broz <mbroz@redhat.com>
+> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+>
+> [...]
 
-#ifndef _LINUX_DM_IO_H
-#define _LINUX_DM_IO_H
+Is there already a new, optimized version? Or is it postponed and someone will 
+_hopefully_ merge  this patch into -rc7-gitX before we have a buggy mainline 
+2.6.25?
 
-#ifdef __KERNEL__
-
-#include <linux/types.h>
-
-struct dm_io_region {
-	struct block_device *bdev;
-	sector_t sector;
-	sector_t count;		/* If this is zero the region is ignored. */
-};
-
-struct page_list {
-	struct page_list *next;
-	struct page *page;
-};
-
-typedef void (*io_notify_fn)(unsigned long error, void *context);
-
-enum dm_io_mem_type {
-	DM_IO_PAGE_LIST,/* Page list */
-	DM_IO_BVEC,	/* Bio vector */
-	DM_IO_VMA,	/* Virtual memory area */
-	DM_IO_KMEM,	/* Kernel memory */
-};
-
-struct dm_io_memory {
-	enum dm_io_mem_type type;
-
-	union {
-		struct page_list *pl;
-		struct bio_vec *bvec;
-		void *vma;
-		void *addr;
-	} ptr;
-
-	unsigned offset;
-};
-
-struct dm_io_notify {
-	io_notify_fn fn;	/* Callback for asynchronous requests */
-	void *context;		/* Passed to callback */
-};
-
-/*
- * IO request structure
- */
-struct dm_io_client;
-struct dm_io_request {
-	int bi_rw;			/* READ|WRITE - not READA */
-	struct dm_io_memory mem;	/* Memory to use for io */
-	struct dm_io_notify notify;	/* Synchronous if notify.fn is NULL */
-	struct dm_io_client *client;	/* Client memory handler */
-};
-
-/*
- * For async io calls, users can alternatively use the dm_io() function below
- * and dm_io_client_create() to create private mempools for the client.
- *
- * Create/destroy may block.
- */
-struct dm_io_client *dm_io_client_create(unsigned num_pages);
-int dm_io_client_resize(unsigned num_pages, struct dm_io_client *client);
-void dm_io_client_destroy(struct dm_io_client *client);
-
-/*
- * IO interface using private per-client pools.
- * Each bit in the optional 'sync_error_bits' bitset indicates whether an
- * error occurred doing io to the corresponding region.
- */
-int dm_io(struct dm_io_request *io_req, unsigned num_regions,
-	  struct dm_io_region *region, unsigned long *sync_error_bits);
-
-#endif	/* __KERNEL__ */
-#endif	/* _LINUX_DM_IO_H */
+Thanks,
+	Chr  
