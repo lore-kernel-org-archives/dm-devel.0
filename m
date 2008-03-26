@@ -1,15 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [RFC PATCH] sync code with RHEL 4.7
-Date: Tue, 25 Mar 2008 12:55:40 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0803251241510.3256@porkchop.devel.redhat.com>
-References: <Pine.LNX.4.64.0803201823290.11448@porkchop.devel.redhat.com>
-	<20080325121633.GZ12007@agk.fab.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [0/4] Internal device-mapper public interface
+Date: Wed, 26 Mar 2008 14:11:58 +0000
+Message-ID: <20080326141158.GB12007@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="168446244-787427121-1206463611=:3256"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080325121633.GZ12007@agk.fab.redhat.com>
-Content-ID: <Pine.LNX.4.64.0803251247050.3256@porkchop.devel.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,135 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+We've finally spent some time trying to clean up the device-mapper interface
+and expose more of it for the use of other modules in include/linux.
 
---168446244-787427121-1206463611=:3256
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; format=flowed
-Content-ID: <Pine.LNX.4.64.0803251247051.3256@porkchop.devel.redhat.com>
+The patches are here and pushed for -mm:
+  http://www.kernel.org/pub/linux/kernel/people/agk/patches/2.6/editing/series.html
 
-> Regardless, please create an equivalent upstream patch and submit it to
-> dm-devel for review.
->
-> Alasdair
+and the following messages contain the updated .h files.
 
-Hi
+Have we missed anything?
 
-Here I'm submitting a patch to sync code with RHEL 4. The patch doesn't 
-fix any bug in upstream.
-
-RHEL 4/5 have a clustered mirror code that sometimes needs to periodically 
-poll until the remote node finishes recovery. Previously, the sleeping was 
-done in main kmirrord thread (with schedule_timeout(), and later 
-schedule()), but it caused very bad performance (even on non-clustered 
-configurations, because it was accidently triggered).
-
-So I reworked the code in RHEL 4 to use timer instead of 
-schedule_timeout() for sleeping, so when some code needs to delay the 
-request, it calls delayed_wake(). If some other code calls wake() 
-meanwhile, the thread is woken up immediatelly.
-
-Pls. ckeck the patch for correctness.
-
-Mikulas
---168446244-787427121-1206463611=:3256
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII;
-	NAME=dm-mirror-sync-with-rhel4.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0803251246511.3256@porkchop.devel.redhat.com>
-Content-Description: 
-Content-Disposition: ATTACHMENT; FILENAME=dm-mirror-sync-with-rhel4.patch
-
-VGhpcyBpcyByZXdvcmsgb2YgcGF0Y2ggZm9yIGJ6IDQzMjU2NiBmb3IgdXBz
-dHJlYW0uDQpUaGUgYnVnIGRvZXNuJ3QgcmVhbGx5IGV4aXN0IGluIHVwc3Ry
-ZWFtLCB0aGUgcGF0Y2gganVzdCBzeW5jcyBjb2RlLg0KDQotLS0NCiBkcml2
-ZXJzL21kL2RtLXJhaWQxLmMgfCAgIDQ2ICsrKysrKysrKysrKysrKysrKysr
-KysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0NCiAxIGZpbGUgY2hhbmdlZCwg
-MjYgaW5zZXJ0aW9ucygrKSwgMjAgZGVsZXRpb25zKC0pDQoNCkluZGV4OiBs
-aW51eC0yLjYuMjUtcmM2L2RyaXZlcnMvbWQvZG0tcmFpZDEuYw0KPT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PQ0KLS0tIGxpbnV4LTIuNi4yNS1yYzYub3JpZy9k
-cml2ZXJzL21kL2RtLXJhaWQxLmMJMjAwOC0wMy0xOSAyMjoxODo1My4wMDAw
-MDAwMDAgKzAxMDANCisrKyBsaW51eC0yLjYuMjUtcmM2L2RyaXZlcnMvbWQv
-ZG0tcmFpZDEuYwkyMDA4LTAzLTIxIDE2OjI2OjEzLjAwMDAwMDAwMCArMDEw
-MA0KQEAgLTE1NCw2ICsxNTQsOSBAQCBzdHJ1Y3QgbWlycm9yX3NldCB7DQog
-DQogCXN0cnVjdCB3b3JrcXVldWVfc3RydWN0ICprbWlycm9yZF93cTsNCiAJ
-c3RydWN0IHdvcmtfc3RydWN0IGttaXJyb3JkX3dvcms7DQorCXN0cnVjdCB0
-aW1lcl9saXN0IHRpbWVyOw0KKwl1bnNpZ25lZCBsb25nIHRpbWVyX3BlbmRp
-bmc7DQorDQogCXN0cnVjdCB3b3JrX3N0cnVjdCB0cmlnZ2VyX2V2ZW50Ow0K
-IA0KIAl1bnNpZ25lZCBpbnQgbnJfbWlycm9yczsNCkBAIC0xNzgsNiArMTgx
-LDIzIEBAIHN0YXRpYyB2b2lkIHdha2Uoc3RydWN0IG1pcnJvcl9zZXQgKm1z
-KQ0KIAlxdWV1ZV93b3JrKG1zLT5rbWlycm9yZF93cSwgJm1zLT5rbWlycm9y
-ZF93b3JrKTsNCiB9DQogDQorc3RhdGljIHZvaWQgZGVsYXllZF93YWtlX2Zu
-KHVuc2lnbmVkIGxvbmcgZGF0YSkNCit7DQorCXN0cnVjdCBtaXJyb3Jfc2V0
-ICptcyA9IChzdHJ1Y3QgbWlycm9yX3NldCAqKWRhdGE7DQorCWNsZWFyX2Jp
-dCgwLCAmbXMtPnRpbWVyX3BlbmRpbmcpOw0KKwl3YWtlKG1zKTsNCit9DQor
-DQorc3RhdGljIHZvaWQgZGVsYXllZF93YWtlKHN0cnVjdCBtaXJyb3Jfc2V0
-ICptcykNCit7DQorCWlmICghdGVzdF9hbmRfc2V0X2JpdCgwLCAmbXMtPnRp
-bWVyX3BlbmRpbmcpKSB7DQorCQltcy0+dGltZXIuZXhwaXJlcyA9IGppZmZp
-ZXMgKyBIWiAvIDU7DQorCQltcy0+dGltZXIuZGF0YSA9ICh1bnNpZ25lZCBs
-b25nKW1zOw0KKwkJbXMtPnRpbWVyLmZ1bmN0aW9uID0gZGVsYXllZF93YWtl
-X2ZuOw0KKwkJYWRkX3RpbWVyKCZtcy0+dGltZXIpOw0KKwl9DQorfQ0KKw0K
-IC8qIEZJWE1FIG1vdmUgdGhpcyAqLw0KIHN0YXRpYyB2b2lkIHF1ZXVlX2Jp
-byhzdHJ1Y3QgbWlycm9yX3NldCAqbXMsIHN0cnVjdCBiaW8gKmJpbywgaW50
-IHJ3KTsNCiANCkBAIC0xMTgyLDYgKzEyMDIsNyBAQCBzdGF0aWMgdm9pZCBk
-b193cml0ZXMoc3RydWN0IG1pcnJvcl9zZXQgDQogCQlzcGluX2xvY2tfaXJx
-KCZtcy0+bG9jayk7DQogCQliaW9fbGlzdF9tZXJnZSgmbXMtPmZhaWx1cmVz
-LCAmc3luYyk7DQogCQlzcGluX3VubG9ja19pcnEoJm1zLT5sb2NrKTsNCisJ
-CXdha2UobXMpOw0KIAl9IGVsc2UNCiAJCXdoaWxlICgoYmlvID0gYmlvX2xp
-c3RfcG9wKCZzeW5jKSkpDQogCQkJZG9fd3JpdGUobXMsIGJpbyk7DQpAQCAt
-MTI0MSw3ICsxMjYyLDcgQEAgc3RhdGljIHZvaWQgZG9fZmFpbHVyZXMoc3Ry
-dWN0IG1pcnJvcl9zZQ0KIAliaW9fbGlzdF9tZXJnZSgmbXMtPmZhaWx1cmVz
-LCBmYWlsdXJlcyk7DQogCXNwaW5fdW5sb2NrX2lycSgmbXMtPmxvY2spOw0K
-IA0KLQl3YWtlKG1zKTsNCisJZGVsYXllZF93YWtlKG1zKTsNCiB9DQogDQog
-c3RhdGljIHZvaWQgdHJpZ2dlcl9ldmVudChzdHJ1Y3Qgd29ya19zdHJ1Y3Qg
-KndvcmspDQpAQCAtMTI1NSw3ICsxMjc2LDcgQEAgc3RhdGljIHZvaWQgdHJp
-Z2dlcl9ldmVudChzdHJ1Y3Qgd29ya19zdA0KIC8qLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0NCiAgKiBrbWlycm9yZA0KICAqLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tKi8N
-Ci1zdGF0aWMgaW50IF9kb19taXJyb3Ioc3RydWN0IHdvcmtfc3RydWN0ICp3
-b3JrKQ0KK3N0YXRpYyB2b2lkIGRvX21pcnJvcihzdHJ1Y3Qgd29ya19zdHJ1
-Y3QgKndvcmspDQogew0KIAlzdHJ1Y3QgbWlycm9yX3NldCAqbXMgPWNvbnRh
-aW5lcl9vZih3b3JrLCBzdHJ1Y3QgbWlycm9yX3NldCwNCiAJCQkJCSAgICBr
-bWlycm9yZF93b3JrKTsNCkBAIC0xMjc2LDI0ICsxMjk3LDYgQEAgc3RhdGlj
-IGludCBfZG9fbWlycm9yKHN0cnVjdCB3b3JrX3N0cnVjdA0KIAlkb19yZWFk
-cyhtcywgJnJlYWRzKTsNCiAJZG9fd3JpdGVzKG1zLCAmd3JpdGVzKTsNCiAJ
-ZG9fZmFpbHVyZXMobXMsICZmYWlsdXJlcyk7DQotDQotCXJldHVybiAobXMt
-PmZhaWx1cmVzLmhlYWQpID8gMSA6IDA7DQotfQ0KLQ0KLXN0YXRpYyB2b2lk
-IGRvX21pcnJvcihzdHJ1Y3Qgd29ya19zdHJ1Y3QgKndvcmspDQotew0KLQkv
-Kg0KLQkgKiBJZiBfZG9fbWlycm9yIHJldHVybnMgMSwgd2UgZ2l2ZSBpdA0K
-LQkgKiBhbm90aGVyIHNob3QuICBUaGlzIGhlbHBzIGZvciBjYXNlcyBsaWtl
-DQotCSAqICdzdXNwZW5kJyB3aGVyZSB3ZSBjYWxsIGZsdXNoX3dvcmtxdWV1
-ZQ0KLQkgKiBhbmQgZXhwZWN0IGFsbCB3b3JrIHRvIGJlIGZpbmlzaGVkLiAg
-SWYNCi0JICogYSBmYWlsdXJlIGhhcHBlbnMgZHVyaW5nIGEgc3VzcGVuZCwg
-d2UNCi0JICogY291bGRuJ3QgaXNzdWUgYSAnd2FrZScgYmVjYXVzZSBpdCB3
-b3VsZA0KLQkgKiBub3QgYmUgaG9ub3JlZC4gIFRoZXJlZm9yZSwgd2UgcmV0
-dXJuICcxJw0KLQkgKiBmcm9tIF9kb19taXJyb3IsIGFuZCByZXRyeSBoZXJl
-Lg0KLQkgKi8NCi0Jd2hpbGUgKF9kb19taXJyb3Iod29yaykpDQotCQlzY2hl
-ZHVsZSgpOw0KIH0NCiANCiANCkBAIC0xNTQ3LDYgKzE1NTAsOCBAQCBzdGF0
-aWMgaW50IG1pcnJvcl9jdHIoc3RydWN0IGRtX3RhcmdldCAqDQogCQlnb3Rv
-IGVycl9mcmVlX2NvbnRleHQ7DQogCX0NCiAJSU5JVF9XT1JLKCZtcy0+a21p
-cnJvcmRfd29yaywgZG9fbWlycm9yKTsNCisJaW5pdF90aW1lcigmbXMtPnRp
-bWVyKTsNCisJbXMtPnRpbWVyX3BlbmRpbmcgPSAwOw0KIAlJTklUX1dPUkso
-Jm1zLT50cmlnZ2VyX2V2ZW50LCB0cmlnZ2VyX2V2ZW50KTsNCiANCiAJciA9
-IHBhcnNlX2ZlYXR1cmVzKG1zLCBhcmdjLCBhcmd2LCAmYXJnc191c2VkKTsN
-CkBAIC0xNTg5LDYgKzE1OTQsNyBAQCBzdGF0aWMgdm9pZCBtaXJyb3JfZHRy
-KHN0cnVjdCBkbV90YXJnZXQgDQogew0KIAlzdHJ1Y3QgbWlycm9yX3NldCAq
-bXMgPSAoc3RydWN0IG1pcnJvcl9zZXQgKikgdGktPnByaXZhdGU7DQogDQor
-CWRlbF90aW1lcl9zeW5jKCZtcy0+dGltZXIpOw0KIAlmbHVzaF93b3JrcXVl
-dWUobXMtPmttaXJyb3JkX3dxKTsNCiAJZG1fa2NvcHlkX2NsaWVudF9kZXN0
-cm95KG1zLT5rY29weWRfY2xpZW50KTsNCiAJZGVzdHJveV93b3JrcXVldWUo
-bXMtPmttaXJyb3JkX3dxKTsNCg==
-
---168446244-787427121-1206463611=:3256
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---168446244-787427121-1206463611=:3256--
+Alasdair
+-- 
+agk@redhat.com
