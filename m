@@ -1,192 +1,145 @@
-From: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Subject: [2.6.25-rc8] dm crypt: fix ctx pending
-Date: Thu, 27 Mar 2008 18:53:15 +0000
-Message-ID: <20080327185315.GA26288@agk.fab.redhat.com>
-Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: [2.6.25-rc8] dm io: write error bits form long not int
+Date: Thu, 27 Mar 2008 18:57:55 +0000
+Message-ID: <20080327185755.GL24157@agk.fab.redhat.com>
+References: <20080327185315.GA26288@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-crypt-return-2687-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
-List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-To: Linus Torvalds <torvalds-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-Cc: Chr <chunkeey-S0/GAf8tV78@public.gmane.org>, "Rafael J. Wysocki" <rjw-KKrjLPT3xs0@public.gmane.org>, Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-crypt-4q3lyFh4P1g@public.gmane.org, Christian Kujau <lists-AanptEQQ3TL9uQeqpI+JUg@public.gmane.org>, Ulrich Lukas <stellplatz-nr.13a-7vBoImwI/YtIVYojq0lqJrNAH6kLmebB@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Adrian Bunk <bunk-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>, Natalie Protasevich <protasnb-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>, Herbert Xu <herbert-lOAM2aK0SrRLBo1qDEOMRrpzq4S04n8Q@public.gmane.org>, David Chinner <dgc-sJ/iWh9BUns@public.gmane.org>, xfs-VZNHf3L845pBDgjK7y7TUQ@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.orgdm-crypt-4q3lyFh4P1g@public.gmane.org, Ritesh Raj Sarraf <rrs-7WuBAv+fczCJ8c2fQYRYNw@public.gmane.org>
+In-Reply-To: <20080327185315.GA26288@agk.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: dm-devel@redhat.com, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+From: Alasdair G Kergon <agk@redhat.com>
 
-Fix regression in dm-crypt introduced in commit
-3a7f6c990ad04e6f576a159876c602d14d6f7fef
-(dm crypt: use async crypto).
+write_err is an unsigned long used with set_bit() so should not
+be passed around as unsigned int.
 
-If write requests need to be split into pieces, the code must not
-process them in parallel because the crypto context cannot be shared.
-So there can be parallel crypto operations on one part of the write,
-but only one write bio can be processed at a time.
+http://bugzilla.kernel.org/show_bug.cgi?id=10271
 
-This is not optimal and the workqueue code needs to be optimized for
-parallel processing, but for now it solves the problem without affecting
-the performance of synchronous crypto operation (most of current
-dm-crypt users).
-
-http://bugzilla.kernel.org/show_bug.cgi?id=10242
-http://bugzilla.kernel.org/show_bug.cgi?id=10207
-
-Signed-off-by: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Signed-off-by: Alasdair G Kergon <agk-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm-crypt.c |   58 +++++++++++++++++++++++++-------------------------
- 1 files changed, 30 insertions(+), 28 deletions(-)
+ drivers/md/dm-io.c    |    2 +-
+ drivers/md/dm-raid1.c |    4 ++--
+ drivers/md/dm-snap.c  |    2 +-
+ drivers/md/kcopyd.c   |   10 +++++-----
+ drivers/md/kcopyd.h   |    4 ++--
+ 5 files changed, 11 insertions(+), 11 deletions(-)
 
-Index: linux-2.6.25-rc7/drivers/md/dm-crypt.c
+Index: linux-2.6.25-rc7/drivers/md/dm-io.c
 ===================================================================
---- linux-2.6.25-rc7.orig/drivers/md/dm-crypt.c	2008-03-27 17:51:23.000000000 +0000
-+++ linux-2.6.25-rc7/drivers/md/dm-crypt.c	2008-03-27 17:51:25.000000000 +0000
-@@ -1,7 +1,7 @@
- /*
-  * Copyright (C) 2003 Christophe Saout <christophe-4q3lyFh4P1g@public.gmane.org>
-  * Copyright (C) 2004 Clemens Fruhwirth <clemens-Yy/aLhJqNSaEi8DpZVb4nw@public.gmane.org>
-- * Copyright (C) 2006-2007 Red Hat, Inc. All rights reserved.
-+ * Copyright (C) 2006-2008 Red Hat, Inc. All rights reserved.
-  *
-  * This file is released under the GPL.
+--- linux-2.6.25-rc7.orig/drivers/md/dm-io.c	2008-03-27 17:51:22.000000000 +0000
++++ linux-2.6.25-rc7/drivers/md/dm-io.c	2008-03-27 17:51:30.000000000 +0000
+@@ -114,7 +114,7 @@ static void dec_count(struct io *io, uns
+ 			wake_up_process(io->sleeper);
+ 
+ 		else {
+-			int r = io->error;
++			unsigned long r = io->error;
+ 			io_notify_fn fn = io->callback;
+ 			void *context = io->context;
+ 
+Index: linux-2.6.25-rc7/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.25-rc7.orig/drivers/md/dm-raid1.c	2008-03-27 17:51:22.000000000 +0000
++++ linux-2.6.25-rc7/drivers/md/dm-raid1.c	2008-03-27 17:51:30.000000000 +0000
+@@ -753,7 +753,7 @@ out:
+  * are in the no-sync state.  We have to recover these by
+  * recopying from the default mirror to all the others.
+  *---------------------------------------------------------------*/
+-static void recovery_complete(int read_err, unsigned int write_err,
++static void recovery_complete(int read_err, unsigned long write_err,
+ 			      void *context)
+ {
+ 	struct region *reg = (struct region *)context;
+@@ -767,7 +767,7 @@ static void recovery_complete(int read_e
+ 	}
+ 
+ 	if (write_err) {
+-		DMERR_LIMIT("Write error during recovery (error = 0x%x)",
++		DMERR_LIMIT("Write error during recovery (error = 0x%lx)",
+ 			    write_err);
+ 		/*
+ 		 * Bits correspond to devices (excluding default mirror).
+Index: linux-2.6.25-rc7/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.25-rc7.orig/drivers/md/dm-snap.c	2008-03-27 17:51:22.000000000 +0000
++++ linux-2.6.25-rc7/drivers/md/dm-snap.c	2008-03-27 17:51:30.000000000 +0000
+@@ -804,7 +804,7 @@ static void commit_callback(void *contex
+  * Called when the copy I/O has finished.  kcopyd actually runs
+  * this code so don't block.
   */
-@@ -93,6 +93,8 @@ struct crypt_config {
- 
- 	struct workqueue_struct *io_queue;
- 	struct workqueue_struct *crypt_queue;
-+	wait_queue_head_t writeq;
-+
- 	/*
- 	 * crypto related data
+-static void copy_callback(int read_err, unsigned int write_err, void *context)
++static void copy_callback(int read_err, unsigned long write_err, void *context)
+ {
+ 	struct dm_snap_pending_exception *pe = context;
+ 	struct dm_snapshot *s = pe->snap;
+Index: linux-2.6.25-rc7/drivers/md/kcopyd.c
+===================================================================
+--- linux-2.6.25-rc7.orig/drivers/md/kcopyd.c	2008-03-27 17:51:22.000000000 +0000
++++ linux-2.6.25-rc7/drivers/md/kcopyd.c	2008-03-27 17:51:30.000000000 +0000
+@@ -169,7 +169,7 @@ struct kcopyd_job {
+ 	 * Error state of the job.
  	 */
-@@ -331,14 +333,7 @@ static void crypt_convert_init(struct cr
- 	ctx->idx_out = bio_out ? bio_out->bi_idx : 0;
- 	ctx->sector = sector + cc->iv_offset;
- 	init_completion(&ctx->restart);
--	/*
--	 * Crypto operation can be asynchronous,
--	 * ctx->pending is increased after request submission.
--	 * We need to ensure that we don't call the crypt finish
--	 * operation before pending got incremented
--	 * (dependent on crypt submission return code).
--	 */
--	atomic_set(&ctx->pending, 2);
-+	atomic_set(&ctx->pending, 1);
- }
+ 	int read_err;
+-	unsigned int write_err;
++	unsigned long write_err;
  
- static int crypt_convert_block(struct crypt_config *cc,
-@@ -411,43 +406,42 @@ static void crypt_alloc_req(struct crypt
- static int crypt_convert(struct crypt_config *cc,
- 			 struct convert_context *ctx)
+ 	/*
+ 	 * Either READ or WRITE
+@@ -293,7 +293,7 @@ static int run_complete_job(struct kcopy
  {
--	int r = 0;
-+	int r;
+ 	void *context = job->context;
+ 	int read_err = job->read_err;
+-	unsigned int write_err = job->write_err;
++	unsigned long write_err = job->write_err;
+ 	kcopyd_notify_fn fn = job->fn;
+ 	struct kcopyd_client *kc = job->kc;
  
- 	while(ctx->idx_in < ctx->bio_in->bi_vcnt &&
- 	      ctx->idx_out < ctx->bio_out->bi_vcnt) {
- 
- 		crypt_alloc_req(cc, ctx);
- 
-+		atomic_inc(&ctx->pending);
-+
- 		r = crypt_convert_block(cc, ctx, cc->req);
- 
- 		switch (r) {
-+		/* async */
- 		case -EBUSY:
- 			wait_for_completion(&ctx->restart);
- 			INIT_COMPLETION(ctx->restart);
- 			/* fall through*/
- 		case -EINPROGRESS:
--			atomic_inc(&ctx->pending);
- 			cc->req = NULL;
--			r = 0;
--			/* fall through*/
-+			ctx->sector++;
-+			continue;
-+
-+		/* sync */
- 		case 0:
-+			atomic_dec(&ctx->pending);
- 			ctx->sector++;
- 			continue;
--		}
- 
--		break;
-+		/* error */
-+		default:
-+			atomic_dec(&ctx->pending);
-+			return r;
-+		}
- 	}
- 
--	/*
--	 * If there are pending crypto operation run async
--	 * code. Otherwise process return code synchronously.
--	 * The step of 2 ensures that async finish doesn't
--	 * call crypto finish too early.
--	 */
--	if (atomic_sub_return(2, &ctx->pending))
--		return -EINPROGRESS;
--
--	return r;
-+	return 0;
+@@ -396,7 +396,7 @@ static int process_jobs(struct list_head
+ 		if (r < 0) {
+ 			/* error this rogue job */
+ 			if (job->rw == WRITE)
+-				job->write_err = (unsigned int) -1;
++				job->write_err = (unsigned long) -1L;
+ 			else
+ 				job->read_err = 1;
+ 			push(&_complete_jobs, job);
+@@ -448,8 +448,8 @@ static void dispatch_job(struct kcopyd_j
  }
  
- static void dm_crypt_bio_destructor(struct bio *bio)
-@@ -624,8 +618,10 @@ static void kcryptd_io_read(struct dm_cr
- static void kcryptd_io_write(struct dm_crypt_io *io)
+ #define SUB_JOB_SIZE 128
+-static void segment_complete(int read_err,
+-			     unsigned int write_err, void *context)
++static void segment_complete(int read_err, unsigned long write_err,
++			     void *context)
  {
- 	struct bio *clone = io->ctx.bio_out;
-+	struct crypt_config *cc = io->target->private;
+ 	/* FIXME: tidy this function */
+ 	sector_t progress = 0;
+Index: linux-2.6.25-rc7/drivers/md/kcopyd.h
+===================================================================
+--- linux-2.6.25-rc7.orig/drivers/md/kcopyd.h	2008-03-27 17:51:22.000000000 +0000
++++ linux-2.6.25-rc7/drivers/md/kcopyd.h	2008-03-27 17:51:30.000000000 +0000
+@@ -32,8 +32,8 @@ void kcopyd_client_destroy(struct kcopyd
+  * read_err is a boolean,
+  * write_err is a bitset, with 1 bit for each destination region
+  */
+-typedef void (*kcopyd_notify_fn)(int read_err,
+-				 unsigned int write_err, void *context);
++typedef void (*kcopyd_notify_fn)(int read_err, unsigned long write_err,
++				 void *context);
  
- 	generic_make_request(clone);
-+	wake_up(&cc->writeq);
- }
- 
- static void kcryptd_io(struct work_struct *work)
-@@ -698,7 +694,8 @@ static void kcryptd_crypt_write_convert_
- 
- 		r = crypt_convert(cc, &io->ctx);
- 
--		if (r != -EINPROGRESS) {
-+		if (atomic_dec_and_test(&io->ctx.pending)) {
-+			/* processed, no running async crypto  */
- 			kcryptd_crypt_write_io_submit(io, r, 0);
- 			if (unlikely(r < 0))
- 				return;
-@@ -706,8 +703,12 @@ static void kcryptd_crypt_write_convert_
- 			atomic_inc(&io->pending);
- 
- 		/* out of memory -> run queues */
--		if (unlikely(remaining))
-+		if (unlikely(remaining)) {
-+			/* wait for async crypto then reinitialize pending */
-+			wait_event(cc->writeq, !atomic_read(&io->ctx.pending));
-+			atomic_set(&io->ctx.pending, 1);
- 			congestion_wait(WRITE, HZ/100);
-+		}
- 	}
- }
- 
-@@ -746,7 +747,7 @@ static void kcryptd_crypt_read_convert(s
- 
- 	r = crypt_convert(cc, &io->ctx);
- 
--	if (r != -EINPROGRESS)
-+	if (atomic_dec_and_test(&io->ctx.pending))
- 		kcryptd_crypt_read_done(io, r);
- 
- 	crypt_dec_pending(io);
-@@ -1047,6 +1048,7 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad_crypt_queue;
- 	}
- 
-+	init_waitqueue_head(&cc->writeq);
- 	ti->private = cc;
- 	return 0;
- 
+ int kcopyd_copy(struct kcopyd_client *kc, struct io_region *from,
+ 		unsigned int num_dests, struct io_region *dests,
