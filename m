@@ -1,145 +1,50 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [2.6.25-rc8] dm io: write error bits form long not int
-Date: Thu, 27 Mar 2008 18:57:55 +0000
-Message-ID: <20080327185755.GL24157@agk.fab.redhat.com>
-References: <20080327185315.GA26288@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Takashi Sato <t-sato@yk.jp.nec.com>
+Subject: Re: [RFC PATCH] freeze feature ver 1.0
+Date: Fri, 28 Mar 2008 18:01:45 +0900
+Message-ID: <20080328180145t-sato@mail.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080327185315.GA26288@agk.fab.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, Heiko Carstens <heiko.carstens@de.ibm.com>, linux-kernel@vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Sender: linux-ext4-owner@vger.kernel.org
+To: David Chinner <dgc@sgi.com>
+Cc: "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-From: Alasdair G Kergon <agk@redhat.com>
+Hi,
 
-write_err is an unsigned long used with set_bit() so should not
-be passed around as unsigned int.
+David Chinner wrote:
+> Can you please split this into two patches - one which introduces the
+> generic functionality *without* the timeout stuff, and a second patch
+> that introduces the timeouts.
 
-http://bugzilla.kernel.org/show_bug.cgi?id=10271
+OK.
+I will send the split patches in subsequent mails. 
+ 
+> I think this timeout stuff is dangerous - it adds significant
+> complexity and really does not protect against anything that can't
+> be done in userspace.  i.e. If your system is running well enough
+> for the timer to fire and unfreeze the filesystem, it's running well
+> enough for you to do "freeze X; sleep Y; unfreeze X".  
 
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm-io.c    |    2 +-
- drivers/md/dm-raid1.c |    4 ++--
- drivers/md/dm-snap.c  |    2 +-
- drivers/md/kcopyd.c   |   10 +++++-----
- drivers/md/kcopyd.h   |    4 ++--
- 5 files changed, 11 insertions(+), 11 deletions(-)
+If the process is terminated at "sleep Y" by an unexpected
+accident (e.g. signals),  the filesystem will be left frozen.
+So, I think the timeout is needed to unfreeze more definitely.
 
-Index: linux-2.6.25-rc7/drivers/md/dm-io.c
-===================================================================
---- linux-2.6.25-rc7.orig/drivers/md/dm-io.c	2008-03-27 17:51:22.000000000 +0000
-+++ linux-2.6.25-rc7/drivers/md/dm-io.c	2008-03-27 17:51:30.000000000 +0000
-@@ -114,7 +114,7 @@ static void dec_count(struct io *io, uns
- 			wake_up_process(io->sleeper);
- 
- 		else {
--			int r = io->error;
-+			unsigned long r = io->error;
- 			io_notify_fn fn = io->callback;
- 			void *context = io->context;
- 
-Index: linux-2.6.25-rc7/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.25-rc7.orig/drivers/md/dm-raid1.c	2008-03-27 17:51:22.000000000 +0000
-+++ linux-2.6.25-rc7/drivers/md/dm-raid1.c	2008-03-27 17:51:30.000000000 +0000
-@@ -753,7 +753,7 @@ out:
-  * are in the no-sync state.  We have to recover these by
-  * recopying from the default mirror to all the others.
-  *---------------------------------------------------------------*/
--static void recovery_complete(int read_err, unsigned int write_err,
-+static void recovery_complete(int read_err, unsigned long write_err,
- 			      void *context)
- {
- 	struct region *reg = (struct region *)context;
-@@ -767,7 +767,7 @@ static void recovery_complete(int read_e
- 	}
- 
- 	if (write_err) {
--		DMERR_LIMIT("Write error during recovery (error = 0x%x)",
-+		DMERR_LIMIT("Write error during recovery (error = 0x%lx)",
- 			    write_err);
- 		/*
- 		 * Bits correspond to devices (excluding default mirror).
-Index: linux-2.6.25-rc7/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.25-rc7.orig/drivers/md/dm-snap.c	2008-03-27 17:51:22.000000000 +0000
-+++ linux-2.6.25-rc7/drivers/md/dm-snap.c	2008-03-27 17:51:30.000000000 +0000
-@@ -804,7 +804,7 @@ static void commit_callback(void *contex
-  * Called when the copy I/O has finished.  kcopyd actually runs
-  * this code so don't block.
-  */
--static void copy_callback(int read_err, unsigned int write_err, void *context)
-+static void copy_callback(int read_err, unsigned long write_err, void *context)
- {
- 	struct dm_snap_pending_exception *pe = context;
- 	struct dm_snapshot *s = pe->snap;
-Index: linux-2.6.25-rc7/drivers/md/kcopyd.c
-===================================================================
---- linux-2.6.25-rc7.orig/drivers/md/kcopyd.c	2008-03-27 17:51:22.000000000 +0000
-+++ linux-2.6.25-rc7/drivers/md/kcopyd.c	2008-03-27 17:51:30.000000000 +0000
-@@ -169,7 +169,7 @@ struct kcopyd_job {
- 	 * Error state of the job.
- 	 */
- 	int read_err;
--	unsigned int write_err;
-+	unsigned long write_err;
- 
- 	/*
- 	 * Either READ or WRITE
-@@ -293,7 +293,7 @@ static int run_complete_job(struct kcopy
- {
- 	void *context = job->context;
- 	int read_err = job->read_err;
--	unsigned int write_err = job->write_err;
-+	unsigned long write_err = job->write_err;
- 	kcopyd_notify_fn fn = job->fn;
- 	struct kcopyd_client *kc = job->kc;
- 
-@@ -396,7 +396,7 @@ static int process_jobs(struct list_head
- 		if (r < 0) {
- 			/* error this rogue job */
- 			if (job->rw == WRITE)
--				job->write_err = (unsigned int) -1;
-+				job->write_err = (unsigned long) -1L;
- 			else
- 				job->read_err = 1;
- 			push(&_complete_jobs, job);
-@@ -448,8 +448,8 @@ static void dispatch_job(struct kcopyd_j
- }
- 
- #define SUB_JOB_SIZE 128
--static void segment_complete(int read_err,
--			     unsigned int write_err, void *context)
-+static void segment_complete(int read_err, unsigned long write_err,
-+			     void *context)
- {
- 	/* FIXME: tidy this function */
- 	sector_t progress = 0;
-Index: linux-2.6.25-rc7/drivers/md/kcopyd.h
-===================================================================
---- linux-2.6.25-rc7.orig/drivers/md/kcopyd.h	2008-03-27 17:51:22.000000000 +0000
-+++ linux-2.6.25-rc7/drivers/md/kcopyd.h	2008-03-27 17:51:30.000000000 +0000
-@@ -32,8 +32,8 @@ void kcopyd_client_destroy(struct kcopyd
-  * read_err is a boolean,
-  * write_err is a bitset, with 1 bit for each destination region
-  */
--typedef void (*kcopyd_notify_fn)(int read_err,
--				 unsigned int write_err, void *context);
-+typedef void (*kcopyd_notify_fn)(int read_err, unsigned long write_err,
-+				 void *context);
- 
- int kcopyd_copy(struct kcopyd_client *kc, struct io_region *from,
- 		unsigned int num_dests, struct io_region *dests,
+> FWIW, there is nothing to guarantee that the filesystem has finished
+> freezing when the timeout fires (it's not uncommon to see
+> freeze_bdev() taking *minutes*) and unfreezing in the middle of a
+> freeze operation will cause problems - either for the filesystem
+> in the middle of a freeze operation, or for whatever is freezing the
+> filesystem to get a consistent image.....
+
+Do you mention the freeze_bdev()'s hang?
+The salvage target of my timeout is freeze process's accident as below.
+- It is killed before calling the unfreeze ioctl
+- It causes a deadlock by accessing the frozen filesystem
+So the delayed work for the timeout is set after all of freeze operations
+in freeze_bdev() in my patches.
+I think the filesystem dependent code (write_super_lockfs operation)
+should be implemented not to cause a hang.
+
+Cheers, Takashi
