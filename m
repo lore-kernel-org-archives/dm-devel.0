@@ -1,17 +1,16 @@
-From: berthiaume_wayne@emc.com
-Subject: RE: Using different configuration for arrays with
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Using different configuration for arrays with
 	identicalvendor/product
-Date: Fri, 28 Mar 2008 12:25:43 -0400
-Message-ID: <218DC19ED27F8842B837598EC6D59D0ED702BC@CORPUSMX40A.corp.emc.com>
+Date: Sat, 29 Mar 2008 00:07:07 +0100
+Message-ID: <47ED7A1B.2020508@linpro.no>
 References: <47ECD532.5060402@linpro.no>
+	<218DC19ED27F8842B837598EC6D59D0ED702BC@CORPUSMX40A.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <47ECD532.5060402@linpro.no>
+In-Reply-To: <218DC19ED27F8842B837598EC6D59D0ED702BC@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,82 +20,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Tore.
+* berthiaume_wayne@emc.com
 
-	You should be able to use the emc_handler for both arrays.
-Depending on the distro you are using only implicit ALUA is supported,
-explicit ALUA is in being worked on for upcoming distros. Whether the
-storage group within the array attached to the server is ALUA or not is
-determined by the failover mode you set for the host on that array. At
-the server side you will not know the difference between the two
-failover modes, PNR or ALUA.
+> 	You should be able to use the emc_handler for both arrays.
+> Depending on the distro you are using only implicit ALUA is supported,
+> explicit ALUA is in being worked on for upcoming distros. Whether the
+> storage group within the array attached to the server is ALUA or not is
+> determined by the failover mode you set for the host on that array. At
+> the server side you will not know the difference between the two
+> failover modes, PNR or ALUA.
 
-Regards,
-Wayne.
-EMC Corp=20
+Hi Wayne, thanks for your reply.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Tore Anderson
-Sent: Friday, March 28, 2008 7:24 AM
-To: dm-devel@redhat.com
-Subject: [dm-devel] Using different configuration for arrays with
-identicalvendor/product
+So I can use the emc_clariion hardware handler towards an array
+configured for ALUA mode.  Wasn't aware of that.  I feel it's better to
+let the array handle the trespassing on its own based on the ratio of
+=C2=ABnon-optimal=C2=BB I/O operations (using hardware_handler 0), but I =
+can live
+with host-initiated trespasses on PG swithces/inits.
 
-Hey.  I've got an EMC CX200 and a CX3-40 in my SAN.  The latter one
-supports ALUA, which I'm using as much as I can, the former does not.
-The hosts need to be able to access volumes on both the arrays at the
-same time.
+Anyway - there's still the problem of the path_checker.  If I'm using
+=C2=ABemc_clariion=C2=BB for the array configured for ALUA mode (CLARiiON=
+ Open,
+mode 4), all paths is perceived to be failed.  If I'm using =C2=ABtur=C2=BB=
+ for
+the array configured for PNR mode (CLARiiON Open, mode 1), the passive
+path is perceived to be failed.
 
-Unfortunately the volumes on both of these boxes have vendor <DGC> and
-product <RAID 5>, so making two different device sections for them with
-different hardware_handler and path_checker settings isn't trivial.  I
-figured I could simply override the two settings in the multipath{}
-blocks for volumes on the CX200, making the device{} block specific for
-the CX3-40.  Doesn't appear to work, though, the path_checker- and
-hardware_handler-settings in the multipath{} blocks appears to be
-silently ignored.
-
-Am I out of luck or is there any other way to do what I want?
-
-For reference, this is the device section I use for the CX200 in
-standard <trespassing> mode:
-
-device {
-  vendor               DGC.*
-  product              RAID.*
-  hardware_handler     "1 emc"
-  path_checker         emc_clariion
-  prio_callout         "/sbin/mpath_prio_emc /dev/%n"
-  features             "1 queue_if_no_path"
-  path_grouping_policy group_by_prio
-  failback             immediate
-}
-
-And for the CX3-40 in ALUA mode:
-
-device {
-  vendor               DGC.*
-  product              RAID.*
-  hardware_handler     "0"
-  path_checker         tur
-  prio_callout         "/sbin/mpath_prio_emc /dev/%n"
-  features             "1 queue_if_no_path"
-  path_grouping_policy group_by_prio
-  failback             immediate
-}
-
-These both work fine on hosts that only connect to one of the arrays at
-a time.
+Hence, if I use =C2=ABemc_clariion=C2=BB I won't be able to access the vo=
+lumes on
+the CX3-40 at all, while if I use =C2=ABtur=C2=BB dm-multipath won't swit=
+ch PGs
+when there's a (real) failure on the active path to the CX200.  None of
+these are acceptable alternatives for production use, so the only
+workaround I've found so far is to configure the CX3-40 to use PNR mode
+(which sucks since ALUA is way better).  Do you have another trick up
+your sleeve for me?
 
 Regards
 --=20
 Tore Anderson
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
