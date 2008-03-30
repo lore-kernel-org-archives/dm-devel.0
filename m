@@ -1,88 +1,68 @@
 From: Adrian Bunk <bunk@kernel.org>
-Subject: [2.6 patch] remove dm_create_error_table()
-Date: Mon, 31 Mar 2008 02:28:31 +0300
-Message-ID: <20080330232831.GW28445@cs181133002.pp.htv.fi>
+Subject: [2.6 patch] make dm_{,un}register_dirty_log_type() static
+Date: Mon, 31 Mar 2008 02:28:24 +0300
+Message-ID: <20080330232824.GV28445@cs181133002.pp.htv.fi>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757505AbYC3X3G@vger.kernel.org>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756854AbYC3X2u@vger.kernel.org>
 Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 To: dm-devel@redhat.com
 Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-dm_create_error_table() was added in kernel 2.6.18 and never used...
+This patch makes the needlessly global dm_{,un}register_dirty_log_type() 
+static.
 
 Signed-off-by: Adrian Bunk <bunk@kernel.org>
 
 ---
 
- drivers/md/dm-table.c         |   38 ----------------------------------
- include/linux/device-mapper.h |    6 -----
- 2 files changed, 44 deletions(-)
+ drivers/md/dm-log.c |    6 ++----
+ drivers/md/dm-log.h |    3 ---
+ 2 files changed, 2 insertions(+), 7 deletions(-)
 
-644f0b957bf64a4c86b944166a48fe7bad3d1724 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e75b143..a999211 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -245,44 +245,6 @@ int dm_table_create(struct dm_table **result, int mode,
+5d0ca5f52a1c756246411406890c10b2d5cdd081 diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 2a74b21..0d65cc7 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -17,7 +17,7 @@
+ static LIST_HEAD(_log_types);
+ static DEFINE_SPINLOCK(_lock);
+ 
+-int dm_register_dirty_log_type(struct dirty_log_type *type)
++static int dm_register_dirty_log_type(struct dirty_log_type *type)
+ {
+ 	spin_lock(&_lock);
+ 	type->use_count = 0;
+@@ -27,7 +27,7 @@ int dm_register_dirty_log_type(struct dirty_log_type *type)
  	return 0;
  }
  
--int dm_create_error_table(struct dm_table **result, struct mapped_device *md)
--{
--	struct dm_table *t;
--	sector_t dev_size = 1;
--	int r;
--
--	/*
--	 * Find current size of device.
--	 * Default to 1 sector if inactive.
--	 */
--	t = dm_get_table(md);
--	if (t) {
--		dev_size = dm_table_get_size(t);
--		dm_table_put(t);
--	}
--
--	r = dm_table_create(&t, FMODE_READ, 1, md);
--	if (r)
--		return r;
--
--	r = dm_table_add_target(t, "error", 0, dev_size, NULL);
--	if (r)
--		goto out;
--
--	r = dm_table_complete(t);
--	if (r)
--		goto out;
--
--	*result = t;
--
--out:
--	if (r)
--		dm_table_put(t);
--
--	return r;
--}
--EXPORT_SYMBOL_GPL(dm_create_error_table);
--
- static void free_devices(struct list_head *devices)
+-int dm_unregister_dirty_log_type(struct dirty_log_type *type)
++static int dm_unregister_dirty_log_type(struct dirty_log_type *type)
  {
- 	struct list_head *tmp, *next;
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index cb78457..8fc199b 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -250,11 +250,5 @@ void dm_table_event(struct dm_table *t);
-  */
- int dm_swap_table(struct mapped_device *md, struct dm_table *t);
+ 	spin_lock(&_lock);
  
--/*
-- * Prepare a table for a device that will error all I/O.
-- * To make it active, call dm_suspend(), dm_swap_table() then dm_resume().
-- */
--int dm_create_error_table(struct dm_table **result, struct mapped_device *md);
+@@ -782,7 +782,5 @@ void dm_dirty_log_exit(void)
+ 	dm_unregister_dirty_log_type(&_core_type);
+ }
+ 
+-EXPORT_SYMBOL(dm_register_dirty_log_type);
+-EXPORT_SYMBOL(dm_unregister_dirty_log_type);
+ EXPORT_SYMBOL(dm_create_dirty_log);
+ EXPORT_SYMBOL(dm_destroy_dirty_log);
+diff --git a/drivers/md/dm-log.h b/drivers/md/dm-log.h
+index 3fae87e..c45fc25 100644
+--- a/drivers/md/dm-log.h
++++ b/drivers/md/dm-log.h
+@@ -110,9 +110,6 @@ struct dirty_log_type {
+ 		      char *result, unsigned int maxlen);
+ };
+ 
+-int dm_register_dirty_log_type(struct dirty_log_type *type);
+-int dm_unregister_dirty_log_type(struct dirty_log_type *type);
 -
- #endif	/* __KERNEL__ */
- #endif	/* _LINUX_DEVICE_MAPPER_H */
+ 
+ /*
+  * Make sure you use these two functions, rather than calling
