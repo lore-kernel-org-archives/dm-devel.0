@@ -1,118 +1,88 @@
-From: David Chinner <dgc@sgi.com>
-Subject: Re: [RFC PATCH] freeze feature ver 1.0
-Date: Mon, 31 Mar 2008 08:31:02 +1000
-Message-ID: <20080330223102.GE103491721@sgi.com>
-References: <20080328180145t-sato@mail.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Adrian Bunk <bunk@kernel.org>
+Subject: [2.6 patch] remove dm_create_error_table()
+Date: Mon, 31 Mar 2008 02:28:31 +0300
+Message-ID: <20080330232831.GW28445@cs181133002.pp.htv.fi>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757505AbYC3X3G@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20080328180145t-sato@mail.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: David Chinner <dgc@sgi.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Mar 28, 2008 at 06:01:45PM +0900, Takashi Sato wrote:
-> Hi,
-> 
-> David Chinner wrote:
-> > Can you please split this into two patches - one which introduces the
-> > generic functionality *without* the timeout stuff, and a second patch
-> > that introduces the timeouts.
-> 
-> OK.
-> I will send the split patches in subsequent mails. 
->  
-> > I think this timeout stuff is dangerous - it adds significant
-> > complexity and really does not protect against anything that can't
-> > be done in userspace.  i.e. If your system is running well enough
-> > for the timer to fire and unfreeze the filesystem, it's running well
-> > enough for you to do "freeze X; sleep Y; unfreeze X".  
-> 
-> If the process is terminated at "sleep Y" by an unexpected
-> accident (e.g. signals),  the filesystem will be left frozen.
+dm_create_error_table() was added in kernel 2.6.18 and never used...
 
-At which point you run "unfreeze /mnt/fs" and unfreeze it.
+Signed-off-by: Adrian Bunk <bunk@kernel.org>
 
-If you've got a script that fails in the middle of an operation that
-freezes the filesystem, then the error handling of that script
-needs to unfreeze the filesystem. The kernel does not need to do
-this.
+---
 
-> So, I think the timeout is needed to unfreeze more definitely.
+ drivers/md/dm-table.c         |   38 ----------------------------------
+ include/linux/device-mapper.h |    6 -----
+ 2 files changed, 44 deletions(-)
 
-No, it can be handled by userspace perfectly well.
-
-> > FWIW, there is nothing to guarantee that the filesystem has finished
-> > freezing when the timeout fires (it's not uncommon to see
-> > freeze_bdev() taking *minutes*) and unfreezing in the middle of a
-> > freeze operation will cause problems - either for the filesystem
-> > in the middle of a freeze operation, or for whatever is freezing the
-> > filesystem to get a consistent image.....
-> 
-> Do you mention the freeze_bdev()'s hang?
-
-If freeze_bdev() hangs, then you've got a buggy filesystem and far
-more problems to worry about than undoing the freeze. It's likely
-you're going to need a reboot to unwedge then hung filesystem.....
-
-> The salvage target of my timeout is freeze process's accident as below.
-> - It is killed before calling the unfreeze ioctl
-
-Can be fixed from userspace.
-
-> - It causes a deadlock by accessing the frozen filesystem
-
-Application bug. Undeadlock it by running "unfreeze /mnt/fs"....
-
-FWIW, DM is quite capable of freezing the filesystem, snapshotting
-it and then unfreezing it without hanging, crashing or having nasty
-stuff in general happen. We've used 'xfs_freeze -f /mnt/fs;
-do_something; xfs_freeze -u /mnt/fs' for years without having
-problems with freeze hanging, application deadlocks, etc.....
-
-... And if something has gone wrong during the freeze, it is far,
-far better to leave the filesystem stuck in a frozen state than to
-unfreeze it and allow it to be damaged further. If you get stuck or
-a script gets killed in the middle of execution, then an admin needs
-to look at the problem immediately. Just timing out and unfreezing
-is about the worst thing you can do because it allows problems
-(corruptions, errors, etc) to be propagated and potentially make
-things worse before an admin can intervene and fix things up....
-
-Basically, I don't want to have to deal with the "snapshot
-image corrupt" bug reports that will come from user
-misuse/misunderstanding of the "freeze timeout". It's hard enough
-tracking down these sorts of problems without throwing in the
-"freeze timed out before completion" possibility that guarantees
-a non-consistent snapshot image.....
-
-/me points to the ASSERT_ALWAYS() in xfs_attr_quiesce() that ensures
-we get bug reports when the filesystem is still being actively
-modified when the freeze "completes".
-
-> So the delayed work for the timeout is set after all of freeze operations
-> in freeze_bdev() in my patches.
-> I think the filesystem dependent code (write_super_lockfs operation)
-> should be implemented not to cause a hang.
-
-And that should already be the case. If write_super_lockfs() hangs,
-then you've got a filesystem bug ;)
-
-Cheers,
-
-Dave.
--- 
-Dave Chinner
-Principal Engineer
-SGI Australian Software Group
+644f0b957bf64a4c86b944166a48fe7bad3d1724 diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e75b143..a999211 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -245,44 +245,6 @@ int dm_table_create(struct dm_table **result, int mode,
+ 	return 0;
+ }
+ 
+-int dm_create_error_table(struct dm_table **result, struct mapped_device *md)
+-{
+-	struct dm_table *t;
+-	sector_t dev_size = 1;
+-	int r;
+-
+-	/*
+-	 * Find current size of device.
+-	 * Default to 1 sector if inactive.
+-	 */
+-	t = dm_get_table(md);
+-	if (t) {
+-		dev_size = dm_table_get_size(t);
+-		dm_table_put(t);
+-	}
+-
+-	r = dm_table_create(&t, FMODE_READ, 1, md);
+-	if (r)
+-		return r;
+-
+-	r = dm_table_add_target(t, "error", 0, dev_size, NULL);
+-	if (r)
+-		goto out;
+-
+-	r = dm_table_complete(t);
+-	if (r)
+-		goto out;
+-
+-	*result = t;
+-
+-out:
+-	if (r)
+-		dm_table_put(t);
+-
+-	return r;
+-}
+-EXPORT_SYMBOL_GPL(dm_create_error_table);
+-
+ static void free_devices(struct list_head *devices)
+ {
+ 	struct list_head *tmp, *next;
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index cb78457..8fc199b 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -250,11 +250,5 @@ void dm_table_event(struct dm_table *t);
+  */
+ int dm_swap_table(struct mapped_device *md, struct dm_table *t);
+ 
+-/*
+- * Prepare a table for a device that will error all I/O.
+- * To make it active, call dm_suspend(), dm_swap_table() then dm_resume().
+- */
+-int dm_create_error_table(struct dm_table **result, struct mapped_device *md);
+-
+ #endif	/* __KERNEL__ */
+ #endif	/* _LINUX_DEVICE_MAPPER_H */
