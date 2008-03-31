@@ -1,48 +1,56 @@
-From: Adrian Bunk <bunk@kernel.org>
-Subject: [2.6 patch] proper extern for mdp_major
-Date: Mon, 31 Mar 2008 02:28:51 +0300
-Message-ID: <20080330232851.GZ28445@cs181133002.pp.htv.fi>
+From: David Chinner <dgc@sgi.com>
+Subject: Re: [RFC PATCH 2/2] Add timeout feature
+Date: Mon, 31 Mar 2008 10:00:57 +1000
+Message-ID: <20080331000057.GI108924158@sgi.com>
+References: <20080328180736t-sato@mail.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758807AbYC3X3z@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: dm-devel@redhat.com
-Cc: linux-kernel@vger.kernel.org
+In-Reply-To: <20080328180736t-sato@mail.jp.nec.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Takashi Sato <t-sato@yk.jp.nec.com>
+Cc: David Chinner <dgc@sgi.com>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-This patch adds a proper extern for mdp_major in include/linux/raid/md.h
+On Fri, Mar 28, 2008 at 06:07:36PM +0900, Takashi Sato wrote:
+> The timeout feature is added to freeze ioctl.  And new ioctl
+> to reset the timeout period is added.
+> o Freeze the filesystem
+>   int ioctl(int fd, int FIFREEZE, long *timeval)
+>   fd: The file descriptor of the mountpoint
+>   FIFREEZE: request code for the freeze
+>   timeval: the timeout period in seconds
+>            If it's 0 or 1, the timeout isn't set.
+>            This special case of "1" is implemented to keep
+>            the compatibility with XFS applications.
+>   Return value: 0 if the operation succeeds. Otherwise, -1
 
-Signed-off-by: Adrian Bunk <bunk@kernel.org>
+The timeout is not for the freeze operation - the timeout is
+only set up once the freeze is complete. i.e:
 
----
+$ time sudo ~/test_src/xfs_io -f -x -c 'gfreeze 10' /mnt/scratch/test
+freezing with level = 10
 
- include/linux/raid/md.h |    2 ++
- init/do_mounts_md.c     |    1 -
- 2 files changed, 2 insertions(+), 1 deletion(-)
+real    0m23.204s
+user    0m0.008s
+sys     0m0.012s
 
-1eeb5848dc2a1c4ecb179fba4ac3db377c35ef40 diff --git a/include/linux/raid/md.h b/include/linux/raid/md.h
-index fbaeda7..20b694f 100644
---- a/include/linux/raid/md.h
-+++ b/include/linux/raid/md.h
-@@ -73,6 +73,8 @@
-  */
- #define MD_PATCHLEVEL_VERSION           3
- 
-+extern int mdp_major;
-+
- extern int register_md_personality (struct mdk_personality *p);
- extern int unregister_md_personality (struct mdk_personality *p);
- extern mdk_thread_t * md_register_thread (void (*run) (mddev_t *mddev),
-diff --git a/init/do_mounts_md.c b/init/do_mounts_md.c
-index 753dc54..9589e99 100644
---- a/init/do_mounts_md.c
-+++ b/init/do_mounts_md.c
-@@ -24,7 +24,6 @@ static struct {
- 
- static int md_setup_ents __initdata;
- 
--extern int mdp_major;
- /*
-  * Parse the command-line parameters given our kernel, but do not
-  * actually try to invoke the MD device now; that is handled by
+The freeze takes 23s, and then the 10s timeout is started. So
+this timeout does not protect against freeze_bdev() hangs at all.
+All it does is introduce silent unfreezing of the block device that
+can not be synchronised with the application that is operating
+on the frozen device.
+
+FWIW, resetting this timeout from userspace is unreliable - there's
+no guarantee that under load your userspace process will get to run
+again inside the timeout to reset it, hence leaving you with a
+unfrozen filesystem when you really want it frozen...
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+Principal Engineer
+SGI Australian Software Group
