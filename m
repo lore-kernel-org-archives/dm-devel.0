@@ -1,14 +1,14 @@
 From: Mark McLoughlin <markmc@redhat.com>
-Subject: [PATCH 03/10] dm snapshot: Add exception store methods
-	for merging
-Date: Tue,  1 Apr 2008 09:32:50 +0200
-Message-ID: <1207035177-7156-4-git-send-email-markmc@redhat.com>
+Subject: [PATCH 04/10] dm snapshot: Split snapshot constructor
+Date: Tue,  1 Apr 2008 09:32:51 +0200
+Message-ID: <1207035177-7156-5-git-send-email-markmc@redhat.com>
 References: <1207035177-7156-1-git-send-email-markmc@redhat.com>
 	<1207035177-7156-2-git-send-email-markmc@redhat.com>
 	<1207035177-7156-3-git-send-email-markmc@redhat.com>
+	<1207035177-7156-4-git-send-email-markmc@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1207035177-7156-3-git-send-email-markmc@redhat.com>
+In-Reply-To: <1207035177-7156-4-git-send-email-markmc@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,138 +22,263 @@ To: agk@redhat.com
 Cc: Mark McLoughlin <markmc@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Add prepare_merge() and commit_merge() methods to the exception store to
-allow for snapshot chunks to be removed from the exception store as the
-chunks are merged back into the origin.
+Split parts of snapshot_ctr() into a separate function, snapshot_init()
+and parts of snapshot_dtr() into snapshot_destroy().
 
-prepare_merge() retrieves the details of the last exception in the store
-in preparation for that chunk to be merged back into the origin.
-
-commit_merge() is then later used to remove that same exception from the
-store once the merge has completed.
+This is needed by later patches because the merging target re-uses the
+dm_snapshot structure, but the merging target doesn't register itself
+as a snapshot (i.e. origin writes shouldn't cause an exception), has a
+different set of arguments and in some ways behaves more like a
+snapshot-origin target.
 
 Signed-off-by: Mark McLoughlin <markmc@redhat.com>
 ---
- drivers/md/dm-exception-store.c |   69 +++++++++++++++++++++++++++++++++++++++
- drivers/md/dm-snap.h            |   12 +++++++
- 2 files changed, 81 insertions(+), 0 deletions(-)
+ drivers/md/dm-snap.c |  166 +++++++++++++++++++++++++++----------------------
+ 1 files changed, 91 insertions(+), 75 deletions(-)
 
-diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
-index 02fd3e9..4fd5381 100644
---- a/drivers/md/dm-exception-store.c
-+++ b/drivers/md/dm-exception-store.c
-@@ -624,6 +624,71 @@ static void persistent_commit(struct exception_store *store,
- 	}
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 3b71f53..20f12a8 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -435,18 +435,9 @@ static ulong round_up(ulong n, ulong size)
+ 	return (n + size) & ~size;
  }
  
-+/* Given an exception index within a certain area, return the
-+ * corresponding chunk index.
-+ */
-+static inline uint32_t exception_to_chunk(uint32_t area,
-+					  uint32_t exceptions_per_area,
-+					  uint32_t exception)
-+{
-+	/* Header followed by sets of (metadata chunk, exceptions_per_area chunks)
-+	 */
-+	return 1 + (area * (1 + exceptions_per_area)) + 1 + exception;
+-static int set_chunk_size(struct dm_snapshot *s, const char *chunk_size_arg,
++static int set_chunk_size(struct dm_snapshot *s, unsigned long chunk_size,
+ 			  char **error)
+ {
+-	unsigned long chunk_size;
+-	char *value;
+-
+-	chunk_size = simple_strtoul(chunk_size_arg, &value, 10);
+-	if (*chunk_size_arg == '\0' || *value != '\0') {
+-		*error = "Invalid chunk size";
+-		return -EINVAL;
+-	}
+-
+ 	if (!chunk_size) {
+ 		s->chunk_size = s->chunk_mask = s->chunk_shift = 0;
+ 		return 0;
+@@ -477,61 +468,30 @@ static int set_chunk_size(struct dm_snapshot *s, const char *chunk_size_arg,
+ 	return 0;
+ }
+ 
+-/*
+- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
+- */
+-static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
++static int snapshot_init(struct dm_target *ti, struct dm_snapshot *s,
++			 const char *origin_path, int origin_mode,
++			 const char *cow_path, int cow_mode,
++			 char type, unsigned long chunk_size)
+ {
+-	struct dm_snapshot *s;
+-	int r = -EINVAL;
+-	char persistent;
+-	char *origin_path;
+-	char *cow_path;
+-
+-	if (argc != 4) {
+-		ti->error = "requires exactly 4 arguments";
+-		r = -EINVAL;
+-		goto bad1;
+-	}
+-
+-	origin_path = argv[0];
+-	cow_path = argv[1];
+-	persistent = toupper(*argv[2]);
+-
+-	if (persistent != 'P' && persistent != 'N') {
+-		ti->error = "Persistent flag is not P or N";
+-		r = -EINVAL;
+-		goto bad1;
+-	}
+-
+-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+-	if (s == NULL) {
+-		ti->error = "Cannot allocate snapshot context private "
+-		    "structure";
+-		r = -ENOMEM;
+-		goto bad1;
+-	}
++	int r;
+ 
+-	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &s->origin);
++	r = dm_get_device(ti, origin_path, 0, ti->len, origin_mode, &s->origin);
+ 	if (r) {
+ 		ti->error = "Cannot get origin device";
+-		goto bad2;
++		goto bad1;
+ 	}
+ 
+-	r = dm_get_device(ti, cow_path, 0, 0,
+-			  FMODE_READ | FMODE_WRITE, &s->cow);
++	r = dm_get_device(ti, cow_path, 0, 0, cow_mode, &s->cow);
+ 	if (r) {
+-		dm_put_device(ti, s->origin);
+ 		ti->error = "Cannot get COW device";
+ 		goto bad2;
+ 	}
+ 
+-	r = set_chunk_size(s, argv[3], &ti->error);
++	r = set_chunk_size(s, chunk_size, &ti->error);
+ 	if (r)
+ 		goto bad3;
+ 
+-	s->type = persistent;
+-
++	s->type = type;
+ 	s->valid = 1;
+ 	s->active = 0;
+ 	s->last_percent = 0;
+@@ -548,7 +508,7 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 
+ 	s->store.snap = s;
+ 
+-	if (persistent == 'P')
++	if (s->type == 'P')
+ 		r = dm_create_persistent(&s->store);
+ 	else
+ 		r = dm_create_transient(&s->store);
+@@ -578,41 +538,24 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	bio_list_init(&s->queued_bios);
+ 	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
+ 
+-	/* Add snapshot to the list of snapshots for this origin */
+-	/* Exceptions aren't triggered till snapshot_resume() is called */
+-	if (register_snapshot(s)) {
+-		r = -EINVAL;
+-		ti->error = "Cannot register snapshot origin";
+-		goto bad6;
+-	}
+-
+-	ti->private = s;
+-	ti->split_io = s->chunk_size;
+-
+ 	return 0;
+ 
+  bad6:
+ 	kcopyd_client_destroy(s->kcopyd_client);
+-
+  bad5:
+ 	s->store.destroy(&s->store);
+-
+  bad4:
+ 	exit_exception_table(&s->pending, pending_cache);
+ 	exit_exception_table(&s->complete, exception_cache);
+-
+  bad3:
+ 	dm_put_device(ti, s->cow);
+-	dm_put_device(ti, s->origin);
+-
+  bad2:
+-	kfree(s);
+-
++	dm_put_device(ti, s->origin);
+  bad1:
+ 	return r;
+ }
+ 
+-static void __free_exceptions(struct dm_snapshot *s)
++static void snapshot_destroy(struct dm_target *ti, struct dm_snapshot *s)
+ {
+ 	kcopyd_client_destroy(s->kcopyd_client);
+ 	s->kcopyd_client = NULL;
+@@ -621,6 +564,82 @@ static void __free_exceptions(struct dm_snapshot *s)
+ 	exit_exception_table(&s->complete, exception_cache);
+ 
+ 	s->store.destroy(&s->store);
++
++	dm_put_device(ti, s->origin);
++	dm_put_device(ti, s->cow);
 +}
 +
-+static int persistent_prepare_merge(struct exception_store *store,
-+				    struct dm_snap_exception *e,
-+				    int *empty)
++/*
++ * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
++ */
++static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 +{
-+	struct pstore *ps = get_info(store);
-+	struct disk_exception de;
-+	int r;
++	struct dm_snapshot *s;
++	int r = -EINVAL;
++	char persistent;
++	char *origin_path;
++	char *cow_path;
++	char *chunk_size_arg;
++	unsigned long chunk_size;
++	char *value;
 +
-+	*empty = 0;
-+
-+	if (ps->current_committed == 0) {
-+		if (ps->current_area == 0) {
-+			*empty = 1;
-+			return 0;
-+		}
-+
-+		r = area_io(ps, ps->current_area - 1, READ);
-+		if (r)
-+			return r;
-+
-+		ps->current_committed = ps->exceptions_per_area - 1;
-+	} else {
-+		ps->current_committed--;
++	if (argc != 4) {
++		ti->error = "requires exactly 4 arguments";
++		r = -EINVAL;
++		goto bad1;
 +	}
 +
-+	read_exception(ps, ps->current_committed, &de);
++	origin_path = argv[0];
++	cow_path = argv[1];
++	persistent = toupper(*argv[2]);
++	chunk_size_arg = argv[3];
 +
-+	e->old_chunk = de.old_chunk;
-+	e->new_chunk = de.new_chunk;
++	if (persistent != 'P' && persistent != 'N') {
++		ti->error = "Persistent flag is not P or N";
++		r = -EINVAL;
++		goto bad1;
++	}
 +
-+	ps->next_free = exception_to_chunk(ps->current_area,
-+					   ps->exceptions_per_area,
-+					   ps->current_committed);
++	chunk_size = simple_strtoul(chunk_size_arg, &value, 10);
++	if (*chunk_size_arg == '\0' || *value != '\0') {
++		ti->error = "Invalid chunk size";
++		goto bad1;
++	}
++
++	s = kmalloc(sizeof(*s), GFP_KERNEL);
++	if (s == NULL) {
++		ti->error = "Cannot allocate snapshot context private "
++		    "structure";
++		r = -ENOMEM;
++		goto bad1;
++	}
++
++	r = snapshot_init(ti, s,
++			  origin_path, FMODE_READ,
++			  cow_path, FMODE_READ | FMODE_WRITE,
++			  persistent, chunk_size);
++	if (r)
++		goto bad2;
++
++	/* Add snapshot to the list of snapshots for this origin */
++	/* Exceptions aren't triggered till snapshot_resume() is called */
++	if (register_snapshot(s)) {
++		r = -EINVAL;
++		ti->error = "Cannot register snapshot origin";
++		goto bad3;
++	}
++
++	ti->private = s;
++	ti->split_io = s->chunk_size;
 +
 +	return 0;
-+}
 +
-+static void persistent_commit_merge(struct exception_store *store)
-+{
-+	struct pstore *ps = get_info(store);
-+	struct disk_exception de;
-+	int r;
-+
-+	read_exception(ps, ps->current_committed, &de);
-+
-+	de.new_chunk = 0;
-+	write_exception(ps, ps->current_committed, &de);
-+
-+	r = area_io(ps, ps->current_area, WRITE);
-+	if (r)
-+		ps->valid = 0;
-+}
-+
- static void persistent_drop(struct exception_store *store)
- {
- 	struct pstore *ps = get_info(store);
-@@ -664,6 +729,8 @@ int dm_create_persistent(struct exception_store *store)
- 	store->read_metadata = persistent_read_metadata;
- 	store->prepare_exception = persistent_prepare;
- 	store->commit_exception = persistent_commit;
-+	store->prepare_merge = persistent_prepare_merge;
-+	store->commit_merge = persistent_commit_merge;
- 	store->drop_snapshot = persistent_drop;
- 	store->fraction_full = persistent_fraction_full;
- 	store->context = ps;
-@@ -727,6 +794,8 @@ int dm_create_transient(struct exception_store *store)
- 	store->read_metadata = transient_read_metadata;
- 	store->prepare_exception = transient_prepare;
- 	store->commit_exception = transient_commit;
-+	store->prepare_merge = NULL;
-+	store->commit_merge = NULL;
- 	store->drop_snapshot = NULL;
- 	store->fraction_full = transient_fraction_full;
++ bad3:
++	snapshot_destroy(ti, s);
++ bad2:
++	kfree(s);
++ bad1:
++	return r;
+ }
  
-diff --git a/drivers/md/dm-snap.h b/drivers/md/dm-snap.h
-index 93bce5d..8b02a42 100644
---- a/drivers/md/dm-snap.h
-+++ b/drivers/md/dm-snap.h
-@@ -115,6 +115,18 @@ struct exception_store {
- 				  void *callback_context);
+ static void snapshot_dtr(struct dm_target *ti)
+@@ -633,10 +652,7 @@ static void snapshot_dtr(struct dm_target *ti)
+ 	/* After this returns there can be no new kcopyd jobs. */
+ 	unregister_snapshot(s);
  
- 	/*
-+	 * Prepare the next exception for merging.
-+	 */
-+	int (*prepare_merge) (struct exception_store *store,
-+			      struct dm_snap_exception *e,
-+			      int *empty);
-+
-+	/*
-+	 * Remove the currently merging exception.
-+	 */
-+	void (*commit_merge) (struct exception_store *store);
-+
-+	/*
- 	 * The snapshot is invalid, note this in the metadata.
- 	 */
- 	void (*drop_snapshot) (struct exception_store *store);
+-	__free_exceptions(s);
+-
+-	dm_put_device(ti, s->origin);
+-	dm_put_device(ti, s->cow);
++	snapshot_destroy(ti, s);
+ 
+ 	kfree(s);
+ }
 -- 
 1.5.4.1
