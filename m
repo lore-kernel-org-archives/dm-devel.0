@@ -1,18 +1,14 @@
 From: Mark McLoughlin <markmc@redhat.com>
-Subject: [PATCH 07/10] dm snapshot: Make origin_write() bio arg
-	optional
-Date: Tue,  1 Apr 2008 09:32:54 +0200
-Message-ID: <1207035177-7156-8-git-send-email-markmc@redhat.com>
+Subject: [PATCH 03/10] dm snapshot: Add exception store methods
+	for merging
+Date: Tue,  1 Apr 2008 09:32:50 +0200
+Message-ID: <1207035177-7156-4-git-send-email-markmc@redhat.com>
 References: <1207035177-7156-1-git-send-email-markmc@redhat.com>
 	<1207035177-7156-2-git-send-email-markmc@redhat.com>
 	<1207035177-7156-3-git-send-email-markmc@redhat.com>
-	<1207035177-7156-4-git-send-email-markmc@redhat.com>
-	<1207035177-7156-5-git-send-email-markmc@redhat.com>
-	<1207035177-7156-6-git-send-email-markmc@redhat.com>
-	<1207035177-7156-7-git-send-email-markmc@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1207035177-7156-7-git-send-email-markmc@redhat.com>
+In-Reply-To: <1207035177-7156-3-git-send-email-markmc@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,95 +22,138 @@ To: agk@redhat.com
 Cc: Mark McLoughlin <markmc@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Similar to the previous patch, change the arguments to
-__origin_write() so that rather than requiring a bio structure, we
-take a origin device sector index and optional bio structure.
+Add prepare_merge() and commit_merge() methods to the exception store to
+allow for snapshot chunks to be removed from the exception store as the
+chunks are merged back into the origin.
 
-Rationale is that the merged target will want to trigger an exception
-in all associated snapshots before merging the chunk from the COW
-to the origin and at this point we don't have a bio structure
-corresponding to that copy.
+prepare_merge() retrieves the details of the last exception in the store
+in preparation for that chunk to be merged back into the origin.
+
+commit_merge() is then later used to remove that same exception from the
+store once the merge has completed.
 
 Signed-off-by: Mark McLoughlin <markmc@redhat.com>
 ---
- drivers/md/dm-snap.c |   21 ++++++++++++++-------
- 1 files changed, 14 insertions(+), 7 deletions(-)
+ drivers/md/dm-exception-store.c |   69 +++++++++++++++++++++++++++++++++++++++
+ drivers/md/dm-snap.h            |   12 +++++++
+ 2 files changed, 81 insertions(+), 0 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index e64b9b4..e4ba02c 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1103,7 +1103,8 @@ static int snapshot_status(struct dm_target *ti, status_type_t type,
- /*-----------------------------------------------------------------
-  * Origin methods
-  *---------------------------------------------------------------*/
--static int __origin_write(struct list_head *snapshots, struct bio *bio)
-+static int __origin_write(struct list_head *snapshots, sector_t sector,
-+			  struct bio *bio)
- {
- 	int r = DM_MAPIO_REMAPPED;
- 	struct dm_snapshot *snap;
-@@ -1123,14 +1124,14 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
- 			goto next_snapshot;
- 
- 		/* Nothing to do if writing beyond end of snapshot */
--		if (bio->bi_sector >= dm_table_get_size(snap->table))
-+		if (sector >= dm_table_get_size(snap->table))
- 			goto next_snapshot;
- 
- 		/*
- 		 * Remember, different snapshots can have
- 		 * different chunk sizes.
- 		 */
--		chunk = sector_to_chunk(snap, bio->bi_sector);
-+		chunk = sector_to_chunk(snap, sector);
- 
- 		/*
- 		 * Check exception table to see if block
-@@ -1166,7 +1167,8 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
- 			 */
- 			get_pending_exception(primary_pe);
- 
--			bio_list_add(&primary_pe->origin_bios, bio);
-+			if (bio)
-+				bio_list_add(&primary_pe->origin_bios, bio);
- 
- 			r = DM_MAPIO_SUBMITTED;
- 		}
-@@ -1212,7 +1214,8 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
- /*
-  * Called on a write from the origin driver.
-  */
--static int do_origin(struct dm_dev *origin, struct bio *bio)
-+static int do_origin(struct dm_dev *origin, sector_t sector,
-+		     struct bio *bio)
- {
- 	struct origin *o;
- 	int r = DM_MAPIO_REMAPPED;
-@@ -1220,7 +1223,7 @@ static int do_origin(struct dm_dev *origin, struct bio *bio)
- 	down_read(&_origins_lock);
- 	o = __lookup_origin(origin->bdev);
- 	if (o)
--		r = __origin_write(&o->snapshots, bio);
-+		r = __origin_write(&o->snapshots, sector, bio);
- 	up_read(&_origins_lock);
- 
- 	return r;
-@@ -1266,10 +1269,14 @@ static int origin_map(struct dm_target *ti, struct bio *bio,
- 		      union map_info *map_context)
- {
- 	struct dm_dev *dev = ti->private;
-+
- 	bio->bi_bdev = dev->bdev;
- 
- 	/* Only tell snapshots if this is a write */
--	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
-+	if (bio_rw(bio) != WRITE)
-+		return DM_MAPIO_REMAPPED;
-+
-+	return do_origin(dev, bio->bi_sector, bio);
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index 02fd3e9..4fd5381 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -624,6 +624,71 @@ static void persistent_commit(struct exception_store *store,
+ 	}
  }
  
- #define min_not_zero(l, r) (l == 0) ? r : ((r == 0) ? l : min(l, r))
++/* Given an exception index within a certain area, return the
++ * corresponding chunk index.
++ */
++static inline uint32_t exception_to_chunk(uint32_t area,
++					  uint32_t exceptions_per_area,
++					  uint32_t exception)
++{
++	/* Header followed by sets of (metadata chunk, exceptions_per_area chunks)
++	 */
++	return 1 + (area * (1 + exceptions_per_area)) + 1 + exception;
++}
++
++static int persistent_prepare_merge(struct exception_store *store,
++				    struct dm_snap_exception *e,
++				    int *empty)
++{
++	struct pstore *ps = get_info(store);
++	struct disk_exception de;
++	int r;
++
++	*empty = 0;
++
++	if (ps->current_committed == 0) {
++		if (ps->current_area == 0) {
++			*empty = 1;
++			return 0;
++		}
++
++		r = area_io(ps, ps->current_area - 1, READ);
++		if (r)
++			return r;
++
++		ps->current_committed = ps->exceptions_per_area - 1;
++	} else {
++		ps->current_committed--;
++	}
++
++	read_exception(ps, ps->current_committed, &de);
++
++	e->old_chunk = de.old_chunk;
++	e->new_chunk = de.new_chunk;
++
++	ps->next_free = exception_to_chunk(ps->current_area,
++					   ps->exceptions_per_area,
++					   ps->current_committed);
++
++	return 0;
++}
++
++static void persistent_commit_merge(struct exception_store *store)
++{
++	struct pstore *ps = get_info(store);
++	struct disk_exception de;
++	int r;
++
++	read_exception(ps, ps->current_committed, &de);
++
++	de.new_chunk = 0;
++	write_exception(ps, ps->current_committed, &de);
++
++	r = area_io(ps, ps->current_area, WRITE);
++	if (r)
++		ps->valid = 0;
++}
++
+ static void persistent_drop(struct exception_store *store)
+ {
+ 	struct pstore *ps = get_info(store);
+@@ -664,6 +729,8 @@ int dm_create_persistent(struct exception_store *store)
+ 	store->read_metadata = persistent_read_metadata;
+ 	store->prepare_exception = persistent_prepare;
+ 	store->commit_exception = persistent_commit;
++	store->prepare_merge = persistent_prepare_merge;
++	store->commit_merge = persistent_commit_merge;
+ 	store->drop_snapshot = persistent_drop;
+ 	store->fraction_full = persistent_fraction_full;
+ 	store->context = ps;
+@@ -727,6 +794,8 @@ int dm_create_transient(struct exception_store *store)
+ 	store->read_metadata = transient_read_metadata;
+ 	store->prepare_exception = transient_prepare;
+ 	store->commit_exception = transient_commit;
++	store->prepare_merge = NULL;
++	store->commit_merge = NULL;
+ 	store->drop_snapshot = NULL;
+ 	store->fraction_full = transient_fraction_full;
+ 
+diff --git a/drivers/md/dm-snap.h b/drivers/md/dm-snap.h
+index 93bce5d..8b02a42 100644
+--- a/drivers/md/dm-snap.h
++++ b/drivers/md/dm-snap.h
+@@ -115,6 +115,18 @@ struct exception_store {
+ 				  void *callback_context);
+ 
+ 	/*
++	 * Prepare the next exception for merging.
++	 */
++	int (*prepare_merge) (struct exception_store *store,
++			      struct dm_snap_exception *e,
++			      int *empty);
++
++	/*
++	 * Remove the currently merging exception.
++	 */
++	void (*commit_merge) (struct exception_store *store);
++
++	/*
+ 	 * The snapshot is invalid, note this in the metadata.
+ 	 */
+ 	void (*drop_snapshot) (struct exception_store *store);
 -- 
 1.5.4.1
