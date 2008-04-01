@@ -1,330 +1,436 @@
-From: Takashi Sato <t-sato@yk.jp.nec.com>
-Subject: [RFC PATCH 3/3] Add timeout feature
-Date: Tue, 1 Apr 2008 21:22:04 +0900
-Message-ID: <20080401212204t-sato@mail.jp.nec.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: David Chinner <dgc@sgi.com>
-Cc: "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH 1/7] scsi_dh: add skeleton for SCSI Device
+	Handlers
+Date: Tue, 01 Apr 2008 15:51:39 -0700
+Message-ID: <20080401225139.2124.25928.sendpatchset@localhost.localdomain>
+References: <20080401225133.2124.62025.sendpatchset@localhost.localdomain>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080401225133.2124.62025.sendpatchset@localhost.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: andmike@us.ibm.com, michaelc@cs.wisc.edu, asson_ronald@emc.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, jens.axboe@oracle.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-The timeout feature is added to freeze ioctl.  And new ioctl
-to reset the timeout period is added.
-o Freeze the filesystem
-  int ioctl(int fd, int FIFREEZE, long *timeval)
-  fd: The file descriptor of the mountpoint
-  FIFREEZE: request code for the freeze
-  timeval: the timeout period in seconds
-           If it's 0 or 1, the timeout isn't set.
-           This special case of "1" is implemented to keep
-           the compatibility with XFS applications.
-  Return value: 0 if the operation succeeds. Otherwise, -1
+Subject: scsi_dh: add skeleton for SCSI Device Handlers
 
-o Reset the timeout period
-  int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeval)
-    fd:file descriptor of mountpoint
-    FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
-    timeval: new timeout period in seconds
-    Return value: 0 if the operation succeeds. Otherwise, -1
-    Error number: If the filesystem has already been unfrozen,
-                  errno is set to EINVAL.
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 
-Signed-off-by: Takashi Sato <t-sato@yk.jp.nec.com>
-Signed-off-by: Masayuki Hamaguchi <m-hamaguchi@ys.jp.nec.com>
+Add base support to the SCSI subsystem for SCSI device handlers.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
+Signed-off-by: Mike Christie <michaelc@cs.wisc.edu>
 ---
- drivers/md/dm.c             |    2 -
- fs/block_dev.c              |    2 +
- fs/buffer.c                 |   14 ++++++++-
- fs/ioctl.c                  |   64 +++++++++++++++++++++++++++++++++++++++++++-
- fs/super.c                  |   52 +++++++++++++++++++++++++++++++++++
- fs/xfs/xfs_fsops.c          |    2 -
- include/linux/buffer_head.h |    2 -
- include/linux/fs.h          |    8 +++++
- 8 files changed, 140 insertions(+), 6 deletions(-)
 
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/drivers/md/dm.c linux-2.6.25-rc7-timeout/drivers
-/md/dm.c
---- linux-2.6.25-rc7-xfs/drivers/md/dm.c	2008-04-01 14:21:37.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/drivers/md/dm.c	2008-04-01 13:25:11.000000000 +0900
-@@ -1407,7 +1407,7 @@ static int lock_fs(struct mapped_device 
+ drivers/scsi/Kconfig                  |    2 	2 +	0 -	0 !
+ drivers/scsi/Makefile                 |    1 	1 +	0 -	0 !
+ drivers/scsi/device_handler/Kconfig   |   12 	12 +	0 -	0 !
+ drivers/scsi/device_handler/Makefile  |    4 	4 +	0 -	0 !
+ drivers/scsi/device_handler/scsi_dh.c |  147 	147 +	0 -	0 !
+ drivers/scsi/scsi_error.c             |   11 	11 +	0 -	0 !
+ drivers/scsi/scsi_lib.c               |    8 	8 +	0 -	0 !
+ include/scsi/scsi.h                   |    1 	1 +	0 -	0 !
+ include/scsi/scsi_device.h            |   22 	22 +	0 -	0 !
+ include/scsi/scsi_dh.h                |   58 	58 +	0 -	0 !
+ 10 files changed, 266 insertions(+)
+
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/Kconfig
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/drivers/scsi/Kconfig	2008-03-14 10:48:26.000000000 -0700
++++ linux-2.6.25-rc2-mm1/drivers/scsi/Kconfig	2008-03-14 10:49:21.000000000 -0700
+@@ -1749,4 +1749,6 @@
  
- 	WARN_ON(md->frozen_sb);
+ source "drivers/scsi/pcmcia/Kconfig"
  
--	md->frozen_sb = freeze_bdev(md->suspended_bdev);
-+	md->frozen_sb = freeze_bdev(md->suspended_bdev, 0);
- 	if (IS_ERR(md->frozen_sb)) {
- 		r = PTR_ERR(md->frozen_sb);
- 		md->frozen_sb = NULL;
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/fs/block_dev.c linux-2.6.25-rc7-timeout/fs/block
-_dev.c
---- linux-2.6.25-rc7-xfs/fs/block_dev.c	2008-04-01 14:22:34.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/fs/block_dev.c	2008-04-01 13:27:38.000000000 +0900
-@@ -287,6 +287,8 @@ static void init_once(struct kmem_cache 
++source "drivers/scsi/device_handler/Kconfig"
++
+ endmenu
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/Makefile
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/drivers/scsi/Makefile	2008-03-14 10:48:26.000000000 -0700
++++ linux-2.6.25-rc2-mm1/drivers/scsi/Makefile	2008-03-14 10:49:21.000000000 -0700
+@@ -34,6 +34,7 @@
+ obj-$(CONFIG_SCSI_SAS_ATTRS)	+= scsi_transport_sas.o
+ obj-$(CONFIG_SCSI_SAS_LIBSAS)	+= libsas/
+ obj-$(CONFIG_SCSI_SRP_ATTRS)	+= scsi_transport_srp.o
++obj-$(CONFIG_SCSI_DH)		+= device_handler/
  
- 	/* Initialize semaphore for freeze. */
- 	sema_init(&bdev->bd_freeze_sem, 1);
-+	/* Setup freeze timeout function. */
-+	INIT_DELAYED_WORK(&bdev->bd_freeze_timeout, freeze_timeout);
- }
- 
- static inline void __bd_forget(struct inode *inode)
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/fs/buffer.c linux-2.6.25-rc7-timeout/fs/buffer.c
---- linux-2.6.25-rc7-xfs/fs/buffer.c	2008-04-01 14:22:26.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/fs/buffer.c	2008-04-01 13:27:14.000000000 +0900
-@@ -190,14 +190,17 @@ int fsync_bdev(struct block_device *bdev
- 
- /**
-  * freeze_bdev  --  lock a filesystem and force it into a consistent state
-- * @bdev:	blockdevice to lock
-+ * @bdev:		blockdevice to lock
-+ * @timeout_msec:	timeout period
-  *
-  * This takes the block device bd_mount_sem to make sure no new mounts
-  * happen on bdev until thaw_bdev() is called.
-  * If a superblock is found on this device, we take the s_umount semaphore
-  * on it to make sure nobody unmounts until the snapshot creation is done.
-+ * If timeout_msec is bigger than 0, this registers the delayed work for
-+ * timeout of the freeze feature.
+ obj-$(CONFIG_ISCSI_TCP) 	+= libiscsi.o	iscsi_tcp.o
+ obj-$(CONFIG_INFINIBAND_ISER) 	+= libiscsi.o
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/device_handler/Kconfig
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.25-rc2-mm1/drivers/scsi/device_handler/Kconfig	2008-03-14 13:40:57.000000000 -0700
+@@ -0,0 +1,12 @@
++#
++# SCSI Device Handler configuration
++#
++
++menuconfig SCSI_DH
++	tristate "SCSI Device Handlers"
++	depends on SCSI
++	default n
++	help
++	  SCSI Device Handlers provide device specific support for
++	  devices utilized in multipath configurations. Say Y here to
++	  select support for specific hardware.
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/device_handler/Makefile
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.25-rc2-mm1/drivers/scsi/device_handler/Makefile	2008-03-14 13:40:57.000000000 -0700
+@@ -0,0 +1,4 @@
++#
++# SCSI Device Handler
++#
++obj-$(CONFIG_SCSI_DH)		+= scsi_dh.o
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/scsi_error.c
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/drivers/scsi/scsi_error.c	2008-03-14 10:48:27.000000000 -0700
++++ linux-2.6.25-rc2-mm1/drivers/scsi/scsi_error.c	2008-03-14 10:49:21.000000000 -0700
+@@ -298,6 +298,7 @@
   */
--struct super_block *freeze_bdev(struct block_device *bdev)
-+struct super_block *freeze_bdev(struct block_device *bdev, long timeout_msec)
+ static int scsi_check_sense(struct scsi_cmnd *scmd)
  {
- 	struct super_block *sb;
++	struct scsi_device *sdev = scmd->device;
+ 	struct scsi_sense_hdr sshdr;
  
-@@ -233,6 +236,10 @@ struct super_block *freeze_bdev(struct b
+ 	if (! scsi_command_normalize_sense(scmd, &sshdr))
+@@ -306,6 +307,16 @@
+ 	if (scsi_sense_is_deferred(&sshdr))
+ 		return NEEDS_RETRY;
  
- 	sync_blockdev(bdev);
- 
-+	/* Setup unfreeze timer. */
-+	if (timeout_msec > 0)
-+		add_freeze_timeout(bdev, timeout_msec);
++	if (sdev->scsi_dh_data && sdev->scsi_dh_data->scsi_dh &&
++			sdev->scsi_dh_data->scsi_dh->check_sense) {
++		int rc;
 +
- 	up(&bdev->bd_freeze_sem);
- 
- 	return sb;	/* thaw_bdev releases s->s_umount and bd_mount_sem */
-@@ -255,6 +262,9 @@ void thaw_bdev(struct block_device *bdev
- 		return;
- 	}
- 
-+	/* Delete unfreeze timer. */
-+	del_freeze_timeout(bdev);
-+
- 	if (sb) {
- 		BUG_ON(sb->s_bdev != bdev);
- 
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/fs/ioctl.c linux-2.6.25-rc7-timeout/fs/ioctl.c
---- linux-2.6.25-rc7-xfs/fs/ioctl.c	2008-04-01 14:22:38.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/fs/ioctl.c	2008-04-01 13:27:46.000000000 +0900
-@@ -184,6 +184,8 @@ int do_vfs_ioctl(struct file *filp, unsi
- 		break;
- 
- 	case FIFREEZE: {
-+		long timeout_sec;
-+		long timeout_msec;
- 		struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
- 
- 		if (!capable(CAP_SYS_ADMIN)) {
-@@ -197,8 +199,31 @@ int do_vfs_ioctl(struct file *filp, unsi
- 			break;
- 		}
- 
-+		/* arg(sec) to tick value. */
-+		error = get_user(timeout_sec, (long __user *) arg);
-+		if (error != 0)
-+			break;
-+		/*
-+		 * If 1 is specified as the timeout period,
-+		 * it will be changed into 0 to keep the compatibility
-+		 * of XFS application(xfs_freeze).
-+		 */
-+		if (timeout_sec < 0) {
-+			error = -EINVAL;
-+			break;
-+		} else if (timeout_sec < 2) {
-+			timeout_sec = 0;
-+		}
-+
-+		timeout_msec = timeout_sec * 1000;
-+		/* overflow case */
-+		if (timeout_msec < 0) {
-+			error = -EINVAL;
-+			break;
-+		}
-+
- 		/* Freeze. */
--		freeze_bdev(sb->s_bdev);
-+		freeze_bdev(sb->s_bdev, timeout_msec);
- 
- 		break;
- 	}
-@@ -216,6 +241,43 @@ int do_vfs_ioctl(struct file *filp, unsi
- 		break;
- 	}
- 
-+	case FIFREEZE_RESET_TIMEOUT: {
-+		long timeout_sec;
-+		long timeout_msec;
-+		struct super_block *sb
-+			= filp->f_path.dentry->d_inode->i_sb;
-+
-+		if (!capable(CAP_SYS_ADMIN)) {
-+			error = -EPERM;
-+			break;
-+		}
-+
-+		/* arg(sec) to tick value */
-+		error = get_user(timeout_sec, (long __user *) arg);
-+		if (error)
-+			break;
-+		timeout_msec = timeout_sec * 1000;
-+		if (timeout_msec < 0) {
-+			error = -EINVAL;
-+			break;
-+		}
-+
-+		if (sb) {
-+			down(&sb->s_bdev->bd_freeze_sem);
-+			if (sb->s_frozen == SB_UNFROZEN) {
-+				up(&sb->s_bdev->bd_freeze_sem);
-+				error = -EINVAL;
-+				break;
-+			}
-+			/* setup unfreeze timer */
-+			if (timeout_msec > 0)
-+				add_freeze_timeout(sb->s_bdev,
-+					timeout_msec);
-+			up(&sb->s_bdev->bd_freeze_sem);
-+		}
-+		break;
++		rc = sdev->scsi_dh_data->scsi_dh->check_sense(sdev, &sshdr);
++		if (rc != SCSI_RETURN_NOT_HANDLED)
++			return rc;
++		/* handler does not care. Drop down to default handling */
 +	}
 +
- 	default:
- 		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
- 			error = file_ioctl(filp, cmd, arg);
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/fs/super.c linux-2.6.25-rc7-timeout/fs/super.c
---- linux-2.6.25-rc7-xfs/fs/super.c	2008-04-01 14:22:34.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/fs/super.c	2008-04-01 13:27:41.000000000 +0900
-@@ -983,3 +983,55 @@ struct vfsmount *kern_mount_data(struct 
- }
+ 	/*
+ 	 * Previous logic looked for FILEMARK, EOM or ILI which are
+ 	 * mainly associated with tapes and returned SUCCESS.
+Index: linux-2.6.25-rc2-mm1/include/scsi/scsi_device.h
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/include/scsi/scsi_device.h	2008-03-14 10:48:31.000000000 -0700
++++ linux-2.6.25-rc2-mm1/include/scsi/scsi_device.h	2008-03-14 10:49:21.000000000 -0700
+@@ -161,9 +161,29 @@
  
- EXPORT_SYMBOL_GPL(kern_mount_data);
+ 	struct execute_work	ew; /* used to get process context on put */
+ 
++	struct scsi_dh_data	*scsi_dh_data;
+ 	enum scsi_device_state sdev_state;
+ 	unsigned long		sdev_data[0];
+ } __attribute__((aligned(sizeof(unsigned long))));
++
++struct scsi_device_handler {
++	/* Used by the infrastructure */
++	struct list_head list; /* list of scsi_device_handlers */
++	struct notifier_block nb;
++
++	/* Filled by the hardware handler */
++	struct module *module;
++	const char *name;
++	int (*check_sense)(struct scsi_device *, struct scsi_sense_hdr *);
++	int (*activate)(struct scsi_device *);
++	int (*prep_fn)(struct scsi_device *, struct request *);
++};
++
++struct scsi_dh_data {
++	struct scsi_device_handler *scsi_dh;
++	char buf[0];
++};
++
+ #define	to_scsi_device(d)	\
+ 	container_of(d, struct scsi_device, sdev_gendev)
+ #define	class_to_sdev(d)	\
+@@ -229,7 +249,9 @@
+ 		uint, uint, uint, void *hostdata);
+ extern int scsi_add_device(struct Scsi_Host *host, uint channel,
+ 			   uint target, uint lun);
++extern int scsi_register_device_handler(struct scsi_device_handler *scsi_dh);
+ extern void scsi_remove_device(struct scsi_device *);
++extern int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh);
+ 
+ extern int scsi_device_get(struct scsi_device *);
+ extern void scsi_device_put(struct scsi_device *);
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/device_handler/scsi_dh.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.25-rc2-mm1/drivers/scsi/device_handler/scsi_dh.c	2008-03-14 13:42:24.000000000 -0700
+@@ -0,0 +1,151 @@
++/*
++ * SCSI device handler infrastruture.
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation; either version 2 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program; if not, write to the Free Software Foundation, Inc.,
++ * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ * Copyright IBM Corporation, 2007
++ *      Authors:
++ *               Chandra Seetharaman <sekharan@us.ibm.com>
++ *               Mike Anderson <andmike@linux.vnet.ibm.com>
++ */
++
++#include <scsi/scsi_dh.h>
++#include "../scsi_priv.h"
++
++static DEFINE_SPINLOCK(list_lock);
++static LIST_HEAD(scsi_dh_list);
++
++static struct scsi_device_handler *get_device_handler(const char *name)
++{
++	struct scsi_device_handler *tmp, *found = NULL;
++
++	spin_lock(&list_lock);
++	list_for_each_entry(tmp, &scsi_dh_list, list) {
++		if (!strcmp(tmp->name, name)) {
++			found = tmp;
++			break;
++		}
++	}
++	spin_unlock(&list_lock);
++	return found;
++}
++
++static int scsi_dh_notifier_add(struct device *dev, void *data)
++{
++	struct scsi_device_handler *scsi_dh = data;
++
++	scsi_dh->nb.notifier_call(&scsi_dh->nb, BUS_NOTIFY_ADD_DEVICE, dev);
++	return 0;
++}
 +
 +/*
-+ * freeze_timeout - Thaw the filesystem.
++ * scsi_register_device_handler - register a device handler personality
++ *      module.
++ * @scsi_dh - device handler to be registered.
 + *
-+ * @work:	work queue (delayed_work.work)
-+ *
-+ * Called by the delayed work when elapsing the timeout period.
-+ * Thaw the filesystem.
++ * Returns 0 on success, -EBUSY if handler already registered.
 + */
-+void freeze_timeout(struct work_struct *work)
++int scsi_register_device_handler(struct scsi_device_handler *scsi_dh)
 +{
-+	struct block_device *bd = container_of(work,
-+			struct block_device, bd_freeze_timeout.work);
++	int ret = -EBUSY;
++	struct scsi_device_handler *tmp;
 +
-+	struct super_block *sb = get_super_without_lock(bd);
++	tmp = get_device_handler(scsi_dh->name);
++	if (tmp)
++		goto done;
 +
-+	thaw_bdev(bd, sb);
++	ret = bus_register_notifier(&scsi_bus_type, &scsi_dh->nb);
 +
-+	if (sb)
-+		put_super(sb);
++	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_add);
++	spin_lock(&list_lock);
++	list_add(&scsi_dh->list, &scsi_dh_list);
++	spin_unlock(&list_lock);
++
++done:
++	return ret;
 +}
-+EXPORT_SYMBOL_GPL(freeze_timeout);
++EXPORT_SYMBOL_GPL(scsi_register_device_handler);
 +
-+/*
-+ * add_freeze_timeout - Add timeout for freeze.
-+ *
-+ * @bdev:		block device struct
-+ * @timeout_msec:	timeout period
-+ *
-+ * Add the delayed work for freeze timeout to the delayed work queue.
-+ */
-+void add_freeze_timeout(struct block_device *bdev, long timeout_msec)
++static int scsi_dh_notifier_remove(struct device *dev, void *data)
 +{
-+	s64 timeout_jiffies = msecs_to_jiffies(timeout_msec);
++	struct scsi_device_handler *scsi_dh = data;
 +
-+	/* Set delayed work queue */
-+	cancel_delayed_work(&bdev->bd_freeze_timeout);
-+	schedule_delayed_work(&bdev->bd_freeze_timeout, timeout_jiffies);
++	scsi_dh->nb.notifier_call(&scsi_dh->nb, BUS_NOTIFY_DEL_DEVICE, dev);
++	return 0;
 +}
 +
 +/*
-+ * del_freeze_timeout - Delete timeout for freeze.
++ * scsi_unregister_device_handler - register a device handler personality
++ *      module.
++ * @scsi_dh - device handler to be unregistered.
 + *
-+ * @bdev:	block device struct
-+ *
-+ * Delete the delayed work for freeze timeout from the delayed work queue.
++ * Returns 0 on success, -ENODEV if handler not registered.
 + */
-+void del_freeze_timeout(struct block_device *bdev)
++int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh)
 +{
-+	if (delayed_work_pending(&bdev->bd_freeze_timeout))
-+		cancel_delayed_work(&bdev->bd_freeze_timeout);
++	int ret = -ENODEV;
++	struct scsi_device_handler *tmp;
++
++	tmp = get_device_handler(scsi_dh->name);
++	if (!tmp)
++		goto done;
++
++	ret = bus_unregister_notifier(&scsi_bus_type, &scsi_dh->nb);
++
++	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh,
++					scsi_dh_notifier_remove);
++	spin_lock(&list_lock);
++	list_del(&scsi_dh->list);
++	spin_unlock(&list_lock);
++
++done:
++	return ret;
 +}
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/fs/xfs/xfs_fsops.c linux-2.6.25-rc7-timeout/fs/x
-fs/xfs_fsops.c
---- linux-2.6.25-rc7-xfs/fs/xfs/xfs_fsops.c	2008-04-01 14:22:33.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/fs/xfs/xfs_fsops.c	2008-04-01 13:27:35.000000000 +0900
-@@ -623,7 +623,7 @@ xfs_fs_goingdown(
- {
- 	switch (inflags) {
- 	case XFS_FSOP_GOING_FLAGS_DEFAULT: {
--		struct super_block *sb = freeze_bdev(mp->m_super->s_bdev);
-+		struct super_block *sb = freeze_bdev(mp->m_super->s_bdev, 0);
++EXPORT_SYMBOL_GPL(scsi_unregister_device_handler);
++
++/*
++ * scsi_dh_activate - activate the path associated with the scsi_device
++ *      corresponding to the given request queue.
++ * @q - Request queue that is associated with the scsi_device to be
++ *      activated.
++ */
++int scsi_dh_activate(struct request_queue *q)
++{
++	int err = 0;
++	unsigned long flags;
++	struct scsi_device *sdev;
++	struct scsi_device_handler *scsi_dh = NULL;
++
++	spin_lock_irqsave(q->queue_lock, flags);
++	sdev = q->queuedata;
++	if (sdev && sdev->scsi_dh_data)
++		scsi_dh = sdev->scsi_dh_data->scsi_dh;
++	if (!scsi_dh || !get_device(&sdev->sdev_gendev))
++		err = SCSI_DH_NOSYS;
++	spin_unlock_irqrestore(q->queue_lock, flags);
++
++	if (err)
++		return err;
++
++	if (scsi_dh->activate)
++		err = scsi_dh->activate(sdev);
++	put_device(&sdev->sdev_gendev);
++	return err;
++}
++EXPORT_SYMBOL_GPL(scsi_dh_activate);
++
++MODULE_DESCRIPTION("SCSI device handler");
++MODULE_AUTHOR("Chandra Seetharaman <sekharan@us.ibm.com>");
++MODULE_LICENSE("GPL");
+Index: linux-2.6.25-rc2-mm1/include/scsi/scsi_dh.h
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ linux-2.6.25-rc2-mm1/include/scsi/scsi_dh.h	2008-03-14 10:49:21.000000000 -0700
+@@ -0,0 +1,58 @@
++/*
++ * Header file for SCSI device handler infrastruture.
++ *
++ * Modified version of patches posted by Mike Christie <michaelc@cs.wisc.edu>
++ *
++ * This program is free software; you can redistribute it and/or modify it
++ * under the terms of the GNU General Public License as published by the
++ * Free Software Foundation; either version 2 of the License, or (at your
++ * option) any later version.
++ *
++ * This program is distributed in the hope that it will be useful, but
++ * WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * General Public License for more details.
++ *
++ * You should have received a copy of the GNU General Public License along
++ * with this program; if not, write to the Free Software Foundation, Inc.,
++ * 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
++ *
++ * Copyright IBM Corporation, 2007
++ *      Authors:
++ *               Chandra Seetharaman <sekharan@us.ibm.com>
++ *               Mike Anderson <andmike@linux.vnet.ibm.com>
++ */
++
++#include <scsi/scsi_device.h>
++
++enum {
++	SCSI_DH_OK = 0,
++	/*
++	 * device errors
++	 */
++	SCSI_DH_DEV_FAILED,	/* generic device error */
++	SCSI_DH_DEV_TEMP_BUSY,
++	SCSI_DH_DEVICE_MAX,	/* max device blkerr definition */
++
++	/*
++	 * transport errors
++	 */
++	SCSI_DH_NOTCONN = SCSI_DH_DEVICE_MAX + 1,
++	SCSI_DH_CONN_FAILURE,
++	SCSI_DH_TRANSPORT_MAX,	/* max transport blkerr definition */
++
++	/*
++	 * driver and generic errors
++	 */
++	SCSI_DH_IO = SCSI_DH_TRANSPORT_MAX + 1,	/* generic error */
++	SCSI_DH_INVALID_IO,
++	SCSI_DH_RETRY,		/* retry the req, but not immediately */
++	SCSI_DH_IMM_RETRY,	/* immediately retry the req */
++	SCSI_DH_TIMED_OUT,
++	SCSI_DH_RES_TEMP_UNAVAIL,
++	SCSI_DH_DEV_OFFLINED,
++	SCSI_DH_NOSYS,
++	SCSI_DH_DRIVER_MAX,
++};
++
++extern int scsi_dh_activate(struct request_queue *);
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/scsi_lib.c
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/drivers/scsi/scsi_lib.c	2008-03-14 10:48:27.000000000 -0700
++++ linux-2.6.25-rc2-mm1/drivers/scsi/scsi_lib.c	2008-03-14 10:49:21.000000000 -0700
+@@ -1158,6 +1158,14 @@
  
- 		if (sb && !IS_ERR(sb)) {
- 			xfs_force_shutdown(mp, SHUTDOWN_FORCE_UMOUNT);
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/include/linux/buffer_head.h linux-2.6.25-rc7-tim
-eout/include/linux/buffer_head.h
---- linux-2.6.25-rc7-xfs/include/linux/buffer_head.h	2008-04-01 14:22:39.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/include/linux/buffer_head.h	2008-04-01 13:27:53.000000000 +0900
-@@ -170,7 +170,7 @@ int sync_blockdev(struct block_device *b
- void __wait_on_buffer(struct buffer_head *);
- wait_queue_head_t *bh_waitq_head(struct buffer_head *bh);
- int fsync_bdev(struct block_device *);
--struct super_block *freeze_bdev(struct block_device *);
-+struct super_block *freeze_bdev(struct block_device *, long timeout_msec);
- void thaw_bdev(struct block_device *, struct super_block *);
- int fsync_super(struct super_block *);
- int fsync_no_super(struct block_device *);
-diff -uprN -X /home/sho/pub/MC/freeze-set/dontdiff linux-2.6.25-rc7-xfs/include/linux/fs.h linux-2.6.25-rc7-timeout/incl
-ude/linux/fs.h
---- linux-2.6.25-rc7-xfs/include/linux/fs.h	2008-04-01 14:22:39.000000000 +0900
-+++ linux-2.6.25-rc7-timeout/include/linux/fs.h	2008-04-01 13:27:53.000000000 +0900
-@@ -8,6 +8,7 @@
- 
- #include <linux/limits.h>
- #include <linux/ioctl.h>
-+#include <linux/workqueue.h>
+ 	if (ret != BLKPREP_OK)
+ 		return ret;
++
++	if (unlikely(sdev->scsi_dh_data && sdev->scsi_dh_data->scsi_dh
++			 && sdev->scsi_dh_data->scsi_dh->prep_fn)) {
++		ret = sdev->scsi_dh_data->scsi_dh->prep_fn(sdev, req);
++		if (ret != BLKPREP_OK)
++			return ret;
++	}
++
+ 	/*
+ 	 * Filesystem requests must transfer data.
+ 	 */
+Index: linux-2.6.25-rc2-mm1/include/scsi/scsi.h
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/include/scsi/scsi.h	2008-03-14 10:48:31.000000000 -0700
++++ linux-2.6.25-rc2-mm1/include/scsi/scsi.h	2008-03-14 10:49:21.000000000 -0700
+@@ -374,6 +374,7 @@
+ #define SOFT_ERROR      0x2005
+ #define ADD_TO_MLQUEUE  0x2006
+ #define TIMEOUT_ERROR   0x2007
++#define SCSI_RETURN_NOT_HANDLED   0x2008
  
  /*
-  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
-@@ -225,6 +226,7 @@ extern int dir_notify_enable;
- #define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
- #define FIFREEZE	_IOWR('X', 119, int)	/* Freeze */
- #define FITHAW		_IOWR('X', 120, int)	/* Thaw */
-+#define	FIFREEZE_RESET_TIMEOUT	_IO(0x00, 3)	/* Reset freeze timeout */
- 
- #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
- #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
-@@ -551,6 +553,8 @@ struct block_device {
- 	 */
- 	unsigned long		bd_private;
- 
-+	/* Delayed work for freeze */
-+	struct delayed_work	bd_freeze_timeout;
- 	/* Semaphore for freeze */
- 	struct semaphore	bd_freeze_sem;
+  * Midlevel queue return values.
+Index: linux-2.6.25-rc2-mm1/drivers/scsi/scsi_sysfs.c
+===================================================================
+--- linux-2.6.25-rc2-mm1.orig/drivers/scsi/scsi_sysfs.c	2008-03-14 10:48:27.000000000 -0700
++++ linux-2.6.25-rc2-mm1/drivers/scsi/scsi_sysfs.c	2008-03-14 11:11:38.000000000 -0700
+@@ -397,6 +397,7 @@
+ 	.resume		= scsi_bus_resume,
+ 	.remove		= scsi_bus_remove,
  };
-@@ -2104,5 +2108,9 @@ int proc_nr_files(struct ctl_table *tabl
++EXPORT_SYMBOL_GPL(scsi_bus_type);
  
- int get_filesystem_list(char * buf);
- 
-+extern void add_freeze_timeout(struct block_device *bdev, long timeout_msec);
-+extern void del_freeze_timeout(struct block_device *bdev);
-+extern void freeze_timeout(struct work_struct *work);
-+
- #endif /* __KERNEL__ */
- #endif /* _LINUX_FS_H */
+ int scsi_sysfs_register(void)
+ {
+
+-- 
+
+----------------------------------------------------------------------
+    Chandra Seetharaman               | Be careful what you choose....
+              - sekharan@us.ibm.com   |      .......you may get it.
+----------------------------------------------------------------------
