@@ -1,12 +1,12 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 7/7] scsi_dh: Remove hardware handler
-	infrastructure from dm
-Date: Tue, 01 Apr 2008 15:52:15 -0700
-Message-ID: <20080401225215.2124.39005.sendpatchset@localhost.localdomain>
-References: <20080401225133.2124.62025.sendpatchset@localhost.localdomain>
+From: malahal@us.ibm.com
+Subject: [PATCH] dm: raid1 block-on-error patch
+Date: Tue, 1 Apr 2008 16:21:23 -0700
+Message-ID: <20080401232123.GA19676@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080401225133.2124.62025.sendpatchset@localhost.localdomain>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,340 +16,449 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
-Cc: andmike@us.ibm.com, michaelc@cs.wisc.edu, asson_ronald@emc.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, jens.axboe@oracle.com, agk@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Subject: scsi_dh: Remove hardware handler infrastructure from dm
+Refreshed to linux-2.6.25-rc5-mm1.
 
-From: Chandra Seetharaman <sekharan@us.ibm.com>
+This patch generates a uevent on a device failure and does NOT process
+further writes until it receives 'unblock' message. LVM or other tools
+are expected to get the miror-set status upon receiving the above uevent
+and record the failed device in their metadata, and then send the
+'unblock' message to the dm-raid1 target.
 
-This patch just removes infrastructure that provide support to add
-a hardware handler to dm.
+Please comment. This would help LVM select the right master device at
+mirror logical volume activation/load time.
 
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
- drivers/md/Makefile        |    2 	1 +	1 -	0 !
- drivers/md/dm-hw-handler.c |  213 	0 +	213 -	0 !
- drivers/md/dm-hw-handler.h |   63 	0 +	63 -	0 !
- drivers/md/dm-mpath.h      |    1 	0 +	1 -	0 !
- 4 files changed, 1 insertion(+), 278 deletions(-)
+Signed-off-by: Malahal Naineni <malahal@us.ibm.com>
 
-Index: linux-2.6.25-rc5-mm1/drivers/md/dm-hw-handler.c
-===================================================================
---- linux-2.6.25-rc5-mm1.orig/drivers/md/dm-hw-handler.c	2008-03-26 15:18:07.000000000 -0700
-+++ /dev/null	1970-01-01 00:00:00.000000000 +0000
-@@ -1,213 +0,0 @@
--/*
-- * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-- *
-- * This file is released under the GPL.
-- *
-- * Multipath hardware handler registration.
-- */
+diff -r bfb50ef53671 drivers/md/dm-raid1.c
+--- a/drivers/md/dm-raid1.c	Mon Mar 31 10:13:13 2008 -0700
++++ b/drivers/md/dm-raid1.c	Tue Apr 01 16:09:09 2008 -0700
+@@ -10,6 +10,7 @@
+ #include "dm-io.h"
+ #include "dm-log.h"
+ #include "kcopyd.h"
++#include "dm-uevent.h"
+ 
+ #include <linux/ctype.h>
+ #include <linux/init.h>
+@@ -26,8 +27,11 @@
+ #define DM_MSG_PREFIX "raid1"
+ #define DM_IO_PAGES 64
+ 
+-#define DM_RAID1_HANDLE_ERRORS 0x01
++#define DM_RAID1_HANDLE_ERRORS  0x01
++#define DM_RAID1_BLOCK_ON_ERROR 0x02
+ #define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS)
++#define block_on_error(p)	((p)->features & DM_RAID1_BLOCK_ON_ERROR)
++#define handle_all_errors(p)	(errors_handled(p) || block_on_error(p))
+ 
+ static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
+ 
+@@ -148,6 +152,7 @@ struct mirror_set {
+ 	region_t nr_regions;
+ 	int in_sync;
+ 	int log_failure;
++	int write_blocked;
+ 	atomic_t suspend;
+ 
+ 	atomic_t default_mirror;	/* Default mirror */
+@@ -443,7 +448,7 @@ static void rh_update_states(struct regi
+ 	}
+ 
+ 	list_for_each_entry_safe(reg, next, &failed_recovered, list) {
+-		complete_resync_work(reg, errors_handled(rh->ms) ? 0 : 1);
++		complete_resync_work(reg, handle_all_errors(rh->ms) ? 0 : 1);
+ 		mempool_free(reg, rh->region_pool);
+ 	}
+ 
+@@ -706,8 +711,10 @@ static void fail_mirror(struct mirror *m
+ {
+ 	struct mirror_set *ms = m->ms;
+ 	struct mirror *new;
++	unsigned long flags;
++	int generate_uevent = 0;
+ 
+-	if (!errors_handled(ms))
++	if (!handle_all_errors(ms))
+ 		return;
+ 
+ 	/*
+@@ -719,6 +726,25 @@ static void fail_mirror(struct mirror *m
+ 
+ 	if (test_and_set_bit(error_type, &m->error_type))
+ 		return;
++
++	/*
++	 * Make sure that device failure is recorded in the metadata
++	 * before allowing any new writes. Agent acting on the following
++	 * uevent should query the status of the mirrorset, update
++	 * metadata accordingly and then send the unblock message.
++	 */
++	if (block_on_error(ms)) {
++		spin_lock_irqsave(&ms->lock, flags);
++		if (!ms->write_blocked) {
++			ms->write_blocked = 1;
++			generate_uevent = 1;
++		}
++		spin_unlock_irqrestore(&ms->lock, flags);
++		if (generate_uevent) {
++			dm_dev_uevent(DM_UEVENT_DEV_CHANGE, ms->ti);
++			schedule_work(&ms->trigger_event);
++		}
++	}
+ 
+ 	if (m != get_default_mirror(ms))
+ 		goto out;
+@@ -835,6 +861,7 @@ static void do_recovery(struct mirror_se
+ 	int r;
+ 	struct region *reg;
+ 	struct dm_dirty_log *log = ms->rh.log;
++	struct mirror *m;
+ 
+ 	/*
+ 	 * Start quiescing some regions.
+@@ -855,6 +882,10 @@ static void do_recovery(struct mirror_se
+ 	 */
+ 	if (!ms->in_sync &&
+ 	    (log->type->get_sync_count(log) == ms->nr_regions)) {
++		for (m = ms->mirror; m < ms->mirror + ms->nr_mirrors; m++) {
++			atomic_set(&m->error_count, 0);
++			m->error_type = 0;
++		}
+ 		/* the sync is complete */
+ 		dm_table_event(ms->ti->table);
+ 		ms->in_sync = 1;
+@@ -1086,7 +1117,7 @@ static void write_callback(unsigned long
+ 		DMERR("All replicated volumes dead, failing I/O");
+ 		/* None of the writes succeeded, fail the I/O. */
+ 		ret = -EIO;
+-	} else if (errors_handled(ms)) {
++	} else if (handle_all_errors(ms)) {
+ 		/*
+ 		 * Need to raise event.  Since raising
+ 		 * events can block, we need to do it in
+@@ -1139,6 +1170,13 @@ static void do_writes(struct mirror_set 
+ 
+ 	if (!writes->head)
+ 		return;
++
++	if (ms->write_blocked) {
++		spin_lock_irq(&ms->lock);
++		bio_list_merge(&ms->writes, writes);
++		spin_unlock_irq(&ms->lock);
++		return;
++	}
+ 
+ 	/*
+ 	 * Classify each write.
+@@ -1202,6 +1240,13 @@ static void do_failures(struct mirror_se
+ 
+ 	if (!failures->head)
+ 		return;
++
++	if (ms->write_blocked) {
++		spin_lock_irq(&ms->lock);
++		bio_list_merge(&ms->failures, failures);
++		spin_unlock_irq(&ms->lock);
++		return;
++	}
+ 
+ 	if (!ms->log_failure) {
+ 		while ((bio = bio_list_pop(failures)))
+@@ -1297,7 +1342,6 @@ static void do_mirror(struct work_struct
+ 		schedule();
+ }
+ 
 -
--#include "dm.h"
--#include "dm-hw-handler.h"
+ /*-----------------------------------------------------------------
+  * Target functions
+  *---------------------------------------------------------------*/
+@@ -1327,6 +1371,7 @@ static struct mirror_set *alloc_context(
+ 	ms->nr_regions = dm_sector_div_up(ti->len, region_size);
+ 	ms->in_sync = 0;
+ 	ms->log_failure = 0;
++	ms->write_blocked = 0;
+ 	atomic_set(&ms->suspend, 0);
+ 	atomic_set(&ms->default_mirror, DEFAULT_MIRROR);
+ 
+@@ -1448,6 +1493,7 @@ static int parse_features(struct mirror_
+ {
+ 	unsigned num_features;
+ 	struct dm_target *ti = ms->ti;
++	int i;
+ 
+ 	*args_used = 0;
+ 
+@@ -1458,24 +1504,25 @@ static int parse_features(struct mirror_
+ 		ti->error = "Invalid number of features";
+ 		return -EINVAL;
+ 	}
++	argv++, argc--;
+ 
+-	argc--;
+-	argv++;
+-	(*args_used)++;
 -
--#include <linux/slab.h>
--
--struct hwh_internal {
--	struct hw_handler_type hwht;
--
--	struct list_head list;
--	long use;
--};
--
--#define hwht_to_hwhi(__hwht) container_of((__hwht), struct hwh_internal, hwht)
--
--static LIST_HEAD(_hw_handlers);
--static DECLARE_RWSEM(_hwh_lock);
--
--static struct hwh_internal *__find_hw_handler_type(const char *name)
--{
--	struct hwh_internal *hwhi;
--
--	list_for_each_entry(hwhi, &_hw_handlers, list) {
--		if (!strcmp(name, hwhi->hwht.name))
--			return hwhi;
--	}
--
--	return NULL;
--}
--
--static struct hwh_internal *get_hw_handler(const char *name)
--{
--	struct hwh_internal *hwhi;
--
--	down_read(&_hwh_lock);
--	hwhi = __find_hw_handler_type(name);
--	if (hwhi) {
--		if ((hwhi->use == 0) && !try_module_get(hwhi->hwht.module))
--			hwhi = NULL;
--		else
--			hwhi->use++;
--	}
--	up_read(&_hwh_lock);
--
--	return hwhi;
--}
--
--struct hw_handler_type *dm_get_hw_handler(const char *name)
--{
--	struct hwh_internal *hwhi;
--
--	if (!name)
--		return NULL;
--
--	hwhi = get_hw_handler(name);
--	if (!hwhi) {
--		request_module("dm-%s", name);
--		hwhi = get_hw_handler(name);
--	}
--
--	return hwhi ? &hwhi->hwht : NULL;
--}
--
--void dm_put_hw_handler(struct hw_handler_type *hwht)
--{
--	struct hwh_internal *hwhi;
--
--	if (!hwht)
--		return;
--
--	down_read(&_hwh_lock);
--	hwhi = __find_hw_handler_type(hwht->name);
--	if (!hwhi)
--		goto out;
--
--	if (--hwhi->use == 0)
--		module_put(hwhi->hwht.module);
--
--	BUG_ON(hwhi->use < 0);
--
--      out:
--	up_read(&_hwh_lock);
--}
--
--static struct hwh_internal *_alloc_hw_handler(struct hw_handler_type *hwht)
--{
--	struct hwh_internal *hwhi = kzalloc(sizeof(*hwhi), GFP_KERNEL);
--
--	if (hwhi)
--		hwhi->hwht = *hwht;
--
--	return hwhi;
--}
--
--int dm_register_hw_handler(struct hw_handler_type *hwht)
--{
--	int r = 0;
--	struct hwh_internal *hwhi = _alloc_hw_handler(hwht);
--
--	if (!hwhi)
--		return -ENOMEM;
--
--	down_write(&_hwh_lock);
--
--	if (__find_hw_handler_type(hwht->name)) {
--		kfree(hwhi);
--		r = -EEXIST;
--	} else
--		list_add(&hwhi->list, &_hw_handlers);
--
--	up_write(&_hwh_lock);
--
--	return r;
--}
--
--int dm_unregister_hw_handler(struct hw_handler_type *hwht)
--{
--	struct hwh_internal *hwhi;
--
--	down_write(&_hwh_lock);
--
--	hwhi = __find_hw_handler_type(hwht->name);
--	if (!hwhi) {
--		up_write(&_hwh_lock);
+-	if (num_features > argc) {
++	if (argc < num_features) {
+ 		ti->error = "Not enough arguments to support feature count";
+ 		return -EINVAL;
+ 	}
+ 
+-	if (!strcmp("handle_errors", argv[0]))
+-		ms->features |= DM_RAID1_HANDLE_ERRORS;
+-	else {
+-		ti->error = "Unrecognised feature requested";
 -		return -EINVAL;
--	}
--
--	if (hwhi->use) {
--		up_write(&_hwh_lock);
--		return -ETXTBSY;
--	}
--
--	list_del(&hwhi->list);
--
--	up_write(&_hwh_lock);
--
--	kfree(hwhi);
--
--	return 0;
--}
--
--unsigned dm_scsi_err_handler(struct hw_handler *hwh, struct bio *bio)
--{
--#if 0
--	int sense_key, asc, ascq;
--
--	if (bio->bi_error & BIO_SENSE) {
--		/* FIXME: This is just an initial guess. */
--		/* key / asc / ascq */
--		sense_key = (bio->bi_error >> 16) & 0xff;
--		asc = (bio->bi_error >> 8) & 0xff;
--		ascq = bio->bi_error & 0xff;
--
--		switch (sense_key) {
--			/* This block as a whole comes from the device.
--			 * So no point retrying on another path. */
--		case 0x03:	/* Medium error */
--		case 0x05:	/* Illegal request */
--		case 0x07:	/* Data protect */
--		case 0x08:	/* Blank check */
--		case 0x0a:	/* copy aborted */
--		case 0x0c:	/* obsolete - no clue ;-) */
--		case 0x0d:	/* volume overflow */
--		case 0x0e:	/* data miscompare */
--		case 0x0f:	/* reserved - no idea either. */
--			return MP_ERROR_IO;
--
--			/* For these errors it's unclear whether they
--			 * come from the device or the controller.
--			 * So just lets try a different path, and if
--			 * it eventually succeeds, user-space will clear
--			 * the paths again... */
--		case 0x02:	/* Not ready */
--		case 0x04:	/* Hardware error */
--		case 0x09:	/* vendor specific */
--		case 0x0b:	/* Aborted command */
--			return MP_FAIL_PATH;
--
--		case 0x06:	/* Unit attention - might want to decode */
--			if (asc == 0x04 && ascq == 0x01)
--				/* "Unit in the process of
--				 * becoming ready" */
--				return 0;
--			return MP_FAIL_PATH;
--
--			/* FIXME: For Unit Not Ready we may want
--			 * to have a generic pg activation
--			 * feature (START_UNIT). */
--
--			/* Should these two ever end up in the
--			 * error path? I don't think so. */
--		case 0x00:	/* No sense */
--		case 0x01:	/* Recovered error */
--			return 0;
--		}
--	}
--#endif
--
--	/* We got no idea how to decode the other kinds of errors ->
--	 * assume generic error condition. */
--	return MP_FAIL_PATH;
--}
--
--EXPORT_SYMBOL_GPL(dm_register_hw_handler);
--EXPORT_SYMBOL_GPL(dm_unregister_hw_handler);
--EXPORT_SYMBOL_GPL(dm_scsi_err_handler);
-Index: linux-2.6.25-rc5-mm1/drivers/md/dm-hw-handler.h
-===================================================================
---- linux-2.6.25-rc5-mm1.orig/drivers/md/dm-hw-handler.h	2008-03-26 15:18:07.000000000 -0700
-+++ /dev/null	1970-01-01 00:00:00.000000000 +0000
-@@ -1,63 +0,0 @@
--/*
-- * Copyright (C) 2004 Red Hat, Inc. All rights reserved.
-- *
-- * This file is released under the GPL.
-- *
-- * Multipath hardware handler registration.
-- */
--
--#ifndef	DM_HW_HANDLER_H
--#define	DM_HW_HANDLER_H
--
--#include <linux/device-mapper.h>
--
--#include "dm-mpath.h"
--
--struct hw_handler_type;
--struct hw_handler {
--	struct hw_handler_type *type;
--	struct mapped_device *md;
--	void *context;
--};
--
--/*
-- * Constructs a hardware handler object, takes custom arguments
-- */
--/* Information about a hardware handler type */
--struct hw_handler_type {
--	char *name;
--	struct module *module;
--
--	int (*create) (struct hw_handler *handler, unsigned int argc,
--		       char **argv);
--	void (*destroy) (struct hw_handler *hwh);
--
--	void (*pg_init) (struct hw_handler *hwh, unsigned bypassed,
--			 struct dm_path *path);
--	unsigned (*error) (struct hw_handler *hwh, struct bio *bio);
--	int (*status) (struct hw_handler *hwh, status_type_t type,
--		       char *result, unsigned int maxlen);
--};
--
--/* Register a hardware handler */
--int dm_register_hw_handler(struct hw_handler_type *type);
--
--/* Unregister a hardware handler */
--int dm_unregister_hw_handler(struct hw_handler_type *type);
--
--/* Returns a registered hardware handler type */
--struct hw_handler_type *dm_get_hw_handler(const char *name);
--
--/* Releases a hardware handler  */
--void dm_put_hw_handler(struct hw_handler_type *hwht);
--
--/* Default err function */
--unsigned dm_scsi_err_handler(struct hw_handler *hwh, struct bio *bio);
--
--/* Error flags for err and dm_pg_init_complete */
--#define MP_FAIL_PATH 1
--#define MP_BYPASS_PG 2
--#define MP_ERROR_IO  4	/* Don't retry this I/O */
--#define MP_RETRY 8
--
--#endif
-Index: linux-2.6.25-rc5-mm1/drivers/md/Makefile
-===================================================================
---- linux-2.6.25-rc5-mm1.orig/drivers/md/Makefile	2008-03-26 15:18:07.000000000 -0700
-+++ linux-2.6.25-rc5-mm1/drivers/md/Makefile	2008-03-26 15:18:12.000000000 -0700
-@@ -4,7 +4,7 @@
++	for (i = 0; i < num_features; i++) {
++		if (!strcmp("handle_errors", argv[i]))
++			ms->features |= DM_RAID1_HANDLE_ERRORS;
++		else if (!strcmp("block_on_error", argv[i]))
++			ms->features |= DM_RAID1_BLOCK_ON_ERROR;
++		else {
++			ti->error = "Unrecognised feature requested";
++			return -EINVAL;
++		}
+ 	}
  
- dm-mod-objs	:= dm.o dm-table.o dm-target.o dm-linear.o dm-stripe.o \
- 		   dm-ioctl.o dm-io.o kcopyd.o
--dm-multipath-objs := dm-hw-handler.o dm-path-selector.o dm-mpath.o
-+dm-multipath-objs := dm-path-selector.o dm-mpath.o
- dm-snapshot-objs := dm-snap.o dm-exception-store.o
- dm-mirror-objs	:= dm-raid1.o
- dm-rdac-objs	:= dm-mpath-rdac.o
-Index: linux-2.6.25-rc5-mm1/drivers/md/dm-mpath.h
-===================================================================
---- linux-2.6.25-rc5-mm1.orig/drivers/md/dm-mpath.h	2008-03-26 15:18:07.000000000 -0700
-+++ linux-2.6.25-rc5-mm1/drivers/md/dm-mpath.h	2008-03-26 15:18:12.000000000 -0700
-@@ -16,7 +16,6 @@
- 	unsigned is_active;	/* Read-only */
+-	(*args_used)++;
++	*args_used = 1 + num_features;
  
- 	void *pscontext;	/* For path-selector use */
--	void *hwhcontext;	/* For hw-handler use */
+ 	return 0;
+ }
+@@ -1789,6 +1836,7 @@ static void mirror_resume(struct dm_targ
+  *
+  * We return one character representing the most severe error
+  * we have encountered.
++ *    M => Master - Has the latest data, can serve as a mirror Master
+  *    A => Alive - No failures
+  *    D => Dead - A write failure occurred leaving mirror out-of-sync
+  *    S => Sync - A sychronization failure occurred, mirror out-of-sync
+@@ -1798,6 +1846,14 @@ static void mirror_resume(struct dm_targ
+  */
+ static char device_status_char(struct mirror *m)
+ {
++	struct mirror_set *ms = m->ms;
++
++	if (block_on_error(ms)) {
++		if (atomic_read(&m->error_count) == 0 &&
++		    (ms->in_sync || get_default_mirror(ms) == m))
++			return 'M';
++	}
++
+ 	if (!atomic_read(&(m->error_count)))
+ 		return 'A';
+ 
+@@ -1840,10 +1896,73 @@ static int mirror_status(struct dm_targe
+ 			DMEMIT(" %s %llu", ms->mirror[m].dev->name,
+ 			       (unsigned long long)ms->mirror[m].offset);
+ 
+-		if (ms->features & DM_RAID1_HANDLE_ERRORS)
++		if (errors_handled(ms) && block_on_error(ms))
++			DMEMIT(" 2 handle_errors block_on_error");
++		else if (errors_handled(ms))
+ 			DMEMIT(" 1 handle_errors");
++		else if (block_on_error(ms))
++			DMEMIT(" 1 block_on_error");
+ 	}
+ 
++	return 0;
++}
++
++/* unblock message handler
++ *
++ * This message has the mirror device recorded states. If they don't
++ * agree to the actual state in the target, we regenerate uvent. If the
++ * recorded state and the actual of state of each device is same, we
++ * unblock the mirrorset to allow writes.
++ */
++static int mirror_message(struct dm_target *ti, unsigned argc, char **argv)
++{
++	struct mirror_set *ms = (struct mirror_set *) ti->private;
++	char device_status;
++	char *name;	/* major:minor format */
++	int i;
++
++	if (!block_on_error(ms))
++		return -EINVAL;
++	if (argc < 1 || strnicmp(argv[0], "unblock", sizeof("unblock")))
++		return -EINVAL;
++	argv++;
++	argc--;
++
++	spin_lock_irq(&ms->lock);
++	if (!ms->write_blocked)
++		DMWARN("Received unblock message when not blocked!");
++	if (argc != 2 * ms->nr_mirrors)
++		goto error;
++
++	for (i = 0; i < ms->nr_mirrors; i++) {
++		name = argv[2 * i];
++		if (strncmp(name, ms->mirror[i].dev->name,
++			   sizeof(ms->mirror[i].dev->name))) {
++			DMWARN("name %s doesn't match name %s\n", name,
++			       (ms->mirror[i].dev->name));
++			goto error;
++		}
++		if (sscanf(argv[2 * i + 1], "%c", &device_status) != 1) {
++			DMWARN("incorrect recorded state value");
++			goto error;
++		}
++
++		/* Re-generate uevent if the actual device state has
++		 * changed since we last reported.
++		 */
++		if (device_status != device_status_char(&ms->mirror[i]))
++			goto error;
++	}
++	ms->write_blocked = 0;
++	spin_unlock_irq(&ms->lock);
++	wake(ms);
++	return 0;
++
++error:
++	/* Regenerate the event */
++	spin_unlock_irq(&ms->lock);
++	dm_dev_uevent(DM_UEVENT_DEV_CHANGE, ms->ti);
++	schedule_work(&ms->trigger_event);
+ 	return 0;
+ }
+ 
+@@ -1859,6 +1978,7 @@ static struct target_type mirror_target 
+ 	.postsuspend = mirror_postsuspend,
+ 	.resume	 = mirror_resume,
+ 	.status	 = mirror_status,
++	.message = mirror_message,
  };
  
- /* Callback for hwh_pg_init_fn to use when complete */
-
--- 
-
-----------------------------------------------------------------------
-    Chandra Seetharaman               | Be careful what you choose....
-              - sekharan@us.ibm.com   |      .......you may get it.
-----------------------------------------------------------------------
+ static int __init dm_mirror_init(void)
+diff -r bfb50ef53671 drivers/md/dm-uevent.c
+--- a/drivers/md/dm-uevent.c	Mon Mar 31 10:13:13 2008 -0700
++++ b/drivers/md/dm-uevent.c	Tue Apr 01 16:09:09 2008 -0700
+@@ -35,6 +35,7 @@ static const struct {
+ } _dm_uevent_type_names[] = {
+ 	{DM_UEVENT_PATH_FAILED, KOBJ_CHANGE, "PATH_FAILED"},
+ 	{DM_UEVENT_PATH_REINSTATED, KOBJ_CHANGE, "PATH_REINSTATED"},
++	{DM_UEVENT_DEV_CHANGE, KOBJ_CHANGE, "TARGET_STATE_CHANGE"},
+ };
+ 
+ static struct kmem_cache *_dm_event_cache;
+@@ -111,6 +112,48 @@ static struct dm_uevent *dm_build_path_u
+ 	if (add_uevent_var(&event->ku_env, "DM_NR_VALID_PATHS=%d",
+ 			   nr_valid_paths)) {
+ 		DMERR("%s: add_uevent_var() for DM_NR_VALID_PATHS failed",
++		      __func__);
++		goto err_add;
++	}
++
++	return event;
++
++err_add:
++	dm_uevent_free(event);
++err_nomem:
++	return ERR_PTR(-ENOMEM);
++}
++
++static struct dm_uevent *dm_build_dev_uevent(struct mapped_device *md,
++					      struct dm_target *ti,
++					      enum kobject_action action,
++					      const char *dm_action)
++{
++	struct dm_uevent *event;
++
++	event = dm_uevent_alloc(md);
++	if (!event) {
++		DMERR("%s: dm_uevent_alloc() failed", __func__);
++		goto err_nomem;
++	}
++
++	event->action = action;
++
++	if (add_uevent_var(&event->ku_env, "DM_TARGET=%s", ti->type->name)) {
++		DMERR("%s: add_uevent_var() for DM_TARGET failed",
++		      __func__);
++		goto err_add;
++	}
++
++	if (add_uevent_var(&event->ku_env, "DM_ACTION=%s", dm_action)) {
++		DMERR("%s: add_uevent_var() for DM_ACTION failed",
++		      __func__);
++		goto err_add;
++	}
++
++	if (add_uevent_var(&event->ku_env, "DM_SEQNUM=%u",
++			   dm_next_uevent_seq(md))) {
++		DMERR("%s: add_uevent_var() for DM_SEQNUM failed",
+ 		      __func__);
+ 		goto err_add;
+ 	}
+@@ -205,6 +248,36 @@ out:
+ }
+ EXPORT_SYMBOL_GPL(dm_path_uevent);
+ 
++/**
++ * dm_dev_uevent - called to create a new dev event and queue it
++ *
++ * @event_type:	dev event type enum
++ * @ti:		pointer to a dm_target
++ *
++ */
++void dm_dev_uevent(enum dm_uevent_type event_type, struct dm_target *ti)
++{
++	struct mapped_device *md = dm_table_get_md(ti->table);
++	struct dm_uevent *event;
++
++	if (event_type >= ARRAY_SIZE(_dm_uevent_type_names)) {
++		DMERR("%s: Invalid event_type %d", __func__, event_type);
++		goto out;
++	}
++
++	event = dm_build_dev_uevent(md, ti,
++				     _dm_uevent_type_names[event_type].action,
++				     _dm_uevent_type_names[event_type].name);
++	if (IS_ERR(event))
++		goto out;
++
++	dm_uevent_add(md, &event->elist);
++
++out:
++	dm_put(md);
++}
++EXPORT_SYMBOL_GPL(dm_dev_uevent);
++
+ int dm_uevent_init(void)
+ {
+ 	_dm_event_cache = KMEM_CACHE(dm_uevent, 0);
+diff -r bfb50ef53671 drivers/md/dm-uevent.h
+--- a/drivers/md/dm-uevent.h	Mon Mar 31 10:13:13 2008 -0700
++++ b/drivers/md/dm-uevent.h	Tue Apr 01 16:09:09 2008 -0700
+@@ -24,6 +24,7 @@ enum dm_uevent_type {
+ enum dm_uevent_type {
+ 	DM_UEVENT_PATH_FAILED,
+ 	DM_UEVENT_PATH_REINSTATED,
++	DM_UEVENT_DEV_CHANGE,
+ };
+ 
+ #ifdef CONFIG_DM_UEVENT
+@@ -34,6 +35,8 @@ extern void dm_path_uevent(enum dm_ueven
+ extern void dm_path_uevent(enum dm_uevent_type event_type,
+ 			   struct dm_target *ti, const char *path,
+ 			   unsigned nr_valid_paths);
++extern void dm_dev_uevent(enum dm_uevent_type event_type,
++			  struct dm_target *ti);
+ 
+ #else
+ 
+@@ -53,6 +56,10 @@ static inline void dm_path_uevent(enum d
+ 				  unsigned nr_valid_paths)
+ {
+ }
++static inline void dm_dev_uevent(enum dm_uevent_type event_type,
++				 struct dm_target *ti)
++{
++}
+ 
+ #endif	/* CONFIG_DM_UEVENT */
+ 
