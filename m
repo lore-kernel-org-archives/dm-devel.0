@@ -1,24 +1,17 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: Re: Desynchronizing dm-raid1
-Date: Thu, 03 Apr 2008 10:49:19 -0400
-Message-ID: <yq1iqyzouxc.fsf@sermon.lab.mkp.net>
-References: <47DEC402.10309@redhat.com>
-	<Pine.LNX.4.64.0803171611430.31803@porkchop.devel.redhat.com>
-	<20080317215631.GG29322@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
-	<20080318233955.GA12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
-	<20080319000241.GB12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
-	<20080319011757.GD12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
-	<20080403014042.GA3789@us.ibm.com>
+From: Mark McLoughlin <markmc@redhat.com>
+Subject: [PATCH 06/10] dm snapshot: Make find_pending_exception()
+	not take a bio
+Date: Tue,  1 Apr 2008 09:32:53 +0200
+Message-ID: <1207035177-7156-7-git-send-email-markmc@redhat.com>
+References: <1207035177-7156-1-git-send-email-markmc@redhat.com>
+	<1207035177-7156-2-git-send-email-markmc@redhat.com>
+	<1207035177-7156-3-git-send-email-markmc@redhat.com>
+	<1207035177-7156-4-git-send-email-markmc@redhat.com>
+	<1207035177-7156-5-git-send-email-markmc@redhat.com>
+	<1207035177-7156-6-git-send-email-markmc@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080403014042.GA3789@us.ibm.com> (malahal@us.ibm.com's message
-	of "Wed\, 2 Apr 2008 18\:40\:42 -0700")
+In-Reply-To: <1207035177-7156-6-git-send-email-markmc@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,35 +21,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: agk@redhat.com
+Cc: Mark McLoughlin <markmc@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
->>>>> "Malahal" == malahal  <malahal@us.ibm.com> writes:
+Change __find_pending_exception() so that it takes an old chunk index
+and "prepare" flag rather than a bio structure.
 
->> 1. lock the buffers and unmap the pages while they are being
->> written.  --- upstream developers would likely reject it. No other
->> driver than dm-raid1 has problems with this and they wouldn't damp
->> performance because of one driver.
+Rationale is that the merged target will use the pending exception
+table for tracking writes which have been mapped to the COW device. In
+such cases, we won't want a new exception to be prepared in the
+exception store.
 
-Malahal> Very few drivers require it, so how about an interface to
-Malahal> lock the pages of an I/O available to drivers. Only needed
-Malahal> RAID drivers would lock the I/O while it is in progress and
-Malahal> they only pay the performance penalty.  mmap pages are a bit
-Malahal> tricky. They need to go into read-only mode when an I/O is in
-Malahal> progress. I know this would likely be rejected too!!!
+Also, the merged target will want to trigger an exception in all
+associated snapshots without a corresponding bio structure. We'll need
+to do this when initiating a copy from the COW device to the origin
+device.
 
-I have exactly the same problem with the data integrity stuff I'm
-working on.
+Signed-off-by: Mark McLoughlin <markmc@redhat.com>
+---
+ drivers/md/dm-snap.c |    9 ++++-----
+ 1 files changed, 4 insertions(+), 5 deletions(-)
 
-Essentially a checksum gets generated when a bio is submitted and both
-the I/O controller and the disk drive verify the checksum.
-
-With ext2 in particular I often experience that the page (usually
-containing directory metadata) has been modified before the controller
-does the DMA.  And the I/O will then be rejected by the controller or
-drive because the checksum doesn't match the data.
-
-So this problem is not specific to DM/MD...
-
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 7684f8f..e64b9b4 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -881,11 +881,10 @@ static void start_copy(struct dm_snap_pending_exception *pe)
+  * this.
+  */
+ static struct dm_snap_pending_exception *
+-__find_pending_exception(struct dm_snapshot *s, struct bio *bio)
++__find_pending_exception(struct dm_snapshot *s, chunk_t chunk, int prepare)
+ {
+ 	struct dm_snap_exception *e;
+ 	struct dm_snap_pending_exception *pe;
+-	chunk_t chunk = sector_to_chunk(s, bio->bi_sector);
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(&s->pe_lock, flags);
+@@ -934,7 +933,7 @@ __find_pending_exception(struct dm_snapshot *s, struct bio *bio)
+ 	insert_exception(&s->pending, &pe->e);
+ 
+  ref_and_out:
+-	if (bio_rw(bio) != WRITE)
++	if (!prepare)
+ 		get_pending_exception(pe);
+ 	else if (!pe->started) {
+ 		if (s->store.prepare_exception(&s->store, &pe->e)) {
+@@ -992,7 +991,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 		goto out_unlock;
+ 	}
+ 
+-	pe = __find_pending_exception(s, bio);
++	pe = __find_pending_exception(s, chunk, bio_rw(bio) == WRITE);
+ 	if (!pe) {
+ 		__invalidate_snapshot(s, -ENOMEM);
+ 		r = -EIO;
+@@ -1142,7 +1141,7 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ 		if (e)
+ 			goto next_snapshot;
+ 
+-		pe = __find_pending_exception(snap, bio);
++		pe = __find_pending_exception(snap, chunk, 1);
+ 		if (!pe) {
+ 			__invalidate_snapshot(snap, -ENOMEM);
+ 			goto next_snapshot;
 -- 
-Martin K. Petersen	Oracle Linux Engineering
+1.5.4.1
