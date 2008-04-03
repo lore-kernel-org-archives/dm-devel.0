@@ -1,23 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: Desynchronizing dm-raid1
-Date: Thu, 3 Apr 2008 07:21:54 -0700
-Message-ID: <20080403142154.GA11878@us.ibm.com>
-References: <Pine.LNX.4.64.0803171611430.31803@porkchop.devel.redhat.com>
-	<20080317215631.GG29322@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
-	<20080318233955.GA12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
-	<20080319000241.GB12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
-	<20080319011757.GD12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
-	<20080403091936.GA9901@redhat.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools Multipath-usage.txt
+Date: 3 Apr 2008 15:11:07 -0000
+Message-ID: <20080403151107.1125.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080403091936.GA9901@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,38 +13,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Heinz Mauelshagen [mauelshagen@redhat.com] wrote:
-> 
-> [HM] md RAID456 and dm RAID45 don't have the raid1 problem, because
-> they utilize stripe caches, hence tacking page copies. Application pages
-> can change nonetheless vs. stripe cache pages.
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	bmarzins@sourceware.org	2008-04-03 15:11:06
 
-I wish they didn't make copies of data pages for the sake of
-performance! If they did make copies for all of their I/O, they don't
-have this problem.
+Modified files:
+	.              : Multipath-usage.txt 
 
-> > 4. make more region states.
-> > --- If the region is in RH_DIRTY state and all writes drain, the state is 
-> > changed to RH_MAYBE_DIRTY. (we don't know if the region is synchronized or 
-> > not). The disk dirty flag is kept.
-> > --- periodically (once in few minutes, so that it doesn't affect 
-> > performance much), the change all regions in RH_MAYBE_DIRTY state to 
-> > RH_CLEAN_CANDIDATE, then issue sync() on all filesystems. If, after the 
-> > sync(), the region is still in RH_CLEAN_CANDIDATE (i.e. it hasn't been 
-> > written during the sync()), it is moved to RH_CLEAN state and the on-disk 
-> > bit for the region is turned off.
-> 
-> [HM] This is essentially one technical approach for my comment on 2. above.
-> RH_MAYBE_DIRTY sounds superfluous at first glance, because when all writes
-> to a region drained, we can set RH_CLEAN_CANDIDATE, run the sync() and check
-> if that state persists in order to trigger the dirty log update.
+Log message:
+	Fix doc mistake reported in bz 305781
 
-I don't think the state RH_MAYBE_DIRTY is superfluous.  If the region
-state is RH_CLEAN_CANDIDATE after the sync(), that means no 'write'
-happened since we set RH_CLEAN_CANDIDATE. If there was any write, the
-region state would be 'RH_DIRTY' or 'RH_MAYBE_DIRTY'.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/Multipath-usage.txt.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.4.2.2&r2=1.4.2.3
 
---Malahal.
+--- multipath-tools/Multipath-usage.txt	2007/01/10 21:56:17	1.4.2.2
++++ multipath-tools/Multipath-usage.txt	2008/04/03 15:11:02	1.4.2.3
+@@ -289,7 +289,7 @@
+ 
+ For each path:
+ 
+- \_ host:channel:id:lun devnode major:minor [path_status][dm_status_if_known]
++ \_ host:channel:id:lun devnode major:minor [dm_status_if_known][path_status]
+ 
+ The dm status (dm_status_if_known) is like the path status
+ (path_status), but from the kernel's point of view.  The dm status has two
