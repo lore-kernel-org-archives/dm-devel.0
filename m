@@ -1,8 +1,11 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools Multipath-usage.txt
-Date: 3 Apr 2008 15:11:07 -0000
-Message-ID: <20080403151107.1125.qmail@sourceware.org>
+From: Clint Moore <clint@blueboxgrp.com>
+Subject: dm-ioband = smarter than me
+Date: Fri, 4 Apr 2008 16:53:32 -0700
+Message-ID: <2EABDA74-5CC4-4CA2-9839-1EA2C89F2548@blueboxgrp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v919.2)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,31 +16,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2008-04-03 15:11:06
 
-Modified files:
-	.              : Multipath-usage.txt 
+	I'm missing something and I'm not quite sure what it is.
 
-Log message:
-	Fix doc mistake reported in bz 305781
+Here's what I have:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/Multipath-usage.txt.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.4.2.2&r2=1.4.2.3
+[root@ test 2.6.24]# df -k
+Filesystem           1K-blocks      Used Available Use% Mounted on
+/dev/sda3            234414076   4047692 218266628   2% /
+...
+[root@test 2.6.24]# dmsetup targets
+ioband           v0.0.3
+...
+[root@ test 2.6.24]# echo "0 $(blockdev --getsize /dev/sda3) ioband / 
+dev/sda3 1" | dmsetup create ioband1
+device-mapper: reload ioctl failed: Invalid argument
+Command failed
+[root@ test 2.6.24]#
 
---- multipath-tools/Multipath-usage.txt	2007/01/10 21:56:17	1.4.2.2
-+++ multipath-tools/Multipath-usage.txt	2008/04/03 15:11:02	1.4.2.3
-@@ -289,7 +289,7 @@
- 
- For each path:
- 
-- \_ host:channel:id:lun devnode major:minor [path_status][dm_status_if_known]
-+ \_ host:channel:id:lun devnode major:minor [dm_status_if_known][path_status]
- 
- The dm status (dm_status_if_known) is like the path status
- (path_status), but from the kernel's point of view.  The dm status has two
+  Is it obvious to anyone else what I'm missing or do I need to  
+provide more info?
+
+-cm
