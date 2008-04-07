@@ -1,7 +1,7 @@
-From: malahal@us.ibm.com
+From: "Martin K. Petersen" <mkp@mkp.net>
 Subject: Re: Desynchronizing dm-raid1
-Date: Mon, 7 Apr 2008 10:22:30 -0700
-Message-ID: <20080407172230.GA11600@us.ibm.com>
+Date: Mon, 07 Apr 2008 13:44:27 -0400
+Message-ID: <yq1zls5muf8.fsf@sermon.lab.mkp.net>
 References: <20080317215631.GG29322@agk.fab.redhat.com>
 	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
 	<20080318233955.GA12007@agk.fab.redhat.com>
@@ -12,12 +12,13 @@ References: <20080317215631.GG29322@agk.fab.redhat.com>
 	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
 	<20080403014042.GA3789@us.ibm.com>
 	<yq14padoast.fsf@sermon.lab.mkp.net>
+	<20080407172230.GA11600@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq14padoast.fsf@sermon.lab.mkp.net>
+In-Reply-To: <20080407172230.GA11600@us.ibm.com> (malahal@us.ibm.com's message
+	of "Mon\, 7 Apr 2008 10\:22\:30 -0700")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -30,32 +31,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Martin K. Petersen [mkp@mkp.net] wrote:
-> >>>>> "Malahal" == malahal  <malahal@us.ibm.com> writes:
-> 
-> [I sent this last week but it never made it to the list]
-> 
-> Malahal> Very few drivers require it, so how about an interface to
-> Malahal> lock the pages of an I/O available to drivers. Only needed
-> Malahal> RAID drivers would lock the I/O while it is in progress and
-> Malahal> they only pay the performance penalty.  mmap pages are a bit
-> Malahal> tricky. They need to go into read-only mode when an I/O is in
-> Malahal> progress. I know this would likely be rejected too!!!
-> 
-> I have exactly the same problem with the data integrity stuff I'm
-> working on.
-> 
-> Essentially a checksum gets generated when a bio is submitted, and
-> both the I/O controller and the disk drive verify the checksum.
-> 
-> With ext2 in particular I often experience that the page (usually
-> containing directory metadata) has been modified before the controller
-> does the DMA.  And the I/O will then be rejected by the controller or
-> drive because the checksum doesn't match the data.
+>>>>> "Malahal" == malahal  <malahal@us.ibm.com> writes:
 
-Your problem is very similar to an iSCSI problem sumitted here:
-http://now.netapp.com/NOW/cgi-bin/bol?Type=Detail&Display=137902
+Malahal> Your problem is very similar to an iSCSI problem sumitted
+Malahal> here:
+Malahal> http://now.netapp.com/NOW/cgi-bin/bol?Type=Detail&Display=137902
 
-Fortunately, you can detect the problem and the I/O can be retried if
-possible. In the RAID case, it goes undetected until you hit the
-eventual corruption!
+Can't see it without a netapp account...
+
+
+Malahal> Fortunately, you can detect the problem and the I/O can be
+Malahal> retried if possible.
+
+That's not entirely trivial.  Obviously the original data that matches
+the checksum is gone.  And I don't want to blindly regenerate the
+checksum from the new data (how do I know this was an "ok" kind of
+corruption?).
+
+The only one that has that knowledge is the filesystem.  And if the
+filesystem needs to be integrity-aware, I'd much rather have it Do The
+Right Thing than teach it to inspect and reissue I/Os that come back
+with -EDANGERWILLROBINSON.
+
+With ext2 at least this is not some rare corner case.  It happens
+hundreds of times during an unpack of a kernel tarball.  We'd end up
+burning many, many cycles doing retries.
+
+-- 
+Martin K. Petersen	Oracle Linux Engineering
