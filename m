@@ -1,21 +1,23 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: Desynchronizing dm-raid1
-Date: Mon, 7 Apr 2008 19:27:40 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0804071923180.3742@porkchop.devel.redhat.com>
-References: <Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
+Date: Mon, 7 Apr 2008 19:31:19 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0804071928060.3742@porkchop.devel.redhat.com>
+References: <47DEC402.10309@redhat.com>
+	<Pine.LNX.4.64.0803171611430.31803@porkchop.devel.redhat.com>
+	<20080317215631.GG29322@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
 	<20080318233955.GA12007@agk.fab.redhat.com>
 	<Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
 	<20080319000241.GB12007@agk.fab.redhat.com>
 	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
 	<20080319011757.GD12007@agk.fab.redhat.com>
 	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
-	<20080403091936.GA9901@redhat.com> <20080403142154.GA11878@us.ibm.com>
-	<20080407142517.GA7327@redhat.com> <20080407154106.GC3114@us.ibm.com>
+	<20080403014042.GA3789@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080407154106.GC3114@us.ibm.com>
+In-Reply-To: <20080403014042.GA3789@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,58 +30,52 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 7 Apr 2008, malahal@us.ibm.com wrote:
+On Wed, 2 Apr 2008, malahal@us.ibm.com wrote:
 
-> Heinz Mauelshagen [mauelshagen@redhat.com] wrote:
->>>> RH_MAYBE_DIRTY sounds superfluous at first glance, because when all writes
->>>> to a region drained, we can set RH_CLEAN_CANDIDATE, run the sync() and check
->>>> if that state persists in order to trigger the dirty log update.
->
-> If I understand your above description: a region's state is set to
-> RH_DIRTY when an I/O is scheduled in the region and is set to
-> RH_CLEAN_CANDIDATE when all I/O is completed. In other words, a region's
-> state is RH_CLEAN_CANDIDATE when there is no pending I/O to that region.
-> Did I get it right so far?
->
-> Then we invoke sync(). Now, if the region's state is RH_CLEAN_CANDIDATE,
-
-The problem is, that if sync() wrote to that region, it waits until all 
-writes drain and sets the region to RH_CLEAN_CANDIDATE too. So we couldn't 
-distinguish the cases, if the sync() wrote to the region or not.
-
-During this sync() write, anyone else may modify the data too, so if the 
-sync() touched the region, we don't know if it's in-sync or isn't.
-
-> you set the region's state to RH_CLEAN. If the region's state is
-> anything other than RH_CLEAN_CANDIDATE, you don't do anything. Am I
-> correct?
->
->>> I don't think the state RH_MAYBE_DIRTY is superfluous.  If the region
->>> state is RH_CLEAN_CANDIDATE after the sync(), that means no 'write'
->>> happened since we set RH_CLEAN_CANDIDATE. If there was any write, the
->>> region state would be 'RH_DIRTY' or 'RH_MAYBE_DIRTY'.
+> Mikulas Patocka [mpatocka@redhat.com] wrote:
+>> Ideas how to fix it:
 >>
->> Hrm, sound like a contradiction in your statement.
->> Either it stays RH_CLEAN_CANDIDATE because of no writes *or*
->> it's state-changing to RH_DIRTY, no ?
+>> 1. lock the buffers and unmap the pages while they are being written.
+>> --- upstream developers would likely reject it. No other driver than
+>> dm-raid1 has problems with this and they wouldn't damp performance because
+>> of one driver.
 >
-> The state would be RH_CLEAN_CANDIDATE if there were ***NO*** writes as
-> part of sync(). The next statement only describes what would happen if
-> there were any writes as part of sync().
+> Very few drivers require it, so how about an interface to lock the pages
+> of an I/O available to drivers.
 
-The sync() does write just like any other process, so it may create 
-RH_CLEAN_CANDIDATE state too. To check that the region was not written 
-during sync(), you need an extra state and make sure that no other code 
-sets this state, except your syncing thread.
+Two rules of locking (one for RAID and the other for non-RAID) would 
+create many bugs.
+
+> Only needed RAID drivers would lock the
+> I/O while it is in progress and they only pay the performance penalty.
+> mmap pages are a bit tricky. They need to go into read-only mode when an
+> I/O is in progress. I know this would likely be rejected too!!!
+>
+>> 4. make more region states.
+>> --- If the region is in RH_DIRTY state and all writes drain, the state is
+>> changed to RH_MAYBE_DIRTY. (we don't know if the region is synchronized or
+>> not). The disk dirty flag is kept.
+>> --- periodically (once in few minutes, so that it doesn't affect
+>> performance much), the change all regions in RH_MAYBE_DIRTY state to
+>> RH_CLEAN_CANDIDATE, then issue sync() on all filesystems. If, after the
+>> sync(), the region is still in RH_CLEAN_CANDIDATE (i.e. it hasn't been
+>> written during the sync()), it is moved to RH_CLEAN state and the on-disk
+>> bit for the region is turned off.
+>
+> Sounds good except that it uses sync()! Is there a way to sync only
+> pages related to a certain block device? How hard it is to implement
+> such an interface?
+
+No, because the dirty pages may be everywhere. I.e. on filesystem you 
+create loopback device with lvm2 devices with another filesystem, 
+containing another loopback ... etc.
+
+You'd need to build a DAG of dependent devices in the kernel and there is 
+no such graph currently.
+
+If you do sync() once 15 minutes or so, I think it wouldn't have 
+performance impact.
 
 Mikulas
 
 > --Malahal.
-> PS: Any comments from the original submitter if he thinks the state
-> is really superfluous?
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
