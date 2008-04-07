@@ -1,16 +1,16 @@
-From: Jens Thiele <karme@berlios.de>
-Subject: Re: bio too big device md0 (248 > 240) - lvm on top of
-	raid1
-Date: Sun, 06 Apr 2008 22:42:52 +0200
-Message-ID: <87tzier9yr.fsf@thialfi.karme-net.hirschau>
-References: <87ejgv27nb.fsf@thialfi.karme-net.hirschau>
-	<46F0DF57.7060207@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: dm-ioband = smarter than me
+Date: Mon, 07 Apr 2008 13:08:23 +0900 (JST)
+Message-ID: <20080407.130823.193698492.ryov@valinux.co.jp>
+References: <2EABDA74-5CC4-4CA2-9839-1EA2C89F2548@blueboxgrp.com>
+	<20080405014540.GB10916@us.ibm.com>
+	<7ABA9490-2FB2-4886-8061-08BB30CA568B@blueboxgrp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <46F0DF57.7060207@redhat.com> (Milan Broz's message of "Wed\,
-	19 Sep 2007 10\:35\:35 +0200")
+In-Reply-To: <7ABA9490-2FB2-4886-8061-08BB30CA568B@blueboxgrp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,42 +20,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Milan Broz <mbroz@redhat.com> writes:
+Hi Clint,
 
-> Hi,
->
-> Jens Thiele wrote:
->> I think I run into the same problem as described in a thread on the lkml:
->> "[dm-devel] bio too big device md1 (16 > 8)"
->> Message-Id   <87irc84bcq.87hcrs4bcq@87fy7c4bcq.message.id>
->> http://lkml.org/lkml/2007/4/7/81
->> 
->> A related thread on dm-devel about a patch that probably doesn't help:
->> "[dm-devel] [2.6.22 PATCH 01/26] dm: merge max_hw_sector"
->> http://www.redhat.com/archives/dm-devel/2007-May/msg00007.html
->> 
->> Any news regarding this one?
->> Should I file a bug on http://bugzilla.kernel.org/ ?
->> (It seems there is no entry yet)
->
-> Yes,  if you can reproduce it, report it to bugzilla please.
->
-> Please attach kernel version, "dmsetup table", syslog... etc. 
-> (you can use lvmdump command to grab all informantion and
-> attach it to the bug).
->
->> PS: if I have a LVM snapshot the message disappears
->
-> so please describe this too with informations above.
->
-> Thanks,
-> Milan
+> 	I don't think that I missed that in the directions - do you have to do that?  I just assumed that it didn't matter.  Still, I'm not sure how I would do that to a root partition... unless you aren't supposed to use this on one.
 
-Finally I managed to submit a bug report: #10407
-http://bugzilla.kernel.org/show_bug.cgi?id=10407
+I'll try to use an ioband device as root device while booting up.
+I think it'll need to create an ioband device before mkrootdev is
+executed in the initrd script like LVM.
+I'll report back when I've made more progress.
 
 Thanks,
-Jens
+Ryo Tsuruta
