@@ -1,123 +1,119 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Desynchronizing dm-raid1
-Date: Mon, 7 Apr 2008 19:38:00 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0804071932340.3742@porkchop.devel.redhat.com>
-References: <47DEC402.10309@redhat.com>
-	<Pine.LNX.4.64.0803171611430.31803@porkchop.devel.redhat.com>
-	<20080317215631.GG29322@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
-	<20080318233955.GA12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
-	<20080319000241.GB12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
-	<20080319011757.GD12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
-	<20080403091936.GA9901@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
+Subject: Data corruption on software RAID
+Date: Tue, 8 Apr 2008 01:43:18 +0200 (CEST)
+Message-ID: <Pine.LNX.4.64.0804080033430.13352@artax.karlin.mff.cuni.cz>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080403091936.GA9901@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: mauelshagen@redhat.com, device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758850AbYDGXng@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, agk@redhat.com, mingo@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-On Thu, 3 Apr 2008, Heinz Mauelshagen wrote:
+Hi
 
->
-> See below [HM].
->
-> On Wed, Apr 02, 2008 at 04:23:41PM -0400, Mikulas Patocka wrote:
->> Hi
->>
->> Unfortunatelly, the bug with desychnronizing raid1 that someone pointed out
->> on Monday, is real. The bug happens when you modify the page while its
->> being written to raid1 device --- old version can be written to one mirror
->> leg, the new versions to the other mirror leg. Raid1 code does not notice
->> this, marks the region clean after the writes finish, and the volume stays
->> desynchronized.
->>
->> The possibilities, how data can be modified while they are being written.
->>
->> 1. an application does O_DIRECT IO and modifies the memory underway.
->>
->> --- this is a problem of the application and we don't have to care about
->> it.
->>
->> 2. an application maps file for writing. pdflush or kswapd daemon writes
->> the page on background while the application is modifying it.
->>
->> 3. an application writes to a page with write() syscall. This syscall can
->> race with pdflush or kswapd as well.
->>
->> 4. a filesystem modifies the buffer while its being written by pdflush or
->> kswapd daemons.
->>
->>
->> The pdflush and kswapd daemons run in background and do periodic writes of
->> the modified data. pdflush is triggered regularly and writes data in
->> specified interval (about 30 seconds), so that in case of crash, the image
->> on disk is not too old. kswapd is triggered when the free memory goes low
->> --- it writes file pages and filesystem buffers too.
->>
->> In cases 2,3,4 the data may be modified while they are being written, but
->> the kernel writes them later again. The sequence is something like:
->> clear dirty bit
->> submit IO
->> --- if the data are modified while the IO is in progress, the dirty bit is
->> turned on again and the data will be written later and possible data
->> corruption is corrected. --- so as long as the system does not crash, there
->> can't be desynchronized mirror.
->>
->> But if the system crashes before the data are written second time, the
->> blocks may stay desynchronized.
->>
->> An example of data corruption on ext2:
->>
->> We have a dirty bitmap buffer
->> Pdflush clears the dirty flag and starts writing the buffer
->> The write is submitted to dm-raid1, it makes two requests and submits them
->> to two mirror devices
->>
->> This operation races with another thread allocating a block on ext2 and
->> doing:
->
-> [HM] And taking out a copy unlocked in the RAID driver ain't help
-> application data integrity, because it could still change the data while
-> the RAID driver is copying, hence leading to coherency on the
-> RAID set but holding incorrect application data.
-> One can argue that this is ok in case of a crash, because the application
-> failed to flush any page changes
+During source code review, I found an unprobable but possible data 
+corruption on RAID-1 and on DM-RAID-1. (I'm not sure about RAID-4,5,6).
 
-The application has no way of knowing that it's data is being written. you 
-call write(); fsync(); --- and if write() races with pdflush, the data may 
-be very well written on that write() call. You, as an application 
-developer, never know. You can only be sure that the data is certainly 
-written when fsync() returns. But it may be written earlier.
+The RAID code was enhanced with bitmaps in 2.6.13.
 
-> and hence has to be capable to recover from this.
+The bitmap tracks regions on the device that may be possibly out-of-sync. 
+The purpose of the bitmap is to avoid resynchronizing the whole array in 
+the case of crash. DM-raid uses similar bitmap too.
 
-Applications (such as databases) well recover from the situation that the 
-data were written or from the situation that the data were not written.
+The write sequnce is usually:
+1. turn on bit in the bitmap (if it hasn't been on before).
+2. update the data.
+3. when writes to all devices finish, turn the bit may be turned off.
 
-But they don't recover from the situation when read() to the same data 
-after a crash returns randomly old data on new data (depending on which 
-mirror leg was selected for read).
+The developers assume that when all writes to the region finish, the 
+region is in-sync.
 
-> We always will end up with consistent mirrors (either on multiplicated
-> successful writes to all legs or after resynchronization of the mirror)
-> at the cost of internal caching of pages.
+This assumption is wrong.
 
-The problem is that we turn off the dirty bit after we finish write to 
-both legs and never resync this region after a crash.
+Kernel writes data while they may be modified in many places. For example, 
+the pdflush daemon writes periodically pages and buffers without locking 
+them. Similarly, pages may be written while they are mapped for write to 
+the processes.
+
+Normally, there is no problem with modify-while-write. The write sequence 
+is something like:
+* turn off Dirty bit
+* write the buffer or page
+--- and if the buffer or page is modified while it's being written, the 
+Dirty bit is turned on again and the correct data are written later.
+
+But with RAID (since 2.6.13), it can produce corruption because when the 
+buffer is modified while being written, different versions of data can be 
+written to devices in the RAID array. For example:
+
+1. pdflush turns off a dirty bit on Ext2 bitmap buffer and starts writing 
+the buffer to RAID-1
+2. the kernel allocates some blocks in that Ext2 bitmap. One of RAID-1 
+devices writes new data, the other one gets old data.
+3. The kernel turns on the buffer dirty bit, so this buffer is scheduled 
+for next write.
+4. RAID-1 subsystem sees that both writes finished, it thinks that this 
+region is in-sync, turns off its dirty bit in its region bitmap and writes 
+the bitmap to disk.
+5. before pdflush writes the Ext2 bitmap buffer again, the system CRASHES
+
+6. after new boot, RAID-1 sees the bit for this region off, so it doesn't 
+resynchronize it.
+7. during fsck, RAID-1 reads the Ext2 bitmap from the device where the bit 
+is on. fsck sees that the bitmap is correct and doesn't touch it.
+8. some times later kernel reads the Ext2 bitmap from the other device. It 
+sees the bit off, allocates some data there and creates cross-linked 
+files.
+
+The same corruption may happen with some jorunaled filesystems (probably 
+not Ext3) or applications that do their own crash recovery (databases, 
+etc.). The key point is that an application expects that after a crash it 
+reads old data or new data, but it doesn't expect that subsequent reads to 
+the same place may alternatively return old or new data --- which may 
+happen on RAID-1.
+
+
+Possibilities how to fix it:
+
+1. lock the buffers and pages while they are being written --- this would 
+cause performance degradation (the most severe degradation would be in 
+case when one process does repeatedly sync() and other unrelated 
+process repeatedly writes to some file).
+
+Lock the buffers and pages only for RAID --- would create many special 
+cases and possible bugs.
+
+2. never turn the region dirty bit off until the filesystem is unmounted. 
+--- this is the simplest fix. If the computer crashes after a long 
+time, it resynchronizes the whole device. But there won't cause 
+application-visible or filesystem-visible data corruption.
+
+3. turn off the region bit if the region wasn't written in one pdflush 
+period --- requires an interaction with pdflush, rather complex. The 
+problem here is that pdflush makes its best effort to write data in 
+dirty_writeback_centisecs interval, but it is not guaranteed to do it.
+
+4. make more region states: Region has in-memory states CLEAN, DIRTY, 
+MAYBE_DIRTY, CLEAN_CANDIDATE.
+
+When you start writing to the region, it is always moved to DIRTY state 
+(and on-disk bit is turned on).
+
+When you finish all writes to the region, move it to MAYBE_DIRTY state, 
+but leave bit on disk on. We now don't know if the region is dirty or no.
+
+Run a helper thread that does periodically:
+Change MAYBE_DIRTY regions to CLEAN_CANDIDATE
+Issue sync()
+Change CLEAN_CANDIDATE regions to CLEAN state and clear their on-disk bit.
+
+The rationale is that if the above write-while-modify scenario happens, 
+the page is always dirty. Thus, sync() will write the page, kick the 
+region back from CLEAN_CANDIDATE to MAYBE_DIRTY state and we won't mark 
+the region as clean on disk.
+
+
+I'd like to know you ideas on this, before we start coding a solution.
 
 Mikulas
