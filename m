@@ -1,54 +1,72 @@
-From: malahal@us.ibm.com
-Subject: Re: Desynchronizing dm-raid1
-Date: Mon, 7 Apr 2008 17:04:23 -0700
-Message-ID: <20080408000422.GA3246@us.ibm.com>
-References: <Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
-	<20080319000241.GB12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
-	<20080319011757.GD12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
-	<20080403091936.GA9901@redhat.com>
-	<20080403142154.GA11878@us.ibm.com>
-	<20080407142517.GA7327@redhat.com>
-	<20080407154106.GC3114@us.ibm.com>
-	<Pine.LNX.4.64.0804071923180.3742@porkchop.devel.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Helge Hafting <helge.hafting@aitel.hist.no>
+Subject: Re: Data corruption on software RAID
+Date: Tue, 08 Apr 2008 12:22:54 +0200
+Message-ID: <47FB477E.40502@aitel.hist.no>
+References: <Pine.LNX.4.64.0804080033430.13352@artax.karlin.mff.cuni.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0804071923180.3742@porkchop.devel.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.0804080033430.13352@artax.karlin.mff.cuni.cz>
+Sender: linux-raid-owner@vger.kernel.org
+To: Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
+Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, agk@redhat.com, mingo@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-Mikulas Patocka [mpatocka@redhat.com] wrote:
-> On Mon, 7 Apr 2008, malahal@us.ibm.com wrote:
+Mikulas Patocka wrote:
+> Hi
 >
->>>> I don't think the state RH_MAYBE_DIRTY is superfluous.  If the region
->>>> state is RH_CLEAN_CANDIDATE after the sync(), that means no 'write'
->>>> happened since we set RH_CLEAN_CANDIDATE. If there was any write, the
->>>> region state would be 'RH_DIRTY' or 'RH_MAYBE_DIRTY'.
->>>
->>> Hrm, sound like a contradiction in your statement.
->>> Either it stays RH_CLEAN_CANDIDATE because of no writes *or*
->>> it's state-changing to RH_DIRTY, no ?
->>
->> The state would be RH_CLEAN_CANDIDATE if there were ***NO*** writes as
->> part of sync(). The next statement only describes what would happen if
->> there were any writes as part of sync().
+> During source code review, I found an unprobable but possible data 
+> corruption on RAID-1 and on DM-RAID-1. (I'm not sure about RAID-4,5,6).
 >
-> The sync() does write just like any other process, so it may create 
-> RH_CLEAN_CANDIDATE state too. To check that the region was not written 
-> during sync(), you need an extra state and make sure that no other code 
-> sets this state, except your syncing thread.
+> The RAID code was enhanced with bitmaps in 2.6.13.
+>
+> The bitmap tracks regions on the device that may be possibly out-of-sync. 
+> The purpose of the bitmap is to avoid resynchronizing the whole array in 
+> the case of crash. DM-raid uses similar bitmap too.
+>
+> The write sequnce is usually:
+> 1. turn on bit in the bitmap (if it hasn't been on before).
+> 2. update the data.
+> 3. when writes to all devices finish, turn the bit may be turned off.
+>
+> The developers assume that when all writes to the region finish, the 
+> region is in-sync.
+>
+> This assumption is wrong.
+>
+> Kernel writes data while they may be modified in many places. For example, 
+> the pdflush daemon writes periodically pages and buffers without locking 
+> them. Similarly, pages may be written while they are mapped for write to 
+> the processes.
+>
+> Normally, there is no problem with modify-while-write. The write sequence 
+> is something like:
+> * turn off Dirty bit
+> * write the buffer or page
+> --- and if the buffer or page is modified while it's being written, the 
+> Dirty bit is turned on again and the correct data are written later.
+>
+> But with RAID (since 2.6.13), it can produce corruption because when the 
+> buffer is modified while being written, different versions of data can be 
+> written to devices in the RAID array. For example:
+>
+> 1. pdflush turns off a dirty bit on Ext2 bitmap buffer and starts writing 
+> the buffer to RAID-1
+> 2. the kernel allocates some blocks in that Ext2 bitmap. One of RAID-1 
+> devices writes new data, the other one gets old data.
+> 3. The kernel turns on the buffer dirty bit, so this buffer is scheduled 
+> for next write.
+> 4. RAID-1 subsystem sees that both writes finished, it thinks that this 
+> region is in-sync, turns off its dirty bit in its region bitmap and writes 
+> the bitmap to disk.
+>   
+Would this help:
+RAID-1 sees that both writes finished. It checks the dirty bits on all
+relevant buffers/pages. If none got re-dirtied, then it is ok to
+turn off the dirty bit in the region bitmap and write that. Otherwise, 
+it is not!
 
-Exactly my point. Thanks for putting it better.
+Or is such a check too time-consuming?
+
+Helge Hafting
