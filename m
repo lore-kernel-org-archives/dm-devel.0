@@ -1,49 +1,37 @@
-From: Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
-Subject: Re: Data corruption on software RAID
-Date: Tue, 8 Apr 2008 13:14:05 +0200 (CEST)
-Message-ID: <Pine.LNX.4.64.0804081308080.27869@artax.karlin.mff.cuni.cz>
-References: <Pine.LNX.4.64.0804080033430.13352@artax.karlin.mff.cuni.cz>
- <47FB477E.40502@aitel.hist.no>
+From: Barbara Joyes <Barbara.Joyes@Sun.COM>
+Subject: lun paths status
+Date: Tue, 08 Apr 2008 16:39:02 +0200
+Message-ID: <47FB8386.7030408@Sun.COM>
+Reply-To: Barbara.Joyes@Sun.COM,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753559AbYDHLOW@vger.kernel.org>
-In-Reply-To: <47FB477E.40502@aitel.hist.no>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Helge Hafting <helge.hafting@aitel.hist.no>
-Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, agk@redhat.com, mingo@redhat.com, neilb@suse.de
+Content-Type: text/plain; format=flowed; charset=ISO-8859-1
+Content-Transfer-Encoding: 7BIT
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> > But with RAID (since 2.6.13), it can produce corruption because when the
-> > buffer is modified while being written, different versions of data can be
-> > written to devices in the RAID array. For example:
-> >
-> > 1. pdflush turns off a dirty bit on Ext2 bitmap buffer and starts writing
-> > the buffer to RAID-1
-> > 2. the kernel allocates some blocks in that Ext2 bitmap. One of RAID-1
-> > devices writes new data, the other one gets old data.
-> > 3. The kernel turns on the buffer dirty bit, so this buffer is scheduled for
-> > next write.
-> > 4. RAID-1 subsystem sees that both writes finished, it thinks that this
-> > region is in-sync, turns off its dirty bit in its region bitmap and writes
-> > the bitmap to disk.
-> >   
-> Would this help:
-> RAID-1 sees that both writes finished. It checks the dirty bits on all
-> relevant buffers/pages. If none got re-dirtied, then it is ok to
-> turn off the dirty bit in the region bitmap and write that. Otherwise, it is
-> not!
-> 
-> Or is such a check too time-consuming?
+Hi all,
+would someone have the transition status diagram for the status viewed 
+in multipath -ll ?
 
-That is impossible. The page cache can answer questions like "where is 
-page 0x1234 from inode 0x5678 located on disk?" But it can't answer the 
-reverse question: "which inode and which page is using disk block 
-0x12345678?"
+or at least the exact signification of the status like :
+active
+enabled
+faulty
+failing
+ready
 
-Furthermore, with device mapper you can stack several mapping tables each 
-on other --- and again --- device mapper can't solve the reverse problem 
-it can't tell you which filesystem is using block X.
-
-Mikulas
-
-> Helge Hafting
+Thanks in advance for providing any documentation or information related 
+to my question ?
+Regards,
+Barbara
