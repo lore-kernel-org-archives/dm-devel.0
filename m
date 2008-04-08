@@ -1,14 +1,14 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: [PATCH] dm:  dm_table_unplug_all optimization
-Date: Tue, 08 Apr 2008 11:21:00 -0700
-Message-ID: <20080408182100.1779.92514.stgit@desktop-andmike.beaverton.ibm.com>
-References: <20080408182055.1779.69633.stgit@desktop-andmike.beaverton.ibm.com>
+From: "Jim Lester" <Jim.Lester@compellent.com>
+Subject: Submitting Multipath Device Defintions
+Date: Tue, 8 Apr 2008 15:47:50 -0500
+Message-ID: <99E0F1976E2DA2499F3E6EB18B25F036041165A0@honeywheat.Beer.Town>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080408182055.1779.69633.stgit@desktop-andmike.beaverton.ibm.com>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,29 +19,14 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-Performance optimization for high contention of the q->queue_lock under
-certain workloads.
+What is the process for getting device definitions into the default
+multipath configuration?=20
 
-Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
 ---
-
- drivers/md/dm-table.c |    3 ++-
- 1 files changed, 2 insertions(+), 1 deletions(-)
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index e75b143..f4c8c1b 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -1012,7 +1012,8 @@ void dm_table_unplug_all(struct dm_table *t)
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
- 
--		blk_unplug(q);
-+		if (blk_queue_plugged(q))
-+			blk_unplug(q);
- 	}
- }
- 
+Jim Lester | Product Specialist
+Jim.Lester@Compellent.com
+(o) 952.294.2802
+(c) 763.218.6012
+Compellent Technologies | www.compellent.com
