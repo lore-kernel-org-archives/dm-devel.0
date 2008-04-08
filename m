@@ -1,12 +1,14 @@
 From: Mike Anderson <andmike@linux.vnet.ibm.com>
 Subject: [PATCH] dm:  dm_table_unplug_all optimization
-Date: Tue, 08 Apr 2008 11:20:55 -0700
-Message-ID: <20080408182055.1779.69633.stgit@desktop-andmike.beaverton.ibm.com>
+Date: Tue, 08 Apr 2008 11:21:00 -0700
+Message-ID: <20080408182100.1779.92514.stgit@desktop-andmike.beaverton.ibm.com>
+References: <20080408182055.1779.69633.stgit@desktop-andmike.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080408182055.1779.69633.stgit@desktop-andmike.beaverton.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,26 +22,26 @@ To: dm-devel@redhat.com
 Cc: Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-This patch series provides a optimization to the dm_table_unplug_all
-function in device mapper (dm).
+Performance optimization for high contention of the q->queue_lock under
+certain workloads.
 
-A OLTP type workload on a 16core Intel box using a volume containing 48 logical
-drives across 3 dual port fiber adapters showed some high oprofile values.
+Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
+---
 
-A high oprofile sampling value was seen in dm_table_unplug_all coming from
-high contention of the q->queue_lock. Since dm_table_unplug_all will unplug all
-devices in the table it can cause contention on the queue_lock with processes
-trying to pull requests off the queue even on devices that are not plugged. As
-dm_table_unplug_all is coded now blk_unplug will result in the queue_lock being taken for all checks of the queue_flags (blk_remove_plug).
+ drivers/md/dm-table.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-The change lead to a ~16 percent performance improvement on a RedHat
-distro kernel. It appears to be a fairly safe change as the worst case if
-dm missed a queue to unplug, the queue will get unplugged when the number
-of requests exceed (unplug_thresh (4) or unplug_delay (3 ms). It can also
-be the case that if post getting the queue_lock and checking for the queue
-to be plugged that once the lock is dropped plugging can occur.
-
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e75b143..f4c8c1b 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -1012,7 +1012,8 @@ void dm_table_unplug_all(struct dm_table *t)
+ 	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->bdev);
+ 
+-		blk_unplug(q);
++		if (blk_queue_plugged(q))
++			blk_unplug(q);
+ 	}
+ }
+ 
