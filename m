@@ -1,15 +1,14 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [PATCH] dm:  dm_table_unplug_all optimization
-Date: Wed, 9 Apr 2008 10:15:23 +0200
-Message-ID: <20080409081522.GI12774@kernel.dk>
-References: <20080408182055.1779.69633.stgit@desktop-andmike.beaverton.ibm.com>
-	<20080408182100.1779.92514.stgit@desktop-andmike.beaverton.ibm.com>
+From: Chip Coldwell <coldwell@redhat.com>
+Subject: Re: Submitting Multipath Device Defintions
+Date: Wed, 9 Apr 2008 12:35:49 -0400 (EDT)
+Message-ID: <alpine.LFD.1.00.0804091235010.18092@localhost.localdomain>
+References: <99E0F1976E2DA2499F3E6EB18B25F036041165A0@honeywheat.Beer.Town>
+	<47FC6576.3080006@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080408182100.1779.92514.stgit@desktop-andmike.beaverton.ibm.com>
+In-Reply-To: <47FC6576.3080006@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +18,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Anderson <andmike@linux.vnet.ibm.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 08 2008, Mike Anderson wrote:
-> Performance optimization for high contention of the q->queue_lock under
-> certain workloads.
-> 
-> Signed-off-by: Mike Anderson <andmike@linux.vnet.ibm.com>
+On Wed, 9 Apr 2008, Hannes Reinecke wrote:
 
-Acked-by: Jens Axboe <jens.axboe@oracle.com>
+> Hi Jim,
+> 
+> Jim Lester wrote:
+> > What is the process for getting device definitions into the default
+> > multipath configuration? 
+> > 
+> Send a patch. And open a bugzilla with RH and SUSE to get it included
+> in their rpms, too.
 
-> ---
-> 
->  drivers/md/dm-table.c |    3 ++-
->  1 files changed, 2 insertions(+), 1 deletions(-)
-> 
-> diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> index e75b143..f4c8c1b 100644
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -1012,7 +1012,8 @@ void dm_table_unplug_all(struct dm_table *t)
->  	list_for_each_entry(dd, devices, list) {
->  		struct request_queue *q = bdev_get_queue(dd->bdev);
->  
-> -		blk_unplug(q);
-> +		if (blk_queue_plugged(q))
-> +			blk_unplug(q);
->  	}
->  }
->  
-> 
+did you open a bz with us for the dm-multipath-alua HW handler?
+
+Chip
 
 -- 
-Jens Axboe
+Charles M. "Chip" Coldwell
+Senior Software Engineer
+Red Hat, Inc
+978-392-2426
+
+GPG ID:  852E052F
+GPG FPR: 77E5 2B51 4907 F08A 7E92  DE80 AFA9 9A8F 852E 052F
