@@ -1,108 +1,83 @@
-From: Andrew Patterson <andrew.patterson@hp.com>
-Subject: bdev size not updated correctly after underlying device is resized
-Date: Wed, 09 Apr 2008 17:29:42 -0600
-Message-ID: <1207783782.31821.80.camel@bluto.andrew>
+From: Mikulas Patocka <mikulas@artax.karlin.mff.cuni.cz>
+Subject: Re: Data corruption on software RAID
+Date: Thu, 10 Apr 2008 05:07:30 +0200 (CEST)
+Message-ID: <Pine.LNX.4.64.0804100503160.26713@artax.karlin.mff.cuni.cz>
+References: <Pine.LNX.4.64.0804080033430.13352@artax.karlin.mff.cuni.cz>
+ <47FD0BE8.4070105@tmr.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756203AbYDIX34@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com
-Cc: axboe@kernel.dk, viro@zeniv.linux.org.uk, andmike@linux.vnet.ibm.com
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <linux-raid-owner@vger.kernel.org>
+In-Reply-To: <47FD0BE8.4070105@tmr.com>
+Sender: linux-raid-owner@vger.kernel.org
+To: Bill Davidsen <davidsen@tmr.com>
+Cc: linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, agk@redhat.com, mingo@redhat.com, neilb@suse.de
 List-Id: dm-devel.ids
 
-I ran into this problem while trying to resize a mounted file-system
-after growing/shrinking the size of the underlying block device (in this
-case, a fibre-channel LUN). The kernel recognizes the device size change
-when revalidate_disk() is called, but the bdev->bd_inode->i_size will
-not be updated for any new openers if there are already openers of the
-device.  In my case I was using LVM thusly:
+> > Possibilities how to fix it:
+> >
+> > 1. lock the buffers and pages while they are being written --- this would
+> > cause performance degradation (the most severe degradation would be in case
+> > when one process does repeatedly sync() and other unrelated process
+> > repeatedly writes to some file).
+> >
+> > Lock the buffers and pages only for RAID --- would create many special cases
+> > and possible bugs.
+> >
+> > 2. never turn the region dirty bit off until the filesystem is unmounted.
+> > --- this is the simplest fix. If the computer crashes after a long time, it
+> > resynchronizes the whole device. But there won't cause application-visible
+> > or filesystem-visible data corruption.
+> >
+> > 3. turn off the region bit if the region wasn't written in one pdflush
+> > period --- requires an interaction with pdflush, rather complex. The problem
+> > here is that pdflush makes its best effort to write data in
+> > dirty_writeback_centisecs interval, but it is not guaranteed to do it.
+> >
+> > 4. make more region states: Region has in-memory states CLEAN, DIRTY,
+> > MAYBE_DIRTY, CLEAN_CANDIDATE.
+> >
+> > When you start writing to the region, it is always moved to DIRTY state (and
+> > on-disk bit is turned on).
+> >
+> > When you finish all writes to the region, move it to MAYBE_DIRTY state, but
+> > leave bit on disk on. We now don't know if the region is dirty or no.
+> >
+> > Run a helper thread that does periodically:
+> > Change MAYBE_DIRTY regions to CLEAN_CANDIDATE
+> > Issue sync()
+> > Change CLEAN_CANDIDATE regions to CLEAN state and clear their on-disk bit.
+> >
+> > The rationale is that if the above write-while-modify scenario happens, the
+> > page is always dirty. Thus, sync() will write the page, kick the region back
+> > from CLEAN_CANDIDATE to MAYBE_DIRTY state and we won't mark the region as
+> > clean on disk.
+> >
+> >
+> > I'd like to know you ideas on this, before we start coding a solution.
+> >   
+> 
+> I looked at just this problem a while ago, and came to the conclusion that
+> what was needed was a COW bit, to show that there was i/o in flight, and that
+> before modification it needed to be copied. Since you don't want to let that
+> recurse, you don't start writing the copy until the original is written and
+> freed. Ideally you wouldn't bother to finish writing the original, but that
+> doesn't seem possible. That allows at most two copies of a chunk to take up
+> memory space at once, although it's still ugly and can be a bottleneck.
 
-     1. Create a volume group with a physical volume on something that
-        can be resized (usually some sort of SCSI RAID device).
-     2. Create a logical volume on that VG.  This holds the underlying
-        PV block device open as long at the LV is activated
-     3. Run blockdev --getsize <block dev>
-     4. Resize the underlying block device.
-     5. Get the OS to notice the change.  For fibre-channel LUN's you
-        can use /sys/class/scsi_device/<device>/device/rescan.
-     6. Size is correctly changed in /dev/block/<device>/size
-     7. Run blockdev --getsize again (no change in size reported)
-     8. Inactivate the LV (there are now no longer any openers on the
-        block device)
-     9. Run blockdev --getsize again.  Size is now correct as there are
-        no openers on the device when blockdev is run.
+Copying the data would be performance overkill. You can really write 
+different data to different disks, you just must not forget to resync them 
+after a crash. The filesystem/application will recover with either old or 
+new data --- it just won't recover when it's reading old and new data from 
+the same location.
 
-This problem has been reported before at:
+From my point of view that trick with thread doing sync() and turning off 
+region bits looks best. I'd like to know if that solution doesn't have any 
+other flaw.
 
-  http://lkml.org/lkml/2007/7/3/83
+> For reliable operation I would want all copies (and/or CRCs) to be written on
+> an fsync, by the time I bother to fsync I really, really, want the data on the
+> disk.
 
-The following patch is a suggestion on how to fix this problem.  It is
-not a complete solution as it is probably a bad thing to change other
-openers device size without at least protecting the change with a lock.
-And user-apps and other sub-systems might not like the reported device
-size being changed underneath them. It looks like the following
-sub-systems access this value:
+fsync already works this way.
 
-ndb
-dm
-md
-affs
-hfs
-jfs
-reiserfs
-udf
-
-
-Subject: [PATCH] Reset bdev size regardless of other openers.
-
-A block device may be resized while online.  If the revalidate_disk
-routine is called after the resize, the gendisk->capacity value is
-updated for the device.  However, the bdev->bd_inode->i_size is not
-updated when the block device is opened if there are any other openers
-on the device.  This means that apps like LVM are unlikely to see the
-size change as they tend to keep their block devices open.  There is a
-discussion of this problem at:
-
-  http://lkml.org/lkml/2007/7/3/83
-
-This patch changes block_dev.c:do_open() to call bd_set_size()
-regardless if there are other openers on the device.  It should not be
-applied in its existing state as changing i_size should be protected by
-a lock. Also, there needs to be some analysis on the effects of changing
-the device size underneath an app.
-
-Andrew Patterson
-
-Subject: [PATCH] Reset bdev size regardless of other openers.
-
-A block device may be resized while online.  If the revalidate_disk
-routine is called after the resize, the gendisk->capacity value is
-updated for the device.  However, the bdev->bd_inode->i_size is not
-updated when the block device is opened if there are any other openers
-on the device.  This means that apps like LVM are unlikely to see the
-size change as they tend to keep their block devices open.  There is a
-discussion of this problem at:
-
-  http://lkml.org/lkml/2007/7/3/83
-
-This patch changes block_dev.c:do_open() to call bd_set_size()
-regardless if there are other openers on the device.  It should not be
-applied in its existing state as changing i_size should be protected by
-a lock. Also, there needs to be some analysis on the effects of changing
-the device size underneath an app.
-
-diff --git a/fs/block_dev.c b/fs/block_dev.c
-index 7d822fa..d13a4e5 100644
---- a/fs/block_dev.c
-+++ b/fs/block_dev.c
-@@ -992,6 +992,9 @@ static int do_open(struct block_device *bdev, struct file *file, int for_part)
- 				ret = bdev->bd_disk->fops->open(bdev->bd_inode, file);
- 				if (ret)
- 					goto out;
-+				/* device may have been resized with revalidate_disk */
-+				if (!part)
-+					bd_set_size(bdev, (loff_t)get_capacity(disk)<<9);
- 			}
- 			if (bdev->bd_invalidated)
- 				rescan_partitions(bdev->bd_disk, bdev);
+Mikulas
