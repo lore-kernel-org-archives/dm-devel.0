@@ -1,7 +1,8 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 3/3] dm-mpath: remove hwhcontext from dm_path
-Date: Thu, 10 Apr 2008 15:51:08 -0400 (EDT)
-Message-ID: <20080410.155108.112628266.k-ueda@ct.jp.nec.com>
+Subject: [PATCH 2/3] dm-mpath: move is_active to pgpath from
+	dm_path
+Date: Thu, 10 Apr 2008 15:50:31 -0400 (EDT)
+Message-ID: <20080410.155031.78704020.k-ueda@ct.jp.nec.com>
 References: <20080410.154819.71084314.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,63 +22,94 @@ Errors-To: dm-devel-bounces@redhat.com
 To: agk@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch removes 'hwhcontext' from struct dm_path.
+This patch moves 'is_active' in struct dm_path to struct pgpath.
 No functional change.
 
-The hwhcontext should be moved to struct pgpath or somewhere
-related to only multipath target, since hardware handler is
-multipath target dependent.
-
-However, only dm-mpath-hp-sw.c is using the hwhcontext now,
-and using it is not necessary.  So just remove it.
+The is_active is multipath target dependent.
+Other dm modules don't see it.
+So moving it to struct pgpath.
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 ---
- drivers/md/dm-mpath-hp-sw.c   |    7 +++----
- include/linux/device-mapper.h |    1 -
- 2 files changed, 3 insertions(+), 5 deletions(-)
+ drivers/md/dm-mpath.c         |   13 +++++++------
+ include/linux/device-mapper.h |    2 --
+ 2 files changed, 7 insertions(+), 8 deletions(-)
 
-Index: 2.6.25-rc8/drivers/md/dm-mpath-hp-sw.c
+Index: 2.6.25-rc8/drivers/md/dm-mpath.c
 ===================================================================
---- 2.6.25-rc8.orig/drivers/md/dm-mpath-hp-sw.c
-+++ 2.6.25-rc8/drivers/md/dm-mpath-hp-sw.c
-@@ -117,12 +117,12 @@ out:
-  * 1. Make timeout configurable
-  * 2. Preallocate request
-  */
--static struct request *hp_sw_get_request(struct dm_path *path)
-+static struct request *hp_sw_get_request(struct dm_path *path,
-+					 struct hp_sw_context *h)
- {
- 	struct request *req;
- 	struct block_device *bdev = path->dev->bdev;
- 	struct request_queue *q = bdev_get_queue(bdev);
--	struct hp_sw_context *h = path->hwhcontext;
+--- 2.6.25-rc8.orig/drivers/md/dm-mpath.c
++++ 2.6.25-rc8/drivers/md/dm-mpath.c
+@@ -30,6 +30,7 @@ struct pgpath {
+ 	struct list_head list;
  
- 	req = blk_get_request(q, WRITE, GFP_NOIO);
- 	if (!req)
-@@ -170,10 +170,9 @@ static void hp_sw_pg_init(struct hw_hand
- 	struct request *req;
- 	struct hp_sw_context *h;
+ 	struct priority_group *pg;	/* Owning PG */
++	unsigned is_active;		/* Path status */
+ 	unsigned fail_count;		/* Cumulative failure count */
  
--	path->hwhcontext = hwh->context;
- 	h = hwh->context;
+ 	struct dm_path path;
+@@ -120,7 +121,7 @@ static struct pgpath *alloc_pgpath(void)
+ 	struct pgpath *pgpath = kzalloc(sizeof(*pgpath), GFP_KERNEL);
  
--	req = hp_sw_get_request(path);
-+	req = hp_sw_get_request(path, h);
- 	if (!req) {
- 		DMERR("%s path activation command - allocation fail",
- 		      path->dev->name);
+ 	if (pgpath)
+-		pgpath->path.is_active = 1;
++		pgpath->is_active = 1;
+ 
+ 	return pgpath;
+ }
+@@ -844,13 +845,13 @@ static int fail_path(struct pgpath *pgpa
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+-	if (!pgpath->path.is_active)
++	if (!pgpath->is_active)
+ 		goto out;
+ 
+ 	DMWARN("Failing path %s.", pgpath->path.dev->name);
+ 
+ 	pgpath->pg->ps.type->fail_path(&pgpath->pg->ps, &pgpath->path);
+-	pgpath->path.is_active = 0;
++	pgpath->is_active = 0;
+ 	pgpath->fail_count++;
+ 
+ 	m->nr_valid_paths--;
+@@ -880,7 +881,7 @@ static int reinstate_path(struct pgpath 
+ 
+ 	spin_lock_irqsave(&m->lock, flags);
+ 
+-	if (pgpath->path.is_active)
++	if (pgpath->is_active)
+ 		goto out;
+ 
+ 	if (!pgpath->pg->ps.type) {
+@@ -894,7 +895,7 @@ static int reinstate_path(struct pgpath 
+ 	if (r)
+ 		goto out;
+ 
+-	pgpath->path.is_active = 1;
++	pgpath->is_active = 1;
+ 
+ 	m->current_pgpath = NULL;
+ 	if (!m->nr_valid_paths++ && m->queue_size)
+@@ -1256,7 +1257,7 @@ static int multipath_status(struct dm_ta
+ 
+ 			list_for_each_entry(p, &pg->pgpaths, list) {
+ 				DMEMIT("%s %s %u ", p->path.dev->name,
+-				       p->path.is_active ? "A" : "F",
++				       p->is_active ? "A" : "F",
+ 				       p->fail_count);
+ 				if (pg->ps.type->status)
+ 					sz += pg->ps.type->status(&pg->ps,
 Index: 2.6.25-rc8/include/linux/device-mapper.h
 ===================================================================
 --- 2.6.25-rc8.orig/include/linux/device-mapper.h
 +++ 2.6.25-rc8/include/linux/device-mapper.h
-@@ -149,7 +149,6 @@ struct dm_target {
+@@ -148,8 +148,6 @@ struct dm_target {
+ 
  struct dm_path {
  	struct dm_dev *dev;	/* Read-only */
+-	unsigned is_active;	/* Read-only */
+-
  	void *pscontext;	/* For path-selector use */
--	void *hwhcontext;	/* For hw-handler use */
+ 	void *hwhcontext;	/* For hw-handler use */
  };
- 
- int dm_register_target(struct target_type *t);
