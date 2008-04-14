@@ -1,9 +1,12 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libmultipath discovery.c
-Date: 14 Apr 2008 17:59:55 -0000
-Message-ID: <20080414175955.18857.qmail@sourceware.org>
+From: Adrian Bunk <bunk@kernel.org>
+Subject: [2.6 patch] make dm_set_device_limits() static
+Date: Mon, 14 Apr 2008 21:41:47 +0300
+Message-ID: <20080414184147.GW6695@cs181133002.pp.htv.fi>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,44 +16,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2008-04-14 17:59:55
+This patch makes the needlessly global dm_set_device_limits() static.
 
-Modified files:
-	libmultipath   : discovery.c 
+Signed-off-by: Adrian Bunk <bunk@kernel.org>
 
-Log message:
-	Move the fd close call to fix a regression caused by the max_fd work.
+---
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.28.2.6&r2=1.28.2.7
+This patch has been sent on:
+- 31 Mar 2008
 
---- multipath-tools/libmultipath/discovery.c	2008/03/05 20:53:14	1.28.2.6
-+++ multipath-tools/libmultipath/discovery.c	2008/04/14 17:59:54	1.28.2.7
-@@ -737,10 +737,6 @@
- 		condlog(3, "serial = %s", pp->serial);
- 	}
- 
--#ifndef DAEMON
--	close(pp->fd);
--	pp->fd = -1;
--#endif
+ drivers/md/dm-table.c         |    4 ++--
+ include/linux/device-mapper.h |    5 -----
+ 2 files changed, 2 insertions(+), 7 deletions(-)
+
+bb081f9ddde6ca766b8c1cd1077f203d0a082cdb diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index a999211..ce27283 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -491,7 +491,8 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
  	return 0;
  }
  
-@@ -827,6 +823,10 @@
- 	else if (strlen(pp->wwid))
- 		condlog(3, "uid = %s (cache)", pp->wwid);
+-void dm_set_device_limits(struct dm_target *ti, struct block_device *bdev)
++static void dm_set_device_limits(struct dm_target *ti,
++				 struct block_device *bdev)
+ {
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	struct io_restrictions *rs = &ti->limits;
+@@ -541,7 +542,6 @@ void dm_set_device_limits(struct dm_target *ti, struct block_device *bdev)
  
-+#ifndef DAEMON
-+	close(pp->fd);
-+	pp->fd = -1;
-+#endif
- 	return 0;
+ 	rs->no_cluster |= !test_bit(QUEUE_FLAG_CLUSTER, &q->queue_flags);
+ }
+-EXPORT_SYMBOL_GPL(dm_set_device_limits);
  
- out:
+ int dm_get_device(struct dm_target *ti, const char *path, sector_t start,
+ 		  sector_t len, int mode, struct dm_dev **result)
+diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
+index 8fc199b..4c4b3a6 100644
+--- a/include/linux/device-mapper.h
++++ b/include/linux/device-mapper.h
+@@ -75,11 +75,6 @@ typedef int (*dm_ioctl_fn) (struct dm_target *ti, struct inode *inode,
+ void dm_error(const char *message);
+ 
+ /*
+- * Combine device limits.
+- */
+-void dm_set_device_limits(struct dm_target *ti, struct block_device *bdev);
+-
+-/*
+  * Constructors should call these functions to ensure destination devices
+  * are opened/closed correctly.
+  * FIXME: too many arguments.
