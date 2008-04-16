@@ -1,10 +1,14 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 0/7] scsi_dh: Move hardware handlers from dm to
-	SCSI
-Date: Tue, 15 Apr 2008 18:18:18 -0700
-Message-ID: <20080416011818.19580.41106.sendpatchset@chandra-ubuntu>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [2.6 patch] make dm_set_device_limits() static
+Date: Wed, 16 Apr 2008 14:35:24 +0100
+Message-ID: <20080416133524.GG18935@agk.fab.redhat.com>
+References: <20080330232836.GX28445@cs181133002.pp.htv.fi>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20080330232836.GX28445@cs181133002.pp.htv.fi>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,27 +18,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, linux-scsi@vger.kernel.org
-Cc: andmike@us.ibm.com, michaelc@cs.wisc.edu, asson_ronald@emc.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, jens.axboe@oracle.com, agk@redhat.com
+To: Adrian Bunk <bunk@kernel.org>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hello,
+On Mon, Mar 31, 2008 at 02:28:36AM +0300, Adrian Bunk wrote:
+> This patch makes the needlessly global dm_set_device_limits() static.
+ 
+Not needlessly global IMHO: It's part of the interface available for dm
+targets to use.  For example, dm-loop uses it.  The whole device limits
+thing is still problematic anyway, as dynamic changes to the
+restrictions aren't propagated, so we need more work in this area.
 
-This is the same set of patches that was posted on Apr 01:
-http://marc.info/?l=dm-devel&m=120716401627550&w=2
-
-Only change is that these patches are created on top of 2.6.25-rc8-mm2.
-
-Testing has been done with the following storage devices:
- - IBM DS4800 storage device for the lsi_rdac hardware handler
- - HP storage device for the hp_sw hardware handler.
-   Thanks to Dave(dwysocha@redhat.com)
- - EMC storage device for the EMC hardware handler.
-   Thanks to Arthur(Benoit_Arthur@emc.com) and Ronald(asson_ronald@emc.com)
-In effect all hardware handlers are tested.
-
-These patches need an ACK from Alasdair(agk@redhat.com).
-
-Thanks,
-
-chandra
+Alasdair
+-- 
+agk@redhat.com
