@@ -1,15 +1,12 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: [Notice] multipath-tools changes upstream
-Date: Thu, 17 Apr 2008 13:48:13 -0700
-Message-ID: <20080417204813.GC22737@linux.vnet.ibm.com>
-References: <1208278929.11770.62.camel@plop>
-	<20080417182526.GH3116@ether.msp.redhat.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: path checker open() flags, devmapper ioctl()
+Date: Thu, 17 Apr 2008 22:55:43 +0200
+Message-ID: <1208465743.11770.100.camel@plop>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080417182526.GH3116@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,39 +19,38 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Benjamin Marzinski <bmarzins@redhat.com> wrote:
-> On Tue, Apr 15, 2008 at 07:02:08PM +0200, Christophe Varoqui wrote:
-> > Hi,
-> > 
-> > please take notice I updated the upstream git tree for the
-> > multipath-tools project. This tree includes lots of code shuffling :
-> > 
-> > 1) prioritizers as dlopen'ed shared libs (/lib/libmultipath/libprio*.so)
-> > 2) checkers as dlopen'ed shared libs (/lib/libmultipath/libcheck*.so)
-> > 
-> > Consequences :
-> > The multipath tool is about to get shot for good
-> > The klibc build is gone
-> > 
-> > Please review, and comment.
-> 
-> I'm not able to update my copy of the repository, or clone a new one.
-> Am I the only one?
-> 
+Notice to reader : real questions are hidden in this obfuscated
+message ! I'll mark them with ** to augment the chances for them being
+answered :)
 
-It is working for me.
+Path checker maintainers,
 
-I just pulled the other day post the email.
+** would you object to my changing the checkers open() flags from O_RDWR
+to O_RDONLY ? ** Directio and readsector0 would not object, and all
+other checkers use the file descriptor to submit SG_IO ioctls which do
+not require Write capability.
+Re-reading the SG documentation at http://sg.torque.net/sg/sg_io.html, I
+understand it should be ok. In real life, scsi_id does exactly that for
+example.
 
-git-head on my tree is currently at:
-e22cda64d35235a2b6511cfb589710c3bd3202e0
+The particular issue I'm facing is that on a RHEL5 box presented with
+EMC Symmetrix R2 Logical Units (write-protected LU receiving SRDF
+updates from R1 LU), the checker bails out on open(/dev/sd?, O_RDWR|
+O_NONBLOCK) returning EROFS. opening with O_RDONLY grants us a usable
+fd, which give the checker a chance to report the actual path state.
 
-I just did a git-pull and it indicated that I was up to date.
+I'd like to fix the checker inconsistency, but we'll hit another wall
+short after that : because the device mapper refuses to honor the
+R2-multipath-tables loading without the read-only devmap option.
 
-I am pulling from: 
-remote.origin.url=git://git.kernel.org/pub/scm/linux/storage/multipath-tools/.git
+This behavior is new to RHEL5. R2 LU could perfectly be multipathed in
+RHEL4.
+** Does someone have insight about this new kernel behaviour, and about
+the multipath layer =EF=BB=BFdesired behaviour in this context ? ** I per=
+sonnaly
+would rather not care for promoting a devmap from RO to RW upon R1-R2
+split, and the even more tricky demoting from RW to RO (what about io
+flush ?) upon un-spliting.
 
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Regards,
+cvaroqui
