@@ -1,66 +1,82 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [dm-devel] Read-Only devices, multipath and more
-Date: Tue, 20 May 2008 23:09:49 +0200
-Message-ID: <1211317789.31536.9.camel@plop>
-References: <1210966544.12901.51.camel@plop>
-	 <20080520144807.GC10723@agk.fab.redhat.com>
+From: Frederik Deweerdt <deweerdt@free.fr>
+Subject: [patch] minor dm.c cleanup
+Date: Fri, 18 Apr 2008 17:40:45 +0200
+Message-ID: <20080418154045.GI7134@slug>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20080520144807.GC10723@agk.fab.redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: agk@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Le mardi 20 mai 2008 =C3=A0 15:48 +0100, Alasdair G Kergon a =C3=A9crit=
- :
-> On Fri, May 16, 2008 at 09:35:44PM +0200, christophe varoqui wrote:
-> > fact: device-mapper refuse to load a RW multipath table on these pa=
-ths
-> > (ie without libdevmapper:set_task_set_ro())
-> > question: should change this behaviour to allow to load a RW multip=
-ath
-> > table on these paths and let the IO be failed by the storage hardwa=
-re ?
->=20
-> Yes.  But relax this *only* for multipath targets, where the whole id=
-ea
-> is to "hide" path problems from the layer above.
-=EF=BB=BF
-=46air enough.
+Hello Alasdair,
 
-> It would not make sense=20
-> in my view to do this for other DM targets.
-> =20
+The small patch below:
+- Removes the unused md argument from both specific_minor() and next_free_minor()
+- Folds kmalloc + memset(0) into a single kzalloc call in alloc_dev()
 
-During my testing I remember seeing a RW linear map loaded over a RO
-multipath map (through a genuine vgchange -ay, the PV being the
-multipath).
+This has been compile tested on x86.
 
-> > Alasdair proposed to add more explicit table loading ioctl return c=
-ode
-> > when the failure is due to this ready-only paths issue (E_ROFS for
-> > example).
->=20
-> I think this should be done too (for non-multipath and other errors).
->=20
-Right, I'm about the publish a changeset for supporting the whole RO
-notion in the multipath-tools :
-1/ printing the RO/RW information
-2/ fallbacking to RO when RW loading fails
-3/ new flag to force map reloading, which takes care of the RO->RW
-promotion and RW->RO demotion scenarii
+Regards,
+Frederik
 
-I'll adapt 2/ to your new return codes when available.
+Signed-off-by: Frederik Deweerdt <frederik.deweerdt@gmail.com>
 
-
-Thanks for caring,
-cvaroqui
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 11f4ffe..a4b217e 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -924,7 +924,7 @@ static void free_minor(int minor)
+ /*
+  * See if the device with a specific minor # is free.
+  */
+-static int specific_minor(struct mapped_device *md, int minor)
++static int specific_minor(int minor)
+ {
+ 	int r, m;
+ 
+@@ -957,7 +957,7 @@ out:
+ 	return r;
+ }
+ 
+-static int next_free_minor(struct mapped_device *md, int *minor)
++static int next_free_minor(int *minor)
+ {
+ 	int r, m;
+ 
+@@ -993,7 +993,7 @@ static struct block_device_operations dm_blk_dops;
+ static struct mapped_device *alloc_dev(int minor)
+ {
+ 	int r;
+-	struct mapped_device *md = kmalloc(sizeof(*md), GFP_KERNEL);
++	struct mapped_device *md = kzalloc(sizeof(*md), GFP_KERNEL);
+ 	void *old_md;
+ 
+ 	if (!md) {
+@@ -1006,13 +1006,12 @@ static struct mapped_device *alloc_dev(int minor)
+ 
+ 	/* get a minor number for the dev */
+ 	if (minor == DM_ANY_MINOR)
+-		r = next_free_minor(md, &minor);
++		r = next_free_minor(&minor);
+ 	else
+-		r = specific_minor(md, minor);
++		r = specific_minor(minor);
+ 	if (r < 0)
+ 		goto bad_minor;
+ 
+-	memset(md, 0, sizeof(*md));
+ 	init_rwsem(&md->io_lock);
+ 	mutex_init(&md->suspend_lock);
+ 	spin_lock_init(&md->pushback_lock);
