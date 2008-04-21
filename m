@@ -1,15 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: [PATCH] dm: raid1 block-on-error patch
-Date: Sun, 20 Apr 2008 14:34:05 -0700
-Message-ID: <20080420213405.GA16156@us.ibm.com>
-References: <20080401233150.GA19821@us.ibm.com>
-	<FD6EF7F6-5CA1-42F3-A0AA-CB558A731331@redhat.com>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW dmsetup/dmsetup.c
+Date: 21 Apr 2008 11:59:23 -0000
+Message-ID: <20080421115923.14343.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <FD6EF7F6-5CA1-42F3-A0AA-CB558A731331@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,275 +13,111 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: andmike@us.ibm.com, agk@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Removed uevent related changes. "block_on_error" feature implicitly sets
-"handle_errors" feature.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2008-04-21 11:59:22
 
---Malahal.
+Modified files:
+	.              : WHATS_NEW 
+	dmsetup        : dmsetup.c 
 
-This patch generates an event on a device failure and does NOT process
-further writes until it receives 'unblock' message. LVM or other tools
-are expected to get the mirorset status upon receiving the above event
-and record the failed device in their metadata, and then send the
-'unblock' message to the dm-raid1 target.
+Log message:
+	Add --prefixes to dmsetup
+	
+	E.g. dmsetup info -c --prefixes
+	
+	Again, might change the name of this option.
 
-This would help LVM select the right master device at mirror logical
-volume activation/load time.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.229&r2=1.230
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.104&r2=1.105
 
-Signed-off-by: Malahal Naineni <malahal@us.ibm.com>
-
-diff -r bfb50ef53671 drivers/md/dm-raid1.c
---- a/drivers/md/dm-raid1.c	Mon Mar 31 10:13:13 2008 -0700
-+++ b/drivers/md/dm-raid1.c	Sun Apr 20 13:34:00 2008 -0700
-@@ -26,8 +26,10 @@
- #define DM_MSG_PREFIX "raid1"
- #define DM_IO_PAGES 64
+--- device-mapper/WHATS_NEW	2008/04/20 00:11:07	1.229
++++ device-mapper/WHATS_NEW	2008/04/21 11:59:22	1.230
+@@ -1,5 +1,6 @@
+ Version 1.02.26 - 
+ =================================
++  Add --prefixes to dmsetup.
+   Add field name prefix option to reporting functions.
+   Calculate string size within dm_pool_grow_object.
  
--#define DM_RAID1_HANDLE_ERRORS 0x01
-+#define DM_RAID1_HANDLE_ERRORS  0x01
-+#define DM_RAID1_BLOCK_ON_ERROR 0x02
- #define errors_handled(p)	((p)->features & DM_RAID1_HANDLE_ERRORS)
-+#define block_on_error(p)	((p)->features & DM_RAID1_BLOCK_ON_ERROR)
+--- device-mapper/dmsetup/dmsetup.c	2008/04/19 15:50:17	1.104
++++ device-mapper/dmsetup/dmsetup.c	2008/04/21 11:59:22	1.105
+@@ -120,6 +120,7 @@
+ 	NOOPENCOUNT_ARG,
+ 	NOTABLE_ARG,
+ 	OPTIONS_ARG,
++	PREFIXES_ARG,
+ 	READAHEAD_ARG,
+ 	SEPARATOR_ARG,
+ 	SHOWKEYS_ARG,
+@@ -1914,7 +1915,7 @@
+ 	char *options = (char *) default_report_options;
+ 	const char *keys = "";
+ 	const char *separator = " ";
+-	int aligned = 1, headings = 1, buffered = 1;
++	int aligned = 1, headings = 1, buffered = 1, field_prefixes = 0;
+ 	uint32_t flags = 0;
+ 	size_t len = 0;
+ 	int r = 0;
+@@ -1929,6 +1930,11 @@
+ 	if (_switches[UNBUFFERED_ARG])
+ 		buffered = 0;
  
- static DECLARE_WAIT_QUEUE_HEAD(_kmirrord_recovery_stopped);
- 
-@@ -148,6 +150,7 @@ struct mirror_set {
- 	region_t nr_regions;
- 	int in_sync;
- 	int log_failure;
-+	int write_blocked;
- 	atomic_t suspend;
- 
- 	atomic_t default_mirror;	/* Default mirror */
-@@ -706,6 +709,7 @@ static void fail_mirror(struct mirror *m
- {
- 	struct mirror_set *ms = m->ms;
- 	struct mirror *new;
-+	unsigned long flags;
- 
- 	if (!errors_handled(ms))
- 		return;
-@@ -719,6 +723,18 @@ static void fail_mirror(struct mirror *m
- 
- 	if (test_and_set_bit(error_type, &m->error_type))
- 		return;
-+
-+	/*
-+	 * Make sure that device failure is recorded in the metadata
-+	 * before allowing any new writes. Agent acting on the following
-+	 * event should query the status of the mirrorset, update
-+	 * metadata accordingly and then send the unblock message.
-+	 */
-+	if (block_on_error(ms)) {
-+		spin_lock_irqsave(&ms->lock, flags);
-+		ms->write_blocked = 1;
-+		spin_unlock_irqrestore(&ms->lock, flags);
++	if (_switches[PREFIXES_ARG]) {
++		aligned = 0;
++		field_prefixes = 1;
 +	}
++
+ 	if (_switches[OPTIONS_ARG] && _string_args[OPTIONS_ARG]) {
+ 		if (*_string_args[OPTIONS_ARG] != '+')
+ 			options = _string_args[OPTIONS_ARG];
+@@ -1971,6 +1977,9 @@
+ 	if (headings)
+ 		flags |= DM_REPORT_OUTPUT_HEADINGS;
  
- 	if (m != get_default_mirror(ms))
++	if (field_prefixes)
++		flags |= DM_REPORT_OUTPUT_FIELD_NAME_PREFIX;
++
+ 	if (!(_report = dm_report_init(&_report_type,
+ 				       _report_types, _report_fields,
+ 				       options, separator, flags, keys, NULL)))
+@@ -1981,6 +1990,9 @@
  		goto out;
-@@ -835,6 +851,7 @@ static void do_recovery(struct mirror_se
- 	int r;
- 	struct region *reg;
- 	struct dm_dirty_log *log = ms->rh.log;
-+	struct mirror *m;
- 
- 	/*
- 	 * Start quiescing some regions.
-@@ -855,6 +872,10 @@ static void do_recovery(struct mirror_se
- 	 */
- 	if (!ms->in_sync &&
- 	    (log->type->get_sync_count(log) == ms->nr_regions)) {
-+		for (m = ms->mirror; m < ms->mirror + ms->nr_mirrors; m++) {
-+			atomic_set(&m->error_count, 0);
-+			m->error_type = 0;
-+		}
- 		/* the sync is complete */
- 		dm_table_event(ms->ti->table);
- 		ms->in_sync = 1;
-@@ -1140,6 +1161,13 @@ static void do_writes(struct mirror_set 
- 	if (!writes->head)
- 		return;
- 
-+	if (ms->write_blocked) {
-+		spin_lock_irq(&ms->lock);
-+		bio_list_merge(&ms->writes, writes);
-+		spin_unlock_irq(&ms->lock);
-+		return;
-+	}
-+
- 	/*
- 	 * Classify each write.
- 	 */
-@@ -1202,6 +1230,13 @@ static void do_failures(struct mirror_se
- 
- 	if (!failures->head)
- 		return;
-+
-+	if (ms->write_blocked) {
-+		spin_lock_irq(&ms->lock);
-+		bio_list_merge(&ms->failures, failures);
-+		spin_unlock_irq(&ms->lock);
-+		return;
-+	}
- 
- 	if (!ms->log_failure) {
- 		while ((bio = bio_list_pop(failures)))
-@@ -1327,6 +1362,7 @@ static struct mirror_set *alloc_context(
- 	ms->nr_regions = dm_sector_div_up(ti->len, region_size);
- 	ms->in_sync = 0;
- 	ms->log_failure = 0;
-+	ms->write_blocked = 0;
- 	atomic_set(&ms->suspend, 0);
- 	atomic_set(&ms->default_mirror, DEFAULT_MIRROR);
- 
-@@ -1448,6 +1484,7 @@ static int parse_features(struct mirror_
- {
- 	unsigned num_features;
- 	struct dm_target *ti = ms->ti;
-+	int i;
- 
- 	*args_used = 0;
- 
-@@ -1458,24 +1495,26 @@ static int parse_features(struct mirror_
- 		ti->error = "Invalid number of features";
- 		return -EINVAL;
- 	}
-+	argv++, argc--;
- 
--	argc--;
--	argv++;
--	(*args_used)++;
--
--	if (num_features > argc) {
-+	if (argc < num_features) {
- 		ti->error = "Not enough arguments to support feature count";
- 		return -EINVAL;
  	}
  
--	if (!strcmp("handle_errors", argv[0]))
--		ms->features |= DM_RAID1_HANDLE_ERRORS;
--	else {
--		ti->error = "Unrecognised feature requested";
--		return -EINVAL;
-+	for (i = 0; i < num_features; i++) {
-+		if (!strcmp("handle_errors", argv[i]))
-+			ms->features |= DM_RAID1_HANDLE_ERRORS;
-+		else if (!strcmp("block_on_error", argv[i])) {
-+			ms->features |= DM_RAID1_BLOCK_ON_ERROR;
-+			ms->features |= DM_RAID1_HANDLE_ERRORS;
-+		} else {
-+			ti->error = "Unrecognised feature requested";
-+			return -EINVAL;
-+		}
- 	}
- 
--	(*args_used)++;
-+	*args_used = 1 + num_features;
- 
- 	return 0;
- }
-@@ -1798,8 +1837,14 @@ static void mirror_resume(struct dm_targ
-  */
- static char device_status_char(struct mirror *m)
- {
--	if (!atomic_read(&(m->error_count)))
--		return 'A';
-+	struct mirror_set *ms = m->ms;
++	if (field_prefixes)
++		dm_report_set_output_field_name_prefix(_report, "dm_");
 +
-+	if (atomic_read(&m->error_count) == 0) {
-+		if (ms->in_sync || get_default_mirror(ms) == m)
-+			return 'A';
-+		else
-+			return 'U';
-+	}
+ 	r = 1;
  
- 	return (test_bit(DM_RAID1_WRITE_ERROR, &(m->error_type))) ? 'D' :
- 		(test_bit(DM_RAID1_SYNC_ERROR, &(m->error_type))) ? 'S' :
-@@ -1840,10 +1885,74 @@ static int mirror_status(struct dm_targe
- 			DMEMIT(" %s %llu", ms->mirror[m].dev->name,
- 			       (unsigned long long)ms->mirror[m].offset);
- 
--		if (ms->features & DM_RAID1_HANDLE_ERRORS)
-+		/*
-+		 * 'handle_errors' is implicit with 'block_on_error', so
-+		 * check block_on_error first.
-+		 */
-+		if (block_on_error(ms))
-+			DMEMIT(" 1 block_on_error");
-+		else if (errors_handled(ms))
- 			DMEMIT(" 1 handle_errors");
- 	}
- 
-+	return 0;
-+}
-+
-+/* unblock message handler
-+ *
-+ * This message has the mirror device recorded states. If they don't
-+ * agree to the actual state in the target, we regenerate uvent. If the
-+ * recorded state and the actual state of each device is same, we
-+ * unblock the mirrorset to allow writes.
-+ */
-+static int mirror_message(struct dm_target *ti, unsigned argc, char **argv)
-+{
-+	struct mirror_set *ms = (struct mirror_set *) ti->private;
-+	char device_status;
-+	char *name;	/* major:minor format */
-+	int i;
-+
-+	if (!block_on_error(ms))
-+		return -EINVAL;
-+	if (argc < 1 || strnicmp(argv[0], "unblock", sizeof("unblock")))
-+		return -EINVAL;
-+	argv++;
-+	argc--;
-+
-+	spin_lock_irq(&ms->lock);
-+	if (!ms->write_blocked)
-+		DMWARN("Received unblock message when not blocked!");
-+	if (argc != 2 * ms->nr_mirrors)
-+		goto error;
-+
-+	for (i = 0; i < ms->nr_mirrors; i++) {
-+		name = argv[2 * i];
-+		if (strncmp(name, ms->mirror[i].dev->name,
-+			   sizeof(ms->mirror[i].dev->name))) {
-+			DMWARN("name %s doesn't match name %s\n", name,
-+			       (ms->mirror[i].dev->name));
-+			goto error;
-+		}
-+		if (sscanf(argv[2 * i + 1], "%c", &device_status) != 1) {
-+			DMWARN("incorrect recorded state value");
-+			goto error;
-+		}
-+
-+		/* Re-generate event if the actual device state has
-+		 * changed since we last reported.
-+		 */
-+		if (device_status != device_status_char(&ms->mirror[i]))
-+			goto error;
-+	}
-+	ms->write_blocked = 0;
-+	spin_unlock_irq(&ms->lock);
-+	wake(ms);
-+	return 0;
-+
-+error:
-+	/* Regenerate the event */
-+	spin_unlock_irq(&ms->lock);
-+	schedule_work(&ms->trigger_event);
- 	return 0;
- }
- 
-@@ -1859,6 +1968,7 @@ static struct target_type mirror_target 
- 	.postsuspend = mirror_postsuspend,
- 	.resume	 = mirror_resume,
- 	.status	 = mirror_status,
-+	.message = mirror_message,
- };
- 
- static int __init dm_mirror_init(void)
+ out:
+@@ -2047,7 +2059,7 @@
+ 		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
+ 		"        [--readahead [+]<sectors>|auto|none]\n"
+ 		"        [-c|-C|--columns] [-o <fields>] [-O|--sort <sort_fields>]\n"
+-		"        [--noheadings] [--separator <separator>]\n\n");
++		"        [--noheadings] [--prefixes] [--separator <separator>]\n\n");
+ 	for (i = 0; _commands[i].name; i++)
+ 		fprintf(out, "\t%s %s\n", _commands[i].name, _commands[i].help);
+ 	fprintf(out, "\n<device> may be device name or -u <uuid> or "
+@@ -2409,6 +2421,7 @@
+ 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
+ 		{"notable", 0, &ind, NOTABLE_ARG},
+ 		{"options", 1, &ind, OPTIONS_ARG},
++		{"prefixes", 0, &ind, PREFIXES_ARG},
+ 		{"readahead", 1, &ind, READAHEAD_ARG},
+ 		{"separator", 1, &ind, SEPARATOR_ARG},
+ 		{"showkeys", 0, &ind, SHOWKEYS_ARG},
+@@ -2543,6 +2556,8 @@
+ 			_switches[NOLOCKFS_ARG]++;
+ 		if ((ind == NOOPENCOUNT_ARG))
+ 			_switches[NOOPENCOUNT_ARG]++;
++		if ((ind == PREFIXES_ARG))
++			_switches[PREFIXES_ARG]++;
+ 		if ((ind == READAHEAD_ARG)) {
+ 			_switches[READAHEAD_ARG]++;
+ 			if (!strcasecmp(optarg, "auto"))
