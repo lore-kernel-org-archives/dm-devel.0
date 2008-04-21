@@ -1,7 +1,7 @@
 From: agk@sourceware.org
 Subject: device-mapper ./WHATS_NEW dmsetup/dmsetup.c
-Date: 21 Apr 2008 11:59:23 -0000
-Message-ID: <20080421115923.14343.qmail@sourceware.org>
+Date: 21 Apr 2008 13:16:31 -0000
+Message-ID: <20080421131631.5375.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,106 +18,101 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2008-04-21 11:59:22
+Changes by:	agk@sourceware.org	2008-04-21 13:16:31
 
 Modified files:
 	.              : WHATS_NEW 
 	dmsetup        : dmsetup.c 
 
 Log message:
-	Add --prefixes to dmsetup
-	
-	E.g. dmsetup info -c --prefixes
-	
-	Again, might change the name of this option.
+	Add 3 new reporting colums: tables_loaded, readonly, suspended.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.229&r2=1.230
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.104&r2=1.105
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.230&r2=1.231
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.105&r2=1.106
 
---- device-mapper/WHATS_NEW	2008/04/20 00:11:07	1.229
-+++ device-mapper/WHATS_NEW	2008/04/21 11:59:22	1.230
+--- device-mapper/WHATS_NEW	2008/04/21 11:59:22	1.230
++++ device-mapper/WHATS_NEW	2008/04/21 13:16:30	1.231
 @@ -1,5 +1,6 @@
  Version 1.02.26 - 
  =================================
-+  Add --prefixes to dmsetup.
++  Add tables_loaded, readonly and suspended columns to reports.
+   Add --prefixes to dmsetup.
    Add field name prefix option to reporting functions.
    Calculate string size within dm_pool_grow_object.
+--- device-mapper/dmsetup/dmsetup.c	2008/04/21 11:59:22	1.105
++++ device-mapper/dmsetup/dmsetup.c	2008/04/21 13:16:30	1.106
+@@ -1643,6 +1643,63 @@
+ 	return dm_report_field_string(rh, field, &s);
+ }
  
---- device-mapper/dmsetup/dmsetup.c	2008/04/19 15:50:17	1.104
-+++ device-mapper/dmsetup/dmsetup.c	2008/04/21 11:59:22	1.105
-@@ -120,6 +120,7 @@
- 	NOOPENCOUNT_ARG,
- 	NOTABLE_ARG,
- 	OPTIONS_ARG,
-+	PREFIXES_ARG,
- 	READAHEAD_ARG,
- 	SEPARATOR_ARG,
- 	SHOWKEYS_ARG,
-@@ -1914,7 +1915,7 @@
- 	char *options = (char *) default_report_options;
- 	const char *keys = "";
- 	const char *separator = " ";
--	int aligned = 1, headings = 1, buffered = 1;
-+	int aligned = 1, headings = 1, buffered = 1, field_prefixes = 0;
- 	uint32_t flags = 0;
- 	size_t len = 0;
- 	int r = 0;
-@@ -1929,6 +1930,11 @@
- 	if (_switches[UNBUFFERED_ARG])
- 		buffered = 0;
- 
-+	if (_switches[PREFIXES_ARG]) {
-+		aligned = 0;
-+		field_prefixes = 1;
++static int _dm_info_table_loaded_disp(struct dm_report *rh,
++				      struct dm_pool *mem __attribute((unused)),
++				      struct dm_report_field *field,
++				      const void *data,
++				      void *private __attribute((unused)))
++{
++	const struct dm_info *info = data;
++
++	if (info->live_table) {
++		if (info->inactive_table)
++			dm_report_field_set_value(field, "Both", NULL);
++		else
++			dm_report_field_set_value(field, "Live", NULL);
++		return 1;
 +	}
 +
- 	if (_switches[OPTIONS_ARG] && _string_args[OPTIONS_ARG]) {
- 		if (*_string_args[OPTIONS_ARG] != '+')
- 			options = _string_args[OPTIONS_ARG];
-@@ -1971,6 +1977,9 @@
- 	if (headings)
- 		flags |= DM_REPORT_OUTPUT_HEADINGS;
- 
-+	if (field_prefixes)
-+		flags |= DM_REPORT_OUTPUT_FIELD_NAME_PREFIX;
++	if (info->inactive_table)
++		dm_report_field_set_value(field, "Inactive", NULL);
++	else
++		dm_report_field_set_value(field, "None", NULL);
 +
- 	if (!(_report = dm_report_init(&_report_type,
- 				       _report_types, _report_fields,
- 				       options, separator, flags, keys, NULL)))
-@@ -1981,6 +1990,9 @@
- 		goto out;
- 	}
- 
-+	if (field_prefixes)
-+		dm_report_set_output_field_name_prefix(_report, "dm_");
++	return 1;
++}
 +
- 	r = 1;
++static int _dm_info_suspended_disp(struct dm_report *rh,
++				   struct dm_pool *mem __attribute((unused)),
++				   struct dm_report_field *field,
++				   const void *data,
++				   void *private __attribute((unused)))
++{
++	const struct dm_info *info = data;
++
++	if (info->suspended)
++		dm_report_field_set_value(field, "Suspended", NULL);
++	else
++		dm_report_field_set_value(field, "", NULL);
++
++	return 1;
++}
++
++static int _dm_info_read_only_disp(struct dm_report *rh,
++				   struct dm_pool *mem __attribute((unused)),
++				   struct dm_report_field *field,
++				   const void *data,
++				   void *private __attribute((unused)))
++{
++	const struct dm_info *info = data;
++
++	if (info->read_only)
++		dm_report_field_set_value(field, "Read-only", NULL);
++	else
++		dm_report_field_set_value(field, "Writeable", NULL);
++
++	return 1;
++}
++
++
+ static int _dm_info_devno_disp(struct dm_report *rh, struct dm_pool *mem,
+ 			       struct dm_report_field *field, const void *data,
+ 			       void *private)
+@@ -1885,6 +1942,9 @@
+ FIELD_F(TASK, NUM, "RAhead", 6, dm_read_ahead, "read_ahead", "Read ahead in sectors.")
  
- out:
-@@ -2047,7 +2059,7 @@
- 		"        [-r|--readonly] [--noopencount] [--nolockfs]\n"
- 		"        [--readahead [+]<sectors>|auto|none]\n"
- 		"        [-c|-C|--columns] [-o <fields>] [-O|--sort <sort_fields>]\n"
--		"        [--noheadings] [--separator <separator>]\n\n");
-+		"        [--noheadings] [--prefixes] [--separator <separator>]\n\n");
- 	for (i = 0; _commands[i].name; i++)
- 		fprintf(out, "\t%s %s\n", _commands[i].name, _commands[i].help);
- 	fprintf(out, "\n<device> may be device name or -u <uuid> or "
-@@ -2409,6 +2421,7 @@
- 		{"noopencount", 0, &ind, NOOPENCOUNT_ARG},
- 		{"notable", 0, &ind, NOTABLE_ARG},
- 		{"options", 1, &ind, OPTIONS_ARG},
-+		{"prefixes", 0, &ind, PREFIXES_ARG},
- 		{"readahead", 1, &ind, READAHEAD_ARG},
- 		{"separator", 1, &ind, SEPARATOR_ARG},
- 		{"showkeys", 0, &ind, SHOWKEYS_ARG},
-@@ -2543,6 +2556,8 @@
- 			_switches[NOLOCKFS_ARG]++;
- 		if ((ind == NOOPENCOUNT_ARG))
- 			_switches[NOOPENCOUNT_ARG]++;
-+		if ((ind == PREFIXES_ARG))
-+			_switches[PREFIXES_ARG]++;
- 		if ((ind == READAHEAD_ARG)) {
- 			_switches[READAHEAD_ARG]++;
- 			if (!strcasecmp(optarg, "auto"))
+ FIELD_F(INFO, STR, "Stat", 4, dm_info_status, "attr", "(L)ive, (I)nactive, (s)uspended, (r)ead-only, read-(w)rite.")
++FIELD_F(INFO, STR, "Tables", 6, dm_info_table_loaded, "tables_loaded", "Which of the live and inactive table slots are filled.")
++FIELD_F(INFO, STR, "Suspended", 9, dm_info_suspended, "suspended", "Whether the device is suspended.")
++FIELD_F(INFO, STR, "Read-only", 9, dm_info_read_only, "readonly", "Whether the device is read-only or writeable.")
+ FIELD_F(INFO, STR, "DevNo", 5, dm_info_devno, "devno", "Device major and minor numbers")
+ FIELD_O(INFO, dm_info, NUM, "Maj", major, 3, int32, "major", "Block device major number.")
+ FIELD_O(INFO, dm_info, NUM, "Min", minor, 3, int32, "minor", "Block device minor number.")
