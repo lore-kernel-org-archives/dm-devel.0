@@ -1,7 +1,7 @@
 From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: [RFC][PATCH 6/10] I/O context inheritance
-Date: Tue, 22 Apr 2008 22:55:56 +0900 (JST)
-Message-ID: <20080422.225556.64548415.taka@valinux.co.jp>
+Subject: [RFC][PATCH 7/10] I/O context inheritance
+Date: Tue, 22 Apr 2008 22:57:17 +0900 (JST)
+Message-ID: <20080422.225717.102033295.taka@valinux.co.jp>
 References: <20080422.224935.00673711.taka@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,72 +23,152 @@ Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 
-The raid10 module also makes use of temporary bios to sync physical disks
-under the same md device. Make these bios point the iocontext of a kernel
-thread in the module.
+The raid5 module makes use of temporary bios to issue several I/O requests
+in the same stripe, whenever it gets a write I/O request. In this case,
+the temporary bios should inherit the iocontext from the source bio.
+
+And the module also makes use of temporary bios to sync physical disks
+under the same md device. In this case, these bios point the iocontext of
+one of the kernel threads in the module.
 
 Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
 
 
---- linux-2.6.25.bio0/include/linux/raid/raid10.h	2008-04-22 15:48:32.000000000 +0900
-+++ linux-2.6.25/include/linux/raid/raid10.h	2008-04-22 15:52:58.000000000 +0900
-@@ -94,6 +94,7 @@ struct r10bio_s {
- 	int			read_slot;
- 
- 	struct list_head	retry_list;
+--- linux-2.6.25.bio0/include/linux/raid/raid5.h	2008-04-22 15:48:32.000000000 +0900
++++ linux-2.6.25/include/linux/raid/raid5.h	2008-04-22 15:53:09.000000000 +0900
+@@ -169,6 +169,7 @@ struct stripe_head {
+ 	spinlock_t		lock;
+ 	int			bm_seq;	/* sequence number for bitmap flushes */
+ 	int			disks;			/* disks in stripe */
 +	struct io_context	*io_context;
- 	/*
- 	 * if the IO is in WRITE direction, then multiple bios are used,
- 	 * one for each copy.
---- linux-2.6.25.bio0/drivers/md/raid10.c	2008-04-22 15:48:33.000000000 +0900
-+++ linux-2.6.25/drivers/md/raid10.c	2008-04-22 17:19:50.000000000 +0900
-@@ -199,6 +199,9 @@ static void put_buf(r10bio_t *r10_bio)
+ 	/* stripe_operations
+ 	 * @pending - pending ops flags (set for request->issue->complete)
+ 	 * @ack - submitted ops flags (set for issue->complete)
+--- linux-2.6.25.bio0/drivers/md/raid5.c	2008-04-22 15:48:32.000000000 +0900
++++ linux-2.6.25/drivers/md/raid5.c	2008-04-22 18:51:13.000000000 +0900
+@@ -148,6 +148,8 @@ static void __release_stripe(raid5_conf_
+ 			}
+ 			atomic_dec(&conf->active_stripes);
+ 			if (!test_bit(STRIPE_EXPANDING, &sh->state)) {
++				put_io_context(sh->io_context);
++				sh->io_context = NULL;
+ 				list_add_tail(&sh->lru, &conf->inactive_list);
+ 				wake_up(&conf->wait_for_stripe);
+ 				if (conf->retry_read_aligned)
+@@ -235,7 +237,7 @@ static int grow_buffers(struct stripe_he
+ 
+ static void raid5_build_block (struct stripe_head *sh, int i);
+ 
+-static void init_stripe(struct stripe_head *sh, sector_t sector, int pd_idx, int disks)
++static void init_stripe(struct stripe_head *sh, sector_t sector, int pd_idx, int disks, struct bio *bi)
  {
- 	conf_t *conf = mddev_to_conf(r10_bio->mddev);
+ 	raid5_conf_t *conf = sh->raid_conf;
+ 	int i;
+@@ -253,6 +255,10 @@ static void init_stripe(struct stripe_he
+ 	sh->sector = sector;
+ 	sh->pd_idx = pd_idx;
+ 	sh->state = 0;
++	if (bi)
++		sh->io_context = ioc_object_link(bi->bi_io_context);
++	else
++		sh->io_context = ioc_object_link(current->io_context);
  
-+	put_io_context(r10_bio->io_context);
-+	r10_bio->io_context = NULL;
-+
- 	mempool_free(r10_bio, conf->r10buf_pool);
+ 	sh->disks = disks;
  
- 	lower_barrier(conf);
-@@ -1761,6 +1764,7 @@ static sector_t sync_request(mddev_t *md
- 				r10_bio->mddev = mddev;
- 				set_bit(R10BIO_IsRecover, &r10_bio->state);
- 				r10_bio->sector = sect;
-+				r10_bio->io_context = ioc_object_link(current->io_context);
+@@ -291,7 +297,7 @@ static void unplug_slaves(mddev_t *mddev
+ static void raid5_unplug_device(struct request_queue *q);
  
- 				raid10_find_phys(conf, r10_bio);
- 				/* Need to check if this section will still be
-@@ -1793,6 +1797,7 @@ static sector_t sync_request(mddev_t *md
- 						bio->bi_bdev = conf->mirrors[d].rdev->bdev;
- 						atomic_inc(&conf->mirrors[d].rdev->nr_pending);
- 						atomic_inc(&r10_bio->remaining);
-+						bio->bi_io_context = r10_bio->io_context;
- 						/* and we write to 'i' */
+ static struct stripe_head *get_active_stripe(raid5_conf_t *conf, sector_t sector, int disks,
+-					     int pd_idx, int noblock)
++				     int pd_idx, int noblock, struct bio *bi)
+ {
+ 	struct stripe_head *sh;
  
- 						for (k=0; k<conf->copies; k++)
-@@ -1808,6 +1813,7 @@ static sector_t sync_request(mddev_t *md
- 						bio->bi_sector = r10_bio->devs[k].addr +
- 							conf->mirrors[i].rdev->data_offset;
- 						bio->bi_bdev = conf->mirrors[i].rdev->bdev;
-+						bio->bi_io_context = r10_bio->io_context;
+@@ -321,7 +327,7 @@ static struct stripe_head *get_active_st
+ 					);
+ 				conf->inactive_blocked = 0;
+ 			} else
+-				init_stripe(sh, sector, pd_idx, disks);
++				init_stripe(sh, sector, pd_idx, disks, bi);
+ 		} else {
+ 			if (atomic_read(&sh->count)) {
+ 			  BUG_ON(!list_empty(&sh->lru));
+@@ -412,10 +418,19 @@ static void ops_run_io(struct stripe_hea
+ 		bi = &sh->dev[i].req;
  
- 						r10_bio->devs[0].devnum = d;
- 						r10_bio->devs[1].devnum = i;
-@@ -1861,6 +1867,7 @@ static sector_t sync_request(mddev_t *md
- 		set_bit(R10BIO_IsSync, &r10_bio->state);
- 		raid10_find_phys(conf, r10_bio);
- 		r10_bio->sectors = (sector_nr | conf->chunk_mask) - sector_nr +1;
-+		r10_bio->io_context = ioc_object_link(current->io_context);
+ 		bi->bi_rw = rw;
+-		if (rw == WRITE)
++		if (rw == WRITE) {
+ 			bi->bi_end_io = raid5_end_write_request;
+-		else
++			if (sh->dev[i].towrite) {
++				bi->bi_io_context = sh->dev[i].towrite->bi_io_context;
++			}
++		} else {
+ 			bi->bi_end_io = raid5_end_read_request;
++			if (sh->dev[i].toread) {
++				bi->bi_io_context = sh->dev[i].toread->bi_io_context;
++			}
++		}
++		if (!bi->bi_io_context)
++			bi->bi_io_context = sh->io_context;
  
- 		for (i=0; i<conf->copies; i++) {
- 			int d = r10_bio->devs[i].devnum;
-@@ -1880,6 +1887,7 @@ static sector_t sync_request(mddev_t *md
- 			bio->bi_sector = r10_bio->devs[i].addr +
- 				conf->mirrors[d].rdev->data_offset;
- 			bio->bi_bdev = conf->mirrors[d].rdev->bdev;
-+			bio->bi_io_context = r10_bio->io_context;
- 			count++;
- 		}
+ 		rcu_read_lock();
+ 		rdev = rcu_dereference(conf->disks[i].rdev);
+@@ -2551,7 +2566,7 @@ static void handle_stripe_expansion(raid
+ 						conf->max_degraded, &dd_idx,
+ 						&pd_idx, conf);
+ 			sh2 = get_active_stripe(conf, s, conf->raid_disks,
+-						pd_idx, 1);
++						pd_idx, 1, NULL);
+ 			if (sh2 == NULL)
+ 				/* so far only the early blocks of this stripe
+ 				 * have been requested.  When later blocks
+@@ -3512,7 +3527,7 @@ static int make_request(struct request_q
+ 			(unsigned long long)new_sector, 
+ 			(unsigned long long)logical_sector);
  
+-		sh = get_active_stripe(conf, new_sector, disks, pd_idx, (bi->bi_rw&RWA_MASK));
++		sh = get_active_stripe(conf, new_sector, disks, pd_idx, (bi->bi_rw&RWA_MASK), bi);
+ 		if (sh) {
+ 			if (unlikely(conf->expand_progress != MaxSector)) {
+ 				/* expansion might have moved on while waiting for a
+@@ -3650,7 +3665,7 @@ static sector_t reshape_request(mddev_t 
+ 		int skipped = 0;
+ 		pd_idx = stripe_to_pdidx(sector_nr+i, conf, conf->raid_disks);
+ 		sh = get_active_stripe(conf, sector_nr+i,
+-				       conf->raid_disks, pd_idx, 0);
++				       conf->raid_disks, pd_idx, 0, NULL);
+ 		set_bit(STRIPE_EXPANDING, &sh->state);
+ 		atomic_inc(&conf->reshape_stripes);
+ 		/* If any of this stripe is beyond the end of the old
+@@ -3701,7 +3716,7 @@ static sector_t reshape_request(mddev_t 
+ 		pd_idx = stripe_to_pdidx(first_sector, conf,
+ 					 conf->previous_raid_disks);
+ 		sh = get_active_stripe(conf, first_sector,
+-				       conf->previous_raid_disks, pd_idx, 0);
++			       conf->previous_raid_disks, pd_idx, 0, NULL);
+ 		set_bit(STRIPE_EXPAND_SOURCE, &sh->state);
+ 		set_bit(STRIPE_HANDLE, &sh->state);
+ 		release_stripe(sh);
+@@ -3791,9 +3806,9 @@ static inline sector_t sync_request(mdde
+ 	bitmap_cond_end_sync(mddev->bitmap, sector_nr);
+ 
+ 	pd_idx = stripe_to_pdidx(sector_nr, conf, raid_disks);
+-	sh = get_active_stripe(conf, sector_nr, raid_disks, pd_idx, 1);
++	sh = get_active_stripe(conf, sector_nr, raid_disks, pd_idx, 1, NULL);
+ 	if (sh == NULL) {
+-		sh = get_active_stripe(conf, sector_nr, raid_disks, pd_idx, 0);
++		sh = get_active_stripe(conf, sector_nr, raid_disks, pd_idx, 0, NULL);
+ 		/* make sure we don't swamp the stripe cache if someone else
+ 		 * is trying to get access
+ 		 */
+@@ -3857,7 +3872,7 @@ static int  retry_aligned_read(raid5_con
+ 			/* already done this stripe */
+ 			continue;
+ 
+-		sh = get_active_stripe(conf, sector, conf->raid_disks, pd_idx, 1);
++		sh = get_active_stripe(conf, sector, conf->raid_disks, pd_idx, 1, raid_bio);
+ 
+ 		if (!sh) {
+ 			/* failed to get a stripe - must wait */
