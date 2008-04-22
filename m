@@ -1,16 +1,12 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH] 10-times slower dm-raid1 O_SYNC
-Date: Mon, 21 Apr 2008 18:04:35 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0804211754510.19735@porkchop.devel.redhat.com>
-References: <Pine.LNX.4.64.0804172328070.10556@porkchop.devel.redhat.com>
-	<20080418120459.GQ18935@agk.fab.redhat.com>
+From: Domenico Viggiani <dviggiani@tiscali.it>
+Subject: map in use
+Date: Tue, 22 Apr 2008 11:31:15 +0200
+Message-ID: <000101c8a45b$9c93a4c0$cf42e3c1@pitagora.it>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED;
-	BOUNDARY="168446244-1216514207-1208815307=:19735"
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080418120459.GQ18935@agk.fab.redhat.com>
-Content-ID: <Pine.LNX.4.64.0804211802010.19735@porkchop.devel.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,146 +16,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+I don't know if it is the best place to ask this question but this list
+helped me a lot of times!
 
---168446244-1216514207-1208815307=:19735
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; FORMAT=flowed
-Content-ID: <Pine.LNX.4.64.0804211802011.19735@porkchop.devel.redhat.com>
+Trying to remove a map with:
+ multipath -f <map>
+I get "map in use", surely by LVM. Problem is that every LVM command I try
+to run (vgdisplay, vgexport, vgchange), it hangs.
 
-Hi
+Only a reboot?
 
-Here is the patch to fix 10-times slower dm-raid1.
-
-I realized that conditional unplug when someone is waiting on any IO (that 
-I proposed on the phone call) is not correct --- it would leave the same 
-problem with asynchronous IO (io_submit functions, etc.). So when kmirrord 
-finishes all work, it unplugs the queue unconditionally.
-
-The same bug exists with kcopyd, I fixed it to always use BIO_RW_SYNC bit. 
-In kcopyd work routine it is not possible to find all devices that were 
-involved in copying, so we don't know which queue to unplug. So the only 
-way to fix it is to use synchronous submit.
-
-Look at it and if you don't find any issues, I will post the patch to the 
-customer for his testing.
-
-Mikulas
---168446244-1216514207-1208815307=:19735
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII; NAME=dm-unplug-queues.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0804211801470.19735@porkchop.devel.redhat.com>
-Content-Description: 
-Content-Disposition: ATTACHMENT; FILENAME=dm-unplug-queues.patch
-
-QXZvaWQgM21zIGRlbGF5IGluIGRtLXJhaWQgYW5kIGtjb3B5ZC4NCg0KSXQg
-aXMgc3BlY2lmaWVkIHRoYXQgYW55IHN1Ym1pdHRlZCBiaW8gd2l0aG91dCBC
-SU9fUldfU1lOQyBmbGFnIG1heSBwbHVnIHRoZQ0KcXVldWUgKGkuZS4gYmxv
-Y2sgdGhlIHJlcXVlc3RzIGZyb20gYmVpbmcgZGlzcGF0Y2hlZCB0byB0aGUg
-cGh5c2ljYWwgZGV2aWNlKS4NCg0KVGhlIHF1ZXVlIGlzIHVucGx1Z2dlZCB3
-aGVuIHRoZSBjYWxsZXIgY2FsbHMgYmxrX3VucGx1ZygpIGZ1bmN0aW9uLiBV
-c3VhbGx5LCB0aGUNCnNlcXVlbmNlIGlzIHRoYXQgc29tZW9uZSBjYWxscyBz
-dWJtaXRfYmggdG8gc3VibWl0IElPIG9uIGEgYnVmZmVyLiBUaGUgSU8gcGx1
-Z3MNCnRoZSBxdWV1ZSBhbmQgd2FpdHMgKHRvIGJlIHBvc3NpYmx5IGpvaW5l
-ZCB3aXRoIG90aGVyIGFkamFjZW50IGJpb3MpLiBUaGVuLCB3aGVuDQp0aGUg
-Y2FsbGVyIGNhbGxzIHdhaXRfb25fYnVmZmVyKCksIGl0IHVucGx1Z3MgdGhl
-IHF1ZXVlIGFuZCBzdWJtaXRzIHRoZSBJT3MgdG8NCnRoZSBkaXNrLg0KDQpU
-aGlzIHdhcyBoYXBwZW5uaW5nOg0KDQpXaGVuIGRvaW5nIE9fU1lOQyB3cml0
-ZXMsIGZ1bmN0aW9uIGZzeW5jX2J1ZmZlcnNfbGlzdCgpIHN1Ym1pdHMgYSBs
-aXN0IG9mDQpiaW9zIHRvIGRtX3JhaWQxLCB0aGUgYmlvcyBhcmUgYWRkZWQg
-dG8gZG1fcmFpZDEgd3JpdGUgcXVldWUgYW5kIGttaXJyb3JkIGlzDQp3b2tl
-biB1cC4NCg0KZnN5bmNfYnVmZmVyc19saXN0KCkgY2FsbHMgd2FpdF9vbl9i
-dWZmZXIoKSAtLS0gdGhhdCB1bnBsdWdzIHRoZSBxdWV1ZSwgYnV0DQp0aGVy
-ZSBhcmUgbm8gYmlvcyBvbiB0aGUgZGV2aWNlIHF1ZXVlICh0aGV5IGFyZSBz
-dGlsbCBpbiBkbV9yYWlkMSBxdWV1ZSkNCg0Kd2FpdF9vbl9idWZmZXIoKSBz
-dGFydHMgd2FpdGluZyB1bnRpbCB0aGUgSU8gaXMgZmluaXNoZWQuDQoNCmtt
-aXJyb3JkIGlzIHNjaGVkdWxlZCwga21pcnJvcmQgdGFrZXMgYmlvcyBhbmQg
-c3VibWl0cyB0aGVtIHRvIHRoZSBkZXZpY2VzLg0KDQp0aGUgc3VibWl0dGVk
-IGJpbyBwbHVncyB0aGUgaGFyZGRpc2sgcXVldWUsIHRoZXJlIGlzIG5vIG9u
-ZSB0byB1bnBsdWcgaXQNCih0aGUgcHJvY2VzcyB0aGF0IGNhbGxlZCB3YWl0
-X29uX2J1ZmZlcigpIGlzIGFscmVhZHkgc2xlZXBpbmcpDQoNClNvIHRoZXJl
-IGlzIDNtcyB0aW1lb3V0LCBhZnRlciB3aGljaCB0aGUgcXVldWVzIG9uIHRo
-ZSBoYXJkZGlza3MgYXJlDQp1bnBsdWdnZWQsIGFuZCByZXF1ZXN0cyBhcmUg
-cHJvY2Vzc2VkLg0KDQpUaGlzIDNtcyB0aW1lb3V0IGNhdXNlZCB0aGF0IGlu
-IGNlcnRhaW4gd29ya2xvYWRzIChPX1NZTkMsIDhrYiB3cml0ZXMpLCBkbS1y
-YWlkMQ0KaXMgMTAgdGltZXMgc2xvd2VyIHRoYW4gbWQtcmFpZDEuDQoNCg0K
-RXZlcnkgdGltZSB3ZSBzdWJtaXQgc29tZXRoaW5nIGFzeW5jaHJvbm91c2x5
-IHZpYSBkbV9pbywgd2UgbXVzdCB1bnBsdWcgdGhlDQpxdWV1ZSB0byBhY3R1
-YWxseSBwdXQgdGhlIHJlcXVlc3QgdG8gdGhlIGRldmljZS4NCg0KVGhpcyBw
-YXRjaCBhZGRzIHVucGx1ZyBjYWxsIHRvIGttaXJyb3JkIC0tLSB3aGlsZSBw
-cm9jZXNzaW5nIHJlcXVlc3RzLCBpdCBrZWVwcw0KdGhlIHF1ZXVlIHBsdWdn
-ZWQgKHNvIHRoYXQgYWRqYWNlbnQgYmlvcyBjYW4gYmUgbWVyZ2VkKSwgd2hl
-biBpdCBmaW5pc2hlcw0KcHJvY2Vzc2luZyBhbGwgYmlvcywgaXQgdW5wbHVn
-cyB0aGUgcXVldWUgdG8gc3VibWl0IHRoZSBiaW9zLg0KDQpJdCBhbHNvIGZp
-eGVzIGtjb3B5ZCwgdGhhdCBoYXMgdGhlIHNhbWUgcG90ZW50aWFsIHByb2Js
-ZW0uIEFsbCBrY29weWQgcmVxdWVzdHMNCmFyZSBzdWJtaXR0ZWQgd2l0aCBC
-SU9fUldfU1lOQy4NCg0KU2lnbmVkLW9mZi1ieTogTWlrdWxhcyBQYXRvY2th
-IDxtcGF0b2NrYUByZWRoYXQuY29tPg0KDQotLS0NCiBkcml2ZXJzL21kL2Rt
-LWlvLmMgICAgIHwgICAxMCArKysrKysrKy0tDQogZHJpdmVycy9tZC9kbS1r
-Y29weWQuYyB8ICAgIDIgKy0NCiBkcml2ZXJzL21kL2RtLXJhaWQxLmMgIHwg
-ICAgMiArKw0KIDMgZmlsZXMgY2hhbmdlZCwgMTEgaW5zZXJ0aW9ucygrKSwg
-MyBkZWxldGlvbnMoLSkNCg0KSW5kZXg6IGxpbnV4LTIuNi4yNS1yYzgvZHJp
-dmVycy9tZC9kbS1yYWlkMS5jDQo9PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQot
-LS0gbGludXgtMi42LjI1LXJjOC5vcmlnL2RyaXZlcnMvbWQvZG0tcmFpZDEu
-YwkyMDA4LTA0LTAzIDE4OjQ1OjA5LjAwMDAwMDAwMCArMDIwMA0KKysrIGxp
-bnV4LTIuNi4yNS1yYzgvZHJpdmVycy9tZC9kbS1yYWlkMS5jCTIwMDgtMDQt
-MjEgMjE6NTU6MzQuMDAwMDAwMDAwICswMjAwDQpAQCAtMTI5Nyw2ICsxMjk3
-LDggQEAgc3RhdGljIHZvaWQgZG9fbWlycm9yKHN0cnVjdCB3b3JrX3N0cnVj
-dA0KIAlkb19yZWFkcyhtcywgJnJlYWRzKTsNCiAJZG9fd3JpdGVzKG1zLCAm
-d3JpdGVzKTsNCiAJZG9fZmFpbHVyZXMobXMsICZmYWlsdXJlcyk7DQorDQor
-CWRtX3RhYmxlX3VucGx1Z19hbGwobXMtPnRpLT50YWJsZSk7DQogfQ0KIA0K
-IA0KSW5kZXg6IGxpbnV4LTIuNi4yNS1yYzgvZHJpdmVycy9tZC9kbS1pby5j
-DQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gbGludXgtMi42LjI1LXJj
-OC5vcmlnL2RyaXZlcnMvbWQvZG0taW8uYwkyMDA4LTA0LTIxIDIyOjMyOjIx
-LjAwMDAwMDAwMCArMDIwMA0KKysrIGxpbnV4LTIuNi4yNS1yYzgvZHJpdmVy
-cy9tZC9kbS1pby5jCTIwMDgtMDQtMjEgMjI6NDM6MTQuMDAwMDAwMDAwICsw
-MjAwDQpAQCAtMzUzLDcgKzM1Myw3IEBAIHN0YXRpYyBpbnQgc3luY19pbyhz
-dHJ1Y3QgZG1faW9fY2xpZW50ICoNCiB7DQogCXN0cnVjdCBpbyBpbzsNCiAN
-Ci0JaWYgKG51bV9yZWdpb25zID4gMSAmJiBydyAhPSBXUklURSkgew0KKwlp
-ZiAobnVtX3JlZ2lvbnMgPiAxICYmIChydyAmIFJXX01BU0spICE9IFdSSVRF
-KSB7DQogCQlXQVJOX09OKDEpOw0KIAkJcmV0dXJuIC1FSU87DQogCX0NCkBA
-IC0zOTAsNyArMzkwLDcgQEAgc3RhdGljIGludCBhc3luY19pbyhzdHJ1Y3Qg
-ZG1faW9fY2xpZW50IA0KIHsNCiAJc3RydWN0IGlvICppbzsNCiANCi0JaWYg
-KG51bV9yZWdpb25zID4gMSAmJiBydyAhPSBXUklURSkgew0KKwlpZiAobnVt
-X3JlZ2lvbnMgPiAxICYmIChydyAmIFJXX01BU0spICE9IFdSSVRFKSB7DQog
-CQlXQVJOX09OKDEpOw0KIAkJZm4oMSwgY29udGV4dCk7DQogCQlyZXR1cm4g
-LUVJTzsNCkBAIC00MzcsNiArNDM3LDEyIEBAIHN0YXRpYyBpbnQgZHBfaW5p
-dChzdHJ1Y3QgZG1faW9fcmVxdWVzdCANCiANCiAvKg0KICAqIE5ldyBjb2xs
-YXBzZWQgKGEpc3luY2hyb25vdXMgaW50ZXJmYWNlDQorICoNCisgKiBBdHRl
-bnRpb246DQorICogSWYgdGhlIElPIGlzIGFzeW5jaHJvbm91cyAoaS5lLiBp
-dCBoYXMgbm90aWZ5LmZuKSwgeW91IG11c3QgZWl0aGVyIHVucGx1ZyB0aGUN
-CisgKiBxdWV1ZSB3aXRoIGJsa191bnBsdWcoKSBzb21lIHRpbWVzIGxhdGVy
-IG9yIHlvdSBtdXN0IHNldCBCSU9fUldfU1lOQyBiaXQgaW4NCisgKiBpb19y
-ZXEtPmJpX3J3LiBJZiB5b3UgZmFpbCB0byBkbyBvbmUgb2YgdGhlc2UsIHRo
-ZSBJTyB3aWxsIGJlIHN1Ym1pdHRlZCB0bw0KKyAqIHRoZSBkaXNrIHdpdGgg
-M21zIGRlbGF5Lg0KICAqLw0KIGludCBkbV9pbyhzdHJ1Y3QgZG1faW9fcmVx
-dWVzdCAqaW9fcmVxLCB1bnNpZ25lZCBudW1fcmVnaW9ucywNCiAJICBzdHJ1
-Y3QgZG1faW9fcmVnaW9uICp3aGVyZSwgdW5zaWduZWQgbG9uZyAqc3luY19l
-cnJvcl9iaXRzKQ0KSW5kZXg6IGxpbnV4LTIuNi4yNS1yYzgvZHJpdmVycy9t
-ZC9kbS1rY29weWQuYw0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIGxp
-bnV4LTIuNi4yNS1yYzgub3JpZy9kcml2ZXJzL21kL2RtLWtjb3B5ZC5jCTIw
-MDgtMDQtMDMgMTg6NDU6MDguMDAwMDAwMDAwICswMjAwDQorKysgbGludXgt
-Mi42LjI1LXJjOC9kcml2ZXJzL21kL2RtLWtjb3B5ZC5jCTIwMDgtMDQtMjEg
-MjI6MzQ6NDEuMDAwMDAwMDAwICswMjAwDQpAQCAtMzMzLDcgKzMzMyw3IEBA
-IHN0YXRpYyBpbnQgcnVuX2lvX2pvYihzdHJ1Y3Qga2NvcHlkX2pvYiANCiB7
-DQogCWludCByOw0KIAlzdHJ1Y3QgZG1faW9fcmVxdWVzdCBpb19yZXEgPSB7
-DQotCQkuYmlfcncgPSBqb2ItPnJ3LA0KKwkJLmJpX3J3ID0gam9iLT5ydyB8
-ICgxIDw8IEJJT19SV19TWU5DKSwNCiAJCS5tZW0udHlwZSA9IERNX0lPX1BB
-R0VfTElTVCwNCiAJCS5tZW0ucHRyLnBsID0gam9iLT5wYWdlcywNCiAJCS5t
-ZW0ub2Zmc2V0ID0gam9iLT5vZmZzZXQsDQo=
-
---168446244-1216514207-1208815307=:19735
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---168446244-1216514207-1208815307=:19735--
+Thanks
+-- 
+Domenico Viggiani
