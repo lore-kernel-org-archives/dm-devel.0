@@ -1,186 +1,49 @@
-From: "Wim Colgate" <Wim.Colgate@citrix.com>
-Subject: a few setup/control questions
-Date: Tue, 22 Apr 2008 09:51:59 -0700
-Message-ID: <7BC3A7DB53028743B733D298244A8C6255F8C3@sjcpexch02.citrite.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Dan Williams" <dan.j.williams@intel.com>
+Subject: Re: [dm-devel] Re: [RFC][PATCH 0/10] I/O context inheritance
+Date: Tue, 22 Apr 2008 11:10:41 -0700
+Message-ID: <e9c3a7c20804221110y1968dfb3q27b86c9a7480ad1@mail.gmail.com>
+References: <20080422.224935.00673711.taka@valinux.co.jp>
+	 <20080422.230318.112756414.taka@valinux.co.jp>
+	 <20080422145418.GL12774@kernel.dk>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1320836982=="
-Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762979AbYDVSLB@vger.kernel.org>
+In-Reply-To: <20080422145418.GL12774@kernel.dk>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Hirokazu Takahashi <taka@valinux.co.jp>, linux-kernel@vger.kernel.org, agk@sourceware.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+On Tue, Apr 22, 2008 at 7:54 AM, Jens Axboe <jens.axboe@oracle.com> wrote:
+> On Tue, Apr 22 2008, Hirokazu Takahashi wrote:
+>  > Hi,
+>  >
+>  > Sorry, these patches are for linux-2.6.25.
+>  >
+>  > > This series of patches make the block I/O layer and the I/O schedulers
+>  > > be able to determine the right io_context of every I/O.
+>  > >
+>  > > The current implementation of the block I/O layer and the I/O schedulers
+>  > > assume that the current process is the one which issued the given I/O,
+>  > > then use the io_context of this process to control the I/O.
+>  > > But this assumption isn't quite right because several kernel threads
+>  > > will handle I/O requests on behalf of the processes which originated them.
+>  > > This often happens when you want to use device mapper modules.
+>  > >
+>  > > The patches make every bio has a pointer to an io_context, which will
+>  > > be set when it is allocated or cloned. So it makes it possible to find
+>  > > the right io_context from any bio at any place.
+>  > >
+>  > > I'm waiting for your comments.
+>
+>  Can you give a brief summary of what you need this stuff for?
+>
 
---===============1320836982==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C8A499.302486DA"
+I am not sure if this the intended application, but I have been
+looking at supporting ionice over software-raid and this series seems
+like a necessary first step.
 
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C8A499.302486DA
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-I'm fairly new to device-mapper/multipath io, so please bear with me,
-and I hope these questions are not inane.
-
-=20
-
-I've been able to manually setup MP configurations via
-/etc/multipath.conf. For example, I blacklist all wwid's and then
-blacklist_excpetion just the wwid's I wish to multipath.
-
-=20
-
-Is there a mechanism to control blacklist & expections through the
-command like tools?=20
-
-=20
-
-Does adding a device through the cli override multipath.conf? (i.e.
-blacklist/exceptions)
-
-=20
-
-In general, I'd like to be able to dynamically control MP and its
-parameters, rather than manually editing the .conf file and restarting
-the service.
-
-=20
-
-Regards,
-
-=20
-
-Wim
-
-
-------_=_NextPart_001_01C8A499.302486DA
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
-xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
-xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
-
-<head>
-<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
-charset=3Dus-ascii">
-<meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{mso-style-priority:99;
-	color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{mso-style-priority:99;
-	color:purple;
-	text-decoration:underline;}
-span.EmailStyle17
-	{mso-style-type:personal-compose;
-	font-family:"Calibri","sans-serif";
-	color:windowtext;}
-.MsoChpDefault
-	{mso-style-type:export-only;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.0in 1.0in 1.0in;}
-div.Section1
-	{page:Section1;}
--->
-</style>
-<!--[if gte mso 9]><xml>
- <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
-</xml><![endif]--><!--[if gte mso 9]><xml>
- <o:shapelayout v:ext=3D"edit">
-  <o:idmap v:ext=3D"edit" data=3D"1" />
- </o:shapelayout></xml><![endif]-->
-</head>
-
-<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
-
-<div class=3DSection1>
-
-<p class=3DMsoNormal>I&#8217;m fairly new to device-mapper/multipath io, =
-so
-please bear with me, and I hope these questions are not =
-inane.<o:p></o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal>I&#8217;ve been able to manually setup MP =
-configurations via
-/etc/multipath.conf. For example, I blacklist all wwid&#8217;s and then
-blacklist_excpetion just the wwid&#8217;s I wish to =
-multipath.<o:p></o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal>Is there a mechanism to control blacklist &amp; =
-expections
-through the command like tools? <o:p></o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal>Does adding a device through the cli override
-multipath.conf? (i.e. blacklist/exceptions)<o:p></o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal>In general, I&#8217;d like to be able to =
-dynamically control
-MP and its parameters, rather than manually editing the .conf file and =
-restarting
-the service.<o:p></o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal>Regards,<o:p></o:p></p>
-
-<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
-
-<p class=3DMsoNormal>Wim<o:p></o:p></p>
-
-</div>
-
-</body>
-
-</html>
-
-------_=_NextPart_001_01C8A499.302486DA--
-
-
---===============1320836982==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1320836982==--
+--
+Dan
