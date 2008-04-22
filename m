@@ -1,49 +1,149 @@
-From: "Dan Williams" <dan.j.williams@intel.com>
-Subject: Re: [dm-devel] Re: [RFC][PATCH 0/10] I/O context inheritance
-Date: Tue, 22 Apr 2008 11:10:41 -0700
-Message-ID: <e9c3a7c20804221110y1968dfb3q27b86c9a7480ad1@mail.gmail.com>
-References: <20080422.224935.00673711.taka@valinux.co.jp>
-	 <20080422.230318.112756414.taka@valinux.co.jp>
-	 <20080422145418.GL12774@kernel.dk>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [dm-devel] [PATCH 4/7] scsi_dh: add EMC Clariion device handler
+Date: Tue, 22 Apr 2008 14:09:19 -0700
+Message-ID: <1208898559.1025.191.camel@chandra-ubuntu>
+References: <20080416011818.19580.41106.sendpatchset@chandra-ubuntu>
+	 <20080416011842.19580.92056.sendpatchset@chandra-ubuntu>
+	 <4806294C.9090703@cs.wisc.edu> <1208390384.1025.40.camel@chandra-ubuntu>
+	 <48078571.9040806@cs.wisc.edu>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1762979AbYDVSLB@vger.kernel.org>
-In-Reply-To: <20080422145418.GL12774@kernel.dk>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Hirokazu Takahashi <taka@valinux.co.jp>, linux-kernel@vger.kernel.org, agk@sourceware.org
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <48078571.9040806@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, andmike@us.ibm.com, asson_ronald@emc.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, jens.axboe@oracle.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Apr 22, 2008 at 7:54 AM, Jens Axboe <jens.axboe@oracle.com> wrote:
-> On Tue, Apr 22 2008, Hirokazu Takahashi wrote:
->  > Hi,
->  >
->  > Sorry, these patches are for linux-2.6.25.
->  >
->  > > This series of patches make the block I/O layer and the I/O schedulers
->  > > be able to determine the right io_context of every I/O.
->  > >
->  > > The current implementation of the block I/O layer and the I/O schedulers
->  > > assume that the current process is the one which issued the given I/O,
->  > > then use the io_context of this process to control the I/O.
->  > > But this assumption isn't quite right because several kernel threads
->  > > will handle I/O requests on behalf of the processes which originated them.
->  > > This often happens when you want to use device mapper modules.
->  > >
->  > > The patches make every bio has a pointer to an io_context, which will
->  > > be set when it is allocated or cloned. So it makes it possible to find
->  > > the right io_context from any bio at any place.
->  > >
->  > > I'm waiting for your comments.
->
->  Can you give a brief summary of what you need this stuff for?
->
 
-I am not sure if this the intended application, but I have been
-looking at supporting ionice over software-raid and this series seems
-like a necessary first step.
+On Thu, 2008-04-17 at 12:14 -0500, Mike Christie wrote:
+> Chandra Seetharaman wrote:
+> > On Wed, 2008-04-16 at 11:29 -0500, Mike Christie wrote:
+> >> Chandra Seetharaman wrote:
+> >>> +
+> >>> +static int send_cmd(struct scsi_device *sdev, int cmd)
+> >>> +{
+> >>> +	struct request *rq = get_req(sdev, cmd);
+> >>> +
+> >>> +	if (!rq)
+> >>> +		return SCSI_DH_RES_TEMP_UNAVAIL;
+> >>> +
+> >>> +	return blk_execute_rq(sdev->request_queue, NULL, rq, 1);
+> >>> +}
+> >>> +
+> >> My only concerns are:
+> >>
+> >> 1. EMC and HP need to send a command to every device to transition them. 
+> >> Because we do blk_execute_rq from the dm multipath workqueue we can now 
+> >> only failover/failback for a couple devices at a time.
+> >>
+> > 
+> >> I am not sure if this is a big deal, because this the error handler path 
+> >> so it is going to be slower than the normal path. But it seems like 
+> > 
+> > Yes. But...
+> > 
+> > pg_init() due to failover/failback will be sent only when I/O is
+> > sent/resent to a multipath device, isn't it ? and we don't expect I/Os
+> > to be sent to all the devices at the same time (all the time), do we ?
+> > 
+> 
+> I am not sure what you mean by all the time, because I am talking about 
 
---
-Dan
+What I meant was that we do not expect I/Os to be sent to all the
+devices at all the times (pg_init will be sent only when I/Os fails on a
+path, right ?).
+
+Sorry for not being clear.
+
+> failover times above. And for failover I think I said yes in the 
+> previous mail. For EMC we are currently sending failover commands to all 
+> the devices at the same time, because EMC does not do the controller 
+> failover RDAC does.
+
+RDAC doesn't do controller failover. It also does per lun failover.
+
+> 
+> > So, as you pointed, is it a big deal ? :)
+> > 
+> 
+> In the previous mail I specifically said users might care, because they 
+> are picky about failover times, real    3m39.728s
+user    0m4.135s
+sys     0m14.536s
+
+> so the answer is to your question is 
+> what I said before, maybe :) I said I am not sure, because I do not have 
+> any numbers for the failover times.
+
+Since RDAC also does the failover per device (as is the case with EMC),
+I ran tests on about 49 luns. I ran disktest on all the disks at the
+same time and disabled/enabled the port to the preferred path to
+generate failover and failback.
+
+Let me know what do you think.
+
+Here are the results:
+Tests run in an idle system. With 49 luns and the following script:
+******************************************************
+for i in `ls -1 /dev/mapper/mpath*`
+do
+	disktest $i -L 4000 -t 100 -P X &
+	sleep 1
+done
+
+wait
+******************************************************
+Simple Run:
+
+with patchset:		2.6.25-mm1:
+real    3m30.122s	real    3m29.746s
+user    0m4.069s	user    0m4.099s
+sys     0m14.876s	sys     0m14.535s
+-----------------------------------------------
+
+Failover Run:
+
+with patchset:		2.6.25-mm1:
+real    5m18.875s	real    5m31.741s
+user    0m4.069s	user    0m3.883s
+sys     0m14.838s	sys     0m13.822s
+-----------------------------------------------
+
+Failback Run:
+
+with patchset:		2.6.25-mm1*:
+real    4m50.313s	real    3m39.728s
+user    0m4.051s	user    0m4.135s
+sys     0m14.809s	sys     0m14.536s
+
+* In 2.6.25-mm1 not all paths failed back for I/Os to
+be completed due to the delay/failures during probing
+(which is being handled in the new patchset)
+-----------------------------------------------
+
+> 
+> > BTW, As you know, it was originally coded that way(patchset posted on
+> > Jan 23, 2008) and later changed as per James comments (through you) that
+> > the code was overusing blk_execute_rq_nowait().
+> >  
+> 
+> Yes, I know, and as you know I did not agree with James. The reason I 
+> bring it up again is that Ed is not doing dm-multipath stuff, so EMC 
+> does not have a good reviewer right now, and I want to make sure these 
+> issues are raised on the list during the review so we can all discuss 
+> them together.
+> 
+> If James thinks it is a big enough problem he can offer some of this 
+> alternatives. If not then he will merge it and we can see if people even 
+> notice and handle it later. I just want to make sure we all know what is 
+> going on, because Alasdair is not a scsi guy. James does not know all 
+> the fun details of every box. And the EMC guys are not up to speed on 
+> linux. I am just worried we are going to get a bad review.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
