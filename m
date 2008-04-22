@@ -1,7 +1,7 @@
 From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: [RFC][PATCH 9/10] I/O context inheritance
-Date: Tue, 22 Apr 2008 22:59:07 +0900 (JST)
-Message-ID: <20080422.225907.116124009.taka@valinux.co.jp>
+Subject: [RFC][PATCH 10/10] I/O context inheritance
+Date: Tue, 22 Apr 2008 23:00:17 +0900 (JST)
+Message-ID: <20080422.230017.69986283.taka@valinux.co.jp>
 References: <20080422.224935.00673711.taka@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,50 +23,28 @@ Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 
-The packet writing module creates a bio in its own way, so its iocontext
+The floppy driver will allocate a bio on its stack, so its iocontext
 should be set here.
 
 This code hasn't been tested yet.
 
-
 Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
 
 
---- linux-2.6.25.bio0/drivers/block/pktcdvd.c	2008-04-22 15:48:36.000000000 +0900
-+++ linux-2.6.25/drivers/block/pktcdvd.c	2008-04-22 15:53:41.000000000 +0900
-@@ -514,6 +514,7 @@ static void pkt_bio_finished(struct pktc
+--- linux-2.6.25.bio0/drivers/block/floppy.c	2008-04-22 15:48:36.000000000 +0900
++++ linux-2.6.25/drivers/block/floppy.c	2008-04-22 21:33:40.000000000 +0900
+@@ -3845,12 +3845,14 @@ static int __floppy_read_block_0(struct 
+ 	init_completion(&complete);
+ 	bio.bi_private = &complete;
+ 	bio.bi_end_io = floppy_rb0_complete;
++	bio.bi_io_context = get_io_context(GFP_NOIO, -1);
  
- static void pkt_bio_destructor(struct bio *bio)
- {
-+	put_io_context(bio->bi_io_context);
- 	kfree(bio->bi_io_vec);
- 	kfree(bio);
- }
-@@ -522,6 +523,11 @@ static struct bio *pkt_bio_alloc(int nr_
- {
- 	struct bio_vec *bvl = NULL;
- 	struct bio *bio;
-+	struct io_context *ioc;
-+
-+	ioc = get_io_context(GFP_KERNEL, -1);
-+	if (!ioc)
-+		goto no_ioc;
+ 	submit_bio(READ, &bio);
+ 	generic_unplug_device(bdev_get_queue(bdev));
+ 	process_fd_request();
+ 	wait_for_completion(&complete);
  
- 	bio = kmalloc(sizeof(struct bio), GFP_KERNEL);
- 	if (!bio)
-@@ -535,12 +541,15 @@ static struct bio *pkt_bio_alloc(int nr_
- 	bio->bi_max_vecs = nr_iovecs;
- 	bio->bi_io_vec = bvl;
- 	bio->bi_destructor = pkt_bio_destructor;
-+	bio->bi_io_context = ioc;
++	put_io_context(bio.bi_io_context);
+ 	__free_page(page);
  
- 	return bio;
- 
-  no_bvl:
- 	kfree(bio);
-  no_bio:
-+	put_io_context(ioc);
-+ no_ioc:
- 	return NULL;
- }
- 
+ 	return 0;
