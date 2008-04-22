@@ -1,7 +1,7 @@
 From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: [RFC][PATCH 5/10] I/O context inheritance
-Date: Tue, 22 Apr 2008 22:55:15 +0900 (JST)
-Message-ID: <20080422.225515.128486479.taka@valinux.co.jp>
+Subject: [RFC][PATCH 6/10] I/O context inheritance
+Date: Tue, 22 Apr 2008 22:55:56 +0900 (JST)
+Message-ID: <20080422.225556.64548415.taka@valinux.co.jp>
 References: <20080422.224935.00673711.taka@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,62 +23,72 @@ Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 
-The raid1 module makes use of temporary bios to sync physical disks
-under the same md device. Make the bios point the iocontext of one of
-the kernel threads in the module.
-
-Meanwhile, regular read/write I/O requests will be cloned and may be
-handled by one of the kernel threads in the modules. In this case,
-the iocontext will be inherited from the source bio.
+The raid10 module also makes use of temporary bios to sync physical disks
+under the same md device. Make these bios point the iocontext of a kernel
+thread in the module.
 
 Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
 
 
---- linux-2.6.25.bio0/include/linux/raid/raid1.h	2008-04-22 15:48:32.000000000 +0900
-+++ linux-2.6.25/include/linux/raid/raid1.h	2008-04-22 15:52:38.000000000 +0900
-@@ -100,6 +100,7 @@ struct r1bio_s {
+--- linux-2.6.25.bio0/include/linux/raid/raid10.h	2008-04-22 15:48:32.000000000 +0900
++++ linux-2.6.25/include/linux/raid/raid10.h	2008-04-22 15:52:58.000000000 +0900
+@@ -94,6 +94,7 @@ struct r10bio_s {
+ 	int			read_slot;
  
  	struct list_head	retry_list;
- 	struct bitmap_update	*bitmap_update;
 +	struct io_context	*io_context;
  	/*
- 	 * if the IO is in WRITE direction, then multiple bios are used.
- 	 * We choose the number when they are allocated.
---- linux-2.6.25.bio0/drivers/md/raid1.c	2008-04-22 15:48:36.000000000 +0900
-+++ linux-2.6.25/drivers/md/raid1.c	2008-04-22 17:18:08.000000000 +0900
-@@ -200,6 +200,8 @@ static void put_buf(r1bio_t *r1_bio)
- 		if (bio->bi_end_io)
- 			rdev_dec_pending(conf->mirrors[i].rdev, r1_bio->mddev);
- 	}
-+	put_io_context(r1_bio->io_context);
-+	r1_bio->io_context = NULL;
+ 	 * if the IO is in WRITE direction, then multiple bios are used,
+ 	 * one for each copy.
+--- linux-2.6.25.bio0/drivers/md/raid10.c	2008-04-22 15:48:33.000000000 +0900
++++ linux-2.6.25/drivers/md/raid10.c	2008-04-22 17:19:50.000000000 +0900
+@@ -199,6 +199,9 @@ static void put_buf(r10bio_t *r10_bio)
+ {
+ 	conf_t *conf = mddev_to_conf(r10_bio->mddev);
  
- 	mempool_free(r1_bio, conf->r1buf_pool);
- 
-@@ -1731,6 +1733,7 @@ static sector_t sync_request(mddev_t *md
- 	r1_bio->sector = sector_nr;
- 	r1_bio->state = 0;
- 	set_bit(R1BIO_IsSync, &r1_bio->state);
-+	r1_bio->io_context = ioc_object_link(current->io_context);
- 
- 	for (i=0; i < conf->raid_disks; i++) {
- 		mdk_rdev_t *rdev;
-@@ -1747,6 +1750,7 @@ static sector_t sync_request(mddev_t *md
- 		bio->bi_size = 0;
- 		bio->bi_end_io = NULL;
- 		bio->bi_private = NULL;
-+		bio->bi_io_context = r1_bio->io_context;
- 
- 		rdev = rcu_dereference(conf->mirrors[i].rdev);
- 		if (rdev == NULL ||
---- linux-2.6.25.bio0/drivers/md/md.c	2008-04-22 15:48:33.000000000 +0900
-+++ linux-2.6.25/drivers/md/md.c	2008-04-22 15:52:38.000000000 +0900
-@@ -5451,6 +5451,8 @@ void md_do_sync(mddev_t *mddev)
- 	else
- 		desc = "recovery";
- 
-+	current->io_context = alloc_io_context(GFP_KERNEL, -1); /*XXX*/
++	put_io_context(r10_bio->io_context);
++	r10_bio->io_context = NULL;
 +
- 	/* we overload curr_resync somewhat here.
- 	 * 0 == not engaged in resync at all
- 	 * 2 == checking that there is no conflict with another sync
+ 	mempool_free(r10_bio, conf->r10buf_pool);
+ 
+ 	lower_barrier(conf);
+@@ -1761,6 +1764,7 @@ static sector_t sync_request(mddev_t *md
+ 				r10_bio->mddev = mddev;
+ 				set_bit(R10BIO_IsRecover, &r10_bio->state);
+ 				r10_bio->sector = sect;
++				r10_bio->io_context = ioc_object_link(current->io_context);
+ 
+ 				raid10_find_phys(conf, r10_bio);
+ 				/* Need to check if this section will still be
+@@ -1793,6 +1797,7 @@ static sector_t sync_request(mddev_t *md
+ 						bio->bi_bdev = conf->mirrors[d].rdev->bdev;
+ 						atomic_inc(&conf->mirrors[d].rdev->nr_pending);
+ 						atomic_inc(&r10_bio->remaining);
++						bio->bi_io_context = r10_bio->io_context;
+ 						/* and we write to 'i' */
+ 
+ 						for (k=0; k<conf->copies; k++)
+@@ -1808,6 +1813,7 @@ static sector_t sync_request(mddev_t *md
+ 						bio->bi_sector = r10_bio->devs[k].addr +
+ 							conf->mirrors[i].rdev->data_offset;
+ 						bio->bi_bdev = conf->mirrors[i].rdev->bdev;
++						bio->bi_io_context = r10_bio->io_context;
+ 
+ 						r10_bio->devs[0].devnum = d;
+ 						r10_bio->devs[1].devnum = i;
+@@ -1861,6 +1867,7 @@ static sector_t sync_request(mddev_t *md
+ 		set_bit(R10BIO_IsSync, &r10_bio->state);
+ 		raid10_find_phys(conf, r10_bio);
+ 		r10_bio->sectors = (sector_nr | conf->chunk_mask) - sector_nr +1;
++		r10_bio->io_context = ioc_object_link(current->io_context);
+ 
+ 		for (i=0; i<conf->copies; i++) {
+ 			int d = r10_bio->devs[i].devnum;
+@@ -1880,6 +1887,7 @@ static sector_t sync_request(mddev_t *md
+ 			bio->bi_sector = r10_bio->devs[i].addr +
+ 				conf->mirrors[d].rdev->data_offset;
+ 			bio->bi_bdev = conf->mirrors[d].rdev->bdev;
++			bio->bi_io_context = r10_bio->io_context;
+ 			count++;
+ 		}
+ 
