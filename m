@@ -1,7 +1,7 @@
 From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: [RFC][PATCH 1/10] I/O context inheritance
-Date: Tue, 22 Apr 2008 22:51:31 +0900 (JST)
-Message-ID: <20080422.225131.66125511.taka@valinux.co.jp>
+Subject: [RFC][PATCH 2/10] I/O context inheritance
+Date: Tue, 22 Apr 2008 22:53:01 +0900 (JST)
+Message-ID: <20080422.225301.114961903.taka@valinux.co.jp>
 References: <20080422.224935.00673711.taka@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,102 +23,142 @@ Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
 
-Make every bio points the iocontext of the process which originally
-generated an I/O request. 
- - Assign the iocontext of the current process to a bio when it is
-   newly allocated.
- - Assign the iocontext which the source bio has to a newly allocated
-   bio when it is duplicated.
+Every I/O scheduler should get a iocontext from a given bio,
+not from the current process.
 
 
 Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
 
 
---- linux-2.6.25.bio0/include/linux/bio.h	2008-04-22 15:48:36.000000000 +0900
-+++ linux-2.6.25/include/linux/bio.h	2008-04-22 15:49:42.000000000 +0900
-@@ -114,6 +114,8 @@ struct bio {
- 	void			*bi_private;
+--- linux-2.6.25.bio0/block/blk-core.c	2008-04-22 15:48:32.000000000 +0900
++++ linux-2.6.25/block/blk-core.c	2008-04-22 16:13:31.000000000 +0900
+@@ -600,7 +600,8 @@ static inline void blk_free_request(stru
+ }
  
- 	bio_destructor_t	*bi_destructor;	/* destructor */
+ static struct request *
+-blk_alloc_request(struct request_queue *q, int rw, int priv, gfp_t gfp_mask)
++blk_alloc_request(struct request_queue *q, int rw, int priv, gfp_t gfp_mask,
++						struct io_context *ioc)
+ {
+ 	struct request *rq = mempool_alloc(q->rq.rq_pool, gfp_mask);
+ 
+@@ -614,7 +615,7 @@ blk_alloc_request(struct request_queue *
+ 	rq->cmd_flags = rw | REQ_ALLOCED;
+ 
+ 	if (priv) {
+-		if (unlikely(elv_set_request(q, rq, gfp_mask))) {
++		if (unlikely(elv_set_request(q, rq, gfp_mask, ioc))) {
+ 			mempool_free(rq, q->rq.rq_pool);
+ 			return NULL;
+ 		}
+@@ -702,7 +703,7 @@ static struct request *get_request(struc
+ {
+ 	struct request *rq = NULL;
+ 	struct request_list *rl = &q->rq;
+-	struct io_context *ioc = NULL;
++	struct io_context *ioc;
+ 	const int rw = rw_flags & 0x01;
+ 	int may_queue, priv;
+ 
+@@ -710,9 +711,12 @@ static struct request *get_request(struc
+ 	if (may_queue == ELV_MQUEUE_NO)
+ 		goto rq_starved;
+ 
++	ioc = bio ? bio->bi_io_context : current->io_context;
 +
-+	struct io_context       *bi_io_context;
- };
+ 	if (rl->count[rw]+1 >= queue_congestion_on_threshold(q)) {
+ 		if (rl->count[rw]+1 >= q->nr_requests) {
+-			ioc = current_io_context(GFP_ATOMIC, q->node);
++			if (!ioc)
++				ioc = current_io_context(GFP_ATOMIC, q->node);
+ 			/*
+ 			 * The queue will fill after this allocation, so set
+ 			 * it as full, and mark this process as "batching".
+@@ -754,7 +758,7 @@ static struct request *get_request(struc
+ 
+ 	spin_unlock_irq(q->queue_lock);
+ 
+-	rq = blk_alloc_request(q, rw_flags, priv, gfp_mask);
++	rq = blk_alloc_request(q, rw_flags, priv, gfp_mask, ioc);
+ 	if (unlikely(!rq)) {
+ 		/*
+ 		 * Allocation failed presumably due to memory. Undo anything
+--- linux-2.6.25.bio0/include/linux/elevator.h	2008-04-22 15:48:36.000000000 +0900
++++ linux-2.6.25/include/linux/elevator.h	2008-04-22 15:51:27.000000000 +0900
+@@ -22,7 +22,7 @@ typedef struct request *(elevator_reques
+ typedef void (elevator_completed_req_fn) (struct request_queue *, struct request *);
+ typedef int (elevator_may_queue_fn) (struct request_queue *, int);
+ 
+-typedef int (elevator_set_req_fn) (struct request_queue *, struct request *, gfp_t);
++typedef int (elevator_set_req_fn) (struct request_queue *, struct request *, gfp_t, struct io_context *);
+ typedef void (elevator_put_req_fn) (struct request *);
+ typedef void (elevator_activate_req_fn) (struct request_queue *, struct request *);
+ typedef void (elevator_deactivate_req_fn) (struct request_queue *, struct request *);
+@@ -113,7 +113,7 @@ extern int elv_register_queue(struct req
+ extern void elv_unregister_queue(struct request_queue *q);
+ extern int elv_may_queue(struct request_queue *, int);
+ extern void elv_completed_request(struct request_queue *, struct request *);
+-extern int elv_set_request(struct request_queue *, struct request *, gfp_t);
++extern int elv_set_request(struct request_queue *, struct request *, gfp_t, struct io_context *);
+ extern void elv_put_request(struct request_queue *, struct request *);
  
  /*
---- linux-2.6.25.bio0/include/linux/iocontext.h	2008-04-22 15:48:36.000000000 +0900
-+++ linux-2.6.25/include/linux/iocontext.h	2008-04-22 15:49:42.000000000 +0900
-@@ -85,7 +85,7 @@ struct io_context {
- 	void *ioc_data;
- };
- 
--static inline struct io_context *ioc_task_link(struct io_context *ioc)
-+static inline struct io_context *ioc_object_link(struct io_context *ioc)
- {
- 	/*
- 	 * if ref count is zero, don't allow sharing (ioc is going away, it's
-@@ -99,4 +99,6 @@ static inline struct io_context *ioc_tas
+--- linux-2.6.25.bio0/block/elevator.c	2008-04-22 15:48:32.000000000 +0900
++++ linux-2.6.25/block/elevator.c	2008-04-22 15:51:27.000000000 +0900
+@@ -864,12 +864,13 @@ struct request *elv_former_request(struc
  	return NULL;
  }
  
-+#define ioc_task_link(ioc)	ioc_object_link(ioc)
-+
- #endif
---- linux-2.6.25.bio0/fs/bio.c	2008-04-22 15:48:31.000000000 +0900
-+++ linux-2.6.25/fs/bio.c	2008-04-22 15:49:42.000000000 +0900
-@@ -107,8 +107,16 @@ static inline struct bio_vec *bvec_alloc
- 	return bvl;
- }
- 
-+static inline void put_bio_context(struct bio *bio)
-+{
-+	if (bio->bi_io_context)
-+		put_io_context(bio->bi_io_context);
-+}
-+
- void bio_free(struct bio *bio, struct bio_set *bio_set)
+-int elv_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
++int elv_set_request(struct request_queue *q, struct request *rq,
++				 gfp_t gfp_mask, struct io_context *ioc)
  {
-+	put_bio_context(bio);
-+
- 	if (bio->bi_io_vec) {
- 		const int pool_idx = BIO_POOL_IDX(bio);
+ 	elevator_t *e = q->elevator;
  
-@@ -177,10 +185,29 @@ out:
+ 	if (e->ops->elevator_set_req_fn)
+-		return e->ops->elevator_set_req_fn(q, rq, gfp_mask);
++		return e->ops->elevator_set_req_fn(q, rq, gfp_mask, ioc);
  
- struct bio *bio_alloc(gfp_t gfp_mask, int nr_iovecs)
+ 	rq->elevator_private = NULL;
+ 	return 0;
+--- linux-2.6.25.bio0/block/cfq-iosched.c	2008-04-22 15:48:32.000000000 +0900
++++ linux-2.6.25/block/cfq-iosched.c	2008-04-22 17:15:21.000000000 +0900
+@@ -1571,14 +1571,16 @@ static int cfq_cic_link(struct cfq_data 
+  * than one device managed by cfq.
+  */
+ static struct cfq_io_context *
+-cfq_get_io_context(struct cfq_data *cfqd, gfp_t gfp_mask)
++cfq_get_io_context(struct cfq_data *cfqd, struct io_context *ioc, gfp_t gfp_mask)
  {
--	struct bio *bio = bio_alloc_bioset(gfp_mask, nr_iovecs, fs_bio_set);
-+	struct bio *bio;
-+	struct io_context *ioc;
+-	struct io_context *ioc = NULL;
+ 	struct cfq_io_context *cic;
  
--	if (bio)
-+	/*
-+	 * Set the io_context of the current process here since this newly
-+	 * created bio may be passed to a I/O scheduler through another
-+	 * kernel thread in half of the process that originate this bio.
-+	 * get_io_context function should called here so it can be blocked
-+	 * in it.
-+	 * Todo: when the current is an aio kernel thread, the io_context
-+	 *       of the original process should be set instead of that of
-+	 *       the thread.
-+	 */
-+	ioc = get_io_context(gfp_mask, -1);
+ 	might_sleep_if(gfp_mask & __GFP_WAIT);
+ 
+-	ioc = get_io_context(gfp_mask, cfqd->queue->node);
++	ioc = ioc_object_link(ioc);
++
 +	if (!ioc)
-+		return NULL;
-+
-+	bio = bio_alloc_bioset(gfp_mask, nr_iovecs, fs_bio_set);
-+	if (bio) {
- 		bio->bi_destructor = bio_fs_destructor;
-+		bio->bi_io_context = ioc;
-+	} else
-+		put_io_context(ioc);
++		ioc = get_io_context(gfp_mask, cfqd->queue->node);
+ 	if (!ioc)
+ 		return NULL;
  
- 	return bio;
- }
-@@ -262,6 +289,7 @@ void __bio_clone(struct bio *bio, struct
- 	bio->bi_vcnt = bio_src->bi_vcnt;
- 	bio->bi_size = bio_src->bi_size;
- 	bio->bi_idx = bio_src->bi_idx;
-+	bio->bi_io_context = ioc_object_link(bio_src->bi_io_context);
- }
+@@ -1938,7 +1940,8 @@ static void cfq_put_request(struct reque
+  * Allocate cfq data structures associated with this request.
+  */
+ static int
+-cfq_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask)
++cfq_set_request(struct request_queue *q, struct request *rq, gfp_t gfp_mask,
++				struct io_context *ioc)
+ {
+ 	struct cfq_data *cfqd = q->elevator->elevator_data;
+ 	struct cfq_io_context *cic;
+@@ -1949,7 +1952,7 @@ cfq_set_request(struct request_queue *q,
  
- /**
+ 	might_sleep_if(gfp_mask & __GFP_WAIT);
+ 
+-	cic = cfq_get_io_context(cfqd, gfp_mask);
++	cic = cfq_get_io_context(cfqd, ioc, gfp_mask);
+ 
+ 	spin_lock_irqsave(q->queue_lock, flags);
+ 
