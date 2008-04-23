@@ -1,78 +1,69 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [dm-devel] [PATCH 4/7] scsi_dh: add EMC Clariion device handler
-Date: Tue, 22 Apr 2008 16:45:53 -0700
-Message-ID: <1208907953.1025.235.camel@chandra-ubuntu>
-References: <20080416011818.19580.41106.sendpatchset@chandra-ubuntu>
-	 <20080416011842.19580.92056.sendpatchset@chandra-ubuntu>
-	 <4806294C.9090703@cs.wisc.edu> <1208390384.1025.40.camel@chandra-ubuntu>
-	 <48078571.9040806@cs.wisc.edu> <1208898559.1025.191.camel@chandra-ubuntu>
-	 <480E5D08.3000905@cs.wisc.edu>
-Reply-To: sekharan@us.ibm.com
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: Re: [RFC][PATCH 0/10] I/O context inheritance
+Date: Wed, 23 Apr 2008 12:27:20 +0900 (JST)
+Message-ID: <20080423.122720.110761879.taka@valinux.co.jp>
+References: <20080422.230318.112756414.taka@valinux.co.jp>
+	<20080422145418.GL12774@kernel.dk>
+	<e9c3a7c20804221110y1968dfb3q27b86c9a7480ad1@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <480E5D08.3000905@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, andmike@us.ibm.com, asson_ronald@emc.com, James.Bottomley@HansenPartnership.com, Benoit_Arthur@emc.com, jens.axboe@oracle.com, agk@redhat.com, berthiaume_wayne@emc.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <e9c3a7c20804221110y1968dfb3q27b86c9a7480ad1@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dan.j.williams@intel.com
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@sourceware.org
 List-Id: dm-devel.ids
 
+Hi,
 
-On Tue, 2008-04-22 at 16:47 -0500, Mike Christie wrote:
-<snip>
-> > wait
-> > ******************************************************
-> > Simple Run:
-> > 
-> > with patchset:		2.6.25-mm1:
-> > real    3m30.122s	real    3m29.746s
-> > user    0m4.069s	user    0m4.099s
-> > sys     0m14.876s	sys     0m14.535s
-> > -----------------------------------------------
+> > On Tue, Apr 22 2008, Hirokazu Takahashi wrote:
+> >  > Hi,
+> >  >
+> >  > Sorry, these patches are for linux-2.6.25.
+> >  >
+> >  > > This series of patches make the block I/O layer and the I/O schedulers
+> >  > > be able to determine the right io_context of every I/O.
+> >  > >
+> >  > > The current implementation of the block I/O layer and the I/O schedulers
+> >  > > assume that the current process is the one which issued the given I/O,
+> >  > > then use the io_context of this process to control the I/O.
+> >  > > But this assumption isn't quite right because several kernel threads
+> >  > > will handle I/O requests on behalf of the processes which originated them.
+> >  > > This often happens when you want to use device mapper modules.
+> >  > >
+> >  > > The patches make every bio has a pointer to an io_context, which will
+> >  > > be set when it is allocated or cloned. So it makes it possible to find
+> >  > > the right io_context from any bio at any place.
+> >  > >
+> >  > > I'm waiting for your comments.
+> >
+> >  Can you give a brief summary of what you need this stuff for?
+> >
 > 
-> Is this just a boot up test or a test just running IO but no 
-> failback/failover?
+> I am not sure if this the intended application, but I have been
+> looking at supporting ionice over software-raid and this series seems
+> like a necessary first step.
 
-Test running IO but no failover/failback.
+Yes, the intention is to make ionice be able to work correctly over
+device mapper modules such as software-raid and the multipath driver.
+This mechanism is needed since quite a few device mapper modules have
+kernel threads, including workqueues, handle I/O requests.
 
-> 
-> > 
-> > Failover Run:
-> > 
-> > with patchset:		2.6.25-mm1:
-> > real    5m18.875s	real    5m31.741s
-> > user    0m4.069s	user    0m3.883s
-> > sys     0m14.838s	sys     0m13.822s
-> 
-> Ehh, I have no idea if this is good or bad. Does it mean it is talking 
-> 13 more seconds to complete?
+And I also have a plan to use this new feature for block I/O bandwidth
+control based on cgroup with some enhancement. With this feature, we
+can also trace the iocontext of the process or cgroup which made
+a certain page dirtied.
 
-It is taking 13 more seconds without the serialization :) (i.e the old
-code).
 
-> 
-> Have you seen the type of thread on dm-devel or the iscsi list where 
-> people are concerned with getting the time the failure is detected to 
-> the time IO is running on a new path down from something like 10 to 5
-
-I totally agree with you that shaving a second here and a second there
-has lot of value to the customers.
->  
-> seconds. One time the iscsi driver did not implement time2wait correctly 
-> and by fixing it we shaved only 2 seconds off and users were very happy 
-> with the extra 2 seconds. We added the nop timer stuff so we could get 
-> faster failovers. We have the fast io fail tmo so we can speed up the 
-> process even more. Shaving off a second here or there is really nitpicky 
-> and if I were you I would give me the middle finger :) It just seems
-
-But, I wouldn't :)
->  
-> like people expect better performance from this type of error.
-> 
-> If my comment is too nitpicky then I am fine with ignoring this for now. 
-> We just have to fix the emc short/long tress pass code then. I added 
-> another EMC guy to the thread so he can ping the other EMC devs to get 
-> going (I had sent them questions on how to handle it and have not got a 
-> response).
-
+Thank you,
+Hirokazu Takahashi.
