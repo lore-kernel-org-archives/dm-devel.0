@@ -1,12 +1,11 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper update for 2.6.26
-Date: Fri, 25 Apr 2008 15:15:00 +0100
-Message-ID: <20080425141500.GV24157@agk.fab.redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH] [RFC] switch DM tables to readonly automatically
+Date: Fri, 25 Apr 2008 16:32:37 +0200
+Message-ID: <4811EB85.8090505@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="------------000607020402030605090801"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,81 +15,80 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Adrian Bunk <bunk@kernel.org>, "Robert P. J. Day" <rpjday@crashcourse.ca>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, Heinz Mauelshagen <hjm@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Frederik Deweerdt <frederik.deweerdt@gmail.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Please pull from:
+This is a multi-part message in MIME format.
+--------------000607020402030605090801
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git
+Hi all,
 
-to get the following device-mapper update for 2.6.26:
+this patch switches the device-mapper table to read-only
+status automatically if one underlying device returns -EROFS.
+
+Rationale:
+Whenever a SCSI device is switched to read-only a table
+reload from multipath-tools fails, without any indication
+about the reason. And it's actually quite tricky to detect
+the read-only status from userland. And quite pointless, too,
+as the kernel already knows about it.
+
+And we now can create tables for CD-ROMs, too, without
+having to use the '-r' flag to dmsetup ...
+
+Christophe, this might also fix your problem.
+
+As usual, comments etc are welcome.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+
+--------------000607020402030605090801
+Content-Type: text/plain;
+ name="dm-table-switch-to-readonly"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline;
+ filename="dm-table-switch-to-readonly"
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e75b143..f615e85 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -501,11 +501,19 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
+ 		dd->mode = mode;
+ 		dd->bdev = NULL;
  
-Adrian Bunk (2):
-      dm table: drop void suspend_targets return
-      dm table: remove unused dm_create_error_table
+-		if ((r = open_dev(dd, dev, t->md))) {
++		r = open_dev(dd, dev, t->md);
++		if (r == -EROFS) {
++			dd->mode &= ~FMODE_WRITE;
++			r = open_dev(dd, dev, t->md);
++		}
++		if (r) {
+ 			kfree(dd);
+ 			return r;
+ 		}
+ 
++		if (dd->mode != mode)
++			t->mode = dd->mode;
++
+ 		format_dev_t(dd->name, dev);
+ 
+ 		atomic_set(&dd->count, 0);
 
-Alasdair G Kergon (5):
-      dm io: rename error to error_bits
-      dm log: move register functions
-      dm: expose macros
-      dm kcopyd: rename
-      dm: move include files
+--------------000607020402030605090801
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Frederik Deweerdt (1):
-      dm: remove md argument from specific_minor
 
-Heinz Mauelshagen (5):
-      dm log: generalise name in messages
-      dm log: move dirty region log code into separate module
-      dm io: clean interface
-      dm kcopyd: clean interface
-      dm log: clean interface
-
-Jonathan Brassow (1):
-      dm log: make module use tracking internal
-
-Mikulas Patocka (7):
-      dm snapshot: fix chunksize sector conversion
-      dm snapshot: store pointer to target instance
-      dm kcopyd: per device
-      dm kcopyd: private mempool
-      dm kcopyd: remove redundant client counting
-      dm raid1: use timer
-      dm: unplug queues in threads
-
-Milan Broz (2):
-      dm snapshot: reduce default memory allocation
-      dm crypt: add documentation
-
-Robert P. J. Day (1):
-      dm raid1: use list_split_init
-
- Documentation/device-mapper/dm-crypt.txt           |   52 ++++
- drivers/md/Makefile                                |    6 +-
- drivers/md/dm-exception-store.c                    |   10 +-
- drivers/md/dm-io.c                                 |   38 ++-
- drivers/md/{kcopyd.c => dm-kcopyd.c}               |  298 ++++++++------------
- drivers/md/dm-log.c                                |  254 +++++++++++------
- drivers/md/dm-raid1.c                              |  132 +++++-----
- drivers/md/dm-snap.c                               |   22 +-
- drivers/md/dm-snap.h                               |    4 +-
- drivers/md/dm-table.c                              |   42 +---
- drivers/md/dm.c                                    |   16 +-
- drivers/md/dm.h                                    |   98 +------
- drivers/md/kcopyd.h                                |   42 ---
- include/linux/device-mapper.h                      |   96 ++++++-
- .../md/dm-log.h => include/linux/dm-dirty-log.h    |   84 +++---
- {drivers/md => include/linux}/dm-io.h              |   18 +-
- include/linux/dm-kcopyd.h                          |   47 +++
- 17 files changed, 659 insertions(+), 600 deletions(-)
- create mode 100644 Documentation/device-mapper/dm-crypt.txt
- rename drivers/md/{kcopyd.c => dm-kcopyd.c} (71%)
- delete mode 100644 drivers/md/kcopyd.h
- rename drivers/md/dm-log.h => include/linux/dm-dirty-log.h (54%)
- rename {drivers/md => include/linux}/dm-io.h (84%)
- create mode 100644 include/linux/dm-kcopyd.h
-
-Alasdair
--- 
-agk@redhat.com
+--------------000607020402030605090801--
