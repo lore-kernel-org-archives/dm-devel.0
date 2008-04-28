@@ -1,64 +1,81 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 2/2] dm-ioband: I/O bandwidth controller
- v0.0.4: Document
-Date: Mon, 28 Apr 2008 17:06:27 +0900 (JST)
-Message-ID: <20080428.170627.59682428.ryov@valinux.co.jp>
-References: <20080424.201857.183035295.ryov@valinux.co.jp>
-	<20080424.202219.59667073.ryov@valinux.co.jp>
-	<20080426114535.e19283be.akpm@linux-foundation.org>
+From: Takashi Sato <t-sato@yk.jp.nec.com>
+Subject: [RFC PATCH 0/3] freeze feature ver 1.2
+Date: Mon, 28 Apr 2008 19:29:20 +0900
+Message-ID: <20080428192920t-sato__44331.4004609876$1209378639$gmane$org@mail.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <20080426114535.e19283be.akpm@linux-foundation.org>
-List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: akpm@linux-foundation.org
-Cc: xen-devel@lists.xensource.com, sergk@sergk.org.ua, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, dm-devel@redhat.com
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
 Hi,
 
-> Most writes are performed by pdflush, kswapd, etc.  This will lead to large
-> inaccuracy.
->
-> It isn't trivial to fix.  We'd need deep, long tracking of ownership
-> probably all the way up to the pagecache page.  The same infrastructure
-> would be needed to make Sergey's "BSD acct: disk I/O accounting" vaguely
-> accurate.  Other proposals need it, but I forget what they are.
+I have re-based my freeze patches from linux-2.6.25-rc7 to
+linux-2.6.25.
+There is no functional change from the previous version.
+The patch-set consists of the following three patches.
 
-I also realize that some kernel threads such as pdflush perform actual
-writes instead of tasks which originally issued write requests.
-So, taka is developing a blocking I/O tacking down mechanism which is
-based on cgroup memory controller and posted it to LKML:
-http://lwn.net/Articles/273802/
+[PATCH 1/3] Implement generic freeze feature
+  The ioctls for the generic freeze feature are below.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, arg)
+      fd: The file descriptor of the mountpoint
+      FIFREEZE: request code for the freeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
 
-However, the current implementation works well with Xen virtual
-machines, because virtual machine's I/Os are issued from its own kernel
-thread and can be tracked down. Please see a benchmark result of Xen
-virtual machine:
-http://people.valinux.co.jp/~ryov/dm-ioband/benchmark/xen-blktap.html
+  o Unfreeze the filesystem
+    int ioctl(int fd, int FITHAW, arg)
+      fd: The file descriptor of the mountpoint
+      FITHAW: request code for unfreeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
 
-As for KVM, dm-ioband was also able to track down block I/Os as I
-expected. When dm-ioband is used in virtual machine environment,
-I think even the current implementation will work fairly.
+[PATCH 2/3] Remove XFS specific ioctl interfaces for freeze feature
+  It removes XFS specific ioctl interfaces and request codes
+  for freeze feature.
+  This patch has been supplied by David Chinner.
 
-But unfortunately I found KVM still had a performance problem that
-it couldn't handle I/Os efficiently yet, which should be improved.
-I already posted this problem to kvm-devel list:
-http://sourceforge.net/mailarchive/forum.php?thread_name=20080229.210531.226799765.ryov%40valinux.co.jp&forum_name=kvm-devel
- 
-> Much more minor points: when merge-time comes, the patches should have the
-> LINUX_VERSION_CODE stuff removed.  And probably all of the many `inline's
-> should be removed.
+[PATCH 3/3] Add timeout feature
+  The timeout feature is added to freeze ioctl.  And new ioctl
+  to reset the timeout period is added.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, long *timeval)
+    fd: The file descriptor of the mountpoint
+    FIFREEZE: request code for the freeze
+    timeval: the timeout period in seconds
+             If it's 0 or 1, the timeout isn't set.
+             This special case of "1" is implemented to keep
+             the compatibility with XFS applications.
+    Return value: 0 if the operation succeeds. Otherwise, -1
 
-Thank you for your advice. I'll have these fixes included in the next
-release.
+  o Reset the timeout period
+    This is useful for the application to set the timeval more accurately.
+    For example, the freezer resets the timeval to 10 seconds every 5
+    seconds.  In this approach, even if the freezer causes a deadlock
+    by accessing the frozen filesystem, it will be solved by the timeout
+    in 10 seconds and the freezer can recognize that at the next reset
+    of timeval.
+    int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeval)
+      fd:file descriptor of mountpoint
+      FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
+      timeval: new timeout period in seconds
+      Return value: 0 if the operation succeeds. Otherwise, -1
+      Error number: If the filesystem has already been unfrozen,
+                    errno is set to EINVAL.
 
-Ryo Tsuruta
+Any comments are very welcome.
+
+Cheers, Takashi
