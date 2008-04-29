@@ -1,12 +1,15 @@
-From: Adrian Bunk <bunk@kernel.org>
-Subject: [2.6 patch] make dm_dirty_log_{init,exit}() static
-Date: Mon, 28 Apr 2008 18:39:06 +0300
-Message-ID: <20080428153906.GK2813@cs181133002.pp.htv.fi>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Patch added to scsi-pending-2.6: [SCSI] scsi_dh: Use
+	SCSI device handler in dm-multipath
+Date: Tue, 29 Apr 2008 15:56:29 +0100
+Message-ID: <20080429145629.GK18935@agk.fab.redhat.com>
+References: <200804241603.m3OG3B5M030182@hera.kernel.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <200804241603.m3OG3B5M030182@hera.kernel.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,56 +19,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Heinz Mauelshagen <hjm@redhat.com>, Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>
+To: Chandra Seetharaman <sekharan@us.ibm.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, andmike@us.ibm.com, Mike Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-dm_dirty_log_{init,exit}() can now become static.
+On Thu, Apr 24, 2008 at 04:03:11PM +0000, James Bottomley wrote:
+>     This patch converts dm-mpath to scsi hw handlers. It does
+>     not add any new functionality and old behaviors and userspace
+>     tools work as is except we use the safe clariion default instead
+>     of using the userspace setting.
 
-Signed-off-by: Adrian Bunk <bunk@kernel.org>
+OK.  Comments from my first line-by-line reading of this.
 
----
+Firstly, the patch header is rather too brief for my liking - the patch
+does make some subtle functional changes that ought to be commented upon
+to explain to people why they are being made.  (I would have preferred
+this patch to have been broken up into smaller ones in a manner that
+made the functional changes more obvious i.e. separated from the code
+reorganisation.)
 
- drivers/md/dm-log.c |    4 ++--
- drivers/md/dm.h     |    6 ------
- 2 files changed, 2 insertions(+), 8 deletions(-)
+1. Currently the supplied hw_handler name is validated at table load
+time so userspace cannot create a device using a non-existent
+hw_handler.  After this patch it looks as if that validation is delayed
+until something starts to access the device - and then the paths simply
+get failed, a new failure mode for the userspace tools to handle.  Is
+that change hard to avoid or was it judged not worth the effort to leave
+things as they were and perform as much validation / resource allocation
+as possible up front?
 
-9fc29a7361124f1b56119645584cbe17d59e0e02 diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 67a6f31..5b48478 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -831,7 +831,7 @@ static struct dm_dirty_log_type _disk_type = {
- 	.status = disk_status,
- };
- 
--int __init dm_dirty_log_init(void)
-+static int __init dm_dirty_log_init(void)
- {
- 	int r;
- 
-@@ -848,7 +848,7 @@ int __init dm_dirty_log_init(void)
- 	return r;
- }
- 
--void __exit dm_dirty_log_exit(void)
-+static void __exit dm_dirty_log_exit(void)
- {
- 	dm_dirty_log_type_unregister(&_disk_type);
- 	dm_dirty_log_type_unregister(&_core_type);
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 8c03b63..1e59a0b 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -100,12 +100,6 @@ int dm_lock_for_deletion(struct mapped_device *md);
- 
- void dm_kobject_uevent(struct mapped_device *md);
- 
--/*
-- * Dirty log
-- */
--int dm_dirty_log_init(void);
--void dm_dirty_log_exit(void);
--
- int dm_kcopyd_init(void);
- void dm_kcopyd_exit(void);
- 
+2.  parse_hw_handler() now ignores hw_handler arguments.
+Please add a comment to explain that or perhaps log a warning message if
+any are supplied.
+BTW r looks superfluous now:
+
+        if (read_param(_params, shift(as), &hw_argc, &ti->error))
+                return -EINVAL;
+
+3. The dmsetup table output has changed - it no longer matches the input
+in the case where arguments got ignored.  I don't think this matters
+(unlike a similar issue we had with crypt), but it should be noted in
+comments inline.
+
+4.  /* Fields used by hardware handler usage */
+Comment doesn't add anything - drop it?
+
+5. char *hw_handler_name;
+const?
+
+6. The code now assumes all hw_handlers have a pg_init function: in
+practice this is likely to be the case.  Does that permit further
+simplification of some of the logic?
+
+7. I note that the 'bypassed' argument to the pg_init function has been
+dropped - presumably as none of the existing handlers made any use of
+it.
+
+8. A new workqueue is introduced without comment.  Which of the changes
+means we need it now?  What's the reason it's not single-threaded
+(and per-device)?  Is there a clearer name than "khwhandlerd" -
+something that tells people it's connected with multipath, and
+can the name of the struct workqueue_struct variable match this?
+Previously the hw_handler pg_init function was required to return
+immediately.  Can its replacement scsi_dh_activate() block (but not in a
+way that could deadlock of course)?  Should some of its functionality be
+got out of the way at initialisation time within multipath_ctr()?
+
+9. What does m->path_to_activate give us that m->current_pgpath
+doesn't?
+
+10. Is activate_passive_path() an accurate function name?  Is the
+supplied path argument always 'passive'?
+
+11. Where has the use of pg_init_retries gone?
+
+I still need to check the updated state machine logic and associated
+locking once we have a final version of this patch.
+
+Alasdair
+-- 
+agk@redhat.com
