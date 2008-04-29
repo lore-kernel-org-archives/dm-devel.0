@@ -1,15 +1,15 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Patch added to scsi-pending-2.6: [SCSI] scsi_dh: Use
-	SCSI device handler in dm-multipath
-Date: Tue, 29 Apr 2008 15:56:29 +0100
-Message-ID: <20080429145629.GK18935@agk.fab.redhat.com>
+From: "Srinivas Ramani" <sramani@pillardata.com>
+Subject: Different Path priorities for iSCSI and FC paths to a
+	combination lun.
+Date: Tue, 29 Apr 2008 11:29:57 -0700
+Message-ID: <7DAA28B9259FAD458DEE03DC3DA236DA043F66DF@caex02.trans.corp>
 References: <200804241603.m3OG3B5M030182@hera.kernel.org>
+	<20080429145629.GK18935@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C8AA27.06DE2B9A"
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200804241603.m3OG3B5M030182@hera.kernel.org>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,82 +19,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Chandra Seetharaman <sekharan@us.ibm.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, andmike@us.ibm.com, Mike Christie <michaelc@cs.wisc.edu>, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 24, 2008 at 04:03:11PM +0000, James Bottomley wrote:
->     This patch converts dm-mpath to scsi hw handlers. It does
->     not add any new functionality and old behaviors and userspace
->     tools work as is except we use the safe clariion default instead
->     of using the userspace setting.
+This is a multi-part message in MIME format.
 
-OK.  Comments from my first line-by-line reading of this.
+------_=_NextPart_001_01C8AA27.06DE2B9A
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 
-Firstly, the patch header is rather too brief for my liking - the patch
-does make some subtle functional changes that ought to be commented upon
-to explain to people why they are being made.  (I would have preferred
-this patch to have been broken up into smaller ones in a manner that
-made the functional changes more obvious i.e. separated from the code
-reorganisation.)
+Hi Folks;
+                   I would be grateful to learn from this forum on how =
+one would be able to have
+                  different path priorities for a FC / iSCSI  paths to a =
+multiprotocol FC/iSCSI
+                  combination lun using device mapper .
+                  The intention is that a  FC path should have a higher =
+priority than an iSCSI path to the same lun.
+                  Is it possible to do it with a configuration change or =
+would one need to  add this feature to the
+                  mpath_prio_alua  code.
+=20
+=20
+With Regards
+Srini
+=20
+Senior Software Engineer
+Pillar Data Systems.
 
-1. Currently the supplied hw_handler name is validated at table load
-time so userspace cannot create a device using a non-existent
-hw_handler.  After this patch it looks as if that validation is delayed
-until something starts to access the device - and then the paths simply
-get failed, a new failure mode for the userspace tools to handle.  Is
-that change hard to avoid or was it judged not worth the effort to leave
-things as they were and perform as much validation / resource allocation
-as possible up front?
+------_=_NextPart_001_01C8AA27.06DE2B9A
+Content-Type: application/ms-tnef;
+	name="winmail.dat"
+Content-Transfer-Encoding: base64
 
-2.  parse_hw_handler() now ignores hw_handler arguments.
-Please add a comment to explain that or perhaps log a warning message if
-any are supplied.
-BTW r looks superfluous now:
+eJ8+IjsSAQaQCAAEAAAAAAABAAEAAQeQBgAIAAAA5AQAAAAAAADoAAEIgAcAGAAAAElQTS5NaWNy
+b3NvZnQgTWFpbC5Ob3RlADEIAQ2ABAACAAAAAgACAAEEgAEARwAAAERpZmZlcmVudCBQYXRoIHBy
+aW9yaXRpZXMgZm9yIGlTQ1NJIGFuZCBGQyBwYXRocyB0byBhIGNvbWJpbmF0aW9uIGx1bi4A4BgB
+BYADAA4AAADYBwQAHQALAB0AOQACAGMBASCAAwAOAAAA2AcEAB0ACwAdADkAAgBjAQEJgAEAIQAA
+ADIyQjk4RjJGOEFBODc0NDdCMTJFRDcyMkU0NThGOURCAFEHAQOQBgDwEAAAOQAAAAMANgAAAAAA
+QAA5AJor3gYnqsgBHgA9AAEAAAABAAAAAAAAAAIBRwABAAAAMAAAAGM9VVM7YT0gO3A9VHJhbnND
+b3JwO2w9Q0FFWDAyLTA4MDQyOTE4Mjk1N1otOTIyAB4ASQABAAAAZwAAAFtkbS1kZXZlbF0gUmU6
+IFBhdGNoIGFkZGVkIHRvIHNjc2ktcGVuZGluZy0yLjY6IFtTQ1NJXSBzY3NpX2RoOiBVc2VTQ1NJ
+IGRldmljZSBoYW5kbGVyIGluIGRtLW11bHRpcGF0aAAAQABOAIAMXTQJqsgBHgBaAAEAAAAcAAAA
+ZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tAAIBWwABAAAAVQAAAAAAAACBKx+kvqMQGZ1uAN0B
+D1QCAAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQBTTVRQAGRtLWRldmVsLWJvdW5jZXNA
+cmVkaGF0LmNvbQAAAAACAVwAAQAAACEAAABTTVRQOkRNLURFVkVMLUJPVU5DRVNAUkVESEFULkNP
+TQAAAAAeAF0AAQAAABIAAABBbGFzZGFpciBHIEtlcmdvbgAAAAIBXgABAAAAPgAAAAAAAACBKx+k
+vqMQGZ1uAN0BD1QCAAAAAEFsYXNkYWlyIEcgS2VyZ29uAFNNVFAAYWdrQHJlZGhhdC5jb20AAAAC
+AV8AAQAAABQAAABTTVRQOkFHS0BSRURIQVQuQ09NAB4AZgABAAAABQAAAFNNVFAAAAAAHgBnAAEA
+AAAcAAAAZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tAB4AaAABAAAABQAAAFNNVFAAAAAAHgBp
+AAEAAAAPAAAAYWdrQHJlZGhhdC5jb20AAB4AcAABAAAARwAAAERpZmZlcmVudCBQYXRoIHByaW9y
+aXRpZXMgZm9yIGlTQ1NJIGFuZCBGQyBwYXRocyB0byBhIGNvbWJpbmF0aW9uIGx1bi4AAAIBcQAB
+AAAAGwAAAAHIqgmOJK8dj5/Z3kRjp0myRdvB21UABxw2hQAeAHMAAQAAAE4AAABKYW1lcyBCb3R0
+b21sZXk7IGFuZG1pa2VAdXMuaWJtLmNvbTsgTWlrZSBDaHJpc3RpZTsgZGV2aWNlLW1hcHBlciBk
+ZXZlbG9wbWVudAAAAB4AdAABAAAAFAAAAENoYW5kcmEgU2VldGhhcmFtYW4AHgAaDAEAAAAQAAAA
+U3Jpbml2YXMgUmFtYW5pAB4AHQ4BAAAARwAAAERpZmZlcmVudCBQYXRoIHByaW9yaXRpZXMgZm9y
+IGlTQ1NJIGFuZCBGQyBwYXRocyB0byBhIGNvbWJpbmF0aW9uIGx1bi4AAAIBCRABAAAArggAAKoI
+AABtKwAATFpGddzQgzADAAoAcmNwZzEyNYIyA0NodG1sMQMwPwEDAfcKgAKkA+MCAGNowQrAc2V0
+MCAHEwKA/xADAFAEVghVB7IR1Q5RAwHdENcyBgAGwxHVMwRGENlvEusR4wjvCfc7GM8OMDU7EdIM
+YGMAUAsJAWQzNpMRYAulNCAQAipcDrIDAZAOEDkgPEhUTUBMIGRpcj0eMHI8Pn0d8wAhAzAfQWRv
+5wDgH0EKsVxxGLAfQRDwbwMwH6URYB2rMx2AHqBFTEFEH3AdrDc3HpBUcElUTEUjnR1wDvBbCGRt
+LQEAdmVsXYEH8GU6IFBhdCFxBGFkAQBkIHRvIDME8ACQLXAJ8B8AbmcQLTIuNicgW1NDjFNJJuAo
+Ml9kaCcgPlURMCliHvAmoA3gZSB7EQAooGwTMQuAHvAmcG0udR4wBSAnUGgjrTg13R6QLyTfHkIK
+4yAuXy9vBQ4QNg7wPE1FVEGOIAWgAjAJ8HQ9IgXg4R6zNi4wMCkQM5AzoAEx0DU4NyIgbmEBB4A9
+R0VORVJB+FRPUiOdJiEt0CNfJfELMJ8eQTURYDxCT0SOWSOdHPE4D2c5Nh6QSERJViuwZD08YE8M
+V0EnAAtQeVRleLh0ODIkkDvwHw8gAAD/IKUhQyEBIZ86Lzs/PEA93+c+7z/6Hck2NEPaQC8eJIQ0
+OB6QRk9OVCggdGl6NLAyQ8sL4kAJSIhpIEYG8GtzOx2s+jU78S9Jch95H4dGGwHAXx+HCqJOmAqA
+HawwIyEv/zwhTe9ID0F/Qo9Dn0SvTs+/Rs9T70jvSf9LDB2rOB2AYCZuYnNwAoAfmCf+YQFAXw9g
+H2EvYj9jT2Rf/2VvZn9nj2ifaa9qv2vPbN//be9u/3APcR9yL3M/dE91X/92b3d/eI95n3qve798
+z33f/37vf/+BD4Ifgy+EP4VPhl//h2+If4mPip+Lr4y/jc+O31+P75D/kg+TEiqwdwhgbP0n4GIr
+IAnAJ1ABECwwJ/LfK4AKwAOgA1In8GgEAJfw3QWwdZgwAiArMG8H4AIg/ysgllcBoCuAJ/IRACaw
+TH//TY9On0+vUL9Rz1Lfkt9U//9WD1cfWC9ZP1pPW19cb11//16Pk1+Ub5Kfrn+vj7Cfsa//sr+z
+z7Tfte+2/7gPuR+6L/+7P7xPvV++b79/wI/Bn8Kv/8O/xM/F38bvx//JD8ofyy//zD/NT85fz2/Q
+f9GP0p/Tr//Uv9XP1t/X79j/2g/bH9wv/90/3k+bX5xv4Y+rT6xfSyrvpZABIASQMrEgLHLo0AUQ
+fQWwaSxQB5GYoSeQTABD/CAvK7ApYt8P4B/hKujT/wQgKAHqICwkA2AoABhB6jH+L+qf4q+c353v
+nv+gD6Ef/+Pvoz+kT6Vfpm+nf6iPqZ//5M/l3+bv/y/rr+y/Aw8EH/8FLwY/B08IXwlvCn8Ljwyf
+/w2vDr8PzxDfEe8S/xQPFR//Fi8XPxhPGV8abxt/HI8dn/8erx+/IM8h3yLvI/8lDyYf/ycvKD8p
+TypfK28sfy2PLp8fL68wvzHPMt/vIG1iaY5ulwDpUJfgbHVuM+9LNP8zKnUA4G5n+mBlCHZpY5pw
+bWFwcPnogCAu7+/w//IP8x/0L//1P/ZPM2/4b/l/+o/7n/yv//2//s//3wDvAf83vzjPMy//T19Q
+b1F/Uo9Tn1SvVb9Wz/9X31jvWf9bD1wfXS9eP19P/2BfYW9if2OPZJ9lr2a/Z8//aN9p72r/bA9t
+H24vbz9wT/9xX3Jvc390j3Wfdq93v3jPx3nfeu97/yBUaJpwNwD/lxDosDdCmHGYUJcA6hF9D+9+
+H3xK6kHo43OZMJZymsK76hGYYGeAAOoA6TV5gPJ/l+CG0e+T6NTuMZhQmnBz/GFtmnA3gTvfPO89
+/z8P/0AfQS9CP3x/RF9Fb0Z/R4//SJ9Jr0q/S89M303vgW+Cf/98P5xPnV+eb59/oI+hn6Kv/6O/
+pM+l36bvp/+pD6ofqy//rD+tT65fr2+wf7GPsp+zr/+0v7XPtt+377j/ug+7H7wv/70/vk+/X8Bv
+wX/Cj8OfxK/fxb/Gz8ffyO/tsEnpwOmAyejQb3OZ4GJsgBDuMfZk7kDNIXfpgOkQ6iDvIORuZoXA
+dXI3JJVQhtD2Z4AQ6fF3hPOAoIAQ0ND+ZYUg7wDKD8sfyU/Rz9LfudPlYWTRMYWw6cFl6PD/z0DN
+wtRf1W/TmogRiO+J//+LD4wfjS+OP49P09+Rb5J//5OPlJ+Vr5a/l8+Y35nvmv//2G/Zf9Of7u/v
+//EP8h/zL//0P/VP9l/3b/h/+Y/6n/uv//y//c/+3//vAP8CDwMfBC//BT8GTwdfCG8JfwqPC58M
+r/8Nvw7PD98Q7xH/Ew8UHxUv/xY/F08YXxlvGn8bjztQhILSX4YiX2E3gGEcnx2v/38rNsA68Ijf
+3H/dj96f36//4L/hzxwP4+/k/+YP5x/oL//pP+pP61/sb+1/Mz0knyrP/yCvIb8wnycPKB8pLyo/
+OU//LF8tby5/L487/zGvQR8zz/803zXvNv84D0xPOi87PzxP/z1fPm8/f06PQZ9Cr0O/RM9/Rd9G
+70f/V29KH0svXqhXkc6CUmVnWLBkc0zf/03vJd9S71P/VQ9WH17PWD//WU9aX1tvXH9dj16fX69g
+v+Vhz1OGYG5pY59kr2W//2bPZ99o72n/cq9sH20vbj//b09wX3Fvcn9zj3Sfda93D/94H35PUA9R
+H4Qfeo97n3yv/4u/fs9/34Dvgf+DD49/hS9vlJ+HT4hfdftlduDQMVOwb2Z0d5YA0OBFz/D7dtDR
+EHKKL4s/eS+QP5FP/5Jfk2+cH5WPlp+Xr5i/mc8fmt+b75z/ng+fH1BpbBpsqqFEz2DOwFN5c/B0
+ZW1zI6+ir6O/pM9/pd+m76f/sK+7v7zPqX01wbIhL0JPRFmzAKmbhDI3vvFIVE1MswACfcPAAAAe
+ADUQAQAAAD0AAAA8N0RBQTI4QjkyNTlGQUQ0NThERUUwM0RDM0RBMjM2REEwNDNGNjZERkBjYWV4
+MDIudHJhbnMuY29ycD4AAAAAHgA5EAEAAABaAAAAPDIwMDgwNDI0MTYwMy5tM09HM0I1TTAzMDE4
+MkBoZXJhLmtlcm5lbC5vcmc+IDwyMDA4MDQyOTE0NTYyOS5HSzE4OTM1QGFnay5mYWIucmVkaGF0
+LmNvbT4AAAAeAEcQAQAAAA8AAABtZXNzYWdlL3JmYzgyMgAACwDyEAEAAAAfAPMQAQAAAJYAAABE
+AGkAZgBmAGUAcgBlAG4AdAAgAFAAYQB0AGgAIABwAHIAaQBvAHIAaQB0AGkAZQBzACAAZgBvAHIA
+IABpAFMAQwBTAEkAIABhAG4AZAAgAEYAQwAgAHAAYQB0AGgAcwAgAHQAbwAgAGEAIABjAG8AbQBi
+AGkAbgBhAHQAaQBvAG4AIABsAHUAbgAuAC4ARQBNAEwAAAAAAAsA9hAAAAAAQAAHMMgI//4lqsgB
+QAAIMPw8EAcnqsgBAwDeP69vAAADAPE/CQQAAB4A+D8BAAAAEAAAAFNyaW5pdmFzIFJhbWFuaQAC
+Afk/AQAAAGAAAAAAAAAA3KdAyMBCEBq0uQgAKy/hggEAAAAAAAAAL089VFJBTlNDT1JQL09VPUZJ
+UlNUIEFETUlOSVNUUkFUSVZFIEdST1VQL0NOPVJFQ0lQSUVOVFMvQ049U1JBTUFOSQAeAPo/AQAA
+ABUAAABTeXN0ZW0gQWRtaW5pc3RyYXRvcgAAAAACAfs/AQAAAB4AAAAAAAAA3KdAyMBCEBq0uQgA
+Ky/hggEAAAAAAAAALgAAAAMA/T/kBAAAAwAZQAAAAAADABpAAAAAAAMAHUAAAAAAAwAeQAAAAAAe
+ADBAAQAAAAgAAABTUkFNQU5JAB4AMUABAAAACAAAAFNSQU1BTkkAHgAyQAEAAAAcAAAAZG0tZGV2
+ZWwtYm91bmNlc0ByZWRoYXQuY29tAB4AM0ABAAAADwAAAGFna0ByZWRoYXQuY29tAAAeADhAAQAA
+AAgAAABTUkFNQU5JAB4AOUABAAAAAgAAAC4AAAADAHZA/////wsAKQAAAAAACwAjAAAAAAADAAYQ
+OyB61QMABxCGAQAAAwAQEAAAAAADABEQAQAAAB4ACBABAAAAZQAAAEhJRk9MS1M7SVdPVUxEQkVH
+UkFURUZVTFRPTEVBUk5GUk9NVEhJU0ZPUlVNT05IT1dPTkVXT1VMREJFQUJMRVRPSEFWRURJRkZF
+UkVOVFBBVEhQUklPUklUSUVTRk9SQUZDL0kAAAAAAgF/AAEAAAA9AAAAPDdEQUEyOEI5MjU5RkFE
+NDU4REVFMDNEQzNEQTIzNkRBMDQzRjY2REZAY2FleDAyLnRyYW5zLmNvcnA+AAAAAIPq
 
-        if (read_param(_params, shift(as), &hw_argc, &ti->error))
-                return -EINVAL;
+------_=_NextPart_001_01C8AA27.06DE2B9A
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-3. The dmsetup table output has changed - it no longer matches the input
-in the case where arguments got ignored.  I don't think this matters
-(unlike a similar issue we had with crypt), but it should be noted in
-comments inline.
 
-4.  /* Fields used by hardware handler usage */
-Comment doesn't add anything - drop it?
-
-5. char *hw_handler_name;
-const?
-
-6. The code now assumes all hw_handlers have a pg_init function: in
-practice this is likely to be the case.  Does that permit further
-simplification of some of the logic?
-
-7. I note that the 'bypassed' argument to the pg_init function has been
-dropped - presumably as none of the existing handlers made any use of
-it.
-
-8. A new workqueue is introduced without comment.  Which of the changes
-means we need it now?  What's the reason it's not single-threaded
-(and per-device)?  Is there a clearer name than "khwhandlerd" -
-something that tells people it's connected with multipath, and
-can the name of the struct workqueue_struct variable match this?
-Previously the hw_handler pg_init function was required to return
-immediately.  Can its replacement scsi_dh_activate() block (but not in a
-way that could deadlock of course)?  Should some of its functionality be
-got out of the way at initialisation time within multipath_ctr()?
-
-9. What does m->path_to_activate give us that m->current_pgpath
-doesn't?
-
-10. Is activate_passive_path() an accurate function name?  Is the
-supplied path argument always 'passive'?
-
-11. Where has the use of pg_init_retries gone?
-
-I still need to check the updated state machine logic and associated
-locking once we have a final version of this patch.
-
-Alasdair
--- 
-agk@redhat.com
+------_=_NextPart_001_01C8AA27.06DE2B9A--
