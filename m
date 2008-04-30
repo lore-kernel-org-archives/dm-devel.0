@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] Fixup varags usage
-Date: Wed, 30 Apr 2008 11:03:34 +0200
-Message-ID: <20080430090334.E5BA118C6FF@pentland.suse.de>
+Subject: [PATCH] libdevmapper prints garbage on shutdown
+Date: Wed, 30 Apr 2008 11:03:39 +0200
+Message-ID: <20080430090339.726D618C6FF@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,27 +21,84 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-We already call va_end() at the correct position, no need to
-duplicate it in log_safe().
+This patch fixes 2 logging bugs:
+  o multipath command prints unexpected log message like
+    "libdevmapper: libdm-common.c(303): Created /dev/mapper/<mapname>"
+  o multipathd doesn't log messages like "--------shut down------"
+    during the exit path
 
+What is the problem:
+  o multipath command and multipathd register dm_write_log() using
+    dm_log_init() and it can be called from libdevmapper codes like
+    dm_lib_release().
+  o dm_write_log() references the global "conf" to find the verbosity,
+    but it is freed before dm_lib_release() calls dm_write_log().
+  o So dm_write_log() reads garbage value like big vervosity.
+
+What does the patch do:
+  o multipath command sets NULL to "conf" after freeing it.
+    This prevents dm_write_log() from reading garbage data.
+  o multipath command and multipathd free "conf" after all logging
+    are completed, because the logging functions reference it
+    to find the verbosity.
+
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/log_pthread.c |    2 --
- 1 files changed, 0 insertions(+), 2 deletions(-)
+ multipath/main.c  |   10 +++++++++-
+ multipathd/main.c |   10 ++++++++--
+ 2 files changed, 17 insertions(+), 3 deletions(-)
 
-diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
-index 8976bfb..8909440 100644
---- a/libmultipath/log_pthread.c
-+++ b/libmultipath/log_pthread.c
-@@ -15,9 +15,7 @@
- void log_safe (int prio, const char * fmt, va_list ap)
- {
- 	pthread_mutex_lock(logq_lock);
--	//va_start(ap, fmt);
- 	log_enqueue(prio, fmt, ap);
--	va_end(ap);
- 	pthread_mutex_unlock(logq_lock);
+diff --git a/multipath/main.c b/multipath/main.c
+index 0f4b2d2..b6ea6fd 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -429,9 +429,17 @@ main (int argc, char *argv[])
+ 	
+ out:
+ 	sysfs_cleanup();
+-	free_config(conf);
+ 	dm_lib_release();
+ 	dm_lib_exit();
++
++	/*
++	 * Freeing config must be done after dm_lib_exit(), because
++	 * the logging function (dm_write_log()), which is called there,
++	 * references the config.
++	 */
++	free_config(conf);
++	conf = NULL;
++
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 50e7441..385521c 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1373,8 +1373,6 @@ child (void * param)
+ 	vecs->lock = NULL;
+ 	FREE(vecs);
+ 	vecs = NULL;
+-	free_config(conf);
+-	conf = NULL;
  
- 	pthread_mutex_lock(logev_lock);
+ 	condlog(2, "--------shut down-------");
+ 
+@@ -1384,6 +1382,14 @@ child (void * param)
+ 	dm_lib_release();
+ 	dm_lib_exit();
+ 
++	/*
++	 * Freeing config must be done after condlog() and dm_lib_exit(),
++	 * because logging functions like dlog() and dm_write_log()
++	 * reference the config.
++	 */
++	free_config(conf);
++	conf = NULL;
++
+ #ifdef _DEBUG_
+ 	dbg_free_final(NULL);
+ #endif
 -- 
 1.5.2.4
