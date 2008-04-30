@@ -1,8 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] [libmultipath] block SIGPIPE before writing to a
-	pipe
-Date: Wed, 30 Apr 2008 11:01:04 +0200
-Message-ID: <20080430090104.58EC718C6FF@pentland.suse.de>
+Subject: [PATCH] multipathd crash on shutdown
+Date: Wed, 30 Apr 2008 11:03:24 +0200
+Message-ID: <20080430090324.EB97E18C6FF@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -22,55 +21,27 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-We have to block SIGPIPE before we're writing to the communication
-pipe otherwise the daemon will be killed if the listening program
-terminates prematurely.
+On shutdown multipathd flushes its internal message queue;
+but we have to check if the messages on the queue are not empty.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/uxsock.c |   23 ++++++++++++++++++++---
- 1 files changed, 20 insertions(+), 3 deletions(-)
+ libmultipath/log_pthread.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
-index abb9f85..cdc3dbc 100644
---- a/libmultipath/uxsock.c
-+++ b/libmultipath/uxsock.c
-@@ -14,6 +14,7 @@
- #include <sys/socket.h>
- #include <sys/un.h>
- #include <sys/poll.h>
-+#include <signal.h>
- #include <errno.h>
- 
- #include "memory.h"
-@@ -127,9 +128,25 @@ size_t read_all(int fd, void *buf, size_t len)
-  */
- int send_packet(int fd, const char *buf, size_t len)
- {
--	if (write_all(fd, &len, sizeof(len)) != sizeof(len)) return -1;
--	if (write_all(fd, buf, len) != len) return -1;	
--	return 0;
-+	int ret = 0;
-+#ifdef DAEMON
-+	sigset_t set, old;
-+
-+	/* Block SIGPIPE */
-+	sigemptyset(&set);
-+	sigaddset(&set, SIGPIPE);
-+	pthread_sigmask(SIG_BLOCK, &set, &old);
-+#endif	
-+	if (write_all(fd, &len, sizeof(len)) != sizeof(len)) 
-+		ret = -1;
-+	if (!ret && write_all(fd, buf, len) != len)
-+		ret = -1;	
-+
-+#ifdef DAEMON
-+	/* And unblock it again */
-+	pthread_sigmask(SIG_SETMASK, &old, NULL);
-+#endif	
-+	return ret;
+diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+index 5a82b6a..8976bfb 100644
+--- a/libmultipath/log_pthread.c
++++ b/libmultipath/log_pthread.c
+@@ -33,7 +33,8 @@ static void flush_logqueue (void)
+ 		pthread_mutex_lock(logq_lock);
+ 		empty = log_dequeue(la->buff);
+ 		pthread_mutex_unlock(logq_lock);
+-		log_syslog(la->buff);
++		if (!empty)
++			log_syslog(la->buff);
+ 	} while (empty == 0);
  }
  
- /*
 -- 
 1.5.2.4
