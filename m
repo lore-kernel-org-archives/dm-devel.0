@@ -1,7 +1,8 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] libdevmapper prints garbage on shutdown
-Date: Wed, 30 Apr 2008 11:03:39 +0200
-Message-ID: <20080430090339.726D618C6FF@pentland.suse.de>
+Subject: [PATCH] Improve sense code scanning in sg_read() and tur
+	checker
+Date: Wed, 30 Apr 2008 11:03:45 +0200
+Message-ID: <20080430090345.8558D18C6FF@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,84 +22,112 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-This patch fixes 2 logging bugs:
-  o multipath command prints unexpected log message like
-    "libdevmapper: libdm-common.c(303): Created /dev/mapper/<mapname>"
-  o multipathd doesn't log messages like "--------shut down------"
-    during the exit path
+sg_read and tur should be able to correctly parse sense data,
+as we might need to retry any UNIT ATTENTION sense codes.
 
-What is the problem:
-  o multipath command and multipathd register dm_write_log() using
-    dm_log_init() and it can be called from libdevmapper codes like
-    dm_lib_release().
-  o dm_write_log() references the global "conf" to find the verbosity,
-    but it is freed before dm_lib_release() calls dm_write_log().
-  o So dm_write_log() reads garbage value like big vervosity.
-
-What does the patch do:
-  o multipath command sets NULL to "conf" after freeing it.
-    This prevents dm_write_log() from reading garbage data.
-  o multipath command and multipathd free "conf" after all logging
-    are completed, because the logging functions reference it
-    to find the verbosity.
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- multipath/main.c  |   10 +++++++++-
- multipathd/main.c |   10 ++++++++--
- 2 files changed, 17 insertions(+), 3 deletions(-)
+ libmultipath/checkers/libsg.c |   13 ++++++++-
+ libmultipath/checkers/tur.c   |   58 ++++++++++++++++++++++++++++------------
+ 2 files changed, 52 insertions(+), 19 deletions(-)
 
-diff --git a/multipath/main.c b/multipath/main.c
-index 0f4b2d2..b6ea6fd 100644
---- a/multipath/main.c
-+++ b/multipath/main.c
-@@ -429,9 +429,17 @@ main (int argc, char *argv[])
- 	
- out:
- 	sysfs_cleanup();
--	free_config(conf);
- 	dm_lib_release();
- 	dm_lib_exit();
+diff --git a/libmultipath/checkers/libsg.c b/libmultipath/checkers/libsg.c
+index 9171b10..4cb7ecc 100644
+--- a/libmultipath/checkers/libsg.c
++++ b/libmultipath/checkers/libsg.c
+@@ -72,10 +72,21 @@ retry:
+ 	    (0 == io_hdr.driver_status)) {
+ 		return PATH_UP;
+ 	} else {
++		int key = 0;
 +
-+	/*
-+	 * Freeing config must be done after dm_lib_exit(), because
-+	 * the logging function (dm_write_log()), which is called there,
-+	 * references the config.
-+	 */
-+	free_config(conf);
-+	conf = NULL;
++		if (io_hdr.sb_len_wr > 3) {
++			if (sbb[0] == 0x72 || sbb[0] == 0x73)
++				key = sbb[1] & 0x0f;
++			else if (io_hdr.sb_len_wr > 13 &&
++				 ((sbb[0] & 0x7f) == 0x70 ||
++				  (sbb[0] & 0x7f) == 0x71))
++				key = sbb[2] & 0x0f;
++		}
 +
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 50e7441..385521c 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -1373,8 +1373,6 @@ child (void * param)
- 	vecs->lock = NULL;
- 	FREE(vecs);
- 	vecs = NULL;
--	free_config(conf);
--	conf = NULL;
+ 		/*
+ 		 * Retry if UNIT_ATTENTION check condition.
+ 		 */
+-		if ((sbb[2]&0xf) == 6) {
++		if (key == 0x6) {
+ 			if (--retry_count)
+ 				goto retry;
+ 		}
+diff --git a/libmultipath/checkers/tur.c b/libmultipath/checkers/tur.c
+index e84435e..43b846d 100644
+--- a/libmultipath/checkers/tur.c
++++ b/libmultipath/checkers/tur.c
+@@ -41,26 +41,48 @@ extern int
+ libcheck_check (struct checker * c)
+ {
+ 	struct sg_io_hdr io_hdr;
+-        unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0 };
+-        unsigned char sense_buffer[32];
++	unsigned char turCmdBlk[TUR_CMD_LEN] = { 0x00, 0, 0, 0, 0, 0 };
++	unsigned char sense_buffer[32];
++	int retry_tur = 5;
  
- 	condlog(2, "--------shut down-------");
- 
-@@ -1384,6 +1382,14 @@ child (void * param)
- 	dm_lib_release();
- 	dm_lib_exit();
- 
-+	/*
-+	 * Freeing config must be done after condlog() and dm_lib_exit(),
-+	 * because logging functions like dlog() and dm_write_log()
-+	 * reference the config.
-+	 */
-+	free_config(conf);
-+	conf = NULL;
+-        memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
+-        io_hdr.interface_id = 'S';
+-        io_hdr.cmd_len = sizeof (turCmdBlk);
+-        io_hdr.mx_sb_len = sizeof (sense_buffer);
+-        io_hdr.dxfer_direction = SG_DXFER_NONE;
+-        io_hdr.cmdp = turCmdBlk;
+-        io_hdr.sbp = sense_buffer;
+-        io_hdr.timeout = DEF_TIMEOUT;
+-        io_hdr.pack_id = 0;
+-        if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
++ retry:
++	memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
++	io_hdr.interface_id = 'S';
++	io_hdr.cmd_len = sizeof (turCmdBlk);
++	io_hdr.mx_sb_len = sizeof (sense_buffer);
++	io_hdr.dxfer_direction = SG_DXFER_NONE;
++	io_hdr.cmdp = turCmdBlk;
++	io_hdr.sbp = sense_buffer;
++	io_hdr.timeout = DEF_TIMEOUT;
++	io_hdr.pack_id = 0;
++	if (ioctl(c->fd, SG_IO, &io_hdr) < 0) {
+ 		MSG(c, MSG_TUR_DOWN);
+-                return PATH_DOWN;
+-        }
+-        if (io_hdr.info & SG_INFO_OK_MASK) {
++		return PATH_DOWN;
++	}
++	if (io_hdr.info & SG_INFO_OK_MASK) {
++		int key = 0, asc, ascq;
 +
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
- #endif
++		if (io_hdr.sb_len_wr > 3) {
++			if (io_hdr.sbp[0] == 0x72 || io_hdr.sbp[0] == 0x73) {
++				key = io_hdr.sbp[1] & 0x0f;
++				asc = io_hdr.sbp[2];
++				ascq = io_hdr.sbp[3];
++			} else if (io_hdr.sb_len_wr > 13 &&
++				   ((io_hdr.sbp[0] & 0x7f) == 0x70 ||
++				    (io_hdr.sbp[0] & 0x7f) == 0x71)) {
++				key = io_hdr.sbp[2] & 0x0f;
++				asc = io_hdr.sbp[12];
++				ascq = io_hdr.sbp[13];
++			}
++		}
++		if (key == 0x6) {
++			/* Unit Attention, retry */
++			if (--retry_tur)
++				goto retry;
++		}
+ 		MSG(c, MSG_TUR_DOWN);
+-                return PATH_DOWN;
+-        }
++		return PATH_DOWN;
++	}
+ 	MSG(c, MSG_TUR_UP);
+-        return PATH_UP;
++	return PATH_UP;
+ }
 -- 
 1.5.2.4
