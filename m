@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] Add cciss_tur checker
-Date: Wed, 30 Apr 2008 11:04:38 +0200
-Message-ID: <20080430090438.A171F18C6FF@pentland.suse.de>
+Subject: [PATCH] Remove DAEMON defines
+Date: Wed, 30 Apr 2008 11:04:50 +0200
+Message-ID: <20080430090451.060C418C6FF@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,333 +21,408 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-The 'normal' SG_IO tur checker has some issues with cciss, so
-we'd better use a dedicated path checker here.
+We're now building just one shared library for both programs,
+multipath and multipathd. So any DAEMON defines are quite
+pointless.
+Remove them and use 'mpp->waiter == NULL' to distinguish between
+multipath and multipathd where required.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/checkers.h           |    1 +
- libmultipath/checkers/Makefile    |    1 +
- libmultipath/checkers/cciss.h     |  142 +++++++++++++++++++++++++++++++++++++
- libmultipath/checkers/cciss_tur.c |  137 +++++++++++++++++++++++++++++++++++
- 4 files changed, 281 insertions(+), 0 deletions(-)
- create mode 100644 libmultipath/checkers/cciss.h
- create mode 100644 libmultipath/checkers/cciss_tur.c
+ libmultipath/Makefile      |    8 ++------
+ libmultipath/configure.c   |   28 +++++++++++++++-------------
+ libmultipath/debug.c       |    8 +-------
+ libmultipath/debug.h       |   10 +---------
+ libmultipath/devmapper.c   |   12 ++----------
+ libmultipath/discovery.c   |   11 +----------
+ libmultipath/dmparser.c    |    5 ++---
+ libmultipath/structs.c     |    4 +---
+ libmultipath/structs_vec.c |   11 +++++------
+ libmultipath/structs_vec.h |    2 --
+ libmultipath/uxsock.c      |   10 ++++------
+ libmultipath/waiter.h      |    3 ---
+ multipath/main.c           |    2 ++
+ multipathd/Makefile        |    2 +-
+ multipathd/main.c          |    2 ++
+ 15 files changed, 39 insertions(+), 79 deletions(-)
 
-diff --git a/libmultipath/checkers.h b/libmultipath/checkers.h
-index 93337f1..4ff475d 100644
---- a/libmultipath/checkers.h
-+++ b/libmultipath/checkers.h
-@@ -61,6 +61,7 @@
- #define RDAC         "rdac"
- #define EMC_CLARIION "emc_clariion"
- #define READSECTOR0  "readsector0"
-+#define CCISS_TUR    "cciss_tur"
+diff --git a/libmultipath/Makefile b/libmultipath/Makefile
+index 18241a2..05bcc37 100644
+--- a/libmultipath/Makefile
++++ b/libmultipath/Makefile
+@@ -11,12 +11,8 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
+        structs.o discovery.o propsel.o dict.o \
+        pgpolicies.o debug.o regex.o defaults.o uevent.o \
+        switchgroup.o uxsock.o print.o alias.o log_pthread.o \
+-       log.o configure.o structs_vec.o sysfs.o prio.o checkers.o
+-
+-#ifeq ($(strip $(DAEMON)),1)
+-	OBJS += lock.o waiter.o
+-	CFLAGS += -DDAEMON
+-#endif
++       log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
++       lock.o waiter.o
  
- #define DEFAULT_CHECKER DIRECTIO
+ LIBDM_API_FLUSH = $(shell if test -d /lib64 ; then objdump -T /lib64/libdevmapper.so* ; else objdump -T /lib/libdevmapper.so.* ; fi | grep -c dm_task_no_flush)
  
-diff --git a/libmultipath/checkers/Makefile b/libmultipath/checkers/Makefile
-index f37a0f9..9b517f2 100644
---- a/libmultipath/checkers/Makefile
-+++ b/libmultipath/checkers/Makefile
-@@ -5,6 +5,7 @@
- include ../../Makefile.inc
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index df31cdd..d9fa397 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -367,19 +367,21 @@ domap (struct multipath * mpp)
+ 		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
+ 		 * succeeded
+ 		 */
+-#ifndef DAEMON
+-		dm_switchgroup(mpp->alias, mpp->bestpg);
+-		if (mpp->action != ACT_NOTHING)
+-			print_multipath_topology(mpp, conf->verbosity);
+-#else
+-		mpp->stat_map_loads++;
+-		condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
+-                        mpp->size, DEFAULT_TARGET, mpp->params);
+-		/*
+-		 * Required action is over, reset for the stateful daemon
+-		 */
+-		mpp->action = ACT_NOTHING;
+-#endif
++		if (!mpp->waiter) {
++			/* multipath client mode */
++			dm_switchgroup(mpp->alias, mpp->bestpg);
++			if (mpp->action != ACT_NOTHING)
++				print_multipath_topology(mpp, conf->verbosity);
++		} else  {
++			/* multipath daemon mode */
++			mpp->stat_map_loads++;
++			condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
++				mpp->size, DEFAULT_TARGET, mpp->params);
++			/*
++			 * Required action is over, reset for the stateful daemon
++			 */
++			mpp->action = ACT_NOTHING;
++		}
+ 		return DOMAP_OK;
+ 	}
+ 	return DOMAP_FAIL;
+diff --git a/libmultipath/debug.c b/libmultipath/debug.c
+index 05dfb06..d30517d 100644
+--- a/libmultipath/debug.c
++++ b/libmultipath/debug.c
+@@ -5,11 +5,9 @@
+ #include <stdlib.h>
+ #include <stdarg.h>
  
- LIBS= \
-+	libcheckcciss_tur.so \
- 	libcheckreadsector0.so \
- 	libchecktur.so \
- 	libcheckdirectio.so \
-diff --git a/libmultipath/checkers/cciss.h b/libmultipath/checkers/cciss.h
-new file mode 100644
-index 0000000..f6a37d8
---- /dev/null
-+++ b/libmultipath/checkers/cciss.h
-@@ -0,0 +1,142 @@
-+#ifndef CCISS_H
-+#define CCISS_H
+-#if DAEMON
+ #include "log_pthread.h"
+ #include <sys/types.h>
+ #include <time.h>
+-#endif
+ 
+ #include "vector.h"
+ #include "config.h"
+@@ -23,12 +21,11 @@ void dlog (int sink, int prio, const char * fmt, ...)
+ 	thres = (conf) ? conf->verbosity : 0;
+ 
+ 	if (prio <= thres) {
+-#if DAEMON
+ 		if (!sink) {
+ 			time_t t = time(NULL);
+ 			struct tm *tb = localtime(&t);
+ 			char buff[16];
+-			
 +
-+#include <linux/types.h>
-+#include <linux/ioctl.h>
+ 			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
+ 			buff[sizeof(buff)-1] = '\0';
+ 
+@@ -37,9 +34,6 @@ void dlog (int sink, int prio, const char * fmt, ...)
+ 		}
+ 		else
+ 			log_safe(prio + 3, fmt, ap);
+-#else
+-		vfprintf(stdout, fmt, ap);
+-#endif
+ 	}
+ 	va_end(ap);
+ }
+diff --git a/libmultipath/debug.h b/libmultipath/debug.h
+index 082fff1..c6120c1 100644
+--- a/libmultipath/debug.h
++++ b/libmultipath/debug.h
+@@ -1,21 +1,13 @@
+ void dlog (int sink, int prio, const char * fmt, ...)
+ 	__attribute__((format(printf, 3, 4)));
+ 
+-#if DAEMON
+ 
+ #include <pthread.h>
+ #include <stdarg.h>
+ 
+ #include "log_pthread.h"
+ 
+-int logsink;
++extern int logsink;
+ 
+ #define condlog(prio, fmt, args...) \
+ 	dlog(logsink, prio, fmt "\n", ##args)
+-
+-#else /* DAEMON */
+-
+-#define condlog(prio, fmt, args...) \
+-	dlog(0, prio, fmt "\n", ##args)
+-
+-#endif /* DAEMON */
+diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
+index f21d3ab..cc01486 100644
+--- a/libmultipath/devmapper.c
++++ b/libmultipath/devmapper.c
+@@ -22,11 +22,9 @@
+ #include "devmapper.h"
+ #include "config.h"
+ 
+-#if DAEMON
+ #include "log_pthread.h"
+ #include <sys/types.h>
+ #include <time.h>
+-#endif
+ 
+ #define MAX_WAIT 5
+ #define LOOPS_PER_SEC 5
+@@ -47,8 +45,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+ 	if (thres <= 3 || level > thres)
+ 		return;
+ 
+-        va_start(ap, f);
+-#if DAEMON
++	va_start(ap, f);
+ 	if (!logsink) {
+ 		time_t t = time(NULL);
+ 		struct tm *tb = localtime(&t);
+@@ -65,12 +62,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
+ 		condlog(level, "libdevmapper: %s(%i): ", file, line);
+ 		log_safe(level + 3, f, ap);
+ 	}
+-#else
+-	fprintf(stdout, "libdevmapper: %s(%i): ", file, line);
+-	vfprintf(stdout, f, ap);
+-	fprintf(stdout, "\n");
+-#endif
+-        va_end(ap);
++	va_end(ap);
+ 
+ 	return;
+ }
+diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
+index 8cfb53f..7baa9e7 100644
+--- a/libmultipath/discovery.c
++++ b/libmultipath/discovery.c
+@@ -716,10 +716,6 @@ pathinfo (struct path *pp, vector hwtable, int mask)
+ 	if (mask & DI_WWID && !strlen(pp->wwid))
+ 		get_uid(pp);
+ 
+-#ifndef DAEMON
+-	close(pp->fd);
+-	pp->fd = -1;
+-#endif
+ 	return 0;
+ 
+ blank:
+@@ -728,11 +724,6 @@ blank:
+ 	 */
+ 	memset(pp->wwid, 0, WWID_SIZE);
+ 	pp->state = PATH_DOWN;
+-#ifndef DAEMON
+-	if (pp->fd > 0){
+-		close(pp->fd);
+-		pp->fd = -1;
+-	}
+-#endif
 +
-+#define CCISS_IOC_MAGIC 'B'
+ 	return 0;
+ }
+diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
+index fe7d986..df7a0c3 100644
+--- a/libmultipath/dmparser.c
++++ b/libmultipath/dmparser.c
+@@ -277,10 +277,9 @@ disassemble_map (vector pathvec, char * params, struct multipath * mpp)
+ 
+ 				strncpy(pp->dev_t, word, BLK_DEV_SIZE);
+ 
+-#ifndef DAEMON
+-				if (store_path(pathvec, pp))
++				/* Only call this in multipath client mode */
++				if (!mpp->waiter && store_path(pathvec, pp))
+ 					goto out;
+-#endif
+ 			}
+ 			FREE(word);
+ 
+diff --git a/libmultipath/structs.c b/libmultipath/structs.c
+index 11f3061..082d53f 100644
+--- a/libmultipath/structs.c
++++ b/libmultipath/structs.c
+@@ -170,14 +170,12 @@ free_multipath (struct multipath * mpp, int free_paths)
+ 
+ 	if (mpp->dmi)
+ 		FREE(mpp->dmi);
+-	
+-#if DAEMON
 +
-+/*
-+ * transfer direction
-+ */
-+#define XFER_NONE		0x00
-+#define XFER_WRITE		0x01
-+#define XFER_READ		0x02
-+#define XFER_RSVD		0x03
+ 	/*
+ 	 * better own vecs->lock here
+ 	 */
+ 	if (mpp->waiter)
+ 		((struct event_thread *)mpp->waiter)->mpp = NULL;
+-#endif
+ 
+ 	free_pathvec(mpp->paths, free_paths);
+ 	free_pgvec(mpp->pg, free_paths);
+diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
+index f4d69bb..6757eb9 100644
+--- a/libmultipath/structs_vec.c
++++ b/libmultipath/structs_vec.c
+@@ -62,7 +62,7 @@ adopt_paths (vector pathvec, struct multipath * mpp)
+ 			condlog(3, "%s: ownership set to %s",
+ 				pp->dev, mpp->alias);
+ 			pp->mpp = mpp;
+-			
 +
-+/*
-+ * task attribute
-+ */
-+#define ATTR_UNTAGGED		0x00
-+#define ATTR_SIMPLE		0x04
-+#define ATTR_HEADOFQUEUE	0x05
-+#define ATTR_ORDERED		0x06
-+#define ATTR_ACA		0x07
+ 			if (!mpp->paths && !(mpp->paths = vector_alloc()))
+ 				return 1;
+ 
+@@ -294,18 +294,17 @@ retry:
+ 		char new_alias[WWID_SIZE];
+ 
+ 		/*
+-	 	 * detect an external rename of the multipath device
++		 * detect an external rename of the multipath device
+ 		 */
+ 		if (dm_get_name(mpp->wwid, DEFAULT_TARGET, new_alias)) {
+ 			condlog(3, "%s multipath mapped device name has "
+ 				"changed from %s to %s", mpp->wwid,
+ 				mpp->alias, new_alias);
+ 			strcpy(mpp->alias, new_alias);
+-#if DAEMON
+-			if (mpp->waiter) 
 +
-+/*
-+ * cdb type
-+ */
-+#define TYPE_CMD		0x00
-+#define TYPE_MSG		0x01
++			if (mpp->waiter)
+ 				strncpy(((struct event_thread *)mpp->waiter)->mapname,
+ 					new_alias, WWID_SIZE);
+-#endif
+ 			goto retry;
+ 		}
+ 		condlog(0, "%s: failed to setup multipath", mpp->alias);
+@@ -341,7 +340,7 @@ add_map_without_path (struct vectors * vecs,
+ 
+ 	if (adopt_paths(vecs->pathvec, mpp))
+ 		goto out;
+-	
 +
-+#define SENSEINFOBYTES		32
+ 	if (!vector_alloc_slot(vecs->mpvec))
+ 		goto out;
+ 
+diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
+index b8a416f..19a2387 100644
+--- a/libmultipath/structs_vec.h
++++ b/libmultipath/structs_vec.h
+@@ -2,9 +2,7 @@
+ #define _STRUCTS_VEC_H
+ 
+ struct vectors {
+-#if DAEMON
+ 	pthread_mutex_t *lock;
+-#endif
+ 	vector pathvec;
+ 	vector mpvec;
+ };
+diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
+index cdc3dbc..a070943 100644
+--- a/libmultipath/uxsock.c
++++ b/libmultipath/uxsock.c
+@@ -129,23 +129,21 @@ size_t read_all(int fd, void *buf, size_t len)
+ int send_packet(int fd, const char *buf, size_t len)
+ {
+ 	int ret = 0;
+-#ifdef DAEMON
+ 	sigset_t set, old;
+ 
+ 	/* Block SIGPIPE */
+ 	sigemptyset(&set);
+ 	sigaddset(&set, SIGPIPE);
+ 	pthread_sigmask(SIG_BLOCK, &set, &old);
+-#endif	
+-	if (write_all(fd, &len, sizeof(len)) != sizeof(len)) 
 +
-+/*
-+ * Type defs used in the following structs
-+ */
-+#define BYTE __u8
-+#define WORD __u16
-+#define HWORD __u16
-+#define DWORD __u32
-+
-+#pragma pack(1)
-+
-+//Command List Structure
-+typedef union _SCSI3Addr_struct {
-+   struct {
-+    BYTE Dev;
-+    BYTE Bus:6;
-+    BYTE Mode:2;        // b00
-+  } PeripDev;
-+   struct {
-+    BYTE DevLSB;
-+    BYTE DevMSB:6;
-+    BYTE Mode:2;        // b01
-+  } LogDev;
-+   struct {
-+    BYTE Dev:5;
-+    BYTE Bus:3;
-+    BYTE Targ:6;
-+    BYTE Mode:2;        // b10
-+  } LogUnit;
-+} SCSI3Addr_struct;
-+
-+typedef struct _PhysDevAddr_struct {
-+  DWORD             TargetId:24;
-+  DWORD             Bus:6;
-+  DWORD             Mode:2;
-+  SCSI3Addr_struct  Target[2]; //2 level target device addr
-+} PhysDevAddr_struct;
-+  
-+typedef struct _LogDevAddr_struct {
-+  DWORD            VolId:30;
-+  DWORD            Mode:2;
-+  BYTE             reserved[4];
-+} LogDevAddr_struct;
-+
-+typedef union _LUNAddr_struct {
-+  BYTE               LunAddrBytes[8];
-+  SCSI3Addr_struct   SCSI3Lun[4];
-+  PhysDevAddr_struct PhysDev;
-+  LogDevAddr_struct  LogDev;
-+} LUNAddr_struct;
-+
-+typedef struct _RequestBlock_struct {
-+  BYTE   CDBLen;
-+  struct {
-+    BYTE Type:3;
-+    BYTE Attribute:3;
-+    BYTE Direction:2;
-+  } Type;
-+  HWORD  Timeout;
-+  BYTE   CDB[16];
-+} RequestBlock_struct;
-+
-+typedef union _MoreErrInfo_struct{
-+  struct {
-+    BYTE  Reserved[3];
-+    BYTE  Type;
-+    DWORD ErrorInfo;
-+  }Common_Info;
-+  struct{
-+    BYTE  Reserved[2];
-+    BYTE  offense_size;//size of offending entry
-+    BYTE  offense_num; //byte # of offense 0-base
-+    DWORD offense_value;
-+  }Invalid_Cmd;
-+}MoreErrInfo_struct;
-+
-+typedef struct _ErrorInfo_struct {
-+  BYTE               ScsiStatus;
-+  BYTE               SenseLen;
-+  HWORD              CommandStatus;
-+  DWORD              ResidualCnt;
-+  MoreErrInfo_struct MoreErrInfo;
-+  BYTE               SenseInfo[SENSEINFOBYTES];
-+} ErrorInfo_struct;
-+
-+#pragma pack()
-+
-+typedef struct _IOCTL_Command_struct {
-+	LUNAddr_struct		LUN_info;
-+	RequestBlock_struct	Request;
-+	ErrorInfo_struct	error_info;
-+	WORD			buf_size;  /* size in bytes of the buf */
-+	BYTE			*buf;
-+} IOCTL_Command_struct;
-+
-+typedef struct _LogvolInfo_struct{
-+	__u32   LunID;
-+	int     num_opens;  /* number of opens on the logical volume */
-+	int     num_parts;  /* number of partitions configured on logvol */
-+} LogvolInfo_struct;
-+
-+#define CCISS_PASSTHRU     _IOWR(CCISS_IOC_MAGIC, 11, IOCTL_Command_struct)
-+#define CCISS_GETLUNINFO   _IOR(CCISS_IOC_MAGIC, 17, LogvolInfo_struct)
-+
-+int cciss_init( struct checker *);
-+void cciss_free (struct checker * c);
-+int cciss_tur( struct checker *);
-+
-+#endif
-+
-diff --git a/libmultipath/checkers/cciss_tur.c b/libmultipath/checkers/cciss_tur.c
-new file mode 100644
-index 0000000..4c26901
---- /dev/null
-+++ b/libmultipath/checkers/cciss_tur.c
-@@ -0,0 +1,137 @@
-+/*
-+ *****************************************************************************
-+ *                                                                           *
-+ *     (C)  Copyright 2007 Hewlett-Packard Development Company, L.P          *
-+ *                                                                           *
-+ * This program is free software; you can redistribute it and/or modify it   *
-+ * under the terms of the GNU General Public License as published by the Free*
-+ * Software  Foundation; either version 2 of the License, or (at your option)*
-+ * any later version.                                                        *
-+ *                                                                           *
-+ * This program is distributed in the hope that it will be useful, but       *
-+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY*
-+ * or FITNESS FOR  A PARTICULAR PURPOSE. See the GNU General Public License  *
-+ * for more details.                                                         *
-+ *                                                                           *
-+ * You should have received a copy of the GNU General Public License along   *
-+ * with this program; if not, write to the Free Software Foundation, Inc.,   *
-+ * 675 Mass Ave, Cambridge, MA 02139, USA.                                   *
-+ *                                                                           *
-+ * The copy of the GNU General Public License is available at                *
-+ * /opt/hp/HPDMmultipath-tool directoy                                       *
-+ *                                                                           *
-+ *****************************************************************************
-+*/
-+
-+/*
-+ *  This program originally derived from and inspired by
-+ *  Christophe Varoqui's tur.c, part of libchecker.
-+ */
-+
-+
-+#include <stdio.h>
-+#include <stdlib.h>
-+#include <string.h>
-+#include <sys/types.h>
-+#include <sys/stat.h>
-+#include <unistd.h>
-+#include <fcntl.h>
-+#include <sys/ioctl.h>
-+#include <errno.h>
-+
-+#include "checkers.h"
-+
-+#include "cciss.h"
-+
-+#define TUR_CMD_LEN 6
-+#define HEAVY_CHECK_COUNT       10
-+
-+#define MSG_CCISS_TUR_UP	"cciss_tur checker reports path is up"
-+#define MSG_CCISS_TUR_DOWN	"cciss_tur checker reports path is down"
-+
-+struct cciss_tur_checker_context {
-+	void * dummy;
-+};
-+
-+int libcheck_init (struct checker * c)
-+{
-+	return 0;
-+}
-+
-+void libcheck_free (struct checker * c)
-+{
-+	return;
-+}
-+
-+extern int
-+libcheck_check (struct checker * c)
-+{
-+	int rc;
-+	int ret;
-+	unsigned int lun = 0;
-+	struct cciss_tur_checker_context * ctxt = NULL;
-+	LogvolInfo_struct    lvi;       // logical "volume" info
-+	IOCTL_Command_struct cic;       // cciss ioctl command
-+
-+	if ((c->fd) <= 0) {
-+		MSG(c,"no usable fd");
++	if (write_all(fd, &len, sizeof(len)) != sizeof(len))
+ 		ret = -1;
+ 	if (!ret && write_all(fd, buf, len) != len)
+-		ret = -1;	
 +		ret = -1;
-+		goto out;
-+	}
+ 
+-#ifdef DAEMON
+ 	/* And unblock it again */
+ 	pthread_sigmask(SIG_SETMASK, &old, NULL);
+-#endif	
 +
-+	rc = ioctl(c->fd, CCISS_GETLUNINFO, &lvi);
-+	if ( rc != 0) {
-+		perror("Error: ");
-+		fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
-+			strerror(errno));
-+		MSG(c,MSG_CCISS_TUR_DOWN);
-+		ret = PATH_DOWN;
-+		goto out;
-+	} else {
-+		lun = lvi.LunID;
-+	}
+ 	return ret;
+ }
+ 
+diff --git a/libmultipath/waiter.h b/libmultipath/waiter.h
+index 0223924..468ce5f 100644
+--- a/libmultipath/waiter.h
++++ b/libmultipath/waiter.h
+@@ -1,8 +1,6 @@
+ #ifndef _WAITER_H
+ #define _WAITER_H
+ 
+-#if DAEMON
+-
+ struct event_thread {
+ 	struct dm_task *dmt;
+ 	pthread_t thread;
+@@ -19,5 +17,4 @@ int start_waiter_thread (struct multipath *mpp, struct vectors *vecs);
+ int waiteventloop (struct event_thread *waiter);
+ void *waitevent (void *et);
+ 
+-#endif /* DAEMON */
+ #endif /* _WAITER_H */
+diff --git a/multipath/main.c b/multipath/main.c
+index b6ea6fd..c071cac 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -49,6 +49,8 @@
+ #include <pgpolicies.h>
+ #include <version.h>
+ 
++int logsink;
 +
-+	memset(&cic, 0, sizeof(cic));
-+	cic.LUN_info.LogDev.VolId = lun & 0x3FFFFFFF;
-+	cic.LUN_info.LogDev.Mode = 0x01; /* logical volume addressing */
-+	cic.Request.CDBLen = 6;  /* need to try just 2 bytes here */
-+	cic.Request.Type.Type =  TYPE_CMD; // It is a command.
-+	cic.Request.Type.Attribute = ATTR_SIMPLE;
-+	cic.Request.Type.Direction = XFER_NONE;
-+	cic.Request.Timeout = 0;
+ static int
+ filter_pathvec (vector pathvec, char * refwwid)
+ {
+diff --git a/multipathd/Makefile b/multipathd/Makefile
+index 6beb993..dd223c4 100644
+--- a/multipathd/Makefile
++++ b/multipathd/Makefile
+@@ -5,7 +5,7 @@ include ../Makefile.inc
+ #
+ # basic flags setting
+ #
+-CFLAGS += -DDAEMON -I$(multipathdir) -Wl,-rpath,$(libdir)
++CFLAGS += -I$(multipathdir) -Wl,-rpath,$(libdir)
+ LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -laio \
+ 	   -lmultipath -L$(multipathdir)
+ 
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 385521c..2b1fd86 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -65,6 +65,8 @@
+ pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
+ pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+ 
++int logsink;
 +
-+	cic.Request.CDB[0] = 0;
-+	cic.Request.CDB[1] = 0;
-+	cic.Request.CDB[2] = 0;
-+	cic.Request.CDB[3] = 0;
-+	cic.Request.CDB[4] = 0;
-+	cic.Request.CDB[5] = 0;
-+
-+	rc = ioctl(c->fd, CCISS_PASSTHRU, &cic);
-+	if (rc < 0) {
-+		fprintf(stderr, "cciss TUR  failed: %s\n",
-+			strerror(errno));
-+		MSG(c,MSG_CCISS_TUR_DOWN);
-+		ret = PATH_DOWN;
-+		goto out;
-+	}
-+
-+	if ((cic.error_info.CommandStatus | cic.error_info.ScsiStatus )) {
-+		MSG(c,MSG_CCISS_TUR_DOWN);
-+		ret = PATH_DOWN;
-+		goto out;
-+	}
-+
-+	MSG(c,MSG_CCISS_TUR_UP);
-+
-+	ret = PATH_UP;
-+out:
-+	/*
-+	 * caller told us he doesn't want to keep the context :
-+	 * free it
-+	 */
-+	if (!c->context)
-+		free(ctxt);
-+
-+	return(ret);
-+}
+ /*
+  * global copy of vecs for use in sig handlers
+  */
 -- 
 1.5.2.4
