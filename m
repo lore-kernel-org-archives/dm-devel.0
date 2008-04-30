@@ -1,7 +1,7 @@
 From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH] Remove DAEMON defines
-Date: Wed, 30 Apr 2008 11:04:50 +0200
-Message-ID: <20080430090451.060C418C6FF@pentland.suse.de>
+Subject: [PATCH] Make modules directory configurable
+Date: Wed, 30 Apr 2008 11:04:59 +0200
+Message-ID: <20080430090459.E0FE418C6FF@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,408 +21,305 @@ Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-We're now building just one shared library for both programs,
-multipath and multipathd. So any DAEMON defines are quite
-pointless.
-Remove them and use 'mpp->waiter == NULL' to distinguish between
-multipath and multipathd where required.
+As we know have a separate directory for the various shared
+libraries we should make this configurable.
+And use that variable a prefix for dlopen() to make that
+work correctly.
 
 Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- libmultipath/Makefile      |    8 ++------
- libmultipath/configure.c   |   28 +++++++++++++++-------------
- libmultipath/debug.c       |    8 +-------
- libmultipath/debug.h       |   10 +---------
- libmultipath/devmapper.c   |   12 ++----------
- libmultipath/discovery.c   |   11 +----------
- libmultipath/dmparser.c    |    5 ++---
- libmultipath/structs.c     |    4 +---
- libmultipath/structs_vec.c |   11 +++++------
- libmultipath/structs_vec.h |    2 --
- libmultipath/uxsock.c      |   10 ++++------
- libmultipath/waiter.h      |    3 ---
- multipath/main.c           |    2 ++
- multipathd/Makefile        |    2 +-
- multipathd/main.c          |    2 ++
- 15 files changed, 39 insertions(+), 79 deletions(-)
+ libmultipath/checkers.c |    5 ++++-
+ libmultipath/config.c   |   27 ++++++++++++++++-----------
+ libmultipath/config.h   |    1 +
+ libmultipath/defaults.h |    1 +
+ libmultipath/dict.c     |   24 ++++++++++++++++++++++++
+ libmultipath/prio.c     |   18 ++++++++++--------
+ multipath/main.c        |    6 +++---
+ multipathd/main.c       |    5 +++--
+ 8 files changed, 62 insertions(+), 25 deletions(-)
 
-diff --git a/libmultipath/Makefile b/libmultipath/Makefile
-index 18241a2..05bcc37 100644
---- a/libmultipath/Makefile
-+++ b/libmultipath/Makefile
-@@ -11,12 +11,8 @@ OBJS = memory.o parser.o vector.o devmapper.o callout.o \
-        structs.o discovery.o propsel.o dict.o \
-        pgpolicies.o debug.o regex.o defaults.o uevent.o \
-        switchgroup.o uxsock.o print.o alias.o log_pthread.o \
--       log.o configure.o structs_vec.o sysfs.o prio.o checkers.o
--
--#ifeq ($(strip $(DAEMON)),1)
--	OBJS += lock.o waiter.o
--	CFLAGS += -DDAEMON
--#endif
-+       log.o configure.o structs_vec.o sysfs.o prio.o checkers.o \
-+       lock.o waiter.o
+diff --git a/libmultipath/checkers.c b/libmultipath/checkers.c
+index ff606d0..3aa1f9d 100644
+--- a/libmultipath/checkers.c
++++ b/libmultipath/checkers.c
+@@ -5,6 +5,8 @@
  
- LIBDM_API_FLUSH = $(shell if test -d /lib64 ; then objdump -T /lib64/libdevmapper.so* ; else objdump -T /lib/libdevmapper.so.* ; fi | grep -c dm_task_no_flush)
+ #include "debug.h"
+ #include "checkers.h"
++#include "vector.h"
++#include "config.h"
  
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index df31cdd..d9fa397 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -367,19 +367,21 @@ domap (struct multipath * mpp)
- 		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
- 		 * succeeded
- 		 */
--#ifndef DAEMON
--		dm_switchgroup(mpp->alias, mpp->bestpg);
--		if (mpp->action != ACT_NOTHING)
--			print_multipath_topology(mpp, conf->verbosity);
--#else
--		mpp->stat_map_loads++;
--		condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
--                        mpp->size, DEFAULT_TARGET, mpp->params);
--		/*
--		 * Required action is over, reset for the stateful daemon
--		 */
--		mpp->action = ACT_NOTHING;
--#endif
-+		if (!mpp->waiter) {
-+			/* multipath client mode */
-+			dm_switchgroup(mpp->alias, mpp->bestpg);
-+			if (mpp->action != ACT_NOTHING)
-+				print_multipath_topology(mpp, conf->verbosity);
-+		} else  {
-+			/* multipath daemon mode */
-+			mpp->stat_map_loads++;
-+			condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
-+				mpp->size, DEFAULT_TARGET, mpp->params);
-+			/*
-+			 * Required action is over, reset for the stateful daemon
-+			 */
-+			mpp->action = ACT_NOTHING;
-+		}
- 		return DOMAP_OK;
- 	}
- 	return DOMAP_FAIL;
-diff --git a/libmultipath/debug.c b/libmultipath/debug.c
-index 05dfb06..d30517d 100644
---- a/libmultipath/debug.c
-+++ b/libmultipath/debug.c
-@@ -5,11 +5,9 @@
- #include <stdlib.h>
- #include <stdarg.h>
+ static LIST_HEAD(checkers);
  
--#if DAEMON
- #include "log_pthread.h"
- #include <sys/types.h>
- #include <time.h>
--#endif
+@@ -61,7 +63,8 @@ struct checker * add_checker (char * name)
+ 	c = alloc_checker();
+ 	if (!c)
+ 		return NULL;
+-	snprintf(libname, LIB_CHECKER_NAMELEN, "libcheck%s.so", name);
++	snprintf(libname, LIB_CHECKER_NAMELEN, "%s/libcheck%s.so",
++		 conf->multipath_dir, name);
+ 	condlog(3, "loading %s checker", libname);
+ 	handle = dlopen(libname, RTLD_NOW);
+ 	errstr = dlerror();
+diff --git a/libmultipath/config.c b/libmultipath/config.c
+index af862b7..4548ad1 100644
+--- a/libmultipath/config.c
++++ b/libmultipath/config.c
+@@ -310,6 +310,9 @@ free_config (struct config * conf)
+ 	if (conf->udev_dir)
+ 		FREE(conf->udev_dir);
  
- #include "vector.h"
- #include "config.h"
-@@ -23,12 +21,11 @@ void dlog (int sink, int prio, const char * fmt, ...)
- 	thres = (conf) ? conf->verbosity : 0;
- 
- 	if (prio <= thres) {
--#if DAEMON
- 		if (!sink) {
- 			time_t t = time(NULL);
- 			struct tm *tb = localtime(&t);
- 			char buff[16];
--			
++	if (conf->multipath_dir)
++		FREE(conf->multipath_dir);
 +
- 			strftime(buff, sizeof(buff), "%b %d %H:%M:%S", tb);
- 			buff[sizeof(buff)-1] = '\0';
+ 	if (conf->selector)
+ 		FREE(conf->selector);
  
-@@ -37,9 +34,6 @@ void dlog (int sink, int prio, const char * fmt, ...)
+@@ -366,35 +369,37 @@ load_config (char * file)
+ 			goto out;
  		}
- 		else
- 			log_safe(prio + 3, fmt, ap);
--#else
--		vfprintf(stdout, fmt, ap);
--#endif
  	}
- 	va_end(ap);
- }
-diff --git a/libmultipath/debug.h b/libmultipath/debug.h
-index 082fff1..c6120c1 100644
---- a/libmultipath/debug.h
-+++ b/libmultipath/debug.h
-@@ -1,21 +1,13 @@
- void dlog (int sink, int prio, const char * fmt, ...)
- 	__attribute__((format(printf, 3, 4)));
- 
--#if DAEMON
- 
- #include <pthread.h>
- #include <stdarg.h>
- 
- #include "log_pthread.h"
- 
--int logsink;
-+extern int logsink;
- 
- #define condlog(prio, fmt, args...) \
- 	dlog(logsink, prio, fmt "\n", ##args)
--
--#else /* DAEMON */
--
--#define condlog(prio, fmt, args...) \
--	dlog(0, prio, fmt "\n", ##args)
--
--#endif /* DAEMON */
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index f21d3ab..cc01486 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -22,11 +22,9 @@
- #include "devmapper.h"
- #include "config.h"
- 
--#if DAEMON
- #include "log_pthread.h"
- #include <sys/types.h>
- #include <time.h>
--#endif
- 
- #define MAX_WAIT 5
- #define LOOPS_PER_SEC 5
-@@ -47,8 +45,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
- 	if (thres <= 3 || level > thres)
- 		return;
- 
--        va_start(ap, f);
--#if DAEMON
-+	va_start(ap, f);
- 	if (!logsink) {
- 		time_t t = time(NULL);
- 		struct tm *tb = localtime(&t);
-@@ -65,12 +62,7 @@ dm_write_log (int level, const char *file, int line, const char *f, ...)
- 		condlog(level, "libdevmapper: %s(%i): ", file, line);
- 		log_safe(level + 3, f, ap);
- 	}
--#else
--	fprintf(stdout, "libdevmapper: %s(%i): ", file, line);
--	vfprintf(stdout, f, ap);
--	fprintf(stdout, "\n");
--#endif
--        va_end(ap);
-+	va_end(ap);
- 
- 	return;
- }
-diff --git a/libmultipath/discovery.c b/libmultipath/discovery.c
-index 8cfb53f..7baa9e7 100644
---- a/libmultipath/discovery.c
-+++ b/libmultipath/discovery.c
-@@ -716,10 +716,6 @@ pathinfo (struct path *pp, vector hwtable, int mask)
- 	if (mask & DI_WWID && !strlen(pp->wwid))
- 		get_uid(pp);
- 
--#ifndef DAEMON
--	close(pp->fd);
--	pp->fd = -1;
--#endif
- 	return 0;
- 
- blank:
-@@ -728,11 +724,6 @@ blank:
- 	 */
- 	memset(pp->wwid, 0, WWID_SIZE);
- 	pp->state = PATH_DOWN;
--#ifndef DAEMON
--	if (pp->fd > 0){
--		close(pp->fd);
--		pp->fd = -1;
--	}
--#endif
-+
- 	return 0;
- }
-diff --git a/libmultipath/dmparser.c b/libmultipath/dmparser.c
-index fe7d986..df7a0c3 100644
---- a/libmultipath/dmparser.c
-+++ b/libmultipath/dmparser.c
-@@ -277,10 +277,9 @@ disassemble_map (vector pathvec, char * params, struct multipath * mpp)
- 
- 				strncpy(pp->dev_t, word, BLK_DEV_SIZE);
- 
--#ifndef DAEMON
--				if (store_path(pathvec, pp))
-+				/* Only call this in multipath client mode */
-+				if (!mpp->waiter && store_path(pathvec, pp))
- 					goto out;
--#endif
- 			}
- 			FREE(word);
- 
-diff --git a/libmultipath/structs.c b/libmultipath/structs.c
-index 11f3061..082d53f 100644
---- a/libmultipath/structs.c
-+++ b/libmultipath/structs.c
-@@ -170,14 +170,12 @@ free_multipath (struct multipath * mpp, int free_paths)
- 
- 	if (mpp->dmi)
- 		FREE(mpp->dmi);
 -	
--#if DAEMON
 +
  	/*
- 	 * better own vecs->lock here
+ 	 * fill the voids left in the config file
  	 */
- 	if (mpp->waiter)
- 		((struct event_thread *)mpp->waiter)->mpp = NULL;
--#endif
- 
- 	free_pathvec(mpp->paths, free_paths);
- 	free_pgvec(mpp->pg, free_paths);
-diff --git a/libmultipath/structs_vec.c b/libmultipath/structs_vec.c
-index f4d69bb..6757eb9 100644
---- a/libmultipath/structs_vec.c
-+++ b/libmultipath/structs_vec.c
-@@ -62,7 +62,7 @@ adopt_paths (vector pathvec, struct multipath * mpp)
- 			condlog(3, "%s: ownership set to %s",
- 				pp->dev, mpp->alias);
- 			pp->mpp = mpp;
--			
++	if (conf->multipath_dir == NULL)
++		conf->multipath_dir = set_default(DEFAULT_MULTIPATHDIR);
 +
- 			if (!mpp->paths && !(mpp->paths = vector_alloc()))
- 				return 1;
- 
-@@ -294,18 +294,17 @@ retry:
- 		char new_alias[WWID_SIZE];
- 
- 		/*
--	 	 * detect an external rename of the multipath device
-+		 * detect an external rename of the multipath device
- 		 */
- 		if (dm_get_name(mpp->wwid, DEFAULT_TARGET, new_alias)) {
- 			condlog(3, "%s multipath mapped device name has "
- 				"changed from %s to %s", mpp->wwid,
- 				mpp->alias, new_alias);
- 			strcpy(mpp->alias, new_alias);
--#if DAEMON
--			if (mpp->waiter) 
+ 	if (conf->hwtable == NULL) {
+ 		conf->hwtable = vector_alloc();
+-		
 +
-+			if (mpp->waiter)
- 				strncpy(((struct event_thread *)mpp->waiter)->mapname,
- 					new_alias, WWID_SIZE);
--#endif
- 			goto retry;
- 		}
- 		condlog(0, "%s: failed to setup multipath", mpp->alias);
-@@ -341,7 +340,7 @@ add_map_without_path (struct vectors * vecs,
- 
- 	if (adopt_paths(vecs->pathvec, mpp))
- 		goto out;
--	
-+
- 	if (!vector_alloc_slot(vecs->mpvec))
+ 		if (!conf->hwtable)
+ 			goto out;
+-		
+ 	}
+ 	if (setup_default_hwtable(conf->hwtable))
  		goto out;
  
-diff --git a/libmultipath/structs_vec.h b/libmultipath/structs_vec.h
-index b8a416f..19a2387 100644
---- a/libmultipath/structs_vec.h
-+++ b/libmultipath/structs_vec.h
-@@ -2,9 +2,7 @@
- #define _STRUCTS_VEC_H
- 
- struct vectors {
--#if DAEMON
- 	pthread_mutex_t *lock;
--#endif
- 	vector pathvec;
- 	vector mpvec;
- };
-diff --git a/libmultipath/uxsock.c b/libmultipath/uxsock.c
-index cdc3dbc..a070943 100644
---- a/libmultipath/uxsock.c
-+++ b/libmultipath/uxsock.c
-@@ -129,23 +129,21 @@ size_t read_all(int fd, void *buf, size_t len)
- int send_packet(int fd, const char *buf, size_t len)
- {
- 	int ret = 0;
--#ifdef DAEMON
- 	sigset_t set, old;
- 
- 	/* Block SIGPIPE */
- 	sigemptyset(&set);
- 	sigaddset(&set, SIGPIPE);
- 	pthread_sigmask(SIG_BLOCK, &set, &old);
--#endif	
--	if (write_all(fd, &len, sizeof(len)) != sizeof(len)) 
+ 	if (conf->blist_devnode == NULL) {
+ 		conf->blist_devnode = vector_alloc();
+-		
 +
-+	if (write_all(fd, &len, sizeof(len)) != sizeof(len))
- 		ret = -1;
- 	if (!ret && write_all(fd, buf, len) != len)
--		ret = -1;	
-+		ret = -1;
- 
--#ifdef DAEMON
- 	/* And unblock it again */
- 	pthread_sigmask(SIG_SETMASK, &old, NULL);
--#endif	
+ 		if (!conf->blist_devnode)
+ 			goto out;
+ 	}
+ 	if (conf->blist_wwid == NULL) {
+ 		conf->blist_wwid = vector_alloc();
+-		
 +
- 	return ret;
+ 		if (!conf->blist_wwid)
+ 			goto out;
+ 	}
+ 	if (conf->blist_device == NULL) {
+ 		conf->blist_device = vector_alloc();
+-		
++
+ 		if (!conf->blist_device)
+ 			goto out;
+ 	}
+@@ -402,21 +407,21 @@ load_config (char * file)
+ 		goto out;
+ 
+ 	if (conf->elist_devnode == NULL) {
+-                conf->elist_devnode = vector_alloc();
++		conf->elist_devnode = vector_alloc();
+ 
+-                if (!conf->elist_devnode)
++		if (!conf->elist_devnode)
+ 			goto out;
+ 	}
+ 	if (conf->elist_wwid == NULL) {
+ 		conf->elist_wwid = vector_alloc();
+ 
+-                if (!conf->elist_wwid)
++		if (!conf->elist_wwid)
+ 			goto out;
+ 	}
+ 
+ 	if (conf->elist_device == NULL) {
+ 		conf->elist_device = vector_alloc();
+-		
++
+ 		if (!conf->elist_device)
+ 			goto out;
+ 	}
+@@ -442,7 +447,7 @@ load_config (char * file)
+ 	if (conf->hwhandler == NULL)
+ 		conf->hwhandler = set_default(DEFAULT_HWHANDLER);
+ 
+-	if (!conf->selector  || !conf->udev_dir         ||
++	if (!conf->selector  || !conf->udev_dir || !conf->multipath_dir ||
+ 	    !conf->getuid    || !conf->features ||
+ 	    !conf->hwhandler)
+ 		goto out;
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index 7568d7b..8a97799 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -71,6 +71,7 @@ struct config {
+ 	char * dev;
+ 	char * sysfs_dir;
+ 	char * udev_dir;
++	char * multipath_dir;
+ 	char * selector;
+ 	char * getuid;
+ 	char * features;
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index 97a3dd7..e8060a2 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -1,5 +1,6 @@
+ #define DEFAULT_GETUID		"/lib/udev/scsi_id -g -u -s /block/%n"
+ #define DEFAULT_UDEVDIR		"/dev"
++#define DEFAULT_MULTIPATHDIR	"/lib/multipath"
+ #define DEFAULT_SELECTOR	"round-robin 0"
+ #define DEFAULT_FEATURES	"0"
+ #define DEFAULT_HWHANDLER	"0"
+diff --git a/libmultipath/dict.c b/libmultipath/dict.c
+index 76571d7..b6f7845 100644
+--- a/libmultipath/dict.c
++++ b/libmultipath/dict.c
+@@ -44,6 +44,17 @@ udev_dir_handler(vector strvec)
  }
  
-diff --git a/libmultipath/waiter.h b/libmultipath/waiter.h
-index 0223924..468ce5f 100644
---- a/libmultipath/waiter.h
-+++ b/libmultipath/waiter.h
-@@ -1,8 +1,6 @@
- #ifndef _WAITER_H
- #define _WAITER_H
+ static int
++multipath_dir_handler(vector strvec)
++{
++	conf->multipath_dir = set_value(strvec);
++
++	if (!conf->multipath_dir)
++		return 1;
++
++	return 0;
++}
++
++static int
+ def_selector_handler(vector strvec)
+ {
+ 	conf->selector = set_value(strvec);
+@@ -1332,6 +1343,18 @@ snprint_def_udev_dir (char * buff, int len, void * data)
+ }
  
--#if DAEMON
--
- struct event_thread {
- 	struct dm_task *dmt;
- 	pthread_t thread;
-@@ -19,5 +17,4 @@ int start_waiter_thread (struct multipath *mpp, struct vectors *vecs);
- int waiteventloop (struct event_thread *waiter);
- void *waitevent (void *et);
+ static int
++snprint_def_multipath_dir (char * buff, int len, void * data)
++{
++	if (!conf->udev_dir)
++		return 0;
++	if (strlen(DEFAULT_MULTIPATHDIR) == strlen(conf->multipath_dir) &&
++	    !strcmp(conf->multipath_dir, DEFAULT_MULTIPATHDIR))
++		return 0;
++
++	return snprintf(buff, len, "%s", conf->multipath_dir);
++}
++
++static int
+ snprint_def_selector (char * buff, int len, void * data)
+ {
+ 	if (!conf->selector)
+@@ -1538,6 +1561,7 @@ init_keywords(void)
+ 	install_keyword_root("defaults", NULL);
+ 	install_keyword("polling_interval", &polling_interval_handler, &snprint_def_polling_interval);
+ 	install_keyword("udev_dir", &udev_dir_handler, &snprint_def_udev_dir);
++	install_keyword("multipath_dir", &multipath_dir_handler, &snprint_def_multipath_dir);
+ 	install_keyword("selector", &def_selector_handler, &snprint_def_selector);
+ 	install_keyword("path_grouping_policy", &def_pgpolicy_handler, &snprint_def_path_grouping_policy);
+ 	install_keyword("getuid_callout", &def_getuid_callout_handler, &snprint_def_getuid_callout);
+diff --git a/libmultipath/prio.c b/libmultipath/prio.c
+index 617fc19..54393f2 100644
+--- a/libmultipath/prio.c
++++ b/libmultipath/prio.c
+@@ -5,6 +5,7 @@
  
--#endif /* DAEMON */
- #endif /* _WAITER_H */
+ #include "debug.h"
+ #include "prio.h"
++#include "config.h"
+ 
+ static LIST_HEAD(prioritizers);
+ 
+@@ -28,18 +29,18 @@ void free_prio (struct prio * p)
+ 
+ void cleanup_prio(void)
+ {
+-        struct prio * prio_loop;
+-        struct prio * prio_temp;
++	struct prio * prio_loop;
++	struct prio * prio_temp;
+ 
+-        list_for_each_entry_safe(prio_loop, prio_temp, &prioritizers, node) {
+-                list_del(&prio_loop->node);
+-                free(prio_loop);
+-        }
++	list_for_each_entry_safe(prio_loop, prio_temp, &prioritizers, node) {
++		list_del(&prio_loop->node);
++		free(prio_loop);
++	}
+ }
+ 
+ struct prio * prio_lookup (char * name)
+ {
+-        struct prio * p;
++	struct prio * p;
+ 
+ 	list_for_each_entry(p, &prioritizers, node) {
+ 		if (!strncmp(name, p->name, PRIO_NAME_LEN))
+@@ -61,7 +62,8 @@ struct prio * add_prio (char * name)
+ 	p = alloc_prio();
+ 	if (!p)
+ 		return NULL;
+-	snprintf(libname, LIB_PRIO_NAMELEN, "libprio%s.so", name);
++	snprintf(libname, LIB_PRIO_NAMELEN, "%s/libprio%s.so",
++		 conf->multipath_dir, name);
+ 	condlog(3, "loading %s prioritizer", libname);
+ 	handle = dlopen(libname, RTLD_NOW);
+ 	errstr = dlerror();
 diff --git a/multipath/main.c b/multipath/main.c
-index b6ea6fd..c071cac 100644
+index c071cac..f1ac256 100644
 --- a/multipath/main.c
 +++ b/multipath/main.c
-@@ -49,6 +49,8 @@
- #include <pgpolicies.h>
- #include <version.h>
+@@ -326,6 +326,9 @@ main (int argc, char *argv[])
+ 	if (dm_prereq(DEFAULT_TARGET))
+ 		exit(1);
  
-+int logsink;
++	if (load_config(DEFAULT_CONFIGFILE))
++		exit(1);
 +
- static int
- filter_pathvec (vector pathvec, char * refwwid)
- {
-diff --git a/multipathd/Makefile b/multipathd/Makefile
-index 6beb993..dd223c4 100644
---- a/multipathd/Makefile
-+++ b/multipathd/Makefile
-@@ -5,7 +5,7 @@ include ../Makefile.inc
- #
- # basic flags setting
- #
--CFLAGS += -DDAEMON -I$(multipathdir) -Wl,-rpath,$(libdir)
-+CFLAGS += -I$(multipathdir) -Wl,-rpath,$(libdir)
- LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -laio \
- 	   -lmultipath -L$(multipathdir)
- 
+ 	if (init_checkers()) {
+ 		condlog(0, "failed to initialize checkers");
+ 		exit(1);
+@@ -334,9 +337,6 @@ main (int argc, char *argv[])
+ 		condlog(0, "failed to initialize prioritizers");
+ 		exit(1);
+ 	}
+-	if (load_config(DEFAULT_CONFIGFILE))
+-		exit(1);
+-
+ 	if (sysfs_init(conf->sysfs_dir, FILE_NAME_SIZE)) {
+ 		condlog(0, "multipath tools need sysfs mounted");
+ 		exit(1);
 diff --git a/multipathd/main.c b/multipathd/main.c
-index 385521c..2b1fd86 100644
+index 2b1fd86..ac9cd36 100644
 --- a/multipathd/main.c
 +++ b/multipathd/main.c
-@@ -65,6 +65,8 @@
- pthread_cond_t exit_cond = PTHREAD_COND_INITIALIZER;
- pthread_mutex_t exit_mutex = PTHREAD_MUTEX_INITIALIZER;
+@@ -1274,6 +1274,9 @@ child (void * param)
+ 	condlog(2, "--------start up--------");
+ 	condlog(2, "read " DEFAULT_CONFIGFILE);
  
-+int logsink;
++	if (load_config(DEFAULT_CONFIGFILE))
++		exit(1);
 +
- /*
-  * global copy of vecs for use in sig handlers
-  */
+ 	if (init_checkers()) {
+ 		condlog(0, "failed to initialize checkers");
+ 		exit(1);
+@@ -1282,8 +1285,6 @@ child (void * param)
+ 		condlog(0, "failed to initialize prioritizers");
+ 		exit(1);
+ 	}
+-	if (load_config(DEFAULT_CONFIGFILE))
+-		exit(1);
+ 
+ 	setlogmask(LOG_UPTO(conf->verbosity + 3));
+ 
 -- 
 1.5.2.4
