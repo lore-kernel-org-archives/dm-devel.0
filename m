@@ -1,47 +1,64 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] [RFC] switch DM tables to readonly
-	automatically
-Date: Thu, 1 May 2008 12:24:51 +0100
-Message-ID: <20080501112451.GT18935@agk.fab.redhat.com>
-References: <4811EB85.8090505@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4811EB85.8090505@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH 00/10] scsi_dh: Move hardware handlers from dm to SCSI
+Date: Thu, 01 May 2008 14:49:41 -0700
+Message-ID: <20080501214941.27759.95121.sendpatchset@chandra-ubuntu>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, andmike@us.ibm.com, michaelc@cs.wisc.edu, agk@redhat.com, James.Bottomley@HansenPartnership.com, jens.axboe@oracle.com, dwysocha@redhat.com, Benoit_Arthur@emc.com, asson_ronald@emc.com, Chandra Seetharaman <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 25, 2008 at 04:32:37PM +0200, Hannes Reinecke wrote:
-> this patch switches the device-mapper table to read-only
-> status automatically if one underlying device returns -EROFS.
- 
-I'm going to need some persuading here...
+Hello,
 
-An analogy.  If I call open() with O_RDWR and but that can't be done
-because the device is read-only - what happens?  Does the open()
-silently give me a read-only file descriptor instead?  Or does it
-give me -EROFS?
+This is the latest version of the patchset that was posted on Apr 17:
+http://marc.info/?l=linux-scsi&m=120847097122545&w=2
 
-If I request DM_TABLE_LOAD without the DM_READONLY_FLAG, I am asking
-for a device I can write to and if that's not possible I expect an
-error.  If I'd wanted a read-only device I'd have set the
-DM_READONLY_FLAG on my request.
+Following are the changes made since last post:
+  Based on Alasdair's comments:
+    - Split the dm-mpath patch into 4 patches to enhance readabilty
+    - Added comments to patch header and inline
+    - Added an interface scsi_dh_handler_exist() and used it
+      to verify the availability of a hardware handler
+    - Do not accept arguments with the hardware handler parameter
+    - Make the workqueue single threaded, and change its name
+    - removed the usage of path_to_activate and used an existing field
+    -renamed activate_passive_path to activate_path
+    - Bring back the pg_init_retries.
+  Others:
+    - Added additional devices to the device list
+    - removed few erroneous BUG assertions
+    - Fixed an erroneous return code from scsi_dh_rdac.c.
 
-Is the real problem that -EROFS/-ENXIO errors are not propagating back
-up through target _ctr functions as perhaps they should?
+This patch set applies on 2.6.25-mm1.
 
-Alasdair
--- 
-agk@redhat.com
+This patch set has been tested on a DS4800.
+
+Testing has been done earlier with the following storage devices:
+ - IBM DS4800 storage device for the lsi_rdac hardware handler
+ - HP storage device for the hp_sw hardware handler.
+   Thanks to Dave(dwysocha@redhat.com)
+ - EMC storage device for the EMC hardware handler.
+   Thanks to Arthur(Benoit_Arthur@emc.com) and Ronald(asson_ronald@emc.com)
+In effect all hardware handlers are tested.
+
+-------------------- Comment from Patch 01/10 ---------------------
+Some of the storage devices (that can be accessed through multiple paths),
+do need some special handling for
+	1. Activating the passive path of the storage access.
+	2. Decode and handle the special sense codes returned by the devices.
+	3. Handle the I/Os being sent to the passive path, especially
+           during the device probe time.
+when accessed through multiple paths.
+
+As of today this special device handling is done at the dm-multipath
+layer using dm-handlers. That works well for (1); for (2) to be handled
+at dm layer, scsi sense information need to be exported from SCSI to dm-layer,
+which is not very attractive; (3) cannot be done at all at the dm layer.
+
+Device handler has been moved to SCSI mainly to handle (2) and (3) properly.
+----------------------
+
+Thanks,
+
+chandra
+
