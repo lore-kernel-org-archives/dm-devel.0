@@ -1,17 +1,11 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Re: Patch added to scsi-pending-2.6: [SCSI]
-	scsi_dh: Use SCSI device handler in dm-multipath
-Date: Thu, 01 May 2008 16:21:46 -0700
-Message-ID: <1209684106.21974.65.camel@chandra-ubuntu>
-References: <200804241603.m3OG3B5M030182@hera.kernel.org>
-	<20080429145629.GK18935@agk.fab.redhat.com>
-	<1209512709.21974.30.camel@chandra-ubuntu>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: removing "active" variable in snapshots
+Date: Thu, 1 May 2008 19:52:15 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0805011943530.20655@engineering.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1209512709.21974.30.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,218 +15,115 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, andmike@us.ibm.com, device-mapper development <dm-devel@redhat.com>, Mike Christie <michaelc@cs.wisc.edu>
+To: Alasdair Graeme Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+Hi
 
-I have submitted a new set of patches with changes as per your
-suggestions. Please see below for details.
+While working on snapshot merging, I found that there is "active" entry in 
+struct dm_snapshot and it looks that it has no meaning:
 
-Thanks,
+This variable is set to 0 on snapshot creation in snapshot_ctr
+It is set to 1 on snapshot resume (call is made after every creation)
+This variable is never set to 0 again.
 
-chandra
-On Tue, 2008-04-29 at 16:45 -0700, Chandra Seetharaman wrote:
-> Hi Alasdair,
-> 
-> Thanks for your feedback.
-> 
-> MikeC and mikeand, feel free to add.
-> 
-> On Tue, 2008-04-29 at 15:56 +0100, Alasdair G Kergon wrote:
-> > On Thu, Apr 24, 2008 at 04:03:11PM +0000, James Bottomley wrote:
-> > >     This patch converts dm-mpath to scsi hw handlers. It does
-> > >     not add any new functionality and old behaviors and userspace
-> > >     tools work as is except we use the safe clariion default instead
-> > >     of using the userspace setting.
-> > 
-> > OK.  Comments from my first line-by-line reading of this.
-> > 
-> > Firstly, the patch header is rather too brief for my liking - the patch
-> > does make some subtle functional changes that ought to be commented upon
-> > to explain to people why they are being made.  (I would have preferred
-> 
-> will do.
+This variable is read only in __origin_write and snapshots with active == 
+0 are skipped.
 
-Added comments to appropriate places.
+It looks to me, like it could be removed, the origin is resumed after all 
+snapshots, so there is no window where active could be "0" in 
+__origin_write. Furthermore, if such condition existed, writing to origin 
+without writing to snapshot would damage the snapshot --- so even if 
+"active" ever has some effect, it would only result in data corruption.
 
-> > this patch to have been broken up into smaller ones in a manner that
-> > made the functional changes more obvious i.e. separated from the code
-> > reorganisation.)
-> 
-> will do.
+I need it to be removed for merging, I start merging when snapshot is 
+resumed and at this point all other snapshots must be able to accept new 
+exceptions, if I excluded a snapshot, it would be corrupted.
 
-Separated the dm patches to 4 patches to make it more reader-friendly
-and separating different aspects.
+Would you agree with this patch to remove the "active" field, or do you 
+see some reason for it?
 
-> 
-> > 
-> > 1. Currently the supplied hw_handler name is validated at table load
-> > time so userspace cannot create a device using a non-existent
-> > hw_handler.  After this patch it looks as if that validation is delayed
-> > until something starts to access the device - and then the paths simply
-> > get failed, a new failure mode for the userspace tools to handle.  Is
-> > that change hard to avoid or was it judged not worth the effort to leave
-> > things as they were and perform as much validation / resource allocation
-> > as possible up front?
-> 
-> For the current implementation, initialization of the scsi_dh specific
-> data need to happen when we see the device the very first time (for
-> prep_fn() and check_sense() to be useful). We cannot wait till multipath
-> comes along, and the device specific data will exist till the device is
-> removed, hence there is no need to hold onto a reference for each device
-> for mulipath's sake.
-> 
-> But, I agree with your point that the failure should happen early.
-> 
-> Will add a scsi_dh_handler_exist(name) function to make sure that the
-> module is available at the time of table load. What do you think ?
+Mikulas
 
-Implemented it and tested to make sure that the failure happens during
-table load time.
+---
+  drivers/md/dm-snap.c |   17 ++---------------
+  drivers/md/dm-snap.h |    3 ---
+  2 files changed, 2 insertions(+), 18 deletions(-)
 
-> 
-> > 
-> > 2.  parse_hw_handler() now ignores hw_handler arguments.
-> > Please add a comment to explain that or perhaps log a warning message if
-> > any are supplied.
-> 
-> will do
+Index: linux-2.6.25/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.25.orig/drivers/md/dm-snap.c	2008-05-01 17:16:02.000000000 +0200
++++ linux-2.6.25/drivers/md/dm-snap.c	2008-05-01 17:17:41.000000000 +0200
+@@ -557,7 +557,6 @@ static int snapshot_ctr(struct dm_target
+  	s->type = persistent;
 
-Changed it to fail when any additional arguments are provided making it
-very visible to the user.
+  	s->valid = 1;
+-	s->active = 0;
+  	s->last_percent = 0;
+  	init_rwsem(&s->lock);
+  	s->ti = ti;
+@@ -616,7 +615,6 @@ static int snapshot_ctr(struct dm_target
+  	}
 
-> 
-> > BTW r looks superfluous now:
-> > 
-> >         if (read_param(_params, shift(as), &hw_argc, &ti->error))
-> >                 return -EINVAL;
-> 
-> will fix.
+  	/* Add snapshot to the list of snapshots for this origin */
+-	/* Exceptions aren't triggered till snapshot_resume() is called */
+  	if (register_snapshot(s)) {
+  		r = -EINVAL;
+  		ti->error = "Cannot register snapshot origin";
+@@ -954,7 +952,6 @@ static int snapshot_map(struct dm_target
+  	chunk = sector_to_chunk(s, bio->bi_sector);
 
-done.
-> 
-> > 
-> > 3. The dmsetup table output has changed - it no longer matches the input
-> > in the case where arguments got ignored.  I don't think this matters
-> > (unlike a similar issue we had with crypt), but it should be noted in
-> > comments inline.
-> 
-> will add comments.
+  	/* Full snapshots are not usable */
+-	/* To get here the table must be live so s->active is always set. */
+  	if (!s->valid)
+  		return -EIO;
 
-with the change in the arguments, o/p of dmsetup table would be proper.
+@@ -1027,15 +1024,6 @@ static int snapshot_end_io(struct dm_tar
+  	return 0;
+  }
 
-> 
-> > 
-> > 4.  /* Fields used by hardware handler usage */
-> > Comment doesn't add anything - drop it?
-> > 
-> ok.
+-static void snapshot_resume(struct dm_target *ti)
+-{
+-	struct dm_snapshot *s = ti->private;
+-
+-	down_write(&s->lock);
+-	s->active = 1;
+-	up_write(&s->lock);
+-}
+-
+  static int snapshot_status(struct dm_target *ti, status_type_t type,
+  			   char *result, unsigned int maxlen)
+  {
+@@ -1099,8 +1087,8 @@ static int __origin_write(struct list_he
 
-done
+  		down_write(&snap->lock);
 
-> 
-> > 5. char *hw_handler_name;
-> > const?
-> 
-> will fix.
+-		/* Only deal with valid and active snapshots */
+-		if (!snap->valid || !snap->active)
++		/* Only deal with valid snapshots */
++		if (!snap->valid)
+  			goto next_snapshot;
 
-done
-> 
-> > 
-> > 6. The code now assumes all hw_handlers have a pg_init function: in
-> > practice this is likely to be the case.  Does that permit further
-> > simplification of some of the logic?
-> 
-> will look into it.
+  		/* Nothing to do if writing beyond end of snapshot */
+@@ -1288,7 +1276,6 @@ static struct target_type snapshot_targe
+  	.dtr     = snapshot_dtr,
+  	.map     = snapshot_map,
+  	.end_io  = snapshot_end_io,
+-	.resume  = snapshot_resume,
+  	.status  = snapshot_status,
+  };
 
-Not much except invoking queue_work directly.
+Index: linux-2.6.25/drivers/md/dm-snap.h
+===================================================================
+--- linux-2.6.25.orig/drivers/md/dm-snap.h	2008-05-01 17:15:37.000000000 +0200
++++ linux-2.6.25/drivers/md/dm-snap.h	2008-05-01 17:16:30.000000000 +0200
+@@ -151,9 +151,6 @@ struct dm_snapshot {
+  	/* You can't use a snapshot if this is 0 (e.g. if full) */
+  	int valid;
 
-> 
-> > 
-> > 7. I note that the 'bypassed' argument to the pg_init function has been
-> > dropped - presumably as none of the existing handlers made any use of
-> > it.
-> 
-> Yes, none of the hardware handlers used it.
-> 
-> > 
-> > 8. A new workqueue is introduced without comment.
-> 
-> Will add.
-
-Done.
-> 
-> >   Which of the changes means we need it now? 
-> I do not understand this comment.
-> 
-> >  What's the reason it's not single-threaded (and per-device)?
-> Per device might be an overkill. Will do single-threaded.
-
-Made it single-threaded.
-> 
-> >   Is there a clearer name than "khwhandlerd" -
-> > something that tells people it's connected with multipath, and
-> 
-> how does kmpath_handlerd sound ?
-
-changed to kmpath_handlerd
-
-> 
-> > can the name of the struct workqueue_struct variable match this?
-> 
-> will fix.
-
-done.
-
-> 
-> > Previously the hw_handler pg_init function was required to return
-> > immediately.  Can its replacement scsi_dh_activate() block (but not in a
-> > way that could deadlock of course)? 
-> 
-> Yes, scsi_dh_activate() can block. But, at the dm-level, it is
-> indifferent, due to the usage of the workqueue.
-> 
-> >  Should some of its functionality be
-> > got out of the way at initialisation time within multipath_ctr()?
-> 
-> You mean hardware handler specific initialization ? It happens when the
-> device is found. We do not want to wait till multipath comes along.
-> 
-> > 
-> > 9. What does m->path_to_activate give us that m->current_pgpath
-> > doesn't?
-> 
-> I guess none. Was just sticking with the original interface as it was
-> handed off to an asynchronous thread. If it won't matter, I will fix it
-> to use it directly from the multipath data structure.
-
-removed path_to_activate and using current_pgpath->path instead.
-
-> 
-> > 
-> > 10. Is activate_passive_path() an accurate function name?  Is the
-> > supplied path argument always 'passive'?
-> 
-> May be not always. Will change it activate_path().
-
-Changed to activate_path()
-> 
-> > 
-> > 11. Where has the use of pg_init_retries gone?
-> 
-> Oops.. will fix.
-
-fixed.
-
-> > 
-> > I still need to check the updated state machine logic and associated
-> > locking once we have a final version of this patch.
-> > 
-> > Alasdair
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+-	/* Origin writes don't trigger exceptions until this is set */
+-	int active;
+-
+  	/* Used for display of table */
+  	char type;
