@@ -1,16 +1,17 @@
-From: "Srinivas Ramani" <sramani@pillardata.com>
-Subject: RE: Different Path priorities for iSCSI and FC paths
-	toa	combination lun.
-Date: Thu, 1 May 2008 15:39:03 -0700
-Message-ID: <7DAA28B9259FAD458DEE03DC3DA236DA043F66E3@caex02.trans.corp>
-References: <200804241603.m3OG3B5M030182@hera.kernel.org>	<20080429145629.GK18935@agk.fab.redhat.com>
-	<7DAA28B9259FAD458DEE03DC3DA236DA043F66DF@caex02.trans.corp>
-	<48177FA8.7030206@linpro.no>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: Re: Patch added to scsi-pending-2.6: [SCSI]
+	scsi_dh: Use SCSI device handler in dm-multipath
+Date: Thu, 01 May 2008 16:21:46 -0700
+Message-ID: <1209684106.21974.65.camel@chandra-ubuntu>
+References: <200804241603.m3OG3B5M030182@hera.kernel.org>
+	<20080429145629.GK18935@agk.fab.redhat.com>
+	<1209512709.21974.30.camel@chandra-ubuntu>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="----_=_NextPart_001_01C8ABDC.28185202"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <1209512709.21974.30.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,157 +21,218 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, andmike@us.ibm.com, device-mapper development <dm-devel@redhat.com>, Mike Christie <michaelc@cs.wisc.edu>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Hi Alasdair,
 
-------_=_NextPart_001_01C8ABDC.28185202
-Content-Type: text/plain;
-	charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+I have submitted a new set of patches with changes as per your
+suggestions. Please see below for details.
 
-Thanks Tore .
-I plan to add mpath_prio_alua_pillar to the code base to return =
-different priorities for iSCSI and FC paths for
-combination luns .
-=20
-=20
-With Regards
-Srini
+Thanks,
 
-________________________________
+chandra
+On Tue, 2008-04-29 at 16:45 -0700, Chandra Seetharaman wrote:
+> Hi Alasdair,
+> 
+> Thanks for your feedback.
+> 
+> MikeC and mikeand, feel free to add.
+> 
+> On Tue, 2008-04-29 at 15:56 +0100, Alasdair G Kergon wrote:
+> > On Thu, Apr 24, 2008 at 04:03:11PM +0000, James Bottomley wrote:
+> > >     This patch converts dm-mpath to scsi hw handlers. It does
+> > >     not add any new functionality and old behaviors and userspace
+> > >     tools work as is except we use the safe clariion default instead
+> > >     of using the userspace setting.
+> > 
+> > OK.  Comments from my first line-by-line reading of this.
+> > 
+> > Firstly, the patch header is rather too brief for my liking - the patch
+> > does make some subtle functional changes that ought to be commented upon
+> > to explain to people why they are being made.  (I would have preferred
+> 
+> will do.
 
-From: dm-devel-bounces@redhat.com on behalf of Tore Anderson
-Sent: Tue 4/29/2008 1:06 PM
-To: device-mapper development
-Subject: Re: [dm-devel] Different Path priorities for iSCSI and FC paths =
-toa combination lun.
+Added comments to appropriate places.
 
+> > this patch to have been broken up into smaller ones in a manner that
+> > made the functional changes more obvious i.e. separated from the code
+> > reorganisation.)
+> 
+> will do.
 
+Separated the dm patches to 4 patches to make it more reader-friendly
+and separating different aspects.
 
-Hi,
+> 
+> > 
+> > 1. Currently the supplied hw_handler name is validated at table load
+> > time so userspace cannot create a device using a non-existent
+> > hw_handler.  After this patch it looks as if that validation is delayed
+> > until something starts to access the device - and then the paths simply
+> > get failed, a new failure mode for the userspace tools to handle.  Is
+> > that change hard to avoid or was it judged not worth the effort to leave
+> > things as they were and perform as much validation / resource allocation
+> > as possible up front?
+> 
+> For the current implementation, initialization of the scsi_dh specific
+> data need to happen when we see the device the very first time (for
+> prep_fn() and check_sense() to be useful). We cannot wait till multipath
+> comes along, and the device specific data will exist till the device is
+> removed, hence there is no need to hold onto a reference for each device
+> for mulipath's sake.
+> 
+> But, I agree with your point that the failure should happen early.
+> 
+> Will add a scsi_dh_handler_exist(name) function to make sure that the
+> module is available at the time of table load. What do you think ?
 
-* Srinivas Ramani
+Implemented it and tested to make sure that the failure happens during
+table load time.
 
-> I would be grateful to learn from this forum on how one would be able
-> to have different path priorities for a FC / iSCSI  paths to a
-> multiprotocol FC/iSCSI combination lun using device mapper . The
-> intention is that a  FC path should have a higher priority than an
-> iSCSI path to the same lun. Is it possible to do it with a
-> configuration change or would one need to  add this feature to the
-> mpath_prio_alua  code.
+> 
+> > 
+> > 2.  parse_hw_handler() now ignores hw_handler arguments.
+> > Please add a comment to explain that or perhaps log a warning message if
+> > any are supplied.
+> 
+> will do
 
-Make a small wrapper script that invokes mpath_prio_alua and also checks
-if the path is to a iSCSI volume or not (you can probably determine this
-by looking somewhere beneath /sys/block/$dev/).  If it is, add 100 to
-whatever mpath_prio_alua returned, and print the sum.
+Changed it to fail when any additional arguments are provided making it
+very visible to the user.
 
-Regards
---
-Tore Anderson
+> 
+> > BTW r looks superfluous now:
+> > 
+> >         if (read_param(_params, shift(as), &hw_argc, &ti->error))
+> >                 return -EINVAL;
+> 
+> will fix.
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+done.
+> 
+> > 
+> > 3. The dmsetup table output has changed - it no longer matches the input
+> > in the case where arguments got ignored.  I don't think this matters
+> > (unlike a similar issue we had with crypt), but it should be noted in
+> > comments inline.
+> 
+> will add comments.
 
+with the change in the arguments, o/p of dmsetup table would be proper.
 
+> 
+> > 
+> > 4.  /* Fields used by hardware handler usage */
+> > Comment doesn't add anything - drop it?
+> > 
+> ok.
 
-------_=_NextPart_001_01C8ABDC.28185202
-Content-Type: application/ms-tnef;
-	name="winmail.dat"
-Content-Transfer-Encoding: base64
+done
 
-eJ8+IhAWAQaQCAAEAAAAAAABAAEAAQeQBgAIAAAA5AQAAAAAAADoAAEIgAcAGAAAAElQTS5NaWNy
-b3NvZnQgTWFpbC5Ob3RlADEIAQ2ABAACAAAAAgACAAEEgAEAVQAAAFJFOiBbZG0tZGV2ZWxdIERp
-ZmZlcmVudCBQYXRoIHByaW9yaXRpZXMgZm9yIGlTQ1NJIGFuZCBGQyBwYXRocyB0b2EJY29tYmlu
-YXRpb24gbHVuLgCAHQEFgAMADgAAANgHBQABAA8AJwADAAQAIgEBIIADAA4AAADYBwUAAQAPACcA
-BgAEACUBAQmAAQAhAAAAQjhGRDQwMEZFODUwQTg0NjhGNjE0OEJBQUVFMTA2NDEAPgcBA5AGAFgR
-AAA4AAAAAwA2AAAAAABAADkAAlIYKNyryAEeAD0AAQAAAAUAAABSRTogAAAAAAIBRwABAAAAMQAA
-AGM9VVM7YT0gO3A9VHJhbnNDb3JwO2w9Q0FFWDAyLTA4MDUwMTIyMzkwM1otMjI5MAAAAAAeAEkA
-AQAAAFUAAABSZTogW2RtLWRldmVsXSBEaWZmZXJlbnQgUGF0aCBwcmlvcml0aWVzIGZvciBpU0NT
-SSBhbmQgRkMgcGF0aHMgdG9hCWNvbWJpbmF0aW9uIGx1bi4AAAAAQABOAADEinE0qsgBHgBaAAEA
-AAAcAAAAZG0tZGV2ZWwtYm91bmNlc0ByZWRoYXQuY29tAAIBWwABAAAAVQAAAAAAAACBKx+kvqMQ
-GZ1uAN0BD1QCAAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQBTTVRQAGRtLWRldmVsLWJv
-dW5jZXNAcmVkaGF0LmNvbQAAAAACAVwAAQAAACEAAABTTVRQOkRNLURFVkVMLUJPVU5DRVNAUkVE
-SEFULkNPTQAAAAAeAF0AAQAAAA4AAABUb3JlIEFuZGVyc29uAAAAAgFeAAEAAAA6AAAAAAAAAIEr
-H6S+oxAZnW4A3QEPVAIAAAAAVG9yZSBBbmRlcnNvbgBTTVRQAHRvcmVAbGlucHJvLm5vAAAAAgFf
-AAEAAAAUAAAAU01UUDpUT1JFQExJTlBSTy5OTwAeAGYAAQAAAAUAAABTTVRQAAAAAB4AZwABAAAA
-HAAAAGRtLWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQAeAGgAAQAAAAUAAABTTVRQAAAAAB4AaQAB
-AAAADwAAAHRvcmVAbGlucHJvLm5vAAAeAHAAAQAAAFEAAABbZG0tZGV2ZWxdIERpZmZlcmVudCBQ
-YXRoIHByaW9yaXRpZXMgZm9yIGlTQ1NJIGFuZCBGQyBwYXRocyB0b2EJY29tYmluYXRpb24gbHVu
-LgAAAAACAXEAAQAAABsAAAAByKo0i3ClYyKtS1ZCL7ewkC30Q/KkAGKSRlkAHgB0AAEAAAAaAAAA
-ZGV2aWNlLW1hcHBlciBkZXZlbG9wbWVudAAAAB4AGgwBAAAAEAAAAFNyaW5pdmFzIFJhbWFuaQAe
-AB0OAQAAAFEAAABbZG0tZGV2ZWxdIERpZmZlcmVudCBQYXRoIHByaW9yaXRpZXMgZm9yIGlTQ1NJ
-IGFuZCBGQyBwYXRocyB0b2EJY29tYmluYXRpb24gbHVuLgAAAAACAQkQAQAAAOsIAADnCAAAZR8A
-AExaRnWxUHAbAwAKAHJjcGcxMjWCMgNDaHRtbDEDMD8BAwH3CoACpAPjAgBjaMEKwHNldDAgBxMC
-gP8QAwBQBFYIVQeyEdUOUQMB3RDXMgYABsMR1TMERhDZ2RLvZjQQbxF7NQPGB23lEdU2GkdhaANx
-AoAR49sI7wn3Ox4PDjA1Hy8fATsR4QxgYwBQCwkBZDM2kxFgC6U0IBACKlwOsgMBkA4QOSA8SFRN
-QEwgZGlyPSSgcjw+fSRjACEDMCWxZG/nAOAlsQqxXHEd8CWxGOBvAzAmFRFgJBszI/AlEEVMQUQl
-4CQcNzclAFRwSVRMRSoNI+AO8FKAZTogW2RtLQEAQHZlbF0gRAaQZkcEkAnwBUBQYXQn8HDzBRAF
-sGl0CJAEIAIQBcBAaVNDU0kgAHBkOCBGQy6QLmEEIHRv/GEgBaAG0AuALmAuwAOgSQpAbi4qHTg1
-JQAvdytPJLIK4yAzrzS/DhA2wQ7wPE1FVEEw8QIwGS4RPSIF4CUjNi4wHDAuI1A44TcgNTg3DCIg
-MVAHgD1HRU7ARVJBVE9SKg0skV8zICnPLGE17ySxNRFgPHBCT0RZKg0jYT1fZ0Q5NiUARElWL4Bk
-Yj1BsE9XQSzAC1B5gFRleHQxNTMlb/8mcAAAJxUnsydxKA8/f0CPn0GQQw9EH0UqJDk2NEkKE0Vf
-JJQ0OCUARk9OflQvQADQOgAHEzDxHaE9ViM5ITkhIACQejoAMvdI+xgwAzBjE/ADsgHQRTkyVBjw
-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
-aGVyYS5rZXJuZWwub3JnPgk8MjAwODA0MjkxNDU2MjkuR0sxODkzNUBhZ2suZmFiLnJlZGhhdC5j
-b20+IDw3REFBMjhCOTI1OUZBRDQ1OERFRTAzREMzREEyMzZEQTA0M0Y2NkRGQGNhZXgwMi50cmFu
-cy5jb3JwPiA8NDgxNzdGQTguNzAzMDIwNkBsaW5wcm8ubm8+AB4ARxABAAAADwAAAG1lc3NhZ2Uv
-cmZjODIyAAALAPIQAQD3Wh8A8xABAAAAtgAAAFIARQAlADMAQQAgAFsAZABtAC0AZABlAHYAZQBs
-AF0AIABEAGkAZgBmAGUAcgBlAG4AdAAgAFAAYQB0AGgAIABwAHIAaQBvAHIAaQB0AGkAZQBzACAA
-ZgBvAHIAIABpAFMAQwBTAEkAIABhAG4AZAAgAEYAQwAgAHAAYQB0AGgAcwAgAHQAbwBhAAkAYwBv
-AG0AYgBpAG4AYQB0AGkAbwBuACAAbAB1AG4ALgAuAEUATQBMAAAAAAALAPYQAAAAAEAABzDM2obU
-vqvIAUAACDBmx9Mp3KvIAQMA3j+vbwAAAwDxPwkEAAAeAPg/AQAAABAAAABTcmluaXZhcyBSYW1h
-bmkAAgH5PwEAAABgAAAAAAAAANynQMjAQhAatLkIACsv4YIBAAAAAAAAAC9PPVRSQU5TQ09SUC9P
-VT1GSVJTVCBBRE1JTklTVFJBVElWRSBHUk9VUC9DTj1SRUNJUElFTlRTL0NOPVNSQU1BTkkAHgD6
-PwEAAAAVAAAAU3lzdGVtIEFkbWluaXN0cmF0b3IAAAAAAgH7PwEAAAAeAAAAAAAAANynQMjAQhAa
-tLkIACsv4YIBAAAAAAAAAC4AAAADAP0/5AQAAAMAGUAAAAAAAwAaQAAAAAADAB1AAAAAAAMAHkAA
-AAAAHgAwQAEAAAAIAAAAU1JBTUFOSQAeADFAAQAAAAgAAABTUkFNQU5JAB4AMkABAAAAHAAAAGRt
-LWRldmVsLWJvdW5jZXNAcmVkaGF0LmNvbQAeADNAAQAAAA8AAAB0b3JlQGxpbnByby5ubwAAHgA4
-QAEAAAAIAAAAU1JBTUFOSQAeADlAAQAAAAIAAAAuAAAAAwB2QP////8LACkAAAAAAAsAIwAAAAAA
-AwAGENuSxYcDAAcQ1QMAAAMAEBAAAAAAAwAREAAAAAAeAAgQAQAAAGUAAABUSEFOS1NUT1JFSVBM
-QU5UT0FERE1QQVRIUFJJT0FMVUFQSUxMQVJUT1RIRUNPREVCQVNFVE9SRVRVUk5ESUZGRVJFTlRQ
-UklPUklUSUVTRk9SSVNDU0lBTkRGQ1BBVEhTRk9SAAAAAAIBfwABAAAAPQAAADw3REFBMjhCOTI1
-OUZBRDQ1OERFRTAzREMzREEyMzZEQTA0M0Y2NkUzQGNhZXgwMi50cmFucy5jb3JwPgAAAAAPrQ==
+> 
+> > 5. char *hw_handler_name;
+> > const?
+> 
+> will fix.
 
-------_=_NextPart_001_01C8ABDC.28185202
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+done
+> 
+> > 
+> > 6. The code now assumes all hw_handlers have a pg_init function: in
+> > practice this is likely to be the case.  Does that permit further
+> > simplification of some of the logic?
+> 
+> will look into it.
 
+Not much except invoking queue_work directly.
 
-------_=_NextPart_001_01C8ABDC.28185202--
+> 
+> > 
+> > 7. I note that the 'bypassed' argument to the pg_init function has been
+> > dropped - presumably as none of the existing handlers made any use of
+> > it.
+> 
+> Yes, none of the hardware handlers used it.
+> 
+> > 
+> > 8. A new workqueue is introduced without comment.
+> 
+> Will add.
+
+Done.
+> 
+> >   Which of the changes means we need it now? 
+> I do not understand this comment.
+> 
+> >  What's the reason it's not single-threaded (and per-device)?
+> Per device might be an overkill. Will do single-threaded.
+
+Made it single-threaded.
+> 
+> >   Is there a clearer name than "khwhandlerd" -
+> > something that tells people it's connected with multipath, and
+> 
+> how does kmpath_handlerd sound ?
+
+changed to kmpath_handlerd
+
+> 
+> > can the name of the struct workqueue_struct variable match this?
+> 
+> will fix.
+
+done.
+
+> 
+> > Previously the hw_handler pg_init function was required to return
+> > immediately.  Can its replacement scsi_dh_activate() block (but not in a
+> > way that could deadlock of course)? 
+> 
+> Yes, scsi_dh_activate() can block. But, at the dm-level, it is
+> indifferent, due to the usage of the workqueue.
+> 
+> >  Should some of its functionality be
+> > got out of the way at initialisation time within multipath_ctr()?
+> 
+> You mean hardware handler specific initialization ? It happens when the
+> device is found. We do not want to wait till multipath comes along.
+> 
+> > 
+> > 9. What does m->path_to_activate give us that m->current_pgpath
+> > doesn't?
+> 
+> I guess none. Was just sticking with the original interface as it was
+> handed off to an asynchronous thread. If it won't matter, I will fix it
+> to use it directly from the multipath data structure.
+
+removed path_to_activate and using current_pgpath->path instead.
+
+> 
+> > 
+> > 10. Is activate_passive_path() an accurate function name?  Is the
+> > supplied path argument always 'passive'?
+> 
+> May be not always. Will change it activate_path().
+
+Changed to activate_path()
+> 
+> > 
+> > 11. Where has the use of pg_init_retries gone?
+> 
+> Oops.. will fix.
+
+fixed.
+
+> > 
+> > I still need to check the updated state machine logic and associated
+> > locking once we have a final version of this patch.
+> > 
+> > Alasdair
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
