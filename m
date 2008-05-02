@@ -1,15 +1,16 @@
-From: Neil Brown <neilb@suse.de>
-Subject: Re: oops in linear_mergeable_bvec
-Date: Fri, 2 May 2008 15:28:49 +1000
-Message-ID: <18458.42641.306621.469263@notabene.brown>
-References: <3b2bc9d0804300352k76bdc2f1id7da040761bca427@mail.gmail.com>
-	<20080501213157.e53535b7.akpm@linux-foundation.org>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH] [RFC] switch DM tables to readonly
+	automatically
+Date: Fri, 02 May 2008 08:24:40 +0200
+Message-ID: <481AB3A8.30803@suse.de>
+References: <4811EB85.8090505@suse.de>
+	<20080501112451.GT18935@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: message from Andrew Morton on Thursday May 1
+In-Reply-To: <20080501112451.GT18935@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,195 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>, marco gaddoni <marco.gaddoni@gmail.com>
-Cc: linux-raid@vger.kernel.org, dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thursday May 1, akpm@linux-foundation.org wrote:
+Alasdair G Kergon wrote:
+> On Fri, Apr 25, 2008 at 04:32:37PM +0200, Hannes Reinecke wrote:
+>> this patch switches the device-mapper table to read-only
+>> status automatically if one underlying device returns -EROFS.
+> =20
+> I'm going to need some persuading here...
+>=20
+> An analogy.  If I call open() with O_RDWR and but that can't be done
+> because the device is read-only - what happens?  Does the open()
+> silently give me a read-only file descriptor instead?  Or does it
+> give me -EROFS?
+>=20
+> If I request DM_TABLE_LOAD without the DM_READONLY_FLAG, I am asking
+> for a device I can write to and if that's not possible I expect an
+> error.  If I'd wanted a read-only device I'd have set the
+> DM_READONLY_FLAG on my request.
+>=20
+> Is the real problem that -EROFS/-ENXIO errors are not propagating back
+> up through target _ctr functions as perhaps they should?
+>=20
+No, the real error is that you currently cannot create multipath
+targets on devices exported as read-only from the storage.
+Having device-mapper setting the 'read-only' flag automatically
+on those devices instead of just bailing out will fix this.
 
-> (cc dm-devel) (which often has no effect)
+The main problem we're facing here (from the point of multipathd)
+is the lack of error reporting from device-mapper.
+We're just getting the very helpful error 'ioctl failed',
+with no indication about _why_.
+So we have no clue at all that we might have to check for the
+read-only setting on this device.
+And checking this setting on _any_ ioctl error is just plain
+silly.
 
-In this case it would be understandable - linux-raid is the correct
-list :-)
+The rest of the patch (calling _set_disk_ro and refusing to
+open the device with O_RDWR) is just whitewhash to get a
+better user experience.
 
-OK, I'll push this to the top of my stack.....
+Cheers,
 
-> On Wed, 30 Apr 2008 12:52:38 +0200 "marco gaddoni" <marco.gaddoni@gmail.com> wrote:
-> 
-> > Hello,
-> > 
-> > i have this repeatable oops in linear_mergeable_bvec
-> > 
-> > the kernel is the Debian testing as of this morning,
-> > 
-> > i am trying to rsync some data from this box to my pc.
-> > the data is on a software raid 0 made of 2 ide disks
-
-It is a 'linear', not a 'raid 0' by the way.
-
-> > 
-> > the oops is triggered during the copy of a specific file,
-> > allways the same.
-> > 
-> > what can be the problem?
-> > 
-> > arianna:~# cat /proc/mdstat
-> > Personalities : [linear]
-> > md2 : active linear hda1[0] hdb1[1]
-> >       277321856 blocks 64k rounding
-> > 
-> > unused devices: <none>
-
-On decoding the Oops, it seems to in which_dev called from
-linear_mergeable_bvec. 
-'hash' is NULL.  This is bads.
-'block' seems to be 42, which is maybe a little bit surprising...
-
-What is really strange is that when I disassemble the Code: (see
-below), there is now "divl" instruction to match the "sector_div" in
-which_dev.
-
-So I'm somewhat perplexed.
-
-What, exactly, are the sizes of hda1 and hdb1.  Knowing that might
-help me see if anything else looks wrong.
-
-NeilBrown
-
-
-Disassembly of "Code:"
-
-Code;  ffffffd5 <END_OF_CODE+3fc2bfd5/????>
-00000000 <_EIP>:
-Code;  ffffffd5 <END_OF_CODE+3fc2bfd5/????>
-   0:   24 04                     and    $0x4,%al
-Code;  ffffffd7 <END_OF_CODE+3fc2bfd7/????>
-   2:   89 d1                     mov    %edx,%ecx
-Code;  ffffffd9 <END_OF_CODE+3fc2bfd9/????>
-   4:   31 d2                     xor    %edx,%edx
-Code;  ffffffdb <END_OF_CODE+3fc2bfdb/????>
-   6:   85 c9                     test   %ecx,%ecx
-Code;  ffffffdd <END_OF_CODE+3fc2bfdd/????>
-   8:   89 44 24 08               mov    %eax,0x8(%esp)
-Code;  ffffffe1 <END_OF_CODE+3fc2bfe1/????>
-   c:   74 08                     je     16 <_EIP+0x16>
-Code;  ffffffe3 <END_OF_CODE+3fc2bfe3/????>
-   e:   89 c8                     mov    %ecx,%eax
-Code;  ffffffe5 <END_OF_CODE+3fc2bfe5/????>
-  10:   31 d2                     xor    %edx,%edx
-Code;  ffffffe7 <END_OF_CODE+3fc2bfe7/????>
-  12:   f7 f3                     div    %ebx
-Code;  ffffffe9 <END_OF_CODE+3fc2bfe9/????>
-  14:   89 c1                     mov    %eax,%ecx
-Code;  ffffffeb <END_OF_CODE+3fc2bfeb/????>
-  16:   8b 44 24 08               mov    0x8(%esp),%eax
-Code;  ffffffef <END_OF_CODE+3fc2bfef/????>
-  1a:   f7 f3                     div    %ebx
-Code;  fffffff1 <END_OF_CODE+3fc2bff1/????>
-  1c:   89 ca                     mov    %ecx,%edx
-Code;  fffffff3 <END_OF_CODE+3fc2bff3/????>
-  1e:   89 c2                     mov    %eax,%edx
-Code;  fffffff5 <END_OF_CODE+3fc2bff5/????>
-  20:   8b 46 04                  mov    0x4(%esi),%eax
-Code;  fffffff8 <END_OF_CODE+3fc2bff8/????>
-  23:   8b 1c 90                  mov    (%eax,%edx,4),%ebx this is conf->hash_table[block]???
-Code;  fffffffb <END_OF_CODE+3fc2bffb/????>
-  26:   eb 03                     jmp    2b <_EIP+0x2b>
-Code;  fffffffd <END_OF_CODE+3fc2bffd/????>
-  28:   83 c3 14                  add    $0x14,%ebx        This is "hash++;"
-Code;  00000000 Before first symbol
-  2b:   8b 53 10                  mov    0x10(%ebx),%edx
-Code;  00000003 Before first symbol
-  2e:   8b 43 0c                  mov    0xc(%ebx),%eax
-Code;  00000006 Before first symbol
-  31:   8b 73 04                  mov    0x4(%ebx),%esi
-Code;  00000009 Before first symbol
-  34:   8b 7b 08                  mov    0x8(%ebx),%edi
-Code;  0000000c Before first symbol
-  37:   89 d1                     mov    %edx,%ecx
-Code;  0000000e Before first symbol
-  39:   89 54 24 24               mov    %edx,0x24(%esp)
-Code;  00000012 Before first symbol
-  3d:   89 c2                     mov    %eax,%edx
-Code;  00000014 Before first symbol
-  3f:   01                        .byte 0x1
-
-
-
-
-> > 
-> > 
-> > BUG: unable to handle kernel NULL pointer dereference at virtual
-> > address 00000010
-> > printing eip: c881609a *pde = 00000000
-> > Oops: 0000 [#1] SMP
-> > Modules linked in: nf_nat_ftp nf_conntrack_ftp nfsd auth_rpcgss
-> > exportfs nfs lockd nfs_acl sunrpc ipt_MASQUERADE ipt_LOG
-> > ip6table_filter xt_state xt_NFQUEUE xt_hashlimit ip6_tables xt_tcpmss
-> > xt_tcpudp ipt_addrtype xt_pkttype iptable_raw xt_CLASSIFY xt_CONNMARK
-> > xt_MARK xt_comment ipt_REJECT xt_length xt_connmark ipt_owner
-> > ipt_recent ipt_iprange xt_physdev xt_policy xt_multiport xt_conntrack
-> > iptable_mangle iptable_nat nf_nat nf_conntrack_ipv4 nf_conntrack
-> > iptable_filter ip_tables x_tables ipv6 deflate zlib_deflate
-> > zlib_inflate twofish twofish_common camellia serpent blowfish
-> > des_generic cbc ecb aes_i586 aes_generic geode_aes blkcipher xcbc
-> > sha256_generic sha1_generic crypto_null af_key psmouse ide_generic
-> > snd_intel8x0 snd_ac97_codec parport_pc ac97_bus i2c_i801 parport
-> > snd_pcm i2c_core intel_rng snd_timer snd soundcore snd_page_alloc
-> > intel_agp agpgart pcspkr shpchp pci_hotplug iTCO_wdt rtc evdev ext3
-> > jbd mbcache linear md_mod ide_cd cdrom ide_disk ata_generic libata
-> > scsi_mod floppy e100 mii piix generic ide_core
-> > 
-> > Pid: 5203, comm: rsync Not tainted (2.6.24-1-686 #1)
-> > EIP: 0060:[<c881609a>] EFLAGS: 00010246 CPU: 0
-> > EIP is at linear_mergeable_bvec+0x9a/0x10b [linear]
-> > EAX: c6595fc0 EBX: 00000000 ECX: 00000000 EDX: 0000002c
-> > ESI: c78a63c0 EDI: 00000000 EBP: 00000000 ESP: c16d5c68
-> >  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
-> > Process rsync (pid: 5203, ti=c16d4000 task=c7b09250 task.ti=c16d4000)
-> > Stack: 0b3ed648 00000002 0b3ed648 c6747360 167dac90 00000004 0b3ed648 00000002
-> >        c16ce660 c0196e63 c6747360 c16ce660 c8816000 c642b8c8 c019718e c16ce660
-> >        c1011720 00000004 c16d5da0 c0197a3e 00001000 00000000 000000ff 00001000
-> > Call Trace:
-> >  [<c0196e63>] bio_alloc_bioset+0x9b/0xf3
-> >  [<c8816000>] linear_mergeable_bvec+0x0/0x10b [linear]
-> >  [<c019718e>] __bio_add_page+0xf0/0x162
-> >  [<c0197a3e>] bio_add_page+0x31/0x37
-> >  [<c019ab9c>] do_mpage_readpage+0x516/0x5d2
-> >  [<c891762b>] ext3_get_block+0x0/0xd0 [ext3]
-> >  [<c01e1499>] radix_tree_insert+0x4f/0x15e
-> >  [<c015acdd>] add_to_page_cache+0x67/0x80
-> >  [<c019adf3>] mpage_readpages+0x96/0xc3
-> >  [<c891762b>] ext3_get_block+0x0/0xd0 [ext3]
-> >  [<c015f343>] __alloc_pages+0x59/0x2d5
-> >  [<c8916c2f>] ext3_readpages+0x0/0x15 [ext3]
-> >  [<c0161101>] __do_page_cache_readahead+0x127/0x1a6
-> >  [<c891762b>] ext3_get_block+0x0/0xd0 [ext3]
-> >  [<c016147c>] page_cache_sync_readahead+0x2a/0x2f
-> >  [<c015afae>] do_generic_mapping_read+0xdd/0x3b2
-> >  [<c015a7c7>] file_read_actor+0x0/0xcc
-> >  [<c015c95c>] generic_file_aio_read+0x16b/0x1a6
-> >  [<c015a7c7>] file_read_actor+0x0/0xcc
-> >  [<c0178493>] do_sync_read+0xc7/0x10a
-> >  [<c01353f9>] autoremove_wake_function+0x0/0x35
-> >  [<c011bf41>] do_page_fault+0x1f7/0x592
-> >  [<c01783cc>] do_sync_read+0x0/0x10a
-> >  [<c0178d19>] vfs_read+0x9f/0x14b
-> >  [<c0179182>] sys_read+0x41/0x67
-> >  [<c0103e5e>] sysenter_past_esp+0x6b/0xa1
-> >  =======================
-> > Code: 24 04 89 d1 31 d2 85 c9 89 44 24 08 74 08 89 c8 31 d2 f7 f3 89
-> > c1 8b 44 24 08 f7 f3 89 ca 89 c2 8b 46 04 8b 1c 90 eb 03 83 c3 14 <8b>
-> > 53 10 8b 43 0c 8b 73 04 8b 7b 08 89 d1 89 54 24 24 89 c2 01
-> > EIP: [<c881609a>] linear_mergeable_bvec+0x9a/0x10b [linear] SS:ESP 0068:c16d5c68
-> 
-> (cc dm-devel) (which often has no effect)
-> 
-> I wonder which kernel.org kernel was used to generate 2.6.24-1-686.
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
