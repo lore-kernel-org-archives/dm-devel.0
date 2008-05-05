@@ -1,45 +1,76 @@
-From: Alan Stern <stern-nwvwT67g6+6dFdvTe/nMLpVzexx5G7lz@public.gmane.org>
-Subject: Re: PROBLEM: powertop reports 8000 spurious interrupts/s from USB
- disk
-Date: Mon, 5 May 2008 10:32:42 -0400 (EDT)
-Message-ID: <Pine.LNX.4.44L0.0805051030080.2435-100000@iolanthe.rowland.org>
-References: <54b33ccd0805042014j3773db72s3843c76f01fd0e54@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Desynchronizing dm-raid1
+Date: Mon, 5 May 2008 17:45:10 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0805051737580.25016@engineering.redhat.com>
+References: <47DEC402.10309@redhat.com>
+	<Pine.LNX.4.64.0803171611430.31803@porkchop.devel.redhat.com>
+	<20080317215631.GG29322@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
+	<20080318233955.GA12007@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
+	<20080319000241.GB12007@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
+	<20080319011757.GD12007@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
+	<20080403014042.GA3789@us.ibm.com> <yq14padoast.fsf@sermon.lab.mkp.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <54b33ccd0805042014j3773db72s3843c76f01fd0e54-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-usb-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Marti Raudsepp <marti-HlJQ7cSfIDjYtjvyW6yDsg@public.gmane.org>
-Cc: Matthew Dharm <mdharm-usb-JGfshJpz5UybPZpvUQj5UqxOck334EZe@public.gmane.org>, David Brownell <dbrownell-Rn4VEauK+AKRv+LV9MX5uipxlwaOVQ5f@public.gmane.org>, Linux USB list <linux-usb-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, Linux USB storage list <usb-storage-ijkIwGHArpdIPJnuZ7Njw4oP9KaGy4wf@public.gmane.org>, device-mapper list <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <yq14padoast.fsf@sermon.lab.mkp.net>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: linux-crypto@vger.kernel.org
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 5 May 2008, Marti Raudsepp wrote:
 
-> On Mon, May 5, 2008 at 3:13 AM, Matthew Dharm
-> <mdharm-usb-JGfshJpz5UybPZpvUQj5UqxOck334EZe@public.gmane.org> wrote:
-> >  If there is no actual activity, then this is likely not a usb-storage
-> >  problem.  It may very well be an HCD problem, however.
-> >
-> >  You may want to turn on CONFIG_USB_STORAGE_DEBUG and verify that there is,
-> >  in fact, no activity to the drive during these events.
-> 
-> Indeed, I enabled USB_DEBUG and USB_STORAGE_DEBUG; there are no kernel
-> messages at the time of the interrupt flood.
-> 
-> Any ideas how to proceed to get this problem resolved? I added David
-> Brownell (the EHCI maintainer) to recipients.
 
-One thing you can do is to mount a debugfs filesystem, and under it go
-to the EHCI directory corresponding to the controller your drive is 
-plugged into.  The contents of the "registers" and "async" files would 
-be interesting -- particularly if you get them while the disk is idle.
+On Mon, 7 Apr 2008, Martin K. Petersen wrote:
 
-You might even try looking at "registers" several times in a row, since 
-its contents may change over time.
+>>>>>> "Malahal" == malahal  <malahal@us.ibm.com> writes:
+>
+> [I sent this last week but it never made it to the list]
+>
+> Malahal> Very few drivers require it, so how about an interface to
+> Malahal> lock the pages of an I/O available to drivers. Only needed
+> Malahal> RAID drivers would lock the I/O while it is in progress and
+> Malahal> they only pay the performance penalty.  mmap pages are a bit
+> Malahal> tricky. They need to go into read-only mode when an I/O is in
+> Malahal> progress. I know this would likely be rejected too!!!
+>
+> I have exactly the same problem with the data integrity stuff I'm
+> working on.
+>
+> Essentially a checksum gets generated when a bio is submitted, and
+> both the I/O controller and the disk drive verify the checksum.
+>
+> With ext2 in particular I often experience that the page (usually
+> containing directory metadata) has been modified before the controller
+> does the DMA.  And the I/O will then be rejected by the controller or
+> drive because the checksum doesn't match the data.
+>
+> So this problem is not specific to DM/MD...
+>
+> -- 
+> Martin K. Petersen	Oracle Linux Engineering
 
-Alan Stern
+BTW: is it guaranteed for crypto functions that they read the source data 
+only once?
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-usb" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I.e. if you encrypt a block while another CPU modifies it, and then 
+decrypt it, is it guaranteed that each byte of the result will be either 
+old byte or new byte of the original data?
+
+If not, we have a subtle case of disk corruption here too. (imagine that 
+you update for example atime field in inode while the block is being 
+written and the crypto interface will trash the inode block).
+
+Mikulas
