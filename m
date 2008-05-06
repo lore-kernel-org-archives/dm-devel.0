@@ -1,23 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Desynchronizing dm-raid1
-Date: Mon, 5 May 2008 17:45:10 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0805051737580.25016@engineering.redhat.com>
-References: <47DEC402.10309@redhat.com>
-	<Pine.LNX.4.64.0803171611430.31803@porkchop.devel.redhat.com>
-	<20080317215631.GG29322@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181921380.10939@porkchop.devel.redhat.com>
-	<20080318233955.GA12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803181942140.20490@porkchop.devel.redhat.com>
-	<20080319000241.GB12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0803182015001.21077@porkchop.devel.redhat.com>
-	<20080319011757.GD12007@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0804021444120.22485@porkchop.devel.redhat.com>
-	<20080403014042.GA3789@us.ibm.com> <yq14padoast.fsf@sermon.lab.mkp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH] Fixes to EMC scsi device handler
+Date: Mon, 05 May 2008 18:34:18 -0700
+Message-ID: <1210037658.21974.125.camel@chandra-ubuntu>
+References: <481EF5AA.7090304@suse.de>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <yq14padoast.fsf@sermon.lab.mkp.net>
+In-Reply-To: <481EF5AA.7090304@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,50 +18,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-crypto@vger.kernel.org
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: James Bottomley <James.Bottomley@SteelEye.com>, dm-devel <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
 
+On Mon, 2008-05-05 at 13:55 +0200, Hannes Reinecke wrote:
+> Hi Chandra,
+> 
+> based on your latest patchset there are some issues which
+> should be fixed:
+> 
+> - When SYSFS_DEPRECATED is not set also scsi_target and
+>   scsi_host devices will be attached to the scsi bus.
+>   So we have to check with 'scsi_is_sdev_device' before
+>   processing the notifier call
 
-On Mon, 7 Apr 2008, Martin K. Petersen wrote:
+This need to be done for all the handlers, right ?
+>  
+> - Newer EMC flarecode also provide for a 'VRAID' device
+>   model; this should be added to the device map
+> - The name should be 'emc', not 'emc_clariion', for
+>   integration with existing multipath-tools
+> - It's spelled 'detached' :-)
+> 
+> Patch attached.
 
->>>>>> "Malahal" == malahal  <malahal@us.ibm.com> writes:
->
-> [I sent this last week but it never made it to the list]
->
-> Malahal> Very few drivers require it, so how about an interface to
-> Malahal> lock the pages of an I/O available to drivers. Only needed
-> Malahal> RAID drivers would lock the I/O while it is in progress and
-> Malahal> they only pay the performance penalty.  mmap pages are a bit
-> Malahal> tricky. They need to go into read-only mode when an I/O is in
-> Malahal> progress. I know this would likely be rejected too!!!
->
-> I have exactly the same problem with the data integrity stuff I'm
-> working on.
->
-> Essentially a checksum gets generated when a bio is submitted, and
-> both the I/O controller and the disk drive verify the checksum.
->
-> With ext2 in particular I often experience that the page (usually
-> containing directory metadata) has been modified before the controller
-> does the DMA.  And the I/O will then be rejected by the controller or
-> drive because the checksum doesn't match the data.
->
-> So this problem is not specific to DM/MD...
->
-> -- 
-> Martin K. Petersen	Oracle Linux Engineering
+Looks good to me.
+> 
+> Some issues which I'd like to see eventually:
+> 
+> - We should have a way of adding/modifying the internal
+>   device map. Currently we have to recompile the module
+>   every time a new device definition is found.
 
-BTW: is it guaranteed for crypto functions that they read the source data 
-only once?
+Yeah, very true. it will become an annoyance. Is this the reason why
+you were asking for the sysfs interface (below) ?
 
-I.e. if you encrypt a block while another CPU modifies it, and then 
-decrypt it, is it guaranteed that each byte of the result will be either 
-old byte or new byte of the original data?
+> - The ->activate function should be able to be triggered
+>   manually via sysfs.
 
-If not, we have a subtle case of disk corruption here too. (imagine that 
-you update for example atime field in inode while the block is being 
-written and the crypto interface will trash the inode block).
+Why would you need this ? 
+> 
+> James, seeing that the scsi_dh pointer is already present
+> in the sdev structure, would you accept a patch which adds
+> scsi_dh attributes to drivers/scsi/scsi_sysfs.c?
+> Having them encapsulated into drivers/scsi/device_handler
+> somewhere is really painful due to the asynchronous nature
+> of this whole thing ...
+> 
+> Apart from this: Great work!
+> I'll check the other device handlers, too; already noticed
+> that the device map for HP is wrong :-)
 
-Mikulas
+Can you please help fix it. 
+> 
+> Cheers,
+> 
+> hannes
+> plain text document attachment (scsi-dh-emc-fixes)
+> Fixes to EMC scsi device handler
+> 
+> Several fixes to the EMC scsi device handler:
+> - The name should be 'emc' for seamless integration with multipathing
+> - Newer EMC flarecode also has a 'VRAID' type
+> - Check if this is really a sdev before processing the notifier call
+> 
+> Signed-off-by: Hannes Reinecke <hare@suse.de>
+> 
+> diff --git a/drivers/scsi/device_handler/scsi_dh_emc.c b/drivers/scsi/device_handler/scsi_dh_emc.c
+> index 1b18989..0aded96 100644
+> --- a/drivers/scsi/device_handler/scsi_dh_emc.c
+> +++ b/drivers/scsi/device_handler/scsi_dh_emc.c
+> @@ -25,7 +25,7 @@
+>  #include <scsi/scsi_dh.h>
+>  #include <scsi/scsi_device.h>
+> 
+> -#define CLARIION_NAME			"emc_clariion"
+> +#define CLARIION_NAME			"emc"
+> 
+>  #define CLARIION_TRESPASS_PAGE		0x22
+>  #define CLARIION_BUFFER_SIZE		0x80
+> @@ -390,12 +390,13 @@ static int clariion_check_sense(struct scsi_device *sdev,
+>  	return SUCCESS;
+>  }
+> 
+> -static const struct {
+> +static const struct clariion_dev_list_t {
+>  	char *vendor;
+>  	char *model;
+>  } clariion_dev_list[] = {
+>  	{"DGC", "RAID"},
+>  	{"DGC", "DISK"},
+> +	{"DGC", "VRAID"},
+>  	{NULL, NULL},
+>  };
+> 
+> @@ -422,6 +423,9 @@ static int clariion_bus_notify(struct notifier_block *nb,
+>  	int i, found = 0;
+>  	unsigned long flags;
+> 
+> +	if (!scsi_is_sdev_device(dev))
+> +		return 0;
+> +
+>  	if (action == BUS_NOTIFY_ADD_DEVICE) {
+>  		for (i = 0; clariion_dev_list[i].vendor; i++) {
+>  			if (!strncmp(sdev->vendor, clariion_dev_list[i].vendor,
+> @@ -465,7 +469,7 @@ static int clariion_bus_notify(struct notifier_block *nb,
+>  		sdev->scsi_dh_data = NULL;
+>  		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+> 
+> -		sdev_printk(KERN_NOTICE, sdev, "Dettached %s.\n",
+> +		sdev_printk(KERN_NOTICE, sdev, "Detached %s.\n",
+>  			    CLARIION_NAME);
+> 
+>  		kfree(scsi_dh_data);
