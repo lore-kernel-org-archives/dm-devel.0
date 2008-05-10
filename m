@@ -1,12 +1,12 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] Try 2: Better path checker handling
-Date: Fri, 9 May 2008 17:45:13 -0500
-Message-ID: <20080509224512.GN3145@ether.msp.redhat.com>
+From: "Wim Colgate" <Wim.Colgate@citrix.com>
+Subject: resend - actionable triggers?
+Date: Fri, 9 May 2008 17:28:33 -0700
+Message-ID: <7BC3A7DB53028743B733D298244A8C626E2F39@sjcpexch02.citrite.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="96YOpH+ONegL0A3E"
+Content-Type: multipart/mixed; boundary="===============1538637966=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,277 +16,161 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@free.fr>, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
---96YOpH+ONegL0A3E
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+--===============1538637966==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C8B234.D6F44E1A"
 
-The problem with my last patch, aside from a typeo, is this; While the
-patch kept you from silently using the default checker instead of the
-desired one, if you failed to load a checker (say while setting up the
-default hardware configuration), multipath would fail out, even if your
-devices never would need that checker.
+This is a multi-part message in MIME format.
 
-Another problem that the original patch didn't fix was that
-multipath.conf should be order independent, and with the existing
-checker code, it isn't.  The multipath_dir had to be set before
-you could set a checker, otherwise the checker load failed (since the
-multipath_dir wasn't specified).
+------_=_NextPart_001_01C8B234.D6F44E1A
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-This new patch delays loading the checker libraries until a device
-actually needs them. It replaces the previous patch and applies directly
-on top of the upstream code.
+Hi,
 
--Ben
+=20
 
---96YOpH+ONegL0A3E
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment; filename="move_checker_load.patch"
+If I have DM/multipath enabled on a dual path (for the sake of argument:
+a Fibre Channel LUN) and one of the paths becomes unavailable, there is
+an event captured in the system log that details which path disappeared
+(similarly if it reappears).
 
-Index: multipath-tools-test/libmultipath/checkers.c
-===================================================================
---- multipath-tools-test.orig/libmultipath/checkers.c
-+++ multipath-tools-test/libmultipath/checkers.c
-@@ -47,10 +47,7 @@ struct checker * checker_lookup (char * 
- 		if (!strncmp(name, c->name, CHECKER_NAME_LEN))
- 			return c;
- 	}
--	c = add_checker(name);
--	if (c)
--		return c;
--	return checker_default();
-+	return add_checker(name);
- }
- 
- struct checker * add_checker (char * name)
-@@ -172,13 +169,14 @@ char * checker_message (struct checker *
- 	return c->message;
- }
- 
--struct checker * checker_default (void)
-+void checker_get (struct checker * dst, char * name)
- {
--	return checker_lookup(DEFAULT_CHECKER);
--}
-+	struct checker * src = checker_lookup(name);
- 
--void checker_get (struct checker * dst, struct checker * src)
--{
-+	if (!src) {
-+		dst->check = NULL;
-+		return;
-+	}
- 	dst->fd = src->fd;
- 	dst->sync = src->sync;
- 	strncpy(dst->name, src->name, CHECKER_NAME_LEN);
-Index: multipath-tools-test/libmultipath/config.c
-===================================================================
---- multipath-tools-test.orig/libmultipath/config.c
-+++ multipath-tools-test/libmultipath/config.c
-@@ -270,13 +270,15 @@ store_hwe (vector hwtable, struct hwentr
- 
- 	if (dhwe->selector && !(hwe->selector = set_param_str(dhwe->selector)))
- 		goto out;
-+
-+	if (dhwe->checker_name && !(hwe->checker_name = set_param_str(dhwe->checker_name)))
-+		goto out;
- 				
- 	hwe->pgpolicy = dhwe->pgpolicy;
- 	hwe->pgfailback = dhwe->pgfailback;
- 	hwe->rr_weight = dhwe->rr_weight;
- 	hwe->no_path_retry = dhwe->no_path_retry;
- 	hwe->minio = dhwe->minio;
--	hwe->checker = dhwe->checker;
- 	hwe->prio = dhwe->prio;
- 
- 	if (dhwe->bl_product && !(hwe->bl_product = set_param_str(dhwe->bl_product)))
-@@ -455,8 +457,8 @@ load_config (char * file)
- 	if (!conf->prio)
- 		conf->prio = prio_default();
- 
--	if (!conf->checker)
--		conf->checker = checker_lookup(DEFAULT_CHECKER);
-+	if (!conf->checker_name)
-+		conf->checker_name = set_default(DEFAULT_CHECKER);
- 
- 	return 0;
- out:
-Index: multipath-tools-test/libmultipath/dict.c
-===================================================================
---- multipath-tools-test.orig/libmultipath/dict.c
-+++ multipath-tools-test/libmultipath/dict.c
-@@ -120,16 +120,11 @@ def_features_handler(vector strvec)
- static int
- def_path_checker_handler(vector strvec)
- {
--	char * buff;
--
--	buff = set_value(strvec);
-+	conf->checker_name = set_value(strvec);
- 
--	if (!buff)
-+	if (!conf->checker_name)
- 		return 1;
- 	
--	conf->checker = checker_lookup(buff);
--	FREE(buff);
--
- 	return 0;
- }
- 
-@@ -549,20 +544,16 @@ hw_selector_handler(vector strvec)
- static int
- hw_path_checker_handler(vector strvec)
- {
--	char * buff;
- 	struct hwentry * hwe = VECTOR_LAST_SLOT(conf->hwtable);
- 
- 	if (!hwe)
- 		return 1;
- 
--	buff = set_value(strvec);
-+	hwe->checker_name = set_value(strvec);
- 
--	if (!buff)
-+	if (!hwe->checker_name)
- 		return 1;
- 	
--	hwe->checker = checker_lookup(buff);
--	FREE(buff);
--
- 	return 0;
- }
- 
-@@ -1312,14 +1303,12 @@ snprint_hw_path_checker (char * buff, in
- {
- 	struct hwentry * hwe = (struct hwentry *)data;
- 
--	if (!hwe->checker)
--		return 0;
--	if (!checker_selected(hwe->checker))
-+	if (!hwe->checker_name)
- 		return 0;
--	if (hwe->checker == conf->checker)
-+	if (!strcmp(hwe->checker_name, conf->checker_name))
- 		return 0;
- 	
--	return snprintf(buff, len, "%s", checker_name(hwe->checker));
-+	return snprintf(buff, len, "%s", hwe->checker_name);
- }
- 
- static int
-@@ -1417,12 +1406,12 @@ snprint_def_features (char * buff, int l
- static int
- snprint_def_path_checker (char * buff, int len, void * data)
- {
--	if (!conf->checker)
-+	if (!conf->checker_name)
- 		return 0;
--	if (conf->checker == checker_default())
-+	if (conf->checker_name == DEFAULT_CHECKER)
- 		return 0;
- 	
--	return snprintf(buff, len, "%s", checker_name(conf->checker));
-+	return snprintf(buff, len, "%s", conf->checker_name);
- }
- 
- static int
-Index: multipath-tools-test/libmultipath/hwtable.c
-===================================================================
---- multipath-tools-test.orig/libmultipath/hwtable.c
-+++ multipath-tools-test/libmultipath/hwtable.c
-@@ -732,7 +732,6 @@ setup_default_hwtable (vector hw)
- 	struct hwentry * hwe = default_hw;
- 
- 	while (hwe->vendor) {
--		hwe->checker = checker_lookup(hwe->checker_name);
- 		hwe->prio = prio_lookup(hwe->prio_name);
- 		r += store_hwe(hw, hwe);
- 		hwe++;
-Index: multipath-tools-test/libmultipath/checkers.h
-===================================================================
---- multipath-tools-test.orig/libmultipath/checkers.h
-+++ multipath-tools-test/libmultipath/checkers.h
-@@ -117,12 +117,10 @@ void checker_set_async (struct checker *
- void checker_set_fd (struct checker *, int);
- void checker_enable (struct checker *);
- void checker_disable (struct checker *);
--struct checker * checker_lookup (char *);
- int checker_check (struct checker *);
- int checker_selected (struct checker *);
- char * checker_name (struct checker *);
- char * checker_message (struct checker *);
--struct checker * checker_default (void);
--void checker_get (struct checker *, struct checker *);
-+void checker_get (struct checker *, char *);
- 
- #endif /* _CHECKERS_H */
-Index: multipath-tools-test/libmultipath/config.h
-===================================================================
---- multipath-tools-test.orig/libmultipath/config.h
-+++ multipath-tools-test/libmultipath/config.h
-@@ -29,7 +29,6 @@ struct hwentry {
- 	int minio;
- 	int pg_timeout;
- 	struct prio * prio;
--	struct checker * checker;
- 	char * bl_product;
- };
- 
-@@ -55,7 +54,6 @@ struct config {
- 	int with_sysfs;
- 	int pgpolicy;
- 	struct prio * prio;
--	struct checker * checker;
- 	enum devtypes dev_type;
- 	int minio;
- 	int checkint;
-@@ -77,6 +75,7 @@ struct config {
- 	char * features;
- 	char * hwhandler;
- 	char * bindings_file;
-+	char * checker_name;
- 
- 	vector keywords;
- 	vector mptable;
-Index: multipath-tools-test/libmultipath/propsel.c
-===================================================================
---- multipath-tools-test.orig/libmultipath/propsel.c
-+++ multipath-tools-test/libmultipath/propsel.c
-@@ -217,19 +217,19 @@ select_checker(struct path *pp)
- {
- 	struct checker * c = &pp->checker;
- 
--	if (pp->hwe && pp->hwe->checker) {
--		checker_get(c, pp->hwe->checker);
-+	if (pp->hwe && pp->hwe->checker_name) {
-+		checker_get(c, pp->hwe->checker_name);
- 		condlog(3, "%s: path checker = %s (controller setting)",
- 			pp->dev, checker_name(c));
- 		return 0;
- 	}
--	if (conf->checker) {
--		checker_get(c, conf->checker);
-+	if (conf->checker_name) {
-+		checker_get(c, conf->checker_name);
- 		condlog(3, "%s: path checker = %s (config file default)",
- 			pp->dev, checker_name(c));
- 		return 0;
- 	}
--	checker_get(c, checker_default());
-+	checker_get(c, DEFAULT_CHECKER);
- 	condlog(3, "%s: path checker = %s (internal default)",
- 		pp->dev, checker_name(c));
- 	return 0;
+=20
 
---96YOpH+ONegL0A3E
+My question are there any hooks in the mulitpath software that allows me
+to perform an action when this event triggers?
+
+=20
+
+Barring that, will the path disappear/appear trigger udev rules? This
+actually is preferable.
+
+=20
+
+Thanks,
+
+=20
+
+Wim
+
+=20
+
+
+------_=_NextPart_001_01C8B234.D6F44E1A
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal>Hi,<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>If I have DM/multipath enabled on a dual path (for =
+the sake
+of argument: a Fibre Channel LUN) and one of the paths becomes =
+unavailable,
+there is an event captured in the system log that details which path
+disappeared (similarly if it reappears).<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>My question are there any hooks in the mulitpath =
+software
+that allows me to perform an action when this event =
+triggers?<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Barring that, will the path disappear/appear =
+trigger udev
+rules? This actually is preferable.<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Thanks,<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Wim<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01C8B234.D6F44E1A--
+
+
+--===============1538637966==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---96YOpH+ONegL0A3E--
+--===============1538637966==--
