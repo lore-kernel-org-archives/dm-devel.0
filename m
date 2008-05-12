@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools/multipath main.c
-Date: 12 May 2008 17:46:41 -0000
-Message-ID: <20080512174641.22405.qmail@sourceware.org>
+Subject: multipath-tools/multipathd main.c
+Date: 12 May 2008 18:48:04 -0000
+Message-ID: <20080512184804.30321.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,44 +19,65 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-05-12 17:46:41
+Changes by:	bmarzins@sourceware.org	2008-05-12 18:48:03
 
 Modified files:
-	multipath      : main.c 
+	multipathd     : main.c 
 
 Log message:
-	fix config freeing.
+	Fix multipathd startup so -d option works correctly.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.44.2.4&r2=1.44.2.5
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.6&r2=1.69.2.7
 
---- multipath-tools/multipath/main.c	2007/11/10 00:01:59	1.44.2.4
-+++ multipath-tools/multipath/main.c	2008/05/12 17:46:41	1.44.2.5
-@@ -1,7 +1,7 @@
- /*
-  * Soft:        multipath device mapper target autoconfig
-  *
-- * Version:     $Id: main.c,v 1.44.2.4 2007/11/10 00:01:59 bmarzins Exp $
-+ * Version:     $Id: main.c,v 1.44.2.5 2008/05/12 17:46:41 bmarzins Exp $
-  *
-  * Author:      Christophe Varoqui
-  *
-@@ -414,9 +414,17 @@
- 		condlog(3, "restart multipath configuration process");
- 	
- out:
--	free_config(conf);
- 	dm_lib_release();
- 	dm_lib_exit();
+--- multipath-tools/multipathd/main.c	2008/05/12 17:45:28	1.69.2.6
++++ multipath-tools/multipathd/main.c	2008/05/12 18:48:03	1.69.2.7
+@@ -1422,15 +1422,31 @@
+ 	umask(0);
+ }
+ 
++enum child_flag_bits {
++	__DAEMONIZE = 0,
++#ifdef CLONE_NEWNS
++	__NEW_NS,
++#endif
++};
 +
-+	/*
-+	 * Freeing config must be done after dm_lib_exit(), because
-+	 * the logging function (dm_write_log()), which is called there,
-+	 * references the config.
-+	 */
-+	free_config(conf);
-+	conf = NULL;
++#define DAEMONIZE	(1 << __DAEMONIZE)
++#ifdef CLONE_NEWNS
++#define NEW_NS		(1 << __NEW_NS)
++#endif
 +
- #ifdef _DEBUG_
- 	dbg_free_final(NULL);
+ static int
+ child (void * param)
+ {
+ 	pthread_t check_thr, uevent_thr, uxlsnr_thr;
+ 	pthread_attr_t attr;
+ 	struct vectors * vecs;
+-	unsigned long new_ns = (unsigned long)param;
++	unsigned int daemon = (unsigned long)param & DAEMONIZE;
++#ifdef CLONE_NEWNS
++	unsigned int new_ns = (unsigned long)param & NEW_NS;
++#endif
+ 
+-	setup_daemon();
++	if (daemon)
++		setup_daemon();
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 
+ 	if (logsink)
+@@ -1583,11 +1599,11 @@
+ #ifdef CLONE_NEWNS
+ 	if (unshare(CLONE_NEWNS) < 0) {
+ 		fprintf(stderr, "Failed to unshare namespace : %s\n", strerror(errno));
+-		return child((void *)0);
++		return child((void *)DAEMONIZE);
+ 	}
+-	return child((void *)1);
++	return child((void *)(DAEMONIZE | NEW_NS));
+ #else
+-	return child((void *)0);
++	return child((void *)DAEMONIZE);
  #endif
+ }
+ 
