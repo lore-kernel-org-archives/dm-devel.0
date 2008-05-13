@@ -1,9 +1,14 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd main.c
-Date: 12 May 2008 18:48:04 -0000
-Message-ID: <20080512184804.30321.qmail@sourceware.org>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Desynchronizing dm-raid1
+Date: Mon, 12 May 2008 23:28:44 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0805122325050.373@engineering.redhat.com>
+References: <E1JtKQL-0004Nm-00@gondolin.me.apana.org.au>
+	<Pine.LNX.4.64.0805061849020.7260@engineering.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0805061849020.7260@engineering.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,71 +18,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: dm-devel@redhat.com, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-05-12 18:48:03
+On Tue, 6 May 2008, Mikulas Patocka wrote:
 
-Modified files:
-	multipathd     : main.c 
+> On Tue, 6 May 2008, Herbert Xu wrote:
+>
+>> Mikulas Patocka <mpatocka@redhat.com> wrote:
+>>> 
+>>> BTW: is it guaranteed for crypto functions that they read the source data
+>>> only once?
+>> 
+>> There is no such guarantee.
+>> 
+>> Cheers,
+>
+> So we'll have to copy the sector to temporary space before encrypting it.
+>
+> I'll look at it.
+>
+> Mikulas
 
-Log message:
-	Fix multipathd startup so -d option works correctly.
+Do you think that it would make sense to add a flag to crypto API that 
+says that the encryption function reads the input only once? --- so that 
+we wouldn't have to copy the data when using an algorithm which doesn't 
+need it.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.6&r2=1.69.2.7
+Or do you thint it would be useless (all major disk-encryption algorithms 
+read input buffer more times?) or it would create too much code 
+complexity?
 
---- multipath-tools/multipathd/main.c	2008/05/12 17:45:28	1.69.2.6
-+++ multipath-tools/multipathd/main.c	2008/05/12 18:48:03	1.69.2.7
-@@ -1422,15 +1422,31 @@
- 	umask(0);
- }
- 
-+enum child_flag_bits {
-+	__DAEMONIZE = 0,
-+#ifdef CLONE_NEWNS
-+	__NEW_NS,
-+#endif
-+};
-+
-+#define DAEMONIZE	(1 << __DAEMONIZE)
-+#ifdef CLONE_NEWNS
-+#define NEW_NS		(1 << __NEW_NS)
-+#endif
-+
- static int
- child (void * param)
- {
- 	pthread_t check_thr, uevent_thr, uxlsnr_thr;
- 	pthread_attr_t attr;
- 	struct vectors * vecs;
--	unsigned long new_ns = (unsigned long)param;
-+	unsigned int daemon = (unsigned long)param & DAEMONIZE;
-+#ifdef CLONE_NEWNS
-+	unsigned int new_ns = (unsigned long)param & NEW_NS;
-+#endif
- 
--	setup_daemon();
-+	if (daemon)
-+		setup_daemon();
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 
- 	if (logsink)
-@@ -1583,11 +1599,11 @@
- #ifdef CLONE_NEWNS
- 	if (unshare(CLONE_NEWNS) < 0) {
- 		fprintf(stderr, "Failed to unshare namespace : %s\n", strerror(errno));
--		return child((void *)0);
-+		return child((void *)DAEMONIZE);
- 	}
--	return child((void *)1);
-+	return child((void *)(DAEMONIZE | NEW_NS));
- #else
--	return child((void *)0);
-+	return child((void *)DAEMONIZE);
- #endif
- }
- 
+Mikulas
