@@ -1,12 +1,13 @@
-From: Christof Schmitt <christof.schmitt@de.ibm.com>
-Subject: might_sleep warning in multipath_dtr
-Date: Tue, 6 May 2008 16:13:22 +0200
-Message-ID: <20080506141322.GA14931@schmichrtp.de.ibm.com>
+From: Nikanth Karthikesan <knikanth@suse.de>
+Subject: [PATCH] Documentation: change dm-io.txt to document the
+	new ap
+Date: Thu, 15 May 2008 14:46:11 +0530
+Message-ID: <1210842971.5236.3.camel@nikanth-laptop.blr.novell.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,105 +18,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-A test with multipathing and periodic path failures (2.6.25 on s390x)
-hit this problem:
+Change documentation in dm-io.txt to the new API
 
-   <3>BUG: sleeping function called from invalid context at /home/autobuild/BUILD/linux-2.6.25-20080430/kernel/workqueue.c:396
-    <4>in_atomic():1, irqs_disabled():0
-    <4>CPU: 1 Not tainted 2.6.25-28.x.20080430-s390xdefault #1
-    <4>Process pdflush (pid: 19981, task: 0000000008914538, ksp: 000000001418fba8)
-    <4>0000000000000000 000000001418fac0 0000000000000002 0000000000000000 
-    <4>       000000001418fb60 000000001418fad8 000000001418fad8 000000000010563c 
-    <4>       0000000000000000 000000001418fba8 0000000000000000 0000000000000000 
-    <4>       000000001418fac0 000000000000000c 000000001418fac0 000000001418fb30 
-    <4>       0000000000464aa0 000000000010563c 000000001418fac0 000000001418fb10 
-    <4>Call Trace:
-    <4>([<00000000001055c2>] show_trace+0x12e/0x13c)
-    <4> [<0000000000105696>] show_stack+0xc6/0xf8
-    <4> [<0000000000105e58>] dump_stack+0xb0/0xc0
-    <4> [<0000000000129092>] __might_sleep+0x106/0x128
-    <4> [<000000000014e344>] flush_workqueue+0x44/0x9c
-    <4> [<000003e00008f79c>] multipath_dtr+0x38/0x50 [dm_multipath]
-    <4> [<000003e000077e4a>] dm_table_put+0xae/0x134 [dm_mod]
-    <4> [<000003e000076020>] dm_any_congested+0x50/0x88 [dm_mod]
-    <4> [<00000000001e09c0>] sync_sb_inodes+0xa4/0x334
-    <4> [<00000000001e0f9e>] writeback_inodes+0xfa/0x130
-    <4> [<0000000000189e04>] wb_kupdate+0xd0/0x170
-    <4> [<000000000018a65a>] pdflush+0x14a/0x22c
-    <4> [<0000000000152bec>] kthread+0x68/0xa0
-    <4> [<000000000010a0be>] kernel_thread_starter+0x6/0xc
-    <4> [<000000000010a0b8>] kernel_thread_starter+0x0/0xc
+Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
 
-After the bug message, the CPU is waiting in _raw_spin_relax:
+--
+ Documentation/device-mapper/dm-io.txt |   87 ++++++++++++++++++++++-----------
+ 1 files changed, 58 insertions(+), 29 deletions(-)
 
-================================================================
-TASK HAS CPU (1): 0x8914538 (pdflush):
- LOWCORE INFO:
-  -psw      : 0x0704100180000000 0x00000000002aa8f6
-  -function : _raw_spin_relax+94
-  -prefix   : 0x1fb04000
-  -cpu timer: 0x7fffd1ed 0xa3fc6a40
-  -clock cmp: 0x00c25518 0x4f9f8839
-  -general registers:
-     000000000000000000 0x0000000000000004
-     0x000000000067b728 0x0000000000000002
-     0x0000000000455632 0x0000000000485ec0
-     000000000000000000 0x000000001af244b8
-     0x000000001e6daf60 0x000000000021bfd4
-     0x0000000001046ca0 0x000000001418f8a8
-     0x00000000006abdc0 0x000000000046f218
-     0x000000000045561e 0x000000001418f8a8
-  -access registers:
-     0000000000 0000000000 0000000000 0000000000
-     0000000000 0000000000 0000000000 0000000000
-     0000000000 0000000000 0000000000 0000000000
-     0000000000 0000000000 0000000000 0000000000
-  -control registers:
-     0x0000000014354e12 0x0000000000676007
-     0x0000000000011200 000000000000000000
-     0x0000000000004e0d 0x0000000000011200
-     0x0000000011000000 0x0000000000676007
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 0x00000000154641c7
-     0x00000000db000000 000000000000000000
-  -floating point registers:
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-     000000000000000000 000000000000000000
-
- STACK:
- 0 ifind+66 [0x1d299e]
- 1 ilookup5_nowait+90 [0x1d2af2]
- 2 sysfs_addrm_start+98 [0x21c506]
- 3 sysfs_hash_and_remove+66 [0x21ac82]
- 4 sysfs_remove_link+44 [0x21d8b4]
- 5 del_symlink+60 [0x1edeb8]
- 6 bd_release_from_disk+218 [0x1edfd6]
- 7 close_dev+74 [0x3e000077202]
- 8 dm_put_device+88 [0x3e000077280]
- 9 free_priority_group+138 [0x3e00008f672]
-10 free_multipath+100 [0x3e00008f708]
-11 multipath_dtr+66 [0x3e00008f7a6]
-12 dm_table_put+174 [0x3e000077e4a]
-13 dm_any_congested+80 [0x3e000076020]
-14 sync_sb_inodes+164 [0x1e09c0]
-15 writeback_inodes+250 [0x1e0f9e]
-16 wb_kupdate+208 [0x189e04]
-17 pdflush+330 [0x18a65a]
-18 kthread+104 [0x152bec]
-19 kernel_thread_starter+6 [0x10a0be]
-
-I don't know, if this exact situation is reproducible, but we have a
-memory dump that should have some more data.
-
-Any ideas how to debug this problem?
-
-Christof
+diff --git a/Documentation/device-mapper/dm-io.txt b/Documentation/device-mapper/dm-io.txt
+index 3b5d9a5..52ebff3 100644
+--- a/Documentation/device-mapper/dm-io.txt
++++ b/Documentation/device-mapper/dm-io.txt
+@@ -26,50 +26,79 @@ the I/O, along with an offset into the f
+       struct page *page;
+    };
+ 
+-   int dm_io_sync(unsigned int num_regions, struct io_region *where, int rw,
+-                  struct page_list *pl, unsigned int offset,
+-                  unsigned long *error_bits);
+-   int dm_io_async(unsigned int num_regions, struct io_region *where, int rw,
+-                   struct page_list *pl, unsigned int offset,
+-                   io_notify_fn fn, void *context);
+-
+ The second I/O service type takes an array of bio vectors as the data buffer
+ for the I/O. This service can be handy if the caller has a pre-assembled bio,
+ but wants to direct different portions of the bio to different devices.
+ 
+-   int dm_io_sync_bvec(unsigned int num_regions, struct io_region *where,
+-                       int rw, struct bio_vec *bvec,
+-                       unsigned long *error_bits);
+-   int dm_io_async_bvec(unsigned int num_regions, struct io_region *where,
+-                        int rw, struct bio_vec *bvec,
+-                        io_notify_fn fn, void *context);
+-
+ The third I/O service type takes a pointer to a vmalloc'd memory buffer as the
+ data buffer for the I/O. This service can be handy if the caller needs to do
+ I/O to a large region but doesn't want to allocate a large number of individual
+ memory pages.
+ 
+-   int dm_io_sync_vm(unsigned int num_regions, struct io_region *where, int rw,
+-                     void *data, unsigned long *error_bits);
+-   int dm_io_async_vm(unsigned int num_regions, struct io_region *where, int rw,
+-                      void *data, io_notify_fn fn, void *context);
++The fourth I/O service type takes a pointer to kernel memory as the data
++buffer for I/O.
++
++To use any of the I/O service callers should setup a dm_io_request and
++submit it using dm_io().
++
++   struct dm_io_request {
++      int bi_rw;                      /* READ|WRITE - not READA */
++      struct dm_io_memory mem;        /* Memory to use for io */
++      struct dm_io_notify notify;     /* Synchronous if notify.fn is NULL */
++      struct dm_io_client *client;    /* Client memory handler */
++   };
++
++   int dm_io(struct dm_io_request *io_req, unsigned num_regions,
++          struct io_region *region, unsigned long *sync_error_bits);
++
++The type of I/O service is chosen by specifying the appropriate dm_io_mem_type
++and populating the corresponding pointer in dm_io_memory.
++
++   struct dm_io_memory {
++      enum dm_io_mem_type type;
++
++      union {
++         struct page_list *pl;
++         struct bio_vec *bvec;
++         void *vma;
++         void *addr;
++      } ptr;
++
++      unsigned offset;
++   };
++
++   enum dm_io_mem_type {
++      DM_IO_PAGE_LIST,/* Page list */
++      DM_IO_BVEC,     /* Bio vector */
++      DM_IO_VMA,      /* Virtual memory area */
++      DM_IO_KMEM,     /* Kernel memory */
++   };
++
+ 
+ Callers of the asynchronous I/O services must include the name of a completion
+ callback routine and a pointer to some context data for the I/O.
+ 
+    typedef void (*io_notify_fn)(unsigned long error, void *context);
+ 
+-The "error" parameter in this callback, as well as the "*error" parameter in
+-all of the synchronous versions, is a bitset (instead of a simple error value).
+-In the case of an write-I/O to multiple regions, this bitset allows dm-io to
+-indicate success or failure on each individual region.
++   struct dm_io_notify {
++      io_notify_fn fn;        /* Callback for asynchronous requests */
++      void *context;          /* Passed to callback */
++   };
++
++
++For asynchronous I/O, private mempools should be created using
++dm_io_client_create().
++
++   struct dm_io_client *dm_io_client_create(unsigned num_pages);
++
++dm_io_client_resize() is used to resize the mempool of the client. To free the
++mempool dm_io_client_destroy() should be used.
+ 
+-Before using any of the dm-io services, the user should call dm_io_get()
+-and specify the number of pages they expect to perform I/O on concurrently.
+-Dm-io will attempt to resize its mempool to make sure enough pages are
+-always available in order to avoid unnecessary waiting while performing I/O.
++   int dm_io_client_resize(unsigned num_pages, struct dm_io_client *client);
++   void dm_io_client_destroy(struct dm_io_client *client);
+ 
+-When the user is finished using the dm-io services, they should call
+-dm_io_put() and specify the same number of pages that were given on the
+-dm_io_get() call.
++The "error" parameter in this callback, as well as the sync_error_bits
++parameter in dm_io for synchronous calls is a bitset (instead of a simple
++error value). In the case of an write-I/O to multiple regions, this bitset
++allows dm-io to indicate success or failure on each individual region.
+ 
