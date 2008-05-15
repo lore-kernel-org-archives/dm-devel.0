@@ -1,174 +1,199 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 7/7] scsi_dh: attach to hardware handler from dm-mpath
-Date: Thu, 15 May 2008 11:46:30 +0200
-Message-ID: <482C0676.9070004@suse.de>
-References: <20080514144338.714F910B5DF@craiglockhart-ipmi.suse.de> <1210819801.21974.266.camel@chandra-ubuntu>
+From: "Wim Colgate" <Wim.Colgate@citrix.com>
+Subject: simple question... to tough to answer?
+Date: Thu, 15 May 2008 10:09:35 -0700
+Message-ID: <7BC3A7DB53028743B733D298244A8C626E3A0D@sjcpexch02.citrite.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1210819801.21974.266.camel@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: sekharan@us.ibm.com
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
+Content-Type: multipart/mixed; boundary="===============1627070788=="
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Chandra,
+This is a multi-part message in MIME format.
 
-Chandra Seetharaman wrote:
-> What is the purpose of this feature ?
->=20
-> With dh_state functionality, one could associate a handler to a new
-> device and then if one does "multipath", the hardware handler would b=
-e
-> associated with the multipath device. What are we achieving by this ?
->=20
-This allows multipath to override the device tables build into
-the device handler. Reason here is that multipath has a configuration
-file which allows the user to override the build-in defaults.
-And this includes the hardware handler, so we need to make sure that
-the hardware handler is indeed attached.
+--===============1627070788==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C8B6AE.76A87F0E"
 
-I'd rather have it here instead of doing it from userland, as I try
-to avoid searching through sysfs wherever possible.
+This is a multi-part message in MIME format.
 
-> The review comments below are on the assumption that this is a needed
-> feature.
-> ---
->=20
-> Shouldn't we provide a detach also ?
->=20
-Hmm. Maybe. I'll check if it's possible to distinguish between
-built-in devices (which shouldn't be detached) and overridden
-ones (which should be).
+------_=_NextPart_001_01C8B6AE.76A87F0E
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 
-> On Wed, 2008-05-14 at 16:43 +0200, Hannes Reinecke wrote:
->> multipath keeps a separate device table which may be
->> more current than the built-in one.
->> So we should allow to override the multipath settings
->> by calling ->attach for each device.
->>
->> Signed-off-by: Hannes Reinecke <hare@suse.de>
->> ---
->>  drivers/md/dm-mpath.c                 |   10 ++++++
->>  drivers/scsi/device_handler/scsi_dh.c |   52 ++++++++++++++++++++++=
-++++++++--
->>  include/scsi/scsi_dh.h                |    1 +
->>  3 files changed, 59 insertions(+), 4 deletions(-)
->>
->> diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
->> index e8f704a..b69cd87 100644
->> --- a/drivers/md/dm-mpath.c
->> +++ b/drivers/md/dm-mpath.c
->> @@ -546,6 +546,7 @@ static struct pgpath *parse_path(struct arg_set =
-*as, struct path_selector *ps,
->>  {
->>  	int r;
->>  	struct pgpath *p;
->> +	struct multipath *m =3D (struct multipath *) ti->private;
->>
->>  	/* we need at least a path arg */
->>  	if (as->argc < 1) {
->> @@ -564,6 +565,15 @@ static struct pgpath *parse_path(struct arg_set=
- *as, struct path_selector *ps,
->>  		goto bad;
->>  	}
->>
->> +	if (m->hw_handler_name) {
->> +		r =3D scsi_dh_attach(bdev_get_queue(p->path.dev->bdev),
->> +				   m->hw_handler_name);
->> +		if (r < 0) {
->> +			dm_put_device(ti, p->path.dev);
->> +			goto bad;
->> +		}
->> +	}
->> +
->>  	r =3D ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->er=
-ror);
->>  	if (r) {
->>  		dm_put_device(ti, p->path.dev);
->> diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/de=
-vice_handler/scsi_dh.c
->> index 2dbf84b..dfca3db 100644
->> --- a/drivers/scsi/device_handler/scsi_dh.c
->> +++ b/drivers/scsi/device_handler/scsi_dh.c
->> @@ -113,8 +113,12 @@ int scsi_dh_handler_attach(struct scsi_device *=
-sdev,
->>  {
->>  	int err =3D -EBUSY;
->>
->> -	if (sdev->scsi_dh_data)
->> -		return err;
->> +	if (sdev->scsi_dh_data) {
->> +		if (sdev->scsi_dh_data->scsi_dh !=3D scsi_dh)
->> +			return err;
->> +		else
->> +			return 0;
->> +	}
->=20
-> This need to be moved to an earlier patch.
-Yes.
+Hi,
 
->>  	err =3D scsi_dh->attach(sdev);
->>
->> @@ -163,8 +167,11 @@ static int scsi_dh_notifier(struct notifier_blo=
-ck *nb,
->>  		goto out;
->>
->>  	if (action =3D=3D BUS_NOTIFY_ADD_DEVICE) {
->> -		scsi_dh_handler_attach(sdev, devinfo->handler);
->> -		device_create_file(dev, &scsi_dh_state_attr);
->> +		int err;
->> +
->> +		err =3D scsi_dh_handler_attach(sdev, devinfo->handler);
->> +		if (!err)
->> +			err =3D device_create_file(dev, &scsi_dh_state_attr);
->=20
-> This too.
->=20
-Ok.
+=20
 
->>  	} else if (action =3D=3D BUS_NOTIFY_DEL_DEVICE) {
->>  		if (sdev->scsi_dh_data =3D=3D NULL)
->>  			goto out;
->> @@ -345,6 +352,43 @@ int scsi_dh_handler_exist(const char *name)
->>  }
->>  EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
->>
->> +/*
->> + * scsi_dh_handler_attach - Attach device handler
->> + * @sdev - sdev the handler should be attached to
->> + * @name - name of the handler to attach
->> + */
->> +int scsi_dh_attach(struct request_queue *q, const char *name)
->> +{
->=20
-> This code seems to do incorrect things (run the case with sdev =3D=3D=
- NULL
-> or sdev->scsi_dh_data->scsi_dh !=3D scsi_dh).
->=20
-> This function can be simplified to just call scsi_dh_handler_attach()
-> after getting scsi_dh and a get_device.
->=20
-> We can avoid calling scsi_dh->attach directly. instead call
-> scsi_dh_device_handler(), which would do all the necessary checking.
->=20
-Correct. Fixed.
+I'm not quite sure why no one in the community hasn't been able to
+answer my questions.=20
 
-Chandra, thank you very much for your review.
-That helped a lot (and fixed some bugs, too :-).
+=20
 
-Cheers,
+Simply (re)stated:
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+=20
+
+1) Are there hooks for dm/multipath events to notify software?
+
+2) does path down/up fire up udev rules?
+
+=20
+
+Thanks,
+
+=20
+
+Wim
+
+
+------_=_NextPart_001_01C8B6AE.76A87F0E
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<html xmlns:v=3D"urn:schemas-microsoft-com:vml" =
+xmlns:o=3D"urn:schemas-microsoft-com:office:office" =
+xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
+xmlns:x=3D"urn:schemas-microsoft-com:office:excel" =
+xmlns:p=3D"urn:schemas-microsoft-com:office:powerpoint" =
+xmlns:a=3D"urn:schemas-microsoft-com:office:access" =
+xmlns:dt=3D"uuid:C2F41010-65B3-11d1-A29F-00AA00C14882" =
+xmlns:s=3D"uuid:BDC6E3F0-6DA3-11d1-A2A3-00AA00C14882" =
+xmlns:rs=3D"urn:schemas-microsoft-com:rowset" xmlns:z=3D"#RowsetSchema" =
+xmlns:b=3D"urn:schemas-microsoft-com:office:publisher" =
+xmlns:ss=3D"urn:schemas-microsoft-com:office:spreadsheet" =
+xmlns:c=3D"urn:schemas-microsoft-com:office:component:spreadsheet" =
+xmlns:oa=3D"urn:schemas-microsoft-com:office:activation" =
+xmlns:html=3D"http://www.w3.org/TR/REC-html40" =
+xmlns:q=3D"http://schemas.xmlsoap.org/soap/envelope/" xmlns:D=3D"DAV:" =
+xmlns:x2=3D"http://schemas.microsoft.com/office/excel/2003/xml" =
+xmlns:ois=3D"http://schemas.microsoft.com/sharepoint/soap/ois/" =
+xmlns:dir=3D"http://schemas.microsoft.com/sharepoint/soap/directory/" =
+xmlns:ds=3D"http://www.w3.org/2000/09/xmldsig#" =
+xmlns:dsp=3D"http://schemas.microsoft.com/sharepoint/dsp" =
+xmlns:udc=3D"http://schemas.microsoft.com/data/udc" =
+xmlns:xsd=3D"http://www.w3.org/2001/XMLSchema" =
+xmlns:sub=3D"http://schemas.microsoft.com/sharepoint/soap/2002/1/alerts/"=
+ xmlns:ec=3D"http://www.w3.org/2001/04/xmlenc#" =
+xmlns:sp=3D"http://schemas.microsoft.com/sharepoint/" =
+xmlns:sps=3D"http://schemas.microsoft.com/sharepoint/soap/" =
+xmlns:xsi=3D"http://www.w3.org/2001/XMLSchema-instance" =
+xmlns:udcxf=3D"http://schemas.microsoft.com/data/udc/xmlfile" =
+xmlns:wf=3D"http://schemas.microsoft.com/sharepoint/soap/workflow/" =
+xmlns:mver=3D"http://schemas.openxmlformats.org/markup-compatibility/2006=
+" xmlns:m=3D"http://schemas.microsoft.com/office/2004/12/omml" =
+xmlns:mrels=3D"http://schemas.openxmlformats.org/package/2006/relationshi=
+ps" =
+xmlns:ex12t=3D"http://schemas.microsoft.com/exchange/services/2006/types"=
+ =
+xmlns:ex12m=3D"http://schemas.microsoft.com/exchange/services/2006/messag=
+es" xmlns:Z=3D"urn:schemas-microsoft-com:" =
+xmlns=3D"http://www.w3.org/TR/REC-html40">
+
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; =
+charset=3Dus-ascii">
+<meta name=3DGenerator content=3D"Microsoft Word 12 (filtered medium)">
+<style>
+<!--
+ /* Font Definitions */
+ @font-face
+	{font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;}
+ /* Style Definitions */
+ p.MsoNormal, li.MsoNormal, div.MsoNormal
+	{margin:0in;
+	margin-bottom:.0001pt;
+	font-size:11.0pt;
+	font-family:"Calibri","sans-serif";}
+a:link, span.MsoHyperlink
+	{mso-style-priority:99;
+	color:blue;
+	text-decoration:underline;}
+a:visited, span.MsoHyperlinkFollowed
+	{mso-style-priority:99;
+	color:purple;
+	text-decoration:underline;}
+span.EmailStyle17
+	{mso-style-type:personal-compose;
+	font-family:"Calibri","sans-serif";
+	color:windowtext;}
+.MsoChpDefault
+	{mso-style-type:export-only;}
+@page Section1
+	{size:8.5in 11.0in;
+	margin:1.0in 1.0in 1.0in 1.0in;}
+div.Section1
+	{page:Section1;}
+-->
+</style>
+<!--[if gte mso 9]><xml>
+ <o:shapedefaults v:ext=3D"edit" spidmax=3D"1026" />
+</xml><![endif]--><!--[if gte mso 9]><xml>
+ <o:shapelayout v:ext=3D"edit">
+  <o:idmap v:ext=3D"edit" data=3D"1" />
+ </o:shapelayout></xml><![endif]-->
+</head>
+
+<body lang=3DEN-US link=3Dblue vlink=3Dpurple>
+
+<div class=3DSection1>
+
+<p class=3DMsoNormal>Hi,<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>I&#8217;m not quite sure why no one in the =
+community hasn&#8217;t
+been able to answer my questions. <o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Simply (re)stated:<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>1) Are there hooks for dm/multipath events to =
+notify software?<o:p></o:p></p>
+
+<p class=3DMsoNormal>2) does path down/up fire up udev =
+rules?<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Thanks,<o:p></o:p></p>
+
+<p class=3DMsoNormal><o:p>&nbsp;</o:p></p>
+
+<p class=3DMsoNormal>Wim<o:p></o:p></p>
+
+</div>
+
+</body>
+
+</html>
+
+------_=_NextPart_001_01C8B6AE.76A87F0E--
+
+
+--===============1627070788==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1627070788==--
