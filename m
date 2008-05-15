@@ -1,215 +1,174 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 6/7] scsi_dh: Update RDAC device handler
-Date: Wed, 14 May 2008 19:50:30 -0700
-Message-ID: <1210819830.21974.268.camel@chandra-ubuntu>
-References: <20080514144334.09AA610B5DF@craiglockhart-ipmi.suse.de>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/7] scsi_dh: Implement generic device table handling
+Date: Thu, 15 May 2008 09:16:56 +0200
+Message-ID: <482BE368.3070506@suse.de>
+References: <20080514144310.1EDBC10B5DF@craiglockhart-ipmi.suse.de> <1210819551.21974.252.camel@chandra-ubuntu>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080514144334.09AA610B5DF@craiglockhart-ipmi.suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, dm-devel <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1210819551.21974.252.camel@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: sekharan@us.ibm.com
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi@vger.kernel.org, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2008-05-14 at 16:43 +0200, Hannes Reinecke wrote:
-> This patch updates the RDAC device handler to
-> refuse to attach to devices not supporting the
-> RDAC vpd pages.
-> 
-> Signed-off-by: Hannes Reinecke <hare@suse.de>
-> ---
->  drivers/scsi/device_handler/scsi_dh_rdac.c |   84 +++++++++++++++++----------
->  1 files changed, 53 insertions(+), 31 deletions(-)
-> 
-> diff --git a/drivers/scsi/device_handler/scsi_dh_rdac.c b/drivers/scsi/device_handler/scsi_dh_rdac.c
-> index e61cde6..dd9f515 100644
-> --- a/drivers/scsi/device_handler/scsi_dh_rdac.c
-> +++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
-> @@ -173,6 +173,11 @@ struct rdac_dh_data {
->  #define RDAC_STATE_ACTIVE	0
->  #define RDAC_STATE_PASSIVE	1
->  	unsigned char		state;
-> +
-> +#define RDAC_LUN_UNOWNED	0
-> +#define RDAC_LUN_OWNED		1
-> +#define RDAC_LUN_AVT		2
-> +	char			lun_state;
->  	unsigned char		sense[SCSI_SENSE_BUFFERSIZE];
->  	union			{
->  		struct c2_inquiry c2;
-> @@ -214,7 +219,7 @@ static struct request *get_rdac_req(struct scsi_device *sdev,
->  		return NULL;
->  	}
-> 
-> -	memset(&rq->cmd, 0, BLK_MAX_CDB);
-> +	memset(rq->cmd, 0, BLK_MAX_CDB);
->  	rq->sense = h->sense;
->  	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
->  	rq->sense_len = 0;
-> @@ -354,14 +359,16 @@ static int get_lun(struct scsi_device *sdev)
->  	err = submit_inquiry(sdev, 0xC8, sizeof(struct c8_inquiry));
->  	if (err == SCSI_DH_OK) {
->  		inqp = &h->inq.c8;
-> -		h->lun = inqp->lun[7]; /* currently it uses only one byte */
-> +		if (inqp->page_code != 0xc8)
-> +			return SCSI_DH_NOSYS;
-> +		if (inqp->page_id[0] != 'e' || inqp->page_id[1] != 'd' ||
-> +		    inqp->page_id[2] != 'i' || inqp->page_id[3] != 'd')
-> +			return SCSI_DH_NOSYS;
-> +		h->lun = scsilun_to_int((struct scsi_lun *)inqp->lun);
->  	}
->  	return err;
->  }
-> 
-> -#define RDAC_OWNED	0
-> -#define RDAC_UNOWNED	1
-> -#define RDAC_FAILED	2
->  static int check_ownership(struct scsi_device *sdev)
->  {
->  	int err;
-> @@ -370,17 +377,23 @@ static int check_ownership(struct scsi_device *sdev)
-> 
->  	err = submit_inquiry(sdev, 0xC9, sizeof(struct c9_inquiry));
->  	if (err == SCSI_DH_OK) {
-> -		err = RDAC_UNOWNED;
->  		inqp = &h->inq.c9;
->  		/*
->  		 * If in AVT mode or if the path already owns the LUN,
->  		 * return RDAC_OWNED;
->  		 */
+Chandra Seetharaman wrote:
+> On Wed, 2008-05-14 at 16:43 +0200, Hannes Reinecke wrote:
+> <snip>
+>=20
+>> +
+>> +struct scsi_dh_devinfo_list {
+>> +	struct list_head node;
+>> +	char vendor[9];
+>> +	char model[17];
+>> +	struct scsi_device_handler *handler;
+>> +};
+>=20
+> I do not see why we should be duplicating the information that
+> is already present in scsi_dh and is available here thru scsi_dh_list=
+=2E
+> Instead of walking thru the scsi_dh_dev_list we could walk thru
+> scsi_dh_list and get the same result.
+>
+Indeed we can. I originally did this as it would allow us to dynamicall=
+y
+add and remove entries from that list, which isn't possible with the
+static arrays provided by the individual device handler.
+But seeing that we can now manually attach any device I guess we can
+remove it.
+=20
+> On the other hand, if we could create a cache of the list of devices
+> (vendor-product-scsi_dh triplet) that has been attached, and walk
+> thru that list first before others during attach, it would help
+> (as we would guess there to be multiple of the same device).
+> =20
+Yes, but we can achieve that very same thing by walking the scsi_dh_lis=
+t.
+I'll fix it up.
 
-With the code change below the comment above is incorrect, please
-remove.
-> -		if (((inqp->avte_cvp >> 7) == 0x1) ||
-> -				 ((inqp->avte_cvp & 0x1) != 0))
-> -			err = RDAC_OWNED;
-> -	} else
-> -		err = RDAC_FAILED;
-> +		if ((inqp->avte_cvp >> 7) == 0x1) {
-> +			/* LUN in AVT mode */
-> +			sdev_printk(KERN_NOTICE, sdev,
-> +				    "%s: AVT mode detected\n",
-> +				    RDAC_NAME);
-> +			h->lun_state = RDAC_LUN_AVT;
-> +		} else if ((inqp->avte_cvp & 0x1) != 0) {
-> +			/* LUN was owned by the controller */
-> +			h->lun_state = RDAC_LUN_OWNED;
-> +		}
-> +	}
-> +
->  	return err;
->  }
-> 
-> @@ -478,24 +491,9 @@ static int rdac_activate(struct scsi_device *sdev)
->  	struct rdac_dh_data *h = get_rdac_data(sdev);
->  	int err = SCSI_DH_OK;
-> 
-> -	if (h->lun == UNINITIALIZED_LUN) {
-> -		err = get_lun(sdev);
-> -		if (err != SCSI_DH_OK)
-> -			goto done;
-> -	}
-> -
->  	err = check_ownership(sdev);
-> -	switch (err) {
-> -	case RDAC_UNOWNED:
-> -		break;
-> -	case RDAC_OWNED:
-> -		err = SCSI_DH_OK;
-> -		goto done;
-> -	case RDAC_FAILED:
-> -	default:
-> -		err = SCSI_DH_IO;
+>> +
+>> +int scsi_dh_handler_attach(struct scsi_device *sdev,
+>> +			   struct scsi_device_handler *scsi_dh);
+>> +int scsi_dh_handler_detach(struct scsi_device *sdev);
+>=20
+> Why is the prototype needed ?
+>=20
+> Can this be static ?
+>=20
+Probably a left over from earlier attempts. Will be removing them.
 
-What does this change yield ? (under check_ownership)
+>>  static struct scsi_device_handler *get_device_handler(const char *n=
+ame)
+>>  {
+>> @@ -33,7 +45,7 @@ static struct scsi_device_handler *get_device_hand=
+ler(const char *name)
+>>
+>=20
+> <snip>
+>=20
+>> +/*
+>> + * scsi_dh_handler_attach - Attach a device handler to a device
+>> + * @sdev - SCSI device the device handler should attach to
+>> + * @scsi_dh - The device handler to attach
+>> + */
+>> +int scsi_dh_handler_attach(struct scsi_device *sdev,
+>> +			   struct scsi_device_handler *scsi_dh)
+>> +{
+>> +	int err =3D -EBUSY;
+>> +
+>> +	if (sdev->scsi_dh_data)
+>> +		return err;
+>=20
+> One of the later patch check for scsi_dh to be same as
+> sdev->scsi_dh_data->scsi_dh. We can check for that here.
+>=20
+> One more thing: there are multiple places (in this file and
+> in the hardware handlers) the same check appear. Can we just
+> do it only here and remove all the others ?
+>
+Yes. Will do.
+=20
+>> +
+>> +	err =3D scsi_dh->attach(sdev);
+>=20
+> This assumes attach is available, but there is no assertion in
+> scsi_register_device_handler().  Same is the case with detach(). Eith=
+er
+> assert or check for the function availability here.
+Ok.
 
-> +	if (err != SCSI_DH_OK)
->  		goto done;
-> -	}
-> 
->  	if (!h->ctlr) {
->  		err = initialize_controller(sdev);
-> @@ -508,8 +506,9 @@ static int rdac_activate(struct scsi_device *sdev)
->  		if (err != SCSI_DH_OK)
->  			goto done;
->  	}
-> -
-> -	err = send_mode_select(sdev);
-> +	if (h->lun_state != RDAC_LUN_AVT &&
-> +	    !(h->lun_state & RDAC_LUN_OWNED))
+>> +
+>> +	return err;
+>> +}
+>> +
+>> +/*
+>> + * scsi_dh_handler_detach - Detach a device handler to a device
+>> + * @sdev - SCSI device the device handler should be detached from
+>> + */
+>> +int scsi_dh_handler_detach(struct scsi_device *sdev)
+>> +{
+>> +	struct scsi_device_handler *scsi_dh;
+>=20
+> can avoid the variable and call detach directly ?
+>> +
+>> +	if (!sdev->scsi_dh_data)
+>> +		return -ENODEV;
+>=20
+> Can't we just return 0 ?
+>=20
+Well, seeing that the actual detach callback is
+of type 'void', we should be using the same type here.
 
-This can be simplified by (h->lun_state == RDAC_LUN_UNOWNED) ?
-> +		err = send_mode_select(sdev);
->  done:
->  	return err;
->  }
-> @@ -606,6 +605,7 @@ static int rdac_bus_attach(struct scsi_device *sdev)
->  	struct scsi_dh_data *scsi_dh_data;
->  	struct rdac_dh_data *h;
->  	unsigned long flags;
-> +	int err;
-> 
->  	scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
->  			       + sizeof(*h) , GFP_KERNEL);
-> @@ -622,11 +622,33 @@ static int rdac_bus_attach(struct scsi_device *sdev)
->  	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
->  	sdev->scsi_dh_data = scsi_dh_data;
->  	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+>> +
+>> +	scsi_dh =3D sdev->scsi_dh_data->scsi_dh;
+>> +
+>> +	scsi_dh->detach(sdev);
+>> +
+>> +	return 0;
+>> +}
+>=20
+> <snip>
+>=20
+>>  	list_add(&scsi_dh->list, &scsi_dh_list);
+>>  	spin_unlock(&list_lock);
+>> +	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_a=
+dd);
+>> +	printk(KERN_INFO "%s: registered\n", scsi_dh->name);
+>=20
+> We can be more descriptive. Like "Hardware handler %s registered" or =
+some such.
+>=20
+Ok.
 
-need an initialization for lun_state.
+>> +	ret =3D SCSI_DH_OK;
+>>
+>>  done:
+>>  	return ret;
+> <snip>
+>=20
+>> +	}
+>>  	list_del(&scsi_dh->list);
+>>  	spin_unlock(&list_lock);
+>> +	printk(KERN_INFO "%s: unregistered\n", scsi_dh->name);
+>=20
+> Same here.
+>=20
+OK.
 
-> +
-> +	err = get_lun(sdev);
-> +	if (err != SCSI_DH_OK)
-> +		goto failed;
-> +
-> +	err = check_ownership(sdev);
-> +	if (err != SCSI_DH_OK)
-> +		goto failed;
-> +
-> +	sdev_printk(KERN_NOTICE, sdev,
-> +		    "%s: LUN %d (state %d)\n",
-> +		    RDAC_NAME, h->lun, h->lun_state);
+Thanks for the review. I'll post an update soon.
 
-instead of printing lun_state as %d it would be more readable it is a
-string.
+Cheers,
 
-> +
->  	try_module_get(THIS_MODULE);
-> 
-> -	sdev_printk(KERN_NOTICE, sdev, "Attached %s\n", RDAC_NAME);
-> +	sdev_printk(KERN_NOTICE, sdev, "%s: Attached\n", RDAC_NAME);
-> 
->  	return 0;
-> +
-> +failed:
-> +	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
-> +	sdev->scsi_dh_data = NULL;
-> +	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
-> +	kfree(scsi_dh_data);
-> +	sdev_printk(KERN_ERR, sdev, "%s: not attached\n",
-> +		    RDAC_NAME);
-> +	return -EINVAL;
->  }
-> 
->  static void rdac_bus_detach( struct scsi_device *sdev )
-> @@ -645,7 +667,7 @@ static void rdac_bus_detach( struct scsi_device *sdev )
->  		kref_put(&h->ctlr->kref, release_controller);
->  	kfree(scsi_dh_data);
->  	module_put(THIS_MODULE);
-> -	sdev_printk(KERN_NOTICE, sdev, "Detached %s\n", RDAC_NAME);
-> +	sdev_printk(KERN_NOTICE, sdev, "%s: Detached\n", RDAC_NAME);
->  }
-> 
->  static int __init rdac_init(void)
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
