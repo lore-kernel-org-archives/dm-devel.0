@@ -1,15 +1,16 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: simple question... to tough to answer?
-Date: Fri, 16 May 2008 08:27:07 -0700
-Message-ID: <20080516152707.GA24657@linux.vnet.ibm.com>
-References: <7BC3A7DB53028743B733D298244A8C626E3A0D@sjcpexch02.citrite.net>
-	<482D6DB1.5080709@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH 1/7] scsi_dh: Implement generic device table
+	handling
+Date: Fri, 16 May 2008 11:32:59 -0700
+Message-ID: <1210962779.21974.330.camel@chandra-ubuntu>
+References: <20080514144310.1EDBC10B5DF@craiglockhart-ipmi.suse.de>
+	<1210819551.21974.252.camel@chandra-ubuntu> <482BE368.3070506@suse.de>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <482D6DB1.5080709@suse.de>
+In-Reply-To: <482BE368.3070506@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,48 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, dm-devel <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hannes Reinecke <hare@suse.de> wrote:
-> Hi Wim,
->
-> Wim Colgate wrote:
->> Hi,
->>
->> I???m not quite sure why no one in the community hasn???t been able to 
->> answer my questions.
->>
->> Simply (re)stated:
->>
->> 1) Are there hooks for dm/multipath events to notify software?
->>
-> Yes. There is the general dm_event mechanism (which I wouldn't recommend)
-> or with newer kernels you'll get netlink events from multipath for any
-> path-related events.
->
 
-You can look at the documentation in recent kernels trees to get an
-example of the event attributes provided with each event using the
-uevent interface: Documentation/device-mapper/dm-uevent.txt
+On Thu, 2008-05-15 at 09:16 +0200, Hannes Reinecke wrote:
+<snip>
 
->> 2) does path down/up fire up udev rules?
->>
-> Not as such. As stated above we should be sending out netlink events for
-> path up/down events, but to my knowledge no-one is taking advantage
-> of them. Certainly not udev in its default setting nor multipath.
+> 
+> > On the other hand, if we could create a cache of the list of devices
+> > (vendor-product-scsi_dh triplet) that has been attached, and walk
+> > thru that list first before others during attach, it would help
+> > (as we would guess there to be multiple of the same device).
+> >  
+> Yes, but we can achieve that very same thing by walking the scsi_dh_list.
+> I'll fix it up.
 
-One should note that if using the the current git version of the multipath
-tools and one wants to experiment with additional events one would need to
-add a udev rule "(i.e., RUN+="socket:...") You can reference this previous
-email for context.
-http://article.gmane.org/gmane.linux.scsi/36165
+interested in seeing that.
 
-On some what related note. With all the work around making sure we can run
-in low memory situations we should make a choice to use raw netlink
-interface or the udev abstract namespace socket.
-
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+<snip>
