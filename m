@@ -1,23 +1,17 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: Re: [PATCH] Implement barrier support for single device
-	DM devices
-Date: Fri, 16 May 2008 23:48:21 +0200
-Message-ID: <482E0125.7070701@firstfloor.org>
-References: <20080215120821.GA8267@basil.nowhere.org>	
-	<20080215122002.GM29914@agk.fab.redhat.com>	
-	<47B58EAA.8040405@msgid.tls.msk.ru>	
-	<20080215142010.GA29552@one.firstfloor.org>	
-	<20080215141229.GB1788@agk.fab.redhat.com>
-	<47B97E87.6040209@emc.com>	 <47B9870B.8060005@msgid.tls.msk.ru>
-	<47B98D8A.7090506@emc.com>	
-	<20080219024533.GC4066@agk.fab.redhat.com>
-	<170fa0d20805161255i31d768ceh3b15c2640f06524b@mail.gmail.com>
+From: "Craig Simpson" <csimpson@visto.com>
+Subject: RE: multipathd: error calling out mpath_prio_hds_modular
+Date: Fri, 16 May 2008 16:19:28 -0700
+Message-ID: <ABFD05FF09D13E4883B757E75603624D011E9514@ex-sea1.vistocorp.com>
+References: <1210966544.12901.51.camel@plop><ABFD05FF09D13E4883B757E75603624D011E94FF@ex-sea1.vistocorp.com>
+	<20080516210137.GA1286@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <170fa0d20805161255i31d768ceh3b15c2640f06524b@mail.gmail.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20080516210137.GA1286@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,16 +21,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@gmail.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Michael Tokarev <mjt@tls.msk.ru>, agk@redhat.com, linux-kernel@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Mike Snitzer wrote:
 
-> Given that you feel supporting barriers on single device DM targets is
-> a good thing, what is the status of such support (like Andi's patch)
-> making it upstream?
 
-It's not in 2.6.26-rc2. I was also a little surprised by it missing.
+I put a symlink in /=20
+ln -s  /sbin/mpath_prio_hds_modular mpath_prio_hds_modular
 
--Andi
+But it still has the error.=20
+
+Where would I edit my /etc/multipath.conf to set this?=20
+
+Thanks!
+Craig
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of malahal@us.ibm.com
+Sent: Friday, May 16, 2008 2:02 PM
+To: dm-devel@redhat.com
+Subject: Re: [dm-devel] multipathd: error calling out
+mpath_prio_hds_modular
+
+The multipathd tried calling mpath_prio_hds_modular program but it could
+not find it! There is a bug in some version of RHEL where multipath has
+"mpath_prio_hds_modular" instead of "/sbin/mpath_prio_hds_modular".
+Update your multipath tools package or fix it in your
+/etc/multipath.conf (this requires some careful modifications!)
+
+--Malahal.
+PS: since execv looks for your executable file in the 'cwd', you can
+probably make it work by just copying /sbin/mpath_prio_hds_modular to
+/mpath_prio_hds_modular (I am assuming that multipathd daemon makes "/"
+as it ***home*** before calling this.)
+
+Craig Simpson [csimpson@visto.com] wrote:
+>=20
+> My RedHat 5.1 ES server (actually it is that but rebranded as Oracles
+> latest Linux) is  logging this in /var/log/message all the time.=20
+>=20
+> It is attached to a Hitachi SAN device.=20
+>=20
+> All seems to be working OK, but these errors go on and on.=20
+>=20
+> Don't get what they mean?
+>=20
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 65:0
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 65:16
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 65:32
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 65:48
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 65:64
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 65:80
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 8:0
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 8:16
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 8:32
+> May 16 19:48:01 wpe01 multipathd: error calling out
+> mpath_prio_hds_modular 8:48
+>=20
+>=20
+> Craig
+>=20
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
