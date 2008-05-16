@@ -1,56 +1,46 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./Makefile path_priority/pp_hp ...
-Date: 16 May 2008 20:07:29 -0000
-Message-ID: <20080516200729.31347.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH 3/7] scsi_dh: add generic SPC-3 alua handler
+Date: Fri, 16 May 2008 22:18:31 +0200
+Message-ID: <20080516201830.GB16538@kernel.dk>
+References: <20080514144319.543D910B5DF@craiglockhart-ipmi.suse.de> <1210819780.21974.264.camel@chandra-ubuntu> <482BF09E.2070905@suse.de> <1210963077.21974.334.camel@chandra-ubuntu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1210963077.21974.334.camel@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Chandra Seetharaman <sekharan@us.ibm.com>
+Cc: Hannes Reinecke <hare@suse.de>, James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2008-05-16 20:07:27
+On Fri, May 16 2008, Chandra Seetharaman wrote:
+> It is a question to Jens :) 
+> 
+> On Thu, 2008-05-15 at 10:13 +0200, Hannes Reinecke wrote:
+> > Chandra Seetharaman wrote:
+> > > I do not know the functionality of this module. So, my comments are only
+> > > related to code.
+> > > 
+> > > blk_request_rq() frees up the request before it returns (in
+> > > blk_end_sync_rq()). So, there is no need for blk_put_request().
+> > > 
+> > Indeed. But this opens up another question:
+> > 
+> > By the time blk_execute_rq() returns, the request is already
+> > put back onto the queue.
+> > That means that I shouldn't access rq->errors any more, as
+> > the request might have been reused already.
+> > But blk_execute_rq() returns -EIO for any error, making it
+> > impossible to signal a proper error here.
+> > So how do I get the contents of rq->errors safely?
+> > 
+> > Cheers,
+> > 
+> > Hannes
 
-Modified files:
-	.              : Makefile 
-Added files:
-	path_priority/pp_hp_sw: Makefile pp_hp_sw.c 
+blk_get_request() and blk_put_request() when done. See how
+block/scsi_ioctl.c:sg_io() does just that.
 
-Log message:
-	Fix for bz #438037
-	added Dave Wysochanski's hp storageworks priority callout patch
+-- 
+Jens Axboe
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/Makefile.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.6.2.2&r2=1.6.2.3
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_hp_sw/Makefile.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=NONE&r2=1.1.2.1
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_hp_sw/pp_hp_sw.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=NONE&r2=1.1.2.1
-
---- multipath-tools/Makefile	2007/07/24 20:35:24	1.6.2.2
-+++ multipath-tools/Makefile	2008/05/16 20:07:26	1.6.2.3
-@@ -23,13 +23,15 @@
- BUILDDIRS = libmultipath libcheckers path_priority/pp_emc \
- 	    path_priority/pp_alua path_priority/pp_netapp \
- 	    path_priority/pp_hds_modular path_priority/pp_tpc \
-+	    path_priority/pp_hp_sw \
- 	    multipath multipathd kpartx cciss_id
- ALLDIRS	= $(shell find . -type d -maxdepth 1 -mindepth 1)
- 
- VERSION = $(shell basename ${PWD} | cut -d'-' -f3)
- INSTALLDIRS = multipath multipathd kpartx path_priority/pp_emc \
- 	     path_priority/pp_alua path_priority/pp_netapp \
--	     path_priority/pp_hds_modular path_priority/pp_tpc cciss_id
-+	     path_priority/pp_hds_modular path_priority/pp_tpc \
-+	     path_priority/pp_hp_sw cciss_id
- 
- 
- all: recurse
