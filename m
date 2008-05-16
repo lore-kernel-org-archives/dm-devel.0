@@ -1,15 +1,23 @@
-From: malahal@us.ibm.com
-Subject: Re: multipathd: error calling out mpath_prio_hds_modular
-Date: Fri, 16 May 2008 14:01:37 -0700
-Message-ID: <20080516210137.GA1286@us.ibm.com>
-References: <1210966544.12901.51.camel@plop>
-	<ABFD05FF09D13E4883B757E75603624D011E94FF@ex-sea1.vistocorp.com>
+From: Andi Kleen <andi@firstfloor.org>
+Subject: Re: Re: [PATCH] Implement barrier support for single device
+	DM devices
+Date: Fri, 16 May 2008 23:48:21 +0200
+Message-ID: <482E0125.7070701@firstfloor.org>
+References: <20080215120821.GA8267@basil.nowhere.org>	
+	<20080215122002.GM29914@agk.fab.redhat.com>	
+	<47B58EAA.8040405@msgid.tls.msk.ru>	
+	<20080215142010.GA29552@one.firstfloor.org>	
+	<20080215141229.GB1788@agk.fab.redhat.com>
+	<47B97E87.6040209@emc.com>	 <47B9870B.8060005@msgid.tls.msk.ru>
+	<47B98D8A.7090506@emc.com>	
+	<20080219024533.GC4066@agk.fab.redhat.com>
+	<170fa0d20805161255i31d768ceh3b15c2640f06524b@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <ABFD05FF09D13E4883B757E75603624D011E94FF@ex-sea1.vistocorp.com>
+In-Reply-To: <170fa0d20805161255i31d768ceh3b15c2640f06524b@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +27,16 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Mike Snitzer <snitzer@gmail.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Michael Tokarev <mjt@tls.msk.ru>, agk@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-The multipathd tried calling mpath_prio_hds_modular program but it could
-not find it! There is a bug in some version of RHEL where multipath has
-"mpath_prio_hds_modular" instead of "/sbin/mpath_prio_hds_modular".
-Update your multipath tools package or fix it in your
-/etc/multipath.conf (this requires some careful modifications!)
+Mike Snitzer wrote:
 
---Malahal.
-PS: since execv looks for your executable file in the 'cwd', you can
-probably make it work by just copying /sbin/mpath_prio_hds_modular to
-/mpath_prio_hds_modular (I am assuming that multipathd daemon makes "/"
-as it ***home*** before calling this.)
+> Given that you feel supporting barriers on single device DM targets is
+> a good thing, what is the status of such support (like Andi's patch)
+> making it upstream?
 
-Craig Simpson [csimpson@visto.com] wrote:
-> 
-> My RedHat 5.1 ES server (actually it is that but rebranded as Oracles
-> latest Linux) is  logging this in /var/log/message all the time. 
-> 
-> It is attached to a Hitachi SAN device. 
-> 
-> All seems to be working OK, but these errors go on and on. 
-> 
-> Don't get what they mean?
-> 
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 65:0
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 65:16
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 65:32
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 65:48
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 65:64
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 65:80
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 8:0
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 8:16
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 8:32
-> May 16 19:48:01 wpe01 multipathd: error calling out
-> mpath_prio_hds_modular 8:48
-> 
-> 
-> Craig
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+It's not in 2.6.26-rc2. I was also a little surprised by it missing.
+
+-Andi
