@@ -1,9 +1,9 @@
 From: "Craig Simpson" <csimpson@visto.com>
 Subject: RE: multipathd: error calling out mpath_prio_hds_modular
-Date: Fri, 16 May 2008 16:19:28 -0700
-Message-ID: <ABFD05FF09D13E4883B757E75603624D011E9514@ex-sea1.vistocorp.com>
-References: <1210966544.12901.51.camel@plop><ABFD05FF09D13E4883B757E75603624D011E94FF@ex-sea1.vistocorp.com>
-	<20080516210137.GA1286@us.ibm.com>
+Date: Fri, 16 May 2008 16:34:23 -0700
+Message-ID: <ABFD05FF09D13E4883B757E75603624D011E9515@ex-sea1.vistocorp.com>
+References: <1210966544.12901.51.camel@plop><ABFD05FF09D13E4883B757E75603624D011E94FF@ex-sea1.vistocorp.com><20080516210137.GA1286@us.ibm.com>
+	<ABFD05FF09D13E4883B757E75603624D011E9514@ex-sea1.vistocorp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -11,7 +11,7 @@ Content-Type: text/plain;
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <20080516210137.GA1286@us.ibm.com>
+In-Reply-To: <ABFD05FF09D13E4883B757E75603624D011E9514@ex-sea1.vistocorp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,6 +23,22 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+
+The symlink didn't work, but coping the file to / worked.=20
+
+YES!!!
+
+Thank You!
+Craig
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Craig Simpson
+Sent: Friday, May 16, 2008 4:19 PM
+To: device-mapper development
+Subject: RE: [dm-devel] multipathd: error calling out
+mpath_prio_hds_modular
 
 
 
@@ -95,6 +111,11 @@ Craig Simpson [csimpson@visto.com] wrote:
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
 
 --
 dm-devel mailing list
