@@ -1,42 +1,41 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 1/7] scsi_dh: Implement generic device table
-	handling
-Date: Fri, 16 May 2008 11:32:59 -0700
-Message-ID: <1210962779.21974.330.camel@chandra-ubuntu>
-References: <20080514144310.1EDBC10B5DF@craiglockhart-ipmi.suse.de>
-	<1210819551.21974.252.camel@chandra-ubuntu> <482BE368.3070506@suse.de>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+Subject: Re: [PATCH 3/7] scsi_dh: add generic SPC-3 alua handler
+Date: Fri, 16 May 2008 11:37:57 -0700
+Message-ID: <1210963077.21974.334.camel@chandra-ubuntu>
+References: <20080514144319.543D910B5DF@craiglockhart-ipmi.suse.de>
+	 <1210819780.21974.264.camel@chandra-ubuntu>  <482BF09E.2070905@suse.de>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <482BE368.3070506@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <482BF09E.2070905@suse.de>
+Sender: linux-scsi-owner@vger.kernel.org
 To: Hannes Reinecke <hare@suse.de>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, dm-devel <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi@vger.kernel.org, device-mapper development <dm-devel@redhat.com>, "jens.axboe" <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
+It is a question to Jens :) 
 
-On Thu, 2008-05-15 at 09:16 +0200, Hannes Reinecke wrote:
-<snip>
-
+On Thu, 2008-05-15 at 10:13 +0200, Hannes Reinecke wrote:
+> Chandra Seetharaman wrote:
+> > I do not know the functionality of this module. So, my comments are only
+> > related to code.
+> > 
+> > blk_request_rq() frees up the request before it returns (in
+> > blk_end_sync_rq()). So, there is no need for blk_put_request().
+> > 
+> Indeed. But this opens up another question:
 > 
-> > On the other hand, if we could create a cache of the list of devices
-> > (vendor-product-scsi_dh triplet) that has been attached, and walk
-> > thru that list first before others during attach, it would help
-> > (as we would guess there to be multiple of the same device).
-> >  
-> Yes, but we can achieve that very same thing by walking the scsi_dh_list.
-> I'll fix it up.
+> By the time blk_execute_rq() returns, the request is already
+> put back onto the queue.
+> That means that I shouldn't access rq->errors any more, as
+> the request might have been reused already.
+> But blk_execute_rq() returns -EIO for any error, making it
+> impossible to signal a proper error here.
+> So how do I get the contents of rq->errors safely?
+> 
+> Cheers,
+> 
+> Hannes
 
-interested in seeing that.
-
-<snip>
