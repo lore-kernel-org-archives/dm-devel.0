@@ -1,12 +1,22 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Read-Only devices, multipath and more
-Date: Fri, 16 May 2008 21:35:44 +0200
-Message-ID: <1210966544.12901.51.camel@plop>
+From: "Mike Snitzer" <snitzer@gmail.com>
+Subject: Re: Re: [PATCH] Implement barrier support for single
+	device DM devices
+Date: Fri, 16 May 2008 15:55:30 -0400
+Message-ID: <170fa0d20805161255i31d768ceh3b15c2640f06524b@mail.gmail.com>
+References: <20080215120821.GA8267@basil.nowhere.org>
+	<20080215122002.GM29914@agk.fab.redhat.com>
+	<47B58EAA.8040405@msgid.tls.msk.ru>
+	<20080215142010.GA29552@one.firstfloor.org>
+	<20080215141229.GB1788@agk.fab.redhat.com> <47B97E87.6040209@emc.com>
+	<47B9870B.8060005@msgid.tls.msk.ru> <47B98D8A.7090506@emc.com>
+	<20080219024533.GC4066@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080219024533.GC4066@agk.fab.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,74 +26,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
-Cc: Christophe Varoqui <christophe.varoqui@free.fr>
+To: device-mapper development <dm-devel@redhat.com>, agk@redhat.com, Ric Wheeler <ric@emc.com>, Michael Tokarev <mjt@tls.msk.ru>, Andi Kleen <andi@firstfloor.org>, linux-kernel@vge
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, Feb 18, 2008 at 10:45 PM, Alasdair G Kergon <agk@redhat.com> wrote:
+> On Mon, Feb 18, 2008 at 08:52:10AM -0500, Ric Wheeler wrote:
+>  > I understand that. Most of the time, dm or md devices are composed of
+>  > uniform components which will uniformly support (or not) the cache flush
+>  > commands used by barriers.
+>
+>  As a dm developer, it's "almost none of the time" because trivial
+>  configurations aren't the ones that require lots of testing effort.
+>
+>  Let's stop arguing over "most of the time":-)
+>
+>  As Andi points out, there are certainly enough real-world users of
+>  "single linear or crypt target using one physical device" for it to be
+>  worth our supporting it.
 
-I'll try to summarize the facts about how linux kernel (scsi and
-device-mapper) and userspace (multipath-tools) handles devices
-RO->RW->RO changes.
+Hi Alasdair,
 
-The sample setup is 2 x EMC Symmetrix systems, with a pair of logical
-unit configured for synchronous inter-system replication (SRDF). In a
-normal situation, the LU receiving the data updates (the R2) is RO,
-while the LU emitting the data updates (the R1) is RW. Let's take this
-state as a starting point.
+Given that you feel supporting barriers on single device DM targets is
+a good thing, what is the status of such support (like Andi's patch)
+making it upstream?
 
-Server S1 sees R1. Server S2 sees R2
-
----
-
-t0)
-storage state: R1 (RW) <- sync -> R2 (RO)=20
-action: Linux system on S2 freshly rebooted.
-fact: scsi paths to R2 are reported read-only by "hdparm -r"
-fact: device-mapper refuse to load a RW multipath table on these paths
-(ie without libdevmapper:set_task_set_ro())
-
-question: should change this behaviour to allow to load a RW multipath
-table on these paths and let the IO be failed by the storage hardware ?
-
-t1)
-=EF=BB=BFstorage state: R1 (RW) <- split -> R2 (RW)=20
-action: none
-fact: scsi paths to R2 are still reported read-only by "hdparm -r"
-fact: device-mapper still refuse to load a RW multipath table on these
-paths
-=EF=BB=BFfact: if a RO multipath table was loaded at t0, it is still RO a=
-t t1
-
-question: shouldn't the write protection change be detected by the scsi
-kernel subsystem, or should we implement a userspace device polling ?
-question: how do we detect from userspace the device write protection
-change ? (trying to load a multipath devmap is not a good test).
-sg-utils maybe ? in multipathd or in a separe daemon, as the issue
-extends beyond multipathing ?
-
-action: echo 1>/sys/block/sd{a,b}/device/rescan
-fact: the write protection flags are updated to the correct RW state and
-multipath then works as expected
-
-question: is there a softer way to update the write proctection flags ?
-
-t2)
-=EF=BB=BFstorage state: R1 (RW) <- resync -> R2 (RO)=20
-action: none
-fact: the RW multipath devmap is still loaded
-
-question: so why not permit to load it in the first place ?
-
----
-
-This scenario shows there is an annoying lack of consistency and
-symmetry in the Linux behaviour. I'm willing to implement whatever is
-expected from the multipath-tools. But can we define what is expected ?
-
-Alasdair proposed to add more explicit table loading ioctl return code
-when the failure is due to this ready-only paths issue (E_ROFS for
-example). Which comes short of solving the RO->RW devmap promotion=20
-
-Please advise.
-Christophe Varoqui (keep me on cc:)
+Mike
