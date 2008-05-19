@@ -1,70 +1,78 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Deadlock on RHEL4 with kpartx/queue_if_no_path - any way
-	out?
-Date: Mon, 19 May 2008 11:00:46 +0200
-Message-ID: <483141BE.2010304@linpro.no>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 7/7] scsi_dh: attach to hardware handler from dm-mpath
+Date: Mon, 19 May 2008 12:21:36 +0200
+Message-ID: <483154B0.7020500@suse.de>
+References: <20080514144338.714F910B5DF@craiglockhart-ipmi.suse.de>	 <1210819801.21974.266.camel@chandra-ubuntu>  <482C0676.9070004@suse.de> <1210964001.21974.351.camel@chandra-ubuntu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1210964001.21974.351.camel@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: sekharan@us.ibm.com
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi.  Due to a PEBCAK and wrong paths being removed I've now ended up
-in this situation:
+Hi Chandra,
 
-$ multipath -ll multimedia
-multimedia (3600a0b80002984ae00001da546c27de1)
-[size=200 GB][features="1 queue_if_no_path"][hwhandler="0"]
-\_ round-robin 0 [enabled]
- \_ #:#:#:#  -    65:16  [failed][faulty]
+Chandra Seetharaman wrote:
+> On Thu, 2008-05-15 at 11:46 +0200, Hannes Reinecke wrote:
+>> Hi Chandra,
+>>
+>> Chandra Seetharaman wrote:
+>>> What is the purpose of this feature ?
+>>>
+>>> With dh_state functionality, one could associate a handler to a new
+>>> device and then if one does "multipath", the hardware handler would=
+ be
+>>> associated with the multipath device. What are we achieving by this=
+ ?
+>>>
+>> This allows multipath to override the device tables build into
+>> the device handler. Reason here is that multipath has a configuratio=
+n
+>> file which allows the user to override the build-in defaults.
+>> And this includes the hardware handler, so we need to make sure that
+>> the hardware handler is indeed attached.
+>=20
+> Hardware handler's existence is currently been verified during parsin=
+g
+> (by doing a request_module() followed by scsi_dh_handler_exist() in
+> parse_hw_handler()).
+>=20
+Yes, but this only verifies that the _handler_ exist, not that it is
+attached to this sdev
 
-I readded the paths with 'echo - - - > /sys/class/scsi_host/host*/scan',
-but the map does not get healthy - all attempts to reload the map with
-the multipath tools ends up in blocking I/O, using dmsetup directly I
-only get failures due to the map being busy.
+> Hardware handler module is attached to the device itself (thru
+> try_module_get() in attach), so, the module will exist as long as the
+> device exists.
+>=20
+Not quite. It's only attached automatically if the device map has
+an entry for this module.
+However, given this patchset we can now easily manually attach any
+device to the device handler. Or at least try to do so.
+It's then up to the device handler to refuse binding if none of
+the necessary pages/information etc. was found.
 
-This is how the process list looks:
+> Hence, there is no need to attach it again from the multipath layer.
+>=20
+Yes, you do. The user might have it's own custom configuration file,
+covering new/unknown/unhandled/testing devices, which out of necessity
+are _not_ hardcoded in the device table of the device handler.
+So multipath has to have a way of attaching device handler to those
+devices, too.
 
-$ ps axf
-  PID TTY      STAT   TIME COMMAND
-[...]
-11598 ?        SLl    0:01 /sbin/multipathd
-12080 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-12087 ?        S<     0:00  \_ /sbin/dmsetup ls -j 253 -m 3 --target multipath --exec /sbin/kpartx -a
-12088 ?        D<     0:00      \_ /sbin/kpartx -a /dev/mapper/multimedia
-12714 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-12720 ?        S<     0:00  \_ /sbin/multipath -v0 /dev/sdb
-12794 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-12800 ?        D<     0:00  \_ /sbin/multipath -v0 /dev/sdc
-12831 ?        D      0:00 multipath -v 2
-14132 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-14139 ?        S<     0:00  \_ /sbin/dmsetup ls -j 253 -m 3 --target multipath --exec /sbin/kpartx -a
-14140 ?        D<     0:00      \_ /sbin/kpartx -a /dev/mapper/multimedia
-14219 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-14225 ?        D<     0:00  \_ /sbin/multipath -v0 /dev/sdd
-14255 ?        D      0:00 multipath -v 2
-15312 ?        D      0:00 multipath /dev/sdd
-17032 ?        D      0:00 multipath
- 1008 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
- 1014 ?        D<     0:00  \_ /sbin/multipath -v0 /dev/sde
+Cheers,
 
-...I assume the kpartx process is locking the map so no changes can be
-done, but since there's no alive paths and queue_if_no_path is active,
-it will never return, and I'm stuck in a deadlock.
-
-Is there any way out of this save a reboot?
-
-Regards,
--- 
-Tore Anderson
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
