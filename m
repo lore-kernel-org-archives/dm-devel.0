@@ -1,9 +1,8 @@
 From: "Craig Simpson" <csimpson@visto.com>
-Subject: RE: Deadlock on RHEL4 with kpartx/queue_if_no_path - any
-	wayout?
-Date: Mon, 19 May 2008 15:18:23 -0700
-Message-ID: <ABFD05FF09D13E4883B757E75603624DF9BF7B@ex-sea1.vistocorp.com>
-References: <483141BE.2010304@linpro.no>
+Subject: RE: "[undef] [ready] [orphan]" ?
+Date: Mon, 19 May 2008 15:31:49 -0700
+Message-ID: <ABFD05FF09D13E4883B757E75603624DF9BF7C@ex-sea1.vistocorp.com>
+References: <ABFD05FF09D13E4883B757E75603624DF9BF7A@ex-sea1.vistocorp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -11,7 +10,7 @@ Content-Type: text/plain;
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <483141BE.2010304@linpro.no>
+In-Reply-To: <ABFD05FF09D13E4883B757E75603624DF9BF7A@ex-sea1.vistocorp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,10 +25,210 @@ List-Id: dm-devel.ids
 
 
 
-multipathd -k
-reconfigure
+Also if I do a multipath -l all looks good?=20
 
-maybe....
+[root@oralnx01 sbin]# multipath -l
+asm09 (1HITACHI_730600240008) dm-15 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:8  sdaw 67:0    [active][undef]
+ \_ 1:0:0:8  sdcp 69:208  [active][undef]
+ \_ 1:0:1:8  sded 128:80  [active][undef]
+ \_ 0:0:0:8  sdi  8:128   [active][undef]
+mpath19 (1HITACHI_730600240018) dm-34 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:18 sdbg 67:160  [active][undef]
+ \_ 1:0:1:18 sden 128:240 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 1:0:0:18 sdcz 70:112  [active][undef]
+ \_ 0:0:0:18 sds  65:32   [active][undef]
+mpath0 (1HITACHI_730600240026) dm-6 HITACHI,DF600F
+[size=3D15G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:26 sdbo 68:32   [active][undef]
+ \_ 1:0:1:26 sdev 129:112 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:0:26 sdaa 65:160  [active][undef]
+ \_ 1:0:0:26 sddh 70:240  [active][undef]
+vote3 (1HITACHI_730600240024) dm-43 HITACHI,DF600F
+[size=3D1.0G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:24 sdbm 68:0    [active][undef]
+ \_ 1:0:0:24 sddf 70:208  [active][undef]
+ \_ 1:0:1:24 sdet 129:80  [active][undef]
+ \_ 0:0:0:24 sdy  65:128  [active][undef]
+asm08 (1HITACHI_730600240007) dm-14 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:7  sdav 66:240  [active][undef]
+ \_ 1:0:0:7  sdco 69:192  [active][undef]
+ \_ 1:0:1:7  sdec 128:64  [active][undef]
+ \_ 0:0:0:7  sdh  8:112   [active][undef]
+asm10 (1HITACHI_730600240009) dm-23 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:9  sdax 67:16   [active][undef]
+ \_ 1:0:0:9  sdcq 69:224  [active][undef]
+ \_ 1:0:1:9  sdee 128:96  [active][undef]
+ \_ 0:0:0:9  sdj  8:144   [active][undef]
+mpath18 (1HITACHI_730600240017) dm-33 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 1:0:0:17 sdcy 70:96   [active][undef]
+ \_ 0:0:0:17 sdr  65:16   [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:17 sdbf 67:144  [active][undef]
+ \_ 1:0:1:17 sdem 128:224 [active][undef]
+vote2 (1HITACHI_730600240023) dm-42 HITACHI,DF600F
+[size=3D1.0G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:23 sdbl 67:240  [active][undef]
+ \_ 1:0:0:23 sdde 70:192  [active][undef]
+ \_ 1:0:1:23 sdes 129:64  [active][undef]
+ \_ 0:0:0:23 sdx  65:112  [active][undef]
+ocr2 (1HITACHI_730600240021) dm-37 HITACHI,DF600F
+[size=3D1.0G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:21 sdbj 67:208  [active][undef]
+ \_ 1:0:0:21 sddc 70:160  [active][undef]
+ \_ 1:0:1:21 sdeq 129:32  [active][undef]
+ \_ 0:0:0:21 sdv  65:80   [active][undef]
+mpath20 (1HITACHI_730600240019) dm-35 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 1:0:0:19 sdda 70:128  [active][undef]
+ \_ 0:0:0:19 sdt  65:48   [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:19 sdbh 67:176  [active][undef]
+ \_ 1:0:1:19 sdeo 129:0   [active][undef]
+asm07 (1HITACHI_730600240006) dm-13 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:6  sdau 66:224  [active][undef]
+ \_ 1:0:0:6  sdcn 69:176  [active][undef]
+ \_ 1:0:1:6  sdeb 128:48  [active][undef]
+ \_ 0:0:0:6  sdg  8:96    [active][undef]
+mpath17 (1HITACHI_730600240016) dm-32 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:16 sdbe 67:128  [active][undef]
+ \_ 1:0:1:16 sdel 128:208 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 1:0:0:16 sdcx 70:80   [active][undef]
+ \_ 0:0:0:16 sdq  65:0    [active][undef]
+vote1 (1HITACHI_730600240022) dm-39 HITACHI,DF600F
+[size=3D1.0G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:22 sdbk 67:224  [active][undef]
+ \_ 1:0:0:22 sddd 70:176  [active][undef]
+ \_ 1:0:1:22 sder 129:48  [active][undef]
+ \_ 0:0:0:22 sdw  65:96   [active][undef]
+ocr1 (1HITACHI_730600240020) dm-36 HITACHI,DF600F
+[size=3D1.0G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:20 sdbi 67:192  [active][undef]
+ \_ 1:0:0:20 sddb 70:144  [active][undef]
+ \_ 1:0:1:20 sdep 129:16  [active][undef]
+ \_ 0:0:0:20 sdu  65:64   [active][undef]
+asm06 (1HITACHI_730600240005) dm-12 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:5  sdat 66:208  [active][undef]
+ \_ 1:0:0:5  sdcm 69:160  [active][undef]
+ \_ 1:0:1:5  sdea 128:32  [active][undef]
+ \_ 0:0:0:5  sdf  8:80    [active][undef]
+mpath16 (1HITACHI_730600240015) dm-31 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 1:0:0:15 sdcw 70:64   [active][undef]
+ \_ 0:0:0:15 sdp  8:240   [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:15 sdbd 67:112  [active][undef]
+ \_ 1:0:1:15 sdek 128:192 [active][undef]
+asm05 (1HITACHI_730600240004) dm-11 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:4  sdas 66:192  [active][undef]
+ \_ 1:0:0:4  sdcl 69:144  [active][undef]
+ \_ 1:0:1:4  sddz 128:16  [active][undef]
+ \_ 0:0:0:4  sde  8:64    [active][undef]
+mpath15 (1HITACHI_730600240014) dm-30 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:14 sdbc 67:96   [active][undef]
+ \_ 1:0:1:14 sdej 128:176 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 1:0:0:14 sdcv 70:48   [active][undef]
+ \_ 0:0:0:14 sdo  8:224   [active][undef]
+asm04 (1HITACHI_730600240003) dm-10 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:3  sdar 66:176  [active][undef]
+ \_ 1:0:0:3  sdck 69:128  [active][undef]
+ \_ 1:0:1:3  sddy 128:0   [active][undef]
+ \_ 0:0:0:3  sdd  8:48    [active][undef]
+mpath14 (1HITACHI_730600240013) dm-29 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 1:0:0:13 sdcu 70:32   [active][undef]
+ \_ 0:0:0:13 sdn  8:208   [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:13 sdbb 67:80   [active][undef]
+ \_ 1:0:1:13 sdei 128:160 [active][undef]
+asm03 (1HITACHI_730600240002) dm-9 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:2  sdaq 66:160  [active][undef]
+ \_ 1:0:0:2  sdcj 69:112  [active][undef]
+ \_ 0:0:0:2  sdc  8:32    [active][undef]
+ \_ 1:0:1:2  sddx 71:240  [active][undef]
+mpath13 (1HITACHI_730600240012) dm-28 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:12 sdba 67:64   [active][undef]
+ \_ 1:0:1:12 sdeh 128:144 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 1:0:0:12 sdct 70:16   [active][undef]
+ \_ 0:0:0:12 sdm  8:192   [active][undef]
+asm02 (1HITACHI_730600240001) dm-8 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:1  sdap 66:144  [active][undef]
+ \_ 0:0:0:1  sdb  8:16    [active][undef]
+ \_ 1:0:0:1  sdci 69:96   [active][undef]
+ \_ 1:0:1:1  sddw 71:224  [active][undef]
+mpath12 (1HITACHI_730600240011) dm-27 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 1:0:0:11 sdcs 70:0    [active][undef]
+ \_ 0:0:0:11 sdl  8:176   [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:11 sdaz 67:48   [active][undef]
+ \_ 1:0:1:11 sdeg 128:128 [active][undef]
+asm01 (1HITACHI_730600240000) dm-7 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:0  sdao 66:128  [active][undef]
+ \_ 0:0:0:0  sda  8:0     [active][undef]
+ \_ 1:0:0:0  sdch 69:80   [active][undef]
+ \_ 1:0:1:0  sddv 71:208  [active][undef]
+mpath26 (1HITACHI_730600240025) dm-45 HITACHI,DF600F
+[size=3D15G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 1:0:0:25 sddg 70:224  [active][undef]
+ \_ 0:0:0:25 sdz  65:144  [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:25 sdbn 68:16   [active][undef]
+ \_ 1:0:1:25 sdeu 129:96  [active][undef]
+mpath11 (1HITACHI_730600240010) dm-25 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+ \_ 0:0:1:10 sday 67:32   [active][undef]
+ \_ 1:0:1:10 sdef 128:112 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 1:0:0:10 sdcr 69:240  [active][undef]
+ \_ 0:0:0:10 sdk  8:160   [active][undef]
 
 --
 =20
@@ -44,64 +243,227 @@ Craig Simpson
 
 -----Original Message-----
 From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Tore Anderson
-Sent: Monday, May 19, 2008 2:01 AM
+On Behalf Of Craig Simpson
+Sent: Monday, May 19, 2008 3:02 PM
 To: device-mapper development
-Subject: [dm-devel] Deadlock on RHEL4 with kpartx/queue_if_no_path - any
-wayout?
+Subject: [dm-devel] "[undef] [ready] [orphan]" ?
 
-Hi.  Due to a PEBCAK and wrong paths being removed I've now ended up
-in this situation:
 
-$ multipath -ll multimedia
-multimedia (3600a0b80002984ae00001da546c27de1)
-[size=3D200 GB][features=3D"1 queue_if_no_path"][hwhandler=3D"0"]
-\_ round-robin 0 [enabled]
- \_ #:#:#:#  -    65:16  [failed][faulty]
+My multipathing seems to be working. As seen below.=20
 
-I readded the paths with 'echo - - - > /sys/class/scsi_host/host*/scan',
-but the map does not get healthy - all attempts to reload the map with
-the multipath tools ends up in blocking I/O, using dmsetup directly I
-only get failures due to the map being busy.
+multipathd -k
+multipathd> show multipaths status
+name    failback  queueing paths dm-st
+mpath0  immediate off      4     active
+asm01   immediate off      4     active
+asm02   immediate off      4     active
+asm03   immediate off      4     active
+asm04   immediate off      4     active
+asm05   immediate off      4     active
+asm06   immediate off      4     active
+asm07   immediate off      4     active
+asm08   immediate off      4     active
+asm09   immediate off      4     active
+asm10   immediate off      4     active
+mpath11 immediate off      4     active
+mpath12 immediate off      4     active
+mpath13 immediate off      4     active
+mpath14 immediate off      4     active
+mpath15 immediate off      4     active
+mpath16 immediate off      4     active
+mpath17 immediate off      4     active
+mpath18 immediate off      4     active
+mpath19 immediate off      4     active
+mpath20 immediate off      4     active
+ocr1    immediate off      4     active
+ocr2    immediate off      4     active
+vote1   immediate off      4     active
+vote2   immediate off      4     active
+vote3   immediate off      4     active
+mpath26 immediate off      4     active
 
-This is how the process list looks:
 
-$ ps axf
-  PID TTY      STAT   TIME COMMAND
-[...]
-11598 ?        SLl    0:01 /sbin/multipathd
-12080 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-12087 ?        S<     0:00  \_ /sbin/dmsetup ls -j 253 -m 3 --target
-multipath --exec /sbin/kpartx -a
-12088 ?        D<     0:00      \_ /sbin/kpartx -a
-/dev/mapper/multimedia
-12714 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-12720 ?        S<     0:00  \_ /sbin/multipath -v0 /dev/sdb
-12794 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-12800 ?        D<     0:00  \_ /sbin/multipath -v0 /dev/sdc
-12831 ?        D      0:00 multipath -v 2
-14132 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-14139 ?        S<     0:00  \_ /sbin/dmsetup ls -j 253 -m 3 --target
-multipath --exec /sbin/kpartx -a
-14140 ?        D<     0:00      \_ /sbin/kpartx -a
-/dev/mapper/multimedia
-14219 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
-14225 ?        D<     0:00  \_ /sbin/multipath -v0 /dev/sdd
-14255 ?        D      0:00 multipath -v 2
-15312 ?        D      0:00 multipath /dev/sdd
-17032 ?        D      0:00 multipath
- 1008 ?        S<     0:00 /bin/sh /etc/dev.d/block/multipath.dev block
- 1014 ?        D<     0:00  \_ /sbin/multipath -v0 /dev/sde
+BUT I am getting this error:
 
-...I assume the kpartx process is locking the map so no changes can be
-done, but since there's no alive paths and queue_if_no_path is active,
-it will never return, and I'm stuck in a deadlock.
+I don't get the "[undef] [ready] [orphan]" part. It seems that I have 4
+paths and all is good.=20
 
-Is there any way out of this save a reboot?
+multipathd> show paths
+hcil     dev  dev_t   pri dm_st   chk_st  next_check
+0:0:0:26 sdaa 65:160  0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:27 sdab 65:176  1   [undef] [ready] [orphan]
+0:0:0:28 sdac 65:192  0   [undef] [ready] [orphan]
+0:0:0:29 sdad 65:208  1   [undef] [ready] [orphan]
+0:0:0:30 sdae 65:224  0   [undef] [ready] [orphan]
+0:0:0:31 sdaf 65:240  1   [undef] [ready] [orphan]
+0:0:0:32 sdag 66:0    0   [undef] [ready] [orphan]
+0:0:0:33 sdah 66:16   1   [undef] [ready] [orphan]
+0:0:0:34 sdai 66:32   0   [undef] [ready] [orphan]
+0:0:0:35 sdaj 66:48   1   [undef] [ready] [orphan]
+0:0:0:36 sdak 66:64   0   [undef] [ready] [orphan]
+0:0:0:37 sdal 66:80   1   [undef] [ready] [orphan]
+0:0:0:38 sdam 66:96   0   [undef] [ready] [orphan]
+0:0:0:39 sdan 66:112  1   [undef] [ready] [orphan]
+0:0:1:0  sdao 66:128  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:1  sdap 66:144  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:2  sdaq 66:160  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:3  sdar 66:176  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:4  sdas 66:192  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:5  sdat 66:208  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:6  sdau 66:224  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:7  sdav 66:240  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:8  sdaw 67:0    1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:9  sdax 67:16   0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:10 sday 67:32   1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:11 sdaz 67:48   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:0  sda  8:0     0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:12 sdba 67:64   1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:13 sdbb 67:80   0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:14 sdbc 67:96   1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:15 sdbd 67:112  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:16 sdbe 67:128  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:17 sdbf 67:144  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:18 sdbg 67:160  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:19 sdbh 67:176  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:20 sdbi 67:192  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:21 sdbj 67:208  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:22 sdbk 67:224  1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:23 sdbl 67:240  0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:24 sdbm 68:0    1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:25 sdbn 68:16   0   [active][ready] XXXXXXXXX. 38/40
+0:0:1:26 sdbo 68:32   1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:27 sdbp 68:48   0   [undef] [ready] [orphan]
+0:0:1:28 sdbq 68:64   1   [undef] [ready] [orphan]
+0:0:1:29 sdbr 68:80   0   [undef] [ready] [orphan]
+0:0:1:30 sdbs 68:96   1   [undef] [ready] [orphan]
+0:0:1:31 sdbt 68:112  0   [undef] [ready] [orphan]
+0:0:1:32 sdbu 68:128  1   [undef] [ready] [orphan]
+0:0:1:33 sdbv 68:144  0   [undef] [ready] [orphan]
+0:0:1:34 sdbw 68:160  1   [undef] [ready] [orphan]
+0:0:1:35 sdbx 68:176  0   [undef] [ready] [orphan]
+0:0:1:36 sdby 68:192  1   [undef] [ready] [orphan]
+0:0:1:37 sdbz 68:208  0   [undef] [ready] [orphan]
+0:0:0:1  sdb  8:16    1   [active][ready] XXXXXXXXX. 38/40
+0:0:1:38 sdca 68:224  1   [undef] [ready] [orphan]
+0:0:1:39 sdcb 68:240  0   [undef] [ready] [orphan]
+1:0:0:0  sdch 69:80   0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:1  sdci 69:96   1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:2  sdcj 69:112  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:3  sdck 69:128  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:4  sdcl 69:144  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:5  sdcm 69:160  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:6  sdcn 69:176  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:7  sdco 69:192  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:8  sdcp 69:208  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:9  sdcq 69:224  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:10 sdcr 69:240  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:11 sdcs 70:0    1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:12 sdct 70:16   0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:13 sdcu 70:32   1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:14 sdcv 70:48   0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:15 sdcw 70:64   1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:16 sdcx 70:80   0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:17 sdcy 70:96   1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:18 sdcz 70:112  0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:2  sdc  8:32    0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:19 sdda 70:128  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:20 sddb 70:144  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:21 sddc 70:160  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:22 sddd 70:176  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:23 sdde 70:192  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:24 sddf 70:208  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:25 sddg 70:224  1   [active][ready] XXXXXXXXX. 38/40
+1:0:0:26 sddh 70:240  0   [active][ready] XXXXXXXXX. 38/40
+1:0:0:27 sddi 71:0    1   [undef] [ready] [orphan]
+1:0:0:28 sddj 71:16   0   [undef] [ready] [orphan]
+1:0:0:29 sddk 71:32   1   [undef] [ready] [orphan]
+1:0:0:30 sddl 71:48   0   [undef] [ready] [orphan]
+1:0:0:31 sddm 71:64   1   [undef] [ready] [orphan]
+1:0:0:32 sddn 71:80   0   [undef] [ready] [orphan]
+1:0:0:33 sddo 71:96   1   [undef] [ready] [orphan]
+1:0:0:34 sddp 71:112  0   [undef] [ready] [orphan]
+1:0:0:35 sddq 71:128  1   [undef] [ready] [orphan]
+1:0:0:36 sddr 71:144  0   [undef] [ready] [orphan]
+1:0:0:37 sdds 71:160  1   [undef] [ready] [orphan]
+1:0:0:38 sddt 71:176  0   [undef] [ready] [orphan]
+1:0:0:39 sddu 71:192  1   [undef] [ready] [orphan]
+1:0:1:0  sddv 71:208  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:1  sddw 71:224  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:2  sddx 71:240  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:3  sddy 128:0   0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:4  sddz 128:16  1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:3  sdd  8:48    1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:5  sdea 128:32  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:6  sdeb 128:48  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:7  sdec 128:64  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:8  sded 128:80  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:9  sdee 128:96  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:10 sdef 128:112 1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:11 sdeg 128:128 0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:12 sdeh 128:144 1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:13 sdei 128:160 0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:14 sdej 128:176 1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:15 sdek 128:192 0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:16 sdel 128:208 1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:17 sdem 128:224 0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:18 sden 128:240 1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:19 sdeo 129:0   0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:20 sdep 129:16  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:21 sdeq 129:32  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:22 sder 129:48  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:23 sdes 129:64  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:24 sdet 129:80  1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:25 sdeu 129:96  0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:26 sdev 129:112 1   [active][ready] XXXXXXXXX. 38/40
+1:0:1:27 sdew 129:128 0   [undef] [ready] [orphan]
+1:0:1:28 sdex 129:144 1   [undef] [ready] [orphan]
+1:0:1:29 sdey 129:160 0   [undef] [ready] [orphan]
+1:0:1:30 sdez 129:176 1   [undef] [ready] [orphan]
+0:0:0:4  sde  8:64    0   [active][ready] XXXXXXXXX. 38/40
+1:0:1:31 sdfa 129:192 0   [undef] [ready] [orphan]
+1:0:1:32 sdfb 129:208 1   [undef] [ready] [orphan]
+1:0:1:33 sdfc 129:224 0   [undef] [ready] [orphan]
+1:0:1:34 sdfd 129:240 1   [undef] [ready] [orphan]
+1:0:1:35 sdfe 130:0   0   [undef] [ready] [orphan]
+1:0:1:36 sdff 130:16  1   [undef] [ready] [orphan]
+1:0:1:37 sdfg 130:32  0   [undef] [ready] [orphan]
+1:0:1:38 sdfh 130:48  1   [undef] [ready] [orphan]
+1:0:1:39 sdfi 130:64  0   [undef] [ready] [orphan]
+0:0:0:5  sdf  8:80    1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:6  sdg  8:96    0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:7  sdh  8:112   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:8  sdi  8:128   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:9  sdj  8:144   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:10 sdk  8:160   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:11 sdl  8:176   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:12 sdm  8:192   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:13 sdn  8:208   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:14 sdo  8:224   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:15 sdp  8:240   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:16 sdq  65:0    0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:17 sdr  65:16   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:18 sds  65:32   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:19 sdt  65:48   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:20 sdu  65:64   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:21 sdv  65:80   1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:22 sdw  65:96   0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:23 sdx  65:112  1   [active][ready] XXXXXXXXX. 38/40
+0:0:0:24 sdy  65:128  0   [active][ready] XXXXXXXXX. 38/40
+0:0:0:25 sdz  65:144  1   [active][ready] XXXXXXXXX. 38/40
 
-Regards,
---=20
-Tore Anderson
+
+
+
+
+--
+=20
+Craig Simpson
+
+
+"In the circle the beginning and the end are common"
+ ~ Heraclitis (540-480BC)
+
+=20
 
 --
 dm-devel mailing list
