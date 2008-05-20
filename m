@@ -1,38 +1,37 @@
-From: Andreas Dilger <adilger@sun.com>
-Subject: Re: [RFC PATCH 1/3] Implement generic freeze feature
-Date: Mon, 19 May 2008 21:57:12 -0600
-Message-ID: <20080520035712.GA7252@webber.adilger.int>
-References: <20080514170625t-sato@mail.jp.nec.com>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Deadlock on RHEL4 with kpartx/queue_if_no_path - any
+	wayout?
+Date: Tue, 20 May 2008 12:48:25 +0200
+Message-ID: <4832AC79.8030608@linpro.no>
+References: <ABFD05FF09D13E4883B757E75603624DF9BF7B@ex-sea1.vistocorp.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-reply-to: <20080514170625t-sato@mail.jp.nec.com>
-Content-disposition: inline
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <ABFD05FF09D13E4883B757E75603624DF9BF7B@ex-sea1.vistocorp.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On May 14, 2008  17:06 +0900, Takashi Sato wrote:
-> +static int ioctl_freeze(struct file *filp)
-> +{
-> +	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
-> +
-> +	if (!capable(CAP_SYS_ADMIN))
-> +		return -EPERM;
-> +
-> +	/* If filesystem doesn't support freeze feature, return. */
-> +	if (sb->s_op->write_super_lockfs == NULL)
-> +		return -EINVAL;
+* Craig Simpson
 
-Should this be EINVAL, or EOPNOTSUPP?  Usually EINVAL means there is
-something wrong with the passed ioctl parameters (e.g. bad value),
-while EOPNOTSUPP is "operation not supported" and makes more sense.
+> multipathd -k
+> reconfigure
+> 
+> maybe....
 
-Cheers, Andreas
---
-Andreas Dilger
-Sr. Staff Engineer, Lustre Group
-Sun Microsystems of Canada, Inc.
+Thanks for the suggestion, but no go...
 
+Ended up rebooting the machine, didn't see any other way out.  :-(
+
+-- 
+Tore Anderson
