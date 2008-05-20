@@ -1,118 +1,66 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 7/7] scsi_dh: attach to hardware handler from dm-mpath
-Date: Tue, 20 May 2008 11:52:34 -0700
-Message-ID: <1211309554.21974.427.camel@chandra-ubuntu>
-References: <20080514144338.714F910B5DF@craiglockhart-ipmi.suse.de>
-	 <1210819801.21974.266.camel@chandra-ubuntu>  <482C0676.9070004@suse.de>
-	 <1210964001.21974.351.camel@chandra-ubuntu>  <483154B0.7020500@suse.de>
-	 <1211221247.21974.382.camel@chandra-ubuntu>  <4832C706.5040202@suse.de>
-Reply-To: sekharan@us.ibm.com
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: [dm-devel] Read-Only devices, multipath and more
+Date: Tue, 20 May 2008 23:09:49 +0200
+Message-ID: <1211317789.31536.9.camel@plop>
+References: <1210966544.12901.51.camel@plop>
+	 <20080520144807.GC10723@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4832C706.5040202@suse.de>
+In-Reply-To: <20080520144807.GC10723@agk.fab.redhat.com>
 Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi Hannes,
+Le mardi 20 mai 2008 =C3=A0 15:48 +0100, Alasdair G Kergon a =C3=A9crit=
+ :
+> On Fri, May 16, 2008 at 09:35:44PM +0200, christophe varoqui wrote:
+> > fact: device-mapper refuse to load a RW multipath table on these pa=
+ths
+> > (ie without libdevmapper:set_task_set_ro())
+> > question: should change this behaviour to allow to load a RW multip=
+ath
+> > table on these paths and let the IO be failed by the storage hardwa=
+re ?
+>=20
+> Yes.  But relax this *only* for multipath targets, where the whole id=
+ea
+> is to "hide" path problems from the layer above.
+=EF=BB=BF
+=46air enough.
 
-Now I see why you want this change in dm-multipath. I think I agree with
-these changes.
+> It would not make sense=20
+> in my view to do this for other DM targets.
+> =20
 
-But, it brings another question: what does dh_state provide ? Help to
-user to see which hardware handler a device is attached to ?
+During my testing I remember seeing a RW linear map loaded over a RO
+multipath map (through a genuine vgchange -ay, the PV being the
+multipath).
 
-I thought more about the scsi_dh_detach function (in the context of my
-earlier comment), adding it would require more housekeeping to associate
-one-to-one mapping between attach and detach. We can leave it the same
-way as the module will be detached when the device disappear eventually.
+> > Alasdair proposed to add more explicit table loading ioctl return c=
+ode
+> > when the failure is due to this ready-only paths issue (E_ROFS for
+> > example).
+>=20
+> I think this should be done too (for non-multipath and other errors).
+>=20
+Right, I'm about the publish a changeset for supporting the whole RO
+notion in the multipath-tools :
+1/ printing the RO/RW information
+2/ fallbacking to RO when RW loading fails
+3/ new flag to force map reloading, which takes care of the RO->RW
+promotion and RW->RO demotion scenarii
 
-Thanks,
+I'll adapt 2/ to your new return codes when available.
 
-chandra 
-On Tue, 2008-05-20 at 14:41 +0200, Hannes Reinecke wrote:
-> Hi Chandra,
-> 
-> Chandra Seetharaman wrote:
-> > On Mon, 2008-05-19 at 12:21 +0200, Hannes Reinecke wrote:
-> >> Hi Chandra,
-> >>
-> [ .. ]
-> >> Yes, but this only verifies that the _handler_ exist, not that it is
-> >> attached to this sdev
-> > 
-> > Agreed. And it works properly with the original design.
-> > 
-> > Here is my thinking on how it would work with the new feature (ability
-> > to attach any device using dh_state) you added:
-> >  - User adds a new device
-> >  - User knows which scsi hardware handler their device can attach to,
-> >    lets say, "mydev".
-> >  - User attaches the device with scsi hardware handler (writing "mydev"
-> >    to "dh_state").
-> >    Device is now attached to "mydev"
-> >  - User updates his/her multipath.conf file with "mydev" for the
-> >    specific device.
-> >  - User invokes multipath, which checks for the existence of "mydev"
-> >    and allows the table insertion.
-> >  - When pg_init was required in the future, multipath calls "activate"
-> >    for "mydev" correctly.
-> > 
-> > Wouldn't this work ?
-> > 
-> > Note: In the absence of this patch (7/7) only.
-> > 
-> Yes, but only for the first time. After reboot the user would
-> have to do the reconfiguration again.
-> 
-> >>> Hardware handler module is attached to the device itself (thru
-> >>> try_module_get() in attach), so, the module will exist as long as the
-> >>> device exists.
-> >>>
-> >> Not quite. It's only attached automatically if the device map has
-> >> an entry for this module.
-> >> However, given this patchset we can now easily manually attach any
-> >> device to the device handler. Or at least try to do so.
-> >> It's then up to the device handler to refuse binding if none of
-> >> the necessary pages/information etc. was found.
-> > 
-> > Doesn't dh_state solve this issue ?
-> > 
-> In theory, yes.
-> 
-> >>> Hence, there is no need to attach it again from the multipath layer.
-> >>>
-> >> Yes, you do. The user might have it's own custom configuration file,
-> >> covering new/unknown/unhandled/testing devices, which out of necessity
-> >> are _not_ hardcoded in the device table of the device handler.
-> >> So multipath has to have a way of attaching device handler to those
-> >> devices, too.
-> > 
-> > dh_state allows the user to do this, in which case why do we need to do
-> > this in multipath layer ?
-> > 
-> Because then we (read: I) don't have to modify multipath-tools.
-> If we don't take this patch we'll have to modify multipath-tools
-> to check for the dh_state attribute explicitly and activate
-> the hardware handler directly via sysfs.
-> 
-> But this also means that existing multipath-tools programs won't
-> be able to correctly activate the hardware handler in
-> _some_ cases (ie those cases, where the hardware table for the
-> device_handler doesn't contain the device in question).
-> And I can just imagine the bugs I'll be getting ...
-> So if we decide to take that road we should kill the hardware
-> handler feature from the device-mapper multipath interface
-> altogether to notify the user that the programs won't work
-> anymore. Otherwise it's just heading for trouble.
-> 
-> So I'd rather keep the userland interface stable here and add
-> some code to the kernel.
-> 
-> Cheers,
-> 
-> Hannes
 
+Thanks for caring,
+cvaroqui
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
