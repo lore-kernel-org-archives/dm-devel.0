@@ -1,9 +1,10 @@
 From: "Craig Simpson" <csimpson@visto.com>
 Subject: RE: Round Robin vs Active/Passive
-Date: Wed, 21 May 2008 14:49:09 -0700
-Message-ID: <ABFD05FF09D13E4883B757E75603624D011E960A@ex-sea1.vistocorp.com>
+Date: Wed, 21 May 2008 16:41:58 -0700
+Message-ID: <ABFD05FF09D13E4883B757E75603624D011E961E@ex-sea1.vistocorp.com>
 References: <8a6b34b03e0524aa66c862534fee9b7a@www3.mail.volny.cz><18484.2693.62883.535755@notabene.brown>	<ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com><ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>	<483468AD.7@linpro.no><ABFD05FF09D13E4883B757E75603624D011E95FF@ex-sea1.vistocorp.com>
 	<48348DA8.2010803@linpro.no>
+	<ABFD05FF09D13E4883B757E75603624D011E960A@ex-sea1.vistocorp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
@@ -11,7 +12,7 @@ Content-Type: text/plain;
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-class: urn:content-classes:message
-In-Reply-To: <48348DA8.2010803@linpro.no>
+In-Reply-To: <ABFD05FF09D13E4883B757E75603624D011E960A@ex-sea1.vistocorp.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,6 +25,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 Cc: Geoff Quan <GQuan@visto.com>, Michael Denney <mdenney@visto.com>, Kevin Koplar <kevin.koplar@hds.com>
 List-Id: dm-devel.ids
+
+
+All is Beautiful now. Not logging any errors to messages so looks like "
+mpath_prio_hds_modular" is getting called correctly.=20
+
+Multipath -ll
+asm14 (1HITACHI_730600240013) dm-55 HITACHI,DF600F
+[size=3D64G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 1:0:0:13 sdcp 69:208  [active][ready]
+ \_ 0:0:0:13 sdn  8:208   [active][ready]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:13 sdbb 67:80   [active][ready]
+ \_ 1:0:1:13 sded 128:80  [active][ready]
+
+Thanks,
+Craig
+
+
+
+
+-----Original Message-----
+From: Craig Simpson=20
+Sent: Wednesday, May 21, 2008 2:49 PM
+To: device-mapper development
+Cc: Michael Denney; Geoff Quan; Kevin Koplar; Craig Simpson
+Subject: RE: [dm-devel] Round Robin vs Active/Passive
 
 
 
