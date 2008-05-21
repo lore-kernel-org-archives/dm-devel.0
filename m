@@ -1,15 +1,17 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: Round Robin vs Active/Passive
-Date: Wed, 21 May 2008 20:23:41 +0200
-Message-ID: <483468AD.7@linpro.no>
-References: <8a6b34b03e0524aa66c862534fee9b7a@www3.mail.volny.cz><18484.2693.62883.535755@notabene.brown>	<ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com>
-	<ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>
+From: "Craig Simpson" <csimpson@visto.com>
+Subject: RE: Round Robin vs Active/Passive
+Date: Wed, 21 May 2008 13:21:20 -0700
+Message-ID: <ABFD05FF09D13E4883B757E75603624D011E95FF@ex-sea1.vistocorp.com>
+References: <8a6b34b03e0524aa66c862534fee9b7a@www3.mail.volny.cz><18484.2693.62883.535755@notabene.brown>	<ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com><ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>
+	<483468AD.7@linpro.no>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <483468AD.7@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,11 +25,85 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Michael Denney <mdenney@visto.com>
 List-Id: dm-devel.ids
 
+
+Amazing Info, thanks!
+
+Changed my Defaults to this:
+
+defaults {
+        udev_dir                /dev
+        polling_interval        10
+        selector                "round-robin 0"
+        path_grouping_policy    group_by_prio
+        getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        prio_callout            /sbin/mpath_prio_hds_modular
+        path_checker            readsector0
+        rr_min_io               100
+        rr_weight               priorities
+        failback                immediate
+        no_path_retry           fail
+        user_friendly_name      yes
+}
+
+
+So figure I don't need to include anything in my aliases, since the
+defaults are set.
+
+        multipath {
+                wwid                    1HITACHI_D60090910032
+                alias                   asm01
+        }
+
+Did a multipathd -k
+And a reconfigure
+
+
+But when doing a multipath -l Not sure if it looks correct:
+
+asm01 (1HITACHI_D60090910032) dm-6 HITACHI,DF600F
+[size=3D32G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:32 sdm 8:192 [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:0:32 sdb 8:16  [active][undef]
+
+
+
+Also a multipathd> show topology
+
+reload: asm01  (1HITACHI_D60090910032) dm-6  HITACHI,DF600F
+[size=3D32G ][features=3D0       ][hwhandler=3D0        ]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 0:0:1:32 sdm 8:192 [active][ready]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:0:32 sdb 8:16  [active][ready]
+
+
+
+Looks like I have [enabled] [enabled] ...
+But it should be [active] [enabled]
+
+
+Thanks for any feedback.=20
+
+Craig
+
+
+
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Tore Anderson
+Sent: Wednesday, May 21, 2008 11:24 AM
+To: device-mapper development
+Cc: Michael Denney
+Subject: Re: [dm-devel] Round Robin vs Active/Passive
+
 * Craig Simpson
-> 
-> My Hitachi AMS200 is an Active/Passive array says Hitachi. 
+>=20
+> My Hitachi AMS200 is an Active/Passive array says Hitachi.=20
 > By looking at asm13 I see all my paths active. Did use the
-> "path_grouping_policy    multibus" when creating that alias. 
+> "path_grouping_policy    multibus" when creating that alias.=20
 
 The AMS200 is indeed an active/passive array, but it's "fakes"
 active/active behaviour - if the passive controller receives an I/O
@@ -50,11 +126,11 @@ to the set of paths to the passive controller.  An example on how this
 looks:
 
 mysql (36006016034301f0004582492ab21dd11)
-[size=40 GB][features=1 queue_if_no_path][hwhandler=0]
-\_ round-robin 0 [prio=2][active]
+[size=3D40 GB][features=3D1 queue_if_no_path][hwhandler=3D0]
+\_ round-robin 0 [prio=3D2][active]
  \_ 4:0:2:0 sds 65:32 [active][ready]
  \_ 3:0:2:0 sdu 65:64 [active][ready]
-\_ round-robin 0 [prio=0][enabled]
+\_ round-robin 0 [prio=3D0][enabled]
  \_ 4:0:3:0 sdr 65:16 [active][ready]
  \_ 3:0:3:0 sdt 65:48 [active][ready]
 
@@ -88,5 +164,10 @@ odd LUNs and two mostly idle one with even LUNs you won't be able to
 split the load equally between the controllers.
 
 Regards,
--- 
+--=20
 Tore Anderson
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
