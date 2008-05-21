@@ -1,49 +1,61 @@
-From: "Takashi Sato" <t-sato@yk.jp.nec.com>
-Subject: Re: [RFC PATCH 1/3] Implement generic freeze feature
-Date: Wed, 21 May 2008 10:23:23 +0900
-Message-ID: <1AE3C150C90A4C1A8C024C3D6079C948@nsl.ad.nec.co.jp>
-References: <20080514170625t-sato@mail.jp.nec.com>
-	<20080520035712.GA7252@webber.adilger.int>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 7/7] scsi_dh: attach to hardware handler from dm-mpath
+Date: Wed, 21 May 2008 08:18:26 +0200
+Message-ID: <4833BEB2.1070305@suse.de>
+References: <20080514144338.714F910B5DF@craiglockhart-ipmi.suse.de>	 <1210819801.21974.266.camel@chandra-ubuntu>  <482C0676.9070004@suse.de>	 <1210964001.21974.351.camel@chandra-ubuntu>  <483154B0.7020500@suse.de>	 <1211221247.21974.382.camel@chandra-ubuntu>  <4832C706.5040202@suse.de> <1211309554.21974.427.camel@chandra-ubuntu>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset="iso-8859-1";
-	reply-type=original
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080520035712.GA7252@webber.adilger.int>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Andreas Dilger <adilger@sun.com>
-Cc: linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, linux-ext4@vger.kernel.org, linux-kernel@vger.kernel.org, xfs@oss.sgi.com
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1211309554.21974.427.camel@chandra-ubuntu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: sekharan@us.ibm.com
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Chandra Seetharaman wrote:
+> Hi Hannes,
+>=20
+> Now I see why you want this change in dm-multipath. I think I agree w=
+ith
+> these changes.
+>=20
+Ah. good.
 
-Andreas Dilger wrote:
->> +static int ioctl_freeze(struct file *filp)
->> +{
->> +    struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
->> +
->> +    if (!capable(CAP_SYS_ADMIN))
->> +        return -EPERM;
->> +
->> +    /* If filesystem doesn't support freeze feature, return. */
->> +    if (sb->s_op->write_super_lockfs == NULL)
->> +        return -EINVAL;
-> 
-> Should this be EINVAL, or EOPNOTSUPP?  Usually EINVAL means there is
-> something wrong with the passed ioctl parameters (e.g. bad value),
-> while EOPNOTSUPP is "operation not supported" and makes more sense.
+> But, it brings another question: what does dh_state provide ? Help to
+> user to see which hardware handler a device is attached to ?
+>=20
+And allowing to attach to a different hardware handler.
+Not everyone is running multipathing, but might be interested in the
+having the device handler nevertheless.
 
-Sounds good.
-I will send new patch-set which is rebased to 2.6.26-rc3 and includes
-this fix, in this weekend.
+> I thought more about the scsi_dh_detach function (in the context of m=
+y
+> earlier comment), adding it would require more housekeeping to associ=
+ate
+> one-to-one mapping between attach and detach. We can leave it the sam=
+e
+> way as the module will be detached when the device disappear eventual=
+ly.
+>=20
+Why? You can detach with dh_state, too; just do an
 
-Cheers, Takashi
+echo detach > /sys/block/sdX/device/dh_state
+
+and the hardware handler will detach.
+So no additional attribute is required.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
