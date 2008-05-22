@@ -1,15 +1,20 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: Round Robin vs Active/Passive
-Date: Thu, 22 May 2008 14:00:12 +0200
-Message-ID: <4835604C.30107@linpro.no>
-References: <8a6b34b03e0524aa66c862534fee9b7a@www3.mail.volny.cz><18484.2693.62883.535755@notabene.brown>	<ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com><ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>	<483468AD.7@linpro.no><ABFD05FF09D13E4883B757E75603624D011E95FF@ex-sea1.vistocorp.com>	<48348DA8.2010803@linpro.no>	<ABFD05FF09D13E4883B757E75603624D011E960A@ex-sea1.vistocorp.com>
-	<ABFD05FF09D13E4883B757E75603624D011E961E@ex-sea1.vistocorp.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Desynchronizing dm-raid1
+Date: Thu, 22 May 2008 08:32:45 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0805220828500.15805@engineering.redhat.com>
+References: <E1JtKQL-0004Nm-00@gondolin.me.apana.org.au>
+	<Pine.LNX.4.64.0805061849020.7260@engineering.redhat.com>
+	<Pine.LNX.4.64.0805122325050.373@engineering.redhat.com>
+	<20080513033822.GA9604@gondor.apana.org.au>
+	<Pine.LNX.4.64.0805131622120.486@engineering.redhat.com>
+	<20080514011457.GB18728@gondor.apana.org.au>
+	<Pine.LNX.4.64.0805212210330.17520@engineering.redhat.com>
+	<20080522024225.GA28400@gondor.apana.org.au>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <ABFD05FF09D13E4883B757E75603624D011E961E@ex-sea1.vistocorp.com>
+In-Reply-To: <20080522024225.GA28400@gondor.apana.org.au>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,32 +24,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Michael Denney <mdenney@visto.com>, Geoff Quan <GQuan@visto.com>, Kevin Koplar <kevin.koplar@hds.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: dm-devel@redhat.com, linux-crypto@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-* Craig Simpson
+>> All the ciphers comply, so the bug is only a theroretical issue (but I
+>> didn't check assembler versions --- they should be checked by the person
+>> who wrote them, assembler is write-only language).
+>
+> Since every current algorithm sets the flag could you invert
+> its sense? Sorry to have to do this to you :)
+>
+> Thanks,
 
-> All is Beautiful now. Not logging any errors to messages so looks like "
-> mpath_prio_hds_modular" is getting called correctly. 
-> 
-> Multipath -ll
-> asm14 (1HITACHI_730600240013) dm-55 HITACHI,DF600F
-> [size=64G][features=0][hwhandler=0]
-> \_ round-robin 0 [prio=2][active]
->  \_ 1:0:0:13 sdcp 69:208  [active][ready]
->  \_ 0:0:0:13 sdn  8:208   [active][ready]
-> \_ round-robin 0 [prio=0][enabled]
->  \_ 0:0:1:13 sdbb 67:80   [active][ready]
->  \_ 1:0:1:13 sded 128:80  [active][ready]
+There may be external modules.
 
-Yes, you can see from this output that sdcp and sdn have a prio of 1,
-placing them in the same priority group (which in sum have a prio of 2),
-so the prio-callout definitely works as it is supposed to.  Everything
-looks good, now you should try yanking some fibres (with lots of I/O
-activity running) to make sure that it actually is able to handle a
-failure scenario.  Good luck.
+If you don't set the flag when it should be set, nothing happens (just a 
+slight performance drop), if you set the flag when it shouldn't be set, 
+you get data corruption. So the safest way is this meaning of flag, so 
+that not-yet-reviewed algorithms set the flag to 0 and prevent data 
+corruption.
 
-Regards,
--- 
-Tore Anderson
+Mikulas
