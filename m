@@ -1,57 +1,28 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH 7/7] scsi_dh: attach to hardware handler from dm-mpath
-Date: Thu, 22 May 2008 09:14:54 +0100
-Message-ID: <1211444095.3956.6.camel@localhost.localdomain>
-References: <20080514144338.714F910B5DF@craiglockhart-ipmi.suse.de>
-	 <1210819801.21974.266.camel@chandra-ubuntu>  <482C0676.9070004@suse.de>
-	 <1210964001.21974.351.camel@chandra-ubuntu>  <483154B0.7020500@suse.de>
-	 <1211221247.21974.382.camel@chandra-ubuntu>  <4832C706.5040202@suse.de>
-	 <1211309554.21974.427.camel@chandra-ubuntu>  <4833BEB2.1070305@suse.de>
+From: Herbert Xu <herbert@gondor.apana.org.au>
+Subject: Re: [dm-devel] Desynchronizing dm-raid1
+Date: Fri, 23 May 2008 09:53:45 +1000
+Message-ID: <20080522235345.GA4019@gondor.apana.org.au>
+References: <E1JtKQL-0004Nm-00@gondolin.me.apana.org.au> <Pine.LNX.4.64.0805061849020.7260@engineering.redhat.com> <Pine.LNX.4.64.0805122325050.373@engineering.redhat.com> <20080513033822.GA9604@gondor.apana.org.au> <Pine.LNX.4.64.0805131622120.486@engineering.redhat.com> <20080514011457.GB18728@gondor.apana.org.au> <Pine.LNX.4.64.0805212210330.17520@engineering.redhat.com> <20080522024225.GA28400@gondor.apana.org.au> <Pine.LNX.4.64.0805220828500.15805@engineering.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4833BEB2.1070305@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: sekharan@us.ibm.com, linux-scsi <linux-scsi@vger.kernel.org>, dm-devel <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-crypto-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0805220828500.15805@engineering.redhat.com>
+Sender: linux-crypto-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, linux-crypto@vger.kernel.org, dm-devel@redhat.com, malahal@us.ibm.com
 List-Id: dm-devel.ids
 
-On Wed, 2008-05-21 at 08:18 +0200, Hannes Reinecke wrote:
-> Chandra Seetharaman wrote:
-> > Hi Hannes,
-> > 
-> > Now I see why you want this change in dm-multipath. I think I agree with
-> > these changes.
-> > 
-> Ah. good.
-> 
-> > But, it brings another question: what does dh_state provide ? Help to
-> > user to see which hardware handler a device is attached to ?
-> > 
-> And allowing to attach to a different hardware handler.
-> Not everyone is running multipathing, but might be interested in the
-> having the device handler nevertheless.
-> 
-> > I thought more about the scsi_dh_detach function (in the context of my
-> > earlier comment), adding it would require more housekeeping to associate
-> > one-to-one mapping between attach and detach. We can leave it the same
-> > way as the module will be detached when the device disappear eventually.
-> > 
-> Why? You can detach with dh_state, too; just do an
-> 
-> echo detach > /sys/block/sdX/device/dh_state
-> 
-> and the hardware handler will detach.
-> So no additional attribute is required.
+On Thu, May 22, 2008 at 08:32:45AM -0400, Mikulas Patocka wrote:
+>
+> There may be external modules.
 
-Actually, if you're going down this route, it makes more sense to have
-the device handler be a driver ... remember you were the one promising
-multiple driver binding at the FS/Storage summit ...  that way we can
-use all the generic driver standard interfaces for manual
-binding/unbinding.  Plus we can place the attributes as driver attribute
-groups.
+Sorry but we don't support external modules.  They should be merged
+upstream rather than distributed in the wild.
 
-James
-
-
+Cheers,
+-- 
+Visit Openswan at http://www.openswan.org/
+Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
+Home Page: http://gondor.apana.org.au/~herbert/
+PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
