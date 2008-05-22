@@ -1,15 +1,12 @@
-From: Domenico Viggiani <dviggiani@tiscali.it>
-Subject: RE: Round Robin vs Active/Passive
-Date: Thu, 22 May 2008 10:24:52 +0200
-Message-ID: <000301c8bbe5$4f1091d0$cf42e3c1@pitagora.it>
-References: <8a6b34b03e0524aa66c862534fee9b7a@www3.mail.volny.cz><18484.2693.62883.535755@notabene.brown>	<ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com>	<ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>
-	<483468AD.7@linpro.no>
+From: Takashi Sato <t-sato@yk.jp.nec.com>
+Subject: [RFC PATCH 0/3] freeze feature ver 1.4
+Date: Thu, 22 May 2008 17:49:24 +0900
+Message-ID: <20080522174924t-sato@mail.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <483468AD.7@linpro.no>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,79 +16,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'device-mapper development' <dm-devel@redhat.com>
+To: "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsd>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-* Tore Anderson
->
-> The AMS200 is indeed an active/passive array, but it's "fakes"
-> active/active behaviour - if the passive controller receives 
-> an I/O operation it will redirect it internally to the active 
-> one which will process it and return it back to the passive 
-> controller, which in turn returns it back to the initiator, 
-> which have no idea that this happens at all.
-> 
-> So you can use it as a true active/active array, but I'd 
-> recommend against it for two reasons;  first, there might be 
-> a slight processing overhead to route I/O through the passive 
-> controller (as well as a slight increase in latency), second, 
-> you might risk saturating the interconnect between the 
-> controllers with re-routed I/O if you have lots of volumes 
-> using the array in this way (this might or might not be a 
-> real problem depending on how the hardware is built).
-> 
-> So what you should do is to distinguish between paths to the 
-> active controller and run round-robin on all of these, while 
-> having fail-over to the set of paths to the passive 
-> controller.  An example on how this
-> looks:
-> 
-> mysql (36006016034301f0004582492ab21dd11)
-> [size=40 GB][features=1 queue_if_no_path][hwhandler=0] \_ 
-> round-robin 0 [prio=2][active]  \_ 4:0:2:0 sds 65:32 
-> [active][ready]  \_ 3:0:2:0 sdu 65:64 [active][ready] \_ 
-> round-robin 0 [prio=0][enabled]  \_ 4:0:3:0 sdr 65:16 
-> [active][ready]  \_ 3:0:3:0 sdt 65:48 [active][ready]
-> 
-> I/O is here balanced between sds and sdu, which have the 
-> highest priority.  sdr and sdt will only be used should both 
-> sds and sdu fail.
-> This is accomplished by the following two configuration settings:
-> 
-> path_grouping_policy group_by_prio
-> prio_callout "/sbin/mpath_prio_emc_silent /dev/%n"
-> 
-> (This is an EMC array.)
-> 
-> You should be able to do the same using 
-> mpath_prio_hdc_modular as the prio_callout.  Last I checked 
-> this callout wasn't actually able to determine which 
-> controller is the preferred for a given volume (one of the 
-> reasons I bought an EMC instead), but did a simplistic check 
-> which was something along the lines of "controller 0 is 
-> preferred for all volumes with an even LUN;  controller 1 for 
-> all volumes with an odd LUN".  So even though this probably 
-> won't match reality unless you take care to configure the AMS 
-> accordingly, you will get the desired effect - round robin 
-> between the paths to one controller, failover to the paths to 
-> the other.  The AMS is also clever enough to understand that 
-> if you're only sending I/O to the passive controller it will 
-> automatically change the ownership of the volume to the 
-> controller actually receiving I/O, so you won't have the 
-> problem of I/O being re-routed between controllers.
-> 
-> The downside is that you can't decide which controller is the 
-> preferred one for a given volume, so if you have two highly 
-> active volumes with odd LUNs and two mostly idle one with 
-> even LUNs you won't be able to split the load equally between 
-> the controllers.
+Hi,
 
-Sorry for question: is this how new ALUA mode works for EMC Clariion CX
-arrays?
-Are default settings suitable for this new failover mode?
+The freeze feature can suspend accesses to the filesystem
+keeping the filesystem's consistency.
+We can take the consistent backup with it cooperating with
+the backup software.
 
-I just upgraded my CX700 to FLARE26 with ALUA mode...
+I've modified [PATCH 1/3] to set the suitable error number (EOPNOTSUPP)
+in case the filesystem doesn't support the freeze feature.
+This was pointed out by Andreas Dilger.
+In addition, the patches are re-based from linux-2.6.26-rc2 to
+linux-2.6.26-rc3.
 
-Thanks
---
-Domenico Viggiani
+The patch-set consists of the following three patches.
+
+[PATCH 1/3] Implement generic freeze feature
+  I have modified to set the suitable error number (EOPNOTSUPP)
+  in case the filesystem doesn't support the freeze feature.
+
+  The ioctls for the generic freeze feature are below.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, arg)
+      fd: The file descriptor of the mountpoint
+      FIFREEZE: request code for the freeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
+
+  o Unfreeze the filesystem
+    int ioctl(int fd, int FITHAW, arg)
+      fd: The file descriptor of the mountpoint
+      FITHAW: request code for unfreeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
+
+[PATCH 2/3] Remove XFS specific ioctl interfaces for freeze feature
+  It removes XFS specific ioctl interfaces and request codes
+  for freeze feature.
+  This patch has been supplied by David Chinner.
+
+[PATCH 3/3] Add timeout feature
+  The timeout feature is added to freeze ioctl.  And new ioctl
+  to reset the timeout period is added.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, long *timeval)
+      fd: The file descriptor of the mountpoint
+      FIFREEZE: request code for the freeze
+      timeval: the timeout period in seconds
+               If it's 0 or 1, the timeout isn't set.
+               This special case of "1" is implemented to keep
+               the compatibility with XFS applications.
+      Return value: 0 if the operation succeeds. Otherwise, -1
+
+  o Reset the timeout period
+    This is useful for the application to set the timeval more accurately.
+    For example, the freezer resets the timeval to 10 seconds every 5
+    seconds.  In this approach, even if the freezer causes a deadlock
+    by accessing the frozen filesystem, it will be solved by the timeout
+    in 10 seconds and the freezer can recognize that at the next reset
+    of timeval.
+    int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeval)
+      fd:file descriptor of mountpoint
+      FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
+      timeval: new timeout period in seconds
+      Return value: 0 if the operation succeeds. Otherwise, -1
+      Error number: If the filesystem has already been unfrozen,
+                    errno is set to EINVAL.
+
+Any comments are very welcome.
+
+Cheers, Takashi
