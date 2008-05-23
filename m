@@ -1,16 +1,11 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: Round Robin vs Active/Passive
-Date: Fri, 23 May 2008 11:42:35 +0200
-Message-ID: <4836918B.8090909@linpro.no>
-References: <ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com>	<ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>	<483468AD.7@linpro.no>
-	<000301c8bbe5$4f1091d0$cf42e3c1@pitagora.it>	<20080523071654.GB380@pentland.suse.de>	<4836798F.4060100@linpro.no>
-	<20080523085521.GC380@pentland.suse.de>
+From: "Laurent GEHLEN" <list.4.gehlen@gmail.com>
+Subject: domap (0) failure for create/reload map
+Date: Fri, 23 May 2008 11:58:22 +0200
+Message-ID: <cbca94860805230258l48eaf9a9u4d4b1ee91ed79294@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1506504925=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080523085521.GC380@pentland.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,87 +15,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+--===============1506504925==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_9961_17390384.1211536702587"
 
-* Hannes Reinecke
+------=_Part_9961_17390384.1211536702587
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> In moving the assignment to another controller you will have a more
-> efficient I/O throughput, as in general the internal link between those
-> two controller isn't the fastest. So you really want to move the
-> LUN to that controller which should handle the I/O.
+Hello,
 
-Yes.  But the EMC will take care of moving the volume where it gets the
-most I/O on its own (they call it "implicit trespass"), no
-host-initiated volume movement is necessary.  I'll elaborate on why I
-believe this to be better (especially in clustered environments):
+Is there anybody who can help me to find where is my problem.
+I'm trying to generate a mapper device with the tools multipath. But visibly
+it blocs before it finish, because I don't have any new mapper device.
+When i chose the verbose level 3 i can see those interesting things:
 
-Consider a simple dual-fabric topology, which controller A connected to
-fabric A and controller B connected to fabric B.  Ten nodes share one
-volume, which by default are owned by controller A.  They all generate
-about the same amount of I/O.
+> # multipath -v3
+> [...]
+> sda: not found in pathvec
+> [...]
+> sdb: not found in pathvec
+> [...]
+> sdc: not found in pathvec
+> [...]
+> sdd: not found in pathvec
+> [...]
+> test: set ACT_CREATE (map does not exist)
+> test: domap (0) failure for create/reload map
+> [...]
+> libdevmapper: libdm-common.c(239): Setting SELinux context for
+> /dev/mapper/test to system_u:object_r:fixed_disk_device_t.
+> [...]
+>
 
-  +-----------[ Switch - Fabric A ]
-  |            |    |     |    |
-Ctrl A         |    |     |    |
-              N1   N2   [..]  N10
-Ctrl B         |    |     |    |
-  |            |    |     |    |
-  +-----------[ Switch - Fabric B ]
+I think the most interesting thing is the "domap (0) failure for
+create/reload map".
+I've read a bit about the code mutlipath
+(cm/linux/storage/multipath-tools/libmultipath/configure.c+domap+(0)+failure+for+create/reload+map&hl=fr&ct=clnk&cd=4&gl=be&client=firefox-a)
+And conclude (but not sure) that's the dm_addmap failed.
 
-Normally all traffic to the volume are passed through fabric A to
-controller A, while fabric B and controller B are completely idle.
+you can find the output of multipath -v3 here:
+ --> http://rafb.net/p/J45SFA12.html
 
-Now, say that the patch cord between N10 and Fabric A breaks.  In the
-situation when there's no host-initiated volume, N10 will start using
-the path through fabric B through the passive controller with a slight
-performance impact, while the CLARiiON will leave the volume on
-controller A since it can tell that that's where 90% of the I/O is
-coming in anyway.
+My multipath.conf here:
+ --> http://rafb.net/p/G66QZ826.html
 
-If the hosts all will move the volume ("explicit trespass") whenever
-they see fit, in the above scenario N10 would move the volume to
-controller B, making 90% of all I/O come in the wrong way.  Depending on
-the failback settings one of N1-9 would move it back to controller A
-later, and until the broken patch cord was fixed the volume would keep
-moving back and forth between controllers - not exactly optimal.
+Thank you in advance for any idea!
 
-At least that's how I _think_ it would work, and that's why I don't use
-the ALUA bits.  I'd appreciate your comments on whether or not this
-makes sense or not...
+Laurent
 
-Note that in the case of an error that redirects all I/O to the passive
-controller (for example if N10 was the only node using the volume, or
-the switch in fabric A failed), the volume would still get moved to
-controller B (even though the hosts aren't able to do this themselves),
-because of the "implicit trespass"-functionality.  The only drawback
-that I can see of relying on this is that the I/O will pass through the
-passive controller for some minutes instead of being transferred
-immediately, which isn't really a problem as the performance degradation
-is very slight, at least not on the CX3;  I'm having problems measuring
-it at all.
+------=_Part_9961_17390384.1211536702587
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-> (Remember, the original EMC failover couldn't even handle I/O on
-> the non-active controller ...)
+Hello,<br><br>Is there anybody who can help me to find where is my problem.<br>I&#39;m trying to generate a mapper device with the tools multipath. But visibly it blocs before it finish, because I don&#39;t have any new mapper device.<br>
 
-Yes, PNR mode sucked.  I'm really glad the new CLARiiONs support ALUA,
-now I don't need a Symmetrix anymore.  :-)
+When i chose the verbose level 3 i can see those interesting things:<br><blockquote style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;" class="gmail_quote"># multipath -v3<br>
+[...]<br>
+sda: not found in pathvec<br>[...]<br>sdb: not found in pathvec<br>[...]<br>sdc: not found in pathvec<br>[...]<br>sdd: not found in pathvec<br>[...]<br>test: set ACT_CREATE (map does not exist)<br>test: domap (0) failure for create/reload map<br>
 
-> Well, the big advantage of the ALUA support in the EMC is that even the
-> secondary path will function, albeit slower. Hence you wouldn't get
-> the I/O errors during boot anymore.
+[...]<br>libdevmapper: libdm-common.c(239): Setting SELinux context for /dev/mapper/test to system_u:object_r:fixed_disk_device_t.<br>[...]<br></blockquote><br>I think the most interesting thing is the &quot;domap (0) failure for create/reload map&quot;.<br>
 
-Ah, yes, I am aware of this.  That is how the HDS AMS that was discussed
-earlier in the thread works too, though I'm not sure if that is actually
-ALUA or some HDS-specific implementation that does basically the same thing.
+I&#39;ve read a bit about the code mutlipath (cm/linux/storage/multipath-tools/libmultipath/configure.c+domap+(0)+failure+for+create/reload+map&amp;hl=fr&amp;ct=clnk&amp;cd=4&amp;gl=be&amp;client=firefox-a)<br>And conclude (but not sure) that&#39;s the dm_addmap failed.<br>
 
-I understood that Domenico asked if this is functionally equivalent to
-the new ALUA mode on the CLARiiONs, not if the old PNR mode was
-equivalent to ALUA, which is what I think is maybe how you understood
-it?  If so I agree with you - those two are indeed completely different.
+<br>you can find the output of multipath -v3 here:<br>&nbsp;--&gt; <a href="http://rafb.net/p/J45SFA12.html" target="_blank">http://rafb.net/p/J45SFA12.html</a><br><br>My multipath.conf here:<br>&nbsp;--&gt; <a href="http://rafb.net/p/G66QZ826.html" target="_blank">http://rafb.net/p/G66QZ826.html</a><br>
 
-Regards,
--- 
-Tore Anderson
+<br>Thank you in advance for any idea!<br><br>Laurent<br><br>
+
+------=_Part_9961_17390384.1211536702587--
+
+
+--===============1506504925==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1506504925==--
