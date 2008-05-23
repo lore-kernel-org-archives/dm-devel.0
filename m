@@ -1,94 +1,48 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH 7/7] scsi_dh: attach to hardware handler from dm-mpath
-Date: Fri, 23 May 2008 09:06:21 -0500
-Message-ID: <1211551581.11477.10.camel@localhost.localdomain>
-References: <20080514144338.714F910B5DF@craiglockhart-ipmi.suse.de>
-	 <1210819801.21974.266.camel@chandra-ubuntu> <482C0676.9070004@suse.de>
-	 <1210964001.21974.351.camel@chandra-ubuntu> <483154B0.7020500@suse.de>
-	 <1211221247.21974.382.camel@chandra-ubuntu> <4832C706.5040202@suse.de>
-	 <1211309554.21974.427.camel@chandra-ubuntu> <4833BEB2.1070305@suse.de>
-	 <1211444095.3956.6.camel@localhost.localdomain>
-	 <20080523114008.GG380@pentland.suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Desynchronizing dm-raid1
+Date: Fri, 23 May 2008 10:59:33 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0805231057110.31371@engineering.redhat.com>
+References: <E1JtKQL-0004Nm-00@gondolin.me.apana.org.au>
+	<Pine.LNX.4.64.0805061849020.7260@engineering.redhat.com>
+	<Pine.LNX.4.64.0805122325050.373@engineering.redhat.com>
+	<20080513033822.GA9604@gondor.apana.org.au>
+	<Pine.LNX.4.64.0805131622120.486@engineering.redhat.com>
+	<20080514011457.GB18728@gondor.apana.org.au>
+	<Pine.LNX.4.64.0805212210330.17520@engineering.redhat.com>
+	<20080522024225.GA28400@gondor.apana.org.au>
+	<Pine.LNX.4.64.0805220828500.15805@engineering.redhat.com>
+	<20080522235345.GA4019@gondor.apana.org.au>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20080523114008.GG380@pentland.suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: linux-scsi <linux-scsi@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080522235345.GA4019@gondor.apana.org.au>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: dm-devel@redhat.com, linux-crypto@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, 2008-05-23 at 13:40 +0200, Hannes Reinecke wrote:
-> On Thu, May 22, 2008 at 09:14:54AM +0100, James Bottomley wrote:
-> > On Wed, 2008-05-21 at 08:18 +0200, Hannes Reinecke wrote:
-> [ .. ]
-> > > Why? You can detach with dh_state, too; just do an
-> > > 
-> > > echo detach > /sys/block/sdX/device/dh_state
-> > > 
-> > > and the hardware handler will detach.
-> > > So no additional attribute is required.
-> > 
-> > Actually, if you're going down this route, it makes more sense to have
-> > the device handler be a driver ... remember you were the one promising
-> > multiple driver binding at the FS/Storage summit ...  that way we can
-> > use all the generic driver standard interfaces for manual
-> > binding/unbinding.  Plus we can place the attributes as driver attribute
-> > groups.
-> > 
-> Hmm. Actually this very discussion I had with Kay Sievers earlier this
-> week when we tried to make bsg useable for udev.
-> The problem here is that we really want the device_handler to kick in
-> _before_ any of the 'normal' SCSI ULD starts it's probing, as we might
-> want to suppress I/O on this channel.
+> On Thu, May 22, 2008 at 08:32:45AM -0400, Mikulas Patocka wrote:
+>>
+>> There may be external modules.
+>
+> Sorry but we don't support external modules.  They should be merged
+> upstream rather than distributed in the wild.
+>
+> Cheers,
 
-That's easily doable provided there's some type of trigger for
-registration.  At the moment, it's just a binding free for all since
-drivers bind either when they appear (for existing devices) or when the
-device appears (for existing drivers).  For the new multiple driver
-binding code, I could see a good case for either strictly controlling
-the ordering (for binding a new device to existing drivers) or even
-making the bindings classification driven.
+If you want to negate the meaning of the flag, then you have to write it 
+yourself. I, as non-developer of crypto code, can prove that on given path 
+the input data are read only once --- but I can't prove that on all paths 
+and all possible chaining modes of algorithms the data are read once, 
+because I don't know about all of them.
 
-> If we were to use the normal driver binding for this we'd be called
-> at the same level with the normal ULDs, making it unpredictable at which
-> time we're called.
-
-Depends how it's done.  Right at the moment with only a single driver
-there's no concept of ordering ... if it's list based, then it would be
-in list order, but there's no reason the order can't be dictated by the
-bus.
-
-> And it was actually Greg KH which promised the multiple driver binding,
-> but seems that he's not getting around doing this anytime soon.
-
-Well, since we have the use case, the rules of open source would tend to
-dictate that we have the impetus to do it.  Particularly when there's
-tricky questions like binding order to be answered.
-
-> Hmm; maybe I can convince Kay on doing it ...
-> But want we really want to do is _not_ having these 'special' handlers
-> called at any time during bus probing, but having a fixed order like:
-> 
-> sdev probing
->  - (optional) device handler attach
->  - bsg attach
->  - SCSI ULD probing
-> 
-> We would like to have bsg available before ULD probing, as then we could
-> use the bsg device nodes in general in udev (like calling scsi_id on it).
-> It _might_ be possible to handle these cases with multiple driver binding,
-> but seeing that there's no-one currently working on it I'd like to stick
-> with the current approach.
-
-I think a simple priority based scheme would cope with that.  Say a
-single integer in the bus for max priority and then it loops from zero
-to max binding all drivers equal to that priority.  We could use 3 (zero
-for device handler, one for bsg and 2 for ULD).  We should probably use
-1 as the default for everything, giving the ability to bind either
-before or after the default (using zero or 2).
-
-James
-
-
+Mikulas
