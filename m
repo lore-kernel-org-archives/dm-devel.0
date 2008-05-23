@@ -1,19 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
+From: Tore Anderson <tore@linpro.no>
 Subject: Re: Round Robin vs Active/Passive
-Date: Fri, 23 May 2008 10:55:21 +0200
-Message-ID: <20080523085521.GC380@pentland.suse.de>
-References: <ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com>
-	<ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>
-	<483468AD.7@linpro.no> <000301c8bbe5$4f1091d0$cf42e3c1@pitagora.it>
-	<20080523071654.GB380@pentland.suse.de>
-	<4836798F.4060100@linpro.no>
+Date: Fri, 23 May 2008 11:42:35 +0200
+Message-ID: <4836918B.8090909@linpro.no>
+References: <ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com>	<ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>	<483468AD.7@linpro.no>
+	<000301c8bbe5$4f1091d0$cf42e3c1@pitagora.it>	<20080523071654.GB380@pentland.suse.de>	<4836798F.4060100@linpro.no>
+	<20080523085521.GC380@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4836798F.4060100@linpro.no>
+In-Reply-To: <20080523085521.GC380@pentland.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,96 +23,84 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Tore,
+Hi,
 
-On Fri, May 23, 2008 at 10:00:15AM +0200, Tore Anderson wrote:
-> * Hannes Reinecke
->=20
-> > No. Alua is completely different. You have to use
-> >=20
-> > prio_callout "/sbin/mpath_prio_alua /dev/%n"
-> >=20
-> > for this.
-> > Although the normal EMC configuration continues to work, too.
-> > And also note that you have to change the failover mode
-> > to '4' to enable ALUA on the Clariion.
->=20
-> Hmm, interesting.  Apologies if I've been spreading misinformation!
->=20
-> Now you made me curious.  How does using an array (in ALUA failover mod=
-e
-> 4) with my configuration:
->=20
->         device {
->                 vendor                  DGC
->                 product                 *
->                 product_blacklist       LUNZ
->                 path_grouping_policy    group_by_prio
->                 path_checker            tur
->                 no_path_retry           queue
->                 prio_callout            "/sbin/mpath_prio_emc /dev/%n"
->                 failback                immediate
->         }
->=20
-> differ from using the ALUA specific code in multipath-tools?  I believe
-> it would look something like this?
->=20
->         device {
->                 vendor                  DGC
->                 product                 *
->                 product_blacklist       LUNZ
->                 path_grouping_policy    group_by_prio
->                 path_checker            tur
->                 no_path_retry           queue
->                 prio_callout            "/sbin/mpath_prio_alua /dev/%n"
->                 failback                immediate
->                 hardware_handler        "1 alua"
->         }
->=20
-Yes, this looks about okay.
+* Hannes Reinecke
 
-> I assume the ALUA bits are able to explicitly tell the CLARiiON to
-> transfer volume ownership from one controller to another (something I
-> don't think is desired in clustered environments anyway - the array
-> should have a better understanding of the optimal location of the volum=
-e
-> than the hosts, who could be in disagreement and end up moving the
-> volume back and forth), but what other differences are there?
->
-In moving the assignment to another controller you will have a more
-efficient I/O throughput, as in general the internal link between those
-two controller isn't the fastest. So you really want to move the
-LUN to that controller which should handle the I/O.
-(Remember, the original EMC failover couldn't even handle I/O on
-the non-active controller ...)
+> In moving the assignment to another controller you will have a more
+> efficient I/O throughput, as in general the internal link between those
+> two controller isn't the fastest. So you really want to move the
+> LUN to that controller which should handle the I/O.
 
-And for ALUA support in general this is just a standardized method of
-signalling the required failover/multipath support mode to the initiator.
-You can map just about any existing failover method on ALUA modes,
-so in principle every IHV can update their firmware to support ALUA.
+Yes.  But the EMC will take care of moving the volume where it gets the
+most I/O on its own (they call it "implicit trespass"), no
+host-initiated volume movement is necessary.  I'll elaborate on why I
+believe this to be better (especially in clustered environments):
 
-And most vendors already did so. Funnily enough, none of those chose
-to implement the _exact_ modes the original firmware supported.
-With EMC we suddenly can do I/O on the secondary path, the active/active
-HP boxes suddenly have optimal and non/optimal paths, the old HP
-MSA firmware starts do do I/O on their standby path, too, etc.
-Bit of a shame, really. I was really curious how ALUA paths in 'standby'
-mode would be reacting ...
+Consider a simple dual-fabric topology, which controller A connected to
+fabric A and controller B connected to fabric B.  Ten nodes share one
+volume, which by default are owned by controller A.  They all generate
+about the same amount of I/O.
 
-> I'm speaking strictly from a user's point of view here - the difference=
-s
-> "under the hood" isn't that interesting to me as long as it ends up
-> working the same way and in an equally reliable manner.
->=20
-Well, the big advantage of the ALUA support in the EMC is that even the
-secondary path will function, albeit slower. Hence you wouldn't get
-the I/O errors during boot anymore.
+  +-----------[ Switch - Fabric A ]
+  |            |    |     |    |
+Ctrl A         |    |     |    |
+              N1   N2   [..]  N10
+Ctrl B         |    |     |    |
+  |            |    |     |    |
+  +-----------[ Switch - Fabric B ]
 
-HTH,
+Normally all traffic to the volume are passed through fabric A to
+controller A, while fabric B and controller B are completely idle.
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+Now, say that the patch cord between N10 and Fabric A breaks.  In the
+situation when there's no host-initiated volume, N10 will start using
+the path through fabric B through the passive controller with a slight
+performance impact, while the CLARiiON will leave the volume on
+controller A since it can tell that that's where 90% of the I/O is
+coming in anyway.
+
+If the hosts all will move the volume ("explicit trespass") whenever
+they see fit, in the above scenario N10 would move the volume to
+controller B, making 90% of all I/O come in the wrong way.  Depending on
+the failback settings one of N1-9 would move it back to controller A
+later, and until the broken patch cord was fixed the volume would keep
+moving back and forth between controllers - not exactly optimal.
+
+At least that's how I _think_ it would work, and that's why I don't use
+the ALUA bits.  I'd appreciate your comments on whether or not this
+makes sense or not...
+
+Note that in the case of an error that redirects all I/O to the passive
+controller (for example if N10 was the only node using the volume, or
+the switch in fabric A failed), the volume would still get moved to
+controller B (even though the hosts aren't able to do this themselves),
+because of the "implicit trespass"-functionality.  The only drawback
+that I can see of relying on this is that the I/O will pass through the
+passive controller for some minutes instead of being transferred
+immediately, which isn't really a problem as the performance degradation
+is very slight, at least not on the CX3;  I'm having problems measuring
+it at all.
+
+> (Remember, the original EMC failover couldn't even handle I/O on
+> the non-active controller ...)
+
+Yes, PNR mode sucked.  I'm really glad the new CLARiiONs support ALUA,
+now I don't need a Symmetrix anymore.  :-)
+
+> Well, the big advantage of the ALUA support in the EMC is that even the
+> secondary path will function, albeit slower. Hence you wouldn't get
+> the I/O errors during boot anymore.
+
+Ah, yes, I am aware of this.  That is how the HDS AMS that was discussed
+earlier in the thread works too, though I'm not sure if that is actually
+ALUA or some HDS-specific implementation that does basically the same thing.
+
+I understood that Domenico asked if this is functionally equivalent to
+the new ALUA mode on the CLARiiONs, not if the old PNR mode was
+equivalent to ALUA, which is what I think is maybe how you understood
+it?  If so I agree with you - those two are indeed completely different.
+
+Regards,
+-- 
+Tore Anderson
