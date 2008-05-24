@@ -1,23 +1,13 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: Desynchronizing dm-raid1
-Date: Sat, 24 May 2008 10:01:19 +1000
-Message-ID: <20080524000119.GA26747@gondor.apana.org.au>
-References: <Pine.LNX.4.64.0805061849020.7260@engineering.redhat.com>
-	<Pine.LNX.4.64.0805122325050.373@engineering.redhat.com>
-	<20080513033822.GA9604@gondor.apana.org.au>
-	<Pine.LNX.4.64.0805131622120.486@engineering.redhat.com>
-	<20080514011457.GB18728@gondor.apana.org.au>
-	<Pine.LNX.4.64.0805212210330.17520@engineering.redhat.com>
-	<20080522024225.GA28400@gondor.apana.org.au>
-	<Pine.LNX.4.64.0805220828500.15805@engineering.redhat.com>
-	<20080522235345.GA4019@gondor.apana.org.au>
-	<Pine.LNX.4.64.0805231057110.31371@engineering.redhat.com>
+From: "Laurent GEHLEN" <list.4.gehlen@gmail.com>
+Subject: Re: domap (0) failure for create/reload map
+Date: Sat, 24 May 2008 11:47:27 +0200
+Message-ID: <cbca94860805240247g49712dc5sd93d862bc4ce12a1@mail.gmail.com>
+References: <cbca94860805230258l48eaf9a9u4d4b1ee91ed79294@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============0338062995=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0805231057110.31371@engineering.redhat.com>
+In-Reply-To: <cbca94860805230258l48eaf9a9u4d4b1ee91ed79294@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,25 +17,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, linux-crypto@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, May 23, 2008 at 10:59:33AM -0400, Mikulas Patocka wrote:
+--===============0338062995==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_1594_12635626.1211622447419"
+
+------=_Part_1594_12635626.1211622447419
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+I've just seen that the link are dead, so I uploaded the file on my server.
+
+So now you can find the output of multipath -v3 here:
+ --> http://xen-lo.no-ip.org/temp/output-multipath-v3
+And my multipath.conf here:
+ --> http://xen-lo.no-ip.org/temp/multipath.conf
+<http://rafb.net/p/J45SFA12.html>
+Thanks
+
+Laurent
+
+2008/5/23 Laurent GEHLEN <list.4.gehlen@gmail.com>:
+
+> Hello,
 >
-> If you want to negate the meaning of the flag, then you have to write it 
-> yourself. I, as non-developer of crypto code, can prove that on given path 
-> the input data are read only once --- but I can't prove that on all paths 
-> and all possible chaining modes of algorithms the data are read once, 
-> because I don't know about all of them.
+> Is there anybody who can help me to find where is my problem.
+> I'm trying to generate a mapper device with the tools multipath. But
+> visibly it blocs before it finish, because I don't have any new mapper
+> device.
+> When i chose the verbose level 3 i can see those interesting things:
+>
+>> # multipath -v3
+>> [...]
+>> sda: not found in pathvec
+>> [...]
+>> sdb: not found in pathvec
+>> [...]
+>> sdc: not found in pathvec
+>> [...]
+>> sdd: not found in pathvec
+>> [...]
+>> test: set ACT_CREATE (map does not exist)
+>> test: domap (0) failure for create/reload map
+>> [...]
+>> libdevmapper: libdm-common.c(239): Setting SELinux context for
+>> /dev/mapper/test to system_u:object_r:fixed_disk_device_t.
+>> [...]
+>>
+>
+> I think the most interesting thing is the "domap (0) failure for
+> create/reload map".
+> I've read a bit about the code mutlipath
+> (cm/linux/storage/multipath-tools/libmultipath/configure.c+domap+(0)+failure+for+create/reload+map&hl=fr&ct=clnk&cd=4&gl=be&client=firefox-a)
+> And conclude (but not sure) that's the dm_addmap failed.
+>
+> you can find the output of multipath -v3 here:
+>  --> http://rafb.net/p/J45SFA12.html
+>
+> My multipath.conf here:
+>  --> http://rafb.net/p/G66QZ826.html
+>
+> Thank you in advance for any idea!
+>
+> Laurent
+>
+>
 
-Huh? Inverting it would give exactly the same result as your current
-patch.  If you're not confident with it inverted, then I can't see
-how you could be confident about the patch as it is.
+------=_Part_1594_12635626.1211622447419
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Cheers,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+I&#39;ve just seen that the link are dead, so I uploaded the file on my server.<br><br>So now you can find the output of multipath -v3 here:<br>&nbsp;--&gt; <a href="http://xen-lo.no-ip.org/temp/output-multipath-v3">http://xen-lo.no-ip.org/temp/output-multipath-v3</a><br>
+And my multipath.conf here:<br>&nbsp;--&gt; <a href="http://xen-lo.no-ip.org/temp/multipath.conf">http://xen-lo.no-ip.org/temp/multipath.conf</a><br><a href="http://rafb.net/p/J45SFA12.html" target="_blank"></a><br>Thanks<br><br>
+Laurent<br><br><div class="gmail_quote">2008/5/23 Laurent GEHLEN &lt;<a href="mailto:list.4.gehlen@gmail.com">list.4.gehlen@gmail.com</a>&gt;:<br><blockquote class="gmail_quote" style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;">
+Hello,<br><br>Is there anybody who can help me to find where is my problem.<br>I&#39;m trying to generate a mapper device with the tools multipath. But visibly it blocs before it finish, because I don&#39;t have any new mapper device.<br>
+
+
+When i chose the verbose level 3 i can see those interesting things:<br><blockquote style="border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padding-left: 1ex;" class="gmail_quote"># multipath -v3<br>
+
+[...]<br>
+sda: not found in pathvec<br>[...]<br>sdb: not found in pathvec<br>[...]<br>sdc: not found in pathvec<br>[...]<br>sdd: not found in pathvec<br>[...]<br>test: set ACT_CREATE (map does not exist)<br>test: domap (0) failure for create/reload map<br>
+
+
+[...]<br>libdevmapper: libdm-common.c(239): Setting SELinux context for /dev/mapper/test to system_u:object_r:fixed_disk_device_t.<br>[...]<br></blockquote><br>I think the most interesting thing is the &quot;domap (0) failure for create/reload map&quot;.<br>
+
+
+I&#39;ve read a bit about the code mutlipath (cm/linux/storage/multipath-tools/libmultipath/configure.c+domap+(0)+failure+for+create/reload+map&amp;hl=fr&amp;ct=clnk&amp;cd=4&amp;gl=be&amp;client=firefox-a)<br>And conclude (but not sure) that&#39;s the dm_addmap failed.<br>
+
+
+<br>you can find the output of multipath -v3 here:<br>&nbsp;--&gt; <a href="http://rafb.net/p/J45SFA12.html" target="_blank">http://rafb.net/p/J45SFA12.html</a><br><br>My multipath.conf here:<br>&nbsp;--&gt; <a href="http://rafb.net/p/G66QZ826.html" target="_blank">http://rafb.net/p/G66QZ826.html</a><br>
+
+
+<br>Thank you in advance for any idea!<br><font color="#888888"><br>Laurent<br><br>
+</font></blockquote></div><br>
+
+------=_Part_1594_12635626.1211622447419--
+
+
+--===============0338062995==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0338062995==--
