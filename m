@@ -1,13 +1,11 @@
-From: "KAIZUKA Hiroyuki" <kaizuka@valinux.co.jp>
-Subject: dm-ioband utility tool update (LVM support)
-Date: Thu, 29 May 2008 19:19:50 +0900
-Message-ID: <b4f682fb0805290319s442cc896w303ac11b80dfd988@mail.gmail.com>
+From: Twardy Sandrine <twardy@univ-tln.fr>
+Subject: Problem with multipath and kernel 2.6.18-92.el5
+Date: Thu, 29 May 2008 14:45:37 +0200
+Message-ID: <483EA571.5010009@univ-tln.fr>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============2122719830=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +18,120 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi, everyone,
+This is a cryptographically signed message in MIME format.
 
-iobandctl has been updated.
-It came to be able to deal with LVM Volume Groups.
+--===============2122719830==
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
+	micalg=sha1; boundary="------------ms030007030003080204000509"
 
-iobandctl is an administration tool to realize disk I/O bandwidth control
-using dm-ioband, which is an I/O bandwidth controller implemented as a
-device-mapper driver. You can find dm-ioband at:
-http://people.valinux.co.jp/~ryov/dm-ioband
+This is a cryptographically signed message in MIME format.
 
-Changes from previous version:
-*  LVM support.
-  o You can specify a Volume Group for the device name on "create" subcommand.
-    Ioband devices are created per LV involved in the VG.
-  o "create" subcommand has come not to try to create already existing ioband
-    devices. This helps you to create an ioband device which will map on to
-    newly added Logical Volume.
-  o You can specify Logical Volumes for the device name on "weight" subcommand.
-  o You can specify Volume Groups or Logical Volumes for the device name on
-    "group", "showconfig", and "status" subcommand.
-  o You can specify a Volume Group or a Logical Volume for the device name on
-    "destroy" subcommand. Now, it is possible to delete each ioband device,
-    not all ioband devices involved in the specified device.
-* Fixed a bug, when resetting ioband device statistics counter.
+--------------ms030007030003080204000509
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Limitations:
-* iobandctl does not support the "weight-iosize" policy yet, which has been
-  newly added to dm-ioband v1.0.0.
+Hello,
 
-For more details, please refer to:
-http://people.valinux.co.jp/~kaizuka/dm-ioband/iobandctl/
+I have update my server to kernel 2.6.18-92.el5, and multipath not work 
+because a module dm_hp_sw is automatically load. But this module seem 
+don't work for my EVA 5000 HSV110.
 
-Thanks,
-KAIZUKA Hiroyuki
+i would like not load this module, but the command multipath -v 3 load 
+this module why ? Can I dont load this module ?
+
+Thanks a lot for your responses
+
+
+--------------ms030007030003080204000509
+Content-Type: application/x-pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+Content-Description: S/MIME Cryptographic Signature
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIINOzCC
+A9swggLDoAMCAQICAQIwDQYJKoZIhvcNAQEEBQAwTzELMAkGA1UEBhMCRlIxDDAKBgNVBAoT
+A0NSVTESMBAGA1UEAxMJYWMtcmFjaW5lMR4wHAYJKoZIhvcNAQkBFg9jYS1hZG1pbkBjcnUu
+ZnIwHhcNMDMwNTE2MDkzMTE3WhcNMTIxMjE0MDkzMTE3WjBUMQswCQYDVQQGEwJGUjEMMAoG
+A1UEChMDQ1JVMRcwFQYDVQQDEw5hYy11dGlsaXNhdGV1cjEeMBwGCSqGSIb3DQEJARYPY2Et
+YWRtaW5AY3J1LmZyMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtXGYMirQ2feu
+6b4FDrH8PRwIyjfXPSXaG33GoatYJIbOmxAwnGbwVBng3WDzoW5X45RWq93nOxSdx4MTsGQJ
+pBihob2h4XeGpL54WlLd+kvOxvp/0OzLYYcESI3dpVRjf6jB8Ggc7BUlE+ptIjyXAVTNKz1o
+6aiLSR6G1zG5cidq3BAXjlpfvbX9EWfICcnmLMSQ29oam857EsAJRuGHNajdPEMUlsioEIf2
+Zf4YL9pa5rJ5Efs7NTxu8ffICGYlCynJXJTC461sRrub8s6SOM69NTw8EM+1A3ewd5WyGkZe
+QSG7SJyJY8Lg8u4CMoflOjP3LSYhCLI1Ic0gX08dkQIDAQABo4G8MIG5MA8GA1UdEwEB/wQF
+MAMBAf8wHQYDVR0OBBYEFBUKfCi1rKa81/0yMx15vbNJCjGQMHcGA1UdIwRwMG6AFK8vz0qV
+BLbeJLMJqVU+XA4c+HEuoVOkUTBPMQswCQYDVQQGEwJGUjEMMAoGA1UEChMDQ1JVMRIwEAYD
+VQQDEwlhYy1yYWNpbmUxHjAcBgkqhkiG9w0BCQEWD2NhLWFkbWluQGNydS5mcoIBADAOBgNV
+HQ8BAf8EBAMCAQYwDQYJKoZIhvcNAQEEBQADggEBAMG/+LofN2vISFWieXrHsFsIrM/2WUhf
+zAcE2/Ga+/UWvJaDJO9RlbUNN3l+f40L1yUJW9kZqY4XMBcbJ6jbpmeJ+zTf+zveAD/sl9ZN
+qoC931HFLq/TGjZSIQxX4Nxad9DFbok66X1qfRZF4+beaz2zjrF07LvjWX6201Rc6zQhNyTy
+UdO/wYY0EBYu0CFrTK4RxS6d2LsyO1p1Xj7oMCa9Utmu/igZoXJYL709POBKHJoYNU+LI6iJ
+8aYcZupJ/GXVxfj68L1KP2i8cM3a570bJCDbsKcchzZqsvII5cewU7KKPH4fyMyfsA39tJ0V
+BMQyvdWZHpS75DN0eB5UVzUwggSqMIIDkqADAgECAgIM3TANBgkqhkiG9w0BAQQFADBUMQsw
+CQYDVQQGEwJGUjEMMAoGA1UEChMDQ1JVMRcwFQYDVQQDEw5hYy11dGlsaXNhdGV1cjEeMBwG
+CSqGSIb3DQEJARYPY2EtYWRtaW5AY3J1LmZyMB4XDTA4MDEwOTA4NDAzMloXDTA5MDEwOTA4
+NDAzMlowXTELMAkGA1UEBhMCRlIxETAPBgNVBAoTCDA4MzA3NjZHMRgwFgYDVQQDEw9TYW5k
+cmluZSBUd2FyZHkxITAfBgkqhkiG9w0BCQEWEnR3YXJkeUB1bml2LXRsbi5mcjCBnzANBgkq
+hkiG9w0BAQEFAAOBjQAwgYkCgYEAuMu3xIzg2nryTowSb3CHrqsNpKy/WkxZnvCj5DfkrpB2
+T+TpswgJ5i/dbSIN54uMZXUs0FAUyCsIemNq7ZbfY3Rkf0IcKcttgGTxoZFv+zCDb1IIprYx
+b4dDRjrhx5TnE4YLpg5vEeF+RfLpZVlrI3z7jk0gzt16sJ4N3s2LqvUCAwEAAaOCAf8wggH7
+MAwGA1UdEwEB/wQCMAAwEQYJYIZIAYb4QgEBBAQDAgSwMA4GA1UdDwEB/wQEAwIF4DAdBgNV
+HREEFjAUgRJ0d2FyZHlAdW5pdi10bG4uZnIwcAYJYIZIAYb4QgENBGMWYUNlcnRpZmljYXQg
+YWMtdXRpbGlzYXRldXIuIFBvdXIgdG91dGUgaW5mb3JtYXRpb24gc2UgcmVwb3J0ZXIg4CBo
+dHRwOi8vaWdjLmNydS5mci9hYy11dGlsaXNhdGV1ci8wHQYDVR0OBBYEFLbA25+07p957qiQ
+aMHPKpIAhbhJMHcGA1UdIwRwMG6AFBUKfCi1rKa81/0yMx15vbNJCjGQoVOkUTBPMQswCQYD
+VQQGEwJGUjEMMAoGA1UEChMDQ1JVMRIwEAYDVQQDEwlhYy1yYWNpbmUxHjAcBgkqhkiG9w0B
+CQEWD2NhLWFkbWluQGNydS5mcoIBAjBPBgNVHR8ESDBGMESgQqBAhj5odHRwOi8vaWdjLmNy
+dS5mci9jZ2ktYmluL2xvYWRjcmw/Q0E9YWMtdXRpbGlzYXRldXImZm9ybWF0PURFUjBOBgNV
+HSAERzBFMEMGDikDBgEEAAG3XwMBAgAEMDEwLwYIKwYBBQUHAgEWI2h0dHA6Ly9pZ2MuY3J1
+LmZyL3JlZmVyZW5jZXMvcGMucGRmMA0GCSqGSIb3DQEBBAUAA4IBAQBEgjBomW7m3kn19REA
++PweCfDsBOnZ/xMoN3iMeKsWO8pbCOU5gSVByfHGl1EVK9IMeArtQ+Cs5S2RHmj3qOCmgkQi
+bKzPUiuAUGAr23NvxjZujDA9PS0q35yajxB+u5oeacCdRy7YTE5fE63vmhgGWcFil9fUJWZH
+lzxnKYGvnuvEzLoDbwmHB96XUrjaGjqZVTVjQLT3G8MpJLkMv96rovUAevqgsTm02ZhnULUe
+Sr7u24vkHKBrdX+HUtJ8grbUY3pII/uiS9rVq6ERGwzY5lTAmcRDqlXPWn//5FNZ5T/gglVA
+c/3pbxZDyMASpG/4b6VFRM31yRiCszpGu66nMIIEqjCCA5KgAwIBAgICDN0wDQYJKoZIhvcN
+AQEEBQAwVDELMAkGA1UEBhMCRlIxDDAKBgNVBAoTA0NSVTEXMBUGA1UEAxMOYWMtdXRpbGlz
+YXRldXIxHjAcBgkqhkiG9w0BCQEWD2NhLWFkbWluQGNydS5mcjAeFw0wODAxMDkwODQwMzJa
+Fw0wOTAxMDkwODQwMzJaMF0xCzAJBgNVBAYTAkZSMREwDwYDVQQKEwgwODMwNzY2RzEYMBYG
+A1UEAxMPU2FuZHJpbmUgVHdhcmR5MSEwHwYJKoZIhvcNAQkBFhJ0d2FyZHlAdW5pdi10bG4u
+ZnIwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBALjLt8SM4Np68k6MEm9wh66rDaSsv1pM
+WZ7wo+Q35K6Qdk/k6bMICeYv3W0iDeeLjGV1LNBQFMgrCHpjau2W32N0ZH9CHCnLbYBk8aGR
+b/swg29SCKa2MW+HQ0Y64ceU5xOGC6YObxHhfkXy6WVZayN8+45NIM7derCeDd7Ni6r1AgMB
+AAGjggH/MIIB+zAMBgNVHRMBAf8EAjAAMBEGCWCGSAGG+EIBAQQEAwIEsDAOBgNVHQ8BAf8E
+BAMCBeAwHQYDVR0RBBYwFIESdHdhcmR5QHVuaXYtdGxuLmZyMHAGCWCGSAGG+EIBDQRjFmFD
+ZXJ0aWZpY2F0IGFjLXV0aWxpc2F0ZXVyLiBQb3VyIHRvdXRlIGluZm9ybWF0aW9uIHNlIHJl
+cG9ydGVyIOAgaHR0cDovL2lnYy5jcnUuZnIvYWMtdXRpbGlzYXRldXIvMB0GA1UdDgQWBBS2
+wNuftO6fee6okGjBzyqSAIW4STB3BgNVHSMEcDBugBQVCnwotaymvNf9MjMdeb2zSQoxkKFT
+pFEwTzELMAkGA1UEBhMCRlIxDDAKBgNVBAoTA0NSVTESMBAGA1UEAxMJYWMtcmFjaW5lMR4w
+HAYJKoZIhvcNAQkBFg9jYS1hZG1pbkBjcnUuZnKCAQIwTwYDVR0fBEgwRjBEoEKgQIY+aHR0
+cDovL2lnYy5jcnUuZnIvY2dpLWJpbi9sb2FkY3JsP0NBPWFjLXV0aWxpc2F0ZXVyJmZvcm1h
+dD1ERVIwTgYDVR0gBEcwRTBDBg4pAwYBBAABt18DAQIABDAxMC8GCCsGAQUFBwIBFiNodHRw
+Oi8vaWdjLmNydS5mci9yZWZlcmVuY2VzL3BjLnBkZjANBgkqhkiG9w0BAQQFAAOCAQEARIIw
+aJlu5t5J9fURAPj8Hgnw7ATp2f8TKDd4jHirFjvKWwjlOYElQcnxxpdRFSvSDHgK7UPgrOUt
+kR5o96jgpoJEImysz1IrgFBgK9tzb8Y2bowwPT0tKt+cmo8QfruaHmnAnUcu2ExOXxOt75oY
+BlnBYpfX1CVmR5c8ZymBr57rxMy6A28Jhwfel1K42ho6mVU1Y0C09xvDKSS5DL/eq6L1AHr6
+oLE5tNmYZ1C1Hkq+7tuL5Byga3V/h1LSfIK21GN6SCP7okva1auhERsM2OZUwJnEQ6pVz1p/
+/+RTWeU/4IJVQHP96W8WQ8jAEqRv+G+lRUTN9ckYgrM6RruupzGCAo0wggKJAgEBMFowVDEL
+MAkGA1UEBhMCRlIxDDAKBgNVBAoTA0NSVTEXMBUGA1UEAxMOYWMtdXRpbGlzYXRldXIxHjAc
+BgkqhkiG9w0BCQEWD2NhLWFkbWluQGNydS5mcgICDN0wCQYFKw4DAhoFAKCCAYkwGAYJKoZI
+hvcNAQkDMQsGCSqGSIb3DQEHATAcBgkqhkiG9w0BCQUxDxcNMDgwNTI5MTI0NTM3WjAjBgkq
+hkiG9w0BCQQxFgQU2V9SZ3prfZrD0+KcR1eWuoFPcGwwUgYJKoZIhvcNAQkPMUUwQzAKBggq
+hkiG9w0DBzAOBggqhkiG9w0DAgICAIAwDQYIKoZIhvcNAwICAUAwBwYFKw4DAgcwDQYIKoZI
+hvcNAwICASgwaQYJKwYBBAGCNxAEMVwwWjBUMQswCQYDVQQGEwJGUjEMMAoGA1UEChMDQ1JV
+MRcwFQYDVQQDEw5hYy11dGlsaXNhdGV1cjEeMBwGCSqGSIb3DQEJARYPY2EtYWRtaW5AY3J1
+LmZyAgIM3TBrBgsqhkiG9w0BCRACCzFcoFowVDELMAkGA1UEBhMCRlIxDDAKBgNVBAoTA0NS
+VTEXMBUGA1UEAxMOYWMtdXRpbGlzYXRldXIxHjAcBgkqhkiG9w0BCQEWD2NhLWFkbWluQGNy
+dS5mcgICDN0wDQYJKoZIhvcNAQEBBQAEgYCmnJcgHUCMbmmuHU4hNF7xxxlzUlgn+feKrXGX
+0rNp4DTGp6nrkdz+s5nkmf6ZsyX4LxmUjizSxI3PrN0cytsa4ut6C3m6e7ZDU9kz1O/6Z+Ag
+BF7rxX5D9QFg5B9/ygzw0UUBi8FcW3pg1q+BzTFNGWEZlxgyA2TTKnuzllQ5ggAAAAAAAA==
+--------------ms030007030003080204000509--
+
+
+--===============2122719830==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2122719830==--
