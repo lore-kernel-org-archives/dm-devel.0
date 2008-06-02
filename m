@@ -1,45 +1,61 @@
-From: Yan Li <elliot.li.tech@gmail.com>
-Subject: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O in dm-crypt
-Date: Mon, 2 Jun 2008 20:31:45 +0800
-Message-ID: <20080602123145.GA8258@yantp.cn.ibm.com>
-References: <20080602030738.GA7761@yantp.cn.ibm.com> <48439890.6030904@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/2] dm-ioband: I/O bandwidth controller v1.1.0:
+ Introduction
+Date: Mon, 02 Jun 2008 21:34:33 +0900 (JST)
+Message-ID: <20080602.213433.193692201.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759922AbYFBMcW@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <48439890.6030904@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Milan Broz <mbroz@redhat.com>
-Cc: Yan Li <elliot.li.tech@gmail.com>, Andrew Morton <akpm@linux-foundation.org>, Ritesh Raj Sarraf <rrs@researchut.com>, Christophe Saout <christophe@saout.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Herbert Xu <herbert@gondor.apana.org.au>, rjmaomao@gmail.com, Alasdair G Kergon <agk@redhat.com>, dm-crypt@saout.de
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/cgi-bin/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: agk@sourceware.org
 List-Id: dm-devel.ids
 
-Hi Milan,
+Hi everyone,
 
-On Mon, Jun 02, 2008 at 08:52:00AM +0200, Milan Broz wrote:
-> Please could you try if  patch here helps and doesn't cause performance degradation?
-> http://www2.kernel.org/pub/linux/kernel/people/agk/patches/2.6/2.6.25/dm-crypt-add-cond_resched.patch
+This is dm-ioband version 1.1.0 release.
 
-Will the result of testing a Debian 2.6.24-etchnhalf.1-amd64 kernel
-(very near a vanilla kernel) be of same value?  Since the data on some
-other drives on this server is important so I dare not try 2.6.25-rc
-on it.
+Dm-ioband is an I/O bandwidth controller implemented as a device-mapper
+driver, which gives specified bandwidth to each job running on the same
+physical device.
 
-Following is my test plan, comments are welcomed:
+- Can be applied to the kernel 2.6.26-rc2-mm1.
+- Changes from 1.0.0 (posted on May 19, 2008):
+  - Measures against high memory pressure.
+    I/O requests to reclaim pages won't be blocked in dm-ioband
+    even when the group doesn't have the right to issue any more I/Os.
+    But it can keep to control the bandwidth of the group since these
+    I/Os will be counted as debt of the group.
+  - Performance tuning
+    Improve the performance when a lot of ioband groups are created.
+    It is useful when you want to control bandwidth on a per user
+    basis. For example, you can create an ioband group and give an
+    weight to a user once the user is logged in. The combination of
+    dm-ioband, the cgroup memory resource controller and the
+    CPU resource controller will work more effectively.
 
-Test command:
-# dd if=/dev/zero of=/dev/mapper/open_device bs=500M count=10
-(this server has 2G memory)
+I also announce that we have launched "Linux Block I/O Bandwidth
+Control Project" website http://people.valinux.co.jp/~ryov/bwctl/ .
+The goal of this project is to develop a block I/O bandwidth
+controller on Linux. You can find information about the followings:
 
-The command will be run	for 3 times, and average speed of last two
-runs will be taken as result score.
+- dm-ioband
+  This device mapper driver.
+- iobandctl
+  An administration tool for dm-ioband, which makes it easy to
+  configure the dm-ioband device.
+- Block I/O Tracking
+  Block I/O tracking, which we call "bio cgroup", provides block I/O
+  tracking mechanism. It makes dm-ioband be able to control the block
+  I/O bandwidths even when it accepts delays write requests.
 
-Dm-crypt LUKS Encryption scenarios:
-aes-cbc-essiv:sha256, keysize 128
-aes-xts-plain, keysize 256
-aes-xts-plain, keysize 512
-
-I will compare the speed of all above 3 encryption scenarios, with and
-without the patch.
-
---
-Li, Yan
+Thanks,
+Ryo Tsuruta
