@@ -1,11 +1,12 @@
-From: Kevin M Lange <kevin_m_lange@raytheon.com>
-Subject: multipath-tools support for SGI TP9700...
-Date: Thu, 12 Jun 2008 00:51:25 -0400
-Message-ID: <OF744EE384.61DE82DD-ON86257466.0019E988-85257466.001AAE7D@mck.us.ray.com>
+From: Ron Peterson <rpeterso@mtholyoke.edu>
+Subject: kpartx and udev
+Date: Tue, 3 Jun 2008 12:36:49 -0400
+Message-ID: <20080603163649.GE20339@localhost.localdomain>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0036848464=="
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -15,76 +16,82 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr, dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multipart message in MIME format.
---===============0036848464==
-Content-Type: multipart/alternative;
-	boundary="=_alternative 001AAE7A85257466_="
+Hi,
 
-This is a multipart message in MIME format.
---=_alternative 001AAE7A85257466_=
-Content-Type: text/plain; charset="US-ASCII"
+I am having trouble getting kpartx to run reliably from udev.  My config
+files look like:
+________________________________________________________________________
+/etc/udev/rules.d/z60_multipath.rules:
 
-Salut,
+RUN+="socket:/org/kernel/dm/multipath_event"
 
-Our organization is currently prototyping a database host which is running 
-RHEL5 with SGI InfiniteStorage TP9700 Storage System.  Red Hat support has 
-effectively told us that the device-mapper-multipath software does not 
-support our TP9700 storage.  Does the multipath-tools v0.4.8 support SGI 
-TP9700?  We are interested in contributing our hardware configuration for 
-test of multipath-tools, but are unable to contribute programming 
-resources at this time.
+________________________________________________________________________
+/etc/udev/rules.d/z60_kpartx.rules:
 
-- Kevin
+KERNEL!="dm-*", GOTO="kpartx_end"
+ACTION=="remove", GOTO="kpartx_end"
+ACTION=="modify", GOTO="kpartx_end"
 
+ACTION=="add", \
+    SUBSYSTEM=="block", \
+    KERNEL=="dm-*", \
+    PROGRAM="/sbin/devmap_name %M %m", \
+    RUN+="/sbin/kpartx -a /dev/mapper/%c"
 
-Kevin M Lange 
-Principal Information Systems Technologist, NASA EMD Program
-EMD UNIX IT Support 
-Raytheon Information Solutions 
+LABEL="kpartx_end"
 
-301.851.8450 office
-301.928.2492 cell
-klange@raytheon.com
-5700 Rivertech Court
-Riverdale, MD 20737-1250
---=_alternative 001AAE7A85257466_=
-Content-Type: text/html; charset="US-ASCII"
+##
 
+When I run 'multipath', my /dev/mapper directory looks something like:
 
-<br><font size=3 color=#000080 face="Tahoma">Salut,</font>
-<br>
-<br><font size=3 color=#000080 face="Tahoma">Our organization is currently
-prototyping a database host which is running RHEL5 with SGI InfiniteStorage
-TP9700 Storage System. &nbsp;Red Hat support has effectively told us that
-the device-mapper-multipath software does not support our TP9700 storage.
-&nbsp;Does the multipath-tools v0.4.8 support SGI TP9700? &nbsp;We are
-interested in contributing our hardware configuration for test of multipath-tools,
-but are unable to contribute programming resources at this time.</font>
-<br>
-<br><font size=3 color=#000080 face="Tahoma">- Kevin<br>
-</font><font size=2 face="sans-serif"><br>
-</font><font size=2 color=#5f5f5f face="Arial"><b><br>
-Kevin M Lange </b></font><font size=1 color=#5f5f5f face="Arial"><br>
-Principal Information Systems Technologist, NASA EMD Program<br>
-EMD UNIX IT Support <b><br>
-Raytheon Information Solutions <br>
-</b><br>
-301.851.8450 office<br>
-301.928.2492 cell<br>
-klange@raytheon.com</font>
-<p><font size=1 color=#5f5f5f face="Arial">5700 Rivertech Court<br>
-Riverdale, MD 20737-1250</font>
---=_alternative 001AAE7A85257466_=--
+brw-rw---- 1 root disk   253, 22 2008-06-03 12:21 db1
+brw-rw---- 1 root disk   253, 26 2008-06-03 12:21 db1p1
+brw-rw---- 1 root disk   253,  1 2008-06-03 12:21 db2
+brw-rw---- 1 root disk   253,  3 2008-06-03 12:21 db3
+brw-rw---- 1 root disk   253,  4 2008-06-03 12:21 db4
+brw-rw---- 1 root disk   253, 13 2008-06-03 12:21 f3a00
+brw-rw---- 1 root disk   253, 14 2008-06-03 12:21 f3a01
+...
 
+All of these devices have one or more partitions; i.e. there should be a
+db2p1, and a db3p1, and so on.
 
---===============0036848464==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+As you can see, /some/ of my partitions are showing up, but others do not.
 
+If I run kpartx manually, it works; e.g.
 
---===============0036848464==--
+1110# kpartx -a /dev/mapper/db2
+
+1111# ll /dev/mapper/db2*
+brw-rw---- 1 root disk 253,  1 2008-06-03 12:21 /dev/mapper/db2
+brw-rw---- 1 root disk 253, 33 2008-06-03 12:29 /dev/mapper/db2p1
+
+I'm running multipath-tools version 0.4.8 on debian etch, running my own
+kernel, which at the moment is 2.6.25.4, but I've experienced the same
+trouble on other kernel versions.
+
+Interestingly, on kernel 2.6.23.16 as it happens, I was able to make
+this work by wrapping kpartx in a little script called my_kpartx.sh like
+this:
+
+#!/bin/sh
+(
+sleep 1
+/sbin/kpartx %1 %2
+) &
+
+Then, in my z60_kpartx.rules file, I called /sbin/my_kpartx rather than
+/sbin/kpartx.  This doesn't work in 2.6.25.4 though.
+
+So that's my sad tale of woe.  Any suggestions that might cheer me up?
+
+-- 
+Ron Peterson
+Network & Systems Manager
+Mount Holyoke College
+http://www.mtholyoke.edu/~rpeterso
+-
+I wish my computer would do what I want it to do - not what I tell it to do.
