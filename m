@@ -1,52 +1,30 @@
-From: Christopher <joffer@online.no>
-Subject: qla4xxx &
- "device-mapper: table: 253:0: multipath: error getting device" error
-Date: Wed, 04 Jun 2008 00:35:43 +0200
-Message-ID: <4845C73F.7030009@online.no>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Yan Li <elliot.li.tech@gmail.com>
+Subject: Re: 2.6.24 Kernel Soft Lock Up with heavy I/O in dm-crypt
+Date: Wed, 4 Jun 2008 07:13:39 +0800
+Message-ID: <20080603231339.GA5995@yantp.cn.ibm.com>
+References: <20080602030738.GA7761@yantp.cn.ibm.com> <48439890.6030904@redhat.com> <20080602123145.GA8258@yantp.cn.ibm.com> <2f83bcba0806031246m30f92892wc868d81a9c29d680@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15; format=flowed
-Content-Transfer-Encoding: 7BIT
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756228AbYFCXOS@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <2f83bcba0806031246m30f92892wc868d81a9c29d680@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ritesh Raj Sarraf <rrs@researchut.com>
+Cc: Yan Li <elliot.li.tech@gmail.com>, Milan Broz <mbroz@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Christophe Saout <christophe@saout.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Herbert Xu <herbert@gondor.apana.org.au>, rjmaomao@gmail.com, Alasdair G Kergon <agk@redhat.com>, dm-crypt@saout.de
 List-Id: dm-devel.ids
 
-Hi,
+On Wed, Jun 04, 2008 at 01:16:30AM +0530, Ritesh Raj Sarraf wrote:
+> Following is the bugzilla that was opened against this problem.
+> http://bugzilla.kernel.org/show_bug.cgi?id=10378
+> 
+> Since I wasn't able to reproduce it on a server machine again, it was later
+> closed.
+> 
+> If you think it is the same issue, please feel free to re-open it.
 
-I'm on my second atempt to configure iSCSI (Dell EqualLogic PS5000XV) on 
-linux (CentOS 5.1 x86_64). The first ended in a total caos and kernel 
-panic I didn't manage to recover from. No biggie, since it's a new 
-server (actually will be two identical running a cluster with iSCSI as 
-shared storage).
+I think they are not the same. My problem lied in the slow crypto
+computation under heavy I/O. I'm testing Milan Broz's patch, till now
+it seems has solved my problem.
 
-I've got a dualport QLogic iSCSI HBA QLE4062C card. I am trying to 
-configure my server to use multipath to the EqualLogic, but i'm not 
-confident it's safe to put it in production since I get this error in my 
-message log (dmesg) when what I believe is correct configuration gives 
-me lots of these:
-
-device-mapper: table: 253:0: multipath: error getting device
-device-mapper: ioctl: error adding target to table
-
-First I used the drivers from QLogic and thought it was a bug in the 
-driver, but after I removed them the system loaded the kernel provided 
-qla4xxx driver and the error still showed in my log.
-
-Is this a but in device-mapper-multipath or is it my config?
-
-For more info on this, see my open-iscsi post on google groups:
-http://groups.google.com/group/open-iscsi/browse_thread/thread/8bf139d774eab658 
-
-
-I posted there first, but ppl in the group told me to go to dm-devel.
-
-/Christopher
+-- 
+Li, Yan
