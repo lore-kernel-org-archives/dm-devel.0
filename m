@@ -1,76 +1,42 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: mpath: don't fail paths on first error
-Date: Fri, 06 Jun 2008 16:18:05 +0200
-Message-ID: <4849471D.4060104@suse.de>
-References: <4848218B.3090404@cs.wisc.edu>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <4848218B.3090404@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
+From: agk@sourceware.org
+Subject: device-mapper WHATS_NEW
+Date: 6 Jun 2008 18:53:27 -0000
+Message-ID: <20080606185327.23620.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2008-06-06 18:53:27
 
-Mike Christie wrote:
-> The problem we see a lot at Red Hat is that if drivers fail a command=
-=20
-> with DID_BUS_BUSY or DID_ERROR for something like underrun or even fo=
-r=20
-> transient path problems, we can normally recover from this pretty=20
-> quickly and we do not need to switch path groups.
->=20
-Yeah, I thought about this, too.
-> queue_if_no_path/no_path_retry will prevent IO from being fail upward=
-s,=20
-> but just switching paths can cause a lot of strain on the target, so =
-we=20
-> might want to prevent path switching when we do not need to. If we ar=
-e=20
-> using a box that requires manual failover or a box that does not use=20
-> manual failover but still has to shift resources between storage=20
-> controllers when switching paths, we most likely do not want to mark=20
-> paths failed for these transient errors.
->=20
-Well, the original design idea was that it always will be quicker or
-less error-prone to just move the I/O to the next path.
-Seeing that this is not always the case this approach is probably
-better.
+Modified files:
+	.              : WHATS_NEW 
 
-> The attached patch allows us to wait X seconds before marking a path =
-as=20
-> failed. If within X seconds from seeing the first IO error, we do not=
-=20
-> see a IO complete successfully then we mark a path as failed. This pa=
-tch=20
-> work best with the fail fast enhancements ones where for a lot of pat=
-h=20
-> problems the fast io fail / recovery timeout will fail io quickly to =
-us=20
-> and the test IOs do not get stuck, and where some errors like DID_ERR=
-OR=20
-> are not even failed fast.
->=20
-> The patch should apply over linus's tree or scsi-misc.
->=20
-Thanks for this, Mike.
+Log message:
+	nameprefixes
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.234&r2=1.235
 
-Cheers,
-
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--- device-mapper/WHATS_NEW	2008/06/06 18:53:08	1.234
++++ device-mapper/WHATS_NEW	2008/06/06 18:53:26	1.235
+@@ -5,7 +5,7 @@
+   Make dm_hash_iter safe against deletion.
+   Accept a NULL pointer to dm_free silently.
+   Add tables_loaded, readonly and suspended columns to reports.
+-  Add --fieldprefixes to dmsetup.
++  Add --nameprefixes to dmsetup.
+   Add field name prefix option to reporting functions.
+   Calculate string size within dm_pool_grow_object.
+ 
