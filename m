@@ -1,39 +1,76 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: Re: Round Robin vs Active/Passive
-Date: Fri, 06 Jun 2008 09:19:28 +0200
-Message-ID: <4848E500.2000302@linpro.no>
-References: <ABFD05FF09D13E4883B757E75603624D011E95B6@ex-sea1.vistocorp.com>	<ABFD05FF09D13E4883B757E75603624D011E95BB@ex-sea1.vistocorp.com>	<483468AD.7@linpro.no>	<000301c8bbe5$4f1091d0$cf42e3c1@pitagora.it>	<20080523071654.GB380@pentland.suse.de>	<4836798F.4060100@linpro.no><000401c8bcc0$d29e94d0$cf42e3c1@pitagora.it>	<4836A075.9090008@linpro.no>	<01d601c8bd1a$c5fd99b0$0201a8c0@zeug>	<48478DBF.3060709@linpro.no>
-	<484793BF.3050303@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: mpath: don't fail paths on first error
+Date: Fri, 06 Jun 2008 16:18:05 +0200
+Message-ID: <4849471D.4060104@suse.de>
+References: <4848218B.3090404@cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <484793BF.3050303@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <4848218B.3090404@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Hannes,
+Hi Mike,
 
-* Hannes Reinecke
+Mike Christie wrote:
+> The problem we see a lot at Red Hat is that if drivers fail a command=
+=20
+> with DID_BUS_BUSY or DID_ERROR for something like underrun or even fo=
+r=20
+> transient path problems, we can normally recover from this pretty=20
+> quickly and we do not need to switch path groups.
+>=20
+Yeah, I thought about this, too.
+> queue_if_no_path/no_path_retry will prevent IO from being fail upward=
+s,=20
+> but just switching paths can cause a lot of strain on the target, so =
+we=20
+> might want to prevent path switching when we do not need to. If we ar=
+e=20
+> using a box that requires manual failover or a box that does not use=20
+> manual failover but still has to shift resources between storage=20
+> controllers when switching paths, we most likely do not want to mark=20
+> paths failed for these transient errors.
+>=20
+Well, the original design idea was that it always will be quicker or
+less error-prone to just move the I/O to the next path.
+Seeing that this is not always the case this approach is probably
+better.
 
-> No need. I did some patch once ago which allowed you to set the hardware
-> handler in the multipaths section.
-> For exactly this scenario. Can you test if it works?
+> The attached patch allows us to wait X seconds before marking a path =
+as=20
+> failed. If within X seconds from seeing the first IO error, we do not=
+=20
+> see a IO complete successfully then we mark a path as failed. This pa=
+tch=20
+> work best with the fail fast enhancements ones where for a lot of pat=
+h=20
+> problems the fast io fail / recovery timeout will fail io quickly to =
+us=20
+> and the test IOs do not get stuck, and where some errors like DID_ERR=
+OR=20
+> are not even failed fast.
+>=20
+> The patch should apply over linus's tree or scsi-misc.
+>=20
+Thanks for this, Mike.
 
-Certainly!  Can you send me the patch or point me to it, though?  I 
-didn't find it in my archive, but I might have missed it as you've been 
-submitting a lot of patches here.
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-Regards,
--- 
-Tore Anderson
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
