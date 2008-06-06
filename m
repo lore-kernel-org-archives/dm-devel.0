@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper/lib libdm-report.c
-Date: 6 Jun 2008 19:07:48 -0000
-Message-ID: <20080606190748.10280.qmail@sourceware.org>
+Subject: device-mapper VERSION WHATS_NEW
+Date: 6 Jun 2008 19:09:20 -0000
+Message-ID: <20080606190920.10589.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,34 +18,30 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2008-06-06 19:07:47
+Changes by:	agk@sourceware.org	2008-06-06 19:09:20
 
 Modified files:
-	lib            : libdm-report.c 
+	.              : VERSION WHATS_NEW 
 
 Log message:
-	switch to single quotes rather than double for nameprefixes
+	pre-release
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.18&r2=1.19
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.134&r2=1.135
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.235&r2=1.236
 
---- device-mapper/lib/libdm-report.c	2008/04/20 00:11:08	1.18
-+++ device-mapper/lib/libdm-report.c	2008/06/06 19:07:47	1.19
-@@ -845,7 +845,7 @@
- 
- 				free(field_id);
- 
--				if (!dm_pool_grow_object(rh->mem, "=\"", 2)) {
-+				if (!dm_pool_grow_object(rh->mem, "=\'", 2)) {
- 					log_error("dm_report: Unable to extend output line");
- 					goto bad;
- 				}
-@@ -886,7 +886,7 @@
- 			}
- 
- 			if (rh->flags & DM_REPORT_OUTPUT_FIELD_NAME_PREFIX)
--				if (!dm_pool_grow_object(rh->mem, "\"", 1)) {
-+				if (!dm_pool_grow_object(rh->mem, "\'", 1)) {
- 					log_error("dm_report: Unable to extend output line");
- 					goto bad;
- 				}
+--- device-mapper/VERSION	2008/04/10 18:04:31	1.134
++++ device-mapper/VERSION	2008/06/06 19:09:19	1.135
+@@ -1 +1 @@
+-1.02.26-cvs (2008-04-10)
++1.02.26-cvs (2008-06-06)
+--- device-mapper/WHATS_NEW	2008/06/06 18:53:26	1.235
++++ device-mapper/WHATS_NEW	2008/06/06 19:09:19	1.236
+@@ -1,5 +1,5 @@
+-Version 1.02.26 - 
+-=================================
++Version 1.02.26 - 6th June 2008
++===============================
+   Initialise params buffer to empty string in _emit_segment.
+   Skip add_dev_node when ioctls disabled.
+   Make dm_hash_iter safe against deletion.
