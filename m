@@ -1,16 +1,9 @@
-From: malahal@us.ibm.com
-Subject: Re: Questin about device mapper, Debian and devices
-Date: Mon, 9 Jun 2008 09:22:34 -0700
-Message-ID: <20080609162234.GA29800@us.ibm.com>
-References: <454237550806090308j20a29e58w7dc22b89ce055e5@mail.gmail.com>
-	<20080609145318.GA26029@us.ibm.com>
-	<454237550806090842o6641045dh6993dea16616ea89@mail.gmail.com>
+From: agk@sourceware.org
+Subject: device-mapper ./WHATS_NEW lib/libdm-deptree.c
+Date: 10 Jun 2008 11:19:19 -0000
+Message-ID: <20080610111919.18537.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <454237550806090842o6641045dh6993dea16616ea89@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,32 +13,41 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I don't use debian, so I don't know what the defaults are.  "multipath
--F" should remove all multipath mappings. You can use "dmsetup
-remove_all" command to remove all device-mapper devices.
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2008-06-10 11:19:19
 
--Malahal.
+Modified files:
+	.              : WHATS_NEW 
+	lib            : libdm-deptree.c 
 
-January Weiner [january@uni-muenster.de] wrote:
-> > Remove /etc/multipath.conf file if you have. Same file can be used to
-> > blacklist if you want to apply multipath to exclude few devices.
-> 
-> There is no such file. Assuming I enter the blacklist, how do I
-> restart the service so that I no longer have the mapping present? with
-> /etc/init.d/multipath-tools restart?
-> 
-> j.
-> 
-> -- 
-> ------------ January Weiner 3  ---------------------+---------------
-> Division of Bioinformatics, University of Muenster  |  Schlo?platz 4
-> (+49)(251)8321634                                   |  D48149 M?nster
-> http://www.uni-muenster.de/Evolution/ebb/           |  Germany
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Log message:
+	Fix inverted no_flush debug message. (mpatocka)
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.240&r2=1.241
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.38&r2=1.39
+
+--- device-mapper/WHATS_NEW	2008/06/08 14:53:51	1.240
++++ device-mapper/WHATS_NEW	2008/06/10 11:19:18	1.241
+@@ -1,5 +1,6 @@
+ Version 1.02.27 -
+ ===============================
++  Fix inverted no_flush debug message.
+   Remove --enable-jobs from configure. (Set at runtime instead.)
+   Bring configure.in and list.h into line with the lvm2 versions.
+ 
+--- device-mapper/lib/libdm-deptree.c	2008/06/05 19:10:35	1.38
++++ device-mapper/lib/libdm-deptree.c	2008/06/10 11:19:19	1.39
+@@ -937,7 +937,7 @@
+ 	log_verbose("Suspending %s (%" PRIu32 ":%" PRIu32 ")%s%s",
+ 		    name, major, minor,
+ 		    skip_lockfs ? "" : " with filesystem sync",
+-		    no_flush ? "" : " without device flush");
++		    no_flush ? " without device flush" : "");
+ 
+ 	if (!(dmt = dm_task_create(DM_DEVICE_SUSPEND))) {
+ 		log_error("Suspend dm_task creation failed for %s", name);
