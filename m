@@ -1,8 +1,10 @@
-From: agk@sourceware.org
-Subject: device-mapper ./WHATS_NEW lib/libdm-deptree.c
-Date: 10 Jun 2008 11:19:19 -0000
-Message-ID: <20080610111919.18537.qmail@sourceware.org>
+From: Luke S Crawford <lsc@prgmr.com>
+Subject: "Snapshots and mirrors may not yet be mixed."
+Date: 10 Jun 2008 20:48:45 -0400
+Message-ID: <m3bq28lrte.fsf@luke.xen.prgmr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,41 +15,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: chris@prgmr.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	agk@sourceware.org	2008-06-10 11:19:19
 
-Modified files:
-	.              : WHATS_NEW 
-	lib            : libdm-deptree.c 
+So, I have been using the lvm mirror target on CentOS 5.1 
+(2.6.18-53.1.21.el5xen) for some time now;  it works great for most things,
+and gives me much more flexibility than putting my PVs on md devices.
 
-Log message:
-	Fix inverted no_flush debug message. (mpatocka)
+The other day I tried to create a snapshot:
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.240&r2=1.241
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.38&r2=1.39
+ lvcreate -s -L 100M -d hydra_domU/test -n test_snap
 
---- device-mapper/WHATS_NEW	2008/06/08 14:53:51	1.240
-+++ device-mapper/WHATS_NEW	2008/06/10 11:19:18	1.241
-@@ -1,5 +1,6 @@
- Version 1.02.27 -
- ===============================
-+  Fix inverted no_flush debug message.
-   Remove --enable-jobs from configure. (Set at runtime instead.)
-   Bring configure.in and list.h into line with the lvm2 versions.
- 
---- device-mapper/lib/libdm-deptree.c	2008/06/05 19:10:35	1.38
-+++ device-mapper/lib/libdm-deptree.c	2008/06/10 11:19:19	1.39
-@@ -937,7 +937,7 @@
- 	log_verbose("Suspending %s (%" PRIu32 ":%" PRIu32 ")%s%s",
- 		    name, major, minor,
- 		    skip_lockfs ? "" : " with filesystem sync",
--		    no_flush ? "" : " without device flush");
-+		    no_flush ? " without device flush" : "");
- 
- 	if (!(dmt = dm_task_create(DM_DEVICE_SUSPEND))) {
- 		log_error("Suspend dm_task creation failed for %s", name);
+it returned:
+
+Snapshots and mirrors may not yet be mixed.
+
+is the mirror target still under active development?  or is it a problem
+with my setup?
+
+
+thanks.
