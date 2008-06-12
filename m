@@ -1,13 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: "Snapshots and mirrors may not yet be mixed."
-Date: Wed, 11 Jun 2008 22:21:07 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0806112217580.23166@engineering.redhat.com>
-References: <m3bq28lrte.fsf@luke.xen.prgmr.com>
+From: Guido =?iso-8859-1?Q?G=FCnther?= <agx@sigxcpu.org>
+Subject: Re: Questin about device mapper, Debian and devices
+Date: Thu, 12 Jun 2008 10:44:49 +0200
+Message-ID: <20080612084448.GA12178@bogon.ms20.nix>
+References: <454237550806090308j20a29e58w7dc22b89ce055e5@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <m3bq28lrte.fsf@luke.xen.prgmr.com>
+Content-Disposition: inline
+In-Reply-To: <454237550806090308j20a29e58w7dc22b89ce055e5@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,34 +19,15 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: chris@prgmr.com
 List-Id: dm-devel.ids
 
-On Tue, 10 Jun 2008, Luke S Crawford wrote:
-
-> So, I have been using the lvm mirror target on CentOS 5.1
-> (2.6.18-53.1.21.el5xen) for some time now;  it works great for most things,
-> and gives me much more flexibility than putting my PVs on md devices.
->
-> The other day I tried to create a snapshot:
->
-> lvcreate -s -L 100M -d hydra_domU/test -n test_snap
->
-> it returned:
->
-> Snapshots and mirrors may not yet be mixed.
->
-> is the mirror target still under active development?  or is it a problem
-> with my setup?
->
->
-> thanks.
-
-There is a bug that "lvconvert -s" can create snapshot of a mirror ... and 
-to my surprise, once it was created this way, it worked.
-
-So maybe we could remove this restriction at all. There was some concern 
-that dmeventd may misbehave in this situation. lvm commands seem to handle 
-snapshots of a mirror fine.
-
-Mikulas
+On Mon, Jun 09, 2008 at 12:08:51PM +0200, January Weiner wrote:
+> I am running a server with Debian stable. After a recent automatic
+> update and an unrelated reboot suddenly I could not mount some of my
+> hard disks any more. For example,
+The automatic update wouldn't pull in multipath-tools. So you either
+installed it directly or pulled it in via a dependency (most people
+install it since kpartx isn't split into it's own package in etch).
+Have a look /etc/init.d/*multipath*. Disabling these should help.
+Cheers,
+ -- Guido
