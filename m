@@ -1,12 +1,13 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] multipath-tools: DESTDIR makefiles cleanup
-Date: Wed, 11 Jun 2008 13:46:16 -0500
-Message-ID: <20080611184616.GJ3117@ether.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: "Snapshots and mirrors may not yet be mixed."
+Date: Wed, 11 Jun 2008 22:21:07 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0806112217580.23166@engineering.redhat.com>
+References: <m3bq28lrte.fsf@luke.xen.prgmr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="ew6BAiZeqk4r7MaW"
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <m3bq28lrte.fsf@luke.xen.prgmr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,93 +17,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: cristophe.varoqui@free.fr
+To: device-mapper development <dm-devel@redhat.com>
+Cc: chris@prgmr.com
 List-Id: dm-devel.ids
 
+On Tue, 10 Jun 2008, Luke S Crawford wrote:
 
---ew6BAiZeqk4r7MaW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> So, I have been using the lvm mirror target on CentOS 5.1
+> (2.6.18-53.1.21.el5xen) for some time now;  it works great for most things,
+> and gives me much more flexibility than putting my PVs on md devices.
+>
+> The other day I tried to create a snapshot:
+>
+> lvcreate -s -L 100M -d hydra_domU/test -n test_snap
+>
+> it returned:
+>
+> Snapshots and mirrors may not yet be mixed.
+>
+> is the mirror target still under active development?  or is it a problem
+> with my setup?
+>
+>
+> thanks.
 
-This patch makes the $(DESTDIR) makefile option for multipath-tools more
-useful. First, it makes sure that everything that's installed uses it.
-Second, it removes the forced root installs, so that you can can install
-to any $(DESTDIR) that you have permissions for, even if you aren't
-root.
+There is a bug that "lvconvert -s" can create snapshot of a mirror ... and 
+to my surprise, once it was created this way, it worked.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+So maybe we could remove this restriction at all. There was some concern 
+that dmeventd may misbehave in this situation. lvm commands seem to handle 
+snapshots of a mirror fine.
 
----
-Makefile              |    6 +++---
-checkers/Makefile     |    4 ++--
-prioritizers/Makefile |    4 ++--
-3 files changed, 7 insertions(+), 7 deletions(-)
-
-
---ew6BAiZeqk4r7MaW
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline; filename="makefiles_fix.patch"
-
-Index: multipath-tools-080519/libmultipath/Makefile
-===================================================================
---- multipath-tools-080519.orig/libmultipath/Makefile
-+++ multipath-tools-080519/libmultipath/Makefile
-@@ -26,11 +26,11 @@ $(LIBS): $(OBJS)
- 	$(CC) $(SHARED_FLAGS) $(CFLAGS) -o $@ $(OBJS)
- 
- install:
--	$(INSTALL_PROGRAM) -o root -g root -m 755 -d $(libdir)
--	$(INSTALL_PROGRAM) -o root -g root -m 755 $(LIBS) $(libdir)/$(LIBS)
-+	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
-+	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)/$(LIBS)
- 
- uninstall:
--	rm -f $(libdir)/$(LIBS)
-+	rm -f $(DESTDIR)$(libdir)/$(LIBS)
- 
- clean:
- 	rm -f core *.a *.o *.gz *.so
-Index: multipath-tools-080519/libmultipath/checkers/Makefile
-===================================================================
---- multipath-tools-080519.orig/libmultipath/checkers/Makefile
-+++ multipath-tools-080519/libmultipath/checkers/Makefile
-@@ -21,10 +21,10 @@ libcheck%.so: libsg.o %.o
- 	$(CC) $(SHARED_FLAGS) -o $@ $^
- 
- install:
--	$(INSTALL_PROGRAM) -o root -g root -m 755 $(LIBS) $(libdir)
-+	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)
- 
- uninstall:
--	rm -f $(libdir)/$(LIBS)
-+	rm -f $(DESTDIR)$(libdir)/$(LIBS)
- 
- clean:
- 	rm -f core *.a *.o *.gz *.so
-Index: multipath-tools-080519/libmultipath/prioritizers/Makefile
-===================================================================
---- multipath-tools-080519.orig/libmultipath/prioritizers/Makefile
-+++ multipath-tools-080519/libmultipath/prioritizers/Makefile
-@@ -25,10 +25,10 @@ libprio%.so: %.o
- 	$(CC) $(SHARED_FLAGS) -o $@ $^
- 
- install: $(LIBS)
--	install -m 755 libprio*.so $(libdir)
-+	$(INSTALL_PROGRAM) -m 755 libprio*.so $(DESTDIR)$(libdir)
- 
- uninstall:
--	rm -f $(libdir)/libprio*.so
-+	rm -f $(DESTDIR)$(libdir)/libprio*.so
- 
- clean:
- 	rm -f core *.a *.o *.gz *.so
-
---ew6BAiZeqk4r7MaW
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---ew6BAiZeqk4r7MaW--
+Mikulas
