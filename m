@@ -1,13 +1,13 @@
-From: "Gianluca Cecchi" <gianluca.cecchi@gmail.com>
-Subject: Re: two paths remain failed on DS6800 after code upgrade
-Date: Fri, 13 Jun 2008 18:22:40 +0200
-Message-ID: <561c252c0806130922m6612720dq77b31bc3bdb8c703@mail.gmail.com>
-References: <561c252c0806130314x2924a027n1fbd74c29178e5c8@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: NetBSD libdevmapper port
+Date: Fri, 13 Jun 2008 12:51:48 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0806131236500.32455@engineering.redhat.com>
+References: <7F5B52C7-1511-49C8-B81A-D4D58E6B12F3@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1056167681=="
+Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <561c252c0806130314x2924a027n1fbd74c29178e5c8@mail.gmail.com>
+In-Reply-To: <7F5B52C7-1511-49C8-B81A-D4D58E6B12F3@gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,88 +17,118 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Adam Hamsik <haaaad@gmail.com>
+Cc: dm-devel@redhat.com, tech-kern@netbsd.org
 List-Id: dm-devel.ids
 
---===============1056167681==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_36143_10353373.1213374160666"
+Hi
 
-------=_Part_36143_10353373.1213374160666
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+If you are rewriting it --- have you somehow thought about avoiding 
+suspend?
 
-It seems I solved the problem removing the disks and then adding them, with
-the commands:
+A big source of problems in Linux is, that when you suspend a device, you 
+can do only a limited set of calls --- basically, you must avoid anything 
+that could possibly wait for I/O or allocate memory --- or you might end 
+up waiting for the suspended device and deadlock. And I know still about 3 
+places in kernel that have this error possibility.
 
-for sdc
-remove:*
-echo "1" > /sys/class/scsi_host/host0/device/target0:0:1/0:0:1:0/delete*
-**
-To reregister the disk with the kernel used the command:***
-echo "0 1 0" > /sys/class/scsi_host/host0/scan*
+A Linux LVM does something like: suspend old table, write to disk with 
+direct i/o, resume new table. I'd suggest that you invent some method how 
+to batch these operations into single syscall --- or you run into a 
+several years of deadlock problems on NetBSD --- basically, on Linux, we 
+have to preallocate a stack and heap (so that running LVM process won't 
+cause a page fault --- the question --- how to do it portably on all 
+NetBSD architectures?), mlock the process, make sure that we don't open 
+files or write anything to terminal while suspended, make sure that the 
+ioctl syscall doesn't allocate anything (currently false, it won't 
+deadlock but it could randomly fail), make sure that O_DIRECT write 
+syscall doesn't allocate anything or wait for other I/O (currently it 
+false, there is a deadlock possibility) ... etc.
 
-for sdd
-remove:*
-echo "1" > /sys/class/scsi_host/host0/device/target0:0:1/0:0:1:1/delete*
-**
-To reregister the disk with the kernel used the command:***
-echo "0 1 1" > /sys/class/scsi_host/host0/scan*
+--- if you port lvm2 as it is, you'll have to audit (and maybe rewrite) 
+many parts of NetBSD kernel for not waiting for I/O. If you do it badly, 
+you'll get deadlocks.
 
-In general
-deregister*
-echo "1" > /sys/class/scsi_host/hostH/device/targetH:B:T/H:B:T:L/delete* To
-reregister the disk with the kernel:*
-echo "B T L" > /sys/class/scsi_host/hostH/scan
+This suspend thing was a big misdesign and if you are writing it from 
+scratch, try to avoid it.
 
-* Device name persistence not granted. In my case
-sdc --> sdi
-sdd --> sdd
+Mikulas
 
-All operations were transparent and with no downtime.
-I also removed other disks and then readded (also during I/O using them) and
-I have to say that multipath seems very robust.
-Thanks to the developers.
-HIH for others.
-Still I don't understand why  it was before unable to reinstate the path.
-Gianluca
-**
-
-------=_Part_36143_10353373.1213374160666
-Content-Type: text/html; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-It seems I solved the problem removing the disks and then adding them, with the commands:<br><br>for sdc<br>remove:<strong><span class="cmdname"><br>echo "1" &gt; /sys/class/scsi_host/host0/device/target</span><em>0:0:1/0:0:1:0</em><span class="cmdname">/delete</span></strong>
-<br><strong><span class="cmdname"></span><span class="cmdname"></span></strong>
-
-<div class="p"><br>To reregister the disk with the kernel used the command:<strong><span class="cmdname"></span></strong><strong><span class="cmdname"><br>echo "</span><em>0 1 0</em><span class="cmdname">" &gt; /sys/class/scsi_host/host0/scan</span></strong>
-</div><br>for sdd<br>
-remove:<strong><span class="cmdname"><br>
-echo "1" &gt; /sys/class/scsi_host/host0/device/target</span><em>0:0:1/0:0:1:1</em><span class="cmdname">/delete</span></strong>
-<br>
-<strong><span class="cmdname"></span><span class="cmdname"></span></strong>
-
-<div class="p"><br>
-To reregister the disk with the kernel used the command:<strong><span class="cmdname"></span></strong><strong><span class="cmdname"><br>
-echo "</span><em>0 1 1</em><span class="cmdname">" &gt; /sys/class/scsi_host/host0/scan</span></strong>
-</div>
-<br>In general <br>deregister<strong><span class="cmdname"><br>echo "1" &gt; /sys/class/scsi_host/hostH/device/target</span><em>H:B:T/H:B:T:L</em><span class="cmdname">/delete</span></strong>
-
-<div class="p">To reregister the disk with the kernel:<strong><span class="cmdname"><br>echo "</span><em>B T L</em><span class="cmdname">" &gt; /sys/class/scsi_host/hostH/scan<br><br></span></strong> Device name persistence not granted. In my case <br>
-sdc --&gt; sdi <br>sdd --&gt; sdd<br><br>All operations were transparent and with no downtime.<br>I also removed other disks and then readded (also during I/O using them) and I have to say that multipath seems very robust.<br>
-Thanks to the developers.<br>HIH for others.<br>Still I don&#39;t understand why&nbsp; it was before unable to reinstate the path.<br>Gianluca&nbsp;  <br>
-</div><strong><span class="cmdname"></span></strong>
-
-------=_Part_36143_10353373.1213374160666--
-
-
---===============1056167681==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1056167681==--
+> -----BEGIN PGP SIGNED MESSAGE-----
+> Hash: SHA1
+>
+> Hi,
+>
+> *** Please keep me on CC when you replying from dm-devel list I'm not 
+> currently subscribed there. ***
+>
+> My name is Adam Hamsik and this summer I'm working on GSOC project Write and 
+> improve LVM driver. As my task I have rewritten (We can't include GPL 
+> software into NetBSD kernel therefore I have rewritten it from scratch)dm 
+> like driver for NetBSD and ported libdevmapper + lvm2tools to NetBSD. There 
+> are some small differences between
+> Linux and NetBSD such as:
+>
+> a) NetBSD doesn't use proc filesystem like linux does.
+>
+> b) NetBSD has 2 types of devices(when we talk about disk devices) raw and 
+> block.
+> raw device is char device which allow users directly from device(without 
+> buffer cache).
+>
+> After the first implementation of dm-driver my mentor suggested to 
+> rewrite/clean dm-ioctl interface to be more NetBSD-like. I have implemented 
+> new interface based on proplib library [1] it is based on work
+> made by apple [2]. I have added 3 files to libdevmapper
+>
+> include/netbsd/netbsd-dm.h -> file shared between kernel driver and 
+> libdevmapper.
+> lib/ioctl/libdm_netbsd.c   -> file with external functions for parsing native 
+> NetBSD proplist dictionaries to
+> 			      libdevmapper dm_ioctl structure.
+>
+> lib/ioctl/libdm-nbsd-iface.c -> this is copied/changed libdm-iface.c I found 
+> that number of NetBSD specific 					changes is 
+> bigger than I can easily #ifdef them, therefore I have added new
+> 				NetBSD interface file.
+>
+> I have created patch against latest release of libdevmapper, it would be 
+> great if we will be able to manage
+> commiting of this patch to libdevmapper main repo. My patch is currently not 
+> ready to commit, it needs major cleanup, but I thought that it would be good 
+> to let dm developers know about my effort and show my work to them.
+>
+> My patch is located here [3], I have uploaded patch against lvm2tools, too. 
+> But it is patch against 2.02.28.
+> Because there were quite massive changes to lvm2tools in latest releases I 
+> will report lvm2tools again and
+> merge my changes with latest lvm release.
+>
+> There is also my BSD licensed device-mapper driver which is located here [5].
+>
+> Any suggestions, comments are welcome.
+>
+>
+> [1] http://netbsd.gw.com/cgi-bin/man-cgi/man?proplib+3+NetBSD-current
+> [2] 
+> http://developer.apple.com/documentation/Darwin/Reference/ManPages/man5/plist.5.html
+> [3] http://www.netbsd.org/~haad/libdevmapper_netbsd.diff
+> [4] http://www.netbsd.org/~haad/lvm2_netbsd.diff
+> [5] http://www.netbsd.org/~haad/dm20080610.tar.bz2
+>
+> Regards
+>
+> Adam.
+>
+> -----BEGIN PGP SIGNATURE-----
+> Version: GnuPG v1.4.7 (Darwin)
+>
+> iD8DBQFIT9nelIxPgX3Go0MRAmU5AJ4+HgffqYCUAfotrS2IsyE9Wjth9ACgmd20
+> XcqvpqhmlgBy7/rlzdptjTM=
+> =W1/N
+> -----END PGP SIGNATURE-----
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
