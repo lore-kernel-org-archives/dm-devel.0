@@ -1,14 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: NetBSD libdevmapper port
-Date: Fri, 13 Jun 2008 11:46:44 +0100
-Message-ID: <20080613104644.GL20826@agk.fab.redhat.com>
-References: <7F5B52C7-1511-49C8-B81A-D4D58E6B12F3@gmail.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: multipathing Sun 6140
+Date: Fri, 13 Jun 2008 10:27:12 -0400
+Message-ID: <20080613142712.GB27204@mars.virtualiron.com>
+References: <484705D1.6080200@provectis.cl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <7F5B52C7-1511-49C8-B81A-D4D58E6B12F3@gmail.com>
+In-Reply-To: <484705D1.6080200@provectis.cl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,40 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Adam Hamsik <haaaad@gmail.com>
-Cc: dm-devel@redhat.com, tech-kern@netbsd.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: julio.pacheco@provectis.cl
 List-Id: dm-devel.ids
 
-On Wed, Jun 11, 2008 at 03:57:49PM +0200, Adam Hamsik wrote:
-> *** Please keep me on CC when you replying from dm-devel list I'm not  
-> currently subscribed there. ***
- 
-> I have created patch against latest release of libdevmapper, it would  
-> be great if we will be able to manage
-> commiting of this patch to libdevmapper main repo. My patch is  
-> currently not ready to commit, it needs major cleanup, but I thought  
-> that it would be good to let dm developers know about my effort and  
-> show my work to them.
- 
-We'd be happy to include such patches in the userspace tools and
-libraries.
+On Wed, Jun 04, 2008 at 05:14:57PM -0400, Gustavo Riveros wrote:
+> Hi dm-developers,
+>
+> I'm having problem with multipathing device-mapper with my linux server, 
+> but this was resolved by Thread "multipathing flip flopping on Sun 6140" 
+> very well 
+> (http://www.redhat.com/archives/dm-devel/2007-August/msg00066.html)
 
-Just ensure that all the differences are abstracted suitably so
-that 'configure' can deal with them without breaking linux:-)
+That multipath.conf entry seems to be missing some key elements:
 
-Note that we're part way through the process of merging the
-device-mapper and lvm2 source trees: when this is complete
-releases will consist of a single tarball with a single
-'configure.in' (and an option just to build the former
-device-mapper components).
+     device {
+                vendor                  "SUN"
+                product                 "CSM200_R"
+                product_blacklist       "Universal Xport"
+                features                "1 queue_if_no_path"
+                path_checker    rdac
+                hardware_handler        "1 rdac"
+                path_grouping_policy    group_by_prio
+                prio                    "rdac"
+                failback                immediate
+        }
 
-Rather than sending one patch at the end, it's probably better to send
-smaller patches as you go along, as and when logically-coherent sets of
-changes are ready.  Also, try to avoid copying and pasting code into new
-files where very little is changing - create internal library functions
-or include files and share them instead, refactoring existing code
-as required.
+>
+> The configuration is the same:
+>
+> X4600 Server
+> 2 HBA's Emulex
+> SAN STK6140
+>
+> but in dmesg i have the following error message:
+>
+> Buffer I/0 error on device sdf, logical block 0
+> end_request: I/0 error, dev sdf, sector 0
+>
+> Did you know the error message?
 
-Alasdair
--- 
-agk@redhat.com
+That would imply you are using the 'readsector0' checker program
+instead of the 'rdac' one.
+
+The multipath.conf above assumes that this controller is indeed an RDAC
+one. I don't have one so the configuration might be completly wrong.
