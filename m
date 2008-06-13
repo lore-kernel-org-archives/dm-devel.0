@@ -1,14 +1,15 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: multipathing Sun 6140
-Date: Fri, 13 Jun 2008 10:32:59 -0700
-Message-ID: <1213378379.7031.138.camel@chandra-ubuntu>
-References: <484705D1.6080200@provectis.cl>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: NetBSD libdevmapper port
+Date: Fri, 13 Jun 2008 18:34:13 +0100
+Message-ID: <20080613173413.GO20826@agk.fab.redhat.com>
+References: <7F5B52C7-1511-49C8-B81A-D4D58E6B12F3@gmail.com>
+	<Pine.LNX.4.64.0806131236500.32455@engineering.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <484705D1.6080200@provectis.cl>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0806131236500.32455@engineering.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,46 +20,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: julio.pacheco@provectis.cl
+Cc: tech-kern@netbsd.org, Adam Hamsik <haaaad@gmail.com>
 List-Id: dm-devel.ids
 
+On Fri, Jun 13, 2008 at 12:51:48PM -0400, Mikulas Patocka wrote:
+> This suspend thing was a big misdesign and if you are writing it from 
+> scratch, try to avoid it.
+ 
+Despite how things might seem, we gained some substantial
+simplifications by doing things this way and I reject the term
+'misdesign':-)  If writing this from scratch under similar time
+constraints, we would still handle this a similar way.
 
-On Wed, 2008-06-04 at 17:14 -0400, Gustavo Riveros wrote:
-> Hi dm-developers,
-> 
-> I'm having problem with multipathing device-mapper with my linux server, 
-> but this was resolved by Thread "multipathing flip flopping on Sun 6140" 
-> very well 
-> (http://www.redhat.com/archives/dm-devel/2007-August/msg00066.html)
-> 
-> The configuration is the same:
-> 
-> X4600 Server
-> 2 HBA's Emulex
-> SAN STK6140
-> 
-> but in dmesg i have the following error message:
-> 
-> Buffer I/0 error on device sdf, logical block 0
-> end_request: I/0 error, dev sdf, sector 0
-> 
-> Did you know the error message?
-
-This is the error message that is printed when the lun is accesses thru
-the passive paths. These are _not_ a problem.
-
-They will not appear if all the access to the luns are thru the dm
-devices (in which case you will see these only during device probing
+But this suspend/resume mechanism was never intended to last as long as
+it has - it was meant to be a stepping stone to a more-sophisticated
+transaction mechanism that we have still not found time to develop,
+mostly because this existing mechanism is "good enough" most of the
 time.
 
-I am pushing a set of patches (currently in -mm, and hopefully will get
-into 2.6.27) that will get rid of these messages.
-
-> 
-> Thanks,
-> Gustavo Riveros
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Alasdair
+-- 
+agk@redhat.com
