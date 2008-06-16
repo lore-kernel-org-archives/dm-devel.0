@@ -1,15 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
+From: Adam Hamsik <haaaad@gmail.com>
 Subject: Re: NetBSD libdevmapper port
-Date: Sun, 15 Jun 2008 22:24:07 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0806152201230.14263@engineering.redhat.com>
+Date: Tue, 17 Jun 2008 00:03:47 +0200
+Message-ID: <9B8150BC-CD20-4E8B-A40F-17CD4BA5DA69@gmail.com>
 References: <7F5B52C7-1511-49C8-B81A-D4D58E6B12F3@gmail.com>
-	<200806131652.m5DGqD0s015068@sbuxscan.baea.com.au>
-	<20080614095812.GA21126@baea.com.au>
+	<Pine.LNX.4.64.0806131236500.32455@engineering.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII; format=flowed
+Mime-Version: 1.0 (Apple Message framework v924)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080614095812.GA21126@baea.com.au>
+In-Reply-To: <Pine.LNX.4.64.0806131236500.32455@engineering.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,86 +19,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Brett Lymn <blymn@baesystems.com.au>
-Cc: dm-devel@redhat.com, tech-kern@netbsd.org, Adam Hamsik <haaaad@gmail.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, tech-kern@netbsd.org
 List-Id: dm-devel.ids
 
-On Sat, 14 Jun 2008, Brett Lymn wrote:
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-> Hi - I am mentoring Adam in this project
+
+On Jun,Friday 13 2008, at 6:51 PM, Mikulas Patocka wrote:
+
+> Hi
 >
-> On Fri, Jun 13, 2008 at 12:51:48PM -0400, Mikulas Patocka wrote:
->>
->> If you are rewriting it --- have you somehow thought about avoiding
->> suspend?
->>
+> If you are rewriting it --- have you somehow thought about avoiding  
+> suspend?
+
+device suspend/resume are unsupported for now. I was not sure what  
+these commands should really do.
+Because GPL/BSD licensing issues I haven't look at linux code.
+
 >
-> I assume you are talking about handling a suspend of a device
-> underlying the LVM.  At the moment, NetBSD does not have the facility
-> to suspend a device in this manner so I dont think we will have this
-> issue (yet).
-
-It's good, so you can think twice and code once :)
-
->> A Linux LVM does something like: suspend old table, write to disk with
->> direct i/o, resume new table. I'd suggest that you invent some method how
->> to batch these operations into single syscall
 >
-> I think this should be doable with the API that Adam is using - in
-> NetBSD there is a thing called proplib which is a method of passing a
-> very limited form of XML into the kernel - Adam is using proplib to
-> pass the lvm parameters into the kernel.
+> A big source of problems in Linux is, that when you suspend a  
+> device, you can do only a limited set of calls --- basically, you  
+> must avoid anything that could possibly wait for I/O or allocate  
+> memory --- or you might end up waiting for the suspended device and  
+> deadlock. And I know still about 3 places in kernel that have this  
+> error possibility.
+
+ok but why I should want to do something like suspending of device ?  
+to avoid IO operations when I'm changing
+device table or what problem are device suspend/resume want to solve.  
+If this is problem I can use one mutex
+shared between dm_dev_suspend/resume_ioctl call and dmstrategy(this  
+routine does IO) so I can avoid IO's when
+device is suspended.
+
 >
->>  --- the question --- how to do it portably on all
->> NetBSD architectures?),
 >
-> Actually, most of the operations you have listed are, from memory,
-> machine independent code - there is very little of the kernel that
-> actually is architecture specific we work hard to keep it that way.
-
-See function in LVM2/lib/mm/memlock.c - _allocate_memory
-
-It attempts to prepare memory for locking, so that there will be no more 
-page faults while some device is suspended. It could fail if:
-
-* if you have a different heap algorithm that allocates temp_malloc_mem 
-block in a separate chunk
-* if you have an architecture with separate stacks for stack data and for 
-register windows (I don't know if such exists) - then alloca(_size_stack) 
-will preallocate just one stack, not both
-* if a running process can take some additional faults specific to a given 
-architecture that allocate memory (for example fault on FPU instruction 
-allocating FPU context --- I don't know how precisely you have it 
-implemented).
-
-- these are very brittle requirements and if someone forgets about them, 
-then LVM will be deadlocky. And these requirements span a lot of 
-LVM-independent code and it's hard to enforce all libc/kernel engineers to 
-think about LVM-specific peculiarities.
-
->> --- if you port lvm2 as it is, you'll have to audit (and maybe rewrite)
->> many parts of NetBSD kernel for not waiting for I/O. If you do it badly,
->> you'll get deadlocks.
->>
+> A Linux LVM does something like: suspend old table, write to disk  
+> with direct i/o, resume new table. I'd suggest that you invent some  
+> method how to batch these operations into single syscall --- or you  
+> run into a several years of deadlock problems on NetBSD ---  
+> basically, on Linux, we have to preallocate a stack and heap (so  
+> that running LVM process won't cause a page fault --- the question  
+> --- how to do it portably on all NetBSD architectures?), mlock the  
+> process, make sure that we don't open files or write anything to  
+> terminal while suspended, make sure that the ioctl syscall doesn't  
+> allocate anything (currently false, it won't deadlock but it could  
+> randomly fail), make sure that O_DIRECT write syscall doesn't  
+> allocate anything or wait for other I/O (currently it false, there  
+> is a deadlock possibility) ... etc.
 >
-> The head of the bleeding edge NetBSD code (netbsd-current) is having a
-> lot of work done on it to make the kernel re-entrant and
-> multi-threaded.  This may be a bit of a bonus in terms of what you are
-> saying because there should be locks that need to be held to perform
-> the i/o - it may be a case of just making the acquiring of these locks
-> non-blocking (or it may not be an issue at all).  We shall need to
-> wait and see on that one.
+> --- if you port lvm2 as it is, you'll have to audit (and maybe  
+> rewrite) many parts of NetBSD kernel for not waiting for I/O. If you  
+> do it badly, you'll get deadlocks.
 
-Any non-atomic memory allocation can wait for I/O. So if you allocate some 
-kernel memory for example in that tiny XML parser, this could trigger 
-dirty page writeout, the writeout may be directed to the suspended device 
-and you are locked up. (atomic allocations may fail anytime --- for 
-example if too many packets come from network and exhaust the atomic 
-reserve --- so they are not perfect solution too)
+I want definitely avoid such massive changes to our kernel.
 
-If you solve this problem somehow generally (for example batching suspend 
-and ioctls into one call), I'd support bacporting that solution to Linux.
+>
+>
+> This suspend thing was a big misdesign and if you are writing it  
+> from scratch, try to avoid it.
 
-Mikulas
+Regards
 
-> Thanks for the input.
+Adam.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (Darwin)
+
+iD8DBQFIVuNElIxPgX3Go0MRAvoaAJ9TC+dcYmp9S7yv/0un4YcMUE+AwwCeP1G0
+C5o2j8D/+heQATR8eewYd34=
+=dmZO
+-----END PGP SIGNATURE-----
