@@ -1,15 +1,12 @@
-From: Christof Schmitt <christof.schmitt@de.ibm.com>
-Subject: Re: might_sleep warning in multipath_dtr
-Date: Wed, 18 Jun 2008 09:32:28 +0200
-Message-ID: <20080618073228.GA13557@schmichrtp.de.ibm.com>
-References: <20080507083716.GA30401@schmichrtp.de.ibm.com>
-	<20080507132820.GN8827@agk.fab.redhat.com>
+From: Jim Meyering <jim@meyering.net>
+Subject: [PATCH] avoid compiler warning about cast in OFFSET_OF
+	macro
+Date: Wed, 18 Jun 2008 12:19:36 +0200
+Message-ID: <87ve07xcxz.fsf@rho.meyering.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080507132820.GN8827@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,86 +17,56 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, May 07, 2008 at 02:28:20PM +0100, Alasdair G Kergon wrote:
-> On Wed, May 07, 2008 at 10:37:16AM +0200, Christof Schmitt wrote:
-> >     <4> [<000003e00008f79c>] multipath_dtr+0x38/0x50 [dm_multipath]
-> >     <4> [<000003e000077e4a>] dm_table_put+0xae/0x134 [dm_mod]
-> >     <4> [<000003e000076020>] dm_any_congested+0x50/0x88 [dm_mod]
-> 
-> > I don't know, if this exact situation is reproducible, but we have a
-> > memory dump that should have some more data.
-> 
-> Well I'm guessing dm_any_congested() ran alongside a table reload, such
-> that dm_any_congested() was still referencing the old table after
-> dm_swap_table() removed it.
-> 
-> IOW There needs to be better synchronisation between those two
-> functions.
+While I happen to know these warnings are false alerts,
 
-If the dm_swap_table should take care of the destruction, the attached
-patch enforces this by letting the __unbind function wait until all
-other users of the table did free their references to the table.
+  dmsetup.c:1949: warning: cast from pointer to integer of different size
+  dmsetup.c:1950: warning: cast from pointer to integer of different size
+  dmsetup.c:1951: warning: cast from pointer to integer of different size
+  dmsetup.c:1952: warning: cast from pointer to integer of different size
+  dmsetup.c:1953: warning: cast from pointer to integer of different size
+  dmsetup.c:1955: warning: cast from pointer to integer of different size
 
-With this patch, the system survived a series of multipath failover
-tests.
+their mere presence (and our becoming inured to them) makes it more
+likely someone will introduce a new one that will be ignored along
+with all those.
 
-Signed-off-by: Christof Schmitt <christof.schmitt@de.ibm.com>
+So I changed the offending OFFSET_OF macro to generate equivalent code
+(-O2-generated, before/after .o files are identical) but without triggering
+the warning:
+
+From 1219430622d29c7a3f8bdc6ad1fdd2a64082070e Mon Sep 17 00:00:00 2001
+From: Jim Meyering <meyering@redhat.com>
+Date: Wed, 18 Jun 2008 12:05:12 +0200
+Subject: [PATCH] avoid compiler warning about cast in OFFSET_OF macro
+
+* dmsetup/dmsetup.c (OFFSET_OF): Use an equivalent definition
+that does not cast a pointer value to a narrower type.
 ---
- drivers/md/dm-table.c |    7 +++++++
- drivers/md/dm.c       |    1 +
- drivers/md/dm.h       |    1 +
- 3 files changed, 9 insertions(+)
+ dmsetup/dmsetup.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
---- a/drivers/md/dm-table.c	2008-04-17 11:08:04.000000000 +0200
-+++ b/drivers/md/dm-table.c	2008-06-16 17:00:36.000000000 +0200
-@@ -27,6 +27,7 @@
- struct dm_table {
- 	struct mapped_device *md;
- 	atomic_t holders;
-+	wait_queue_head_t unbind_wait;
- 
- 	/* btree table */
- 	unsigned int depth;
-@@ -227,6 +228,7 @@ int dm_table_create(struct dm_table **re
- 
- 	INIT_LIST_HEAD(&t->devices);
- 	atomic_set(&t->holders, 1);
-+	init_waitqueue_head(&t->unbind_wait);
- 
- 	if (!num_targets)
- 		num_targets = KEYS_PER_NODE;
-@@ -1023,6 +1025,11 @@ struct mapped_device *dm_table_get_md(st
- 	return t->md;
- }
- 
-+void dm_table_wait(struct dm_table *map)
-+{
-+	wait_event(map->unbind_wait, atomic_read(&map->holders) == 1);
-+}
-+
- EXPORT_SYMBOL(dm_vcalloc);
- EXPORT_SYMBOL(dm_get_device);
- EXPORT_SYMBOL(dm_put_device);
---- a/drivers/md/dm.c	2008-04-17 11:08:04.000000000 +0200
-+++ b/drivers/md/dm.c	2008-06-16 16:57:24.000000000 +0200
-@@ -1189,6 +1189,7 @@ static void __unbind(struct mapped_devic
- 	write_lock(&md->map_lock);
- 	md->map = NULL;
- 	write_unlock(&md->map_lock);
-+	dm_table_wait(map);
- 	dm_table_put(map);
- }
- 
---- a/drivers/md/dm.h	2008-01-25 13:26:14.000000000 +0100
-+++ b/drivers/md/dm.h	2008-06-16 16:56:32.000000000 +0200
-@@ -111,6 +111,7 @@ void dm_table_postsuspend_targets(struct
- int dm_table_resume_targets(struct dm_table *t);
- int dm_table_any_congested(struct dm_table *t, int bdi_bits);
- void dm_table_unplug_all(struct dm_table *t);
-+void dm_table_wait(struct dm_table *map);
- 
+diff --git a/dmsetup/dmsetup.c b/dmsetup/dmsetup.c
+index fdc52e3..b242f1c 100644
+--- a/dmsetup/dmsetup.c
++++ b/dmsetup/dmsetup.c
+@@ -1,6 +1,6 @@
  /*
-  * To check the return value from dm_table_find_target().
+  * Copyright (C) 2001-2004 Sistina Software, Inc. All rights reserved.
+- * Copyright (C) 2004-2007 Red Hat, Inc. All rights reserved.
++ * Copyright (C) 2004-2008 Red Hat, Inc. All rights reserved.
+  * Copyright (C) 2005-2007 NEC Corporation
+  *
+  * This file is part of the device-mapper userspace tools.
+@@ -1927,7 +1927,7 @@ static const struct dm_report_object_type _report_types[] = {
+ };
+
+ /* Column definitions */
+-#define OFFSET_OF(strct, field) ((unsigned int) &((struct strct *)NULL)->field)
++#define OFFSET_OF(strct, field) (((char*)&((struct strct*)0)->field) - (char*)0)
+ #define STR (DM_REPORT_FIELD_TYPE_STRING)
+ #define NUM (DM_REPORT_FIELD_TYPE_NUMBER)
+ #define FIELD_O(type, strct, sorttype, head, field, width, func, id, desc) {DR_ ## type, sorttype, OFFSET_OF(strct, field), width, id, head, &_ ## func ## _disp, desc},
+--
+1.5.6.rc3.13.gb55d4
