@@ -1,13 +1,12 @@
-From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
-Subject: multipath: Failing Path
-Date: Wed, 18 Jun 2008 20:07:05 -0700
-Message-ID: <110b17190806182007j31843efas1278946c186f016e@mail.gmail.com>
+From: Adam Hamsik <haaaad@gmail.com>
+Subject: libdevmapper patches
+Date: Sat, 21 Jun 2008 14:57:17 +0200
+Message-ID: <9F196958-3293-4669-9032-ABC0E1F1ADAE@gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Mime-Version: 1.0 (Apple Message framework v924)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,79 +16,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: blymn <blymn@internode.on.net>
 List-Id: dm-devel.ids
 
-Hi All,
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
 
-I recently sent a mail describing the problem I am facing on failback
-(I have copied the same at the end of this mail)
-I am facing this problem with RHEL 5.1.
+Hi
 
-In all the logs I have collected for this failure, one thing thats
-distinctive is:
+*** Please keep me on CC I'm not currently subscribed to this list. ***
 
-- When a failover happens, error handler function from my device
-handler is called; after which the path is marked as failed with
-printk "device-mapper: multipath: Failing Path 8:XX". I know this as I
-have added some debug prints in my error handler.
+I have updated my version of libdevmapper and extracted all my changes  
+from my local source tree.
 
-- But while the preferred controller is coming up, due to some failure
-the only surviving paths are marked as fail with the printk
-"device-mapper: multipath: Failing Path 8:XX" but this time it does
-not call my device handler for error handling.
+I have produced 5 patches they are located here [1].
 
-Why so?
-I search the device-mapper code for the string "Failing path" and
-could find it only in one function fail_path(path) and this function
-gets called only in 2 condition, either as ap art of
-dm_dpg_init_complete() OR do_end_io(). In both the conditions, I
-should see some prints from my device handler but I don't.
+Small description of all patches:
 
-Who else or in what other conditin can I get the printk
-"device-mapper: multipath: Failing Path 8:XX"??
+a)netbsd_libdevmapper.diff
+   Adds new netbsd protocol file, and glue to parse and create dm- 
+ioctl structures from proplib dictionaries.
 
-Any kind of help is much appreciated.
+b)makefiles.diff
+   Changes needed to libdevmapper build system to properly build on  
+netbsd, linux.
 
-Thanks and Regards,
-Pradipmaya.
+c)dmeventd.diff
+   Small dmeventd diff which adds signal.h to NetBSD build.
 
+d)libdm-common-netbsd.diff
+   Adds support for raw devices to device nodes manipulating routines.
 
+e)libdm-deptree-netbsd.diff
+   Remove check for IS_BLK when we build libdevmapper on netbsd.
 
-<snip>
-Hi All,
+[1]http://www.netbsd.org/~haad/libdevmapper/
 
-I am facing a weird problem with RHEL.
+Regards
 
-Following is the setup I have:
--       RHEL 5.1 OS installed on diskless blades
--       Blades connected to 2 controllers (so basically 2 paths)
--       Trying for ALUA support
--       For ALUA support I derived my code from Hannes check for explicit
-ALUA support.
--       Path_grouping_policy            group_by_prio
--       Features                        1 "queue_if_no_path"
--       No_path_retry           20
+Adam.
 
-Problem:
--       When the failover happens, the standby paths are made active by
-firing STPG. So far so good.
--       When the failback happens, some how the standby paths are failed
-(with messages Failing path 8:XX) even before the preferred controller
-comes up.
--       If the failure is show once, init_function is called again and thing
-move fine, but in case this same error happens twice, the path is
-marked as failure. In these situation as there are no paths, either
-hangs or mounted as read-only.
--       This does not happen immediately, it happens in hour or so when I Am
-trying continuous failover failback with some gap in between 2
-operations.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.7 (Darwin)
 
-Why does the path fail in such scenarios?
-How can this be prevented?
-
-Please suggest.
-
-Regards,
-Pradipmaya.
-<snip>
+iD8DBQFIXPqtlIxPgX3Go0MRAoREAJ4ttr3o8J4N7X8QaSmcNUsgHEd49wCePYyQ
+lffTklqVT5gsyQ1w5Su9n/U=
+=EoJo
+-----END PGP SIGNATURE-----
