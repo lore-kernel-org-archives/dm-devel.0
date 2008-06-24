@@ -1,16 +1,12 @@
-From: "Craig Simpson" <csimpson@visto.com>
-Subject: iostat for a multipath alias?
-Date: Sat, 21 Jun 2008 19:51:00 -0700
-Message-ID: <ABFD05FF09D13E4883B757E75603624D013FAA4B@ex-sea1.vistocorp.com>
-References: <110b17190806182007j31843efas1278946c186f016e@mail.gmail.com>
+From: Takashi Sato <t-sato@yk.jp.nec.com>
+Subject: [PATCH 0/3] freeze feature ver 1.6
+Date: Tue, 24 Jun 2008 15:59:19 +0900
+Message-ID: <20080624155919t-sato@mail.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <110b17190806182007j31843efas1278946c186f016e@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,14 +16,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: akpm@linux-foundation.org, viro@ZenIV.linux.org.uk
+Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
+Hi Andrew and Alexander,
 
+I have implemented the ioctls for the filesystem freeze feature
+and discussed its implementation on the ML (linux-ext4, xfs,
+linux-fsdevel, linux-kernel) for five months.  All of the comments are
+addressed in my patch-set.
+Could you consider merging it into Linux?
 
-Has anyone a method for using iostat for a multipath alias, or getting
-performance data in general. I know it is spread over multiple disks...=20
+The filesystem freeze feature can suspend accesses to the filesystem
+keeping the filesystem's consistency.  We can take the consistent backup
+with it cooperating with the backup software.
 
+The patches are re-based from linux-2.6.26-rc3 to linux-2.6.26-rc7
+There is no functional change from the previous version.
+The patch-set consists of the following three patches.
 
+[PATCH 1/3] Implement generic freeze feature
+  I have modified to set the suitable error number (EOPNOTSUPP)
+  in case the filesystem doesn't support the freeze feature.
 
-Craig
+  The ioctls for the generic freeze feature are below.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, arg)
+      fd: The file descriptor of the mountpoint
+      FIFREEZE: request code for the freeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
+
+  o Unfreeze the filesystem
+    int ioctl(int fd, int FITHAW, arg)
+      fd: The file descriptor of the mountpoint
+      FITHAW: request code for unfreeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
+
+[PATCH 2/3] Remove XFS specific ioctl interfaces for freeze feature
+  It removes XFS specific ioctl interfaces and request codes
+  for freeze feature.
+  This patch has been supplied by David Chinner.
+
+[PATCH 3/3] Add timeout feature
+  The timeout feature is added to freeze ioctl.  And new ioctl
+  to reset the timeout period is added.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, long *timeval)
+      fd: The file descriptor of the mountpoint
+      FIFREEZE: request code for the freeze
+      timeval: the timeout period in seconds
+               If it's 0 or 1, the timeout isn't set.
+               This special case of "1" is implemented to keep
+               the compatibility with XFS applications.
+      Return value: 0 if the operation succeeds. Otherwise, -1
+
+  o Reset the timeout period
+    This is useful for the application to set the timeval more accurately.
+    For example, the freezer resets the timeval to 10 seconds every 5
+    seconds.  In this approach, even if the freezer causes a deadlock
+    by accessing the frozen filesystem, it will be solved by the timeout
+    in 10 seconds and the freezer can recognize that at the next reset
+    of timeval.
+    int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeval)
+      fd:file descriptor of mountpoint
+      FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
+      timeval: new timeout period in seconds
+      Return value: 0 if the operation succeeds. Otherwise, -1
+      Error number: If the filesystem has already been unfrozen,
+                    errno is set to EINVAL.
+
+Any comments are very welcome.
+
+Cheers, Takashi
