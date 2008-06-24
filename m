@@ -1,373 +1,716 @@
-From: Takashi Sato <t-sato@yk.jp.nec.com>
-Subject: [PATCH 3/3] Add timeout feature
-Date: Tue, 24 Jun 2008 16:00:56 +0900
-Message-ID: <20080624160056t-sato@mail.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: hare@suse.de (Hannes Reinecke)
+Subject: [PATCH 1/9] scsi_dh: Implement common device table handling
+Date: Tue, 24 Jun 2008 12:03:48 +0200
+Message-ID: <20080624100349.06F5A10B5DE@craiglockhart-ipmi.suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: akpm@linux-foundation.org, viro@ZenIV.linux.org.uk
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-The timeout feature is added to freeze ioctl.  And new ioctl
-to reset the timeout period is added.
-o Freeze the filesystem
-  int ioctl(int fd, int FIFREEZE, long *timeval)
-    fd: The file descriptor of the mountpoint
-    FIFREEZE: request code for the freeze
-    timeval: the timeout period in seconds
-             If it's 0 or 1, the timeout isn't set.
-             This special case of "1" is implemented to keep
-             the compatibility with XFS applications.
-    Return value: 0 if the operation succeeds. Otherwise, -1
 
-o Reset the timeout period
-  int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeval)
-    fd:file descriptor of mountpoint
-    FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
-    timeval: new timeout period in seconds
-    Return value: 0 if the operation succeeds. Otherwise, -1
-    Error number: If the filesystem has already been unfrozen,
-                  errno is set to EINVAL.
+Instead of having each and every driver implement its own
+device table scanning code we should rather implement a common
+routine and scan the device tables there.
+This allows us also to implement a general notifier chain
+callback for all device handler instead for one per handler.
 
-Signed-off-by: Takashi Sato <t-sato@yk.jp.nec.com>
-Signed-off-by: Masayuki Hamaguchi <m-hamaguchi@ys.jp.nec.com>
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 ---
- drivers/md/dm.c             |    2 -
- fs/block_dev.c              |    2 +
- fs/buffer.c                 |   14 ++++++-
- fs/ioctl.c                  |   78 ++++++++++++++++++++++++++++++++++++++++++--
- fs/super.c                  |   51 ++++++++++++++++++++++++++++
- fs/xfs/xfs_fsops.c          |    2 -
- include/linux/buffer_head.h |    2 -
- include/linux/fs.h          |    8 ++++
- 8 files changed, 151 insertions(+), 8 deletions(-)
+ drivers/scsi/device_handler/scsi_dh.c       |  199 ++++++++++++++++++++++-----
+ drivers/scsi/device_handler/scsi_dh_emc.c   |   92 +++++--------
+ drivers/scsi/device_handler/scsi_dh_hp_sw.c |   85 +++++-------
+ drivers/scsi/device_handler/scsi_dh_rdac.c  |  106 ++++++---------
+ include/scsi/scsi_device.h                  |    9 +-
+ 5 files changed, 289 insertions(+), 202 deletions(-)
 
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/drivers/md/dm.c linux-2.6.26-rc7-timeout/
-drivers/md/dm.c
---- linux-2.6.26-rc7-xfs/drivers/md/dm.c	2008-06-23 11:55:11.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/drivers/md/dm.c	2008-06-23 11:56:47.000000000 +0900
-@@ -1407,7 +1407,7 @@ static int lock_fs(struct mapped_device 
+diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
+index ab6c21c..21cd645 100644
+--- a/drivers/scsi/device_handler/scsi_dh.c
++++ b/drivers/scsi/device_handler/scsi_dh.c
+@@ -33,7 +33,7 @@ static struct scsi_device_handler *get_device_handler(const char *name)
  
- 	WARN_ON(md->frozen_sb);
- 
--	md->frozen_sb = freeze_bdev(md->suspended_bdev);
-+	md->frozen_sb = freeze_bdev(md->suspended_bdev, 0);
- 	if (IS_ERR(md->frozen_sb)) {
- 		r = PTR_ERR(md->frozen_sb);
- 		md->frozen_sb = NULL;
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/fs/block_dev.c linux-2.6.26-rc7-timeout/f
-s/block_dev.c
---- linux-2.6.26-rc7-xfs/fs/block_dev.c	2008-06-23 11:55:15.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/fs/block_dev.c	2008-06-23 11:56:47.000000000 +0900
-@@ -285,6 +285,8 @@ static void init_once(struct kmem_cache 
- 	INIT_LIST_HEAD(&bdev->bd_holder_list);
- #endif
- 	inode_init_once(&ei->vfs_inode);
-+	/* Setup freeze timeout function. */
-+	INIT_DELAYED_WORK(&bdev->bd_freeze_timeout, freeze_timeout);
+ 	spin_lock(&list_lock);
+ 	list_for_each_entry(tmp, &scsi_dh_list, list) {
+-		if (!strcmp(tmp->name, name)) {
++		if (!strncmp(tmp->name, name, strlen(tmp->name))) {
+ 			found = tmp;
+ 			break;
+ 		}
+@@ -42,51 +42,170 @@ static struct scsi_device_handler *get_device_handler(const char *name)
+ 	return found;
  }
  
- static inline void __bd_forget(struct inode *inode)
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/fs/buffer.c linux-2.6.26-rc7-timeout/fs/b
-uffer.c
---- linux-2.6.26-rc7-xfs/fs/buffer.c	2008-06-23 11:55:15.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/fs/buffer.c	2008-06-23 11:56:47.000000000 +0900
-@@ -190,14 +190,17 @@ int fsync_bdev(struct block_device *bdev
- 
- /**
-  * freeze_bdev  --  lock a filesystem and force it into a consistent state
-- * @bdev:	blockdevice to lock
-+ * @bdev:              blockdevice to lock
-+ * @timeout_msec:      timeout period
-  *
-  * This takes the block device bd_mount_sem to make sure no new mounts
-  * happen on bdev until thaw_bdev() is called.
-  * If a superblock is found on this device, we take the s_umount semaphore
-  * on it to make sure nobody unmounts until the snapshot creation is done.
-+ * If timeout_msec is bigger than 0, this registers the delayed work for
-+ * timeout of the freeze feature.
-  */
--struct super_block *freeze_bdev(struct block_device *bdev)
-+struct super_block *freeze_bdev(struct block_device *bdev, long timeout_msec)
+-static int scsi_dh_notifier_add(struct device *dev, void *data)
++static int device_handler_match(struct scsi_device_handler *tmp,
++				struct scsi_device *sdev)
  {
- 	struct super_block *sb;
- 
-@@ -234,6 +237,10 @@ struct super_block *freeze_bdev(struct b
- 	}
- 
- 	sync_blockdev(bdev);
-+	/* Setup unfreeze timer. */
-+	if (timeout_msec > 0)
-+		add_freeze_timeout(bdev, timeout_msec);
+-	struct scsi_device_handler *scsi_dh = data;
++	int i;
 +
- 	clear_bit(BD_FREEZE_OP, &bdev->bd_state);
++	for(i = 0; tmp->devlist[i].vendor; i++) {
++		if (!strncmp(sdev->vendor, tmp->devlist[i].vendor,
++			     strlen(tmp->devlist[i].vendor)) &&
++		    !strncmp(sdev->model, tmp->devlist[i].model,
++			     strlen(tmp->devlist[i].model))) {
++			return 1;
++		}
++	}
  
- 	return sb;	/* thaw_bdev releases s->s_umount and bd_mount_sem */
-@@ -258,6 +265,9 @@ int thaw_bdev(struct block_device *bdev,
- 		return 0;
- 	}
- 
-+	/* Delete unfreeze timer. */
-+	del_freeze_timeout(bdev);
-+
- 	if (sb) {
- 		BUG_ON(sb->s_bdev != bdev);
- 
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/fs/ioctl.c linux-2.6.26-rc7-timeout/fs/io
-ctl.c
---- linux-2.6.26-rc7-xfs/fs/ioctl.c	2008-06-23 11:55:15.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/fs/ioctl.c	2008-06-23 11:56:47.000000000 +0900
-@@ -145,12 +145,16 @@ static int ioctl_fioasync(unsigned int f
-  * ioctl_freeze - Freeze the filesystem.
-  *
-  * @filp:	target file
-+ * @argp:       timeout value(sec)
-  *
-  * Call freeze_bdev() to freeze the filesystem.
-  */
--static int ioctl_freeze(struct file *filp)
-+static int ioctl_freeze(struct file *filp, unsigned long arg)
- {
-+	long timeout_sec;
-+	long timeout_msec;
- 	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
-+	int error;
- 
- 	if (!capable(CAP_SYS_ADMIN))
- 		return -EPERM;
-@@ -159,8 +163,27 @@ static int ioctl_freeze(struct file *fil
- 	if (sb->s_op->write_super_lockfs == NULL)
- 		return -EOPNOTSUPP;
- 
-+	/* arg(sec) to tick value. */
-+	error = get_user(timeout_sec, (long __user *) arg);
-+	if (error != 0)
-+		return error;
-+	/*
-+	 * If 1 is specified as the timeout period,
-+	 * it will be changed into 0 to keep the compatibility
-+	 * of XFS application(xfs_freeze).
-+	 */
-+	if (timeout_sec < 0)
-+		return -EINVAL;
-+	else if (timeout_sec < 2)
-+		timeout_sec = 0;
-+
-+	timeout_msec = timeout_sec * 1000;
-+	/* overflow case */
-+	if (timeout_msec < 0)
-+		return -EINVAL;
-+
- 	/* Freeze */
--	sb = freeze_bdev(sb->s_bdev);
-+	sb = freeze_bdev(sb->s_bdev, timeout_msec);
- 	if (IS_ERR(sb))
- 		return PTR_ERR(sb);
+-	scsi_dh->nb.notifier_call(&scsi_dh->nb, BUS_NOTIFY_ADD_DEVICE, dev);
  	return 0;
-@@ -185,6 +208,51 @@ static int ioctl_thaw(struct file *filp)
  }
  
  /*
-+ * ioctl_freeze_reset_timeout - Reset timeout for freeze.
-+ *
-+ * @filp:       target file
-+ * @argp:       timeout value(sec)
-+ *
-+ * Rest timeout for freeze.
+- * scsi_register_device_handler - register a device handler personality
+- *      module.
+- * @scsi_dh - device handler to be registered.
++ * scsi_dh_handler_attach - Attach a device handler to a device
++ * @sdev - SCSI device the device handler should attach to
++ * @scsi_dh - The device handler to attach
 + */
-+static int
-+ioctl_freeze_reset_timeout(struct file *filp, unsigned long arg)
++static int scsi_dh_handler_attach(struct scsi_device *sdev,
++				  struct scsi_device_handler *scsi_dh)
 +{
-+	long timeout_sec;
-+	long timeout_msec;
-+	struct super_block *sb
-+			= filp->f_path.dentry->d_inode->i_sb;
-+	int error;
++	int err = 0;
 +
-+	if (!capable(CAP_SYS_ADMIN))
-+		return -EPERM;
++	if (sdev->scsi_dh_data) {
++		if (sdev->scsi_dh_data->scsi_dh != scsi_dh)
++			err = -EBUSY;
++	} else if (scsi_dh->attach)
++		err = scsi_dh->attach(sdev);
 +
-+	/* arg(sec) to tick value */
-+	error = get_user(timeout_sec, (long __user *) arg);
-+	if (error)
-+		return error;
-+	timeout_msec = timeout_sec * 1000;
-+	if (timeout_msec < 0)
-+		return -EINVAL;
++	return err;
++}
 +
-+	if (sb) {
-+		if (test_and_set_bit(BD_FREEZE_OP, &sb->s_bdev->bd_state))
-+			return -EBUSY;
-+		if (sb->s_frozen == SB_UNFROZEN) {
-+			clear_bit(BD_FREEZE_OP, &sb->s_bdev->bd_state);
-+			return -EINVAL;
++/*
++ * scsi_dh_handler_detach - Detach a device handler from a device
++ * @sdev - SCSI device the device handler should be detached from
++ * @scsi_dh - Device handler to be detached
+  *
+- * Returns 0 on success, -EBUSY if handler already registered.
++ * Detach from a device handler. If a device handler is specified,
++ * only detach if the currently attached handler is equal to it.
+  */
+-int scsi_register_device_handler(struct scsi_device_handler *scsi_dh)
++static void scsi_dh_handler_detach(struct scsi_device *sdev,
++				   struct scsi_device_handler *scsi_dh)
+ {
+-	int ret = -EBUSY;
+-	struct scsi_device_handler *tmp;
++	if (!sdev->scsi_dh_data)
++		return;
+ 
+-	tmp = get_device_handler(scsi_dh->name);
+-	if (tmp)
+-		goto done;
++	if (scsi_dh && scsi_dh != sdev->scsi_dh_data->scsi_dh)
++		return;
+ 
+-	ret = bus_register_notifier(&scsi_bus_type, &scsi_dh->nb);
++	if (scsi_dh->detach)
++		scsi_dh->detach(sdev);
++}
++
++/*
++ * scsi_dh_notifier - notifier chain callback
++ */
++static int scsi_dh_notifier(struct notifier_block *nb,
++			    unsigned long action, void *data)
++{
++	struct device *dev = data;
++	struct scsi_device *sdev;
++	int err = 0;
++	struct scsi_device_handler *tmp, *devinfo = NULL;
++
++	if (!scsi_is_sdev_device(dev))
++		return 0;
++
++	sdev = to_scsi_device(dev);
+ 
+-	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_add);
+ 	spin_lock(&list_lock);
+-	list_add(&scsi_dh->list, &scsi_dh_list);
++	list_for_each_entry(tmp, &scsi_dh_list, list) {
++		if (device_handler_match(tmp, sdev)) {
++			devinfo = tmp;
++			break;
 +		}
-+		/* setup unfreeze timer */
-+		if (timeout_msec > 0)
-+			add_freeze_timeout(sb->s_bdev,
-+					timeout_msec);
-+		clear_bit(BD_FREEZE_OP, &sb->s_bdev->bd_state);
 +	}
+ 	spin_unlock(&list_lock);
+ 
+-done:
+-	return ret;
++	if (!devinfo)
++		goto out;
++
++	if (action == BUS_NOTIFY_ADD_DEVICE) {
++		err = scsi_dh_handler_attach(sdev, devinfo);
++	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
++		scsi_dh_handler_detach(sdev, NULL);
++	}
++out:
++	return err;
+ }
+-EXPORT_SYMBOL_GPL(scsi_register_device_handler);
+ 
++/*
++ * scsi_dh_notifier_add - Callback for scsi_register_device_handler
++ */
++static int scsi_dh_notifier_add(struct device *dev, void *data)
++{
++	struct scsi_device_handler *scsi_dh = data;
++	struct scsi_device *sdev;
++
++	if (!scsi_is_sdev_device(dev))
++		return 0;
++
++	if (!get_device(dev))
++		return 0;
++
++	sdev = to_scsi_device(dev);
++
++	if (device_handler_match(scsi_dh, sdev))
++		scsi_dh_handler_attach(sdev, scsi_dh);
++
++	put_device(dev);
 +
 +	return 0;
 +}
 +
 +/*
-  * When you add any new common ioctls to the switches above and below
-  * please update compat_sys_ioctl() too.
-  *
-@@ -227,13 +295,17 @@ int do_vfs_ioctl(struct file *filp, unsi
- 		break;
- 
- 	case FIFREEZE:
--		error = ioctl_freeze(filp);
-+		error = ioctl_freeze(filp, arg);
- 		break;
- 
- 	case FITHAW:
- 		error = ioctl_thaw(filp);
- 		break;
- 
-+	case FIFREEZE_RESET_TIMEOUT:
-+		error = ioctl_freeze_reset_timeout(filp, arg);
-+		break;
++ * scsi_dh_notifier_remove - Callback for scsi_unregister_device_handler
++ */
+ static int scsi_dh_notifier_remove(struct device *dev, void *data)
+ {
+ 	struct scsi_device_handler *scsi_dh = data;
++	struct scsi_device *sdev;
 +
- 	default:
- 		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
- 			error = file_ioctl(filp, cmd, arg);
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/fs/super.c linux-2.6.26-rc7-timeout/fs/su
-per.c
---- linux-2.6.26-rc7-xfs/fs/super.c	2008-06-23 11:55:15.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/fs/super.c	2008-06-23 11:56:47.000000000 +0900
-@@ -1010,3 +1010,54 @@ struct vfsmount *kern_mount_data(struct 
++	if (!scsi_is_sdev_device(dev))
++		return 0;
++
++	if (!get_device(dev))
++		return 0;
++
++	sdev = to_scsi_device(dev);
++
++	scsi_dh_handler_detach(sdev, scsi_dh);
++
++	put_device(dev);
+ 
+-	scsi_dh->nb.notifier_call(&scsi_dh->nb, BUS_NOTIFY_DEL_DEVICE, dev);
+ 	return 0;
  }
  
- EXPORT_SYMBOL_GPL(kern_mount_data);
-+
-+/*
-+ * freeze_timeout - Thaw the filesystem.
-+ *
-+ * @work:	work queue (delayed_work.work)
-+ *
-+ * Called by the delayed work when elapsing the timeout period.
-+ * Thaw the filesystem.
-+ */
-+void freeze_timeout(struct work_struct *work)
-+{
-+	struct block_device *bd = container_of(work,
-+			struct block_device, bd_freeze_timeout.work);
-+	struct super_block *sb = get_super_without_lock(bd);
-+
-+	thaw_bdev(bd, sb);
-+
-+	if (sb)
-+		put_super(sb);
-+}
-+EXPORT_SYMBOL_GPL(freeze_timeout);
-+
-+/*
-+ * add_freeze_timeout - Add timeout for freeze.
-+ *
-+ * @bdev:		block device struct
-+ * @timeout_msec:	timeout period
-+ *
-+ * Add the delayed work for freeze timeout to the delayed work queue.
-+ */
-+void add_freeze_timeout(struct block_device *bdev, long timeout_msec)
-+{
-+	s64 timeout_jiffies = msecs_to_jiffies(timeout_msec);
-+
-+	/* Set delayed work queue */
-+	cancel_delayed_work(&bdev->bd_freeze_timeout);
-+	schedule_delayed_work(&bdev->bd_freeze_timeout, timeout_jiffies);
-+}
-+
-+/*
-+ * del_freeze_timeout - Delete timeout for freeze.
-+ *
-+ * @bdev:	block device struct
-+ *
-+ * Delete the delayed work for freeze timeout from the delayed work queue.
-+ */
-+void del_freeze_timeout(struct block_device *bdev)
-+{
-+	if (delayed_work_pending(&bdev->bd_freeze_timeout))
-+		cancel_delayed_work(&bdev->bd_freeze_timeout);
-+}
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/fs/xfs/xfs_fsops.c linux-2.6.26-rc7-timeo
-ut/fs/xfs/xfs_fsops.c
---- linux-2.6.26-rc7-xfs/fs/xfs/xfs_fsops.c	2008-06-23 11:55:15.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/fs/xfs/xfs_fsops.c	2008-06-23 11:56:47.000000000 +0900
-@@ -619,7 +619,7 @@ xfs_fs_goingdown(
- {
- 	switch (inflags) {
- 	case XFS_FSOP_GOING_FLAGS_DEFAULT: {
--		struct super_block *sb = freeze_bdev(mp->m_super->s_bdev);
-+		struct super_block *sb = freeze_bdev(mp->m_super->s_bdev, 0);
- 
- 		if (sb && !IS_ERR(sb)) {
- 			xfs_force_shutdown(mp, SHUTDOWN_FORCE_UMOUNT);
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/include/linux/buffer_head.h linux-2.6.26-
-rc7-timeout/include/linux/buffer_head.h
---- linux-2.6.26-rc7-xfs/include/linux/buffer_head.h	2008-06-23 11:55:16.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/include/linux/buffer_head.h	2008-06-23 11:56:47.000000000 +0900
-@@ -170,7 +170,7 @@ int sync_blockdev(struct block_device *b
- void __wait_on_buffer(struct buffer_head *);
- wait_queue_head_t *bh_waitq_head(struct buffer_head *bh);
- int fsync_bdev(struct block_device *);
--struct super_block *freeze_bdev(struct block_device *);
-+struct super_block *freeze_bdev(struct block_device *, long timeout_msec);
- int thaw_bdev(struct block_device *, struct super_block *);
- int fsync_super(struct super_block *);
- int fsync_no_super(struct block_device *);
-diff -uprN -X linux-2.6.26-rc7.org/Documentation/dontdiff linux-2.6.26-rc7-xfs/include/linux/fs.h linux-2.6.26-rc7-timeo
-ut/include/linux/fs.h
---- linux-2.6.26-rc7-xfs/include/linux/fs.h	2008-06-23 11:55:16.000000000 +0900
-+++ linux-2.6.26-rc7-timeout/include/linux/fs.h	2008-06-23 11:56:47.000000000 +0900
-@@ -8,6 +8,7 @@
- 
- #include <linux/limits.h>
- #include <linux/ioctl.h>
-+#include <linux/workqueue.h>
- 
  /*
-  * It's silly to have NR_OPEN bigger than NR_FILE, but you can change
-@@ -225,6 +226,7 @@ extern int dir_notify_enable;
- #define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
- #define FIFREEZE	_IOWR('X', 119, int)	/* Freeze */
- #define FITHAW		_IOWR('X', 120, int)	/* Thaw */
-+#define	FIFREEZE_RESET_TIMEOUT	_IO(0x00, 3)	/* Reset freeze timeout */
++ * scsi_register_device_handler - register a device handler personality
++ *      module.
++ * @scsi_dh - device handler to be registered.
++ *
++ * Returns 0 on success, -EBUSY if handler already registered.
++ */
++int scsi_register_device_handler(struct scsi_device_handler *scsi_dh)
++{
++	if (get_device_handler(scsi_dh->name))
++		return -EBUSY;
++
++	spin_lock(&list_lock);
++	list_add(&scsi_dh->list, &scsi_dh_list);
++	spin_unlock(&list_lock);
++	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh, scsi_dh_notifier_add);
++	printk(KERN_INFO "%s: device handler registered\n", scsi_dh->name);
++
++	return SCSI_DH_OK;
++}
++EXPORT_SYMBOL_GPL(scsi_register_device_handler);
++
++/*
+  * scsi_unregister_device_handler - register a device handler personality
+  *      module.
+  * @scsi_dh - device handler to be unregistered.
+@@ -95,23 +214,18 @@ static int scsi_dh_notifier_remove(struct device *dev, void *data)
+  */
+ int scsi_unregister_device_handler(struct scsi_device_handler *scsi_dh)
+ {
+-	int ret = -ENODEV;
+-	struct scsi_device_handler *tmp;
+-
+-	tmp = get_device_handler(scsi_dh->name);
+-	if (!tmp)
+-		goto done;
+-
+-	ret = bus_unregister_notifier(&scsi_bus_type, &scsi_dh->nb);
++	if (!get_device_handler(scsi_dh->name))
++		return -ENODEV;
  
- #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
- #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
-@@ -559,6 +561,8 @@ struct block_device {
+ 	bus_for_each_dev(&scsi_bus_type, NULL, scsi_dh,
+-					scsi_dh_notifier_remove);
++			 scsi_dh_notifier_remove);
++
+ 	spin_lock(&list_lock);
+ 	list_del(&scsi_dh->list);
+ 	spin_unlock(&list_lock);
++	printk(KERN_INFO "%s: device handler unregistered\n", scsi_dh->name);
  
- 	/* State of the block device. (Used by freeze feature) */
- 	unsigned long		bd_state;
-+	/* Delayed work for freeze */
-+	struct delayed_work     bd_freeze_timeout;
+-done:
+-	return ret;
++	return SCSI_DH_OK;
+ }
+ EXPORT_SYMBOL_GPL(scsi_unregister_device_handler);
+ 
+@@ -157,6 +271,27 @@ int scsi_dh_handler_exist(const char *name)
+ }
+ EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
+ 
++static struct notifier_block scsi_dh_nb = {
++	.notifier_call = scsi_dh_notifier
++};
++
++static int __init scsi_dh_init(void)
++{
++	int r;
++
++	r = bus_register_notifier(&scsi_bus_type, &scsi_dh_nb);
++
++	return r;
++}
++
++static void __exit scsi_dh_exit(void)
++{
++	bus_unregister_notifier(&scsi_bus_type, &scsi_dh_nb);
++}
++
++module_init(scsi_dh_init);
++module_exit(scsi_dh_exit);
++
+ MODULE_DESCRIPTION("SCSI device handler");
+ MODULE_AUTHOR("Chandra Seetharaman <sekharan@us.ibm.com>");
+ MODULE_LICENSE("GPL");
+diff --git a/drivers/scsi/device_handler/scsi_dh_emc.c b/drivers/scsi/device_handler/scsi_dh_emc.c
+index ed53f14..8a20eb2 100644
+--- a/drivers/scsi/device_handler/scsi_dh_emc.c
++++ b/drivers/scsi/device_handler/scsi_dh_emc.c
+@@ -390,21 +390,21 @@ static int clariion_check_sense(struct scsi_device *sdev,
+ 	return SUCCESS;
+ }
+ 
+-static const struct {
+-	char *vendor;
+-	char *model;
+-} clariion_dev_list[] = {
++const struct scsi_dh_devlist clariion_dev_list[] = {
+ 	{"DGC", "RAID"},
+ 	{"DGC", "DISK"},
+ 	{NULL, NULL},
  };
  
+-static int clariion_bus_notify(struct notifier_block *, unsigned long, void *);
++static int clariion_bus_attach(struct scsi_device *sdev);
++static void clariion_bus_detach(struct scsi_device *sdev);
+ 
+ static struct scsi_device_handler clariion_dh = {
+ 	.name		= CLARIION_NAME,
+ 	.module		= THIS_MODULE,
+-	.nb.notifier_call = clariion_bus_notify,
++	.devlist	= clariion_dev_list,
++	.attach		= clariion_bus_attach,
++	.detach		= clariion_bus_detach,
+ 	.check_sense	= clariion_check_sense,
+ 	.activate	= clariion_activate,
+ };
+@@ -412,68 +412,50 @@ static struct scsi_device_handler clariion_dh = {
  /*
-@@ -2149,5 +2153,9 @@ int proc_nr_files(struct ctl_table *tabl
+  * TODO: need some interface so we can set trespass values
+  */
+-static int clariion_bus_notify(struct notifier_block *nb,
+-				unsigned long action, void *data)
++static int clariion_bus_attach(struct scsi_device *sdev)
+ {
+-	struct device *dev = data;
+-	struct scsi_device *sdev = to_scsi_device(dev);
+ 	struct scsi_dh_data *scsi_dh_data;
+ 	struct clariion_dh_data *h;
+-	int i, found = 0;
+ 	unsigned long flags;
  
- int get_filesystem_list(char * buf);
+-	if (action == BUS_NOTIFY_ADD_DEVICE) {
+-		for (i = 0; clariion_dev_list[i].vendor; i++) {
+-			if (!strncmp(sdev->vendor, clariion_dev_list[i].vendor,
+-				     strlen(clariion_dev_list[i].vendor)) &&
+-			    !strncmp(sdev->model, clariion_dev_list[i].model,
+-				     strlen(clariion_dev_list[i].model))) {
+-				found = 1;
+-				break;
+-			}
+-		}
+-		if (!found)
+-			goto out;
+-
+-		scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
+-				+ sizeof(*h) , GFP_KERNEL);
+-		if (!scsi_dh_data) {
+-			sdev_printk(KERN_ERR, sdev, "Attach failed %s.\n",
+-				    CLARIION_NAME);
+-			goto out;
+-		}
++	scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
++			       + sizeof(*h) , GFP_KERNEL);
++	if (!scsi_dh_data) {
++		sdev_printk(KERN_ERR, sdev, "Attach failed %s.\n",
++			    CLARIION_NAME);
++		return -ENOMEM;
++	}
  
-+extern void add_freeze_timeout(struct block_device *bdev, long timeout_msec);
-+extern void del_freeze_timeout(struct block_device *bdev);
-+extern void freeze_timeout(struct work_struct *work);
+-		scsi_dh_data->scsi_dh = &clariion_dh;
+-		h = (struct clariion_dh_data *) scsi_dh_data->buf;
+-		h->default_sp = CLARIION_UNBOUND_LU;
+-		h->current_sp = CLARIION_UNBOUND_LU;
++	scsi_dh_data->scsi_dh = &clariion_dh;
++	h = (struct clariion_dh_data *) scsi_dh_data->buf;
++	h->default_sp = CLARIION_UNBOUND_LU;
++	h->current_sp = CLARIION_UNBOUND_LU;
+ 
+-		spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+-		sdev->scsi_dh_data = scsi_dh_data;
+-		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
++	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
++	sdev->scsi_dh_data = scsi_dh_data;
++	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+ 
+-		sdev_printk(KERN_NOTICE, sdev, "Attached %s.\n", CLARIION_NAME);
+-		try_module_get(THIS_MODULE);
++	sdev_printk(KERN_NOTICE, sdev, "Attached %s.\n", CLARIION_NAME);
++	try_module_get(THIS_MODULE);
+ 
+-	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
+-		if (sdev->scsi_dh_data == NULL ||
+-				sdev->scsi_dh_data->scsi_dh != &clariion_dh)
+-			goto out;
++	return 0;
++}
+ 
+-		spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+-		scsi_dh_data = sdev->scsi_dh_data;
+-		sdev->scsi_dh_data = NULL;
+-		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
++static void clariion_bus_detach(struct scsi_device *sdev)
++{
++	struct scsi_dh_data *scsi_dh_data;
++	unsigned long flags;
+ 
+-		sdev_printk(KERN_NOTICE, sdev, "Dettached %s.\n",
+-			    CLARIION_NAME);
++	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
++	scsi_dh_data = sdev->scsi_dh_data;
++	sdev->scsi_dh_data = NULL;
++	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+ 
+-		kfree(scsi_dh_data);
+-		module_put(THIS_MODULE);
+-	}
++	sdev_printk(KERN_NOTICE, sdev, "Detached %s.\n",
++		    CLARIION_NAME);
+ 
+-out:
+-	return 0;
++	kfree(scsi_dh_data);
++	module_put(THIS_MODULE);
+ }
+ 
+ static int __init clariion_init(void)
+diff --git a/drivers/scsi/device_handler/scsi_dh_hp_sw.c b/drivers/scsi/device_handler/scsi_dh_hp_sw.c
+index 12ceab7..78259bc 100644
+--- a/drivers/scsi/device_handler/scsi_dh_hp_sw.c
++++ b/drivers/scsi/device_handler/scsi_dh_hp_sw.c
+@@ -108,80 +108,63 @@ done:
+ 	return ret;
+ }
+ 
+-static const struct {
+-	char *vendor;
+-	char *model;
+-} hp_sw_dh_data_list[] = {
++const struct scsi_dh_devlist hp_sw_dh_data_list[] = {
+ 	{"COMPAQ", "MSA"},
+ 	{"HP", "HSV"},
+ 	{"DEC", "HSG80"},
+ 	{NULL, NULL},
+ };
+ 
+-static int hp_sw_bus_notify(struct notifier_block *, unsigned long, void *);
++static int hp_sw_bus_attach(struct scsi_device *sdev);
++static void hp_sw_bus_detach(struct scsi_device *sdev);
+ 
+ static struct scsi_device_handler hp_sw_dh = {
+ 	.name		= HP_SW_NAME,
+ 	.module		= THIS_MODULE,
+-	.nb.notifier_call = hp_sw_bus_notify,
++	.devlist	= hp_sw_dh_data_list,
++	.attach		= hp_sw_bus_attach,
++	.detach		= hp_sw_bus_detach,
+ 	.activate	= hp_sw_activate,
+ };
+ 
+-static int hp_sw_bus_notify(struct notifier_block *nb,
+-			    unsigned long action, void *data)
++static int hp_sw_bus_attach(struct scsi_device *sdev)
+ {
+-	struct device *dev = data;
+-	struct scsi_device *sdev = to_scsi_device(dev);
+ 	struct scsi_dh_data *scsi_dh_data;
+-	int i, found = 0;
+ 	unsigned long flags;
+ 
+-	if (action == BUS_NOTIFY_ADD_DEVICE) {
+-		for (i = 0; hp_sw_dh_data_list[i].vendor; i++) {
+-			if (!strncmp(sdev->vendor, hp_sw_dh_data_list[i].vendor,
+-				     strlen(hp_sw_dh_data_list[i].vendor)) &&
+-			    !strncmp(sdev->model, hp_sw_dh_data_list[i].model,
+-				     strlen(hp_sw_dh_data_list[i].model))) {
+-				found = 1;
+-				break;
+-			}
+-		}
+-		if (!found)
+-			goto out;
+-
+-		scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
+-				+ sizeof(struct hp_sw_dh_data) , GFP_KERNEL);
+-		if (!scsi_dh_data) {
+-			sdev_printk(KERN_ERR, sdev, "Attach Failed %s.\n",
+-				    HP_SW_NAME);
+-			goto out;
+-		}
++	scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
++			       + sizeof(struct hp_sw_dh_data) , GFP_KERNEL);
++	if (!scsi_dh_data) {
++		sdev_printk(KERN_ERR, sdev, "Attach Failed %s.\n",
++			    HP_SW_NAME);
++		return 0;
++	}
+ 
+-		scsi_dh_data->scsi_dh = &hp_sw_dh;
+-		spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+-		sdev->scsi_dh_data = scsi_dh_data;
+-		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+-		try_module_get(THIS_MODULE);
++	scsi_dh_data->scsi_dh = &hp_sw_dh;
++	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
++	sdev->scsi_dh_data = scsi_dh_data;
++	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
++	try_module_get(THIS_MODULE);
+ 
+-		sdev_printk(KERN_NOTICE, sdev, "Attached %s.\n", HP_SW_NAME);
+-	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
+-		if (sdev->scsi_dh_data == NULL ||
+-				sdev->scsi_dh_data->scsi_dh != &hp_sw_dh)
+-			goto out;
++	sdev_printk(KERN_NOTICE, sdev, "Attached %s.\n", HP_SW_NAME);
+ 
+-		spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+-		scsi_dh_data = sdev->scsi_dh_data;
+-		sdev->scsi_dh_data = NULL;
+-		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+-		module_put(THIS_MODULE);
++	return 0;
++}
+ 
+-		sdev_printk(KERN_NOTICE, sdev, "Dettached %s.\n", HP_SW_NAME);
++static void hp_sw_bus_detach( struct scsi_device *sdev )
++{
++	struct scsi_dh_data *scsi_dh_data;
++	unsigned long flags;
+ 
+-		kfree(scsi_dh_data);
+-	}
++	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
++	scsi_dh_data = sdev->scsi_dh_data;
++	sdev->scsi_dh_data = NULL;
++	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
++	module_put(THIS_MODULE);
+ 
+-out:
+-	return 0;
++	sdev_printk(KERN_NOTICE, sdev, "Detached %s\n", HP_SW_NAME);
 +
- #endif /* __KERNEL__ */
- #endif /* _LINUX_FS_H */
++	kfree(scsi_dh_data);
+ }
+ 
+ static int __init hp_sw_init(void)
+diff --git a/drivers/scsi/device_handler/scsi_dh_rdac.c b/drivers/scsi/device_handler/scsi_dh_rdac.c
+index 6fff077..e61cde6 100644
+--- a/drivers/scsi/device_handler/scsi_dh_rdac.c
++++ b/drivers/scsi/device_handler/scsi_dh_rdac.c
+@@ -569,10 +569,7 @@ static int rdac_check_sense(struct scsi_device *sdev,
+ 	return SCSI_RETURN_NOT_HANDLED;
+ }
+ 
+-static const struct {
+-	char *vendor;
+-	char *model;
+-} rdac_dev_list[] = {
++const struct scsi_dh_devlist rdac_dev_list[] = {
+ 	{"IBM", "1722"},
+ 	{"IBM", "1724"},
+ 	{"IBM", "1726"},
+@@ -590,84 +587,67 @@ static const struct {
+ 	{NULL, NULL},
+ };
+ 
+-static int rdac_bus_notify(struct notifier_block *, unsigned long, void *);
++static int rdac_bus_attach(struct scsi_device *sdev);
++static void rdac_bus_detach(struct scsi_device *sdev);
+ 
+ static struct scsi_device_handler rdac_dh = {
+ 	.name = RDAC_NAME,
+ 	.module = THIS_MODULE,
+-	.nb.notifier_call = rdac_bus_notify,
++	.devlist = rdac_dev_list,
+ 	.prep_fn = rdac_prep_fn,
+ 	.check_sense = rdac_check_sense,
++	.attach = rdac_bus_attach,
++	.detach = rdac_bus_detach,
+ 	.activate = rdac_activate,
+ };
+ 
+-/*
+- * TODO: need some interface so we can set trespass values
+- */
+-static int rdac_bus_notify(struct notifier_block *nb,
+-			    unsigned long action, void *data)
++static int rdac_bus_attach(struct scsi_device *sdev)
+ {
+-	struct device *dev = data;
+-	struct scsi_device *sdev = to_scsi_device(dev);
+ 	struct scsi_dh_data *scsi_dh_data;
+ 	struct rdac_dh_data *h;
+-	int i, found = 0;
+ 	unsigned long flags;
+ 
+-	if (action == BUS_NOTIFY_ADD_DEVICE) {
+-		for (i = 0; rdac_dev_list[i].vendor; i++) {
+-			if (!strncmp(sdev->vendor, rdac_dev_list[i].vendor,
+-				     strlen(rdac_dev_list[i].vendor)) &&
+-			    !strncmp(sdev->model, rdac_dev_list[i].model,
+-				     strlen(rdac_dev_list[i].model))) {
+-				found = 1;
+-				break;
+-			}
+-		}
+-		if (!found)
+-			goto out;
+-
+-		scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
+-				+ sizeof(*h) , GFP_KERNEL);
+-		if (!scsi_dh_data) {
+-			sdev_printk(KERN_ERR, sdev, "Attach failed %s.\n",
+-				    RDAC_NAME);
+-			goto out;
+-		}
+-
+-		scsi_dh_data->scsi_dh = &rdac_dh;
+-		h = (struct rdac_dh_data *) scsi_dh_data->buf;
+-		h->lun = UNINITIALIZED_LUN;
+-		h->state = RDAC_STATE_ACTIVE;
+-		spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+-		sdev->scsi_dh_data = scsi_dh_data;
+-		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+-		try_module_get(THIS_MODULE);
+-
+-		sdev_printk(KERN_NOTICE, sdev, "Attached %s.\n", RDAC_NAME);
+-
+-	} else if (action == BUS_NOTIFY_DEL_DEVICE) {
+-		if (sdev->scsi_dh_data == NULL ||
+-				sdev->scsi_dh_data->scsi_dh != &rdac_dh)
+-			goto out;
+-
+-		spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
+-		scsi_dh_data = sdev->scsi_dh_data;
+-		sdev->scsi_dh_data = NULL;
+-		spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+-
+-		h = (struct rdac_dh_data *) scsi_dh_data->buf;
+-		if (h->ctlr)
+-			kref_put(&h->ctlr->kref, release_controller);
+-		kfree(scsi_dh_data);
+-		module_put(THIS_MODULE);
+-		sdev_printk(KERN_NOTICE, sdev, "Dettached %s.\n", RDAC_NAME);
++	scsi_dh_data = kzalloc(sizeof(struct scsi_device_handler *)
++			       + sizeof(*h) , GFP_KERNEL);
++	if (!scsi_dh_data) {
++		sdev_printk(KERN_ERR, sdev, "Attach failed %s.\n",
++			    RDAC_NAME);
++		return 0;
+ 	}
+ 
+-out:
++	scsi_dh_data->scsi_dh = &rdac_dh;
++	h = (struct rdac_dh_data *) scsi_dh_data->buf;
++	h->lun = UNINITIALIZED_LUN;
++	h->state = RDAC_STATE_ACTIVE;
++	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
++	sdev->scsi_dh_data = scsi_dh_data;
++	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
++	try_module_get(THIS_MODULE);
++
++	sdev_printk(KERN_NOTICE, sdev, "Attached %s\n", RDAC_NAME);
++
+ 	return 0;
+ }
+ 
++static void rdac_bus_detach( struct scsi_device *sdev )
++{
++	struct scsi_dh_data *scsi_dh_data;
++	struct rdac_dh_data *h;
++	unsigned long flags;
++
++	spin_lock_irqsave(sdev->request_queue->queue_lock, flags);
++	scsi_dh_data = sdev->scsi_dh_data;
++	sdev->scsi_dh_data = NULL;
++	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
++
++	h = (struct rdac_dh_data *) scsi_dh_data->buf;
++	if (h->ctlr)
++		kref_put(&h->ctlr->kref, release_controller);
++	kfree(scsi_dh_data);
++	module_put(THIS_MODULE);
++	sdev_printk(KERN_NOTICE, sdev, "Detached %s\n", RDAC_NAME);
++}
++
+ static int __init rdac_init(void)
+ {
+ 	int r;
+diff --git a/include/scsi/scsi_device.h b/include/scsi/scsi_device.h
+index 06b979f..62ce167 100644
+--- a/include/scsi/scsi_device.h
++++ b/include/scsi/scsi_device.h
+@@ -166,15 +166,22 @@ struct scsi_device {
+ 	unsigned long		sdev_data[0];
+ } __attribute__((aligned(sizeof(unsigned long))));
+ 
++struct scsi_dh_devlist {
++	char *vendor;
++	char *model;
++};
++
+ struct scsi_device_handler {
+ 	/* Used by the infrastructure */
+ 	struct list_head list; /* list of scsi_device_handlers */
+-	struct notifier_block nb;
+ 
+ 	/* Filled by the hardware handler */
+ 	struct module *module;
+ 	const char *name;
++	const struct scsi_dh_devlist *devlist;
+ 	int (*check_sense)(struct scsi_device *, struct scsi_sense_hdr *);
++	int (*attach)(struct scsi_device *);
++	void (*detach)(struct scsi_device *);
+ 	int (*activate)(struct scsi_device *);
+ 	int (*prep_fn)(struct scsi_device *, struct request *);
+ };
+-- 
+1.5.2.4
+
