@@ -1,167 +1,78 @@
-From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 7/9] scsi_dh: attach to hardware handler from dm-mpath
-Date: Tue, 24 Jun 2008 12:05:19 +0200
-Message-ID: <20080624100519.E7BBE10B5DE@craiglockhart-ipmi.suse.de>
+From: "Geoff Galitz" <geoff@galitz.org>
+Subject: multipathd dies at startup
+Date: Tue, 24 Jun 2008 15:27:26 +0200
+Message-ID: <6FFEF66445B249919BAE6BA748041FE7@geoffPC>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="US-ASCII"
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-multipath keeps a separate device table which may be
-more current than the built-in one.
-So we should make sure to always call ->attach whenever
-a multipath map with hardware handler is instantiated.
-And we should call ->detach on removal, too.
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c                 |   13 ++++++
- drivers/scsi/device_handler/scsi_dh.c |   68 ++++++++++++++++++++++++++++++++-
- include/scsi/scsi_dh.h                |    2 +
- 3 files changed, 81 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index e8f704a..bd2bcf4 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -147,9 +147,12 @@ static struct priority_group *alloc_priority_group(void)
- static void free_pgpaths(struct list_head *pgpaths, struct dm_target *ti)
- {
- 	struct pgpath *pgpath, *tmp;
-+	struct multipath *m = (struct multipath *) ti->private;
- 
- 	list_for_each_entry_safe(pgpath, tmp, pgpaths, list) {
- 		list_del(&pgpath->list);
-+		if (m->hw_handler_name)
-+			scsi_dh_detach(bdev_get_queue(pgpath->path.dev->bdev));
- 		dm_put_device(ti, pgpath->path.dev);
- 		free_pgpath(pgpath);
- 	}
-@@ -546,6 +549,7 @@ static struct pgpath *parse_path(struct arg_set *as, struct path_selector *ps,
- {
- 	int r;
- 	struct pgpath *p;
-+	struct multipath *m = (struct multipath *) ti->private;
- 
- 	/* we need at least a path arg */
- 	if (as->argc < 1) {
-@@ -564,6 +568,15 @@ static struct pgpath *parse_path(struct arg_set *as, struct path_selector *ps,
- 		goto bad;
- 	}
- 
-+	if (m->hw_handler_name) {
-+		r = scsi_dh_attach(bdev_get_queue(p->path.dev->bdev),
-+				   m->hw_handler_name);
-+		if (r < 0) {
-+			dm_put_device(ti, p->path.dev);
-+			goto bad;
-+		}
-+	}
-+
- 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
- 	if (r) {
- 		dm_put_device(ti, p->path.dev);
-diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
-index 7cbd1f6..a505e83 100644
---- a/drivers/scsi/device_handler/scsi_dh.c
-+++ b/drivers/scsi/device_handler/scsi_dh.c
-@@ -95,8 +95,8 @@ static void scsi_dh_handler_detach(struct scsi_device *sdev,
- 	if (scsi_dh && scsi_dh != sdev->scsi_dh_data->scsi_dh)
- 		return;
- 
--	if (scsi_dh->detach)
--		scsi_dh->detach(sdev);
-+	if (sdev->scsi_dh_data->scsi_dh->detach)
-+		sdev->scsi_dh_data->scsi_dh->detach(sdev);
- }
- 
- /*
-@@ -366,6 +366,70 @@ int scsi_dh_handler_exist(const char *name)
- }
- EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
- 
-+/*
-+ * scsi_dh_handler_attach - Attach device handler
-+ * @sdev - sdev the handler should be attached to
-+ * @name - name of the handler to attach
-+ */
-+int scsi_dh_attach(struct request_queue *q, const char *name)
-+{
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	struct scsi_device_handler *scsi_dh;
-+	int err = 0;
-+
-+	scsi_dh = get_device_handler(name);
-+	if (!scsi_dh)
-+		return -EINVAL;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (!sdev || !get_device(&sdev->sdev_gendev))
-+		err = -ENODEV;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	if (!err) {
-+		err = scsi_dh_handler_attach(sdev, scsi_dh);
-+
-+		put_device(&sdev->sdev_gendev);
-+	}
-+	return err;
-+}
-+EXPORT_SYMBOL_GPL(scsi_dh_attach);
-+
-+/*
-+ * scsi_dh_handler_detach - Detach device handler
-+ * @sdev - sdev the handler should be detached from
-+ *
-+ * This function will detach the device handler only
-+ * if the sdev is not part of the internal list, ie
-+ * if it has been attached manually.
-+ */
-+void scsi_dh_detach(struct request_queue *q)
-+{
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	struct scsi_device_handler *scsi_dh = NULL;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (!sdev || !get_device(&sdev->sdev_gendev))
-+		sdev = NULL;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	if (!sdev)
-+		return;
-+
-+	if (sdev->scsi_dh_data) {
-+		/* if sdev is not on internal list, detach */
-+		scsi_dh = sdev->scsi_dh_data->scsi_dh;
-+		if (!device_handler_match(scsi_dh, sdev))
-+			scsi_dh_handler_detach(sdev, scsi_dh);
-+	}
-+	put_device(&sdev->sdev_gendev);
-+}
-+EXPORT_SYMBOL_GPL(scsi_dh_detach);
-+
- static struct notifier_block scsi_dh_nb = {
- 	.notifier_call = scsi_dh_notifier
- };
-diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
-index 5d05ac0..8032e51 100644
---- a/include/scsi/scsi_dh.h
-+++ b/include/scsi/scsi_dh.h
-@@ -59,3 +59,5 @@ enum {
- 
- extern int scsi_dh_activate(struct request_queue *);
- extern int scsi_dh_handler_exist(const char *);
-+extern int scsi_dh_attach(struct request_queue *, const char *);
-+extern void scsi_dh_detach(struct request_queue *q);
--- 
-1.5.2.4
+I am trying to get dm-multipath configured to support my iSCSI setup, but I
+have a problem with multipathd dieing silently at startup.
 
+kernel 2.6.18-53.1.21.el5
+package: device-mapper-multipath-0.4.7-12.el5_1.4
+distro: Centos 5.1
+
+Multpath config:
+
+
+
+-----------------------------------
+# Blacklist all devices by default. Remove this to enable multipathing
+# on the default devices.
+blacklist {
+devnode "*"
+}
+
+blacklist_exceptions {
+device {
+vendor "IET" 
+product "VIRTUAL-DISK"
+}
+}
+
+multipaths {
+multipath {
+wwid 14945540000000000000000000100000037800f000000d00f
+alias yellow
+path_grouping_policy multibus
+path_checker readsector0
+path_selector "round-robin 0"
+failback immediate
+rr_weight priorities
+no_path_retry 5
+}
+}
+
+device {
+vendor "IET"
+product "VIRTUAL-DISK"
+path_grouping_policy failover
+features "1 queue_if_no_path"
+failback immediate
+}
+}
+
+
+
+
+Geoff Galitz
+Blankenheim NRW, Deutschland
+http://www.galitz.org
