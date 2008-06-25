@@ -1,16 +1,16 @@
-From: "Takashi Sato" <t-sato@yk.jp.nec.com>
-Subject: Re: [PATCH 0/3] freeze feature ver 1.6
-Date: Wed, 25 Jun 2008 15:36:40 +0900
-Message-ID: <27A96BE5FB224E9A876DA3326A6A6B27@nsl.ad.nec.co.jp>
-References: <20080624155919t-sato@mail.jp.nec.com>
-	<20080624143840.c183d0d9.akpm@linux-foundation.org>
+From: "Geoff Galitz" <geoff@galitz.org>
+Subject: RE: multipathd dies at startup
+Date: Wed, 25 Jun 2008 11:40:59 +0200
+Message-ID: <8C152752565D473EA81F20817D4B0E7A@geoffPC>
+References: <6FFEF66445B249919BAE6BA748041FE7@geoffPC>
+	<4861882A.4020801@finnzi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset="ISO-8859-1";
-	reply-type=original
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain;
+	charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080624143840.c183d0d9.akpm@linux-foundation.org>
+In-Reply-To: <4861882A.4020801@finnzi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,118 +20,112 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+To: 'device-mapper development' <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
 
-> umm, OK, but nowhere in this patch series can I find a justification or
-> reason for making these changes to Linux.  Why do we want to do this?
-> What is the benefit?  What is the motivation.  What are the use-cases,
-> etc?
 
-Currently, ext3 in mainline Linux doesn't have the freeze feature which
-suspends write requests.  So, we cannot take a backup which keeps
-the filesystem's consistency with the storage device's features
-(snapshot and replication) while it is mounted.
-In many case, a commercial filesystem (e.g. VxFS) has
-the freeze feature and it would be used to get the consistent backup.
-If Linux's standard filesytem ext3 has the freeze feature, we can do it
-without a commercial filesystem.
+Thanks for the reply.  Just for the record it is now fixed.  Here is what
+happened:
 
-So I have implemented the ioctls of the freeze feature.
-I think we can take the consistent backup with the following steps.
-1. Freeze the filesystem with the freeze ioctl.
-2. Separate the replication volume or create the snapshot
-   with the storage device's feature.
-3. Unfreeze the filesystem with the unfreeze ioctl.
-4. Take the backup from the separated replication volume
-   or the snapshot.
+Tested on Centos 5.1 i368: multipathd died reliably
+Tested on Centos 5.1 x86_64:  works like a charm
 
-Cheers, Takashi
+And then it turns out that Centos 5.2 came down the line just last night =
+for
+me, so I updated and now multipathd works for me in both i386 and x86_64.
 
-> On Tue, 24 Jun 2008 15:59:19 +0900
-> Takashi Sato <t-sato@yk.jp.nec.com> wrote:
-> 
->> Hi Andrew and Alexander,
->> 
->> I have implemented the ioctls for the filesystem freeze feature
->> and discussed its implementation on the ML (linux-ext4, xfs,
->> linux-fsdevel, linux-kernel) for five months.  All of the comments are
->> addressed in my patch-set.
->> Could you consider merging it into Linux?
->> 
->> The filesystem freeze feature can suspend accesses to the filesystem
->> keeping the filesystem's consistency.  We can take the consistent backup
->> with it cooperating with the backup software.
->> 
->> The patches are re-based from linux-2.6.26-rc3 to linux-2.6.26-rc7
->> There is no functional change from the previous version.
->> The patch-set consists of the following three patches.
->> 
->> [PATCH 1/3] Implement generic freeze feature
->>   I have modified to set the suitable error number (EOPNOTSUPP)
->>   in case the filesystem doesn't support the freeze feature.
->> 
->>   The ioctls for the generic freeze feature are below.
->>   o Freeze the filesystem
->>     int ioctl(int fd, int FIFREEZE, arg)
->>       fd: The file descriptor of the mountpoint
->>       FIFREEZE: request code for the freeze
->>       arg: Ignored
->>       Return value: 0 if the operation succeeds. Otherwise, -1
->> 
->>   o Unfreeze the filesystem
->>     int ioctl(int fd, int FITHAW, arg)
->>       fd: The file descriptor of the mountpoint
->>       FITHAW: request code for unfreeze
->>       arg: Ignored
->>       Return value: 0 if the operation succeeds. Otherwise, -1
->> 
->> [PATCH 2/3] Remove XFS specific ioctl interfaces for freeze feature
->>   It removes XFS specific ioctl interfaces and request codes
->>   for freeze feature.
->>   This patch has been supplied by David Chinner.
->> 
->> [PATCH 3/3] Add timeout feature
->>   The timeout feature is added to freeze ioctl.  And new ioctl
->>   to reset the timeout period is added.
->>   o Freeze the filesystem
->>     int ioctl(int fd, int FIFREEZE, long *timeval)
->>       fd: The file descriptor of the mountpoint
->>       FIFREEZE: request code for the freeze
->>       timeval: the timeout period in seconds
->>                If it's 0 or 1, the timeout isn't set.
->>                This special case of "1" is implemented to keep
->>                the compatibility with XFS applications.
->>       Return value: 0 if the operation succeeds. Otherwise, -1
->> 
->>   o Reset the timeout period
->>     This is useful for the application to set the timeval more accurately.
->>     For example, the freezer resets the timeval to 10 seconds every 5
->>     seconds.  In this approach, even if the freezer causes a deadlock
->>     by accessing the frozen filesystem, it will be solved by the timeout
->>     in 10 seconds and the freezer can recognize that at the next reset
->>     of timeval.
->>     int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeval)
->>       fd:file descriptor of mountpoint
->>       FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
->>       timeval: new timeout period in seconds
->>       Return value: 0 if the operation succeeds. Otherwise, -1
->>       Error number: If the filesystem has already been unfrozen,
->>                     errno is set to EINVAL.
->> 
->> Any comments are very welcome.
-> 
-> umm, OK, but nowhere in this patch series can I find a justification or
-> reason for making these changes to Linux.  Why do we want to do this? 
-> What is the benefit?  What is the motivation.  What are the use-cases,
-> etc?
-> 
-> Thanks.
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-ext4" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Again, thanks for the help.
+
+-geoff
+
+
+Geoff Galitz
+Blankenheim NRW, Deutschland
+http://www.galitz.org
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On
+Behalf Of Finnur =D6rn Gu=F0mundsson
+Sent: Mittwoch, 25. Juni 2008 01:50
+To: device-mapper development
+Subject: Re: [dm-devel] multipathd dies at startup
+
+Geoff Galitz wrote:
 >
+> I am trying to get dm-multipath configured to support my iSCSI setup, b=
+ut
+I
+> have a problem with multipathd dieing silently at startup.
+>
+> kernel 2.6.18-53.1.21.el5
+> package: device-mapper-multipath-0.4.7-12.el5_1.4
+> distro: Centos 5.1
+>
+> Multpath config:
+>
+>
+>
+> -----------------------------------
+> # Blacklist all devices by default. Remove this to enable multipathing
+> # on the default devices.
+> blacklist {
+> devnode "*"
+> }
+>
+> blacklist_exceptions {
+> device {
+> vendor "IET"=20
+> product "VIRTUAL-DISK"
+> }
+> }
+>
+> multipaths {
+> multipath {
+> wwid 14945540000000000000000000100000037800f000000d00f
+> alias yellow
+> path_grouping_policy multibus
+> path_checker readsector0
+> path_selector "round-robin 0"
+> failback immediate
+> rr_weight priorities
+> no_path_retry 5
+> }
+> }
+>
+> device {
+> vendor "IET"
+> product "VIRTUAL-DISK"
+> path_grouping_policy failover
+> features "1 queue_if_no_path"
+> failback immediate
+> }
+> }
+>
+>
+>
+>
+> Geoff Galitz
+> Blankenheim NRW, Deutschland
+> http://www.galitz.org
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>  =20
+Hi,
+Having recently hit the same issue, it was a SELinux problem in my case.
+Try: setenforce 0 ; service multipathd restart
+
+See if it works for you. I also remember seeing a fix from RHEL/CentOS=20
+regarding this.
+
+Thanks,
+Finnur
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
