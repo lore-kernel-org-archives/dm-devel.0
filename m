@@ -1,14 +1,9 @@
-From: =?ISO-8859-1?Q?Finnur_=D6rn_Gu=F0mundsson?= <finnzi@finnzi.com>
-Subject: Re: multipathd dies at startup
-Date: Tue, 24 Jun 2008 23:50:02 +0000
-Message-ID: <4861882A.4020801@finnzi.com>
-References: <6FFEF66445B249919BAE6BA748041FE7@geoffPC>
+From: agk@sourceware.org
+Subject: device-mapper/lib libdm-report.c
+Date: 25 Jun 2008 00:10:36 -0000
+Message-ID: <20080625001036.2219.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <6FFEF66445B249919BAE6BA748041FE7@geoffPC>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,77 +13,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Geoff Galitz wrote:
->
-> I am trying to get dm-multipath configured to support my iSCSI setup, but I
-> have a problem with multipathd dieing silently at startup.
->
-> kernel 2.6.18-53.1.21.el5
-> package: device-mapper-multipath-0.4.7-12.el5_1.4
-> distro: Centos 5.1
->
-> Multpath config:
->
->
->
-> -----------------------------------
-> # Blacklist all devices by default. Remove this to enable multipathing
-> # on the default devices.
-> blacklist {
-> devnode "*"
-> }
->
-> blacklist_exceptions {
-> device {
-> vendor "IET" 
-> product "VIRTUAL-DISK"
-> }
-> }
->
-> multipaths {
-> multipath {
-> wwid 14945540000000000000000000100000037800f000000d00f
-> alias yellow
-> path_grouping_policy multibus
-> path_checker readsector0
-> path_selector "round-robin 0"
-> failback immediate
-> rr_weight priorities
-> no_path_retry 5
-> }
-> }
->
-> device {
-> vendor "IET"
-> product "VIRTUAL-DISK"
-> path_grouping_policy failover
-> features "1 queue_if_no_path"
-> failback immediate
-> }
-> }
->
->
->
->
-> Geoff Galitz
-> Blankenheim NRW, Deutschland
-> http://www.galitz.org
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->   
-Hi,
-Having recently hit the same issue, it was a SELinux problem in my case.
-Try: setenforce 0 ; service multipathd restart
+CVSROOT:	/cvs/dm
+Module name:	device-mapper
+Changes by:	agk@sourceware.org	2008-06-25 00:10:36
 
-See if it works for you. I also remember seeing a fix from RHEL/CentOS 
-regarding this.
+Modified files:
+	lib            : libdm-report.c 
 
-Thanks,
-Finnur
+Log message:
+	Cope with missing field values.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-report.c.diff?cvsroot=dm&r1=1.21&r2=1.22
+
+--- device-mapper/lib/libdm-report.c	2008/06/24 22:53:48	1.21
++++ device-mapper/lib/libdm-report.c	2008/06/25 00:10:36	1.22
+@@ -895,8 +895,13 @@
+ 	}
+ 
+ 	list_iterate_items(fp, &rh->field_props) {
+-		if (fp->flags & FLD_HIDDEN)
++		if (fp->flags & FLD_HIDDEN) {
++			list_iterate_items(row, &rh->rows) {
++				field = list_item(list_first(&row->fields), struct dm_report_field);
++				list_del(&field->list);
++			}
+ 			continue;
++		}
+ 
+ 		if ((rh->flags & DM_REPORT_OUTPUT_HEADINGS)) {
+ 			if (!dm_pool_grow_object(rh->mem, rh->fields[fp->field_num].heading, 0)) {
+@@ -910,10 +915,11 @@
+ 		}
+ 
+ 		list_iterate_items(row, &rh->rows) {
+-			field = list_item(list_first(&row->fields), struct dm_report_field);
+-			if (!_output_field(rh, field))
+-				goto bad;
+-			list_del(&field->list);
++			if ((field = list_item(list_first(&row->fields), struct dm_report_field))) {
++				if (!_output_field(rh, field))
++					goto bad;
++				list_del(&field->list);
++			}
+ 
+ 			if (!list_end(&rh->rows, &row->list))
+ 				if (!dm_pool_grow_object(rh->mem, rh->separator, 0)) {
