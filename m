@@ -1,14 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH 0/3] freeze feature ver 1.6
-Date: Wed, 25 Jun 2008 23:53:19 +0100
-Message-ID: <20080625225319.GR22522@agk.fab.redhat.com>
-References: <1c748a490806251445x4c1f4901nb503273b08dd680@mail.gmail.com>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: Can we have customized path_checker?
+Date: Wed, 25 Jun 2008 16:02:05 -0700
+Message-ID: <110b17190806251602h685f5a4vfc508b816f7cdb16@mail.gmail.com>
+References: <110b17190806251539t5fcc712fj780dd4852d269447@mail.gmail.com>
+	<1214433880.32521.3.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1214433880.32521.3.camel@chandra-ubuntu>
 Content-Disposition: inline
-In-Reply-To: <1c748a490806251445x4c1f4901nb503273b08dd680@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,15 +20,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-You could experiment adding the dm 'delay' target into your device stack,
-which lets you route reads and writes down different paths - then have 
-separate linear targets underneath each recombining them back into
-the same path, and then use the existing dmsetup suspend/resume only on the
-read path.
+Thanks Chandra; I just wanted to give it a try.
 
-Alasdair
--- 
-agk@redhat.com
+Regards,
+Pradipmaya.
+
+On Wed, Jun 25, 2008 at 3:44 PM, Chandra Seetharaman
+<sekharan@us.ibm.com> wrote:
+>
+> On Wed, 2008-06-25 at 15:39 -0700, Pradipmaya Maharana wrote:
+>> Hi All,
+>>
+>> Under the multipath.conf, can we have the customized path checker?
+>> Something like:
+>>
+>> path_checker    /sbin/my_path_checker /dev/%n
+>>
+>> Please comment.
+>
+> Technically, yes, you can. I do not about "support" after that point :)
+>
+> But, remember that if your storage does have other configuration info
+> built in, you will be overwriting them all.
+>
+>>
+>> Thanks and Regards,
+>> Pradipmaya.
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
