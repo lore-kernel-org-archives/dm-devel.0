@@ -1,15 +1,16 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: Re: multipath-tools support for SGI TP9700...
-Date: Thu, 26 Jun 2008 07:20:16 -0400
-Message-ID: <20080626112016.GA11085@mars.virtualiron.com>
-References: <1213307328.25460.34.camel@plop>
-	<OF677BDEF1.5E2665CA-ON86257474.0014369D-85257474.001A7D70@mck.us.ray.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH 1/9] scsi_dh: Implement common device table
+	handling
+Date: Thu, 26 Jun 2008 14:45:48 +0200
+Message-ID: <48638F7C.9090602@suse.de>
+References: <20080624100349.06F5A10B5DE@craiglockhart-ipmi.suse.de>
+	<1214441566.32521.10.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <OF677BDEF1.5E2665CA-ON86257474.0014369D-85257474.001A7D70@mck.us.ray.com>
+In-Reply-To: <1214441566.32521.10.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,17 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@free.fr>
+To: sekharan@us.ibm.com
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-> their original SP when the FC cable was reconnected.  Am I to assume that 
-> RDAC or other multipath software will not tell the storage to failback 
-> trepassed LUNs?
+Hi Chandra,
 
-It will if the priority received from the prio_callout (or in more recent
-version prio) is greater for the set of the trespassed LUNs and you are using
-the right prio group policy. Try having this value in the new configuration
-for the RDAC setup:
+Chandra Seetharaman wrote:
+> Other than one minor issue the code looks good (sorry for the late
+> realization on my part).
+>=20
+> Issue: scsi_dh_handler_detach() references scsi_dh with no check for
+> null and scsi_dh_notifier() call it with scsi_dh =3D=3D NULL. code can =
+be
+> changed to get the device handler from sdev.
+>=20
+This is fixed in patch 7/9. I thought I had rediffed them properly,
+but apparently not. Sorry for that.
 
-               path_grouping_policy    group_by_prio
+Thanks for the review.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
