@@ -1,65 +1,58 @@
-From: KAIZUKA Hiroyuki <kaizuka@valinux.co.jp>
-Subject: iobandctl (a utility tool for dm-ioband) update
-Date: Fri, 27 Jun 2008 19:13:32 +0900
-Message-ID: <4864BD4C.9000506@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
+Subject: Re: [PATCH 1/3] Implement generic freeze feature
+Date: Fri, 27 Jun 2008 20:33:27 +0900
+Message-ID: <2B8295B5761847BCB9831DB3ADE96B49@nsl.ad.nec.co.jp>
+References: <20080624155950t-sato@mail.jp.nec.com> <20080624144803.0135a84d.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain;
+	format=flowed;
+	charset="iso-8859-1";
+	reply-type=original
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20080624144803.0135a84d.akpm@linux-foundation.org>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, axboe@kernel.dk, mtk.manpages@googlemail.com
 List-Id: dm-devel.ids
 
-Hi all,
+Hi,
 
-iobandctl has been updated to v0.0.3.
-This version of iobandctl enables you:
- To use the configuration files to configure I/O bandwidth control settings,
- To apply I/O bandwidth control to multiple disks which share the I/O
- bandwidth,
- To apply the new bandwidth control policy which has been implemented on
- dm-ioband v1.0.0.
-See http://people.valinux.co.jp/~kaizuka/dm-ioband/iobandctl/
-for more details.
+>> +/*
+>> + * get_super_without_lock - Get super_block from block_device without lock.
+>> + * @bdev: block device struct
+>> + *
+>> + * Scan the superblock list and finds the superblock of the file system
+>> + * mounted on the block device given. This doesn't lock anyone.
+>> + * %NULL is returned if no match is found.
+>> + */
+>
+> This is not a terribly good comment.
+>
+> Which lock are we not taking?  I _assume_ that it's referring to
+> s_umount?  If so, the text should describe that.
+>
+> It should also go to some lengths explaining why this dangerous-looking
+> and rather nasty-looking function exists.
+>
+> Look at it this way: there is no way in which the reviewer of this
+> patch (ie: me) can work out why this function exists.  Hence there will
+> be no way in which future readers of this code will be able to work out
+> why this function exists either.  This is bad.  These things should be
+> described in code comments and in the changelog (whichever is most
+> appropriate).
 
-iobandctl is an administration tool to realize disk I/O bandwidth control
-using dm-ioband, which is an I/O bandwidth controller implemented as a
-device-mapper driver. You can find dm-ioband at:
-http://people.valinux.co.jp/~ryov/bwctl/
+Thank you for your comment.  I will write comments appropriately.
 
-Changes from previous version:
-* Configuration file support
- o config subcommand is added.
- o It is possible to configure your I/O bandwidth control settings
-   using your configuration file.
-* Multiple disks support
- o −−bind option is added on "create" subcommand.
- o It is possible to apply I/O bandwidth control to multiple disks
-   which share the I/O bandwidth.
- o It's certain that two or more Logical Units contained in the same
-   SCSI target device share the I/O bandwidth. You are able to distribute the
-   bandwidth among the partitions involved in these Logical Units.
-* New bandwidth control policy support
- o policy subcommand is added.
- o The new policy "weight-iosize" do I/O bandwidth control based on
-   the size of I/Os instead of the number of I/Os, which is the existing and
-   default policy named "weight-iocount".
-* Particular devices name support such as certain raid devices
- o Support for logical drive names such as "/dev/cciss/c1d0" and
-   raid device names such as "/dev/md0".
- o This simply means that iobandctl has come to treat such names
-   properly now, though it couldn't do that in previous version.
- o It needs you to understand which device share the I/O bandwidth
-   with which other device, and configure proper settings using --bind option.
+I was wrong. I thought we didn't need to lock s_umount because
+this ioctl required to open a regular file or a directory and we cannot
+unmount a target filesystem.
+So I created get_super_without_lock() used in freeze_bdev().
 
-Regards,
-KAIZUKA Hiroyuki
+But, I have found that the ioctl (DM_DEV_SUSPEND_CMD in
+drivers/md/dm-ioctl.c) requires to open  a logical volume
+(not a file or a directory) and calls freeze_bdev(), so we can unmount
+a filesystem.
+So I will replace get_super_without_lock with get_super to get s_umount.
+
+Cheers, Takashi
