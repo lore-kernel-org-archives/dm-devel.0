@@ -1,41 +1,65 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH 1/9] scsi_dh: Implement common device table handling
-Date: Thu, 26 Jun 2008 07:41:03 -0700
-Message-ID: <1214491263.31845.0.camel@chandra-ubuntu>
-References: <20080624100349.06F5A10B5DE@craiglockhart-ipmi.suse.de>
-	 <1214441566.32521.10.camel@chandra-ubuntu>  <48638F7C.9090602@suse.de>
-Reply-To: sekharan@us.ibm.com
+From: KAIZUKA Hiroyuki <kaizuka@valinux.co.jp>
+Subject: iobandctl (a utility tool for dm-ioband) update
+Date: Fri, 27 Jun 2008 19:13:32 +0900
+Message-ID: <4864BD4C.9000506@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <48638F7C.9090602@suse.de>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Hannes Reinecke <hare@suse.de>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Great then.
+Hi all,
 
-Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+iobandctl has been updated to v0.0.3.
+This version of iobandctl enables you:
+ To use the configuration files to configure I/O bandwidth control settings,
+ To apply I/O bandwidth control to multiple disks which share the I/O
+ bandwidth,
+ To apply the new bandwidth control policy which has been implemented on
+ dm-ioband v1.0.0.
+See http://people.valinux.co.jp/~kaizuka/dm-ioband/iobandctl/
+for more details.
 
-On Thu, 2008-06-26 at 14:45 +0200, Hannes Reinecke wrote:
-> Hi Chandra,
-> 
-> Chandra Seetharaman wrote:
-> > Other than one minor issue the code looks good (sorry for the late
-> > realization on my part).
-> > 
-> > Issue: scsi_dh_handler_detach() references scsi_dh with no check for
-> > null and scsi_dh_notifier() call it with scsi_dh == NULL. code can be
-> > changed to get the device handler from sdev.
-> > 
-> This is fixed in patch 7/9. I thought I had rediffed them properly,
-> but apparently not. Sorry for that.
-> 
-> Thanks for the review.
-> 
-> Cheers,
-> 
-> Hannes
+iobandctl is an administration tool to realize disk I/O bandwidth control
+using dm-ioband, which is an I/O bandwidth controller implemented as a
+device-mapper driver. You can find dm-ioband at:
+http://people.valinux.co.jp/~ryov/bwctl/
 
+Changes from previous version:
+* Configuration file support
+ o config subcommand is added.
+ o It is possible to configure your I/O bandwidth control settings
+   using your configuration file.
+* Multiple disks support
+ o −−bind option is added on "create" subcommand.
+ o It is possible to apply I/O bandwidth control to multiple disks
+   which share the I/O bandwidth.
+ o It's certain that two or more Logical Units contained in the same
+   SCSI target device share the I/O bandwidth. You are able to distribute the
+   bandwidth among the partitions involved in these Logical Units.
+* New bandwidth control policy support
+ o policy subcommand is added.
+ o The new policy "weight-iosize" do I/O bandwidth control based on
+   the size of I/Os instead of the number of I/Os, which is the existing and
+   default policy named "weight-iocount".
+* Particular devices name support such as certain raid devices
+ o Support for logical drive names such as "/dev/cciss/c1d0" and
+   raid device names such as "/dev/md0".
+ o This simply means that iobandctl has come to treat such names
+   properly now, though it couldn't do that in previous version.
+ o It needs you to understand which device share the I/O bandwidth
+   with which other device, and configure proper settings using --bind option.
+
+Regards,
+KAIZUKA Hiroyuki
