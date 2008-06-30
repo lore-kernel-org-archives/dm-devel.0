@@ -1,14 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/3] freeze feature ver 1.8
-Date: Mon, 30 Jun 2008 14:54:33 +0100
-Message-ID: <20080630135433.GA22522@agk.fab.redhat.com>
-References: <20080630212005t-sato@mail.jp.nec.com>
+From: "Craig Simpson" <csimpson@visto.com>
+Subject: Way to get IO stats on multipath alias?
+Date: Mon, 30 Jun 2008 13:39:30 -0700
+Message-ID: <ABFD05FF09D13E4883B757E75603624D013FAC27@ex-sea1.vistocorp.com>
+References: <20080624225348.16387.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080630212005t-sato@mail.jp.nec.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20080624225348.16387.qmail@sourceware.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,30 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: "axboe@kernel.dk" <axboe@kernel.dk>, "mtk.manpages@googlemail.com" <mtk.manpages@googlemail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "akpm@linux-foundation.org" <akpm@linux-foundation.org>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Jun 30, 2008 at 09:20:05PM +0900, Takashi Sato wrote:
-> Currently, ext3 in mainline Linux doesn't have the freeze feature which
-> suspends write requests.  So, we cannot take a backup which keeps
-> the filesystem's consistency with the storage device's features
-> (snapshot and replication) while it is mounted.
-> In many case, a commercial filesystem (e.g. VxFS) has
-> the freeze feature and it would be used to get the consistent backup.
-> If Linux's standard filesytem ext3 has the freeze feature, we can do it
-> without a commercial filesystem.
- 
-Is the following a fair summary?
 
-1. Some filesystems have a freeze/thaw feature.  XFS exports this to
-userspace directly through a couple of ioctls, but other filesystems
-don't.  For filesystems on device-mapper block devices it is exported to
-userspace through the DM_DEV_SUSPEND ioctl which LVM uses.
 
-2. There is a desire to access this feature from userspace on non-XFS
-filesystems without having to use device-mapper/LVM.
+OK so I make my alias in /etc/multipath.conf
+        multipath {
+                wwid                    1HITACHI_750140820017
+                alias                   asm13
+        }
 
-Alasdair
--- 
-agk@redhat.com
+
+And as expected all 4 paths are there and happy in Hitachi's
+active/passive world
+
+asm13 (1HITACHI_750140820017) dm-44 HITACHI,DF600F
+[size=3D32G][features=3D0][hwhandler=3D0]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 1:0:0:17 sdbb 67:80   [active][ready]
+ \_ 0:0:0:17 sdr  65:16   [active][ready]
+\_ round-robin 0 [prio=3D0][enabled]
+ \_ 0:0:1:17 sdcq 69:224  [active][ready]
+ \_ 1:0:1:17 sded 128:80  [active][ready]
+
+Now I can do a iostat -x and get the stats for sdbb, sdr, dscq, and
+sded.=20
+
+But is there a way to collect statistics on asm13?=20
+
+Really need to know how it is doing on that level. Ya I can get info on
+dm-44, but that changes across reboots, and could be different on
+different nodes on the cluster....=20
+
+Help!!!!
+
+Craig
