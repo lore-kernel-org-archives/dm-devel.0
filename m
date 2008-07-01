@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH 3/3] Add timeout feature
-Date: Tue, 1 Jul 2008 11:52:51 +0100
-Message-ID: <20080701105251.GC22522@agk.fab.redhat.com>
-References: <20080630212450t-sato@mail.jp.nec.com>
-	<20080701081026.GB16691@infradead.org>
+From: Nikola Ciprich <extmaillist@linuxbox.cz>
+Subject: problems getting ioband to work properly
+Date: Tue, 1 Jul 2008 14:11:25 +0200
+Message-ID: <20080701121125.GA2898@develbox.linuxbox.cz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20080701081026.GB16691@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +16,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, Christoph Hellwig <hch@infradead.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, viro@ZenIV.linux.org.uk, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, akpm@linux-foundation.org, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+To: dm-devel@redhat.com
+Cc: nikola.ciprich@linuxbox.cz
 List-Id: dm-devel.ids
 
-On Tue, Jul 01, 2008 at 04:10:26AM -0400, Christoph Hellwig wrote:
-> I still disagree with this whole patch.  
+Hello all,
+I'd like to try I/O shaping using ioband, but it doesn't seem to be working properly for some reason.
+I have one disc partition used as LVM PV, VG on top of it. I created two 1GB LVs for tests: iob1, iob2
 
-Same here - if you want a timeout, what stops you from implementing it in a
-userspace process?  If your concern is that the process might die without
-thawing the filesystem, take a look at the userspace LVM/multipath code for
-ideas - lock into memory, disable OOM killer, run from ramdisk etc.
-In practice, those techniques seem to be good enough.
+Then I setup ioband using following commands:
 
-> call can hang and this would be theoretically useful is when the
-> filesystem is already frozen by someone else, but this should be fixed
-> by refusing to do the second freeze, as suggested in my comment to patch
-> 1.
+echo 0 2097152 ioband /dev/mapper/vg-iob1 iob 0 0 none weight 0 :40 | dmsetup create ioband-iob1
+echo 0 2097152 ioband /dev/mapper/vg-iob2 iob 0 0 none weight 0 :10 | dmsetup create ioband-iob2
 
-Similarly if a device-mapper device is involved, how should the following
-sequence behave - A, B or C?
+When I measure throughput using hdparm --direct -t on one of the ioband devices, i get ~61MBps.
 
-1. dmsetup suspend (freezes)
-2. FIFREEZE
-3. FITHAW
-4. dmsetup resume (thaws)
+If I measure it on both devices concurrently in loop, throughput settles on ~30MBps on every device, so it seems that it's divided equally.
 
-A:
-  1 succeeds, freezes
-  2 succeeds, remains frozen
-  3 succeeds, remains frozen
-  4 succeeds, thaws
+What am I doing wrong?
 
-B:
-  1 succeeds, freezes
-  2 fails, remains frozen
-  3 shouldn't be called because 2 failed but if it is: succeeds, thaws
-  4 succeeds (already thawed, but still does the device-mapper parts)
+thanks a lot in advance
 
-C:
-  1 succeeds, freezes
-  2 fails, remains frozen
-  3 fails (because device-mapper owns the freeze/thaw), remains frozen 
-  4 succeeds, thaws
+nik
 
-Alasdair
+PS: I'm using 2.6.26-rc8+ioband-1.1.0 patch
+
 -- 
-agk@redhat.com
+-------------------------------------
+Nikola CIPRICH
+LinuxBox.cz, s.r.o.
+28. rijna 168, 709 01 Ostrava
+
+tel.:   +420 596 603 142
+fax:    +420 596 621 273
+mobil:  +420 777 093 799
+www.linuxbox.cz
+
+mobil servis: +420 737 238 656
+email servis: servis@linuxbox.cz
+-------------------------------------
