@@ -1,23 +1,46 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Tue, 1 Jul 2008 04:10:26 -0400
-Message-ID: <20080701081026.GB16691@infradead.org>
-References: <20080630212450t-sato@mail.jp.nec.com>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
+Subject: Re: [dm-devel] [PATCH 0/3] freeze feature ver 1.8
+Date: Tue, 1 Jul 2008 18:12:32 +0900
+Message-ID: <6B16FAEFB450496A9AA95BFF27BD6AE6@nsl.ad.nec.co.jp>
+References: <20080630212005t-sato@mail.jp.nec.com> <20080630135433.GA22522@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20080630212450t-sato@mail.jp.nec.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, axboe@kernel.dk, mtk.manpages@googlemail.com
+Content-Type: text/plain;
+	format=flowed;
+	charset="iso-8859-1";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20080630135433.GA22522@agk.fab.redhat.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-I still disagree with this whole patch.  There is not reason to let
-the freeze request timeout - an auto-unfreezing will only confuse the
-hell out of the caller.  The only reason where the current XFS freeze
-call can hang and this would be theoretically useful is when the
-filesystem is already frozen by someone else, but this should be fixed
-by refusing to do the second freeze, as suggested in my comment to patch
-1.
+Hi,
 
+Alasdair G Kergon wrote:
+>> Currently, ext3 in mainline Linux doesn't have the freeze feature which
+>> suspends write requests.  So, we cannot take a backup which keeps
+>> the filesystem's consistency with the storage device's features
+>> (snapshot and replication) while it is mounted.
+>> In many case, a commercial filesystem (e.g. VxFS) has
+>> the freeze feature and it would be used to get the consistent backup.
+>> If Linux's standard filesytem ext3 has the freeze feature, we can do it
+>> without a commercial filesystem.
+>
+> Is the following a fair summary?
+
+Yes, you are right.
+We'd like to use the freeze feature without device-mapper/LVM.
+
+> 1. Some filesystems have a freeze/thaw feature.  XFS exports this to
+> userspace directly through a couple of ioctls, but other filesystems
+> don't.  For filesystems on device-mapper block devices it is exported to
+> userspace through the DM_DEV_SUSPEND ioctl which LVM uses.
+>
+> 2. There is a desire to access this feature from userspace on non-XFS
+> filesystems without having to use device-mapper/LVM.
+>
+> Alasdair
+
+Cheers, Takashi 
