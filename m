@@ -1,16 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 2/6] drivers/md: remove null pointer dereference
-Date: Wed, 2 Jul 2008 20:03:06 +0100
-Message-ID: <20080702190306.GG22522@agk.fab.redhat.com>
-References: <Pine.LNX.4.64.0805121537100.3694@ask.diku.dk>
-	<20080702105434.GF22522@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0807021351270.4854@ask.diku.dk>
+From: <Yanqing_Liu@Dell.com>
+Subject: lsi rdac device handler issue in non-redundant
+	environment
+Date: Wed, 2 Jul 2008 14:28:46 -0500
+Message-ID: <00FE57DD11E3A94893D5BD54C3358BE884BDED@AUSX3MPC128.aus.amer.dell.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: multipart/mixed; boundary="===============0415389613=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0807021351270.4854@ask.diku.dk>
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,23 +17,129 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Julia Lawall <julia@diku.dk>
-Cc: device-mapper development <dm-devel@redhat.com>, kernel-janitors@vger.kernel.org, linux-kernel@vger.kernel.org
+To: sekharan@us.ibm.com, dm-devel@redhat.com
+Cc: Jacob_Cherian@Dell.com, Charles_Rose@Dell.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 02, 2008 at 01:51:41PM +0200, Julia Lawall wrote:
-> In looking at it a little bit, it seems that ps.type is initialized in the
-> function stored in the ctr field of the target_type structure and this
-> function is called in the function stored in the message field of the same
-> structure.  The function in the message structure seems to be only called
-> from the function target_message in dm-ioctl.c, but I don't see the
-> relation to an invocation of the ctr field.  Is that guaranteed to be
-> invoked earlier?
- 
-ctr is short for constructor (perhaps we should rename these functions one day)
-and it has to run first to set up the data structures which a subsequent
-target_message may reference.
+This is a multi-part message in MIME format.
 
-Alasdair
--- 
-agk@redhat.com
+--===============0415389613==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C8DC79.D8809357"
+
+This is a multi-part message in MIME format.
+
+------_=_NextPart_001_01C8DC79.D8809357
+Content-Type: text/plain;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
+
+
+Hi Chandra,
+
+This is regarding your patch for lsi rdac device handler posted in this
+link:
+
+https://www.redhat.com/archives/dm-devel/2008-May/msg00003.html
+
+There is a single controller connection scenario that we may also need
+to consider in the rdac device handler as below.
+
+1) The host is only connected to one of the controllers from boot time.
+Say, Controller A.
+
+2) The virtual disks mapped to the host are evenly distributed between
+the two controllers, say, Controller A owns virtual disk 1 and 3,
+Controller B owns virtual disk 2 and 4.
+
+3) The host needs to access the data on VD 2 and VD 4.
+
+In this scenario, the DM-RDAC handler should be able to transfer the
+ownership of VD 2 and 4 to Controller A, to access data on these virtual
+disks.  It seems the current handler cannot initiate failover operation
+in this scenario.=20
+
+Please correct me if I am wrong here.
+
+Thanks,
+Yanqing
+
+------_=_NextPart_001_01C8DC79.D8809357
+Content-Type: text/html;
+	charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+6.5.7653.21">
+<TITLE>  lsi rdac device handler issue in non-redundant =
+environment</TITLE>
+</HEAD>
+<BODY>
+<!-- Converted from text/rtf format -->
+<BR>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Hi Chandra,</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">This is regarding your patch for lsi =
+rdac device handler posted in this link:</FONT>
+</P>
+
+<P><A =
+HREF=3D"https://www.redhat.com/archives/dm-devel/2008-May/msg00003.html">=
+<U><FONT COLOR=3D"#0000FF" SIZE=3D2 =
+FACE=3D"Arial">https://www.redhat.com/archives/dm-devel/2008-May/msg00003=
+.html</FONT></U></A>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">There is a single controller connection =
+scenario that we may also need to consider in the rdac device handler as =
+below.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">1) The host is only connected to one of =
+the controllers from boot time. Say, Controller A.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">2) The virtual disks mapped to the host =
+are evenly distributed between the two controllers, say, Controller A =
+owns virtual disk 1 and 3, Controller B owns virtual disk 2 and =
+4.</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">3) The host needs to access the data on =
+VD 2 and VD 4.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">In this scenario, the DM-RDAC handler =
+should be able to transfer the ownership of VD 2 and 4 to Controller A, =
+to access data on these virtual disks.&nbsp; It seems the current =
+handler cannot initiate failover operation in this scenario. </FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Please correct me if I am wrong =
+here.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Thanks,</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Arial">Yanqing</FONT>
+</P>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01C8DC79.D8809357--
+
+
+--===============0415389613==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0415389613==--
