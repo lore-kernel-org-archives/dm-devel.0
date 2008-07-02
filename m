@@ -1,13 +1,12 @@
-From: Evan C Hildebran <evan.hildebran@louisville.edu>
-Subject: Help Please
-Date: Tue, 8 Jul 2008 10:35:34 -0400
-Message-ID: <487342EB.D84E.0052.0@gwise.louisville.edu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Peter Lavin <lavinp@cs.tcd.ie>
+Subject: Resetting dmsetup open count
+Date: Wed, 02 Jul 2008 16:39:25 +0100
+Message-ID: <486BA12D.5010506@cs.tcd.ie>
+Reply-To: lavinp@cs.tcd.ie, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,43 +19,42 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Dear Redhat,
+Dear dmsetup mailers,
 
-  I keep getting the following errors when my server boots up and the dev=
-ice-mapper will not map the alias defined in the multipath.conf file. Wha=
-t is causing this to happen and how do I fix it?
+I am attempting to remove a LVM in CentOS 5. I am getting the following 
+message...
 
+Can't remove open logical volume "lvm_name"
 
-Jul  8 09:54:04 phpvm1 multipathd: cannot open /sbin/dasd_id : No such fi=
-le or directory
-Jul  8 09:54:04 phpvm1 multipathd: [copy.c] cannot open /sbin/dasd_id
-Jul  8 09:54:04 phpvm1 multipathd: cannot copy /sbin/dasd_id in ramfs : N=
-o such file or directory
+I can delete the link... /dev/vg01/lvm_name and also delete the 
+associated block... /dev/mapper/vg01-lvm_name.
 
-Jul  8 09:54:19 phpvm1 kernel: device-mapper: uevent: version 1.0.3
-Jul  8 09:54:19 phpvm1 kernel: device-mapper: ioctl: 4.11.5-ioctl (2007-1=
-2-12) initialised: dm-devel@redhat.com
-Jul  8 09:54:19 phpvm1 kernel: device-mapper: multipath: version 1.0.5 lo=
-aded
-Jul  8 09:54:19 phpvm1 kernel: device-mapper: multipath round-robin: vers=
-ion 1.0.0 loaded
-Jul  8 09:54:19 phpvm1 kernel: device-mapper: table: 253:0: multipath: er=
-ror getting device
-Jul  8 09:54:19 phpvm1 kernel: device-mapper: ioctl: error adding target =
-to table
-Jul  8 09:54:20 phpvm1 kernel: device-mapper: table: 253:1: multipath: er=
-ror getting device
-Jul  8 09:54:20 phpvm1 kernel: device-mapper: ioctl: error adding target =
-to table
+However, when I attempt to recreate the LVM using the same name (I need 
+to use the same name). I get a message that the LVM already exists. I 
+have traced this to dmsetup, where running dmsetup info vg01-lvm_name 
+reveals...
 
+[root@tg26 mapper]# dmsetup info vg01-lvm_name
+Name: vg01-lvm_name
+State: ACTIVE
+Tables present: LIVE
+Open count: 1  <------- this appears to be the problem
+Event number: 0
+Major, minor: 253, 63
+Number of targets: 1
+UUID: LVM-CT2Hz7dN6TLC3c8DydQ8nIenwjSmA8CI1yrsTLQy7Ip1Cxetz3 JrdQArvsgBqDsj
 
-Thank you,
+I may be able to reset this Open count by rebooting the machine but this 
+is the least preferred option. Is there a was of resetting this 'Open 
+count' in the dmsetup records without rebooting the system. My dmsetup 
+version is pre- 4.8.0 so I cannot use the lvmremove -f option.
 
+Peter
 
-
-Evan C. Hildebran
-Systems Programmer IV
-HEAT Administrator
-Information Technology
-University of Louisville
-evan.hildebran@louisville.edu
+-- 
+best regards,
+Peter Lavin,
+Computer Architecture & Grid Research Group,
+Lloyd Institute, 005,
+Trinity College Dublin, Ireland.
++353 1 8961536
