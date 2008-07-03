@@ -1,17 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH 3/3] Add timeout feature
-Date: Thu, 3 Jul 2008 13:47:10 +0100
-Message-ID: <20080703124709.GI22522@agk.fab.redhat.com>
-References: <20080630212450t-sato@mail.jp.nec.com>
-	<20080701081026.GB16691@infradead.org>
-	<20080701105251.GC22522@agk.fab.redhat.com>
-	<9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: problems getting ioband to work properly
+Date: Thu, 03 Jul 2008 21:53:05 +0900 (JST)
+Message-ID: <20080703.215305.112607122.ryov@valinux.co.jp>
+References: <20080701121125.GA2898@develbox.linuxbox.cz>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp>
+In-Reply-To: <20080701121125.GA2898@develbox.linuxbox.cz>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,51 +18,69 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org
+To: dm-devel@redhat.com, extmaillist@linuxbox.cz
+Cc: nikola.ciprich@linuxbox.cz
 List-Id: dm-devel.ids
 
-On Thu, Jul 03, 2008 at 09:11:05PM +0900, Takashi Sato wrote:
-> If the freezer accesses the frozen filesystem and causes a deadlock,
-> the above ideas can't solve it
+Hi,
 
-But you could also say that if the 'freezer' process accesses the frozen
-filesystem and deadlocks then that's just a bug and that userspace code
-should be fixed and there's no need to introduce the complexity of a
-timeout parameter.
+Thanks for being interested in dm-ioband.
 
-> >Similarly if a device-mapper device is involved, how should the following
-> >sequence behave - A, B or C?
-> >
-> >1. dmsetup suspend (freezes)
-> >2. FIFREEZE
-> >3. FITHAW
-> >4. dmsetup resume (thaws)
-> [...]
-> >C:
-> > 1 succeeds, freezes
-> > 2 fails, remains frozen
-> > 3 fails (because device-mapper owns the freeze/thaw), remains frozen
-> > 4 succeeds, thaws
+> I'd like to try I/O shaping using ioband, but it doesn't seem to be working properly for some reason.
+> I have one disc partition used as LVM PV, VG on top of it. I created two 1GB LVs for tests: iob1, iob2
 > 
-> I think C is appropriate and the following change makes it possible.
-> How do you think?
- 
-The point I'm trying to make here is:
-  Under what real-world circumstances might multiple concurrent freezing
-  attempts occur, and which of A, B or C (or other variations) would be
-  the most appropriate way of handling such situations?
+> Then I setup ioband using following commands:
+> 
+> echo 0 2097152 ioband /dev/mapper/vg-iob1 iob 0 0 none weight 0 :40 | dmsetup create ioband-iob1
+> echo 0 2097152 ioband /dev/mapper/vg-iob2 iob 0 0 none weight 0 :10 | dmsetup create ioband-iob2
+> 
+> When I measure throughput using hdparm --direct -t on one of the ioband devices, i get ~61MBps.
+> 
+> If I measure it on both devices concurrently in loop, throughput settles on ~30MBps on every device, so it seems that it's divided equally.
+> 
+> What am I doing wrong?
 
-A common example is people running xfs_freeze followed by an lvm command
-which also attempts to freeze the filesystem.
+Dm-ioband is designed not to limit the I/O bandwidths of disks unless
+the I/O load is heavy so that you can use the full performance of
+the disks, which can handle multiple I/O requests at the same time.
 
-I can see a case for B or C, but personally I prefer A:
+Dm-ioband starts controlling I/O bandwidth when the number of I/O
+request exceeds a certain threshold, which can be changed with
+dmsetup command.
 
-> > 1 succeeds, freezes
-> > 2 succeeds, remains frozen
-> > 3 succeeds, remains frozen
-> > 4 succeeds, thaws
+    # sudo dmsetup message ioband-iob1 0 io_throttle 2
 
-Alasdair
--- 
-agk@redhat.com
+  Please see also the manual at:
+     http://people.valinux.co.jp/~ryov/dm-ioband/manual/cmdref.html
+
+If you do the following, you will see how the bandwidth control is working.
+
+  1. run a total of eight dd programs for reading.
+
+  #!/bin/bash
+  for ((i = 0; i < 4; i++)); do
+        dd if=/dev/mapper/ioband-iob1 of=/dev/null ibs=4k iflag=direct &
+        dd if=/dev/mapper/ioband-iob2 of=/dev/null ibs=4k iflag=direct &
+  done
+
+  2. watch the iostat report at intervals of 5 seconds.
+
+  # iostat -p dm-2 -p dm-3 5
+  ...
+  avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+             1.24    0.00   23.40   29.28    0.00   46.08
+
+  Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
+  dm-2           4647.33     37178.60         0.00     180688          0
+  dm-3           1348.56     10788.48         0.00      52432          0
+
+  avg-cpu:  %user   %nice %system %iowait  %steal   %idle
+             0.73    0.00   23.11   26.11    0.00   50.05
+
+  Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
+  dm-2           5092.75     40742.03         0.00     196784          0
+  dm-3           1019.25      8154.04         0.00      39384          0
+  ...
+
+Thanks,
+Ryo Tsuruta
