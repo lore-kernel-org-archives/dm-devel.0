@@ -1,12 +1,18 @@
-From: Peter Lavin <lavinp@cs.tcd.ie>
-Subject: Resetting dmsetup open count
-Date: Wed, 02 Jul 2008 16:39:25 +0100
-Message-ID: <486BA12D.5010506@cs.tcd.ie>
-Reply-To: lavinp@cs.tcd.ie, device-mapper development <dm-devel@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: Re: [PATCH 3/3] Add timeout feature
+Date: Fri, 4 Jul 2008 08:11:33 +1000
+Message-ID: <20080703221133.GA29319__42008.8814724751$1215605292$gmane$org@disturbed>
+References: <20080630212450t-sato@mail.jp.nec.com>
+	<20080701081026.GB16691@infradead.org>
+	<20080701105251.GC22522@agk.fab.redhat.com>
+	<9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp>
+	<20080703124709.GI22522@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20080703124709.GI22522@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,45 +22,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Takashi Sato <t-sato@yk.jp.nec.com>, Christoph Hellwig <hch@infradead.org>, linux-ext4@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, viro@
 List-Id: dm-devel.ids
 
-Dear dmsetup mailers,
+On Thu, Jul 03, 2008 at 01:47:10PM +0100, Alasdair G Kergon wrote:
+> On Thu, Jul 03, 2008 at 09:11:05PM +0900, Takashi Sato wrote:
+> > If the freezer accesses the frozen filesystem and causes a deadlock,
+> > the above ideas can't solve it
+> 
+> But you could also say that if the 'freezer' process accesses the frozen
+> filesystem and deadlocks then that's just a bug and that userspace code
+> should be fixed and there's no need to introduce the complexity of a
+> timeout parameter.
 
-I am attempting to remove a LVM in CentOS 5. I am getting the following 
-message...
+Seconded - that was also my primary objection to the timeout code.
 
-Can't remove open logical volume "lvm_name"
+> The point I'm trying to make here is:
+>   Under what real-world circumstances might multiple concurrent freezing
+>   attempts occur, and which of A, B or C (or other variations) would be
+>   the most appropriate way of handling such situations?
+> 
+> A common example is people running xfs_freeze followed by an lvm command
+> which also attempts to freeze the filesystem.
 
-I can delete the link... /dev/vg01/lvm_name and also delete the 
-associated block... /dev/mapper/vg01-lvm_name.
+Yes, I've seen that reported a number of times.
 
-However, when I attempt to recreate the LVM using the same name (I need 
-to use the same name). I get a message that the LVM already exists. I 
-have traced this to dmsetup, where running dmsetup info vg01-lvm_name 
-reveals...
+> I can see a case for B or C, but personally I prefer A:
+> 
+> > > 1 succeeds, freezes
+> > > 2 succeeds, remains frozen
+> > > 3 succeeds, remains frozen
+> > > 4 succeeds, thaws
 
-[root@tg26 mapper]# dmsetup info vg01-lvm_name
-Name: vg01-lvm_name
-State: ACTIVE
-Tables present: LIVE
-Open count: 1  <------- this appears to be the problem
-Event number: 0
-Major, minor: 253, 63
-Number of targets: 1
-UUID: LVM-CT2Hz7dN6TLC3c8DydQ8nIenwjSmA8CI1yrsTLQy7Ip1Cxetz3 JrdQArvsgBqDsj
+Agreed, though I'd modify the definition of that case to be "remain
+frozen until the last thaw occurs". That has the advantage that
+it's relatively simple to implement with just a counter...
 
-I may be able to reset this Open count by rebooting the machine but this 
-is the least preferred option. Is there a was of resetting this 'Open 
-count' in the dmsetup records without rebooting the system. My dmsetup 
-version is pre- 4.8.0 so I cannot use the lvmremove -f option.
+Cheers,
 
-Peter
-
+Dave.
 -- 
-best regards,
-Peter Lavin,
-Computer Architecture & Grid Research Group,
-Lloyd Institute, 005,
-Trinity College Dublin, Ireland.
-+353 1 8961536
+Dave Chinner
+david@fromorbit.com
