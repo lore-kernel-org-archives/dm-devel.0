@@ -1,12 +1,17 @@
-From: Julia Lawall <julia@diku.dk>
-Subject: [PATCH resend] drivers/md: remove null pointer
-	dereference
-Date: Wed, 2 Jul 2008 21:38:24 +0200 (CEST)
-Message-ID: <Pine.LNX.4.64.0807022136520.4854@ask.diku.dk>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
+Subject: Re: Re: [PATCH 3/3] Add timeout feature
+Date: Thu, 3 Jul 2008 21:11:05 +0900
+Message-ID: <9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp>
+References: <20080630212450t-sato@mail.jp.nec.com>
+	<20080701081026.GB16691@infradead.org>
+	<20080701105251.GC22522@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; format=flowed; charset="iso-8859-1";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080701105251.GC22522@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,51 +21,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, kernel-janitors@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, Alasdair G Kergon <agk@redhat.com>
+Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-From: Julia Lawall <julia@diku.dk>
+Hi Christoph and Alasdair,
 
-If pgpath->pg->ps.type is NULL, it is not possible to access its name
-field.  Alasdair G Kergon suggested that the field type is actually known
-never to be NULL; instead it is its field reinstate_path that is supposed
-to be tested.
+> On Tue, Jul 01, 2008 at 04:10:26AM -0400, Christoph Hellwig wrote:
+>> I still disagree with this whole patch.
+>
+> Same here - if you want a timeout, what stops you from implementing it in a
+> userspace process?  If your concern is that the process might die without
+> thawing the filesystem, take a look at the userspace LVM/multipath code for
+> ideas - lock into memory, disable OOM killer, run from ramdisk etc.
+> In practice, those techniques seem to be good enough.
 
+If the freezer accesses the frozen filesystem and causes a deadlock,
+the above ideas can't solve it.  The timeout is useful to solve such a deadlock.
+If you don't need the timeout, you can disable it by specifying "0" as the
+timeout period.
 
-This problem was found using the following semantic match
-(http://www.emn.fr/x-info/coccinelle/)
+> Similarly if a device-mapper device is involved, how should the following
+> sequence behave - A, B or C?
+>
+> 1. dmsetup suspend (freezes)
+> 2. FIFREEZE
+> 3. FITHAW
+> 4. dmsetup resume (thaws)
+[...]
+> C:
+>  1 succeeds, freezes
+>  2 fails, remains frozen
+>  3 fails (because device-mapper owns the freeze/thaw), remains frozen
+>  4 succeeds, thaws
 
-// <smpl>
-@@
-expression E, E1;
-identifier f;
-statement S1,S2,S3;
-@@
+I think C is appropriate and the following change makes it possible.
+How do you think?
 
-* if (E == NULL)
-{
-  ... when != if (E == NULL) S1 else S2
-      when != E = E1
-* E->f
-  ... when any
-  return ...;
-}
-else S3
-// </smpl>
+1. Add the new bit flag(BD_FREEZE_DM) in block_device.bd_state.
+   It means that the volume is frozen by the device-mapper.
 
-Signed-off-by: Julia Lawall <julia@diku.dk>
+2. Operate and check this bit flag as followings.
 
----
+  - Bit operations in the device-mapper's freeze/thaw
+    FREEZE:
+      dm_suspend():   set BD_FREEZE_DM
+        freeze_bdev():set BD_FREEZE_OP
 
-diff -u -p a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -883,7 +883,7 @@ static int reinstate_path(struct pgpath 
- 	if (pgpath->path.is_active)
- 		goto out;
- 
--	if (!pgpath->pg->ps.type) {
-+	if (!pgpath->pg->ps.type->reinstate_path) {
- 		DMWARN("Reinstate path not supported by path selector %s",
- 		       pgpath->pg->ps.type->name);
- 		r = -EINVAL;
+    THAW:
+        thaw_bdev():   clear BD_FREEZE_OP
+      dm_resume():    clear BD_FREEZE_DM
+
+  -  Checks in FIFREEZE/FITHAW
+    FREEZE:
+      ioctl_freeze(): Not need to check BD_FREEZE_DM
+        freeze_bdev():set BD_FREEZE_OP
+
+    THAW:
+      ioctl_thaw():   If BD_FREEZE_DM is set, fail, otherwise, call thaw_bdev()
+        thaw_bdev():   clear BD_FREEZE_OP
+
+Cheers, Takashi
