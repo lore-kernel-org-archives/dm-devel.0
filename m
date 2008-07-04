@@ -1,75 +1,49 @@
-From: Eric Sandeen <sandeen@redhat.com>
-Subject: Re: [dm-devel] Re: [PATCH 3/3] Add timeout feature
-Date: Thu, 03 Jul 2008 09:45:48 -0500
-Message-ID: <486CE61C.50706@redhat.com>
-References: <20080630212450t-sato@mail.jp.nec.com> <20080701081026.GB16691@infradead.org> <20080701105251.GC22522@agk.fab.redhat.com> <9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/2] dm-ioband: I/O bandwidth controller v1.2.0:
+ Introduction
+Date: Fri, 04 Jul 2008 12:40:38 +0900 (JST)
+Message-ID: <20080704.124038.193696173.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: Christoph Hellwig <hch@infradead.org>, Alasdair G Kergon <agk@redhat.com>, linux-ext4@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-fsdevel@vger.kernel.org, viro@ZenIV.linux.org.uk, dm-devel@redhat.com, xfs@oss.sgi.com, linux-kernel@vger.kernel.org, mtk.manpages@googlemail.com, axboe@kernel.dk
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: agk@sourceware.org
 List-Id: dm-devel.ids
 
-Takashi Sato wrote:
-> Hi Christoph and Alasdair,
-> 
->> On Tue, Jul 01, 2008 at 04:10:26AM -0400, Christoph Hellwig wrote:
->>> I still disagree with this whole patch.
->> Same here - if you want a timeout, what stops you from implementing it in a
->> userspace process?  If your concern is that the process might die without
->> thawing the filesystem, take a look at the userspace LVM/multipath code for
->> ideas - lock into memory, disable OOM killer, run from ramdisk etc.
->> In practice, those techniques seem to be good enough.
-> 
-> If the freezer accesses the frozen filesystem and causes a deadlock,
-> the above ideas can't solve it.  The timeout is useful to solve such a deadlock.
-> If you don't need the timeout, you can disable it by specifying "0" as the
-> timeout period.
-> 
->> Similarly if a device-mapper device is involved, how should the following
->> sequence behave - A, B or C?
->>
->> 1. dmsetup suspend (freezes)
->> 2. FIFREEZE
->> 3. FITHAW
->> 4. dmsetup resume (thaws)
-> [...]
->> C:
->>  1 succeeds, freezes
->>  2 fails, remains frozen
->>  3 fails (because device-mapper owns the freeze/thaw), remains frozen
->>  4 succeeds, thaws
-> 
-> I think C is appropriate and the following change makes it possible.
-> How do you think?
-> 
-> 1. Add the new bit flag(BD_FREEZE_DM) in block_device.bd_state.
->    It means that the volume is frozen by the device-mapper.
+Hi everyone,
 
-Will we add a new bit/flag for every possible subysstem that may call
-freeze/thaw?  This seems odd to me.
+This is the dm-ioband version 1.2.0 release.
 
-They are different paths to the same underlying mechanism; it should not
-matter if it is an existing freeze from DM or via FIFREEZE or via the
-xfs ioctl, or any other mechanism should it?  I don't think this generic
-interface should use any flag named *_DM, personally.
+Dm-ioband is an I/O bandwidth controller implemented as a device-mapper
+driver, which gives specified bandwidth to each job running on the same
+physical device.
 
-It seems that nested freeze requests must be handled in a generic way
-regardless of what initiates any of the requests?
-
-Refcounting freezes as Alasdair suggests seems to make sense to me, i.e.
-freeze, freeze, thaw, thaw leads to:
-
->> > > 1 (freeze) succeeds, freezes (frozen++)
->> > > 2 (freeze) succeeds, remains frozen (frozen++)
->> > > 3 (thaw) succeeds, remains frozen (frozen--)
->> > > 4 (thaw) succeeds, thaws (frozen--)
-
-that way each caller of freeze is guaranteed that the fs is frozen at
-least until they call thaw?
+- Can be applied to the kernel 2.6.26-rc5-mm3.
+- Changes from 1.1.0 (posted on June 2, 2008):
+  - Dynamic policy switching
+    A user can change the bandwidth control policy while the dm-ioband
+    device is active. It is useful when the dm-ioband device is used
+    as a root device.
+  - I/O smoothing take #1
+    This feature makes I/O requests of each group issued smoothly.
+    Once a certain group has used up its tokens, all I/O requests to
+    the group will be blocked until all the other groups used up theirs.
+    This feature is to minimize this blocking time.
+    We are now testing on the 2nd step and we will release it soon,
+    which will improve the smoothness significantly.
+  - Replace simple_strtol() with strict_strtol().
+  - Fix I/O errors encountered after "dmsetup resume."
 
 Thanks,
--Eric
+Ryo Tsuruta
+Linux Block I/O Bandwidth Control Project
+http://people.valinux.co.jp/~ryov/bwctl/
