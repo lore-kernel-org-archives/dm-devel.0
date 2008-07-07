@@ -1,62 +1,34 @@
-From: "Takashi Sato" <t-sato@yk.jp.nec.com>
-Subject: Re: [dm-devel] Re: [PATCH 3/3] Add timeout feature
-Date: Fri, 4 Jul 2008 21:08:09 +0900
-Message-ID: <B7BFE816D02640B8A5EFDD83E9C23FB9@nsl.ad.nec.co.jp>
-References: <20080630212450t-sato@mail.jp.nec.com> <20080701081026.GB16691@infradead.org> <20080701105251.GC22522@agk.fab.redhat.com> <9942A69CB65D4A41B39F36AF8EEF6F22@nsl.ad.nec.co.jp> <20080703124709.GI22522@agk.fab.redhat.com> <20080703221133.GA29319@disturbed>
+From: "Jim Lester" <Jim.Lester@compellent.com>
+Subject: Changes to readsector0
+Date: Mon, 7 Jul 2008 11:19:33 -0500
+Message-ID: <A7519D7FDEF2A144BA6D40BDF13100FE8FEE46@ex2.Beer.Town>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-	format=flowed;
-	charset="ISO-8859-1";
-	reply-type=original
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <20080703221133.GA29319@disturbed>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Dave Chinner <david@fromorbit.com>
-Cc: dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, linux-kernel@vger.kernel.org, axboe@kernel.dk, mtk.manpages@googlemail.com
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Alasdair, Eric and Dave,
+Could somebody help me understand what happened to readsector0? It used
+to work perfectly for our SAN systems. Then with 0.4.8 in SLES SP2 it
+would report all paths as down. Did something change that I missed?
+Thanks.=20
 
-> On Thu, Jul 03, 2008 at 01:47:10PM +0100, Alasdair G Kergon wrote:
->> On Thu, Jul 03, 2008 at 09:11:05PM +0900, Takashi Sato wrote:
->> > If the freezer accesses the frozen filesystem and causes a deadlock,
->> > the above ideas can't solve it
->>
->> But you could also say that if the 'freezer' process accesses the frozen
->> filesystem and deadlocks then that's just a bug and that userspace code
->> should be fixed and there's no need to introduce the complexity of a
->> timeout parameter.
->
-> Seconded - that was also my primary objection to the timeout code.
-
-I will consider removing the timeout.
-
->> The point I'm trying to make here is:
->>   Under what real-world circumstances might multiple concurrent freezing
->>   attempts occur, and which of A, B or C (or other variations) would be
->>   the most appropriate way of handling such situations?
->>
->> A common example is people running xfs_freeze followed by an lvm command
->> which also attempts to freeze the filesystem.
->
-> Yes, I've seen that reported a number of times.
->
->> I can see a case for B or C, but personally I prefer A:
->>
->> > > 1 succeeds, freezes
->> > > 2 succeeds, remains frozen
->> > > 3 succeeds, remains frozen
->> > > 4 succeeds, thaws
->
-> Agreed, though I'd modify the definition of that case to be "remain
-> frozen until the last thaw occurs". That has the advantage that
-> it's relatively simple to implement with just a counter...
-
-I agree this idea.
-But I have one concern. When device-mapper's freeze follows FIFREEZE,
-can device-mapper freeze only device-mapper's part correctly?
-And when device-mapper's thaw follows FITHAW,
-can device-mapper thaw only device-mapper's part?
-
-Cheers, Takashi 
+---
+Jim Lester | Linux Product Specialist
+Jim.Lester@Compellent.com
+(o) 952.294.2802
+(c) 763.218.6012
+Compellent Technologies | www.compellent.com
