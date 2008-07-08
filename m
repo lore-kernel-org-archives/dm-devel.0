@@ -1,287 +1,43 @@
-From: Johannes Berg <johannes@sipsolutions.net>
-Subject: [RFC 04/11] remove CONFIG_KMOD from drivers
-Date: Tue, 08 Jul 2008 19:00:19 +0200
-Message-ID: <20080708170044.262684000@sipsolutions.net>
-References: <20080708170015.470877000@sipsolutions.net>
+From: Adrian Bunk <bunk@kernel.org>
+Subject: Re: [RFC 04/11] remove CONFIG_KMOD from drivers
+Date: Tue, 8 Jul 2008 21:30:20 +0300
+Message-ID: <20080708183019.GA11954@cs181140183.pp.htv.fi>
+References: <20080708170015.470877000@sipsolutions.net> <20080708170044.262684000@sipsolutions.net>
 Mime-Version: 1.0
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
 Return-path: <linux-ppp-owner@vger.kernel.org>
-Content-Disposition: inline; filename=config-kmod-remove-drivers.patch
+Content-Disposition: inline
+In-Reply-To: <20080708170044.262684000@sipsolutions.net>
 Sender: linux-ppp-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Rusty Russell <rusty@rustcorp.com.au>, Christoph Hellwig <hch@infradead.org>, video4linux-list@redhat.com, David Woodhouse <dwmw2@infradead.org>, linux-ppp@vger.kernel.org, dm-devel@redhat.com
+To: Johannes Berg <johannes@sipsolutions.net>
+Cc: linux-kernel@vger.kernel.org, Rusty Russell <rusty@rustcorp.com.au>, Christoph Hellwig <hch@infradead.org>, video4linux-list@redhat.com, David Woodhouse <dwmw2@infradead.org>, linux-ppp@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Straight forward conversions to CONFIG_MODULE; many drivers
-include <linux/kmod.h> conditionally and then don't have any
-other conditional code so remove it from those.
+On Tue, Jul 08, 2008 at 07:00:19PM +0200, Johannes Berg wrote:
+>...
+> --- everything.orig/drivers/md/md.c	2008-07-08 18:46:21.000000000 +0200
+> +++ everything/drivers/md/md.c	2008-07-08 18:49:10.000000000 +0200
+>...
+> @@ -3410,7 +3405,7 @@ static int do_md_run(mddev_t * mddev)
+>  		}
+>  	}
+>  
+> -#ifdef CONFIG_KMOD
+> +#ifdef CONFIG_MODULES
+>  	if (mddev->level != LEVEL_NONE)
+>  		request_module("md-level-%d", mddev->level);
+>  	else if (mddev->clevel[0])
+>...
 
-Signed-off-by: Johannes Berg <johannes@sipsolutions.net>
-Cc: video4linux-list@redhat.com
-Cc: David Woodhouse <dwmw2@infradead.org>
-Cc: linux-ppp@vger.kernel.org
-Cc: dm-devel@redhat.com
----
- drivers/md/md.c                                 |    7 +------
- drivers/media/video/cpia.c                      |    4 ----
- drivers/media/video/usbvision/usbvision-core.c  |    4 ----
- drivers/media/video/usbvision/usbvision-video.c |    4 ----
- drivers/media/video/v4l1-compat.c               |    4 ----
- drivers/media/video/v4l2-common.c               |    4 ----
- drivers/media/video/vino.c                      |    5 +----
- drivers/media/video/w9968cf.c                   |    4 ++--
- drivers/mtd/mtdpart.c                           |    2 --
- drivers/net/irda/sir_dongle.c                   |    2 --
- drivers/net/ppp_generic.c                       |   10 +++-------
- drivers/net/pppox.c                             |    9 ++-------
- drivers/video/fbmem.c                           |   17 ++---------------
- 13 files changed, 11 insertions(+), 65 deletions(-)
+You can remove the #ifdef
 
---- everything.orig/drivers/md/md.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/md/md.c	2008-07-08 18:49:10.000000000 +0200
-@@ -44,14 +44,9 @@
- #include <linux/mutex.h>
- #include <linux/ctype.h>
- #include <linux/freezer.h>
--
- #include <linux/init.h>
--
- #include <linux/file.h>
--
--#ifdef CONFIG_KMOD
- #include <linux/kmod.h>
--#endif
- 
- #include <asm/unaligned.h>
- 
-@@ -3410,7 +3405,7 @@ static int do_md_run(mddev_t * mddev)
- 		}
- 	}
- 
--#ifdef CONFIG_KMOD
-+#ifdef CONFIG_MODULES
- 	if (mddev->level != LEVEL_NONE)
- 		request_module("md-level-%d", mddev->level);
- 	else if (mddev->clevel[0])
---- everything.orig/drivers/media/video/cpia.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/cpia.c	2008-07-08 18:49:11.000000000 +0200
-@@ -39,10 +39,6 @@
- #include <asm/io.h>
- #include <linux/mutex.h>
- 
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
--
- #include "cpia.h"
- 
- static int video_nr = -1;
---- everything.orig/drivers/media/video/usbvision/usbvision-core.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/usbvision/usbvision-core.c	2008-07-08 18:49:11.000000000 +0200
-@@ -47,10 +47,6 @@
- 
- #include <linux/workqueue.h>
- 
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
--
- #include "usbvision.h"
- 
- static unsigned int core_debug;
---- everything.orig/drivers/media/video/usbvision/usbvision-video.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/usbvision/usbvision-video.c	2008-07-08 18:49:11.000000000 +0200
-@@ -70,10 +70,6 @@
- 
- #include <linux/workqueue.h>
- 
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
--
- #include "usbvision.h"
- #include "usbvision-cards.h"
- 
---- everything.orig/drivers/media/video/v4l1-compat.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/v4l1-compat.c	2008-07-08 18:49:11.000000000 +0200
-@@ -35,10 +35,6 @@
- #include <asm/system.h>
- #include <asm/pgtable.h>
- 
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
--
- static unsigned int debug;
- module_param(debug, int, 0644);
- MODULE_PARM_DESC(debug, "enable debug messages");
---- everything.orig/drivers/media/video/v4l2-common.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/v4l2-common.c	2008-07-08 18:49:11.000000000 +0200
-@@ -60,10 +60,6 @@
- #include <media/v4l2-common.h>
- #include <media/v4l2-chip-ident.h>
- 
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
--
- #include <linux/videodev.h>
- 
- MODULE_AUTHOR("Bill Dirks, Justin Schoeman, Gerd Knorr");
---- everything.orig/drivers/media/video/vino.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/vino.c	2008-07-08 18:49:11.000000000 +0200
-@@ -30,10 +30,7 @@
- #include <linux/mm.h>
- #include <linux/time.h>
- #include <linux/version.h>
--
--#ifdef CONFIG_KMOD
- #include <linux/kmod.h>
--#endif
- 
- #include <linux/i2c.h>
- #include <linux/i2c-algo-sgi.h>
-@@ -4641,7 +4638,7 @@ static int __init vino_module_init(void)
- 	}
- 	vino_init_stage++;
- 
--#if defined(CONFIG_KMOD) && defined(MODULE)
-+#ifdef MODULE
- 	request_module("saa7191");
- 	request_module("indycam");
- #endif
---- everything.orig/drivers/media/video/w9968cf.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/media/video/w9968cf.c	2008-07-08 18:49:11.000000000 +0200
-@@ -110,7 +110,7 @@ static int specific_debug = W9968CF_SPEC
- 
- static unsigned int param_nv[24]; /* number of values per parameter */
- 
--#ifdef CONFIG_KMOD
-+#ifdef CONFIG_MODULES
- module_param(ovmod_load, bool, 0644);
- #endif
- module_param(simcams, ushort, 0644);
-@@ -143,7 +143,7 @@ module_param(debug, ushort, 0644);
- module_param(specific_debug, bool, 0644);
- #endif
- 
--#ifdef CONFIG_KMOD
-+#ifdef CONFIG_MODULES
- MODULE_PARM_DESC(ovmod_load,
- 		 "\n<0|1> Automatic 'ovcamchip' module loading."
- 		 "\n0 disabled, 1 enabled."
---- everything.orig/drivers/mtd/mtdpart.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/mtd/mtdpart.c	2008-07-08 18:49:11.000000000 +0200
-@@ -555,10 +555,8 @@ int parse_mtd_partitions(struct mtd_info
- 
- 	for ( ; ret <= 0 && *types; types++) {
- 		parser = get_partition_parser(*types);
--#ifdef CONFIG_KMOD
- 		if (!parser && !request_module("%s", *types))
- 				parser = get_partition_parser(*types);
--#endif
- 		if (!parser) {
- 			printk(KERN_NOTICE "%s partition parsing not available\n",
- 			       *types);
---- everything.orig/drivers/net/irda/sir_dongle.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/net/irda/sir_dongle.c	2008-07-08 18:49:11.000000000 +0200
-@@ -67,9 +67,7 @@ int sirdev_get_dongle(struct sir_dev *de
- 	const struct dongle_driver *drv = NULL;
- 	int err = -EINVAL;
- 
--#ifdef CONFIG_KMOD
- 	request_module("irda-dongle-%d", type);
--#endif
- 
- 	if (dev->dongle_drv != NULL)
- 		return -EBUSY;
---- everything.orig/drivers/net/ppp_generic.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/net/ppp_generic.c	2008-07-08 18:54:36.000000000 +0200
-@@ -2113,13 +2113,9 @@ ppp_set_compress(struct ppp *ppp, unsign
- 	    || ccp_option[1] < 2 || ccp_option[1] > data.length)
- 		goto out;
- 
--	cp = find_compressor(ccp_option[0]);
--#ifdef CONFIG_KMOD
--	if (!cp) {
--		request_module("ppp-compress-%d", ccp_option[0]);
--		cp = find_compressor(ccp_option[0]);
--	}
--#endif /* CONFIG_KMOD */
-+	cp = try_then_request_module(
-+		find_compressor(ccp_option[0]),
-+		"ppp-compress-%d", ccp_option[0]);
- 	if (!cp)
- 		goto out;
- 
---- everything.orig/drivers/net/pppox.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/net/pppox.c	2008-07-08 18:49:11.000000000 +0200
-@@ -115,13 +115,8 @@ static int pppox_create(struct net *net,
- 		goto out;
- 
- 	rc = -EPROTONOSUPPORT;
--#ifdef CONFIG_KMOD
--	if (!pppox_protos[protocol]) {
--		char buffer[32];
--		sprintf(buffer, "pppox-proto-%d", protocol);
--		request_module(buffer);
--	}
--#endif
-+	if (!pppox_protos[protocol])
-+		request_module("pppox-proto-%d", protocol);
- 	if (!pppox_protos[protocol] ||
- 	    !try_module_get(pppox_protos[protocol]->owner))
- 		goto out;
---- everything.orig/drivers/video/fbmem.c	2008-07-08 18:46:21.000000000 +0200
-+++ everything/drivers/video/fbmem.c	2008-07-08 18:49:11.000000000 +0200
-@@ -28,9 +28,7 @@
- #include <linux/proc_fs.h>
- #include <linux/seq_file.h>
- #include <linux/console.h>
--#ifdef CONFIG_KMOD
- #include <linux/kmod.h>
--#endif
- #include <linux/err.h>
- #include <linux/device.h>
- #include <linux/efi.h>
-@@ -837,13 +835,6 @@ fb_write(struct file *file, const char _
- 	return (cnt) ? cnt : err;
- }
- 
--#ifdef CONFIG_KMOD
--static void try_to_load(int fb)
--{
--	request_module("fb%d", fb);
--}
--#endif /* CONFIG_KMOD */
--
- int
- fb_pan_display(struct fb_info *info, struct fb_var_screeninfo *var)
- {
-@@ -1086,10 +1077,8 @@ fb_ioctl(struct inode *inode, struct fil
- 		    return -EINVAL;
- 		if (con2fb.framebuffer < 0 || con2fb.framebuffer >= FB_MAX)
- 		    return -EINVAL;
--#ifdef CONFIG_KMOD
- 		if (!registered_fb[con2fb.framebuffer])
--		    try_to_load(con2fb.framebuffer);
--#endif /* CONFIG_KMOD */
-+		    request_module("fb%d", con2fb.framebuffer);
- 		if (!registered_fb[con2fb.framebuffer])
- 		    return -EINVAL;
- 		event.info = info;
-@@ -1326,10 +1315,8 @@ fb_open(struct inode *inode, struct file
- 
- 	if (fbidx >= FB_MAX)
- 		return -ENODEV;
--#ifdef CONFIG_KMOD
- 	if (!(info = registered_fb[fbidx]))
--		try_to_load(fbidx);
--#endif /* CONFIG_KMOD */
-+		request_module("fb%d", fbidx);
- 	if (!(info = registered_fb[fbidx]))
- 		return -ENODEV;
- 	if (!try_module_get(info->fbops->owner))
+cu
+Adrian
 
 -- 
+
+       "Is there not promise of rain?" Ling Tan asked suddenly out
+        of the darkness. There had been need of rain for many days.
+       "Only a promise," Lao Er said.
+                                       Pearl S. Buck - Dragon Seed
 
