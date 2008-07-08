@@ -1,8 +1,8 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [RFC PATCH 3/4] dm core: add support for barrier bio
-	with payload
-Date: Tue, 08 Jul 2008 18:49:09 +0200
-Message-ID: <48739A85.1040208@redhat.com>
+Subject: [RFC PATCH 4/4] dm core: wait for barrier in process in
+	suspend
+Date: Tue, 08 Jul 2008 18:49:14 +0200
+Message-ID: <48739A8A.6070005@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -21,80 +21,119 @@ To: Alasdair G Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Process barrier request with payload in device-mapper.
+Implement waiting for barrier in dm_suspend request.
 
-Because mapping of device can be generic, device-mapper
-cannot process barriers containing data directly.
+suspend_lock cannot be used inside barrier processing,
+because there can be generated new barrier request during suspend
+process (e.g. in lock_fs() call).
 
-To emulate the same effect of barrier, process bio
-like normal request and subsequently inject to all mapped
-targets zero-sized barrier (whilst incoming bios are queued).
+Add wait for for ongoing barrier to finish before suspending.
+
+There are two status bits used:
+DMF_BLOCK_IO -> all ios are queued
+DMF_BARRIER  -> device is processing barrier (always include BLOCK_IO too).
+
+Suspend call simply waits till DMF_BARRIER disappear and immediatelly
+and switch to BLOCK_IO to prevent another barrier to start.
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
+
 ---
- drivers/md/dm.c |   24 ++++++++++++------------
- 1 files changed, 12 insertions(+), 12 deletions(-)
+ drivers/md/dm.c |   61 +++++++++++++++++++++++++++++++++++++++++++++++-------
+ 1 files changed, 53 insertions(+), 8 deletions(-)
 
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index d8a9cc3..1a65389 100644
+index 1a65389..d7b2a17 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -498,7 +498,7 @@ static int __noflush_suspending(struct mapped_device *md)
- static void dec_pending(struct dm_io *io, int error)
- {
- 	unsigned long flags;
--	int barrier = bio_empty_barrier(io->bio);
-+	int barrier = bio_barrier(io->bio);
+@@ -1452,6 +1452,13 @@ static void __flush_deferred_io(struct mapped_device *md, int barrier_flag)
+ 	while ((c = bio_list_pop(&md->deferred))) {
+ 		barrier = bio_barrier(c);
  
- 	/* Push-back supersedes any I/O errors */
- 	if (error && !(io->error > 0 && __noflush_suspending(io->md)))
-@@ -673,6 +673,7 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
- 	clone->bi_sector = sector;
- 	clone->bi_bdev = bio->bi_bdev;
- 	clone->bi_rw = bio->bi_rw;
-+	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
- 	clone->bi_vcnt = 1;
- 	clone->bi_size = to_bytes(len);
- 	clone->bi_io_vec->bv_offset = offset;
-@@ -698,6 +699,7 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
- 	clone->bi_vcnt = idx + bv_count;
- 	clone->bi_size = to_bytes(len);
- 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
-+	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
- 
- 	return clone;
- }
-@@ -857,11 +859,15 @@ static int __split_bio(struct mapped_device *md, struct bio *bio)
- 
- 	start_io_acct(ci.io);
- 
--	if (unlikely(bio_empty_barrier(ci.bio)))
--		error = __clone_and_map_barrier(&ci);
--	else
--		while (ci.sector_count && !error)
--			error = __clone_and_map(&ci);
-+	while (ci.sector_count && !error)
-+		error = __clone_and_map(&ci);
++		/* FIXME: is this possible here? */
++		/* New barrier and no flag */
++		if (barrier && !test_bit(DMF_BARRIER, &md->flags)) {
++			__submit_barrier(md, c);
++			return;
++		} 
 +
-+	/*
-+	 * Barrier with payload is converted to normal bio
-+	 * and subsequent zero-size barrier requests.
-+	 */
-+ 	if (unlikely(bio_barrier(ci.bio)) && !error)
-+ 		error = __clone_and_map_barrier(&ci);
+ 		if (__split_bio(md, c))
+ 			bio_io_error(c);
  
- 	/* drop the extra reference count */
- 	dec_pending(ci.io, error);
-@@ -1475,12 +1481,6 @@ static void __merge_pushback_list(struct mapped_device *md)
+@@ -1591,6 +1598,47 @@ static void unlock_fs(struct mapped_device *md)
+ 	clear_bit(DMF_FROZEN, &md->flags);
+ }
  
- static void __request_barrier(struct mapped_device *md, struct bio *bio)
- {
--	/* Only barriers without payload are supported */
--	if (bio->bi_size) {
--		bio_endio(bio, -EOPNOTSUPP);
--		return;
++static int _blockio_if_not_in_barrier(struct mapped_device *md)
++{
++	int in_barrier;
++
++	down_write(&md->io_lock);
++	smp_mb();
++	in_barrier = test_bit(DMF_BARRIER, &md->flags);
++	if (!in_barrier)
++		set_bit(DMF_BLOCK_IO, &md->flags);
++	up_write(&md->io_lock);
++
++	return !in_barrier;
++}
++
++static int dm_wait_blockio(struct mapped_device *md)
++{
++	int r = 0;
++
++	while (1) {
++		set_current_state(TASK_INTERRUPTIBLE);
++
++		if (_blockio_if_not_in_barrier(md))
++			break;
++
++		if (signal_pending(current)) {
++			r = -EINTR;
++			break;
++		}
++
++		/*
++		 * We cannot use io_schedule here
++		 * all io can be already processed.
++		 * FIXME: starvation here?
++		 */
++		schedule_timeout(HZ/100);
++	}
++	set_current_state(TASK_RUNNING);
++
++	return r;
++}
++
+ /*
+  * We need to be able to change a mapping table under a mounted
+  * filesystem.  For example we might want to move some data in
+@@ -1613,12 +1661,6 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 		goto out_unlock;
+ 	}
+ 
+-	 /* FIXME: temporary, it must not fail here  */
+-	if (test_bit(DMF_BARRIER, &md->flags)) {
+-		r = -EBUSY;
+-		goto out_unlock;
 -	}
 -
- 	smp_mb();
- 	if (!test_bit(DMF_BLOCK_IO, &md->flags))
- 		__submit_barrier(md, bio);
+ 	map = dm_get_table(md);
+ 
+ 	/*
+@@ -1653,10 +1695,13 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 
+ 	/*
+ 	 * First we set the BLOCK_IO flag so no more ios will be mapped.
++	 * But wait for possible ongoing barrier to finish first.
+ 	 */
+-	down_write(&md->io_lock);
+-	set_bit(DMF_BLOCK_IO, &md->flags);
++	r = dm_wait_blockio(md);
++	if (r)
++		goto out;
+ 
++	down_write(&md->io_lock);
+ 	add_wait_queue(&md->wait, &wait);
+ 	up_write(&md->io_lock);
+ 
