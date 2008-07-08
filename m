@@ -1,28 +1,54 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: RE: Changes to readsector0
-Date: Tue, 8 Jul 2008 17:50:37 -0400
-Message-ID: <20080708215037.GA16820@mars.virtualiron.com>
-References: <A7519D7FDEF2A144BA6D40BDF13100FE9515C6@ex2.Beer.Town>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Wed, 9 Jul 2008 09:10:27 +1000
+Message-ID: <20080708231026.GP11558@disturbed>
+References: <20080630212450t-sato@mail.jp.nec.com> <20080701081026.GB16691@infradead.org> <20080707110730.GG5643@ucw.cz>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-ext4-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <A7519D7FDEF2A144BA6D40BDF13100FE9515C6@ex2.Beer.Town>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+In-Reply-To: <20080707110730.GG5643@ucw.cz>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Pavel Machek <pavel@suse.cz>
+Cc: Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, axboe@kernel.dk, mtk.manpages@googlemail.com
 List-Id: dm-devel.ids
 
-On Tue, Jul 08, 2008 at 02:11:46PM -0500, Jim Lester wrote:
-> Is there any reason to use directio over tur if the system supports tur?
+On Mon, Jul 07, 2008 at 01:07:31PM +0200, Pavel Machek wrote:
+> Hi!
+>=20
+> > I still disagree with this whole patch.  There is not reason to let
+> > the freeze request timeout - an auto-unfreezing will only confuse t=
+he
+> > hell out of the caller.  The only reason where the current XFS free=
+ze
+> > call can hang and this would be theoretically useful is when the
+>=20
+> What happens when someone dirties so much data that vm swaps out
+> whatever process that frozen the filesystem?
 
-No. directio is much slower than tur. Think of tur as 'ping' and directio as
-doing a HTTP request - much heavier.
+a) you can't dirty a frozen filesystem - by definition a frozen
+   filesystem is a *clean filesystem* and *cannot be dirtied*.
+b) Swap doesn't write through the filesystem
+c) you can still read from a frozen filesystem to page your
+   executable=D1=95 in.
+d) if dirtying another unfrozen filesystem swaps out your
+   application so it can't run, then there's a major VM bug.
+   Regardless, until the app completes it is relying on the
+   filesystem being frozen, so it better remain frozen....
+
+> I though that was why the timeout was there...
+
+Not that I know of.=20
+
+Cheers,
+
+Dave.
+--=20
+Dave Chinner
+david@fromorbit.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-ext4" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
