@@ -1,30 +1,52 @@
-From: Pavel Machek <pavel@suse.cz>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Mon, 7 Jul 2008 13:07:31 +0200
-Message-ID: <20080707110730.GG5643@ucw.cz>
-References: <20080630212450t-sato@mail.jp.nec.com> <20080701081026.GB16691@infradead.org>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: Changes to readsector0
+Date: Tue, 8 Jul 2008 10:00:28 -0400
+Message-ID: <20080708140028.GB6764@mars.virtualiron.com>
+References: <A7519D7FDEF2A144BA6D40BDF13100FE8FEE46@ex2.Beer.Town>
+	<1D80D4F6D179BD4D869FE807A5BF833602D8B643@EXCNYSM0A1AN.nysemail.nyenet>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756265AbYGHNjK@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20080701081026.GB16691@infradead.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Christoph Hellwig <hch@infradead.org>
-Cc: Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, axboe@kernel.dk, mtk.manpages@googlemail.com
+In-Reply-To: <1D80D4F6D179BD4D869FE807A5BF833602D8B643@EXCNYSM0A1AN.nysemail.nyenet>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi!
+On Tue, Jul 08, 2008 at 08:41:48AM -0400, Romanowski, John (OFT) wrote:
+> Hi,
+>  I use readsector0, moving to SLES10 SP2 soon  and am interested in you=
+r
+> problem description.
 
-> I still disagree with this whole patch.  There is not reason to let
-> the freeze request timeout - an auto-unfreezing will only confuse the
-> hell out of the caller.  The only reason where the current XFS freeze
-> call can hang and this would be theoretically useful is when the
+The manpage for SLES10 SP2 multipath.conf mentions this:
 
-What happens when someone dirties so much data that vm swaps out
-whatever process that frozen the filesystem?
+" path_checker     The default method used to determine the paths=E2=80=99=
+ state. Possible values are
 
-I though that was why the timeout was there...
-							Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+                        directio    Read the first sector with direct I/O=
+.
+
+						.... snip ..
+
+                        readsector0 (Deprecated) Read the first sector of=
+ the device.
+
+                        Default value is directio. Using readsector0 as
+                        path_checker is deprecated as it=E2=80=99s report=
+ed to not work correctly on certain devices.
+"
+
+
+So you should be able to replace 'readsector0' with 'directio' in your mu=
+ltipath.conf file.
