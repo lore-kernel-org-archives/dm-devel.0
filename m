@@ -1,139 +1,287 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [RFC PATCH 4/4] dm core: wait for barrier in process in
-	suspend
-Date: Tue, 08 Jul 2008 18:49:14 +0200
-Message-ID: <48739A8A.6070005@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Johannes Berg <johannes@sipsolutions.net>
+Subject: [RFC 04/11] remove CONFIG_KMOD from drivers
+Date: Tue, 08 Jul 2008 19:00:19 +0200
+Message-ID: <20080708170044.262684000@sipsolutions.net>
+References: <20080708170015.470877000@sipsolutions.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+Return-path: <linux-ppp-owner@vger.kernel.org>
+Content-Disposition: inline; filename=config-kmod-remove-drivers.patch
+Sender: linux-ppp-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Cc: Rusty Russell <rusty@rustcorp.com.au>, Christoph Hellwig <hch@infradead.org>, video4linux-list@redhat.com, David Woodhouse <dwmw2@infradead.org>, linux-ppp@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Implement waiting for barrier in dm_suspend request.
+Straight forward conversions to CONFIG_MODULE; many drivers
+include <linux/kmod.h> conditionally and then don't have any
+other conditional code so remove it from those.
 
-suspend_lock cannot be used inside barrier processing,
-because there can be generated new barrier request during suspend
-process (e.g. in lock_fs() call).
-
-Add wait for for ongoing barrier to finish before suspending.
-
-There are two status bits used:
-DMF_BLOCK_IO -> all ios are queued
-DMF_BARRIER  -> device is processing barrier (always include BLOCK_IO too).
-
-Suspend call simply waits till DMF_BARRIER disappear and immediatelly
-and switch to BLOCK_IO to prevent another barrier to start.
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-
+Signed-off-by: Johannes Berg <johannes@sipsolutions.net>
+Cc: video4linux-list@redhat.com
+Cc: David Woodhouse <dwmw2@infradead.org>
+Cc: linux-ppp@vger.kernel.org
+Cc: dm-devel@redhat.com
 ---
- drivers/md/dm.c |   61 +++++++++++++++++++++++++++++++++++++++++++++++-------
- 1 files changed, 53 insertions(+), 8 deletions(-)
+ drivers/md/md.c                                 |    7 +------
+ drivers/media/video/cpia.c                      |    4 ----
+ drivers/media/video/usbvision/usbvision-core.c  |    4 ----
+ drivers/media/video/usbvision/usbvision-video.c |    4 ----
+ drivers/media/video/v4l1-compat.c               |    4 ----
+ drivers/media/video/v4l2-common.c               |    4 ----
+ drivers/media/video/vino.c                      |    5 +----
+ drivers/media/video/w9968cf.c                   |    4 ++--
+ drivers/mtd/mtdpart.c                           |    2 --
+ drivers/net/irda/sir_dongle.c                   |    2 --
+ drivers/net/ppp_generic.c                       |   10 +++-------
+ drivers/net/pppox.c                             |    9 ++-------
+ drivers/video/fbmem.c                           |   17 ++---------------
+ 13 files changed, 11 insertions(+), 65 deletions(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1a65389..d7b2a17 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1452,6 +1452,13 @@ static void __flush_deferred_io(struct mapped_device *md, int barrier_flag)
- 	while ((c = bio_list_pop(&md->deferred))) {
- 		barrier = bio_barrier(c);
+--- everything.orig/drivers/md/md.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/md/md.c	2008-07-08 18:49:10.000000000 +0200
+@@ -44,14 +44,9 @@
+ #include <linux/mutex.h>
+ #include <linux/ctype.h>
+ #include <linux/freezer.h>
+-
+ #include <linux/init.h>
+-
+ #include <linux/file.h>
+-
+-#ifdef CONFIG_KMOD
+ #include <linux/kmod.h>
+-#endif
  
-+		/* FIXME: is this possible here? */
-+		/* New barrier and no flag */
-+		if (barrier && !test_bit(DMF_BARRIER, &md->flags)) {
-+			__submit_barrier(md, c);
-+			return;
-+		} 
-+
- 		if (__split_bio(md, c))
- 			bio_io_error(c);
+ #include <asm/unaligned.h>
  
-@@ -1591,6 +1598,47 @@ static void unlock_fs(struct mapped_device *md)
- 	clear_bit(DMF_FROZEN, &md->flags);
- }
- 
-+static int _blockio_if_not_in_barrier(struct mapped_device *md)
-+{
-+	int in_barrier;
-+
-+	down_write(&md->io_lock);
-+	smp_mb();
-+	in_barrier = test_bit(DMF_BARRIER, &md->flags);
-+	if (!in_barrier)
-+		set_bit(DMF_BLOCK_IO, &md->flags);
-+	up_write(&md->io_lock);
-+
-+	return !in_barrier;
-+}
-+
-+static int dm_wait_blockio(struct mapped_device *md)
-+{
-+	int r = 0;
-+
-+	while (1) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+
-+		if (_blockio_if_not_in_barrier(md))
-+			break;
-+
-+		if (signal_pending(current)) {
-+			r = -EINTR;
-+			break;
-+		}
-+
-+		/*
-+		 * We cannot use io_schedule here
-+		 * all io can be already processed.
-+		 * FIXME: starvation here?
-+		 */
-+		schedule_timeout(HZ/100);
-+	}
-+	set_current_state(TASK_RUNNING);
-+
-+	return r;
-+}
-+
- /*
-  * We need to be able to change a mapping table under a mounted
-  * filesystem.  For example we might want to move some data in
-@@ -1613,12 +1661,6 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
- 		goto out_unlock;
+@@ -3410,7 +3405,7 @@ static int do_md_run(mddev_t * mddev)
+ 		}
  	}
  
--	 /* FIXME: temporary, it must not fail here  */
--	if (test_bit(DMF_BARRIER, &md->flags)) {
--		r = -EBUSY;
--		goto out_unlock;
--	}
+-#ifdef CONFIG_KMOD
++#ifdef CONFIG_MODULES
+ 	if (mddev->level != LEVEL_NONE)
+ 		request_module("md-level-%d", mddev->level);
+ 	else if (mddev->clevel[0])
+--- everything.orig/drivers/media/video/cpia.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/cpia.c	2008-07-08 18:49:11.000000000 +0200
+@@ -39,10 +39,6 @@
+ #include <asm/io.h>
+ #include <linux/mutex.h>
+ 
+-#ifdef CONFIG_KMOD
+-#include <linux/kmod.h>
+-#endif
 -
- 	map = dm_get_table(md);
+ #include "cpia.h"
  
- 	/*
-@@ -1653,10 +1695,13 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ static int video_nr = -1;
+--- everything.orig/drivers/media/video/usbvision/usbvision-core.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/usbvision/usbvision-core.c	2008-07-08 18:49:11.000000000 +0200
+@@ -47,10 +47,6 @@
  
- 	/*
- 	 * First we set the BLOCK_IO flag so no more ios will be mapped.
-+	 * But wait for possible ongoing barrier to finish first.
- 	 */
--	down_write(&md->io_lock);
--	set_bit(DMF_BLOCK_IO, &md->flags);
-+	r = dm_wait_blockio(md);
-+	if (r)
-+		goto out;
+ #include <linux/workqueue.h>
  
-+	down_write(&md->io_lock);
- 	add_wait_queue(&md->wait, &wait);
- 	up_write(&md->io_lock);
+-#ifdef CONFIG_KMOD
+-#include <linux/kmod.h>
+-#endif
+-
+ #include "usbvision.h"
  
+ static unsigned int core_debug;
+--- everything.orig/drivers/media/video/usbvision/usbvision-video.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/usbvision/usbvision-video.c	2008-07-08 18:49:11.000000000 +0200
+@@ -70,10 +70,6 @@
+ 
+ #include <linux/workqueue.h>
+ 
+-#ifdef CONFIG_KMOD
+-#include <linux/kmod.h>
+-#endif
+-
+ #include "usbvision.h"
+ #include "usbvision-cards.h"
+ 
+--- everything.orig/drivers/media/video/v4l1-compat.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/v4l1-compat.c	2008-07-08 18:49:11.000000000 +0200
+@@ -35,10 +35,6 @@
+ #include <asm/system.h>
+ #include <asm/pgtable.h>
+ 
+-#ifdef CONFIG_KMOD
+-#include <linux/kmod.h>
+-#endif
+-
+ static unsigned int debug;
+ module_param(debug, int, 0644);
+ MODULE_PARM_DESC(debug, "enable debug messages");
+--- everything.orig/drivers/media/video/v4l2-common.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/v4l2-common.c	2008-07-08 18:49:11.000000000 +0200
+@@ -60,10 +60,6 @@
+ #include <media/v4l2-common.h>
+ #include <media/v4l2-chip-ident.h>
+ 
+-#ifdef CONFIG_KMOD
+-#include <linux/kmod.h>
+-#endif
+-
+ #include <linux/videodev.h>
+ 
+ MODULE_AUTHOR("Bill Dirks, Justin Schoeman, Gerd Knorr");
+--- everything.orig/drivers/media/video/vino.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/vino.c	2008-07-08 18:49:11.000000000 +0200
+@@ -30,10 +30,7 @@
+ #include <linux/mm.h>
+ #include <linux/time.h>
+ #include <linux/version.h>
+-
+-#ifdef CONFIG_KMOD
+ #include <linux/kmod.h>
+-#endif
+ 
+ #include <linux/i2c.h>
+ #include <linux/i2c-algo-sgi.h>
+@@ -4641,7 +4638,7 @@ static int __init vino_module_init(void)
+ 	}
+ 	vino_init_stage++;
+ 
+-#if defined(CONFIG_KMOD) && defined(MODULE)
++#ifdef MODULE
+ 	request_module("saa7191");
+ 	request_module("indycam");
+ #endif
+--- everything.orig/drivers/media/video/w9968cf.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/media/video/w9968cf.c	2008-07-08 18:49:11.000000000 +0200
+@@ -110,7 +110,7 @@ static int specific_debug = W9968CF_SPEC
+ 
+ static unsigned int param_nv[24]; /* number of values per parameter */
+ 
+-#ifdef CONFIG_KMOD
++#ifdef CONFIG_MODULES
+ module_param(ovmod_load, bool, 0644);
+ #endif
+ module_param(simcams, ushort, 0644);
+@@ -143,7 +143,7 @@ module_param(debug, ushort, 0644);
+ module_param(specific_debug, bool, 0644);
+ #endif
+ 
+-#ifdef CONFIG_KMOD
++#ifdef CONFIG_MODULES
+ MODULE_PARM_DESC(ovmod_load,
+ 		 "\n<0|1> Automatic 'ovcamchip' module loading."
+ 		 "\n0 disabled, 1 enabled."
+--- everything.orig/drivers/mtd/mtdpart.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/mtd/mtdpart.c	2008-07-08 18:49:11.000000000 +0200
+@@ -555,10 +555,8 @@ int parse_mtd_partitions(struct mtd_info
+ 
+ 	for ( ; ret <= 0 && *types; types++) {
+ 		parser = get_partition_parser(*types);
+-#ifdef CONFIG_KMOD
+ 		if (!parser && !request_module("%s", *types))
+ 				parser = get_partition_parser(*types);
+-#endif
+ 		if (!parser) {
+ 			printk(KERN_NOTICE "%s partition parsing not available\n",
+ 			       *types);
+--- everything.orig/drivers/net/irda/sir_dongle.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/net/irda/sir_dongle.c	2008-07-08 18:49:11.000000000 +0200
+@@ -67,9 +67,7 @@ int sirdev_get_dongle(struct sir_dev *de
+ 	const struct dongle_driver *drv = NULL;
+ 	int err = -EINVAL;
+ 
+-#ifdef CONFIG_KMOD
+ 	request_module("irda-dongle-%d", type);
+-#endif
+ 
+ 	if (dev->dongle_drv != NULL)
+ 		return -EBUSY;
+--- everything.orig/drivers/net/ppp_generic.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/net/ppp_generic.c	2008-07-08 18:54:36.000000000 +0200
+@@ -2113,13 +2113,9 @@ ppp_set_compress(struct ppp *ppp, unsign
+ 	    || ccp_option[1] < 2 || ccp_option[1] > data.length)
+ 		goto out;
+ 
+-	cp = find_compressor(ccp_option[0]);
+-#ifdef CONFIG_KMOD
+-	if (!cp) {
+-		request_module("ppp-compress-%d", ccp_option[0]);
+-		cp = find_compressor(ccp_option[0]);
+-	}
+-#endif /* CONFIG_KMOD */
++	cp = try_then_request_module(
++		find_compressor(ccp_option[0]),
++		"ppp-compress-%d", ccp_option[0]);
+ 	if (!cp)
+ 		goto out;
+ 
+--- everything.orig/drivers/net/pppox.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/net/pppox.c	2008-07-08 18:49:11.000000000 +0200
+@@ -115,13 +115,8 @@ static int pppox_create(struct net *net,
+ 		goto out;
+ 
+ 	rc = -EPROTONOSUPPORT;
+-#ifdef CONFIG_KMOD
+-	if (!pppox_protos[protocol]) {
+-		char buffer[32];
+-		sprintf(buffer, "pppox-proto-%d", protocol);
+-		request_module(buffer);
+-	}
+-#endif
++	if (!pppox_protos[protocol])
++		request_module("pppox-proto-%d", protocol);
+ 	if (!pppox_protos[protocol] ||
+ 	    !try_module_get(pppox_protos[protocol]->owner))
+ 		goto out;
+--- everything.orig/drivers/video/fbmem.c	2008-07-08 18:46:21.000000000 +0200
++++ everything/drivers/video/fbmem.c	2008-07-08 18:49:11.000000000 +0200
+@@ -28,9 +28,7 @@
+ #include <linux/proc_fs.h>
+ #include <linux/seq_file.h>
+ #include <linux/console.h>
+-#ifdef CONFIG_KMOD
+ #include <linux/kmod.h>
+-#endif
+ #include <linux/err.h>
+ #include <linux/device.h>
+ #include <linux/efi.h>
+@@ -837,13 +835,6 @@ fb_write(struct file *file, const char _
+ 	return (cnt) ? cnt : err;
+ }
+ 
+-#ifdef CONFIG_KMOD
+-static void try_to_load(int fb)
+-{
+-	request_module("fb%d", fb);
+-}
+-#endif /* CONFIG_KMOD */
+-
+ int
+ fb_pan_display(struct fb_info *info, struct fb_var_screeninfo *var)
+ {
+@@ -1086,10 +1077,8 @@ fb_ioctl(struct inode *inode, struct fil
+ 		    return -EINVAL;
+ 		if (con2fb.framebuffer < 0 || con2fb.framebuffer >= FB_MAX)
+ 		    return -EINVAL;
+-#ifdef CONFIG_KMOD
+ 		if (!registered_fb[con2fb.framebuffer])
+-		    try_to_load(con2fb.framebuffer);
+-#endif /* CONFIG_KMOD */
++		    request_module("fb%d", con2fb.framebuffer);
+ 		if (!registered_fb[con2fb.framebuffer])
+ 		    return -EINVAL;
+ 		event.info = info;
+@@ -1326,10 +1315,8 @@ fb_open(struct inode *inode, struct file
+ 
+ 	if (fbidx >= FB_MAX)
+ 		return -ENODEV;
+-#ifdef CONFIG_KMOD
+ 	if (!(info = registered_fb[fbidx]))
+-		try_to_load(fbidx);
+-#endif /* CONFIG_KMOD */
++		request_module("fb%d", fbidx);
+ 	if (!(info = registered_fb[fbidx]))
+ 		return -ENODEV;
+ 	if (!try_module_get(info->fbops->owner))
+
+-- 
+
