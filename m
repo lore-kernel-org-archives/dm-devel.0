@@ -1,7 +1,7 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [RFC PATCH 0/4] dm core: full barrier support
-Date: Tue, 08 Jul 2008 18:48:53 +0200
-Message-ID: <48739A75.1070807@redhat.com>
+Subject: [RFC PATCH 1/4] dm core: remove unused code
+Date: Tue, 08 Jul 2008 18:48:58 +0200
+Message-ID: <48739A7A.2030202@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -20,89 +20,66 @@ To: Alasdair G Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+This patch removes dead codes for the noflush suspend.
+No functional change.
 
-there was several discussions about supporting barriers
-in device-mapper.
+The dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL) in dm_suspend()
+is never invoked because:
+  - The 'goto flush_and_out' is same as 'goto out', because
+    the 'goto flush_and_out' is called only when '!noflush'
+  - If the 'r && noflush' is true, the interrupt check code above
+    is invoked and 'goto out'
 
-I wrote this code some time ago, but it never reached dm-devel
-tree. Take this more like RFC and experimental approach
-- maybe there is better way how to handle it. 
-Anyway this implementation works in my tests and is relatively simple.
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+---
+ drivers/md/dm.c |   14 +-------------
+ 1 files changed, 1 insertions(+), 13 deletions(-)
 
-[RFC PATCH 1/4] dm core: remove unused code
-	- just remove never used code, already sent some time ago
-	in another patchset
-
-[RFC PATCH 2/4] dm core: add support for empty barriers
-	- the core implementation of empty barrier support
-	- implementation for stripe target
-
-[RFC PATCH 3/4] dm core: add support for barrier bio with payload
-	- tranform payload to sequence of data bio + empty barrier
-
-[RFC PATCH 4/4] dm core: wait for barrier in process in suspend
-	- try to solve the problem that we cannot suspend device
-	during processing of barrier.
-
-
-Notes to implementation:
-
-* Patches are generated with previously applied bvec_merge
-patches from dm-devel tree (but it should work even without them)
-(removing unnecessary bio split was part of solution)
-
-* ignoring multipath for now, but it should probably process
-barriers correctly in multipath target
-
-* barrier is expensive operation, so it should be used
-very rarely, processing (and cost) in DM is equivalent
-to suspending device
-
-* There are several types of barrier implementation
-in hw drivers (DRAIN,TAGGING, ...) but DM doesn't care about
-it - I think that sending zero-sized barrier to low-lever driver
-is enough to allow its internal logic to decide what to do.
-
-* DM target is responsible for processing barrier for its devices.
-  (barrier is sent per target not per device).
-
-  - Only targets know which devices are related to barrier request,
-  and dm-core have no functionality to decide which devices are used
-  in specific targets (!)
-
-  - Most of targets will probably need no special code to handle
-  zero-sized barrier
-
-  - implementation is simpler, we can e.g. disable barriers
-  for some type of target (and implement it later)
-
-  - it must process correctly mapping table reloads
-
-* DM always send zero-sized barriers, barriers with payload
-  are converted to non-barrier bios with payload
-  + subsequent zero-size barrier
-
-* All preceding IOs must be processed when barrier is issued
-  - All barriers is processed with down_write(io_lock) locked.
-  Because bios are internally queued per process (in *make_request)
-  this is sufficient to ensuring that all previous IOs are
-  submitted by DM (dm_request runs with down_read, so barrier
-  request will wait till all "readers" are done).
-
-  - Moreover, after submitting zero barrier, code waits till
-  all processing IOs (per md) are finished before releasing flag.
-  It waits even for reads and barrier itself now.
-
-* After processing all requests (including all barrier clones)
-  the queued IOs are flushed.
-  - If there is another barrier in queue, operation continues
-  without clearing BLOCK_IO flag (this flag is cleared only
-  when whole queue if flushed and no new barrier is on-the-fly).
-
-* Some targets do not need changes (linear), others need review
-but should work in general (mirror, crypt, ...)
-
-Milan
---
-mbroz@redhat.com
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index bca448e..83b0c64 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -76,7 +76,6 @@ union map_info *dm_get_mapinfo(struct bio *bio)
+  */
+ struct dm_wq_req {
+ 	enum {
+-		DM_WQ_FLUSH_ALL,
+ 		DM_WQ_FLUSH_DEFERRED,
+ 	} type;
+ 	struct work_struct work;
+@@ -1384,9 +1383,6 @@ static void dm_wq_work(struct work_struct *work)
+ 
+ 	down_write(&md->io_lock);
+ 	switch (req->type) {
+-	case DM_WQ_FLUSH_ALL:
+-		__merge_pushback_list(md);
+-		/* pass through */
+ 	case DM_WQ_FLUSH_DEFERRED:
+ 		__flush_deferred_io(md);
+ 		break;
+@@ -1516,7 +1512,7 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 		if (!md->suspended_bdev) {
+ 			DMWARN("bdget failed in dm_suspend");
+ 			r = -ENOMEM;
+-			goto flush_and_out;
++			goto out;
+ 		}
+ 
+ 		/*
+@@ -1567,14 +1563,6 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 
+ 	set_bit(DMF_SUSPENDED, &md->flags);
+ 
+-flush_and_out:
+-	if (r && noflush)
+-		/*
+-		 * Because there may be already I/Os in the pushback list,
+-		 * flush them before return.
+-		 */
+-		dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL);
+-
+ out:
+ 	if (r && md->suspended_bdev) {
+ 		bdput(md->suspended_bdev);
