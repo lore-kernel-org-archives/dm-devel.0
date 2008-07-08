@@ -1,16 +1,12 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: Changes to readsector0
-Date: Tue, 8 Jul 2008 10:00:28 -0400
-Message-ID: <20080708140028.GB6764@mars.virtualiron.com>
-References: <A7519D7FDEF2A144BA6D40BDF13100FE8FEE46@ex2.Beer.Town>
-	<1D80D4F6D179BD4D869FE807A5BF833602D8B643@EXCNYSM0A1AN.nysemail.nyenet>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [RFC PATCH 0/4] dm core: full barrier support
+Date: Tue, 08 Jul 2008 18:48:53 +0200
+Message-ID: <48739A75.1070807@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1D80D4F6D179BD4D869FE807A5BF833602D8B643@EXCNYSM0A1AN.nysemail.nyenet>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,33 +16,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 08, 2008 at 08:41:48AM -0400, Romanowski, John (OFT) wrote:
-> Hi,
->  I use readsector0, moving to SLES10 SP2 soon  and am interested in you=
-r
-> problem description.
+Hi,
 
-The manpage for SLES10 SP2 multipath.conf mentions this:
+there was several discussions about supporting barriers
+in device-mapper.
 
-" path_checker     The default method used to determine the paths=E2=80=99=
- state. Possible values are
+I wrote this code some time ago, but it never reached dm-devel
+tree. Take this more like RFC and experimental approach
+- maybe there is better way how to handle it. 
+Anyway this implementation works in my tests and is relatively simple.
 
-                        directio    Read the first sector with direct I/O=
-.
+[RFC PATCH 1/4] dm core: remove unused code
+	- just remove never used code, already sent some time ago
+	in another patchset
 
-						.... snip ..
+[RFC PATCH 2/4] dm core: add support for empty barriers
+	- the core implementation of empty barrier support
+	- implementation for stripe target
 
-                        readsector0 (Deprecated) Read the first sector of=
- the device.
+[RFC PATCH 3/4] dm core: add support for barrier bio with payload
+	- tranform payload to sequence of data bio + empty barrier
 
-                        Default value is directio. Using readsector0 as
-                        path_checker is deprecated as it=E2=80=99s report=
-ed to not work correctly on certain devices.
-"
+[RFC PATCH 4/4] dm core: wait for barrier in process in suspend
+	- try to solve the problem that we cannot suspend device
+	during processing of barrier.
 
 
-So you should be able to replace 'readsector0' with 'directio' in your mu=
-ltipath.conf file.
+Notes to implementation:
+
+* Patches are generated with previously applied bvec_merge
+patches from dm-devel tree (but it should work even without them)
+(removing unnecessary bio split was part of solution)
+
+* ignoring multipath for now, but it should probably process
+barriers correctly in multipath target
+
+* barrier is expensive operation, so it should be used
+very rarely, processing (and cost) in DM is equivalent
+to suspending device
+
+* There are several types of barrier implementation
+in hw drivers (DRAIN,TAGGING, ...) but DM doesn't care about
+it - I think that sending zero-sized barrier to low-lever driver
+is enough to allow its internal logic to decide what to do.
+
+* DM target is responsible for processing barrier for its devices.
+  (barrier is sent per target not per device).
+
+  - Only targets know which devices are related to barrier request,
+  and dm-core have no functionality to decide which devices are used
+  in specific targets (!)
+
+  - Most of targets will probably need no special code to handle
+  zero-sized barrier
+
+  - implementation is simpler, we can e.g. disable barriers
+  for some type of target (and implement it later)
+
+  - it must process correctly mapping table reloads
+
+* DM always send zero-sized barriers, barriers with payload
+  are converted to non-barrier bios with payload
+  + subsequent zero-size barrier
+
+* All preceding IOs must be processed when barrier is issued
+  - All barriers is processed with down_write(io_lock) locked.
+  Because bios are internally queued per process (in *make_request)
+  this is sufficient to ensuring that all previous IOs are
+  submitted by DM (dm_request runs with down_read, so barrier
+  request will wait till all "readers" are done).
+
+  - Moreover, after submitting zero barrier, code waits till
+  all processing IOs (per md) are finished before releasing flag.
+  It waits even for reads and barrier itself now.
+
+* After processing all requests (including all barrier clones)
+  the queued IOs are flushed.
+  - If there is another barrier in queue, operation continues
+  without clearing BLOCK_IO flag (this flag is cleared only
+  when whole queue if flushed and no new barrier is on-the-fly).
+
+* Some targets do not need changes (linear), others need review
+but should work in general (mirror, crypt, ...)
+
+Milan
+--
+mbroz@redhat.com
