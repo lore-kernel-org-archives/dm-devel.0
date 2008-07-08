@@ -1,18 +1,13 @@
-From: Theodore Tso <tytso@mit.edu>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Tue, 8 Jul 2008 21:09:22 -0400
-Message-ID: <20080709010922.GE9957__30395.3324597844$1215605285$gmane$org@mit.edu>
-References: <20080630212450t-sato@mail.jp.nec.com>
-	<20080701081026.GB16691@infradead.org>
-	<20080707110730.GG5643@ucw.cz> <20080708231026.GP11558@disturbed>
-	<20080708232031.GE18195@elf.ucw.cz>
-	<20080709005254.GQ11558@disturbed>
+From: Evan C Hildebran <evan.hildebran@louisville.edu>
+Subject: Help Please
+Date: Tue, 8 Jul 2008 10:35:34 -0400
+Message-ID: <487342EB.D84E.0052.0@gwise.louisville.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="US-ASCII"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20080709005254.GQ11558@disturbed>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,38 +17,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Pavel Machek <pavel@suse.cz>, Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.o
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 09, 2008 at 10:52:54AM +1000, Dave Chinner wrote:
-> If you walk enough inodes while the filesystem is frozen, it
-> theoretically could happen.  Typically a filesystem is only for a
-> few seconds at a time so in the real world this has never, ever been
-> a problem.
+Dear Redhat,
 
-I had argued for the timeout (and so it's mostly my fault that
-Takashi-San included it as a feature) mainly because I was (and still
-amm) deeply paranoid about the competence of the application
-programers who might use this feature.  I could see them screwing up
-leaving it locked forever --- perhaps when their program core dumps or
-when the user types ^C and they forgot to install a signal handler,
-leaving the filesystem frozen forever.
+  I keep getting the following errors when my server boots up and the dev=
+ice-mapper will not map the alias defined in the multipath.conf file. Wha=
+t is causing this to happen and how do I fix it?
 
-In the meantime, user applications that try to create files on that
-filesystem, or write to files already opened when the filesystem are
-frozen will accumulate dirty pages in the page cache, until the system
-finally falls over.
 
-Think about some of the evil perpetrated by hal and the userspace
-suspend-resume scripts (and how much complexity with random XML
-fragments getting parsed by various dbus plugins), and tell me with a
-straight face that you would trust these modern-day desktop
-application writers with this interface.  Because they *will* find
-some interesting way to (ab)use it.....
+Jul  8 09:54:04 phpvm1 multipathd: cannot open /sbin/dasd_id : No such fi=
+le or directory
+Jul  8 09:54:04 phpvm1 multipathd: [copy.c] cannot open /sbin/dasd_id
+Jul  8 09:54:04 phpvm1 multipathd: cannot copy /sbin/dasd_id in ramfs : N=
+o such file or directory
 
-Also, I didn't think the extra code complexity to implements timeouts
-was *that* bad --- it seemed fairly small for the functionality.
+Jul  8 09:54:19 phpvm1 kernel: device-mapper: uevent: version 1.0.3
+Jul  8 09:54:19 phpvm1 kernel: device-mapper: ioctl: 4.11.5-ioctl (2007-1=
+2-12) initialised: dm-devel@redhat.com
+Jul  8 09:54:19 phpvm1 kernel: device-mapper: multipath: version 1.0.5 lo=
+aded
+Jul  8 09:54:19 phpvm1 kernel: device-mapper: multipath round-robin: vers=
+ion 1.0.0 loaded
+Jul  8 09:54:19 phpvm1 kernel: device-mapper: table: 253:0: multipath: er=
+ror getting device
+Jul  8 09:54:19 phpvm1 kernel: device-mapper: ioctl: error adding target =
+to table
+Jul  8 09:54:20 phpvm1 kernel: device-mapper: table: 253:1: multipath: er=
+ror getting device
+Jul  8 09:54:20 phpvm1 kernel: device-mapper: ioctl: error adding target =
+to table
 
-Best regards,
 
-						- Ted
+Thank you,
+
+
+
+Evan C. Hildebran
+Systems Programmer IV
+HEAT Administrator
+Information Technology
+University of Louisville
+evan.hildebran@louisville.edu
