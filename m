@@ -1,13 +1,16 @@
-From: Dragomir Minkovski <drago@canonical.com>
-Subject: multipath-tools with Dell MD3000
-Date: Mon, 30 Jun 2008 12:39:27 -0400
-Message-ID: <48690C3F.3070204@canonical.com>
-Reply-To: dragomir.minkovski@canonical.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Pavel Machek <pavel@suse.cz>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Wed, 9 Jul 2008 01:20:31 +0200
+Message-ID: <20080708232031.GE18195__6438.78057967431$1215605282$gmane$org@elf.ucw.cz>
+References: <20080630212450t-sato@mail.jp.nec.com>
+	<20080701081026.GB16691@infradead.org>
+	<20080707110730.GG5643@ucw.cz> <20080708231026.GP11558@disturbed>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20080708231026.GP11558@disturbed>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,24 +20,52 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+On Wed 2008-07-09 09:10:27, Dave Chinner wrote:
+> On Mon, Jul 07, 2008 at 01:07:31PM +0200, Pavel Machek wrote:
+> > Hi!
+> > 
+> > > I still disagree with this whole patch.  There is not reason to let
+> > > the freeze request timeout - an auto-unfreezing will only confuse the
+> > > hell out of the caller.  The only reason where the current XFS freeze
+> > > call can hang and this would be theoretically useful is when the
+> > 
+> > What happens when someone dirties so much data that vm swaps out
+> > whatever process that frozen the filesystem?
+> 
+> a) you can't dirty a frozen filesystem - by definition a frozen
+>    filesystem is a *clean filesystem* and *cannot be dirtied*.
 
-Hello,
+Can you stop me?
 
-I'm trying to find is the Dell PowerVault MD3000 Storage supported from
-multipath-tools, and/or is there plans to be included?
+mmap("/some/huge_file", MAP_SHARED);
 
-Regards,
-Drago
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.6 (GNU/Linux)
-Comment: Using GnuPG with Mozilla - http://enigmail.mozdev.org
+then write to memory mapping?
 
-iD8DBQFIaQw/+2HZqJ1WBs4RAi7TAJ4m3naUkBh4bNffs4odvJC3OT0MlwCghpTr
-fzhFG35ZSYKVr0HMg3OmcMs=
-=23Z7
------END PGP SIGNATURE-----
+> b) Swap doesn't write through the filesystem
+> c) you can still read from a frozen filesystem to page your
+>    executable?? in.
+
+atime modification should mean dirty data, right? And dirty data mean
+memory pressure, right? 
+
+> d) if dirtying another unfrozen filesystem swaps out your
+                 ~~~~~~~
+>    application so it can't run, then there's a major VM bug.
+>    Regardless, until the app completes it is relying on the
+>    filesystem being frozen, so it better remain frozen....
+
+Agreed. With emphasis on "another".
+
+> > I though that was why the timeout was there...
+> 
+> Not that I know of. 
+
+Ok, lets see how you deal with mmap.
+								Pavel
+
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
