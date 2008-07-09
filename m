@@ -1,15 +1,9 @@
-From: Levy_Jerome@emc.com
-Subject: [PATCH 2.6.9-34] emc_clariion_checker: Additional SCSI
-	info on query command error
-Date: Wed, 9 Jul 2008 12:49:08 -0400
-Message-ID: <6416EE16C1AF1E4C86882867E4DD0FF6016CBD16@CORPUSMX40B.corp.emc.com>
+From: wysochanski@sourceware.org
+Subject: multipath-tools/libmultipath print.c
+Date: 9 Jul 2008 20:11:39 -0000
+Message-ID: <20080709201139.24388.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,57 +13,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-emc_clariion_checker returns a "query command error" but no information
-as to what generated the error. The proposed patch adds the
-sense/ASC/ASCQ or SCSI/host/driver byte information as available from
-the SG_IO interface to assist in troubleshooting. The changes should be
-pretty universal but this was built on 2.6.9-34 under the
-multipath-tools-0.4.5.56 tree.=20
----
-Hope I'm getting this format right. This is my first time submitting a
-patch. Please yell directly at me if I'm screwing it up. Thanks...
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	wysochanski@sourceware.org	2008-07-09 20:11:37
 
-Jerry Levy, Engineer IV
-EMC Global Services Technical Support, PREM ISG
-AMER Host Systems Software - UNIX
-E-mail: levy_jerome@emc.com
----
+Modified files:
+	libmultipath   : print.c 
 
---- libcheckers/emc_clariion.c  2008-07-09 12:29:52.000000000 -0400
-+++ libcheckers/emc_clariion.c.original 2008-07-09 10:39:05.000000000
--0400
-@@ -32,7 +32,6 @@ int emc_clariion(int fd, char *msg, void
-        unsigned char sb[128] =3D { 0, };
-        unsigned char inqCmdBlk[INQUIRY_CMDLEN] =3D {INQUIRY_CMD, 1, 0xC0=
-,
-0,
-                                                sizeof(sb), 0};
--       unsigned char msgbuf[128];
-        struct sg_io_hdr io_hdr;
-        struct emc_clariion_checker_context * ctxt =3D NULL;
-        int ret;
-@@ -87,15 +86,7 @@ int emc_clariion(int fd, char *msg, void
-                goto out;
-        }
-        if (io_hdr.info & SG_INFO_OK_MASK) {
--               if(io_hdr.sb_len_wr) {
--                       sprintf(msgbuf,"emc_clariion_checker: query
-command error (sense 0x%02X, ASC 0x%02x, ASCQ 0x%02x)",
--
-sense_buffer[2],sense_buffer[12],sense_buffer[13]);
--               }
--               else {
--                       sprintf(msgbuf,"emc_clariion_checker: query
-command error (SCSI 0x%02X, host 0x%02x, driver 0x%02x)",
--
-io_hdr.masked_status,io_hdr.host_status,io_hdr.driver_status);
--               }
--               MSG(msgbuf);
-+               MSG("emc_clariion_checker: query command indicates
-error");
-                ret =3D PATH_DOWN;
-                goto out;
-        }
+Log message:
+	Resolves rhbz#442000.  Fix whitespace in multipath -ll output.
+
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/print.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.1&r2=1.5.2.2
+
+--- multipath-tools/libmultipath/print.c	2007/01/10 20:08:08	1.5.2.1
++++ multipath-tools/libmultipath/print.c	2008/07/09 20:11:33	1.5.2.2
+@@ -679,9 +679,9 @@
+ 	c += sprintf(c, "%%n");
+ 	
+ 	if (strncmp(mpp->alias, mpp->wwid, WWID_SIZE))
+-		c += sprintf(c, " (%%w) ");
++		c += sprintf(c, " (%%w)");
+ 
+-	c += sprintf(c, "%%d ");
++	c += sprintf(c, " %%d ");
+ 	c += snprint_vpr(c, 24, first_path(mpp));
+ 
+ 	fwd += snprint_multipath(buff + fwd, len - fwd, style, mpp);
