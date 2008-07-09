@@ -1,16 +1,18 @@
-From: Pavel Machek <pavel@suse.cz>
+From: Theodore Tso <tytso@mit.edu>
 Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Wed, 9 Jul 2008 01:20:31 +0200
-Message-ID: <20080708232031.GE18195__6438.78057967431$1215605282$gmane$org@elf.ucw.cz>
+Date: Tue, 8 Jul 2008 21:09:22 -0400
+Message-ID: <20080709010922.GE9957__30395.3324597844$1215605285$gmane$org@mit.edu>
 References: <20080630212450t-sato@mail.jp.nec.com>
 	<20080701081026.GB16691@infradead.org>
 	<20080707110730.GG5643@ucw.cz> <20080708231026.GP11558@disturbed>
+	<20080708232031.GE18195@elf.ucw.cz>
+	<20080709005254.GQ11558@disturbed>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20080708231026.GP11558@disturbed>
+In-Reply-To: <20080709005254.GQ11558@disturbed>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,52 +22,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+To: Pavel Machek <pavel@suse.cz>, Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.o
 List-Id: dm-devel.ids
 
-On Wed 2008-07-09 09:10:27, Dave Chinner wrote:
-> On Mon, Jul 07, 2008 at 01:07:31PM +0200, Pavel Machek wrote:
-> > Hi!
-> > 
-> > > I still disagree with this whole patch.  There is not reason to let
-> > > the freeze request timeout - an auto-unfreezing will only confuse the
-> > > hell out of the caller.  The only reason where the current XFS freeze
-> > > call can hang and this would be theoretically useful is when the
-> > 
-> > What happens when someone dirties so much data that vm swaps out
-> > whatever process that frozen the filesystem?
-> 
-> a) you can't dirty a frozen filesystem - by definition a frozen
->    filesystem is a *clean filesystem* and *cannot be dirtied*.
+On Wed, Jul 09, 2008 at 10:52:54AM +1000, Dave Chinner wrote:
+> If you walk enough inodes while the filesystem is frozen, it
+> theoretically could happen.  Typically a filesystem is only for a
+> few seconds at a time so in the real world this has never, ever been
+> a problem.
 
-Can you stop me?
+I had argued for the timeout (and so it's mostly my fault that
+Takashi-San included it as a feature) mainly because I was (and still
+amm) deeply paranoid about the competence of the application
+programers who might use this feature.  I could see them screwing up
+leaving it locked forever --- perhaps when their program core dumps or
+when the user types ^C and they forgot to install a signal handler,
+leaving the filesystem frozen forever.
 
-mmap("/some/huge_file", MAP_SHARED);
+In the meantime, user applications that try to create files on that
+filesystem, or write to files already opened when the filesystem are
+frozen will accumulate dirty pages in the page cache, until the system
+finally falls over.
 
-then write to memory mapping?
+Think about some of the evil perpetrated by hal and the userspace
+suspend-resume scripts (and how much complexity with random XML
+fragments getting parsed by various dbus plugins), and tell me with a
+straight face that you would trust these modern-day desktop
+application writers with this interface.  Because they *will* find
+some interesting way to (ab)use it.....
 
-> b) Swap doesn't write through the filesystem
-> c) you can still read from a frozen filesystem to page your
->    executable?? in.
+Also, I didn't think the extra code complexity to implements timeouts
+was *that* bad --- it seemed fairly small for the functionality.
 
-atime modification should mean dirty data, right? And dirty data mean
-memory pressure, right? 
+Best regards,
 
-> d) if dirtying another unfrozen filesystem swaps out your
-                 ~~~~~~~
->    application so it can't run, then there's a major VM bug.
->    Regardless, until the app completes it is relying on the
->    filesystem being frozen, so it better remain frozen....
-
-Agreed. With emphasis on "another".
-
-> > I though that was why the timeout was there...
-> 
-> Not that I know of. 
-
-Ok, lets see how you deal with mmap.
-								Pavel
-
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+						- Ted
