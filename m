@@ -1,55 +1,33 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: Resetting dmsetup open count
-Date: Wed, 9 Jul 2008 10:01:32 -0400
-Message-ID: <20080709140132.GA30521@mars.virtualiron.com>
-References: <486BA12D.5010506@cs.tcd.ie>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: jim owens <jowens@hp.com>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Wed, 09 Jul 2008 10:13:19 -0400
+Message-ID: <4874C77F.7070602@hp.com>
+References: <20080709005254.GQ11558@disturbed> <20080709010922.GE9957@mit.edu> <E1KGSvZ-0006dB-53@pomaz-ex.szeredi.hu> <20080709061621.GA5260@infradead.org> <E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu> <20080708234120.5072111f@infradead.org> <E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu> <20080708235502.1c52a586@infradead.org> <20080709071346.GS11558@disturbed> <20080709110900.GI9957@mit.edu> <20080709114958.GV11558@disturbed> <4874C3E8.20804@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <486BA12D.5010506@cs.tcd.ie>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: lavinp@cs.tcd.ie, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <4874C3E8.20804@hp.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: linux-fsdevel@vger.kernel.org
+Cc: Dave Chinner <david@fromorbit.com>, Theodore Tso <tytso@mit.edu>, Arjan van de Ven <arjan@infradead.org>, Miklos Szeredi <miklos@szeredi.hu>, hch@infradead.org, pavel@suse.cz, t-sato@yk.jp.nec.com, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, axboe@kernel.dk, mtk.manpages@googlemail.com
 List-Id: dm-devel.ids
 
-On Wed, Jul 02, 2008 at 04:39:25PM +0100, Peter Lavin wrote:
-> Dear dmsetup mailers,
->
-> I am attempting to remove a LVM in CentOS 5. I am getting the following 
-> message...
->
-> Can't remove open logical volume "lvm_name"
->
-> I can delete the link... /dev/vg01/lvm_name and also delete the associated 
-> block... /dev/mapper/vg01-lvm_name.
->
-> However, when I attempt to recreate the LVM using the same name (I need to 
-> use the same name). I get a message that the LVM already exists. I have 
-> traced this to dmsetup, where running dmsetup info vg01-lvm_name reveals...
->
-> [root@tg26 mapper]# dmsetup info vg01-lvm_name
-> Name: vg01-lvm_name
-> State: ACTIVE
-> Tables present: LIVE
-> Open count: 1  <------- this appears to be the problem
-> Event number: 0
-> Major, minor: 253, 63
-> Number of targets: 1
-> UUID: LVM-CT2Hz7dN6TLC3c8DydQ8nIenwjSmA8CI1yrsTLQy7Ip1Cxetz3 JrdQArvsgBqDsj
->
-> I may be able to reset this Open count by rebooting the machine but this is 
-> the least preferred option. Is there a was of resetting this 'Open count' 
-> in the dmsetup records without rebooting the system. My dmsetup version is 
-> pre- 4.8.0 so I cannot use the lvmremove -f option.
+Oops..
 
-Did you use 'vgchange --available ln vg01-lvm_name' before trying to
-remove it using 'dmsetup' ?
+ > WHY A TIMEOUT - need a way for operator to abort the
+ > freeze
+
+instead of "abort" I should have said "limit" because
+it is really proactive control (so they will not get
+called in the middle of the night by pissed users).
+
+I forgot to make it clear that TIMEOUT is the same as AUTO-THAW
+in logging errors so the adnin knows they have a bad snapshot and
+can do it again.
+
+I also forgot to say that our customers all say they can deal
+with retrying a snapshot, but not with unknown bad snapshots
+and most definitely not with killing their 24/7 operations!
+
+jim
