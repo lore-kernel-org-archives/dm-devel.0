@@ -1,18 +1,21 @@
-From: Brad Boyer <flar@allandria.com>
+From: Dave Chinner <david@fromorbit.com>
 Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Tue, 8 Jul 2008 21:21:47 -0700
-Message-ID: <20080709042147.GB20695__14781.3989119188$1215605313$gmane$org@cynthia.pants.nu>
-References: <20080630212450t-sato@mail.jp.nec.com>
-	<20080701081026.GB16691@infradead.org>
-	<20080707110730.GG5643@ucw.cz> <20080708231026.GP11558@disturbed>
-	<20080708232031.GE18195@elf.ucw.cz>
-	<20080709005254.GQ11558@disturbed> <20080709010922.GE9957@mit.edu>
+Date: Wed, 9 Jul 2008 21:49:58 +1000
+Message-ID: <20080709114958.GV11558__26766.4399849766$1215605317$gmane$org@disturbed>
+References: <20080709005254.GQ11558@disturbed> <20080709010922.GE9957@mit.edu>
+	<E1KGSvZ-0006dB-53@pomaz-ex.szeredi.hu>
+	<20080709061621.GA5260@infradead.org>
+	<E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu>
+	<20080708234120.5072111f@infradead.org>
+	<E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu>
+	<20080708235502.1c52a586@infradead.org>
+	<20080709071346.GS11558@disturbed> <20080709110900.GI9957@mit.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20080709010922.GE9957@mit.edu>
+In-Reply-To: <20080709110900.GI9957@mit.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,38 +25,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Theodore Tso <tytso@mit.edu>, Pavel Machek <pavel@suse.cz>, Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org
+To: Theodore Tso <tytso@mit.edu>, Arjan van de Ven <arjan@infradead.org>, Miklos Szeredi <miklos@szeredi.hu>, hch@infradead.org, pavel@suse.cz, t-sato@yk.jp.nec.com, akpm@linux-foundation.
 List-Id: dm-devel.ids
 
-On Tue, Jul 08, 2008 at 09:09:22PM -0400, Theodore Tso wrote:
-> I had argued for the timeout (and so it's mostly my fault that
-> Takashi-San included it as a feature) mainly because I was (and still
-> amm) deeply paranoid about the competence of the application
-> programers who might use this feature.  I could see them screwing up
-> leaving it locked forever --- perhaps when their program core dumps or
-> when the user types ^C and they forgot to install a signal handler,
-> leaving the filesystem frozen forever.
+On Wed, Jul 09, 2008 at 07:09:00AM -0400, Theodore Tso wrote:
+> > 
+> > Bloody hell! Doesn't *anyone* understand that a frozen filesystem is
+> > *clean*? That the process of freezing it ensures all dirty data and
+> > metadata is written out before the freeze completes? And that once
+> > frozen, it can't be dirtied until unfrozen?
 > 
-> In the meantime, user applications that try to create files on that
-> filesystem, or write to files already opened when the filesystem are
-> frozen will accumulate dirty pages in the page cache, until the system
-> finally falls over.
+> What do you mean by "it can't be diritied until unfrozen".  What
+> happens if I have a kernel compilation happening on a filesystem which
+> I am trying to freeze?   Does
+
+> (a) the freeze fail (because the checks equivalent to what happens
+> when you remount a filesystem read-only happen)?
 > 
-> Think about some of the evil perpetrated by hal and the userspace
-> suspend-resume scripts (and how much complexity with random XML
-> fragments getting parsed by various dbus plugins), and tell me with a
-> straight face that you would trust these modern-day desktop
-> application writers with this interface.  Because they *will* find
-> some interesting way to (ab)use it.....
+> (b) The process gets a kill -9 when it tries to write a file on the
+> frozen filesystem?
 > 
-> Also, I didn't think the extra code complexity to implements timeouts
-> was *that* bad --- it seemed fairly small for the functionality.
+> (c) The process gets a kill -STOP when it tries to write
+> to a file on the frozen filesystem?  
+> 
+> (d) The process won't fail, but just continue to run, filling the page
+> cache with dirty pages that can't be written out because the
+> filesystem is frozen?
 
-Just as an extra point of reference, VxFS supports a freeze/thaw by
-ioctl very similar to this including a timeout in seconds. This
-means someone else thought it was a useful feature.
+(e) none of the above.  The kernel compilation will appear to pause
+until the filesystem is unfrozen. No other visible effect should
+occur. It will get blocked in a write or filesystem transaction
+because the fs is frozen.
 
-http://sfdoccentral.symantec.com/sf/5.0/linux/manpages/vxfs/vxfsio_7.html
+Look at vfs_check_frozen() - any call to that will block if the
+filesystem is frozen or being frozen. The generic hook is in
+__generic_file_aio_write_nolock() and various other filesystems have
+calls in their specific write paths (fuse, ntfs, ocfs2, xfs, xip) to
+do this.
 
-	Brad Boyer
-	flar@allandria.com
+For all other modifications, filesystem specific methods of
+blocking transactions are used. XFS uses vfs_check_frozen() in
+xfs_trans_alloc(), ext3 (and probably ocfs2) do it via
+their ->write_super_lockfs method calling journal_lock_updates(),
+ext4 via jbd2_lock_updates() and so on....
+
+When the filesystem is unfrozen the journal is unlocked and
+anything sleeping on the vfs_check_frozen() waitqueue is
+woken.....
+
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
