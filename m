@@ -1,41 +1,58 @@
-From: mornfall@sourceware.org
-Subject: device-mapper/dmeventd dmeventd.c
-Date: 9 Jul 2008 13:26:09 -0000
-Message-ID: <20080709132609.20517.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Arjan van de Ven <arjan@infradead.org>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Wed, 9 Jul 2008 06:53:36 -0700
+Message-ID: <20080709065336.1e5e4d74@infradead.org>
+References: <20080708231026.GP11558@disturbed>
+	<20080708232031.GE18195@elf.ucw.cz>
+	<20080709005254.GQ11558@disturbed>
+	<20080709010922.GE9957@mit.edu>
+	<E1KGSvZ-0006dB-53@pomaz-ex.szeredi.hu>
+	<20080709061621.GA5260@infradead.org>
+	<E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu>
+	<20080708234120.5072111f@infradead.org>
+	<E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu>
+	<20080708235502.1c52a586@infradead.org>
+	<20080709071346.GS11558@disturbed>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <20080709071346.GS11558@disturbed>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Dave Chinner <david@fromorbit.com>
+Cc: Miklos Szeredi <miklos@szeredi.hu>, hch@infradead.org, tytso@mit.edu, pavel@suse.cz, t-sato@yk.jp.nec.com, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-fsdevel@vger.kernel.org, linux-kernel@vger.kernel.org, axboe@kernel.dk, mtk.manpages@googlemail.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	device-mapper
-Changes by:	mornfall@sourceware.org	2008-07-09 13:26:08
+On Wed, 9 Jul 2008 17:13:46 +1000
+Dave Chinner <david@fromorbit.com> wrote:
 
-Modified files:
-	dmeventd       : dmeventd.c 
+> > one can argue about the need of doing the first 3 steps via a
+> > userland loop; it sure sounds like one needs to be really careful
+> > to not do any writes to the fs from the app that does snapshots
+> > (and that includes doing any syscalls in the kernel that allocate
+> > memory.. just because that already could cause unrelated data to be
+> > written from inside the app. Not fun.)
+> 
+> Bloody hell! Doesn't *anyone* understand that a frozen filesystem is
+> *clean*? That the process of freezing it ensures all dirty data and
+> metadata is written out before the freeze completes? And that once
+> frozen, it can't be dirtied until unfrozen?
+> 
+> That's 3 (or is it 4 - maybe 5 now that I think about it) different
+> ppl in 24 hours that have made this same broken argument about
+> being unable to write back dirty data on a frozen filesystem......
 
-Log message:
-	Add #include <signal.h> to dmeventd.c, fixes compilation on NetBSD.
+unless you also freeze the system as a whole (in a 'refrigerator
+suspend' way).. the "clean" part is just about a nanosecond long. After
+that stuff gets dirty again (you're doing that sendfile to receive more
+packets from the FTP upload etc etc).
+Sure you can pause those. But there's a real risk that you end up
+pausing the app that you want to unfreeze the fs (via the memory
+allocation->direct reclaim path). And no, mlock doesn't help.
+Especially with delayed allocation, where data writes will cause
+metadata activity, this is not just theory.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmeventd/dmeventd.c.diff?cvsroot=dm&r1=1.50&r2=1.51
-
---- device-mapper/dmeventd/dmeventd.c	2007/07/24 14:16:48	1.50
-+++ device-mapper/dmeventd/dmeventd.c	2008/07/09 13:26:07	1.51
-@@ -36,6 +36,7 @@
- #include <sys/time.h>
- #include <sys/resource.h>
- #include <unistd.h>
-+#include <signal.h>
- #include <arpa/inet.h>		/* for htonl, ntohl */
- 
- #ifdef linux
+-- 
+If you want to reach me at my work email, use arjan@linux.intel.com
+For development, discussion and tips for power savings, 
+visit http://www.lesswatts.org
