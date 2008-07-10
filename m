@@ -1,18 +1,17 @@
-From: Pavel Machek <pavel@suse.cz>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Wed, 9 Jul 2008 22:44:13 +0200
-Message-ID: <20080709204412.GG11006__17777.6345787153$1215637154$gmane$org@ucw.cz>
-References: <20080630212450t-sato@mail.jp.nec.com>
-	<20080701081026.GB16691@infradead.org>
-	<20080707110730.GG5643@ucw.cz> <20080708231026.GP11558@disturbed>
-	<20080708232031.GE18195@elf.ucw.cz>
-	<20080709005254.GQ11558@disturbed>
+From: "Xinwei Hu" <hxinwei@gmail.com>
+Subject: Re: [PATCH 1/2] dm-ioband: I/O bandwidth controller
+	v1.2.0: Source code and patch
+Date: Thu, 10 Jul 2008 15:22:37 +0800
+Message-ID: <1cafab770807100022l3c8f9c7fy4d63caa0c49c286c@mail.gmail.com>
+References: <20080704.124038.193696173.ryov@valinux.co.jp>
+	<20080704.124142.226792170.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080704.124142.226792170.ryov@valinux.co.jp>
 Content-Disposition: inline
-In-Reply-To: <20080709005254.GQ11558@disturbed>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,60 +21,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi!
-
-> > > > > I still disagree with this whole patch.  There is not reason to let
-> > > > > the freeze request timeout - an auto-unfreezing will only confuse the
-> > > > > hell out of the caller.  The only reason where the current XFS freeze
-> > > > > call can hang and this would be theoretically useful is when the
-> > > > 
-> > > > What happens when someone dirties so much data that vm swaps out
-> > > > whatever process that frozen the filesystem?
-> > > 
-> > > a) you can't dirty a frozen filesystem - by definition a frozen
-> > >    filesystem is a *clean filesystem* and *cannot be dirtied*.
-> > 
-> > Can you stop me?
-> > 
-> > mmap("/some/huge_file", MAP_SHARED);
-> > 
-> > then write to memory mapping?
-> 
-> Sure - we can put a hook in ->page_mkwrite() to prevent it.  We
-> don't right now because nobody in the real world really cares if one
-> half of a concurrent user data change is in the old snapshot or the
-> new one......
-> 
-> > > b) Swap doesn't write through the filesystem
-> > > c) you can still read from a frozen filesystem to page your
-> > >    executable?? in.
-> > 
-> > atime modification should mean dirty data, right?
-> 
-> Metadata, not data. If that's really a problem (and it never has
-> been for XFS because we always allow in memory changes to atime)
-> then touch_atime could be easily changed to avoid this...
-> 
-> > And dirty data mean
-> > memory pressure, right? 
-> 
-> If you walk enough inodes while the filesystem is frozen, it
-> theoretically could happen.  Typically a filesystem is only for a
-> few seconds at a time so in the real world this has never, ever been
-> a problem.
-
-So we have freezing interface that does not really freeze, and
-that can break the system when filesystem is frozen for too long...
-:-(.
-
-Maybe you could use process freezer -- cgroup people are adding
-userspace interface to that -- to solve those... but that would mean
-stopping everyone but thread doing freezing...
-
-								Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Hi Ryo,
+2008/7/4 Ryo Tsuruta <ryov@valinux.co.jp>:
+> +static void prevent_burst_bios(struct ioband_group *gp, struct bio *bio)
+> +{
+> +       struct ioband_device *dp = gp->c_banddev;
+> +
+> +       if (current->flags & PF_KTHREAD) {
+> +               /*
+> +                * Kernel threads shouldn't be blocked easily since each of
+> +                * them may handle BIOs for several groups on several
+> +                * partitions.
+> +                */
+  Might be a stupid question, but doesn't that make more sense to just
+check if current->mm == NULL ?
+  I think PF_BORROWED_MM is only used when kernel threads doing AIO
+for user process, and that should be counted as normal user processes.
+Am I miss anything ?
