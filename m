@@ -1,55 +1,64 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 1/2] dm-ioband: I/O bandwidth controller
-	v1.2.0: Source code and patch
-Date: Thu, 10 Jul 2008 22:36:04 +0900 (JST)
-Message-ID: <20080710.223604.39165576.ryov@valinux.co.jp>
-References: <20080704.124038.193696173.ryov@valinux.co.jp>
-	<20080704.124142.226792170.ryov@valinux.co.jp>
-	<1cafab770807100022l3c8f9c7fy4d63caa0c49c286c@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Subject: [PATCH 0/2] dm-ioband: I/O bandwidth controller v1.3.0:
+ Introduction
+Date: Fri, 11 Jul 2008 20:14:11 +0900 (JST)
+Message-ID: <20080711.201411.193712771.ryov@valinux.co.jp>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1cafab770807100022l3c8f9c7fy4d63caa0c49c286c@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, hxinwei@gmail.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758828AbYGKLO2@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: agk@sourceware.org
 List-Id: dm-devel.ids
 
-Hi Xinwei,
+Hi everyone,
 
-> > +static void prevent_burst_bios(struct ioband_group *gp, struct bio *bio)
-> > +{
-> > +       struct ioband_device *dp = gp->c_banddev;
-> > +
-> > +       if (current->flags & PF_KTHREAD) {
-> > +               /*
-> > +                * Kernel threads shouldn't be blocked easily since each of
-> > +                * them may handle BIOs for several groups on several
-> > +                * partitions.
-> > +                */
->   Might be a stupid question, but doesn't that make more sense to just
-> check if current->mm == NULL ?
->   I think PF_BORROWED_MM is only used when kernel threads doing AIO
-> for user process, and that should be counted as normal user processes.
-> Am I miss anything ?
+This is the dm-ioband version 1.3.0 release.
 
-This function makes processes issuing I/O blocked when the number of
-in-flight I/Os exceeds a certain threshold. The purpose is to prevent
-I/O requests from issuing unlimitedly, not for counting the number of
-I/Os.
-But kernel threads should not be blocked easily since each of them may
-handles BIOs for several group on several partitions. The AIO kernel
-threads also handle I/Os for several groups, that's why they should
-not be blocked easily.
+Dm-ioband is an I/O bandwidth controller implemented as a device-mapper
+driver, which gives specified bandwidth to each job running on the same
+physical device.
+
+- Can be applied to the kernel 2.6.26-rc5-mm3.
+- Changes from 1.2.0 (posted on Jul 4, 2008):
+  - I/O smoothing take #2
+    This feature makes I/O requests of each group issued smoothly.
+    Once a certain group has used up its tokens, all I/O requests to
+    the group will be blocked until all the other groups used up
+    theirs. This feature is to minimize this blocking time and to
+    issue I/O requests at a constant rate according to the weight,
+    without decreasing throughput.
+    We have tested various ideas to achieve this feature and we have
+    chosen the most effective ways as follows:
+      - Shorten the epoch period of dm-ioband, each of which every
+        ioband group will get new tokens. On the other hand, the
+        leftover tokens for the past few epochs can be taken over to
+        the next epoch so that it can keep the fairness between the
+        groups even when the I/O loads of some groups are changing.
+      - Make a new epoch immediately when a group with large weight
+        used up its tokens even though there remain a lot of in-flight
+        I/Os.
+        To gain the throughput, dm-ioband will recharge tokens to all
+        the groups without waiting their I/O completion if possible.
+      - Make the I/O requests which user process have just made
+        be handled ahead of the blocked I/O requests, since it
+        would make sense that you assume the groups which issued
+        these blocked I/O requests will have small weights.
+      - Make the number of I/O requests which can be queued in dm-ioband
+        smaller, so it will prevents all the I/O request of each
+	group from being issued at the same time when a new epoch
+	gets made.
+- TODO
+  - Implementing cgroup support for dm-ioband is in progress. This
+    feature makes it be able to handle asynchronous I/O requests properly.
+
+I added a new benchmark result on the dm-ioband webpage. This result
+shows that dm-ioband can control a bandwidth even when an unbalanced
+I/O load is applied.
+http://people.valinux.co.jp/~ryov/dm-ioband/benchmark/partition3.html
 
 Thanks,
 Ryo Tsuruta
+Linux Block I/O Bandwidth Control Project
+http://people.valinux.co.jp/~ryov/bwctl/
