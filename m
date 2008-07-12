@@ -1,7 +1,7 @@
 From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 12 Jul 2008 00:07:36 -0000
-Message-ID: <20080712000736.540.qmail@sourceware.org>
+Subject: multipath-tools ./Makefile path_priority/pp_hp ...
+Date: 12 Jul 2008 01:24:08 -0000
+Message-ID: <20080712012408.10489.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -19,38 +19,37 @@ List-Id: dm-devel.ids
 CVSROOT:	/cvs/dm
 Module name:	multipath-tools
 Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-07-12 00:07:33
+Changes by:	bmarzins@sourceware.org	2008-07-12 01:24:07
 
 Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+	.              : Makefile 
+Added files:
+	path_priority/pp_hp_sw: Makefile pp_hp_sw.c 
 
 Log message:
-	Fix for bz 434588. dasd storage now defaults to queue_if_no_path.
+	Fix for bz 434988. Dave Wysochanski's backported mpath_prio_hp_sw priority
+	checker.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.9&r2=1.5.4.10
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.11&r2=1.20.2.12
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7.2.2&r2=1.7.2.3
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_hp_sw/Makefile.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=NONE&r2=1.1.4.1
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_hp_sw/pp_hp_sw.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=NONE&r2=1.1.4.1
 
---- multipath-tools/multipath.conf.defaults	2008/01/07 22:22:53	1.5.4.9
-+++ multipath-tools/multipath.conf.defaults	2008/07/12 00:07:33	1.5.4.10
-@@ -277,7 +277,7 @@
- #		product			"S/390 DASD ECKD"
- #		product_blacklist	"S/390.*"
- #		getuid_callout		"/sbin/dasd_id /dev/%n"
--#		features		"0"
-+#		features		"1 queue_if_no_path"
- #		hardware_handler	"0"
- #               path_grouping_policy    multibus
- #		rr_weight		uniform
---- multipath-tools/libmultipath/hwtable.c	2008/01/03 20:16:06	1.20.2.11
-+++ multipath-tools/libmultipath/hwtable.c	2008/07/12 00:07:33	1.20.2.12
-@@ -374,7 +374,7 @@
- 		.bl_product    = "S/390.*",
- 		.getuid        = "/sbin/dasd_id /dev/%n",
- 		.getprio       = NULL,
--		.features      = DEFAULT_FEATURES,
-+		.features      = "1 queue_if_no_path",
- 		.hwhandler     = DEFAULT_HWHANDLER,
- 		.selector      = DEFAULT_SELECTOR,
- 		.pgpolicy      = MULTIBUS,
+--- multipath-tools/Makefile	2007/06/18 22:59:47	1.7.2.2
++++ multipath-tools/Makefile	2008/07/12 01:24:07	1.7.2.3
+@@ -21,11 +21,13 @@
+ export KRNLOBJ
+ BUILDDIRS = multipath multipathd kpartx cciss_id path_priority/pp_alua \
+ 	    path_priority/pp_emc path_priority/pp_hds_modular \
+-	    path_priority/pp_netapp path_priority/pp_rdac path_priority/pp_tpc
++	    path_priority/pp_netapp path_priority/pp_rdac \
++	    path_priority/pp_tpc path_priority/pp_hp_sw
+ 
+ ALLDIRS = multipath multipathd kpartx cciss_id path_priority/pp_alua \
+ 	  path_priority/pp_emc path_priority/pp_hds_modular \
+-	  path_priority/pp_netapp path_priority/pp_rdac path_priority/pp_tpc \
++	  path_priority/pp_netapp path_priority/pp_rdac \
++	  path_priority/pp_hp_sw path_priority/pp_tpc \
+ 	  libmultipath libcheckers
+ 
+ VERSION = $(shell basename ${PWD} | cut -d'-' -f3)
