@@ -1,81 +1,45 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools ./multipath.conf.defaults libm ...
-Date: 12 Jul 2008 17:36:58 -0000
-Message-ID: <20080712173658.21816.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: Pavel Machek <pavel@suse.cz>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Sun, 13 Jul 2008 14:06:02 +0200
+Message-ID: <20080713120602.GC7517@elf.ucw.cz>
+References: <E1KGSvZ-0006dB-53@pomaz-ex.szeredi.hu> <20080709061621.GA5260@infradead.org> <E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu> <20080708234120.5072111f@infradead.org> <E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu> <20080708235502.1c52a586@infradead.org> <20080709071346.GS11558@disturbed> <20080709110900.GI9957@mit.edu> <20080709114958.GV11558@disturbed> <4874C3E8.20804@hp.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <4874C3E8.20804@hp.com>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: jim owens <jowens@hp.com>
+Cc: linux-fsdevel@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Theodore Tso <tytso@mit.edu>, Arjan van de Ven <arjan@infradead.org>, Miklos Szeredi <miklos@szeredi.hu>, hch@infradead.org, t-sato@yk.jp.nec.com, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, axboe@kernel.dk, mtk.manpages@googlemail.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2008-07-12 17:36:57
+Hi!
 
-Modified files:
-	.              : multipath.conf.defaults 
-	libmultipath   : hwtable.c 
+> NEED - provide way for SAN and hardware raid storage to do
+> its snapshot/copy function while the system was in-use and
+> get an image that could mount cleanly.  Without freeze, at
+> a minimum we usually needed filesystem metadata recovery
+> to run, worst case is completely unusable snapshits :)
+>
+> freezefs() is single-level:
+>
+>    ENOTSUPPOTED - by any other fs
+>    EOK - done
+>    EINPROGRESS
+>    EALREADY
+>
+> As implemented, freezefs only ensures the metadata is
+> consistent so the filesystem copy can mount anywhere.
+>
+> This means ONLY SOME metadata (or no metadata) is flushed and
+> then all metadata updates are stopped.  User/kernel writes
+> to already allocated file pages WILL go to a frozen disk.
 
-Log message:
-	Fix bz #446223. Added default configuration for DASD FBA devices.
+That's the difference here. They do write file data, and thus avoid
+mmap()-writes problem.
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.defaults.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.4.11&r2=1.5.4.12
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/hwtable.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.20.2.13&r2=1.20.2.14
-
---- multipath-tools/multipath.conf.defaults	2008/07/12 02:44:14	1.5.4.11
-+++ multipath-tools/multipath.conf.defaults	2008/07/12 17:36:56	1.5.4.12
-@@ -313,6 +313,18 @@
- #               path_checker            directio
- #	}
- #	device {
-+#		vendor			"IBM"
-+#		product			"S/390 DASD FBA"
-+#		product_blacklist	S/390.*"
-+#		getuid_callout		"sbin/dasd_id /dev/%n"
-+#		features		"0"
-+#		hardware_handler	"0"
-+#		path_grouping_policy	multibus
-+#		rr_weight		uniform
-+#		rr_min_io		1000
-+#		path_checker		directio
-+#	}
-+#	device {
- #		vendor			"NETAPP"
- #		product			"LUN"
- #		getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
---- multipath-tools/libmultipath/hwtable.c	2008/07/12 02:44:14	1.20.2.13
-+++ multipath-tools/libmultipath/hwtable.c	2008/07/12 17:36:56	1.20.2.14
-@@ -418,6 +418,23 @@
- 		.minio         = DEFAULT_MINIO,
- 		.checker_name  = DIRECTIO,
- 	},
-+	{
-+		/* IBM S/390 FBA DASD */
-+		.vendor        = "IBM",
-+		.product       = "S/390 DASD FBA",
-+		.bl_product    = "S/390.*",
-+		.getuid        = "/sbin/dasd_id /dev/%n",
-+		.getprio       = NULL,
-+		.features      = DEFAULT_FEATURES,
-+		.hwhandler     = DEFAULT_HWHANDLER,
-+		.selector      = DEFAULT_SELECTOR,
-+		.pgpolicy      = MULTIBUS,
-+		.pgfailback    = FAILBACK_UNDEF,
-+		.rr_weight     = RR_WEIGHT_NONE,
-+		.no_path_retry = NO_PATH_RETRY_UNDEF,
-+		.minio         = DEFAULT_MINIO,
-+		.checker_name  = DIRECTIO,
-+	},
-  	/*
- 	 * NETAPP controller family
- 	 *
+...and they _still_ provide auto-thaw.
+								Pavel
+-- 
+(english) http://www.livejournal.com/~pavelmachek
+(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
