@@ -1,60 +1,60 @@
-From: jim owens <jowens@hp.com>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Mon, 14 Jul 2008 10:04:30 -0400
-Message-ID: <487B5CEE.90404@hp.com>
-References: <20080709005254.GQ11558@disturbed> <20080709010922.GE9957@mit.edu> <E1KGSvZ-0006dB-53@pomaz-ex.szeredi.hu> <20080709061621.GA5260@infradead.org> <E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu> <20080708234120.5072111f@infradead.org> <E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu> <20080708235502.1c52a586@infradead.org> <20080709071346.GS11558@disturbed> <20080709110900.GI9957@mit.edu> <20080709114958.GV11558@disturbed> <4874C3E8.20804@hp.com> <88E7CDF01964465CB9F33DE11298271D@nsl.ad.nec.co.jp>
+From: "Jim Lester" <Jim.Lester@compellent.com>
+Subject: RE: [PATCH] libmultipath/hwtable.c: Compellent Definition
+Date: Mon, 14 Jul 2008 10:38:12 -0500
+Message-ID: <A7519D7FDEF2A144BA6D40BDF13100FEA3F5B2@ex2.Beer.Town>
+References: <A7519D7FDEF2A144BA6D40BDF13100FEA01806@ex2.Beer.Town>
+	<20080711165328.GB29126@mars.virtualiron.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <88E7CDF01964465CB9F33DE11298271D@nsl.ad.nec.co.jp>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: mtk.manpages@googlemail.com, axboe@kernel.dk, linux-kernel@vger.kernel.org, dm-devel@redhat.com, xfs@oss.sgi.com, linux-ext4@vger.kernel.org, viro@ZenIV.linux.org.uk, akpm@linux-foundation.org, pavel@suse.cz, linux-fsdevel@vger.kernel.org, hch@infradead.org, Miklos Szeredi <miklos@szeredi.hu>, Arjan van de Ven <arjan@infradead.org>, Theodore Tso <tytso@mit.edu>, Dave Chinner <david@fromorbit.com>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20080711165328.GB29126@mars.virtualiron.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Takashi Sato wrote:
+I know, but that's when dumps out when you do a "show config" So
+obviously my statement was slightly redundant. But I just wanted to make
+sure it was clear what settings I wanted.=20
 
-> What is the difference between the timeout and AUTO-THAW?
-> When the kernel detects a deadlock, does it occur to solve it?
+---
+Jim Lester
 
-TIMEOUT is a user-specified limit for the freeze.  It is
-not a deadlock preventer or deadlock breaker.  The reason
-it exists is:
+-----Original Message-----
+From: Konrad Rzeszutek [mailto:konrad@virtualiron.com]=20
+Sent: Friday, July 11, 2008 11:53 AM
+To: device-mapper development
+Subject: Re: [dm-devel] [PATCH] libmultipath/hwtable.c: Compellent
+Definition
 
-    - middle of the night (low but not zero users)
-    - cron triggers freeze and hardware snapshot
-    - san is overloaded by tape copy traffic so
-      hardware will take 2 hours to ack snapshot done
-    - user "company president" tries to create a report
-      needed for an AM meeting with bankers
-    - with so few users, system will just patiently
-      wait for hardware to finish
-    - after 10 minutes "company president" pages
-      admin, admin's boss, and "IT vice president"
-      in a real unhappy mood
+On Fri, Jul 11, 2008 at 11:17:03AM -0500, Jim Lester wrote:
+> The following is the patch to include a hardware definition for
+> Compellent's SAN. This is my first patch so hopefully I did everything
+> correctly. The definition in config form is below, if for some reason
+my
+> code doesn't match that, please inform me.
+>=20
+>         device {
+>                 vendor "COMPELNT"
+>                 product "Compellent Vol"
+>                 path_grouping_policy multibus
+>                 path_checker tur
+>                 checker tur
 
-AUTO-THAW is simply a name for the effect of all deadlock
-preventer and deadlock breaker code that the kernel has
-in the freeze implementation paths... if that code would
-unfreeze the filesystem.  We also implemented deadlock
-preventer code that does not thaw the freeze.
+That is bogus. There are no 'checker' field in the .conf file. Hopefully
+that isn't in your product release notes.
 
-None of the AUTO-THAW code is there to stop a stupid
-userspace program caller of freeze.  It handles things
-like "a system in our cluster is going down so we
-must have this filesystem unfrozen or the whole
-cluster will crash".   In places where there could be
-a kernel deadlock we made it "lock-only-if-non-blocking"
-and if we could not wait to retry later, the failure
-to lock would trigger an immediate unfreeze.
-
-Deadlock prevention needs code in critical paths in more
-than just filesystems.  Sometimes this is as simple as
-an "I can't wait on freeze" flag added to a vm-filesystem
-interface.
-
-Timers just don't work for keeping the kernel alive
-because they don't trigger on resource exhaustion.
-
-jim
+>                 failback immediate
+>                 no_path_retry queue
+>         }
