@@ -1,52 +1,33 @@
-From: Pavel Machek <pavel@suse.cz>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
 Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Mon, 14 Jul 2008 08:36:17 +0200
-Message-ID: <20080714063617.GF31949@elf.ucw.cz>
-References: <E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu> <20080708234120.5072111f@infradead.org> <E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu> <20080708235502.1c52a586@infradead.org> <20080709071346.GS11558@disturbed> <20080709110900.GI9957@mit.edu> <20080709114958.GV11558@disturbed> <4874C3E8.20804@hp.com> <20080713120602.GC7517@elf.ucw.cz> <487A383F.50600@hp.com>
+Date: Mon, 14 Jul 2008 22:12:51 +0900
+Message-ID: <88E7CDF01964465CB9F33DE11298271D@nsl.ad.nec.co.jp>
+References: <20080709005254.GQ11558@disturbed> <20080709010922.GE9957@mit.edu> <E1KGSvZ-0006dB-53@pomaz-ex.szeredi.hu> <20080709061621.GA5260@infradead.org> <E1KGT4q-0006fD-Jb@pomaz-ex.szeredi.hu> <20080708234120.5072111f@infradead.org> <E1KGTTm-0006ke-Jh@pomaz-ex.szeredi.hu> <20080708235502.1c52a586@infradead.org> <20080709071346.GS11558@disturbed> <20080709110900.GI9957@mit.edu> <20080709114958.GV11558@disturbed> <4874C3E8.20804@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain;
+	format=flowed;
+	charset="ISO-8859-1";
+	reply-type=response
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <487A383F.50600@hp.com>
+In-Reply-To: <4874C3E8.20804@hp.com>
 Sender: linux-ext4-owner@vger.kernel.org
 To: jim owens <jowens@hp.com>
-Cc: linux-fsdevel@vger.kernel.org, Dave Chinner <david@fromorbit.com>, Theodore Tso <tytso@mit.edu>, Arjan van de Ven <arjan@infradead.org>, Miklos Szeredi <miklos@szeredi.hu>, hch@infradead.org, t-sato@yk.jp.nec.com, akpm@linux-foundation.org, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, axboe@kernel.dk, mtk.manpages@googlemail.com
+Cc: mtk.manpages@googlemail.com, axboe@kernel.dk, linux-kernel@vger.kernel.org, dm-devel@redhat.com, xfs@oss.sgi.com, linux-ext4@vger.kernel.org, viro@ZenIV.linux.org.uk, akpm@linux-foundation.org, pavel@suse.cz, linux-fsdevel@vger.kernel.org, hch@infradead.org, Miklos Szeredi <miklos@szeredi.hu>, Arjan van de Ven <arjan@infradead.org>, Theodore Tso <tytso@mit.edu>, Dave Chinner <david@fromorbit.com>
 List-Id: dm-devel.ids
 
-On Sun 2008-07-13 13:15:43, jim owens wrote:
-> Pavel Machek wrote:
+Hi,
+
+jim owens wrote:
+> In addition to the user controllable timeout mechanism,
+> we internally implement AUTO-THAW in the filesystem
+> whenever necessary to prevent a kernel hang/crash.
 >
->>> This means ONLY SOME metadata (or no metadata) is flushed and
->>> then all metadata updates are stopped.  User/kernel writes
->>> to already allocated file pages WILL go to a frozen disk.
->>
->> That's the difference here. They do write file data, and thus avoid
->> mmap()-writes problem.
->>
->> ...and they _still_ provide auto-thaw.
->> 								Pavel
->
-> One of the hardest things to make people understand is that
-> stopping file data writes in the filesystem during a freeze
-> is not just dangerous, it is also __worthless__ unless you
-> have a complete "user environment freeze" mechanism.
+> If an AUTO-THAW occurs, we post to the log and an
+> event manager so the user knows the snapshot is bad.
 
-Eh?
+I am interested in AUTO-THAW.
+What is the difference between the timeout and AUTO-THAW?
+When the kernel detects a deadlock, does it occur to solve it?
 
-> And unless each independent component has a freeze and they
-> can all be coordinated, the data in the pipeline is never
-> stable enough to say "if you stop all writes to disk and
-> take a snapshot, this is the same as an orderly shutdown,
-> backup, restore, and startup".
-
-If you also freeze data writes, at least snapshot is not worse than
-_unexpected_ shutdown.
-
-And apps should already be ready for unexpected shutdowns (using fsync
-etc).
-
-								Pavel
-
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+Cheers, Takashi
