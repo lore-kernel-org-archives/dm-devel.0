@@ -1,17 +1,12 @@
-From: "Jim Lester" <Jim.Lester@compellent.com>
-Subject: RE: [PATCH] libmultipath/hwtable.c: Compellent Definition
-Date: Mon, 14 Jul 2008 10:38:12 -0500
-Message-ID: <A7519D7FDEF2A144BA6D40BDF13100FEA3F5B2@ex2.Beer.Town>
-References: <A7519D7FDEF2A144BA6D40BDF13100FEA01806@ex2.Beer.Town>
-	<20080711165328.GB29126@mars.virtualiron.com>
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: persistent reservation behaviour with dm-multipath
+Date: Thu, 17 Jul 2008 00:01:11 +0200
+Message-ID: <1216245671.28212.29.camel@plop>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20080711165328.GB29126@mars.virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,37 +19,33 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I know, but that's when dumps out when you do a "show config" So
-obviously my statement was slightly redundant. But I just wanted to make
-sure it was clear what settings I wanted.=20
+The current dm-multipath behaviour is currently a potent data corrupter
+on PR-based clusters sharing multipaths with the queue_if_no_path
+feature on. Consider the following scenario :
 
----
-Jim Lester
+- Node A take a write-exclusive persistent reservation on LU
+- Node B submits a write io to LU, which is a sda-sdb multipath
+=EF=BB=BF- B dm_multipath routes the wio to sda, the wio is failed, the p=
+ath is
+marked failed
+=EF=BB=BF- B dm_multipath routes the wio to sdb, the wio is failed, the l=
+ast
+path is marked failed
+- B queues the wio because of the queue_if_no_path feature. Process
+submitting the wio is stuck in D-state.
+- A releases the reservation. Queued wios are unqueued, corrupting the
+data on LU.
 
------Original Message-----
-From: Konrad Rzeszutek [mailto:konrad@virtualiron.com]=20
-Sent: Friday, July 11, 2008 11:53 AM
-To: device-mapper development
-Subject: Re: [dm-devel] [PATCH] libmultipath/hwtable.c: Compellent
-Definition
+I suspect wio returning a "reservation conflict" status should never be
+queued.
 
-On Fri, Jul 11, 2008 at 11:17:03AM -0500, Jim Lester wrote:
-> The following is the patch to include a hardware definition for
-> Compellent's SAN. This is my first patch so hopefully I did everything
-> correctly. The definition in config form is below, if for some reason
-my
-> code doesn't match that, please inform me.
->=20
->         device {
->                 vendor "COMPELNT"
->                 product "Compellent Vol"
->                 path_grouping_policy multibus
->                 path_checker tur
->                 checker tur
+DM suspend/resume on the multipath effectively flushes the queue, but
+this solution leaves a window open for data corruption, between io
+enqueue and user-space driven queue flush.
 
-That is bogus. There are no 'checker' field in the .conf file. Hopefully
-that isn't in your product release notes.
+I saw Mike's Aug 2005 patches for scsi errors translation in block-layer
+errors, which were a usable infrastructure to implement the desired
+behaviour. Is some variant of this work headed for the upstream kernel ?
 
->                 failback immediate
->                 no_path_retry queue
->         }
+Regards,
+cvaroqui
