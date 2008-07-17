@@ -1,156 +1,513 @@
-From: hare@suse.de (Hannes Reinecke)
-Subject: [PATCH 7/8] scsi_dh: attach to hardware handler from dm-mpath
-Date: Thu, 17 Jul 2008 09:39:17 +0200
-Message-ID: <20080717073917.36E0F18C6FD@pentland.suse.de>
+From: <Yanqing_Liu@Dell.com>
+Subject: Patch to lsi rda  device handler
+Date: Thu, 17 Jul 2008 11:56:12 -0500
+Message-ID: <00FE57DD11E3A94893D5BD54C3358BE884BE1F@AUSX3MPC128.aus.amer.dell.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Content-Type: multipart/mixed; boundary="===============1510387229=="
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com, sekharan@us.ibm.com
+Cc: Ahmad_Ali@Dell.com, mchristi@redhat.com, Jacob_Cherian@Dell.com, Shyam_Iyer@Dell.com, Charles_Rose@Dell.com
 List-Id: dm-devel.ids
 
+This is a multi-part message in MIME format.
 
-multipath keeps a separate device table which may be
-more current than the built-in one.
-So we should make sure to always call ->attach whenever
-a multipath map with hardware handler is instantiated.
-And we should call ->detach on removal, too.
+--===============1510387229==
+Content-class: urn:content-classes:message
+Content-Type: multipart/alternative;
+	boundary="----_=_NextPart_001_01C8E82E.04B0D394"
 
-Signed-off-by: Hannes Reinecke <hare@suse.de>
----
- drivers/md/dm-mpath.c                 |   13 +++++++
- drivers/scsi/device_handler/scsi_dh.c |   64 +++++++++++++++++++++++++++++++++
- include/scsi/scsi_dh.h                |    2 +
- 3 files changed, 79 insertions(+), 0 deletions(-)
+This is a multi-part message in MIME format.
 
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index e8f704a..bd2bcf4 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -147,9 +147,12 @@ static struct priority_group *alloc_priority_group(void)
- static void free_pgpaths(struct list_head *pgpaths, struct dm_target *ti)
- {
- 	struct pgpath *pgpath, *tmp;
-+	struct multipath *m = (struct multipath *) ti->private;
- 
- 	list_for_each_entry_safe(pgpath, tmp, pgpaths, list) {
- 		list_del(&pgpath->list);
-+		if (m->hw_handler_name)
-+			scsi_dh_detach(bdev_get_queue(pgpath->path.dev->bdev));
- 		dm_put_device(ti, pgpath->path.dev);
- 		free_pgpath(pgpath);
+------_=_NextPart_001_01C8E82E.04B0D394
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+Hello,
+
+Here is the lsi rdac device handler code that was posted:
+
+https://www.redhat.com/archives/dm-devel/2008-May/msg00003.html
+
+The following patch is to address a NULL pointer problem in lsi rdac
+device handler.
+
+In function get_rdac_req, after a request is successfully allocated, the
+area that the cmd pointer points to should be zeroed out. However, the
+function zeros out the command pointer itself, along with some other
+adjacent area. This results in NULL pointer dereference when submitting
+inquiry commands when checking virtual disk ownership during device
+discovery time. The kernel trace is attached at the end of the message.
+
+The change is to zero out the area that the cmd pointer points to,
+instead of the pointer itself in the allocated request structure.
+
+--- scsi_dh_rdac.c.orig	2008-07-17 01:53:10.000000000 -0400
++++ scsi_dh_rdac.c	2008-07-17 01:45:28.000000000 -0400
+@@ -214,7 +214,7 @@
+ 		return NULL;
  	}
-@@ -546,6 +549,7 @@ static struct pgpath *parse_path(struct arg_set *as, struct path_selector *ps,
- {
- 	int r;
- 	struct pgpath *p;
-+	struct multipath *m = (struct multipath *) ti->private;
- 
- 	/* we need at least a path arg */
- 	if (as->argc < 1) {
-@@ -564,6 +568,15 @@ static struct pgpath *parse_path(struct arg_set *as, struct path_selector *ps,
- 		goto bad;
- 	}
- 
-+	if (m->hw_handler_name) {
-+		r = scsi_dh_attach(bdev_get_queue(p->path.dev->bdev),
-+				   m->hw_handler_name);
-+		if (r < 0) {
-+			dm_put_device(ti, p->path.dev);
-+			goto bad;
-+		}
-+	}
-+
- 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
- 	if (r) {
- 		dm_put_device(ti, p->path.dev);
-diff --git a/drivers/scsi/device_handler/scsi_dh.c b/drivers/scsi/device_handler/scsi_dh.c
-index e90df9d..a915968 100644
---- a/drivers/scsi/device_handler/scsi_dh.c
-+++ b/drivers/scsi/device_handler/scsi_dh.c
-@@ -369,6 +369,70 @@ int scsi_dh_handler_exist(const char *name)
- }
- EXPORT_SYMBOL_GPL(scsi_dh_handler_exist);
- 
-+/*
-+ * scsi_dh_handler_attach - Attach device handler
-+ * @sdev - sdev the handler should be attached to
-+ * @name - name of the handler to attach
-+ */
-+int scsi_dh_attach(struct request_queue *q, const char *name)
-+{
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	struct scsi_device_handler *scsi_dh;
-+	int err = 0;
-+
-+	scsi_dh = get_device_handler(name);
-+	if (!scsi_dh)
-+		return -EINVAL;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (!sdev || !get_device(&sdev->sdev_gendev))
-+		err = -ENODEV;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	if (!err) {
-+		err = scsi_dh_handler_attach(sdev, scsi_dh);
-+
-+		put_device(&sdev->sdev_gendev);
-+	}
-+	return err;
-+}
-+EXPORT_SYMBOL_GPL(scsi_dh_attach);
-+
-+/*
-+ * scsi_dh_handler_detach - Detach device handler
-+ * @sdev - sdev the handler should be detached from
-+ *
-+ * This function will detach the device handler only
-+ * if the sdev is not part of the internal list, ie
-+ * if it has been attached manually.
-+ */
-+void scsi_dh_detach(struct request_queue *q)
-+{
-+	unsigned long flags;
-+	struct scsi_device *sdev;
-+	struct scsi_device_handler *scsi_dh = NULL;
-+
-+	spin_lock_irqsave(q->queue_lock, flags);
-+	sdev = q->queuedata;
-+	if (!sdev || !get_device(&sdev->sdev_gendev))
-+		sdev = NULL;
-+	spin_unlock_irqrestore(q->queue_lock, flags);
-+
-+	if (!sdev)
-+		return;
-+
-+	if (sdev->scsi_dh_data) {
-+		/* if sdev is not on internal list, detach */
-+		scsi_dh = sdev->scsi_dh_data->scsi_dh;
-+		if (!device_handler_match(scsi_dh, sdev))
-+			scsi_dh_handler_detach(sdev, scsi_dh);
-+	}
-+	put_device(&sdev->sdev_gendev);
-+}
-+EXPORT_SYMBOL_GPL(scsi_dh_detach);
-+
- static struct notifier_block scsi_dh_nb = {
- 	.notifier_call = scsi_dh_notifier
- };
-diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
-index 3b486d9..78ba73f 100644
---- a/include/scsi/scsi_dh.h
-+++ b/include/scsi/scsi_dh.h
-@@ -58,3 +58,5 @@ enum {
- 
- extern int scsi_dh_activate(struct request_queue *);
- extern int scsi_dh_handler_exist(const char *);
-+extern int scsi_dh_attach(struct request_queue *, const char *);
-+extern void scsi_dh_detach(struct request_queue *q);
--- 
-1.5.2.4
+=20
+-	memset(&rq->cmd, 0, BLK_MAX_CDB);
++	memset(rq->cmd, 0, BLK_MAX_CDB);
+ 	rq->sense =3D h->sense;
+ 	memset(rq->sense, 0, SCSI_SENSE_BUFFERSIZE);
+ 	rq->sense_len =3D 0;
 
+
+Below is the kernel trace when problem happens, just for reference:
+
+Jul 10 01:05:52 localhost kernel: In fn rdac_activate
+Jul 10 01:05:52 localhost kernel: BUG: unable to handle kernel NULL
+pointer dereference at 0000000000000000
+Jul 10 01:05:52 localhost kernel: IP: [<ffffffffa051e1d4>]
+:scsi_dh_rdac:submit_inquiry+0x42/0x8d
+Jul 10 01:05:52 localhost kernel: PGD 0=20
+Jul 10 01:05:52 localhost kernel: Oops: 0002 [1] SMP=20
+Jul 10 01:05:52 localhost kernel: CPU 2=20
+Jul 10 01:05:52 localhost kernel: Modules linked in: scsi_dh_rdac vfat
+fat autofs4 hidp rfcomm l2cap bluetooth sunrpc iptable_filter ip_tables
+ip6t_REJECT xt_tcpudp ip6table_filter ip6_tables x_tables ipv6 ib_iser
+rdma_cm ib_cm iw_cm ib_sa ib_mad ib_core ib_addr iscsi_tcp libiscsi
+scsi_transport_iscsi dm_round_robin dm_multipath scsi_dh sbs sbshc
+battery acpi_memhotplug ac parport_pc lp parport sg usb_storage dcdbas
+ide_cd_mod cdrom bnx2 serio_raw button rtc_cmos rtc_core rtc_lib
+i5000_edac shpchp edac_core pcspkr dm_snapshot dm_zero dm_mirror dm_log
+dm_mod ata_piix libata megaraid_sas mptsas mptscsih scsi_transport_sas
+mptbase sd_mod scsi_mod ext3 jbd uhci_hcd ohci_hcd ehci_hcd [last
+unloaded: microcode]
+Jul 10 01:05:52 localhost kernel: Pid: 5741, comm: kmpath_handlerd Not
+tainted 2.6.26-rc5 #1
+Jul 10 01:05:52 localhost kernel: RIP: 0010:[<ffffffffa051e1d4>]
+[<ffffffffa051e1d4>] :scsi_dh_rdac:submit_inquiry+0x42/0x8d
+Jul 10 01:05:52 localhost kernel: RSP: 0018:ffff81003c511dd0  EFLAGS:
+00010246
+Jul 10 01:05:52 localhost kernel: RAX: 0000000000000000 RBX:
+00000000000000af RCX: 0000000000000001
+Jul 10 01:05:52 localhost kernel: RDX: ffff81003c4818b8 RSI:
+0000000000000000 RDI: ffff81003e82eb10
+Jul 10 01:05:52 localhost kernel: RBP: 00000000000000c8 R08:
+0000000000000003 R09: 0000000000000005
+Jul 10 01:05:52 localhost kernel: R10: ffff81003a472c15 R11:
+000000000000005d R12: ffff81003e82eb10
+Jul 10 01:05:52 localhost multipathd: mpath2: event checker started=20
+Jul 10 01:05:52 localhost kernel: R13: ffffffffa051f640 R14:
+ffff81003956d920 R15: 0000000000000000
+Jul 10 01:05:52 localhost kernel: FS:  0000000000000000(0000)
+GS:ffff81003fa5be40(0000) knlGS:0000000000000000
+Jul 10 01:05:52 localhost kernel: CS:  0010 DS: 0018 ES: 0018 CR0:
+000000008005003b
+Jul 10 01:05:52 localhost kernel: CR2: 0000000000000000 CR3:
+0000000000201000 CR4: 00000000000006e0
+Jul 10 01:05:52 localhost kernel: DR0: 0000000000000000 DR1:
+0000000000000000 DR2: 0000000000000000
+Jul 10 01:05:52 localhost kernel: DR3: 0000000000000000 DR6:
+00000000ffff0ff0 DR7: 0000000000000400
+Jul 10 01:05:52 localhost kernel: Process kmpath_handlerd (pid: 5741,
+threadinfo ffff81003c510000, task ffff81003e9329a0)
+Jul 10 01:05:52 localhost kernel: Stack:  ffff81003a472c00
+ffff81003956d800 ffff81003956d800 ffffffffa051e4db
+Jul 10 01:05:52 localhost kernel:  ffff81003e9329a0 ffff81003a472c08
+ffff81003d5e67c0 ffffffff808d0700
+Jul 10 01:05:52 localhost kernel:  0000000000000000 ffff81003d5e67c0
+ffff81003c511ed0 0000000000000000
+Jul 10 01:05:52 localhost kernel: Call Trace:
+Jul 10 01:05:52 localhost kernel:  [<ffffffffa051e4db>] ?
+:scsi_dh_rdac:rdac_activate+0x70/0x461
+Jul 10 01:05:52 localhost kernel:  [<ffffffffa03050f4>] ?
+:scsi_dh:scsi_dh_activate+0x55/0x9c
+Jul 10 01:05:52 localhost kernel:  [<ffffffffa0310327>] ?
+:dm_multipath:activate_path+0x0/0x16d
+Jul 10 01:05:52 localhost kernel:  [<ffffffffa0310352>] ?
+:dm_multipath:activate_path+0x2b/0x16d
+Jul 10 01:05:52 localhost kernel:  [<ffffffffa0310327>] ?
+:dm_multipath:activate_path+0x0/0x16d
+Jul 10 01:05:52 localhost kernel:  [<ffffffff8023fed9>] ?
+run_workqueue+0x7b/0x103
+Jul 10 01:05:52 localhost kernel:  [<ffffffff80240754>] ?
+worker_thread+0xd5/0xe0
+Jul 10 01:05:52 localhost kernel:  [<ffffffff80242f26>] ?
+autoremove_wake_function+0x0/0x2e
+Jul 10 01:05:52 localhost kernel:  [<ffffffff8024067f>] ?
+worker_thread+0x0/0xe0
+Jul 10 01:05:52 localhost kernel:  [<ffffffff80242df7>] ?
+kthread+0x47/0x74
+Jul 10 01:05:53 localhost kernel:  [<ffffffff8022d674>] ?
+schedule_tail+0x28/0x5d
+Jul 10 01:05:53 localhost kernel:  [<ffffffff8020cb98>] ?
+child_rip+0xa/0x12
+Jul 10 01:05:53 localhost kernel:  [<ffffffff80242db0>] ?
+kthread+0x0/0x74
+Jul 10 01:05:53 localhost kernel:  [<ffffffff8020cb8e>] ?
+child_rip+0x0/0x12
+Jul 10 01:05:53 localhost kernel:=20
+Jul 10 01:05:53 localhost multipathd: mpath0: event checker started=20
+Jul 10 01:05:53 localhost kernel:=20
+Jul 10 01:05:53 localhost multipathd: mpath13: event checker started=20
+Jul 10 01:05:53 localhost kernel: Code: 04 0f 0b eb fe 48 8d 70 75 31 c9
+e8 c1 fe ff ff 48 85 c0 48 89 c2 b9 0c 00 00 00 74 52 48 8b 80 e8 00 00
+00 b1 01 31 f6 4c 89 e7 <c6> 00 12 48 8b 82 e8 00 00 00 c6 40 01 01 48
+8b 82 e8 00 00 00=20
+Jul 10 01:05:53 localhost multipathd: path checkers start up=20
+Jul 10 01:05:53 localhost kernel: RIP  [<ffffffffa051e1d4>]
+:scsi_dh_rdac:submit_inquiry+0x42/0x8d
+Jul 10 01:05:53 localhost multipathd: dm-4: add map (uevent)=20
+Jul 10 01:05:53 localhost kernel:  RSP <ffff81003c511dd0>
+Jul 10 01:05:53 localhost multipathd: dm-4: devmap already registered=20
+Jul 10 01:05:53 localhost kernel: CR2: 0000000000000000
+Jul 10 01:05:53 localhost kernel: ---[ end trace f05af9e56671650e ]---
+Jul 10 01:08:52 localhost multipathd: dm-3: add map (uevent)=20
+Jul 10 01:08:52 localhost multipathd: dm-3: devmap already registered=20
+Jul 10 01:08:52 localhost multipathd: dm-2: remove map (uevent)=20
+Jul 10 01:08:52 localhost multipathd: mpath2: map in use=20
+Jul 10 01:08:52 localhost multipathd: mpath2: can't flush=20
+Jul 10 01:11:52 localhost multipathd: dm-2: add map (uevent)=20
+Jul 10 01:11:52 localhost multipathd: dm-2: devmap already registered=20
+
+Please provide any feedback that you may have.
+
+Thanks,
+Yanqing
+
+------_=_NextPart_001_01C8E82E.04B0D394
+Content-Type: text/html;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+<META HTTP-EQUIV=3D"Content-Type" CONTENT=3D"text/html; =
+charset=3Dus-ascii">
+<META NAME=3D"Generator" CONTENT=3D"MS Exchange Server version =
+6.5.7653.36">
+<TITLE>Patch to lsi rda  device handler</TITLE>
+</HEAD>
+<BODY>
+<!-- Converted from text/rtf format -->
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Hello,</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Here is the lsi rdac device handler =
+code that was posted:</FONT>
+</P>
+
+<P><A =
+HREF=3D"https://www.redhat.com/archives/dm-devel/2008-May/msg00003.html">=
+<U><FONT COLOR=3D"#0000FF" SIZE=3D2 =
+FACE=3D"Arial">https://www.redhat.com/archives/dm-devel/2008-May/msg00003=
+.html</FONT></U></A>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">The following patch is to address a =
+NULL pointer problem in lsi rdac device handler.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">In function get_rdac_req, after a =
+request is successfully allocated, the area that the cmd pointer points =
+to should be zeroed out. However, the function zeros out the command =
+pointer itself, along with some other adjacent area. This results in =
+NULL pointer dereference when submitting inquiry commands when checking =
+virtual disk ownership during device discovery time. The kernel trace is =
+attached at the end of the message.</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">The change is to zero out the area that =
+the cmd pointer points to, instead of the pointer itself in the =
+allocated request structure.</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">--- scsi_dh_rdac.c.orig =
+2008-07-17 01:53:10.000000000 -0400</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">+++ =
+scsi_dh_rdac.c&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 2008-07-17 =
+01:45:28.000000000 -0400</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">@@ -214,7 +214,7 @@</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; =
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return NULL;</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">&nbsp;</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memset(&amp;rq-&gt;cmd, 0, =
+BLK_MAX_CDB);</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memset(rq-&gt;cmd, 0, =
+BLK_MAX_CDB);</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rq-&gt;sense =3D =
+h-&gt;sense;</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; memset(rq-&gt;sense, 0, =
+SCSI_SENSE_BUFFERSIZE);</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier =
+New">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; rq-&gt;sense_len =3D =
+0;</FONT>
+</P>
+<BR>
+
+<P><FONT SIZE=3D2 FACE=3D"Arial">Below is the kernel trace when problem =
+happens, just for reference:</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost kernel: =
+In fn rdac_activate</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: BUG: unable to handle kernel NULL pointer dereference at =
+0000000000000000</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: IP: [&lt;ffffffffa051e1d4&gt;] =
+:scsi_dh_rdac:submit_inquiry+0x42/0x8d</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: PGD 0 </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: Oops: 0002 [1] SMP </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: CPU 2 </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: Modules linked in: scsi_dh_rdac vfat fat autofs4 hidp rfcomm =
+l2cap bluetooth sunrpc iptable_filter ip_tables ip6t_REJECT xt_tcpudp =
+ip6table_filter ip6_tables x_tables ipv6 ib_iser rdma_cm ib_cm iw_cm =
+ib_sa ib_mad ib_core ib_addr iscsi_tcp libiscsi scsi_transport_iscsi =
+dm_round_robin dm_multipath scsi_dh sbs sbshc battery acpi_memhotplug ac =
+parport_pc lp parport sg usb_storage dcdbas ide_cd_mod cdrom bnx2 =
+serio_raw button rtc_cmos rtc_core rtc_lib i5000_edac shpchp edac_core =
+pcspkr dm_snapshot dm_zero dm_mirror dm_log dm_mod ata_piix libata =
+megaraid_sas mptsas mptscsih scsi_transport_sas mptbase sd_mod scsi_mod =
+ext3 jbd uhci_hcd ohci_hcd ehci_hcd [last unloaded: =
+microcode]</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost kernel: =
+Pid: 5741, comm: kmpath_handlerd Not tainted 2.6.26-rc5 #1</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: RIP: 0010:[&lt;ffffffffa051e1d4&gt;]&nbsp; =
+[&lt;ffffffffa051e1d4&gt;] =
+:scsi_dh_rdac:submit_inquiry+0x42/0x8d</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost kernel: =
+RSP: 0018:ffff81003c511dd0&nbsp; EFLAGS: 00010246</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: RAX: 0000000000000000 RBX: 00000000000000af RCX: =
+0000000000000001</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: RDX: ffff81003c4818b8 RSI: 0000000000000000 RDI: =
+ffff81003e82eb10</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: RBP: 00000000000000c8 R08: 0000000000000003 R09: =
+0000000000000005</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: R10: ffff81003a472c15 R11: 000000000000005d R12: =
+ffff81003e82eb10</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+multipathd: mpath2: event checker started </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: R13: ffffffffa051f640 R14: ffff81003956d920 R15: =
+0000000000000000</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: FS:&nbsp; 0000000000000000(0000) GS:ffff81003fa5be40(0000) =
+knlGS:0000000000000000</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: CS:&nbsp; 0010 DS: 0018 ES: 0018 CR0: 000000008005003b</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: CR2: 0000000000000000 CR3: 0000000000201000 CR4: =
+00000000000006e0</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: DR0: 0000000000000000 DR1: 0000000000000000 DR2: =
+0000000000000000</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: =
+0000000000000400</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: Process kmpath_handlerd (pid: 5741, threadinfo ffff81003c510000, =
+task ffff81003e9329a0)</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost kernel: =
+Stack:&nbsp; ffff81003a472c00 ffff81003956d800 ffff81003956d800 =
+ffffffffa051e4db</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; ffff81003e9329a0 ffff81003a472c08 ffff81003d5e67c0 =
+ffffffff808d0700</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; 0000000000000000 ffff81003d5e67c0 ffff81003c511ed0 =
+0000000000000000</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel: Call Trace:</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffffa051e4db&gt;] ? =
+:scsi_dh_rdac:rdac_activate+0x70/0x461</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffffa03050f4&gt;] ? =
+:scsi_dh:scsi_dh_activate+0x55/0x9c</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffffa0310327&gt;] ? =
+:dm_multipath:activate_path+0x0/0x16d</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffffa0310352&gt;] ? =
+:dm_multipath:activate_path+0x2b/0x16d</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffffa0310327&gt;] ? =
+:dm_multipath:activate_path+0x0/0x16d</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffff8023fed9&gt;] ? =
+run_workqueue+0x7b/0x103</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffff80240754&gt;] ? =
+worker_thread+0xd5/0xe0</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffff80242f26&gt;] ? =
+autoremove_wake_function+0x0/0x2e</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffff8024067f&gt;] ? worker_thread+0x0/0xe0</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:52 localhost =
+kernel:&nbsp; [&lt;ffffffff80242df7&gt;] ? kthread+0x47/0x74</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel:&nbsp; [&lt;ffffffff8022d674&gt;] ? =
+schedule_tail+0x28/0x5d</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel:&nbsp; [&lt;ffffffff8020cb98&gt;] ? child_rip+0xa/0x12</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel:&nbsp; [&lt;ffffffff80242db0&gt;] ? kthread+0x0/0x74</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel:&nbsp; [&lt;ffffffff8020cb8e&gt;] ? child_rip+0x0/0x12</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel: </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+multipathd: mpath0: event checker started </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel: </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+multipathd: mpath13: event checker started </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel: Code: 04 0f 0b eb fe 48 8d 70 75 31 c9 e8 c1 fe ff ff 48 85 c0 =
+48 89 c2 b9 0c 00 00 00 74 52 48 8b 80 e8 00 00 00 b1 01 31 f6 4c 89 e7 =
+&lt;c6&gt; 00 12 48 8b 82 e8 00 00 00 c6 40 01 01 48 8b 82 e8 00 00 00 =
+</FONT></P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+multipathd: path checkers start up </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel: RIP&nbsp; [&lt;ffffffffa051e1d4&gt;] =
+:scsi_dh_rdac:submit_inquiry+0x42/0x8d</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+multipathd: dm-4: add map (uevent) </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel:&nbsp; RSP &lt;ffff81003c511dd0&gt;</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+multipathd: dm-4: devmap already registered </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel: CR2: 0000000000000000</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:05:53 localhost =
+kernel: ---[ end trace f05af9e56671650e ]---</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:08:52 localhost =
+multipathd: dm-3: add map (uevent) </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:08:52 localhost =
+multipathd: dm-3: devmap already registered </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:08:52 localhost =
+multipathd: dm-2: remove map (uevent) </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:08:52 localhost =
+multipathd: mpath2: map in use </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:08:52 localhost =
+multipathd: mpath2: can't flush </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:11:52 localhost =
+multipathd: dm-2: add map (uevent) </FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Jul 10 01:11:52 localhost =
+multipathd: dm-2: devmap already registered </FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Please provide any feedback that =
+you may have.</FONT>
+</P>
+
+<P><FONT SIZE=3D2 FACE=3D"Courier New">Thanks,</FONT>
+
+<BR><FONT SIZE=3D2 FACE=3D"Courier New">Yanqing</FONT>
+</P>
+
+</BODY>
+</HTML>
+------_=_NextPart_001_01C8E82E.04B0D394--
+
+
+--===============1510387229==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1510387229==--
