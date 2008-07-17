@@ -1,11 +1,11 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: persistent reservation behaviour with dm-multipath
-Date: Thu, 17 Jul 2008 00:01:11 +0200
-Message-ID: <1216245671.28212.29.camel@plop>
+From: KAIZUKA Hiroyuki <kaizuka@valinux.co.jp>
+Subject: iobandctl minor update
+Date: Thu, 17 Jul 2008 15:12:01 +0900
+Message-ID: <487EE2B1.7050607@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,36 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The current dm-multipath behaviour is currently a potent data corrupter
-on PR-based clusters sharing multipaths with the queue_if_no_path
-feature on. Consider the following scenario :
+Hi all,
 
-- Node A take a write-exclusive persistent reservation on LU
-- Node B submits a write io to LU, which is a sda-sdb multipath
-=EF=BB=BF- B dm_multipath routes the wio to sda, the wio is failed, the p=
-ath is
-marked failed
-=EF=BB=BF- B dm_multipath routes the wio to sdb, the wio is failed, the l=
-ast
-path is marked failed
-- B queues the wio because of the queue_if_no_path feature. Process
-submitting the wio is stuck in D-state.
-- A releases the reservation. Queued wios are unqueued, corrupting the
-data on LU.
+This is a minor update release of iobandctl.
 
-I suspect wio returning a "reservation conflict" status should never be
-queued.
+For now I believe this is a complete version of iobandctl.
+The only improvement in this release is cleaned-up source code.
 
-DM suspend/resume on the multipath effectively flushes the queue, but
-this solution leaves a window open for data corruption, between io
-enqueue and user-space driven queue flush.
+You can find the source code and documentations of iobandctl from:
+http://people.valinux.co.jp/~kaizuka/dm-ioband/iobandctl/
 
-I saw Mike's Aug 2005 patches for scsi errors translation in block-layer
-errors, which were a usable infrastructure to implement the desired
-behaviour. Is some variant of this work headed for the upstream kernel ?
+iobandctl is an administration tool to realize disk I/O bandwidth
+control. It needs dm-ioband, which is an I/O bandwidth controller
+implemented as a device-mapper driver. You can find dm-ioband at:
+http://people.valinux.co.jp/~ryov/bwctl/
 
-Regards,
-cvaroqui
+Changes from previous version:
+* Source code cleanup.
+* Improved execution speed, in the case of using configuration file
+  especially.
+
+
+Thanks,
+KAIZUKA Hiroyuki
