@@ -1,44 +1,49 @@
-From: KAIZUKA Hiroyuki <kaizuka@valinux.co.jp>
-Subject: iobandctl minor update
-Date: Thu, 17 Jul 2008 15:12:01 +0900
-Message-ID: <487EE2B1.7050607@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: [PATCH 0/8] scsi_dh update
+Date: Thu, 17 Jul 2008 09:37:29 +0200
+Message-ID: <487EF6B9.20107@suse.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: SCSI Mailing List <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Chandra Seetharaman <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-Hi all,
+Hi James,
 
-This is a minor update release of iobandctl.
+this is the (hopefully final) update to my scsi_dh patchset.
+=46eatures are:
 
-For now I believe this is a complete version of iobandctl.
-The only improvement in this release is cleaned-up source code.
+- Move device-table matching into the device_handler infrastructure,
+ so that individual drivers don't have to implement it themselves
+- Adds a 'dh_state' sysfs attribute for manually attaching device
+ handler to new or unknown disks; this allows to override the
+ internal device tables
+- Update the dm-multipath code to attach the device handler
+ specified in the multipath configuration
+- Add a cache to speed up lookup of several identical devices
+- Update existing EMC, RDAC, and hp_sw device handler to use
+ the new infrastructure
+- Add new SPC-3 ALUA device handler
 
-You can find the source code and documentations of iobandctl from:
-http://people.valinux.co.jp/~kaizuka/dm-ioband/iobandctl/
+The NetApp device handler has been left out for now as it's still
+under development.
 
-iobandctl is an administration tool to realize disk I/O bandwidth
-control. It needs dm-ioband, which is an I/O bandwidth controller
-implemented as a device-mapper driver. You can find dm-ioband at:
-http://people.valinux.co.jp/~ryov/bwctl/
+Please apply.
 
-Changes from previous version:
-* Source code cleanup.
-* Improved execution speed, in the case of using configuration file
-  especially.
+Cheers,
 
-
-Thanks,
-KAIZUKA Hiroyuki
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
