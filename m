@@ -1,16 +1,16 @@
-From: "Koehler, M - SPLXM" <Menno.Koehler@klm.com>
+From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
 Subject: RE: Losing paths
-Date: Wed, 23 Jul 2008 14:33:51 +0200
-Message-ID: <AB48FAA97D916742945DE3B0C9AA521B0276FB5A@KL1010VE.cs.ad.klmcorp.net>
+Date: Wed, 23 Jul 2008 09:12:43 -0400
+Message-ID: <1D80D4F6D179BD4D869FE807A5BF833602D8B686@EXCNYSM0A1AN.nysemail.nyenet>
 References: <E6D1DDD48426A44EB25DF27F5AAE7A6505B96AC7@KL1010XG.cs.ad.klmcorp.net>
+	<AB48FAA97D916742945DE3B0C9AA521B0276FB5A@KL1010VE.cs.ad.klmcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <E6D1DDD48426A44EB25DF27F5AAE7A6505B96AC7@KL1010XG.cs.ad.klmcorp.net>
+Content-Class: urn:content-classes:message
+In-Reply-To: <AB48FAA97D916742945DE3B0C9AA521B0276FB5A@KL1010VE.cs.ad.klmcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,6 +22,28 @@ Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+Did you change multipath.conf and reboot the machine?
+ if not reboot, what steps put the changed multipath.conf into effect
+for the 2145's (SVC) LUNs?
+
+
+--------------------------------------------------------
+This e-mail, including any attachments, may be confidential, privileged o=
+r otherwise legally protected. It is intended only for the addressee. If =
+you received this e-mail in error or from someone who was not authorized =
+to send it to you, do not disseminate, copy or otherwise use this e-mail =
+or its attachments.  Please notify the sender immediately by reply e-mail=
+ and delete the e-mail from your system.
+
+
+-----Original Message-----
+
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Koehler, M - SPLXM
+Sent: Wednesday, July 23, 2008 8:34 AM
+To: device-mapper development
+Subject: RE: [dm-devel] Losing paths
 
 Greetings,
 
@@ -90,3 +112,8 @@ Koninklijke Luchtvaart Maatschappij N.V. (also known as KLM Royal
 Dutch Airlines) is registered in Amstelveen, The Netherlands, with
 registered number 33014286=20
 **********************************************************************
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
