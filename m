@@ -1,16 +1,16 @@
-From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
+From: "Koehler, M - SPLXM" <Menno.Koehler@klm.com>
 Subject: RE: Losing paths
-Date: Wed, 23 Jul 2008 09:12:43 -0400
-Message-ID: <1D80D4F6D179BD4D869FE807A5BF833602D8B686@EXCNYSM0A1AN.nysemail.nyenet>
-References: <E6D1DDD48426A44EB25DF27F5AAE7A6505B96AC7@KL1010XG.cs.ad.klmcorp.net>
-	<AB48FAA97D916742945DE3B0C9AA521B0276FB5A@KL1010VE.cs.ad.klmcorp.net>
+Date: Wed, 23 Jul 2008 15:22:47 +0200
+Message-ID: <AB48FAA97D916742945DE3B0C9AA521B0276FB5C@KL1010VE.cs.ad.klmcorp.net>
+References: <1D80D4F6D179BD4D869FE807A5BF833602D8B686@EXCNYSM0A1AN.nysemail.nyenet>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Class: urn:content-classes:message
-In-Reply-To: <AB48FAA97D916742945DE3B0C9AA521B0276FB5A@KL1010VE.cs.ad.klmcorp.net>
+Content-class: urn:content-classes:message
+In-Reply-To: <1D80D4F6D179BD4D869FE807A5BF833602D8B686@EXCNYSM0A1AN.nysemail.nyenet>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,18 +23,36 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hello,=20
+
+Thanks for your respond, first I tried the multipathd -k reconfigure
+(and get a ok returned) and later when seen that it still was using tur
+we tried a reboot but with the same result.
+
+Kind regards,
+
+Menno
+
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Romanowski, John (OFT)
+Sent: Wednesday, July 23, 2008 3:13 PM
+To: device-mapper development
+Subject: RE: [dm-devel] Losing paths
+
 Did you change multipath.conf and reboot the machine?
  if not reboot, what steps put the changed multipath.conf into effect
 for the 2145's (SVC) LUNs?
 
 
 --------------------------------------------------------
-This e-mail, including any attachments, may be confidential, privileged o=
-r otherwise legally protected. It is intended only for the addressee. If =
-you received this e-mail in error or from someone who was not authorized =
-to send it to you, do not disseminate, copy or otherwise use this e-mail =
-or its attachments.  Please notify the sender immediately by reply e-mail=
- and delete the e-mail from your system.
+This e-mail, including any attachments, may be confidential, privileged
+or otherwise legally protected. It is intended only for the addressee.
+If you received this e-mail in error or from someone who was not
+authorized to send it to you, do not disseminate, copy or otherwise use
+this e-mail or its attachments.  Please notify the sender immediately by
+reply e-mail and delete the e-mail from your system.
 
 
 -----Original Message-----
@@ -117,3 +135,28 @@ registered number 33014286=20
 dm-devel mailing list
 dm-devel@redhat.com
 https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
+**********************************************************************
+For information, services and offers, please visit our web site:
+http://www.klm.com. This e-mail and any attachment may contain
+confidential and privileged material intended for the addressee
+only. If you are not the addressee, you are notified that no part
+of the e-mail or any attachment may be disclosed, copied or
+distributed, and that any other action related to this e-mail or
+attachment is strictly prohibited, and may be unlawful. If you have
+received this e-mail by error, please notify the sender immediately
+by return e-mail, and delete this message.=20
+
+Koninklijke Luchtvaart Maatschappij NV (KLM), its subsidiaries
+and/or its employees shall not be liable for the incorrect or
+incomplete transmission of this e-mail or any attachments, nor
+responsible for any delay in receipt.
+Koninklijke Luchtvaart Maatschappij N.V. (also known as KLM Royal
+Dutch Airlines) is registered in Amstelveen, The Netherlands, with
+registered number 33014286=20
+**********************************************************************
