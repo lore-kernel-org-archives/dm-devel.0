@@ -1,13 +1,13 @@
-From: Lars Ellenberg <lars.ellenberg@linbit.com>
-Subject: [PATCH] if READA is intentionally ignored,
-	that is not EIO, but EWOULDBLOCK
-Date: Fri, 25 Jul 2008 14:54:31 +0200
-Message-ID: <20080725125431.GD28245@soda.linbit>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] dm-raid1.c: Conditionally ignore kcopyd errors
+	depending on whether mirror handles them
+Date: Fri, 25 Jul 2008 10:18:28 -0500
+Message-ID: <1216999108.16636.2.camel@hydrogen>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +20,27 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Signed-off-by: Lars Ellenberg <lars.ellenberg@linbit.com>
----
- drivers/md/dm-zero.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+	brassow
 
-diff --git a/drivers/md/dm-zero.c b/drivers/md/dm-zero.c
-index bdec206..7b9f5e5 100644
---- a/drivers/md/dm-zero.c
-+++ b/drivers/md/dm-zero.c
-@@ -37,7 +37,7 @@ static int zero_map(struct dm_target *ti, struct bio *bio,
- 		break;
- 	case READA:
- 		/* readahead of null bytes only wastes buffer cache */
--		return -EIO;
-+		return -EWOULDBLOCK;
- 	case WRITE:
- 		/* writes get silently dropped */
- 		break;
--- 
-1.5.5.GIT
+dm-raid1 is setting the flag to ignore errors in kcopyd.  Now that
+mirroring is capable of handling errors, it should.  So, we make
+the setting of the 'ignore errors' flag conditional on whether
+mirror is handling errors or not.
 
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
--- 
-: Lars Ellenberg                            Tel +43-1-8178292-55 :
-: LINBIT Information Technologies GmbH      Fax +43-1-8178292-82 :
-: Vivenotgasse 48, A-1120 Vienna/Europe    http://www.linbit.com :
+Index: linux-2.6.26-rc8/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.26-rc8.orig/drivers/md/dm-raid1.c
++++ linux-2.6.26-rc8/drivers/md/dm-raid1.c
+@@ -842,7 +842,9 @@ static int recover(struct mirror_set *ms
+ 	}
+ 
+ 	/* hand to kcopyd */
+-	set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
++	if (!errors_handled(ms))
++		set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
++
+ 	r = dm_kcopyd_copy(ms->kcopyd_client, &from, ms->nr_mirrors - 1, to,
+ 			   flags, recovery_complete, reg);
+ 
