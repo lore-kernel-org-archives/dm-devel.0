@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] dm-raid1.c: Conditionally ignore kcopyd errors
-	depending on whether mirror handles them
-Date: Fri, 25 Jul 2008 10:18:28 -0500
-Message-ID: <1216999108.16636.2.camel@hydrogen>
+Subject: [Patch 1 of 2]: Cluster-aware log module - enabling
+	cluster-aware mirrors
+Date: Fri, 25 Jul 2008 11:09:28 -0500
+Message-ID: <1217002168.17218.5.camel@hydrogen>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -22,10 +22,15 @@ List-Id: dm-devel.ids
 
 	brassow
 
-dm-raid1 is setting the flag to ignore errors in kcopyd.  Now that
-mirroring is capable of handling errors, it should.  So, we make
-the setting of the 'ignore errors' flag conditional on whether
-mirror is handling errors or not.
+The logging API needs an extra function to make cluster mirroring
+possible.  This new function allows us to check whether a mirror
+region is being recovered on another machine in the cluster.  This
+helps us prevent simultaneous recovery I/O and process I/O to the
+same locations on disk.
+
+Cluster-aware log modules will implement this function.  Single
+machine log modules will not.  So, there is no performance
+penalty for single machine mirrors.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -33,14 +38,71 @@ Index: linux-2.6.26-rc8/drivers/md/dm-raid1.c
 ===================================================================
 --- linux-2.6.26-rc8.orig/drivers/md/dm-raid1.c
 +++ linux-2.6.26-rc8/drivers/md/dm-raid1.c
-@@ -842,7 +842,9 @@ static int recover(struct mirror_set *ms
+@@ -1157,6 +1157,9 @@ static void do_writes(struct mirror_set 
+ 	int state;
+ 	struct bio *bio;
+ 	struct bio_list sync, nosync, recover, *this_list = NULL;
++	struct bio_list requeue;
++	struct dm_dirty_log *log = ms->rh.log;
++	region_t region;
+ 
+ 	if (!writes->head)
+ 		return;
+@@ -1167,9 +1170,18 @@ static void do_writes(struct mirror_set 
+ 	bio_list_init(&sync);
+ 	bio_list_init(&nosync);
+ 	bio_list_init(&recover);
++	bio_list_init(&requeue);
+ 
+ 	while ((bio = bio_list_pop(writes))) {
+-		state = rh_state(&ms->rh, bio_to_region(&ms->rh, bio), 1);
++		region = bio_to_region(&ms->rh, bio);
++
++		if (log->type->is_remote_recovering &&
++		    log->type->is_remote_recovering(log, region)) {
++			bio_list_add(&requeue, bio);
++			continue;
++		}
++
++		state = rh_state(&ms->rh, region, 1);
+ 		switch (state) {
+ 		case RH_CLEAN:
+ 		case RH_DIRTY:
+@@ -1189,6 +1201,16 @@ static void do_writes(struct mirror_set 
  	}
  
- 	/* hand to kcopyd */
--	set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
-+	if (!errors_handled(ms))
-+		set_bit(DM_KCOPYD_IGNORE_ERROR, &flags);
+ 	/*
++	 * Add bios that are delayed due to remote recovery
++	 * back on to the write queue
++	 */
++	if (unlikely(requeue.head)) {
++		spin_lock_irq(&ms->lock);
++		bio_list_merge(&ms->writes, &requeue);
++		spin_unlock_irq(&ms->lock);
++	}
 +
- 	r = dm_kcopyd_copy(ms->kcopyd_client, &from, ms->nr_mirrors - 1, to,
- 			   flags, recovery_complete, reg);
++	/*
+ 	 * Increment the pending counts for any regions that will
+ 	 * be written to (writes to recover regions are going to
+ 	 * be delayed).
+Index: linux-2.6.26-rc8/include/linux/dm-dirty-log.h
+===================================================================
+--- linux-2.6.26-rc8.orig/include/linux/dm-dirty-log.h
++++ linux-2.6.26-rc8/include/linux/dm-dirty-log.h
+@@ -113,6 +113,16 @@ struct dm_dirty_log_type {
+ 	 */
+ 	int (*status)(struct dm_dirty_log *log, status_type_t status_type,
+ 		      char *result, unsigned maxlen);
++
++	/*
++	 * is_remote_recovering is necessary for cluster mirroring. It provides
++	 * a way to detect recovery on another node, so we aren't writing
++	 * concurrently.  This function is likely to block (when a cluster log
++	 * is used).
++	 *
++	 * Returns: 0, 1
++	 */
++	int (*is_remote_recovering)(struct dm_dirty_log *log, region_t region);
+ };
  
+ int dm_dirty_log_type_register(struct dm_dirty_log_type *type);
