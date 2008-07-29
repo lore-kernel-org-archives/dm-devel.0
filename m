@@ -1,16 +1,14 @@
-From: "Daniel Keisling" <daniel.keisling@austin.ppdi.com>
-Subject: RE: multipathd sometimes not reinstating paths
-Date: Tue, 29 Jul 2008 09:40:04 -0500
-Message-ID: <65F9ACC78BD8304BAAEB817634C62D4C0617C8FD@AUSMAIL01.americas.ppdi.local>
-References: <200807291435.57935.tore@linpro.no>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Sajesh Singh <ssingh@amnh.org>
+Subject: Re: Strange DM issue on boot
+Date: Tue, 29 Jul 2008 10:47:24 -0400
+Message-ID: <488F2D7C.9090905@amnh.org>
+References: <156D04C1A9F47A40BBAE9554FDC7CD7802568F08@3parm3.hq.3pardata.com>
+Reply-To: ssingh@amnh.org, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <200807291435.57935.tore@linpro.no>
+In-Reply-To: <156D04C1A9F47A40BBAE9554FDC7CD7802568F08@3parm3.hq.3pardata.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,56 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-I have tested failing paths by removing SAN controllers from the
-specific zone in my switch config.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-On Behalf Of Tore Anderson
-Sent: Tuesday, July 29, 2008 7:36 AM
-To: dm-devel@redhat.com
-Subject: [dm-devel] multipathd sometimes not reinstating paths
+Charles Polk wrote:
+> The controllers are not happy with the panging on the controllers.
+>
+>   
+Should I not be using the default settings in the /etc/multipath.conf? 
+Are there any specific settings that need to be configured to use 
+multipathd with an HDS AMS1000 array?
 
-Hello,
-
-I've on several occasions seen that multipathd fails to reinstate paths=20
-that has recovered.  Yesterday I had a controller meltdown on an array,=20
-and several hosts ended up stuck in a all-paths-down state, which a=20
-simple restart of multipathd fixed.  It's as if multipathd at some=20
-point stopped to check dead paths for revival.  The hosts were running=20
-0.4.7 and 0.4.5 (RHEL4/5 and Debian 4.0).
-
-Since getting things back on line was the priority I didn't get around=20
-to debugging it, unfortunately.  I've seen this before many times,=20
-though, so I'm wondering if anybody else has seen this and know what=20
-causes it?  Is there any known workarounds or ways to avoid it?
-
-Any suggestions on how to debug it if I see it happen again?
-
-Regards,
---=20
-Tore Anderson
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
-
-
-______________________________________________________________________
-This email transmission and any documents, files or previous email
-messages attached to it may contain information that is confidential or
-legally privileged. If you are not the intended recipient or a person
-responsible for delivering this transmission to the intended recipient,
-you are hereby notified that you must not read this transmission and
-that any disclosure, copying, printing, distribution or use of this
-transmission is strictly prohibited. If you have received this transmissi=
-on
-in error, please immediately notify the sender by telephone or return ema=
-il
-and delete the original transmission and its attachments without reading
-or saving in any manner.
+> ----- Original Message -----
+> From: dm-devel-bounces@redhat.com <dm-devel-bounces@redhat.com>
+> To: dm-devel@redhat.com <dm-devel@redhat.com>
+> Sent: Mon Jul 28 13:54:52 2008
+> Subject: [dm-devel] Strange DM issue on boot
+>
+> EL 5.2
+> Hitachi AMS1000 array
+> Qlogic HBA (qla2xxx driver)
+>
+> I am seeing a strange issue when rebooting a server connected to the 
+> AMS1000 disk array. If I have a mount point defined in /etc/fstab that 
+> points to a mulitpathe device I receive the following error:
+>
+> error calling out /sbin/mpath_prio_hds_modular 8:32
+>
+> That error would seem to indicate a path failure, but if I remove the 
+> entry from /etc/fstab and reboot I am able to mount the device from the 
+> command line. I have tried to include the qlogic driver in the initrd, 
+> but that did help in any way. Are the dm-multipath drivers loading at 
+> the incorrect time? Has anyone ever encountered this before?
+>
+> Regards,
+>
+> Sajesh
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>   
