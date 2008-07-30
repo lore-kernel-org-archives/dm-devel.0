@@ -1,18 +1,15 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: Pathvec messages
-Date: Wed, 30 Jul 2008 12:37:02 -0500
-Message-ID: <20080730173701.GG30728@ether.msp.redhat.com>
-References: <488F4A9E.6020906@amnh.org>
-	<20080729170455.GE30728@ether.msp.redhat.com>
-	<488F54B7.6030600@amnh.org>
-	<20080729190735.GF30728@ether.msp.redhat.com>
-	<488F72E4.7020506@amnh.org>
+From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
+Subject: RE: /dev/dm-? and /dev/mapper/
+Date: Wed, 30 Jul 2008 14:47:36 -0400
+Message-ID: <1D80D4F6D179BD4D869FE807A5BF833602D8B6B0@EXCNYSM0A1AN.nysemail.nyenet>
+References: <200807300844.11578.wilhelm.meier@fh-kl.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <488F72E4.7020506@amnh.org>
+Content-Class: urn:content-classes:message
+In-Reply-To: <200807300844.11578.wilhelm.meier@fh-kl.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,83 +19,63 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sajesh Singh <ssingh@amnh.org>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Jul 29, 2008 at 03:43:32PM -0400, Sajesh Singh wrote:
->    Benjamin Marzinski wrote:
-> 
->  On Tue, Jul 29, 2008 at 01:34:47PM -0400, Sajesh Singh wrote:
-> 
-> 
-> 
->     Benjamin Marzinski wrote:
-> 
->   On Tue, Jul 29, 2008 at 12:51:42PM -0400, Sajesh Singh wrote:
-> 
-> 
->   Whenever I run the multipath -v3 command on a EL 5 server I see the
->   following line in the output for each device.
-> 
->   sdc: not found in pathvec
-> 
-> 
->   This simply means that the device is not already stored in multipath's
->   in memory list of discovered paths. It's completely normal to see this
->   for your all your devices when running the multipath command.
-> 
->   -Ben
-> 
-> 
-> 
->     That being said, when does the device make it into the memory list of
->     discovered paths ?
-> 
-> 
->  Immediately after multipath realizes that it's not there.  In
->  multipathd, which uses the same code, you will see this when multipath
->  first spots a new device.  After that, the device will be list of
->  discovered paths.
-> 
->  -Ben
-> 
-> 
->    So running multipath -v3 multiple times and seeing the output of "not
->    found in pathvec" is merely informational?
-> 
+device-mapper creates the /dev/dm-? names, I doubt you could get rid of
+them.
+LVM names are persistent, maybe instead of mount-by-label you could
+change to mount the persistent /dev/VGname/LVname's
 
-Correct.
 
--Ben
-> 
-> 
-> 
->   I have seen questions on this before, but no answer as to what this means.
->   Is the message merely information or does the multipath configuration need
->   to be changed?
-> 
->   Regards,
-> 
->   Sajesh
-> 
->   --
->   dm-devel mailing list
->   [[1]2]dm-devel@redhat.com
->   [3][2]https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> 
->  References
-> 
->     Visible links
->     1. [3]mailto:dm-devel@redhat.com
->     2. [4]https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> 
-> References
-> 
->    Visible links
->    1. mailto:2]dm-devel@redhat.com
->    2. https://www.redhat.com/mailman/listinfo/dm-devel
->    3. mailto:dm-devel@redhat.com
->    4. https://www.redhat.com/mailman/listinfo/dm-devel
+
+--------------------------------------------------------
+This e-mail, including any attachments, may be confidential, privileged o=
+r otherwise legally protected. It is intended only for the addressee. If =
+you received this e-mail in error or from someone who was not authorized =
+to send it to you, do not disseminate, copy or otherwise use this e-mail =
+or its attachments.  Please notify the sender immediately by reply e-mail=
+ and delete the e-mail from your system.
+
+
+-----Original Message-----
+
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
+On Behalf Of Wilhelm Meier
+Sent: Wednesday, July 30, 2008 2:44 AM
+To: dm-devel@redhat.com
+Subject: [dm-devel] /dev/dm-? and /dev/mapper/
+
+Hi,
+
+I don't know if this is the right place to ask ...
+
+I use kernel 2.6.22 and debian etch.
+
+If I create a vg and some volumes in it I get the
+
+/dev/dm-?
+
+and
+
+/dev/mapper/<vg>-<lv>
+
+devices nodes.
+
+If I try to mount the filesystem via label, sometimes /dev/dm-? and=20
+sometimes /dev/mapper/<vg>-<lv> gets mounted.
+
+That is the cause of some later errors in my setup.
+
+The question is: how can I get rid of the dm-? (e.g. they should not=20
+be created at all) oder how do I the mount to stick to=20
+the /dev/mapper/... files?
+
+TIA,
+--=20
+Wilhelm
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
