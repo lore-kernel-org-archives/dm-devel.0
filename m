@@ -1,17 +1,18 @@
-From: Eduard Nicodei <omega2youall@gmail.com>
-Subject: Re: logical volumes not being detected
-Date: Wed, 30 Jul 2008 14:02:58 +0300
-Message-ID: <200807301402.58647.omega2youall@gmail.com>
-References: <200807281212.32092.omega2youall@gmail.com>
-	<1D80D4F6D179BD4D869FE807A5BF8336026171DA@EXCNYSM0A1AN.nysemail.nyenet>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: Pathvec messages
+Date: Wed, 30 Jul 2008 12:37:02 -0500
+Message-ID: <20080730173701.GG30728@ether.msp.redhat.com>
+References: <488F4A9E.6020906@amnh.org>
+	<20080729170455.GE30728@ether.msp.redhat.com>
+	<488F54B7.6030600@amnh.org>
+	<20080729190735.GF30728@ether.msp.redhat.com>
+	<488F72E4.7020506@amnh.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1D80D4F6D179BD4D869FE807A5BF8336026171DA@EXCNYSM0A1AN.nysemail.nyenet>
 Content-Disposition: inline
+In-Reply-To: <488F72E4.7020506@amnh.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,65 +22,83 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Sajesh Singh <ssingh@amnh.org>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Monday 28 July 2008 18:57:22 Romanowski, John (OFT) wrote:
-> Hi,
-> I'm not familiar with ubuntu. In SLES one has to enable the boot.lvm script
-> which runs vgscan and vgchange to detect and enable the PV's, VG's and
-> their LV's.
->
-> Try manually running vgscan and then vgchange -a y
-> and see if that helps.
-> good luck.
->
->
-> --------------------------------------------------------
-> This e-mail, including any attachments, may be confidential, privileged or
-> otherwise legally protected. It is intended only for the addressee. If you
-> received this e-mail in error or from someone who was not authorized to
-> send it to you, do not disseminate, copy or otherwise use this e-mail or
-> its attachments.  Please notify the sender immediately by reply e-mail and
-> delete the e-mail from your system.
->
->
-> -----Original Message-----
->
-> From: dm-devel-bounces@redhat.com on behalf of Eduard Nicodei
-> Sent: Mon 7/28/2008 5:12 AM
-> To: dm-devel@redhat.com
-> Subject: [dm-devel] logical volumes not being detected
->
-> Hello, this is my first posting here and I'm sorry if this has already been
-> discused. All I want to know is what other modules/libraries other than the
-> device-mapper kernel module, lvm2 and the devmapper library do I need in
-> order to have my logical volumes detected.
-> here's my setup: one 160GB sata2 hdd; one 320GB sata2 hdd; a minimal
-> version of ubuntu (installed from debootstrap) and a custom compiled kernel
-> version 2.6.26 (I should mention that the kernel doesn't contain all of the
-> modules - I wanted it to provide only the features I need). I have created
-> a physical volume, volume group and logical volume from another ubuntu
-> installation. It is detected while using the live cd, and also if I boot
-> the minimal ubuntu with another kernel that has a full set of features.
->
-> regards, Eduard
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+On Tue, Jul 29, 2008 at 03:43:32PM -0400, Sajesh Singh wrote:
+>    Benjamin Marzinski wrote:
+> 
+>  On Tue, Jul 29, 2008 at 01:34:47PM -0400, Sajesh Singh wrote:
+> 
+> 
+> 
+>     Benjamin Marzinski wrote:
+> 
+>   On Tue, Jul 29, 2008 at 12:51:42PM -0400, Sajesh Singh wrote:
+> 
+> 
+>   Whenever I run the multipath -v3 command on a EL 5 server I see the
+>   following line in the output for each device.
+> 
+>   sdc: not found in pathvec
+> 
+> 
+>   This simply means that the device is not already stored in multipath's
+>   in memory list of discovered paths. It's completely normal to see this
+>   for your all your devices when running the multipath command.
+> 
+>   -Ben
+> 
+> 
+> 
+>     That being said, when does the device make it into the memory list of
+>     discovered paths ?
+> 
+> 
+>  Immediately after multipath realizes that it's not there.  In
+>  multipathd, which uses the same code, you will see this when multipath
+>  first spots a new device.  After that, the device will be list of
+>  discovered paths.
+> 
+>  -Ben
+> 
+> 
+>    So running multipath -v3 multiple times and seeing the output of "not
+>    found in pathvec" is merely informational?
+> 
 
-sorry, neither vgscan nor vgchange -a -y didn't work. However, after twinking 
-my kernel I found the problem: I had to select the "Create deprecated sysfs 
-files" and the "Kernel->user space relay support (formerly relayfs)" kernel 
-configuration options, (both from "General setup");
-now I'm not a dm-developer so this is just a suggestion: does device-mapper 
-use deprecated sysfs files? If so, it should be upgraded, or at least a 
-warning be posted somewhere that dm needs those files.
+Correct.
+
+-Ben
+> 
+> 
+> 
+>   I have seen questions on this before, but no answer as to what this means.
+>   Is the message merely information or does the multipath configuration need
+>   to be changed?
+> 
+>   Regards,
+> 
+>   Sajesh
+> 
+>   --
+>   dm-devel mailing list
+>   [[1]2]dm-devel@redhat.com
+>   [3][2]https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+>  References
+> 
+>     Visible links
+>     1. [3]mailto:dm-devel@redhat.com
+>     2. [4]https://www.redhat.com/mailman/listinfo/dm-devel
+> 
+> 
+> References
+> 
+>    Visible links
+>    1. mailto:2]dm-devel@redhat.com
+>    2. https://www.redhat.com/mailman/listinfo/dm-devel
+>    3. mailto:dm-devel@redhat.com
+>    4. https://www.redhat.com/mailman/listinfo/dm-devel
