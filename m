@@ -1,103 +1,53 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH RFC] dm snapshot: shared exception store
-Date: Mon, 4 Aug 2008 17:22:12 +0900
-Message-ID: <20080804171242V.fujita.tomonori@lab.ntt.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/7] I/O bandwidth controller and BIO tracking
+Date: Mon, 04 Aug 2008 17:51:26 +0900 (JST)
+Message-ID: <20080804.175126.193692178.ryov@valinux.co.jp>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753789AbYHDIvg@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: agk@sourceware.org
 List-Id: dm-devel.ids
 
-This is a new implementation of dm-snapshot.
+Hi everyone,
 
-The important design differences from the current dm-snapshot are:
+This series of patches of dm-ioband now includes "The bio tracking mechanism,"
+which has been posted individually to this mailing list.
+This makes it easy for anybody to control the I/O bandwidth even when
+the I/O is one of delayed-write requests.
+Have fun!
 
-- It uses one exception store per origin device that is shared by all snapshots.
-- It doesn't keep the complete exception tables in memory.
+This series of patches consists of two parts:
+  1. dm-ioband
+    Dm-ioband is an I/O bandwidth controller implemented as a
+    device-mapper driver, which gives specified bandwidth to each job
+    running on the same physical device. A job is a group of processes
+    with the same pid or pgrp or uid or a virtual machine such as KVM
+    or Xen. A job can also be a cgroup by applying the bio-cgroup patch.
+  2. bio-cgroup
+    Bio-cgroup is a BIO tracking mechanism, which is implemented on
+    the cgroup memory subsystem. With the mechanism, it is able to
+    determine which cgroup each of bio belongs to, even when the bio
+    is one of delayed-write requests issued from a kernel thread
+    such as pdflush.
 
-I took the exception store code of Zumastor (http://zumastor.org/).
+The above two parts have been posted individually to this mailing list
+until now, but after this time we would release them all together.
 
-Zumastor is remote replication software (a local server sends the
-delta between two snapshots to a remote server, and then the remote
-server applies the delta in an atomic manner. So the data on the
-remote server is always consistent).
+  [PATCH 1/7] dm-ioband: Patch of device-mapper driver
+  [PATCH 2/7] dm-ioband: Documentation of design overview, installation,
+                         command reference and examples.
+  [PATCH 3/7] bio-cgroup: Introduction
+  [PATCH 4/7] bio-cgroup: Split the cgroup memory subsystem into two parts
+  [PATCH 5/7] bio-cgroup: Remove a lot of "#ifdef"s
+  [PATCH 6/7] bio-cgroup: Implement the bio-cgroup
+  [PATCH 7/7] bio-cgroup: Add a cgroup support to dm-ioband
 
-Zumastor snapshot fulfills the above two requirements, but it is
-implemented in user space. The dm kernel module sends the information
-of a request to user space and the user space daemon tells the kernel
-what to do.
+Please see the following site for more information:
+  Linux Block I/O Bandwidth Control Project
+  http://people.valinux.co.jp/~ryov/bwctl/
 
-Zumastor user-space daemon needs to take care about replication so the
-user-space approach makes sense but I think that the pure user-space
-approach is an overkill just for snapshot. I prefer to implement
-snapshot in kernel space (as the current dm-snapshot does). I think
-that we can add features for remote replication software like Zumastor
-to it, that is, features to provide user space a delta between two
-snapshots and apply the delta in an atomic manner (via ioctl or
-something else).
-
-Note that the code is still in a very early stage. There are lots of
-TODO items:
-
-- snapshot deletion support
-- writable snapshot support
-- protection for unexpected events (probably journaling)
-- performance improvement (handling exception cache and format, locking, etc)
-- better integration with the current snapshot code
-- improvement on error handling
-- cleanups
-- generating a delta between two snapshots
-- applying a delta to in a atomic manner
-
-The patch against 2.6.26 is available at:
-
-http://www.kernel.org/pub/linux/kernel/people/tomo/dm-snap/0001-dm-snapshot-dm-snapshot-shared-exception-store.patch
-
-
-Here's an example (/dev/sdb1 as an origin device and /dev/sdg1 as a cow device):
-
-- creates the set of an origin and a cow:
-
-flax:~# echo 0 `blockdev --getsize /dev/sdb1` snapshot-origin /dev/sdb1 /dev/sdg1 P2 16 |dmsetup create work
-
-- no snapshot yet:
-
-flax:~# dmsetup status
-work: 0 125017767 snapshot-origin : no snapshot
-
-
-- creates one snapshot (the id of the snapshot is 0):
-
-flax:~# dmsetup message /dev/mapper/work 0 snapshot create 0
-
-
-- creates one snapshot (the id of the snapshot is 1):
-
-flax:~# dmsetup message /dev/mapper/work 0 snapshot create 1
-
-
-- there are two snapshots (#0 and #1):
-
-flax:~# dmsetup status
-work: 0 125017767 snapshot-origin 0 1
-
-
-- let's access to the snapshots:
-
-flax:~# echo 0 `blockdev --getsize /dev/sdb1` snapshot /dev/sdb1 0|dmsetup create work-snap0
-flax:~# echo 0 `blockdev --getsize /dev/sdb1` snapshot /dev/sdb1 1|dmsetup create work-snap1
-
-flax:~# ls /dev/mapper/
-control  work  work-snap0  work-snap1
+Thanks,
+Ryo Tsuruta
