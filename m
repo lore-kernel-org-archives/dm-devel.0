@@ -1,55 +1,55 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 7/7] bio-cgroup: Add a cgroup support to dm-ioband
-Date: Mon, 04 Aug 2008 18:01:02 +0900 (JST)
-Message-ID: <20080804.180102.39161075.ryov@valinux.co.jp>
-References: <20080804.175748.189722512.ryov@valinux.co.jp>
-	<20080804.175934.112619046.ryov@valinux.co.jp>
-	<20080804.180022.183027902.ryov@valinux.co.jp>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: LVM Snapshot Feature
+Date: Mon, 4 Aug 2008 09:15:11 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0808040912350.28033@devserv.devel.redhat.com>
+References: <4DE0C34D8B0DA64C9585DC45C36EA03BAB0788@dewdfe1g.wdf.sap.corp>
+	<1746B17C-CC23-40D7-A993-FC32CAA5BF24@gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754555AbYHDJBU@vger.kernel.org>
-In-Reply-To: <20080804.180022.183027902.ryov@valinux.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
-Cc: agk@sourceware.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1746B17C-CC23-40D7-A993-FC32CAA5BF24@gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-With this patch, dm-ioband can work with the bio cgroup.
+On Fri, 1 Aug 2008, Adam Hamsik wrote:
 
-Based on 2.6.27-rc1-mm1
-Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
-Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+> On Aug,Friday 1 2008, at 9:35 AM, Bombardier, Pascal wrote:
+> 
+> > Hi,
+> > 
+> > In your opinion, does it make sense to be able to create non-persistent
+> > snapshots ?
+> > In the case of a filesystem backup, a non-persistent snapshot would be a
+> > snapshot that we agree to lose in case of failure or reboot. If anything
+> > happens, a server administrator would have to recreate a new snapshot
+> > and then restart the backup.
+> > In this case, I think metadata could be stored in memory instead of on
+> > disk, which should improve LVM snapshot performance.
+> > 
+> > Is this theory wrong, and is this something which can be implemented
+> > easily in the current LVM code ?
+> > 
+> 
+> AFAIK non-persistent snapshots are already implemented see
+> DM_PERSISTENT_DEV_FLAG ? I haven't look at linux kernel code how is
+> it done but when I solve my lvcreate -s bug on NetBSD non-persistent
+> snapshots are next :).
+> 
+> Regards
+> 
+> Adam.
 
-diff -Ndupr linux-2.6.27-rc1-mm1.cg2/drivers/md/dm-ioband-type.c linux-2.6.27-rc1-mm1.cg3/drivers/md/dm-ioband-type.c
---- linux-2.6.27-rc1-mm1.cg2/drivers/md/dm-ioband-type.c	2008-08-01 16:53:57.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg3/drivers/md/dm-ioband-type.c	2008-08-01 19:44:36.000000000 +0900
-@@ -6,6 +6,7 @@
-  * This file is released under the GPL.
-  */
- #include <linux/bio.h>
-+#include <linux/biocontrol.h>
- #include "dm.h"
- #include "dm-bio-list.h"
- #include "dm-ioband.h"
-@@ -53,13 +54,13 @@ static int ioband_node(struct bio *bio)
- 
- static int ioband_cgroup(struct bio *bio)
- {
--  /*
--   * This function should return the ID of the cgroup which issued "bio".
--   * The ID of the cgroup which the current process belongs to won't be
--   * suitable ID for this purpose, since some BIOs will be handled by kernel
--   * threads like aio or pdflush on behalf of the process requesting the BIOs.
--   */
--	return 0;	/* not implemented yet */
-+	struct io_context *ioc = get_bio_cgroup_iocontext(bio);
-+	int id = 0;
-+	if (ioc) {
-+		id = ioc->id;
-+		put_io_context(ioc);
-+	}
-+	return id;
- }
- 
- struct group_type dm_ioband_group_type[] = {
+Yes. They are implemented in device mapper in kernel --- but no userspace 
+lvm tool can use them. You can only create them using dmsetup.
+
+Mikulas
