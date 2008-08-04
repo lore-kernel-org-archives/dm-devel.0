@@ -1,55 +1,29 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: LVM Snapshot Feature
-Date: Mon, 4 Aug 2008 09:15:11 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0808040912350.28033@devserv.devel.redhat.com>
-References: <4DE0C34D8B0DA64C9585DC45C36EA03BAB0788@dewdfe1g.wdf.sap.corp>
-	<1746B17C-CC23-40D7-A993-FC32CAA5BF24@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Dave Hansen <dave@linux.vnet.ibm.com>
+Subject: Too many I/O controller patches
+Date: Mon, 04 Aug 2008 10:20:33 -0700
+Message-ID: <1217870433.20260.101.camel@nimitz>
+References: <20080804.175126.193692178.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1746B17C-CC23-40D7-A993-FC32CAA5BF24@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1759692AbYHDRVf@vger.kernel.org>
+In-Reply-To: <20080804.175126.193692178.ryov@valinux.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, agk@sourceware.org, Andrea Righi <righi.andrea@gmail.com>
 List-Id: dm-devel.ids
 
-On Fri, 1 Aug 2008, Adam Hamsik wrote:
+On Mon, 2008-08-04 at 17:51 +0900, Ryo Tsuruta wrote:
+> This series of patches of dm-ioband now includes "The bio tracking mechanism,"
+> which has been posted individually to this mailing list.
+> This makes it easy for anybody to control the I/O bandwidth even when
+> the I/O is one of delayed-write requests.
 
-> On Aug,Friday 1 2008, at 9:35 AM, Bombardier, Pascal wrote:
-> 
-> > Hi,
-> > 
-> > In your opinion, does it make sense to be able to create non-persistent
-> > snapshots ?
-> > In the case of a filesystem backup, a non-persistent snapshot would be a
-> > snapshot that we agree to lose in case of failure or reboot. If anything
-> > happens, a server administrator would have to recreate a new snapshot
-> > and then restart the backup.
-> > In this case, I think metadata could be stored in memory instead of on
-> > disk, which should improve LVM snapshot performance.
-> > 
-> > Is this theory wrong, and is this something which can be implemented
-> > easily in the current LVM code ?
-> > 
-> 
-> AFAIK non-persistent snapshots are already implemented see
-> DM_PERSISTENT_DEV_FLAG ? I haven't look at linux kernel code how is
-> it done but when I solve my lvcreate -s bug on NetBSD non-persistent
-> snapshots are next :).
-> 
-> Regards
-> 
-> Adam.
+During the Containers mini-summit at OLS, it was mentioned that there
+are at least *FOUR* of these I/O controllers floating around.  Have you
+talked to the other authors?  (I've cc'd at least one of them).
 
-Yes. They are implemented in device mapper in kernel --- but no userspace 
-lvm tool can use them. You can only create them using dmsetup.
+We obviously can't come to any kind of real consensus with people just
+tossing the same patches back and forth.
 
-Mikulas
+-- Dave
