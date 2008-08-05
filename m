@@ -1,66 +1,97 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
+From: Andrea Righi <righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
 Subject: Re: Too many I/O controller patches
-Date: Tue, 05 Aug 2008 15:28:16 +0900 (JST)
-Message-ID: <20080805.152816.105502343.taka@valinux.co.jp>
-References: <1217876521.20260.123.camel@nimitz> <48976A2A.9060600@gmail.com>
-	<1217883036.20260.137.camel@nimitz>
+Date: Tue,  5 Aug 2008 11:27:52 +0200 (MEST)
+Message-ID: <48981D18.2070006@gmail.com>
+References: <20080804.175126.193692178.ryov@valinux.co.jp>	
+	<1217870433.20260.101.camel@nimitz> <489748E6.5080106@gmail.com>	
+	<1217876521.20260.123.camel@nimitz> <48976A2A.9060600@gmail.com>
+	<6599ad830808042255y59215481l5463d4dca9fb2001@mail.gmail.com>
+Reply-To: righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <1217883036.20260.137.camel@nimitz>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: dave@linux.vnet.ibm.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, righi.andrea@gmail.com
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <6599ad830808042255y59215481l5463d4dca9fb2001-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Paul Menage <menage-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Cc: xen-devel-GuqFBffKawuULHF6PoxzQEEOCMrvLtNR@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
 List-Id: dm-devel.ids
 
-Hi,
-
-> > >> But I'm not yet convinced that limiting the IO writes at the device
-> > >> mapper layer is the best solution. IMHO it would be better to throttle
-> > >> applications' writes when they're dirtying pages in the page cache (the
-> > >> io-throttle way), because when the IO requests arrive to the device
-> > >> mapper it's too late (we would only have a lot of dirty pages that are
-> > >> waiting to be flushed to the limited block devices, and maybe this could
-> > >> lead to OOM conditions). IOW dm-ioband is doing this at the wrong level
-> > >> (at least for my requirements). Ryo, correct me if I'm wrong or if I've
-> > >> not understood the dm-ioband approach.
-> > > 
-> > > The avoid-lots-of-page-dirtying problem sounds like a hard one.  But, if
-> > > you look at this in combination with the memory controller, they would
-> > > make a great team.
-> > > 
-> > > The memory controller keeps you from dirtying more than your limit of
-> > > pages (and pinning too much memory) even if the dm layer is doing the
-> > > throttling and itself can't throttle the memory usage.
-> > 
-> > mmh... but in this way we would just move the OOM inside the cgroup,
-> > that is a nice improvement, but the main problem is not resolved...
-> > 
-> > A safer approach IMHO is to force the tasks to wait synchronously on
-> > each operation that directly or indirectly generates i/o.
+Paul Menage wrote:
+> On Mon, Aug 4, 2008 at 1:44 PM, Andrea Righi <righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org> wrote:
+>> A safer approach IMHO is to force the tasks to wait synchronously on
+>> each operation that directly or indirectly generates i/o.
+>>
+>> In particular the solution used by the io-throttle controller to limit
+>> the dirty-ratio in memory is to impose a sleep via
+>> schedule_timeout_killable() in balance_dirty_pages() when a generic
+>> process exceeds the limits defined for the belonging cgroup.
+>>
+>> Limiting read operations is a lot more easy, because they're always
+>> synchronized with i/o requests.
 > 
-> Fine in theory, hard in practice. :)
+> I think that you're conflating two issues:
 > 
-> I think the best we can hope for is to keep parity with what happens in
-> the rest of the kernel.  We already have a problem today with people
-> mmap()'ing lots of memory and dirtying it all at once.  Adding a i/o
-> bandwidth controller or a memory controller isn't really going to fix
-> that.  I think it is outside the scope of the i/o (and memory)
-> controllers until we solve it generically, first.
+> - controlling how much dirty memory a cgroup can have at any given
+> time (since dirty memory is much harder/slower to reclaim than clean
+> memory)
+> 
+> - controlling how much effect a cgroup can have on a given I/O device.
+> 
+> By controlling the rate at which a task can generate dirty pages,
+> you're not really limiting either of these. I think you'd have to set
+> your I/O limits artificially low to prevent a case of a process
+> writing a large data file and then doing fsync() on it, which would
+> then hit the disk with the entire file at once, and blow away any QoS
+> guarantees for other groups.
 
-Yes, that's right. This should be solved.
+Anyway, dirty pages ratio is directly proportional to the IO that will
+be performed on the real device, isn't it? this wouldn't prevent IO
+bursts as you correctly say, but IMHO it is a simple and quite effective
+way to measure the IO write activity of each cgroup on each affected
+device.
 
-But there is a good thing when you use a memory controller.
-A problem occurred in a certain cgroup will be confined in its cgroup.
-I think this is a great point, don't you think?
+To prevent the IO peaks I usually reduce the vm_dirty_ratio, but, ok,
+this is a workaround, not the solution to the problem either.
 
-Thank you,
-Hirokazu Takahashi.
+IMHO, based on the dirty-page rate measurement, we should apply both
+limiting methods: throttle dirty-pages ratio to prevent too many dirty
+pages in the system (harde to reclaim and generating
+unpredictable/unpleasant/unresponsiveness behaviour), and throttle the
+dispatching of IO requests at the device-mapper/IO-scheduler layer to
+smooth IO peaks/bursts, generated by fsync() and similar scenarios.
+
+Another different approach could be to implement the measurement in the
+elevator, looking at the elapsed between the IO request is issued to the
+drive and the request is served. So, look at the start time T1,
+completion time T2, take the difference (T2 - T1) and say: cgroup C1
+consumed an amount of IO of (T2 - T1), and also use a token-bucket
+policy to fill/reduce the "credits" of each IO cgroup in terms of IO
+time slots. This would be a more precise measurement, instead of trying
+to predict how expensive the IO operation will be, only looking at the
+dirty-page ratio. Then throttle both dirty-page ratio *and* the
+dispatching of the IO requests submitted by the cgroup that exceeds the
+limits.
+
+> 
+> As Dave suggested, I think it would make more sense to have your
+> page-dirtying throttle points hook into the memory controller instead,
+> and allow the memory controller to track/limit dirty pages for a
+> cgroup, and potentially do throttling as part of that.
+> 
+> Paul
+
+Yes, implementing page-drity throttling in memory controller seems
+absolutely reasonable. I can try to move in this direction, merge the
+page-dirty throttling in memory controller and also post the RFC.
+
+Thanks,
+-Andrea
