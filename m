@@ -1,44 +1,34 @@
 From: Dave Hansen <dave@linux.vnet.ibm.com>
 Subject: Re: Too many I/O controller patches
-Date: Tue, 05 Aug 2008 09:20:18 -0700
-Message-ID: <1217953218.10907.25.camel@nimitz>
+Date: Tue, 05 Aug 2008 09:25:37 -0700
+Message-ID: <1217953537.10907.30.camel@nimitz>
 References: <20080804.175126.193692178.ryov@valinux.co.jp>
 	 <1217870433.20260.101.camel@nimitz> <489748E6.5080106@gmail.com>
-	 <000901c8f6a5$fe64ba30$fb2e2e90$@jp.nec.com>  <48981D3B.2020701@gmail.com>
+	 <1217876521.20260.123.camel@nimitz> <48976A2A.9060600@gmail.com>
+	 <6599ad830808042255y59215481l5463d4dca9fb2001@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1761421AbYHEQUk@vger.kernel.org>
-In-Reply-To: <48981D3B.2020701@gmail.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1760582AbYHEQ0X@vger.kernel.org>
+In-Reply-To: <6599ad830808042255y59215481l5463d4dca9fb2001@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: righi.andrea@gmail.com
-Cc: Satoshi UCHIDA <s-uchida@ap.jp.nec.com>, xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, vtaras@openvz.org, dm-devel@redhat.com, agk@sourceware.org, virtualization@lists.linux-foundation.org, ngupta@google.com
+To: Paul Menage <menage@google.com>
+Cc: righi.andrea@gmail.com, xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org
 List-Id: dm-devel.ids
 
-On Tue, 2008-08-05 at 11:28 +0200, Andrea Righi wrote:
-> > Buffered write I/O is also related with cache system.
-> > We must consider this problem as I/O control.
->=20
-> Agree. At least, maybe we should consider if an IO controller could b=
-e
-> a valid solution also for these problems.
+On Mon, 2008-08-04 at 22:55 -0700, Paul Menage wrote:
+> 
+> As Dave suggested, I think it would make more sense to have your
+> page-dirtying throttle points hook into the memory controller instead,
+> and allow the memory controller to track/limit dirty pages for a
+> cgroup, and potentially do throttling as part of that.
 
-Isn't this one of the core points that we keep going back and forth
-over?  =EF=BB=BFIt seems like people are arguing in circles over this:
+Yeah, I'm sure we're going to have to get to setting the dirty ratio
+        
+        $ cat /proc/sys/vm/dirty_ratio
+        40
 
-Do we:
-	1. control potential memory usage by throttling I/O
-or
-	2. Throttle I/O when memory is full
-
-I might lean toward (1) if we didn't already have a memory controller.
-But, we have one, and it works.  Also, we *already* do (2) in the
-kernel, so it would seem to graft well onto existing mechanisms that we
-have.
-
-I/O controllers should not worry about memory.  They're going to have a
-hard enough time getting the I/O part right. :)
-
-=EF=BB=BFOr, am I over-simplifying this?
+on a per-container basis at *some* point.  We might as well do it
+earlier rather than later.
 
 -- Dave
