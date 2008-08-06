@@ -1,357 +1,94 @@
-From: "Naveen Gupta" <ngupta@google.com>
-Subject: Re: RFC: I/O bandwidth controller (was Re: Too many I/O controller patches)
-Date: Wed, 6 Aug 2008 12:37:46 -0700
-Message-ID: <2846be6b0808061237o6667c609l21bdb5a765469e95@mail.gmail.com>
-References: <20080804.175126.193692178.ryov@valinux.co.jp>
-	 <1217870433.20260.101.camel@nimitz>
-	 <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
+From: Andrew Patterson <andrew.patterson@hp.com>
+Subject: Re: Status of resizing/growing dm-multipath devices on
+	the fly
+Date: Wed, 06 Aug 2008 14:58:16 -0600
+Message-ID: <1218056296.14886.29.camel@bluto.andrew>
+References: <20080806125355.GM3771@edu.joroinen.fi>
+	<BF003E91ABCA429FA851667CB3486F7F@pitagora.it>
+	<20080806143751.GO3771@edu.joroinen.fi>
+	<20080806193602.GA9941@linux.vnet.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757570AbYHFTiz@vger.kernel.org>
-In-Reply-To: <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: =?ISO-8859-1?Q?Fernando_Luis_V=E1zquez_Cao?= <fernando@oss.ntt.co.jp>
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, Ryo Tsuruta <ryov@valinux.co.jp>, yoshikawa.takuya@oss.ntt.co.jp, taka@valinux.co.jp, uchida@ap.jp.nec.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, agk@sourceware.org, Andrea Righi <righi.andrea@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080806193602.GA9941@linux.vnet.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Anderson <andmike@linux.vnet.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-=46ernando
+On Wed, 2008-08-06 at 12:36 -0700, Mike Anderson wrote:
+> Pasi K?rkk?inen <pasik@iki.fi> wrote:
+> > On Wed, Aug 06, 2008 at 03:48:12PM +0200, Domenico Viggiani wrote:
+> > > * Pasi K=C3=A4rkk=C3=A4inen wrote:
+> > > >=20
+> > > > Is it possible to resize (grow) dm-multipath devices on the=20
+> > > > fly nowadays?
+> > > >=20
+> > > > I googled and found some discussions about the subject, but=20
+> > > > the conclusion seemed to be it's not possible.. that was a=20
+> > > > while ago, so I was wondering if this has been fixed/implemented.=
+.
+> > > >=20
+> > > > Using LVM and adding another new LUN/PV is not an option=20
+> > > > always.. it's a lot easier to manage the whole thing if it's=20
+> > > > possible to resize/grow existing LUNs on the fly.
+> > >=20
+> > > Nowadays all disk-arrays make online LUN extension a breeze but
+> > > unfortunately it seems that dm-multipath is still not able to see n=
+ew size
+> > > without downtime:
+> > >  http://www.redhat.com/archives/dm-devel/2007-August/msg00205.html
+> > > Look also at this recent thread on RHEL5 mailing-list where you can=
+ find
+> > > also a post from a Red Hat representative:
+> > >  http://www.redhat.com/archives/rhelv5-list/2008-July/msg00267.html
+> > >=20
+> > > Sure, you can just add a new LUN, pvcreate and vgextend but it is n=
+ot a
+> > > viable solution because it causes LUN proliferation.
+> > >=20
+> > > Sincerely, I'm still subscribed to this mailing-list only to see if=
+ someone
+> > > solve this SHAME!
+> > > It's a feature that Linux really needs.
+> > >=20
+> > > Hope someone pick this cry of pain!
+> > >=20
+> >=20
+> > Thanks for the reply.
+> >=20
+> > Does someone know what's the actual problem in this? meaning why it h=
+asn't
+> > been done yet..=20
+>=20
+> It has to do with the block layer not using the new size value while th=
+ere
+> are openers.
+>=20
+> Andrew submitted a patch series (url below) a while ago to try and addr=
+ess
+> this issue, but I do not know the status. I added Andrew to the cc.
+>=20
+> http://thread.gmane.org/gmane.linux.scsi/41623
+>=20
 
-Nice summary. My comments are inline.
+The above patchset works with SCSI devices. I have tested it with single
+SCSI devices under dm/LVM, i.e., a PV is on a single SCSI LUN with only
+one path to it. It has not yet been accepted upstream due to not getting
+sign-off from Al Viro. I plan on resubmitting soon to add cciss support.
+Hopefully Al will getting around to reviewing it sometime this century.
+I have heard rumors that Al has some all-encompassing solution for this
+problem but hasn't got around to implementing it.  I'll test my new
+patches with multi-path while I am at it.
 
--Naveen
-
-2008/8/5 Fernando Luis V=E1zquez Cao <fernando@oss.ntt.co.jp>:
-> On Mon, 2008-08-04 at 10:20 -0700, Dave Hansen wrote:
->> On Mon, 2008-08-04 at 17:51 +0900, Ryo Tsuruta wrote:
->> > This series of patches of dm-ioband now includes "The bio tracking=
- mechanism,"
->> > which has been posted individually to this mailing list.
->> > This makes it easy for anybody to control the I/O bandwidth even w=
-hen
->> > the I/O is one of delayed-write requests.
->>
->> During the Containers mini-summit at OLS, it was mentioned that ther=
-e
->> are at least *FOUR* of these I/O controllers floating around.  Have =
-you
->> talked to the other authors?  (I've cc'd at least one of them).
->>
->> We obviously can't come to any kind of real consensus with people ju=
-st
->> tossing the same patches back and forth.
->>
->> -- Dave
->
-> Hi Dave,
->
-> I have been tracking the memory controller patches for a while which
-> spurred my interest in cgroups and prompted me to start working on I/=
-O
-> bandwidth controlling mechanisms. This year I have had several
-> opportunities to discuss the design challenges of i/o controllers wit=
-h
-> the NEC and VALinux Japan teams (CCed), most recently last month duri=
-ng
-> the Linux Foundation Japan Linux Symposium, where we took advantage o=
-f
-> Andrew Morton's visit to Japan to do some brainstorming on this topic=
-=2E I
-> will try so summarize what was discussed there (and in the Linux Stor=
-age
-> & Filesystem Workshop earlier this year) and propose a hopefully
-> acceptable way to proceed and try to get things started.
->
-> This RFC ended up being a bit longer than I had originally intended, =
-but
-> hopefully it will serve as the start of a fruitful discussion.
->
-> As you pointed out, it seems that there is not much consensus buildin=
-g
-> going on, but that does not mean there is a lack of interest. To get =
-the
-> ball rolling it is probably a good idea to clarify the state of thing=
-s
-> and try to establish what we are trying to accomplish.
->
-> *** State of things in the mainstream kernel<BR>
-> The kernel has had somewhat adavanced I/O control capabilities for qu=
-ite
-> some time now: CFQ. But the current CFQ has some problems:
->  - I/O priority can be set by PID, PGRP, or UID, but...
->  - ...all the processes that fall within the same class/priority are
-> scheduled together and arbitrary grouping are not possible.
->  - Buffered I/O is not handled properly.
->  - CFQ's IO priority is an attribute of a process that affects all
-> devices it sends I/O requests to. In other words, with the current
-> implementation it is not possible to assign per-device IO priorities =
-to
-> a task.
->
-> *** Goals
->  1. Cgroups-aware I/O scheduling (being able to define arbitrary
-> groupings of processes and treat each group as a single scheduling
-> entity).
->  2. Being able to perform I/O bandwidth control independently on each
-> device.
->  3. I/O bandwidth shaping.
->  4. Scheduler-independent I/O bandwidth control.
->  5. Usable with stacking devices (md, dm and other devices of that
-> ilk).
->  6. I/O tracking (handle buffered and asynchronous I/O properly).
->
-> The list of goals above is not exhaustive and it is also likely to
-> contain some not-so-nice-to-have features so your feedback would be
-> appreciated.
->
-> 1. & 2.- Cgroups-aware I/O scheduling (being able to define arbitrary
-> groupings of processes and treat each group as a single scheduling
-> identity)
->
-> We obviously need this because our final goal is to be able to contro=
-l
-> the IO generated by a Linux container. The good news is that we alrea=
-dy
-> have the cgroups infrastructure so, regarding this problem, we would
-> just have to transform our I/O bandwidth controller into a cgroup
-> subsystem.
->
-> This seems to be the easiest part, but the current cgroups
-> infrastructure has some limitations when it comes to dealing with blo=
-ck
-> devices: impossibility of creating/removing certain control structure=
-s
-> dynamically and hardcoding of subsystems (i.e. resource controllers).
-> This makes it difficult to handle block devices that can be hotplugge=
-d
-> and go away at any time (this applies not only to usb storage but als=
-o
-> to some SATA and SCSI devices). To cope with this situation properly =
-we
-> would need hotplug support in cgroups, but, as suggested before and
-> discussed in the past (see (0) below), there are some limitations.
->
-> Even in the non-hotplug case it would be nice if we could treat each
-> block I/O device as an independent resource, which means we could do
-> things like allocating I/O bandwidth on a per-device basis. As long a=
-s
-> performance is not compromised too much, adding some kind of basic
-> hotplug support to cgroups is probably worth it.
->
-> (0) http://lkml.org/lkml/2008/5/21/12
->
-> 3. & 4. & 5. - I/O bandwidth shaping & General design aspects
->
-> The implementation of an I/O scheduling algorithm is to a certain ext=
-ent
-> influenced by what we are trying to achieve in terms of I/O bandwidth
-> shaping, but, as discussed below, the required accuracy can determine
-> the layer where the I/O controller has to reside. Off the top of my
-> head, there are three basic operations we may want perform:
->  - I/O nice prioritization: ionice-like approach.
->  - Proportional bandwidth scheduling: each process/group of processes
-> has a weight that determines the share of bandwidth they receive.
->  - I/O limiting: set an upper limit to the bandwidth a group of tasks
-> can use.
-
-I/O limiting can be a special case of proportional bandwidth
-scheduling. A process/process group can use use it's share of
-bandwidth and if there is spare bandwidth it be allowed to use it. And
-if we want to absolutely restrict it we add another flag which
-specifies that the specified proportion is exact and has an upper
-bound.
-
-Let's say the ideal b/w for a device is 100MB/s
-
-And process 1 is assigned b/w of 20%. When we say that the proportion
-is strict, the b/w for process 1 will be 20% of the max b/w (which may
-be less than 100MB/s) subject to a max of 20MB/s.
-
-
->
-> If we are pursuing a I/O prioritization model =E0 la CFQ the temptati=
-on is
-> to implement it at the elevator layer or extend any of the existing I=
-/O
-> schedulers.
->
-> There have been several proposals that extend either the CFQ schedule=
-r
-> (see (1), (2) below) or the AS scheduler (see (3) below). The problem
-> with these controllers is that they are scheduler dependent, which me=
-ans
-> that they become unusable when we change the scheduler or when we wan=
-t
-> to control stacking devices which define their own make_request_fn
-> function (md and dm come to mind). It could be argued that the physic=
-al
-> devices controlled by a dm or md driver are likely to be fed by
-> traditional I/O schedulers such as CFQ, but these I/O schedulers woul=
-d
-> be running independently from each other, each one controlling its ow=
-n
-> device ignoring the fact that they part of a stacking device. This la=
-ck
-> of information at the elevator layer makes it pretty difficult to obt=
-ain
-> accurate results when using stacking devices. It seems that unless we
-> can make the elevator layer aware of the topology of stacking devices
-> (possibly by extending the elevator API?) evelator-based approaches d=
-o
-> not constitute a generic solution. Here onwards, for discussion
-> purposes, I will refer to this type of I/O bandwidth controllers as
-> elevator-based I/O controllers.
-
-It can be argued that any scheduling decision wrt to i/o belongs to
-elevators. Till now they have been used to improve performance. But
-with new requirements to isolate i/o based on process or cgroup, we
-need to change the elevators.
-
-If we add another layer of i/o scheduling (block layer I/O controller)
-above elevators
-1) It builds another layer of i/o scheduling (bandwidth or priority)
-2) This new layer can have decisions for i/o scheduling which conflict
-with underlying elevator. e.g. If we decide to do b/w scheduling in
-this new layer, there is no way a priority based elevator could work
-underneath it.
-
-If a custom make_request_fn is defined (which means the said device is
-not using existing elevator), it could build it's own scheduling
-rather than asking kernel to add another layer at the time of i/o
-submission. Since it has complete control of i/o.
-
->
-> A simple way of solving the problems discussed in the previous paragr=
-aph
-> is to perform I/O control before the I/O actually enters the block la=
-yer
-> either at the pagecache level (when pages are dirtied) or at the entr=
-y
-> point to the generic block layer (generic_make_request()). Andrea's I=
-/O
-> throttling patches stick to the former variant (see (4) below) and
-> Tsuruta-san and Takahashi-san's dm-ioband (see (5) below) take the la=
-ter
-> approach. The rationale is that by hooking into the source of I/O
-> requests we can perform I/O control in a topology-agnostic and
-> elevator-agnostic way. I will refer to this new type of I/O bandwidth
-> controller as block layer I/O controller.
->
-> By residing just above the generic block layer the implementation of =
-a
-> block layer I/O controller becomes relatively easy, but by not taking
-> into account the characteristics of the underlying devices we might r=
-isk
-> underutilizing them. For this reason, in some cases it would probably
-> make sense to complement a generic I/O controller with elevator-based
-> I/O controller, so that the maximum throughput can be squeezed from t=
-he
-> physical devices.
->
-> (1) Uchida-san's CFQ-based scheduler: http://lwn.net/Articles/275944/
-> (2) Vasily's CFQ-based scheduler: http://lwn.net/Articles/274652/
-> (3) Naveen Gupta's AS-based scheduler: http://lwn.net/Articles/288895=
-/
-> (4) Andrea Righi's i/o bandwidth controller (I/O throttling):http://t=
-hread.gmane.org/gmane.linux.kernel.containers/5975
-> (5) Tsuruta-san and Takahashi-san's dm-ioband: http://thread.gmane.or=
-g/gmane.linux.kernel.virtualization/6581
->
-> 6.- I/O tracking
->
-> This is arguably the most important part, since to perform I/O contro=
-l
-> we need to be able to determine where the I/O is coming from.
->
-> Reads are trivial because they are served in the context of the task
-> that generated the I/O. But most writes are performed by pdflush,
-> kswapd, and friends so performing I/O control just in the synchronous
-> I/O path would lead to large inaccuracy. To get this right we would n=
-eed
-> to track ownership all the way up to the pagecache page. In other wor=
-ds,
-> it is necessary to track who is dirtying pages so that when they are
-> written to disk the right task is charged for that I/O.
->
-> Fortunately, such tracking of pages is one of the things the existing
-> memory resource controller is doing to control memory usage. This is =
-a
-> clever observation which has a useful implication: if the rather
-> imbricated tracking and accounting parts of the memory resource
-> controller were split the I/O controller could leverage the existing
-> infrastructure to track buffered and asynchronous I/O. This is exactl=
-y
-> what the bio-cgroup (see (6) below) patches set out to do.
->
-> It is also possible to do without I/O tracking. For that we would nee=
-d
-> to hook into the synchronous I/O path and every place in the kernel
-> where pages are dirtied (see (4) above for details). However controll=
-ing
-> the rate at which a cgroup can generate dirty pages seems to be a tas=
-k
-> that belongs in the memory controller not the I/O controller. As Dave
-> and Paul suggested its probably better to delegate this to the memory
-> controller. In fact, it seems that Yamamoto-san is cooking some patch=
-es
-> that implement just that: dirty balancing for cgroups (see (7) for
-> details).
->
-> Another argument in favor of I/O tracking is that not only block laye=
-r
-> I/O controllers would benefit from it, but also the existing I/O
-> schedulers and the elevator-based I/O controllers proposed by
-> Uchida-san, Vasily, and Naveen (Yoshikawa-san, who is CCed, and mysel=
-f
-> are working on this and hopefully will be sending patches soon).
->
-> (6) Tsuruta-san and Takahashi-san's I/O tracking patches: http://lkml=
-=2Eorg/lkml/2008/8/4/90
-> (7) Yamamoto-san dirty balancing patches: http://lwn.net/Articles/289=
-237/
->
-> *** How to move on
->
-> As discussed before, it probably makes sense to have both a block lay=
-er
-> I/O controller and a elevator-based one, and they could certainly
-> cohabitate. As discussed before, all of them need I/O tracking
-> capabilities so I would like to suggest the plan below to get things
-> started:
->
->  - Improve the I/O tracking patches (see (6) above) until they are in
-> mergeable shape.
->  - Fix CFQ and AS to use the new I/O tracking functionality to show i=
-ts
-> benefits. If the performance impact is acceptable this should suffice=
- to
-> convince the respective maintainer and get the I/O tracking patches
-> merged.
->  - Implement a block layer resource controller. dm-ioband is a workin=
-g
-> solution and feature rich but its dependency on the dm infrastructure=
- is
-> likely to find opposition (the dm layer does not handle barriers
-> properly and the maximum size of I/O requests can be limited in some
-> cases). In such a case, we could either try to build a standalone
-> resource controller based on dm-ioband (which would probably hook int=
-o
-> generic_make_request) or try to come up with something new.
->  - If the I/O tracking patches make it into the kernel we could move =
-on
-> and try to get the Cgroup extensions to CFQ and AS mentioned before (=
-see
-> (1), (2), and (3) above for details) merged.
->  - Delegate the task of controlling the rate at which a task can
-> generate dirty pages to the memory controller.
->
-> This RFC is somewhat vague but my feeling is that we build some
-> consensus on the goals and basic design aspects before delving into
-> implementation details.
->
-> I would appreciate your comments and feedback.
->
-> - Fernando
->
->
+Andrew =20
