@@ -1,61 +1,69 @@
-From: Balbir Singh <balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>
-Subject: Re: Too many I/O controller patches
-Date: Wed, 06 Aug 2008 09:00:07 +0530
-Message-ID: <48991ABF.906@linux.vnet.ibm.com>
-References: <20080804.175126.193692178.ryov@valinux.co.jp>
-	<1217870433.20260.101.camel@nimitz> <489748E6.5080106@gmail.com>
-	<000901c8f6a5$fe64ba30$fb2e2e90$@jp.nec.com>
-	<48981D3B.2020701@gmail.com> <1217953218.10907.25.camel@nimitz>
-	<20080806114425.c0e9b24f.kamezawa.hiroyu@jp.fujitsu.com>
-Reply-To: balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
+From: haad <haaaad@gmail.com>
+Subject: Re: LVM Snapshot Feature
+Date: Wed, 6 Aug 2008 09:08:16 +0300
+Message-ID: <70f06bad0808052308p6fc03511web87ab414e650c81@mail.gmail.com>
+References: <4DE0C34D8B0DA64C9585DC45C36EA03BAB0788@dewdfe1g.wdf.sap.corp>
+	<1746B17C-CC23-40D7-A993-FC32CAA5BF24@gmail.com>
+	<Pine.LNX.4.64.0808040912350.28033@devserv.devel.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-In-Reply-To: <20080806114425.c0e9b24f.kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
-List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
-List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
-List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
-List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
-	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
-Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
-To: KAMEZAWA Hiroyuki <kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org>
-Cc: xen-devel-GuqFBffKawuULHF6PoxzQEEOCMrvLtNR@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, vtaras-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, Dave Hansen <dave-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org>, ngupta-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0808040912350.28033@devserv.devel.redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-S0FNRVpBV0EgSGlyb3l1a2kgd3JvdGU6Cj4gT24gVHVlLCAwNSBBdWcgMjAwOCAwOToyMDoxOCAt
-MDcwMAo+IERhdmUgSGFuc2VuIDxkYXZlQGxpbnV4LnZuZXQuaWJtLmNvbT4gd3JvdGU6Cj4gCj4+
-IE9uIFR1ZSwgMjAwOC0wOC0wNSBhdCAxMToyOCArMDIwMCwgQW5kcmVhIFJpZ2hpIHdyb3RlOgo+
-Pj4+IEJ1ZmZlcmVkIHdyaXRlIEkvTyBpcyBhbHNvIHJlbGF0ZWQgd2l0aCBjYWNoZSBzeXN0ZW0u
-Cj4+Pj4gV2UgbXVzdCBjb25zaWRlciB0aGlzIHByb2JsZW0gYXMgSS9PIGNvbnRyb2wuCj4+PiBB
-Z3JlZS4gQXQgbGVhc3QsIG1heWJlIHdlIHNob3VsZCBjb25zaWRlciBpZiBhbiBJTyBjb250cm9s
-bGVyIGNvdWxkIGJlCj4+PiBhIHZhbGlkIHNvbHV0aW9uIGFsc28gZm9yIHRoZXNlIHByb2JsZW1z
-Lgo+PiBJc24ndCB0aGlzIG9uZSBvZiB0aGUgY29yZSBwb2ludHMgdGhhdCB3ZSBrZWVwIGdvaW5n
-IGJhY2sgYW5kIGZvcnRoCj4+IG92ZXI/ICDvu79JdCBzZWVtcyBsaWtlIHBlb3BsZSBhcmUgYXJn
-dWluZyBpbiBjaXJjbGVzIG92ZXIgdGhpczoKPj4KPj4gRG8gd2U6Cj4+IAkxLiBjb250cm9sIHBv
-dGVudGlhbCBtZW1vcnkgdXNhZ2UgYnkgdGhyb3R0bGluZyBJL08KPj4gb3IKPj4gCTIuIFRocm90
-dGxlIEkvTyB3aGVuIG1lbW9yeSBpcyBmdWxsCj4+Cj4+IEkgbWlnaHQgbGVhbiB0b3dhcmQgKDEp
-IGlmIHdlIGRpZG4ndCBhbHJlYWR5IGhhdmUgYSBtZW1vcnkgY29udHJvbGxlci4KPj4gQnV0LCB3
-ZSBoYXZlIG9uZSwgYW5kIGl0IHdvcmtzLiAgQWxzbywgd2UgKmFscmVhZHkqIGRvICgyKSBpbiB0
-aGUKPj4ga2VybmVsLCBzbyBpdCB3b3VsZCBzZWVtIHRvIGdyYWZ0IHdlbGwgb250byBleGlzdGlu
-ZyBtZWNoYW5pc21zIHRoYXQgd2UKPj4gaGF2ZS4KPj4KPj4gSS9PIGNvbnRyb2xsZXJzIHNob3Vs
-ZCBub3Qgd29ycnkgYWJvdXQgbWVtb3J5LiAgCj4gSSBhZ3JlZSBoZXJlIDspCj4gCj4+IFRoZXkn
-cmUgZ29pbmcgdG8gaGF2ZSBhIGhhcmQgZW5vdWdoIHRpbWUgZ2V0dGluZyB0aGUgSS9PIHBhcnQg
-cmlnaHQuIDopCj4+Cj4gbWVtY2cgaGF2ZSBtb3JlIHByb2JsZW1zIG5vdyA7KCAKPiAKPiBPbmx5
-IGEgZGlmZmljdWx0IHRoaW5nIHRvIGxpbWl0IGRpcnR5LXJhdGlvIGluIG1lbWNnIGlzIGhvdy10
-by1jb3VudCBkaXJ0eQo+IHBhZ2VzLiBJZiBJL08gY29udHJvbGxlcidzIGhvb2sgaGVscHMsIGl0
-J3MgZ29vZC4KPiAKPiBNeSBzbWFsbCBjb25jZXJuIGlzICJXaGF0IGhhcHBlbnMgaWYgd2UgdGhy
-b3R0b2xlIEkvTyBiYW5kd2lkdGggdG9vIHNtYWxsCj4gdW5kZXIgc29tZSBtZW1jZy4iIEluIHN1
-Y2ggY2dyb3VwLCB3ZSBtYXkgc2VlIG1vcmUgT09NcyBiZWNhdXNlIEkvTyB3aWxsCj4gbm90IGZp
-bmlzaCBpbiB0aW1lLgo+IEEgc3lzdGVtIGFkbWluIGhhdmUgdG8gZmluZCBzb21lIHdheSB0byBh
-dm9pZCB0aGlzLgo+IAo+IEJ1dCBwbGVhc2UgZG8gSS9PIGNvbnRyb2wgZmlyc3QuIERpcnR5LXBh
-Z2UgY29udHJvbCBpcyByZWxhdGVkIGJ1dCBkaWZmZXJlbnQKPiBsYXllcidzIHByb2JsZW0sIEkg
-dGhpbmsuCgpZZXMsIHBsZWFzZSBzb2x2ZSB0aGUgSS9PIGNvbnRyb2wgcHJvYmxlbSBmaXJzdC4K
-Ci0tIAoJV2FybSBSZWdhcmRzLAoJQmFsYmlyIFNpbmdoCglMaW51eCBUZWNobm9sb2d5IENlbnRl
-cgoJSUJNLCBJU1RMCgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
-X19fXwpDb250YWluZXJzIG1haWxpbmcgbGlzdApDb250YWluZXJzQGxpc3RzLmxpbnV4LWZvdW5k
-YXRpb24ub3JnCmh0dHBzOi8vbGlzdHMubGludXgtZm91bmRhdGlvbi5vcmcvbWFpbG1hbi9saXN0
-aW5mby9jb250YWluZXJz
+On Mon, Aug 4, 2008 at 4:15 PM, Mikulas Patocka <mpatocka@redhat.com> wrote:
+> On Fri, 1 Aug 2008, Adam Hamsik wrote:
+>
+>> On Aug,Friday 1 2008, at 9:35 AM, Bombardier, Pascal wrote:
+>>
+>> > Hi,
+>> >
+>> > In your opinion, does it make sense to be able to create non-persistent
+>> > snapshots ?
+>> > In the case of a filesystem backup, a non-persistent snapshot would be a
+>> > snapshot that we agree to lose in case of failure or reboot. If anything
+>> > happens, a server administrator would have to recreate a new snapshot
+>> > and then restart the backup.
+>> > In this case, I think metadata could be stored in memory instead of on
+>> > disk, which should improve LVM snapshot performance.
+>> >
+>> > Is this theory wrong, and is this something which can be implemented
+>> > easily in the current LVM code ?
+>> >
+>>
+>> AFAIK non-persistent snapshots are already implemented see
+>> DM_PERSISTENT_DEV_FLAG ? I haven't look at linux kernel code how is
+>> it done but when I solve my lvcreate -s bug on NetBSD non-persistent
+>> snapshots are next :).
+>>
+>> Regards
+>>
+>> Adam.
+>
+> Yes. They are implemented in device mapper in kernel --- but no userspace
+> lvm tool can use them. You can only create them using dmsetup.
+>
+> Mikulas
+
+
+Do you have list of commands which I have to run to create persistent dm
+snapshot with dmsetup ? It would be handy to test my driver with dmsetup
+first and only after that use lvm2tools to create persistent/non-persistent
+snapshots.
+
+Regards
+
+Adam.
