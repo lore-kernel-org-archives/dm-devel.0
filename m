@@ -1,75 +1,86 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: Re: [RFC PATCH 0/4] dm core: full barrier support
-Date: Wed, 06 Aug 2008 12:33:45 +0200
-Message-ID: <48997E09.9040808@redhat.com>
-References: <48739A75.1070807@redhat.com>
-	<20080806100522.GA3142@develbox.linuxbox.cz>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: [PATCH 4/7] bio-cgroup: Split the cgroup memory
+ subsystem into two parts
+Date: Wed, 06 Aug 2008 20:43:39 +0900 (JST)
+Message-ID: <20080806.204339.76736223.taka@valinux.co.jp>
+References: <20080804.175707.104036289.ryov@valinux.co.jp>
+	<20080804.175748.189722512.ryov@valinux.co.jp>
+	<20080806165421.f76edd47.kamezawa.hiroyu@jp.fujitsu.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080806100522.GA3142@develbox.linuxbox.cz>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nikola Ciprich <extmaillist@linuxbox.cz>
-Cc: nikola.ciprich@linuxbox.cz, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20080806165421.f76edd47.kamezawa.hiroyu@jp.fujitsu.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: kamezawa.hiroyu@jp.fujitsu.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, ryov@valinux.co.jp
 List-Id: dm-devel.ids
 
-Nikola Ciprich wrote:
-> Hi Milan,
-> I'd like to ask, what's the current state of barrier support in DM?
-
 Hi,
-current state is exactly these patches below. Still applicable for upstream.
-It is not in any development tree yet.
 
-> Did You get any feedback? Are there any plans for pushing it to
-> mainline?
-
-No, there was no feedback.
-
-Pushing it mainline depends on Alasdair's decision (maintainer of device-mapper).
-(It needs thorough review first and maybe better implementation.)
-
-Milan
---
-mbroz@redhat.com
-
-
-> thanks a lot in advance
-> BR
-> nik
+> > This patch splits the cgroup memory subsystem into two parts.
+> > One is for tracking pages to find out the owners. The other is
+> > for controlling how much amount of memory should be assigned to
+> > each cgroup.
+> > 
+> > With this patch, you can use the page tracking mechanism even if
+> > the memory subsystem is off.
+> > 
+> > Based on 2.6.27-rc1-mm1
+> > Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
+> > Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+> > 
 > 
-> On Tue, Jul 08, 2008 at 06:48:53PM +0200, Milan Broz wrote:
->> Hi,
->>
->> there was several discussions about supporting barriers
->> in device-mapper.
->>
->> I wrote this code some time ago, but it never reached dm-devel
->> tree. Take this more like RFC and experimental approach
->> - maybe there is better way how to handle it. 
->> Anyway this implementation works in my tests and is relatively simple.
->>
->> [RFC PATCH 1/4] dm core: remove unused code
->> 	- just remove never used code, already sent some time ago
->> 	in another patchset
->>
->> [RFC PATCH 2/4] dm core: add support for empty barriers
->> 	- the core implementation of empty barrier support
->> 	- implementation for stripe target
->>
->> [RFC PATCH 3/4] dm core: add support for barrier bio with payload
->> 	- tranform payload to sequence of data bio + empty barrier
->>
->> [RFC PATCH 4/4] dm core: wait for barrier in process in suspend
->> 	- try to solve the problem that we cannot suspend device
->> 	during processing of barrier.
+> Plese CC me or Balbir or Pavel (See Maintainer list) when you try this ;)
+> 
+> After this patch, the total structure is
+> 
+>  page <-> page_cgroup <-> bio_cgroup.
+>  (multiple bio_cgroup can be attached to page_cgroup)
+>
+> Does this pointer chain will add
+>   - significant performance regression or
+>   - new race condtions 
+> ?
+
+I don't think it will cause significant performance loss, because
+the link between a page and a page_cgroup has already existed, which
+the memory resource controller prepared. Bio_cgroup uses this as it is,
+and does nothing about this.
+
+And the link between page_cgroup and bio_cgroup isn't protected
+by any additional spin-locks, since the associated bio_cgroup is
+guaranteed to exist as long as the bio_cgroup owns pages.
+
+I've just noticed that most of overhead comes from the spin-locks
+when reclaiming the pages inside mem_cgroups and the spin-locks to
+protect the links between pages and page_cgroups.
+The latter overhead comes from the policy your team has chosen
+that page_cgroup structures are allocated on demand. I still feel
+this approach doesn't make any sense because linux kernel tries to
+make use of most of the pages as far as it can, so most of them
+have to be assigned its related page_cgroup. It would make us happy
+if page_cgroups are allocated at the booting time.
+
+> For example, adding a simple function.
+> ==
+> int get_page_io_id(struct page *)
+>  - returns a I/O cgroup ID for this page. If ID is not found, -1 is returned.
+>    ID is not guaranteed to be valid value. (ID can be obsolete)
+> ==
+> And just storing cgroup ID to page_cgroup at page allocation.
+> Then, making bio_cgroup independent from page_cgroup and 
+> get ID if avialble and avoid too much pointer walking.
+
+I don't think there are any diffrences between a poiter and ID.
+I think this ID is just a encoded version of the pointer.
+
+> Thanks,
+> -Kame
