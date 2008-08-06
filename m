@@ -1,18 +1,15 @@
-From: Andrew Patterson <andrew.patterson@hp.com>
+From: Sharif Nassar <lists-dmdevel@mrwacky.com>
 Subject: Re: Status of resizing/growing dm-multipath devices on
 	the fly
-Date: Wed, 06 Aug 2008 14:58:16 -0600
-Message-ID: <1218056296.14886.29.camel@bluto.andrew>
+Date: Wed, 6 Aug 2008 14:46:57 -0700 (PDT)
+Message-ID: <Pine.LNX.4.64.0808061432330.13407@mrwacky.com>
 References: <20080806125355.GM3771@edu.joroinen.fi>
-	<BF003E91ABCA429FA851667CB3486F7F@pitagora.it>
-	<20080806143751.GO3771@edu.joroinen.fi>
-	<20080806193602.GA9941@linux.vnet.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: MULTIPART/MIXED;
+	BOUNDARY="-1463801342-673291102-1218059217=:13407"
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080806193602.GA9941@linux.vnet.ibm.com>
+In-Reply-To: <20080806125355.GM3771@edu.joroinen.fi>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,73 +19,231 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Anderson <andmike@linux.vnet.ibm.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2008-08-06 at 12:36 -0700, Mike Anderson wrote:
-> Pasi K?rkk?inen <pasik@iki.fi> wrote:
-> > On Wed, Aug 06, 2008 at 03:48:12PM +0200, Domenico Viggiani wrote:
-> > > * Pasi K=C3=A4rkk=C3=A4inen wrote:
-> > > >=20
-> > > > Is it possible to resize (grow) dm-multipath devices on the=20
-> > > > fly nowadays?
-> > > >=20
-> > > > I googled and found some discussions about the subject, but=20
-> > > > the conclusion seemed to be it's not possible.. that was a=20
-> > > > while ago, so I was wondering if this has been fixed/implemented.=
-.
-> > > >=20
-> > > > Using LVM and adding another new LUN/PV is not an option=20
-> > > > always.. it's a lot easier to manage the whole thing if it's=20
-> > > > possible to resize/grow existing LUNs on the fly.
-> > >=20
-> > > Nowadays all disk-arrays make online LUN extension a breeze but
-> > > unfortunately it seems that dm-multipath is still not able to see n=
-ew size
-> > > without downtime:
-> > >  http://www.redhat.com/archives/dm-devel/2007-August/msg00205.html
-> > > Look also at this recent thread on RHEL5 mailing-list where you can=
- find
-> > > also a post from a Red Hat representative:
-> > >  http://www.redhat.com/archives/rhelv5-list/2008-July/msg00267.html
-> > >=20
-> > > Sure, you can just add a new LUN, pvcreate and vgextend but it is n=
-ot a
-> > > viable solution because it causes LUN proliferation.
-> > >=20
-> > > Sincerely, I'm still subscribed to this mailing-list only to see if=
- someone
-> > > solve this SHAME!
-> > > It's a feature that Linux really needs.
-> > >=20
-> > > Hope someone pick this cry of pain!
-> > >=20
-> >=20
-> > Thanks for the reply.
-> >=20
-> > Does someone know what's the actual problem in this? meaning why it h=
-asn't
-> > been done yet..=20
->=20
-> It has to do with the block layer not using the new size value while th=
-ere
-> are openers.
->=20
-> Andrew submitted a patch series (url below) a while ago to try and addr=
-ess
-> this issue, but I do not know the status. I added Andrew to the cc.
->=20
-> http://thread.gmane.org/gmane.linux.scsi/41623
->=20
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-The above patchset works with SCSI devices. I have tested it with single
-SCSI devices under dm/LVM, i.e., a PV is on a single SCSI LUN with only
-one path to it. It has not yet been accepted upstream due to not getting
-sign-off from Al Viro. I plan on resubmitting soon to add cciss support.
-Hopefully Al will getting around to reviewing it sometime this century.
-I have heard rumors that Al has some all-encompassing solution for this
-problem but hasn't got around to implementing it.  I'll test my new
-patches with multi-path while I am at it.
+---1463801342-673291102-1218059217=:13407
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 
-Andrew =20
+On Wed, 6 Aug 2008, Pasi K=E4rkk=E4inen wrote:
+
+> Hello!
+>=20
+> Is it possible to resize (grow) dm-multipath devices on the fly nowaday=
+s?=20
+>=20
+> I googled and found some discussions about the subject, but the conclus=
+ion
+> seemed to be it's not possible.. that was a while ago, so I was wonderi=
+ng if
+> this has been fixed/implemented..=20
+>=20
+> Using LVM and adding another new LUN/PV is not an option always.. it's =
+a lot
+> easier to manage the whole thing if it's possible to resize/grow existi=
+ng
+> LUNs on the fly.
+
+
+Sure it is, but it's not pretty.  Don't believe the naysayers.
+We seem to have a working method for resizing multipath luns from our=20
+NetApp filers.  It works on CentOS 4 & 5, for us, and our NetApps.
+(2 HBA, times 2 paths on each makes for four SCSI LUN to resize)
+
+The poorly formatted, unpolished, YMMV, no warranty recipe is:
+
+1. Record the state of the dm tables
+
+dmsetup table resize_test | tee orig current new final
+
+2. Split one of the paths
+
+multipath -l
+resize_test (360a98000486e5452576f4336486d4c74) dm-2 NETAPP,LUN
+[size=3D1.0G][features=3D1 queue_if_no_path][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+  \_ 5:0:0:0 sdb 8:16  [active][undef]
+  \_ 6:0:0:0 sdc 8:32  [active][undef]
+\_ round-robin 0 [prio=3D0][enabled]
+  \_ 6:0:1:0 sdd 8:48  [active][undef]
+  \_ 5:0:1:0 sde 8:64  [active][undef]
+
+# Choose a pair: sdb+sdc or sdd+sde. For this, let's choose sdd+sde
+
+# Update current
+vi current
+0 2097152 multipath 1 queue_if_no_path 0 2 1 round-robin 0 2 1 8:16 4000=20
+8:32 4000 round-robin 0 2 1 8:48 1000 8:64 1000
+
+# Change this to:
+0 2097152 multipath 1 queue_if_no_path 0 1 1 round-robin 0 2 1 8:16 4000=20
+8:32 4000
+
+# Note this is what happened:
+# Remove the second pair beginning with the second "round-robin". We know=
+=20
+it's sdd+sde based on the major/minor pairs.
+# Reduce the number of pairs after "queue_if_no_path" from 2 (0 2 1) to 1=
+=20
+(0 1 1)
+
+multipathd -k
+> del path sdd
+> del path sde
+
+# Reload the dm table
+dmsetup suspend resize_test current; dmsetup reload resize_test current;=20
+dmsetup resume resize_test
+
+# Verify you now just have one set of paths
+multipath -l
+resize_test (360a98000486e5452576f4336486d4c74) dm-2 NETAPP,LUN
+[size=3D1.0G][features=3D1 queue_if_no_path][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][active]
+  \_ 5:0:0:0 sdb 8:16  [active][undef]
+  \_ 6:0:0:0 sdc 8:32  [active][undef]
+
+3.  Grow the LUN on the SAN (although, this can happen before steps 1 & 2=
+=20
+as well)
+
+(NetApp specific:)
+lun resize /vol/resize_test/lun 10g
+
+4. # Update partition table
+
+blockdev --rereadpt /dev/sdd
+blockdev --rereadpt /dev/sde
+blockdev --getsize /dev/sdd
+blockdev --getsize /dev/sde
+
+# The values for getsize in both commands must be the SAME
+# Record this value
+# The above gave us the value 20971520
+
+# Update the dm table for new
+vi new
+
+0 2097152 multipath 1 queue_if_no_path 0 2 1 round-robin 0 2 1 8:16 4000=20
+8:32 4000 round-robin 0 2 1 8:48 1000 8:64 1000
+
+# Change this to:
+0 20971520 multipath 1 queue_if_no_path 0 1 1 round-robin 0 2 1 8:48 1000=
+=20
+8:64 1000
+
+# Note this is what happened:
+# Update the second parameter (num sectors) from 2097152 to 20971520=20
+(obtained from blockdev --getsize)
+# Remove the second pair beginning with the second "round-robin"
+# Reduce the number of pairs after "queue_if_no_path" from 2 (0 2 1) to 1=
+=20
+(0 1 1)
+
+5.  Switch to the new path
+
+multipathd -k
+> add path sdd
+> add path sde
+> del path sdb
+> del path sdc
+
+# Note: We are adding the INACTIVE Paths first (sdd+sde) and then removin=
+g
+# the ACTIVE paths (sdb+sdc). This is VERY important. I tried reversing i=
+t=20
+by
+# deleting ACTIVE first then adding INACTIVE. Fortunately, multipathd kep=
+t=20
+one
+# of them, refusing to budge.
+
+dmsetup suspend resize_test; dmsetup reload resize_test new; dmsetup=20
+resume resize_test
+
+# Verify we've switched to the new path:
+multipath -l
+resize_test (360a98000486e5452576f4336486d4c74) dm-2 NETAPP,LUN
+[size=3D10G][features=3D1 queue_if_no_path][hwhandler=3D0]
+\_ round-robin 0 [prio=3D0][enabled]
+  \_ 6:0:1:0 sdd 8:48  [active][undef]
+  \_ 5:0:1:0 sde 8:64  [active][undef]
+
+# Note: multipath now shows the new size (10G). If it still shows the old=
+=20
+size, chances are
+# that one of the block devices in the pair have not had their partition=20
+tables updated.
+# TURN BACK! AND MAKE SURE TO REREAD THE PARTITION TABLES!
+
+
+6. Update the block devices on the inactive path
+
+blockdev --rereadpt /dev/sdb
+blockdev --rereadpt /dev/sdc
+blockdev --getsize /dev/sdb
+blockdev --getsize /dev/sdc
+
+7. Re-add the final path
+
+# Update the final dm table
+
+vi final
+0 2097152 multipath 1 queue_if_no_path 0 2 1 round-robin 0 2 1 8:16 4000=20
+8:32 4000 round-robin 0 2 1 8:48 1000 8:64 1000
+
+# Change to:
+0 20971520 multipath 1 queue_if_no_path 0 2 1 round-robin 0 2 1 8:16 4000=
+=20
+8:32 4000 round-robin 0 2 1 8:48 1000 8:64 1000
+
+# Note this is what happened:
+# Update the second parameter (num sectors) from 2097152 to 20971520
+# (obtained from blockdev --getsize)
+
+multipathd -k
+add path sdb
+add path sdc
+
+dmsetup suspend resize_test; dmsetup reload resize_test final; dmsetup=20
+resume resize_test
+
+multipathd -k
+reconfigure
+
+# Note: This reconfigure is *ESSENTIAL* as it forces multipath to remembe=
+r=20
+the new size. Without this step, failing one of the paths
+# can cause multipath to reuse the previous block device size and cause=20
+filesystem problems.
+
+8.  Resize the FS from userland
+
+ext2online /dev/mapper/resize_test
+(or resize2fs in newer )
+
+
+Pfew! Done!
+I think this should have been shared by us (myself, Gino Ledesma, Michael=
+ Hsu) a long time ago.
+We probably wanted to make a pretty pretty script to do it for us.
+
+There is a slightly more convoluted recipe if you were bold and foolish=20
+enough to partition the LUN (like we once were).
+
+Cheers,
+
+-sharif
+
+---1463801342-673291102-1218059217=:13407
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+---1463801342-673291102-1218059217=:13407--
