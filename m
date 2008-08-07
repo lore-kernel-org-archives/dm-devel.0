@@ -1,142 +1,62 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: [PATCH 4/7] bio-cgroup: Split the cgroup memory
- subsystem into two parts
-Date: Thu, 07 Aug 2008 16:25:12 +0900 (JST)
-Message-ID: <20080807.162512.22162413.taka@valinux.co.jp>
-References: <20080804.175748.189722512.ryov@valinux.co.jp>
-	<20080806165421.f76edd47.kamezawa.hiroyu@jp.fujitsu.com>
-	<16255819.1218030343593.kamezawa.hiroyu@jp.fujitsu.com>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Subject: Re: Status of resizing/growing dm-multipath devices on the
+	fly
+Date: Thu, 7 Aug 2008 10:45:25 +0300
+Message-ID: <20080807074525.GR3771@edu.joroinen.fi>
+References: <20080806125355.GM3771@edu.joroinen.fi>
+	<Pine.LNX.4.64.0808061432330.13407@mrwacky.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <16255819.1218030343593.kamezawa.hiroyu@jp.fujitsu.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: kamezawa.hiroyu@jp.fujitsu.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, ryov@valinux.co.jp, Balbir Singh <balbir@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0808061432330.13407@mrwacky.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
-> >> > This patch splits the cgroup memory subsystem into two parts.
-> >> > One is for tracking pages to find out the owners. The other is
-> >> > for controlling how much amount of memory should be assigned to
-> >> > each cgroup.
-> >> > 
-> >> > With this patch, you can use the page tracking mechanism even if
-> >> > the memory subsystem is off.
-> >> > 
-> >> > Based on 2.6.27-rc1-mm1
-> >> > Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
-> >> > Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
-> >> > 
-> >> 
-> >> Plese CC me or Balbir or Pavel (See Maintainer list) when you try this ;)
-> >> 
-> >> After this patch, the total structure is
-> >> 
-> >>  page <-> page_cgroup <-> bio_cgroup.
-> >>  (multiple bio_cgroup can be attached to page_cgroup)
-> >>
-> >> Does this pointer chain will add
-> >>   - significant performance regression or
-> >>   - new race condtions 
-> >> ?
+On Wed, Aug 06, 2008 at 02:46:57PM -0700, Sharif Nassar wrote:
+> On Wed, 6 Aug 2008, Pasi K=E4rkk=E4inen wrote:
+>=20
+> >Hello!
 > >
-> >I don't think it will cause significant performance loss, because
-> >the link between a page and a page_cgroup has already existed, which
-> >the memory resource controller prepared. Bio_cgroup uses this as it is,
-> >and does nothing about this.
+> >Is it possible to resize (grow) dm-multipath devices on the fly nowada=
+ys?=20
 > >
-> >And the link between page_cgroup and bio_cgroup isn't protected
-> >by any additional spin-locks, since the associated bio_cgroup is
-> >guaranteed to exist as long as the bio_cgroup owns pages.
+> >I googled and found some discussions about the subject, but the conclu=
+sion
+> >seemed to be it's not possible.. that was a while ago, so I was wonder=
+ing=20
+> >if
+> >this has been fixed/implemented..=20
 > >
-> Hmm, I think page_cgroup's cost is visible when
-> 1. a page is changed to be in-use state. (fault or radixt-tree-insert)
-> 2. a page is changed to be out-of-use state (fault or radixt-tree-removal)
-> 3. memcg hit its limit or global LRU reclaim runs.
-> "1" and "2" can be catched as 5% loss of exec throuput. 
-> "3" is not measured (because LRU walk itself is heavy.)
-> 
-> What new chances to access page_cgroup you'll add ?
-> I'll have to take into account them.
+> >Using LVM and adding another new LUN/PV is not an option always.. it's=
+ a=20
+> >lot
+> >easier to manage the whole thing if it's possible to resize/grow exist=
+ing
+> >LUNs on the fly.
+>=20
+>=20
+> Sure it is, but it's not pretty.  Don't believe the naysayers.
+> We seem to have a working method for resizing multipath luns from our=20
+> NetApp filers.  It works on CentOS 4 & 5, for us, and our NetApps.
+> (2 HBA, times 2 paths on each makes for four SCSI LUN to resize)
+>=20
+> The poorly formatted, unpolished, YMMV, no warranty recipe is:
+>=20
 
-I haven't add any at this moment, but I thinks some people may want
-to move some pages in page-cache from one cgroup to another cgroup.
-When that time comes, I'll try to make the cost minimized that
-I will probably only update the link between a page_cgroup and
-a bio_cgroup and leave the others untouched.
+Thanks a lot!=20
 
-> >I've just noticed that most of overhead comes from the spin-locks
-> >when reclaiming the pages inside mem_cgroups and the spin-locks to
-> >protect the links between pages and page_cgroups.
-> Overhead between page <-> page_cgroup lock is cannot be catched by
-> lock_stat now.Do you have numbers ?
-> But ok, there are too many locks ;(
+Better to have a workaround than nothing :)=20
 
-The problem is that every time the lock is held, the associated
-cache line is flushed.
-
-> >The latter overhead comes from the policy your team has chosen
-> >that page_cgroup structures are allocated on demand. I still feel
-> >this approach doesn't make any sense because linux kernel tries to
-> >make use of most of the pages as far as it can, so most of them
-> >have to be assigned its related page_cgroup. It would make us happy
-> >if page_cgroups are allocated at the booting time.
-> >
-> Now, multi-sizer-page-cache is discussed for a long time. If it's our
-> direction, on-demand page_cgroup make sense.
-
-I don't think I can agree to this.
-When multi-sized-page-cache is introduced, some data structures will be
-allocated to manage multi-sized-pages. I think page_cgroups should be
-allocated at the same time. This approach will make things simple.
-
-It seems like the on-demand allocation approach leads not only
-overhead but complexity and a lot of race conditions.
-If you allocate page_cgroups when allocating page structures,
-You can get rid of most of the locks and you don't have to care about
-allocation error of page_cgroups anymore.
-
-And it will also give us flexibility that memcg related data can be
-referred/updated inside critical sections.
-
-> >> For example, adding a simple function.
-> >> ==
-> >> int get_page_io_id(struct page *)
-> >>  - returns a I/O cgroup ID for this page. If ID is not found, -1 is returne
-> d.
-> >>    ID is not guaranteed to be valid value. (ID can be obsolete)
-> >> ==
-> >> And just storing cgroup ID to page_cgroup at page allocation.
-> >> Then, making bio_cgroup independent from page_cgroup and 
-> >> get ID if avialble and avoid too much pointer walking.
-> >
-> >I don't think there are any diffrences between a poiter and ID.
-> >I think this ID is just a encoded version of the pointer.
-> >
-> ID can be obsolete, pointer is not. memory cgroup has to take care of
-> bio cgroup's race condition ? (About race conditions, it's already complicated
-> enough)
-
-Bio-cgroup just expects that the call-backs bio-cgroup prepares are called
-when the status of a page_cgroup get changed.
-
-> To be honest, I think adding a new (4 or 8 bytes) page struct and record infor
-> mation of bio-control is more straightforward approach. Buy as you might
-> think, "there is no room"
-
-But only if everyone allows me to add some new members into "struct page."
-I think the same thing goes with memcg you're working on.
-
-
-Thank you,
-Hirokazu Takahashi.
+-- Pasi
