@@ -1,52 +1,88 @@
-From: Fernando Luis =?ISO-8859-1?Q?V=E1zquez?= Cao
-	<fernando@oss.ntt.co.jp>
-Subject: Re: RFC: I/O bandwidth controller (was Re: Too many I/O controller
-	patches)
-Date: Thu, 07 Aug 2008 12:01:15 +0900
-Message-ID: <1218078075.3803.149.camel@sebastian.kern.oss.ntt.co.jp>
-References: <20080804.175126.193692178.ryov@valinux.co.jp>
-	 <1217870433.20260.101.camel@nimitz>
-	 <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
-	 <4899D464.1070506@linux.vnet.ibm.com>
+From: Nikola Ciprich <extmaillist@linuxbox.cz>
+Subject: Re: [RFC PATCH 0/4] dm core: full barrier support
+Date: Thu, 7 Aug 2008 06:38:30 +0200
+Message-ID: <20080807043830.GA14595@nik-comp.linuxbox.cz>
+References: <48739A75.1070807@redhat.com>
+	<20080806100522.GA3142@develbox.linuxbox.cz>
+	<48997E09.9040808@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1757857AbYHGDBb@vger.kernel.org>
-In-Reply-To: <4899D464.1070506@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: balbir@linux.vnet.ibm.com
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, xen-devel@lists.xensource.com, uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, ngupta@google.com, Andrea Righi <righi.andrea@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <48997E09.9040808@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Milan Broz <mbroz@redhat.com>
+Cc: nikola.ciprich@linuxbox.cz, device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 2008-08-06 at 22:12 +0530, Balbir Singh wrote:
-> > *** Goals
-> >   1. Cgroups-aware I/O scheduling (being able to define arbitrary
-> > groupings of processes and treat each group as a single scheduling
-> > entity).
-> >   2. Being able to perform I/O bandwidth control independently on each
-> > device.
-> >   3. I/O bandwidth shaping.
-> >   4. Scheduler-independent I/O bandwidth control.
-> >   5. Usable with stacking devices (md, dm and other devices of that
-> > ilk).
-> >   6. I/O tracking (handle buffered and asynchronous I/O properly).
-> > 
-> > The list of goals above is not exhaustive and it is also likely to
-> > contain some not-so-nice-to-have features so your feedback would be
-> > appreciated.
-> > 
-> 
-> Would you like to split up IO into read and write IO. We know that read can be
-> very latency sensitive when compared to writes. Should we consider them
-> separately in the RFC?
-Oops, I somehow ended up leaving your first question unanswered. Sorry.
+Hi,
+and thanks for reply. OK, so I guess it might help if somebody (me:)) starts at least testing and commenting, right?
+I'll install it on some of testing machines and report results.
+br
+nik
 
-I do not think we should consider them separately, as long as there is a
-proper IO tracking infrastructure in place. As you mentioned, reads can
-be very latecy sensitive, but the read case could be treated as an
-special case IO controller/IO tracking subsystem. There certainly are
-optimization opportunities. For example, in the synchronous I/O patch ww
-could mark bios with the iocontext of the current task, because it will
-happen to be originator of that IO. By effectively caching the ownership
-information in the bio we can avoid all the accesses to struct page,
-page_cgroup, etc, and reads would definitively benefit from that. 
+> No, there was no feedback.
+> 
+> Pushing it mainline depends on Alasdair's decision (maintainer of device-mapper).
+> (It needs thorough review first and maybe better implementation.)
+> 
+> Milan
+> --
+> mbroz@redhat.com
+> 
+> 
+> > thanks a lot in advance
+> > BR
+> > nik
+> > 
+> > On Tue, Jul 08, 2008 at 06:48:53PM +0200, Milan Broz wrote:
+> >> Hi,
+> >>
+> >> there was several discussions about supporting barriers
+> >> in device-mapper.
+> >>
+> >> I wrote this code some time ago, but it never reached dm-devel
+> >> tree. Take this more like RFC and experimental approach
+> >> - maybe there is better way how to handle it. 
+> >> Anyway this implementation works in my tests and is relatively simple.
+> >>
+> >> [RFC PATCH 1/4] dm core: remove unused code
+> >> 	- just remove never used code, already sent some time ago
+> >> 	in another patchset
+> >>
+> >> [RFC PATCH 2/4] dm core: add support for empty barriers
+> >> 	- the core implementation of empty barrier support
+> >> 	- implementation for stripe target
+> >>
+> >> [RFC PATCH 3/4] dm core: add support for barrier bio with payload
+> >> 	- tranform payload to sequence of data bio + empty barrier
+> >>
+> >> [RFC PATCH 4/4] dm core: wait for barrier in process in suspend
+> >> 	- try to solve the problem that we cannot suspend device
+> >> 	during processing of barrier.
+> 
+
+-- 
+-------------------------------------
+Nikola CIPRICH
+LinuxBox.cz, s.r.o.
+28. rijna 168, 709 01 Ostrava
+
+tel.:   +420 596 603 142
+fax:    +420 596 621 273
+mobil:  +420 777 093 799
+
+www.linuxbox.cz
+
+mobil servis: +420 737 238 656
+email servis: servis@linuxbox.cz
+-------------------------------------
