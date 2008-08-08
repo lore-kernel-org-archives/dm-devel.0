@@ -1,179 +1,101 @@
-From: Fernando Luis =?ISO-8859-1?Q?V=E1zquez?= Cao
-	<fernando@oss.ntt.co.jp>
-Subject: Re: RFC: I/O bandwidth controller (was Re: Too many I/O controller
-	patches)
-Date: Thu, 07 Aug 2008 22:59:38 +0900
-Message-ID: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: RFC: I/O bandwidth controller
+Date: Fri, 08 Aug 2008 15:21:19 +0900 (JST)
+Message-ID: <20080808.152119.43521725.taka@valinux.co.jp>
 References: <20080804.175126.193692178.ryov@valinux.co.jp>
-	 <1217870433.20260.101.camel@nimitz>
-	 <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
-	 <489AA83F.1040306@gmail.com>
+	<1217870433.20260.101.camel@nimitz>
+	<1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753268AbYHGN7v@vger.kernel.org>
-In-Reply-To: <489AA83F.1040306@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: righi.andrea@gmail.com
-Cc: Dave Hansen <dave@linux.vnet.ibm.com>, Ryo Tsuruta <ryov@valinux.co.jp>, yoshikawa.takuya@oss.ntt.co.jp, taka@valinux.co.jp, uchida@ap.jp.nec.com, ngupta@google.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, agk@sourceware.org
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: fernando@oss.ntt.co.jp
+Cc: xen-devel@lists.xensource.com, uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, dave@linux.vnet.ibm.com, yoshikawa.takuya@oss.ntt.co.jp, dm-devel@redhat.com, agk@sourceware.org, ryov@valinux.co.jp, virtualization@lists.linux-foundation.org, ngupta@google.com, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
-Hi Andrea!
+Hi, Fernando,
 
-On Thu, 2008-08-07 at 09:46 +0200, Andrea Righi wrote:=20
-> Fernando Luis V=C3=A1zquez Cao wrote:
-> > This RFC ended up being a bit longer than I had originally intended=
-, but
-> > hopefully it will serve as the start of a fruitful discussion.
->=20
-> Thanks for posting this detailed RFC! A few comments below.
->=20
-> > As you pointed out, it seems that there is not much consensus build=
-ing
-> > going on, but that does not mean there is a lack of interest. To ge=
-t the
-> > ball rolling it is probably a good idea to clarify the state of thi=
-ngs
-> > and try to establish what we are trying to accomplish.
-> >=20
-> > *** State of things in the mainstream kernel<BR>
-> > The kernel has had somewhat adavanced I/O control capabilities for =
-quite
-> > some time now: CFQ. But the current CFQ has some problems:
-> >   - I/O priority can be set by PID, PGRP, or UID, but...
-> >   - ...all the processes that fall within the same class/priority a=
-re
-> > scheduled together and arbitrary grouping are not possible.
-> >   - Buffered I/O is not handled properly.
-> >   - CFQ's IO priority is an attribute of a process that affects all
-> > devices it sends I/O requests to. In other words, with the current
-> > implementation it is not possible to assign per-device IO prioritie=
-s to
-> > a task.
-> >=20
-> > *** Goals
-> >   1. Cgroups-aware I/O scheduling (being able to define arbitrary
-> > groupings of processes and treat each group as a single scheduling
-> > entity).
-> >   2. Being able to perform I/O bandwidth control independently on e=
-ach
-> > device.
-> >   3. I/O bandwidth shaping.
-> >   4. Scheduler-independent I/O bandwidth control.
-> >   5. Usable with stacking devices (md, dm and other devices of that
-> > ilk).
-> >   6. I/O tracking (handle buffered and asynchronous I/O properly).
->=20
-> The same above also for IO operations/sec (bandwidth intended not onl=
-y
-> in terms of bytes/sec), plus:
->=20
-> 7. Optimal bandwidth usage: allow to exceed the IO limits to take
-> advantage of free/unused IO resources (i.e. allow "bursts" when the
-> whole physical bandwidth for a block device is not fully used and the=
-n
-> "throttle" again when IO from unlimited cgroups comes into place)
->=20
-> 8. "fair throttling": avoid to throttle always the same task within a
-> cgroup, but try to distribute the throttling among all the tasks
-> belonging to the throttle cgroup
+It's a good work!
 
-Thank you for the ideas!
+> *** How to move on
+> 
+> As discussed before, it probably makes sense to have both a block layer
+> I/O controller and a elevator-based one, and they could certainly
+> cohabitate. As discussed before, all of them need I/O tracking
+> capabilities so I would like to suggest the plan below to get things
+> started:
+> 
+>   - Improve the I/O tracking patches (see (6) above) until they are in
+> mergeable shape.
 
-By the way, point "3." above (I/O bandwidth shaping) refers to IO
-scheduling algorithms in general. When I wrote the RFC I thought that
-once we have the IO tracking and accounting mechanisms in place choosin=
-g
-and implementing an algorithm (fair throttling, proportional bandwidth
-scheduling, etc) would be easy in comparison, and that is the reason a
-list was not included.
+The current implementation of bio-cgroup is quite basic that a certain
+page is owned by the cgroup that allocated the page, that is the same
+way as the memory controller does. In most of cases this is enough and
+it helps minimize the overhead. 
 
-Once I get more feedback from all of you I will resend a more detailed
-RFC that will include your suggestions.
+I think you many want to add some feature to change the owner of a page.
+It will be ok we implement it step by step. I know there will be some
+tradeoff between the overhead and the accuracy to track pages.
 
-> > 1. & 2.- Cgroups-aware I/O scheduling (being able to define arbitra=
-ry
-> > groupings of processes and treat each group as a single scheduling
-> > identity)
-> >=20
-> > We obviously need this because our final goal is to be able to cont=
-rol
-> > the IO generated by a Linux container. The good news is that we alr=
-eady
-> > have the cgroups infrastructure so, regarding this problem, we woul=
-d
-> > just have to transform our I/O bandwidth controller into a cgroup
-> > subsystem.
-> >=20
-> > This seems to be the easiest part, but the current cgroups
-> > infrastructure has some limitations when it comes to dealing with b=
-lock
-> > devices: impossibility of creating/removing certain control structu=
-res
-> > dynamically and hardcoding of subsystems (i.e. resource controllers=
-).
-> > This makes it difficult to handle block devices that can be hotplug=
-ged
-> > and go away at any time (this applies not only to usb storage but a=
-lso
-> > to some SATA and SCSI devices). To cope with this situation properl=
-y we
-> > would need hotplug support in cgroups, but, as suggested before and
-> > discussed in the past (see (0) below), there are some limitations.
-> >=20
-> > Even in the non-hotplug case it would be nice if we could treat eac=
-h
-> > block I/O device as an independent resource, which means we could d=
-o
-> > things like allocating I/O bandwidth on a per-device basis. As long=
- as
-> > performance is not compromised too much, adding some kind of basic
-> > hotplug support to cgroups is probably worth it.
-> >
-> > (0) http://lkml.org/lkml/2008/5/21/12
->=20
-> What about using major,minor numbers to identify each device and acco=
-unt
-> IO statistics? If a device is unplugged we could reset IO statistics
-> and/or remove IO limitations for that device from userspace (i.e. by =
-a
-> deamon), but pluggin/unplugging the device would not be blocked/affec=
-ted
-> in any case. Or am I oversimplifying the problem?
-If a resource we want to control (a block device in this case) is
-hot-plugged/unplugged the corresponding cgroup-related structures insid=
-e
-the kernel need to be allocated/freed dynamically, respectively. The
-problem is that this is not always possible. For example, with the
-current implementation of cgroups it is not possible to treat each bloc=
-k
-device as a different cgroup subsytem/resource controlled, because
-subsystems are created at compile time.
+We also try to reduce the overhead of the tracking, whose code comes
+from the memory controller though. We all should help the memory
+controller team do this.
 
-> > 3. & 4. & 5. - I/O bandwidth shaping & General design aspects
-> >=20
-> > The implementation of an I/O scheduling algorithm is to a certain e=
-xtent
-> > influenced by what we are trying to achieve in terms of I/O bandwid=
-th
-> > shaping, but, as discussed below, the required accuracy can determi=
-ne
-> > the layer where the I/O controller has to reside. Off the top of my
-> > head, there are three basic operations we may want perform:
-> >   - I/O nice prioritization: ionice-like approach.
-> >   - Proportional bandwidth scheduling: each process/group of proces=
-ses
-> > has a weight that determines the share of bandwidth they receive.
-> >   - I/O limiting: set an upper limit to the bandwidth a group of ta=
-sks
-> > can use.
->=20
-> Use a deadline-based IO scheduling could be an interesting path to be
-> explored as well, IMHO, to try to guarantee per-cgroup minimum bandwi=
-dth
-> requirements.
-Please note that the only thing we can do is to guarantee minimum
-bandwidth requirement when there is contention for an IO resource, whic=
-h
-is precisely what a proportional bandwidth scheduler does. An I missing
-something?
+>   - Fix CFQ and AS to use the new I/O tracking functionality to show its
+> benefits. If the performance impact is acceptable this should suffice to
+> convince the respective maintainer and get the I/O tracking patches
+> merged.
+
+Yes.
+
+>   - Implement a block layer resource controller. dm-ioband is a working
+> solution and feature rich but its dependency on the dm infrastructure is
+> likely to find opposition (the dm layer does not handle barriers
+> properly and the maximum size of I/O requests can be limited in some
+> cases). In such a case, we could either try to build a standalone
+> resource controller based on dm-ioband (which would probably hook into
+> generic_make_request) or try to come up with something new.
+
+I doubt about the maximum size of I/O requests problem. You can't avoid
+this problem as far as you use device mapper modules with such a bad
+manner, even if the controller is implemented as a stand-alone controller.
+There is no limitation if you only use dm-ioband without any other device
+mapper modules.
+
+And I think the device mapper team just started designing barriers support.
+I guess it won't take long. Right, Alasdair?
+We should know it is logically impossible to support barriers on some
+types of device mapper modules such as LVM. You can't avoid the barrier
+problem when you use this kind of multiple devices even if you implement
+the controller in the block layer.
+
+But I think a stand-alone implementation will have a merit that it
+makes it easier to setup the configuration rather than dm-ioband.
+From this point of view, it would be good that you move the algorithm
+of dm-ioband into the block layer.
+On the other hand, we should know it will make it impossible to use
+the dm infrastructure from the controller, though it isn't so rich.
+
+>   - If the I/O tracking patches make it into the kernel we could move on
+> and try to get the Cgroup extensions to CFQ and AS mentioned before (see
+> (1), (2), and (3) above for details) merged.
+>   - Delegate the task of controlling the rate at which a task can
+> generate dirty pages to the memory controller.
+> 
+> This RFC is somewhat vague but my feeling is that we build some
+> consensus on the goals and basic design aspects before delving into
+> implementation details.
+> 
+> I would appreciate your comments and feedback.
+> 
+> - Fernando
+> 
