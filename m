@@ -1,16 +1,16 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 6/7] bio-cgroup: Implement the bio-cgroup
-Date: Fri, 08 Aug 2008 20:41:13 +0900 (JST)
-Message-ID: <20080808.204113.39165145.ryov@valinux.co.jp>
-References: <489BF14D.6050009@oss.ntt.co.jp>
-	<20080808.173045.112614776.ryov@valinux.co.jp>
-	<489C150C.5040700@oss.ntt.co.jp>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: RFC: I/O bandwidth controller
+Date: Fri, 08 Aug 2008 23:31:50 +0900 (JST)
+Message-ID: <20080808.233150.02266833.taka@valinux.co.jp>
+References: <1217870433.20260.101.camel@nimitz>
+	<1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
+	<20080808.152119.43521725.taka@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <489C150C.5040700@oss.ntt.co.jp>
+In-Reply-To: <20080808.152119.43521725.taka@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,44 +20,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: yoshikawa.takuya@oss.ntt.co.jp
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org
+To: fernando@oss.ntt.co.jp
+Cc: xen-devel@lists.xensource.com, uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, dave@linux.vnet.ibm.com, yoshikawa.takuya@oss.ntt.co.jp, dm-devel@redhat.com, agk@sourceware.org, virtualization@lists.linux-foundation.org, ngupta@google.com, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
-Hi Yoshikawa-san,
+Hi, Fernando,
 
-> I wanted to test my own scheduler which uses bio tracking information.
-> SO I tried your patch, especially, get_bio_cgroup_iocontext(), to get
-> the io_context from bio.
->
-> In my test, I made some threads with certain iopriorities run
-> concurrently. To schedule these threads based on their iopriorities,
-> I made BGROUP directories for each iopriorities.
-> e.g. /cgroup/bio/be0 ... /cgroup/bio/be7
-> Then, I tried to attach the processes to the appropriate groups.
+> >   - Implement a block layer resource controller. dm-ioband is a working
+> > solution and feature rich but its dependency on the dm infrastructure is
+> > likely to find opposition (the dm layer does not handle barriers
+> > properly and the maximum size of I/O requests can be limited in some
+> > cases). In such a case, we could either try to build a standalone
+> > resource controller based on dm-ioband (which would probably hook into
+> > generic_make_request) or try to come up with something new.
 > 
-> But the processes stayed in the original group(id=0).
+> I doubt about the maximum size of I/O requests problem. You can't avoid
+> this problem as far as you use device mapper modules with such a bad
+> manner, even if the controller is implemented as a stand-alone controller.
+> There is no limitation if you only use dm-ioband without any other device
+> mapper modules.
 
-In the current implementation, when a process moves to an another cgroup:
-  - Already allocated memory does not move to the cgroup, still remains.
-  - Only allocated memory after move belongs to the cgroup.
-This behavior follows the memory controller.
+Ryo told me this isn't true anymore. The dm infrastructure introduced
+a new feature to support multiple page-sized I/O requests, that was
+just merged to the current linux tree. So you and me don't need to
+worry about this stuff anymore.
 
-Memory does not move between cgroups since it is so heavy operation, 
-but it would be worth under some sort of conditions.
+Ryo said he was going to make dm-ioband support this new feature and
+post the patches soon.
 
-Could you try to move a process between cgroups in the following way?
-
-   # echo $$ > /cgroup/bio/be0
-   # run_your_program
-   # echo $$ > /cgroup/bio/be1
-   # run_your_program
-   ...
-
-> I am sorry but I have to leave now and I cannot come here next week.
-> --> I will take summer holidays.
-
-Have a nice vacation!
+> And I think the device mapper team just started designing barriers support.
+> I guess it won't take long. Right, Alasdair?
+> We should know it is logically impossible to support barriers on some
+> types of device mapper modules such as LVM. You can't avoid the barrier
+> problem when you use this kind of multiple devices even if you implement
+> the controller in the block layer.
+> 
+> But I think a stand-alone implementation will have a merit that it
+> makes it easier to setup the configuration rather than dm-ioband.
+> From this point of view, it would be good that you move the algorithm
+> of dm-ioband into the block layer.
+> On the other hand, we should know it will make it impossible to use
+> the dm infrastructure from the controller, though it isn't so rich.
+> 
+> >   - If the I/O tracking patches make it into the kernel we could move on
+> > and try to get the Cgroup extensions to CFQ and AS mentioned before (see
+> > (1), (2), and (3) above for details) merged.
+> >   - Delegate the task of controlling the rate at which a task can
+> > generate dirty pages to the memory controller.
+> > 
+> > This RFC is somewhat vague but my feeling is that we build some
+> > consensus on the goals and basic design aspects before delving into
+> > implementation details.
+> > 
+> > I would appreciate your comments and feedback.
+> > 
+> > - Fernando
 
 Thanks,
-Ryo Tsuruta
+Hirokazu Takahashi.
