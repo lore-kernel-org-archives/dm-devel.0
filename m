@@ -1,47 +1,63 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: RFC: I/O bandwidth controller
-Date: Fri, 08 Aug 2008 20:39:44 +0900 (JST)
-Message-ID: <20080808.203944.29203232.taka@valinux.co.jp>
-References: <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
-	<4899D464.1070506@linux.vnet.ibm.com>
-	<1218078075.3803.149.camel@sebastian.kern.oss.ntt.co.jp>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 6/7] bio-cgroup: Implement the bio-cgroup
+Date: Fri, 08 Aug 2008 20:41:13 +0900 (JST)
+Message-ID: <20080808.204113.39165145.ryov@valinux.co.jp>
+References: <489BF14D.6050009@oss.ntt.co.jp>
+	<20080808.173045.112614776.ryov@valinux.co.jp>
+	<489C150C.5040700@oss.ntt.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <1218078075.3803.149.camel@sebastian.kern.oss.ntt.co.jp>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: fernando@oss.ntt.co.jp
-Cc: xen-devel@lists.xensource.com, uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, righi.andrea@gmail.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com, balbir@linux.vnet.ibm.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <489C150C.5040700@oss.ntt.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: yoshikawa.takuya@oss.ntt.co.jp
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org
 List-Id: dm-devel.ids
 
-Hi,
+Hi Yoshikawa-san,
 
-> > Would you like to split up IO into read and write IO. We know that read can be
-> > very latency sensitive when compared to writes. Should we consider them
-> > separately in the RFC?
-> Oops, I somehow ended up leaving your first question unanswered. Sorry.
+> I wanted to test my own scheduler which uses bio tracking information.
+> SO I tried your patch, especially, get_bio_cgroup_iocontext(), to get
+> the io_context from bio.
+>
+> In my test, I made some threads with certain iopriorities run
+> concurrently. To schedule these threads based on their iopriorities,
+> I made BGROUP directories for each iopriorities.
+> e.g. /cgroup/bio/be0 ... /cgroup/bio/be7
+> Then, I tried to attach the processes to the appropriate groups.
 > 
-> I do not think we should consider them separately, as long as there is a
-> proper IO tracking infrastructure in place. As you mentioned, reads can
-> be very latecy sensitive, but the read case could be treated as an
-> special case IO controller/IO tracking subsystem. There certainly are
-> optimization opportunities. For example, in the synchronous I/O patch ww
-> could mark bios with the iocontext of the current task, because it will
-> happen to be originator of that IO. By effectively caching the ownership
-> information in the bio we can avoid all the accesses to struct page,
-> page_cgroup, etc, and reads would definitively benefit from that. 
+> But the processes stayed in the original group(id=0).
 
-FYI, we should also take special care of pages being reclaimed, the free
-memory of the cgroup these pages belong to may be really low.
-Dm-ioband is doing this.
+In the current implementation, when a process moves to an another cgroup:
+  - Already allocated memory does not move to the cgroup, still remains.
+  - Only allocated memory after move belongs to the cgroup.
+This behavior follows the memory controller.
+
+Memory does not move between cgroups since it is so heavy operation, 
+but it would be worth under some sort of conditions.
+
+Could you try to move a process between cgroups in the following way?
+
+   # echo $$ > /cgroup/bio/be0
+   # run_your_program
+   # echo $$ > /cgroup/bio/be1
+   # run_your_program
+   ...
+
+> I am sorry but I have to leave now and I cannot come here next week.
+> --> I will take summer holidays.
+
+Have a nice vacation!
 
 Thanks,
-Hirokazu Takahashi.
+Ryo Tsuruta
