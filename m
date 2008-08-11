@@ -1,12 +1,20 @@
-From: Christoph Hellwig <hch@lst.de>
-Subject: [PATCH] dm: kill lookup_device wrapper
-Date: Mon, 11 Aug 2008 00:24:08 +0200
-Message-ID: <20080810222408.GA8331@lst.de>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Subject: Re: Status of resizing/growing dm-multipath devices on the
+	fly
+Date: Mon, 11 Aug 2008 13:36:19 +0300
+Message-ID: <20080811103619.GA3771@edu.joroinen.fi>
+References: <20080806125355.GM3771@edu.joroinen.fi>
+	<BF003E91ABCA429FA851667CB3486F7F@pitagora.it>
+	<20080806143751.GO3771@edu.joroinen.fi>
+	<20080806193602.GA9941@linux.vnet.ibm.com>
+	<1218056296.14886.29.camel@bluto.andrew>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <1218056296.14886.29.camel@bluto.andrew>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,51 +24,84 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, viro@zeniv.linux.org.uk
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Mike Anderson <andmike@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-Now that lookup_bdev is exported and used by dm just use it directly
-instead of through a trivial wrapper.
+On Wed, Aug 06, 2008 at 02:58:16PM -0600, Andrew Patterson wrote:
+> On Wed, 2008-08-06 at 12:36 -0700, Mike Anderson wrote:
+> > Pasi K?rkk?inen <pasik@iki.fi> wrote:
+> > > On Wed, Aug 06, 2008 at 03:48:12PM +0200, Domenico Viggiani wrote:
+> > > > * Pasi K=E4rkk=E4inen wrote:
+> > > > >=20
+> > > > > Is it possible to resize (grow) dm-multipath devices on the=20
+> > > > > fly nowadays?
+> > > > >=20
+> > > > > I googled and found some discussions about the subject, but=20
+> > > > > the conclusion seemed to be it's not possible.. that was a=20
+> > > > > while ago, so I was wondering if this has been fixed/implemente=
+d..
+> > > > >=20
+> > > > > Using LVM and adding another new LUN/PV is not an option=20
+> > > > > always.. it's a lot easier to manage the whole thing if it's=20
+> > > > > possible to resize/grow existing LUNs on the fly.
+> > > >=20
+> > > > Nowadays all disk-arrays make online LUN extension a breeze but
+> > > > unfortunately it seems that dm-multipath is still not able to see=
+ new size
+> > > > without downtime:
+> > > >  http://www.redhat.com/archives/dm-devel/2007-August/msg00205.htm=
+l
+> > > > Look also at this recent thread on RHEL5 mailing-list where you c=
+an find
+> > > > also a post from a Red Hat representative:
+> > > >  http://www.redhat.com/archives/rhelv5-list/2008-July/msg00267.ht=
+ml
+> > > >=20
+> > > > Sure, you can just add a new LUN, pvcreate and vgextend but it is=
+ not a
+> > > > viable solution because it causes LUN proliferation.
+> > > >=20
+> > > > Sincerely, I'm still subscribed to this mailing-list only to see =
+if someone
+> > > > solve this SHAME!
+> > > > It's a feature that Linux really needs.
+> > > >=20
+> > > > Hope someone pick this cry of pain!
+> > > >=20
+> > >=20
+> > > Thanks for the reply.
+> > >=20
+> > > Does someone know what's the actual problem in this? meaning why it=
+ hasn't
+> > > been done yet..=20
+> >=20
+> > It has to do with the block layer not using the new size value while =
+there
+> > are openers.
+> >=20
+> > Andrew submitted a patch series (url below) a while ago to try and ad=
+dress
+> > this issue, but I do not know the status. I added Andrew to the cc.
+> >=20
+> > http://thread.gmane.org/gmane.linux.scsi/41623
+> >=20
+>=20
+> The above patchset works with SCSI devices. I have tested it with singl=
+e
+> SCSI devices under dm/LVM, i.e., a PV is on a single SCSI LUN with only
+> one path to it. It has not yet been accepted upstream due to not gettin=
+g
+> sign-off from Al Viro. I plan on resubmitting soon to add cciss support=
+.
+> Hopefully Al will getting around to reviewing it sometime this century.
+> I have heard rumors that Al has some all-encompassing solution for this
+> problem but hasn't got around to implementing it.  I'll test my new
+> patches with multi-path while I am at it.
+>=20
 
+Was there some problems/issues with the patchset? Or just lack of time fr=
+om
+Al..=20
 
-Signed-off-by: Christoph Hellwig <hch@lst.de>
-
-Index: linux-2.6/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-table.c	2008-08-02 00:05:04.000000000 +0200
-+++ linux-2.6/drivers/md/dm-table.c	2008-08-02 00:06:02.000000000 +0200
-@@ -312,19 +312,6 @@ static inline int check_space(struct dm_
- }
- 
- /*
-- * Convert a device path to a dev_t.
-- */
--static int lookup_device(const char *path, dev_t *dev)
--{
--	struct block_device *bdev = lookup_bdev(path);
--	if (IS_ERR(bdev))
--		return PTR_ERR(bdev);
--	*dev = bdev->bd_dev;
--	bdput(bdev);
--	return 0;
--}
--
--/*
-  * See if we've already got a device in the list.
-  */
- static struct dm_dev *find_device(struct list_head *l, dev_t dev)
-@@ -433,8 +420,12 @@ static int __table_get_device(struct dm_
- 			return -EOVERFLOW;
- 	} else {
- 		/* convert the path to a device */
--		if ((r = lookup_device(path, &dev)))
--			return r;
-+		struct block_device *bdev = lookup_bdev(path);
-+
-+		if (IS_ERR(bdev))
-+			return PTR_ERR(bdev);
-+		dev = bdev->bd_dev;
-+		bdput(bdev);
- 	}
- 
- 	dd = find_device(&t->devices, dev);
+-- Pasi
