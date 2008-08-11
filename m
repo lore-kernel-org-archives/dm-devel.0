@@ -1,107 +1,255 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: Status of resizing/growing dm-multipath devices on the
-	fly
-Date: Mon, 11 Aug 2008 13:36:19 +0300
-Message-ID: <20080811103619.GA3771@edu.joroinen.fi>
-References: <20080806125355.GM3771@edu.joroinen.fi>
-	<BF003E91ABCA429FA851667CB3486F7F@pitagora.it>
-	<20080806143751.GO3771@edu.joroinen.fi>
-	<20080806193602.GA9941@linux.vnet.ibm.com>
-	<1218056296.14886.29.camel@bluto.andrew>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Naveen Gupta" <ngupta@google.com>
+Subject: Re: RFC: I/O bandwidth controller (was Re: Too many I/O controller patches)
+Date: Mon, 11 Aug 2008 11:18:51 -0700
+Message-ID: <2846be6b0808111118q14995d84xdb9e6de500e415e2@mail.gmail.com>
+References: <20080804.175126.193692178.ryov@valinux.co.jp>
+	 <1217870433.20260.101.camel@nimitz>
+	 <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
+	 <2846be6b0808061237o6667c609l21bdb5a765469e95@mail.gmail.com>
+	 <1218115028.8460.353.camel@sebastian.kern.oss.ntt.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755962AbYHKST1@vger.kernel.org>
+In-Reply-To: <1218115028.8460.353.camel@sebastian.kern.oss.ntt.co.jp>
 Content-Disposition: inline
-In-Reply-To: <1218056296.14886.29.camel@bluto.andrew>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Mike Anderson <andmike@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: =?ISO-8859-1?Q?Fernando_Luis_V=E1zquez_Cao?= <fernando@oss.ntt.co.jp>
+Cc: Dave Hansen <dave@linux.vnet.ibm.com>, Ryo Tsuruta <ryov@valinux.co.jp>, yoshikawa.takuya@oss.ntt.co.jp, taka@valinux.co.jp, uchida@ap.jp.nec.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, agk@sourceware.org, Andrea Righi <righi.andrea@gmail.com>
 List-Id: dm-devel.ids
 
-On Wed, Aug 06, 2008 at 02:58:16PM -0600, Andrew Patterson wrote:
-> On Wed, 2008-08-06 at 12:36 -0700, Mike Anderson wrote:
-> > Pasi K?rkk?inen <pasik@iki.fi> wrote:
-> > > On Wed, Aug 06, 2008 at 03:48:12PM +0200, Domenico Viggiani wrote:
-> > > > * Pasi K=E4rkk=E4inen wrote:
-> > > > >=20
-> > > > > Is it possible to resize (grow) dm-multipath devices on the=20
-> > > > > fly nowadays?
-> > > > >=20
-> > > > > I googled and found some discussions about the subject, but=20
-> > > > > the conclusion seemed to be it's not possible.. that was a=20
-> > > > > while ago, so I was wondering if this has been fixed/implemente=
-d..
-> > > > >=20
-> > > > > Using LVM and adding another new LUN/PV is not an option=20
-> > > > > always.. it's a lot easier to manage the whole thing if it's=20
-> > > > > possible to resize/grow existing LUNs on the fly.
-> > > >=20
-> > > > Nowadays all disk-arrays make online LUN extension a breeze but
-> > > > unfortunately it seems that dm-multipath is still not able to see=
- new size
-> > > > without downtime:
-> > > >  http://www.redhat.com/archives/dm-devel/2007-August/msg00205.htm=
-l
-> > > > Look also at this recent thread on RHEL5 mailing-list where you c=
-an find
-> > > > also a post from a Red Hat representative:
-> > > >  http://www.redhat.com/archives/rhelv5-list/2008-July/msg00267.ht=
-ml
-> > > >=20
-> > > > Sure, you can just add a new LUN, pvcreate and vgextend but it is=
- not a
-> > > > viable solution because it causes LUN proliferation.
-> > > >=20
-> > > > Sincerely, I'm still subscribed to this mailing-list only to see =
-if someone
-> > > > solve this SHAME!
-> > > > It's a feature that Linux really needs.
-> > > >=20
-> > > > Hope someone pick this cry of pain!
-> > > >=20
-> > >=20
-> > > Thanks for the reply.
-> > >=20
-> > > Does someone know what's the actual problem in this? meaning why it=
- hasn't
-> > > been done yet..=20
-> >=20
-> > It has to do with the block layer not using the new size value while =
-there
-> > are openers.
-> >=20
-> > Andrew submitted a patch series (url below) a while ago to try and ad=
-dress
-> > this issue, but I do not know the status. I added Andrew to the cc.
-> >=20
-> > http://thread.gmane.org/gmane.linux.scsi/41623
-> >=20
->=20
-> The above patchset works with SCSI devices. I have tested it with singl=
+Hello Fernando
+
+
+2008/8/7 Fernando Luis V=E1zquez Cao <fernando@oss.ntt.co.jp>:
+> Hi Naveen,
+>
+> On Wed, 2008-08-06 at 12:37 -0700, Naveen Gupta wrote:
+>> > 3. & 4. & 5. - I/O bandwidth shaping & General design aspects
+>> >
+>> > The implementation of an I/O scheduling algorithm is to a certain =
+extent
+>> > influenced by what we are trying to achieve in terms of I/O bandwi=
+dth
+>> > shaping, but, as discussed below, the required accuracy can determ=
+ine
+>> > the layer where the I/O controller has to reside. Off the top of m=
+y
+>> > head, there are three basic operations we may want perform:
+>> >  - I/O nice prioritization: ionice-like approach.
+>> >  - Proportional bandwidth scheduling: each process/group of proces=
+ses
+>> > has a weight that determines the share of bandwidth they receive.
+>> >  - I/O limiting: set an upper limit to the bandwidth a group of ta=
+sks
+>> > can use.
+>>
+>> I/O limiting can be a special case of proportional bandwidth
+>> scheduling. A process/process group can use use it's share of
+>> bandwidth and if there is spare bandwidth it be allowed to use it. A=
+nd
+>> if we want to absolutely restrict it we add another flag which
+>> specifies that the specified proportion is exact and has an upper
+>> bound.
+>>
+>> Let's say the ideal b/w for a device is 100MB/s
+>>
+>> And process 1 is assigned b/w of 20%. When we say that the proportio=
+n
+>> is strict, the b/w for process 1 will be 20% of the max b/w (which m=
+ay
+>> be less than 100MB/s) subject to a max of 20MB/s.
+> I essentially agree with you. The nice thing about proportional
+> bandwidth scheduling is that we get bandwidth guarantees when there i=
+s
+> contention for the block device, but still get the benefits of
+> statistical multiplexing in the non-contended case. With strict IO
+> limiting we risk underusing the block devices.
+>
+>> > If we are pursuing a I/O prioritization model =E0 la CFQ the tempt=
+ation is
+>> > to implement it at the elevator layer or extend any of the existin=
+g I/O
+>> > schedulers.
+>> >
+>> > There have been several proposals that extend either the CFQ sched=
+uler
+>> > (see (1), (2) below) or the AS scheduler (see (3) below). The prob=
+lem
+>> > with these controllers is that they are scheduler dependent, which=
+ means
+>> > that they become unusable when we change the scheduler or when we =
+want
+>> > to control stacking devices which define their own make_request_fn
+>> > function (md and dm come to mind). It could be argued that the phy=
+sical
+>> > devices controlled by a dm or md driver are likely to be fed by
+>> > traditional I/O schedulers such as CFQ, but these I/O schedulers w=
+ould
+>> > be running independently from each other, each one controlling its=
+ own
+>> > device ignoring the fact that they part of a stacking device. This=
+ lack
+>> > of information at the elevator layer makes it pretty difficult to =
+obtain
+>> > accurate results when using stacking devices. It seems that unless=
+ we
+>> > can make the elevator layer aware of the topology of stacking devi=
+ces
+>> > (possibly by extending the elevator API?) evelator-based approache=
+s do
+>> > not constitute a generic solution. Here onwards, for discussion
+>> > purposes, I will refer to this type of I/O bandwidth controllers a=
+s
+>> > elevator-based I/O controllers.
+>>
+>> It can be argued that any scheduling decision wrt to i/o belongs to
+>> elevators. Till now they have been used to improve performance. But
+>> with new requirements to isolate i/o based on process or cgroup, we
+>> need to change the elevators.
+> I have the impression there is a tendency to conflate two different
+> issues when discussing I/O schedulers and resource controllers, so le=
+t
+> me elaborate on this point.
+>
+> On the one hand, we have the problem of feeding physical devices with=
+ IO
+> requests in such a way that we squeeze the maximum performance out of
+> them. Of course in some cases we may want to prioritize responsivenes=
+s
+> over throughput. In either case the kernel has to perform the same ba=
+sic
+> operations: merging and dispatching IO requests. There is no discussi=
+on
+> this is the elevator's job and the elevator should take into account =
+the
+> physical characteristics of the device.
+>
+> On the other hand, there is the problem of sharing an IO resource, i.=
+e.
+> block device, between multiple tasks or groups of tasks. There are ma=
+ny
+> ways of sharing an IO resource depending on what we are trying to
+> accomplish: proportional bandwidth scheduling, priority-based
+> scheduling, etc. But to implement this sharing algorithms the kernel =
+has
+> to determine the task whose IO will be submitted. In a sense, we are
+> scheduling tasks (and groups of tasks) not IO requests (which has muc=
+h
+> in common with CPU scheduling). Besides, the sharing problem is not
+> directly related to the characteristics of the underlying device, whi=
+ch
+> means it does not need to be implemented at the elevator layer.
+
+What if we pass the task specific information to the elevator. We do
+this for CFQ (where we pass the priority). And if we need any
+additional information to be passed we could add that in a similar
+manner.
+
+I really liked your initial suggestion where step 1 would be to add
+I/O tracking patches. And then use this in CFQ and AS to do resource
+sharing. And if we see any shortcoming with this approach. Let's see
+what the best place is to solve remaining problems.
+
+
+>
+> Traditional elevators limit themselves to schedule IO requests to dis=
+k
+> with no regard to where it came from. However, new IO schedulers such=
+ as
+> CFQ combine this with IO prioritization capabilities. This means that
+> the elevator decides the application whose IO will be dispatched next=
+=2E
+> The problem is that at this layer there is not enough information to
+> make such decisions in an accurate way, because, as mentioned in the
+> RFC, the elevator has not way to know the block IO topology. The
+> implication of this is that the elevator does not know the impact a
+> particular scheduling decision will make in the IO throughput seen by
+> applications, which is what users care about.
+
+Is it possible to send the topology information to the elevators. And
+then they can make global as well as local decisions.
+
+>
+> For all these reasons, I think the elevator should take care of
+> optimizing the last stretch of the IO path (generic block layer -> bl=
+ock
+> device) for performance/responsiveness, and leave the job of ensuring
+> that each task is guaranteed a fair share of the kernel's IO resource=
+s
+> to the upper layers (for example a block layer resource controller).
+>
+> I recognize that in some cases global performance could be improved i=
+f
+> the block layer had access to information from the elevator, and that=
+ is
+> why I mentioned in the RFC that in some cases it might make sense to
+> combine a block layer resource controller and a elevator layer one (w=
 e
-> SCSI devices under dm/LVM, i.e., a PV is on a single SCSI LUN with only
-> one path to it. It has not yet been accepted upstream due to not gettin=
-g
-> sign-off from Al Viro. I plan on resubmitting soon to add cciss support=
-.
-> Hopefully Al will getting around to reviewing it sometime this century.
-> I have heard rumors that Al has some all-encompassing solution for this
-> problem but hasn't got around to implementing it.  I'll test my new
-> patches with multi-path while I am at it.
->=20
+> just would need to figure out a way for the to communicate with each
+> other and work well in tandem).
+>
+>> If we add another layer of i/o scheduling (block layer I/O controlle=
+r)
+>> above elevators
+>> 1) It builds another layer of i/o scheduling (bandwidth or priority)
+> As I mentioned before we are trying to achieve two things: making the
+> best use of block devices, and sharing those IO resources between tas=
+ks
+> or groups of tasks. There are two possible approaches here: implement
+> everything in the elevator or move the sharing bits somewhere above t=
+he
+> elevator layer. In either case we have to carry out the same tasks so
+> the impact of delegating part of the work to a new layer should not b=
+e
+> that big, and, hopefully, will improve maintainability.
+>
+>> 2) This new layer can have decisions for i/o scheduling which confli=
+ct
+>> with underlying elevator. e.g. If we decide to do b/w scheduling in
+>> this new layer, there is no way a priority based elevator could work
+>> underneath it.
+> The priority system could be implemented above the elevator layer in =
+the
+> block layer resource controller, which means that the elevator would
+> only have to worry about scheduling the requests it receives from the
+> block layer and dispatching them to disk in the best possible way.
+>
+> An alternative would be using a block layer resource controller and a
+> elavator-based resource controller in tandem.
+>
+>> If a custom make_request_fn is defined (which means the said device =
+is
+>> not using existing elevator),
+> Please note that each of the block devices that constitute a stacking
+> device could have its own elevator.
 
-Was there some problems/issues with the patchset? Or just lack of time fr=
-om
-Al..=20
+Another possible approach, if the top layer cannot pass topology info
+to the underling block device elevators. We could use FIFO for the
+underlying block devices, effectively disabling them. The Top layer
+will make it's scheduling decision in custom __make_request and the
+layers below will just forward. And we can easily avoid any conflict.
 
--- Pasi
+>
+>> it could build it's own scheduling
+>> rather than asking kernel to add another layer at the time of i/o
+>> submission. Since it has complete control of i/o.
+> I think that is something we should avoid. The IO scheduling behavior
+> that the user sees should not depend on the topology of the system. W=
+e
+> certainly do not want to reimplement the same scheduling algorithm fo=
+r
+> every RAID driver. I am of the opinion that whatever IO scheduling
+> algorithm we choose should be implemented just once and usable under =
+any
+> IO configuration.
+>
+I agree that we shouldn't be reinventing things for every RAID driver.
+We could have a generic algorithm which everyone plugs into. If not
+that is not possible, we always have the option to create one in
+custom __make_request.
+
+>
+
+
+-Naveen
