@@ -1,104 +1,66 @@
-From: Daniel Phillips <phillips@phunq.net>
-Subject: Re: [PATCH RFC] dm snapshot: shared exception store
-Date: Tue, 12 Aug 2008 05:30:46 -0700
-Message-ID: <200808120530.47308.phillips@phunq.net>
-References: <Pine.LNX.4.64.0808061453470.19728@devserv.devel.redhat.com>
-	<20080812083440U.fujita.tomonori@lab.ntt.co.jp>
-	<alpine.DEB.1.00.0808111644340.15543@abydos.NerdBox.Net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/7] I/O bandwidth controller and BIO tracking
+Date: Tue, 12 Aug 2008 21:31:53 +0900 (JST)
+Message-ID: <20080812.213153.193691490.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <alpine.DEB.1.00.0808111644340.15543@abydos.NerdBox.Net>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: zumastor@googlegroups.com, agk@redhat.com
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, kamezawa.hiroyu@jp.fujitsu.com, agk@sourceware.org
 List-Id: dm-devel.ids
 
-Hi Steve,
+Hi everyone,
 
-On Monday 11 August 2008 17:15, Steve VanDeBogart wrote:
-> On Tue, 12 Aug 2008, FUJITA Tomonori wrote:
-> > On Mon, 11 Aug 2008 18:12:08 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
-> >> - drop that limitation on maximum 64 snapshots. If we are going to
-> >> redesign it, we should design it without such a limit, so that we wouldn't
-> >> have to redesign it again (why we need more than 64 --- for example to
-> >> take periodic snapshots every few minutes to record system activity). The
-> >> limit on number of snapshots can be dropped if we index b-tree nodes by a
-> >> key that contains chunk number and range of snapshot numbers where this
-> >> applies.
-> >
-> > Unfortunately it's the limitation of the current b-tree
-> > format. As far as I know, there is no code that we can use, which
-> > supports unlimited and writable snapshot.
-> 
-> I've recently worked on the limit of 64 snapshots and the storage cost of 
-> 2x64bits per modified chunk.  A btree format that fixes these two issue 
-> is described in this post: http://lwn.net/Articles/288896/  If you have 
-> the time / energy, I believe that this format will work well and be 
-> simple and elegant.  I can't speak for Daniel Phillips, but I suspect he 
-> is concentrating on tux3 and not on getting this format into Zumastor.
+Here are new releases of dm-ioband and bio-cgroup.
 
-It is very much the intention to get the versioned pointer code into
-ddsnap.  There is also this code:
+The major change from the previous version is that dm-ioband now supports
+a device-mapper bvec merge function, which removes the restriction that
+the device-mapper framework automatically splits a I/O request into
+several small I/O requests. The size of I/O requests was limited to
+PAGE_SIZE when the underlying device, such as software RAID, had its
+own merge function. This restriction had ever been applied to all
+device-mapper drivers, but it has been solved recently by introducing
+the bvec merge function feature into device-mapper.
 
-   http://tux3.org/tux3?f=81a1dd303e2a;file=user/test/dleaf.c
+The release also includes a minor update of bio-cgroup, that removes
+some unused code in bio_cgroup_move_task(), which is no longer necessary.
 
-which implements a compressed leaf dictionary format that I believe you
-last saw on a whiteboard a few weeks ago.  It now works pretty well, in
-part thanks to Shapor.  The idea is to thoroughly shake out this code in
-Tux3 then backport to ddsnap.  But nothing stands in the way of somebody
-just putting that in now.
+dm-ioband
+  Dm-ioband is an I/O bandwidth controller implemented as a
+  device-mapper driver, which gives specified bandwidth to each job
+  running on the same block device. A job is a group of processes
+  with the same pid or pgrp or uid or a virtual machine such as KVM
+  or Xen. A job can also be a cgroup by applying the bio-cgroup patch.
 
-Incidentally, it did turn out to be possible to make the group entries
-32 bits.  Demented code to be honest, but the leaf compression is really
-good while the speed is roughly the same as the existing code, and it has
-the benefit of supporting 48 bit block numbers while the existing code
-only supports 32.  It also has the pleasant property of most of the
-memmoves being zero bytes, because I got it right this time and put the
-leaf dictionary upside down at the top of the block instead of having
-the exceptions at the top.
+bio-cgroup
+  Bio-cgroup is a BIO tracking mechanism, which is implemented on the
+  cgroup memory subsystem. With the mechanism, it is able to determine
+  which cgroup each of bio belongs to, even when the bio is one of
+  delayed-write requests issued from a kernel thread such as pdflush.
 
-You are right that I will not be merging this code in the immediate
-future.  Anybody who wants to take that on is more than welcome.  It will
-not be a hard project to integrate that code and the algorithms are quite
-interesting.
+The following is a list of patches:
 
-Over time, a few other pieces of Tux3 will get merged back into ddsnap, 
-for example, the forward logging atomic update method to eliminate most
-of the remaining journal overhead.
+  [PATCH 1/7] dm-ioband: Patch of device-mapper driver
+  [PATCH 2/7] dm-ioband: Documentation of design overview, installation,
+                         command reference and examples.
+  [PATCH 3/7] bio-cgroup: Introduction
+  [PATCH 4/7] bio-cgroup: Split the cgroup memory subsystem into two parts
+  [PATCH 5/7] bio-cgroup: Remove a lot of "#ifdef"s
+  [PATCH 6/7] bio-cgroup: Implement the bio-cgroup
+  [PATCH 7/7] bio-cgroup: Add a cgroup support to dm-ioband
 
-> With both of these formats, in the context of the Zumastor codebase, the 
-> number of snapshots is limited by a requirement that all metadata about
-> a specific chunk fit within a single btree node.  This limits the 
-> number of snapshots to approximately a quarter the chunk size. i.e. 4k
-> chunks would support approximately 500 snapshots. 
+Please see the following site for more information:
+  Linux Block I/O Bandwidth Control Project
+  http://people.valinux.co.jp/~ryov/bwctl/
 
-One eighth the chunk size, you meant.  Chunk pointers being 8 bytes,
-and the leaf directory overhead being insignificant by the time a
-block has been split down to just a single logical address.
-
-> Removing that restriction would increase the number of supported 
-> snapshots by a factor of eight, at which point the next restriction
-> is encountered.
-
-I think the next restriction is the size of the version table in the
-superblock, which is easily overcome.  Then the next one after that is
-the number of bits available in the block pointer for the version,
-which can resonably be 16 with 48 bit block pointers, giving 2^16 user
-visible snapshots, which is getting pretty close to unlimited.
-
-Regards,
-
-Daniel
+Thanks,
+Ryo Tsuruta
