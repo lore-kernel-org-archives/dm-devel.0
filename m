@@ -1,80 +1,43 @@
-From: Steve VanDeBogart <vandebo-dm@NerdBox.Net>
-Subject: Re: [PATCH RFC] dm snapshot: shared exception store
-Date: Mon, 11 Aug 2008 17:15:51 -0700 (PDT)
-Message-ID: <alpine.DEB.1.00.0808111644340.15543@abydos.NerdBox.Net>
-References: <Pine.LNX.4.64.0808061453470.19728@devserv.devel.redhat.com>
-	<20080809140205V.fujita.tomonori@lab.ntt.co.jp>
-	<Pine.LNX.4.64.0808111740520.14722@hs20-bc2-1.build.redhat.com>
-	<20080812083440U.fujita.tomonori@lab.ntt.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Fernando Luis =?ISO-8859-1?Q?V=E1zquez?= Cao
+	<fernando@oss.ntt.co.jp>
+Subject: Re: RFC: I/O bandwidth controller
+Date: Tue, 12 Aug 2008 14:35:23 +0900
+Message-ID: <1218519323.3964.0.camel@sebastian.kern.oss.ntt.co.jp>
+References: <1217985189.3154.57.camel@sebastian.kern.oss.ntt.co.jp>
+	 <4899D464.1070506@linux.vnet.ibm.com>
+	 <1218078075.3803.149.camel@sebastian.kern.oss.ntt.co.jp>
+	 <20080808.203944.29203232.taka@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; format=flowed; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080812083440U.fujita.tomonori@lab.ntt.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: agk@redhat.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1751249AbYHLFfw@vger.kernel.org>
+In-Reply-To: <20080808.203944.29203232.taka@valinux.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hirokazu Takahashi <taka@valinux.co.jp>
+Cc: balbir@linux.vnet.ibm.com, xen-devel@lists.xensource.com, uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
-On Tue, 12 Aug 2008, FUJITA Tomonori wrote:
-> On Mon, 11 Aug 2008 18:12:08 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
->> - drop that limitation on maximum 64 snapshots. If we are going to
->> redesign it, we should design it without such a limit, so that we wouldn't
->> have to redesign it again (why we need more than 64 --- for example to
->> take periodic snapshots every few minutes to record system activity). The
->> limit on number of snapshots can be dropped if we index b-tree nodes by a
->> key that contains chunk number and range of snapshot numbers where this
->> applies.
->
-> Unfortunately it's the limitation of the current b-tree
-> format. As far as I know, there is no code that we can use, which
-> supports unlimited and writable snapshot.
+On Fri, 2008-08-08 at 20:39 +0900, Hirokazu Takahashi wrote:
+> Hi,
+> 
+> > > Would you like to split up IO into read and write IO. We know that read can be
+> > > very latency sensitive when compared to writes. Should we consider them
+> > > separately in the RFC?
+> > Oops, I somehow ended up leaving your first question unanswered. Sorry.
+> > 
+> > I do not think we should consider them separately, as long as there is a
+> > proper IO tracking infrastructure in place. As you mentioned, reads can
+> > be very latecy sensitive, but the read case could be treated as an
+> > special case IO controller/IO tracking subsystem. There certainly are
+> > optimization opportunities. For example, in the synchronous I/O patch ww
+> > could mark bios with the iocontext of the current task, because it will
+> > happen to be originator of that IO. By effectively caching the ownership
+> > information in the bio we can avoid all the accesses to struct page,
+> > page_cgroup, etc, and reads would definitively benefit from that. 
+> 
+> FYI, we should also take special care of pages being reclaimed, the free
+> memory of the cgroup these pages belong to may be really low.
+> Dm-ioband is doing this.
+Thank you for the heads-up.
 
-I've recently worked on the limit of 64 snapshots and the storage cost of 
-2x64bits per modified chunk.  A btree format that fixes these two issue 
-is described in this post: http://lwn.net/Articles/288896/  If you have 
-the time / energy, I believe that this format will work well and be 
-simple and elegant.  I can't speak for Daniel Phillips, but I suspect he 
-is concentrating on tux3 and not on getting this format into Zumastor.
-
-If you don't want to implement "versioned pointers," an earlier format
-change is implemented as a patch against Zumastor here:
-http://groups.google.com/group/zumastor/browse_thread/thread/523ee7925add3dfc/a5d26a4b48fd8906?lnk=gst&q=#a5d26a4b48fd8906
-It removes the 64 snapshot limit and reduces the meta-data storage 
-requirements, but does not support snapshots of snapshots.  This patch 
-has undergone reasonable testing and can be considered beta level code.
-
-With both of these formats, in the context of the Zumastor codebase, the 
-number of snapshots is limited by a requirement that all metadata about
-a specific chunk fit within a single btree node.  This limits the 
-number of snapshots to approximately a quarter the chunk size. i.e. 4k
-chunks would support approximately 500 snapshots. 
-Removing that restriction would increase the number of supported 
-snapshots by a factor of eight, at which point the next restriction
-is encountered.
-
->> - deleting the snapshot --- this needs to walk the whole b-tree --- it is
->> slow. Keeping another b-tree of chunks belonging to the given snapshot
->> would be overkill. I think the best solution would be to split the device
->> into large areas and use per-snapshot bitmap that says if the snapshot has
->> some exceptions allocated in the pertaining area (similar to the
->> dirty-bitmap of raid1). For short lived snapshots this will save walking
->> the b-tree. For long-lived snapshots there is no help to speed it up...
->> But delete performance is not that critical anyway because deleting can be
->> done asynchronously without user waiting for it.
-
-I don't know if it would be useful for your port, but there are some
-patches floating around the Zumastor mailing list that implement
-background delete.  They're not production ready but are a good start on
-the implementation.
-
---
-Steve
+- Fernando
