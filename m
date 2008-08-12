@@ -1,129 +1,104 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: RFC: I/O bandwidth controller
-Date: Tue, 12 Aug 2008 20:10:25 +0900 (JST)
-Message-ID: <20080812.201025.57762305.taka@valinux.co.jp>
-References: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp>
-	<48A0A689.40908@gmail.com>
-	<loom.20080812T071504-212@post.gmane.org>
+From: Daniel Phillips <phillips@phunq.net>
+Subject: Re: [PATCH RFC] dm snapshot: shared exception store
+Date: Tue, 12 Aug 2008 05:30:46 -0700
+Message-ID: <200808120530.47308.phillips@phunq.net>
+References: <Pine.LNX.4.64.0808061453470.19728@devserv.devel.redhat.com>
+	<20080812083440U.fujita.tomonori@lab.ntt.co.jp>
+	<alpine.DEB.1.00.0808111644340.15543@abydos.NerdBox.Net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=utf-8
-Content-Transfer-Encoding: base64
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753345AbYHLLKh@vger.kernel.org>
-In-Reply-To: <loom.20080812T071504-212@post.gmane.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: baramsori72@gmail.com
-Cc: balbir@linux.vnet.ibm.com, xen-devel@lists.xensource.com, uchida@ap.jp.nec.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com, righi.andrea@gmail.com
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <alpine.DEB.1.00.0808111644340.15543@abydos.NerdBox.Net>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: zumastor@googlegroups.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-SGksDQoNCj4gPiBGZXJuYW5kbyBMdWlzIFbDoXpxdWV6IENhbyB3cm90ZToNCj4gPiA+Pj4gVGhp
-cyBzZWVtcyB0byBiZSB0aGUgZWFzaWVzdCBwYXJ0LCBidXQgdGhlIGN1cnJlbnQgY2dyb3Vwcw0K
-PiA+ID4+PiBpbmZyYXN0cnVjdHVyZSBoYXMgc29tZSBsaW1pdGF0aW9ucyB3aGVuIGl0IGNvbWVz
-IHRvIGRlYWxpbmcgd2l0aCBibG9jaw0KPiA+ID4+PiBkZXZpY2VzOiBpbXBvc3NpYmlsaXR5IG9m
-IGNyZWF0aW5nL3JlbW92aW5nIGNlcnRhaW4gY29udHJvbCBzdHJ1Y3R1cmVzDQo+ID4gPj4+IGR5
-bmFtaWNhbGx5IGFuZCBoYXJkY29kaW5nIG9mIHN1YnN5c3RlbXMgKGkuZS4gcmVzb3VyY2UgY29u
-dHJvbGxlcnMpLg0KPiA+ID4+PiBUaGlzIG1ha2VzIGl0IGRpZmZpY3VsdCB0byBoYW5kbGUgYmxv
-Y2sgZGV2aWNlcyB0aGF0IGNhbiBiZSBob3RwbHVnZ2VkDQo+ID4gPj4+IGFuZCBnbyBhd2F5IGF0
-IGFueSB0aW1lICh0aGlzIGFwcGxpZXMgbm90IG9ubHkgdG8gdXNiIHN0b3JhZ2UgYnV0IGFsc28N
-Cj4gPiA+Pj4gdG8gc29tZSBTQVRBIGFuZCBTQ1NJIGRldmljZXMpLiBUbyBjb3BlIHdpdGggdGhp
-cyBzaXR1YXRpb24gcHJvcGVybHkgd2UNCj4gPiA+Pj4gd291bGQgbmVlZCBob3RwbHVnIHN1cHBv
-cnQgaW4gY2dyb3VwcywgYnV0LCBhcyBzdWdnZXN0ZWQgYmVmb3JlIGFuZA0KPiA+ID4+PiBkaXNj
-dXNzZWQgaW4gdGhlIHBhc3QgKHNlZSAoMCkgYmVsb3cpLCB0aGVyZSBhcmUgc29tZSBsaW1pdGF0
-aW9ucy4NCj4gPiA+Pj4NCj4gPiA+Pj4gRXZlbiBpbiB0aGUgbm9uLWhvdHBsdWcgY2FzZSBpdCB3
-b3VsZCBiZSBuaWNlIGlmIHdlIGNvdWxkIHRyZWF0IGVhY2gNCj4gPiA+Pj4gYmxvY2sgSS9PIGRl
-dmljZSBhcyBhbiBpbmRlcGVuZGVudCByZXNvdXJjZSwgd2hpY2ggbWVhbnMgd2UgY291bGQgZG8N
-Cj4gPiA+Pj4gdGhpbmdzIGxpa2UgYWxsb2NhdGluZyBJL08gYmFuZHdpZHRoIG9uIGEgcGVyLWRl
-dmljZSBiYXNpcy4gQXMgbG9uZyBhcw0KPiA+ID4+PiBwZXJmb3JtYW5jZSBpcyBub3QgY29tcHJv
-bWlzZWQgdG9vIG11Y2gsIGFkZGluZyBzb21lIGtpbmQgb2YgYmFzaWMNCj4gPiA+Pj4gaG90cGx1
-ZyBzdXBwb3J0IHRvIGNncm91cHMgaXMgcHJvYmFibHkgd29ydGggaXQuDQo+ID4gPj4+DQo+ID4g
-Pj4+ICgwKSBodHRwOi8vbGttbC5vcmcvbGttbC8yMDA4LzUvMjEvMTINCj4gPiA+PiBXaGF0IGFi
-b3V0IHVzaW5nIG1ham9yLG1pbm9yIG51bWJlcnMgdG8gaWRlbnRpZnkgZWFjaCBkZXZpY2UgYW5k
-IGFjY291bnQNCj4gPiA+PiBJTyBzdGF0aXN0aWNzPyBJZiBhIGRldmljZSBpcyB1bnBsdWdnZWQg
-d2UgY291bGQgcmVzZXQgSU8gc3RhdGlzdGljcw0KPiA+ID4+IGFuZC9vciByZW1vdmUgSU8gbGlt
-aXRhdGlvbnMgZm9yIHRoYXQgZGV2aWNlIGZyb20gdXNlcnNwYWNlIChpLmUuIGJ5IGENCj4gPiA+
-PiBkZWFtb24pLCBidXQgcGx1Z2dpbi91bnBsdWdnaW5nIHRoZSBkZXZpY2Ugd291bGQgbm90IGJl
-IGJsb2NrZWQvYWZmZWN0ZWQNCj4gPiA+PiBpbiBhbnkgY2FzZS4gT3IgYW0gSSBvdmVyc2ltcGxp
-ZnlpbmcgdGhlIHByb2JsZW0/DQo+ID4gPiBJZiBhIHJlc291cmNlIHdlIHdhbnQgdG8gY29udHJv
-bCAoYSBibG9jayBkZXZpY2UgaW4gdGhpcyBjYXNlKSBpcw0KPiA+ID4gaG90LXBsdWdnZWQvdW5w
-bHVnZ2VkIHRoZSBjb3JyZXNwb25kaW5nIGNncm91cC1yZWxhdGVkIHN0cnVjdHVyZXMgaW5zaWRl
-DQo+ID4gPiB0aGUga2VybmVsIG5lZWQgdG8gYmUgYWxsb2NhdGVkL2ZyZWVkIGR5bmFtaWNhbGx5
-LCByZXNwZWN0aXZlbHkuIFRoZQ0KPiA+ID4gcHJvYmxlbSBpcyB0aGF0IHRoaXMgaXMgbm90IGFs
-d2F5cyBwb3NzaWJsZS4gRm9yIGV4YW1wbGUsIHdpdGggdGhlDQo+ID4gPiBjdXJyZW50IGltcGxl
-bWVudGF0aW9uIG9mIGNncm91cHMgaXQgaXMgbm90IHBvc3NpYmxlIHRvIHRyZWF0IGVhY2ggYmxv
-Y2sNCj4gPiA+IGRldmljZSBhcyBhIGRpZmZlcmVudCBjZ3JvdXAgc3Vic3l0ZW0vcmVzb3VyY2Ug
-Y29udHJvbGxlZCwgYmVjYXVzZQ0KPiA+ID4gc3Vic3lzdGVtcyBhcmUgY3JlYXRlZCBhdCBjb21w
-aWxlIHRpbWUuDQo+ID4gDQo+ID4gVGhlIHdob2xlIHN1YnN5c3RlbSBpcyBjcmVhdGVkIGF0IGNv
-bXBpbGUgdGltZSwgYnV0IGNvbnRyb2xsZXIgZGF0YQ0KPiA+IHN0cnVjdHVyZXMgYXJlIGFsbG9j
-YXRlZCBkeW5hbWljYWxseSAoaS5lLiBzZWUgc3RydWN0IG1lbV9jZ3JvdXAgZm9yDQo+ID4gbWVt
-b3J5IGNvbnRyb2xsZXIpLiBTbywgaWRlbnRpZnlpbmcgZWFjaCBkZXZpY2Ugd2l0aCBhIG5hbWUs
-IG9yIGEga2V5DQo+ID4gbGlrZSBtYWpvcixtaW5vciwgaW5zdGVhZCBvZiBhIHJlZmVyZW5jZS9w
-b2ludGVyIHRvIGEgc3RydWN0IGNvdWxkIGhlbHANCj4gPiB0byBoYW5kbGUgdGhpcyBpbiB1c2Vy
-c3BhY2UuIEkgbWVhbiwgaWYgYSBkZXZpY2UgaXMgdW5wbHVnZ2VkIGENCj4gPiB1c2Vyc3BhY2Ug
-ZGFlbW9uIGNhbiBqdXN0IGhhbmRsZSB0aGUgZXZlbnQgYW5kIGRlbGV0ZSB0aGUgY29udHJvbGxl
-cg0KPiA+IGRhdGEgc3RydWN0dXJlcyBhbGxvY2F0ZWQgZm9yIHRoaXMgZGV2aWNlLCBhc3luY2hy
-b25vdXNseSwgdmlhDQo+ID4gdXNlcnNwYWNlLT5rZXJuZWwgaW50ZXJmYWNlLiBBbmQgd2l0aG91
-dCBob2xkaW5nIGEgcmVmZXJlbmNlIHRvIHRoYXQNCj4gPiBwYXJ0aWN1bGFyIGJsb2NrIGRldmlj
-ZSBpbiB0aGUga2VybmVsLiBBbnl3YXksIGltcGxlbWVudGluZyBhIGdlbmVyaWMNCj4gPiBpbnRl
-cmZhY2UgdGhhdCB3b3VsZCBhbGxvdyB0byBkZWZpbmUgaG9va3MgZm9yIGhvdC1wbHVnZ2FibGUg
-ZGV2aWNlcyAob3INCj4gPiBzaW1pbGFyIGV2ZW50cykgaW4gY2dyb3VwcyB3b3VsZCBiZSBpbnRl
-cmVzdGluZy4NCj4gPiANCj4gPiA+Pj4gMy4gJiA0LiAmIDUuIC0gSS9PIGJhbmR3aWR0aCBzaGFw
-aW5nICYgR2VuZXJhbCBkZXNpZ24gYXNwZWN0cw0KPiA+ID4+Pg0KPiA+ID4+PiBUaGUgaW1wbGVt
-ZW50YXRpb24gb2YgYW4gSS9PIHNjaGVkdWxpbmcgYWxnb3JpdGhtIGlzIHRvIGEgY2VydGFpbiBl
-eHRlbnQNCj4gPiA+Pj4gaW5mbHVlbmNlZCBieSB3aGF0IHdlIGFyZSB0cnlpbmcgdG8gYWNoaWV2
-ZSBpbiB0ZXJtcyBvZiBJL08gYmFuZHdpZHRoDQo+ID4gPj4+IHNoYXBpbmcsIGJ1dCwgYXMgZGlz
-Y3Vzc2VkIGJlbG93LCB0aGUgcmVxdWlyZWQgYWNjdXJhY3kgY2FuIGRldGVybWluZQ0KPiA+ID4+
-PiB0aGUgbGF5ZXIgd2hlcmUgdGhlIEkvTyBjb250cm9sbGVyIGhhcyB0byByZXNpZGUuIE9mZiB0
-aGUgdG9wIG9mIG15DQo+ID4gPj4+IGhlYWQsIHRoZXJlIGFyZSB0aHJlZSBiYXNpYyBvcGVyYXRp
-b25zIHdlIG1heSB3YW50IHBlcmZvcm06DQo+ID4gPj4+ICAgLSBJL08gbmljZSBwcmlvcml0aXph
-dGlvbjogaW9uaWNlLWxpa2UgYXBwcm9hY2guDQo+ID4gPj4+ICAgLSBQcm9wb3J0aW9uYWwgYmFu
-ZHdpZHRoIHNjaGVkdWxpbmc6IGVhY2ggcHJvY2Vzcy9ncm91cCBvZiBwcm9jZXNzZXMNCj4gPiA+
-Pj4gaGFzIGEgd2VpZ2h0IHRoYXQgZGV0ZXJtaW5lcyB0aGUgc2hhcmUgb2YgYmFuZHdpZHRoIHRo
-ZXkgcmVjZWl2ZS4NCj4gPiA+Pj4gICAtIEkvTyBsaW1pdGluZzogc2V0IGFuIHVwcGVyIGxpbWl0
-IHRvIHRoZSBiYW5kd2lkdGggYSBncm91cCBvZiB0YXNrcw0KPiA+ID4+PiBjYW4gdXNlLg0KPiA+
-ID4+IFVzZSBhIGRlYWRsaW5lLWJhc2VkIElPIHNjaGVkdWxpbmcgY291bGQgYmUgYW4gaW50ZXJl
-c3RpbmcgcGF0aCB0byBiZQ0KPiA+ID4+IGV4cGxvcmVkIGFzIHdlbGwsIElNSE8sIHRvIHRyeSB0
-byBndWFyYW50ZWUgcGVyLWNncm91cCBtaW5pbXVtIGJhbmR3aWR0aA0KPiA+ID4+IHJlcXVpcmVt
-ZW50cy4NCj4gPiA+IFBsZWFzZSBub3RlIHRoYXQgdGhlIG9ubHkgdGhpbmcgd2UgY2FuIGRvIGlz
-IHRvIGd1YXJhbnRlZSBtaW5pbXVtDQo+ID4gPiBiYW5kd2lkdGggcmVxdWlyZW1lbnQgd2hlbiB0
-aGVyZSBpcyBjb250ZW50aW9uIGZvciBhbiBJTyByZXNvdXJjZSwgd2hpY2gNCj4gPiA+IGlzIHBy
-ZWNpc2VseSB3aGF0IGEgcHJvcG9ydGlvbmFsIGJhbmR3aWR0aCBzY2hlZHVsZXIgZG9lcy4gQW4g
-SSBtaXNzaW5nDQo+ID4gPiBzb21ldGhpbmc/DQo+ID4gDQo+ID4gQ29ycmVjdC4gUHJvcG9ydGlv
-bmFsIGJhbmR3aWR0aCBhdXRvbWF0aWNhbGx5IGFsbG93cyB0byBndWFyYW50ZWUgbWluDQo+ID4g
-cmVxdWlyZW1lbnRzIChpbnN0ZWFkIG9mIElPIGxpbWl0aW5nIGFwcHJvYWNoLCB0aGF0IG5lZWRz
-IGFkZGl0aW9uYWwNCj4gPiBtZWNoYW5pc21zIHRvIGFjaGl2ZSB0aGlzKS4NCj4gPiANCj4gPiBJ
-biBhbnkgY2FzZSB0aGVyZSdzIG5vIGd1YXJhbnRlZSBmb3IgYSBjZ3JvdXAvYXBwbGljYXRpb24g
-dG8gc3VzdGFpbg0KPiA+IGkuZS4gMTBNQi9zIG9uIGEgY2VydGFpbiBkZXZpY2UsIGJ1dCB0aGlz
-IGlzIGEgaGFyZCBwcm9ibGVtIGFueXdheSwgYW5kDQo+ID4gdGhlIGJlc3Qgd2UgY2FuIGRvIGlz
-IHRvIHRyeSB0byBzYXRpc2Z5ICJzb2Z0IiBjb25zdHJhaW50cy4NCj4gDQo+IEkgdGhpbmsgZ3Vh
-cmFudGVlaW5nIHRoZSBtaW5pbXVtIEkvTyBiYW5kd2lkdGggaXMgdmVyeSBpbXBvcnRhbnQuIElu
-IHRoZSANCj4gYnVzaW5lc3Mgc2l0ZSwgZXNwZWNpYWxseSBpbiBzdHJlYW1pbmcgc2VydmljZSBz
-eXN0ZW0sIGFkbWluaXN0cmF0b3IgcmVxdWlyZXMgDQo+IHRoZSBmdW5jdGlvbmFsaXR5IHRvIHNh
-dGlzZnkgUW9TIG9yIHBlcmZvcm1hbmNlIG9mIHRoZWlyIHNlcnZpY2UuIA0KPiBPZiBjb3Vyc2Us
-IElPIHRocm90dGxpbmcgaXMgaW1wb3J0YW50LCBidXQsIHBlcnNvbmFsbHksIEkgdGhpbmsgZ3Vh
-cmFudGVlaW5nIA0KPiB0aGUgbWluaW11bSBiYW5kd2lkdGggaXMgbW9yZSBpbXBvcnRhbnQgdGhh
-biBsaW1pdGF0aW9uIG9mIG1heGltdW0gYmFuZHdpZHRoIA0KPiB0byBzYXRpc2Z5IHRoZSByZXF1
-aXJlbWVudCBpbiByZWFsIGJ1c2luZXNzIHNpdGVzLg0KPiBBbmQgSSBrbm93IEFuZHJlYeKAmXMg
-aW8tdGhyb3R0bGUgcGF0Y2ggc3VwcG9ydHMgdGhlIGxhdHRlciBjYXNlIHdlbGwgYW5kIGl0IGlz
-IA0KPiB2ZXJ5IHN0YWJsZS4gDQo+IEJ1dCwgdGhlIGZpcnN0IGNhc2UoZ3VhcmFudGVlIHRoZSBt
-aW5pbXVtIGJhbmR3aWR0aCkgaXMgbm90IHN1cHBvcnRlZCBpbiBhbnkgDQo+IHBhdGNoZXMuDQo+
-IElzIHRoZXJlIGFueSBwbGFucyB0byBzdXBwb3J0IGl0PyBhbmQgSXMgdGhlcmUgYW55IHByb2Js
-ZW1zIGluIGltcGxlbWVudGluZyBpdD8NCj4gSSB0aGluayBpZiBJTyBjb250cm9sbGVyIGNhbiBz
-dXBwb3J0IGd1YXJhbnRlZWluZyB0aGUgbWluaW11bSBiYW5kd2lkdGggYW5kIA0KPiB3b3JrLWNv
-bnNlcnZpbmcgbW9kZSBzaW11bHRhbmVvdXNseSwgaXQgbW9yZSBlYXNpbHkgc2F0aXNmaWVzIHRo
-ZSByZXF1aXJlbWVudCANCj4gb2YgdGhlIGJ1c2luZXNzIHNpdGVzLg0KPiBBZGRpdGlvbmFsbHks
-IEkgZGlkbuKAmXQgdW5kZXJzdGFuZCDigJxQcm9wb3J0aW9uYWwgYmFuZHdpZHRoIGF1dG9tYXRp
-Y2FsbHkgYWxsb3dzIA0KPiB0byBndWFyYW50ZWUgbWluDQo+IHJlcXVpcmVtZW50c+KAnSBhbmQg
-4oCcc29mdCBjb25zdHJhaW50c+KAnS4NCj4gQ2FuIHlvdSBnaXZlIG1lIGEgYWR2aWNlIGFib3V0
-IHRoaXMgPyANCj4gVGhhbmtzIGluIGFkdmFuY2UuDQo+IA0KPiBEb25nLUphZSBLYW5nDQoNCkkg
-dGhpbmsgdGhpcyBpcyB3aGF0IGRtLWlvYmFuZCBkb2VzLg0KDQpMZXQncyBzYXkgeW91IG1ha2Ug
-dHdvIGdyb3VwcyBzaGFyZSB0aGUgc2FtZSBkaXNrLCBhbmQgZ2l2ZSB0aGVtDQo3MCUgb2YgdGhl
-IGJhbmR3aWR0aCB0aGUgZGlzayBwaHlzaWNhbGx5IGhhcyBhbmQgMzAlIHJlc3BlY3RpdmVseS4N
-ClRoaXMgbWVhbnMgdGhlIGZvcm1lciBncm91cCBpcyBhbG1vc3QgZ3VhcmFudGVlZCB0byBiZSBh
-YmxlIHRvIHVzZQ0KNzAlIG9mIHRoZSBiYW5kd2lkdGggZXZlbiB3aGVuIHRoZSBsYXR0ZXIgb25l
-IGlzIGlzc3VpbmcgcXVpdGUNCmEgbG90IG9mIEkvTyByZXF1ZXN0cy4NCg0KWWVzLCBJIGtub3cg
-dGhlcmUgZXhpc3QgaGVhZCBzZWVrIGxhZ3Mgd2l0aCB0cmFkaXRpb25hbCBtYWduZXRpYyBkaXNr
-cywNCnNvIGl0J3MgaW1wb3J0YW50IHRvIGltcHJvdmUgdGhlIGFsZ29yaXRobSB0byByZWR1Y2Ug
-dGhpcyBvdmVyaGVhZC4NCg0KQW5kIEkgdGhpbmsgaXQgaXMgYWxzbyBwb3NzaWJsZSB0byBhZGQg
-YSBuZXcgc2NoZWR1bGluZyBwb2xpY3kgdG8NCmd1YXJhbnRlZSB0aGUgbWluaW11bSBiYW5kd2lk
-dGguIEl0IG1pZ2h0IGJlIGNvb2wgaWYgc29tZSBncm91cCBjYW4NCnVzZSBndXJhbnRlZWQgYmFu
-ZHdpZHRocyBhbmQgdGhlIG90aGVyIHNoYXJlIHRoZSByZXN0IG9uIHByb3BvcnRpb25hbA0KYmFu
-ZHdpZHRoIHBvbGljeS4NCg0KVGhhbmtzLA0KSGlyb2thenUgVGFrYWhhc2hpLg0K
+Hi Steve,
+
+On Monday 11 August 2008 17:15, Steve VanDeBogart wrote:
+> On Tue, 12 Aug 2008, FUJITA Tomonori wrote:
+> > On Mon, 11 Aug 2008 18:12:08 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
+> >> - drop that limitation on maximum 64 snapshots. If we are going to
+> >> redesign it, we should design it without such a limit, so that we wouldn't
+> >> have to redesign it again (why we need more than 64 --- for example to
+> >> take periodic snapshots every few minutes to record system activity). The
+> >> limit on number of snapshots can be dropped if we index b-tree nodes by a
+> >> key that contains chunk number and range of snapshot numbers where this
+> >> applies.
+> >
+> > Unfortunately it's the limitation of the current b-tree
+> > format. As far as I know, there is no code that we can use, which
+> > supports unlimited and writable snapshot.
+> 
+> I've recently worked on the limit of 64 snapshots and the storage cost of 
+> 2x64bits per modified chunk.  A btree format that fixes these two issue 
+> is described in this post: http://lwn.net/Articles/288896/  If you have 
+> the time / energy, I believe that this format will work well and be 
+> simple and elegant.  I can't speak for Daniel Phillips, but I suspect he 
+> is concentrating on tux3 and not on getting this format into Zumastor.
+
+It is very much the intention to get the versioned pointer code into
+ddsnap.  There is also this code:
+
+   http://tux3.org/tux3?f=81a1dd303e2a;file=user/test/dleaf.c
+
+which implements a compressed leaf dictionary format that I believe you
+last saw on a whiteboard a few weeks ago.  It now works pretty well, in
+part thanks to Shapor.  The idea is to thoroughly shake out this code in
+Tux3 then backport to ddsnap.  But nothing stands in the way of somebody
+just putting that in now.
+
+Incidentally, it did turn out to be possible to make the group entries
+32 bits.  Demented code to be honest, but the leaf compression is really
+good while the speed is roughly the same as the existing code, and it has
+the benefit of supporting 48 bit block numbers while the existing code
+only supports 32.  It also has the pleasant property of most of the
+memmoves being zero bytes, because I got it right this time and put the
+leaf dictionary upside down at the top of the block instead of having
+the exceptions at the top.
+
+You are right that I will not be merging this code in the immediate
+future.  Anybody who wants to take that on is more than welcome.  It will
+not be a hard project to integrate that code and the algorithms are quite
+interesting.
+
+Over time, a few other pieces of Tux3 will get merged back into ddsnap, 
+for example, the forward logging atomic update method to eliminate most
+of the remaining journal overhead.
+
+> With both of these formats, in the context of the Zumastor codebase, the 
+> number of snapshots is limited by a requirement that all metadata about
+> a specific chunk fit within a single btree node.  This limits the 
+> number of snapshots to approximately a quarter the chunk size. i.e. 4k
+> chunks would support approximately 500 snapshots. 
+
+One eighth the chunk size, you meant.  Chunk pointers being 8 bytes,
+and the leaf directory overhead being insignificant by the time a
+block has been split down to just a single logical address.
+
+> Removing that restriction would increase the number of supported 
+> snapshots by a factor of eight, at which point the next restriction
+> is encountered.
+
+I think the next restriction is the size of the version table in the
+superblock, which is easily overcome.  Then the next one after that is
+the number of bits available in the block pointer for the version,
+which can resonably be 16 with 48 bit block pointers, giving 2^16 user
+visible snapshots, which is getting pretty close to unlimited.
+
+Regards,
+
+Daniel
