@@ -1,694 +1,142 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 6/7] bio-cgroup: Implement the bio-cgroup
-Date: Tue, 12 Aug 2008 21:36:40 +0900 (JST)
-Message-ID: <20080812.213640.183031086.ryov@valinux.co.jp>
-References: <20080812.213449.104039151.ryov@valinux.co.jp>
-	<20080812.213533.189720227.ryov@valinux.co.jp>
-	<20080812.213604.112616601.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrea Righi <righi.andrea@gmail.com>
+Subject: Re: RFC: I/O bandwidth controller
+Date: Tue, 12 Aug 2008 14:55:48 +0200 (MEST)
+Message-ID: <48A18854.9020000@gmail.com>
+References: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp>	<48A0A689.40908@gmail.com>	<loom.20080812T071504-212@post.gmane.org> <20080812.201025.57762305.taka@valinux.co.jp>
+Reply-To: righi.andrea@gmail.com
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080812.213604.112616601.ryov@valinux.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
-Cc: fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, kamezawa.hiroyu@jp.fujitsu.com, agk@sourceware.org
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753847AbYHLM4R@vger.kernel.org>
+In-Reply-To: <20080812.201025.57762305.taka@valinux.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hirokazu Takahashi <taka@valinux.co.jp>
+Cc: baramsori72@gmail.com, balbir@linux.vnet.ibm.com, xen-devel@lists.xensource.com, Satoshi UCHIDA <s-uchida@ap.jp.nec.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com
 List-Id: dm-devel.ids
 
-This patch implements the bio cgroup on the memory cgroup.
+Hirokazu Takahashi wrote:
+>>>>>> 3. & 4. & 5. - I/O bandwidth shaping & General design aspects
+>>>>>>
+>>>>>> The implementation of an I/O scheduling algorithm is to a certai=
+n extent
+>>>>>> influenced by what we are trying to achieve in terms of I/O band=
+width
+>>>>>> shaping, but, as discussed below, the required accuracy can dete=
+rmine
+>>>>>> the layer where the I/O controller has to reside. Off the top of=
+ my
+>>>>>> head, there are three basic operations we may want perform:
+>>>>>>   - I/O nice prioritization: ionice-like approach.
+>>>>>>   - Proportional bandwidth scheduling: each process/group of pro=
+cesses
+>>>>>> has a weight that determines the share of bandwidth they receive=
+=2E
+>>>>>>   - I/O limiting: set an upper limit to the bandwidth a group of=
+ tasks
+>>>>>> can use.
+>>>>> Use a deadline-based IO scheduling could be an interesting path t=
+o be
+>>>>> explored as well, IMHO, to try to guarantee per-cgroup minimum ba=
+ndwidth
+>>>>> requirements.
+>>>> Please note that the only thing we can do is to guarantee minimum
+>>>> bandwidth requirement when there is contention for an IO resource,=
+ which
+>>>> is precisely what a proportional bandwidth scheduler does. An I mi=
+ssing
+>>>> something?
+>>> Correct. Proportional bandwidth automatically allows to guarantee m=
+in
+>>> requirements (instead of IO limiting approach, that needs additiona=
+l
+>>> mechanisms to achive this).
+>>>
+>>> In any case there's no guarantee for a cgroup/application to sustai=
+n
+>>> i.e. 10MB/s on a certain device, but this is a hard problem anyway,=
+ and
+>>> the best we can do is to try to satisfy "soft" constraints.
+>> I think guaranteeing the minimum I/O bandwidth is very important. In=
+ the=20
+>> business site, especially in streaming service system, administrator=
+ requires=20
+>> the functionality to satisfy QoS or performance of their service.=20
+>> Of course, IO throttling is important, but, personally, I think guar=
+anteeing=20
+>> the minimum bandwidth is more important than limitation of maximum b=
+andwidth=20
+>> to satisfy the requirement in real business sites.
+>> And I know Andrea=E2=80=99s io-throttle patch supports the latter ca=
+se well and it is=20
+>> very stable.=20
+>> But, the first case(guarantee the minimum bandwidth) is not supporte=
+d in any=20
+>> patches.
+>> Is there any plans to support it? and Is there any problems in imple=
+menting it?
+>> I think if IO controller can support guaranteeing the minimum bandwi=
+dth and=20
+>> work-conserving mode simultaneously, it more easily satisfies the re=
+quirement=20
+>> of the business sites.
+>> Additionally, I didn=E2=80=99t understand =E2=80=9CProportional band=
+width automatically allows=20
+>> to guarantee min
+>> requirements=E2=80=9D and =E2=80=9Csoft constraints=E2=80=9D.
+>> Can you give me a advice about this ?=20
+>> Thanks in advance.
+>>
+>> Dong-Jae Kang
+>=20
+> I think this is what dm-ioband does.
+>=20
+> Let's say you make two groups share the same disk, and give them
+> 70% of the bandwidth the disk physically has and 30% respectively.
+> This means the former group is almost guaranteed to be able to use
+> 70% of the bandwidth even when the latter one is issuing quite
+> a lot of I/O requests.
+>=20
+> Yes, I know there exist head seek lags with traditional magnetic disk=
+s,
+> so it's important to improve the algorithm to reduce this overhead.
+>=20
+> And I think it is also possible to add a new scheduling policy to
+> guarantee the minimum bandwidth. It might be cool if some group can
+> use guranteed bandwidths and the other share the rest on proportional
+> bandwidth policy.
+>=20
+> Thanks,
+> Hirokazu Takahashi.
 
-Based on 2.6.27-rc1-mm1
-Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
-Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+With IO limiting approach minimum requirements are supposed to be
+guaranteed if the user configures a generic block device so that the su=
+m
+of the limits doesn't exceed the total IO bandwidth of that device. But=
+,
+in principle, there's nothing in "throttling" that guarantees "fairness=
+"
+among different cgroups doing IO on the same block devices, that means
+there's nothing to guarantee minimum requirements (and this is the
+reason because I liked the Satoshi's CFQ-cgroup approach together with
+io-throttle).
 
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/block/blk-ioc.c linux-2.6.27-rc1-mm1.cg2/block/blk-ioc.c
---- linux-2.6.27-rc1-mm1.cg1/block/blk-ioc.c	2008-07-29 11:40:31.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/block/blk-ioc.c	2008-08-12 14:47:59.000000000 +0900
-@@ -84,24 +84,28 @@ void exit_io_context(void)
- 	}
- }
- 
-+void init_io_context(struct io_context *ioc)
-+{
-+	atomic_set(&ioc->refcount, 1);
-+	atomic_set(&ioc->nr_tasks, 1);
-+	spin_lock_init(&ioc->lock);
-+	ioc->ioprio_changed = 0;
-+	ioc->ioprio = 0;
-+	ioc->last_waited = jiffies; /* doesn't matter... */
-+	ioc->nr_batch_requests = 0; /* because this is 0 */
-+	ioc->aic = NULL;
-+	INIT_RADIX_TREE(&ioc->radix_root, GFP_ATOMIC | __GFP_HIGH);
-+	INIT_HLIST_HEAD(&ioc->cic_list);
-+	ioc->ioc_data = NULL;
-+}
-+
- struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
- {
- 	struct io_context *ret;
- 
- 	ret = kmem_cache_alloc_node(iocontext_cachep, gfp_flags, node);
--	if (ret) {
--		atomic_set(&ret->refcount, 1);
--		atomic_set(&ret->nr_tasks, 1);
--		spin_lock_init(&ret->lock);
--		ret->ioprio_changed = 0;
--		ret->ioprio = 0;
--		ret->last_waited = jiffies; /* doesn't matter... */
--		ret->nr_batch_requests = 0; /* because this is 0 */
--		ret->aic = NULL;
--		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
--		INIT_HLIST_HEAD(&ret->cic_list);
--		ret->ioc_data = NULL;
--	}
-+	if (ret)
-+		init_io_context(ret);
- 
- 	return ret;
- }
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/include/linux/biocontrol.h linux-2.6.27-rc1-mm1.cg2/include/linux/biocontrol.h
---- linux-2.6.27-rc1-mm1.cg1/include/linux/biocontrol.h	1970-01-01 09:00:00.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/include/linux/biocontrol.h	2008-08-12 14:48:00.000000000 +0900
-@@ -0,0 +1,159 @@
-+#include <linux/cgroup.h>
-+#include <linux/mm.h>
-+#include <linux/memcontrol.h>
-+
-+#ifndef _LINUX_BIOCONTROL_H
-+#define _LINUX_BIOCONTROL_H
-+
-+#ifdef	CONFIG_CGROUP_BIO
-+
-+struct io_context;
-+struct block_device;
-+
-+struct bio_cgroup {
-+	struct cgroup_subsys_state css;
-+	int id;
-+	struct io_context *io_context;	/* default io_context */
-+/*	struct radix_tree_root io_context_root; per device io_context */
-+	spinlock_t		page_list_lock;
-+	struct list_head	page_list;
-+};
-+
-+static inline int bio_cgroup_disabled(void)
-+{
-+	return bio_cgroup_subsys.disabled;
-+}
-+
-+static inline struct bio_cgroup *bio_cgroup_from_task(struct task_struct *p)
-+{
-+	return container_of(task_subsys_state(p, bio_cgroup_subsys_id),
-+				struct bio_cgroup, css);
-+}
-+
-+static inline void __bio_cgroup_add_page(struct page_cgroup *pc)
-+{
-+	struct bio_cgroup *biog = pc->bio_cgroup;
-+	list_add(&pc->blist, &biog->page_list);
-+}
-+
-+static inline void bio_cgroup_add_page(struct page_cgroup *pc)
-+{
-+	struct bio_cgroup *biog = pc->bio_cgroup;
-+	unsigned long flags;
-+	spin_lock_irqsave(&biog->page_list_lock, flags);
-+	__bio_cgroup_add_page(pc);
-+	spin_unlock_irqrestore(&biog->page_list_lock, flags);
-+}
-+
-+static inline void __bio_cgroup_remove_page(struct page_cgroup *pc)
-+{
-+	list_del_init(&pc->blist);
-+}
-+
-+static inline void bio_cgroup_remove_page(struct page_cgroup *pc)
-+{
-+	struct bio_cgroup *biog = pc->bio_cgroup;
-+	unsigned long flags;
-+	spin_lock_irqsave(&biog->page_list_lock, flags);
-+	__bio_cgroup_remove_page(pc);
-+	spin_unlock_irqrestore(&biog->page_list_lock, flags);
-+}
-+
-+static inline void get_bio_cgroup(struct bio_cgroup *biog)
-+{
-+	css_get(&biog->css);
-+}
-+
-+static inline void put_bio_cgroup(struct bio_cgroup *biog)
-+{
-+	css_put(&biog->css);
-+}
-+
-+static inline void set_bio_cgroup(struct page_cgroup *pc,
-+					struct bio_cgroup *biog)
-+{
-+	pc->bio_cgroup = biog;
-+}
-+
-+static inline void clear_bio_cgroup(struct page_cgroup *pc)
-+{
-+	struct bio_cgroup *biog = pc->bio_cgroup;
-+	pc->bio_cgroup = NULL;
-+	put_bio_cgroup(biog);
-+}
-+
-+static inline struct bio_cgroup *get_bio_page_cgroup(struct page_cgroup *pc)
-+{
-+	struct bio_cgroup *biog = pc->bio_cgroup;
-+	css_get(&biog->css);
-+	return biog;
-+}
-+
-+/* This sould be called in an RCU-protected section. */
-+static inline struct bio_cgroup *mm_get_bio_cgroup(struct mm_struct *mm)
-+{
-+	struct bio_cgroup *biog;
-+	biog = bio_cgroup_from_task(rcu_dereference(mm->owner));
-+	get_bio_cgroup(biog);
-+	return biog;
-+}
-+
-+extern struct io_context *get_bio_cgroup_iocontext(struct bio *bio);
-+
-+#else	/* CONFIG_CGROUP_BIO */
-+
-+struct bio_cgroup;
-+
-+static inline int bio_cgroup_disabled(void)
-+{
-+	return 1;
-+}
-+
-+static inline void bio_cgroup_add_page(struct page_cgroup *pc)
-+{
-+}
-+
-+static inline void bio_cgroup_remove_page(struct page_cgroup *pc)
-+{
-+}
-+
-+static inline void get_bio_cgroup(struct bio_cgroup *biog)
-+{
-+}
-+
-+static inline void put_bio_cgroup(struct bio_cgroup *biog)
-+{
-+}
-+
-+static inline void set_bio_cgroup(struct page_cgroup *pc,
-+					struct bio_cgroup *biog)
-+{
-+}
-+
-+static inline void clear_bio_cgroup(struct page_cgroup *pc)
-+{
-+}
-+
-+static inline struct bio_cgroup *get_bio_page_cgroup(struct page_cgroup *pc)
-+{
-+	return NULL;
-+}
-+
-+static inline struct bio_cgroup *mm_get_bio_cgroup(struct mm_struct *mm)
-+{
-+	return NULL;
-+}
-+
-+static inline int get_bio_cgroup_id(struct page *page)
-+{
-+	return 0;
-+}
-+
-+static inline struct io_context *get_bio_cgroup_iocontext(struct bio *bio)
-+{
-+	return NULL;
-+}
-+
-+#endif	/* CONFIG_CGROUP_BIO */
-+
-+#endif /* _LINUX_BIOCONTROL_H */
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/include/linux/cgroup_subsys.h linux-2.6.27-rc1-mm1.cg2/include/linux/cgroup_subsys.h
---- linux-2.6.27-rc1-mm1.cg1/include/linux/cgroup_subsys.h	2008-08-12 14:30:19.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/include/linux/cgroup_subsys.h	2008-08-12 14:48:00.000000000 +0900
-@@ -43,6 +43,12 @@ SUBSYS(mem_cgroup)
- 
- /* */
- 
-+#ifdef CONFIG_CGROUP_BIO
-+SUBSYS(bio_cgroup)
-+#endif
-+
-+/* */
-+
- #ifdef CONFIG_CGROUP_DEVICE
- SUBSYS(devices)
- #endif
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/include/linux/iocontext.h linux-2.6.27-rc1-mm1.cg2/include/linux/iocontext.h
---- linux-2.6.27-rc1-mm1.cg1/include/linux/iocontext.h	2008-07-29 11:40:31.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/include/linux/iocontext.h	2008-08-12 14:48:00.000000000 +0900
-@@ -83,6 +83,8 @@ struct io_context {
- 	struct radix_tree_root radix_root;
- 	struct hlist_head cic_list;
- 	void *ioc_data;
-+
-+	int id;		/* cgroup ID */
- };
- 
- static inline struct io_context *ioc_task_link(struct io_context *ioc)
-@@ -104,6 +106,7 @@ int put_io_context(struct io_context *io
- void exit_io_context(void);
- struct io_context *get_io_context(gfp_t gfp_flags, int node);
- struct io_context *alloc_io_context(gfp_t gfp_flags, int node);
-+void init_io_context(struct io_context *ioc);
- void copy_io_context(struct io_context **pdst, struct io_context **psrc);
- #else
- static inline void exit_io_context(void)
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/include/linux/memcontrol.h linux-2.6.27-rc1-mm1.cg2/include/linux/memcontrol.h
---- linux-2.6.27-rc1-mm1.cg1/include/linux/memcontrol.h	2008-08-12 14:47:22.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/include/linux/memcontrol.h	2008-08-12 14:48:00.000000000 +0900
-@@ -54,6 +54,10 @@ struct page_cgroup {
- 	struct list_head lru;		/* per cgroup LRU list */
- 	struct mem_cgroup *mem_cgroup;
- #endif /* CONFIG_CGROUP_MEM_RES_CTLR */
-+#ifdef CONFIG_CGROUP_BIO
-+	struct list_head blist;		/* for bio_cgroup page list */
-+	struct bio_cgroup *bio_cgroup;
-+#endif
- 	struct page *page;
- 	int flags;
- };
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/init/Kconfig linux-2.6.27-rc1-mm1.cg2/init/Kconfig
---- linux-2.6.27-rc1-mm1.cg1/init/Kconfig	2008-08-12 14:47:22.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/init/Kconfig	2008-08-12 14:48:00.000000000 +0900
-@@ -418,9 +418,20 @@ config CGROUP_MEMRLIMIT_CTLR
- 	  memory RSS and Page Cache control. Virtual address space control
- 	  is provided by this controller.
- 
-+config CGROUP_BIO
-+	bool "Block I/O cgroup subsystem"
-+	depends on CGROUPS
-+	select MM_OWNER
-+	help
-+	  Provides a Resource Controller which enables to track the onwner
-+	  of every Block I/O.
-+	  The information this subsystem provides can be used from any
-+	  kind of module such as dm-ioband device mapper modules or
-+	  the cfq-scheduler.
-+
- config CGROUP_PAGE
- 	def_bool y
--	depends on CGROUP_MEM_RES_CTLR
-+	depends on CGROUP_MEM_RES_CTLR || CGROUP_BIO
- 
- config SYSFS_DEPRECATED
- 	bool
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/mm/Makefile linux-2.6.27-rc1-mm1.cg2/mm/Makefile
---- linux-2.6.27-rc1-mm1.cg1/mm/Makefile	2008-08-12 14:47:22.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/mm/Makefile	2008-08-12 14:48:00.000000000 +0900
-@@ -35,4 +35,5 @@ obj-$(CONFIG_MIGRATION) += migrate.o
- obj-$(CONFIG_SMP) += allocpercpu.o
- obj-$(CONFIG_QUICKLIST) += quicklist.o
- obj-$(CONFIG_CGROUP_PAGE) += memcontrol.o
-+obj-$(CONFIG_CGROUP_BIO) += biocontrol.o
- obj-$(CONFIG_CGROUP_MEMRLIMIT_CTLR) += memrlimitcgroup.o
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/mm/biocontrol.c linux-2.6.27-rc1-mm1.cg2/mm/biocontrol.c
---- linux-2.6.27-rc1-mm1.cg1/mm/biocontrol.c	1970-01-01 09:00:00.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/mm/biocontrol.c	2008-08-12 15:06:12.000000000 +0900
-@@ -0,0 +1,219 @@
-+/* biocontrol.c - Block I/O Controller
-+ *
-+ * Copyright IBM Corporation, 2007
-+ * Author Balbir Singh <balbir@linux.vnet.ibm.com>
-+ *
-+ * Copyright 2007 OpenVZ SWsoft Inc
-+ * Author: Pavel Emelianov <xemul@openvz.org>
-+ *
-+ * Copyright VA Linux Systems Japan, 2008
-+ * Author Hirokazu Takahashi <taka@valinux.co.jp>
-+ *
-+ * This program is free software; you can redistribute it and/or modify
-+ * it under the terms of the GNU General Public License as published by
-+ * the Free Software Foundation; either version 2 of the License, or
-+ * (at your option) any later version.
-+ *
-+ * This program is distributed in the hope that it will be useful,
-+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
-+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-+ * GNU General Public License for more details.
-+ */
-+
-+#include <linux/module.h>
-+#include <linux/cgroup.h>
-+#include <linux/mm.h>
-+#include <linux/blkdev.h>
-+#include <linux/smp.h>
-+#include <linux/bit_spinlock.h>
-+#include <linux/idr.h>
-+#include <linux/err.h>
-+#include <linux/biocontrol.h>
-+
-+/* return corresponding bio_cgroup object of a cgroup */
-+static inline struct bio_cgroup *cgroup_bio(struct cgroup *cgrp)
-+{
-+	return container_of(cgroup_subsys_state(cgrp, bio_cgroup_subsys_id),
-+			    struct bio_cgroup, css);
-+}
-+
-+static struct idr bio_cgroup_id;
-+static DEFINE_SPINLOCK(bio_cgroup_idr_lock);
-+
-+static struct cgroup_subsys_state *
-+bio_cgroup_create(struct cgroup_subsys *ss, struct cgroup *cgrp)
-+{
-+	struct bio_cgroup *biog;
-+	struct io_context *ioc;
-+	int error;
-+
-+	if (!cgrp->parent) {
-+		static struct bio_cgroup default_bio_cgroup;
-+		static struct io_context default_bio_io_context;
-+
-+		biog = &default_bio_cgroup;
-+		ioc = &default_bio_io_context;
-+		init_io_context(ioc);
-+
-+		idr_init(&bio_cgroup_id);
-+		biog->id = 0;
-+
-+		page_cgroup_init();
-+	} else {
-+		biog = kzalloc(sizeof(*biog), GFP_KERNEL);
-+		ioc = alloc_io_context(GFP_KERNEL, -1);
-+		if (!ioc || !biog) {
-+			error = -ENOMEM;
-+			goto out;
-+		}
-+retry:
-+		if (unlikely(!idr_pre_get(&bio_cgroup_id, GFP_KERNEL))) {
-+			error = -EAGAIN;
-+			goto out;
-+		}
-+		spin_lock_irq(&bio_cgroup_idr_lock);
-+		error = idr_get_new_above(&bio_cgroup_id,
-+						(void *)biog, 1, &biog->id);
-+		spin_unlock_irq(&bio_cgroup_idr_lock);
-+		if (error == -EAGAIN)
-+			goto retry;
-+		else if (error)
-+			goto out;
-+	}
-+
-+	ioc->id = biog->id;
-+	biog->io_context = ioc;
-+
-+	INIT_LIST_HEAD(&biog->page_list);
-+	spin_lock_init(&biog->page_list_lock);
-+
-+	/* Bind the cgroup to bio_cgroup object we just created */
-+	biog->css.cgroup = cgrp;
-+
-+	return &biog->css;
-+out:
-+	if (ioc)
-+		put_io_context(ioc);
-+	kfree(biog);
-+	return ERR_PTR(error);
-+}
-+
-+#define FORCE_UNCHARGE_BATCH	(128)
-+static void bio_cgroup_force_empty(struct bio_cgroup *biog)
-+{
-+	struct page_cgroup *pc;
-+	struct page *page;
-+	int count = FORCE_UNCHARGE_BATCH;
-+	struct list_head *list = &biog->page_list;
-+	unsigned long flags;
-+
-+	spin_lock_irqsave(&biog->page_list_lock, flags);
-+	while (!list_empty(list)) {
-+		pc = list_entry(list->prev, struct page_cgroup, blist);
-+		page = pc->page;
-+		get_page(page);
-+		spin_unlock_irqrestore(&biog->page_list_lock, flags);
-+		mem_cgroup_uncharge_page(page);
-+		put_page(page);
-+		if (--count <= 0) {
-+			count = FORCE_UNCHARGE_BATCH;
-+			cond_resched();
-+		}
-+		spin_lock_irqsave(&biog->page_list_lock, flags);
-+	}
-+	spin_unlock_irqrestore(&biog->page_list_lock, flags);
-+	return;
-+}
-+
-+static void bio_cgroup_pre_destroy(struct cgroup_subsys *ss,
-+							struct cgroup *cgrp)
-+{
-+	struct bio_cgroup *biog = cgroup_bio(cgrp);
-+	bio_cgroup_force_empty(biog);
-+}
-+
-+static void bio_cgroup_destroy(struct cgroup_subsys *ss, struct cgroup *cgrp)
-+{
-+	struct bio_cgroup *biog = cgroup_bio(cgrp);
-+
-+	put_io_context(biog->io_context);
-+
-+	spin_lock_irq(&bio_cgroup_idr_lock);
-+	idr_remove(&bio_cgroup_id, biog->id);
-+	spin_unlock_irq(&bio_cgroup_idr_lock);
-+
-+	kfree(biog);
-+}
-+
-+struct bio_cgroup *find_bio_cgroup(int id)
-+{
-+	struct bio_cgroup *biog;
-+	spin_lock_irq(&bio_cgroup_idr_lock);
-+	biog = (struct bio_cgroup *)
-+	idr_find(&bio_cgroup_id, id);
-+	spin_unlock_irq(&bio_cgroup_idr_lock);
-+	get_bio_cgroup(biog);
-+	return biog;
-+}
-+
-+struct io_context *get_bio_cgroup_iocontext(struct bio *bio)
-+{
-+	struct io_context *ioc;
-+	struct page_cgroup *pc;
-+	struct bio_cgroup *biog;
-+	struct page *page = bio_iovec_idx(bio, 0)->bv_page;
-+
-+	lock_page_cgroup(page);
-+	pc = page_get_page_cgroup(page);
-+	if (pc)
-+		biog = pc->bio_cgroup;
-+	else
-+		biog = bio_cgroup_from_task(rcu_dereference(init_mm.owner));
-+	ioc = biog->io_context;	/* default io_context for this cgroup */
-+	atomic_inc(&ioc->refcount);
-+	unlock_page_cgroup(page);
-+	return ioc;
-+}
-+EXPORT_SYMBOL(get_bio_cgroup_iocontext);
-+
-+static u64 bio_id_read(struct cgroup *cgrp, struct cftype *cft)
-+{
-+	struct bio_cgroup *biog = cgroup_bio(cgrp);
-+
-+	return (u64) biog->id;
-+}
-+
-+
-+static struct cftype bio_files[] = {
-+	{
-+		.name = "id",
-+		.read_u64 = bio_id_read,
-+	},
-+};
-+
-+static int bio_cgroup_populate(struct cgroup_subsys *ss, struct cgroup *cont)
-+{
-+	if (bio_cgroup_disabled())
-+		return 0;
-+	return cgroup_add_files(cont, ss, bio_files, ARRAY_SIZE(bio_files));
-+}
-+
-+static void bio_cgroup_move_task(struct cgroup_subsys *ss,
-+				struct cgroup *cont,
-+				struct cgroup *old_cont,
-+				struct task_struct *p)
-+{
-+	/* do nothing */
-+}
-+
-+
-+struct cgroup_subsys bio_cgroup_subsys = {
-+	.name           = "bio",
-+	.subsys_id      = bio_cgroup_subsys_id,
-+	.create         = bio_cgroup_create,
-+	.destroy        = bio_cgroup_destroy,
-+	.pre_destroy	= bio_cgroup_pre_destroy,
-+	.populate       = bio_cgroup_populate,
-+	.attach		= bio_cgroup_move_task,
-+	.early_init	= 0,
-+};
-diff -Ndupr linux-2.6.27-rc1-mm1.cg1/mm/memcontrol.c linux-2.6.27-rc1-mm1.cg2/mm/memcontrol.c
---- linux-2.6.27-rc1-mm1.cg1/mm/memcontrol.c	2008-08-12 14:47:40.000000000 +0900
-+++ linux-2.6.27-rc1-mm1.cg2/mm/memcontrol.c	2008-08-12 14:48:00.000000000 +0900
-@@ -20,6 +20,7 @@
- #include <linux/res_counter.h>
- #include <linux/memcontrol.h>
- #include <linux/cgroup.h>
-+#include <linux/biocontrol.h>
- #include <linux/mm.h>
- #include <linux/smp.h>
- #include <linux/page-flags.h>
-@@ -1019,11 +1020,12 @@ struct page_cgroup *page_get_page_cgroup
-  * < 0 if the cgroup is over its limit
-  */
- static int mem_cgroup_charge_common(struct page *page, struct mm_struct *mm,
--				gfp_t gfp_mask, enum charge_type ctype,
--				struct mem_cgroup *memcg)
-+			gfp_t gfp_mask, enum charge_type ctype,
-+			struct mem_cgroup *memcg, struct bio_cgroup *biocg)
- {
- 	struct page_cgroup *pc;
- 	struct mem_cgroup *mem;
-+	struct bio_cgroup *biog;
- 
- 	pc = kmem_cache_alloc(page_cgroup_cache, gfp_mask);
- 	if (unlikely(pc == NULL))
-@@ -1035,18 +1037,15 @@ static int mem_cgroup_charge_common(stru
- 	 * thread group leader migrates. It's possible that mm is not
- 	 * set, if so charge the init_mm (happens for pagecache usage).
- 	 */
--	if (likely(!memcg)) {
--		rcu_read_lock();
--		mem = mm_get_mem_cgroup(mm);
--		rcu_read_unlock();
--	} else {
--		mem = memcg;
--		get_mem_cgroup(mem);
--	}
-+	rcu_read_lock();
-+	mem = memcg ? memcg : mm_get_mem_cgroup(mm);
-+	biog = biocg ? biocg : mm_get_bio_cgroup(mm);
-+	rcu_read_unlock();
- 
- 	if (mem_cgroup_try_to_allocate(mem, gfp_mask) < 0)
- 		goto out;
- 	set_mem_cgroup(pc, mem);
-+	set_bio_cgroup(pc, biog);
- 	pc->page = page;
- 	/*
- 	 * If a page is accounted as a page cache, insert to inactive list.
-@@ -1065,18 +1064,21 @@ static int mem_cgroup_charge_common(stru
- 	if (unlikely(page_get_page_cgroup(page))) {
- 		unlock_page_cgroup(page);
- 		clear_mem_cgroup(pc);
-+		clear_bio_cgroup(pc);
- 		kmem_cache_free(page_cgroup_cache, pc);
- 		goto done;
- 	}
- 	page_assign_page_cgroup(page, pc);
- 
- 	mem_cgroup_add_page(pc);
-+	bio_cgroup_add_page(pc);
- 
- 	unlock_page_cgroup(page);
- done:
- 	return 0;
- out:
- 	put_mem_cgroup(mem);
-+	put_bio_cgroup(biog);
- 	kmem_cache_free(page_cgroup_cache, pc);
- err:
- 	return -ENOMEM;
-@@ -1099,7 +1101,7 @@ int mem_cgroup_charge(struct page *page,
- 	if (unlikely(!mm))
- 		mm = &init_mm;
- 	return mem_cgroup_charge_common(page, mm, gfp_mask,
--				MEM_CGROUP_CHARGE_TYPE_MAPPED, NULL);
-+				MEM_CGROUP_CHARGE_TYPE_MAPPED, NULL, NULL);
- }
- 
- int mem_cgroup_cache_charge(struct page *page, struct mm_struct *mm,
-@@ -1135,7 +1137,7 @@ int mem_cgroup_cache_charge(struct page 
- 		mm = &init_mm;
- 
- 	return mem_cgroup_charge_common(page, mm, gfp_mask,
--				MEM_CGROUP_CHARGE_TYPE_CACHE, NULL);
-+				MEM_CGROUP_CHARGE_TYPE_CACHE, NULL, NULL);
- }
- 
- /*
-@@ -1146,7 +1148,7 @@ __mem_cgroup_uncharge_common(struct page
- {
- 	struct page_cgroup *pc;
- 
--	if (mem_cgroup_disabled())
-+	if (mem_cgroup_disabled() && bio_cgroup_disabled())
- 		return;
- 
- 	/*
-@@ -1166,11 +1168,13 @@ __mem_cgroup_uncharge_common(struct page
- 		goto unlock;
- 
- 	mem_cgroup_remove_page(pc);
-+	bio_cgroup_remove_page(pc);
- 
- 	page_assign_page_cgroup(page, NULL);
- 	unlock_page_cgroup(page);
- 
- 	clear_mem_cgroup(pc);
-+	clear_bio_cgroup(pc);
- 
- 	kmem_cache_free(page_cgroup_cache, pc);
- 	return;
-@@ -1196,24 +1200,29 @@ int mem_cgroup_prepare_migration(struct 
- {
- 	struct page_cgroup *pc;
- 	struct mem_cgroup *mem = NULL;
-+	struct bio_cgroup *biog = NULL;
- 	enum charge_type ctype = MEM_CGROUP_CHARGE_TYPE_MAPPED;
- 	int ret = 0;
- 
--	if (mem_cgroup_disabled())
-+	if (mem_cgroup_disabled() && bio_cgroup_disabled())
- 		return 0;
- 
- 	lock_page_cgroup(page);
- 	pc = page_get_page_cgroup(page);
- 	if (pc) {
- 		mem = get_mem_page_cgroup(pc);
-+		biog = get_bio_page_cgroup(pc);
- 		if (pc->flags & PAGE_CGROUP_FLAG_CACHE)
- 			ctype = MEM_CGROUP_CHARGE_TYPE_CACHE;
- 	}
- 	unlock_page_cgroup(page);
--	if (mem) {
-+	if (pc) {
- 		ret = mem_cgroup_charge_common(newpage, NULL, GFP_KERNEL,
--			ctype, mem);
--		put_mem_cgroup(mem);
-+			ctype, mem, biog);
-+		if (mem)
-+			put_mem_cgroup(mem);
-+		if (biog)
-+			put_bio_cgroup(biog);
- 	}
- 	return ret;
- }
+A more complicated issue is how to evaluate the total IO bandwidth of a
+generic device. We can use some kind of averaging/prediction, but
+basically it would be inaccurate due to the mechanic of disks (head
+seeks, but also caching, buffering mechanisms implemented directly into
+the device, etc.). It's a hard problem. And the same problem exists als=
+o
+for proportional bandwidth as well, in terms of IO rate predictability =
+I
+mean.
+
+The only difference is that with proportional bandwidth you know that
+(taking the same example reported by Hirokazu) with i.e. 10 similar IO
+requests, 7 will be dispatched to the first cgroup and 3 to the other
+cgroup. So, you don't need anything to guarantee "fairness", but it's
+hard also for this case to evaluate the cost of the 7 IO requests
+respect to the cost of the other 3 IO requests as seen by user
+applications, that is the cost the users care about.
+
+-Andrea
