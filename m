@@ -1,173 +1,59 @@
 From: Andrea Righi <righi.andrea@gmail.com>
 Subject: Re: RFC: I/O bandwidth controller
-Date: Tue, 12 Aug 2008 22:44:30 +0200
-Message-ID: <48A1F62E.4090202@gmail.com>
-References: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp>	 <48A0A689.40908@gmail.com>	<loom.20080812T071504-212@post.gmane.org>	 <20080812.201025.57762305.taka@valinux.co.jp> <48A18854.9020000@gmail.com>	 <48A18B1F.6080000@gmail.com> <1218549276.4456.100.camel@sebastian.kern.oss.ntt.co.jp>
+Date: Tue, 12 Aug 2008 23:00:30 +0200
+Message-ID: <48A1F9EE.5080602@gmail.com>
+References: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp><48A0A689.40908@gmail.com>	<loom.20080812T071504-212@post.gmane.org><20080812.201025.57762305.taka@valinux.co.jp><48A18854.9020000@gmail.com> <48A18B1F.6080000@gmail.com> <1218549276.4456.100.camel@sebastian.kern.oss.ntt.co.jp> <D1D4C3FF75F9354393DB8314DF43DEF2E7F7ED@xbl3.emulex.com>
 Reply-To: righi.andrea@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753270AbYHLUot@vger.kernel.org>
-In-Reply-To: <1218549276.4456.100.camel@sebastian.kern.oss.ntt.co.jp>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754267AbYHLVAp@vger.kernel.org>
+In-Reply-To: <D1D4C3FF75F9354393DB8314DF43DEF2E7F7ED@xbl3.emulex.com>
 Sender: linux-kernel-owner@vger.kernel.org
-To: =?UTF-8?B?RmVybmFuZG8gTHVpcyBWw6F6cXVleiBDYW8=?= <fernando@oss.ntt.co.jp>
-Cc: Hirokazu Takahashi <taka@valinux.co.jp>, baramsori72@gmail.com, balbir@linux.vnet.ibm.com, xen-devel@lists.xensource.com, Satoshi UCHIDA <s-uchida@ap.jp.nec.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com
+To: James.Smart@Emulex.Com
+Cc: fernando@oss.ntt.co.jp, xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, taka@valinux.co.jp, dm-devel@redhat.com, agk@sourceware.org, baramsori72@gmail.com, dave@linux.vnet.ibm.com, ngupta@google.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-=46ernando Luis V=C3=A1zquez Cao wrote:
-> On Tue, 2008-08-12 at 22:29 +0900, Andrea Righi wrote:
->> Andrea Righi wrote:
->>> Hirokazu Takahashi wrote:
->>>>>>>>> 3. & 4. & 5. - I/O bandwidth shaping & General design aspects
->>>>>>>>>
->>>>>>>>> The implementation of an I/O scheduling algorithm is to a cer=
-tain extent
->>>>>>>>> influenced by what we are trying to achieve in terms of I/O b=
-andwidth
->>>>>>>>> shaping, but, as discussed below, the required accuracy can d=
-etermine
->>>>>>>>> the layer where the I/O controller has to reside. Off the top=
- of my
->>>>>>>>> head, there are three basic operations we may want perform:
->>>>>>>>>   - I/O nice prioritization: ionice-like approach.
->>>>>>>>>   - Proportional bandwidth scheduling: each process/group of =
-processes
->>>>>>>>> has a weight that determines the share of bandwidth they rece=
-ive.
->>>>>>>>>   - I/O limiting: set an upper limit to the bandwidth a group=
- of tasks
->>>>>>>>> can use.
->>>>>>>> Use a deadline-based IO scheduling could be an interesting pat=
-h to be
->>>>>>>> explored as well, IMHO, to try to guarantee per-cgroup minimum=
- bandwidth
->>>>>>>> requirements.
->>>>>>> Please note that the only thing we can do is to guarantee minim=
-um
->>>>>>> bandwidth requirement when there is contention for an IO resour=
-ce, which
->>>>>>> is precisely what a proportional bandwidth scheduler does. An I=
- missing
->>>>>>> something?
->>>>>> Correct. Proportional bandwidth automatically allows to guarante=
-e min
->>>>>> requirements (instead of IO limiting approach, that needs additi=
-onal
->>>>>> mechanisms to achive this).
->>>>>>
->>>>>> In any case there's no guarantee for a cgroup/application to sus=
-tain
->>>>>> i.e. 10MB/s on a certain device, but this is a hard problem anyw=
-ay, and
->>>>>> the best we can do is to try to satisfy "soft" constraints.
->>>>> I think guaranteeing the minimum I/O bandwidth is very important.=
- In the=20
->>>>> business site, especially in streaming service system, administra=
-tor requires=20
->>>>> the functionality to satisfy QoS or performance of their service.=
-=20
->>>>> Of course, IO throttling is important, but, personally, I think g=
-uaranteeing=20
->>>>> the minimum bandwidth is more important than limitation of maximu=
-m bandwidth=20
->>>>> to satisfy the requirement in real business sites.
->>>>> And I know Andrea=E2=80=99s io-throttle patch supports the latter=
- case well and it is=20
->>>>> very stable.=20
->>>>> But, the first case(guarantee the minimum bandwidth) is not suppo=
-rted in any=20
->>>>> patches.
->>>>> Is there any plans to support it? and Is there any problems in im=
-plementing it?
->>>>> I think if IO controller can support guaranteeing the minimum ban=
-dwidth and=20
->>>>> work-conserving mode simultaneously, it more easily satisfies the=
- requirement=20
->>>>> of the business sites.
->>>>> Additionally, I didn=E2=80=99t understand =E2=80=9CProportional b=
-andwidth automatically allows=20
->>>>> to guarantee min
->>>>> requirements=E2=80=9D and =E2=80=9Csoft constraints=E2=80=9D.
->>>>> Can you give me a advice about this ?=20
->>>>> Thanks in advance.
->>>>>
->>>>> Dong-Jae Kang
->>>> I think this is what dm-ioband does.
->>>>
->>>> Let's say you make two groups share the same disk, and give them
->>>> 70% of the bandwidth the disk physically has and 30% respectively.
->>>> This means the former group is almost guaranteed to be able to use
->>>> 70% of the bandwidth even when the latter one is issuing quite
->>>> a lot of I/O requests.
->>>>
->>>> Yes, I know there exist head seek lags with traditional magnetic d=
-isks,
->>>> so it's important to improve the algorithm to reduce this overhead=
-=2E
->>>>
->>>> And I think it is also possible to add a new scheduling policy to
->>>> guarantee the minimum bandwidth. It might be cool if some group ca=
-n
->>>> use guranteed bandwidths and the other share the rest on proportio=
-nal
->>>> bandwidth policy.
->>>>
->>>> Thanks,
->>>> Hirokazu Takahashi.
->>> With IO limiting approach minimum requirements are supposed to be
->>> guaranteed if the user configures a generic block device so that th=
-e sum
->>> of the limits doesn't exceed the total IO bandwidth of that device.=
- But,
->>> in principle, there's nothing in "throttling" that guarantees "fair=
-ness"
->>> among different cgroups doing IO on the same block devices, that me=
-ans
->>> there's nothing to guarantee minimum requirements (and this is the
->>> reason because I liked the Satoshi's CFQ-cgroup approach together w=
-ith
->>> io-throttle).
->>>
->>> A more complicated issue is how to evaluate the total IO bandwidth =
-of a
->>> generic device. We can use some kind of averaging/prediction, but
->>> basically it would be inaccurate due to the mechanic of disks (head
->>> seeks, but also caching, buffering mechanisms implemented directly =
-into
->>> the device, etc.). It's a hard problem. And the same problem exists=
- also
->>> for proportional bandwidth as well, in terms of IO rate predictabil=
-ity I
->>> mean.
->> BTW as I said in a previous email, an interesting path to be explore=
-d
->> IMHO could be to think in terms of IO time. So, look at the time an =
-IO
->> request is issued to the drive, look at the time the request is serv=
-ed,
->> evaluate the difference and charge the consumed IO time to the
->> appropriate cgroup. Then dispatch IO requests in function of the
->> consumed IO time debts / credits, using for example a token-bucket
->> strategy. And probably the best place to implement the IO time
->> accounting is the elevator.
-> Please note that the seek time for a specific IO request is strongly
-> correlated with the IO requests that preceded it, which means that th=
-e
-> owner of that request is not the only one to blame if it takes too lo=
-ng
-> to process it. In other words, with the algorithm you propose we may =
-end
-> up charging the wrong guy.
+James.Smart@Emulex.Com wrote:
+> Fernando Luis V=E1zquez Cao wrote:
+>>> BTW as I said in a previous email, an interesting path to=20
+>> be explored
+>>> IMHO could be to think in terms of IO time. So, look at the=20
+>> time an IO
+>>> request is issued to the drive, look at the time the=20
+>> request is served,
+>>> evaluate the difference and charge the consumed IO time to the
+>>> appropriate cgroup. Then dispatch IO requests in function of the
+>>> consumed IO time debts / credits, using for example a token-bucket
+>>> strategy. And probably the best place to implement the IO time
+>>> accounting is the elevator.
+>> Please note that the seek time for a specific IO request is strongly
+>> correlated with the IO requests that preceded it, which means that t=
+he
+>> owner of that request is not the only one to blame if it=20
+>> takes too long
+>> to process it. In other words, with the algorithm you propose=20
+>> we may end
+>> up charging the wrong guy.
+>=20
+> I assume all of these discussions are focused on simple storage - dis=
+ks
+> direct attached to a single server - and are not targeted at SANs wit=
+h
+> arrays, multi-initiator accesses, and fabric/network impacts. True ?=20
+> Such algorithms can be seriously off-base in these latter configurati=
+ons.
 
-mmh.. yes. The only scenario I can imagine where this solution is not
-fair is when there're a lot of guys always requesting the same near
-blocks and a single guy looking for a single distant block (supposing
-disk seeks are more expensive than read/write ops).
+Accounting the IO cost using time values should be in principle a
+topology-agnostic solution, so it should work both for LUs from SAN,
+magnetic disks, USB drive, optical drives, etc. because we're actually
+looking at the time spent to execute each IO operation (and you don't
+need to know the details of the particular IO operation, because you
+automatically know the actual cost).
 
-In this case it would be fair to charge a huge amount only to the guy
-requesting the single distant block and distribute the cost of the seek
-to move back the head equally among the other guys. Using the algorighm
-I proposed, instead, both the single "bad" guy and the first "good" guy
-that moves back the disk head would spend a large sum of IO credits.
+If you mean that trying to evaluate or even predict the cost of the see=
+k
+ops is so meaningful in those "complex" environments, well.. yes, in
+this case I agree.
 
 -Andrea
