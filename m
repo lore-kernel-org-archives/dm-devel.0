@@ -1,84 +1,52 @@
-From: Daniel Phillips <phillips@phunq.net>
-Subject: Re: [PATCH RFC] dm snapshot: shared exception store
-Date: Wed, 13 Aug 2008 17:14:08 -0700
-Message-ID: <200808131714.09311.phillips@phunq.net>
-References: <Pine.LNX.4.64.0808061453470.19728@devserv.devel.redhat.com>
-	<Pine.LNX.4.64.0808111740520.14722@hs20-bc2-1.build.redhat.com>
-	<20080812083440U.fujita.tomonori@lab.ntt.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: David Collier-Brown <davecb@sun.com>
+Subject: Re: RFC: I/O bandwidth controller
+Date: Thu, 14 Aug 2008 07:18:13 -0400
+Message-ID: <48A41475.4070108@sun.com>
+References: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp>
+ <48A0A689.40908@gmail.com> <loom.20080812T071504-212@post.gmane.org>
+ <20080812.201025.57762305.taka@valinux.co.jp> <48A18854.9020000@gmail.com>
+Reply-To: davecb@sun.com
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080812083440U.fujita.tomonori@lab.ntt.co.jp>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com
+Content-Type: text/plain; format=flowed; charset=us-ascii
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758774AbYHNPSl@vger.kernel.org>
+In-reply-to: <48A18854.9020000@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: righi.andrea@gmail.com
+Cc: Hirokazu Takahashi <taka@valinux.co.jp>, baramsori72@gmail.com, balbir@linux.vnet.ibm.com, xen-devel@lists.xensource.com, Satoshi UCHIDA <s-uchida@ap.jp.nec.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com
 List-Id: dm-devel.ids
 
-On Monday 11 August 2008 16:34, FUJITA Tomonori wrote:
-> On Mon, 11 Aug 2008 18:12:08 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
-> > So use different format --- we in RedHat plan redesigning it too. One of 
-> > the needed features is "rolling snapshots" --- i.e. you take snapshot 
+Andrea Righi wrote:
+> A more complicated issue is how to evaluate the total IO bandwidth of a
+> generic device. We can use some kind of averaging/prediction, but
+> basically it would be inaccurate due to the mechanic of disks (head
+> seeks, but also caching, buffering mechanisms implemented directly into
+> the device, etc.). It's a hard problem. And the same problem exists also
+> for proportional bandwidth as well, in terms of IO rate predictability I
+> mean.
 
-Matt Dillon's Hammer for BSD has rolling snapshots, effectively
-infinite snapshots on a per-fsync basis.  I strongly suggest that you
-think about rustling up some engineers to join a porting team, both
-Red Hat and NTT.
+  Actually it's a little-known easy problem.
 
-> > every 5 minutes or so and you keep them around. The result is that you 
-> > have complete history of the system activity.
-> 
-> I think that implementing a better format is far more difficult than
-> you think. for example, see the tux3 vs. HAMMER discussion between
-> Daniel Phillips and Matthew Dillon.
-> 
-> Unless Alasdair tells me that unlimited snapshots is a must, probably
-> I will not work on it. I'm focusing integrating a snapshot feature
-> into dm cleanly.
-> 
-> Of course, I'm happy to use the better snapshot code if it's
-> available.
+  The capacity planning community does it all the time, but then describes
+it in terms that are only interesting (intelligible?) to an enthusiastic
+amateur mathematician (;-))
 
-Very sensible.  Over time it will be available, but there is a whole
-lot of benefit to starting with code that is known to work.
+  One finds the point, called N*, at which the throughput flattens
+out and and the response time starts to grow without bounds, and
+calls that level the maximum.
 
-One thing you need to keep in mind: any time you have a memory-using
-daemon doing work on behalf of block IO code you need to implement
-anti-deadlock measures of the kind ddsnap implements via bio-throttle.
-Other ways have been proposed to solve these deadlocks, but the
-bio-throttle approach is the only one that has been observed to work
-reliably.
+  In practice, one does an easier variant.  One sets a response-time 
+limit and throttles *everyone* proportionally when th disk starts to 
+regularly degrade beyond the limit.  Interestingly, because we're 
+slowing the application to prevent slowing the disks, the value we 
+pick needn't be terribly precise.  It also doesn't require any pre-
+knowledge about the disks.
 
-You are also welcome to port the real thing to kernel: ddsnapd.  The
-scope of that work would be roughly what you have already accomplished.
-You would only port the part that responds to kernel read/write
-requests.  I could take care of designing and implementing a kernel
-interface between your port and the rest of ddsnapd that does such
-things as respond to control messages and generate block delta
-lists.  You can optionally leave the delete code in userspace, except
-for the journalling, which has to work together with the journalling
-that will be triggered for origin write and snapshot read/write.
-Since delete can now run in background (with my new patch) that should
-not be a performance issue at all.
+  Send me a note if you want to discuss this in more detail.
 
-It is also possible to interface ddsnapd seamlessly to LVM2.  That
-mechanism has been built into LVM2 since forever, via dynamically
-loadable modules in the LVM2 userspace support.  I am not sure what
-would be done about LVM2 re replication.  Perhaps LVM2 can be taught
-to understand that.  Otherwise, I do not think it would be hard to
-create a suitable out-of-band interface for replication control.
-
-Regards,
-
-Daniel
+--dave
+-- 
+David Collier-Brown            | Always do right. This will gratify
+Sun Microsystems, Toronto      | some people and astonish the rest
+davecb@sun.com                 |                      -- Mark Twain
+cell: (647) 833-9377, bridge: (877) 385-4099 code: 506 9191#
