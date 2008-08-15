@@ -1,52 +1,119 @@
-From: David Collier-Brown <davecb@sun.com>
-Subject: Re: RFC: I/O bandwidth controller
-Date: Thu, 14 Aug 2008 07:18:13 -0400
-Message-ID: <48A41475.4070108@sun.com>
-References: <1218117578.11703.81.camel@sebastian.kern.oss.ntt.co.jp>
- <48A0A689.40908@gmail.com> <loom.20080812T071504-212@post.gmane.org>
- <20080812.201025.57762305.taka@valinux.co.jp> <48A18854.9020000@gmail.com>
-Reply-To: davecb@sun.com
-Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset=us-ascii
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758774AbYHNPSl@vger.kernel.org>
-In-reply-to: <48A18854.9020000@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: righi.andrea@gmail.com
-Cc: Hirokazu Takahashi <taka@valinux.co.jp>, baramsori72@gmail.com, balbir@linux.vnet.ibm.com, xen-devel@lists.xensource.com, Satoshi UCHIDA <s-uchida@ap.jp.nec.com>, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, dave@linux.vnet.ibm.com, ngupta@google.com
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH 00/10] dm snapshot: shared exception store
+Date: Fri, 15 Aug 2008 15:42:41 +0900
+Message-ID: <1218782571-15290-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Andrea Righi wrote:
-> A more complicated issue is how to evaluate the total IO bandwidth of a
-> generic device. We can use some kind of averaging/prediction, but
-> basically it would be inaccurate due to the mechanic of disks (head
-> seeks, but also caching, buffering mechanisms implemented directly into
-> the device, etc.). It's a hard problem. And the same problem exists also
-> for proportional bandwidth as well, in terms of IO rate predictability I
-> mean.
 
-  Actually it's a little-known easy problem.
+This is new patchset for the shared exception store.
 
-  The capacity planning community does it all the time, but then describes
-it in terms that are only interesting (intelligible?) to an enthusiastic
-amateur mathematician (;-))
+You can find the first submission:
 
-  One finds the point, called N*, at which the throughput flattens
-out and and the response time starts to grow without bounds, and
-calls that level the maximum.
+https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
 
-  In practice, one does an easier variant.  One sets a response-time 
-limit and throttles *everyone* proportionally when th disk starts to 
-regularly degrade beyond the limit.  Interestingly, because we're 
-slowing the application to prevent slowing the disks, the value we 
-pick needn't be terribly precise.  It also doesn't require any pre-
-knowledge about the disks.
+Seems that there is a chance that the shared exception store feature
+might be merged into mainline if it's implemented nicely so this time
+I try to integrate the feature into the existing code more cleanly and
+submit patches in a reasonable way.
 
-  Send me a note if you want to discuss this in more detail.
+There are 10 patches and #1-7 patches include the changes to the
+existing code necessary to support the shared exception dm-snapshot.
 
---dave
--- 
-David Collier-Brown            | Always do right. This will gratify
-Sun Microsystems, Toronto      | some people and astonish the rest
-davecb@sun.com                 |                      -- Mark Twain
-cell: (647) 833-9377, bridge: (877) 385-4099 code: 506 9191#
+My main focus is still a way to incorporate this new feature into the
+exisiting code nicely.
+
+The patches are available (against the latest git tree):
+
+http://www.kernel.org/pub/linux/kernel/people/tomo/dm-snap/
+
+If you like a git tree:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/tomo/linux-2.6-misc.git dm-snap
+
+
+=
+In this example, /dev/sda1 is used as an origin device and /dev/sdb1
+is used as a cow device.
+
+- first, set up an origin and a cow:
+
+vine:/home/fujita# echo |dmesg create --notable work
+vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
+vine:/home/fujita# dmsetup resume work
+
+
+- confirm the current status:
+
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin : no snapshot
+
+
+- create one snapshot (the id is 0):
+
+vine:/home/fujita# dmsetup message work 0 snapshot create 0
+
+
+- see if the snapshot is created:
+
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 1 0
+
+
+- create one more snapshot (the id is 5) and see the result:
+
+vine:/home/fujita# dmsetup message work 0 snapshot create 5
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 2 0 5
+
+Note that creating a snapshot just means that you store some
+information on the cow device. You don't create a device for it yet.
+
+
+- create a device to access to the snapshot #5
+
+vine:/home/fujita# echo |dmsetup create --notable snap5
+vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap /dev/sda1 5|dmsetup load snap5
+vine:/home/fujita# dmsetup resume snap5
+
+- confirm the current status:
+
+vine:/home/fujita# dmsetup status
+snap5: 0 268430022 s-snap Unknown
+work: 0 268430022 s-snap-origin 2 0 5
+
+
+- remove the devices after you play with them:
+
+vine:/home/fujita# dmsetup remove snap5
+vine:/home/fujita# dmsetup remove work
+vine:/home/fujita# dmsetup info
+No devices found
+
+
+- Again, setup the origin and the cow:
+
+vine:/home/fujita# echo |dmsetup create --notable work
+vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
+vine:/home/fujita# dmsetup resume work
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 2 0 5
+
+Note that you have two snapshots that you created. You can play with
+them again after creating devices for them.
+
+
+*) By default, dmsetup perfomrs multiple tasks. I uses dmsetup
+commands that issue a single ioctl to make things clear.
