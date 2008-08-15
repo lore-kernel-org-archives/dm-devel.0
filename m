@@ -1,9 +1,17 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 00/10] dm snapshot: shared exception store
-Date: Fri, 15 Aug 2008 15:42:41 +0900
-Message-ID: <1218782571-15290-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH 06/10] dm snapshot: split snapshot_map and
+	sanpshot_end_io
+Date: Fri, 15 Aug 2008 15:42:47 +0900
+Message-ID: <1218782571-15290-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+References: <1218782571-15290-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1218782571-15290-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1218782571-15290-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1218782571-15290-4-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1218782571-15290-5-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1218782571-15290-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1218782571-15290-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,103 +25,68 @@ To: dm-devel@redhat.com
 Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
+snapshot_map and sanpshot_end_io are useful for shared exception
+snapshot but they assume that dm_target::private is a pointer to
+struct dm_snapshot. This removes that restriction.
 
-This is new patchset for the shared exception store.
+Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+---
+ drivers/md/dm-snap.c |   25 +++++++++++++++++++------
+ 1 files changed, 19 insertions(+), 6 deletions(-)
 
-You can find the first submission:
-
-https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
-
-Seems that there is a chance that the shared exception store feature
-might be merged into mainline if it's implemented nicely so this time
-I try to integrate the feature into the existing code more cleanly and
-submit patches in a reasonable way.
-
-There are 10 patches and #1-7 patches include the changes to the
-existing code necessary to support the shared exception dm-snapshot.
-
-My main focus is still a way to incorporate this new feature into the
-exisiting code nicely.
-
-The patches are available (against the latest git tree):
-
-http://www.kernel.org/pub/linux/kernel/people/tomo/dm-snap/
-
-If you like a git tree:
-
-git://git.kernel.org/pub/scm/linux/kernel/git/tomo/linux-2.6-misc.git dm-snap
-
-
-=
-In this example, /dev/sda1 is used as an origin device and /dev/sdb1
-is used as a cow device.
-
-- first, set up an origin and a cow:
-
-vine:/home/fujita# echo |dmesg create --notable work
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
-vine:/home/fujita# dmsetup resume work
-
-
-- confirm the current status:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin : no snapshot
-
-
-- create one snapshot (the id is 0):
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 0
-
-
-- see if the snapshot is created:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 1 0
-
-
-- create one more snapshot (the id is 5) and see the result:
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 5
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-Note that creating a snapshot just means that you store some
-information on the cow device. You don't create a device for it yet.
-
-
-- create a device to access to the snapshot #5
-
-vine:/home/fujita# echo |dmsetup create --notable snap5
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap /dev/sda1 5|dmsetup load snap5
-vine:/home/fujita# dmsetup resume snap5
-
-- confirm the current status:
-
-vine:/home/fujita# dmsetup status
-snap5: 0 268430022 s-snap Unknown
-work: 0 268430022 s-snap-origin 2 0 5
-
-
-- remove the devices after you play with them:
-
-vine:/home/fujita# dmsetup remove snap5
-vine:/home/fujita# dmsetup remove work
-vine:/home/fujita# dmsetup info
-No devices found
-
-
-- Again, setup the origin and the cow:
-
-vine:/home/fujita# echo |dmsetup create --notable work
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
-vine:/home/fujita# dmsetup resume work
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-Note that you have two snapshots that you created. You can play with
-them again after creating devices for them.
-
-
-*) By default, dmsetup perfomrs multiple tasks. I uses dmsetup
-commands that issue a single ioctl to make things clear.
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 4f15b5f..fa0e9f7 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -1039,11 +1039,10 @@ static void remap_exception(struct dm_snapshot *s, struct dm_snap_exception *e,
+ 			 (bio->bi_sector & s->chunk_mask);
+ }
+ 
+-static int snapshot_map(struct dm_target *ti, struct bio *bio,
+-			union map_info *map_context)
++static int do_snapshot_map(struct dm_snapshot *s, struct bio *bio,
++			   union map_info *map_context)
+ {
+ 	struct dm_snap_exception *e;
+-	struct dm_snapshot *s = ti->private;
+ 	int r = DM_MAPIO_REMAPPED;
+ 	chunk_t chunk;
+ 	struct dm_snap_pending_exception *pe = NULL;
+@@ -1107,18 +1106,32 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 	return r;
+ }
+ 
+-static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
+-			   int error, union map_info *map_context)
++static int snapshot_map(struct dm_target *ti, struct bio *bio,
++			union map_info *map_context)
+ {
+ 	struct dm_snapshot *s = ti->private;
++
++	return do_snapshot_map(s, bio, map_context);
++}
++
++static int do_snapshot_end_io(struct dm_snapshot *s, struct bio *bio,
++			      int error, union map_info *map_context)
++{
+ 	struct dm_snap_tracked_chunk *c = map_context->ptr;
+ 
+ 	if (c)
+ 		stop_tracking_chunk(s, c);
+-
+ 	return 0;
+ }
+ 
++static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
++			   int error, union map_info *map_context)
++{
++	struct dm_snapshot *s = ti->private;
++
++	return do_snapshot_end_io(s, bio, error, map_context);
++}
++
+ static void snapshot_resume(struct dm_target *ti)
+ {
+ 	struct dm_snapshot *s = ti->private;
+-- 
+1.5.5.GIT
