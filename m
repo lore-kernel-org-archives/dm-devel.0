@@ -1,17 +1,17 @@
-From: "Ryusuke Konishi" <konishi.ryusuke@lab.ntt.co.jp>
+From: Daniel Phillips <phillips@phunq.net>
 Subject: Re: [PATCH RFC] dm snapshot: shared exception store
-Date: Fri, 15 Aug 2008 22:53:11 +0900
-Message-ID: <c4a7c9420808150653s1ef637d7ia4cac8312ecd7377@mail.gmail.com>
-References: <Pine.LNX.4.64.0808061453470.19728@devserv.devel.redhat.com>
-	<Pine.LNX.4.64.0808111740520.14722@hs20-bc2-1.build.redhat.com>
-	<20080812083440U.fujita.tomonori@lab.ntt.co.jp>
-	<200808131714.09311.phillips@phunq.net>
+Date: Sat, 16 Aug 2008 13:14:32 -0700
+Message-ID: <200808161314.33521.phillips@phunq.net>
+References: <200808131714.09311.phillips@phunq.net>
+	<200808150143.55776.phillips@phunq.net>
+	<20080815182608B.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain;
+  charset="iso-8859-1"
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200808131714.09311.phillips@phunq.net>
+In-Reply-To: <20080815182608B.fujita.tomonori@lab.ntt.co.jp>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -22,44 +22,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: agk@redhat.com
+To: zumastor@googlegroups.com
+Cc: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-Hello folks,
+On Friday 15 August 2008 02:25, FUJITA Tomonori wrote:
+> 
+> On Fri, 15 Aug 2008 01:43:55 -0700
+> Daniel Phillips <phillips@phunq.net> wrote:
+> 
+> > > A daemon program requests delta from the 
+> > > kernel, and sends it to another daemon program on the remote
+> > > server. The daemon on the remote server asks the kernel to apply
+> > > delta.
+> > 
+> > The downstream server just writes the delta to the origin, there is no
+> > need to ask the kernel to do this.
+> > 
+> > > The advantage of this approach, the above replication program can work
+> > > with any snapshot implementation, which could live in dm or file
+> > > systems like btrfs. File systems could implement the snapshot features
+> > > more efficiently than dm.
+> > 
+> > When you replicate a volume you can just send a list of changed blocks
+> > as ddsnap does.  This is not the case with a filesystem delta, which
+> > has to send the changed blocks of each filesystem object logically,
+> > along with relevant metadata such as changed permissions, ownership,
+> > file sizes etc.
+> 
+> What I think about is...
+> 
+> User-space replication programs don't know anything about delta. Delta
+> might be a list of changed blocks, or something more complicated. So
+> the downstream server can't simply write the delta to the origin. It
+> always asks the kernel.
 
-2008/8/14 Daniel Phillips <phillips@phunq.net>:
-> On Monday 11 August 2008 16:34, FUJITA Tomonori wrote:
->> On Mon, 11 Aug 2008 18:12:08 -0400 (EDT) Mikulas Patocka <mpatocka@redhat.com> wrote:
->> > So use different format --- we in RedHat plan redesigning it too. One of
->> > the needed features is "rolling snapshots" --- i.e. you take snapshot
->
-> Matt Dillon's Hammer for BSD has rolling snapshots, effectively
-> infinite snapshots on a per-fsync basis.  I strongly suggest that you
-> think about rustling up some engineers to join a porting team, both
-> Red Hat and NTT.
+Just like a volume, there is no real need to ask the kernel to take
+care of the details of the filesystem layout.  Say your delta says
+"truncate file x to y bytes, change these blocks and move it to
+directory z".  You can do all of that with standard filesystem calls,
+no need to create a new kernel interface.  In general, all the logical
+elements of a filesystem that are visible to a user should be
+modifiable by a user.  The only special thing the filesystem has to
+provide is the ability to snapshot.
 
-I'm a developer of NILFS, a Linux log-structured filesystem with the
-rolling snapshots
-(we call it continous snapshots);  NILFS can take inifinite snapshots
-every few seconds
-or on a per-fsync basis.  ( It is available from  http://www.nilfs.org/  )
+> User-space replication programs don't care about the format of
+> delta. A file system can give user-space programs whatever as
+> delta. All a file system needs to do is applying the delta that it
+> gave to user space.
 
-Though it works fine and is maintained for the recent kernels, it's
-too complicated
-due to its LFS nature (as Tomonori pointed out).  So, I am happy if we
-can realize
-continuous snapshotting filesystem much simpler on nicely supported dm or block
-layer features.
+We usually try to do it the opposite way: the kernel knows as little
+as possible about the format of data it transfers, while userspace
+knows the rest.  In this case usespace already knows everything it
+needs to know, which is just the Posix filesystem interface.
 
-We also have to keep in mind that filesystem development requires much
-more energy
-than usual projects.   It seems that a lot of development energy is
-dispersed around  filesystems especially for Linux.   I'm still
-working on NILFS to make it simple enough,
-but I am also glad to cooperate with other engineers if other FS
-people or Red Hat
-people hope for that.
+Regards,
 
-With regards,
-Ryusuke Konishi
+Daniel
