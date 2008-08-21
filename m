@@ -1,65 +1,72 @@
-From: Konrad Rzeszutek <konrad-/HHyZTb1IPUUqSzUVP1SBw@public.gmane.org>
-Subject: Re: Reducing amount of logmessages openiscsi/multipath [with md3000i]
-Date: Wed, 20 Aug 2008 09:47:04 -0400
-Message-ID: <20080820134704.GA9595@mars.virtualiron.com>
-References: <005b01c901fd$37683660$a638a320$@net> <48AB00C5.8050604@cs.wisc.edu> <20080819211221.GC22302@mars.virtualiron.com> <004d01c902b3$878658a0$969309e0$@net>
-Reply-To: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH 1/3] Implement generic freeze feature
+Date: Thu, 21 Aug 2008 12:58:41 -0700
+Message-ID: <20080821125841.a04a706f.akpm@linux-foundation.org>
+References: <20080818212819t-sato@mail.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Return-path: <grbounce-FC1hwAUAAAA0O9VQcsxVj1UPjHD9r3x_=glio-open-iscsi=m.gmane.org-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-In-Reply-To: <004d01c902b3$878658a0$969309e0$@net>
-Sender: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-List-Post: <mailto:open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Help: <mailto:open-iscsi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Unsubscribe: <http://googlegroups.com/group/open-iscsi/subscribe>,
-	<mailto:open-iscsi+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-To: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-Cc: 'device-mapper development' <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20080818212819t-sato@mail.jp.nec.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Takashi Sato <t-sato@yk.jp.nec.com>
+Cc: linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, hch@infradead.org, axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
+On Mon, 18 Aug 2008 21:28:19 +0900
+Takashi Sato <t-sato@yk.jp.nec.com> wrote:
 
-On Wed, Aug 20, 2008 at 12:57:24PM +0200, Kees Hoekzema wrote:
+> The ioctls for the generic freeze feature are below.
+> o Freeze the filesystem
+>   int ioctl(int fd, int FIFREEZE, arg)
+>     fd: The file descriptor of the mountpoint
+>     FIFREEZE: request code for the freeze
+>     arg: Ignored
+>     Return value: 0 if the operation succeeds. Otherwise, -1
 > 
+> o Unfreeze the filesystem
+>   int ioctl(int fd, int FITHAW, arg)
+>     fd: The file descriptor of the mountpoint
+>     FITHAW: request code for unfreeze
+>     arg: Ignored
+>     Return value: 0 if the operation succeeds. Otherwise, -1
 > 
-> 
-> > -----Original Message-----
-> > He wants the RDAC hw handler and its path checker (rdac). The MD3000i
-> > is an
-> > LSI re-branded box and is the same as the IBM DS3300.
-> > 
-> > >
-> > > You also want to make sure that you are using the md3000i hw handler
-> > or
-> > > scsh_dh_module if you are not already. The dm-devel guys can help you
-> > out.
-> > 
-> > Here is the multipath.conf he should be using for MD3000i (or for the
-> > DS3300
-> > but will need to modify the vendor/model entry)
-> > 
-> >         # Note: The same as the IBM DS3300
-> >         #
-> >         device {
-> >                 vendor                  "DELL"
-> >                 product                 "MD3000i"
-> >                 product_blacklist       "Universal Xport"
-> >                 features                "1 queue_if_no_path"
-> >                 path_grouping_policy    group_by_prio
-> >                 hardware_handler        "1 rdac"
-> >                 path_checker            rdac
-> >                 prio                    "rdac"
-> >                 failback                immediate
-> >         }
-> > 
-> > 
-> 
-> This fixed the problem, although a simple flush was not enough to activate
+>
+> ...
+>
+> --- linux-2.6.27-rc2.org/include/linux/fs.h	2008-08-06 13:49:54.000000000 +0900
+> +++ linux-2.6.27-rc2-freeze/include/linux/fs.h	2008-08-07 08:59:54.000000000 +0900
+> @@ -226,6 +226,8 @@ extern int dir_notify_enable;
+>  #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+>  #define FIBMAP	   _IO(0x00,1)	/* bmap access */
+>  #define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
+> +#define FIFREEZE	_IOWR('X', 119, int)	/* Freeze */
+> +#define FITHAW		_IOWR('X', 120, int)	/* Thaw */
 
-Glad to hear that.
+FIFREEZE is 119, but a few lines above we have
 
-> the changes, so it took a bit longer to get the result I wanted. In the end
-> I saw that it was still using the direction path_checker and noticed that
-> you cannot change the 'path_checker' on the fly with just a multipath -F /
-> -v 2, but that a reload of the modules was needed.
+#define BLKDISCARD _IO(0x12,119)
 
-Ohh, you could also do: multipathd -k'reconfigure'
+Should we be using 120 and 121 here?
+
+>  #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
+>  #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
+> @@ -574,6 +576,10 @@ struct block_device {
+>  	 * care to not mess up bd_private for that case.
+>  	 */
+>  	unsigned long		bd_private;
+> +	/* The counter of freeze processes */
+> +	int			bd_freeze_count;
+> +	/* Semaphore for freeze */
+> +	struct semaphore	bd_freeze_sem;
+
+"freeze" is not an adequate description of what this protects.  I think
+it's only the modification and testing of bd_freeze_count, isn't it?
+
+If so, all this could be done more neatly by removing the lock,
+switching to atomic_t and using our (rich) atomic_t operations.
+
+otoh, perhaps it protects more than this, in which case the lock
+can/should be switched to a `struct mutex'?
+
+
