@@ -1,14 +1,13 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Thu, 21 Aug 2008 13:20:06 -0700
-Message-ID: <20080821132006.9949101c.akpm@linux-foundation.org>
-References: <20080818212856t-sato@mail.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH]: scsi_dh: Print a warning message when ignoring
+	arguments for hardwar handlers
+Date: Thu, 21 Aug 2008 23:55:37 -0700
+Message-ID: <1219388137.14830.112.camel@chandra-ubuntu>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080818212856t-sato@mail.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,196 +17,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, hch@infradead.org, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org, Oleg Nesterov <oleg@tv-sign.ru>
+To: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 18 Aug 2008 21:28:56 +0900
-Takashi Sato <t-sato@yk.jp.nec.com> wrote:
+Instead of silently ignoring the arguments specified along with the
+hardware handler, print some warning message to inform the user that the
+arguments are dropped.
 
-> The timeout feature is added to freeze ioctl.  And new ioctl
-> to reset the timeout period is added.
-> o Freeze the filesystem
->   int ioctl(int fd, int FIFREEZE, long *timeout_sec)
->     fd: The file descriptor of the mountpoint
->     FIFREEZE: request code for the freeze
->     timeout_sec: the timeout period in seconds
->              If it's 0 or 1, the timeout isn't set.
->              This special case of "1" is implemented to keep
->              the compatibility with XFS applications.
->     Return value: 0 if the operation succeeds. Otherwise, -1
-> 
-> o Reset the timeout period
->   int ioctl(int fd, int FIFREEZE_RESET_TIMEOUT, long *timeout_sec)
->     fd:file descriptor of mountpoint
->     FIFREEZE_RESET_TIMEOUT: request code for reset of timeout period
->     timeout_sec: new timeout period in seconds
->     Return value: 0 if the operation succeeds. Otherwise, -1
->     Error number: If the filesystem has already been unfrozen,
->                   errno is set to EINVAL.
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+---
 
-I don't think the changelogs actually explained why this feature is
-being added?
-
-Which userspace tools are expected to send these ioctls?  Something in
-util-linux?  dm-utils?  Are patches to those packages planned?
-
->
-> ...
->
->  /*
-> + * ioctl_freeze_reset_timeout - Reset timeout for freeze.
-> + *
-> + * @filp:       target file
-> + * @argp:       timeout value(sec)
-> + *
-> + * Reset timeout for freeze.
-> + */
-> +static int
-> +ioctl_freeze_reset_timeout(struct file *filp, int __user *argp)
-> +{
-> +	int timeout_sec;
-> +	unsigned int timeout_msec;
-> +	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
-> +	struct block_device *bdev = sb->s_bdev;
-> +	int error;
-> +
-> +	if (!capable(CAP_SYS_ADMIN))
-> +		return -EPERM;
-> +
-> +	/* If a regular file or a directory isn't specified, return EINVAL. */
-> +	if (bdev == NULL)
-> +		return -EINVAL;
-> +
-> +	/* arg(sec) to tick value */
-> +	error = get_user(timeout_sec, argp);
-> +	if (error)
-> +		return error;
-> +
-> +	if (timeout_sec <= 0 || timeout_sec > UINT_MAX/1000)
-> +		return -EINVAL;
-> +
-> +	timeout_msec = timeout_sec * 1000;
-> +
-> +	down(&bdev->bd_freeze_sem);
-> +	if (!bdev->bd_freeze_count) {
-> +		up(&bdev->bd_freeze_sem);
-> +		return -EINVAL;
-> +	}
-> +	/* setup unfreeze timer */
-> +	add_freeze_timeout(bdev, timeout_msec);
-> +	up(&bdev->bd_freeze_sem);
-> +
-> +	return 0;
-> +}
-
-This duplicates quite a bit of code from ioctl_freeze().  Can this be
-cleaned up?
-
-
-> +/*
->   * When you add any new common ioctls to the switches above and below
->   * please update compat_sys_ioctl() too.
->   *
-> @@ -235,13 +302,17 @@ int do_vfs_ioctl(struct file *filp, unsi
->  		break;
->  
->  	case FIFREEZE:
-> -		error = ioctl_freeze(filp);
-> +		error = ioctl_freeze(filp, argp);
->  		break;
->  
->  	case FITHAW:
->  		error = ioctl_thaw(filp);
->  		break;
->  
-> +	case FIFREEZE_RESET_TIMEOUT:
-> +		error = ioctl_freeze_reset_timeout(filp, argp);
-> +		break;
-> +
->  	default:
->  		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
->  			error = file_ioctl(filp, cmd, arg);
->
-> ...
->
->  EXPORT_SYMBOL_GPL(kern_mount_data);
-> +
-> +/*
-> + * freeze_timeout - Thaw the filesystem.
-> + *
-> + * @work:	work queue (delayed_work.work)
-> + *
-> + * Called by the delayed work when elapsing the timeout period.
-> + * Thaw the filesystem.
-> + */
-> +void freeze_timeout(struct work_struct *work)
-> +{
-> +	struct block_device *bd = container_of(work,
-> +			struct block_device, bd_freeze_timeout.work);
-> +	struct super_block *sb = get_super(bd);
-> +
-> +	thaw_bdev(bd, sb);
-> +
-> +	if (sb)
-> +		drop_super(sb);
-> +}
-> +EXPORT_SYMBOL_GPL(freeze_timeout);
-
-I can't see why this was exported.
-
-> +/*
-> + * add_freeze_timeout - Add timeout for freeze.
-> + *
-> + * @bdev:		block device struct
-> + * @timeout_msec:	timeout period
-> + *
-> + * Add the delayed work for freeze timeout to the delayed work queue.
-> + */
-> +void add_freeze_timeout(struct block_device *bdev, unsigned int timeout_msec)
-> +{
-> +	s64 timeout_jiffies = msecs_to_jiffies(timeout_msec);
-> +
-> +	/* Set delayed work queue */
-> +	cancel_delayed_work_sync(&bdev->bd_freeze_timeout);
-> +	schedule_delayed_work(&bdev->bd_freeze_timeout, timeout_jiffies);
-> +}
-
-I don't particularly like the names of these new global symbols.  The
-kernel already has a "freezer" thing, part of power-management. 
-Introducing another one is a bit confusing.
-
-otoh, freezer seems to have consistently used "freezer", so the 'r'
-arguable saves us.
-
-Still, I'd have thought that "fsfreeze" would have been a clearer, more
-specific identifier for the whole project.
-
-> +/*
-> + * del_freeze_timeout - Delete timeout for freeze.
-> + *
-> + * @bdev:	block device struct
-> + *
-> + * Delete the delayed work for freeze timeout from the delayed work queue.
-> + */
-> +void del_freeze_timeout(struct block_device *bdev)
-> +{
-> +	/*
-> +	 * It's possible that the delayed work task (freeze_timeout()) calls
-> +	 * del_freeze_timeout().  If the delayed work task calls
-> +	 * cancel_delayed_work_sync((), the deadlock will occur.
-> +	 * So we need this check (delayed_work_pending()).
-> +	 */
-> +	if (delayed_work_pending(&bdev->bd_freeze_timeout))
-> +		cancel_delayed_work_sync(&bdev->bd_freeze_timeout);
-> +}
-
-So if the calling task is keventd via run_workqueue() then
-delayed_work_pending() should return false due to run_workqueue()
-ordering, so we avoid the deadlock.
-
-Seems a bit racy if some other process starts the delayed-work while
-this function is running but I guess the new semaphore prevents that.
-
-Perhaps cancel_delayed_work_sync() shouldn't hang up if called from the
-work handler?
+Index: linux-2.6.27-rc3/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.27-rc3.orig/drivers/md/dm-mpath.c
++++ linux-2.6.27-rc3/drivers/md/dm-mpath.c
+@@ -685,6 +685,10 @@ static int parse_hw_handler(struct arg_s
+ 		m->hw_handler_name = NULL;
+ 		return -EINVAL;
+ 	}
++
++	if (hw_argc > 1)
++		DMWARN("Ignoring arguments for hardware handler \"%s\"",
++				m->hw_handler_name);
+ 	consume(as, hw_argc - 1);
+ 
+ 	return 0;
