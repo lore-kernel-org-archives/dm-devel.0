@@ -1,45 +1,37 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH]: scsi_dh: Print a warning message when ignoring
-	arguments for hardwar handlers
-Date: Thu, 21 Aug 2008 23:55:37 -0700
-Message-ID: <1219388137.14830.112.camel@chandra-ubuntu>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Andreas Dilger <adilger@sun.com>
+Subject: Re: [PATCH 1/3] Implement generic freeze feature
+Date: Fri, 22 Aug 2008 01:09:58 -0600
+Message-ID: <20080822070958.GU3392@webber.adilger.int>
+References: <20080818212819t-sato@mail.jp.nec.com>
+ <20080821125841.a04a706f.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-reply-to: <20080821125841.a04a706f.akpm@linux-foundation.org>
+Content-disposition: inline
+Sender: linux-ext4-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: Takashi Sato <t-sato@yk.jp.nec.com>, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, hch@infradead.org, axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Instead of silently ignoring the arguments specified along with the
-hardware handler, print some warning message to inform the user that the
-arguments are dropped.
+On Aug 21, 2008  12:58 -0700, Andrew Morton wrote:
+> >  #define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
+> > +#define FIFREEZE	_IOWR('X', 119, int)	/* Freeze */
+> > +#define FITHAW		_IOWR('X', 120, int)	/* Thaw */
+> 
+> FIFREEZE is 119, but a few lines above we have
+> 
+> #define BLKDISCARD _IO(0x12,119)
+>
+> Should we be using 120 and 121 here?
 
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
+No, because 'X' != 0x12...  The 'X' is used because this ioctl is compatible
+with the XFS implementation of this feature.
 
-Index: linux-2.6.27-rc3/drivers/md/dm-mpath.c
-===================================================================
---- linux-2.6.27-rc3.orig/drivers/md/dm-mpath.c
-+++ linux-2.6.27-rc3/drivers/md/dm-mpath.c
-@@ -685,6 +685,10 @@ static int parse_hw_handler(struct arg_s
- 		m->hw_handler_name = NULL;
- 		return -EINVAL;
- 	}
-+
-+	if (hw_argc > 1)
-+		DMWARN("Ignoring arguments for hardware handler \"%s\"",
-+				m->hw_handler_name);
- 	consume(as, hw_argc - 1);
- 
- 	return 0;
+Cheers, Andreas
+--
+Andreas Dilger
+Sr. Staff Engineer, Lustre Group
+Sun Microsystems of Canada, Inc.
+
