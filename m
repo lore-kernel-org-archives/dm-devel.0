@@ -1,66 +1,101 @@
-From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-Subject: Re: linux-next: Tree for August 27
-Date: Wed, 27 Aug 2008 21:45:20 +0200
-Message-ID: <200808272145.20627.bzolnier@gmail.com>
-References: <20080827183453.eb651f50.sfr@canb.auug.org.au> <200808271206.48370.bzolnier@gmail.com> <58cb370e0808270757k583c0fc2oc659bc8e2dd6c21e@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <58cb370e0808270757k583c0fc2oc659bc8e2dd6c21e@mail.gmail.com>
-Content-Disposition: inline
-Sender: linux-next-owner@vger.kernel.org
-To: Stephen Rothwell <sfr@canb.auug.org.au>
-Cc: linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>, dm-devel@redhat.com
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipathd multipathd.init.redhat
+Date: 28 Aug 2008 19:22:33 -0000
+Message-ID: <20080828192233.17351.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wednesday 27 August 2008, Bartlomiej Zolnierkiewicz wrote:
-> On Wed, Aug 27, 2008 at 12:06 PM, Bartlomiej Zolnierkiewicz
-> <bzolnier@gmail.com> wrote:
-> >
-> > Hi,
-> >
-> > On Wednesday 27 August 2008, Stephen Rothwell wrote:
-> >> Hi all,
-> >>
-> >> Changes since next-20080826:
-> >
-> > it fails to build here with:
-> >
-> > arch/x86/kernel/cpu/addon_cpuid_features.c: In function 'detect_extended_topology':
-> > arch/x86/kernel/cpu/addon_cpuid_features.c:119: error: 'struct cpuinfo_x86' hasno member named 'cpu_core_id'
-> > arch/x86/kernel/cpu/addon_cpuid_features.c:121: error: 'struct cpuinfo_x86' hasno member named 'phys_proc_id'
-> > arch/x86/kernel/cpu/addon_cpuid_features.c:130: error: 'struct cpuinfo_x86' hasno member named 'phys_proc_id'
-> > arch/x86/kernel/cpu/addon_cpuid_features.c:133: error: 'struct cpuinfo_x86' hasno member named 'cpu_core_id'
-> > make[2]: *** [arch/x86/kernel/cpu/addon_cpuid_features.o] Error 1
-> > make[1]: *** [arch/x86/kernel/cpu] Error 2
-> > make: *** [arch/x86/kernel] Error 2
-> 
-> which is most likely already fixed in x86 tree by
-> 
-> http://lkml.org/lkml/2008/8/27/34
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2008-08-28 19:22:33
 
-Confirmed.
+Modified files:
+	multipathd     : multipathd.init.redhat 
 
-However now I'm getting device-mapper errors on 'cryptsetup create':
+Log message:
+	Fix for bz #456228. Patch applied from bugzilla. The multipath init script now
+	refuses to stop multipathd when the root device is a multipath device.  This
+	was causing problems with shutdown on iSCSI devices.
 
-dmesg:
-...
-device-mapper: core: bdget failed in dm_suspend
-device-mapper: ioctl: device doesn't appear to be in the dev hash table.
-...
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/multipathd.init.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.4.2&r2=1.2.4.3
 
-cryptsetup:
-...
-Command failed: device-mapper: resume ioctl failed: Invalid argument
-...
-
-next-20080826 is fine
-
-BTW it also seems that certain people need some encouragement
-to fix the nasty warning first reported by Randy two weeks ago
-(http://lkml.org/lkml/2008/8/14/207) and later addressed by
-Rusty (http://lkml.org/lkml/2008/8/16/40) (the solution is said
-to be fragile but there doesn't seem to be any better one on
-the horizon so...)
+--- multipath-tools/multipathd/multipathd.init.redhat	2007/06/18 21:12:54	1.2.4.2
++++ multipath-tools/multipathd/multipathd.init.redhat	2008/08/28 19:22:33	1.2.4.3
+@@ -4,7 +4,7 @@
+ #
+ # Starts the multipath daemon
+ #
+-# chkconfig: - 13 87
++# chkconfig: - 06 87
+ # description: Manage device-mapper multipath devices
+ # processname: multipathd
+ 
+@@ -13,6 +13,7 @@
+ initdir=/etc/rc.d/init.d
+ lockdir=/var/lock/subsys
+ sysconfig=/etc/sysconfig
++syspath=/sys/block
+ 
+  
+ system=redhat
+@@ -26,6 +27,35 @@
+ 
+ RETVAL=0
+ 
++teardown_slaves()
++{
++cd $1; 
++if [ -d "slaves" ]; then
++for slave in slaves/*;
++do
++	if [ "$slave" = "slaves/*" ]; then
++		read dev <  $1/dev
++		tablename=`dmsetup table --target multipath | sed -n "s/\(.*\): .* $dev .*/\1/p"`
++		if ! [ -z $tablename ]; then
++			echo "Root is on a multipathed device, multipathd can not be stopped"
++			exit 1
++		fi
++	else
++		local_slave=`readlink -f $slave`;
++		teardown_slaves $local_slave;
++	fi
++	done
++		
++else
++		read dev <  $1/dev
++		tablename=`dmsetup table --target multipath | sed -n "s/\(.*\): .* $dev .*/\1/p"`
++		if ! [ -z $tablename ]; then
++			echo "Root is on a multipathed device, multipathd can not be stopped"
++			exit 1
++		fi
++fi
++}
++
+ #
+ # See how we were called.
+ #
+@@ -40,6 +70,11 @@
+ }
+ 
+ stop() {
++        root_dev=$(awk '{ if ($1 !~ /^[ \t]*#/ && $2 == "/") { print $1; }}' /etc/mtab)
++	dm_num=`dmsetup info -c --noheadings -o minor $root_dev`
++	root_dm_device="dm-$dm_num"
++	[ -d $syspath/$root_dm_device ] && teardown_slaves $syspath/$root_dm_device
++
+ 	echo -n $"Stopping $prog daemon: "
+ 	killproc $DAEMON
+ 	RETVAL=$?
