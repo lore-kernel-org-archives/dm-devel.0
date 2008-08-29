@@ -1,59 +1,80 @@
-From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
-Subject: Re: linux-next: Tree for August 27
-Date: Fri, 29 Aug 2008 21:23:07 +0200
-Message-ID: <200808292123.07246.bzolnier@gmail.com>
-References: <20080827183453.eb651f50.sfr@canb.auug.org.au> <48B7C361.9070008@kernel.org> <20080829094249.GQ20055@kernel.dk>
+From: "Pradipmaya Maharana" <pradipmaya@gmail.com>
+Subject: Re: Issues with mkinitrd and path priority modules
+Date: Fri, 29 Aug 2008 14:26:27 -0700
+Message-ID: <110b17190808291426w6f6c4f74h529b98812a82f59e@mail.gmail.com>
+References: <110b17190808281455w5449d3a4sf997d17d54dc99f5@mail.gmail.com>
+	<20080829140859.GB2936@mars.virtualiron.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <20080829094249.GQ20055@kernel.dk>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080829140859.GB2936@mars.virtualiron.com>
 Content-Disposition: inline
-Sender: linux-next-owner@vger.kernel.org
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: Tejun Heo <tj@kernel.org>, Stephen Rothwell <sfr@canb.auug.org.au>, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>, dm-devel@redhat.com
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi Konrad,
 
-Hi,
+Thanks for your help.
+I got what I need to do.
 
-On Friday 29 August 2008, Jens Axboe wrote:
-> On Fri, Aug 29 2008, Tejun Heo wrote:
-> > Jens Axboe wrote:
-> > >> On the somehow related topic - CONFIG_DEBUG_BLOCK_EXT_DEVT which is
-> > >> introduced by commit 3e5ba59bbab878f60b8b87004ac55a464bddc819 ("block:
-> > >> implement CONFIG_DEBUG_BLOCK_EXT_DEVT") is way too intrusive to be
-> > >> enabled by default if CONFIG_DEBUG_KERNEL is set as it easily results
-> > >> in no longer bootable systems (+ help entry for the new option says
-> > >> "Say N if you are unsure.").
-> > >>
-> > >> Tejun/Jens: please consider changing this.
-> > > 
-> > > I have change the default to 'n' for now.
-> > 
-> > Hmmm... it broke booting?  Bart, can you please elaborate a bit what got
-> > broken?  Did it fail to locate the root partition or were you using
-> > static device nodes?
-> 
-> It works fine for me, fwiw.
+As I understand from the lines from mkinitrd below, I need to build 2
+versions of my mpath_prio_custom; along with the normal one, I need to
+build a static version with ".static" appended to the file name. The
+mkinitrd looks for the "mpath_prio_*.static" files to copy.
 
-It fails to locate the root partition if you are using the default root
-device on x86 (the one hard-wired into bzImage, it uses hard-coded 8-bit
-major/minor numbers).
+<snip from mkinitrd>
+    # This includes all mpath_prio checkers in the image (~2.5M)
+    # Alternately we can only include those that are used by the
+    # current mpath config. This would require users to rebuild
+    # the initrd if migrating/adding controllers from different
+    # storage vendors
+    for M in /sbin/mpath_prio_*.static ; do
+        inst ${M} $MNTIMAGE/${M%%.static};
+    done
+<snip>
 
-Now I see that the issue is easily fixed by passing the root device name
-with "root=" (since it will figure out the actual major/minor numbers
-later) and that the default root device is said to be deprecated according
-to Documentation/x86/boot.txt (OTOH there is no warning at all that it is
-deprecated and that you should be using "root=" so I'm not convinced that
-I'm the only one who would hit the unfortunate combination).
+Thanks and Regards,
+Pradipmaya.
 
-Actually it seems that CONFIG_DEBUG_BLOCK_EXT_DEVT introduction (which I
-think is a nice step forward) is a good oportunity to put the deprecation
-of the default root device further, i.e. it may be worth to hook the
-default root device check and/or CONFIG_DEBUG_BLOCK_EXT_DEVT one into
-mount_block_root().
 
-Thanks,
-Bart
+On Fri, Aug 29, 2008 at 7:08 AM, Konrad Rzeszutek
+<konrad@virtualiron.com> wrote:
+> On Thu, Aug 28, 2008 at 02:55:15PM -0700, Pradipmaya Maharana wrote:
+>> Hi All,
+>>
+>> I have created mpath_prio_custom, based on code from mpath_prio_alua.
+>> I specified the module in /etc/multipath.cong for getting priority of
+>> the luns.
+>>
+>> prio_callout  "/sbin/mpath_prio_custom /dev/%n"
+>>
+>> The module gets installed under /sbin with out any error, gives me
+>> correct priorities and runs fine; but while this module is installed
+>> if I do an mkinitrd, my module does not get included in the initrd
+>> image.  And due to this, when the kernel boots next time, it fails. As
+>> my module is mentioned in the multipath.conf, kernel tries to find
+>> this module under /sbin but cannot find it and hence it fails. I see
+>> other modules, mpath_prio_alua, mpath_prio_emc, etc. are part of the
+>> initrd image.
+>>
+>> What must I do so that my module gets included as a part of initrd image.
+>
+> Edit the 'mkinitrd' program to include this in. You didn't say what distro
+> you are using so it is hard to say what else you might need to modify.
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>
