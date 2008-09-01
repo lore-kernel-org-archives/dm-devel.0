@@ -1,13 +1,13 @@
-From: "Eric Van Hensbergen" <ericvh@gmail.com>
-Subject: dm snapshot: log only
-Date: Mon, 1 Sep 2008 08:24:36 -0500
-Message-ID: <a4e6962a0809010624k33e4214av2236288622c0420f@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Stefan Raspl <raspl@linux.vnet.ibm.com>
+Subject: bdev lost its queue
+Date: Mon, 01 Sep 2008 15:48:18 +0200
+Message-ID: <48BBF2A2.6040104@linux.vnet.ibm.com>
+Reply-To: raspl@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,15 +20,26 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Is there any way to get dm snapshot to generate only an exception log
-of blocks written?  I've been playing around with Venti under Linux
-and it would greatly accelerate snapshots to venti if I only have to
-process blocks written since the last snapshot instead of scanning the
-whole partition.  I've toyed with the idea of keeping origin snapshots
-around in between venti snapshots and just processing their exception
-log -- but the copy-on-write performance overheads of origin snapshot
-may be undesirable.
+We conducted a bunch tests where we used various ways to forcefully=20
+disconnect or temporarily disable DASD disks from an IBM System z=20
+machine. In the course we ran into a kernel panic in=20
+dm_table_unplug_all() (dm-table.c), specifically at
 
-Thanks for any help,
+     struct request_queue *q =3D bdev_get_queue(dd->bdev);
+     blk_unplug(q);
 
-             -eric
+since the queue of the bdev was NULL.
+Did anyone see a crash in this place before? And are there other disk=20
+drivers to can set their queue to NULL due to unplugging/outages or simil=
+ar?
+
+Best regards,
+Stefan
+
+--=20
+Linux on System z
+IBM Deutschland Research & Development GmbH
+Vorsitzender des Aufsichtsrats: Martin Jetter
+Gesch=E4ftsf=FChrer: Erich Baier
+Sitz der Gesellschaft: B=F6blingen
+Registergericht: Amtsgericht Stuttgart, HRB 243294
