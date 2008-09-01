@@ -1,45 +1,29 @@
-From: Stefan Raspl <raspl@linux.vnet.ibm.com>
-Subject: bdev lost its queue
-Date: Mon, 01 Sep 2008 15:48:18 +0200
-Message-ID: <48BBF2A2.6040104@linux.vnet.ibm.com>
-Reply-To: raspl@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
+Subject: Re: [PATCH #blk-for-2.8] init: DEBUG_BLOCK_EXT_DEVT requires explicit root= param
+Date: Mon, 1 Sep 2008 18:34:02 +0200
+Message-ID: <200809011834.02577.bzolnier@gmail.com>
+References: <20080827183453.eb651f50.sfr@canb.auug.org.au> <20080901113059.GO20055@kernel.dk> <48BBD429.50907@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-next-owner@vger.kernel.org>
+In-Reply-To: <48BBD429.50907@kernel.org>
+Content-Disposition: inline
+Sender: linux-next-owner@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <jens.axboe@oracle.com>, Stephen Rothwell <sfr@canb.auug.org.au>, linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@elte.hu>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We conducted a bunch tests where we used various ways to forcefully=20
-disconnect or temporarily disable DASD disks from an IBM System z=20
-machine. In the course we ran into a kernel panic in=20
-dm_table_unplug_all() (dm-table.c), specifically at
+On Monday 01 September 2008, Tejun Heo wrote:
+> DEBUG_BLOCK_EXT_DEVT shuffles SCSI and IDE device numbers and root
+> device number set using rdev become meaningless.  Root devices should
+> be explicitly specified using textual names.  Warn about it if root
+> can't be found and DEBUG_BLOCK_EXT_DEVT is enabled.  Also, add warning
+> to the help text.
+> 
+> Signed-off-by: Tejun Heo <tj@kernel.org>
+> Cc: Bartlomiej Zolnierkiewicz <bzolnier@gmail.com>
 
-     struct request_queue *q =3D bdev_get_queue(dd->bdev);
-     blk_unplug(q);
-
-since the queue of the bdev was NULL.
-Did anyone see a crash in this place before? And are there other disk=20
-drivers to can set their queue to NULL due to unplugging/outages or simil=
-ar?
-
-Best regards,
-Stefan
-
---=20
-Linux on System z
-IBM Deutschland Research & Development GmbH
-Vorsitzender des Aufsichtsrats: Martin Jetter
-Gesch=E4ftsf=FChrer: Erich Baier
-Sitz der Gesellschaft: B=F6blingen
-Registergericht: Amtsgericht Stuttgart, HRB 243294
+Thanks Tejun.  With this patch I'm also fine with having
+DEBUG_BLOCK_EXT_DEVT enabled by default.
