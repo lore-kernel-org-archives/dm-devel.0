@@ -1,11 +1,10 @@
-From: Martin Petermann <martin@linux.vnet.ibm.com>
-Subject: question to queue_if_no_path
-Date: Tue, 02 Sep 2008 23:59:53 +0200
-Message-ID: <48BDB759.4000907@linux.vnet.ibm.com>
+From: "Larry Dickson" <ldickson@cuttedge.com>
+Subject: Could not create kcopyd client
+Date: Tue, 2 Sep 2008 15:27:25 -0700
+Message-ID: <1c748a490809021527w48d6ed27wc99490a2a10923ef@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1161139414=="
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,101 +15,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
+
+--===============1161139414==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_10165_24948299.1220394445452"
+
+------=_Part_10165_24948299.1220394445452
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 Hi,
 
-I'm working on Linux on zSeries systems. Some of my colleagues do some 
-testing with multipathing. Within the tests they conduct there is 
-normally one path available: but it can happen that all paths disappear. 
-They use the queue_if_no_path option to avoid any io problems if this 
-case will happen. Unfortunately they receiving io errors. I can 
-re-create this issue. I have looked for some documentation about the 
-behavior using the queue_if_no_path option but was not successful.
+This is a digest of a problem in LVM snapshot which seems to have its roots
+in dm. I placed it on the LVM list already; here is a copy for dm-devel,
+just in case anybody has seen this a thousand times before... Our customer
+is not happy with a 15-snapshot limit.
 
-I used a tool generating at lot of io on file systems formatted with 
-ext3. If the paths are gone the application doing this io stress is 
-stalled. After establishing the paths again the application is failing 
-with io errors. If I look into the system message log file I can find 
-EXT3 errors like the following:
+ With a 768 GB logical volume in a 2235 GB volume group, and 4 GB of memory,
+I try to set up lots of snapshots (of 45 or 50 GB each) and can't get past
+15. Sometimes I'll succeed in generating more than 15 COWs in /dev/mapper,
+but lvdisplay never shows more than 15 snapshots in the "LV snapshot status
+source of" listing under the parent volume. I searched and found 15
+snapshots mentioned in a couple places like
+wiki.samba.org/index.php/Shadow_Copies_with_Snapshots - but nothing really
+authoritative.
 
-Sep  2 11:58:34 t6360034 kernel: EXT3-fs error (device dm-15): 
-ext3_journal_start_sb: <6>sd 1:0:10:1087455248: [sdg] Done: 0\
-x0000000023b4fd00 SUCCESS
+Is there really such a limit? Or is it a memory requirement - I seem to
+remember so many MB memory per GB of storage, but can't find that either.
+Versions are (variants of) lvm2-2.02.38, device-mapper-1.02.26,
+kernel-smp-2.6.20 (64 bit).
 
-There also appear EXT3 errors not related to EXT3 journaling.
+ More details: I found a /var/log/messages note that corresponded exactly to
+the following bug:
+==========================
 
-My question is if this is something that can be expected since the 
-multipath queueing can not prevent from this. Is this behaviour 
-something that only appears on Linux for zSeries.
+http://www.linux-archive.org/debian-kernel/7067-bug-453254-linux-2-6-18-5-xen-686-unable-create-more-than-32-lvm-snapshots-total.html
 
-Btw. the SCSI requests failing because of the detached devices return a 
-DID_ERROR sense code:
+11-28-2007, 01:34 AM
+Peter de Zwart
 
-Sep  2 11:56:50 t6360034 kernel: sd 1:0:10:1087520784: Notifying upper 
-driver of completion (result 70000)
-
-Regards
-     Martin
-
-I used the following configuration file for my tests:
-
-defaults {
-polling_interval 1
-}
-
-multipaths {
-multipath {
-wwid 36005076303ffc56200000000000010d1
-alias mpvol1
-}
-multipath {
-wwid 36005076303ffc56200000000000010d0
-alias mpvol2
-}
-multipath {
-wwid 36005076303ffc56200000000000010d3
-alias mpvol3
-}
-}
-
-[root@t6360034 /]# mount
-/dev/dasda2 on / type ext3 (rw)
-none on /proc type proc (rw)
-none on /sys type sysfs (rw)
-none on /dev/pts type devpts (rw,gid=5,mode=620)
-none on /sys/kernel/debug type debugfs (rw)
-sunrpc on /var/lib/nfs/rpc_pipefs type rpc_pipefs (rw)
-/dev/mapper/mpvol1-part1 on /mpvol1-part1 type ext3 (rw)
-/dev/mapper/mpvol1-part2 on /mpvol1-part2 type ext3 (rw)
-/dev/mapper/mpvol1-part3 on /mpvol1-part3 type ext3 (rw)
-/dev/mapper/mpvol1-part4 on /mpvol1-part4 type ext3 (rw)
-/dev/mapper/mpvol2-part1 on /mpvol2-part1 type ext3 (rw)
-/dev/mapper/mpvol2-part2 on /mpvol2-part2 type ext3 (rw)
-/dev/mapper/mpvol2-part3 on /mpvol2-part3 type ext3 (rw)
-/dev/mapper/mpvol2-part4 on /mpvol2-part4 type ext3 (rw)
-/dev/mapper/mpvol3-part1 on /mpvol3-part1 type ext3 (rw)
-/dev/mapper/mpvol3-part2 on /mpvol3-part2 type ext3 (rw)
-/dev/mapper/mpvol3-part3 on /mpvol3-part3 type ext3 (rw)
-/dev/mapper/mpvol3-part4 on /mpvol3-part4 type ext3 (rw)
+Default Bug#453254: linux-2.6.18-5-xen-686: Unable to create more than 32
+LVM snapshots in total
+Package: linux-2.6.18-5-xen-686
+Severity: normal
 
 
-multipath -ll shows the following:
+When attempting to create more than 32 LVM snapshots, the following error
+message is sent from the Kernel:
 
-[root@t6360034 devices]# multipath -ll
-mpvol3 (36005076303ffc56200000000000010d3) dm-1 IBM,2107900
-[size=5.0G][features=1 queue_if_no_path][hwhandler=0][rw]
-\_ round-robin 0 [prio=2][enabled]
-  \_ 0:0:11:1087586320 sdg 8:96  [active][ready]
-  \_ 1:0:10:1087586320 sdm 8:192 [active][ready]
-mpvol2 (36005076303ffc56200000000000010d0) dm-0 IBM,2107900
-[size=5.0G][features=1 queue_if_no_path][hwhandler=0][rw]
-\_ round-robin 0 [prio=2][enabled]
-  \_ 0:0:11:1087389712 sdc 8:32  [active][ready]
-  \_ 1:0:10:1087389712 sdl 8:176 [active][ready]
-mpvol1 (36005076303ffc56200000000000010d1) dm-3 IBM,2107900
-[size=5.0G][features=1 queue_if_no_path][hwhandler=0][rw]
-\_ round-robin 0 [prio=2][enabled]
-  \_ 0:0:11:1087455248 sdj 8:144 [active][ready]
-  \_ 1:0:10:1087455248 sdk 8:160 [active][ready]
+device-mapper: table: 254:142: snapshot: Could not create kcopyd client
+device-mapper: ioctl: error adding target to table
+
+==========================
+(End of reference; no follow-up found.)
+
+Thanks in advance,
+
+Larry Dickson
+
+Cutting Edge Networked Storage
+
+------=_Part_10165_24948299.1220394445452
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+<div>Hi,</div>
+<div>&nbsp;</div>
+<div>This is a digest of a problem in LVM snapshot which seems to have its roots in dm. I placed it on the LVM list already; here is a copy for dm-devel, just in case anybody has seen this a thousand times before... Our customer is not happy with a 15-snapshot limit.</div>
+
+<div>&nbsp;</div>
+<div>
+<div>With a 768 GB logical volume in a 2235 GB volume group, and 4 GB of memory, I try to set up lots of snapshots (of 45 or 50 GB each)&nbsp;and can&#39;t get past 15. Sometimes I&#39;ll succeed in generating more than 15 COWs in /dev/mapper, but lvdisplay never shows more than 15 snapshots in the &quot;LV snapshot status source of&quot; listing under the parent volume. I searched and found 15 snapshots mentioned in a couple places like <span><a onclick="return top.js.OpenExtLink(window,event,this)" href="http://wiki.samba.org/index.php/Shadow_Copies_with_Snapshots" target="_blank">wiki.samba.org/index.php/Shadow_Copies_with_Snapshots</a> - but nothing really authoritative.</span></div>
+
+<div><span></span>&nbsp;</div>
+<div><span>Is there really such a limit? Or is it a memory requirement - I seem to remember so many MB memory per GB of storage, but can&#39;t find that either. Versions are (variants of)&nbsp;lvm2-2.02.38, device-mapper-1.02.26, kernel-smp-2.6.20 (64 bit).</span></div>
+
+<div><span></span>&nbsp;</div>
+<div><span>
+<div>More details: I found a /var/log/messages note that corresponded exactly to the following bug:</div>
+<div>==========================</div>
+<div>
+<p><a onclick="return top.js.OpenExtLink(window,event,this)" href="http://www.linux-archive.org/debian-kernel/7067-bug-453254-linux-2-6-18-5-xen-686-unable-create-more-than-32-lvm-snapshots-total.html" target="_blank">http://www.linux-archive.org/debian-kernel/7067-bug-453254-linux-2-6-18-5-xen-686-unable-create-more-than-32-lvm-snapshots-total.html</a></p>
+
+<p>11-28-2007, 01:34 AM<br>Peter de Zwart<br>&nbsp;&nbsp; &nbsp;<br>Default Bug#453254: linux-2.6.18-5-xen-686: Unable to create more than 32 LVM snapshots in total<br>Package: linux-2.6.18-5-xen-686<br>Severity: normal</p>
+<p><br>When attempting to create more than 32 LVM snapshots, the following error message is sent from the Kernel:</p>
+<p>device-mapper: table: 254:142: snapshot: Could not create kcopyd client<br>device-mapper: ioctl: error adding target to table</p>
+<p>==========================<br>(End of reference; no follow-up found.)</p>
+<p>Thanks in advance,</p>
+<p>Larry Dickson</p>
+<p>Cutting Edge Networked Storage</p></div></span></div></div>
+
+------=_Part_10165_24948299.1220394445452--
+
+
+--===============1161139414==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1161139414==--
