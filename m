@@ -1,10 +1,11 @@
-From: "jean Diallo" <diallo.jean@gmail.com>
-Subject: hardware_handler error with HP MSA1000
-Date: Tue, 12 Aug 2008 11:47:24 +0200
-Message-ID: <e368f40808120247q2c4eed53hc8f527e4a69e1992@mail.gmail.com>
+From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
+Subject: Problem w/ CONFIG_DEBUG_BLOCK_EXT_DEVT
+Date: Tue, 02 Sep 2008 06:36:43 -0400
+Message-ID: <48BD173B.3090600@hp.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0880806398=="
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -15,89 +16,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: tj@kernel.org, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
---===============0880806398==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_33867_28951856.1218534444255"
+I have found two problems in LVM2/DM w/ a potential new "experimental
+feature" in 2.6.28: CONFIG_DEBUG_BLOCK_EXT_DEVT (this is from Jens
+Axboe's origin/for-2.6.28 git branch)
 
-------=_Part_33867_28951856.1218534444255
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+"Conventionally, block device numbers are allocated from predetermined
+contiguous area.  However, extended block area may introduce
+non-contiguous block device numbers.  This option forces most block
+device numbers to be allocated from the extended space and spreads them
+to discover kernel or userland code paths which assume predetermined
+contiguous device number allocation."
 
-Hi
-I have been strugling with an HP MSA1000 for a few weeks now.
-I am using the old active/passive firmware.
-Here is the device section of my multipath.conf :
+W/ LVM2 & DM there are (at least) two issues:
 
-devices {
-	device {
-		vendor 		"COMPAQ"
-		product		"MSA1000"
-		hardware_handler	"1 hp_sw"
-		path_grouping_policy	group_by_prio
-		path_checker	hp_sw
- 			 		
- 	}
-}
+(1) Device major numbers for some reason are /not/ being entered
+correctly into /proc/devices -- w/ CONFIG_DEBUG_BLOCK_EXT_DEVT=y I am
+seeing some devices w/ major "259" (a SATA controller) but no entry in
+/proc/devices. LVM2/DM will not find the entry in /proc/devices, and not
+allow any device w/ that major to be used with LVM commands.
 
+(2) Device minor numbers can be quite large, and the 10-character limits
+in dm/lib/libdm-deptree.c are too small.
 
-I am under RHEL5.2 and this is the rpm package of dm-multipath 0.4.7-16.el5.
-Here is my /var/log/messages when i start multipathd daemon :
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath:
-unknown hardware handler type
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath:
-unknown hardware handler type
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath:
-unknown hardware handler type
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath:
-unknown hardware handler type
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath:
-unknown hardware handler type
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath:
-unknown hardware handler type
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target
-to table
-Aug 12 13:48:33 cluster3 multipathd: path checkers start up
-
-If anyone can help, thanks in advance.
-
-------=_Part_33867_28951856.1218534444255
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-<div dir="ltr">Hi<br>I have been strugling with an HP MSA1000 for a few weeks now.<br>I am using the old active/passive firmware.<br>Here is the device section of my multipath.conf :<br><br><pre>devices {<br>	device {<br>		vendor 		&quot;COMPAQ&quot;<br>
-		product		&quot;MSA1000&quot;<br>		hardware_handler	&quot;1 hp_sw&quot;<br>		path_grouping_policy	group_by_prio<br>		path_checker	hp_sw<br> 			 		<br> 	}<br>}</pre><br>I am under RHEL5.2 and this is the rpm package of dm-multipath 0.4.7-16.el5.<br>
-Here is my /var/log/messages when i start multipathd daemon :<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath: unknown hardware handler type<br>
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath: unknown hardware handler type<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath: unknown hardware handler type<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath: unknown hardware handler type<br>
-Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath: unknown hardware handler type<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>
-Aug 12 13:48:33 cluster3 kernel: device-mapper: table: 253:19: multipath: unknown hardware handler type<br>Aug 12 13:48:33 cluster3 kernel: device-mapper: ioctl: error adding target to table<br>Aug 12 13:48:33 cluster3 multipathd: path checkers start up<br>
-<br>If anyone can help, thanks in advance.<br><br></div>
-
-------=_Part_33867_28951856.1218534444255--
-
-
---===============0880806398==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0880806398==--
+Alan
