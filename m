@@ -1,75 +1,233 @@
-From: malahal@us.ibm.com
-Subject: Re: dm mirror with failed device
-Date: Sun, 7 Sep 2008 08:57:32 -0700
-Message-ID: <20080907155732.GA5517@us.ibm.com>
-References: <200809071149.46888.lists@octopus-technologies.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Takashi Sato <t-sato@yk.jp.nec.com>
+Subject: [PATCH 1/3] Implement generic freeze feature
+Date: Mon, 8 Sep 2008 20:52:45 +0900
+Message-ID: <20080908205245t-sato@mail.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200809071149.46888.lists@octopus-technologies.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, Oleg Nesterov <oleg@tv-sign.ru>
+Cc: "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "mtk.manpages@googlemail.com" <mtk.manpages@googlemail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-If I remember, anything older than 2.6.25 can't handle errors in
-dm-mirror. The I/O errors you saw were from your block device driver and
-not from your dm-mirror. DM-mirror module itself is unaware of anything
-to your iSCSI device! At least this is the expected behaviour if your
-kernel is not patched, and that seems to be the case with your kernel. I
-don't use Ubuntu! You may have a better luck with 2.6.26 or 27.
+The ioctls for the generic freeze feature are below.
+o Freeze the filesystem
+  int ioctl(int fd, int FIFREEZE, arg)
+    fd: The file descriptor of the mountpoint
+    FIFREEZE: request code for the freeze
+    arg: Ignored
+    Return value: 0 if the operation succeeds. Otherwise, -1
 
-RHEL kernels are patched so handle these errors correctly!
+o Unfreeze the filesystem
+  int ioctl(int fd, int FITHAW, arg)
+    fd: The file descriptor of the mountpoint
+    FITHAW: request code for unfreeze
+    arg: Ignored
+    Return value: 0 if the operation succeeds. Otherwise, -1
 
---Malahal.
+Signed-off-by: Takashi Sato <t-sato@yk.jp.nec.com>
+Signed-off-by: Masayuki Hamaguchi <m-hamaguchi@ys.jp.nec.com>
+---
+ fs/block_dev.c              |    2 +
+ fs/buffer.c                 |   34 ++++++++++++++++++++++++++++++-
+ fs/ioctl.c                  |   47 ++++++++++++++++++++++++++++++++++++++++++++
+ include/linux/buffer_head.h |    2 -
+ include/linux/fs.h          |    7 ++++++
+ 5 files changed, 90 insertions(+), 2 deletions(-)
 
-Stephen Beynon [lists@octopus-technologies.com] wrote:
-> 
-> This is probably a stupid question, in which case I apologise in advance.
-> 
-> I am looking to set up a number of machines with internal disks mirrored onto 
-> an iscsi server.  I aim to provide resiliance against disk failures, and the 
-> iscsi server will be a handy single point to backup.
-> 
-> I set up the following test mirror.
-> 
-> # dmsetup status mirror
-> 0 16777216 mirror 2 254:8 8:16 32768/32768 0 1 core
-> # dmsetup table mirror
-> 0 16777216 mirror core 1 512 2 254:8 0 8:16 0
-> 
-> As a test I shutdown the iscsi server and continued writes to the mirror 
-> device.  As expected syslog recorded i/o errors on the iscsi lun, but writes 
-> to the mirror continued.  After waiting a few minutes I expected to see that 
-> parts of the mirror were out of sync, however dmsetup status gave exactly the 
-> same results as above.
-> 
-> When I restarted the iscsi server blocks started to be written to the iscsi 
-> server again, but the changes that happened during the iscsi server down time 
-> were never replicated.  Clearly this left the mirror in an inconsistent state 
-> with the only indication of problems being in syslog.
-> 
-> Is there any way I can configure dm-mirror to either mark the blocks as out of 
-> sync when a write fails, and re-try the write later ?
-> 
-> I am currently running Ubuntu gutsy on the client machines, so it does not 
-> have dmeventd, but from reading the docs it it not clear that dmeventd would 
-> help.
-> 
-> Regards
-> 
-> Stephen 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+diff -uprN -X linux-2.6.27-rc5.org/Documentation/dontdiff linux-2.6.27-rc5.org/fs/block_dev.c linux-2.6.27-rc5-freeze/fs
+/block_dev.c
+--- linux-2.6.27-rc5.org/fs/block_dev.c	2008-08-29 07:52:02.000000000 +0900
++++ linux-2.6.27-rc5-freeze/fs/block_dev.c	2008-09-05 20:00:29.000000000 +0900
+@@ -285,6 +285,8 @@ static void init_once(void *foo)
+ 	INIT_LIST_HEAD(&bdev->bd_holder_list);
+ #endif
+ 	inode_init_once(&ei->vfs_inode);
++	/* Initialize mutex for freeze. */
++	mutex_init(&bdev->bd_fsfreeze_mutex);
+ }
+ 
+ static inline void __bd_forget(struct inode *inode)
+diff -uprN -X linux-2.6.27-rc5.org/Documentation/dontdiff linux-2.6.27-rc5.org/fs/buffer.c linux-2.6.27-rc5-freeze/fs/bu
+ffer.c
+--- linux-2.6.27-rc5.org/fs/buffer.c	2008-08-29 07:52:02.000000000 +0900
++++ linux-2.6.27-rc5-freeze/fs/buffer.c	2008-09-05 20:23:13.000000000 +0900
+@@ -196,11 +196,25 @@ int fsync_bdev(struct block_device *bdev
+  * happen on bdev until thaw_bdev() is called.
+  * If a superblock is found on this device, we take the s_umount semaphore
+  * on it to make sure nobody unmounts until the snapshot creation is done.
++ * The reference counter (bd_fsfreeze_count) guarantees that only the last
++ * unfreeze process can unfreeze the frozen filesystem actually when multiple
++ * freeze requests arrive simultaneously. It counts up in freeze_bdev() and
++ * count down in thaw_bdev(). When it becomes 0, thaw_bdev() will unfreeze
++ * actually.
+  */
+ struct super_block *freeze_bdev(struct block_device *bdev)
+ {
+ 	struct super_block *sb;
+ 
++	mutex_lock(&bdev->bd_fsfreeze_mutex);
++	if (bdev->bd_fsfreeze_count > 0) {
++		bdev->bd_fsfreeze_count++;
++		sb = get_super(bdev);
++		mutex_unlock(&bdev->bd_fsfreeze_mutex);
++		return sb;
++	}
++	bdev->bd_fsfreeze_count++;
++
+ 	down(&bdev->bd_mount_sem);
+ 	sb = get_super(bdev);
+ 	if (sb && !(sb->s_flags & MS_RDONLY)) {
+@@ -219,6 +233,8 @@ struct super_block *freeze_bdev(struct b
+ 	}
+ 
+ 	sync_blockdev(bdev);
++	mutex_unlock(&bdev->bd_fsfreeze_mutex);
++
+ 	return sb;	/* thaw_bdev releases s->s_umount and bd_mount_sem */
+ }
+ EXPORT_SYMBOL(freeze_bdev);
+@@ -230,8 +246,22 @@ EXPORT_SYMBOL(freeze_bdev);
+  *
+  * Unlocks the filesystem and marks it writeable again after freeze_bdev().
+  */
+-void thaw_bdev(struct block_device *bdev, struct super_block *sb)
++int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+ {
++	mutex_lock(&bdev->bd_fsfreeze_mutex);
++	if (!bdev->bd_fsfreeze_count) {
++		mutex_unlock(&bdev->bd_fsfreeze_mutex);
++		return 0;
++	}
++
++	bdev->bd_fsfreeze_count--;
++	if (bdev->bd_fsfreeze_count > 0) {
++		if (sb)
++			drop_super(sb);
++		mutex_unlock(&bdev->bd_fsfreeze_mutex);
++		return 0;
++	}
++
+ 	if (sb) {
+ 		BUG_ON(sb->s_bdev != bdev);
+ 
+@@ -244,6 +274,8 @@ void thaw_bdev(struct block_device *bdev
+ 	}
+ 
+ 	up(&bdev->bd_mount_sem);
++	mutex_unlock(&bdev->bd_fsfreeze_mutex);
++	return 0;
+ }
+ EXPORT_SYMBOL(thaw_bdev);
+ 
+diff -uprN -X linux-2.6.27-rc5.org/Documentation/dontdiff linux-2.6.27-rc5.org/fs/ioctl.c linux-2.6.27-rc5-freeze/fs/ioc
+tl.c
+--- linux-2.6.27-rc5.org/fs/ioctl.c	2008-08-29 07:52:02.000000000 +0900
++++ linux-2.6.27-rc5-freeze/fs/ioctl.c	2008-09-05 20:22:46.000000000 +0900
+@@ -13,6 +13,7 @@
+ #include <linux/security.h>
+ #include <linux/module.h>
+ #include <linux/uaccess.h>
++#include <linux/buffer_head.h>
+ 
+ #include <asm/ioctls.h>
+ 
+@@ -140,6 +141,43 @@ static int ioctl_fioasync(unsigned int f
+ 	return error;
+ }
+ 
++static int ioctl_freeze(struct file *filp)
++{
++	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
++
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	/* If filesystem doesn't support freeze feature, return. */
++	if (sb->s_op->write_super_lockfs == NULL)
++		return -EOPNOTSUPP;
++
++	/* If a blockdevice-backed filesystem isn't specified, return. */
++	if (sb->s_bdev == NULL)
++		return -EINVAL;
++
++	/* Freeze */
++	sb = freeze_bdev(sb->s_bdev);
++	if (IS_ERR(sb))
++		return PTR_ERR(sb);
++	return 0;
++}
++
++static int ioctl_thaw(struct file *filp)
++{
++	struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
++
++	if (!capable(CAP_SYS_ADMIN))
++		return -EPERM;
++
++	/* If a blockdevice-backed filesystem isn't specified, return EINVAL. */
++	if (sb->s_bdev == NULL)
++		return -EINVAL;
++
++	/* Thaw */
++	return thaw_bdev(sb->s_bdev, sb);
++}
++
+ /*
+  * When you add any new common ioctls to the switches above and below
+  * please update compat_sys_ioctl() too.
+@@ -181,6 +219,15 @@ int do_vfs_ioctl(struct file *filp, unsi
+ 		} else
+ 			error = -ENOTTY;
+ 		break;
++
++	case FIFREEZE:
++		error = ioctl_freeze(filp);
++		break;
++
++	case FITHAW:
++		error = ioctl_thaw(filp);
++		break;
++
+ 	default:
+ 		if (S_ISREG(filp->f_path.dentry->d_inode->i_mode))
+ 			error = file_ioctl(filp, cmd, arg);
+diff -uprN -X linux-2.6.27-rc5.org/Documentation/dontdiff linux-2.6.27-rc5.org/include/linux/buffer_head.h linux-2.6.27-
+rc5-freeze/include/linux/buffer_head.h
+--- linux-2.6.27-rc5.org/include/linux/buffer_head.h	2008-08-29 07:52:02.000000000 +0900
++++ linux-2.6.27-rc5-freeze/include/linux/buffer_head.h	2008-09-05 20:16:12.000000000 +0900
+@@ -170,7 +170,7 @@ void __wait_on_buffer(struct buffer_head
+ wait_queue_head_t *bh_waitq_head(struct buffer_head *bh);
+ int fsync_bdev(struct block_device *);
+ struct super_block *freeze_bdev(struct block_device *);
+-void thaw_bdev(struct block_device *, struct super_block *);
++int thaw_bdev(struct block_device *, struct super_block *);
+ int fsync_super(struct super_block *);
+ int fsync_no_super(struct block_device *);
+ struct buffer_head *__find_get_block(struct block_device *bdev, sector_t block,
+diff -uprN -X linux-2.6.27-rc5.org/Documentation/dontdiff linux-2.6.27-rc5.org/include/linux/fs.h linux-2.6.27-rc5-freez
+e/include/linux/fs.h
+--- linux-2.6.27-rc5.org/include/linux/fs.h	2008-08-29 07:52:02.000000000 +0900
++++ linux-2.6.27-rc5-freeze/include/linux/fs.h	2008-09-05 20:18:21.000000000 +0900
+@@ -226,6 +226,8 @@ extern int dir_notify_enable;
+ #define BMAP_IOCTL 1		/* obsolete - kept for compatibility */
+ #define FIBMAP	   _IO(0x00,1)	/* bmap access */
+ #define FIGETBSZ   _IO(0x00,2)	/* get the block size used for bmap */
++#define FIFREEZE	_IOWR('X', 119, int)	/* Freeze */
++#define FITHAW		_IOWR('X', 120, int)	/* Thaw */
+ 
+ #define	FS_IOC_GETFLAGS			_IOR('f', 1, long)
+ #define	FS_IOC_SETFLAGS			_IOW('f', 2, long)
+@@ -574,6 +576,11 @@ struct block_device {
+ 	 * care to not mess up bd_private for that case.
+ 	 */
+ 	unsigned long		bd_private;
++
++	/* The counter of freeze processes */
++	int			bd_fsfreeze_count;
++	/* Mutex for freeze */
++	struct mutex		bd_fsfreeze_mutex;
+ };
+ 
+ /*
