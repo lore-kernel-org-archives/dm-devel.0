@@ -1,58 +1,77 @@
-From: Stefan Raspl <raspl@linux.vnet.ibm.com>
-Subject: [PATCH] Fix Null pointer Exception
-Date: Mon, 08 Sep 2008 17:40:59 +0200
-Message-ID: <48C5478B.2040401@linux.vnet.ibm.com>
-Reply-To: raspl@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 1/3] Implement generic freeze feature
+Date: Mon, 8 Sep 2008 13:10:26 -0400
+Message-ID: <20080908171020.GA22521@infradead.org>
+References: <20080908205245t-sato@mail.jp.nec.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, agk@redhat.com
-Cc: akpm@linux-foundation.org, h.carstens@de.ibm.com, martin.schwidefsky@de.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20080908205245t-sato@mail.jp.nec.com>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Takashi Sato <t-sato@yk.jp.nec.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, Oleg Nesterov <oleg@tv-sign.ru>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "mtk.manpages@googlemail.com" <mtk.manpages@googlemail.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Here's a trivial patch for the kernel panics that we reported last week
-when testing various ways to forcefully disconnect or temporarily disable
-DASD disks from an IBM System z machine. We ran into NULL pointer exceptions
-at the respective places.
+On Mon, Sep 08, 2008 at 08:52:45PM +0900, Takashi Sato wrote:
+> diff -uprN -X linux-2.6.27-rc5.org/Documentation/dontdiff linux-2.6.27-rc5.org/fs/block_dev.c linux-2.6.27-rc5-freeze/fs
+> /block_dev.c
+> --- linux-2.6.27-rc5.org/fs/block_dev.c	2008-08-29 07:52:02.000000000 +0900
+> +++ linux-2.6.27-rc5-freeze/fs/block_dev.c	2008-09-05 20:00:29.000000000 +0900
+> @@ -285,6 +285,8 @@ static void init_once(void *foo)
+>  	INIT_LIST_HEAD(&bdev->bd_holder_list);
+>  #endif
+>  	inode_init_once(&ei->vfs_inode);
+> +	/* Initialize mutex for freeze. */
+> +	mutex_init(&bdev->bd_fsfreeze_mutex);
+
+Why not just freeze_mutex?
 
 
-Signed-off-by: Stefan Raspl <raspl@linux.vnet.ibm.com>
+>  struct super_block *freeze_bdev(struct block_device *bdev)
+>  {
+>  	struct super_block *sb;
+>  
+> +	mutex_lock(&bdev->bd_fsfreeze_mutex);
+> +	if (bdev->bd_fsfreeze_count > 0) {
+> +		bdev->bd_fsfreeze_count++;
+> +		sb = get_super(bdev);
+> +		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> +		return sb;
+> +	}
+> +	bdev->bd_fsfreeze_count++;
+> +
+>  	down(&bdev->bd_mount_sem);
 
+Note that we still have duplication with the bd_mount_sem.  I think
+you should look into getting rid of it and instead do a check of
+the freeze_count under proper freeze_mutex protection.
 
----
- drivers/md/dm-table.c |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+> +int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+>  {
+> +	mutex_lock(&bdev->bd_fsfreeze_mutex);
+> +	if (!bdev->bd_fsfreeze_count) {
+> +		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> +		return 0;
+> +	}
+> +
+> +	bdev->bd_fsfreeze_count--;
+> +	if (bdev->bd_fsfreeze_count > 0) {
+> +		if (sb)
+> +			drop_super(sb);
+> +		mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> +		return 0;
+> +	}
+> +
+>  	if (sb) {
+>  		BUG_ON(sb->s_bdev != bdev);
+>  
+> @@ -244,6 +274,8 @@ void thaw_bdev(struct block_device *bdev
+>  	}
+>  
+>  	up(&bdev->bd_mount_sem);
+> +	mutex_unlock(&bdev->bd_fsfreeze_mutex);
+> +	return 0;
 
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -943,7 +943,8 @@ int dm_table_any_congested(struct dm_tab
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
--		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
-+		if (q)
-+			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
- 	}
- 
- 	return r;
-@@ -957,7 +958,8 @@ void dm_table_unplug_all(struct dm_table
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
- 
--		blk_unplug(q);
-+		if (q)
-+			blk_unplug(q);
- 	}
- }
- 
+Why do you add a return value here if we always return 0 anyway?
+
