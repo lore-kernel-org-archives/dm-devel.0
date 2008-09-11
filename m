@@ -1,14 +1,16 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH] Fix Null pointer Exception
-Date: Mon, 8 Sep 2008 17:21:53 -0700
-Message-ID: <20080908172153.05268f6d.akpm@linux-foundation.org>
-References: <48C5478B.2040401@linux.vnet.ibm.com>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
+Subject: Re: [PATCH 1/3] Implement generic freeze feature
+Date: Thu, 11 Sep 2008 19:58:08 +0900
+Message-ID: <85FB1C9FF587411A99FF66E76008D2A6@nsl.ad.nec.co.jp>
+References: <20080818212819t-sato@mail.jp.nec.com>
+	<48C012F3.3000408@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; format=flowed; charset="iso-8859-1";
+	reply-type=original
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <48C5478B.2040401@linux.vnet.ibm.com>
+In-Reply-To: <48C012F3.3000408@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,60 +20,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: raspl@linux.vnet.ibm.com
-Cc: dm-devel@redhat.com, h.carstens@de.ibm.com, martin.schwidefsky@de.ibm.com, agk@redhat.com
+To: Eric Sandeen <sandeen@redhat.com>
+Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, 08 Sep 2008 17:40:59 +0200
-Stefan Raspl <raspl@linux.vnet.ibm.com> wrote:
+Hi,
 
-> Here's a trivial patch for the kernel panics that we reported last week
-> when testing various ways to forcefully disconnect or temporarily disable
-> DASD disks from an IBM System z machine. We ran into NULL pointer exceptions
-> at the respective places.
-> 
+Eric Sandeen:
+>> +static int ioctl_freeze(struct file *filp)
+>> +{
+>> +     struct super_block *sb = filp->f_path.dentry->d_inode->i_sb;
+>> +
+>> +     if (!capable(CAP_SYS_ADMIN))
+>> +         return -EPERM;
+>> +
+>> +     /* If filesystem doesn't support freeze feature, return. */
+>> +     if (sb->s_op->write_super_lockfs == NULL)
+>> +         return -EOPNOTSUPP;
+>> +
+>> +     /* If a regular file or a directory isn't specified, return. */
+>> +     if (sb->s_bdev == NULL)
+>> +         return -EINVAL;
+>> +
+>> +     /* Freeze */
+>> +     sb = freeze_bdev(sb->s_bdev);
+>> +     if (IS_ERR(sb))
+>> +         return PTR_ERR(sb);
+>> +     return 0;
+>> +}
+>
+> Not a problem with your patch exactly, but I was just wondering; you
+> check here whether the sb returned from freeze_bdev is an ERR_PTR (as
+> does lock_fs()) - but, freeze_bdev never returns an error, does it?
+> ->write_super_lockfs is a void...
+>
+> It really seems that at least we should be able to handle IO errors on
+> the freeze request, and tell the user "No, your filesystem was not
+> frozen..."?
+>
+> Maybe I'll whip up a patch to see about propagating freeze errors up
+> from the filesystems that implement it, unless I'm missing some reason
+> not to do so...?
 
-Please look at the above text and consider how it will look to people
-who read it in the git repository in 2011.
+Right.
+We should handle an IO error which occurs in write_super_lockfs.
+I will change the write_super_lockfs's type to "int" so that it can return an error.
+And I will consider returning an error of ext3_write_super_lockfs because
+journal_flush() in ext3_write_super_lockfs() doesn't handle an IO error.
 
-And consider how it looks today, to people who don't know anything
-about "the kernel panics that we reported last week".
+> Also, should this be checking for a NULL returned from freeze_bdev as
+> well?  I guess this should never happen if we have a file open on which
+> we are calling the ioctl ...
 
-> 
-> Signed-off-by: Stefan Raspl <raspl@linux.vnet.ibm.com>
-> 
-> 
-> ---
->  drivers/md/dm-table.c |    6 ++++--
->  1 file changed, 4 insertions(+), 2 deletions(-)
-> 
-> --- a/drivers/md/dm-table.c
-> +++ b/drivers/md/dm-table.c
-> @@ -943,7 +943,8 @@ int dm_table_any_congested(struct dm_tab
->  
->  	list_for_each_entry(dd, devices, list) {
->  		struct request_queue *q = bdev_get_queue(dd->bdev);
-> -		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
-> +		if (q)
-> +			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
->  	}
->  
->  	return r;
-> @@ -957,7 +958,8 @@ void dm_table_unplug_all(struct dm_table
->  	list_for_each_entry(dd, devices, list) {
->  		struct request_queue *q = bdev_get_queue(dd->bdev);
->  
-> -		blk_unplug(q);
-> +		if (q)
-> +			blk_unplug(q);
->  	}
->  }
->  
+I think ioctl_freeze doesn't need to check NULL because it never happen
+as you said.
 
-And it's not just a trivial matter of getting the paperwork right. 
-This could be the wrong fix - how did these null pointers come about? 
-What was the workload?  It seems strange to have a blockdev which has
-no queue associated with it.
-
-It takes no more than five minutes to fully describe a patch of this
-kind.  Please expend that time.
+Cheers, Takashi
