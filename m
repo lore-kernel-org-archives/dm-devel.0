@@ -1,16 +1,11 @@
-From: "Takashi Sato" <t-sato@yk.jp.nec.com>
-Subject: Re: [PATCH 1/3] Implement generic freeze feature
-Date: Thu, 11 Sep 2008 20:11:06 +0900
-Message-ID: <059C75EDB49641A49EF986D81EED4200@nsl.ad.nec.co.jp>
-References: <20080908205245t-sato@mail.jp.nec.com>
-	<20080908171020.GA22521@infradead.org>
+From: "Chandramouli Subramanian" <himouli@gmail.com>
+Subject: Question re: dev mapper interface
+Date: Fri, 12 Sep 2008 18:35:51 +0530
+Message-ID: <874496a00809120605l7a30022bq66ed9a4036b684ef@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset="iso-8859-1";
-	reply-type=original
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1281220002=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080908171020.GA22521@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,68 +15,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, Oleg Nesterov <oleg@tv-sign.ru>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
+
+--===============1281220002==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_28952_12658625.1221224751197"
+
+------=_Part_28952_12658625.1221224751197
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 Hi,
 
-Christoph Hellwig wrote:
->> --- linux-2.6.27-rc5.org/fs/block_dev.c 2008-08-29 07:52:02.000000000 +0900
->> +++ linux-2.6.27-rc5-freeze/fs/block_dev.c 2008-09-05 20:00:29.000000000 +0900
->> @@ -285,6 +285,8 @@ static void init_once(void *foo)
->>      INIT_LIST_HEAD(&bdev->bd_holder_list);
->>  #endif
->>      inode_init_once(&ei->vfs_inode);
->> +     /* Initialize mutex for freeze. */
->> +     mutex_init(&bdev->bd_fsfreeze_mutex);
->
-> Why not just freeze_mutex?
+Could someone let me know how can i create a user-space library using the
+DM-Multipath (interface) for
+some mgmt application accessability.
 
-The Linux kernel has already had the name of "freezer" in the part of
-power-management.  So I named the above mutex "fsfreeze"
-(filesystem freeze) to distinguish it from the existent "freezer".
-Andrew pointed it out.
+Should i use the libdevmapper library to create a wrapper around it ?
 
->>  struct super_block *freeze_bdev(struct block_device *bdev)
->>  {
->>       struct super_block *sb;
->>
->> +    mutex_lock(&bdev->bd_fsfreeze_mutex);
->> +    if (bdev->bd_fsfreeze_count > 0) {
->> +        bdev->bd_fsfreeze_count++;
->> +        sb = get_super(bdev);
->> +        mutex_unlock(&bdev->bd_fsfreeze_mutex);
->> +        return sb;
->> +    }
->> +    bdev->bd_fsfreeze_count++;
->> +
->>      down(&bdev->bd_mount_sem);
->
-> Note that we still have duplication with the bd_mount_sem.  I think
-> you should look into getting rid of it and instead do a check of
-> the freeze_count under proper freeze_mutex protection.
+Any suggestions will be helpful.
 
-In the original implementation,
-while the filesystem is frozen, subsequent mounts wait for unfreeze
-with the semaphore (bd_mount_sem).
-But if we replace the semphore with the check of the freeze_count,
-subsequent mounts will abort.
-I think the original behavior shouldn't be changed, so the existing bd_mount_sem
-is better.
+Thanks
 
->> @@ -244,6 +274,8 @@ void thaw_bdev(struct block_device *bdev
->>  }
->>
->>        up(&bdev->bd_mount_sem);
->> +     mutex_unlock(&bdev->bd_fsfreeze_mutex);
->> +     return 0;
->
-> Why do you add a return value here if we always return 0 anyway?
+------=_Part_28952_12658625.1221224751197
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-I forgot to remove the unneeded return value in above old patch.
-But I need to implement a return value in the new patch
-because thaw_bdev() needs to return an IO error which occurs
-in unlockfs().
-Eric pointed it out.
+<div dir="ltr"><div>Hi,</div>
+<div>&nbsp;</div>
+<div>Could someone let me know how can i create a user-space library using the DM-Multipath (interface) for</div>
+<div>some mgmt application accessability.</div>
+<div>&nbsp;</div>
+<div>Should i use the libdevmapper library to create a wrapper around it ?</div>
+<div>&nbsp;</div>
+<div>Any suggestions will be helpful.</div>
+<div>&nbsp;</div>
+<div>Thanks</div></div>
 
-Cheers, Takashi
+------=_Part_28952_12658625.1221224751197--
+
+
+--===============1281220002==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1281220002==--
