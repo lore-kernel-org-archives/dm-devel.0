@@ -1,14 +1,14 @@
 From: Andi Kleen <andi@firstfloor.org>
 Subject: Re: Barrier support in device mapper
-Date: Thu, 18 Sep 2008 15:44:12 +0200
-Message-ID: <20080918134412.GK25711@one.firstfloor.org>
-References: <200809181127.37704.knikanth@suse.de> <48D1FBBE.4080305@redhat.com>
+Date: Thu, 18 Sep 2008 15:47:36 +0200
+Message-ID: <20080918134736.GL25711@one.firstfloor.org>
+References: <200809181546.32242.knikanth@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <48D1FBBE.4080305@redhat.com>
+In-Reply-To: <200809181546.32242.knikanth@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,53 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, Alasdair G Kergon <agk@redhat.com>
+To: Nikanth Karthikesan <knikanth@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, Christophe Saout <christophe@saout.de>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Sep 18, 2008 at 08:57:02AM +0200, Milan Broz wrote:
-> - imagine DM device which has barrier support switched on by this simple patch and
-> you try to run pvmove on it. How is the barrier request processed by underlying
-> devices now?
+On Thu, Sep 18, 2008 at 03:46:31PM +0530, Nikanth Karthikesan wrote:
+> Hi Milan
+> 
+> I was able to talk to Alasdair on Freenode#device-mapper and he is also of the 
+> opinion full-barrier support is the way to go.
+> 
+> On Thu, Sep 18, 2008 at 12:27 PM, Milan Broz <mbroz@redhat.com> wrote:
+> > Andi's patch is not complete and I think there can be several problems with 
+> > it:
+> >
+> > - imagine DM device which has barrier support switched on by this simple
+> > patch and you try to run pvmove on it. How is the barrier request processed
+> > by underlying devices now?
+> >
+> > -> mapping can change online (pvmove, lvextend, lvconvert, ...) to more
+> > complicated mapping - who reset barrier flag support?
+> >
+> 
+> I think these things will not create problems.
 
-I don't see how a barrier can go through incorrectly even in this scenario. The pvmove
-will always be handled by the remapper and then remapper always checks
-underlying single device and barrier supported and rejects the barrier
-as needed. 
-
-After a request passed the remapper to extent cannot be moved elsewhere again
-because it's already in flight on the underlying device queues.
-
-Please describe the scenario in more detail that you think will break.
+Correct.
 
 > 
-> -> mapping can change online (pvmove, lvextend, lvconvert, ...) to more
-> complicated mapping - who reset barrier flag support?
+> > - what about stacking devices? Imagine crypto - there is one device per
+> > table possible under linear target (where you enable barriers by this
+> > patch).
+> > dm-crypt will need to implement some queue flushes to properly support
+> > barriers. Another example - partition mapping over multipath (kpartx), ...
+> > Are you sure that is it safe with Andi's patch?
+> > ...
 > 
-> - what about stacking devices? Imagine crypto - there is one device per
-> table possible under linear target (where you enable barriers by this patch).
-> dm-crypt will need to implement some queue flushes to properly support
-> barriers.
+> I do not have knowledge of dm-crypt, but yes, dm-crypt might possibly reorder.
+> Either they should flush the queues or atleast return -EOPNOTSUPP if we need 
+> to use Andi's patch.
 
-Yes dm_crypt needs more work for barriers (I have an experimental but not
-quite right patch here for that), but my other patch doesn't enable 
-barriers on dm_crypt anyways. dm_crypt doesn't call dm_barrier_supported() 
-on its target ever, so there won't be any barriers for it.
+That's already done because it doesn't call dm_table_support_barrier() on
+its target. Only the simple remapper does.
 
-> Another example - partition mapping over multipath (kpartx), ...
+All the scenarios you guys are describing (except for pvmove which
+just seems to be confused thinking) would happen when the ->barrier_supported
+target flag wasn't there, but it really is.
 
-dm-mpath doesn't call dm_barrier_supported() either. Did you
-really read my patch?  It sounds like you're ranting about something
-else, but not my patch.
-
-> Are you sure that is it safe with Andi's patch?
-
-I think it is.
-
-> That's why we need something more robust.
+> > It is dangerous to use that patch IMO, better not support barriers at all
+> > here. That's why we need something more robust.
+> >
 > 
-> Unfortunately I received _no_ feedback to mentioned RFC barrier patches.
+> I understand the possible problems.
 
-What patches?  Pointer please.
+Sorry, but Milan is just wrong on all of them as far as I know.
 
 -Andi
+
+
+-- 
+ak@linux.intel.com
