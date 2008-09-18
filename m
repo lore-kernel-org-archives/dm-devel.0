@@ -1,107 +1,110 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 3/3] block: add a queue flag for request stacking
-	support
-Date: Thu, 18 Sep 2008 10:46:13 -0400 (EDT)
-Message-ID: <20080918.104613.104028583.k-ueda@ct.jp.nec.com>
-References: <20080918.104356.74754407.k-ueda@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Thu, 18 Sep 2008 11:06:34 -0400
+Message-ID: <20080918150634.GH20640@redhat.com>
+References: <20080918.210418.226794540.ryov@valinux.co.jp>
+	<20080918131554.GB20640@redhat.com> <48D267B5.20402@gmail.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080918.104356.74754407.k-ueda@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: jens.axboe@oracle.com
-Cc: j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+Return-path: <virtualization-bounces@lists.linux-foundation.org>
+Content-Disposition: inline
+In-Reply-To: <48D267B5.20402@gmail.com>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/virtualization>
+List-Post: <mailto:virtualization@lists.linux-foundation.org>
+List-Help: <mailto:virtualization-request@lists.linux-foundation.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/virtualization>,
+	<mailto:virtualization-request@lists.linux-foundation.org?subject=subscribe>
+Sender: virtualization-bounces@lists.linux-foundation.org
+Errors-To: virtualization-bounces@lists.linux-foundation.org
+To: Andrea Righi <righi.andrea@gmail.com>
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-This patch adds a queue flag to indicate the block device can be
-used for request stacking.
+On Thu, Sep 18, 2008 at 04:37:41PM +0200, Andrea Righi wrote:
+> Vivek Goyal wrote:
+> > On Thu, Sep 18, 2008 at 09:04:18PM +0900, Ryo Tsuruta wrote:
+> >> Hi All,
+> >>
+> >> I have got excellent results of dm-ioband, that controls the disk I/O
+> >> bandwidth even when it accepts delayed write requests.
+> >>
+> >> In this time, I ran some benchmarks with a high-end storage. The
+> >> reason was to avoid a performance bottleneck due to mechanical factors
+> >> such as seek time.
+> >>
+> >> You can see the details of the benchmarks at:
+> >> http://people.valinux.co.jp/~ryov/dm-ioband/hps/
+> >>
+> > 
+> > Hi Ryo,
+> > 
+> > I had a query about dm-ioband patches. IIUC, dm-ioband patches will break
+> > the notion of process priority in CFQ because now dm-ioband device will
+> > hold the bio and issue these to lower layers later based on which bio's
+> > become ready. Hence actual bio submitting context might be different and
+> > because cfq derives the io_context from current task, it will be broken.
+> > 
+> > To mitigate that problem, we probably need to implement Fernando's
+> > suggestion of putting io_context pointer in bio. 
+> > 
+> > Have you already done something to solve this issue?
+> > 
+> > Secondly, why do we have to create an additional dm-ioband device for 
+> > every device we want to control using rules. This looks little odd
+> > atleast to me. Can't we keep it in line with rest of the controllers
+> > where task grouping takes place using cgroup and rules are specified in
+> > cgroup itself (The way Andrea Righi does for io-throttling patches)?
+> > 
+> > To avoid creation of stacking another device (dm-ioband) on top of every
+> > device we want to subject to rules, I was thinking of maintaining an
+> > rb-tree per request queue. Requests will first go into this rb-tree upon
+> > __make_request() and then will filter down to elevator associated with the
+> > queue (if there is one). This will provide us the control of releasing
+> > bio's to elevaor based on policies (proportional weight, max bandwidth
+> > etc) and no need of stacking additional block device.
+> > 
+> > I am working on some experimental proof of concept patches. It will take
+> > some time though.
+> > 
+> > I was thinking of following.
+> > 
+> > - Adopt the Andrea Righi's style of specifying rules for devices and
+> >   group the tasks using cgroups.
+> > 
+> > - To begin with, adopt dm-ioband's approach of proportional bandwidth
+> >   controller. It makes sense to me limit the bandwidth usage only in
+> >   case of contention. If there is really a need to limit max bandwidth,
+> >   then probably we can do something to implement additional rules or
+> >   implement some policy switcher where user can decide what kind of
+> >   policies need to be implemented.
+> > 
+> > - Get rid of dm-ioband and instead buffer requests on an rb-tree on every
+> >   request queue which is controlled by some kind of cgroup rules.
+> > 
+> > It would be good to discuss above approach now whether it makes sense or 
+> > not. I think it is kind of fusion of io-throttling and dm-ioband patches
+> > with additional idea of doing io-control just above elevator on the request
+> > queue using an rb-tree.
+> 
+> Thanks Vivek. All sounds reasonable to me and I think this is be the right way
+> to proceed.
+> 
+> I'll try to design and implement your rb-tree per request-queue idea into my
+> io-throttle controller, maybe we can reuse it also for a more generic solution.
+> Feel free to send me your experimental proof of concept if you want, even if
+> it's not yet complete, I can review it, test and contribute.
 
-Request stacking drivers need to stack their devices on top of
-only devices of which q->request_fn is functional.
-Since bio stacking drivers (e.g. md, loop) basically initialize
-their queue using blk_alloc_queue() and don't set q->request_fn,
-the check of (q->request_fn == NULL) looks enough for that purpose.
+Currently I have taken code from bio-cgroup to implement cgroups and to
+provide functionality to associate a bio to a cgroup. I need this to be
+able to queue the bio's at right node in the rb-tree and then also to be
+able to take a decision when is the right time to release few requests.
 
-However, dm will become both types of stacking driver (bio-based and
-request-based).  And dm will always set q->request_fn even if the dm
-device is bio-based of which q->request_fn is not functional actually.
-So we need something else to distinguish the type of the device.
-Adding a queue flag is a solution for that.
+Right now in crude implementation, I am working on making system boot.
+Once patches are at least in little bit working shape, I will send it to you
+to have a look.
 
-
-The reason why dm always sets q->request_fn is to keep
-the compatibility of dm user-space tools.
-Currently, all dm user-space tools are using bio-based dm without
-specifying the type of the dm device they use.
-To use request-based dm without changing such tools, the kernel
-must decide the type of the dm device automatically.
-The automatic type decision can't be done at the device creation time
-and needs to be deferred until such tools load a mapping table,
-since the actual type is decided by dm target type included in
-the mapping table.
-
-So a dm device has to be initialized using blk_init_queue()
-so that we can load either type of table.
-Then, all queue stuffs are set (e.g. q->request_fn) and we have
-no element to distinguish that it is bio-based or request-based,
-even after a table is loaded and the type of the device is decided.
-
-By the way, some stuffs of the queue (e.g. request_list, elevator)
-are needless when the dm device is used as bio-based.
-But the memory size is not so large (about 20[KB] per queue on ia64),
-so I hope the memory loss can be acceptable for bio-based dm users.
-
-
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>
----
- block/blk-core.c       |    3 ++-
- include/linux/blkdev.h |    3 +++
- 2 files changed, 5 insertions(+), 1 deletion(-)
-
-Index: linux-2.6-block/block/blk-core.c
-===================================================================
---- linux-2.6-block.orig/block/blk-core.c
-+++ linux-2.6-block/block/blk-core.c
-@@ -566,7 +566,8 @@ blk_init_queue_node(request_fn_proc *rfn
- 	q->request_fn		= rfn;
- 	q->prep_rq_fn		= NULL;
- 	q->unplug_fn		= generic_unplug_device;
--	q->queue_flags		= (1 << QUEUE_FLAG_CLUSTER);
-+	q->queue_flags		= (1 << QUEUE_FLAG_CLUSTER |
-+				   1 << QUEUE_FLAG_STACKABLE);
- 	q->queue_lock		= lock;
- 
- 	blk_queue_segment_boundary(q, 0xffffffff);
-Index: linux-2.6-block/include/linux/blkdev.h
-===================================================================
---- linux-2.6-block.orig/include/linux/blkdev.h
-+++ linux-2.6-block/include/linux/blkdev.h
-@@ -441,6 +441,7 @@ struct request_queue
- #define QUEUE_FLAG_NOMERGES    10	/* disable merge attempts */
- #define QUEUE_FLAG_SAME_COMP   11	/* force complete on same CPU */
- #define QUEUE_FLAG_FAIL_IO     12	/* fake timeout */
-+#define QUEUE_FLAG_STACKABLE   13	/* supports request stacking */
- 
- static inline int queue_is_locked(struct request_queue *q)
- {
-@@ -547,6 +548,8 @@ enum {
- #define blk_queue_stopped(q)	test_bit(QUEUE_FLAG_STOPPED, &(q)->queue_flags)
- #define blk_queue_nomerges(q)	test_bit(QUEUE_FLAG_NOMERGES, &(q)->queue_flags)
- #define blk_queue_flushing(q)	((q)->ordseq)
-+#define blk_queue_stackable(q)	\
-+	test_bit(QUEUE_FLAG_STACKABLE, &(q)->queue_flags)
- 
- #define blk_fs_request(rq)	((rq)->cmd_type == REQ_TYPE_FS)
- #define blk_pc_request(rq)	((rq)->cmd_type == REQ_TYPE_BLOCK_PC)
+Thanks
+Vivek
