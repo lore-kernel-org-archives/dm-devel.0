@@ -1,14 +1,15 @@
-From: Stephen Beynon <stephen@octopus-technologies.com>
-Subject: dm mirror with failed device
-Date: Sun, 7 Sep 2008 02:11:11 +0100
-Message-ID: <200809070211.34360.stephen@octopus-technologies.com>
+From: Levy_Jerome@emc.com
+Subject: [RHEL 5.3 PATCH 1/1] scsi_dh: add ALUA notification for
+	EMC Clariion devices.
+Date: Thu, 18 Sep 2008 09:54:37 -0400
+Message-ID: <6416EE16C1AF1E4C86882867E4DD0FF6025D1741@CORPUSMX40B.corp.emc.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain;
-  charset="utf-8"
-Content-Transfer-Encoding: 7bit
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,37 +22,35 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is probably a stupid question, in which case I apologise in advance.
+Adding sense code data decode for optimal/non-optimal path changeover.
+Unfortunately in the read sense code we can't do another inquiry, so we
+can't tell the user whether we are on the optimal or non-optimal path,
+only that a change has occurred.=20
 
-I am looking to set up a number of machines with internal disks mirrored onto 
-an iscsi server.  I aim to provide resiliance against disk failures, and the 
-iscsi server will be a handy single point to backup.
+Jerry Levy, Engineer IV
+EMC Global Services Technical Support, PREM ISG
+AMER Host Systems Software - UNIX
+---
 
-I set up the following test mirror.
-
-# dmsetup status mirror
-0 16777216 mirror 2 254:8 8:16 32768/32768 0 1 core
-# dmsetup table mirror
-0 16777216 mirror core 1 512 2 254:8 0 8:16 0
-
-As a test I shutdown the iscsi server and continued writes to the mirror 
-device.  As expected syslog recorded i/o errors on the iscsi lun, but writes 
-to the mirror continued.  After waiting a few minutes I expected to see that 
-parts of the mirror were out of sync, however dmsetup status gave exactly the 
-same results as above.
-
-When I restarted the iscsi server blocks started to be written to the iscsi 
-server again, but the changes that happened during the iscsi server down time 
-were never replicated.  Clearly this left the mirror in an inconsistent state 
-with the only indication of problems being in syslog.
-
-Is there any way I can configure dm-mirror to either mark the blocks as out of 
-sync when a write fails, and re-try the write later ?
-
-I am currently running Ubuntu gutsy on the client machines, so it does not 
-have dmeventd, but from reading the docs it it not clear that dmeventd would 
-help.
-
-Regards
-
-Stephen 
+--- scsi_dh_emc.original.c      2008-09-17 14:50:18.000000000 -0400
++++ scsi_dh_emc.c       2008-09-17 14:54:38.000000000 -0400
+@@ -435,6 +435,16 @@
+                        return SUCCESS;
+                break;
+        case UNIT_ATTENTION:
++                if (sense_hdr->asc =3D=3D 0x2A && sense_hdr->ascq =3D=3D=
+ 0x06)
++                        /*
++                         * ALUA status has changed. Report to host,
++                         * no further action required... jml
++                         */
++                        sdev_printk(KERN_NOTICE, sdev,
++                                    "%s: Asymetric access state has
+changed.\n",
++                                    CLARIION_NAME);
++                        return SUCCESS;
++                break;
+                if (sense_hdr->asc =3D=3D 0x29 && sense_hdr->ascq =3D=3D =
+0x00)
+                        /*
+                         * Unit Attention Code. This is the first IO
