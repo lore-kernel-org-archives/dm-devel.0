@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper VERSION WHATS_NEW
-Date: 18 Sep 2008 20:09:51 -0000
-Message-ID: <20080918200951.16302.qmail@sourceware.org>
+Subject: device-mapper/lib libdm-deptree.c
+Date: 18 Sep 2008 22:55:33 -0000
+Message-ID: <20080918225533.19806.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,29 +18,25 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2008-09-18 20:09:51
+Changes by:	agk@sourceware.org	2008-09-18 22:55:33
 
 Modified files:
-	.              : VERSION WHATS_NEW 
+	lib            : libdm-deptree.c 
 
 Log message:
-	post-release
+	Fix last checkin - tested wrong dnode.
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/VERSION.diff?cvsroot=dm&r1=1.139&r2=1.140
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/WHATS_NEW.diff?cvsroot=dm&r1=1.251&r2=1.252
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/lib/libdm-deptree.c.diff?cvsroot=dm&r1=1.42&r2=1.43
 
---- device-mapper/VERSION	2008/09/18 20:03:24	1.139
-+++ device-mapper/VERSION	2008/09/18 20:09:51	1.140
-@@ -1 +1 @@
--1.02.28-cvs (2008-09-18)
-+1.02.29-cvs (2008-09-18)
---- device-mapper/WHATS_NEW	2008/09/18 18:34:53	1.251
-+++ device-mapper/WHATS_NEW	2008/09/18 20:09:51	1.252
-@@ -1,3 +1,6 @@
-+Version 1.02.29 -
-+=====================================
-+
- Version 1.02.28 - 18th September 2008
- =====================================
-   Only resume devices in dm_tree_preload_children if size changes.
+--- device-mapper/lib/libdm-deptree.c	2008/09/18 18:34:53	1.42
++++ device-mapper/lib/libdm-deptree.c	2008/09/18 22:55:33	1.43
+@@ -1551,7 +1551,7 @@
+ 		}
+ 
+ 		/* Resume device immediately if it has parents and its size changed */
+-		if (!dm_tree_node_num_children(child, 1) || !dnode->props.size_changed)
++		if (!dm_tree_node_num_children(child, 1) || !child->props.size_changed)
+ 			continue;
+ 
+ 		if (!child->info.inactive_table && !child->info.suspended)
