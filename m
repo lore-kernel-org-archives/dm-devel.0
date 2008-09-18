@@ -1,14 +1,14 @@
-From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: Barrier support in device mapper
-Date: Thu, 18 Sep 2008 11:27:37 +0530
-Message-ID: <200809181127.37704.knikanth@suse.de>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: Barrier support in device mapper
+Date: Thu, 18 Sep 2008 08:57:02 +0200
+Message-ID: <48D1FBBE.4080305@redhat.com>
+References: <200809181127.37704.knikanth@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
+In-Reply-To: <200809181127.37704.knikanth@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,27 +18,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Andi Kleen <andi@firstfloor.org>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair
+Nikanth Karthikesan wrote:
+> Are we going to get full-barrier support soon? If not, I would like to see 
+> Andi's patch being merged till we get full barrier support ready. I would like 
+> to know your thoughts.
 
-What are plans in supporting barriers in device mapper?
+Hi,
+Andi's patch is not complete and I think there can be several problems with it:
 
-Sometime back Andi Kleen posted a patch[1] to support barriers for single-
-device dm-devices.
+- imagine DM device which has barrier support switched on by this simple patch and
+you try to run pvmove on it. How is the barrier request processed by underlying
+devices now?
 
-Recently Milan Broz posted an RFC patch-set[2] to implement full-barrier 
-support.
+-> mapping can change online (pvmove, lvextend, lvconvert, ...) to more
+complicated mapping - who reset barrier flag support?
 
-Are we going to get full-barrier support soon? If not, I would like to see 
-Andi's patch being merged till we get full barrier support ready. I would like 
-to know your thoughts.
+- what about stacking devices? Imagine crypto - there is one device per
+table possible under linear target (where you enable barriers by this patch).
+dm-crypt will need to implement some queue flushes to properly support
+barriers. Another example - partition mapping over multipath (kpartx), ...
+Are you sure that is it safe with Andi's patch?
+...
 
-Thanks
-Nikanth Karthikesan
-SUSE Labs
+It is dangerous to use that patch IMO, better not support barriers at all here.
+That's why we need something more robust.
 
-[1] http://lkml.org/lkml/2008/2/15/125
-[2] http://article.gmane.org/gmane.linux.kernel.device-mapper.devel/5941
+Unfortunately I received _no_ feedback to mentioned RFC barrier patches.
+
+Milan
+--
+mbroz@redhat.com
