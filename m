@@ -1,79 +1,90 @@
-From: Andi Kleen <andi@firstfloor.org>
-Subject: Re: Barrier support in device mapper
-Date: Thu, 18 Sep 2008 15:47:36 +0200
-Message-ID: <20080918134736.GL25711@one.firstfloor.org>
-References: <200809181546.32242.knikanth@suse.de>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrea Righi <righi.andrea@gmail.com>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Thu, 18 Sep 2008 16:37:41 +0200
+Message-ID: <48D267B5.20402@gmail.com>
+References: <20080918.210418.226794540.ryov@valinux.co.jp> <20080918131554.GB20640@redhat.com>
+Reply-To: righi.andrea@gmail.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <200809181546.32242.knikanth@suse.de>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Nikanth Karthikesan <knikanth@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Andi Kleen <andi@firstfloor.org>, Christophe Saout <christophe@saout.de>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755572AbYIROhz@vger.kernel.org>
+In-Reply-To: <20080918131554.GB20640@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Vivek Goyal <vgoyal@redhat.com>
+Cc: Ryo Tsuruta <ryov@valinux.co.jp>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, agk@sourceware.org, jens.axboe@oracle.com
 List-Id: dm-devel.ids
 
-On Thu, Sep 18, 2008 at 03:46:31PM +0530, Nikanth Karthikesan wrote:
-> Hi Milan
+Vivek Goyal wrote:
+> On Thu, Sep 18, 2008 at 09:04:18PM +0900, Ryo Tsuruta wrote:
+>> Hi All,
+>>
+>> I have got excellent results of dm-ioband, that controls the disk I/O
+>> bandwidth even when it accepts delayed write requests.
+>>
+>> In this time, I ran some benchmarks with a high-end storage. The
+>> reason was to avoid a performance bottleneck due to mechanical factors
+>> such as seek time.
+>>
+>> You can see the details of the benchmarks at:
+>> http://people.valinux.co.jp/~ryov/dm-ioband/hps/
+>>
 > 
-> I was able to talk to Alasdair on Freenode#device-mapper and he is also of the 
-> opinion full-barrier support is the way to go.
+> Hi Ryo,
 > 
-> On Thu, Sep 18, 2008 at 12:27 PM, Milan Broz <mbroz@redhat.com> wrote:
-> > Andi's patch is not complete and I think there can be several problems with 
-> > it:
-> >
-> > - imagine DM device which has barrier support switched on by this simple
-> > patch and you try to run pvmove on it. How is the barrier request processed
-> > by underlying devices now?
-> >
-> > -> mapping can change online (pvmove, lvextend, lvconvert, ...) to more
-> > complicated mapping - who reset barrier flag support?
-> >
+> I had a query about dm-ioband patches. IIUC, dm-ioband patches will break
+> the notion of process priority in CFQ because now dm-ioband device will
+> hold the bio and issue these to lower layers later based on which bio's
+> become ready. Hence actual bio submitting context might be different and
+> because cfq derives the io_context from current task, it will be broken.
 > 
-> I think these things will not create problems.
-
-Correct.
-
+> To mitigate that problem, we probably need to implement Fernando's
+> suggestion of putting io_context pointer in bio. 
 > 
-> > - what about stacking devices? Imagine crypto - there is one device per
-> > table possible under linear target (where you enable barriers by this
-> > patch).
-> > dm-crypt will need to implement some queue flushes to properly support
-> > barriers. Another example - partition mapping over multipath (kpartx), ...
-> > Are you sure that is it safe with Andi's patch?
-> > ...
+> Have you already done something to solve this issue?
 > 
-> I do not have knowledge of dm-crypt, but yes, dm-crypt might possibly reorder.
-> Either they should flush the queues or atleast return -EOPNOTSUPP if we need 
-> to use Andi's patch.
-
-That's already done because it doesn't call dm_table_support_barrier() on
-its target. Only the simple remapper does.
-
-All the scenarios you guys are describing (except for pvmove which
-just seems to be confused thinking) would happen when the ->barrier_supported
-target flag wasn't there, but it really is.
-
-> > It is dangerous to use that patch IMO, better not support barriers at all
-> > here. That's why we need something more robust.
-> >
+> Secondly, why do we have to create an additional dm-ioband device for 
+> every device we want to control using rules. This looks little odd
+> atleast to me. Can't we keep it in line with rest of the controllers
+> where task grouping takes place using cgroup and rules are specified in
+> cgroup itself (The way Andrea Righi does for io-throttling patches)?
 > 
-> I understand the possible problems.
+> To avoid creation of stacking another device (dm-ioband) on top of every
+> device we want to subject to rules, I was thinking of maintaining an
+> rb-tree per request queue. Requests will first go into this rb-tree upon
+> __make_request() and then will filter down to elevator associated with the
+> queue (if there is one). This will provide us the control of releasing
+> bio's to elevaor based on policies (proportional weight, max bandwidth
+> etc) and no need of stacking additional block device.
+> 
+> I am working on some experimental proof of concept patches. It will take
+> some time though.
+> 
+> I was thinking of following.
+> 
+> - Adopt the Andrea Righi's style of specifying rules for devices and
+>   group the tasks using cgroups.
+> 
+> - To begin with, adopt dm-ioband's approach of proportional bandwidth
+>   controller. It makes sense to me limit the bandwidth usage only in
+>   case of contention. If there is really a need to limit max bandwidth,
+>   then probably we can do something to implement additional rules or
+>   implement some policy switcher where user can decide what kind of
+>   policies need to be implemented.
+> 
+> - Get rid of dm-ioband and instead buffer requests on an rb-tree on every
+>   request queue which is controlled by some kind of cgroup rules.
+> 
+> It would be good to discuss above approach now whether it makes sense or 
+> not. I think it is kind of fusion of io-throttling and dm-ioband patches
+> with additional idea of doing io-control just above elevator on the request
+> queue using an rb-tree.
 
-Sorry, but Milan is just wrong on all of them as far as I know.
+Thanks Vivek. All sounds reasonable to me and I think this is be the right way
+to proceed.
 
--Andi
+I'll try to design and implement your rb-tree per request-queue idea into my
+io-throttle controller, maybe we can reuse it also for a more generic solution.
+Feel free to send me your experimental proof of concept if you want, even if
+it's not yet complete, I can review it, test and contribute.
 
-
--- 
-ak@linux.intel.com
+-Andrea
