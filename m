@@ -1,85 +1,169 @@
-From: Andy <genanr@emsphone.com>
-Subject: Re: multipath-tools libmultipath/configure.c libmu ...
-Date: Fri, 19 Sep 2008 16:57:32 -0500
-Message-ID: <20080919215731.GA7172@thumper2>
-References: <20080919032710.28653.qmail@sourceware.org>
-	<20080919185313.GA2932@thumper2>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 1/2] lld busy status exporting interface
+Date: Fri, 19 Sep 2008 19:11:22 -0400 (EDT)
+Message-ID: <20080919.191122.102582872.k-ueda@ct.jp.nec.com>
+References: <20080919.104756.41628866.k-ueda@ct.jp.nec.com>
+	<20080919.104854.71084447.k-ueda@ct.jp.nec.com>
+	<20080919143344.44d1a83e.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080919185313.GA2932@thumper2>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20080919143344.44d1a83e.akpm@linux-foundation.org>
+Sender: linux-scsi-owner@vger.kernel.org
+To: akpm@linux-foundation.org
+Cc: James.Bottomley@HansenPartnership.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com
 List-Id: dm-devel.ids
 
-On Fri, Sep 19, 2008 at 01:53:13PM -0500, Andy wrote:
-> On Fri, Sep 19, 2008 at 03:27:10AM -0000, bmarzins@sourceware.org wrote:
-> > CVSROOT:	/cvs/dm
-> > Module name:	multipath-tools
-> > Branch: 	RHEL5_FC6
-> > Changes by:	bmarzins@sourceware.org	2008-09-19 03:27:08
-> > 
-> > Modified files:
-> > 	libmultipath   : configure.c configure.h devmapper.c devmapper.h 
-> > 	multipathd     : cli.c cli.h cli_handlers.c cli_handlers.h 
-> > 	                 main.c main.h 
-> > 
-> > Log message:
-> > 	Fix for bz #455692. There is now a command for multipathd, 'resize map'. This
-> > 	does online grows or shrinks for your multipath device. It has some warts.
-> > 	
-> > 	1. It needs to remove and re-add every path in the device. This can cause two
-> > 	annoyances. First, if you only have one valid path, you go into an all paths
-> > 	down scenario. However, you will immediately re-add the path, so it won't
-> > 	trigger problem #2. Second, if the path is inaccessable, you may not be able to
-> > 	re-add it.
-> > 	
-> > 	2. You can't disable flushing on suspend for a device-mapper device, when you
-> > 	want to change size. This means that if all your paths are down, you will fail
-> > 	the queued IOs when you suspend. This is a problem with the device-mapper kernel
-> > 	code, and there's no real way to avoid it, except by fixing it in the kernel.
-> > 	
-> > 	This commit also has some minor fixups for 238421, and adds the ability to
-> > 	disable and restore queueing on all multipath devices through multipathd
-> > 
-> > Patches:
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.3&r2=1.2.2.4
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.2.1
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.5&r2=1.22.2.6
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.4&r2=1.11.2.5
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.2&r2=1.6.2.3
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.2&r2=1.3.2.3
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.13&r2=1.69.2.14
-> > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7&r2=1.7.2.1
-> > 
-> 
-> Where can I get the multipath-tools sources that these patches apply cleanly
-> to?  They do not apply cleanly to my multipath 0.4.8 sources, add there
-> seems to be some major differences in some places.
-> 
-> Thanks,
-> 
-> Andy
-> 
+Hi Andrew,
 
-Responding to my own mail, I did got the source with the patches from the
-cvs.  But, the resizing does not work for with with mounted volumes.  There
-are 4 paths for the volume, so there is no probably with it failing paths. 
-I get "domap(0) failure for create/reload map" when I run multipath -v 3.
+On Fri, 19 Sep 2008 14:33:44 -0700, Andrew Morton wrote:
+> On Fri, 19 Sep 2008 10:48:54 -0400 (EDT)
+> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+> 
+> > This patch adds an interface to check lld's busy status
+> > from the block layer.
+> > This resolves a performance problem on request stacking devices below.
+> > 
+> > 
+> > Some drivers like scsi mid layer stop dispatching request when
+> > they detect busy state on its low-level device like host/bus/device.
+> > It allows other requests to stay in the I/O scheduler's queue
+> > for a chance of merging.
+> > 
+> > Request stacking drivers like request-based dm should follow
+> > the same logic.
+> > However, there is no generic interface for the stacked device
+> > to check if the underlying device(s) are busy.
+> > If the request stacking driver dispatches and submits requests to
+> > the busy underlying device, the requests will stay in
+> > the underlying device's queue without a chance of merging.
+> > This causes performance problem on burst I/O load.
+> > 
+> > With this patch, busy state of the underlying device is exported
+> > via the state flag of queue's backing_dev_info.  So the request
+> > stacking driver can check it and stop dispatching requests if busy.
+> > 
+> > The underlying device driver must set/clear the flag appropriately:
+> >    ON:  when the device driver can't process requests immediately.
+> >    OFF: when the device driver can process requests immediately,
+> >         including abnormal situations where the device driver needs
+> >         to kill all requests.
+> > 
+> > 
+> > Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> > Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> > Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
+> > ---
+> >  include/linux/backing-dev.h |    8 ++++++++
+> >  mm/backing-dev.c            |   12 ++++++++++++
+> >  2 files changed, 20 insertions(+)
+> > 
+> > Index: scsi-misc-2.6/include/linux/backing-dev.h
+> > ===================================================================
+> > --- scsi-misc-2.6.orig/include/linux/backing-dev.h
+> > +++ scsi-misc-2.6/include/linux/backing-dev.h
+> > @@ -26,6 +26,7 @@ enum bdi_state {
+> >  	BDI_pdflush,		/* A pdflush thread is working this device */
+> >  	BDI_write_congested,	/* The write queue is getting full */
+> >  	BDI_read_congested,	/* The read queue is getting full */
+> > +	BDI_lld_congested,	/* The device/host is busy */
+> >  	BDI_unused,		/* Available bits start here */
+> >  };
+> >  
+> > @@ -226,8 +227,15 @@ static inline int bdi_rw_congested(struc
+> >  				  (1 << BDI_write_congested));
+> >  }
+> >  
+> > +static inline int bdi_lld_congested(struct backing_dev_info *bdi)
+> > +{
+> > +	return bdi_congested(bdi, 1 << BDI_lld_congested);
+> > +}
+> > +
+> >  void clear_bdi_congested(struct backing_dev_info *bdi, int rw);
+> >  void set_bdi_congested(struct backing_dev_info *bdi, int rw);
+> > +void clear_bdi_lld_congested(struct backing_dev_info *bdi);
+> > +void set_bdi_lld_congested(struct backing_dev_info *bdi);
+> >  long congestion_wait(int rw, long timeout);
+> >  
+> >  
+> > Index: scsi-misc-2.6/mm/backing-dev.c
+> > ===================================================================
+> > --- scsi-misc-2.6.orig/mm/backing-dev.c
+> > +++ scsi-misc-2.6/mm/backing-dev.c
+> > @@ -279,6 +279,18 @@ void set_bdi_congested(struct backing_de
+> >  }
+> >  EXPORT_SYMBOL(set_bdi_congested);
+> >  
+> > +void clear_bdi_lld_congested(struct backing_dev_info *bdi)
+> > +{
+> > +	clear_bit(BDI_lld_congested, &bdi->state);
+> > +}
+> > +EXPORT_SYMBOL_GPL(clear_bdi_lld_congested);
+> > +
+> > +void set_bdi_lld_congested(struct backing_dev_info *bdi)
+> > +{
+> > +	set_bit(BDI_lld_congested, &bdi->state);
+> > +}
+> > +EXPORT_SYMBOL_GPL(set_bdi_lld_congested);
+> > +
+> >  /**
+> >   * congestion_wait - wait for a backing_dev to become uncongested
+> >   * @rw: READ or WRITE
+> 
+> Is this really the right way to do it?
 
-I can get dm to reconize the new size if the volume is umounted.  But, I
-really would like it to work while it is mounted.
+I think so, but I may not understand what you mean correctly.
+So please elaborate your concern if my explanation below doesn't
+satisfy what you want to know.
 
-Andy
+
+> Back in the days when we first did the backing_dev_info.congested_fn()
+> logic it was decided that there basically was no single place in which
+> the congested state could be stored.
+> 
+> So we ended up deciding that whenever a caller wants to know a
+> backing_dev's congested status, it has to call in to the
+> ->congested_fn() and that congested_fn would then call down into all
+> the constituent low-level drivers/queues/etc asking each one if it is
+> congested.
+
+bdi_lld_congested() also does that using bdi_congested(), which calls
+->congested_fn().
+And only real device drivers (e.g. scsi, ide) set/clear the flag.
+Stacking drivers like request-based dm don't.
+So stacking drivers always check the BDI_lld_congested flag of
+the bottom device of the device stack.
+
+BDI_[write|read]_congested flags have been using for queue's
+congestion, so that I/O queueing/merging can be proceeded even if
+the lld is congested.  So I added a new flag.
+
+
+> I mean, as a simple example which is probably wrong - what happens if a
+> single backing_dev is implemented via two different disks and
+> controllers, and they both become congested and then one of them comes
+> uncongested.  Is there no way in which the above implemention can
+> incorrectly flag the backing_dev as being uncongested?
+
+Do you mean that "a single backing_dev via two disks/controllers" is
+a dm device (e.g. a dm-multipath device having 2 paths, a dm-mirror
+device having 2 disks)?
+
+If so, dm doesn't set/clear the flag, and the decision, whether
+the dm device itself is congested or not, depends on dm's target driver.
+
+For example of dm-multipath,
+  o call bdi_lld_congested() for each path.
+  o if one of the paths are uncongested, dm-multipath will decide
+    the dm device is uncongested and dispatch incoming I/Os to
+    the uncongested path.
+
+For example of dm-mirror,
+  o call bdi_lld_congested() for each disk.
+  o if the incoming I/O is READ, same logic as dm-multipath above.
+    if the incoming I/O is WRITE, dm-mirror will decide the dm device
+    is uncongested only when all disks are uncongested.
+
+Thanks,
+Kiyoshi Ueda
