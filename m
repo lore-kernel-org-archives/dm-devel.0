@@ -1,14 +1,16 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 2/2] dm core: tidy local_init
-Date: Fri, 19 Sep 2008 11:56:44 -0400 (EDT)
-Message-ID: <20080919.115644.106261180.k-ueda@ct.jp.nec.com>
-References: <20080919.105958.78703932.k-ueda@ct.jp.nec.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [PATCH 2/2] scsi: exports busy status
+	via	bdi_lld_congested
+Date: Fri, 19 Sep 2008 11:06:04 -0500
+Message-ID: <48D3CDEC.9060407@cs.wisc.edu>
+References: <20080919.104756.41628866.k-ueda@ct.jp.nec.com>
+	<20080919.104922.97297160.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080919.105958.78703932.k-ueda@ct.jp.nec.com>
+In-Reply-To: <20080919.104922.97297160.k-ueda@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,80 +20,75 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com, dm-devel@redhat.com, mbroz@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: James.Bottomley@HansenPartnership.com, j-nomura@ce.jp.nec.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, k-ueda@ct.jp.nec.com
 List-Id: dm-devel.ids
 
-This patch tidies local_init() as preparation for another patch,
-which creates some kmem_cache for request-based dm.
-No functional change.
+Kiyoshi Ueda wrote:
+> This patch change scsi mid layer to export its busy status.
+> Not set the busy flag, when scsi can't dispatch I/Os anymore and
+> needs to kill I/Os.  Otherwise, request stacking drivers may hold
+> requests forever.
+> 
+> 
+> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+> Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
+> ---
+>  drivers/scsi/scsi.c     |    4 ++--
+>  drivers/scsi/scsi_lib.c |   23 ++++++++++++++++++++++-
+>  2 files changed, 24 insertions(+), 3 deletions(-)
+> 
+> Index: scsi-misc-2.6/drivers/scsi/scsi_lib.c
+> ===================================================================
+> --- scsi-misc-2.6.orig/drivers/scsi/scsi_lib.c
+> +++ scsi-misc-2.6/drivers/scsi/scsi_lib.c
+> @@ -459,17 +459,30 @@ static void scsi_init_cmd_errh(struct sc
+>  
+>  void scsi_device_unbusy(struct scsi_device *sdev)
+>  {
+> +	int host_congested;
+>  	struct Scsi_Host *shost = sdev->host;
+>  	unsigned long flags;
+>  
+>  	spin_lock_irqsave(shost->host_lock, flags);
+>  	shost->host_busy--;
+> +	if ((shost->can_queue > 0 && shost->host_busy >= shost->can_queue) ||
+> +	    shost->host_blocked || shost->host_self_blocked ||
+> +	    scsi_host_in_recovery(shost))
+> +		host_congested = 1;
+> +	else
+> +		host_congested = 0;
+> +
 
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm.c |   34 +++++++++++++++++-----------------
- 1 files changed, 17 insertions(+), 17 deletions(-)
+You might want to check if the starget busy too (scsi-misc has this but 
+Jens's tree and linus do not)? The code below that I snipped from 
+scsi_request_fn will set the congested bits if scsi_target_queue_ready 
+returns 0, so above here you would want to clear it if it not congested 
+anymore.
 
-Index: 2.6.27-rc6/drivers/md/dm.c
-===================================================================
---- 2.6.27-rc6.orig/drivers/md/dm.c
-+++ 2.6.27-rc6/drivers/md/dm.c
-@@ -150,40 +150,40 @@ static struct kmem_cache *_tio_cache;
- 
- static int __init local_init(void)
- {
--	int r;
-+	int r = -ENOMEM;
- 
- 	/* allocate a slab for the dm_ios */
- 	_io_cache = KMEM_CACHE(dm_io, 0);
- 	if (!_io_cache)
--		return -ENOMEM;
-+		return r;
- 
- 	/* allocate a slab for the target ios */
- 	_tio_cache = KMEM_CACHE(dm_target_io, 0);
--	if (!_tio_cache) {
--		kmem_cache_destroy(_io_cache);
--		return -ENOMEM;
--	}
-+	if (!_tio_cache)
-+		goto out_free_io_cache;
- 
- 	r = dm_uevent_init();
--	if (r) {
--		kmem_cache_destroy(_tio_cache);
--		kmem_cache_destroy(_io_cache);
--		return r;
--	}
-+	if (r)
-+		goto out_free_tio_cache;
- 
- 	_major = major;
- 	r = register_blkdev(_major, _name);
--	if (r < 0) {
--		kmem_cache_destroy(_tio_cache);
--		kmem_cache_destroy(_io_cache);
--		dm_uevent_exit();
--		return r;
--	}
-+	if (r < 0)
-+		goto out_uevent_exit;
- 
- 	if (!_major)
- 		_major = r;
- 
- 	return 0;
-+
-+out_uevent_exit:
-+	dm_uevent_exit();
-+out_free_tio_cache:
-+	kmem_cache_destroy(_tio_cache);
-+out_free_io_cache:
-+	kmem_cache_destroy(_io_cache);
-+
-+	return r;
- }
- 
- static void local_exit(void)
+>  	if (unlikely(scsi_host_in_recovery(shost) &&
+>  		     (shost->host_failed || shost->host_eh_scheduled)))
+>  		scsi_eh_wakeup(shost);
+>  	spin_unlock(shost->host_lock);
+> +
+>  	spin_lock(sdev->request_queue->queue_lock);
+>  	sdev->device_busy--;
+> +	if (bdi_lld_congested(&sdev->request_queue->backing_dev_info) &&
+> +	    !host_congested && sdev->device_busy < sdev->queue_depth &&
+> +	    !sdev->device_blocked)
+> +		clear_bdi_lld_congested(&sdev->request_queue->backing_dev_info);
+>  	spin_unlock_irqrestore(sdev->request_queue->queue_lock, flags);
+>  }
+>  
+
+
+
+> @@ -1593,6 +1613,7 @@ static void scsi_request_fn(struct reque
+>  	 * later time.
+>  	 */
+>  	spin_lock_irq(q->queue_lock);
+> +	set_bdi_lld_congested(&q->backing_dev_info);
+>  	blk_requeue_request(q, req);
+>  	sdev->device_busy--;
+>  	if(sdev->device_busy == 0)
