@@ -1,12 +1,14 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 0/2] dm: cleanup for request-based dm-multipath
-Date: Fri, 19 Sep 2008 10:59:58 -0400 (EDT)
-Message-ID: <20080919.105958.78703932.k-ueda@ct.jp.nec.com>
+Subject: [PATCH 1/2] dm core: remove unused DM_WQ_FLUSH_ALL
+Date: Fri, 19 Sep 2008 11:56:16 -0400 (EDT)
+Message-ID: <20080919.115616.18307396.k-ueda@ct.jp.nec.com>
+References: <20080919.105958.78703932.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080919.105958.78703932.k-ueda@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +22,67 @@ To: agk@redhat.com
 Cc: j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com, dm-devel@redhat.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+This patch removes dead codes for the noflush suspend.
+No functional change.
 
-The following patches are clean-ups of dm for preparation of
-request-based dm-multipath.
-The patches are created on top of 2.6.27-rc6 + your linux-next
-patches (*1).  But there is no functional dependency to the linux-next
-patches.
+The dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL) in dm_suspend()
+is never invoked because:
+  - The 'goto flush_and_out' is same as 'goto out', because
+    the 'goto flush_and_out' is called only when '!noflush'
+  - If the 'r && noflush' is true, the interrupt check code above
+    is invoked and 'goto out'
 
-(*1) The patches shown between "NEXT_PATCHES_START" and "NEXT_PATCHES_END"
-ftp://sources.redhat.com/pub/dm/patches/2.6-unstable/editing-quilt/patches/series.html
+Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>
+---
+ drivers/md/dm.c |   14 +-------------
+ 1 files changed, 1 insertion(+), 13 deletions(-)
 
-
-Please review and apply.
-The request-based dm-multipath patches (*2) depend on these clean-ups.
-I hope both patches are pushed to linux-next for 2.6.28.
-
-(*2) http://lkml.org/lkml/2008/9/12/100
-
-
-Summary of the patches:
-  1/2: dm core: remove unused DM_WQ_FLUSH_ALL
-  2/2: dm core: tidy local_init
-
-(PATCH 1/2 is also included in the Milan's barrier support patch-set.)
-
-Thanks,
-Kiyoshi Ueda
+Index: 2.6.27-rc6/drivers/md/dm.c
+===================================================================
+--- 2.6.27-rc6.orig/drivers/md/dm.c
++++ 2.6.27-rc6/drivers/md/dm.c
+@@ -76,7 +76,6 @@ union map_info *dm_get_mapinfo(struct bi
+  */
+ struct dm_wq_req {
+ 	enum {
+-		DM_WQ_FLUSH_ALL,
+ 		DM_WQ_FLUSH_DEFERRED,
+ 	} type;
+ 	struct work_struct work;
+@@ -1388,9 +1387,6 @@ static void dm_wq_work(struct work_struc
+ 
+ 	down_write(&md->io_lock);
+ 	switch (req->type) {
+-	case DM_WQ_FLUSH_ALL:
+-		__merge_pushback_list(md);
+-		/* pass through */
+ 	case DM_WQ_FLUSH_DEFERRED:
+ 		__flush_deferred_io(md);
+ 		break;
+@@ -1520,7 +1516,7 @@ int dm_suspend(struct mapped_device *md,
+ 		if (!md->suspended_bdev) {
+ 			DMWARN("bdget failed in dm_suspend");
+ 			r = -ENOMEM;
+-			goto flush_and_out;
++			goto out;
+ 		}
+ 
+ 		/*
+@@ -1571,14 +1567,6 @@ int dm_suspend(struct mapped_device *md,
+ 
+ 	set_bit(DMF_SUSPENDED, &md->flags);
+ 
+-flush_and_out:
+-	if (r && noflush)
+-		/*
+-		 * Because there may be already I/Os in the pushback list,
+-		 * flush them before return.
+-		 */
+-		dm_queue_flush(md, DM_WQ_FLUSH_ALL, NULL);
+-
+ out:
+ 	if (r && md->suspended_bdev) {
+ 		bdput(md->suspended_bdev);
