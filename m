@@ -1,72 +1,60 @@
-From: Andy <genanr@emsphone.com>
-Subject: Re: multipath-tools libmultipath/configure.c libmu ...
-Date: Fri, 19 Sep 2008 13:53:13 -0500
-Message-ID: <20080919185313.GA2932@thumper2>
-References: <20080919032710.28653.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Andrea Righi <righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Fri, 19 Sep 2008 22:28:40 +0200
+Message-ID: <48D40B78.6060709@gmail.com>
+References: <20080918.210418.226794540.ryov@valinux.co.jp>
+	<20080918131554.GB20640@redhat.com>
+	<20080919.202031.86647893.taka@valinux.co.jp>
+	<20080919131019.GA3606@redhat.com>
+Reply-To: righi.andrea-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080919032710.28653.qmail@sourceware.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+Return-path: <containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+In-Reply-To: <20080919131019.GA3606-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+List-Unsubscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linux-foundation.org/pipermail/containers>
+List-Post: <mailto:containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org>
+List-Help: <mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=help>
+List-Subscribe: <https://lists.linux-foundation.org/mailman/listinfo/containers>,
+	<mailto:containers-request-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org?subject=subscribe>
+Sender: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+Errors-To: containers-bounces-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org
+To: Vivek Goyal <vgoyal-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Cc: xen-devel-GuqFBffKawuULHF6PoxzQEEOCMrvLtNR@public.gmane.org, containers-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, jens.axboe-QHcLZuEGTsvQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, virtualization-cunTk1MwBs9QetFLy7KEm3xJsTq8ys+cHZ5vskTnxNA@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, agk-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org, xemul-GEFAQzZX7r8dnm+yROfE0A@public.gmane.org, fernando-gVGce1chcLdL9jVzuh4AOg@public.gmane.org, balbir-23VcF4HTsmIX0ybBhKVfKdBPR1lH4CV8@public.gmane.org
 List-Id: dm-devel.ids
 
-On Fri, Sep 19, 2008 at 03:27:10AM -0000, bmarzins@sourceware.org wrote:
-> CVSROOT:	/cvs/dm
-> Module name:	multipath-tools
-> Branch: 	RHEL5_FC6
-> Changes by:	bmarzins@sourceware.org	2008-09-19 03:27:08
+Vivek Goyal wrote:
+> On Fri, Sep 19, 2008 at 08:20:31PM +0900, Hirokazu Takahashi wrote:
+>>> To avoid creation of stacking another device (dm-ioband) on top of every
+>>> device we want to subject to rules, I was thinking of maintaining an
+>>> rb-tree per request queue. Requests will first go into this rb-tree upon
+>>> __make_request() and then will filter down to elevator associated with the
+>>> queue (if there is one). This will provide us the control of releasing
+>>> bio's to elevaor based on policies (proportional weight, max bandwidth
+>>> etc) and no need of stacking additional block device.
+>> I think it's a bit late to control I/O requests there, since process
+>> may be blocked in get_request_wait when the I/O load is high.
+>> Please imagine the situation that cgroups with low bandwidths are
+>> consuming most of "struct request"s while another cgroup with a high
+>> bandwidth is blocked and can't get enough "struct request"s.
+>>
+>> It means cgroups that issues lot of I/O request can win the game.
+>>
 > 
-> Modified files:
-> 	libmultipath   : configure.c configure.h devmapper.c devmapper.h 
-> 	multipathd     : cli.c cli.h cli_handlers.c cli_handlers.h 
-> 	                 main.c main.h 
+> Ok, this is a good point. Because number of struct requests are limited
+> and they seem to be allocated on first come first serve basis, so if a
+> cgroup is generating lot of IO, then it might win.
 > 
-> Log message:
-> 	Fix for bz #455692. There is now a command for multipathd, 'resize map'. This
-> 	does online grows or shrinks for your multipath device. It has some warts.
-> 	
-> 	1. It needs to remove and re-add every path in the device. This can cause two
-> 	annoyances. First, if you only have one valid path, you go into an all paths
-> 	down scenario. However, you will immediately re-add the path, so it won't
-> 	trigger problem #2. Second, if the path is inaccessable, you may not be able to
-> 	re-add it.
-> 	
-> 	2. You can't disable flushing on suspend for a device-mapper device, when you
-> 	want to change size. This means that if all your paths are down, you will fail
-> 	the queued IOs when you suspend. This is a problem with the device-mapper kernel
-> 	code, and there's no real way to avoid it, except by fixing it in the kernel.
-> 	
-> 	This commit also has some minor fixups for 238421, and adds the ability to
-> 	disable and restore queueing on all multipath devices through multipathd
-> 
-> Patches:
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.3&r2=1.2.2.4
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.2.1
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.5&r2=1.22.2.6
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.4&r2=1.11.2.5
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.2&r2=1.6.2.3
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.2&r2=1.3.2.3
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.13&r2=1.69.2.14
-> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7&r2=1.7.2.1
-> 
+> But dm-ioband will face the same issue. Essentially it is also a request
+> queue and it will have limited number of request descriptors. Have you 
+> modified the logic somewhere for allocation of request descriptors to the
+> waiting processes based on their weights? If yes, the logic probably can
+> be implemented here too.
 
-Where can I get the multipath-tools sources that these patches apply cleanly
-to?  They do not apply cleanly to my multipath 0.4.8 sources, add there
-seems to be some major differences in some places.
+Maybe throttling dirty page ratio in memory could help to avoid this problem.
+I mean, if a cgroup is exceeding the i/o limits do ehm... something.. also at
+the balance_dirty_pages() level.
 
-Thanks,
-
-Andy
+-Andrea
