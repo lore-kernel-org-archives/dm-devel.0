@@ -1,60 +1,95 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: multipath-tools libmultipath/configure.c libmu ...
-Date: Fri, 19 Sep 2008 11:52:05 +0300
-Message-ID: <20080919085205.GA13941@edu.joroinen.fi>
-References: <20080919032710.28653.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/5] bio-cgroup: Introduction
+Date: Fri, 19 Sep 2008 20:01:07 +0900 (JST)
+Message-ID: <20080919.200107.193703747.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080919032710.28653.qmail@sourceware.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753886AbYISLBU@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, agk@sourceware.org
 List-Id: dm-devel.ids
 
-On Fri, Sep 19, 2008 at 03:27:10AM -0000, bmarzins@sourceware.org wrote:
-> CVSROOT:	/cvs/dm
-> Module name:	multipath-tools
-> Branch: 	RHEL5_FC6
-> Changes by:	bmarzins@sourceware.org	2008-09-19 03:27:08
-> 
-> Modified files:
-> 	libmultipath   : configure.c configure.h devmapper.c devmapper.h 
-> 	multipathd     : cli.c cli.h cli_handlers.c cli_handlers.h 
-> 	                 main.c main.h 
-> 
-> Log message:
-> 	Fix for bz #455692. There is now a command for multipathd, 'resize map'. This
-> 	does online grows or shrinks for your multipath device. It has some warts.
-> 	
-> 	1. It needs to remove and re-add every path in the device. This can cause two
-> 	annoyances. First, if you only have one valid path, you go into an all paths
-> 	down scenario. However, you will immediately re-add the path, so it won't
-> 	trigger problem #2. Second, if the path is inaccessable, you may not be able to
-> 	re-add it.
-> 	
-> 	2. You can't disable flushing on suspend for a device-mapper device, when you
-> 	want to change size. This means that if all your paths are down, you will fail
-> 	the queued IOs when you suspend. This is a problem with the device-mapper kernel
-> 	code, and there's no real way to avoid it, except by fixing it in the kernel.
-> 	
-> 	This commit also has some minor fixups for 238421, and adds the ability to
-> 	disable and restore queueing on all multipath devices through multipathd
-> 
+Hi everyone,
 
-Nice!!
+Here are new releases of bio-cgroup.
+Changes from the previous version are as follows:
 
-So now we have SCSI disk online resizing, and dm-multipath online resizing. Excellent. 
+- Accurate dirty-page tracking
+  Support migrating pages between bio-cgroups with minimum overhead,
+  but I think such a situation is quite rare.
 
-I assume both of these will be in RHEL 5.3? 
+- Fix a bug of swapcache page handling
+  Sometimes, "bad page state" is occurred since the memory controller
+  has temporarily changed the swapcache page handling.
 
--- Pasi
+The following is the list of patches:
+
+  [PATCH 0/5] bio-cgroup: Introduction
+  [PATCH 1/5] bio-cgroup: Split the cgroup memory subsystem into two parts
+  [PATCH 2/5] bio-cgroup: Remove a lot of "#ifdef"s
+  [PATCH 3/5] bio-cgroup: Implement the bio-cgroup
+  [PATCH 4/5] bio-cgroup: Add a cgroup support to dm-ioband
+  [PATCH 5/5] bio-cgroup: Dirty page tracking
+
+You have to apply the patch dm-ioband v1.5.0 before applying this
+series of patches. The dm-ioband patch can be found at:
+http://people.valinux.co.jp/~ryov/dm-ioband/
+
+And you have to select the following config options when compiling kernel:
+  CONFIG_CGROUPS=y
+  CONFIG_CGROUP_BIO=y
+And I recommend you should also select the options for cgroup memory
+subsystem, because it makes it possible to give some I/O bandwidth
+and some memory to a certain cgroup to control delayed write requests
+and the processes in the cgroup will be able to make pages dirty only
+inside the cgroup even when the given bandwidth is narrow.
+  CONFIG_RESOURCE_COUNTERS=y
+  CONFIG_CGROUP_MEM_RES_CTLR=y
+
+Please see the following site for more information:
+http://people.valinux.co.jp/~ryov/bio-cgroup/
+
+ --------------------------------------------------------
+
+The following shows how to use dm-ioband with cgroups.
+Please assume that you want make two cgroups, which we call "bio cgroup"
+here, to track down block I/Os and assign them to ioband device "ioband1".
+
+First, mount the bio cgroup filesystem.
+
+ # mount -t cgroup -o bio none /cgroup/bio
+
+Then, make new bio cgroups and put some processes in them.
+
+ # mkdir /cgroup/bio/bgroup1
+ # mkdir /cgroup/bio/bgroup2
+ # echo 1234 > /cgroup/bio/bgroup1/tasks
+ # echo 5678 > /cgroup/bio/bgroup1/tasks
+
+Now, check the ID of each bio cgroup which is just created.
+
+ # cat /cgroup/bio/bgroup1/bio.id
+   1
+ # cat /cgroup/bio/bgroup2/bio.id
+   2
+
+Finally, attach the cgroups to "ioband1" and assign them weights.
+
+ # dmsetup message ioband1 0 type cgroup
+ # dmsetup message ioband1 0 attach 1
+ # dmsetup message ioband1 0 attach 2
+ # dmsetup message ioband1 0 weight 1:30
+ # dmsetup message ioband1 0 weight 2:60
+
+You can also make use of the dm-ioband administration tool if you want.
+The tool will be found here:
+http://people.valinux.co.jp/~kaizuka/dm-ioband/iobandctl/manual.html
+You can set up the device with the tool as follows.
+In this case, you don't need to know the IDs of the cgroups.
+
+ # iobandctl.py group /dev/mapper/ioband1 cgroup /cgroup/bio/bgroup1:30 /cgroup/bio/bgroup2:60
+
+Thanks,
+Ryo Tsuruta
