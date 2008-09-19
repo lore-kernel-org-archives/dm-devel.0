@@ -1,146 +1,72 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: [dm-devel] Re: dm-ioband + bio-cgroup benchmarks
-Date: Fri, 19 Sep 2008 12:34:05 +0900 (JST)
-Message-ID: <20080919.123405.91829935.taka@valinux.co.jp>
-References: <48D267B5.20402@gmail.com> <20080918150634.GH20640@redhat.com>
-	<48D2715A.6060002@gmail.com>
-Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <48D2715A.6060002@gmail.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: righi.andrea@gmail.com, dm-devel@redhat.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, agk@sourceware.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, jens.axboe@oracle.com, ryov@valinux.co.jp, balbir@linux.vnet.ibm.com, fernando@oss.ntt.co.jp, vgoyal@redhat.com, xemul@openvz.org
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipathd cli_handlers.c
+Date: 19 Sep 2008 04:00:22 -0000
+Message-ID: <20080919040022.3121.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2008-09-19 04:00:22
 
-> >> Vivek Goyal wrote:
-> >>> On Thu, Sep 18, 2008 at 09:04:18PM +0900, Ryo Tsuruta wrote:
-> >>>> Hi All,
-> >>>>
-> >>>> I have got excellent results of dm-ioband, that controls the disk I/O
-> >>>> bandwidth even when it accepts delayed write requests.
-> >>>>
-> >>>> In this time, I ran some benchmarks with a high-end storage. The
-> >>>> reason was to avoid a performance bottleneck due to mechanical factors
-> >>>> such as seek time.
-> >>>>
-> >>>> You can see the details of the benchmarks at:
-> >>>> http://people.valinux.co.jp/~ryov/dm-ioband/hps/
-> >>>>
-> >>> Hi Ryo,
-> >>>
-> >>> I had a query about dm-ioband patches. IIUC, dm-ioband patches will break
-> >>> the notion of process priority in CFQ because now dm-ioband device will
-> >>> hold the bio and issue these to lower layers later based on which bio's
-> >>> become ready. Hence actual bio submitting context might be different and
-> >>> because cfq derives the io_context from current task, it will be broken.
-> >>>
-> >>> To mitigate that problem, we probably need to implement Fernando's
-> >>> suggestion of putting io_context pointer in bio. 
-> >>>
-> >>> Have you already done something to solve this issue?
-> >>>
-> >>> Secondly, why do we have to create an additional dm-ioband device for 
-> >>> every device we want to control using rules. This looks little odd
-> >>> atleast to me. Can't we keep it in line with rest of the controllers
-> >>> where task grouping takes place using cgroup and rules are specified in
-> >>> cgroup itself (The way Andrea Righi does for io-throttling patches)?
-> >>>
-> >>> To avoid creation of stacking another device (dm-ioband) on top of every
-> >>> device we want to subject to rules, I was thinking of maintaining an
-> >>> rb-tree per request queue. Requests will first go into this rb-tree upon
-> >>> __make_request() and then will filter down to elevator associated with the
-> >>> queue (if there is one). This will provide us the control of releasing
-> >>> bio's to elevaor based on policies (proportional weight, max bandwidth
-> >>> etc) and no need of stacking additional block device.
-> >>>
-> >>> I am working on some experimental proof of concept patches. It will take
-> >>> some time though.
-> >>>
-> >>> I was thinking of following.
-> >>>
-> >>> - Adopt the Andrea Righi's style of specifying rules for devices and
-> >>>   group the tasks using cgroups.
-> >>>
-> >>> - To begin with, adopt dm-ioband's approach of proportional bandwidth
-> >>>   controller. It makes sense to me limit the bandwidth usage only in
-> >>>   case of contention. If there is really a need to limit max bandwidth,
-> >>>   then probably we can do something to implement additional rules or
-> >>>   implement some policy switcher where user can decide what kind of
-> >>>   policies need to be implemented.
-> >>>
-> >>> - Get rid of dm-ioband and instead buffer requests on an rb-tree on every
-> >>>   request queue which is controlled by some kind of cgroup rules.
-> >>>
-> >>> It would be good to discuss above approach now whether it makes sense or 
-> >>> not. I think it is kind of fusion of io-throttling and dm-ioband patches
-> >>> with additional idea of doing io-control just above elevator on the request
-> >>> queue using an rb-tree.
-> >> Thanks Vivek. All sounds reasonable to me and I think this is be the right way
-> >> to proceed.
-> >>
-> >> I'll try to design and implement your rb-tree per request-queue idea into my
-> >> io-throttle controller, maybe we can reuse it also for a more generic solution.
-> >> Feel free to send me your experimental proof of concept if you want, even if
-> >> it's not yet complete, I can review it, test and contribute.
-> > 
-> > Currently I have taken code from bio-cgroup to implement cgroups and to
-> > provide functionality to associate a bio to a cgroup. I need this to be
-> > able to queue the bio's at right node in the rb-tree and then also to be
-> > able to take a decision when is the right time to release few requests.
-> > 
-> > Right now in crude implementation, I am working on making system boot.
-> > Once patches are at least in little bit working shape, I will send it to you
-> > to have a look.
-> > 
-> > Thanks
-> > Vivek
-> 
-> I wonder... wouldn't be simpler to just use the memory controller
-> to retrieve this information starting from struct page?
-> 
-> I mean, following this path (in short, obviously using the appropriate
-> interfaces for locking and referencing the different objects):
-> 
-> cgrp = page->page_cgroup->mem_cgroup->css.cgroup
-> 
-> Once you get the cgrp it's very easy to use the corresponding controller
-> structure.
-> 
-> Actually, this is how I'm doing in cgroup-io-throttle to associate a bio
-> to a cgroup. What other functionalities/advantages bio-cgroup provide in
-> addition to that?
+Modified files:
+	multipathd     : cli_handlers.c 
 
-I've decided to get Ryo to post the accurate dirty-page tracking patch
-for bio-cgroup, which isn't perfect yet though. The memory controller
-never wants to support this tracking because migrating a page between
-memory cgroups is really heavy.
+Log message:
+	Update to the 455692 fix. With the most recent RHEL 5.3 kernels, it's not
+	necesary to remove and re-add the devices, so some of the warts just magically
+	disappeared.
 
-I also thought enhancing the memory controller would be good enough,
-but a lot of people said they wanted to control memory resource and
-block I/O resource separately.
-So you can create several bio-cgroup in one memory-cgroup,
-or you can use bio-cgroup without memory-cgroup.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.3&r2=1.6.2.4
 
-I also have a plan to implement more acurate tracking mechanism
-on bio-cgroup after the memory cgroup team re-implement the infrastructure,
-which won't be supported by memory-cgroup.
-When a process are moved into another memory cgroup,
-the pages belonging to the process don't move to the new cgroup
-because migrating pages is so heavy. It's hard to find the pages
-from the process and migrating pages may cause some memory pressure.
-I'll implement this feature only on bio-cgroup with minimum overhead
-
-
-Thanks,
-Hirokazu Takahashi.
+--- multipath-tools/multipathd/cli_handlers.c	2008/09/19 03:27:08	1.6.2.3
++++ multipath-tools/multipathd/cli_handlers.c	2008/09/19 04:00:21	1.6.2.4
+@@ -427,7 +427,7 @@
+ 	return 0;
+ }
+ 
+-
++/*
+ int
+ reload_paths(struct multipath *mpp, struct vectors * vecs)
+ {
+@@ -477,7 +477,7 @@
+ 	vector_free(path_names);
+ 	return err;
+ }
+-
++*/
+ int resize_map(struct multipath *mpp, unsigned long long size, struct vectors * vecs)
+ {
+ 	mpp->size = size;
+@@ -528,6 +528,7 @@
+ 	}
+ 	condlog(3, "%s old size is %llu, new size is %llu", mapname, mpp->size,
+ 		size);
++/*
+ 	if (size > mpp->size) {
+ 		if (reload_paths(mpp, vecs) != 0) {
+ 			condlog(0, "%s: failed to reload paths", mapname);
+@@ -544,6 +545,9 @@
+ 			return 1;
+ 		}
+ 	}
++*/
++	if (resize_map(mpp, size, vecs) != 0)
++		return 1;
+ 	dm_lib_release();
+ 	setup_multipath(vecs, mpp);
+ 	sync_map_state(mpp);
