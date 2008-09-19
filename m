@@ -1,17 +1,14 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 2/2] scsi: exports busy status via
-	bdi_lld_congested
-Date: Fri, 19 Sep 2008 13:28:45 -0400 (EDT)
-Message-ID: <20080919.132845.59649006.k-ueda@ct.jp.nec.com>
-References: <20080919.104756.41628866.k-ueda@ct.jp.nec.com>
-	<20080919.104922.97297160.k-ueda@ct.jp.nec.com>
-	<48D3CDEC.9060407@cs.wisc.edu>
+From: Andy <genanr@emsphone.com>
+Subject: Re: multipath-tools libmultipath/configure.c libmu ...
+Date: Fri, 19 Sep 2008 13:53:13 -0500
+Message-ID: <20080919185313.GA2932@thumper2>
+References: <20080919032710.28653.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <48D3CDEC.9060407@cs.wisc.edu>
+Content-Disposition: inline
+In-Reply-To: <20080919032710.28653.qmail@sourceware.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,60 +18,55 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: michaelc@cs.wisc.edu
-Cc: k-ueda@ct.jp.nec.com, linux-scsi@vger.kernel.org, linux-kernel@vger.kernel.org, James.Bottomley@HansenPartnership.com, dm-devel@redhat.com, j-nomura@ce.jp.nec.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
-
-On Fri, 19 Sep 2008 11:06:04 -0500, Mike Christie wrote:
-> Kiyoshi Ueda wrote:
-> > This patch change scsi mid layer to export its busy status.
-> > Not set the busy flag, when scsi can't dispatch I/Os anymore and
-> > needs to kill I/Os.  Otherwise, request stacking drivers may hold
-> > requests forever.
-> > 
-> > 
-> > Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-> > Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> > Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
-> > ---
-> >  drivers/scsi/scsi.c     |    4 ++--
-> >  drivers/scsi/scsi_lib.c |   23 ++++++++++++++++++++++-
-> >  2 files changed, 24 insertions(+), 3 deletions(-)
-> > 
-> > Index: scsi-misc-2.6/drivers/scsi/scsi_lib.c
-> > ===================================================================
-> > --- scsi-misc-2.6.orig/drivers/scsi/scsi_lib.c
-> > +++ scsi-misc-2.6/drivers/scsi/scsi_lib.c
-> > @@ -459,17 +459,30 @@ static void scsi_init_cmd_errh(struct sc
-> >  
-> >  void scsi_device_unbusy(struct scsi_device *sdev)
-> >  {
-> > +	int host_congested;
-> >  	struct Scsi_Host *shost = sdev->host;
-> >  	unsigned long flags;
-> >  
-> >  	spin_lock_irqsave(shost->host_lock, flags);
-> >  	shost->host_busy--;
-> > +	if ((shost->can_queue > 0 && shost->host_busy >= shost->can_queue) ||
-> > +	    shost->host_blocked || shost->host_self_blocked ||
-> > +	    scsi_host_in_recovery(shost))
-> > +		host_congested = 1;
-> > +	else
-> > +		host_congested = 0;
-> > +
+On Fri, Sep 19, 2008 at 03:27:10AM -0000, bmarzins@sourceware.org wrote:
+> CVSROOT:	/cvs/dm
+> Module name:	multipath-tools
+> Branch: 	RHEL5_FC6
+> Changes by:	bmarzins@sourceware.org	2008-09-19 03:27:08
 > 
-> You might want to check if the starget busy too (scsi-misc has this but 
-> Jens's tree and linus do not)? The code below that I snipped from 
-> scsi_request_fn will set the congested bits if scsi_target_queue_ready 
-> returns 0, so above here you would want to clear it if it not congested 
-> anymore.
+> Modified files:
+> 	libmultipath   : configure.c configure.h devmapper.c devmapper.h 
+> 	multipathd     : cli.c cli.h cli_handlers.c cli_handlers.h 
+> 	                 main.c main.h 
+> 
+> Log message:
+> 	Fix for bz #455692. There is now a command for multipathd, 'resize map'. This
+> 	does online grows or shrinks for your multipath device. It has some warts.
+> 	
+> 	1. It needs to remove and re-add every path in the device. This can cause two
+> 	annoyances. First, if you only have one valid path, you go into an all paths
+> 	down scenario. However, you will immediately re-add the path, so it won't
+> 	trigger problem #2. Second, if the path is inaccessable, you may not be able to
+> 	re-add it.
+> 	
+> 	2. You can't disable flushing on suspend for a device-mapper device, when you
+> 	want to change size. This means that if all your paths are down, you will fail
+> 	the queued IOs when you suspend. This is a problem with the device-mapper kernel
+> 	code, and there's no real way to avoid it, except by fixing it in the kernel.
+> 	
+> 	This commit also has some minor fixups for 238421, and adds the ability to
+> 	disable and restore queueing on all multipath devices through multipathd
+> 
+> Patches:
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.3&r2=1.2.2.4
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.2.1
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.5&r2=1.22.2.6
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.4&r2=1.11.2.5
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.2&r2=1.6.2.3
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.2&r2=1.3.2.3
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.13&r2=1.69.2.14
+> http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7&r2=1.7.2.1
+> 
 
-Yes, thank you for noticing that.
-Since I was looking at scsi-misc and your target patch is in
-scsi-post-merge, I overlooked it.
-I'll rebase my patches and repost again.
+Where can I get the multipath-tools sources that these patches apply cleanly
+to?  They do not apply cleanly to my multipath 0.4.8 sources, add there
+seems to be some major differences in some places.
 
 Thanks,
-Kiyoshi Ueda
+
+Andy
