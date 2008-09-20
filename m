@@ -1,92 +1,53 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [PATCH 1/2] lld busy status exporting interface
-Date: Fri, 19 Sep 2008 16:45:24 -0700
-Message-ID: <20080919164524.295e1f9a.akpm@linux-foundation.org>
-References: <20080919.104756.41628866.k-ueda@ct.jp.nec.com>
-	<20080919.104854.71084447.k-ueda@ct.jp.nec.com>
-	<20080919143344.44d1a83e.akpm@linux-foundation.org>
-	<20080919.191122.102582872.k-ueda@ct.jp.nec.com>
+From: KAMEZAWA Hiroyuki <kamezawa.hiroyu@jp.fujitsu.com>
+Subject: Re: [dm-devel] Re: dm-ioband + bio-cgroup benchmarks
+Date: Sat, 20 Sep 2008 13:27:03 +0900
+Message-ID: <20080920132703.e74c8f89.kamezawa.hiroyu@jp.fujitsu.com>
+References: <48D267B5.20402@gmail.com>
+	<20080918150634.GH20640@redhat.com>
+	<48D2715A.6060002@gmail.com>
+	<20080919.123405.91829935.taka@valinux.co.jp>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20080919.191122.102582872.k-ueda@ct.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-Cc: James.Bottomley@HansenPartnership.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752946AbYITEU6@vger.kernel.org>
+In-Reply-To: <20080919.123405.91829935.taka@valinux.co.jp>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Hirokazu Takahashi <taka@valinux.co.jp>
+Cc: righi.andrea@gmail.com, dm-devel@redhat.com, xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, agk@sourceware.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, jens.axboe@oracle.com, balbir@linux.vnet.ibm.com, fernando@oss.ntt.co.jp, xemul@openvz.org
 List-Id: dm-devel.ids
 
-On Fri, 19 Sep 2008 19:11:22 -0400 (EDT)
-Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+On Fri, 19 Sep 2008 12:34:05 +0900 (JST)
+Hirokazu Takahashi <taka@valinux.co.jp> wrote:
 
-> > Back in the days when we first did the backing_dev_info.congested_fn()
-> > logic it was decided that there basically was no single place in which
-> > the congested state could be stored.
-> > 
-> > So we ended up deciding that whenever a caller wants to know a
-> > backing_dev's congested status, it has to call in to the
-> > ->congested_fn() and that congested_fn would then call down into all
-> > the constituent low-level drivers/queues/etc asking each one if it is
-> > congested.
+> I've decided to get Ryo to post the accurate dirty-page tracking patch
+> for bio-cgroup, which isn't perfect yet though. The memory controller
+> never wants to support this tracking because migrating a page between
+> memory cgroups is really heavy.
 > 
-> bdi_lld_congested() also does that using bdi_congested(), which calls
-> ->congested_fn().
-> And only real device drivers (e.g. scsi, ide) set/clear the flag.
-> Stacking drivers like request-based dm don't.
-
-umm, OK, that should work.
-
-> So stacking drivers always check the BDI_lld_congested flag of
-> the bottom device of the device stack.
-
-How does a stacking driver know that the backing_device which it is
-looking at is a "lowest level" device?
-
-I don't think it does - only the code which implements that device
-knows this, so the stacking driver has to call into that device's
-congested_fn(), yes?
-
-In which case one wonders why the state was stored in the
-backing_dev_info at all.  Why not store it in the device-private data
-to avoid confusion and abuse?
-
-> BDI_[write|read]_congested flags have been using for queue's
-> congestion, so that I/O queueing/merging can be proceeded even if
-> the lld is congested.  So I added a new flag.
-
-iirc, BDI_read/write_congested predated the introduction of the
-congested_fn() and perhaps should have been removed once we went to the
-congested_fn approach.  But it's been a while since I spent a lot of
-time looking in there.
-
+> I also thought enhancing the memory controller would be good enough,
+> but a lot of people said they wanted to control memory resource and
+> block I/O resource separately.
+> So you can create several bio-cgroup in one memory-cgroup,
+> or you can use bio-cgroup without memory-cgroup.
 > 
-> > I mean, as a simple example which is probably wrong - what happens if a
-> > single backing_dev is implemented via two different disks and
-> > controllers, and they both become congested and then one of them comes
-> > uncongested.  Is there no way in which the above implemention can
-> > incorrectly flag the backing_dev as being uncongested?
+> I also have a plan to implement more acurate tracking mechanism
+> on bio-cgroup after the memory cgroup team re-implement the infrastructure,
+> which won't be supported by memory-cgroup.
+> When a process are moved into another memory cgroup,
+> the pages belonging to the process don't move to the new cgroup
+> because migrating pages is so heavy. It's hard to find the pages
+> from the process and migrating pages may cause some memory pressure.
+> I'll implement this feature only on bio-cgroup with minimum overhead
 > 
-> Do you mean that "a single backing_dev via two disks/controllers" is
-> a dm device (e.g. a dm-multipath device having 2 paths, a dm-mirror
-> device having 2 disks)?
+I really would like to move page_cgroup to new cgroup when the process moves...
+But it's just in my plan and I'm not sure I can do it or not.
 
-Something along those lines, sure.
+Anyway what's next for me is
+ 1. fix current discussion to remove page->page_cgroup pointer.
+ 2. reduce locks.
+ 3. support swap and swap-cache.
 
-> If so, dm doesn't set/clear the flag, and the decision, whether
-> the dm device itself is congested or not, depends on dm's target driver.
-> 
-> For example of dm-multipath,
->   o call bdi_lld_congested() for each path.
->   o if one of the paths are uncongested, dm-multipath will decide
->     the dm device is uncongested and dispatch incoming I/Os to
->     the uncongested path.
+I think algorithm for (1), (2) is now getting smart.
 
-hm, OK.
-
-> For example of dm-mirror,
->   o call bdi_lld_congested() for each disk.
->   o if the incoming I/O is READ, same logic as dm-multipath above.
->     if the incoming I/O is WRITE, dm-mirror will decide the dm device
->     is uncongested only when all disks are uncongested.
-> 
-> Thanks,
-> Kiyoshi Ueda
+Thanks,
+-Kame
