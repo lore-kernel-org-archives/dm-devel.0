@@ -1,179 +1,123 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: dm-ioband + bio-cgroup benchmarks
-Date: Mon, 22 Sep 2008 10:30:42 -0400
-Message-ID: <20080922143042.GA19222@redhat.com>
-References: <20080918131554.GB20640@redhat.com> <20080919.202031.86647893.taka@valinux.co.jp> <20080919131019.GA3606@redhat.com> <20080922.183651.62951479.taka@valinux.co.jp>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH]: scsidh - fix a panic in 2.6.27 due to a race
+	during path activation in dm multipath
+Date: Mon, 22 Sep 2008 16:38:44 -0700
+Message-ID: <1222126724.14830.437.camel@chandra-ubuntu>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753198AbYIVOpl@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20080922.183651.62951479.taka@valinux.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Hirokazu Takahashi <taka@valinux.co.jp>
-Cc: ryov@valinux.co.jp, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, agk@sourceware.org, righi.andrea@gmail.com, jens.axboe@oracle.com
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Linus Torvalds <torvalds@linux-foundation.org>, Alasdair G Kergon <agk@redhat.com>, James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Sep 22, 2008 at 06:36:51PM +0900, Hirokazu Takahashi wrote:
-> Hi,
-> 
-> > > > > I have got excellent results of dm-ioband, that controls the disk I/O
-> > > > > bandwidth even when it accepts delayed write requests.
-> > > > > 
-> > > > > In this time, I ran some benchmarks with a high-end storage. The
-> > > > > reason was to avoid a performance bottleneck due to mechanical factors
-> > > > > such as seek time.
-> > > > > 
-> > > > > You can see the details of the benchmarks at:
-> > > > > http://people.valinux.co.jp/~ryov/dm-ioband/hps/
-> > > 
-> > >   (snip)
-> > > 
-> > > > Secondly, why do we have to create an additional dm-ioband device for 
-> > > > every device we want to control using rules. This looks little odd
-> > > > atleast to me. Can't we keep it in line with rest of the controllers
-> > > > where task grouping takes place using cgroup and rules are specified in
-> > > > cgroup itself (The way Andrea Righi does for io-throttling patches)?
-> > > 
-> > > It isn't essential dm-band is implemented as one of the device-mappers.
-> > > I've been also considering that this algorithm itself can be implemented
-> > > in the block layer directly.
-> > > 
-> > > Although, the current implementation has merits. It is flexible.
-> > >   - Dm-ioband can be place anywhere you like, which may be right before
-> > >     the I/O schedulers or may be placed on top of LVM devices.
-> > 
-> > Hi,
-> > 
-> > An rb-tree per request queue also should be able to give us this
-> > flexibility. Because logic is implemented per request queue, rules can be 
-> > placed at any layer. Either at bottom most layer where requests are
-> > passed to elevator or at higher layer where requests will be passed to 
-> > lower level block devices in the stack. Just that we shall have to do
-> > modifications to some of the higher level dm/md drivers to make use of
-> > queuing cgroup requests and releasing cgroup requests to lower layers.
-> 
-> Request descriptors are allocated just right before passing I/O requests
-> to the elevators. Even if you move the descriptor allocation point
-> before calling the dm/md drivers, the drivers can't make use of them.
-> 
+This patch was originally posted on Aug 29, 2008:
+http://marc.info/?l=dm-devel&m=122005218312005&w=2
 
-You are right. request descriptors are currently allocated at bottom
-most layer. Anyway, in the rb-tree, we put bio cgroups as logical elements
-and every bio cgroup then contains the list of either bios or requeust
-descriptors. So what kind of list bio-cgroup maintains can depend on
-whether it is a higher layer driver (will maintain bios) or a lower layer
-driver (will maintain list of request descriptors per bio-cgroup).
+Now, reposting based on comments received from Alasdair.
 
-So basically mechanism of maintaining an rb-tree can be completely
-ignorant of the fact whether a driver is keeping track of bios or keeping
-track of requests per cgroup. 
+----------------------
+Moving the path activation to workqueue along with scsi_dh patches introduced
+a race. It is due to the fact that the current_pgpath (in the multipath data
+structure) can be modified if changes happen in any of the paths leading to
+the lun. If the changes lead to current_pgpath being set to NULL, then it
+leads to the invalid access which results in the panic below.
+
+This patch fixes that by storing the pgpath to activate in the multipath data
+structure and properly protecting it.
+
+Note that if activate_path is called twice in succession with different pgpath,
+with the second one being called before the first one is done, then activate
+path will be called twice for the second pgpath, which is fine.
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+--------------------
+Unable to handle kernel paging request for data at address 0x00000020
+Faulting instruction address: 0xd000000000aa1844
+cpu 0x1: Vector: 300 (Data Access) at [c00000006b987a80]
+    pc: d000000000aa1844: .activate_path+0x30/0x218 [dm_multipath]
+    lr: c000000000087a2c: .run_workqueue+0x114/0x204
+    sp: c00000006b987d00
+   msr: 8000000000009032
+   dar: 20
+ dsisr: 40000000
+  current = 0xc0000000676bb3f0
+  paca    = 0xc0000000006f3680
+    pid   = 2528, comm = kmpath_handlerd
+enter ? for help
+[c00000006b987da0] c000000000087a2c .run_workqueue+0x114/0x204
+[c00000006b987e40] c000000000088b58 .worker_thread+0x120/0x144
+[c00000006b987f00] c00000000008ca70 .kthread+0x78/0xc4
+[c00000006b987f90] c000000000027cc8 .kernel_thread+0x4c/0x68
+---------------------
+
+---
+ drivers/md/dm-mpath.c |   17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+Index: linux-2.6.27-rc4/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.27-rc4.orig/drivers/md/dm-mpath.c
++++ linux-2.6.27-rc4/drivers/md/dm-mpath.c
+@@ -63,6 +63,7 @@ struct multipath {
  
-> When one of the dm drivers accepts a I/O request, the request
-> won't have either a real device number or a real sector number.
-> The request will be re-mapped to another sector of another device
-> in every dm drivers. The request may even be replicated there.
-> So it is really hard to find the right request queue to put
-> the request into and sort them on the queue.
-
-Hmm.., I thought that all the incoming requests to dm/md driver will
-remain in a single queue maintained by that drvier (irrespective of the
-fact in which request queue these requests go in lower layers after
-replication or other operation). I am not very familiar with dm/md
-implementation. I will read more about it....
-
-> 
-> > >   - It supports partition based bandwidth control which can work without
-> > >     cgroups, which is quite easy to use of.
-> > 
-> > >   - It is independent to any I/O schedulers including ones which will
-> > >     be introduced in the future.
-> > 
-> > This scheme should also be independent of any of the IO schedulers. We
-> > might have to do small changes in IO-schedulers to decouple the things
-> > from __make_request() a bit to insert rb-tree in between __make_request()
-> > and IO-scheduler. Otherwise fundamentally, this approach should not
-> > require any major modifications to IO-schedulers. 
-> > 
-> > > 
-> > > I also understand it's will be hard to set up without some tools
-> > > such as lvm commands.
-> > > 
-> > 
-> > That's something I wish to avoid. If we can keep it simple by doing
-> > grouping using cgroup and allow one line rules in cgroup it would be nice.
-> 
-> It's possible the algorithm of dm-ioband can be placed in the block layer
-> if it is really a big problem.
-> But I doubt it can control every control block I/O as we wish since
-> the interface the cgroup supports is quite poor.
-
-Had a question regarding cgroup interface. I am assuming that in a system,
-one will be using other controllers as well apart from IO-controller.
-Other controllers will be using cgroup as a grouping mechanism.
-Now coming up with additional grouping mechanism for only io-controller seems
-little odd to me. It will make the job of higher level management software
-harder.
-
-Looking at the dm-ioband grouping examples given in patches, I think cases
-of grouping based  in pid, pgrp, uid and kvm can be handled by creating right
-cgroup and making sure applications are launched/moved into right cgroup by
-user space tools. 
-
-I think keeping grouping mechanism in line with rest of the controllers
-should help because a uniform grouping mechanism should make life simpler.
-
-I am not very sure about moving dm-ioband algorithm in block layer. Looks
-like it will make life simpler at least in terms of configuration. 
-
-> 
-> > > > To avoid creation of stacking another device (dm-ioband) on top of every
-> > > > device we want to subject to rules, I was thinking of maintaining an
-> > > > rb-tree per request queue. Requests will first go into this rb-tree upon
-> > > > __make_request() and then will filter down to elevator associated with the
-> > > > queue (if there is one). This will provide us the control of releasing
-> > > > bio's to elevaor based on policies (proportional weight, max bandwidth
-> > > > etc) and no need of stacking additional block device.
-> > > 
-> > > I think it's a bit late to control I/O requests there, since process
-> > > may be blocked in get_request_wait when the I/O load is high.
-> > > Please imagine the situation that cgroups with low bandwidths are
-> > > consuming most of "struct request"s while another cgroup with a high
-> > > bandwidth is blocked and can't get enough "struct request"s.
-> > > 
-> > > It means cgroups that issues lot of I/O request can win the game.
-> > > 
-> > 
-> > Ok, this is a good point. Because number of struct requests are limited
-> > and they seem to be allocated on first come first serve basis, so if a
-> > cgroup is generating lot of IO, then it might win.
-> > 
-> > But dm-ioband will face the same issue. 
-> 
-> Nope. Dm-ioband doesn't have this issue since it works before allocating
-> the descriptors. Only I/O requests dm-ioband has passed can allocate its
-> descriptor.
-> 
-
-Ok. Got it. dm-ioband does not block on allocation of request descriptors.
-It does seem to be blocking in prevent_burst_bios() but that would be
-per group so it should be fine.
-
-That means for lower layers, one shall have to do request descritor
-allocation as per the cgroup weight to make sure a cgroup with lower
-weight does not get higher % of disk because it is generating more
-requests.
-
-One additional issue with my scheme I just noticed is that I am putting
-bio-cgroup in rb-tree. If there are stacked devices then bio/requests from
-same cgroup can be at multiple levels of processing at same time. That
-would mean that a single cgroup needs to be in multiple rb-trees at the
-same time in various layers. So I might have to create a temporary object
-which can associate with cgroup and get rid of that object once I don't
-have the requests any more...
-
-Well, implementing rb-tree per request queue seems to be harder than I 
-had thought. Especially taking care of decoupling the elevator and reqeust
-descriptor logic at lower layers. Long way to go..
-
-Thanks
-Vivek
+ 	const char *hw_handler_name;
+ 	struct work_struct activate_path;
++	struct pgpath *pgpath_to_activate;
+ 	unsigned nr_priority_groups;
+ 	struct list_head priority_groups;
+ 	unsigned pg_init_required;	/* pg_init needs calling? */
+@@ -146,6 +147,7 @@ static struct priority_group *alloc_prio
+ 
+ static void free_pgpaths(struct list_head *pgpaths, struct dm_target *ti)
+ {
++	unsigned long flags;
+ 	struct pgpath *pgpath, *tmp;
+ 	struct multipath *m = ti->private;
+ 
+@@ -154,6 +156,10 @@ static void free_pgpaths(struct list_hea
+ 		if (m->hw_handler_name)
+ 			scsi_dh_detach(bdev_get_queue(pgpath->path.dev->bdev));
+ 		dm_put_device(ti, pgpath->path.dev);
++		spin_lock_irqsave(&m->lock, flags);
++		if (m->pgpath_to_activate == pgpath)
++			m->pgpath_to_activate = NULL;
++		spin_unlock_irqrestore(&m->lock, flags);
+ 		free_pgpath(pgpath);
+ 	}
+ }
+@@ -421,6 +427,7 @@ static void process_queued_ios(struct wo
+ 		__choose_pgpath(m);
+ 
+ 	pgpath = m->current_pgpath;
++	m->pgpath_to_activate = m->current_pgpath;
+ 
+ 	if ((pgpath && !m->queue_io) ||
+ 	    (!pgpath && !m->queue_if_no_path))
+@@ -1097,8 +1104,15 @@ static void activate_path(struct work_st
+ 	int ret;
+ 	struct multipath *m =
+ 		container_of(work, struct multipath, activate_path);
+-	struct dm_path *path = &m->current_pgpath->path;
++	struct dm_path *path;
++	unsigned long flags;
+ 
++	spin_lock_irqsave(&m->lock, flags);
++	path = &m->pgpath_to_activate->path;
++	m->pgpath_to_activate = NULL;
++	spin_unlock_irqrestore(&m->lock, flags);
++	if (!path)
++		return;
+ 	ret = scsi_dh_activate(bdev_get_queue(path->dev->bdev));
+ 	pg_init_done(path, ret);
+ }
