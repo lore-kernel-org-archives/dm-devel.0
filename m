@@ -1,113 +1,135 @@
-From: "Jun'ichi Nomura (NEC)" <j-nomura@ce.jp.nec.com>
-Subject: Re: [PATCH 1/2] lld busy status exporting interface
-Date: Mon, 22 Sep 2008 13:49:58 +0900
-Message-ID: <48D723F6.8040804@ce.jp.nec.com>
-References: <20080919.104756.41628866.k-ueda@ct.jp.nec.com>	<20080919.104854.71084447.k-ueda@ct.jp.nec.com>	<20080919143344.44d1a83e.akpm@linux-foundation.org>	<20080919.191122.102582872.k-ueda@ct.jp.nec.com>
-	<20080919164524.295e1f9a.akpm@linux-foundation.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Mon, 22 Sep 2008 18:36:51 +0900 (JST)
+Message-ID: <20080922.183651.62951479.taka@valinux.co.jp>
+References: <20080918131554.GB20640@redhat.com>
+	<20080919.202031.86647893.taka@valinux.co.jp>
+	<20080919131019.GA3606@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080919164524.295e1f9a.akpm@linux-foundation.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>, Jens Axboe <jens.axboe@oracle.com>, James.Bottomley@HansenPartnership.com
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20080919131019.GA3606@redhat.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: vgoyal@redhat.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, righi.andrea@gmail.com, agk@sourceware.org, ryov@valinux.co.jp, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Hi Andrew,
-(and James, Jens, please let us know your opinions on the possible
- changes described below)
+Hi,
 
-Andrew Morton wrote:
-> On Fri, 19 Sep 2008 19:11:22 -0400 (EDT)
-> Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:
+> > > > I have got excellent results of dm-ioband, that controls the disk I/O
+> > > > bandwidth even when it accepts delayed write requests.
+> > > > 
+> > > > In this time, I ran some benchmarks with a high-end storage. The
+> > > > reason was to avoid a performance bottleneck due to mechanical factors
+> > > > such as seek time.
+> > > > 
+> > > > You can see the details of the benchmarks at:
+> > > > http://people.valinux.co.jp/~ryov/dm-ioband/hps/
+> > 
+> >   (snip)
+> > 
+> > > Secondly, why do we have to create an additional dm-ioband device for 
+> > > every device we want to control using rules. This looks little odd
+> > > atleast to me. Can't we keep it in line with rest of the controllers
+> > > where task grouping takes place using cgroup and rules are specified in
+> > > cgroup itself (The way Andrea Righi does for io-throttling patches)?
+> > 
+> > It isn't essential dm-band is implemented as one of the device-mappers.
+> > I've been also considering that this algorithm itself can be implemented
+> > in the block layer directly.
+> > 
+> > Although, the current implementation has merits. It is flexible.
+> >   - Dm-ioband can be place anywhere you like, which may be right before
+> >     the I/O schedulers or may be placed on top of LVM devices.
 > 
->>> Back in the days when we first did the backing_dev_info.congested_fn()
->>> logic it was decided that there basically was no single place in which
->>> the congested state could be stored.
->>>
->>> So we ended up deciding that whenever a caller wants to know a
->>> backing_dev's congested status, it has to call in to the
->>> ->congested_fn() and that congested_fn would then call down into all
->>> the constituent low-level drivers/queues/etc asking each one if it is
->>> congested.
->> bdi_lld_congested() also does that using bdi_congested(), which calls
->> ->congested_fn().
->> And only real device drivers (e.g. scsi, ide) set/clear the flag.
->> Stacking drivers like request-based dm don't.
+> Hi,
 > 
-> umm, OK, that should work.
+> An rb-tree per request queue also should be able to give us this
+> flexibility. Because logic is implemented per request queue, rules can be 
+> placed at any layer. Either at bottom most layer where requests are
+> passed to elevator or at higher layer where requests will be passed to 
+> lower level block devices in the stack. Just that we shall have to do
+> modifications to some of the higher level dm/md drivers to make use of
+> queuing cgroup requests and releasing cgroup requests to lower layers.
+
+Request descriptors are allocated just right before passing I/O requests
+to the elevators. Even if you move the descriptor allocation point
+before calling the dm/md drivers, the drivers can't make use of them.
+
+When one of the dm drivers accepts a I/O request, the request
+won't have either a real device number or a real sector number.
+The request will be re-mapped to another sector of another device
+in every dm drivers. The request may even be replicated there.
+So it is really hard to find the right request queue to put
+the request into and sort them on the queue.
+
+> >   - It supports partition based bandwidth control which can work without
+> >     cgroups, which is quite easy to use of.
 > 
->> So stacking drivers always check the BDI_lld_congested flag of
->> the bottom device of the device stack.
+> >   - It is independent to any I/O schedulers including ones which will
+> >     be introduced in the future.
 > 
-> How does a stacking driver know that the backing_device which it is
-> looking at is a "lowest level" device?
+> This scheme should also be independent of any of the IO schedulers. We
+> might have to do small changes in IO-schedulers to decouple the things
+> from __make_request() a bit to insert rb-tree in between __make_request()
+> and IO-scheduler. Otherwise fundamentally, this approach should not
+> require any major modifications to IO-schedulers. 
 > 
-> I don't think it does - only the code which implements that device
-> knows this, so the stacking driver has to call into that device's
-> congested_fn(), yes?
-
-Yes. So the stacking driver calls bdi_congested, which calls
-the underlying device's congested_fn if exists, and eventually
-checks the bottom device's congestion state.
-Translation of multiple devices' congestion status is done by
-the congested_fn of the stacking device.
-E.g. dm-multipath returns 'not congested' if any of its paths are not
-congested.
-
-> In which case one wonders why the state was stored in the
-> backing_dev_info at all.  Why not store it in the device-private data
-> to avoid confusion and abuse?
-
-It should be possible.
-We've just followed the existing scheme of BDI_{read,write}congested
-because of their similarity.
-
-I would like to know which part of the patch was your concern:
-  1) Exposing set/clear_bdi_lld_congested without explicit comments
-     that says they should be used only by bottom-level devices
-  2) A new bdi_state, BDI_lld_congested
-  3) Use of backing_dev_info for this purpose
-
-If 1), either or both of the followings can be easily done:
-  [a] Add a comment in backing-dev.h that says set/clear_bdi_lld_congested
-      should be called only from the bottom device
-  [b] Move set/clear_bdi_lld_congested from mm/backing-dev.c
-      to block/blk-core.c, with renaming to blk_set/clear_lld_congested,
-      so that only a block device that knows what it does will set/clear
-      the flag
-
-If 2) or 3), I think we need to rewrite the patch in either way of these:
-  [c] Add a new strategy function to request_queue and use it instead,
-      e.g. q->lld_busy_fn, which is NULL by default.
-      Set/clear QUEUE_FLAG_BUSY in request_queue by the bottom device,
-      and the block layer will check the flag if q->lld_busy_fn is NULL.
-  [d] Similar to [c], except that storing the busy flag in struct scsi_device
-      and q->lld_busy_fn() of the scsi device will check that.
-      If q->lld_busy_fn is NULL, the block layer will just return
-      'not congested'.
-
-Which do you think is better?
-
->> BDI_[write|read]_congested flags have been using for queue's
->> congestion, so that I/O queueing/merging can be proceeded even if
->> the lld is congested.  So I added a new flag.
+> > 
+> > I also understand it's will be hard to set up without some tools
+> > such as lvm commands.
+> > 
 > 
-> iirc, BDI_read/write_congested predated the introduction of the
-> congested_fn() and perhaps should have been removed once we went to the
-> congested_fn approach.  But it's been a while since I spent a lot of
-> time looking in there.
+> That's something I wish to avoid. If we can keep it simple by doing
+> grouping using cgroup and allow one line rules in cgroup it would be nice.
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+It's possible the algorithm of dm-ioband can be placed in the block layer
+if it is really a big problem.
+But I doubt it can control every control block I/O as we wish since
+the interface the cgroup supports is quite poor.
+
+> > > To avoid creation of stacking another device (dm-ioband) on top of every
+> > > device we want to subject to rules, I was thinking of maintaining an
+> > > rb-tree per request queue. Requests will first go into this rb-tree upon
+> > > __make_request() and then will filter down to elevator associated with the
+> > > queue (if there is one). This will provide us the control of releasing
+> > > bio's to elevaor based on policies (proportional weight, max bandwidth
+> > > etc) and no need of stacking additional block device.
+> > 
+> > I think it's a bit late to control I/O requests there, since process
+> > may be blocked in get_request_wait when the I/O load is high.
+> > Please imagine the situation that cgroups with low bandwidths are
+> > consuming most of "struct request"s while another cgroup with a high
+> > bandwidth is blocked and can't get enough "struct request"s.
+> > 
+> > It means cgroups that issues lot of I/O request can win the game.
+> > 
+> 
+> Ok, this is a good point. Because number of struct requests are limited
+> and they seem to be allocated on first come first serve basis, so if a
+> cgroup is generating lot of IO, then it might win.
+> 
+> But dm-ioband will face the same issue. 
+
+Nope. Dm-ioband doesn't have this issue since it works before allocating
+the descriptors. Only I/O requests dm-ioband has passed can allocate its
+descriptor.
+
+> Essentially it is also a request
+> queue and it will have limited number of request descriptors. Have you 
+> modified the logic somewhere for allocation of request descriptors to the
+> waiting processes based on their weights? If yes, the logic probably can
+> be implemented here too.
+
+I feel this is almost what dm-ioband is doing.
+
+> Thanks
+> Vivek
