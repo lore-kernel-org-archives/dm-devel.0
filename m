@@ -1,10 +1,15 @@
-From: Dave Wysochanski <dwysocha@redhat.com>
-Subject: [PATCH] Increase bindings file lock timeout to avoid
-	failure of user_friendly_names map.
-Date: Tue, 23 Sep 2008 14:00:19 -0400
-Message-ID: <1222192819-15794-1-git-send-email-dwysocha@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: multipath-tools libmultipath/configure.c libmu ...
+Date: Tue, 23 Sep 2008 13:05:04 -0500
+Message-ID: <20080923180504.GB3808@ether.msp.redhat.com>
+References: <20080919032710.28653.qmail@sourceware.org>
+	<20080919185313.GA2932@thumper2> <20080919215731.GA7172@thumper2>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20080919215731.GA7172@thumper2>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,35 +19,88 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christophe Varoqui <christophe.varoqui@free.fr>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On setups with a large number of paths / multipath maps, contention for
-the advisory lock on the bindings file may take longer than 3 seconds,
-and some multipath processes may create maps based on WWID despite having
-user_friendly_names set.  Increasing the timeout is a simple fix that
-gets us a bit further.
+On Fri, Sep 19, 2008 at 04:57:32PM -0500, Andy wrote:
+> On Fri, Sep 19, 2008 at 01:53:13PM -0500, Andy wrote:
+> > On Fri, Sep 19, 2008 at 03:27:10AM -0000, bmarzins@sourceware.org wrote:
+> > > CVSROOT:	/cvs/dm
+> > > Module name:	multipath-tools
+> > > Branch: 	RHEL5_FC6
+> > > Changes by:	bmarzins@sourceware.org	2008-09-19 03:27:08
+> > > 
+> > > Modified files:
+> > > 	libmultipath   : configure.c configure.h devmapper.c devmapper.h 
+> > > 	multipathd     : cli.c cli.h cli_handlers.c cli_handlers.h 
+> > > 	                 main.c main.h 
+> > > 
+> > > Log message:
+> > > 	Fix for bz #455692. There is now a command for multipathd, 'resize map'. This
+> > > 	does online grows or shrinks for your multipath device. It has some warts.
+> > > 	
+> > > 	1. It needs to remove and re-add every path in the device. This can cause two
+> > > 	annoyances. First, if you only have one valid path, you go into an all paths
+> > > 	down scenario. However, you will immediately re-add the path, so it won't
+> > > 	trigger problem #2. Second, if the path is inaccessable, you may not be able to
+> > > 	re-add it.
+> > > 	
+> > > 	2. You can't disable flushing on suspend for a device-mapper device, when you
+> > > 	want to change size. This means that if all your paths are down, you will fail
+> > > 	the queued IOs when you suspend. This is a problem with the device-mapper kernel
+> > > 	code, and there's no real way to avoid it, except by fixing it in the kernel.
+> > > 	
+> > > 	This commit also has some minor fixups for 238421, and adds the ability to
+> > > 	disable and restore queueing on all multipath devices through multipathd
+> > > 
+> > > Patches:
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.2.3&r2=1.2.2.4
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/configure.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.1&r2=1.1.2.1
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.22.2.5&r2=1.22.2.6
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/devmapper.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.11.2.4&r2=1.11.2.5
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.5.2.2&r2=1.5.2.3
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.6.2.2&r2=1.6.2.3
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/cli_handlers.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.2&r2=1.3.2.3
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.13&r2=1.69.2.14
+> > > http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.7&r2=1.7.2.1
+> > > 
+> > 
+> > Where can I get the multipath-tools sources that these patches apply cleanly
+> > to?  They do not apply cleanly to my multipath 0.4.8 sources, add there
+> > seems to be some major differences in some places.
+> > 
+> > Thanks,
+> > 
+> > Andy
+> > 
+> 
+> Responding to my own mail, I did got the source with the patches from the
+> cvs.  But, the resizing does not work for with with mounted volumes.  There
+> are 4 paths for the volume, so there is no probably with it failing paths. 
+> I get "domap(0) failure for create/reload map" when I run multipath -v 3.
+> 
+> I can get dm to reconize the new size if the volume is umounted.  But, I
+> really would like it to work while it is mounted.
+> 
 
-More extensive fixes might include:
-1) improving the efficiency of the critical section code
-2) use shared/read locks initially, then use exclusive/write locks only when
-it is known the bindings file needs updated
+It should work for mounted volumes.  Did you try
+multipathd -k"resize map <mapname>"
 
-Signed-off-by: Dave Wysochanski <dwysocha@redhat.com>
----
- libmultipath/alias.h |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+Since this requires suspending without the no_flush option, I didn't
+want to have it happen on a normal reload, and since without the kernel
+fixes, this required removing and then readding paths, I did it through
+multipathd.
 
-diff --git a/libmultipath/alias.h b/libmultipath/alias.h
-index 3d64b9b..fe1191b 100644
---- a/libmultipath/alias.h
-+++ b/libmultipath/alias.h
-@@ -1,4 +1,4 @@
--#define BINDINGS_FILE_TIMEOUT 3
-+#define BINDINGS_FILE_TIMEOUT 30
- #define BINDINGS_FILE_HEADER \
- "# Multipath bindings, Version : 1.0\n" \
- "# NOTE: this file is automatically maintained by the multipath program.\n" \
--- 
-1.5.5.1
+So just running multipath -v3 after a path resize won't work. In fact, I
+think it might leave the devices in the suspended state, since the
+resume fails.
+
+-Ben
+
+> Andy
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
