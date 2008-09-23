@@ -1,14 +1,15 @@
-From: malahal@us.ibm.com
-Subject: Re: dm mirror with failed device
-Date: Tue, 23 Sep 2008 09:11:26 -0700
-Message-ID: <20080923161126.GA13400@us.ibm.com>
-References: <200809070211.34360.stephen@octopus-technologies.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Re: [PATCH] Fix Null pointer Exception
+Date: Tue, 23 Sep 2008 17:56:28 +0100
+Message-ID: <20080923165628.GI5288@agk.fab.redhat.com>
+References: <48C5478B.2040401@linux.vnet.ibm.com>
+	<20080908172153.05268f6d.akpm@linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <200809070211.34360.stephen@octopus-technologies.com>
+In-Reply-To: <20080908172153.05268f6d.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,39 +19,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: raspl@linux.vnet.ibm.com, Jens Axboe <jens.axboe@oracle.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>, h.carstens@de.ibm.com, dm-devel@redhat.com, martin.schwidefsky@de.ibm.com
 List-Id: dm-devel.ids
 
-Stephen Beynon [stephen@octopus-technologies.com] wrote:
-> This is probably a stupid question, in which case I apologise in advance.
+On Mon, Sep 08, 2008 at 05:21:53PM -0700, Andrew Morton wrote:
+> On Mon, 08 Sep 2008 17:40:59 +0200
+> Stefan Raspl <raspl@linux.vnet.ibm.com> wrote:
+> > Here's a trivial patch for the kernel panics that we reported last week
+> > when testing various ways to forcefully disconnect or temporarily disable
+> > DASD disks from an IBM System z machine. We ran into NULL pointer exceptions
+> > at the respective places.
+> Please look at the above text and consider how it will look to people
+> who read it in the git repository in 2011.
 > 
-> I am looking to set up a number of machines with internal disks mirrored onto 
-> an iscsi server.  I aim to provide resiliance against disk failures, and the 
-> iscsi server will be a handy single point to backup.
-> 
-> I set up the following test mirror.
-> 
-> # dmsetup status mirror
-> 0 16777216 mirror 2 254:8 8:16 32768/32768 0 1 core
-> # dmsetup table mirror
-> 0 16777216 mirror core 1 512 2 254:8 0 8:16 0
-> 
-> As a test I shutdown the iscsi server and continued writes to the mirror 
-> device.  As expected syslog recorded i/o errors on the iscsi lun, but writes 
-> to the mirror continued.  After waiting a few minutes I expected to see that 
-> parts of the mirror were out of sync, however dmsetup status gave exactly the 
-> same results as above.
-> 
-> When I restarted the iscsi server blocks started to be written to the iscsi 
-> server again, but the changes that happened during the iscsi server down time 
-> were never replicated.  Clearly this left the mirror in an inconsistent state 
-> with the only indication of problems being in syslog.
-> 
-> Is there any way I can configure dm-mirror to either mark the blocks as out of 
-> sync when a write fails, and re-try the write later ?
-> 
-> I am currently running Ubuntu gutsy on the client machines, so it does not 
-> have dmeventd, but from reading the docs it it not clear that dmeventd would 
-> help.
+> And consider how it looks today, to people who don't know anything
+> about "the kernel panics that we reported last week".
+ 
+I've found this message:
 
-What kernel version?
++ Date: Mon, 01 Sep 2008 15:48:18 +0200
++ From: Stefan Raspl <raspl@linux.vnet.ibm.com>
++ Subject: [dm-devel] bdev lost its queue
++ To: device-mapper development <dm-devel@redhat.com>
++ 
++ We conducted a bunch tests where we used various ways to forcefully 
++ disconnect or temporarily disable DASD disks from an IBM System z 
++ machine. In the course we ran into a kernel panic in 
++ dm_table_unplug_all() (dm-table.c), specifically at
++ 
++    struct request_queue *q = bdev_get_queue(dd->bdev);
++     blk_unplug(q);
++ 
++ since the queue of the bdev was NULL.
++ Did anyone see a crash in this place before? And are there other disk 
++ drivers to can set their queue to NULL due to unplugging/outages or similar?
+
+> > --- a/drivers/md/dm-table.c
+> > +++ b/drivers/md/dm-table.c
+> > @@ -943,7 +943,8 @@ int dm_table_any_congested(struct dm_tab
+> >  
+> >  	list_for_each_entry(dd, devices, list) {
+> >  		struct request_queue *q = bdev_get_queue(dd->bdev);
+> > -		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
+> > +		if (q)
+> > +			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
+> >  	}
+> >  
+> >  	return r;
+> > @@ -957,7 +958,8 @@ void dm_table_unplug_all(struct dm_table
+> >  	list_for_each_entry(dd, devices, list) {
+> >  		struct request_queue *q = bdev_get_queue(dd->bdev);
+> >  
+> > -		blk_unplug(q);
+> > +		if (q)
+> > +			blk_unplug(q);
+> >  	}
+> >  }
+> >  
+> 
+> And it's not just a trivial matter of getting the paperwork right. 
+> This could be the wrong fix - how did these null pointers come about? 
+> What was the workload?  It seems strange to have a blockdev which has
+> no queue associated with it.
+ 
+Indeed, there is also code in other files that assumes struct
+request_queue is not NULL.  And no, I've not heard of other drivers
+causing this problem.  (Our dm multipath code doesn't do this when all
+the paths disappear, for example.)
+
+Have you had chance to look at old kernel versions to see in which
+commit this was introduced?
+
+Jens - What's your opinion: s390 driver fix or more messages like this one?
+                if (!q) {
+                        printk(KERN_ERR
+                               "generic_make_request: Trying to access "
+                                "nonexistent block-device %s (%Lu)\n",
+                                bdevname(bio->bi_bdev, b),
+                                (long long) bio->bi_sector);
+
+Alasdair
+-- 
+agk@redhat.com
