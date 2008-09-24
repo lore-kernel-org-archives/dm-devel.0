@@ -1,94 +1,60 @@
 From: Hirokazu Takahashi <taka@valinux.co.jp>
 Subject: Re: dm-ioband + bio-cgroup benchmarks
-Date: Wed, 24 Sep 2008 19:18:03 +0900 (JST)
-Message-ID: <20080924.191803.100102323.taka@valinux.co.jp>
+Date: Wed, 24 Sep 2008 19:34:14 +0900 (JST)
+Message-ID: <20080924.193414.22923673.taka@valinux.co.jp>
 References: <20080919131019.GA3606@redhat.com>
 	<20080922.183651.62951479.taka@valinux.co.jp>
 	<20080922143042.GA19222@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <xen-devel-bounces@lists.xensource.com>
 In-Reply-To: <20080922143042.GA19222@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
 To: vgoyal@redhat.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, righi.andrea@gmail.com, agk@sourceware.org, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, righi.andrea@gmail.com, agk@sourceware.org, ryov@valinux.co.jp, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
 Hi,
 
-> > > > > To avoid creation of stacking another device (dm-ioband) on top of every
-> > > > > device we want to subject to rules, I was thinking of maintaining an
-> > > > > rb-tree per request queue. Requests will first go into this rb-tree upon
-> > > > > __make_request() and then will filter down to elevator associated with the
-> > > > > queue (if there is one). This will provide us the control of releasing
-> > > > > bio's to elevaor based on policies (proportional weight, max bandwidth
-> > > > > etc) and no need of stacking additional block device.
-> > > > 
-> > > > I think it's a bit late to control I/O requests there, since process
-> > > > may be blocked in get_request_wait when the I/O load is high.
-> > > > Please imagine the situation that cgroups with low bandwidths are
-> > > > consuming most of "struct request"s while another cgroup with a high
-> > > > bandwidth is blocked and can't get enough "struct request"s.
-> > > > 
-> > > > It means cgroups that issues lot of I/O request can win the game.
-> > > > 
-> > > 
-> > > Ok, this is a good point. Because number of struct requests are limited
-> > > and they seem to be allocated on first come first serve basis, so if a
-> > > cgroup is generating lot of IO, then it might win.
-> > > 
-> > > But dm-ioband will face the same issue. 
-> > 
-> > Nope. Dm-ioband doesn't have this issue since it works before allocating
-> > the descriptors. Only I/O requests dm-ioband has passed can allocate its
-> > descriptor.
-> > 
+> > It's possible the algorithm of dm-ioband can be placed in the block layer
+> > if it is really a big problem.
+> > But I doubt it can control every control block I/O as we wish since
+> > the interface the cgroup supports is quite poor.
 > 
-> Ok. Got it. dm-ioband does not block on allocation of request descriptors.
-> It does seem to be blocking in prevent_burst_bios() but that would be
-> per group so it should be fine.
+> Had a question regarding cgroup interface. I am assuming that in a system,
+> one will be using other controllers as well apart from IO-controller.
+> Other controllers will be using cgroup as a grouping mechanism.
+> Now coming up with additional grouping mechanism for only io-controller seems
+> little odd to me. It will make the job of higher level management software
+> harder.
+> 
+> Looking at the dm-ioband grouping examples given in patches, I think cases
+> of grouping based  in pid, pgrp, uid and kvm can be handled by creating right
+> cgroup and making sure applications are launched/moved into right cgroup by
+> user space tools. 
 
-Yes. There is also another little mechanism that prevent_burst_bios()
-tries not to block kernel threads if possible.
+Grouping in pid, pgrp and uid is not the point, which I've been thinking
+can be replaced with cgroup once the implementation of bio-cgroup is done.
 
-> That means for lower layers, one shall have to do request descritor
-> allocation as per the cgroup weight to make sure a cgroup with lower
-> weight does not get higher % of disk because it is generating more
-> requests.
+I think problems of cgroup are that they can't support lots of storages
+and hotplug devices, it just handle them as if they were just one resource.
+I don't insist the interface of dm-ioband is the best. I just hope the
+cgroup infrastructure support this kind of resources.
 
-Yes. But when cgroups with higher weight aren't issueing a lot of I/Os,
-even a cgroup with lower weight can allocate a lot of request descriptors.
+> I think keeping grouping mechanism in line with rest of the controllers
+> should help because a uniform grouping mechanism should make life simpler.
+> 
+> I am not very sure about moving dm-ioband algorithm in block layer. Looks
+> like it will make life simpler at least in terms of configuration. 
 
-> One additional issue with my scheme I just noticed is that I am putting
-> bio-cgroup in rb-tree. If there are stacked devices then bio/requests from
-> same cgroup can be at multiple levels of processing at same time. That
-> would mean that a single cgroup needs to be in multiple rb-trees at the
-> same time in various layers. So I might have to create a temporary object
-> which can associate with cgroup and get rid of that object once I don't
-> have the requests any more...
-
-You mean each layer should have its rb-tree? Is it per device?
-One lvm logical volume may probably consist from several physical
-volumes, which will be shared with other logical volumes.
-And some layers may split one bio into several bios.
-I hardly can imagine how these structures will be.
-
-But I guess it is a good thing that we are going to support
-a general infrastructure for I/O requests.
-
-> Well, implementing rb-tree per request queue seems to be harder than I 
-> had thought. Especially taking care of decoupling the elevator and reqeust
-> descriptor logic at lower layers. Long way to go..
 
 Thanks,
 Hirokazu Takahashi.
