@@ -1,124 +1,128 @@
-From: Takashi Sato <t-sato@yk.jp.nec.com>
-Subject: Re: [PATCH 4/10] xfs: Fix error handling inwrite_super_lockfs/unlockfs
-Date: Wed, 24 Sep 2008 17:14:39 +0900
-Message-ID: <20080924171439t-sato@mail.jp.nec.com>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Wed, 24 Sep 2008 17:29:37 +0900 (JST)
+Message-ID: <20080924.172937.72827863.taka@valinux.co.jp>
+References: <20080919131019.GA3606@redhat.com>
+	<20080922.183651.62951479.taka@valinux.co.jp>
+	<20080922143042.GA19222@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Dave Chinner <david@fromorbit.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20080922143042.GA19222@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: vgoyal@redhat.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, righi.andrea@gmail.com, agk@sourceware.org, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
 Hi,
 
-Dave Chinner wrote:
->> diff -uprN -X linux-2.6.27-rc7-lockfs/Documentation/dontdiff linux-2.6.27-rc7-lockfs/fs/xfs/linux-2.6/xfs_super.c lin
-ux-
->> 2.6.27-rc7-lockfs-xfs/fs/xfs/linux-2.6/xfs_super.c
->> --- linux-2.6.27-rc7-lockfs/fs/xfs/linux-2.6/xfs_super.c 2008-09-22 07:29:55.000000000 +0900
->> +++ linux-2.6.27-rc7-lockfs-xfs/fs/xfs/linux-2.6/xfs_super.c 2008-09-22 10:13:39.000000000 +0900
->> @@ -1351,7 +1351,7 @@ xfs_fs_remount(
->>   * need to take care of themetadata. Once that's done write a dummy
->>   * record to dirty the log in case of a crash while frozen.
->>   */
->> -STATIC void
->> +STATIC int
->>  xfs_fs_lockfs(
->>  	struct super_block *sb)
->>  {
->> @@ -1359,6 +1359,7 @@ xfs_fs_lockfs(
->>  
->>  	xfs_attr_quiesce(mp);
->>  	xfs_fs_log_dummy(mp);
->> + 	return 0;
->>  }
+> > > > > > I have got excellent results of dm-ioband, that controls the disk I/O
+> > > > > > bandwidth even when it accepts delayed write requests.
+> > > > > > 
+> > > > > > In this time, I ran some benchmarks with a high-end storage. The
+> > > > > > reason was to avoid a performance bottleneck due to mechanical factors
+> > > > > > such as seek time.
+> > > > > > 
+> > > > > > You can see the details of the benchmarks at:
+> > > > > > http://people.valinux.co.jp/~ryov/dm-ioband/hps/
+> > > > 
+> > > >   (snip)
+> > > > 
+> > > > > Secondly, why do we have to create an additional dm-ioband device for 
+> > > > > every device we want to control using rules. This looks little odd
+> > > > > atleast to me. Can't we keep it in line with rest of the controllers
+> > > > > where task grouping takes place using cgroup and rules are specified in
+> > > > > cgroup itself (The way Andrea Righi does for io-throttling patches)?
+> > > > 
+> > > > It isn't essential dm-band is implemented as one of the device-mappers.
+> > > > I've been also considering that this algorithm itself can be implemented
+> > > > in the block layer directly.
+> > > > 
+> > > > Although, the current implementation has merits. It is flexible.
+> > > >   - Dm-ioband can be place anywhere you like, which may be right before
+> > > >     the I/O schedulers or may be placed on top of LVM devices.
+> > > 
+> > > Hi,
+> > > 
+> > > An rb-tree per request queue also should be able to give us this
+> > > flexibility. Because logic is implemented per request queue, rules can be 
+> > > placed at any layer. Either at bottom most layer where requests are
+> > > passed to elevator or at higher layer where requests will be passed to 
+> > > lower level block devices in the stack. Just that we shall have to do
+> > > modifications to some of the higher level dm/md drivers to make use of
+> > > queuing cgroup requests and releasing cgroup requests to lower layers.
+> > 
+> > Request descriptors are allocated just right before passing I/O requests
+> > to the elevators. Even if you move the descriptor allocation point
+> > before calling the dm/md drivers, the drivers can't make use of them.
+> > 
 > 
-> xfs_fs_log_dummy() currently is void because it had nowhere to
-> return errors to. It silently throws away errors because of this.
-> Hence the correct thing to do here is to fix xfs_fs_log_dummy()
-> to return the errors it currently ignores. i.e. catch the errors
-> from xfs_trans_reserve() and xfs_trans_commit() calls in
-> xfs_fs_log_dummy().
+> You are right. request descriptors are currently allocated at bottom
+> most layer. Anyway, in the rb-tree, we put bio cgroups as logical elements
+> and every bio cgroup then contains the list of either bios or requeust
+> descriptors. So what kind of list bio-cgroup maintains can depend on
+> whether it is a higher layer driver (will maintain bios) or a lower layer
+> driver (will maintain list of request descriptors per bio-cgroup).
 
-OK.
-I've fixed the patch for xfs as following.
-Could you review it?
-If it's OK, I will include it in new freeze patch-set.
+I'm getting confused about your idea.
 
-Signed-off-by: Takashi Sato <t-sato@yk.jp.nec.com>
-Signed-off-by: Masayuki Hamaguchi <m-hamaguchi@ys.jp.nec.com>
----
-diff -uprN -X linux-2.6.27-rc7.org/Documentation/dontdiff linux-2.6.27-rc7-ext4_3/fs/xfs/linux-2.6/xfs_super.c linux-2.6
-.27-rc7-xfs_4/fs/xfs/linux-2.6/xfs_super.c
---- linux-2.6.27-rc7-ext4_3/fs/xfs/linux-2.6/xfs_super.c	2008-09-24 10:48:02.000000000 +0900
-+++ linux-2.6.27-rc7-xfs_4/fs/xfs/linux-2.6/xfs_super.c	2008-09-24 11:24:08.000000000 +0900
-@@ -1351,14 +1351,14 @@ xfs_fs_remount(
-  * need to take care of themetadata. Once that's done write a dummy
-  * record to dirty the log in case of a crash while frozen.
-  */
--STATIC void
-+STATIC int
- xfs_fs_lockfs(
- 	struct super_block	*sb)
- {
- 	struct xfs_mount	*mp = XFS_M(sb);
- 
- 	xfs_attr_quiesce(mp);
--	xfs_fs_log_dummy(mp);
-+	return -xfs_fs_log_dummy(mp);
- }
- 
- STATIC int
-diff -uprN -X linux-2.6.27-rc7.org/Documentation/dontdiff linux-2.6.27-rc7-ext4_3/fs/xfs/xfs_fsops.c linux-2.6.27-rc7-xf
-s_4/fs/xfs/xfs_fsops.c
---- linux-2.6.27-rc7-ext4_3/fs/xfs/xfs_fsops.c	2008-09-24 10:48:02.000000000 +0900
-+++ linux-2.6.27-rc7-xfs_4/fs/xfs/xfs_fsops.c	2008-09-24 11:47:08.000000000 +0900
-@@ -589,17 +589,19 @@ out:
- 	return 0;
- }
- 
--void
-+int
- xfs_fs_log_dummy(
- 	xfs_mount_t	*mp)
- {
- 	xfs_trans_t	*tp;
- 	xfs_inode_t	*ip;
-+	int		error;
- 
- 	tp = _xfs_trans_alloc(mp, XFS_TRANS_DUMMY1);
--	if (xfs_trans_reserve(tp, 0, XFS_ICHANGE_LOG_RES(mp), 0, 0, 0)) {
-+	error = xfs_trans_reserve(tp, 0, XFS_ICHANGE_LOG_RES(mp), 0, 0, 0);
-+	if (error) {
- 		xfs_trans_cancel(tp, 0);
--		return;
-+		return error;
- 	}
- 
- 	ip = mp->m_rootip;
-@@ -609,9 +611,10 @@ xfs_fs_log_dummy(
- 	xfs_trans_ihold(tp, ip);
- 	xfs_trans_log_inode(tp, ip, XFS_ILOG_CORE);
- 	xfs_trans_set_sync(tp);
--	xfs_trans_commit(tp, 0);
-+	error = xfs_trans_commit(tp, 0);
- 
- 	xfs_iunlock(ip, XFS_ILOCK_EXCL);
-+	return error;
- }
- 
- int
-diff -uprN -X linux-2.6.27-rc7.org/Documentation/dontdiff linux-2.6.27-rc7-ext4_3/fs/xfs/xfs_fsops.h linux-2.6.27-rc7-xf
-s_4/fs/xfs/xfs_fsops.h
---- linux-2.6.27-rc7-ext4_3/fs/xfs/xfs_fsops.h	2008-09-24 10:48:02.000000000 +0900
-+++ linux-2.6.27-rc7-xfs_4/fs/xfs/xfs_fsops.h	2008-09-24 11:36:29.000000000 +0900
-@@ -25,6 +25,6 @@ extern int xfs_fs_counts(xfs_mount_t *mp
- extern int xfs_reserve_blocks(xfs_mount_t *mp, __uint64_t *inval,
- 				xfs_fsop_resblks_t *outval);
- extern int xfs_fs_goingdown(xfs_mount_t *mp, __uint32_t inflags);
--extern void xfs_fs_log_dummy(xfs_mount_t *mp);
-+extern int xfs_fs_log_dummy(xfs_mount_t *mp);
- 
- #endif	/* __XFS_FSOPS_H__ */
+I thought you wanted to make each cgroup have its own rb-tree,
+and wanted to make all the layers share the same rb-tree.
+If so, are you going to put different things into the same tree?
+Do you even want all the I/O schedlers use the same tree?
+
+Are you going to block request descriptors in the tree?
+From the view point of performance, all the request descriptors
+should be passed to the I/O schedulers, since the maximum number
+of request descriptors is limited. 
+
+And I still don't understand if you want to make your rb-tree
+work efficiently, you need to put a lot of bios or request descriptors
+into the tree. Is that what you are going to do?
+On the other hand, dm-ioband tries to minimize to have bios blocked.
+And I have a plan on reducing the maximum number that can be
+blocked there.
+
+Sorry to bother you that I just don't understand the concept clearly.
+
+> So basically mechanism of maintaining an rb-tree can be completely
+> ignorant of the fact whether a driver is keeping track of bios or keeping
+> track of requests per cgroup. 
+
+I don't care whether the queue is implemented as a rb-tee or some
+kind of list because they are logically the same thing.
+
+> > When one of the dm drivers accepts a I/O request, the request
+> > won't have either a real device number or a real sector number.
+> > The request will be re-mapped to another sector of another device
+> > in every dm drivers. The request may even be replicated there.
+> > So it is really hard to find the right request queue to put
+> > the request into and sort them on the queue.
+> 
+> Hmm.., I thought that all the incoming requests to dm/md driver will
+> remain in a single queue maintained by that drvier (irrespective of the
+> fact in which request queue these requests go in lower layers after
+> replication or other operation). I am not very familiar with dm/md
+> implementation. I will read more about it....
+
+They never look into the queues maintained in drivers.
+Some of them have its own little queue and others don't.
+Some may just modify the sector numbers of I/O requests or may
+create a new I/O request themselves. Others such as md-raid5
+have their own queues to control I/Os, where A write request may
+cause several read requests and have to wait for their completions
+before the actual write starts.
+
+
+Thanks,
+Hirokazu Takahashi.
