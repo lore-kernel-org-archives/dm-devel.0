@@ -1,17 +1,13 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: Re: [PATCH 4/8] bio-cgroup: Split the cgroup memory
-	subsystem into two parts
-Date: Thu, 25 Sep 2008 17:46:34 +0900 (JST)
-Message-ID: <20080925.174634.02448435.taka@valinux.co.jp>
-References: <20080924.191234.104048747.ryov@valinux.co.jp>
-	<20080924.191309.189710495.ryov@valinux.co.jp>
-	<20080925161400.602ddfdb.kamezawa.hiroyu@jp.fujitsu.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [RFC PATCH 0/2] Export lld busy state for request
+	stacking drivers
+Date: Thu, 25 Sep 2008 11:53:55 -0400 (EDT)
+Message-ID: <20080925.115355.71085765.k-ueda@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20080925161400.602ddfdb.kamezawa.hiroyu@jp.fujitsu.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,49 +17,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, kamezawa.hiroyu@jp.fujitsu.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, agk@sourceware.org, balbir@linux.vnet.ibm.com, fernando@oss.ntt.co.jp, xemul@openvz.org
+To: akpm@linux-foundation.org, jens.axboe@oracle.com, James.Bottomley@HansenPartnership.com
+Cc: j-nomura@ce.jp.nec.com, k-ueda@ct.jp.nec.com, dm-devel@redhat.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hi,
+Hi Andrew, Jens, James,
 
-> I posted new ones.
->  - http://lkml.org/lkml/2008/9/25/33 
->  (changes in page_cgroup) http://lkml.org/lkml/2008/9/25/56
-> (I'm not sure this gets Ack or Nack. but direction will not change.)
-> 
-> Then, please tell me if you have new troubles with new ones.
-> Or if you have requests.
-> Major changes are
-> 
->   - page_cgroup.h is added.
->   - lookup_page_cgroup(struct page*), lock_page_cgroup() etc.. is exported.
->   - All page_cgroup are allocated at boot.
->   - you can use atomic operation to modify page_cgroup->flags.
+The following patches are the revised version to use lld's private data
+instead of backing_dev_info.state for exporting lld busy state.
 
-Good new!
+Please review and give me your opinion.
+If all of you have no problem, I'll re-send the patches separately
+to each maintainer, Jens and James.
 
-> One concern from me to this bio_cgroup is that this increases size of
-> +#ifdef CONFIG_CGROUP_BIO
-> +	struct list_head blist;		/* for bio_cgroup page list */
-> +	struct bio_cgroup *bio_cgroup;
-> +#endif
-> struct page_cgroup...more 24bytes per 4096bytes.
-> Could you reduce this ? I think 8bytes per memcg is reasonable.
-> Can you move lru to bio itself ?
+The patches are created on the following commit of for-2.6.28
+in linux-2.6-block, but the scsi part can be also applied to
+scsi-post-merge-2.6.
+---------------------------------------------------------------
+commit c5062758edbe59286d7d8e718a59e4d4347ef541
+Author: Jens Axboe <jens.axboe@oracle.com>
+Date:   Wed Sep 24 13:05:10 2008 +0200
 
-I have a plan on getting rid of the blist after your work is done,
-whose design will depend on that all page_cgroups are preallocated.
-I also think the size of bio_cgroup can be reduced if making bio_cgroup
-contain a bio-cgroup ID instead of the pointer.
+    libata: set queue SSD flag for SSD devices
+---------------------------------------------------------------
 
-Just wait! :)
 
-> This makes page_cgroup to be 64bytes from 40bytes and makes it larger
-> than mem_map....
-> After bio_cgroup, page_cgroup, allocated at boot, size on my 48GB box 
-> will jump up.
-> 480MB -> 760MB.
-> 
-> Thanks,
-> -Kame
+Previous post and discussions about the interface:
+    http://lkml.org/lkml/2008/9/19/138
+
+
+Summary of the patches:
+    1/2: block: add lld busy state exporting interface
+    2/2: scsi: export busy state via q->lld_busy_fn()
+
+Thanks,
+Kiyoshi Ueda
