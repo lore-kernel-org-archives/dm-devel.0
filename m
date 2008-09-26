@@ -1,8 +1,8 @@
 From: Takashi Sato <t-sato@yk.jp.nec.com>
-Subject: [PATCH 7/10] reiserfs: Fix error handling in
-	write_super_lockfs/unlockfs
-Date: Fri, 26 Sep 2008 17:58:54 +0900
-Message-ID: <20080926175854t-sato@mail.jp.nec.com>
+Subject: [PATCH 9/10] Remove XFS specific ioctl interfaces for
+	freeze feature
+Date: Fri, 26 Sep 2008 17:59:24 +0900
+Message-ID: <20080926175924t-sato@mail.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,51 +21,69 @@ To: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.
 Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-I've changed write_super_lockfs/unlockfs so that they always return
-0 (success) to keep a current behavior.
+It removes XFS specific ioctl interfaces and request codes
+for freeze feature.
+This patch has been supplied by David Chinner.
 
+Signed-off-by: Dave Chinner <dgc@sgi.com>
 Signed-off-by: Takashi Sato <t-sato@yk.jp.nec.com>
-Signed-off-by: Masayuki Hamaguchi <m-hamaguchi@ys.jp.nec.com>
 ---
- super.c |   10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ linux-2.6/xfs_ioctl.c   |   15 ---------------
+ linux-2.6/xfs_ioctl32.c |    2 --
+ xfs_fs.h                |    4 ++--
+ 3 files changed, 2 insertions(+), 19 deletions(-)
 
-diff -uprN -X linux-2.6.27-rc7-lockfs-xfs/Documentation/dontdiff linux-2.6.27-rc7-lockfs-xfs/fs/reiserfs/super.c linux-2
-.6.27-rc7-lockfs-reiserfs/fs/reiserfs/super.c
---- linux-2.6.27-rc7-lockfs-xfs/fs/reiserfs/super.c	2008-09-26 12:19:24.000000000 +0900
-+++ linux-2.6.27-rc7-lockfs-reiserfs/fs/reiserfs/super.c	2008-09-26 17:00:18.000000000 +0900
-@@ -83,7 +83,7 @@ static void reiserfs_write_super(struct 
- 	reiserfs_sync_fs(s, 1);
- }
- 
--static void reiserfs_write_super_lockfs(struct super_block *s)
-+static int reiserfs_freeze(struct super_block *s)
- {
- 	struct reiserfs_transaction_handle th;
- 	reiserfs_write_lock(s);
-@@ -101,11 +101,13 @@ static void reiserfs_write_super_lockfs(
+diff -uprN -X linux-2.6.27-rc7-freeze/Documentation/dontdiff linux-2.6.27-rc7-freeze/fs/xfs/linux-2.6/xfs_ioctl.c linux-
+2.6.27-rc7-xfs/fs/xfs/linux-2.6/xfs_ioctl.c
+--- linux-2.6.27-rc7-freeze/fs/xfs/linux-2.6/xfs_ioctl.c	2008-09-22 07:29:55.000000000 +0900
++++ linux-2.6.27-rc7-xfs/fs/xfs/linux-2.6/xfs_ioctl.c	2008-09-22 14:19:19.000000000 +0900
+@@ -1529,21 +1529,6 @@ xfs_ioctl(
+ 		return -error;
  	}
- 	s->s_dirt = 0;
- 	reiserfs_write_unlock(s);
-+	return 0;
- }
  
--static void reiserfs_unlockfs(struct super_block *s)
-+static int reiserfs_unfreeze(struct super_block *s)
- {
- 	reiserfs_allow_writes(s);
-+	return 0;
- }
+-	case XFS_IOC_FREEZE:
+-		if (!capable(CAP_SYS_ADMIN))
+-			return -EPERM;
+-
+-		if (inode->i_sb->s_frozen == SB_UNFROZEN)
+-			freeze_bdev(inode->i_sb->s_bdev);
+-		return 0;
+-
+-	case XFS_IOC_THAW:
+-		if (!capable(CAP_SYS_ADMIN))
+-			return -EPERM;
+-		if (inode->i_sb->s_frozen != SB_UNFROZEN)
+-			thaw_bdev(inode->i_sb->s_bdev, inode->i_sb);
+-		return 0;
+-
+ 	case XFS_IOC_GOINGDOWN: {
+ 		__uint32_t in;
  
- extern const struct in_core_key MAX_IN_CORE_KEY;
-@@ -613,8 +615,8 @@ static const struct super_operations rei
- 	.put_super = reiserfs_put_super,
- 	.write_super = reiserfs_write_super,
- 	.sync_fs = reiserfs_sync_fs,
--	.write_super_lockfs = reiserfs_write_super_lockfs,
--	.unlockfs = reiserfs_unlockfs,
-+	.freeze_fs = reiserfs_freeze,
-+	.unfreeze_fs = reiserfs_unfreeze,
- 	.statfs = reiserfs_statfs,
- 	.remount_fs = reiserfs_remount,
- 	.show_options = generic_show_options,
+diff -uprN -X linux-2.6.27-rc7-freeze/Documentation/dontdiff linux-2.6.27-rc7-freeze/fs/xfs/linux-2.6/xfs_ioctl32.c linu
+x-2.6.27-rc7-xfs/fs/xfs/linux-2.6/xfs_ioctl32.c
+--- linux-2.6.27-rc7-freeze/fs/xfs/linux-2.6/xfs_ioctl32.c	2008-09-22 07:29:55.000000000 +0900
++++ linux-2.6.27-rc7-xfs/fs/xfs/linux-2.6/xfs_ioctl32.c	2008-09-22 14:19:19.000000000 +0900
+@@ -398,8 +398,6 @@ xfs_compat_ioctl(
+ 	case XFS_IOC_FSGROWFSDATA:
+ 	case XFS_IOC_FSGROWFSLOG:
+ 	case XFS_IOC_FSGROWFSRT:
+-	case XFS_IOC_FREEZE:
+-	case XFS_IOC_THAW:
+ 	case XFS_IOC_GOINGDOWN:
+ 	case XFS_IOC_ERROR_INJECTION:
+ 	case XFS_IOC_ERROR_CLEARALL:
+diff -uprN -X linux-2.6.27-rc7-freeze/Documentation/dontdiff linux-2.6.27-rc7-freeze/fs/xfs/xfs_fs.h linux-2.6.27-rc7-xf
+s/fs/xfs/xfs_fs.h
+--- linux-2.6.27-rc7-freeze/fs/xfs/xfs_fs.h	2008-09-22 07:29:55.000000000 +0900
++++ linux-2.6.27-rc7-xfs/fs/xfs/xfs_fs.h	2008-09-22 14:19:19.000000000 +0900
+@@ -477,8 +477,8 @@ typedef struct xfs_handle {
+ #define XFS_IOC_ERROR_INJECTION	     _IOW ('X', 116, struct xfs_error_injection)
+ #define XFS_IOC_ERROR_CLEARALL	     _IOW ('X', 117, struct xfs_error_injection)
+ /*	XFS_IOC_ATTRCTL_BY_HANDLE -- deprecated 118	 */
+-#define XFS_IOC_FREEZE		     _IOWR('X', 119, int)
+-#define XFS_IOC_THAW		     _IOWR('X', 120, int)
++/*	XFS_IOC_FREEZE		  -- FIFREEZE   119	 */
++/*	XFS_IOC_THAW		  -- FITHAW     120	 */
+ #define XFS_IOC_FSSETDM_BY_HANDLE    _IOW ('X', 121, struct xfs_fsop_setdm_handlereq)
+ #define XFS_IOC_ATTRLIST_BY_HANDLE   _IOW ('X', 122, struct xfs_fsop_attrlist_handlereq)
+ #define XFS_IOC_ATTRMULTI_BY_HANDLE  _IOW ('X', 123, struct xfs_fsop_attrmulti_handlereq)
