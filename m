@@ -1,119 +1,44 @@
-From: Andrea Righi <righi.andrea@gmail.com>
-Subject: Re: dm-ioband + bio-cgroup benchmarks
-Date: Fri, 26 Sep 2008 19:30:26 +0200
-Message-ID: <48DD1C32.60207@gmail.com>
-References: <20080919131019.GA3606@redhat.com> <20080922.183651.62951479.taka@valinux.co.jp> <20080922143042.GA19222@redhat.com> <20080924.172937.72827863.taka@valinux.co.jp> <20080924140355.GB547@redhat.com> <48DD09AD.2010200@gmail.com> <48DD17A9.9080607@gmail.com>
-Reply-To: righi.andrea@gmail.com
+From: Dave Kleikamp <shaggy@linux.vnet.ibm.com>
+Subject: Re: [PATCH 0/10] freeze feature ver 1.13
+Date: Fri, 26 Sep 2008 16:26:58 -0500
+Message-ID: <1222464418.27833.7.camel@norville.austin.ibm.com>
+References: <20080926175652t-sato@mail.jp.nec.com>
+	 <30536.1222426096@turing-police.cc.vt.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753225AbYIZRar@vger.kernel.org>
-In-Reply-To: <48DD17A9.9080607@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Hirokazu Takahashi <taka@valinux.co.jp>, ryov@valinux.co.jp, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, agk@sourceware.org, jens.axboe@oracle.com
+Return-path: <linux-fsdevel-owner@vger.kernel.org>
+In-Reply-To: <30536.1222426096@turing-police.cc.vt.edu>
+Sender: linux-fsdevel-owner@vger.kernel.org
+To: Valdis.Kletnieks@vt.edu
+Cc: Takashi Sato <t-sato@yk.jp.nec.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "mtk.manpages@googlemail.com" <mtk.manpages@googlemail.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Andrea Righi wrote:
-> Andrea Righi wrote:
->> Vivek Goyal wrote:
->> [snip]
->>> Ok, I will give more details of the thought process.
->>>
->>> I was thinking of maintaing an rb-tree per request queue and not an
->>> rb-tree per cgroup. This tree can contain all the bios submitted to that
->>> request queue through __make_request(). Every node in the tree will represent
->>> one cgroup and will contain a list of bios issued from the tasks from that
->>> cgroup.
->>>
->>> Every bio entering the request queue through __make_request() function
->>> first will be queued in one of the nodes in this rb-tree, depending on which
->>> cgroup that bio belongs to.
->>>
->>> Once the bios are buffered in rb-tree, we release these to underlying
->>> elevator depending on the proportionate weight of the nodes/cgroups.
->>>
->>> Some more details which I was trying to implement yesterday.
->>>
->>> There will be one bio_cgroup object per cgroup. This object will contain
->>> many bio_group objects. Each bio_group object will be created for each
->>> request queue where a bio from bio_cgroup is queued. Essentially the idea
->>> is that bios belonging to a cgroup can be on various request queues in the
->>> system. So a single object can not serve the purpose as it can not be on
->>> many rb-trees at the same time.  Hence create one sub object which will keep
->>> track of bios belonging to one cgroup on a particular request queue.
->>>
->>> Each bio_group will contain a list of bios and this bio_group object will
->>> be a node in the rb-tree of request queue. For example. Lets say there are
->>> two request queues in the system q1 and q2 (lets say they belong to /dev/sda
->>> and /dev/sdb). Let say a task t1 in /cgroup/io/test1 is issueing io both
->>> for /dev/sda and /dev/sdb.
->>>
->>> bio_cgroup belonging to /cgroup/io/test1 will have two sub bio_group
->>> objects, say bio_group1 and bio_group2. bio_group1 will be in q1's rb-tree
->>> and bio_group2 will be in q2's rb-tree. bio_group1 will contain a list of
->>> bios issued by task t1 for /dev/sda and bio_group2 will contain a list of
->>> bios issued by task t1 for /dev/sdb. I thought the same can be extended
->>> for stacked devices also.
->>>   
->>> I am still trying to implementing it and hopefully this is doable idea.
->>> I think at the end of the day it will be something very close to dm-ioband
->>> algorithm just that there will be no lvm driver and no notion of separate
->>> dm-ioband device. 
->> Vivek, thanks for the detailed explanation. Only a comment. I guess, if
->> we don't change also the per-process optimizations/improvements made by
->> some IO scheduler, I think we can have undesirable behaviours.
->>
->> For example: CFQ uses the per-process iocontext to improve fairness
->> between *all* the processes in a system. But it doesn't have the concept
->> that there's a cgroup context on-top-of the processes.
->>
->> So, some optimizations made to guarantee fairness among processes could
->> conflict with algorithms implemented at the cgroup layer. And
->> potentially lead to undesirable behaviours.
->>
->> For example an issue I'm experiencing with my cgroup-io-throttle
->> patchset is that a cgroup can consistently increase the IO rate (always
->> respecting the max limits), simply increasing the number of IO worker
->> tasks respect to another cgroup with a lower number of IO workers. This
->> is probably due to the fact the CFQ tries to give the same amount of
->> "IO time" to all the tasks, without considering that they're organized
->> in cgroup.
+On Fri, 2008-09-26 at 06:48 -0400, Valdis.Kletnieks@vt.edu wrote:
+> On Fri, 26 Sep 2008 17:56:52 +0900, Takashi Sato said:
+
+> Would it be a good idea to merge patch 10 into patch 8?   Otherwise, there's
+> two issues I can see:
 > 
-> BTW this is why I proposed to use a single shared iocontext for all the
-> processes running in the same cgroup. Anyway, this is not the best
-> solution, because in this way all the IO requests coming from a cgroup
-> will be queued to the same cfq queue. If I'm not wrong in this way we
-> would implement noop (FIFO) between tasks belonging to the same cgroup
-> and CFQ between cgroups. But, at least for this particular case, we
-> would be able to provide fairness among cgroups.
+> 1) A mostly theoretical problem if a bisect lands exactly on patch 9 it can
+> hit the deadlock.
 
-Ah! also have a look at this:
+Really, there's no deadlock until someone uses the new function, so
+that's not really an issue, is it?  However, this patchset breaks
+bisection anyway.
 
-http://download.systemimager.org/~arighi/linux/patches/io-throttle/benchmark/graph/effect-of-per-process-cfq-fairness-on-the-cgroup-context.png
+A bisect anywhere between patch 1 and 7 will cause some number of
+filesystems to fail to compile.  Patches 1-7 either need to be combined
+into one, or patch 1 needs to add freeze_fs and unfreeze_fs while
+leaving write_super_lockfs and unlockfs, then a patch between 7 and 8
+could remove write_super_lockfs and unlockfs.
 
-The graph highlights the dependency between the IO rate and the number
-of tasks running in a cgroup. For this testcase I've used 2 cgroups:
+> 2) The API at patch 8 and patch 10 differs, that's going to make testing through
+> a bisection of this patch series a pain.
 
-- cgroup A, with a single task doing IO (large O_DIRECT read stream)
-- cgroup B, with a variable number of tasks ranging from 1 to 16 doing
-  IO in parallel
+There's no need to test the new interface during a bisection.  Bisection
+is important in testing regressions, but not new function.
+-- 
+David Kleikamp
+IBM Linux Technology Center
 
-If we want to be "fair" the gap of IO performance between the cgroups
-should be close to 0.
-
-Using "plain" cfq (red line) the gap of performance increases
-incrementing the number of tasks in a cgroup.
-
-Using cgroup-io-throttle on top of cfq (green line) the gap of
-performance is lower (the asymptotic curve is due to the bandwidth
-capping provided by cgroup-io-throttle).
-
-Using cgroup-io-throttle and a single shared iocontext for each cgroup
-(blue line) the gap of performance is really close to 0.
-
-Anyway, I repeat, I don't think this is a wonderful solution, it is just
-to highlights this issue and share with you the results of some tests I
-did.
-
--Andrea
