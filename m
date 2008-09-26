@@ -1,73 +1,67 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Fri, 26 Sep 2008 08:35:25 -0400
-Message-ID: <35472.1222432525@turing-police.cc.vt.edu>
-References: <20080908205337t-sato@mail.jp.nec.com>
-	<20080908171119.GB22521@infradead.org>
-	<48DBFD42.6030307@redhat.com>
-	<D0B0D91F884647D6808626CDFF81E532@nsl.ad.nec.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Fri, 26 Sep 2008 21:42:15 +0900 (JST)
+Message-ID: <20080926.214215.45417575.taka@valinux.co.jp>
+References: <20080922143042.GA19222@redhat.com>
+	<20080924.191803.100102323.taka@valinux.co.jp>
+	<20080924145202.GC547@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1342194515=="
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: Your message of "Fri, 26 Sep 2008 17:52:35 +0900."
-	<D0B0D91F884647D6808626CDFF81E532@nsl.ad.nec.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, Ric Wheeler <rwheeler@redhat.com>, Oleg Nesterov <oleg@tv-sign.ru>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20080924145202.GC547@redhat.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: vgoyal@redhat.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, righi.andrea@gmail.com, agk@sourceware.org, ryov@valinux.co.jp, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
---===============1342194515==
-Content-Type: multipart/signed; boundary="==_Exmh_1222432525_7097P";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
-Content-Transfer-Encoding: 7bit
+Hi,
 
---==_Exmh_1222432525_7097P
-Content-Type: text/plain; charset=us-ascii
+> > > One additional issue with my scheme I just noticed is that I am putting
+> > > bio-cgroup in rb-tree. If there are stacked devices then bio/requests from
+> > > same cgroup can be at multiple levels of processing at same time. That
+> > > would mean that a single cgroup needs to be in multiple rb-trees at the
+> > > same time in various layers. So I might have to create a temporary object
+> > > which can associate with cgroup and get rid of that object once I don't
+> > > have the requests any more...
+> > 
+> > You mean each layer should have its rb-tree? Is it per device?
+> > One lvm logical volume may probably consist from several physical
+> > volumes, which will be shared with other logical volumes.
+> > And some layers may split one bio into several bios.
+> > I hardly can imagine how these structures will be.
+> > 
+> 
+> Yes, one rb-tree per device, be it physical device or logical device
+> (because there is one request queue associated per physical/logical block
+> device).
 
-On Fri, 26 Sep 2008 17:52:35 +0900, Takashi Sato said:
+No, logical block devices doesn't have any request queues and
+they essentially won't block any bios unless it is impossible to
+handle them at the moment. Device-mappers never touch any request queues.
 
-(Sorry, am reading the threads out of temporal sequence....)
+> I was thinking of getting hold/hijack the bios as soon as they are
+> submitted to the device using associated request function. So if there
+> is a logical device built on top of two physical device, the associated
+> bio copy or other logic should not even see the bio the moment it is 
+> submitted to the deivce. It will see the bio only when it is released
+> from associated rb-tree to them. Do you think this will not work? To me
+> this is what dm-ioband is doing logically. The only difference is that it
+> does this with the help of a separate request queue. 
 
-> I think that your concern is that the freezer cannot recognize the occurrence
-> of a timeout and it continues the backup process and the backup data is
-> corrupted finally.
-> If the freezer can recognize it by the unfreeze ioctl's errono, will your concern
->  be solved?
-> If so, I will implement it.
+I think it's easy to just make all logical device --- device mapper
+device  --- and all physical device have their own bandwidth control
+mechanism.
+But I'm not clear how your algorithm works to control the bandwidth.
+At which level are you going to guarantee the bandwidth, at the logical
+volumes layer such as lvm or at the physical device layer?
 
-That would also address my concerns about merging patches 8 and 10 of the
-other patch series (because patch 10 wouldn't be needed then)...
-
-
---==_Exmh_1222432525_7097P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFI3NcNcC3lWbTT17ARAlfSAJ9koC6IkAWpTwgQQzzxs0CHDfWf6ACgzm8C
-gDUF+0x2+mjqNZBumGOhqOA=
-=x5uP
------END PGP SIGNATURE-----
-
---==_Exmh_1222432525_7097P--
-
-
---===============1342194515==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1342194515==--
+Thanks,
+Hirokazu Takahashi.
