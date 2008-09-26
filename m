@@ -1,8 +1,8 @@
 From: Takashi Sato <t-sato@yk.jp.nec.com>
-Subject: [PATCH 2/10] ext3: Fix error handling in
+Subject: [PATCH 3/10] ext4: Fix error handling in
 	write_super_lockfs/unlockfs
-Date: Fri, 26 Sep 2008 17:57:31 +0900
-Message-ID: <20080926175732t-sato__15486.6851088174$1222419557$gmane$org@mail.jp.nec.com>
+Date: Fri, 26 Sep 2008 17:57:46 +0900
+Message-ID: <20080926175746t-sato@mail.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -17,7 +17,7 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "axboe@kernel.dk" <axboe@kernel.dk>, mtk.manpages@googlemail.co
+To: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redh>
 Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
@@ -27,66 +27,62 @@ unlockfs always returns 0.
 Signed-off-by: Takashi Sato <t-sato@yk.jp.nec.com>
 Signed-off-by: Masayuki Hamaguchi <m-hamaguchi@ys.jp.nec.com>
 ---
- super.c |   44 +++++++++++++++++++++++++++++---------------
- 1 file changed, 29 insertions(+), 15 deletions(-)
+ super.c |   40 +++++++++++++++++++++++++++-------------
+ 1 file changed, 27 insertions(+), 13 deletions(-)
 
-diff -uprN -X linux-2.6.27-rc7-lockfs/Documentation/dontdiff linux-2.6.27-rc7-lockfs/fs/ext3/super.c linux-2.6.27-rc7-lo
-ckfs-ext3/fs/ext3/super.c
---- linux-2.6.27-rc7-lockfs/fs/ext3/super.c	2008-09-22 07:29:55.000000000 +0900
-+++ linux-2.6.27-rc7-lockfs-ext3/fs/ext3/super.c	2008-09-26 16:54:41.000000000 +0900
-@@ -48,8 +48,8 @@ static int ext3_load_journal(struct supe
+diff -uprN -X linux-2.6.27-rc7-lockfs-ext3/Documentation/dontdiff linux-2.6.27-rc7-lockfs-ext3/fs/ext4/super.c linux-2.6
+.27-rc7-lockfs-ext4/fs/ext4/super.c
+--- linux-2.6.27-rc7-lockfs-ext3/fs/ext4/super.c	2008-09-26 11:44:53.000000000 +0900
++++ linux-2.6.27-rc7-lockfs-ext4/fs/ext4/super.c	2008-09-26 16:55:57.000000000 +0900
+@@ -49,7 +49,7 @@ static int ext4_load_journal(struct supe
  			     unsigned long journal_devnum);
- static int ext3_create_journal(struct super_block *, struct ext3_super_block *,
+ static int ext4_create_journal(struct super_block *, struct ext4_super_block *,
  			       unsigned int);
--static void ext3_commit_super (struct super_block * sb,
--			       struct ext3_super_block * es,
-+static int ext3_commit_super(struct super_block *sb,
-+			       struct ext3_super_block *es,
- 			       int sync);
- static void ext3_mark_recovery_complete(struct super_block * sb,
- 					struct ext3_super_block * es);
-@@ -60,9 +60,9 @@ static const char *ext3_decode_error(str
+-static void ext4_commit_super(struct super_block *sb,
++static int ext4_commit_super(struct super_block *sb,
+ 			      struct ext4_super_block *es, int sync);
+ static void ext4_mark_recovery_complete(struct super_block *sb,
+ 					struct ext4_super_block *es);
+@@ -60,9 +60,9 @@ static const char *ext4_decode_error(str
  				     char nbuf[16]);
- static int ext3_remount (struct super_block * sb, int * flags, char * data);
- static int ext3_statfs (struct dentry * dentry, struct kstatfs * buf);
--static void ext3_unlockfs(struct super_block *sb);
-+static int ext3_unfreeze(struct super_block *sb);
- static void ext3_write_super (struct super_block * sb);
--static void ext3_write_super_lockfs(struct super_block *sb);
-+static int ext3_freeze(struct super_block *sb);
+ static int ext4_remount(struct super_block *sb, int *flags, char *data);
+ static int ext4_statfs(struct dentry *dentry, struct kstatfs *buf);
+-static void ext4_unlockfs(struct super_block *sb);
++static int ext4_unfreeze(struct super_block *sb);
+ static void ext4_write_super(struct super_block *sb);
+-static void ext4_write_super_lockfs(struct super_block *sb);
++static int ext4_freeze(struct super_block *sb);
  
- /*
-  * Wrappers for journal_start/end.
-@@ -728,8 +728,8 @@ static const struct super_operations ext
- 	.put_super	= ext3_put_super,
- 	.write_super	= ext3_write_super,
- 	.sync_fs	= ext3_sync_fs,
--	.write_super_lockfs = ext3_write_super_lockfs,
--	.unlockfs	= ext3_unlockfs,
-+	.freeze_fs	= ext3_freeze,
-+	.unfreeze_fs	= ext3_unfreeze,
- 	.statfs		= ext3_statfs,
- 	.remount_fs	= ext3_remount,
- 	.clear_inode	= ext3_clear_inode,
-@@ -2251,21 +2251,23 @@ static int ext3_create_journal(struct su
+ 
+ ext4_fsblk_t ext4_block_bitmap(struct super_block *sb,
+@@ -875,8 +875,8 @@ static const struct super_operations ext
+ 	.put_super	= ext4_put_super,
+ 	.write_super	= ext4_write_super,
+ 	.sync_fs	= ext4_sync_fs,
+-	.write_super_lockfs = ext4_write_super_lockfs,
+-	.unlockfs	= ext4_unlockfs,
++	.freeze_fs	= ext4_freeze,
++	.unfreeze_fs	= ext4_unfreeze,
+ 	.statfs		= ext4_statfs,
+ 	.remount_fs	= ext4_remount,
+ 	.clear_inode	= ext4_clear_inode,
+@@ -2792,20 +2792,22 @@ static int ext4_create_journal(struct su
  	return 0;
  }
  
--static void ext3_commit_super (struct super_block * sb,
--			       struct ext3_super_block * es,
-+static int ext3_commit_super(struct super_block *sb,
-+			       struct ext3_super_block *es,
- 			       int sync)
+-static void ext4_commit_super(struct super_block *sb,
++static int ext4_commit_super(struct super_block *sb,
+ 			      struct ext4_super_block *es, int sync)
  {
- 	struct buffer_head *sbh = EXT3_SB(sb)->s_sbh;
+ 	struct buffer_head *sbh = EXT4_SB(sb)->s_sbh;
 +	int error = 0;
  
  	if (!sbh)
 -		return;
 +		return error;
  	es->s_wtime = cpu_to_le32(get_seconds());
- 	es->s_free_blocks_count = cpu_to_le32(ext3_count_free_blocks(sb));
- 	es->s_free_inodes_count = cpu_to_le32(ext3_count_free_inodes(sb));
+ 	ext4_free_blocks_count_set(es, ext4_count_free_blocks(sb));
+ 	es->s_free_inodes_count = cpu_to_le32(ext4_count_free_inodes(sb));
  	BUFFER_TRACE(sbh, "marking dirty");
  	mark_buffer_dirty(sbh);
  	if (sync)
@@ -96,39 +92,39 @@ ckfs-ext3/fs/ext3/super.c
  }
  
  
-@@ -2379,28 +2381,39 @@ static int ext3_sync_fs(struct super_blo
+@@ -2919,28 +2921,39 @@ static int ext4_sync_fs(struct super_blo
   * LVM calls this function before a (read-only) snapshot is created.  This
   * gives us a chance to flush the journal completely and mark the fs clean.
   */
--static void ext3_write_super_lockfs(struct super_block *sb)
-+static int ext3_freeze(struct super_block *sb)
+-static void ext4_write_super_lockfs(struct super_block *sb)
++static int ext4_freeze(struct super_block *sb)
  {
 +	int error = 0;
 +	journal_t *journal;
  	sb->s_dirt = 0;
  
  	if (!(sb->s_flags & MS_RDONLY)) {
--		journal_t *journal = EXT3_SB(sb)->s_journal;
-+		journal = EXT3_SB(sb)->s_journal;
+-		journal_t *journal = EXT4_SB(sb)->s_journal;
++		journal = EXT4_SB(sb)->s_journal;
  
  		/* Now we set up the journal barrier. */
- 		journal_lock_updates(journal);
--		journal_flush(journal);
-+		error = journal_flush(journal);
+ 		jbd2_journal_lock_updates(journal);
+-		jbd2_journal_flush(journal);
++		error = jbd2_journal_flush(journal);
 +		if (error)
 +			goto out;
  
  		/* Journal blocked and flushed, clear needs_recovery flag. */
- 		EXT3_CLEAR_INCOMPAT_FEATURE(sb, EXT3_FEATURE_INCOMPAT_RECOVER);
--		ext3_commit_super(sb, EXT3_SB(sb)->s_es, 1);
-+		error = ext3_commit_super(sb, EXT3_SB(sb)->s_es, 1);
+ 		EXT4_CLEAR_INCOMPAT_FEATURE(sb, EXT4_FEATURE_INCOMPAT_RECOVER);
+-		ext4_commit_super(sb, EXT4_SB(sb)->s_es, 1);
++		error = ext4_commit_super(sb, EXT4_SB(sb)->s_es, 1);
 +		if (error)
 +			goto out;
  	}
 +	return 0;
 +
 +out:
-+	journal_unlock_updates(journal);
++	jbd2_journal_unlock_updates(journal);
 +	return error;
  }
  
@@ -136,16 +132,16 @@ ckfs-ext3/fs/ext3/super.c
   * Called by LVM after the snapshot is done.  We need to reset the RECOVER
   * flag here, even though the filesystem is not technically dirty yet.
   */
--static void ext3_unlockfs(struct super_block *sb)
-+static int ext3_unfreeze(struct super_block *sb)
+-static void ext4_unlockfs(struct super_block *sb)
++static int ext4_unfreeze(struct super_block *sb)
  {
  	if (!(sb->s_flags & MS_RDONLY)) {
  		lock_super(sb);
-@@ -2410,6 +2423,7 @@ static void ext3_unlockfs(struct super_b
+@@ -2950,6 +2963,7 @@ static void ext4_unlockfs(struct super_b
  		unlock_super(sb);
- 		journal_unlock_updates(EXT3_SB(sb)->s_journal);
+ 		jbd2_journal_unlock_updates(EXT4_SB(sb)->s_journal);
  	}
 +	return 0;
  }
  
- static int ext3_remount (struct super_block * sb, int * flags, char * data)
+ static int ext4_remount(struct super_block *sb, int *flags, char *data)
