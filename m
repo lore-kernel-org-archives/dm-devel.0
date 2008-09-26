@@ -1,88 +1,115 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: [PATCH 0/10] freeze feature ver 1.13
-Date: Fri, 26 Sep 2008 06:48:16 -0400
-Message-ID: <30536.1222426096@turing-police.cc.vt.edu>
-References: <20080926175652t-sato@mail.jp.nec.com>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: Re: [dm-devel] Re: dm-ioband + bio-cgroup benchmarks
+Date: Fri, 26 Sep 2008 19:54:29 +0900 (JST)
+Message-ID: <20080926.195429.46150284.taka@valinux.co.jp>
+References: <20080919.123405.91829935.taka@valinux.co.jp>
+	<661de9470809240404i62300942o15337ecec335fe22@mail.gmail.com>
+	<661de9470809240407m7f50b6dav897fef3b37295bb2@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; boundary="==_Exmh_1222426096_7097P";
-	 micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: Your message of "Fri, 26 Sep 2008 17:56:52 +0900."
-             <20080926175652t-sato@mail.jp.nec.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Takashi Sato <t-sato@yk.jp.nec.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "mtk.manpages@googlemail.com" <mtk.manpages@googlemail.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <661de9470809240407m7f50b6dav897fef3b37295bb2@mail.gmail.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: balbir@linux.vnet.ibm.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, ryov@valinux.co.jp, xemul@openvz.org, fernando@oss.ntt.co.jp, vgoyal@redhat.com, righi.andrea@gmail.com
 List-Id: dm-devel.ids
 
---==_Exmh_1222426096_7097P
-Content-Type: text/plain; charset=us-ascii
+Hi,
 
-On Fri, 26 Sep 2008 17:56:52 +0900, Takashi Sato said:
-
-> [PATCH 1/10] VFS: Fix error handling of write_super_lockfs/unlockfs
->   Changed the type of write_super_lockfs and unlockfs from "void"
->   to "int" so that they can return an error. 
->   Rename write_super_lockfs/unlockfs of the super block operation
->   freeze_fs/unfreeze_fs to avoid a confusion.
+> >> > > Currently I have taken code from bio-cgroup to implement cgroups and
+> >> > > to
+> >> > > provide functionality to associate a bio to a cgroup. I need this to
+> >> > > be
+> >> > > able to queue the bio's at right node in the rb-tree and then also to
+> >> > > be
+> >> > > able to take a decision when is the right time to release few
+> >> > > requests.
+> >> > >
+> >> > > Right now in crude implementation, I am working on making system boot.
+> >> > > Once patches are at least in little bit working shape, I will send it
+> >> > > to you
+> >> > > to have a look.
+> >> > >
+> >> > > Thanks
+> >> > > Vivek
+> >> >
+> >> > I wonder... wouldn't be simpler to just use the memory controller
+> >> > to retrieve this information starting from struct page?
+> >> >
+> >> > I mean, following this path (in short, obviously using the appropriate
+> >> > interfaces for locking and referencing the different objects):
+> >> >
+> >> > cgrp = page->page_cgroup->mem_cgroup->css.cgroup
+> >> >
+> >> > Once you get the cgrp it's very easy to use the corresponding controller
+> >> > structure.
+> >> >
+> >> > Actually, this is how I'm doing in cgroup-io-throttle to associate a bio
+> >> > to a cgroup. What other functionalities/advantages bio-cgroup provide in
+> >> > addition to that?
+> >>
+> >> I've decided to get Ryo to post the accurate dirty-page tracking patch
+> >> for bio-cgroup, which isn't perfect yet though. The memory controller
+> >> never wants to support this tracking because migrating a page between
+> >> memory cgroups is really heavy.
 > 
-> [PATCH 2/10]-[PATCH 6/10] Fix error handling in write_super_lockfs/unlockfs
->                           (ext3, ext4, xfs, gfs2, jfs)
->   Changed write_super_lockfs so that it returns an error if needed.
->   unlockfs always returns 0.
+> It depends on the migration. The cost is proportional to the number of
+> pages moved. The cost can be brought down (I do have a  design on
+> paper  -- from long long ago), where moving mm's will reduce the cost
+> of migration, but it adds an additional dereference in the common
+> path.
+
+Okay, this will help to track anonymous pages even after processes are
+migrated between memory-cgroups.
+The rest of my concern is pages in the pagecache, which might be
+potentially dirtied by processes in other cgroups. I think bio-cgroups
+should also care this case.
+
+> >> I also thought enhancing the memory controller would be good enough,
+> >> but a lot of people said they wanted to control memory resource and
+> >> block I/O resource separately.
+> >
+> > Yes, ideally we do want that.
+> >
+> >>
+> >> So you can create several bio-cgroup in one memory-cgroup,
+> >> or you can use bio-cgroup without memory-cgroup.
+> >>
+> >> I also have a plan to implement more acurate tracking mechanism
+> >> on bio-cgroup after the memory cgroup team re-implement the
+> >> infrastructure,
+> >> which won't be supported by memory-cgroup.
+> >> When a process are moved into another memory cgroup,
+> >> the pages belonging to the process don't move to the new cgroup
+> >> because migrating pages is so heavy. It's hard to find the pages
+> >> from the process and migrating pages may cause some memory pressure.
+> >> I'll implement this feature only on bio-cgroup with minimum overhead
+> >
 > 
-> [PATCH 7/10] reiserfs: Fix error handling in write_super_lockfs/unlockfs
->   Changed write_super_lockfs/unlockfs so that they always return
->   0 (success) to keep a current behavior.
-> 
-> [PATCH 8/10] Implement generic freeze feature
->   The ioctls for the generic freeze feature are below.
->   o Freeze the filesystem
->     int ioctl(int fd, int FIFREEZE, arg)
->       fd: The file descriptor of the mountpoint
->       FIFREEZE: request code for the freeze
->       arg: Ignored
->       Return value: 0 if the operation succeeds. Otherwise, -1
-> 
->   o Unfreeze the filesystem
->     int ioctl(int fd, int FITHAW, arg)
->       fd: The file descriptor of the mountpoint
->       FITHAW: request code for unfreeze
->       arg: Ignored
->       Return value: 0 if the operation succeeds. Otherwise, -1
-> 
-> [PATCH 9/10] Remove XFS specific ioctl interfaces for freeze feature
->   It removes XFS specific ioctl interfaces and request codes
->   for freeze feature.
->   This patch has been supplied by David Chinner.
-> 
-> [PATCH 10/10] Add timeout feature
->   The timeout feature is added to "freeze ioctl" to solve a deadlock
->   when the freezer accesses a frozen filesystem. And new ioctl
->   to reset the timeout period is added to extend the timeout period.
->   For example, the freezer resets the timeout period to 10 seconds every 5
->   seconds.  In this approach, even if the freezer causes a deadlock by
->   accessing the frozen filesystem, it will be solved by the timeout
+> Kamezawa has also wanted the page migration feature and we've agreed
+> to provide a per-cgroup flag to decide to turn migration on/off. I
+> would not mind refactoring memcontrol.c if that can help the IO
+> controller and if you want migration, force the migration flag to on
+> and warn the user if they try to turn it off.
 
-Would it be a good idea to merge patch 10 into patch 8?   Otherwise, there's
-two issues I can see:
+Good news! But I've been wondering whether the IO controller should
+have the same feature.
+Once Kamezawa-san finished to implement the new page_cgroup
+infrastructure which pre-allocates all the memory it needs,
+I think I can minimize the cost migrating pages between bio-cgroup
+since this migration won't cause any page reclaim unlike that of
+memory-cgroup.
 
-1) A mostly theoretical problem if a bisect lands exactly on patch 9 it can
-hit the deadlock.
+In this case I might design it only moves pages between bio-cgroups
+while it won't move them between memory-cgroups.
 
-2) The API at patch 8 and patch 10 differs, that's going to make testing through
-a bisection of this patch series a pain.
-
---==_Exmh_1222426096_7097P
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.9 (GNU/Linux)
-Comment: Exmh version 2.5 07/13/2001
-
-iD8DBQFI3L3wcC3lWbTT17ARAjrhAKC8UZHTiIM5FLH1rhQ70o1u4X66CQCfeopP
-jGYlmgzaSwfvHkgcswECSio=
-=HZAd
------END PGP SIGNATURE-----
-
---==_Exmh_1222426096_7097P--
+Thanks,
+Hirokazu Takahashi.
