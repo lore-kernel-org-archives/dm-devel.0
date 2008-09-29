@@ -1,44 +1,80 @@
-From: Dave Kleikamp <shaggy@linux.vnet.ibm.com>
-Subject: Re: [PATCH 0/10] freeze feature ver 1.13
-Date: Fri, 26 Sep 2008 16:26:58 -0500
-Message-ID: <1222464418.27833.7.camel@norville.austin.ibm.com>
-References: <20080926175652t-sato@mail.jp.nec.com>
-	 <30536.1222426096@turing-police.cc.vt.edu>
+From: Hirokazu Takahashi <taka@valinux.co.jp>
+Subject: Re: dm-ioband + bio-cgroup benchmarks
+Date: Mon, 29 Sep 2008 19:40:36 +0900 (JST)
+Message-ID: <20080929.194036.105502812.taka@valinux.co.jp>
+References: <20080924145331.GD547@redhat.com>
+	<20080926.220418.83079316.taka@valinux.co.jp>
+	<48DD0617.3050403@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <30536.1222426096@turing-police.cc.vt.edu>
-Sender: linux-fsdevel-owner@vger.kernel.org
-To: Valdis.Kletnieks@vt.edu
-Cc: Takashi Sato <t-sato@yk.jp.nec.com>, Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "viro@ZenIV.linux.org.uk" <viro@ZenIV.linux.org.uk>, "linux-ext4@vger.kernel.org" <linux-ext4@vger.kernel.org>, "xfs@oss.sgi.com" <xfs@oss.sgi.com>, "mtk.manpages@googlemail.com" <mtk.manpages@googlemail.com>, "axboe@kernel.dk" <axboe@kernel.dk>, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <48DD0617.3050403@gmail.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: righi.andrea@gmail.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, ryov@valinux.co.jp, xemul@openvz.org, fernando@oss.ntt.co.jp, vgoyal@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Fri, 2008-09-26 at 06:48 -0400, Valdis.Kletnieks@vt.edu wrote:
-> On Fri, 26 Sep 2008 17:56:52 +0900, Takashi Sato said:
+Hi,
 
-> Would it be a good idea to merge patch 10 into patch 8?   Otherwise, there's
-> two issues I can see:
+> >>>>> It's possible the algorithm of dm-ioband can be placed in the block layer
+> >>>>> if it is really a big problem.
+> >>>>> But I doubt it can control every control block I/O as we wish since
+> >>>>> the interface the cgroup supports is quite poor.
+> >>>> Had a question regarding cgroup interface. I am assuming that in a system,
+> >>>> one will be using other controllers as well apart from IO-controller.
+> >>>> Other controllers will be using cgroup as a grouping mechanism.
+> >>>> Now coming up with additional grouping mechanism for only io-controller seems
+> >>>> little odd to me. It will make the job of higher level management software
+> >>>> harder.
+> >>>>
+> >>>> Looking at the dm-ioband grouping examples given in patches, I think cases
+> >>>> of grouping based  in pid, pgrp, uid and kvm can be handled by creating right
+> >>>> cgroup and making sure applications are launched/moved into right cgroup by
+> >>>> user space tools. 
+> >>> Grouping in pid, pgrp and uid is not the point, which I've been thinking
+> >>> can be replaced with cgroup once the implementation of bio-cgroup is done.
+> >>>
+> >>> I think problems of cgroup are that they can't support lots of storages
+> >>> and hotplug devices, it just handle them as if they were just one resource.
+> >>> I don't insist the interface of dm-ioband is the best. I just hope the
+> >>> cgroup infrastructure support this kind of resources.
+> >>>
+> >> Sorry, I did not understand fully. Can you please explain in detail what
+> >> kind of situation will not be covered by cgroup interface.
+> > 
+> > From the concept of the cgroup, if you want control several disks
+> > independently, you should make each disk have its own cgroup subsystem,
+> > which only can be defined when compiling the kernel. This is impossible
+> > because every linux box has various number of disks.
 > 
-> 1) A mostly theoretical problem if a bisect lands exactly on patch 9 it can
-> hit the deadlock.
+> mmh? not true. You can define a single cgroup subsystem that implements
+> the opportune interfaces to apply your type of control, and use many
+> structures allocated dynamically for each controlled object (one for
+> each block device, disk, partition, ... or using any kind of
+> grouping/splitting policy). Actually, this is how cgroup-io-throttle, as
+> well as any other cgroup subsystem, is implemented.
+> 
+> > So you think it may be possible to make each cgroup have lots of control
+> > files for each device as a workaround. But it isn't allowed to add/remove
+> > control files when some devices are hot-added or hot-removed.
+> 
+> Why not a single control file for all the devices?
 
-Really, there's no deadlock until someone uses the new function, so
-that's not really an issue, is it?  However, this patchset breaks
-bisection anyway.
+This is possible but I wonder if this is really the way we should go.
+It looks like you tried implementing another ioctl-like interface
+on the cgroup control file interface. You can do anything you want
+with this interface though.
 
-A bisect anywhere between patch 1 and 7 will cause some number of
-filesystems to fail to compile.  Patches 1-7 either need to be combined
-into one, or patch 1 needs to add freeze_fs and unfreeze_fs while
-leaving write_super_lockfs and unlockfs, then a patch between 7 and 8
-could remove write_super_lockfs and unlockfs.
+I guess there should be at least some rules to implement this kind of
+ioctl-like interface if they don't want to enhance the cgroup interface, 
 
-> 2) The API at patch 8 and patch 10 differs, that's going to make testing through
-> a bisection of this patch series a pain.
-
-There's no need to test the new interface during a bisection.  Bisection
-is important in testing regressions, but not new function.
--- 
-David Kleikamp
-IBM Linux Technology Center
-
+Thank you,
+Hirokazu Takahashi.
