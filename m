@@ -1,109 +1,23 @@
-From: Pavel Emelyanov <xemul@openvz.org>
-Subject: Re: dm-ioband + bio-cgroup benchmarks
-Date: Mon, 29 Sep 2008 16:13:14 +0400
-Message-ID: <48E0C65A.90001@openvz.org>
-References: <20080924140355.GB547@redhat.com>	<48DD09AD.2010200@gmail.com>	<48DD17A9.9080607@gmail.com> <20080929.210729.117112710.taka@valinux.co.jp>
+From: Christoph Hellwig <hch@infradead.org>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Mon, 29 Sep 2008 10:13:26 -0400
+Message-ID: <20080929141326.GA31781@infradead.org>
+References: <20080908205337t-sato@mail.jp.nec.com> <20080908171119.GB22521@infradead.org> <48DBFD42.6030307@redhat.com> <D0B0D91F884647D6808626CDFF81E532@nsl.ad.nec.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754185AbYI2MSW@vger.kernel.org>
-In-Reply-To: <20080929.210729.117112710.taka@valinux.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Hirokazu Takahashi <taka@valinux.co.jp>
-Cc: righi.andrea@gmail.com, vgoyal@redhat.com, ryov@valinux.co.jp, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, agk@sourceware.org, jens.axboe@oracle.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-ext4-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <D0B0D91F884647D6808626CDFF81E532@nsl.ad.nec.co.jp>
+Sender: linux-ext4-owner@vger.kernel.org
+To: Takashi Sato <t-sato@yk.jp.nec.com>
+Cc: Ric Wheeler <rwheeler@redhat.com>, Christoph Hellwig <hch@infradead.org>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@tv-sign.ru>, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Hirokazu Takahashi wrote:
-> Hi, Andrea,
-> 
->>>> Ok, I will give more details of the thought process.
->>>>
->>>> I was thinking of maintaing an rb-tree per request queue and not an
->>>> rb-tree per cgroup. This tree can contain all the bios submitted to that
->>>> request queue through __make_request(). Every node in the tree will represent
->>>> one cgroup and will contain a list of bios issued from the tasks from that
->>>> cgroup.
->>>>
->>>> Every bio entering the request queue through __make_request() function
->>>> first will be queued in one of the nodes in this rb-tree, depending on which
->>>> cgroup that bio belongs to.
->>>>
->>>> Once the bios are buffered in rb-tree, we release these to underlying
->>>> elevator depending on the proportionate weight of the nodes/cgroups.
->>>>
->>>> Some more details which I was trying to implement yesterday.
->>>>
->>>> There will be one bio_cgroup object per cgroup. This object will contain
->>>> many bio_group objects. Each bio_group object will be created for each
->>>> request queue where a bio from bio_cgroup is queued. Essentially the idea
->>>> is that bios belonging to a cgroup can be on various request queues in the
->>>> system. So a single object can not serve the purpose as it can not be on
->>>> many rb-trees at the same time.  Hence create one sub object which will keep
->>>> track of bios belonging to one cgroup on a particular request queue.
->>>>
->>>> Each bio_group will contain a list of bios and this bio_group object will
->>>> be a node in the rb-tree of request queue. For example. Lets say there are
->>>> two request queues in the system q1 and q2 (lets say they belong to /dev/sda
->>>> and /dev/sdb). Let say a task t1 in /cgroup/io/test1 is issueing io both
->>>> for /dev/sda and /dev/sdb.
->>>>
->>>> bio_cgroup belonging to /cgroup/io/test1 will have two sub bio_group
->>>> objects, say bio_group1 and bio_group2. bio_group1 will be in q1's rb-tree
->>>> and bio_group2 will be in q2's rb-tree. bio_group1 will contain a list of
->>>> bios issued by task t1 for /dev/sda and bio_group2 will contain a list of
->>>> bios issued by task t1 for /dev/sdb. I thought the same can be extended
->>>> for stacked devices also.
->>>>   
->>>> I am still trying to implementing it and hopefully this is doable idea.
->>>> I think at the end of the day it will be something very close to dm-ioband
->>>> algorithm just that there will be no lvm driver and no notion of separate
->>>> dm-ioband device. 
->>> Vivek, thanks for the detailed explanation. Only a comment. I guess, if
->>> we don't change also the per-process optimizations/improvements made by
->>> some IO scheduler, I think we can have undesirable behaviours.
->>>
->>> For example: CFQ uses the per-process iocontext to improve fairness
->>> between *all* the processes in a system. But it doesn't have the concept
->>> that there's a cgroup context on-top-of the processes.
->>>
->>> So, some optimizations made to guarantee fairness among processes could
->>> conflict with algorithms implemented at the cgroup layer. And
->>> potentially lead to undesirable behaviours.
->>>
->>> For example an issue I'm experiencing with my cgroup-io-throttle
->>> patchset is that a cgroup can consistently increase the IO rate (always
->>> respecting the max limits), simply increasing the number of IO worker
->>> tasks respect to another cgroup with a lower number of IO workers. This
->>> is probably due to the fact the CFQ tries to give the same amount of
->>> "IO time" to all the tasks, without considering that they're organized
->>> in cgroup.
->> BTW this is why I proposed to use a single shared iocontext for all the
->> processes running in the same cgroup. Anyway, this is not the best
->> solution, because in this way all the IO requests coming from a cgroup
->> will be queued to the same cfq queue. If I'm not wrong in this way we
->> would implement noop (FIFO) between tasks belonging to the same cgroup
->> and CFQ between cgroups. But, at least for this particular case, we
->> would be able to provide fairness among cgroups.
->>
->> -Andrea
-> 
-> I ever thought the same thing but this approach breaks the compatibility.
-> I think we should make ionice only effective for the processes in the
-> same cgroup.
-> 
-> A system gives some amount of bandwidths to its cgroups, and
-> the processes in one of the cgroups fairly share the given bandwidth.
-> I think this is the straight approach. What do you think?
-> 
-> I think all the CFQ-cgroup the NEC guys are working, OpenVZ team's CFQ
-> scheduler and dm-ioband with bio-cgroup work like this.
+On Fri, Sep 26, 2008 at 05:52:35PM +0900, Takashi Sato wrote:
+> I think that your concern is that the freezer cannot recognize the occurrence
+> of a timeout and it continues the backup process and the backup data is
+> corrupted finally.
 
-If by "fairly share the given bandwidth" you mean "share according to their
-IO-nice values" then you're right on this, Hirokazu. We always use a two-level
-schedulers and would like to see the same behavior in anything that will be
-the IO-bandwidth-controller in the mainline :)
+What timeout should happen?  the freeze ioctl must not return until the
+filesystem is a clean state and all writes are blocked.
 
-> Thank you,
-> Hirokazu Takahashi.
-> 
-> 
