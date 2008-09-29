@@ -1,80 +1,60 @@
-From: Hirokazu Takahashi <taka@valinux.co.jp>
-Subject: Re: dm-ioband + bio-cgroup benchmarks
-Date: Mon, 29 Sep 2008 19:40:36 +0900 (JST)
-Message-ID: <20080929.194036.105502812.taka@valinux.co.jp>
-References: <20080924145331.GD547@redhat.com>
-	<20080926.220418.83079316.taka@valinux.co.jp>
-	<48DD0617.3050403@gmail.com>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
+Subject: Re: [PATCH 3/3] Add timeout feature
+Date: Mon, 29 Sep 2008 20:11:41 +0900
+Message-ID: <CB0D828755EF47B78DA10F72C80BC436@nsl.ad.nec.co.jp>
+References: <20080908205337t-sato@mail.jp.nec.com>
+	<20080908171119.GB22521@infradead.org>
+	<48DBFD42.6030307@redhat.com>
+	<D0B0D91F884647D6808626CDFF81E532@nsl.ad.nec.co.jp>
+	<48DCC043.1020207@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; format=flowed; charset="ISO-8859-1";
+	reply-type=original
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <48DD0617.3050403@gmail.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: righi.andrea@gmail.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, ryov@valinux.co.jp, xemul@openvz.org, fernando@oss.ntt.co.jp, vgoyal@redhat.com, balbir@linux.vnet.ibm.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <48DCC043.1020207@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ric Wheeler <rwheeler@redhat.com>, Christoph Hellwig <hch@infradead.org>
+Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, Andrew Morton <akpm@linux-foundation.org>, linux-ext4@vger.kernel.org, Oleg Nesterov <oleg@tv-sign.ru>
 List-Id: dm-devel.ids
 
-Hi,
+Hi Ric and Christoph,
 
-> >>>>> It's possible the algorithm of dm-ioband can be placed in the block layer
-> >>>>> if it is really a big problem.
-> >>>>> But I doubt it can control every control block I/O as we wish since
-> >>>>> the interface the cgroup supports is quite poor.
-> >>>> Had a question regarding cgroup interface. I am assuming that in a system,
-> >>>> one will be using other controllers as well apart from IO-controller.
-> >>>> Other controllers will be using cgroup as a grouping mechanism.
-> >>>> Now coming up with additional grouping mechanism for only io-controller seems
-> >>>> little odd to me. It will make the job of higher level management software
-> >>>> harder.
-> >>>>
-> >>>> Looking at the dm-ioband grouping examples given in patches, I think cases
-> >>>> of grouping based  in pid, pgrp, uid and kvm can be handled by creating right
-> >>>> cgroup and making sure applications are launched/moved into right cgroup by
-> >>>> user space tools. 
-> >>> Grouping in pid, pgrp and uid is not the point, which I've been thinking
-> >>> can be replaced with cgroup once the implementation of bio-cgroup is done.
-> >>>
-> >>> I think problems of cgroup are that they can't support lots of storages
-> >>> and hotplug devices, it just handle them as if they were just one resource.
-> >>> I don't insist the interface of dm-ioband is the best. I just hope the
-> >>> cgroup infrastructure support this kind of resources.
-> >>>
-> >> Sorry, I did not understand fully. Can you please explain in detail what
-> >> kind of situation will not be covered by cgroup interface.
-> > 
-> > From the concept of the cgroup, if you want control several disks
-> > independently, you should make each disk have its own cgroup subsystem,
-> > which only can be defined when compiling the kernel. This is impossible
-> > because every linux box has various number of disks.
-> 
-> mmh? not true. You can define a single cgroup subsystem that implements
-> the opportune interfaces to apply your type of control, and use many
-> structures allocated dynamically for each controlled object (one for
-> each block device, disk, partition, ... or using any kind of
-> grouping/splitting policy). Actually, this is how cgroup-io-throttle, as
-> well as any other cgroup subsystem, is implemented.
-> 
-> > So you think it may be possible to make each cgroup have lots of control
-> > files for each device as a workaround. But it isn't allowed to add/remove
-> > control files when some devices are hot-added or hot-removed.
-> 
-> Why not a single control file for all the devices?
+Ric Wheeler wrote:
+>>>> And as with all previous posting I still fundamentally disagree about
+>>>> the need of this functionality.  We don't need a timeout for freezing.
+>>>
+>>> I agree with Christoph here, I think that the timeout is unneeded.
+>>
+>> I think that your concern is that the freezer cannot recognize the occurrence
+>> of a timeout and it continues the backup process and the backup data is
+>> corrupted finally.
+>> If the freezer can recognize it by the unfreeze ioctl's errono, will your concern
+>> be solved?
+>> If so, I will implement it.
+>>
+>> Cheers, Takashi
+>>
+> I think that is certainly part a big part of my concern.
+>
+> Also note that the timeout seems to be quite low relative to say the standard timeout for a SCSI 
+> device (30 seconds worst case).
+>
+> In general, I am quite supportive of the patch series and think that this is a great addition.
 
-This is possible but I wonder if this is really the way we should go.
-It looks like you tried implementing another ioctl-like interface
-on the cgroup control file interface. You can do anything you want
-with this interface though.
+Thank you for your comments.
+Christoph, do you have any comments about this solution?
 
-I guess there should be at least some rules to implement this kind of
-ioctl-like interface if they don't want to enhance the cgroup interface, 
+If it's OK, I will change the freeze patch so that the unfreeze ioctl sets
+ETIMEDOUT to errno when the timeout occurs.
 
-Thank you,
-Hirokazu Takahashi.
+Cheers, Takashi
