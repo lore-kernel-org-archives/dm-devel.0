@@ -1,109 +1,147 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [PATCH 5/7] block: Find bio sector offset given idx and offset
-Date: Wed, 1 Oct 2008 10:10:56 +0200
-Message-ID: <20081001081056.GB19428@kernel.dk>
-References: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com> <1222846723-18213-6-git-send-email-martin.petersen@oracle.com>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Subject: Re: multipath-tools libmultipath/configure.c libmu ...
+Date: Wed, 1 Oct 2008 16:03:14 +0300
+Message-ID: <20081001130314.GM9714@edu.joroinen.fi>
+References: <20080919032710.28653.qmail@sourceware.org>
+	<20080919185313.GA2932@thumper2> <20080919215731.GA7172@thumper2>
+	<20080923180504.GB3808@ether.msp.redhat.com>
+	<20080930092206.GH9714@edu.joroinen.fi>
+	<20080930093843.GI9714@edu.joroinen.fi>
+	<20080930192046.GE3808@ether.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753879AbYJAIL2@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1222846723-18213-6-git-send-email-martin.petersen@oracle.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: neilb@suse.de, agk@sourceware.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
+In-Reply-To: <20080930192046.GE3808@ether.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Oct 01 2008, Martin K. Petersen wrote:
-> Helper function to find the sector offset in a bio given bvec index
-> and page offset.
-> 
-> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
-> ---
->  fs/bio.c            |   34 ++++++++++++++++++++++++++++++++++
->  include/linux/bio.h |    1 +
->  2 files changed, 35 insertions(+), 0 deletions(-)
-> 
-> diff --git a/fs/bio.c b/fs/bio.c
-> index e56e768..55ee2fd 100644
-> --- a/fs/bio.c
-> +++ b/fs/bio.c
-> @@ -1300,6 +1300,40 @@ struct bio_pair *bio_split(struct bio *bi, mempool_t *pool, int first_sectors)
->  	return bp;
->  }
->  
-> +/**
-> + *	bio_sector_offset - Find hardware sector offset in bio
-> + *	@bio:		bio to inspect
-> + *	@index:		bio_vec index
-> + *	@offset:	offset in bv_page
-> + *
-> + *	Return the number of hardware sectors between beginning of bio
-> + *	and an end point indicated by a bio_vec index and an offset
-> + *	within that vector's page.
-> + */
-> +sector_t bio_sector_offset(struct bio *bio, unsigned short index,
-> +			   unsigned int offset)
-> +{
-> +	struct bio_vec *bv;
-> +	unsigned int sector_sz = bio->bi_bdev->bd_disk->queue->hardsect_size;
-> +	sector_t sectors;
-> +	int i;
-> +
-> +	sectors = 0;
-> +
-> +	BUG_ON(index >= bio->bi_vcnt);
-> +
-> +	bio_for_each_segment(bv, bio, i) {
-> +		if (i == index) {
-> +			if (offset > bv->bv_offset)
-> +				sectors += (offset - bv->bv_offset) / sector_sz;
-> +			return sectors;
-> +		}
-> +
-> +		sectors += bv->bv_len / sector_sz;
-> +	}
-> +
-> +	BUG();
-> +}
+On Tue, Sep 30, 2008 at 02:20:47PM -0500, Benjamin Marzinski wrote:
+> On Tue, Sep 30, 2008 at 12:38:43PM +0300, Pasi K=E4rkk=E4inen wrote:
+> > On Tue, Sep 30, 2008 at 12:22:06PM +0300, Pasi K=E4rkk=E4inen wrote:
+> > > On Tue, Sep 23, 2008 at 01:05:04PM -0500, Benjamin Marzinski wrote:
+> > > > >=20
+> > > > > Responding to my own mail, I did got the source with the patche=
+s from the
+> > > > > cvs.  But, the resizing does not work for with with mounted vol=
+umes.  There
+> > > > > are 4 paths for the volume, so there is no probably with it fai=
+ling paths.=20
+> > > > > I get "domap(0) failure for create/reload map" when I run multi=
+path -v 3.
+> > > > >=20
+> > > > > I can get dm to reconize the new size if the volume is umounted=
+.  But, I
+> > > > > really would like it to work while it is mounted.
+> > > > >=20
+> > > >=20
+> > > > It should work for mounted volumes.  Did you try
+> > > > multipathd -k"resize map <mapname>"
+> > > >=20
+> > > > Since this requires suspending without the no_flush option, I did=
+n't
+> > > > want to have it happen on a normal reload, and since without the =
+kernel
+> > > > fixes, this required removing and then readding paths, I did it t=
+hrough
+> > > > multipathd.
+> > > >=20
+> > > > So just running multipath -v3 after a path resize won't work. In =
+fact, I
+> > > > think it might leave the devices in the suspended state, since th=
+e
+> > > > resume fails.
+> > > >=20
+> > >=20
+> > > Hi!
+> > >=20
+> > > I just tried this but I'm having problems getting it to work..
+> > >=20
+> > > # multipathd -k"resize map mpath-resize-test"
+> > > fail
+> > >=20
+> > > The underlying SCSI devices have been online resized already, and v=
+erified
+> > > from dmesg and from /proc/partitions to be bigger.
+> > >=20
+> > > I'm running rhel5 kernel with scsi online resize patches (2.6.18-93=
+.el5.bz444964.2)
+> > > and dm-multipath testing packages with support for online resizing
+> > > (device-mapper-multipath-0.4.7-19.el5.i386.rpm).
+> > >=20
+> > > Any ideas?=20
+> > >=20
+> >=20
+> > Actually I think the problem was that I had not yet reloaded multipat=
+hd
+> > configuration, so my underlying devices were still blacklisted accord=
+ing to
+> > multipathd -k"show devices".. but still I had the mpath-device up and
+> > running :) Oh well..
+> >=20
+> > I ran "/etc/init.d/multipathd reload" and then:
+> >=20
+> > # multipathd -k"resize map mpath-resize-test"
+> > ok
+> >=20
+> > But "multipath -ll" still shows the mpath-resize-test device with the
+> > same/old size..=20
+> >=20
+> > What to do/try next?=20
+>=20
+> Does
+>=20
+> # blockdev --getsize <scsi_device>
+>=20
+> show the new size, after you have increased the scsi device size?
+>=20
 
-Too may BUG's there, me thinks, and the interface looks fragile. What if
-the bio is alreday done (bi_idx == bi_vcnt)? I'd prefer something ala:
+Yep, it does.
 
-sector_t bio_sector_offset(struct bio *bio, unsigned short index,
-			   unsigned int offset)
-{
-	unsigned int sector_sz = queue_hardsect_size(bio->bi_bdev->bd_disk->queue);
-	struct bio_vec *bv;
-	sector_t sectors;
-	int i;
+> Also, can you start up multipathd with the -v3 option, and copy any
+> messages that are printed out when you run=20
+>=20
+> # multipathd -k"resize map mpath-resize-test"
+>=20
+> Thanks.
+>=20
 
-	sectors = 0;
+I don't know what went wrong, but my mpath device went into SUSPENDED mod=
+e,
+and now also multipathd command just hangs.. actually I can't even reboot
+the server, 'reboot' command also hangs. "dmsetup resume" doesn't help..
 
-        /* total start of bio current start? */
-#if 0
-        if (index >= bio->bi_vcnt)
-                index = bio->bi_vcnt - 1;
+I guess rebooting doesn't work because I have some IO waiting for executi=
+on
+for that suspended device/filesystem..
 
-        __bio_for_each_segment(bv, bio, i, 0) {
-#else
-        if (index > bio->bi_idx)
-                return 0;
+I power cycled the server, and tried again..=20
 
-	bio_for_each_segment(bv, bio, i) {
-#endif
-		if (i == index) {
-			if (offset > bv->bv_offset)
-				sectors += (offset - bv->bv_offset) / sector_sz;
-                        break;
-		}
+This time it worked OK!=20
 
-		sectors += bv->bv_len / sector_sz;
-	}
+Differences between my first try (which didn't work) and the=20
+second (successful) try:
 
-        return sectors;
-}
+- First time I didn't have multipathd restarted/reloaded to pick up the =20
+  complete configuration for the LUNs/devices used in this test.
 
-Depending on which interface you want, pick one of the if/else parts :-)
+- First time I didn't understand to do 'del/add path' trick.. I went for
+  'resize map' immediately.=20
 
--- 
-Jens Axboe
+"Log" of my successful resize experience is here:
+http://pasik.reaktio.net/rhel5-online-iscsi-resize-test.txt
+
+Thanks a lot for your help!
+
+-- Pasi
