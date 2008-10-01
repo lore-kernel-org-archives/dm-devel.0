@@ -1,8 +1,8 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: [PATCH 2/7] block: Fix double put in
-	blk_integrity_unregister
-Date: Wed,  1 Oct 2008 03:38:38 -0400
-Message-ID: <1222846723-18213-3-git-send-email-martin.petersen@oracle.com>
+Subject: [PATCH 1/7] block: Introduce integrity data ownership
+	flag
+Date: Wed,  1 Oct 2008 03:38:37 -0400
+Message-ID: <1222846723-18213-2-git-send-email-martin.petersen@oracle.com>
 References: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -20,27 +20,41 @@ To: jens.axboe@oracle.com, neilb@suse.de, agk@sourceware.org
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
- - kobject_del already puts the parent.
-
- - Set integrity profile to NULL to prevent stale data.
+A filesystem might supply its own integrity metadata.  Introduce a
+flag that indicates whether the filesystem or the block layer owns the
+integrity buffer.
 
 Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- block/blk-integrity.c |    2 +-
- 1 files changed, 1 insertions(+), 1 deletions(-)
+ fs/bio-integrity.c  |    3 ++-
+ include/linux/bio.h |    1 +
+ 2 files changed, 3 insertions(+), 1 deletions(-)
 
-diff --git a/block/blk-integrity.c b/block/blk-integrity.c
-index 69023da..e3817a0 100644
---- a/block/blk-integrity.c
-+++ b/block/blk-integrity.c
-@@ -376,7 +376,7 @@ void blk_integrity_unregister(struct gendisk *disk)
+diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
+index c3e174b..8e409ff 100644
+--- a/fs/bio-integrity.c
++++ b/fs/bio-integrity.c
+@@ -107,7 +107,8 @@ void bio_integrity_free(struct bio *bio, struct bio_set *bs)
+ 	BUG_ON(bip == NULL);
  
- 	kobject_uevent(&bi->kobj, KOBJ_REMOVE);
- 	kobject_del(&bi->kobj);
--	kobject_put(&disk_to_dev(disk)->kobj);
- 	kmem_cache_free(integrity_cachep, bi);
-+	disk->integrity = NULL;
- }
- EXPORT_SYMBOL(blk_integrity_unregister);
+ 	/* A cloned bio doesn't own the integrity metadata */
+-	if (!bio_flagged(bio, BIO_CLONED) && bip->bip_buf != NULL)
++	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
++	    && bip->bip_buf != NULL)
+ 		kfree(bip->bip_buf);
+ 
+ 	mempool_free(bip->bip_vec, bs->bvec_pools[bip->bip_pool]);
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 6520ee1..6aba97d 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -109,6 +109,7 @@ struct bio {
+ #define BIO_EOPNOTSUPP	7	/* not supported */
+ #define BIO_CPU_AFFINE	8	/* complete bio on same CPU as submitted */
+ #define BIO_NULL_MAPPED 9	/* contains invalid user pages */
++#define BIO_FS_INTEGRITY 10	/* fs owns integrity data, not block layer */
+ #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
+ 
+ /*
 -- 
 1.6.0.2
