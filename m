@@ -1,7 +1,8 @@
 From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: [PATCH 4/7] block: gendisk integrity wrapper
-Date: Wed,  1 Oct 2008 03:38:40 -0400
-Message-ID: <1222846723-18213-5-git-send-email-martin.petersen@oracle.com>
+Subject: [PATCH 5/7] block: Find bio sector offset given idx and
+	offset
+Date: Wed,  1 Oct 2008 03:38:41 -0400
+Message-ID: <1222846723-18213-6-git-send-email-martin.petersen@oracle.com>
 References: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -19,37 +20,71 @@ To: jens.axboe@oracle.com, neilb@suse.de, agk@sourceware.org
 Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-This is a wrapper for accessing a gendisk's integrity bits.  It allows
-the integrity support in MD to be compiled with BLK_DEV_INTEGRITY off.
+Helper function to find the sector offset in a bio given bvec index
+and page offset.
 
 Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 ---
- include/linux/blkdev.h |    6 ++++++
- 1 files changed, 6 insertions(+), 0 deletions(-)
+ fs/bio.c            |   34 ++++++++++++++++++++++++++++++++++
+ include/linux/bio.h |    1 +
+ 2 files changed, 35 insertions(+), 0 deletions(-)
 
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index eec0842..ca08439 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -1027,6 +1027,11 @@ static inline struct blk_integrity *bdev_get_integrity(struct block_device *bdev
- 	return bdev->bd_disk->integrity;
+diff --git a/fs/bio.c b/fs/bio.c
+index e56e768..55ee2fd 100644
+--- a/fs/bio.c
++++ b/fs/bio.c
+@@ -1300,6 +1300,40 @@ struct bio_pair *bio_split(struct bio *bi, mempool_t *pool, int first_sectors)
+ 	return bp;
  }
  
-+static inline struct blk_integrity *blk_get_integrity(struct gendisk *disk)
++/**
++ *	bio_sector_offset - Find hardware sector offset in bio
++ *	@bio:		bio to inspect
++ *	@index:		bio_vec index
++ *	@offset:	offset in bv_page
++ *
++ *	Return the number of hardware sectors between beginning of bio
++ *	and an end point indicated by a bio_vec index and an offset
++ *	within that vector's page.
++ */
++sector_t bio_sector_offset(struct bio *bio, unsigned short index,
++			   unsigned int offset)
 +{
-+	return disk->integrity;
-+}
++	struct bio_vec *bv;
++	unsigned int sector_sz = bio->bi_bdev->bd_disk->queue->hardsect_size;
++	sector_t sectors;
++	int i;
 +
- static inline unsigned int bdev_get_tag_size(struct block_device *bdev)
- {
- 	struct blk_integrity *bi = bdev_get_integrity(bdev);
-@@ -1069,6 +1074,7 @@ static inline int blk_integrity_rq(struct request *rq)
- #define blk_rq_count_integrity_sg(a)		(0)
- #define blk_rq_map_integrity_sg(a, b)		(0)
- #define bdev_get_integrity(a)			(0)
-+#define blk_get_integrity(a)			(0)
- #define bdev_get_tag_size(a)			(0)
- #define blk_integrity_compare(a, b)		(0)
- #define blk_integrity_register(a, b)		(0)
++	sectors = 0;
++
++	BUG_ON(index >= bio->bi_vcnt);
++
++	bio_for_each_segment(bv, bio, i) {
++		if (i == index) {
++			if (offset > bv->bv_offset)
++				sectors += (offset - bv->bv_offset) / sector_sz;
++			return sectors;
++		}
++
++		sectors += bv->bv_len / sector_sz;
++	}
++
++	BUG();
++}
+ 
+ /*
+  * create memory pools for biovec's in a bio_set.
+diff --git a/include/linux/bio.h b/include/linux/bio.h
+index 6aba97d..386a1df 100644
+--- a/include/linux/bio.h
++++ b/include/linux/bio.h
+@@ -327,6 +327,7 @@ extern int bio_add_page(struct bio *, struct page *, unsigned int,unsigned int);
+ extern int bio_add_pc_page(struct request_queue *, struct bio *, struct page *,
+ 			   unsigned int, unsigned int);
+ extern int bio_get_nr_vecs(struct block_device *);
++extern sector_t bio_sector_offset(struct bio *, unsigned short, unsigned int);
+ extern struct bio *bio_map_user(struct request_queue *, struct block_device *,
+ 				unsigned long, unsigned int, int, gfp_t);
+ struct sg_iovec;
 -- 
 1.6.0.2
