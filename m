@@ -1,42 +1,40 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper regression fixes for 2.6.27
-Date: Wed, 1 Oct 2008 17:24:18 +0100
-Message-ID: <20081001162417.GE5098@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH 1/1] block: add lld busy state exporting interface
+Date: Wed, 1 Oct 2008 20:31:08 +0200
+Message-ID: <20081001183107.GM19428@kernel.dk>
+References: <20080929.113558.112628070.k-ueda@ct.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-scsi-owner@vger.kernel.org>
 Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Milan Broz <mbroz@redhat.com>
+In-Reply-To: <20080929.113558.112628070.k-ueda@ct.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, dm-devel@redhat.com, akpm@linux-foundation.org, j-nomura@ce.jp.nec.com
 List-Id: dm-devel.ids
 
-Please pull from:
+On Mon, Sep 29 2008, Kiyoshi Ueda wrote:
+> Hi Jens,
+> 
+> I hope the previous RFC patch(*) would be no problem, since I haven't
+> gotten any negative comment.
+>     (*) http://lkml.org/lkml/2008/9/25/262
+> 
+> So could you take this patch for 2.6.28 additionally?
+> This patch adds a new interface for request stacking drivers.
+> There should be no regression risk.
+> 
+> This patch was created on top of the commit below of for-2.6.28.
+> ---------------------------------------------------------------------
+> commit e857b07acc3f1352224f380fcbf26ef985116cc8
+> Author: Sven Schuetz <sven@linux.vnet.ibm.com>
+> Date:   Fri Sep 26 10:58:02 2008 +0200
+> 
+>     include blktrace_api.h in headers_install
+> ---------------------------------------------------------------------
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git
+Applied
 
-to get the following device-mapper fixes for 2.6.27:
-
-Chandra Seetharaman (1):
-      dm mpath: add missing path switching locking
-
-Mikulas Patocka (2):
-      dm: always allow one page in dm_merge_bvec
-      dm: cope with access beyond end of device in dm_merge_bvec
-
- drivers/md/dm-mpath.c |   16 +++++++++++++++-
- drivers/md/dm.c       |   12 ++++++++----
- 2 files changed, 23 insertions(+), 5 deletions(-)
-
-Alasdair
 -- 
-agk@redhat.com
+Jens Axboe
+
