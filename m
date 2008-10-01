@@ -1,19 +1,9 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath-tools libmultipath/configure.c libmu ...
-Date: Tue, 30 Sep 2008 14:20:47 -0500
-Message-ID: <20080930192046.GE3808@ether.msp.redhat.com>
-References: <20080919032710.28653.qmail@sourceware.org>
-	<20080919185313.GA2932@thumper2> <20080919215731.GA7172@thumper2>
-	<20080923180504.GB3808@ether.msp.redhat.com>
-	<20080930092206.GH9714@edu.joroinen.fi>
-	<20080930093843.GI9714@edu.joroinen.fi>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Block integrity patches for 2.6.28
+Date: Wed,  1 Oct 2008 03:38:36 -0400
+Message-ID: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20080930093843.GI9714@edu.joroinen.fi>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,97 +13,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: jens.axboe@oracle.com, neilb@suse.de, agk@sourceware.org
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Tue, Sep 30, 2008 at 12:38:43PM +0300, Pasi K=E4rkk=E4inen wrote:
-> On Tue, Sep 30, 2008 at 12:22:06PM +0300, Pasi K=E4rkk=E4inen wrote:
-> > On Tue, Sep 23, 2008 at 01:05:04PM -0500, Benjamin Marzinski wrote:
-> > > >=20
-> > > > Responding to my own mail, I did got the source with the patches =
-from the
-> > > > cvs.  But, the resizing does not work for with with mounted volum=
-es.  There
-> > > > are 4 paths for the volume, so there is no probably with it faili=
-ng paths.=20
-> > > > I get "domap(0) failure for create/reload map" when I run multipa=
-th -v 3.
-> > > >=20
-> > > > I can get dm to reconize the new size if the volume is umounted. =
- But, I
-> > > > really would like it to work while it is mounted.
-> > > >=20
-> > >=20
-> > > It should work for mounted volumes.  Did you try
-> > > multipathd -k"resize map <mapname>"
-> > >=20
-> > > Since this requires suspending without the no_flush option, I didn'=
-t
-> > > want to have it happen on a normal reload, and since without the ke=
-rnel
-> > > fixes, this required removing and then readding paths, I did it thr=
-ough
-> > > multipathd.
-> > >=20
-> > > So just running multipath -v3 after a path resize won't work. In fa=
-ct, I
-> > > think it might leave the devices in the suspended state, since the
-> > > resume fails.
-> > >=20
-> >=20
-> > Hi!
-> >=20
-> > I just tried this but I'm having problems getting it to work..
-> >=20
-> > # multipathd -k"resize map mpath-resize-test"
-> > fail
-> >=20
-> > The underlying SCSI devices have been online resized already, and ver=
-ified
-> > from dmesg and from /proc/partitions to be bigger.
-> >=20
-> > I'm running rhel5 kernel with scsi online resize patches (2.6.18-93.e=
-l5.bz444964.2)
-> > and dm-multipath testing packages with support for online resizing
-> > (device-mapper-multipath-0.4.7-19.el5.i386.rpm).
-> >=20
-> > Any ideas?=20
-> >=20
->=20
-> Actually I think the problem was that I had not yet reloaded multipathd
-> configuration, so my underlying devices were still blacklisted accordin=
-g to
-> multipathd -k"show devices".. but still I had the mpath-device up and
-> running :) Oh well..
->=20
-> I ran "/etc/init.d/multipathd reload" and then:
->=20
-> # multipathd -k"resize map mpath-resize-test"
-> ok
->=20
-> But "multipath -ll" still shows the mpath-resize-test device with the
-> same/old size..=20
->=20
-> What to do/try next?=20
 
-Does
+This patch series contains block layer integrity updates for 2.6.28.
 
-# blockdev --getsize <scsi_device>
+There are a few fixes to the core bits, including a switch from
+block_device to gendisk in the integrity compare function.  I also had
+to add a helper to access a gendisk's integrity profile.  This is used
+by MD.
 
-show the new size, after you have increased the scsi device size?
+The DM bits have been cleaned up and a separate dm_table_set_integrity
+function has been introduced.  This allows us to avoid changing
+dm_table_set_restrictions() and its callers.
 
-Also, can you start up multipathd with the -v3 option, and copy any
-messages that are printed out when you run=20
+The MD patch now correctly handles devices that come and go (as
+requested by Neil).
 
-# multipathd -k"resize map mpath-resize-test"
+The patches are against for-2.6.28 and depend on
 
-Thanks.
+    d7533ad0e132f92e75c1b2eb7c26387b25a583c1
 
--Ben
->=20
-> -- Pasi
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+being reverted.
+
+--
+Martin K. Petersen      Oracle Linux Engineering
