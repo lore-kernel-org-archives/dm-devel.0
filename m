@@ -1,60 +1,109 @@
-From: "Martin K. Petersen" <martin.petersen@oracle.com>
-Subject: [PATCH 1/7] block: Introduce integrity data ownership
-	flag
-Date: Wed,  1 Oct 2008 03:38:37 -0400
-Message-ID: <1222846723-18213-2-git-send-email-martin.petersen@oracle.com>
-References: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: jens.axboe@oracle.com, neilb@suse.de, agk@sourceware.org
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, "Martin K. Petersen" <martin.petersen@oracle.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH 5/7] block: Find bio sector offset given idx and offset
+Date: Wed, 1 Oct 2008 10:10:56 +0200
+Message-ID: <20081001081056.GB19428@kernel.dk>
+References: <1222846723-18213-1-git-send-email-martin.petersen@oracle.com> <1222846723-18213-6-git-send-email-martin.petersen@oracle.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753879AbYJAIL2@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1222846723-18213-6-git-send-email-martin.petersen@oracle.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: "Martin K. Petersen" <martin.petersen@oracle.com>
+Cc: neilb@suse.de, agk@sourceware.org, linux-kernel@vger.kernel.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-A filesystem might supply its own integrity metadata.  Introduce a
-flag that indicates whether the filesystem or the block layer owns the
-integrity buffer.
+On Wed, Oct 01 2008, Martin K. Petersen wrote:
+> Helper function to find the sector offset in a bio given bvec index
+> and page offset.
+> 
+> Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
+> ---
+>  fs/bio.c            |   34 ++++++++++++++++++++++++++++++++++
+>  include/linux/bio.h |    1 +
+>  2 files changed, 35 insertions(+), 0 deletions(-)
+> 
+> diff --git a/fs/bio.c b/fs/bio.c
+> index e56e768..55ee2fd 100644
+> --- a/fs/bio.c
+> +++ b/fs/bio.c
+> @@ -1300,6 +1300,40 @@ struct bio_pair *bio_split(struct bio *bi, mempool_t *pool, int first_sectors)
+>  	return bp;
+>  }
+>  
+> +/**
+> + *	bio_sector_offset - Find hardware sector offset in bio
+> + *	@bio:		bio to inspect
+> + *	@index:		bio_vec index
+> + *	@offset:	offset in bv_page
+> + *
+> + *	Return the number of hardware sectors between beginning of bio
+> + *	and an end point indicated by a bio_vec index and an offset
+> + *	within that vector's page.
+> + */
+> +sector_t bio_sector_offset(struct bio *bio, unsigned short index,
+> +			   unsigned int offset)
+> +{
+> +	struct bio_vec *bv;
+> +	unsigned int sector_sz = bio->bi_bdev->bd_disk->queue->hardsect_size;
+> +	sector_t sectors;
+> +	int i;
+> +
+> +	sectors = 0;
+> +
+> +	BUG_ON(index >= bio->bi_vcnt);
+> +
+> +	bio_for_each_segment(bv, bio, i) {
+> +		if (i == index) {
+> +			if (offset > bv->bv_offset)
+> +				sectors += (offset - bv->bv_offset) / sector_sz;
+> +			return sectors;
+> +		}
+> +
+> +		sectors += bv->bv_len / sector_sz;
+> +	}
+> +
+> +	BUG();
+> +}
 
-Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
----
- fs/bio-integrity.c  |    3 ++-
- include/linux/bio.h |    1 +
- 2 files changed, 3 insertions(+), 1 deletions(-)
+Too may BUG's there, me thinks, and the interface looks fragile. What if
+the bio is alreday done (bi_idx == bi_vcnt)? I'd prefer something ala:
 
-diff --git a/fs/bio-integrity.c b/fs/bio-integrity.c
-index c3e174b..8e409ff 100644
---- a/fs/bio-integrity.c
-+++ b/fs/bio-integrity.c
-@@ -107,7 +107,8 @@ void bio_integrity_free(struct bio *bio, struct bio_set *bs)
- 	BUG_ON(bip == NULL);
- 
- 	/* A cloned bio doesn't own the integrity metadata */
--	if (!bio_flagged(bio, BIO_CLONED) && bip->bip_buf != NULL)
-+	if (!bio_flagged(bio, BIO_CLONED) && !bio_flagged(bio, BIO_FS_INTEGRITY)
-+	    && bip->bip_buf != NULL)
- 		kfree(bip->bip_buf);
- 
- 	mempool_free(bip->bip_vec, bs->bvec_pools[bip->bip_pool]);
-diff --git a/include/linux/bio.h b/include/linux/bio.h
-index 6520ee1..6aba97d 100644
---- a/include/linux/bio.h
-+++ b/include/linux/bio.h
-@@ -109,6 +109,7 @@ struct bio {
- #define BIO_EOPNOTSUPP	7	/* not supported */
- #define BIO_CPU_AFFINE	8	/* complete bio on same CPU as submitted */
- #define BIO_NULL_MAPPED 9	/* contains invalid user pages */
-+#define BIO_FS_INTEGRITY 10	/* fs owns integrity data, not block layer */
- #define bio_flagged(bio, flag)	((bio)->bi_flags & (1 << (flag)))
- 
- /*
+sector_t bio_sector_offset(struct bio *bio, unsigned short index,
+			   unsigned int offset)
+{
+	unsigned int sector_sz = queue_hardsect_size(bio->bi_bdev->bd_disk->queue);
+	struct bio_vec *bv;
+	sector_t sectors;
+	int i;
+
+	sectors = 0;
+
+        /* total start of bio current start? */
+#if 0
+        if (index >= bio->bi_vcnt)
+                index = bio->bi_vcnt - 1;
+
+        __bio_for_each_segment(bv, bio, i, 0) {
+#else
+        if (index > bio->bi_idx)
+                return 0;
+
+	bio_for_each_segment(bv, bio, i) {
+#endif
+		if (i == index) {
+			if (offset > bv->bv_offset)
+				sectors += (offset - bv->bv_offset) / sector_sz;
+                        break;
+		}
+
+		sectors += bv->bv_len / sector_sz;
+	}
+
+        return sectors;
+}
+
+Depending on which interface you want, pick one of the if/else parts :-)
+
 -- 
-1.6.0.2
+Jens Axboe
