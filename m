@@ -1,55 +1,191 @@
-From: Pavel Machek <pavel@suse.cz>
-Subject: Re: [PATCH 3/3] Add timeout feature
-Date: Sun, 5 Oct 2008 12:00:38 +0200
-Message-ID: <20081005100037.GB2351@ucw.cz>
-References: <20080908205337t-sato@mail.jp.nec.com> <20080908171119.GB22521@infradead.org> <48DBFD42.6030307@redhat.com> <D0B0D91F884647D6808626CDFF81E532@nsl.ad.nec.co.jp> <20080929141326.GA31781@infradead.org> <48E0E7D4.1090409@sandeen.net> <20080929143749.GA13286@infradead.org> <48E0EA0B.7000701@sandeen.net>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: failover does not work with rdac device handler
+Date: Mon, 6 Oct 2008 13:26:31 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45BBBCCF2@cosmail01.lsi.com>
+References: <00FE57DD11E3A94893D5BD54C3358BE884BF36@AUSX3MPC128.aus.amer.dell.com>
+	<E463DF2B2E584B4A82673F53D62C2EF45BB4E86E@cosmail01.lsi.com>
+	<E463DF2B2E584B4A82673F53D62C2EF45BBBC908@cosmail01.lsi.com>,
+	<1223081419.14830.585.camel@chandra-ubuntu>
+	<E463DF2B2E584B4A82673F53D62C2EF45BB949D3@cosmail01.lsi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <48E0EA0B.7000701@sandeen.net>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Eric Sandeen <sandeen@sandeen.net>
-Cc: Christoph Hellwig <hch@infradead.org>, Takashi Sato <t-sato@yk.jp.nec.com>, Ric Wheeler <rwheeler@redhat.com>, Andrew Morton <akpm@linux-foundation.org>, Oleg Nesterov <oleg@tv-sign.ru>, linux-fsdevel@vger.kernel.org, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-ext4@vger.kernel.org, xfs@oss.sgi.com, axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BB949D3@cosmail01.lsi.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Moger, Babu" <Babu.Moger@lsi.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon 2008-09-29 09:45:31, Eric Sandeen wrote:
-> Christoph Hellwig wrote:
-> > On Mon, Sep 29, 2008 at 09:36:04AM -0500, Eric Sandeen wrote:
-> >> Christoph Hellwig wrote:
-> >>> On Fri, Sep 26, 2008 at 05:52:35PM +0900, Takashi Sato wrote:
-> >>>> I think that your concern is that the freezer cannot recognize the occurrence
-> >>>> of a timeout and it continues the backup process and the backup data is
-> >>>> corrupted finally.
-> >>> What timeout should happen?  the freeze ioctl must not return until the
-> >>> filesystem is a clean state and all writes are blocked.
-> >> The suggestion was that *UN*freeze would return ETIMEDOUT if the
-> >> filesystem had already unfrozen itself, I think.  That way you know that
-> >> the snapshot you just took is worthless, at least.
-> > 
-> > But why would the filesystem every unfreeze itself?  That defeats the
-> > whole point of freezing it.
-> 
-> I agree.  Was just trying to clarify the above point.
-> 
-> But there have been what, 12 submissions now, with the unfreeze timeout
-> in place so it's a persistent theme ;)
-> 
-> Perhaps a demonstration of just how easy (or not easy) it is to deadlock
-> a filesystem by freezing the root might be in order, at least.
-> 
-> And even if it is relatively easy, I still maintain that it is the
-> administrator's role to not inflict damage on the machine being
-> administered.  There are a lot of potentially dangerous tools at root's
-> disposal; why this particular one needs a nanny I'm still not quite sure.
+Hi Chandra,
 
-Can you docuument what administrator must not do for freezing to be
-safe?
+All the dh_state values show "rdac".  I have cut pasted the output below.
 
-What if so much dirty data accumulates on frozen filesystem that
-there's not enough memory for the unfreeze tool?
+I am seeing the following error messages when I tried to failover.
 
-									Pavel
--- 
-(english) http://www.livejournal.com/~pavelmachek
-(cesky, pictures) http://atrey.karlin.mff.cuni.cz/~pavel/picture/horses/blog.html
+        Oct  6 13:50:01 localhost multipathd: 8:96: reinstated
+        Oct  6 13:50:01 localhost kernel: device-mapper: multipath: Canno=
+t              failover device because scsi_dh_rdac was not loaded.
+        Oct  6 13:50:01 localhost kernel: device-mapper: multipath: Faili=
+ng             path 8:96.
+        Oct  6 13:50:01 localhost kernel: device-mapper: multipath: Could=
+ not           failover device. Error 15.
+        Oct  6 13:50:01 localhost multipathd: 8:96: mark as failed
+
+
+Output of # multipath -ll
+
+        mpath2 (3600a0b80000f6a7d000080454714d058) dm-2 LSI,INF-01-00
+        [size=3D10G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac][r=
+w]
+        \_ round-robin 0 [prio=3D6][active]
+         \_ 3:0:0:2 sdf 8:80  [active][ready]
+         \_ 3:0:2:2 sdl 8:176 [active][ready]
+        \_ round-robin 0 [prio=3D0][enabled]
+         \_ 3:0:1:2 sdi 8:128 [active][ghost]
+         \_ 3:0:3:2 sdo 8:224 [active][ghost]
+
+
+dh_state values.
+
+        #cat /sys/block/sdf/device/dh_state
+        rdac
+
+        #cat /sys/block/sdl/device/dh_state
+        rdac
+
+        #cat /sys/block/sdi/device/dh_state
+        rdac
+
+        # cat /sys/block/sdo/device/dh_state
+        rdac
+
+ Please let me know what you think.
+ Note (Kernel version 2.6.27-rc7 and multipath-tools v0.4.8)
+
+Thanks
+Babu Moger
+
+-----Original Message-----
+From: Moger, Babu
+Sent: Friday, October 03, 2008 10:35 PM
+To: sekharan@us.ibm.com
+Cc: device-mapper development; linux-scsi@vger.kernel.org
+Subject: RE: [dm-devel] failover does not work with rdac device handler
+
+Thanks Chandra for the response..
+
+That is the good news. So, we do not have to change the kernel  code ever=
+ytime we want to support the new product.
+
+I will do the steps you mentioned first thing on Monday and reply your ba=
+ck.
+
+Thanks
+Babu Moger
+
+________________________________________
+From: Chandra Seetharaman [sekharan@us.ibm.com]
+Sent: Friday, October 03, 2008 7:50 PM
+To: Moger, Babu
+Cc: device-mapper development; linux-scsi@vger.kernel.org
+Subject: Re: [dm-devel] failover does not work with rdac device handler
+
+It is supposed to work. I will look into it and respond.
+
+Can you try one thing
+
+for all your devices, do
+        echo rdac > /sys/block/sd?/dh_state
+
+(first you can read the files and see if they all show rdac or not)
+
+and then do your fail over. Let me know what happens.
+
+chandra
+On Fri, 2008-10-03 at 18:12 -0600, Moger, Babu wrote:
+> Hi,
+>
+> I have quick question.
+>
+> I am trying to configure device mapper for my FC array (on my Linux box=
+). I have passed all the arguments from /etc/multipath.conf(like vendor, =
+model etc ..).
+>
+> Discovery seems fine. But, failover is not working.  I am seeing the fo=
+llowing error.
+>
+> "device-mapper: multipath: Cannot failover device because scsi_dh_rdac =
+was not loaded."
+>
+> Is it required to add vendor id and model id anywhere else to support t=
+his device?
+>
+> Thanks
+> Babu Moger
+>
+>
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
+On Behalf Of Moger, Babu
+> Sent: Wednesday, October 01, 2008 4:48 PM
+> To: device-mapper development; linux-scsi@vger.kernel.org
+> Subject: [dm-devel] failover does not work with rdac device handler
+>
+> Hi All,
+>
+> I am new to the device mapper and just thought I will set-up device map=
+per on our arrays. I am using the latest kernel 2.6.27.rc6 and got the la=
+test multipath-tools from upstream.
+>
+> I updated /etc/multipath.conf with all the information (vendor, product=
+, hardware_handler, prio etc  ...). Note that my device is not part of rd=
+ac_dev_list.
+>
+> Discovery worked fine. "multipath -ll" displays all the information. I =
+can see that it is picking up rdac device handler.
+>
+> But I found that for some reason failover/failback is not working.  I a=
+m seeing following these messages.
+>
+> "device-mapper: multipath: Cannot failover device because scsi_dh_rdac =
+was not loaded."
+>
+> I can see that scsi_dh_rdac driver is already loaded.
+>
+> I did some more investigation. Found that failover works fine if I add =
+vendor, model in rdac_dev_list (in file scsi_dh_rdac.c).
+>
+> My question - is it required to add all the supported vendor and model =
+names in rdac_dev_list?
+>
+> Appreciate your responses.
+>
+> Thanks
+> Babu Moger
+>
+>
+>
+>
+>
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
