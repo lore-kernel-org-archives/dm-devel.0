@@ -1,267 +1,97 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: failover does not work with rdac device handler
-Date: Mon, 6 Oct 2008 16:26:54 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45BBBCE37@cosmail01.lsi.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: RE: [dm-devel] failover does not work with rdac device handler
+Date: Mon, 06 Oct 2008 19:04:34 -0700
+Message-ID: <1223345074.14830.601.camel@chandra-ubuntu>
 References: <00FE57DD11E3A94893D5BD54C3358BE884BF36@AUSX3MPC128.aus.amer.dell.com>
-	<E463DF2B2E584B4A82673F53D62C2EF45BB4E86E@cosmail01.lsi.com>
-	<E463DF2B2E584B4A82673F53D62C2EF45BBBC908@cosmail01.lsi.com>
-	,<1223081419.14830.585.camel@chandra-ubuntu>
-	<E463DF2B2E584B4A82673F53D62C2EF45BB949D3@cosmail01.lsi.com>
-	<E463DF2B2E584B4A82673F53D62C2EF45BBBCCF2@cosmail01.lsi.com>
-	<1223322817.14830.593.camel@chandra-ubuntu>
-	<E463DF2B2E584B4A82673F53D62C2EF45BBBCD31@cosmail01.lsi.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BB4E86E@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBC908@cosmail01.lsi.com>
+	 ,<1223081419.14830.585.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BB949D3@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCCF2@cosmail01.lsi.com>
+	 <1223322817.14830.593.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCD31@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCE37@cosmail01.lsi.com>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BBBCD31@cosmail01.lsi.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BBBCE37@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Chandra,
+Hi,
 
-Please note that failover works fine if I add vendor and model ids("LSI",=
- "INF-01-00")in rdac_dev_list(in the file scsi_dh_rdac.c).
+Can you try the attached patch.
 
-Thanks
-Babu Moger
+chandra
+PS: I see a problem (not related to this patch) that the dh_state file
+is not getting recreated, still working on it.
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On=
- Behalf Of Moger, Babu
-Sent: Monday, October 06, 2008 3:00 PM
-To: sekharan@us.ibm.com
-Cc: device-mapper development; linux-scsi@vger.kernel.org
-Subject: RE: [dm-devel] failover does not work with rdac device handler
+-------------
 
+Keep a reference count of attaches, so that same number of detaches are allowed.
 
-I have configured two Luns.
-
-
-# lsmod | grep scsi_dh_rdac
-scsi_dh_rdac           39044  8
-scsi_dh                40068  2 scsi_dh_rdac,dm_multipath
-scsi_mod              188920  9 scsi_dh_rdac,scsi_dh,sg,lpfc,qla2xxx,scsi=
-_transport_fc,libata,megaraid_sas,sd_mod
-
-
-Here is the complete output.
-
-# multipath -ll
-
-mpath2 (3600a0b80000f6a7d000080454714d058) dm-2 LSI,INF-01-00
-[size=3D10G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac][rw]
-\_ round-robin 0 [prio=3D6][active]
- \_ 3:0:0:2 sdf 8:80  [active][ready]
- \_ 3:0:2:2 sdl 8:176 [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 3:0:1:2 sdi 8:128 [active][ghost]
- \_ 3:0:3:2 sdo 8:224 [active][ghost]
-
-mpath3 (3600a0b80000f519c00007e034714d159) dm-3 LSI,INF-01-00
-[size=3D10G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac][rw]
-\_ round-robin 0 [prio=3D6][active]
- \_ 3:0:1:3 sdj 8:144 [active][ready]
- \_ 3:0:3:3 sdp 8:240 [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 3:0:0:3 sdg 8:96  [active][ghost]
- \_ 3:0:2:3 sdm 8:192 [active][ghost]
-
-
-Thanks
-Babu Moger
-
------Original Message-----
-From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
-Sent: Monday, October 06, 2008 2:54 PM
-To: Moger, Babu
-Cc: device-mapper development; linux-scsi@vger.kernel.org
-Subject: RE: [dm-devel] failover does not work with rdac device handler
-
-Is this the only rdac device that is present ?
-
-Can you also get me the o/p of "lsmod | grep scsi_dh_rdac" (just wanted
-to make sure if each (SCSI) device has a module.
-
-On Mon, 2008-10-06 at 13:26 -0600, Moger, Babu wrote:
-> Hi Chandra,
->
-> All the dh_state values show "rdac".  I have cut pasted the output belo=
-w.
->
-> I am seeing the following error messages when I tried to failover.
->
->         Oct  6 13:50:01 localhost multipathd: 8:96: reinstated
->         Oct  6 13:50:01 localhost kernel: device-mapper: multipath: Can=
-not              failover device because scsi_dh_rdac was not loaded.
->         Oct  6 13:50:01 localhost kernel: device-mapper: multipath: Fai=
-ling             path 8:96.
->         Oct  6 13:50:01 localhost kernel: device-mapper: multipath: Cou=
-ld not           failover device. Error 15.
->         Oct  6 13:50:01 localhost multipathd: 8:96: mark as failed
->
->
-> Output of # multipath -ll
->
->         mpath2 (3600a0b80000f6a7d000080454714d058) dm-2 LSI,INF-01-00
->         [size=3D10G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]=
-[rw]
->         \_ round-robin 0 [prio=3D6][active]
->          \_ 3:0:0:2 sdf 8:80  [active][ready]
->          \_ 3:0:2:2 sdl 8:176 [active][ready]
->         \_ round-robin 0 [prio=3D0][enabled]
->          \_ 3:0:1:2 sdi 8:128 [active][ghost]
->          \_ 3:0:3:2 sdo 8:224 [active][ghost]
->
->
-> dh_state values.
->
->         #cat /sys/block/sdf/device/dh_state
->         rdac
->
->         #cat /sys/block/sdl/device/dh_state
->         rdac
->
->         #cat /sys/block/sdi/device/dh_state
->         rdac
->
->         # cat /sys/block/sdo/device/dh_state
->         rdac
->
->  Please let me know what you think.
->  Note (Kernel version 2.6.27-rc7 and multipath-tools v0.4.8)
->
-> Thanks
-> Babu Moger
->
-> -----Original Message-----
-> From: Moger, Babu
-> Sent: Friday, October 03, 2008 10:35 PM
-> To: sekharan@us.ibm.com
-> Cc: device-mapper development; linux-scsi@vger.kernel.org
-> Subject: RE: [dm-devel] failover does not work with rdac device handler
->
-> Thanks Chandra for the response..
->
-> That is the good news. So, we do not have to change the kernel  code ev=
-erytime we want to support the new product.
->
-> I will do the steps you mentioned first thing on Monday and reply your =
-back.
->
-> Thanks
-> Babu Moger
->
-> ________________________________________
-> From: Chandra Seetharaman [sekharan@us.ibm.com]
-> Sent: Friday, October 03, 2008 7:50 PM
-> To: Moger, Babu
-> Cc: device-mapper development; linux-scsi@vger.kernel.org
-> Subject: Re: [dm-devel] failover does not work with rdac device handler
->
-> It is supposed to work. I will look into it and respond.
->
-> Can you try one thing
->
-> for all your devices, do
->         echo rdac > /sys/block/sd?/dh_state
->
-> (first you can read the files and see if they all show rdac or not)
->
-> and then do your fail over. Let me know what happens.
->
-> chandra
-> On Fri, 2008-10-03 at 18:12 -0600, Moger, Babu wrote:
-> > Hi,
-> >
-> > I have quick question.
-> >
-> > I am trying to configure device mapper for my FC array (on my Linux b=
-ox). I have passed all the arguments from /etc/multipath.conf(like vendor=
-, model etc ..).
-> >
-> > Discovery seems fine. But, failover is not working.  I am seeing the =
-following error.
-> >
-> > "device-mapper: multipath: Cannot failover device because scsi_dh_rda=
-c was not loaded."
-> >
-> > Is it required to add vendor id and model id anywhere else to support=
- this device?
-> >
-> > Thanks
-> > Babu Moger
-> >
-> >
-> > -----Original Message-----
-> > From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com=
-] On Behalf Of Moger, Babu
-> > Sent: Wednesday, October 01, 2008 4:48 PM
-> > To: device-mapper development; linux-scsi@vger.kernel.org
-> > Subject: [dm-devel] failover does not work with rdac device handler
-> >
-> > Hi All,
-> >
-> > I am new to the device mapper and just thought I will set-up device m=
-apper on our arrays. I am using the latest kernel 2.6.27.rc6 and got the =
-latest multipath-tools from upstream.
-> >
-> > I updated /etc/multipath.conf with all the information (vendor, produ=
-ct, hardware_handler, prio etc  ...). Note that my device is not part of =
-rdac_dev_list.
-> >
-> > Discovery worked fine. "multipath -ll" displays all the information. =
-I can see that it is picking up rdac device handler.
-> >
-> > But I found that for some reason failover/failback is not working.  I=
- am seeing following these messages.
-> >
-> > "device-mapper: multipath: Cannot failover device because scsi_dh_rda=
-c was not loaded."
-> >
-> > I can see that scsi_dh_rdac driver is already loaded.
-> >
-> > I did some more investigation. Found that failover works fine if I ad=
-d vendor, model in rdac_dev_list (in file scsi_dh_rdac.c).
-> >
-> > My question - is it required to add all the supported vendor and mode=
-l names in rdac_dev_list?
-> >
-> > Appreciate your responses.
-> >
-> > Thanks
-> > Babu Moger
-> >
-> >
-> >
-> >
-> >
-> >
-> >
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-scsi"=
- in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+---
+Index: linux-2.6.27-rc8-git5/drivers/scsi/device_handler/scsi_dh.c
+===================================================================
+--- linux-2.6.27-rc8-git5.orig/drivers/scsi/device_handler/scsi_dh.c
++++ linux-2.6.27-rc8-git5/drivers/scsi/device_handler/scsi_dh.c
+@@ -153,12 +153,26 @@ static int scsi_dh_handler_attach(struct
+ 	if (sdev->scsi_dh_data) {
+ 		if (sdev->scsi_dh_data->scsi_dh != scsi_dh)
+ 			err = -EBUSY;
+-	} else if (scsi_dh->attach)
++		else
++			kref_get(&sdev->scsi_dh_data.kref);
++	} else if (scsi_dh->attach) {
+ 		err = scsi_dh->attach(sdev);
++		if (!err)
++			kref_init(&sdev->scsi_dh_data.kref);
++	}
+ 
+ 	return err;
+ }
+ 
++static void scsi_dh_release(struct *kref kref)
++{
++	struct scsi_dh_data *scsi_dh_data;
++	scsi_dh_data = container_of(kref, struct scsi_dh_data, kref);
++
++	if (scsi_dh_data->scsi_dh && scsi_dh_data->scsi_dh->detach)
++		scsi_dh_data->scsi_dh->detach(sdev);
++}
++
+ /*
+  * scsi_dh_handler_detach - Detach a device handler from a device
+  * @sdev - SCSI device the device handler should be detached from
+@@ -176,11 +190,7 @@ static void scsi_dh_handler_detach(struc
+ 	if (scsi_dh && scsi_dh != sdev->scsi_dh_data->scsi_dh)
+ 		return;
+ 
+-	if (!scsi_dh)
+-		scsi_dh = sdev->scsi_dh_data->scsi_dh;
+-
+-	if (scsi_dh && scsi_dh->detach)
+-		scsi_dh->detach(sdev);
++	kref_put(&sdev->scsi_dh_data.kref, scsi_dh_release);
+ }
+ 
+ /*
+Index: linux-2.6.27-rc8-git5/include/scsi/scsi_device.h
+===================================================================
+--- linux-2.6.27-rc8-git5.orig/include/scsi/scsi_device.h
++++ linux-2.6.27-rc8-git5/include/scsi/scsi_device.h
+@@ -191,6 +191,7 @@ struct scsi_device_handler {
+ 
+ struct scsi_dh_data {
+ 	struct scsi_device_handler *scsi_dh;
++	struct kref kref;
+ 	char buf[0];
+ };
+ 
 
 
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
