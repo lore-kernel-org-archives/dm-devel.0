@@ -1,17 +1,18 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller
- v1.7.0: Introduction
-Date: Thu, 09 Oct 2008 21:14:14 +0900 (JST)
-Message-ID: <20081009.211414.193713198.ryov@valinux.co.jp>
-References: <2891419e0810080129sb6b35y11362f4bef71c174@mail.gmail.com>
-	<20081008.194022.226783199.ryov@valinux.co.jp>
-	<2891419e0810082315v28f2f4cbu5f95230db3be0bc1@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Re: [PATCH] Fix Null pointer Exception
+Date: Thu, 9 Oct 2008 16:17:49 +0100
+Message-ID: <20081009151749.GO23898@agk.fab.redhat.com>
+References: <48C5478B.2040401@linux.vnet.ibm.com>
+	<20080908172153.05268f6d.akpm@linux-foundation.org>
+	<20080923165628.GI5288@agk.fab.redhat.com>
+	<48DA3DF1.6060403@linux.vnet.ibm.com>
+	<20081007211840.GC23898@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <2891419e0810082315v28f2f4cbu5f95230db3be0bc1@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20081007211840.GC23898@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,112 +22,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: baramsori72@gmail.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, balbir@linux.vnet.ibm.com, fernando@oss.ntt.co.jp, xemul@openvz.org
+To: raspl@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, heiko.carstens@de.ibm.coms
 List-Id: dm-devel.ids
 
-Hi Dong-Jae,
+On Tue, Oct 07, 2008 at 10:18:40PM +0100, Alasdair G Kergon wrote:
+> Meanwhile I will not be applying that patch, though I may take a patch
+> to provide clean diagnostics should a situation like this occur again.
+ 
+I'm thinking of something like this:
 
-> So, I tested dm-ioband and bio-cgroup patches with another IO testing
-> tool, xdd ver6.5(http://www.ioperformance.com/),  after your reply.
-> Xdd supports O_DIRECT mode and time limit options.
-> I think, personally, it is proper tool for testing of IO controllers
-> in Linux Container ML.
 
-Xdd is really useful for me. Thanks for letting me know.
+From: Alasdair G Kergon <agk@redhat.com>
 
-> And I found some strange points in test results. In fact, it will be
-> not strange for other persons^^
-> 
-> 1. dm-ioband can control IO bandwidth well in O_DIRECT mode(read and
-> write), I think the result is very reasonable. but it can't control it
-> in Buffered mode when I checked just only output of xdd. I think
-> bio-cgroup patches is for solving the problems, is it right? If so,
-> how can I check or confirm the role of bio-cgroup patches?
->
-> 2. As showed in test results, the IO performance in Buffered IO mode
-> is very low compared with it in O_DIRECT mode. In my opinion, the
-> reverse case is more natural in real life.
-> Can you give me a answer about it?
+Detect and report buggy drivers that destroy their request_queue.
 
-Your results show all xdd programs belong to the same cgroup,
-could you explain me in detail about your test procedure?
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+Cc: Stefan Raspl <raspl@linux.vnet.ibm.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
 
-To know how many I/Os are actually issued to a physical device in
-buffered mode within a measurement period, you should check the
-/sys/block/<dev>/stat file just before starting a test program and
-just after the end of the test program. The contents of the stat file
-is described in the following document:
-   kernel/Documentation/block/stat.txt
+---
+ drivers/md/dm-table.c |   24 ++++++++++++++++++++++--
+ 1 files changed, 22 insertions(+), 2 deletions(-)
 
-> 3. Compared with physical bandwidth(when it is checked with one
-> process and without dm-ioband device), the sum of the bandwidth by
-> dm-ioband has very considerable gap with the physical bandwidth. I
-> wonder the reason. Is it overhead of dm-ioband or bio-cgroup patches?
-> or Are there any another reasons?
-
-The followings are the results on my PC with SATA disk, and there is
-no big difference between with and without dm-ioband. Please try the
-same thing if you have time.
-
-without dm-ioband
-=================
-# xdd.linux -op write -queuedepth 16 -targets 1 /dev/sdb1 \
-  -reqsize 8 -numreqs 128000 -verbose -timelimit 30 -dio -randomize
-
-T  Q       Bytes      Ops    Time      Rate    IOPS   Latency
-%CPU  OP_Type    ReqSize
-0 16   140001280    17090    30.121     4.648     567.38    0.0018
-0.01   write        8192
-
-with dm-ioband
-==============
-* cgroup1 (weight 10)
-# cat /cgroup/1/bio.id
-1
-# echo $$ > /cgroup/1/tasks
-# xdd.linux -op write -queuedepth 16 -targets 1 /dev/mapper/ioband1
-  -reqsize 8 -numreqs 128000 -verbose -timelimit 30 -dio -randomize
-T  Q       Bytes      Ops    Time      Rate      IOPS   Latency
-%CPU  OP_Type    ReqSize     
-0 16    14393344     1757    30.430     0.473      57.74    0.0173
-0.00   write        8192 
-
-* cgroup2 (weight 20)
-# cat /cgroup/2/bio.id
-2
-# echo $$ > /cgroup/2/tasks
-# xdd.linux -op write -queuedepth 16 -targets 1 /dev/mapper/ioband1
-  -reqsize 8 -numreqs 128000 -verbose -timelimit 30 -dio -randomize
-T  Q       Bytes      Ops    Time      Rate      IOPS   Latency
-%CPU  OP_Type    ReqSize     
-0 16    44113920     5385    30.380     1.452     177.25    0.0056
-0.00   write        8192 
-
-* cgroup3 (weight 60)
-# cat /cgroup/3/bio.id
-3
-# echo $$ > /cgroup/3/tasks
-# xdd.linux -op write -queuedepth 16 -targets 1 /dev/mapper/ioband1
-  -reqeize 8 -numreqs 128000 -verbose -timelimit 30 -dio -randomize
-T  Q       Bytes      Ops    Time      Rate      IOPS   Latency
-%CPU  OP_Type    ReqSize     
-0 16    82485248    10069    30.256     2.726     332.79    0.0030
-0.00   write        8192 
-
-Total
-=====
-                  Bytes        Ops    Rate   IOPS
-  w/o dm-ioband  140001280    17090  4.648  567.38
-  w/  dm-ioband  140992512    17211  4.651  567.78
-
-> > Could you give me the O_DIRECT patch?
-> >
-> Of course, if you want. But it is nothing
-> Tiobench tool is very simple and light source code, so I just add the
-> O_DIRECT option in tiotest.c of tiobench testing tool.
-> Anyway, after I make a patch file, I send it to you
-
-Thank you very much!
-
-Ryo Tsuruta
+Index: linux-2.6.27-rc8/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.27-rc8.orig/drivers/md/dm-table.c	2008-10-09 14:53:35.000000000 +0100
++++ linux-2.6.27-rc8/drivers/md/dm-table.c	2008-10-09 14:56:26.000000000 +0100
+@@ -478,6 +478,13 @@ void dm_set_device_limits(struct dm_targ
+ {
+ 	struct request_queue *q = bdev_get_queue(bdev);
+ 	struct io_restrictions *rs = &ti->limits;
++	char b[BDEVNAME_SIZE];
++
++	if (unlikely(!q)) {
++		DMWARN("%s: Cannot set limits for nonexistent device %s",
++		       dm_device_name(ti->table->md), bdevname(bdev, b));
++		return;
++	}
+ 
+ 	/*
+ 	 * Combine the device limits low.
+@@ -943,7 +950,14 @@ int dm_table_any_congested(struct dm_tab
+ 
+ 	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->bdev);
+-		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
++		char b[BDEVNAME_SIZE];
++
++		if (likely(q))
++			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
++		else
++			DMWARN_LIMIT("%s: any_congested: nonexistent device %s",
++				     dm_device_name(t->md),
++				     bdevname(dd->bdev, b));
+ 	}
+ 
+ 	return r;
+@@ -956,8 +970,14 @@ void dm_table_unplug_all(struct dm_table
+ 
+ 	list_for_each_entry(dd, devices, list) {
+ 		struct request_queue *q = bdev_get_queue(dd->bdev);
++		char b[BDEVNAME_SIZE];
+ 
+-		blk_unplug(q);
++		if (likely(q))
++			blk_unplug(q);
++		else
++			DMWARN_LIMIT("%s: Cannot unplug nonexistent device %s",
++				     dm_device_name(t->md),
++				     bdevname(dd->bdev, b));
+ 	}
+ }
+ 
