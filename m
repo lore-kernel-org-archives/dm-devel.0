@@ -1,18 +1,9 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: [PATCH] Fix Null pointer Exception
-Date: Thu, 9 Oct 2008 16:17:49 +0100
-Message-ID: <20081009151749.GO23898@agk.fab.redhat.com>
-References: <48C5478B.2040401@linux.vnet.ibm.com>
-	<20080908172153.05268f6d.akpm@linux-foundation.org>
-	<20080923165628.GI5288@agk.fab.redhat.com>
-	<48DA3DF1.6060403@linux.vnet.ibm.com>
-	<20081007211840.GC23898@agk.fab.redhat.com>
+From: wysochanski@sourceware.org
+Subject: multipath-tools/libmultipath alias.h
+Date: 9 Oct 2008 18:47:57 -0000
+Message-ID: <20081009184757.28704.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20081007211840.GC23898@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,76 +13,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: raspl@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Andrew Morton <akpm@linux-foundation.org>, heiko.carstens@de.ibm.coms
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 07, 2008 at 10:18:40PM +0100, Alasdair G Kergon wrote:
-> Meanwhile I will not be applying that patch, though I may take a patch
-> to provide clean diagnostics should a situation like this occur again.
- 
-I'm thinking of something like this:
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL4_FC5
+Changes by:	wysochanski@sourceware.org	2008-10-09 18:47:56
 
+Modified files:
+	libmultipath   : alias.h 
 
-From: Alasdair G Kergon <agk@redhat.com>
+Log message:
+	Fix rhbz445268: Increase bindings file lock timeout to avoid failure of user_friendly_names map
+	
+	Backport from upstream.
+	From 29372b2edf719f30f21c610d502999fdf7d19885 Mon Sep 17 00:00:00 2001
+	From: Dave Wysochanski <dwysocha@redhat.com>
+	Date: Tue, 23 Sep 2008 13:16:38 -0400
+	Subject: [PATCH] Increase bindings file lock timeout to avoid failure of user_friendly_names map.
+	
+	On setups with a large number of paths / multipath maps, contention for
+	the advisory lock on the bindings file may take longer than 3 seconds,
+	and some multipath processes may create maps based on WWID despite having
+	user_friendly_names set.  Increasing the timeout is a simple fix that
+	gets us a bit further.
+	
+	More extensive fixes might include:
+	1) improving the efficiency of the critical section code
+	2) use shared/read locks initially, then use exclusive/write locks only when
+	it is known the bindings file needs updated
 
-Detect and report buggy drivers that destroy their request_queue.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/alias.h.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.1&r2=1.1.2.1
 
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-Cc: Stefan Raspl <raspl@linux.vnet.ibm.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-
----
- drivers/md/dm-table.c |   24 ++++++++++++++++++++++--
- 1 files changed, 22 insertions(+), 2 deletions(-)
-
-Index: linux-2.6.27-rc8/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.27-rc8.orig/drivers/md/dm-table.c	2008-10-09 14:53:35.000000000 +0100
-+++ linux-2.6.27-rc8/drivers/md/dm-table.c	2008-10-09 14:56:26.000000000 +0100
-@@ -478,6 +478,13 @@ void dm_set_device_limits(struct dm_targ
- {
- 	struct request_queue *q = bdev_get_queue(bdev);
- 	struct io_restrictions *rs = &ti->limits;
-+	char b[BDEVNAME_SIZE];
-+
-+	if (unlikely(!q)) {
-+		DMWARN("%s: Cannot set limits for nonexistent device %s",
-+		       dm_device_name(ti->table->md), bdevname(bdev, b));
-+		return;
-+	}
- 
- 	/*
- 	 * Combine the device limits low.
-@@ -943,7 +950,14 @@ int dm_table_any_congested(struct dm_tab
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
--		r |= bdi_congested(&q->backing_dev_info, bdi_bits);
-+		char b[BDEVNAME_SIZE];
-+
-+		if (likely(q))
-+			r |= bdi_congested(&q->backing_dev_info, bdi_bits);
-+		else
-+			DMWARN_LIMIT("%s: any_congested: nonexistent device %s",
-+				     dm_device_name(t->md),
-+				     bdevname(dd->bdev, b));
- 	}
- 
- 	return r;
-@@ -956,8 +970,14 @@ void dm_table_unplug_all(struct dm_table
- 
- 	list_for_each_entry(dd, devices, list) {
- 		struct request_queue *q = bdev_get_queue(dd->bdev);
-+		char b[BDEVNAME_SIZE];
- 
--		blk_unplug(q);
-+		if (likely(q))
-+			blk_unplug(q);
-+		else
-+			DMWARN_LIMIT("%s: Cannot unplug nonexistent device %s",
-+				     dm_device_name(t->md),
-+				     bdevname(dd->bdev, b));
- 	}
- }
- 
+--- multipath-tools/libmultipath/alias.h	2005/11/09 22:28:58	1.1
++++ multipath-tools/libmultipath/alias.h	2008/10/09 18:47:50	1.1.2.1
+@@ -1,4 +1,4 @@
+-#define BINDINGS_FILE_TIMEOUT 3
++#define BINDINGS_FILE_TIMEOUT 30
+ #define BINDINGS_FILE_HEADER \
+ "# Multipath bindings, Version : 1.0\n" \
+ "# NOTE: this file is automatically maintained by the multipath program.\n" \
