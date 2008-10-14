@@ -1,15 +1,14 @@
-From: "Scott Moseman" <scmoseman@gmail.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 Subject: Re: Can I configure priority?
-Date: Tue, 14 Oct 2008 13:17:27 -0500
-Message-ID: <342d47870810141117x46cae3fbq1f36c0c941b5f109@mail.gmail.com>
+Date: Tue, 14 Oct 2008 11:47:08 -0700
+Message-ID: <1224010028.14830.728.camel@chandra-ubuntu>
 References: <342d47870810141108n6557befbs620a24bac96b5391@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 In-Reply-To: <342d47870810141108n6557befbs620a24bac96b5391@mail.gmail.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,26 +21,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Alternatively, if we use 'failover' instead, is there a way to have DM
-use the HBA as the main interface and only failover to ETH when
-necessary?
 
-Thanks,
-Scott
-
-
-On Tue, Oct 14, 2008 at 1:08 PM, Scott Moseman <scmoseman@gmail.com> wrote:
->
+On Tue, 2008-10-14 at 13:08 -0500, Scott Moseman wrote:
 > RHEL v5
 > eth + hba
->
+> 
 > If I'm using 'multibus' for my 'path_grouping_policy' in order to
 > utilize all of the channels, is there any way to prioritize how the 2
+If you use multibus, all the paths will be used in round-robin fashion.
+You will not be able to prioritize.
+
 > interfaces are used?  For instance, if we prefer to have the traffic,
 > when the bandwidth doesn't exceed a single channel, using the HBA
 > first and ETH second?  How does DM determine which interface to use in
 > low bandwidth situations?
->
+
+It doesn't.
+
+One way to solve the problem: you can do is to change the grouping
+policy to by changing policy to be "group_by_prio", and having a
+priority handler that would give a prio value proportional to the
+bandwidth usage. But, note that this will keep moving the active path
+(may be that is what you want).
+
+> 
 > Thanks,
 > Scott
->
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
