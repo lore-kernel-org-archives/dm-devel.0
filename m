@@ -1,10 +1,10 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Can I configure priority?
-Date: Tue, 14 Oct 2008 23:25:28 +0200
-Message-ID: <20081014232528.24e82a3c@plop>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: merging dm-ioband into Linux
+Date: Wed, 15 Oct 2008 19:00:12 +0900 (JST)
+Message-ID: <20081015.190012.104035071.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,29 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: scmoseman@gmail.com
+To: agk@sourceware.org
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> RHEL v5
-> eth + hba
-> 
-> If I'm using 'multibus' for my 'path_grouping_policy' in order to
-> utilize all of the channels, is there any way to prioritize how the 2
-> interfaces are used?  For instance, if we prefer to have the traffic,
-> when the bandwidth doesn't exceed a single channel, using the HBA
-> first and ETH second?  How does DM determine which interface to use in
-> low bandwidth situations?
-> 
-> Thanks,
-> Scott
-> 
-With a multibus multipath, you can still use path priorities as a
-weighting factor for the (weighted) round-robin scheduler :
+Hi Alasdair,
 
-1/ set "rr_weight priorities" in multipath.conf
-2/ find or forge a priority handler to return the weights your want for
-your paths
+As you know, I have been developing a block I/O bandwidth controller
+on Linux. Now, I have almost finished implementation of the features
+and I think I have fixed all the points that you suggested.
 
-Regards,
-cvaroqui
+For the next step, I would like many people to use dm-ioband in
+various environments such as with a high-end storage, with a solid
+state drive and so, so that I will be able to get a lot of feedback
+from them to improve and enhance the controller.
+
+So, would you consider merging the dm-ioband patch into Linux
+kernel as one of device mapper modules? I think it is not hard to
+merge the code, because dm-ioband doesn't touch any existing code
+except Makefile and Kconfig files placed in drivers/md directory.
+You can get the patch from the following URL:
+http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.0.patch
+
+I would really appreciate it if you would reply me anything.
+
+Thanks,
+Ryo Tsuruta
