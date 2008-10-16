@@ -1,10 +1,11 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: merging dm-ioband into Linux
-Date: Wed, 15 Oct 2008 19:00:12 +0900 (JST)
-Message-ID: <20081015.190012.104035071.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH]: [multipath-tools] Add support for couple of IBM
+	storage devices
+Date: Wed, 15 Oct 2008 17:20:01 -0700
+Message-ID: <1224116401.14830.736.camel@chandra-ubuntu>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,29 +17,77 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@sourceware.org
-Cc: dm-devel@redhat.com
+To: Christophe Varoqui <christophe.varoqui@free.fr>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+Few of the IBM rdac storage devices are not available in the multipath
+tools. This patch adds support for those.
 
-As you know, I have been developing a block I/O bandwidth controller
-on Linux. Now, I have almost finished implementation of the features
-and I think I have fixed all the points that you suggested.
+Signed-Off-by: Chandra Seetharaman <sekharan@us.ibm.com>
 
-For the next step, I would like many people to use dm-ioband in
-various environments such as with a high-end storage, with a solid
-state drive and so, so that I will be able to get a lot of feedback
-from them to improve and enhance the controller.
-
-So, would you consider merging the dm-ioband patch into Linux
-kernel as one of device mapper modules? I think it is not hard to
-merge the code, because dm-ioband doesn't touch any existing code
-except Makefile and Kconfig files placed in drivers/md directory.
-You can get the patch from the following URL:
-http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.0.patch
-
-I would really appreciate it if you would reply me anything.
-
-Thanks,
-Ryo Tsuruta
+---
+Index: multipath-tools/libmultipath/hwtable.c
+===================================================================
+--- multipath-tools.orig/libmultipath/hwtable.c
++++ multipath-tools/libmultipath/hwtable.c
+@@ -358,9 +358,9 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS3400 */
++		/* IBM DS4100 */
+ 		.vendor        = "IBM",
+-		.product       = "1726-4xx",
++		.product       = "1724",
+ 		.getuid        = DEFAULT_GETUID,
+ 		.features      = "1 queue_if_no_path",
+ 		.hwhandler     = "1 rdac",
+@@ -374,7 +374,23 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
+-		/* IBM DS4400 / FAStT700 */
++		/* IBM DS3200 / DS3300 / DS3400 */
++		.vendor        = "IBM",
++		.product       = "1726",
++		.getuid        = DEFAULT_GETUID,
++		.features      = "1 queue_if_no_path",
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = 300,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	{
++		/* IBM DS4400 / DS4500 / FAStT700 */
+ 		.vendor        = "IBM",
+ 		.product       = "1742",
+ 		.getuid        = DEFAULT_GETUID,
+@@ -422,6 +438,22 @@ static struct hwentry default_hw[] = {
+ 		.prio_name     = PRIO_RDAC,
+ 	},
+ 	{
++	    /* IBM DS5000 */
++		.vendor        = "IBM",
++		.product       = "1818",
++		.getuid        = DEFAULT_GETUID,
++		.features      = DEFAULT_FEATURES,
++		.hwhandler     = "1 rdac",
++		.selector      = DEFAULT_SELECTOR,
++		.pgpolicy      = GROUP_BY_PRIO,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.rr_weight     = RR_WEIGHT_NONE,
++		.no_path_retry = NO_PATH_RETRY_QUEUE,
++		.minio         = DEFAULT_MINIO,
++		.checker_name  = RDAC,
++		.prio_name     = PRIO_RDAC,
++	},
++	{
+ 		/* IBM Netfinity Fibre Channel RAID Controller Unit */
+ 		.vendor        = "IBM",
+ 		.product       = "3526",
