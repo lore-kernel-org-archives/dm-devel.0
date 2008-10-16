@@ -1,301 +1,71 @@
-From: Rusty Russell <rusty@rustcorp.com.au>
-Subject: [PATCH 1/5] remove CONFIG_KMOD from drivers
-Date: Thu, 16 Oct 2008 11:13:33 +0000 (UTC)
-Message-ID: <20081016111212.6F127DDFA1@ozlabs.org>
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756596AbYJPLMj@vger.kernel.org>
-Date: Thu Oct 16 22:10:38 EST 2008
-Sender: linux-kernel-owner@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Cc: Andrew Morton <akpm@linux-foundation.org>, Johannes Berg <johannes@sipsolutions.net>, video4linux-list@redhat.com, David Woodhouse <dwmw2@infradead.org>, linux-ppp@vger.kernel.org, dm-devel@redhat.com
+From: "Nicholas A. Bellinger" <nab@linux-iscsi.org>
+Subject: [ANNOUNCE]: LIO-Target/ConfigFS for v2.6.27
+Date: Thu, 16 Oct 2008 16:11:13 -0700
+Message-ID: <1224198674.5556.255.camel__7138.88618997789$1224198774$gmane$org@haakon2.linux-iscsi.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Linux-iSCSI.org Target Dev" <linux-iscsi-target-dev@googlegroups.com>, LKML <linux-kernel@vger.kernel.org>, linux-scsi <linux-scsi@vger.kernel.org>, SCST-Devel <scst-devel@lists.sour>
+Cc: Andrew Morton <akpm@osdl.org>, James Bottomley <James.Bottomley@HansenPartnership.com>, Mike Christie <michaelc@cs.wisc.edu>, Greg KH <greg@kroah.com>, Jerome Martin <tramjoe.merin@gmail.com>, Pete Wyckoff <pw@osc.edu>, Christoph Hellwig <hch@infradead.org>, Alan Stern <stern@rowland.harvard.edu>, "H. Peter Anvin" <hpa@zytor.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-From: Johannes Berg <johannes@sipsolutions.net>
+Greetings all,
 
-Straight forward conversions to CONFIG_MODULE; many drivers
-include <linux/kmod.h> conditionally and then don't have any
-other conditional code so remove it from those.
+I am happy to announce the release of LIO-Target/ConfigFS for v2.6.27.
 
-Signed-off-by: Johannes Berg <johannes@sipsolutions.net>
-Cc: video4linux-list@redhat.com
-Cc: David Woodhouse <dwmw2@infradead.org>
-Cc: linux-ppp@vger.kernel.org
-Cc: dm-devel@redhat.com
-Signed-off-by: Rusty Russell <rusty@rustcorp.com.au>
----
- drivers/md/md.c                                 |    7 -------
- drivers/media/video/cpia.c                      |    4 ----
- drivers/media/video/usbvision/usbvision-core.c  |    4 ----
- drivers/media/video/usbvision/usbvision-video.c |    4 ----
- drivers/media/video/v4l1-compat.c               |    4 ----
- drivers/media/video/v4l2-common.c               |    4 ----
- drivers/media/video/vino.c                      |    5 +----
- drivers/media/video/w9968cf.c                   |    4 ++--
- drivers/mtd/mtdpart.c                           |    2 --
- drivers/net/irda/sir_dongle.c                   |    2 --
- drivers/net/ppp_generic.c                       |   10 +++-------
- drivers/net/pppox.c                             |    9 ++-------
- drivers/video/fbmem.c                           |   17 ++---------------
- 13 files changed, 10 insertions(+), 66 deletions(-)
+http://linux-iscsi.org/index.php/LIO-Target/ConfigFS
 
-diff -r 6251a9fdf8f9 drivers/md/md.c
---- a/drivers/md/md.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/md/md.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -44,14 +44,9 @@
- #include <linux/mutex.h>
- #include <linux/ctype.h>
- #include <linux/freezer.h>
--
- #include <linux/init.h>
--
- #include <linux/file.h>
--
--#ifdef CONFIG_KMOD
- #include <linux/kmod.h>
--#endif
- 
- #include <asm/unaligned.h>
- 
-@@ -3558,12 +3553,10 @@ static int do_md_run(mddev_t * mddev)
- 		}
- 	}
- 
--#ifdef CONFIG_KMOD
- 	if (mddev->level != LEVEL_NONE)
- 		request_module("md-level-%d", mddev->level);
- 	else if (mddev->clevel[0])
- 		request_module("md-%s", mddev->clevel);
--#endif
- 
- 	/*
- 	 * Drop all container device buffers, from now on
-diff -r 6251a9fdf8f9 drivers/media/video/cpia.c
---- a/drivers/media/video/cpia.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/cpia.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -38,10 +38,6 @@
- #include <linux/delay.h>
- #include <asm/io.h>
- #include <linux/mutex.h>
--
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
- 
- #include "cpia.h"
- 
-diff -r 6251a9fdf8f9 drivers/media/video/usbvision/usbvision-core.c
---- a/drivers/media/video/usbvision/usbvision-core.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/usbvision/usbvision-core.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -44,10 +44,6 @@
- #include <media/tuner.h>
- 
- #include <linux/workqueue.h>
--
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
- 
- #include "usbvision.h"
- 
-diff -r 6251a9fdf8f9 drivers/media/video/usbvision/usbvision-video.c
---- a/drivers/media/video/usbvision/usbvision-video.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/usbvision/usbvision-video.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -68,10 +68,6 @@
- #include <media/tuner.h>
- 
- #include <linux/workqueue.h>
--
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
- 
- #include "usbvision.h"
- #include "usbvision-cards.h"
-diff -r 6251a9fdf8f9 drivers/media/video/v4l1-compat.c
---- a/drivers/media/video/v4l1-compat.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/v4l1-compat.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -35,10 +35,6 @@
- #include <asm/uaccess.h>
- #include <asm/system.h>
- #include <asm/pgtable.h>
--
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
- 
- static unsigned int debug;
- module_param(debug, int, 0644);
-diff -r 6251a9fdf8f9 drivers/media/video/v4l2-common.c
---- a/drivers/media/video/v4l2-common.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/v4l2-common.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -59,10 +59,6 @@
- #define __OLD_VIDIOC_ /* To allow fixing old calls*/
- #include <media/v4l2-common.h>
- #include <media/v4l2-chip-ident.h>
--
--#ifdef CONFIG_KMOD
--#include <linux/kmod.h>
--#endif
- 
- #include <linux/videodev2.h>
- 
-diff -r 6251a9fdf8f9 drivers/media/video/vino.c
---- a/drivers/media/video/vino.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/vino.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -30,10 +30,7 @@
- #include <linux/mm.h>
- #include <linux/time.h>
- #include <linux/version.h>
--
--#ifdef CONFIG_KMOD
- #include <linux/kmod.h>
--#endif
- 
- #include <linux/i2c.h>
- #include <linux/i2c-algo-sgi.h>
-@@ -4641,7 +4638,7 @@ static int __init vino_module_init(void)
- 	}
- 	vino_init_stage++;
- 
--#if defined(CONFIG_KMOD) && defined(MODULE)
-+#ifdef MODULE
- 	request_module("saa7191");
- 	request_module("indycam");
- #endif
-diff -r 6251a9fdf8f9 drivers/media/video/w9968cf.c
---- a/drivers/media/video/w9968cf.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/media/video/w9968cf.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -111,7 +111,7 @@ static int specific_debug = W9968CF_SPEC
- 
- static unsigned int param_nv[24]; /* number of values per parameter */
- 
--#ifdef CONFIG_KMOD
-+#ifdef CONFIG_MODULES
- module_param(ovmod_load, bool, 0644);
- #endif
- module_param(simcams, ushort, 0644);
-@@ -144,7 +144,7 @@ module_param(specific_debug, bool, 0644)
- module_param(specific_debug, bool, 0644);
- #endif
- 
--#ifdef CONFIG_KMOD
-+#ifdef CONFIG_MODULES
- MODULE_PARM_DESC(ovmod_load,
- 		 "\n<0|1> Automatic 'ovcamchip' module loading."
- 		 "\n0 disabled, 1 enabled."
-diff -r 6251a9fdf8f9 drivers/mtd/mtdpart.c
---- a/drivers/mtd/mtdpart.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/mtd/mtdpart.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -564,10 +564,8 @@ int parse_mtd_partitions(struct mtd_info
- 
- 	for ( ; ret <= 0 && *types; types++) {
- 		parser = get_partition_parser(*types);
--#ifdef CONFIG_KMOD
- 		if (!parser && !request_module("%s", *types))
- 				parser = get_partition_parser(*types);
--#endif
- 		if (!parser) {
- 			printk(KERN_NOTICE "%s partition parsing not available\n",
- 			       *types);
-diff -r 6251a9fdf8f9 drivers/net/irda/sir_dongle.c
---- a/drivers/net/irda/sir_dongle.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/net/irda/sir_dongle.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -67,9 +67,7 @@ int sirdev_get_dongle(struct sir_dev *de
- 	const struct dongle_driver *drv = NULL;
- 	int err = -EINVAL;
- 
--#ifdef CONFIG_KMOD
- 	request_module("irda-dongle-%d", type);
--#endif
- 
- 	if (dev->dongle_drv != NULL)
- 		return -EBUSY;
-diff -r 6251a9fdf8f9 drivers/net/ppp_generic.c
---- a/drivers/net/ppp_generic.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/net/ppp_generic.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -2124,13 +2124,9 @@ ppp_set_compress(struct ppp *ppp, unsign
- 	    || ccp_option[1] < 2 || ccp_option[1] > data.length)
- 		goto out;
- 
--	cp = find_compressor(ccp_option[0]);
--#ifdef CONFIG_KMOD
--	if (!cp) {
--		request_module("ppp-compress-%d", ccp_option[0]);
--		cp = find_compressor(ccp_option[0]);
--	}
--#endif /* CONFIG_KMOD */
-+	cp = try_then_request_module(
-+		find_compressor(ccp_option[0]),
-+		"ppp-compress-%d", ccp_option[0]);
- 	if (!cp)
- 		goto out;
- 
-diff -r 6251a9fdf8f9 drivers/net/pppox.c
---- a/drivers/net/pppox.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/net/pppox.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -115,13 +115,8 @@ static int pppox_create(struct net *net,
- 		goto out;
- 
- 	rc = -EPROTONOSUPPORT;
--#ifdef CONFIG_KMOD
--	if (!pppox_protos[protocol]) {
--		char buffer[32];
--		sprintf(buffer, "pppox-proto-%d", protocol);
--		request_module(buffer);
--	}
--#endif
-+	if (!pppox_protos[protocol])
-+		request_module("pppox-proto-%d", protocol);
- 	if (!pppox_protos[protocol] ||
- 	    !try_module_get(pppox_protos[protocol]->owner))
- 		goto out;
-diff -r 6251a9fdf8f9 drivers/video/fbmem.c
---- a/drivers/video/fbmem.c	Mon Aug 25 14:22:06 2008 +1000
-+++ b/drivers/video/fbmem.c	Mon Aug 25 14:27:32 2008 +1000
-@@ -28,9 +28,7 @@
- #include <linux/proc_fs.h>
- #include <linux/seq_file.h>
- #include <linux/console.h>
--#ifdef CONFIG_KMOD
- #include <linux/kmod.h>
--#endif
- #include <linux/err.h>
- #include <linux/device.h>
- #include <linux/efi.h>
-@@ -837,13 +835,6 @@ fb_write(struct file *file, const char _
- 	return (cnt) ? cnt : err;
- }
- 
--#ifdef CONFIG_KMOD
--static void try_to_load(int fb)
--{
--	request_module("fb%d", fb);
--}
--#endif /* CONFIG_KMOD */
--
- int
- fb_pan_display(struct fb_info *info, struct fb_var_screeninfo *var)
- {
-@@ -1085,10 +1076,8 @@ fb_ioctl(struct inode *inode, struct fil
- 		    return -EINVAL;
- 		if (con2fb.framebuffer < 0 || con2fb.framebuffer >= FB_MAX)
- 		    return -EINVAL;
--#ifdef CONFIG_KMOD
- 		if (!registered_fb[con2fb.framebuffer])
--		    try_to_load(con2fb.framebuffer);
--#endif /* CONFIG_KMOD */
-+		    request_module("fb%d", con2fb.framebuffer);
- 		if (!registered_fb[con2fb.framebuffer])
- 		    return -EINVAL;
- 		event.info = info;
-@@ -1326,10 +1315,8 @@ fb_open(struct inode *inode, struct file
- 	if (fbidx >= FB_MAX)
- 		return -ENODEV;
- 	lock_kernel();
--#ifdef CONFIG_KMOD
- 	if (!(info = registered_fb[fbidx]))
--		try_to_load(fbidx);
--#endif /* CONFIG_KMOD */
-+		request_module("fb%d", fbidx);
- 	if (!(info = registered_fb[fbidx])) {
- 		res = -ENODEV;
- 		goto out;
+Using ConfigFS it is now possible to create generic storage objects from
+Linux/SCSI using struct scsi_device, Linux/BLOCK using struct
+block_device and Linux/VFS using struct file into a generic target
+infrastructure under /sys/kernel/config/target/core (target_core_mod).
+From there, one can create ConfigFS symbolic links to destinations
+under /sys/kernel/config/target/iscsi/ (iscsi_target_mod).  The idea is
+that any $FABRIC module can access the same storage objects under the
+generic target_core_mod configfs infrastracture.
+
+I have primarly been working on completing the configfs conversion for
+iscsi_target_mod, and as that work wraps up, I will next be focusing on
+target_core_mod and the generic kernel target infrastructure in Linux.
+This involves quite a few different things, merging existing in-tree
+STGT code into so it can use /sys/kernel/config/target/core, merging out
+of tree SCST code for multiple existing fabric modules and hardware
+target mode drivers, the Target API, etc.  This work will definately
+take lots of time and effort, but the end result will be a complete
+target infrastructure under Linux that all manner of folks can use and
+take advantage of and to build upon.
+
+Thanks to the many folks you have made suggestions and comments in order
+to get packets across the network and blocks down to storage up as
+quickly as possible.  It was only ~7 weeks ago that Ming Zhang made the
+recommendation to start using configfs, and now 6k new lines of code in
+target_core_config.[c,h] and iscsi_target_configfs.[c.h]..  Wow..
+
+As work continues on both fronts:  making iscsi_target_mod upstream
+ready, and creating a generic target engine using configfs for
+iscsi_target_mod and *ALL* fabric modules, the Linux-iSCSI.org team
+invites anyone who is interested to start looking at the code.  You can
+do this online at:
+
+http://git.kernel.org/?p=linux/kernel/git/nab/lio-core-2.6.git;a=tree;f=drivers/lio-core;hb=HEAD
+
+or checkout your own git tree and start posting patching to the
+LIO-Target devleopment list.  Instructions for git clone can be found
+on:
+
+http://linux-iscsi.org/index.php/LIO-Target
+
+Please feel free to ask questions!
+
+--nab
