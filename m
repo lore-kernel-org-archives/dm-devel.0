@@ -1,15 +1,16 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
 Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller
  v1.8.0: Introduction
-Date: Mon, 20 Oct 2008 18:01:30 +0900 (JST)
-Message-ID: <20081020.180129.193689104.ryov@valinux.co.jp>
-References: <20081017.160950.71109894.ryov@valinux.co.jp>
-	<2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
+Date: Mon, 20 Oct 2008 21:48:58 +0900 (JST)
+Message-ID: <20081020.214858.193685328.ryov@valinux.co.jp>
+References: <2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
+	<20081020.180129.193689104.ryov@valinux.co.jp>
+	<2891419e0810200313j5cac8541qff80614e3d784b1b@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
+In-Reply-To: <2891419e0810200313j5cac8541qff80614e3d784b1b@mail.gmail.com>
 List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
 	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
 List-Post: <mailto:xen-devel@lists.xensource.com>
@@ -24,19 +25,12 @@ List-Id: dm-devel.ids
 
 Hi Dong-Jae,
 
-> I am trying to install your new released dm-ioband v1.8.0
-> I/O bandwidth controller v1.8.0 could be adjusted to  the latest
-> stable kernel 2.6.27.1
-> it was good news for me
-> but, I had a problem when I try to patch bio-cgroup files to  stable
-> kernel 2.6.27.1
-> many patch failure and hunk messages were occured.
-> 
-> Can you check bio-cgroup patch files against stable kernel 2.6.27.1?
+> Well, do you have any plan to upgrade bio-cgroup patches for stable
+> latest kernel?
+> but, I think it will be not easy job ^^
 
-bio-cgroup patch can apply only to 2.6.27-rc5-mm1 so far.
-Please use 2.6.27-rc5-mm1 to try both bio-cgroup and dm-ioband,
-dm-ioband v1.8.0 can also apply to 2.6.27-rc5-mm1.
+I think the memory cgroup will have a major change sometime soon.
+So the new patch will be released after that.
 
 Thanks,
 Ryo Tsuruta
