@@ -1,36 +1,117 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller
- v1.8.0: Introduction
-Date: Mon, 20 Oct 2008 21:48:58 +0900 (JST)
-Message-ID: <20081020.214858.193685328.ryov@valinux.co.jp>
-References: <2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
-	<20081020.180129.193689104.ryov@valinux.co.jp>
-	<2891419e0810200313j5cac8541qff80614e3d784b1b@mail.gmail.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: multipath rdac - recover from both paths lost
+Date: Mon, 20 Oct 2008 10:04:28 -0400
+Message-ID: <20081020140427.GA679@mars.virtualiron.com>
+References: <bd4583d00810200329x652c28b8xbfa1aa23c22912e@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-In-Reply-To: <2891419e0810200313j5cac8541qff80614e3d784b1b@mail.gmail.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
-To: baramsori72@gmail.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, corsetproject@googlegroups.com, fernando@oss.ntt.co.jp, agk@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <bd4583d00810200329x652c28b8xbfa1aa23c22912e@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Dong-Jae,
+On Mon, Oct 20, 2008 at 09:29:16PM +1100, Greg Cockburn wrote:
+> Hi,
+> 
+> I am trying to get back from a strage situation.
+> 
+> I have had both paths in a RDAC setup fail and then come back.
 
-> Well, do you have any plan to upgrade bio-cgroup patches for stable
-> latest kernel?
-> but, I think it will be not easy job ^^
+That is not what your 'multipath -ll' output shows. How did they
+come back? As in a re-login? If so they should automaticly be
+repopulated - unless your 'multipathd' daemon is dead.
 
-I think the memory cgroup will have a major change sometime soon.
-So the new patch will be released after that.
+Also, try running 'dd if=/dev/sdX of=/dev/null count=1' on your
+new paths (sde?, sdf?) and see if they fail. If they do fail, then
+they are still in failed condition and you need to fix your
+transportion problem.
 
-Thanks,
-Ryo Tsuruta
+
+> 
+> I want to know if there is a way to recover from this without a reboot.
+
+Yes. You can force it to rediscover all of the present block devices and
+add them in the corresponding device mapper maps by calling : 'multipath'.
+No arguments, nothing. Just call it. After that run 'multipath -ll' and
+that should show your new/refreshed block devices.
+
+
+> 
+> (OS = CentOS 5.1)
+> 
+> multipath -ll
+> mpath2 (3600a0b800035ebc8000001a94652ae50) dm-4 IBM,1726-4xx  FAStT
+> [size=1.4T][features=0][hwhandler=1 rdac]
+> \_ round-robin 0 [prio=0][enabled]
+>  \_ 2:0:0:1 sde 8:80  [failed][ghost]
+> \_ round-robin 0 [prio=100][active]
+>  \_ 1:0:0:1 sdf 8:96  [failed][ready]
+> 
+> dmsetup info mpath2
+> Name:              mpath2
+> State:             ACTIVE
+> Tables present:    LIVE
+> Open count:        20
+> Event number:      3
+> Major, minor:      253, 4
+> Number of targets: 1
+> UUID: mpath-3600a0b800035ebc8000001a94652ae50
+> 
+> vgscan
+>   Reading all physical volumes.  This may take a while...
+>   /dev/mapper/mpath2: read failed after 0 of 4096 at 1497314033664:
+> Input/output error
+>   /dev/mapper/mpath2: read failed after 0 of 4096 at 0: Input/output error
+> 
+> dmsetup remove --force mpath2
+
+Uhh.. That is not the way to do it. You would be removing the carpet underneath
+LVM. And from the looks of it, there are about 20 processes using it - so all
+of them could die.
+
+> 
+> 
+> 
+> device-mapper: remove ioctl failed: Device or resource busy
+> Command failed
+> 
+> multipath -f mpath2 (just exits with return code 1)
+> 
+> 
+> dmesg
+> 
+>     <<vendor>> ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6
+> 
+> sde: Current: sense key: Recovered Error
+>     <<vendor>> ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6
+> 
+> sdf: Current: sense key: Recovered Error
+>     <<vendor>> ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6
+> 
+> end_request: I/O error, dev sdf, sector 61118720
+> device-mapper: multipath: Failing path 8:80.
+> end_request: I/O error, dev sdf, sector 599510512
+> 
+> device-mapper: ioctl: unable to remove open device mpath2
+> device-mapper: ioctl: unable to remove open device mpath2
+> 
+> Any advice would be greatly appreciated.
+> 
+> Thanks,
+> Greg.
+
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
