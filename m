@@ -1,17 +1,15 @@
 From: "Dong-Jae Kang" <baramsori72@gmail.com>
 Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller
 	v1.8.0: Introduction
-Date: Mon, 20 Oct 2008 19:13:14 +0900
-Message-ID: <2891419e0810200313j5cac8541qff80614e3d784b1b@mail.gmail.com>
+Date: Mon, 20 Oct 2008 17:40:49 +0900
+Message-ID: <2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
 References: <20081017.160950.71109894.ryov@valinux.co.jp>
-	<2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
-	<20081020.180129.193689104.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081020.180129.193689104.ryov@valinux.co.jp>
+In-Reply-To: <20081017.160950.71109894.ryov@valinux.co.jp>
 Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -28,34 +26,54 @@ List-Id: dm-devel.ids
 
 Hi, Ryo Tsuruta
 
-Thank you for fast reply.
+I am trying to install your new released dm-ioband v1.8.0
+I/O bandwidth controller v1.8.0 could be adjusted to  the latest
+stable kernel 2.6.27.1
+it was good news for me
+but, I had a problem when I try to patch bio-cgroup files to  stable
+kernel 2.6.27.1
+many patch failure and hunk messages were occured.
 
-2008/10/20 Ryo Tsuruta <ryov@valinux.co.jp>:
-> Hi Dong-Jae,
->
->> I am trying to install your new released dm-ioband v1.8.0
->> I/O bandwidth controller v1.8.0 could be adjusted to  the latest
->> stable kernel 2.6.27.1
->> it was good news for me
->> but, I had a problem when I try to patch bio-cgroup files to  stable
->> kernel 2.6.27.1
->> many patch failure and hunk messages were occured.
->>
->> Can you check bio-cgroup patch files against stable kernel 2.6.27.1?
->
-> bio-cgroup patch can apply only to 2.6.27-rc5-mm1 so far.
-> Please use 2.6.27-rc5-mm1 to try both bio-cgroup and dm-ioband,
-> dm-ioband v1.8.0 can also apply to 2.6.27-rc5-mm1.
+Can you check bio-cgroup patch files against stable kernel 2.6.27.1?
 
-OK, I will use kernel-2.6.27-rc5-mm1 as your comments
+If the dm-ioband and bio-cgroup patches had different base kernel, i
+think it is not natural.
+I think it is more reasonable to release dm-ioband and bio-cgroup
+patches in pair.
+In my situation, both direct IO and buffered IO are same important.
 
-Well, do you have any plan to upgrade bio-cgroup patches for stable
-latest kernel?
-but, I think it will be not easy job ^^
-Thank you
+thank you
 
-Regards,
+Regard,
 Dong-Jae Kang
+
+2008/10/17 Ryo Tsuruta <ryov@valinux.co.jp>:
+> Hi Alasdair and all,
+>
+> This is the dm-ioband version 1.8.0 release.
+>
+> Dm-ioband is an I/O bandwidth controller implemented as a device-mapper
+> driver, which gives specified bandwidth to each job running on the same
+> physical device.
+>
+> This release is a minor bug fix and confirmed running on the latest
+> stable kernel 2.6.27.1.
+>
+> - Can be applied to the kernel 2.6.27.1 and 2.6.27-rc5-mm1.
+> - Changes from 1.7.0 (posted on Oct 3, 2008):
+>  - Fix a minor bug in io_limit setting that causes dm-ioband to stop
+>    issuing I/O requests when a large value is set to io_limit.
+>
+> Alasdair, could you please review this patch and give me any comments?
+>
+> Thanks,
+> Ryo Tsuruta
+> _______________________________________________
+> Containers mailing list
+> Containers@lists.linux-foundation.org
+> https://lists.linux-foundation.org/mailman/listinfo/containers
+>
+
 
 
 -- 
