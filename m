@@ -1,16 +1,11 @@
-From: "Dong-Jae Kang" <baramsori72@gmail.com>
-Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller
-	v1.8.0: Introduction
-Date: Mon, 20 Oct 2008 17:40:49 +0900
-Message-ID: <2891419e0810200140s3cf9c0a3q228620519ae5f4af@mail.gmail.com>
-References: <20081017.160950.71109894.ryov@valinux.co.jp>
+From: "Greg Cockburn" <gergnz@gmail.com>
+Subject: multipath rdac - recover from both paths lost
+Date: Mon, 20 Oct 2008 21:29:16 +1100
+Message-ID: <bd4583d00810200329x652c28b8xbfa1aa23c22912e@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="===============1102789180=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081017.160950.71109894.ryov@valinux.co.jp>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,69 +15,106 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, corsetproject@googlegroups.com, fernando@oss.ntt.co.jp, agk@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi, Ryo Tsuruta
+--===============1102789180==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_169485_8677947.1224498557000"
 
-I am trying to install your new released dm-ioband v1.8.0
-I/O bandwidth controller v1.8.0 could be adjusted to  the latest
-stable kernel 2.6.27.1
-it was good news for me
-but, I had a problem when I try to patch bio-cgroup files to  stable
-kernel 2.6.27.1
-many patch failure and hunk messages were occured.
+------=_Part_169485_8677947.1224498557000
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-Can you check bio-cgroup patch files against stable kernel 2.6.27.1?
+Hi,
 
-If the dm-ioband and bio-cgroup patches had different base kernel, i
-think it is not natural.
-I think it is more reasonable to release dm-ioband and bio-cgroup
-patches in pair.
-In my situation, both direct IO and buffered IO are same important.
+I am trying to get back from a strage situation.
 
-thank you
+I have had both paths in a RDAC setup fail and then come back.
 
-Regard,
-Dong-Jae Kang
+I want to know if there is a way to recover from this without a reboot.
 
-2008/10/17 Ryo Tsuruta <ryov@valinux.co.jp>:
-> Hi Alasdair and all,
->
-> This is the dm-ioband version 1.8.0 release.
->
-> Dm-ioband is an I/O bandwidth controller implemented as a device-mapper
-> driver, which gives specified bandwidth to each job running on the same
-> physical device.
->
-> This release is a minor bug fix and confirmed running on the latest
-> stable kernel 2.6.27.1.
->
-> - Can be applied to the kernel 2.6.27.1 and 2.6.27-rc5-mm1.
-> - Changes from 1.7.0 (posted on Oct 3, 2008):
->  - Fix a minor bug in io_limit setting that causes dm-ioband to stop
->    issuing I/O requests when a large value is set to io_limit.
->
-> Alasdair, could you please review this patch and give me any comments?
->
-> Thanks,
-> Ryo Tsuruta
-> _______________________________________________
-> Containers mailing list
-> Containers@lists.linux-foundation.org
-> https://lists.linux-foundation.org/mailman/listinfo/containers
->
+(OS = CentOS 5.1)
+
+multipath -ll
+mpath2 (3600a0b800035ebc8000001a94652ae50) dm-4 IBM,1726-4xx  FAStT
+[size=1.4T][features=0][hwhandler=1 rdac]
+\_ round-robin 0 [prio=0][enabled]
+ \_ 2:0:0:1 sde 8:80  [failed][ghost]
+\_ round-robin 0 [prio=100][active]
+ \_ 1:0:0:1 sdf 8:96  [failed][ready]
+
+dmsetup info mpath2
+Name:              mpath2
+State:             ACTIVE
+Tables present:    LIVE
+Open count:        20
+Event number:      3
+Major, minor:      253, 4
+Number of targets: 1
+UUID: mpath-3600a0b800035ebc8000001a94652ae50
+
+vgscan
+  Reading all physical volumes.  This may take a while...
+  /dev/mapper/mpath2: read failed after 0 of 4096 at 1497314033664:
+Input/output error
+  /dev/mapper/mpath2: read failed after 0 of 4096 at 0: Input/output error
+
+dmsetup remove --force mpath2
 
 
 
--- 
--------------------------------------------------------------------------------------------------
-   DONG-JAE, KANG
-   Senior Member of Engineering Staff
-   Internet Platform Research Dept, S/W Content Research Lab
-   Electronics and Telecommunications Research Institute(ETRI)
-   138 Gajeongno, Yuseong-gu, Daejeon, 305-700 KOREA
-   Phone : 82-42-860-1561 Fax : 82-42-860-6699
-   Mobile : 82-10-9919-2353 E-mail : djkang@etri.re.kr (MSN)
--------------------------------------------------------------------------------------------------
+device-mapper: remove ioctl failed: Device or resource busy
+Command failed
+
+multipath -f mpath2 (just exits with return code 1)
+
+
+dmesg
+
+    <<vendor>> ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6
+
+sde: Current: sense key: Recovered Error
+    <<vendor>> ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6
+
+sdf: Current: sense key: Recovered Error
+    <<vendor>> ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6
+
+end_request: I/O error, dev sdf, sector 61118720
+device-mapper: multipath: Failing path 8:80.
+end_request: I/O error, dev sdf, sector 599510512
+
+device-mapper: ioctl: unable to remove open device mpath2
+device-mapper: ioctl: unable to remove open device mpath2
+
+Any advice would be greatly appreciated.
+
+Thanks,
+Greg.
+
+------=_Part_169485_8677947.1224498557000
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+<div dir="ltr">Hi,<br><br>I am trying to get back from a strage situation.<br><br>I have had both paths in a RDAC setup fail and then come back.<br><br>I want to know if there is a way to recover from this without a reboot.<br>
+<br>(OS = CentOS 5.1)<br><br>multipath -ll<br>mpath2 (3600a0b800035ebc8000001a94652ae50) dm-4 IBM,1726-4xx&nbsp; FAStT<br>[size=1.4T][features=0][hwhandler=1 rdac]<br>\_ round-robin 0 [prio=0][enabled]<br>&nbsp;\_ 2:0:0:1 sde 8:80&nbsp; [failed][ghost]<br>
+\_ round-robin 0 [prio=100][active]<br>&nbsp;\_ 1:0:0:1 sdf 8:96&nbsp; [failed][ready]<br><br>dmsetup info mpath2<br>Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; mpath2<br>State:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ACTIVE<br>Tables present:&nbsp;&nbsp;&nbsp; LIVE<br>Open count:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 20<br>Event number:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 3<br>
+Major, minor:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 253, 4<br>Number of targets: 1<br>UUID: mpath-3600a0b800035ebc8000001a94652ae50<br><br>vgscan<br>&nbsp; Reading all physical volumes.&nbsp; This may take a while...<br>&nbsp; /dev/mapper/mpath2: read failed after 0 of 4096 at 1497314033664: Input/output error<br>
+&nbsp; /dev/mapper/mpath2: read failed after 0 of 4096 at 0: Input/output error<br><br>dmsetup remove --force mpath2<br><br><br><br>device-mapper: remove ioctl failed: Device or resource busy<br>Command failed<br><br>multipath -f mpath2 (just exits with return code 1)<br>
+<br><br>dmesg<br><br>&nbsp;&nbsp;&nbsp; &lt;&lt;vendor&gt;&gt; ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6<br><br>sde: Current: sense key: Recovered Error<br>&nbsp;&nbsp;&nbsp; &lt;&lt;vendor&gt;&gt; ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6<br><br>sdf: Current: sense key: Recovered Error<br>
+&nbsp;&nbsp;&nbsp; &lt;&lt;vendor&gt;&gt; ASC=0xe0 ASCQ=0x6ASC=0xe0 ASCQ=0x6<br><br>end_request: I/O error, dev sdf, sector 61118720<br>device-mapper: multipath: Failing path 8:80.<br>end_request: I/O error, dev sdf, sector 599510512<br>
+<br>device-mapper: ioctl: unable to remove open device mpath2<br>device-mapper: ioctl: unable to remove open device mpath2<br><br>Any advice would be greatly appreciated.<br><br>Thanks,<br>Greg.<br></div>
+
+------=_Part_169485_8677947.1224498557000--
+
+
+--===============1102789180==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============1102789180==--
