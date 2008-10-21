@@ -1,16 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Calltrace in dm-snapshot in 2.6.27 kernel
-Date: Tue, 21 Oct 2008 13:22:33 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0810211319330.13319@hs20-bc2-1.build.redhat.com>
-References: <48FC23DE.5040000@poczta.onet.pl> <48FC4498.5070706@redhat.com>
-	<48FD7911.1000705@poczta.onet.pl>
-	<Pine.LNX.4.64.0810210953560.12983@hs20-bc2-1.build.redhat.com>
-	<48FDFF53.5080007@poczta.onet.pl>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [stable] [git pull] Additional device-mapper patches
+	for 2.6.28
+Date: Tue, 21 Oct 2008 18:35:52 +0100
+Message-ID: <20081021173552.GK2810@agk.fab.redhat.com>
+References: <20081021165901.GO5098@agk.fab.redhat.com>
+	<20081021170436.GA25030@kroah.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <48FDFF53.5080007@poczta.onet.pl>
+Content-Disposition: inline
+In-Reply-To: <20081021170436.GA25030@kroah.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +20,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: aluno3 <aluno3@poczta.onet.pl>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Greg KH <greg@kroah.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Heinz Mauelshagen <mauelshagen@redhat.com>, Linus Torvalds <torvalds@linux-foundation.org>, stable@kernel.org, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-> Hi Mikulas
-> 
-> I send to You (in attachment) files from both kernels.Thank You for help
-> 
-> Best
+On Tue, Oct 21, 2008 at 10:04:36AM -0700, Greg KH wrote:
+> Hm, as you copied stable@kernel.org, does that mean that some of these
+> are applicable to -stable releases?
+ 
+Yes - the ones with 'Cc: stable@kernel.org' in the changelog from which
+I generated the Cc list.  I've sent them separately.
 
-Thanks. Does your workload involve just one snapshot of a given volume, or 
-do you have more snapshots of the same volume? Do you write only to origin 
-or to both origin and the snapshot or only to the snapshot?
-
-I will send you some patch with more debug tests soon, just answer these 
-questions first, so that I can make it.
-
-Mikulas
+Alasdair
+-- 
+agk@redhat.com
