@@ -1,7 +1,7 @@
-From: "aluno3@poczta.onet.pl" <aluno3@poczta.onet.pl>
+From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: Re: Calltrace in dm-snapshot in 2.6.27 kernel
-Date: Wed, 22 Oct 2008 15:37:21 +0200
-Message-ID: <48FF2C91.4080401@poczta.onet.pl>
+Date: Wed, 22 Oct 2008 11:45:07 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0810221140440.28028@hs20-bc2-1.build.redhat.com>
 References: <48FC23DE.5040000@poczta.onet.pl> <48FC4498.5070706@redhat.com>
 	<48FD7911.1000705@poczta.onet.pl>
 	<Pine.LNX.4.64.0810210953560.12983@hs20-bc2-1.build.redhat.com>
@@ -9,12 +9,12 @@ References: <48FC23DE.5040000@poczta.onet.pl> <48FC4498.5070706@redhat.com>
 	<Pine.LNX.4.64.0810211319330.13319@hs20-bc2-1.build.redhat.com>
 	<48FE22A0.30005@poczta.onet.pl>
 	<Pine.LNX.4.64.0810211736230.24588@hs20-bc2-1.build.redhat.com>
+	<48FF2C91.4080401@poczta.onet.pl>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0810211736230.24588@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <48FF2C91.4080401@poczta.onet.pl>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,85 +24,86 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
+To: "aluno3@poczta.onet.pl" <aluno3@poczta.onet.pl>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+On Wed, 22 Oct 2008, aluno3@poczta.onet.pl wrote:
+
+> Hi
+> 
+> I used your patch and I ran test the same workload. After a few hours
+> test, everything is OK. Is it possible? Test is still running.When I get
+> something wrong from kernel I write to You again.
+
 Hi
 
-I used your patch and I ran test the same workload. After a few hours
-test, everything is OK. Is it possible? Test is still running.When I get
-something wrong from kernel I write to You again.
+That's good that it works. So try this. Keep the first patch (it is this 
+one --- 
+http://people.redhat.com/mpatocka/patches/kernel/2.6.27/dm-snapshot-fix-primary-pe-race.patch 
+--- I think Milan already sent it to you and you have it applied). Undo 
+the second patch (that one that hides deallocation with /* */ ). And apply 
+this. Run the same test.
 
+Mikulas
 
+---
+ drivers/md/dm-snap.c |   10 +++++++++-
+ drivers/md/dm-snap.h |    2 ++
+ 2 files changed, 11 insertions(+), 1 deletion(-)
 
-Mikulas Patocka wrote:
-> Hi
->
-> Run the same workload and try this patch (also keep the previous patch 
-> applied).
->
-> Note, that the patch is not correct (it leaks a little bit of memory when 
-> you deactivate a snapshot, also it will cause an error if you rmmod 
-> dm-snapshot), I just want to see if you get any more crashes with this.
->
-> Mikulas
->
->   
->> My workload in case of 32b involved only one volume and 3 snapshots to
->> this volume. I wrote only to origin volume (with use fstress) and I
->> created and deleted these snapshots from time to time. Snapshots was
->> mount with rw option.
->>
->> In case 64b I had 2 volume and 10 snapshots for each volume.I created
->> and deleted these snapshots from time to time as well. I wrote only to
->> origin volumes (with use dd)
->>
->> I don`t remember exactly but in case test with 1 snapshot per volume all
->> was working correctly through a few hours and I stopped this test but in
->> case my above tests system was working correctly through a few minutes.
->>  
->> Mikulas Patocka wrote:
->>     
->>>> Hi Mikulas
->>>>
->>>> I send to You (in attachment) files from both kernels.Thank You for help
->>>>
->>>> Best
->>>>     
->>>>         
->>> Thanks. Does your workload involve just one snapshot of a given volume, or 
->>> do you have more snapshots of the same volume? Do you write only to origin 
->>> or to both origin and the snapshot or only to the snapshot?
->>>
->>> I will send you some patch with more debug tests soon, just answer these 
->>> questions first, so that I can make it.
->>>
->>> Mikulas
->>>       
->
-> ---
->  drivers/md/dm-snap.c |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
->
-> Index: linux-2.6.27-clean/drivers/md/dm-snap.c
-> ===================================================================
-> --- linux-2.6.27-clean.orig/drivers/md/dm-snap.c	2008-10-21 23:38:49.000000000 +0200
-> +++ linux-2.6.27-clean/drivers/md/dm-snap.c	2008-10-21 23:39:09.000000000 +0200
-> @@ -736,12 +736,12 @@ static void snapshot_dtr(struct dm_targe
->  
->  	__free_exceptions(s);
->  
-> -	mempool_destroy(s->pending_pool);
-> +	/*mempool_destroy(s->pending_pool);*/
->  
->  	dm_put_device(ti, s->origin);
->  	dm_put_device(ti, s->cow);
->  
-> -	kfree(s);
-> +	/*kfree(s);*/
->  }
->  
->  /*
->
->   
+Index: linux-2.6.27-clean/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.27-clean.orig/drivers/md/dm-snap.c	2008-10-22 15:41:24.000000000 +0200
++++ linux-2.6.27-clean/drivers/md/dm-snap.c	2008-10-22 15:51:33.000000000 +0200
+@@ -368,6 +368,7 @@ static struct dm_snap_pending_exception 
+ 	struct dm_snap_pending_exception *pe = mempool_alloc(s->pending_pool,
+ 							     GFP_NOIO);
+ 
++	atomic_inc(&s->n_pending_exceptions);
+ 	pe->snap = s;
+ 
+ 	return pe;
+@@ -375,7 +376,10 @@ static struct dm_snap_pending_exception 
+ 
+ static void free_pending_exception(struct dm_snap_pending_exception *pe)
+ {
+-	mempool_free(pe, pe->snap->pending_pool);
++	struct struct dm_snapshot *s = pe->snap;
++	mempool_free(pe, s->pending_pool);
++	smp_mb__before_atomic_dec();
++	atomic_dec(&s->n_pending_exceptions);
+ }
+ 
+ static void insert_completed_exception(struct dm_snapshot *s,
+@@ -601,6 +605,7 @@ static int snapshot_ctr(struct dm_target
+ 	s->valid = 1;
+ 	s->active = 0;
+ 	s->last_percent = 0;
++	atomic_set(&s->n_pending_exceptions, 0);
+ 	init_rwsem(&s->lock);
+ 	spin_lock_init(&s->pe_lock);
+ 	s->ti = ti;
+@@ -727,6 +732,9 @@ static void snapshot_dtr(struct dm_targe
+ 	/* After this returns there can be no new kcopyd jobs. */
+ 	unregister_snapshot(s);
+ 
++	while (atomic_read(&s->n_pending_exceptions))
++		yield();
++
+ #ifdef CONFIG_DM_DEBUG
+ 	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
+ 		BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
+Index: linux-2.6.27-clean/drivers/md/dm-snap.h
+===================================================================
+--- linux-2.6.27-clean.orig/drivers/md/dm-snap.h	2008-10-22 15:45:08.000000000 +0200
++++ linux-2.6.27-clean/drivers/md/dm-snap.h	2008-10-22 15:46:49.000000000 +0200
+@@ -163,6 +163,8 @@ struct dm_snapshot {
+ 
+ 	mempool_t *pending_pool;
+ 
++	atomic_t n_pending_exceptions;
++
+ 	struct exception_table pending;
+ 	struct exception_table complete;
+ 
