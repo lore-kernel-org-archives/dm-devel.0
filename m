@@ -1,57 +1,42 @@
-From: Chen Zumeng <zumeng.chen@windriver.com>
-Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller v1.8.0: Introduction
-Date: Wed, 22 Oct 2008 16:12:21 +0800
-Message-ID: <48FEE065.20406@windriver.com>
-References: <20081017.160950.71109894.ryov@valinux.co.jp>	<48FDB8AC.9020707@windriver.com>	<48FEDC63.308@windriver.com> <20081022.170536.193712541.ryov@valinux.co.jp>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller
+ v1.8.0: Introduction
+Date: Wed, 22 Oct 2008 19:38:31 +0900 (JST)
+Message-ID: <20081022.193831.193716981.ryov@valinux.co.jp>
+References: <20081017.160950.71109894.ryov@valinux.co.jp>
+	<48FDB8AC.9020707@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754356AbYJVIP2@vger.kernel.org>
-In-Reply-To: <20081022.170536.193712541.ryov@valinux.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Ryo Tsuruta <ryov@valinux.co.jp>, haotian.zhang@windriver.com
-Cc: bruce.ashfield@windriver.com, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, fernando@oss.ntt.co.jp
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <48FDB8AC.9020707@windriver.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: zumeng.chen@windriver.com
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, fernando@oss.ntt.co.jp, agk@redhat.com
 List-Id: dm-devel.ids
 
-Ryo Tsuruta wrote:
-> Hi Chen,
-> 
->> Chen Zumeng wrote:
->>> Hi, Ryo Tsuruta
->>> And our test team want to test bio_tracking as your benchmark reports,
->>> so would you please send me your test codes? Thanks in advance.
->> Hi Ryo Tsuruta,
->>
->> I wonder if you received last email, so I reply this email to ask
->> for your bio_tracking test codes to generate your benchmark reports
->> as shown in your website. Thanks in advance :)
-Thanks for you quick reply :)
+Hi Chen,
 
-Regards,
-Zumeng
-> 
-> I've uploaded two scripts here:
-> http://people.valinux.co.jp/~ryov/dm-ioband/scripts/xdd-count.sh
-> http://people.valinux.co.jp/~ryov/dm-ioband/scripts/xdd-size.sh
-> 
-> xdd-count.sh controls bandwidth based on the number of I/O requests,
-> and xdd-size.sh controls bandwidth based onthe number of I/O sectors.
-> Theses scritpts require xdd disk I/O testing tool which can be
-> downloaded from here:
-> http://www.ioperformance.com/products.htm
-> 
-> Please feel free to ask me questions if you have any questions.
-OK thanks.
-> 
->>> P.S. The following are my changes to avoid schedule_timeout:
-> 
-> Thanks, but your patch seems to cause a problem when ioband devices
-> which have the same name are created at the same time. I will fix the
-> issue in the next release.
-Maybe, hoping your next release :)
+> I applied your patches(both) into the latest kernel(27), and dm-ioband
+> looks work well(other than schedule_timeout in alloc_ioband_device);
+> But I think you are the author of bio_tracking, so it is high
+> appreciated if you can give your comments and advices for potential
+> difference between 27-rc5-mm1 and 2.6.27 to me.
 
-Zumeng
-> 
-> Thanks,
-> Ryo Tsuruta
-> 
+There is no major difference between both version, but I have no time
+to port and test bio-cgroup to/on 2.6.27.
+
+Kamezawa-san said
+> the newest mmotm has the newest *big* change. enjoy it ;)
+
+The next bio-cgroup patch will be based on this newest change.
+
+Thanks,
+Ryo Tsuruta
