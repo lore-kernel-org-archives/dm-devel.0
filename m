@@ -1,53 +1,93 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [BUG] dm-mpath and scsi persistent reservation
-Date: Tue, 21 Oct 2008 15:48:03 -0700
-Message-ID: <1224629283.14830.838.camel@chandra-ubuntu>
-References: <20081021231910.0fdbeb75@plop>
-Reply-To: sekharan@us.ibm.com
+From: Chen Zumeng <zumeng.chen@windriver.com>
+Subject: Re: [PATCH 0/2] dm-ioband: I/O bandwidth controller v1.8.0: Introduction
+Date: Wed, 22 Oct 2008 15:55:15 +0800
+Message-ID: <48FEDC63.308@windriver.com>
+References: <20081017.160950.71109894.ryov@valinux.co.jp> <48FDB8AC.9020707@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20081021231910.0fdbeb75@plop>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Christophe Varoqui <christophe.varoqui@free.fr>
-Cc: jens.axboe@oracle.com, james.bottomley@hansenpartnership.com, alasdair.kergon@redhat.com, linux-scsi@vger.kernel.org, dm-devel@redhat.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754338AbYJVH6C@vger.kernel.org>
+In-Reply-To: <48FDB8AC.9020707@windriver.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: Bruce Ashfield <bruce.ashfield@windriver.com>, Haotian Zhang <haotian.zhang@windriver.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com, fernando@oss.ntt.co.jp
 List-Id: dm-devel.ids
 
-Christophe,
-
-The SCSI Hardware handler is created for devices with special needs. It
-is available in 2.6.27. One can be written for any device to translate
-the scsi sense code to a different error code that the dm understands.
-Is this something that coule help this situation ?
-
-Have a look at drivers/scsi/device_handler directory.
-
-Hope this helps,
-
-chandra
-On Tue, 2008-10-21 at 23:19 +0200, Christophe Varoqui wrote:
-> Hi,
+Chen Zumeng wrote:
+> Hi, Ryo Tsuruta
 > 
-> the dm-mpath multipathing driver enqueues write ios returned by
-> the scsi layer with a "reservation conflict" error (on assymetric
-> storage controllers, like Clariion, where queue_if_no_path is enabled).
-> 
-> This is wrong, and a potent data-corrupter : wio sent to a reserved
-> scsi device should never be retried on this same device.
-> 
-> Can someone advise on a viable solution for this problem ? I
-> understand the Device Mapper being a block remapper, it is not expected
-> to receive scsi errors directly ... but maybe some kind of translation
-> might be acceptable. Or is there hope in the request-based remapper ?
-> 
-> Jens, James, Alasdair, ... as maintainers of the involved subsystems,
-> would you care to give some advise on the issue.
+> And our test team want to test bio_tracking as your benchmark reports,
+> so would you please send me your test codes? Thanks in advance.
+Hi Ryo Tsuruta,
+
+I wonder if you received last email, so I reply this email to ask
+for your bio_tracking test codes to generate your benchmark reports
+as shown in your website. Thanks in advance :)
+
+Regards,
+Zumeng
 > 
 > Regards,
-> cvaroqui
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+> Zumeng
+> 
+> P.S. The following are my changes to avoid schedule_timeout:
+> 
+> 
+> diff --git a/drivers/md/dm-ioband-ctl.c b/drivers/md/dm-ioband-ctl.c
+> index a792620..643ca4e 100644
+> --- a/drivers/md/dm-ioband-ctl.c
+> +++ b/drivers/md/dm-ioband-ctl.c
+> @@ -100,6 +100,7 @@ static struct ioband_device 
+> *alloc_ioband_device(char *name,
+>                         return dp;
+>                 }
+>         }
+> +       spin_unlock_irqrestore(&ioband_devicelist_lock, flags);
+> 
+>         /*
+>          * Prepare its own workqueue as generic_make_request() may
+> @@ -133,9 +134,11 @@ static struct ioband_device 
+> *alloc_ioband_device(char *name,
+>         init_waitqueue_head(&new->g_waitq);
+>         init_waitqueue_head(&new->g_waitq_suspend);
+>         init_waitqueue_head(&new->g_waitq_flush);
+> -       list_add_tail(&new->g_list, &ioband_device_list);
+> 
+> +       spin_lock_irqsave(&ioband_devicelist_lock, flags);
+> +       list_add_tail(&new->g_list, &ioband_device_list);
+>         spin_unlock_irqrestore(&ioband_devicelist_lock, flags);
+> +
+>         return new;
+>  }
+> ---
+> 
+> Ryo Tsuruta wrote:
+>> Hi Alasdair and all,
+>>
+>> This is the dm-ioband version 1.8.0 release.
+>>
+>> Dm-ioband is an I/O bandwidth controller implemented as a device-mapper
+>> driver, which gives specified bandwidth to each job running on the same
+>> physical device.
+>>
+>> This release is a minor bug fix and confirmed running on the latest
+>> stable kernel 2.6.27.1.
+>>
+>> - Can be applied to the kernel 2.6.27.1 and 2.6.27-rc5-mm1.
+>> - Changes from 1.7.0 (posted on Oct 3, 2008):
+>>   - Fix a minor bug in io_limit setting that causes dm-ioband to stop
+>>     issuing I/O requests when a large value is set to io_limit.
+>>
+>> Alasdair, could you please review this patch and give me any comments?
+>>
+>> Thanks,
+>> Ryo Tsuruta
+>> -- 
+>> To unsubscribe from this list: send the line "unsubscribe 
+>> linux-kernel" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>> Please read the FAQ at  http://www.tux.org/lkml/
+>>
+> 
+> 
