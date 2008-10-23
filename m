@@ -1,67 +1,138 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: mulitipath -ll & multiapth -v3 ouput
-Date: Thu, 23 Oct 2008 10:34:11 -0400
-Message-ID: <20081023143411.GA10858@mars.virtualiron.com>
-References: <213666.28497.qm@web94812.mail.in2.yahoo.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: RE: [dm-devel] failover does not work with rdac device handler
+Date: Thu, 23 Oct 2008 10:15:04 -0700
+Message-ID: <1224782104.14830.870.camel@chandra-ubuntu>
+References: <00FE57DD11E3A94893D5BD54C3358BE884BF36@AUSX3MPC128.aus.amer.dell.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BB4E86E@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBC908@cosmail01.lsi.com>
+	 ,<1223081419.14830.585.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BB949D3@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCCF2@cosmail01.lsi.com>
+	 <1223322817.14830.593.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCD31@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCE37@cosmail01.lsi.com>
+	 <1223345074.14830.601.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBD142@cosmail01.lsi.com>
+	 <1223407146.14830.617.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BCE45E0@cosmail01.lsi.com>
+Reply-To: sekharan@us.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <213666.28497.qm@web94812.mail.in2.yahoo.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BCE45E0@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Oct 23, 2008 at 03:56:15PM +0530, sriharsha y d wrote:
-> Hi,
-> 
-> Not sure why there is a difference between the  mulitipath -ll & multiapth -v3 ouput ,for  IO queuing features disply,
-> 
-> i.e 
-> multipath  -v3 
-> asm1: pgfailback = -2 (controller setting) 
-> asm1: pgpolicy = multibus (controller setting) 
-> asm1: selector = round-robin 0 (internal default) 
-> asm1: features = 0 (internal default) 
-> asm1: hwhandler = 0 (internal default) 
-> asm1: rr_weight = 2 (config file default) 
-> asm1: minio = 100 (config file default) 
-> asm1: no_path_retry = 5 (config file default) 
-> pg_timeout = NONE (internal default) 
-> asm1: set ACT_NOTHING (map unchanged)
-> 
->  
-> multiapth -ll 
-> 
-> asm1 (1HITACHI_770100720007) dm-9 HITACHI,DF600F 
-> [size=65G][features=1 queue_if_no_path][hwhandler=0] 
-> \_ round-robin 0 [prio=0][active] 
->  \_ 0:0:0:7 sdh 8:112 [active][ready] 
->  \_ 1:0:0:7 sdp 8:240 [active][ready]
-> 
-> 
-> So if we look at the features part , v3 output displays the correct info since in the config file  I have disabled queuing, but where as in -ll ouput it says queuing is enabled !!
+Hi Babu,
 
-Did you run 'multipathd -k'reconfigure' after you disabled queuing in your multipath.conf file?
+There is an another issue w.r.t non-listed devices (like you tested).
+The issue is that when the device disappears and reappear, the dh_state
+file is not created for them. I wanted to send the patch for that also
+together with this one. That is the reason for delay.
 
+chandra
+On Thu, 2008-10-23 at 08:12 -0600, Moger, Babu wrote:
+> Hello Chandra,
+>    I have not seen this patch being submitted to mainstream kernel. When are you planning to submit this patch? Should I open a bugzilla for tracking purposes?
 > 
-> Can some one provide more info on this ....
+> Thanks
+> Babu Moger
+> -----Original Message-----
+> From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
+> Sent: Tuesday, October 07, 2008 2:19 PM
+> To: Moger, Babu
+> Cc: device-mapper development; linux-scsi@vger.kernel.org
+> Subject: RE: [dm-devel] failover does not work with rdac device handler
+> 
+> 
+> Sorry, I sent an imcomplete patch. Here is the correct one.
+> 
+> BTW, The panic you saw is caused by the line (one of the lines you
+> added):
+> 
+> dev = container_of(&scsi_dh_data, struct scsi_device, scsi_dh_data);
+> 
+> in scsi_dh_release(). We cannot use pointer in a structure to get the
+> parent structure.
+> 
+> chandra
+> 
+> Keep a reference count of attaches, so that same number of detaches are allowed.
+> -----------
+> 
+> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> ---
+> Index: linux-2.6.27-rc8-git5/drivers/scsi/device_handler/scsi_dh.c
+> ===================================================================
+> --- linux-2.6.27-rc8-git5.orig/drivers/scsi/device_handler/scsi_dh.c
+> +++ linux-2.6.27-rc8-git5/drivers/scsi/device_handler/scsi_dh.c
+> @@ -153,12 +153,28 @@ static int scsi_dh_handler_attach(struct
+>         if (sdev->scsi_dh_data) {
+>                 if (sdev->scsi_dh_data->scsi_dh != scsi_dh)
+>                         err = -EBUSY;
+> -       } else if (scsi_dh->attach)
+> +               else
+> +                       kref_get(&sdev->scsi_dh_data->kref);
+> +       } else if (scsi_dh->attach) {
+>                 err = scsi_dh->attach(sdev);
+> +               if (!err) {
+> +                       kref_init(&sdev->scsi_dh_data->kref);
+> +                       sdev->scsi_dh_data->sdev = sdev;
+> +               }
+> +       }
+> 
+>         return err;
+>  }
+> 
+> +static void scsi_dh_release(struct kref *kref)
+> +{
+> +       struct scsi_dh_data *scsi_dh_data;
+> +       scsi_dh_data = container_of(kref, struct scsi_dh_data, kref);
+> +
+> +       if (scsi_dh_data->scsi_dh && scsi_dh_data->scsi_dh->detach)
+> +               scsi_dh_data->scsi_dh->detach(scsi_dh_data->sdev);
+> +}
+> +
+>  /*
+>   * scsi_dh_handler_detach - Detach a device handler from a device
+>   * @sdev - SCSI device the device handler should be detached from
+> @@ -176,11 +192,7 @@ static void scsi_dh_handler_detach(struc
+>         if (scsi_dh && scsi_dh != sdev->scsi_dh_data->scsi_dh)
+>                 return;
+> 
+> -       if (!scsi_dh)
+> -               scsi_dh = sdev->scsi_dh_data->scsi_dh;
+> -
+> -       if (scsi_dh && scsi_dh->detach)
+> -               scsi_dh->detach(sdev);
+> +       kref_put(&sdev->scsi_dh_data->kref, scsi_dh_release);
+>  }
+> 
+>  /*
+> Index: linux-2.6.27-rc8-git5/include/scsi/scsi_device.h
+> ===================================================================
+> --- linux-2.6.27-rc8-git5.orig/include/scsi/scsi_device.h
+> +++ linux-2.6.27-rc8-git5/include/scsi/scsi_device.h
+> @@ -6,6 +6,7 @@
+>  #include <linux/spinlock.h>
+>  #include <linux/workqueue.h>
+>  #include <linux/blkdev.h>
+> +#include <linux/kref.h>
+>  #include <scsi/scsi.h>
+>  #include <asm/atomic.h>
+> 
+> @@ -191,6 +192,8 @@ struct scsi_device_handler {
+> 
+>  struct scsi_dh_data {
+>         struct scsi_device_handler *scsi_dh;
+> +       struct kref kref;
+> +       struct scsi_device *sdev; /* back reference */
+>         char buf[0];
+>  };
 > 
 > 
 > 
->       Add more friends to your messenger and enjoy! Go to http://messenger.yahoo.com/invite/
-> 
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+
