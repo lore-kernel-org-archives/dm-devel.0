@@ -1,148 +1,127 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Calltrace in dm-snapshot in 2.6.27 kernel
-Date: Thu, 23 Oct 2008 09:40:31 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0810230938280.3939@hs20-bc2-1.build.redhat.com>
-References: <48FC23DE.5040000@poczta.onet.pl> <48FC4498.5070706@redhat.com>
-	<48FD7911.1000705@poczta.onet.pl>
-	<Pine.LNX.4.64.0810210953560.12983@hs20-bc2-1.build.redhat.com>
-	<48FDFF53.5080007@poczta.onet.pl>
-	<Pine.LNX.4.64.0810211319330.13319@hs20-bc2-1.build.redhat.com>
-	<48FE22A0.30005@poczta.onet.pl>
-	<Pine.LNX.4.64.0810211736230.24588@hs20-bc2-1.build.redhat.com>
-	<48FF2C91.4080401@poczta.onet.pl>
-	<Pine.LNX.4.64.0810221140440.28028@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0810221238030.3985@hs20-bc2-1.build.redhat.com>
-	<4900603C.2090508@poczta.onet.pl>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: [dm-devel] failover does not work with rdac device handler
+Date: Thu, 23 Oct 2008 08:12:43 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45BCE45E0@cosmail01.lsi.com>
+References: <00FE57DD11E3A94893D5BD54C3358BE884BF36@AUSX3MPC128.aus.amer.dell.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BB4E86E@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBC908@cosmail01.lsi.com>
+	 ,<1223081419.14830.585.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BB949D3@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCCF2@cosmail01.lsi.com>
+	 <1223322817.14830.593.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCD31@cosmail01.lsi.com>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBCE37@cosmail01.lsi.com>
+	 <1223345074.14830.601.camel@chandra-ubuntu>
+	 <E463DF2B2E584B4A82673F53D62C2EF45BBBD142@cosmail01.lsi.com>
+ <1223407146.14830.617.camel@chandra-ubuntu>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4900603C.2090508@poczta.onet.pl>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "aluno3@poczta.onet.pl" <aluno3@poczta.onet.pl>
-Cc: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1223407146.14830.617.camel@chandra-ubuntu>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "sekharan@us.ibm.com" <sekharan@us.ibm.com>
+Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, 23 Oct 2008, aluno3@poczta.onet.pl wrote:
+Hello Chandra,
+   I have not seen this patch being submitted to mainstream kernel. When are you planning to submit this patch? Should I open a bugzilla for tracking purposes?
 
-> I used dm-snapshot-fix-primary-pe-race.patch and last patch related with
-> pending_exception.After the same test and workload everything work
-> correctly so far.Is it final patch?
+Thanks
+Babu Moger
+-----Original Message-----
+From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
+Sent: Tuesday, October 07, 2008 2:19 PM
+To: Moger, Babu
+Cc: device-mapper development; linux-scsi@vger.kernel.org
+Subject: RE: [dm-devel] failover does not work with rdac device handler
 
-Yes, these two patches are expected to be the final fix. Thanks for the 
-testing. If you get some more crashes even with these two, write about 
-them.
 
-Mikulas
+Sorry, I sent an imcomplete patch. Here is the correct one.
 
-> best and thanks
-> 
-> 
-> Mikulas Patocka wrote:
-> > Oh, sorry for this "struct struct" in the patch in free_pending_exception, 
-> > replace it just with one "struct". I forgot to refresh the patch before 
-> > sending it.
-> >
-> > Mikulas
-> >
-> > On Wed, 22 Oct 2008, Mikulas Patocka wrote:
-> >
-> >   
-> >> On Wed, 22 Oct 2008, aluno3@poczta.onet.pl wrote:
-> >>
-> >>     
-> >>> Hi
-> >>>
-> >>> I used your patch and I ran test the same workload. After a few hours
-> >>> test, everything is OK. Is it possible? Test is still running.When I get
-> >>> something wrong from kernel I write to You again.
-> >>>       
-> >> Hi
-> >>
-> >> That's good that it works. So try this. Keep the first patch (it is this 
-> >> one --- 
-> >> http://people.redhat.com/mpatocka/patches/kernel/2.6.27/dm-snapshot-fix-primary-pe-race.patch 
-> >> --- I think Milan already sent it to you and you have it applied). Undo 
-> >> the second patch (that one that hides deallocation with /* */ ). And apply 
-> >> this. Run the same test.
-> >>
-> >> Mikulas
-> >>
-> >> ---
-> >>  drivers/md/dm-snap.c |   10 +++++++++-
-> >>  drivers/md/dm-snap.h |    2 ++
-> >>  2 files changed, 11 insertions(+), 1 deletion(-)
-> >>
-> >> Index: linux-2.6.27-clean/drivers/md/dm-snap.c
-> >> ===================================================================
-> >> --- linux-2.6.27-clean.orig/drivers/md/dm-snap.c	2008-10-22 15:41:24.000000000 +0200
-> >> +++ linux-2.6.27-clean/drivers/md/dm-snap.c	2008-10-22 15:51:33.000000000 +0200
-> >> @@ -368,6 +368,7 @@ static struct dm_snap_pending_exception 
-> >>  	struct dm_snap_pending_exception *pe = mempool_alloc(s->pending_pool,
-> >>  							     GFP_NOIO);
-> >>  
-> >> +	atomic_inc(&s->n_pending_exceptions);
-> >>  	pe->snap = s;
-> >>  
-> >>  	return pe;
-> >> @@ -375,7 +376,10 @@ static struct dm_snap_pending_exception 
-> >>  
-> >>  static void free_pending_exception(struct dm_snap_pending_exception *pe)
-> >>  {
-> >> -	mempool_free(pe, pe->snap->pending_pool);
-> >> +	struct struct dm_snapshot *s = pe->snap;
-> >> +	mempool_free(pe, s->pending_pool);
-> >> +	smp_mb__before_atomic_dec();
-> >> +	atomic_dec(&s->n_pending_exceptions);
-> >>  }
-> >>  
-> >>  static void insert_completed_exception(struct dm_snapshot *s,
-> >> @@ -601,6 +605,7 @@ static int snapshot_ctr(struct dm_target
-> >>  	s->valid = 1;
-> >>  	s->active = 0;
-> >>  	s->last_percent = 0;
-> >> +	atomic_set(&s->n_pending_exceptions, 0);
-> >>  	init_rwsem(&s->lock);
-> >>  	spin_lock_init(&s->pe_lock);
-> >>  	s->ti = ti;
-> >> @@ -727,6 +732,9 @@ static void snapshot_dtr(struct dm_targe
-> >>  	/* After this returns there can be no new kcopyd jobs. */
-> >>  	unregister_snapshot(s);
-> >>  
-> >> +	while (atomic_read(&s->n_pending_exceptions))
-> >> +		yield();
-> >> +
-> >>  #ifdef CONFIG_DM_DEBUG
-> >>  	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
-> >>  		BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
-> >> Index: linux-2.6.27-clean/drivers/md/dm-snap.h
-> >> ===================================================================
-> >> --- linux-2.6.27-clean.orig/drivers/md/dm-snap.h	2008-10-22 15:45:08.000000000 +0200
-> >> +++ linux-2.6.27-clean/drivers/md/dm-snap.h	2008-10-22 15:46:49.000000000 +0200
-> >> @@ -163,6 +163,8 @@ struct dm_snapshot {
-> >>  
-> >>  	mempool_t *pending_pool;
-> >>  
-> >> +	atomic_t n_pending_exceptions;
-> >> +
-> >>  	struct exception_table pending;
-> >>  	struct exception_table complete;
-> >>  
-> >>
-> >> --
-> >> dm-devel mailing list
-> >> dm-devel@redhat.com
-> >> https://www.redhat.com/mailman/listinfo/dm-devel
-> >>
-> >>     
-> >
-> >   
-> 
+BTW, The panic you saw is caused by the line (one of the lines you
+added):
+
+dev = container_of(&scsi_dh_data, struct scsi_device, scsi_dh_data);
+
+in scsi_dh_release(). We cannot use pointer in a structure to get the
+parent structure.
+
+chandra
+
+Keep a reference count of attaches, so that same number of detaches are allowed.
+-----------
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+---
+Index: linux-2.6.27-rc8-git5/drivers/scsi/device_handler/scsi_dh.c
+===================================================================
+--- linux-2.6.27-rc8-git5.orig/drivers/scsi/device_handler/scsi_dh.c
++++ linux-2.6.27-rc8-git5/drivers/scsi/device_handler/scsi_dh.c
+@@ -153,12 +153,28 @@ static int scsi_dh_handler_attach(struct
+        if (sdev->scsi_dh_data) {
+                if (sdev->scsi_dh_data->scsi_dh != scsi_dh)
+                        err = -EBUSY;
+-       } else if (scsi_dh->attach)
++               else
++                       kref_get(&sdev->scsi_dh_data->kref);
++       } else if (scsi_dh->attach) {
+                err = scsi_dh->attach(sdev);
++               if (!err) {
++                       kref_init(&sdev->scsi_dh_data->kref);
++                       sdev->scsi_dh_data->sdev = sdev;
++               }
++       }
+
+        return err;
+ }
+
++static void scsi_dh_release(struct kref *kref)
++{
++       struct scsi_dh_data *scsi_dh_data;
++       scsi_dh_data = container_of(kref, struct scsi_dh_data, kref);
++
++       if (scsi_dh_data->scsi_dh && scsi_dh_data->scsi_dh->detach)
++               scsi_dh_data->scsi_dh->detach(scsi_dh_data->sdev);
++}
++
+ /*
+  * scsi_dh_handler_detach - Detach a device handler from a device
+  * @sdev - SCSI device the device handler should be detached from
+@@ -176,11 +192,7 @@ static void scsi_dh_handler_detach(struc
+        if (scsi_dh && scsi_dh != sdev->scsi_dh_data->scsi_dh)
+                return;
+
+-       if (!scsi_dh)
+-               scsi_dh = sdev->scsi_dh_data->scsi_dh;
+-
+-       if (scsi_dh && scsi_dh->detach)
+-               scsi_dh->detach(sdev);
++       kref_put(&sdev->scsi_dh_data->kref, scsi_dh_release);
+ }
+
+ /*
+Index: linux-2.6.27-rc8-git5/include/scsi/scsi_device.h
+===================================================================
+--- linux-2.6.27-rc8-git5.orig/include/scsi/scsi_device.h
++++ linux-2.6.27-rc8-git5/include/scsi/scsi_device.h
+@@ -6,6 +6,7 @@
+ #include <linux/spinlock.h>
+ #include <linux/workqueue.h>
+ #include <linux/blkdev.h>
++#include <linux/kref.h>
+ #include <scsi/scsi.h>
+ #include <asm/atomic.h>
+
+@@ -191,6 +192,8 @@ struct scsi_device_handler {
+
+ struct scsi_dh_data {
+        struct scsi_device_handler *scsi_dh;
++       struct kref kref;
++       struct scsi_device *sdev; /* back reference */
+        char buf[0];
+ };
+
+
+
