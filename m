@@ -1,16 +1,12 @@
-From: Prakash Rudraraju <prakash@jigsaw.com>
-Subject: RE: multipathd segfault and SCSI errors
-Date: Fri, 24 Oct 2008 08:39:13 -0700
-Message-ID: <0FCB6A1400B4B9469B7661BFE02AFC2E0B289DA578@mailx.jigsaw.com>
-References: <0FCB6A1400B4B9469B7661BFE02AFC2E0B289DA4F1@mailx.jigsaw.com>
-	<20081024133041.GA28671@mars.virtualiron.com>
+From: Kit Westneat <kwestneat@datadirectnet.com>
+Subject: Buffer I/O error
+Date: Fri, 24 Oct 2008 15:22:32 -0400
+Message-ID: <49022078.6010700@datadirectnet.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081024133041.GA28671@mars.virtualiron.com>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,54 +16,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Eliminating the local disk /dev/sda by adding it to blacklist solved the =
-problem of segmentation fault during boot up.
+Hi dm-devel,
 
-blacklist {
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-        devnode "^(hd|xvd)[a-z]*"
-        devnode "sda"
-        wwid "*"
-}
+I'm running into an issue with dm-multipath 
+(device-mapper-multipath-0.4.5-27.el4_6.3) that has me confused and I 
+was hoping I could get some guidance.
 
-I am currently importing the database to check for path failures during l=
-oad. It takes about 12 hours to complete, but we had no path failures so =
-far.
+Here are the relevant dmesg messages:
+device-mapper: dm-multipath: Failing path 8:48.
+device-mapper: dm-multipath: Failing path 8:48.
+device-mapper: dm-multipath: Failing path 8:48.
+device-mapper: dm-multipath: Failing path 65:80.
+printk: 1004 messages suppressed.
+Buffer I/O error on device dm-13, logical block 1192525829
+lost page write due to I/O error on dm-13
 
-I will get "multipathd -v9 -d" after the import is complete.
+Normally when I have seen Buffer I/O errors in the past, they have been 
+accompanied by SCSI errors as well, but in this case I am not getting 
+anything. One odd thing is that the filesystem reported extremely slow 
+writes before the buffer I/O errors occurred. I have checked and 
+double-checked the storage array and everything seems fine. I am using 
+directio as my path checker if that makes a difference.
 
-# multipathd -v9 -d
-Oct 24 08:38:39 | --------start up--------
-Oct 24 08:38:39 | read /etc/multipath.conf
-Oct 24 08:38:39 | process is already running
+I have been able to reproduce the problem consistently by attempting an 
+fsck on dm-13. However, I am now doing an fsck on the underlying sd 
+device and it hasn't bombed out yet with the buffer I/O errors.
+
+Has anyone encountered these seemingly inexplicable buffer I/O errors 
+before? Any advice on how to debug it?
 
 Thanks,
-Prakash.
-
-
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On=
- Behalf Of Konrad Rzeszutek
-Sent: Friday, October 24, 2008 6:31 AM
-To: device-mapper development
-Subject: Re: [dm-devel] multipathd segfault and SCSI errors
-
-> multipathd[7165]: segfault at 000000000000000a rip 00002aaaaaf51a3d rsp=
- 00007fff03b50090 error 4
-
-Can you run multipathd as so:
-
-multipathd -v9 -d
-
-And provide the -200 lines output from the segfault output? You might nee=
-d to
-edit the /etc/init.d/multipathd to have this work and pipe the output to =
-a log file or so.
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+Kit Westneat
