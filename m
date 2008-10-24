@@ -1,53 +1,36 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] DM data integrity support
-Date: Fri, 24 Oct 2008 11:51:12 +0100
-Message-ID: <20081024105112.GQ2810@agk.fab.redhat.com>
-References: <yq1k5c7mg7v.fsf@sermon.lab.mkp.net>
-	<20081021125951.GD2810@agk.fab.redhat.com>
-	<yq1hc72d2xp.fsf@sermon.lab.mkp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Balbir Singh <balbir@linux.vnet.ibm.com>
+Subject: Re: [Question] power management related with cgroup based resource
+ management
+Date: Fri, 24 Oct 2008 17:17:14 +0530
+Message-ID: <4901B5C2.9070108@linux.vnet.ibm.com>
+References: <2891419e0810201954q57087fc8ufcaa0e42f3ca99e2@mail.gmail.com>
+Reply-To: balbir@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <yq1hc72d2xp.fsf@sermon.lab.mkp.net>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Jens Axboe <jens.axboe@oracle.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756263AbYJXLre@vger.kernel.org>
+In-Reply-To: <2891419e0810201954q57087fc8ufcaa0e42f3ca99e2@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Dong-Jae Kang <baramsori72@gmail.com>
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, corsetproject@googlegroups.com, Vaidyanathan Srinivasan <svaidy@linux.vnet.ibm.com>
 List-Id: dm-devel.ids
 
-On Fri, Oct 24, 2008 at 12:36:50AM -0400, Martin K. Petersen wrote:
-> agk> Perhaps change the register/unregister interface to make it
-> agk> symmetric: we always register and unregister when creating the
-> agk> device, then set the integrity to the appropriate value - which
-> agk> might include NULL - when the new table is put into place.
-> It seemed wasteful to register profiles since 99%+ of all storage
-> devices out there that don't have a need for them.  That's why I
-> deferred the allocation.  But I guess mere mortals compile without
-> BLK_DEV_INTEGRITY anyway so it may not matter that much...
- 
-Then the integrity profile allocation/free should be attached to the
-table creation/destruction, not the device itself, and you make the
-reasonable assumption that the profiles of the devices in the table
-won't change between table creation and device resumption.
+Dong-Jae Kang wrote:
+> Hi, all
+> 
+> These days, I am interested in green IT area for low power OS
+> So, I have a question about it.
+> Is there any good idea or comments about power management related with
+> cgroup based resource management?
+> I have no idea about that, but it seems to be possible to find a good concept.
+> And I hope so
+> Is it some strange question? ^^
 
-i.e. Each dm table holds a reference to its own allocated integrity
-profile, and when a table switches from inactivate to live, that profile
-becomes the one registered against the block device (without memory
-allocation that could deadlock at that point - the allocation might
-involve flushing to the suspended device, which waits for the resume
-which waits for this allocation).  (I'd prefer not to see another
-dependency on PF_MEMALLOC enter the tree, when a slightly different
-interface could avoid it and still offer lazy allocation.)
+lesswatts.org, linux-pm (mailing list) are good sources on Power Management. I
+would recommend asking at those mailing lists (there are several new features
+like range timers, no idle hertz, sched_mc consolidation and much more). Could
+you be specific about what you are looking for? Are you looking at
+Server/Desktop power management?
 
-Alasdair
 -- 
-agk@redhat.com
+	Balbir
