@@ -1,51 +1,31 @@
-From: "Dong-Jae Kang" <baramsori72@gmail.com>
-Subject: Re: [Question] power management related with cgroup based resource management
-Date: Fri, 24 Oct 2008 21:24:21 +0900
-Message-ID: <2891419e0810240524u746b731cjcbd127fa4204bd4d@mail.gmail.com>
-References: <2891419e0810201954q57087fc8ufcaa0e42f3ca99e2@mail.gmail.com>
-	 <4901B5C2.9070108@linux.vnet.ibm.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: multipathd segfault and SCSI errors
+Date: Fri, 24 Oct 2008 09:30:41 -0400
+Message-ID: <20081024133041.GA28671@mars.virtualiron.com>
+References: <0FCB6A1400B4B9469B7661BFE02AFC2E0B289DA4F1@mailx.jigsaw.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1755452AbYJXMYe@vger.kernel.org>
-In-Reply-To: <4901B5C2.9070108@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-To: balbir@linux.vnet.ibm.com
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, corsetproject@googlegroups.com, Vaidyanathan Srinivasan <svaidy@linux.vnet.ibm.com>
+In-Reply-To: <0FCB6A1400B4B9469B7661BFE02AFC2E0B289DA4F1@mailx.jigsaw.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi, Balbir Singh
+> multipathd[7165]: segfault at 000000000000000a rip 00002aaaaaf51a3d rsp 00007fff03b50090 error 4
 
-2008/10/24 Balbir Singh <balbir@linux.vnet.ibm.com>:
-> Dong-Jae Kang wrote:
->> Hi, all
->>
->> These days, I am interested in green IT area for low power OS
->> So, I have a question about it.
->> Is there any good idea or comments about power management related with
->> cgroup based resource management?
->> I have no idea about that, but it seems to be possible to find a good concept.
->> And I hope so
->> Is it some strange question? ^^
->
-> lesswatts.org, linux-pm (mailing list) are good sources on Power Management. I
-> would recommend asking at those mailing lists (there are several new features
-> like range timers, no idle hertz, sched_mc consolidation and much more). Could
-> you be specific about what you are looking for? Are you looking at
-> Server/Desktop power management?
->
+Can you run multipathd as so:
 
-Thank you very much for your kind recommendation.^^
-this site information will be helpful for me.
-As your recommendation, I will try to contact to lesswatts.org,
-linux-pm (mailing list)
+multipathd -v9 -d
 
-I am interested in power management in server side.
-and I just wonder this question, "Is there any related point between
-cgroup framework and power management?"
-
-Thanks again
-
-Regards,
-Dong-Jae Kang
+And provide the -200 lines output from the segfault output? You might need to
+edit the /etc/init.d/multipathd to have this work and pipe the output to a log file or so.
