@@ -1,19 +1,9 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 9/9] dm snapshot: add shared_snapshot_target
-Date: Mon, 27 Oct 2008 21:07:56 +0900
-Message-ID: <1225109276-16491-10-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-References: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-4-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-5-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-9-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH 0/9] dm snapshot: shared exception store
+Date: Mon, 27 Oct 2008 21:07:47 +0900
+Message-ID: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1225109276-16491-9-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,306 +17,114 @@ To: agk@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
----
- drivers/md/dm-snap.c |  199 +++++++++++++++++++++++++++++++++++++++++++++-----
- 1 files changed, 181 insertions(+), 18 deletions(-)
+This is the third version of the shared exception store (based on
+Zumastor code). You can find the first and second submission:
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 1b9c1ef..bbdfff3 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1140,11 +1140,9 @@ static void snapshot_resume(struct dm_target *ti)
- 	up_write(&s->lock);
- }
- 
--static int snapshot_status(struct dm_target *ti, status_type_t type,
--			   char *result, unsigned int maxlen)
-+static int do_snapshot_status(struct dm_snapshot *snap, status_type_t type,
-+			      char *result, unsigned int maxlen, u64 snapid)
- {
--	struct dm_snapshot *snap = ti->private;
--
- 	switch (type) {
- 	case STATUSTYPE_INFO:
- 		if (!snap->valid)
-@@ -1170,16 +1168,31 @@ static int snapshot_status(struct dm_target *ti, status_type_t type,
- 		 * to make private copies if the output is to
- 		 * make sense.
- 		 */
--		snprintf(result, maxlen, "%s %s %c %llu",
--			 snap->origin->name, snap->cow->name,
--			 snap->type,
--			 (unsigned long long)snap->chunk_size);
-+		if (snap->type == 'S')
-+			snprintf(result, maxlen, "%s %s %c %llu %llu",
-+				 snap->origin->name, snap->cow->name,
-+				 snap->type,
-+				 (unsigned long long)snap->chunk_size,
-+				 snapid);
-+		else
-+			snprintf(result, maxlen, "%s %s %c %llu",
-+				 snap->origin->name, snap->cow->name,
-+				 snap->type,
-+				 (unsigned long long)snap->chunk_size);
- 		break;
- 	}
- 
- 	return 0;
- }
- 
-+static int snapshot_status(struct dm_target *ti, status_type_t type,
-+			   char *result, unsigned int maxlen)
-+{
-+	struct dm_snapshot *snap = ti->private;
-+
-+	return do_snapshot_status(snap, type, result, maxlen, 0);
-+}
-+
- /*-----------------------------------------------------------------
-  * Origin methods
-  *---------------------------------------------------------------*/
-@@ -1393,7 +1406,6 @@ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
- /*
-  * shared exception origin code
-  */
--
- struct dm_shared_origin {
- 	struct dm_dev *origin;
- 
-@@ -1520,6 +1532,134 @@ static int shared_origin_message(struct dm_target *ti, unsigned argc,
- 	return snap->store.message(&snap->store, argc, argv);
- }
- 
-+/*
-+ * shared exception snapshot code
-+ */
-+
-+struct dm_shared_snapshot {
-+	struct dm_dev *origin;
-+
-+	struct dm_snapshot *snap;
-+	u64 snapid;
-+};
-+
-+/*
-+ * Construct a shared origin mapping: <origin_dev> <snapshot id>
-+ */
-+static int shared_snapshot_ctr(struct dm_target *ti, unsigned int argc,
-+			       char **argv)
-+{
-+	int r;
-+	struct dm_shared_origin *dso;
-+	struct dm_shared_snapshot *dss;
-+	struct dm_snapshot *origin_snap;
-+	struct dm_dev *dev;
-+	struct origin *o;
-+	u64 id;
-+
-+	if (argc != 2) {
-+		ti->error = "snapshot: incorrect number of arguments";
-+		return -EINVAL;
-+	}
-+
-+	dss = kzalloc(sizeof(*dss), GFP_KERNEL);
-+	if (!dss)
-+		return -ENOMEM;
-+
-+	id = simple_strtoul(argv[1], NULL, 10);
-+	if (id >= 64) {
-+		r = -EINVAL;
-+		ti->error = "Invalid snapid";
-+		goto out;
-+	}
-+
-+	r = dm_get_device(ti, argv[0], 0, ti->len, FMODE_READ, &dev);
-+	if (r) {
-+		ti->error = "Cannot get origin device";
-+		goto out;
-+	}
-+
-+	r = -EINVAL;
-+	down_read(&_origins_lock);
-+	o = __lookup_origin(dev->bdev);
-+	if (o && !list_empty(&o->snapshots)) {
-+		int nr;
-+		unsigned long map[DIV_ROUND_UP(MAX_SNAPSHOTS, BITS_PER_LONG)];
-+		struct exception_store *store;
-+
-+		memset(map, 0, sizeof(map));
-+
-+		origin_snap = list_first_entry(&o->snapshots,
-+					       struct dm_snapshot, list);
-+		store = &origin_snap->store;
-+		dso = origin_snap->ti->private;
-+
-+		down_write(&store->snap->lock);
-+		nr = store->get_snapshot_info(store, map, sizeof(map));
-+		up_write(&store->snap->lock);
-+
-+		if (test_bit(id, map)) {
-+			dm_table_get(origin_snap->ti->table);
-+			ti->private = dss;
-+			dss->snap = origin_snap;
-+			dss->snapid = id;
-+			dss->origin = dev;
-+
-+			ti->split_io = origin_snap->chunk_size;
-+			r = 0;
-+
-+			printk("%s %d: %lld\n", __FUNCTION__, __LINE__,
-+			       (unsigned long long)id);
-+
-+		} else {
-+			ti->error = "non-exist snapshot";
-+			r = -EINVAL;
-+		}
-+	}
-+	up_read(&_origins_lock);
-+
-+	if (r)
-+		dm_put_device(ti, dev);
-+out:
-+	if (r)
-+		kfree(dss);
-+
-+	return r;
-+}
-+
-+static void shared_snapshot_dtr(struct dm_target *ti)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	dm_table_put(dss->snap->ti->table);
-+	dm_put_device(ti, dss->origin);
-+	kfree(dss);
-+}
-+
-+static int shared_snapshot_map(struct dm_target *ti, struct bio *bio,
-+			       union map_info *map_context)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	return do_snapshot_map(dss->snap, bio, map_context, dss->snapid);
-+}
-+
-+static int shared_snapshot_end_io(struct dm_target *ti, struct bio *bio,
-+				  int error, union map_info *map_context)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	return do_snapshot_end_io(dss->snap, bio, error, map_context);
-+}
-+
-+static int shared_snapshot_status(struct dm_target *ti, status_type_t type,
-+				  char *result, unsigned int maxlen)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	return do_snapshot_status(dss->snap, type, result, maxlen, dss->snapid);
-+}
-+
- static struct target_type origin_target = {
- 	.name    = "snapshot-origin",
- 	.version = {1, 6, 0},
-@@ -1554,6 +1694,17 @@ static struct target_type shared_origin_target = {
- 	.message = shared_origin_message,
- };
- 
-+static struct target_type shared_snapshot_target = {
-+	.name    = "s-snap",
-+	.version = {1, 0, 0},
-+	.module  = THIS_MODULE,
-+	.ctr     = shared_snapshot_ctr,
-+	.dtr     = shared_snapshot_dtr,
-+	.map     = shared_snapshot_map,
-+	.end_io  = shared_snapshot_end_io,
-+	.status  = shared_snapshot_status,
-+};
-+
- static int __init dm_snapshot_init(void)
- {
- 	int r;
-@@ -1570,37 +1721,43 @@ static int __init dm_snapshot_init(void)
- 		goto bad1;
- 	}
- 
-+	r = dm_register_target(&shared_snapshot_target);
-+	if (r) {
-+		DMERR("shared snapshot target register failed %d", r);
-+		goto bad2;
-+	}
-+
- 	r = dm_register_target(&shared_origin_target);
- 	if (r) {
- 		DMERR("shared origin target register failed %d", r);
--		goto bad2;
-+		goto bad3;
- 	}
- 
- 	r = init_origin_hash();
- 	if (r) {
- 		DMERR("init_origin_hash failed.");
--		goto bad3;
-+		goto bad4;
- 	}
- 
- 	exception_cache = KMEM_CACHE(dm_snap_exception, 0);
- 	if (!exception_cache) {
- 		DMERR("Couldn't create exception cache.");
- 		r = -ENOMEM;
--		goto bad4;
-+		goto bad5;
- 	}
- 
- 	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
- 	if (!pending_cache) {
- 		DMERR("Couldn't create pending cache.");
- 		r = -ENOMEM;
--		goto bad5;
-+		goto bad6;
- 	}
- 
- 	tracked_chunk_cache = KMEM_CACHE(dm_snap_tracked_chunk, 0);
- 	if (!tracked_chunk_cache) {
- 		DMERR("Couldn't create cache to track chunks in use.");
- 		r = -ENOMEM;
--		goto bad6;
-+		goto bad7;
- 	}
- 
- 	ksnapd = create_singlethread_workqueue("ksnapd");
-@@ -1614,14 +1771,16 @@ static int __init dm_snapshot_init(void)
- 
-       bad_pending_pool:
- 	kmem_cache_destroy(tracked_chunk_cache);
--      bad6:
-+      bad7:
- 	kmem_cache_destroy(pending_cache);
--      bad5:
-+      bad6:
- 	kmem_cache_destroy(exception_cache);
--      bad4:
-+      bad5:
- 	exit_origin_hash();
--      bad3:
-+      bad4:
- 	dm_unregister_target(&shared_origin_target);
-+      bad3:
-+	dm_unregister_target(&shared_snapshot_target);
-       bad2:
- 	dm_unregister_target(&origin_target);
-       bad1:
-@@ -1643,6 +1802,10 @@ static void __exit dm_snapshot_exit(void)
- 	if (r)
- 		DMERR("origin unregister failed %d", r);
- 
-+	r = dm_unregister_target(&shared_snapshot_target);
-+	if (r)
-+		DMERR("shared snapshot unregister failed %d", r);
-+
- 	r = dm_unregister_target(&shared_origin_target);
- 	if (r)
- 		DMERR("shared origin unregister failed %d", r);
--- 
-1.5.5.GIT
+https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
+
+https://www.redhat.com/archives/dm-devel/2008-August/msg00087.html
+
+
+The major change since the second version is the snapshot deletion
+support. When you delete a snapshot, you can reclaim the disk spaces
+that it used.
+
+I would appreciate it if I could get comments on user interface, the
+changes to the existing code, etc though there are still several
+things to fix; the major one is disk format endian (Zumastor simply
+uses the CPU endian for the disk format).
+
+
+There are 9 patches and #1-6 patches include the changes to the
+existing code necessary to support the shared exception dm-snapshot.
+
+There are not any major changes to #1-6 patches since the last submission.
+
+The patches are available (against 2.6.28-rc2):
+
+http://www.kernel.org/pub/linux/kernel/people/tomo/dm-snap/2008-10-27/
+
+If you like a git tree:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/tomo/linux-2.6-misc.git dm-snap
+
+=
+In this example, /dev/sda1 is used as an origin device and /dev/sdb1
+is used as a cow device.
+
+- first, set up an origin and a cow:
+
+vine:/home/fujita# echo |dmesg create --notable work
+vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
+vine:/home/fujita# dmsetup resume work
+
+
+- confirm the current status:
+
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin : no snapshot
+
+
+- create one snapshot (the id is 0):
+
+vine:/home/fujita# dmsetup message work 0 snapshot create 0
+
+
+- see if the snapshot is created:
+
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 1 0
+
+
+- create one more snapshot (the id is 5) and see the result:
+
+vine:/home/fujita# dmsetup message work 0 snapshot create 5
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 2 0 5
+
+Note that creating a snapshot just means that you store some
+information on the cow device. You don't create a device for it yet.
+
+
+- create a device to access to the snapshot #5
+
+vine:/home/fujita# echo |dmsetup create --notable snap5
+vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap /dev/sda1 5|dmsetup load snap5
+vine:/home/fujita# dmsetup resume snap5
+
+- confirm the current status:
+
+vine:/home/fujita# dmsetup status
+snap5: 0 268430022 s-snap Unknown
+work: 0 268430022 s-snap-origin 2 0 5
+
+
+- remove the devices after you play with them:
+
+vine:/home/fujita# dmsetup remove snap5
+vine:/home/fujita# dmsetup remove work
+vine:/home/fujita# dmsetup info
+No devices found
+
+
+- Again, setup the origin and the cow:
+
+vine:/home/fujita# echo |dmsetup create --notable work
+vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
+vine:/home/fujita# dmsetup resume work
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 2 0 5
+
+Note that you have two snapshots that you created. You can play with
+them again after creating devices for them.
+
+
+- delete the 5th snapshot
+
+vine:/home/fujita# dmsetup message work 0 snapshot delete 5
+vine:/home/fujita# dmsetup status
+work: 0 268430022 s-snap-origin 1 0
+
+
+*) By default, dmsetup perfomrs multiple tasks. I uses dmsetup
+commands that issue a single ioctl to make things clear.
