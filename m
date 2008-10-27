@@ -1,8 +1,11 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 0/9] dm snapshot: shared exception store
-Date: Mon, 27 Oct 2008 21:07:47 +0900
-Message-ID: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+From: Takashi Sato <t-sato@yk.jp.nec.com>
+Subject: [PATCH 0/3] freeze feature ver 1.14
+Date: Mon, 27 Oct 2008 21:58:11 +0900
+Message-ID: <20081027215811t-sato__34377.7061476887$1225112465$gmane$org@mail.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -13,118 +16,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com
+To: Andrew Morton <akpm@linux-foundation.org>, Christoph Hellwig <hch@infradead.org>, "linux-fsdevel@vger.kernel.org" <linux-fsdevel@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redh>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-This is the third version of the shared exception store (based on
-Zumastor code). You can find the first and second submission:
+Hi, 
 
-https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
+We need to discuss about the timeout feature more,
+so I send patches only of the generic freeze feature.
 
-https://www.redhat.com/archives/dm-devel/2008-August/msg00087.html
+I've addressed the comment from Shaggy,
+combined patches that were divided into each filesystems into one patch 
+because of the avoidance of a bisection.
 
+Currently, ext3 in mainline Linux doesn't have the freeze feature which
+suspends write requests.  So, we cannot take a backup which keeps
+the filesystem's consistency with the storage device's features
+(snapshot and replication) while it is mounted.
+In many case, a commercial filesystem (e.g. VxFS) has
+the freeze feature and it would be used to get the consistent backup.
+If Linux's standard filesystem ext3 has the freeze feature, we can do it
+without a commercial filesystem.
 
-The major change since the second version is the snapshot deletion
-support. When you delete a snapshot, you can reclaim the disk spaces
-that it used.
+So I have implemented the ioctls of the freeze feature.
+I think we can take the consistent backup with the following steps.
+1. Freeze the filesystem with the freeze ioctl.
+2. Separate the replication volume or create the snapshot
+   with the storage device's feature.
+3. Unfreeze the filesystem with the unfreeze ioctl.
+4. Take the backup from the separated replication volume
+   or the snapshot.
 
-I would appreciate it if I could get comments on user interface, the
-changes to the existing code, etc though there are still several
-things to fix; the major one is disk format endian (Zumastor simply
-uses the CPU endian for the disk format).
+[PATCH 1/3] Add error handling of write_super_lockfs and unlockfs
+  VFS:
+  Changed the type of write_super_lockfs and unlockfs from "void"
+  to "int" so that they can return an error. 
+  Rename write_super_lockfs and unlockfs of the super block operation
+  freeze_fs and unfreeze_fs to avoid a confusion.
 
+  ext3, ext4, xfs, gfs2, jfs:
+  Changed the type of write_super_lockfs and unlockfs from "void"
+  to "int" so that write_super_lockfs returns an error if needed,
+  and unlockfs always returns 0.
 
-There are 9 patches and #1-6 patches include the changes to the
-existing code necessary to support the shared exception dm-snapshot.
+  reiserfs:
+  Changed the type of write_super_lockfs and unlockfs from "void"
+  to "int" so that they always return 0 (success) to keep a current behavior.
 
-There are not any major changes to #1-6 patches since the last submission.
+[PATCH 2/3] Implement generic freeze feature
+  The ioctls for the generic freeze feature are below.
+  o Freeze the filesystem
+    int ioctl(int fd, int FIFREEZE, arg)
+      fd: The file descriptor of the mountpoint
+      FIFREEZE: request code for the freeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
 
-The patches are available (against 2.6.28-rc2):
+  o Unfreeze the filesystem
+    int ioctl(int fd, int FITHAW, arg)
+      fd: The file descriptor of the mountpoint
+      FITHAW: request code for unfreeze
+      arg: Ignored
+      Return value: 0 if the operation succeeds. Otherwise, -1
+      Error number: If the filesystem has already been unfrozen,
+                    errno is set to EINVAL.
 
-http://www.kernel.org/pub/linux/kernel/people/tomo/dm-snap/2008-10-27/
+[PATCH 3/3] Remove XFS specific ioctl interfaces for freeze feature
+  It removes XFS specific ioctl interfaces and request codes
+  for freeze feature.
+  This patch has been supplied by David Chinner.
 
-If you like a git tree:
+Any comments are very welcome.
 
-git://git.kernel.org/pub/scm/linux/kernel/git/tomo/linux-2.6-misc.git dm-snap
-
-=
-In this example, /dev/sda1 is used as an origin device and /dev/sdb1
-is used as a cow device.
-
-- first, set up an origin and a cow:
-
-vine:/home/fujita# echo |dmesg create --notable work
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
-vine:/home/fujita# dmsetup resume work
-
-
-- confirm the current status:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin : no snapshot
-
-
-- create one snapshot (the id is 0):
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 0
-
-
-- see if the snapshot is created:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 1 0
-
-
-- create one more snapshot (the id is 5) and see the result:
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 5
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-Note that creating a snapshot just means that you store some
-information on the cow device. You don't create a device for it yet.
-
-
-- create a device to access to the snapshot #5
-
-vine:/home/fujita# echo |dmsetup create --notable snap5
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap /dev/sda1 5|dmsetup load snap5
-vine:/home/fujita# dmsetup resume snap5
-
-- confirm the current status:
-
-vine:/home/fujita# dmsetup status
-snap5: 0 268430022 s-snap Unknown
-work: 0 268430022 s-snap-origin 2 0 5
-
-
-- remove the devices after you play with them:
-
-vine:/home/fujita# dmsetup remove snap5
-vine:/home/fujita# dmsetup remove work
-vine:/home/fujita# dmsetup info
-No devices found
-
-
-- Again, setup the origin and the cow:
-
-vine:/home/fujita# echo |dmsetup create --notable work
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
-vine:/home/fujita# dmsetup resume work
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-Note that you have two snapshots that you created. You can play with
-them again after creating devices for them.
-
-
-- delete the 5th snapshot
-
-vine:/home/fujita# dmsetup message work 0 snapshot delete 5
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 1 0
-
-
-*) By default, dmsetup perfomrs multiple tasks. I uses dmsetup
-commands that issue a single ioctl to make things clear.
+Cheers, Takashi
