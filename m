@@ -1,15 +1,21 @@
-From: <Yanqing_Liu@Dell.com>
-Subject: [patch]: [multipath-tool] Add check for removed device
-	in rdac checker
-Date: Mon, 27 Oct 2008 10:11:28 -0500
-Message-ID: <00FE57DD11E3A94893D5BD54C3358BE884BFA6@AUSX3MPC128.aus.amer.dell.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: [PATCH 7/9] dm snapshot: add shared exception store
+Date: Mon, 27 Oct 2008 12:55:38 -0400
+Message-ID: <20081027165538.GA27667@mars.virtualiron.com>
+References: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-4-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-5-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+Content-Disposition: inline
+In-Reply-To: <1225109276-16491-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +25,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: christophe.varoqui@free.fr
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+On Mon, Oct 27, 2008 at 09:07:54PM +0900, FUJITA Tomonori wrote:
+> This adds a new exception store implementation, shared exception
+> store. The important design differences from the current two exception
+> store implementations:
+> 
+> - It uses one exception store (cow disk) per origin device that is
+>   shared by all snapshots.
+> - It doesn't keep the complete exception tables in memory.
+> 
+> The shared exception store uses struct pstore, which the persistent
+> exception store uses because there are many useful functions that
+> struct pstore works with. The shared exception adds some variants to
+> struct pstore, but not many.
 
-This patch adds a check for removed device in rdac checker. After volume
-access inquiry returns, the checker will check the peripheral qualifier
-field to see if the device is deleted/unmapped. If so, mark path as
-failed.
+Thank you for posting this. I've just two questions:
 
-Signed off by: Yanqing Liu <Yanqing_Liu@Dell.com>
+... 
+> +static unsigned long shared_allocate_chunk(struct pstore *ps)
+> +{
+> +	unsigned long idx;
+> +	unsigned long limit;
+> +	unsigned long start_chunk;
+> +	unsigned long nr = (ps->snap->chunk_size << SECTOR_SHIFT) * 8;
+> +
+> +	start_chunk = ps->cur_bitmap_chunk;
+> +again:
+> +	if (ps->cur_bitmap_chunk == ps->nr_bitmap_chunks)
+> +		limit = ps->nr_chunks - (nr * (ps->nr_bitmap_chunks - 1));
 
----
+Is this correct? If the chunk size is 16 the nr_chunks would be the bit-shift
+value (5). Hence you are subtracting 8192*(some positivie number)-1 from 5 -
+is that what you intend to do?
 
---- libcheckers/rdac.c.orig	2008-10-22 02:52:33.000000000 -0400
-+++ libcheckers/rdac.c	2008-10-17 03:43:13.000000000 -0400
-@@ -27,6 +27,7 @@
- #define MSG_RDAC_UP    "rdac checker reports path is up"
- #define MSG_RDAC_DOWN  "rdac checker reports path is down"
- #define MSG_RDAC_GHOST "rdac checker reports path is ghost"
-+#define MSG_RDAC_DELETED "rdac checker reports path deleted"
-=20
- struct rdac_checker_context {
- 	void * dummy;
-@@ -90,7 +91,8 @@
-=20
- struct volume_access_inq
- {
--	char dontcare0[8];
-+	char qualifier;
-+	char dontcare0[7];
- 	char avtcvp;
- 	char dontcare1[39];
- };
-@@ -104,6 +106,12 @@
- 		MSG(c, MSG_RDAC_DOWN);
- 		return PATH_DOWN;
- 	}
-+=09
-+	if (0 !=3D inq.qualifier) {
-+		MSG(c, MSG_RDAC_DELETED);
-+		return PATH_DOWN;
-+	}
-+	=09
-=20
- 	return ((inq.avtcvp & 0x1) ? PATH_UP : PATH_GHOST);  }
+> +	else
+> +		limit = nr;
+> +
+> +	idx = find_next_zero_bit(ps->bitmap, limit, ps->cur_bitmap_index);
+> +	if (idx < limit) {
+> +		set_bit(idx, ps->bitmap);
+> +
+> +		if (idx == limit - 1) {
+> +			ps->cur_bitmap_index = 0;
+> +
+> +			read_new_bitmap_chunk(ps);
+> +		} else
+> +			ps->cur_bitmap_index++;
+> +	} else {
+> +		chunk_io(ps, ps->cur_bitmap_chunk, WRITE, 1, ps->bitmap);
+> +
+> +		read_new_bitmap_chunk(ps);
+> +
+> +		/* todo: check # free chunks */
+> +		if (start_chunk == ps->cur_bitmap_chunk) {
+> +			DMERR("%s %d: fail to find a new chunk",
+> +			      __func__, __LINE__);
+> +			return 0;
+> +		}
+> +
+> +		goto again;
+> +	}
+> +
+> +	return idx + (ps->cur_bitmap_chunk - FIRST_BITMAP_CHUNK) * nr;
+
+.. snip..
+> +static int shared_create_bitmap(struct exception_store *store)
+> +{
+> +	struct pstore *ps = get_info(store);
+> +	int i, r, rest, this;
+> +	chunk_t chunk;
+> +
+> +	/* bitmap + superblock */
+> +	rest = ps->nr_bitmap_chunks + 1;
+> +
+> +	for (chunk = 0; chunk < ps->nr_bitmap_chunks; chunk++) {
+> +		memset(ps->area, 0, ps->snap->chunk_size << SECTOR_SHIFT);
+> +
+> +		this = min_t(int, rest, ps->snap->chunk_size * 512 * 8);
+
+512? Why not do the << SECTOR_SHIFT as in the other places?
+
+> +		if (this) {
+> +			rest -= this;
+> +
+> +			memset(ps->area, 0xff, this / 8);
+> +
+> +			for (i = 0; i < this % 8; i++)
+> +				set_bit(i, (unsigned long *)ps->area + this / 8);
+> +		}
+> +
+> +		r = chunk_io(ps, chunk + FIRST_BITMAP_CHUNK, WRITE, 1,
+> +			     ps->area);
+> +		if (r)
+> +			return r;
+> +	}
+> +
+> +	return 0;
