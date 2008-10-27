@@ -1,18 +1,17 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 8/9] dm snapshot: add shared_origin_target
-Date: Mon, 27 Oct 2008 21:07:55 +0900
-Message-ID: <1225109276-16491-9-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH 6/9] dm snapshot: add snapshot id argument to
+	prepare_exception and lookup_completed_exception
+Date: Mon, 27 Oct 2008 21:07:53 +0900
+Message-ID: <1225109276-16491-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 References: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 	<1225109276-16491-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 	<1225109276-16491-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 	<1225109276-16491-4-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 	<1225109276-16491-5-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 	<1225109276-16491-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1225109276-16491-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1225109276-16491-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+In-Reply-To: <1225109276-16491-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,262 +25,161 @@ To: agk@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+With the current two exception store implementations (persistent and
+transient), snapshots are independent. Each snapshot has own cow disk
+and dm_snapshot struct.
+
+With shared exception store code, snapshots are not independent. They
+are stored in a single cow disk and has only one dm_snapshot struct.
+So the shared exception store code needs to identify snapshot in
+prepare_exception() and lookup_completed_exception().
+
 Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
 ---
- drivers/md/dm-snap.c |  175 +++++++++++++++++++++++++++++++++++++++++++++++---
- 1 files changed, 165 insertions(+), 10 deletions(-)
+ drivers/md/dm-exception-store.c |    4 ++--
+ drivers/md/dm-snap.c            |   22 ++++++++++++----------
+ drivers/md/dm-snap.h            |    6 ++++--
+ 3 files changed, 18 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index c234d0d..1b9c1ef 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -575,8 +575,8 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	cow_path = argv[1];
- 	persistent = toupper(*argv[2]);
- 
--	if (persistent != 'P' && persistent != 'N') {
--		ti->error = "Persistent flag is not P or N";
-+	if (persistent != 'P' && persistent != 'N' && persistent != 'S') {
-+		ti->error = "Persistent flag is not P, N, or S";
- 		r = -EINVAL;
- 		goto bad1;
- 	}
-@@ -624,7 +624,9 @@ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- 	s->store.snap = s;
- 
--	if (persistent == 'P')
-+	if (persistent == 'S')
-+		r = dm_create_shared(&s->store);
-+	else if (persistent == 'P')
- 		r = dm_create_persistent(&s->store);
- 	else
- 		r = dm_create_transient(&s->store);
-@@ -1388,6 +1390,136 @@ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
- 	return 0;
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index 6c5ea26..122e2f9 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -552,7 +552,7 @@ static int persistent_read_metadata(struct exception_store *store)
  }
  
-+/*
-+ * shared exception origin code
-+ */
-+
-+struct dm_shared_origin {
-+	struct dm_dev *origin;
-+
-+	struct dm_snapshot *origin_snap;
-+};
-+
-+/*
-+ * Construct a shared origin mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
-+ */
-+static int shared_origin_ctr(struct dm_target *ti, unsigned int argc,
-+			     char **argv)
-+{
-+	int r;
-+	struct dm_shared_origin *dso;
-+	struct dm_snapshot *s;
-+
-+	if (argc != 4) {
-+		ti->error = "origin: incorrect number of arguments";
-+		return -EINVAL;
-+	}
-+
-+	dso = kzalloc(sizeof(*dso), GFP_KERNEL);
-+	if (!dso)
-+		return -ENOMEM;
-+
-+	r = snapshot_ctr(ti, argc, argv);
-+	if (r)
-+		goto out;
-+
-+	s = ti->private;
-+
-+	if (s->chunk_size != 16) {
-+		r = -EINVAL;
-+		ti->error = "invalid chunk size";
-+		snapshot_dtr(ti);
-+		goto out;
-+	}
-+
-+	s->active = 1;
-+
-+	dso->origin = s->origin;
-+	dso->origin_snap = s;
-+	ti->private = dso;
-+
-+	return 0;
-+out:
-+	kfree(dso);
-+	return r;
-+}
-+
-+static void shared_origin_dtr(struct dm_target *ti)
-+{
-+	struct dm_shared_origin *dso = ti->private;
-+
-+	ti->private = dso->origin_snap;
-+	snapshot_dtr(ti);
-+	kfree(dso);
-+}
-+
-+static int shared_origin_map(struct dm_target *ti, struct bio *bio,
-+			     union map_info *map_context)
-+{
-+	struct dm_shared_origin *dso = ti->private;
-+	struct dm_dev *dev = dso->origin;
-+
-+	bio->bi_bdev = dev->bdev;
-+
-+	/* Only tell snapshots if this is a write */
-+	return (bio_rw(bio) == WRITE) ? do_origin(dev, bio) : DM_MAPIO_REMAPPED;
-+}
-+
-+static int shared_origin_status(struct dm_target *ti, status_type_t type,
-+				char *result, unsigned int maxlen)
-+{
-+	struct dm_shared_origin *dso = ti->private;
-+	struct dm_snapshot *snap = dso->origin_snap;
-+	struct exception_store *store = &snap->store;
-+	unsigned long map[DIV_ROUND_UP(MAX_SNAPSHOTS, BITS_PER_LONG)];
-+	int r, nr, i;
-+
-+	switch (type) {
-+	case STATUSTYPE_INFO:
-+
-+		memset(map, 0, sizeof(map));
-+
-+		down_write(&store->snap->lock);
-+		nr = store->get_snapshot_info(store, map, sizeof(map));
-+		up_write(&store->snap->lock);
-+
-+		if (nr) {
-+			r = snprintf(result, maxlen, "%d ", nr);
-+			result += r;
-+			maxlen -= min_t(int, r, maxlen);
-+
-+			for (i = 0; maxlen && i < MAX_SNAPSHOTS; i++) {
-+				if (test_bit(i, map)) {
-+					r = snprintf(result, maxlen, "%d ", i);
-+					result += r;
-+					maxlen -= min_t(int, r, maxlen);
-+				}
-+			}
-+		} else
-+			snprintf(result, maxlen, ": no snapshot");
-+
-+		break;
-+
-+	case STATUSTYPE_TABLE:
-+		r = snprintf(result, maxlen, "%s", snap->origin->name);
-+		if (r > 0 && r < maxlen)
-+			snprintf(result + r, maxlen - r, "%s %s %llu",
-+				 snap->origin->name, snap->cow->name,
-+				 (unsigned long long)snap->chunk_size);
-+		break;
-+	}
-+
-+	return 0;
-+}
-+
-+static int shared_origin_message(struct dm_target *ti, unsigned argc,
-+				 char **argv)
-+{
-+	struct dm_shared_origin *dso = ti->private;
-+	struct dm_snapshot *snap = dso->origin_snap;
-+	return snap->store.message(&snap->store, argc, argv);
-+}
-+
- static struct target_type origin_target = {
- 	.name    = "snapshot-origin",
- 	.version = {1, 6, 0},
-@@ -1411,6 +1543,17 @@ static struct target_type snapshot_target = {
- 	.status  = snapshot_status,
- };
- 
-+static struct target_type shared_origin_target = {
-+	.name    = "s-snap-origin",
-+	.version = {1, 0, 0},
-+	.module  = THIS_MODULE,
-+	.ctr     = shared_origin_ctr,
-+	.dtr     = shared_origin_dtr,
-+	.map     = shared_origin_map,
-+	.status  = shared_origin_status,
-+	.message = shared_origin_message,
-+};
-+
- static int __init dm_snapshot_init(void)
+ static int persistent_prepare(struct exception_store *store,
+-			      struct dm_snap_exception *e)
++			      struct dm_snap_exception *e, u64 snapid)
  {
- 	int r;
-@@ -1427,31 +1570,37 @@ static int __init dm_snapshot_init(void)
- 		goto bad1;
+ 	struct pstore *ps = get_info(store);
+ 	uint32_t stride;
+@@ -705,7 +705,7 @@ static int transient_read_metadata(struct exception_store *store)
+ }
+ 
+ static int transient_prepare(struct exception_store *store,
+-			     struct dm_snap_exception *e)
++			     struct dm_snap_exception *e, u64 snapid)
+ {
+ 	struct transient_c *tc = (struct transient_c *) store->context;
+ 	sector_t size = get_dev_size(store->snap->cow->bdev);
+diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
+index 30071b8..c234d0d 100644
+--- a/drivers/md/dm-snap.c
++++ b/drivers/md/dm-snap.c
+@@ -348,10 +348,12 @@ static struct dm_snap_exception *lookup_exception(struct exception_table *et,
+ }
+ 
+ struct dm_snap_exception *lookup_complete_exception(struct dm_snapshot *s,
+-						    chunk_t chunk)
++						    chunk_t chunk,
++						    u64 snapid)
+ {
+ 	if (s->store.lookup_completed_exception)
+-		return s->store.lookup_completed_exception(&s->store, chunk);
++		return s->store.lookup_completed_exception(&s->store, chunk,
++							   snapid);
+ 	else
+ 		return lookup_exception(&s->complete, chunk);
+ }
+@@ -970,7 +972,7 @@ static void start_copy(struct dm_snap_pending_exception *pe)
+  * this.
+  */
+ static struct dm_snap_pending_exception *
+-__find_pending_exception(struct dm_snapshot *s, struct bio *bio)
++__find_pending_exception(struct dm_snapshot *s, struct bio *bio, u64 snapid)
+ {
+ 	struct dm_snap_exception *e;
+ 	struct dm_snap_pending_exception *pe;
+@@ -1013,7 +1015,7 @@ __find_pending_exception(struct dm_snapshot *s, struct bio *bio)
+ 	atomic_set(&pe->ref_count, 0);
+ 	pe->started = 0;
+ 
+-	if (s->store.prepare_exception(&s->store, &pe->e)) {
++	if (s->store.prepare_exception(&s->store, &pe->e, snapid)) {
+ 		free_pending_exception(pe);
+ 		return NULL;
+ 	}
+@@ -1035,7 +1037,7 @@ static void remap_exception(struct dm_snapshot *s, struct dm_snap_exception *e,
+ }
+ 
+ static int do_snapshot_map(struct dm_snapshot *s, struct bio *bio,
+-			   union map_info *map_context)
++			   union map_info *map_context, u64 snapid)
+ {
+ 	struct dm_snap_exception *e;
+ 	int r = DM_MAPIO_REMAPPED;
+@@ -1059,7 +1061,7 @@ static int do_snapshot_map(struct dm_snapshot *s, struct bio *bio,
  	}
  
-+	r = dm_register_target(&shared_origin_target);
-+	if (r) {
-+		DMERR("shared origin target register failed %d", r);
-+		goto bad2;
-+	}
+ 	/* If the block is already remapped - use that, else remap it */
+-	e = lookup_complete_exception(s, chunk);
++	e = lookup_complete_exception(s, chunk, snapid);
+ 	if (e) {
+ 		remap_exception(s, e, bio, chunk);
+ 		goto out_unlock;
+@@ -1071,7 +1073,7 @@ static int do_snapshot_map(struct dm_snapshot *s, struct bio *bio,
+ 	 * writeable.
+ 	 */
+ 	if (bio_rw(bio) == WRITE) {
+-		pe = __find_pending_exception(s, bio);
++		pe = __find_pending_exception(s, bio, snapid);
+ 		if (!pe) {
+ 			__invalidate_snapshot(s, -ENOMEM);
+ 			r = -EIO;
+@@ -1106,7 +1108,7 @@ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ {
+ 	struct dm_snapshot *s = ti->private;
+ 
+-	return do_snapshot_map(s, bio, map_context);
++	return do_snapshot_map(s, bio, map_context, 0);
+ }
+ 
+ static int do_snapshot_end_io(struct dm_snapshot *s, struct bio *bio,
+@@ -1215,11 +1217,11 @@ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ 		 * ref_count is initialised to 1 so pending_complete()
+ 		 * won't destroy the primary_pe while we're inside this loop.
+ 		 */
+-		e = lookup_complete_exception(snap, chunk);
++		e = lookup_complete_exception(snap, chunk, ORIGIN_SNAPID);
+ 		if (e)
+ 			goto next_snapshot;
+ 
+-		pe = __find_pending_exception(snap, bio);
++		pe = __find_pending_exception(snap, bio, ORIGIN_SNAPID);
+ 		if (!pe) {
+ 			__invalidate_snapshot(snap, -ENOMEM);
+ 			goto next_snapshot;
+diff --git a/drivers/md/dm-snap.h b/drivers/md/dm-snap.h
+index b0b5176..c7529bf 100644
+--- a/drivers/md/dm-snap.h
++++ b/drivers/md/dm-snap.h
+@@ -83,6 +83,8 @@ static inline void dm_consecutive_chunk_count_inc(struct dm_snap_exception *e)
+ 
+ #  endif
+ 
++#define ORIGIN_SNAPID ULLONG_MAX
 +
- 	r = init_origin_hash();
- 	if (r) {
- 		DMERR("init_origin_hash failed.");
--		goto bad2;
-+		goto bad3;
- 	}
+ /*
+  * Abstraction to handle the meta/layout of exception stores (the
+  * COW device).
+@@ -104,7 +106,7 @@ struct exception_store {
+ 	 * Find somewhere to store the next exception.
+ 	 */
+ 	int (*prepare_exception) (struct exception_store *store,
+-				  struct dm_snap_exception *e);
++				  struct dm_snap_exception *e, u64 snapid);
  
- 	exception_cache = KMEM_CACHE(dm_snap_exception, 0);
- 	if (!exception_cache) {
- 		DMERR("Couldn't create exception cache.");
- 		r = -ENOMEM;
--		goto bad3;
-+		goto bad4;
- 	}
+ 	/*
+ 	 * Update the metadata with this exception.
+@@ -130,7 +132,7 @@ struct exception_store {
+ 	 * look up if a chunk is in completed exception.
+ 	 */
+ 	struct dm_snap_exception *(*lookup_completed_exception)
+-	(struct exception_store *store, chunk_t chunk);
++	(struct exception_store *store, chunk_t chunk, u64 snapid);
  
- 	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
- 	if (!pending_cache) {
- 		DMERR("Couldn't create pending cache.");
- 		r = -ENOMEM;
--		goto bad4;
-+		goto bad5;
- 	}
- 
- 	tracked_chunk_cache = KMEM_CACHE(dm_snap_tracked_chunk, 0);
- 	if (!tracked_chunk_cache) {
- 		DMERR("Couldn't create cache to track chunks in use.");
- 		r = -ENOMEM;
--		goto bad5;
-+		goto bad6;
- 	}
- 
- 	ksnapd = create_singlethread_workqueue("ksnapd");
-@@ -1465,12 +1614,14 @@ static int __init dm_snapshot_init(void)
- 
-       bad_pending_pool:
- 	kmem_cache_destroy(tracked_chunk_cache);
--      bad5:
-+      bad6:
- 	kmem_cache_destroy(pending_cache);
--      bad4:
-+      bad5:
- 	kmem_cache_destroy(exception_cache);
--      bad3:
-+      bad4:
- 	exit_origin_hash();
-+      bad3:
-+	dm_unregister_target(&shared_origin_target);
-       bad2:
- 	dm_unregister_target(&origin_target);
-       bad1:
-@@ -1492,6 +1643,10 @@ static void __exit dm_snapshot_exit(void)
- 	if (r)
- 		DMERR("origin unregister failed %d", r);
- 
-+	r = dm_unregister_target(&shared_origin_target);
-+	if (r)
-+		DMERR("shared origin unregister failed %d", r);
-+
- 	exit_origin_hash();
- 	kmem_cache_destroy(pending_cache);
- 	kmem_cache_destroy(exception_cache);
+ 	/*
+ 	 * let exception store code to handle the message hook in
 -- 
 1.5.5.GIT
