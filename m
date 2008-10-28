@@ -1,16 +1,17 @@
-From: "Takashi Sato" <t-sato@yk.jp.nec.com>
-Subject: Re: [PATCH 2/3] Implement generic freeze feature
-Date: Tue, 28 Oct 2008 21:33:59 +0900
-Message-ID: <F69DB5CD5C544C428676CFA36F31FF26@nsl.ad.nec.co.jp>
-References: <20081027215855t-sato@mail.jp.nec.com>
-	<20081027231533.96c42a78.akpm@linux-foundation.org>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: [patch]: [multipath-tool] Add check for
+	removeddevice in rdac checker
+Date: Tue, 28 Oct 2008 10:10:39 -0400
+Message-ID: <20081028141039.GA15229@mars.virtualiron.com>
+References: <00FE57DD11E3A94893D5BD54C3358BE884BFA6@AUSX3MPC128.aus.amer.dell.com>
+	<20081027170113.GA6167@mars.virtualiron.com>
+	<46A00B48CC54E4468EF6911F877AC4CA01B6255E@blrx3m10.blr.amer.dell.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; format=flowed; charset="iso-8859-1";
-	reply-type=original
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081027231533.96c42a78.akpm@linux-foundation.org>
+Content-Disposition: inline
+In-Reply-To: <46A00B48CC54E4468EF6911F877AC4CA01B6255E@blrx3m10.blr.amer.dell.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,31 +21,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-
->> -void thaw_bdev(struct block_device *bdev, struct super_block *sb)
->> +int thaw_bdev(struct block_device *bdev, struct super_block *sb)
->>  {
->> + int error = 0;
->> +
->> + mutex_lock(&bdev->bd_fsfreeze_mutex);
->> + if (!bdev->bd_fsfreeze_count) {
->> + mutex_unlock(&bdev->bd_fsfreeze_mutex);
->> + return -EINVAL;
+On Tue, Oct 28, 2008 at 03:11:08PM +0530, Shyam_Iyer@Dell.com wrote:
+> Konrad Wrote:
+> > On Mon, Oct 27, 2008 at 10:11:28AM -0500, Yanqing_Liu@Dell.com wrote:
+> > > Hi,
+> > >
+> > > This patch adds a check for removed device in rdac checker. After
+> > > volume access inquiry returns, the checker will check the peripheral
+> > > qualifier field to see if the device is deleted/unmapped. If so,
+> mark
+> > > path as failed.
 > 
-> This would be a programming error, yes?
-
-This is not a kernel programming error but a user's.
-thaw_bdev() is called via the unfreeze ioctl.  If a user calls the unfreeze
-ioctl for an unfrozen filesystem, this error will be returned.
-So a WARN_ON isn't needed.
-
-> If so, a WARN_ON is more appropriate than a silent runtime error.
+> > How does multipathd behaves when this fix is not in? Does it still
+> mark the path down? I would presume so, but it would take longer (the
+> default SCSI timeout value?)
 > 
->> + }
+> Absolutely. But that would also be after some IOs on the failed path and
+> the device being marked offline. Instead if the controller device is
+> intelligent to support a feature to know if the path is down through an
+> inquiry then it is worth marking the path down earlier. 
 
-Cheers, Takashi
+I concur.
+> 
+> Thanks for reviewing.
+
+You are welcome.
+
++1
