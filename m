@@ -1,17 +1,17 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: [patch]: [multipath-tool] Add check for
-	removeddevice in rdac checker
-Date: Tue, 28 Oct 2008 10:10:39 -0400
-Message-ID: <20081028141039.GA15229@mars.virtualiron.com>
-References: <00FE57DD11E3A94893D5BD54C3358BE884BFA6@AUSX3MPC128.aus.amer.dell.com>
-	<20081027170113.GA6167@mars.virtualiron.com>
-	<46A00B48CC54E4468EF6911F877AC4CA01B6255E@blrx3m10.blr.amer.dell.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 10/13] dm: add core functions for
+	request-based dm
+Date: Tue, 28 Oct 2008 12:00:31 -0400 (EDT)
+Message-ID: <20081028.120031.71084925.k-ueda@ct.jp.nec.com>
+References: <20080912.103814.74754581.k-ueda@ct.jp.nec.com>
+	<20080912.104612.115643090.k-ueda@ct.jp.nec.com>
+	<807b3a220810240044v1b9f12e3xc3bd5a429b9d4c5@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <46A00B48CC54E4468EF6911F877AC4CA01B6255E@blrx3m10.blr.amer.dell.com>
+In-Reply-To: <807b3a220810240044v1b9f12e3xc3bd5a429b9d4c5@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,33 +21,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: nikanth@gmail.com
+Cc: k-ueda@ct.jp.nec.com, linux-scsi@vger.kernel.org, knikanth@suse.de, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, j-nomura@ce.jp.nec.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Oct 28, 2008 at 03:11:08PM +0530, Shyam_Iyer@Dell.com wrote:
-> Konrad Wrote:
-> > On Mon, Oct 27, 2008 at 10:11:28AM -0500, Yanqing_Liu@Dell.com wrote:
-> > > Hi,
-> > >
-> > > This patch adds a check for removed device in rdac checker. After
-> > > volume access inquiry returns, the checker will check the peripheral
-> > > qualifier field to see if the device is deleted/unmapped. If so,
-> mark
-> > > path as failed.
-> 
-> > How does multipathd behaves when this fix is not in? Does it still
-> mark the path down? I would presume so, but it would take longer (the
-> default SCSI timeout value?)
-> 
-> Absolutely. But that would also be after some IOs on the failed path and
-> the device being marked offline. Instead if the controller device is
-> intelligent to support a feature to know if the path is down through an
-> inquiry then it is worth marking the path down earlier. 
+Hi Nikanth,
 
-I concur.
+On Fri, 24 Oct 2008 13:14:50 +0530, "Nikanth K" wrote:
+> On Fri, Sep 12, 2008 at 8:16 PM, Kiyoshi Ueda wrote:
+> <snip>
 > 
-> Thanks for reviewing.
+> > +static int dm_make_request(struct request_queue *q, struct bio *bio)
+> > +{
+> > +       struct mapped_device *md = (struct mapped_device *)q->queuedata;
+> > +
+> > +       if (unlikely(bio_barrier(bio))) {
+> > +               bio_endio(bio, -EOPNOTSUPP);
+> > +               return 0;
+> > +       }
+> > +
+> <snip>
+> 
+> Why not add barrier support in the beginning itself, so that targets
+> can be developed with barriers in mind? At least can we make the target
+> to return error, instead of the core?
 
-You are welcome.
+Currently, there is no barrier support in dm, not only request-based.
+Barrier support is a different feature in the next step, I think.
 
-+1
+As you noticed in the PATCH#11, current request-based dm has
+the limitation that multiple targets are not supported, so it may
+look barrier support in request-based dm is easy.
+But we may be able to remove the limitation in the future, so
+depending on it is not a good idea.
+
+Thanks,
+Kiyoshi Ueda
