@@ -1,16 +1,16 @@
-From: <Shyam_Iyer@Dell.com>
-Subject: RE: [patch]: [multipath-tool] Add check for removeddevice
-	in rdac checker
-Date: Tue, 28 Oct 2008 15:11:08 +0530
-Message-ID: <46A00B48CC54E4468EF6911F877AC4CA01B6255E@blrx3m10.blr.amer.dell.com>
-References: <00FE57DD11E3A94893D5BD54C3358BE884BFA6@AUSX3MPC128.aus.amer.dell.com>
-	<20081027170113.GA6167@mars.virtualiron.com>
+From: "Takashi Sato" <t-sato@yk.jp.nec.com>
+Subject: Re: [PATCH 2/3] Implement generic freeze feature
+Date: Tue, 28 Oct 2008 21:33:59 +0900
+Message-ID: <F69DB5CD5C544C428676CFA36F31FF26@nsl.ad.nec.co.jp>
+References: <20081027215855t-sato@mail.jp.nec.com>
+	<20081027231533.96c42a78.akpm@linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0117728593=="
+Content-Type: text/plain; format=flowed; charset="iso-8859-1";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20081027170113.GA6167@mars.virtualiron.com>
+In-Reply-To: <20081027231533.96c42a78.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,92 +20,31 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: axboe@kernel.dk, mtk.manpages@googlemail.com, linux-kernel@vger.kernel.org, xfs@oss.sgi.com, Christoph Hellwig <hch@infradead.org>, dm-devel@redhat.com, viro@ZenIV.linux.org.uk, linux-fsdevel@vger.kernel.org, linux-ext4@vger.kernel.org
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Hi,
 
---===============0117728593==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C938E1.4DB59014"
+>> -void thaw_bdev(struct block_device *bdev, struct super_block *sb)
+>> +int thaw_bdev(struct block_device *bdev, struct super_block *sb)
+>>  {
+>> + int error = 0;
+>> +
+>> + mutex_lock(&bdev->bd_fsfreeze_mutex);
+>> + if (!bdev->bd_fsfreeze_count) {
+>> + mutex_unlock(&bdev->bd_fsfreeze_mutex);
+>> + return -EINVAL;
+> 
+> This would be a programming error, yes?
 
-This is a multi-part message in MIME format.
+This is not a kernel programming error but a user's.
+thaw_bdev() is called via the unfreeze ioctl.  If a user calls the unfreeze
+ioctl for an unfrozen filesystem, this error will be returned.
+So a WARN_ON isn't needed.
 
-------_=_NextPart_001_01C938E1.4DB59014
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+> If so, a WARN_ON is more appropriate than a silent runtime error.
+> 
+>> + }
 
-Konrad Wrote:
-> On Mon, Oct 27, 2008 at 10:11:28AM -0500, Yanqing_Liu@Dell.com wrote:
-> > Hi,
-> >
-> > This patch adds a check for removed device in rdac checker. After
-> > volume access inquiry returns, the checker will check the peripheral
-> > qualifier field to see if the device is deleted/unmapped. If so,
-mark
-> > path as failed.
-
-> How does multipathd behaves when this fix is not in? Does it still
-mark the path down? I would presume so, but it would take longer (the
-default SCSI timeout value?)
-
-Absolutely. But that would also be after some IOs on the failed path and
-the device being marked offline. Instead if the controller device is
-intelligent to support a feature to know if the path is down through an
-inquiry then it is worth marking the path down earlier.=20
-
-Thanks for reviewing.
-
--Shyam Iyer.
-
-
-------_=_NextPart_001_01C938E1.4DB59014
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><TITLE></TITLE>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<META content=3D"MSHTML 6.00.2900.3429" name=3DGENERATOR></HEAD>
-<BODY>
-<P><FONT size=3D2>Konrad Wrote:<BR>&gt; On Mon, Oct 27, 2008 at =
-10:11:28AM -0500,=20
-Yanqing_Liu@Dell.com wrote:<BR>&gt; &gt; Hi,<BR>&gt; &gt;<BR>&gt; &gt; =
-This=20
-patch adds a check for removed device in rdac checker. After<BR>&gt; =
-&gt; volume=20
-access inquiry returns, the checker will check the peripheral<BR>&gt; =
-&gt;=20
-qualifier field to see if the device is deleted/unmapped. If so, =
-mark<BR>&gt;=20
-&gt; path as failed.<BR><BR>&gt; How does multipathd behaves when this =
-fix is=20
-not in? Does it still mark the path down? I would presume so, but it =
-would take=20
-longer (the default SCSI timeout value?)<BR><BR>Absolutely.&nbsp;But =
-that would=20
-also be after some IOs on the failed path and the device being marked =
-offline.=20
-Instead if the controller device is intelligent to support a feature to =
-know if=20
-the path is down through an inquiry then it is worth marking&nbsp;the =
-path down=20
-earlier. </FONT></P>
-<P><FONT size=3D2>Thanks for reviewing.</FONT></P>
-<P><FONT size=3D2>-Shyam Iyer.</FONT></P></BODY></HTML>
-
-------_=_NextPart_001_01C938E1.4DB59014--
-
-
---===============0117728593==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0117728593==--
+Cheers, Takashi
