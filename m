@@ -1,16 +1,16 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 11/13] dm: enable request-based dm
-Date: Tue, 28 Oct 2008 12:02:27 -0400 (EDT)
-Message-ID: <20081028.120227.104028516.k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 13/13] dm-mpath: convert to request-based
+Date: Tue, 28 Oct 2008 12:03:51 -0400 (EDT)
+Message-ID: <20081028.120351.78702656.k-ueda@ct.jp.nec.com>
 References: <20080912.103814.74754581.k-ueda@ct.jp.nec.com>
-	<20080912.104634.08318008.k-ueda@ct.jp.nec.com>
-	<807b3a220810240052n6a8b41b0x1ea9c88124b3f5f8@mail.gmail.com>
+	<20080912.104727.38325381.k-ueda@ct.jp.nec.com>
+	<807b3a220810240055g1dfa4deam3f6a90d6c58aac32@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <807b3a220810240052n6a8b41b0x1ea9c88124b3f5f8@mail.gmail.com>
+In-Reply-To: <807b3a220810240055g1dfa4deam3f6a90d6c58aac32@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,33 +26,26 @@ List-Id: dm-devel.ids
 
 Hi Nikanth,
 
-On Fri, 24 Oct 2008 13:22:46 +0530, "Nikanth K" wrote:
-> On Fri, Sep 12, 2008 at 8:16 PM, Kiyoshi Ueda wrote:
-> > This patch enables request-based dm.
-> >
-> > o Request-based dm and bio-based dm coexist, since there are
-> >  some target drivers which are more fitting to bio-based dm.
-> >  Also, there are other bio-based devices in the kernel
-> >  (e.g. md, loop).
-> >  Since bio-based device can't receive struct request,
-> >  there are some limitations on device stacking between
-> >  bio-based and request-based.
-> >
-> >                     type of underlying device
-> >                   bio-based      requeset-based
-> >   ----------------------------------------------
-> >    bio-based         OK                OK
-> >    request-based     NG                OK
-> >
+On Fri, 24 Oct 2008 13:25:33 +0530, "Nikanth K" wrote:
+> On Fri, Sep 12, 2008 at 8:17 PM, Kiyoshi Ueda wrote:
+> > This patch converts dm-multipath target to request-based from bio-based.
 > 
-> So will some configurations would become impossible, if a target is
-> made request-based and bio-based one is removed. Hope both
-> types of targets would co-exist and would be selectable for sometime.
+> Can we keep both the bio-based as well as request-based dm-multipath?
 
-If the target is used anywhere in the device stack (e.g. linear),
-both types of the target are needed, and that is possible.
+Why do you want to keep bio-based dm-multipath?
+In the realistic environment, dm-multipath is usually the bottom
+of the stacking devices.  So I think existing working configurations
+are still possible with request-based dm-multipath.
 
-As for multipath, see my another reply to your comment for PATCH 13.
+If we keep both types of multipath targets, maintenance cost would
+be doubled and additional user interface might be needed to specify
+which type is used.  I can't see any major benefit worth paying
+the cost of keeping bio-based dm-multipath.
+
+I know dm developers sometimes use linear/error maps under multipath
+just for testing purpose.  If that is your requirement, I can make
+request-based targets for linear and error (e.g. named like linear_rq
+and error_rq).
 
 Thanks,
 Kiyoshi Ueda
