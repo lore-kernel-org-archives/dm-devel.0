@@ -1,16 +1,16 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 13/13] dm-mpath: convert to request-based
-Date: Tue, 28 Oct 2008 12:03:51 -0400 (EDT)
-Message-ID: <20081028.120351.78702656.k-ueda@ct.jp.nec.com>
-References: <20080912.103814.74754581.k-ueda@ct.jp.nec.com>
-	<20080912.104727.38325381.k-ueda@ct.jp.nec.com>
-	<807b3a220810240055g1dfa4deam3f6a90d6c58aac32@mail.gmail.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 7/9] dm snapshot: add shared exception store
+Date: Wed, 29 Oct 2008 08:57:00 +0900
+Message-ID: <20081029085625U.fujita.tomonori@lab.ntt.co.jp>
+References: <1225109276-16491-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<20081027165538.GA27667@mars.virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <807b3a220810240055g1dfa4deam3f6a90d6c58aac32@mail.gmail.com>
+In-Reply-To: <20081027165538.GA27667@mars.virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,32 +20,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: nikanth@gmail.com
-Cc: k-ueda@ct.jp.nec.com, linux-scsi@vger.kernel.org, knikanth@suse.de, linux-kernel@vger.kernel.org, dm-devel@redhat.com, jens.axboe@oracle.com, j-nomura@ce.jp.nec.com, agk@redhat.com
+To: dm-devel@redhat.com
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-Hi Nikanth,
+On Mon, 27 Oct 2008 12:55:38 -0400
+Konrad Rzeszutek <konrad@virtualiron.com> wrote:
 
-On Fri, 24 Oct 2008 13:25:33 +0530, "Nikanth K" wrote:
-> On Fri, Sep 12, 2008 at 8:17 PM, Kiyoshi Ueda wrote:
-> > This patch converts dm-multipath target to request-based from bio-based.
+> On Mon, Oct 27, 2008 at 09:07:54PM +0900, FUJITA Tomonori wrote:
+> > This adds a new exception store implementation, shared exception
+> > store. The important design differences from the current two exception
+> > store implementations:
+> > 
+> > - It uses one exception store (cow disk) per origin device that is
+> >   shared by all snapshots.
+> > - It doesn't keep the complete exception tables in memory.
+> > 
+> > The shared exception store uses struct pstore, which the persistent
+> > exception store uses because there are many useful functions that
+> > struct pstore works with. The shared exception adds some variants to
+> > struct pstore, but not many.
 > 
-> Can we keep both the bio-based as well as request-based dm-multipath?
+> Thank you for posting this. I've just two questions:
 
-Why do you want to keep bio-based dm-multipath?
-In the realistic environment, dm-multipath is usually the bottom
-of the stacking devices.  So I think existing working configurations
-are still possible with request-based dm-multipath.
+Thanks for the comments.
 
-If we keep both types of multipath targets, maintenance cost would
-be doubled and additional user interface might be needed to specify
-which type is used.  I can't see any major benefit worth paying
-the cost of keeping bio-based dm-multipath.
+> ... 
+> > +static unsigned long shared_allocate_chunk(struct pstore *ps)
+> > +{
+> > +	unsigned long idx;
+> > +	unsigned long limit;
+> > +	unsigned long start_chunk;
+> > +	unsigned long nr = (ps->snap->chunk_size << SECTOR_SHIFT) * 8;
+> > +
+> > +	start_chunk = ps->cur_bitmap_chunk;
+> > +again:
+> > +	if (ps->cur_bitmap_chunk == ps->nr_bitmap_chunks)
+> > +		limit = ps->nr_chunks - (nr * (ps->nr_bitmap_chunks - 1));
+> 
+> Is this correct? If the chunk size is 16 the nr_chunks would be the bit-shift
+> value (5). Hence you are subtracting 8192*(some positivie number)-1 from 5 -
+> is that what you intend to do?
 
-I know dm developers sometimes use linear/error maps under multipath
-just for testing purpose.  If that is your requirement, I can make
-request-based targets for linear and error (e.g. named like linear_rq
-and error_rq).
+nr_chunks is the total number of chunks. What I try to do here is to
+calculate the number of chunks that the last bitmap chunk holds.
+
+I guess that it's better to do something simpler like this:
+
+if (ps->cur_bitmap_chunk == ps->nr_bitmap_chunks)
+        limit = ps->nr_chunks % nr;
+else
+	limit = nr;
+
+
+> > +	else
+> > +		limit = nr;
+> > +
+> > +	idx = find_next_zero_bit(ps->bitmap, limit, ps->cur_bitmap_index);
+> > +	if (idx < limit) {
+> > +		set_bit(idx, ps->bitmap);
+> > +
+> > +		if (idx == limit - 1) {
+> > +			ps->cur_bitmap_index = 0;
+> > +
+> > +			read_new_bitmap_chunk(ps);
+> > +		} else
+> > +			ps->cur_bitmap_index++;
+> > +	} else {
+> > +		chunk_io(ps, ps->cur_bitmap_chunk, WRITE, 1, ps->bitmap);
+> > +
+> > +		read_new_bitmap_chunk(ps);
+> > +
+> > +		/* todo: check # free chunks */
+> > +		if (start_chunk == ps->cur_bitmap_chunk) {
+> > +			DMERR("%s %d: fail to find a new chunk",
+> > +			      __func__, __LINE__);
+> > +			return 0;
+> > +		}
+> > +
+> > +		goto again;
+> > +	}
+> > +
+> > +	return idx + (ps->cur_bitmap_chunk - FIRST_BITMAP_CHUNK) * nr;
+> 
+> .. snip..
+> > +static int shared_create_bitmap(struct exception_store *store)
+> > +{
+> > +	struct pstore *ps = get_info(store);
+> > +	int i, r, rest, this;
+> > +	chunk_t chunk;
+> > +
+> > +	/* bitmap + superblock */
+> > +	rest = ps->nr_bitmap_chunks + 1;
+> > +
+> > +	for (chunk = 0; chunk < ps->nr_bitmap_chunks; chunk++) {
+> > +		memset(ps->area, 0, ps->snap->chunk_size << SECTOR_SHIFT);
+> > +
+> > +		this = min_t(int, rest, ps->snap->chunk_size * 512 * 8);
+> 
+> 512? Why not do the << SECTOR_SHIFT as in the other places?
+
+Yeah, '<< SECTOR_SHIFT' is better. It will be fixed at the next round.
+
 
 Thanks,
-Kiyoshi Ueda
