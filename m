@@ -1,18 +1,16 @@
 From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] Check region size during dirty log creation
-Date: Wed, 29 Oct 2008 20:51:32 +0000
-Message-ID: <20081029205132.GJ31233@agk.fab.redhat.com>
-References: <1225285328.3974.5.camel@o>
-	<20081029135607.GF31233@agk.fab.redhat.com>
-	<1225292850.1196.4.camel@o>
-	<20081029154357.GI31233@agk.fab.redhat.com>
-	<1225295622.1196.12.camel@o>
+Subject: Re: [PATCH 1/9] dm snapshot: make chunk_io handle any
+	buffer
+Date: Wed, 29 Oct 2008 23:48:52 +0000
+Message-ID: <20081029234852.GM31233@agk.fab.redhat.com>
+References: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+	<1225109276-16491-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1225295622.1196.12.camel@o>
+In-Reply-To: <1225109276-16491-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,25 +20,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: heinzm@redhat.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, Oct 29, 2008 at 04:53:42PM +0100, Heinz Mauelshagen wrote:
-> I'm arguing, that the kernel should only restrict to prevent against
-> programming errors.
+On Mon, Oct 27, 2008 at 09:07:48PM +0900, FUJITA Tomonori wrote:
+> chunk_io() can perform I/Os only with ps->area. This patch adds a new
+> argument (a pointer to a buffer) to chunk_io() so that it can performs
+> I/Os with the buffer.
  
-Indeed - but I'm asking where the existing constraint is coming
-from and if it is still/was ever correct?
+> +static int chunk_io(struct pstore *ps, chunk_t chunk, int rw, int metadata,
+> +		    void *data)
 
-Also, this patch duplicates existing checks in _check_region_size()
-that should be removed if the validation moves.
+data is part of ps so should not need passing in as it's already accessible!
 
-static inline int _check_region_size(struct dm_target *ti, uint32_t size)
-{
-        return !(size % (PAGE_SIZE >> 9) || !is_power_of_2(size) ||
-                 size > ti->len);
-}
+It's looking like struct pstore is acquiring fields that apply to only one
+type of snapshot:  IOW More-invasive refactoring of that struct is needed.
+- Which fields apply to both?  Which apply only to one type of snapshot?
 
 Alasdair
 -- 
