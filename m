@@ -1,7 +1,7 @@
 From: agk@sourceware.org
-Subject: device-mapper/include log.h
-Date: 30 Oct 2008 17:50:42 -0000
-Message-ID: <20081030175042.16770.qmail@sourceware.org>
+Subject: device-mapper/dmsetup dmsetup.c
+Date: 30 Oct 2008 17:52:07 -0000
+Message-ID: <20081030175207.31087.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -18,25 +18,24 @@ List-Id: dm-devel.ids
 
 CVSROOT:	/cvs/dm
 Module name:	device-mapper
-Changes by:	agk@sourceware.org	2008-10-30 17:50:42
+Changes by:	agk@sourceware.org	2008-10-30 17:52:07
 
 Modified files:
-	include        : log.h 
+	dmsetup        : dmsetup.c 
 
 Log message:
-	drop libdevmapper.h
+	drop explicit libdevmapper.h
 
 Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/include/log.h.diff?cvsroot=dm&r1=1.12&r2=1.13
+http://sourceware.org/cgi-bin/cvsweb.cgi/device-mapper/dmsetup/dmsetup.c.diff?cvsroot=dm&r1=1.112&r2=1.113
 
---- device-mapper/include/log.h	2008/10/30 17:24:04	1.12
-+++ device-mapper/include/log.h	2008/10/30 17:50:41	1.13
-@@ -16,8 +16,6 @@
- #ifndef _DM_LOG_H
- #define _DM_LOG_H
+--- device-mapper/dmsetup/dmsetup.c	2008/10/30 17:24:03	1.112
++++ device-mapper/dmsetup/dmsetup.c	2008/10/30 17:52:06	1.113
+@@ -21,7 +21,6 @@
+ 
+ #include "configure.h"
  
 -#include "libdevmapper.h"
--
- #include <stdio.h>		/* FILE */
- #include <string.h>		/* strerror() */
- #include <errno.h>
+ #include "dm-logging.h"
+ 
+ #include <stdio.h>
