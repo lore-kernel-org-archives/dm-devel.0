@@ -1,36 +1,56 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [dm-devel] [PATCH] Add gfp_mask to bio_integrity_clone()
-Date: Fri, 31 Oct 2008 15:17:02 +0100
-Message-ID: <20081031141701.GI31673@kernel.dk>
-References: <490942D4.3070504@ce.jp.nec.com> <yq1hc6s3l4g.fsf@sermon.lab.mkp.net>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: [PATCH] dm-stripe: pay attention to failing registration
+	in dm_stripe_init()
+Date: Fri, 31 Oct 2008 16:11:09 +0100
+Message-ID: <1225465869.1196.60.camel@o>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752396AbYJaOS0@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <yq1hc6s3l4g.fsf@sermon.lab.mkp.net>
-Sender: linux-kernel-owner@vger.kernel.org
-To: "Martin K. Petersen" <martin.petersen@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: heinzm@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 31 2008, Martin K. Petersen wrote:
-> >>>>> "Jun'ichi" == Jun'ichi Nomura <j-nomura@ce.jp.nec.com> writes:
-> 
-> Jun'ichi> What do you think about adding gfp_mask parameter to
-> Jun'ichi> bio_integrity_clone() like the attached patch?
-> 
-> Jun'ichi> It also seems natural to inherit gfp_mask from bio_clone
-> Jun'ichi> when bio_integrity_clone is called from it.  Since
-> Jun'ichi> bio_clone() is the only caller of bio_integrity_clone() in
-> Jun'ichi> 2.6.28-rc2 and all in-tree callers of bio_clone() are using
-> Jun'ichi> GFP_NOIO, the patch does nothing other than changing the
-> Jun'ichi> interface.
-> 
-> Looks good to me.  I'll update the non-multipath DM bits accordingly.
-> 
-> Acked-by: Martin K. Petersen <martin.petersen@oracle.com>
+dm_stripe_init() doesn't pay attention to a failing target registration.
 
-Shall I just include this in the 2.6.29 branch?
+Heinz
 
--- 
-Jens Axboe
+Signed-off-by: Heinz Mauelshagen <heinzm@redhat.com>
+
+---
+diff -up linux-2.6.27.4/drivers/md/dm-stripe.c.orig1
+linux-2.6.27.4/drivers/md/dm-stripe.c
+--- linux-2.6.27.4/drivers/md/dm-stripe.c.orig1	2008-10-26
+00:05:07.000000000 +0200
++++ linux-2.6.27.4/drivers/md/dm-stripe.c	2008-10-31 16:05:12.000000000
++0100
+@@ -322,12 +322,13 @@ int __init dm_stripe_init(void)
+ 	r = dm_register_target(&stripe_target);
+ 	if (r < 0)
+ 		DMWARN("target registration failed");
+-
+-	kstriped = create_singlethread_workqueue("kstriped");
+-	if (!kstriped) {
+-		DMERR("failed to create workqueue kstriped");
+-		dm_unregister_target(&stripe_target);
+-		return -ENOMEM;
++	else {
++		kstriped = create_singlethread_workqueue("kstriped");
++		if (!kstriped) {
++			DMERR("failed to create workqueue kstriped");
++			dm_unregister_target(&stripe_target);
++			r = -ENOMEM;
++		}
+ 	}
+ 
+ 	return r;
