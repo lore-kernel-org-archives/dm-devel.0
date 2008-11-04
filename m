@@ -1,94 +1,75 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: RE: [dm-devel] i/o error due to all path failure with rdac
-Date: Fri, 31 Oct 2008 13:21:39 -0700
-Message-ID: <1225484499.14830.1057.camel@chandra-ubuntu>
-References: <49022078.6010700@datadirectnet.com>
-	 <E463DF2B2E584B4A82673F53D62C2EF45BD3B893@cosmail01.lsi.com>
-	 <20081030173453.GB23948@linux.vnet.ibm.com>
-	 <E463DF2B2E584B4A82673F53D62C2EF45BD9D049@cosmail01.lsi.com>
-	 <1225396981.14830.990.camel@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF45BD9D0AD@cosmail01.lsi.com>
-	 <1225405417.14830.1001.camel@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF45BD9D16B@cosmail01.lsi.com>
-	 <1225409729.14830.1005.camel@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF45BD9D2E2@cosmail01.lsi.com>
-Reply-To: sekharan@us.ibm.com
+From: "Nikanth Karthikesan" <KNikanth@novell.com>
+Subject: Re: [PATCH 10/13] dm: add core functions
+	forrequest-based dm
+Date: Mon, 03 Nov 2008 22:33:31 -0700
+Message-ID: <49102C03020000C50002E257@victor.provo.novell.com>
+References: <20080912.103814.74754581.k-ueda@ct.jp.nec.com>
+	<20080912.104612.115643090.k-ueda@ct.jp.nec.com>
+	<807b3a220810240044v1b9f12e3xc3bd5a429b9d4c5@mail.gmail.com>
+	<490FB852.3FEE.00C5.1@novell.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BD9D2E2@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <490FB852.3FEE.00C5.1@novell.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>"<Kiyoshi Ueda" <k-ueda@ct.jp.nec.com>, nikanth@gmail.com, agk@redhat.com
+Cc: linux-scsi@vger.kernel.org, knikanth@suse.de, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "<Andi Kleen" <andi@firstfloor.org>, jens.axboe@oracle.com, j-nomura@ce.jp.nec.com, "<Milan Broz" <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-That is good to know. I will push the patch upstream.
+Hi Kiyoshi
 
-BTW, Please be advised that you might see some unknown problems if you
-use the multipath tools from mainline on your distro releases.
+>>> On 10/28/2008 at 09:30 PM, Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote:=
+=20
+> Hi Nikanth,
+>=20
+> On Fri, 24 Oct 2008 13:14:50 +0530, "Nikanth K" wrote:
+>> On Fri, Sep 12, 2008 at 8:16 PM, Kiyoshi Ueda wrote:
+>> <snip>
+>>=20
+>> > +static int dm_make_request(struct request_queue *q, struct bio *bio=
+)
+>> > +{
+>> > +       struct mapped_device *md =3D (struct mapped_device *)q->queu=
+edata;
+>> > +
+>> > +       if (unlikely(bio_barrier(bio))) {
+>> > +               bio_endio(bio, -EOPNOTSUPP);
+>> > +               return 0;
+>> > +       }
+>> > +
+>> <snip>
+>>=20
+>> Why not add barrier support in the beginning itself, so that targets
+>> can be developed with barriers in mind? At least can we make the targe=
+t
+>> to return error, instead of the core?
+>=20
+> Currently, there is no barrier support in dm, not only request-based.
+> Barrier support is a different feature in the next step, I think.
+>=20
 
-The library in distro releases and the tools in mainline may not be
-totally compatible, which is the cause.
+But there are some works in that direction to add support for barriers in=
+ dm.
+That is why I think building request-based dm with barriers from the=20
+ground up might be a good idea.
 
-I would suggest you to use the tools from your distro itself. The kernel
-changes for SCSI_DH should work with no changes to the tools (in your
-distro). IOW, you do not need the latest multipath tools.
+> As you noticed in the PATCH#11, current request-based dm has
+> the limitation that multiple targets are not supported, so it may
+> look barrier support in request-based dm is easy.
+> But we may be able to remove the limitation in the future, so
+> depending on it is not a good idea.
+>=20
 
-chandra
-On Fri, 2008-10-31 at 10:05 -0600, Moger, Babu wrote:
-> Yes, It is working fine with this patch. Now my online/offline test is running fine. Thank you very much. That was really a quick fix.
-> 
-> I am still learning the device mapper. Hopefully I will be some help in the future.
-> 
-> Thanks
-> Babu Moger
-> 
-> -----Original Message-----
-> From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
-> Sent: Thursday, October 30, 2008 6:35 PM
-> To: Moger, Babu
-> Cc: device-mapper development; linux-scsi@vger.kernel.org
-> Subject: RE: [dm-devel] i/o error due to all path failure with rdac
-> 
-> Can you try this patch.
-> ---------
-> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-> 
-> Index: linux-2.6.27/drivers/scsi/device_handler/scsi_dh_rdac.c
-> ===================================================================
-> --- linux-2.6.27.orig/drivers/scsi/device_handler/scsi_dh_rdac.c
-> +++ linux-2.6.27/drivers/scsi/device_handler/scsi_dh_rdac.c
-> @@ -386,6 +386,7 @@ static int check_ownership(struct scsi_d
->         struct c9_inquiry *inqp;
-> 
->         h->lun_state = RDAC_LUN_UNOWNED;
-> +       h->state = RDAC_STATE_ACTIVE;
->         err = submit_inquiry(sdev, 0xC9, sizeof(struct c9_inquiry), h);
->         if (err == SCSI_DH_OK) {
->                 inqp = &h->inq.c9;
-> ---
-> 
-> On Thu, 2008-10-30 at 17:21 -0600, Moger, Babu wrote:
-> > Looks like eventually we get rport failure after the controller offline.
-> >
-> >
-> > I have attached the messages file.  I am running raw IO.
-> >
-> > Also, please note that I have added following lines in check_sense. This condition (quiescence) should be retried.
-> >
-> >
-> > case UNIT_ATTENTION:
-> >                 if ((sense_hdr->asc == 0x29 && sense_hdr->ascq == 0x00) ||
-> >                     (sense_hdr->asc == 0x8b && sense_hdr->ascq == 0x02))
-> >                         /*
-> >                          * Power On, Reset, or Bus Device Reset, just retry.
-> >                          */
-> >                         return ADD_TO_MLQUEUE;
-> >
-> >
-> >
-> > Thanks
-> > Babu Moger
-> >
-
+Thanks
+Nikanth Karthikesan
