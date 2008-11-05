@@ -1,19 +1,12 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 10/13] dm: add core functions for request-based
-	dm
-Date: Tue, 04 Nov 2008 10:01:57 -0500
-Message-ID: <491063E5.9060805@ct.jp.nec.com>
-References: <20080912.103814.74754581.k-ueda@ct.jp.nec.com>
-	<20080912.104612.115643090.k-ueda@ct.jp.nec.com>
-	<807b3a220810240044v1b9f12e3xc3bd5a429b9d4c5@mail.gmail.com>
-	<490FB852.3FEE.00C5.1@novell.com>
-	<49102C03020000C50002E257@victor.provo.novell.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Source code repository changes
+Date: Wed, 5 Nov 2008 00:55:07 +0000
+Message-ID: <20081105005507.GH14593@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49102C03020000C50002E257@victor.provo.novell.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,55 +16,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Nikanth Karthikesan <KNikanth@novell.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, linux-scsi@vger.kernel.org, knikanth@suse.de, linux-kernel@vger.kernel.org, dm-devel@redhat.com, "<Andi Kleen" <andi@firstfloor.org>, jens.axboe@oracle.com, j-nomura@ce.jp.nec.com, agk@redhat.com, "<Milan Broz" <mbroz@redhat.com>
+To: lvm-devel@redhat.com, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Nikanth,
+OK - I'd like packagers to start testing what is currently in LVM2 CVS and
+report any problems with sets of configuration options / make targets actually
+required.
 
-Nikanth Karthikesan wrote:
-> Hi Kiyoshi
-> 
->>>> On 10/28/2008 at 09:30 PM, Kiyoshi Ueda <k-ueda@ct.jp.nec.com> wrote: 
->> Hi Nikanth,
->>
->> On Fri, 24 Oct 2008 13:14:50 +0530, "Nikanth K" wrote:
->>> On Fri, Sep 12, 2008 at 8:16 PM, Kiyoshi Ueda wrote:
->>> <snip>
->>>
->>>> +static int dm_make_request(struct request_queue *q, struct bio *bio)
->>>> +{
->>>> +       struct mapped_device *md = (struct mapped_device *)q->queuedata;
->>>> +
->>>> +       if (unlikely(bio_barrier(bio))) {
->>>> +               bio_endio(bio, -EOPNOTSUPP);
->>>> +               return 0;
->>>> +       }
->>>> +
->>> <snip>
->>>
->>> Why not add barrier support in the beginning itself, so that targets
->>> can be developed with barriers in mind? At least can we make the target
->>> to return error, instead of the core?
->> Currently, there is no barrier support in dm, not only request-based.
->> Barrier support is a different feature in the next step, I think.
-> 
-> But there are some works in that direction to add support for barriers in dm.
-> That is why I think building request-based dm with barriers from the 
-> ground up might be a good idea.
+Once the Fedora 11 tree opens (expected end of this week) I shall make the
+first tarball release and use this code.
 
-I agree, if I or other people have a time to implement barrier support
-for request-based dm.
-But I think the some works you mentioned above are:
-    - Andi Kleen: barrier support for linear (single device)
-    - Milan Broz: full barrier support in dm core (no target patch)
-so there is no barrier support work for dm-multipath yet.
+In summary:
 
-Current request-based target is only dm-multipath, so we won't have
-any feature regression even if request-based dm-multipath gets in.
-And I don't have much time to implement barrier support for
-request-based dm-multipath now, so I'd like to consider it as
-the next step.
+  There'll be one source tarball instead of two.
 
-Thanks,
-Kiyoshi Ueda
+  make device-mapper and make install_device-mapper will deal with the
+device-mapper pieces.
+
+  make and make install will do both.
+
+Other make targets can deal with other useful combinations - some obvious ones
+are still missing.
+
+I have tried to retain file history during the import and added a dm_ prefix to
+former device-mapper tags.
+
+Fedora and RHEL will continue to ship three RPMS: device-mapper, lvm2 and lvm2-cluster,
+but they'll all be generated from a single upstream tarball + SRPM.
+
+Why are we doing this?
+  - To avoid the time-wasting dependency problems when building two separate
+    packages;
+  - To switch to a single source repository to make a likely move from CVS to
+    git easier;
+  - To reduce the maintenance overhead;
+  - To make sharing code between the two quicker and easier.
+
+We'll maintain separate WHATS_NEW and VERSION files for now, but eventually I hope
+to merge these too.
+
+Alasdair
+-- 
+agk@redhat.com
