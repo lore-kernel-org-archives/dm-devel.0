@@ -1,15 +1,13 @@
-From: Mike Anderson <andmike@linux.vnet.ibm.com>
-Subject: Re: problem with multipathd, not all paths added to a
-	disk on boot
-Date: Thu, 6 Nov 2008 09:07:55 -0800
-Message-ID: <20081106170755.GA11985@linux.vnet.ibm.com>
-References: <20081106143100.0FBC013375@smtp.l00-bugdead-prods.de>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: RFC: Patch to dm-raid1 to allow error type in status
+	output - even when !errors_handled
+Date: Thu, 06 Nov 2008 11:59:58 -0600
+Message-ID: <1225994398.29143.3.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20081106143100.0FBC013375@smtp.l00-bugdead-prods.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +17,99 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Sebastian Reitenbach <sebastia@l00-bugdead-prods.de> wrote:
-> /dev/sdb in group vm-store, on 1:0:0:0 is not listed, however, lsscsi
-> has the disk in the list:
-> [1:0:0:0]    disk    IBM      1814      FAStT  0916  /dev/sdb
-> 
-> for the disk that is not added to the group, I see sth like this 
-> in /var/log/messages:
-> Nov  6 12:32:36 srv24 kernel: end_request: I/O error, dev sdb, sector 0
-> Nov  6 12:32:39 srv24 kernel: end_request: I/O error, dev sdb, sector 0
-> Nov  6 12:32:39 srv24 kernel: end_request: I/O error, dev sdb, sector 8
-> Nov  6 12:32:42 srv24 kernel: end_request: I/O error, dev sdb, sector 0
-> Nov  6 12:32:42 srv24 multipathd: sdb: add path (uevent)
-> Nov  6 12:32:42 srv24 multipathd: sdb: spurious uevent, path already in 
-> pathvec
-> Nov  6 12:32:42 srv24 multipathd: sdb: failed to get path uid
-> Nov  6 12:32:45 srv24 kernel: end_request: I/O error, dev sdb, sector 0
-> 
+I have not compiled or tested this patch at this point... just looking
+for feedback.
 
-What does running "/sbin/scsi_id -g -u -s /block/sdb" return when you are
-in this failing mode?
+ brassow
 
-If scsi_id fails what does "sg_inq -v /dev/sdb" and
-"cat /sys/block/sdb/device/state" return?
+Device-mapper mirrors are allowed to either handle or ignore
+device errors/failures.  In some cases, it is desirable to
+ignore errors.  For example, when using 'pvmove' to move data
+off of a failing device, we just want to get all the data we
+can and not stop for failures.
 
--andmike
---
-Michael Anderson
-andmike@linux.vnet.ibm.com
+Currently, when failures are ignored, they are completely ignored.
+They are not recorded and have no affect on the mirror.  I think
+it would be more beneficial to at least record the information -
+even though no action is taken.  This way, the status output could
+indicate that a problem occurred.  Since the status output is
+backwards compatible with older programs, those older programs
+would simply ignore the new information.  Newer or updated programs,
+on the other hand, would be able to see that something had happened
+- even if they didn't want to take action.  (Imagine copying off
+data from a failing drive.  You may want to copy all that you can
+without stopping for failures, but you still want to know if some
+regions didn't get copied properly.)
+
+The way to do this is to move the 'errors_handled' check after the
+error accounting in fail_mirror (but before action is taken to
+change the primary mirror, etc.).  The error accounting is done by
+incrementing 'error_count' and setting 'error_type'.  Since these
+variables can now have non-zero value, even when not handling
+errors, we must couple a check for 'errors_handled' in the places
+where 'error_count' is checked - specifically, 'choose_mirror',
+'default_ok', and 'do_reads'.
+
+We handle 'choose_mirror' a little bit more cleverly than just
+mitigating the 'error_count' with a check for 'errors_handled'.
+In this case, if the region is in sync, we still try to find
+a mirror that has not failed (just in case we would read stale
+data); but if there is no other option, we can still give the
+default mirror if we are ignoring errors.
+
+
+Index: linux-2.6/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid1.c
++++ linux-2.6/drivers/md/dm-raid1.c
+@@ -197,9 +197,6 @@ static void fail_mirror(struct mirror *m
+ 	struct mirror_set *ms = m->ms;
+ 	struct mirror *new;
+ 
+-	if (!errors_handled(ms))
+-		return;
+-
+ 	/*
+ 	 * error_count is used for nothing more than a
+ 	 * simple way to tell if a device has encountered
+@@ -210,6 +207,9 @@ static void fail_mirror(struct mirror *m
+ 	if (test_and_set_bit(error_type, &m->error_type))
+ 		return;
+ 
++	if (!errors_handled(ms))
++		return;
++
+ 	if (m != get_default_mirror(ms))
+ 		goto out;
+ 
+@@ -369,14 +369,15 @@ static struct mirror *choose_mirror(stru
+ 			m += ms->nr_mirrors;
+ 	} while (m != get_default_mirror(ms));
+ 
+-	return NULL;
++	return (errors_handled(ms)) ? NULL : m;
+ }
+ 
+ static int default_ok(struct mirror *m)
+ {
+ 	struct mirror *default_mirror = get_default_mirror(m->ms);
+ 
+-	return !atomic_read(&default_mirror->error_count);
++	return !errors_handled(m->ms) ||
++		!atomic_read(&default_mirror->error_count);
+ }
+ 
+ static int mirror_available(struct mirror_set *ms, struct bio *bio)
+@@ -483,7 +484,8 @@ static void do_reads(struct mirror_set *
+ 		 */
+ 		if (likely(region_in_sync(ms, region, 1)))
+ 			m = choose_mirror(ms, bio->bi_sector);
+-		else if (m && atomic_read(&m->error_count))
++		else if (m && errors_handled(ms) &&
++			 atomic_read(&m->error_count))
+ 			m = NULL;
+ 
+ 		if (likely(m))
