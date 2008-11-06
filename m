@@ -1,14 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] Do not try to activate path if pgpath is NULL
-Date: Thu, 6 Nov 2008 10:47:20 +0000
-Message-ID: <20081106104720.GA14593@agk.fab.redhat.com>
-References: <1225943926.14830.1099.camel@chandra-ubuntu>
+From: Adam Hamsik <haaaad@gmail.com>
+Subject: Re: Re: Source code repository changes
+Date: Thu, 6 Nov 2008 15:15:02 +0100
+Message-ID: <625C3C1C-82F7-4E52-BDE0-913FC447B1A7@gmail.com>
+References: <20081105005507.GH14593@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Mime-Version: 1.0 (Apple Message framework v929.2)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1225943926.14830.1099.camel@chandra-ubuntu>
+In-Reply-To: <20081105005507.GH14593@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,16 +18,34 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Nov 05, 2008 at 07:58:46PM -0800, Chandra Seetharaman wrote:
-> Path activation code is called even when the pgpath is NULL. This could
-> lead to a panic in activate_path(). Such a panic is seen in -rt kernel.
- 
-Added to -mm and will push for .28
 
-Alasdair
--- 
-agk@redhat.com
+On Nov,Wednesday 5 2008, at 1:55 AM, Alasdair G Kergon wrote:
+
+> OK - I'd like packagers to start testing what is currently in LVM2  
+> CVS and
+> report any problems with sets of configuration options / make  
+> targets actually
+> required.
+>
+> Once the Fedora 11 tree opens (expected end of this week) I shall  
+> make the
+> first tarball release and use this code.
+
+
+I want to ask if it would be possible to merge NetBSD patches. During  
+this summer I have
+ported libdevmapper/lvm2tools to NetBSD. Currently I can use lvm with  
+lvm2tools on NetBSD
+with out any problems. Only needed changes for libdevmapper was  
+addition of 3 files(netbsd-dm.h
+libdm-nbsd-iface.c libdm_netbsd.c to ioctl code). In lvm2tools I have  
+added 2 files and written
+some small patches to support BSD raw devices. I can provide patches  
+if merge would be possible.
+
+Regards
+
+Adam.
