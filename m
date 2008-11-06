@@ -1,15 +1,14 @@
-From: "Jeff McCune" <JMcCune@ntst.com>
-Subject: multipath-tools Patch Submission - mpath_prop_class
-	callout
-Date: Thu, 6 Nov 2008 13:56:44 -0500
-Message-ID: <9A7F9F83A843AD4EBDE53D0D868ECD4203471F24@NTST-OH-MAIL01.ntst.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Sebastian Reitenbach" <sebastia@l00-bugdead-prods.de>
+Subject: Re: problem with multipathd,
+	not all paths added to adisk on boot
+Date: Thu, 06 Nov 2008 20:33:43 -0000
+Message-ID: <20081106203344.6DA561336A@smtp.l00-bugdead-prods.de>
+Reply-To: Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: cristophe.varoqui@free.fr
+To: dm-devel@redhat.com, andmike@linux.vnet.ibm.com
 List-Id: dm-devel.ids
-
 
 Hi,
 
-Where might I read about the procedure for submitting a patch to
-multipath-tools?
-
-I've written a very small mpath_prio_class program, which I'm currently
-using to assign fibre channel paths a priority of 40, and iSCSI paths a
-priority of 10, and I'd like to submit this for inclusion in the
-device-mapper-multipath package.  This program facilitates failover and
-failback from fibre to iscsi paths.
-
-From http://sources.redhat.com/dm/  I've wandered to
-http://christophe.varoqui.free.fr/ which states the git repository is
-located at http://kernel.org/pub/scm/linux/storage/multipath-tools/ but
-I receive the following error when I attempt to clone it:
-
-[jmccune@homer dev]$ git clone
-http://kernel.org/pub/scm/linux/storage/multipath-tools/
-Initialized empty Git repository in
-/asp/home/jmccune/dev/multipath-tools/.git/
-Cannot get remote repository information.
-Perhaps git-update-server-info needs to be run there?
-
-Cheers,
---
-Jeff McCune
-Senior System Administrator
-Netsmart Technologies
-1-800-434-2642 x7382
+Mike Anderson <andmike@linux.vnet.ibm.com> wrote: 
+> Sebastian Reitenbach <sebastia@l00-bugdead-prods.de> wrote:
+> > /dev/sdb in group vm-store, on 1:0:0:0 is not listed, however, lsscsi
+> > has the disk in the list:
+> > [1:0:0:0]    disk    IBM      1814      FAStT  0916  /dev/sdb
+> > 
+> > for the disk that is not added to the group, I see sth like this 
+> > in /var/log/messages:
+> > Nov  6 12:32:36 srv24 kernel: end_request: I/O error, dev sdb, sector 0
+> > Nov  6 12:32:39 srv24 kernel: end_request: I/O error, dev sdb, sector 0
+> > Nov  6 12:32:39 srv24 kernel: end_request: I/O error, dev sdb, sector 8
+> > Nov  6 12:32:42 srv24 kernel: end_request: I/O error, dev sdb, sector 0
+> > Nov  6 12:32:42 srv24 multipathd: sdb: add path (uevent)
+> > Nov  6 12:32:42 srv24 multipathd: sdb: spurious uevent, path already in 
+> > pathvec
+> > Nov  6 12:32:42 srv24 multipathd: sdb: failed to get path uid
+> > Nov  6 12:32:45 srv24 kernel: end_request: I/O error, dev sdb, sector 0
+> > 
+> 
+> What does running "/sbin/scsi_id -g -u -s /block/sdb" return when you are
+> in this failing mode?
+/sbin/scsi_id -g -u -s /block/sdb
+3600a0b800048b3fe00000431490e90ce
 
 
+> 
+> If scsi_id fails what does "sg_inq -v /dev/sdb" and
+> "cat /sys/block/sdb/device/state" return?
+It doesn't fail, but anyways:
+sg_inq -v /dev/sdb
+    inquiry cdb: 12 00 00 00 24 00
+standard INQUIRY:
+    inquiry cdb: 12 00 00 00 4a 00
+  PQual=0  Device_type=0  RMB=0  version=0x05  [SPC-3]
+  [AERC=0]  [TrmTsk=0]  NormACA=1  HiSUP=1  Resp_data_format=2
+  SCCS=0  ACC=0  TGPS=0  3PC=0  Protect=0  BQue=0
+  EncServ=1  MultiP=0  [MChngr=0]  [ACKREQQ=0]  Addr16=0
+  [RelAdr=0]  WBus16=1  Sync=1  Linked=0  [TranDis=0]  CmdQue=1
+  Clocking=0x0  QAS=0  IUS=0
+    length=74 (0x4a)   Peripheral device type: disk
+ Vendor identification: IBM
+ Product identification: 1814      FAStT
+ Product revision level: 0916
+    inquiry cdb: 12 01 00 00 fc 00
+    inquiry: requested 252 bytes but  got 21 bytes
+    inquiry cdb: 12 01 80 00 fc 00
+    inquiry: requested 252 bytes but  got 20 bytes
+ Unit serial number: SG83955342
 
-This message is intended only for the use of the individual or entity=20
-to which it is addressed, and may contain information that is=20
-privileged, confidential and exempt from disclosure under applicable=20
-law. If the reader of this message is not the intended recipient, or=20
-the employer or agent responsible for delivering the message to the=20
-intended recipient, you are hereby notified that any dissemination,=20
-distribution or copying of this communication is strictly prohibited.=20
-If you have received this communication in error, please notify the=20
-sender immediately by telephone and delete the material from your=20
-computer. Thank you for your cooperation.
+cat /sys/block/sdb/device/state
+running
+
+thanks
+Sebastian
