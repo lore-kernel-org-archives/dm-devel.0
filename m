@@ -1,8 +1,7 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH] Print a warning message when hardware handler
-	parameters are ignored
-Date: Wed, 05 Nov 2008 19:57:16 -0800
-Message-ID: <1225943836.14830.1096.camel@chandra-ubuntu>
+Subject: [PATCH] Do not try to activate path if pgpath is NULL
+Date: Wed, 05 Nov 2008 19:58:46 -0800
+Message-ID: <1225943926.14830.1099.camel@chandra-ubuntu>
 Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -21,26 +20,32 @@ To: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Currently dm ignores the parameters provided to hardware handlers
-without providing any notifications to the user.
+Path activation code is called even when the pgpath is NULL. This could
+lead to a panic in activate_path(). Such a panic is seen in -rt kernel.
 
-This patch just prints a warning message so that the user knows that
-the arguments are ignored.
+This problem has been there before the pg_init() was moved to a
+workqueue.
 
 Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
 ---
-Index: linux-2.6.27-rc3/drivers/md/dm-mpath.c
+
+Index: linux-2.6.28-rc3/drivers/md/dm-mpath.c
 ===================================================================
---- linux-2.6.27-rc3.orig/drivers/md/dm-mpath.c
-+++ linux-2.6.27-rc3/drivers/md/dm-mpath.c
-@@ -708,6 +708,10 @@ static int parse_hw_handler(struct arg_s
- 		m->hw_handler_name = NULL;
- 		return -EINVAL;
- 	}
-+
-+	if (hw_argc > 1)
-+		DMWARN("Ignoring user specified arguments for hardware handler \"%s\"",
-+				m->hw_handler_name);
- 	consume(as, hw_argc - 1);
+--- linux-2.6.28-rc3.orig/drivers/md/dm-mpath.c
++++ linux-2.6.28-rc3/drivers/md/dm-mpath.c
+@@ -441,13 +441,13 @@ static void process_queued_ios(struct wo
+ 		__choose_pgpath(m);
  
- 	return 0;
+ 	pgpath = m->current_pgpath;
+-	m->pgpath_to_activate = m->current_pgpath;
+ 
+ 	if ((pgpath && !m->queue_io) ||
+ 	    (!pgpath && !m->queue_if_no_path))
+ 		must_queue = 0;
+ 
+-	if (m->pg_init_required && !m->pg_init_in_progress) {
++	if (m->pg_init_required && !m->pg_init_in_progress && pgpath) {
++		m->pgpath_to_activate = pgpath;
+ 		m->pg_init_count++;
+ 		m->pg_init_required = 0;
+ 		m->pg_init_in_progress = 1;
