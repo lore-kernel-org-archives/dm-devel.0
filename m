@@ -1,66 +1,32 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH] Retry mode select in rdac device handler
-Date: Wed, 05 Nov 2008 20:06:37 -0800
-Message-ID: <1225944397.14830.1111.camel@chandra-ubuntu>
-Reply-To: sekharan@us.ibm.com
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Print a warning message when hardware handler
+	parameters are ignored
+Date: Thu, 6 Nov 2008 10:46:22 +0000
+Message-ID: <20081106104622.GZ14593@agk.fab.redhat.com>
+References: <1225943836.14830.1096.camel@chandra-ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
-Cc: dm-devel <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1225943836.14830.1096.camel@chandra-ubuntu>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: sekharan@us.ibm.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-When the mode select sent to the controller fails with the retryable
-error, it is better to retry the mode_select from the hardware handler
-itself, instead of propagating the failure to dm-multipath.
+On Wed, Nov 05, 2008 at 07:57:16PM -0800, Chandra Seetharaman wrote:
+> Currently dm ignores the parameters provided to hardware handlers
+> without providing any notifications to the user.
+ 
+Added to -mm & will push for .28
 
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
----
-Index: linux-2.6.28-rc3/drivers/scsi/device_handler/scsi_dh_rdac.c
-===================================================================
---- linux-2.6.28-rc3.orig/drivers/scsi/device_handler/scsi_dh_rdac.c
-+++ linux-2.6.28-rc3/drivers/scsi/device_handler/scsi_dh_rdac.c
-@@ -24,6 +24,7 @@
- #include <scsi/scsi_dh.h>
- 
- #define RDAC_NAME "rdac"
-+#define RDAC_RETRY_COUNT 5
- 
- /*
-  * LSI mode page stuff
-@@ -477,21 +478,27 @@ static int send_mode_select(struct scsi_
- {
- 	struct request *rq;
- 	struct request_queue *q = sdev->request_queue;
--	int err = SCSI_DH_RES_TEMP_UNAVAIL;
-+	int err, retry_cnt = RDAC_RETRY_COUNT;
- 
-+retry:
-+	err = SCSI_DH_RES_TEMP_UNAVAIL;
- 	rq = rdac_failover_get(sdev, h);
- 	if (!rq)
- 		goto done;
- 
--	sdev_printk(KERN_INFO, sdev, "queueing MODE_SELECT command.\n");
-+	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
-+		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
- 
- 	err = blk_execute_rq(q, NULL, rq, 1);
--	if (err != SCSI_DH_OK)
-+	blk_put_request(rq);
-+	if (err != SCSI_DH_OK) {
- 		err = mode_select_handle_sense(sdev, h->sense);
-+		if (err == SCSI_DH_RETRY && retry_cnt--)
-+			goto retry;
-+	}
- 	if (err == SCSI_DH_OK)
- 		h->state = RDAC_STATE_ACTIVE;
- 
--	blk_put_request(rq);
- done:
- 	return err;
- }
-
-
+Alasdair
