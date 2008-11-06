@@ -1,14 +1,13 @@
-From: Domenico Viggiani <dviggiani@tiscali.it>
-Subject: dm-multipath with Celerra iSCSI
-Date: Wed, 5 Nov 2008 12:23:08 +0100
-Message-ID: <8091EF5D0CFB498CABAFC1A9B92E9F3E@pitagora.it>
-References: <20081105005507.GH14593@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: [PATCH] Print a warning message when hardware handler
+	parameters are ignored
+Date: Wed, 05 Nov 2008 19:57:16 -0800
+Message-ID: <1225943836.14830.1096.camel@chandra-ubuntu>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081105005507.GH14593@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,36 +17,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: 'device-mapper development' <dm-devel@redhat.com>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
-I configured an iSCSI LUN on an EMC Celerra NAS. After discovered LUN by
-iSCSI and ran "multipath -v2", I get:
+Currently dm ignores the parameters provided to hardware handlers
+without providing any notifications to the user.
 
-# multipath -ls
-mpath-resize-test (36006048ca49317821e436e3a5ab974f6) dm-3 EMC,Celerra iSCSI
-[size=295G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][enabled]
- \_ 10:0:0:52 sda 8:0   [active][undef]
-\_ round-robin 0 [prio=0][enabled]
- \_ 11:0:0:52 sdb 8:16  [active][undef]
+This patch just prints a warning message so that the user knows that
+the arguments are ignored.
 
-# multipath -ll
-mpath-resize-test (36006048ca49317821e436e3a5ab974f6) dm-3 EMC,Celerra iSCSI
-[size=295G][features=0][hwhandler=0]
-\_ round-robin 0 [prio=0][enabled]
- \_ 10:0:0:52 sda 8:0   [active][ready]
-\_ round-robin 0 [prio=0][enabled]
- \_ 11:0:0:52 sdb 8:16  [active][ready]
-
-Why is there difference between two outputs?
-
-Then, examining "multipath -v3" output, I see "path checker = readsector0";
-is it right?
-
-In general, are multipath.conf defaults right for this Celerra filer?
-
-Thanks in advance
---
-Domenico Viggiani
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+---
+Index: linux-2.6.27-rc3/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.27-rc3.orig/drivers/md/dm-mpath.c
++++ linux-2.6.27-rc3/drivers/md/dm-mpath.c
+@@ -708,6 +708,10 @@ static int parse_hw_handler(struct arg_s
+ 		m->hw_handler_name = NULL;
+ 		return -EINVAL;
+ 	}
++
++	if (hw_argc > 1)
++		DMWARN("Ignoring user specified arguments for hardware handler \"%s\"",
++				m->hw_handler_name);
+ 	consume(as, hw_argc - 1);
+ 
+ 	return 0;
