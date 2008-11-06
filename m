@@ -1,14 +1,15 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH 0/9] dm snapshot: shared exception store
-Date: Thu, 6 Nov 2008 14:37:11 -0600
-Message-ID: <CAAEF849-8EAA-4006-A0C3-58F40A0904B4@redhat.com>
-References: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+From: Mike Anderson <andmike@linux.vnet.ibm.com>
+Subject: Re: multipath-tools Patch Submission - mpath_prop_class
+	callout
+Date: Thu, 6 Nov 2008 12:47:50 -0800
+Message-ID: <20081106204750.GA14092@linux.vnet.ibm.com>
+References: <9A7F9F83A843AD4EBDE53D0D868ECD4203471F24@NTST-OH-MAIL01.ntst.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v929.2)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1225109276-16491-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Content-Disposition: inline
+In-Reply-To: <9A7F9F83A843AD4EBDE53D0D868ECD4203471F24@NTST-OH-MAIL01.ntst.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,17 +20,39 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: cristophe.varoqui@free.fr
 List-Id: dm-devel.ids
 
-Wouldn't it be nice if we could generalize the creation of the  
-exception stores.  Rather than having 'dm_create_[shared/persistent/ 
-transient]', we could have 'dm_create_exception_store(<string>)'.   
-What happens when cluster snapshots comes around?  That will be  
-another exception store.
+Jeff McCune <JMcCune@ntst.com> wrote:
+> 
+> Hi,
+> 
+> Where might I read about the procedure for submitting a patch to
+> multipath-tools?
+> 
+> I've written a very small mpath_prio_class program, which I'm currently
+> using to assign fibre channel paths a priority of 40, and iSCSI paths a
+> priority of 10, and I'd like to submit this for inclusion in the
+> device-mapper-multipath package.  This program facilitates failover and
+> failback from fibre to iscsi paths.
+> 
+> >From http://sources.redhat.com/dm/  I've wandered to
+> http://christophe.varoqui.free.fr/ which states the git repository is
+> located at http://kernel.org/pub/scm/linux/storage/multipath-tools/ but
+> I receive the following error when I attempt to clone it:
+> 
+> [jmccune@homer dev]$ git clone
+> http://kernel.org/pub/scm/linux/storage/multipath-tools/
+> Initialized empty Git repository in
+> /asp/home/jmccune/dev/multipath-tools/.git/
+> Cannot get remote repository information.
+> Perhaps git-update-server-info needs to be run there?
 
-  brassow
+Can you try the git url?
 
-On Oct 27, 2008, at 7:07 AM, FUJITA Tomonori wrote:
+git clone git://git.kernel.org/pub/scm/linux/storage/multipath-tools/.git
 
-> This is the third version of the shared exception store (based on
-> Zumastor code). You can find the first and second submission:
+-andmike
+--
+Michael Anderson
+andmike@linux.vnet.ibm.com
