@@ -1,18 +1,11 @@
-From: "Jeff McCune" <JMcCune@ntst.com>
-Subject: RE: multipath-tools Patch Submission -
-	mpath_prop_classcallout
-Date: Thu, 6 Nov 2008 15:49:44 -0500
-Message-ID: <9A7F9F83A843AD4EBDE53D0D868ECD42034BA51F@NTST-OH-MAIL01.ntst.com>
-References: <9A7F9F83A843AD4EBDE53D0D868ECD4203471F24@NTST-OH-MAIL01.ntst.com>
-	<20081106204750.GA14092@linux.vnet.ibm.com>
+From: "Reng Zeng" <alan@fiucssa.org>
+Subject: Question about 'dmsetup remove' and dtr of target_type
+Date: Sun, 9 Nov 2008 00:27:24 -0500
+Message-ID: <60468f1e0811082127h3dac5b60h829d871fb38dd63a@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: multipart/mixed; boundary="===============1080997157=="
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <20081106204750.GA14092@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,47 +15,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: cristophe.varoqui@free.fr
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+--===============1080997157==
+Content-Type: multipart/alternative;
+	boundary="----=_Part_55339_23420779.1226208444450"
 
-> > I receive the following error when I attempt to clone it:
-> >
-> > [jmccune@homer dev]$ git clone
-> > http://kernel.org/pub/scm/linux/storage/multipath-tools/
-> > Initialized empty Git repository in
-> > /asp/home/jmccune/dev/multipath-tools/.git/
-> > Cannot get remote repository information.
-> > Perhaps git-update-server-info needs to be run there?
->=20
-> Can you try the git url?
->=20
-> git clone git://git.kernel.org/pub/scm/linux/storage/multipath-
-> tools/.git
+------=_Part_55339_23420779.1226208444450
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
-That works like a charm.  Thanks, I'll patch and publish the repository
-shortly.
+Hi,
+
+I suppose "dmsetup remove' will invoke dtr of target_type to remove the
+device.
+
+However, I use "dmsetup remove" hundreds times, as the debug info, but it
+never enter the dtr function I defined.
+
+Anybody have idea on this? Or how to dig into that to discover the reason?
+Thanks.
+
+To be of more details, I have cache_target as below.
+static struct target_type cache_target = {
+...
+        .dtr    = cache_dtr,
+...
+};
+I add debug info into cache_dtr, it show it never enter into cache_dtr when
+I "dmsetup remove".
+
+Thanks again,
+Alan
+
+------=_Part_55339_23420779.1226208444450
+Content-Type: text/html; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+Hi,<br><br>I suppose &quot;dmsetup remove&#39; will invoke dtr of target_type to remove the device.<br><br>However, I use &quot;dmsetup remove&quot; hundreds times, as the debug info, but it never enter the dtr function I defined.<br>
+<br>Anybody have idea on this? Or how to dig into that to discover the reason? Thanks.<br><br>To be of more details, I have cache_target as below.<br>static struct target_type cache_target = {<br>...<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; .dtr&nbsp;&nbsp;&nbsp; = cache_dtr,<br>
+...<br>};<br>I add debug info into cache_dtr, it show it never enter into cache_dtr when I &quot;dmsetup remove&quot;.<br><br>Thanks again,<br>Alan<br><br>
+
+------=_Part_55339_23420779.1226208444450--
 
 
-Cheers,
---
-Jeff McCune
-Senior System Administrator
-Netsmart Technologies
-1-800-434-2642 x7382
+--===============1080997157==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
 
 
-
-
-
-This message is intended only for the use of the individual or entity=20
-to which it is addressed, and may contain information that is=20
-privileged, confidential and exempt from disclosure under applicable=20
-law. If the reader of this message is not the intended recipient, or=20
-the employer or agent responsible for delivering the message to the=20
-intended recipient, you are hereby notified that any dissemination,=20
-distribution or copying of this communication is strictly prohibited.=20
-If you have received this communication in error, please notify the=20
-sender immediately by telephone and delete the material from your=20
-computer. Thank you for your cooperation.
+--===============1080997157==--
