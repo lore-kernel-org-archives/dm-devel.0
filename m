@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: RFC::  [PATCH 1 of 3] dm-exception-store API
-Date: Mon, 10 Nov 2008 16:43:15 -0600
-Message-ID: <1226356995.22387.19.camel@hydrogen.msp.redhat.com>
+Subject: RFC::  [PATCH 2 of 3] dm-exception-store API
+Date: Mon, 10 Nov 2008 16:43:45 -0600
+Message-ID: <1226357025.22387.20.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -21,312 +21,208 @@ List-Id: dm-devel.ids
 
  brassow
 
-Creation of dm-exception-store.h
+If the exception store API ever becomes as popular as the
+dm-dirty-log.h API, then we should make the name of the
+exception store structure a little more official.
 
-Pull structures that bridge the gap between snapshot and
-exception store out of dm-snap.h and put them in a new
-.h file - dm-exception-store.h.  This file will define the
-API for new exception stores.
+s/exception_store/dm_exception_store/
 
-My hope is to eventually get rid of dm-snap.h, since only one
-file should need to include it (dm-snap.c).
 
 Index: linux-2.6/drivers/md/dm-exception-store.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-exception-store.c
 +++ linux-2.6/drivers/md/dm-exception-store.c
-@@ -7,6 +7,7 @@
-  * This file is released under the GPL.
-  */
+@@ -462,19 +462,19 @@ static int read_exceptions(struct pstore
+ 	return 0;
+ }
  
-+#include "dm-exception-store.h"
- #include "dm-snap.h"
+-static struct pstore *get_info(struct exception_store *store)
++static struct pstore *get_info(struct dm_exception_store *store)
+ {
+ 	return (struct pstore *) store->context;
+ }
  
- #include <linux/mm.h>
+-static void persistent_fraction_full(struct exception_store *store,
++static void persistent_fraction_full(struct dm_exception_store *store,
+ 				     sector_t *numerator, sector_t *denominator)
+ {
+ 	*numerator = get_info(store)->next_free * store->snap->chunk_size;
+ 	*denominator = get_dev_size(store->snap->cow->bdev);
+ }
+ 
+-static void persistent_destroy(struct exception_store *store)
++static void persistent_destroy(struct dm_exception_store *store)
+ {
+ 	struct pstore *ps = get_info(store);
+ 
+@@ -485,7 +485,7 @@ static void persistent_destroy(struct ex
+ 	kfree(ps);
+ }
+ 
+-static int persistent_read_metadata(struct exception_store *store)
++static int persistent_read_metadata(struct dm_exception_store *store)
+ {
+ 	int r, uninitialized_var(new_snapshot);
+ 	struct pstore *ps = get_info(store);
+@@ -551,7 +551,7 @@ static int persistent_read_metadata(stru
+ 	return 0;
+ }
+ 
+-static int persistent_prepare(struct exception_store *store,
++static int persistent_prepare(struct dm_exception_store *store,
+ 			      struct dm_snap_exception *e)
+ {
+ 	struct pstore *ps = get_info(store);
+@@ -578,7 +578,7 @@ static int persistent_prepare(struct exc
+ 	return 0;
+ }
+ 
+-static void persistent_commit(struct exception_store *store,
++static void persistent_commit(struct dm_exception_store *store,
+ 			      struct dm_snap_exception *e,
+ 			      void (*callback) (void *, int success),
+ 			      void *callback_context)
+@@ -640,7 +640,7 @@ static void persistent_commit(struct exc
+ 	ps->callback_count = 0;
+ }
+ 
+-static void persistent_drop(struct exception_store *store)
++static void persistent_drop(struct dm_exception_store *store)
+ {
+ 	struct pstore *ps = get_info(store);
+ 
+@@ -649,7 +649,7 @@ static void persistent_drop(struct excep
+ 		DMWARN("write header failed");
+ }
+ 
+-int dm_create_persistent(struct exception_store *store)
++int dm_create_persistent(struct dm_exception_store *store)
+ {
+ 	struct pstore *ps;
+ 
+@@ -694,17 +694,17 @@ struct transient_c {
+ 	sector_t next_free;
+ };
+ 
+-static void transient_destroy(struct exception_store *store)
++static void transient_destroy(struct dm_exception_store *store)
+ {
+ 	kfree(store->context);
+ }
+ 
+-static int transient_read_metadata(struct exception_store *store)
++static int transient_read_metadata(struct dm_exception_store *store)
+ {
+ 	return 0;
+ }
+ 
+-static int transient_prepare(struct exception_store *store,
++static int transient_prepare(struct dm_exception_store *store,
+ 			     struct dm_snap_exception *e)
+ {
+ 	struct transient_c *tc = (struct transient_c *) store->context;
+@@ -719,7 +719,7 @@ static int transient_prepare(struct exce
+ 	return 0;
+ }
+ 
+-static void transient_commit(struct exception_store *store,
++static void transient_commit(struct dm_exception_store *store,
+ 			     struct dm_snap_exception *e,
+ 			     void (*callback) (void *, int success),
+ 			     void *callback_context)
+@@ -728,14 +728,14 @@ static void transient_commit(struct exce
+ 	callback(callback_context, 1);
+ }
+ 
+-static void transient_fraction_full(struct exception_store *store,
++static void transient_fraction_full(struct dm_exception_store *store,
+ 				    sector_t *numerator, sector_t *denominator)
+ {
+ 	*numerator = ((struct transient_c *) store->context)->next_free;
+ 	*denominator = get_dev_size(store->snap->cow->bdev);
+ }
+ 
+-int dm_create_transient(struct exception_store *store)
++int dm_create_transient(struct dm_exception_store *store)
+ {
+ 	struct transient_c *tc;
+ 
 Index: linux-2.6/drivers/md/dm-exception-store.h
 ===================================================================
---- /dev/null
+--- linux-2.6.orig/drivers/md/dm-exception-store.h
 +++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -0,0 +1,134 @@
-+/*
-+ * Copyright (C) 2008 Red Hat, Inc.  All rights reserved.
-+ *
-+ * Device-mapper exception store.
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef _LINUX_DM_EXCEPTION_STORE
-+#define _LINUX_DM_EXCEPTION_STORE
-+#ifdef __KERNEL__
-+
-+#include <linux/blkdev.h>
-+
-+/*
-+ * The snapshot code deals with largish chunks of the disk at a
-+ * time. Typically 32k - 512k.
-+ */
-+typedef sector_t chunk_t;
-+
-+/*
-+ * An exception is used where an old chunk of data has been
-+ * replaced by a new one.
-+ * If chunk_t is 64 bits in size, the top 8 bits of new_chunk hold the number
-+ * of chunks that follow contiguously.  Remaining bits hold the number of the
-+ * chunk within the device.
-+ */
-+struct dm_snap_exception {
-+	struct list_head hash_list;
-+
-+	chunk_t old_chunk;
-+	chunk_t new_chunk;
-+};
-+
-+/*
-+ * Funtions to manipulate consecutive chunks
-+ */
-+#  if defined(CONFIG_LBD) || (BITS_PER_LONG == 64)
-+#    define DM_CHUNK_CONSECUTIVE_BITS 8
-+#    define DM_CHUNK_NUMBER_BITS 56
-+
-+static inline chunk_t dm_chunk_number(chunk_t chunk)
-+{
-+	return chunk & (chunk_t)((1ULL << DM_CHUNK_NUMBER_BITS) - 1ULL);
-+}
-+
-+static inline unsigned dm_consecutive_chunk_count(struct dm_snap_exception *e)
-+{
-+	return e->new_chunk >> DM_CHUNK_NUMBER_BITS;
-+}
-+
-+static inline void dm_consecutive_chunk_count_inc(struct dm_snap_exception *e)
-+{
-+	e->new_chunk += (1ULL << DM_CHUNK_NUMBER_BITS);
-+
-+	BUG_ON(!dm_consecutive_chunk_count(e));
-+}
-+
-+#  else
-+#    define DM_CHUNK_CONSECUTIVE_BITS 0
-+
-+static inline chunk_t dm_chunk_number(chunk_t chunk)
-+{
-+	return chunk;
-+}
-+
-+static inline unsigned dm_consecutive_chunk_count(struct dm_snap_exception *e)
-+{
-+	return 0;
-+}
-+
-+static inline void dm_consecutive_chunk_count_inc(struct dm_snap_exception *e)
-+{
-+}
-+
-+#  endif
-+
-+/*
-+ * Abstraction to handle the meta/layout of exception stores (the
-+ * COW device).
-+ */
-+struct exception_store {
-+
-+	/*
-+	 * Destroys this object when you've finished with it.
-+	 */
-+	void (*destroy) (struct exception_store *store);
-+
-+	/*
-+	 * The target shouldn't read the COW device until this is
-+	 * called.
-+	 */
-+	int (*read_metadata) (struct exception_store *store);
-+
-+	/*
-+	 * Find somewhere to store the next exception.
-+	 */
-+	int (*prepare_exception) (struct exception_store *store,
-+				  struct dm_snap_exception *e);
-+
-+	/*
-+	 * Update the metadata with this exception.
-+	 */
-+	void (*commit_exception) (struct exception_store *store,
-+				  struct dm_snap_exception *e,
-+				  void (*callback) (void *, int success),
-+				  void *callback_context);
-+
-+	/*
-+	 * The snapshot is invalid, note this in the metadata.
-+	 */
-+	void (*drop_snapshot) (struct exception_store *store);
-+
-+	/*
-+	 * Return how full the snapshot is.
-+	 */
-+	void (*fraction_full) (struct exception_store *store,
-+			       sector_t *numerator,
-+			       sector_t *denominator);
-+
-+	struct dm_snapshot *snap;
-+	void *context;
-+};
-+
-+/*
-+ * Constructor and destructor for the exception stores
-+ */
-+int dm_create_persistent(struct exception_store *store);
-+
-+int dm_create_transient(struct exception_store *store);
-+
-+#endif /* __KERNEL__ */
-+
-+#endif /* _LINUX_DM_EXCEPTION_STORE */
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -20,6 +20,7 @@
- #include <linux/log2.h>
- #include <linux/dm-kcopyd.h>
+@@ -79,29 +79,29 @@ static inline void dm_consecutive_chunk_
+  * Abstraction to handle the meta/layout of exception stores (the
+  * COW device).
+  */
+-struct exception_store {
++struct dm_exception_store {
  
-+#include "dm-exception-store.h"
- #include "dm-snap.h"
- #include "dm-bio-list.h"
+ 	/*
+ 	 * Destroys this object when you've finished with it.
+ 	 */
+-	void (*destroy) (struct exception_store *store);
++	void (*destroy) (struct dm_exception_store *store);
+ 
+ 	/*
+ 	 * The target shouldn't read the COW device until this is
+ 	 * called.
+ 	 */
+-	int (*read_metadata) (struct exception_store *store);
++	int (*read_metadata) (struct dm_exception_store *store);
+ 
+ 	/*
+ 	 * Find somewhere to store the next exception.
+ 	 */
+-	int (*prepare_exception) (struct exception_store *store,
++	int (*prepare_exception) (struct dm_exception_store *store,
+ 				  struct dm_snap_exception *e);
+ 
+ 	/*
+ 	 * Update the metadata with this exception.
+ 	 */
+-	void (*commit_exception) (struct exception_store *store,
++	void (*commit_exception) (struct dm_exception_store *store,
+ 				  struct dm_snap_exception *e,
+ 				  void (*callback) (void *, int success),
+ 				  void *callback_context);
+@@ -109,12 +109,12 @@ struct exception_store {
+ 	/*
+ 	 * The snapshot is invalid, note this in the metadata.
+ 	 */
+-	void (*drop_snapshot) (struct exception_store *store);
++	void (*drop_snapshot) (struct dm_exception_store *store);
+ 
+ 	/*
+ 	 * Return how full the snapshot is.
+ 	 */
+-	void (*fraction_full) (struct exception_store *store,
++	void (*fraction_full) (struct dm_exception_store *store,
+ 			       sector_t *numerator,
+ 			       sector_t *denominator);
+ 
+@@ -125,9 +125,9 @@ struct exception_store {
+ /*
+  * Constructor and destructor for the exception stores
+  */
+-int dm_create_persistent(struct exception_store *store);
++int dm_create_persistent(struct dm_exception_store *store);
+ 
+-int dm_create_transient(struct exception_store *store);
++int dm_create_transient(struct dm_exception_store *store);
+ 
+ #endif /* __KERNEL__ */
  
 Index: linux-2.6/drivers/md/dm-snap.h
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.h
 +++ linux-2.6/drivers/md/dm-snap.h
-@@ -20,116 +20,6 @@ struct exception_table {
- 	struct list_head *table;
- };
+@@ -62,7 +62,7 @@ struct dm_snapshot {
+ 	spinlock_t pe_lock;
  
--/*
-- * The snapshot code deals with largish chunks of the disk at a
-- * time. Typically 32k - 512k.
-- */
--typedef sector_t chunk_t;
--
--/*
-- * An exception is used where an old chunk of data has been
-- * replaced by a new one.
-- * If chunk_t is 64 bits in size, the top 8 bits of new_chunk hold the number
-- * of chunks that follow contiguously.  Remaining bits hold the number of the
-- * chunk within the device.
-- */
--struct dm_snap_exception {
--	struct list_head hash_list;
--
--	chunk_t old_chunk;
--	chunk_t new_chunk;
--};
--
--/*
-- * Funtions to manipulate consecutive chunks
-- */
--#  if defined(CONFIG_LBD) || (BITS_PER_LONG == 64)
--#    define DM_CHUNK_CONSECUTIVE_BITS 8
--#    define DM_CHUNK_NUMBER_BITS 56
--
--static inline chunk_t dm_chunk_number(chunk_t chunk)
--{
--	return chunk & (chunk_t)((1ULL << DM_CHUNK_NUMBER_BITS) - 1ULL);
--}
--
--static inline unsigned dm_consecutive_chunk_count(struct dm_snap_exception *e)
--{
--	return e->new_chunk >> DM_CHUNK_NUMBER_BITS;
--}
--
--static inline void dm_consecutive_chunk_count_inc(struct dm_snap_exception *e)
--{
--	e->new_chunk += (1ULL << DM_CHUNK_NUMBER_BITS);
--
--	BUG_ON(!dm_consecutive_chunk_count(e));
--}
--
--#  else
--#    define DM_CHUNK_CONSECUTIVE_BITS 0
--
--static inline chunk_t dm_chunk_number(chunk_t chunk)
--{
--	return chunk;
--}
--
--static inline unsigned dm_consecutive_chunk_count(struct dm_snap_exception *e)
--{
--	return 0;
--}
--
--static inline void dm_consecutive_chunk_count_inc(struct dm_snap_exception *e)
--{
--}
--
--#  endif
--
--/*
-- * Abstraction to handle the meta/layout of exception stores (the
-- * COW device).
-- */
--struct exception_store {
--
--	/*
--	 * Destroys this object when you've finished with it.
--	 */
--	void (*destroy) (struct exception_store *store);
--
--	/*
--	 * The target shouldn't read the COW device until this is
--	 * called.
--	 */
--	int (*read_metadata) (struct exception_store *store);
--
--	/*
--	 * Find somewhere to store the next exception.
--	 */
--	int (*prepare_exception) (struct exception_store *store,
--				  struct dm_snap_exception *e);
--
--	/*
--	 * Update the metadata with this exception.
--	 */
--	void (*commit_exception) (struct exception_store *store,
--				  struct dm_snap_exception *e,
--				  void (*callback) (void *, int success),
--				  void *callback_context);
--
--	/*
--	 * The snapshot is invalid, note this in the metadata.
--	 */
--	void (*drop_snapshot) (struct exception_store *store);
--
--	/*
--	 * Return how full the snapshot is.
--	 */
--	void (*fraction_full) (struct exception_store *store,
--			       sector_t *numerator,
--			       sector_t *denominator);
--
--	struct dm_snapshot *snap;
--	void *context;
--};
--
- #define DM_TRACKED_CHUNK_HASH_SIZE	16
- #define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
- 					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
-@@ -193,14 +83,6 @@ struct dm_snapshot {
- int dm_add_exception(struct dm_snapshot *s, chunk_t old, chunk_t new);
+ 	/* The on disk metadata handler */
+-	struct exception_store store;
++	struct dm_exception_store store;
  
- /*
-- * Constructor and destructor for the default persistent
-- * store.
-- */
--int dm_create_persistent(struct exception_store *store);
--
--int dm_create_transient(struct exception_store *store);
--
--/*
-  * Return the number of sectors in the device.
-  */
- static inline sector_t get_dev_size(struct block_device *bdev)
+ 	struct dm_kcopyd_client *kcopyd_client;
+ 
