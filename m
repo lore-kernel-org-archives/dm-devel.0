@@ -1,10 +1,10 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Error target causes entire device to error
-Date: Mon, 10 Nov 2008 17:16:28 -0500
-Message-ID: <4918B2BC.8020606@cfl.rr.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: RFC::  [PATCH 0 of 3] dm-exception-store API
+Date: Mon, 10 Nov 2008 16:43:05 -0600
+Message-ID: <1226356985.22387.18.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,20 +16,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-$ sudo dmsetup create foo
-0 1 zero
-1 1 error
-$ sudo dd if=/dev/mapper/foo bs=512 count=1
-dd: reading `/dev/mapper/foo': Input/output error
-0+0 records in
-0+0 records out
-0 bytes (0 B) copied, 0.000715356 seconds, 0.0 kB/s
+Creating an exception store API should make it easier to create new
+exception stores.  Once completed, a simple exception store module
+should be all that is needed.
 
-Why can't you read the first sector mapped to the zero target without 
-getting an error?  It doesn't seem to matter where the error target is 
-in the table, or how big the virtual device is; any attempt to read 
-anywhere returns an error if there are any sectors mapped to the error 
-target.
+These patches are preliminary.  There is still work to do, but I'm
+offering this time as an opportunity to complain about the general
+direction.  Basically, things compile but that is all I've tested.
+
+If it's ok with everyone, I'd also rather have 'dm_exception_store*'
+structure names changed to 'dm_exstore*' for brevity.  However, I used
+the longer names because I thought it would be the more likely choice.
+
+Fujita Tomonori, the API change should prove exceptionally useful to
+you... and I don't think you will need the 'message' interface to create
+your exception stores anymore.  You should be able to use more standard
+methods.
+
+ brassow
