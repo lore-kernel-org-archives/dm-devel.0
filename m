@@ -1,14 +1,14 @@
-From: "Sebastian Reitenbach" <sebastia@l00-bugdead-prods.de>
-Subject: Re: problem with multipathd,
-	not all paths added to adisk on boot
-Date: Mon, 10 Nov 2008 12:13:15 -0000
-Message-ID: <20081110121315.710CC13327@asdf.l00-bugdead-prods.de>
-Reply-To: Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>,
-	device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Queue upcall locking (was: [RFC][PATCH] fix
+	dm_any_congested() to properly sync up with suspend code path)
+Date: Mon, 10 Nov 2008 08:11:51 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0811100746180.24696@hs20-bc2-1.build.redhat.com>
+References: <1225944008.14830.1101.camel@chandra-ubuntu>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1225944008.14830.1101.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,150 +18,200 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: andmike@linux.vnet.ibm.com, dm-devel@redhat.com
+To: Chandra Seetharaman <sekharan@us.ibm.com>
+Cc: axboe@kernel.dk, dm-devel <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Hi
 
-Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>,device-mapper 
-development <dm-devel@redhat.com> wrote: 
-> Hi,
+The bug is correctly analyzed.
+
+Regarding the patch --- you need to wake up md->wait if dec_pending drops 
+to zero, so that dm_suspend is not waiting forever.
+
+Otherwise the patch is correct, but contains some unneeded parts: if 
+md->pending is used to block removal, we no longer need to hold the 
+reference on the table at all. If the code is already called under a 
+spinlock (from upstream kernel), we could execute everything under 
+md->map_lock spinlock and drop this reference counting at all. But the 
+code can take indefinite amount of time, so it would be best to not call 
+it under a spinlock in the first place.
+
+For upstream Linux developers: you are holding a spinlock and calling 
+bdi*_congested functions that can take indefinite amount of time (there 
+are even users reporting having 50 disks in one logical volume or so). I 
+think it would be good to move these calls out of spinlocks.
+
+What are the general locking rules for these block queue upcalls 
+(congested_fn, unplug_fn, merge_bvec_fn & others)? It looks like there may 
+be more bugs like this in another upcalls. Can you please somehow specify 
+what can the upcall do and what can't?
+
+Mikulas
+
+On Wed, 5 Nov 2008, Chandra Seetharaman wrote:
+
+> dm_any_congested() just checks for the DMF_BLOCK_IO and has no
+> code to make sure that suspend waits for dm_any_congested() to
+> complete.
 > 
-> Mike Anderson <andmike@linux.vnet.ibm.com> wrote: 
-> > Sebastian Reitenbach <sebastia@l00-bugdead-prods.de> wrote:
-> > > /dev/sdb in group vm-store, on 1:0:0:0 is not listed, however, lsscsi
-> > > has the disk in the list:
-> > > [1:0:0:0]    disk    IBM      1814      FAStT  0916  /dev/sdb
-> > > 
-> > > for the disk that is not added to the group, I see sth like this 
-> > > in /var/log/messages:
-> > > Nov  6 12:32:36 srv24 kernel: end_request: I/O error, dev sdb, sector 
-0
-> > > Nov  6 12:32:39 srv24 kernel: end_request: I/O error, dev sdb, sector 
-0
-> > > Nov  6 12:32:39 srv24 kernel: end_request: I/O error, dev sdb, sector 
-8
-> > > Nov  6 12:32:42 srv24 kernel: end_request: I/O error, dev sdb, sector 
-0
-> > > Nov  6 12:32:42 srv24 multipathd: sdb: add path (uevent)
-> > > Nov  6 12:32:42 srv24 multipathd: sdb: spurious uevent, path already 
-in 
-> > > pathvec
-> > > Nov  6 12:32:42 srv24 multipathd: sdb: failed to get path uid
-> > > Nov  6 12:32:45 srv24 kernel: end_request: I/O error, dev sdb, sector 
-0
-> > > 
-> > 
-> > What does running "/sbin/scsi_id -g -u -s /block/sdb" return when you 
-are
-> > in this failing mode?
-> /sbin/scsi_id -g -u -s /block/sdb
-> 3600a0b800048b3fe00000431490e90ce
+> This leads to a case where the table_destroy() and free_multipath()
+> and some other sleeping functions are called (thru dm_table_put())
+> from dm_any_congested.
+> 
+> This leads to 2 problems:
+> 1. Sleeping functions called from congested code, whose caller
+>    holds a spin lock.
+> 2. An ABBA deadlock between pdflush and multipathd. The two locks
+>    in contention are inode lock and kernel lock.
+>    Here is the crash analysis:
+> PID: 16879  TASK: ffff81013a06a140  CPU: 3   COMMAND: "pdflush"
+> Owns inode_lock and waiting for kernel_sem
+> 
+> PID: 8299   TASK: ffff81024f03e100  CPU: 2   COMMAND: "multipathd"
+> Owns kernel_sem and waiting for inode_lock.
 > 
 > 
-> > 
-> > If scsi_id fails what does "sg_inq -v /dev/sdb" and
-> > "cat /sys/block/sdb/device/state" return?
-> It doesn't fail, but anyways:
-> sg_inq -v /dev/sdb
->     inquiry cdb: 12 00 00 00 24 00
-> standard INQUIRY:
->     inquiry cdb: 12 00 00 00 4a 00
->   PQual=0  Device_type=0  RMB=0  version=0x05  [SPC-3]
->   [AERC=0]  [TrmTsk=0]  NormACA=1  HiSUP=1  Resp_data_format=2
->   SCCS=0  ACC=0  TGPS=0  3PC=0  Protect=0  BQue=0
->   EncServ=1  MultiP=0  [MChngr=0]  [ACKREQQ=0]  Addr16=0
->   [RelAdr=0]  WBus16=1  Sync=1  Linked=0  [TranDis=0]  CmdQue=1
->   Clocking=0x0  QAS=0  IUS=0
->     length=74 (0x4a)   Peripheral device type: disk
->  Vendor identification: IBM
->  Product identification: 1814      FAStT
->  Product revision level: 0916
->     inquiry cdb: 12 01 00 00 fc 00
->     inquiry: requested 252 bytes but  got 21 bytes
->     inquiry cdb: 12 01 80 00 fc 00
->     inquiry: requested 252 bytes but  got 20 bytes
->  Unit serial number: SG83955342
+> PID: 8299   TASK: ffff81024f03e100  CPU: 2   COMMAND: "multipathd"^M
+>  #0 [ffff81024ad338c8] schedule at ffffffff8128534c^M
+>  #1 [ffff81024ad33980] rt_spin_lock_slowlock at ffffffff81286d15^M << Waiting
+> for inode_lock
+>  #2 [ffff81024ad33a40] __rt_spin_lock at ffffffff812873b0^M
+>  #3 [ffff81024ad33a50] rt_spin_lock at ffffffff812873bb^M
+>  #4 [ffff81024ad33a60] ifind_fast at ffffffff810c32a1^M
+>  #5 [ffff81024ad33a90] iget_locked at ffffffff810c3be8^M
+>  #6 [ffff81024ad33ad0] proc_get_inode at ffffffff810ebaff^M
+>  #7 [ffff81024ad33b10] proc_lookup at ffffffff810f082a^M
+>  #8 [ffff81024ad33b40] proc_root_lookup at ffffffff810ec312^M
+>  #9 [ffff81024ad33b70] do_lookup at ffffffff810b78f7^M
+> #10 [ffff81024ad33bc0] __link_path_walk at ffffffff810b9a93^M
+> #11 [ffff81024ad33c60] link_path_walk at ffffffff810b9fc1^M
+> #12 [ffff81024ad33d30] path_walk at ffffffff810ba073^M
+> #13 [ffff81024ad33d40] do_path_lookup at ffffffff810ba37a^M
+> #14 [ffff81024ad33d90] __path_lookup_intent_open at ffffffff810baeb0^M
+> #15 [ffff81024ad33de0] path_lookup_open at ffffffff810baf60^M
+> #16 [ffff81024ad33df0] open_namei at ffffffff810bb071^M
+> #17 [ffff81024ad33e80] do_filp_open at ffffffff810ae610^M
+> #18 [ffff81024ad33f30] do_sys_open at ffffffff810ae67f^M
+> #19 [ffff81024ad33f70] sys_open at ffffffff810ae729^M
 > 
-> cat /sys/block/sdb/device/state
-> running
 > 
-I added some more verbosity when starting up multipathd. Then before the 
-error message regarding the path is already in the pathvec, I see the 
-following:
-...
-Nov 10 13:42:08 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:1:2): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:09 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:0:0): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:09 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:1:2): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:09 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:0:0): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:09 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:1:2): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:10 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:0:0): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:10 srv24 kernel: end_request: I/O error, dev sdb, sector 0
-Nov 10 13:42:10 srv24 kernel: printk: 5 messages suppressed.
-Nov 10 13:42:10 srv24 kernel: Buffer I/O error on device sdb, logical block 
-0
-Nov 10 13:42:10 srv24 multipathd: uevent 'add' from '/block/sdb'
-Nov 10 13:42:10 srv24 multipathd: UDEV_LOG=3
-Nov 10 13:42:10 srv24 multipathd: ACTION=add
-Nov 10 13:42:10 srv24 multipathd: DEVPATH=/block/sdb
-Nov 10 13:42:10 srv24 multipathd: SUBSYSTEM=block
-Nov 10 13:42:10 srv24 multipathd: SEQNUM=1278
-Nov 10 13:42:10 srv24 multipathd: MINOR=16
-Nov 10 13:42:10 srv24 multipathd: MAJOR=8
-Nov 10 13:42:10 srv24 multipathd: 
-PHYSDEVPATH=/devices/pci0000:00/0000:00:02.0/0000:10:00.0/0000:11:00.0/0000:13:00.0/host1/rport-1:0-0/target1:0:0/1:0:0:0
-
-
-Nov 10 13:42:10 srv24 multipathd: PHYSDEVBUS=scsi
-Nov 10 13:42:10 srv24 multipathd: PHYSDEVDRIVER=sd
-Nov 10 13:42:10 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:1:2): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:10 srv24 multipathd: UDEVD_EVENT=1
-Nov 10 13:42:10 srv24 multipathd: ID_VENDOR=IBM
-Nov 10 13:42:10 srv24 multipathd: ID_MODEL=1814_FAStT
-Nov 10 13:42:10 srv24 multipathd: ID_REVISION=0916
-Nov 10 13:42:10 srv24 multipathd: 
-ID_SERIAL=3600a0b800048b3fe00000431490e90ce
-Nov 10 13:42:10 srv24 multipathd: ID_TYPE=disk
-Nov 10 13:42:10 srv24 multipathd: ID_BUS=scsi
-Nov 10 13:42:10 srv24 multipathd: 
-ID_PATH=pci-0000:13:00.0-fc-0x200400a0b848b3ff:0x0000000000000000
-Nov 10 13:42:10 srv24 multipathd: DEVNAME=/dev/sdb
-Nov 10 13:42:10 srv24 multipathd: 
-DEVLINKS=/dev/disk/by-id/scsi-3600a0b800048b3fe00000431490e90ce
-/dev/disk/by-path/pci-0000:13:00.0-fc-0x200400a0b848b3ff:0x0000
-Nov 10 13:42:10 srv24 multipathd: sdb: add path (uevent)
-Nov 10 13:42:10 srv24 multipathd: sdb: spurious uevent, path already in 
-pathvec
-Nov 10 13:42:10 srv24 multipathd: sdb: failed to get path uid
-Nov 10 13:42:10 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:0:0): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:10 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:0:0): Mid-layer 
-underflow detected (3000 of 3000 bytes)...returning error status.
-Nov 10 13:42:10 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:1:2): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-Nov 10 13:42:11 srv24 kernel: qla2xxx 0000:13:00.0: scsi(1:0:0:0): Mid-layer 
-underflow detected (1000 of 1000 bytes)...returning error status.
-...
-
-I also recognized, when I just restart multipathd after above error, then 
-sdb is immediately added to the path.
-
-I also tried combinations of other qla2xxx parameters to raise some timeout 
-values..., e.g.:
-options qla2xxx qlport_down_retry=5 ql2xlogintimeout=30 
-ql2xloginretrycount=5 ql2xplogiabsentdevice=1 ql2xfdmienable=1 
-ql2xmaxqdepth=64 ql2xextended_error_logging=1 ql2xqfullrampup=180
-but that did not produced any observable difference.
-
-so still no real solution, any idea what could block multipathd to add sdb 
-to the path on first startup?
-
-kind regards
-Sebastian
+> PID: 16879  TASK: ffff81013a06a140  CPU: 3   COMMAND: "pdflush"^M
+>  #0 [ffff810023063aa0] schedule at ffffffff8128534c^M
+>  #1 [ffff810023063b58] rt_mutex_slowlock at ffffffff81286ac5^M  << Waiting for
+> Kernel Lock
+>  #2 [ffff810023063c28] rt_mutex_lock at ffffffff81285fb4^M
+>  #3 [ffff810023063c38] rt_down at ffffffff8105fec7^M
+>  #4 [ffff810023063c58] lock_kernel at ffffffff81287b8c^M
+>  #5 [ffff810023063c78] __blkdev_put at ffffffff810d5d31^M
+>  #6 [ffff810023063cb8] blkdev_put at ffffffff810d5e68^M
+>  #7 [ffff810023063cc8] close_dev at ffffffff8819e547^M
+>  #8 [ffff810023063ce8] dm_put_device at ffffffff8819e579^M
+>  #9 [ffff810023063d08] free_priority_group at ffffffff881c0e86^M
+> #10 [ffff810023063d58] free_multipath at ffffffff881c0f11^M
+> #11 [ffff810023063d78] multipath_dtr at ffffffff881c0f73^M
+> #12 [ffff810023063d98] dm_table_put at ffffffff8819e347^M
+> #13 [ffff810023063dc8] dm_any_congested at ffffffff8819d074^M
+> #14 [ffff810023063df8] sync_sb_inodes at ffffffff810cd451^M
+> #15 [ffff810023063e38] writeback_inodes at ffffffff810cd7b5^M
+> #16 [ffff810023063e68] background_writeout at ffffffff8108be38^M
+> #17 [ffff810023063ed8] pdflush at ffffffff8108c79a^M
+> #18 [ffff810023063f28] kthread at ffffffff81051477^M
+> #19 [ffff810023063f48] kernel_thread at ffffffff8100d048^M
+> 
+> crash> kernel_sem
+> kernel_sem = $5 = {
+>   count = {
+>     counter = 0
+>   }, 
+>   lock = {
+>     wait_lock = {
+>       raw_lock = {
+>         slock = 34952
+>       }, 
+>       break_lock = 0
+>     }, 
+>     wait_list = {
+>       prio_list = {
+>         next = 0xffff810023063b88, 
+>         prev = 0xffff81014941fdc0
+>       }, 
+>       node_list = {
+>         next = 0xffff810023063b98, 
+>         prev = 0xffff81014d04ddd0
+>       }
+>     }, 
+>     owner = 0xffff81024f03e102 << multipathd owns it. (task 0xffff81024f03e100) 
+>                                                    << last two bits are flags..
+> so replace it with 0.
+>   }
+> }
+> crash> inode_lock
+> inode_lock = $6 = {
+>   lock = {
+>     wait_lock = {
+>       raw_lock = {
+>         slock = 3341
+>       }, 
+>       break_lock = 0
+>     }, 
+>     wait_list = {
+>       prio_list = {
+>         next = 0xffff81024ad339a0, 
+>         prev = 0xffff8100784fdd78
+>       }, 
+>       node_list = {
+>         next = 0xffff81024ad339b0, 
+>         prev = 0xffff81024afb3a70
+>       }
+>     }, 
+>     owner = 0xffff81013a06a142 << pdflush owns it. (task 0xffff81013a06a140)
+>   }, 
+>   break_lock = 0
+> }
+> crash> 
+> ----------------
+> 
+> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+> ----
+> 
+> Index: linux-2.6.28-rc3/drivers/md/dm.c
+> ===================================================================
+> --- linux-2.6.28-rc3.orig/drivers/md/dm.c
+> +++ linux-2.6.28-rc3/drivers/md/dm.c
+> @@ -937,16 +937,21 @@ static void dm_unplug_all(struct request
+>  
+>  static int dm_any_congested(void *congested_data, int bdi_bits)
+>  {
+> -	int r;
+> +	int r = bdi_bits;
+>  	struct mapped_device *md = (struct mapped_device *) congested_data;
+> -	struct dm_table *map = dm_get_table(md);
+> +	struct dm_table *map;
+>  
+> -	if (!map || test_bit(DMF_BLOCK_IO, &md->flags))
+> -		r = bdi_bits;
+> -	else
+> -		r = dm_table_any_congested(map, bdi_bits);
+> +	atomic_inc(&md->pending);
+> +	if (test_bit(DMF_BLOCK_IO, &md->flags))
+> +		goto done;
+>  
+> -	dm_table_put(map);
+> +	map = dm_get_table(md);
+> +	if (map) {
+> +		r = dm_table_any_congested(map, bdi_bits);
+> +		dm_table_put(map);
+> +	}
+> +done:
+> +	atomic_dec(&md->pending);
+>  	return r;
+>  }
+>  
+> 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> 
