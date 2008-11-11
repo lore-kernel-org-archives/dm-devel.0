@@ -1,41 +1,28 @@
 From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: Queue upcall locking (was: [RFC][PATCH] fix
+Subject: Re: Queue upcall locking (was: [dm-devel] [RFC][PATCH] fix
 	dm_any_congested() to properly sync up with suspend code path)
-Date: Tue, 11 Nov 2008 13:18:54 -0500
-Message-ID: <20081111181854.GA25049@infradead.org>
-References: <1225944008.14830.1101.camel@chandra-ubuntu>
-	<Pine.LNX.4.64.0811100746180.24696@hs20-bc2-1.build.redhat.com>
-	<20081110135401.GA11606@infradead.org>
-	<Pine.LNX.4.64.0811100914500.14825@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Date: Tue, 11 Nov 2008 13:21:02 -0500
+Message-ID: <20081111182102.GB25049@infradead.org>
+References: <1225944008.14830.1101.camel@chandra-ubuntu> <Pine.LNX.4.64.0811100746180.24696@hs20-bc2-1.build.redhat.com> <20081110135401.GA11606@infradead.org> <20081110142715.GD16649@agk.fab.redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754779AbYKKSVU@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0811100914500.14825@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: axboe@kernel.dk, linux-kernel@vger.kernel.org, Christoph Hellwig <hch@infradead.org>, dm-devel <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+In-Reply-To: <20081110142715.GD16649@agk.fab.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Christoph Hellwig <hch@infradead.org>, Mikulas Patocka <mpatocka@redhat.com>, axboe@kernel.dk, dm-devel <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Mon, Nov 10, 2008 at 09:19:21AM -0500, Mikulas Patocka wrote:
-> For device mapper, congested_fn asks every device in the tree and make OR 
-> of their bits --- so if the user has 50 devices, it asks them all.
+On Mon, Nov 10, 2008 at 02:27:15PM +0000, Alasdair G Kergon wrote:
+> Indeed - the blocking was a bug for which there's a patch, but that doesn't
+> deal with how the function should be operating in the first place.
 > 
-> For md-linear, md-raid0, md-raid1, md-raid10 and md-multipath it does the 
-> same --- asking every device.
+> - If one device is found to be congested, why bother checking the remaining
+> devices?
 > 
-> If you have a better idea how to implement congested_fn, say it.
+> - If the device is suspended, the response should be that it is congested, I'd
+> have thought.
 
-Well, even asking 50 devices shouldn't take that long normally.  Do you
-take some sleeping lock that might block forever?  In that case I would
-just return congested for that device as it would delay pdflush
-otherwise.
+Yes.  device congested is a quick an dirty check - if you encounter
+anything long just return congested if I/O would hit this long delay,
+too or not congested if you can't really know.
