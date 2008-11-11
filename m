@@ -1,18 +1,18 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: RE: DM does not activate the paths if there are more
-	than	one path in path group during failover
-Date: Tue, 11 Nov 2008 13:00:47 -0800
-Message-ID: <1226437247.8998.0.camel@chandra-ubuntu>
-References: <1225944321.14830.1109.camel@chandra-ubuntu>
-	<E463DF2B2E584B4A82673F53D62C2EF45BE759CF@cosmail01.lsi.com>
-	<20081111005920.GN16649@agk.fab.redhat.com>
-	<E463DF2B2E584B4A82673F53D62C2EF45BE75B7F@cosmail01.lsi.com>
-Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Queue upcall locking (was: [RFC][PATCH] fix
+	dm_any_congested() to properly sync up with suspend code path)
+Date: Tue, 11 Nov 2008 17:08:43 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0811111657360.5129@hs20-bc2-1.build.redhat.com>
+References: <1225944008.14830.1101.camel@chandra-ubuntu>
+	<Pine.LNX.4.64.0811100746180.24696@hs20-bc2-1.build.redhat.com>
+	<20081110135401.GA11606@infradead.org>
+	<Pine.LNX.4.64.0811100914500.14825@hs20-bc2-1.build.redhat.com>
+	<20081111181854.GA25049@infradead.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BE75B7F@cosmail01.lsi.com>
+In-Reply-To: <20081111181854.GA25049@infradead.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,58 +22,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "andmike@linux.vnet.ibm.com" <andmike@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: Christoph Hellwig <hch@infradead.org>
+Cc: axboe@kernel.dk, dm-devel <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Will look into this problem and get back to you.
+On Tue, 11 Nov 2008, Christoph Hellwig wrote:
 
-chandra
-On Tue, 2008-11-11 at 10:13 -0700, Moger, Babu wrote:
-> Thanks for the response.
+> On Mon, Nov 10, 2008 at 09:19:21AM -0500, Mikulas Patocka wrote:
+> > For device mapper, congested_fn asks every device in the tree and make OR 
+> > of their bits --- so if the user has 50 devices, it asks them all.
+> > 
+> > For md-linear, md-raid0, md-raid1, md-raid10 and md-multipath it does the 
+> > same --- asking every device.
+> > 
+> > If you have a better idea how to implement congested_fn, say it.
 > 
-> If pg_init is intended to be called only once then problem is elsewhere.
-> 
-> During the pg_init, the activate_path is called. The activate_path calls scsi_dh_activate(then rdac_activate) which will set path state to active(h->state = RDAC_STATE_ACTIVE;). My understanding is, h->state is specific to each path. How does d-m sets h->state to RDAC_STATE_ACTIVE for all the paths available in the path group.
-> 
-> This is what happening in my case. On path group failure, d-m switches the path group initiates path group. It then selects the first path (in the path group) starts I/O. After exhausting the repeat_count it then selects the next path in the path group.  Then rdac_prep_fn is called. This function finds h->state is still passive and fails the path which becomes unusable.
-> 
-> This function returns BLKPREP_KILL which is leading to fail failure.
-> 
-> static int rdac_prep_fn(struct scsi_device *sdev, struct request *req)
-> {
->         struct rdac_dh_data *h = get_rdac_data(sdev);
->         int ret = BLKPREP_OK;
-> 
->         if (h->state != RDAC_STATE_ACTIVE) {
->                 ret = BLKPREP_KILL;
->                 req->cmd_flags |= REQ_QUIET;
->         }
->         return ret;
-> }
-> 
-> This is my understanding so far. Please correct me if there is anything wrong.
-> 
-> 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Alasdair G Kergon
-> Sent: Monday, November 10, 2008 6:59 PM
-> To: device-mapper development
-> Cc: andmike@linux.vnet.ibm.com; linux-scsi@vger.kernel.org
-> Subject: Re: [dm-devel] DM does not activate the paths if there are more than one path in path group during failover
-> 
-> pg_init is a function intended to be called *once* when there is a switch to a new group of paths.  It is not per-path initialisation.
-> 
-> Alasdair
-> --
-> agk@redhat.com
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> Well, even asking 50 devices shouldn't take that long normally.
+
+There are some atomic operations inside congested_fn.
+
+I remember that there was some database benchmark on a setup with 48 
+devices. Just dropping one spinlock from unplug function resulted in 
+overall improvement (not microbenchmarks, the whole run) by 18%. The 
+slowdown with unplug is similar as with congested_fn --- unplugs walks all 
+the physical devices for a given logical device and unplugs them.
+
+So simplifying congested_fn might help too. Do you have an idea, how often 
+is it called? I thought about caching the return value for one jiffy.
+
+> Do you take some sleeping lock that might block forever?  In that case I 
+> would just return congested for that device as it would delay pdflush 
+> otherwise.
+
+Sometimes we do, and we shouldn't, because congested_fn is called with 
+spinlock. That's what I'm working on now.
+
+BTW. how "realtime" do you expect the Linux kernel to be? Is there some 
+effort to make all spinlocks locked for finite time? (so that someone 
+could one day calculate the times of all spinlocks, take the maximum time 
+and give Linux a "realtime" label). If so, then bdi_congested call should 
+be moved out of spinlocks. If there are already many cases when spinlock 
+could be taken and list of indefinite length walked inside, it isn't worth 
+optimizing for it.
+
+Mikulas
