@@ -1,81 +1,95 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: DM does not activate the paths if there are more than one path
-	in path group during failover
-Date: Mon, 10 Nov 2008 18:06:28 -0800
-Message-ID: <1226369188.14830.1180.camel@chandra-ubuntu>
-References: <1225944321.14830.1109.camel@chandra-ubuntu>
-	 <E463DF2B2E584B4A82673F53D62C2EF45BE759CF@cosmail01.lsi.com>
-Reply-To: sekharan@us.ibm.com
+Subject: Re: updated Chandra's patch for dm_any_congested
+Date: Mon, 10 Nov 2008 18:17:51 -0800
+Message-ID: <1226369871.14830.1186.camel@chandra-ubuntu>
+References: <Pine.LNX.4.64.0811101206570.7687@hs20-bc2-1.build.redhat.com>
+	<1226338466.5014.29.camel@localhost.localdomain>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45BE759CF@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, "andmike@linux.vnet.ibm.com" <andmike@linux.vnet.ibm.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1226338466.5014.29.camel@localhost.localdomain>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, mpatocka@redhat.com, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
 
-On Mon, 2008-11-10 at 17:45 -0700, Moger, Babu wrote:
-> Hi All,
->   I have noticed one more problem with device mapper today.
-> 
-> Summary:  If there are more than one path in the path group, device mapper does not activate the all the paths during the failover. DM only activates the first path in the path group. It does not call the function activate_path for the second path (or third so on). This seems like a major problem for me. Current code does not keep track of whether the path is already activated or not.  This leads DM using only first path and all other paths become unusable. This happens during the failover.
+Here is an updated version based on James's comments:
 
-We do not need to send activate to each "path" as all paths in a path
-group lead to the same controller and that controller is activated when
-the activate is sent on the first path itself.
+From: Chandra Seetharaman <sekharan@us.ibm.com>
 
-Is your multipathd running ?
+dm_any_congested() just checks for the DMF_BLOCK_IO and has no
+code to make sure that suspend waits for dm_any_congested() to
+complete.  This patch adds such a check.
 
-BTW, why is the physical path state is showing "undef", it should be
-"ghost" or "ready"
-> 
-> Test case.
-> 1. Start the IO with all the paths.
-> 2. Fail the active path.
-> 3. Failover (mode select) will happen and passive path will be activated
-> 4. Only first path in path group is activated and other paths will be failed. I would expect the DM to activate all the paths in the path group. However this does not happen.
-> 
-> Output of multipath -ll before the test.
-> 
-> mpathf (3600a0b80000f519c0000cc8a48fc7d0b) dm-2 LSI,INF-01-00
-> [size=2.0G][features=0][hwhandler=1 rdac][rw]
-> \_ round-robin 0 [prio=4][enabled]
->  \_ 3:0:0:0 sde 8:64  [active][undef] running
->  \_ 3:0:2:0 sdg 8:96  [active][undef] running
-> \_ round-robin 0 [prio=2][enabled]
->  \_ 3:0:1:0 sdf 8:80  [active][undef] running
->  \_ 3:0:3:0 sdh 8:112 [active][undef] running
-> 
-> 
-> Output of multipath -ll after the test. Notice that second path has failed.
-> 
-> mpathf (3600a0b80000f519c0000cc8a48fc7d0b) dm-2 LSI,INF-01-00
-> [size=2.0G][features=0][hwhandler=1 rdac][rw]
-> \_ round-robin 0 [prio=2][enabled]
->  \_ 3:0:1:0 sdf 8:80  [active][undef] running
->  \_ 3:0:3:0 sdh 8:112 [failed][undef] running
-> 
-> 
-> Here is the patch, I have used to work-around the problem. I am sure this is not the place we want to add the fix. However, this patch should give you understanding of the problem. This patch will set the flags
-> m->pg_init_required and m->queue_io whenever D-M select new path in the path group whenever the repeat_count is exhausted.
-> 
-> --- linux-2.6.28-rc4/drivers/md/dm-mpath.c.orig 2008-11-10 17:50:24.000000000 -0600
-> +++ linux-2.6.28-rc4/drivers/md/dm-mpath.c      2008-11-10 17:51:36.000000000 -0600
-> @@ -245,6 +245,10 @@ static int __choose_path_in_pg(struct mu
->         if (!path)
->                 return -ENXIO;
-> 
-> +       /* Set the pg_init_required flag to activate this path */
-> +       m->pg_init_required = 1;
-> +       m->queue_io = 1;
-> +
->         m->current_pgpath = path_to_pgpath(path);
-> 
->         if (m->current_pg != pg)
-> 
-> 
-> 
+Without it, a race can occur with dm_table_put() attempting to
+destroying the table in the wrong thread, the one running
+dm_any_congested() which is meant to be quick and return
+immediately.
 
+Two examples of problems:
+1. Sleeping functions called from congested code, the caller
+   of which holds a spin lock.
+2. An ABBA deadlock between pdflush and multipathd. The two locks
+   in contention are inode lock and kernel lock.
+----------------
+Updates from the original patch:
+ - Mikulas changed 
+	atomic_dec(&md->pending));
+   to
+	if (!atomic_dec_return(&md->pending))
+		wake_up(&md->wait);
+ - Chandra changed the code organization to get rid of the goto
+   as per James Bottemley' suggestion.
+----------------
+
+[AGK: Is the return value always correct when the table is skipped?]
+
+Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+--------
+
+Index: linux-2.6.28-rc3/drivers/md/dm.c
+===================================================================
+--- linux-2.6.28-rc3.orig/drivers/md/dm.c
++++ linux-2.6.28-rc3/drivers/md/dm.c
+@@ -937,16 +937,20 @@ static void dm_unplug_all(struct request
+ 
+ static int dm_any_congested(void *congested_data, int bdi_bits)
+ {
+-	int r;
++	int r = bdi_bits;
+ 	struct mapped_device *md = (struct mapped_device *) congested_data;
+-	struct dm_table *map = dm_get_table(md);
+-
+-	if (!map || test_bit(DMF_BLOCK_IO, &md->flags))
+-		r = bdi_bits;
+-	else
+-		r = dm_table_any_congested(map, bdi_bits);
++	struct dm_table *map;
+ 
+-	dm_table_put(map);
++	atomic_inc(&md->pending);
++	if (!test_bit(DMF_BLOCK_IO, &md->flags)) {
++		map = dm_get_table(md);
++		if (map) {
++			r = dm_table_any_congested(map, bdi_bits);
++			dm_table_put(map);
++		}
++	}
++	if (!atomic_dec_return(&md->pending))
++		wake_up(&md->wait);
+ 	return r;
+ }
+ 
