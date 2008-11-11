@@ -1,28 +1,84 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: Queue upcall locking (was: [dm-devel] [RFC][PATCH] fix
-	dm_any_congested() to properly sync up with suspend code path)
-Date: Tue, 11 Nov 2008 13:22:11 -0500
-Message-ID: <20081111182211.GC25049@infradead.org>
-References: <1225944008.14830.1101.camel@chandra-ubuntu> <Pine.LNX.4.64.0811100746180.24696@hs20-bc2-1.build.redhat.com> <20081110135401.GA11606@infradead.org> <20081110142715.GD16649@agk.fab.redhat.com> <Pine.LNX.4.64.0811100933520.16965@hs20-bc2-1.build.redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: DM does not activate the paths if there are more
+	than	one path in path group during failover
+Date: Tue, 11 Nov 2008 10:13:11 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45BE75B7F@cosmail01.lsi.com>
+References: <1225944321.14830.1109.camel@chandra-ubuntu>
+	<E463DF2B2E584B4A82673F53D62C2EF45BE759CF@cosmail01.lsi.com>
+	<20081111005920.GN16649@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754979AbYKKSWW@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0811100933520.16965@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Christoph Hellwig <hch@infradead.org>, axboe@kernel.dk, dm-devel <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20081111005920.GN16649@agk.fab.redhat.com>
+Content-Language: en-US
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: 'device-mapper development' <dm-devel@redhat.com>
+Cc: "andmike@linux.vnet.ibm.com" <andmike@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon, Nov 10, 2008 at 09:40:18AM -0500, Mikulas Patocka wrote:
-> > - If the device is suspended, the response should be that it is 
-> > congested, I'd have thought.
-> 
-> Yes, but these congestion upcalls are used only for optimization and the 
-> device is suspended for so small time, that it doesn't matter if we 
-> optimize io acces in small moment or not.
 
-We use device congested to not block pdflush on a device that can't
-currently accept I/O.  For a suspended device congested is always
-correct, pdflush will just come back a little later and in the mean time
-write out stuff that doesn't delay it.
+Thanks for the response.
+
+If pg_init is intended to be called only once then problem is elsewhere.
+
+During the pg_init, the activate_path is called. The activate_path calls =
+scsi_dh_activate(then rdac_activate) which will set path state to active(=
+h->state =3D RDAC_STATE_ACTIVE;). My understanding is, h->state is specif=
+ic to each path. How does d-m sets h->state to RDAC_STATE_ACTIVE for all =
+the paths available in the path group.
+
+This is what happening in my case. On path group failure, d-m switches th=
+e path group initiates path group. It then selects the first path (in the=
+ path group) starts I/O. After exhausting the repeat_count it then select=
+s the next path in the path group.  Then rdac_prep_fn is called. This fun=
+ction finds h->state is still passive and fails the path which becomes un=
+usable.
+
+This function returns BLKPREP_KILL which is leading to fail failure.
+
+static int rdac_prep_fn(struct scsi_device *sdev, struct request *req)
+{
+        struct rdac_dh_data *h =3D get_rdac_data(sdev);
+        int ret =3D BLKPREP_OK;
+
+        if (h->state !=3D RDAC_STATE_ACTIVE) {
+                ret =3D BLKPREP_KILL;
+                req->cmd_flags |=3D REQ_QUIET;
+        }
+        return ret;
+}
+
+This is my understanding so far. Please correct me if there is anything w=
+rong.
+
+
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On=
+ Behalf Of Alasdair G Kergon
+Sent: Monday, November 10, 2008 6:59 PM
+To: device-mapper development
+Cc: andmike@linux.vnet.ibm.com; linux-scsi@vger.kernel.org
+Subject: Re: [dm-devel] DM does not activate the paths if there are more =
+than one path in path group during failover
+
+pg_init is a function intended to be called *once* when there is a switch=
+ to a new group of paths.  It is not per-path initialisation.
+
+Alasdair
+--
+agk@redhat.com
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
