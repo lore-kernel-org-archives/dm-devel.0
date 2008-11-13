@@ -1,200 +1,109 @@
-From: "Balasubramanian, Vijayakumar (STSD)" <vijayakumar@hp.com>
-Subject: [patch] leastpending_io load balancing policy
-Date: Wed, 12 Nov 2008 14:17:05 +0000
-Message-ID: <2118D41AB77C214BBF7D2330CD977BCF1BB395790D@GVW1162EXB.americas.hpqcorp.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 0/8] I/O bandwidth controller and BIO tracking
+Date: Thu, 13 Nov 2008 12:10:19 +0900 (JST)
+Message-ID: <20081113.121019.104237699577193919.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
-	boundary="_002_2118D41AB77C214BBF7D2330CD977BCF1BB395790DGVW1162EXBame_"
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Cc: fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com, xemul@openvz.org, kamezawa.hiroyu@jp.fujitsu.com, agk@sourceware.org
 List-Id: dm-devel.ids
 
---_002_2118D41AB77C214BBF7D2330CD977BCF1BB395790DGVW1162EXBame_
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Hi everyone,
 
-Hi,
-Attached patch provides "Least pending IO" dynamic load balancing policy fo=
-r bio based device mapper multipath. This load balancing policy considers t=
-he number of unserviced requests pending on a path and selects the path wit=
-h least count for pending service request.
+This is a new release of dm-ioband and bio-cgroup. With this release,
+the overhead of bio-cgroup is significantly reduced and the accuracy
+of block I/O tracking is much improved. These patches are for
+2.6.28-rc2-mm1.
 
-We find this policy more useful especially when the SAN environment has het=
-erogeneous components. Ex, when there is one 8GB HBA and one 2GB HBA connec=
-ted to the same server, 8GB HBA could be utilized better with this algorith=
-m.
+Enjoy it!
 
-Can we have this patch included into the source tree?
+dm-ioband
+=========
+
+Dm-ioband is an I/O bandwidth controller implemented as a
+device-mapper driver, which gives specified bandwidth to each job
+running on the same block device. A job is a group of processes
+or a virtual machine such as KVM or Xen. 
+I/O throughput on dm-ioband is excellent not only on SATA storage
+but on SDD, which as good as the one without dm-ioband.
+
+Changes from the previous release:
+  - Fix a bug that create_workqueue() is called during spin lock
+    when creating a new ioband group.
+  - A new tunable parameter "carryover" is added, which specifies
+    how many tokens an ioband group can keep for the future use
+    when the group isn't so active.
+
+TODO:
+  - Other policies to schedule BIOs.
+    - Policies which fits SSD.
+     e.g.)
+       - Guarantee response time.
+       - Guarantee throughput.
+    - Policies which fits Highend Storage or hardware raid storage.
+       - Some LUNs may share the same bandwidth.
+  - Support WRITE_BARRIER when the device-mapper layer supports it.
+  - Implement the algorithm of dm-ioband in the block I/O layer
+    experimentally.
+
+bio-cgroup
+==========
+
+Bio-cgroup is a BIO tracking mechanism, which is implemented on the
+cgroup memory subsystem. With the mechanism, it is able to determine
+which cgroup each of bio belongs to, even when the bio is one of
+delayed-write requests issued from a kernel thread such as pdflush.
+
+Changes from the previous release:
+  - This release is a new implementation.
+  - This is based on the new design of the cgroup memory controller
+    framework, which pre-allocates all cgroup-page data structures to
+    reduce the overhead.
+  - The overhead to trace block I/O requests is much smaller than that
+    of the previous one. This is done by making every page have the id
+    of its corresponding bio-cgroup instead of the pointer to it and
+    most of spin-locks and atomic operations are gone.
+  - This implementation uses only 4 bytes per page for I/O tracking
+    while the previous version uses 12 bytes on a 32 bit machine and 24
+    bytes on a 64 bit machine.
+  - The accuracy of I/O tracking is improved that it can trace I/O
+    requests even when the processes which issued these requests get
+    moved into another bio-cgroup.
+  - Support bounce buffers tracking. They will have the same bio-cgroup
+    owners as the original I/O requests.
+
+TODO:
+  - Support to track I/O requests that will be generated in Linux
+    kernel, such as those of RAID0 and RAID5.
+
+A list of patches
+=================
+
+The following is a list of patches:
+
+  [PATCH 0/8] I/O bandwidth controller and BIO tracking
+  [PATCH 1/8] dm-ioband: Introduction
+  [PATCH 2/8] dm-ioband: Source code and patch
+  [PATCH 3/8] dm-ioband: Document
+  [PATCH 4/8] bio-cgroup: Introduction
+  [PATCH 5/8] bio-cgroup: The new page_cgroup framework
+  [PATCH 6/8] bio-cgroup: The body of bio-cgroup
+  [PATCH 7/8] bio-cgroup: Page tracking hooks
+  [PATCH 8/8] bio-cgroup: Add a cgroup support to dm-ioband
+
+Please see the following site for more information:
+  Linux Block I/O Bandwidth Control Project
+  http://people.valinux.co.jp/~ryov/bwctl/
 
 Thanks,
-Vijay
-
-
---_002_2118D41AB77C214BBF7D2330CD977BCF1BB395790DGVW1162EXBame_
-Content-Type: application/octet-stream; name="leastpending_io.patch"
-Content-Description: leastpending_io.patch
-Content-Disposition: attachment; filename="leastpending_io.patch"; size=7948;
-	creation-date="Wed, 12 Nov 2008 11:45:10 GMT";
-	modification-date="Wed, 12 Nov 2008 11:45:10 GMT"
-Content-Transfer-Encoding: base64
-
-ZGlmZiAtcE5hdXIgbWQtb3JnLy9NYWtlZmlsZSBtZC8vTWFrZWZpbGUKLS0tIG1kLW9yZy8vTWFr
-ZWZpbGUJMjAwOC0xMS0xMiAxNzowODoyOS4wMDAwMDAwMDAgKzA1MzAKKysrIG1kLy9NYWtlZmls
-ZQkyMDA4LTExLTEyIDE1OjE0OjIyLjAwMDAwMDAwMCArMDUzMApAQCAtMzIsNyArMzIsNyBAQCBv
-YmotJChDT05GSUdfQkxLX0RFVl9NRCkJKz0gbWQtbW9kLm8KIG9iai0kKENPTkZJR19CTEtfREVW
-X0RNKQkrPSBkbS1tb2Qubwogb2JqLSQoQ09ORklHX0RNX0NSWVBUKQkJKz0gZG0tY3J5cHQubwog
-b2JqLSQoQ09ORklHX0RNX0RFTEFZKQkJKz0gZG0tZGVsYXkubwotb2JqLSQoQ09ORklHX0RNX01V
-TFRJUEFUSCkJKz0gZG0tbXVsdGlwYXRoLm8gZG0tcm91bmQtcm9iaW4ubworb2JqLSQoQ09ORklH
-X0RNX01VTFRJUEFUSCkJKz0gZG0tbXVsdGlwYXRoLm8gZG0tcm91bmQtcm9iaW4ubyBkbS1sZWFz
-dHBlbmRpbmctcGF0aC5vIAogb2JqLSQoQ09ORklHX0RNX1NOQVBTSE9UKQkrPSBkbS1zbmFwc2hv
-dC5vCiBvYmotJChDT05GSUdfRE1fTUlSUk9SKQkJKz0gZG0tbWlycm9yLm8gZG0tbG9nLm8KIG9i
-ai0kKENPTkZJR19ETV9aRVJPKQkJKz0gZG0temVyby5vCmRpZmYgLXBOYXVyIG1kLW9yZy8vZG0t
-bGVhc3RwZW5kaW5nLXBhdGguYyBtZC8vZG0tbGVhc3RwZW5kaW5nLXBhdGguYwotLS0gbWQtb3Jn
-Ly9kbS1sZWFzdHBlbmRpbmctcGF0aC5jCTE5NzAtMDEtMDEgMDU6MzA6MDAuMDAwMDAwMDAwICsw
-NTMwCisrKyBtZC8vZG0tbGVhc3RwZW5kaW5nLXBhdGguYwkyMDA4LTExLTEyIDE1OjE5OjExLjAw
-MDAwMDAwMCArMDUzMApAQCAtMCwwICsxLDI3MiBAQAorLyoKKyAgKioqKioqKioqKioqKioqKioq
-KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
-KioKKyAqICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgKgorICogICAgIChDKSAgQ29weXJpZ2h0IDIwMDggSGV3
-bGV0dC1QYWNrYXJkIERldmVsb3BtZW50IENvbXBhbnksIEwuUCAgICAgICAgICAqCisgKiAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICoKKyAqIFRoaXMgcHJvZ3JhbSBpcyBmcmVlIHNvZnR3YXJlOyB5b3UgY2Fu
-IHJlZGlzdHJpYnV0ZSBpdCBhbmQvb3IgbW9kaWZ5IGl0ICAgKgorICogdW5kZXIgdGhlIHRlcm1z
-IG9mIHRoZSBHTlUgR2VuZXJhbCBQdWJsaWMgTGljZW5zZSBhcyBwdWJsaXNoZWQgYnkgdGhlIEZy
-ZWUqCisgKiBTb2Z0d2FyZSAgRm91bmRhdGlvbjsgZWl0aGVyIHZlcnNpb24gMiBvZiB0aGUgTGlj
-ZW5zZSwgb3IgKGF0IHlvdXIgb3B0aW9uKSoKKyAqIGFueSBsYXRlciB2ZXJzaW9uLiAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKgorICogICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAqCisgKiBUaGlzIHByb2dyYW0gaXMgZGlzdHJpYnV0ZWQgaW4gdGhlIGhv
-cGUgdGhhdCBpdCB3aWxsIGJlIHVzZWZ1bCwgYnV0ICAgICAgICoKKyAqIFdJVEhPVVQgQU5ZIFdB
-UlJBTlRZOyB3aXRob3V0IGV2ZW4gdGhlIGltcGxpZWQgd2FycmFudHkgb2YgTUVSQ0hBTlRBQklM
-SVRZKgorICogb3IgRklUTkVTUyBGT1IgIEEgUEFSVElDVUxBUiBQVVJQT1NFLiBTZWUgdGhlIEdO
-VSBHZW5lcmFsIFB1YmxpYyBMaWNlbnNlICAqCisgKiBmb3IgbW9yZSBkZXRhaWxzLiAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICoKKyAqICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgKgorICogWW91IHNob3VsZCBoYXZlIHJlY2VpdmVkIGEgY29weSBvZiB0
-aGUgR05VIEdlbmVyYWwgUHVibGljIExpY2Vuc2UgYWxvbmcgICAqCisgKiB3aXRoIHRoaXMgcHJv
-Z3JhbTsgaWYgbm90LCB3cml0ZSB0byB0aGUgRnJlZSBTb2Z0d2FyZSBGb3VuZGF0aW9uLCBJbmMu
-LCAgICoKKyAqIDY3NSBNYXNzIEF2ZSwgQ2FtYnJpZGdlLCBNQSAwMjEzOSwgVVNBLiAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgKgorICogICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAqCisgKiAg
-ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg
-ICAgICAgICAgICAgICAgICoKKyAqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioq
-KioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKioqKgorICovCisKKyNpbmNsdWRl
-ICJkbS5oIgorI2luY2x1ZGUgImRtLXBhdGgtc2VsZWN0b3IuaCIKKworI2luY2x1ZGUgPGxpbnV4
-L3NsYWIuaD4KKworCisjZGVmaW5lIFJSX01JTl9JTwktMQorCisjZGVmaW5lIERNX01TR19QUkVG
-SVggIm11bHRpcGF0aCBsZWFzdHBlbmRpbmdpby1wYXRoIgorCQorLyotLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQorICogUGF0
-aC1oYW5kbGluZyBjb2RlLCBwYXRocyBhcmUgaGVsZCBpbiBsaXN0cworICotLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0qLworc3Ry
-dWN0IHBhdGhfaW5mbyB7CisJc3RydWN0IGxpc3RfaGVhZCBsaXN0OworCXN0cnVjdCBkbV9wYXRo
-ICpwYXRoOworCXVuc2lnbmVkIHJlcGVhdF9jb3VudDsKKwl1bnNpZ25lZCBpb19jb3VudDsKK307
-CisKK3N0YXRpYyB2b2lkIGZyZWVfcGF0aHMoc3RydWN0IGxpc3RfaGVhZCAqcGF0aHMpCit7CisJ
-c3RydWN0IHBhdGhfaW5mbyAqcGksICpuZXh0OworCisJbGlzdF9mb3JfZWFjaF9lbnRyeV9zYWZl
-KHBpLCBuZXh0LCBwYXRocywgbGlzdCkgeworCQlsaXN0X2RlbCgmcGktPmxpc3QpOworCQlrZnJl
-ZShwaSk7CisJfQorfQorCisvKi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tCisgKiBsZWFzdHBlbmRpbmdpby1wYXRoIHNlbGVj
-dG9yCisgKi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLSovCisKK3N0cnVjdCBzZWxlY3RvciB7CisJc3RydWN0IGxpc3RfaGVhZCB2
-YWxpZF9wYXRoczsKKwlzdHJ1Y3QgbGlzdF9oZWFkIGludmFsaWRfcGF0aHM7Cit9OworCitzdGF0
-aWMgc3RydWN0IHNlbGVjdG9yICphbGxvY19zZWxlY3Rvcih2b2lkKQoreworCXN0cnVjdCBzZWxl
-Y3RvciAqcyA9IGttYWxsb2Moc2l6ZW9mKCpzKSwgR0ZQX0tFUk5FTCk7CisKKwlpZiAocykgewor
-CQlJTklUX0xJU1RfSEVBRCgmcy0+dmFsaWRfcGF0aHMpOworCQlJTklUX0xJU1RfSEVBRCgmcy0+
-aW52YWxpZF9wYXRocyk7CisJfQorCisJcmV0dXJuIHM7Cit9CisKK3N0YXRpYyBpbnQgbHBwX2Ny
-ZWF0ZShzdHJ1Y3QgcGF0aF9zZWxlY3RvciAqcHMsIHVuc2lnbmVkIGFyZ2MsIGNoYXIgKiphcmd2
-KQoreworCXN0cnVjdCBzZWxlY3RvciAqczsKKworCXMgPSBhbGxvY19zZWxlY3RvcigpOworCWlm
-ICghcykKKwkJcmV0dXJuIC1FTk9NRU07CisKKwlwcy0+Y29udGV4dCA9IHM7CisJcmV0dXJuIDA7
-Cit9CisKK3N0YXRpYyB2b2lkIGxwcF9kZXN0cm95KHN0cnVjdCBwYXRoX3NlbGVjdG9yICpwcykK
-K3sKKwlzdHJ1Y3Qgc2VsZWN0b3IgKnMgPSAoc3RydWN0IHNlbGVjdG9yICopIHBzLT5jb250ZXh0
-OworCisJZnJlZV9wYXRocygmcy0+dmFsaWRfcGF0aHMpOworCWZyZWVfcGF0aHMoJnMtPmludmFs
-aWRfcGF0aHMpOworCWtmcmVlKHMpOworCXBzLT5jb250ZXh0ID0gTlVMTDsKK30KKworc3RhdGlj
-IGludCBscHBfc3RhdHVzKHN0cnVjdCBwYXRoX3NlbGVjdG9yICpwcywgc3RydWN0IGRtX3BhdGgg
-KnBhdGgsCisJCSAgICAgc3RhdHVzX3R5cGVfdCB0eXBlLCBjaGFyICpyZXN1bHQsIHVuc2lnbmVk
-IGludCBtYXhsZW4pCit7CisJc3RydWN0IHBhdGhfaW5mbyAqcGk7CisJaW50IHN6ID0gMDsKKwor
-CWlmICghcGF0aCkKKwkJRE1FTUlUKCIwICIpOworCWVsc2UgeworCQlzd2l0Y2godHlwZSkgewor
-CQljYXNlIFNUQVRVU1RZUEVfSU5GTzoKKwkJCWJyZWFrOworCQljYXNlIFNUQVRVU1RZUEVfVEFC
-TEU6CisJCQlwaSA9IHBhdGgtPnBzY29udGV4dDsKKwkJCURNRU1JVCgiJXUgIiwgcGktPnJlcGVh
-dF9jb3VudCk7CisJCQlicmVhazsKKwkJfQorCX0KKworCXJldHVybiBzejsKK30KKworLyoKKyAq
-IENhbGxlZCBkdXJpbmcgaW5pdGlhbGlzYXRpb24gdG8gcmVnaXN0ZXIgZWFjaCBwYXRoIHdpdGgg
-YW4KKyAqIG9wdGlvbmFsIHJlcGVhdF9jb3VudC4KKyAqLworc3RhdGljIGludCBscHBfYWRkX3Bh
-dGgoc3RydWN0IHBhdGhfc2VsZWN0b3IgKnBzLCBzdHJ1Y3QgZG1fcGF0aCAqcGF0aCwKKwkJICAg
-ICAgIGludCBhcmdjLCBjaGFyICoqYXJndiwgY2hhciAqKmVycm9yKQoreworCXN0cnVjdCBzZWxl
-Y3RvciAqcyA9IChzdHJ1Y3Qgc2VsZWN0b3IgKikgcHMtPmNvbnRleHQ7CisJc3RydWN0IHBhdGhf
-aW5mbyAqcGk7CisJdW5zaWduZWQgcmVwZWF0X2NvdW50ID0gUlJfTUlOX0lPOworCisJaWYgKGFy
-Z2MgPiAxKSB7CisJCSplcnJvciA9ICJsZWFzdHBlbmRpbmdpby1wYXRoIHBzOiBpbmNvcnJlY3Qg
-bnVtYmVyIG9mIGFyZ3VtZW50cyI7CisJCXJldHVybiAtRUlOVkFMOworCX0KKworCS8qIEZpcnN0
-IHBhdGggYXJndW1lbnQgaXMgbnVtYmVyIG9mIEkvT3MgYmVmb3JlIHN3aXRjaGluZyBwYXRoICov
-CisJaWYgKChhcmdjID09IDEpICYmIChzc2NhbmYoYXJndlswXSwgIiV1IiwgJnJlcGVhdF9jb3Vu
-dCkgIT0gMSkpIHsKKwkJKmVycm9yID0gImxlYXN0cGVuZGluZ2lvLXBhdGggcHM6IGludmFsaWQg
-cmVwZWF0IGNvdW50IjsKKwkJcmV0dXJuIC1FSU5WQUw7CisJfQorCisJLyogYWxsb2NhdGUgdGhl
-IHBhdGggKi8KKwlwaSA9IGttYWxsb2Moc2l6ZW9mKCpwaSksIEdGUF9LRVJORUwpOworCWlmICgh
-cGkpIHsKKwkJKmVycm9yID0gImxlYXN0cGVuZGluZ2lvLXBhdGggcHM6IEVycm9yIGFsbG9jYXRp
-bmcgcGF0aCBjb250ZXh0IjsKKwkJcmV0dXJuIC1FTk9NRU07CisJfQorCisJcGktPnBhdGggPSBw
-YXRoOworCXBpLT5yZXBlYXRfY291bnQgPSByZXBlYXRfY291bnQ7CisJcGktPmlvX2NvdW50ID0g
-MDsKKworCXBhdGgtPnBzY29udGV4dCA9IHBpOworCisJbGlzdF9hZGQoJnBpLT5saXN0LCAmcy0+
-dmFsaWRfcGF0aHMpOworCisJcmV0dXJuIDA7Cit9CisKK3N0YXRpYyB2b2lkIGxwcF9mYWlsX3Bh
-dGgoc3RydWN0IHBhdGhfc2VsZWN0b3IgKnBzLCBzdHJ1Y3QgZG1fcGF0aCAqcCkKK3sKKwlzdHJ1
-Y3Qgc2VsZWN0b3IgKnMgPSAoc3RydWN0IHNlbGVjdG9yICopIHBzLT5jb250ZXh0OworCXN0cnVj
-dCBwYXRoX2luZm8gKnBpID0gcC0+cHNjb250ZXh0OworCisJcGktPmlvX2NvdW50ID0gMDsKKwor
-CWxpc3RfbW92ZSgmcGktPmxpc3QsICZzLT5pbnZhbGlkX3BhdGhzKTsKK30KKworc3RhdGljIGlu
-dCBscHBfcmVpbnN0YXRlX3BhdGgoc3RydWN0IHBhdGhfc2VsZWN0b3IgKnBzLCBzdHJ1Y3QgZG1f
-cGF0aCAqcCkKK3sKKwlzdHJ1Y3Qgc2VsZWN0b3IgKnMgPSAoc3RydWN0IHNlbGVjdG9yICopIHBz
-LT5jb250ZXh0OworCXN0cnVjdCBwYXRoX2luZm8gKnBpID0gcC0+cHNjb250ZXh0OworCisJcGkt
-PmlvX2NvdW50ID0gMDsKKworCWxpc3RfbW92ZSgmcGktPmxpc3QsICZzLT52YWxpZF9wYXRocyk7
-CisKKwlyZXR1cm4gMDsKK30KKworc3RhdGljIHN0cnVjdCBkbV9wYXRoKiBscHBfZmluZF9sZWFz
-dF9wZW5kaW5nX2lvX3BhdGgoc3RydWN0IHNlbGVjdG9yICpzKQoreworCXN0cnVjdCBwYXRoX2lu
-Zm8gKnBpID0gTlVMTCwqbmV4dCA9IE5VTEwsKmxlYXN0X2lvX3BhdGggPSBOVUxMOworCXN0cnVj
-dCBsaXN0X2hlYWQgKnBhdGhzID0gTlVMTDsKKworCWlmKGxpc3RfZW1wdHkoJnMtPnZhbGlkX3Bh
-dGhzKSl7CisJCXJldHVybiBOVUxMOworCX0KKwlwYXRocyA9ICZzLT52YWxpZF9wYXRoczsKKwls
-aXN0X2Zvcl9lYWNoX2VudHJ5X3NhZmUocGksIG5leHQsIHBhdGhzLCBsaXN0KSB7CisJCWlmKGxl
-YXN0X2lvX3BhdGggPT0gTlVMTCkKKwkJCWxlYXN0X2lvX3BhdGggPSBwaTsKKwkJaWYobGVhc3Rf
-aW9fcGF0aC0+aW9fY291bnQgPCBwaS0+aW9fY291bnQpIHsKKwkJCWxlYXN0X2lvX3BhdGggPSBw
-aTsKKwkJfQorCQlpZihsZWFzdF9pb19wYXRoLT5pb19jb3VudCA9PSAwKQorCQkJYnJlYWs7CisK
-Kwl9CisJaWYobGVhc3RfaW9fcGF0aCl7CisJCWxlYXN0X2lvX3BhdGgtPmlvX2NvdW50ICsrOwor
-CQlyZXR1cm4gbGVhc3RfaW9fcGF0aC0+cGF0aDsKKwl9CisKKwlyZXR1cm4gTlVMTDsKK30KKwor
-c3RhdGljIHN0cnVjdCBkbV9wYXRoICpscHBfc2VsZWN0X3BhdGgoc3RydWN0IHBhdGhfc2VsZWN0
-b3IgKnBzLAorCQkJCSAgIHVuc2lnbmVkICpyZXBlYXRfY291bnQpCit7CisJc3RydWN0IHNlbGVj
-dG9yICpzID0gKHN0cnVjdCBzZWxlY3RvciAqKSBwcy0+Y29udGV4dDsKKwlyZXR1cm4gbHBwX2Zp
-bmRfbGVhc3RfcGVuZGluZ19pb19wYXRoKHMpOworfQorCitzdGF0aWMgaW50IGxwcF9lbmRfaW8o
-c3RydWN0IHBhdGhfc2VsZWN0b3IgKnBzLHN0cnVjdCBkbV9wYXRoICpwYXRoKQoreworCXN0cnVj
-dCBwYXRoX2luZm8gKnBpID0gTlVMTDsKKworCURNSU5GTygibGVhc3RwZW5kaW5naW8tcGF0aDog
-bHBwX2VuZF9pbyIpOworCQorCXBpID0gcGF0aC0+cHNjb250ZXh0OworCWlmKHBpID09IE5VTEwp
-CisJCXJldHVybiAxOworCQorCXBpLT5pb19jb3VudC0tOworCisJcmV0dXJuIDA7Cit9CisKK3N0
-YXRpYyBzdHJ1Y3QgcGF0aF9zZWxlY3Rvcl90eXBlIGxwcF9wcyA9IHsKKwkubmFtZSA9ICJsZWFz
-dHBlbmRpbmdpby1wYXRoIiwKKwkubW9kdWxlID0gVEhJU19NT0RVTEUsCisJLnRhYmxlX2FyZ3Mg
-PSAxLAorCS5pbmZvX2FyZ3MgPSAwLAorCS5jcmVhdGUgPSBscHBfY3JlYXRlLAorCS5kZXN0cm95
-ID0gbHBwX2Rlc3Ryb3ksCisJLnN0YXR1cyA9IGxwcF9zdGF0dXMsCisJLmFkZF9wYXRoID0gbHBw
-X2FkZF9wYXRoLAorCS5mYWlsX3BhdGggPSBscHBfZmFpbF9wYXRoLAorCS5yZWluc3RhdGVfcGF0
-aCA9IGxwcF9yZWluc3RhdGVfcGF0aCwKKwkuc2VsZWN0X3BhdGggPSBscHBfc2VsZWN0X3BhdGgs
-CisJLmVuZF9pbwk9IGxwcF9lbmRfaW8sCit9OworCisKKworc3RhdGljIGludCBfX2luaXQgZG1f
-bHBwX2luaXQodm9pZCkKK3sKKwlpbnQgciA9IGRtX3JlZ2lzdGVyX3BhdGhfc2VsZWN0b3IoJmxw
-cF9wcyk7CisKKwlpZiAociA8IDApCisJCURNRVJSKCJsZWFzdHBlbmRpbmdpby1wYXRoOiByZWdp
-c3RlciBmYWlsZWQgJWQiLCByKTsKKworCURNSU5GTygiZG0tbGVhc3RwZW5kaW5naW8tcGF0aCB2
-ZXJzaW9uIDEuMC4wIGxvYWRlZCIpOworCisJcmV0dXJuIHI7Cit9CisKK3N0YXRpYyB2b2lkIF9f
-ZXhpdCBkbV9scHBfZXhpdCh2b2lkKQoreworCWludCByID0gZG1fdW5yZWdpc3Rlcl9wYXRoX3Nl
-bGVjdG9yKCZscHBfcHMpOworCisJaWYgKHIgPCAwKQorCQlETUVSUigibGVhc3RwZW5kaW5naW8t
-cGF0aDogdW5yZWdpc3RlciBmYWlsZWQgJWQiLCByKTsKK30KKworbW9kdWxlX2luaXQoZG1fbHBw
-X2luaXQpOworbW9kdWxlX2V4aXQoZG1fbHBwX2V4aXQpOworCitNT0RVTEVfREVTQ1JJUFRJT04o
-RE1fTkFNRSAiIGxlYXN0cGVuZGluZ2lvLXBhdGggbXVsdGlwYXRoIHBhdGggc2VsZWN0b3IiKTsK
-K01PRFVMRV9BVVRIT1IoIlNha3NoaSBDaGFpdGFueWEgVmVuaSA8dnNha3NoaUBocC5jb20+Iik7
-CitNT0RVTEVfTElDRU5TRSgiR1BMIik7Cg==
-
---_002_2118D41AB77C214BBF7D2330CD977BCF1BB395790DGVW1162EXBame_
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---_002_2118D41AB77C214BBF7D2330CD977BCF1BB395790DGVW1162EXBame_--
+Ryo Tsuruta
