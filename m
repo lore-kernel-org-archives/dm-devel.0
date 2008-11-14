@@ -1,15 +1,13 @@
-From: Takuya Yoshikawa <yoshikawa.takuya@oss.ntt.co.jp>
-Subject: Re: [PATCH 6/8] bio-cgroup: The body of bio-cgroup
-Date: Fri, 14 Nov 2008 16:01:37 +0900
-Message-ID: <491D2251.7010702@oss.ntt.co.jp>
-References: <20081113.121254.625859878544534829.ryov@valinux.co.jp>	<20081113.121322.653026525707351102.ryov@valinux.co.jp>	<20081113.121357.75173118738921642.ryov@valinux.co.jp>
-	<20081113.121433.632868945383117577.ryov@valinux.co.jp>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [Patch 1 of 2]: Cluster-aware dirty log - Log API
+	addition
+Date: Fri, 14 Nov 2008 11:44:21 -0600
+Message-ID: <1226684661.25637.9.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081113.121433.632868945383117577.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,148 +17,97 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi,
+This patch can be considered by itself.  The second patch I am sending
+will be the actual cluster log module, but these 2 patches don't
+necessarily need to go together.
 
-Ryo Tsuruta wrote:
->  
-> +void init_io_context(struct io_context *ioc)
-> +{
-> +	atomic_set(&ioc->refcount, 1);
-> +	atomic_set(&ioc->nr_tasks, 1);
-> +	spin_lock_init(&ioc->lock);
-> +	ioc->ioprio_changed = 0;
-> +	ioc->ioprio = 0;
-> +	ioc->last_waited = jiffies; /* doesn't matter... */
-> +	ioc->nr_batch_requests = 0; /* because this is 0 */
-> +	ioc->aic = NULL;
-> +	INIT_RADIX_TREE(&ioc->radix_root, GFP_ATOMIC | __GFP_HIGH);
-> +	INIT_HLIST_HEAD(&ioc->cic_list);
-> +	ioc->ioc_data = NULL;
-> +}
-> +
->  struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
->  {
->  	struct io_context *ret;
->  
->  	ret = kmem_cache_alloc_node(iocontext_cachep, gfp_flags, node);
-> -	if (ret) {
-> -		atomic_set(&ret->refcount, 1);
-> -		atomic_set(&ret->nr_tasks, 1);
-> -		spin_lock_init(&ret->lock);
-> -		ret->ioprio_changed = 0;
-> -		ret->ioprio = 0;
-> -		ret->last_waited = jiffies; /* doesn't matter... */
-> -		ret->nr_batch_requests = 0; /* because this is 0 */
-> -		ret->aic = NULL;
-> -		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
-> -		INIT_HLIST_HEAD(&ret->cic_list);
-> -		ret->ioc_data = NULL;
-> -	}
-> +	if (ret)
-> +		init_io_context(ret);
->  
->  	return ret;
->  }
+ brassow
 
+The logging API needs an extra function to make cluster mirroring
+possible.  This new function allows us to check whether a mirror
+region is being recovered on another machine in the cluster.  This
+helps us prevent simultaneous recovery I/O and process I/O to the
+same locations on disk.
 
-> +
-> +/* Create a new bio-cgroup. */
-> +static struct cgroup_subsys_state *
-> +bio_cgroup_create(struct cgroup_subsys *ss, struct cgroup *cgrp)
-> +{
-> +	struct bio_cgroup *biog;
-> +	struct io_context *ioc;
-> +	int ret;
-> +
-> +	if (!cgrp->parent) {
-> +		biog = &default_bio_cgroup;
-> +		init_io_context(biog->io_context);
-> +		/* Increment the referrence count not to be released ever. */
-> +		atomic_inc(&biog->io_context->refcount);
-> +		idr_init(&bio_cgroup_id);
-> +		return &biog->css;
-> +	}
-> +
-> +	biog = kzalloc(sizeof(*biog), GFP_KERNEL);
-> +	ioc = alloc_io_context(GFP_KERNEL, -1);
-> +	if (!ioc || !biog) {
-> +		ret = -ENOMEM;
-> +		goto out_err;
-> +	}
-> +	biog->io_context = ioc;
+Cluster-aware log modules will implement this function.  Single
+machine log modules will not.  So, there is no performance
+penalty for single machine mirrors.
 
-If I understand correctly io_contexts allocated by alloc_io_context() should
-be owned by some tasks. In this case, the newly created io_context has no
-owner though biog->io_context->nr_tasks == 1. With the cfq scheduler this may
-cause some problems especially when cic_free_func() is called because
-cfq_exit_io_context() would never be called. Am I wrong?
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-> +retry:
-> +	if (!idr_pre_get(&bio_cgroup_id, GFP_KERNEL)) {
-> +		ret = -EAGAIN;
-> +		goto out_err;
-> +	}
-> +	spin_lock_irq(&bio_cgroup_idr_lock);
-> +	ret = idr_get_new_above(&bio_cgroup_id, (void *)biog, 1, &biog->id);
-> +	spin_unlock_irq(&bio_cgroup_idr_lock);
-> +	if (ret == -EAGAIN)
-> +		goto retry;
-> +	else if (ret)
-> +		goto out_err;
-> +
-> +	return &biog->css;
-> +out_err:
-> +	if (biog)
-> +		kfree(biog);
-> +	if (ioc)
-> +		put_io_context(ioc);
-> +	return ERR_PTR(ret);
-> +}
-> +
-> +/* Delete the bio-cgroup. */
-> +static void bio_cgroup_destroy(struct cgroup_subsys *ss, struct cgroup *cgrp)
-> +{
-> +	struct bio_cgroup *biog = cgroup_bio(cgrp);
-> +
-> +	put_io_context(biog->io_context);
-
-Here, I suspects what will happen under the following condition:
-biog->io_context->refcount: 1 --> 0
-biog->io_context->nr_tasks: 1 --> 1
-==> cfq_dtor() will be called but cfq_exit() has not be called yet.
-
-> +
-> +	spin_lock_irq(&bio_cgroup_idr_lock);
-> +	idr_remove(&bio_cgroup_id, biog->id);
-> +	spin_unlock_irq(&bio_cgroup_idr_lock);
-> +
-> +	kfree(biog);
-> +}
-> +
-
-> +
-> +/* Determine the iocontext of the bio-cgroup that issued a given bio. */
-> +struct io_context *get_bio_cgroup_iocontext(struct bio *bio)
-> +{
-> +	struct bio_cgroup *biog = NULL;
-> +	struct io_context *ioc;
-> +	int	id = 0;
-> +
-> +	id = get_bio_cgroup_id(bio);
-> +	if (id)
-> +		biog = find_bio_cgroup(id);
-> +	if (!biog)
-> +		biog = &default_bio_cgroup;
-> +	ioc = biog->io_context;	/* default io_context for this cgroup */
-> +	atomic_inc(&ioc->refcount);
-> +	return ioc;
-> +}
-> +EXPORT_SYMBOL(get_bio_cgroup_iocontext);
-
-
-Thanks,
-Takuya Yoshikawa
+Index: linux-2.6/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid1.c
++++ linux-2.6/drivers/md/dm-raid1.c
+@@ -588,6 +588,9 @@ static void do_writes(struct mirror_set 
+ 	int state;
+ 	struct bio *bio;
+ 	struct bio_list sync, nosync, recover, *this_list = NULL;
++	struct bio_list requeue;
++	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
++	region_t region;
+ 
+ 	if (!writes->head)
+ 		return;
+@@ -598,10 +601,18 @@ static void do_writes(struct mirror_set 
+ 	bio_list_init(&sync);
+ 	bio_list_init(&nosync);
+ 	bio_list_init(&recover);
++	bio_list_init(&requeue);
+ 
+ 	while ((bio = bio_list_pop(writes))) {
+-		state = dm_rh_get_state(ms->rh,
+-					dm_rh_bio_to_region(ms->rh, bio), 1);
++		region = dm_rh_bio_to_region(ms->rh, bio);
++
++		if (log->type->is_remote_recovering &&
++		    log->type->is_remote_recovering(log, region)) {
++			bio_list_add(&requeue, bio);
++			continue;
++		}
++
++		state = dm_rh_get_state(ms->rh, region, 1);
+ 		switch (state) {
+ 		case DM_RH_CLEAN:
+ 		case DM_RH_DIRTY:
+@@ -621,6 +632,16 @@ static void do_writes(struct mirror_set 
+ 	}
+ 
+ 	/*
++	 * Add bios that are delayed due to remote recovery
++	 * back on to the write queue
++	 */
++	if (unlikely(requeue.head)) {
++		spin_lock_irq(&ms->lock);
++		bio_list_merge(&ms->writes, &requeue);
++		spin_unlock_irq(&ms->lock);
++	}
++
++	/*
+ 	 * Increment the pending counts for any regions that will
+ 	 * be written to (writes to recover regions are going to
+ 	 * be delayed).
+Index: linux-2.6/include/linux/dm-dirty-log.h
+===================================================================
+--- linux-2.6.orig/include/linux/dm-dirty-log.h
++++ linux-2.6/include/linux/dm-dirty-log.h
+@@ -113,6 +113,16 @@ struct dm_dirty_log_type {
+ 	 */
+ 	int (*status)(struct dm_dirty_log *log, status_type_t status_type,
+ 		      char *result, unsigned maxlen);
++
++	/*
++	 * is_remote_recovering is necessary for cluster mirroring. It provides
++	 * a way to detect recovery on another node, so we aren't writing
++	 * concurrently.  This function is likely to block (when a cluster log
++	 * is used).
++	 *
++	 * Returns: 0, 1
++	 */
++	int (*is_remote_recovering)(struct dm_dirty_log *log, region_t region);
+ };
+ 
+ int dm_dirty_log_type_register(struct dm_dirty_log_type *type);
