@@ -1,12 +1,15 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCHES] new solution for dm_any_congested crash
-Date: Thu, 13 Nov 2008 20:55:27 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0811132048040.17126@hs20-bc2-1.build.redhat.com>
+From: Takuya Yoshikawa <yoshikawa.takuya@oss.ntt.co.jp>
+Subject: Re: [PATCH 6/8] bio-cgroup: The body of bio-cgroup
+Date: Fri, 14 Nov 2008 16:01:37 +0900
+Message-ID: <491D2251.7010702@oss.ntt.co.jp>
+References: <20081113.121254.625859878544534829.ryov@valinux.co.jp>	<20081113.121322.653026525707351102.ryov@valinux.co.jp>	<20081113.121357.75173118738921642.ryov@valinux.co.jp>
+	<20081113.121433.632868945383117577.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="279731514-546810119-1226627668=:17126"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-ID: <Pine.LNX.4.64.0811132054360.17126@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20081113.121433.632868945383117577.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,274 +19,148 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>, Chandra Seetharaman <sekharan@us.ibm.com>
-Cc: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, dm-devel@redhat.com, agk@sourceware.org, xemul@openvz.org, fernando@oss.ntt.co.jp, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi,
 
---279731514-546810119-1226627668=:17126
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII
-Content-ID: <Pine.LNX.4.64.0811132054361.17126@hs20-bc2-1.build.redhat.com>
-
-Hi
-
-The Chandra's patch was correct, but the problem is more serious (the same 
-crash could happen in dm_merge_bvec, dm_unplug_all or at some other dm 
-places), so I had to rework reference counting.
-
-These are three patches.
-1. reverts Chadra's changes
-2. just a little swap of two calls, to prepare for the third
-3. the reference counting rework
-
-Chandra, please test the patches at your system (without your original 
-patch) and verify that they avoid the crashes as well as your patch does.
-
-Mikulas
---279731514-546810119-1226627668=:17126
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII;
-	NAME=dm-revert-avoid-destroying-table-in-dm_any_congested.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0811132054280.17126@hs20-bc2-1.build.redhat.com>
-Content-Description: 1. revert Chandra's patch
-Content-Disposition: ATTACHMENT;
-	FILENAME=dm-revert-avoid-destroying-table-in-dm_any_congested.patch
-
-UmV2ZXJ0IGRtLWF2b2lkLWRlc3Ryb3lpbmctdGFibGUtaW4tZG1fYW55X2Nv
-bmdlc3RlZC5wYXRjaA0KDQpUaGUgcGF0Y2ggaXMgY29ycmVjdCwgaG93ZXZl
-ciB0aGUgcHJvYmxlbSBpcyBtb3JlIHNlcmlvdXMuDQoNClRoZSBzYW1lIGxh
-enkgZGVzdHJ1Y3RvciBjYWxscyBjYW4gaGFwcGVuIGluIGRtX21lcmdlX2J2
-ZWMsDQpkbV91bnBsdWdfYWxsIGFuZCBpbiBtYW55IG90aGVyIGRldmljZSBt
-YXBwZXIgcGxhY2VzLiBTbywgYSBtb3JlDQpnZW5lcmFsaXplZCBzb2x1dGlv
-biBuZWVkcyB0byBiZSBkZXZlbG9wZWQuDQoNClNpZ25lZC1vZmYtYnk6IE1p
-a3VsYXMgUGF0b2NrYSA8bXBhdG9ja2FAcmVkaGF0LmNvbT4NCg0KLS0tDQog
-ZHJpdmVycy9tZC9kbS5jIHwgICAyNCArKysrKysrKy0tLS0tLS0tLS0tLS0t
-LS0NCiAxIGZpbGUgY2hhbmdlZCwgOCBpbnNlcnRpb25zKCspLCAxNiBkZWxl
-dGlvbnMoLSkNCg0KSW5kZXg6IGxpbnV4LTIuNi4yOC1yYzQtZGV2ZWwvZHJp
-dmVycy9tZC9kbS5jDQo9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQotLS0gbGlu
-dXgtMi42LjI4LXJjNC1kZXZlbC5vcmlnL2RyaXZlcnMvbWQvZG0uYwkyMDA4
-LTExLTE0IDAyOjM5OjM2LjAwMDAwMDAwMCArMDEwMA0KKysrIGxpbnV4LTIu
-Ni4yOC1yYzQtZGV2ZWwvZHJpdmVycy9tZC9kbS5jCTIwMDgtMTEtMTQgMDI6
-Mzk6MDkuMDAwMDAwMDAwICswMTAwDQpAQCAtOTQxLDI0ICs5NDEsMTYgQEAg
-c3RhdGljIHZvaWQgZG1fdW5wbHVnX2FsbChzdHJ1Y3QgcmVxdWVzdA0KIA0K
-IHN0YXRpYyBpbnQgZG1fYW55X2Nvbmdlc3RlZCh2b2lkICpjb25nZXN0ZWRf
-ZGF0YSwgaW50IGJkaV9iaXRzKQ0KIHsNCi0JaW50IHIgPSBiZGlfYml0czsN
-Ci0Jc3RydWN0IG1hcHBlZF9kZXZpY2UgKm1kID0gY29uZ2VzdGVkX2RhdGE7
-DQotCXN0cnVjdCBkbV90YWJsZSAqbWFwOw0KLQ0KLQlhdG9taWNfaW5jKCZt
-ZC0+cGVuZGluZyk7DQotDQotCWlmICghdGVzdF9iaXQoRE1GX0JMT0NLX0lP
-LCAmbWQtPmZsYWdzKSkgew0KLQkJbWFwID0gZG1fZ2V0X3RhYmxlKG1kKTsN
-Ci0JCWlmIChtYXApIHsNCi0JCQlyID0gZG1fdGFibGVfYW55X2Nvbmdlc3Rl
-ZChtYXAsIGJkaV9iaXRzKTsNCi0JCQlkbV90YWJsZV9wdXQobWFwKTsNCi0J
-CX0NCi0JfQ0KKwlpbnQgcjsNCisJc3RydWN0IG1hcHBlZF9kZXZpY2UgKm1k
-ID0gKHN0cnVjdCBtYXBwZWRfZGV2aWNlICopIGNvbmdlc3RlZF9kYXRhOw0K
-KwlzdHJ1Y3QgZG1fdGFibGUgKm1hcCA9IGRtX2dldF90YWJsZShtZCk7DQog
-DQotCWlmICghYXRvbWljX2RlY19yZXR1cm4oJm1kLT5wZW5kaW5nKSkNCi0J
-CS8qIG51ZGdlIGFueW9uZSB3YWl0aW5nIG9uIHN1c3BlbmQgcXVldWUgKi8N
-Ci0JCXdha2VfdXAoJm1kLT53YWl0KTsNCisJaWYgKCFtYXAgfHwgdGVzdF9i
-aXQoRE1GX0JMT0NLX0lPLCAmbWQtPmZsYWdzKSkNCisJCXIgPSBiZGlfYml0
-czsNCisJZWxzZQ0KKwkJciA9IGRtX3RhYmxlX2FueV9jb25nZXN0ZWQobWFw
-LCBiZGlfYml0cyk7DQogDQorCWRtX3RhYmxlX3B1dChtYXApOw0KIAlyZXR1
-cm4gcjsNCiB9DQogDQo=
-
---279731514-546810119-1226627668=:17126
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII;
-	NAME=dm-table-drop-reference-at-unbind.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0811132054281.17126@hs20-bc2-1.build.redhat.com>
-Content-Description: 2. drop reference in __unbind
-Content-Disposition: ATTACHMENT;
-	FILENAME=dm-table-drop-reference-at-unbind.patch
-
-U3dhcCB0aGVzZSB0d28gcmVmZXJlbmNlIGRlY3JlbWVudHMgLi4uIHNvIHRo
-YXQgdGhlIGxhc3QgcmVmZXJlbmNlIHRvDQp0aGUgdGFibGUgaXMgZHJvcHBl
-ZCBpbiBfX3VuYmluZC4NCg0KVGhpcyBpcyByZXF1aXJlZCBmb3IgdGhlIGZv
-bGxvd2luZyBwYXRjaCwNCmRtLXRhYmxlLXJld29yay1yZWZlcmVuY2UtY291
-bnRpbmcucGF0Y2gsIHdoaWNoIHdpbGwgY2hhbmdlIHRoZSBsb2dpYyBpbg0K
-c3VjaCBhIHdheSB0aGF0IHRhYmxlIGRlc3RydWN0b3IgaXMgY2FsbGVkIG9u
-bHkgYXQgc3BlY2lmaWMgcG9pbnRzIGluDQp0aGUgY29kZS4NCg0KU2lnbmVk
-LW9mZi1ieTogTWlrdWxhcyBQYXRvY2thIDxtcGF0b2NrYUByZWRoYXQuY29t
-Pg0KDQotLS0NCiBkcml2ZXJzL21kL2RtLmMgfCAgICAyICstDQogMSBmaWxl
-IGNoYW5nZWQsIDEgaW5zZXJ0aW9uKCspLCAxIGRlbGV0aW9uKC0pDQoNCklu
-ZGV4OiBsaW51eC0yLjYuMjgtcmM0LWRldmVsL2RyaXZlcnMvbWQvZG0uYw0K
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIGxpbnV4LTIuNi4yOC1yYzQt
-ZGV2ZWwub3JpZy9kcml2ZXJzL21kL2RtLmMJMjAwOC0xMS0xNCAwMjozOTow
-OS4wMDAwMDAwMDAgKzAxMDANCisrKyBsaW51eC0yLjYuMjgtcmM0LWRldmVs
-L2RyaXZlcnMvbWQvZG0uYwkyMDA4LTExLTE0IDAyOjQzOjEwLjAwMDAwMDAw
-MCArMDEwMA0KQEAgLTEzMjIsOCArMTMyMiw4IEBAIHZvaWQgZG1fcHV0KHN0
-cnVjdCBtYXBwZWRfZGV2aWNlICptZCkNCiAJCQlkbV90YWJsZV9wcmVzdXNw
-ZW5kX3RhcmdldHMobWFwKTsNCiAJCQlkbV90YWJsZV9wb3N0c3VzcGVuZF90
-YXJnZXRzKG1hcCk7DQogCQl9DQotCQlfX3VuYmluZChtZCk7DQogCQlkbV90
-YWJsZV9wdXQobWFwKTsNCisJCV9fdW5iaW5kKG1kKTsNCiAJCWZyZWVfZGV2
-KG1kKTsNCiAJfQ0KIH0NCg==
-
---279731514-546810119-1226627668=:17126
-Content-Type: TEXT/PLAIN; CHARSET=US-ASCII;
-	NAME=dm-table-rework-reference-counting.patch
-Content-Transfer-Encoding: BASE64
-Content-ID: <Pine.LNX.4.64.0811132054282.17126@hs20-bc2-1.build.redhat.com>
-Content-Description: 3. rework reference counting
-Content-Disposition: ATTACHMENT;
-	FILENAME=dm-table-rework-reference-counting.patch
-
-UmV3b3JrIHRhYmxlIHJlZmVyZW5jZSBjb3VudGluZy4NCg0KVGhlIGNvZGUg
-YmVmb3JlIHRoZSBwYXRjaCB1c2VzIGEgcmVmZXJlbmNlIGNvdW50ZXJzIG9u
-IGEgdGFibGUuIFdoZW4gdGhlDQpsYXN0IHJlZmVyZW5jZSBpcyBkcm9wcGVk
-IGFuZCB0aGUgY291bnRlciByZWFjaGVzIHplcm8sIHRoZSB0YWJsZQ0KZGVz
-dHJ1Y3RvciBpcyBjYWxsZWQuDQpUYWJsZSByZWZlcmVuY2UgY291bnRlcnMg
-YXJlIGFjcXVpcmVkL3JlbGVhc2VkIGZyb20gdXBjYWxscyBmcm9tIG90aGVy
-DQprZXJuZWwgY29kZSAoZG1fYW55X2Nvbmdlc3RlZCwgZG1fbWVyZ2VfYnZl
-YywgZG1fdW5wbHVnX2FsbCkuDQpJZiB0aGUgcmVmZXJlbmNlIGNvdW50ZXIg
-cmVhY2hlcyB6ZXJvIGluIG9uZSBvZiB0aGUgdXBjYWxscywgdGhlIHRhYmxl
-DQpkZXN0cnVjdG9yIGlzIGNhbGxlZCBmcm9tIGFsbW9zdCByYW5kb20ga2Vy
-bmVsIGNvZGUuDQoNClRoaXMgbGVhZHMgdG8gdmFyaW91cyBwcm9ibGVtczoN
-CiogZG1fYW55X2Nvbmdlc3RlZCBiZWluZyBjYWxsZWQgdW5kZXIgYSBzcGlu
-bG9jaywgd2hpY2ggY2FsbHMgdGhlDQogIGRlc3RydWN0b3IsIHdoaWNoIGNh
-bGxzIHNvbWUgc2xlZXBpbmcgZnVuY3Rpb24uDQoqIHRoZSBkZXN0cnVjdG9y
-IGF0dGVtcHRpbmcgdG8gdGFrZSBhIGxvY2sgdGhhdCBpcyBhbHJlYWR5IHRh
-a2VuIGJ5IHRoZQ0KICBzYW1lIHByb2Nlc3MuDQoqIHN0YWxlIHJlZmVyZW5j
-ZSBmcm9tIHNvbWUgb3RoZXIga2VybmVsIGNvZGUga2VlcHMgdGhlIHRhYmxl
-DQogIGNvbnN0cnVjdGVkLCB3aGljaCBrZWVwcyBzb21lIGRldmljZXMgb3Bl
-biwgZXZlbiBhZnRlciBzdWNjZXNzZnVsDQogIHJldHVybiBmcm9tICJkbXNl
-dHVwIHJlbW92ZSIuIFRoaXMgY2FuIGNvbmZ1c2UgbHZtIGFuZCBwcmV2ZW50
-IGNsb3NpbmcNCiAgb2YgdW5kZXJseWluZyBkZXZpY2VzIG9yIHJldXNpbmcg
-ZGV2aWNlIG1pbm9yIG51bWJlcnMuDQoNClRoZSBwYXRjaCBjaGFuZ2VzIHJl
-ZmVyZW5jZSBjb3VudGluZyBzbyB0aGF0IHRoZXJlIGlzIHRoZSB0YWJsZQ0K
-ZGVzdHJ1Y3RvciBjYW4gYmUgY2FsbGVkIG9ubHkgYXQgcHJlZGV0ZXJtaW5l
-ZCBwbGFjZXMuDQoNClRoZSB0YWJsZSBoYXMgYWx3YXlzIGV4YWN0bHkgb25l
-IHJlZmVyZW5jZSBmcm9tIGVpdGhlciBtYXBwZWRfZGV2aWNlLT5tYXANCm9y
-IGhhc2hfY2VsbC0+bmV3X21hcC4gVGhpcyByZWZlcmVuY2UgaXMgbm90IGNv
-dW50ZWQgaW4gdGFibGUtPmhvbGRlcnMuDQpBIHBhaXIgb2YgZG1fY3JlYXRl
-X3RhYmxlL2RtX2Rlc3Ryb3lfdGFibGUgZnVuY3Rpb25zIGlzIHVzZWQgZm9y
-IHRhYmxlDQpjcmVhdGlvbi9kZXN0cnVjdGlvbi4NCg0KVGVtcG9yYXJ5IHJl
-ZmVyZW5jZXMgZnJvbSB0aGUgb3RoZXIgY29kZSBpbmNyZWFzZSB0YWJsZS0+
-aG9sZGVycy4gQSBwYWlyDQpvZiBkbV90YWJsZV9nZXQvZG1fdGFibGVfcHV0
-IGZ1bmN0aW9ucyBpcyB1c2VkIHRvIG1hbmlwdWxhdGUgaXQuDQoNCldoZW4g
-dGhlIHRhYmxlIGlzIGFib3V0IHRvIGJlIGRlc3Ryb3llZCwgd2Ugd2FpdCBm
-b3IgdGFibGUtPmhvbGRlcnMgdG8NCnJlYWNoIDAuIFRoZW4sIHdlIGNhbGwg
-dGhlIHRhYmxlIGRlc3RydWN0b3IuDQoNClRoaXMgd2F5LCB0aGUgZGVzdHJ1
-Y3RvciBpcyBjYWxsZWQgb25seSBhdCBzcGVjaWZpYyBwb2ludA0KKGRtX3Rh
-YmxlX2Rlc3Ryb3kgZnVuY3Rpb24pIGFuZCB0aGUgYWJvdmUgcHJvYmxlbXMg
-YXNzb2NpYXRlZCB3aXRoIGxhenkNCmRlc3RydWN0aW5nIGNhbid0IGhhcHBl
-bi4NCg0KU2lnbmVkLW9mZi1ieTogTWlrdWxhcyBQYXRvY2thIDxtcGF0b2Nr
-YUByZWRoYXQuY29tPg0KDQotLS0NCiBkcml2ZXJzL21kL2RtLWlvY3RsLmMg
-fCAgIDEwICsrKystLS0tLS0NCiBkcml2ZXJzL21kL2RtLXRhYmxlLmMgfCAg
-IDI3ICsrKysrKysrKysrKysrKysrKysrKysrLS0tLQ0KIGRyaXZlcnMvbWQv
-ZG0uYyAgICAgICB8ICAgIDcgKysrKy0tLQ0KIGRyaXZlcnMvbWQvZG0uaCAg
-ICAgICB8ICAgIDEgKw0KIDQgZmlsZXMgY2hhbmdlZCwgMzIgaW5zZXJ0aW9u
-cygrKSwgMTMgZGVsZXRpb25zKC0pDQoNCkluZGV4OiBsaW51eC0yLjYuMjgt
-cmM0LWRldmVsL2RyaXZlcnMvbWQvZG0taW9jdGwuYw0KPT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PQ0KLS0tIGxpbnV4LTIuNi4yOC1yYzQtZGV2ZWwub3JpZy9k
-cml2ZXJzL21kL2RtLWlvY3RsLmMJMjAwOC0xMS0xNCAwMjozNjo0NS4wMDAw
-MDAwMDAgKzAxMDANCisrKyBsaW51eC0yLjYuMjgtcmM0LWRldmVsL2RyaXZl
-cnMvbWQvZG0taW9jdGwuYwkyMDA4LTExLTE0IDAyOjQzOjE0LjAwMDAwMDAw
-MCArMDEwMA0KQEAgLTIzMyw3ICsyMzMsNyBAQCBzdGF0aWMgdm9pZCBfX2hh
-c2hfcmVtb3ZlKHN0cnVjdCBoYXNoX2NlDQogCX0NCiANCiAJaWYgKGhjLT5u
-ZXdfbWFwKQ0KLQkJZG1fdGFibGVfcHV0KGhjLT5uZXdfbWFwKTsNCisJCWRt
-X3RhYmxlX2Rlc3Ryb3koaGMtPm5ld19tYXApOw0KIAlkbV9wdXQoaGMtPm1k
-KTsNCiAJZnJlZV9jZWxsKGhjKTsNCiB9DQpAQCAtODI3LDggKzgyNyw4IEBA
-IHN0YXRpYyBpbnQgZG9fcmVzdW1lKHN0cnVjdCBkbV9pb2N0bCAqcGENCiAN
-CiAJCXIgPSBkbV9zd2FwX3RhYmxlKG1kLCBuZXdfbWFwKTsNCiAJCWlmIChy
-KSB7DQorCQkJZG1fdGFibGVfZGVzdHJveShuZXdfbWFwKTsNCiAJCQlkbV9w
-dXQobWQpOw0KLQkJCWRtX3RhYmxlX3B1dChuZXdfbWFwKTsNCiAJCQlyZXR1
-cm4gcjsNCiAJCX0NCiANCkBAIC04MzYsOCArODM2LDYgQEAgc3RhdGljIGlu
-dCBkb19yZXN1bWUoc3RydWN0IGRtX2lvY3RsICpwYQ0KIAkJCXNldF9kaXNr
-X3JvKGRtX2Rpc2sobWQpLCAwKTsNCiAJCWVsc2UNCiAJCQlzZXRfZGlza19y
-byhkbV9kaXNrKG1kKSwgMSk7DQotDQotCQlkbV90YWJsZV9wdXQobmV3X21h
-cCk7DQogCX0NCiANCiAJaWYgKGRtX3N1c3BlbmRlZChtZCkpDQpAQCAtMTA4
-MCw3ICsxMDc4LDcgQEAgc3RhdGljIGludCB0YWJsZV9sb2FkKHN0cnVjdCBk
-bV9pb2N0bCAqcA0KIAl9DQogDQogCWlmIChoYy0+bmV3X21hcCkNCi0JCWRt
-X3RhYmxlX3B1dChoYy0+bmV3X21hcCk7DQorCQlkbV90YWJsZV9kZXN0cm95
-KGhjLT5uZXdfbWFwKTsNCiAJaGMtPm5ld19tYXAgPSB0Ow0KIAl1cF93cml0
-ZSgmX2hhc2hfbG9jayk7DQogDQpAQCAtMTEwOSw3ICsxMTA3LDcgQEAgc3Rh
-dGljIGludCB0YWJsZV9jbGVhcihzdHJ1Y3QgZG1faW9jdGwgKg0KIAl9DQog
-DQogCWlmIChoYy0+bmV3X21hcCkgew0KLQkJZG1fdGFibGVfcHV0KGhjLT5u
-ZXdfbWFwKTsNCisJCWRtX3RhYmxlX2Rlc3Ryb3koaGMtPm5ld19tYXApOw0K
-IAkJaGMtPm5ld19tYXAgPSBOVUxMOw0KIAl9DQogDQpJbmRleDogbGludXgt
-Mi42LjI4LXJjNC1kZXZlbC9kcml2ZXJzL21kL2RtLXRhYmxlLmMNCj09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT0NCi0tLSBsaW51eC0yLjYuMjgtcmM0LWRldmVs
-Lm9yaWcvZHJpdmVycy9tZC9kbS10YWJsZS5jCTIwMDgtMTEtMTQgMDI6MzY6
-NDUuMDAwMDAwMDAwICswMTAwDQorKysgbGludXgtMi42LjI4LXJjNC1kZXZl
-bC9kcml2ZXJzL21kL2RtLXRhYmxlLmMJMjAwOC0xMS0xNCAwMjo0MzoxNC4w
-MDAwMDAwMDAgKzAxMDANCkBAIC02MCw2ICs2MCwyMSBAQCBzdHJ1Y3QgZG1f
-dGFibGUgew0KIH07DQogDQogLyoNCisgKiBOZXcgdGFibGUgcmVmZXJlbmNl
-IHJ1bGVzOg0KKyAqDQorICogVGhlIHRhYmxlIGhhcyBhbHdheXMgZXhhY3Rs
-eSBvbmUgcmVmZXJlbmNlIGZyb20gZWl0aGVyIG1hcHBlZF9kZXZpY2UtPm1h
-cA0KKyAqIG9yIGhhc2hfY2VsbC0+bmV3X21hcC4gVGhpcyByZWZlcmVuY2Ug
-aXMgbm90IGNvdW50ZWQgaW4gdGFibGUtPmhvbGRlcnMuDQorICogQSBwYWly
-IG9mIGRtX2NyZWF0ZV90YWJsZS9kbV9kZXN0cm95X3RhYmxlIGZ1bmN0aW9u
-cyBpcyB1c2VkIGZvciB0YWJsZQ0KKyAqIGNyZWF0aW9uL2Rlc3RydWN0aW9u
-Lg0KKyAqDQorICogVGVtcG9yYXJ5IHJlZmVyZW5jZXMgZnJvbSB0aGUgb3Ro
-ZXIgY29kZSBpbmNyZWFzZSB0YWJsZS0+aG9sZGVycy4gQSBwYWlyDQorICog
-b2YgZG1fdGFibGVfZ2V0L2RtX3RhYmxlX3B1dCBmdW5jdGlvbnMgaXMgdXNl
-ZCB0byBtYW5pcHVsYXRlIGl0Lg0KKyAqDQorICogV2hlbiB0aGUgdGFibGUg
-aXMgYWJvdXQgdG8gYmUgZGVzdHJveWVkLCB3ZSB3YWl0IGZvciB0YWJsZS0+
-aG9sZGVycyB0bw0KKw0KKyAqLw0KKw0KKy8qDQogICogU2ltaWxhciB0byBj
-ZWlsaW5nKGxvZ19zaXplKG4pKQ0KICAqLw0KIHN0YXRpYyB1bnNpZ25lZCBp
-bnQgaW50X2xvZyh1bnNpZ25lZCBpbnQgbiwgdW5zaWduZWQgaW50IGJhc2Up
-DQpAQCAtMjIzLDcgKzIzOCw3IEBAIGludCBkbV90YWJsZV9jcmVhdGUoc3Ry
-dWN0IGRtX3RhYmxlICoqcmUNCiAJCXJldHVybiAtRU5PTUVNOw0KIA0KIAlJ
-TklUX0xJU1RfSEVBRCgmdC0+ZGV2aWNlcyk7DQotCWF0b21pY19zZXQoJnQt
-PmhvbGRlcnMsIDEpOw0KKwlhdG9taWNfc2V0KCZ0LT5ob2xkZXJzLCAwKTsN
-CiANCiAJaWYgKCFudW1fdGFyZ2V0cykNCiAJCW51bV90YXJnZXRzID0gS0VZ
-U19QRVJfTk9ERTsNCkBAIC0yNTMsMTAgKzI2OCwxNCBAQCBzdGF0aWMgdm9p
-ZCBmcmVlX2RldmljZXMoc3RydWN0IGxpc3RfaGVhDQogCX0NCiB9DQogDQot
-c3RhdGljIHZvaWQgdGFibGVfZGVzdHJveShzdHJ1Y3QgZG1fdGFibGUgKnQp
-DQordm9pZCBkbV90YWJsZV9kZXN0cm95KHN0cnVjdCBkbV90YWJsZSAqdCkN
-CiB7DQogCXVuc2lnbmVkIGludCBpOw0KIA0KKwl3aGlsZSAoYXRvbWljX3Jl
-YWQoJnQtPmhvbGRlcnMpKQ0KKwkJeWllbGQoKTsNCisJc21wX21iKCk7DQor
-DQogCS8qIGZyZWUgdGhlIGluZGV4ZXMgKHNlZSBkbV90YWJsZV9jb21wbGV0
-ZSkgKi8NCiAJaWYgKHQtPmRlcHRoID49IDIpDQogCQl2ZnJlZSh0LT5pbmRl
-eFt0LT5kZXB0aCAtIDJdKTsNCkBAIC0yOTQsOCArMzEzLDggQEAgdm9pZCBk
-bV90YWJsZV9wdXQoc3RydWN0IGRtX3RhYmxlICp0KQ0KIAlpZiAoIXQpDQog
-CQlyZXR1cm47DQogDQotCWlmIChhdG9taWNfZGVjX2FuZF90ZXN0KCZ0LT5o
-b2xkZXJzKSkNCi0JCXRhYmxlX2Rlc3Ryb3kodCk7DQorCXNtcF9tYl9fYmVm
-b3JlX2F0b21pY19kZWMoKTsNCisJYXRvbWljX2RlYygmdC0+aG9sZGVycyk7
-DQogfQ0KIA0KIC8qDQpJbmRleDogbGludXgtMi42LjI4LXJjNC1kZXZlbC9k
-cml2ZXJzL21kL2RtLmMNCj09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT0NCi0tLSBs
-aW51eC0yLjYuMjgtcmM0LWRldmVsLm9yaWcvZHJpdmVycy9tZC9kbS5jCTIw
-MDgtMTEtMTQgMDI6NDM6MTAuMDAwMDAwMDAwICswMTAwDQorKysgbGludXgt
-Mi42LjI4LXJjNC1kZXZlbC9kcml2ZXJzL21kL2RtLmMJMjAwOC0xMS0xNCAw
-Mjo0MzoxNC4wMDAwMDAwMDAgKzAxMDANCkBAIC0xMjA4LDEwICsxMjA4LDEx
-IEBAIHN0YXRpYyBpbnQgX19iaW5kKHN0cnVjdCBtYXBwZWRfZGV2aWNlICoN
-CiANCiAJX19zZXRfc2l6ZShtZCwgc2l6ZSk7DQogDQotCWlmIChzaXplID09
-IDApDQorCWlmIChzaXplID09IDApIHsNCisJCWRtX3RhYmxlX2Rlc3Ryb3ko
-dCk7DQogCQlyZXR1cm4gMDsNCisJfQ0KIA0KLQlkbV90YWJsZV9nZXQodCk7
-DQogCWRtX3RhYmxlX2V2ZW50X2NhbGxiYWNrKHQsIGV2ZW50X2NhbGxiYWNr
-LCBtZCk7DQogDQogCXdyaXRlX2xvY2soJm1kLT5tYXBfbG9jayk7DQpAQCAt
-MTIzMyw3ICsxMjM0LDcgQEAgc3RhdGljIHZvaWQgX191bmJpbmQoc3RydWN0
-IG1hcHBlZF9kZXZpYw0KIAl3cml0ZV9sb2NrKCZtZC0+bWFwX2xvY2spOw0K
-IAltZC0+bWFwID0gTlVMTDsNCiAJd3JpdGVfdW5sb2NrKCZtZC0+bWFwX2xv
-Y2spOw0KLQlkbV90YWJsZV9wdXQobWFwKTsNCisJZG1fdGFibGVfZGVzdHJv
-eShtYXApOw0KIH0NCiANCiAvKg0KSW5kZXg6IGxpbnV4LTIuNi4yOC1yYzQt
-ZGV2ZWwvZHJpdmVycy9tZC9kbS5oDQo9PT09PT09PT09PT09PT09PT09PT09
-PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
-DQotLS0gbGludXgtMi42LjI4LXJjNC1kZXZlbC5vcmlnL2RyaXZlcnMvbWQv
-ZG0uaAkyMDA4LTExLTE0IDAyOjM2OjQ1LjAwMDAwMDAwMCArMDEwMA0KKysr
-IGxpbnV4LTIuNi4yOC1yYzQtZGV2ZWwvZHJpdmVycy9tZC9kbS5oCTIwMDgt
-MTEtMTQgMDI6NDM6MTQuMDAwMDAwMDAwICswMTAwDQpAQCAtMzYsNiArMzYs
-NyBAQCBzdHJ1Y3QgZG1fdGFibGU7DQogLyotLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LQ0KICAqIEludGVybmFsIHRhYmxlIGZ1bmN0aW9ucy4NCiAgKi0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLSovDQordm9pZCBkbV90YWJsZV9kZXN0cm95KHN0cnVjdCBk
-bV90YWJsZSAqdCk7DQogdm9pZCBkbV90YWJsZV9ldmVudF9jYWxsYmFjayhz
-dHJ1Y3QgZG1fdGFibGUgKnQsDQogCQkJICAgICB2b2lkICgqZm4pKHZvaWQg
-KiksIHZvaWQgKmNvbnRleHQpOw0KIHN0cnVjdCBkbV90YXJnZXQgKmRtX3Rh
-YmxlX2dldF90YXJnZXQoc3RydWN0IGRtX3RhYmxlICp0LCB1bnNpZ25lZCBp
-bnQgaW5kZXgpOw0K
-
---279731514-546810119-1226627668=:17126
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Ryo Tsuruta wrote:
+>  
+> +void init_io_context(struct io_context *ioc)
+> +{
+> +	atomic_set(&ioc->refcount, 1);
+> +	atomic_set(&ioc->nr_tasks, 1);
+> +	spin_lock_init(&ioc->lock);
+> +	ioc->ioprio_changed = 0;
+> +	ioc->ioprio = 0;
+> +	ioc->last_waited = jiffies; /* doesn't matter... */
+> +	ioc->nr_batch_requests = 0; /* because this is 0 */
+> +	ioc->aic = NULL;
+> +	INIT_RADIX_TREE(&ioc->radix_root, GFP_ATOMIC | __GFP_HIGH);
+> +	INIT_HLIST_HEAD(&ioc->cic_list);
+> +	ioc->ioc_data = NULL;
+> +}
+> +
+>  struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
+>  {
+>  	struct io_context *ret;
+>  
+>  	ret = kmem_cache_alloc_node(iocontext_cachep, gfp_flags, node);
+> -	if (ret) {
+> -		atomic_set(&ret->refcount, 1);
+> -		atomic_set(&ret->nr_tasks, 1);
+> -		spin_lock_init(&ret->lock);
+> -		ret->ioprio_changed = 0;
+> -		ret->ioprio = 0;
+> -		ret->last_waited = jiffies; /* doesn't matter... */
+> -		ret->nr_batch_requests = 0; /* because this is 0 */
+> -		ret->aic = NULL;
+> -		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
+> -		INIT_HLIST_HEAD(&ret->cic_list);
+> -		ret->ioc_data = NULL;
+> -	}
+> +	if (ret)
+> +		init_io_context(ret);
+>  
+>  	return ret;
+>  }
 
 
---279731514-546810119-1226627668=:17126--
+> +
+> +/* Create a new bio-cgroup. */
+> +static struct cgroup_subsys_state *
+> +bio_cgroup_create(struct cgroup_subsys *ss, struct cgroup *cgrp)
+> +{
+> +	struct bio_cgroup *biog;
+> +	struct io_context *ioc;
+> +	int ret;
+> +
+> +	if (!cgrp->parent) {
+> +		biog = &default_bio_cgroup;
+> +		init_io_context(biog->io_context);
+> +		/* Increment the referrence count not to be released ever. */
+> +		atomic_inc(&biog->io_context->refcount);
+> +		idr_init(&bio_cgroup_id);
+> +		return &biog->css;
+> +	}
+> +
+> +	biog = kzalloc(sizeof(*biog), GFP_KERNEL);
+> +	ioc = alloc_io_context(GFP_KERNEL, -1);
+> +	if (!ioc || !biog) {
+> +		ret = -ENOMEM;
+> +		goto out_err;
+> +	}
+> +	biog->io_context = ioc;
+
+If I understand correctly io_contexts allocated by alloc_io_context() should
+be owned by some tasks. In this case, the newly created io_context has no
+owner though biog->io_context->nr_tasks == 1. With the cfq scheduler this may
+cause some problems especially when cic_free_func() is called because
+cfq_exit_io_context() would never be called. Am I wrong?
+
+> +retry:
+> +	if (!idr_pre_get(&bio_cgroup_id, GFP_KERNEL)) {
+> +		ret = -EAGAIN;
+> +		goto out_err;
+> +	}
+> +	spin_lock_irq(&bio_cgroup_idr_lock);
+> +	ret = idr_get_new_above(&bio_cgroup_id, (void *)biog, 1, &biog->id);
+> +	spin_unlock_irq(&bio_cgroup_idr_lock);
+> +	if (ret == -EAGAIN)
+> +		goto retry;
+> +	else if (ret)
+> +		goto out_err;
+> +
+> +	return &biog->css;
+> +out_err:
+> +	if (biog)
+> +		kfree(biog);
+> +	if (ioc)
+> +		put_io_context(ioc);
+> +	return ERR_PTR(ret);
+> +}
+> +
+> +/* Delete the bio-cgroup. */
+> +static void bio_cgroup_destroy(struct cgroup_subsys *ss, struct cgroup *cgrp)
+> +{
+> +	struct bio_cgroup *biog = cgroup_bio(cgrp);
+> +
+> +	put_io_context(biog->io_context);
+
+Here, I suspects what will happen under the following condition:
+biog->io_context->refcount: 1 --> 0
+biog->io_context->nr_tasks: 1 --> 1
+==> cfq_dtor() will be called but cfq_exit() has not be called yet.
+
+> +
+> +	spin_lock_irq(&bio_cgroup_idr_lock);
+> +	idr_remove(&bio_cgroup_id, biog->id);
+> +	spin_unlock_irq(&bio_cgroup_idr_lock);
+> +
+> +	kfree(biog);
+> +}
+> +
+
+> +
+> +/* Determine the iocontext of the bio-cgroup that issued a given bio. */
+> +struct io_context *get_bio_cgroup_iocontext(struct bio *bio)
+> +{
+> +	struct bio_cgroup *biog = NULL;
+> +	struct io_context *ioc;
+> +	int	id = 0;
+> +
+> +	id = get_bio_cgroup_id(bio);
+> +	if (id)
+> +		biog = find_bio_cgroup(id);
+> +	if (!biog)
+> +		biog = &default_bio_cgroup;
+> +	ioc = biog->io_context;	/* default io_context for this cgroup */
+> +	atomic_inc(&ioc->refcount);
+> +	return ioc;
+> +}
+> +EXPORT_SYMBOL(get_bio_cgroup_iocontext);
+
+
+Thanks,
+Takuya Yoshikawa
