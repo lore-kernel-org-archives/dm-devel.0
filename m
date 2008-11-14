@@ -1,46 +1,47 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [RFC][PATCH] Handle multipath paths in a path group properly
-	during pg_init (was "RE: DM does not activate the
-	paths if there are more than one path in path group during failover")
-Date: Fri, 14 Nov 2008 00:12:05 +0000
-Message-ID: <20081114001205.GQ30569@agk.fab.redhat.com>
-References: <1225944321.14830.1109.camel@chandra-ubuntu>
-	<E463DF2B2E584B4A82673F53D62C2EF45BE759CF@cosmail01.lsi.com>
-	<20081111005920.GN16649@agk.fab.redhat.com>
-	<E463DF2B2E584B4A82673F53D62C2EF45BE75B7F@cosmail01.lsi.com>
-	<1226620138.8998.64.camel@chandra-ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [dm-devel] [PATCH 1/8] dm-ioband: Introduction
+Date: Fri, 14 Nov 2008 10:38:28 +0900 (JST)
+Message-ID: <20081114.103828.737004071327928691.ryov@valinux.co.jp>
+References: <20081113.121146.623571555980959797.ryov@valinux.co.jp>
+	<491C81CB.7010705@cfl.rr.com>
+	<20081114.081840.114538392.taka@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1226620138.8998.64.camel@chandra-ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@us.ibm.com
-Cc: Mike Anderson <andmike@us.ibm.com>, device-mapper development <dm-devel@redhat.com>, Mike Christie <mchristi@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <xen-devel-bounces@lists.xensource.com>
+In-Reply-To: <20081114.081840.114538392.taka@valinux.co.jp>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: dm-devel@redhat.com, taka@valinux.co.jp
+Cc: xen-devel@lists.xensource.com, containers@lists.linux-foundation.org, linux-kernel@vger.kernel.org, virtualization@lists.linux-foundation.org, agk@sourceware.org, balbir@linux.vnet.ibm.com, psusi@cfl.rr.com, fernando@oss.ntt.co.jp, kamezawa.hiroyu@jp.fujitsu.com, xemul@openvz.org
 List-Id: dm-devel.ids
 
-On Thu, Nov 13, 2008 at 03:48:58PM -0800, Chandra Seetharaman wrote:
-> The problem reported by Moger Babu was caused due to the architectural
-> change made when we moved from dm hardware handler to SCSI hardware
-> handler.
- 
-pg_init is single initialisation for the group.
-It only needs to happen on one path.
+Hi Phillip,
 
-It sounds to me that what you're adding here is a *per-path* initialisation,
-something *separate* from (and additional to) the existing *per-group* pg_init.
+> > Ryo Tsuruta wrote:
+> > > Create two ioband devices "ioband1" and "ioband2". "ioband1" is mapped
+> > > to "/dev/sda1" and has a weight of 40. "ioband2" is mapped to "/dev/sda2"
+> > > and has a weight of 10. "ioband1" can use 80% --- 40/(40+10)*100 ---
+> > > of the bandwidth of the physical disk "/dev/sda" while "ioband2" can use 20%.
+> > 
+> > Just to clarify, when you say ioband1 can use 80% of the bandwidh, you 
+> > mean that is how much it will get if both io bands are loaded right?  If 
+> > there is no activity on ioband2, then ioband1 will get the full disk 
+> > bandwidth right?
+> 
+> Absolutely, you are right!
 
-Has this patch been tested on EMC?
+Here is a benchmark result of sharing bandwidth between three ioband
+devices. When there is no activity on ioband2, the total bandwidth of
+the disk is shared only between ioband1 and ioband3 according to their
+weights.
+http://people.valinux.co.jp/~ryov/dm-ioband/benchmark/partition1.html
 
-Alasdair
--- 
-agk@redhat.com
+--
+Ryo Tsuruta <ryov@valinux.co.jp>
