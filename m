@@ -1,10 +1,14 @@
-From: rrs@researchut.com
-Subject: [PATCH] Read the verbosity level from multipath.conf
-	configuration file
-Date: Thu, 20 Nov 2008 18:11:15 +0530
-Message-ID: <1227184875-20831-1-git-send-email-rsarraf@netapp.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [patch] multipath-tools weighted path priority routine
+Date: Fri, 21 Nov 2008 16:51:29 +0900
+Message-ID: <49266881.7030701@ct.jp.nec.com>
+References: <2118D41AB77C214BBF7D2330CD977BCF1BB3958036@GVW1162EXB.americas.hpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <2118D41AB77C214BBF7D2330CD977BCF1BB3958036@GVW1162EXB.americas.hpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,110 +18,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ritesh Raj Sarraf <rrs@researchut.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-From: Ritesh Raj Sarraf <rrs@researchut.com>
+Hi Vijayakumar,
 
-With this patch, multipathd can read the verbosity level from
-the multipath.conf configuration file.
-For example:
-verbosity       5
+Balasubramanian, Vijayakumar (STSD) wrote:
+> Hi,
+> 'Weighted path' is a new path prioritizer for device mapper multipath, where specific paths and the corresponding priority values can be provided as arguments.
+> This prioritizer assigns the priority value provided in the configuration file based on the comparison made between the specified paths and the path instance for which this is called. Paths can be specified as a regular expression of devname of the path or as hbtl information of the path.
+> 
+> Syntax:
+> weightedpath  <hbtl|devname> <regex1> <prio1> <regex2> <prio2> ...
+> 
+> Examples:
+> prio  "weightedpath hbtl 1:.:.:. 2 4:.:.:. 4"   #All paths through SCSI 'H' as '1' will take prio 2 and all paths with SCSI 'H' as 4 will take prio as 4.
+> prio  "weightedpath devname sda$ 10 sde$ 20"    #Path sda takes prio 10 and path sde takes prio 20. can be provided in multipath section.
+> 
+> 
+> This prioritizer allows user to set static load balancing for devices. Useful when user has prior knowledge of path performance difference or unavailability of certain paths.
 
-Signed-off-by: Ritesh Raj Sarraf <rrs@researchut.com>
----
- libmultipath/config.c      |    2 +-
- libmultipath/defaults.h    |    1 +
- libmultipath/dict.c        |   20 ++++++++++++++++++++
- multipath/multipath.conf.5 |    5 +++++
- 4 files changed, 27 insertions(+), 1 deletions(-)
+I think we can't specify a prefered path reliably in this way.
+Device name, host number, etc may vary for each system reboot.
+It's horrible to check and change the config file after every reboot.
+We should use more persistent name.
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 6d731d2..b49cc90 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -420,7 +420,7 @@ load_config (char * file)
- 	 * internal defaults
- 	 */
- 	if (!conf->verbosity)
--		conf->verbosity = 2;
-+		conf->verbosity = DEFAULT_VERBOSITY;
- 
- 	conf->dev_type = DEV_NONE;
- 	conf->minio = 1000;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 87b155e..a943673 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -11,6 +11,7 @@
- #define DEFAULT_NO_PATH_RETRY  NO_PATH_RETRY_UNDEF
- #define DEFAULT_PGTIMEOUT      -PGTIMEOUT_NONE
- #define DEFAULT_USER_FRIENDLY_NAMES    0
-+#define DEFAULT_VERBOSITY	2
- 
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 2429a93..9d26e9e 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -33,6 +33,17 @@ polling_interval_handler(vector strvec)
- }
- 
- static int
-+verbosity_handler(vector strvec)
-+{
-+	char * buff;
-+
-+	buff = VECTOR_SLOT(strvec, 1);
-+	conf->verbosity = atoi(buff);
-+
-+	return 0;
-+}
-+
-+static int
- udev_dir_handler(vector strvec)
- {
- 	conf->udev_dir = set_value(strvec);
-@@ -1316,6 +1327,14 @@ snprint_def_polling_interval (char * buff, int len, void * data)
- }
- 
- static int
-+snprint_def_verbosity (char * buff, int len, void * data)
-+{
-+	if (conf->checkint == DEFAULT_VERBOSITY)
-+		return 0;
-+	return snprintf(buff, len, "%i", conf->verbosity);
-+}
-+
-+static int
- snprint_def_udev_dir (char * buff, int len, void * data)
- {
- 	if (!conf->udev_dir)
-@@ -1549,6 +1568,7 @@ void
- init_keywords(void)
- {
- 	install_keyword_root("defaults", NULL);
-+	install_keyword("verbosity", &verbosity_handler, &snprint_def_verbosity);
- 	install_keyword("polling_interval", &polling_interval_handler, &snprint_def_polling_interval);
- 	install_keyword("udev_dir", &udev_dir_handler, &snprint_def_udev_dir);
- 	install_keyword("multipath_dir", &multipath_dir_handler, &snprint_def_multipath_dir);
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 39639dd..6c53d9d 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -74,6 +74,11 @@ interval between two path checks in seconds; default is
- directory where udev creates its device nodes; default is
- .I /dev
- .TP
-+.B verbosity
-+default verbosity. Higher values increase the verbosity level. Valid
-+levels are between 0 and 6; default is 2.
-+.I /dev
-+.TP
- .B selector
- The default path selector algorithm to use; they are offered by the
- kernel multipath target. The only currently implemented is
--- 
-1.5.6.5
+If you'd like to specify a prefered host, you may be able to use
+hosts's WWN like /sys/class/fc_host/host?/[node|port]_name.
+
+Thanks,
+Kiyoshi Ueda
