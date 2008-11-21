@@ -1,18 +1,13 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH] scsi_dh: Adding LSI vendor and product ids
-	in rdac device list
-Date: Mon, 24 Nov 2008 08:06:11 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45C92436A@cosmail01.lsi.com>
-References: <1225944321.14830.1109.camel@chandra-ubuntu>
-	<E463DF2B2E584B4A82673F53D62C2EF45BE75982@cosmail01.lsi.com>
-	<1227485085.25499.5.camel@localhost.localdomain>
+From: Ed Cashin <ecashin@coraid.com>
+Subject: Re: Sending reads/writes to a userspace program?
+Date: Fri, 21 Nov 2008 10:10:06 -0500
+Message-ID: <874p215d4h.fsf@coraid.com>
+References: <a01fc5d10705160353o582e074ep428d76d2a55ff39b@mail.gmail.com>
+	<m3fy5xyori.fsf@guaranine.beaverton.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1227485085.25499.5.camel@localhost.localdomain>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,52 +17,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: device-mapper development <dm-devel@redhat.com>, "andmike@linux.vnet.ibm.com" <andmike@linux.vnet.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Dan Smith <danms@us.ibm.com> writes:
 
-Thank You..  Will take care next time.
-
-Thanks
-Babu Moger
------Original Message-----
-From: James Bottomley [mailto:James.Bottomley@HansenPartnership.com]
-Sent: Sunday, November 23, 2008 6:05 PM
-To: Moger, Babu
-Cc: linux-scsi@vger.kernel.org; sekharan@us.ibm.com; andmike@linux.vnet.i=
-bm.com; device-mapper development
-Subject: Re: [PATCH] scsi_dh: Adding LSI vendor and product ids in rdac d=
-evice list
-
-On Mon, 2008-11-10 at 16:17 -0700, Moger, Babu wrote:
-> From: Babu Moger <babu.moger@lsi.com>
+> NJ> Does dm provide any way for a custom target type to redirect a read or
+> NJ> write to a userspace program? Or even for it to notify the program of
+> NJ> the read/write and wait until it gives the goahead, somewhat like the
+> NJ> way page faulting works? 
 >
-> This patch adds LSI vendor and product ids in rdac device handler.
+> I have been working on a userspace target, which allows you to do just
+> what you describe.  I have an hg tree up with some userspace tools, as
+> well as an out-of-body version of the kernel module:
 >
-> Signed-off-by: Babu Moger <Babu.Moger@lsi.com>
+>   http://static.danplanet.com/hg/dm-userspace.ring/
 >
-> ---
+> I also have an actual kernel tree with dm-userspace support, from
+> which I could generate a patch if the above does not work well for
+> you.
 >
-> --- linux-2.6.28-rc4/drivers/scsi/device_handler/scsi_dh_rdac.c.orig   =
- 2008-11-10 16:56:01.000000000 -0600
-> +++ linux-2.6.28-rc4/drivers/scsi/device_handler/scsi_dh_rdac.c 2008-11=
--10 16:56:20.000000000 -0600
-> @@ -594,6 +594,8 @@ static const struct scsi_dh_devlist rdac
->         {"SUN", "LCSM100_F"},
->         {"DELL", "MD3000"},
->         {"DELL", "MD3000i"},
-> +       {"LSI", "INF-01-00"},
-> +       {"ENGENIO", "INF-01-00"},
->         {NULL, NULL},
->  };
+> NJ> I'm wondering if it's possible to create a target type that
+> NJ> implements a 'remote' block device with blocks stored on something
+> NJ> like Amazon S3, keeping only a local cache of mapped blocks, and
+> NJ> fetching / writing blocks as needed.
+>
+> Yep, I have done similar things with dm-userspace.
 
-This patch is whitespace damaged.  Your tabs have been converted to
-spaces by your email tool.  I've fixed it up this time, since it was
-only two lines, but please see
+The dm-userspace target is very interesting to me because it would
+allow me to use block devices that were based on arbitrary and
+experimental aggregations of local and remote storage coordinated by a
+simple userland program.
 
-Documentation/email-clients.txt
+I see in the archives that there were some attempts to get
+dm-userspace into the mainline kernel by way of the development device
+mapper code, but I don't think there have been recent attempts to
+get dm-userspace merged.
 
-For hints on how to get your MUA to work with patches.
+Is there a problem with dm-userspace that is keeping it out of the
+mainline?  If not, can it be resubmitted?
 
-James
+-- 
+  Ed Cashin <ecashin@coraid.com>
