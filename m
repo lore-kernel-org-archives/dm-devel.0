@@ -1,10 +1,15 @@
 From: Ritesh Raj Sarraf <rrs@researchut.com>
-Subject: [PATCH] Read the verbosity level from multipath.conf
+Subject: Re: [PATCH] Read the verbosity level from multipath.conf
 	configuration file
-Date: Fri, 21 Nov 2008 16:24:30 +0530
-Message-ID: <1227264870-11910-1-git-send-email-rsarraf@netapp.com>
+Date: Fri, 21 Nov 2008 16:25:23 +0530
+Message-ID: <200811211625.36757.rrs@researchut.com>
+References: <1227184875-20831-1-git-send-email-rsarraf@netapp.com>
+	<49266A26.7040801@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============0801672920=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <49266A26.7040801@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,108 +19,59 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Ritesh Raj Sarraf <rsarraf@netapp.com>
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-With this patch, multipathd can read the verbosity level from
-the multipath.conf configuration file.
-For example:
-verbosity       5
+--===============0801672920==
+Content-Type: multipart/signed; boundary="nextPart1514379.Ytel810ICV";
+	protocol="application/pgp-signature"; micalg=pgp-sha1
+Content-Transfer-Encoding: 7bit
 
-Signed-off-by: Ritesh Raj Sarraf <rsarraf@netapp.com>
----
- libmultipath/config.c      |    2 +-
- libmultipath/defaults.h    |    1 +
- libmultipath/dict.c        |   20 ++++++++++++++++++++
- multipath/multipath.conf.5 |    5 +++++
- 4 files changed, 27 insertions(+), 1 deletions(-)
+--nextPart1514379.Ytel810ICV
+Content-Type: text/plain;
+  charset="iso-2022-jp"
+Content-Transfer-Encoding: quoted-printable
+Content-Disposition: inline
 
-diff --git a/libmultipath/config.c b/libmultipath/config.c
-index 6d731d2..b49cc90 100644
---- a/libmultipath/config.c
-+++ b/libmultipath/config.c
-@@ -420,7 +420,7 @@ load_config (char * file)
- 	 * internal defaults
- 	 */
- 	if (!conf->verbosity)
--		conf->verbosity = 2;
-+		conf->verbosity = DEFAULT_VERBOSITY;
- 
- 	conf->dev_type = DEV_NONE;
- 	conf->minio = 1000;
-diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
-index 87b155e..a943673 100644
---- a/libmultipath/defaults.h
-+++ b/libmultipath/defaults.h
-@@ -11,6 +11,7 @@
- #define DEFAULT_NO_PATH_RETRY  NO_PATH_RETRY_UNDEF
- #define DEFAULT_PGTIMEOUT      -PGTIMEOUT_NONE
- #define DEFAULT_USER_FRIENDLY_NAMES    0
-+#define DEFAULT_VERBOSITY	2
- 
- #define DEFAULT_CHECKINT	5
- #define MAX_CHECKINT(a)		(a << 2)
-diff --git a/libmultipath/dict.c b/libmultipath/dict.c
-index 2429a93..a6ec494 100644
---- a/libmultipath/dict.c
-+++ b/libmultipath/dict.c
-@@ -33,6 +33,17 @@ polling_interval_handler(vector strvec)
- }
- 
- static int
-+verbosity_handler(vector strvec)
-+{
-+	char * buff;
-+
-+	buff = VECTOR_SLOT(strvec, 1);
-+	conf->verbosity = atoi(buff);
-+
-+	return 0;
-+}
-+
-+static int
- udev_dir_handler(vector strvec)
- {
- 	conf->udev_dir = set_value(strvec);
-@@ -1316,6 +1327,14 @@ snprint_def_polling_interval (char * buff, int len, void * data)
- }
- 
- static int
-+snprint_def_verbosity (char * buff, int len, void * data)
-+{
-+	if (conf->verbosity == DEFAULT_VERBOSITY)
-+		return 0;
-+	return snprintf(buff, len, "%i", conf->verbosity);
-+}
-+
-+static int
- snprint_def_udev_dir (char * buff, int len, void * data)
- {
- 	if (!conf->udev_dir)
-@@ -1549,6 +1568,7 @@ void
- init_keywords(void)
- {
- 	install_keyword_root("defaults", NULL);
-+	install_keyword("verbosity", &verbosity_handler, &snprint_def_verbosity);
- 	install_keyword("polling_interval", &polling_interval_handler, &snprint_def_polling_interval);
- 	install_keyword("udev_dir", &udev_dir_handler, &snprint_def_udev_dir);
- 	install_keyword("multipath_dir", &multipath_dir_handler, &snprint_def_multipath_dir);
-diff --git a/multipath/multipath.conf.5 b/multipath/multipath.conf.5
-index 39639dd..6c53d9d 100644
---- a/multipath/multipath.conf.5
-+++ b/multipath/multipath.conf.5
-@@ -74,6 +74,11 @@ interval between two path checks in seconds; default is
- directory where udev creates its device nodes; default is
- .I /dev
- .TP
-+.B verbosity
-+default verbosity. Higher values increase the verbosity level. Valid
-+levels are between 0 and 6; default is 2.
-+.I /dev
-+.TP
- .B selector
- The default path selector algorithm to use; they are offered by the
- kernel multipath target. The only currently implemented is
--- 
-1.5.6.5
+On Friday 21 Nov 2008 13:28:30 Kiyoshi Ueda wrote:
+> > =1B(B?=1B(Bstatic int
+> > +snprint_def_verbosity (char * buff, int len, void * data)
+> > +{
+> > +=1B(B?????=1B(Bif (conf->checkint =3D=3D DEFAULT_VERBOSITY)
+>
+> Isn't it conf->verbosity?
+
+Thank you Kiyoshi. I'll be sending an updated patch.
+
+
+Ritesh
+=2D-=20
+Ritesh Raj Sarraf
+RESEARCHUT - http://www.researchut.com
+"Necessity is the mother of invention."
+
+
+--nextPart1514379.Ytel810ICV
+Content-Type: application/pgp-signature; name=signature.asc 
+Content-Description: This is a digitally signed message part.
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEABECAAYFAkkmk6IACgkQ4Rhi6gTxMLxZogCdHLrj/0h3GZMjIH9RMBtSegyQ
+vqwAoLQfCYVdBguZsVcQojejT7eV+Dlh
+=nzGz
+-----END PGP SIGNATURE-----
+
+--nextPart1514379.Ytel810ICV--
+
+
+--===============0801672920==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============0801672920==--
