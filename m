@@ -1,9 +1,11 @@
 From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 0/9] dm snapshot: shared exception store (v4)
-Date: Thu, 27 Nov 2008 01:17:30 +0900
-Message-ID: <1227716259-31952-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Subject: [PATCH 1/9] dm snapshot: make chunk_io handle any buffer
+Date: Thu, 27 Nov 2008 01:17:31 +0900
+Message-ID: <1227716259-31952-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+References: <1227716259-31952-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1227716259-31952-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,142 +19,64 @@ To: dm-devel@redhat.com
 Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-This is the fourth version of the shared exception store (based on
-Zumastor code). You can find the previous submissions:
+chunk_io() can perform I/Os only with ps->area. This patch adds a new
+argument (a pointer to a buffer) to chunk_io() so that it can performs
+I/Os with the buffer.
 
-https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
+Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+---
+ drivers/md/dm-exception-store.c |   11 ++++++-----
+ 1 files changed, 6 insertions(+), 5 deletions(-)
 
-https://www.redhat.com/archives/dm-devel/2008-August/msg00087.html
-
-https://www.redhat.com/archives/dm-devel/2008-October/msg00159.html
-
-Except for bug fixes, the major change since the previous version is
-fixing the disk endian (Zumastor simply uses the CPU endian for the
-disk format). The current code uses little endian for the disk format
-(I just slightly tested it with ppc64. It needs more tests, of
-course). I also modified the snapshot disk initialization code to
-reserve chunks for the journaling mechanism. I've not implemented the
-journaling mechanism but there is no need to change the disk format
-for that later.
-
-There are 9 patches and I modified only 7th patch (Zumastor shared
-snapshot code) since the last submission. IOW, I have not change the
-way to refactor the existing code. I'll think about how to integrate
-this with the existing code cleaner again but I think that the
-user-interface is far more important than how to integrate this with
-the existing in-kernel code. We don't want to change the
-user-interface after mainline mering while we can evolve (or clean up)
-the in-kernel structures any time (and it's not hard at all).
-
-For example, a way to handle the snapshots looks oK?
-
-- create one snapshot (the id is 0):
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 0
-
-- get the list of snapshots:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-(this means we have two snapshots, their IDs are 0 and 5).
-
-With Zumastor code, the maximum number of snapshots is 64 so the above
-interface to get the list would work, but it might not work well for
-an shared-exception-snapshot implementation that support tons of
-snapshots (which someone might implement in the future).
-
-Any opinions?
-
-
-The patches are available (against the latest Linus git tree):
-
-http://www.kernel.org/pub/linux/kernel/people/tomo/dm-snap/2008-11-26/
-
-If you like a git tree:
-
-git://git.kernel.org/pub/scm/linux/kernel/git/tomo/linux-2.6-misc.git dm-snap
-
-
-The following is the same instruction as the previous submission.
-
-=
-In this example, /dev/sda1 is used as an origin device and
-/dev/sdb1 is used as a cow device.
-
-- first, set up an origin and a cow:
-
-vine:/home/fujita# echo |dmesg create --notable work
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
-vine:/home/fujita# dmsetup resume work
-
-
-- confirm the current status:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin : no snapshot
-
-
-- create one snapshot (the id is 0):
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 0
-
-
-- see if the snapshot is created:
-
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 1 0
-
-
-- create one more snapshot (the id is 5) and see the result:
-
-vine:/home/fujita# dmsetup message work 0 snapshot create 5
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-Note that creating a snapshot just means that you store some
-information on the cow device. You don't create a device for it yet.
-
-
-- create a device to access to the snapshot #5
-
-vine:/home/fujita# echo |dmsetup create --notable snap5
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap /dev/sda1 5|dmsetup load snap5
-vine:/home/fujita# dmsetup resume snap5
-
-- confirm the current status:
-
-vine:/home/fujita# dmsetup status
-snap5: 0 268430022 s-snap Unknown
-work: 0 268430022 s-snap-origin 2 0 5
-
-
-- remove the devices after you play with them:
-
-vine:/home/fujita# dmsetup remove snap5
-vine:/home/fujita# dmsetup remove work
-vine:/home/fujita# dmsetup info
-No devices found
-
-
-- Again, setup the origin and the cow:
-
-vine:/home/fujita# echo |dmsetup create --notable work
-vine:/home/fujita# echo 0 `blockdev --getsize /dev/sda1` s-snap-origin /dev/sda1 /dev/sdb1 S 16|dmsetup load work
-vine:/home/fujita# dmsetup resume work
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 2 0 5
-
-Note that you have two snapshots that you created. You can play with
-them again after creating devices for them.
-
-
-- delete the 5th snapshot
-
-vine:/home/fujita# dmsetup message work 0 snapshot delete 5
-vine:/home/fujita# dmsetup status
-work: 0 268430022 s-snap-origin 1 0
-
-
-*) By default, dmsetup perfomrs multiple tasks. I uses dmsetup
-commands that issue a single ioctl to make things clear.
+diff --git a/drivers/md/dm-exception-store.c b/drivers/md/dm-exception-store.c
+index 01590f3..6c5ea26 100644
+--- a/drivers/md/dm-exception-store.c
++++ b/drivers/md/dm-exception-store.c
+@@ -188,7 +188,8 @@ static void do_metadata(struct work_struct *work)
+ /*
+  * Read or write a chunk aligned and sized block of data from a device.
+  */
+-static int chunk_io(struct pstore *ps, chunk_t chunk, int rw, int metadata)
++static int chunk_io(struct pstore *ps, chunk_t chunk, int rw, int metadata,
++		    void *data)
+ {
+ 	struct dm_io_region where = {
+ 		.bdev = ps->snap->cow->bdev,
+@@ -198,7 +199,7 @@ static int chunk_io(struct pstore *ps, chunk_t chunk, int rw, int metadata)
+ 	struct dm_io_request io_req = {
+ 		.bi_rw = rw,
+ 		.mem.type = DM_IO_VMA,
+-		.mem.ptr.vma = ps->area,
++		.mem.ptr.vma = data,
+ 		.client = ps->io_client,
+ 		.notify.fn = NULL,
+ 	};
+@@ -240,7 +241,7 @@ static int area_io(struct pstore *ps, int rw)
+ 
+ 	chunk = area_location(ps, ps->current_area);
+ 
+-	r = chunk_io(ps, chunk, rw, 0);
++	r = chunk_io(ps, chunk, rw, 0, ps->area);
+ 	if (r)
+ 		return r;
+ 
+@@ -297,7 +298,7 @@ static int read_header(struct pstore *ps, int *new_snapshot)
+ 	if (r)
+ 		return r;
+ 
+-	r = chunk_io(ps, 0, READ, 1);
++	r = chunk_io(ps, 0, READ, 1, ps->area);
+ 	if (r)
+ 		goto bad;
+ 
+@@ -359,7 +360,7 @@ static int write_header(struct pstore *ps)
+ 	dh->version = cpu_to_le32(ps->version);
+ 	dh->chunk_size = cpu_to_le32(ps->snap->chunk_size);
+ 
+-	return chunk_io(ps, 0, WRITE, 1);
++	return chunk_io(ps, 0, WRITE, 1, ps->area);
+ }
+ 
+ /*
+-- 
+1.5.5.GIT
