@@ -1,19 +1,15 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: [PATCH 9/9] dm snapshot: add shared_snapshot_target
-Date: Thu, 27 Nov 2008 01:17:39 +0900
-Message-ID: <1227716259-31952-10-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-References: <1227716259-31952-1-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-2-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-3-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-4-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-5-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-6-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-7-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-8-git-send-email-fujita.tomonori@lab.ntt.co.jp>
-	<1227716259-31952-9-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: RE: Temporarily squelching multipathd errors
+Date: Wed, 26 Nov 2008 12:43:18 -0500
+Message-ID: <20081126174317.GA19425@mars.virtualiron.com>
+References: <E154952FA1D141C18A9A128FEC40B34D@pitagora.it>
+	<65F9ACC78BD8304BAAEB817634C62D4C06EAFB63@AUSMAIL01.americas.ppdi.local>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1227716259-31952-9-git-send-email-fujita.tomonori@lab.ntt.co.jp>
+Content-Disposition: inline
+In-Reply-To: <65F9ACC78BD8304BAAEB817634C62D4C06EAFB63@AUSMAIL01.americas.ppdi.local>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,310 +19,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Signed-off-by: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
----
- drivers/md/dm-snap.c |  199 +++++++++++++++++++++++++++++++++++++++++++++-----
- 1 files changed, 181 insertions(+), 18 deletions(-)
+On Fri, Nov 21, 2008 at 01:54:01PM -0600, Daniel Keisling wrote:
+> I am still getting multipath errors when unpresenting and presenting
+> LUNs.  I've traced it down to getting path failures everytime I either
+> remove or add a LUN to the system.  The strange thing is that I get path
+> errors for maps that aren't related to the LUNs I am deleting or adding.
+> In this case, I am deleting the LUN with the map 'mpath18,' but other
+> maps complain whenever the LUN is deleted:
+> 
+> Nov 21 13:47:05 ausracdbd01 multipathd: checker failed path 67:208 in
+> map orabackup_hs
+> Nov 21 13:47:05 ausracdbd01 kernel: device-mapper: multipath: Failing
+> path 67:208.
+> Nov 21 13:47:08 ausracdbd01 multipathd: checker failed path 70:160 in
+> map mpath18
+> Nov 21 13:47:08 ausracdbd01 kernel: device-mapper: multipath: Failing
+> path 70:160.
+> Nov 21 13:47:09 ausracdbd01 multipathd: checker failed path 69:0 in map
+> orabackup_hs
+> Nov 21 13:47:09 ausracdbd01 kernel: device-mapper: multipath: Failing
+> path 69:0.
+> Nov 21 13:47:10 ausracdbd01 multipathd: checker failed path 65:192 in
+> map ph1d
+> Nov 21 13:47:10 ausracdbd01 kernel: device-mapper: multipath: Failing
+> path 65:192.
+> Nov 21 13:47:10 ausracdbd01 multipathd: checker failed path 65:224 in
+> map limsd
+> Nov 21 13:47:10 ausracdbd01 kernel: device-mapper: multipath: Failing
+> path 65:224.
+> Nov 21 13:47:10 ausracdbd01 multipathd: checker failed path 65:240 in
+> map limsd_arch
+> 
 
-diff --git a/drivers/md/dm-snap.c b/drivers/md/dm-snap.c
-index 967218c..010fcf7 100644
---- a/drivers/md/dm-snap.c
-+++ b/drivers/md/dm-snap.c
-@@ -1156,11 +1156,9 @@ static void snapshot_resume(struct dm_target *ti)
- 	up_write(&s->lock);
- }
- 
--static int snapshot_status(struct dm_target *ti, status_type_t type,
--			   char *result, unsigned int maxlen)
-+static int do_snapshot_status(struct dm_snapshot *snap, status_type_t type,
-+			      char *result, unsigned int maxlen, u64 snapid)
- {
--	struct dm_snapshot *snap = ti->private;
--
- 	switch (type) {
- 	case STATUSTYPE_INFO:
- 		if (!snap->valid)
-@@ -1186,16 +1184,31 @@ static int snapshot_status(struct dm_target *ti, status_type_t type,
- 		 * to make private copies if the output is to
- 		 * make sense.
- 		 */
--		snprintf(result, maxlen, "%s %s %c %llu",
--			 snap->origin->name, snap->cow->name,
--			 snap->type,
--			 (unsigned long long)snap->chunk_size);
-+		if (snap->type == 'S')
-+			snprintf(result, maxlen, "%s %s %c %llu %llu",
-+				 snap->origin->name, snap->cow->name,
-+				 snap->type,
-+				 (unsigned long long)snap->chunk_size,
-+				 (unsigned long long)snapid);
-+		else
-+			snprintf(result, maxlen, "%s %s %c %llu",
-+				 snap->origin->name, snap->cow->name,
-+				 snap->type,
-+				 (unsigned long long)snap->chunk_size);
- 		break;
- 	}
- 
- 	return 0;
- }
- 
-+static int snapshot_status(struct dm_target *ti, status_type_t type,
-+			   char *result, unsigned int maxlen)
-+{
-+	struct dm_snapshot *snap = ti->private;
-+
-+	return do_snapshot_status(snap, type, result, maxlen, 0);
-+}
-+
- /*-----------------------------------------------------------------
-  * Origin methods
-  *---------------------------------------------------------------*/
-@@ -1409,7 +1422,6 @@ static int origin_status(struct dm_target *ti, status_type_t type, char *result,
- /*
-  * shared exception origin code
-  */
--
- struct dm_shared_origin {
- 	struct dm_dev *origin;
- 
-@@ -1536,6 +1548,134 @@ static int shared_origin_message(struct dm_target *ti, unsigned argc,
- 	return snap->store.message(&snap->store, argc, argv);
- }
- 
-+/*
-+ * shared exception snapshot code
-+ */
-+
-+struct dm_shared_snapshot {
-+	struct dm_dev *origin;
-+
-+	struct dm_snapshot *snap;
-+	u64 snapid;
-+};
-+
-+/*
-+ * Construct a shared origin mapping: <origin_dev> <snapshot id>
-+ */
-+static int shared_snapshot_ctr(struct dm_target *ti, unsigned int argc,
-+			       char **argv)
-+{
-+	int r;
-+	struct dm_shared_origin *dso;
-+	struct dm_shared_snapshot *dss;
-+	struct dm_snapshot *origin_snap;
-+	struct dm_dev *dev;
-+	struct origin *o;
-+	u64 id;
-+
-+	if (argc != 2) {
-+		ti->error = "snapshot: incorrect number of arguments";
-+		return -EINVAL;
-+	}
-+
-+	dss = kzalloc(sizeof(*dss), GFP_KERNEL);
-+	if (!dss)
-+		return -ENOMEM;
-+
-+	id = simple_strtoul(argv[1], NULL, 10);
-+	if (id >= 64) {
-+		r = -EINVAL;
-+		ti->error = "Invalid snapid";
-+		goto out;
-+	}
-+
-+	r = dm_get_device(ti, argv[0], 0, ti->len, FMODE_READ, &dev);
-+	if (r) {
-+		ti->error = "Cannot get origin device";
-+		goto out;
-+	}
-+
-+	r = -EINVAL;
-+	down_read(&_origins_lock);
-+	o = __lookup_origin(dev->bdev);
-+	if (o && !list_empty(&o->snapshots)) {
-+		int nr;
-+		unsigned long map[DIV_ROUND_UP(MAX_SNAPSHOTS, BITS_PER_LONG)];
-+		struct exception_store *store;
-+
-+		memset(map, 0, sizeof(map));
-+
-+		origin_snap = list_first_entry(&o->snapshots,
-+					       struct dm_snapshot, list);
-+		store = &origin_snap->store;
-+		dso = origin_snap->ti->private;
-+
-+		down_write(&store->snap->lock);
-+		nr = store->get_snapshot_info(store, map, sizeof(map));
-+		up_write(&store->snap->lock);
-+
-+		if (test_bit(id, map)) {
-+			dm_table_get(origin_snap->ti->table);
-+			ti->private = dss;
-+			dss->snap = origin_snap;
-+			dss->snapid = id;
-+			dss->origin = dev;
-+
-+			ti->split_io = origin_snap->chunk_size;
-+			r = 0;
-+
-+			printk("%s %d: %lld\n", __FUNCTION__, __LINE__,
-+			       (unsigned long long)id);
-+
-+		} else {
-+			ti->error = "non-exist snapshot";
-+			r = -EINVAL;
-+		}
-+	}
-+	up_read(&_origins_lock);
-+
-+	if (r)
-+		dm_put_device(ti, dev);
-+out:
-+	if (r)
-+		kfree(dss);
-+
-+	return r;
-+}
-+
-+static void shared_snapshot_dtr(struct dm_target *ti)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	dm_table_put(dss->snap->ti->table);
-+	dm_put_device(ti, dss->origin);
-+	kfree(dss);
-+}
-+
-+static int shared_snapshot_map(struct dm_target *ti, struct bio *bio,
-+			       union map_info *map_context)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	return do_snapshot_map(dss->snap, bio, map_context, dss->snapid);
-+}
-+
-+static int shared_snapshot_end_io(struct dm_target *ti, struct bio *bio,
-+				  int error, union map_info *map_context)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	return do_snapshot_end_io(dss->snap, bio, error, map_context);
-+}
-+
-+static int shared_snapshot_status(struct dm_target *ti, status_type_t type,
-+				  char *result, unsigned int maxlen)
-+{
-+	struct dm_shared_snapshot *dss = ti->private;
-+
-+	return do_snapshot_status(dss->snap, type, result, maxlen, dss->snapid);
-+}
-+
- static struct target_type origin_target = {
- 	.name    = "snapshot-origin",
- 	.version = {1, 6, 0},
-@@ -1570,6 +1710,17 @@ static struct target_type shared_origin_target = {
- 	.message = shared_origin_message,
- };
- 
-+static struct target_type shared_snapshot_target = {
-+	.name    = "s-snap",
-+	.version = {1, 0, 0},
-+	.module  = THIS_MODULE,
-+	.ctr     = shared_snapshot_ctr,
-+	.dtr     = shared_snapshot_dtr,
-+	.map     = shared_snapshot_map,
-+	.end_io  = shared_snapshot_end_io,
-+	.status  = shared_snapshot_status,
-+};
-+
- static int __init dm_snapshot_init(void)
- {
- 	int r;
-@@ -1586,37 +1737,43 @@ static int __init dm_snapshot_init(void)
- 		goto bad1;
- 	}
- 
-+	r = dm_register_target(&shared_snapshot_target);
-+	if (r) {
-+		DMERR("shared snapshot target register failed %d", r);
-+		goto bad2;
-+	}
-+
- 	r = dm_register_target(&shared_origin_target);
- 	if (r) {
- 		DMERR("shared origin target register failed %d", r);
--		goto bad2;
-+		goto bad3;
- 	}
- 
- 	r = init_origin_hash();
- 	if (r) {
- 		DMERR("init_origin_hash failed.");
--		goto bad3;
-+		goto bad4;
- 	}
- 
- 	exception_cache = KMEM_CACHE(dm_snap_exception, 0);
- 	if (!exception_cache) {
- 		DMERR("Couldn't create exception cache.");
- 		r = -ENOMEM;
--		goto bad4;
-+		goto bad5;
- 	}
- 
- 	pending_cache = KMEM_CACHE(dm_snap_pending_exception, 0);
- 	if (!pending_cache) {
- 		DMERR("Couldn't create pending cache.");
- 		r = -ENOMEM;
--		goto bad5;
-+		goto bad6;
- 	}
- 
- 	tracked_chunk_cache = KMEM_CACHE(dm_snap_tracked_chunk, 0);
- 	if (!tracked_chunk_cache) {
- 		DMERR("Couldn't create cache to track chunks in use.");
- 		r = -ENOMEM;
--		goto bad6;
-+		goto bad7;
- 	}
- 
- 	ksnapd = create_singlethread_workqueue("ksnapd");
-@@ -1630,14 +1787,16 @@ static int __init dm_snapshot_init(void)
- 
-       bad_pending_pool:
- 	kmem_cache_destroy(tracked_chunk_cache);
--      bad6:
-+      bad7:
- 	kmem_cache_destroy(pending_cache);
--      bad5:
-+      bad6:
- 	kmem_cache_destroy(exception_cache);
--      bad4:
-+      bad5:
- 	exit_origin_hash();
--      bad3:
-+      bad4:
- 	dm_unregister_target(&shared_origin_target);
-+      bad3:
-+	dm_unregister_target(&shared_snapshot_target);
-       bad2:
- 	dm_unregister_target(&origin_target);
-       bad1:
-@@ -1659,6 +1818,10 @@ static void __exit dm_snapshot_exit(void)
- 	if (r)
- 		DMERR("origin unregister failed %d", r);
- 
-+	r = dm_unregister_target(&shared_snapshot_target);
-+	if (r)
-+		DMERR("shared snapshot unregister failed %d", r);
-+
- 	r = dm_unregister_target(&shared_origin_target);
- 	if (r)
- 		DMERR("shared origin unregister failed %d", r);
--- 
-1.5.5.GIT
+Can you attach the 'multipath -ll' output? Run the program before
+you delete/add the LUNs and after, please.
+
+How do you delete/add the LUNs? Are you re-using the LUN number, or are you
+actually deleting a LUN, deleting the block device as well, and then
+when adding (with a new LUN number higher than the deleted one), rescanning 
+the SCSI host channel to get the new block device for the LUN?
