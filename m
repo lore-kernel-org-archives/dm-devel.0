@@ -1,8 +1,8 @@
 From: Takahiro Yasui <tyasui@redhat.com>
-Subject: [RFC][PATCH 2/4] dm-log: unify rw_header to
-	read/write_header
-Date: Tue, 25 Nov 2008 19:01:39 -0500
-Message-ID: <492C91E3.5020700@redhat.com>
+Subject: [RFC][PATCH 4/4] dm-log: interface update for multiple
+	log devices
+Date: Tue, 25 Nov 2008 19:01:43 -0500
+Message-ID: <492C91E7.5030000@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-2022-JP
@@ -21,74 +21,184 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>, Masami Hiramatsu <mhiramat@redhat.com>
 List-Id: dm-devel.ids
 
-rw_header function updates three members of io_req data every time
-when I/O is processed. bi_rw and notify.fn are never modified once
-they get initialized, and also they can be set in advance.
-This patch removes unnecessary update operations.
+This patch introduces a new interface for multi-log devices. disk log
+has two interfaces, constructor and status, and disk_ctr function and
+disk_status functions are extended to handle multiple log device paths.
+
+ - Current interface
+
+    disk_ctr():
+        log_path region_size [[no]sync]
+
+    disk_status() - STATUSTYPE_INFO:
+        nr_params disk log_path log_status:"A" or "D"
+
+    disk_status() - STATUSTYPE_TABLE:
+        disk nr_params log_path region_size [[no]sync]
+
+
+ - Proposed interface
+
+    disk_ctr():
+        [log_path]{1,} region_size [[no]sync]
+
+    disk_status() - STATUSTYPE_INFO:
+        nr_params disk [log_path]{1,} [log_status:"A" or "D"]{1,}
+
+    disk_status() - STATUSTYPE_TABLE:
+        disk nr_params [log_path]{1,} region_size [[no]sync]
 
 
 Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
 ---
- drivers/md/dm-log.c |   23 +++++++++++------------
- 1 file changed, 11 insertions(+), 12 deletions(-)
+ drivers/md/dm-log.c   |   75 ++++++++++++++++++++++++++++++++++++++------------
+ drivers/md/dm-raid1.c |    2 -
+ 2 files changed, 59 insertions(+), 18 deletions(-)
 
 Index: linux-2.6.28-rc4/drivers/md/dm-log.c
 ===================================================================
 --- linux-2.6.28-rc4.orig/drivers/md/dm-log.c
 +++ linux-2.6.28-rc4/drivers/md/dm-log.c
-@@ -323,20 +323,13 @@ static void header_from_disk(struct log_
- 	core->nr_regions = le64_to_cpu(disk->nr_regions);
+@@ -11,7 +11,7 @@
+ #include <linux/vmalloc.h>
+ #include <linux/dm-io.h>
+ #include <linux/dm-dirty-log.h>
+-
++#include <linux/dm-kcopyd.h>
+ #include <linux/device-mapper.h>
+ 
+ #define DM_MSG_PREFIX "dirty region log"
+@@ -536,8 +536,40 @@ static size_t log_buffer_size(struct log
  }
  
--static int rw_header(struct log_c *lc, int rw)
--{
--	lc->io_req.bi_rw = rw;
--	lc->io_req.mem.ptr.vma = lc->disk_header;
--	lc->io_req.notify.fn = NULL;
--
--	return dm_io(&lc->io_req, 1, &lc->header_location, NULL);
--}
--
- static int read_header(struct log_c *log)
+ static int parse_params(unsigned int argc, char **argv,
+-			uint32_t *region_size, enum sync *sync)
++			unsigned int *nr_logs, uint32_t *region_size,
++			enum sync *sync)
  {
++	unsigned long tmp_region;
++	int i;
++
++	if (argc && nr_logs) {
++		/*
++		 * case of disk log
++		 *
++		 * find region_size param from the end as a number string
++		 * and get the number of log devices
++		 */
++		for (i = argc - 1; i >= 0; i--)
++			if (!strict_strtoul(argv[i], 10, &tmp_region))
++				break;
++
++		if (i < 0) {
++			DMWARN("invalid region size to dirty region log");
++			return -EINVAL;
++		}
++
++		/* limit the same number as mirror disk */
++		if (i < 1 || i > DM_KCOPYD_MAX_REGIONS + 1) {
++			DMWARN("Invalid number of dirty region log devices");
++			return -EINVAL;
++		}
++
++		*nr_logs = i;
++
++		argc -= i;
++		argv += i;
++	}
++
+ 	/*
+ 	 * check number of parameters
+ 	 */
+@@ -757,7 +789,7 @@ static int core_ctr(struct dm_dirty_log 
+ 	enum sync sync;
  	int r;
  
--	r = rw_header(log, READ);
-+	log->io_req.bi_rw = READ;
-+
-+	r = dm_io(&log->io_req, 1, &log->header_location, NULL);
+-	r = parse_params(argc, argv, &region_size, &sync);
++	r = parse_params(argc, argv, NULL, &region_size, &sync);
  	if (r)
  		return r;
  
-@@ -364,8 +357,8 @@ static int read_header(struct log_c *log
- 
- static inline int write_header(struct log_c *log)
- {
--	header_to_disk(&log->header, log->disk_header);
--	return rw_header(log, WRITE);
-+	log->io_req.bi_rw = WRITE;
-+	return dm_io(&log->io_req, 1, &log->header_location, NULL);
- }
- 
+@@ -786,26 +818,22 @@ static void core_dtr(struct dm_dirty_log
  /*----------------------------------------------------------------
-@@ -454,7 +447,10 @@ static int create_log_context(struct dm_
- 		buf_size = dm_round_up((LOG_OFFSET << SECTOR_SHIFT) +
- 				       bitset_size, ti->limits.hardsect_size);
- 		lc->header_location.count = buf_size >> SECTOR_SHIFT;
-+
- 		lc->io_req.mem.type = DM_IO_VMA;
-+		lc->io_req.mem.ptr.vma = lc->disk_header;
-+		lc->io_req.notify.fn = NULL;
- 		lc->io_req.client = dm_io_client_create(dm_div_up(buf_size,
- 								   PAGE_SIZE));
- 		if (IS_ERR(lc->io_req.client)) {
-@@ -636,6 +632,9 @@ static int disk_resume(struct dm_dirty_l
- 	/* set the correct number of regions in the header */
- 	lc->header.nr_regions = lc->region_count;
+  * disks log constructor/destructor
+  *
+- * argv contains log_device region_size followed optionally by [no]sync
++ * argv contains [log_path]{1,} region_size [[no]sync]
+  *--------------------------------------------------------------*/
+ static int disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
+ 		    unsigned int argc, char **argv)
+ {
+ 	struct log_c *lc;
++	unsigned int nr_logs;
+ 	uint32_t region_size;
+ 	enum sync sync;
+ 	int r;
  
-+	/* update disk headers */
-+	header_to_disk(&lc->header, lc->disk_header);
+-	if (!argc) {
+-		DMWARN("wrong number of arguments to dirty region log");
+-		return -EINVAL;
+-	}
+-
+-	r = parse_params(argc-1, argv+1, &region_size, &sync);
++	r = parse_params(argc, argv, &nr_logs, &region_size, &sync);
+ 	if (r)
+ 		return r;
+ 
+-	lc = create_log_context(ti, 1, region_size, sync);
++	lc = create_log_context(ti, nr_logs, region_size, sync);
+ 	if (!lc)
+ 		return -ENOMEM;
+ 
+@@ -1032,19 +1060,32 @@ static int core_status(struct dm_dirty_l
+ static int disk_status(struct dm_dirty_log *log, status_type_t status,
+ 		       char *result, unsigned int maxlen)
+ {
+-	int sz = 0;
+ 	struct log_c *lc = log->context;
++	char buffer[lc->nr_logs + 1];
++	unsigned int i;
++	int sz = 0;
++	int params;
+ 
+ 	switch(status) {
+ 	case STATUSTYPE_INFO:
+-		DMEMIT("3 %s %s %c", log->type->name, lc->log[0].dev->name,
+-		       lc->log[0].failed ? 'D' : 'A');
++		DMEMIT("%d %s ", lc->nr_logs + 2, log->type->name);
++		for (i = 0; i < lc->nr_logs; i++) {
++			DMEMIT("%s ", lc->log[i].dev->name);
++			buffer[i] = lc->log[i].failed ? 'D' : 'A';
++		}
++		buffer[i] = '\0';
++		DMEMIT("%s", buffer);
+ 		break;
+ 
+ 	case STATUSTYPE_TABLE:
+-		DMEMIT("%s %u %s %u ", log->type->name,
+-		       lc->sync == DEFAULTSYNC ? 2 : 3, lc->log[0].dev->name,
+-		       lc->region_size);
++		params = lc->nr_logs + 1;
++		params += (lc->sync == DEFAULTSYNC) ? 0 : 1;
++		DMEMIT("%s %d ", log->type->name, params);
 +
- 	/* write the new header */
- 	r = write_header(lc);
- 	if (r) {
++		for (i = 0; i < lc->nr_logs; i++)
++			DMEMIT("%s ", lc->log[i].dev->name);
++
++		DMEMIT("%u ", lc->region_size);
+ 		DMEMIT_SYNC;
+ 	}
+ 
+Index: linux-2.6.28-rc4/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.28-rc4.orig/drivers/md/dm-raid1.c
++++ linux-2.6.28-rc4/drivers/md/dm-raid1.c
+@@ -926,7 +926,7 @@ static int parse_features(struct mirror_
+  * [#features <features>]
+  *
+  * log_type is "core" or "disk"
+- * #log_params is between 1 and 3
++ * #log_params is more than 0
+  *
+  * If present, features must be "handle_errors".
+  */
