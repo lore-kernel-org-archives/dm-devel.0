@@ -1,16 +1,13 @@
-From: "aluno3@poczta.onet.pl" <aluno3@poczta.onet.pl>
-Subject: Re: Calltrace in dm-snapshot in 2.6.27 kernel
-Date: Fri, 28 Nov 2008 08:28:16 +0100
-Message-ID: <492F9D90.7020807@poczta.onet.pl>
-References: <48FC23DE.5040000@poczta.onet.pl>
-	<48FC4498.5070706@redhat.com>	<48FD7911.1000705@poczta.onet.pl>	<Pine.LNX.4.64.0810210953560.12983@hs20-bc2-1.build.redhat.com>	<48FDFF53.5080007@poczta.onet.pl>	<Pine.LNX.4.64.0810211319330.13319@hs20-bc2-1.build.redhat.com>	<48FE22A0.30005@poczta.onet.pl>	<Pine.LNX.4.64.0810211736230.24588@hs20-bc2-1.build.redhat.com>	<48FF2C91.4080401@poczta.onet.pl>	<Pine.LNX.4.64.0810221140440.28028@hs20-bc2-1.build.redhat.com>	<Pine.LNX.4.64.0810221238030.3985@hs20-bc2-1.build.redhat.com>	<4900603C.2090508@poczta.onet.pl>	<Pine.LNX.4.64.0810230938280.3939@hs20-bc2-1.build.redhat.com>	<4923CEF8.5060103@poczta.onet.pl>	<Pine.LNX.4.64.0811240550530.8466@hs20-bc2-1.build.redhat.com>
-	<492CFCDC.7050702@poczta.onet.pl>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re:Announce: unlimited number of shared snapshots
+Date: Fri, 28 Nov 2008 14:54:03 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0811281449520.6900@hs20-bc2-1.build.redhat.com>
+References: <492FAF1C.8080401@gluesys.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <492CFCDC.7050702@poczta.onet.pl>
+In-Reply-To: <492FAF1C.8080401@gluesys.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,383 +17,232 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: hgichon <kpkim@gluesys.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi
+Oh, sorry, there was a bug with big devices. I uploaded new patches at the 
+same location, try them. (there's another fix for bug when sector size is 
+smaller than chunk size in these new patches)
 
-More info about problem:
+BTW. for good performance, make sure that the size of your origin 
+partition is aligned to the chunk size --- otherwise, there's a serious 
+inefficiency in the kernel; if you use it over a partition with odd number 
+of sectors, the kernel will split all IOs to 512 bytes and it'll be very 
+slow.
 
-In my previous mail I wrote that I brought to call trace after a few
-minutes but without use "dm snapshot: fix primary_pe race"and "wait for
-chunks in destructor" of course and that one call trace ("after a few
-minutes") involve problem with  "wait for chunks in destructor".
+Mikulas
 
-But,yesterday I got next call trace:
-
-Pid: 25597, comm: kcopyd Not tainted (2.6.27.7 #47)
-EIP: 0060:[<c044d495>] EFLAGS: 00010282 CPU: 1
-EIP is at remove_exception+0x5/0x20
-EAX: c7b3d348 EBX: c7b3d348 ECX: 00200200 EDX: 00100100
-ESI: c799d770 EDI: ea6a99c0 EBP: 00000000 ESP: f26b5ec0
- DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
-Process kcopyd (pid: 25597, ti=f26b4000 task=f09e11f0 task.ti=f26b4000)
-Stack: c044e04f 0000000c 00000000 f1980c40 00000000 c044f313 001396a7 00000000
-       000013ba 00000000 c7b3dd88 ea6a99c0 00000000 c044e100 c7b3dd88 f30f7aa8
-       00000000 c0449234 00000000 f30f7b94 00000400 00000000 00000000 ea53fcb8
-Call Trace:
- [<c044e04f>] pending_complete+0x9f/0x110
- [<c044f313>] persistent_commit+0xe3/0x110
- [<c044e100>] copy_callback+0x30/0x40
- [<c0449234>] segment_complete+0x154/0x1d0
- [<c0448e65>] run_complete_job+0x45/0x80
- [<c04490e0>] segment_complete+0x0/0x1d0
- [<c0448e20>] run_complete_job+0x0/0x80
- [<c0449024>] process_jobs+0x14/0x70
- [<c0449080>] do_work+0x0/0x40
- [<c0449096>] do_work+0x16/0x40
- [<c013502d>] run_workqueue+0x4d/0xf0
- [<c013514d>] worker_thread+0x7d/0xc0
- [<c01382e0>] autoremove_wake_function+0x0/0x30
- [<c0526543>] __sched_text_start+0x1e3/0x4a0
- [<c01382e0>] autoremove_wake_function+0x0/0x30
- [<c0121a2b>] complete+0x2b/0x40
- [<c01350d0>] worker_thread+0x0/0xc0
- [<c0137db4>] kthread+0x44/0x70
- [<c0137d70>] kthread+0x0/0x70
- [<c0104c57>] kernel_thread_helper+0x7/0x10
- =======================
-Code: 4b 0c e8 cf ff ff ff 8b 56 08 8d 04 c2 8b 10 89 13 89 18 89 5a 04 89 43 
-04 5b 5e c3 8d 76 00 8d bc 27 00 00 00 00 8b 48 04 8b 10 <89> 11 89 4a 04 c7 
-00 00 01 10 00 c7 40 04 00 02 20 00 c3 90 8d
-EIP: [<c044d495>] remove_exception+0x5/0x20 SS:ESP 0068:f26b5ec0
----[ end trace 8a6182ef9a00114f ]---
-
-root@53434231:~# uname -a
-Linux 53434231 2.6.27.7 #47 SMP Tue Nov 25 08:57:37 CET 
-2008 i686 GNU/Linux
-
-
-root@53434231:~# addr2line -e ./vmlinux c044d495
-include/linux/list.h:93
-
-
-git log for my drivers/md/ show in order:
-
-dm snapshot: wait for chunks in destructor
-dm snapshot: fix register_snapshot deadlock
-dm snapshot: drop unused last_percent
-dm raid1: flush workqueue before destruction
-md: fix bug in raid10 recovery.
-md: linear: Fix a division by zero bug for very small arrays.
-dm snapshot: fix primary_pe race
-dm kcopyd: avoid queue shuffle
-md: Fix rdev_size_store with size == 0
-...
-
-
-
-
-
-aluno3@poczta.onet.pl wrote:
-> Hi
->
->
-> Yes, I am sure that I used 2.6.27.6. I checked it again.
->
-> When I tested 2.6.27 without "dm snapshot: fix primary_pe race" I
-> brought to call trace after a few minutes but with use "dm snapshot: fix
-> primary_pe race" bring to call trace is very hard.Sometimes even after a
-> few days test. I don`t have reproducible scenario :(. I tested kernel
-> with use Bacula, Rsync, LVM, Snapshot together and very heavy load.It
-> happened only 2 times through four weeks test.How can I help in this
-> case? Thanks and best
->
->
-> Mikulas Patocka wrote:
->   
->> Hi
->>
->> This was supposed to be fixed with "dm snapshot: fix primary_pe race" 
->> patch in 2.6.27.4. Are you sure that you really see it on 2.6.27.6? If so, 
->> it looks like the bug wasn't fixed yet.
->>
->> How often does it happen? Do you have some reproducible scenario for this 
->> bug?
->>
->> Mikulas
->>
->>   
->>     
->>> Hi 
->>>
->>> I tested kernel 2.6.27.6 with patch from 2.6.28rc (wait for chunks in destructor,fix register_snapshot deadlock,) and I identified next problem with kernel and dm but repeatability this problem is very small.I got call trace:
->>>
->>>
->>> Pid: 26230, comm: kcopyd Not tainted (2.6.27.6 #36)
->>> EIP: 0060:[<c044d485>] EFLAGS: 00010282 CPU: 1
->>> EIP is at remove_exception+0x5/0x20
->>> EAX: ca3b5908 EBX: ca3b5908 ECX: 00200200 EDX: 00100100
->>> ESI: f7b489f8 EDI: e92ad980 EBP: 00000000 ESP: f29c7ec0
->>> DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
->>> Process kcopyd (pid: 26230, ti=f29c6000 task=e8512430 task.ti=f29c6000)
->>> Stack: c044e03f 0000000d 00000000 c85948c0 00000000 c044f2e7 0009bc30
->>> 00000000
->>>       0000e705 00000000 e8e41288 e92ad980 00000000 c044e0f0 e8e41288
->>> c7800ec8
->>>       00000000 c0449224 00000000 c7800fb4 00000400 00000000 00000000
->>> f2bdfbb0
->>> Call Trace:
->>> [<c044e03f>] pending_complete+0x9f/0x110
->>> [<c044f2e7>] persistent_commit+0xc7/0x110
->>> [<c044e0f0>] copy_callback+0x30/0x40
->>> [<c0449224>] segment_complete+0x154/0x1d0
->>> [<c0448e55>] run_complete_job+0x45/0x80
->>> [<c04490d0>] segment_complete+0x0/0x1d0
->>> [<c0448e10>] run_complete_job+0x0/0x80
->>> [<c0449014>] process_jobs+0x14/0x70
->>> [<c0449070>] do_work+0x0/0x40
->>> [<c0449086>] do_work+0x16/0x40
->>> [<c013502d>] run_workqueue+0x4d/0xf0
->>> [<c013514d>] worker_thread+0x7d/0xc0
->>> [<c01382e0>] autoremove_wake_function+0x0/0x30
->>> [<c0526583>] __sched_text_start+0x1e3/0x4a0
->>> [<c01382e0>] autoremove_wake_function+0x0/0x30
->>> [<c0121a2b>] complete+0x2b/0x40
->>> [<c01350d0>] worker_thread+0x0/0xc0
->>> [<c0137db4>] kthread+0x44/0x70
->>> [<c0137d70>] kthread+0x0/0x70
->>> [<c0104c57>] kernel_thread_helper+0x7/0x10
->>> =======================
->>> Code: 4b 0c e8 cf ff ff ff 8b 56 08 8d 04 c2 8b 10 89 13 89 18 89 5a 04
->>> 89 43 04 5b 5e c3 8d 76 00 8d bc 27 00 00 00 00 8b 48 04 8b 10 <89> 11
->>> 89 4a 04 c7 00 00 01 10 00 c7 40 04 00 02 20 00 c3 90 8d
->>> EIP: [<c044d485>] remove_exception+0x5/0x20 SS:ESP 0068:f29c7ec0
->>> ---[ end trace 834a1d3742a1be05 ]---
->>>
->>>
->>>
->>> addr2line returned include/linux/list.h:93 for EIP c044d485:
->>>
->>>
->>> static inline void __list_del(struct list_head * prev, struct list_head
->>> * next)
->>> {
->>>         next->prev = prev;
->>>         prev->next = next;      //line 93
->>> }
->>>
->>>
->>>
->>>
->>> A few weeks ago I got similar call trace with plain kernel 2.6.27 and
->>> patches from mail thread:
->>>
->>>
->>> BUG: unable to handle kernel paging request at 00200200
->>> IP: [<c044bf65>] remove_exception+0x5/0x20
->>> *pdpt = 0000000029acc001 *pde = 0000000000000000
->>> Oops: 0002 [#1] SMP
->>> Modules linked in: iscsi_trgt mptctl mptbase st sg drbd bonding
->>> iscsi_tcp libiscsi scsi_transport_iscsi aacraid sata_nv forcedeth button
->>> ftdi_sio usbserial
->>>
->>> Pid: 31375, comm: kcopyd Not tainted (2.6.27 #21)
->>> EIP: 0060:[<c044bf65>] EFLAGS: 00010282 CPU: 1
->>> EIP is at remove_exception+0x5/0x20
->>> EAX: f276da88 EBX: f276da88 ECX: 00200200 EDX: 00100100
->>> ESI: c79a4a58 EDI: c9268cc0 EBP: 00000000 ESP: ecbcbec0
->>>  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
->>> Process kcopyd (pid: 31375, ti=ecbca000 task=e6d9d220 task.ti=ecbca000)
->>> Stack: c044cb1f 0000000e 00000000 c916b480 00000000 c044dde3 00018f47
->>> 00000000
->>>        00002870 00000000 c70cba48 c9268cc0 00000000 c044cbd0 c70cba48
->>> c720aec8
->>>        00000000 c0447d04 00000000 c720afb4 00000400 00000000 00000000
->>> efc65580
->>> Call Trace:
->>>  [<c044cb1f>] pending_complete+0x9f/0x110
->>>  [<c044dde3>] persistent_commit+0xe3/0x110
->>>  [<c044cbd0>] copy_callback+0x30/0x40
->>>  [<c0447d04>] segment_complete+0x154/0x1d0
->>>  [<c0447935>] run_complete_job+0x45/0x80
->>>  [<c0447bb0>] segment_complete+0x0/0x1d0
->>>  [<c04478f0>] run_complete_job+0x0/0x80
->>>  [<c0447af4>] process_jobs+0x14/0x70
->>>  [<c0447b50>] do_work+0x0/0x40
->>>  [<c0447b66>] do_work+0x16/0x40
->>>  [<c013509d>] run_workqueue+0x4d/0xf0
->>>  [<c01351bd>] worker_thread+0x7d/0xc0
->>>  [<c0138350>] autoremove_wake_function+0x0/0x30
->>>  [<c0524f2c>] __sched_text_start+0x1ec/0x4b0
->>>  [<c0138350>] autoremove_wake_function+0x0/0x30
->>>  [<c0121a9b>] complete+0x2b/0x40
->>>  [<c0135140>] worker_thread+0x0/0xc0
->>>  [<c0137e24>] kthread+0x44/0x70
->>>  [<c0137de0>] kthread+0x0/0x70
->>>  [<c0104c57>] kernel_thread_helper+0x7/0x10
->>>  =======================
->>> Code: 4b 0c e8 cf ff ff ff 8b 56 08 8d 04 c2 8b 10 89 13 89 18 89 5a 04
->>> 89 43 04 5b 5e c3 8d 76 00 8d bc 27 00 00 00 00 8b 48 04 8b 10 <89> 11
->>> 89 4a 04 c7 00 00 01 10 00 c7 40 04 00 02 20 00 c3 90 8d
->>> EIP: [<c044bf65>] remove_exception+0x5/0x20 SS:ESP 0068:ecbcbec0
->>> ---[ end trace 25afcedfe7eb0a2b ]---
->>>
->>> Is this known problem or something new? Thanks
->>>
->>>
->>> Mikulas Patocka wrote:
->>>     
->>>       
->>>> On Thu, 23 Oct 2008, aluno3@poczta.onet.pl wrote:
->>>>
->>>>   
->>>>       
->>>>         
->>>>> I used dm-snapshot-fix-primary-pe-race.patch and last patch related with
->>>>> pending_exception.After the same test and workload everything work
->>>>> correctly so far.Is it final patch?
->>>>>     
->>>>>         
->>>>>           
->>>> Yes, these two patches are expected to be the final fix. Thanks for the 
->>>> testing. If you get some more crashes even with these two, write about 
->>>> them.
->>>>
->>>> Mikulas
->>>>
->>>>   
->>>>       
->>>>         
->>>>> best and thanks
->>>>>
->>>>>
->>>>> Mikulas Patocka wrote:
->>>>>     
->>>>>         
->>>>>           
->>>>>> Oh, sorry for this "struct struct" in the patch in free_pending_exception, 
->>>>>> replace it just with one "struct". I forgot to refresh the patch before 
->>>>>> sending it.
->>>>>>
->>>>>> Mikulas
->>>>>>
->>>>>> On Wed, 22 Oct 2008, Mikulas Patocka wrote:
->>>>>>
->>>>>>   
->>>>>>       
->>>>>>           
->>>>>>             
->>>>>>> On Wed, 22 Oct 2008, aluno3@poczta.onet.pl wrote:
->>>>>>>
->>>>>>>     
->>>>>>>         
->>>>>>>             
->>>>>>>               
->>>>>>>> Hi
->>>>>>>>
->>>>>>>> I used your patch and I ran test the same workload. After a few hours
->>>>>>>> test, everything is OK. Is it possible? Test is still running.When I get
->>>>>>>> something wrong from kernel I write to You again.
->>>>>>>>       
->>>>>>>>           
->>>>>>>>               
->>>>>>>>                 
->>>>>>> Hi
->>>>>>>
->>>>>>> That's good that it works. So try this. Keep the first patch (it is this 
->>>>>>> one --- 
->>>>>>> http://people.redhat.com/mpatocka/patches/kernel/2.6.27/dm-snapshot-fix-primary-pe-race.patch 
->>>>>>> --- I think Milan already sent it to you and you have it applied). Undo 
->>>>>>> the second patch (that one that hides deallocation with /* */ ). And apply 
->>>>>>> this. Run the same test.
->>>>>>>
->>>>>>> Mikulas
->>>>>>>
->>>>>>> ---
->>>>>>>  drivers/md/dm-snap.c |   10 +++++++++-
->>>>>>>  drivers/md/dm-snap.h |    2 ++
->>>>>>>  2 files changed, 11 insertions(+), 1 deletion(-)
->>>>>>>
->>>>>>> Index: linux-2.6.27-clean/drivers/md/dm-snap.c
->>>>>>> ===================================================================
->>>>>>> --- linux-2.6.27-clean.orig/drivers/md/dm-snap.c	2008-10-22 15:41:24.000000000 +0200
->>>>>>> +++ linux-2.6.27-clean/drivers/md/dm-snap.c	2008-10-22 15:51:33.000000000 +0200
->>>>>>> @@ -368,6 +368,7 @@ static struct dm_snap_pending_exception 
->>>>>>>  	struct dm_snap_pending_exception *pe = mempool_alloc(s->pending_pool,
->>>>>>>  							     GFP_NOIO);
->>>>>>>  
->>>>>>> +	atomic_inc(&s->n_pending_exceptions);
->>>>>>>  	pe->snap = s;
->>>>>>>  
->>>>>>>  	return pe;
->>>>>>> @@ -375,7 +376,10 @@ static struct dm_snap_pending_exception 
->>>>>>>  
->>>>>>>  static void free_pending_exception(struct dm_snap_pending_exception *pe)
->>>>>>>  {
->>>>>>> -	mempool_free(pe, pe->snap->pending_pool);
->>>>>>> +	struct struct dm_snapshot *s = pe->snap;
->>>>>>> +	mempool_free(pe, s->pending_pool);
->>>>>>> +	smp_mb__before_atomic_dec();
->>>>>>> +	atomic_dec(&s->n_pending_exceptions);
->>>>>>>  }
->>>>>>>  
->>>>>>>  static void insert_completed_exception(struct dm_snapshot *s,
->>>>>>> @@ -601,6 +605,7 @@ static int snapshot_ctr(struct dm_target
->>>>>>>  	s->valid = 1;
->>>>>>>  	s->active = 0;
->>>>>>>  	s->last_percent = 0;
->>>>>>> +	atomic_set(&s->n_pending_exceptions, 0);
->>>>>>>  	init_rwsem(&s->lock);
->>>>>>>  	spin_lock_init(&s->pe_lock);
->>>>>>>  	s->ti = ti;
->>>>>>> @@ -727,6 +732,9 @@ static void snapshot_dtr(struct dm_targe
->>>>>>>  	/* After this returns there can be no new kcopyd jobs. */
->>>>>>>  	unregister_snapshot(s);
->>>>>>>  
->>>>>>> +	while (atomic_read(&s->n_pending_exceptions))
->>>>>>> +		yield();
->>>>>>> +
->>>>>>>  #ifdef CONFIG_DM_DEBUG
->>>>>>>  	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
->>>>>>>  		BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
->>>>>>> Index: linux-2.6.27-clean/drivers/md/dm-snap.h
->>>>>>> ===================================================================
->>>>>>> --- linux-2.6.27-clean.orig/drivers/md/dm-snap.h	2008-10-22 15:45:08.000000000 +0200
->>>>>>> +++ linux-2.6.27-clean/drivers/md/dm-snap.h	2008-10-22 15:46:49.000000000 +0200
->>>>>>> @@ -163,6 +163,8 @@ struct dm_snapshot {
->>>>>>>  
->>>>>>>  	mempool_t *pending_pool;
->>>>>>>  
->>>>>>> +	atomic_t n_pending_exceptions;
->>>>>>> +
->>>>>>>  	struct exception_table pending;
->>>>>>>  	struct exception_table complete;
->>>>>>>  
->>>>>>>
->>>>>>> --
->>>>>>> dm-devel mailing list
->>>>>>> dm-devel@redhat.com
->>>>>>> https://www.redhat.com/mailman/listinfo/dm-devel
->>>>>>>
->>>>>>>     
->>>>>>>         
->>>>>>>             
->>>>>>>               
->>>>>>   
->>>>>>       
->>>>>>           
->>>>>>             
->>>>   
->>>>       
->>>>         
->>   
->>     
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
->   
+> Hi Mikulas
+> Thanks for your job.
+> 
+> In my vmware ESXi guest OS (linux-2.6.28-rc5), the multisnap was crashed.
+> 
+> dd if=/dev/zero of=/dev/LD/snap bs=4096 count=1
+> echo 0 `blockdev --getsize /dev/mapper/LD-ori` multisnapshot
+> /dev/mapper/LD-ori /dev/mapper/LD-snap 4096|dmsetup create ms
+> 
+> [  298.050106] ------------[ cut here ]------------
+> [  298.050106] kernel BUG at drivers/md/dm-bufio.c:156!
+> [  298.050106] invalid opcode: 0000 [#1] SMP [  298.050106] last sysfs file:
+> /sys/block/sde/dev
+> [  298.050106] CPU 0 [  298.050106] Modules linked in: dm_multisnapshot
+> hangcheck_timer e1000 e1000e megaraid_sas megaraid_mbox megaraid_mm mptsas
+> mptspi mptscsih mptctl mptbase dm_mod scsi_transport_sas scsi_transport_spi
+> sd_mod
+> [  298.050106] Pid: 1759, comm: dmsetup Not tainted 2.6.28-rc5-1128 #1
+> [  298.050106] RIP: 0010:[<ffffffffa002dae4>]  [<ffffffffa002dae4>]
+> get_unclaimed_buffer+0xd4/0x130 [dm_mod]
+> [  298.050106] RSP: 0018:ffff8800165edb28  EFLAGS: 00010202
+> [  298.050106] RAX: 0000000000000004 RBX: ffff880016219f00 RCX:
+> ffff880016219f10
+> [  298.050106] RDX: 0000000000000902 RSI: 0000000000000001 RDI:
+> ffff880016219f40
+> [  298.050106] RBP: ffff88001624e000 R08: ffff88001624e000 R09:
+> ffff8800173ca000
+> [  298.050106] R10: 0000000000000003 R11: 0000000000000000 R12:
+> 0000000000000001
+> [  298.050106] R13: ffff88001624e000 R14: 000000000020c401 R15:
+> ffff88001624e020
+> [  298.050106] FS:  00007fd02c0356f0(0000) GS:ffffffff80658800(0000)
+> knlGS:0000000000000000
+> [  298.050106] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+> [  298.050106] CR2: 00007f47f4405590 CR3: 00000000160f6000 CR4:
+> 00000000000006a0
+> [  298.050106] DR0: 0000000000000000 DR1: 0000000000000000 DR2:
+> 0000000000000000
+> [  298.050106] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7:
+> 0000000000000400
+> [  298.050106] Process dmsetup (pid: 1759, threadinfo ffff8800165ec000, task
+> ffff880025174c20)
+> [  298.050106] Stack:
+> [  298.050106]  0000000000000000 ffff880016227000 ffff880016219f00
+> ffffffffa002deab
+> [  298.050106]  ffff88001624e860 ffff88001624e068 0000000000000286
+> ffff8800165edc18
+> [  298.050106]  0000000000000000 ffff880025174c20 ffffffff8022b950
+> 0000000000000000
+> [  298.050106] Call Trace:
+> [  298.050106]  [<ffffffffa002deab>] ? dm_bufio_new_read+0x2ab/0x2f0 [dm_mod]
+> [  298.050106]  [<ffffffff8022b950>] ? default_wake_function+0x0/0x10
+> [  298.050106]  [<ffffffffa00e0918>] ? multisnap_origin_ctr+0x4f8/0xc90
+> [dm_multisnapshot]
+> [  298.050106]  [<ffffffffa002932b>] ? dm_table_add_target+0x18b/0x3c0
+> [dm_mod]
+> [  298.050106]  [<ffffffffa002b2ff>] ? table_load+0xaf/0x210 [dm_mod]
+> [  298.050106]  [<ffffffff8027b28d>] ? __vmalloc_area_node+0xbd/0x130
+> [  298.050106]  [<ffffffffa002b250>] ? table_load+0x0/0x210 [dm_mod]
+> [  298.050106]  [<ffffffffa002c0d1>] ? dm_ctl_ioctl+0x251/0x2c0 [dm_mod]
+> [  298.050106]  [<ffffffff8029784f>] ? vfs_ioctl+0x2f/0xa0
+> [  298.050106]  [<ffffffff80297c00>] ? do_vfs_ioctl+0x340/0x470
+> [  298.050106]  [<ffffffff80297d79>] ? sys_ioctl+0x49/0x80
+> [  298.050106]  [<ffffffff8020c10b>] ? system_call_fastpath+0x16/0x1b
+> [  298.050106] Code: 54 a8 02 74 aa 45 85 e4 74 e9 f6 07 02 74 a0 b9 02 00 00
+> 00 48 c7 c2 20 d9 02 a0 be 01 00 00 00 e8 42 fe 4b e0 eb 88 0f 0b eb fe <0f>
+> 0b eb fe 31 db eb 84 45 85 e4 90 0f 84 60 ff ff ff b9 02 00 [  298.050106] RIP
+> [<ffffffffa002dae4>] get_unclaimed_buffer+0xd4/0x130 [dm_mod]
+> [  298.050106]  RSP <ffff8800165edb28>
+> [  298.218349] ---[ end trace 9642e91f49f4b2b1 ]---
+> #dmsetup ls
+> LD-snap	(254, 1)
+> LD-ori	(254, 0)
+> ms	(254, 2)
+> #ls /dev/mapper/
+> LD-ori   LD-snap  control 
+> #vgdisplay -v      Finding all volume groups
+>    Finding volume group "LD"
+>  --- Volume group ---
+>  VG Name               LD
+>  System ID              Format                lvm2
+>  Metadata Areas        8
+>  Metadata Sequence No  3
+>  VG Access             read/write
+>  VG Status             resizable
+>  MAX LV                0
+>  Cur LV                2
+>  Open LV               2
+>  Max PV                0
+>  Cur PV                4
+>  Act PV                4
+>  VG Size               53.98 GB
+>  PE Size               4.00 MB
+>  Total PE              13820
+>  Alloc PE / Size       13312 / 52.00 GB
+>  Free  PE / Size       508 / 1.98 GB
+>  VG UUID               r0hOuU-L4I0-V3Zy-hK10-TtJe-toBw-9BDpCY
+>    --- Logical volume ---
+>  LV Name                /dev/LD/ori
+>  VG Name                LD
+>  LV UUID                LXOLcd-oPdk-xXoq-ZmK6-B4Qd-z8y6-Vf1WZ8
+>  LV Write Access        read/write
+>  LV Status              available
+>  # open                 1
+>  LV Size                26.00 GB
+>  Current LE             6656
+>  Segments               1
+>  Allocation             inherit
+>  Read ahead sectors     auto
+>  - currently set to     256
+>  Block device           254:0
+>    --- Logical volume ---
+>  LV Name                /dev/LD/snap
+>  VG Name                LD
+>  LV UUID                MlgpYW-AbNZ-7DMd-BEmc-RNiz-wmsa-vNiq1m
+>  LV Write Access        read/write
+>  LV Status              available
+>  # open                 1
+>  LV Size                26.00 GB
+>  Current LE             6656
+>  Segments               4
+>  Allocation             inherit
+>  Read ahead sectors     auto
+>  - currently set to     256#vgdisplay -v      Finding all volume groups
+>    Finding volume group "LD"
+>  --- Volume group ---
+>  VG Name               LD
+>  System ID              Format                lvm2
+>  Metadata Areas        8
+>  Metadata Sequence No  3
+>  VG Access             read/write
+>  VG Status             resizable
+>  MAX LV                0
+>  Cur LV                2
+>  Open LV               2
+>  Max PV                0
+>  Cur PV                4
+>  Act PV                4
+>  VG Size               53.98 GB
+>  PE Size               4.00 MB
+>  Total PE              13820
+>  Alloc PE / Size       13312 / 52.00 GB
+>  Free  PE / Size       508 / 1.98 GB
+>  VG UUID               r0hOuU-L4I0-V3Zy-hK10-TtJe-toBw-9BDpCY
+>    --- Logical volume ---
+>  LV Name                /dev/LD/ori
+>  VG Name                LD
+>  LV UUID                LXOLcd-oPdk-xXoq-ZmK6-B4Qd-z8y6-Vf1WZ8
+>  LV Write Access        read/write
+>  LV Status              available
+>  # open                 1
+>  LV Size                26.00 GB
+>  Current LE             6656
+>  Segments               1
+>  Allocation             inherit
+>  Read ahead sectors     auto
+>  - currently set to     256
+>  Block device           254:0
+>    --- Logical volume ---
+>  LV Name                /dev/LD/snap
+>  VG Name                LD
+>  LV UUID                MlgpYW-AbNZ-7DMd-BEmc-RNiz-wmsa-vNiq1m
+>  LV Write Access        read/write
+>  LV Status              available
+>  # open                 1
+>  LV Size                26.00 GB
+>  Current LE             6656
+>  Segments               4
+>  Allocation             inherit
+>  Read ahead sectors     auto
+>  - currently set to     256
+>  Block device           254:1
+>    --- Physical volumes ---
+>  PV Name               /dev/sda      PV UUID
+> lc8iKg-WrqG-XWyL-t6TW-TtPj-HQn1-pgbtku
+>  PV Status             allocatable
+>  Total PE / Free PE    7679 / 508
+>    PV Name               /dev/sdc      PV UUID
+> bbHAWq-adBj-ACcU-5Bp6-LM2Y-r5M6-9ncvGc
+>  PV Status             allocatable
+>  Total PE / Free PE    2047 / 0
+>    PV Name               /dev/sdd      PV UUID
+> 5B7gOQ-KKuk-XtHm-6FSr-11Q4-2p7y-lr2xGP
+>  PV Status             allocatable
+>  Total PE / Free PE    2047 / 0
+>    PV Name               /dev/sde      PV UUID
+> kXUvPh-gsVN-oQln-CiMu-XdR2-C1Xd-DgLtjb
+>  PV Status             allocatable
+>  Total PE / Free PE    2047 / 0
+> 
+>  Block device           254:1
+>    --- Physical volumes ---
+>  PV Name               /dev/sda      PV UUID
+> lc8iKg-WrqG-XWyL-t6TW-TtPj-HQn1-pgbtku
+>  PV Status             allocatable
+>  Total PE / Free PE    7679 / 508
+>    PV Name               /dev/sdc      PV UUID
+> bbHAWq-adBj-ACcU-5Bp6-LM2Y-r5M6-9ncvGc
+>  PV Status             allocatable
+>  Total PE / Free PE    2047 / 0
+>    PV Name               /dev/sdd      PV UUID
+> 5B7gOQ-KKuk-XtHm-6FSr-11Q4-2p7y-lr2xGP
+>  PV Status             allocatable
+>  Total PE / Free PE    2047 / 0
+>    PV Name               /dev/sde      PV UUID
+> kXUvPh-gsVN-oQln-CiMu-XdR2-C1Xd-DgLtjb
+>  PV Status             allocatable
+>  Total PE / Free PE    2047 / 0
+> 
+> What's wrong with my test?
+> 
+> best regards
+> 
