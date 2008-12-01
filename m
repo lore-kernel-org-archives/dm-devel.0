@@ -1,16 +1,16 @@
-From: Herbert Xu <herbert@gondor.apana.org.au>
-Subject: Re: Re: next-20081125: crypto hard disk gets unaccessable
-Date: Mon, 1 Dec 2008 12:57:49 +0800
-Message-ID: <20081201045749.GA18292@gondor.apana.org.au>
-References: <20081128063355.GA4700@denkbrett.schottelius.org>
-	<20081129192939.925275f0.akpm@linux-foundation.org>
-	<49332CC6.4080606@redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
+Date: Mon, 01 Dec 2008 02:00:54 -0500
+Message-ID: <49338BA6.3010809@redhat.com>
+References: <492C91DF.7040507@redhat.com>
+	<492D9BDB.5010001@cfl.rr.com>	<492E514F.2080007@redhat.com>
+	<49304F41.2060205@cfl.rr.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <49332CC6.4080606@redhat.com>
+In-Reply-To: <49304F41.2060205@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,29 +20,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Milan Broz <mbroz@redhat.com>
-Cc: Christophe Saout <christophe@saout.de>, Nico -telmich- Schottelius <nico-linux-next@schottelius.org>, LKML <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, linux-next@vger.kernel.org, linux-crypto@vger.kernel.org, Herbert@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Dec 01, 2008 at 01:16:06AM +0100, Milan Broz wrote:
+Phillip Susi wrote:
+> Takahiro Yasui wrote:
+>> bitmap data on a log disk indicates if each region are "clean" or "dirty"
+>> among mirror disks. If a bit related to a region is "1", it means that
+>> the region is "clean" and data in the region is synchronized in all mirror
+>> disks and they store the same data in the region. On the other hand,
+>> if a bit related to a region is "0", the region is "dirty" and the region
+>> is out of synchronization. It means that each mirror disk might contain
+>> different data in the region.
+>>
+>> Therefore, a log disk contains a state of each region, but does not
+>> correspond to a specific mirror device.
+>>
+>> This patch set introduces redundant log disk on dm-mirror.
+> 
+> Right... and when recording a log on every disk in the mirror, each copy
+> of the log may not contain exactly the same information at any given
+> time.  If you write to one disk in the mirror first, then you need to
+> mark the region as dirty on that disk first, so that if the system
+> crashes before you can copy the data to the other mirror, you can see
+> that the first disk is more up to date than the second disk.
+> 
+> In other words, knowing that a region is or is not synchronized across
+> each disk is not enough; if they are out of sync you need to figure out
+> which disk has the most current information so it can be replicated to
+> the others, don't you?
 >
-> > [69186.618468]  [<ffffffffa027226a>] ? crypto_cbc_encrypt+0xfa/0x15a [cbc]
-> > [69186.618481]  [<ffffffffa0285705>] ? aes_encrypt+0x0/0x7 [aes_x86_64]
-> > [69186.618494]  [<ffffffffa020667d>] ? async_encrypt+0x35/0x3a [crypto_blkcipher]
-> > [69186.618509]  [<ffffffffa0269a6f>] ? crypt_convert+0x1d2/0x253 [dm_crypt]
-> > [69186.618522]  [<ffffffffa0269ed6>] ? kcryptd_crypt+0x3e6/0x407 [dm_crypt]
-> > [69186.618533]  [<ffffffffa0269af0>] ? kcryptd_crypt+0x0/0x407 [dm_crypt]
-> 
-> I assume that crypto run here synchronously (not through asynchronous completion callback).
-> 
-> Herbert - is my guess ok? (The asynchronous handling in dm-crypt was the only part changed recently.)
-> (And I think that except crypto hw nobody uses asynchronous mode yet by default.)
+> Or do you just always write to the first disk first, and assume it has
+> the most recent data if the region was marked as dirty in ANY of the logs?
 
-Yes that's definitely synchronous.
+log disks are updated in parallel and we do not know which disk has the
+latest and correct data if the system crashes during write operations
+on log devices. But there is no problem about it.
 
-Cheers,
--- 
-Visit Openswan at http://www.openswan.org/
-Email: Herbert Xu ~{PmV>HI~} <herbert@gondor.apana.org.au>
-Home Page: http://gondor.apana.org.au/~herbert/
-PGP Key: http://gondor.apana.org.au/~herbert/pubkey.txt
+There are two cases we need to think about.
+
+1) Some log devices contain "clean", but mirror devices are not synchronized
+
+This case is problematic, but never happens, because data is written on
+mirror devices after marking log devices "dirty", and make it "clean"
+after write I/Os on mirror devices completed and mirrors get synchronized.
+
+2) Some log devices contain "dirty", but mirror devices are synchronized
+
+This case may happen but is not problematic. Just data replication of
+the region among mirror devices will be done when the mirror is resumed.
+This case would also happen on the system with the current single log if
+the system crashes after marking a log device "dirty" and before marking
+it back to "clean".
+
+Thanks,
+---
+Takahiro Yasui
+Hitachi Computer Products (America) Inc.
