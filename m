@@ -1,54 +1,47 @@
-From: Phillip Susi <psusi@cfl.rr.com>
-Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
-Date: Mon, 1 Dec 2008 11:10:01 -0500
-Message-ID: <49340C59.4070504@cfl.rr.com>
-References: <492C91DF.7040507@redhat.com>	<492D9BDB.5010001@cfl.rr.com>	<492E514F.2080007@redhat.com>	<49304F41.2060205@cfl.rr.com>
-	<49338BA6.3010809@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Nico -telmich- Schottelius <nico-linux-next@schottelius.org>
+Subject: Re: next-20081125: crypto hard disk gets unaccessable
+Date: Mon, 1 Dec 2008 18:35:28 +0100
+Message-ID: <20081201173528.GD8005@denkbrett.schottelius.org>
+References: <20081128063355.GA4700@denkbrett.schottelius.org> <20081129192939.925275f0.akpm@linux-foundation.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-2022-JP"
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49338BA6.3010809@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="rz+pwK2yUstbofK6"
+Return-path: <linux-next-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20081129192939.925275f0.akpm@linux-foundation.org>
+Sender: linux-next-owner@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Cc: linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>, Herbert Xu <herbert@gondor.apana.org.au>, Christophe Saout <christophe@saout.de>, dm-devel@redhat.com, linux-crypto@vger.kernel.org
 List-Id: dm-devel.ids
 
-Takahiro Yasui wrote:
-> log disks are updated in parallel and we do not know which disk has the
-> latest and correct data if the system crashes during write operations
-> on log devices. But there is no problem about it.
 
-Once the IO request has been completed, the data needs to be stable on
-the disk.  This means that either you have to wait until the data has
-been written to all underlying mirror devices before completing the
-request ( slow ) or you have to have some way of knowing which disk(s)
-got written to, and which ones need updated after a crash.  Are you
-saying you take the former path?
+--rz+pwK2yUstbofK6
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-> There are two cases we need to think about.
-> 
-> 1) Some log devices contain "clean", but mirror devices are not synchronized
-> 
-> This case is problematic, but never happens, because data is written on
-> mirror devices after marking log devices "dirty", and make it "clean"
-> after write I/Os on mirror devices completed and mirrors get synchronized.
+Andrew Morton [Sat, Nov 29, 2008 at 07:29:39PM -0800]:
+> I assume that 2.6.28-rc6 is OK?
 
-Does the entire log-data-log update cycle complete before dm completes
-the higher level IO request?  That would maintain data integrity, but at
-significant cost to performance.
+Yep, sorry for the late answer.
 
-For performance sake, don't you want to allow write requests to be
-completed before the log is necessarily marked as clean again?  That way
-multiple writes to the same data zone do not require multiple log
-dirty/clean updates.  Also for performance reasons, don't you want to
-allow the data to be written to only one mirror before completing the
-request?  Then go back and do lazy synchronization?
+--=20
+Think about Free and Open Source Software (FOSS).
+http://nico.schottelius.org/documentations/foss/the-term-foss/
+
+PGP: BFE4 C736 ABE5 406F 8F42  F7CF B8BE F92A 9885 188C
+
+--rz+pwK2yUstbofK6
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.9 (GNU/Linux)
+
+iEYEARECAAYFAkk0IGAACgkQuL75KpiFGIzk8gCghJg2bJkbmOPd08Jras0nZQzh
+uKoAnR4cTptpYpcq77SzVNGgZ5KAsBvW
+=oALM
+-----END PGP SIGNATURE-----
+
+--rz+pwK2yUstbofK6--
