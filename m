@@ -1,12 +1,14 @@
-From: "Ty! Boyack" <ty@nrel.colostate.edu>
-Subject: What does no_path_retry=NULL mean?
-Date: Wed, 03 Dec 2008 12:26:29 -0700
-Message-ID: <4936DD65.9000101@nrel.colostate.edu>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [patch] leastpending_io load balancing policy
+Date: Wed, 3 Dec 2008 22:08:19 +0000
+Message-ID: <20081203220819.GO26097@agk.fab.redhat.com>
+References: <2118D41AB77C214BBF7D2330CD977BCF1BB395790D@GVW1162EXB.americas.hpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <2118D41AB77C214BBF7D2330CD977BCF1BB395790D@GVW1162EXB.americas.hpqcorp.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,41 +18,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: "Balasubramanian, Vijayakumar (STSD)" <vijayakumar@hp.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I've been trying to understand what the default behavior should be if
-no_path_retry is not set in the multipath.conf file.  The annotated
-version describes (somewhat) what happens with values of queue, fail, or
-n>0, but says the default is NULL, and does not say what behavior NULL
-produces.
+On Wed, Nov 12, 2008 at 02:17:05PM +0000, Balasubramanian, Vijayakumar (STSD) wrote:
+> Attached patch provides "Least pending IO" dynamic load balancing policy for
+> bio based device mapper multipath. This load balancing policy considers the
+> number of unserviced requests pending on a path and selects the path with
+> least count for pending service request.
 
-The reason for the question is a situation where a highly-available
-iscsi target undergoes failover from one node to another, and the iscsi
-initiators see all their multiple paths fail during that transition
-time, which takes 5-120 seconds.  I had set no_path_retry to queue,
-thinking it would queue until the paths come back, but it seems to stop
-checking the path status and queue forever.  Is that expected?  Or 
-should no_path_retry=queue stop queuing (but continue checking the 
-paths) and send both queued and new requests when the paths are 
-available again?  With it set to queue it hangs all I/O requests until I 
-restart multipathd, at which point I expect that all queued data is 
-lost.  It will stay in the queued state for hours/days even though the 
-paths are back if no action is taken.
+repeat_count is still accepted but does nothing so I've removed it.
+(And how did it work with a default of (unsigned) -1 anyway - never
+switch path?)
 
-This is on fedora 9, the default device-mapper-multipath rpm, version
-0.4.7, release 16.fc9.  path_checker=readsector0, and poling_interval=10.
+However, it might improve performance by reducing the amount of splitting
+of consecutive contiguous I/Os, so I think you should consider putting
+it back in and implementing it (either internally or by extending the
+ps interface to separate choice of path from use of path).
 
-Thanks for helping me understand what is happening here.
+Another alternative might be to use thresholds, and only switch path,
+for example, when the amount of I/O outstanding down the current path is
+X more than the amount down the least path or the amount down the least
+path falls below Y.
 
--Ty!
+There is useful status information (io_count) not returned to userspace, so
+I've added that to lpp_status().
 
+The wrapper function lpp_select_path call adds nothing so I've
+collapsed it.
 
+Is there some locking missing from the end_io function because it manipulates
+io_count?  E.g. io_count atomic with memory barrier, or caller takes the
+lock?  How does it interact with fail_path() in do_end_io() and the way
+that the io_count can get reset to 0 when a path is reinstated (and in
+general there could still be outstanding I/O down it)?  For now, I've
+removed that resetting.  (I'm concerned that there may be some races in
+this code.)
 
+Also, now that there is more than one path selector, Kconfig should be
+updated to make them separate modules and to require at least one to
+be included.
+
+Alasdair
 -- 
--===========================-
-  Ty! Boyack
-  NREL Unix Network Manager
-  ty@nrel.colostate.edu
-  (970) 491-1186
--===========================-
+agk@redhat.com
