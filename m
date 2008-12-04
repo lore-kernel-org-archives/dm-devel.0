@@ -1,15 +1,13 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [patch] leastpending_io load balancing policy
-Date: Wed, 3 Dec 2008 23:01:40 +0000
-Message-ID: <20081203230140.GE5098@agk.fab.redhat.com>
-References: <2118D41AB77C214BBF7D2330CD977BCF1BB395790D@GVW1162EXB.americas.hpqcorp.net>
-	<20081203220819.GO26097@agk.fab.redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: [PATCH] dm-log: fix return value in create_log_context
+	function
+Date: Wed, 03 Dec 2008 20:15:10 -0500
+Message-ID: <49372F1E.5060200@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20081203220819.GO26097@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,16 +17,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Balasubramanian, Vijayakumar (STSD)" <vijayakumar@hp.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Also look at request based multipath patch rqdm-dlb-02-queue-length-dlb.patch
-which addresses some but not all of those points.
+Hi,
 
-In particular I'd be interested in evidence as to whether repeat counts or 
-thresholds work better.
+This is very trivial fix, but let me post it to improve code
+readability. In the current implementation, caller function
+does not use the return value and no action is changed.
 
-Alasdair
--- 
-agk@redhat.com
+Regards,
+---
+Takahiro Yasui
+Hitachi Computer Products (America) Inc.
+
+
+
+When dm_io_client_create function fails in create_log_context
+function, return value is set to variable r but it is not used.
+r should be returned.
+
+
+Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
+---
+ drivers/md/dm-log.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6.28-rc7/drivers/md/dm-log.c
+===================================================================
+--- linux-2.6.28-rc7.orig/drivers/md/dm-log.c
++++ linux-2.6.28-rc7/drivers/md/dm-log.c
+@@ -461,7 +461,7 @@ static int create_log_context(struct dm_
+ 			r = PTR_ERR(lc->io_req.client);
+ 			DMWARN("couldn't allocate disk io client");
+ 			kfree(lc);
+-			return -ENOMEM;
++			return r;
+ 		}
+ 
+ 		lc->disk_header = vmalloc(buf_size);
