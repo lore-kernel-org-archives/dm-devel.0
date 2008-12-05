@@ -1,16 +1,14 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Re: [PATCH 0/8] I/O bandwidth controller and BIO
-	tracking
-Date: Fri, 05 Dec 2008 21:19:17 +0900 (JST)
-Message-ID: <20081205.211917.737004071327927699.ryov@valinux.co.jp>
-References: <20081113.121019.104237699577193919.ryov@valinux.co.jp>
-	<20081113.125015.59640143160053352.ryov@valinux.co.jp>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: What does no_path_retry=NULL mean?
+Date: Fri, 5 Dec 2008 09:20:01 -0600
+Message-ID: <20081205152000.GA1585@ether.msp.redhat.com>
+References: <4936DD65.9000101@nrel.colostate.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081113.125015.59640143160053352.ryov@valinux.co.jp>
+Content-Disposition: inline
+In-Reply-To: <4936DD65.9000101@nrel.colostate.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,21 +18,58 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair,
+On Wed, Dec 03, 2008 at 12:26:29PM -0700, Ty! Boyack wrote:
+> I've been trying to understand what the default behavior should be if
+> no_path_retry is not set in the multipath.conf file.  The annotated
+> version describes (somewhat) what happens with values of queue, fail, or
+> n>0, but says the default is NULL, and does not say what behavior NULL
+> produces.
 
-> As you know, I have posted a new dm-ioband patch today. I hope you
-> will take quick look over the patch and reply some comments for me.
-> Would you tell me when you will/can do it?
+NULL is the same as fail, unless you manually set the retry feature
+with
 
-3 weeks has passed since the previous email.
-Would you consider merging the dm-ioband patch into Linux?
-What else do I need to do it?
-Have you already looked over the patch?
-What do you think about it?
+features "1 queue_if_no_path"
 
---
-Ryo Tsuruta <ryov@valinux.co.jp>
+> The reason for the question is a situation where a highly-available
+> iscsi target undergoes failover from one node to another, and the iscsi
+> initiators see all their multiple paths fail during that transition
+> time, which takes 5-120 seconds.  I had set no_path_retry to queue,
+> thinking it would queue until the paths come back, but it seems to stop
+> checking the path status and queue forever.  Is that expected?  Or should 
+> no_path_retry=queue stop queuing (but continue checking the paths) and send 
+> both queued and new requests when the paths are available again?  With it 
+> set to queue it hangs all I/O requests until I restart multipathd, at which 
+> point I expect that all queued data is lost.  It will stay in the queued 
+> state for hours/days even though the paths are back if no action is taken.
+
+This is not what is supposed to happen, but yout queued data is not lost when
+multipathd is stopped and restarted.  It is queued in the kernel, not userspace.
+Does /var/log/messages say anything when multipathd hangs?  Would it be
+possible for you to attach gdb, and get a backtrace of the multipath
+threads when it hangs?
+
+> This is on fedora 9, the default device-mapper-multipath rpm, version
+> 0.4.7, release 16.fc9.  path_checker=readsector0, and poling_interval=10.
+>
+> Thanks for helping me understand what is happening here.
+>
+> -Ty!
+>
+>
+>
+> -- 
+> -===========================-
+>  Ty! Boyack
+>  NREL Unix Network Manager
+>  ty@nrel.colostate.edu
+>  (970) 491-1186
+> -===========================-
+>
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
