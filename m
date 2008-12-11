@@ -1,8 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 4/6] Fix for parsing multipath.conf files without
-	spaces before brackets
-Date: Thu, 11 Dec 2008 16:10:27 -0600
-Message-ID: <20081211221027.GL1585@ether.msp.redhat.com>
+Subject: [PATCH 5/6] Fix broken major:minor device handling
+Date: Thu, 11 Dec 2008 16:11:40 -0600
+Message-ID: <20081211221140.GM1585@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -21,56 +20,38 @@ To: christophe varoqui <christophe.varoqui@free.fr>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-There's a bug in bug in the multipath.conf code that keeps multipath from
-correctly parsing config files where there is no space between a section name
-and the opening bracket. For instance
+devt2devname was not actually setting devname, so multipath was not able to
+do operate on devices using major:minor
 
-devices {
-	device {
-		...
-	}
-}
-
-works but
-
-devices {
-	device{
-		...
-	}
-}
-
-doesn't. This patch makes sure that brackets are the recognized as seperate from
-the token that they follow, unless they are part of a quoted string.
+This patch sets devname, and also checks for an unlikely buffer overrun.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/parser.c |   12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
+ libmultipath/discovery.c |    7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-Index: multipath-tools-081203/libmultipath/parser.c
+Index: multipath-tools-081203/libmultipath/discovery.c
 ===================================================================
---- multipath-tools-081203.orig/libmultipath/parser.c
-+++ multipath-tools-081203/libmultipath/parser.c
-@@ -239,12 +239,20 @@ alloc_strvec(char *string)
- 				in_string = 0;
- 			else
- 				in_string = 1;
-+		} else if (!in_string && (*cp == '{' || *cp == '}')) {
-+			token = MALLOC(2);
+--- multipath-tools-081203.orig/libmultipath/discovery.c
++++ multipath-tools-081203/libmultipath/discovery.c
+@@ -253,7 +253,11 @@ devt2devname (char *devname, char *devt)
+ 			continue;
  
-+			if (!token)
-+				goto out;
-+
-+			*(token) = *cp;
-+			*(token + 1) = '\0';
-+			cp++;
- 		} else {
- 			while ((in_string ||
- 				(!isspace((int) *cp) && isascii((int) *cp) &&
--				 *cp != '!' && *cp != '#')) &&
--			       *cp != '\0' && *cp != '"')
-+				 *cp != '!' && *cp != '#' && *cp != '{' &&
-+				 *cp != '}')) && *cp != '\0' && *cp != '"')
- 				cp++;
- 			strlen = cp - start;
- 			token = MALLOC(strlen + 1);
+ 		if ((major == tmpmaj) && (minor == tmpmin)) {
+-			sprintf(block_path, "/sys/block/%s", dev);
++			if (snprintf(block_path, FILE_NAME_SIZE, "/sys/block/%s", dev) >= FILE_NAME_SIZE) {
++				condlog(0, "device name %s is too long\n", dev);
++				fclose(fd);
++				return 1;
++			}
+ 			break;
+ 		}
+ 	}
+@@ -271,6 +275,7 @@ devt2devname (char *devname, char *devt)
+ 		condlog(0, "sysfs entry %s is not a directory\n", block_path);
+ 		return 1;
+ 	}
++	basename(block_path, devname);
+ 	return 0;
+ }
+ 
