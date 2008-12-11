@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH 1/6] Fix for uevent devpath handling
-Date: Thu, 11 Dec 2008 16:03:28 -0600
-Message-ID: <20081211220328.GI1585@ether.msp.redhat.com>
+Subject: [PATCH 2/6] Fix for kpartx on sparc64
+Date: Thu, 11 Dec 2008 16:06:07 -0600
+Message-ID: <20081211220607.GJ1585@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -20,42 +20,23 @@ To: christophe varoqui <christophe.varoqui@free.fr>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is necessary to make uevents work on fedora, since devpath appears as
-something like:
-'/devices/pci0000:00/0000:00:0a.0/0000:06:00.0/host11/rport-11:0-1/target11:0:1/11:0:1:0/block/sdi'
-
-It simply strips off the everything up to the /block.
+This typedef change is necessary to make kpartx work on sparc64 machines.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- multipathd/main.c |   12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+ kpartx/lopart.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: multipath-tools-081203/multipathd/main.c
+Index: multipath-tools-081203/kpartx/lopart.c
 ===================================================================
---- multipath-tools-081203.orig/multipathd/main.c
-+++ multipath-tools-081203/multipathd/main.c
-@@ -603,14 +603,20 @@ uxsock_trigger (char * str, char ** repl
- static int
- uev_discard(char * devpath)
- {
-+	char *tmp;
- 	char a[10], b[10];
- 
- 	/*
- 	 * keep only block devices, discard partitions
- 	 */
--	if (sscanf(devpath, "/block/%10s", a) != 1 ||
--	    sscanf(devpath, "/block/%10[^/]/%10s", a, b) == 2) {
--		condlog(4, "discard event on %s", devpath);
-+	tmp = strstr(devpath, "/block/");
-+	if (tmp == NULL){
-+		condlog(0, "no /block/ in '%s'", devpath);
-+		return 1;
-+	}
-+	if (sscanf(tmp, "/block/%10s", a) != 1 ||
-+	    sscanf(tmp, "/block/%10[^/]/%10s", a, b) == 2) {
-+		condlog(0, "discard event on %s", devpath);
- 		return 1;
- 	}
- 	return 0;
+--- multipath-tools-081203.orig/kpartx/lopart.c
++++ multipath-tools-081203/kpartx/lopart.c
+@@ -30,7 +30,7 @@
+ #if defined(__hppa__) || defined(__powerpc64__) || defined (__alpha__) \
+  || defined (__x86_64__)
+ typedef unsigned long __kernel_old_dev_t;
+-#elif defined(__powerpc__) || defined(__ia64__)
++#elif defined(__powerpc__) || defined(__ia64__) || (defined(__sparc__) && defined (__arch64__))
+ typedef unsigned int __kernel_old_dev_t;
+ #else
+ typedef unsigned short __kernel_old_dev_t;
