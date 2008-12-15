@@ -1,18 +1,15 @@
-From: Heinz Mauelshagen <heinzm@redhat.com>
-Subject: Re: Re: dm targets with spaces in the name
-Date: Mon, 15 Dec 2008 15:09:23 +0100
-Message-ID: <1229350163.31942.6.camel@o>
-References: <4936BBC6.7000800@cfl.rr.com> <1228405956.23557.74.camel@o>
-	<49383A77.80903@cfl.rr.com>	<20081205015938.GQ26097@agk.fab.redhat.com>
-	<49395DB6.6050802@cfl.rr.com>
-	<20081205170849.GC26097@agk.fab.redhat.com>
-	<493D8430.3010904@cfl.rr.com>
-Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
+Date: Mon, 15 Dec 2008 09:56:57 -0500
+Message-ID: <49467039.6060801@redhat.com>
+References: <492C91DF.7040507@redhat.com>
+	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <493D8430.3010904@cfl.rr.com>
+In-Reply-To: <ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,30 +22,83 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Am Montag, den 08.12.2008, 15:31 -0500 schrieb Phillip Susi:
-> Alasdair G Kergon wrote:
-> > which is a bug as per what I stated above, if true.
-> > 
-> > dmsetup knows nothing about the format of the table line - it's a simple
-> > string - and should not be interfering with it: a backslash+space (after any
-> > shell escaping) should get handled consistently, passed through to the target
-> > and should work.
-> 
-> Nevermind, I must have made a typeo before because now the kernel 
-> accepts targets with spaces in the name just fine, as long as they are 
-> properly backslash escaped.
-> 
-> Heinz, you mentioned that dmraid should just not be using names with 
-> spaces in them.  My first thought was to fix dmraid to backslash escape 
-> the spaces, but you seem to have another idea in mind?
+Hi Jon,
 
-We don't support them in dmraid and I find them principally bogus.
-Why not use '_' instead to avoid parsing hassles ?
+Thanks for kind comments.
 
-Heinz
-
+Jonathan Brassow wrote:
+> On Nov 25, 2008, at 6:01 PM, Takahiro Yasui wrote:
+>> PATCH SET
+>> =========
+>>  1/4: dm-log: fix no io_client_destroy
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+> definitely, ACK.
+> 
+>>  2/4: dm-log: remove unnecessary updates of io_req members
+> 
+> haven't fully reviewed yet.
+> 
+>>  3/4: dm-log: introduce multi-log devices
+>>  4/4: dm-log: update interface to control multi-log devices
+> 
+> No.  more follows...
+> 
+>> BACKGROUND
+>> ==========
+> 
+> <snip>
+> 
+>> However, once log disk breaks down, data replications are required
+>> for a whole data disks, and if a size of data disk is huge, it
+>> takes long time
+> 
+> Not entirely true.  When the log disk breaks down /and/ the machine  
+> crashes or reboots, then resynchronization is necessary.  However,  
+> this means that in almost all circumstances, you are immediately able  
+> to replace the failed disk log with another and maintain the in-sync  
+> state of the log - avoiding the resync.
+> 
+>> This patch introduces multi-log devices for mirror target, which
+>> stores log data on multiple log devices, and decreases probability
+>> of disk replication even if one log disk has broken down.
+> 
+> Given what I said above, I'd like to see intelligence added to the  
+> dmeventd mirror DSO to handle replacing mirror logs done first.  There  
+> is certainly a lot of low lying fruit in that space.  However, I can  
+> see a small benefit to implementing multi-log.  Specifically, to  
+> address the case where a log device dies and is immediately followed  
+> by a machine failure before corrective action can be taken.  IOW, you  
+> are targeting a very small window of time here.
+
+Yes, as you mentioned, it is a very small window of time. But mirroring
+could be used for very critical systems and users would care such
+a small window.
+
+In addition, the multi-log feature is efficient and very important
+at system booting. It is highly possible that disks get broken.
+I think that the current log feature can not save this situation
+because there is only one log disk and there is only way to construct
+a mirror by "core" log. Then, a whole disk replication will be triggered.
+
+Do you have a good idea to save it, too? If there is, it could be
+an another solution of our concern.
+
+> If you choose to take on the multi-log (which it appears you are  
+> mostly done), then I'd like to see it as a separate module.  IOW,  
+> there should be no code changes to dm-log.c.  You would implement a  
+> new module, named dm-log-multi[ple].ko.  The name would be "multi- 
+> disk".  This frees you to have whatever constructor table arguments  
+> you want.  (I've done something similar when creating my cluster-aware  
+> logging.)
+
+Yes, it is easy to implement the multi-log feature as a separate
+module, but there are many common functions for both modules.
+For maintainability, I think that those functions should be shared
+for both modules instead of being maintained by themselves.
+
+Could you give me any suggestions for sharing common functions?
+
+Thanks,
+---
+Takahiro Yasui
+Hitachi Computer Products (America) Inc.
