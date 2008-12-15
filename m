@@ -1,7 +1,7 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: multipath -f/-F exit status
-Date: Sat, 13 Dec 2008 12:59:37 +0100
-Message-ID: <20081213125937.2ddc34d6@plop>
+From: Michael Leun <dm-devel@newton.leun.net>
+Subject: dm-snapshot merge?
+Date: Mon, 15 Dec 2008 09:20:34 +0100
+Message-ID: <20081215092034.1333ec98@elektra.leun.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
@@ -16,40 +16,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmr@redhat.com
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
+Cc: markmc@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
-> Hi Folks,
-> 
-> Older versions of multipath-tools would always exit with status 0
-> (success) when flushing multipath device maps (-f/-F). This was never
-> guaranteed but happened because the "r" local in multipath/main.c was
-> used uninitialised in these code paths (by chance, it always lands on
-> a freshly zeroed stack page, so although undefined the behaviour was
-> pretty reliable).
-> 
-> This was changed by commit 8497928514aa3df6d46f24d8d9b70b086e9fcfbd:
->
-Then by a9a6c71592d4e2271a38c3d334bee7cbce963cff.
+Hello,
 
-Does the upstream version works as you expect in this regard ?
- 
-> multipath -F
-> ------------
-> 
-> -F     flush all unused multipath device maps
-> 
-> Exit status
->        0 At least one unused multipath device map was flushed
->        1 No unused maps were found or no maps could be flushed
-> 
-> The alternative for -F seems to be to return 0 if all unused maps were
-> flushed and 1 if there were unused maps that could not be flushed.
-> This doesn't seem like a very likely occurrence, but maybe it should
-> be handled separately?
-> 
-I guess the current implementation return r as the number failures.
+I've seen there was some activity regarding snapshot merge in the past,
+but the last news on seem to be several months old.
 
-Regards,
-cvaroqui
+Are there any plans to get snapshot merge (apply contents of a cow
+device to the original block device) finished and merged to the
+mainline kernel?
+
+Would be a cool feature!
+
+-- 
+Bye,
+
+Michael Leun
