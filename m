@@ -1,13 +1,14 @@
 From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: [PATCH] Memory leak when deleting and re-adding
-	device-mapper entries.
-Date: Tue, 16 Dec 2008 10:54:54 -0500
-Message-ID: <1229442897-3765-3-git-send-email-konrad@virtualiron.com>
+Subject: [PATCH] Memory leak in ev_add_map.
+Date: Tue, 16 Dec 2008 10:54:56 -0500
+Message-ID: <1229442897-3765-5-git-send-email-konrad@virtualiron.com>
 References: <1229442897-3765-1-git-send-email-konrad@virtualiron.com>
 	<1229442897-3765-2-git-send-email-konrad@virtualiron.com>
+	<1229442897-3765-3-git-send-email-konrad@virtualiron.com>
+	<1229442897-3765-4-git-send-email-konrad@virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1229442897-3765-2-git-send-email-konrad@virtualiron.com>
+In-Reply-To: <1229442897-3765-4-git-send-email-konrad@virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,30 +23,41 @@ List-Id: dm-devel.ids
 
 From: Konrad Rzeszutek <konrad@mars.virtualiron.com>
 
- If we remove a map (with configuration details specified in the multipath.conf file)
- and later re-add it, the pointer to the config is over-written without first
- de-allocating the values.
+ When using dm_mapname it makes a strdup of the returned value. We use
+ the dm_mapname return value (alias) in our function but neglected
+ to free it at the exit points.
 
-Signed-off-by: Konrad Rzeszutek <konrad@virtualiron.com>
 ---
- libmultipath/configure.c |    5 +++++
- 1 files changed, 5 insertions(+), 0 deletions(-)
+ multipathd/main.c |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
 
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index 285a8a2..83ee0ae 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -50,6 +50,11 @@ setup_map (struct multipath * mpp)
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 30dba5b..e8a2660 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -243,6 +243,7 @@ ev_add_map (struct sysfs_device * dev, struct vectors * vecs)
+ 
+ 	if (map_present && dm_type(alias, TGT_MPATH) <= 0) {
+ 		condlog(4, "%s: not a multipath map", alias);
++		FREE(alias);
+ 		return 0;
  	}
  
- 	/*
-+	 * free features, selector, and hwhandler properties if they are being reused
-+	 */
-+	free_multipath_attributes(mpp);
-+
-+	/*
- 	 * properties selectors
- 	 */
- 	select_pgfailback(mpp);
+@@ -256,6 +257,7 @@ ev_add_map (struct sysfs_device * dev, struct vectors * vecs)
+ 		 */
+ 		condlog(0, "%s: devmap already registered",
+ 			dev->kernel);
++		FREE(alias);
+ 		return 0;
+ 	}
+ 
+@@ -280,6 +282,7 @@ ev_add_map (struct sysfs_device * dev, struct vectors * vecs)
+ 		condlog(0, "%s: uev_add_map %s failed", alias, dev->kernel);
+ 
+ 	FREE(refwwid);
++	FREE(alias);
+ 	return r;
+ }
+ 
 -- 
 1.5.4.1
