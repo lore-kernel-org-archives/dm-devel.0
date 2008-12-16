@@ -1,14 +1,18 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: multipath -f/-F exit status
-Date: Mon, 15 Dec 2008 17:35:41 +0000
-Message-ID: <4946956D.7030800@redhat.com>
-References: <20081213125937.2ddc34d6@plop>
-Reply-To: bmr@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Heinz Mauelshagen <heinzm@redhat.com>
+Subject: Re: Re: dm targets with spaces in the name
+Date: Tue, 16 Dec 2008 09:55:21 +0100
+Message-ID: <1229417721.25364.4.camel@o>
+References: <4936BBC6.7000800@cfl.rr.com> <1228405956.23557.74.camel@o>
+	<49383A77.80903@cfl.rr.com>	<20081205015938.GQ26097@agk.fab.redhat.com>
+	<49395DB6.6050802@cfl.rr.com>	<20081205170849.GC26097@agk.fab.redhat.com>
+	<493D8430.3010904@cfl.rr.com> <1229350163.31942.6.camel@o>
+	<49468354.1040504@cfl.rr.com>
+Reply-To: heinzm@redhat.com, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20081213125937.2ddc34d6@plop>
+In-Reply-To: <49468354.1040504@cfl.rr.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,43 +25,23 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Christophe Varoqui wrote:
->> Hi Folks,
->>
->> Older versions of multipath-tools would always exit with status 0
->> (success) when flushing multipath device maps (-f/-F). This was never
->> guaranteed but happened because the "r" local in multipath/main.c was
->> used uninitialised in these code paths (by chance, it always lands on
->> a freshly zeroed stack page, so although undefined the behaviour was
->> pretty reliable).
->>
->> This was changed by commit 8497928514aa3df6d46f24d8d9b70b086e9fcfbd:
->>
-> Then by a9a6c71592d4e2271a38c3d334bee7cbce963cff.
+Am Montag, den 15.12.2008, 11:18 -0500 schrieb Phillip Susi:
+> Heinz Mauelshagen wrote:
+> > We don't support them in dmraid and I find them principally bogus.
+> > Why not use '_' instead to avoid parsing hassles ?
 > 
-> Does the upstream version works as you expect in this regard ?
+> Well I suppose you could convert spaces to underscores and the 
+> likelihood of a conflict with a name that originally had an underscore 
+> would be rather small.  Do you think that should be done in the format 
+> handler, or elsewhere?
 
-Sorry - not sure how I missed that last week.
+I was thinking along the same lines.
+It should be done generically in the dmraid_read() code path.
 
->> The alternative for -F seems to be to return 0 if all unused maps were
->> flushed and 1 if there were unused maps that could not be flushed.
->> This doesn't seem like a very likely occurrence, but maybe it should
->> be handled separately?
->>
-> I guess the current implementation return r as the number failures.
+Heinz
 
-It does, which seems a slightly strange thing to return - I don't see 
-how it's useful as it's actually the number of device-mapper maps that 
-we couldn't flush (sum of returns from dm_flush_map), i.e. the total 
-number of maps that either weren't multipath, weren't unused etc :)
-
-This will cause problems on systems that have 256 such maps since the 
-exit status is truncated to 8-bits and we would falsely reported the 
-status as zero.
-
-It seems more useful to return an overall success/failure indication for 
-these commands and would be more in-keeping with other similar tools and 
-POSIX.
-
-Regards,
-Bryn.
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
