@@ -1,16 +1,14 @@
-From: malahal@us.ibm.com
-Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
-Date: Fri, 19 Dec 2008 16:13:05 -0800
-Message-ID: <20081220001305.GA8574@us.ibm.com>
-References: <492C91DF.7040507@redhat.com>
-	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
-	<49467039.6060801@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Device mapper support for more than one target ?
+Date: Mon, 22 Dec 2008 18:50:33 +0000
+Message-ID: <20081222185033.GA17119@agk.fab.redhat.com>
+References: <37d33d830812220922l5a0bc36et5dd1f9853f9cd33@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <49467039.6060801@redhat.com>
+In-Reply-To: <37d33d830812220922l5a0bc36et5dd1f9853f9cd33@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +18,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: agk@redhat.com
+To: Sandeep K Sinha <sandeepksinha@gmail.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-Takahiro Yasui [tyasui@redhat.com] wrote:
-> In addition, the multi-log feature is efficient and very important
-> at system booting. It is highly possible that disks get broken.
-> I think that the current log feature can not save this situation
-> because there is only one log disk and there is only way to construct
-> a mirror by "core" log. Then, a whole disk replication will be triggered.
+On Mon, Dec 22, 2008 at 10:52:08PM +0530, Sandeep K Sinha wrote:
+> After looking at the complete implementation of device mappers, I
+> figured out that we can have more than one target for a mapped device
+> then why do we have a check for the number of target to be equal to
+> one , in dm_blk_ioctl ( ) in drivers/md/dm.c
 > 
-> Do you have a good idea to save it, too? If there is, it could be
-> an another solution of our concern.
+> http://lxr.linux.no/linux+v2.6.27.10/drivers/md/dm.c#L337
 
-A while back IBM posted a patch to LVM that constructs a log device with
-a mirror and then creates the real mirror using such a mirrored log
-device. I think this may solve your problem. It was completely written
-in LVM and Stefan refreshed it to the latest LVM.
+Because whether or not it makes sense to send any specific ioctl to more
+than one target in parallel depends on what that ioctl does.  When we
+added that code we said that we could add hard-coding for specific
+ioctls if the need arose, but so far it hasn't.
 
-Anyone thinks this user level only solution is any better? We will be
-very happy to have any one of the solutions in upstream!
-
-Here is a link the posted patch
-(http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/3988)
-
-
---Malahal.
+Alasdair
+-- 
+agk@redhat.com
