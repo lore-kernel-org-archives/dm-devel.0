@@ -1,16 +1,16 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: Re: Device mapper support for more than one target ?
-Date: Mon, 22 Dec 2008 21:24:33 +0000
-Message-ID: <20081222212433.GA17247@agk.fab.redhat.com>
-References: <37d33d830812220922l5a0bc36et5dd1f9853f9cd33@mail.gmail.com>
-	<20081222185033.GA17119@agk.fab.redhat.com>
-	<37d33d830812221054w78fe49f3l6c2896a27c908656@mail.gmail.com>
+From: Takahiro Yasui <tyasui@redhat.com>
+Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
+Date: Mon, 22 Dec 2008 19:23:26 -0500
+Message-ID: <49502F7E.9040300@redhat.com>
+References: <492C91DF.7040507@redhat.com>
+	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
+	<49467039.6060801@redhat.com> <20081220001305.GA8574@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <37d33d830812221054w78fe49f3l6c2896a27c908656@mail.gmail.com>
+In-Reply-To: <20081220001305.GA8574@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,32 +20,48 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Sandeep K Sinha <sandeepksinha@gmail.com>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org
+To: dm-devel@redhat.com
+Cc: agk@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 23, 2008 at 12:24:49AM +0530, Sandeep K Sinha wrote:
-> On Tue, Dec 23, 2008 at 12:20 AM, Alasdair G Kergon <agk@redhat.com> wrote:
-> > On Mon, Dec 22, 2008 at 10:52:08PM +0530, Sandeep K Sinha wrote:
-> > Because whether or not it makes sense to send any specific ioctl to more
-> > than one target in parallel depends on what that ioctl does.  When we
-> > added that code we said that we could add hard-coding for specific
-> > ioctls if the need arose, but so far it hasn't.
-> No, the philosophy should be that we send the ioctl's to the mapped
-> device and not to the targets underlying that mapped-device.
+Hi Malahal,
 
-That's not what the current implementation was for, viz. passing scsi
-ioctls through dm multipath devices.
+malahal@us.ibm.com wrote:
+> Takahiro Yasui [tyasui@redhat.com] wrote:
+>> In addition, the multi-log feature is efficient and very important
+>> at system booting. It is highly possible that disks get broken.
+>> I think that the current log feature can not save this situation
+>> because there is only one log disk and there is only way to construct
+>> a mirror by "core" log. Then, a whole disk replication will be triggered.
+>>
+>> Do you have a good idea to save it, too? If there is, it could be
+>> an another solution of our concern.
+> 
+> A while back IBM posted a patch to LVM that constructs a log device with
+> a mirror and then creates the real mirror using such a mirrored log
+> device. I think this may solve your problem. It was completely written
+> in LVM and Stefan refreshed it to the latest LVM.
 
-> And doing so, I should be able to access the complete map that belongs
-> to that mapped device. If I implement an ioctl of my own and try to
-> serve it, the problem would be that it would never allow me to serve
-> it if has more than one target.
+Thank you for the comment and information. It seems that your
+approach seems to address my problem, too. Here I have a concern
+about write performance because an additional mirror mapping might
+introduce additional delay and overhead. In addition, error for
+log devices is better to be handled by the simple way, and a basic
+error handling would work.
 
-As I said above, if the need arises we can have a whitelist mechanism
-for ioctls to be handled differently, but the only safe default
-behaviour is the one that has been implemented.
+I couldn't find any discussion after you posted the patch.
+Could you tell me if IBM also have the same background as I have,
+or do you have another issue to solve? I would also like to know
+if my approach solves your problem.
 
-Alasdair
--- 
-agk@redhat.com
+> Anyone thinks this user level only solution is any better? We will be
+> very happy to have any one of the solutions in upstream!
+
+Yes, I appreciate many comments and I'm glad to have a solution
+in upstream, too.
+
+> Here is a link the posted patch
+> (http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/3988)
+> 
+> 
+> --Malahal.
