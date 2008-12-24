@@ -1,17 +1,17 @@
-From: malahal@us.ibm.com
-Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
-Date: Tue, 23 Dec 2008 10:02:28 -0800
-Message-ID: <20081223180228.GA24831@us.ibm.com>
-References: <492C91DF.7040507@redhat.com>
-	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
-	<49467039.6060801@redhat.com> <20081220001305.GA8574@us.ibm.com>
-	<49502F7E.9040300@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Re: [PATCH 0/8] I/O bandwidth controller and BIO
+	tracking
+Date: Wed, 24 Dec 2008 17:36:13 +0900 (JST)
+Message-ID: <20081224.173613.104038800.ryov@valinux.co.jp>
+References: <20081113.121019.104237699577193919.ryov@valinux.co.jp>
+	<20081113.125015.59640143160053352.ryov@valinux.co.jp>
+	<20081205.211917.737004071327927699.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <49502F7E.9040300@redhat.com>
+In-Reply-To: <20081205.211917.737004071327927699.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,44 +21,24 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takahiro Yasui <tyasui@redhat.com>
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: agk@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Takahiro Yasui [tyasui@redhat.com] wrote:
-> Hi Malahal,
-> > A while back IBM posted a patch to LVM that constructs a log device with
-> > a mirror and then creates the real mirror using such a mirrored log
-> > device. I think this may solve your problem. It was completely written
-> > in LVM and Stefan refreshed it to the latest LVM.
+Hi Alasdair,
+
+> > As you know, I have posted a new dm-ioband patch today. I hope you
+> > will take quick look over the patch and reply some comments for me.
+> > Would you tell me when you will/can do it?
 > 
-> Thank you for the comment and information. It seems that your
-> approach seems to address my problem, too. Here I have a concern
-> about write performance because an additional mirror mapping might
-> introduce additional delay and overhead. In addition, error for
-> log devices is better to be handled by the simple way, and a basic
-> error handling would work.
+> 3 weeks has passed since the previous email.
+> Would you consider merging the dm-ioband patch into Linux?
+> What else do I need to do it?
+> Have you already looked over the patch?
+> What do you think about it?
 
-In theory yes, but I doubt it would be user visible that much. We expect
-transient failures under some circumstances, so we would like to handle
-them. In other words, a failed device is expected to come back and the
-mirror target should re-integrate it automatically when it comes back.
-Can your multi-log code handle re-synchronizing a log device?
+Another 3 weeks has passed.
+I hope you would reply me with the answers to above questions.
 
-With our user level only implementation, the log device handling would
-be as good as the real mirror *leg* handling. We get all the benefits of
-the mirror without doing any code! Wouldn't it be nice?
-
-
-> I couldn't find any discussion after you posted the patch.
-> Could you tell me if IBM also have the same background as I have,
-> or do you have another issue to solve? I would also like to know
-> if my approach solves your problem.
-
-Jonathan, Alasdair and I had discussions about the patch. I can send
-them to you if you want.
-
-As I said, we want to handle transient device failures. Can your patch
-work with such log devices?
-
---Malahal.
+Thanks,
+Ryo Tsuruta
