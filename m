@@ -1,43 +1,69 @@
-From: Alberto Bertogli <albertito@blitiri.com.ar>
-Subject: Re: [dm-devel] Re: jbd2 inside a device mapper module
-Date: Tue, 30 Dec 2008 11:51:47 -0200
-Message-ID: <20081230135147.GP4127@blitiri.com.ar>
-References: <20081225143535.GA4127@blitiri.com.ar> <20081227200127.GX5000@webber.adilger.int> <46A00B48CC54E4468EF6911F877AC4CA01DDBB66@blrx3m10.blr.amer.dell.com> <20081229210537.GN4127@blitiri.com.ar> <4959C5FD.3050305@sun.com>
+From: malahal@us.ibm.com
+Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
+Date: Wed, 31 Dec 2008 12:15:40 -0800
+Message-ID: <20081231201540.GA11495@us.ibm.com>
+References: <492C91DF.7040507@redhat.com>
+	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
+	<49467039.6060801@redhat.com> <20081220001305.GA8574@us.ibm.com>
+	<49502F7E.9040300@redhat.com> <20081223180228.GA24831@us.ibm.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-ext4-owner@vger.kernel.org>
+Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <4959C5FD.3050305@sun.com>
-Sender: linux-ext4-owner@vger.kernel.org
-To: Alex Tomas <bzzz@sun.com>
-Cc: Shyam_Iyer@Dell.com, dm-devel@redhat.com, linux-ext4@vger.kernel.org, tytso@MIT.EDU, linux-kernel@vger.kernel.org
+In-Reply-To: <20081223180228.GA24831@us.ibm.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Takahiro Yasui <tyasui@redhat.com>, dm-devel@redhat.com, agk@redhat.com, jbrassow@redhat.com
 List-Id: dm-devel.ids
 
-On Tue, Dec 30, 2008 at 09:55:57AM +0300, Alex Tomas wrote:
-> one good thing about JBD is that you can't update target block and csum
-> atomically. so, either you use some form of COW or you use journalling.
-> given we already have JBD it'd make sense to use it?
+Alasdair, Jonathan: Any comments regarding kernel module vs
+implementing it entirely with in LVM to support this multi-log feature?
 
-I'm sorry, but I'm not following. Is that first sentence right?
+Thanks, Malahal.
 
-The main disadvantage I see of using jbd at the moment is that I loose
-the possibility of having checksums and data in a different device.
-
-The only alternative to jbd that I have at the moment is the "two
-metadatas" approach I explained in another email (but please let me know
-if it wasn't clear).
-
-They both provide what I need (atomicity in data and csum writes), one
-is easier, more tested, but prevents a feature. The other is a bit more
-difficult, untested and written my me, but allows a feature. I have no
-idea, performance-wise, how they will behave (it is expected they suck,
-according to the other emails).
-
-At this moment I'm going with the two metadatas approach, because I
-think it has less limitations and it'd be fun to write. If then it's
-unfit for some reason, I can always go back and use jbd. But I'm
-obviously open to suggestions and more alternatives.
-
-Thanks a lot,
-		Alberto
-
+malahal@us.ibm.com [malahal@us.ibm.com] wrote:
+> Takahiro Yasui [tyasui@redhat.com] wrote:
+> > Hi Malahal,
+> > > A while back IBM posted a patch to LVM that constructs a log device with
+> > > a mirror and then creates the real mirror using such a mirrored log
+> > > device. I think this may solve your problem. It was completely written
+> > > in LVM and Stefan refreshed it to the latest LVM.
+> > 
+> > Thank you for the comment and information. It seems that your
+> > approach seems to address my problem, too. Here I have a concern
+> > about write performance because an additional mirror mapping might
+> > introduce additional delay and overhead. In addition, error for
+> > log devices is better to be handled by the simple way, and a basic
+> > error handling would work.
+> 
+> In theory yes, but I doubt it would be user visible that much. We expect
+> transient failures under some circumstances, so we would like to handle
+> them. In other words, a failed device is expected to come back and the
+> mirror target should re-integrate it automatically when it comes back.
+> Can your multi-log code handle re-synchronizing a log device?
+> 
+> With our user level only implementation, the log device handling would
+> be as good as the real mirror *leg* handling. We get all the benefits of
+> the mirror without doing any code! Wouldn't it be nice?
+> 
+> 
+> > I couldn't find any discussion after you posted the patch.
+> > Could you tell me if IBM also have the same background as I have,
+> > or do you have another issue to solve? I would also like to know
+> > if my approach solves your problem.
+> 
+> Jonathan, Alasdair and I had discussions about the patch. I can send
+> them to you if you want.
+> 
+> As I said, we want to handle transient device failures. Can your patch
+> work with such log devices?
+> 
+> --Malahal.
