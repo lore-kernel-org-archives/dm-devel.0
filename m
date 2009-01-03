@@ -1,39 +1,36 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/3] dm-target: target_type improvements
-Date: Fri, 2 Jan 2009 18:12:15 +0000
-Message-ID: <20090102181215.GF11060@agk.fab.redhat.com>
+From: "=?UTF-8?Q?Cheng_Renquan_(=E7=A8=8B=E4=BB=BB=E5=85=A8)?="
+	<crquan@gmail.com>
+Subject: Re: [dm-devel] [PATCH 0/3] dm-target: target_type improvements
+Date: Sat, 3 Jan 2009 14:42:01 +0800
+Message-ID: <91b13c310901022242y59e05c39ycc9183a5595abd0@mail.gmail.com>
 References: <1229660385-17153-1-git-send-email-crquan@gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+	 <20090102181215.GF11060@agk.fab.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: base64
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S932153AbZACGmU@vger.kernel.org>
+In-Reply-To: <20090102181215.GF11060@agk.fab.redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1229660385-17153-1-git-send-email-crquan@gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Cheng Renquan <crquan@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Alasdair G Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org
 List-Id: dm-devel.ids
 
-On Fri, Dec 19, 2008 at 12:19:42PM +0800, crquan@gmail.com wrote:
-> From: Cheng Renquan <crquan@gmail.com>
-> 3. totally remove tt_internal;
-> The 3rd patch may be controversial,
-> But I still think it's worth it:
-
-Well now that it's down to just one field for linking items I'm inclined to
-agree that it's OK.
-
-Do you (or anyone else) have any interest in creating and testing similar sets
-of patches for the other parts of device-mapper that use the same construction?
-
-Alasdair
--- 
-agk@redhat.com
+T24gU2F0LCBKYW4gMywgMjAwOSBhdCAyOjEyIEFNLCBBbGFzZGFpciBHIEtlcmdvbiA8YWdrQHJl
+ZGhhdC5jb20+IHdyb3RlOgo+IE9uIEZyaSwgRGVjIDE5LCAyMDA4IGF0IDEyOjE5OjQyUE0gKzA4
+MDAsIGNycXVhbkBnbWFpbC5jb20gd3JvdGU6Cj4+IEZyb206IENoZW5nIFJlbnF1YW4gPGNycXVh
+bkBnbWFpbC5jb20+Cj4+IDMuIHRvdGFsbHkgcmVtb3ZlIHR0X2ludGVybmFsOwo+PiBUaGUgM3Jk
+IHBhdGNoIG1heSBiZSBjb250cm92ZXJzaWFsLAo+PiBCdXQgSSBzdGlsbCB0aGluayBpdCdzIHdv
+cnRoIGl0Ogo+Cj4gV2VsbCBub3cgdGhhdCBpdCdzIGRvd24gdG8ganVzdCBvbmUgZmllbGQgZm9y
+IGxpbmtpbmcgaXRlbXMgSSdtIGluY2xpbmVkIHRvCj4gYWdyZWUgdGhhdCBpdCdzIE9LLgo+Cj4g
+RG8geW91IChvciBhbnlvbmUgZWxzZSkgaGF2ZSBhbnkgaW50ZXJlc3QgaW4gY3JlYXRpbmcgYW5k
+IHRlc3Rpbmcgc2ltaWxhciBzZXRzCj4gb2YgcGF0Y2hlcyBmb3IgdGhlIG90aGVyIHBhcnRzIG9m
+IGRldmljZS1tYXBwZXIgdGhhdCB1c2UgdGhlIHNhbWUgY29uc3RydWN0aW9uPwoKSSBqdXN0IGNh
+bWUgYWNyb3NzIHRoZSBkZXZpY2UtbWFwcGVyIGNvZGUgYW5kIG1hZGUgdGhlIHBhdGNoZXMgb25l
+Cm1vbnRoIGFnbywgSSB3YW50IHRvIGtub3cgeW91IChkbS1kZXYpJ3MgYXR0aXR1ZGUgdG93YXJk
+IHRoaXMgdHlwZSBvZgpzdHJ1Y3QgcmVjb25zdHJ1Y3Rpb24uIE5vdyBJIGtub3cgaXQgYW5kIGNh
+biBkbyBtb3JlLgoKPgo+IEFsYXNkYWlyCj4gLS0KPiBhZ2tAcmVkaGF0LmNvbQoKQlRXLCB3aHkg
+eW91IHNldCBSZXBseS10byBmaWVsZCB0byBteSBlbWFpbCBhZGRyZXNzPyBNYXliZSBhbiBhY2Np
+ZGVudApvZiB5b3VyIG1haWwgY2xpZW50PwoKLS0gCkNoZW5nIFJlbnF1YW4gKOeoi+S7u+WFqCks
+IFNoZW56aGVuLCBDaGluYQpHcm91Y2hvIE1hcnggIC0gIkkgd2FzIG1hcnJpZWQgYnkgYSBqdWRn
+ZS4gSSBzaG91bGQgaGF2ZSBhc2tlZCBmb3IgYSBqdXJ5LiIK
