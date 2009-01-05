@@ -1,68 +1,49 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
-Date: Mon, 05 Jan 2009 12:36:12 -0500
-Message-ID: <4962450C.20507@redhat.com>
-References: <492C91DF.7040507@redhat.com>
-	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
-	<49467039.6060801@redhat.com> <20081220001305.GA8574@us.ibm.com>
-	<49502F7E.9040300@redhat.com> <20081223180228.GA24831@us.ibm.com>
-	<49622ADB.7040200@redhat.com> <20090105162435.GB18452@us.ibm.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Randy Dunlap <randy.dunlap@oracle.com>
+Subject: Re: linux-next: Tree for January 5 (dm-target)
+Date: Mon, 5 Jan 2009 09:45:37 -0800
+Message-ID: <20090105094537.0718183d.randy.dunlap@oracle.com>
+References: <20090105173517.deeff918.sfr@canb.auug.org.au>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090105162435.GB18452@us.ibm.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: malahal@us.ibm.com
-Cc: dm-devel@redhat.com, agk@redhat.com
+Return-path: <linux-next-owner@vger.kernel.org>
+In-Reply-To: <20090105173517.deeff918.sfr@canb.auug.org.au>
+Sender: linux-next-owner@vger.kernel.org
+To: Stephen Rothwell <sfr@canb.auug.org.au>, dm-devel@redhat.com
+Cc: linux-next@vger.kernel.org, LKML <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-malahal@us.ibm.com wrote:
-> Takahiro Yasui [tyasui@redhat.com] wrote:
->> Hi Malahal,
->>
->> my patch doesn't handle transient error now. I expect log devices
->> to be failed and got in a blockage status once an error has happened.
->>
->>> With our user level only implementation, the log device handling would
->>> be as good as the real mirror *leg* handling. We get all the benefits of
->>> the mirror without doing any code! Wouldn't it be nice?
->> I agree that simple implementation is better, but log could be handled
->> without any additional layer, and also I'm thinking that log could be
->> handled in the simpler way.
->>
->> Lower layer, such as SCSI, also has retry feature based on error type
->> and will be done in the proper way. Do you mean that it isn't enough
->> and should dm-layer handle errors for log device, too?
+On Mon, 5 Jan 2009 17:35:17 +1100 Stephen Rothwell wrote:
+
+> Hi all,
 > 
-> Not really. What I meant is re-integrating a failed log device when it
-> comes back again. That is also what I mean by handling 'transient
-> errors'.
+> This tree will not build a powerpc ppc4xx_defconfig due to a kvm problem.
+> 
+> Changes since 20090102:
+> 
+> Removed tree:
+> 	rr_cpumask (served it purpose)
+> 
+> Undropped tree:
+> 	driver-core
+> 	kvm
+> 
+> Dropped trees (temporarily):
+> 	usb (build problem)
+> 	rr (complex conflicts)
+> 	semaphore-removal (due to unfixed conflicts against Linus' tree)
+> 	cpu_alloc (build problem)
+> 	audit (difficult conflicts)
+> 	staging (depends on usb)
+> 
+> The device-mapper tree lost its conflict.
 
-Thanks, I see your requirement on this feature.
-Let me put one more question.
 
-LVM mirroring is used to make system available even if some devices,
-such as data and log device, have a problem. Currently, activations
-by "vgchange -ay" command seem to fail during system booting if one
-of devices related to VG are missing or had I/O error. For example,
-if a mirror is structured by two data devices and log devices, the
-mirror logical device should be activated and used even if one data
-device and one log device are missing.
+When CONFIG_MODULE_UNLOAD=n (or CONFIG_MODULES=n):
 
-Could you give me an idea or solution to handle this? Do we need to
-enhance your feature to achieve this requirement?
+linux-next-20090105/drivers/md/dm-target.c:106: error: implicit declaration of function 'module_refcount'
 
-I appreciate your comments.
 
-Thanks,
-Taka
+
+---
+~Randy
