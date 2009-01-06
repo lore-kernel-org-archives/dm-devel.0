@@ -1,12 +1,13 @@
-From: "Charlie Sharkey" <charlie.sharkey@bustech.com>
-Subject: Suse sles10 SP1 -> SP2 update question
-Date: Tue, 6 Jan 2009 15:56:59 -0500
-Message-ID: <03FB5D708BE3C8448E8079186A56CDE60104231E@BTIBURMAIL.bustech.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: dm-table-rework-reference-counting.patch
+Date: Tue, 6 Jan 2009 16:27:12 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0901061611590.2209@hs20-bc2-1.build.redhat.com>
+References: <49630562.3090107@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1351431950=="
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
+In-Reply-To: <49630562.3090107@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,141 +17,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Hi
 
---===============1351431950==
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C97041.51A2BAAE"
+You are right, thanks for the review. I grepped for other uses of 
+dm_table_put and they seem correct - just these two were bad.
 
-This is a multi-part message in MIME format.
-
-------_=_NextPart_001_01C97041.51A2BAAE
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-=20
-I'm not sure if this is the correct place for this question or not.
-If not, please let me know.
-=20
-After updating my Suse Sles10 SP1 system  (2.6.16.46-0.12-smp) with the
-kernel rpm from SP2 (2.6.16.60-0.21-smp) devices that mounted (by label)
-are mounting as non multipathed devices. For example, a device that
-previously
-mounted as:  /dev/dm-5  now mounts as:  /dev/sdj1 =20
-=20
-The devices mount ok, they're just not mounting as multipathed devices.=20
-If I reboot, there is about a one in five chance that they will mount
-ok.
-=20
-I have tried updating the rpms that I thought might be needed by the new
-kernel, but
-haven't been able to correct the problem. I've updated the following
-rpms:
-=20
-    util-linux, util-linux-crypto, scsi, multipath-tools, device-mapper,
-udev, lvm2
-=20
-Are there other dependencies that the device mapper needs for mounting ?
-=20
-Thank you,
-=20
-charlie
-
-------_=_NextPart_001_01C97041.51A2BAAE
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD>
-<META http-equiv=3DContent-Type content=3D"text/html; =
-charset=3Dus-ascii">
-<META content=3D"MSHTML 6.00.6000.16788" name=3DGENERATOR></HEAD>
-<BODY>
-<DIV><FONT face=3DArial size=3D2></FONT>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>I'm =
-not sure if this=20
-is the correct place for this question or not.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>If =
-not, please let=20
-me know.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>After =
-updating my=20
-Suse Sles10 SP1 system&nbsp;&nbsp;(2.6.16.46-0.12-smp) with=20
-the</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>kernel =
-rpm from SP2=20
-(2.6.16.60-0.21-smp) devices that mounted (by label)</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>are =
-mounting&nbsp;as=20
-non multipathed devices. For example, a device that=20
-previously</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial =
-size=3D2>mounted as:=20
-&nbsp;/dev/dm-5&nbsp; now mounts as:&nbsp; /dev/sdj1&nbsp; =
-</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>The=20
-devices&nbsp;mount ok,</FONT></SPAN><SPAN =
-class=3D018363720-06012009><FONT=20
-face=3DArial size=3D2> they're just not mounting as multipathed devices. =
-
-</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>If I =
-reboot, there=20
-is about a </FONT></SPAN><SPAN class=3D018363720-06012009><FONT =
-face=3DArial=20
-size=3D2>one </FONT></SPAN><SPAN class=3D018363720-06012009><FONT =
-face=3DArial=20
-size=3D2>in five chance that they will mount ok.</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>I have =
-tried=20
-updating the rpms that I thought might be needed by the new kernel,=20
-but</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial =
-size=3D2>haven't been able to=20
-correct the problem. I've updated the following =
-rpms:</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial =
-size=3D2>&nbsp;&nbsp;&nbsp;=20
-util-linux, util-linux-crypto, scsi, multipath-tools, device-mapper, =
-udev,=20
-lvm2</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>Are =
-there other=20
-dependencies that the device mapper needs for mounting =
-?</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial size=3D2>Thank=20
-you,</FONT></SPAN></DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV><SPAN class=3D018363720-06012009><FONT face=3DArial=20
-size=3D2>charlie</FONT></SPAN></DIV></BODY></HTML>
-
-------_=_NextPart_001_01C97041.51A2BAAE--
+Alasdair: push this patch to Linus soon.
 
 
---===============1351431950==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Another point: it looks somehow scary to free the table before unlocking 
+_hash_lock --- most of the time, _hash_lock is took only on behalf of 
+userspace ioctls (no problem with that), but it is also took in 
+dm_copy_name_and_uuid that can be called from uevent code:
 
+dm_table_event -> event_callback -> dm_send_uevents -> takes _hash_lock
+And dm_table_event is called directly from targets, targets wait for 
+dm_table_event to finish in their destructor --- so calling the destructor 
+with locked _hash_lock seems to be a deadlock possibility --- what do you 
+think?
 
---===============1351431950==--
+Mikulas
+
+On Tue, 6 Jan 2009, Kiyoshi Ueda wrote:
+
+> Hi Alasdair, Mikulas,
+> 
+> Although I'm not sure this is correct, don't we need to convert
+> the following 2 dm_table_put()s to dm_table_destroy()?
+> Otherwise, the created table won't be destroyed and memory leak
+> will happen in such error cases?
+> 
+> drivers/md/dm-ioctl.c:table_load()
+> 1060         r = dm_table_create(&t, get_mode(param), param->target_count, md);
+> 1061         if (r)
+> 1062                 goto out;
+> 1063 
+> 1064         r = populate_table(t, param, param_size);
+> 1065         if (r) {
+> 1066                 dm_table_put(t);
+> 1067                 goto out;
+> 1068         }
+> 1069 
+> 1070         down_write(&_hash_lock);
+> 1071         hc = dm_get_mdptr(md);
+> 1072         if (!hc || hc->md != md) {
+> 1073                 DMWARN("device has been removed from the dev hash table.");
+> 1074                 dm_table_put(t);
+> 1075                 up_write(&_hash_lock);
+> 1076                 r = -ENXIO;
+> 1077                 goto out;
+> 1078         }
+> 
+> Thanks,
+> Kiyoshi Ueda
+> 
+
+Fix an error introduced in dm-table-rework-reference-counting.patch.
+
+When there is failure after table initialization, we need to use
+dm_table_destroy, not dm_table_put, to free the table.
+
+dm_table_put may be used only after dm_table_get.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+CC: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+
+---
+ drivers/md/dm-ioctl.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+Index: linux-2.6.28-devel/drivers/md/dm-ioctl.c
+===================================================================
+--- linux-2.6.28-devel.orig/drivers/md/dm-ioctl.c	2009-01-06 22:06:01.000000000 +0100
++++ linux-2.6.28-devel/drivers/md/dm-ioctl.c	2009-01-06 22:07:05.000000000 +0100
+@@ -1063,7 +1063,7 @@ static int table_load(struct dm_ioctl *p
+ 
+ 	r = populate_table(t, param, param_size);
+ 	if (r) {
+-		dm_table_put(t);
++		dm_table_destroy(t);
+ 		goto out;
+ 	}
+ 
+@@ -1071,7 +1071,7 @@ static int table_load(struct dm_ioctl *p
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+ 		DMWARN("device has been removed from the dev hash table.");
+-		dm_table_put(t);
++		dm_table_destroy(t);
+ 		up_write(&_hash_lock);
+ 		r = -ENXIO;
+ 		goto out;
