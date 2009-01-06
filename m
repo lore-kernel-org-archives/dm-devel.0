@@ -1,20 +1,15 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
-Date: Mon, 05 Jan 2009 17:26:27 -0500
-Message-ID: <49628913.2000404@redhat.com>
-References: <492C91DF.7040507@redhat.com>
-	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
-	<49467039.6060801@redhat.com> <20081220001305.GA8574@us.ibm.com>
-	<49502F7E.9040300@redhat.com> <20081223180228.GA24831@us.ibm.com>
-	<49622ADB.7040200@redhat.com>
-	<20090105162435.GB18452@us.ibm.com> <4962450C.20507@redhat.com>
-	<20090105184408.GA20412@us.ibm.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [git pull] device-mapper patches for 2.6.29
+Date: Mon, 5 Jan 2009 18:51:00 -0800 (PST)
+Message-ID: <alpine.LFD.2.00.0901051843570.3057@localhost.localdomain>
+References: <20081010125159.GK5098@agk.fab.redhat.com>
+	<20090105191824.GP5098@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=ISO-8859-7
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090105184408.GA20412@us.ibm.com>
+In-Reply-To: <20090105191824.GP5098@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,45 +19,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: malahal@us.ibm.com
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Andi Kleen <ak@suse.de>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Cheng Renquan <crquan@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-malahal@us.ibm.com wrote:
-> Takahiro Yasui [tyasui@redhat.com] wrote:
->>> Not really. What I meant is re-integrating a failed log device when it
->>> comes back again. That is also what I mean by handling 'transient
->>> errors'.
->> Thanks, I see your requirement on this feature.
->> Let me put one more question.
->>
->> LVM mirroring is used to make system available even if some devices,
->> such as data and log device, have a problem. Currently, activations
->> by "vgchange -ay" command seem to fail during system booting if one
->> of devices related to VG are missing or had I/O error. For example,
->> if a mirror is structured by two data devices and log devices, the
->> mirror logical device should be activated and used even if one data
->> device and one log device are missing.
->>
->> Could you give me an idea or solution to handle this? Do we need to
->> enhance your feature to achieve this requirement?
-> 
-> The requirement you are asking is more than "mirrored log" support.
-> Actually it is nothing to do with "mirrored log" support! LVM has
-> "--partial' option but that creates read-only volumes.  IBM has
-> implemented "--partial-rw" that activates such mirror devices.
-> Essentially it creates an 'error device' in place of a missing device,
-> but the patch isn't complete as it doesn't work well with other segment
-> (target) types!
-> 
-> What we need is changes to LVM "--partial" code path where it can create
-> volumes read-only or read-write based on what is available instead of
-> blindly doing read-only.
 
-Thank you for the kind reply. I tried the latest lvm command as
-Alasdair suggested, and it seems to work as I expected.
 
-I will test the latest lvm command first.
+On Mon, 5 Jan 2009, Alasdair G Kergon wrote:
+>
+> Please pull from:
+>=20
+>   master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git
+>=20
+> to get the following device-mapper patches for 2.6.29:
 
-Thanks,
-Taka
+Oh no, this is totally broken, and doesn't compile even with my fairly=20
+minimal install:
+
+  drivers/md/dm-target.c: In function =A1dm_unregister_target=A2:
+  drivers/md/dm-target.c:106: error: implicit declaration of function =A1=
+module_refcount=A2
+
+Not pulled.
+
+		Linus
