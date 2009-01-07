@@ -1,12 +1,16 @@
-From: "lu ping" <luping.nju@gmail.com>
-Subject: why "real" device and "snapshot-origin" differs after a
-	snapshot is created
-Date: Tue, 6 Jan 2009 20:14:19 -0800
-Message-ID: <e80b0eb70901062014t33172e81lfeb8f7b0f2caf2e1@mail.gmail.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: self deadlock possibility during device deletion (Was:
+	dm-table-rework-reference-counting.patch)
+Date: Wed, 07 Jan 2009 14:23:39 +0900
+Message-ID: <49643C5B.4090802@ct.jp.nec.com>
+References: <49630562.3090107@ct.jp.nec.com>
+	<Pine.LNX.4.64.0901061611590.2209@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1015151741=="
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0901061611590.2209@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,56 +20,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============1015151741==
-Content-Type: multipart/alternative;
-	boundary="----=_Part_45110_9030694.1231301659682"
+Hi Mikulas, Alasdair,
 
-------=_Part_45110_9030694.1231301659682
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Mikulas Patocka wrote:
+> > Hi
+> > 
+> > You are right, thanks for the review. I grepped for other uses of 
+> > dm_table_put and they seem correct - just these two were bad.
+> > 
+> > Alasdair: push this patch to Linus soon.
 
-Hi Folks,
-
-I am a dm newbie and I am not sure if it's the right place to ask my
-question. But I couldn't find any other related mail list...
-
-After I create a LVM snapshot, there are four related devices. According to
-the documentation, there is a "real" device which contains the original
-mapping table of the source, while a "snapshot-origin" device gets the
-original device number.
-
-As to my understanding, when you read from "snapshot-origin", it will just
-pass the read to the "real" device, while when you write to it, it does the
-COW to the "COW device" and then again pass the writes to the "real" device.
-But after I wrote to "snapshot-origin", I found it's content no longer the
-same as the "real" device (from a "diff"). I must be missing something
-important here. Can somebody explain to me why?
-
-Thanks
-Ping
-
-------=_Part_45110_9030694.1231301659682
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-Hi Folks,<br><br>I am a dm newbie and I am not sure if it&#39;s the right place to ask my question. But I couldn&#39;t find any other related mail list...<br><br>After I create a LVM snapshot, there are four related devices. According to the documentation, there is a &quot;real&quot; device which contains the original mapping table of the source, while a &quot;snapshot-origin&quot; device gets the original device number.<br>
-<br>As to my understanding, when you read from &quot;snapshot-origin&quot;, it will just pass the read to the &quot;real&quot; device, while when you write to it, it does the COW to the &quot;COW device&quot; and then again pass the writes to the &quot;real&quot; device.<br>
-But after I wrote to &quot;snapshot-origin&quot;, I found it&#39;s content no longer the same as the &quot;real&quot; device (from a &quot;diff&quot;). I must be missing something important here. Can somebody explain to me why?<br>
-<br>Thanks<br>Ping<br>
-
-------=_Part_45110_9030694.1231301659682--
+Thank you for the rapid work.
 
 
---===============1015151741==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> > Another point: it looks somehow scary to free the table before unlocking 
+> > _hash_lock --- most of the time, _hash_lock is took only on behalf of 
+> > userspace ioctls (no problem with that), but it is also took in 
+> > dm_copy_name_and_uuid that can be called from uevent code:
+> > 
+> > dm_table_event -> event_callback -> dm_send_uevents -> takes _hash_lock
+> > And dm_table_event is called directly from targets, targets wait for 
+> > dm_table_event to finish in their destructor --- so calling the destructor 
+> > with locked _hash_lock seems to be a deadlock possibility --- what do you 
+> > think?
+
+You are right, although there is no such target now.
+But there is already a code path that could cause such a deadlock.
+
+If a mapped_device is being deleted while there are pending uevents
+in md->uevent_list, the ioctl for the deletion should cause
+self-deadlock, because __hash_remove() calls dm_table_event()
+with _hash_lock locked:
+
+drivers/md/dm-ioctl.c:__hash_remove()
+220 static void __hash_remove(struct hash_cell *hc)
+221 {
+222         struct dm_table *table;
+223 
+224         /* remove from the dev hash */
+225         list_del(&hc->uuid_list);
+226         list_del(&hc->name_list);
+227         dm_set_mdptr(hc->md, NULL);
+228 
+229         table = dm_get_table(hc->md);
+230         if (table) {
+231                 dm_table_event(table);
+232                 dm_table_put(table);
+233         }
+
+We should unlock _hash_lock before handling event flush.
+
+> > Mikulas
+
+Thanks,
+Kiyoshi Ueda
 
 
---===============1015151741==--
+> > On Tue, 6 Jan 2009, Kiyoshi Ueda wrote:
+> > 
+>> >> Hi Alasdair, Mikulas,
+>> >>
+>> >> Although I'm not sure this is correct, don't we need to convert
+>> >> the following 2 dm_table_put()s to dm_table_destroy()?
+>> >> Otherwise, the created table won't be destroyed and memory leak
+>> >> will happen in such error cases?
+>> >>
+>> >> drivers/md/dm-ioctl.c:table_load()
+>> >> 1060         r = dm_table_create(&t, get_mode(param), param->target_count, md);
+>> >> 1061         if (r)
+>> >> 1062                 goto out;
+>> >> 1063 
+>> >> 1064         r = populate_table(t, param, param_size);
+>> >> 1065         if (r) {
+>> >> 1066                 dm_table_put(t);
+>> >> 1067                 goto out;
+>> >> 1068         }
+>> >> 1069 
+>> >> 1070         down_write(&_hash_lock);
+>> >> 1071         hc = dm_get_mdptr(md);
+>> >> 1072         if (!hc || hc->md != md) {
+>> >> 1073                 DMWARN("device has been removed from the dev hash table.");
+>> >> 1074                 dm_table_put(t);
+>> >> 1075                 up_write(&_hash_lock);
+>> >> 1076                 r = -ENXIO;
+>> >> 1077                 goto out;
+>> >> 1078         }
+>> >>
+>> >> Thanks,
+>> >> Kiyoshi Ueda
+>> >>
+> > 
+> > Fix an error introduced in dm-table-rework-reference-counting.patch.
+> > 
+> > When there is failure after table initialization, we need to use
+> > dm_table_destroy, not dm_table_put, to free the table.
+> > 
+> > dm_table_put may be used only after dm_table_get.
+> > 
+> > Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+> > CC: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> > 
+> > ---
+> >  drivers/md/dm-ioctl.c |    4 ++--
+> >  1 file changed, 2 insertions(+), 2 deletions(-)
+> > 
+> > Index: linux-2.6.28-devel/drivers/md/dm-ioctl.c
+> > ===================================================================
+> > --- linux-2.6.28-devel.orig/drivers/md/dm-ioctl.c	2009-01-06 22:06:01.000000000 +0100
+> > +++ linux-2.6.28-devel/drivers/md/dm-ioctl.c	2009-01-06 22:07:05.000000000 +0100
+> > @@ -1063,7 +1063,7 @@ static int table_load(struct dm_ioctl *p
+> >  
+> >  	r = populate_table(t, param, param_size);
+> >  	if (r) {
+> > -		dm_table_put(t);
+> > +		dm_table_destroy(t);
+> >  		goto out;
+> >  	}
+> >  
+> > @@ -1071,7 +1071,7 @@ static int table_load(struct dm_ioctl *p
+> >  	hc = dm_get_mdptr(md);
+> >  	if (!hc || hc->md != md) {
+> >  		DMWARN("device has been removed from the dev hash table.");
+> > -		dm_table_put(t);
+> > +		dm_table_destroy(t);
+> >  		up_write(&_hash_lock);
+> >  		r = -ENXIO;
+> >  		goto out;
+> > 
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
