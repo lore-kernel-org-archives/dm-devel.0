@@ -1,17 +1,12 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH] dm-log: fix return value in create_log_context
-	function
-Date: Thu, 8 Jan 2009 09:39:20 -0600
-Message-ID: <F1C48541-8E34-4B67-897E-0D261D51D79B@redhat.com>
-References: <49372F1E.5060200@redhat.com> <494A8BD3.1020708@redhat.com>
-	<1FD128DB-404C-4758-A276-6149DAAE8F74@redhat.com>
-	<494ABF67.2030103@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH 0/4][RFC] dm-core: full barrier support
+Date: Thu, 08 Jan 2009 17:13:00 +0100
+Message-ID: <4966260C.6070602@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <494ABF67.2030103@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,61 +19,19 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-ACK.
+This patchset is just resend for new kernel of a barrier implementation.
 
-  brassow
+Please note that it is more request for discussion...
 
-On Dec 18, 2008, at 3:23 PM, Takahiro Yasui wrote:
+[PATCH 1/4] dm-core: remove current partial barrier implementation
 
-> Hi Jon,
->
-> Thanks for reviewing this patch.
->
->> We might also want to change the message in that case then too,
->> right?  Maybe "Unable to create disk io client"?
->
-> Thanks, "create disk io client" is better. But I changed as
-> "couldn't create disk io client" for consistency with other
-> messages.
->
-> Regards,
-> ---
-> Takahiro Yasui
-> Hitachi Computer Products (America) Inc.
->
->
->
-> When dm_io_client_create function fails in create_log_context  
-> function,
-> return value is set to r but it is not used. r should be returned.
-> In addition, the warning message is properly corrected so that it  
-> doesn't
-> indicate memory allocation.
->
->
-> Signed-off-by: Takahiro Yasui <tyasui@redhat.com>
-> ---
-> drivers/md/dm-log.c |    4 ++--
-> 1 file changed, 2 insertions(+), 2 deletions(-)
->
-> Index: linux-2.6.28-rc8/drivers/md/dm-log.c
-> ===================================================================
-> --- linux-2.6.28-rc8.orig/drivers/md/dm-log.c
-> +++ linux-2.6.28-rc8/drivers/md/dm-log.c
-> @@ -459,9 +459,9 @@ static int create_log_context(struct dm_
-> 								   PAGE_SIZE));
-> 		if (IS_ERR(lc->io_req.client)) {
-> 			r = PTR_ERR(lc->io_req.client);
-> -			DMWARN("couldn't allocate disk io client");
-> +			DMWARN("couldn't create disk io client");
-> 			kfree(lc);
-> -			return -ENOMEM;
-> +			return r;
-> 		}
->
-> 		lc->disk_header = vmalloc(buf_size);
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+[PATCH 2/4] dm-core: Add zero-size barrier processing to device-mapper
+
+[PATCH 3/4] dm-core: Process barrier request with payload in device-mapper
+
+[PATCH 4/4] dm-core: Implement waiting for barrier in dm_suspend request
+
+
+Milan
+--
+mbroz@redhat.com
