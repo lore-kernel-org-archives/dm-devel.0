@@ -1,15 +1,14 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [2.6.29 PATCH 01/02] dm target: use module refcount
-	directly
-Date: Thu, 8 Jan 2009 14:50:09 -0600
-Message-ID: <F36B0AAE-AF42-48F5-B2AB-743ACD6EA786@redhat.com>
-References: <20090107204143.GR3512@agk.fab.redhat.com>
+Subject: Re: [PATCH] Handle error paths.
+Date: Thu, 8 Jan 2009 14:59:45 -0600
+Message-ID: <EE9F8178-CCDD-40A6-AD4E-9B8014FEB4A1@redhat.com>
+References: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v930.3)
 Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090107204143.GR3512@agk.fab.redhat.com>
+In-Reply-To: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,82 +21,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
+Ummm?
 
   brassow
 
-On Jan 7, 2009, at 2:41 PM, Alasdair G Kergon wrote:
+On Jan 8, 2009, at 1:25 PM, Konrad Rzeszutek wrote:
 
-> From: Cheng Renquan <crquan@gmail.com>
 >
-> The tt_internal's 'use' field is superfluous: the module's refcount  
-> can do
-> the work properly.  An acceptable side-effect is that this increases  
-> the
-> reference counts reported by 'lsmod'.
+> On memory constrained systems, where a large amount of LUNs are
+> assigned (say more enough to make multipath blossom to 70% of  
+> available
+> memory space) forking would fail returning -ENOMEM. The kernel has  
+> enough
+> free pages for the new process, but when it clones the new child  
+> process
+> from the parent process space it accounts the parent process heap  
+> space
+> against the child (which counts for more pages than there are free  
+> pages).
 >
-> Remove the superfluous test when removing a target module.
->
-> Signed-off-by: Cheng Renquan <crquan@gmail.com>
-> Reviewed-by: Alasdair G Kergon <agk@redhat.com>
-> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
-> ---
-> drivers/md/dm-target.c |   20 +++-----------------
-> 1 files changed, 3 insertions(+), 17 deletions(-)
->
-> Index: linux-2.6.28/drivers/md/dm-target.c
-> ===================================================================
-> --- linux-2.6.28.orig/drivers/md/dm-target.c	2009-01-07  
-> 20:29:57.000000000 +0000
-> +++ linux-2.6.28/drivers/md/dm-target.c	2009-01-07  
-> 20:30:57.000000000 +0000
-> @@ -18,7 +18,6 @@ struct tt_internal {
-> 	struct target_type tt;
->
-> 	struct list_head list;
-> -	long use;
-> };
->
-> static LIST_HEAD(_targets);
-> @@ -44,12 +43,8 @@ static struct tt_internal *get_target_ty
-> 	down_read(&_lock);
->
-> 	ti = __find_target_type(name);
-> -	if (ti) {
-> -		if ((ti->use == 0) && !try_module_get(ti->tt.module))
-> -			ti = NULL;
-> -		else
-> -			ti->use++;
-> -	}
-> +	if (ti && !try_module_get(ti->tt.module))
-> +		ti = NULL;
->
-> 	up_read(&_lock);
-> 	return ti;
-> @@ -77,10 +72,7 @@ void dm_put_target_type(struct target_ty
-> 	struct tt_internal *ti = (struct tt_internal *) t;
->
-> 	down_read(&_lock);
-> -	if (--ti->use == 0)
-> -		module_put(ti->tt.module);
-> -
-> -	BUG_ON(ti->use < 0);
-> +	module_put(ti->tt.module);
-> 	up_read(&_lock);
->
-> 	return;
-> @@ -140,12 +132,6 @@ void dm_unregister_target(struct target_
-> 		BUG();
-> 	}
->
-> -	if (ti->use) {
-> -		DMCRIT("Attempt to unregister target still in use: %s",
-> -		       t->name);
-> -		BUG();
-> -	}
-> -
-> 	list_del(&ti->list);
-> 	kfree(ti);
+> Using vfork passes a flag to clone which will inhibit this calculation
+> and instead check for free pages. The danger in using vfork is that  
+> the child
+> could use the values from the parent, but fortunatly we don't do  
+> that and
+> immediately call 'execve' swipping the process space free.
 >
 >
 > --
