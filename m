@@ -1,9 +1,12 @@
 From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: [PATCH] Handle error paths.
-Date: Thu,  8 Jan 2009 14:25:03 -0500
-Message-ID: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
+Subject: [PATCH] Close file descriptors if forking returns an
+	error.
+Date: Thu,  8 Jan 2009 14:25:04 -0500
+Message-ID: <1231442704-19032-2-git-send-email-konrad@virtualiron.com>
+References: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,15 +19,37 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+From: Konrad Rzeszutek <konrad@mars.virtualiron.com>
 
-On memory constrained systems, where a large amount of LUNs are
-assigned (say more enough to make multipath blossom to 70% of available
-memory space) forking would fail returning -ENOMEM. The kernel has enough
-free pages for the new process, but when it clones the new child process
-from the parent process space it accounts the parent process heap space
-against the child (which counts for more pages than there are free pages).
+And also use vfork instead of fork so that the heap space count
+of the parent process (multipathd) will not be counted against
+the program which will executed (scsi_id or other).
+---
+ libmultipath/callout.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
 
-Using vfork passes a flag to clone which will inhibit this calculation
-and instead check for free pages. The danger in using vfork is that the child
-could use the values from the parent, but fortunatly we don't do that and
-immediately call 'execve' swipping the process space free.
+diff --git a/libmultipath/callout.c b/libmultipath/callout.c
+index 4dd33c5..6f9d195 100644
+--- a/libmultipath/callout.c
++++ b/libmultipath/callout.c
+@@ -68,7 +68,7 @@ int execute_program(char *path, char *value, int len)
+ 		return -1;
+ 
+ 
+-	pid = fork();
++	pid = vfork();
+ 
+ 	switch(pid) {
+ 	case 0:
+@@ -91,6 +91,9 @@ int execute_program(char *path, char *value, int len)
+ 
+ 		exit(-1);
+ 	case -1:
++		close(fds[0]);
++		close(fds[1]);
++		condlog(0, "error forking: %s. errno:%d\n", path, errno);
+ 		return -1;
+ 	default:
+ 		/* parent reads from fds[0] */
+-- 
+1.5.4.1
