@@ -1,15 +1,15 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [2.6.29 PATCH] dm ioctl: validate name length when
-	renaming
-Date: Thu, 8 Jan 2009 14:38:21 -0600
-Message-ID: <0CF5D0B1-86A7-4FD2-8E1D-6520B49F94B3@redhat.com>
-References: <20090107131516.GT5098@agk.fab.redhat.com>
+Subject: Re: [2.6.29 PATCH 01] dm table: rework reference counting
+	fix
+Date: Thu, 8 Jan 2009 14:36:02 -0600
+Message-ID: <811CE9C9-6716-45B7-A7E2-80E60C0A9FB6@redhat.com>
+References: <20090107131403.GS5098@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v930.3)
 Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090107131516.GT5098@agk.fab.redhat.com>
+In-Reply-To: <20090107131403.GS5098@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,43 +26,48 @@ Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
   brassow
 
-On Jan 7, 2009, at 7:15 AM, Alasdair G Kergon wrote:
+On Jan 7, 2009, at 7:14 AM, Alasdair G Kergon wrote:
 
-> From: Milan Broz <mbroz@redhat.com>
+> From: Mikulas Patocka <mpatocka@redhat.com>
 >
-> When renaming a mapped device validate the length of the new name.
+> Fix an error introduced in dm-table-rework-reference-counting.patch.
 >
-> The rename ioctl accepted any correctly-terminated string enclosed
-> within the data passed from userspace.  The other ioctls enforce a
-> size limit of DM_NAME_LEN.  If the name is changed and becomes longer
-> than that, the device can no longer be addressed by name.
+> When there is failure after table initialization, we need to use
+> dm_table_destroy, not dm_table_put, to free the table.
 >
-> Fix it by properly checking for device name length (including
-> terminating zero).
+> dm_table_put may be used only after dm_table_get.
 >
-> Cc: stable@kernel.org
-> Signed-off-by: Milan Broz <mbroz@redhat.com>
+> Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 > Signed-off-by: Alasdair G Kergon <agk@redhat.com>
 > ---
-> drivers/md/dm-ioctl.c |    3 ++-
-> 1 files changed, 2 insertions(+), 1 deletion(-)
+> drivers/md/dm-ioctl.c |    4 ++--
+> 1 files changed, 2 insertions(+), 2 deletions(-)
 >
 > Index: linux-2.6.28/drivers/md/dm-ioctl.c
 > ===================================================================
 > --- linux-2.6.28.orig/drivers/md/dm-ioctl.c	2009-01-06  
-> 15:06:06.000000000 +0000
-> +++ linux-2.6.28/drivers/md/dm-ioctl.c	2009-01-06 15:07:04.000000000  
+> 15:07:04.000000000 +0000
+> +++ linux-2.6.28/drivers/md/dm-ioctl.c	2009-01-06 21:36:12.000000000  
 > +0000
-> @@ -704,7 +704,8 @@ static int dev_rename(struct dm_ioctl *p
-> 	char *new_name = (char *) param + param->data_start;
+> @@ -1064,7 +1064,7 @@ static int table_load(struct dm_ioctl *p
 >
-> 	if (new_name < param->data ||
-> -	    invalid_str(new_name, (void *) param + param_size)) {
-> +	    invalid_str(new_name, (void *) param + param_size) ||
-> +	    strlen(new_name) > DM_NAME_LEN - 1) {
-> 		DMWARN("Invalid new logical volume name supplied.");
-> 		return -EINVAL;
+> 	r = populate_table(t, param, param_size);
+> 	if (r) {
+> -		dm_table_put(t);
+> +		dm_table_destroy(t);
+> 		goto out;
 > 	}
+>
+> @@ -1072,7 +1072,7 @@ static int table_load(struct dm_ioctl *p
+> 	hc = dm_get_mdptr(md);
+> 	if (!hc || hc->md != md) {
+> 		DMWARN("device has been removed from the dev hash table.");
+> -		dm_table_put(t);
+> +		dm_table_destroy(t);
+> 		up_write(&_hash_lock);
+> 		r = -ENXIO;
+> 		goto out;
 >
 > --
 > dm-devel mailing list
