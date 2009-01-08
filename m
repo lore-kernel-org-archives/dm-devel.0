@@ -1,13 +1,13 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 4/4] dm-core: Implement waiting for barrier in
- dm_suspend request
-Date: Thu, 08 Jan 2009 17:13:46 +0100
-Message-ID: <4966263A.9040401@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: merging dm-ioband into Linux
+Date: Thu, 8 Jan 2009 12:05:09 -0600
+Message-ID: <09F68804-691D-4E75-ABFC-9E1CE86FB98A@redhat.com>
+References: <20090105.225124.193700534.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0 (Apple Message framework v930.3)
+Content-Type: multipart/mixed; boundary="===============2101011274=="
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090105.225124.193700534.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,119 +20,131 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Implement waiting for barrier in dm_suspend request.
 
-suspend_lock cannot be used inside barrier processing,
-because there can be generated new barrier request during suspend
-process (e.g. in lock_fs() call).
+--===============2101011274==
+Content-Type: multipart/alternative; boundary=Apple-Mail-4--272360424
 
-Add wait for for ongoing barrier to finish before suspending.
 
-There are two status bits used:
-DMF_BLOCK_IO -> all ios are queued
-DMF_BARRIER  -> device is processing barrier (always include BLOCK_IO too).
+--Apple-Mail-4--272360424
+Content-Type: text/plain;
+	charset=US-ASCII;
+	format=flowed;
+	delsp=yes
+Content-Transfer-Encoding: 7bit
 
-Suspend call simply waits till DMF_BARRIER disappear and immediately
-and switch to BLOCK_IO to prevent another barrier to start.
+Perhaps it will help people to know that there is a good write-up  
+about how it all works at the end of the patch found at:
+http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.0.patch
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
+It seem interesting to me.  (I'm still reading through the description  
+and haven't started looking at the code.)
 
----
- drivers/md/dm.c |   61 +++++++++++++++++++++++++++++++++++++++++++++++-------
- 1 files changed, 53 insertions(+), 8 deletions(-)
+Regarding:
++                ioband_device_id
++
++                          The ID number for an ioband device. The  
+same ID
++                        must be set among the ioband devices that  
+share the
++                        same bandwidth, which means they work on the  
+same
++                        physical disk.
+... but it doesn't have to be the same physical disk, right?  It could  
+be a group if disks if you felt the need to do something like that,  
+right?  (You could treat a JBOD as one unit.)  Otherwise, you could  
+probably eliminate this field.
+brassow
+On Jan 5, 2009, at 7:51 AM, Ryo Tsuruta wrote:
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index f3d1ee5..407f4a6 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -1508,6 +1508,13 @@ static void __flush_deferred_io(struct mapped_device *md, int barrier_flag)
- 	while ((c = bio_list_pop(&md->deferred))) {
- 		barrier = bio_barrier(c);
- 
-+		/* FIXME: is this possible here? */
-+		/* New barrier and no flag */
-+		if (barrier && !test_bit(DMF_BARRIER, &md->flags)) {
-+			__submit_barrier(md, c);
-+			return;
-+		} 
+> Hi Alasdair,
+>
+> I know you are very very busy, but could you do me a favor and
+> respond to my email?
+>
+> - Have you already looked over the patch?
+> - What do you think about it?
+> - Would you consider merging the dm-ioband patch into Linux?
+> - What else do I need to do it?
+>
+> Any comments, suggestions or whatever will be grately appreciated.
+>
+> Thanks,
+> Ryo Tsuruta
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+
+--Apple-Mail-4--272360424
+Content-Type: text/html;
+	charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
+
+<html><body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; =
+-webkit-line-break: after-white-space; ">Perhaps it will help people to =
+know that there is a good write-up about how it all works at the end of =
+the patch found at:<div><a =
+href=3D"http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.=
+0.patch">http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7=
+.0.patch</a></div><div><br></div><div>It seem interesting to me. =
+&nbsp;(I'm still reading through the description and haven't started =
+looking at the =
+code.)</div><div><br></div><div>Regarding:</div><div><span =
+class=3D"Apple-style-span" style=3D"font-family: Times; font-size: 16px; =
+"><pre style=3D"word-wrap: break-word; white-space: pre-wrap; "><font =
+class=3D"Apple-style-span" face=3D"Courier" size=3D"3"><span =
+class=3D"Apple-style-span" style=3D"font-size: 12px;">+                =
+ioband_device_id
 +
- 		if (__split_bio(md, c))
- 			bio_io_error(c);
- 
-@@ -1647,6 +1654,47 @@ static void unlock_fs(struct mapped_device *md)
- 	clear_bit(DMF_FROZEN, &md->flags);
- }
- 
-+static int _blockio_if_not_in_barrier(struct mapped_device *md)
-+{
-+	int in_barrier;
-+
-+	down_write(&md->io_lock);
-+	smp_mb();
-+	in_barrier = test_bit(DMF_BARRIER, &md->flags);
-+	if (!in_barrier)
-+		set_bit(DMF_BLOCK_IO, &md->flags);
-+	up_write(&md->io_lock);
-+
-+	return !in_barrier;
-+}
-+
-+static int dm_wait_blockio(struct mapped_device *md)
-+{
-+	int r = 0;
-+
-+	while (1) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+
-+		if (_blockio_if_not_in_barrier(md))
-+			break;
-+
-+		if (signal_pending(current)) {
-+			r = -EINTR;
-+			break;
-+		}
-+
-+		/*
-+		 * We cannot use io_schedule here
-+		 * all io can be already processed.
-+		 * FIXME: starvation here?
-+		 */
-+		schedule_timeout(HZ/100);
-+	}
-+	set_current_state(TASK_RUNNING);
-+
-+	return r;
-+}
-+
- /*
-  * We need to be able to change a mapping table under a mounted
-  * filesystem.  For example we might want to move some data in
-@@ -1669,12 +1717,6 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
- 		goto out_unlock;
- 	}
- 
--	 /* FIXME: temporary, it must not fail here  */
--	if (test_bit(DMF_BARRIER, &md->flags)) {
--		r = -EBUSY;
--		goto out_unlock;
--	}
--
- 	map = dm_get_table(md);
- 
- 	/*
-@@ -1709,10 +1751,13 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
- 
- 	/*
- 	 * First we set the BLOCK_IO flag so no more ios will be mapped.
-+	 * But wait for possible ongoing barrier to finish first.
- 	 */
--	down_write(&md->io_lock);
--	set_bit(DMF_BLOCK_IO, &md->flags);
-+	r = dm_wait_blockio(md);
-+	if (r)
-+		goto out;
- 
-+	down_write(&md->io_lock);
- 	add_wait_queue(&md->wait, &wait);
- 	up_write(&md->io_lock);
- 
++                          The ID number for an ioband device. The same =
+ID
++                        must be set among the ioband devices that share =
+the
++                        same bandwidth, which means they work on the =
+same
++                        physical disk.<span class=3D"Apple-style-span" =
+style=3D"font-family: Helvetica; white-space: normal; =
+"></span></span></font></pre><pre style=3D"word-wrap: break-word; =
+white-space: pre-wrap; "><font class=3D"Apple-style-span" =
+face=3D"Helvetica" size=3D"3"><span class=3D"Apple-style-span" =
+style=3D"font-size: 12px; white-space: normal;">... but it doesn't have =
+to be the same physical disk, right? &nbsp;It could be a group if disks =
+if you felt the need to do something like that, right? &nbsp;(You could =
+treat a JBOD as one unit.) &nbsp;Otherwise, you could probably eliminate =
+this field.</span></font></pre><pre style=3D"word-wrap: break-word; =
+"><font class=3D"Apple-style-span" face=3D"Helvetica" size=3D"3"><span =
+class=3D"Apple-style-span" style=3D"font-size: 12px; white-space: =
+normal;"> </span></font></pre><pre style=3D"word-wrap: break-word; =
+white-space: pre-wrap; "><font class=3D"Apple-style-span" face=3D"Courier"=
+ size=3D"3"><span class=3D"Apple-style-span" style=3D"font-size: =
+12px;"><span class=3D"Apple-style-span" style=3D"font-family: Helvetica; =
+white-space: normal; ">brassow</span></span></font></pre><pre =
+style=3D"word-wrap: break-word; white-space: pre-wrap; "><span =
+class=3D"Apple-style-span" style=3D"font-family: Helvetica; font-size: =
+12px; white-space: normal; ">On Jan 5, 2009, at 7:51 AM, Ryo Tsuruta =
+wrote:</span></pre></span><div><br =
+class=3D"Apple-interchange-newline"><blockquote type=3D"cite"><div>Hi =
+Alasdair,<br><br>I know you are very very busy, but could you do me a =
+favor and<br>respond to my email?<br><br>- Have you already looked over =
+the patch?<br>- What do you think about it?<br>- Would you consider =
+merging the dm-ioband patch into Linux?<br>- What else do I need to do =
+it?<br><br>Any comments, suggestions or whatever will be grately =
+appreciated.<br><br>Thanks,<br>Ryo Tsuruta<br><br>--<br>dm-devel mailing =
+list<br><a =
+href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>https://www=
+.redhat.com/mailman/listinfo/dm-devel<br></div></blockquote></div><br></di=
+v></body></html>=
+
+--Apple-Mail-4--272360424--
+
+
+--===============2101011274==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+
+--===============2101011274==--
