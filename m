@@ -1,8 +1,8 @@
 From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH 1/4] dm-core: remove current partial barrier
-	implementation
-Date: Thu, 08 Jan 2009 17:13:12 +0100
-Message-ID: <49662618.80600@redhat.com>
+Subject: [PATCH 2/4] dm-core: Add zero-size barrier processing to
+	device-mapper
+Date: Thu, 08 Jan 2009 17:13:24 +0100
+Message-ID: <49662624.7030801@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
@@ -20,142 +20,335 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Prepare for full barrier implementation - remove the simple one
+Add zero-size barrier processing to device-mapper.
+
+Barrier without payload is now resent to all targets
+in mapped devices.
+Target is responsible for barrier processing.
+
+After processing all cloned requests is the parent
+barrier request finished.
+
+Only one barrier in time is processed, all subsequent bio
+requests are queued (including possible other barrier bios).
+
+Define special processing for stripe target, every device
+in stripe set must receive empty barrier bio.
+
+All other targets (in kernel) should process barriers without
+changes correctly now.
+(But probably some optimizations needed.)
 
 Signed-off-by: Milan Broz <mbroz@redhat.com>
-
 ---
- drivers/md/dm-linear.c        |    1 -
- drivers/md/dm-table.c         |   19 -------------------
- drivers/md/dm.c               |   15 ++++++++++-----
- drivers/md/dm.h               |    1 -
- include/linux/device-mapper.h |    1 -
- 5 files changed, 10 insertions(+), 27 deletions(-)
+ drivers/md/dm-stripe.c |    9 +++
+ drivers/md/dm.c        |  158 +++++++++++++++++++++++++++++++++++++++++++----
+ 2 files changed, 153 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/md/dm-linear.c b/drivers/md/dm-linear.c
-index bfa107f..79fb53e 100644
---- a/drivers/md/dm-linear.c
-+++ b/drivers/md/dm-linear.c
-@@ -142,7 +142,6 @@ static struct target_type linear_target = {
- 	.status = linear_status,
- 	.ioctl  = linear_ioctl,
- 	.merge  = linear_merge,
--	.features = DM_TARGET_SUPPORTS_BARRIERS,
- };
+diff --git a/drivers/md/dm-stripe.c b/drivers/md/dm-stripe.c
+index 41569bc..b9e6396 100644
+--- a/drivers/md/dm-stripe.c
++++ b/drivers/md/dm-stripe.c
+@@ -216,6 +216,15 @@ static int stripe_map(struct dm_target *ti, struct bio *bio,
+ 	sector_t chunk = offset >> sc->chunk_shift;
+ 	uint32_t stripe = sector_div(chunk, sc->stripes);
  
- int __init dm_linear_init(void)
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 2fd66c3..d599143 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -52,8 +52,6 @@ struct dm_table {
- 	sector_t *highs;
- 	struct dm_target *targets;
- 
--	unsigned barriers_supported:1;
--
- 	/*
- 	 * Indicates the rw permissions for the new logical
- 	 * device.  This should be a combination of FMODE_READ
-@@ -243,7 +241,6 @@ int dm_table_create(struct dm_table **result, fmode_t mode,
- 
- 	INIT_LIST_HEAD(&t->devices);
- 	atomic_set(&t->holders, 0);
--	t->barriers_supported = 1;
- 
- 	if (!num_targets)
- 		num_targets = KEYS_PER_NODE;
-@@ -749,10 +746,6 @@ int dm_table_add_target(struct dm_table *t, const char *type,
- 	/* FIXME: the plan is to combine high here and then have
- 	 * the merge fn apply the target level restrictions. */
- 	combine_restrictions_low(&t->limits, &tgt->limits);
--
--	if (!(tgt->type->features & DM_TARGET_SUPPORTS_BARRIERS))
--		t->barriers_supported = 0;
--
- 	return 0;
- 
-  bad:
-@@ -797,12 +790,6 @@ int dm_table_complete(struct dm_table *t)
- 
- 	check_for_valid_limits(&t->limits);
- 
--	/*
--	 * We only support barriers if there is exactly one underlying device.
--	 */
--	if (!list_is_singular(&t->devices))
--		t->barriers_supported = 0;
--
- 	/* how many indexes will the btree have ? */
- 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
- 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
-@@ -1017,12 +1004,6 @@ struct mapped_device *dm_table_get_md(struct dm_table *t)
- 	return t->md;
- }
- 
--int dm_table_barrier_ok(struct dm_table *t)
--{
--	return t->barriers_supported;
--}
--EXPORT_SYMBOL(dm_table_barrier_ok);
--
- EXPORT_SYMBOL(dm_vcalloc);
- EXPORT_SYMBOL(dm_get_device);
- EXPORT_SYMBOL(dm_put_device);
++	if (unlikely(bio_empty_barrier(bio))) {
++		unsigned int i, r = 0;
++
++		for (i = 0; i < sc->stripes && r == 0; i++)
++			r = blkdev_issue_flush(sc->stripe[i].dev->bdev, NULL);
++		bio_endio(bio, r);
++		return DM_MAPIO_SUBMITTED;
++	}
++
+ 	bio->bi_bdev = sc->stripe[stripe].dev->bdev;
+ 	bio->bi_sector = sc->stripe[stripe].physical_start +
+ 	    (chunk << sc->chunk_shift) + (offset & sc->chunk_mask);
 diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 51ba1db..a9aa699 100644
+index a9aa699..d2f7e0b 100644
 --- a/drivers/md/dm.c
 +++ b/drivers/md/dm.c
-@@ -838,11 +838,7 @@ static int __split_bio(struct mapped_device *md, struct bio *bio)
- 	ci.map = dm_get_table(md);
- 	if (unlikely(!ci.map))
- 		return -EIO;
--	if (unlikely(bio_barrier(bio) && !dm_table_barrier_ok(ci.map))) {
--		dm_table_put(ci.map);
--		bio_endio(bio, -EOPNOTSUPP);
--		return 0;
--	}
+@@ -95,6 +95,7 @@ union map_info *dm_get_mapinfo(struct bio *bio)
+ #define DMF_FREEING 3
+ #define DMF_DELETING 4
+ #define DMF_NOFLUSH_SUSPENDING 5
++#define DMF_BARRIER 6
+ 
+ /*
+  * Work processed by per-device workqueue.
+@@ -102,6 +103,8 @@ union map_info *dm_get_mapinfo(struct bio *bio)
+ struct dm_wq_req {
+ 	enum {
+ 		DM_WQ_FLUSH_DEFERRED,
++		DM_WQ_BARRIER,
++		DM_WQ_BARRIER_POST,
+ 	} type;
+ 	struct work_struct work;
+ 	struct mapped_device *md;
+@@ -136,6 +139,11 @@ struct mapped_device {
+ 	 * Processing queue (flush/barriers)
+ 	 */
+ 	struct workqueue_struct *wq;
++	/*
++	 * Always processing one barrier in time,
++	 * one static struct per md is enough.
++	 */
++	struct dm_wq_req barrier_work;
+ 
+ 	/*
+ 	 * The current mapping.
+@@ -512,6 +520,9 @@ int dm_set_geometry(struct mapped_device *md, struct hd_geometry *geo)
+  *   interests of getting something for people to use I give
+  *   you this clearly demarcated crap.
+  *---------------------------------------------------------------*/
++static void dm_wq_queue(struct mapped_device *md, int type, void *context,
++			struct dm_wq_req *req);
++static void dm_queue_flush(struct mapped_device *md, int type, void *context);
+ 
+ static int __noflush_suspending(struct mapped_device *md)
+ {
+@@ -525,6 +536,7 @@ static int __noflush_suspending(struct mapped_device *md)
+ static void dec_pending(struct dm_io *io, int error)
+ {
+ 	unsigned long flags;
++	int barrier = bio_empty_barrier(io->bio);
+ 
+ 	/* Push-back supersedes any I/O errors */
+ 	if (error && !(io->error > 0 && __noflush_suspending(io->md)))
+@@ -552,6 +564,10 @@ static void dec_pending(struct dm_io *io, int error)
+ 			trace_block_bio_complete(io->md->queue, io->bio);
+ 
+ 			bio_endio(io->bio, io->error);
 +
- 	ci.md = md;
- 	ci.bio = bio;
- 	ci.io = alloc_io(md);
-@@ -926,6 +922,15 @@ static int dm_request(struct request_queue *q, struct bio *bio)
++			if (barrier)
++				dm_wq_queue(io->md, DM_WQ_BARRIER_POST, NULL,
++					    &io->md->barrier_work);
+ 		}
+ 
+ 		free_io(io->md, io);
+@@ -623,11 +639,6 @@ static void __map_bio(struct dm_target *ti, struct bio *clone,
+ 	sector_t sector;
+ 	struct mapped_device *md;
+ 
+-	/*
+-	 * Sanity checks.
+-	 */
+-	BUG_ON(!clone->bi_size);
+-
+ 	clone->bi_end_io = clone_endio;
+ 	clone->bi_private = tio;
+ 
+@@ -827,6 +838,36 @@ static int __clone_and_map(struct clone_info *ci)
+ 	return 0;
+ }
+ 
++static void __map_empty_barrier(struct clone_info *ci, struct dm_target *ti)
++{
++	struct dm_target_io *tio;
++	struct bio *clone;
++
++	tio = alloc_tio(ci->md);
++	tio->io = ci->io;
++	tio->ti = ti;
++	memset(&tio->info, 0, sizeof(tio->info));
++
++	clone = clone_bio(ci->bio, 0, 0, 0, 0, ci->md->bs);
++	clone->bi_rw |= 1 << BIO_RW_BARRIER;
++
++	__map_bio(ti, clone, tio);
++}
++
++static int __clone_and_map_barrier(struct clone_info *ci)
++{
++	int i, targets = dm_table_get_num_targets(ci->map);
++	struct dm_target *ti;
++
++	/* Processing barrier per target */
++	for (i=0; i < targets; i++) {
++		ti = dm_table_get_target(ci->map, i);
++		__map_empty_barrier(ci, ti);
++	}
++
++	return 0;
++}
++
+ /*
+  * Split the bio into several clones.
+  */
+@@ -851,8 +892,12 @@ static int __split_bio(struct mapped_device *md, struct bio *bio)
+ 	ci.idx = bio->bi_idx;
+ 
+ 	start_io_acct(ci.io);
+-	while (ci.sector_count && !error)
+-		error = __clone_and_map(&ci);
++
++	if (unlikely(bio_empty_barrier(ci.bio)))
++		error = __clone_and_map_barrier(&ci);
++	else
++		while (ci.sector_count && !error)
++			error = __clone_and_map(&ci);
+ 
+ 	/* drop the extra reference count */
+ 	dec_pending(ci.io, error);
+@@ -922,12 +967,8 @@ static int dm_request(struct request_queue *q, struct bio *bio)
  	struct mapped_device *md = q->queuedata;
  	int cpu;
  
-+	/*
-+	 * There is no use in forwarding any barrier request since we can't
-+	 * guarantee it is (or can be) handled by the targets correctly.
-+	 */
-+	if (unlikely(bio_barrier(bio))) {
-+		bio_endio(bio, -EOPNOTSUPP);
-+		return 0;
+-	/*
+-	 * There is no use in forwarding any barrier request since we can't
+-	 * guarantee it is (or can be) handled by the targets correctly.
+-	 */
+ 	if (unlikely(bio_barrier(bio))) {
+-		bio_endio(bio, -EOPNOTSUPP);
++		dm_queue_flush(md, DM_WQ_BARRIER, bio);
+ 		return 0;
+ 	}
+ 
+@@ -996,6 +1037,13 @@ static int dm_any_congested(void *congested_data, int bdi_bits)
+ 	return r;
+ }
+ 
++/*
++ * Make block layer happy otherwise it fails barriers requests
++ */
++static void dm_prepare_flush(struct request_queue *q, struct request *req)
++{
++}
++
+ /*-----------------------------------------------------------------
+  * An IDR is used to keep track of allocated minor numbers.
+  *---------------------------------------------------------------*/
+@@ -1121,6 +1169,9 @@ static struct mapped_device *alloc_dev(int minor)
+ 	md->queue->unplug_fn = dm_unplug_all;
+ 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
+ 
++	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN_FLUSH,
++			  dm_prepare_flush);
++
+ 	md->io_pool = mempool_create_slab_pool(MIN_IOS, _io_cache);
+ 	if (!md->io_pool)
+ 		goto bad_io_pool;
+@@ -1401,19 +1452,70 @@ static int dm_wait_for_completion(struct mapped_device *md)
+ 	return r;
+ }
+ 
++static void __submit_barrier(struct mapped_device *md, struct bio *bio)
++{
++	DECLARE_WAITQUEUE(wait, current);
++	int r = 0, rw = bio_data_dir(bio);
++	struct dm_table *map = NULL;
++	int cpu;
++
++	cpu = part_stat_lock();
++	part_stat_inc(cpu, &dm_disk(md)->part0, ios[rw]);
++	part_stat_add(cpu, &dm_disk(md)->part0, sectors[rw], bio_sectors(bio));
++	part_stat_unlock();
++
++	set_bit(DMF_BLOCK_IO, &md->flags);
++	set_bit(DMF_BARRIER, &md->flags);
++
++	r = __split_bio(md, bio);
++	if (r < 0) {
++		bio_endio(bio, r);
++		clear_bit(DMF_BLOCK_IO, &md->flags);
++		clear_bit(DMF_BARRIER, &md->flags);
++		return;
 +	}
 +
- 	down_read(&md->io_lock);
- 
- 	cpu = part_stat_lock();
-diff --git a/drivers/md/dm.h b/drivers/md/dm.h
-index 20194e0..7e1af9b 100644
---- a/drivers/md/dm.h
-+++ b/drivers/md/dm.h
-@@ -52,7 +52,6 @@ int dm_table_any_congested(struct dm_table *t, int bdi_bits);
-  * To check the return value from dm_table_find_target().
-  */
- #define dm_target_is_valid(t) ((t)->table)
--int dm_table_barrier_ok(struct dm_table *t);
- 
- /*-----------------------------------------------------------------
-  * A registry of target types.
-diff --git a/include/linux/device-mapper.h b/include/linux/device-mapper.h
-index 8209e08..27dfba2 100644
---- a/include/linux/device-mapper.h
-+++ b/include/linux/device-mapper.h
-@@ -116,7 +116,6 @@ void dm_put_device(struct dm_target *ti, struct dm_dev *d);
++	/* wait for completion of preceding requests + barrier */
++	add_wait_queue(&md->wait, &wait);
++	up_write(&md->io_lock);
++
++	/* unplug */
++	map = dm_get_table(md);
++	if (map)
++		dm_table_unplug_all(map);
++	dm_table_put(map);
++
++	r = dm_wait_for_completion(md);
++
++	down_write(&md->io_lock);
++	remove_wait_queue(&md->wait, &wait);
++}
++
  /*
-  * Target features
+  * Process the deferred bios
   */
--#define DM_TARGET_SUPPORTS_BARRIERS 0x00000001
+-static void __flush_deferred_io(struct mapped_device *md)
++static void __flush_deferred_io(struct mapped_device *md, int barrier_flag)
+ {
+ 	struct bio *c;
++	int barrier;
  
- struct target_type {
- 	uint64_t features;
+ 	while ((c = bio_list_pop(&md->deferred))) {
++		barrier = bio_barrier(c);
++
+ 		if (__split_bio(md, c))
+ 			bio_io_error(c);
++
++		/*
++		 * Process preceding bios if bio was barrier
++		 * and then finish it in next BARRIER_POST
++		 */
++		if (barrier)
++			return;
+ 	}
+ 
+ 	clear_bit(DMF_BLOCK_IO, &md->flags);
++	if (barrier_flag)
++		clear_bit(DMF_BARRIER, &md->flags);
+ }
+ 
+ static void __merge_pushback_list(struct mapped_device *md)
+@@ -1427,6 +1529,22 @@ static void __merge_pushback_list(struct mapped_device *md)
+ 	spin_unlock_irqrestore(&md->pushback_lock, flags);
+ }
+ 
++static void __request_barrier(struct mapped_device *md, struct bio *bio)
++{
++	/* Only barriers without payload are supported */
++	if (bio->bi_size) {
++		bio_endio(bio, -EOPNOTSUPP);
++		return;
++	}
++
++	smp_mb();
++	if (!test_bit(DMF_BLOCK_IO, &md->flags))
++		__submit_barrier(md, bio);
++	else
++		/* Otherwise barrier is queued */
++		bio_list_add(&md->deferred, bio);
++}
++
+ static void dm_wq_work(struct work_struct *work)
+ {
+ 	struct dm_wq_req *req = container_of(work, struct dm_wq_req, work);
+@@ -1435,7 +1553,13 @@ static void dm_wq_work(struct work_struct *work)
+ 	down_write(&md->io_lock);
+ 	switch (req->type) {
+ 	case DM_WQ_FLUSH_DEFERRED:
+-		__flush_deferred_io(md);
++		__flush_deferred_io(md, 0);
++		break;
++	case DM_WQ_BARRIER:
++		__request_barrier(md, req->context);
++		break;
++	case DM_WQ_BARRIER_POST:
++		__flush_deferred_io(md, 1);
+ 		break;
+ 	default:
+ 		DMERR("dm_wq_work: unrecognised work type %d", req->type);
+@@ -1545,6 +1669,12 @@ int dm_suspend(struct mapped_device *md, unsigned suspend_flags)
+ 		goto out_unlock;
+ 	}
+ 
++	 /* FIXME: temporary, it must not fail here  */
++	if (test_bit(DMF_BARRIER, &md->flags)) {
++		r = -EBUSY;
++		goto out_unlock;
++	}
++
+ 	map = dm_get_table(md);
+ 
+ 	/*
