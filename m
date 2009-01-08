@@ -1,13 +1,18 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: merging dm-ioband into Linux
-Date: Thu, 8 Jan 2009 12:05:09 -0600
-Message-ID: <09F68804-691D-4E75-ABFC-9E1CE86FB98A@redhat.com>
-References: <20090105.225124.193700534.ryov@valinux.co.jp>
+Subject: Re: [RFC][PATCH 0/4] dm-log: support multi-log devices
+Date: Thu, 8 Jan 2009 12:30:27 -0600
+Message-ID: <B5B7237F-34C0-4A68-A849-18F795E2E026@redhat.com>
+References: <492C91DF.7040507@redhat.com>
+	<ACCFADCE-51D8-4183-803D-32050E3BE436@redhat.com>
+	<49467039.6060801@redhat.com> <20081220001305.GA8574@us.ibm.com>
+	<49502F7E.9040300@redhat.com> <20081223180228.GA24831@us.ibm.com>
+	<20081231201540.GA11495@us.ibm.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: multipart/mixed; boundary="===============2101011274=="
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090105.225124.193700534.ryov@valinux.co.jp>
+In-Reply-To: <20081231201540.GA11495@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,131 +25,34 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+My general feeling is that it is better to do in userspace, but this  
+is only because I think there is so much improvement to be done in the  
+mirror DSO - transient fault handling being one of those areas.  If  
+you all can get your benefits of multi-log, while I get my benefits of  
+an improved DSO, then I am very happy.
 
---===============2101011274==
-Content-Type: multipart/alternative; boundary=Apple-Mail-4--272360424
+That being said, there may also be merit in the kernel approach.  I  
+haven't tried to think through all the nasty cases where log devices  
+and mirror devices overlap.  For example, I want a 3-way mirror with a  
+2-way redundant mirror log and I only have 3 physical disks.  If I get  
+a failure on a device that contains both log and leg, how are the  
+failures going to be handled?  It could get difficult with the  
+layering...
 
+And speaking of layering...  If we made LVM capable of generic  
+layering (e.g. ability to stack targets, like RAID10 or snapshots of  
+mirrors) and we improved the DSO, wouldn't we get everything we want?   
+Stacking is already high on the list of priorities... so another good  
+place to focus attention would be the mirror DSO.  :)
 
---Apple-Mail-4--272360424
-Content-Type: text/plain;
-	charset=US-ASCII;
-	format=flowed;
-	delsp=yes
-Content-Transfer-Encoding: 7bit
+Perhaps others have a stronger opinion on kernel vs. userspace.
 
-Perhaps it will help people to know that there is a good write-up  
-about how it all works at the end of the patch found at:
-http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.0.patch
+  brassow
 
-It seem interesting to me.  (I'm still reading through the description  
-and haven't started looking at the code.)
+On Dec 31, 2008, at 2:15 PM, malahal@us.ibm.com wrote:
 
-Regarding:
-+                ioband_device_id
-+
-+                          The ID number for an ioband device. The  
-same ID
-+                        must be set among the ioband devices that  
-share the
-+                        same bandwidth, which means they work on the  
-same
-+                        physical disk.
-... but it doesn't have to be the same physical disk, right?  It could  
-be a group if disks if you felt the need to do something like that,  
-right?  (You could treat a JBOD as one unit.)  Otherwise, you could  
-probably eliminate this field.
-brassow
-On Jan 5, 2009, at 7:51 AM, Ryo Tsuruta wrote:
-
-> Hi Alasdair,
+> Alasdair, Jonathan: Any comments regarding kernel module vs
+> implementing it entirely with in LVM to support this multi-log  
+> feature?
 >
-> I know you are very very busy, but could you do me a favor and
-> respond to my email?
->
-> - Have you already looked over the patch?
-> - What do you think about it?
-> - Would you consider merging the dm-ioband patch into Linux?
-> - What else do I need to do it?
->
-> Any comments, suggestions or whatever will be grately appreciated.
->
-> Thanks,
-> Ryo Tsuruta
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-
---Apple-Mail-4--272360424
-Content-Type: text/html;
-	charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
-
-<html><body style=3D"word-wrap: break-word; -webkit-nbsp-mode: space; =
--webkit-line-break: after-white-space; ">Perhaps it will help people to =
-know that there is a good write-up about how it all works at the end of =
-the patch found at:<div><a =
-href=3D"http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.=
-0.patch">http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7=
-.0.patch</a></div><div><br></div><div>It seem interesting to me. =
-&nbsp;(I'm still reading through the description and haven't started =
-looking at the =
-code.)</div><div><br></div><div>Regarding:</div><div><span =
-class=3D"Apple-style-span" style=3D"font-family: Times; font-size: 16px; =
-"><pre style=3D"word-wrap: break-word; white-space: pre-wrap; "><font =
-class=3D"Apple-style-span" face=3D"Courier" size=3D"3"><span =
-class=3D"Apple-style-span" style=3D"font-size: 12px;">+                =
-ioband_device_id
-+
-+                          The ID number for an ioband device. The same =
-ID
-+                        must be set among the ioband devices that share =
-the
-+                        same bandwidth, which means they work on the =
-same
-+                        physical disk.<span class=3D"Apple-style-span" =
-style=3D"font-family: Helvetica; white-space: normal; =
-"></span></span></font></pre><pre style=3D"word-wrap: break-word; =
-white-space: pre-wrap; "><font class=3D"Apple-style-span" =
-face=3D"Helvetica" size=3D"3"><span class=3D"Apple-style-span" =
-style=3D"font-size: 12px; white-space: normal;">... but it doesn't have =
-to be the same physical disk, right? &nbsp;It could be a group if disks =
-if you felt the need to do something like that, right? &nbsp;(You could =
-treat a JBOD as one unit.) &nbsp;Otherwise, you could probably eliminate =
-this field.</span></font></pre><pre style=3D"word-wrap: break-word; =
-"><font class=3D"Apple-style-span" face=3D"Helvetica" size=3D"3"><span =
-class=3D"Apple-style-span" style=3D"font-size: 12px; white-space: =
-normal;"> </span></font></pre><pre style=3D"word-wrap: break-word; =
-white-space: pre-wrap; "><font class=3D"Apple-style-span" face=3D"Courier"=
- size=3D"3"><span class=3D"Apple-style-span" style=3D"font-size: =
-12px;"><span class=3D"Apple-style-span" style=3D"font-family: Helvetica; =
-white-space: normal; ">brassow</span></span></font></pre><pre =
-style=3D"word-wrap: break-word; white-space: pre-wrap; "><span =
-class=3D"Apple-style-span" style=3D"font-family: Helvetica; font-size: =
-12px; white-space: normal; ">On Jan 5, 2009, at 7:51 AM, Ryo Tsuruta =
-wrote:</span></pre></span><div><br =
-class=3D"Apple-interchange-newline"><blockquote type=3D"cite"><div>Hi =
-Alasdair,<br><br>I know you are very very busy, but could you do me a =
-favor and<br>respond to my email?<br><br>- Have you already looked over =
-the patch?<br>- What do you think about it?<br>- Would you consider =
-merging the dm-ioband patch into Linux?<br>- What else do I need to do =
-it?<br><br>Any comments, suggestions or whatever will be grately =
-appreciated.<br><br>Thanks,<br>Ryo Tsuruta<br><br>--<br>dm-devel mailing =
-list<br><a =
-href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br>https://www=
-.redhat.com/mailman/listinfo/dm-devel<br></div></blockquote></div><br></di=
-v></body></html>=
-
---Apple-Mail-4--272360424--
-
-
---===============2101011274==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============2101011274==--
+> Thanks, Malahal.
