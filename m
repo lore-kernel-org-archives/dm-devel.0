@@ -1,14 +1,13 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH] Handle error paths.
-Date: Thu, 8 Jan 2009 14:59:45 -0600
-Message-ID: <EE9F8178-CCDD-40A6-AD4E-9B8014FEB4A1@redhat.com>
-References: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
+From: "Salah Coronya" <salah.coronya@gmail.com>
+Subject: dm-loop status
+Date: Thu, 8 Jan 2009 16:10:40 -0600
+Message-ID: <772ddc350901081410q7c095416h2e2c280e0e47b818@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,37 +17,10 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Ummm?
-
-  brassow
-
-On Jan 8, 2009, at 1:25 PM, Konrad Rzeszutek wrote:
-
->
-> On memory constrained systems, where a large amount of LUNs are
-> assigned (say more enough to make multipath blossom to 70% of  
-> available
-> memory space) forking would fail returning -ENOMEM. The kernel has  
-> enough
-> free pages for the new process, but when it clones the new child  
-> process
-> from the parent process space it accounts the parent process heap  
-> space
-> against the child (which counts for more pages than there are free  
-> pages).
->
-> Using vfork passes a flag to clone which will inhibit this calculation
-> and instead check for free pages. The danger in using vfork is that  
-> the child
-> could use the values from the parent, but fortunatly we don't do  
-> that and
-> immediately call 'execve' swipping the process space free.
->
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Anyone know the status of dm-loop? The wiki page hasn't been update in
+a year, and there hasn't been any mention of it on the mailing list
+for longer than that, and it doesn't appear to have ever been merged
+in the Linux kernel.
