@@ -1,80 +1,70 @@
-From: Chandra Seetharaman <sekharan-r/Jw6+rmf7HQT0dZR+AlfA@public.gmane.org>
-Subject: Re: [dm-devel] Re: multipathd: sdc: readsector0 checker reports path is down
-Date: Thu, 08 Jan 2009 12:48:36 -0800
-Message-ID: <1231447716.9047.29.camel@chandra-ubuntu>
-References: <20090108193137.GA3953@esri.com> <1231444732.9047.27.camel@chandra-ubuntu>  <20090108201007.GA8423@esri.com>
-Reply-To: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-Mime-Version: 1.0
-Content-Type: text/plain
-Return-path: <grbounce-FC1hwAUAAAA0O9VQcsxVj1UPjHD9r3x_=glio-open-iscsi=m.gmane.org-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-In-Reply-To: <20090108201007.GA8423-v48TKWNzwFw@public.gmane.org>
-Sender: open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org
-List-Post: <mailto:open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Help: <mailto:open-iscsi+help-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-List-Unsubscribe: <http://googlegroups.com/group/open-iscsi/subscribe>,
-	<mailto:open-iscsi+unsubscribe-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
-To: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
-Cc: "open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org" <open-iscsi-/JYPxA39Uh5TLH3MbocFFw@public.gmane.org>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: [2.6.29 PATCH] dm ioctl: validate name length when
+	renaming
+Date: Thu, 8 Jan 2009 14:38:21 -0600
+Message-ID: <0CF5D0B1-86A7-4FD2-8E1D-6520B49F94B3@redhat.com>
+References: <20090107131516.GT5098@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0 (Apple Message framework v930.3)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090107131516.GT5098@agk.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Reviewed-by: Jonathan Brassow <jbrassow@redhat.com>
 
+  brassow
 
-On Thu, 2009-01-08 at 12:10 -0800, Ray Van Dolson wrote:
-> On Thu, Jan 08, 2009 at 11:58:52AM -0800, Chandra Seetharaman wrote:
-> > 
-> > 
-> > On Thu, 2009-01-08 at 11:31 -0800, Ray Van Dolson wrote:
-> > > I'm still getting the hang of iSCSI and multipath, so bear with me if
-> > > this is a FAQ that I've missed...
-> > > 
-> > > I have a host attaching to an MD3000i via iSCSI/dm-multipath that is
-> > > working but showing a lot of the following errors in syslog:
-> > > 
-> > >   multipathd: sdc: readsector0 checker reports path is down
-> > you should be using the rdac path checker. In addition to that you
-> > should be using rdac hardware handler and tpc priority checker.
-> > 
-> > If you have and entry for your MD3000i in /etc/multipath.conf, replace
-> > it with this. If not add this
-> > -------------------
-> > devices {
-> >         device {
-> >                 vendor                  "DELL"
-> >                 product                 "MD3000i"
-> >                 hardware_handler        "1 rdac"
-> >                 path_checker            rdac
-> >                 failback                immediate
-> >                 path_grouping_policy    group_by_prio
-> >                 no_path_retry           queue
-> >                 prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
-> >         }
-> > }
-> > ---------------------
-> > 
-> > After this change you have to do:
-> > - multipath -F
-> > - service multipathd restart
-> > 
-> > Let me know how it goes.
-> 
-> This appears to have done the trick.  So, I guess the default path
-> checker is readsector0 and rdac is another method -- I imagine it
-> directly talks to my MD3000i to determine path status?
+On Jan 7, 2009, at 7:15 AM, Alasdair G Kergon wrote:
 
-Yes, it sends a C9 inquiry to the storage controller and determines the
-state.
-> 
-> > > 
-> > > My initial impression is that sdc is likely the "passive" path (for
-> > > failover) whereas sdd is my active path:
-> > 
-> > yes.
-> 
-> Thanks much!
-> 
-> Ray
-> 
+> From: Milan Broz <mbroz@redhat.com>
+>
+> When renaming a mapped device validate the length of the new name.
+>
+> The rename ioctl accepted any correctly-terminated string enclosed
+> within the data passed from userspace.  The other ioctls enforce a
+> size limit of DM_NAME_LEN.  If the name is changed and becomes longer
+> than that, the device can no longer be addressed by name.
+>
+> Fix it by properly checking for device name length (including
+> terminating zero).
+>
+> Cc: stable@kernel.org
+> Signed-off-by: Milan Broz <mbroz@redhat.com>
+> Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+> ---
+> drivers/md/dm-ioctl.c |    3 ++-
+> 1 files changed, 2 insertions(+), 1 deletion(-)
+>
+> Index: linux-2.6.28/drivers/md/dm-ioctl.c
+> ===================================================================
+> --- linux-2.6.28.orig/drivers/md/dm-ioctl.c	2009-01-06  
+> 15:06:06.000000000 +0000
+> +++ linux-2.6.28/drivers/md/dm-ioctl.c	2009-01-06 15:07:04.000000000  
+> +0000
+> @@ -704,7 +704,8 @@ static int dev_rename(struct dm_ioctl *p
+> 	char *new_name = (char *) param + param->data_start;
+>
+> 	if (new_name < param->data ||
+> -	    invalid_str(new_name, (void *) param + param_size)) {
+> +	    invalid_str(new_name, (void *) param + param_size) ||
+> +	    strlen(new_name) > DM_NAME_LEN - 1) {
+> 		DMWARN("Invalid new logical volume name supplied.");
+> 		return -EINVAL;
+> 	}
+>
 > --
 > dm-devel mailing list
-> dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+> dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
