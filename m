@@ -1,12 +1,15 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: [PATCH] Close file descriptors if forking returns an
-	error.
-Date: Thu,  8 Jan 2009 14:25:04 -0500
-Message-ID: <1231442704-19032-2-git-send-email-konrad@virtualiron.com>
-References: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: multipathd: sdc: readsector0 checker reports path is
+	down
+Date: Thu, 08 Jan 2009 11:58:52 -0800
+Message-ID: <1231444732.9047.27.camel@chandra-ubuntu>
+References: <20090108193137.GA3953@esri.com>
+Reply-To: sekharan@us.ibm.com, device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1231442704-19032-1-git-send-email-konrad@virtualiron.com>
+In-Reply-To: <20090108193137.GA3953@esri.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,40 +19,127 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: open-iscsi@googlegroups.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From: Konrad Rzeszutek <konrad@mars.virtualiron.com>
 
-And also use vfork instead of fork so that the heap space count
-of the parent process (multipathd) will not be counted against
-the program which will executed (scsi_id or other).
----
- libmultipath/callout.c |    5 ++++-
- 1 files changed, 4 insertions(+), 1 deletions(-)
+On Thu, 2009-01-08 at 11:31 -0800, Ray Van Dolson wrote:
+> I'm still getting the hang of iSCSI and multipath, so bear with me if
+> this is a FAQ that I've missed...
+> 
+> I have a host attaching to an MD3000i via iSCSI/dm-multipath that is
+> working but showing a lot of the following errors in syslog:
+> 
+>   multipathd: sdc: readsector0 checker reports path is down
+you should be using the rdac path checker. In addition to that you
+should be using rdac hardware handler and tpc priority checker.
 
-diff --git a/libmultipath/callout.c b/libmultipath/callout.c
-index 4dd33c5..6f9d195 100644
---- a/libmultipath/callout.c
-+++ b/libmultipath/callout.c
-@@ -68,7 +68,7 @@ int execute_program(char *path, char *value, int len)
- 		return -1;
- 
- 
--	pid = fork();
-+	pid = vfork();
- 
- 	switch(pid) {
- 	case 0:
-@@ -91,6 +91,9 @@ int execute_program(char *path, char *value, int len)
- 
- 		exit(-1);
- 	case -1:
-+		close(fds[0]);
-+		close(fds[1]);
-+		condlog(0, "error forking: %s. errno:%d\n", path, errno);
- 		return -1;
- 	default:
- 		/* parent reads from fds[0] */
--- 
-1.5.4.1
+If you have and entry for your MD3000i in /etc/multipath.conf, replace
+it with this. If not add this
+-------------------
+devices {
+        device {
+                vendor                  "DELL"
+                product                 "MD3000i"
+                hardware_handler        "1 rdac"
+                path_checker            rdac
+                failback                immediate
+                path_grouping_policy    group_by_prio
+                no_path_retry           queue
+                prio_callout            "/sbin/mpath_prio_tpc /dev/%n"
+        }
+}
+---------------------
+
+After this change you have to do:
+- multipath -F
+- service multipathd restart
+
+Let me know how it goes.
+> 
+> My initial impression is that sdc is likely the "passive" path (for
+> failover) whereas sdd is my active path:
+
+yes.
+
+> 
+>   # multipath -ll
+>   sdc: checker msg is "readsector0 checker reports path is down"
+>   mpath2 (36001ec9000f338370000000000000000) dm-2 DELL,Universal Xport
+>   [size=20M][features=0][hwhandler=0]
+>   \_ round-robin 0 [prio=0][enabled]
+>    \_ 4:0:0:31 sdf 8:80  [active][ready] 
+>   mpath1 (36001ec9000f337dd0000000000000000) dm-1 DELL,Universal Xport
+>   [size=20M][features=0][hwhandler=0]
+>   \_ round-robin 0 [prio=0][enabled]
+>    \_ 3:0:0:31 sde 8:64  [active][ready] 
+>   mpath0 (36001ec9000f337dd0000065b491854a4) dm-0 DELL,MD3000i
+>   [size=150G][features=0][hwhandler=1 rdac]
+>   \_ round-robin 0 [prio=3][active]
+>    \_ 3:0:0:0  sdd 8:48  [active][ready] 
+>   \_ round-robin 0 [prio=0][enabled]
+>    \_ 4:0:0:0  sdc 8:32  [failed][faulty]
+> 
+>   # iscsiadm -m discovery -t sendtargets -p 192.168.132.101:3260
+>   0.0.0.0:3260,1 iqn.1984-05.com.dell:powervault.6001ec9000f337dd0000000048bdc862
+>   0.0.0.0:3260,2 iqn.1984-05.com.dell:powervault.6001ec9000f337dd0000000048bdc862
+>   192.168.132.101:3260,1 iqn.1984-05.com.dell:powervault.6001ec9000f337dd0000000048bdc862
+>   192.168.132.102:3260,2 iqn.1984-05.com.dell:powervault.6001ec9000f337dd0000000048bdc862
+> 
+>   # iscsiadm -m session -P 1
+>   Target: iqn.1984-05.com.dell:powervault.6001ec9000f337dd0000000048bdc862
+>     Current Portal: 192.168.132.101:3260,1
+>     Persistent Portal: 192.168.132.101:3260,1
+>       **********
+>       Interface:
+>       **********
+>       Iface Name: default
+>       Iface Transport: tcp
+>       Iface Initiatorname: iqn.1994-05.com.redhat:2738e0d3bd21
+>       Iface IPaddress: 192.168.132.202
+>       Iface HWaddress: default
+>       Iface Netdev: default
+>       SID: 1
+>       iSCSI Connection State: LOGGED IN
+>       iSCSI Session State: Unknown
+>       Internal iscsid Session State: NO CHANGE
+>     Current Portal: 192.168.132.102:3260,2
+>     Persistent Portal: 192.168.132.102:3260,2
+>       **********
+>       Interface:
+>       **********
+>       Iface Name: default
+>       Iface Transport: tcp
+>       Iface Initiatorname: iqn.1994-05.com.redhat:2738e0d3bd21
+>       Iface IPaddress: 192.168.132.202
+>       Iface HWaddress: default
+>       Iface Netdev: default
+>       SID: 2
+>       iSCSI Connection State: LOGGED IN
+>       iSCSI Session State: Unknown
+>       Internal iscsid Session State: NO CHANGE
+> 
+> sde and sdf are the silly 20MB partition that the MD3000 creates and
+> I'm not using either.
+> 
+> My ultimate goal is to not have so many of the path is down errors
+> showing up in my syslog file (hundreds and hundreds of them).  I'm not
+> sure if their presence is normal (indicative of a passive path) or
+> indicative of a problem.
+> 
+> Also, I'm not clear as to how I should identify which target
+> corresponds with which drive (sdc or sdd).
+> 
+> Any thoughts?  I don't have direct access to the MD3000i
+> unfortunately... this is from a CentOS 5.2 system btw.
+> 
+> Ray
+> 
+> --~--~---------~--~----~------------~-------~--~----~
+> You received this message because you are subscribed to the Google Groups "open-iscsi" group.
+> To post to this group, send email to open-iscsi@googlegroups.com
+> To unsubscribe from this group, send email to open-iscsi+unsubscribe@googlegroups.com
+> For more options, visit this group at http://groups.google.com/group/open-iscsi
+> -~----------~----~----~----~------~----~------~--~---
+> 
