@@ -1,15 +1,12 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: dm-loop status
-Date: Fri, 09 Jan 2009 09:59:57 +0000
-Message-ID: <4967201D.8050103@redhat.com>
-References: <772ddc350901081410q7c095416h2e2c280e0e47b818@mail.gmail.com>
-	<20090108223543.GA12299@mars.virtualiron.com>
-Reply-To: bmr@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH] Log API addition for cluster-aware dirty log
+Date: Fri, 09 Jan 2009 12:14:25 -0600
+Message-ID: <1231524865.24591.3.camel@hydrogen.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090108223543.GA12299@mars.virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,36 +16,97 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Konrad Rzeszutek wrote:
-> On Thu, Jan 08, 2009 at 04:10:40PM -0600, Salah Coronya wrote:
->> Anyone know the status of dm-loop? The wiki page hasn't been update in
->> a year, and there hasn't been any mention of it on the mailing list
->> for longer than that, and it doesn't appear to have ever been merged
->> in the Linux kernel.
-> 
-> I believe the LKML guys thought there was no need for a second
-> type of loop device - that instead the loop device should have its
-> bugs fixed instead.
-> 
-> Look on LKML for dm-loop and loop discussions.
+This patch is the same patch as posted in a previous e-mail.  I am
+reposting so that it gets into Patchwork.  The patch for "cluster-aware
+logging module" depends on this.
 
-I don't think that was ever fully resolved. Neither of the block-mapped 
-loop implementations that have been proposed were ready for merging last 
-year (see Christoph's comments regarding the need for an API to keep the 
-file systems informed of what we are doing behind their backs).
+ brassow
 
-There is a clear demand for device-mapper integrated loopback support 
-(see numerous threads on this list and several kernel.org bugzillas) and 
-I think this is something that we should still be aiming at.
+The logging API needs an extra function to make cluster mirroring
+possible.  This new function allows us to check whether a mirror
+region is being recovered on another machine in the cluster.  This
+helps us prevent simultaneous recovery I/O and process I/O to the
+same locations on disk.
 
-My preferred approach is to have a single implementation of loopback 
-block device support that can be exposed via both the /dev/loop and 
-device-mapper interfaces. Sharing code between these two subsystems 
-seems an obvious net win but I haven't had any time to work on this over 
-the last year.
+Cluster-aware log modules will implement this function.  Single
+machine log modules will not.  So, there is no performance
+penalty for single machine mirrors.
 
-Regards,
-Bryn.
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+Index: linux-2.6/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-raid1.c
++++ linux-2.6/drivers/md/dm-raid1.c
+@@ -586,6 +586,9 @@ static void do_writes(struct mirror_set 
+ 	int state;
+ 	struct bio *bio;
+ 	struct bio_list sync, nosync, recover, *this_list = NULL;
++	struct bio_list requeue;
++	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
++	region_t region;
+ 
+ 	if (!writes->head)
+ 		return;
+@@ -596,10 +599,18 @@ static void do_writes(struct mirror_set 
+ 	bio_list_init(&sync);
+ 	bio_list_init(&nosync);
+ 	bio_list_init(&recover);
++	bio_list_init(&requeue);
+ 
+ 	while ((bio = bio_list_pop(writes))) {
+-		state = dm_rh_get_state(ms->rh,
+-					dm_rh_bio_to_region(ms->rh, bio), 1);
++		region = dm_rh_bio_to_region(ms->rh, bio);
++
++		if (log->type->is_remote_recovering &&
++		    log->type->is_remote_recovering(log, region)) {
++			bio_list_add(&requeue, bio);
++			continue;
++		}
++
++		state = dm_rh_get_state(ms->rh, region, 1);
+ 		switch (state) {
+ 		case DM_RH_CLEAN:
+ 		case DM_RH_DIRTY:
+@@ -619,6 +630,16 @@ static void do_writes(struct mirror_set 
+ 	}
+ 
+ 	/*
++	 * Add bios that are delayed due to remote recovery
++	 * back on to the write queue
++	 */
++	if (unlikely(requeue.head)) {
++		spin_lock_irq(&ms->lock);
++		bio_list_merge(&ms->writes, &requeue);
++		spin_unlock_irq(&ms->lock);
++	}
++
++	/*
+ 	 * Increment the pending counts for any regions that will
+ 	 * be written to (writes to recover regions are going to
+ 	 * be delayed).
+Index: linux-2.6/include/linux/dm-dirty-log.h
+===================================================================
+--- linux-2.6.orig/include/linux/dm-dirty-log.h
++++ linux-2.6/include/linux/dm-dirty-log.h
+@@ -113,6 +113,16 @@ struct dm_dirty_log_type {
+ 	 */
+ 	int (*status)(struct dm_dirty_log *log, status_type_t status_type,
+ 		      char *result, unsigned maxlen);
++
++	/*
++	 * is_remote_recovering is necessary for cluster mirroring. It provides
++	 * a way to detect recovery on another node, so we aren't writing
++	 * concurrently.  This function is likely to block (when a cluster log
++	 * is used).
++	 *
++	 * Returns: 0, 1
++	 */
++	int (*is_remote_recovering)(struct dm_dirty_log *log, region_t region);
+ };
+ 
+ int dm_dirty_log_type_register(struct dm_dirty_log_type *type);
