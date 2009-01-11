@@ -1,12 +1,13 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH] Log API addition for cluster-aware dirty log
-Date: Fri, 09 Jan 2009 12:14:25 -0600
-Message-ID: <1231524865.24591.3.camel@hydrogen.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [PATCH 0/4][RFC] dm-core: full barrier support
+Date: Sun, 11 Jan 2009 14:28:29 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0901111319240.25677@hs20-bc2-1.build.redhat.com>
+References: <4966260C.6070602@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <4966260C.6070602@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,97 +17,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-This patch is the same patch as posted in a previous e-mail.  I am
-reposting so that it gets into Patchwork.  The patch for "cluster-aware
-logging module" depends on this.
+On Thu, 8 Jan 2009, Milan Broz wrote:
 
- brassow
+> This patchset is just resend for new kernel of a barrier implementation.
+> 
+> Please note that it is more request for discussion...
+> 
+> [PATCH 1/4] dm-core: remove current partial barrier implementation
+> 
+> [PATCH 2/4] dm-core: Add zero-size barrier processing to device-mapper
+> 
+> [PATCH 3/4] dm-core: Process barrier request with payload in device-mapper
+> 
+> [PATCH 4/4] dm-core: Implement waiting for barrier in dm_suspend request
+> 
+> 
+> Milan
+> --
+> mbroz@redhat.com
 
-The logging API needs an extra function to make cluster mirroring
-possible.  This new function allows us to check whether a mirror
-region is being recovered on another machine in the cluster.  This
-helps us prevent simultaneous recovery I/O and process I/O to the
-same locations on disk.
+Hi
 
-Cluster-aware log modules will implement this function.  Single
-machine log modules will not.  So, there is no performance
-penalty for single machine mirrors.
+I looked at the patches.
 
-Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+There are few fixable technical bugs:
 
-Index: linux-2.6/drivers/md/dm-raid1.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-raid1.c
-+++ linux-2.6/drivers/md/dm-raid1.c
-@@ -586,6 +586,9 @@ static void do_writes(struct mirror_set 
- 	int state;
- 	struct bio *bio;
- 	struct bio_list sync, nosync, recover, *this_list = NULL;
-+	struct bio_list requeue;
-+	struct dm_dirty_log *log = dm_rh_dirty_log(ms->rh);
-+	region_t region;
- 
- 	if (!writes->head)
- 		return;
-@@ -596,10 +599,18 @@ static void do_writes(struct mirror_set 
- 	bio_list_init(&sync);
- 	bio_list_init(&nosync);
- 	bio_list_init(&recover);
-+	bio_list_init(&requeue);
- 
- 	while ((bio = bio_list_pop(writes))) {
--		state = dm_rh_get_state(ms->rh,
--					dm_rh_bio_to_region(ms->rh, bio), 1);
-+		region = dm_rh_bio_to_region(ms->rh, bio);
-+
-+		if (log->type->is_remote_recovering &&
-+		    log->type->is_remote_recovering(log, region)) {
-+			bio_list_add(&requeue, bio);
-+			continue;
-+		}
-+
-+		state = dm_rh_get_state(ms->rh, region, 1);
- 		switch (state) {
- 		case DM_RH_CLEAN:
- 		case DM_RH_DIRTY:
-@@ -619,6 +630,16 @@ static void do_writes(struct mirror_set 
- 	}
- 
- 	/*
-+	 * Add bios that are delayed due to remote recovery
-+	 * back on to the write queue
-+	 */
-+	if (unlikely(requeue.head)) {
-+		spin_lock_irq(&ms->lock);
-+		bio_list_merge(&ms->writes, &requeue);
-+		spin_unlock_irq(&ms->lock);
-+	}
-+
-+	/*
- 	 * Increment the pending counts for any regions that will
- 	 * be written to (writes to recover regions are going to
- 	 * be delayed).
-Index: linux-2.6/include/linux/dm-dirty-log.h
-===================================================================
---- linux-2.6.orig/include/linux/dm-dirty-log.h
-+++ linux-2.6/include/linux/dm-dirty-log.h
-@@ -113,6 +113,16 @@ struct dm_dirty_log_type {
- 	 */
- 	int (*status)(struct dm_dirty_log *log, status_type_t status_type,
- 		      char *result, unsigned maxlen);
-+
-+	/*
-+	 * is_remote_recovering is necessary for cluster mirroring. It provides
-+	 * a way to detect recovery on another node, so we aren't writing
-+	 * concurrently.  This function is likely to block (when a cluster log
-+	 * is used).
-+	 *
-+	 * Returns: 0, 1
-+	 */
-+	int (*is_remote_recovering)(struct dm_dirty_log *log, region_t region);
- };
- 
- int dm_dirty_log_type_register(struct dm_dirty_log_type *type);
+* After you submit a barrier, you wait for completion of the barrier and 
+preceding requests. Yet, in your implementation the barrier request may 
+be reordered with preceding requests and this is against barrier 
+specification. There need to be two waits, one before submitting the 
+barrier and one after.
+
+* If you endio a barrier request, you end the request and then call 
+DM_WQ_BARRIER_POST that flushes caches. You must flush caches first and 
+then do bio_endio (so that when the barrier request finishes, data are 
+certainly on the disk).
+
+* what about DM_ENDIO_REQUEUE and the pushback queue? Alasdair, please 
+describe what is it used for (there is usage of this in mpath and raid1). 
+With two queues it is impossible to get barrier ordering right, this needs 
+somehow to be changed to one-queue design --- biolists deferred and 
+pushback joined. It would be best to remove DM_ENDIO_REQUEUE, if it is 
+possible.
+
+* if you clear DMF_BLOCK_IO, you don't run the deferred queue --- it would 
+produce lockup if barrier and non-barrier requests were submitted 
+simultaneously (the non-barrier request gets queued on the deferred queue 
+because of DMF_BLOCK_IO, but not dequeued when the barrier finishes). 
+Single filesystems usually don't do it --- but they are allowed to --- for 
+example to run direct io in parallel with journal commit. Another 
+possibility when this lockup happens is when the filesystem is mounted 
+read-wriet and the admin runs fsck in read-only mode.
+
+* maybe the patch could be simplified somehow, not all the branches are 
+needed (for example join DM_WQ_BARRIER and DM_WQ_BARRIER_POST).
+
+--- and the main issue with the patch:
+
+The patch waits in dm_request routine until the barrier finishes. This is 
+allowed (there is no deadlock or crash hapenning because of it), but it 
+basically turns asynchronous IO into synchronous IO and degrades 
+performance.
+
+As it turned out in my discussion before Christmas on lkml, all the 
+current in-kernel filesystems use barriers in a synchronous way, so there 
+is no problem with synchronous waiting inside dm_request now. But using 
+barriers in a synchronous way supresses any performance advantage barriers 
+could bring (you can replace synchronous barriers with hw-cache flushes 
+and get the same performance with simpler code). If someone ever 
+introduces async-barrier filesystem into kernel, synchronous processing 
+will kill performance.
+
+So this synchronous waiting is not a performance problem now but it may be 
+problem in the future.
+
+
+I have thought about it and written an implementation of asynchronous 
+barriers --- it works by passing the requests to kdmflush and it returns 
+immediatelly from dm_request. I'll post it in a few days.
+
+Mikulas
