@@ -1,65 +1,69 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: An multipath performance issue on RHEL 5
-Date: Tue, 13 Jan 2009 10:23:06 -0500
-Message-ID: <20090113152306.GA19158@mars.virtualiron.com>
-References: <496C5ABB.8040602@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Milan Broz <mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [dm-devel] dm-crypt low performance
+Date: Tue, 13 Jan 2009 16:50:48 +0100
+Message-ID: <496CB858.70803@redhat.com>
+References: <0ths36-dce.ln1@news.researchut.com>
+Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <496C5ABB.8040602@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-crypt-return-3056-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
+List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
+In-Reply-To: <0ths36-dce.ln1-b1aPebNLFEbkkoF7R9+BZ0EOCMrvLtNR@public.gmane.org>
+To: Ritesh Raj Sarraf <rrs-7WuBAv+fczCJ8c2fQYRYNw@public.gmane.org>
+Cc: device-mapper development <dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>, dm-crypt-4q3lyFh4P1g@public.gmane.org
 List-Id: dm-devel.ids
 
-On Tue, Jan 13, 2009 at 05:11:23PM +0800, dwu wrote:
-> A customer has done a test of multipath on RHEL 5, and he found that the 
-> speed is 30-40MB/sec, but it can reach 160MB/sec when using EMC powerpath 
+Ritesh Raj Sarraf wrote:
+> I'm using dm-crypt on an external USB enclosure ide hdd. I copied 20Gb of 
+> data on to the encrypted device and am suffering severe performance penalty.
+> After a couple of seconds, all processes involved in the I/O keep stalling. 
+> They periodically resume, just for a couple of seconds and then again stall.
+> 
+> Running linux 2.6.26.
 
-Does it reach that when do a test on individual disks in the setup
-with EMC powerpath?
+Please can you try it without dm-crypt involved?
+Just copy 20Gb to your unencrypted disk attached through USB.
 
->
-> [root@clnode2 ~]# hdparm -t /dev/mapper/mpath0
->
-> /dev/mapper/mpath0:
-> Timing buffered disk reads: 118 MB in 3.01 seconds = 39.22 MB/sec
-> [root@clnode2 ~]# hdparm -t /dev/mapper/mpath5
->
-> /dev/mapper/mpath5:
-> Timing buffered disk reads: 132 MB in 3.04 seconds = 43.38 MB/sec
-> [root@clnode2 tmp]# hdparm -t /dev/sdm
->
-> /dev/sdm:
-> Timing buffered disk reads: 112 MB in 3.04 seconds = 36.89 MB/sec
-> [root@clnode2 tmp]# hdparm -t /dev/sdaa
->
-> /dev/sdaa:
-> Timing buffered disk reads: 108 MB in 3.02 seconds = 35.81 MB/sec
-> [root@clnode2 tmp]# hdparm -t /dev/sdf
->
-> /dev/sdf:
-> Timing buffered disk reads: read() failed: Input/output error
-> [root@clnode2 tmp]# hdparm -t /dev/sdt
->
-> /dev/sdt:
-> Timing buffered disk reads: read() failed: Input/output error
->
+I saw this problem with plain USB attached storage some time ago too.
 
-Since you did the test on the underlaying SCSI subsystem (that
-was the next thing to test) - which has no connection to multipath
-it eliminates the multipath layer. When you do the hdparam test
-on RHEL4 OS on those disks - are the numbers the same?
+There is only one thread in dm-crypt and it is waiting for io_schedule,
+so I think it is not dm-crypt who is blocking it, but the layer
+below the dm-crypt.
 
-Is your RHEL4 rig the same exact machine with the same exact
-fibre connection? You could have the RHEL5 using a 1GB connection
-while the RHEL4 might be using 2GB?
+Milan
+
+> [15869.848387] kcryptd       D f7044a0c     0 13656      2                                                            
+> [15869.848387]        f29d79c0 00000046 01c58000 f7044a0c c03c1430 c03c4740 
+> c03c4740 f29d79c0                         
+> [15869.848387]        f29d7b4c c201c740 00000001 00010001 00000001 f79b48d0 
+> f29d7b4c 00eb4b70                         
+> [15869.848387]        c01df9a6 c0135b72 00000000 00000000 00000000 000000ff 
+> c201c740 c201cb44                         
+> [15869.848387] Call Trace:                                                                                            
+> [15869.848387]  [<c01df9a6>] cfq_may_queue+0x48/0xab                                                                  
+> [15869.848387]  [<c0135b72>] getnstimeofday+0x32/0xaf                                                                 
+> [15869.848387]  [<c02c1091>] io_schedule+0x4f/0x86                                                                    
+> [15869.848387]  [<c01d734f>] get_request_wait+0xf2/0x16d                                                              
+> [15869.848387]  [<c013140a>] autoremove_wake_function+0x0/0x2d                                                        
+> [15869.848387]  [<c01d7789>] __make_request+0x2b7/0x33a                                                               
+> [15869.848387]  [<c01d6465>] generic_make_request+0x419/0x44a                                                         
+> [15869.848387]  [<f8c30563>] async_encrypt+0x2f/0x35 [crypto_blkcipher]                                               
+> [15869.848387]  [<f8c659ce>] crypt_convert+0x20e/0x240 [dm_crypt]                                                     
+> [15869.848387]  [<f8c65c5d>] kcryptd_crypt+0x25d/0x339 [dm_crypt]                                                     
+> [15869.848387]  [<f8c65a00>] kcryptd_crypt+0x0/0x339 [dm_crypt]                                                       
+> [15869.848387]  [<f8c65a00>] kcryptd_crypt+0x0/0x339 [dm_crypt]                                                       
+> [15869.848387]  [<c012e818>] run_workqueue+0x73/0xed                                                                  
+> [15869.848387]  [<c012e949>] worker_thread+0xb7/0xc3                                                                  
+> [15869.848387]  [<c013140a>] autoremove_wake_function+0x0/0x2d                                                        
+> [15869.848387]  [<c012e892>] worker_thread+0x0/0xc3                                                                   
+> [15869.848387]  [<c01311a6>] kthread+0x38/0x5d                                                                        
+> [15869.848387]  [<c013116e>] kthread+0x0/0x5d                                                                         
+> [15869.848387]  [<c01045af>] kernel_thread_helper+0x7/0x10                                                            
+
+Milan
+--
+mbroz-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
