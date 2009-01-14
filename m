@@ -1,17 +1,12 @@
-From: Sebastian Reitenbach <sebastia@l00-bugdead-prods.de>
-Subject: Re: /dev/sdaa /dev/sdab ... not recognized as valid paths?
-Date: Wed, 14 Jan 2009 08:42:30 +0100
-Message-ID: <200901140842.31141.sebastia@l00-bugdead-prods.de>
-References: <200901140738.03109.sebastia@l00-bugdead-prods.de>
-	<496D9552.8080202@suse.de>
+From: "Ty! Boyack" <ty@nrel.colostate.edu>
+Subject: Could device-mapper offer multi-tier storage?
+Date: Wed, 14 Jan 2009 12:43:31 -0700
+Message-ID: <496E4063.5070502@nrel.colostate.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="iso-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <496D9552.8080202@suse.de>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,54 +19,50 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wednesday 14 January 2009 08:33:38 am Hannes Reinecke wrote:
-> Hi Sebastian,
->
-> Sebastian Reitenbach wrote:
-> > Hi,
-> >
-> > I do present 8 luns to the cluster. For each lun there are 4 ways through
-> > the SAN that can be used. Therefore I have devices like /dev/sdaa
-> > /dev/sdab and so on. The output of multipath -ll shows some disks with 4
-> > paths, some with three, some only with two. In the output of multipath
-> > -ll only disks with three letters are shown e.g. /dev/sda.
-> > when I run e.g. /sbin/scsi_id -g -u -s /block/sdaa, then it outputs one
-> > of the configured ID's that I already have in /etc/multipath.conf.
-> >
-> > How can I add these disks to the multipath failover?
-> >
-> > I'm on SLES10 sp2.
->
-> Have you enabled udev?
-> No, it's not on by default. Don't ask.
-yes, udevd runs:
-service boot.udev status
-Checking for udevd:                                                   running
+Hi all,
 
-Here the beginning of my /etc/multipath.conf file:
-defaults {
-        udev_dir        /dev
-        path_grouping_policy    multibus
-        getuid_callout  "/sbin/scsi_id -g -u -s /block/%n"
-        prio    "alua"
-        user_friendly_names yes
+I'm seeing a good bit of interest in multi-tier storage in high end 
+systems, and was wondering if this functionality could be offered by 
+device-mapper.
 
-        default_features        "0"
-}
-blacklist {
-        devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*|sda"
-}
-multipaths {
-        multipath {
-...
-        }
-}
+By multi-tier, I'm speaking of systems where various speed/quality 
+storage units are used in an analogous way to the way cache is used for 
+memory:  The most recently/often used data blocks are placed on the 
+fastest storage device, then over time gets flushed out to slower 
+systems.  It seems the trend is to use a smaller array of 15k rpm SAS 
+drives as the first tier, then flush it out to much larger arrays of 
+7200 rpm SATA drives as the second tier.
 
-this version of the multipath tools is installed: multipath-tools-0.4.7-34.40
+While this clearly has benefits in large systems, I would think the same 
+concept could be brought in-box as well, by using a fast 15k or solid 
+state drive as the first tier, and then pushing out to 7200 rpm SATA as 
+a second tier. 
 
-regards
-Sebastian
->
-> Cheers,
->
-> Hannes
+My interest is more in the large system side, but if this functionality 
+was available and easy to use, I could see it getting wide adoption in 
+smaller systems too -- just as RAID was once limited to big systems, 
+this could be a cool technology to make available to all.
+
+So the questions:
+
+1)  Is device-mapper the right layer to look at applying this?
+
+2)  If so, any ideas on how hard it would be to implement?
+
+3)  If device-mapper is not the right place, any idea where this 
+functionality should go, or if it is already out there in another form?
+
+Thanks -- I would love to hear any thoughts or questions on this.
+
+-Ty!
+
+
+
+
+-- 
+-===========================-
+  Ty! Boyack
+  NREL Unix Network Manager
+  ty@nrel.colostate.edu
+  (970) 491-1186
+-===========================-
