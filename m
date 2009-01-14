@@ -1,15 +1,14 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
+From: Alasdair G Kergon <agk@redhat.com>
 Subject: Re: merging dm-ioband into Linux
-Date: Wed, 14 Jan 2009 11:01:27 +0900 (JST)
-Message-ID: <20090114.110127.193692919.ryov@valinux.co.jp>
+Date: Wed, 14 Jan 2009 02:23:33 +0000
+Message-ID: <20090114022332.GT1804@agk.fab.redhat.com>
 References: <20090105.225124.193700534.ryov@valinux.co.jp>
-	<09F68804-691D-4E75-ABFC-9E1CE86FB98A@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <09F68804-691D-4E75-ABFC-9E1CE86FB98A@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090105.225124.193700534.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,38 +18,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, jbrassow@redhat.com
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jonathan,
+On Mon, Jan 05, 2009 at 10:51:24PM +0900, Ryo Tsuruta wrote:
+> I know you are very very busy, but could you do me a favor and
+> respond to my email?
+ 
+I'm starting to use patchwork.
 
-I'm sorry for responding late.
+The same applies to anyone else with patches I haven't picked up yet.
 
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [dm-devel] merging dm-ioband into Linux
-Date: Thu, 8 Jan 2009 12:05:09 -0600
+Please read the message 'Patchwork and patch flow'.
 
-> Perhaps it will help people to know that there is a good write-up about how it all works at the end of the patch found at:
-> http://people.valinux.co.jp/~ryov/dm-ioband/patches/dm-ioband-1.7.0.patch
+Check the patches apply at the 'mm' level of my quilt series file
+then resend them to this list so patchwork picks them up.
 
-Thanks for the advice.
+If there are dependencies on other patches that are not in Linus's git,
+optional or not, send those patches to this list too with explanation
+about the route they will take upstream (e.g. "currently in -mm")
+and make sure subject lines are consistent.
 
-> It seem interesting to me.  (I'm still reading through the description and haven't started looking at the code.)
+Then try to find some more people willing to put their name to them and
+comment on them in the threads and add 'Reviewed-by' and 'Tested-by'
+lines.
 
-I would also be happy if you give me any comments on the code.
-
-> Regarding:
-> +                ioband_device_id
-> +
-> +                          The ID number for an ioband device. The same ID
-> +                        must be set among the ioband devices that share the
-> +                        same bandwidth, which means they work on the same
-> +                        physical disk.
-> ... but it doesn't have to be the same physical disk, right?  It could be a group if disks if you felt the need to do something like that, right?  (You could treat a JBOD as one unit.)  Otherwise, you could probably eliminate this field.
-
-As you wrote, dm-ioband can treat a logical volume on different
-physical devices like this:
-http://people.valinux.co.jp/~ryov/dm-ioband/benchmark/lvm.html
-
-Thanks,
-Ryo Tsuruta
+Alasdair
+-- 
+agk@redhat.com
