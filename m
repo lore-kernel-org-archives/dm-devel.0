@@ -1,16 +1,15 @@
-From: shane bradley <sbradley@redhat.com>
-Subject: Re: multipath.conf and polling_interval option
-	seems	misleading
-Date: Fri, 16 Jan 2009 11:21:48 -0500
-Message-ID: <4970B41C.1000509@redhat.com>
-References: <4970AFB8.6090906@redhat.com>
-	<1232122255.29644.23.camel@chandra-ubuntu>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: How does multipath tool handle Lun remapping?
+Date: Fri, 16 Jan 2009 13:13:28 -0500
+Message-ID: <20090116181327.GD1493@mars.virtualiron.com>
+References: <d364733c0901160042n65184828pcac1e7a6435b6c9c@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1232122255.29644.23.camel@chandra-ubuntu>
+Content-Disposition: inline
+In-Reply-To: <d364733c0901160042n65184828pcac1e7a6435b6c9c@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,101 +19,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Yeah the wording I think is the problem. Someone familiar with source 
-code or multipathing will read that option differently.
+On Fri, Jan 16, 2009 at 04:42:25PM +0800, =E8=B0=A2=E7=BA=B2 wrote:
+> Hi,
+>=20
+> multipath path tool use the external program, such as scsi_id in udev,
+> to get the id of the lun. But how does it handle the lun remapping?
+> For example, at first, thiere is a lun in array:lun1, it is mapped to
+> host with lun id 11. On the host, I use the multipath program to
+> generate a multipath device for this lun. Then I unmap lun1 and
+> another lun: lun2 which is mapped to the host with the same lun id 11.
 
-When someone reads the word path, they think of a single path to lun, 
-then wait, check the next path to single lun.
-They are  not thinking of all paths are checked at same time.
+Do you reboot the system after those unmaps/maps?
 
-After thinking about it, this would not be good behaviour because it 
-could take forever (minutes) before a path is found dead.
-I think the problem is just the description of the option 
-"polling_interval", it should be made clearer.
+> In this situation, it seems that the multipath tool could not notice
+> that there is a change of lun even after recreate the multipath
+> device, is that true?
 
---sbradley
+It would - as long as hte block devices get re-created/deleted
+for the new/old LUNs.
 
-Chandra Seetharaman wrote:
-> On Fri, 2009-01-16 at 11:03 -0500, shane bradley wrote:
->   
->> After reviewing the code and doing some testing I have noticed that 
->> polling_interval did not work as expected.
->> I had reviewed the description of the option for multipath.conf and it 
->> conflicted with the results that I had got
->> testing device-mapper-multipath on RHEL4/RHEL5.
->>
->> $ cat /usr/share/doc/device-mapper-multipath-0.4.7/multipath.conf.annotated
->> #       # name    : polling_interval
->> #       # scope   : multipathd
->> #       # desc    : interval between two path checks in seconds
->> #       # default : 5
->> #       #
->> #       polling_interval 10
->>
->> ---------
->>
->> The behaviour that I had expected based on the option's description above:
->> check path 1
->> wait polling_interval
->> check path 2
->> wait polling_interval
->> check path 1
->> wait polling_interval
->> check path 2
->> wait polling_interval
->>
->> However after testing the results that I got was(with multipathd -v4):
->> example:
->> check path 1
->> check path 2
->> wait polling_interval
->> check path 1
->> check path 2
->> wait polling_interval
->>
->> ---------
->>
->> The behaviour I seen in RHEL4 and RHEL5 was working as design after
->> reviewing the code and talking to a couple engineers.
->>
->> The problem it seems is how I was reading the description of the option.
->>  From my results in testing and talking with some engineers the 
->> "polling_interval" option actually means:
->>
->> "The interval between checking all possible paths for all multipath paths"
->> ----------
->>
->> 1) Is my assumption correct that "polling_interval" actually means:
->> "The interval between checking all possible paths for all multipath paths"
->>
->> 2) What is a better way to describe the "polling_interval" option?
->>
->> 3) Shouldn't we make it clearer for people who don't that that much 
->> experience with multipathing?
->>     
->
-> IMO, the behavior seen is the proper behavior.
->
-> If it does as per your interpretation, the seconds between checking of
-> the same path will depend on the number of paths to a storage, which may
-> not be acceptable.
->
-> May be the wording in multipath.conf.annotated should be made clear.
->
->   
->> --sbradley
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->>     
->
+>=20
+> Thanks,
+>=20
+> --=20
+> Xie Gang
+>=20
 > --
 > dm-devel mailing list
 > dm-devel@redhat.com
 > https://www.redhat.com/mailman/listinfo/dm-devel
->   
