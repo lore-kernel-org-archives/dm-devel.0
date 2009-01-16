@@ -1,13 +1,13 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: DM kernel interface
-Date: Thu, 15 Jan 2009 20:00:42 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0901151954390.23015@hs20-bc2-1.build.redhat.com>
-References: <496F0D7A0200000D017159D6@lucius.provo.novell.com>
+From: "=?GB2312?B?0Lu42Q==?=" <xiegang112@gmail.com>
+Subject: How does multipath tool handle Lun remapping?
+Date: Fri, 16 Jan 2009 16:42:25 +0800
+Message-ID: <d364733c0901160042n65184828pcac1e7a6435b6c9c@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <496F0D7A0200000D017159D6@lucius.provo.novell.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,34 +17,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: ajack@novell.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, 15 Jan 2009, Allen Jack wrote:
+Hi,
 
-> I have used the ioctl interface to create dm objects and get information 
-> about dm objects from a user space application, and am familiar with it.  
-> I am now required to get the object information from kernel space, and 
-> was wondering what interface is available to do that directly.
-> 
-> Is there a direct device mapper interface in kernel space that I can use 
-> to get the object information from?  For example, I need to see the 
-> target mappings within a linear object.
-> 
-> Allen Jack
-> Sr. Software Engineer
-> ajack@novell.com
-> (801) 861-5923
-> Novell, Inc.
-> Making IT Work As One
-> www.novell.com
+multipath path tool use the external program, such as scsi_id in udev,
+to get the id of the lun. But how does it handle the lun remapping?
+For example, at first, thiere is a lun in array:lun1, it is mapped to
+host with lun id 11. On the host, I use the multipath program to
+generate a multipath device for this lun. Then I unmap lun1 and
+another lun: lun2 which is mapped to the host with the same lun id 11.
+In this situation, it seems that the multipath tool could not notice
+that there is a change of lun even after recreate the multipath
+device, is that true?
 
-Hi
+Thanks,
 
-You can call the same ioctls from kernel space as well, see ioctl_by_bdev.
-
-Calling device mapper functions defined in <linux/device-mapper.h> 
-directly is discouraged if you are not developing dm target driver.
-
-Mikulas
+-- 
+Xie Gang
