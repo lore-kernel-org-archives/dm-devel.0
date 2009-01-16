@@ -1,11 +1,11 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
+From: shane bradley <sbradley@redhat.com>
 Subject: Re: multipath.conf and polling_interval option
 	seems	misleading
-Date: Fri, 16 Jan 2009 16:13:12 +0000
-Message-ID: <4970B218.7090306@redhat.com>
+Date: Fri, 16 Jan 2009 11:21:48 -0500
+Message-ID: <4970B41C.1000509@redhat.com>
 References: <4970AFB8.6090906@redhat.com>
 	<1232122255.29644.23.camel@chandra-ubuntu>
-Reply-To: bmr@redhat.com, device-mapper development <dm-devel@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
@@ -23,7 +23,60 @@ Errors-To: dm-devel-bounces@redhat.com
 To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Yeah the wording I think is the problem. Someone familiar with source 
+code or multipathing will read that option differently.
+
+When someone reads the word path, they think of a single path to lun, 
+then wait, check the next path to single lun.
+They are  not thinking of all paths are checked at same time.
+
+After thinking about it, this would not be good behaviour because it 
+could take forever (minutes) before a path is found dead.
+I think the problem is just the description of the option 
+"polling_interval", it should be made clearer.
+
+--sbradley
+
 Chandra Seetharaman wrote:
+> On Fri, 2009-01-16 at 11:03 -0500, shane bradley wrote:
+>   
+>> After reviewing the code and doing some testing I have noticed that 
+>> polling_interval did not work as expected.
+>> I had reviewed the description of the option for multipath.conf and it 
+>> conflicted with the results that I had got
+>> testing device-mapper-multipath on RHEL4/RHEL5.
+>>
+>> $ cat /usr/share/doc/device-mapper-multipath-0.4.7/multipath.conf.annotated
+>> #       # name    : polling_interval
+>> #       # scope   : multipathd
+>> #       # desc    : interval between two path checks in seconds
+>> #       # default : 5
+>> #       #
+>> #       polling_interval 10
+>>
+>> ---------
+>>
+>> The behaviour that I had expected based on the option's description above:
+>> check path 1
+>> wait polling_interval
+>> check path 2
+>> wait polling_interval
+>> check path 1
+>> wait polling_interval
+>> check path 2
+>> wait polling_interval
+>>
+>> However after testing the results that I got was(with multipathd -v4):
+>> example:
+>> check path 1
+>> check path 2
+>> wait polling_interval
+>> check path 1
+>> check path 2
+>> wait polling_interval
+>>
+>> ---------
+>>
 >> The behaviour I seen in RHEL4 and RHEL5 was working as design after
 >> reviewing the code and talking to a couple engineers.
 >>
@@ -41,20 +94,27 @@ Chandra Seetharaman wrote:
 >>
 >> 3) Shouldn't we make it clearer for people who don't that that much 
 >> experience with multipathing?
-> 
+>>     
+>
 > IMO, the behavior seen is the proper behavior.
-> 
+>
 > If it does as per your interpretation, the seconds between checking of
 > the same path will depend on the number of paths to a storage, which may
 > not be acceptable.
-> 
+>
 > May be the wording in multipath.conf.annotated should be made clear.
-
-Agreed - I'd not even really thought about this until Shane brought it 
-up as I'd read the description to mean exactly what the code does.
-
-It does seem that some users are puzzled by this behaviour - can't 
-hurt to make the wording a little more explicit for this option.
-
-Regards,
-Bryn.
+>
+>   
+>> --sbradley
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>     
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+>   
