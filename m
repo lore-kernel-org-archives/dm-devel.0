@@ -1,17 +1,14 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: RE: Temporarily squelching multipathd errors
-Date: Mon, 19 Jan 2009 10:07:06 -0500
-Message-ID: <20090119150706.GA21668@mars.virtualiron.com>
-References: <20081126174317.GA19425@mars.virtualiron.com>
-	<65F9ACC78BD8304BAAEB817634C62D4C07441224@AUSMAIL01.americas.ppdi.local>
-	<20090116212858.GA27665@mars.virtualiron.com>
-	<65F9ACC78BD8304BAAEB817634C62D4C0744141F@AUSMAIL01.americas.ppdi.local>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: Could device-mapper offer multi-tier storage?
+Date: Mon, 19 Jan 2009 09:28:22 -0600
+Message-ID: <D8A2BC50-9F46-4355-AF48-C83BC091F590@redhat.com>
+References: <496E4063.5070502@nrel.colostate.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Mime-Version: 1.0 (Apple Message framework v930.3)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <65F9ACC78BD8304BAAEB817634C62D4C0744141F@AUSMAIL01.americas.ppdi.local>
+In-Reply-To: <496E4063.5070502@nrel.colostate.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,57 +18,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Daniel Keisling <Daniel.Keisling@ppdi.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> 
-> I'm not in this test.  Since all this takes around 20 seconds, I can
-> immediately mount the LUN again on the server with any SCSI devices
-> permanently disappearing.
-> 
-> Would you like me to:
-> 
-> A) Umount the filesystem
-> B) Perform a 'dmsetup remove mpath33'
-> C) Delete all SCSI devices via /sys/block/$device/delete
-> D) Tell the storage unit to unpresent and delete the LUN
-> E) Optionally do a SCSI rescan to clear everything out
-> F) Tell the storage unit to create the LUN with the same WWID and SCSI
-> ID
-> G) Perform a SCSI rescan
-> H) Do a multipath -v3 to get the maps back (?)
-> I) Fsck and mount the filesystem?
-> 
-> I believe I get the same results as what I pasted, but will prove it if
-> need be.
+I wonder how much Heinz's replicator code could work with this...
 
-Please do. Step B might be unnecessary as multipathd will figure out that
-devices are gone (by step C) and start removing the block devices from the
-map.
+Heinz et al have a "remote replicator" target that 'logs' requests to  
+a local device and then pushes them to remote devices.  I could  
+imagine the log device being the fast device, and the remote devices  
+being the slow devices.
 
-> 
-> BTW, I do a SCSI rescan with the HP Fibreutils package (hp_rescan -a),
-> which basically does a "echo "- - -" >
-> /sys/class/scsi_host/${INST}/scan" and removes devices with "echo "scsi
-> remove-single-device $INST 0 $j $k" > /proc/scsi/scsi"
+So, I'm not sure how much overlap there is here, but it's something to  
+think about.
 
-You only need to do the first step: echo "- - -"  > /sys/class/scsi/host/hostX/scan
+  brassow
 
-> 
-> Thanks,
-> 
-> Daniel
-> 
-> ______________________________________________________________________
-> This email transmission and any documents, files or previous email
-> messages attached to it may contain information that is confidential or
-> legally privileged. If you are not the intended recipient or a person
-> responsible for delivering this transmission to the intended recipient,
-> you are hereby notified that you must not read this transmission and
-> that any disclosure, copying, printing, distribution or use of this
-> transmission is strictly prohibited. If you have received this transmission
-> in error, please immediately notify the sender by telephone or return email
-> and delete the original transmission and its attachments without reading
-> or saving in any manner.
-> 
+On Jan 14, 2009, at 1:43 PM, Ty! Boyack wrote:
+
+> Hi all,
+>
+> I'm seeing a good bit of interest in multi-tier storage in high end  
+> systems, and was wondering if this functionality could be offered by  
+> device-mapper.
+>
+> By multi-tier, I'm speaking of systems where various speed/quality  
+> storage units are used in an analogous way to the way cache is used  
+> for memory:  The most recently/often used data blocks are placed on  
+> the fastest storage device, then over time gets flushed out to  
+> slower systems.  It seems the trend is to use a smaller array of 15k  
+> rpm SAS drives as the first tier, then flush it out to much larger  
+> arrays of 7200 rpm SATA drives as the second tier.
+>
+> While this clearly has benefits in large systems, I would think the  
+> same concept could be brought in-box as well, by using a fast 15k or  
+> solid state drive as the first tier, and then pushing out to 7200  
+> rpm SATA as a second tier.
+> My interest is more in the large system side, but if this  
+> functionality was available and easy to use, I could see it getting  
+> wide adoption in smaller systems too -- just as RAID was once  
+> limited to big systems, this could be a cool technology to make  
+> available to all.
+>
+> So the questions:
+>
+> 1)  Is device-mapper the right layer to look at applying this?
+>
+> 2)  If so, any ideas on how hard it would be to implement?
+>
+> 3)  If device-mapper is not the right place, any idea where this  
+> functionality should go, or if it is already out there in another  
+> form?
+>
+> Thanks -- I would love to hear any thoughts or questions on this.
+>
+> -Ty!
+>
+>
+>
+>
+> -- 
+> -===========================-
+> Ty! Boyack
+> NREL Unix Network Manager
+> ty@nrel.colostate.edu
+> (970) 491-1186
+> -===========================-
+>
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
