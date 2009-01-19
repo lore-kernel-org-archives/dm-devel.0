@@ -1,14 +1,15 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
 Subject: Re: Could device-mapper offer multi-tier storage?
-Date: Mon, 19 Jan 2009 09:28:22 -0600
-Message-ID: <D8A2BC50-9F46-4355-AF48-C83BC091F590@redhat.com>
+Date: Mon, 19 Jan 2009 17:01:06 +0100
+Message-ID: <4974A3C2.3090509@suse.de>
 References: <496E4063.5070502@nrel.colostate.edu>
+	<D8A2BC50-9F46-4355-AF48-C83BC091F590@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <496E4063.5070502@nrel.colostate.edu>
+In-Reply-To: <D8A2BC50-9F46-4355-AF48-C83BC091F590@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,70 +22,51 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I wonder how much Heinz's replicator code could work with this...
+Hi Jon et al,
 
-Heinz et al have a "remote replicator" target that 'logs' requests to  
-a local device and then pushes them to remote devices.  I could  
-imagine the log device being the fast device, and the remote devices  
-being the slow devices.
+Jonathan Brassow wrote:
+> I wonder how much Heinz's replicator code could work with this...
+>=20
+> Heinz et al have a "remote replicator" target that 'logs' requests to a=
+=20
+> local device and then pushes them to remote devices.  I could imagine=20
+> the log device being the fast device, and the remote devices being the=20
+> slow devices.
+>=20
+> So, I'm not sure how much overlap there is here, but it's something to=20
+> think about.
+>=20
+Well, maybe. Not so sure if device-mapper is the correct place to impleme=
+nt
+something like this.
 
-So, I'm not sure how much overlap there is here, but it's something to  
-think about.
+What you get if you use a device-mapper device as the 'middle' tier in
+this scenario is that this device will contain only random blocks,
+ie those actually accessed/modified/whatever.
+Only the underlying device will contain the full information about
+all blocks, and as such only the underlying device can be mounted
+and provides a meaningful filesystem.
+Any middle tier devices will contain a somewhat random update of
+several blocks, which cannot be interpreted at all.
 
-  brassow
+This makes error checking _really_ hard, as the middle tier devices
+can't be consistency checked at all; we have to hope the blocks on
+there make sense to the underlying device.
 
-On Jan 14, 2009, at 1:43 PM, Ty! Boyack wrote:
+No, this scenario could be more efficiently handled on the filesystem
+level, as we then have an implicit consistency check as you're restricted
+to move _files_ to a different storage; but that's okay as the filesystem=
+s
+in on each device themselves will be consistent.
 
-> Hi all,
->
-> I'm seeing a good bit of interest in multi-tier storage in high end  
-> systems, and was wondering if this functionality could be offered by  
-> device-mapper.
->
-> By multi-tier, I'm speaking of systems where various speed/quality  
-> storage units are used in an analogous way to the way cache is used  
-> for memory:  The most recently/often used data blocks are placed on  
-> the fastest storage device, then over time gets flushed out to  
-> slower systems.  It seems the trend is to use a smaller array of 15k  
-> rpm SAS drives as the first tier, then flush it out to much larger  
-> arrays of 7200 rpm SATA drives as the second tier.
->
-> While this clearly has benefits in large systems, I would think the  
-> same concept could be brought in-box as well, by using a fast 15k or  
-> solid state drive as the first tier, and then pushing out to 7200  
-> rpm SATA as a second tier.
-> My interest is more in the large system side, but if this  
-> functionality was available and easy to use, I could see it getting  
-> wide adoption in smaller systems too -- just as RAID was once  
-> limited to big systems, this could be a cool technology to make  
-> available to all.
->
-> So the questions:
->
-> 1)  Is device-mapper the right layer to look at applying this?
->
-> 2)  If so, any ideas on how hard it would be to implement?
->
-> 3)  If device-mapper is not the right place, any idea where this  
-> functionality should go, or if it is already out there in another  
-> form?
->
-> Thanks -- I would love to hear any thoughts or questions on this.
->
-> -Ty!
->
->
->
->
-> -- 
-> -===========================-
-> Ty! Boyack
-> NREL Unix Network Manager
-> ty@nrel.colostate.edu
-> (970) 491-1186
-> -===========================-
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Would be a grand application for union mount if and when it comes around.
+And probably btrfs already has it built-in, I wouldn't wonder.
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
