@@ -1,15 +1,14 @@
-From: Takahiro Yasui <tyasui@redhat.com>
+From: malahal@us.ibm.com
 Subject: Re: [RFC] [PATCH] lvm2: mirroredlog support
-Date: Tue, 20 Jan 2009 17:12:34 -0500
-Message-ID: <49764C52.9010205@redhat.com>
-References: <20081230001055.GA13710@us.ibm.com> <49750524.3030007@redhat.com>
-	<20090120015427.GA16550@us.ibm.com>
+Date: Tue, 20 Jan 2009 14:14:48 -0800
+Message-ID: <20090120221448.GA17369@us.ibm.com>
+References: <20081230001055.GA13710@us.ibm.com> <4976423F.2070103@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090120015427.GA16550@us.ibm.com>
+Content-Disposition: inline
+In-Reply-To: <4976423F.2070103@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,50 +18,104 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: malahal@us.ibm.com
-Cc: dm-devel@redhat.com, agk@redhat.com
+To: Takahiro Yasui <tyasui@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-malahal@us.ibm.com wrote:
-> Takahiro Yasui [tyasui@redhat.com] wrote:
-> ...
->> When one of log disk is broken and is not recognized, there is a case
->> disk that replication is executed. Let me explain with the following
->> simple case, which is the mirror volume, vg00-lv00 is composed of two
->> data disks and one mirrored log which is composed of two log disks.
->>
->> * Analysis of this problem
->>
->> A mirrored log is a type of "core" log and log devices need to be
->> synchronized when a mirrored log is activated. But when the first log
->> device is not recognized, "READ" I/O returns -EIO in disk_resume()
->> because log disk is not in-sync status and a default log can not be
->> switched to the other log disk working well.
->>
->>
->> Avoiding disk replication even if a log device got trouble is one of
->> the requirements. Is there any solution to avoid this problem by the
->> mirrored log approach?
+Thank you Takahiro for your comments. They all need to be fixed! I also
+found that 'lvremove' doesn't remove the device mapper tables for the
+"log mirror".
+
+--Malahal.
+
+Takahiro Yasui [tyasui@redhat.com] wrote:
+> malahal@us.ibm.com wrote:
+> > This patch adds '--mirroredlog' option to LVM commands to create a
+> > mirror with mirrored log device. Rebased to the latest LVM code
+> > (LVM2.2.02.43). Appreciate any comments.
 > 
-> Two ways to fix:
-> 1) Never make "error leg" as your master leg as that is pointless.
-
-This approach will solve the case that a log leg is not recognized, but
-I'm afraid that it won't solve other type of I/O errors, such as medium
-error.
-
-LVM commands such as vgchange accesses only sectors containing label and
-metadata, and LVM commands will successfully activate mirrored log as a
-userland process. However, in kernel, I/Os errors might be detected in
-a log area, and "READ" I/O returns -EIO. In this case, log will be detected
-as a failed device.
-
-> 2) Maybe we can use 'nosync' option when one of the two legs is known to
->    be an error device. This is probably easier than method (1)
-
-This approach looks good.
-
-Thanks,
----
-Takahiro Yasui
-Hitachi Computer Products (America), Inc.
+> Hi, Malahal
+> 
+> This is the additional test results of mirrored log. Currently your
+> patch is proposed by "RFC", and these might be known issues to you,
+> but I hope this reports would be helpful to improve your patch.
+> Any comments are welcome.
+> 
+> 
+> 0. Test environment
+>   - LVM2.2.02.43 with mirrored log patch
+>   - vg00 is composed of 8 PVs (/dev/sd[c-j])
+> 
+> 
+> 1. SIGSEGV at converting a core log to a mirrored log
+> 
+>   # dmsetup status
+>   vg00-lv00_mimage_1: 0 24576 linear
+>   vg00-lv00_mimage_0: 0 24576 linear
+>   vg00-lv00: 0 24576 mirror 2 253:3 253:4 24/24 1 AA 1 core
+> 
+>   # lvconvert -m1 --mirroredlog /dev/vg00/lv00
+>   Segmentation fault
+> 
+>   # lvconvert -m2 --mirroredlog /dev/vg00/lv00
+>   Segmentation fault
+> 
+> 
+> 2. Fail at conversion from 2 legs to 3 legs
+> 
+>   lv00 in vg00 has 2 legs (2 log legs and 2 data legs), and when it is
+>   converted to the structure with 3 lets, the conversion fails.
+> 
+>   vg00-lv00 (253:5)
+>    + vg00-lv00_mimage_1 (253:4)
+>    + vg00-lv00_mimage_0 (253:3)
+>    + vg00-lv00_mlog (253:2)
+>       + vg00-lv00_mlog_mimage_1 (253:1)
+>       + vg00-lv00_mlog_mimage_0 (253:0)
+> 
+>   # lvconvert -m2 --mirroredlog /dev/vg00/lv00
+>     device-mapper: reload ioctl failed: No such device or address
+>     Failed to lock lv00
+>   # dmsetup status
+>   vg00-lv00_mimage_2: 0 8192 linear    <-- data leg is created
+>   vg00-lv00_mimage_1: 0 24576 linear
+>   vg00-lv00_mlog_mimage_1: 0 8192 linear
+>   vg00-lv00_mimage_0: 0 24576 linear
+>   vg00-lv00_mlog_mimage_0: 0 8192 linear
+>   vg00-lv00_mimagetmp_2: 0 24576 error <-- temporary data log exists
+>   vg00-lv00_mlog: 0 8192 mirror 2 253:1 253:2 8/8 1 AA 1 core
+>   vg00-lv00: 0 24576 mirror 2 253:4 253:5 24/24 1 AA 3 disk 253:3 A
+> 
+> 
+> 3. Fail at conversion from disk log to mirrored log
+> 
+>   # dmsetup status
+>   vg00-lv00_mimage_1: 0 24576 linear
+>   vg00-lv00_mimage_0: 0 24576 linear
+>   vg00-lv00_mlog: 0 8192 linear
+>   vg00-lv00: 0 24576 mirror 2 253:1 253:2 24/24 1 AA 3 disk 253:0 A
+> 
+>   # lvconvert -m1 --mirroredlog /dev/vg00/lv00
+>   Logical volume lv00 already has 1 mirror(s).
+> 
+>    => disk log should be converted to mirrored log?
+> 
+>   # lvconvert -m2 --mirroredlog /dev/vg00/lv00
+>   device-mapper: reload ioctl failed: No such device or address
+>   Failed to lock lv00
+>   # dmsetup status
+>   vg00-lv00_mimage_2: 0 8192 linear
+>   vg00-lv00_mimage_1: 0 24576 linear
+>   vg00-lv00_mimage_0: 0 24576 linear
+>   vg00-lv00_mimagetmp_2: 0 24576 error
+>   vg00-lv00_mlog: 0 8192 linear
+>   vg00-lv00: 0 24576 mirror 2 253:1 253:2 24/24 1 AA 3 disk 253:0 A
+> 
+>    => disk log should be converted to mirrored log with 3 legs?
+> 
+> 
+> Thanks,
+> ---
+> Takahiro Yasui
+> Hitachi Computer Products (America), Inc.
+> 
