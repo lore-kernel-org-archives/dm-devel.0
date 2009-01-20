@@ -1,16 +1,13 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: Re: [RFC] [PATCH] lvm2: mirroredlog support
-Date: Tue, 20 Jan 2009 14:52:20 -0500
-Message-ID: <49762B74.9080301@redhat.com>
-References: <20081230001055.GA13710@us.ibm.com>
-	<49750524.3030007@redhat.com>	<20090120015427.GA16550@us.ibm.com>	<497579AB.4060503@linux.vnet.ibm.com>
-	<20090120173817.GA9601@us.ibm.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 3 of 12]:
+	dm-exception-store-move-dm_target-pointer.patch
+Date: Tue, 20 Jan 2009 13:53:26 -0600
+Message-ID: <1232481206.19993.19.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090120173817.GA9601@us.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +17,105 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: malahal@us.ibm.com, raspl@linux.vnet.ibm.com
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> Stefan Raspl [raspl@linux.vnet.ibm.com] wrote:
->> If I understand Takahiro correctly, the main issue is that the whole
->> log device becomes unusable in case one leg is broken...? Of course,
->> we still have the other leg with the most recent data available and
->> can read from that one. However, this would require that we can
->> start a mirror in rw-mode (so we can keep the still-recent half up
->> to date) even if one half has failed - a functionality which was
->> recently added to LVM, as we discussed in our last call...?
-> 
-> Stefan, Takahiro is using the latest LVM that brings LVs in rw-mode.
-> That is not the problem. Actually, everything works if a slave leg of a
-> "log mirror" is broken. But if the master leg of the "log mirror" is
-> broken, entire log device becomes unusable. The reason is when we
-> activate the "log mirror", it always synchronizes the data from the
-> master leg to slave leg since it has no log device (as the "log mirror"
-> uses "corelog"). In other words, the "log mirror" always starts in "not
-> in sync" state and synchronizes.
-> 
-> If the master leg is broken for the "log mirror", it starts in "not in
-> sync" state and tries to copy data from the "broken leg" to the active
-> leg! This appears as the master leg failure while doing synchronization
-> which makes the whole device unusable.
-> 
->> I'm not sure if I understand his statements about the
->> synchronization correctly. Why would any synchronization within the
->> data mirror occur at all? It's only the log which is broken, not the
->> actual data in vg00-lv00_mimage_0/1. If any synchronization in the
->> _data_ mirror occurs just because one leg in the _log_ mirror has a
->> problem, I'd consider that a bug.
-> 
-> Since the entire log device is unusable with its "master device
-> broken", the "data mirror" goes for synchronization.
+ brassow
 
-Thank you for the good explanation, Malahal. You are explaining exactly
-what I need to say. I'm using LVM2.2.02.43, on which this mirroredlog
-patch is built.
+Move target pointer from snapshot to exception store.
 
-Thanks,
-Taka
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
+
+Index: linux-2.6.28/drivers/md/dm-exception-store.c
+===================================================================
+--- linux-2.6.28.orig/drivers/md/dm-exception-store.c	2009-01-07 23:41:24.000000000 +0000
++++ linux-2.6.28/drivers/md/dm-exception-store.c	2009-01-07 23:44:44.000000000 +0000
+@@ -142,7 +142,7 @@ int dm_exception_store_type_unregister(s
+ }
+ EXPORT_SYMBOL(dm_exception_store_type_unregister);
+ 
+-int dm_exception_store_create(const char *type_name,
++int dm_exception_store_create(const char *type_name, struct dm_target *ti,
+ 			      struct dm_exception_store **store)
+ {
+ 	int r = 0;
+@@ -160,6 +160,7 @@ int dm_exception_store_create(const char
+ 	}
+ 
+ 	tmp_store->type = type;
++	tmp_store->ti = ti;
+ 
+ 	r = type->ctr(tmp_store, 0, NULL);
+ 	if (r) {
+Index: linux-2.6.28/drivers/md/dm-exception-store.h
+===================================================================
+--- linux-2.6.28.orig/drivers/md/dm-exception-store.h	2009-01-07 23:41:24.000000000 +0000
++++ linux-2.6.28/drivers/md/dm-exception-store.h	2009-01-07 23:44:10.000000000 +0000
+@@ -95,6 +95,7 @@ struct dm_exception_store_type {
+ 
+ struct dm_exception_store {
+ 	struct dm_exception_store_type *type;
++	struct dm_target *ti;
+ 
+ 	struct dm_snapshot *snap;
+ 
+@@ -147,7 +148,7 @@ static inline void dm_consecutive_chunk_
+ int dm_exception_store_type_register(struct dm_exception_store_type *type);
+ int dm_exception_store_type_unregister(struct dm_exception_store_type *type);
+ 
+-int dm_exception_store_create(const char *type_name,
++int dm_exception_store_create(const char *type_name, struct dm_target *ti,
+ 			      struct dm_exception_store **store);
+ void dm_exception_store_destroy(struct dm_exception_store *store);
+ 
+Index: linux-2.6.28/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.28.orig/drivers/md/dm-snap.c	2009-01-07 23:41:24.000000000 +0000
++++ linux-2.6.28/drivers/md/dm-snap.c	2009-01-07 23:45:16.000000000 +0000
+@@ -615,7 +615,6 @@ static int snapshot_ctr(struct dm_target
+ 	atomic_set(&s->pending_exceptions_count, 0);
+ 	init_rwsem(&s->lock);
+ 	spin_lock_init(&s->pe_lock);
+-	s->ti = ti;
+ 
+ 	/* Allocate hash table for COW data */
+ 	if (init_hash_tables(s)) {
+@@ -624,7 +623,7 @@ static int snapshot_ctr(struct dm_target
+ 		goto bad3;
+ 	}
+ 
+-	r = dm_exception_store_create(argv[2], &s->store);
++	r = dm_exception_store_create(argv[2], ti, &s->store);
+ 	if (r) {
+ 		ti->error = "Couldn't create exception store";
+ 		r = -EINVAL;
+@@ -819,7 +818,7 @@ static void __invalidate_snapshot(struct
+ 
+ 	s->valid = 0;
+ 
+-	dm_table_event(s->ti->table);
++	dm_table_event(s->store->ti->table);
+ }
+ 
+ static void get_pending_exception(struct dm_snap_pending_exception *pe)
+@@ -1190,7 +1189,7 @@ static int __origin_write(struct list_he
+ 			goto next_snapshot;
+ 
+ 		/* Nothing to do if writing beyond end of snapshot */
+-		if (bio->bi_sector >= dm_table_get_size(snap->ti->table))
++		if (bio->bi_sector >= dm_table_get_size(snap->store->ti->table))
+ 			goto next_snapshot;
+ 
+ 		/*
+Index: linux-2.6.28/drivers/md/dm-snap.h
+===================================================================
+--- linux-2.6.28.orig/drivers/md/dm-snap.h	2009-01-07 23:41:38.000000000 +0000
++++ linux-2.6.28/drivers/md/dm-snap.h	2009-01-07 23:42:31.000000000 +0000
+@@ -25,7 +25,6 @@ struct exception_table {
+ 
+ struct dm_snapshot {
+ 	struct rw_semaphore lock;
+-	struct dm_target *ti;
+ 
+ 	struct dm_dev *origin;
+ 	struct dm_dev *cow;
