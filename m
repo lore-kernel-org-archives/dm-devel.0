@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 7 of 12]: dm-snapshot-remove-dm_snap-header.patch
-Date: Tue, 20 Jan 2009 14:02:47 -0600
-Message-ID: <1232481767.19993.33.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH 8 of 12]:
+	dm-snapshot-use-DMEMIT-macro-for-status.patch
+Date: Tue, 20 Jan 2009 14:05:30 -0600
+Message-ID: <1232481930.19993.37.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -21,194 +22,58 @@ List-Id: dm-devel.ids
 
  brassow
 
-Move some of the last bits from dm-snap.h into dm-snap.c where they
-belong and remove dm-snap.h.
+Use DMEMIT in place of snprintf.  This makes it easier later when
+other modules are helping to populate our status output.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
 Index: linux-2.6.28/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.28.orig/drivers/md/dm-snap.c	2009-01-08 02:29:30.000000000 +0000
-+++ linux-2.6.28/drivers/md/dm-snap.c	2009-01-08 02:40:56.000000000 +0000
-@@ -20,9 +20,9 @@
- #include <linux/vmalloc.h>
- #include <linux/log2.h>
- #include <linux/dm-kcopyd.h>
-+#include <linux/workqueue.h>
+--- linux-2.6.28.orig/drivers/md/dm-snap.c	2009-01-08 20:00:37.000000000 +0000
++++ linux-2.6.28/drivers/md/dm-snap.c	2009-01-08 20:32:18.000000000 +0000
+@@ -1205,24 +1205,25 @@ static void snapshot_resume(struct dm_ta
+ static int snapshot_status(struct dm_target *ti, status_type_t type,
+ 			   char *result, unsigned int maxlen)
+ {
++	int sz = 0;
+ 	struct dm_snapshot *snap = ti->private;
  
- #include "dm-exception-store.h"
--#include "dm-snap.h"
- #include "dm-bio-list.h"
+ 	switch (type) {
+ 	case STATUSTYPE_INFO:
+ 		if (!snap->valid)
+-			snprintf(result, maxlen, "Invalid");
++			DMEMIT("Invalid");
+ 		else {
+ 			if (snap->store->type->fraction_full) {
+ 				sector_t numerator, denominator;
+ 				snap->store->type->fraction_full(snap->store,
+ 								 &numerator,
+ 								 &denominator);
+-				snprintf(result, maxlen, "%llu/%llu",
+-					(unsigned long long)numerator,
+-					(unsigned long long)denominator);
++				DMEMIT("%llu/%llu",
++				       (unsigned long long)numerator,
++				       (unsigned long long)denominator);
+ 			}
+ 			else
+-				snprintf(result, maxlen, "Unknown");
++				DMEMIT("Unknown");
+ 		}
+ 		break;
  
- #define DM_MSG_PREFIX "snapshots"
-@@ -47,9 +47,79 @@
-  */
- #define MIN_IOS 256
+@@ -1232,10 +1233,10 @@ static int snapshot_status(struct dm_tar
+ 		 * to make private copies if the output is to
+ 		 * make sense.
+ 		 */
+-		snprintf(result, maxlen, "%s %s %s %llu",
+-			 snap->origin->name, snap->store->cow->name,
+-			 snap->store->type->name,
+-			 (unsigned long long)snap->store->chunk_size);
++		DMEMIT("%s", snap->origin->name);
++		DMEMIT(" %s %s %llu", snap->store->cow->name,
++		       snap->store->type->name,
++		       (unsigned long long)snap->store->chunk_size);
+ 		break;
+ 	}
  
-+#define DM_TRACKED_CHUNK_HASH_SIZE	16
-+#define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
-+					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
-+
-+struct exception_table {
-+	uint32_t hash_mask;
-+	unsigned hash_shift;
-+	struct list_head *table;
-+};
-+
-+struct dm_snapshot {
-+	struct rw_semaphore lock;
-+
-+	struct dm_dev *origin;
-+
-+	/* List of snapshots per Origin */
-+	struct list_head list;
-+
-+	/* You can't use a snapshot if this is 0 (e.g. if full) */
-+	int valid;
-+
-+	/* Origin writes don't trigger exceptions until this is set */
-+	int active;
-+
-+	/* Used for display of table */
-+	char type;
-+
-+	mempool_t *pending_pool;
-+
-+	atomic_t pending_exceptions_count;
-+
-+	struct exception_table pending;
-+	struct exception_table complete;
-+
-+	/*
-+	 * pe_lock protects all pending_exception operations and access
-+	 * as well as the snapshot_bios list.
-+	 */
-+	spinlock_t pe_lock;
-+
-+	/* The on disk metadata handler */
-+	struct dm_exception_store *store;
-+
-+	struct dm_kcopyd_client *kcopyd_client;
-+
-+	/* Queue of snapshot writes for ksnapd to flush */
-+	struct bio_list queued_bios;
-+	struct work_struct queued_bios_work;
-+
-+	/* Chunks with outstanding reads */
-+	mempool_t *tracked_chunk_pool;
-+	spinlock_t tracked_chunk_lock;
-+	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
-+};
-+
- static struct workqueue_struct *ksnapd;
- static void flush_queued_bios(struct work_struct *work);
- 
-+static sector_t chunk_to_sector(struct dm_exception_store *store,
-+				chunk_t chunk)
-+{
-+	return chunk << store->chunk_shift;
-+}
-+
-+static int bdev_equal(struct block_device *lhs, struct block_device *rhs)
-+{
-+	/*
-+	 * There is only ever one instance of a particular block
-+	 * device so we can compare pointers safely.
-+	 */
-+	return lhs == rhs;
-+}
-+
- struct dm_snap_pending_exception {
- 	struct dm_snap_exception e;
- 
-Index: linux-2.6.28/drivers/md/dm-snap.h
-===================================================================
---- linux-2.6.28.orig/drivers/md/dm-snap.h	2009-01-08 02:36:13.000000000 +0000
-+++ /dev/null	1970-01-01 00:00:00.000000000 +0000
-@@ -1,86 +0,0 @@
--/*
-- * Copyright (C) 2001-2002 Sistina Software (UK) Limited.
-- *
-- * This file is released under the GPL.
-- */
--
--#ifndef DM_SNAPSHOT_H
--#define DM_SNAPSHOT_H
--
--#include <linux/device-mapper.h>
--#include "dm-exception-store.h"
--#include "dm-bio-list.h"
--#include <linux/blkdev.h>
--#include <linux/workqueue.h>
--
--struct exception_table {
--	uint32_t hash_mask;
--	unsigned hash_shift;
--	struct list_head *table;
--};
--
--#define DM_TRACKED_CHUNK_HASH_SIZE	16
--#define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
--					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
--
--struct dm_snapshot {
--	struct rw_semaphore lock;
--
--	struct dm_dev *origin;
--
--	/* List of snapshots per Origin */
--	struct list_head list;
--
--	/* You can't use a snapshot if this is 0 (e.g. if full) */
--	int valid;
--
--	/* Origin writes don't trigger exceptions until this is set */
--	int active;
--
--	/* Used for display of table */
--	char type;
--
--	mempool_t *pending_pool;
--
--	atomic_t pending_exceptions_count;
--
--	struct exception_table pending;
--	struct exception_table complete;
--
--	/*
--	 * pe_lock protects all pending_exception operations and access
--	 * as well as the snapshot_bios list.
--	 */
--	spinlock_t pe_lock;
--
--	/* The on disk metadata handler */
--	struct dm_exception_store *store;
--
--	struct dm_kcopyd_client *kcopyd_client;
--
--	/* Queue of snapshot writes for ksnapd to flush */
--	struct bio_list queued_bios;
--	struct work_struct queued_bios_work;
--
--	/* Chunks with outstanding reads */
--	mempool_t *tracked_chunk_pool;
--	spinlock_t tracked_chunk_lock;
--	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
--};
--
--static inline sector_t chunk_to_sector(struct dm_exception_store *store,
--				      chunk_t chunk)
--{
--	return chunk << store->chunk_shift;
--}
--
--static inline int bdev_equal(struct block_device *lhs, struct block_device *rhs)
--{
--	/*
--	 * There is only ever one instance of a particular block
--	 * device so we can compare pointers safely.
--	 */
--	return lhs == rhs;
--}
--
--#endif
