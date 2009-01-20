@@ -1,16 +1,12 @@
-From: malahal@us.ibm.com
-Subject: Re: Re: [RFC] [PATCH] lvm2: mirroredlog support
-Date: Tue, 20 Jan 2009 09:38:17 -0800
-Message-ID: <20090120173817.GA9601@us.ibm.com>
-References: <20081230001055.GA13710@us.ibm.com> <49750524.3030007@redhat.com>
-	<20090120015427.GA16550@us.ibm.com>
-	<497579AB.4060503@linux.vnet.ibm.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [Patch 0 of 12]  New exception store API
+Date: Tue, 20 Jan 2009 13:47:19 -0600
+Message-ID: <1232480839.19993.10.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <497579AB.4060503@linux.vnet.ibm.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,35 +19,28 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Stefan Raspl [raspl@linux.vnet.ibm.com] wrote:
-> If I understand Takahiro correctly, the main issue is that the whole
-> log device becomes unusable in case one leg is broken...? Of course,
-> we still have the other leg with the most recent data available and
-> can read from that one. However, this would require that we can
-> start a mirror in rw-mode (so we can keep the still-recent half up
-> to date) even if one half has failed - a functionality which was
-> recently added to LVM, as we discussed in our last call...?
+The following 12 patches introduce the new exception store API.  (Thanks
+to agk for doing most of the work to break-up the original large patch.)
+These patches introduce the API that satisfies today's exception stores
+(i.e. "persistent" and "transient").  I have not expanded the API to
+include what is necessary for the "shared" and "clustered" exception
+stores yet.  I hope we can get these pushed first.
 
-Stefan, Takahiro is using the latest LVM that brings LVs in rw-mode.
-That is not the problem. Actually, everything works if a slave leg of a
-"log mirror" is broken. But if the master leg of the "log mirror" is
-broken, entire log device becomes unusable. The reason is when we
-activate the "log mirror", it always synchronizes the data from the
-master leg to slave leg since it has no log device (as the "log mirror"
-uses "corelog"). In other words, the "log mirror" always starts in "not
-in sync" state and synchronizes.
+agk, you broke up my original patch, which I then broke up some more,
+tested, and bug fixed.
 
-If the master leg is broken for the "log mirror", it starts in "not in
-sync" state and tries to copy data from the "broken leg" to the active
-leg! This appears as the master leg failure while doing synchronization
-which makes the whole device unusable.
+Patch names are:
+1 of 12: dm-exception-store-separate-type-from-instance.patch
+2 of 12: dm-exception-store-introduce-registry.patch
+3 of 12: dm-exception-store-move-dm_target-pointer.patch
+4 of 12: dm-exception-store-move-chunk_fields.patch
+5 of 12: dm-exception-store-move-cow-pointer.patch
+6 of 12: dm-snapshot-remove-dm_snap-header-use.patch
+7 of 12: dm-snapshot-remove-dm_snap-header.patch
+8 of 12: dm-snapshot-use-DMEMIT-macro-for-status.patch
+9 of 12: dm-snapshot-move-ctr-parsing-to-exception-store.patch
+10 of 12: dm-snapshot-move-status-to-exception-store.patch
+11 of 12: dm-exception-store-generalize-table-args.patch
+12 of 12: dm-snapshot-new-ctr-table-format.patch
 
-> I'm not sure if I understand his statements about the
-> synchronization correctly. Why would any synchronization within the
-> data mirror occur at all? It's only the log which is broken, not the
-> actual data in vg00-lv00_mimage_0/1. If any synchronization in the
-> _data_ mirror occurs just because one leg in the _log_ mirror has a
-> problem, I'd consider that a bug.
-
-Since the entire log device is unusable with its "master device
-broken", the "data mirror" goes for synchronization.
+ brassow
