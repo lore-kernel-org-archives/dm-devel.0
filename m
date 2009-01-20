@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 12 of 12]: dm-snapshot-new-ctr-table-format.patch
-Date: Tue, 20 Jan 2009 14:14:27 -0600
-Message-ID: <1232482467.19993.48.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH]: dm-snapshot-cleanup.patch
+Date: Tue, 20 Jan 2009 14:26:51 -0600
+Message-ID: <1232483211.19993.52.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,12 +19,12 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+This patch applies on top of the previous 12 just to clean-up some
+indenting and such.
+
  brassow
 
-Introduce the new constructor table formats for snapshots
-and exception stores.  This allows for new exception store
-types and allows for easy addition of future features to
-snapshots.
+Indenting and formatting fixes after a long series of patches.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -32,135 +32,126 @@ Index: linux-2.6/drivers/md/dm-snap-persistent.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap-persistent.c
 +++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -698,8 +698,13 @@ static int persistent_status(struct dm_e
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT("%s P %llu", store->cow->name,
--		       (unsigned long long)store->chunk_size);
-+		if (!strcmp("P", store->type->name))
-+			DMEMIT("%s P %llu", store->cow->name,
-+			       (unsigned long long)store->chunk_size);
-+		else
-+			DMEMIT("%s 2 %s %llu", store->type->name,
-+			       store->cow->name,
-+			       (unsigned long long)store->chunk_size);
- 	}
+@@ -509,7 +509,7 @@ static int persistent_read_metadata(stru
+ 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
+ 				  sizeof(struct disk_exception);
+ 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
+-			sizeof(*ps->callbacks));
++				   sizeof(*ps->callbacks));
+ 	if (!ps->callbacks)
+ 		return -ENOMEM;
  
- 	return sz;
-Index: linux-2.6/drivers/md/dm-snap-transient.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-transient.c
-+++ linux-2.6/drivers/md/dm-snap-transient.c
-@@ -91,8 +91,13 @@ static int transient_status(struct dm_ex
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT("%s N %llu", store->cow->name,
--		       (unsigned long long)store->chunk_size);
-+		if (!strcmp("N", store->type->name))
-+			DMEMIT("%s N %llu", store->cow->name,
-+			       (unsigned long long)store->chunk_size);
-+		else
-+			DMEMIT("%s 2 %s %llu", store->type->name,
-+			       store->cow->name,
-+			       (unsigned long long)store->chunk_size);
- 	}
+@@ -620,7 +620,7 @@ static void persistent_commit_exception(
+ 	 * If we completely filled the current area, then wipe the next one.
+ 	 */
+ 	if ((ps->current_committed == ps->exceptions_per_area) &&
+-	     zero_disk_area(ps, ps->current_area + 1))
++	    zero_disk_area(ps, ps->current_area + 1))
+ 		ps->valid = 0;
  
- 	return sz;
+ 	/*
 Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -7,6 +7,7 @@
-  */
+@@ -365,7 +365,8 @@ static int init_exception_table(struct e
+ 	return 0;
+ }
  
- #include <linux/blkdev.h>
-+#include <linux/ctype.h>
- #include <linux/device-mapper.h>
- #include <linux/delay.h>
- #include <linux/fs.h>
-@@ -579,7 +580,10 @@ static int init_hash_tables(struct dm_sn
-  * @store: contains newly allocated dm_exception_store
-  *
-  * Possible formats for argv::
-+ * Backwards compatibility mode:
-  *     <COW-dev> p/n <chunk-size>
-+ * Current format:
-+ *     <store type> <arg count> <COW> <chunk-size> [other args]
-  *
+-static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
++static void exit_exception_table(struct exception_table *et,
++				 struct kmem_cache *mem)
+ {
+ 	struct list_head *slot;
+ 	struct dm_snap_exception *ex, *next;
+@@ -588,8 +589,8 @@ static int init_hash_tables(struct dm_sn
   * Returns: 0 on success, -Exxx on error
   */
-@@ -587,11 +591,13 @@ static int create_exception_store(struct
-                                  char **argv, unsigned *args_used,
-                                  struct dm_exception_store **store)
+ static int create_exception_store(struct dm_target *ti, unsigned argc,
+-                                 char **argv, unsigned *args_used,
+-                                 struct dm_exception_store **store)
++				  char **argv, unsigned *args_used,
++				  struct dm_exception_store **store)
  {
-+	unsigned param_count;
+ 	unsigned param_count;
  	char *tmp_argv[2];
+@@ -667,8 +668,7 @@ static int snapshot_ctr(struct dm_target
  
- 	*store = NULL;
- 
--	if (1 /* less change patch to patch */) {
-+	/* Detect old-style table line with type as second arg. */
-+	if (!isdigit(*argv[1])) {
- 		if (argc < 3) {
- 			ti->error = "Insufficient exception store arguments";
- 			return -EINVAL;
-@@ -605,10 +611,34 @@ static int create_exception_store(struct
- 		return dm_exception_store_create(toupper(*argv[1]), ti, 2,
- 						 tmp_argv, store);
+ 	s = kmalloc(sizeof(*s), GFP_KERNEL);
+ 	if (!s) {
+-		ti->error = "Cannot allocate snapshot context private "
+-		    "structure";
++		ti->error = "Cannot allocate snapshot private structure";
+ 		r = -ENOMEM;
+ 		goto bad_snap;
  	}
-+
-+	if (sscanf(argv[1], "%u", &param_count) != 1) {
-+		ti->error = "Invalid exception store argument count";
-+		return -EINVAL;
-+	}
-+
-+	*args_used = 2 + param_count;
-+
-+	if (argc < *args_used) {
-+		ti->error = "Insufficient exception store arguments";
-+		return -EINVAL;
-+	}
-+
-+	return dm_exception_store_create(argv[0], ti, param_count,
-+					 argv + 2, store);
+@@ -719,7 +719,8 @@ static int snapshot_ctr(struct dm_target
+ 	spin_lock_init(&s->tracked_chunk_lock);
+ 
+ 	/* Metadata must only be loaded into one table at once */
+-	r = s->store->type->read_metadata(s->store, dm_add_exception, (void *)s);
++	r = s->store->type->read_metadata(s->store, dm_add_exception,
++					  (void *)s);
+ 	if (r < 0) {
+ 		ti->error = "Failed to read snapshot metadata";
+ 		goto bad_load_and_register;
+@@ -957,7 +958,7 @@ static void pending_complete(struct dm_s
+ 	 */
+ 	insert_completed_exception(s, e);
+ 
+- out:
++out:
+ 	remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = put_pending_exception(pe);
+@@ -1020,7 +1021,7 @@ static void start_copy(struct dm_snap_pe
+ 
+ 	/* Hand over to kcopyd */
+ 	dm_kcopyd_copy(s->kcopyd_client,
+-		    &src, 1, &dest, 0, copy_callback, pe);
++		       &src, 1, &dest, 0, copy_callback, pe);
  }
  
  /*
-- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
-+ * snapshot_ctr
-+ * @ti
-+ * @argc
-+ * @argv
-+ *
-+ * Construct a snapshot mapping.  Possible mapping tables include:
-+ *     <origin_dev> <exception store args> <feature args>
-+ * See 'create_exception_store' for format of <exception store args>.
-+ *
-+ * Returns: 0 on success, -XXX on error
-  */
- static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
-@@ -619,10 +649,9 @@ static int snapshot_ctr(struct dm_target
- 	struct dm_exception_store *store;
- 	unsigned args_used;
+@@ -1083,7 +1084,7 @@ __find_pending_exception(struct dm_snaps
+ 	get_pending_exception(pe);
+ 	insert_exception(&s->pending, &pe->e);
  
--	if (argc != 4) {
--		ti->error = "requires exactly 4 arguments";
--		r = -EINVAL;
--		goto bad_args;
-+	if (argc < 4) {
-+		ti->error = "too few arguments";
-+		return -EINVAL;
+- out:
++out:
+ 	return pe;
+ }
+ 
+@@ -1091,8 +1092,9 @@ static void remap_exception(struct dm_sn
+ 			    struct bio *bio, chunk_t chunk)
+ {
+ 	bio->bi_bdev = s->store->cow->bdev;
+-	bio->bi_sector = chunk_to_sector(s->store, dm_chunk_number(e->new_chunk) +
+-			 (chunk - e->old_chunk)) +
++	bio->bi_sector = chunk_to_sector(s->store,
++					 dm_chunk_number(e->new_chunk) +
++					 (chunk - e->old_chunk)) +
+ 			 (bio->bi_sector & s->store->chunk_mask);
+ }
+ 
+@@ -1158,9 +1160,9 @@ static int snapshot_map(struct dm_target
+ 		map_context->ptr = track_chunk(s, chunk);
  	}
  
- 	origin_path = argv[0];
-@@ -737,7 +766,6 @@ bad_origin:
- bad_snap:
- 	dm_exception_store_destroy(store);
- 
--bad_args:
+- out_unlock:
++out_unlock:
+ 	up_write(&s->lock);
+- out:
++out:
  	return r;
  }
+ 
+@@ -1300,7 +1302,7 @@ static int __origin_write(struct list_he
+ 			list_add_tail(&pe->list, &pe_queue);
+ 		}
+ 
+- next_snapshot:
++	next_snapshot:
+ 		up_write(&snap->lock);
+ 	}
  
