@@ -1,16 +1,17 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/2] dm-ioband: I/O bandwidth controller
-	v1.10.0: Source code and patch
-Date: Tue, 20 Jan 2009 15:53:34 +0000
-Message-ID: <20090120155334.GH9859@agk.fab.redhat.com>
-References: <20090120.141022.193708059.ryov@valinux.co.jp>
-	<20090120.141114.226778416.ryov@valinux.co.jp>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: How does multipath tool handle Lun remapping?
+Date: Tue, 20 Jan 2009 10:44:00 -0500
+Message-ID: <20090120154400.GA19640@mars.virtualiron.com>
+References: <d364733c0901160042n65184828pcac1e7a6435b6c9c@mail.gmail.com>
+	<20090116181327.GD1493@mars.virtualiron.com>
+	<d364733c0901191917y76543be4o5b14f29c057d1bd5@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090120.141114.226778416.ryov@valinux.co.jp>
+In-Reply-To: <d364733c0901191917y76543be4o5b14f29c057d1bd5@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,48 +21,22 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-So, what needs to be reviewed?
+On Tue, Jan 20, 2009 at 11:17:53AM +0800, =E8=B0=A2=E7=BA=B2 wrote:
+> It make sense that multipath tool can notice that there is a
+> recreation of OS device. But it still depends on the external program,
+> such as scsi_id to get the identifier of the lun=E3=80=82
+> I looked through the scsi_id source code, found that unit serial
+> number might be returned if the device supported the EVPD inquery
+> page80. This might be the wrong infomation for multipath tool, is that
+> true?
+
+That information is correct. You can prove it yourself by running
+'scsi_id -g -u -s /block/sdb' before and after the deletion. The
+value will be the same.
 
 
-1. General style/layout/naming cleanup.
-- It's pretty good compared to a lot of patches that get sent, but there are
-still a few things we can improve.
-
-Lindent is throwing up some stuff (but remember it doesn't get things
-perfect so don't make all the changes it recommends).
-Remove double blank lines, plenty of unnecessary braces, "unsigned int" ->
-"unsigned".  
-Review the names - should a few more things get a DM_ or dm_ prefix?
-Are all the names consistent and as self-explanatory as they can reasonably be?
-(e.g. a variable called 'new' - new what?)
-
-
-2. A high-level review.
-Review the documentation and what the code does and how it does it.
-- Does it make sense to add this to the kernel in this way?
-
-
-3. A device-mapper review.
-- Does the code fit into device-mapper correctly, using all the dm interfaces properly?
-
-
-4. A detailed code review.
-- Checking for correctness, fixing typos, improving messages, looking for ways
-  to improve the code structure etc.
-
-
-So, it needs volunteers on this list to take on aspects of that and lend their
-support to the patch.
-
-I consider items 1, 2 and 3 as blockers that must be completed satisfactorily before
-I can push it upstream.  (Items 1 and 3 should be quick; 2 may take a bit
-longer.)  Item 4 is of course open-ended so does not have to be finished before
-it can be included.
-
-Alasdair
--- 
-agk@redhat.com
+What is not correct is the LUN number. And for that there needs
+to be a deletion of the block device and a recreation of them.
