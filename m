@@ -1,14 +1,17 @@
-From: malahal@us.ibm.com
-Subject: Re: [RFC] [PATCH] lvm2: mirroredlog support
-Date: Tue, 20 Jan 2009 14:14:48 -0800
-Message-ID: <20090120221448.GA17369@us.ibm.com>
-References: <20081230001055.GA13710@us.ibm.com> <4976423F.2070103@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: [PATCH 1/2] dm-ioband: I/O bandwidth controller
+	v1.10.0: Source code and patch
+Date: Wed, 21 Jan 2009 22:03:56 +0900 (JST)
+Message-ID: <20090121.220356.39155811.ryov@valinux.co.jp>
+References: <20090120.141022.193708059.ryov@valinux.co.jp>
+	<20090120.141114.226778416.ryov@valinux.co.jp>
+	<20090120145208.GE9859@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <4976423F.2070103@redhat.com>
+In-Reply-To: <20090120145208.GE9859@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,104 +21,71 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Takahiro Yasui <tyasui@redhat.com>
+To: agk@redhat.com
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Thank you Takahiro for your comments. They all need to be fixed! I also
-found that 'lvremove' doesn't remove the device mapper tables for the
-"log mirror".
+Hi Alasdair,
 
---Malahal.
+Thank you for reviewing and giving me suggestions.
 
-Takahiro Yasui [tyasui@redhat.com] wrote:
-> malahal@us.ibm.com wrote:
-> > This patch adds '--mirroredlog' option to LVM commands to create a
-> > mirror with mirrored log device. Rebased to the latest LVM code
-> > (LVM2.2.02.43). Appreciate any comments.
-> 
-> Hi, Malahal
-> 
-> This is the additional test results of mirrored log. Currently your
-> patch is proposed by "RFC", and these might be known issues to you,
-> but I hope this reports would be helpful to improve your patch.
-> Any comments are welcome.
+> On Tue, Jan 20, 2009 at 02:11:14PM +0900, Ryo Tsuruta wrote:
+> > This patch is the dm-ioband version 1.10.0 release.
+>  
+> drivers/md/dm-ioband-ctl.c:194:2: warning: context problem in 'suspend_ioband_device': '_spin_unlock_irqrestore' expected different c
+> ontext
+> drivers/md/dm-ioband-ctl.c:194:2:    context 'lock': wanted >= 1, got 0
+> drivers/md/dm-ioband-ctl.c:608:3: warning: context problem in 'prevent_burst_bios': '_spin_unlock_irq' expected different context
+> drivers/md/dm-ioband-ctl.c:608:3:    context 'lock': wanted >= 1, got 0
 > 
 > 
-> 0. Test environment
->   - LVM2.2.02.43 with mirrored log patch
->   - vg00 is composed of 8 PVs (/dev/sd[c-j])
-> 
-> 
-> 1. SIGSEGV at converting a core log to a mirrored log
-> 
->   # dmsetup status
->   vg00-lv00_mimage_1: 0 24576 linear
->   vg00-lv00_mimage_0: 0 24576 linear
->   vg00-lv00: 0 24576 mirror 2 253:3 253:4 24/24 1 AA 1 core
-> 
->   # lvconvert -m1 --mirroredlog /dev/vg00/lv00
->   Segmentation fault
-> 
->   # lvconvert -m2 --mirroredlog /dev/vg00/lv00
->   Segmentation fault
-> 
-> 
-> 2. Fail at conversion from 2 legs to 3 legs
-> 
->   lv00 in vg00 has 2 legs (2 log legs and 2 data legs), and when it is
->   converted to the structure with 3 lets, the conversion fails.
-> 
->   vg00-lv00 (253:5)
->    + vg00-lv00_mimage_1 (253:4)
->    + vg00-lv00_mimage_0 (253:3)
->    + vg00-lv00_mlog (253:2)
->       + vg00-lv00_mlog_mimage_1 (253:1)
->       + vg00-lv00_mlog_mimage_0 (253:0)
-> 
->   # lvconvert -m2 --mirroredlog /dev/vg00/lv00
->     device-mapper: reload ioctl failed: No such device or address
->     Failed to lock lv00
->   # dmsetup status
->   vg00-lv00_mimage_2: 0 8192 linear    <-- data leg is created
->   vg00-lv00_mimage_1: 0 24576 linear
->   vg00-lv00_mlog_mimage_1: 0 8192 linear
->   vg00-lv00_mimage_0: 0 24576 linear
->   vg00-lv00_mlog_mimage_0: 0 8192 linear
->   vg00-lv00_mimagetmp_2: 0 24576 error <-- temporary data log exists
->   vg00-lv00_mlog: 0 8192 mirror 2 253:1 253:2 8/8 1 AA 1 core
->   vg00-lv00: 0 24576 mirror 2 253:4 253:5 24/24 1 AA 3 disk 253:3 A
-> 
-> 
-> 3. Fail at conversion from disk log to mirrored log
-> 
->   # dmsetup status
->   vg00-lv00_mimage_1: 0 24576 linear
->   vg00-lv00_mimage_0: 0 24576 linear
->   vg00-lv00_mlog: 0 8192 linear
->   vg00-lv00: 0 24576 mirror 2 253:1 253:2 24/24 1 AA 3 disk 253:0 A
-> 
->   # lvconvert -m1 --mirroredlog /dev/vg00/lv00
->   Logical volume lv00 already has 1 mirror(s).
-> 
->    => disk log should be converted to mirrored log?
-> 
->   # lvconvert -m2 --mirroredlog /dev/vg00/lv00
->   device-mapper: reload ioctl failed: No such device or address
->   Failed to lock lv00
->   # dmsetup status
->   vg00-lv00_mimage_2: 0 8192 linear
->   vg00-lv00_mimage_1: 0 24576 linear
->   vg00-lv00_mimage_0: 0 24576 linear
->   vg00-lv00_mimagetmp_2: 0 24576 error
->   vg00-lv00_mlog: 0 8192 linear
->   vg00-lv00: 0 24576 mirror 2 253:1 253:2 24/24 1 AA 3 disk 253:0 A
-> 
->    => disk log should be converted to mirrored log with 3 legs?
-> 
-> 
-> Thanks,
-> ---
-> Takahiro Yasui
-> Hitachi Computer Products (America), Inc.
-> 
+> Last time we had something like that, it was straightforward to restructure the
+> functions to avoid it - see if you can manage that here too.
+
+I'm trying to suppress these warnings, but the latest sparse command
+(2009-01-21) doesn't seem to interpret __acquires() and __releases()
+macros properly.
+
+I wrote the following sample code and tested with sparse-0.4.1 and
+sparse-2009-01-21.
+
+  static void foo(struct ioband_device *dp, unsigned long flags)
+  {
+          spin_unlock_irqrestore(&dp->g_lock, flags);
+  }
+
+The both sparse commands issued warnings as I expected.
+
+  sparse-0.4.1
+    CHECK   /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c
+  /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c:171:13:
+    warning: context imbalance in 'foo' - unexpected unlock
+
+  sparse-2009-01-21
+  /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c:173:2:
+  warning: context problem in 'foo': '_spin_unlock_irqrestore'
+    expected different context
+  /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c:173:2:
+    context 'lock': wanted >= 1, got 0
+
+Next, I added a __releases() macro and tested again.
+
+  static void foo(struct ioband_device *dp, unsigned long flags)
+	__releases(dp->g_lock)
+  {
+          spin_unlock_irqrestore(&dp->g_lock, flags);
+  }
+
+Only sparse-2009-01-21 still issued the warning.
+
+  CHECK   /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c
+  /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c:174:2:
+    warning: context problem in 'foo': '_spin_unlock_irqrestore'
+    expected different context
+  /home/ryov/work/dm-ioband/dm-ioband/src/dm-ioband-ctl.c:174:2:
+    context 'lock': wanted >= 1, got 0
+
+Could you tell me which sparse version are you using?
+
+Thanks,
+Ryo Tsuruta
