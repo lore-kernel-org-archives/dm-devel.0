@@ -1,48 +1,63 @@
-From: Seokmann Ju <seokmann.ju@qlogic.com>
-Subject: Re: qla2xxx 0000:03:0c.0: Firmware image unavailable
-Date: Wed, 21 Jan 2009 16:26:03 -0800
-Message-ID: <39FF78AD-75CB-4495-99C7-C4FAFB23999D@qlogic.com>
-References: <1225944321.14830.1109.camel@chandra-ubuntu>    <E463DF2B2E584B4A82673F53D62C2EF45CEAB48E@cosmail01.lsi.com>
-Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: text/plain; charset="US-ASCII"; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45CEAB48E@cosmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] crash in dm-io when signal is pending
+Date: Wed, 21 Jan 2009 22:04:39 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0901212203090.31606@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+If someone sends signal to a process performing synchronous dm-io call,
+the kernel may crash.
 
-On Jan 21, 2009, at 4:00 PM, Moger, Babu wrote:
+The function sync_io attempts to exit with -EINTR if it has pending signal,
+however the structure "io" is allocated on stack, so already submitted io
+requests end up touching unallocated stack space and corrupting kernel memory.
 
-> Hi All,
-> Have you guys seen this following error?
->
-> Jan 21 16:30:44 txmpp2 kernel: qla2xxx 0000:03:0c.0: Firmware image  
-> unavailable.
-> Jan 21 16:30:44 txmpp2 kernel: qla2xxx 0000:03:0c.0: Firmware images  
-> can be retrieved from: ftp://ftp.qlogic.com/outgoing/linux/firmware/.
->
-> After this error, qlogic driver fails to detect the LUNs attached.
->
-> I am running 2.6.29-rc2 kernel on x86_64 machine.
->
-> I tried couple of things without any success. I downloaded all the  
-> qlogic firmwares available and kept it in /lib/firmware. Tried  
-> rebuilding the kernel. Did not help. Thanks in advance.
-Could you double check that those firmware binaries under /lib/ 
-firmware have correct naming convention as defined in qla_os.c:  
-FW_FILE_ISP2XXX?
+sync_io sets its state to TASK_UNINTERRUPTIBLE, so the signal can't break out
+of io_schedule() --- however, if the signal was pending before sync_io entered
+while (1) loop, the corruption of kernel memory will happen.
 
->
->
->
-> Thanks
-> Babu Moger
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux- 
-> scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+There is no way to cancel in-progress IOs, so the best solution is to ignore
+signals at this point.
 
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-io.c |    5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+Index: linux-2.6.29-rc1-devel/drivers/md/dm-io.c
+===================================================================
+--- linux-2.6.29-rc1-devel.orig/drivers/md/dm-io.c	2009-01-22 03:46:09.000000000 +0100
++++ linux-2.6.29-rc1-devel/drivers/md/dm-io.c	2009-01-22 03:46:50.000000000 +0100
+@@ -368,16 +368,13 @@ static int sync_io(struct dm_io_client *
+ 	while (1) {
+ 		set_current_state(TASK_UNINTERRUPTIBLE);
+ 
+-		if (!atomic_read(&io.count) || signal_pending(current))
++		if (!atomic_read(&io.count))
+ 			break;
+ 
+ 		io_schedule();
+ 	}
+ 	set_current_state(TASK_RUNNING);
+ 
+-	if (atomic_read(&io.count))
+-		return -EINTR;
+-
+ 	if (error_bits)
+ 		*error_bits = io.error_bits;
+ 
