@@ -1,18 +1,14 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1/2] dm-ioband: I/O bandwidth controller
-	v1.10.0: Source code and patch
-Date: Wed, 21 Jan 2009 17:18:17 +0000
-Message-ID: <20090121171817.GP9859@agk.fab.redhat.com>
-References: <20090120.141022.193708059.ryov@valinux.co.jp>
-	<20090120.141114.226778416.ryov@valinux.co.jp>
-	<20090120145208.GE9859@agk.fab.redhat.com>
-	<20090121.220356.39155811.ryov@valinux.co.jp>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: qla2xxx 0000:03:0c.0: Firmware image unavailable
+Date: Wed, 21 Jan 2009 17:00:09 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45CEAB48E@cosmail01.lsi.com>
+References: <1225944321.14830.1109.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090121.220356.39155811.ryov@valinux.co.jp>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,17 +18,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dm-devel@redhat.com
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-I'm asking whether or not restructuring that little bit of code would improve
-clarity, or whether it would become more convoluted.
+Hi All,
+Have you guys seen this following error?=20
 
-Last time we had this, changing the functions so locks were acquired then
-released actually improved clarity - I'm asking if the same is true here
-or not.
+Jan 21 16:30:44 txmpp2 kernel: qla2xxx 0000:03:0c.0: Firmware image unava=
+ilable.=20
+Jan 21 16:30:44 txmpp2 kernel: qla2xxx 0000:03:0c.0: Firmware images can =
+be retrieved from: ftp://ftp.qlogic.com/outgoing/linux/firmware/.
 
-Alasdair
--- 
-agk@redhat.com
+After this error, qlogic driver fails to detect the LUNs attached.=20
+
+I am running 2.6.29-rc2 kernel on x86_64 machine.
+
+I tried couple of things without any success. I downloaded all the qlogic=
+ firmwares available and kept it in /lib/firmware. Tried rebuilding the k=
+ernel. Did not help. Thanks in advance.=20
+
+
+Thanks
+Babu Moger=20
