@@ -1,48 +1,96 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools multipath.conf.annotated
-Date: 23 Jan 2009 00:27:44 -0000
-Message-ID: <20090123002744.25439.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: "Sudhakar Pannerselvam" <sudhakarp@inmage.net>
+Subject: RE: [dm-devel] RE: qla2xxx 0000:03:0c.0: Firmware image unavailable
+Date: Thu, 22 Jan 2009 22:22:48 -0800
+Message-ID: <D4B83214B57CAC4499F1114D069E451A01A7D765@bunker.inside.abhaisystems.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF45CEAB8A3@cosmail01.lsi.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-class: urn:content-classes:message
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF45CEAB8A3@cosmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Moger, Babu" <Babu.Moger@lsi.com>, device-mapper development <dm-devel@redhat.com>
+Cc: linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2009-01-23 00:27:43
+As James mentioned earlier, this is a distribution issue. I had seen
+this issue with redhat. If you observe redhat distro qlogic drivers,
+they compile firmware files along with the driver and hence they
+wouldn't observe this issue when they load through initrd as there is no
+firmware loading procedure through hotplug interface, whereas if you
+compile qlogic driver by hand without inbuilt firmware files and using
+distro's like redhat, you would encounter this issue. This has to be
+addressed in nash hotplug code. 
 
-Modified files:
-	.              : multipath.conf.annotated 
+One workaround that I could think of, as I mentioned above this is an
+issue with nash which is active only when you load qlogic through initrd
+mechanism. Check if you really need to compile your qlogic driver as
+part of initrd image and recreate initrd image without qlogic module.
+Later you could load the qlogic module(again using hotplug mechanism)
+when kernel comes alive.
 
-Log message:
-	Fix for bz #461122. Just a small documentation cleanup.
+Regards
+Sudhakar
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipath.conf.annotated.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.16.2.8&r2=1.16.2.9
-
---- multipath-tools/multipath.conf.annotated	2009/01/17 00:46:51	1.16.2.8
-+++ multipath-tools/multipath.conf.annotated	2009/01/23 00:27:43	1.16.2.9
-@@ -236,7 +236,12 @@
- #		#
- #		# name    : alias
- #		# scope   : multipath
--#		# desc    : symbolic name for the multipath
-+#		# desc    : symbolic name for the multipath. If you
-+#		#           are using user_friendly_name, do not set
-+#		#           the alias to mpath<n>.  This may conflict
-+#		#           with a automatically assigned
-+#		#           user_friendly_name, and give you incorrect
-+#		#           device nodes.
- #		#
- #		alias			yellow
- #
+> -----Original Message-----
+> From: linux-scsi-owner@vger.kernel.org 
+> [mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of Moger, Babu
+> Sent: Friday, January 23, 2009 5:46 AM
+> To: device-mapper development
+> Cc: linux-scsi@vger.kernel.org
+> Subject: RE: [dm-devel] RE: qla2xxx 0000:03:0c.0: Firmware 
+> image unavailable
+> 
+> 
+> Yes, firmware images are in the initrd. I have verified that. 
+> 
+> Thanks
+> Babu Moger 
+> 
+> -----Original Message-----
+> From: dm-devel-bounces@redhat.com 
+> [mailto:dm-devel-bounces@redhat.com] On Behalf Of Dave Holland
+> Sent: Thursday, January 22, 2009 10:46 AM
+> To: device-mapper development
+> Cc: linux-scsi@vger.kernel.org
+> Subject: Re: [dm-devel] RE: qla2xxx 0000:03:0c.0: Firmware 
+> image unavailable
+> 
+> On Thu, Jan 22, 2009 at 08:20:48AM -0700, Moger, Babu wrote:
+> > You are right. Looks like qlogic driver loads even before 
+> udev hotplug 
+> > is functional.  Driver loads successfully when I re-load the driver 
+> > after the system in up.  Is there any solution or 
+> work-around for this 
+> > problem?
+> 
+> So the problem only happens at boot time? Are you using an 
+> initrd, and if so, have you got the firmware images in the 
+> initrd image?
+> (mkinitramfs, update-initramfs, etc)
+> 
+> Dave
+> --
+> ** Dave Holland ** Systems Support -- Infrastructure Management **
+> ** 01223 496923 ** The Sanger Institute, Hinxton, Cambridge, 
+> UK ** "Your bumper is my crumple zone."
+> 
+> 
+> -- 
+>  The Wellcome Trust Sanger Institute is operated by Genome Research 
+>  Limited, a charity registered in England with number 1021457 and a 
+>  company registered in England with number 2742969, whose registered 
+>  office is 215 Euston Road, London, NW1 2BE. 
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+> --
+> To unsubscribe from this list: send the line "unsubscribe 
+> linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
