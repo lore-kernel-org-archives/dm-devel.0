@@ -1,78 +1,59 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/libcheckers tur.c
-Date: 22 Jan 2009 22:20:19 -0000
-Message-ID: <20090122222019.11216.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: [dm-devel] RE: qla2xxx 0000:03:0c.0: Firmware image unavailable
+Date: Thu, 22 Jan 2009 17:15:36 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF45CEAB8A3@cosmail01.lsi.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF45CEAB550@cosmail01.lsi.com>
+	<D4B83214B57CAC4499F1114D069E451A01A7D6FA@bunker.inside.abhaisystems.com>
+	<E463DF2B2E584B4A82673F53D62C2EF45CEAB586@cosmail01.lsi.com>
+ <20090122164616.GF19147@sanger.ac.uk>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <20090122164616.GF19147@sanger.ac.uk>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL4_FC5
-Changes by:	bmarzins@sourceware.org	2009-01-22 22:20:18
 
-Modified files:
-	libcheckers    : tur.c 
+Yes, firmware images are in the initrd. I have verified that. 
 
-Log message:
-	Fix for bz #449886. Just backporting the tur retry code to RHEL4.  This fix is
-	already in RHEL5 and upstream.
+Thanks
+Babu Moger 
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/tur.c.diff?cvsroot=dm&only_with_tag=RHEL4_FC5&r1=1.2&r2=1.2.2.1
+-----Original Message-----
+From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On Behalf Of Dave Holland
+Sent: Thursday, January 22, 2009 10:46 AM
+To: device-mapper development
+Cc: linux-scsi@vger.kernel.org
+Subject: Re: [dm-devel] RE: qla2xxx 0000:03:0c.0: Firmware image unavailable
 
---- multipath-tools/libcheckers/tur.c	2005/11/16 20:24:57	1.2
-+++ multipath-tools/libcheckers/tur.c	2009/01/22 22:20:18	1.2.2.1
-@@ -36,6 +36,7 @@
-         struct sg_io_hdr io_hdr;
-         unsigned char sense_buffer[32];
- 	struct tur_checker_context * ctxt = NULL;
-+	int retry_tur = 5;
- 	int ret;
- 
- 	/*
-@@ -71,6 +72,7 @@
- 		goto out;
- 	}
- 	
-+retry:
-         memset(&io_hdr, 0, sizeof (struct sg_io_hdr));
-         io_hdr.interface_id = 'S';
-         io_hdr.cmd_len = sizeof (turCmdBlk);
-@@ -86,6 +88,26 @@
- 		goto out;
-         }
-         if (io_hdr.info & SG_INFO_OK_MASK) {
-+		int key = 0, asc, ascq;
-+
-+		if (io_hdr.sb_len_wr > 3) {
-+			if (io_hdr.sbp[0] == 0x72 || io_hdr.sbp[0] == 0x73) {
-+				key = io_hdr.sbp[1] & 0x0f;
-+				asc = io_hdr.sbp[2];
-+				ascq = io_hdr.sbp[3];
-+			} else if (io_hdr.sb_len_wr > 13 &&
-+				   ((io_hdr.sbp[0] & 0x7f) == 0x70 ||
-+				    (io_hdr.sbp[0] & 0x7f) == 0x71)) {
-+				key = io_hdr.sbp[2] & 0x0f;
-+				asc = io_hdr.sbp[12];
-+				ascq = io_hdr.sbp[13];
-+			}
-+		}
-+		if (key == 0x6) {
-+			/* Unit Attention, retry */
-+			if (--retry_tur)
-+				goto retry;
-+		}
- 		MSG(MSG_TUR_DOWN);
-                 ret = PATH_DOWN;
- 		goto out;
+On Thu, Jan 22, 2009 at 08:20:48AM -0700, Moger, Babu wrote:
+> You are right. Looks like qlogic driver loads even before udev hotplug
+> is functional.  Driver loads successfully when I re-load the driver
+> after the system in up.  Is there any solution or work-around for this
+> problem?
+
+So the problem only happens at boot time? Are you using an initrd, and
+if so, have you got the firmware images in the initrd image?
+(mkinitramfs, update-initramfs, etc)
+
+Dave
+-- 
+** Dave Holland ** Systems Support -- Infrastructure Management **
+** 01223 496923 ** The Sanger Institute, Hinxton, Cambridge, UK **
+"Your bumper is my crumple zone."
+
+
+-- 
+ The Wellcome Trust Sanger Institute is operated by Genome Research 
+ Limited, a charity registered in England with number 1021457 and a 
+ company registered in England with number 2742969, whose registered 
+ office is 215 Euston Road, London, NW1 2BE. 
+
+--
+dm-devel mailing list
+dm-devel@redhat.com
+https://www.redhat.com/mailman/listinfo/dm-devel
