@@ -1,15 +1,14 @@
-From: Mike Snitzer <snitzer@gmail.com>
-Subject: Re: RE: qla2xxx 0000:03:0c.0: Firmware image unavailable
-Date: Sat, 24 Jan 2009 23:22:53 -0500
-Message-ID: <170fa0d20901242022s7efedff4p4654811a1c86af70@mail.gmail.com>
-References: <D4B83214B57CAC4499F1114D069E451A01A7D765@bunker.inside.abhaisystems.com>
-	<1232723057.3250.21.camel@localhost.localdomain>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: [PATCH]scsi_dh_rdac: Retry for Quiescence in Progress in
+ rdac device handler
+Date: Mon, 26 Jan 2009 21:29:37 +0530
+Message-ID: <0D1E8821739E724A86F4D16902CE275C13FF9AFFD6@inbmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1232723057.3250.21.camel@localhost.localdomain>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +18,38 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James.Bottomley@hansenpartnership.com
-Cc: device-mapper development <dm-devel@redhat.com>, Sudhakar Pannerselvam <sudhakarp@inmage.net>, linux-scsi@vger.kernel.org, "Moger, Babu" <Babu.Moger@lsi.com>
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Jan 23, 2009 at 10:04 AM, James Bottomley
-<James.Bottomley@hansenpartnership.com> wrote:
-> On Thu, 2009-01-22 at 22:22 -0800, Sudhakar Pannerselvam wrote:
->> As James mentioned earlier, this is a distribution issue. I had seen
->> this issue with redhat. If you observe redhat distro qlogic drivers,
->> they compile firmware files along with the driver and hence they
->> wouldn't observe this issue when they load through initrd as there is no
->> firmware loading procedure through hotplug interface, whereas if you
->> compile qlogic driver by hand without inbuilt firmware files and using
->> distro's like redhat, you would encounter this issue. This has to be
->> addressed in nash hotplug code.
->
-> OK, there is one little wrinkle with Red Hat:  nash is a sort of all in
-> one process and it keeps going wrong.  I've opened a few bugs with red
-> hat about nash over the years with hotplug issues, which this is, but
-> they always ignore them and then close them when the distro goes end of
-> life.
+During device discovery read capacity fails with 0x068b02 and sets the de=
+vice size to 0. As a reason any I/O submitted to this path gets killed at=
+ sd_prep_fn with BLKPREP_KILL. This patch is to retry for 0x068b02. Pleas=
+e apply.
 
-FYI, RHEL5 had this specific nash issue; but RedHat fixed it, see:
-https://bugzilla.redhat.com/show_bug.cgi?id=235277
+From: Vijay Chauhan<vijay.chauhan@lsi.com>
 
-> These problems should be going away when Dave Jones finally kills off
-> nash in his initrd/boot system rewrite.
+This patch adds retry for Quiescence in Progress in rdac device handler.
 
-Cool, sounds like it will be a nice improvement.
+Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
 
-Mike
+---
+--- linux-2.6.29-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig    2=
+009-01-26 20:46:05.000000000 +0530
++++ linux-2.6.29-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c 2009-01-2=
+6 20:47:34.000000000 +0530
+@@ -579,6 +579,11 @@ static int rdac_check_sense(struct scsi_
+                         * Power On, Reset, or Bus Device Reset, just ret=
+ry.
+                         */
+                        return ADD_TO_MLQUEUE;
++               if (sense_hdr->asc =3D=3D 0x8b && sense_hdr->ascq =3D=3D =
+0x02)
++                       /*
++                        * Quiescence in progress , just retry.
++                        */
++                       return ADD_TO_MLQUEUE;
+                break;
+        }
+        /* success just means we do not care what scsi-ml does */
+--
