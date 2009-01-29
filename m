@@ -1,17 +1,11 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/8] dm: request-based dm-multipath
-Date: Thu, 29 Jan 2009 14:32:21 +0000
-Message-ID: <20090129143221.GA1935@agk.fab.redhat.com>
-References: <20081003.110825.74754936.k-ueda@ct.jp.nec.com>
-	<20090128154019.GB23158@agk.fab.redhat.com>
-	<49815863.8040806@ct.jp.nec.com>
-	<20090129104147.GB9870@pentland.suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCHES] new barriers - 2
+Date: Thu, 29 Jan 2009 09:43:14 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0901290935290.27047@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090129104147.GB9870@pentland.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,15 +15,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, Jan 29, 2009 at 11:41:47AM +0100, Hannes Reinecke wrote:
-> Yes, I've noticed that. Problem is this:
+Hi
 
-Thanks - I've applied those two fixes.
+Here I announce 2nd version my new barrier support patches:
+http://people.redhat.com/mpatocka/patches/kernel/barriers/
 
-Alasdair
--- 
-agk@redhat.com
+They are against 2.6.29-rc3.
+
+The most important enhancement is that with these patches, device mapper 
+is able to send barrier requests to lower devices.
+
+So it should be safe to enable write cache with hdparm -W 1 command on 
+disks used in lvm and get enhanced performance because of write caching.
+
+(prior to this patch, if you enabled write cache, you'd get misordered 
+writes if you used journaling filesystems, because the barriers wouldn't 
+get through to the real devices).
+
+The barriers should work on linear volumes, mirrors, snapshots and 
+multipath volumes. On mirrors and multipath, cache flush errors are 
+ignored (this may be further improved).
+
+Mikulas
