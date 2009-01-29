@@ -1,32 +1,37 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
-Subject: Re: multipath.conf and
-	polling_interval	option	seems	misleading
-Date: Thu, 29 Jan 2009 16:44:46 +0000
-Message-ID: <4981DCFE.2030405@redhat.com>
-References: <4970AFB8.6090906@redhat.com>	<1232122255.29644.23.camel@chandra-ubuntu>	<4970B41C.1000509@redhat.com>
-	<4981D772.9090704@redhat.com>
-Reply-To: bmr@redhat.com, device-mapper development <dm-devel@redhat.com>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: [dm-devel] [RFC PATCH 0/4] dm-mpath: dynamic load balancers
+Date: Thu, 29 Jan 2009 12:12:17 -0600
+Message-ID: <4981F181.2090905@cs.wisc.edu>
+References: <20080912.105038.102581623.k-ueda@ct.jp.nec.com>	<20090128153704.GA23158@agk.fab.redhat.com> <498157D1.2010105@ct.jp.nec.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4981D772.9090704@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <498157D1.2010105@ct.jp.nec.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>, stefan.bader@canonical.com, linux-scsi@vger.kernel.org
 List-Id: dm-devel.ids
 
-shane bradley wrote:
-> Patch attached for updated wording of documentation on polling_interval.
+Kiyoshi Ueda wrote:
+> Hi Alasdair,
+> 
+> On 01/29/2009 12:37 AM +0900, Alasdair G Kergon wrote:
+>> On Fri, Sep 12, 2008 at 10:50:38AM -0400, Kiyoshi Ueda wrote:
+>>> The following patches add the following 2 dynamic load balancers
+>>> to request-based dm-multipath:
+>>>   o queue-length oriented dynamic load balancer, dm-queue-length.
+>>>   o service-time oriented dynamic load balancer, dm-service-time.
+>>  
+>> Could we have separate Kconfig options to select them?
+> 
+> Sure.
+> I posted the new one rebased on top of 2.6.29-rc2:
+>   https://www.redhat.com/archives/dm-devel/2009-January/msg00183.html
+>   https://www.redhat.com/archives/dm-devel/2009-January/msg00186.html
+> 
 
-Looks sane to me.
-
-Cheers,
-Bryn.
+For the Kconfig help, is there something we could add to help people 
+know when to choose one or the other? Sort of like how the block layer 
+io scheduler (block/Kconfig.iosched) says one might be helpful for 
+desktops and one is useful for data bses?
