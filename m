@@ -1,15 +1,15 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [RFC PATCH 0/4] dm-mpath: dynamic load balancers
-Date: Thu, 29 Jan 2009 16:16:33 +0900
-Message-ID: <498157D1.2010105@ct.jp.nec.com>
-References: <20080912.105038.102581623.k-ueda@ct.jp.nec.com>
-	<20090128153704.GA23158@agk.fab.redhat.com>
+Subject: Re: [PATCH 0/8] dm: request-based dm-multipath
+Date: Thu, 29 Jan 2009 16:18:59 +0900
+Message-ID: <49815863.8040806@ct.jp.nec.com>
+References: <20081003.110825.74754936.k-ueda@ct.jp.nec.com>
+	<20090128154019.GB23158@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090128153704.GA23158@agk.fab.redhat.com>
+In-Reply-To: <20090128154019.GB23158@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,24 +20,27 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Alasdair Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com, stefan.bader@canonical.com, linux-scsi@vger.kernel.org
+Cc: dm-devel@redhat.com, mbroz@redhat.com
 List-Id: dm-devel.ids
 
 Hi Alasdair,
 
-On 01/29/2009 12:37 AM +0900, Alasdair G Kergon wrote:
-> On Fri, Sep 12, 2008 at 10:50:38AM -0400, Kiyoshi Ueda wrote:
->> The following patches add the following 2 dynamic load balancers
->> to request-based dm-multipath:
->>   o queue-length oriented dynamic load balancer, dm-queue-length.
->>   o service-time oriented dynamic load balancer, dm-service-time.
->  
-> Could we have separate Kconfig options to select them?
+On 01/29/2009 12:40 AM +0900, Alasdair G Kergon wrote:
+> On Fri, Oct 03, 2008 at 11:08:25AM -0400, Kiyoshi Ueda wrote:
+>> This patch-set is the updated version of request-based dm-multipath.
+>> The changes from the previous version (*) are to follow up the change
+>> of the interface to export lld's busy state (PATCH 5).
+> 
+> I've fixed them up to compile again, but haven't thoroughly checked for
+> side-effects.
 
-Sure.
-I posted the new one rebased on top of 2.6.29-rc2:
-  https://www.redhat.com/archives/dm-devel/2009-January/msg00183.html
-  https://www.redhat.com/archives/dm-devel/2009-January/msg00186.html
+I found some problems below in my patches and now considering
+how to fix them:
+  o Unnecessary EIO is returned to application if it submits
+    a bio during table swapping.
+  o kernel panic occurs by frequent table swapping during heavy I/Os.
+ 
+I'll post the fixed version after my vacation.
 
 Thanks,
 Kiyoshi Ueda
