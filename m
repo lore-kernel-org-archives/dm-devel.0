@@ -1,51 +1,37 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Implementation of dm-ioband as a dm-driver (Re: [dm-devel] [PATCH
- 1/2] dm-ioband: I/O bandwidth controller v1.10.0: Source code and patch)
-Date: Thu, 29 Jan 2009 12:41:33 +0900 (JST)
-Message-ID: <20090129.124133.179945157.ryov@valinux.co.jp>
-References: <20090122161218.GA28795@redhat.com>
-	<20090123.191404.39168431.ryov@valinux.co.jp>
-	<20090126162951.GI31802@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: [PATCH 0/0] dm-mpath: queue-length oriented dynamic load
+	balancer
+Date: Thu, 29 Jan 2009 15:59:10 +0900
+Message-ID: <498153BE.60104@ct.jp.nec.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758594AbZA2Dlr@vger.kernel.org>
-In-Reply-To: <20090126162951.GI31802@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, fernando@intellilink.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, arozansk@redhat.com, jmoyer@redhat.com, riel@redhat.com, peterz@infradead.org, menage@google.com, balbir@linux.vnet.ibm.com, dhaval@linux.vnet.ibm.com, chrisw@redhat.com
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, stefan.bader@canonical.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
+Hi,
 
-This mail is about implement IO controller as a dm-driver.
+The following patches add a queue-length oriented dynamic load
+balancer, dm-queue-length, which selects a path having the least
+number of in-flight I/Os.
 
-> In this case first you are forcing some functionalilty to go in a kernel
-> module and then coming up with tools for configuration. I never understood
-> that why don't you let the controller be inside the kernel, let it
-> directly interact with cgroup subsystem and work instead of first taking
-> the functionality out of kernel in a module and then justifying the case
-> that now we need new ways of configuring that module because cgroup
-> infrastructure is not sufficient.  
+This patch-set can be applied on top of 2.6.29-rc2.
 
-It is possible the algorithm of dm-ioband can be directly implemented
-in the kernel. I've been investigating how to do it.
-
-> > > - Need of a dm device for every device we want to control
-> > > 
-> > > 	- This requirement looks odd. It forces everybody to use dm-tools
-> > > 	  and if there are lots of disks in the system, configuation is
-> > > 	  pain.
-> > 
-> > I don't think it's so pain. I think you are already using LVM devices on
-> > your boxes. Setting up dm-ioband is the same as that for LVM. And some
-> > scripts or something similar will help you set up them.
-> 
-> Not everybody uses LVM. Balbir had asked once, if there are thousands of 
-> disks in the system, does that mean I need to create this dm-ioband device
-> for all the disks?
-
-I think it could be easily done by a small script of several lines.
+Summary of the patch-set:
+  1/2: dm-mpath: add a path-selector interface
+  2/2: dm-mpath: add queue-length oriented dynamic load balancer
 
 Thanks,
-Ryo Tsuruta
+Kiyoshi Ueda
