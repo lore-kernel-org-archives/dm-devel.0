@@ -1,35 +1,101 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 0/8] dm: request-based dm-multipath
-Date: Wed, 28 Jan 2009 15:40:19 +0000
-Message-ID: <20090128154019.GB23158@agk.fab.redhat.com>
-References: <20081003.110825.74754936.k-ueda@ct.jp.nec.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: 2-Level IO scheduling (Re: [dm-devel] [PATCH 1/2] dm-ioband: I/O
+ bandwidth controller v1.10.0: Source code and patch)
+Date: Thu, 29 Jan 2009 12:36:44 +0900 (JST)
+Message-ID: <20090129.123644.28802208.ryov@valinux.co.jp>
+References: <20090122161218.GA28795@redhat.com>
+	<20090123.191404.39168431.ryov@valinux.co.jp>
+	<20090126162951.GI31802@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20081003.110825.74754936.k-ueda@ct.jp.nec.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Cc: j-nomura@ce.jp.nec.com, dm-devel@redhat.com, mbroz@redhat.com
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758072AbZA2Dg5@vger.kernel.org>
+In-Reply-To: <20090126162951.GI31802@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: vgoyal@redhat.com
+Cc: dm-devel@redhat.com, agk@redhat.com, linux-kernel@vger.kernel.org, containers@lists.linux-foundation.org, nauman@google.com, dpshah@google.com, lizf@cn.fujitsu.com, mikew@google.com, fchecconi@gmail.com, paolo.valente@unimore.it, jens.axboe@oracle.com, fernando@intellilink.co.jp, s-uchida@ap.jp.nec.com, taka@valinux.co.jp, guijianfeng@cn.fujitsu.com, arozansk@redhat.com, jmoyer@redhat.com, riel@redhat.com, peterz@infradead.org, menage@google.com, balbir@linux.vnet.ibm.com, dhaval@linux.vnet.ibm.com, chrisw@redhat.com
 List-Id: dm-devel.ids
 
-On Fri, Oct 03, 2008 at 11:08:25AM -0400, Kiyoshi Ueda wrote:
-> This patch-set is the updated version of request-based dm-multipath.
-> The changes from the previous version (*) are to follow up the change
-> of the interface to export lld's busy state (PATCH 5).
+Hi Vivek,
 
-I've fixed them up to compile again, but haven't thoroughly checked for
-side-effects.
+I split this mail thread into three topics:
+  o 2-Level IO scheduling
+  o Hierarchical grouping facility for IO controller
+  o Implement IO controller as a dm-driver
 
-Alasdair
--- 
-agk@redhat.com
+This mail is about 2-Level IO scheduling.
+
+> Just because device mapper framework allows one to implement IO controller
+> in a separate module, we should not implement it there. It will be
+> difficult to take care of issues like, configuration, breaking underlying IO
+> scheduler's assumptions, capability to treat tasks and groups at same level
+> etc.
+
+If you are satisfied with low-accuracy bandwidth control by an IO
+scheduler, you don't need to use dm-ioband. If you want to use
+dm-ioband with an IO scheduler, dm-ioband can work with any type of IO
+scheduler, of course dm-ioband can work with your own IO scheduler
+which you are developing.
+
+> > > - If there is one task of io priority 0 in a cgroup and rest of the tasks
+> > >   are of io prio 7. All the tasks belong to best effort class. If tasks of
+> > >   lower priority (7) do lot of IO, then due to buffering there is a chance
+> > >   that IO from lower prio tasks is seen by CFQ first and io from higher prio
+> > >   task is not seen by cfq for quite some time hence that task not getting it
+> > >   fair share with in the cgroup. Similar situation can arise with RT tasks
+> > >   also.
+> > 
+> > Whether using dm-ioband or not, if the tasks of IO priority 7 do lot
+> > of IO, then the device queue is going to be full and tasks which tries
+> > to issue IOs are blocked until the queue get a slot. The IOs are
+> > backlogged even if they are issued from the task of IO priority 0.
+> > I don't understand why you think it's the biggest issue. The same
+> > thing is going to happen without dm-ioband. 
+> > 
+> 
+> True that even limited availability of request descriptors can be a
+> bottleneck and can lead to same kind of issues but my contention is
+> that you are aggravating the problem. Putting a 2nd layer can break IO
+> scheduler's assumption even before underlying request queue is full.
+
+I don't think so. Dm-ioband doesn't break IO scheduler's assumptions.
+In CFQ's case, the priority order is not changed within a cgroup.
+
+> So second level solution on top will increase the frequency of such
+> incidents where a lower priority task can run away with more job done than
+> high priority task because there are no separate queues for different
+> priority tasks and release of buffered bio is FIFO.
+> 
+> Secondly what happens to tasks of RT class? dm-ioband does not have any
+> notion of handling the RT cgroup or RT tasks.
+
+It's not an issue, it's a talk about how to determine a policy.
+I think giving priority to cgroup policy rather than I/O scheduler
+policy is more flexible.
+
+> Thirdly, doing any kind of resource control at higher level takes away the
+> capability to treat task and groups at same level. I have had this
+> discussion in other offline thread also where you are copied. I think
+> it is a good idea to treat tasks and groups at same level where possible
+> (depends if IO scheduler creates separate queues for tasks or not, cfq
+> does.) 
+> 
+> > If I were you, I create two cgroups and let tasks of lower priority
+> > belong to one cgroup and tasks of higher priority belong to another,
+> > and give higher bandwidth to the cgroup to which the higher priority
+> > tasks belong. What do you think about this way?
+> 
+> I think this is not practical. What we are talking is that task
+> priority does not have any meaning. If we want service difference between
+> two tasks, we need to pack them in separate cgroup otherwise we can't
+> gurantee things. If we need to pack every task in separate cgroup then
+> why to even have the notion of task priority.  
+
+It is possible to modify dm-ioband to cooperate with CFQ, but I'm not
+sure it's really meaningful. What do you do when a task of RT class
+issues a lot of I/O? Do you always give priority to the I/Os from the
+task of RT class despite of the assigned bandwidth? Which one do you
+give priority bandwidth or RT class?
+
+Thanks,
+Ryo Tsuruta
