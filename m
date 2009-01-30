@@ -1,37 +1,40 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [dm-devel] [RFC PATCH 0/4] dm-mpath: dynamic load balancers
-Date: Thu, 29 Jan 2009 12:12:17 -0600
-Message-ID: <4981F181.2090905@cs.wisc.edu>
-References: <20080912.105038.102581623.k-ueda@ct.jp.nec.com>	<20090128153704.GA23158@agk.fab.redhat.com> <498157D1.2010105@ct.jp.nec.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] dm-io: don't allocate vector larger than
+	BIO_MAX_PAGES
+Date: Fri, 30 Jan 2009 00:28:09 +0000
+Message-ID: <20090130002809.GE1935@agk.fab.redhat.com>
+References: <Pine.LNX.4.64.0901212227100.3027@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <498157D1.2010105@ct.jp.nec.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, stefan.bader@canonical.com, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0901212227100.3027@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Kiyoshi Ueda wrote:
-> Hi Alasdair,
-> 
-> On 01/29/2009 12:37 AM +0900, Alasdair G Kergon wrote:
->> On Fri, Sep 12, 2008 at 10:50:38AM -0400, Kiyoshi Ueda wrote:
->>> The following patches add the following 2 dynamic load balancers
->>> to request-based dm-multipath:
->>>   o queue-length oriented dynamic load balancer, dm-queue-length.
->>>   o service-time oriented dynamic load balancer, dm-service-time.
->>  
->> Could we have separate Kconfig options to select them?
-> 
-> Sure.
-> I posted the new one rebased on top of 2.6.29-rc2:
->   https://www.redhat.com/archives/dm-devel/2009-January/msg00183.html
->   https://www.redhat.com/archives/dm-devel/2009-January/msg00186.html
-> 
+Pushing to linux-next.
 
-For the Kconfig help, is there something we could add to help people 
-know when to choose one or the other? Sort of like how the block layer 
-io scheduler (block/Kconfig.iosched) says one might be helpful for 
-desktops and one is useful for data bses?
+On Wed, Jan 21, 2009 at 10:32:20PM -0500, Mikulas Patocka wrote:
+> Very likely this was the reason for bug
+> https://bugzilla.redhat.com/show_bug.cgi?id=173153
+
+So with this and the other fixes there've been, do we still have
+any arch-dependent restrictions on chunk_size?
+
+Or can a snapshot created on one arch be used successfully on any other
+now?
+ 
+Alasdair
+-- 
+agk@redhat.com
