@@ -1,15 +1,15 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [RFC PATCH 0/4] dm-mpath: dynamic load balancers
-Date: Fri, 30 Jan 2009 17:03:08 +0900
-Message-ID: <4982B43C.7080203@ct.jp.nec.com>
-References: <20080912.105038.102581623.k-ueda@ct.jp.nec.com>	<20090128153704.GA23158@agk.fab.redhat.com>	<498157D1.2010105@ct.jp.nec.com>
-	<4981F181.2090905@cs.wisc.edu>
+Subject: Re: [PATCH 0/8] dm: request-based dm-multipath
+Date: Fri, 30 Jan 2009 17:05:26 +0900
+Message-ID: <4982B4C6.8050904@ct.jp.nec.com>
+References: <20081003.110825.74754936.k-ueda@ct.jp.nec.com>	<20090128154019.GB23158@agk.fab.redhat.com>	<49815863.8040806@ct.jp.nec.com>
+	<20090129104147.GB9870@pentland.suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4981F181.2090905@cs.wisc.edu>
+In-Reply-To: <20090129104147.GB9870@pentland.suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,41 +20,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, stefan.bader@canonical.com, linux-scsi@vger.kernel.org
+Cc: Alasdair Kergon <agk@redhat.com>, mbroz@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hi Hannes,
 
-Thank you for the comment.
+Thank you for the comments and patches.
+See my comments below.
 
-On 01/30/2009 03:12 AM +0900, Mike Christie wrote:
-> Kiyoshi Ueda wrote:
+On 01/29/2009 07:41 PM +0900, Hannes Reinecke wrote:
+> On Thu, Jan 29, 2009 at 04:18:59PM +0900, Kiyoshi Ueda wrote:
 >> Hi Alasdair,
 >>
->> On 01/29/2009 12:37 AM +0900, Alasdair G Kergon wrote:
->>> On Fri, Sep 12, 2008 at 10:50:38AM -0400, Kiyoshi Ueda wrote:
->>>> The following patches add the following 2 dynamic load balancers
->>>> to request-based dm-multipath:
->>>>   o queue-length oriented dynamic load balancer, dm-queue-length.
->>>>   o service-time oriented dynamic load balancer, dm-service-time.
->>>  
->>> Could we have separate Kconfig options to select them?
->>
->> Sure.
->> I posted the new one rebased on top of 2.6.29-rc2:
->>   https://www.redhat.com/archives/dm-devel/2009-January/msg00183.html
->>   https://www.redhat.com/archives/dm-devel/2009-January/msg00186.html
->>
+>> On 01/29/2009 12:40 AM +0900, Alasdair G Kergon wrote:
+>>> On Fri, Oct 03, 2008 at 11:08:25AM -0400, Kiyoshi Ueda wrote:
+>>>> This patch-set is the updated version of request-based dm-multipath.
+>>>> The changes from the previous version (*) are to follow up the change
+>>>> of the interface to export lld's busy state (PATCH 5).
+>>> I've fixed them up to compile again, but haven't thoroughly checked for
+>>> side-effects.
+>> I found some problems below in my patches and now considering
+>> how to fix them:
+>>   o Unnecessary EIO is returned to application if it submits
+>>     a bio during table swapping.
+> Yes, I've noticed that. Problem is this:
 > 
-> For the Kconfig help, is there something we could add to help people
-> know when to choose one or the other? Sort of like how the block layer
-> io scheduler (block/Kconfig.iosched) says one might be helpful for
-> desktops and one is useful for data bses?
+> --- linux-2.6.27.orig/drivers/md/dm.c
+> +++ linux-2.6.27/drivers/md/dm.c
+> @@ -1304,7 +1304,11 @@ static int dm_make_request(struct reques
+>                 return 0;
+>         }
+>  
+> -       if (unlikely(!md->map)) {
+> +       /*
+> +        * Submitting to a stopped queue with no map is okay;
+> +        * might happen during reconfiguration.
+> +        */
+> +       if (unlikely(!md->map) && !blk_queue_stopped(q)) {
+>                 bio_endio(bio, -EIO);
+>                 return 0;
+>         }
+> 
+> The make_request callback should never return EIO if there's any
+> chance at all to get this request done.
+ 
+Exactly this part has a race condition with table swapping.
+Although you patch fixes the race condition, I think I need
+more careful consideration here.
+(e.g. Is it really OK to go bios through __make_request() with
+      old queue restrictions during table swapping?)
 
-That's a good idea, but I don't have much information about that now.
-To make such guide-line, we probably need lots of feedbacks from users.
-(e.g. That may also depend on HW, not only work-load.)
-So that is TODO in the future, I think.
+I'll work on this problem after my vacation.
+
+
+>>   o kernel panic occurs by frequent table swapping during heavy I/Os.
+>>  
+> That's probably fixed by this patch:
+> 
+> --- linux-2.6.27/drivers/md/dm.c.orig   2009-01-23 15:59:22.741461315 +0100
+> +++ linux-2.6.27/drivers/md/dm.c        2009-01-26 09:03:02.787605723 +0100
+> @@ -714,13 +714,14 @@ static void free_bio_clone(struct reques
+>         struct dm_rq_target_io *tio = clone->end_io_data;
+>         struct mapped_device *md = tio->md;
+>         struct bio *bio;
+> -       struct dm_clone_bio_info *info;
+>  
+>         while ((bio = clone->bio) != NULL) {
+>                 clone->bio = bio->bi_next;
+>  
+> -               info = bio->bi_private;
+> -               free_bio_info(md, info);
+> +               if (bio->bi_private) {
+> +                       struct dm_clone_bio_info *info = bio->bi_private;
+> +                       free_bio_info(md, info);
+> +               }
+>  
+>                 bio->bi_private = md->bs;
+>                 bio_put(bio);
+> 
+> The info field is not necessarily filled here, so we have to check for it
+> explicitly.
+> 
+> With these two patches request-based multipathing have survived all stress-tests
+> so far. Except on mainframe (zfcp), but that's more a driver-related thing.
+
+Hmm, it seems I'm hitting a different problem from the one you hit,
+because I still see my problem even with your patch.
+I need more investigation after my vacation.
 
 Thanks,
 Kiyoshi Ueda
