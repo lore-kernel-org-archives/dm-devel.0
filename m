@@ -1,15 +1,16 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [RFC PATCH 1/2] dm-mpath: interface change
-	for	preparation
-Date: Fri, 30 Jan 2009 17:06:21 +0900
-Message-ID: <4982B4FD.3070103@ct.jp.nec.com>
-References: <0D1E8821739E724A86F4D16902CE275C13FF9B0272@inbmail01.lsi.com>
+Subject: Re: Re: [PATCH 0/0] dm-mpath: queue-length oriented dynamic
+	load balancer
+Date: Fri, 30 Jan 2009 17:10:38 +0900
+Message-ID: <4982B5FE.5040807@ct.jp.nec.com>
+References: <498153BE.60104@ct.jp.nec.com>
+	<20090129140335.GA27390@agk-dp.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C13FF9B0272@inbmail01.lsi.com>
+In-Reply-To: <20090129140335.GA27390@agk-dp.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,34 +20,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, stefan.bader@canonical.com
 List-Id: dm-devel.ids
 
-Hi Vijay,
+Hi Alasdair,
 
-Thank you for the comment.
+Sorry for confusing you.
 
-On 01/30/2009 01:42 PM +0900, Chauhan, Vijay wrote:
-> Hi Kiyoshi/Alasdair,
+On 01/29/2009 11:03 PM +0900, Alasdair G Kergon wrote:
+> On Thu, Jan 29, 2009 at 03:59:10PM +0900, Kiyoshi Ueda wrote:
+>> This patch-set can be applied on top of 2.6.29-rc2.
 > 
-> Just a thought. As we are changing __choose_pgpath parameters
-> in this patch, will it be good to use BIO rather than nr_bytes
-> as parameter? Availability of BIO in loadbalancing interface can
-> provide more flexibility for coming up with new load balancing
-> in future.
+> It's not clear: are you reordering the dependencies now?
+> 
+> Previously there were three sets of patches taken in this order:
+>   1 change to request-based
+>   2 add queue length ps
+>   3 add service time ps
+> i.e. 2 and 3 depend on 1
+> 
+> Are you now changing that so that 2 and 3 could go upstream before 1?
 
-I understand that very much.
-But I'd like to keep independency of path-selector from the type
-of I/O structure as much as possible, since both bio-based targets
-and request-based targets may want to use the same path-selector
-in the future.  (e.g. multipath, which is requset-based,
-and mirror, which is bio-based.)
+I had sent those three sets in the order above since 1 enhances 2 and 3.
+But 2 and 3 don't functionally depend on 1 (although 1 and 3 have
+a few cosmetic dependencies), so we can reorder that as we want.
 
-So if we need only a few arguments, non-structured parameters
-would be good, I think.
-Do you have any idea what other parameters in BIO are useful for
-load balancing decision?
+2 and 3 are simpler patches than 1, and I found some problems in 1,
+so I think reordering might be a good idea if you are OK.
+As for 3, I still want to get feedback from others as it'll involve
+discussion about the optimal interface for load balancer.
 
 Thanks,
 Kiyoshi Ueda
