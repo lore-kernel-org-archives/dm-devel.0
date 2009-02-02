@@ -1,65 +1,89 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Senior device-mapper/LVM job vacancy at Red Hat
-Date: Mon, 2 Feb 2009 20:21:32 +0000
-Message-ID: <20090202202132.GC20668@agk.fab.redhat.com>
-Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [PATCH 12 of 12]:
+	dm-snapshot-new-ctr-table-format.patch
+Date: Tue, 3 Feb 2009 07:55:32 +0900
+Message-ID: <20090203075414U.fujita.tomonori@lab.ntt.co.jp>
+References: <1232482467.19993.48.camel@hydrogen.msp.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-lvm-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/linux-lvm>
-List-Post: <mailto:linux-lvm@redhat.com>
-List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
-	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
-Sender: linux-lvm-bounces@redhat.com
-Errors-To: linux-lvm-bounces@redhat.com
-To: dm-devel@redhat.com, dm-crypt@saout.de, linux-lvm@redhat.com, lvm-devel@redhat.com
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1232482467.19993.48.camel@hydrogen.msp.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-We're seeking to recruit another experienced linux developer to work on
-device-mapper and LVM.  Details below.
+On Tue, 20 Jan 2009 14:14:27 -0600
+Jonathan Brassow <jbrassow@redhat.com> wrote:
 
-Candidates should apply directly through the website within the next
-week or so:
-  https://redhat.ats.hrsmart.com/cgi-bin/a/highlightjob.cgi?jobid=4014
+> -	if (1 /* less change patch to patch */) {
+> +	/* Detect old-style table line with type as second arg. */
+> +	if (!isdigit(*argv[1])) {
+>  		if (argc < 3) {
+>  			ti->error = "Insufficient exception store arguments";
+>  			return -EINVAL;
+> @@ -605,10 +611,34 @@ static int create_exception_store(struct
+>  		return dm_exception_store_create(toupper(*argv[1]), ti, 2,
+>  						 tmp_argv, store);
+>  	}
+> +
+> +	if (sscanf(argv[1], "%u", &param_count) != 1) {
+> +		ti->error = "Invalid exception store argument count";
+> +		return -EINVAL;
+> +	}
+> +
+> +	*args_used = 2 + param_count;
+> +
+> +	if (argc < *args_used) {
+> +		ti->error = "Insufficient exception store arguments";
+> +		return -EINVAL;
+> +	}
+> +
+> +	return dm_exception_store_create(argv[0], ti, param_count,
+> +					 argv + 2, store);
+>  }
 
-Note that although it is listed under our main engineering office at
-Westford outside Boston, MA, this does not preclude the consideration
-of good candidates who would prefer to be based at other Red Hat offices
-worldwide (or to work from home).  If this would be the case, please
-mention it when applying.
+Seems that this gives me:
+
+drivers/md/dm-snap.c: In function 'create_exception_store':
+drivers/md/dm-snap.c:613: warning: passing argument 1 of 'dm_exception_store_create' makes pointer from integer without a cast
 
 
-  Join a team working to enhance and support Linux Device Mapper (DM)
-  and Logical Volume Manager (LVM). This includes the design of key
-  storage features such as software RAID, snapshot, multipath I/O, device
-  encryption, and on-line storage expansion and reconfiguration. Develop
-  these features as part of the the mainstream Linux community, then
-  deliver and support them through the Fedora project, and Red Hat
-  Enterprise Linux.
+BTW, how about adding something like 'compat_name' to struct
+dm_exception_store_type instead of registering two similar structures
+like the followings?
 
-  Excellent analysis, design, development, and debugging skills are
-  required. Includes both kernel and userspace work. Expert ability in
-  the C programming language is required. Proficiency with make, git, and
-  scripting languages is a plus. Experience with storage, I/O drivers,
-  file systems and related utilities is also an advantage.
+static struct dm_exception_store_type _persistent_type = {
+	.name = "persistent",
+	.module = THIS_MODULE,
+	.ctr = persistent_ctr,
+	.dtr = persistent_dtr,
+	.read_metadata = persistent_read_metadata,
+	.prepare_exception = persistent_prepare_exception,
+	.commit_exception = persistent_commit_exception,
+	.drop_snapshot = persistent_drop_snapshot,
+	.fraction_full = persistent_fraction_full,
+	.status = persistent_status,
+};
 
-  Able to integrate the requirements of a variety of users and
-  environments, from the installer and boot environment, through large
-  high availability, high performance, installations. Proven ability to
-  balance features and risk, depending on project constraints. Interested
-  in working as part of a distributed team, understanding others'
-  perspective, and striving to communicate effectively.
-
-Alasdair
--- 
-agk@redhat.com
-
-_______________________________________________
-linux-lvm mailing list
-linux-lvm@redhat.com
-https://www.redhat.com/mailman/listinfo/linux-lvm
-read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
+static struct dm_exception_store_type _persistent_compat_type = {
+	.name = "P",
+	.module = THIS_MODULE,
+	.ctr = persistent_ctr,
+	.dtr = persistent_dtr,
+	.read_metadata = persistent_read_metadata,
+	.prepare_exception = persistent_prepare_exception,
+	.commit_exception = persistent_commit_exception,
+	.drop_snapshot = persistent_drop_snapshot,
+	.fraction_full = persistent_fraction_full,
+	.status = persistent_status,
+};
