@@ -1,53 +1,65 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCHSET] block,scsi,libata: implement alt_size
-Date: Sun, 01 Feb 2009 13:14:48 +0900
-Message-ID: <498521B8.1020703@kernel.org>
-References: <1233456951-992-1-git-send-email-tj@kernel.org>
-	<49851507.5040905@garzik.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Senior device-mapper/LVM job vacancy at Red Hat
+Date: Mon, 2 Feb 2009 20:21:32 +0000
+Message-ID: <20090202202132.GC20668@agk.fab.redhat.com>
+Reply-To: LVM general discussion and development <linux-lvm@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49851507.5040905@garzik.org>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Jeff Garzik <jeff@garzik.org>
-Cc: linux-scsi@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, James.Bottomley@HansenPartnership.com, linux-ide@vger.kernel.org, dm-devel@redhat.com, Mauelshagen@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <linux-lvm-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/linux-lvm>
+List-Post: <mailto:linux-lvm@redhat.com>
+List-Help: <mailto:linux-lvm-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/linux-lvm>,
+	<mailto:linux-lvm-request@redhat.com?subject=subscribe>
+Sender: linux-lvm-bounces@redhat.com
+Errors-To: linux-lvm-bounces@redhat.com
+To: dm-devel@redhat.com, dm-crypt@saout.de, linux-lvm@redhat.com, lvm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello, Jeff.
+We're seeking to recruit another experienced linux developer to work on
+device-mapper and LVM.  Details below.
 
-Jeff Garzik wrote:
-> But the net result is that you are telling dmraid that it is OK to
-> proceed, even though part of the disk it wants is really missing.  That
-> seems unwise, because are you not basically proceeding with a known
-> corrupt dataset at that point?
+Candidates should apply directly through the website within the next
+week or so:
+  https://redhat.ats.hrsmart.com/cgi-bin/a/highlightjob.cgi?jobid=4014
 
-Can you elaborate a bit?  I don't really understand what you mean.  To
-clarify...
+Note that although it is listed under our main engineering office at
+Westford outside Boston, MA, this does not preclude the consideration
+of good candidates who would prefer to be based at other Red Hat offices
+worldwide (or to work from home).  If this would be the case, please
+mention it when applying.
 
-* What happens now.
 
-BIOS sets up HPA expecting the raid driver to look at the metadata
-which is at fixed offset from the end of the HPA locked size.  dmraid
-doesn't know about it so looks at the wrong place.  Results can be
-failed assembly or corrupt assembly depending on what's actually on
-the disk.
+  Join a team working to enhance and support Linux Device Mapper (DM)
+  and Logical Volume Manager (LVM). This includes the design of key
+  storage features such as software RAID, snapshot, multipath I/O, device
+  encryption, and on-line storage expansion and reconfiguration. Develop
+  these features as part of the the mainstream Linux community, then
+  deliver and support them through the Fedora project, and Red Hat
+  Enterprise Linux.
 
-* With the patches applied.
+  Excellent analysis, design, development, and debugging skills are
+  required. Includes both kernel and userspace work. Expert ability in
+  the C programming language is required. Proficiency with make, git, and
+  scripting languages is a plus. Experience with storage, I/O drivers,
+  file systems and related utilities is also an advantage.
 
-BIOS does the same but libata tells dmraid the BIOS size.  dmraid
-looks at the same offset as the BIOS and everything is well.
+  Able to integrate the requirements of a variety of users and
+  environments, from the installer and boot environment, through large
+  high availability, high performance, installations. Proven ability to
+  balance features and risk, depending on project constraints. Interested
+  in working as part of a distributed team, understanding others'
+  perspective, and striving to communicate effectively.
 
-Thanks.
-
+Alasdair
 -- 
-tejun
+agk@redhat.com
+
+_______________________________________________
+linux-lvm mailing list
+linux-lvm@redhat.com
+https://www.redhat.com/mailman/listinfo/linux-lvm
+read the LVM HOW-TO at http://tldp.org/HOWTO/LVM-HOWTO/
