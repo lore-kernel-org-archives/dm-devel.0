@@ -1,14 +1,11 @@
-From: Nikanth Karthikesan <knikanth@suse.de>
-Subject: [PATCH] Mark device-mapper as Supported in MAINTAINERS
-Date: Tue, 3 Feb 2009 10:05:41 +0530
-Message-ID: <200902031005.41788.knikanth@suse.de>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: shared snapshots
+Date: Tue, 3 Feb 2009 01:25:30 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902030118280.16888@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-  charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,27 +15,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+Hi
 
-Mark device-mapper as Supported in MAINTAINERS file.
+If you are going to put shared storage into your snapshots, look at this: 
+http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
 
-Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+--- this is my snapshot store with Fujita/Daniel's store as a loadable 
+module.
 
----
+So if you are going to do shared storage interface, you must accommodate 
+both of these implementations into it.
 
-diff --git a/MAINTAINERS b/MAINTAINERS
-index 474ec0c..cd73850 100644
---- a/MAINTAINERS
-+++ b/MAINTAINERS
-@@ -1387,7 +1387,7 @@ DEVICE-MAPPER  (LVM)
- P:	Alasdair Kergon
- L:	dm-devel@redhat.com
- W:	http://sources.redhat.com/dm
--S:	Maintained
-+S:	Supported
- 
- DIGI INTL. EPCA DRIVER
- P:	Digi International, Inc
+I still don't understand, how do you intend to patch it on the top of 
+existing snapshot code. Definitely, I wouldn't say that it will be an easy 
+task. Look at the code and have a fun with it.
+
+Mikulas
