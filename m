@@ -1,7 +1,7 @@
 From: "Moger, Babu" <Babu.Moger@lsi.com>
 Subject: RE: Multipath setup and rdac questions
-Date: Thu, 5 Feb 2009 10:51:13 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4663975FC@cosmail01.lsi.com>
+Date: Thu, 5 Feb 2009 09:52:20 -0800
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF4663975FE@cosmail01.lsi.com>
 References: <1a4a774c0902050558r661093dag83e71a06250c24aa@mail.gmail.com>
 	<498B00B3.5020402@redhat.com>
 	<E463DF2B2E584B4A82673F53D62C2EF4663975E3@cosmail01.lsi.com>
@@ -25,8 +25,7 @@ Errors-To: dm-devel-bounces@redhat.com
 To: "bmr@redhat.com" <bmr@redhat.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-Please run "/proc/scsi/scsi" to get the correct vendor and product ids.
+Please run  "cat /proc/scsi/scsi"
 
 Thanks
 Babu Moger=20
