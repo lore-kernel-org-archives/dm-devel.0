@@ -1,15 +1,15 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: FW: Multipath setup and rdac questions
-Date: Thu, 5 Feb 2009 13:32:18 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF46653B584@cosmail01.lsi.com>
+From: =?ISO-8859-1?Q?Christian_R=F8snes?= <christian.rosnes@gmail.com>
+Subject: Re: FW: Multipath setup and rdac questions
+Date: Thu, 5 Feb 2009 21:45:06 +0100
+Message-ID: <1a4a774c0902051245k68db6848w8e4ede611fc1f05e@mail.gmail.com>
 References: <E463DF2B2E584B4A82673F53D62C2EF4663976BB@cosmail01.lsi.com>
 	<1a4a774c0902051223g3a70ee45k946b9338d5d3c2df@mail.gmail.com>
+	<E463DF2B2E584B4A82673F53D62C2EF46653B584@cosmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0076008746=="
+Content-Type: multipart/mixed; boundary="===============1578018310=="
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1a4a774c0902051223g3a70ee45k946b9338d5d3c2df@mail.gmail.com>
-Content-Language: en-US
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF46653B584@cosmail01.lsi.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,1030 +19,217 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: =?iso-8859-1?Q?Christian_R=F8snes?= <christian.rosnes@gmail.com>
+To: "Moger, Babu" <Babu.Moger@lsi.com>
 Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0076008746==
-Content-Language: en-US
-Content-Type: multipart/alternative;
-	boundary="_000_E463DF2B2E584B4A82673F53D62C2EF46653B584cosmail01lsicom_"
+--===============1578018310==
+Content-Type: multipart/alternative; boundary=001636498f11c2a55c046231fa94
 
---_000_E463DF2B2E584B4A82673F53D62C2EF46653B584cosmail01lsicom_
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+--001636498f11c2a55c046231fa94
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 
-Your Vendor id is DELL   and Product id is MD3000i
+On Thu, Feb 5, 2009 at 9:32 PM, Moger, Babu <Babu.Moger@lsi.com> wrote:
 
-Now update the multipath.conf with the above information and reboot the sys=
-tem.
+>  Your Vendor id is DELL   and Product id is MD3000i
+>
+>
+>
+> Now update the multipath.conf with the above information and reboot the
+> system.
+>
+>
+>
+> vendor                  "DELL"
+>
+>       product                 "MD3000i"
+>
+>
+>
+> You should see the devices.  Let me know if you need more information..
+>
+Ok. Changed multipath.conf and now multipath -ll shows:
 
-vendor                  "DELL"
-      product                 "MD3000i"
-
-You should see the devices.  Let me know if you need more information..
-
-Thanks
-Babu Moger
-________________________________
-From: Christian R=F8snes [mailto:christian.rosnes@gmail.com]
-Sent: Thursday, February 05, 2009 2:24 PM
-To: Moger, Babu
-Cc: dm-devel@redhat.com
-Subject: Re: FW: [dm-devel] Multipath setup and rdac questions
-
-
-On Thu, Feb 5, 2009 at 8:34 PM, Moger, Babu <Babu.Moger@lsi.com<mailto:Babu=
-.Moger@lsi.com>> wrote:
-
-It is still not correct.  The product id "MD Virtual Disk" is the device cl=
-aimed by MPP. That means you still have mpp in your system.
-
-
-
-Please follow the steps below..
-
-
-
- 1.  Remove the MPP from your system.
-
-Find the directory where MPP sources are located. It should be somewhere in=
- /opt/.  Then run "make uninstall"
-
-
-
-      2. Send me output of /proc/scsi/scsi
-
-Ok. Thank you for spotting this.
-
-The Makefile resided in /usr/src/linuxrdac-09.03.0C06.0030
-I did the following to stop the mpp modules from loading at boot:
-
-i first did:
-
- # cd /usr/src/linuxrdac-09.03.0C06.0030
- /usr/src/linuxrdac-09.03.0C06.0030 # make uninstall
-
-This removed some files (amongst others the files in /opt/mpp)
-
-I rebooted, but the the mpp* drivers still were loaded after reboot.
-
-I then changed the /etc/modprobde.conf and commented out the mpp drivers:
-
-#alias scsi_hostadapter0 mppVhba
-#alias scsi_hostadapter1 mppUpper
-
-This was not enough, I still had the mpp* drivers after reboot.
-
-So I looked in /boot and found an "old" version of initrd, and I assume
-this was the initrd used before the mpp driver was installed.
-So I changed /boot/grub/menu.lst to use the "previous" initrd, and then reb=
-ooted.
-Now, I don't have any mpp drivers loaded anymore.
-
-And here's the output of /proc/scsi/scsi:
-
-# cat /proc/scsi/scsi
-Attached devices:
-Host: scsi0 Channel: 00 Id: 00 Lun: 00
-  Vendor: SEAGATE  Model: ST973451SS       Rev: SM04
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi0 Channel: 00 Id: 01 Lun: 00
-  Vendor: SEAGATE  Model: ST973451SS       Rev: SM04
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi0 Channel: 01 Id: 00 Lun: 00
-  Vendor: Dell     Model: VIRTUAL DISK     Rev: 1028
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 10
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 10
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 01
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 01
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 00
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 11
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 11
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 12
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 12
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 10
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 10
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 11
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 11
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 02
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 02
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 03
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 03
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 01
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 01
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 02
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 02
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 13
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 13
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 14
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 14
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 12
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 12
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 13
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 13
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 04
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 04
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 05
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 05
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi3 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi4 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 03
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 03
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 04
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 04
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 15
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 15
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 14
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 14
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 15
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 15
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi5 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi6 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi8 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi7 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 05
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 05
-  Vendor: DELL     Model: MD3000i          Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi1 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-Host: scsi2 Channel: 00 Id: 00 Lun: 31
-  Vendor: DELL     Model: Universal Xport  Rev: 0735
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-
+# multipath -ll
+mpathe (36002219000918b4c00005b6c497e6632) dm-4 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=12][active]
+ \_ 4:0:0:1  sdm  8:192  [active][ready]
+ \_ 3:0:0:1  sdl  8:176  [active][ready]
+\_ round-robin 0 [prio=2][enabled]
+ \_ 2:0:0:1  sds  65:32  [active][ghost]
+ \_ 1:0:0:1  sdr  65:16  [active][ghost]
+mpathd (36002219000918b3300002e6e497e6315) dm-6 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=6][active]
+ \_ 4:0:0:2  sdo  8:224  [active][ready]
+ \_ 3:0:0:2  sdn  8:208  [active][ready]
+mpathc (36002219000918b4c00005b6f497e6695) dm-1 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=6][active]
+ \_ 3:0:0:3  sdz  65:144 [active][ready]
+mpatha (36002219000918b4c00005b72497e66f3) dm-0 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=3][active]
+ \_ 2:0:0:5  sdba 67:64  [active][ready]
+mpathl (36002219000918b3300002e6b497e62a6) dm-8 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=12][active]
+ \_ 4:0:0:0  sde  8:64   [active][ready]
+ \_ 3:0:0:0  sdd  8:48   [active][ready]
+\_ round-robin 0 [prio=2][enabled]
+ \_ 2:0:0:0  sdc  8:32   [active][ghost]
+ \_ 1:0:0:0  sdb  8:16   [active][ghost]
+mpathk (36002219000922cdf000004a4497e53f5) dm-7 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=12][active]
+ \_ 6:0:0:10 sdi  8:128  [active][ready]
+ \_ 5:0:0:10 sdh  8:112  [active][ready]
+\_ round-robin 0 [prio=2][enabled]
+ \_ 8:0:0:10 sdg  8:96   [active][ghost]
+ \_ 7:0:0:10 sdf  8:80   [active][ghost]
+mpathj (36002219000918b2e000004b2497e581c) dm-5 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=12][active]
+ \_ 8:0:0:11 sdq  65:0   [active][ready]
+ \_ 7:0:0:11 sdp  8:240  [active][ready]
+\_ round-robin 0 [prio=2][enabled]
+ \_ 6:0:0:11 sdk  8:160  [active][ghost]
+ \_ 5:0:0:11 sdj  8:144  [active][ghost]
+mpathi (36002219000922cdf000004a7497e54dd) dm-3 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=12][active]
+ \_ 6:0:0:12 sdw  65:96  [active][ready]
+ \_ 5:0:0:12 sdv  65:80  [active][ready]
+\_ round-robin 0 [prio=2][enabled]
+ \_ 8:0:0:12 sdu  65:64  [active][ghost]
+ \_ 7:0:0:12 sdt  65:48  [active][ghost]
+mpathh (36002219000918b2e000004b5497e587e) dm-2 DELL,MD3000i
+[size=5.5T][features=1 queue_if_no_path][hwhandler=1 rdac]
+\_ round-robin 0 [prio=6][active]
+ \_ 6:0:0:13 sdy  65:128 [active][ready]
+ \_ 5:0:0:13 sdx  65:112 [active][ready]
 
 Thank you
 Christian
 
-
-
-
---_000_E463DF2B2E584B4A82673F53D62C2EF46653B584cosmail01lsicom_
-Content-Type: text/html; charset="iso-8859-1"
+--001636498f11c2a55c046231fa94
+Content-Type: text/html; charset=ISO-8859-1
 Content-Transfer-Encoding: quoted-printable
 
-<html xmlns:v=3D"urn:schemas-microsoft-com:vml" xmlns:o=3D"urn:schemas-micr=
-osoft-com:office:office" xmlns:w=3D"urn:schemas-microsoft-com:office:word" =
-xmlns=3D"http://www.w3.org/TR/REC-html40">
+<br><br><div class=3D"gmail_quote">On Thu, Feb 5, 2009 at 9:32 PM, Moger, B=
+abu <span dir=3D"ltr">&lt;<a href=3D"mailto:Babu.Moger@lsi.com">Babu.Moger@=
+lsi.com</a>&gt;</span> wrote:<br><blockquote class=3D"gmail_quote" style=3D=
+"border-left: 1px solid rgb(204, 204, 204); margin: 0pt 0pt 0pt 0.8ex; padd=
+ing-left: 1ex;">
 
-<head>
-<meta http-equiv=3DContent-Type content=3D"text/html; charset=3Diso-8859-1"=
->
-<meta name=3DGenerator content=3D"Microsoft Word 11 (filtered medium)">
-<!--[if !mso]>
-<style>
-v\:* {behavior:url(#default#VML);}
-o\:* {behavior:url(#default#VML);}
-w\:* {behavior:url(#default#VML);}
-.shape {behavior:url(#default#VML);}
-</style>
-<![endif]-->
-<style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:Tahoma;
-	panose-1:2 11 6 4 3 5 4 4 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin:0in;
-	margin-bottom:.0001pt;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:blue;
-	text-decoration:underline;}
-p
-	{mso-margin-top-alt:auto;
-	margin-right:0in;
-	mso-margin-bottom-alt:auto;
-	margin-left:0in;
-	font-size:12.0pt;
-	font-family:"Times New Roman";}
-span.EmailStyle18
-	{mso-style-type:personal-reply;
-	font-family:Arial;
-	color:navy;}
-@page Section1
-	{size:8.5in 11.0in;
-	margin:1.0in 1.25in 1.0in 1.25in;}
-div.Section1
-	{page:Section1;}
- /* List Definitions */
- @list l0
-	{mso-list-id:2086409988;
-	mso-list-template-ids:1430404594;}
-ol
-	{margin-bottom:0in;}
-ul
-	{margin-bottom:0in;}
--->
-</style>
 
-</head>
 
-<body lang=3DEN-US link=3Dblue vlink=3Dblue>
 
-<div class=3DSection1>
 
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'>Your Vendor id is DELL&nbsp;&nbsp;&nbsp;and Product id is MD3000i&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<o:p></o:p></span></fon=
-t></p>
 
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'><o:p>&nbsp;</o:p></span></font></p>
 
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'>Now update the multipath.conf with the above information and reboot=
- the
-system.<o:p></o:p></span></font></p>
 
-<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 face=3D"C=
-ourier New"><span
-style=3D'font-size:10.0pt;font-family:"Courier New"'><o:p>&nbsp;</o:p></spa=
-n></font></p>
 
-<p class=3DMsoNormal style=3D'text-indent:.5in;text-autospace:none'><font s=
-ize=3D2
-face=3D"Courier New"><span style=3D'font-size:10.0pt;font-family:"Courier N=
-ew"'>vendor=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0
-&quot;DELL&quot;<o:p></o:p></span></font></p>
 
-<p class=3DMsoNormal style=3D'text-autospace:none'><font size=3D2 face=3D"C=
-ourier New"><span
-style=3D'font-size:10.0pt;font-family:"Courier New"'>=A0=A0=A0=A0=A0
-product=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 &quot;MD3000i&quot;=
-<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span style=
-=3D'font-size:
-10.0pt;font-family:Arial;color:navy'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span style=
-=3D'font-size:
-10.0pt;font-family:Arial;color:navy'>You should see the devices. =A0Let me =
-know
-if you need more information..<o:p></o:p></span></font></p>
-
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span style=
-=3D'font-size:
-10.0pt;font-family:Arial;color:navy'><o:p>&nbsp;</o:p></span></font></p>
+<div link=3D"blue" vlink=3D"blue" lang=3D"EN-US">
 
 <div>
 
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span style=
-=3D'font-size:
-10.0pt;font-family:Arial;color:navy'>Thanks</span></font><font color=3Dnavy=
-><span
-style=3D'color:navy'><o:p></o:p></span></font></p>
+<p><font face=3D"Times New Roman" size=3D"3"><span style=3D"font-size: 12pt=
+;">Your Vendor id is DELL&nbsp;&nbsp;&nbsp;and Product id is MD3000i&nbsp;&=
+nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></font></p>
 
-<p class=3DMsoNormal><font size=3D2 color=3Dnavy face=3DArial><span style=
-=3D'font-size:
-10.0pt;font-family:Arial;color:navy'>Babu Moger </span></font><o:p></o:p></=
-p>
+<p><font face=3D"Times New Roman" size=3D"3"><span style=3D"font-size: 12pt=
+;">&nbsp;</span></font></p>
 
-</div>
+<p><font face=3D"Times New Roman" size=3D"3"><span style=3D"font-size: 12pt=
+;">Now update the multipath.conf with the above information and reboot the
+system.</span></font></p>
 
-<div>
+<p style=3D""><font face=3D"Courier New" size=3D"2"><span style=3D"font-siz=
+e: 10pt; font-family: &quot;Courier New&quot;;">&nbsp;</span></font></p>
 
-<div class=3DMsoNormal align=3Dcenter style=3D'text-align:center'><font siz=
-e=3D3
-face=3D"Times New Roman"><span style=3D'font-size:12.0pt'>
+<p style=3D"text-indent: 0.5in;"><font face=3D"Courier New" size=3D"2"><spa=
+n style=3D"font-size: 10pt; font-family: &quot;Courier New&quot;;">vendor&n=
+bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp=
+;&nbsp;&nbsp;&nbsp;&nbsp;
+&quot;DELL&quot;</span></font></p>
 
-<hr size=3D2 width=3D"100%" align=3Dcenter tabindex=3D-1>
+<p style=3D""><font face=3D"Courier New" size=3D"2"><span style=3D"font-siz=
+e: 10pt; font-family: &quot;Courier New&quot;;">&nbsp;&nbsp;&nbsp;&nbsp;&nb=
+sp;
+product&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
+bsp;&nbsp;&nbsp;&nbsp;&nbsp; &quot;MD3000i&quot;</span></font></p>
 
-</span></font></div>
+<p><font color=3D"navy" face=3D"Arial" size=3D"2"><span style=3D"font-size:=
+ 10pt; font-family: Arial; color: navy;">&nbsp;</span></font></p>
 
-<p class=3DMsoNormal><b><font size=3D2 face=3DTahoma><span style=3D'font-si=
-ze:10.0pt;
-font-family:Tahoma;font-weight:bold'>From:</span></font></b><font size=3D2
-face=3DTahoma><span style=3D'font-size:10.0pt;font-family:Tahoma'> Christia=
-n R=F8snes
-[mailto:christian.rosnes@gmail.com] <br>
-<b><span style=3D'font-weight:bold'>Sent:</span></b> Thursday, February 05,=
- 2009
-2:24 PM<br>
-<b><span style=3D'font-weight:bold'>To:</span></b> Moger, Babu<br>
-<b><span style=3D'font-weight:bold'>Cc:</span></b> dm-devel@redhat.com<br>
-<b><span style=3D'font-weight:bold'>Subject:</span></b> Re: FW: [dm-devel]
-Multipath setup and rdac questions</span></font><o:p></o:p></p>
+<p><font color=3D"navy" face=3D"Arial" size=3D"2"><span style=3D"font-size:=
+ 10pt; font-family: Arial; color: navy;">You should see the devices. &nbsp;=
+Let me know
+if you need more information..</span></font></p></div></div></blockquote><d=
+iv>Ok. Changed multipath.conf and now multipath -ll shows:<br><br># multipa=
+th -ll<br>mpathe (36002219000918b4c00005b6c497e6632) dm-4 DELL,MD3000i<br>
+[size=3D5.5T][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]<br>\_ roun=
+d-robin 0 [prio=3D12][active]<br>&nbsp;\_ 4:0:0:1&nbsp; sdm&nbsp; 8:192&nbs=
+p; [active][ready]<br>&nbsp;\_ 3:0:0:1&nbsp; sdl&nbsp; 8:176&nbsp; [active]=
+[ready]<br>\_ round-robin 0 [prio=3D2][enabled]<br>
+&nbsp;\_ 2:0:0:1&nbsp; sds&nbsp; 65:32&nbsp; [active][ghost]<br>&nbsp;\_ 1:=
+0:0:1&nbsp; sdr&nbsp; 65:16&nbsp; [active][ghost]<br>mpathd (36002219000918=
+b3300002e6e497e6315) dm-6 DELL,MD3000i<br>[size=3D5.5T][features=3D1 queue_=
+if_no_path][hwhandler=3D1 rdac]<br>\_ round-robin 0 [prio=3D6][active]<br>
+&nbsp;\_ 4:0:0:2&nbsp; sdo&nbsp; 8:224&nbsp; [active][ready]<br>&nbsp;\_ 3:=
+0:0:2&nbsp; sdn&nbsp; 8:208&nbsp; [active][ready]<br>mpathc (36002219000918=
+b4c00005b6f497e6695) dm-1 DELL,MD3000i<br>[size=3D5.5T][features=3D1 queue_=
+if_no_path][hwhandler=3D1 rdac]<br>\_ round-robin 0 [prio=3D6][active]<br>
+&nbsp;\_ 3:0:0:3&nbsp; sdz&nbsp; 65:144 [active][ready]<br>mpatha (36002219=
+000918b4c00005b72497e66f3) dm-0 DELL,MD3000i<br>[size=3D5.5T][features=3D1 =
+queue_if_no_path][hwhandler=3D1 rdac]<br>\_ round-robin 0 [prio=3D3][active=
+]<br>&nbsp;\_ 2:0:0:5&nbsp; sdba 67:64&nbsp; [active][ready]<br>
+mpathl (36002219000918b3300002e6b497e62a6) dm-8 DELL,MD3000i<br>[size=3D5.5=
+T][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]<br>\_ round-robin 0 [=
+prio=3D12][active]<br>&nbsp;\_ 4:0:0:0&nbsp; sde&nbsp; 8:64&nbsp;&nbsp; [ac=
+tive][ready]<br>&nbsp;\_ 3:0:0:0&nbsp; sdd&nbsp; 8:48&nbsp;&nbsp; [active][=
+ready]<br>
+\_ round-robin 0 [prio=3D2][enabled]<br>&nbsp;\_ 2:0:0:0&nbsp; sdc&nbsp; 8:=
+32&nbsp;&nbsp; [active][ghost]<br>&nbsp;\_ 1:0:0:0&nbsp; sdb&nbsp; 8:16&nbs=
+p;&nbsp; [active][ghost]<br>mpathk (36002219000922cdf000004a4497e53f5) dm-7=
+ DELL,MD3000i<br>[size=3D5.5T][features=3D1 queue_if_no_path][hwhandler=3D1=
+ rdac]<br>
+\_ round-robin 0 [prio=3D12][active]<br>&nbsp;\_ 6:0:0:10 sdi&nbsp; 8:128&n=
+bsp; [active][ready]<br>&nbsp;\_ 5:0:0:10 sdh&nbsp; 8:112&nbsp; [active][re=
+ady]<br>\_ round-robin 0 [prio=3D2][enabled]<br>&nbsp;\_ 8:0:0:10 sdg&nbsp;=
+ 8:96&nbsp;&nbsp; [active][ghost]<br>&nbsp;\_ 7:0:0:10 sdf&nbsp; 8:80&nbsp;=
+&nbsp; [active][ghost]<br>
+mpathj (36002219000918b2e000004b2497e581c) dm-5 DELL,MD3000i<br>[size=3D5.5=
+T][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]<br>\_ round-robin 0 [=
+prio=3D12][active]<br>&nbsp;\_ 8:0:0:11 sdq&nbsp; 65:0&nbsp;&nbsp; [active]=
+[ready]<br>&nbsp;\_ 7:0:0:11 sdp&nbsp; 8:240&nbsp; [active][ready]<br>
+\_ round-robin 0 [prio=3D2][enabled]<br>&nbsp;\_ 6:0:0:11 sdk&nbsp; 8:160&n=
+bsp; [active][ghost]<br>&nbsp;\_ 5:0:0:11 sdj&nbsp; 8:144&nbsp; [active][gh=
+ost]<br>mpathi (36002219000922cdf000004a7497e54dd) dm-3 DELL,MD3000i<br>[si=
+ze=3D5.5T][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]<br>
+\_ round-robin 0 [prio=3D12][active]<br>&nbsp;\_ 6:0:0:12 sdw&nbsp; 65:96&n=
+bsp; [active][ready]<br>&nbsp;\_ 5:0:0:12 sdv&nbsp; 65:80&nbsp; [active][re=
+ady]<br>\_ round-robin 0 [prio=3D2][enabled]<br>&nbsp;\_ 8:0:0:12 sdu&nbsp;=
+ 65:64&nbsp; [active][ghost]<br>&nbsp;\_ 7:0:0:12 sdt&nbsp; 65:48&nbsp; [ac=
+tive][ghost]<br>
+mpathh (36002219000918b2e000004b5497e587e) dm-2 DELL,MD3000i<br>[size=3D5.5=
+T][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]<br>\_ round-robin 0 [=
+prio=3D6][active]<br>&nbsp;\_ 6:0:0:13 sdy&nbsp; 65:128 [active][ready]<br>=
+&nbsp;\_ 5:0:0:13 sdx&nbsp; 65:112 [active][ready]<br>
+&nbsp;<br></div></div>Thank you<br>Christian<br>
 
-</div>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'><o:p>&nbsp;</o:p></span></font></p>
-
-<p class=3DMsoNormal style=3D'margin-bottom:12.0pt'><font size=3D3
-face=3D"Times New Roman"><span style=3D'font-size:12.0pt'><o:p>&nbsp;</o:p>=
-</span></font></p>
-
-<div>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'>On Thu, Feb 5, 2009 at 8:34 PM, Moger, Babu &lt;<a
-href=3D"mailto:Babu.Moger@lsi.com">Babu.Moger@lsi.com</a>&gt; wrote:<o:p></=
-o:p></span></font></p>
-
-<div link=3Dblue vlink=3Dblue>
-
-<div>
-
-<p><font size=3D2 color=3Dnavy face=3DArial><span style=3D'font-size:10.0pt=
-;font-family:
-Arial;color:navy'>It is still not correct. &nbsp;The product id &quot;</spa=
-n></font>MD
-Virtual Disk&quot; is the device claimed by MPP. That means you still have =
-mpp
-in your system.<o:p></o:p></p>
-
-<p><font size=3D3 face=3D"Times New Roman"><span style=3D'font-size:12.0pt'=
->&nbsp;<o:p></o:p></span></font></p>
-
-<p><font size=3D3 face=3D"Times New Roman"><span style=3D'font-size:12.0pt'=
->Please
-follow the steps below..<o:p></o:p></span></font></p>
-
-<p><font size=3D3 face=3D"Times New Roman"><span style=3D'font-size:12.0pt'=
->&nbsp;<o:p></o:p></span></font></p>
-
-<ol start=3D1 type=3D1>
- <li class=3DMsoNormal style=3D'mso-margin-top-alt:auto;mso-margin-bottom-a=
-lt:auto;
-     mso-list:l0 level1 lfo1'><font size=3D3 face=3D"Times New Roman"><span
-     style=3D'font-size:12.0pt'>Remove the MPP from your system.<o:p></o:p>=
-</span></font></li>
-</ol>
-
-<p style=3D'margin-left:.5in'><font size=3D3 face=3D"Times New Roman"><span
-style=3D'font-size:12.0pt'>Find the directory where MPP sources are located=
-. It
-should be somewhere in /opt/. &nbsp;Then run &quot;make uninstall&quot;<o:p=
-></o:p></span></font></p>
-
-<p><font size=3D3 face=3D"Times New Roman"><span style=3D'font-size:12.0pt'=
->&nbsp;<o:p></o:p></span></font></p>
-
-<p><font size=3D3 face=3D"Times New Roman"><span style=3D'font-size:12.0pt'=
->&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-2. Send me output of /proc/scsi/scsi<o:p></o:p></span></font></p>
-
-</div>
-
-</div>
-
-<div>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'><br>
-Ok. Thank you for spotting this.<br>
-<br>
-The Makefile resided in /usr/src/linuxrdac-09.03.0C06.0030<br>
-I did the following to stop the mpp modules from loading at boot:<br>
-<br>
-i first did:<br>
-<br>
-&nbsp;# cd /usr/src/linuxrdac-09.03.0C06.0030<br>
-&nbsp;/usr/src/linuxrdac-09.03.0C06.0030 # make uninstall<br>
-<br>
-This removed some files (amongst others the files in /opt/mpp)<br>
-<br>
-I rebooted, but the the mpp* drivers still were loaded after reboot.<br>
-<br>
-I then changed the /etc/modprobde.conf and commented out the mpp drivers:<b=
-r>
-<br>
-#alias scsi_hostadapter0 mppVhba<br>
-#alias scsi_hostadapter1 mppUpper<br>
-<br>
-This was not enough, I still had the mpp* drivers after reboot.<br>
-<br>
-So I looked in /boot and found an &quot;old&quot; version of initrd, and I
-assume<br>
-this was the initrd used before the mpp driver was installed.<br>
-So I changed /boot/grub/menu.lst to use the &quot;previous&quot; initrd, an=
-d
-then rebooted.<br>
-Now, I don't have any mpp drivers loaded anymore.<br>
-<br>
-And here's the output of /proc/scsi/scsi:<br>
-<br>
-# cat /proc/scsi/scsi<br>
-Attached devices:<br>
-Host: scsi0 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: SEAGATE&nbsp; Model:
-ST973451SS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: SM04<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi0 Channel: 00 Id: 01 Lun: 00<br>
-&nbsp; Vendor: SEAGATE&nbsp; Model:
-ST973451SS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: SM04<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi0 Channel: 01 Id: 00 Lun: 00<br>
-&nbsp; Vendor: Dell&nbsp;&nbsp;&nbsp;&nbsp; Model: VIRTUAL
-DISK&nbsp;&nbsp;&nbsp;&nbsp; Rev: 1028<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: MD3000i&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 10<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 10<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 01<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 01<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 00<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 11<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 11<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 12<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 12<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 10<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 10<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 11<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 11<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 02<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 02<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 03<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 03<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 01<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 01<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 02<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 02<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 13<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 13<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 14<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 14<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 12<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 12<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 13<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 13<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 04<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 04<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: MD3000i&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 05<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 05<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi3 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;
-ANSI SCSI revision: 05<br>
-Host: scsi4 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 03<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 03<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 04<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 04<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 15<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 15<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 14<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 14<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 15<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: MD3000i&nbsp;&nbsp;&nbsp=
-;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 15<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi5 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi6 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp; Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&=
-nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbs=
-p;
-ANSI SCSI revision: 05<br>
-Host: scsi8 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi7 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 05<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 05<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model:
-MD3000i&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Rev: 0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi1 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-Host: scsi2 Channel: 00 Id: 00 Lun: 31<br>
-&nbsp; Vendor: DELL&nbsp;&nbsp;&nbsp;&nbsp; Model: Universal Xport&nbsp; Re=
-v:
-0735<br>
-&nbsp; Type:&nbsp;&nbsp;
-Direct-Access&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&n=
-bsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-ANSI SCSI revision: 05<br>
-<br>
-<br>
-Thank you<br>
-Christian<br>
-<br>
-&nbsp;<o:p></o:p></span></font></p>
-
-</div>
-
-</div>
-
-<p class=3DMsoNormal><font size=3D3 face=3D"Times New Roman"><span style=3D=
-'font-size:
-12.0pt'><o:p>&nbsp;</o:p></span></font></p>
-
-</div>
-
-</body>
-
-</html>
-
---_000_E463DF2B2E584B4A82673F53D62C2EF46653B584cosmail01lsicom_--
+--001636498f11c2a55c046231fa94--
 
 
---===============0076008746==
+--===============1578018310==
 Content-Type: text/plain; charset="us-ascii"
 MIME-Version: 1.0
 Content-Transfer-Encoding: 7bit
 Content-Disposition: inline
 
 
---===============0076008746==--
+--===============1578018310==--
