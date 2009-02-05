@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2]: save/restore bio vector
-Date: Wed, 4 Feb 2009 21:47:59 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902042146170.8695@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 2/2]: optimize dm-raid1 memory consumption
+Date: Wed, 4 Feb 2009 21:53:07 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902042148070.8695@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -19,54 +19,79 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+With my previous patch to save bio vector, the size of dm_raid1_read_record
+is significantly increased (the vector list takes 3072 bytes on 32-bit machines
+and 4096 bytes on 64-bit machines).
 
-This patch should fix bug 472796 in upstream kernel.
+The structure dm_raid1_read_record used to be allocated with kmalloc,
+but kmalloc aligns the size on the next power-of-two --- so an object
+slightly greater than 4096 will allocate 8192 bytes of memory and half of
+that memory will be wasted.
 
----
-
-Bio layer modifies the vector list when the request partially succeeds.
-
-Device mapper saves and restores various fields in the bio, but it doesn't save
-the vector. So, when the block driver modifies the vector on partially succeeded
-request, dm-raid1 and dm-multipath will attempt to resubmit a bio that has
-mismatching bi_size and the size of vector. That will cause BUG() in the block
-layer.
-
-To make requests resubmittable in dm-raid1 and dm-multipath, we must save
-and restore the bio vector as well.
+This patch turns kmalloc into a slab cache. Slab cache doesn't have this
+padding, so it will reduce memory consumption per-request.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-bio-record.h |    3 +++
- 1 file changed, 3 insertions(+)
+ drivers/md/dm-raid1.c |   24 ++++++++++++++++++++----
+ 1 file changed, 20 insertions(+), 4 deletions(-)
 
-Index: linux-2.6.29-rc3-devel/drivers/md/dm-bio-record.h
+Index: linux-2.6.29-rc3-devel/drivers/md/dm-raid1.c
 ===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm-bio-record.h	2009-02-05 03:10:49.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm-bio-record.h	2009-02-05 03:12:52.000000000 +0100
-@@ -22,6 +22,7 @@ struct dm_bio_details {
- 	unsigned int bi_size;
- 	unsigned short bi_idx;
- 	unsigned long bi_flags;
-+	struct bio_vec bi_io_vec[BIO_MAX_PAGES];
+--- linux-2.6.29-rc3-devel.orig/drivers/md/dm-raid1.c	2009-02-05 03:26:25.000000000 +0100
++++ linux-2.6.29-rc3-devel/drivers/md/dm-raid1.c	2009-02-05 03:33:54.000000000 +0100
+@@ -145,6 +145,8 @@ struct dm_raid1_read_record {
+ 	struct dm_bio_details details;
  };
  
- static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
-@@ -31,6 +32,7 @@ static inline void dm_bio_record(struct 
- 	bd->bi_size = bio->bi_size;
- 	bd->bi_idx = bio->bi_idx;
- 	bd->bi_flags = bio->bi_flags;
-+	memcpy(bd->bi_io_vec, bio->bi_io_vec, bio->bi_vcnt * sizeof(struct bio_vec));
++static struct kmem_cache *_dm_raid1_read_record_cache;
++
+ /*
+  * Every mirror should look like this one.
+  */
+@@ -764,9 +766,8 @@ static struct mirror_set *alloc_context(
+ 	atomic_set(&ms->suspend, 0);
+ 	atomic_set(&ms->default_mirror, DEFAULT_MIRROR);
+ 
+-	len = sizeof(struct dm_raid1_read_record);
+-	ms->read_record_pool = mempool_create_kmalloc_pool(MIN_READ_RECORDS,
+-							   len);
++	ms->read_record_pool = mempool_create_slab_pool(MIN_READ_RECORDS, _dm_raid1_read_record_cache);
++
+ 	if (!ms->read_record_pool) {
+ 		ti->error = "Error creating mirror read_record_pool";
+ 		kfree(ms);
+@@ -1279,16 +1280,31 @@ static int __init dm_mirror_init(void)
+ {
+ 	int r;
+ 
++	_dm_raid1_read_record_cache = KMEM_CACHE(dm_raid1_read_record, 0);
++	if (!_dm_raid1_read_record_cache) {
++		DMERR("Can't allocate dm_raid1_read_record cache");
++		r = -ENOMEM;
++		goto bad_cache;
++	}
++
+ 	r = dm_register_target(&mirror_target);
+-	if (r < 0)
++	if (r < 0) {
+ 		DMERR("Failed to register mirror target");
++		goto bad_target;
++	}
++
++	return 0;
+ 
++bad_target:
++	kmem_cache_destroy(_dm_raid1_read_record_cache);
++bad_cache:
+ 	return r;
  }
  
- static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
-@@ -40,6 +42,7 @@ static inline void dm_bio_restore(struct
- 	bio->bi_size = bd->bi_size;
- 	bio->bi_idx = bd->bi_idx;
- 	bio->bi_flags = bd->bi_flags;
-+	memcpy(bio->bi_io_vec, bd->bi_io_vec, bio->bi_vcnt * sizeof(struct bio_vec));
+ static void __exit dm_mirror_exit(void)
+ {
+ 	dm_unregister_target(&mirror_target);
++	kmem_cache_destroy(_dm_raid1_read_record_cache);
  }
  
- #endif
+ /* Module hooks */
