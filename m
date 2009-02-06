@@ -1,16 +1,16 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Patchwork and patch flow
-Date: Fri, 06 Feb 2009 15:42:25 +0900 (JST)
-Message-ID: <20090206.154225.189717016.ryov@valinux.co.jp>
-References: <20090205.204508.71105166.ryov@valinux.co.jp>
-	<A5C05773-7C8F-4D59-B742-DBDC85799DFB@redhat.com>
-	<20090205224831.GV20668@agk.fab.redhat.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: shared snapshots
+Date: Fri, 6 Feb 2009 16:18:10 +0900
+Message-ID: <20090206161758K.fujita.tomonori@lab.ntt.co.jp>
+References: <Pine.LNX.4.64.0902030118280.16888@hs20-bc2-1.build.redhat.com>
+	<20090203154804V.fujita.tomonori@lab.ntt.co.jp>
+	<A764D64A-56E6-46F3-9BA5-2A543D18CE48@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090205224831.GV20668@agk.fab.redhat.com>
+In-Reply-To: <A764D64A-56E6-46F3-9BA5-2A543D18CE48@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,37 +20,26 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, agk@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Jonathan and Alasdair,
+On Thu, 5 Feb 2009 16:17:29 -0600
+Jonathan Brassow <jbrassow@redhat.com> wrote:
 
-Thanks for your advices.
-
-> > To add a Tested-by tag, how much test do we actually need?
-> > We've already done several tests of dm-ioband:
-> >  Proportional I/O bandwidth controlling
-> >  Loading/unloading driver and changing settings while under I/O load
-> >  Bounds checking of setting parameters
-> >  Benchmarks
-> > Do you think these are enough for adding the tag?
-> > It's very difficult for me to determine whether it's qualified or not.
-> > It would be helpful if you could give me some advice.
 > 
-> Interesting question...  If it was me, I'd like to see exactly what
-> you wrote above.  State that you tested it and how you tested it. If
-> there are a number of people who test it and the things they
-> describe offer a broad spectrum of tests, I think that's helpful.
-> Also, if extra testing is wanted, it can be suggested based on what
-> tests have been performed.
+> On Feb 3, 2009, at 12:48 AM, FUJITA Tomonori wrote:
+> 
+> > But surely supporting the shared implementation(s) on the top of the
+> > existing snapshot code needs more refactoring. Jonathan, have you
+> > already started to work on it?
+> 
+> I have a couple pending patches that I haven't sent to the list yet.   
+> I'm hoping to get back to exception store API patches in a week or  
+> two.  In the mean time, the current exception store API patches are  
+> ready for review.  The additions to facilitate shared exception stores  
+> will go on top of that patch set.
 
-O.K. I will post my test items and results on my website sometime
-soon.
-
-> The key thing I'm looking for in Tested-By is independence from
-> the original developers.
-
-I think so. I hope someone will do the test by posting my test items.
+Can you post the pending patches to the mailing list or put on a web
+site, please?
 
 Thanks,
-Ryo Tsuruta
