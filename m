@@ -1,15 +1,12 @@
-From: Tore Anderson <tore@linpro.no>
-Subject: Re: Changing SAN vendors
-Date: Fri, 06 Feb 2009 08:41:09 +0100
-Message-ID: <498BE995.7080406@linpro.no>
-References: <4905EFD192EEDF4A9A19EEE98C32B7F70EFB4A29@DBQV3005.na.corp.mckesson.com>
-	<4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
+From: Atsushi SAKAI <sakaia@jp.fujitsu.com>
+Subject: [PATCH] fix typo in FSF address
+Date: Fri, 06 Feb 2009 18:02:38 +0900
+Message-ID: <20090206090240.7E51D480002@m022.s.css.fujitsu.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +16,149 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Device Mapper <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-* Allen, Jack
+Hello,
 
->     The Answer: The friendly names are kept in
-> /var/lib/multipath/bindings. Because the WWID changed multipathd created
-> new entries. All I had to do was remove the entries for the old WWID and
-> change the friendly name for the new WWID. Simple, but hard to locate
-> the file when no documents I could find to begin with tells you that is
-> where the friendly names are kept.
-> 
->     The Question: The first system was running RH EL 5.2, but the next
-> system is running RH AS 4.7. There was no /var/lib/multipath directory,
-> therefore no bindings file. So I created both, and entered mpath0 and
-> mpath1 with the WWID, but it still uses mpath2 and mpath3. I know
-> multipathd are different version between the two RH Release. Is there
-> something else I need to change on the RH AS 4.7 system to make it use
-> the mpath0 and mpath1 names?
+ I found a typo Bosto"m" in FSF address.
+And I am checking around linux source code.
+Here is the only place which uses Bosto"m" (not Boston).
 
-I suggest you configure the names statically in /etc/multipath.conf
-instead, this will work in both RHEL 4 and 5.  This will also allow you
-to give the devices more descriptive names than just "mpathN".  For
-instance:
+Signed-off-by: Atsushi SAKAI <sakaia@jp.fujitsu.com>
 
-multipaths {
-  multipath {
-    wwid 36006016034301f00b8934c11c241dd11
-    alias oracle
-  }
-  multipath {
-    wwid 36006016034301f001c578c8bab21dd11
-    alias varwww
-  }
-}
+Thanks
+Atsushi SAKAI
 
-Regards,
+
+---
+ drivers/md/raid6.h         |    2 +-
+ drivers/md/raid6algos.c    |    2 +-
+ drivers/md/raid6altivec.uc |    2 +-
+ drivers/md/raid6int.uc     |    2 +-
+ drivers/md/raid6mmx.c      |    2 +-
+ drivers/md/raid6recov.c    |    2 +-
+ drivers/md/raid6sse1.c     |    2 +-
+ drivers/md/raid6sse2.c     |    2 +-
+ drivers/md/raid6x86.h      |    2 +-
+ 9 files changed, 9 insertions(+), 9 deletions(-)
+
+diff --git a/drivers/md/raid6.h b/drivers/md/raid6.h
+index 98dcde8..3090646 100644
+--- a/drivers/md/raid6.h
++++ b/drivers/md/raid6.h
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6algos.c b/drivers/md/raid6algos.c
+index 21987e3..1f6a3c8 100644
+--- a/drivers/md/raid6algos.c
++++ b/drivers/md/raid6algos.c
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6altivec.uc b/drivers/md/raid6altivec.uc
+index b9afd35..2175806 100644
+--- a/drivers/md/raid6altivec.uc
++++ b/drivers/md/raid6altivec.uc
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6int.uc b/drivers/md/raid6int.uc
+index ad004ce..32a0bac 100644
+--- a/drivers/md/raid6int.uc
++++ b/drivers/md/raid6int.uc
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6mmx.c b/drivers/md/raid6mmx.c
+index d4e4a1b..804cb50 100644
+--- a/drivers/md/raid6mmx.c
++++ b/drivers/md/raid6mmx.c
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6recov.c b/drivers/md/raid6recov.c
+index a8c4d94..7a98b86 100644
+--- a/drivers/md/raid6recov.c
++++ b/drivers/md/raid6recov.c
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6sse1.c b/drivers/md/raid6sse1.c
+index 0666237..15c5889 100644
+--- a/drivers/md/raid6sse1.c
++++ b/drivers/md/raid6sse1.c
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6sse2.c b/drivers/md/raid6sse2.c
+index b034ad8..2e92e96 100644
+--- a/drivers/md/raid6sse2.c
++++ b/drivers/md/raid6sse2.c
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
+diff --git a/drivers/md/raid6x86.h b/drivers/md/raid6x86.h
+index 99fea7a..4c22c15 100644
+--- a/drivers/md/raid6x86.h
++++ b/drivers/md/raid6x86.h
+@@ -5,7 +5,7 @@
+  *   This program is free software; you can redistribute it and/or modify
+  *   it under the terms of the GNU General Public License as published by
+  *   the Free Software Foundation, Inc., 53 Temple Place Ste 330,
+- *   Bostom MA 02111-1307, USA; either version 2 of the License, or
++ *   Boston MA 02111-1307, USA; either version 2 of the License, or
+  *   (at your option) any later version; incorporated herein by reference.
+  *
+  * ----------------------------------------------------------------------- */
 -- 
-Tore Anderson
-Redpill Linpro AS - http://www.redpill-linpro.com/
+1.5.2.2
