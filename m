@@ -1,16 +1,15 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: shared snapshots
-Date: Fri, 6 Feb 2009 16:18:10 +0900
-Message-ID: <20090206161758K.fujita.tomonori@lab.ntt.co.jp>
-References: <Pine.LNX.4.64.0902030118280.16888@hs20-bc2-1.build.redhat.com>
-	<20090203154804V.fujita.tomonori@lab.ntt.co.jp>
-	<A764D64A-56E6-46F3-9BA5-2A543D18CE48@redhat.com>
+From: Tore Anderson <tore@linpro.no>
+Subject: Re: Changing SAN vendors
+Date: Fri, 06 Feb 2009 08:41:09 +0100
+Message-ID: <498BE995.7080406@linpro.no>
+References: <4905EFD192EEDF4A9A19EEE98C32B7F70EFB4A29@DBQV3005.na.corp.mckesson.com>
+	<4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <A764D64A-56E6-46F3-9BA5-2A543D18CE48@redhat.com>
+In-Reply-To: <4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,26 +19,43 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 5 Feb 2009 16:17:29 -0600
-Jonathan Brassow <jbrassow@redhat.com> wrote:
+* Allen, Jack
 
+>     The Answer: The friendly names are kept in
+> /var/lib/multipath/bindings. Because the WWID changed multipathd created
+> new entries. All I had to do was remove the entries for the old WWID and
+> change the friendly name for the new WWID. Simple, but hard to locate
+> the file when no documents I could find to begin with tells you that is
+> where the friendly names are kept.
 > 
-> On Feb 3, 2009, at 12:48 AM, FUJITA Tomonori wrote:
-> 
-> > But surely supporting the shared implementation(s) on the top of the
-> > existing snapshot code needs more refactoring. Jonathan, have you
-> > already started to work on it?
-> 
-> I have a couple pending patches that I haven't sent to the list yet.   
-> I'm hoping to get back to exception store API patches in a week or  
-> two.  In the mean time, the current exception store API patches are  
-> ready for review.  The additions to facilitate shared exception stores  
-> will go on top of that patch set.
+>     The Question: The first system was running RH EL 5.2, but the next
+> system is running RH AS 4.7. There was no /var/lib/multipath directory,
+> therefore no bindings file. So I created both, and entered mpath0 and
+> mpath1 with the WWID, but it still uses mpath2 and mpath3. I know
+> multipathd are different version between the two RH Release. Is there
+> something else I need to change on the RH AS 4.7 system to make it use
+> the mpath0 and mpath1 names?
 
-Can you post the pending patches to the mailing list or put on a web
-site, please?
+I suggest you configure the names statically in /etc/multipath.conf
+instead, this will work in both RHEL 4 and 5.  This will also allow you
+to give the devices more descriptive names than just "mpathN".  For
+instance:
 
-Thanks,
+multipaths {
+  multipath {
+    wwid 36006016034301f00b8934c11c241dd11
+    alias oracle
+  }
+  multipath {
+    wwid 36006016034301f001c578c8bab21dd11
+    alias varwww
+  }
+}
+
+Regards,
+-- 
+Tore Anderson
+Redpill Linpro AS - http://www.redpill-linpro.com/
