@@ -1,20 +1,14 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Re: 2.6.28.2 & dm-snapshot or kcopyd Oops
-Date: Thu, 5 Feb 2009 22:26:33 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902052218040.5380@hs20-bc2-1.build.redhat.com>
-References: <200901231836184950432@163.com>,
-	<Pine.LNX.4.64.0901231514590.9877@hs20-bc2-1.build.redhat.com>,
-	<200901301800149019891@163.com>,
-	<Pine.LNX.4.64.0901301533390.5744@hs20-bc2-1.build.redhat.com>,
-	<200901311416111648168@163.com>,
-	<Pine.LNX.4.64.0902031505180.28433@hs20-bc2-1.build.redhat.com>
-	<200902051113011850587@163.com>
-	<Pine.LNX.4.64.0902051749150.5515@hs20-bc2-1.build.redhat.com>
+Subject: Re: shared snapshots
+Date: Thu, 5 Feb 2009 22:44:33 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902052230570.5380@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0902030118280.16888@hs20-bc2-1.build.redhat.com>
+	<20090203154804V.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0902051749150.5515@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20090203154804V.fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,127 +18,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair G Kergon <agk@redhat.com>, Jacky Kim <jcy_2008@163.com>, Milan Broz <mbroz@redhat.com>
+To: agk@redhat.com
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-> +		push(&job->kc->complete_jobs, job);
-> +		wake(job->kc);
-
-I still found one bug with my patch. When I push the job to complete_jobs 
-queue, it may be immediatelly taken and cease to exist. So job->kc 
-dereference is wrong.
-
-A new patch:
 
 
+On Tue, 3 Feb 2009, FUJITA Tomonori wrote:
 
-Under specific circumstances, kcopyd callback could be called from
-the thread that called dm_kcopyd_copy not from kcopyd workqueue.
+> On Tue, 3 Feb 2009 01:25:30 -0500 (EST)
+> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> 
+> > If you are going to put shared storage into your snapshots, look at this: 
+> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
+> > 
+> > --- this is my snapshot store with Fujita/Daniel's store as a loadable 
+> > module.
+> > 
+> > So if you are going to do shared storage interface, you must accommodate 
+> > both of these implementations into it.
+> > 
+> > I still don't understand, how do you intend to patch it on the top of 
+> > existing snapshot code. Definitely, I wouldn't say that it will be an easy 
+> > task. Look at the code and have a fun with it.
+> 
+> I expect that we will support the shared implementation(s) on the top
+> of the existing snapshot code instead of inventing a new target_type
+> (as Mikulas do with multisnap_*).
 
-dm_kcopyd_copy -> split_job -> segment_complete -> job->fn()
+Alasdair is wanting to make it on the top of existing snapshots but I 
+haven't heard from him any specific argument, just generalized talks how 
+sharing code is good.
 
-This code path is taken if thread calling dm_kcopyd_copy is delayed due to
-scheduling inside split_job/segment_complete and the subjobs complete before
-the loop in split_job completes.
+So, please start saying some specific nongeneralized ideas how do you 
+imagine to do it.
 
-Snapshots depend on the fact that callbacks are called from the singlethreaded
-kcopyd workqueue and expect that there is no racing between individual
-callbacks. The racing between callbacks can lead to corruption of exception
-store and it can also cause that exception store callbacks are called twice
-for the same exception --- a likely reason for crashes inside
-pending_complete() / remove_exception().
+I.e. instead od saying "sharing code is good", download stuff from 
+http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/ and 
+say *EXACTLY* which code (structures, functions...) you you want to share 
+with existing snapshots.
 
+Instead of saying "we treat all snapshots like objects with method tables" 
+look at actual method tables from in-kernel snapshots and my snapshots and 
+say *WHICH* methods exactly are you going to join.
 
-When I reviewed kcopyd further, I found four total problems:
+--- then, we can discuss it and go somewhere. Abstract ideas about 
+software engineering make no sense at this stage.
 
-1. job->fn being called from the thread that submitted the job (see above).
+> If not, we can live without refactoring the existing snapshot code.
+> 
+> But surely supporting the shared implementation(s) on the top of the
+> existing snapshot code needs more refactoring. Jonathan, have you
+> already started to work on it?
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
 
-2. job->fn(read_err, write_err, job->context); in segment_complete
-reports the error of the last subjob, not the union of all errors.
-
-3. This comment is bogus (the jobs are not cancelable), plus the code
-is prone to deadlock because the callback may allocate another job from
-the same mempool.
-/*
- * To avoid a race we must keep the job around
- * until after the notify function has completed.
- * Otherwise the client may try and stop the job
- * after we've completed.
- */
-job->fn(read_err, write_err, job->context);
-mempool_free(job, job->kc->job_pool);
-
-4. Master jobs and subjobs are allocated from the same mempool.
-Completion and freeing of a master job depends on successful allocation of
-all subjobs -> deadlock.
-
-
-This patch moves completion of master jobs to run_complete_job (being called
-from the kcopyd workqueue). The patch fixes problems 1, 2, 3.
-
-Problem 4 will need more changes and another patch.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm-kcopyd.c |   18 ++++++++----------
- 1 file changed, 8 insertions(+), 10 deletions(-)
-
-Index: linux-2.6.29-rc3-devel/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm-kcopyd.c	2009-02-05 23:01:50.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm-kcopyd.c	2009-02-06 04:15:52.000000000 +0100
-@@ -297,7 +297,8 @@ static int run_complete_job(struct kcopy
- 	dm_kcopyd_notify_fn fn = job->fn;
- 	struct dm_kcopyd_client *kc = job->kc;
- 
--	kcopyd_put_pages(kc, job->pages);
-+	if (job->pages)
-+		kcopyd_put_pages(kc, job->pages);
- 	mempool_free(job, kc->job_pool);
- 	fn(read_err, write_err, context);
- 
-@@ -461,6 +462,7 @@ static void segment_complete(int read_er
- 	sector_t progress = 0;
- 	sector_t count = 0;
- 	struct kcopyd_job *job = (struct kcopyd_job *) context;
-+	struct dm_kcopyd_client *kc = job->kc;
- 
- 	mutex_lock(&job->lock);
- 
-@@ -490,7 +492,7 @@ static void segment_complete(int read_er
- 
- 	if (count) {
- 		int i;
--		struct kcopyd_job *sub_job = mempool_alloc(job->kc->job_pool,
-+		struct kcopyd_job *sub_job = mempool_alloc(kc->job_pool,
- 							   GFP_NOIO);
- 
- 		*sub_job = *job;
-@@ -508,14 +510,8 @@ static void segment_complete(int read_er
- 
- 	} else if (atomic_dec_and_test(&job->sub_jobs)) {
- 
--		/*
--		 * To avoid a race we must keep the job around
--		 * until after the notify function has completed.
--		 * Otherwise the client may try and stop the job
--		 * after we've completed.
--		 */
--		job->fn(read_err, write_err, job->context);
--		mempool_free(job, job->kc->job_pool);
-+		push(&kc->complete_jobs, job);
-+		wake(kc);
- 	}
- }
- 
-@@ -528,6 +524,8 @@ static void split_job(struct kcopyd_job 
- {
- 	int i;
- 
-+	atomic_inc(&job->kc->nr_jobs);
-+
- 	atomic_set(&job->sub_jobs, SPLIT_COUNT);
- 	for (i = 0; i < SPLIT_COUNT; i++)
- 		segment_complete(0, 0u, job);
+Mikulas
