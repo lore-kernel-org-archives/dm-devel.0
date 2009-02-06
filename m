@@ -1,14 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: shared snapshots
-Date: Thu, 5 Feb 2009 22:44:33 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902052230570.5380@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0902030118280.16888@hs20-bc2-1.build.redhat.com>
-	<20090203154804V.fujita.tomonori@lab.ntt.co.jp>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Patchwork and patch flow
+Date: Fri, 06 Feb 2009 15:42:25 +0900 (JST)
+Message-ID: <20090206.154225.189717016.ryov@valinux.co.jp>
+References: <20090205.204508.71105166.ryov@valinux.co.jp>
+	<A5C05773-7C8F-4D59-B742-DBDC85799DFB@redhat.com>
+	<20090205224831.GV20668@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090203154804V.fujita.tomonori@lab.ntt.co.jp>
+In-Reply-To: <20090205224831.GV20668@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,62 +20,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: agk@redhat.com
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com, agk@redhat.com
 List-Id: dm-devel.ids
 
+Hi Jonathan and Alasdair,
 
+Thanks for your advices.
 
-On Tue, 3 Feb 2009, FUJITA Tomonori wrote:
-
-> On Tue, 3 Feb 2009 01:25:30 -0500 (EST)
-> Mikulas Patocka <mpatocka@redhat.com> wrote:
+> > To add a Tested-by tag, how much test do we actually need?
+> > We've already done several tests of dm-ioband:
+> >  Proportional I/O bandwidth controlling
+> >  Loading/unloading driver and changing settings while under I/O load
+> >  Bounds checking of setting parameters
+> >  Benchmarks
+> > Do you think these are enough for adding the tag?
+> > It's very difficult for me to determine whether it's qualified or not.
+> > It would be helpful if you could give me some advice.
 > 
-> > If you are going to put shared storage into your snapshots, look at this: 
-> > http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/
-> > 
-> > --- this is my snapshot store with Fujita/Daniel's store as a loadable 
-> > module.
-> > 
-> > So if you are going to do shared storage interface, you must accommodate 
-> > both of these implementations into it.
-> > 
-> > I still don't understand, how do you intend to patch it on the top of 
-> > existing snapshot code. Definitely, I wouldn't say that it will be an easy 
-> > task. Look at the code and have a fun with it.
-> 
-> I expect that we will support the shared implementation(s) on the top
-> of the existing snapshot code instead of inventing a new target_type
-> (as Mikulas do with multisnap_*).
+> Interesting question...  If it was me, I'd like to see exactly what
+> you wrote above.  State that you tested it and how you tested it. If
+> there are a number of people who test it and the things they
+> describe offer a broad spectrum of tests, I think that's helpful.
+> Also, if extra testing is wanted, it can be suggested based on what
+> tests have been performed.
 
-Alasdair is wanting to make it on the top of existing snapshots but I 
-haven't heard from him any specific argument, just generalized talks how 
-sharing code is good.
+O.K. I will post my test items and results on my website sometime
+soon.
 
-So, please start saying some specific nongeneralized ideas how do you 
-imagine to do it.
+> The key thing I'm looking for in Tested-By is independence from
+> the original developers.
 
-I.e. instead od saying "sharing code is good", download stuff from 
-http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel/ and 
-say *EXACTLY* which code (structures, functions...) you you want to share 
-with existing snapshots.
+I think so. I hope someone will do the test by posting my test items.
 
-Instead of saying "we treat all snapshots like objects with method tables" 
-look at actual method tables from in-kernel snapshots and my snapshots and 
-say *WHICH* methods exactly are you going to join.
-
---- then, we can discuss it and go somewhere. Abstract ideas about 
-software engineering make no sense at this stage.
-
-> If not, we can live without refactoring the existing snapshot code.
-> 
-> But surely supporting the shared implementation(s) on the top of the
-> existing snapshot code needs more refactoring. Jonathan, have you
-> already started to work on it?
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
-Mikulas
+Thanks,
+Ryo Tsuruta
