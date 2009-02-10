@@ -1,51 +1,51 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH]scsi_dh_rdac: Retry for Quiescence in Progress in rdac
-	device handler
-Date: Tue, 10 Feb 2009 20:44:50 +0000
-Message-ID: <1234298690.3268.58.camel@localhost.localdomain>
-References: <0D1E8821739E724A86F4D16902CE275C13FF9AFFD6@inbmail01.lsi.com>
+From: Joel Becker <Joel.Becker@oracle.com>
+Subject: Re: Bug? Determining the holders of partitions shadowed
+	by dm-multipath.
+Date: Tue, 10 Feb 2009 13:32:39 -0800
+Message-ID: <20090210213239.GA30270@mail.oracle.com>
+References: <20090210004951.GA4341@mail.oracle.com>
+	<16F7C86087BE0247B20562A9E6B07DC75BB5DAA6@excnysm95bagp.nysemail.nyenet>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C13FF9AFFD6@inbmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <16F7C86087BE0247B20562A9E6B07DC75BB5DAA6@excnysm95bagp.nysemail.nyenet>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, 2009-01-26 at 21:29 +0530, Chauhan, Vijay wrote:
-> During device discovery read capacity fails with 0x068b02 and sets the device size to 0. As a reason any I/O submitted to this path gets killed at sd_prep_fn with BLKPREP_KILL. This patch is to retry for 0x068b02. Please apply.
+On Tue, Feb 10, 2009 at 09:49:58AM -0500, Romanowski, John (OFT) wrote:
+> my sles10sp2 at 2.6.16.60-0.29-default doesn't have the /sys/block/.../holders but
+> I've used major:minor device numbers from commands
+> dmsetup ls
+> and
+> dmsetup deps
+> to resolve such device relationships.
 > 
-> From: Vijay Chauhan<vijay.chauhan@lsi.com>
-> 
-> This patch adds retry for Quiescence in Progress in rdac device handler.
-> 
-> Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
-> 
-> ---
-> --- linux-2.6.29-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig    2009-01-26 20:46:05.000000000 +0530
-> +++ linux-2.6.29-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c 2009-01-26 20:47:34.000000000 +0530
-> @@ -579,6 +579,11 @@ static int rdac_check_sense(struct scsi_
->                          * Power On, Reset, or Bus Device Reset, just retry.
->                          */
->                         return ADD_TO_MLQUEUE;
-> +               if (sense_hdr->asc == 0x8b && sense_hdr->ascq == 0x02)
-> +                       /*
-> +                        * Quiescence in progress , just retry.
-> +                        */
-> +                       return ADD_TO_MLQUEUE;
->                 break;
->         }
->         /* success just means we do not care what scsi-ml does */
+> A 'dmsetup ls' device number that isn't listed in 'dmsetup deps' device numbers is a top-level device. Example below: mproot-part1 (dev 253:3, a partition of mp device 253:2) isn't listed as a dependency of any device. Likewise each listed LVM volume isn't listed as a dependency of any device; example- rootvg-tmp 253:10
 
-This patch has all the tabs converted to spaces.  Please see 
+	Sure, but a /dev/sda2 won't show up in dmsetup output anywhere.
+That's kind of my point.
 
-Documentation/SubmittingPatches
-Documentation/email-clients.txt
+Joel
 
-for preventing this in future.
+-- 
 
-James
+Life's Little Instruction Book #198
 
+	"Feed a stranger's expired parking meter."
 
+Joel Becker
+Principal Software Developer
+Oracle
+E-mail: joel.becker@oracle.com
+Phone: (650) 506-8127
