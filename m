@@ -1,18 +1,17 @@
-From: "Romanowski, John (OFT)" <John.Romanowski@oft.state.ny.us>
-Subject: RE: Bug? Determining the holders of partitions shadowed
-	by dm-multipath.
-Date: Tue, 10 Feb 2009 20:14:11 -0500
-Message-ID: <16F7C86087BE0247B20562A9E6B07DC75BC1284D@excnysm95bagp.nysemail.nyenet>
-References: <20090210004951.GA4341@mail.oracle.com>
-	<16F7C86087BE0247B20562A9E6B07DC75BB5DAA6@excnysm95bagp.nysemail.nyenet>
-	<20090210213239.GA30270@mail.oracle.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: Re: Re: [Bugme-new] [Bug 12680] New: Not having a VIA
+	PadLock hardware incurs a long delay in probing on modules insertion
+	attempt.
+Date: Wed, 11 Feb 2009 20:28:20 +0100
+Message-ID: <499326D4.5060005@redhat.com>
+References: <bug-12680-10286@http.bugzilla.kernel.org/>	<20090209130536.9a7a87cd.akpm@linux-foundation.org>	<4992FC7E.3010207@orange.fr>
+	<20090211091647.6607aea4.akpm@linux-foundation.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090210213239.GA30270@mail.oracle.com>
-Content-Language: en-US
+In-Reply-To: <20090211091647.6607aea4.akpm@linux-foundation.org>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,64 +22,49 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: Valentin QUEQUET <v.quequet-techniques@orange.fr>, linux-crypto@vger.kernel.org, bugme-daemon@bugzilla.kernel.org
 List-Id: dm-devel.ids
 
-good point. sorry.
-The partition's parent's device number will be in the dmsetup deps list.
-/dev/sda2 is a partition; dmsetup deps will list its parent's, /dev/sda, =
-major:minor as a dependency of the mpath device .
+Andrew Morton wrote:
+> (cc dm-devel)
+> 
+> On Wed, 11 Feb 2009 17:27:42 +0100 Valentin QUEQUET <v.quequet-techniques@orange.fr> wrote:
+> 
+>> I've finally found why my computer seems to hang (pause) quite lengthy 
+>> when I boot Pristine Linux 2.6.29-rcX... instead of Pristine Linux 
+>> 2.6.28.4 (for example).
+>>
+>> The reason is that the cryptographic keys generation for the Device 
+>> Mapper takes longer with 2.6.29 than with 2.6.28 under certain 
+>> circumstances.
+> 
+> So it's device-mapper userspace?
 
-kludgy.
+No. cryptsetup (which is probably "device-mapper userspace" here) reads
+/dev/random only during luksFormat or during manipulating with keyslots
+(adding key for example).
 
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com]
-> On Behalf Of Joel Becker
-> Sent: Tuesday, February 10, 2009 4:33 PM
-> To: device-mapper development
-> Subject: Re: [dm-devel] Bug? Determining the holders of partitions
-> shadowed by dm-multipath.
->
-> On Tue, Feb 10, 2009 at 09:49:58AM -0500, Romanowski, John (OFT) wrote:
-> > my sles10sp2 at 2.6.16.60-0.29-default doesn't have the
-> /sys/block/.../holders but
-> > I've used major:minor device numbers from commands
-> > dmsetup ls
-> > and
-> > dmsetup deps
-> > to resolve such device relationships.
-> >
-> > A 'dmsetup ls' device number that isn't listed in 'dmsetup deps'
-> device numbers is a top-level device. Example below: mproot-part1 (dev
-> 253:3, a partition of mp device 253:2) isn't listed as a dependency of
-> any device. Likewise each listed LVM volume isn't listed as a
-> dependency of any device; example- rootvg-tmp 253:10
->
->       Sure, but a /dev/sda2 won't show up in dmsetup output anywhere.
-> That's kind of my point.
->
-> Joel
->
-> --
->
-> Life's Little Instruction Book #198
->
->       "Feed a stranger's expired parking meter."
->
-> Joel Becker
-> Principal Software Developer
-> Oracle
-> E-mail: joel.becker@oracle.com
-> Phone: (650) 506-8127
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+The situation you are talking about is when you have for example swap
+encrypted with random key. It is initscripts which owns /etc/crypttab
+and which just tell cryptsetup "use /dev/random as keyfile".
 
+Also initscripts are responsible for loading of random seed to 
+properly initialize RNG *before* this.
 
-This e-mail, including any attachments, may be confidential, privileged o=
-r otherwise legally protected. It is intended only for the addressee. If =
-you received this e-mail in error or from someone who was not authorized =
-to send it to you, do not disseminate, copy or otherwise use this e-mail =
-or its attachments.  Please notify the sender immediately by reply e-mail=
- and delete the e-mail from your system.
+Most distributions uses two steps - mount volume with /var
+(where is the random seed stored) and later mount encrypted volumes
+using random key.
+
+I do not know if the delay in new kernel is bug, but the problem
+with lack of entropy during system boot is "known" problem.
+(Imagine 128bit random key which use fast-generated key with only
+few random bits because of lack of entropy... better to not
+use encryption at all then use such key!)
+
+(if you use LUKS, the random key is generated during luksFormat and
+you do not need random data (entropy) on activation, you just need
+enter known passphrase to unlock keyslot with the volume key.)
+
+Milan
+--
+mbroz@redhat.com
