@@ -1,19 +1,29 @@
-From: "Allen, Jack" <Jack.Allen@mckesson.com>
-Subject: RE: Changing SAN vendors
-Date: Thu, 12 Feb 2009 18:03:28 -0600
-Message-ID: <4905EFD192EEDF4A9A19EEE98C32B7F70F3EB744@DBQV3005.na.corp.mckesson.com>
-References: <4905EFD192EEDF4A9A19EEE98C32B7F70EFB4A29@DBQV3005.na.corp.mckesson.com>
-	<4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Re: 2.6.28.2 & dm-snapshot or kcopyd Oops
+Date: Fri, 13 Feb 2009 01:41:47 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902130138400.26381@hs20-bc2-1.build.redhat.com>
+References: <200901231836184950432@163.com>,
+	<Pine.LNX.4.64.0901231514590.9877@hs20-bc2-1.build.redhat.com>,
+	<200901301800149019891@163.com>,
+	<Pine.LNX.4.64.0901301533390.5744@hs20-bc2-1.build.redhat.com>,
+	<200901311416111648168@163.com>,
+	<Pine.LNX.4.64.0902031505180.28433@hs20-bc2-1.build.redhat.com>,
+	<200902051113011850587@163.com>,
+	<Pine.LNX.4.64.0902051749150.5515@hs20-bc2-1.build.redhat.com>,
+	<Pine.LNX.4.64.0902052218040.5380@hs20-bc2-1.build.redhat.com>,
+	<200902061924107769776@163.com>,
+	<Pine.LNX.4.64.0902061815440.11986@hs20-bc2-1.build.redhat.com>,
+	<200902072041046488539@163.com>,
+	<Pine.LNX.4.64.0902090311340.28754@hs20-bc2-1.build.redhat.com>,
+	<200902101305353713189@163.com>,
+	<Pine.LNX.4.64.0902101832050.386@hs20-bc2-1.build.redhat.com>,
+	<Pine.LNX.4.64.0902110552550.20020@hs20-bc2-1.build.redhat.com>
+	<200902121131140773281@163.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1070111367=="
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
-References: <4905EFD192EEDF4A9A19EEE98C32B7F70EFB4A29@DBQV3005.na.corp.mckesson.com>
-	<4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com>
+In-Reply-To: <200902121131140773281@163.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,282 +33,64 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Jacky Kim <jcy_2008@163.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
+Hi
 
---===============1070111367==
-Content-class: urn:content-classes:message
-Content-class: urn:content-classes:message
-Content-Type: multipart/alternative;
-	boundary="----_=_NextPart_001_01C98D6E.7FE8B1ED"
+Few more questions:
+- do you write to the snapshots?
+- do you create/delete snapshots while the crash happens?
+- do all the snapshots have the same chunk size?
+- how many snapshots do you have?
 
-This is a multi-part message in MIME format.
+Mikulas
 
-------_=_NextPart_001_01C98D6E.7FE8B1ED
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-Hello:
-    Still looking for an answer for RH AS 4.7.
-=20
-    No body has any ideas?
-=20
------
-Thanks:
-Jack Allen
-
-  _____ =20
-
-From: Allen, Jack=20
-Sent: Thursday, February 05, 2009 5:03 PM
-To: device-mapper development
-Subject: RE: [dm-devel] Changing SAN vendors
-
-
-=20
-
-
-  _____ =20
-
-From: Allen, Jack=20
-Sent: Tuesday, February 03, 2009 6:45 PM
-To: dm-devel@redhat.com
-Subject: [dm-devel] Changing SAN vendors
-
-
-
-Hello:=20
-        Our IT group has decided to switch SAN Vendors. The switch over
-for a couple of systems has gone fine, but I have some questions on =
-some
-things that have changed.
-
-        First a little information on how the switch over is taking
-place. The old SAN is a EMC CX and the new SAN is a HP XP. The system =
-is
-connected to a SAN switch which is then connected to both SANs. We shut
-down the system, and then rezone the switch/SAN to access the XP now
-instead of the CX. The XP passes through all the I/O request to the CX.
-When we know the data can be seen correctly, they do some commands that
-copies the data from the CX to the XP and then the I/O takes place on
-the XP from that point on. All this works fine.
-
-        When only connected to the CX, I had /dev/mapper/mpath1 and
-/dev/mapper/mpath2. After the reboot and rezoning /dev/mapper/mpath1 =
-and
-/dev/mapper/mpath2 are gone and /dev/mapper/mpath3 and
-/dev/mapper/mpath4 are there. LVM finds the Volume Group and all =
-Logical
-Volumes with no problem.
-
-        My question is what do I have to change in some configuration
-file or what ever to make /dev/mapper/mpath1 and /dev/mapper/mpath2 be
-in place instead of /dev/mapper/mpath3 and /dev/mapper/mpath4?
-
-        I know this is not creating any real problem, but it is kind of
-misleading, because it looks like 2 paths are missing.
-
------=20
-Thanks=20
-Jack Allen=20
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-
-    Well no one replied, so I will answer my on question in hopes that
-it may help someone else. But I will ask another question and hope
-someone will reply to it, because I have goggled and can not find the
-answers.
-
-    The Answer: The friendly names are kept in
-/var/lib/multipath/bindings. Because the WWID changed multipathd =
-created
-new entries. All I had to do was remove the entries for the old WWID =
-and
-change the friendly name for the new WWID. Simple, but hard to locate
-the file when no documents I could find to begin with tells you that is
-where the friendly names are kept.
-
-    The Question: The first system was running RH EL 5.2, but the next
-system is running RH AS 4.7. There was no /var/lib/multipath directory,
-therefore no bindings file. So I created both, and entered mpath0 and
-mpath1 with the WWID, but it still uses mpath2 and mpath3. I know
-multipathd are different version between the two RH Release. Is there
-something else I need to change on the RH AS 4.7 system to make it use
-the mpath0 and mpath1 names?
-
------
-
-Thanks:
-
-Jack Allen
-
-=20
-
-
-------_=_NextPart_001_01C98D6E.7FE8B1ED
-Content-Type: text/html;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
-
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<HTML><HEAD><TITLE>Changing SAN vendors</TITLE>
-
-<META content=3D"MSHTML 6.00.2900.3492" name=3DGENERATOR></HEAD>
-<BODY>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D863130200-13022009><FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>Hello:</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN =
-class=3D863130200-13022009>&nbsp;&nbsp;&nbsp; <FONT=20
-face=3DArial color=3D#800000 size=3D2>Still looking for an answer for =
-RH AS=20
-4.7.</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D863130200-13022009><FONT =
-face=3DArial=20
-color=3D#800000 size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN =
-class=3D863130200-13022009>&nbsp;&nbsp;&nbsp; <FONT=20
-face=3DArial color=3D#800000 size=3D2>No body has any =
-ideas?</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D863130200-13022009><FONT =
-face=3DArial=20
-color=3D#800000 size=3D2></FONT></SPAN>&nbsp;</DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D863130200-13022009><FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>-----</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D863130200-13022009><FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>Thanks:</FONT></SPAN></DIV>
-<DIV dir=3Dltr align=3Dleft><SPAN class=3D863130200-13022009><FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>Jack Allen</FONT></SPAN></DIV><BR>
-<DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr align=3Dleft>
-<HR tabIndex=3D-1>
-<FONT face=3DTahoma size=3D2><B>From:</B> Allen, Jack <BR><B>Sent:</B> =
-Thursday,=20
-February 05, 2009 5:03 PM<BR><B>To:</B> device-mapper=20
-development<BR><B>Subject:</B> RE: [dm-devel] Changing SAN=20
-vendors<BR></FONT><BR></DIV>
-<DIV></DIV>
-<DIV dir=3Dltr align=3Dleft><FONT face=3DArial color=3D#800000=20
-size=3D2></FONT>&nbsp;</DIV><FONT face=3DArial color=3D#800000 =
-size=3D2></FONT><BR>
-<DIV class=3DOutlookMessageHeader lang=3Den-us dir=3Dltr align=3Dleft>
-<HR tabIndex=3D-1>
-<FONT face=3DTahoma size=3D2><B>From:</B> Allen, Jack <BR><B>Sent:</B> =
-Tuesday,=20
-February 03, 2009 6:45 PM<BR><B>To:</B> =
-dm-devel@redhat.com<BR><B>Subject:</B>=20
-[dm-devel] Changing SAN vendors<BR></FONT><BR></DIV>
-<DIV></DIV><!-- Converted from text/rtf format -->
-<P><FONT face=3DArial size=3D2>Hello:</FONT>=20
-<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT face=3DArial =
-size=3D2>Our IT=20
-group has decided to switch SAN Vendors. The switch over for a couple =
-of systems=20
-has gone fine, but I have some questions on some things that have=20
-changed.</FONT></P>
-<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT face=3DArial =
-size=3D2>First a=20
-little information on how the switch over is taking place. The old SAN =
-is a EMC=20
-CX and the new SAN is a HP XP. The system is connected to a SAN switch =
-which is=20
-then connected to both SANs. We shut down the system, and then rezone =
-the=20
-switch/SAN to access the XP now instead of the CX. The XP passes =
-through all the=20
-I/O request to the CX. When we know the data can be seen correctly, =
-they do some=20
-commands that copies the data from the CX to the XP and then the I/O =
-takes place=20
-on the XP from that point on. All this works fine.</FONT></P>
-<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT face=3DArial =
-size=3D2>When only=20
-connected to the CX, I had /dev/mapper/mpath1 and /dev/mapper/mpath2. =
-After the=20
-reboot and rezoning /dev/mapper/mpath1 and /dev/mapper/mpath2 are gone =
-and=20
-/dev/mapper/mpath3 and /dev/mapper/mpath4 are there. LVM finds the =
-Volume Group=20
-and all Logical Volumes with no problem.</FONT></P>
-<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT face=3DArial =
-size=3D2>My=20
-question is what do I have to change in some configuration file or what =
-ever to=20
-make /dev/mapper/mpath1 and /dev/mapper/mpath2 be in place instead of=20
-/dev/mapper/mpath3 and /dev/mapper/mpath4?</FONT></P>
-<P>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <FONT face=3DArial =
-size=3D2>I know=20
-this is not creating any real problem, but it is kind of misleading, =
-because it=20
-looks like 2 paths are missing.</FONT></P>
-<P><FONT face=3DArial size=3D2>-----</FONT> <BR><FONT face=3DArial=20
-size=3D2>Thanks</FONT> <BR><FONT face=3DArial size=3D2>Jack=20
-Allen</FONT>&nbsp;<BR><SPAN class=3D295395121-05022009><FONT =
-face=3DArial=20
-color=3D#800000=20
-size=3D2>=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D</FONT></SPA=
-N></P>
-<P><SPAN class=3D295395121-05022009>&nbsp;&nbsp;&nbsp;&nbsp;<FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>Well no one replied,&nbsp;so I will answer my =
-on question=20
-in hopes that it may help someone else. But I will ask another question =
-and hope=20
-someone will reply to it,&nbsp;because I have goggled and can not find =
-the=20
-answers.</FONT></SPAN></P>
-<P><SPAN class=3D295395121-05022009>&nbsp;&nbsp;&nbsp;&nbsp;<FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>The Answer: The</FONT>&nbsp;<FONT face=3DArial =
-color=3D#800000=20
-size=3D2>friendly names are kept in /var/lib/multipath/bindings. =
-Because the WWID=20
-changed multipathd created new entries. All I had to do was remove the =
-entries=20
-for the old WWID and change the friendly name for the new WWID. Simple, =
-but hard=20
-to locate the file when no documents I could find to begin with tells =
-you that=20
-is where the friendly names are kept.</FONT></SPAN></P>
-<P><SPAN class=3D295395121-05022009>&nbsp;&nbsp;&nbsp; <FONT =
-face=3DArial=20
-color=3D#800000 size=3D2>The Question: The first system was running RH =
-EL 5.2, but=20
-the next system is running RH AS 4.7. There was no /var/lib/multipath =
-directory,=20
-therefore no bindings file. So I created both, and entered mpath0 and =
-mpath1=20
-with the WWID, but it still uses mpath2 and mpath3. I know multipathd =
-are=20
-different version between the two RH Release. Is there something else I =
-need to=20
-change on the RH AS 4.7 system to make it use the mpath0 and mpath1=20
-names?</FONT></SPAN></P>
-<P><SPAN class=3D295395121-05022009><FONT face=3DArial color=3D#800000=20
-size=3D2>-----</FONT></SPAN></P>
-<P><SPAN class=3D295395121-05022009><FONT face=3DArial color=3D#800000=20
-size=3D2>Thanks:</FONT></SPAN></P>
-<P><SPAN class=3D295395121-05022009><FONT face=3DArial color=3D#800000 =
-size=3D2>Jack=20
-Allen</FONT></SPAN></P>
-<P><SPAN class=3D295395121-05022009></SPAN>&nbsp;</P></BODY></HTML>
-
-------_=_NextPart_001_01C98D6E.7FE8B1ED--
-
-
---===============1070111367==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1070111367==--
+> Hi
+> 
+> With the two patches of yesterday, the latest debug infomation is as follow:
+> 
+> [  197.073630] ------------[ cut here ]------------
+> [  197.073633] kernel BUG at drivers/md/dm-snap.c:405!
+> [  197.073635] invalid opcode: 0000 [#1] SMP 
+> [  197.073637] last sysfs file: /sys/devices/virtual/block/dm-6/dev
+> [  197.073639] Modules linked in: iscsi_trgt arcmsr bonding e1000
+> [  197.073642] 
+> [  197.073645] Pid: 4268, comm: kcopyd Not tainted (2.6.28.2-dm #8) S5000PSL
+> [  197.073647] EIP: 0060:[<c03c5da8>] EFLAGS: 00010246 CPU: 2
+> [  197.073653] EIP is at free_pending_exception+0x88/0x90
+> [  197.073654] EAX: c05a0ce8 EBX: f55449f0 ECX: 00000282 EDX: ef3056d0
+> [  197.073656] ESI: f6c65bc0 EDI: 00000000 EBP: ef2a34e0 ESP: ef3d5ecc
+> [  197.073657]  DS: 007b ES: 007b FS: 00d8 GS: 0000 SS: 0068
+> [  197.073659] Process kcopyd (pid: 4268, ti=ef3d4000 task=f6d77bc0 task.ti=ef3d4000)
+> [  197.073660] Stack:
+> [  197.073661]  f55449f0 00000000 c03c6918 f75fbf70 ef2843c8 f75fbec0 00000000 ef2409c0
+> [  197.073665]  00000001 00000001 ef2a34e0 c03c82ca c03c6a20 002689a4 00000000 000030d8
+> [  197.073668]  00000000 f75fbf2c ef2a34e0 f75fbec0 eeded3c0 c03c69e2 ef2a34e0 eeded418
+> [  197.073672] Call Trace:
+> [  197.073674]  [<c03c6918>] pending_complete+0x2d8/0x360
+> [  197.073677]  [<c03c82ca>] persistent_commit+0x34a/0x380
+> [  197.073679]  [<c03c6a20>] commit_callback+0x0/0x40
+> [  197.073681]  [<c03c69e2>] copy_callback+0x42/0x80
+> [  197.073683]  [<c03c69a0>] copy_callback+0x0/0x80
+> [  197.073686]  [<c03c1858>] run_complete_job+0x108/0x140
+> [  197.073688]  [<c03c119c>] process_jobs+0x4c/0xe0
+> [  197.073690]  [<c03c1750>] run_complete_job+0x0/0x140
+> [  197.073692]  [<c03c1230>] do_work+0x0/0x50
+> [  197.073694]  [<c03c124e>] do_work+0x1e/0x50
+> [  197.073696]  [<c012ef32>] run_workqueue+0x72/0x100
+> [  197.073700]  [<c0132570>] prepare_to_wait+0x20/0x60
+> [  197.073703]  [<c012f840>] worker_thread+0x0/0xb0
+> [  197.073705]  [<c012f8b9>] worker_thread+0x79/0xb0
+> [  197.073707]  [<c01323d0>] autoremove_wake_function+0x0/0x50
+> [  197.073710]  [<c012f840>] worker_thread+0x0/0xb0
+> [  197.073712]  [<c01320d2>] kthread+0x42/0x70
+> [  197.073713]  [<c0132090>] kthread+0x0/0x70
+> [  197.073715]  [<c0103eff>] kernel_thread_helper+0x7/0x18
+> [  197.073718] Code: 04 89 42 04 89 10 c7 41 04 00 02 20 00 c7 43 40 00 01 10 00 fe 05 94 41 65 c0 8b 56 48 89 d8 e8 3f 30 d8 ff f0 ff 4e 4c 5b 5e c3 <0f> 0b eb fe 8d 74 26 00 55 89 c5 57 56 53 83 ec 0c 8b 75 30 8b 
+> [  197.073737] EIP: [<c03c5da8>] free_pending_exception+0x88/0x90 SS:ESP 0068:ef3d5ecc
+> [  197.073754] ---[ end trace beb1c34d6186bec5 ]---
+> 
+> Jacky Kim
+> .
