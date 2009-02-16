@@ -1,21 +1,13 @@
-From: "Allen, Jack" <Jack.Allen@mckesson.com>
-Subject: RE: Changing SAN vendors
-Date: Fri, 13 Feb 2009 16:47:32 -0600
-Message-ID: <4905EFD192EEDF4A9A19EEE98C32B7F70F48AE12@DBQV3005.na.corp.mckesson.com>
-References: <4905EFD192EEDF4A9A19EEE98C32B7F70EFB4A29@DBQV3005.na.corp.mckesson.com>	<4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com><4905EFD192EEDF4A9A19EEE98C32B7F70F3EB744@DBQV3005.na.corp.mckesson.com>
-	<49954B5F.5080209@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2]: save/restore bio vector (version 2)
+Date: Sun, 15 Feb 2009 21:23:39 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902152118330.18362@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0902042146170.8695@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <49954B5F.5080209@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <49954B5F.5080209@redhat.com>
-References: <4905EFD192EEDF4A9A19EEE98C32B7F70EFB4A29@DBQV3005.na.corp.mckesson.com>	<4905EFD192EEDF4A9A19EEE98C32B7F70F0DC22D@DBQV3005.na.corp.mckesson.com><4905EFD192EEDF4A9A19EEE98C32B7F70F3EB744@DBQV3005.na.corp.mckesson.com>
-	<49954B5F.5080209@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0902042146170.8695@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,55 +17,102 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmr@redhat.com, device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Pete Zaitcev <zaitcev@redhat.com>, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-=20
+Hi
 
------Original Message-----
-From: Bryn M. Reeves [mailto:bmr@redhat.com]=20
-Sent: Friday, February 13, 2009 5:29 AM
-To: device-mapper development
-Subject: Re: [dm-devel] Changing SAN vendors
+I've made an update on this patch that consumes 4 times less memory.
 
-Allen, Jack wrote:
-> Hello:
->     Still looking for an answer for RH AS 4.7.
-> =20
->     No body has any ideas?
+This is accomplished by not saving the page (as suggested by Pete Zaitcev 
+<zaitcev@redhat.com>) and using 16-bit entries if the page size is less 
+than 16 bits.
 
-The mpath names change because the XP is exporting the storage with=20
-new WWIDs (multipath-tools name binding is all based on LUN WWIDs).=20
-The bindings are stored in a file that is normally automatically=20
-generated and maintained.
+Mikulas
 
-I think in your stiuation if you need to preserve the old names, your=20
-best option is to manually edit the bindings file and copy it between=20
-the hosts that need to have a common view of the storage.
+On Wed, 4 Feb 2009, Mikulas Patocka wrote:
 
-The default location for the file is /var/lib/multipath/bindings,=20
-although if you have /var configured as a separate file system you=20
-should move it to /etc and configure the bindings_file option in=20
-multipath.conf to avoid problems when initialising multipath devices=20
-before /var is mounted.
+> Hi
+> 
+> This patch should fix bug 472796 in upstream kernel.
+> 
+> ---
 
-You could also take the steps that Tore suggested and configure=20
-multipath entries in multipath.conf to map the devices but unless you=20
-are happy with giving them new names this isn't going to work as the=20
-current multipath-tools will give undefined behaviour if you use=20
-"mpathN" style names for aliases defined in multipath.conf.
+Bio layer modifies the vector list when the request partially succeeds.
 
-Regards,
-Bryn.
+Device mapper saves and restores various fields in the bio, but it doesn't save
+the vector. So, when the block driver modifies the vector on partially succeeded
+request, dm-raid1 and dm-multipath will attempt to resubmit a bio that has
+mismatching bi_size and the size of vector. That will cause BUG() in the block
+layer.
 
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-Thanks.
+To make requests resubmittable in dm-raid1 and dm-multipath, we must save
+and restore the bio vector as well.
 
-I do have /var as a separate file system and as you said it may not be
-mounted when multipathd first starts. I will mv the bindings file to
-/etc and make the change in multipath.conf.
+To consume per-request memory, do not save the pages in a vector.
+Also, use only 16-bit field size if the page size is less than 65536.
 
------
-Thanks:
-Jack Allen
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-bio-record.h |   22 ++++++++++++++++++++++
+ 1 file changed, 22 insertions(+)
+
+Index: linux-2.6.29-rc3-devel/drivers/md/dm-bio-record.h
+===================================================================
+--- linux-2.6.29-rc3-devel.orig/drivers/md/dm-bio-record.h	2009-02-05 03:55:56.000000000 +0100
++++ linux-2.6.29-rc3-devel/drivers/md/dm-bio-record.h	2009-02-16 03:13:07.000000000 +0100
+@@ -16,30 +16,52 @@
+  * functions in this file help the target record and restore the
+  * original bio state.
+  */
++
++struct dm_bio_vec_details {
++#if PAGE_SIZE < 65536
++	__u16 bv_len;
++	__u16 bv_offset;
++#else
++	unsigned int bv_len;
++	unsigned int bv_offset;
++#endif
++};
++
+ struct dm_bio_details {
+ 	sector_t bi_sector;
+ 	struct block_device *bi_bdev;
+ 	unsigned int bi_size;
+ 	unsigned short bi_idx;
+ 	unsigned long bi_flags;
++	struct dm_bio_vec_details bi_io_vec[BIO_MAX_PAGES];
+ };
+ 
+ static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
+ {
++	unsigned i;
+ 	bd->bi_sector = bio->bi_sector;
+ 	bd->bi_bdev = bio->bi_bdev;
+ 	bd->bi_size = bio->bi_size;
+ 	bd->bi_idx = bio->bi_idx;
+ 	bd->bi_flags = bio->bi_flags;
++	for (i = 0; i < bio->bi_vcnt; i++) {
++		bd->bi_io_vec[i].bv_len = bio->bi_io_vec[i].bv_len;
++		bd->bi_io_vec[i].bv_offset = bio->bi_io_vec[i].bv_offset;
++	}
+ }
+ 
+ static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
+ {
++	unsigned i;
+ 	bio->bi_sector = bd->bi_sector;
+ 	bio->bi_bdev = bd->bi_bdev;
+ 	bio->bi_size = bd->bi_size;
+ 	bio->bi_idx = bd->bi_idx;
+ 	bio->bi_flags = bd->bi_flags;
++	for (i = 0; i < bio->bi_vcnt; i++) {
++		bio->bi_io_vec[i].bv_len = bd->bi_io_vec[i].bv_len;
++		bio->bi_io_vec[i].bv_offset = bd->bi_io_vec[i].bv_offset;
++	}
+ }
+ 
+ #endif
