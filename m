@@ -1,13 +1,32 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 1/2]: save/restore bio vector (version 2)
-Date: Sun, 15 Feb 2009 21:23:39 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902152118330.18362@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0902042146170.8695@hs20-bc2-1.build.redhat.com>
+Subject: Re: Re: 2.6.28.2 & dm-snapshot or kcopyd Oops
+Date: Mon, 16 Feb 2009 02:14:38 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902160213010.32560@hs20-bc2-1.build.redhat.com>
+References: <200901231836184950432@163.com>,
+	<Pine.LNX.4.64.0901231514590.9877@hs20-bc2-1.build.redhat.com>,
+	<200901301800149019891@163.com>,
+	<Pine.LNX.4.64.0901301533390.5744@hs20-bc2-1.build.redhat.com>,
+	<200901311416111648168@163.com>,
+	<Pine.LNX.4.64.0902031505180.28433@hs20-bc2-1.build.redhat.com>,
+	<200902051113011850587@163.com>,
+	<Pine.LNX.4.64.0902051749150.5515@hs20-bc2-1.build.redhat.com>,
+	<Pine.LNX.4.64.0902052218040.5380@hs20-bc2-1.build.redhat.com>,
+	<200902061924107769776@163.com>,
+	<Pine.LNX.4.64.0902061815440.11986@hs20-bc2-1.build.redhat.com>,
+	<200902072041046488539@163.com>,
+	<Pine.LNX.4.64.0902090311340.28754@hs20-bc2-1.build.redhat.com>,
+	<200902101305353713189@163.com>,
+	<Pine.LNX.4.64.0902101832050.386@hs20-bc2-1.build.redhat.com>,
+	<Pine.LNX.4.64.0902110552550.20020@hs20-bc2-1.build.redhat.com>,
+	<200902121131140773281@163.com>,
+	<Pine.LNX.4.64.0902130138400.26381@hs20-bc2-1.build.redhat.com>,
+	<Pine.LNX.4.64.0902130229040.2110@hs20-bc2-1.build.redhat.com>
+	<200902131912139165975@163.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0902042146170.8695@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <200902131912139165975@163.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,102 +36,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Pete Zaitcev <zaitcev@redhat.com>, Alasdair G Kergon <agk@redhat.com>
+To: Jacky Kim <jcy_2008@163.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
 
-I've made an update on this patch that consumes 4 times less memory.
 
-This is accomplished by not saving the page (as suggested by Pete Zaitcev 
-<zaitcev@redhat.com>) and using 16-bit entries if the page size is less 
-than 16 bits.
+On Fri, 13 Feb 2009, Jacky Kim wrote:
+
+> Hi,
+> 
+> 1. I test with the origin LV, and don't write to snapshots.
+> 2. I don't delete snapshots when copy big files to the origin LV, but do create snapshot sometimes.
+> 3. The snapshots have the same chunk size: 4KB or 64KB.
+> 4. It seems to work well with 1 snapshot. But it always crashes each time with 2 snapshots.
+> 5. I don't resize the origin device and the snapshots.
+> 
+> The latest debug information is as follows:
+
+Ohhh, the last patch from me was wrong, so it could produce a false 
+positive, so its result is unusable. Apply this on the top of it.
 
 Mikulas
 
-On Wed, 4 Feb 2009, Mikulas Patocka wrote:
-
-> Hi
-> 
-> This patch should fix bug 472796 in upstream kernel.
-> 
-> ---
-
-Bio layer modifies the vector list when the request partially succeeds.
-
-Device mapper saves and restores various fields in the bio, but it doesn't save
-the vector. So, when the block driver modifies the vector on partially succeeded
-request, dm-raid1 and dm-multipath will attempt to resubmit a bio that has
-mismatching bi_size and the size of vector. That will cause BUG() in the block
-layer.
-
-To make requests resubmittable in dm-raid1 and dm-multipath, we must save
-and restore the bio vector as well.
-
-To consume per-request memory, do not save the pages in a vector.
-Also, use only 16-bit field size if the page size is less than 65536.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
 ---
- drivers/md/dm-bio-record.h |   22 ++++++++++++++++++++++
- 1 file changed, 22 insertions(+)
+ drivers/md/dm-snap.c |    1 +
+ 1 file changed, 1 insertion(+)
 
-Index: linux-2.6.29-rc3-devel/drivers/md/dm-bio-record.h
+Index: linux-2.6.28-snap-debug/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm-bio-record.h	2009-02-05 03:55:56.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm-bio-record.h	2009-02-16 03:13:07.000000000 +0100
-@@ -16,30 +16,52 @@
-  * functions in this file help the target record and restore the
-  * original bio state.
-  */
-+
-+struct dm_bio_vec_details {
-+#if PAGE_SIZE < 65536
-+	__u16 bv_len;
-+	__u16 bv_offset;
-+#else
-+	unsigned int bv_len;
-+	unsigned int bv_offset;
-+#endif
-+};
-+
- struct dm_bio_details {
- 	sector_t bi_sector;
- 	struct block_device *bi_bdev;
- 	unsigned int bi_size;
- 	unsigned short bi_idx;
- 	unsigned long bi_flags;
-+	struct dm_bio_vec_details bi_io_vec[BIO_MAX_PAGES];
- };
+--- linux-2.6.28-snap-debug.orig/drivers/md/dm-snap.c	2009-02-16 08:09:22.000000000 +0100
++++ linux-2.6.28-snap-debug/drivers/md/dm-snap.c	2009-02-16 08:09:47.000000000 +0100
+@@ -874,6 +874,7 @@ static struct bio *put_pending_exception
+ 	pe->snap->store.check_pending_exception(&pe->snap->store, pe, __LINE__);
  
- static inline void dm_bio_record(struct dm_bio_details *bd, struct bio *bio)
- {
-+	unsigned i;
- 	bd->bi_sector = bio->bi_sector;
- 	bd->bi_bdev = bio->bi_bdev;
- 	bd->bi_size = bio->bi_size;
- 	bd->bi_idx = bio->bi_idx;
- 	bd->bi_flags = bio->bi_flags;
-+	for (i = 0; i < bio->bi_vcnt; i++) {
-+		bd->bi_io_vec[i].bv_len = bio->bi_io_vec[i].bv_len;
-+		bd->bi_io_vec[i].bv_offset = bio->bi_io_vec[i].bv_offset;
-+	}
- }
+ 	primary_pe = pe->primary_pe;
++	pe->primary_pe = NULL;
  
- static inline void dm_bio_restore(struct dm_bio_details *bd, struct bio *bio)
- {
-+	unsigned i;
- 	bio->bi_sector = bd->bi_sector;
- 	bio->bi_bdev = bd->bi_bdev;
- 	bio->bi_size = bd->bi_size;
- 	bio->bi_idx = bd->bi_idx;
- 	bio->bi_flags = bd->bi_flags;
-+	for (i = 0; i < bio->bi_vcnt; i++) {
-+		bio->bi_io_vec[i].bv_len = bd->bi_io_vec[i].bv_len;
-+		bio->bi_io_vec[i].bv_offset = bd->bi_io_vec[i].bv_offset;
-+	}
- }
- 
- #endif
+ 	if (primary_pe) {
+ 		if (atomic_read(&primary_pe->ref_count) <= 0 || primary_pe->magic != 0x12345678) {
