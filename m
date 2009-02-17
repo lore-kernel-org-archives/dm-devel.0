@@ -1,50 +1,62 @@
-From: Johannes Weiner <hannes@cmpxchg.org>
-Subject: [patch 4/7] md: use kzfree()
-Date: Tue, 17 Feb 2009 19:26:19 +0100
-Message-ID: <20090217184135.997082882@cmpxchg.org>
-References: <20090217182615.897042724@cmpxchg.org>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline; filename=md-use-kzfree.patch
-Sender: owner-linux-mm@kvack.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Cc: Pekka Enberg <penberg@cs.helsinki.fi>, Chas Williams <chas@cmf.nrl.navy.mil>, Evgeniy Polyakov <johnpol@2ka.mipt.ru>, linux-mm@kvack.org, linux-kernel@vger.kernel.org, Alasdair Kergon <dm-devel@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: A suggestion to preserve bio vector
+Date: Tue, 17 Feb 2009 17:32:47 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902171707001.28612@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Use kzfree() instead of memset() + kfree().
+Hi
 
-Signed-off-by: Johannes Weiner <hannes@cmpxchg.org>
-Reviewed-by: Pekka Enberg <penberg@cs.helsinki.fi>
-Cc: Alasdair Kergon <dm-devel@redhat.com>
----
- drivers/md/dm-crypt.c |    6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+We have found a bio bug in device mapper raid1 and multipath.
 
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -1137,8 +1137,7 @@ bad_ivmode:
- 	crypto_free_ablkcipher(tfm);
- bad_cipher:
- 	/* Must zero key material before freeing */
--	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
--	kfree(cc);
-+	kzfree(cc);
- 	return -EINVAL;
- }
- 
-@@ -1164,8 +1163,7 @@ static void crypt_dtr(struct dm_target *
- 	dm_put_device(ti, cc->dev);
- 
- 	/* Must zero key material before freeing */
--	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
--	kfree(cc);
-+	kzfree(cc);
- }
- 
- static int crypt_map(struct dm_target *ti, struct bio *bio,
+When processing a request, dm-raid1 and dm-multipath record the fields 
+bi_sector, bi_bdev, bi_size, bi_idx, bi_flags. If the bio fails, it 
+restores these fields and resubmits the same bio to the other device.
 
+The problem is that when the driver reports partial completions with 
+__blk_end_request having nr_bytes less than the total request size, the 
+bio layer will patch the bi_sector, bi_size and bio vector to reflect the 
+progress.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+If the request later fails, device mapper will resubmit the request to the 
+other device --- but the bio vector was modified, this new request has 
+mismatching bi_size and total request length, and it causes crashes on 
+BUG().
+
+Could it be possible to modify the bio layer so that it doesn't modify the 
+bio vector? Does anything need to modify the vector while the request is 
+being processed?
+
+There are alternate approaches, but they are not as good:
+
+- copy and restore the vector for each request in dm-raid1 and 
+dm-multipath - needless memory allocation and performance degradation per 
+request.
+
+- when request fails, resubmit only that part that reflects the failed 
+data. - this would need to recheck all drivers that handle bios that they 
+produce sensible bios on errors (if we change semantics from "bio contains 
+junk on error" to "bio must reflect progress on error", this would need 
+extensive review). Also, there's an experimental patch on device mapper 
+that makes it to share bio vector when splitting the request to multiple 
+targets (it saves memory and improves performance) and this approach would 
+break the patch.
+
+So, redefine semantics to "bio vector is not modified" looks like a best 
+solution to me. I'd like to know what do you think about it.
+
+Mikulas
