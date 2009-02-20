@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 10 of 17]
-	dm-exception-stores-populate-cache-on-commit.patch
-Date: Fri, 20 Feb 2009 17:24:20 -0600
-Message-ID: <1235172260.24593.39.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH 11 of 17]
+	dm-exception-store-add-lookup-to-API.patch
+Date: Fri, 20 Feb 2009 17:26:08 -0600
+Message-ID: <1235172368.24593.41.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -20,57 +20,165 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The 'resume' exception store function is now in place to
-load the exception store type's caches on startup.  However,
-we still need to continue to populate the caches as
-new exceptions are committed.  This patch takes care of
-that.
+Now that the exception store implementations are capable of
+caching the exceptions on their own, we need a new function
+added to the API to allow us to lookup the exceptions.
+
+Adding 'lookup_exception' to the exception store API.
 
 RFC-by: Jonathan Brassow <jbrassow@redhat.com>
 
+Index: linux-2.6/drivers/md/dm-exception-store.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-exception-store.h
++++ linux-2.6/drivers/md/dm-exception-store.h
+@@ -58,6 +58,16 @@ struct dm_exception_store_type {
+ 				  void *callback_context);
+ 
+ 	/*
++	 * Look up an exception.  For certain exception stores,
++	 * this function /may/ block.  The caller must specify whether
++	 * they can tolerate this.  If the function would block and the
++	 * user specified can_block=0, -EWOULDBLK will be returned.
++	 */
++	int (*lookup_exception) (struct dm_exception_store *store,
++				 struct dm_exception **e,
++				 chunk_t old, int can_block);
++
++	/*
+ 	 * The snapshot is invalid, note this in the metadata.
+ 	 */
+ 	void (*drop_snapshot) (struct dm_exception_store *store);
 Index: linux-2.6/drivers/md/dm-snap-persistent.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap-persistent.c
 +++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -655,6 +655,15 @@ static void persistent_commit_exception(
- 	write_exception(ps, ps->current_committed++, &de);
+@@ -711,6 +711,17 @@ static void persistent_commit_exception(
+ 	ps->callback_count = 0;
+ }
  
- 	/*
-+	 * We are safe to add the exception to our cache before we
-+	 * issue the callbacks.  If we fail to allocate the memory
-+	 * to put it in the cache though, the callbacks will have to
-+	 * report the failure.
-+	 */
-+	if (add_exception(store, de.old_chunk, de.new_chunk))
-+		ps->valid = 0;
++static int persistent_lookup_exception(struct dm_exception_store *store,
++				       struct dm_exception **e,
++				       chunk_t old, int can_block)
++{
++	struct pstore *ps = get_info(store);
 +
-+	/*
- 	 * Add the callback to the back of the array.  This code
- 	 * is the only place where the callback array is
- 	 * manipulated, and we know that it will never be called
++	*e = dm_lookup_exception(ps->table, old);
++
++	return 0;
++}
++
+ static void persistent_drop_snapshot(struct dm_exception_store *store)
+ {
+ 	struct pstore *ps = get_info(store);
+@@ -803,6 +814,7 @@ static struct dm_exception_store_type _p
+ 	.read_metadata = persistent_read_metadata,
+ 	.prepare_exception = persistent_prepare_exception,
+ 	.commit_exception = persistent_commit_exception,
++	.lookup_exception = persistent_lookup_exception,
+ 	.drop_snapshot = persistent_drop_snapshot,
+ 	.fraction_full = persistent_fraction_full,
+ 	.status = persistent_status,
+@@ -817,6 +829,7 @@ static struct dm_exception_store_type _p
+ 	.read_metadata = persistent_read_metadata,
+ 	.prepare_exception = persistent_prepare_exception,
+ 	.commit_exception = persistent_commit_exception,
++	.lookup_exception = persistent_lookup_exception,
+ 	.drop_snapshot = persistent_drop_snapshot,
+ 	.fraction_full = persistent_fraction_full,
+ 	.status = persistent_status,
 Index: linux-2.6/drivers/md/dm-snap-transient.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap-transient.c
 +++ linux-2.6/drivers/md/dm-snap-transient.c
-@@ -77,7 +77,20 @@ static void transient_commit_exception(s
- 				       void (*callback) (void *, int success),
- 				       void *callback_context)
- {
--	/* Just succeed */
-+	struct transient_c *tc = store->context;
-+	struct dm_exception *new;
-+
-+	new = dm_alloc_exception(tc->table);
-+	if (!new) {
-+		callback(callback_context, 0);
-+		return;
-+	}
-+
-+	new->old_chunk = e->old_chunk;
-+	new->new_chunk = e->new_chunk;
-+
-+	dm_insert_exception(tc->table, new);
-+
+@@ -94,6 +94,17 @@ static void transient_commit_exception(s
  	callback(callback_context, 1);
  }
+ 
++static int transient_lookup_exception(struct dm_exception_store *store,
++				      struct dm_exception **e,
++				      chunk_t old, int can_block)
++{
++	struct transient_c *tc = store->context;
++
++	*e = dm_lookup_exception(tc->table, old);
++
++	return 0;
++}
++
+ static void transient_fraction_full(struct dm_exception_store *store,
+ 				    sector_t *numerator, sector_t *denominator)
+ {
+@@ -165,6 +176,7 @@ static struct dm_exception_store_type _t
+ 	.read_metadata = transient_read_metadata,
+ 	.prepare_exception = transient_prepare_exception,
+ 	.commit_exception = transient_commit_exception,
++	.lookup_exception = transient_lookup_exception,
+ 	.fraction_full = transient_fraction_full,
+ 	.status = transient_status,
+ };
+@@ -178,6 +190,7 @@ static struct dm_exception_store_type _t
+ 	.read_metadata = transient_read_metadata,
+ 	.prepare_exception = transient_prepare_exception,
+ 	.commit_exception = transient_commit_exception,
++	.lookup_exception = transient_lookup_exception,
+ 	.fraction_full = transient_fraction_full,
+ 	.status = transient_status,
+ };
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -994,7 +994,7 @@ static int snapshot_map(struct dm_target
+ {
+ 	struct dm_exception *e;
+ 	struct dm_snapshot *s = ti->private;
+-	int r = DM_MAPIO_REMAPPED;
++	int rtn, r = DM_MAPIO_REMAPPED;
+ 	chunk_t chunk;
+ 	struct dm_snap_pending_exception *pe = NULL;
+ 
+@@ -1015,7 +1015,15 @@ static int snapshot_map(struct dm_target
+ 	}
+ 
+ 	/* If the block is already remapped - use that, else remap it */
+-	e = dm_lookup_exception(s->complete, chunk);
++	rtn = s->store->type->lookup_exception(s->store, &e, chunk, 0);
++	if (rtn) {
++		/*
++		 * Could be -EWOULDBLOCK, but we don't handle that yet
++		 * and there are currently no exception store
++		 * implementations that would require us to.
++		 */
++		BUG();
++	}
+ 	if (e) {
+ 		remap_exception(s, e, bio, chunk);
+ 		goto out_unlock;
+@@ -1134,7 +1142,7 @@ static int snapshot_status(struct dm_tar
+  *---------------------------------------------------------------*/
+ static int __origin_write(struct list_head *snapshots, struct bio *bio)
+ {
+-	int r = DM_MAPIO_REMAPPED, first = 0;
++	int rtn, r = DM_MAPIO_REMAPPED, first = 0;
+ 	struct dm_snapshot *snap;
+ 	struct dm_exception *e;
+ 	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
+@@ -1168,7 +1176,16 @@ static int __origin_write(struct list_he
+ 		 * ref_count is initialised to 1 so pending_complete()
+ 		 * won't destroy the primary_pe while we're inside this loop.
+ 		 */
+-		e = dm_lookup_exception(snap->complete, chunk);
++		rtn = snap->store->type->lookup_exception(snap->store, &e,
++							  chunk, 0);
++		if (rtn) {
++			/*
++			 * Could be -EWOULDBLOCK, but we don't handle that yet
++			 * and there are currently no exception store
++			 * implementations that would require us to.
++			 */
++			BUG();
++		}
+ 		if (e)
+ 			goto next_snapshot;
  
