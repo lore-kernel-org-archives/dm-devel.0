@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 12/14] barriers
-Date: Mon, 23 Feb 2009 14:22:36 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902231422280.23293@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 13/14] barriers
+Date: Mon, 23 Feb 2009 14:22:48 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902231422390.23293@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -18,149 +18,184 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-From mbroz@redhat.com Thu Jan  8 11:14:02 2009
-Date: Thu, 08 Jan 2009 17:13:12 +0100
-From: Milan Broz <mbroz@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-To: device-mapper development <dm-devel@redhat.com>
-Subject: [dm-devel] [PATCH 1/4] dm-core: remove current partial barrier implementation
+Rework helper thread.
 
-Prepare for full barrier implementation - remove the simple one
+IO may be submitted to a worker thread with queue_io().
+queue_io() sets DMF_BLOCK_IO so that all further IO goes to the thread.
+When the thread finishes its work, it clears DMF_BLOCK_IO and from this point
+on, requests are submitted from dm_request again.
 
-Signed-off-by: Milan Broz <mbroz@redhat.com>
+Add new flag DMF_BLOCK_FOR_SUSPEND that is set when the IO needs to be blocked
+because of an ongoing suspend (DMF_BLOCK_IO had this meaning before this patch).
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-linear.c        |    1 -
- drivers/md/dm-table.c         |   19 -------------------
- drivers/md/dm.c               |   15 ++++++++++-----
- drivers/md/dm.h               |    1 -
- include/linux/device-mapper.h |    1 -
- 5 files changed, 10 insertions(+), 27 deletions(-)
+ drivers/md/dm.c |   77 +++++++++++++++++++++++++-------------------------------
+ 1 file changed, 35 insertions(+), 42 deletions(-)
 
-Index: linux-2.6.29-rc3-devel/drivers/md/dm-linear.c
+Index: linux-2.6.29-rc6-devel/drivers/md/dm.c
 ===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm-linear.c	2009-02-05 05:33:47.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm-linear.c	2009-02-05 05:33:52.000000000 +0100
-@@ -142,7 +142,6 @@ static struct target_type linear_target 
- 	.status = linear_status,
- 	.ioctl  = linear_ioctl,
- 	.merge  = linear_merge,
--	.features = DM_TARGET_SUPPORTS_BARRIERS,
- };
+--- linux-2.6.29-rc6-devel.orig/drivers/md/dm.c	2009-02-23 16:27:41.000000000 +0100
++++ linux-2.6.29-rc6-devel/drivers/md/dm.c	2009-02-23 17:55:37.000000000 +0100
+@@ -90,11 +90,12 @@ union map_info *dm_get_mapinfo(struct bi
+  * Bits for the md->flags field.
+  */
+ #define DMF_BLOCK_IO 0
+-#define DMF_SUSPENDED 1
+-#define DMF_FROZEN 2
+-#define DMF_FREEING 3
+-#define DMF_DELETING 4
+-#define DMF_NOFLUSH_SUSPENDING 5
++#define DMF_BLOCK_FOR_SUSPEND 1
++#define DMF_SUSPENDED 2
++#define DMF_FROZEN 3
++#define DMF_FREEING 4
++#define DMF_DELETING 5
++#define DMF_NOFLUSH_SUSPENDING 6
  
- int __init dm_linear_init(void)
-Index: linux-2.6.29-rc3-devel/drivers/md/dm-table.c
-===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm-table.c	2009-02-05 05:33:48.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm-table.c	2009-02-05 05:33:52.000000000 +0100
-@@ -52,8 +52,6 @@ struct dm_table {
- 	sector_t *highs;
- 	struct dm_target *targets;
- 
--	unsigned barriers_supported:1;
+ /*
+  * Work processed by per-device workqueue.
+@@ -435,21 +436,15 @@ static void end_io_acct(struct dm_io *io
+ /*
+  * Add the bio to the list of deferred io.
+  */
+-static int queue_io(struct mapped_device *md, struct bio *bio)
++static void queue_io(struct mapped_device *md, struct bio *bio)
+ {
+ 	down_write(&md->io_lock);
 -
- 	/*
- 	 * Indicates the rw permissions for the new logical
- 	 * device.  This should be a combination of FMODE_READ
-@@ -240,7 +238,6 @@ int dm_table_create(struct dm_table **re
- 
- 	INIT_LIST_HEAD(&t->devices);
- 	atomic_set(&t->holders, 0);
--	t->barriers_supported = 1;
- 
- 	if (!num_targets)
- 		num_targets = KEYS_PER_NODE;
-@@ -741,10 +738,6 @@ int dm_table_add_target(struct dm_table 
- 	/* FIXME: the plan is to combine high here and then have
- 	 * the merge fn apply the target level restrictions. */
- 	combine_restrictions_low(&t->limits, &tgt->limits);
+-	if (!test_bit(DMF_BLOCK_IO, &md->flags)) {
+-		up_write(&md->io_lock);
+-		return 1;
+-	}
 -
--	if (!(tgt->type->features & DM_TARGET_SUPPORTS_BARRIERS))
--		t->barriers_supported = 0;
+ 	spin_lock_irq(&md->deferred_lock);
+ 	bio_list_add(&md->deferred, bio);
+ 	spin_unlock_irq(&md->deferred_lock);
 -
- 	return 0;
- 
-  bad:
-@@ -789,12 +782,6 @@ int dm_table_complete(struct dm_table *t
- 
- 	check_for_valid_limits(&t->limits);
- 
--	/*
--	 * We only support barriers if there is exactly one underlying device.
--	 */
--	if (!list_is_singular(&t->devices))
--		t->barriers_supported = 0;
--
- 	/* how many indexes will the btree have ? */
- 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
- 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
-@@ -1008,12 +995,6 @@ struct mapped_device *dm_table_get_md(st
- 	return t->md;
++	if (!test_and_set_bit(DMF_BLOCK_IO, &md->flags))
++		queue_work(md->wq, &md->work);
+ 	up_write(&md->io_lock);
+-	return 0;		/* deferred successfully */
  }
  
--int dm_table_barrier_ok(struct dm_table *t)
--{
--	return t->barriers_supported;
--}
--EXPORT_SYMBOL(dm_table_barrier_ok);
--
- EXPORT_SYMBOL(dm_vcalloc);
- EXPORT_SYMBOL(dm_get_device);
- EXPORT_SYMBOL(dm_put_device);
-Index: linux-2.6.29-rc3-devel/drivers/md/dm.c
-===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm.c	2009-02-05 05:33:51.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm.c	2009-02-05 05:33:52.000000000 +0100
-@@ -831,11 +831,7 @@ static void __process_bio(struct mapped_
- 		bio_io_error(bio);
- 		return;
- 	}
--	if (unlikely(bio_barrier(bio) && !dm_table_barrier_ok(ci.map))) {
--		dm_table_put(ci.map);
--		bio_endio(bio, -EOPNOTSUPP);
--		return;
--	}
-+
- 	ci.md = md;
- 	ci.bio = bio;
- 	ci.io = alloc_io(md);
-@@ -917,6 +913,15 @@ static int dm_request(struct request_que
+ /*
+@@ -908,7 +903,6 @@ out:
+  */
+ static int dm_request(struct request_queue *q, struct bio *bio)
+ {
+-	int r = -EIO;
+ 	int rw = bio_data_dir(bio);
  	struct mapped_device *md = q->queuedata;
  	int cpu;
+@@ -933,31 +927,23 @@ static int dm_request(struct request_que
+ 	 * If we're suspended we have to queue
+ 	 * this io for later.
+ 	 */
+-	while (test_bit(DMF_BLOCK_IO, &md->flags)) {
++	if (unlikely(test_bit(DMF_BLOCK_IO, &md->flags))) {
+ 		up_read(&md->io_lock);
  
-+	/*
-+	 * There is no use in forwarding any barrier request since we can't
-+	 * guarantee it is (or can be) handled by the targets correctly.
-+	 */
-+	if (unlikely(bio_barrier(bio))) {
-+		bio_endio(bio, -EOPNOTSUPP);
+-		if (bio_rw(bio) != READA)
+-			r = queue_io(md, bio);
++		if (unlikely(test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) &&
++		    bio_rw(bio) == READA) {
++			bio_io_error(bio);
++			return 0;
++		}
+ 
+-		if (r <= 0)
+-			goto out_req;
++		queue_io(md, bio);
+ 
+-		/*
+-		 * We're in a while loop, because someone could suspend
+-		 * before we get to the following read lock.
+-		 */
+-		down_read(&md->io_lock);
 +		return 0;
-+	}
+ 	}
+ 
+ 	__process_bio(md, bio);
+ 	up_read(&md->io_lock);
+ 	return 0;
+-
+-out_req:
+-	if (r < 0)
+-		bio_io_error(bio);
+-
+-	return 0;
+ }
+ 
+ static void dm_unplug_all(struct request_queue *q)
+@@ -977,7 +963,7 @@ static int dm_any_congested(void *conges
+ 	struct mapped_device *md = congested_data;
+ 	struct dm_table *map;
+ 
+-	if (!test_bit(DMF_BLOCK_IO, &md->flags)) {
++	if (!test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) {
+ 		map = dm_get_table(md);
+ 		if (map) {
+ 			r = dm_table_any_congested(map, bdi_bits);
+@@ -1412,29 +1398,34 @@ static int dm_wait_for_completion(struct
+ static void dm_wq_work(struct work_struct *work)
+ {
+ 	struct mapped_device *md = container_of(work, struct mapped_device, work);
+-	struct bio *c;
+-
+ 	down_write(&md->io_lock);
+ 
+-next_bio:
+-	spin_lock_irq(&md->deferred_lock);
+-	c = bio_list_pop(&md->deferred);
+-	spin_unlock_irq(&md->deferred_lock);
++	while (!test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) {
++		struct bio *c;
 +
- 	down_read(&md->io_lock);
++		spin_lock_irq(&md->deferred_lock);
++		c = bio_list_pop(&md->deferred);
++		spin_unlock_irq(&md->deferred_lock);
++
++		if (!c) {
++			clear_bit(DMF_BLOCK_IO, &md->flags);
++			break;
++		}
++		up_write(&md->io_lock);
  
- 	cpu = part_stat_lock();
-Index: linux-2.6.29-rc3-devel/drivers/md/dm.h
-===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm.h	2009-02-05 05:33:48.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm.h	2009-02-05 05:33:52.000000000 +0100
-@@ -52,7 +52,6 @@ int dm_table_any_congested(struct dm_tab
-  * To check the return value from dm_table_find_target().
-  */
- #define dm_target_is_valid(t) ((t)->table)
--int dm_table_barrier_ok(struct dm_table *t);
+-	if (c) {
+ 		__process_bio(md, c);
+-		goto next_bio;
++
++		down_write(&md->io_lock);
+ 	}
  
- /*-----------------------------------------------------------------
-  * A registry of target types.
-Index: linux-2.6.29-rc3-devel/include/linux/device-mapper.h
-===================================================================
---- linux-2.6.29-rc3-devel.orig/include/linux/device-mapper.h	2009-02-05 05:33:48.000000000 +0100
-+++ linux-2.6.29-rc3-devel/include/linux/device-mapper.h	2009-02-05 05:33:52.000000000 +0100
-@@ -116,7 +116,6 @@ void dm_put_device(struct dm_target *ti,
+-	clear_bit(DMF_BLOCK_IO, &md->flags);
+ 
+ 	up_write(&md->io_lock);
+ }
+ 
+ static void dm_queue_flush(struct mapped_device *md)
+ {
++	clear_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags);
+ 	queue_work(md->wq, &md->work);
+-	flush_workqueue(md->wq);
+ }
+ 
  /*
-  * Target features
-  */
--#define DM_TARGET_SUPPORTS_BARRIERS 0x00000001
+@@ -1543,6 +1534,7 @@ int dm_suspend(struct mapped_device *md,
+ 	 * First we set the BLOCK_IO flag so no more ios will be mapped.
+ 	 */
+ 	down_write(&md->io_lock);
++	set_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags);
+ 	set_bit(DMF_BLOCK_IO, &md->flags);
  
- struct target_type {
- 	uint64_t features;
+ 	up_write(&md->io_lock);
+@@ -1550,6 +1542,7 @@ int dm_suspend(struct mapped_device *md,
+ 	/*
+ 	 * Wait for the already-mapped ios to complete.
+ 	 */
++	flush_workqueue(md->wq);
+ 	r = dm_wait_for_completion(md, TASK_INTERRUPTIBLE);
+ 
+ 	down_write(&md->io_lock);
