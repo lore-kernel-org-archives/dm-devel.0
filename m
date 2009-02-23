@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 0/14] barriers
-Date: Mon, 23 Feb 2009 14:18:56 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902231411200.23293@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 1/14] barriers
+Date: Mon, 23 Feb 2009 14:19:19 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902231418580.23293@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -16,23 +16,36 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi
+Introduce a function that adds a bio to the head of the list.
 
-This is the series of 14 patches for barriers. This is the "correct" 
-implementation --- i.e. enabling barriers for any targets.
+It will be needed for barriers.
 
-These patches address the upper layer only (providing barriers to 
-filesystem), they don't send barrier request (there will be more patches 
-for that, but they are not yet finalized).
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-The patches are sorted from the simples to the more complicated.
+---
+ drivers/md/dm-bio-list.h |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-The first 11 patches shouldn't have effect on anything, they just move 
-code around. So you can start slowly applying them.
-
-Patch 11 changes generic block layer code, other patches change only dm.
-
-Mikulas
+Index: linux-2.6.29-rc1-devel/drivers/md/dm-bio-list.h
+===================================================================
+--- linux-2.6.29-rc1-devel.orig/drivers/md/dm-bio-list.h	2009-01-19 02:03:49.000000000 +0100
++++ linux-2.6.29-rc1-devel/drivers/md/dm-bio-list.h	2009-01-19 02:05:01.000000000 +0100
+@@ -52,6 +52,16 @@ static inline void bio_list_add(struct b
+ 	bl->tail = bio;
+ }
+ 
++static inline void bio_list_add_head(struct bio_list *bl, struct bio *bio)
++{
++	bio->bi_next = bl->head;
++
++	bl->head = bio;
++
++	if (!bl->tail)
++		bl->tail = bio;
++}
++
+ static inline void bio_list_merge(struct bio_list *bl, struct bio_list *bl2)
+ {
+ 	if (!bl2->head)
