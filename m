@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 5/14] barriers
-Date: Mon, 23 Feb 2009 14:20:50 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902231420360.23293@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 3/14] barriers
+Date: Mon, 23 Feb 2009 14:20:16 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902231420050.23293@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -18,46 +18,65 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Rename __split_bio to __process_bio because it not only splits the bio to
-serveral parts, but also submits them to target drivers.
+Remove the context entry because it is unused. And it won't be used later.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/md/dm.c |   13 +++++--------
+ 1 file changed, 5 insertions(+), 8 deletions(-)
 
 Index: linux-2.6.29-rc3-devel/drivers/md/dm.c
 ===================================================================
---- linux-2.6.29-rc3-devel.orig/drivers/md/dm.c	2009-02-05 05:38:36.000000000 +0100
-+++ linux-2.6.29-rc3-devel/drivers/md/dm.c	2009-02-05 05:39:45.000000000 +0100
-@@ -820,9 +820,9 @@ static int __clone_and_map(struct clone_
+--- linux-2.6.29-rc3-devel.orig/drivers/md/dm.c	2009-02-05 05:38:27.000000000 +0100
++++ linux-2.6.29-rc3-devel/drivers/md/dm.c	2009-02-05 05:38:32.000000000 +0100
+@@ -102,7 +102,6 @@ union map_info *dm_get_mapinfo(struct bi
+ struct dm_wq_req {
+ 	struct work_struct work;
+ 	struct mapped_device *md;
+-	void *context;
+ };
+ 
+ struct mapped_device {
+@@ -1432,20 +1431,18 @@ static void dm_wq_work(struct work_struc
+ 	up_write(&md->io_lock);
  }
  
- /*
-- * Split the bio into several clones.
-+ * Split the bio into several clones and submit it to targets.
-  */
--static int __split_bio(struct mapped_device *md, struct bio *bio)
-+static int __process_bio(struct mapped_device *md, struct bio *bio)
+-static void dm_wq_queue(struct mapped_device *md, void *context,
+-			struct dm_wq_req *req)
++static void dm_wq_queue(struct mapped_device *md, struct dm_wq_req *req)
  {
- 	struct clone_info ci;
- 	int error = 0;
-@@ -945,7 +945,7 @@ static int dm_request(struct request_que
- 		down_read(&md->io_lock);
- 	}
+ 	req->md = md;
+-	req->context = context;
+ 	INIT_WORK(&req->work, dm_wq_work);
+ 	queue_work(md->wq, &req->work);
+ }
  
--	r = __split_bio(md, bio);
-+	r = __process_bio(md, bio);
- 	up_read(&md->io_lock);
+-static void dm_queue_flush(struct mapped_device *md, void *context)
++static void dm_queue_flush(struct mapped_device *md)
+ {
+ 	struct dm_wq_req req;
  
- out_req:
-@@ -1402,7 +1402,7 @@ static void __flush_deferred_io(struct m
- 	struct bio *c;
+-	dm_wq_queue(md, context, &req);
++	dm_wq_queue(md, &req);
+ 	flush_workqueue(md->wq);
+ }
  
- 	while ((c = bio_list_pop(&md->deferred))) {
--		if (__split_bio(md, c))
-+		if (__process_bio(md, c))
- 			bio_io_error(c);
- 	}
+@@ -1579,7 +1576,7 @@ int dm_suspend(struct mapped_device *md,
+ 
+ 	/* were we interrupted ? */
+ 	if (r < 0) {
+-		dm_queue_flush(md, NULL);
++		dm_queue_flush(md);
+ 
+ 		unlock_fs(md);
+ 		goto out; /* pushback list is already flushed, so skip flush */
+@@ -1614,7 +1611,7 @@ int dm_resume(struct mapped_device *md)
+ 	if (r)
+ 		goto out;
+ 
+-	dm_queue_flush(md, NULL);
++	dm_queue_flush(md);
+ 
+ 	unlock_fs(md);
  
