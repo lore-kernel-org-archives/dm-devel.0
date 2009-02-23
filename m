@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 13/14] barriers
-Date: Mon, 23 Feb 2009 14:22:48 -0500 (EST)
-Message-ID: <Pine.LNX.4.64.0902231422390.23293@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 14/14] barriers
+Date: Mon, 23 Feb 2009 14:23:00 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902231422490.23293@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
@@ -18,184 +18,178 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Rework helper thread.
+Barrier support.
 
-IO may be submitted to a worker thread with queue_io().
-queue_io() sets DMF_BLOCK_IO so that all further IO goes to the thread.
-When the thread finishes its work, it clears DMF_BLOCK_IO and from this point
-on, requests are submitted from dm_request again.
+Barriers are submitted to a worker thread that issues them in-order.
 
-Add new flag DMF_BLOCK_FOR_SUSPEND that is set when the IO needs to be blocked
-because of an ongoing suspend (DMF_BLOCK_IO had this meaning before this patch).
+__process_bio functions is modified that when it sees a barrier request,
+it waits for all pending IO before the request, then submits the barrier
+and waits for it.
+
+DM_ENDIO_REQUEUE doesn't work and I doubt that it can be made work with
+barriers.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm.c |   77 +++++++++++++++++++++++++-------------------------------
- 1 file changed, 35 insertions(+), 42 deletions(-)
+ drivers/md/dm.c |   75 +++++++++++++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 61 insertions(+), 14 deletions(-)
 
 Index: linux-2.6.29-rc6-devel/drivers/md/dm.c
 ===================================================================
---- linux-2.6.29-rc6-devel.orig/drivers/md/dm.c	2009-02-23 16:27:41.000000000 +0100
-+++ linux-2.6.29-rc6-devel/drivers/md/dm.c	2009-02-23 17:55:37.000000000 +0100
-@@ -90,11 +90,12 @@ union map_info *dm_get_mapinfo(struct bi
-  * Bits for the md->flags field.
-  */
- #define DMF_BLOCK_IO 0
--#define DMF_SUSPENDED 1
--#define DMF_FROZEN 2
--#define DMF_FREEING 3
--#define DMF_DELETING 4
--#define DMF_NOFLUSH_SUSPENDING 5
-+#define DMF_BLOCK_FOR_SUSPEND 1
-+#define DMF_SUSPENDED 2
-+#define DMF_FROZEN 3
-+#define DMF_FREEING 4
-+#define DMF_DELETING 5
-+#define DMF_NOFLUSH_SUSPENDING 6
+--- linux-2.6.29-rc6-devel.orig/drivers/md/dm.c	2009-02-23 17:55:37.000000000 +0100
++++ linux-2.6.29-rc6-devel/drivers/md/dm.c	2009-02-23 17:55:45.000000000 +0100
+@@ -125,6 +125,11 @@ struct mapped_device {
+ 	spinlock_t deferred_lock;
  
- /*
-  * Work processed by per-device workqueue.
-@@ -435,21 +436,15 @@ static void end_io_acct(struct dm_io *io
- /*
-  * Add the bio to the list of deferred io.
-  */
--static int queue_io(struct mapped_device *md, struct bio *bio)
-+static void queue_io(struct mapped_device *md, struct bio *bio)
- {
- 	down_write(&md->io_lock);
--
--	if (!test_bit(DMF_BLOCK_IO, &md->flags)) {
--		up_write(&md->io_lock);
--		return 1;
+ 	/*
++	 * An error from the barrier request currently being processed.
++	 */
++	int barrier_error;
++
++	/*
+ 	 * Processing queue (flush/barriers)
+ 	 */
+ 	struct workqueue_struct *wq;
+@@ -425,6 +430,10 @@ static void end_io_acct(struct dm_io *io
+ 	part_stat_add(cpu, &dm_disk(md)->part0, ticks[rw], duration);
+ 	part_stat_unlock();
+ 
++	/*
++	 * after this is decremented, the bio must not be touched if it is
++	 * barrier bio
++	 */
+ 	dm_disk(md)->part0.in_flight = pending =
+ 		atomic_dec_return(&md->pending);
+ 
+@@ -525,19 +534,29 @@ static void dec_pending(struct dm_io *io
+ 			 */
+ 			spin_lock_irqsave(&io->md->deferred_lock, flags);
+ 			if (__noflush_suspending(io->md))
+-				bio_list_add(&io->md->deferred, io->bio);
++				bio_list_add_head(&io->md->deferred, io->bio);
+ 			else
+ 				/* noflush suspend was interrupted. */
+ 				io->error = -EIO;
+ 			spin_unlock_irqrestore(&io->md->deferred_lock, flags);
+ 		}
+ 
+-		end_io_acct(io);
++		if (bio_barrier(io->bio)) {
++			/*
++			 * There could be just one barrier request, so we use
++			 * per-device variable for error reporting is OK.
++			 * Note that you can't touch the bio after end_io_acct
++			 */
++			io->md->barrier_error = io->error;
++			end_io_acct(io);
++		} else {
++			end_io_acct(io);
+ 
+-		if (io->error != DM_ENDIO_REQUEUE) {
+-			trace_block_bio_complete(io->md->queue, io->bio);
++			if (io->error != DM_ENDIO_REQUEUE) {
++				trace_block_bio_complete(io->md->queue, io->bio);
+ 
+-			bio_endio(io->bio, io->error);
++				bio_endio(io->bio, io->error);
++			}
+ 		}
+ 
+ 		free_io(io->md, io);
+@@ -682,7 +701,7 @@ static struct bio *split_bvec(struct bio
+ 
+ 	clone->bi_sector = sector;
+ 	clone->bi_bdev = bio->bi_bdev;
+-	clone->bi_rw = bio->bi_rw;
++	clone->bi_rw = bio->bi_rw & ~(1 << BIO_RW_BARRIER);
+ 	clone->bi_vcnt = 1;
+ 	clone->bi_size = to_bytes(len);
+ 	clone->bi_io_vec->bv_offset = offset;
+@@ -703,6 +722,7 @@ static struct bio *clone_bio(struct bio 
+ 
+ 	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
+ 	__bio_clone(clone, bio);
++	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
+ 	clone->bi_destructor = dm_bio_destructor;
+ 	clone->bi_sector = sector;
+ 	clone->bi_idx = idx;
+@@ -823,7 +843,10 @@ static void __process_bio(struct mapped_
+ 
+ 	ci.map = dm_get_table(md);
+ 	if (unlikely(!ci.map)) {
+-		bio_io_error(bio);
++		if (!bio_barrier(bio))
++			bio_io_error(bio);
++		else
++			md->barrier_error = -EIO;
+ 		return;
+ 	}
+ 
+@@ -911,11 +934,6 @@ static int dm_request(struct request_que
+ 	 * There is no use in forwarding any barrier request since we can't
+ 	 * guarantee it is (or can be) handled by the targets correctly.
+ 	 */
+-	if (unlikely(bio_barrier(bio))) {
+-		bio_endio(bio, -EOPNOTSUPP);
+-		return 0;
 -	}
 -
- 	spin_lock_irq(&md->deferred_lock);
- 	bio_list_add(&md->deferred, bio);
- 	spin_unlock_irq(&md->deferred_lock);
--
-+	if (!test_and_set_bit(DMF_BLOCK_IO, &md->flags))
-+		queue_work(md->wq, &md->work);
- 	up_write(&md->io_lock);
--	return 0;		/* deferred successfully */
- }
+ 	down_read(&md->io_lock);
  
- /*
-@@ -908,7 +903,6 @@ out:
-  */
- static int dm_request(struct request_queue *q, struct bio *bio)
- {
--	int r = -EIO;
- 	int rw = bio_data_dir(bio);
- 	struct mapped_device *md = q->queuedata;
- 	int cpu;
-@@ -933,31 +927,23 @@ static int dm_request(struct request_que
+ 	cpu = part_stat_lock();
+@@ -927,7 +945,8 @@ static int dm_request(struct request_que
  	 * If we're suspended we have to queue
  	 * this io for later.
  	 */
--	while (test_bit(DMF_BLOCK_IO, &md->flags)) {
-+	if (unlikely(test_bit(DMF_BLOCK_IO, &md->flags))) {
+-	if (unlikely(test_bit(DMF_BLOCK_IO, &md->flags))) {
++	if (unlikely(test_bit(DMF_BLOCK_IO, &md->flags)) ||
++	    unlikely(bio_barrier(bio))) {
  		up_read(&md->io_lock);
  
--		if (bio_rw(bio) != READA)
--			r = queue_io(md, bio);
-+		if (unlikely(test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) &&
-+		    bio_rw(bio) == READA) {
-+			bio_io_error(bio);
-+			return 0;
-+		}
- 
--		if (r <= 0)
--			goto out_req;
-+		queue_io(md, bio);
- 
--		/*
--		 * We're in a while loop, because someone could suspend
--		 * before we get to the following read lock.
--		 */
--		down_read(&md->io_lock);
-+		return 0;
- 	}
- 
- 	__process_bio(md, bio);
- 	up_read(&md->io_lock);
- 	return 0;
--
--out_req:
--	if (r < 0)
--		bio_io_error(bio);
--
--	return 0;
+ 		if (unlikely(test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) &&
+@@ -1392,6 +1411,12 @@ static int dm_wait_for_completion(struct
+ 	return r;
  }
  
- static void dm_unplug_all(struct request_queue *q)
-@@ -977,7 +963,7 @@ static int dm_any_congested(void *conges
- 	struct mapped_device *md = congested_data;
- 	struct dm_table *map;
- 
--	if (!test_bit(DMF_BLOCK_IO, &md->flags)) {
-+	if (!test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) {
- 		map = dm_get_table(md);
- 		if (map) {
- 			r = dm_table_any_congested(map, bdi_bits);
-@@ -1412,29 +1398,34 @@ static int dm_wait_for_completion(struct
- static void dm_wq_work(struct work_struct *work)
- {
- 	struct mapped_device *md = container_of(work, struct mapped_device, work);
--	struct bio *c;
--
- 	down_write(&md->io_lock);
- 
--next_bio:
--	spin_lock_irq(&md->deferred_lock);
--	c = bio_list_pop(&md->deferred);
--	spin_unlock_irq(&md->deferred_lock);
-+	while (!test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) {
-+		struct bio *c;
++static int dm_flush(struct mapped_device *md)
++{
++	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
++	return 0;
++}
 +
-+		spin_lock_irq(&md->deferred_lock);
-+		c = bio_list_pop(&md->deferred);
-+		spin_unlock_irq(&md->deferred_lock);
-+
-+		if (!c) {
-+			clear_bit(DMF_BLOCK_IO, &md->flags);
-+			break;
-+		}
-+		up_write(&md->io_lock);
- 
--	if (c) {
- 		__process_bio(md, c);
--		goto next_bio;
-+
-+		down_write(&md->io_lock);
- 	}
- 
--	clear_bit(DMF_BLOCK_IO, &md->flags);
- 
- 	up_write(&md->io_lock);
- }
- 
- static void dm_queue_flush(struct mapped_device *md)
- {
-+	clear_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags);
- 	queue_work(md->wq, &md->work);
--	flush_workqueue(md->wq);
- }
- 
  /*
-@@ -1543,6 +1534,7 @@ int dm_suspend(struct mapped_device *md,
- 	 * First we set the BLOCK_IO flag so no more ios will be mapped.
- 	 */
- 	down_write(&md->io_lock);
-+	set_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags);
- 	set_bit(DMF_BLOCK_IO, &md->flags);
+  * Process the deferred bios
+  */
+@@ -1413,8 +1438,30 @@ static void dm_wq_work(struct work_struc
+ 		}
+ 		up_write(&md->io_lock);
  
- 	up_write(&md->io_lock);
-@@ -1550,6 +1542,7 @@ int dm_suspend(struct mapped_device *md,
- 	/*
- 	 * Wait for the already-mapped ios to complete.
- 	 */
-+	flush_workqueue(md->wq);
- 	r = dm_wait_for_completion(md, TASK_INTERRUPTIBLE);
+-		__process_bio(md, c);
++		if (!bio_barrier(c))
++			__process_bio(md, c);
++		else {
++			int error = dm_flush(md);
++			if (unlikely(error)) {
++				bio_endio(c, error);
++				goto next_bio;
++			}
++			if (bio_empty_barrier(c)) {
++				bio_endio(c, 0);
++				goto next_bio;
++			}
++
++			__process_bio(md, c);
++
++			error = dm_flush(md);
++			if (!error && md->barrier_error)
++				error = md->barrier_error;
++
++			if (md->barrier_error != DM_ENDIO_REQUEUE)
++				bio_endio(c, error);
++		}
  
- 	down_write(&md->io_lock);
++next_bio:
+ 		down_write(&md->io_lock);
+ 	}
+ 
