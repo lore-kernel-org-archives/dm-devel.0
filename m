@@ -1,16 +1,11 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Patchwork and patch flow
-Date: Mon, 23 Feb 2009 16:16:12 +0900 (JST)
-Message-ID: <20090223.161612.183026354.ryov@valinux.co.jp>
-References: <20090205224831.GV20668@agk.fab.redhat.com>
-	<20090206.154225.189717016.ryov@valinux.co.jp>
-	<20090213.182546.193685101.ryov@valinux.co.jp>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 0/14] barriers
+Date: Mon, 23 Feb 2009 14:18:56 -0500 (EST)
+Message-ID: <Pine.LNX.4.64.0902231411200.23293@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090213.182546.193685101.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +16,23 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Jonathan, Alasdair and all,
+Hi
 
-> > > To add a Tested-by tag, how much test do we actually need?
-> > > We've already done several tests of dm-ioband:
-> > >  Proportional I/O bandwidth controlling
-> > >  Loading/unloading driver and changing settings while under I/O load
-> > >  Bounds checking of setting parameters
-> > >  Benchmarks
-> > > Do you think these are enough for adding the tag?
-> > > It's very difficult for me to determine whether it's qualified or not.
-> > > It would be helpful if you could give me some advice.
-> > 
-> > Interesting question...  If it was me, I'd like to see exactly what
-> > you wrote above.  State that you tested it and how you tested it. If
-> > there are a number of people who test it and the things they
-> > describe offer a broad spectrum of tests, I think that's helpful.
-> > Also, if extra testing is wanted, it can be suggested based on what
-> > tests have been performed.
-> 
-> I put the test items of dm-ioband on my website. This file requires
-> OpenOffice Calc to view.
-> http://people.valinux.co.jp/~ryov/dm-ioband/test/test-items.ods
-> 
-> Please also see the benchmark results at the following URL:
-> http://people.valinux.co.jp/~ryov/dm-ioband/benchmark/index.html
+This is the series of 14 patches for barriers. This is the "correct" 
+implementation --- i.e. enabling barriers for any targets.
 
-Could someone please review them and give me some comments?
+These patches address the upper layer only (providing barriers to 
+filesystem), they don't send barrier request (there will be more patches 
+for that, but they are not yet finalized).
 
-Thanks,
-Ryo Tsuruta
+The patches are sorted from the simples to the more complicated.
+
+The first 11 patches shouldn't have effect on anything, they just move 
+code around. So you can start slowly applying them.
+
+Patch 11 changes generic block layer code, other patches change only dm.
+
+Mikulas
