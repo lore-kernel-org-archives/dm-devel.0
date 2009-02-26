@@ -1,7 +1,7 @@
 From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: Controlling path priorities in dm-multipath
-Date: Wed, 25 Feb 2009 14:43:05 -0500
-Message-ID: <1235590985.6568.39.camel@jaspav.missionsit.net.missionsit.net>
+Subject: multipathd segfault and error calling out
+Date: Wed, 25 Feb 2009 21:07:44 -0500
+Message-ID: <1235614064.6568.65.camel@jaspav.missionsit.net.missionsit.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,49 +19,165 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello, all.  Sorry to trouble the list but I have been googling and
-reading for the better part of two days.  How does one control path
-priorities in dm-multipath?
+Hello, all.  I am running on kernel 2.6.27 on CentOS 5.2 with VServer
+and device-mapper-multipath-0.4.7-17.el5.  I have a custom
+mpath_prio_ssi script which takes the device name (e.g., sdaa), pulls
+out the path from /etc/disk/by-path and then echos a priority based upon
+a lookup table.  It works perfectly fine from the command line.
+multipath -ll shows the priorities assigned perfectly and exactly the
+right paths are active.
 
-For example, in our test environment in which we are attempting to learn
-dm-multipath, we have a Nexenta opensolaris based iSCSI SAN with ten
-Ethernet ports on the SAN network divided equally between two GbE
-switches.  We have a Linux server with four Ethernet ports on the SAN.
+However, when I start multipathd, it all goes down the tubes.  The paths
+disappear and /var/log/messages is filled with:
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdh
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdi
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdj
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdc
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdd
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sde
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdf
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdg
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdh
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdi
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdj
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdc
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdd
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sde
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdf
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdg
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdh
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdi
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdj
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdk
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdl
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdm
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdn
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdo
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdp
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdq
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdr
+Feb 25 20:50:18 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdk
+Feb 25 20:50:18 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdl
+Feb 25 20:50:18 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sdm
 
-opensolaris only supports 802.3ad for port bonding which required us to
-plug all bonded ports into the same switch. That was an unacceptable
-single point of failure for us so we decided to explore dm-multipath for
-fault tolerance.
+The callout does exist, is executable, and works with multipath.  Based
+upon some email threads, I tried moving it to / and /sbin.  No change.
 
-To optimize network throughput, we decided to divide the storage pool
-for the server into four LUNs - one per server interface to the SAN
-network (the SAN network is subnetted to provide a unique subnet for
-each SAN interface).  We then thought we would implement RAID0 across
-the four LUNs to stripe across all interfaces simultaneously.  We
-assumed this would give us better performance than dm-multipath's
-multibus with round robin.
+When multipathd starts I get:
+Feb 25 20:50:17 vd01 multipathd: cannot open /sbin/dasd_id : No such file or directory
+Feb 25 20:50:17 vd01 multipathd: [copy.c] cannot open /sbin/dasd_id
+Feb 25 20:50:17 vd01 multipathd: cannot copy /sbin/dasd_id in ramfs : No such file or directory
+Feb 25 20:50:17 vd01 multipathd: error calling out /usr/local/sbin/mpath_prio_ssi sda
 
-However, we would prefer the traffic stay within the same switch and not
-needlessly traverse the switch trunks.  Thus, we really want to lock a
-port on the Server to a LUN and use the SAN interface which is on the
-same switch as the Server interface.  We also want each Server interface
-to be able to access each SAN LUN through either of two interfaces on
-the SAN.  The idea is we can thus tolerate a failure of any one switch
-and literally all interfaces but one on either the SAN or Server.
+and when it shuts stops I get:
+Feb 25 20:43:17 vd01 multipathd: error calling out /usr/local/bin/mpath_prio_ssi sdj
+Feb 25 20:43:17 vd01 multipathd: isdb: stop event checker thread
+Feb 25 20:43:17 vd01 multipathd: isdc: stop event checker thread
+Feb 25 20:43:17 vd01 multipathd: isda: stop event checker thread
+Feb 25 20:43:17 vd01 multipathd: isdd: stop event checker thread
+Feb 25 20:43:17 vd01 kernel: multipathd[28942]: segfault at a ip 0000003e8a26fa3d sp 00007fff47e946d0 error 4 in libc-2.5.so[3e8a200000+14a000]
 
-This yields 32 SCSI devices (4 interfaces connected via two paths to
-four LUNs = 4 * 2 * 4).  Again, we want to lock one interface per LUN as
-the top priority interface to ensure we are striping across all
-interfaces and we are not crossing switches except in failover mode.
-The second priority interface should be a different Server interface on
-the same switch.  The third priority should be a different Server
-interface on a different switch.
+Here are the uncommented portions of my /etc/multipath.conf:
+blacklist {
+#        devnode "*"
+        # sdb
+        wwid SATA_ST3250310NS_9SF0L234
+        #sda
+        wwid SATA_ST3250310NS_9SF0LVSR
+}
+defaults {
+        failback                5
+        path_grouping_policy    failover
+        path_checker            tur
+        prio_callout            "/usr/local/sbin/mpath_prio_ssi %n"
+}
+multipaths {
+        multipath {
+                wwid                    3600144f049a4acec00003048c6912c00
+                alias                   isda
+        }
+        multipath {
+                wwid                    3600144f049a4acf500003048c6912c00
+                alias                   isdb
+        }
+        multipath {
+                wwid                    3600144f049a4ace600003048c6912c00
+                alias                   isdc
+        }
+        multipath {
+                wwid                    3600144f049a448a700003048c6912c00
+                alias                   isdd
+        }
+}
 
-How does one prioritize paths in dm-multipath? I even tried creating a
-prio_callout script which did nothing but capture any passed parameters
-(so I could try to write a custom handler based upon what was passed
-into the script) but the call does not appear to pass in any parameters.
-HELP?  Thanks - John
+
+devices {
+       device {
+               vendor                  "SUN"
+               product                 "SOLARIS"
+               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+               features                "0"
+               hardware_handler        "0"
+               path_grouping_policy    failover
+               rr_weight               uniform
+               rr_min_io               1000
+               path_checker            readsector0
+       }
+}
+
+Here is the callout script:
+#!/bin/bash
+# if not passed any device name, return a priority of 0
+if [ -z "${1}" ];then
+        echo 0
+        exit
+fi
+
+ENTRY="$(ls -l1 /dev/disk/by-path | grep /${1}'$')"
+DEV="${ENTRY##* ip-}"
+if [ "$DEV" = "${ENTRY}" ];then #This is not an iSCSI device
+        echo 0
+        exit
+fi
+DEV="${DEV%% ->*}"
+echo $(grep ${DEV} /usr/local/etc/iscsi.list | cut -f2)
+
+and here is iscsi.list:
+172.x.x.158:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020    5
+172.x.x.158:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9    99
+172.x.x.158:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782    5
+172.30.13.158:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639    24
+172.x.x.174:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020    1
+172.x.x.174:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9    2
+172.x.x.174:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782    1
+172.x.x.174:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639    49
+172.x.x.190:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020    0
+172.x.x.190:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9    49
+172.x.x.190:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782    0
+172.x.x.190:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639    2
+172.x.x.206:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020    11
+172.x.x.206:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9    24
+172.x.x.206:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782    11
+172.x.x.206:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639    99
+172.x.x.30:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020     24
+172.x.x.30:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9     11
+172.x.x.30:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782     99
+172.x.x.30:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639     5
+172.x.x.46:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020     49
+172.x.x.46:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9     0
+172.x.x.46:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782     2
+172.x.x.46:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639     1
+172.x.x.62:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020     2
+172.x.x.62:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9     1
+172.x.x.62:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782     49
+172.x.x.62:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639     0
+172.x.x.78:3260-iscsi-iqn.1986-03.com.sun:02:04e2454b-e60c-cfaf-d8b9-923b9fed0020     99
+172.x.x.78:3260-iscsi-iqn.1986-03.com.sun:02:8af2554f-13f6-c0e1-8343-c457e4802cb9     5
+172.x.x.78:3260-iscsi-iqn.1986-03.com.sun:02:b8a8e5cd-4501-c8f7-be51-ad7fcb31f782     24
+172.x.x.78:3260-iscsi-iqn.1986-03.com.sun:02:c3420146-eecc-c364-dc6e-a3914db5a639     11
+
+What have I misconfigured? How do I make this work properly? Thanks -
+John
 -- 
 John A. Sullivan III
 Open Source Development Corporation
