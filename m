@@ -1,7 +1,7 @@
 From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
 Subject: Re: multipathd segfault and error calling out
-Date: Thu, 26 Feb 2009 08:33:51 -0500
-Message-ID: <1235655231.10066.5.camel@jaspav.missionsit.net.missionsit.net>
+Date: Thu, 26 Feb 2009 22:06:22 -0500
+Message-ID: <1235703982.10066.71.camel@jaspav.missionsit.net.missionsit.net>
 References: <1235614064.6568.65.camel@jaspav.missionsit.net.missionsit.net>
 	<49A663A1.5050505@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
@@ -61,28 +61,19 @@ On Thu, 2009-02-26 at 09:40 +0000, Bryn M. Reeves wrote:
 > libmultipath/config.c:store_hwe(),
 > multipathd/main.c:prepare_namespace() and other code that manipulates
 > the list of binaries stored in conf->binvec.
-> 
-> Regards,
-> Bryn.
 <snip>
-Thank you very much, Bryn.  That finally makes sense of it all.
-Unfortunately, I am not a developer at all and hence approach this more
-as a systems designer.
+You were exactly right (of course!).  I changed prio_callout from
+directly calling a bash scrip to /bin/bash scriptname %n and that
+eliminated the callout errors.  However, as expected, the internal calls
+to bin/ls, bin/grep, etc. all failed.  I then rewrote the script to use
+nothing but bash internals (took a little doing such as getting the path
+list from /dev/disk/by-path but it seems to work).
 
-If I understand you correctly, the best approach would be to create my
-script as a compiled binary rather than a bash script.  Then the config
-file processing will load it into memory.  Is that correct? Does that
-also imply that the file referenced as the list of iSCSI ids and
-priorities needs to be embedded in the binary? Is that a non-issue if I
-am not using multipathing for the devices containing the referenced
-script?
-
-As my skills are limited for converting this from bash to C, could I
-achieve the same thing by calling bash rather than the script and
-passing the script as an argument, e.g., 
-prio_callout "/bin/bash /usr/local/sbin/mpath_prio_ssi %n"
-
-Thanks again - John
+That, in our initial testing of simply pulling the network cable (no
+live data transfer yet), multipathd fails the devices and fails them
+back on recovery but, after recover, all the paths are shown as enabled
+- none are active.  We hope to start live data testing tomorrow.  Thanks
+again - John
 -- 
 John A. Sullivan III
 Open Source Development Corporation
