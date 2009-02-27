@@ -1,15 +1,13 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: Re: multipathd segfault and error calling out
-Date: Thu, 26 Feb 2009 22:06:22 -0500
-Message-ID: <1235703982.10066.71.camel@jaspav.missionsit.net.missionsit.net>
-References: <1235614064.6568.65.camel@jaspav.missionsit.net.missionsit.net>
-	<49A663A1.5050505@redhat.com>
+From: Milan Broz <mbroz@redhat.com>
+Subject: [PATCH] Re: [BUGFIX] dm-crypt: Fix a bug of async
+ cryption complete function
+Date: Fri, 27 Feb 2009 16:02:16 +0100
+Message-ID: <49A80078.8060105@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49A663A1.5050505@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,66 +17,142 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: bmr@redhat.com, device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2009-02-26 at 09:40 +0000, Bryn M. Reeves wrote:
-> John A. Sullivan III wrote:
-> > Hello, all.  I am running on kernel 2.6.27 on CentOS 5.2 with 
-> > VServer and device-mapper-multipath-0.4.7-17.el5.  I have a custom 
-> > mpath_prio_ssi script which takes the device name (e.g., sdaa), 
-> > pulls out the path from /etc/disk/by-path and then echos a priority
-> >  based upon a lookup table.  It works perfectly fine from the 
-> > command line. multipath -ll shows the priorities assigned perfectly
-> >  and exactly the right paths are active.
-> > 
-> > However, when I start multipathd, it all goes down the tubes.  The
-> >  paths disappear and /var/log/messages is filled with: Feb 25 
-> > 20:50:17 vd01 multipathd: error calling out 
-> > /usr/local/sbin/mpath_prio_ssi sdh Feb 25 20:50:17 vd01 multipathd:
-> >  error calling out /usr/local/sbin/mpath_prio_ssi sdi Feb 25 
-> > 20:50:17 vd01 multipathd: error calling out 
-> > /usr/local/sbin/mpath_prio_ssi sdj Feb 25 20:50:17 vd01 multipathd:
-> >  error calling out /usr/local/sbin/mpath_prio_ssi sdc
-> 
-> I think you'll need to modify the multipathd binary to achieve this.
-> 
-> To avoid deadlocking when file system access is interrupted due to
-> path failures multipathd forks into a new namespace and discards all
-> the device-backed file systems that are mounted.
-> 
-> It creates an in-memory file system (ramfs) and copies all the
-> binaries it will need into this. The file system is locked into memory
-> so that multipathd can continue to function even if the paths backing
-> the root file system have all failed.
-> 
-> For the callouts themselves (getuid and getprio binaries) the config
-> file processing takes care of this but this only works for stand-alone
-> binaries. If your script has other dependencies then you'll have to
-> add code to pull those into the ramfs volume.
-> 
-> See libmultipath/config.c:push_callout(),
-> libmultipath/config.c:store_hwe(),
-> multipathd/main.c:prepare_namespace() and other code that manipulates
-> the list of binaries stored in conf->binvec.
-<snip>
-You were exactly right (of course!).  I changed prio_callout from
-directly calling a bash scrip to /bin/bash scriptname %n and that
-eliminated the callout errors.  However, as expected, the internal calls
-to bin/ls, bin/grep, etc. all failed.  I then rewrote the script to use
-nothing but bash internals (took a little doing such as getting the path
-list from /dev/disk/by-path but it seems to work).
+(resend, forgot cc: dm-devel for properly queue in patchwork)
 
-That, in our initial testing of simply pulling the network cable (no
-live data transfer yet), multipathd fails the devices and fails them
-back on recovery but, after recover, all the paths are shown as enabled
-- none are active.  We hope to start live data testing tomorrow.  Thanks
-again - John
+-------- Original Message --------
+Subject: Re: [BUGFIX] dm-crypt: Fix a bug of async cryption complete	function
+Date: Fri, 27 Feb 2009 14:51:15 +0100
+From: Milan Broz <mbroz@redhat.com>
+To: Herbert Xu <herbert@gondor.apana.org.au>,  Alasdair G Kergon <agk@redhat.com>
+CC: Huang Ying <ying.huang@intel.com>, linux-kernel@vger.kernel.org,  linux-crypto@vger.kernel.org
+References: <1235724971.6204.106.camel@yhuang-dev.sh.intel.com> <20090227114103.GB24024@gondor.apana.org.au> <49A7D3E5.5040706@redhat.com> <20090227115638.GA24221@gondor.apana.org.au> <49A7DC7E.1040307@redhat.com> <20090227124602.GA24630@gondor.apana.org.au>
+
+Herbert Xu wrote:
+> On Fri, Feb 27, 2009 at 01:28:46PM +0100, Milan Broz wrote:
+>> Like this?
+>>
+>> struct ablkcipher_request *req = (char *)dmreq - cc->dmreq_start;
+>> mempool_free(req, cc->req_pool);
+>
+> Exactly.  You could also embed the ablkcipher_request at the
+> end of dmreq, as in
+>
+> struct dm_crypt_request {
+> 	struct scatterlist sg_in;
+> 	struct scatterlist sg_out;
+> 	struct ablkcipher_request req;
+> };
+>
+> Then you can use container_of.
+
+Hm, I better keep explicitly this pointer retyping as reminder that
+the structures need some revision in future...
+
+Is the attached and reworked patch ok?
+
+Alasdair, please can we queue this for 2.6.29-rc as urgent bugfix?
+
+Milan
 -- 
-John A. Sullivan III
-Open Source Development Corporation
-+1 207-985-7880
-jsullivan@opensourcedevel.com
+mbroz@redhat.com
 
-http://www.spiritualoutreach.com
-Making Christianity intelligible to secular society
+----
+dm-crypt: Fix async completion to not use crypto_async_request directly
+
+In async cryption complete function (kcryptd_async_done), the
+crypto_async_request passed in may be different from the one passed to
+crypto_ablkcipher_encrypt/decrypt. Only crypto_async_request->data is
+guaranteed to be same as the passed in one. Current kcryptd_async_done
+uses passed in crypto_async_request directly, which may cause AES-NI
+based AES algorithm implementation panic.
+
+This patch fix this bug by using crypto_async_request->data only,
+which point to dm_crypt_request, the crypto_async_request passed in
+and original data (convert_context) can be gotten from
+dm_crypt_request.
+
+Signed-off-by: Huang Ying <ying.huang@intel.com>
+Signed-off-by: Milan Broz <mbroz@redhat.com>
+
+---
+ drivers/md/dm-crypt.c |   26 +++++++++++++++++++++-----
+ 1 files changed, 21 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 35bda49..ebab49f 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -60,6 +60,7 @@ struct dm_crypt_io {
+ };
+ 
+ struct dm_crypt_request {
++	struct convert_context *ctx;
+ 	struct scatterlist sg_in;
+ 	struct scatterlist sg_out;
+ };
+@@ -335,6 +336,18 @@ static void crypt_convert_init(struct crypt_config *cc,
+ 	init_completion(&ctx->restart);
+ }
+ 
++static struct dm_crypt_request *dmreq_of_req(struct crypt_config *cc,
++					     struct ablkcipher_request *req)
++{
++	return (struct dm_crypt_request *)((char *)req + cc->dmreq_start);
++}
++
++static struct ablkcipher_request *req_of_dmreq(struct crypt_config *cc,
++					       struct dm_crypt_request *dmreq)
++{
++	return (struct ablkcipher_request *)((char *)dmreq - cc->dmreq_start);
++}
++
+ static int crypt_convert_block(struct crypt_config *cc,
+ 			       struct convert_context *ctx,
+ 			       struct ablkcipher_request *req)
+@@ -345,10 +358,11 @@ static int crypt_convert_block(struct crypt_config *cc,
+ 	u8 *iv;
+ 	int r = 0;
+ 
+-	dmreq = (struct dm_crypt_request *)((char *)req + cc->dmreq_start);
++	dmreq = dmreq_of_req(cc, req);
+ 	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
+ 			 crypto_ablkcipher_alignmask(cc->tfm) + 1);
+ 
++	dmreq->ctx = ctx;
+ 	sg_init_table(&dmreq->sg_in, 1);
+ 	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
+ 		    bv_in->bv_offset + ctx->offset_in);
+@@ -395,8 +409,9 @@ static void crypt_alloc_req(struct crypt_config *cc,
+ 		cc->req = mempool_alloc(cc->req_pool, GFP_NOIO);
+ 	ablkcipher_request_set_tfm(cc->req, cc->tfm);
+ 	ablkcipher_request_set_callback(cc->req, CRYPTO_TFM_REQ_MAY_BACKLOG |
+-					     CRYPTO_TFM_REQ_MAY_SLEEP,
+-					     kcryptd_async_done, ctx);
++					CRYPTO_TFM_REQ_MAY_SLEEP,
++					kcryptd_async_done,
++					dmreq_of_req(cc, cc->req));
+ }
+ 
+ /*
+@@ -821,7 +836,8 @@ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
+ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 			       int error)
+ {
+-	struct convert_context *ctx = async_req->data;
++	struct dm_crypt_request *dmreq = async_req->data;
++	struct convert_context *ctx = dmreq->ctx;
+ 	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
+ 	struct crypt_config *cc = io->target->private;
+ 
+@@ -830,7 +846,7 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
+ 		return;
+ 	}
+ 
+-	mempool_free(ablkcipher_request_cast(async_req), cc->req_pool);
++	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
+ 
+ 	if (!atomic_dec_and_test(&ctx->pending))
+ 		return;
