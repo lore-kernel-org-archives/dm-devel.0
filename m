@@ -1,158 +1,79 @@
-From: Milan Broz <mbroz@redhat.com>
-Subject: [PATCH] Re: [BUGFIX] dm-crypt: Fix a bug of async
- cryption complete function
-Date: Fri, 27 Feb 2009 16:02:16 +0100
-Message-ID: <49A80078.8060105@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: [PATCH]scsi_dh_rdac: Retry mode select for NO_SENSE,
+ ABORTED_COMMAND, UNIT_ATTENTION, NOT_READY(02/04/01)
+Date: Mon, 2 Mar 2009 11:26:36 +0530
+Message-ID: <0D1E8821739E724A86F4D16902CE275C140E25C334@inbmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-(resend, forgot cc: dm-devel for properly queue in patchwork)
+This patch is to add retry for mode select if mode select command is returned with sense key NO_SENSE, 
+ABORTED_COMMAND, UNIT_ATTENTION or NOT_READY(02/04/01). This patch reorganise the sense from 
+if-else to switch-case format in scsi_dh_rdac.c for better maintainability.
 
--------- Original Message --------
-Subject: Re: [BUGFIX] dm-crypt: Fix a bug of async cryption complete	function
-Date: Fri, 27 Feb 2009 14:51:15 +0100
-From: Milan Broz <mbroz@redhat.com>
-To: Herbert Xu <herbert@gondor.apana.org.au>,  Alasdair G Kergon <agk@redhat.com>
-CC: Huang Ying <ying.huang@intel.com>, linux-kernel@vger.kernel.org,  linux-crypto@vger.kernel.org
-References: <1235724971.6204.106.camel@yhuang-dev.sh.intel.com> <20090227114103.GB24024@gondor.apana.org.au> <49A7D3E5.5040706@redhat.com> <20090227115638.GA24221@gondor.apana.org.au> <49A7DC7E.1040307@redhat.com> <20090227124602.GA24630@gondor.apana.org.au>
-
-Herbert Xu wrote:
-> On Fri, Feb 27, 2009 at 01:28:46PM +0100, Milan Broz wrote:
->> Like this?
->>
->> struct ablkcipher_request *req = (char *)dmreq - cc->dmreq_start;
->> mempool_free(req, cc->req_pool);
->
-> Exactly.  You could also embed the ablkcipher_request at the
-> end of dmreq, as in
->
-> struct dm_crypt_request {
-> 	struct scatterlist sg_in;
-> 	struct scatterlist sg_out;
-> 	struct ablkcipher_request req;
-> };
->
-> Then you can use container_of.
-
-Hm, I better keep explicitly this pointer retyping as reminder that
-the structures need some revision in future...
-
-Is the attached and reworked patch ok?
-
-Alasdair, please can we queue this for 2.6.29-rc as urgent bugfix?
-
-Milan
--- 
-mbroz@redhat.com
-
-----
-dm-crypt: Fix async completion to not use crypto_async_request directly
-
-In async cryption complete function (kcryptd_async_done), the
-crypto_async_request passed in may be different from the one passed to
-crypto_ablkcipher_encrypt/decrypt. Only crypto_async_request->data is
-guaranteed to be same as the passed in one. Current kcryptd_async_done
-uses passed in crypto_async_request directly, which may cause AES-NI
-based AES algorithm implementation panic.
-
-This patch fix this bug by using crypto_async_request->data only,
-which point to dm_crypt_request, the crypto_async_request passed in
-and original data (convert_context) can be gotten from
-dm_crypt_request.
-
-Signed-off-by: Huang Ying <ying.huang@intel.com>
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-
+Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
 ---
- drivers/md/dm-crypt.c |   26 +++++++++++++++++++++-----
- 1 files changed, 21 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 35bda49..ebab49f 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -60,6 +60,7 @@ struct dm_crypt_io {
- };
- 
- struct dm_crypt_request {
-+	struct convert_context *ctx;
- 	struct scatterlist sg_in;
- 	struct scatterlist sg_out;
- };
-@@ -335,6 +336,18 @@ static void crypt_convert_init(struct crypt_config *cc,
- 	init_completion(&ctx->restart);
- }
- 
-+static struct dm_crypt_request *dmreq_of_req(struct crypt_config *cc,
-+					     struct ablkcipher_request *req)
-+{
-+	return (struct dm_crypt_request *)((char *)req + cc->dmreq_start);
-+}
-+
-+static struct ablkcipher_request *req_of_dmreq(struct crypt_config *cc,
-+					       struct dm_crypt_request *dmreq)
-+{
-+	return (struct ablkcipher_request *)((char *)dmreq - cc->dmreq_start);
-+}
-+
- static int crypt_convert_block(struct crypt_config *cc,
- 			       struct convert_context *ctx,
- 			       struct ablkcipher_request *req)
-@@ -345,10 +358,11 @@ static int crypt_convert_block(struct crypt_config *cc,
- 	u8 *iv;
- 	int r = 0;
- 
--	dmreq = (struct dm_crypt_request *)((char *)req + cc->dmreq_start);
-+	dmreq = dmreq_of_req(cc, req);
- 	iv = (u8 *)ALIGN((unsigned long)(dmreq + 1),
- 			 crypto_ablkcipher_alignmask(cc->tfm) + 1);
- 
-+	dmreq->ctx = ctx;
- 	sg_init_table(&dmreq->sg_in, 1);
- 	sg_set_page(&dmreq->sg_in, bv_in->bv_page, 1 << SECTOR_SHIFT,
- 		    bv_in->bv_offset + ctx->offset_in);
-@@ -395,8 +409,9 @@ static void crypt_alloc_req(struct crypt_config *cc,
- 		cc->req = mempool_alloc(cc->req_pool, GFP_NOIO);
- 	ablkcipher_request_set_tfm(cc->req, cc->tfm);
- 	ablkcipher_request_set_callback(cc->req, CRYPTO_TFM_REQ_MAY_BACKLOG |
--					     CRYPTO_TFM_REQ_MAY_SLEEP,
--					     kcryptd_async_done, ctx);
-+					CRYPTO_TFM_REQ_MAY_SLEEP,
-+					kcryptd_async_done,
-+					dmreq_of_req(cc, cc->req));
- }
- 
- /*
-@@ -821,7 +836,8 @@ static void kcryptd_crypt_read_convert(struct dm_crypt_io *io)
- static void kcryptd_async_done(struct crypto_async_request *async_req,
- 			       int error)
+--- linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-02-24 12:08:43.000000000 +0530
++++ linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-02-28 18:18:41.000000000 +0530
+@@ -449,28 +449,40 @@ static int mode_select_handle_sense(stru
+ 				    unsigned char *sensebuf)
  {
--	struct convert_context *ctx = async_req->data;
-+	struct dm_crypt_request *dmreq = async_req->data;
-+	struct convert_context *ctx = dmreq->ctx;
- 	struct dm_crypt_io *io = container_of(ctx, struct dm_crypt_io, ctx);
- 	struct crypt_config *cc = io->target->private;
+ 	struct scsi_sense_hdr sense_hdr;
+-	int sense, err = SCSI_DH_IO, ret;
++	int err = SCSI_DH_IO, ret;
  
-@@ -830,7 +846,7 @@ static void kcryptd_async_done(struct crypto_async_request *async_req,
- 		return;
+ 	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
+ 	if (!ret)
+ 		goto done;
+ 
+ 	err = SCSI_DH_OK;
+-	sense = (sense_hdr.sense_key << 16) | (sense_hdr.asc << 8) |
+-			sense_hdr.ascq;
+-	/* If it is retryable failure, submit the c9 inquiry again */
+-	if (sense == 0x59136 || sense == 0x68b02 || sense == 0xb8b02 ||
+-			    sense == 0x62900) {
+-		/* 0x59136    - Command lock contention
+-		 * 0x[6b]8b02 - Quiesense in progress or achieved
+-		 * 0x62900    - Power On, Reset, or Bus Device Reset
+-		 */
++
++	switch (sense_hdr.sense_key) {
++	case NO_SENSE:
++	case ABORTED_COMMAND:
++	case UNIT_ATTENTION:
++		err = SCSI_DH_RETRY;
++		break;
++	case NOT_READY:
++		if (sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x01)
++			/* LUN Not Ready and is in the Process
++			 * of becoming ready
++			 */
++		err = SCSI_DH_RETRY;
++		break;
++	case ILLEGAL_REQUEST:
++		if (sense_hdr.asc == 0x91 && sense_hdr.ascq == 0x36)
++			/*
++			 * Command Lock contention
++			 */
+ 		err = SCSI_DH_RETRY;
++		break;
++	default:
++		sdev_printk(KERN_INFO, sdev,
++			"MODE_SELECT failed with sense %02x/%02x/%02x.\n",
++			sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
  	}
  
--	mempool_free(ablkcipher_request_cast(async_req), cc->req_pool);
-+	mempool_free(req_of_dmreq(cc, dmreq), cc->req_pool);
- 
- 	if (!atomic_dec_and_test(&ctx->pending))
- 		return;
+-	if (sense)
+-		sdev_printk(KERN_INFO, sdev,
+-			"MODE_SELECT failed with sense 0x%x.\n", sense);
+ done:
+ 	return err;
+ }
+
