@@ -1,79 +1,56 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: [PATCH]scsi_dh_rdac: Retry mode select for NO_SENSE,
- ABORTED_COMMAND, UNIT_ATTENTION, NOT_READY(02/04/01)
-Date: Mon, 2 Mar 2009 11:26:36 +0530
-Message-ID: <0D1E8821739E724A86F4D16902CE275C140E25C334@inbmail01.lsi.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: Re: Patchwork and patch flow
+Date: Mon, 02 Mar 2009 19:24:21 +0900 (JST)
+Message-ID: <20090302.192421.71092184.ryov@valinux.co.jp>
+References: <20090206.154225.189717016.ryov@valinux.co.jp>
+	<20090213.182546.193685101.ryov@valinux.co.jp>
+	<20090223.161612.183026354.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090223.161612.183026354.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch is to add retry for mode select if mode select command is returned with sense key NO_SENSE, 
-ABORTED_COMMAND, UNIT_ATTENTION or NOT_READY(02/04/01). This patch reorganise the sense from 
-if-else to switch-case format in scsi_dh_rdac.c for better maintainability.
-
-Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
----
-
---- linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-02-24 12:08:43.000000000 +0530
-+++ linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-02-28 18:18:41.000000000 +0530
-@@ -449,28 +449,40 @@ static int mode_select_handle_sense(stru
- 				    unsigned char *sensebuf)
- {
- 	struct scsi_sense_hdr sense_hdr;
--	int sense, err = SCSI_DH_IO, ret;
-+	int err = SCSI_DH_IO, ret;
+Hi Jonathan, Alasdair and all,
  
- 	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
- 	if (!ret)
- 		goto done;
- 
- 	err = SCSI_DH_OK;
--	sense = (sense_hdr.sense_key << 16) | (sense_hdr.asc << 8) |
--			sense_hdr.ascq;
--	/* If it is retryable failure, submit the c9 inquiry again */
--	if (sense == 0x59136 || sense == 0x68b02 || sense == 0xb8b02 ||
--			    sense == 0x62900) {
--		/* 0x59136    - Command lock contention
--		 * 0x[6b]8b02 - Quiesense in progress or achieved
--		 * 0x62900    - Power On, Reset, or Bus Device Reset
--		 */
-+
-+	switch (sense_hdr.sense_key) {
-+	case NO_SENSE:
-+	case ABORTED_COMMAND:
-+	case UNIT_ATTENTION:
-+		err = SCSI_DH_RETRY;
-+		break;
-+	case NOT_READY:
-+		if (sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x01)
-+			/* LUN Not Ready and is in the Process
-+			 * of becoming ready
-+			 */
-+		err = SCSI_DH_RETRY;
-+		break;
-+	case ILLEGAL_REQUEST:
-+		if (sense_hdr.asc == 0x91 && sense_hdr.ascq == 0x36)
-+			/*
-+			 * Command Lock contention
-+			 */
- 		err = SCSI_DH_RETRY;
-+		break;
-+	default:
-+		sdev_printk(KERN_INFO, sdev,
-+			"MODE_SELECT failed with sense %02x/%02x/%02x.\n",
-+			sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
- 	}
- 
--	if (sense)
--		sdev_printk(KERN_INFO, sdev,
--			"MODE_SELECT failed with sense 0x%x.\n", sense);
- done:
- 	return err;
- }
+> > > To add a Tested-by tag, how much test do we actually need?
+> > > We've already done several tests of dm-ioband:
+> > >  Proportional I/O bandwidth controlling
+> > >  Loading/unloading driver and changing settings while under I/O load
+> > >  Bounds checking of setting parameters
+> > >  Benchmarks
+> > > Do you think these are enough for adding the tag?
+> > > It's very difficult for me to determine whether it's qualified or not.
+> > > It would be helpful if you could give me some advice.
+> > 
+> > Interesting question...  If it was me, I'd like to see exactly what
+> > you wrote above.  State that you tested it and how you tested it. If
+> > there are a number of people who test it and the things they
+> > describe offer a broad spectrum of tests, I think that's helpful.
+> > Also, if extra testing is wanted, it can be suggested based on what
+> > tests have been performed.
+> 
+> I put the test items of dm-ioband on my website. This file requires
+> OpenOffice Calc to view.
+> http://people.valinux.co.jp/~ryov/dm-ioband/test/test-items.ods
+> 
+> Please also see the benchmark results at the following URL:
+> http://people.valinux.co.jp/~ryov/dm-ioband/benchmark/index.html
 
+I'm posting again this since nobody has answered yet.
+I'm glad if someone can review the test items and give some comments.
+
+Thanks,
+Ryo Tsuruta
