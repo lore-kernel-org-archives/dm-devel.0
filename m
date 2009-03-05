@@ -1,16 +1,14 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: dmsetup status not clear
-Date: Thu, 5 Mar 2009 12:15:26 -0500
-Message-ID: <20090305171526.GA29729@mars.virtualiron.com>
-References: <a60f25fc0903041435ob7e7575kc2ebe0770d5cd36e@mail.gmail.com>
-	<20090305162053.GB29061@mars.virtualiron.com>
-	<a60f25fc0903050835k36025e9arf3238685a5f3f707@mail.gmail.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] Mark device-mapper as Supported in MAINTAINERS
+Date: Thu, 5 Mar 2009 18:07:11 +0000
+Message-ID: <20090305180711.GI12302@agk.fab.redhat.com>
+References: <200902031005.41788.knikanth@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <a60f25fc0903050835k36025e9arf3238685a5f3f707@mail.gmail.com>
+In-Reply-To: <200902031005.41788.knikanth@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,32 +18,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Nikanth Karthikesan <knikanth@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> > cat /proc/dmstatus should give you some details.
-> 
-> ~# cat /proc/dmstatus
-> cat: /proc/dmstatus: No such file or directory
+On Tue, Feb 03, 2009 at 10:05:41AM +0530, Nikanth Karthikesan wrote:
+> Mark device-mapper as Supported in MAINTAINERS file.
 
-Ugh. /proc/mdstat I think.
+        Supported:      Someone is actually paid to look after this.
+        Maintained:     Someone actually looks after it.
 
+Both of those apply and I would argue that, given the use of the word
+'actually' in those definitions, 'Maintained' is better than 'Supported'.
 
-.. snip ..
-> iqbala@ftp0:~$ sudo dmsetup status
-> nvidia_eeffhbef5: 0 6458067 linear
-> nvidia_eeffhbef1: 0 149838192 linear
-> nvidia_eeffhbef: 0 156301486 mirror 2 8:0 8:16 1193/1193 1 AA 1 core
-> 
-> It was '1183/1193 1 AD 1 core' and now '1193/1193 1 AA 1 core'
-> 
-> What are the differences? Is there some doc where I can read more about this?
-
-It is divided in two groups. The first is the
-type and the size (0 156301486 mirror): meaning 156301486 sectors, or:
-76319MB, and the kernel module that oversears this device is 'dm-mirror'.
-
-The next group of data is from 'mirror_status' function (from the dm-raid1 module, which
-actually registers itself as 'dm-mirror'). Take a look
-at drivers/md/dm-raid1.c and the above mentioned function - that should
-give you an idea what is what.
+Alasdair
+-- 
+agk@redhat.com
