@@ -1,54 +1,39 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: Clariion EMC RX300 and "long trespass command will
-	be send" message
-Date: Tue, 10 Mar 2009 10:35:12 -0400
-Message-ID: <20090310143512.GE22889@mars.virtualiron.com>
-References: <81c921f30903100341h59740b3dtedb61960b5e5daf7@mail.gmail.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [PATCH]scsi_dh_rdac: Retry for NOT_READY check condition (0x02A102,
+ 0x020401, 0x020404 and  0x020407) in rdac_check_sense
+Date: Tue, 10 Mar 2009 16:26:10 +0100
+Message-ID: <49B68692.9020308@suse.de>
+References: <0D1E8821739E724A86F4D16902CE275C140E25CA0C@inbmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <81c921f30903100341h59740b3dtedb61960b5e5daf7@mail.gmail.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <0D1E8821739E724A86F4D16902CE275C140E25CA0C@inbmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
+To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> [5078349.903410] scsi 6:0:0:0: rejecting I/O to dead device
-... snip ..
-> scsi 6:0:0:0 not exist at lsscsi:
+Chauhan, Vijay wrote:
+> This patch adds retry for NOT_READY check conditions(02/A1/02, 02/04/=
+01, 02/04/04,
+> 02/04/07) in rdac_check_sense.
+>=20
+> Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
+>=20
+Signed-off-by: Hannes Reinecke <hare@suse.de>
 
-How did it disappear?
-> 
-> # lscsi
-> [8:0:0:0]    disk    DGC      RAID 5           0324  /dev/sdc
-> [9:0:0:0]    disk    DGC      RAID 5           0324  /dev/sdd
-> [10:0:0:0]   disk    DGC      RAID 5           0324  /dev/sda
-> [11:0:0:0]   disk    DGC      RAID 5           0324  /dev/sdb
-> 
-> multipath is working fine:
-> # multipath -ll
-> mpath0 (360060160e5101f0020efc45a01cddd11) dm-6 DGC     ,RAID 5
-> [size=512G][features=1 queue_if_no_path][hwhandler=1 emc]
-> \_ round-robin 0 [prio=2][active]
->  \_ 8:0:0:0  sdc 8:32  [active][ready]
->  \_ 9:0:0:0  sdd 8:48  [active][ready]
-> \_ round-robin 0 [prio=0][enabled]
->  \_ 10:0:0:0 sda 8:0   [active][ready]
->  \_ 11:0:0:0 sdb 8:16  [active][ready]
-> 
-> Dispositve 254:6 is mpath0:
-> # devmap_name 254 6
-> mpath0
-> 
-> How could can I stop scsi system / multipath from this messages ?
+Cheers,
 
-Try: multipathd -k'reconfigure'
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
