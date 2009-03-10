@@ -1,72 +1,92 @@
-From: James Bottomley <James.Bottomley@HansenPartnership.com>
-Subject: Re: [PATCH]scsi_dh_rdac: Retry for NOT_READY check
-	condition
-	(0x02A102, 0x020401, 0x020404 and  0x020407) in rdac_check_sense
-Date: Tue, 10 Mar 2009 10:46:31 -0500
-Message-ID: <1236699991.14822.0.camel@localhost.localdomain>
-References: <0D1E8821739E724A86F4D16902CE275C140E25CA0C@inbmail01.lsi.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH][RESUBMIT] scsi_dh_rdac: Retry mode select for
+	NO_SENSE, ABORTED_COMMAND, UNIT_ATTENTION, NOT_READY(02/04/01)
+Date: Tue, 10 Mar 2009 11:48:44 -0700
+Message-ID: <1236710924.2178.4.camel@chandra-ubuntu>
+References: <0D1E8821739E724A86F4D16902CE275C140E25C59C@inbmail01.lsi.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C140E25CA0C@inbmail01.lsi.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <0D1E8821739E724A86F4D16902CE275C140E25C59C@inbmail01.lsi.com>
+Sender: linux-scsi-owner@vger.kernel.org
 To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: Hannes Reinecke <hare@suse.de>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2009-03-10 at 18:30 +0530, Chauhan, Vijay wrote:
-> This patch adds retry for NOT_READY check conditions(02/A1/02, 02/04/01, 02/04/04,
-> 02/04/07) in rdac_check_sense.
-> 
-> Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
-> 
+
+On Wed, 2009-03-04 at 12:17 +0530, Chauhan, Vijay wrote:
 > ---
-> --- linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-03-10 17:42:27.000000000 +0530
-> +++ linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-03-10 18:05:35.000000000 +0530
-> @@ -562,6 +562,30 @@ static int rdac_check_sense(struct scsi_
->  			 * Just retry and wait.
->  			 */
->  			return ADD_TO_MLQUEUE;
-> +		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
-> +			/* LUN Not Ready - Quiescense in progress
-> +			 * or has been achieved
-> +			 * Just retry.
-> +			 */
-> +			return ADD_TO_MLQUEUE;
+> 
+> This patch is to add retry for  mode select if mode select command is returned with sense NO_SENSE,
+> UNIT_ATTENTION, ABORTED_COMMAND, NOT_READY(02/04/01). This patch reorganise the sense keys from
+> if-else to switch-case format for better maintainability.
+> 
+> Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
 
-This is fine, being vendor specific, we don't handle it at the mid-layer
+Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
 
-> +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
-> +			/* LUN Not Ready - Logical Unit Not Ready and is in
-> +			 * the process of becoming ready
-> +			 * Just retry.
+> ---
+> 
+> --- linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-02-14 05:01:30.000000000 +0530
+> +++ linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-03-04 11:25:19.000000000 +0530
+> @@ -449,28 +449,40 @@ static int mode_select_handle_sense(stru
+>  				    unsigned char *sensebuf)
+>  {
+>  	struct scsi_sense_hdr sense_hdr;
+> -	int sense, err = SCSI_DH_IO, ret;
+> +	int err = SCSI_DH_IO, ret;
+> 
+>  	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
+>  	if (!ret)
+>  		goto done;
+> 
+>  	err = SCSI_DH_OK;
+> -	sense = (sense_hdr.sense_key << 16) | (sense_hdr.asc << 8) |
+> -			sense_hdr.ascq;
+> -	/* If it is retryable failure, submit the c9 inquiry again */
+> -	if (sense == 0x59136 || sense == 0x68b02 || sense == 0xb8b02 ||
+> -			    sense == 0x62900) {
+> -		/* 0x59136    - Command lock contention
+> -		 * 0x[6b]8b02 - Quiesense in progress or achieved
+> -		 * 0x62900    - Power On, Reset, or Bus Device Reset
+> -		 */
+> -		err = SCSI_DH_RETRY;
+> -	}
+> 
+> -	if (sense)
+> +	switch (sense_hdr.sense_key) {
+> +	case NO_SENSE:
+> +	case ABORTED_COMMAND:
+> +	case UNIT_ATTENTION:
+> +		err= SCSI_DH_RETRY;
+> +		break;
+> +	case NOT_READY:
+> +		if (sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x01)
+> +			/* LUN Not Ready and is in the Process of Becoming
+> +			 * Ready
 > +			 */
-> +			return ADD_TO_MLQUEUE;
-> +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x04)
-> +			/* LUN Not Ready - Format In Progress
-> +			 *
-> +			 * Just retry.
+> +			err = SCSI_DH_RETRY;
+> +		break;
+> +	case ILLEGAL_REQUEST:
+> +		if (sense_hdr.asc == 0x91 && sense_hdr.ascq == 0x36)
+> +			/*
+> +			 * Command Lock contention
 > +			 */
-> +			return ADD_TO_MLQUEUE;
-> +		if (sense_hdr->asc == 0x04  && sense_hdr->ascq == 0x07)
-> +			/* LUN Not Ready - Storage controller cannot respond
-> +			 * immediately to a PRIN or PROUT command.
-> +			 * Just retry.
-> +			 */
-> +			return ADD_TO_MLQUEUE;
+> +			err = SCSI_DH_RETRY;
+> +		break;
+> +	default:
+>  		sdev_printk(KERN_INFO, sdev,
+> -			"MODE_SELECT failed with sense 0x%x.\n", sense);
+> +			"MODE_SELECT failed with sense %02x/%02x/%02x.\n",sense_hdr.sense_key,
+> +			 sense_hdr.asc, sense_hdr.ascq );
+> +	}
+> +
+>  done:
+>  	return err;
+>  }--
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-For all of these ... along with a few other not ready types, we already
-do a delayed retry at the mid-layer (in scsi_io_completion).  Is there
-some problem that causes this to need to be handled here as well?
-
-James
