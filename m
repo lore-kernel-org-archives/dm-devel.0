@@ -1,80 +1,175 @@
-From: akpm@linux-foundation.org
-Subject: [merged] md-use-kzfree.patch removed from -mm tree
-Date: Fri, 06 Mar 2009 11:28:25 -0800
-Message-ID: <200903061928.n26JSP1r022760@imap1.linux-foundation.org>
-Reply-To: linux-kernel@vger.kernel.org
-Return-path: <mm-commits-owner@vger.kernel.org>
-Sender: mm-commits-owner@vger.kernel.org
-To: hannes@cmpxchg.org, dm-devel@redhat.com, penberg@cs.helsinki.fi, mm-commits@vger.kernel.org
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: [PATCH] dm: Data integrity support
+Date: Mon, 09 Mar 2009 23:46:05 -0400
+Message-ID: <yq1sklm9h1e.fsf@sermon.lab.mkp.net>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Alasdair G. Kergon" <agk@redhat.com>, jens.axboe@oracle.com
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
-The patch titled
-     md: use kzfree()
-has been removed from the -mm tree.  Its filename was
-     md-use-kzfree.patch
+This patch provides support for data integrity passthrough in the device
+mapper.
 
-This patch was dropped because it was merged into mainline or a subsystem tree
+ - If one or more component devices support integrity an integrity
+   profile is preallocated for the DM device.
 
-The current -mm tree may be found at http://userweb.kernel.org/~akpm/mmotm/
+ - If all component devices have compatible profiles the DM device is
+   flagged as capable.
 
-------------------------------------------------------
-Subject: md: use kzfree()
-From: Johannes Weiner <hannes@cmpxchg.org>
+ - Handle integrity metadata when splitting and cloning bios.
 
-Use kzfree() instead of memset() + kfree().
+Signed-off-by: Martin K. Petersen <martin.petersen@oracle.com>
 
-Signed-off-by: Johannes Weiner <hannes@cmpxchg.org>
-Reviewed-by: Pekka Enberg <penberg@cs.helsinki.fi>
-Cc: Alasdair Kergon <dm-devel@redhat.com>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 ---
 
- drivers/md/dm-crypt.c |    6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+This patch requires a change in Jens' for-linus branch that adds a GFP
+mask to bio_integrity_clone() and obsoletes the bio_set argument.
 
-diff -puN drivers/md/dm-crypt.c~md-use-kzfree drivers/md/dm-crypt.c
---- a/drivers/md/dm-crypt.c~md-use-kzfree
-+++ a/drivers/md/dm-crypt.c
-@@ -1137,8 +1137,7 @@ bad_ivmode:
- 	crypto_free_ablkcipher(tfm);
- bad_cipher:
- 	/* Must zero key material before freeing */
--	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
--	kfree(cc);
-+	kzfree(cc);
- 	return -EINVAL;
+
+diff --git a/drivers/md/dm-ioctl.c b/drivers/md/dm-ioctl.c
+--- a/drivers/md/dm-ioctl.c
++++ b/drivers/md/dm-ioctl.c
+@@ -1046,6 +1046,19 @@ static int populate_table(struct dm_tabl
+ 	return dm_table_complete(table);
  }
  
-@@ -1164,8 +1163,7 @@ static void crypt_dtr(struct dm_target *
- 	dm_put_device(ti, cc->dev);
++static int table_prealloc_integrity(struct dm_table *t,
++				    struct mapped_device *md)
++{
++	struct list_head *devices = dm_table_get_devices(t);
++	struct dm_dev_internal *dd;
++
++	list_for_each_entry(dd, devices, list)
++		if (bdev_get_integrity(dd->dm_dev.bdev))
++			return blk_integrity_register(dm_disk(md), NULL);
++
++	return 0;
++}
++
+ static int table_load(struct dm_ioctl *param, size_t param_size)
+ {
+ 	int r;
+@@ -1067,6 +1080,14 @@ static int table_load(struct dm_ioctl *p
+ 		goto out;
+ 	}
  
- 	/* Must zero key material before freeing */
--	memset(cc, 0, sizeof(*cc) + cc->key_size * sizeof(u8));
--	kfree(cc);
-+	kzfree(cc);
++	r = table_prealloc_integrity(t, md);
++	if (r) {
++		DMERR("%s: could not register integrity profile.",
++		      dm_device_name(md));
++		dm_table_destroy(t);
++		goto out;
++	}
++
+ 	down_write(&_hash_lock);
+ 	hc = dm_get_mdptr(md);
+ 	if (!hc || hc->md != md) {
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -877,6 +877,45 @@ struct dm_target *dm_table_find_target(s
+ 	return &t->targets[(KEYS_PER_NODE * n) + k];
  }
  
- static int crypt_map(struct dm_target *ti, struct bio *bio,
-_
-
-Patches currently in -mm which might be from hannes@cmpxchg.org are
-
-linux-next.patch
-cifs-use-kzfree.patch
-s390-use-kzfree.patch
-usb-use-kzfree.patch
-crypto-use-kzfree.patch
-vmscan-rename-scmay_swap-to-may_unmap.patch
-mm-introduce-for_each_populated_zone-macro.patch
-mm-introduce-for_each_populated_zone-macro-cleanup.patch
-mm-shrink_all_memory-use-scnr_reclaimed.patch
-mm-shrink_all_memory-use-scnr_reclaimed-checkpatch-fixes.patch
-vmscan-clip-swap_cluster_max-in-shrink_all_memory.patch
-vmscan-respect-higher-order-in-zone_reclaim.patch
-mm-move-pagevec-stripping-to-save-unlock-relock.patch
-mm-dont-free-swap-slots-on-page-deactivation.patch
-mm-remove-pagevec_swap_free.patch
-ecryptfs-use-kzfree.patch
-memcg-remove-mem_cgroup_calc_mapped_ratio-take2.patch
-
++/*
++ * Set the integrity profile for this device if all devices used have
++ * matching profiles.
++ */
++static void dm_table_set_integrity(struct dm_table *t)
++{
++	struct list_head *devices = dm_table_get_devices(t);
++	struct dm_dev_internal *prev = NULL, *dd = NULL;
++
++	if (!blk_get_integrity(dm_disk(t->md)))
++		return;
++
++	list_for_each_entry(dd, devices, list) {
++		if (prev &&
++		    blk_integrity_compare(prev->dm_dev.bdev->bd_disk,
++					  dd->dm_dev.bdev->bd_disk) < 0) {
++			DMWARN("%s: integrity not set: %s and %s mismatch",
++			       dm_device_name(t->md),
++			       prev->dm_dev.bdev->bd_disk->disk_name,
++			       dd->dm_dev.bdev->bd_disk->disk_name);
++			goto no_integrity;
++		}
++		prev = dd;
++	}
++
++	if (!prev || !bdev_get_integrity(prev->dm_dev.bdev))
++		goto no_integrity;
++
++	blk_integrity_register(dm_disk(t->md),
++			       bdev_get_integrity(prev->dm_dev.bdev));
++
++	return;
++
++no_integrity:
++	blk_integrity_register(dm_disk(t->md), NULL);
++
++	return;
++}
++
+ void dm_table_set_restrictions(struct dm_table *t, struct request_queue *q)
+ {
+ 	/*
+@@ -897,6 +936,7 @@ void dm_table_set_restrictions(struct dm
+ 	else
+ 		queue_flag_set_unlocked(QUEUE_FLAG_CLUSTER, q);
+ 
++	dm_table_set_integrity(t);
+ }
+ 
+ unsigned int dm_table_get_num_targets(struct dm_table *t)
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -703,6 +703,12 @@ static struct bio *split_bvec(struct bio
+ 	clone->bi_io_vec->bv_len = clone->bi_size;
+ 	clone->bi_flags |= 1 << BIO_CLONED;
+ 
++	if (bio_integrity(bio)) {
++		bio_integrity_clone(clone, bio, GFP_NOIO);
++		bio_integrity_trim(clone,
++				   bio_sector_offset(bio, idx, offset), len);
++	}
++
+ 	return clone;
+ }
+ 
+@@ -724,6 +730,14 @@ static struct bio *clone_bio(struct bio 
+ 	clone->bi_size = to_bytes(len);
+ 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
+ 
++	if (bio_integrity(bio)) {
++		bio_integrity_clone(clone, bio, GFP_NOIO);
++
++		if (idx != bio->bi_idx || clone->bi_size < bio->bi_size)
++			bio_integrity_trim(clone,
++					   bio_sector_offset(bio, idx, 0), len);
++	}
++
+ 	return clone;
+ }
+ 
+@@ -1191,6 +1205,7 @@ static void free_dev(struct mapped_devic
+ 	mempool_destroy(md->tio_pool);
+ 	mempool_destroy(md->io_pool);
+ 	bioset_free(md->bs);
++	blk_integrity_unregister(md->disk);
+ 	del_gendisk(md->disk);
+ 	free_minor(minor);
+ 
