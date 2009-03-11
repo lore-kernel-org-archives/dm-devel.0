@@ -1,92 +1,68 @@
 From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH][RESUBMIT] scsi_dh_rdac: Retry mode select for
-	NO_SENSE, ABORTED_COMMAND, UNIT_ATTENTION, NOT_READY(02/04/01)
-Date: Tue, 10 Mar 2009 11:48:44 -0700
-Message-ID: <1236710924.2178.4.camel@chandra-ubuntu>
-References: <0D1E8821739E724A86F4D16902CE275C140E25C59C@inbmail01.lsi.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+Subject: Re: [PATCH]:[multipath-tools] Adding the hwtable for
+	LSI generic rdac storage devices
+Date: Tue, 10 Mar 2009 18:17:49 -0700
+Message-ID: <1236734269.11383.1.camel@chandra-ubuntu>
+References: <E463DF2B2E584B4A82673F53D62C2EF46675B0E8@cosmail01.lsi.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C140E25C59C@inbmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: Hannes Reinecke <hare@suse.de>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "dm-devel@redhat.com" <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF46675B0E8@cosmail01.lsi.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
-On Wed, 2009-03-04 at 12:17 +0530, Chauhan, Vijay wrote:
+On Fri, 2009-03-06 at 09:38 -0700, Moger, Babu wrote:
+> This patch adds the hwtable for LSI rdac generic storage. Also sets the feature pg_init_retries to maximum(50).
+> 
+> Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> 
 > ---
 > 
-> This patch is to add retry for  mode select if mode select command is returned with sense NO_SENSE,
-> UNIT_ATTENTION, ABORTED_COMMAND, NOT_READY(02/04/01). This patch reorganise the sense keys from
-> if-else to switch-case format for better maintainability.
-> 
-> Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+> --- multipath-tools/libmultipath/hwtable.c.orig	2009-03-04 14:33:11.000000000 -0600
+> +++ multipath-tools/libmultipath/hwtable.c	2009-03-04 14:43:57.000000000 -0600
+> @@ -837,6 +837,22 @@ static struct hwentry default_hw[] = {
+>  		.checker_name  = RDAC,
+>  		.prio_name     = PRIO_RDAC,
+>  	},
+> +	/* LSI Generic rdac storage */
+> +	{
+> +		.vendor        = "(LSI|ENGENIO)",
+> +		.product       = "INF-01-00",
+> +		.getuid        = DEFAULT_GETUID,
+> +		.features      = "2 pg_init_retries 50",
+> +		.hwhandler     = "1 rdac",
+> +		.selector      = DEFAULT_SELECTOR,
+> +		.pgpolicy      = GROUP_BY_PRIO,
+> +		.pgfailback    = -FAILBACK_IMMEDIATE,
+> +		.rr_weight     = RR_WEIGHT_NONE,
+> +		.no_path_retry = 15,
 
-Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
-
-> ---
+you don't want to use "queue" for no path retry ?
+ 
+> +		.minio         = DEFAULT_MINIO,
+> +		.checker_name  = RDAC,
+> +		.prio_name     = PRIO_RDAC,
+> +	},
+>  	/*
+>  	 * EOL
+>  	 */
 > 
-> --- linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-02-14 05:01:30.000000000 +0530
-> +++ linux-2.6.29-rc5/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-03-04 11:25:19.000000000 +0530
-> @@ -449,28 +449,40 @@ static int mode_select_handle_sense(stru
->  				    unsigned char *sensebuf)
->  {
->  	struct scsi_sense_hdr sense_hdr;
-> -	int sense, err = SCSI_DH_IO, ret;
-> +	int err = SCSI_DH_IO, ret;
 > 
->  	ret = scsi_normalize_sense(sensebuf, SCSI_SENSE_BUFFERSIZE, &sense_hdr);
->  	if (!ret)
->  		goto done;
 > 
->  	err = SCSI_DH_OK;
-> -	sense = (sense_hdr.sense_key << 16) | (sense_hdr.asc << 8) |
-> -			sense_hdr.ascq;
-> -	/* If it is retryable failure, submit the c9 inquiry again */
-> -	if (sense == 0x59136 || sense == 0x68b02 || sense == 0xb8b02 ||
-> -			    sense == 0x62900) {
-> -		/* 0x59136    - Command lock contention
-> -		 * 0x[6b]8b02 - Quiesense in progress or achieved
-> -		 * 0x62900    - Power On, Reset, or Bus Device Reset
-> -		 */
-> -		err = SCSI_DH_RETRY;
-> -	}
-> 
-> -	if (sense)
-> +	switch (sense_hdr.sense_key) {
-> +	case NO_SENSE:
-> +	case ABORTED_COMMAND:
-> +	case UNIT_ATTENTION:
-> +		err= SCSI_DH_RETRY;
-> +		break;
-> +	case NOT_READY:
-> +		if (sense_hdr.asc == 0x04 && sense_hdr.ascq == 0x01)
-> +			/* LUN Not Ready and is in the Process of Becoming
-> +			 * Ready
-> +			 */
-> +			err = SCSI_DH_RETRY;
-> +		break;
-> +	case ILLEGAL_REQUEST:
-> +		if (sense_hdr.asc == 0x91 && sense_hdr.ascq == 0x36)
-> +			/*
-> +			 * Command Lock contention
-> +			 */
-> +			err = SCSI_DH_RETRY;
-> +		break;
-> +	default:
->  		sdev_printk(KERN_INFO, sdev,
-> -			"MODE_SELECT failed with sense 0x%x.\n", sense);
-> +			"MODE_SELECT failed with sense %02x/%02x/%02x.\n",sense_hdr.sense_key,
-> +			 sense_hdr.asc, sense_hdr.ascq );
-> +	}
-> +
->  done:
->  	return err;
->  }--
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
