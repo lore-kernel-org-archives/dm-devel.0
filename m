@@ -1,20 +1,16 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Re: configure MD3000
-Date: Thu, 12 Mar 2009 15:07:33 -0700
-Message-ID: <1236895653.12841.27.camel@chandra-ubuntu>
-References: <d1392840903120953me7d9acdyee6ead49d880be0@mail.gmail.com>
-	<d1392840903121207n6b3b0ca8lb22134dd064dbc45@mail.gmail.com>
-	<1236885493.12841.15.camel@chandra-ubuntu>
-	<d1392840903121225y7c46dbfbs366de71ab82c8b8d@mail.gmail.com>
-	<1236886304.12841.17.camel@chandra-ubuntu>
-	<d1392840903121240r2f0a9e55t10989593d135a6c4@mail.gmail.com>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 0/8] dm: request-based dm-multipath
+Date: Fri, 13 Mar 2009 10:03:18 +0900
+Message-ID: <49B9B0D6.9070003@ct.jp.nec.com>
+References: <20081003.110825.74754936.k-ueda@ct.jp.nec.com>	<20090128154019.GB23158@agk.fab.redhat.com>	<49815863.8040806@ct.jp.nec.com>	<20090129104147.GB9870@pentland.suse.de>	<4982B4C6.8050904@ct.jp.nec.com>	<49B60444.2090008@ct.jp.nec.com>
+	<49B613FE.3060501@suse.de> <49B8CEBB.7070701@ct.jp.nec.com>
+	<49B8D114.6040200@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <d1392840903121240r2f0a9e55t10989593d135a6c4@mail.gmail.com>
+In-Reply-To: <49B8D114.6040200@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,214 +20,46 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Thomas Witzel <witzel.thomas@gmail.com>
+To: Hannes Reinecke <hare@suse.de>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Hi Hannes,
 
-On Thu, 2009-03-12 at 15:40 -0400, Thomas Witzel wrote:
-> What sort of bothers me, is that although we specified rdac, it says
-> hwhandler=0 while on the web there seems to be output examples where
-> it does say rdac in the multipath output.
-> Also googling convinced me that some people have
-> drivers/md/md-multipath-rdac.c or something like that in their kernel,
-> while my ubuntu kernel and the vanilla git kernel do not have this. I
-> have the feeling this is an important component of this.
+On 2009/03/12 18:08 +0900, Hannes Reinecke wrote:
+> Do you have an updated patch of your suspend fixes? We've run into an issue
+> here which looks suspiciously close to that one (I/O is completed on a
+> deleted pgpath), so we would be happy to test it these out.
 
-From 2.6.27 onwards, rdac has moved to scsi layer as scsi_dh_rdac. You
-can do a "lsmod | grep rdac" to see if that module is inserted.
+You mean that the issue occurs WITHOUT the suspend fix patch which
+I sent.  Is it right?
+If so, you can use it, since I haven't added any big change about
+suspend fix since then.
+Logic changes I added about suspend fix since then are only in
+rq_complete() to follow your comment.  The updated rq_complete()
+is below:
 
-> 
-> On Thu, Mar 12, 2009 at 3:38 PM, Thomas Witzel <witzel.thomas@gmail.com> wrote:
-> > How do you want me to test whether I can read/write ? I can no longer
-> > mount the /dev/sd*1 partitions because now they are busy (thats since
-> > I started multipath). Yes, I did execute multipath -F and multipath
-> > repeatedly, the daemon is running.
-> >
-> > On Thu, Mar 12, 2009 at 3:31 PM, Chandra Seetharaman
-> > <sekharan@us.ibm.com> wrote:
-> >> Are you able to read/write from/to the scsi device ?
-> >>
-> >> If yes, Did you do "multipath -F" followed by "multipath".
-> >>
-> >> Is the multipathd running ?
-> >>
-> >> chandra
-> >> On Thu, 2009-03-12 at 15:25 -0400, Thomas Witzel wrote:
-> >>> My /sys/block looks like this:
-> >>> ls /sys/block/
-> >>> dm-0  dm-3  dm-6   loop2  loop5  ram0   ram11  ram14  ram3  ram6  ram9
-> >>>  sdc  sdf  sdi  sdl
-> >>> dm-1  dm-4  loop0  loop3  loop6  ram1   ram12  ram15  ram4  ram7  sda
-> >>>  sdd  sdg  sdj  sdm
-> >>> dm-2  dm-5  loop1  loop4  loop7  ram10  ram13  ram2   ram5  ram8  sdb
-> >>>  sde  sdh  sdk  sr0
-> >>>
-> >>> My /proc/partitions looks like this:
-> >>>
-> >>> major minor  #blocks  name
-> >>>
-> >>>    8     0   71041024 sda
-> >>>    8     1   68099503 sda1
-> >>>    8     2          1 sda2
-> >>>    8     5    2939863 sda5
-> >>>    8    16 2134896640 sdb
-> >>>    8    17 2134893883 sdb1
-> >>>    8    32 2134896640 sdc
-> >>>    8    48 2134896640 sdd
-> >>>    8    49 2134893883 sdd1
-> >>>    8    64 2134896640 sde
-> >>>    8    80 1222794240 sdf
-> >>>    8    96      20480 sdg
-> >>>    8   112 2134896640 sdh
-> >>>    8   128 2134896640 sdi
-> >>>    8   129 2134893883 sdi1
-> >>>    8   144 2134896640 sdj
-> >>>    8   160 2134896640 sdk
-> >>>    8   161 2134893883 sdk1
-> >>>    8   176 1222794240 sdl
-> >>>    8   192      20480 sdm
-> >>>  254     0 2134896640 dm-0
-> >>>  254     1 2134896640 dm-1
-> >>>  254     2 2134896640 dm-2
-> >>>  254     3 2134896640 dm-3
-> >>>  254     4 1222794240 dm-4
-> >>>  254     5      20480 dm-5
-> >>>  254     6      20480 dm-6
-> >>>
-> >>> All the sd's with a partition are working fine, I even created a test
-> >>> file system at some point. I did load scsi_dh_rdac for testing at some
-> >>> point, and that put the following into the syslog:
-> >>> [10170.087743] sd 1:0:0:0: rdac: LUN 0 (owned)
-> >>> [10170.089151] sd 1:0:0:1: rdac: LUN 1 (unowned)
-> >>> [10170.089941] sd 1:0:0:2: rdac: LUN 2 (owned)
-> >>> [10170.090719] sd 1:0:0:3: rdac: LUN 3 (unowned)
-> >>> [10170.092112] sd 1:0:0:4: rdac: LUN 4 (owned)
-> >>> [10170.092964] sd 1:0:1:0: rdac: LUN 0 (unowned)
-> >>> [10170.093733] sd 1:0:1:1: rdac: LUN 1 (owned)
-> >>> [10170.094507] sd 1:0:1:2: rdac: LUN 2 (unowned)
-> >>> [10170.095261] sd 1:0:1:3: rdac: LUN 3 (owned)
-> >>> [10170.096081] sd 1:0:1:4: rdac: LUN 4 (unowned)
-> >>> [10170.096088] rdac: device handler registered
-> >>>
-> >>> Also loading the scsi_dh_rdac module seems to stop the [ 8996.087508]
-> >>> Buffer I/O error on device dm-5, logical block 5
-> >>> [ 8996.087539] Buffer I/O error on device dm-5, logical block 6
-> >>> [ 8996.087548] Buffer I/O error on device dm-5, logical block 5112
-> >>> [ 8996.087553] Buffer I/O error on device dm-5, logical block 5112
-> >>> [ 8996.087601] Buffer I/O error on device dm-5, logical block 12
-> >>> [ 8996.087606] Buffer I/O error on device dm-5, logical block 13
-> >>> [ 8996.087609] Buffer I/O error on device dm-5, logical block 14
-> >>> [ 8996.087612] Buffer I/O error on device dm-5, logical block 15
-> >>> [ 8996.087615] Buffer I/O error on device dm-5, logical block 16
-> >>> [ 8996.087618] Buffer I/O error on device dm-5, logical block 17
-> >>>
-> >>> type messages.
-> >>>
-> >>> On Thu, Mar 12, 2009 at 3:18 PM, Chandra Seetharaman
-> >>> <sekharan@us.ibm.com> wrote:
-> >>> > No, you don't have to change the distro.
-> >>> >
-> >>> > Do you see the disks ? (the #:#:#:# makes me think that the underlying
-> >>> > block devices are not configured properly). IOW, do you the sd devices
-> >>> > under /sys/block ? Are you able to read/write from/to the devices ?
-> >>> >
-> >>> > chandra
-> >>> >
-> >>> > On Thu, 2009-03-12 at 15:07 -0400, Thomas Witzel wrote:
-> >>> >> Thanks Chandra,
-> >>> >>
-> >>> >> sorry for the out of order reply, still had the digest mode on. I
-> >>> >> setup the config similar to what you said
-> >>> >>
-> >>> >> devices {
-> >>> >>         device {
-> >>> >>                 vendor                  "DELL"
-> >>> >>                 product                 "MD3000"
-> >>> >>                 hardware_handler        "1 rdac"
-> >>> >>                 path_checker            rdac
-> >>> >>                 path_grouping_policy    group_by_prio
-> >>> >>                 prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
-> >>> >>                 failback                immediate
-> >>> >>                 getuid_callout          "/sbin/scsi_id -g -u /block/%n"
-> >>> >>         }
-> >>> >> }
-> >>> >>
-> >>> >>
-> >>> >> and I'm still getting:
-> >>> >> sdh: checker msg is "directio checker reports path is down"
-> >>> >> create: 360022190009773680000214749504780 ,
-> >>> >> [size=2.0T][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdb 8:16  [undef][ready]
-> >>> >> \_ round-robin 0 [prio=0][undef]
-> >>> >>  \_ #:#:#:# sdh 8:112 [undef][faulty]
-> >>> >> sdc: checker msg is "directio checker reports path is down"
-> >>> >> create: 3600221900096f27d00000ab3495047fd ,
-> >>> >> [size=2.0T][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=0][undef]
-> >>> >>  \_ #:#:#:# sdc 8:32  [undef][faulty]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdi 8:128 [undef][ready]
-> >>> >> sdj: checker msg is "directio checker reports path is down"
-> >>> >> create: 360022190009773680000214a495047ce ,
-> >>> >> [size=2.0T][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdd 8:48  [undef][ready]
-> >>> >> \_ round-robin 0 [prio=0][undef]
-> >>> >>  \_ #:#:#:# sdj 8:144 [undef][faulty]
-> >>> >> sde: checker msg is "directio checker reports path is down"
-> >>> >> create: 3600221900096f27d00000ab449504839 ,
-> >>> >> [size=2.0T][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=0][undef]
-> >>> >>  \_ #:#:#:# sde 8:64  [undef][faulty]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdk 8:160 [undef][ready]
-> >>> >> sdl: checker msg is "directio checker reports path is down"
-> >>> >> create: 360022190009773680000214c49504806 ,
-> >>> >> [size=1.1T][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdf 8:80  [undef][ready]
-> >>> >> \_ round-robin 0 [prio=0][undef]
-> >>> >>  \_ #:#:#:# sdl 8:176 [undef][faulty]
-> >>> >> create: 360022190009773680000000000000000 ,
-> >>> >> [size=20M][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdg 8:96  [undef][ready]
-> >>> >> create: 3600221900096f27d0000000000000000 ,
-> >>> >> [size=20M][features=0][hwhandler=0]
-> >>> >> \_ round-robin 0 [prio=1][undef]
-> >>> >>  \_ #:#:#:# sdm 8:192 [undef][ready]
-> >>> >> libdevmapper: libdm-common.c(312): Created
-> >>> >> /dev/mapper/360022190009773680000000000000000
-> >>> >> libdevmapper: libdm-common.c(312): Created
-> >>> >> /dev/mapper/3600221900096f27d0000000000000000
-> >>> >>
-> >>> >> Now this is not on RH or SLES, its an ubuntu 8.4 system. If absolutely
-> >>> >> necessary I would  consider switching the distribution, but right now
-> >>> >> I'd prefer to stick with what all the other machines have.
-> >>> >>
-> >>> >> Thanks, Thomas
-> >>> >>
-> >>> >> --
-> >>> >> dm-devel mailing list
-> >>> >> dm-devel@redhat.com
-> >>> >> https://www.redhat.com/mailman/listinfo/dm-devel
-> >>> >
-> >>> > --
-> >>> > dm-devel mailing list
-> >>> > dm-devel@redhat.com
-> >>> > https://www.redhat.com/mailman/listinfo/dm-devel
-> >>> >
-> >>>
-> >>> --
-> >>> dm-devel mailing list
-> >>> dm-devel@redhat.com
-> >>> https://www.redhat.com/mailman/listinfo/dm-devel
-> >>
-> >> --
-> >> dm-devel mailing list
-> >> dm-devel@redhat.com
-> >> https://www.redhat.com/mailman/listinfo/dm-devel
-> >>
-> >
+static void rq_completed(struct mapped_device *md)
+{
+	struct request_queue *q = md->queue;
+	unsigned long flags;
+
+	spin_lock_irqsave(q->queue_lock, flags);
+	if (q->in_flight) {
+		spin_unlock_irqrestore(q->queue_lock, flags);
+		return;
+	}
+	spin_unlock_irqrestore(q->queue_lock, flags);
+
+	/* nudge anyone waiting on suspend queue */
+	wake_up(&md->wait);
+}
+
+
+I merged the previous suspend fix patch into the request-based dm
+core patch, and I've been changing the core patch after that.
+So I don't have a patch which addresses only suspend fix update.
+Sorry about that.
+
+Thanks,
+Kiyoshi Ueda
