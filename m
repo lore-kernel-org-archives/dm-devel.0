@@ -1,17 +1,17 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH] dm crypt: wait for possible unfinished endio()
-	call in destructor
-Date: Fri, 13 Mar 2009 13:53:19 +0000
-Message-ID: <20090313135319.GJ7445@agk.fab.redhat.com>
-References: <49AFA565.6030902@ahsoftware.de> <49AFBE4A.1010605@redhat.com>
-	<49B0BFBD.7060208@ahsoftware.de> <49B0DDD6.2080608@redhat.com>
-	<49B8F726.8040200@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/3] set pthread stack size to at least
+	PTHREAD_STACK_MIN
+Date: Fri, 13 Mar 2009 15:55:14 -0500
+Message-ID: <20090313205514.GL32340@ether.msp.redhat.com>
+References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>
+	<1236883093-2989-3-git-send-email-bmarzins@redhat.com>
+	<49BA3ACF.1010101@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <49B8F726.8040200@redhat.com>
+In-Reply-To: <49BA3ACF.1010101@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,163 +22,279 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Latest version of this patch.  Please would some people test and/or
-review it asap so we can get it fixed in 2.6.29?
+> Hmm. I don't quite agree. I run into the same problem, but having
+> discovered that we're not checking any return values at all here
+> we should rather do the prudent thing and check them once and for all.
+>
+> I've chosen this approach:
+>
+> diff --git a/libmultipath/log_pthread.c b/libmultipath/log_pthread.c
+> index 9e9aebe..c33480e 100644
+> --- a/libmultipath/log_pthread.c
+> +++ b/libmultipath/log_pthread.c
+> @@ -53,9 +53,30 @@ static void * log_thread (void * et)
+> void log_thread_start (void)
+> {
+>        pthread_attr_t attr;
+> +       size_t stacksize;
+>
+>        logdbg(stderr,"enter log_thread_start\n");
+>
+> +       if (pthread_attr_init(&attr)) {
+> +               fprintf(stderr,"can't initialize log thread\n");
+> +               exit(1);
+> +       }
+> +
+> +       if (pthread_attr_getstacksize(&attr, &stacksize) != 0)
+> +               stacksize = PTHREAD_STACK_MIN:
+> +
+> +       /* Check if the stacksize is large enough */
+> +       if (stacksize < (64 * 1024))
+> +               stacksize = 64 * 1024;
+> +
+> +       /* Set stacksize and try to reinitialize attr if failed */
+> +       if (stacksize > PTHREAD_STACK_MIN &&
+> +           pthread_attr_setstacksize(&attr, stacksize) != 0 &&
+> +           pthread_attr_init(&attr)) {
+> +               fprintf(stderr,"can't set log thread stack size\n");
+> +               exit(1);
+> +       }
+> +
+>        logq_lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+>        logev_lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+>        logev_cond = (pthread_cond_t *) malloc(sizeof(pthread_cond_t));
+> @@ -64,9 +85,6 @@ void log_thread_start (void)
+>        pthread_mutex_init(logev_lock, NULL);
+>        pthread_cond_init(logev_cond, NULL);
+>
+> -       pthread_attr_init(&attr);
+> -       pthread_attr_setstacksize(&attr, 64 * 1024);
+> -
+>        if (log_init("multipathd", 0)) {
+>                fprintf(stderr,"can't initialize log buffer\n");
+>                exit(1);
+>
+>
+> This way we'll at least be notified if something goes wrong in
+> the future. We shouldn't make the same mistake again and
+> ignore error codes which don't happen to trigger now.
+>
+> If agreed I'll post the full patch here.
 
-Alasdair
+This approach doesn't doesn't actually fix the bug that I see. The
+problem I was seeing is that setting the stacksize too small just causes
+pthread_attr_setstacksize() to fail, leaving you with the default stack
+size. On some architectures, the default stacksize is large, like 10Mb.
+Since you start one waiter thread per multipath device, every 100
+devices eats up 1Gb of memory. Your approach always uses the default
+stack size, unless it's too small.  I've never seen problems with the
+stack being too small. Only too large. Maybe your experience has been
+different.
 
-From: Milan Broz <mbroz@redhat.com>
-
-The following oops has been reported when dm-crypt runs over a loop device.
-
-...
-[   70.381058] Process loop0 (pid: 4268, ti=cf3b2000 task=cf1cc1f0 task.ti=cf3b2000)
-...
-[   70.381058] Call Trace:
-[   70.381058]  [<d0d76601>] ? crypt_dec_pending+0x5e/0x62 [dm_crypt]
-[   70.381058]  [<d0d767b8>] ? crypt_endio+0xa2/0xaa [dm_crypt]
-[   70.381058]  [<d0d76716>] ? crypt_endio+0x0/0xaa [dm_crypt]
-[   70.381058]  [<c01a2f24>] ? bio_endio+0x2b/0x2e
-[   70.381058]  [<d0806530>] ? dec_pending+0x224/0x23b [dm_mod]
-[   70.381058]  [<d08066e4>] ? clone_endio+0x79/0xa4 [dm_mod]
-[   70.381058]  [<d080666b>] ? clone_endio+0x0/0xa4 [dm_mod]
-[   70.381058]  [<c01a2f24>] ? bio_endio+0x2b/0x2e
-[   70.381058]  [<c02bad86>] ? loop_thread+0x380/0x3b7
-[   70.381058]  [<c02ba8a1>] ? do_lo_send_aops+0x0/0x165
-[   70.381058]  [<c013754f>] ? autoremove_wake_function+0x0/0x33
-[   70.381058]  [<c02baa06>] ? loop_thread+0x0/0x3b7
-
-When a table is being replaced, it waits for I/O to complete 
-before destroying the mempool, but the endio function doesn't
-call mempool_free() until after completing the bio.
-
-Fix it by swapping the order of those two operations.
-
-The same problem occurs in dm.c with referenced after dec_pending.
-Again, we swap the order.
-
-Signed-off-by: Milan Broz <mbroz@redhat.com>
-Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+The other problem is that when I actually read the pthread_attr_init man
+page (it can fail. who knew?), I saw that it can fail with ENOMEM. Also,
+that it had a function to free it, and that the result of reinitializing
+an attr that hadn't been freed was undefined.  Clearly, this function
+wasn't intended to be called over and over without ever freeing the
+attr, which is how we've been using it in multipathd. So, in the spirit
+of writing code to the interface, instead of to how it appears to be
+currently implemented, how about this.
 ---
- drivers/md/dm-crypt.c |   17 ++++++++++-------
- drivers/md/dm.c       |   32 +++++++++++++++++++-------------
- 2 files changed, 29 insertions(+), 20 deletions(-)
+ libmultipath/log_pthread.c |    9 +-------
+ libmultipath/log_pthread.h |    4 ++-
+ libmultipath/waiter.c      |   11 ++--------
+ libmultipath/waiter.h      |    2 +
+ multipathd/main.c          |   48 +++++++++++++++++++++++++++++++++++----------
+ 5 files changed, 48 insertions(+), 26 deletions(-)
 
-Index: linux-2.6.29-rc7/drivers/md/dm-crypt.c
+Index: multipath-tools-090311/libmultipath/waiter.c
 ===================================================================
---- linux-2.6.29-rc7.orig/drivers/md/dm-crypt.c	2009-03-13 11:06:18.000000000 +0000
-+++ linux-2.6.29-rc7/drivers/md/dm-crypt.c	2009-03-13 11:07:46.000000000 +0000
-@@ -568,19 +568,22 @@ static void crypt_inc_pending(struct dm_
- static void crypt_dec_pending(struct dm_crypt_io *io)
- {
- 	struct crypt_config *cc = io->target->private;
-+	struct bio *base_bio = io->base_bio;
-+	struct dm_crypt_io *base_io = io->base_io;
-+	int error = io->error;
+--- multipath-tools-090311.orig/libmultipath/waiter.c
++++ multipath-tools-090311/libmultipath/waiter.c
+@@ -20,6 +20,8 @@
+ #include "lock.h"
+ #include "waiter.h"
  
- 	if (!atomic_dec_and_test(&io->pending))
- 		return;
- 
--	if (likely(!io->base_io))
--		bio_endio(io->base_bio, io->error);
-+	mempool_free(io, cc->io_pool);
++pthread_attr_t waiter_attr;
 +
-+	if (likely(!base_io))
-+		bio_endio(base_bio, error);
- 	else {
--		if (io->error && !io->base_io->error)
--			io->base_io->error = io->error;
--		crypt_dec_pending(io->base_io);
-+		if (error && !base_io->error)
-+			base_io->error = error;
-+		crypt_dec_pending(base_io);
- 	}
+ struct event_thread *alloc_waiter (void)
+ {
+ 
+@@ -194,18 +196,11 @@ void *waitevent (void *et)
+ 
+ int start_waiter_thread (struct multipath *mpp, struct vectors *vecs)
+ {
+-	pthread_attr_t attr;
+ 	struct event_thread *wp;
+ 
+ 	if (!mpp)
+ 		return 0;
+ 
+-	if (pthread_attr_init(&attr))
+-		goto out;
 -
--	mempool_free(io, cc->io_pool);
- }
+-	pthread_attr_setstacksize(&attr, 32 * 1024);
+-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+-
+ 	wp = alloc_waiter();
+ 
+ 	if (!wp)
+@@ -216,7 +211,7 @@ int start_waiter_thread (struct multipat
+ 	wp->vecs = vecs;
+ 	wp->mpp = mpp;
+ 
+-	if (pthread_create(&wp->thread, &attr, waitevent, wp)) {
++	if (pthread_create(&wp->thread, &waiter_attr, waitevent, wp)) {
+ 		condlog(0, "%s: cannot create event checker", wp->mapname);
+ 		goto out1;
+ 	}
+Index: multipath-tools-090311/multipathd/main.c
+===================================================================
+--- multipath-tools-090311.orig/multipathd/main.c
++++ multipath-tools-090311/multipathd/main.c
+@@ -14,6 +14,7 @@
+ #include <errno.h>
+ #include <sys/time.h>
+ #include <sys/resource.h>
++#include <limits.h>
  
  /*
-Index: linux-2.6.29-rc7/drivers/md/dm.c
-===================================================================
---- linux-2.6.29-rc7.orig/drivers/md/dm.c	2009-03-09 22:12:09.000000000 +0000
-+++ linux-2.6.29-rc7/drivers/md/dm.c	2009-03-13 12:34:19.000000000 +0000
-@@ -525,9 +525,12 @@ static int __noflush_suspending(struct m
- static void dec_pending(struct dm_io *io, int error)
- {
- 	unsigned long flags;
-+	int io_error;
-+	struct bio *bio;
-+	struct mapped_device *md = io->md;
+  * libcheckers
+@@ -1264,17 +1265,47 @@ set_oom_adj (int val)
+ 	fclose(fp);
+ }
  
- 	/* Push-back supersedes any I/O errors */
--	if (error && !(io->error > 0 && __noflush_suspending(io->md)))
-+	if (error && !(io->error > 0 && __noflush_suspending(md)))
- 		io->error = error;
- 
- 	if (atomic_dec_and_test(&io->io_count)) {
-@@ -537,24 +540,27 @@ static void dec_pending(struct dm_io *io
- 			 * This must be handled before the sleeper on
- 			 * suspend queue merges the pushback list.
- 			 */
--			spin_lock_irqsave(&io->md->pushback_lock, flags);
--			if (__noflush_suspending(io->md))
--				bio_list_add(&io->md->pushback, io->bio);
-+			spin_lock_irqsave(&md->pushback_lock, flags);
-+			if (__noflush_suspending(md))
-+				bio_list_add(&md->pushback, io->bio);
- 			else
- 				/* noflush suspend was interrupted. */
- 				io->error = -EIO;
--			spin_unlock_irqrestore(&io->md->pushback_lock, flags);
-+			spin_unlock_irqrestore(&md->pushback_lock, flags);
- 		}
- 
- 		end_io_acct(io);
- 
--		if (io->error != DM_ENDIO_REQUEUE) {
--			trace_block_bio_complete(io->md->queue, io->bio);
-+		io_error = io->error;
-+		bio = io->bio;
- 
--			bio_endio(io->bio, io->error);
--		}
-+		free_io(md, io);
- 
--		free_io(io->md, io);
-+		if (io_error != DM_ENDIO_REQUEUE) {
-+			trace_block_bio_complete(md->queue, bio);
++void
++setup_thread_attr(pthread_attr_t *attr, size_t stacksize, int detached)
++{
++	if (pthread_attr_init(attr)) {
++		fprintf(stderr, "can't initialize thread attr: %s\n",
++			strerror(errno));
++		exit(1);
++	}
++	if (stacksize < PTHREAD_STACK_MIN)
++		stacksize = PTHREAD_STACK_MIN;
 +
-+			bio_endio(bio, io_error);
-+		}
- 	}
- }
- 
-@@ -562,6 +568,7 @@ static void clone_endio(struct bio *bio,
++	if (pthread_attr_setstacksize(attr, stacksize)) {
++		fprintf(stderr, "can't set thread stack size to %lu: %s\n",
++			(unsigned long)stacksize, strerror(errno));
++		exit(1);
++	}
++	if (detached && pthread_attr_setdetachstate(attr,
++						    PTHREAD_CREATE_DETACHED)) {
++		fprintf(stderr, "can't set thread to detached: %s\n",
++			strerror(errno));
++		exit(1);
++	}
++}
++
+ static int
+ child (void * param)
  {
- 	int r = 0;
- 	struct dm_target_io *tio = bio->bi_private;
-+	struct dm_io *io = tio->io;
- 	struct mapped_device *md = tio->io->md;
- 	dm_endio_fn endio = tio->ti->type->end_io;
+ 	pthread_t check_thr, uevent_thr, uxlsnr_thr;
+-	pthread_attr_t attr;
++	pthread_attr_t log_attr, misc_attr;
+ 	struct vectors * vecs;
  
-@@ -585,15 +592,14 @@ static void clone_endio(struct bio *bio,
- 		}
- 	}
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
  
--	dec_pending(tio->io, error);
--
+-	if (logsink)
+-		log_thread_start();
++	setup_thread_attr(&misc_attr, 64 * 1024, 1);
++	setup_thread_attr(&waiter_attr, 32 * 1024, 1);
++
++	if (logsink) {
++		setup_thread_attr(&log_attr, 64 * 1024, 0);
++		log_thread_start(&log_attr);
++		pthread_attr_destroy(&log_attr);
++	}
+ 
+ 	condlog(2, "--------start up--------");
+ 	condlog(2, "read " DEFAULT_CONFIGFILE);
+@@ -1346,13 +1377,10 @@ child (void * param)
  	/*
- 	 * Store md for cleanup instead of tio which is about to get freed.
+ 	 * start threads
  	 */
- 	bio->bi_private = md->bs;
+-	pthread_attr_init(&attr);
+-	pthread_attr_setstacksize(&attr, 64 * 1024);
+-	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+-
+-	pthread_create(&check_thr, &attr, checkerloop, vecs);
+-	pthread_create(&uevent_thr, &attr, ueventloop, vecs);
+-	pthread_create(&uxlsnr_thr, &attr, uxlsnrloop, vecs);
++	pthread_create(&check_thr, &misc_attr, checkerloop, vecs);
++	pthread_create(&uevent_thr, &misc_attr, ueventloop, vecs);
++	pthread_create(&uxlsnr_thr, &misc_attr, uxlsnrloop, vecs);
++	pthread_attr_destroy(&misc_attr);
  
--	bio_put(bio);
- 	free_tio(md, tio);
-+	bio_put(bio);
-+	dec_pending(io, error);
+ 	pthread_cond_wait(&exit_cond, &exit_mutex);
+ 
+Index: multipath-tools-090311/libmultipath/log_pthread.c
+===================================================================
+--- multipath-tools-090311.orig/libmultipath/log_pthread.c
++++ multipath-tools-090311/libmultipath/log_pthread.c
+@@ -50,10 +50,8 @@ static void * log_thread (void * et)
+ 	}
  }
  
- static sector_t max_io_len(struct mapped_device *md,
+-void log_thread_start (void)
++void log_thread_start (pthread_attr_t *attr)
+ {
+-	pthread_attr_t attr;
+-
+ 	logdbg(stderr,"enter log_thread_start\n");
+ 
+ 	logq_lock = (pthread_mutex_t *) malloc(sizeof(pthread_mutex_t));
+@@ -64,14 +62,11 @@ void log_thread_start (void)
+ 	pthread_mutex_init(logev_lock, NULL);
+ 	pthread_cond_init(logev_cond, NULL);
+ 
+-	pthread_attr_init(&attr);
+-	pthread_attr_setstacksize(&attr, 64 * 1024);
+-
+ 	if (log_init("multipathd", 0)) {
+ 		fprintf(stderr,"can't initialize log buffer\n");
+ 		exit(1);
+ 	}
+-	pthread_create(&log_thr, &attr, log_thread, NULL);
++	pthread_create(&log_thr, attr, log_thread, NULL);
+ 
+ 	return;
+ }
+Index: multipath-tools-090311/libmultipath/log_pthread.h
+===================================================================
+--- multipath-tools-090311.orig/libmultipath/log_pthread.h
++++ multipath-tools-090311/libmultipath/log_pthread.h
+@@ -1,6 +1,8 @@
+ #ifndef _LOG_PTHREAD_H
+ #define _LOG_PTHREAD_H
+ 
++#include <pthread.h>
++
+ pthread_t log_thr;
+ 
+ pthread_mutex_t *logq_lock;
+@@ -8,7 +10,7 @@ pthread_mutex_t *logev_lock;
+ pthread_cond_t *logev_cond;
+ 
+ void log_safe(int prio, const char * fmt, va_list ap);
+-void log_thread_start(void);
++void log_thread_start(pthread_attr_t *attr);
+ void log_thread_stop(void);
+ 
+ #endif /* _LOG_PTHREAD_H */
+Index: multipath-tools-090311/libmultipath/waiter.h
+===================================================================
+--- multipath-tools-090311.orig/libmultipath/waiter.h
++++ multipath-tools-090311/libmultipath/waiter.h
+@@ -1,6 +1,8 @@
+ #ifndef _WAITER_H
+ #define _WAITER_H
+ 
++extern pthread_attr_t waiter_attr;
++
+ struct event_thread {
+ 	struct dm_task *dmt;
+ 	pthread_t thread;
