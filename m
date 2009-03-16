@@ -1,16 +1,19 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: Multipath failover issues
-Date: Mon, 16 Mar 2009 15:40:53 -0700
-Message-ID: <1237243253.309.13.camel@chandra-ubuntu>
-References: <49BE7C9C.8020100@directi.com>
-	<1237226357.309.6.camel@chandra-ubuntu> <49BEBEB9.7020707@directi.com>
-Reply-To: sekharan@linux.vnet.ibm.com,
-	device-mapper development <dm-devel@redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: Re: [PATCH 2/3] set pthread stack size to at least
+	PTHREAD_STACK_MIN
+Date: Mon, 16 Mar 2009 18:08:47 -0500
+Message-ID: <20090316230847.GM32340@ether.msp.redhat.com>
+References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>
+	<1236883093-2989-3-git-send-email-bmarzins@redhat.com>
+	<49BA3ACF.1010101@suse.de>
+	<20090313205514.GL32340@ether.msp.redhat.com>
+	<49BE7A89.1040808@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49BEBEB9.7020707@directi.com>
+Content-Disposition: inline
+In-Reply-To: <49BE7A89.1040808@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,97 +26,53 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+> On Mon, Mar 16, 2009 at 05:12:57PM +0100, Hannes Reinecke wrote:
+>> This approach doesn't doesn't actually fix the bug that I see. The
+>> problem I was seeing is that setting the stacksize too small just causes
+>> pthread_attr_setstacksize() to fail, leaving you with the default stack
+>> size. On some architectures, the default stacksize is large, like 10Mb.
+>> Since you start one waiter thread per multipath device, every 100
+>> devices eats up 1Gb of memory. Your approach always uses the default
+>> stack size, unless it's too small.  I've never seen problems with the
+>> stack being too small. Only too large. Maybe your experience has been
+>> different.
+>>
+> Me neither. Makes me wonder if we _really_ need to set the stacksize.
+> After all, I'm not aware that we're having any excessive stack usage
+> somewhere. Maybe we can simplify it by removing the stack attribute
+> setting altogether?
+>
+> I'll see if I can get the different stacksizes and just compare them
+> to the 'updated' setting. Maybe there's no big difference after all...
 
-On Tue, 2009-03-17 at 02:33 +0530, dushyanth.h@directi.com wrote:
-> Hi,
-> 
-> >> device-mapper: multipath: Failing path 8:32.
-> > 
-> > 8:32 has failed here.
-> 
-> >> sd 2:0:0:0: SCSI error: return code = 0x00020000
-> > 
-> > error code 20000 mean the BUS is busy.
-> > 
-> >> end_request: I/O error, dev sdd, sector 1976776672
-> >> device-mapper: multipath: Failing path 8:48.
-> > 
-> > and 8:48 failed because of that.
-> 
-> > Do you know which one was supposed to fail when the RAID controller
-> > failed ? (my guess is it is 8:32).
-> 
-> The alert on the storage device was (sorry for not including this earlier)
-> 
-> 257 Critical 2009-03-11 10:38:43 ALERT:Redundant Controller Failure
-> Detected (Slot B)
-> 
-> I also found additional logs from /var/log/messages which i did not 
-> check earlier.
-> 
-> Mar 11 10:32:46 multipathd: sdc: readsector0 checker reports path is down
-> Mar 11 10:32:46 multipathd: checker failed path 8:32 in map infortrend01
-> Mar 11 10:32:46 multipathd: infortrend01: remaining active paths: 1
-> Mar 11 10:32:46 multipathd: sdd: readsector0 checker reports path is down
-> Mar 11 10:32:46 multipathd: checker failed path 8:48 in map infortrend01
+I definitely see a problem if we use the default stacksize on ia64
+machines.  In RHEL5 at least, it's 10Mb per thread.  With one waiter
+thread per multipath device, you get a gigabyte of memory wasted on
+machines with over a hundred multipath devices.
 
-Does this timing correspond to when you turned off the controller ?
+>> The other problem is that when I actually read the pthread_attr_init man
+>> page (it can fail. who knew?), I saw that it can fail with ENOMEM. Also,
+>> that it had a function to free it, and that the result of reinitializing
+>> an attr that hadn't been freed was undefined.  Clearly, this function
+>> wasn't intended to be called over and over without ever freeing the
+>> attr, which is how we've been using it in multipathd. So, in the spirit
+>> of writing code to the interface, instead of to how it appears to be
+>> currently implemented, how about this.
+> Hmm. You're not freeing the attribute for all non-logging threads neither.
 
+But I only allocate it once.
 
-> Mar 11 10:32:46 multipathd: infortrend01: remaining active paths: 0
-> Mar 11 10:32:46 multipathd: dm-0: add map (uevent)
-> Mar 11 10:32:46 multipathd: dm-0: devmap already registered
-> Mar 11 10:32:46 multipathd: dm-0: add map (uevent)
-> Mar 11 10:32:47 multipathd: dm-0: devmap already registered
-> Mar 11 10:32:47 multipathd: sdd: readsector0 checker reports path is down
-> 
-> So, it looks like 8:32 was the path which had the failed controller and 
-> during the switch over multipath must have detected 8:48 as busy? if 
-> this is right, then it must be due to the infortrend device itself.
-> 
-> > looks like for whatever reason the other SCSI bus became busy.
-> 
-> >> sd 2:0:0:0: SCSI error: return code = 0x00020000
-> >> end_request: I/O error, dev sdd, sector 1967432880
-> >> sd 2:0:0:0: SCSI error: return code = 0x00020000
-> >> end_request: I/O error, dev sdd, sector 161647296
-> 
-> Iam assuming it must have been busy for a few secs during the switch 
-> over and the multipath config doesn't wait enough for the switchover to 
-> work.
-> 
+> Oversight?
 
-Answer to your previous question would help here :)
+Any time a new device is added, we need the waiter thread attribute.  I
+suppose I could free it after each waiter thread is started, and then
+reallocate it again, but it seems like sort of a waste since we want the
+same values every time.
 
-Set no_path_retry to "queue", which would queue the I/Os when "all" the
-paths fail.
+I don't explicitly deallocate it on shutdown, but no matter what the
+implementation is, I expect it will be cleaned up when multipathd
+ends.
 
-If the behavior seen above was caused by the storage and will be
-rectified in an acceptable (to the user) time, then this parameter
-setting would solve your problem.
+Or am I missing something?
 
-BTW, have you seen the I/O successfully been sent to the lun (both paths
-- you can use iostat to check it) before you failed the controller ? (I
-am trying to see if your config settings are proper).
-
-> Any advice on the below values ?
-> 
->  > Additionaly, I have looked at the mailing list archives & annotated conf
->  > files and found two options a) failback and b) no_path_retry. What would
-
-Failback would be useful only when you have different path groups. In a
-multibus setup like yours it is of no value.
-
->  > be the best recommended values for these on a dual controller setup like
->  > mine ?
->  >
->  > It would also be helpful if someone could share infotrend specific
->  > settings multipath settings.
-> 
-> TIA
-> Dushyanth
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+-Ben 
