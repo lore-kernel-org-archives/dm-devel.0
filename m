@@ -1,16 +1,12 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 2/3] set pthread stack size to at
-	least	PTHREAD_STACK_MIN
-Date: Mon, 16 Mar 2009 17:12:57 +0100
-Message-ID: <49BE7A89.1040808@suse.de>
-References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>	<1236883093-2989-3-git-send-email-bmarzins@redhat.com>	<49BA3ACF.1010101@suse.de>
-	<20090313205514.GL32340@ether.msp.redhat.com>
+From: "dushyanth.h@directi.com" <dushyanth.h@directi.com>
+Subject: Multipath failover issues
+Date: Mon, 16 Mar 2009 21:51:48 +0530
+Message-ID: <49BE7C9C.8020100@directi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090313205514.GL32340@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,48 +19,64 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Benjamin Marzinski wrote:
-[ .. ]
->=20
-> This approach doesn't doesn't actually fix the bug that I see. The
-> problem I was seeing is that setting the stacksize too small just cause=
-s
-> pthread_attr_setstacksize() to fail, leaving you with the default stack
-> size. On some architectures, the default stacksize is large, like 10Mb.
-> Since you start one waiter thread per multipath device, every 100
-> devices eats up 1Gb of memory. Your approach always uses the default
-> stack size, unless it's too small.  I've never seen problems with the
-> stack being too small. Only too large. Maybe your experience has been
-> different.
->=20
-Me neither. Makes me wonder if we _really_ need to set the stacksize.
-After all, I'm not aware that we're having any excessive stack usage
-somewhere. Maybe we can simplify it by removing the stack attribute
-setting altogether?
+Hi guys,
 
-I'll see if I can get the different stacksizes and just compare them
-to the 'updated' setting. Maybe there's no big difference after all...
+Iam using dm-multipath for a Infortrend dual controller F16F-R4031-6 FC
+system.
 
-> The other problem is that when I actually read the pthread_attr_init ma=
-n
-> page (it can fail. who knew?), I saw that it can fail with ENOMEM. Also=
-,
-> that it had a function to free it, and that the result of reinitializin=
-g
-> an attr that hadn't been freed was undefined.  Clearly, this function
-> wasn't intended to be called over and over without ever freeing the
-> attr, which is how we've been using it in multipathd. So, in the spirit
-> of writing code to the interface, instead of to how it appears to be
-> currently implemented, how about this.
-Hmm. You're not freeing the attribute for all non-logging threads neither=
-.
-Oversight?=20
+Version details are :
 
-Cheers,
+device-mapper-multipath-0.4.7-17.el5
+device-mapper-1.02.24-1.el5
+device-mapper-event-1.02.24-1.el5
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+OS : Red Hat Enterprise Linux Server release 5.2 (Tikanga)
+Kernel : 2.6.18-92.1.10.el5 #1 SMP x86_64 x86_64 x86_64
+
+Recently, one of the RAID controllers failed and caused multipath to
+fail both active paths
+
+device-mapper: multipath: Failing path 8:32.
+sd 2:0:0:0: SCSI error: return code = 0x00020000
+end_request: I/O error, dev sdd, sector 1976776672
+device-mapper: multipath: Failing path 8:48.
+sd 2:0:0:0: SCSI error: return code = 0x00020000
+end_request: I/O error, dev sdd, sector 1967432880
+sd 2:0:0:0: SCSI error: return code = 0x00020000
+end_request: I/O error, dev sdd, sector 161647296
+
+This caused the ext3 filesystem to go into a read only mode. Full IO
+errors is at http://pastebin.com/m103325d9
+
+The dual controller storage unit and the host server (Only 1 Server
+using 2 Qlogic FC HBAs) are hooked upto two different Qlogic SanBox FC
+switch for redundancy.
+
+multipath.conf : http://pastebin.com/m4c7da817
+multipath -v4 -ll : http://pastebin.com/m7d863925
+
+I have checked the logs on the FC switch and the HBAs
+and i dont see any event which suggest both paths failed at once. Even
+the errors i captured out of dmesg show that one of the physical disks
+that makes up dm-0 had 'end_request: I/O errors' while the other did not
+have any such error.
+
+sd 2:0:0:0: SCSI error: return code = 0x00020000
+end_request: I/O error, dev sdd, sector 1967432880
+sd 2:0:0:0: SCSI error: return code = 0x00020000
+end_request: I/O error, dev sdd, sector 161647296
+
+At this point iam wondering how paths 8:32 and 8:48 failed together -
+considering both paths are through two different FC switches. Any
+suggestions on this ?
+
+Additionaly, I have looked at the mailing list archives & annotated conf
+files and found two options a) failback and b) no_path_retry. What would
+be the best recommended values for these on a dual controller setup like
+mine ?
+
+It would also be helpful if someone could share infotrend specific
+settings multipath settings.
+
+TIA
+Dushyanth
