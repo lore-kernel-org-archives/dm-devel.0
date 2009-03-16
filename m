@@ -1,7 +1,7 @@
 From: "Bryn M. Reeves" <bmr@redhat.com>
 Subject: Re: Multipath failover issues
-Date: Mon, 16 Mar 2009 16:49:54 +0000
-Message-ID: <1237222194.10568.36.camel@breeves.fab.redhat.com>
+Date: Mon, 16 Mar 2009 16:50:18 +0000
+Message-ID: <1237222218.10568.39.camel@breeves.fab.redhat.com>
 References: <49BE7C9C.8020100@directi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -22,12 +22,9 @@ To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 On Mon, 2009-03-16 at 21:51 +0530, dushyanth.h@directi.com wrote:
-> Hi guys,
-> 
-> Iam using dm-multipath for a Infortrend dual controller F16F-R4031-6 FC
-> system.
+> multipath.conf : http://pastebin.com/m4c7da817
+> multipath -v4 -ll : http://pastebin.com/m7d863925
 
-Can you post your multipath.conf somewhere? (pastebin is fine).
+Duh. Ignore me ;)
 
-Regards,
 Bryn.
