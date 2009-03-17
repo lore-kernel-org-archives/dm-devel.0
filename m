@@ -1,71 +1,80 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: RE: [PATCH]scsi_dh_rdac: Retry for NOT_READY check condition
-	(0x02A102, 0x020401, 0x020404 and  0x020407) in rdac_check_sense
-Date: Tue, 17 Mar 2009 18:51:40 +0530
-Message-ID: <0D1E8821739E724A86F4D16902CE275C1410DBBA51@inbmail01.lsi.com>
-References: <1236699991.14822.0.camel@localhost.localdomain>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: [git pull] device-mapper fixes for 2.6.29
+Date: Tue, 17 Mar 2009 09:25:30 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903170920000.26754@hs20-bc2-1.build.redhat.com>
+References: <20090316190642.GH5098@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1236699991.14822.0.camel@localhost.localdomain>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090316190642.GH5098@agk.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com, Milan Broz <mbroz@redhat.com>
 List-Id: dm-devel.ids
 
-Hi James,
+On Mon, 16 Mar 2009, Alasdair G Kergon wrote:
 
-Thanks for your comment. I have updated the patch with your comments.
- 
-On Tues, 2009-03-10 21:17 +0530, James Bottomley wrote: 
-> > +		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
-> > +			/* LUN Not Ready - Quiescense in progress
-> > +			 * or has been achieved
-> > +			 * Just retry.
-> > +			 */
-> > +			return ADD_TO_MLQUEUE;
+> Please pull from:
 > 
-> This is fine, being vendor specific, we don't handle it at 
-> the mid-layer
-
-> > +		if (sense_hdr->asc == 0x04  && sense_hdr->ascq == 0x07)
-> > +			/* LUN Not Ready - Storage controller 
-> cannot respond
-> > +			 * immediately to a PRIN or PROUT command.
-> > +			 * Just retry.
-> > +			 */
-> > +			return ADD_TO_MLQUEUE;
+>   master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git
 > 
-> For all of these ... along with a few other not ready types, 
-> we already
-> do a delayed retry at the mid-layer (in scsi_io_completion).  Is there
-> some problem that causes this to need to be handled here as well?
+> to get the following device-mapper fixes for 2.6.29:
 > 
-Yes, I do agree. Submitting patch for 0x02A102 only.
+> Huang Ying (1):
+>       dm crypt: fix kcryptd_async_done parameter
+> 
+> Mikulas Patocka (2):
+>       dm table: rework reference counting fix
+>       dm io: respect BIO_MAX_PAGES limit
 
-Thanks,
-Vijay
+Hi
 
----
-This patch adds retry for NOT_READY check condition - Quiescense in progress (02/A1/02)
+Also look at:
 
-Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
+dm-io crashes when signal is sent:
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-dmio-fix-signal-crash.patch
 
----
---- linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-03-10 17:42:27.000000000 +0530
-+++ linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-03-17 18:18:07.000000000 +0530
-@@ -562,6 +562,12 @@ static int rdac_check_sense(struct scsi_
- 			 * Just retry and wait.
- 			 */
- 			return ADD_TO_MLQUEUE;
-+		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
-+			/* LUN Not Ready - Quiescense in progress
-+			 * or has been achieved
-+			 * Just retry.
-+			 */
-+			return ADD_TO_MLQUEUE;
- 		break;
- 	case ILLEGAL_REQUEST:
- 		if (sense_hdr->asc == 0x94 && sense_hdr->ascq == 0x01) {
+that partial-read dm-raid1 + dm-multipath crash:
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-record-bio-vector.patch
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-raid1-read-record-slab.patch
+
+crash or data corruption in snapshots (callbacks are called concurrently 
+and shouldn't be):
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-kcopyd-fix.patch
+
+failure to check pending exception after we dropped a lock:
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-snap-break-__find_pending_exception.patch
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-snap-move-allocation-to-the-caller.patch
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-snap-check-complete-exceptions.patch
+
+--- all the patches fix crashes or data corruptions.
+
+--- all these patches except the first one were already committed to RHEL 
+4.8, so you should put them upstream, at least for testing.
+
+Mikulas
+
+
+> Milan Broz (2):
+>       dm ioctl: validate name length when renaming
+>       dm crypt: wait for endio to complete before destruction
+> 
+>  drivers/md/dm-crypt.c |   43 +++++++++++++++++++++++++++++++------------
+>  drivers/md/dm-io.c    |    2 ++
+>  drivers/md/dm-ioctl.c |    7 ++++---
+>  drivers/md/dm.c       |   32 +++++++++++++++++++-------------
+>  4 files changed, 56 insertions(+), 28 deletions(-)
+> 
+> Thanks,
+> Alasdair
+> -- 
+> agk@redhat.com
