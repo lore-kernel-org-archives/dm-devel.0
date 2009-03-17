@@ -1,12 +1,16 @@
-From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
-Subject: info on defaults and features key for 1750500
-Date: Tue, 17 Mar 2009 11:00:37 +0100
-Message-ID: <561c252c0903170300w4b76fc2ck8563b747992d5bde@mail.gmail.com>
+From: Dushyanth Harinath <dushyanth.h@directi.com>
+Subject: Re: Multipath failover issues
+Date: Tue, 17 Mar 2009 18:00:00 +0530
+Message-ID: <49BF97C8.1030406@directi.com>
+References: <49BE7C9C.8020100@directi.com>	<1237226357.309.6.camel@chandra-ubuntu>
+	<49BEBEB9.7020707@directi.com>
+	<1237243253.309.13.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <1237243253.309.13.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,90 +20,70 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hello,
-I have an IBM DS6800 storage system that is identified as 1750500
-[]# cat /proc/scsi/scsi
-Attached devices:
-...
-Host: scsi1 Channel: 00 Id: 01 Lun: 00
-  Vendor: IBM      Model: 1750500          Rev: .441
-  Type:   Direct-Access                    ANSI SCSI revision: 05
-...
+Hi,
 
-My system is rh el 5U3 x86_64 and has two fc hba connected to two fc
-switches (connected then to the 4 ports of the storage system).
-sw version is device-mapper-multipath-0.4.7-23.el5
+>> 257 Critical 2009-03-11 10:38:43 ALERT:Redundant Controller Failure
+>> Detected (Slot B)
+>>
+>> I also found additional logs from /var/log/messages which i did not 
+>> check earlier.
+>>
+>> Mar 11 10:32:46 multipathd: sdc: readsector0 checker reports path is down
+>> Mar 11 10:32:46 multipathd: checker failed path 8:32 in map infortrend01
+>> Mar 11 10:32:46 multipathd: infortrend01: remaining active paths: 1
+>> Mar 11 10:32:46 multipathd: sdd: readsector0 checker reports path is down
+>> Mar 11 10:32:46 multipathd: checker failed path 8:48 in map infortrend01
+> 
+> Does this timing correspond to when you turned off the controller ?
 
-I have a doubt about default configuration.
-In this moment:
-in multipath.conf no particular setting about the storage model. I only have
+This is when the controller failed. The controller shutdown happened 
+much later.
 
-defaults {
-        user_friendly_names yes
-}
+>> Iam assuming it must have been busy for a few secs during the switch 
+>> over and the multipath config doesn't wait enough for the switchover to 
+>> work.
+> 
+> Answer to your previous question would help here :)
+> 
+> Set no_path_retry to "queue", which would queue the I/Os when "all" the
+> paths fail.
 
-Under /usr/share/doc/device-mapper-multipath-0.4.7
-multipath.conf.defaults says:
-#defaults {
-#       udev_dir                /dev
-#       polling_interval        5
-#       selector                "round-robin 0"
-#       path_grouping_policy    failover
-#       getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-#       prio_callout            none
-#       path_checker            readsector0
-#       rr_min_io               1000
-#       rr_weight               uniform
-#       failback                manual
-#       no_path_retry           fail
-#       user_friendly_names     no
-#       bindings_file           "/var/lib/multipath/bindings"
-#}
+Iam not sure if i can do this as well. Aren't we creating an illusion 
+that the storage subsystem is fine and queuing requests when actually 
+the subsystem is gone ? What actually is done for queuing and there must 
+be some limits for the queue as well right ?
 
-and
-#       device {
-#               vendor                  "IBM"
-#               product                 "1750500"
-#               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-#               prio_callout            "/sbin/mpath_prio_alua %d"
-#               features                "1 queue_if_no_path"
-#               hardware_handler        "0"
-#               path_grouping_policy    group_by_prio
-#               failback                immediate
-#               rr_weight               uniform
-#               rr_min_io               1000
-#               path_checker            tur
-#       }
+> If the behavior seen above was caused by the storage and will be
+> rectified in an acceptable (to the user) time, then this parameter
+> setting would solve your problem.
 
-multipath.conf.annotated says
-#       # name    : no_path_retry
-#       # scope   : multipath & multipathd
-#       # desc    : tell the number of retries until disable queueing, or
-#       #           "fail" means immediate failure (no queueing),
-#       #           "queue" means never stop queueing
-#       # values  : queue|fail|n (>0)
-#       # default : (null)
-#       #
-#       #no_path_retry  queue
+Iam checking this with infortrend.
 
+> BTW, have you seen the I/O successfully been sent to the lun (both paths
+> - you can use iostat to check it) before you failed the controller ? (I
+> am trying to see if your config settings are proper).
 
-two questions:
-1) what is the meaning of the line
-features                "1 queue_if_no_path"
-? I didn't find anything about the "features" key.....
-Is it the same as "no_path_retry=queue" ?
+Iam doing a post mortem of the redundant controller failure here :). I 
+dug out what was done after the controller failure.
 
-2) If the answer to 1) is no, taking for good the defaults above, does
-this mean that in a default config I have on my system
-no_path_retry           fail
-?
+* Primary Controller failed and failover to secondary did not work
+* Multipath failed both paths and ext3 went read only
+* Postgres crashed
+* When they logged in and ran (multipath -v2 -ll), they saw both paths 
+active - I cannot find any multipath log entries which shows paths 
+reinstated until 11:50 - which was after controller shutdown and power 
+cycle.
+* The filesystem was mounted again (without fsck) and database started 
+(This answers your question abt IO to the LUNs i think)
+* Postgres recovered and was shutdown immediately and /data unmounted.
+* After this the controllers on the infotrend was shutdown and the 
+device power cycled.
 
-Is there a command where I can see the actual config ?
-(if for example anyone wants to cross check defaults written in docs
-and real code behaviour)
+PS : Iam digging up the entire multipath logs instead of posting 
+snippets here - will add to pastebin and send the link over
 
-Thanks in advance,
-Gianluca
+TIA
+Dushyanth
