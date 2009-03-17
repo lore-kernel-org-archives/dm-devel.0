@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 15 of 29]
-	dm-exception-stores-populate-cache-on-commit.patch
-Date: Tue, 17 Mar 2009 09:04:41 -0500
-Message-ID: <200903171404.n2HE4fqX017443@hydrogen.msp.redhat.com>
+Subject: [PATCH 20 of 29]
+	dm-exception-store-add-suspend-to-API.patch
+Date: Tue, 17 Mar 2009 09:05:31 -0500
+Message-ID: <200903171405.n2HE5V27017485@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,57 +17,67 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-The 'resume' exception store function is now in place to
-load the exception store type's caches on startup.  However,
-we still need to continue to populate the caches as
-new exceptions are committed.  This patch takes care of
-that.
+Add [pre|post]suspend functions to the exception store API.
+These will become important for future exception stores.  Current
+exception store implementations will not alter metadata after
+a 'commit_exception' completes.  However, future stores may do
+journaling or other actions.  They might return from 'commit_exception'
+when the request hits the journal, but continue flushing after.
+This could be bad, because we expect them to not do anything once
+a 'suspend' is issued.  Adding these functions to the API allows
+them to finish what they are doing and conform to device-mapper
+requirements.  (The above was just one example...  Cluster-aware
+exception stores will also require the notification of when they
+need to suspend their activity.)
 
 RFC-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
+Index: linux-2.6/drivers/md/dm-exception-store.h
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -665,6 +665,15 @@ static void persistent_commit_exception(
- 	write_exception(ps, ps->current_committed++, &de);
+--- linux-2.6.orig/drivers/md/dm-exception-store.h
++++ linux-2.6/drivers/md/dm-exception-store.h
+@@ -32,6 +32,8 @@ struct dm_exception_store_type {
+ 	void (*dtr) (struct dm_exception_store *store);
+ 
+ 	int (*resume) (struct dm_exception_store *store);
++	void (*presuspend) (struct dm_exception_store *store);
++	void (*postsuspend) (struct dm_exception_store *store);
  
  	/*
-+	 * We are safe to add the exception to our cache before we
-+	 * issue the callbacks.  If we fail to allocate the memory
-+	 * to put it in the cache though, the callbacks will have to
-+	 * report the failure.
-+	 */
-+	if (add_exception(store, de.old_chunk, de.new_chunk))
-+		ps->valid = 0;
-+
-+	/*
- 	 * Add the callback to the back of the array.  This code
- 	 * is the only place where the callback array is
- 	 * manipulated, and we know that it will never be called
-Index: linux-2.6/drivers/md/dm-snap-transient.c
+ 	 * Find somewhere to store the next exception.
+Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-transient.c
-+++ linux-2.6/drivers/md/dm-snap-transient.c
-@@ -77,7 +77,20 @@ static void transient_commit_exception(s
- 				       void (*callback) (void *, int success),
- 				       void *callback_context)
- {
--	/* Just succeed */
-+	struct transient_c *tc = store->context;
-+	struct dm_exception *new;
-+
-+	new = dm_alloc_exception(tc->table);
-+	if (!new) {
-+		callback(callback_context, 0);
-+		return;
-+	}
-+
-+	new->old_chunk = e->old_chunk;
-+	new->new_chunk = e->new_chunk;
-+
-+	dm_insert_exception(tc->table, new);
-+
- 	callback(callback_context, 1);
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -1001,6 +1001,22 @@ static void snapshot_resume(struct dm_ta
+ 	up_write(&s->lock);
  }
+ 
++static void snapshot_presuspend(struct dm_target *ti)
++{
++	struct dm_snapshot *s = ti->private;
++
++	if(s->store->type->presuspend)
++		s->store->type->presuspend(s->store);
++}
++
++static void snapshot_postsuspend(struct dm_target *ti)
++{
++	struct dm_snapshot *s = ti->private;
++
++	if (s->store->type->postsuspend)
++		s->store->type->postsuspend(s->store);
++}
++
+ static int snapshot_status(struct dm_target *ti, status_type_t type,
+ 			   char *result, unsigned int maxlen)
+ {
+@@ -1280,6 +1296,8 @@ static struct target_type snapshot_targe
+ 	.map     = snapshot_map,
+ 	.end_io  = snapshot_end_io,
+ 	.resume  = snapshot_resume,
++	.presuspend = snapshot_presuspend,
++	.postsuspend = snapshot_postsuspend,
+ 	.status  = snapshot_status,
+ };
  
