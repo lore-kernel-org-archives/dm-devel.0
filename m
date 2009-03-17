@@ -1,89 +1,71 @@
-From: Dushyanth Harinath <dushyanth.h@directi.com>
-Subject: Re: Multipath failover issues
-Date: Tue, 17 Mar 2009 18:00:00 +0530
-Message-ID: <49BF97C8.1030406@directi.com>
-References: <49BE7C9C.8020100@directi.com>	<1237226357.309.6.camel@chandra-ubuntu>
-	<49BEBEB9.7020707@directi.com>
-	<1237243253.309.13.camel@chandra-ubuntu>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: RE: [PATCH]scsi_dh_rdac: Retry for NOT_READY check condition
+	(0x02A102, 0x020401, 0x020404 and  0x020407) in rdac_check_sense
+Date: Tue, 17 Mar 2009 18:51:40 +0530
+Message-ID: <0D1E8821739E724A86F4D16902CE275C1410DBBA51@inbmail01.lsi.com>
+References: <1236699991.14822.0.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1237243253.309.13.camel@chandra-ubuntu>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <1236699991.14822.0.camel@localhost.localdomain>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi,
+Hi James,
 
->> 257 Critical 2009-03-11 10:38:43 ALERT:Redundant Controller Failure
->> Detected (Slot B)
->>
->> I also found additional logs from /var/log/messages which i did not 
->> check earlier.
->>
->> Mar 11 10:32:46 multipathd: sdc: readsector0 checker reports path is down
->> Mar 11 10:32:46 multipathd: checker failed path 8:32 in map infortrend01
->> Mar 11 10:32:46 multipathd: infortrend01: remaining active paths: 1
->> Mar 11 10:32:46 multipathd: sdd: readsector0 checker reports path is down
->> Mar 11 10:32:46 multipathd: checker failed path 8:48 in map infortrend01
+Thanks for your comment. I have updated the patch with your comments.
+ 
+On Tues, 2009-03-10 21:17 +0530, James Bottomley wrote: 
+> > +		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
+> > +			/* LUN Not Ready - Quiescense in progress
+> > +			 * or has been achieved
+> > +			 * Just retry.
+> > +			 */
+> > +			return ADD_TO_MLQUEUE;
 > 
-> Does this timing correspond to when you turned off the controller ?
+> This is fine, being vendor specific, we don't handle it at 
+> the mid-layer
 
-This is when the controller failed. The controller shutdown happened 
-much later.
-
->> Iam assuming it must have been busy for a few secs during the switch 
->> over and the multipath config doesn't wait enough for the switchover to 
->> work.
+> > +		if (sense_hdr->asc == 0x04  && sense_hdr->ascq == 0x07)
+> > +			/* LUN Not Ready - Storage controller 
+> cannot respond
+> > +			 * immediately to a PRIN or PROUT command.
+> > +			 * Just retry.
+> > +			 */
+> > +			return ADD_TO_MLQUEUE;
 > 
-> Answer to your previous question would help here :)
+> For all of these ... along with a few other not ready types, 
+> we already
+> do a delayed retry at the mid-layer (in scsi_io_completion).  Is there
+> some problem that causes this to need to be handled here as well?
 > 
-> Set no_path_retry to "queue", which would queue the I/Os when "all" the
-> paths fail.
+Yes, I do agree. Submitting patch for 0x02A102 only.
 
-Iam not sure if i can do this as well. Aren't we creating an illusion 
-that the storage subsystem is fine and queuing requests when actually 
-the subsystem is gone ? What actually is done for queuing and there must 
-be some limits for the queue as well right ?
+Thanks,
+Vijay
 
-> If the behavior seen above was caused by the storage and will be
-> rectified in an acceptable (to the user) time, then this parameter
-> setting would solve your problem.
+---
+This patch adds retry for NOT_READY check condition - Quiescense in progress (02/A1/02)
 
-Iam checking this with infortrend.
+Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
 
-> BTW, have you seen the I/O successfully been sent to the lun (both paths
-> - you can use iostat to check it) before you failed the controller ? (I
-> am trying to see if your config settings are proper).
-
-Iam doing a post mortem of the redundant controller failure here :). I 
-dug out what was done after the controller failure.
-
-* Primary Controller failed and failover to secondary did not work
-* Multipath failed both paths and ext3 went read only
-* Postgres crashed
-* When they logged in and ran (multipath -v2 -ll), they saw both paths 
-active - I cannot find any multipath log entries which shows paths 
-reinstated until 11:50 - which was after controller shutdown and power 
-cycle.
-* The filesystem was mounted again (without fsck) and database started 
-(This answers your question abt IO to the LUNs i think)
-* Postgres recovered and was shutdown immediately and /data unmounted.
-* After this the controllers on the infotrend was shutdown and the 
-device power cycled.
-
-PS : Iam digging up the entire multipath logs instead of posting 
-snippets here - will add to pastebin and send the link over
-
-TIA
-Dushyanth
+---
+--- linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-03-10 17:42:27.000000000 +0530
++++ linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-03-17 18:18:07.000000000 +0530
+@@ -562,6 +562,12 @@ static int rdac_check_sense(struct scsi_
+ 			 * Just retry and wait.
+ 			 */
+ 			return ADD_TO_MLQUEUE;
++		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
++			/* LUN Not Ready - Quiescense in progress
++			 * or has been achieved
++			 * Just retry.
++			 */
++			return ADD_TO_MLQUEUE;
+ 		break;
+ 	case ILLEGAL_REQUEST:
+ 		if (sense_hdr->asc == 0x94 && sense_hdr->ascq == 0x01) {
