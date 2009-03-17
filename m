@@ -1,20 +1,12 @@
-From: Joe Thornber <joe.thornber@gmail.com>
-Subject: Re: [PATCH 2/3] set pthread stack size to at least
-	PTHREAD_STACK_MIN
-Date: Tue, 17 Mar 2009 07:56:39 +0000
-Message-ID: <95d3ae170903170056l467c50c1v40a3657f001030e3@mail.gmail.com>
-References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>
-	<1236883093-2989-3-git-send-email-bmarzins@redhat.com>
-	<49BA3ACF.1010101@suse.de>
-	<20090313205514.GL32340@ether.msp.redhat.com>
-	<49BE7A89.1040808@suse.de>
-	<20090316230847.GM32340@ether.msp.redhat.com>
+From: Gianluca Cecchi <gianluca.cecchi@gmail.com>
+Subject: info on defaults and features key for 1750500
+Date: Tue, 17 Mar 2009 11:00:37 +0100
+Message-ID: <561c252c0903170300w4b76fc2ck8563b747992d5bde@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090316230847.GM32340@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,32 +16,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-2009/3/16 Benjamin Marzinski <bmarzins@redhat.com>:
-> I definitely see a problem if we use the default stacksize on ia64
-> machines. =A0In RHEL5 at least, it's 10Mb per thread. =A0With one waite=
-r
-> thread per multipath device, you get a gigabyte of memory wasted on
-> machines with over a hundred multipath devices.
+Hello,
+I have an IBM DS6800 storage system that is identified as 1750500
+[]# cat /proc/scsi/scsi
+Attached devices:
+...
+Host: scsi1 Channel: 00 Id: 01 Lun: 00
+  Vendor: IBM      Model: 1750500          Rev: .441
+  Type:   Direct-Access                    ANSI SCSI revision: 05
+...
 
-You need to check whether this is 1G of physical memory, or just a 1G
-chunk out of the address space.
+My system is rh el 5U3 x86_64 and has two fc hba connected to two fc
+switches (connected then to the 4 ports of the storage system).
+sw version is device-mapper-multipath-0.4.7-23.el5
 
-Some threads need to have their stack reserved and locked into memory
-before calls into the kernel.  This avoids deadlocks where the stack
-gets paged out, but he vm can't page it back in until the thread
-completes ...
+I have a doubt about default configuration.
+In this moment:
+in multipath.conf no particular setting about the storage model. I only have
 
-It sounds like you have many more threads running these days than when
-I last looked at LVM, it's not clear to me how many of these are ones
-that need their stacks mem-locking.  Do you have an idea ?
+defaults {
+        user_friendly_names yes
+}
 
-If they don't need mem-locking then as long as you're not forcing the
-stack to be physically allocated I wouldn't worry too much about
-consuming address space.
+Under /usr/share/doc/device-mapper-multipath-0.4.7
+multipath.conf.defaults says:
+#defaults {
+#       udev_dir                /dev
+#       polling_interval        5
+#       selector                "round-robin 0"
+#       path_grouping_policy    failover
+#       getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+#       prio_callout            none
+#       path_checker            readsector0
+#       rr_min_io               1000
+#       rr_weight               uniform
+#       failback                manual
+#       no_path_retry           fail
+#       user_friendly_names     no
+#       bindings_file           "/var/lib/multipath/bindings"
+#}
 
-Hope that ramble made sense,
+and
+#       device {
+#               vendor                  "IBM"
+#               product                 "1750500"
+#               getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+#               prio_callout            "/sbin/mpath_prio_alua %d"
+#               features                "1 queue_if_no_path"
+#               hardware_handler        "0"
+#               path_grouping_policy    group_by_prio
+#               failback                immediate
+#               rr_weight               uniform
+#               rr_min_io               1000
+#               path_checker            tur
+#       }
 
-- Joe
+multipath.conf.annotated says
+#       # name    : no_path_retry
+#       # scope   : multipath & multipathd
+#       # desc    : tell the number of retries until disable queueing, or
+#       #           "fail" means immediate failure (no queueing),
+#       #           "queue" means never stop queueing
+#       # values  : queue|fail|n (>0)
+#       # default : (null)
+#       #
+#       #no_path_retry  queue
+
+
+two questions:
+1) what is the meaning of the line
+features                "1 queue_if_no_path"
+? I didn't find anything about the "features" key.....
+Is it the same as "no_path_retry=queue" ?
+
+2) If the answer to 1) is no, taking for good the defaults above, does
+this mean that in a default config I have on my system
+no_path_retry           fail
+?
+
+Is there a command where I can see the actual config ?
+(if for example anyone wants to cross check defaults written in docs
+and real code behaviour)
+
+Thanks in advance,
+Gianluca
