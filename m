@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 27 of 29] dm-snap-introduce-snapshare.patch
-Date: Tue, 17 Mar 2009 09:06:41 -0500
-Message-ID: <200903171406.n2HE6fEG017544@hydrogen.msp.redhat.com>
+Subject: [PATCH 26 of 29] dm-snap-split-ctr-and-dtr.patch
+Date: Tue, 17 Mar 2009 09:06:31 -0500
+Message-ID: <200903171406.n2HE6Vr3017536@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -20,283 +20,253 @@ Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -92,6 +92,17 @@ struct dm_snapshot {
- 	struct hlist_head tracked_chunk_hash[DM_TRACKED_CHUNK_HASH_SIZE];
- };
+@@ -431,6 +431,89 @@ static int create_exception_store(struct
+ 					 argv + 2, store);
+ }
  
-+struct dm_snapshare {
-+	struct dm_snapshot *snap;
++static struct dm_snapshot *alloc_snapshot(sector_t hash_size)
++{
++	int r, i;
++	struct dm_snapshot *s;
 +
-+	struct list_head shared_list;
++	s = kzalloc(sizeof(*s), GFP_KERNEL);
++	if (!s) {
++		DMERR("Cannot allocate snapshot structure");
++		return NULL;
++	}
 +
-+	atomic_t pending_exceptions_count;
++	s->valid = 1;
++	s->active = 0;
++	atomic_set(&s->pending_exceptions_count, 0);
++	init_rwsem(&s->lock);
++	spin_lock_init(&s->pe_lock);
 +
-+	/* The on disk metadata handler */
-+	struct dm_exception_store *store;
-+};
++	/* Allocate hash table for pending COW data */
++	s->pending = dm_exception_table_create(hash_size, 0,
++					       alloc_pending_exception, s,
++					       free_pending_exception, NULL);
++	if (!s->pending) {
++		DMERR("Unable to allocate hash table space");
++		goto bad_hash_table;
++	}
 +
- static struct workqueue_struct *ksnapd;
- static void flush_queued_bios(struct work_struct *work);
- 
-@@ -530,6 +541,7 @@ static int snapshot_ctr(struct dm_target
++	r = dm_kcopyd_client_create(SNAPSHOT_PAGES, &s->kcopyd_client);
++	if (r) {
++		DMERR("Could not create kcopyd client");
++		goto bad_kcopyd;
++	}
++
++	s->pending_pool = mempool_create_slab_pool(MIN_IOS, pending_cache);
++	if (!s->pending_pool) {
++		DMERR("Could not allocate mempool for pending exceptions");
++		goto bad_pending_pool;
++	}
++
++	s->tracked_chunk_pool = mempool_create_slab_pool(MIN_IOS,
++							 tracked_chunk_cache);
++	if (!s->tracked_chunk_pool) {
++		DMERR("Could not allocate tracked_chunk mempool "
++		      "for tracking reads");
++		goto bad_tracked_chunk_pool;
++	}
++
++	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
++		INIT_HLIST_HEAD(&s->tracked_chunk_hash[i]);
++
++	spin_lock_init(&s->tracked_chunk_lock);
++	bio_list_init(&s->queued_bios);
++	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
++
++	return s;
++
++bad_tracked_chunk_pool:
++	mempool_destroy(s->pending_pool);
++
++bad_pending_pool:
++	dm_kcopyd_client_destroy(s->kcopyd_client);
++
++bad_kcopyd:
++	dm_exception_table_destroy(s->pending);
++
++bad_hash_table:
++	kfree(s);
++
++	return NULL;
++}
++
++static void dealloc_snapshot(struct dm_snapshot *s)
++{
++	mempool_destroy(s->tracked_chunk_pool);
++
++	mempool_destroy(s->pending_pool);
++
++	dm_kcopyd_client_destroy(s->kcopyd_client);
++
++	dm_exception_table_destroy(s->pending);
++
++	kfree(s);
++}
++
+ /*
+  * snapshot_ctr
+  * @ti
+@@ -446,6 +529,7 @@ static int create_exception_store(struct
+ static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
  {
  	sector_t hash_size, cow_dev_size, origin_dev_size, max_buckets;
- 	struct dm_dev *origin;
-+	struct dm_snapshare *ss;
++	struct dm_dev *origin;
  	struct dm_snapshot *s;
  	int i;
  	int r = -EINVAL;
-@@ -546,11 +558,20 @@ static int snapshot_ctr(struct dm_target
- 	argv++;
+@@ -463,38 +547,26 @@ static int snapshot_ctr(struct dm_target
  	argc--;
  
-+	ss = kzalloc(sizeof(*ss), GFP_KERNEL);
-+	if (!ss) {
-+		ti->error = "Failed to allocate snapshot memory";
-+		return -ENOMEM;
-+	}
-+	INIT_LIST_HEAD(&ss->shared_list);
-+	atomic_set(&ss->pending_exceptions_count, 0);
-+
  	r = create_exception_store(ti, argc, argv, &args_used, &store);
- 	if (r) {
- 		ti->error = "Failed to create snapshot exception store";
--		return r;
-+		goto bad_exception_store;
- 	}
-+	ss->store = store;
+-	if (r)
++	if (r) {
++		ti->error = "Failed to create snapshot exception store";
+ 		return r;
++	}
  
  	argv += args_used;
  	argc -= args_used;
-@@ -586,9 +607,9 @@ static int snapshot_ctr(struct dm_target
- 		ti->error = "Failed to create snapshot structure";
- 		goto bad_alloc_snapshot;
- 	}
+ 
+-	s = kmalloc(sizeof(*s), GFP_KERNEL);
+-	if (!s) {
+-		ti->error = "Cannot allocate snapshot private structure";
+-		r = -ENOMEM;
+-		goto bad_snap;
+-	}
 -
-+	ss->snap = s;
- 	s->origin = origin;
+-	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &s->origin);
++	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &origin);
+ 	if (r) {
+ 		ti->error = "Cannot get origin device";
+ 		goto bad_origin;
+ 	}
+ 
 -	s->store = store;
-+	s->store = ss->store;
+-	s->valid = 1;
+-	s->active = 0;
+-	atomic_set(&s->pending_exceptions_count, 0);
+-	init_rwsem(&s->lock);
+-	spin_lock_init(&s->pe_lock);
+-
+ 	/*
+ 	 * Calculate based on the size of the original volume or
+ 	 * the COW volume...
+ 	 */
+ 	cow_dev_size = get_dev_size(store->cow->bdev);
+-	origin_dev_size = get_dev_size(s->origin->bdev);
++	origin_dev_size = get_dev_size(origin->bdev);
+ 	max_buckets = calc_max_buckets();
+ 
+ 	hash_size = min(origin_dev_size, cow_dev_size) >> store->chunk_shift;
+@@ -505,47 +577,24 @@ static int snapshot_ctr(struct dm_target
+ 	if (hash_size < 64)
+ 		hash_size = 64;
+ 
+-	s->pending = dm_exception_table_create(hash_size, 0,
+-					       alloc_pending_exception, s,
+-					       free_pending_exception, NULL);
+-	if (!s->pending) {
+-		ti->error = "Unable to allocate hash table space";
++	/*
++	 * Allocate the snapshot
++	 */
++	s = alloc_snapshot(hash_size);
++	if (!s) {
+ 		r = -ENOMEM;
+-		goto bad_hash_table;
+-	}
+-
+-	r = dm_kcopyd_client_create(SNAPSHOT_PAGES, &s->kcopyd_client);
+-	if (r) {
+-		ti->error = "Could not create kcopyd client";
+-		goto bad_kcopyd;
+-	}
+-
+-	s->pending_pool = mempool_create_slab_pool(MIN_IOS, pending_cache);
+-	if (!s->pending_pool) {
+-		ti->error = "Could not allocate mempool for pending exceptions";
+-		goto bad_pending_pool;
+-	}
+-
+-	s->tracked_chunk_pool = mempool_create_slab_pool(MIN_IOS,
+-							 tracked_chunk_cache);
+-	if (!s->tracked_chunk_pool) {
+-		ti->error = "Could not allocate tracked_chunk mempool for "
+-			    "tracking reads";
+-		goto bad_tracked_chunk_pool;
++		ti->error = "Failed to create snapshot structure";
++		goto bad_alloc_snapshot;
+ 	}
+ 
+-	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
+-		INIT_HLIST_HEAD(&s->tracked_chunk_hash[i]);
+-
+-	spin_lock_init(&s->tracked_chunk_lock);
+-	bio_list_init(&s->queued_bios);
+-	INIT_WORK(&s->queued_bios_work, flush_queued_bios);
++	s->origin = origin;
++	s->store = store;
  
  	/* Add snapshot to the list of snapshots for this origin */
  	/* Exceptions aren't triggered till snapshot_resume() is called */
-@@ -598,8 +619,8 @@ static int snapshot_ctr(struct dm_target
+ 	if (register_snapshot(s)) {
+ 		r = -EINVAL;
+-		ti->error = "Cannot register snapshot origin";
++		ti->error = "Cannot register snapshot with origin";
  		goto bad_load_and_register;
  	}
  
--	ti->private = s;
--	ti->split_io = s->store->chunk_size;
-+	ti->private = ss;
-+	ti->split_io = store->chunk_size;
- 
+@@ -555,24 +604,12 @@ static int snapshot_ctr(struct dm_target
  	return 0;
  
-@@ -612,6 +633,9 @@ bad_alloc_snapshot:
+ bad_load_and_register:
+-	mempool_destroy(s->tracked_chunk_pool);
+-
+-bad_tracked_chunk_pool:
+-	mempool_destroy(s->pending_pool);
+-
+-bad_pending_pool:
+-	dm_kcopyd_client_destroy(s->kcopyd_client);
++	dealloc_snapshot(s);
+ 
+-bad_kcopyd:
+-	dm_exception_table_destroy(s->pending);
+-
+-bad_hash_table:
+-	dm_put_device(ti, s->origin);
++bad_alloc_snapshot:
++	dm_put_device(ti, origin);
+ 
  bad_origin:
+-	kfree(s);
+-
+-bad_snap:
  	dm_exception_store_destroy(store);
  
-+bad_exception_store:
-+	kfree(ss);
-+
  	return r;
- }
- 
-@@ -620,7 +644,8 @@ static void snapshot_dtr(struct dm_targe
- #ifdef CONFIG_DM_DEBUG
- 	int i;
+@@ -604,20 +641,11 @@ static void snapshot_dtr(struct dm_targe
+ 		BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
  #endif
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
-+	struct dm_snapshot *s = ss->snap;
  
- 	flush_workqueue(ksnapd);
- 
-@@ -643,9 +668,11 @@ static void snapshot_dtr(struct dm_targe
- 
+-	mempool_destroy(s->tracked_chunk_pool);
+-
+-	dm_kcopyd_client_destroy(s->kcopyd_client);
+-	s->kcopyd_client = NULL;
+-
+-	dm_exception_table_destroy(s->pending);
+-
+-	mempool_destroy(s->pending_pool);
+-
  	dm_put_device(ti, s->origin);
  
--	dm_exception_store_destroy(s->store);
--
- 	dealloc_snapshot(s);
-+
-+	dm_exception_store_destroy(ss->store);
-+
-+	kfree(ss);
+ 	dm_exception_store_destroy(s->store);
+ 
+-	kfree(s);
++	dealloc_snapshot(s);
  }
  
  /*
-@@ -843,7 +870,8 @@ static void start_copy(struct dm_snap_pe
-  * this.
-  */
- static struct dm_snap_pending_exception *
--__find_pending_exception(struct dm_snapshot *s, struct bio *bio, int group)
-+__find_pending_exception(struct dm_snapshot *s, struct bio *bio,
-+			 struct dm_snapshare *ss)
- {
- 	struct dm_exception *e, *tmp_e;
- 	struct dm_snap_pending_exception *pe;
-@@ -887,7 +915,7 @@ __find_pending_exception(struct dm_snaps
- 	atomic_set(&pe->ref_count, 0);
- 	pe->started = 0;
- 
--	if (s->store->type->prepare_exception(s->store, &pe->e, group)) {
-+	if (s->store->type->prepare_exception(s->store, &pe->e, ss ? 0 : 1)) {
- 		dm_free_exception(s->pending, &pe->e);
- 		return NULL;
- 	}
-@@ -909,12 +937,13 @@ static void remap_exception(struct dm_sn
- static int snapshot_map(struct dm_target *ti, struct bio *bio,
- 			union map_info *map_context)
- {
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
-+	struct dm_snapshot *s = ss->snap;
- 	int rtn, r = DM_MAPIO_REMAPPED;
- 	chunk_t chunk, new_chunk;
- 	struct dm_snap_pending_exception *pe = NULL;
- 
--	chunk = sector_to_chunk(s->store, bio->bi_sector);
-+	chunk = sector_to_chunk(ss->store, bio->bi_sector);
- 
- 	/* Full snapshots are not usable */
- 	/* To get here the table must be live so s->active is always set. */
-@@ -931,7 +960,7 @@ static int snapshot_map(struct dm_target
- 	}
- 
- 	/* If the block is already remapped - use that, else remap it */
--	rtn = s->store->type->lookup_exception(s->store, chunk, &new_chunk, 0);
-+	rtn = ss->store->type->lookup_exception(ss->store, chunk, &new_chunk, 0);
- 	if (!rtn) {
- 		remap_exception(s, bio, new_chunk);
- 		goto out_unlock;
-@@ -950,7 +979,7 @@ static int snapshot_map(struct dm_target
- 	 * writeable.
- 	 */
- 	if (bio_rw(bio) == WRITE) {
--		pe = __find_pending_exception(s, bio, 0);
-+		pe = __find_pending_exception(s, bio, ss);
- 		if (!pe) {
- 			__invalidate_snapshot(s, -ENOMEM);
- 			r = -EIO;
-@@ -983,7 +1012,8 @@ out:
- static int snapshot_end_io(struct dm_target *ti, struct bio *bio,
- 			   int error, union map_info *map_context)
- {
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
-+	struct dm_snapshot *s = ss->snap;
- 	struct dm_snap_tracked_chunk *c = map_context->ptr;
- 
- 	if (c)
-@@ -995,7 +1025,8 @@ static int snapshot_end_io(struct dm_tar
- static void snapshot_resume(struct dm_target *ti)
- {
- 	int r;
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
-+	struct dm_snapshot *s = ss->snap;
- 
- 	/*
- 	 * Target resumes cannot fail, which leaves us in a tight spot.
-@@ -1004,47 +1035,48 @@ static void snapshot_resume(struct dm_ta
- 	 * If invalid, mark the snapshot as such.  However, if other,
- 	 * what can we do?  Mark 'not active'?
- 	 */
--	r = s->store->type->resume(s->store);
--	if (r == -EINVAL)
--		r = s->valid = 0;
--
-+	r = ss->store->type->resume(ss->store);
- 	down_write(&s->lock);
--	s->active = (r) ? 0 : 1;
-+	if (r == -EINVAL)
-+		s->valid = 0;
-+	else
-+		s->active = (r) ? 0 : 1;
- 	up_write(&s->lock);
- }
- 
- static void snapshot_presuspend(struct dm_target *ti)
- {
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
- 
--	if(s->store->type->presuspend)
--		s->store->type->presuspend(s->store);
-+	if(ss->store->type->presuspend)
-+		ss->store->type->presuspend(ss->store);
- }
- 
- static void snapshot_postsuspend(struct dm_target *ti)
- {
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
- 
--	if (s->store->type->postsuspend)
--		s->store->type->postsuspend(s->store);
-+	if (ss->store->type->postsuspend)
-+		ss->store->type->postsuspend(ss->store);
- }
- 
- static int snapshot_status(struct dm_target *ti, status_type_t type,
- 			   char *result, unsigned int maxlen)
- {
- 	unsigned int sz = 0;
--	struct dm_snapshot *snap = ti->private;
-+	struct dm_snapshare *ss = ti->private;
-+	struct dm_snapshot *s = ss->snap;
- 
- 	switch (type) {
- 	case STATUSTYPE_INFO:
--		if (!snap->valid)
-+		if (!s->valid)
- 			DMEMIT("Invalid");
- 		else {
--			if (snap->store->type->fraction_full) {
-+			if (ss->store->type->fraction_full) {
- 				sector_t numerator, denominator;
--				snap->store->type->fraction_full(snap->store,
--								 &numerator,
--								 &denominator);
-+				ss->store->type->fraction_full(ss->store,
-+							       &numerator,
-+							       &denominator);
- 				DMEMIT("%llu/%llu",
- 				       (unsigned long long)numerator,
- 				       (unsigned long long)denominator);
-@@ -1060,9 +1092,9 @@ static int snapshot_status(struct dm_tar
- 		 * to make private copies if the output is to
- 		 * make sense.
- 		 */
--		DMEMIT("%s ", snap->origin->name);
--		snap->store->type->status(snap->store, type,
--					  result+sz, maxlen-sz);
-+		DMEMIT("%s ", s->origin->name);
-+		ss->store->type->status(ss->store, type,
-+					result+sz, maxlen-sz);
- 		break;
- 	}
- 
-@@ -1072,10 +1104,10 @@ static int snapshot_status(struct dm_tar
- static int snapshot_message(struct dm_target *ti, unsigned argc, char **argv)
- {
- 	int r = 0;
--	struct dm_snapshot *s = ti->private;
-+	struct dm_snapshare *ss = ti->private;
- 
--	if (s->store->type->message)
--		r = s->store->type->message(s->store, argc, argv);
-+	if (ss->store->type->message)
-+		r = ss->store->type->message(ss->store, argc, argv);
- 
- 	return r;
- }
-@@ -1130,7 +1162,7 @@ static int __origin_write(struct list_he
- 		 */
- 		BUG_ON(rtn != -ENOENT);
- 
--		pe = __find_pending_exception(snap, bio, 1);
-+		pe = __find_pending_exception(snap, bio, NULL);
- 		if (!pe) {
- 			__invalidate_snapshot(snap, -ENOMEM);
- 			goto next_snapshot;
