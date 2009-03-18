@@ -1,16 +1,14 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 3/3] kcopyd+snapshots race condition
-Date: Wed, 18 Mar 2009 19:15:20 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0903181914520.25113@hs20-bc2-1.build.redhat.com>
-References: <20090316190642.GH5098@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0903170920000.26754@hs20-bc2-1.build.redhat.com>
-	<20090317203838.GQ3063@agk.fab.redhat.com>
-	<Pine.LNX.4.64.0903181913260.25113@hs20-bc2-1.build.redhat.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: [PATCH] Don't display the state of the newly added map
+	during addition in the daemon and don't switch groups.
+Date: Wed, 18 Mar 2009 19:38:08 -0400
+Message-ID: <1237419489-3303-4-git-send-email-konrad@virtualiron.com>
+References: <1237419489-3303-1-git-send-email-konrad@virtualiron.com>
+	<1237419489-3303-2-git-send-email-konrad@virtualiron.com>
+	<1237419489-3303-3-git-send-email-konrad@virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0903181913260.25113@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <1237419489-3303-3-git-send-email-konrad@virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,88 +18,101 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: dm-devel@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Under specific circumstances, kcopyd callback could be called from
-the thread that called dm_kcopyd_copy not from kcopyd workqueue.
+From: Konrad Rzeszutek <konrad@mars.virtualiron.com>
 
-dm_kcopyd_copy -> split_job -> segment_complete -> job->fn()
-
-This code path is taken if thread calling dm_kcopyd_copy is delayed due to
-scheduling inside split_job/segment_complete and the subjobs complete before
-the loop in split_job completes.
-
-Snapshots depend on the fact that callbacks are called from the singlethreaded
-kcopyd workqueue and expect that there is no racing between individual
-callbacks. The racing between callbacks can lead to corruption of exception
-store and it can also cause that exception store callbacks are called twice
-for the same exception --- a likely reason for crashes inside
-pending_complete() / remove_exception().
-
-
-When I reviewed kcopyd further, I found four total problems:
-
-1. job->fn being called from the thread that submitted the job (see above).
-
-2. job->fn(read_err, write_err, job->context); in segment_complete
-reports the error of the last subjob, not the union of all errors.
-
-3. This comment is bogus ---- the jobs are not cancelable. It is leftover from
-   some time when developers thought about adding cancel possibility.
-/*
- * To avoid a race we must keep the job around
- * until after the notify function has completed.
- * Otherwise the client may try and stop the job
- * after we've completed.
- */
-job->fn(read_err, write_err, job->context);
-mempool_free(job, job->kc->job_pool);
-
-4. Master jobs and subjobs are allocated from the same mempool.
-Completion and freeing of a master job depends on successful allocation of
-all subjobs -> deadlock.
-
-
-This patch moves completion of master jobs to run_complete_job (being called
-from the kcopyd workqueue). The patch fixes problems 1, 2, 3.
-
-Problem 4 will need more changes and another patch.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
+A previous commit mass-changed #ifdef DAEMON to check for 'mpp->waiter'. Unfortunatly
+when the 'domap' function is called with ACT_CREATE in the daemon, the mpp->waiter is not
+set, hence the multipath client mode logic is choosen. Fixing this triggers another
+issues which is that newly added path via ACT_CREATE won't have their waitevent thread
+created as the caller checks mpp->action (which changed to ACT_NOTHING) and won't
+start the thread.
 ---
- drivers/md/dm-kcopyd.c |   12 ++++--------
- 1 file changed, 4 insertions(+), 8 deletions(-)
+ libmultipath/config.h    |    1 +
+ libmultipath/configure.c |    9 ++++++---
+ multipath/main.c         |    1 +
+ multipathd/main.c        |    2 +-
+ multipathd/main.h        |    1 -
+ 5 files changed, 9 insertions(+), 5 deletions(-)
 
-Index: linux-2.6.29-rc8-devel/drivers/md/dm-kcopyd.c
-===================================================================
---- linux-2.6.29-rc8-devel.orig/drivers/md/dm-kcopyd.c	2009-03-18 20:39:19.000000000 +0100
-+++ linux-2.6.29-rc8-devel/drivers/md/dm-kcopyd.c	2009-03-18 20:40:26.000000000 +0100
-@@ -510,14 +510,8 @@ static void segment_complete(int read_er
+diff --git a/libmultipath/config.h b/libmultipath/config.h
+index fb917f4..07aa8c0 100644
+--- a/libmultipath/config.h
++++ b/libmultipath/config.h
+@@ -64,6 +64,7 @@ struct config {
+ 	int pg_timeout;
+ 	int max_fds;
+ 	int force_reload;
++	int daemon;
  
- 	} else if (atomic_dec_and_test(&job->sub_jobs)) {
- 
--		/*
--		 * To avoid a race we must keep the job around
--		 * until after the notify function has completed.
--		 * Otherwise the client may try and stop the job
--		 * after we've completed.
--		 */
--		job->fn(read_err, write_err, job->context);
--		mempool_free(job, job->kc->job_pool);
-+		push(&kc->complete_jobs, job);
-+		wake(kc);
+ 	char * dev;
+ 	char * sysfs_dir;
+diff --git a/libmultipath/configure.c b/libmultipath/configure.c
+index 83ee0ae..e00582f 100644
+--- a/libmultipath/configure.c
++++ b/libmultipath/configure.c
+@@ -369,7 +369,7 @@ domap (struct multipath * mpp)
+ 		 * DM_DEVICE_CREATE, DM_DEVICE_RENAME, or DM_DEVICE_RELOAD
+ 		 * succeeded
+ 		 */
+-		if (!mpp->waiter) {
++		if (!conf->daemon) {
+ 			/* multipath client mode */
+ 			dm_switchgroup(mpp->alias, mpp->bestpg);
+ 			if (mpp->action != ACT_NOTHING)
+@@ -380,9 +380,12 @@ domap (struct multipath * mpp)
+ 			condlog(2, "%s: load table [0 %llu %s %s]", mpp->alias,
+ 				mpp->size, TGT_MPATH, mpp->params);
+ 			/*
+-			 * Required action is over, reset for the stateful daemon
++			 * Required action is over, reset for the stateful daemon.
++			 * But don't do it for creation as we use in the caller the
++			 * mpp->action to figure out whether to start the watievent checker.
+ 			 */
+-			mpp->action = ACT_NOTHING;
++			if (mpp->action != ACT_CREATE)
++				mpp->action = ACT_NOTHING;
+ 		}
+ 		return DOMAP_OK;
  	}
- }
+diff --git a/multipath/main.c b/multipath/main.c
+index e60b9bc..ade858d 100644
+--- a/multipath/main.c
++++ b/multipath/main.c
+@@ -421,6 +421,7 @@ main (int argc, char *argv[])
+ 			conf->dev_type = DEV_DEVMAP;
  
-@@ -530,6 +524,8 @@ static void split_job(struct kcopyd_job 
- {
- 	int i;
+ 	}
++	conf->daemon = 0;
+ 	dm_init();
  
-+	atomic_inc(&job->kc->nr_jobs);
-+
- 	atomic_set(&job->sub_jobs, SPLIT_COUNT);
- 	for (i = 0; i < SPLIT_COUNT; i++)
- 		segment_complete(0, 0u, job);
+ 	if (conf->remove == FLUSH_ONE) {
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 7de41a0..323ed7f 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -1333,7 +1333,7 @@ child (void * param)
+ 		condlog(0, "can not find sysfs mount point");
+ 		exit(1);
+ 	}
+-
++	conf->daemon = 1;
+ 	/*
+ 	 * fetch and configure both paths and multipaths
+ 	 */
+diff --git a/multipathd/main.h b/multipathd/main.h
+index 1a6dc55..b3a90f8 100644
+--- a/multipathd/main.h
++++ b/multipathd/main.h
+@@ -1,7 +1,6 @@
+ #ifndef MAIN_H
+ #define MAIN_H
+ 
+-#define DAEMON 1
+ #define MAPGCINT 5
+ 
+ int reconfigure (struct vectors *);
+-- 
+1.5.4.1
