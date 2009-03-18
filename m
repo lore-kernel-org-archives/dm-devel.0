@@ -1,15 +1,12 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 7/8] dm core: pass gfp_mask to
-	bio_integrity_clone()
-Date: Wed, 18 Mar 2009 17:57:26 +0900
-Message-ID: <49C0B776.2070304@ct.jp.nec.com>
-References: <49C0B474.4000204@ct.jp.nec.com>
+From: Christopher Chen <muffaleta@gmail.com>
+Subject: Shell Scripts or Arbitrary Priority Callouts?
+Date: Wed, 18 Mar 2009 15:57:48 -0700
+Message-ID: <7bc80d500903181557x295480feia73d0c23992c6f65@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49C0B474.4000204@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,39 +16,29 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, martin.petersen@oracle.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch passes gfp_mask to bio_integrity_clone() in bio-based dm.
+Hello, running Centos 5.2 here--
 
-Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Cc: Martin K. Petersen <martin.petersen@oracle.com>
-Cc: Alasdair G Kergon <agk@redhat.com>
----
- drivers/md/dm.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+The multipathd daemon is very unhappy with any arbritrary script I
+provide for determining priorities. I see some fuzz in the syslog
+about ramfs and static binaries.
 
-Index: 2.6.29-rc8/drivers/md/dm.c
-===================================================================
---- 2.6.29-rc8.orig/drivers/md/dm.c
-+++ 2.6.29-rc8/drivers/md/dm.c
-@@ -1032,7 +1032,7 @@ static struct bio *split_bvec(struct bio
- 	clone->bi_flags |= 1 << BIO_CLONED;
- 
- 	if (bio_integrity(bio)) {
--		bio_integrity_clone(clone, bio, bs);
-+		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
- 		bio_integrity_trim(clone,
- 				   bio_sector_offset(bio, idx, offset), len);
- 	}
-@@ -1059,7 +1059,7 @@ static struct bio *clone_bio(struct bio 
- 	clone->bi_flags &= ~(1 << BIO_SEG_VALID);
- 
- 	if (bio_integrity(bio)) {
--		bio_integrity_clone(clone, bio, bs);
-+		bio_integrity_clone(clone, bio, GFP_NOIO, bs);
- 
- 		if (idx != bio->bi_idx || clone->bi_size < bio->bi_size)
- 			bio_integrity_trim(clone,
+How do I use shell scripts or arbitrary programs for multipathd? I
+compiled a simple program that spits out "1" and it seems to return
+appropriately.
+
+Also, why does multipath -ll return the appropriate data, namely
+prio=1 (when using my custom statically compiled callout) and
+multipath -l always returns prio=0? Is this an indication of a broken
+configuration or something else?
+
+Cheers
+
+cc
+
+-- 
+Chris Chen <muffaleta@gmail.com>
+"I want the kind of six pack you can't drink."
+-- Micah
