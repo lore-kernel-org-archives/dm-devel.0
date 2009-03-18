@@ -1,8 +1,8 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 3/8] dm core: reject I/O violating new queue
-	limits
-Date: Wed, 18 Mar 2009 17:53:09 +0900
-Message-ID: <49C0B675.6000905@ct.jp.nec.com>
+Subject: [PATCH 4/8] dm core: disable interrupt when taking
+	map_lock
+Date: Wed, 18 Mar 2009 17:54:36 +0900
+Message-ID: <49C0B6CC.2090005@ct.jp.nec.com>
 References: <49C0B474.4000204@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,60 +23,96 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: Christof Schmitt <christof.schmitt@de.ibm.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This patch detects requests violating the queue limitations
-and rejects them.
+This patch disables interrupt when taking map_lock to prevent
+needless lockdep warnings in request-based dm.
 
-The same limitation checks are done when requests are submitted
-to the queue by blk_insert_cloned_request().
-However, such violation can happen if a table is swapped and
-the queue limitations are shrunk while some requests are
-in the queue.
+request-based dm takes map_lock after taking queue_lock with
+disabling interrupt:
+  spin_lock_irqsave(queue_lock)
+  q->request_fn() == dm_request_fn()
+    => dm_get_table()
+         => read_lock(map_lock)
+while queue_lock could be taken in interrupt context.
 
-Since struct request is a reliable one in the block layer and
-device drivers, dispatching such requests is pretty dangerous.
-(e.g. it may cause kernel panic easily.)
-So avoid to dispatch such problematic requests in request-based dm.
+So lockdep warns that a deadlock can happen:
+  write_lock(map_lock)
+  <interrupt>
+  spin_lock_irqsave(queue_lock)
+  q->request_fn() == dm_request_fn()
+    => dm_get_table()
+         => read_lock(map_lock)
+
+Currently there is no such code path in request-based dm where
+q->request_fn() is called from interrupt context, so no such deadlock
+happens.
+But such warning messages confuse users, so prevent them by disabling
+interrupt when taking map_lock.
 
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Cc: Christof Schmitt <christof.schmitt@de.ibm.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm.c |   24 ++++++++++++++++++++++++
- 1 file changed, 24 insertions(+)
+ drivers/md/dm.c |   15 +++++++++------
+ 1 file changed, 9 insertions(+), 6 deletions(-)
 
 Index: 2.6.29-rc8/drivers/md/dm.c
 ===================================================================
 --- 2.6.29-rc8.orig/drivers/md/dm.c
 +++ 2.6.29-rc8/drivers/md/dm.c
-@@ -1492,6 +1492,30 @@ static void map_request(struct dm_target
- 	dm_get(md);
+@@ -511,12 +511,13 @@ static int queue_io(struct mapped_device
+ struct dm_table *dm_get_table(struct mapped_device *md)
+ {
+ 	struct dm_table *t;
++	unsigned long flags;
  
- 	tio->ti = ti;
-+
-+	/*
-+	 * Although submitted requests to the md->queue are checked against
-+	 * the table/queue limitations at the submission time, the limitations
-+	 * may be changed by a table swapping while those already checked
-+	 * requests are in the md->queue.
-+	 * If the limitations have been shrunk in such situations, we may be
-+	 * dispatching requests violating the current limitations here.
-+	 * Since struct request is a reliable one in the block-layer
-+	 * and device drivers, dispatching such requests is dangerous.
-+	 * (e.g. it may cause kernel panic easily.)
-+	 * Avoid to dispatch such problematic requests in request-based dm.
-+	 *
-+	 * Since dm_kill_unmapped_request() expects that tio->ti is correctly
-+	 * set, this has to be done after the set.
-+	 */
-+	r = blk_rq_check_limits(rq->q, rq);
-+	if (unlikely(r)) {
-+		DMWARN("violating the queue limitation. the limitation may be"
-+		       " shrunk while there are some requests in the queue.");
-+		dm_kill_unmapped_request(clone, r);
-+		return;
-+	}
-+
- 	r = ti->type->map_rq(ti, clone, &tio->info);
- 	switch (r) {
- 	case DM_MAPIO_SUBMITTED:
+-	read_lock(&md->map_lock);
++	read_lock_irqsave(&md->map_lock, flags);
+ 	t = md->map;
+ 	if (t)
+ 		dm_table_get(t);
+-	read_unlock(&md->map_lock);
++	read_unlock_irqrestore(&md->map_lock, flags);
+ 
+ 	return t;
+ }
+@@ -1929,6 +1930,7 @@ static int __bind(struct mapped_device *
+ {
+ 	struct request_queue *q = md->queue;
+ 	sector_t size;
++	unsigned long flags;
+ 
+ 	size = dm_table_get_size(t);
+ 
+@@ -1960,10 +1962,10 @@ static int __bind(struct mapped_device *
+ 
+ 	__bind_mempools(md, t);
+ 
+-	write_lock(&md->map_lock);
++	write_lock_irqsave(&md->map_lock, flags);
+ 	md->map = t;
+ 	dm_table_set_restrictions(t, q);
+-	write_unlock(&md->map_lock);
++	write_unlock_irqrestore(&md->map_lock, flags);
+ 
+ 	return 0;
+ }
+@@ -1971,14 +1973,15 @@ static int __bind(struct mapped_device *
+ static void __unbind(struct mapped_device *md)
+ {
+ 	struct dm_table *map = md->map;
++	unsigned long flags;
+ 
+ 	if (!map)
+ 		return;
+ 
+ 	dm_table_event_callback(map, NULL, NULL);
+-	write_lock(&md->map_lock);
++	write_lock_irqsave(&md->map_lock, flags);
+ 	md->map = NULL;
+-	write_unlock(&md->map_lock);
++	write_unlock_irqrestore(&md->map_lock, flags);
+ 	dm_table_destroy(map);
+ }
+ 
