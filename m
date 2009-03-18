@@ -1,8 +1,7 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Subject: [PATCH 0/3] dm-mpath: dynamic load balancers
-	(v1)
-Date: Wed, 18 Mar 2009 17:34:42 +0900
-Message-ID: <49C0B222.9010600@ct.jp.nec.com>
+Subject: [PATCH 0/3] dm-mpath: dynamic load balancers (v1)
+Date: Wed, 18 Mar 2009 17:36:01 +0900
+Message-ID: <49C0B271.7030200@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-2022-JP
