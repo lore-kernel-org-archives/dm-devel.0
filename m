@@ -1,12 +1,15 @@
-From: Christopher Chen <muffaleta@gmail.com>
-Subject: Shell Scripts or Arbitrary Priority Callouts?
-Date: Wed, 18 Mar 2009 15:57:48 -0700
-Message-ID: <7bc80d500903181557x295480feia73d0c23992c6f65@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Re: [git pull] device-mapper fixes for 2.6.29
+Date: Wed, 18 Mar 2009 19:13:21 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903181910010.25113@hs20-bc2-1.build.redhat.com>
+References: <20090316190642.GH5098@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0903170920000.26754@hs20-bc2-1.build.redhat.com>
+	<20090317203838.GQ3063@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090317203838.GQ3063@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,29 +19,25 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hello, running Centos 5.2 here--
+On Tue, 17 Mar 2009, Alasdair G Kergon wrote:
 
-The multipathd daemon is very unhappy with any arbritrary script I
-provide for determining priorities. I see some fuzz in the syslog
-about ramfs and static binaries.
+> On Tue, Mar 17, 2009 at 09:25:30AM -0400, Mikulas Patocka wrote:
+> > http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-kcopyd-fix.patch
+> 
+> Needs submitting to patchwork - split into 4 patches perhaps?
+>  
+> The others are now queued for linux-next and possibly still 2.6.29.
+> 
+> Alasdair
+> -- 
+> agk@redhat.com
 
-How do I use shell scripts or arbitrary programs for multipathd? I
-compiled a simple program that spits out "1" and it seems to return
-appropriately.
+I think it is already in patchwork, but maybe under some weird name (it 
+didn't have [PATCH] header when I sent it). Anyway, I'm resending it, 
+split to 3 pieces.
 
-Also, why does multipath -ll return the appropriate data, namely
-prio=1 (when using my custom statically compiled callout) and
-multipath -l always returns prio=0? Is this an indication of a broken
-configuration or something else?
-
-Cheers
-
-cc
-
--- 
-Chris Chen <muffaleta@gmail.com>
-"I want the kind of six pack you can't drink."
--- Micah
+Mikulas
