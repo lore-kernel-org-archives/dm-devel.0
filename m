@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 13 of 30] DM Snapshot: persistent store minor
-	code cleanup
-Date: Thu, 19 Mar 2009 16:34:46 -0500
-Message-ID: <200903192134.n2JLYkcw007316@hydrogen.msp.redhat.com>
+Subject: [PATCH 15 of 30] DM Exception Store: populate cache on
+	commit
+Date: Thu, 19 Mar 2009 16:35:07 -0500
+Message-ID: <200903192135.n2JLZ7cT007462@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,10 +17,13 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snap-persistent-store-minor-code-cleanup.patch
+Patch name: dm-exception-store-populate-cache-on-commit.patch
 
-Minor code clean-up.  Streamlines code and makes next patch easier
-to review.
+The 'resume' exception store function is now in place to
+load the exception store type's caches on startup.  However,
+we still need to continue to populate the caches as
+new exceptions are committed.  This patch takes care of
+that.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -28,61 +31,45 @@ Index: linux-2.6/drivers/md/dm-snap-persistent.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap-persistent.c
 +++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -536,35 +536,31 @@ static int persistent_read_metadata(stru
- 		ps->current_area = 0;
- 		zero_memory_area(ps);
- 		r = zero_disk_area(ps, 0);
--		if (r) {
--			DMWARN("zero_disk_area(0) failed");
--			return r;
--		}
--	} else {
--		/*
--		 * Sanity checks.
--		 */
--		if (ps->version != SNAPSHOT_DISK_VERSION) {
--			DMWARN("unable to handle snapshot disk version %d",
--			       ps->version);
--			return -EINVAL;
--		}
--
--		/*
--		 * Metadata are valid, but snapshot is invalidated
--		 */
--		if (!ps->valid)
--			return 1;
--
--		/*
--		 * Read the metadata.
--		 */
--		r = read_exceptions(ps, callback, callback_context);
- 		if (r)
--			return r;
-+			DMWARN("zero_disk_area(0) failed");
-+		return r;
-+	}
-+	/*
-+	 * Sanity checks.
-+	 */
-+	if (ps->version != SNAPSHOT_DISK_VERSION) {
-+		DMWARN("unable to handle snapshot disk version %d",
-+		       ps->version);
-+		return -EINVAL;
- 	}
+@@ -665,6 +665,15 @@ static void persistent_commit_exception(
+ 	write_exception(ps, ps->current_committed++, &de);
  
--	return 0;
-+	/*
-+	 * Metadata are valid, but snapshot is invalidated
+ 	/*
++	 * We are safe to add the exception to our cache before we
++	 * issue the callbacks.  If we fail to allocate the memory
++	 * to put it in the cache though, the callbacks will have to
++	 * report the failure.
 +	 */
-+	if (!ps->valid)
-+		return 1;
++	if (add_exception(store, de.old_chunk, de.new_chunk))
++		ps->valid = 0;
 +
 +	/*
-+	 * Read the metadata.
-+	 */
-+	r = read_exceptions(ps, callback, callback_context);
+ 	 * Add the callback to the back of the array.  This code
+ 	 * is the only place where the callback array is
+ 	 * manipulated, and we know that it will never be called
+Index: linux-2.6/drivers/md/dm-snap-transient.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-transient.c
++++ linux-2.6/drivers/md/dm-snap-transient.c
+@@ -77,7 +77,20 @@ static void transient_commit_exception(s
+ 				       void (*callback) (void *, int success),
+ 				       void *callback_context)
+ {
+-	/* Just succeed */
++	struct transient_c *tc = store->context;
++	struct dm_exception *new;
 +
-+	return r;
++	new = dm_alloc_exception(tc->table);
++	if (!new) {
++		callback(callback_context, 0);
++		return;
++	}
++
++	new->old_chunk = e->old_chunk;
++	new->new_chunk = e->new_chunk;
++
++	dm_insert_exception(tc->table, new);
++
+ 	callback(callback_context, 1);
  }
  
- static int persistent_prepare_exception(struct dm_exception_store *store,
