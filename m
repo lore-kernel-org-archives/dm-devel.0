@@ -1,15 +1,9 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH] dm-snap-persistent-fix-dtr-cleanup.patch
-Date: Fri, 20 Mar 2009 09:01:01 -0500
-Message-ID: <7F767AC4-1874-4AA9-87E8-B842D97977A2@redhat.com>
-References: <1236202436.28664.8.camel@hydrogen.msp.redhat.com>
-	<20090319224231.GX3063@agk.fab.redhat.com>
+Subject: [PATCH 1 of 1] dm table cleanup warning message
+Date: Fri, 20 Mar 2009 10:11:18 -0500
+Message-ID: <200903201511.n2KFBIVp016118@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090319224231.GX3063@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,43 +13,32 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+Patch name: dm-table-cleanup-warning-message.patch
 
-On Mar 19, 2009, at 5:42 PM, Alasdair G Kergon wrote:
+Adjust warning message, since there is no dm_table_remove_device
+which the message references.  I found it also helpful to get
+a message about /which/ device was not dm_put_device'ed.
 
-> On Wed, Mar 04, 2009 at 03:33:56PM -0600, Jon Brassow wrote:
->> @@ -481,10 +484,17 @@ static void persistent_dtr(struct dm_exc
->> {
->> 	struct pstore *ps = get_info(store);
->>
->> -	destroy_workqueue(ps->metadata_wq);
->> -	dm_io_client_destroy(ps->io_client);
->> -	vfree(ps->callbacks);
->> +	/* Created in read_header */
->> +	if (ps->io_client)
->> +		dm_io_client_destroy(ps->io_client);
->> 	free_area(ps);
->> +
->> +	/* Allocated in persistent_read_metadata */
->> +	if (ps->callbacks)
->> +		vfree(ps->callbacks);
->> +
->> +	/* Don't need to check these, because they are done in ctr */
->> +	destroy_workqueue(ps->metadata_wq);
->> 	kfree(ps);
->> }
->
-> I presume it's safe to reorder those operations as the workqueue is
-> guaranteed to be empty?  It needs an inline comment though.
-> (Or can we just keep the original, logical, order?)
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-The patch puts them in the order they /should/ have been in in the  
-first place; that is, the reverse order in which they are created.   
-The inline comments I put in state where/when those items are created,  
-and hence why they need checks before being freed.  Perhaps you are  
-suggesting the comments could be better. (?)
-
-  brassow
+Index: linux-2.6/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-table.c
++++ linux-2.6/drivers/md/dm-table.c
+@@ -299,9 +299,11 @@ void dm_table_destroy(struct dm_table *t
+ 
+ 	/* free the device list */
+ 	if (t->devices.next != &t->devices) {
+-		DMWARN("devices still present during destroy: "
+-		       "dm_table_remove_device calls missing");
++		struct dm_dev_internal *dd;
+ 
++		DMWARN("dm_put_device calls missing for:");
++		list_for_each_entry(dd, &t->devices, list)
++			DMWARN(" - %s", dd->dm_dev.name);
+ 		free_devices(&t->devices);
+ 	}
+ 
