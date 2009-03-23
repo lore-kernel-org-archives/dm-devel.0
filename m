@@ -1,15 +1,14 @@
-From: Thomas Witzel <witzel.thomas@gmail.com>
-Subject: Re: configure MD3000 episode 2
-Date: Mon, 23 Mar 2009 11:44:41 -0400
-Message-ID: <d1392840903230844pe310cceya9160bcbe274b735@mail.gmail.com>
-References: <d1392840903201754g119199d1u5b3863ba3a96abad@mail.gmail.com>
-	<20090323143127.GA12731@mars.virtualiron.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: [PATCH 29 of 30] DM Snapshot:  utilize snapshare
+Date: Mon, 23 Mar 2009 14:00:31 -0500
+Message-ID: <DBCFDE1C-1945-4281-8F44-20BD8F94A9DD@redhat.com>
+References: <200903192137.n2JLbUJm008496@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Mime-Version: 1.0 (Apple Message framework v930.3)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090323143127.GA12731@mars.virtualiron.com>
+In-Reply-To: <200903192137.n2JLbUJm008496@hydrogen.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,46 +21,41 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Thanks, I added that. But it didn't change anything. I'm not sure what
-you want me to do with iscsi. I don't think I have an iscsi device. I
-have heard about the MD3000i before, but thats not what I have. I
-think I have a MD3000 (without i) connected via Symbios Logic SAS1068
-PCI-X Fusion-MPT SAS  controller.
+Woops,
 
-Thomas
+Do not use 'ss' after it has been used as a list iterator.  Besides,  
+each snapshare needs to have its associated table notified of the event.
 
-On Mon, Mar 23, 2009 at 10:31 AM, Konrad Rzeszutek
-<konrad@virtualiron.com> wrote:
-> On Fri, Mar 20, 2009 at 08:54:27PM -0400, Thomas Witzel wrote:
->> I have a Dell NX1950 with a MD3000 running ubuntu server 8.04 . With
->> the help of this list I managed to configure the RAID etc. However
->> there is one remaining problem. udev doesn't seem to recognize this
->> setup. After every reboot I have to manually create the /dev/dm-*
->> devices with mknod and run kpartx to make the partitions show up. Can
->> someone please hint to me where I get the appropriate udev scripts ?
+Will send replacement patch shortly.
+
+Bug was caught by QA department's snapshot tests - specifically,  
+overfilling the snapshot.
+
+  brassow
+
+
+On Mar 19, 2009, at 4:37 PM, Jonathan Brassow wrote:
+
+> static void __invalidate_snapshot(struct dm_snapshot *s, int err)
+> {
+> +	struct dm_snapshare *ss;
+> 	char *tmp_str = "ES_INVALIDATE";
 >
-> You can drop this in your udev/rules.d directory:
+> 	if (!s->valid)
+> @@ -734,12 +823,15 @@ static void __invalidate_snapshot(struct
+> 	else if (err == -ENOMEM)
+> 		DMERR("Invalidating snapshot: Unable to allocate exception.");
 >
->> cat /etc/udev/rules.d/95-mpdc.rules
-> RUN+="socket:/org/kernel/dm/multipath_event"
+> -	if (s->store->type->message)
+> -		s->store->type->message(s->store, 1, &tmp_str);
+> +
+> +	/* Invalidating the snapshot will invalidate all snapshares. */
+> +	list_for_each_entry(ss, &s->shared_list, shared_list)
+> +		if (ss->store->type->message)
+> +			ss->store->type->message(ss->store, 1, &tmp_str);
 >
+> 	s->valid = 0;
 >
-> Obviously you need to have your multipathd to start _before_ your
-> iSCSI daemon.
->
->> Ubuntu does have dmapper and multipath related scripts in the udev
->> directory, but they don't seem to be working for me.
->>
->> Thank you so much,
->> Thomas Witzel
->>
->> --
->> dm-devel mailing list
->> dm-devel@redhat.com
->> https://www.redhat.com/mailman/listinfo/dm-devel
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+> -	dm_table_event(s->store->ti->table);
+> +	dm_table_event(ss->store->ti->table);
+> }
