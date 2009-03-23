@@ -1,16 +1,14 @@
-From: "Charlie Sharkey" <charlie.sharkey@bustech.com>
-Subject: multipathd  dead
-Date: Mon, 23 Mar 2009 15:06:38 -0400
-Message-ID: <03FB5D708BE3C8448E8079186A56CDE60111F3FE@BTIBURMAIL.bustech.com>
-References: <d1392840903230844pe310cceya9160bcbe274b735@mail.gmail.com>
+From: Eric Sandeen <sandeen@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Mon, 23 Mar 2009 14:10:28 -0500
+Message-ID: <49C7DEA4.5070100@redhat.com>
+References: <49C7DD3C.2020401@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-class: urn:content-classes:message
-In-Reply-To: <d1392840903230844pe310cceya9160bcbe274b735@mail.gmail.com>
+In-Reply-To: <49C7DD3C.2020401@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,23 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Cc: Andi Kleen <andi@firstfloor.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-=20
+Eric Sandeen wrote:
 
-I have a question about multipathd. It starts up ok,
-but later it's status says it is dead. It does show
-an error (see below), but would this be enough to kill it ?
+(oops, get Andi's email right!)
 
-Also, is there any other log files besides the messages and
-the boot.log files it logs to ?
-
-Thank you,
- charlie
-
-boot.msg file
-<6>device-mapper: multipath: version 1.0.4 loaded
-<6>device-mapper: multipath round-robin: version 1.0.0 loaded
-<3>device-mapper: table: 253:9: multipath: error getting device
-<4>device-mapper: ioctl: error adding target to table
+> I've noticed that on 2.6.29-rcX, with Andi's patch
+> (ab4c1424882be9cd70b89abf2b484add355712fa, dm: support barriers on
+> simple devices) barriers are still getting rejected on these simple devices.
+> 
+> The problem is in __generic_make_request():
+> 
+>                 if (bio_barrier(bio) && bio_has_data(bio) &&
+>                     (q->next_ordered == QUEUE_ORDERED_NONE)) {
+>                         err = -EOPNOTSUPP;
+>                         goto end_io;
+>                 }
+> 
+> and dm isn't flagging its queue as supporting ordered writes, so it's
+> rejected here.
+> 
+> Doing something like this:
+> 
+> + if (t->barriers_supported)
+> +         blk_queue_ordered(q, QUEUE_ORDERED_DRAIN, NULL);
+> 
+> somewhere in dm (I stuck it in dm_table_set_restrictions() - almost
+> certainly the wrong thing to do) did get my dm-linear device to mount
+> with xfs, w/o xfs complaining that its mount-time barrier tests failed.
+> 
+> So what's the right way around this?  What should dm (or md for that
+> matter) advertise on their queues about ordered-ness?  Should there be
+> some sort of "QUEUE_ORDERED_PASSTHROUGH" or something to say "this level
+> doesn't care, ask the next level" or somesuch?  Or should it inherit the
+> flag from the next level down?  Ideas?
+> 
+> Thanks,
+> -Eric
+> 
