@@ -1,14 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 14/14] barriers
-Date: Tue, 24 Mar 2009 14:24:23 +0000
-Message-ID: <20090324142423.GH13664@agk.fab.redhat.com>
-References: <Pine.LNX.4.64.0902231422490.23293@hs20-bc2-1.build.redhat.com>
+From: Thomas Witzel <witzel.thomas@gmail.com>
+Subject: Re: configure MD3000 episode 2
+Date: Tue, 24 Mar 2009 10:24:34 -0400
+Message-ID: <d1392840903240724m55f0f519g48b3b6c778cb727e@mail.gmail.com>
+References: <d1392840903201754g119199d1u5b3863ba3a96abad@mail.gmail.com>
+	<20090323143127.GA12731@mars.virtualiron.com>
+	<d1392840903230844pe310cceya9160bcbe274b735@mail.gmail.com>
+	<d1392840903231405p7b99846g65882690df77e96b@mail.gmail.com>
+	<20090324140654.GA1606@mars.virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0902231422490.23293@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <20090324140654.GA1606@mars.virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,24 +22,18 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Feb 23, 2009 at 02:23:00PM -0500, Mikulas Patocka wrote:
-> DM_ENDIO_REQUEUE doesn't work and I doubt that it can be made work with
-> barriers.
- 
-Didn't we discuss this before?
-We *require* DM_ENDIO_REQUEUE functionality - I can't apply a patch that
-breaks it.  But it is not something that can be used arbitrarily - it is
-only used in situations where core dm is firmly in control (and I/O cannot get
-through to the device e.g. all paths down in multipath) and I don't see why it
-can't continue to work with barriers.
+> Huh? Ubuntu charges license fees on GPL code? I think you are confusing
+> what you are paying - it isn't license fee but support fee.
 
-I hope it's just the comment that is wrong here - or does the patch need
-updating?
+Thats not what I meant. I know that my hardware config does work out
+of the box with RHEL, but we do not want to pay RHEL, and with ubuntu
+I have not been able to get any of this to work for 3 weeks now and I
+have not been able to get help/support on the issue, so I was asking
+whether there is a different free distribution that won't put me
+through these time consuming google/mailing list/debug orgies to get
+some storage mounted.
 
-Alasdair
--- 
-agk@redhat.com
+Thomas
