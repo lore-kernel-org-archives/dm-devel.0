@@ -1,23 +1,19 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
-Date: Tue, 24 Mar 2009 17:01:04 +0200
-Message-ID: <20090324150104.GO5528@edu.joroinen.fi>
-References: <7bc80d500903181557x295480feia73d0c23992c6f65@mail.gmail.com>
-	<1237460677.6506.5.camel@jaspav.missionsit.net.missionsit.net>
-	<7bc80d500903192211k6baadc81ge1b9d8b81ea6a913@mail.gmail.com>
-	<1237543283.6572.10.camel@jaspav.missionsit.net.missionsit.net>
-	<20090322152730.GC5528@edu.joroinen.fi>
-	<1237801596.6577.28.camel@jaspav.missionsit.net.missionsit.net>
-	<20090324073935.GK5528@edu.joroinen.fi>
-	<1237892561.6560.19.camel@jaspav.missionsit.net.missionsit.net>
-	<20090324115708.GM5528@edu.joroinen.fi>
-	<1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Tue, 24 Mar 2009 16:05:17 +0100
+Message-ID: <20090324150517.GX27476@kernel.dk>
+References: <49C7DD3C.2020401@redhat.com>
+	<Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
+	<20090324140524.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
+	<20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
+In-Reply-To: <Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,83 +23,168 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Ross S. W. Walker" <rwalker@medallion.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Andi Kleen <ak@suse.de>
 List-Id: dm-devel.ids
 
-On Tue, Mar 24, 2009 at 08:21:45AM -0400, John A. Sullivan III wrote:
-> > 
-> > Core-iscsi developer seems to be active developing at least the 
-> > new iSCSI target (LIO target).. I think he has been testing it with
-> > core-iscsi, so maybe there's newer version somewhere? 
-> > 
-> > > We did play with the multipath rr_min_io settings and smaller always
-> > > seemed to be better until we got into very large numbers of session.  We
-> > > were testing on a dual quad core AMD Shanghai 2378 system with 32 GB
-> > > RAM, a quad port Intel e1000 card and two on-board nvidia forcedeth
-> > > ports with disktest using 4K blocks to mimic the file system using
-> > > sequential reads (and some sequential writes).
-> > > 
-> > 
-> > Nice hardware. Btw are you using jumbo frames or flow control for iSCSI
-> > traffic? 
-> > 
-
-Dunno if you noticed this.. :) 
-
-
-> > > 
-> > 
-> > When you used dm RAID0 you didn't have any multipath configuration, right? 
-> Correct although we also did test successfully with multipath in
-> failover mode and RAID0.
-> > 
-
-OK.
-
-> > What kind of stripe size and other settings you had for RAID0?
-> Chunk size was 8KB with four disks.  
-> > 
-
-Did you try with much bigger sizes.. 128 kB ?
-
-> > What kind of performance do you get using just a single iscsi session (and
-> > thus just a single path), no multipathing, no DM RAID0 ? Just a filesystem
-> > directly on top of the iscsi /dev/sd? device.
-> Miserable - same roughly 12 MB/s.
-
-OK, Here's your problem. Was this btw reads or writes? Did you tune
-readahead-settings? 
-
-Can paste your iSCSI session settings negotiated with the target? 
-
-> > 
-> > Sounds like there's some other problem if invidual throughput is bad? Or did
-> > you mean performance with a single disktest IO thread is bad, but using multiple
-> > disktest threads it's good.. that would make more sense :) 
-> Yes, the latter.  Single thread (I assume mimicking a single disk
-> operation, e.g., copying a large file) is miserable - much slower than
-> local disk despite the availability of huge bandwidth.  We start
-> utilizing the bandwidth when multiplying concurrent disk activity into
-> the hundreds.
+On Tue, Mar 24 2009, Mikulas Patocka wrote:
 > 
-> I am guessing the single thread performance problem is an open-iscsi
-> issue but I was hoping multipath would help us work around it by
-> utilizing multiple sessions per disk operation.  I suppose that is where
-> we run into the command ordering problem unless there is something else
-> afoot.  Thanks - John
+> 
+> On Tue, 24 Mar 2009, Jens Axboe wrote:
+> 
+> > On Tue, Mar 24 2009, Mikulas Patocka wrote:
+> > > 
+> > > 
+> > > On Tue, 24 Mar 2009, Jens Axboe wrote:
+> > > 
+> > > > On Tue, Mar 24 2009, Mikulas Patocka wrote:
+> > > > > 
+> > > > > 
+> > > > > On Mon, 23 Mar 2009, Eric Sandeen wrote:
+> > > > > 
+> > > > > > I've noticed that on 2.6.29-rcX, with Andi's patch
+> > > > > > (ab4c1424882be9cd70b89abf2b484add355712fa, dm: support barriers on
+> > > > > > simple devices) barriers are still getting rejected on these simple devices.
+> > > > > > 
+> > > > > > The problem is in __generic_make_request():
+> > > > > > 
+> > > > > >                 if (bio_barrier(bio) && bio_has_data(bio) &&
+> > > > > >                     (q->next_ordered == QUEUE_ORDERED_NONE)) {
+> > > > > >                         err = -EOPNOTSUPP;
+> > > > > >                         goto end_io;
+> > > > > >                 }
+> > > > > > 
+> > > > > > and dm isn't flagging its queue as supporting ordered writes, so it's
+> > > > > > rejected here.
+> > > > > > 
+> > > > > > Doing something like this:
+> > > > > > 
+> > > > > > + if (t->barriers_supported)
+> > > > > > +         blk_queue_ordered(q, QUEUE_ORDERED_DRAIN, NULL);
+> > > > > > 
+> > > > > > somewhere in dm (I stuck it in dm_table_set_restrictions() - almost
+> > > > > > certainly the wrong thing to do) did get my dm-linear device to mount
+> > > > > > with xfs, w/o xfs complaining that its mount-time barrier tests failed.
+> > > > > > 
+> > > > > > So what's the right way around this?  What should dm (or md for that
+> > > > > > matter) advertise on their queues about ordered-ness?  Should there be
+> > > > > > some sort of "QUEUE_ORDERED_PASSTHROUGH" or something to say "this level
+> > > > > > doesn't care, ask the next level" or somesuch?  Or should it inherit the
+> > > > > > flag from the next level down?  Ideas?
+> > > > > > 
+> > > > > > Thanks,
+> > > > > > -Eric
+> > > > > > 
+> > > > > > --
+> > > > > > dm-devel mailing list
+> > > > > > dm-devel@redhat.com
+> > > > > > https://www.redhat.com/mailman/listinfo/dm-devel
+> > > > > 
+> > > > > Hi
+> > > > > 
+> > > > > This is misdesign in generic bio layer and it should be fixed there. I 
+> > > > > think it is blocking barrier support in md-raid1 too. Jens, pls apply the 
+> > > > > attached patch.
+> > > > > 
+> > > > > Mikulas
+> > > > > 
+> > > > > ----
+> > > > > 
+> > > > > Move test for not-supported barriers to __make_request.
+> > > > > 
+> > > > > This test prevents barriers from being dispatched to device mapper
+> > > > > and md.
+> > > > > 
+> > > > > This test is sensible only for drivers that use requests (such as disk
+> > > > > drivers), not for drivers that use bios.
+> > > > > 
+> > > > > It is better to fix it in generic code than to make workaround for it
+> > > > > in device mapper and md.
+> > > > 
+> > > > So you audited any ->make_request_fn style driver and made sure they
+> > > > rejected barriers?
+> > > 
+> > > I didn't.
+> > > 
+> > > If you grep for it, you get:
+> > > 
+> > > ./arch/powerpc/sysdev/axonram.c:
+> > > doesn't reject barriers, but it is not needed, it ends all bios in 
+> > > make_request routine
+> > > 
+> > > ./drivers/block/aoe/aoeblk.c:
+> > > * doesn't reject barriers, should be modified to do so
+> > > 
+> > > ./drivers/block/brd.c
+> > > doesn't reject barriers, doesn't need to, ends all bios in make_request
+> > > 
+> > > ./drivers/block/loop.c:
+> > > doesn't reject barriers, it's ok because it doesn't reorder requests
+> > > 
+> > > ./drivers/block/pktcdvd.c
+> > > * doesn't reject barriers, should be modified to do so
+> > > 
+> > > ./drivers/block/umem.c
+> > > * doesn't reject barriers, I don't know if it reorders requests or not.
+> > > 
+> > > ./drivers/s390/block/xpram.c
+> > > doesn't reject barriers, doesn't need, ends bios immediatelly
+> > > 
+> > > ./drivers/md/raid0.c
+> > > rejects barriers
+> > > 
+> > > ./drivers/md/raid1.c
+> > > supports barriers
+> > > 
+> > > ./drivers/md/raid10.c
+> > > rejects barriers
+> > > 
+> > > ./drivers/md/raid5.c
+> > > rejects barriers
+> > > 
+> > > ./drivers/md/linear.c
+> > > rejects barriers
+> > > 
+> > > ./drivers/md/dm.c
+> > > supports barriers partially
+> > 
+> > Not reordering is not enough to support the barrier primitive, unless
+> > you always go to the same device and pass the barrier flag down with it.
+> 
+> For single-device drivers (not md/dm), not reordering should be good 
+> enough to claim barrier support.
 
-You should be able to get many times the throughput you get now.. just with
-a single path/session.
+Not reordering is what the barrier is all about, the problem is how far
+down you extend that guarantee. For the linux barrier, it's ALL the way
+down to and including the hardware. So it's only good enough, if it
+includes the device not reordering the write. And signalling completion
+when it's safe. "Good enough" is not an option, it's all or nothing.
 
-What kind of latency do you have from the initiator to the target/storage? 
+> > I think having the check in generic_make_request() is perfectly fine,
+> > even if the value doesn't completely apply to stacked devices. Perhaps
+> > we can add such a value, then. My main point is that barrier support
+> > should be opt-in, not a default thing.
+> 
+> So make some flag for these bio-based devices, so that they don't have to 
+> use one of those request-based options (which are meaningless for 
+> non-request based device).
 
-Try with for example 4 kB ping:
-ping -s 4096 <ip_of_the_iscsi_target>
+Sure, but as I said, I think it's mainly a cosmetic issue. Signalling
+simple barrier support is just fine.
 
-1000ms divided by the roundtrip you get from ping should give you maximum
-possible IOPS using a single path.. 
+> > Over time we should have support everywhere, but it needs to be checked, 
+> > audited, and trusted.
+> 
+> BTW. What is the rule for barriers if the device can't prevent the 
+> requests from being delayed or reordered? (for example ATA<=3 disks with 
+> cache that lack cache-flush command ... or flash cards that do 
+> write-caching anyway and it can't be turned off). Should they support 
+> barriers and try to make best effort? Or should they reject barriers to 
+> inform the caller code that they have no data consistency?
 
-4 kB * IOPS == max bandwidth you can achieve.
+If they can't flush cache, then they must reject barriers unless they
+have write through caching.
 
--- Pasi
+-- 
+Jens Axboe
