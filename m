@@ -1,15 +1,18 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Barriers still not passing on simple dm devices...
-Date: Tue, 24 Mar 2009 10:26:43 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
-References: <49C7DD3C.2020401@redhat.com>
-	<Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
-	<20090324140524.GV27476@kernel.dk>
+From: Thomas Witzel <witzel.thomas@gmail.com>
+Subject: Re: configure MD3000 episode 2
+Date: Tue, 24 Mar 2009 10:29:13 -0400
+Message-ID: <d1392840903240729h5a37f939u1cdb13a4608748d7@mail.gmail.com>
+References: <d1392840903201754g119199d1u5b3863ba3a96abad@mail.gmail.com>
+	<20090323143127.GA12731@mars.virtualiron.com>
+	<d1392840903230844pe310cceya9160bcbe274b735@mail.gmail.com>
+	<d1392840903231405p7b99846g65882690df77e96b@mail.gmail.com>
+	<20090324140654.GA1606@mars.virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090324140524.GV27476@kernel.dk>
+In-Reply-To: <20090324140654.GA1606@mars.virtualiron.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,125 +22,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jens Axboe <jens.axboe@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
-	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Andi Kleen <ak@suse.de>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
+Okay, I'm looking for a man page:
+man -k hotplug finds nothing
 
+I'm looking for the file you mentioned:
+ls /sbin/hotplug
+ls: cannot access /sbin/hotplug: No such file or directory
 
-On Tue, 24 Mar 2009, Jens Axboe wrote:
+I'm looking for a package to install related to hotplug:
 
-> On Tue, Mar 24 2009, Mikulas Patocka wrote:
-> > 
-> > 
-> > On Mon, 23 Mar 2009, Eric Sandeen wrote:
-> > 
-> > > I've noticed that on 2.6.29-rcX, with Andi's patch
-> > > (ab4c1424882be9cd70b89abf2b484add355712fa, dm: support barriers on
-> > > simple devices) barriers are still getting rejected on these simple devices.
-> > > 
-> > > The problem is in __generic_make_request():
-> > > 
-> > >                 if (bio_barrier(bio) && bio_has_data(bio) &&
-> > >                     (q->next_ordered == QUEUE_ORDERED_NONE)) {
-> > >                         err = -EOPNOTSUPP;
-> > >                         goto end_io;
-> > >                 }
-> > > 
-> > > and dm isn't flagging its queue as supporting ordered writes, so it's
-> > > rejected here.
-> > > 
-> > > Doing something like this:
-> > > 
-> > > + if (t->barriers_supported)
-> > > +         blk_queue_ordered(q, QUEUE_ORDERED_DRAIN, NULL);
-> > > 
-> > > somewhere in dm (I stuck it in dm_table_set_restrictions() - almost
-> > > certainly the wrong thing to do) did get my dm-linear device to mount
-> > > with xfs, w/o xfs complaining that its mount-time barrier tests failed.
-> > > 
-> > > So what's the right way around this?  What should dm (or md for that
-> > > matter) advertise on their queues about ordered-ness?  Should there be
-> > > some sort of "QUEUE_ORDERED_PASSTHROUGH" or something to say "this level
-> > > doesn't care, ask the next level" or somesuch?  Or should it inherit the
-> > > flag from the next level down?  Ideas?
-> > > 
-> > > Thanks,
-> > > -Eric
-> > > 
-> > > --
-> > > dm-devel mailing list
-> > > dm-devel@redhat.com
-> > > https://www.redhat.com/mailman/listinfo/dm-devel
-> > 
-> > Hi
-> > 
-> > This is misdesign in generic bio layer and it should be fixed there. I 
-> > think it is blocking barrier support in md-raid1 too. Jens, pls apply the 
-> > attached patch.
-> > 
-> > Mikulas
-> > 
-> > ----
-> > 
-> > Move test for not-supported barriers to __make_request.
-> > 
-> > This test prevents barriers from being dispatched to device mapper
-> > and md.
-> > 
-> > This test is sensible only for drivers that use requests (such as disk
-> > drivers), not for drivers that use bios.
-> > 
-> > It is better to fix it in generic code than to make workaround for it
-> > in device mapper and md.
-> 
-> So you audited any ->make_request_fn style driver and made sure they
-> rejected barriers?
+apt-cache search hotplug
+libxi-dev - X11 Input extension library (development headers)
+libxi6 - X11 Input extension library
+libxi6-dbg - X11 Input extension library (debug package)
+fxload - Firmware download to EZ-USB devices
+libaws-dev - Ada Web Server development files
+atmel-firmware - Firmware for Atmel at76c50x wireless networking chips.
 
-I didn't.
+Seems like there is NOTHING on ubuntu even remotely called hotplug,
+except /proc/sys/kernel/hotplug
+which is not a configuration file.
 
-If you grep for it, you get:
+What distribution are you using ?
 
-./arch/powerpc/sysdev/axonram.c:
-doesn't reject barriers, but it is not needed, it ends all bios in 
-make_request routine
-
-./drivers/block/aoe/aoeblk.c:
-* doesn't reject barriers, should be modified to do so
-
-./drivers/block/brd.c
-doesn't reject barriers, doesn't need to, ends all bios in make_request
-
-./drivers/block/loop.c:
-doesn't reject barriers, it's ok because it doesn't reorder requests
-
-./drivers/block/pktcdvd.c
-* doesn't reject barriers, should be modified to do so
-
-./drivers/block/umem.c
-* doesn't reject barriers, I don't know if it reorders requests or not.
-
-./drivers/s390/block/xpram.c
-doesn't reject barriers, doesn't need, ends bios immediatelly
-
-./drivers/md/raid0.c
-rejects barriers
-
-./drivers/md/raid1.c
-supports barriers
-
-./drivers/md/raid10.c
-rejects barriers
-
-./drivers/md/raid5.c
-rejects barriers
-
-./drivers/md/linear.c
-rejects barriers
-
-./drivers/md/dm.c
-supports barriers partially
-
-
-Mikulas
+Thomas
