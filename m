@@ -1,20 +1,11 @@
-From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
-Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
-Date: Tue, 24 Mar 2009 09:39:35 +0200
-Message-ID: <20090324073935.GK5528@edu.joroinen.fi>
-References: <7bc80d500903181557x295480feia73d0c23992c6f65@mail.gmail.com>
-	<1237460677.6506.5.camel@jaspav.missionsit.net.missionsit.net>
-	<7bc80d500903192211k6baadc81ge1b9d8b81ea6a913@mail.gmail.com>
-	<1237543283.6572.10.camel@jaspav.missionsit.net.missionsit.net>
-	<20090322152730.GC5528@edu.joroinen.fi>
-	<1237801596.6577.28.camel@jaspav.missionsit.net.missionsit.net>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: about the new snapshots
+Date: Tue, 24 Mar 2009 04:40:11 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903240354020.3850@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <1237801596.6577.28.camel@jaspav.missionsit.net.missionsit.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,121 +15,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Ross S. W. Walker" <rwalker@medallion.com>
+To: Jonathan Brassow <jbrassow@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 23, 2009 at 05:46:36AM -0400, John A. Sullivan III wrote:
-> On Sun, 2009-03-22 at 17:27 +0200, Pasi K=E4rkk=E4inen wrote:
-> > On Fri, Mar 20, 2009 at 06:01:23AM -0400, John A. Sullivan III wrote:
-> > > >=20
-> > > > John:
-> > > >=20
-> > > > Thanks for the reply.
-> > > >=20
-> > > > I ended up writing a small C program to do the priority computati=
-on for me.
-> > > >=20
-> > > > I have two sets of FC-AL shelves attached to two dual-channel Qlo=
-gic
-> > > > cards. That gives me two paths to each disk. I have about 56 spin=
-dles
-> > > > in the current configuration, and am tying them together with md
-> > > > software raid.
-> > > >=20
-> > > > Now, even though each disk says it handles concurrent I/O on each
-> > > > port, my testing indicates that throughput suffers when using mul=
-tibus
-> > > > by about 1/2 (from ~60 MB/sec sustained I/O with failover to 35 M=
-B/sec
-> > > > when using multibus).
-> > > >=20
-> > > > However, with failover, I am effectively using only one channel o=
-n
-> > > > each card. With my custom priority callout, I more or less match =
-the
-> > > > disks with even numbers to the even numbered scsi channels with a
-> > > > higher priority. Same with the odd numbered disks and odd numbere=
-d
-> > > > channels. The odds are 2ndary on even and vice versa. It seems to=
- work
-> > > > rather well, and appears to spread the load nicely.
-> > > >=20
-> > > > Thanks again for your help!
-> > > >=20
-> > > I'm really glad you brought up the performance problem. I had poste=
-d
-> > > about it a few days ago but it seems to have gotten lost.  We are r=
-eally
-> > > struggling with performance issues when attempting to combine multi=
-ple
-> > > paths (in the case of multipath to one big target) or targets (in t=
-he
-> > > case of software RAID0 across several targets) rather than using, i=
-n
-> > > effect, JBODs.  In our case, we are using iSCSI.
-> > >=20
-> > > Like you, we found that using multibus caused almost a linear drop =
-in
-> > > performance.  Round robin across two paths was half as much as aggr=
-egate
-> > > throughput to two separate disks, four paths, one fourth.
-> > >=20
-> > > We also tried striping across the targets with software RAID0 combi=
-ned
-> > > with failover multipath - roughly the same effect.
-> > >=20
-> > > We really don't want to be forced to treated SAN attached disks as
-> > > JDOBs.  Has anyone cracked this problem of using them in either mul=
-tibus
-> > > or RAID0 so we can present them as a single device to the OS and st=
-ill
-> > > load balance multiple paths.  This is a HUGE problem for us so any =
-help
-> > > is greatly appreciated.  Thanks- John
-> >=20
-> > Hello.
-> >=20
-> > Hmm.. just a guess, but could this be related to the fact that if you=
-r paths
-> > to the storage are different iSCSI sessions (open-iscsi _doesn't_ sup=
-port
-> > multiple connections per session aka MC/s), then there is a separate =
-SCSI
-> > command queue per path.. and if SCSI requests are split across those =
-queues=20
-> > they can get out-of-order and that causes performance drop?
-> >=20
-> > See:
-> > http://www.nabble.com/round-robin-with-vmware-initiator-and-iscsi-tar=
-get-td21958346.html
-> >=20
-> > Especially the reply from Ross (CC). Maybe he has some comments :)=20
-> >=20
-> > -- Pasi
-> <snip>
-> I'm trying to spend a little time on this today and am really feeling m=
-y
-> ignorance on the way iSCSI works :(  It looks like linux-iscsi supports
-> MC/S but has not been in active development and will not even compile o=
-n
-> my 2.6.27 kernel.
->=20
-> To simplify matters, I did put each SAN interface on a separate network=
-.
-> Thus, all the different sessions.  If I place them all on the same
-> network and use the iface parameters of open-iscsi, does that eliminate
-> the out-of-order problem and allow me to achieve the performance
-> scalability I'm seeking from dm-multipath in multibus mode? Thanks -
-> John
+Hi Jon
 
-If you use ifaces feature of open-iscsi, you still get separate sessions.
+The code is here: 
+http://people.redhat.com/mpatocka/patches/kernel/new-snapshots/devel
 
-open-iscsi just does not support MC/s :(
+(I'll soon upload a new version that can delete snapshots ... I have 
+written it already, I hadn't done much testing yet)
 
-I think core-iscsi does support MC/s..=20
 
-Then you again you should play with the different multipath settings, and
-tweak how often IOs are split to different paths etc.. maybe that helps.
+The generic code is in dm-multisnap.c file. The Fujita+Daniel's exception 
+store is in dm-multisnap-fujita-daniel.c, my exception store is in the 
+rest of the files.
 
--- Pasi
+Each origin is represented with structure dm_multisnap, it contains list 
+of attached snapshots, structures dm_multisnap_snap. It also contains 
+pointer to exception-store-private part, struct exception_store_private 
+and a method table (struct dm_multisnap_exception_store).
+
+All I/O except reads from the origin is offloaded to a thread. This can be 
+further optimized, that some more cases could be handled directly.
+
+
+My snapshot store is composed as a B+tree with snapshot ranges, each entry 
+contains key (chunk number, start snapshot ID, end snapshot ID) and a 
+value of a new chunk where this is remapped. Thus, it has unlimited number 
+of snapshots --- really limited to 2^32. It can be used for example for 
+rolling snapshots, i.e. take snapshot every 5 minutes to record activity.
+
+
+Things, you should know if you want to port this implementation into your 
+code:
+
+In case someone writes to the snapshots, there may be a need to create 
+multiple copies. For example if you have snapshots 1,2,3 and someone 
+writes to snapshot 2, it creates key [chunk number,2-2]. If someone writes 
+to the origin, it needs to create two more records [chunk number,1-1] and 
+[chunk number,3-3] and perform two copies. If there weren't write to the 
+snapshot, it would create just one record [chunk number,1-3].
+
+This is done in do_origin_write, the function resets exception store's 
+search state machine with s->store->reset_query and then repeatedly asks 
+if there is anything more to remap (s->store->query_next_remap) and if 
+there is, add an entry to the b+tree (s->store->add_next_remap). When it 
+finishes all remaps or when it fills all 8 kcopyd slots, it submits the 
+request to kcopyd.
+
+Fujita+Daniel's store uses bitmask, the upside is that it doesn't ever do 
+multiple copies, so these methods are implemented in such a way that 
+query_next_remap succeeds at most once and add_next_remap processes all 
+the snapshots. The downside of the bitmask is that it is limited to max 64 
+snapshots.
+
+
+Another thing (that you'll need to implement in Fujita+Daniel's store too) 
+is snapshot-to-snapshot copies. It happens when you write to a shared 
+snapshot chunk. The write can't be dispatched directly (because it would 
+be reflected to multiple snapshots), so it needs to perform a copy. I do 
+it in do_snapshot_io, the method is s->store->make_chunk_writeable, it 
+duplicates the record in the b+tree and returns the destination, where the 
+data should be copied. After this method is called, kcopyd performs 
+snapshot-to-snapshot copy.
+
+
+Another abstraction that I added is check_conflicts method (called by 
+check_pending_io) --- it checks if a given chunk+snapid conflicts with 
+kcopyd I/O that is in progress. The exception store fills an union 
+chunk_descriptor, that union is opaque to the generic code, and the 
+generic code calls check_conflict method to check if there is conflict 
+against that I/O. The rationale for this is that in my implementation, 
+there may be many snapshots, one kcopyd action could create exceptions 
+even for a range of several hundred snapshots, and it would be unsuitable 
+to check them one-by-one for conflicts. For Fujita+Daniel's store, the 
+union holds a 64-bit bitmap which IDs are copied. For my store, it holds 
+the snapid range that is being copied.
+
+
+When all kcopyd jobs finish, the method commit is called, it updates the 
+exception store to reflect changes made so far. My store uses 
+log-structure layout, this writes the new commit block that contains 
+updated pointers. Fujita+Daniel's code doesn't have data consistency, so 
+this only writes all dirty buffers, hoping that the computer won't crash 
+between individual writes.
+
+
+Unlike in the old snapshots, in my implementation the bio is retried after 
+a kcopyd job --- when the job finishes, the bio is put back to the queue 
+and checked against all the snapshots again. This simplifies design 
+because not all snapshots need to be processed when processing the bio. 
+For example, kcopyd has 8 slots, when all the slots are filled, there may 
+still be unprocessed snapshots. But it doesn't matter, as they'll be 
+retried.
+
+In the old snapshots, this no-retry-bio thing is wrong too, it causes bug 
+https://bugzilla.redhat.com/show_bug.cgi?id=182659. I already patched it 
+(http://people.redhat.com/mpatocka/patches/kernel/merging/2.6.28/dm-snapshot-rework-origin-write.patch) 
+but the patch was somehow forgotten by Alasdair, you may think about 
+incorporating it into your patchset.
+
+
+Mikulas
