@@ -1,14 +1,19 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: about the new snapshots
-Date: Tue, 24 Mar 2009 10:46:27 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0903240954310.29968@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0903240354020.3850@hs20-bc2-1.build.redhat.com>
-	<20090324122133.GA10158@infradead.org>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: configure MD3000 episode 2
+Date: Tue, 24 Mar 2009 10:48:35 -0400
+Message-ID: <20090324144835.GB1878@mars.virtualiron.com>
+References: <d1392840903201754g119199d1u5b3863ba3a96abad@mail.gmail.com>
+	<20090323143127.GA12731@mars.virtualiron.com>
+	<d1392840903230844pe310cceya9160bcbe274b735@mail.gmail.com>
+	<d1392840903231405p7b99846g65882690df77e96b@mail.gmail.com>
+	<20090324140654.GA1606@mars.virtualiron.com>
+	<d1392840903240724m55f0f519g48b3b6c778cb727e@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090324122133.GA10158@infradead.org>
+Content-Disposition: inline
+In-Reply-To: <d1392840903240724m55f0f519g48b3b6c778cb727e@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,38 +23,19 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Christoph Hellwig <hch@infradead.org>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 24 Mar 2009, Christoph Hellwig wrote:
-
-> On Tue, Mar 24, 2009 at 04:40:11AM -0400, Mikulas Patocka wrote:
-> > Things, you should know if you want to port this implementation into your 
-> > code:
+On Tue, Mar 24, 2009 at 10:24:34AM -0400, Thomas Witzel wrote:
+> > Huh? Ubuntu charges license fees on GPL code? I think you are confusing
+> > what you are paying - it isn't license fee but support fee.
 > 
-> What is Jonathan's code?  I thought your patch series was supposed to get
-> in after some more work?
+> Thats not what I meant. I know that my hardware config does work out
+> of the box with RHEL, but we do not want to pay RHEL, and with ubuntu
+> I have not been able to get any of this to work for 3 weeks now and I
+> have not been able to get help/support on the issue, so I was asking
+> whether there is a different free distribution that won't put me
+> through these time consuming google/mailing list/debug orgies to get
+> some storage mounted.
 
-Jonathan's code joins Fujita+Daniel's zumastore snasphots with the old 
-snapshots.
-
-See this:
-http://patchwork.kernel.org/bundle/jbrassow/Exception%20Store%20API%20group1/
-
-This group of patches can be found at:
-http://patchwork.kernel.org/bundle/jbrassow/Exception%20Store%20API%20group2/
-
-(yesterday when I checked them, the patches had many rejects, but it's 
-good enough to read the source code and see its architecture)
-
-
-My code is independent, written from scratch, it joins my snapshot store 
-with Fujita+Daniel's store.
-
-Alasdair wants to put Jon's patches to the kernel, but I don't know if 
-they'll be able to port my implementation on the top of it. So maybe we 
-end up with my code+Jon's code as separate projects, only with the same 
-interface to userspace. I don't know how it will end.
-
-Mikulas
+Since you say that RHEL works, you could use the clone of RHEL - CentOS.
