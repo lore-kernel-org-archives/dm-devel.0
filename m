@@ -1,81 +1,42 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: RE: [PATCH]scsi_dh_rdac: Retry for NOT_READY check condition
-	(0x02A102, 0x020401, 0x020404 and  0x020407) in rdac_check_sense
-Date: Tue, 24 Mar 2009 12:38:29 -0700
-Message-ID: <1237923509.24723.0.camel@chandra-ubuntu>
-References: <0D1E8821739E724A86F4D16902CE275C1410DBBA51@inbmail01.lsi.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: [PATCH] Fix race-condition when reading sysfs
+	attributes.
+Date: Tue, 24 Mar 2009 17:07:47 -0400
+Message-ID: <20090324210747.GA14495@mars.virtualiron.com>
+References: <1237908301-2339-1-git-send-email-konrad@virtualiron.com>
+	<1237908301-2339-2-git-send-email-konrad@virtualiron.com>
+	<ac3eb2510903240834h13c0848foe84d11f94999179c@mail.gmail.com>
+	<20090324175250.GA16409@mars.virtualiron.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <0D1E8821739E724A86F4D16902CE275C1410DBBA51@inbmail01.lsi.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090324175250.GA16409@mars.virtualiron.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-
-On Tue, 2009-03-17 at 18:51 +0530, Chauhan, Vijay wrote:
-> Hi James,
-> 
-> Thanks for your comment. I have updated the patch with your comments.
-> 
-> On Tues, 2009-03-10 21:17 +0530, James Bottomley wrote: 
-> > > +		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
-> > > +			/* LUN Not Ready - Quiescense in progress
-> > > +			 * or has been achieved
-> > > +			 * Just retry.
-> > > +			 */
-> > > +			return ADD_TO_MLQUEUE;
+> > > There are four uevents sent from the kernel in the creation of
+> > > a SysFS representation of the device. After the last event, the
+> > > SysFs entries for vendor,model, rev are populated. The window
+> > > time between the uevent with /block/sdX sent and the sysfs
+> > > attributes being populated is small.
 > > 
-> > This is fine, being vendor specific, we don't handle it at 
-> > the mid-layer
+> > What kernel version are you using? I thought we fixed all that long ago.
 > 
-> > > +		if (sense_hdr->asc == 0x04  && sense_hdr->ascq == 0x07)
-> > > +			/* LUN Not Ready - Storage controller 
-> > cannot respond
-> > > +			 * immediately to a PRIN or PROUT command.
-> > > +			 * Just retry.
-> > > +			 */
-> > > +			return ADD_TO_MLQUEUE;
-> > 
-> > For all of these ... along with a few other not ready types, 
-> > we already
-> > do a delayed retry at the mid-layer (in scsi_io_completion).  Is there
-> > some problem that causes this to need to be handled here as well?
-> > 
-> Yes, I do agree. Submitting patch for 0x02A102 only.
-> 
-> Thanks,
-> Vijay
-> 
-> ---
-> This patch adds retry for NOT_READY check condition - Quiescense in progress (02/A1/02)
-> 
-> Signed-off-by: Vijay Chauhan<vijay.chauhan@lsi.com>
+> RHEL5.3. Which I thought had many of the fixes from upstream. Let me build
+> the most recent version and see if I can trigger these issues on that
+> version.
 
-Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
-
-> 
-> ---
-> --- linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-03-10 17:42:27.000000000 +0530
-> +++ linux-2.6.29-rc7/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-03-17 18:18:07.000000000 +0530
-> @@ -562,6 +562,12 @@ static int rdac_check_sense(struct scsi_
->  			 * Just retry and wait.
->  			 */
->  			return ADD_TO_MLQUEUE;
-> +		if (sense_hdr->asc == 0xA1  && sense_hdr->ascq == 0x02)
-> +			/* LUN Not Ready - Quiescense in progress
-> +			 * or has been achieved
-> +			 * Just retry.
-> +			 */
-> +			return ADD_TO_MLQUEUE;
->  		break;
->  	case ILLEGAL_REQUEST:
->  		if (sense_hdr->asc == 0x94 && sense_hdr->ascq == 0x01) {
-> ----
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+Kay,
+You were right. I can't reproduce the failure on the more recent versions
+of kernels. Thanks for spotting that.
