@@ -1,22 +1,15 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
-Date: Tue, 24 Mar 2009 08:21:45 -0400
-Message-ID: <1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
-References: <7bc80d500903181557x295480feia73d0c23992c6f65@mail.gmail.com>
-	<1237460677.6506.5.camel@jaspav.missionsit.net.missionsit.net>
-	<7bc80d500903192211k6baadc81ge1b9d8b81ea6a913@mail.gmail.com>
-	<1237543283.6572.10.camel@jaspav.missionsit.net.missionsit.net>
-	<20090322152730.GC5528@edu.joroinen.fi>
-	<1237801596.6577.28.camel@jaspav.missionsit.net.missionsit.net>
-	<20090324073935.GK5528@edu.joroinen.fi>
-	<1237892561.6560.19.camel@jaspav.missionsit.net.missionsit.net>
-	<20090324115708.GM5528@edu.joroinen.fi>
+From: "Ransegnola, Lori" <Lori.Ransegnola@hp.com>
+Subject: RE: Problem with multipathd and a blacklisted device
+Date: Tue, 24 Mar 2009 13:27:43 +0000
+Message-ID: <5635940A0F6F36478CF4D01273B16CA32B9CE52C1E@GVW1096EXB.americas.hpqcorp.net>
+References: <5635940A0F6F36478CF4D01273B16CA32B9C3EDDF8@GVW1096EXB.americas.hpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090324115708.GM5528@edu.joroinen.fi>
+In-Reply-To: <5635940A0F6F36478CF4D01273B16CA32B9C3EDDF8@GVW1096EXB.americas.hpqcorp.net>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,155 +19,182 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: "Ross S. W. Walker" <rwalker@medallion.com>
+To: "Ransegnola, Lori" <Lori.Ransegnola@hp.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, 2009-03-24 at 13:57 +0200, Pasi K=C3=A4rkk=C3=A4inen wrote:
-> On Tue, Mar 24, 2009 at 07:02:41AM -0400, John A. Sullivan III wrote:
-> > > > <snip>
-> > > > I'm trying to spend a little time on this today and am really fee=
-ling my
-> > > > ignorance on the way iSCSI works :(  It looks like linux-iscsi su=
-pports
-> > > > MC/S but has not been in active development and will not even com=
-pile on
-> > > > my 2.6.27 kernel.
-> > > >=20
-> > > > To simplify matters, I did put each SAN interface on a separate n=
-etwork.
-> > > > Thus, all the different sessions.  If I place them all on the sam=
-e
-> > > > network and use the iface parameters of open-iscsi, does that eli=
-minate
-> > > > the out-of-order problem and allow me to achieve the performance
-> > > > scalability I'm seeking from dm-multipath in multibus mode? Thank=
-s -
-> > > > John
-> > >=20
-> > > If you use ifaces feature of open-iscsi, you still get separate ses=
-sions.
-> > >=20
-> > > open-iscsi just does not support MC/s :(
-> > >=20
-> > > I think core-iscsi does support MC/s..=20
-> > >=20
-> > > Then you again you should play with the different multipath setting=
-s, and
-> > > tweak how often IOs are split to different paths etc.. maybe that h=
-elps.
-> > >=20
-> > > -- Pasi
-> > <snip>
-> > I think we're pretty much at the end of our options here but I docume=
-nt
-> > what I've found thus far for closure.
-> >=20
-> > Indeed, there seems to be no way around the session problem.  Core-is=
-csi
-> > does seem to support MC/s but has not been updated in years.  It did =
-not
-> > compile with my 2.6.27 kernel and, given that others seem to have had
-> > the same problem, I did not spend a lot of time troubleshooting it.
-> >=20
->=20
-> Core-iscsi developer seems to be active developing at least the=20
-> new iSCSI target (LIO target).. I think he has been testing it with
-> core-iscsi, so maybe there's newer version somewhere?=20
->=20
-> > We did play with the multipath rr_min_io settings and smaller always
-> > seemed to be better until we got into very large numbers of session. =
- We
-> > were testing on a dual quad core AMD Shanghai 2378 system with 32 GB
-> > RAM, a quad port Intel e1000 card and two on-board nvidia forcedeth
-> > ports with disktest using 4K blocks to mimic the file system using
-> > sequential reads (and some sequential writes).
-> >=20
->=20
-> Nice hardware. Btw are you using jumbo frames or flow control for iSCSI
-> traffic?=20
->=20
-> > With a single thread, there was no difference at all - only about 12.=
-79
-> > MB/s no matter what we did.  With 10 threads and only two interfaces,
-> > there was only a slight difference between rr=3D1 (81.2B/s), rr=3D10 =
-(78.87)
-> > and rr=3D100 (80).
-> >=20
-> > However, when we opened to three and four interfaces, there was a hug=
-e
-> > jump for rr=3D1 (100.4, 105.95) versus rr=3D10 (80.5, 80.75) and rr=3D=
-100
-> > (74.3, 77.6).
-> >=20
-> > At 100 threads on three or four ports, the best performance shifted t=
-o
-> > rr=3D10 (327 MB/s, 335) rather than rr=3D1 (291.7, 290.1) or rr=3D100=
- (216.3).
-> > At 400 threads, rr=3D100 started to overtake rr=3D10 slightly.
-> >=20
-> > This was using all e1000 interfaces. Our first four port test include=
-d
-> > one of the on board ports and performance was dramatically less than
-> > three e1000 ports.  Subsequent testing tweaking forcedeth parameters
-> > from defaults yielded no improvement.
-> >=20
-> > After solving the I/O scheduler problem, dm RAID0 behaved better.  It
-> > still did not give us anywhere near a fourfold increase (four disks o=
-n
-> > four separate ports) but only marginal improvement (14.3 MB/s) using =
-c=3D8
-> > (to fit into a jumbo packet, match the zvol block size on the back en=
-d
-> > and be two block sizes).  It did, however, give the best balance of
-> > performance being just slightly slower than rr=3D1 at 10 threads and
-> > slightly slower than rr=3D10 at 100 threads though not scaling as wel=
-l to
-> > 400 threads.
-> >=20
->=20
-> When you used dm RAID0 you didn't have any multipath configuration, rig=
-ht?=20
-Correct although we also did test successfully with multipath in
-failover mode and RAID0.
->=20
-> What kind of stripe size and other settings you had for RAID0?
-Chunk size was 8KB with four disks. =20
->=20
-> What kind of performance do you get using just a single iscsi session (=
-and
-> thus just a single path), no multipathing, no DM RAID0 ? Just a filesys=
-tem
-> directly on top of the iscsi /dev/sd? device.
-Miserable - same roughly 12 MB/s.
->=20
-> > Thus, collective throughput is acceptable but individual throughput i=
-s
-> > still awful.
-> >=20
->=20
-> Sounds like there's some other problem if invidual throughput is bad? O=
-r did
-> you mean performance with a single disktest IO thread is bad, but using=
- multiple
-> disktest threads it's good.. that would make more sense :)=20
-Yes, the latter.  Single thread (I assume mimicking a single disk
-operation, e.g., copying a large file) is miserable - much slower than
-local disk despite the availability of huge bandwidth.  We start
-utilizing the bandwidth when multiplying concurrent disk activity into
-the hundreds.
+I sent this question last week and have not heard a thing.  Do you have a=
+ suggestion of a better mailing list that I should use for this question?
 
-I am guessing the single thread performance problem is an open-iscsi
-issue but I was hoping multipath would help us work around it by
-utilizing multiple sessions per disk operation.  I suppose that is where
-we run into the command ordering problem unless there is something else
-afoot.  Thanks - John
-<snip>
---=20
-John A. Sullivan III
-Open Source Development Corporation
-+1 207-985-7880
-jsullivan@opensourcedevel.com
+Thank you.
 
-http://www.spiritualoutreach.com
-Making Christianity intelligible to secular society
+Lori
+
+> -----Original Message-----
+> From: Ransegnola, Lori
+> Sent: Thursday, March 19, 2009 3:51 PM
+> To: dm-devel@redhat.com
+> Cc: Ransegnola, Lori
+> Subject: Problem with multipathd and a blacklisted device
+>
+> Configuration:
+> --------------
+>
+> I have a multipath configuration set up where 10 disks are
+> multipathed and 2 disks are blacklisted and are not
+> multipathed.  Here are the relevant parts of the multipath.conf file:
+>
+> defaults {
+>         udev_dir                /dev
+>         polling_interval        10
+>         selector                "round-robin 0"
+> #       path_grouping_policy    multibus
+>         getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+>         prio_callout            /bin/true
+> #       path_checker            readsector0
+>         path_checker            tur
+>         rr_min_io               100
+>         rr_weight               priorities
+>         failback                immediate
+>         no_path_retry           fail
+>         user_friendly_name      yes
+> }
+>
+> blacklist {
+> #       wwid 26353900f02796769
+> #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+> #       devnode "^hd[a-z]"
+>         wwid                    35000c5000a41f72b
+>         wwid                    35000c5000a41f98b
+>         devnode "^cciss!c[0-9]d[0-9]*"
+> }
+>
+>
+> The two disks that are not multipathed have udev rules and
+> are part of a software RAID set.  The devices show up as
+>
+> /etc/udev/rules.d> ls -l /dev/hpdev
+> total 0
+> lrwxrwxrwx 1 root root 7 Mar 18 10:50 sda1 -> ../sda1
+> lrwxrwxrwx 1 root root 7 Mar 18 03:32 sdb1 -> ../sdb1
+>
+> /dev/md0 is created with sda and sdb.  Here is the bottom of
+> the 'mdadm --detail /dev/md0' output:
+>
+> /root> mdadm --detail /dev/md0
+> /dev/md0:
+>         Version
+> ...
+> Failed Devices : 0
+>   Spare Devices : 0
+>
+>            UUID : 94813396:a3e341fc:c5d4b8ba:0617a019
+>          Events : 0.84
+>
+>     Number   Major   Minor   RaidDevice State
+>        0       8        1        0      active sync   /dev/sda1
+>        1       8       17        1      active sync   /dev/sdb1
+> /root>
+>
+> I am running on a Linux RHEL5 U2 system.
+> /etc/udev/rules.d> uname -a
+> Linux n0 2.6.18-53.el5 #1 SMP Wed Oct 10 16:34:19 EDT 2007
+> x86_64 x86_64 x86_64 GNU/Linux /etc/udev/rules.d> multipath
+> -v Missing option arguement multipath-tools v0.4.7 (03/12, 2006)
+> ----------------------------
+>
+> Problem:
+>
+> This configuration works well until I do some failure testing
+> with one of the 2 blacklisted devs in the software RAID set.
+> I found that if I temporarily remove disk sda and put it back
+> a minute later the disk path, /dev/hpdev/sda1, is removed,
+> even though it is blacklisted.
+>
+> Here are some of the pertinent /var/log/messages lines:
+>
+> Mar 19 09:53:19 n0 mdadm: NewArray /dev/md0 Mar 19 10:05:12
+> n0 kernel: mptbase: ioc0: LogInfo(0x31170000):
+> Originator=3D{PL}, Code=3D{IO Device Missing Delay Retry},
+> SubCode(0x0000) Mar 19 10:05:40 n0 last message repeated 5
+> times Mar 19 10:05:42 n0 kernel: mptbase: ioc0:
+> LogInfo(0x31130000): Originator=3D{PL}, Code=3D{IO Not Yet
+> Executed}, SubCode(0x0000) Mar 19 10:05:42 n0 kernel: sd
+> 0:0:28:0: SCSI error: return code =3D 0x00010000 Mar 19
+> 10:05:42 n0 kernel: end_request: I/O error, dev sda, sector
+> 256119 Mar 19 10:05:42 n0 kernel: Buffer I/O error on device
+> sda1, logical block 256056 Mar 19 10:05:42 n0 kernel: Buffer
+> I/O error on device sda1, logical block 256057 Mar 19
+> 10:05:42 n0 kernel: Buffer I/O error on device sda1, logical
+> block 256058 Mar 19 10:05:42 n0 kernel: Buffer I/O error on
+> device sda1, logical block 256059 Mar 19 10:05:42 n0 kernel:
+> Buffer I/O error on device sda1, logical block 256060 Mar 19
+> 10:05:42 n0 kernel: Buffer I/O error on device sda1, logical
+> block 256061 Mar 19 10:05:42 n0 kernel: mptbase: ioc0:
+> LogInfo(0x31130000): Originator=3D{PL}, Code=3D{IO Not Yet
+> Executed}, SubCode(0x0000) Mar 19 10:05:42 n0 kernel: Buffer
+> I/O error on device sda1, logical block 256062 Mar 19
+> 10:05:42 n0 kernel: Buffer I/O error on device sda1, logical
+> block 256063 Mar 19 10:05:42 n0 kernel: sd 0:0:28:0: SCSI
+> error: return code =3D 0x00010000 Mar 19 10:05:42 n0
+> multipathd: sda: remove path (uevent) Mar 19 10:05:42 n0
+> kernel: end_request: I/O error, dev sda, sector 585922495 Mar
+> 19 10:05:42 n0 kernel: Buffer I/O error on device sda1,
+> logical block 585922432 Mar 19 10:05:42 n0 xinetd[13096]:
+> START: hacl-cfgudp pid=3D6034 from=3D127.0.0.1 Mar 19 10:05:42 n0
+> multipathd: uevent trigger error Mar 19 10:05:42 n0 kernel:
+> Buffer I/O error on device sda1, logical block 585922433
+>
+>
+> The sda path is gone:
+>
+> /root> ls -l /dev/hpdev
+> total 0
+> lrwxrwxrwx 1 root root 7 Mar 18 03:32 sdb1 -> ../sdb1 /root>
+>
+> And I cannot reassemble the software raid set.  While the
+> mdstat looks 'normal' the software raid becomes degraded.
+>
+> /etc/udev/rules.d> cat /proc/mdstat
+> Personalities : [raid1]
+> md0 : active raid1 sda1[2](F) sdb1[1]
+>       292961216 blocks [2/1] [_U]
+>
+> unused devices: <none>
+> /etc/udev/rules.d> mdadm --detail /dev/md0
+> /dev/md0:
+>         Version : 00.90.03
+>   Creation Time : Wed Feb 18 14:15:03 2009
+>      Raid Level : raid1
+>      Array Size : 292961216 (279.39 GiB 299.99 GB)
+>     Device Size : 292961216 (279.39 GiB 299.99 GB)
+>    Raid Devices : 2
+>   Total Devices : 2
+> Preferred Minor : 0
+>     Persistence : Superblock is persistent
+>
+>     Update Time : Thu Mar 19 10:28:45 2009
+>           State : clean, degraded
+>  Active Devices : 1
+> Working Devices : 1
+>  Failed Devices : 1
+>   Spare Devices : 0
+>
+>            UUID : 94813396:a3e341fc:c5d4b8ba:0617a019
+>          Events : 0.86
+>
+>     Number   Major   Minor   RaidDevice State
+>        0       0        0        0      removed
+>        1       8       17        1      active sync   /dev/sdb1
+>
+>        2       8        1        -      faulty spare
+> /etc/udev/rules.d>
+>
+> The disk is fine and is back in and ready to go.
+>
+> So, 1) why does multipathd remove the path for a blacklisted
+> device?  If it is blacklisted, shouldn't multipathd just
+> leave it alone??
+> And 2) what can I do to keep this from happening??
+>
+> Lori Ransegnola
+>
