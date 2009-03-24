@@ -1,15 +1,13 @@
-From: malahal@us.ibm.com
-Subject: Re: RE: Problem with multipathd and a blacklisted device
-Date: Tue, 24 Mar 2009 06:42:09 -0700
-Message-ID: <20090324134209.GA12464@us.ibm.com>
-References: <5635940A0F6F36478CF4D01273B16CA32B9C3EDDF8@GVW1096EXB.americas.hpqcorp.net>
-	<5635940A0F6F36478CF4D01273B16CA32B9CE52C1E@GVW1096EXB.americas.hpqcorp.net>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Tue, 24 Mar 2009 10:02:43 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
+References: <49C7DD3C.2020401@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <5635940A0F6F36478CF4D01273B16CA32B9CE52C1E@GVW1096EXB.americas.hpqcorp.net>
+In-Reply-To: <49C7DD3C.2020401@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,99 +17,107 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Andi Kleen <ak@suse.de>
 List-Id: dm-devel.ids
 
-Ransegnola, Lori [Lori.Ransegnola@hp.com] wrote:
-> I sent this question last week and have not heard a thing.  Do you have a suggestion of a better mailing list that I should use for this question?
-> 
-> Thank you.
-> 
-> Lori
-> 
-> > -----Original Message-----
-> > From: Ransegnola, Lori
-> > Sent: Thursday, March 19, 2009 3:51 PM
-> > To: dm-devel@redhat.com
-> > Cc: Ransegnola, Lori
-> > Subject: Problem with multipathd and a blacklisted device
-> >
-> > Configuration:
-> > --------------
-> >
-> > I have a multipath configuration set up where 10 disks are
-> > multipathed and 2 disks are blacklisted and are not
-> > multipathed.  Here are the relevant parts of the multipath.conf file:
-> >
-> > defaults {
-> >         udev_dir                /dev
-> >         polling_interval        10
-> >         selector                "round-robin 0"
-> > #       path_grouping_policy    multibus
-> >         getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-> >         prio_callout            /bin/true
-> > #       path_checker            readsector0
-> >         path_checker            tur
-> >         rr_min_io               100
-> >         rr_weight               priorities
-> >         failback                immediate
-> >         no_path_retry           fail
-> >         user_friendly_name      yes
-> > }
-> >
-> > blacklist {
-> > #       wwid 26353900f02796769
-> > #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-> > #       devnode "^hd[a-z]"
-> >         wwid                    35000c5000a41f72b
-> >         wwid                    35000c5000a41f98b
-> >         devnode "^cciss!c[0-9]d[0-9]*"
-> > }
-> >
-> >
-> > The two disks that are not multipathed have udev rules and
-> > are part of a software RAID set.  The devices show up as
-> >
-> > /etc/udev/rules.d> ls -l /dev/hpdev
-> > total 0
-> > lrwxrwxrwx 1 root root 7 Mar 18 10:50 sda1 -> ../sda1
-> > lrwxrwxrwx 1 root root 7 Mar 18 03:32 sdb1 -> ../sdb1
-> >
-> > /dev/md0 is created with sda and sdb.  Here is the bottom of
-> > the 'mdadm --detail /dev/md0' output:
-> >
-> > /root> mdadm --detail /dev/md0
-> > /dev/md0:
-> >         Version
-> > ...
-> > Failed Devices : 0
-> >   Spare Devices : 0
-> >
-> >            UUID : 94813396:a3e341fc:c5d4b8ba:0617a019
-> >          Events : 0.84
-> >
-> >     Number   Major   Minor   RaidDevice State
-> >        0       8        1        0      active sync   /dev/sda1
-> >        1       8       17        1      active sync   /dev/sdb1
-> > /root>
-> >
-> > I am running on a Linux RHEL5 U2 system.
-> > /etc/udev/rules.d> uname -a
-> > Linux n0 2.6.18-53.el5 #1 SMP Wed Oct 10 16:34:19 EDT 2007
-> > x86_64 x86_64 x86_64 GNU/Linux /etc/udev/rules.d> multipath
-> > -v Missing option arguement multipath-tools v0.4.7 (03/12, 2006)
-> > ----------------------------
-> >
-> > Problem:
-> >
-> > This configuration works well until I do some failure testing
-> > with one of the 2 blacklisted devs in the software RAID set.
-> > I found that if I temporarily remove disk sda and put it back
-> > a minute later the disk path, /dev/hpdev/sda1, is removed, even
-> > though it is blacklisted.
 
-What is 'multipath -ll' output before you remove the blacklisted device?
-What is 'multipath -ll' output after you put the device back a minute
-later?
 
-Thanks, Malahal.
+On Mon, 23 Mar 2009, Eric Sandeen wrote:
+
+> I've noticed that on 2.6.29-rcX, with Andi's patch
+> (ab4c1424882be9cd70b89abf2b484add355712fa, dm: support barriers on
+> simple devices) barriers are still getting rejected on these simple devices.
+> 
+> The problem is in __generic_make_request():
+> 
+>                 if (bio_barrier(bio) && bio_has_data(bio) &&
+>                     (q->next_ordered == QUEUE_ORDERED_NONE)) {
+>                         err = -EOPNOTSUPP;
+>                         goto end_io;
+>                 }
+> 
+> and dm isn't flagging its queue as supporting ordered writes, so it's
+> rejected here.
+> 
+> Doing something like this:
+> 
+> + if (t->barriers_supported)
+> +         blk_queue_ordered(q, QUEUE_ORDERED_DRAIN, NULL);
+> 
+> somewhere in dm (I stuck it in dm_table_set_restrictions() - almost
+> certainly the wrong thing to do) did get my dm-linear device to mount
+> with xfs, w/o xfs complaining that its mount-time barrier tests failed.
+> 
+> So what's the right way around this?  What should dm (or md for that
+> matter) advertise on their queues about ordered-ness?  Should there be
+> some sort of "QUEUE_ORDERED_PASSTHROUGH" or something to say "this level
+> doesn't care, ask the next level" or somesuch?  Or should it inherit the
+> flag from the next level down?  Ideas?
+> 
+> Thanks,
+> -Eric
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
+
+Hi
+
+This is misdesign in generic bio layer and it should be fixed there. I 
+think it is blocking barrier support in md-raid1 too. Jens, pls apply the 
+attached patch.
+
+Mikulas
+
+----
+
+Move test for not-supported barriers to __make_request.
+
+This test prevents barriers from being dispatched to device mapper
+and md.
+
+This test is sensible only for drivers that use requests (such as disk
+drivers), not for drivers that use bios.
+
+It is better to fix it in generic code than to make workaround for it
+in device mapper and md.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ block/blk-core.c |   11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+
+Index: linux-2.6.29-rc6-devel/block/blk-core.c
+===================================================================
+--- linux-2.6.29-rc6-devel.orig/block/blk-core.c	2009-02-23 18:43:37.000000000 +0100
++++ linux-2.6.29-rc6-devel/block/blk-core.c	2009-02-23 18:44:27.000000000 +0100
+@@ -1145,6 +1145,12 @@ static int __make_request(struct request
+ 	const int unplug = bio_unplug(bio);
+ 	int rw_flags;
+ 
++	if (bio_barrier(bio) && bio_has_data(bio) &&
++	    (q->next_ordered == QUEUE_ORDERED_NONE)) {
++		bio_endio(bio, -EOPNOTSUPP);
++		return 0;
++	}
++
+ 	nr_sectors = bio_sectors(bio);
+ 
+ 	/*
+@@ -1450,11 +1456,6 @@ static inline void __generic_make_reques
+ 			err = -EOPNOTSUPP;
+ 			goto end_io;
+ 		}
+-		if (bio_barrier(bio) && bio_has_data(bio) &&
+-		    (q->next_ordered == QUEUE_ORDERED_NONE)) {
+-			err = -EOPNOTSUPP;
+-			goto end_io;
+-		}
+ 
+ 		ret = q->make_request_fn(q, bio);
+ 	} while (ret);
+> 
