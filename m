@@ -1,7 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 33] DM Snapshot: shot new ctr table format
-Date: Wed, 25 Mar 2009 16:33:52 -0500
-Message-ID: <200903252133.n2PLXqOQ020684@hydrogen.msp.redhat.com>
+Subject: [PATCH 3 of 33] DM Snapshot: shot cleanup
+Date: Wed, 25 Mar 2009 16:34:02 -0500
+Message-ID: <200903252134.n2PLY2bh020765@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,149 +16,97 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-new-ctr-table-format.patch
+Patch name: dm-snapshot-cleanup.patch
 
 From: Jonathan Brassow <jbrassow@redhat.com>
 
-Introduce the new constructor table formats for snapshots
-and exception stores.  This allows for new exception store
-types and allows for easy addition of future features to
-snapshots.
+This patch applies on top of the previous 12 just to clean-up some
+indenting and such.
+
+ brassow
+
+Indenting and formatting fixes after a long series of patches.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
 ---
- drivers/md/dm-snap-persistent.c |    9 ++++++--
- drivers/md/dm-snap-transient.c  |    9 ++++++--
- drivers/md/dm-snap.c            |   41 +++++++++++++++++++++++++++++++++-------
- 3 files changed, 48 insertions(+), 11 deletions(-)
+ drivers/md/dm-snap-persistent.c |    4 ++--
+ drivers/md/dm-snap.c            |   14 +++++++-------
+ 2 files changed, 9 insertions(+), 9 deletions(-)
 
-Index: linux-2.6/drivers/md/dm-snap-persistent.c
+Index: linux-2.6.29/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6/drivers/md/dm-snap-persistent.c
-@@ -708,8 +708,13 @@ static unsigned persistent_status(struct
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT(" %s P %llu", store->cow->name,
--		       (unsigned long long)store->chunk_size);
-+		if (!strcmp("P", store->type->name))
-+			DMEMIT(" %s P %llu", store->cow->name,
-+			       (unsigned long long)store->chunk_size);
-+		else
-+			DMEMIT(" %s 2 %s %llu", store->type->name,
-+			       store->cow->name,
-+			       (unsigned long long)store->chunk_size);
- 	}
+--- linux-2.6.29.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6.29/drivers/md/dm-snap-persistent.c
+@@ -519,7 +519,7 @@ static int persistent_read_metadata(stru
+ 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
+ 				  sizeof(struct disk_exception);
+ 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
+-			sizeof(*ps->callbacks));
++				   sizeof(*ps->callbacks));
+ 	if (!ps->callbacks)
+ 		return -ENOMEM;
  
- 	return sz;
-Index: linux-2.6/drivers/md/dm-snap-transient.c
+@@ -630,7 +630,7 @@ static void persistent_commit_exception(
+ 	 * If we completely filled the current area, then wipe the next one.
+ 	 */
+ 	if ((ps->current_committed == ps->exceptions_per_area) &&
+-	     zero_disk_area(ps, ps->current_area + 1))
++	    zero_disk_area(ps, ps->current_area + 1))
+ 		ps->valid = 0;
+ 
+ 	/*
+Index: linux-2.6.29/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap-transient.c
-+++ linux-2.6/drivers/md/dm-snap-transient.c
-@@ -91,8 +91,13 @@ static unsigned transient_status(struct 
- 	case STATUSTYPE_INFO:
- 		break;
- 	case STATUSTYPE_TABLE:
--		DMEMIT(" %s N %llu", store->cow->name,
--		       (unsigned long long)store->chunk_size);
-+		if (!strcmp("N", store->type->name))
-+			DMEMIT(" %s N %llu", store->cow->name,
-+			       (unsigned long long)store->chunk_size);
-+		else
-+			DMEMIT(" %s 2 %s %llu", store->type->name,
-+			       store->cow->name,
-+			       (unsigned long long)store->chunk_size);
- 	}
- 
- 	return sz;
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -580,7 +580,10 @@ static int init_hash_tables(struct dm_sn
-  * @store: contains newly allocated dm_exception_store
-  *
-  * Possible formats for argv::
-+ * Backwards compatibility mode:
-  *     <COW-dev> p/n <chunk-size>
-+ * Current format:
-+ *     <store type> <arg count> <COW> <chunk-size> [other args]
-  *
-  * Returns: 0 on success, -Exxx on error
-  */
-@@ -588,12 +591,14 @@ static int create_exception_store(struct
- 				  char **argv, unsigned *args_used,
- 				  struct dm_exception_store **store)
- {
-+	unsigned param_count;
- 	char *tmp_argv[2];
- 	char buf[8];
- 
- 	*store = NULL;
- 
--	if (1 /* less change patch to patch */) {
-+	/* Detect old-style table line with type as second arg. */
-+	if (!isdigit(*argv[1])) {
- 		if (argc < 3) {
- 			ti->error = "Insufficient exception store arguments";
- 			return -EINVAL;
-@@ -608,10 +613,34 @@ static int create_exception_store(struct
- 
- 		return dm_exception_store_create(buf, ti, 2, tmp_argv, store);
- 	}
-+
-+	if (sscanf(argv[1], "%u", &param_count) != 1) {
-+		ti->error = "Invalid exception store argument count";
-+		return -EINVAL;
-+	}
-+
-+	*args_used = 2 + param_count;
-+
-+	if (argc < *args_used) {
-+		ti->error = "Insufficient exception store arguments";
-+		return -EINVAL;
-+	}
-+
-+	return dm_exception_store_create(argv[0], ti, param_count,
-+					 argv + 2, store);
+--- linux-2.6.29.orig/drivers/md/dm-snap.c
++++ linux-2.6.29/drivers/md/dm-snap.c
+@@ -365,7 +365,8 @@ static int init_exception_table(struct e
+ 	return 0;
  }
  
- /*
-- * Construct a snapshot mapping: <origin_dev> <COW-dev> <p/n> <chunk-size>
-+ * snapshot_ctr
-+ * @ti
-+ * @argc
-+ * @argv
-+ *
-+ * Construct a snapshot mapping.  Possible mapping tables include:
-+ *     <origin_dev> <exception store args> <feature args>
-+ * See 'create_exception_store' for format of <exception store args>.
-+ *
-+ * Returns: 0 on success, -XXX on error
-  */
- static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+-static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
++static void exit_exception_table(struct exception_table *et,
++				 struct kmem_cache *mem)
  {
-@@ -622,10 +651,9 @@ static int snapshot_ctr(struct dm_target
- 	struct dm_exception_store *store;
- 	unsigned args_used;
+ 	struct list_head *slot;
+ 	struct dm_snap_exception *ex, *next;
+@@ -669,8 +670,7 @@ static int snapshot_ctr(struct dm_target
  
--	if (argc != 4) {
--		ti->error = "requires exactly 4 arguments";
--		r = -EINVAL;
--		goto bad_args;
-+	if (argc < 4) {
-+		ti->error = "too few arguments";
-+		return -EINVAL;
+ 	s = kmalloc(sizeof(*s), GFP_KERNEL);
+ 	if (!s) {
+-		ti->error = "Cannot allocate snapshot context private "
+-		    "structure";
++		ti->error = "Cannot allocate snapshot private structure";
+ 		r = -ENOMEM;
+ 		goto bad_snap;
+ 	}
+@@ -960,7 +960,7 @@ static void pending_complete(struct dm_s
+ 	 */
+ 	insert_completed_exception(s, e);
+ 
+- out:
++out:
+ 	remove_exception(&pe->e);
+ 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
+ 	origin_bios = put_pending_exception(pe);
+@@ -1023,7 +1023,7 @@ static void start_copy(struct dm_snap_pe
+ 
+ 	/* Hand over to kcopyd */
+ 	dm_kcopyd_copy(s->kcopyd_client,
+-		    &src, 1, &dest, 0, copy_callback, pe);
++		       &src, 1, &dest, 0, copy_callback, pe);
+ }
+ 
+ static struct dm_snap_pending_exception *
+@@ -1168,9 +1168,9 @@ static int snapshot_map(struct dm_target
+ 		map_context->ptr = track_chunk(s, chunk);
  	}
  
- 	origin_path = argv[0];
-@@ -741,7 +769,6 @@ bad_origin:
- bad_snap:
- 	dm_exception_store_destroy(store);
- 
--bad_args:
+- out_unlock:
++out_unlock:
+ 	up_write(&s->lock);
+- out:
++out:
  	return r;
  }
  
