@@ -1,7 +1,7 @@
 From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
 Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
-Date: Tue, 24 Mar 2009 23:41:00 -0400
-Message-ID: <1237952460.6560.204.camel@jaspav.missionsit.net.missionsit.net>
+Date: Tue, 24 Mar 2009 23:44:52 -0400
+Message-ID: <1237952692.6560.207.camel@jaspav.missionsit.net.missionsit.net>
 References: <20090322152730.GC5528@edu.joroinen.fi>
 	<1237801596.6577.28.camel@jaspav.missionsit.net.missionsit.net>
 	<20090324073935.GK5528@edu.joroinen.fi>
@@ -350,18 +350,9 @@ le
 >=20
 > -- Pasi
 <snip>
-Ross has been of enormous help offline.  Indeed, disabling jumbo packets
-produced an almost 50% increase in single threaded throughput.  We are
-pretty well set although still a bit disappointed in the latency we are
-seeing in opensolaris and have escalated to the vendor about addressing
-it.
-
-The once piece which is still a mystery is why using four targets on
-four separate interfaces striped with dmadm RAID0 does not produce an
-aggregate of slightly less than four times the IOPS of a single target
-on a single interface. This would not seem to be the out of order SCSI
-command problem of multipath.  One of life's great mysteries yet to be
-revealed.  Thanks again, all - John
+Ah, there is one more question. If latency is such an issue, as it has
+proved to be, would it improve performance to put the file system
+journal on local disk rather than the iSCSI disks? - John
 --=20
 John A. Sullivan III
 Open Source Development Corporation
