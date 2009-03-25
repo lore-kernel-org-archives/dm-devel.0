@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 15 of 33] DM Snapshot: move exception code to new
-	file
-Date: Wed, 25 Mar 2009 16:36:05 -0500
-Message-ID: <200903252136.n2PLa5sj021652@hydrogen.msp.redhat.com>
+Subject: [PATCH 14 of 33] DM Snapshot: exception function changes
+	6
+Date: Wed, 25 Mar 2009 16:35:55 -0500
+Message-ID: <200903252135.n2PLZtST021579@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,579 +17,115 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snap-move-exception-code-to-new-file.patch
+Patch name: dm-snap-exception-function-changes-6.patch
 
-Extract exception table/cache code from dm-snap.c so that
-it can be used elsewhere.  I've created the new files,
-dm-exception.[ch].  I chose against including this code in
-this dm-exception-store.[ch] files.
+This patch makes use of the new dm_alloc_exception and
+dm_free_exception functions.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
-Index: linux-2.6/drivers/md/dm-exception-store.h
-===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.h
-+++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -12,26 +12,7 @@
- 
- #include <linux/blkdev.h>
- #include <linux/device-mapper.h>
--
--/*
-- * The snapshot code deals with largish chunks of the disk at a
-- * time. Typically 32k - 512k.
-- */
--typedef sector_t chunk_t;
--
--/*
-- * An exception is used where an old chunk of data has been
-- * replaced by a new one.
-- * If chunk_t is 64 bits in size, the top 8 bits of new_chunk hold the number
-- * of chunks that follow contiguously.  Remaining bits hold the number of the
-- * chunk within the device.
-- */
--struct dm_exception {
--	struct list_head hash_list;
--
--	chunk_t old_chunk;
--	chunk_t new_chunk;
--};
-+#include "dm-exception.h"
- 
- /*
-  * Abstraction to handle the meta/layout of exception stores (the
-@@ -109,49 +90,6 @@ struct dm_exception_store {
- };
- 
- /*
-- * Funtions to manipulate consecutive chunks
-- */
--#  if defined(CONFIG_LBD) || (BITS_PER_LONG == 64)
--#    define DM_CHUNK_CONSECUTIVE_BITS 8
--#    define DM_CHUNK_NUMBER_BITS 56
--
--static inline chunk_t dm_chunk_number(chunk_t chunk)
--{
--	return chunk & (chunk_t)((1ULL << DM_CHUNK_NUMBER_BITS) - 1ULL);
--}
--
--static inline unsigned dm_consecutive_chunk_count(struct dm_exception *e)
--{
--	return e->new_chunk >> DM_CHUNK_NUMBER_BITS;
--}
--
--static inline void dm_consecutive_chunk_count_inc(struct dm_exception *e)
--{
--	e->new_chunk += (1ULL << DM_CHUNK_NUMBER_BITS);
--
--	BUG_ON(!dm_consecutive_chunk_count(e));
--}
--
--#  else
--#    define DM_CHUNK_CONSECUTIVE_BITS 0
--
--static inline chunk_t dm_chunk_number(chunk_t chunk)
--{
--	return chunk;
--}
--
--static inline unsigned dm_consecutive_chunk_count(struct dm_exception *e)
--{
--	return 0;
--}
--
--static inline void dm_consecutive_chunk_count_inc(struct dm_exception *e)
--{
--}
--
--#  endif
--
--/*
-  * Return the number of sectors in the device.
-  */
- static inline sector_t get_dev_size(struct block_device *bdev)
-Index: linux-2.6/drivers/md/dm-exception.c
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-exception.c
-@@ -0,0 +1,163 @@
-+#include <linux/device-mapper.h>
-+#include "dm-exception.h"
-+
-+struct dm_exception_table_internal {
-+	struct dm_exception_table et;
-+
-+	struct dm_exception *(*alloc_exception)(void *context);
-+	void *alloc_context;
-+
-+	void (*free_exception)(struct dm_exception *e, void *context);
-+	void *free_context;
-+};
-+
-+/*
-+ * Implementation of the exception hash tables.
-+ * The lowest hash_shift bits of the chunk number are ignored, allowing
-+ * some consecutive chunks to be grouped together.
-+ */
-+struct dm_exception_table *
-+dm_exception_table_create(uint32_t size, unsigned hash_shift,
-+			  struct dm_exception *(*alloc_exception)(void *),
-+			  void *alloc_context,
-+			  void (*free_exception)(struct dm_exception *e, void *),
-+			  void *free_context)
-+{
-+	unsigned int i;
-+	struct dm_exception_table_internal *eti;
-+	struct dm_exception_table *et;
-+
-+	eti = kmalloc(sizeof(*eti), GFP_KERNEL);
-+	if (!eti)
-+		return NULL;
-+
-+	et = &eti->et;
-+
-+	et->hash_shift = hash_shift;
-+	et->hash_mask = size - 1;
-+	et->table = dm_vcalloc(size, sizeof(struct list_head));
-+	if (!et->table) {
-+		kfree(et);
-+		return NULL;
-+	}
-+
-+	eti->alloc_exception = alloc_exception;
-+	eti->alloc_context = alloc_context;
-+	eti->free_exception = free_exception;
-+	eti->free_context = free_context;
-+
-+	for (i = 0; i < size; i++)
-+		INIT_LIST_HEAD(et->table + i);
-+
-+	return et;
-+}
-+
-+void dm_exception_table_destroy(struct dm_exception_table *et)
-+{
-+	struct dm_exception_table_internal *eti;
-+	struct list_head *slot;
-+	struct dm_exception *ex, *next;
-+	int i, size;
-+
-+	eti = container_of(et, struct dm_exception_table_internal, et);
-+
-+	size = et->hash_mask + 1;
-+	for (i = 0; i < size; i++) {
-+		slot = et->table + i;
-+
-+		list_for_each_entry_safe(ex, next, slot, hash_list)
-+			eti->free_exception(ex, eti->free_context);
-+	}
-+
-+	vfree(et->table);
-+	kfree(eti);
-+}
-+
-+static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
-+{
-+	return (chunk >> et->hash_shift) & et->hash_mask;
-+}
-+
-+void dm_insert_exception(struct dm_exception_table *eh,
-+			 struct dm_exception *new_e)
-+{
-+	struct list_head *l;
-+	struct dm_exception *e = NULL;
-+
-+	l = &eh->table[exception_hash(eh, new_e->old_chunk)];
-+
-+	/* Add immediately if this table doesn't support consecutive chunks */
-+	if (!eh->hash_shift)
-+		goto out;
-+
-+	/* List is ordered by old_chunk */
-+	list_for_each_entry_reverse(e, l, hash_list) {
-+		/* Insert after an existing chunk? */
-+		if (new_e->old_chunk == (e->old_chunk +
-+					 dm_consecutive_chunk_count(e) + 1) &&
-+		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) +
-+					 dm_consecutive_chunk_count(e) + 1)) {
-+			dm_consecutive_chunk_count_inc(e);
-+			dm_free_exception(eh, new_e);
-+			return;
-+		}
-+
-+		/* Insert before an existing chunk? */
-+		if (new_e->old_chunk == (e->old_chunk - 1) &&
-+		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) {
-+			dm_consecutive_chunk_count_inc(e);
-+			e->old_chunk--;
-+			e->new_chunk--;
-+			dm_free_exception(eh, new_e);
-+			return;
-+		}
-+
-+		if (new_e->old_chunk > e->old_chunk)
-+			break;
-+	}
-+
-+out:
-+	list_add(&new_e->hash_list, e ? &e->hash_list : l);
-+}
-+
-+void dm_remove_exception(struct dm_exception *e)
-+{
-+	list_del(&e->hash_list);
-+}
-+
-+/*
-+ * Return the exception data for a sector, or NULL if not
-+ * remapped.
-+ */
-+struct dm_exception *dm_lookup_exception(struct dm_exception_table *et,
-+					 chunk_t chunk)
-+{
-+	struct list_head *slot;
-+	struct dm_exception *e;
-+
-+	slot = &et->table[exception_hash(et, chunk)];
-+	list_for_each_entry(e, slot, hash_list)
-+		if (chunk >= e->old_chunk &&
-+		    chunk <= e->old_chunk + dm_consecutive_chunk_count(e))
-+			return e;
-+
-+	return NULL;
-+}
-+
-+struct dm_exception *dm_alloc_exception(struct dm_exception_table *et)
-+{
-+	struct dm_exception_table_internal *eti;
-+
-+	eti = container_of(et, struct dm_exception_table_internal, et);
-+
-+	return eti->alloc_exception(eti->alloc_context);
-+}
-+
-+void dm_free_exception(struct dm_exception_table *et, struct dm_exception *e)
-+{
-+	struct dm_exception_table_internal *eti;
-+
-+	eti = container_of(et, struct dm_exception_table_internal, et);
-+
-+	return eti->free_exception(e, eti->free_context);
-+}
-Index: linux-2.6/drivers/md/dm-exception.h
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-exception.h
-@@ -0,0 +1,104 @@
-+/*
-+ * Copyright (C) 2009 Red Hat, Inc. All rights reserved.
-+ *
-+ * Device-mapper exception structure and associated functions.
-+ *
-+ * This file is released under the GPL.
-+ */
-+
-+#ifndef __LINUX_DM_EXCEPTION__
-+#define __LINUX_DM_EXCEPTION__
-+
-+#include <linux/blkdev.h>
-+
-+/*
-+ * The snapshot code deals with largish chunks of the disk at a
-+ * time. Typically 32k - 512k.
-+ */
-+typedef sector_t chunk_t;
-+
-+/*
-+ * An exception is used where an old chunk of data has been
-+ * replaced by a new one.
-+ * If chunk_t is 64 bits in size, the top 8 bits of new_chunk hold the number
-+ * of chunks that follow contiguously.  Remaining bits hold the number of the
-+ * chunk within the device.
-+ */
-+struct dm_exception {
-+	struct list_head hash_list;
-+
-+	chunk_t old_chunk;
-+	chunk_t new_chunk;
-+};
-+
-+struct dm_exception_table {
-+	uint32_t hash_mask;
-+	unsigned hash_shift;
-+	struct list_head *table;
-+};
-+
-+/*
-+ * Funtions to manipulate consecutive chunks
-+ */
-+#  if defined(CONFIG_LBD) || (BITS_PER_LONG == 64)
-+#    define DM_CHUNK_CONSECUTIVE_BITS 8
-+#    define DM_CHUNK_NUMBER_BITS 56
-+
-+static inline chunk_t dm_chunk_number(chunk_t chunk)
-+{
-+	return chunk & (chunk_t)((1ULL << DM_CHUNK_NUMBER_BITS) - 1ULL);
-+}
-+
-+static inline unsigned dm_consecutive_chunk_count(struct dm_exception *e)
-+{
-+	return e->new_chunk >> DM_CHUNK_NUMBER_BITS;
-+}
-+
-+static inline void dm_consecutive_chunk_count_inc(struct dm_exception *e)
-+{
-+	e->new_chunk += (1ULL << DM_CHUNK_NUMBER_BITS);
-+
-+	BUG_ON(!dm_consecutive_chunk_count(e));
-+}
-+
-+#  else
-+#    define DM_CHUNK_CONSECUTIVE_BITS 0
-+
-+static inline chunk_t dm_chunk_number(chunk_t chunk)
-+{
-+	return chunk;
-+}
-+
-+static inline unsigned dm_consecutive_chunk_count(struct dm_exception *e)
-+{
-+	return 0;
-+}
-+
-+static inline void dm_consecutive_chunk_count_inc(struct dm_exception *e)
-+{
-+}
-+
-+#  endif
-+
-+struct dm_exception_table *
-+dm_exception_table_create(uint32_t size, unsigned hash_shift,
-+			  struct dm_exception *(*alloc_exception)(void *),
-+			  void *alloc_context,
-+			  void (*free_exception)(struct dm_exception *e, void *),
-+			  void *free_context);
-+
-+void dm_exception_table_destroy(struct dm_exception_table *et);
-+
-+void dm_insert_exception(struct dm_exception_table *eh,
-+			 struct dm_exception *e);
-+
-+void dm_remove_exception(struct dm_exception *e);
-+
-+struct dm_exception *dm_lookup_exception(struct dm_exception_table *et,
-+					 chunk_t chunk);
-+
-+struct dm_exception *dm_alloc_exception(struct dm_exception_table *et);
-+
-+void dm_free_exception(struct dm_exception_table *et, struct dm_exception *e);
-+
-+#endif /* __LINUX_DM_EXCEPTION__ */
 Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -51,12 +51,6 @@
- #define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
- 					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
- 
--struct dm_exception_table {
--	uint32_t hash_mask;
--	unsigned hash_shift;
--	struct list_head *table;
--};
--
- struct dm_snapshot {
- 	struct rw_semaphore lock;
- 
-@@ -343,126 +337,6 @@ static void unregister_snapshot(struct d
- 	up_write(&_origins_lock);
- }
- 
--struct dm_exception_table_internal {
--	struct dm_exception_table et;
--
--	struct dm_exception *(*alloc_exception)(void *context);
--	void *alloc_context;
--
--	void (*free_exception)(struct dm_exception *e, void *context);
--	void *free_context;
--};
--
--/*
-- * Implementation of the exception hash tables.
-- * The lowest hash_shift bits of the chunk number are ignored, allowing
-- * some consecutive chunks to be grouped together.
-- */
--static struct dm_exception_table *
--dm_exception_table_create(uint32_t size, unsigned hash_shift,
--			  struct dm_exception *(*alloc_exception)(void *),
--			  void *alloc_context,
--			  void (*free_exception)(struct dm_exception *e, void *),
--			  void *free_context)
--{
--	unsigned int i;
--	struct dm_exception_table_internal *eti;
--	struct dm_exception_table *et;
--
--	eti = kmalloc(sizeof(*eti), GFP_KERNEL);
--	if (!eti)
--		return NULL;
--
--	et = &eti->et;
--
--	et->hash_shift = hash_shift;
--	et->hash_mask = size - 1;
--	et->table = dm_vcalloc(size, sizeof(struct list_head));
--	if (!et->table) {
--		kfree(et);
--		return NULL;
--	}
--
--	eti->alloc_exception = alloc_exception;
--	eti->alloc_context = alloc_context;
--	eti->free_exception = free_exception;
--	eti->free_context = free_context;
--
--	for (i = 0; i < size; i++)
--		INIT_LIST_HEAD(et->table + i);
--
--	return et;
--}
--
--static void dm_exception_table_destroy(struct dm_exception_table *et)
--{
--	struct dm_exception_table_internal *eti;
--	struct list_head *slot;
--	struct dm_exception *ex, *next;
--	int i, size;
--
--	eti = container_of(et, struct dm_exception_table_internal, et);
--
--	size = et->hash_mask + 1;
--	for (i = 0; i < size; i++) {
--		slot = et->table + i;
--
--		list_for_each_entry_safe (ex, next, slot, hash_list)
--			eti->free_exception(ex, eti->free_context);
--	}
--
--	vfree(et->table);
--	kfree(eti);
--}
--
--static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
--{
--	return (chunk >> et->hash_shift) & et->hash_mask;
--}
--
--static void dm_remove_exception(struct dm_exception *e)
--{
--	list_del(&e->hash_list);
--}
--
--/*
-- * Return the exception data for a sector, or NULL if not
-- * remapped.
-- */
--static struct dm_exception *dm_lookup_exception(struct dm_exception_table *et,
--						chunk_t chunk)
--{
--	struct list_head *slot;
--	struct dm_exception *e;
--
--	slot = &et->table[exception_hash(et, chunk)];
--	list_for_each_entry (e, slot, hash_list)
--		if (chunk >= e->old_chunk &&
--		    chunk <= e->old_chunk + dm_consecutive_chunk_count(e))
--			return e;
--
--	return NULL;
--}
--
--static struct dm_exception *dm_alloc_exception(struct dm_exception_table *et)
--{
--	struct dm_exception_table_internal *eti;
--
--	eti = container_of(et, struct dm_exception_table_internal, et);
--
--	return eti->alloc_exception(eti->alloc_context);
--}
--
--static void dm_free_exception(struct dm_exception_table *et,
--			      struct dm_exception *e)
--{
--	struct dm_exception_table_internal *eti;
--
--	eti = container_of(et, struct dm_exception_table_internal, et);
--
--	return eti->free_exception(e, eti->free_context);
--}
--
- static struct dm_exception *alloc_completed_exception(void *unused)
+@@ -945,6 +945,7 @@ static void get_pending_exception(struct
+ static struct bio *put_pending_exception(struct dm_snap_pending_exception *pe)
  {
- 	struct dm_exception *e;
-@@ -504,48 +378,6 @@ static void free_pending_exception(struc
- 	atomic_dec(&s->pending_exceptions_count);
- }
+ 	struct dm_snap_pending_exception *primary_pe;
++	struct dm_snapshot *s = pe->snap;
+ 	struct bio *origin_bios = NULL;
  
--static void dm_insert_exception(struct dm_exception_table *eh,
--				struct dm_exception *new_e)
--{
--	struct list_head *l;
--	struct dm_exception *e = NULL;
--
--	l = &eh->table[exception_hash(eh, new_e->old_chunk)];
--
--	/* Add immediately if this table doesn't support consecutive chunks */
--	if (!eh->hash_shift)
--		goto out;
--
--	/* List is ordered by old_chunk */
--	list_for_each_entry_reverse(e, l, hash_list) {
--		/* Insert after an existing chunk? */
--		if (new_e->old_chunk == (e->old_chunk +
--					 dm_consecutive_chunk_count(e) + 1) &&
--		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) +
--					 dm_consecutive_chunk_count(e) + 1)) {
--			dm_consecutive_chunk_count_inc(e);
--			dm_free_exception(eh, new_e);
--			return;
--		}
--
--		/* Insert before an existing chunk? */
--		if (new_e->old_chunk == (e->old_chunk - 1) &&
--		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) - 1)) {
--			dm_consecutive_chunk_count_inc(e);
--			e->old_chunk--;
--			e->new_chunk--;
--			dm_free_exception(eh, new_e);
--			return;
--		}
--
--		if (new_e->old_chunk > e->old_chunk)
--			break;
--	}
--
--out:
--	list_add(&new_e->hash_list, e ? &e->hash_list : l);
--}
--
- /*
-  * Callback used by the exception stores to load exceptions when
-  * initialising.
-Index: linux-2.6/drivers/md/Makefile
-===================================================================
---- linux-2.6.orig/drivers/md/Makefile
-+++ linux-2.6/drivers/md/Makefile
-@@ -5,8 +5,8 @@
- dm-mod-objs	:= dm.o dm-table.o dm-target.o dm-linear.o dm-stripe.o \
- 		   dm-ioctl.o dm-io.o dm-kcopyd.o dm-sysfs.o
- dm-multipath-objs := dm-path-selector.o dm-mpath.o
--dm-snapshot-objs := dm-snap.o dm-exception-store.o dm-snap-transient.o \
--		    dm-snap-persistent.o
-+dm-snapshot-objs := dm-snap.o dm-exception.o dm-exception-store.o \
-+		    dm-snap-persistent.o dm-snap-transient.o
- dm-mirror-objs	:= dm-raid1.o
- md-mod-objs     := md.o bitmap.o
- raid456-objs	:= raid5.o raid6algos.o raid6recov.o raid6tables.o \
+ 	primary_pe = pe->primary_pe;
+@@ -957,7 +958,7 @@ static struct bio *put_pending_exception
+ 	if (primary_pe &&
+ 	    atomic_dec_and_test(&primary_pe->ref_count)) {
+ 		origin_bios = bio_list_get(&primary_pe->origin_bios);
+-		free_pending_exception(&primary_pe->e, NULL);
++		dm_free_exception(s->pending, &primary_pe->e);
+ 	}
+ 
+ 	/*
+@@ -965,7 +966,7 @@ static struct bio *put_pending_exception
+ 	 * it's not itself a primary pe.
+ 	 */
+ 	if (!primary_pe || primary_pe != pe)
+-		free_pending_exception(&pe->e, NULL);
++		dm_free_exception(s->pending, &pe->e);
+ 
+ 	return origin_bios;
+ }
+@@ -1108,7 +1109,7 @@ __find_pending_exception(struct dm_snaps
+ 
+ 	pe2 = __lookup_pending_exception(s, chunk);
+ 	if (pe2) {
+-		free_pending_exception(&pe->e, NULL);
++		dm_free_exception(s->pending, &pe->e);
+ 		return pe2;
+ 	}
+ 
+@@ -1120,7 +1121,7 @@ __find_pending_exception(struct dm_snaps
+ 	pe->started = 0;
+ 
+ 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
+-		free_pending_exception(&pe->e, NULL);
++		dm_free_exception(s->pending, &pe->e);
+ 		return NULL;
+ 	}
+ 
+@@ -1182,20 +1183,20 @@ static int snapshot_map(struct dm_target
+ 		pe = __lookup_pending_exception(s, chunk);
+ 		if (!pe) {
+ 			up_write(&s->lock);
+-			tmp_e = alloc_pending_exception(s);
++			tmp_e = dm_alloc_exception(s->pending);
+ 			pe = container_of(tmp_e,
+ 					  struct dm_snap_pending_exception, e);
+ 			down_write(&s->lock);
+ 
+ 			if (!s->valid) {
+-				free_pending_exception(&pe->e, NULL);
++				dm_free_exception(s->pending, &pe->e);
+ 				r = -EIO;
+ 				goto out_unlock;
+ 			}
+ 
+ 			e = dm_lookup_exception(&s->complete, chunk);
+ 			if (e) {
+-				free_pending_exception(&pe->e, NULL);
++				dm_free_exception(s->pending, &pe->e);
+ 				remap_exception(s, e, bio, chunk);
+ 				goto out_unlock;
+ 			}
+@@ -1338,19 +1339,19 @@ static int __origin_write(struct list_he
+ 		pe = __lookup_pending_exception(snap, chunk);
+ 		if (!pe) {
+ 			up_write(&snap->lock);
+-			tmp_e = alloc_pending_exception(snap);
++			tmp_e = dm_alloc_exception(snap->pending);
+ 			pe = container_of(tmp_e,
+ 					  struct dm_snap_pending_exception, e);
+ 			down_write(&snap->lock);
+ 
+ 			if (!snap->valid) {
+-				free_pending_exception(&pe->e, NULL);
++				dm_free_exception(snap->pending, &pe->e);
+ 				goto next_snapshot;
+ 			}
+ 
+ 			e = dm_lookup_exception(&snap->complete, chunk);
+ 			if (e) {
+-				free_pending_exception(&pe->e, NULL);
++				dm_free_exception(snap->pending, &pe->e);
+ 				goto next_snapshot;
+ 			}
+ 
+@@ -1404,7 +1405,8 @@ static int __origin_write(struct list_he
+ 
+ 	if (first && atomic_dec_and_test(&primary_pe->ref_count)) {
+ 		flush_bios(bio_list_get(&primary_pe->origin_bios));
+-		free_pending_exception(&primary_pe->e, NULL);
++		dm_free_exception(primary_pe->snap->pending,
++				       &primary_pe->e);
+ 		/* If we got here, pe_queue is necessarily empty. */
+ 		return r;
+ 	}
