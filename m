@@ -1,8 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 12 of 33] DM Snapshot: exception function changes
-	4
-Date: Wed, 25 Mar 2009 16:35:34 -0500
-Message-ID: <200903252135.n2PLZYaY021430@hydrogen.msp.redhat.com>
+Subject: [PATCH 13 of 33] DM Snapshot: exception function changes
+	5
+Date: Wed, 25 Mar 2009 16:35:44 -0500
+Message-ID: <200903252135.n2PLZi9Z021506@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,11 +17,13 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snap-exception-function-changes-4.patch
+Patch name: dm-snap-exception-function-changes-5.patch
 
-This patch alters the dm_exception_table_create and dm_exception_table_destroy
-functions to take in the function pointers for the exception [de]allocation
-functions.
+This patch introduces the dm_alloc_exception and dm_free_exception
+functions.  They are now the official way to [de]allocate exceptions
+via the new interface.  These functions call the [de]allocation functions
+specified during the creation of the exception table and use the context
+provided at that time.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -29,93 +31,74 @@ Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -359,7 +359,11 @@ struct dm_exception_table_internal {
-  * some consecutive chunks to be grouped together.
-  */
- static struct dm_exception_table *
--dm_exception_table_create(uint32_t size, unsigned hash_shift)
-+dm_exception_table_create(uint32_t size, unsigned hash_shift,
-+			  struct dm_exception *(*alloc_exception)(void *),
-+			  void *alloc_context,
-+			  void (*free_exception)(struct dm_exception *e, void *),
-+			  void *free_context)
- {
- 	unsigned int i;
- 	struct dm_exception_table_internal *eti;
-@@ -379,14 +383,18 @@ dm_exception_table_create(uint32_t size,
- 		return NULL;
- 	}
+@@ -444,6 +444,25 @@ static struct dm_exception *dm_lookup_ex
+ 	return NULL;
+ }
  
-+	eti->alloc_exception = alloc_exception;
-+	eti->alloc_context = alloc_context;
-+	eti->free_exception = free_exception;
-+	eti->free_context = free_context;
++static struct dm_exception *dm_alloc_exception(struct dm_exception_table *et)
++{
++	struct dm_exception_table_internal *eti;
 +
- 	for (i = 0; i < size; i++)
- 		INIT_LIST_HEAD(et->table + i);
- 
- 	return et;
- }
- 
--static void dm_exception_table_destroy(struct dm_exception_table *et,
--				       struct kmem_cache *mem)
-+static void dm_exception_table_destroy(struct dm_exception_table *et)
++	eti = container_of(et, struct dm_exception_table_internal, et);
++
++	return eti->alloc_exception(eti->alloc_context);
++}
++
++static void dm_free_exception(struct dm_exception_table *et,
++			      struct dm_exception *e)
++{
++	struct dm_exception_table_internal *eti;
++
++	eti = container_of(et, struct dm_exception_table_internal, et);
++
++	return eti->free_exception(e, eti->free_context);
++}
++
+ static struct dm_exception *alloc_completed_exception(void *unused)
  {
- 	struct dm_exception_table_internal *eti;
- 	struct list_head *slot;
-@@ -400,7 +408,7 @@ static void dm_exception_table_destroy(s
- 		slot = et->table + i;
+ 	struct dm_exception *e;
+@@ -505,7 +524,7 @@ static void dm_insert_exception(struct d
+ 		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) +
+ 					 dm_consecutive_chunk_count(e) + 1)) {
+ 			dm_consecutive_chunk_count_inc(e);
+-			free_completed_exception(new_e, NULL);
++			dm_free_exception(eh, new_e);
+ 			return;
+ 		}
  
- 		list_for_each_entry_safe (ex, next, slot, hash_list)
--			kmem_cache_free(mem, ex);
-+			eti->free_exception(ex, eti->free_context);
- 	}
+@@ -515,7 +534,7 @@ static void dm_insert_exception(struct d
+ 			dm_consecutive_chunk_count_inc(e);
+ 			e->old_chunk--;
+ 			e->new_chunk--;
+-			free_completed_exception(new_e, NULL);
++			dm_free_exception(eh, new_e);
+ 			return;
+ 		}
  
- 	vfree(et->table);
-@@ -575,7 +583,9 @@ static int init_hash_tables(struct dm_sn
- 	hash_size = rounddown_pow_of_two(hash_size);
+@@ -536,7 +555,7 @@ static int dm_add_exception(void *contex
+ 	struct dm_snapshot *s = context;
+ 	struct dm_exception *e;
  
- 	s->complete = dm_exception_table_create(hash_size,
--						DM_CHUNK_CONSECUTIVE_BITS);
-+						DM_CHUNK_CONSECUTIVE_BITS,
-+						alloc_completed_exception, NULL,
-+						free_completed_exception, NULL);
- 	if (!s->complete)
+-	e = alloc_completed_exception(NULL);
++	e = dm_alloc_exception(s->complete);
+ 	if (!e)
  		return -ENOMEM;
  
-@@ -587,9 +597,11 @@ static int init_hash_tables(struct dm_sn
- 	if (hash_size < 64)
- 		hash_size = 64;
- 
--	s->pending = dm_exception_table_create(hash_size, 0);
-+	s->pending = dm_exception_table_create(hash_size, 0,
-+					       alloc_pending_exception, s,
-+					       free_pending_exception, NULL);
- 	if (!s->pending) {
--		dm_exception_table_destroy(s->complete, exception_cache);
-+		dm_exception_table_destroy(s->complete);
- 		return -ENOMEM;
+@@ -967,7 +986,7 @@ static void pending_complete(struct dm_s
+ 		goto out;
  	}
  
-@@ -781,8 +793,8 @@ bad_pending_pool:
- 	dm_kcopyd_client_destroy(s->kcopyd_client);
+-	e = alloc_completed_exception(NULL);
++	e = dm_alloc_exception(s->complete);
+ 	if (!e) {
+ 		down_write(&s->lock);
+ 		__invalidate_snapshot(s, -ENOMEM);
+@@ -978,7 +997,7 @@ static void pending_complete(struct dm_s
  
- bad_kcopyd:
--	dm_exception_table_destroy(s->pending, pending_cache);
--	dm_exception_table_destroy(s->complete, exception_cache);
-+	dm_exception_table_destroy(s->pending);
-+	dm_exception_table_destroy(s->complete);
- 
- bad_hash_tables:
- 	dm_put_device(ti, s->origin);
-@@ -801,8 +813,8 @@ static void __free_exceptions(struct dm_
- 	dm_kcopyd_client_destroy(s->kcopyd_client);
- 	s->kcopyd_client = NULL;
- 
--	dm_exception_table_destroy(s->pending, pending_cache);
--	dm_exception_table_destroy(s->complete, exception_cache);
-+	dm_exception_table_destroy(s->pending);
-+	dm_exception_table_destroy(s->complete);
- }
- 
- static void snapshot_dtr(struct dm_target *ti)
+ 	down_write(&s->lock);
+ 	if (!s->valid) {
+-		free_completed_exception(e, NULL);
++		dm_free_exception(s->complete, e);
+ 		error = 1;
+ 		goto out;
+ 	}
