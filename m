@@ -1,10 +1,21 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 2 of 2] DM Snapshot: blocking lookup_exception
-	workaround
-Date: Wed, 25 Mar 2009 16:48:33 -0500
-Message-ID: <200903252148.n2PLmX1t027384@hydrogen.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Wed, 25 Mar 2009 18:39:38 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+References: <49C7DD3C.2020401@redhat.com>
+	<Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
+	<20090324140524.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
+	<20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	<20090324150517.GX27476@kernel.dk>
+	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	<20090325152751.GV27476@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090325152751.GV27476@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -14,118 +25,78 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Andi Kleen <ak@suse.de>
 List-Id: dm-devel.ids
 
-Patch name: dm-snap-blocking-lookup_exception-workaround.patch
+> > > If they can't flush cache, then they must reject barriers unless they
+> > > have write through caching.
+> > 
+> > ... and you suppose that journaled filesystems will use this error and 
+> > mark filesystem for fsck if they are running over a device that doesn't 
+> > support consistency?
+> 
+> No, but they can warn that data consistency isn't guarenteed. And they
+> all do, if you mount with barriers enabled and the barrier write fails.
+> If barriers aren't support, the first one will fail. So either they do
+> lazy detect, or they do a trial barrier write at mount time.
 
-This patch is just a workaround to make the cluster exception store
-(cluster-aware snapshots) work.  It basically, makes the snapshot
-mapping functions ignore the fact that the lookup_exception function
-will block.
+The user shouldn't really be required to know what are barriers, which 
+drivers support them and which don't, and which drivers maintain 
+consistency without barriers and which not.
 
-The proper fix would be to have a separate thread in dm-snap.c that
-would be used if an exception store returned -EWOULDBLOCK from
-lookup_exception.
+The user only needs to know if he must run fsck in the case of power 
+failure or not. --- and that -EOPNOTSUPP error and warnings about failed 
+barriers give him no information about that.
 
+> So yes, I suppose that file systems will use this error. Because that is
+> what they do.
+> 
+> > In theory it would be nice, in practice it doesn't work this way because 
+> > many devices *DO* support data consistency don't support barriers (the 
+> > most common are DM and MD when run over disk without write cache).
+> 
+> Your theory is nice, but most dm systems use write back caching. Any
 
-Index: linux-2.6/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -1070,7 +1070,7 @@ static int snapshot_map(struct dm_target
- 
- 	/* If the block is already remapped - use that, else remap it */
- 	rtn = ss->store->type->lookup_exception(ss->store, chunk,
--						&new_chunk, 0, 0);
-+						&new_chunk, 0, 1);
- 	if (!rtn) {
- 		remap_exception(ss, bio, new_chunk);
- 		goto out_unlock;
-@@ -1108,7 +1108,7 @@ static int snapshot_map(struct dm_target
- 			rtn = ss->store->type->lookup_exception(ss->store,
- 								chunk,
- 								&new_chunk,
--								0, 0);
-+								0, 1);
- 			if (!rtn) {
- 				dm_free_exception(ss->pending, &pe->e);
- 				remap_exception(ss, bio, new_chunk);
-@@ -1290,7 +1290,7 @@ static int __origin_write(struct list_he
- 		 * ref_count is initialised to 1 so pending_complete()
- 		 * won't destroy the primary_pe while we're inside this loop.
- 		 */
--		rtn = store->type->lookup_exception(store, chunk, NULL, 1, 0);
-+		rtn = store->type->lookup_exception(store, chunk, NULL, 1, 1);
- 		if (!rtn)
- 			goto next_snapshot;
- 
-@@ -1315,7 +1315,7 @@ static int __origin_write(struct list_he
- 			}
- 
- 			rtn = store->type->lookup_exception(store, chunk,
--							    NULL, 1, 0);
-+							    NULL, 1, 1);
- 			if (!rtn) {
- 				dm_free_exception(snap->pending, &pe->e);
- 				goto next_snapshot;
-Index: linux-2.6/drivers/md/dm-ex-store-clusterized.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-ex-store-clusterized.c
-+++ linux-2.6/drivers/md/dm-ex-store-clusterized.c
-@@ -7,6 +7,7 @@
-  */
- #include <linux/device-mapper.h>
- #include <linux/dlm.h>
-+#include <linux/workqueue.h>
- #include "dm-exception-store.h"
- 
- #define DM_MSG_PREFIX "clusterized exception store"
-@@ -17,6 +18,7 @@ struct clusterized_c {
- 	atomic_t prepared_exceptions;
- 
- 	struct completion completion;
-+	struct work_struct resume_work;
- 
- 	int current_lock_mode;
- 	struct semaphore serialize; /* serialize DLM lock modes */
-@@ -124,6 +126,21 @@ static int cluster_unlock(struct cluster
- 	return 0;
- }
- 
-+static void resume_core(struct work_struct *work)
-+{
-+	int r;
-+	struct clusterized_c *cc;
-+
-+	cc = container_of(work, struct clusterized_c, resume_work);
-+
-+	DMERR("Initiating core resume");
-+	r = cc->core_store->type->resume(cc->core_store);
-+	if (r)
-+		DMERR("Core resume failed");
-+	DMERR("Finished");
-+	complete(&cc->completion);
-+}
-+
- /*
-  * clusterized_ctr
-  * @store
-@@ -180,6 +197,7 @@ static int clusterized_ctr(struct dm_exc
- 	cc->lksb.sb_lvbptr = (char *)&cc->cluster_metadata_counter;
- 
- 	init_completion(&cc->completion);
-+	INIT_WORK(&cc->resume_work, resume_core);
- 
- 	init_MUTEX(&cc->serialize);
- 
-@@ -392,7 +410,8 @@ static int clusterized_lookup_exception(
- 	 * re-reading its metadata and updating its cache.  IOW, it must
- 	 * be able to resume multiple times before a suspend is issued.
- 	 */
--	cc->core_store->type->resume(cc->core_store);
-+	schedule_work(&cc->resume_work);
-+	wait_for_completion(&cc->completion);
- 
- 	cc->metadata_counter = cc->cluster_metadata_counter;
- 	cluster_unlock(cc);
+If they do, the filesystem should know about it and fsck the partition in 
+the case of crash.
+
+> desktop uses write back caching. Only higher end disks default to
+> write-through caching.
+> 
+> > So I think there should be flag (this device does/doesn't support data 
+> > consistency) that the journaled filesystems can use to mark the disk dirty 
+> > for fsck. And if you implement this flag, you can accept barriers always 
+> > to all kind of devices regardless of whether they support consistency. You 
+> > can then get rid of that -EOPNOTSUPP and simplify filesystem code because 
+> > they'd no longer need two commit paths and a clumsy way to restart 
+> > -EOPNOTSUPPed requests.
+> 
+> And my point is that this case isn't interesting, because most setups
+> don't guarantee proper ordering.
+
+If the ordering isn't guaranteed, the filesystem should know about it, and 
+mark the partition for fsck. That's why I'm suggesting to use a flag for 
+that. That flag could be also propagated up through md and dm.
+
+The reasoning: "write barriers aren't supported => the device doesn't 
+guarantee consistency" isn't valid.
+
+> The error handling is complex, no doubt
+> about that. But the trial barrier test is pretty trivial and even could
+> be easily abstracted out. If a later barrier write fails, then that's
+> really no different than if a normal write fails. Error handling is not
+> easy in that case.
+
+I had a discussion with Andi about it some times ago. The conclusion was 
+that all the current filesystems handle barriers failing in the middle of 
+the operation without functionality loss, but it makes barriers useless 
+for any performance-sensitive tasks (commits that wouldn't block 
+concurrent activity). Non-blocking commits could only be implemented if 
+barriers don't fail.
+
+Mikulas
+
+> -- Jens Axboe
+> 
