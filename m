@@ -1,17 +1,24 @@
-From: "Ransegnola, Lori" <Lori.Ransegnola@hp.com>
-Subject: RE: RE: Problem with multipathd and a blacklisted device
-Date: Tue, 24 Mar 2009 21:12:48 +0000
-Message-ID: <5635940A0F6F36478CF4D01273B16CA32B9CE5310F@GVW1096EXB.americas.hpqcorp.net>
-References: <5635940A0F6F36478CF4D01273B16CA32B9C3EDDF8@GVW1096EXB.americas.hpqcorp.net>
-	<5635940A0F6F36478CF4D01273B16CA32B9CE52C1E@GVW1096EXB.americas.hpqcorp.net>
-	<20090324134209.GA12464@us.ibm.com>
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
+Date: Tue, 24 Mar 2009 23:41:00 -0400
+Message-ID: <1237952460.6560.204.camel@jaspav.missionsit.net.missionsit.net>
+References: <20090322152730.GC5528@edu.joroinen.fi>
+	<1237801596.6577.28.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324073935.GK5528@edu.joroinen.fi>
+	<1237892561.6560.19.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324115708.GM5528@edu.joroinen.fi>
+	<1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324150104.GO5528@edu.joroinen.fi>
+	<1237909400.6560.80.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324163603.GQ5528@edu.joroinen.fi>
+	<1237915811.6560.135.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324181735.GR5528@edu.joroinen.fi>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090324134209.GA12464@us.ibm.com>
-Content-Language: en-US
+In-Reply-To: <20090324181735.GR5528@edu.joroinen.fi>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,262 +29,344 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: "Ransegnola, Lori" <Lori.Ransegnola@hp.com>
+Cc: "Ross S. W. Walker" <rwalker@medallion.com>
 List-Id: dm-devel.ids
 
-Here is the 'multipath -ll' output before disk was pulled:
-
- /root> ls -l /dev/hpdev
-total 0
-lrwxrwxrwx 1 root root 7 Mar 24 11:53 sda1 -> ../sdm1
-lrwxrwxrwx 1 root root 7 Mar 24 11:53 sdb1 -> ../sdn1
-/root> multipath -ll
-multisde (35000c5000a41e633) dm-2 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:5:0  sde 8:64   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:19:0 sdq 65:0   [active][ready]
-35000c5000a41e44bdm-5 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:8:0  sdh 8:112  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:22:0 sdt 65:48  [active][ready]
-multisdc (35000c5000a41f38f) dm-0 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:3:0  sdc 8:32   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:17:0 sdo 8:224  [active][ready]
-35000c5000a41e9bbdm-7 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:10:0 sdj 8:144  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:24:0 sdv 65:80  [active][ready]
-35000c50004acb2cfdm-1 HP,DF0300B8053
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:4:0  sdd 8:48   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:18:0 sdp 8:240  [active][ready]
-35000c5000a41f1b3dm-4 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:7:0  sdg 8:96   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:21:0 sds 65:32  [active][ready]
-35000c5000a41f997dm-9 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:12:0 sdl 8:176  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:26:0 sdx 65:112 [active][ready]
-35000c5000a41f37fdm-6 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:9:0  sdi 8:128  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:23:0 sdu 65:64  [active][ready]
-35000c5000a41e0efdm-8 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:11:0 sdk 8:160  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:25:0 sdw 65:96  [active][ready]
-multisdf (35000c5000a41f007) dm-3 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:6:0  sdf 8:80   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:20:0 sdr 65:16  [active][ready]
-/root>
-
-Now once the disk has been pulled and the path to the device is lost:
-
-/root> ls -l /dev/hpdev
-total 0
-lrwxrwxrwx 1 root root 7 Mar 24 11:53 sdb1 -> ../sdn1
-/root> multipath -ll
-multisde (35000c5000a41e633) dm-2 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:5:0  sde 8:64   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:19:0 sdq 65:0   [active][ready]
-35000c5000a41e44bdm-5 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:8:0  sdh 8:112  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:22:0 sdt 65:48  [active][ready]
-multisdc (35000c5000a41f38f) dm-0 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:3:0  sdc 8:32   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:17:0 sdo 8:224  [active][ready]
-35000c5000a41e9bbdm-7 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:10:0 sdj 8:144  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:24:0 sdv 65:80  [active][ready]
-35000c50004acb2cfdm-1 HP,DF0300B8053
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:4:0  sdd 8:48   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:18:0 sdp 8:240  [active][ready]
-35000c5000a41f1b3dm-4 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:7:0  sdg 8:96   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:21:0 sds 65:32  [active][ready]
-35000c5000a41f997dm-9 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:12:0 sdl 8:176  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:26:0 sdx 65:112 [active][ready]
-35000c5000a41f37fdm-6 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:9:0  sdi 8:128  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:23:0 sdu 65:64  [active][ready]
-35000c5000a41e0efdm-8 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:11:0 sdk 8:160  [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:25:0 sdw 65:96  [active][ready]
-multisdf (35000c5000a41f007) dm-3 HP,DF300BB6C3
-[size=3D279G][features=3D0][hwhandler=3D0]
-\_ round-robin 0 [prio=3D0][active]
- \_ 0:0:6:0  sdf 8:80   [active][ready]
-\_ round-robin 0 [prio=3D0][enabled]
- \_ 0:0:20:0 sdr 65:16  [active][ready]
-/root>
-
-Please let me know if there is any other information that you require fro=
-m the node.  Thank you.
-
-Lori
-
-> -----Original Message-----
-> From: dm-devel-bounces@redhat.com
-> [mailto:dm-devel-bounces@redhat.com] On Behalf Of malahal@us.ibm.com
-> Sent: Tuesday, March 24, 2009 9:42 AM
-> To: dm-devel@redhat.com
-> Subject: Re: [dm-devel] RE: Problem with multipathd and a
-> blacklisted device
->
-> Ransegnola, Lori [Lori.Ransegnola@hp.com] wrote:
-> > I sent this question last week and have not heard a thing.
-> Do you have a suggestion of a better mailing list that I
-> should use for this question?
+On Tue, 2009-03-24 at 20:17 +0200, Pasi K=C3=A4rkk=C3=A4inen wrote:
+> On Tue, Mar 24, 2009 at 01:30:10PM -0400, John A. Sullivan III wrote:
+> > Thanks very much, again, and, again, I'll reply in the text - John
+> >=20
+>=20
+> Np :)
+>=20
+> > >=20
+> > > iirc 2810 does not have very big buffers per port, so you might be =
+better
+> > > using flow control instead of jumbos.. then again I'm not sure how =
+good flow
+> > > control implementation HP has?=20
+> > >=20
+> > > The whole point of flow control is to prevent packet loss/drop.. th=
+is happens
+> > > with sending pause frames before the port buffers get full. If port=
+ buffers
+> > > get full then the switch doesn't have any other option than to drop=
+ the
+> > > packets.. and this causes tcp-retransmits -> causes delay and tcp s=
+lows down
+> > > to prevent further packet drops.
+> > >=20
+> > > flow control "pause frames" cause less delay than tcp-retransmits.=20
+> > >=20
+> > > Do you see tcp retransmits with "netstat -s" ? Check both the targe=
+t and the initiators.
+> > Thankfully this is an area of some expertise for me (unlike disk I/O =
+-
+> > obviously ;)  ).  We have been pretty thorough about checking the
+> > network path.  We've not seen any upper layer retransmission or buffe=
+r
+> > overflows.
+>=20
+> Good :)
+>=20
+> > > > > > > What kind of performance do you get using just a single isc=
+si session (and
+> > > > > > > thus just a single path), no multipathing, no DM RAID0 ? Ju=
+st a filesystem
+> > > > > > > directly on top of the iscsi /dev/sd? device.
+> > > > > > Miserable - same roughly 12 MB/s.
+> > > > >=20
+> > > > > OK, Here's your problem. Was this btw reads or writes? Did you =
+tune
+> > > > > readahead-settings?=20
+> > > > 12MBps is sequential reading but sequential writing is not much
+> > > > different.  We did tweak readahead to 1024. We did not want to go=
+ much
+> > > > larger in order to maintain balance with the various data pattern=
+s -
+> > > > some of which are random and some of which may not read linearly.
+> > >=20
+> > > I did some benchmarking earlier between two servers; other one runn=
+ing ietd
+> > > target with 'nullio' and other running open-iscsi initiator. Both u=
+sing a single gigabit NIC.=20
+> > >=20
+> > > I remember getting very close to full gigabit speed at least with b=
+igger
+> > > block sizes. I can't remember how much I got with 4 kB blocks.=20
+> > >=20
+> > > Those tests were made with dd.
+> > Yes, if we use 64KB blocks, we can saturate a Gig link.  With larger
+> > sizes, we can push over 3 Gpbs over the four gig links in the test
+> > environment.
+>=20
+> That's good.=20
+>=20
+> > >=20
+> > > nullio target is a good way to benchmark your network and initiator=
+ and
+> > > verify everything is correct.=20
+> > >=20
+> > > Also it's good to first test for example with FTP and Iperf to veri=
+fy
+> > > network is working properly between target and the initiator and al=
+l the
+> > > other basic settings are correct.
+> > We did flood ping the network and had all interfaces operating at nea=
+r
+> > capacity.  The network itself looks very healthy.
+>=20
+> Ok.=20
+>=20
+> > >=20
+> > > Btw have you configured tcp stacks of the servers? Bigger default t=
+cp window
+> > > size, bigger maximun tcp window size etc..=20
+> > Yep, tweaked transmit queue length, receive and transmit windows, net
+> > device backlogs, buffer space, disabled nagle, and even played with t=
+he
+> > dirty page watermarks.
+>=20
+> That's all taken care of then :)=20
+>=20
+> Also on the target?=20
+>=20
+> > >=20
+> > > > >=20
+> > > > > Can paste your iSCSI session settings negotiated with the targe=
+t?=20
+> > > > Pardon my ignorance :( but, other than packet traces, how do I sh=
+ow the
+> > > > final negotiated settings?
+> > >=20
+> > > Try:
+> > >=20
+> > > iscsiadm -i -m session
+> > > iscsiadm -m session -P3
+> > >=20
+> > Here's what it says.  Pretty much as expected.  We are using COMSTAR =
+on
+> > the target and took some traces to see what COMSTAR was expecting. We
+> > set the open-iscsi parameters to match:
+> >=20
+> > Current Portal: 172.x.x.174:3260,2
+> >         Persistent Portal: 172.x.x.174:3260,2
+> >                 **********
+> >                 Interface:
+> >                 **********
+> >                 Iface Name: default
+> >                 Iface Transport: tcp
+> >                 Iface Initiatorname: iqn.2008-05.biz.ssi:vd-gen
+> >                 Iface IPaddress: 172.x.x.162
+> >                 Iface HWaddress: default
+> >                 Iface Netdev: default
+> >                 SID: 32
+> >                 iSCSI Connection State: LOGGED IN
+> >                 iSCSI Session State: LOGGED_IN
+> >                 Internal iscsid Session State: NO CHANGE
+> >                 ************************
+> >                 Negotiated iSCSI params:
+> >                 ************************
+> >                 HeaderDigest: None
+> >                 DataDigest: None
+> >                 MaxRecvDataSegmentLength: 131072
+> >                 MaxXmitDataSegmentLength: 8192
+> >                 FirstBurstLength: 65536
+> >                 MaxBurstLength: 524288
+> >                 ImmediateData: Yes
+> >                 InitialR2T: Yes
+>=20
+> I guess InitialR2T could be No for a bit better performance?=20
+>=20
+> MaxXmitDataSegmentLength looks small?=20
+>=20
+> > > > > You should be able to get many times the throughput you get now=
+.. just with
+> > > > > a single path/session.
+> > > > >=20
+> > > > > What kind of latency do you have from the initiator to the targ=
+et/storage?=20
+> > > > >=20
+> > > > > Try with for example 4 kB ping:
+> > > > > ping -s 4096 <ip_of_the_iscsi_target>
+> > > > We have about 400 micro seconds - that seems a bit high :(
+> > > > rtt min/avg/max/mdev =3D 0.275/0.337/0.398/0.047 ms
+> > > >=20
+> > >=20
+> > > Yeah.. that's a bit high.=20
+> > Actually, with more testing, we're seeing it stretch up to over 700
+> > micro-seconds.  I'll attach a raft of data I collected at the end of
+> > this email.
+>=20
+> Ok.
+>=20
+> > > I think Ross suggested in some other thread the following settings =
+for e1000
+> > > NICs:
+> > >=20
+> > > "Set the e1000s InterruptThrottleRate=3D1 and their TxRingBufferSiz=
+e=3D4096
+> > > and RxRingBufferSize=3D4096 (verify those option names with a modin=
+fo)
+> > > and add those to modprobe.conf."
+> > We did try playing with the ring buffer but to no avail.  Modinfo doe=
+s
+> > not seem to display the current settings.  We did try playing with
+> > setting the InterruptThrottleRate to 1 but again to no avail.  As I'l=
+l
+> > mention later, I suspect the issue might be the opensolaris based
+> > target.
+>=20
+> Could be..
+>=20
+> > >=20
+> > > > I would love to use larger block sizes as you suggest in your oth=
+er
+> > > > email but, on AMD64, I believe we are stuck with 4KB.  I've not s=
+een any
+> > > > way to change it and would gladly do so if someone knows how.
+> > > >=20
+> > >=20
+> > > Are we talking about filesystem block sizes? That shouldn't be a pr=
+oblem if
+> > > your application uses larger blocksizes for read/write operations..=
+=20
+> > >=20
+> > Yes, file system block size.  When we try rough, end user style tests=
+,
+> > e.g., large file copies, we seem to get the performance indicated by =
+4KB
+> > blocks, i.e., lousy!
+>=20
+> Yep.. try upgrading to 10 Gbit Ethernet for much lower latency ;)
+>=20
+> > > Try for example with:
+> > > dd if=3D/dev/zero of=3D/iscsilun/file.bin bs=3D1024k count=3D1024
+> > Large block sizes can make the system truly fly so we suspect you are
+> > absolutely correct about latency being the issue.  We did do our test=
+ing
+> > with raw interfaces by the way.
+>=20
+> Ok.
+>=20
+> > <snip>
+> > I did a little digging and calculating and here is what I came up wit=
+h
+> > and sent to Nexenta.  Please tell me if I am on the right track.
+> >=20
+> > I am using jumbo frames and should be able to get 2 4KB blocks
+> > per frame.  Total size should be 8192 + 78 (TCP + IP + Ethernet + CRC
+> > -oops we need to add iSCSI -what size is the iSCSI header?) + 12
+> > (interframe gap) =3D 8282 bytes.  Transmission latency should be 8282=
+ *
+> > 8 / 1,000,000,000 =3D 66.3 micro-seconds.  Switch latency is 5.7
+> > microseconds so let's say network latency is 72 - well let's say 75
+> > micro-seconds.  The only additional latency should be added by the
+> > network stacks on the target and initiator.
+> >=20
+> > Current round trip latency between the initiator (Linux) and target
+> > (Nexenta) is around 400 micro-seconds and fluctuates significantly:
+> >=20
+> > Hmm . .  this is worse than the last test:
+> > PING 172.30.13.158 (172.30.13.158) 8192(8220) bytes of data.
+>=20
+> > --- 172.30.13.158 ping statistics ---
+> > 33 packets transmitted, 33 received, 0% packet loss, time 32000ms
+> > rtt min/avg/max/mdev =3D 0.399/0.574/1.366/0.161 ms
+> >=20
+> > There is nothing going on in the network.  So we are seeing 574
+> > micro-seconds total with only 150 micro-seconds attributed to
+> > transmission.  And we see a wide variation in latency.
 > >
-> > Thank you.
-> >
-> > Lori
-> >
-> > > -----Original Message-----
-> > > From: Ransegnola, Lori
-> > > Sent: Thursday, March 19, 2009 3:51 PM
-> > > To: dm-devel@redhat.com
-> > > Cc: Ransegnola, Lori
-> > > Subject: Problem with multipathd and a blacklisted device
-> > >
-> > > Configuration:
-> > > --------------
-> > >
-> > > I have a multipath configuration set up where 10 disks are
-> > > multipathed and 2 disks are blacklisted and are not multipathed.
-> > > Here are the relevant parts of the multipath.conf file:
-> > >
-> > > defaults {
-> > >         udev_dir                /dev
-> > >         polling_interval        10
-> > >         selector                "round-robin 0"
-> > > #       path_grouping_policy    multibus
-> > >         getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
-> > >         prio_callout            /bin/true
-> > > #       path_checker            readsector0
-> > >         path_checker            tur
-> > >         rr_min_io               100
-> > >         rr_weight               priorities
-> > >         failback                immediate
-> > >         no_path_retry           fail
-> > >         user_friendly_name      yes
-> > > }
-> > >
-> > > blacklist {
-> > > #       wwid 26353900f02796769
-> > > #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
-> > > #       devnode "^hd[a-z]"
-> > >         wwid                    35000c5000a41f72b
-> > >         wwid                    35000c5000a41f98b
-> > >         devnode "^cciss!c[0-9]d[0-9]*"
-> > > }
-> > >
-> > >
-> > > The two disks that are not multipathed have udev rules
-> and are part
-> > > of a software RAID set.  The devices show up as
-> > >
-> > > /etc/udev/rules.d> ls -l /dev/hpdev
-> > > total 0
-> > > lrwxrwxrwx 1 root root 7 Mar 18 10:50 sda1 -> ../sda1
-> lrwxrwxrwx 1
-> > > root root 7 Mar 18 03:32 sdb1 -> ../sdb1
-> > >
-> > > /dev/md0 is created with sda and sdb.  Here is the bottom of the
-> > > 'mdadm --detail /dev/md0' output:
-> > >
-> > > /root> mdadm --detail /dev/md0
-> > > /dev/md0:
-> > >         Version
-> > > ...
-> > > Failed Devices : 0
-> > >   Spare Devices : 0
-> > >
-> > >            UUID : 94813396:a3e341fc:c5d4b8ba:0617a019
-> > >          Events : 0.84
-> > >
-> > >     Number   Major   Minor   RaidDevice State
-> > >        0       8        1        0      active sync   /dev/sda1
-> > >        1       8       17        1      active sync   /dev/sdb1
-> > > /root>
-> > >
-> > > I am running on a Linux RHEL5 U2 system.
-> > > /etc/udev/rules.d> uname -a
-> > > Linux n0 2.6.18-53.el5 #1 SMP Wed Oct 10 16:34:19 EDT 2007
-> > > x86_64 x86_64 x86_64 GNU/Linux /etc/udev/rules.d> multipath -v
-> > > Missing option arguement multipath-tools v0.4.7 (03/12, 2006)
-> > > ----------------------------
-> > >
-> > > Problem:
-> > >
-> > > This configuration works well until I do some failure
-> testing with
-> > > one of the 2 blacklisted devs in the software RAID set.
-> > > I found that if I temporarily remove disk sda and put it back a
-> > > minute later the disk path, /dev/hpdev/sda1, is removed,
-> even though
-> > > it is blacklisted.
->
-> What is 'multipath -ll' output before you remove the
-> blacklisted device?
-> What is 'multipath -ll' output after you put the device back
-> a minute later?
->
-> Thanks, Malahal.
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+>=20
+> Yeah something wrong there.. How much latency do you have between diffe=
+rent
+> initiator machines?=20
+> =20
+> > I then tested the latency between interfaces on the initiator and the
+> > target.  Here is what I get for internal latency on the Linux initiat=
+or:
+> > PING 172.30.13.18 (172.30.13.18) from 172.30.13.146 : 8192(8220) byte=
+s
+> > of data.
+> > --- 172.30.13.18 ping statistics ---
+> > 29 packets transmitted, 29 received, 0% packet loss, time 27999ms
+> > rtt min/avg/max/mdev =3D 0.017/0.018/0.033/0.005 ms
+> >=20
+> > A very consistent 18 micro-seconds.
+> >=20
+>=20
+> Yeah, I take it that's not through network/switch :)=20
+>=20
+> > Here is what I get from the Z200:
+> > root@disk01:/etc# ping -s -i e1000g6 172.30.13.190 4096
+> > PING 172.30.13.190: 4096 data bytes
+> > ----172.30.13.190 PING Statistics----
+> > 31 packets transmitted, 31 packets received, 0% packet loss
+> > round-trip (ms)  min/avg/max/stddev =3D 0.042/0.066/0.104/0.019
+> >=20
+>=20
+> Big difference.. I'm not familiar with Solaris, so can't really suggest=
+ what
+> to tune there..=20
+>=20
+> > Notice it is several times longer latency with much wider variation.
+> > How to we tune the opensolaris network stack to reduce it's latency? =
+I'd
+> > really like to improve the individual user experience.  I can tell th=
+em
+> > it's like commuting to work on the train instead of the car during ru=
+sh
+> > hour - faster when there's lots of traffic but slower when there is n=
+ot,
+> > but they will judge the product by their individual experiences more
+> > than their collective experiences.  Thus, I really want to improve th=
+e
+> > individual disk operation throughput.
+> >=20
+> > Latency seems to be our key.  If I can add only 20 micro-seconds of
+> > latency from initiator and target each, that would be roughly 200 mic=
+ro
+> > seconds.  That would almost triple the throughput from what we are
+> > currently seeing.
+> >=20
+>=20
+> Indeed :)=20
+>=20
+> > Unfortunately, I'm a bit ignorant of tweaking networks on opensolaris=
+.
+> > I can certainly learn but am I headed in the right direction or is th=
+is
+> > direction of investigation misguided? Thanks - John
+> >=20
+>=20
+> Low latency is the key for good (iSCSI) SAN performance, as it directly
+> gives you more (possible) IOPS.=20
+>=20
+> Other option is to configure software/settings so that there are multip=
+le
+> outstanding IO's on the fly.. then you're not limited with the latency =
+(so much).
+>=20
+> -- Pasi
+<snip>
+Ross has been of enormous help offline.  Indeed, disabling jumbo packets
+produced an almost 50% increase in single threaded throughput.  We are
+pretty well set although still a bit disappointed in the latency we are
+seeing in opensolaris and have escalated to the vendor about addressing
+it.
+
+The once piece which is still a mystery is why using four targets on
+four separate interfaces striped with dmadm RAID0 does not produce an
+aggregate of slightly less than four times the IOPS of a single target
+on a single interface. This would not seem to be the out of order SCSI
+command problem of multipath.  One of life's great mysteries yet to be
+revealed.  Thanks again, all - John
+--=20
+John A. Sullivan III
+Open Source Development Corporation
++1 207-985-7880
+jsullivan@opensourcedevel.com
+
+http://www.spiritualoutreach.com
+Making Christianity intelligible to secular society
