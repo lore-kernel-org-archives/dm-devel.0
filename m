@@ -1,15 +1,16 @@
-From: "Bryn M. Reeves" <bmr@redhat.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
 Subject: Re: hwtable.c for HP LOGICAL VOLUME (cciss_tur isn't
 	working on iSCSI connection).
-Date: Thu, 26 Mar 2009 19:01:36 +0000
-Message-ID: <1238094096.768.45.camel@breeves.fab.redhat.com>
+Date: Thu, 26 Mar 2009 15:29:27 -0400
+Message-ID: <20090326192927.GB16297@mars.virtualiron.com>
 References: <20090326184654.GA16297@mars.virtualiron.com>
+	<1238094096.768.45.camel@breeves.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090326184654.GA16297@mars.virtualiron.com>
+Content-Disposition: inline
+In-Reply-To: <1238094096.768.45.camel@breeves.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,37 +23,38 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Thu, 2009-03-26 at 14:46 -0400, Konrad Rzeszutek wrote:
-> One of our customers purchased a iSCSI target software that converts the
-> local disks into shareable SAN disks. (http://www.rocketdivision.com/wind.html).
+On Thu, Mar 26, 2009 at 07:01:36PM +0000, Bryn M. Reeves wrote:
+> On Thu, 2009-03-26 at 14:46 -0400, Konrad Rzeszutek wrote:
+> > One of our customers purchased a iSCSI target software that converts the
+> > local disks into shareable SAN disks. (http://www.rocketdivision.com/wind.html).
+> > 
+> > Unfortunatly the software exports the vendor/product of the disks the same as
+> > on the target. Meaning that the HP LOGICAL DISKS are shown over an iSCSI
+> > initiator session. And the cciss_tur checker is kicked off and tries
+> > this ioctl call:
+> > 
+> >     rc = ioctl(c->fd, CCISS_GETLUNINFO, &lvi);
+> >     if ( rc != 0) {
+> >         perror("Error: ");
+> >         fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
+> > 
+> > 
+> > which fails, since the ioctl is done on a SCSI device instead
+> > on the cciss driver.
+> > 
+> > So should the cciss_tur be modified try to do a normal SCSI tur
+> > if it fails to perform the ioctl call? Maybe make a path where
+> > it would first do a CCISS_VERSION (not sure if that exists) and
+> > if that fail do exactly what the 'tur' checker does?
+> > 
+> > Or maybe (with more of these types of software that turn your box in
+> > iSCSI target), provide a means of having a secondary path checker in case
+> > the first one fails?
+> > 
+> > Thoughts?
 > 
-> Unfortunatly the software exports the vendor/product of the disks the same as
-> on the target. Meaning that the HP LOGICAL DISKS are shown over an iSCSI
-> initiator session. And the cciss_tur checker is kicked off and tries
-> this ioctl call:
-> 
->     rc = ioctl(c->fd, CCISS_GETLUNINFO, &lvi);
->     if ( rc != 0) {
->         perror("Error: ");
->         fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
-> 
-> 
-> which fails, since the ioctl is done on a SCSI device instead
-> on the cciss driver.
-> 
-> So should the cciss_tur be modified try to do a normal SCSI tur
-> if it fails to perform the ioctl call? Maybe make a path where
-> it would first do a CCISS_VERSION (not sure if that exists) and
-> if that fail do exactly what the 'tur' checker does?
-> 
-> Or maybe (with more of these types of software that turn your box in
-> iSCSI target), provide a means of having a secondary path checker in case
-> the first one fails?
-> 
-> Thoughts?
+> Why not just fix the target to provide more useful vendor/product info
+> as the other software targets do?
 
-Why not just fix the target to provide more useful vendor/product info
-as the other software targets do?
-
-Regards,
-Bryn.
+Sure. I am filling a bug with them. But there isn't anything in the SCSI
+specs that mandate this behavior.
