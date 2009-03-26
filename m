@@ -1,54 +1,29 @@
-From: Chris Mason <chris.mason@oracle.com>
-Subject: Re: [dm-devel] Barriers still not passing on simple dm devices...
-Date: Thu, 26 Mar 2009 08:55:34 -0400
-Message-ID: <1238072134.5676.12.camel@think.oraclecorp.com>
-References: <49C7DD3C.2020401@redhat.com>
-	 <Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
-	 <20090324140524.GV27476@kernel.dk>
-	 <Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
-	 <20090324143034.GW27476@kernel.dk>
-	 <Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
-	 <20090324150517.GX27476@kernel.dk>
-	 <Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
-	 <20090325152751.GV27476@kernel.dk>
-	 <Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+From: Bodo Eggert <7eggert@gmx.de>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Thu, 26 Mar 2009 14:05:00 +0100
+Message-ID: <E1LmpGX-0001gP-6q@be1.7eggert.dyndns.org>
+References: <ciXHh-39c-37@gated-at.bofh.it> <cjfuL-6vJ-43@gated-at.bofh.it>
+	<cjfEl-6J2-45@gated-at.bofh.it> <cjfNX-6Wh-27@gated-at.bofh.it>
+Reply-To: 7eggert@gmx.de, device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756895AbZCZM4U@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, Andi Kleen <ak@suse.de>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7Bit
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Wed, 2009-03-25 at 18:39 -0400, Mikulas Patocka wrote:
+Mikulas Patocka <mpatocka@redhat.com> wrote:
 
-> > The error handling is complex, no doubt
-> > about that. But the trial barrier test is pretty trivial and even could
-> > be easily abstracted out. If a later barrier write fails, then that's
-> > really no different than if a normal write fails. Error handling is not
-> > easy in that case.
-> 
-> I had a discussion with Andi about it some times ago. The conclusion was 
-> that all the current filesystems handle barriers failing in the middle of 
-> the operation without functionality loss, but it makes barriers useless 
-> for any performance-sensitive tasks (commits that wouldn't block 
-> concurrent activity). Non-blocking commits could only be implemented if 
-> barriers don't fail.
-> 
+> ./drivers/block/loop.c:
+> doesn't reject barriers, it's ok because it doesn't reorder requests
 
-If a barrier fails at runtime, the filesystems do fall back to not doing
-barriers without real problems.  But, that's because they don't actually
-rely on the barriers to decide if an async commit is a good idea.
-
-One exception is reiserfs, which does one wait_on_buffer at a later time
-if barriers are on.  But, this isn't an async commit, this is just
-moving an unplug.
-
-In general, async commits happen with threads and they aren't related to
-barriers.  Barriers don't really give us error handling, and they are at
-the very end of a long chain of technical problems around commits that
-don't block concurrent activity.
-
--chris
+But it relies on other devices to not reorder.
