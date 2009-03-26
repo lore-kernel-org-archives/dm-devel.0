@@ -1,13 +1,9 @@
-From: Lupe Christoph <lupe@lupe-christoph.de>
-Subject: Changes in multipathing between 0.4.5 (SLES9) and 0.4.7
-	(SLES10)
-Date: Thu, 26 Mar 2009 17:06:41 +0100
-Message-ID: <20090326160641.GA12038@lupe-christoph.de>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH 1/2] dm log: use standard kernel module refcounts
+Date: Thu, 26 Mar 2009 13:33:52 -0400
+Message-ID: <1238088833-9447-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,27 +16,65 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi!
+Avoid private module usage accounting by removing 'use' from
+dm_dirty_log_internal.  The standard module reference counting is
+sufficient.
 
-I just ran into a strange difference in the behavious of multipathing
-between SLES9 and SLES10. While SLES9 seemed to ignore single-pathed
-disks like volumes on the internal RAID controller of IBM xSeries,
-SLES10 welcomes them leading to different pathes in /etc/fstab.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-log.c |   19 +++----------------
+ 1 files changed, 3 insertions(+), 16 deletions(-)
 
-There is a lot of our software involved in this behavious, so let's just
-say that the change is unwelcome ;-)
-
-We have for now overcome this by blacklisting the internal RAID
-controller. But there are many types of RAID controllers involved (the
-machines have all hardware-mirrored internal disks), so we would like to
-have a better solution.
-
-Is there a way to tell the multipath-tools to ignore devices that have
-only a single path? I found nothing in the multipath.conf manpage, but
-maybe I read it wrong.
-
-Thanks for any help!
-Luipe Christoph
+diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
+index 737961f..094c8f0 100644
+--- a/drivers/md/dm-log.c
++++ b/drivers/md/dm-log.c
+@@ -20,7 +20,6 @@ struct dm_dirty_log_internal {
+ 	struct dm_dirty_log_type *type;
+ 
+ 	struct list_head list;
+-	long use;
+ };
+ 
+ static LIST_HEAD(_log_types);
+@@ -44,12 +43,8 @@ static struct dm_dirty_log_internal *_get_dirty_log_type(const char *name)
+ 	spin_lock(&_lock);
+ 
+ 	log_type = __find_dirty_log_type(name);
+-	if (log_type) {
+-		if (!log_type->use && !try_module_get(log_type->type->module))
+-			log_type = NULL;
+-		else
+-			log_type->use++;
+-	}
++	if (log_type && !try_module_get(log_type->type->module))
++		log_type = NULL;
+ 
+ 	spin_unlock(&_lock);
+ 
+@@ -120,10 +115,7 @@ static void put_type(struct dm_dirty_log_type *type)
+ 	if (!log_type)
+ 		goto out;
+ 
+-	if (!--log_type->use)
+-		module_put(type->module);
+-
+-	BUG_ON(log_type->use < 0);
++	module_put(type->module);
+ 
+ out:
+ 	spin_unlock(&_lock);
+@@ -173,11 +165,6 @@ int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type)
+ 		return -EINVAL;
+ 	}
+ 
+-	if (log_type->use) {
+-		spin_unlock(&_lock);
+-		return -ETXTBSY;
+-	}
+-
+ 	list_del(&log_type->list);
+ 
+ 	spin_unlock(&_lock);
 -- 
-| There is no substitute for bad design except worse design.                   |
-| /me                                                                          |
+1.6.0.6
