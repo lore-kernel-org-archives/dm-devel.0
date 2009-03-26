@@ -1,37 +1,60 @@
-From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: Re: [PATCH 1 of 2] DM Exception Store:  clusterized type
-Date: Thu, 26 Mar 2009 10:03:37 -0500
-Message-ID: <9A44311E-9DDB-4C4D-8FBE-9007B06F8A26@redhat.com>
-References: <200903252148.n2PLmNPT027311@hydrogen.msp.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0 (Apple Message framework v930.3)
-Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <200903252148.n2PLmNPT027311@hydrogen.msp.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+From: Bodo Eggert <7eggert@gmx.de>
+Subject: Re: [dm-devel] Barriers still not passing on simple dm devices...
+Date: Thu, 26 Mar 2009 16:26:53 +0100
+Message-ID: <E1LmrTq-0001wg-2i@be1.7eggert.dyndns.org>
+References: <ciXHh-39c-37@gated-at.bofh.it> <cjfuL-6vJ-43@gated-at.bofh.it> <cjfEl-6J2-45@gated-at.bofh.it> <cjfNX-6Wh-27@gated-at.bofh.it> <cjfXx-78D-9@gated-at.bofh.it> <cjg7h-7lM-29@gated-at.bofh.it> <cjgqC-80G-21@gated-at.bofh.it> <cjD3I-22U-7@gated-at.bofh.it> <cjDdE-2g3-31@gated-at.bofh.it> <cjJVv-4vp-13@gated-at.bofh.it> <cjXlS-uM-1@gated-at.bofh.it>
+Reply-To: 7eggert@gmx.de
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7Bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758511AbZCZP1U@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Chris Mason <chris.mason@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux
 List-Id: dm-devel.ids
 
+Chris Mason <chris.mason@oracle.com> wrote:
+> On Wed, 2009-03-25 at 18:39 -0400, Mikulas Patocka wrote:
 
-On Mar 25, 2009, at 4:48 PM, Jonathan Brassow wrote:
+>> > The error handling is complex, no doubt
+>> > about that. But the trial barrier test is pretty trivial and even could
+>> > be easily abstracted out. If a later barrier write fails, then that's
+>> > really no different than if a normal write fails. Error handling is not
+>> > easy in that case.
+>> 
+>> I had a discussion with Andi about it some times ago. The conclusion was
+>> that all the current filesystems handle barriers failing in the middle of
+>> the operation without functionality loss, but it makes barriers useless
+>> for any performance-sensitive tasks (commits that wouldn't block
+>> concurrent activity). Non-blocking commits could only be implemented if
+>> barriers don't fail.
+>> 
+> 
+> If a barrier fails at runtime, the filesystems do fall back to not doing
+> barriers without real problems.
 
-> +	if (r != ENOENT)
-> +		return r;
+That's because there are no real problems in not honoring barriers - unless
+your system crashes.
 
-And there's the reason why my code with debugging worked and the patch  
-I sent to the list didn't... should be '-ENOENT'.
+> But, that's because they don't actually 
+> rely on the barriers to decide if an async commit is a good idea.
 
-Replacement patches will follow shortly for:
-Patch name: dm-exception-store-clusterized-type.patch
-Patch name: dm-snap-blocking-lookup_exception-workaround.patch
+As long as they cannot rely on barriers - how should they?
 
-  brassow
+[...]
+> In general, async commits happen with threads and they aren't related to
+> barriers.
+
+If my filesystem said "First update b, then let a point to b", where the H
+is the thread?
+
+> Barriers don't really give us error handling,
+
+Each request should give you error handling, but you are right: The whole
+queue after the barrier must be aborted, too. (Or better: The part depending
+on the barrier.)
+
+> and they are at  
+> the very end of a long chain of technical problems around commits that
+> don't block concurrent activity.
+
+You lost me here, but I guess the end will be a major rewrite.
