@@ -1,60 +1,46 @@
-From: Bodo Eggert <7eggert@gmx.de>
-Subject: Re: [dm-devel] Barriers still not passing on simple dm devices...
-Date: Thu, 26 Mar 2009 16:26:53 +0100
-Message-ID: <E1LmrTq-0001wg-2i@be1.7eggert.dyndns.org>
-References: <ciXHh-39c-37@gated-at.bofh.it> <cjfuL-6vJ-43@gated-at.bofh.it> <cjfEl-6J2-45@gated-at.bofh.it> <cjfNX-6Wh-27@gated-at.bofh.it> <cjfXx-78D-9@gated-at.bofh.it> <cjg7h-7lM-29@gated-at.bofh.it> <cjgqC-80G-21@gated-at.bofh.it> <cjD3I-22U-7@gated-at.bofh.it> <cjDdE-2g3-31@gated-at.bofh.it> <cjJVv-4vp-13@gated-at.bofh.it> <cjXlS-uM-1@gated-at.bofh.it>
-Reply-To: 7eggert@gmx.de
+From: Lupe Christoph <lupe@lupe-christoph.de>
+Subject: Changes in multipathing between 0.4.5 (SLES9) and 0.4.7
+	(SLES10)
+Date: Thu, 26 Mar 2009 17:06:41 +0100
+Message-ID: <20090326160641.GA12038@lupe-christoph.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7Bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758511AbZCZP1U@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Chris Mason <chris.mason@oracle.com>, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Chris Mason <chris.mason@oracle.com> wrote:
-> On Wed, 2009-03-25 at 18:39 -0400, Mikulas Patocka wrote:
+Hi!
 
->> > The error handling is complex, no doubt
->> > about that. But the trial barrier test is pretty trivial and even could
->> > be easily abstracted out. If a later barrier write fails, then that's
->> > really no different than if a normal write fails. Error handling is not
->> > easy in that case.
->> 
->> I had a discussion with Andi about it some times ago. The conclusion was
->> that all the current filesystems handle barriers failing in the middle of
->> the operation without functionality loss, but it makes barriers useless
->> for any performance-sensitive tasks (commits that wouldn't block
->> concurrent activity). Non-blocking commits could only be implemented if
->> barriers don't fail.
->> 
-> 
-> If a barrier fails at runtime, the filesystems do fall back to not doing
-> barriers without real problems.
+I just ran into a strange difference in the behavious of multipathing
+between SLES9 and SLES10. While SLES9 seemed to ignore single-pathed
+disks like volumes on the internal RAID controller of IBM xSeries,
+SLES10 welcomes them leading to different pathes in /etc/fstab.
 
-That's because there are no real problems in not honoring barriers - unless
-your system crashes.
+There is a lot of our software involved in this behavious, so let's just
+say that the change is unwelcome ;-)
 
-> But, that's because they don't actually 
-> rely on the barriers to decide if an async commit is a good idea.
+We have for now overcome this by blacklisting the internal RAID
+controller. But there are many types of RAID controllers involved (the
+machines have all hardware-mirrored internal disks), so we would like to
+have a better solution.
 
-As long as they cannot rely on barriers - how should they?
+Is there a way to tell the multipath-tools to ignore devices that have
+only a single path? I found nothing in the multipath.conf manpage, but
+maybe I read it wrong.
 
-[...]
-> In general, async commits happen with threads and they aren't related to
-> barriers.
-
-If my filesystem said "First update b, then let a point to b", where the H
-is the thread?
-
-> Barriers don't really give us error handling,
-
-Each request should give you error handling, but you are right: The whole
-queue after the barrier must be aborted, too. (Or better: The part depending
-on the barrier.)
-
-> and they are at  
-> the very end of a long chain of technical problems around commits that
-> don't block concurrent activity.
-
-You lost me here, but I guess the end will be a major rewrite.
+Thanks for any help!
+Luipe Christoph
+-- 
+| There is no substitute for bad design except worse design.                   |
+| /me                                                                          |
