@@ -1,11 +1,13 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 2/2] dm log: remove struct dm_dirty_log_internal
-Date: Thu, 26 Mar 2009 13:33:53 -0400
-Message-ID: <1238088833-9447-2-git-send-email-snitzer@redhat.com>
-References: <1238088833-9447-1-git-send-email-snitzer@redhat.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: hwtable.c for HP LOGICAL VOLUME (cciss_tur isn't working
+	on iSCSI connection).
+Date: Thu, 26 Mar 2009 14:46:54 -0400
+Message-ID: <20090326184654.GA16297@mars.virtualiron.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1238088833-9447-1-git-send-email-snitzer@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,173 +20,31 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Remove the 'dm_dirty_log_internal' structure.  The resulting cleanup
-eliminates extra memory allocations.  Therefore exposing the internal
-list_head to the external 'dm_dirty_log_type' structure is a worthwhile
-compromise.
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-log.c          |   60 ++++++++++-------------------------------
- include/linux/dm-dirty-log.h |    3 ++
- 2 files changed, 18 insertions(+), 45 deletions(-)
+One of our customers purchased a iSCSI target software that converts the
+local disks into shareable SAN disks. (http://www.rocketdivision.com/wind.html).
 
-diff --git a/drivers/md/dm-log.c b/drivers/md/dm-log.c
-index 094c8f0..f5e5e11 100644
---- a/drivers/md/dm-log.c
-+++ b/drivers/md/dm-log.c
-@@ -16,34 +16,28 @@
- 
- #define DM_MSG_PREFIX "dirty region log"
- 
--struct dm_dirty_log_internal {
--	struct dm_dirty_log_type *type;
--
--	struct list_head list;
--};
--
- static LIST_HEAD(_log_types);
- static DEFINE_SPINLOCK(_lock);
- 
--static struct dm_dirty_log_internal *__find_dirty_log_type(const char *name)
-+static struct dm_dirty_log_type *__find_dirty_log_type(const char *name)
- {
--	struct dm_dirty_log_internal *log_type;
-+	struct dm_dirty_log_type *log_type;
- 
- 	list_for_each_entry(log_type, &_log_types, list)
--		if (!strcmp(name, log_type->type->name))
-+		if (!strcmp(name, log_type->name))
- 			return log_type;
- 
- 	return NULL;
- }
- 
--static struct dm_dirty_log_internal *_get_dirty_log_type(const char *name)
-+static struct dm_dirty_log_type *_get_dirty_log_type(const char *name)
- {
--	struct dm_dirty_log_internal *log_type;
-+	struct dm_dirty_log_type *log_type;
- 
- 	spin_lock(&_lock);
- 
- 	log_type = __find_dirty_log_type(name);
--	if (log_type && !try_module_get(log_type->type->module))
-+	if (log_type && !try_module_get(log_type->module))
- 		log_type = NULL;
- 
- 	spin_unlock(&_lock);
-@@ -71,14 +65,14 @@ static struct dm_dirty_log_internal *_get_dirty_log_type(const char *name)
- static struct dm_dirty_log_type *get_type(const char *type_name)
- {
- 	char *p, *type_name_dup;
--	struct dm_dirty_log_internal *log_type;
-+	struct dm_dirty_log_type *log_type;
- 
- 	if (!type_name)
- 		return NULL;
- 
- 	log_type = _get_dirty_log_type(type_name);
- 	if (log_type)
--		return log_type->type;
-+		return log_type;
- 
- 	type_name_dup = kstrdup(type_name, GFP_KERNEL);
- 	if (!type_name_dup) {
-@@ -100,19 +94,16 @@ static struct dm_dirty_log_type *get_type(const char *type_name)
- 
- 	kfree(type_name_dup);
- 
--	return log_type ? log_type->type : NULL;
-+	return log_type;
- }
- 
- static void put_type(struct dm_dirty_log_type *type)
- {
--	struct dm_dirty_log_internal *log_type;
--
- 	if (!type)
- 		return;
- 
--	spin_lock(&_lock);
--	log_type = __find_dirty_log_type(type->name);
--	if (!log_type)
-+	spin_lock(&_lock);
-+	if (!__find_dirty_log_type(type->name))
- 		goto out;
- 
- 	module_put(type->module);
-@@ -121,32 +112,15 @@ out:
- 	spin_unlock(&_lock);
- }
- 
--static struct dm_dirty_log_internal *_alloc_dirty_log_type(struct dm_dirty_log_type *type)
--{
--	struct dm_dirty_log_internal *log_type = kzalloc(sizeof(*log_type),
--							 GFP_KERNEL);
--
--	if (log_type)
--		log_type->type = type;
--
--	return log_type;
--}
--
- int dm_dirty_log_type_register(struct dm_dirty_log_type *type)
- {
--	struct dm_dirty_log_internal *log_type = _alloc_dirty_log_type(type);
- 	int r = 0;
- 
--	if (!log_type)
--		return -ENOMEM;
--
- 	spin_lock(&_lock);
- 	if (!__find_dirty_log_type(type->name))
--		list_add(&log_type->list, &_log_types);
--	else {
--		kfree(log_type);
-+		list_add(&type->list, &_log_types);
-+	else
- 		r = -EEXIST;
--	}
- 	spin_unlock(&_lock);
- 
- 	return r;
-@@ -155,20 +129,16 @@ EXPORT_SYMBOL(dm_dirty_log_type_register);
- 
- int dm_dirty_log_type_unregister(struct dm_dirty_log_type *type)
- {
--	struct dm_dirty_log_internal *log_type;
--
- 	spin_lock(&_lock);
- 
--	log_type = __find_dirty_log_type(type->name);
--	if (!log_type) {
-+	if (!__find_dirty_log_type(type->name)) {
- 		spin_unlock(&_lock);
- 		return -EINVAL;
- 	}
- 
--	list_del(&log_type->list);
-+	list_del(&type->list);
- 
- 	spin_unlock(&_lock);
--	kfree(log_type);
- 
- 	return 0;
- }
-diff --git a/include/linux/dm-dirty-log.h b/include/linux/dm-dirty-log.h
-index a6600a5..5e8b11d 100644
---- a/include/linux/dm-dirty-log.h
-+++ b/include/linux/dm-dirty-log.h
-@@ -28,6 +28,9 @@ struct dm_dirty_log_type {
- 	const char *name;
- 	struct module *module;
- 
-+	/* For internal device-mapper use */
-+	struct list_head list;
-+
- 	int (*ctr)(struct dm_dirty_log *log, struct dm_target *ti,
- 		   unsigned argc, char **argv);
- 	void (*dtr)(struct dm_dirty_log *log);
--- 
-1.6.0.6
+Unfortunatly the software exports the vendor/product of the disks the same as
+on the target. Meaning that the HP LOGICAL DISKS are shown over an iSCSI
+initiator session. And the cciss_tur checker is kicked off and tries
+this ioctl call:
+
+    rc = ioctl(c->fd, CCISS_GETLUNINFO, &lvi);
+    if ( rc != 0) {
+        perror("Error: ");
+        fprintf(stderr, "cciss TUR  failed in CCISS_GETLUNINFO: %s\n",
+
+
+which fails, since the ioctl is done on a SCSI device instead
+on the cciss driver.
+
+So should the cciss_tur be modified try to do a normal SCSI tur
+if it fails to perform the ioctl call? Maybe make a path where
+it would first do a CCISS_VERSION (not sure if that exists) and
+if that fail do exactly what the 'tur' checker does?
+
+Or maybe (with more of these types of software that turn your box in
+iSCSI target), provide a means of having a secondary path checker in case
+the first one fails?
+
+Thoughts?
