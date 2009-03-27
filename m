@@ -1,13 +1,23 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: multipathd segfault
-Date: Fri, 27 Mar 2009 08:50:30 +0100
-Message-ID: <49CC8546.9080500@suse.de>
-References: <448b15030903261725x1fc4c02dx594c6df7b8daa11e@mail.gmail.com>
+From: Pasi =?iso-8859-1?Q?K=E4rkk=E4inen?= <pasik@iki.fi>
+Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
+Date: Fri, 27 Mar 2009 11:02:00 +0200
+Message-ID: <20090327090200.GP24960@edu.joroinen.fi>
+References: <1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324150104.GO5528@edu.joroinen.fi>
+	<1237909400.6560.80.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324163603.GQ5528@edu.joroinen.fi>
+	<1237915811.6560.135.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324181735.GR5528@edu.joroinen.fi>
+	<1237952460.6560.204.camel@jaspav.missionsit.net.missionsit.net>
+	<20090325155207.GE24960@edu.joroinen.fi>
+	<1237998092.6560.233.camel@jaspav.missionsit.net.missionsit.net>
+	<1238137415.6574.48.camel@jaspav.missionsit.net.missionsit.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="------------050406000007040200050302"
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <448b15030903261725x1fc4c02dx594c6df7b8daa11e@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <1238137415.6574.48.camel@jaspav.missionsit.net.missionsit.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,103 +28,67 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
+Cc: "Ross S. W. Walker" <rwalker@medallion.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------050406000007040200050302
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
+On Fri, Mar 27, 2009 at 03:03:35AM -0400, John A. Sullivan III wrote:
+> > > 
+> > > > The once piece which is still a mystery is why using four targets on
+> > > > four separate interfaces striped with dmadm RAID0 does not produce an
+> > > > aggregate of slightly less than four times the IOPS of a single target
+> > > > on a single interface. This would not seem to be the out of order SCSI
+> > > > command problem of multipath.  One of life's great mysteries yet to be
+> > > > revealed.  Thanks again, all - John
+> > > 
+> > > Hmm.. maybe the out-of-order problem happens at the target? It gets IO
+> > > requests to nearby offsets from 4 different sessions and there's some kind
+> > > of locking or so going on? 
+> > Ross pointed out a flaw in my test methodology.  By running one I/O at a
+> > time, it was literally doing that - not one full RAID0 I/O but one disk
+> > I/O apparently.  He said to truly test it, I would need to run as many
+> > concurrent I/Os as there were disks in the array.  Thanks - John
+> > ><snip>
+> Argh!!! This turned out to be alarmingly untrue.  This time, we were
+> doing some light testing on a different server with two bonded
+> interfaces in a single bridge (KVM environment) going to the same SAM we
+> used in our four port test.
+> 
 
-David Strand wrote:
-> I am getting a multipathd segfault when I have more than 26 devices,
-> and the device names become 4 characters. (i.e. /dev/sdz is consumed
-> and the next device is /dev/sdaa).
->=20
-> I was trying to hook gdb to a core dump, but it keeps complaining that
-> it needs device-mapper-libs-debuginfo, which I can not find. Can
-> anyone point me to this?
->=20
-> I built multipathd with -g turned on and did not strip it. Here is the
-> last few lines of output when I run it as multipathd -v9 -d:
->=20
-> Jul 04 05:01:26 | alpa-0x000080: discover
-> Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm table
-> alpa-0x000080  NF   [16384]
-> Jul 04 05:01:26 | *word =3D 0, len =3D 1
-> Jul 04 05:01:26 | *word =3D 0, len =3D 1
-> Jul 04 05:01:26 | *word =3D 1, len =3D 1
-> Jul 04 05:01:26 | *word =3D 1, len =3D 1
-> Jul 04 05:01:26 | *word =3D 1, len =3D 1
-> Jul 04 05:01:26 | *word =3D 1, len =3D 1
-> Jul 04 05:01:26 | *word =3D 65:160, len =3D 6
-> Jul 04 05:01:26 | *word =3D 1000, len =3D 4
-> Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm status
-> alpa-0x000080  NF   [16384]
-> Jul 04 05:01:26 | *word =3D 2, len =3D 1
-> Jul 04 05:01:26 | *word =3D 0, len =3D 1
-> Jul 04 05:01:26 | *word =3D 0, len =3D 1
-> Jul 04 05:01:26 | *word =3D 1, len =3D 1
-> Jul 04 05:01:26 | *word =3D E, len =3D 1
-> Jul 04 05:01:26 | *word =3D 1, len =3D 1
-> Jul 04 05:01:26 | *word =3D 0, len =3D 1
-> Jul 04 05:01:26 | *word =3D A, len =3D 1
-> Jul 04 05:01:26 | *word =3D 0, len =3D 1
-> Jul 04 05:01:26 | alpa-0x000080: rr_weight =3D 1 (internal default)
-> Jul 04 05:01:26 | alpa-0x000080: pgfailback =3D -2 (config file default=
-)
-> Jul 04 05:01:26 | alpa-0x000080: no_path_retry =3D 3 (config file defau=
-lt)
-> Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm message
-> alpa-0x000080  NF  queue_if_no_path
->  [16384]
-> Jul 04 05:01:26 | pg_timeout =3D NONE (internal default)
-> Jul 04 05:01:26 | alpa-0x000080: event checker started
-> Jul 04 05:01:26 | sdaa path added to devmap alpa-0x000080
-> Jul 04 05:01:26 | discard event on /block/sdaa/sdaa1
-> Segmentation fault
->=20
-Oh, that one.
+Is the SAN also using bonded interfaces?
 
-Fixed by the attached path.
+> For kicks and to prove to ourselves that RAID0 scaled with multiple I/O
+> as opposed to limiting the test to only single I/O, we tried some actual
+> file transfers to the SAN mounted in sync mode.  We found concurrently
+> transferring two identical files to the RAID0 array composed of two
+> iSCSI attached drives was 57% slower than concurrently transferring the
+> files to the drives separately. In other words, copying file1 and file2
+> concurrently to RAID0 took 57% longer than concurrently copying file1 to
+> disk1 and file2 to disk2.
+> 
 
-Christophe, care to apply?
+Hmm.. I wonder why that happens..
 
-Cheers,
+> We then took a little different approach and used disktest.  We ran two
+> concurrent sessions with -K1.  In one case, we ran both sessions to the
+> 2 disk RAID0 array.  The performance was significantly less again, than
+> running the two concurrent tests against two separate iSCSI disks.  Just
+> to be clear, these were the same disks as composed the array, just not
+> grouped in the array.
+> 
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
+There has to be some logical explanation to this.. 
 
---------------050406000007040200050302
-Content-Type: text/plain;
- name="multipath-tools-uev-discard-segfault"
-Content-Transfer-Encoding: base64
-Content-Disposition: inline;
- filename="multipath-tools-uev-discard-segfault"
+> Even more alarmingly, we did the same test using multipath multibus,
+> i.e., two concurrent disktest with -K1 (both reads and rights, all
+> sequential with 4K block sizes).  The first session completely starved
+> the second.  The first one continued at only slightly reduced speed
+> while the second one (kicked off just as fast as we could hit the enter
+> key) received only roughly 50 IOPS.  Yes, that's fifty.
+> 
+> Frightening but I thought I had better pass along such extreme results
+> to the multipath team.  Thanks - John
 
-Y29tbWl0IDIyMzg4NWI2NjMxMWJiYjQ3ZTQzOTU1N2VjZWQwNjZiMzMyNGFkOGUKQXV0aG9y
-OiBIYW5uZXMgUmVpbmVja2UgPGhhcmVAc3VzZS5kZT4KRGF0ZTogICBUdWUgTWFyIDEwIDA4
-OjU3OjE4IDIwMDkgKzAxMDAKCiAgICBTdGFjayBvdmVyZmxvdyBpbiB1ZXZfdHJpZ2dlcigp
-CiAgICAKICAgIHVldl9kaXNjYXJkIHVzZXMgc3NjYW5mIHRvIHdyaXRlIGEgMTAgYnl0ZSBz
-dHJpbmcgaW50byBhbiBhcnJheSwKICAgIGJ1dCBJIGZvcmdvdCB0byB0YWtlIHRoZSB0cmFp
-bGluZyBOVUxMIGJ5dGUgaW50byBhY2NvdW50LgogICAgCiAgICBSZWZlcmVuY2VzOiBibmMj
-NDc2NTQwCiAgICAKICAgIFNpZ25lZC1vZmYtYnk6IEhhbm5lcyBSZWluZWNrZSA8aGFyZUBz
-dXNlLmRlPgoKZGlmZiAtLWdpdCBhL211bHRpcGF0aGQvbWFpbi5jIGIvbXVsdGlwYXRoZC9t
-YWluLmMKaW5kZXggN2M5OTViNi4uMWQ4ZmY1YSAxMDA2NDQKLS0tIGEvbXVsdGlwYXRoZC9t
-YWluLmMKKysrIGIvbXVsdGlwYXRoZC9tYWluLmMKQEAgLTY1Miw3ICs2NTIsNyBAQCB1eHNv
-Y2tfdHJpZ2dlciAoY2hhciAqIHN0ciwgY2hhciAqKiByZXBseSwgaW50ICogbGVuLCB2b2lk
-ICogdHJpZ2dlcl9kYXRhKQogc3RhdGljIGludAogdWV2X2Rpc2NhcmQoY2hhciAqIGRldnBh
-dGgpCiB7Ci0JY2hhciBhWzEwXSwgYlsxMF0sICpjOworCWNoYXIgYVsxMV0sIGJbMTFdLCAq
-YzsKIAogCS8qCiAJICoga2VlcCBvbmx5IGJsb2NrIGRldmljZXMsIGRpc2NhcmQgcGFydGl0
-aW9ucwo=
---------------050406000007040200050302
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+Hmm, so you had mpath0 and mpath1, and you ran disktest against both, at the
+same time? 
 
-
---------------050406000007040200050302--
+-- Pasi
