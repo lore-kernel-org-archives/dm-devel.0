@@ -1,13 +1,25 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 14/14] barriers
-Date: Fri, 27 Mar 2009 02:11:04 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0903270209380.17063@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0902231422490.23293@hs20-bc2-1.build.redhat.com>
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: Re: Shell Scripts or Arbitrary Priority Callouts?
+Date: Fri, 27 Mar 2009 03:03:35 -0400
+Message-ID: <1238137415.6574.48.camel@jaspav.missionsit.net.missionsit.net>
+References: <20090324073935.GK5528@edu.joroinen.fi>
+	<1237892561.6560.19.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324115708.GM5528@edu.joroinen.fi>
+	<1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324150104.GO5528@edu.joroinen.fi>
+	<1237909400.6560.80.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324163603.GQ5528@edu.joroinen.fi>
+	<1237915811.6560.135.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324181735.GR5528@edu.joroinen.fi>
+	<1237952460.6560.204.camel@jaspav.missionsit.net.missionsit.net>
+	<20090325155207.GE24960@edu.joroinen.fi>
+	<1237998092.6560.233.camel@jaspav.missionsit.net.missionsit.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0902231422490.23293@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <1237998092.6560.233.camel@jaspav.missionsit.net.missionsit.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,198 +29,114 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
+Cc: "Ross S. W. Walker" <rwalker@medallion.com>
 List-Id: dm-devel.ids
 
-Barrier support.
+On Wed, 2009-03-25 at 12:21 -0400, John A. Sullivan III wrote:
+> On Wed, 2009-03-25 at 17:52 +0200, Pasi K=C3=A4rkk=C3=A4inen wrote:
+> > On Tue, Mar 24, 2009 at 11:41:00PM -0400, John A. Sullivan III wrote:
+> > > > > Latency seems to be our key.  If I can add only 20 micro-second=
+s of
+> > > > > latency from initiator and target each, that would be roughly 2=
+00 micro
+> > > > > seconds.  That would almost triple the throughput from what we =
+are
+> > > > > currently seeing.
+> > > > >=20
+> > > >=20
+> > > > Indeed :)=20
+> > > >=20
+> > > > > Unfortunately, I'm a bit ignorant of tweaking networks on opens=
+olaris.
+> > > > > I can certainly learn but am I headed in the right direction or=
+ is this
+> > > > > direction of investigation misguided? Thanks - John
+> > > > >=20
+> > > >=20
+> > > > Low latency is the key for good (iSCSI) SAN performance, as it di=
+rectly
+> > > > gives you more (possible) IOPS.=20
+> > > >=20
+> > > > Other option is to configure software/settings so that there are =
+multiple
+> > > > outstanding IO's on the fly.. then you're not limited with the la=
+tency (so much).
+> > > >=20
+> > > > -- Pasi
+> > > <snip>
+> > > Ross has been of enormous help offline.  Indeed, disabling jumbo pa=
+ckets
+> > > produced an almost 50% increase in single threaded throughput.  We =
+are
+> > > pretty well set although still a bit disappointed in the latency we=
+ are
+> > > seeing in opensolaris and have escalated to the vendor about addres=
+sing
+> > > it.
+> > >=20
+> >=20
+> > Ok. That's pretty big increase. Did you figure out why that happens?=20
+> Greater latency with jumbo packets.
+> >=20
+> > > The once piece which is still a mystery is why using four targets o=
+n
+> > > four separate interfaces striped with dmadm RAID0 does not produce =
+an
+> > > aggregate of slightly less than four times the IOPS of a single tar=
+get
+> > > on a single interface. This would not seem to be the out of order S=
+CSI
+> > > command problem of multipath.  One of life's great mysteries yet to=
+ be
+> > > revealed.  Thanks again, all - John
+> >=20
+> > Hmm.. maybe the out-of-order problem happens at the target? It gets I=
+O
+> > requests to nearby offsets from 4 different sessions and there's some=
+ kind
+> > of locking or so going on?=20
+> Ross pointed out a flaw in my test methodology.  By running one I/O at =
+a
+> time, it was literally doing that - not one full RAID0 I/O but one disk
+> I/O apparently.  He said to truly test it, I would need to run as many
+> concurrent I/Os as there were disks in the array.  Thanks - John
+> ><snip>
+Argh!!! This turned out to be alarmingly untrue.  This time, we were
+doing some light testing on a different server with two bonded
+interfaces in a single bridge (KVM environment) going to the same SAM we
+used in our four port test.
 
-Barriers are submitted to a worker thread that issues them in-order.
+For kicks and to prove to ourselves that RAID0 scaled with multiple I/O
+as opposed to limiting the test to only single I/O, we tried some actual
+file transfers to the SAN mounted in sync mode.  We found concurrently
+transferring two identical files to the RAID0 array composed of two
+iSCSI attached drives was 57% slower than concurrently transferring the
+files to the drives separately. In other words, copying file1 and file2
+concurrently to RAID0 took 57% longer than concurrently copying file1 to
+disk1 and file2 to disk2.
 
-__split_and_process_bio function is modified that when it sees a barrier
-request, it waits for all pending IO before the request, then submits
-the barrier and waits for it (we must wait, otherwise it could be
-intermixed with following requests).
+We then took a little different approach and used disktest.  We ran two
+concurrent sessions with -K1.  In one case, we ran both sessions to the
+2 disk RAID0 array.  The performance was significantly less again, than
+running the two concurrent tests against two separate iSCSI disks.  Just
+to be clear, these were the same disks as composed the array, just not
+grouped in the array.
 
-Errors from the barrier request are recorded in per-device barrier_error
-variable. There may be only one barrier request in progress, so using
-a per-device variable is correct.
+Even more alarmingly, we did the same test using multipath multibus,
+i.e., two concurrent disktest with -K1 (both reads and rights, all
+sequential with 4K block sizes).  The first session completely starved
+the second.  The first one continued at only slightly reduced speed
+while the second one (kicked off just as fast as we could hit the enter
+key) received only roughly 50 IOPS.  Yes, that's fifty.
 
-The barrier request is converted to non-barrier request when sending it
-to the underlying device.
+Frightening but I thought I had better pass along such extreme results
+to the multipath team.  Thanks - John
+--=20
+John A. Sullivan III
+Open Source Development Corporation
++1 207-985-7880
+jsullivan@opensourcedevel.com
 
-This patch guarantees correct barrier behavior if the underlying device
-doesn't perform write-back caching. The same requirement existed before
-barriers were supported in dm.
-
-Bottom layer barrier support (sending barriers by target drivers) and
-handling devices with write-back caches will be done in further patches.
-
-Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-
----
- drivers/md/dm.c |   79 +++++++++++++++++++++++++++++++++++++++++++-------------
- 1 file changed, 61 insertions(+), 18 deletions(-)
-
-Index: linux-2.6.29-rc8-devel/drivers/md/dm.c
-===================================================================
---- linux-2.6.29-rc8-devel.orig/drivers/md/dm.c	2009-03-27 06:51:29.000000000 +0100
-+++ linux-2.6.29-rc8-devel/drivers/md/dm.c	2009-03-27 06:51:33.000000000 +0100
-@@ -125,6 +125,11 @@ struct mapped_device {
- 	spinlock_t deferred_lock;
- 
- 	/*
-+	 * An error from the barrier request currently being processed.
-+	 */
-+	int barrier_error;
-+
-+	/*
- 	 * Processing queue (flush/barriers)
- 	 */
- 	struct workqueue_struct *wq;
-@@ -425,6 +430,10 @@ static void end_io_acct(struct dm_io *io
- 	part_stat_add(cpu, &dm_disk(md)->part0, ticks[rw], duration);
- 	part_stat_unlock();
- 
-+	/*
-+	 * after this is decremented, the bio must not be touched if it is
-+	 * barrier bio
-+	 */
- 	dm_disk(md)->part0.in_flight = pending =
- 		atomic_dec_return(&md->pending);
- 
-@@ -525,19 +534,29 @@ static void dec_pending(struct dm_io *io
- 			 */
- 			spin_lock_irqsave(&io->md->deferred_lock, flags);
- 			if (__noflush_suspending(io->md))
--				bio_list_add(&io->md->deferred, io->bio);
-+				bio_list_add_head(&io->md->deferred, io->bio);
- 			else
- 				/* noflush suspend was interrupted. */
- 				io->error = -EIO;
- 			spin_unlock_irqrestore(&io->md->deferred_lock, flags);
- 		}
- 
--		end_io_acct(io);
-+		if (bio_barrier(io->bio)) {
-+			/*
-+			 * There could be just one barrier request, so we use
-+			 * per-device variable for error reporting is OK.
-+			 * Note that you can't touch the bio after end_io_acct
-+			 */
-+			io->md->barrier_error = io->error;
-+			end_io_acct(io);
-+		} else {
-+			end_io_acct(io);
- 
--		if (io->error != DM_ENDIO_REQUEUE) {
--			trace_block_bio_complete(io->md->queue, io->bio);
-+			if (io->error != DM_ENDIO_REQUEUE) {
-+				trace_block_bio_complete(io->md->queue, io->bio);
- 
--			bio_endio(io->bio, io->error);
-+				bio_endio(io->bio, io->error);
-+			}
- 		}
- 
- 		free_io(io->md, io);
-@@ -682,7 +701,7 @@ static struct bio *split_bvec(struct bio
- 
- 	clone->bi_sector = sector;
- 	clone->bi_bdev = bio->bi_bdev;
--	clone->bi_rw = bio->bi_rw;
-+	clone->bi_rw = bio->bi_rw & ~(1 << BIO_RW_BARRIER);
- 	clone->bi_vcnt = 1;
- 	clone->bi_size = to_bytes(len);
- 	clone->bi_io_vec->bv_offset = offset;
-@@ -703,6 +722,7 @@ static struct bio *clone_bio(struct bio 
- 
- 	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
- 	__bio_clone(clone, bio);
-+	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
- 	clone->bi_destructor = dm_bio_destructor;
- 	clone->bi_sector = sector;
- 	clone->bi_idx = idx;
-@@ -823,7 +843,10 @@ static void __split_and_process_bio(stru
- 
- 	ci.map = dm_get_table(md);
- 	if (unlikely(!ci.map)) {
--		bio_io_error(bio);
-+		if (!bio_barrier(bio))
-+			bio_io_error(bio);
-+		else
-+			md->barrier_error = -EIO;
- 		return;
- 	}
- 
-@@ -907,15 +930,6 @@ static int dm_request(struct request_que
- 	struct mapped_device *md = q->queuedata;
- 	int cpu;
- 
--	/*
--	 * There is no use in forwarding any barrier request since we can't
--	 * guarantee it is (or can be) handled by the targets correctly.
--	 */
--	if (unlikely(bio_barrier(bio))) {
--		bio_endio(bio, -EOPNOTSUPP);
--		return 0;
--	}
--
- 	down_read(&md->io_lock);
- 
- 	cpu = part_stat_lock();
-@@ -927,7 +941,8 @@ static int dm_request(struct request_que
- 	 * If we're suspended or the thread is processing barriers
- 	 * we have to queue this io for later.
- 	 */
--	if (unlikely(test_bit(DMF_QUEUE_IO_FOR_THREAD, &md->flags))) {
-+	if (unlikely(test_bit(DMF_QUEUE_IO_FOR_THREAD, &md->flags)) ||
-+	    unlikely(bio_barrier(bio))) {
- 		up_read(&md->io_lock);
- 
- 		if (unlikely(test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) &&
-@@ -1393,6 +1408,12 @@ static int dm_wait_for_completion(struct
- 	return r;
- }
- 
-+static int dm_flush(struct mapped_device *md)
-+{
-+	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
-+	return 0;
-+}
-+
- /*
-  * Process the deferred bios
-  */
-@@ -1415,8 +1436,30 @@ static void dm_wq_work(struct work_struc
- 			break;
- 		}
- 
--		__split_and_process_bio(md, c);
-+		if (!bio_barrier(c))
-+			__split_and_process_bio(md, c);
-+		else {
-+			int error = dm_flush(md);
-+			if (unlikely(error)) {
-+				bio_endio(c, error);
-+				goto next_bio;
-+			}
-+			if (bio_empty_barrier(c)) {
-+				bio_endio(c, 0);
-+				goto next_bio;
-+			}
-+
-+			__split_and_process_bio(md, c);
-+
-+			error = dm_flush(md);
-+			if (!error && md->barrier_error)
-+				error = md->barrier_error;
-+
-+			if (md->barrier_error != DM_ENDIO_REQUEUE)
-+				bio_endio(c, error);
-+		}
- 
-+next_bio:
- 		down_write(&md->io_lock);
- 	}
- }
+http://www.spiritualoutreach.com
+Making Christianity intelligible to secular society
