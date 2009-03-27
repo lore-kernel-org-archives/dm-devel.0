@@ -1,15 +1,29 @@
-From: David Strand <dpstrand@gmail.com>
-Subject: Re: multipathd segfault
-Date: Fri, 27 Mar 2009 10:08:14 -0700
-Message-ID: <448b15030903271008u3ff803cem3252be01adcd313f@mail.gmail.com>
-References: <448b15030903261725x1fc4c02dx594c6df7b8daa11e@mail.gmail.com>
-	<49CC8546.9080500@suse.de>
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: RE: Shell Scripts or Arbitrary Priority Callouts?
+Date: Fri, 27 Mar 2009 13:15:41 -0400
+Message-ID: <1238174141.6574.109.camel@jaspav.missionsit.net.missionsit.net>
+References: <20090324073935.GK5528@edu.joroinen.fi>
+	<1237892561.6560.19.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324115708.GM5528@edu.joroinen.fi>
+	<1237897305.6560.26.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324150104.GO5528@edu.joroinen.fi>
+	<1237909400.6560.80.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324163603.GQ5528@edu.joroinen.fi>
+	<1237915811.6560.135.camel@jaspav.missionsit.net.missionsit.net>
+	<20090324181735.GR5528@edu.joroinen.fi>
+	<1237952460.6560.204.camel@jaspav.missionsit.net.missionsit.net>
+	<20090325155207.GE24960@edu.joroinen.fi>
+	<1237998092.6560.233.camel@jaspav.missionsit.net.missionsit.net>
+	<1238137415.6574.48.camel@jaspav.missionsit.net.missionsit.net>
+	<2A4646CA-45AF-460A-8E43-A6D9C070842A@medallion.com>
+	<1238165063.6574.97.camel@jaspav.missionsit.net.missionsit.net>
+	<E2BB8074E5500C42984D980D4BD78EF9029E3CFA@MFG-NYC-EXCH2.mfg.prv>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49CC8546.9080500@suse.de>
+In-Reply-To: <E2BB8074E5500C42984D980D4BD78EF9029E3CFA@MFG-NYC-EXCH2.mfg.prv>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,111 +33,109 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: "Ross S. W. Walker" <RWalker@medallion.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Yep, that was exactly it.
+On Fri, 2009-03-27 at 10:59 -0400, Ross S. W. Walker wrote:
+> John A. Sullivan III wrote:
+> > 
+> > On Fri, 2009-03-27 at 10:09 -0400, Ross S. W. Walker wrote:
+> > > 
+> > > I'm sorry you lost me here on this test. NFS file transfers are
+> > > completely different then iSCSI as NFS uses the OS' (for better or
+> > > worse) implementation of file io and not block io, so using NFS as a
+> > > test isn't the best.
+> > 
+> > Sorry if I wasn't clear.  These were iSCSI tests but using file
+> > services, e.g., cp, mv.
+> > 
+> > > My whole idea of mentioning the multiple ios was basically if one
+> > > disk's maximum transfer speed is 40MB/s and you put 4 in a RAID0 then
+> > > if you tested that RAID0 with an app that did 1 io at a time you would
+> > > still only see 40MB/s and not the 160MB/s it is capable of. Obviously
+> > > that isn't what's happening here.
+> > 
+> > Yes, that's what I was hoping for :)
+> > 
+> > > One would hope throughput scales up with number of simultaneous ios or
+> > > there is something broken. Maybe it is dm-raid that is broken, or
+> > > maybe it's just dm-raid+iSCSI that's broken, or maybe it's just
+> > > dm-raid+iSCSI+ZFS that's broken? Who knows? Iit's obvious that this
+> > > setup won't work though.
+> > > 
+> <snip>
+> > > 
+> > > I would take a step back at this point and re-evaluate if running
+> > > software RAID over iSCSI is the best. It seems like a highly complex
+> > > system to get the performance you need.
+> > 
+> > Yes, that's what we've decided to do which has forced a bit of redesign
+> > on our part.
+> > 
+> > > The best, most reliably performing results I have seen with iSCSI have
+> > > been those where the target is performing the RAID (software or
+> > > hardware) and the initiator treats it as a plain disk, using interface
+> > > aggregates or multi-paths to gain throughput.
+> > 
+> > Strangely, multipath didn't seem to help as I thought it would.  Thanks
+> > for all your help - John
+> 
+> Not a problem, in fact I have a vested interest in you succeeding because
+> we are looking at moving our iSCSI over from Linux to Solaris to get
+> that warm fuzzy ZFS integrity assurance feeling.
+> 
+> It is just (and we are running Solaris 10u6 and not OpenSolaris here), we
+> find the user space iscsitgt daemon leaves something to be desired over
+> the kernel based iSCSI Enterprise Target on Linux. Also we have noticed
+> strange performance abnormalities in our tests of iSCSI to a ZFS ZVOL
+> as opposed to iSCSI to a raw disk.
+> 
+> Maybe it's just the price you pay doing iSCSI to a COW file system instead
+> of a raw disk? I dunno, I always prefer to get it all then compromise,
+> but sometimes one doesn't have a choice.
+> 
+> Oh BTW ZFS as an NFS server works brilliantly. We have moved 50% of our
+> VMs over from iSCSI to NFS and performance is great as each VM has 
+> a level of guaranteed throughput so no one VM can starve out the others.
+> 
+> We are going to stick with our Linux iSCSI target for a wee bit longer
+> though to see if the ZFS/ZVOL/iscsitgt situation improves in 10u7. Gives
+> me time to learn the Solaris LiveUpgrade feature.
+<snip>
+Hi Ross. I hope you don't mind that I copied the mailing list in case it
+is of interest to anyone.
 
-2009/3/27 Hannes Reinecke <hare@suse.de>:
-> David Strand wrote:
->>
->> I am getting a multipathd segfault when I have more than 26 devices,
->> and the device names become 4 characters. (i.e. /dev/sdz is consumed
->> and the next device is /dev/sdaa).
->>
->> I was trying to hook gdb to a core dump, but it keeps complaining that
->> it needs device-mapper-libs-debuginfo, which I can not find. Can
->> anyone point me to this?
->>
->> I built multipathd with -g turned on and did not strip it. Here is the
->> last few lines of output when I run it as multipathd -v9 -d:
->>
->> Jul 04 05:01:26 | alpa-0x000080: discover
->> Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm table
->> alpa-0x000080 =C2=A0NF =C2=A0 [16384]
->> Jul 04 05:01:26 | *word =3D 0, len =3D 1
->> Jul 04 05:01:26 | *word =3D 0, len =3D 1
->> Jul 04 05:01:26 | *word =3D 1, len =3D 1
->> Jul 04 05:01:26 | *word =3D 1, len =3D 1
->> Jul 04 05:01:26 | *word =3D 1, len =3D 1
->> Jul 04 05:01:26 | *word =3D 1, len =3D 1
->> Jul 04 05:01:26 | *word =3D 65:160, len =3D 6
->> Jul 04 05:01:26 | *word =3D 1000, len =3D 4
->> Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm status
->> alpa-0x000080 =C2=A0NF =C2=A0 [16384]
->> Jul 04 05:01:26 | *word =3D 2, len =3D 1
->> Jul 04 05:01:26 | *word =3D 0, len =3D 1
->> Jul 04 05:01:26 | *word =3D 0, len =3D 1
->> Jul 04 05:01:26 | *word =3D 1, len =3D 1
->> Jul 04 05:01:26 | *word =3D E, len =3D 1
->> Jul 04 05:01:26 | *word =3D 1, len =3D 1
->> Jul 04 05:01:26 | *word =3D 0, len =3D 1
->> Jul 04 05:01:26 | *word =3D A, len =3D 1
->> Jul 04 05:01:26 | *word =3D 0, len =3D 1
->> Jul 04 05:01:26 | alpa-0x000080: rr_weight =3D 1 (internal default)
->> Jul 04 05:01:26 | alpa-0x000080: pgfailback =3D -2 (config file defaul=
-t)
->> Jul 04 05:01:26 | alpa-0x000080: no_path_retry =3D 3 (config file defa=
-ult)
->> Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm message
->> alpa-0x000080 =C2=A0NF =C2=A0queue_if_no_path
->> =C2=A0[16384]
->> Jul 04 05:01:26 | pg_timeout =3D NONE (internal default)
->> Jul 04 05:01:26 | alpa-0x000080: event checker started
->> Jul 04 05:01:26 | sdaa path added to devmap alpa-0x000080
->> Jul 04 05:01:26 | discard event on /block/sdaa/sdaa1
->> Segmentation fault
->>
-> Oh, that one.
->
-> Fixed by the attached path.
->
-> Christophe, care to apply?
->
-> Cheers,
->
-> Hannes
-> --
-> Dr. Hannes Reinecke =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 zSeries & Storage
-> hare@suse.de =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
-=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0+49 911 74053 688
-> SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=C3=BCrnberg
-> GF: Markus Rex, HRB 16746 (AG N=C3=BCrnberg)
->
-> commit 223885b66311bbb47e439557eced066b3324ad8e
-> Author: Hannes Reinecke <hare@suse.de>
-> Date: =C2=A0 Tue Mar 10 08:57:18 2009 +0100
->
-> =C2=A0 =C2=A0Stack overflow in uev_trigger()
->
-> =C2=A0 =C2=A0uev_discard uses sscanf to write a 10 byte string into an =
-array,
-> =C2=A0 =C2=A0but I forgot to take the trailing NULL byte into account.
->
-> =C2=A0 =C2=A0References: bnc#476540
->
-> =C2=A0 =C2=A0Signed-off-by: Hannes Reinecke <hare@suse.de>
->
-> diff --git a/multipathd/main.c b/multipathd/main.c
-> index 7c995b6..1d8ff5a 100644
-> --- a/multipathd/main.c
-> +++ b/multipathd/main.c
-> @@ -652,7 +652,7 @@ uxsock_trigger (char * str, char ** reply, int * le=
-n,
-> void * trigger_data)
-> =C2=A0static int
-> =C2=A0uev_discard(char * devpath)
-> =C2=A0{
-> - =C2=A0 =C2=A0 =C2=A0 char a[10], b[10], *c;
-> + =C2=A0 =C2=A0 =C2=A0 char a[11], b[11], *c;
->
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0/*
-> =C2=A0 =C2=A0 =C2=A0 =C2=A0 * keep only block devices, discard partitio=
-ns
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+We are using COMSTAR which has given a substantial improvement over
+iscsitgt.  I was concerned about the overhead of writing to the file
+system although I'm not sure that's really the issue.  When we run
+bonnie++ tests on the unit itself, we see it able to read at over 500
+MB/s and write at almost 250.  That's in a unit with four mirror
+pairs.  
+
+The killer issue seems to be latency.  As seen in a previous post, the
+latency on the opensolaris unit is dramatically higher than on the Linux
+unit and more erratic.
+
+That brings me back to a question about NFS.  I could use NFS for our
+scenario as much of our disk I/O is file system I/O (hence the 4KB block
+size problem and impact of latency).  We've thought about switching to
+NFS and I've just not benchmarked it because we are so behind on our
+project (not a good reason).  However, everything I read says NFS is
+slower iSCSI especially for random file I/O as we expect although I
+wonder if it would help us on sequential I/O since we can change the I/O
+size to something much larger than the file system block size.
+
+So, what are the downsides of using NFS? Will I see the same problem
+because of latency (since we get plenty of raw throughput on disk) or is
+it a solution to our latency problem because we can tell it to use large
+transfer sizes? Thanks - John
+> 
+-- 
+John A. Sullivan III
+Open Source Development Corporation
++1 207-985-7880
+jsullivan@opensourcedevel.com
+
+http://www.spiritualoutreach.com
+Making Christianity intelligible to secular society
