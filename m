@@ -1,12 +1,13 @@
-From: David Strand <dpstrand@gmail.com>
-Subject: multipathd segfault
-Date: Thu, 26 Mar 2009 17:25:29 -0700
-Message-ID: <448b15030903261725x1fc4c02dx594c6df7b8daa11e@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 11/14] barriers
+Date: Fri, 27 Mar 2009 02:09:01 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903270207570.17063@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0902231422190.23293@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0902231422190.23293@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,50 +17,33 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
+Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-I am getting a multipathd segfault when I have more than 26 devices,
-and the device names become 4 characters. (i.e. /dev/sdz is consumed
-and the next device is /dev/sdaa).
+Set queue ordered mode.
 
-I was trying to hook gdb to a core dump, but it keeps complaining that
-it needs device-mapper-libs-debuginfo, which I can not find. Can
-anyone point me to this?
+It doesn't really matter what we set here because we don't ever put
+any requests on the queue.
 
-I built multipathd with -g turned on and did not strip it. Here is the
-last few lines of output when I run it as multipathd -v9 -d:
+We just need to set something other than QUEUE_ORDERED_NONE so that
+__generic_make_request passes barrier requests to us.
 
-Jul 04 05:01:26 | alpa-0x000080: discover
-Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm table
-alpa-0x000080  NF   [16384]
-Jul 04 05:01:26 | *word = 0, len = 1
-Jul 04 05:01:26 | *word = 0, len = 1
-Jul 04 05:01:26 | *word = 1, len = 1
-Jul 04 05:01:26 | *word = 1, len = 1
-Jul 04 05:01:26 | *word = 1, len = 1
-Jul 04 05:01:26 | *word = 1, len = 1
-Jul 04 05:01:26 | *word = 65:160, len = 6
-Jul 04 05:01:26 | *word = 1000, len = 4
-Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm status
-alpa-0x000080  NF   [16384]
-Jul 04 05:01:26 | *word = 2, len = 1
-Jul 04 05:01:26 | *word = 0, len = 1
-Jul 04 05:01:26 | *word = 0, len = 1
-Jul 04 05:01:26 | *word = 1, len = 1
-Jul 04 05:01:26 | *word = E, len = 1
-Jul 04 05:01:26 | *word = 1, len = 1
-Jul 04 05:01:26 | *word = 0, len = 1
-Jul 04 05:01:26 | *word = A, len = 1
-Jul 04 05:01:26 | *word = 0, len = 1
-Jul 04 05:01:26 | alpa-0x000080: rr_weight = 1 (internal default)
-Jul 04 05:01:26 | alpa-0x000080: pgfailback = -2 (config file default)
-Jul 04 05:01:26 | alpa-0x000080: no_path_retry = 3 (config file default)
-Jul 04 05:01:26 | libdevmapper: ioctl/libdm-iface.c(1606): dm message
-alpa-0x000080  NF  queue_if_no_path
- [16384]
-Jul 04 05:01:26 | pg_timeout = NONE (internal default)
-Jul 04 05:01:26 | alpa-0x000080: event checker started
-Jul 04 05:01:26 | sdaa path added to devmap alpa-0x000080
-Jul 04 05:01:26 | discard event on /block/sdaa/sdaa1
-Segmentation fault
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm.c |    1 +
+ 1 file changed, 1 insertion(+)
+
+Index: linux-2.6.29-rc8-devel/drivers/md/dm.c
+===================================================================
+--- linux-2.6.29-rc8-devel.orig/drivers/md/dm.c	2009-03-27 04:52:42.000000000 +0100
++++ linux-2.6.29-rc8-devel/drivers/md/dm.c	2009-03-27 04:54:30.000000000 +0100
+@@ -1106,6 +1106,7 @@ static struct mapped_device *alloc_dev(i
+ 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
+ 	md->queue->backing_dev_info.congested_data = md;
+ 	blk_queue_make_request(md->queue, dm_request);
++	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN, NULL);
+ 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
+ 	md->queue->unplug_fn = dm_unplug_all;
+ 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
