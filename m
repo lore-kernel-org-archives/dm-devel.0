@@ -1,23 +1,18 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: Barriers still not passing on simple dm devices...
-Date: Tue, 31 Mar 2009 12:49:33 +0200
-Message-ID: <20090331104933.GJ5178@kernel.dk>
-References: <20090324140524.GV27476@kernel.dk>
-	<Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
-	<20090324143034.GW27476@kernel.dk>
-	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
-	<20090324150517.GX27476@kernel.dk>
-	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
-	<20090325152751.GV27476@kernel.dk>
-	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
-	<20090326084205.GG27476@kernel.dk>
-	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+From: "Ransegnola, Lori" <Lori.Ransegnola@hp.com>
+Subject: RE: RE: Problem with multipathd and a blacklisted device
+Date: Tue, 31 Mar 2009 15:27:28 +0000
+Message-ID: <5635940A0F6F36478CF4D01273B16CA32B9D0E8F73@GVW1096EXB.americas.hpqcorp.net>
+References: <5635940A0F6F36478CF4D01273B16CA32B9C3EDDF8@GVW1096EXB.americas.hpqcorp.net>
+	<5635940A0F6F36478CF4D01273B16CA32B9CE52C1E@GVW1096EXB.americas.hpqcorp.net>
+	<20090324134209.GA12464@us.ibm.com>
+	<5635940A0F6F36478CF4D01273B16CA32B9CE5310F@GVW1096EXB.americas.hpqcorp.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <5635940A0F6F36478CF4D01273B16CA32B9CE5310F@GVW1096EXB.americas.hpqcorp.net>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,138 +22,281 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
-	CHRISTOPHER" <CHRIS.MASON@oracle.com>
+To: "Ransegnola, Lori" <Lori.Ransegnola@hp.com>, device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Mon, Mar 30 2009, Mikulas Patocka wrote:
-> On Thu, 26 Mar 2009, Jens Axboe wrote:
-> 
-> > On Wed, Mar 25 2009, Mikulas Patocka wrote:
+One last try.... Anybody have any input on why this is happening, and if =
+there is something that I can do about it??
+
+Thanks.
+
+Lori
+
+> -----Original Message-----
+> From: Ransegnola, Lori
+> Sent: Tuesday, March 24, 2009 5:13 PM
+> To: device-mapper development
+> Cc: Ransegnola, Lori
+> Subject: RE: [dm-devel] RE: Problem with multipathd and a
+> blacklisted device
+>
+> Here is the 'multipath -ll' output before disk was pulled:
+>
+>  /root> ls -l /dev/hpdev
+> total 0
+> lrwxrwxrwx 1 root root 7 Mar 24 11:53 sda1 -> ../sdm1
+> lrwxrwxrwx 1 root root 7 Mar 24 11:53 sdb1 -> ../sdn1
+> /root> multipath -ll
+> multisde (35000c5000a41e633) dm-2 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:5:0  sde 8:64   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:19:0 sdq 65:0   [active][ready]
+> 35000c5000a41e44bdm-5 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:8:0  sdh 8:112  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:22:0 sdt 65:48  [active][ready]
+> multisdc (35000c5000a41f38f) dm-0 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:3:0  sdc 8:32   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:17:0 sdo 8:224  [active][ready]
+> 35000c5000a41e9bbdm-7 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:10:0 sdj 8:144  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:24:0 sdv 65:80  [active][ready]
+> 35000c50004acb2cfdm-1 HP,DF0300B8053
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:4:0  sdd 8:48   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:18:0 sdp 8:240  [active][ready]
+> 35000c5000a41f1b3dm-4 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:7:0  sdg 8:96   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:21:0 sds 65:32  [active][ready]
+> 35000c5000a41f997dm-9 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:12:0 sdl 8:176  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:26:0 sdx 65:112 [active][ready]
+> 35000c5000a41f37fdm-6 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:9:0  sdi 8:128  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:23:0 sdu 65:64  [active][ready]
+> 35000c5000a41e0efdm-8 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:11:0 sdk 8:160  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:25:0 sdw 65:96  [active][ready]
+> multisdf (35000c5000a41f007) dm-3 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:6:0  sdf 8:80   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:20:0 sdr 65:16  [active][ready]
+> /root>
+>
+> Now once the disk has been pulled and the path to the device is lost:
+>
+> /root> ls -l /dev/hpdev
+> total 0
+> lrwxrwxrwx 1 root root 7 Mar 24 11:53 sdb1 -> ../sdn1
+> /root> multipath -ll
+> multisde (35000c5000a41e633) dm-2 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:5:0  sde 8:64   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:19:0 sdq 65:0   [active][ready]
+> 35000c5000a41e44bdm-5 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:8:0  sdh 8:112  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:22:0 sdt 65:48  [active][ready]
+> multisdc (35000c5000a41f38f) dm-0 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:3:0  sdc 8:32   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:17:0 sdo 8:224  [active][ready]
+> 35000c5000a41e9bbdm-7 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:10:0 sdj 8:144  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:24:0 sdv 65:80  [active][ready]
+> 35000c50004acb2cfdm-1 HP,DF0300B8053
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:4:0  sdd 8:48   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:18:0 sdp 8:240  [active][ready]
+> 35000c5000a41f1b3dm-4 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:7:0  sdg 8:96   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:21:0 sds 65:32  [active][ready]
+> 35000c5000a41f997dm-9 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:12:0 sdl 8:176  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:26:0 sdx 65:112 [active][ready]
+> 35000c5000a41f37fdm-6 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:9:0  sdi 8:128  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:23:0 sdu 65:64  [active][ready]
+> 35000c5000a41e0efdm-8 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:11:0 sdk 8:160  [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:25:0 sdw 65:96  [active][ready]
+> multisdf (35000c5000a41f007) dm-3 HP,DF300BB6C3
+> [size=3D279G][features=3D0][hwhandler=3D0]
+> \_ round-robin 0 [prio=3D0][active]
+>  \_ 0:0:6:0  sdf 8:80   [active][ready]
+> \_ round-robin 0 [prio=3D0][enabled]
+>  \_ 0:0:20:0 sdr 65:16  [active][ready]
+> /root>
+>
+> Please let me know if there is any other information that you
+> require from the node.  Thank you.
+>
+> Lori
+>
+> > -----Original Message-----
+> > From: dm-devel-bounces@redhat.com
+> > [mailto:dm-devel-bounces@redhat.com] On Behalf Of malahal@us.ibm.com
+> > Sent: Tuesday, March 24, 2009 9:42 AM
+> > To: dm-devel@redhat.com
+> > Subject: Re: [dm-devel] RE: Problem with multipathd and a
+> > blacklisted device
 > >
-> > > > > So I think there should be flag (this device does/doesn't support data 
-> > > > > consistency) that the journaled filesystems can use to mark the disk dirty 
-> > > > > for fsck. And if you implement this flag, you can accept barriers always 
-> > > > > to all kind of devices regardless of whether they support consistency. You 
-> > > > > can then get rid of that -EOPNOTSUPP and simplify filesystem code because 
-> > > > > they'd no longer need two commit paths and a clumsy way to restart 
-> > > > > -EOPNOTSUPPed requests.
-> > > > 
-> > > > And my point is that this case isn't interesting, because most setups
-> > > > don't guarantee proper ordering.
-> > > 
-> > > If the ordering isn't guaranteed, the filesystem should know about it, and 
-> > > mark the partition for fsck. That's why I'm suggesting to use a flag for 
-> > > that. That flag could be also propagated up through md and dm.
-> > 
-> > We can do that, not a problem. The problem is that ordering is almost
-> > never preserved, SCSI does not use ordered tags because it hasn't
-> > verified that its error path doesn't reorder by mistake. So right now
-> > you can basically use 'false' as that flag.
-> 
-> There are three ordering guarantees:
-> 
-> 1. - nothing (for devices with write cache without cache control)
-> 
-> 2. - non-cached ordering: the sequence [submit req a, end req a, submit 
-> req b, end req b] will make the ordering. It is guaranteed that when the 
-> request ends successfully, it is on medium. This is what all the 
-> filesystems, md and dm assume about disks. This consistency model was used 
-> long way before barriers came in.
-> 
-> 3. - barrier ordering: ordering is done with barriers, [submit req a, end 
-> req a, submit req b, end req b] won't guarantee ordering of a and b, a 
-> barrier must be inserted.
-
-Plus the barrier also allows [submit req a, submit req b] and still
-count on ordering if either one of them is a barrier. It doesn't have to
-be sync, like the (2).
-
-> --- so you can make a two bitflags that differentiate these models. In 
-> current kernel, model (1) and (2) cannot be differentiated in any way. (3) 
-> can be differentiated only after a trial write and it won't guarantee that 
-> (3) will be valid further.
-
-But what's the point? Basically no devices are naturally ordered by
-default. Either you need cache flushes, or you need to tell the device
-not to reorder on a per-command basis.
-
-> > > The reasoning: "write barriers aren't supported => the device doesn't 
-> > > guarantee consistency" isn't valid.
-> > 
-> > It's valid in the sense that it's the only RELIABLE primitive we have.
-> > Are you really suggestion that we just assume any device is fully
-> > ordered, unless proven otherwise?
-> 
-> If someone implements "write barrier's aren't supported => run fsck", then 
-> a lot of systems start fscking needlessly (for example those using md or 
-> dm without write cache) and become inoperational for long time because of 
-> that. So no one can really implement this logic and filesystems don't run 
-> fsck at all when operated over a device that doesn't support ordering. So 
-> you get data corruption if you get crash on those devices.
-
-Nobody is suggesting that, it's just not a feasible approach. But you
-have to warn if you don't know whether it provides the ordering
-guarantee you expect to provide consistency and integrity.
-
-> > > > The error handling is complex, no doubt
-> > > > about that. But the trial barrier test is pretty trivial and even could
-> > > > be easily abstracted out. If a later barrier write fails, then that's
-> > > > really no different than if a normal write fails. Error handling is not
-> > > > easy in that case.
-> > > 
-> > > I had a discussion with Andi about it some times ago. The conclusion was 
-> > > that all the current filesystems handle barriers failing in the middle of 
-> > > the operation without functionality loss, but it makes barriers useless 
-> > > for any performance-sensitive tasks (commits that wouldn't block 
-> > > concurrent activity). Non-blocking commits could only be implemented if 
-> > > barriers don't fail.
-> > 
-> > As long as you do a trial barrier like XFS does, barriers will not fail
-> > unless you have media error.
-> 
-> No.
-> 
-> The barrier can be cancelled with -EOPNOTSUPP at any time. Andi Kleen 
-> submitted a patch that implements failing barriers for device mapper and 
-> he says that md-raid1 does the same thing.
-
-You are right, if a device is reconfigured beneath you it may very well
-begin to return -EOPNOTSUPP much later. I didn't take that into account,
-I was considering only "plain" devices.
-
-> Filesystems handle these randomly failed barriers but the downside is that 
-> they must not submit any request concurrently with the barrier. Also, that 
-> -EOPNOTSUPP restarting code is really crap, the request cannot be 
-> restarted from bi_end_io, so bi_end_io needs to handle to another thread 
-> for retry without barrier.
-
-It can, but it requires you to operate at the request level. So for file
-systems that is problematic, it wont work of course. It would not be
-THAT hard to provide a helper to reissue the request. Not that pretty,
-but...
-
-> See this patch: http://lkml.org/lkml/2008/12/4/433 (and associated thread)
-> The patch is silly but it just shows what is really hapenning and what the 
-> filesystem must be prepared to deal with.
-
-It's not that silly, we should add special barrier failing to the
-CONFIG_FAIL stuff. You'd definitely want to exercise that in the file
-system.
-
-> > Things would also be much easier, if writes never failed.
+> > Ransegnola, Lori [Lori.Ransegnola@hp.com] wrote:
+> > > I sent this question last week and have not heard a thing.
+> > Do you have a suggestion of a better mailing list that I
+> > should use for this question?
+> > >
+> > > Thank you.
+> > >
+> > > Lori
+> > >
+> > > > -----Original Message-----
+> > > > From: Ransegnola, Lori
+> > > > Sent: Thursday, March 19, 2009 3:51 PM
+> > > > To: dm-devel@redhat.com
+> > > > Cc: Ransegnola, Lori
+> > > > Subject: Problem with multipathd and a blacklisted device
+> > > >
+> > > > Configuration:
+> > > > --------------
+> > > >
+> > > > I have a multipath configuration set up where 10 disks are
+> > > > multipathed and 2 disks are blacklisted and are not
+> multipathed.
+> > > > Here are the relevant parts of the multipath.conf file:
+> > > >
+> > > > defaults {
+> > > >         udev_dir                /dev
+> > > >         polling_interval        10
+> > > >         selector                "round-robin 0"
+> > > > #       path_grouping_policy    multibus
+> > > >         getuid_callout          "/sbin/scsi_id -g -u -s
+> /block/%n"
+> > > >         prio_callout            /bin/true
+> > > > #       path_checker            readsector0
+> > > >         path_checker            tur
+> > > >         rr_min_io               100
+> > > >         rr_weight               priorities
+> > > >         failback                immediate
+> > > >         no_path_retry           fail
+> > > >         user_friendly_name      yes
+> > > > }
+> > > >
+> > > > blacklist {
+> > > > #       wwid 26353900f02796769
+> > > > #       devnode "^(ram|raw|loop|fd|md|dm-|sr|scd|st)[0-9]*"
+> > > > #       devnode "^hd[a-z]"
+> > > >         wwid                    35000c5000a41f72b
+> > > >         wwid                    35000c5000a41f98b
+> > > >         devnode "^cciss!c[0-9]d[0-9]*"
+> > > > }
+> > > >
+> > > >
+> > > > The two disks that are not multipathed have udev rules
+> > and are part
+> > > > of a software RAID set.  The devices show up as
+> > > >
+> > > > /etc/udev/rules.d> ls -l /dev/hpdev
+> > > > total 0
+> > > > lrwxrwxrwx 1 root root 7 Mar 18 10:50 sda1 -> ../sda1
+> > lrwxrwxrwx 1
+> > > > root root 7 Mar 18 03:32 sdb1 -> ../sdb1
+> > > >
+> > > > /dev/md0 is created with sda and sdb.  Here is the
+> bottom of the
+> > > > 'mdadm --detail /dev/md0' output:
+> > > >
+> > > > /root> mdadm --detail /dev/md0
+> > > > /dev/md0:
+> > > >         Version
+> > > > ...
+> > > > Failed Devices : 0
+> > > >   Spare Devices : 0
+> > > >
+> > > >            UUID : 94813396:a3e341fc:c5d4b8ba:0617a019
+> > > >          Events : 0.84
+> > > >
+> > > >     Number   Major   Minor   RaidDevice State
+> > > >        0       8        1        0      active sync   /dev/sda1
+> > > >        1       8       17        1      active sync   /dev/sdb1
+> > > > /root>
+> > > >
+> > > > I am running on a Linux RHEL5 U2 system.
+> > > > /etc/udev/rules.d> uname -a
+> > > > Linux n0 2.6.18-53.el5 #1 SMP Wed Oct 10 16:34:19 EDT 2007
+> > > > x86_64 x86_64 x86_64 GNU/Linux /etc/udev/rules.d> multipath -v
+> > > > Missing option arguement multipath-tools v0.4.7 (03/12, 2006)
+> > > > ----------------------------
+> > > >
+> > > > Problem:
+> > > >
+> > > > This configuration works well until I do some failure
+> > testing with
+> > > > one of the 2 blacklisted devs in the software RAID set.
+> > > > I found that if I temporarily remove disk sda and put it back a
+> > > > minute later the disk path, /dev/hpdev/sda1, is removed,
+> > even though
+> > > > it is blacklisted.
 > >
-> > -- 
-> > Jens Axboe
-> 
-> I definitelly agree that it shouldn't fail. So remove that -EOPNOTSUPP 
-> error code at all, make barriers always pass to all kinds of devices and 
-> inform the caller via queue flags that the device doesn't support 
-> ordering.
-
-Not a queue flag. Make it succeed to get rid of the whole retry
-business, but flag the bio with the information anyway.
-
--- 
-Jens Axboe
+> > What is 'multipath -ll' output before you remove the
+> > blacklisted device?
+> > What is 'multipath -ll' output after you put the device back
+> > a minute later?
+> >
+> > Thanks, Malahal.
+> >
+> > --
+> > dm-devel mailing list
+> > dm-devel@redhat.com
+> > https://www.redhat.com/mailman/listinfo/dm-devel
+> >
+>
