@@ -1,22 +1,23 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: [PATCH 2/3] set pthread stack size to at least
-	PTHREAD_STACK_MIN
-Date: Mon, 30 Mar 2009 18:30:05 -0500
-Message-ID: <20090330233005.GL15911@ether.msp.redhat.com>
-References: <1236883093-2989-1-git-send-email-bmarzins@redhat.com>
-	<1236883093-2989-3-git-send-email-bmarzins@redhat.com>
-	<49BA3ACF.1010101@suse.de>
-	<20090313205514.GL32340@ether.msp.redhat.com>
-	<49BE7A89.1040808@suse.de>
-	<20090316230847.GM32340@ether.msp.redhat.com>
-	<95d3ae170903170056l467c50c1v40a3657f001030e3@mail.gmail.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Mon, 30 Mar 2009 23:39:59 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+References: <49C7DD3C.2020401@redhat.com>
+	<Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
+	<20090324140524.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
+	<20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	<20090324150517.GX27476@kernel.dk>
+	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	<20090325152751.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+	<20090326084205.GG27476@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <95d3ae170903170056l467c50c1v40a3657f001030e3@mail.gmail.com>
+In-Reply-To: <20090326084205.GG27476@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,55 +27,108 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>
 List-Id: dm-devel.ids
 
-On Tue, Mar 17, 2009 at 07:56:39AM +0000, Joe Thornber wrote:
-> 2009/3/16 Benjamin Marzinski <bmarzins@redhat.com>:
-> > I definitely see a problem if we use the default stacksize on ia64
-> > machines. =A0In RHEL5 at least, it's 10Mb per thread. =A0With one wai=
-ter
-> > thread per multipath device, you get a gigabyte of memory wasted on
-> > machines with over a hundred multipath devices.
->=20
-> You need to check whether this is 1G of physical memory, or just a 1G
-> chunk out of the address space.
->=20
-> Some threads need to have their stack reserved and locked into memory
-> before calls into the kernel.  This avoids deadlocks where the stack
-> gets paged out, but he vm can't page it back in until the thread
-> completes ...
->=20
-> It sounds like you have many more threads running these days than when
-> I last looked at LVM, it's not clear to me how many of these are ones
-> that need their stacks mem-locking.  Do you have an idea ?
->=20
-> If they don't need mem-locking then as long as you're not forcing the
-> stack to be physically allocated I wouldn't worry too much about
-> consuming address space.
->=20
-> Hope that ramble made sense,
+On Thu, 26 Mar 2009, Jens Axboe wrote:
 
-Yeah, sorry for missing your reply.
+> On Wed, Mar 25 2009, Mikulas Patocka wrote:
+>
+> > > > So I think there should be flag (this device does/doesn't support data 
+> > > > consistency) that the journaled filesystems can use to mark the disk dirty 
+> > > > for fsck. And if you implement this flag, you can accept barriers always 
+> > > > to all kind of devices regardless of whether they support consistency. You 
+> > > > can then get rid of that -EOPNOTSUPP and simplify filesystem code because 
+> > > > they'd no longer need two commit paths and a clumsy way to restart 
+> > > > -EOPNOTSUPPed requests.
+> > > 
+> > > And my point is that this case isn't interesting, because most setups
+> > > don't guarantee proper ordering.
+> > 
+> > If the ordering isn't guaranteed, the filesystem should know about it, and 
+> > mark the partition for fsck. That's why I'm suggesting to use a flag for 
+> > that. That flag could be also propagated up through md and dm.
+> 
+> We can do that, not a problem. The problem is that ordering is almost
+> never preserved, SCSI does not use ordered tags because it hasn't
+> verified that its error path doesn't reorder by mistake. So right now
+> you can basically use 'false' as that flag.
 
-The issue is that the event threads occasionally need to hold mutexs
-that the checker thread (the one that restores downed paths) needs. If
-the system was low on memory because a number of devices had no paths to
-them, and IO was queueing up, you could run into a problem where a event
-thread was paged out while holding a mutex. With the mutex locked, the
-checker thread could never restore the downed paths, letting the IO
-complete, and freeing up the memory.=20
+There are three ordering guarantees:
 
-Christophe, if people are O.k. with these patches now, could they get
-in.
+1. - nothing (for devices with write cache without cache control)
 
-Thanks
+2. - non-cached ordering: the sequence [submit req a, end req a, submit 
+req b, end req b] will make the ordering. It is guaranteed that when the 
+request ends successfully, it is on medium. This is what all the 
+filesystems, md and dm assume about disks. This consistency model was used 
+long way before barriers came in.
 
--Ben
->=20
-> - Joe
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+3. - barrier ordering: ordering is done with barriers, [submit req a, end 
+req a, submit req b, end req b] won't guarantee ordering of a and b, a 
+barrier must be inserted.
+
+--- so you can make a two bitflags that differentiate these models. In 
+current kernel, model (1) and (2) cannot be differentiated in any way. (3) 
+can be differentiated only after a trial write and it won't guarantee that 
+(3) will be valid further.
+
+> > The reasoning: "write barriers aren't supported => the device doesn't 
+> > guarantee consistency" isn't valid.
+> 
+> It's valid in the sense that it's the only RELIABLE primitive we have.
+> Are you really suggestion that we just assume any device is fully
+> ordered, unless proven otherwise?
+
+If someone implements "write barrier's aren't supported => run fsck", then 
+a lot of systems start fscking needlessly (for example those using md or 
+dm without write cache) and become inoperational for long time because of 
+that. So no one can really implement this logic and filesystems don't run 
+fsck at all when operated over a device that doesn't support ordering. So 
+you get data corruption if you get crash on those devices.
+
+> > > The error handling is complex, no doubt
+> > > about that. But the trial barrier test is pretty trivial and even could
+> > > be easily abstracted out. If a later barrier write fails, then that's
+> > > really no different than if a normal write fails. Error handling is not
+> > > easy in that case.
+> > 
+> > I had a discussion with Andi about it some times ago. The conclusion was 
+> > that all the current filesystems handle barriers failing in the middle of 
+> > the operation without functionality loss, but it makes barriers useless 
+> > for any performance-sensitive tasks (commits that wouldn't block 
+> > concurrent activity). Non-blocking commits could only be implemented if 
+> > barriers don't fail.
+> 
+> As long as you do a trial barrier like XFS does, barriers will not fail
+> unless you have media error.
+
+No.
+
+The barrier can be cancelled with -EOPNOTSUPP at any time. Andi Kleen 
+submitted a patch that implements failing barriers for device mapper and 
+he says that md-raid1 does the same thing.
+
+Filesystems handle these randomly failed barriers but the downside is that 
+they must not submit any request concurrently with the barrier. Also, that 
+-EOPNOTSUPP restarting code is really crap, the request cannot be 
+restarted from bi_end_io, so bi_end_io needs to handle to another thread 
+for retry without barrier.
+
+See this patch: http://lkml.org/lkml/2008/12/4/433 (and associated thread)
+The patch is silly but it just shows what is really hapenning and what the 
+filesystem must be prepared to deal with.
+
+> Things would also be much easier, if writes never failed.
+>
+> -- 
+> Jens Axboe
+
+I definitelly agree that it shouldn't fail. So remove that -EOPNOTSUPP 
+error code at all, make barriers always pass to all kinds of devices and 
+inform the caller via queue flags that the device doesn't support 
+ordering.
+
+Mikulas
