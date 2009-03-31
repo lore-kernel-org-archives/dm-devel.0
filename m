@@ -1,23 +1,16 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Barriers still not passing on simple dm devices...
-Date: Mon, 30 Mar 2009 23:39:59 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
-References: <49C7DD3C.2020401@redhat.com>
-	<Pine.LNX.4.64.0903241000010.29968@hs20-bc2-1.build.redhat.com>
-	<20090324140524.GV27476@kernel.dk>
-	<Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
-	<20090324143034.GW27476@kernel.dk>
-	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
-	<20090324150517.GX27476@kernel.dk>
-	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
-	<20090325152751.GV27476@kernel.dk>
-	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
-	<20090326084205.GG27476@kernel.dk>
+From: "Martin K. Petersen" <martin.petersen@oracle.com>
+Subject: Re: commit 6d2a78e783416ba99e36beb1d4395b785b34e867 avoids
+	dm integrity support
+Date: Tue, 31 Mar 2009 01:21:49 -0400
+Message-ID: <yq1bpriw9le.fsf@sermon.lab.mkp.net>
+References: <49D06571.70903@ct.jp.nec.com>
+	<yq1k566x3cn.fsf@sermon.lab.mkp.net> <20090330185945.GA5178@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090326084205.GG27476@kernel.dk>
+In-Reply-To: <20090330185945.GA5178@kernel.dk> (Jens Axboe's message of "Mon\,
+	30 Mar 2009 20\:59\:45 +0200")
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,107 +21,42 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: Jens Axboe <jens.axboe@oracle.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
-	CHRISTOPHER" <CHRIS.MASON@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, "Martin K. Petersen" <martin.petersen@oracle.com>
 List-Id: dm-devel.ids
 
-On Thu, 26 Mar 2009, Jens Axboe wrote:
+>>>>> "Jens" == Jens Axboe <jens.axboe@oracle.com> writes:
 
-> On Wed, Mar 25 2009, Mikulas Patocka wrote:
->
-> > > > So I think there should be flag (this device does/doesn't support data 
-> > > > consistency) that the journaled filesystems can use to mark the disk dirty 
-> > > > for fsck. And if you implement this flag, you can accept barriers always 
-> > > > to all kind of devices regardless of whether they support consistency. You 
-> > > > can then get rid of that -EOPNOTSUPP and simplify filesystem code because 
-> > > > they'd no longer need two commit paths and a clumsy way to restart 
-> > > > -EOPNOTSUPPed requests.
-> > > 
-> > > And my point is that this case isn't interesting, because most setups
-> > > don't guarantee proper ordering.
-> > 
-> > If the ordering isn't guaranteed, the filesystem should know about it, and 
-> > mark the partition for fsck. That's why I'm suggesting to use a flag for 
-> > that. That flag could be also propagated up through md and dm.
-> 
-> We can do that, not a problem. The problem is that ordering is almost
-> never preserved, SCSI does not use ordered tags because it hasn't
-> verified that its error path doesn't reorder by mistake. So right now
-> you can basically use 'false' as that flag.
+Jens> The forward progress reference failed to take stacked drivers into
+Jens> account, I didn't realize that they need to allocate integrity
+Jens> data again as well.
 
-There are three ordering guarantees:
+Yup.  We need a bio integrity struct as well as a vector to describe the
+integrity pages.
 
-1. - nothing (for devices with write cache without cache control)
+Ideally I'd like to avoid cloning the integrity bio_vec altogether.  The
+only reason I do it now is because I have to keep the integrity vector
+in sync with the data vector when that gets sliced and diced.  Plus
+there's the suck of partial completion.
 
-2. - non-cached ordering: the sequence [submit req a, end req a, submit 
-req b, end req b] will make the ordering. It is guaranteed that when the 
-request ends successfully, it is on medium. This is what all the 
-filesystems, md and dm assume about disks. This consistency model was used 
-long way before barriers came in.
+If we never changed bio_vecs this wouldn't be an issue.  One option
+would be to add an offset parameter to the bio.  That way we could
+completely avoid cloning bio_vecs.  That would mean a bit more
+complexity in building scatterlists at the bottom of the pile but we'd
+do fewer memory allocations.
 
-3. - barrier ordering: ordering is done with barriers, [submit req a, end 
-req a, submit req b, end req b] won't guarantee ordering of a and b, a 
-barrier must be inserted.
+I've been tinkering with that approach this evening.  I almost have it
+working for the integrity vector.  Doing it for bios is obviously a much
+bigger task.
 
---- so you can make a two bitflags that differentiate these models. In 
-current kernel, model (1) and (2) cannot be differentiated in any way. (3) 
-can be differentiated only after a trial write and it won't guarantee that 
-(3) will be valid further.
 
-> > The reasoning: "write barriers aren't supported => the device doesn't 
-> > guarantee consistency" isn't valid.
-> 
-> It's valid in the sense that it's the only RELIABLE primitive we have.
-> Are you really suggestion that we just assume any device is fully
-> ordered, unless proven otherwise?
+Jens> Perhaps it would be cleaner to make the integrity allocation more
+Jens> explicit in the supported paths, instead of hiding it in bio_set?
+Jens> Dunno, haven't thought much about it, just an alternative approach
 
-If someone implements "write barrier's aren't supported => run fsck", then 
-a lot of systems start fscking needlessly (for example those using md or 
-dm without write cache) and become inoperational for long time because of 
-that. So no one can really implement this logic and filesystems don't run 
-fsck at all when operated over a device that doesn't support ordering. So 
-you get data corruption if you get crash on those devices.
+DM is the only subsystem that manually clones things.  MD uses bio_clone
+and has no idea that the integrity fluff is there.  In any case I really
+think the bio_set approach is a nicer interface than making every
+stacking driver special-case integrity allocations.
 
-> > > The error handling is complex, no doubt
-> > > about that. But the trial barrier test is pretty trivial and even could
-> > > be easily abstracted out. If a later barrier write fails, then that's
-> > > really no different than if a normal write fails. Error handling is not
-> > > easy in that case.
-> > 
-> > I had a discussion with Andi about it some times ago. The conclusion was 
-> > that all the current filesystems handle barriers failing in the middle of 
-> > the operation without functionality loss, but it makes barriers useless 
-> > for any performance-sensitive tasks (commits that wouldn't block 
-> > concurrent activity). Non-blocking commits could only be implemented if 
-> > barriers don't fail.
-> 
-> As long as you do a trial barrier like XFS does, barriers will not fail
-> unless you have media error.
-
-No.
-
-The barrier can be cancelled with -EOPNOTSUPP at any time. Andi Kleen 
-submitted a patch that implements failing barriers for device mapper and 
-he says that md-raid1 does the same thing.
-
-Filesystems handle these randomly failed barriers but the downside is that 
-they must not submit any request concurrently with the barrier. Also, that 
--EOPNOTSUPP restarting code is really crap, the request cannot be 
-restarted from bi_end_io, so bi_end_io needs to handle to another thread 
-for retry without barrier.
-
-See this patch: http://lkml.org/lkml/2008/12/4/433 (and associated thread)
-The patch is silly but it just shows what is really hapenning and what the 
-filesystem must be prepared to deal with.
-
-> Things would also be much easier, if writes never failed.
->
-> -- 
-> Jens Axboe
-
-I definitelly agree that it shouldn't fail. So remove that -EOPNOTSUPP 
-error code at all, make barriers always pass to all kinds of devices and 
-inform the caller via queue flags that the device doesn't support 
-ordering.
-
-Mikulas
+-- 
+Martin K. Petersen	Oracle Linux Engineering
