@@ -1,14 +1,17 @@
-From: Rodrigo Nascimento <nascimento.rp@gmail.com>
-Subject: Re: Device Mapper MultiPath
-Date: Tue, 31 Mar 2009 21:59:13 -0300
-Message-ID: <af7b4eb20903311759g1e97fb53u45cc6b6350a6022a@mail.gmail.com>
-References: <af7b4eb20903311707o925902dn14a6dc8030498001@mail.gmail.com>
-	<20090401002559.GA3213@mars.virtualiron.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 14/14] barriers
+Date: Wed, 01 Apr 2009 14:48:01 +0900
+Message-ID: <49D30011.5080302@ct.jp.nec.com>
+References: <Pine.LNX.4.64.0902231422490.23293@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0903270209380.17063@hs20-bc2-1.build.redhat.com>
+	<49D06851.9090904@ct.jp.nec.com>
+	<Pine.LNX.4.64.0903301001220.1408@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============0192347556=="
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090401002559.GA3213@mars.virtualiron.com>
+In-Reply-To: <Pine.LNX.4.64.0903301001220.1408@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,131 +21,240 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
---===============0192347556==
-Content-Type: multipart/alternative; boundary=000e0cd56aa4f6d5dc046673d26d
+Hi Mikulas,
 
---000e0cd56aa4f6d5dc046673d26d
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Sorry for my less explanation.
 
-Konrad,
+On 2009/03/30 23:02 +0900, Mikulas Patocka wrote:
+> Hi
+> 
+> You must apply the whole series of patches from patch 1 (that I sent long 
+> time before). This patch is an update to the series.
 
-Thanks for your tips.
-I'll run this tests and post the results here!
+Yes, I know that.
+But the Milan's patch (http://marc.info/?l=dm-devel&m=123695241224620&w=2)
+changed around dec_pending() in dm.c and it has already been merged into
+2.6.29 (after 2.6.29-rc8).
+Your patch conflicts against the change and is rejected, when I try to
+apply your whole patch-set on top of 2.6.29.
 
-Now, I'm a Professional Services Engineer at NetApp Latin America (Brazil)
-and I have some problems with FAS3140 and Citrix Xen 5.0.0 with Multipathing
-enabled. Do you think that I could have some help here?
+The conflict may be just cosmetic reasons, but I'm not sure.
+So I noticed that to you, so that I can review this patch correctly
+for my request-based dm work.
 
-See you,
-
-:-)
-
-On Tue, Mar 31, 2009 at 9:25 PM, Konrad Rzeszutek <konrad@virtualiron.com>wrote:
-
-> On Tue, Mar 31, 2009 at 09:07:08PM -0300, Rodrigo Nascimento wrote:
-> > Hi All,
-> >
-> > I'm a student of computer sciences and I'd like to collaborate with the
-> > development of the DM-MP.
-> > I know that maybe you received this kind of message during all time, but
-> I
->
-> I think you are the first :-)
->
-> > really want to help, with anything.
->
-> Shakedown help would be nice. As in, trying to yank stuff underneath it,
-> add new block disks, remove them, add them, remove them, edit the
-> multipath.conf file and issue 'reconfigure', resize the maps,
-> then add 1000+LUNs, and while they are being added, start removing the
-> LUNs, then for extra fun call 'dmsetup remove_all' while in another
-> thread you run 'multipath'. Ooh, and see if there are any memory leaks
-> while this all is being done.
->
-> >
-> > I'd appreciate if someone help me how to begin here. :)
-> >
-> > Rgds,
-> >
-> > --
-> > Rodrigo Nascimento
->
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
+Thanks,
+Kiyoshi Ueda
 
 
-
--- 
-Rodrigo Nascimento
-
---000e0cd56aa4f6d5dc046673d26d
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<div>Konrad, </div>
-<div>=A0</div>
-<div>Thanks for your tips.</div>
-<div>I&#39;ll run this tests and post the results here!</div>
-<div>=A0</div>
-<div>Now, I&#39;m a Professional Services Engineer at NetApp Latin America =
-(Brazil) and I have some problems with FAS3140 and Citrix Xen 5.0.0=A0with =
-Multipathing enabled. Do you think that I could have some help here?</div>
-
-<div>=A0</div>
-<div>See you,</div>
-<div>=A0</div>
-<div>:-)<br><br></div>
-<div class=3D"gmail_quote">On Tue, Mar 31, 2009 at 9:25 PM, Konrad Rzeszute=
-k <span dir=3D"ltr">&lt;<a href=3D"mailto:konrad@virtualiron.com" target=3D=
-"_blank">konrad@virtualiron.com</a>&gt;</span> wrote:<br>
-<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
-px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">
-<div>On Tue, Mar 31, 2009 at 09:07:08PM -0300, Rodrigo Nascimento wrote:<br=
->&gt; Hi All,<br>&gt;<br>&gt; I&#39;m a student of computer sciences and I&=
-#39;d like to collaborate with the<br>&gt; development of the DM-MP.<br>
-&gt; I know that maybe you received this kind of message during all time, b=
-ut I<br><br></div>I think you are the first :-)<br>
-<div><br>&gt; really want to help, with anything.<br><br></div>Shakedown he=
-lp would be nice. As in, trying to yank stuff underneath it,<br>add new blo=
-ck disks, remove them, add them, remove them, edit the<br>multipath.conf fi=
-le and issue &#39;reconfigure&#39;, resize the maps,<br>
-then add 1000+LUNs, and while they are being added, start removing the<br>L=
-UNs, then for extra fun call &#39;dmsetup remove_all&#39; while in another<=
-br>thread you run &#39;multipath&#39;. Ooh, and see if there are any memory=
- leaks<br>
-while this all is being done.<br>
-<div><br>&gt;<br>&gt; I&#39;d appreciate if someone help me how to begin he=
-re. :)<br>&gt;<br>&gt; Rgds,<br>&gt;<br>&gt; --<br>&gt; Rodrigo Nascimento<=
-br><br></div>&gt; --<br>&gt; dm-devel mailing list<br>&gt; <a href=3D"mailt=
-o:dm-devel@redhat.com" target=3D"_blank">dm-devel@redhat.com</a><br>
-&gt; <a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D=
-"_blank">https://www.redhat.com/mailman/listinfo/dm-devel</a><br><font colo=
-r=3D"#888888"><br>--<br>dm-devel mailing list<br><a href=3D"mailto:dm-devel=
-@redhat.com" target=3D"_blank">dm-devel@redhat.com</a><br>
-<a href=3D"https://www.redhat.com/mailman/listinfo/dm-devel" target=3D"_bla=
-nk">https://www.redhat.com/mailman/listinfo/dm-devel</a><br></font></blockq=
-uote></div><br><br clear=3D"all"><br>-- <br>Rodrigo Nascimento<br>
-
---000e0cd56aa4f6d5dc046673d26d--
-
-
---===============0192347556==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============0192347556==--
+> Mikulas
+> 
+>> Hi Mikulas,
+>>
+>> This patch doesn't apply to 2.6.29.
+>> Probably you are using a pretty older kernel?
+>>
+>> Thanks,
+>> Kiyoshi Ueda
+>>
+>>
+>> On 2009/03/27 15:11 +0900, Mikulas Patocka wrote:
+>>> Barrier support.
+>>>
+>>> Barriers are submitted to a worker thread that issues them in-order.
+>>>
+>>> __split_and_process_bio function is modified that when it sees a barrier
+>>> request, it waits for all pending IO before the request, then submits
+>>> the barrier and waits for it (we must wait, otherwise it could be
+>>> intermixed with following requests).
+>>>
+>>> Errors from the barrier request are recorded in per-device barrier_error
+>>> variable. There may be only one barrier request in progress, so using
+>>> a per-device variable is correct.
+>>>
+>>> The barrier request is converted to non-barrier request when sending it
+>>> to the underlying device.
+>>>
+>>> This patch guarantees correct barrier behavior if the underlying device
+>>> doesn't perform write-back caching. The same requirement existed before
+>>> barriers were supported in dm.
+>>>
+>>> Bottom layer barrier support (sending barriers by target drivers) and
+>>> handling devices with write-back caches will be done in further patches.
+>>>
+>>> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+>>>
+>>> ---
+>>>  drivers/md/dm.c |   79 +++++++++++++++++++++++++++++++++++++++++++-------------
+>>>  1 file changed, 61 insertions(+), 18 deletions(-)
+>>>
+>>> Index: linux-2.6.29-rc8-devel/drivers/md/dm.c
+>>> ===================================================================
+>>> --- linux-2.6.29-rc8-devel.orig/drivers/md/dm.c	2009-03-27 06:51:29.000000000 +0100
+>>> +++ linux-2.6.29-rc8-devel/drivers/md/dm.c	2009-03-27 06:51:33.000000000 +0100
+>>> @@ -125,6 +125,11 @@ struct mapped_device {
+>>>  	spinlock_t deferred_lock;
+>>>  
+>>>  	/*
+>>> +	 * An error from the barrier request currently being processed.
+>>> +	 */
+>>> +	int barrier_error;
+>>> +
+>>> +	/*
+>>>  	 * Processing queue (flush/barriers)
+>>>  	 */
+>>>  	struct workqueue_struct *wq;
+>>> @@ -425,6 +430,10 @@ static void end_io_acct(struct dm_io *io
+>>>  	part_stat_add(cpu, &dm_disk(md)->part0, ticks[rw], duration);
+>>>  	part_stat_unlock();
+>>>  
+>>> +	/*
+>>> +	 * after this is decremented, the bio must not be touched if it is
+>>> +	 * barrier bio
+>>> +	 */
+>>>  	dm_disk(md)->part0.in_flight = pending =
+>>>  		atomic_dec_return(&md->pending);
+>>>  
+>>> @@ -525,19 +534,29 @@ static void dec_pending(struct dm_io *io
+>>>  			 */
+>>>  			spin_lock_irqsave(&io->md->deferred_lock, flags);
+>>>  			if (__noflush_suspending(io->md))
+>>> -				bio_list_add(&io->md->deferred, io->bio);
+>>> +				bio_list_add_head(&io->md->deferred, io->bio);
+>>>  			else
+>>>  				/* noflush suspend was interrupted. */
+>>>  				io->error = -EIO;
+>>>  			spin_unlock_irqrestore(&io->md->deferred_lock, flags);
+>>>  		}
+>>>  
+>>> -		end_io_acct(io);
+>>> +		if (bio_barrier(io->bio)) {
+>>> +			/*
+>>> +			 * There could be just one barrier request, so we use
+>>> +			 * per-device variable for error reporting is OK.
+>>> +			 * Note that you can't touch the bio after end_io_acct
+>>> +			 */
+>>> +			io->md->barrier_error = io->error;
+>>> +			end_io_acct(io);
+>>> +		} else {
+>>> +			end_io_acct(io);
+>>>  
+>>> -		if (io->error != DM_ENDIO_REQUEUE) {
+>>> -			trace_block_bio_complete(io->md->queue, io->bio);
+>>> +			if (io->error != DM_ENDIO_REQUEUE) {
+>>> +				trace_block_bio_complete(io->md->queue, io->bio);
+>>>  
+>>> -			bio_endio(io->bio, io->error);
+>>> +				bio_endio(io->bio, io->error);
+>>> +			}
+>>>  		}
+>>>  
+>>>  		free_io(io->md, io);
+>>> @@ -682,7 +701,7 @@ static struct bio *split_bvec(struct bio
+>>>  
+>>>  	clone->bi_sector = sector;
+>>>  	clone->bi_bdev = bio->bi_bdev;
+>>> -	clone->bi_rw = bio->bi_rw;
+>>> +	clone->bi_rw = bio->bi_rw & ~(1 << BIO_RW_BARRIER);
+>>>  	clone->bi_vcnt = 1;
+>>>  	clone->bi_size = to_bytes(len);
+>>>  	clone->bi_io_vec->bv_offset = offset;
+>>> @@ -703,6 +722,7 @@ static struct bio *clone_bio(struct bio 
+>>>  
+>>>  	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
+>>>  	__bio_clone(clone, bio);
+>>> +	clone->bi_rw &= ~(1 << BIO_RW_BARRIER);
+>>>  	clone->bi_destructor = dm_bio_destructor;
+>>>  	clone->bi_sector = sector;
+>>>  	clone->bi_idx = idx;
+>>> @@ -823,7 +843,10 @@ static void __split_and_process_bio(stru
+>>>  
+>>>  	ci.map = dm_get_table(md);
+>>>  	if (unlikely(!ci.map)) {
+>>> -		bio_io_error(bio);
+>>> +		if (!bio_barrier(bio))
+>>> +			bio_io_error(bio);
+>>> +		else
+>>> +			md->barrier_error = -EIO;
+>>>  		return;
+>>>  	}
+>>>  
+>>> @@ -907,15 +930,6 @@ static int dm_request(struct request_que
+>>>  	struct mapped_device *md = q->queuedata;
+>>>  	int cpu;
+>>>  
+>>> -	/*
+>>> -	 * There is no use in forwarding any barrier request since we can't
+>>> -	 * guarantee it is (or can be) handled by the targets correctly.
+>>> -	 */
+>>> -	if (unlikely(bio_barrier(bio))) {
+>>> -		bio_endio(bio, -EOPNOTSUPP);
+>>> -		return 0;
+>>> -	}
+>>> -
+>>>  	down_read(&md->io_lock);
+>>>  
+>>>  	cpu = part_stat_lock();
+>>> @@ -927,7 +941,8 @@ static int dm_request(struct request_que
+>>>  	 * If we're suspended or the thread is processing barriers
+>>>  	 * we have to queue this io for later.
+>>>  	 */
+>>> -	if (unlikely(test_bit(DMF_QUEUE_IO_FOR_THREAD, &md->flags))) {
+>>> +	if (unlikely(test_bit(DMF_QUEUE_IO_FOR_THREAD, &md->flags)) ||
+>>> +	    unlikely(bio_barrier(bio))) {
+>>>  		up_read(&md->io_lock);
+>>>  
+>>>  		if (unlikely(test_bit(DMF_BLOCK_FOR_SUSPEND, &md->flags)) &&
+>>> @@ -1393,6 +1408,12 @@ static int dm_wait_for_completion(struct
+>>>  	return r;
+>>>  }
+>>>  
+>>> +static int dm_flush(struct mapped_device *md)
+>>> +{
+>>> +	dm_wait_for_completion(md, TASK_UNINTERRUPTIBLE);
+>>> +	return 0;
+>>> +}
+>>> +
+>>>  /*
+>>>   * Process the deferred bios
+>>>   */
+>>> @@ -1415,8 +1436,30 @@ static void dm_wq_work(struct work_struc
+>>>  			break;
+>>>  		}
+>>>  
+>>> -		__split_and_process_bio(md, c);
+>>> +		if (!bio_barrier(c))
+>>> +			__split_and_process_bio(md, c);
+>>> +		else {
+>>> +			int error = dm_flush(md);
+>>> +			if (unlikely(error)) {
+>>> +				bio_endio(c, error);
+>>> +				goto next_bio;
+>>> +			}
+>>> +			if (bio_empty_barrier(c)) {
+>>> +				bio_endio(c, 0);
+>>> +				goto next_bio;
+>>> +			}
+>>> +
+>>> +			__split_and_process_bio(md, c);
+>>> +
+>>> +			error = dm_flush(md);
+>>> +			if (!error && md->barrier_error)
+>>> +				error = md->barrier_error;
+>>> +
+>>> +			if (md->barrier_error != DM_ENDIO_REQUEUE)
+>>> +				bio_endio(c, error);
+>>> +		}
+>>>  
+>>> +next_bio:
+>>>  		down_write(&md->io_lock);
+>>>  	}
+>>>  }
+>>>
+>>> --
+>>> dm-devel mailing list
+>>> dm-devel@redhat.com
+>>> https://www.redhat.com/mailman/listinfo/dm-devel
