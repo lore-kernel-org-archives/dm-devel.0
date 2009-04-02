@@ -1,12 +1,18 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper changes for 2.6.30
-Date: Thu, 2 Apr 2009 20:23:58 +0100
-Message-ID: <20090402192358.GL5098@agk.fab.redhat.com>
+From: Konrad Rzeszutek <konrad@virtualiron.com>
+Subject: Re: Device Mapper MultiPath
+Date: Thu, 2 Apr 2009 15:32:33 -0400
+Message-ID: <20090402193233.GC615@mars.virtualiron.com>
+References: <af7b4eb20903311707o925902dn14a6dc8030498001@mail.gmail.com>
+	<20090401002559.GA3213@mars.virtualiron.com>
+	<20090401200841.GA9078@thumper2>
+	<20090401203108.GA17991@mars.virtualiron.com>
+	<20090402190956.GA12661@thumper2>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20090402190956.GA12661@thumper2>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,88 +22,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, Heinz Mauelshagen <heinzm@redhat.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Cheng Renquan <crquan@gmail.com>, Mikulas Patocka <mpatocka@redhat.com>, Johannes Weiner <hannes@cmpxchg.org>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Please pull from:
+On Thu, Apr 02, 2009 at 02:09:56PM -0500, Andy wrote:
+> On Wed, Apr 01, 2009 at 04:31:08PM -0400, Konrad Rzeszutek wrote:
+> > On Wed, Apr 01, 2009 at 03:08:41PM -0500, Andy wrote:
+> > > On Tue, Mar 31, 2009 at 08:25:59PM -0400, Konrad Rzeszutek wrote:
+> > > > On Tue, Mar 31, 2009 at 09:07:08PM -0300, Rodrigo Nascimento wrote:
+> > > > > Hi All,
+> > > > > 
+> > > > > I'm a student of computer sciences and I'd like to collaborate with the
+> > > > > development of the DM-MP.
+> > > > > I know that maybe you received this kind of message during all time, but I
+> > > > 
+> > > > I think you are the first :-)
+> > > > 
+> > > > > really want to help, with anything.
+> > > > 
+> > > > Shakedown help would be nice. As in, trying to yank stuff underneath it, 
+> > > > add new block disks, remove them, add them, remove them, edit the
+> > > > multipath.conf file and issue 'reconfigure', resize the maps, 
+> > > > then add 1000+LUNs, and while they are being added, start removing the
+> > > > LUNs, then for extra fun call 'dmsetup remove_all' while in another
+> > > > thread you run 'multipath'. Ooh, and see if there are any memory leaks
+> > > > while this all is being done.
+> > > > 
+> > > 
+> > > What I would really like to see is online resizing of non-partitioned dm
+> > > block devices.  I would love to be able to resize an underlying dm-mp block
+> > > device, and the just grow the filesystem without using a extra, un-needed,
+> > 
+> > Benjamin posted a CVS patch of this, that I've forward-ported to work with
+> > the latest git. It is attached.
+> > 
+> > 
+> 
+> Thanks, I must have missed that post.  Unfortantly, I am having problems with
+> multipathd in the latest git.  It fails all my paths and hangs.  It I go
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
-
-to get the following device-mapper changes for 2.6.30
-
-Alasdair G Kergon (1):
-      dm table: fix upgrade mode race
-
-Cheng Renquan (2):
-      dm target: use module refcount directly
-      dm target: remove struct tt_internal
-
-Johannes Weiner (1):
-      dm crypt: use kzfree
-
-Jonathan Brassow (12):
-      dm exception store: separate type from instance
-      dm raid1: add is_remote_recovering hook for clusters
-      dm exception store: introduce registry
-      dm exception store: move dm_target pointer
-      dm exception store: move chunk_fields
-      dm exception store: move cow pointer
-      dm snapshot: remove dm_snap header use
-      dm snapshot: remove dm_snap header
-      dm snapshot: use DMEMIT macro for status
-      dm snapshot: move ctr parsing to exception store
-      dm snapshot: move status to exception store
-      dm snapshot: persistent fix dtr cleanup
-
-Jun'ichi Nomura (1):
-      dm: path selector use module refcount directly
-
-Mike Snitzer (2):
-      dm log: use standard kernel module refcount
-      dm log: remove struct dm_dirty_log_internal
-
-Mikulas Patocka (17):
-      dm: preserve bi_io_vec when resubmitting bios
-      dm raid1: switch read_record from kmalloc to slab to save memory
-      dm io: make sync_io uninterruptible
-      dm snapshot: refactor __find_pending_exception
-      dm snapshot: avoid dropping lock in __find_pending_exception
-      dm snapshot: avoid having two exceptions for the same chunk
-      dm: bio list add bio_list_add_head
-      dm: remove unnecessary work queue type field
-      dm: remove unnecessary work queue context field
-      dm: remove unnecessary struct dm_wq_req
-      dm: rename __split_bio
-      dm: move bio_io_error into __split_and_process_bio
-      dm: merge __flush_deferred_io into caller
-      dm: allow uninterruptible wait for pending io
-      dm: merge pushback and deferred bio lists
-      dm: move wait queue declaration
-      dm: set queue ordered mode
-
- drivers/md/dm-bio-list.h        |   10 +
- drivers/md/dm-bio-record.h      |   26 +++
- drivers/md/dm-crypt.c           |    6 +-
- drivers/md/dm-exception-store.c |  252 +++++++++++++++++++++++++
- drivers/md/dm-exception-store.h |   58 +++++-
- drivers/md/dm-io.c              |    5 +-
- drivers/md/dm-log.c             |   75 ++------
- drivers/md/dm-path-selector.c   |   21 +--
- drivers/md/dm-raid1.c           |   50 +++++-
- drivers/md/dm-snap-persistent.c |  153 +++++++++++-----
- drivers/md/dm-snap-transient.c  |   86 +++++++--
- drivers/md/dm-snap.c            |  384 ++++++++++++++++++++-------------------
- drivers/md/dm-snap.h            |  105 -----------
- drivers/md/dm-table.c           |   26 ++--
- drivers/md/dm-target.c          |  104 +++--------
- drivers/md/dm.c                 |  134 +++++---------
- drivers/md/dm.h                 |    2 +-
- include/linux/device-mapper.h   |    3 +
- include/linux/dm-dirty-log.h    |   13 ++
- 19 files changed, 893 insertions(+), 620 deletions(-)
- delete mode 100644 drivers/md/dm-snap.h
-
-Alasdair
--- 
-agk@redhat.com
+Ugh. That doesn't bode well. Try running it with 'strace' to see if it is hanging
+on the ioctl or what not.
