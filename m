@@ -1,16 +1,12 @@
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Subject: Re: Device Mapper MultiPath
-Date: Wed, 1 Apr 2009 16:31:08 -0400
-Message-ID: <20090401203108.GA17991@mars.virtualiron.com>
-References: <af7b4eb20903311707o925902dn14a6dc8030498001@mail.gmail.com>
-	<20090401002559.GA3213@mars.virtualiron.com>
-	<20090401200841.GA9078@thumper2>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: [PATCH 1 of 1] Updated cluster log patch
+Date: Thu, 02 Apr 2009 09:40:35 -0500
+Message-ID: <1238683235.24108.5.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="45Z9DzgjV8m4Oswq"
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090401200841.GA9078@thumper2>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,576 +16,1331 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
+I've rolled the old patches together and added 'dm-log.txt' to the
+Documentation directory.  This text file contains descriptions of the
+various logging types (not just the cluster logging).
 
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+This patch supersedes (as somewhat named by patchwork):
+- dm-log-cluster.patch
+- dm-raid1-add-clustering-addendum1.patch
+- dm-raid1-add-clustering-addendum2.patch
 
-On Wed, Apr 01, 2009 at 03:08:41PM -0500, Andy wrote:
-> On Tue, Mar 31, 2009 at 08:25:59PM -0400, Konrad Rzeszutek wrote:
-> > On Tue, Mar 31, 2009 at 09:07:08PM -0300, Rodrigo Nascimento wrote:
-> > > Hi All,
-> > > 
-> > > I'm a student of computer sciences and I'd like to collaborate with the
-> > > development of the DM-MP.
-> > > I know that maybe you received this kind of message during all time, but I
-> > 
-> > I think you are the first :-)
-> > 
-> > > really want to help, with anything.
-> > 
-> > Shakedown help would be nice. As in, trying to yank stuff underneath it, 
-> > add new block disks, remove them, add them, remove them, edit the
-> > multipath.conf file and issue 'reconfigure', resize the maps, 
-> > then add 1000+LUNs, and while they are being added, start removing the
-> > LUNs, then for extra fun call 'dmsetup remove_all' while in another
-> > thread you run 'multipath'. Ooh, and see if there are any memory leaks
-> > while this all is being done.
-> > 
-> 
-> What I would really like to see is online resizing of non-partitioned dm
-> block devices.  I would love to be able to resize an underlying dm-mp block
-> device, and the just grow the filesystem without using a extra, un-needed,
+ brassow
 
-Benjamin posted a CVS patch of this, that I've forward-ported to work with
-the latest git. It is attached.
+This patch contains a cluster-aware log module.  When used
+by dm-raid1, device-mapper mirroring can be cluster-aware.
 
+There is a kernel component (provided in this patch) and a
+user space component.  The kernel component implements the
+logging interface and passes all requests to userspace via
+'connector' (a netlink wrapper).  The userspace daemon is
+built upon OpenAIS for cluster communication and is fault
+tolerant.
 
-> volume manager layer.  I remember some of this being talk about a while ago,
-> but I don't think anything ever happened.
-> 
-> Andy
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: attachment;
-	filename="Support-resizing-of-multipath-maps.patch"
-
-From 478bf8cc2c741f860d4a0a6d0cc22d5304e7f45c Mon Sep 17 00:00:00 2001
-From: Konrad Rzeszutek <konrad@virtualiron.com>
-Date: Mon, 23 Mar 2009 15:35:59 -0400
-Subject: [PATCH] Support resizing of multipath maps.
-
-This is patch that initially showed up on dm-devel mailing list:
-
-http://www.linux-archive.org/device-mapper-development/162594-multipath-tools-libmultipath-configure-c-libmu.html
-which was posted on dm-devel mailing list, but never ported
-over to work with the git version. This forward-port by me
-works.
----
- libmultipath/configure.c  |   10 +++-
- libmultipath/configure.h  |    4 +-
- libmultipath/devmapper.c  |   12 ++-
- libmultipath/devmapper.h  |    2 +-
- libmultipath/sysfs.h      |    1 +
- multipathd/cli.c          |    2 +
- multipathd/cli.h          |    2 +
- multipathd/cli_handlers.c |  166 +++++++++++++++++++++++++++++++-------------
- multipathd/cli_handlers.h |    1 +
- multipathd/main.c         |    3 +-
- multipathd/main.h         |    1 +
- 11 files changed, 147 insertions(+), 57 deletions(-)
-
-diff --git a/libmultipath/configure.c b/libmultipath/configure.c
-index e00582f..ed20f37 100644
---- a/libmultipath/configure.c
-+++ b/libmultipath/configure.c
-@@ -353,7 +353,15 @@ domap (struct multipath * mpp)
+Index: linux-2.6/drivers/md/Kconfig
+===================================================================
+--- linux-2.6.orig/drivers/md/Kconfig
++++ linux-2.6/drivers/md/Kconfig
+@@ -256,6 +256,16 @@ config DM_MIRROR
+          Allow volume managers to mirror logical volumes, also
+          needed for live data migration tools such as 'pvmove'.
  
- 	case ACT_RELOAD:
- 		r = (dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL)
--		     && dm_simplecmd(DM_DEVICE_RESUME, mpp->alias));
-+		     && dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, 1));
-+		break;
++config DM_LOG_CLUSTERED
++	tristate "Mirror cluster logging (EXPERIMENTAL)"
++	depends on DM_MIRROR && EXPERIMENTAL
++	select CONNECTOR
++	---help---
++	  Cluster logging allows device-mapper mirroring to be
++	  cluster-aware.  Mirror devices can be used by multiple
++	  machines at the same time.  Note: this will not make
++	  your applications cluster-aware.
 +
-+ 	case ACT_RESIZE:
-+  		r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
-+  		if (!r)
-+  			r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
-+  		if (r)
-+  			r = dm_simplecmd(DM_DEVICE_RESUME, mpp->alias, 0);
- 		break;
+ config DM_ZERO
+ 	tristate "Zero target"
+ 	depends on BLK_DEV_DM
+Index: linux-2.6/drivers/md/Makefile
+===================================================================
+--- linux-2.6.orig/drivers/md/Makefile
++++ linux-2.6/drivers/md/Makefile
+@@ -8,6 +8,7 @@ dm-multipath-objs := dm-path-selector.o 
+ dm-snapshot-objs := dm-snap.o dm-exception.o dm-exception-store.o \
+ 		    dm-snap-persistent.o dm-snap-transient.o
+ dm-mirror-objs	:= dm-raid1.o
++dm-log-clustered-objs := dm-log-cluster.o dm-log-cluster-transfer.o
+ md-mod-objs     := md.o bitmap.o
+ raid456-objs	:= raid5.o raid6algos.o raid6recov.o raid6tables.o \
+ 		   raid6int1.o raid6int2.o raid6int4.o \
+@@ -36,6 +37,7 @@ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+ obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
++obj-$(CONFIG_DM_LOG_CLUSTERED)	+= dm-log-clustered.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
  
- 	case ACT_RENAME:
-diff --git a/libmultipath/configure.h b/libmultipath/configure.h
-index 75d5057..25891ba 100644
---- a/libmultipath/configure.h
-+++ b/libmultipath/configure.h
-@@ -7,6 +7,7 @@
- #define ACT_SWITCHPG_STR        "switchpg"
- #define ACT_RENAME_STR          "rename"
- #define ACT_CREATE_STR          "create"
-+#define ACT_RESIZE_STR          "resize"
+ quiet_cmd_unroll = UNROLL  $@
+Index: linux-2.6/include/linux/connector.h
+===================================================================
+--- linux-2.6.orig/include/linux/connector.h
++++ linux-2.6/include/linux/connector.h
+@@ -39,8 +39,10 @@
+ #define CN_IDX_V86D			0x4
+ #define CN_VAL_V86D_UVESAFB		0x1
+ #define CN_IDX_BB			0x5	/* BlackBoard, from the TSP GPL sampling framework */
++#define CN_IDX_DM			0x6     /* Device Mapper */
++#define CN_VAL_DM_CLUSTER_LOG		0x1
  
- enum actions {
- 	ACT_UNDEF,
-@@ -15,7 +16,8 @@ enum actions {
- 	ACT_RELOAD,
- 	ACT_SWITCHPG,
- 	ACT_RENAME,
--	ACT_CREATE
-+	ACT_CREATE,
-+	ACT_RESIZE,
- };
+-#define CN_NETLINK_USERS		6
++#define CN_NETLINK_USERS		7
  
- #define FLUSH_ONE 1
-diff --git a/libmultipath/devmapper.c b/libmultipath/devmapper.c
-index 78204ff..125d394 100644
---- a/libmultipath/devmapper.c
-+++ b/libmultipath/devmapper.c
-@@ -150,7 +150,7 @@ dm_prereq (void)
- }
- 
- extern int
--dm_simplecmd (int task, const char *name) {
-+dm_simplecmd (int task, const char *name, int no_flush) {
- 	int r = 0;
- 	struct dm_task *dmt;
- 
-@@ -163,7 +163,8 @@ dm_simplecmd (int task, const char *name) {
- 	dm_task_no_open_count(dmt);
- 	dm_task_skip_lockfs(dmt);	/* for DM_DEVICE_RESUME */
- #ifdef LIBDM_API_FLUSH
--	dm_task_no_flush(dmt);		/* for DM_DEVICE_SUSPEND/RESUME */
-+	if (no_flush)
-+		dm_task_no_flush(dmt);		/* for DM_DEVICE_SUSPEND/RESUME */
- #endif
- 
- 	r = dm_task_run (dmt);
-@@ -193,6 +194,9 @@ dm_addmap (int task, const char *name, const char *target,
- 	if (ro)
- 		dm_task_set_ro(dmt);
- 
-+	if (ro)
-+		dm_task_set_ro(dmt);
+ /*
+  * Maximum connector's message size.
+Index: linux-2.6/include/linux/dm-log-cluster.h
+===================================================================
+--- /dev/null
++++ linux-2.6/include/linux/dm-log-cluster.h
+@@ -0,0 +1,67 @@
++/*
++ * Copyright (C) 2006-2009 Red Hat, Inc.
++ *
++ * This file is released under the LGPL.
++ */
 +
- 	if (uuid){
- 		prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(uuid) + 1);
- 		if (!prefixed_uuid) {
-@@ -536,7 +540,7 @@ dm_flush_map (const char * mapname)
- 		return 1;
- 	}
- 
--	r = dm_simplecmd(DM_DEVICE_REMOVE, mapname);
-+	r = dm_simplecmd(DM_DEVICE_REMOVE, mapname, 0);
- 
- 	if (r) {
- 		condlog(4, "multipath map %s removed", mapname);
-@@ -935,7 +939,7 @@ dm_remove_partmaps (const char * mapname)
- 				 */
- 				condlog(4, "partition map %s removed",
- 					names->name);
--				dm_simplecmd(DM_DEVICE_REMOVE, names->name);
-+				dm_simplecmd(DM_DEVICE_REMOVE, names->name, 0);
- 		   }
- 
- 		next = names->next;
-diff --git a/libmultipath/devmapper.h b/libmultipath/devmapper.h
-index a340c00..b262efa 100644
---- a/libmultipath/devmapper.h
-+++ b/libmultipath/devmapper.h
-@@ -3,7 +3,7 @@
- 
- void dm_init(void);
- int dm_prereq (void);
--int dm_simplecmd (int, const char *);
-+int dm_simplecmd (int, const char *, int);
- int dm_addmap_create (const char *, const char *,
-                       unsigned long long size, const char *uuid);
- int dm_addmap_create_ro (const char *, const char *,
-diff --git a/libmultipath/sysfs.h b/libmultipath/sysfs.h
-index e7fa3e7..2cd762f 100644
---- a/libmultipath/sysfs.h
-+++ b/libmultipath/sysfs.h
-@@ -21,5 +21,6 @@ struct sysfs_device *sysfs_device_get_parent_with_subsystem(struct sysfs_device
- void sysfs_device_put(struct sysfs_device *dev);
- char *sysfs_attr_get_value(const char *devpath, const char *attr_name);
- int sysfs_resolve_link(char *path, size_t size);
-+int sysfs_get_size (struct sysfs_device * dev, unsigned long long * size);
- 
- #endif
-diff --git a/multipathd/cli.c b/multipathd/cli.c
-index c93aa83..f6f4297 100644
---- a/multipathd/cli.c
-+++ b/multipathd/cli.c
-@@ -155,6 +155,7 @@ load_keys (void)
- 	r += add_key(keys, "resume", RESUME, 0);
- 	r += add_key(keys, "reinstate", REINSTATE, 0);
- 	r += add_key(keys, "fail", FAIL, 0);
-+	r += add_key(keys, "resize", RESIZE, 0);
- 	r += add_key(keys, "paths", PATHS, 0);
- 	r += add_key(keys, "maps", MAPS, 0);
- 	r += add_key(keys, "multipaths", MAPS, 0);
-@@ -429,6 +430,7 @@ cli_init (void) {
- 	add_handler(RECONFIGURE, NULL);
- 	add_handler(SUSPEND+MAP, NULL);
- 	add_handler(RESUME+MAP, NULL);
-+	add_handler(RESIZE+MAP, NULL);
- 	add_handler(REINSTATE+PATH, NULL);
- 	add_handler(FAIL+PATH, NULL);
- 	add_handler(QUIT, NULL);
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index d58a200..13d8289 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -7,6 +7,7 @@ enum {
- 	__RESUME,
- 	__REINSTATE,
- 	__FAIL,
-+	__RESIZE,
- 	__PATHS,
- 	__MAPS,
- 	__PATH,
-@@ -32,6 +33,7 @@ enum {
- #define RESUME		(1 << __RESUME)
- #define REINSTATE	(1 << __REINSTATE)
- #define FAIL		(1 << __FAIL)
-+#define RESIZE		(1 << __RESIZE)
- #define PATHS		(1 << __PATHS)
- #define MAPS		(1 << __MAPS)
- #define PATH		(1 << __PATH)
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index 6cf232a..b352c62 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -14,6 +14,7 @@
- #include <debug.h>
- #include <print.h>
- #include <sysfs.h>
-+#include <errno.h>
- 
- #include "main.h"
- #include "cli.h"
-@@ -419,12 +420,79 @@ cli_del_map (void * v, char ** reply, int * len, void * data)
- 	return ev_remove_map(param, vecs);
- }
- 
-+int resize_map(struct multipath *mpp, unsigned long long size,
-+	       struct vectors * vecs)
-+{
-+	mpp->size = size;
-+	update_mpp_paths(mpp, vecs->pathvec);
-+	setup_map(mpp);
-+	mpp->action = ACT_RESIZE;
-+	if (domap(mpp) <= 0) {
-+		condlog(0, "%s: failed to resize map : %s", mpp->alias,
-+			strerror(errno));
-+		return 1;
-+	}
-+	return 0;
++#ifndef __DM_LOG_CLUSTER_H__
++#define __DM_LOG_CLUSTER_H__
++
++#include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
++
++#define DM_CLOG_TFR_SIZE 1024
++
++#define DM_CLOG_CTR                    1
++#define DM_CLOG_DTR                    2
++#define DM_CLOG_PRESUSPEND             3
++#define DM_CLOG_POSTSUSPEND            4
++#define DM_CLOG_RESUME                 5
++#define DM_CLOG_GET_REGION_SIZE        6
++#define DM_CLOG_IS_CLEAN               7
++#define DM_CLOG_IN_SYNC                8
++#define DM_CLOG_FLUSH                  9
++#define DM_CLOG_MARK_REGION           10
++#define DM_CLOG_CLEAR_REGION          11
++#define DM_CLOG_GET_RESYNC_WORK       12
++#define DM_CLOG_SET_REGION_SYNC       13
++#define DM_CLOG_GET_SYNC_COUNT        14
++#define DM_CLOG_STATUS_INFO           15
++#define DM_CLOG_STATUS_TABLE          16
++#define DM_CLOG_IS_REMOTE_RECOVERING  17
++
++#define REQUEST_TYPES {	\
++	"INVALID", \
++	"DM_CLOG_CTR", \
++	"DM_CLOG_DTR", \
++	"DM_CLOG_PRESUSPEND", \
++	"DM_CLOG_POSTSUSPEND", \
++	"DM_CLOG_RESUME", \
++	"DM_CLOG_GET_REGION_SIZE", \
++	"DM_CLOG_IS_CLEAN", \
++	"DM_CLOG_IN_SYNC", \
++	"DM_CLOG_FLUSH", \
++	"DM_CLOG_MARK_REGION", \
++	"DM_CLOG_CLEAR_REGION", \
++	"DM_CLOG_GET_RESYNC_WORK", \
++	"DM_CLOG_SET_REGION_SYNC", \
++	"DM_CLOG_GET_SYNC_COUNT", \
++	"DM_CLOG_STATUS_INFO", \
++	"DM_CLOG_STATUS_TABLE", \
++	"DM_CLOG_IS_REMOTE_RECOVERING" \
 +}
 +
-+int
-+cli_resize(void *v, char **reply, int *len, void *data)
++struct clog_tfr {
++	uint64_t private[2];
++	char uuid[DM_UUID_LEN]; /* Ties a request to a specific mirror log */
++
++	int error;              /* Used by server to inform of errors */
++	uint32_t originator;    /* Cluster ID of this machine */
++
++	uint32_t seq;           /* Sequence number for request */
++	uint32_t request_type;  /* DM_CLOG_* */
++	uint32_t data_size;     /* How much data (not including this struct) */
++
++	char data[0];
++};
++
++#endif /* __DM_LOG_CLUSTER_H__ */
+Index: linux-2.6/drivers/md/dm-log-cluster-transfer.c
+===================================================================
+--- /dev/null
++++ linux-2.6/drivers/md/dm-log-cluster-transfer.c
+@@ -0,0 +1,280 @@
++/*
++ * Copyright (C) 2006-2009 Red Hat, Inc.
++ *
++ * This file is released under the LGPL.
++ */
++
++#include <linux/kernel.h>
++#include <linux/module.h>
++#include <net/sock.h>
++#include <linux/workqueue.h>
++#include <linux/connector.h>
++#include <linux/device-mapper.h>
++
++#include <linux/dm-log-cluster.h>
++#include "dm-log-cluster-transfer.h"
++
++#include <asm/div64.h> /* Unnecessary */
++
++#define SHORT_UUID(x) (strlen(x) > 8) ? ((x) + (strlen(x) - 8)) : (x)
++
++static uint32_t seq;
++
++/*
++ * Pre-allocated space for speed
++ */
++#define DM_CLOG_PREALLOCED_SIZE 512
++static struct cn_msg *prealloced_cn_msg;
++static struct clog_tfr *prealloced_clog_tfr;
++
++static struct cb_id cn_clog_id = { CN_IDX_DM, CN_VAL_DM_CLUSTER_LOG };
++static DEFINE_MUTEX(_lock);
++
++struct receiving_pkg {
++	struct list_head list;
++	struct completion complete;
++
++	uint32_t seq;
++
++	int error;
++	size_t *data_size;
++	char *data;
++};
++
++static DEFINE_SPINLOCK(receiving_list_lock);
++static struct list_head receiving_list;
++
++static const char *request_type_str(uint32_t request_type)
 +{
-+	struct vectors * vecs = (struct vectors *)data;
-+	char * mapname = get_keyparam(v, MAP);
-+	struct multipath *mpp;
-+	int minor;
-+	unsigned long long size;
-+	struct pathgroup *pgp;
-+	struct path *pp;
++	static const char *map[] = REQUEST_TYPES;
 +
-+	condlog(2, "%s: resize map (operator)", mapname);
-+	if (sscanf(mapname, "dm-%d", &minor) == 1)
-+		mpp = find_mp_by_minor(vecs->mpvec, minor);
-+	else
-+		mpp = find_mp_by_alias(vecs->mpvec, mapname);
++	return map[request_type];
++}
 +
-+	if (!mpp) {
-+		condlog(0, "%s: invalid map name. cannot resize", mapname);
-+		return 1;
++static int dm_clog_sendto_server(struct clog_tfr *tfr)
++{
++	int r;
++	int size;
++	struct cn_msg *msg = prealloced_cn_msg;
++
++	if (tfr != prealloced_clog_tfr) {
++		size = sizeof(struct cn_msg) +
++			sizeof(struct clog_tfr) + tfr->data_size;
++		msg = kmalloc(size, GFP_NOIO);
++		if (!msg)
++			return -ENOMEM;
++		memcpy((msg + 1), tfr,
++		       sizeof(struct clog_tfr) + tfr->data_size);
 +	}
 +
-+	pgp = VECTOR_SLOT(mpp->pg, 0);
-+	pp = VECTOR_SLOT(pgp->paths, 0);
-+	condlog(0,"%s: reading sysfs.", mapname);
-+	if (sysfs_get_size(pp->sysdev, &size)) {
-+		condlog(0, "%s: couldn't get size for sysfs. cannot resize",
-+			mapname);
-+		return 1;
-+	}
-+	if (size == mpp->size) {
-+		condlog(0, "%s: map is still the same size (%llu)", mapname,
-+			mpp->size);
++	memset(msg, 0, sizeof(struct cn_msg));
++
++	msg->id.idx = cn_clog_id.idx;
++	msg->id.val = cn_clog_id.val;
++	msg->ack = 0;
++	msg->seq = tfr->seq;
++	msg->len = sizeof(struct clog_tfr) + tfr->data_size;
++
++	r = cn_netlink_send(msg, 0, gfp_any());
++
++	if (msg != prealloced_cn_msg)
++		kfree(msg);
++
++	return r;
++}
++
++/*
++ * fill_pkg
++ * @msg
++ * @tfr
++ *
++ * Parameters can be either msg or tfr, but not both.  This
++ * function fills in the reply for a waiting request.  If just
++ * msg is given, then the reply is simply an ACK from userspace
++ * that the request was received.
++ *
++ * Returns: 0 on success, -ENOENT on failure
++ */
++static int fill_pkg(struct cn_msg *msg, struct clog_tfr *tfr)
++{
++	uint32_t rtn_seq = (msg) ? msg->seq : (tfr) ? tfr->seq : 0;
++	struct receiving_pkg *pkg;
++
++	list_for_each_entry(pkg, &receiving_list, list) {
++		if (rtn_seq != pkg->seq)
++			continue;
++
++		if (msg) {
++			pkg->error = -msg->ack;
++			/*
++			 * If we are trying again, we will need to know our
++			 * storage capacity.  Otherwise, along with the
++			 * error code, we make explicit that we have no data.
++			 */
++			if (pkg->error != -EAGAIN)
++				*(pkg->data_size) = 0;
++		} else if (tfr->data_size > *(pkg->data_size)) {
++			DMERR("Insufficient space to receive package [%s]::",
++			      request_type_str(tfr->request_type));
++			DMERR("  tfr->data_size    = %u", tfr->data_size);
++			DMERR("  *(pkg->data_size) = %lu", *(pkg->data_size));
++
++			*(pkg->data_size) = 0;
++			pkg->error = -ENOSPC;
++		} else {
++			pkg->error = tfr->error;
++			memcpy(pkg->data, tfr->data, tfr->data_size);
++			*(pkg->data_size) = tfr->data_size;
++		}
++		complete(&pkg->complete);
 +		return 0;
 +	}
-+	condlog(3, "%s old size is %llu, new size is %llu", mapname, mpp->size,
-+		size);
 +
-+	condlog(0,"%s: resize_map.");
-+	if (resize_map(mpp, size, vecs) != 0)
-+		return 1;
++	return -ENOENT;
++}
 +
-+	condlog(0,"%s: dm_lib_release.", mapname);
-+	dm_lib_release();
-+	condlog(0,"%s: setup multipath.", mapname);
-+	setup_multipath(vecs, mpp);
-+	condlog(0,"%s: sync map state.", mapname);
-+	sync_map_state(mpp);
++/*
++ * cn_clog_callback
++ * @data
++ *
++ * This is the connector callback that delivers data
++ * that was sent from userspace.
++ */
++static void cn_clog_callback(void *data)
++{
++	struct cn_msg *msg = (struct cn_msg *)data;
++	struct clog_tfr *tfr = (struct clog_tfr *)(msg + 1);
++
++	spin_lock(&receiving_list_lock);
++	if (msg->len == 0)
++		fill_pkg(msg, NULL);
++	else if (msg->len < sizeof(*tfr))
++		DMERR("Incomplete message received: [%u]", msg->seq);
++	else
++		fill_pkg(NULL, tfr);
++	spin_unlock(&receiving_list_lock);
++}
++
++/*
++ * dm_clog_consult_server
++ * @uuid: log's uuid (must be DM_UUID_LEN in size)
++ * @request_type:
++ * @data: data to tx to the server
++ * @data_size: size of data in bytes
++ * @rdata: place to put return data from server
++ * @rdata_size: value-result (amount of space given/amount of space used)
++ *
++ * Only one process at a time can communicate with the server.
++ * rdata_size is undefined on failure.
++ *
++ * Returns: 0 on success, -EXXX on failure
++ */
++int dm_clog_consult_server(const char *uuid, int request_type,
++			   char *data, size_t data_size,
++			   char *rdata, size_t *rdata_size)
++{
++	int r = 0;
++	size_t dummy = 0;
++	int overhead_size = sizeof(struct clog_tfr *) + sizeof(struct cn_msg);
++	struct clog_tfr *tfr = prealloced_clog_tfr;
++	struct receiving_pkg pkg;
++
++	if (data_size > (DM_CLOG_PREALLOCED_SIZE - overhead_size)) {
++		DMINFO("Size of tfr exceeds preallocated size");
++		/* FIXME: is kmalloc sufficient if we need this much space? */
++		tfr = kzalloc(data_size + sizeof(*tfr), GFP_NOIO);
++	}
++
++	if (!tfr)
++		return -ENOMEM;
++
++	if (!rdata_size)
++		rdata_size = &dummy;
++resend:
++	/*
++	 * We serialize the sending of requests so we can
++	 * use the preallocated space.
++	 */
++	mutex_lock(&_lock);
++
++	memset(tfr, 0, DM_CLOG_PREALLOCED_SIZE - overhead_size);
++	memcpy(tfr->uuid, uuid, DM_UUID_LEN);
++	tfr->seq = seq++;
++	tfr->request_type = request_type;
++	tfr->data_size = data_size;
++	if (data && data_size)
++		memcpy(tfr->data, data, data_size);
++
++	memset(&pkg, 0, sizeof(pkg));
++	init_completion(&pkg.complete);
++	pkg.seq = tfr->seq;
++	pkg.data_size = rdata_size;
++	pkg.data = rdata;
++	spin_lock(&receiving_list_lock);
++	list_add(&(pkg.list), &receiving_list);
++	spin_unlock(&receiving_list_lock);
++
++	r = dm_clog_sendto_server(tfr);
++
++	mutex_unlock(&_lock);
++
++	if (r) {
++		DMERR("Unable to send cluster log request [%s] to server: %d",
++		      request_type_str(request_type), r);
++		spin_lock(&receiving_list_lock);
++		list_del_init(&(pkg.list));
++		spin_unlock(&receiving_list_lock);
++
++		goto out;
++	}
++
++	r = wait_for_completion_timeout(&(pkg.complete), 15 * HZ);
++	spin_lock(&receiving_list_lock);
++	list_del_init(&(pkg.list));
++	spin_unlock(&receiving_list_lock);
++	if (!r) {
++		DMWARN("[%s] Request timed out: [%s/%u] - retrying",
++		       SHORT_UUID(uuid), request_type_str(request_type),
++		       pkg.seq);
++		goto resend;
++	}
++
++	r = pkg.error;
++	if (r == -EAGAIN)
++		goto resend;
++
++out:
++	if (tfr != (struct clog_tfr *)prealloced_clog_tfr)
++		kfree(tfr);
++
++	return r;
++}
++
++int dm_clog_tfr_init(void)
++{
++	int r;
++	void *prealloced;
++
++	INIT_LIST_HEAD(&receiving_list);
++
++	prealloced = kmalloc(DM_CLOG_PREALLOCED_SIZE, GFP_KERNEL);
++	if (!prealloced)
++		return -ENOMEM;
++
++	prealloced_cn_msg = prealloced;
++	prealloced_clog_tfr = prealloced + sizeof(struct cn_msg);
++
++	r = cn_add_callback(&cn_clog_id, "clulog", cn_clog_callback);
++	if (r) {
++		cn_del_callback(&cn_clog_id);
++		return r;
++	}
 +
 +	return 0;
 +}
 +
- int
- cli_switch_group(void * v, char ** reply, int * len, void * data)
- {
- 	char * mapname = get_keyparam(v, MAP);
- 	int groupnum = atoi(get_keyparam(v, GROUP));
--	
++void dm_clog_tfr_exit(void)
++{
++	cn_del_callback(&cn_clog_id);
++	kfree(prealloced_cn_msg);
++}
+Index: linux-2.6/drivers/md/dm-log-cluster-transfer.h
+===================================================================
+--- /dev/null
++++ linux-2.6/drivers/md/dm-log-cluster-transfer.h
+@@ -0,0 +1,18 @@
++/*
++ * Copyright (C) 2006-2009 Red Hat, Inc.
++ *
++ * This file is released under the LGPL.
++ */
 +
- 	condlog(2, "%s: switch to path group #%i (operator)", mapname, groupnum);
- 
- 	return dm_switchgroup(mapname, groupnum);
-@@ -434,7 +502,7 @@ int
- cli_reconfigure(void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
--			
++#ifndef __DM_LOG_CLUSTER_TRANSFER_H__
++#define __DM_LOG_CLUSTER_TRANSFER_H__
 +
- 	condlog(2, "reconfigure (operator)");
- 
- 	return reconfigure(vecs);
-@@ -445,18 +513,18 @@ cli_suspend(void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int r = dm_simplecmd(DM_DEVICE_SUSPEND, param);
-+	int r = dm_simplecmd(DM_DEVICE_SUSPEND, param, 1);
- 
- 	condlog(2, "%s: suspend (operator)", param);
- 
- 	if (!r) /* error */
- 		return 1;
--	
++#define DM_MSG_PREFIX "dm-log-clustered"
 +
- 	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, param);
- 
- 	if (!mpp)
- 		return 1;
--	
++int dm_clog_tfr_init(void);
++void dm_clog_tfr_exit(void);
++int dm_clog_consult_server(const char *uuid, int request_type,
++			   char *data, size_t data_size,
++			   char *rdata, size_t *rdata_size);
 +
- 	dm_get_info(param, &mpp->dmi);
- 	return 0;
- }
-@@ -466,18 +534,18 @@ cli_resume(void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int r = dm_simplecmd(DM_DEVICE_RESUME, param);
-+	int r = dm_simplecmd(DM_DEVICE_RESUME, param, 1);
- 
- 	condlog(2, "%s: resume (operator)", param);
- 
- 	if (!r) /* error */
- 		return 1;
--	
++#endif /* __DM_LOG_CLUSTER_TRANSFER_H__ */
+Index: linux-2.6/drivers/md/dm-log-cluster.c
+===================================================================
+--- /dev/null
++++ linux-2.6/drivers/md/dm-log-cluster.c
+@@ -0,0 +1,797 @@
++/*
++ * Copyright (C) 2006-2009 Red Hat, Inc.
++ *
++ * This file is released under the LGPL.
++ */
 +
- 	struct multipath * mpp = find_mp_by_alias(vecs->mpvec, param);
- 
- 	if (!mpp)
- 		return 1;
--	
++#include <linux/blkdev.h> /* for sector_div, which is used in dm-dirty-log.h */
++#include <linux/bio.h>
++#include <linux/dm-dirty-log.h>
++#include <linux/device-mapper.h>
 +
- 	dm_get_info(param, &mpp->dmi);
- 	return 0;
- }
-@@ -488,7 +556,7 @@ cli_reinstate(void * v, char ** reply, int * len, void * data)
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, PATH);
- 	struct path * pp;
--	
++#include <linux/dm-log-cluster.h>
++#include "dm-log-cluster-transfer.h"
 +
- 	pp = find_path_by_dev(vecs->pathvec, param);
- 
- 	if (!pp)
-@@ -511,7 +579,7 @@ cli_fail(void * v, char ** reply, int * len, void * data)
- 	char * param = get_keyparam(v, PATH);
- 	struct path * pp;
- 	int r;
--	
++struct flush_entry {
++	int type;
++	region_t region;
++	struct list_head list;
++};
 +
- 	pp = find_path_by_dev(vecs->pathvec, param);
- 
- 	if (!pp)
-@@ -535,67 +603,67 @@ cli_fail(void * v, char ** reply, int * len, void * data)
- int
- show_blacklist (char ** r, int * len)
- {
--        char *c = NULL;
--        char *reply = NULL;
--        unsigned int maxlen = INITIAL_REPLY_LEN;
--        int again = 1;
-+	char *c = NULL;
-+	char *reply = NULL;
-+	unsigned int maxlen = INITIAL_REPLY_LEN;
-+	int again = 1;
- 
--        while (again) {
-+	while (again) {
- 		reply = MALLOC(maxlen);
- 		if (!reply)
- 			return 1;
- 
--                c = reply;
--                c += snprint_blacklist_report(c, maxlen);
--                again = ((c - reply) == maxlen);
--                if (again) {
-+		c = reply;
-+		c += snprint_blacklist_report(c, maxlen);
-+		again = ((c - reply) == maxlen);
-+		if (again) {
- 			maxlen  *= 2;
- 			FREE(reply);
--                        continue;
--                }
--        }
-+			continue;
-+		}
++struct log_c {
++	struct dm_target *ti;
++	uint32_t region_size;
++	region_t region_count;
++	char uuid[DM_UUID_LEN];
++
++	char *ctr_str; /* Gives ability to restart if userspace dies */
++	uint32_t ctr_size;
++
++	/*
++	 * in_sync_hint gets set when doing is_remote_recovering.  It
++	 * represents the first region that needs recovery.  IOW, the
++	 * first zero bit of sync_bits.  This can be useful for to limit
++	 * traffic for calls like is_remote_recovering and get_resync_work,
++	 * but be take care in its use for anything else.
++	 */
++	uint64_t in_sync_hint;
++
++	spinlock_t flush_lock;
++	struct list_head flush_list;  /* only for clear and mark requests */
++
++	struct dm_dev *disk_log;
++};
++
++static mempool_t *flush_entry_pool;
++
++static void *flush_entry_alloc(gfp_t gfp_mask, void *pool_data)
++{
++	return kmalloc(sizeof(struct flush_entry), gfp_mask);
++}
++
++static void flush_entry_free(void *element, void *pool_data)
++{
++	kfree(element);
++}
++
++int cluster_do_request(struct log_c *lc, const char *uuid, int request_type,
++		       char *data, size_t data_size,
++		       char *rdata, size_t *rdata_size)
++{
++	int r;
++
++	/*
++	 * If the server isn't there, -ESRCH is returned,
++	 * and we must keep trying until the server is
++	 * restored.
++	 */
++retry:
++	r = dm_clog_consult_server(uuid, request_type, data,
++				   data_size, rdata, rdata_size);
++
++	if (r != -ESRCH)
++		return r;
++
++	DMERR(" Userspace cluster log server not found.");
++	while (1) {
++		set_current_state(TASK_INTERRUPTIBLE);
++		schedule_timeout(2*HZ);
++		DMWARN("Attempting to contact cluster log server...");
++		r = dm_clog_consult_server(uuid, DM_CLOG_CTR, lc->ctr_str,
++					   lc->ctr_size, NULL, NULL);
++		if (!r)
++			break;
 +	}
- 
--        *r = reply;
--        *len = (int)(c - reply + 1);
-+	*r = reply;
-+	*len = (int)(c - reply + 1);
- 
--        return 0;
-+	return 0;
- }
- 
- int
- cli_list_blacklist (void * v, char ** reply, int * len, void * data)
- {
--        condlog(3, "list blacklist (operator)");
-+	condlog(3, "list blacklist (operator)");
- 
--        return show_blacklist(reply, len);
-+	return show_blacklist(reply, len);
- }
- 
- int
- show_devices (char ** r, int * len, struct vectors *vecs)
- {
--        char *c = NULL;
--        char *reply = NULL;
--        unsigned int maxlen = INITIAL_REPLY_LEN;
--        int again = 1;
-+	char *c = NULL;
-+	char *reply = NULL;
-+	unsigned int maxlen = INITIAL_REPLY_LEN;
-+	int again = 1;
- 
--        while (again) {
--                reply = MALLOC(maxlen);
--                if (!reply)
--                        return 1;
-+	while (again) {
-+		reply = MALLOC(maxlen);
-+		if (!reply)
-+			return 1;
- 
--                c = reply;
--                c += snprint_devices(c, maxlen, vecs);
--                again = ((c - reply) == maxlen);
--                if (again) {
--                        maxlen  *= 2;
--                        FREE(reply);
--                        continue;
--                }
--        }
-+		c = reply;
-+		c += snprint_devices(c, maxlen, vecs);
-+		again = ((c - reply) == maxlen);
-+		if (again) {
-+			maxlen  *= 2;
-+			FREE(reply);
-+			continue;
-+		}
++	DMINFO("Reconnected to cluster log server... CTR complete");
++	r = dm_clog_consult_server(uuid, DM_CLOG_RESUME, NULL,
++				   0, NULL, NULL);
++	if (!r)
++		goto retry;
++
++	DMERR("Error trying to resume cluster log: %d", r);
++
++	return -ESRCH;
++}
++
++static int cluster_ctr(struct dm_dirty_log *log, struct dm_target *ti,
++		       unsigned int argc, char **argv,
++		       struct dm_dev *disk_log)
++{
++	int i;
++	int r = 0;
++	int str_size;
++	int offset = (disk_log) ? 1 : 0;
++	char *ctr_str = NULL;
++	struct log_c *lc = NULL;
++	uint32_t region_size;
++	region_t region_count;
++
++	/* Already checked argument count */
++
++	if (sscanf(argv[offset], "%u", &region_size) != 1) {
++		DMWARN("Invalid region size string");
++		return -EINVAL;
 +	}
- 
--        *r = reply;
--        *len = (int)(c - reply + 1);
-+	*r = reply;
-+	*len = (int)(c - reply + 1);
- 
--        return 0;
++
++	region_count = dm_sector_div_up(ti->len, region_size);
++
++	lc = kmalloc(sizeof(*lc), GFP_KERNEL);
++	if (!lc) {
++		DMWARN("Unable to allocate cluster log context.");
++		return -ENOMEM;
++	}
++
++	lc->ti = ti;
++	lc->region_size = region_size;
++	lc->region_count = region_count;
++	lc->disk_log = disk_log;
++
++	/* FIXME: Need to check size of uuid arg */
++	memcpy(lc->uuid, argv[1 + offset], DM_UUID_LEN);
++	spin_lock_init(&lc->flush_lock);
++	INIT_LIST_HEAD(&lc->flush_list);
++
++	for (i = 0, str_size = 0; i < argc; i++)
++		str_size += strlen(argv[i]) + 1; /* +1 for space between args */
++
++	str_size += 20; /* Max number of chars in a printed u64 number */
++
++	ctr_str = kzalloc(str_size, GFP_KERNEL);
++	if (!ctr_str) {
++		DMWARN("Unable to allocate memory for constructor string");
++		kfree(lc);
++		return -ENOMEM;
++	}
++
++	for (i = 0, str_size = 0; i < argc; i++)
++		str_size += sprintf(ctr_str + str_size, "%s ", argv[i]);
++	str_size += sprintf(ctr_str + str_size, "%llu",
++			    (unsigned long long)ti->len);
++
++	/* Send table string */
++	r = dm_clog_consult_server(lc->uuid, DM_CLOG_CTR,
++				   ctr_str, str_size, NULL, NULL);
++
++	if (r == -ESRCH)
++		DMERR(" Userspace cluster log server not found");
++
++	if (r) {
++		kfree(lc);
++		kfree(ctr_str);
++	} else {
++		lc->ctr_str = ctr_str;
++		lc->ctr_size = str_size;
++		log->context = lc;
++	}
++
++	return r;
++}
++
++/*
++ * cluster_core_ctr
++ * @log
++ * @ti
++ * @argc
++ * @argv
++ *
++ * argv contains:
++ *   <region_size> <uuid> [[no]sync]
++ *
++ * Returns: 0 on success, -XXX on failure
++ */
++static int cluster_core_ctr(struct dm_dirty_log *log, struct dm_target *ti,
++			    unsigned int argc, char **argv)
++{
++	int i, r;
++	if ((argc < 2) || (argc > 3)) {
++		DMERR("Too %s arguments to clustered-core mirror log type.",
++		      (argc < 2) ? "few" : "many");
++		DMERR("  %d arguments supplied:", argc);
++		for (i = 0; i < argc; i++)
++			DMERR("    %s", argv[i]);
++		return -EINVAL;
++	}
++
++	r = cluster_ctr(log, ti, argc, argv, NULL);
++
++	return r;
++}
++
++
++/*
++ * cluster_core_ctr
++ * @log
++ * @ti
++ * @argc
++ * @argv
++ *
++ * argv contains:
++ *   <disk> <region_size> <uuid> [[no]sync]
++ *
++ * Returns: 0 on success, -XXX on failure
++ */
++static int cluster_disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
++			    unsigned int argc, char **argv)
++{
++	int r, i;
++	struct dm_dev *dev;
++
++	if ((argc < 3) || (argc > 4)) {
++		DMERR("Too %s arguments to clustered-disk mirror log type.",
++		      (argc < 3) ? "few" : "many");
++		DMERR("  %d arguments supplied:", argc);
++		for (i = 0; i < argc; i++)
++			DMERR("    %s", argv[i]);
++		return -EINVAL;
++	}
++
++	r = dm_get_device(ti, argv[0], 0, 0, FMODE_READ | FMODE_WRITE, &dev);
++	if (r)
++		return r;
++
++	r = cluster_ctr(log, ti, argc, argv, dev);
++	if (r)
++		dm_put_device(ti, dev);
++
++	return r;
++}
++
++/*
++ * cluster_dtr
++ * @log
++ */
++static void cluster_dtr(struct dm_dirty_log *log)
++{
++	int r;
++	struct log_c *lc = log->context;
++
++	r = dm_clog_consult_server(lc->uuid, DM_CLOG_DTR,
++				   NULL, 0,
++				   NULL, NULL);
++
++	if (lc->disk_log)
++		dm_put_device(lc->ti, lc->disk_log);
++	kfree(lc->ctr_str);
++	kfree(lc);
++
++	return;
++}
++
++/*
++ * cluster_presuspend
++ * @log
++ */
++static int cluster_presuspend(struct dm_dirty_log *log)
++{
++	int r;
++	struct log_c *lc = log->context;
++
++	r = dm_clog_consult_server(lc->uuid, DM_CLOG_PRESUSPEND,
++				   NULL, 0,
++				   NULL, NULL);
++
++	return r;
++}
++
++/*
++ * cluster_postsuspend
++ * @log
++ */
++static int cluster_postsuspend(struct dm_dirty_log *log)
++{
++	int r;
++	struct log_c *lc = log->context;
++
++	r = dm_clog_consult_server(lc->uuid, DM_CLOG_POSTSUSPEND,
++				   NULL, 0,
++				   NULL, NULL);
++
++	return r;
++}
++
++/*
++ * cluster_resume
++ * @log
++ */
++static int cluster_resume(struct dm_dirty_log *log)
++{
++	int r;
++	struct log_c *lc = log->context;
++
++	lc->in_sync_hint = 0;
++	r = dm_clog_consult_server(lc->uuid, DM_CLOG_RESUME,
++				   NULL, 0,
++				   NULL, NULL);
++
++	return r;
++}
++
++/*
++ * cluster_get_region_size
++ * @log
++ *
++ * Only called during mirror construction, ok to block.
++ *
++ * Returns: region size (doesn't fail)
++ */
++static uint32_t cluster_get_region_size(struct dm_dirty_log *log)
++{
++	struct log_c *lc = log->context;
++
++	return lc->region_size;
++}
++
++/*
++ * cluster_is_clean
++ * @log
++ * @region
++ *
++ * Check whether a region is clean.  If there is any sort of
++ * failure when consulting the server, we return not clean.
++ *
++ * Returns: 1 if clean, 0 otherwise
++ */
++static int cluster_is_clean(struct dm_dirty_log *log, region_t region)
++{
++	int r;
++	int is_clean;
++	size_t rdata_size;
++	struct log_c *lc = log->context;
++
++	rdata_size = sizeof(is_clean);
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_IS_CLEAN,
++			       (char *)&region, sizeof(region),
++			       (char *)&is_clean, &rdata_size);
++
++	return (r) ? 0 : is_clean;
++}
++
++/*
++ * cluster_in_sync
++ * @log
++ * @region
++ * @can_block: if set, return immediately
++ *
++ * Check if the region is in-sync.  If there is any sort
++ * of failure when consulting the server, we assume that
++ * the region is not in sync.
++ *
++ * Returns: 1 if in-sync, 0 if not-in-sync, -EWOULDBLOCK
++ */
++static int cluster_in_sync(struct dm_dirty_log *log, region_t region,
++			   int can_block)
++{
++	int r;
++	int in_sync;
++	size_t rdata_size;
++	struct log_c *lc = log->context;
++
++	/*
++	 * We can never respond directly - even if in_sync_hint is
++	 * set.  This is because another machine could see a device
++	 * failure and mark the region out-of-sync.  If we don't go
++	 * to userspace to ask, we might think the region is in-sync
++	 * and allow a read to pick up data that is stale.  (This is
++	 * very unlikely if a device actually fails; but it is very
++	 * likely if a connection to one device from one machine fails.)
++	 *
++	 * There still might be a problem if the mirror caches the region
++	 * state as in-sync... but then this call would not be made.  So,
++	 * that is a mirror problem.
++	 */
++	if (!can_block)
++		return -EWOULDBLOCK;
++
++	rdata_size = sizeof(in_sync);
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_IN_SYNC,
++			       (char *)&region, sizeof(region),
++			       (char *)&in_sync, &rdata_size);
++	return (r) ? 0 : in_sync;
++}
++
++/*
++ * cluster_flush
++ * @log
++ *
++ * This function is ok to block.
++ * The flush happens in two stages.  First, it sends all
++ * clear/mark requests that are on the list.  Then it
++ * tells the server to commit them.  This gives the
++ * server a chance to optimise the commit to the cluster
++ * and/or disk, instead of doing it for every request.
++ *
++ * Additionally, we could implement another thread that
++ * sends the requests up to the server - reducing the
++ * load on flush.  Then the flush would have less in
++ * the list and be responsible for the finishing commit.
++ *
++ * Returns: 0 on success, < 0 on failure
++ */
++static int cluster_flush(struct dm_dirty_log *log)
++{
++	int r = 0;
++	unsigned long flags;
++	struct log_c *lc = log->context;
++	LIST_HEAD(flush_list);
++	struct flush_entry *fe, *tmp_fe;
++
++	spin_lock_irqsave(&lc->flush_lock, flags);
++	list_splice_init(&lc->flush_list, &flush_list);
++	spin_unlock_irqrestore(&lc->flush_lock, flags);
++
++	if (list_empty(&flush_list))
++		return 0;
++
++	/*
++	 * FIXME: Count up requests, group request types,
++	 * allocate memory to stick all requests in and
++	 * send to server in one go.  Failing the allocation,
++	 * do it one by one.
++	 */
++
++	list_for_each_entry(fe, &flush_list, list) {
++		r = cluster_do_request(lc, lc->uuid, fe->type,
++				       (char *)&fe->region,
++				       sizeof(fe->region),
++				       NULL, NULL);
++		if (r)
++			goto fail;
++	}
++
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_FLUSH,
++			       NULL, 0, NULL, NULL);
++
++fail:
++	/*
++	 * We can safely remove these entries, even if failure.
++	 * Calling code will receive an error and will know that
++	 * the log facility has failed.
++	 */
++	list_for_each_entry_safe(fe, tmp_fe, &flush_list, list) {
++		list_del(&fe->list);
++		mempool_free(fe, flush_entry_pool);
++	}
++
++	if (r)
++		dm_table_event(lc->ti->table);
++
++	return r;
++}
++
++/*
++ * cluster_mark_region
++ * @log
++ * @region
++ *
++ * This function should avoid blocking unless absolutely required.
++ * (Memory allocation is valid for blocking.)
++ */
++static void cluster_mark_region(struct dm_dirty_log *log, region_t region)
++{
++	unsigned long flags;
++	struct log_c *lc = log->context;
++	struct flush_entry *fe;
++
++	/* Wait for an allocation, but _never_ fail */
++	fe = mempool_alloc(flush_entry_pool, GFP_NOIO);
++	BUG_ON(!fe);
++
++	spin_lock_irqsave(&lc->flush_lock, flags);
++	fe->type = DM_CLOG_MARK_REGION;
++	fe->region = region;
++	list_add(&fe->list, &lc->flush_list);
++	spin_unlock_irqrestore(&lc->flush_lock, flags);
++
++	return;
++}
++
++/*
++ * cluster_clear_region
++ * @log
++ * @region
++ *
++ * This function must not block.
++ * So, the alloc can't block.  In the worst case, it is ok to
++ * fail.  It would simply mean we can't clear the region.
++ * Does nothing to current sync context, but does mean
++ * the region will be re-sync'ed on a reload of the mirror
++ * even though it is in-sync.
++ */
++static void cluster_clear_region(struct dm_dirty_log *log, region_t region)
++{
++	unsigned long flags;
++	struct log_c *lc = log->context;
++	struct flush_entry *fe;
++
++	/*
++	 * If we fail to allocate, we skip the clearing of
++	 * the region.  This doesn't hurt us in any way, except
++	 * to cause the region to be resync'ed when the
++	 * device is activated next time.
++	 */
++	fe = mempool_alloc(flush_entry_pool, GFP_ATOMIC);
++	if (!fe) {
++		DMERR("Failed to allocate memory to clear region.");
++		return;
++	}
++
++	spin_lock_irqsave(&lc->flush_lock, flags);
++	fe->type = DM_CLOG_CLEAR_REGION;
++	fe->region = region;
++	list_add(&fe->list, &lc->flush_list);
++	spin_unlock_irqrestore(&lc->flush_lock, flags);
++
++	return;
++}
++
++/*
++ * cluster_get_resync_work
++ * @log
++ * @region
++ *
++ * Get a region that needs recovery.  It is valid to return
++ * an error for this function.
++ *
++ * Returns: 1 if region filled, 0 if no work, <0 on error
++ */
++static int cluster_get_resync_work(struct dm_dirty_log *log, region_t *region)
++{
++	int r;
++	size_t rdata_size;
++	struct log_c *lc = log->context;
++	struct {
++		int i;
++		region_t r;
++	} pkg;
++
++	if (lc->in_sync_hint >= lc->region_count)
++		return 0;
++
++	rdata_size = sizeof(pkg);
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_GET_RESYNC_WORK,
++			       NULL, 0,
++			       (char *)&pkg, &rdata_size);
++
++	*region = pkg.r;
++	return (r) ? r : pkg.i;
++}
++
++/*
++ * cluster_set_region_sync
++ * @log
++ * @region
++ * @in_sync
++ *
++ * Set the sync status of a given region.  This function
++ * must not fail.
++ */
++static void cluster_set_region_sync(struct dm_dirty_log *log,
++				    region_t region, int in_sync)
++{
++	int r;
++	struct log_c *lc = log->context;
++	struct {
++		region_t r;
++		int i;
++	} pkg;
++
++	pkg.r = region;
++	pkg.i = in_sync;
++
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_SET_REGION_SYNC,
++			       (char *)&pkg, sizeof(pkg),
++			       NULL, NULL);
++
++	/*
++	 * It would be nice to be able to report failures.
++	 * However, it is easy emough to detect and resolve.
++	 */
++	return;
++}
++
++/*
++ * cluster_get_sync_count
++ * @log
++ *
++ * If there is any sort of failure when consulting the server,
++ * we assume that the sync count is zero.
++ *
++ * Returns: sync count on success, 0 on failure
++ */
++static region_t cluster_get_sync_count(struct dm_dirty_log *log)
++{
++	int r;
++	size_t rdata_size;
++	region_t sync_count;
++	struct log_c *lc = (struct log_c *)log->context;
++
++	rdata_size = sizeof(sync_count);
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_GET_SYNC_COUNT,
++			       NULL, 0,
++			       (char *)&sync_count, &rdata_size);
++
++	if (r)
++		return 0;
++
++	if (sync_count >= lc->region_count)
++		lc->in_sync_hint = lc->region_count;
++
++	return sync_count;
++}
++
++/*
++ * cluster_status
++ * @log
++ * @status_type
++ * @result
++ * @maxlen
++ *
++ * Returns: amount of space consumed
++ */
++static int cluster_status(struct dm_dirty_log *log, status_type_t status_type,
++			  char *result, unsigned int maxlen)
++{
++	int r = 0;
++	size_t sz = (size_t)maxlen;
++	struct log_c *lc = log->context;
++
++	switch (status_type) {
++	case STATUSTYPE_INFO:
++		r = cluster_do_request(lc, lc->uuid, DM_CLOG_STATUS_INFO,
++				       NULL, 0,
++				       result, &sz);
++		/*
++		 * FIXME: If we fail to contact server, we should still
++		 * populate this with parsible results
++		 */
++		break;
++	case STATUSTYPE_TABLE:
++		r = cluster_do_request(lc, lc->uuid, DM_CLOG_STATUS_TABLE,
++				       NULL, 0,
++				       result, &sz);
++		break;
++	}
++	return (r) ? 0 : (int)sz;
++}
++
++/*
++ * cluster_is_remote_recovering
++ * @log
++ * @region
++ *
++ * Returns: 1 if region recovering, 0 otherwise
++ */
++static int cluster_is_remote_recovering(struct dm_dirty_log *log,
++					region_t region)
++{
++	int r;
++	struct log_c *lc = log->context;
++	static unsigned long long limit;
++	struct {
++		int is_recovering;
++		uint64_t in_sync_hint;
++	} pkg;
++	size_t rdata_size = sizeof(pkg);
++
++	/*
++	 * Once the mirror has been reported to be in-sync,
++	 * it will never again ask for recovery work.  So,
++	 * we can safely say there is not a remote machine
++	 * recovering if the device is in-sync.  (in_sync_hint
++	 * must be reset at resume time.)
++	 */
++	if (region < lc->in_sync_hint)
++		return 0;
++	else if (jiffies < limit)
++		return 1;
++
++	limit = jiffies + (HZ / 4);
++	r = cluster_do_request(lc, lc->uuid, DM_CLOG_IS_REMOTE_RECOVERING,
++			       (char *)&region, sizeof(region),
++			       (char *)&pkg, &rdata_size);
++	if (r)
++		return 1;
++
++	lc->in_sync_hint = pkg.in_sync_hint;
++
++	return pkg.is_recovering;
++}
++
++static struct dm_dirty_log_type _clustered_core_type = {
++	.name = "clustered-core",
++	.module = THIS_MODULE,
++	.ctr = cluster_core_ctr,
++	.dtr = cluster_dtr,
++	.presuspend = cluster_presuspend,
++	.postsuspend = cluster_postsuspend,
++	.resume = cluster_resume,
++	.get_region_size = cluster_get_region_size,
++	.is_clean = cluster_is_clean,
++	.in_sync = cluster_in_sync,
++	.flush = cluster_flush,
++	.mark_region = cluster_mark_region,
++	.clear_region = cluster_clear_region,
++	.get_resync_work = cluster_get_resync_work,
++	.set_region_sync = cluster_set_region_sync,
++	.get_sync_count = cluster_get_sync_count,
++	.status = cluster_status,
++	.is_remote_recovering = cluster_is_remote_recovering,
++};
++
++static struct dm_dirty_log_type _clustered_disk_type = {
++	.name = "clustered-disk",
++	.module = THIS_MODULE,
++	.ctr = cluster_disk_ctr,
++	.dtr = cluster_dtr,
++	.presuspend = cluster_presuspend,
++	.postsuspend = cluster_postsuspend,
++	.resume = cluster_resume,
++	.get_region_size = cluster_get_region_size,
++	.is_clean = cluster_is_clean,
++	.in_sync = cluster_in_sync,
++	.flush = cluster_flush,
++	.mark_region = cluster_mark_region,
++	.clear_region = cluster_clear_region,
++	.get_resync_work = cluster_get_resync_work,
++	.set_region_sync = cluster_set_region_sync,
++	.get_sync_count = cluster_get_sync_count,
++	.status = cluster_status,
++	.is_remote_recovering = cluster_is_remote_recovering,
++};
++
++static int __init cluster_dirty_log_init(void)
++{
++	int r = 0;
++
++	flush_entry_pool = mempool_create(100, flush_entry_alloc,
++					  flush_entry_free, NULL);
++
++	if (!flush_entry_pool) {
++		DMWARN("Unable to create flush_entry_pool:  No memory.");
++		return -ENOMEM;
++	}
++
++	r = dm_clog_tfr_init();
++	if (r) {
++		DMWARN("Unable to initialize cluster log communications");
++		mempool_destroy(flush_entry_pool);
++		return r;
++	}
++
++	r = dm_dirty_log_type_register(&_clustered_core_type);
++	if (r) {
++		DMWARN("Couldn't register clustered-core dirty log type");
++		dm_clog_tfr_exit();
++		mempool_destroy(flush_entry_pool);
++		return r;
++	}
++
++	r = dm_dirty_log_type_register(&_clustered_disk_type);
++	if (r) {
++		DMWARN("Couldn't register clustered-disk dirty log type");
++		dm_dirty_log_type_unregister(&_clustered_core_type);
++		dm_clog_tfr_exit();
++		mempool_destroy(flush_entry_pool);
++		return r;
++	}
++
++	DMINFO("(built %s %s) installed", __DATE__, __TIME__);
 +	return 0;
- }
- 
- int
-@@ -603,9 +671,9 @@ cli_list_devices (void * v, char ** reply, int * len, void * data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
--        condlog(3, "list devices (operator)");
-+	condlog(3, "list devices (operator)");
- 
--        return show_devices(reply, len, vecs);
-+	return show_devices(reply, len, vecs);
- }
- 
- int
-diff --git a/multipathd/cli_handlers.h b/multipathd/cli_handlers.h
-index f57a160..6598b2a 100644
---- a/multipathd/cli_handlers.h
-+++ b/multipathd/cli_handlers.h
-@@ -17,6 +17,7 @@ int cli_add_map (void * v, char ** reply, int * len, void * data);
- int cli_del_map (void * v, char ** reply, int * len, void * data);
- int cli_switch_group(void * v, char ** reply, int * len, void * data);
- int cli_reconfigure(void * v, char ** reply, int * len, void * data);
-+int cli_resize(void * v, char ** reply, int * len, void * data);
- int cli_suspend(void * v, char ** reply, int * len, void * data);
- int cli_resume(void * v, char ** reply, int * len, void * data);
- int cli_reinstate(void * v, char ** reply, int * len, void * data);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index b7532f1..fce6ce9 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -147,7 +147,7 @@ coalesce_maps(struct vectors *vecs, vector nmpv)
- 	return 0;
- }
- 
--static void
-+void
- sync_map_state(struct multipath *mpp)
- {
- 	struct pathgroup *pgp;
-@@ -722,6 +722,7 @@ uxlsnrloop (void * ap)
- 	set_handler_callback(RECONFIGURE, cli_reconfigure);
- 	set_handler_callback(SUSPEND+MAP, cli_suspend);
- 	set_handler_callback(RESUME+MAP, cli_resume);
-+	set_handler_callback(RESIZE+MAP, cli_resize);
- 	set_handler_callback(REINSTATE+PATH, cli_reinstate);
- 	set_handler_callback(FAIL+PATH, cli_fail);
- 	set_handler_callback(QUIT, cli_quit);
-diff --git a/multipathd/main.h b/multipathd/main.h
-index b3a90f8..136b7e5 100644
---- a/multipathd/main.h
-+++ b/multipathd/main.h
-@@ -8,5 +8,6 @@ int ev_add_path (char *, struct vectors *);
- int ev_remove_path (char *, struct vectors *);
- int ev_add_map (struct sysfs_device *, struct vectors *);
- int ev_remove_map (char *, struct vectors *);
-+void sync_map_state (struct multipath *);
- 
- #endif /* MAIN_H */
--- 
-1.5.4.1
-
-
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---45Z9DzgjV8m4Oswq--
++}
++
++static void __exit cluster_dirty_log_exit(void)
++{
++	dm_dirty_log_type_unregister(&_clustered_disk_type);
++	dm_dirty_log_type_unregister(&_clustered_core_type);
++	dm_clog_tfr_exit();
++	mempool_destroy(flush_entry_pool);
++	DMINFO("(built %s %s) removed", __DATE__, __TIME__);
++	return;
++}
++
++module_init(cluster_dirty_log_init);
++module_exit(cluster_dirty_log_exit);
++
++MODULE_DESCRIPTION(DM_NAME " cluster-aware dirty log");
++MODULE_AUTHOR("Jonathan Brassow <dm-devel@redhat.com>");
++MODULE_LICENSE("GPL");
+Index: linux-2.6/Documentation/dm-log.txt
+===================================================================
+--- /dev/null
++++ linux-2.6/Documentation/dm-log.txt
+@@ -0,0 +1,58 @@
++Device-Mapper Logging
++=====================
++The device-mapper logging code is used by some of the device-mapper
++RAID targets to track regions of the disk that are not consistent.
++A region (or portion of the address space) of the disk may be
++inconsistent because a RAID stripe is currently being operated on or
++a machine died while the region was being altered.  In the case of
++mirrors, a region would be considered dirty/inconsistent while you
++are writing to it because the writes need to be replicated for all
++the legs of the mirror and may not reach the legs at the same time.
++Once all writes are complete, the region is considered clean again.
++
++There is a generic logging interface that the device-mapper RAID
++implementations use to perform logging operations (see
++dm_dirty_log_type in include/linux/dm-dirty-log.h).  Various different
++logging implementations are available and provide different
++capabilities.  The list includes:
++
++Type	       Files
++====	       =====
++disk	       drivers/md/dm-log.c
++core	       drivers/md/dm-log.c
++cluster-disk   drivers/md/dm-log-cluster* include/linux/dm-log-cluster.h
++cluster-core   drivers/md/dm-log-cluster* include/linux/dm-log-cluster.h
++*Others have also suggested 'multi-log', but this is not available yet
++
++The "disk" log type
++-------------------
++Commits the log state to disk.  This way, the logging state survives
++reboots/crashes.
++
++The "core" log type
++-------------------
++Keeps the log state in memory.  The log state will not survive a reboot
++or crash, but there may be a small boost in performance.  Additionally,
++this is the logging method used if logging disk in the "disk" method dies.
++
++The "cluster-*" log types
++-------------------------
++These types operate in the same way as their single machine counterparts,
++but they are cluster-aware.  This is done by forwarding most logging
++requests to userspace, where a daemon processes the request in an ordered
++fashion with the rest of the nodes in the cluster.  This is necessary to
++prevent log state corruption.  (Imagine if two machines are writing to the
++same region of a mirror.  They would both mark the region dirty, but you
++need a cluster-aware entity that can handle properly marking the region
++clean when they are done.  Otherwise, you might clear the region when the
++first machine is done, not the second.)
++
++The structures used for communication between kernel and userspace are
++located in include/linux/dm-log-cluster.h.  'Connector' is used as the
++interface for kernel/userspace interaction.  In userspace, the daemons
++use openAIS/corosync in order to communicate with guaranteed ordering
++and delivery.
++
++Providing a cluster-aware logging type gives device-mapper RAID1 (and
++potentially other RAIDs) the ability to operate in a cluster-aware
++fashion.
