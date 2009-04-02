@@ -1,12 +1,18 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] Fix a multipathd signal deadlock.
-Date: Thu, 2 Apr 2009 15:18:55 -0500
-Message-ID: <20090402201855.GT15911@ether.msp.redhat.com>
+Subject: Re: Device Mapper MultiPath
+Date: Thu, 2 Apr 2009 15:25:57 -0500
+Message-ID: <20090402202556.GU15911@ether.msp.redhat.com>
+References: <af7b4eb20903311707o925902dn14a6dc8030498001@mail.gmail.com>
+	<20090401002559.GA3213@mars.virtualiron.com>
+	<20090401200841.GA9078@thumper2>
+	<20090401203108.GA17991@mars.virtualiron.com>
+	<20090402190956.GA12661@thumper2>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <20090402190956.GA12661@thumper2>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,180 +25,51 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-If multipathd is run with -v3, both the SIGHUP, and the SIGUSR1 signal handlers
-will log a message.  If a multipathd thread receives one of these signals while
-it has a log lock held, it deadlocks itself. Also, the SIGHUP handler will grab
-the vecs lock, so if any thread receives a SIGHUP while holding the vecs lock,
-it deadlocks itself.  This commit blocks the appropriate signals to guard
-against this.
+On Thu, Apr 02, 2009 at 02:09:56PM -0500, Andy wrote:
+> On Wed, Apr 01, 2009 at 04:31:08PM -0400, Konrad Rzeszutek wrote:
+> > On Wed, Apr 01, 2009 at 03:08:41PM -0500, Andy wrote:
+> > > On Tue, Mar 31, 2009 at 08:25:59PM -0400, Konrad Rzeszutek wrote:
+> > > > On Tue, Mar 31, 2009 at 09:07:08PM -0300, Rodrigo Nascimento wrote:
+> > > > > Hi All,
+> > > > > 
+> > > > > I'm a student of computer sciences and I'd like to collaborate with the
+> > > > > development of the DM-MP.
+> > > > > I know that maybe you received this kind of message during all time, but I
+> > > > 
+> > > > I think you are the first :-)
+> > > > 
+> > > > > really want to help, with anything.
+> > > > 
+> > > > Shakedown help would be nice. As in, trying to yank stuff underneath it, 
+> > > > add new block disks, remove them, add them, remove them, edit the
+> > > > multipath.conf file and issue 'reconfigure', resize the maps, 
+> > > > then add 1000+LUNs, and while they are being added, start removing the
+> > > > LUNs, then for extra fun call 'dmsetup remove_all' while in another
+> > > > thread you run 'multipath'. Ooh, and see if there are any memory leaks
+> > > > while this all is being done.
+> > > > 
+> > > 
+> > > What I would really like to see is online resizing of non-partitioned dm
+> > > block devices.  I would love to be able to resize an underlying dm-mp block
+> > > device, and the just grow the filesystem without using a extra, un-needed,
+> > 
+> > Benjamin posted a CVS patch of this, that I've forward-ported to work with
+> > the latest git. It is attached.
+> > 
+> > 
+> 
+> Thanks, I must have missed that post.  Unfortantly, I am having problems with
+> multipathd in the latest git.  It fails all my paths and hangs.  It I go
+> into the interactive mode, it even hangs just asking for help.  The
+> multipath program itself shows the paths without a problem.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/lock.c        |   10 ++++++++++
- libmultipath/lock.h        |    3 +++
- libmultipath/log_pthread.c |    8 ++++++++
- libmultipath/waiter.c      |    5 +++++
- multipathd/main.c          |   10 ++++++++++
- 5 files changed, 36 insertions(+)
+Try the patch I just posted. [Fix a multipathd signal deadlock.] and see
+if that fixes it.
 
-Index: multipath-tools-090330/libmultipath/lock.c
-===================================================================
---- multipath-tools-090330.orig/libmultipath/lock.c
-+++ multipath-tools-090330/libmultipath/lock.c
-@@ -1,6 +1,16 @@
- #include <pthread.h>
-+#include <signal.h>
- #include "lock.h"
- #include <stdio.h>
-+
-+void block_signal (int signum, sigset_t *old)
-+{
-+	sigset_t set;
-+	sigemptyset(&set);
-+	sigaddset(&set, signum);
-+	pthread_sigmask(SIG_BLOCK, &set, old);
-+}
-+
- void cleanup_lock (void * data)
- {
- 	unlock ((*(struct mutex_lock *)data));
-Index: multipath-tools-090330/libmultipath/lock.h
-===================================================================
---- multipath-tools-090330.orig/libmultipath/lock.h
-+++ multipath-tools-090330/libmultipath/lock.h
-@@ -1,6 +1,8 @@
- #ifndef _LOCK_H
- #define _LOCK_H
- 
-+#include <signal.h>
-+
- /*
-  * Wrapper for the mutex. Includes a ref-count to keep
-  * track of how many there are out-standing threads blocking
-@@ -27,5 +29,6 @@ struct mutex_lock {
- #endif
- 
- void cleanup_lock (void * data);
-+void block_signal(int signum, sigset_t *old);
- 
- #endif /* _LOCK_H */
-Index: multipath-tools-090330/libmultipath/log_pthread.c
-===================================================================
---- multipath-tools-090330.orig/libmultipath/log_pthread.c
-+++ multipath-tools-090330/libmultipath/log_pthread.c
-@@ -11,9 +11,15 @@
- 
- #include "log_pthread.h"
- #include "log.h"
-+#include "lock.h"
- 
- void log_safe (int prio, const char * fmt, va_list ap)
- {
-+	sigset_t old;
-+
-+	block_signal(SIGUSR1, &old);
-+	block_signal(SIGHUP, NULL);
-+
- 	pthread_mutex_lock(logq_lock);
- 	log_enqueue(prio, fmt, ap);
- 	pthread_mutex_unlock(logq_lock);
-@@ -21,6 +27,8 @@ void log_safe (int prio, const char * fm
- 	pthread_mutex_lock(logev_lock);
- 	pthread_cond_signal(logev_cond);
- 	pthread_mutex_unlock(logev_lock);
-+
-+	pthread_sigmask(SIG_SETMASK, &old, NULL);
- }
- 
- static void flush_logqueue (void)
-Index: multipath-tools-090330/libmultipath/waiter.c
-===================================================================
---- multipath-tools-090330.orig/libmultipath/waiter.c
-+++ multipath-tools-090330/libmultipath/waiter.c
-@@ -32,11 +32,13 @@ struct event_thread *alloc_waiter (void)
- 
- void free_waiter (void *data)
- {
-+	sigset_t old;
- 	struct event_thread *wp = (struct event_thread *)data;
- 
- 	/*
- 	 * indicate in mpp that the wp is already freed storage
- 	 */
-+	block_signal(SIGHUP, &old);
- 	lock(wp->vecs->lock);
- 
- 	if (wp->mpp)
-@@ -51,6 +53,7 @@ void free_waiter (void *data)
- 		condlog(3, "free_waiter, mpp freed before wp=%p (%s).", wp, wp->mapname);
- 
- 	unlock(wp->vecs->lock);
-+	pthread_sigmask(SIG_SETMASK, &old, NULL);
- 
- 	if (wp->dmt)
- 		dm_task_destroy(wp->dmt);
-@@ -185,6 +188,8 @@ void *waitevent (void *et)
- 	waiter = (struct event_thread *)et;
- 	pthread_cleanup_push(free_waiter, et);
- 
-+	block_signal(SIGUSR1, NULL);
-+	block_signal(SIGHUP, NULL);
- 	while (1) {
- 		r = waiteventloop(waiter);
- 
-Index: multipath-tools-090330/multipathd/main.c
-===================================================================
---- multipath-tools-090330.orig/multipathd/main.c
-+++ multipath-tools-090330/multipathd/main.c
-@@ -688,6 +688,9 @@ out:
- static void *
- ueventloop (void * ap)
- {
-+	block_signal(SIGUSR1, NULL);
-+	block_signal(SIGHUP, NULL);
-+
- 	if (uevent_listen(&uev_trigger, ap))
- 		fprintf(stderr, "error starting uevent listener");
- 
-@@ -697,6 +700,9 @@ ueventloop (void * ap)
- static void *
- uxlsnrloop (void * ap)
- {
-+	block_signal(SIGUSR1, NULL);
-+	block_signal(SIGHUP, NULL);
-+
- 	if (cli_init())
- 		return NULL;
- 
-@@ -1007,6 +1013,7 @@ checkerloop (void *ap)
- 	struct path *pp;
- 	int count = 0;
- 	unsigned int i;
-+	sigset_t old;
- 
- 	mlockall(MCL_CURRENT | MCL_FUTURE);
- 	vecs = (struct vectors *)ap;
-@@ -1020,6 +1027,7 @@ checkerloop (void *ap)
- 	}
- 
- 	while (1) {
-+		block_signal(SIGHUP, &old);
- 		pthread_cleanup_push(cleanup_lock, &vecs->lock);
- 		lock(vecs->lock);
- 		condlog(4, "tick");
-@@ -1042,6 +1050,7 @@ checkerloop (void *ap)
- 		}
- 
- 		lock_cleanup_pop(vecs->lock);
-+		pthread_sigmask(SIG_SETMASK, &old, NULL);
- 		sleep(1);
- 	}
- 	return NULL;
-@@ -1358,6 +1367,7 @@ child (void * param)
- 	/*
- 	 * exit path
- 	 */
-+	block_signal(SIGHUP, NULL);
- 	lock(vecs->lock);
- 	remove_maps_and_stop_waiters(vecs);
- 	free_pathvec(vecs->pathvec, FREE_PATHS);
+> 
+> Andy
+> 
+> --
+> dm-devel mailing list
+> dm-devel@redhat.com
+> https://www.redhat.com/mailman/listinfo/dm-devel
