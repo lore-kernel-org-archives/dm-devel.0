@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 1 of 1] Updated cluster log patch
-Date: Thu, 02 Apr 2009 09:40:35 -0500
-Message-ID: <1238683235.24108.5.camel@hydrogen.msp.redhat.com>
+Subject: [PATCH 1 of 2]: DM Exception Store: clusterized type
+	(repost)
+Date: Thu, 02 Apr 2009 10:16:31 -0500
+Message-ID: <1238685391.25326.4.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -19,26 +20,21 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-I've rolled the old patches together and added 'dm-log.txt' to the
-Documentation directory.  This text file contains descriptions of the
-various logging types (not just the cluster logging).
-
-This patch supersedes (as somewhat named by patchwork):
-- dm-log-cluster.patch
-- dm-raid1-add-clustering-addendum1.patch
-- dm-raid1-add-clustering-addendum2.patch
+I am reposting this patch with the following changes:
+1) Updated patch for the Makefile changes, assuming dm-log-cluster.patch
+precedes this patch
+2) Added Documentation file, Documentation/dm-exception-store.txt, that
+describes exception store implementation and various types.
 
  brassow
 
-This patch contains a cluster-aware log module.  When used
-by dm-raid1, device-mapper mirroring can be cluster-aware.
-
-There is a kernel component (provided in this patch) and a
-user space component.  The kernel component implements the
-logging interface and passes all requests to userspace via
-'connector' (a netlink wrapper).  The userspace daemon is
-built upon OpenAIS for cluster communication and is fault
-tolerant.
+This patch provides an exception store implementation that is
+capable of "wrapping" other exception store implementations and
+making them cluster-aware.  It is not a stand-alone implementation.
+It merely uses distributed locking to protect exception store
+metadata as the single-machine "core" exception stores perform
+their actions independently.  This is why the module uses the
+term "clusterized" instead of "clustered".
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -46,1301 +42,679 @@ Index: linux-2.6/drivers/md/Kconfig
 ===================================================================
 --- linux-2.6.orig/drivers/md/Kconfig
 +++ linux-2.6/drivers/md/Kconfig
-@@ -256,6 +256,16 @@ config DM_MIRROR
-          Allow volume managers to mirror logical volumes, also
-          needed for live data migration tools such as 'pvmove'.
+@@ -244,10 +244,23 @@ config DM_CRYPT
+ 	  If unsure, say N.
  
-+config DM_LOG_CLUSTERED
-+	tristate "Mirror cluster logging (EXPERIMENTAL)"
-+	depends on DM_MIRROR && EXPERIMENTAL
-+	select CONNECTOR
+ config DM_SNAPSHOT
+-       tristate "Snapshot target"
+-       depends on BLK_DEV_DM
+-       ---help---
+-         Allow volume managers to take writable snapshots of a device.
++	tristate "Snapshot target"
++	depends on BLK_DEV_DM
 +	---help---
-+	  Cluster logging allows device-mapper mirroring to be
-+	  cluster-aware.  Mirror devices can be used by multiple
-+	  machines at the same time.  Note: this will not make
-+	  your applications cluster-aware.
++	  Allow volume managers to take writable snapshots of a device.
 +
- config DM_ZERO
- 	tristate "Zero target"
- 	depends on BLK_DEV_DM
++config DM_EXSTORE_CLUSTERIZED
++	tristate "Cluster-aware exception store wrapper (EXPERIMENTAL)"
++	depends on BLK_DEV_DM && DM_SNAPSHOT && EXPERIMENTAL
++	select DLM
++	---help---
++	  An exception store is a module that is used by snapshots to
++	  record COW areas.  This module is capable of wrapping certain
++	  exception stores so that they appear to be cluster-aware.  This
++	  has the affect of making device-mapper snapshots cluster-aware.
++	  Not every exception store type can be wrapped.  Check the end
++	  of drivers/md/dm-ex-store-clusterized.c to find out what stores
++	  are supported.
+ 
+ config DM_MIRROR
+        tristate "Mirror target"
 Index: linux-2.6/drivers/md/Makefile
 ===================================================================
 --- linux-2.6.orig/drivers/md/Makefile
 +++ linux-2.6/drivers/md/Makefile
-@@ -8,6 +8,7 @@ dm-multipath-objs := dm-path-selector.o 
+@@ -7,6 +7,7 @@ dm-mod-objs	:= dm.o dm-table.o dm-target
+ dm-multipath-objs := dm-path-selector.o dm-mpath.o
  dm-snapshot-objs := dm-snap.o dm-exception.o dm-exception-store.o \
  		    dm-snap-persistent.o dm-snap-transient.o
++dm-exstore-clusterized-objs := dm-ex-store-clusterized.o
  dm-mirror-objs	:= dm-raid1.o
-+dm-log-clustered-objs := dm-log-cluster.o dm-log-cluster-transfer.o
+ dm-log-clustered-objs := dm-log-cluster.o dm-log-cluster-transfer.o
  md-mod-objs     := md.o bitmap.o
- raid456-objs	:= raid5.o raid6algos.o raid6recov.o raid6tables.o \
- 		   raid6int1.o raid6int2.o raid6int4.o \
-@@ -36,6 +37,7 @@ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+@@ -36,6 +37,7 @@ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
  obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
  obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
++obj-$(CONFIG_DM_EXSTORE_CLUSTERIZED) += dm-exstore-clusterized.o
  obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
-+obj-$(CONFIG_DM_LOG_CLUSTERED)	+= dm-log-clustered.o
+ obj-$(CONFIG_DM_LOG_CLUSTERED)	+= dm-log-clustered.o
  obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
- 
- quiet_cmd_unroll = UNROLL  $@
-Index: linux-2.6/include/linux/connector.h
-===================================================================
---- linux-2.6.orig/include/linux/connector.h
-+++ linux-2.6/include/linux/connector.h
-@@ -39,8 +39,10 @@
- #define CN_IDX_V86D			0x4
- #define CN_VAL_V86D_UVESAFB		0x1
- #define CN_IDX_BB			0x5	/* BlackBoard, from the TSP GPL sampling framework */
-+#define CN_IDX_DM			0x6     /* Device Mapper */
-+#define CN_VAL_DM_CLUSTER_LOG		0x1
- 
--#define CN_NETLINK_USERS		6
-+#define CN_NETLINK_USERS		7
- 
- /*
-  * Maximum connector's message size.
-Index: linux-2.6/include/linux/dm-log-cluster.h
+Index: linux-2.6/drivers/md/dm-ex-store-clusterized.c
 ===================================================================
 --- /dev/null
-+++ linux-2.6/include/linux/dm-log-cluster.h
-@@ -0,0 +1,67 @@
++++ linux-2.6/drivers/md/dm-ex-store-clusterized.c
+@@ -0,0 +1,573 @@
 +/*
-+ * Copyright (C) 2006-2009 Red Hat, Inc.
++ * Copyright (C) 2009 Red Hat, Inc. All rights reserved.
 + *
-+ * This file is released under the LGPL.
-+ */
-+
-+#ifndef __DM_LOG_CLUSTER_H__
-+#define __DM_LOG_CLUSTER_H__
-+
-+#include <linux/dm-ioctl.h> /* For DM_UUID_LEN */
-+
-+#define DM_CLOG_TFR_SIZE 1024
-+
-+#define DM_CLOG_CTR                    1
-+#define DM_CLOG_DTR                    2
-+#define DM_CLOG_PRESUSPEND             3
-+#define DM_CLOG_POSTSUSPEND            4
-+#define DM_CLOG_RESUME                 5
-+#define DM_CLOG_GET_REGION_SIZE        6
-+#define DM_CLOG_IS_CLEAN               7
-+#define DM_CLOG_IN_SYNC                8
-+#define DM_CLOG_FLUSH                  9
-+#define DM_CLOG_MARK_REGION           10
-+#define DM_CLOG_CLEAR_REGION          11
-+#define DM_CLOG_GET_RESYNC_WORK       12
-+#define DM_CLOG_SET_REGION_SYNC       13
-+#define DM_CLOG_GET_SYNC_COUNT        14
-+#define DM_CLOG_STATUS_INFO           15
-+#define DM_CLOG_STATUS_TABLE          16
-+#define DM_CLOG_IS_REMOTE_RECOVERING  17
-+
-+#define REQUEST_TYPES {	\
-+	"INVALID", \
-+	"DM_CLOG_CTR", \
-+	"DM_CLOG_DTR", \
-+	"DM_CLOG_PRESUSPEND", \
-+	"DM_CLOG_POSTSUSPEND", \
-+	"DM_CLOG_RESUME", \
-+	"DM_CLOG_GET_REGION_SIZE", \
-+	"DM_CLOG_IS_CLEAN", \
-+	"DM_CLOG_IN_SYNC", \
-+	"DM_CLOG_FLUSH", \
-+	"DM_CLOG_MARK_REGION", \
-+	"DM_CLOG_CLEAR_REGION", \
-+	"DM_CLOG_GET_RESYNC_WORK", \
-+	"DM_CLOG_SET_REGION_SYNC", \
-+	"DM_CLOG_GET_SYNC_COUNT", \
-+	"DM_CLOG_STATUS_INFO", \
-+	"DM_CLOG_STATUS_TABLE", \
-+	"DM_CLOG_IS_REMOTE_RECOVERING" \
-+}
-+
-+struct clog_tfr {
-+	uint64_t private[2];
-+	char uuid[DM_UUID_LEN]; /* Ties a request to a specific mirror log */
-+
-+	int error;              /* Used by server to inform of errors */
-+	uint32_t originator;    /* Cluster ID of this machine */
-+
-+	uint32_t seq;           /* Sequence number for request */
-+	uint32_t request_type;  /* DM_CLOG_* */
-+	uint32_t data_size;     /* How much data (not including this struct) */
-+
-+	char data[0];
-+};
-+
-+#endif /* __DM_LOG_CLUSTER_H__ */
-Index: linux-2.6/drivers/md/dm-log-cluster-transfer.c
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-log-cluster-transfer.c
-@@ -0,0 +1,280 @@
-+/*
-+ * Copyright (C) 2006-2009 Red Hat, Inc.
++ * Device-mapper exception structure and associated functions.
 + *
-+ * This file is released under the LGPL.
++ * This file is released under the GPL.
 + */
-+
-+#include <linux/kernel.h>
-+#include <linux/module.h>
-+#include <net/sock.h>
-+#include <linux/workqueue.h>
-+#include <linux/connector.h>
 +#include <linux/device-mapper.h>
++#include <linux/dlm.h>
++#include "dm-exception-store.h"
 +
-+#include <linux/dm-log-cluster.h>
-+#include "dm-log-cluster-transfer.h"
++#define DM_MSG_PREFIX "clusterized exception store"
 +
-+#include <asm/div64.h> /* Unnecessary */
++struct clusterized_c {
++	struct dm_exception_store *core_store;
 +
-+#define SHORT_UUID(x) (strlen(x) > 8) ? ((x) + (strlen(x) - 8)) : (x)
++	struct rw_semaphore lock;
 +
-+static uint32_t seq;
++	int current_dl_mode;
++	unsigned dl_holders;
++	struct completion dlm_completion;
++	dlm_lockspace_t *lockspace;
++	struct dlm_lksb lksb;
 +
-+/*
-+ * Pre-allocated space for speed
-+ */
-+#define DM_CLOG_PREALLOCED_SIZE 512
-+static struct cn_msg *prealloced_cn_msg;
-+static struct clog_tfr *prealloced_clog_tfr;
++	uint64_t metadata_counter;
++	uint64_t cluster_metadata_counter;
 +
-+static struct cb_id cn_clog_id = { CN_IDX_DM, CN_VAL_DM_CLUSTER_LOG };
-+static DEFINE_MUTEX(_lock);
-+
-+struct receiving_pkg {
-+	struct list_head list;
-+	struct completion complete;
-+
-+	uint32_t seq;
-+
-+	int error;
-+	size_t *data_size;
-+	char *data;
++	char uuid[0]; /* must be last */
 +};
 +
-+static DEFINE_SPINLOCK(receiving_list_lock);
-+static struct list_head receiving_list;
++#define mode2str(__mode) \
++	(__mode == DLM_LOCK_NL) ? "DLM_LOCK_NL" : \
++	(__mode == DLM_LOCK_CR) ? "DLM_LOCK_CR" : \
++	(__mode == DLM_LOCK_EX) ? "DLM_LOCK_EX" : "UNKNOWN"
 +
-+static const char *request_type_str(uint32_t request_type)
++static void lock_obtained(void *context)
 +{
-+	static const char *map[] = REQUEST_TYPES;
++	struct clusterized_c *cc = context;
 +
-+	return map[request_type];
++	complete(&cc->dlm_completion);
 +}
 +
-+static int dm_clog_sendto_server(struct clog_tfr *tfr)
++static int __cluster_lock(struct clusterized_c *cc, int mode)
 +{
 +	int r;
-+	int size;
-+	struct cn_msg *msg = prealloced_cn_msg;
++	uint32_t flags = DLM_LKF_VALBLK;
 +
-+	if (tfr != prealloced_clog_tfr) {
-+		size = sizeof(struct cn_msg) +
-+			sizeof(struct clog_tfr) + tfr->data_size;
-+		msg = kmalloc(size, GFP_NOIO);
-+		if (!msg)
-+			return -ENOMEM;
-+		memcpy((msg + 1), tfr,
-+		       sizeof(struct clog_tfr) + tfr->data_size);
++	/*
++	 * Does the curernt lock mode meet or exceed our needs?
++	 */
++	if (mode <= cc->current_dl_mode) {
++		cc->dl_holders++;
++		return 0;
 +	}
 +
-+	memset(msg, 0, sizeof(struct cn_msg));
++	/*
++	 * If the current lock mode is DLM_LOCK_NL, we can immediately
++	 * proceed to converting it.
++	 */
++	if (cc->current_dl_mode == DLM_LOCK_NL) {
++		BUG_ON(cc->dl_holders);
 +
-+	msg->id.idx = cn_clog_id.idx;
-+	msg->id.val = cn_clog_id.val;
-+	msg->ack = 0;
-+	msg->seq = tfr->seq;
-+	msg->len = sizeof(struct clog_tfr) + tfr->data_size;
++		flags |= DLM_LKF_CONVERT;
 +
-+	r = cn_netlink_send(msg, 0, gfp_any());
++		r = dlm_lock(cc->lockspace, mode, &cc->lksb,
++			     flags, cc->uuid, strlen(cc->uuid), 0,
++			     lock_obtained, cc, NULL);
++		if (r) {
++			DMERR("cluster_lock immediate failure: %d", r);
++			return r;
++		}
 +
-+	if (msg != prealloced_cn_msg)
-+		kfree(msg);
++		wait_for_completion(&cc->dlm_completion);
++
++		if (cc->lksb.sb_status) {
++			DMERR("cluster_lock async failure: %d",
++			      cc->lksb.sb_status);
++			return cc->lksb.sb_status;
++		}
++
++		cc->current_dl_mode = mode;
++		cc->dl_holders = 1;
++		return 0;
++	}
++
++	DMERR("DLM up-conversion required... waiting for unlock");
++	return -EAGAIN;
++}
++
++static int __cluster_unlock(struct clusterized_c *cc)
++{
++	int r;
++	uint32_t flags = DLM_LKF_VALBLK | DLM_LKF_CONVERT;
++
++	if (--cc->dl_holders)
++		return 0;
++
++	r = dlm_lock(cc->lockspace, DLM_LOCK_NL, &cc->lksb,
++		     flags, cc->uuid, strlen(cc->uuid), 0,
++		     lock_obtained, cc, NULL);
++
++	if (!r) {
++		wait_for_completion(&cc->dlm_completion);
++		r = cc->lksb.sb_status;
++	}
++
++	if (r)
++		DMERR("Failure to convert to NL lock: %d", r);
++	else
++		cc->current_dl_mode = DLM_LOCK_NL;
++
++	return r;
++}
++
++static int cluster_lock_init(struct clusterized_c *cc)
++{
++	int r;
++	uint32_t flags = DLM_LKF_VALBLK | DLM_LKF_EXPEDITE;
++
++	r = dlm_lock(cc->lockspace, DLM_LOCK_NL, &cc->lksb,
++		     flags, cc->uuid, strlen(cc->uuid), 0,
++		     lock_obtained, cc, NULL);
++	if (!r) {
++		wait_for_completion(&cc->dlm_completion);
++		r = cc->lksb.sb_status;
++	}
++
++	if (r)
++		DMERR("Failed to acquire initial DLM lock: %d", r);
++
++	return r;
++}
++
++static void cluster_lock_exit(struct clusterized_c *cc)
++{
++	BUG_ON(cc->current_dl_mode);
++	dlm_unlock(cc->lockspace, cc->lksb.sb_lkid,
++		   DLM_LKF_FORCEUNLOCK, &cc->lksb, cc);
++}
++
++static int cluster_lock(struct clusterized_c *cc, int mode)
++{
++	int r = -EAGAIN;
++
++	while (r == -EAGAIN) {
++		down_write(&cc->lock);
++		r = __cluster_lock(cc, mode);
++		up_write(&cc->lock);
++	}
 +
 +	return r;
 +}
 +
 +/*
-+ * fill_pkg
-+ * @msg
-+ * @tfr
++ * cluster_unlock
++ * @cc
 + *
-+ * Parameters can be either msg or tfr, but not both.  This
-+ * function fills in the reply for a waiting request.  If just
-+ * msg is given, then the reply is simply an ACK from userspace
-+ * that the request was received.
++ * Doesn't completely unlock, but rather puts the lock back into
++ * the DLM_LOCK_NL mode.  This preserves the LVB.
 + *
-+ * Returns: 0 on success, -ENOENT on failure
 + */
-+static int fill_pkg(struct cn_msg *msg, struct clog_tfr *tfr)
++static int cluster_unlock(struct clusterized_c *cc)
 +{
-+	uint32_t rtn_seq = (msg) ? msg->seq : (tfr) ? tfr->seq : 0;
-+	struct receiving_pkg *pkg;
++	int r;
 +
-+	list_for_each_entry(pkg, &receiving_list, list) {
-+		if (rtn_seq != pkg->seq)
-+			continue;
++	down_write(&cc->lock);
++	r = __cluster_unlock(cc);
++	up_write(&cc->lock);
 +
-+		if (msg) {
-+			pkg->error = -msg->ack;
-+			/*
-+			 * If we are trying again, we will need to know our
-+			 * storage capacity.  Otherwise, along with the
-+			 * error code, we make explicit that we have no data.
-+			 */
-+			if (pkg->error != -EAGAIN)
-+				*(pkg->data_size) = 0;
-+		} else if (tfr->data_size > *(pkg->data_size)) {
-+			DMERR("Insufficient space to receive package [%s]::",
-+			      request_type_str(tfr->request_type));
-+			DMERR("  tfr->data_size    = %u", tfr->data_size);
-+			DMERR("  *(pkg->data_size) = %lu", *(pkg->data_size));
-+
-+			*(pkg->data_size) = 0;
-+			pkg->error = -ENOSPC;
-+		} else {
-+			pkg->error = tfr->error;
-+			memcpy(pkg->data, tfr->data, tfr->data_size);
-+			*(pkg->data_size) = tfr->data_size;
-+		}
-+		complete(&pkg->complete);
-+		return 0;
-+	}
-+
-+	return -ENOENT;
++	return r;
 +}
 +
 +/*
-+ * cn_clog_callback
-+ * @data
++ * clusterized_ctr
++ * @store
++ * @argc
++ * @argv
 + *
-+ * This is the connector callback that delivers data
-+ * that was sent from userspace.
-+ */
-+static void cn_clog_callback(void *data)
-+{
-+	struct cn_msg *msg = (struct cn_msg *)data;
-+	struct clog_tfr *tfr = (struct clog_tfr *)(msg + 1);
-+
-+	spin_lock(&receiving_list_lock);
-+	if (msg->len == 0)
-+		fill_pkg(msg, NULL);
-+	else if (msg->len < sizeof(*tfr))
-+		DMERR("Incomplete message received: [%u]", msg->seq);
-+	else
-+		fill_pkg(NULL, tfr);
-+	spin_unlock(&receiving_list_lock);
-+}
-+
-+/*
-+ * dm_clog_consult_server
-+ * @uuid: log's uuid (must be DM_UUID_LEN in size)
-+ * @request_type:
-+ * @data: data to tx to the server
-+ * @data_size: size of data in bytes
-+ * @rdata: place to put return data from server
-+ * @rdata_size: value-result (amount of space given/amount of space used)
-+ *
-+ * Only one process at a time can communicate with the server.
-+ * rdata_size is undefined on failure.
++ * The mapping table will be the same as the exception
++ * store it is covering, but will also include the
++ * argument:
++ *	<non-clustered args> cluster_uuid:<UUID>
 + *
 + * Returns: 0 on success, -EXXX on failure
 + */
-+int dm_clog_consult_server(const char *uuid, int request_type,
-+			   char *data, size_t data_size,
-+			   char *rdata, size_t *rdata_size)
-+{
-+	int r = 0;
-+	size_t dummy = 0;
-+	int overhead_size = sizeof(struct clog_tfr *) + sizeof(struct cn_msg);
-+	struct clog_tfr *tfr = prealloced_clog_tfr;
-+	struct receiving_pkg pkg;
-+
-+	if (data_size > (DM_CLOG_PREALLOCED_SIZE - overhead_size)) {
-+		DMINFO("Size of tfr exceeds preallocated size");
-+		/* FIXME: is kmalloc sufficient if we need this much space? */
-+		tfr = kzalloc(data_size + sizeof(*tfr), GFP_NOIO);
-+	}
-+
-+	if (!tfr)
-+		return -ENOMEM;
-+
-+	if (!rdata_size)
-+		rdata_size = &dummy;
-+resend:
-+	/*
-+	 * We serialize the sending of requests so we can
-+	 * use the preallocated space.
-+	 */
-+	mutex_lock(&_lock);
-+
-+	memset(tfr, 0, DM_CLOG_PREALLOCED_SIZE - overhead_size);
-+	memcpy(tfr->uuid, uuid, DM_UUID_LEN);
-+	tfr->seq = seq++;
-+	tfr->request_type = request_type;
-+	tfr->data_size = data_size;
-+	if (data && data_size)
-+		memcpy(tfr->data, data, data_size);
-+
-+	memset(&pkg, 0, sizeof(pkg));
-+	init_completion(&pkg.complete);
-+	pkg.seq = tfr->seq;
-+	pkg.data_size = rdata_size;
-+	pkg.data = rdata;
-+	spin_lock(&receiving_list_lock);
-+	list_add(&(pkg.list), &receiving_list);
-+	spin_unlock(&receiving_list_lock);
-+
-+	r = dm_clog_sendto_server(tfr);
-+
-+	mutex_unlock(&_lock);
-+
-+	if (r) {
-+		DMERR("Unable to send cluster log request [%s] to server: %d",
-+		      request_type_str(request_type), r);
-+		spin_lock(&receiving_list_lock);
-+		list_del_init(&(pkg.list));
-+		spin_unlock(&receiving_list_lock);
-+
-+		goto out;
-+	}
-+
-+	r = wait_for_completion_timeout(&(pkg.complete), 15 * HZ);
-+	spin_lock(&receiving_list_lock);
-+	list_del_init(&(pkg.list));
-+	spin_unlock(&receiving_list_lock);
-+	if (!r) {
-+		DMWARN("[%s] Request timed out: [%s/%u] - retrying",
-+		       SHORT_UUID(uuid), request_type_str(request_type),
-+		       pkg.seq);
-+		goto resend;
-+	}
-+
-+	r = pkg.error;
-+	if (r == -EAGAIN)
-+		goto resend;
-+
-+out:
-+	if (tfr != (struct clog_tfr *)prealloced_clog_tfr)
-+		kfree(tfr);
-+
-+	return r;
-+}
-+
-+int dm_clog_tfr_init(void)
++static int clusterized_ctr(struct dm_exception_store *store,
++			   unsigned argc, char **argv)
 +{
 +	int r;
-+	void *prealloced;
++	unsigned i, j, len;
++	unsigned my_argc = argc + 1;
++	char *my_argv[my_argc];
++	char chunk_size_str[32];
++	char *core_name;
++	struct clusterized_c *cc = NULL;
 +
-+	INIT_LIST_HEAD(&receiving_list);
++	/*
++	 * First, in order to pass down to non-clustered
++	 * core, we must add back the COW and chunk size
++	 * arguments
++	 */
++	my_argv[0] = store->cow->name;
++	sprintf(chunk_size_str, "%llu", (unsigned long long)store->chunk_size);
++	my_argv[1] = chunk_size_str;
 +
-+	prealloced = kmalloc(DM_CLOG_PREALLOCED_SIZE, GFP_KERNEL);
-+	if (!prealloced)
++	/* Now we strip off the cluster_uuid argument */
++	argc--;
++	if (strncmp("cluster_uuid:", argv[argc], 13)) {
++		DMERR("No 'cluster_uuid:' argument provided.");
++		return -EINVAL;
++	}
++	for (i = 0, j = 2; i < argc; i++, j++)
++		my_argv[j] = argv[i];
++
++	/*
++	 * We just want to count the actual UUID, plus 1
++	 * for the trailing NULL.  (With MAX size being
++	 * what is able to fit in the LVB of a DLM lock.)
++	 */
++	len = strlen(argv[argc] + 13) + 1;
++	len = (len > DLM_RESNAME_MAXLEN) ? DLM_RESNAME_MAXLEN : len;
++	cc = kzalloc(sizeof(*cc) + len, GFP_KERNEL);
++	if (!cc)
 +		return -ENOMEM;
++	strncpy(cc->uuid, argv[argc] + 13, len);
++	cc->lksb.sb_lvbptr = (char *)&cc->cluster_metadata_counter;
 +
-+	prealloced_cn_msg = prealloced;
-+	prealloced_clog_tfr = prealloced + sizeof(struct cn_msg);
++	init_rwsem(&cc->lock);
++	init_completion(&cc->dlm_completion);
 +
-+	r = cn_add_callback(&cn_clog_id, "clulog", cn_clog_callback);
++	/* Create (or join) the lock space */
++	r = dlm_new_lockspace(store->type->name, strlen(store->type->name),
++			      &cc->lockspace, 0, sizeof(uint64_t));
++
 +	if (r) {
-+		cn_del_callback(&cn_clog_id);
++		DMERR("Unable to create DLM lockspace for %s",
++		      store->type->name);
++		kfree(cc);
 +		return r;
 +	}
++	cluster_lock_init(cc);
++
++	/*
++	 * Now we find the non-clustered exception store name.
++	 * It will be whatever is left when we strip 'clusterized_' off.
++	 */
++	core_name = strstr(store->type->name, "-");
++	BUG_ON(!core_name);
++	core_name++;
++
++	r = dm_exception_store_create(core_name, store->ti, my_argc, my_argv,
++				      &cc->core_store);
++
++	if (r) {
++		DMERR("Failed to create foundational exception store, %s",
++		      core_name);
++		dlm_release_lockspace(cc->lockspace, 1);
++		kfree(cc);
++		return r;
++	}
++
++	/* If the core store is shared, we are shared */
++	store->shared_uuid = cc->core_store->shared_uuid;
++
++	store->context = cc;
 +
 +	return 0;
 +}
 +
-+void dm_clog_tfr_exit(void)
++static void clusterized_dtr(struct dm_exception_store *store)
 +{
-+	cn_del_callback(&cn_clog_id);
-+	kfree(prealloced_cn_msg);
-+}
-Index: linux-2.6/drivers/md/dm-log-cluster-transfer.h
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-log-cluster-transfer.h
-@@ -0,0 +1,18 @@
-+/*
-+ * Copyright (C) 2006-2009 Red Hat, Inc.
-+ *
-+ * This file is released under the LGPL.
-+ */
++	struct clusterized_c *cc = store->context;
 +
-+#ifndef __DM_LOG_CLUSTER_TRANSFER_H__
-+#define __DM_LOG_CLUSTER_TRANSFER_H__
++	dm_exception_store_destroy(cc->core_store);
 +
-+#define DM_MSG_PREFIX "dm-log-clustered"
++	cluster_lock_exit(cc);
++	dlm_release_lockspace(cc->lockspace, 1);
 +
-+int dm_clog_tfr_init(void);
-+void dm_clog_tfr_exit(void);
-+int dm_clog_consult_server(const char *uuid, int request_type,
-+			   char *data, size_t data_size,
-+			   char *rdata, size_t *rdata_size);
-+
-+#endif /* __DM_LOG_CLUSTER_TRANSFER_H__ */
-Index: linux-2.6/drivers/md/dm-log-cluster.c
-===================================================================
---- /dev/null
-+++ linux-2.6/drivers/md/dm-log-cluster.c
-@@ -0,0 +1,797 @@
-+/*
-+ * Copyright (C) 2006-2009 Red Hat, Inc.
-+ *
-+ * This file is released under the LGPL.
-+ */
-+
-+#include <linux/blkdev.h> /* for sector_div, which is used in dm-dirty-log.h */
-+#include <linux/bio.h>
-+#include <linux/dm-dirty-log.h>
-+#include <linux/device-mapper.h>
-+
-+#include <linux/dm-log-cluster.h>
-+#include "dm-log-cluster-transfer.h"
-+
-+struct flush_entry {
-+	int type;
-+	region_t region;
-+	struct list_head list;
-+};
-+
-+struct log_c {
-+	struct dm_target *ti;
-+	uint32_t region_size;
-+	region_t region_count;
-+	char uuid[DM_UUID_LEN];
-+
-+	char *ctr_str; /* Gives ability to restart if userspace dies */
-+	uint32_t ctr_size;
-+
-+	/*
-+	 * in_sync_hint gets set when doing is_remote_recovering.  It
-+	 * represents the first region that needs recovery.  IOW, the
-+	 * first zero bit of sync_bits.  This can be useful for to limit
-+	 * traffic for calls like is_remote_recovering and get_resync_work,
-+	 * but be take care in its use for anything else.
-+	 */
-+	uint64_t in_sync_hint;
-+
-+	spinlock_t flush_lock;
-+	struct list_head flush_list;  /* only for clear and mark requests */
-+
-+	struct dm_dev *disk_log;
-+};
-+
-+static mempool_t *flush_entry_pool;
-+
-+static void *flush_entry_alloc(gfp_t gfp_mask, void *pool_data)
-+{
-+	return kmalloc(sizeof(struct flush_entry), gfp_mask);
++	kfree(cc);
 +}
 +
-+static void flush_entry_free(void *element, void *pool_data)
-+{
-+	kfree(element);
-+}
-+
-+int cluster_do_request(struct log_c *lc, const char *uuid, int request_type,
-+		       char *data, size_t data_size,
-+		       char *rdata, size_t *rdata_size)
++static int clusterized_resume(struct dm_exception_store *store)
 +{
 +	int r;
++	struct clusterized_c *cc = store->context;
 +
-+	/*
-+	 * If the server isn't there, -ESRCH is returned,
-+	 * and we must keep trying until the server is
-+	 * restored.
-+	 */
-+retry:
-+	r = dm_clog_consult_server(uuid, request_type, data,
-+				   data_size, rdata, rdata_size);
++	cluster_lock(cc, DLM_LOCK_CR);
 +
-+	if (r != -ESRCH)
-+		return r;
++	r = cc->core_store->type->resume(cc->core_store);
++	cc->metadata_counter = cc->cluster_metadata_counter;
 +
-+	DMERR(" Userspace cluster log server not found.");
-+	while (1) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		schedule_timeout(2*HZ);
-+		DMWARN("Attempting to contact cluster log server...");
-+		r = dm_clog_consult_server(uuid, DM_CLOG_CTR, lc->ctr_str,
-+					   lc->ctr_size, NULL, NULL);
-+		if (!r)
-+			break;
-+	}
-+	DMINFO("Reconnected to cluster log server... CTR complete");
-+	r = dm_clog_consult_server(uuid, DM_CLOG_RESUME, NULL,
-+				   0, NULL, NULL);
-+	if (!r)
-+		goto retry;
++	cluster_unlock(cc);
 +
-+	DMERR("Error trying to resume cluster log: %d", r);
-+
-+	return -ESRCH;
++	return r;
 +}
 +
-+static int cluster_ctr(struct dm_dirty_log *log, struct dm_target *ti,
-+		       unsigned int argc, char **argv,
-+		       struct dm_dev *disk_log)
++static void clusterized_presuspend(struct dm_exception_store *store)
 +{
-+	int i;
-+	int r = 0;
-+	int str_size;
-+	int offset = (disk_log) ? 1 : 0;
-+	char *ctr_str = NULL;
-+	struct log_c *lc = NULL;
-+	uint32_t region_size;
-+	region_t region_count;
++	struct clusterized_c *cc = store->context;
 +
-+	/* Already checked argument count */
++	if (cc->core_store->type->presuspend)
++		cc->core_store->type->presuspend(store);
++}
 +
-+	if (sscanf(argv[offset], "%u", &region_size) != 1) {
-+		DMWARN("Invalid region size string");
-+		return -EINVAL;
-+	}
++static void clusterized_postsuspend(struct dm_exception_store *store)
++{
++	struct clusterized_c *cc = store->context;
 +
-+	region_count = dm_sector_div_up(ti->len, region_size);
++	if (cc->core_store->type->postsuspend)
++		cc->core_store->type->postsuspend(store);
++}
 +
-+	lc = kmalloc(sizeof(*lc), GFP_KERNEL);
-+	if (!lc) {
-+		DMWARN("Unable to allocate cluster log context.");
-+		return -ENOMEM;
-+	}
++static int clusterized_prepare_exception(struct dm_exception_store *store,
++					 struct dm_exception *e, int group)
++{
++	int r;
++	struct clusterized_c *cc = store->context;
 +
-+	lc->ti = ti;
-+	lc->region_size = region_size;
-+	lc->region_count = region_count;
-+	lc->disk_log = disk_log;
++	cluster_lock(cc, DLM_LOCK_EX);
 +
-+	/* FIXME: Need to check size of uuid arg */
-+	memcpy(lc->uuid, argv[1 + offset], DM_UUID_LEN);
-+	spin_lock_init(&lc->flush_lock);
-+	INIT_LIST_HEAD(&lc->flush_list);
-+
-+	for (i = 0, str_size = 0; i < argc; i++)
-+		str_size += strlen(argv[i]) + 1; /* +1 for space between args */
-+
-+	str_size += 20; /* Max number of chars in a printed u64 number */
-+
-+	ctr_str = kzalloc(str_size, GFP_KERNEL);
-+	if (!ctr_str) {
-+		DMWARN("Unable to allocate memory for constructor string");
-+		kfree(lc);
-+		return -ENOMEM;
-+	}
-+
-+	for (i = 0, str_size = 0; i < argc; i++)
-+		str_size += sprintf(ctr_str + str_size, "%s ", argv[i]);
-+	str_size += sprintf(ctr_str + str_size, "%llu",
-+			    (unsigned long long)ti->len);
-+
-+	/* Send table string */
-+	r = dm_clog_consult_server(lc->uuid, DM_CLOG_CTR,
-+				   ctr_str, str_size, NULL, NULL);
-+
-+	if (r == -ESRCH)
-+		DMERR(" Userspace cluster log server not found");
++	r = cc->core_store->type->prepare_exception(cc->core_store, e, group);
 +
 +	if (r) {
-+		kfree(lc);
-+		kfree(ctr_str);
-+	} else {
-+		lc->ctr_str = ctr_str;
-+		lc->ctr_size = str_size;
-+		log->context = lc;
++		DMERR("Core store failed to prepare_exception");
++		cluster_unlock(cc);
 +	}
 +
 +	return r;
 +}
 +
-+/*
-+ * cluster_core_ctr
-+ * @log
-+ * @ti
-+ * @argc
-+ * @argv
-+ *
-+ * argv contains:
-+ *   <region_size> <uuid> [[no]sync]
-+ *
-+ * Returns: 0 on success, -XXX on failure
-+ */
-+static int cluster_core_ctr(struct dm_dirty_log *log, struct dm_target *ti,
-+			    unsigned int argc, char **argv)
++/* cbc - callback context */
++struct cbc {
++	struct clusterized_c *cc;
++
++	void (*callback) (void *, int success);
++	void *callback_data;
++};
++
++void commit_callback(void *data, int success)
 +{
-+	int i, r;
-+	if ((argc < 2) || (argc > 3)) {
-+		DMERR("Too %s arguments to clustered-core mirror log type.",
-+		      (argc < 2) ? "few" : "many");
-+		DMERR("  %d arguments supplied:", argc);
-+		for (i = 0; i < argc; i++)
-+			DMERR("    %s", argv[i]);
-+		return -EINVAL;
-+	}
++	struct cbc *context = data;
 +
-+	r = cluster_ctr(log, ti, argc, argv, NULL);
++	context->cc->metadata_counter++;
++	context->cc->cluster_metadata_counter = context->cc->metadata_counter;
 +
-+	return r;
++	context->callback(context->callback_data, success);
++	cluster_unlock(context->cc);
++
++	kfree(context);
 +}
 +
-+
-+/*
-+ * cluster_core_ctr
-+ * @log
-+ * @ti
-+ * @argc
-+ * @argv
-+ *
-+ * argv contains:
-+ *   <disk> <region_size> <uuid> [[no]sync]
-+ *
-+ * Returns: 0 on success, -XXX on failure
-+ */
-+static int cluster_disk_ctr(struct dm_dirty_log *log, struct dm_target *ti,
-+			    unsigned int argc, char **argv)
++static void clusterized_commit_exception(struct dm_exception_store *store,
++					 struct dm_exception *e,
++					 void (*callback) (void *, int success),
++					 void *callback_context)
 +{
-+	int r, i;
-+	struct dm_dev *dev;
++	struct clusterized_c *cc = store->context;
++	struct cbc *cbc;
 +
-+	if ((argc < 3) || (argc > 4)) {
-+		DMERR("Too %s arguments to clustered-disk mirror log type.",
-+		      (argc < 3) ? "few" : "many");
-+		DMERR("  %d arguments supplied:", argc);
-+		for (i = 0; i < argc; i++)
-+			DMERR("    %s", argv[i]);
-+		return -EINVAL;
-+	}
-+
-+	r = dm_get_device(ti, argv[0], 0, 0, FMODE_READ | FMODE_WRITE, &dev);
-+	if (r)
-+		return r;
-+
-+	r = cluster_ctr(log, ti, argc, argv, dev);
-+	if (r)
-+		dm_put_device(ti, dev);
-+
-+	return r;
-+}
-+
-+/*
-+ * cluster_dtr
-+ * @log
-+ */
-+static void cluster_dtr(struct dm_dirty_log *log)
-+{
-+	int r;
-+	struct log_c *lc = log->context;
-+
-+	r = dm_clog_consult_server(lc->uuid, DM_CLOG_DTR,
-+				   NULL, 0,
-+				   NULL, NULL);
-+
-+	if (lc->disk_log)
-+		dm_put_device(lc->ti, lc->disk_log);
-+	kfree(lc->ctr_str);
-+	kfree(lc);
-+
-+	return;
-+}
-+
-+/*
-+ * cluster_presuspend
-+ * @log
-+ */
-+static int cluster_presuspend(struct dm_dirty_log *log)
-+{
-+	int r;
-+	struct log_c *lc = log->context;
-+
-+	r = dm_clog_consult_server(lc->uuid, DM_CLOG_PRESUSPEND,
-+				   NULL, 0,
-+				   NULL, NULL);
-+
-+	return r;
-+}
-+
-+/*
-+ * cluster_postsuspend
-+ * @log
-+ */
-+static int cluster_postsuspend(struct dm_dirty_log *log)
-+{
-+	int r;
-+	struct log_c *lc = log->context;
-+
-+	r = dm_clog_consult_server(lc->uuid, DM_CLOG_POSTSUSPEND,
-+				   NULL, 0,
-+				   NULL, NULL);
-+
-+	return r;
-+}
-+
-+/*
-+ * cluster_resume
-+ * @log
-+ */
-+static int cluster_resume(struct dm_dirty_log *log)
-+{
-+	int r;
-+	struct log_c *lc = log->context;
-+
-+	lc->in_sync_hint = 0;
-+	r = dm_clog_consult_server(lc->uuid, DM_CLOG_RESUME,
-+				   NULL, 0,
-+				   NULL, NULL);
-+
-+	return r;
-+}
-+
-+/*
-+ * cluster_get_region_size
-+ * @log
-+ *
-+ * Only called during mirror construction, ok to block.
-+ *
-+ * Returns: region size (doesn't fail)
-+ */
-+static uint32_t cluster_get_region_size(struct dm_dirty_log *log)
-+{
-+	struct log_c *lc = log->context;
-+
-+	return lc->region_size;
-+}
-+
-+/*
-+ * cluster_is_clean
-+ * @log
-+ * @region
-+ *
-+ * Check whether a region is clean.  If there is any sort of
-+ * failure when consulting the server, we return not clean.
-+ *
-+ * Returns: 1 if clean, 0 otherwise
-+ */
-+static int cluster_is_clean(struct dm_dirty_log *log, region_t region)
-+{
-+	int r;
-+	int is_clean;
-+	size_t rdata_size;
-+	struct log_c *lc = log->context;
-+
-+	rdata_size = sizeof(is_clean);
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_IS_CLEAN,
-+			       (char *)&region, sizeof(region),
-+			       (char *)&is_clean, &rdata_size);
-+
-+	return (r) ? 0 : is_clean;
-+}
-+
-+/*
-+ * cluster_in_sync
-+ * @log
-+ * @region
-+ * @can_block: if set, return immediately
-+ *
-+ * Check if the region is in-sync.  If there is any sort
-+ * of failure when consulting the server, we assume that
-+ * the region is not in sync.
-+ *
-+ * Returns: 1 if in-sync, 0 if not-in-sync, -EWOULDBLOCK
-+ */
-+static int cluster_in_sync(struct dm_dirty_log *log, region_t region,
-+			   int can_block)
-+{
-+	int r;
-+	int in_sync;
-+	size_t rdata_size;
-+	struct log_c *lc = log->context;
-+
-+	/*
-+	 * We can never respond directly - even if in_sync_hint is
-+	 * set.  This is because another machine could see a device
-+	 * failure and mark the region out-of-sync.  If we don't go
-+	 * to userspace to ask, we might think the region is in-sync
-+	 * and allow a read to pick up data that is stale.  (This is
-+	 * very unlikely if a device actually fails; but it is very
-+	 * likely if a connection to one device from one machine fails.)
-+	 *
-+	 * There still might be a problem if the mirror caches the region
-+	 * state as in-sync... but then this call would not be made.  So,
-+	 * that is a mirror problem.
-+	 */
-+	if (!can_block)
-+		return -EWOULDBLOCK;
-+
-+	rdata_size = sizeof(in_sync);
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_IN_SYNC,
-+			       (char *)&region, sizeof(region),
-+			       (char *)&in_sync, &rdata_size);
-+	return (r) ? 0 : in_sync;
-+}
-+
-+/*
-+ * cluster_flush
-+ * @log
-+ *
-+ * This function is ok to block.
-+ * The flush happens in two stages.  First, it sends all
-+ * clear/mark requests that are on the list.  Then it
-+ * tells the server to commit them.  This gives the
-+ * server a chance to optimise the commit to the cluster
-+ * and/or disk, instead of doing it for every request.
-+ *
-+ * Additionally, we could implement another thread that
-+ * sends the requests up to the server - reducing the
-+ * load on flush.  Then the flush would have less in
-+ * the list and be responsible for the finishing commit.
-+ *
-+ * Returns: 0 on success, < 0 on failure
-+ */
-+static int cluster_flush(struct dm_dirty_log *log)
-+{
-+	int r = 0;
-+	unsigned long flags;
-+	struct log_c *lc = log->context;
-+	LIST_HEAD(flush_list);
-+	struct flush_entry *fe, *tmp_fe;
-+
-+	spin_lock_irqsave(&lc->flush_lock, flags);
-+	list_splice_init(&lc->flush_list, &flush_list);
-+	spin_unlock_irqrestore(&lc->flush_lock, flags);
-+
-+	if (list_empty(&flush_list))
-+		return 0;
-+
-+	/*
-+	 * FIXME: Count up requests, group request types,
-+	 * allocate memory to stick all requests in and
-+	 * send to server in one go.  Failing the allocation,
-+	 * do it one by one.
-+	 */
-+
-+	list_for_each_entry(fe, &flush_list, list) {
-+		r = cluster_do_request(lc, lc->uuid, fe->type,
-+				       (char *)&fe->region,
-+				       sizeof(fe->region),
-+				       NULL, NULL);
-+		if (r)
-+			goto fail;
-+	}
-+
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_FLUSH,
-+			       NULL, 0, NULL, NULL);
-+
-+fail:
-+	/*
-+	 * We can safely remove these entries, even if failure.
-+	 * Calling code will receive an error and will know that
-+	 * the log facility has failed.
-+	 */
-+	list_for_each_entry_safe(fe, tmp_fe, &flush_list, list) {
-+		list_del(&fe->list);
-+		mempool_free(fe, flush_entry_pool);
-+	}
-+
-+	if (r)
-+		dm_table_event(lc->ti->table);
-+
-+	return r;
-+}
-+
-+/*
-+ * cluster_mark_region
-+ * @log
-+ * @region
-+ *
-+ * This function should avoid blocking unless absolutely required.
-+ * (Memory allocation is valid for blocking.)
-+ */
-+static void cluster_mark_region(struct dm_dirty_log *log, region_t region)
-+{
-+	unsigned long flags;
-+	struct log_c *lc = log->context;
-+	struct flush_entry *fe;
-+
-+	/* Wait for an allocation, but _never_ fail */
-+	fe = mempool_alloc(flush_entry_pool, GFP_NOIO);
-+	BUG_ON(!fe);
-+
-+	spin_lock_irqsave(&lc->flush_lock, flags);
-+	fe->type = DM_CLOG_MARK_REGION;
-+	fe->region = region;
-+	list_add(&fe->list, &lc->flush_list);
-+	spin_unlock_irqrestore(&lc->flush_lock, flags);
-+
-+	return;
-+}
-+
-+/*
-+ * cluster_clear_region
-+ * @log
-+ * @region
-+ *
-+ * This function must not block.
-+ * So, the alloc can't block.  In the worst case, it is ok to
-+ * fail.  It would simply mean we can't clear the region.
-+ * Does nothing to current sync context, but does mean
-+ * the region will be re-sync'ed on a reload of the mirror
-+ * even though it is in-sync.
-+ */
-+static void cluster_clear_region(struct dm_dirty_log *log, region_t region)
-+{
-+	unsigned long flags;
-+	struct log_c *lc = log->context;
-+	struct flush_entry *fe;
-+
-+	/*
-+	 * If we fail to allocate, we skip the clearing of
-+	 * the region.  This doesn't hurt us in any way, except
-+	 * to cause the region to be resync'ed when the
-+	 * device is activated next time.
-+	 */
-+	fe = mempool_alloc(flush_entry_pool, GFP_ATOMIC);
-+	if (!fe) {
-+		DMERR("Failed to allocate memory to clear region.");
++	cbc = kmalloc(sizeof(*cbc), GFP_NOIO);
++	if (!cbc) {
++		callback(callback_context, 0);
 +		return;
 +	}
 +
-+	spin_lock_irqsave(&lc->flush_lock, flags);
-+	fe->type = DM_CLOG_CLEAR_REGION;
-+	fe->region = region;
-+	list_add(&fe->list, &lc->flush_list);
-+	spin_unlock_irqrestore(&lc->flush_lock, flags);
++	cbc->cc = cc;
++	cbc->callback = callback;
++	cbc->callback_data = callback_context;
 +
-+	return;
++	cc->core_store->type->commit_exception(cc->core_store, e,
++					       commit_callback, cbc);
 +}
 +
 +/*
-+ * cluster_get_resync_work
-+ * @log
-+ * @region
++ * clusterized_lookup_exception
++ * @store
++ * @old
++ * @new: NULL if they don't want data back
++ * @group
++ * @can_block
 + *
-+ * Get a region that needs recovery.  It is valid to return
-+ * an error for this function.
++ * A "shared" exception store can alter the metadata
++ * outside the scope of our cluster-wide LVB counter.
++ * We have no way of knowing whether we need to re-read/resume
++ * the metadata if a "shared" exception store is in use.
 + *
-+ * Returns: 1 if region filled, 0 if no work, <0 on error
++ * We could re-read the metadata regardless, but that seems
++ * like an aweful waste... just don't allow "shared"
++ * exception stores right now (enforced in the ctr).
++ *
++ * Returns: 0 if found, -ENOENT if not found, -Exxx otherwise
 + */
-+static int cluster_get_resync_work(struct dm_dirty_log *log, region_t *region)
++static int clusterized_lookup_exception(struct dm_exception_store *store,
++					chunk_t old, chunk_t *new,
++					int group, int can_block)
 +{
 +	int r;
-+	size_t rdata_size;
-+	struct log_c *lc = log->context;
-+	struct {
-+		int i;
-+		region_t r;
-+	} pkg;
-+
-+	if (lc->in_sync_hint >= lc->region_count)
-+		return 0;
-+
-+	rdata_size = sizeof(pkg);
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_GET_RESYNC_WORK,
-+			       NULL, 0,
-+			       (char *)&pkg, &rdata_size);
-+
-+	*region = pkg.r;
-+	return (r) ? r : pkg.i;
-+}
-+
-+/*
-+ * cluster_set_region_sync
-+ * @log
-+ * @region
-+ * @in_sync
-+ *
-+ * Set the sync status of a given region.  This function
-+ * must not fail.
-+ */
-+static void cluster_set_region_sync(struct dm_dirty_log *log,
-+				    region_t region, int in_sync)
-+{
-+	int r;
-+	struct log_c *lc = log->context;
-+	struct {
-+		region_t r;
-+		int i;
-+	} pkg;
-+
-+	pkg.r = region;
-+	pkg.i = in_sync;
-+
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_SET_REGION_SYNC,
-+			       (char *)&pkg, sizeof(pkg),
-+			       NULL, NULL);
++	struct clusterized_c *cc = store->context;
 +
 +	/*
-+	 * It would be nice to be able to report failures.
-+	 * However, it is easy emough to detect and resolve.
++	 * Even if the metadata counters don't match, we don't
++	 * need to re-read the metadata if we can find the
++	 * exception right now.  In fact, we don't even need to
++	 * take out the cluster lock if we are just looking in our
++	 * local cache.
 +	 */
-+	return;
-+}
++	r = cc->core_store->type->lookup_exception(cc->core_store, old,
++						   new, group, can_block);
 +
-+/*
-+ * cluster_get_sync_count
-+ * @log
-+ *
-+ * If there is any sort of failure when consulting the server,
-+ * we assume that the sync count is zero.
-+ *
-+ * Returns: sync count on success, 0 on failure
-+ */
-+static region_t cluster_get_sync_count(struct dm_dirty_log *log)
-+{
-+	int r;
-+	size_t rdata_size;
-+	region_t sync_count;
-+	struct log_c *lc = (struct log_c *)log->context;
++	/* If we found the exception or there was an error, we can return */
++	if (r != -ENOENT)
++		return r;
 +
-+	rdata_size = sizeof(sync_count);
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_GET_SYNC_COUNT,
-+			       NULL, 0,
-+			       (char *)&sync_count, &rdata_size);
++	/* We block when we aquire the DLM lock - respect !can_block */
++	if (!can_block)
++		return -EWOULDBLOCK;
 +
-+	if (r)
-+		return 0;
++	cluster_lock(cc, DLM_LOCK_CR);
 +
-+	if (sync_count >= lc->region_count)
-+		lc->in_sync_hint = lc->region_count;
-+
-+	return sync_count;
-+}
-+
-+/*
-+ * cluster_status
-+ * @log
-+ * @status_type
-+ * @result
-+ * @maxlen
-+ *
-+ * Returns: amount of space consumed
-+ */
-+static int cluster_status(struct dm_dirty_log *log, status_type_t status_type,
-+			  char *result, unsigned int maxlen)
-+{
-+	int r = 0;
-+	size_t sz = (size_t)maxlen;
-+	struct log_c *lc = log->context;
-+
-+	switch (status_type) {
-+	case STATUSTYPE_INFO:
-+		r = cluster_do_request(lc, lc->uuid, DM_CLOG_STATUS_INFO,
-+				       NULL, 0,
-+				       result, &sz);
++	/*
++	 * If a "shared" core exception store is used, then the
++	 * metadata_counter is incapable of keeping track of all
++	 * changes that occur, so we must re-read the metadata
++	 * (i.e. resume).
++	 */
++	if (!store->shared_uuid &&
++	    (cc->cluster_metadata_counter == cc->metadata_counter)) {
 +		/*
-+		 * FIXME: If we fail to contact server, we should still
-+		 * populate this with parsible results
++		 * Exception was not found, and the metadata was not
++		 * changed by other node.
 +		 */
++		cluster_unlock(cc);
++		return -ENOENT;
++	}
++
++	/*
++	 * The core exception store's resume method must be capable of
++	 * re-reading its metadata and updating its cache.  IOW, it must
++	 * be able to resume multiple times before a suspend is issued.
++	 */
++	cc->core_store->type->resume(cc->core_store);
++
++	cc->metadata_counter = cc->cluster_metadata_counter;
++	cluster_unlock(cc);
++
++	/* Now, try to find the exception again. */
++	r = cc->core_store->type->lookup_exception(cc->core_store, old,
++						   new, group, can_block);
++	return r;
++}
++
++static void clusterized_fraction_full(struct dm_exception_store *store,
++				      sector_t *numerator, sector_t *denominator)
++{
++	struct clusterized_c *cc = store->context;
++
++	/*
++	 * FIXME: If we want more exact numbers, then we should
++	 * check the LVB for changes and potentially force the
++	 * core store to re-read metadata.
++	 */
++	cc->core_store->type->fraction_full(cc->core_store, numerator,
++					    denominator);
++}
++
++static unsigned clusterized_status(struct dm_exception_store *store,
++				   status_type_t status, char *result,
++				   unsigned int maxlen)
++{
++	int sz = 0;
++	char *tmp_result;
++	struct clusterized_c *cc = store->context;
++
++	switch (status) {
++	case STATUSTYPE_INFO:
 +		break;
 +	case STATUSTYPE_TABLE:
-+		r = cluster_do_request(lc, lc->uuid, DM_CLOG_STATUS_TABLE,
-+				       NULL, 0,
-+				       result, &sz);
-+		break;
++		DMEMIT(" clusterized");
++		tmp_result = result + sz;
++		sz += cc->core_store->type->status(cc->core_store, status,
++						   result+sz, maxlen-sz);
++		tmp_result[0] = '-'; /* s/ /-/ */
++
++		tmp_result = strstr(tmp_result, " ");
++		if (tmp_result) {
++			tmp_result++;
++			tmp_result[0]++; /* Inc numeric char */
++		}
++
++		DMEMIT(" cluster_uuid:%s", cc->uuid);
 +	}
-+	return (r) ? 0 : (int)sz;
++
++	return sz;
++}
++
++static int clusterized_message(struct dm_exception_store *store,
++			       unsigned argc, char **argv)
++{
++	int r;
++	struct clusterized_c *cc = store->context;
++
++	cluster_lock(cc, DLM_LOCK_EX);
++
++	r = cc->core_store->type->message(cc->core_store, argc, argv);
++
++	cc->metadata_counter++;
++	cc->cluster_metadata_counter = cc->metadata_counter;
++	cluster_unlock(cc);
++
++	return r;
 +}
 +
 +/*
-+ * cluster_is_remote_recovering
-+ * @log
-+ * @region
++ * Here is where we define what core exception store types are
++ * valid for this module to clusterize.  The necessary qualities
++ * of the core exception store are:
++ *	1) Must be able to resume multiple times (i.e. re-read
++ *	   its metadata).  This is because other nodes are allowed
++ *	   to add/alter the metadata underneath you.  Ideally, only
++ *	   the delta's will be picked up when the metadata is
++ *	   re-read - as is the case with the "persistent" store.
++ *	*2) Must not be a "shared" exception store.  IOW, the alteration
++ *	   of one exception store cannot affect another.  Currently, this
++ *	   situation is not adequately handled (but could be handled if
++ *	   people really want it).
 + *
-+ * Returns: 1 if region recovering, 0 otherwise
++ * If the above conditions are met, then you can simply add an addtional
++ * 'dm_exception_store_type' below.  In fact, you could copy the block of
++ * code that is there and replace 'persistent' with the name of the
++ * exception store type that is being covered.
 + */
-+static int cluster_is_remote_recovering(struct dm_dirty_log *log,
-+					region_t region)
++static struct dm_exception_store_type _clusterized_persistent = {
++	.name = "clusterized-persistent",
++	.module = THIS_MODULE,
++	.ctr = clusterized_ctr,
++	.dtr = clusterized_dtr,
++	.resume = clusterized_resume,
++	.presuspend = clusterized_presuspend,
++	.postsuspend = clusterized_postsuspend,
++	.prepare_exception = clusterized_prepare_exception,
++	.commit_exception = clusterized_commit_exception,
++	.lookup_exception = clusterized_lookup_exception,
++	.fraction_full = clusterized_fraction_full,
++	.status = clusterized_status,
++	.message = clusterized_message,
++};
++
++static int __init dm_clusterized_exception_store_init(void)
 +{
 +	int r;
-+	struct log_c *lc = log->context;
-+	static unsigned long long limit;
-+	struct {
-+		int is_recovering;
-+		uint64_t in_sync_hint;
-+	} pkg;
-+	size_t rdata_size = sizeof(pkg);
 +
-+	/*
-+	 * Once the mirror has been reported to be in-sync,
-+	 * it will never again ask for recovery work.  So,
-+	 * we can safely say there is not a remote machine
-+	 * recovering if the device is in-sync.  (in_sync_hint
-+	 * must be reset at resume time.)
-+	 */
-+	if (region < lc->in_sync_hint)
-+		return 0;
-+	else if (jiffies < limit)
-+		return 1;
-+
-+	limit = jiffies + (HZ / 4);
-+	r = cluster_do_request(lc, lc->uuid, DM_CLOG_IS_REMOTE_RECOVERING,
-+			       (char *)&region, sizeof(region),
-+			       (char *)&pkg, &rdata_size);
++	r = dm_exception_store_type_register(&_clusterized_persistent);
 +	if (r)
-+		return 1;
++		DMERR("Unable to register clusterized-persistent"
++		      " exception store type: %d", r);
++	else
++		DMINFO("(built %s %s) installed", __DATE__, __TIME__);
 +
-+	lc->in_sync_hint = pkg.in_sync_hint;
-+
-+	return pkg.is_recovering;
++	return r;
 +}
 +
-+static struct dm_dirty_log_type _clustered_core_type = {
-+	.name = "clustered-core",
-+	.module = THIS_MODULE,
-+	.ctr = cluster_core_ctr,
-+	.dtr = cluster_dtr,
-+	.presuspend = cluster_presuspend,
-+	.postsuspend = cluster_postsuspend,
-+	.resume = cluster_resume,
-+	.get_region_size = cluster_get_region_size,
-+	.is_clean = cluster_is_clean,
-+	.in_sync = cluster_in_sync,
-+	.flush = cluster_flush,
-+	.mark_region = cluster_mark_region,
-+	.clear_region = cluster_clear_region,
-+	.get_resync_work = cluster_get_resync_work,
-+	.set_region_sync = cluster_set_region_sync,
-+	.get_sync_count = cluster_get_sync_count,
-+	.status = cluster_status,
-+	.is_remote_recovering = cluster_is_remote_recovering,
-+};
-+
-+static struct dm_dirty_log_type _clustered_disk_type = {
-+	.name = "clustered-disk",
-+	.module = THIS_MODULE,
-+	.ctr = cluster_disk_ctr,
-+	.dtr = cluster_dtr,
-+	.presuspend = cluster_presuspend,
-+	.postsuspend = cluster_postsuspend,
-+	.resume = cluster_resume,
-+	.get_region_size = cluster_get_region_size,
-+	.is_clean = cluster_is_clean,
-+	.in_sync = cluster_in_sync,
-+	.flush = cluster_flush,
-+	.mark_region = cluster_mark_region,
-+	.clear_region = cluster_clear_region,
-+	.get_resync_work = cluster_get_resync_work,
-+	.set_region_sync = cluster_set_region_sync,
-+	.get_sync_count = cluster_get_sync_count,
-+	.status = cluster_status,
-+	.is_remote_recovering = cluster_is_remote_recovering,
-+};
-+
-+static int __init cluster_dirty_log_init(void)
++static void __exit dm_clusterized_exception_store_exit(void)
 +{
-+	int r = 0;
-+
-+	flush_entry_pool = mempool_create(100, flush_entry_alloc,
-+					  flush_entry_free, NULL);
-+
-+	if (!flush_entry_pool) {
-+		DMWARN("Unable to create flush_entry_pool:  No memory.");
-+		return -ENOMEM;
-+	}
-+
-+	r = dm_clog_tfr_init();
-+	if (r) {
-+		DMWARN("Unable to initialize cluster log communications");
-+		mempool_destroy(flush_entry_pool);
-+		return r;
-+	}
-+
-+	r = dm_dirty_log_type_register(&_clustered_core_type);
-+	if (r) {
-+		DMWARN("Couldn't register clustered-core dirty log type");
-+		dm_clog_tfr_exit();
-+		mempool_destroy(flush_entry_pool);
-+		return r;
-+	}
-+
-+	r = dm_dirty_log_type_register(&_clustered_disk_type);
-+	if (r) {
-+		DMWARN("Couldn't register clustered-disk dirty log type");
-+		dm_dirty_log_type_unregister(&_clustered_core_type);
-+		dm_clog_tfr_exit();
-+		mempool_destroy(flush_entry_pool);
-+		return r;
-+	}
-+
-+	DMINFO("(built %s %s) installed", __DATE__, __TIME__);
-+	return 0;
-+}
-+
-+static void __exit cluster_dirty_log_exit(void)
-+{
-+	dm_dirty_log_type_unregister(&_clustered_disk_type);
-+	dm_dirty_log_type_unregister(&_clustered_core_type);
-+	dm_clog_tfr_exit();
-+	mempool_destroy(flush_entry_pool);
++	dm_exception_store_type_unregister(&_clusterized_persistent);
 +	DMINFO("(built %s %s) removed", __DATE__, __TIME__);
-+	return;
 +}
 +
-+module_init(cluster_dirty_log_init);
-+module_exit(cluster_dirty_log_exit);
++module_init(dm_clusterized_exception_store_init);
++module_exit(dm_clusterized_exception_store_exit);
 +
-+MODULE_DESCRIPTION(DM_NAME " cluster-aware dirty log");
-+MODULE_AUTHOR("Jonathan Brassow <dm-devel@redhat.com>");
++MODULE_DESCRIPTION(DM_MSG_PREFIX);
++MODULE_AUTHOR("Jonathan Brassow <jbrassow@redhat.com>");
 +MODULE_LICENSE("GPL");
-Index: linux-2.6/Documentation/dm-log.txt
+Index: linux-2.6/Documentation/dm-exception-store.txt
 ===================================================================
 --- /dev/null
-+++ linux-2.6/Documentation/dm-log.txt
-@@ -0,0 +1,58 @@
-+Device-Mapper Logging
-+=====================
-+The device-mapper logging code is used by some of the device-mapper
-+RAID targets to track regions of the disk that are not consistent.
-+A region (or portion of the address space) of the disk may be
-+inconsistent because a RAID stripe is currently being operated on or
-+a machine died while the region was being altered.  In the case of
-+mirrors, a region would be considered dirty/inconsistent while you
-+are writing to it because the writes need to be replicated for all
-+the legs of the mirror and may not reach the legs at the same time.
-+Once all writes are complete, the region is considered clean again.
++++ linux-2.6/Documentation/dm-exception-store.txt
+@@ -0,0 +1,45 @@
++Device-Mapper Exception Store
++=============================
++The device-mapper exception store code is used by device-mapper
++snapshots (although other targets could find it useful as well).
++The exception stores provide a way to map the old location of a
++chunk (a discrete portion of the storage space) to a new location.
++This remapping information is called an "exception".  Snapshots
++use this to track their Copy-On-Write data.
 +
-+There is a generic logging interface that the device-mapper RAID
-+implementations use to perform logging operations (see
-+dm_dirty_log_type in include/linux/dm-dirty-log.h).  Various different
-+logging implementations are available and provide different
-+capabilities.  The list includes:
++There is a generic exception store interface.  Various different
++exception store implementations are available and have vastly
++different characteristics.  The list includes:
 +
-+Type	       Files
-+====	       =====
-+disk	       drivers/md/dm-log.c
-+core	       drivers/md/dm-log.c
-+cluster-disk   drivers/md/dm-log-cluster* include/linux/dm-log-cluster.h
-+cluster-core   drivers/md/dm-log-cluster* include/linux/dm-log-cluster.h
-+*Others have also suggested 'multi-log', but this is not available yet
++Type                      File(s)
++====                      =======
++persistent                drivers/md/dm-snap-persistent.c
++P (depricated)		  drivers/md/dm-snap-persistent.c
++transient		  drivers/md/dm-snap-transient.c
++N (depricated)		  drivers/md/dm-snap-transient.c
++clusterized-persistent	  drivers/md/dm-ex-store-clusterized.c
 +
-+The "disk" log type
-+-------------------
-+Commits the log state to disk.  This way, the logging state survives
-+reboots/crashes.
++The "persistent" type
++---------------------
++No fancy algorithms or space efficiency considerations.  Just
++a simple way to store exceptions to disk.  The exception store
++data can survive reboots and crashes.  The "P" type is simply
++the old name for this exception store type.
 +
-+The "core" log type
-+-------------------
-+Keeps the log state in memory.  The log state will not survive a reboot
-+or crash, but there may be a small boost in performance.  Additionally,
-+this is the logging method used if logging disk in the "disk" method dies.
++The "transient" type
++--------------------
++No fancy algorithms or space efficiency considerations.  Just
++a simple way to store exceptions in memory.  The exception store
++data /will not/ survive reboots and crashes.  The "N" type is simply
++the old name for this exception store type.
 +
-+The "cluster-*" log types
-+-------------------------
-+These types operate in the same way as their single machine counterparts,
-+but they are cluster-aware.  This is done by forwarding most logging
-+requests to userspace, where a daemon processes the request in an ordered
-+fashion with the rest of the nodes in the cluster.  This is necessary to
-+prevent log state corruption.  (Imagine if two machines are writing to the
-+same region of a mirror.  They would both mark the region dirty, but you
-+need a cluster-aware entity that can handle properly marking the region
-+clean when they are done.  Otherwise, you might clear the region when the
-+first machine is done, not the second.)
++The "clusterized-persistent" type
++---------------------------------
++This implementation merely provides DLM wrapping around other available
++types.  This is why the term 'clusterized-' is used instead of 'cluster-'
++or 'clustered-'.  This implementation has the ability to wrap most
++present and future exception store implementations, although "persistent"
++is currently the only one supported.  This wrapping makes the exception
++stores cluster-aware, which in turn makes device-mapper snapshots cluster
++aware.
 +
-+The structures used for communication between kernel and userspace are
-+located in include/linux/dm-log-cluster.h.  'Connector' is used as the
-+interface for kernel/userspace interaction.  In userspace, the daemons
-+use openAIS/corosync in order to communicate with guaranteed ordering
-+and delivery.
-+
-+Providing a cluster-aware logging type gives device-mapper RAID1 (and
-+potentially other RAIDs) the ability to operate in a cluster-aware
-+fashion.
