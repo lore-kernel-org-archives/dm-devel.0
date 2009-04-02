@@ -1,19 +1,23 @@
-From: Andy <genanr@emsphone.com>
-Subject: Re: Device Mapper MultiPath
-Date: Thu, 2 Apr 2009 17:01:53 -0500
-Message-ID: <20090402220153.GA16754@thumper2>
-References: <af7b4eb20903311707o925902dn14a6dc8030498001@mail.gmail.com>
-	<20090401002559.GA3213@mars.virtualiron.com>
-	<20090401200841.GA9078@thumper2>
-	<20090401203108.GA17991@mars.virtualiron.com>
-	<20090402190956.GA12661@thumper2>
-	<20090402202556.GU15911@ether.msp.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Thu, 2 Apr 2009 19:40:18 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
+References: <20090324140524.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903241010490.29968@hs20-bc2-1.build.redhat.com>
+	<20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	<20090324150517.GX27476@kernel.dk>
+	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	<20090325152751.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+	<20090326084205.GG27476@kernel.dk>
+	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+	<20090331104933.GJ5178@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090402202556.GU15911@ether.msp.redhat.com>
+In-Reply-To: <20090331104933.GJ5178@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,52 +27,156 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>
 List-Id: dm-devel.ids
 
-On Thu, Apr 02, 2009 at 03:25:57PM -0500, Benjamin Marzinski wrote:
-> On Thu, Apr 02, 2009 at 02:09:56PM -0500, Andy wrote:
-> > On Wed, Apr 01, 2009 at 04:31:08PM -0400, Konrad Rzeszutek wrote:
-> > > On Wed, Apr 01, 2009 at 03:08:41PM -0500, Andy wrote:
-> > > > On Tue, Mar 31, 2009 at 08:25:59PM -0400, Konrad Rzeszutek wrote:
-> > > > > On Tue, Mar 31, 2009 at 09:07:08PM -0300, Rodrigo Nascimento wrote:
-> > > > > > Hi All,
-> > > > > > 
-> > > > > > I'm a student of computer sciences and I'd like to collaborate with the
-> > > > > > development of the DM-MP.
-> > > > > > I know that maybe you received this kind of message during all time, but I
-> > > > > 
-> > > > > I think you are the first :-)
-> > > > > 
-> > > > > > really want to help, with anything.
-> > > > > 
-> > > > > Shakedown help would be nice. As in, trying to yank stuff underneath it, 
-> > > > > add new block disks, remove them, add them, remove them, edit the
-> > > > > multipath.conf file and issue 'reconfigure', resize the maps, 
-> > > > > then add 1000+LUNs, and while they are being added, start removing the
-> > > > > LUNs, then for extra fun call 'dmsetup remove_all' while in another
-> > > > > thread you run 'multipath'. Ooh, and see if there are any memory leaks
-> > > > > while this all is being done.
-> > > > > 
-> > > > 
-> > > > What I would really like to see is online resizing of non-partitioned dm
-> > > > block devices.  I would love to be able to resize an underlying dm-mp block
-> > > > device, and the just grow the filesystem without using a extra, un-needed,
-> > > 
-> > > Benjamin posted a CVS patch of this, that I've forward-ported to work with
-> > > the latest git. It is attached.
-> > > 
-> > > 
+
+
+On Tue, 31 Mar 2009, Jens Axboe wrote:
+
+> On Mon, Mar 30 2009, Mikulas Patocka wrote:
+> > On Thu, 26 Mar 2009, Jens Axboe wrote:
 > > 
-> > Thanks, I must have missed that post.  Unfortantly, I am having problems with
-> > multipathd in the latest git.  It fails all my paths and hangs.  It I go
-> > into the interactive mode, it even hangs just asking for help.  The
-> > multipath program itself shows the paths without a problem.
+> > > On Wed, Mar 25 2009, Mikulas Patocka wrote:
+> > >
+> > > > > > So I think there should be flag (this device does/doesn't support data 
+> > > > > > consistency) that the journaled filesystems can use to mark the disk dirty 
+> > > > > > for fsck. And if you implement this flag, you can accept barriers always 
+> > > > > > to all kind of devices regardless of whether they support consistency. You 
+> > > > > > can then get rid of that -EOPNOTSUPP and simplify filesystem code because 
+> > > > > > they'd no longer need two commit paths and a clumsy way to restart 
+> > > > > > -EOPNOTSUPPed requests.
+> > > > > 
+> > > > > And my point is that this case isn't interesting, because most setups
+> > > > > don't guarantee proper ordering.
+> > > > 
+> > > > If the ordering isn't guaranteed, the filesystem should know about it, and 
+> > > > mark the partition for fsck. That's why I'm suggesting to use a flag for 
+> > > > that. That flag could be also propagated up through md and dm.
+> > > 
+> > > We can do that, not a problem. The problem is that ordering is almost
+> > > never preserved, SCSI does not use ordered tags because it hasn't
+> > > verified that its error path doesn't reorder by mistake. So right now
+> > > you can basically use 'false' as that flag.
+> > 
+> > There are three ordering guarantees:
+> > 
+> > 1. - nothing (for devices with write cache without cache control)
+> > 
+> > 2. - non-cached ordering: the sequence [submit req a, end req a, submit 
+> > req b, end req b] will make the ordering. It is guaranteed that when the 
+> > request ends successfully, it is on medium. This is what all the 
+> > filesystems, md and dm assume about disks. This consistency model was used 
+> > long way before barriers came in.
+> > 
+> > 3. - barrier ordering: ordering is done with barriers, [submit req a, end 
+> > req a, submit req b, end req b] won't guarantee ordering of a and b, a 
+> > barrier must be inserted.
 > 
-> Try the patch I just posted. [Fix a multipathd signal deadlock.] and see
-> if that fixes it.
+> Plus the barrier also allows [submit req a, submit req b] and still
+> count on ordering if either one of them is a barrier. It doesn't have to
+> be sync, like the (2).
 > 
+> > --- so you can make a two bitflags that differentiate these models. In 
+> > current kernel, model (1) and (2) cannot be differentiated in any way. (3) 
+> > can be differentiated only after a trial write and it won't guarantee that 
+> > (3) will be valid further.
+> 
+> But what's the point? Basically no devices are naturally ordered by
+> default. Either you need cache flushes, or you need to tell the device
+> not to reorder on a per-command basis.
+> 
+> > > > The reasoning: "write barriers aren't supported => the device doesn't 
+> > > > guarantee consistency" isn't valid.
+> > > 
+> > > It's valid in the sense that it's the only RELIABLE primitive we have.
+> > > Are you really suggestion that we just assume any device is fully
+> > > ordered, unless proven otherwise?
+> > 
+> > If someone implements "write barrier's aren't supported => run fsck", then 
+> > a lot of systems start fscking needlessly (for example those using md or 
+> > dm without write cache) and become inoperational for long time because of 
+> > that. So no one can really implement this logic and filesystems don't run 
+> > fsck at all when operated over a device that doesn't support ordering. So 
+> > you get data corruption if you get crash on those devices.
+> 
+> Nobody is suggesting that, it's just not a feasible approach. But you
 
-The patch did not fix the problem.
+I am saying that the filesystem should run fsck if journaled filesystem is 
+mounted on an unsafe device and crash happens.
 
-Andy
+> have to warn if you don't know whether it provides the ordering
+> guarantee you expect to provide consistency and integrity.
+
+The warning of missing barriers (or other actions) should be printed only 
+if write cache is enabled. But there's no way how a filesystem on the top 
+of several dm or md layers can find out if the disk is running with hdparm 
+-w 0 or hdparm -w 1.
+
+> > The barrier can be cancelled with -EOPNOTSUPP at any time. Andi Kleen 
+> > submitted a patch that implements failing barriers for device mapper and 
+> > he says that md-raid1 does the same thing.
+> 
+> You are right, if a device is reconfigured beneath you it may very well
+> begin to return -EOPNOTSUPP much later. I didn't take that into account,
+> I was considering only "plain" devices.
+> 
+> > Filesystems handle these randomly failed barriers but the downside is that 
+> > they must not submit any request concurrently with the barrier. Also, that 
+> > -EOPNOTSUPP restarting code is really crap, the request cannot be 
+> > restarted from bi_end_io, so bi_end_io needs to handle to another thread 
+> > for retry without barrier.
+> 
+> It can, but it requires you to operate at the request level. So for file
+> systems that is problematic, it wont work of course. It would not be
+> THAT hard to provide a helper to reissue the request. Not that pretty,
+> but...
+
+And it makes barriers useless for ordering.
+
+The filesystem can't do [submit req a], [submit barrier req b], [submit 
+req c] and assume that the requests will be ordered. If [b] fails with 
+-EOPNOTSUPP, [a] and [c] could be already reordered and data corruption 
+has already happened. Even if you catch [b]'s error and resubmit it as 
+non-barrier request, it's too late.
+
+So, as a result of this complication, all the existing filesystems send 
+just one barrier request and do not try to overlay it with any other write 
+requests.
+
+So I'm wondering why Linux developers designed a barrier interface with 
+complex specification, complex implementation and the interface is useless 
+to provide any request ordering and it's no better than q->issue_flush_fn 
+method or whatever was there beffore. Obviously, the whole barrier thing 
+was designed by a person who never used it in a filesystem.
+ 
+> > See this patch: http://lkml.org/lkml/2008/12/4/433 (and associated thread)
+> > The patch is silly but it just shows what is really hapenning and what the 
+> > filesystem must be prepared to deal with.
+> 
+> It's not that silly, we should add special barrier failing to the
+> CONFIG_FAIL stuff. You'd definitely want to exercise that in the file
+> system.
+> 
+> > > Things would also be much easier, if writes never failed.
+> > >
+> > > -- 
+> > > Jens Axboe
+> > 
+> > I definitelly agree that it shouldn't fail. So remove that -EOPNOTSUPP 
+> > error code at all, make barriers always pass to all kinds of devices and 
+> > inform the caller via queue flags that the device doesn't support 
+> > ordering.
+> 
+> Not a queue flag. Make it succeed to get rid of the whole retry
+> business, but flag the bio with the information anyway.
+
+That's a possibility too.
+
+Mikulas
+
+> -- 
+> Jens Axboe
+> 
