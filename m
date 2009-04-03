@@ -1,15 +1,12 @@
-From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
-Subject: Re: [PATCH 0 of 33] Generalized device-mapper exception
-	store API
-Date: Fri, 3 Apr 2009 11:54:09 +0900
-Message-ID: <20090403115414I.fujita.tomonori@lab.ntt.co.jp>
-References: <1238017479.20668.6.camel@hydrogen.msp.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] Clean up multipath linking
+Date: Thu, 2 Apr 2009 23:19:36 -0500
+Message-ID: <20090403041935.GV15911@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1238017479.20668.6.camel@hydrogen.msp.redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,27 +16,90 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, 25 Mar 2009 16:44:36 -0500
-Jonathan Brassow <jbrassow@redhat.com> wrote:
+This is a patch to fix up the linking. It does two things.  First, it makes
+libmultipath.so install to /lib/ just like a normal shared library, so you
+don't have to use -rpath to link to it.  Second, and more importantly,
+it moves the libaio linking into libcheckdirectio.so, where it belongs.  Since
+libcheckdirectio.so is a dynamic shared object, multipath and multipathd don't
+know what functions they need to link in from libaio. This fixes the directio
+lockup for me.
 
-> I've updated the patches for 2.6.29.  I've pulled in 3 patches that
-> weren't applying cleanly from "group 1", added 1 more patch to "group
-> 2", and pulled the shared exception store patch (I'll send that
-> separately).
-> 
-> I have adjusted the bundles appropriately:
-> http://patchwork.kernel.org/bundle/jbrassow/Exception%20Store%20API%
-> 20group2/
-> 
-> The bundle for group1 had been removed.
-> 
-> Please be aware if you are working off of agk's series file, the first
-> three patches in this group supersede what is there.
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/Makefile          |    7 ++++---
+ libmultipath/checkers/Makefile |    3 +++
+ multipath/Makefile             |    5 ++---
+ multipathd/Makefile            |    4 ++--
+ 4 files changed, 11 insertions(+), 8 deletions(-)
 
-Thanks a lot!
-
-Is there a git tree including all the patches? I tried to apply
-patches but I failed somehow. A git tree makes life much easier.
+Index: multipath-tools-090402/libmultipath/Makefile
+===================================================================
+--- multipath-tools-090402.orig/libmultipath/Makefile
++++ multipath-tools-090402/libmultipath/Makefile
+@@ -23,14 +23,15 @@ endif
+ all: $(LIBS)
+ 
+ $(LIBS): $(OBJS)
+-	$(CC) $(SHARED_FLAGS) $(CFLAGS) -o $@ $(OBJS)
++	$(CC) $(SHARED_FLAGS) -Wl,-soname,$@ $(CFLAGS) -o $@ $(OBJS)
+ 
+ install:
++	$(INSTALL_PROGRAM) -d $(DESTDIR)$(prefix)/lib
++	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(prefix)/lib/$(LIBS)
+ 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
+-	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)/$(LIBS)
+ 
+ uninstall:
+-	rm -f $(DESTDIR)$(libdir)/$(LIBS)
++	rm -f $(DESTDIR)$(prefix)/lib/$(LIBS)
+ 
+ clean:
+ 	rm -f core *.a *.o *.gz *.so
+Index: multipath-tools-090402/multipath/Makefile
+===================================================================
+--- multipath-tools-090402.orig/multipath/Makefile
++++ multipath-tools-090402/multipath/Makefile
+@@ -6,9 +6,8 @@ include ../Makefile.inc
+ 
+ OBJS = main.o
+ 
+-CFLAGS += -I$(multipathdir) -Wl,-rpath,$(libdir)
+-LDFLAGS += -lpthread -ldevmapper -laio -ldl \
+-	   -lmultipath -L$(multipathdir)
++CFLAGS += -I$(multipathdir)
++LDFLAGS += -lpthread -ldevmapper -ldl -lmultipath -L$(multipathdir)
+ 
+ EXEC = multipath
+ 
+Index: multipath-tools-090402/multipathd/Makefile
+===================================================================
+--- multipath-tools-090402.orig/multipathd/Makefile
++++ multipath-tools-090402/multipathd/Makefile
+@@ -5,8 +5,8 @@ include ../Makefile.inc
+ #
+ # basic flags setting
+ #
+-CFLAGS += -I$(multipathdir) -Wl,-rpath,$(libdir)
+-LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -laio -ldl \
++CFLAGS += -I$(multipathdir)
++LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -ldl \
+ 	   -lmultipath -L$(multipathdir)
+ 
+ #
+Index: multipath-tools-090402/libmultipath/checkers/Makefile
+===================================================================
+--- multipath-tools-090402.orig/libmultipath/checkers/Makefile
++++ multipath-tools-090402/libmultipath/checkers/Makefile
+@@ -17,6 +17,9 @@ CFLAGS += -I..
+ 
+ all: $(LIBS)
+ 
++libcheckdirectio.so: libsg.o directio.o
++	$(CC) $(SHARED_FLAGS) -o $@ $^ -laio
++
+ libcheck%.so: libsg.o %.o
+ 	$(CC) $(SHARED_FLAGS) -o $@ $^
+ 
