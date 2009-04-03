@@ -1,7 +1,7 @@
 From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] Clean up multipath linking
-Date: Thu, 2 Apr 2009 23:19:36 -0500
-Message-ID: <20090403041935.GV15911@ether.msp.redhat.com>
+Subject: [PATCH] Miscellaneous multipath bugfixes
+Date: Thu, 2 Apr 2009 23:44:19 -0500
+Message-ID: <20090403044419.GW15911@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -19,87 +19,139 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a patch to fix up the linking. It does two things.  First, it makes
-libmultipath.so install to /lib/ just like a normal shared library, so you
-don't have to use -rpath to link to it.  Second, and more importantly,
-it moves the libaio linking into libcheckdirectio.so, where it belongs.  Since
-libcheckdirectio.so is a dynamic shared object, multipath and multipathd don't
-know what functions they need to link in from libaio. This fixes the directio
-lockup for me.
+This is mostly a cleanup of some bugs that recently got introduced. In
+ACT_RESIZE we were trying to create a read-only device before we tried
+to create a read/write one (I also added the ability to fail back to
+read-only in ACT_RELOAD).  There were some printouts that I assume were
+for debugging, and some duplicate code.  And I switched it so that
+dm_simplecmd_flush did flushing, and dm_simplecmd_noflush didn't.
 
 Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
 ---
- libmultipath/Makefile          |    7 ++++---
- libmultipath/checkers/Makefile |    3 +++
- multipath/Makefile             |    5 ++---
- multipathd/Makefile            |    4 ++--
- 4 files changed, 11 insertions(+), 8 deletions(-)
+ libmultipath/configure.c  |   13 ++++++++-----
+ libmultipath/devmapper.c  |   11 ++++-------
+ multipathd/cli_handlers.c |    9 ++-------
+ 3 files changed, 14 insertions(+), 19 deletions(-)
 
-Index: multipath-tools-090402/libmultipath/Makefile
+Index: multipath-tools-090402/libmultipath/configure.c
 ===================================================================
---- multipath-tools-090402.orig/libmultipath/Makefile
-+++ multipath-tools-090402/libmultipath/Makefile
-@@ -23,14 +23,15 @@ endif
- all: $(LIBS)
+--- multipath-tools-090402.orig/libmultipath/configure.c
++++ multipath-tools-090402/libmultipath/configure.c
+@@ -352,16 +352,19 @@ domap (struct multipath * mpp)
+ 		break;
  
- $(LIBS): $(OBJS)
--	$(CC) $(SHARED_FLAGS) $(CFLAGS) -o $@ $(OBJS)
-+	$(CC) $(SHARED_FLAGS) -Wl,-soname,$@ $(CFLAGS) -o $@ $(OBJS)
+ 	case ACT_RELOAD:
+-		r = (dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL)
+-		     && dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias));
++		r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
++		if (!r)
++			r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
++		if (r)
++			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias);
+ 		break;
  
- install:
-+	$(INSTALL_PROGRAM) -d $(DESTDIR)$(prefix)/lib
-+	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(prefix)/lib/$(LIBS)
- 	$(INSTALL_PROGRAM) -m 755 -d $(DESTDIR)$(libdir)
--	$(INSTALL_PROGRAM) -m 755 $(LIBS) $(DESTDIR)$(libdir)/$(LIBS)
+  	case ACT_RESIZE:
+-  		r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
++  		r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
+   		if (!r)
+-  			r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
++  			r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
+   		if (r)
+-  			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias);
++  			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias);
+ 		break;
  
- uninstall:
--	rm -f $(DESTDIR)$(libdir)/$(LIBS)
-+	rm -f $(DESTDIR)$(prefix)/lib/$(LIBS)
- 
- clean:
- 	rm -f core *.a *.o *.gz *.so
-Index: multipath-tools-090402/multipath/Makefile
+ 	case ACT_RENAME:
+Index: multipath-tools-090402/libmultipath/devmapper.c
 ===================================================================
---- multipath-tools-090402.orig/multipath/Makefile
-+++ multipath-tools-090402/multipath/Makefile
-@@ -6,9 +6,8 @@ include ../Makefile.inc
+--- multipath-tools-090402.orig/libmultipath/devmapper.c
++++ multipath-tools-090402/libmultipath/devmapper.c
+@@ -176,12 +176,12 @@ dm_simplecmd (int task, const char *name
  
- OBJS = main.o
+ extern int
+ dm_simplecmd_flush (int task, const char *name) {
+-	return dm_simplecmd(task, name, 1);
++	return dm_simplecmd(task, name, 0);
+ }
  
--CFLAGS += -I$(multipathdir) -Wl,-rpath,$(libdir)
--LDFLAGS += -lpthread -ldevmapper -laio -ldl \
--	   -lmultipath -L$(multipathdir)
-+CFLAGS += -I$(multipathdir)
-+LDFLAGS += -lpthread -ldevmapper -ldl -lmultipath -L$(multipathdir)
+ extern int
+ dm_simplecmd_noflush (int task, const char *name) {
+-	return dm_simplecmd(task, name, 0);
++	return dm_simplecmd(task, name, 1);
+ }
  
- EXEC = multipath
+ extern int
+@@ -204,9 +204,6 @@ dm_addmap (int task, const char *name, c
+ 	if (ro)
+ 		dm_task_set_ro(dmt);
  
-Index: multipath-tools-090402/multipathd/Makefile
+-	if (ro)
+-		dm_task_set_ro(dmt);
+-
+ 	if (uuid){
+ 		prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(uuid) + 1);
+ 		if (!prefixed_uuid) {
+@@ -550,7 +547,7 @@ dm_flush_map (const char * mapname)
+ 		return 1;
+ 	}
+ 
+-	r = dm_simplecmd_noflush(DM_DEVICE_REMOVE, mapname);
++	r = dm_simplecmd_flush(DM_DEVICE_REMOVE, mapname);
+ 
+ 	if (r) {
+ 		condlog(4, "multipath map %s removed", mapname);
+@@ -949,7 +946,7 @@ dm_remove_partmaps (const char * mapname
+ 				 */
+ 				condlog(4, "partition map %s removed",
+ 					names->name);
+-				dm_simplecmd_noflush(DM_DEVICE_REMOVE, names->name);
++				dm_simplecmd_flush(DM_DEVICE_REMOVE, names->name);
+ 		   }
+ 
+ 		next = names->next;
+Index: multipath-tools-090402/multipathd/cli_handlers.c
 ===================================================================
---- multipath-tools-090402.orig/multipathd/Makefile
-+++ multipath-tools-090402/multipathd/Makefile
-@@ -5,8 +5,8 @@ include ../Makefile.inc
- #
- # basic flags setting
- #
--CFLAGS += -I$(multipathdir) -Wl,-rpath,$(libdir)
--LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -laio -ldl \
-+CFLAGS += -I$(multipathdir)
-+LDFLAGS += -lpthread -ldevmapper -lreadline -lncurses -ldl \
- 	   -lmultipath -L$(multipathdir)
+--- multipath-tools-090402.orig/multipathd/cli_handlers.c
++++ multipath-tools-090402/multipathd/cli_handlers.c
+@@ -459,7 +459,6 @@ cli_resize(void *v, char **reply, int *l
  
- #
-Index: multipath-tools-090402/libmultipath/checkers/Makefile
-===================================================================
---- multipath-tools-090402.orig/libmultipath/checkers/Makefile
-+++ multipath-tools-090402/libmultipath/checkers/Makefile
-@@ -17,6 +17,9 @@ CFLAGS += -I..
+ 	pgp = VECTOR_SLOT(mpp->pg, 0);
+ 	pp = VECTOR_SLOT(pgp->paths, 0);
+-	condlog(0,"%s: reading sysfs.", mapname);
+ 	if (sysfs_get_size(pp->sysdev, &size)) {
+ 		condlog(0, "%s: couldn't get size for sysfs. cannot resize",
+ 			mapname);
+@@ -473,15 +472,11 @@ cli_resize(void *v, char **reply, int *l
+ 	condlog(3, "%s old size is %llu, new size is %llu", mapname, mpp->size,
+ 		size);
  
- all: $(LIBS)
+-	condlog(0, "%s: resize_map.", mapname);
+ 	if (resize_map(mpp, size, vecs) != 0)
+ 		return 1;
  
-+libcheckdirectio.so: libsg.o directio.o
-+	$(CC) $(SHARED_FLAGS) -o $@ $^ -laio
-+
- libcheck%.so: libsg.o %.o
- 	$(CC) $(SHARED_FLAGS) -o $@ $^
+-	condlog(0,"%s: dm_lib_release.", mapname);
+ 	dm_lib_release();
+-	condlog(0,"%s: setup multipath.", mapname);
+ 	setup_multipath(vecs, mpp);
+-	condlog(0,"%s: sync map state.", mapname);
+ 	sync_map_state(mpp);
+ 
+ 	return 0;
+@@ -513,7 +508,7 @@ cli_suspend(void * v, char ** reply, int
+ {
+ 	struct vectors * vecs = (struct vectors *)data;
+ 	char * param = get_keyparam(v, MAP);
+-	int r = dm_simplecmd_flush(DM_DEVICE_SUSPEND, param);
++	int r = dm_simplecmd_noflush(DM_DEVICE_SUSPEND, param);
+ 
+ 	condlog(2, "%s: suspend (operator)", param);
+ 
+@@ -534,7 +529,7 @@ cli_resume(void * v, char ** reply, int 
+ {
+ 	struct vectors * vecs = (struct vectors *)data;
+ 	char * param = get_keyparam(v, MAP);
+-	int r = dm_simplecmd_flush(DM_DEVICE_RESUME, param);
++	int r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param);
+ 
+ 	condlog(2, "%s: resume (operator)", param);
  
