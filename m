@@ -1,12 +1,23 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: [PATCH] Miscellaneous multipath bugfixes
-Date: Thu, 2 Apr 2009 23:44:19 -0500
-Message-ID: <20090403044419.GW15911@ether.msp.redhat.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Fri, 3 Apr 2009 10:11:31 +0200
+Message-ID: <20090403081131.GP5178@kernel.dk>
+References: <20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	<20090324150517.GX27476@kernel.dk>
+	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	<20090325152751.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+	<20090326084205.GG27476@kernel.dk>
+	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+	<20090331104933.GJ5178@kernel.dk>
+	<Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,142 +27,158 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>
 List-Id: dm-devel.ids
 
-This is mostly a cleanup of some bugs that recently got introduced. In
-ACT_RESIZE we were trying to create a read-only device before we tried
-to create a read/write one (I also added the ability to fail back to
-read-only in ACT_RELOAD).  There were some printouts that I assume were
-for debugging, and some duplicate code.  And I switched it so that
-dm_simplecmd_flush did flushing, and dm_simplecmd_noflush didn't.
+On Thu, Apr 02 2009, Mikulas Patocka wrote:
+> 
+> 
+> On Tue, 31 Mar 2009, Jens Axboe wrote:
+> 
+> > On Mon, Mar 30 2009, Mikulas Patocka wrote:
+> > > On Thu, 26 Mar 2009, Jens Axboe wrote:
+> > > 
+> > > > On Wed, Mar 25 2009, Mikulas Patocka wrote:
+> > > >
+> > > > > > > So I think there should be flag (this device does/doesn't support data 
+> > > > > > > consistency) that the journaled filesystems can use to mark the disk dirty 
+> > > > > > > for fsck. And if you implement this flag, you can accept barriers always 
+> > > > > > > to all kind of devices regardless of whether they support consistency. You 
+> > > > > > > can then get rid of that -EOPNOTSUPP and simplify filesystem code because 
+> > > > > > > they'd no longer need two commit paths and a clumsy way to restart 
+> > > > > > > -EOPNOTSUPPed requests.
+> > > > > > 
+> > > > > > And my point is that this case isn't interesting, because most setups
+> > > > > > don't guarantee proper ordering.
+> > > > > 
+> > > > > If the ordering isn't guaranteed, the filesystem should know about it, and 
+> > > > > mark the partition for fsck. That's why I'm suggesting to use a flag for 
+> > > > > that. That flag could be also propagated up through md and dm.
+> > > > 
+> > > > We can do that, not a problem. The problem is that ordering is almost
+> > > > never preserved, SCSI does not use ordered tags because it hasn't
+> > > > verified that its error path doesn't reorder by mistake. So right now
+> > > > you can basically use 'false' as that flag.
+> > > 
+> > > There are three ordering guarantees:
+> > > 
+> > > 1. - nothing (for devices with write cache without cache control)
+> > > 
+> > > 2. - non-cached ordering: the sequence [submit req a, end req a, submit 
+> > > req b, end req b] will make the ordering. It is guaranteed that when the 
+> > > request ends successfully, it is on medium. This is what all the 
+> > > filesystems, md and dm assume about disks. This consistency model was used 
+> > > long way before barriers came in.
+> > > 
+> > > 3. - barrier ordering: ordering is done with barriers, [submit req a, end 
+> > > req a, submit req b, end req b] won't guarantee ordering of a and b, a 
+> > > barrier must be inserted.
+> > 
+> > Plus the barrier also allows [submit req a, submit req b] and still
+> > count on ordering if either one of them is a barrier. It doesn't have to
+> > be sync, like the (2).
+> > 
+> > > --- so you can make a two bitflags that differentiate these models. In 
+> > > current kernel, model (1) and (2) cannot be differentiated in any way. (3) 
+> > > can be differentiated only after a trial write and it won't guarantee that 
+> > > (3) will be valid further.
+> > 
+> > But what's the point? Basically no devices are naturally ordered by
+> > default. Either you need cache flushes, or you need to tell the device
+> > not to reorder on a per-command basis.
+> > 
+> > > > > The reasoning: "write barriers aren't supported => the device doesn't 
+> > > > > guarantee consistency" isn't valid.
+> > > > 
+> > > > It's valid in the sense that it's the only RELIABLE primitive we have.
+> > > > Are you really suggestion that we just assume any device is fully
+> > > > ordered, unless proven otherwise?
+> > > 
+> > > If someone implements "write barrier's aren't supported => run fsck", then 
+> > > a lot of systems start fscking needlessly (for example those using md or 
+> > > dm without write cache) and become inoperational for long time because of 
+> > > that. So no one can really implement this logic and filesystems don't run 
+> > > fsck at all when operated over a device that doesn't support ordering. So 
+> > > you get data corruption if you get crash on those devices.
+> > 
+> > Nobody is suggesting that, it's just not a feasible approach. But you
+> 
+> I am saying that the filesystem should run fsck if journaled filesystem is 
+> mounted on an unsafe device and crash happens.
+> 
+> > have to warn if you don't know whether it provides the ordering
+> > guarantee you expect to provide consistency and integrity.
+> 
+> The warning of missing barriers (or other actions) should be printed only 
+> if write cache is enabled. But there's no way how a filesystem on the top 
+> of several dm or md layers can find out if the disk is running with hdparm 
+> -w 0 or hdparm -w 1.
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
----
- libmultipath/configure.c  |   13 ++++++++-----
- libmultipath/devmapper.c  |   11 ++++-------
- multipathd/cli_handlers.c |    9 ++-------
- 3 files changed, 14 insertions(+), 19 deletions(-)
+Right, you can't possibly now that. Hence we have to print the warning.
 
-Index: multipath-tools-090402/libmultipath/configure.c
-===================================================================
---- multipath-tools-090402.orig/libmultipath/configure.c
-+++ multipath-tools-090402/libmultipath/configure.c
-@@ -352,16 +352,19 @@ domap (struct multipath * mpp)
- 		break;
- 
- 	case ACT_RELOAD:
--		r = (dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL)
--		     && dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias));
-+		r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
-+		if (!r)
-+			r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
-+		if (r)
-+			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias);
- 		break;
- 
-  	case ACT_RESIZE:
--  		r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
-+  		r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
-   		if (!r)
--  			r = dm_addmap_reload(mpp->alias, mpp->params, mpp->size, NULL);
-+  			r = dm_addmap_reload_ro(mpp->alias, mpp->params, mpp->size, NULL);
-   		if (r)
--  			r = dm_simplecmd_noflush(DM_DEVICE_RESUME, mpp->alias);
-+  			r = dm_simplecmd_flush(DM_DEVICE_RESUME, mpp->alias);
- 		break;
- 
- 	case ACT_RENAME:
-Index: multipath-tools-090402/libmultipath/devmapper.c
-===================================================================
---- multipath-tools-090402.orig/libmultipath/devmapper.c
-+++ multipath-tools-090402/libmultipath/devmapper.c
-@@ -176,12 +176,12 @@ dm_simplecmd (int task, const char *name
- 
- extern int
- dm_simplecmd_flush (int task, const char *name) {
--	return dm_simplecmd(task, name, 1);
-+	return dm_simplecmd(task, name, 0);
- }
- 
- extern int
- dm_simplecmd_noflush (int task, const char *name) {
--	return dm_simplecmd(task, name, 0);
-+	return dm_simplecmd(task, name, 1);
- }
- 
- extern int
-@@ -204,9 +204,6 @@ dm_addmap (int task, const char *name, c
- 	if (ro)
- 		dm_task_set_ro(dmt);
- 
--	if (ro)
--		dm_task_set_ro(dmt);
--
- 	if (uuid){
- 		prefixed_uuid = MALLOC(UUID_PREFIX_LEN + strlen(uuid) + 1);
- 		if (!prefixed_uuid) {
-@@ -550,7 +547,7 @@ dm_flush_map (const char * mapname)
- 		return 1;
- 	}
- 
--	r = dm_simplecmd_noflush(DM_DEVICE_REMOVE, mapname);
-+	r = dm_simplecmd_flush(DM_DEVICE_REMOVE, mapname);
- 
- 	if (r) {
- 		condlog(4, "multipath map %s removed", mapname);
-@@ -949,7 +946,7 @@ dm_remove_partmaps (const char * mapname
- 				 */
- 				condlog(4, "partition map %s removed",
- 					names->name);
--				dm_simplecmd_noflush(DM_DEVICE_REMOVE, names->name);
-+				dm_simplecmd_flush(DM_DEVICE_REMOVE, names->name);
- 		   }
- 
- 		next = names->next;
-Index: multipath-tools-090402/multipathd/cli_handlers.c
-===================================================================
---- multipath-tools-090402.orig/multipathd/cli_handlers.c
-+++ multipath-tools-090402/multipathd/cli_handlers.c
-@@ -459,7 +459,6 @@ cli_resize(void *v, char **reply, int *l
- 
- 	pgp = VECTOR_SLOT(mpp->pg, 0);
- 	pp = VECTOR_SLOT(pgp->paths, 0);
--	condlog(0,"%s: reading sysfs.", mapname);
- 	if (sysfs_get_size(pp->sysdev, &size)) {
- 		condlog(0, "%s: couldn't get size for sysfs. cannot resize",
- 			mapname);
-@@ -473,15 +472,11 @@ cli_resize(void *v, char **reply, int *l
- 	condlog(3, "%s old size is %llu, new size is %llu", mapname, mpp->size,
- 		size);
- 
--	condlog(0, "%s: resize_map.", mapname);
- 	if (resize_map(mpp, size, vecs) != 0)
- 		return 1;
- 
--	condlog(0,"%s: dm_lib_release.", mapname);
- 	dm_lib_release();
--	condlog(0,"%s: setup multipath.", mapname);
- 	setup_multipath(vecs, mpp);
--	condlog(0,"%s: sync map state.", mapname);
- 	sync_map_state(mpp);
- 
- 	return 0;
-@@ -513,7 +508,7 @@ cli_suspend(void * v, char ** reply, int
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int r = dm_simplecmd_flush(DM_DEVICE_SUSPEND, param);
-+	int r = dm_simplecmd_noflush(DM_DEVICE_SUSPEND, param);
- 
- 	condlog(2, "%s: suspend (operator)", param);
- 
-@@ -534,7 +529,7 @@ cli_resume(void * v, char ** reply, int 
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, MAP);
--	int r = dm_simplecmd_flush(DM_DEVICE_RESUME, param);
-+	int r = dm_simplecmd_noflush(DM_DEVICE_RESUME, param);
- 
- 	condlog(2, "%s: resume (operator)", param);
- 
+> > > The barrier can be cancelled with -EOPNOTSUPP at any time. Andi Kleen 
+> > > submitted a patch that implements failing barriers for device mapper and 
+> > > he says that md-raid1 does the same thing.
+> > 
+> > You are right, if a device is reconfigured beneath you it may very well
+> > begin to return -EOPNOTSUPP much later. I didn't take that into account,
+> > I was considering only "plain" devices.
+> > 
+> > > Filesystems handle these randomly failed barriers but the downside is that 
+> > > they must not submit any request concurrently with the barrier. Also, that 
+> > > -EOPNOTSUPP restarting code is really crap, the request cannot be 
+> > > restarted from bi_end_io, so bi_end_io needs to handle to another thread 
+> > > for retry without barrier.
+> > 
+> > It can, but it requires you to operate at the request level. So for file
+> > systems that is problematic, it wont work of course. It would not be
+> > THAT hard to provide a helper to reissue the request. Not that pretty,
+> > but...
+> 
+> And it makes barriers useless for ordering.
+> 
+> The filesystem can't do [submit req a], [submit barrier req b], [submit 
+> req c] and assume that the requests will be ordered. If [b] fails with 
+> -EOPNOTSUPP, [a] and [c] could be already reordered and data corruption 
+> has already happened. Even if you catch [b]'s error and resubmit it as 
+> non-barrier request, it's too late.
+> 
+> So, as a result of this complication, all the existing filesystems send 
+> just one barrier request and do not try to overlay it with any other write 
+> requests.
+> 
+> So I'm wondering why Linux developers designed a barrier interface with 
+> complex specification, complex implementation and the interface is useless 
+> to provide any request ordering and it's no better than q->issue_flush_fn 
+> method or whatever was there beffore. Obviously, the whole barrier thing 
+> was designed by a person who never used it in a filesystem.
+
+That's not quite true, it was done in conjunction with file system
+people. At a certain level, we are restricted by what the hardware can
+actually do. It's certainly possible to make sure your storage stack can
+support barriers and be safe in that regard, but it's certainly also
+true that reconfiguring devices may void that guarantee. So it's not
+perfect, but it's the best we can do. The worst part is that it's
+virtually impossible to inform of such limitations.
+
+If we get rid of -EOPNOTSUPP and just warn in such cases, then you
+should never see -EOPNOTSUPP in the above sequence. You may not actually
+be safe, hence we print a warning. It'll also make the whole thing a lot
+less complex.
+
+And to wrap up with the history of barriers, there was NOTHING before.
+->issue_flush_fn is a later addition to just force a flush for fsync()
+and friends, the original implementation was just a data bio/bh with
+barrier semantics, providing no reordering before and after the data
+passed.
+
+Nobody was interested in barriers when they were done. Nobody. The fact
+that it's taken 6 years or so to actually emerge as a hot topic for data
+consistency should make that quite obvious. So the original
+implementation was basically a joint effort with Chris on the reiser
+side and EMC as the hw vendor and me doing the block implementation.
+
+-- 
+Jens Axboe
