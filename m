@@ -1,8 +1,11 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 33 of 33] DM Snapshot:  utilize snapshare
-Date: Mon, 6 Apr 2009 16:38:02 -0500
-Message-ID: <200904062138.n36Lc2aI022124@hydrogen.msp.redhat.com>
+Subject: [PATCH 1 of 1] Clusterized snapshot exception store
+Date: Mon, 06 Apr 2009 16:43:54 -0500
+Message-ID: <1239054234.13756.8.camel@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,766 +19,715 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snap-utilize-snapshare.patch
+I've refactored this patch, basically pulling in the two old patches
+into one.
 
-This patch finishes the integration of the snapshare structure.  It
-removes the exception store from the snapshot struct and relies
-on the snapshare and creates the pending exception cache for the
-individual snapshots (located in the snapshare structure).
+This patch provides an exception store implementation that is
+capable of "wrapping" other exception store implementations and
+making them cluster-aware.  It is not a stand-alone implementation.
+It merely uses distributed locking to protect exception store
+metadata as the single-machine "core" exception stores perform
+their actions independently.  This is why the module uses the
+term "clusterized" instead of "clustered".
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
- 
-Index: linux-2.6/drivers/md/dm-snap.c
+
+Index: linux-2.6/drivers/md/Kconfig
 ===================================================================
---- linux-2.6.orig/drivers/md/dm-snap.c
-+++ linux-2.6/drivers/md/dm-snap.c
-@@ -51,10 +51,21 @@
- #define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
- 					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
+--- linux-2.6.orig/drivers/md/Kconfig
++++ linux-2.6/drivers/md/Kconfig
+@@ -244,10 +244,23 @@ config DM_CRYPT
+ 	  If unsure, say N.
  
+ config DM_SNAPSHOT
+-       tristate "Snapshot target"
+-       depends on BLK_DEV_DM
+-       ---help---
+-         Allow volume managers to take writable snapshots of a device.
++	tristate "Snapshot target"
++	depends on BLK_DEV_DM
++	---help---
++	  Allow volume managers to take writable snapshots of a device.
++
++config DM_EXSTORE_CLUSTERIZED
++	tristate "Cluster-aware exception store wrapper (EXPERIMENTAL)"
++	depends on BLK_DEV_DM && DM_SNAPSHOT && EXPERIMENTAL
++	select DLM
++	---help---
++	  An exception store is a module that is used by snapshots to
++	  record COW areas.  This module is capable of wrapping certain
++	  exception stores so that they appear to be cluster-aware.  This
++	  has the affect of making device-mapper snapshots cluster-aware.
++	  Not every exception store type can be wrapped.  Check the end
++	  of drivers/md/dm-ex-store-clusterized.c to find out what stores
++	  are supported.
+ 
+ config DM_MIRROR
+        tristate "Mirror target"
+Index: linux-2.6/drivers/md/Makefile
+===================================================================
+--- linux-2.6.orig/drivers/md/Makefile
++++ linux-2.6/drivers/md/Makefile
+@@ -7,6 +7,7 @@ dm-mod-objs	:= dm.o dm-table.o dm-target
+ dm-multipath-objs := dm-path-selector.o dm-mpath.o
+ dm-snapshot-objs := dm-snap.o dm-exception.o dm-exception-store.o \
+ 		    dm-snap-persistent.o dm-snap-transient.o
++dm-exstore-clusterized-objs := dm-ex-store-clusterized.o
+ dm-mirror-objs	:= dm-raid1.o
+ dm-log-clustered-objs := dm-log-cluster.o dm-log-cluster-transfer.o
+ md-mod-objs     := md.o bitmap.o
+@@ -36,6 +37,7 @@ obj-$(CONFIG_DM_CRYPT)		+= dm-crypt.o
+ obj-$(CONFIG_DM_DELAY)		+= dm-delay.o
+ obj-$(CONFIG_DM_MULTIPATH)	+= dm-multipath.o dm-round-robin.o
+ obj-$(CONFIG_DM_SNAPSHOT)	+= dm-snapshot.o
++obj-$(CONFIG_DM_EXSTORE_CLUSTERIZED) += dm-exstore-clusterized.o
+ obj-$(CONFIG_DM_MIRROR)		+= dm-mirror.o dm-log.o dm-region-hash.o
+ obj-$(CONFIG_DM_LOG_CLUSTERED)	+= dm-log-clustered.o
+ obj-$(CONFIG_DM_ZERO)		+= dm-zero.o
+Index: linux-2.6/drivers/md/dm-ex-store-clusterized.c
+===================================================================
+--- /dev/null
++++ linux-2.6/drivers/md/dm-ex-store-clusterized.c
+@@ -0,0 +1,592 @@
 +/*
-+ * Exception table hash sizes for pending exceptions
-+ * The snapshot pending exception table holds pending exceptions
-+ * that affect all snapshots in the share group (due to origin write).
-+ * The snapshare pending exception table holds pending exceptions
-+ * that affect just one snapshot in the share group (due to a
-+ * write to one of the snapshots).
++ * Copyright (C) 2009 Red Hat, Inc. All rights reserved.
++ *
++ * Device-mapper exception structure and associated functions.
++ *
++ * This file is released under the GPL.
 + */
-+#define DM_SNAPSHARE_HASH_SIZE 16
-+#define DM_SNAPSHOT_HASH_SIZE 64
++#include <linux/device-mapper.h>
++#include <linux/dlm.h>
++#include <linux/workqueue.h>
++#include "dm-exception-store.h"
 +
- struct dm_snapshot {
- 	struct rw_semaphore lock;
- 
--	struct dm_dev *origin;
-+	struct block_device *o_bdev;
- 
- 	/* List of snapshots per Origin */
- 	struct list_head list;
-@@ -67,19 +78,17 @@ struct dm_snapshot {
- 
- 	mempool_t *pending_pool;
- 
--	atomic_t pending_exceptions_count;
--
- 	struct dm_exception_table *pending;
- 
-+	uint64_t shared_uuid;
-+	struct list_head shared_list;
++#define DM_MSG_PREFIX "clusterized exception store"
 +
- 	/*
- 	 * pe_lock protects all pending_exception operations and access
- 	 * as well as the snapshot_bios list.
- 	 */
- 	spinlock_t pe_lock;
- 
--	/* The on disk metadata handler */
--	struct dm_exception_store *store;
--
- 	struct dm_kcopyd_client *kcopyd_client;
- 
- 	/* Queue of snapshot writes for ksnapd to flush */
-@@ -109,6 +118,19 @@ struct dm_snapshare {
- static struct workqueue_struct *ksnapd;
- static void flush_queued_bios(struct work_struct *work);
- 
-+static struct dm_exception_store *get_first_store(struct dm_snapshot *s)
++struct clusterized_c {
++	struct dm_exception_store *core_store;
++
++	struct completion resume_completion;
++	struct work_struct resume_work;
++
++	struct rw_semaphore lock;
++
++	int current_dl_mode;
++	unsigned dl_holders;
++	struct completion dlm_completion;
++	dlm_lockspace_t *lockspace;
++	struct dlm_lksb lksb;
++
++	uint64_t metadata_counter;
++	uint64_t cluster_metadata_counter;
++
++	char uuid[0]; /* must be last */
++};
++
++#define mode2str(__mode) \
++	(__mode == DLM_LOCK_NL) ? "DLM_LOCK_NL" : \
++	(__mode == DLM_LOCK_CR) ? "DLM_LOCK_CR" : \
++	(__mode == DLM_LOCK_EX) ? "DLM_LOCK_EX" : "UNKNOWN"
++
++static void lock_obtained(void *context)
 +{
-+	struct dm_snapshare *ss;
++	struct clusterized_c *cc = context;
 +
-+	list_for_each_entry(ss, &s->shared_list, shared_list)
-+		return ss->store;
-+
-+	DMERR("No snapshares in snapshot");
-+	BUG();
-+
-+	return NULL;
++	complete(&cc->dlm_completion);
 +}
 +
- static sector_t chunk_to_sector(struct dm_exception_store *store,
- 				chunk_t chunk)
- {
-@@ -156,8 +178,12 @@ struct dm_snap_pending_exception {
- 	 */
- 	atomic_t ref_count;
- 
--	/* Pointer back to snapshot context */
++static int __cluster_lock(struct clusterized_c *cc, int mode)
++{
++	int r;
++	uint32_t flags = DLM_LKF_VALBLK;
++
 +	/*
-+	 * Pointer back to snapshot or snapshare context
-+	 * Only one of 'ss' or 'snap' may be populated.
++	 * Does the curernt lock mode meet or exceed our needs?
 +	 */
- 	struct dm_snapshot *snap;
-+	struct dm_snapshare *ss;
- 
- 	/*
- 	 * 1 indicates the exception has already been sent to
-@@ -299,13 +325,21 @@ static void __insert_origin(struct origi
- }
- 
- /*
-+ * register_snapshare
-+ * @ss: snapshare - initialized and populated with 's'
-+ *
-  * Make a note of the snapshot and its origin so we can look it
-  * up when the origin has a write on it.
-+ *
-+ * Returns: 0 on success, -Exxx on failure
-  */
--static int register_snapshot(struct dm_snapshot *snap)
-+static void dealloc_snapshot(struct dm_snapshot *s);
-+static int register_snapshare(struct dm_snapshare *ss)
- {
-+	int found = 0;
- 	struct origin *o, *new_o;
--	struct block_device *bdev = snap->origin->bdev;
-+	struct dm_snapshot *s;
-+	struct block_device *bdev = ss->origin->bdev;
- 
- 	new_o = kmalloc(sizeof(*new_o), GFP_KERNEL);
- 	if (!new_o)
-@@ -327,20 +361,69 @@ static int register_snapshot(struct dm_s
- 		__insert_origin(o);
- 	}
- 
--	list_add_tail(&snap->list, &o->snapshots);
-+	if (!ss->snap->shared_uuid)
-+		goto new_snapshot;
++	if (mode <= cc->current_dl_mode) {
++		cc->dl_holders++;
++		return 0;
++	}
 +
-+	list_for_each_entry(s, &o->snapshots, list) {
-+		down_write(&s->lock);
-+		if (s->shared_uuid == ss->snap->shared_uuid) {
-+			list_add(&ss->shared_list, &s->shared_list);
++	/*
++	 * If the current lock mode is DLM_LOCK_NL, we can immediately
++	 * proceed to converting it.
++	 */
++	if (cc->current_dl_mode == DLM_LOCK_NL) {
++		BUG_ON(cc->dl_holders);
 +
-+			dealloc_snapshot(ss->snap);
++		flags |= DLM_LKF_CONVERT;
 +
-+			ss->snap = s;
-+
-+			up_write(&s->lock);
-+			found = 1;
-+			break;
++		r = dlm_lock(cc->lockspace, mode, &cc->lksb,
++			     flags, cc->uuid, strlen(cc->uuid), 0,
++			     lock_obtained, cc, NULL);
++		if (r) {
++			DMERR("cluster_lock immediate failure: %d", r);
++			return r;
 +		}
-+		up_write(&s->lock);
++
++		wait_for_completion(&cc->dlm_completion);
++
++		if (cc->lksb.sb_status) {
++			DMERR("cluster_lock async failure: %d",
++			      cc->lksb.sb_status);
++			return cc->lksb.sb_status;
++		}
++
++		cc->current_dl_mode = mode;
++		cc->dl_holders = 1;
++		return 0;
 +	}
 +
-+new_snapshot:
-+	if (!found)
-+		list_add_tail(&ss->snap->list, &o->snapshots);
- 
- 	up_write(&_origins_lock);
- 	return 0;
- }
- 
--static void unregister_snapshot(struct dm_snapshot *s)
-+static void unregister_snapshare(struct dm_snapshare *ss)
- {
- 	struct origin *o;
- 
-+	/*
-+	 * Always origin lock, then snapshot lock
-+	 */
- 	down_write(&_origins_lock);
--	o = __lookup_origin(s->origin->bdev);
-+	o = __lookup_origin(ss->origin->bdev);
-+
-+	down_write(&ss->snap->lock);
-+
-+	/*
-+	 * Remove the snapshare, then if there are no
-+	 * more snapshares left, remove the snapshot
-+	 * from the origin's list
-+	 */
-+	list_del(&ss->shared_list);
-+
-+	if (list_empty(&ss->snap->shared_list)) {
-+		/*
-+		 * dtr will use 'list_empty' check on this...
-+		 * We must use list_del_init
-+		 */
-+		list_del_init(&ss->snap->list);
-+
-+		/*
-+		 * Since this is the last share, we need to leave
-+		 * it in place.  Otherwise, 'get_first_store' will
-+		 * fail.
-+		 */
-+		list_add(&ss->shared_list, &ss->snap->shared_list);
-+	}
-+
-+	up_write(&ss->snap->lock);
- 
--	list_del(&s->list);
- 	if (list_empty(&o->snapshots)) {
- 		list_del(&o->hash_list);
- 		kfree(o);
-@@ -352,11 +435,14 @@ static void unregister_snapshot(struct d
- static struct dm_exception *alloc_pending_exception(void *context)
- {
- 	struct dm_snapshot *s = context;
-+	struct dm_snapshare *ss;
- 	struct dm_snap_pending_exception *pe = mempool_alloc(s->pending_pool,
- 							     GFP_NOIO);
- 
--	atomic_inc(&s->pending_exceptions_count);
-+	list_for_each_entry(ss, &s->shared_list, shared_list)
-+		atomic_inc(&ss->pending_exceptions_count);
- 	pe->snap = s;
-+	pe->ss = NULL;
- 
- 	return &pe->e;
- }
-@@ -365,25 +451,44 @@ static void free_pending_exception(struc
- {
- 	struct dm_snap_pending_exception *pe;
- 	struct dm_snapshot *s;
-+	struct dm_snapshare *ss;
- 
- 	pe = container_of(e, struct dm_snap_pending_exception, e);
- 	s = pe->snap;
- 
- 	mempool_free(pe, s->pending_pool);
- 	smp_mb__before_atomic_dec();
--	atomic_dec(&s->pending_exceptions_count);
-+
-+	list_for_each_entry(ss, &s->shared_list, shared_list)
-+		atomic_dec(&ss->pending_exceptions_count);
- }
- 
--/*
-- * Hard coded magic.
-- */
--static int calc_max_buckets(void)
-+static struct dm_exception *alloc_snapshare_pending_exception(void *context)
- {
--	/* use a fixed size of 2MB */
--	unsigned long mem = 2 * 1024 * 1024;
--	mem /= sizeof(struct list_head);
-+	struct dm_snapshare *ss = context;
-+	struct dm_snap_pending_exception *pe;
-+
-+	pe = mempool_alloc(ss->snap->pending_pool, GFP_NOIO);
-+
-+	atomic_inc(&ss->pending_exceptions_count);
-+	pe->ss = ss;
-+	pe->snap = NULL;
- 
--	return mem;
-+	return &pe->e;
++	DMERR("DLM up-conversion required... waiting for unlock");
++	return -EAGAIN;
 +}
 +
-+static void free_snapshare_pending_exception(struct dm_exception *e,
-+					     void *unused)
++static int __cluster_unlock(struct clusterized_c *cc)
 +{
-+	struct dm_snap_pending_exception *pe;
-+	struct dm_snapshare *ss;
++	int r;
++	uint32_t flags = DLM_LKF_VALBLK | DLM_LKF_CONVERT;
 +
-+	pe = container_of(e, struct dm_snap_pending_exception, e);
-+	ss = pe->ss;
++	if (--cc->dl_holders)
++		return 0;
 +
-+	mempool_free(pe, ss->snap->pending_pool);
-+	smp_mb__before_atomic_dec();
-+	atomic_dec(&ss->pending_exceptions_count);
- }
- 
- /*
-@@ -445,7 +550,7 @@ static int create_exception_store(struct
- 					 argv + 2, store);
- }
- 
--static struct dm_snapshot *alloc_snapshot(sector_t hash_size)
-+static struct dm_snapshot *alloc_snapshot(void)
- {
- 	int r, i;
- 	struct dm_snapshot *s;
-@@ -456,14 +561,14 @@ static struct dm_snapshot *alloc_snapsho
- 		return NULL;
- 	}
- 
-+	INIT_LIST_HEAD(&s->shared_list);
- 	s->valid = 1;
- 	s->active = 0;
--	atomic_set(&s->pending_exceptions_count, 0);
- 	init_rwsem(&s->lock);
- 	spin_lock_init(&s->pe_lock);
- 
- 	/* Allocate hash table for pending COW data */
--	s->pending = dm_exception_table_create(hash_size, 0,
-+	s->pending = dm_exception_table_create(DM_SNAPSHOT_HASH_SIZE, 0,
- 					       alloc_pending_exception, s,
- 					       free_pending_exception, NULL);
- 	if (!s->pending) {
-@@ -542,11 +647,8 @@ static void dealloc_snapshot(struct dm_s
-  */
- static int snapshot_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- {
--	sector_t hash_size, cow_dev_size, origin_dev_size, max_buckets;
--	struct dm_dev *origin;
- 	struct dm_snapshare *ss;
- 	struct dm_snapshot *s;
--	int i;
- 	int r = -EINVAL;
- 	char *origin_path;
- 	struct dm_exception_store *store;
-@@ -569,6 +671,14 @@ static int snapshot_ctr(struct dm_target
- 	INIT_LIST_HEAD(&ss->shared_list);
- 	atomic_set(&ss->pending_exceptions_count, 0);
- 
-+	ss->pending = dm_exception_table_create(DM_SNAPSHARE_HASH_SIZE, 0,
-+						alloc_snapshare_pending_exception, ss,
-+						free_snapshare_pending_exception, NULL);
-+	if (!ss->pending) {
-+		ti->error = "Failed to allocate exception hash table";
-+		goto bad_hash_table;
++	r = dlm_lock(cc->lockspace, DLM_LOCK_NL, &cc->lksb,
++		     flags, cc->uuid, strlen(cc->uuid), 0,
++		     lock_obtained, cc, NULL);
++
++	if (!r) {
++		wait_for_completion(&cc->dlm_completion);
++		r = cc->lksb.sb_status;
 +	}
 +
- 	r = create_exception_store(ti, argc, argv, &args_used, &store);
- 	if (r) {
- 		ti->error = "Failed to create snapshot exception store";
-@@ -579,44 +689,29 @@ static int snapshot_ctr(struct dm_target
- 	argv += args_used;
- 	argc -= args_used;
- 
--	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &origin);
-+	r = dm_get_device(ti, origin_path, 0, ti->len, FMODE_READ, &ss->origin);
- 	if (r) {
- 		ti->error = "Cannot get origin device";
- 		goto bad_origin;
- 	}
- 
- 	/*
--	 * Calculate based on the size of the original volume or
--	 * the COW volume...
--	 */
--	cow_dev_size = get_dev_size(store->cow->bdev);
--	origin_dev_size = get_dev_size(origin->bdev);
--	max_buckets = calc_max_buckets();
--
--	hash_size = min(origin_dev_size, cow_dev_size) >> store->chunk_shift;
--	hash_size = min(hash_size, max_buckets);
--
--	hash_size = rounddown_pow_of_two(hash_size);
--	hash_size >>= 3;
--	if (hash_size < 64)
--		hash_size = 64;
--
--	/*
- 	 * Allocate the snapshot
- 	 */
--	s = alloc_snapshot(hash_size);
-+	s = alloc_snapshot();
- 	if (!s) {
- 		r = -ENOMEM;
- 		ti->error = "Failed to create snapshot structure";
- 		goto bad_alloc_snapshot;
- 	}
- 	ss->snap = s;
--	s->origin = origin;
--	s->store = ss->store;
-+	s->o_bdev = ss->origin->bdev;
-+	s->shared_uuid = store->shared_uuid;
-+	list_add(&ss->shared_list, &s->shared_list);
- 
- 	/* Add snapshot to the list of snapshots for this origin */
- 	/* Exceptions aren't triggered till snapshot_resume() is called */
--	if (register_snapshot(s)) {
-+	if (register_snapshare(ss)) {
- 		r = -EINVAL;
- 		ti->error = "Cannot register snapshot with origin";
- 		goto bad_load_and_register;
-@@ -631,12 +726,15 @@ bad_load_and_register:
- 	dealloc_snapshot(s);
- 
- bad_alloc_snapshot:
--	dm_put_device(ti, origin);
-+	dm_put_device(ti, ss->origin);
- 
- bad_origin:
- 	dm_exception_store_destroy(store);
- 
- bad_exception_store:
-+	dm_exception_table_destroy(ss->pending);
++	if (r)
++		DMERR("Failure to convert to NL lock: %d", r);
++	else
++		cc->current_dl_mode = DLM_LOCK_NL;
 +
-+bad_hash_table:
- 	kfree(ss);
- 
- 	return r;
-@@ -654,9 +752,9 @@ static void snapshot_dtr(struct dm_targe
- 
- 	/* Prevent further origin writes from using this snapshot. */
- 	/* After this returns there can be no new kcopyd jobs. */
--	unregister_snapshot(s);
-+	unregister_snapshare(ss);
- 
--	while (atomic_read(&s->pending_exceptions_count))
-+	while (atomic_read(&ss->pending_exceptions_count))
- 		msleep(1);
- 	/*
- 	 * Ensure instructions in mempool_destroy aren't reordered
-@@ -664,17 +762,24 @@ static void snapshot_dtr(struct dm_targe
- 	 */
- 	smp_mb();
- 
++	return r;
++}
++
++static int cluster_lock_init(struct clusterized_c *cc)
++{
++	int r;
++	uint32_t flags = DLM_LKF_VALBLK | DLM_LKF_EXPEDITE;
++
++	r = dlm_lock(cc->lockspace, DLM_LOCK_NL, &cc->lksb,
++		     flags, cc->uuid, strlen(cc->uuid), 0,
++		     lock_obtained, cc, NULL);
++	if (!r) {
++		wait_for_completion(&cc->dlm_completion);
++		r = cc->lksb.sb_status;
++	}
++
++	if (r)
++		DMERR("Failed to acquire initial DLM lock: %d", r);
++
++	return r;
++}
++
++static void cluster_lock_exit(struct clusterized_c *cc)
++{
++	BUG_ON(cc->current_dl_mode);
++	dlm_unlock(cc->lockspace, cc->lksb.sb_lkid,
++		   DLM_LKF_FORCEUNLOCK, &cc->lksb, cc);
++}
++
++static int cluster_lock(struct clusterized_c *cc, int mode)
++{
++	int r = -EAGAIN;
++
++	while (r == -EAGAIN) {
++		down_write(&cc->lock);
++		r = __cluster_lock(cc, mode);
++		up_write(&cc->lock);
++	}
++
++	return r;
++}
++
++/*
++ * cluster_unlock
++ * @cc
++ *
++ * Doesn't completely unlock, but rather puts the lock back into
++ * the DLM_LOCK_NL mode.  This preserves the LVB.
++ *
++ */
++static int cluster_unlock(struct clusterized_c *cc)
++{
++	int r;
++
++	down_write(&cc->lock);
++	r = __cluster_unlock(cc);
++	up_write(&cc->lock);
++
++	return r;
++}
++
++static void resume_core(struct work_struct *work)
++{
++	int r;
++	struct clusterized_c *cc;
++
++	cc = container_of(work, struct clusterized_c, resume_work);
++
++	r = cc->core_store->type->resume(cc->core_store);
++	if (r)
++		DMERR("Core resume failed");
++	complete(&cc->resume_completion);
++}
++
++/*
++ * clusterized_ctr
++ * @store
++ * @argc
++ * @argv
++ *
++ * The mapping table will be the same as the exception
++ * store it is covering, but will also include the
++ * argument:
++ *	<non-clustered args> cluster_uuid:<UUID>
++ *
++ * Returns: 0 on success, -EXXX on failure
++ */
++static int clusterized_ctr(struct dm_exception_store *store,
++			   unsigned argc, char **argv)
++{
++	int r;
++	unsigned i, j, len;
++	unsigned my_argc = argc + 1;
++	char *my_argv[my_argc];
++	char chunk_size_str[32];
++	char *core_name;
++	struct clusterized_c *cc = NULL;
++
 +	/*
-+	 * Has this snapshot been detached from the origin?
-+	 * If so, deallocate it.
++	 * First, in order to pass down to non-clustered
++	 * core, we must add back the COW and chunk size
++	 * arguments
 +	 */
-+	if (list_empty(&s->list)) {
- #ifdef CONFIG_DM_DEBUG
--	for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
--		BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
-+		for (i = 0; i < DM_TRACKED_CHUNK_HASH_SIZE; i++)
-+			BUG_ON(!hlist_empty(&s->tracked_chunk_hash[i]));
- #endif
-+		dealloc_snapshot(s);
++	my_argv[0] = store->cow->name;
++	sprintf(chunk_size_str, "%llu", (unsigned long long)store->chunk_size);
++	my_argv[1] = chunk_size_str;
++
++	/* Now we strip off the cluster_uuid argument */
++	argc--;
++	if (strncmp("cluster_uuid:", argv[argc], 13)) {
++		DMERR("No 'cluster_uuid:' argument provided.");
++		return -EINVAL;
 +	}
- 
--	dm_put_device(ti, s->origin);
--
--	dealloc_snapshot(s);
-+	dm_put_device(ti, ss->origin);
- 
- 	dm_exception_store_destroy(ss->store);
- 
-+	dm_exception_table_destroy(ss->pending);
++	for (i = 0, j = 2; i < argc; i++, j++)
++		my_argv[j] = argv[i];
 +
- 	kfree(ss);
- }
- 
-@@ -724,6 +829,7 @@ static void error_bios(struct bio *bio)
- 
- static void __invalidate_snapshot(struct dm_snapshot *s, int err)
- {
-+	struct dm_snapshare *ss;
- 	char *tmp_str = "ES_INVALIDATE";
- 
- 	if (!s->valid)
-@@ -734,12 +840,16 @@ static void __invalidate_snapshot(struct
- 	else if (err == -ENOMEM)
- 		DMERR("Invalidating snapshot: Unable to allocate exception.");
- 
--	if (s->store->type->message)
--		s->store->type->message(s->store, 1, &tmp_str);
- 
- 	s->valid = 0;
- 
--	dm_table_event(s->store->ti->table);
-+	/* Invalidating the snapshot will invalidate all snapshares. */
-+	list_for_each_entry(ss, &s->shared_list, shared_list) {
-+		if (ss->store->type->message)
-+			ss->store->type->message(ss->store, 1, &tmp_str);
++	/*
++	 * We just want to count the actual UUID, plus 1
++	 * for the trailing NULL.  (With MAX size being
++	 * what is able to fit in the LVB of a DLM lock.)
++	 */
++	len = strlen(argv[argc] + 13) + 1;
++	len = (len > DLM_RESNAME_MAXLEN) ? DLM_RESNAME_MAXLEN : len;
++	cc = kzalloc(sizeof(*cc) + len, GFP_KERNEL);
++	if (!cc)
++		return -ENOMEM;
++	strncpy(cc->uuid, argv[argc] + 13, len);
++	cc->lksb.sb_lvbptr = (char *)&cc->cluster_metadata_counter;
 +
-+		dm_table_event(ss->store->ti->table);
++	init_rwsem(&cc->lock);
++	init_completion(&cc->dlm_completion);
++	init_completion(&cc->resume_completion);
++	INIT_WORK(&cc->resume_work, resume_core);
++
++	/* Create (or join) the lock space */
++	r = dlm_new_lockspace(store->type->name, strlen(store->type->name),
++			      &cc->lockspace, 0, sizeof(uint64_t));
++
++	if (r) {
++		DMERR("Unable to create DLM lockspace for %s",
++		      store->type->name);
++		kfree(cc);
++		return r;
 +	}
- }
- 
- static void get_pending_exception(struct dm_snap_pending_exception *pe)
-@@ -750,7 +860,6 @@ static void get_pending_exception(struct
- static struct bio *put_pending_exception(struct dm_snap_pending_exception *pe)
- {
- 	struct dm_snap_pending_exception *primary_pe;
--	struct dm_snapshot *s = pe->snap;
- 	struct bio *origin_bios = NULL;
- 
- 	primary_pe = pe->primary_pe;
-@@ -763,7 +872,9 @@ static struct bio *put_pending_exception
- 	if (primary_pe &&
- 	    atomic_dec_and_test(&primary_pe->ref_count)) {
- 		origin_bios = bio_list_get(&primary_pe->origin_bios);
--		dm_free_exception(s->pending, &primary_pe->e);
-+		dm_free_exception(primary_pe->ss ? primary_pe->ss->pending :
-+				  primary_pe->snap->pending,
-+				  &primary_pe->e);
- 	}
- 
- 	/*
-@@ -771,14 +882,15 @@ static struct bio *put_pending_exception
- 	 * it's not itself a primary pe.
- 	 */
- 	if (!primary_pe || primary_pe != pe)
--		dm_free_exception(s->pending, &pe->e);
-+		dm_free_exception(pe->ss ? pe->ss->pending : pe->snap->pending,
-+				  &pe->e);
- 
- 	return origin_bios;
- }
- 
- static void pending_complete(struct dm_snap_pending_exception *pe, int success)
- {
--	struct dm_snapshot *s = pe->snap;
-+	struct dm_snapshot *s = pe->snap ? pe->snap : pe->ss->snap;
- 	struct bio *origin_bios = NULL;
- 	struct bio *snapshot_bios = NULL;
- 	int error = 0;
-@@ -828,15 +940,17 @@ static void commit_callback(void *contex
- static void copy_callback(int read_err, unsigned long write_err, void *context)
- {
- 	struct dm_snap_pending_exception *pe = context;
--	struct dm_snapshot *s = pe->snap;
-+	struct dm_exception_store *store;
++	cluster_lock_init(cc);
 +
-+	store = pe->ss ? pe->ss->store : get_first_store(pe->snap);
- 
- 	if (read_err || write_err)
- 		pending_complete(pe, 0);
- 
- 	else
- 		/* Update the metadata if we are persistent */
--		s->store->type->commit_exception(s->store, &pe->e,
--						 commit_callback, pe);
-+		store->type->commit_exception(store, &pe->e,
-+					      commit_callback, pe);
- }
- 
- /*
-@@ -844,19 +958,24 @@ static void copy_callback(int read_err, 
-  */
- static void start_copy(struct dm_snap_pending_exception *pe)
- {
--	struct dm_snapshot *s = pe->snap;
-+	struct dm_exception_store *store;
-+	struct dm_snapshot *s;
- 	struct dm_io_region src, dest;
--	struct block_device *bdev = s->origin->bdev;
-+	struct block_device *bdev;
- 	sector_t dev_size;
- 
-+	store = (pe->ss) ? pe->ss->store : get_first_store(pe->snap);
-+	s = pe->snap ? pe->snap : pe->ss->snap;
-+	bdev = s->o_bdev;
++	/*
++	 * Now we find the non-clustered exception store name.
++	 * It will be whatever is left when we strip 'clusterized_' off.
++	 */
++	core_name = strstr(store->type->name, "-");
++	BUG_ON(!core_name);
++	core_name++;
 +
- 	dev_size = get_dev_size(bdev);
- 
- 	src.bdev = bdev;
--	src.sector = chunk_to_sector(s->store, pe->e.old_chunk);
--	src.count = min(s->store->chunk_size, dev_size - src.sector);
-+	src.sector = chunk_to_sector(store, pe->e.old_chunk);
-+	src.count = min(store->chunk_size, dev_size - src.sector);
- 
--	dest.bdev = s->store->cow->bdev;
--	dest.sector = chunk_to_sector(s->store, pe->e.new_chunk);
-+	dest.bdev = store->cow->bdev;
-+	dest.sector = chunk_to_sector(store, pe->e.new_chunk);
- 	dest.count = src.count;
- 
- 	/* Hand over to kcopyd */
-@@ -890,16 +1009,24 @@ __lookup_pending_exception(struct dm_exc
-  * this.
-  */
- static struct dm_snap_pending_exception *
--__find_pending_exception(struct dm_snapshot *s,
--			 struct dm_snap_pending_exception *pe,
--			 chunk_t chunk, int group)
-+__find_pending_exception(struct dm_snap_pending_exception *pe, chunk_t chunk)
- {
-+	struct dm_snapshare *ss = pe->ss;
-+	struct dm_snapshot *s = pe->snap ? pe->snap : ss->snap;
-+	struct dm_exception_store *store = ss ? ss->store : get_first_store(s);
-+	struct dm_exception_table *table = ss ? ss->pending : s->pending;
- 	struct dm_snap_pending_exception *pe2;
- 
-+	/* First check the snapshot pending cache */
- 	pe2 = __lookup_pending_exception(s->pending, chunk);
--	if (pe2) {
--		dm_free_exception(s->pending, &pe->e);
--		return pe2;
-+	if (pe2)
-+		goto free_it;
++	r = dm_exception_store_create(core_name, store->ti, my_argc, my_argv,
++				      &cc->core_store);
 +
-+	/* Next, check the snapshare */
-+	if (ss) {
-+		pe2 = __lookup_pending_exception(ss->pending, chunk);
-+		if (pe2)
-+			goto free_it;
- 	}
- 
- 	pe->e.old_chunk = chunk;
-@@ -909,23 +1036,27 @@ __find_pending_exception(struct dm_snaps
- 	atomic_set(&pe->ref_count, 0);
- 	pe->started = 0;
- 
--	if (s->store->type->prepare_exception(s->store, &pe->e, group)) {
--		dm_free_exception(s->pending, &pe->e);
-+	if (store->type->prepare_exception(store, &pe->e, ss ? 0 : 1)) {
-+		dm_free_exception(table, &pe->e);
- 		return NULL;
- 	}
- 
- 	get_pending_exception(pe);
--	dm_insert_exception(s->pending, &pe->e);
-+	dm_insert_exception(table, &pe->e);
- 
- 	return pe;
++	if (r) {
++		DMERR("Failed to create foundational exception store, %s",
++		      core_name);
++		dlm_release_lockspace(cc->lockspace, 1);
++		kfree(cc);
++		return r;
++	}
 +
-+free_it:
-+	dm_free_exception(table, &pe->e);
-+	return pe2;
- }
- 
--static void remap_exception(struct dm_snapshot *s, struct bio *bio,
--			    chunk_t chunk)
-+static void remap_exception(struct dm_snapshare *ss,
-+			    struct bio *bio, chunk_t chunk)
- {
--	bio->bi_bdev = s->store->cow->bdev;
--	bio->bi_sector = chunk_to_sector(s->store, dm_chunk_number(chunk)) +
--		(bio->bi_sector & s->store->chunk_mask);
-+	bio->bi_bdev = ss->store->cow->bdev;
-+	bio->bi_sector = chunk_to_sector(ss->store, dm_chunk_number(chunk)) +
-+		(bio->bi_sector & ss->store->chunk_mask);
- }
- 
- static int snapshot_map(struct dm_target *ti, struct bio *bio,
-@@ -964,7 +1095,7 @@ static int snapshot_map(struct dm_target
- 	rtn = ss->store->type->lookup_exception(ss->store, chunk,
- 						&new_chunk, flags);
- 	if (!rtn) {
--		remap_exception(s, bio, new_chunk);
-+		remap_exception(ss, bio, new_chunk);
- 		goto out_unlock;
- 	}
- 
-@@ -982,15 +1113,18 @@ static int snapshot_map(struct dm_target
- 	 */
- 	if (bio_rw(bio) == WRITE) {
- 		pe = __lookup_pending_exception(s->pending, chunk);
-+		if (!pe)
-+			pe = __lookup_pending_exception(ss->pending, chunk);
++	/* If the core store is shared, we are shared */
++	store->shared_uuid = cc->core_store->shared_uuid;
 +
- 		if (!pe) {
- 			up_write(&s->lock);
--			tmp_e = dm_alloc_exception(s->pending);
-+			tmp_e = dm_alloc_exception(ss->pending);
- 			pe = container_of(tmp_e,
- 					  struct dm_snap_pending_exception, e);
- 			down_write(&s->lock);
- 
- 			if (!s->valid) {
--				dm_free_exception(s->pending, &pe->e);
-+				dm_free_exception(ss->pending, &pe->e);
- 				r = -EIO;
- 				goto out_unlock;
- 			}
-@@ -998,12 +1132,12 @@ static int snapshot_map(struct dm_target
- 								&new_chunk,
- 								flags);
- 			if (!rtn) {
--				dm_free_exception(s->pending, &pe->e);
--				remap_exception(s, bio, new_chunk);
-+				dm_free_exception(ss->pending, &pe->e);
-+				remap_exception(ss, bio, new_chunk);
- 				goto out_unlock;
- 			}
- 
--			pe = __find_pending_exception(s, pe, chunk, 0);
-+			pe = __find_pending_exception(pe, chunk);
- 			if (!pe) {
- 				__invalidate_snapshot(s, -ENOMEM);
- 				r = -EIO;
-@@ -1011,7 +1145,7 @@ static int snapshot_map(struct dm_target
- 			}
- 		}
- 
--		remap_exception(s, bio, pe->e.new_chunk);
-+		remap_exception(ss, bio, pe->e.new_chunk);
- 		bio_list_add(&pe->snapshot_bios, bio);
- 
- 		r = DM_MAPIO_SUBMITTED;
-@@ -1024,7 +1158,7 @@ static int snapshot_map(struct dm_target
- 			goto out;
- 		}
- 	} else {
--		bio->bi_bdev = s->origin->bdev;
-+		bio->bi_bdev = ss->origin->bdev;
- 		map_context->ptr = track_chunk(s, chunk);
- 	}
- 
-@@ -1117,7 +1251,7 @@ static int snapshot_status(struct dm_tar
- 		 * to make private copies if the output is to
- 		 * make sense.
- 		 */
--		DMEMIT("%s", s->origin->name);
-+		DMEMIT("%s", ss->origin->name);
- 		ss->store->type->status(ss->store, type, result + sz,
- 					maxlen - sz);
- 		break;
-@@ -1146,6 +1280,7 @@ static int __origin_write(struct list_he
- 	int rtn, r = DM_MAPIO_REMAPPED, first = 0;
- 	struct dm_snapshot *snap;
- 	struct dm_exception *tmp_e;
-+	struct dm_exception_store *store;
- 	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
- 	chunk_t chunk;
- 	LIST_HEAD(pe_queue);
-@@ -1159,26 +1294,26 @@ static int __origin_write(struct list_he
- 		if (!snap->valid || !snap->active)
- 			goto next_snapshot;
- 
-+		store = get_first_store(snap);
++	store->context = cc;
 +
- 		/* Nothing to do if writing beyond end of snapshot */
--		if (bio->bi_sector >= dm_table_get_size(snap->store->ti->table))
-+		if (bio->bi_sector >= dm_table_get_size(store->ti->table))
- 			goto next_snapshot;
- 
- 		/*
- 		 * Remember, different snapshots can have
- 		 * different chunk sizes.
- 		 */
--		chunk = sector_to_chunk(snap->store, bio->bi_sector);
-+		chunk = sector_to_chunk(store, bio->bi_sector);
- 
- 		/*
--		 * Check exception table to see if block
--		 * is already remapped in this snapshot
--		 * and trigger an exception if not.
-+		 * Check exception table to see if block is already
-+		 * remapped in this snapshot and trigger an exception if not.
- 		 *
- 		 * ref_count is initialised to 1 so pending_complete()
- 		 * won't destroy the primary_pe while we're inside this loop.
- 		 */
--		rtn = snap->store->type->lookup_exception(snap->store, chunk,
--							  NULL, flags);
-+		rtn = store->type->lookup_exception(store, chunk, NULL, flags);
- 		if (!rtn)
- 			goto next_snapshot;
- 
-@@ -1202,15 +1337,14 @@ static int __origin_write(struct list_he
- 				goto next_snapshot;
- 			}
- 
--			rtn = snap->store->type->lookup_exception(snap->store,
--								  chunk, NULL,
--								  flags);
-+			rtn = store->type->lookup_exception(store, chunk,
-+							    NULL, flags);
- 			if (!rtn) {
- 				dm_free_exception(snap->pending, &pe->e);
- 				goto next_snapshot;
- 			}
- 
--			pe = __find_pending_exception(snap, pe, chunk, 1);
-+			pe = __find_pending_exception(pe, chunk);
- 			if (!pe) {
- 				__invalidate_snapshot(snap, -ENOMEM);
- 				goto next_snapshot;
-@@ -1348,15 +1482,18 @@ static void origin_resume(struct dm_targ
- {
- 	struct dm_dev *dev = ti->private;
- 	struct dm_snapshot *snap;
-+	struct dm_exception_store *store;
- 	struct origin *o;
- 	chunk_t chunk_size = 0;
- 
- 	down_read(&_origins_lock);
- 	o = __lookup_origin(dev->bdev);
- 	if (o)
--		list_for_each_entry (snap, &o->snapshots, list)
-+		list_for_each_entry(snap, &o->snapshots, list) {
-+			store = get_first_store(snap);
- 			chunk_size = min_not_zero(chunk_size,
--						  snap->store->chunk_size);
-+						  store->chunk_size);
++	return 0;
++}
++
++static void clusterized_dtr(struct dm_exception_store *store)
++{
++	struct clusterized_c *cc = store->context;
++
++	dm_exception_store_destroy(cc->core_store);
++
++	cluster_lock_exit(cc);
++	dlm_release_lockspace(cc->lockspace, 1);
++
++	kfree(cc);
++}
++
++static int clusterized_resume(struct dm_exception_store *store)
++{
++	int r;
++	struct clusterized_c *cc = store->context;
++
++	cluster_lock(cc, DLM_LOCK_CR);
++
++	r = cc->core_store->type->resume(cc->core_store);
++	cc->metadata_counter = cc->cluster_metadata_counter;
++
++	cluster_unlock(cc);
++
++	return r;
++}
++
++static void clusterized_presuspend(struct dm_exception_store *store)
++{
++	struct clusterized_c *cc = store->context;
++
++	if (cc->core_store->type->presuspend)
++		cc->core_store->type->presuspend(store);
++}
++
++static void clusterized_postsuspend(struct dm_exception_store *store)
++{
++	struct clusterized_c *cc = store->context;
++
++	if (cc->core_store->type->postsuspend)
++		cc->core_store->type->postsuspend(store);
++}
++
++static int clusterized_prepare_exception(struct dm_exception_store *store,
++					 struct dm_exception *e, int group)
++{
++	int r;
++	struct clusterized_c *cc = store->context;
++
++	cluster_lock(cc, DLM_LOCK_EX);
++
++	r = cc->core_store->type->prepare_exception(cc->core_store, e, group);
++
++	if (r) {
++		DMERR("Core store failed to prepare_exception");
++		cluster_unlock(cc);
++	}
++
++	return r;
++}
++
++/* cbc - callback context */
++struct cbc {
++	struct clusterized_c *cc;
++
++	void (*callback) (void *, int success);
++	void *callback_data;
++};
++
++void commit_callback(void *data, int success)
++{
++	struct cbc *context = data;
++
++	context->cc->metadata_counter++;
++	context->cc->cluster_metadata_counter = context->cc->metadata_counter;
++
++	context->callback(context->callback_data, success);
++	cluster_unlock(context->cc);
++
++	kfree(context);
++}
++
++static void clusterized_commit_exception(struct dm_exception_store *store,
++					 struct dm_exception *e,
++					 void (*callback) (void *, int success),
++					 void *callback_context)
++{
++	struct clusterized_c *cc = store->context;
++	struct cbc *cbc;
++
++	cbc = kmalloc(sizeof(*cbc), GFP_NOIO);
++	if (!cbc) {
++		callback(callback_context, 0);
++		return;
++	}
++
++	cbc->cc = cc;
++	cbc->callback = callback;
++	cbc->callback_data = callback_context;
++
++	cc->core_store->type->commit_exception(cc->core_store, e,
++					       commit_callback, cbc);
++}
++
++/*
++ * clusterized_lookup_exception
++ * @store
++ * @old
++ * @new: NULL if they don't want data back
++ * @flags
++ *
++ * A "shared" exception store can alter the metadata
++ * outside the scope of our cluster-wide LVB counter.
++ * We have no way of knowing whether we need to re-read/resume
++ * the metadata if a "shared" exception store is in use.
++ *
++ * We could re-read the metadata regardless, but that seems
++ * like an aweful waste... just don't allow "shared"
++ * exception stores right now (enforced in the ctr).
++ *
++ * Returns: 0 if found, -ENOENT if not found, -Exxx otherwise
++ */
++static int clusterized_lookup_exception(struct dm_exception_store *store,
++					chunk_t old, chunk_t *new,
++					uint32_t flags)
++{
++	int r;
++	struct clusterized_c *cc = store->context;
++
++	/*
++	 * Even if the metadata counters don't match, we don't
++	 * need to re-read the metadata if we can find the
++	 * exception right now.  In fact, we don't even need to
++	 * take out the cluster lock if we are just looking in our
++	 * local cache.
++	 */
++	r = cc->core_store->type->lookup_exception(cc->core_store, old,
++						   new, flags);
++
++	/* If we found the exception or there was an error, we can return */
++	if (r != -ENOENT)
++		return r;
++
++	/* We block when we aquire the DLM lock - respect !can_block */
++	if (!(flags & DM_ES_LOOKUP_CAN_BLOCK))
++		return -EWOULDBLOCK;
++
++	cluster_lock(cc, DLM_LOCK_CR);
++
++	/*
++	 * If a "shared" core exception store is used, then the
++	 * metadata_counter is incapable of keeping track of all
++	 * changes that occur, so we must re-read the metadata
++	 * (i.e. resume).
++	 */
++	if (!store->shared_uuid &&
++	    (cc->cluster_metadata_counter == cc->metadata_counter)) {
++		/*
++		 * Exception was not found, and the metadata was not
++		 * changed by other node.
++		 */
++		cluster_unlock(cc);
++		return -ENOENT;
++	}
++
++	/*
++	 * The core exception store's resume method must be capable of
++	 * re-reading its metadata and updating its cache.  IOW, it must
++	 * be able to resume multiple times before a suspend is issued.
++	 */
++	schedule_work(&cc->resume_work);
++	wait_for_completion(&cc->resume_completion);
++
++	cc->metadata_counter = cc->cluster_metadata_counter;
++	cluster_unlock(cc);
++
++	/* Now, try to find the exception again. */
++	r = cc->core_store->type->lookup_exception(cc->core_store, old,
++						   new, flags);
++	return r;
++}
++
++static void clusterized_fraction_full(struct dm_exception_store *store,
++				      sector_t *numerator, sector_t *denominator)
++{
++	struct clusterized_c *cc = store->context;
++
++	/*
++	 * FIXME: If we want more exact numbers, then we should
++	 * check the LVB for changes and potentially force the
++	 * core store to re-read metadata.
++	 */
++	cc->core_store->type->fraction_full(cc->core_store, numerator,
++					    denominator);
++}
++
++static unsigned clusterized_status(struct dm_exception_store *store,
++				   status_type_t status, char *result,
++				   unsigned int maxlen)
++{
++	int sz = 0;
++	char *tmp_result;
++	struct clusterized_c *cc = store->context;
++
++	switch (status) {
++	case STATUSTYPE_INFO:
++		break;
++	case STATUSTYPE_TABLE:
++		DMEMIT(" clusterized");
++		tmp_result = result + sz;
++		sz += cc->core_store->type->status(cc->core_store, status,
++						   result+sz, maxlen-sz);
++		tmp_result[0] = '-'; /* s/ /-/ */
++
++		tmp_result = strstr(tmp_result, " ");
++		if (tmp_result) {
++			tmp_result++;
++			tmp_result[0]++; /* Inc numeric char */
 +		}
- 	up_read(&_origins_lock);
- 
- 	ti->split_io = chunk_size;
++
++		DMEMIT(" cluster_uuid:%s", cc->uuid);
++	}
++
++	return sz;
++}
++
++static int clusterized_message(struct dm_exception_store *store,
++			       unsigned argc, char **argv)
++{
++	int r;
++	struct clusterized_c *cc = store->context;
++
++	cluster_lock(cc, DLM_LOCK_EX);
++
++	r = cc->core_store->type->message(cc->core_store, argc, argv);
++
++	cc->metadata_counter++;
++	cc->cluster_metadata_counter = cc->metadata_counter;
++	cluster_unlock(cc);
++
++	return r;
++}
++
++/*
++ * Here is where we define what core exception store types are
++ * valid for this module to clusterize.  The necessary qualities
++ * of the core exception store are:
++ *	1) Must be able to resume multiple times (i.e. re-read
++ *	   its metadata).  This is because other nodes are allowed
++ *	   to add/alter the metadata underneath you.  Ideally, only
++ *	   the delta's will be picked up when the metadata is
++ *	   re-read - as is the case with the "persistent" store.
++ *	*2) Must not be a "shared" exception store.  IOW, the alteration
++ *	   of one exception store cannot affect another.  Currently, this
++ *	   situation is not adequately handled (but could be handled if
++ *	   people really want it).
++ *
++ * If the above conditions are met, then you can simply add an addtional
++ * 'dm_exception_store_type' below.  In fact, you could copy the block of
++ * code that is there and replace 'persistent' with the name of the
++ * exception store type that is being covered.
++ */
++static struct dm_exception_store_type _clusterized_persistent = {
++	.name = "clusterized-persistent",
++	.module = THIS_MODULE,
++	.ctr = clusterized_ctr,
++	.dtr = clusterized_dtr,
++	.resume = clusterized_resume,
++	.presuspend = clusterized_presuspend,
++	.postsuspend = clusterized_postsuspend,
++	.prepare_exception = clusterized_prepare_exception,
++	.commit_exception = clusterized_commit_exception,
++	.lookup_exception = clusterized_lookup_exception,
++	.fraction_full = clusterized_fraction_full,
++	.status = clusterized_status,
++	.message = clusterized_message,
++};
++
++static int __init dm_clusterized_exception_store_init(void)
++{
++	int r;
++
++	r = dm_exception_store_type_register(&_clusterized_persistent);
++	if (r)
++		DMERR("Unable to register clusterized-persistent"
++		      " exception store type: %d", r);
++	else
++		DMINFO("(built %s %s) installed", __DATE__, __TIME__);
++
++	return r;
++}
++
++static void __exit dm_clusterized_exception_store_exit(void)
++{
++	dm_exception_store_type_unregister(&_clusterized_persistent);
++	DMINFO("(built %s %s) removed", __DATE__, __TIME__);
++}
++
++module_init(dm_clusterized_exception_store_init);
++module_exit(dm_clusterized_exception_store_exit);
++
++MODULE_DESCRIPTION(DM_MSG_PREFIX);
++MODULE_AUTHOR("Jonathan Brassow <jbrassow@redhat.com>");
++MODULE_LICENSE("GPL");
+Index: linux-2.6/Documentation/dm-exception-store.txt
+===================================================================
+--- /dev/null
++++ linux-2.6/Documentation/dm-exception-store.txt
+@@ -0,0 +1,45 @@
++Device-Mapper Exception Store
++=============================
++The device-mapper exception store code is used by device-mapper
++snapshots (although other targets could find it useful as well).
++The exception stores provide a way to map the old location of a
++chunk (a discrete portion of the storage space) to a new location.
++This remapping information is called an "exception".  Snapshots
++use this to track their Copy-On-Write data.
++
++There is a generic exception store interface.  Various different
++exception store implementations are available and have vastly
++different characteristics.  The list includes:
++
++Type                      File(s)
++====                      =======
++persistent                drivers/md/dm-snap-persistent.c
++P (depricated)		  drivers/md/dm-snap-persistent.c
++transient		  drivers/md/dm-snap-transient.c
++N (depricated)		  drivers/md/dm-snap-transient.c
++clusterized-persistent	  drivers/md/dm-ex-store-clusterized.c
++
++The "persistent" type
++---------------------
++No fancy algorithms or space efficiency considerations.  Just
++a simple way to store exceptions to disk.  The exception store
++data can survive reboots and crashes.  The "P" type is simply
++the old name for this exception store type.
++
++The "transient" type
++--------------------
++No fancy algorithms or space efficiency considerations.  Just
++a simple way to store exceptions in memory.  The exception store
++data /will not/ survive reboots and crashes.  The "N" type is simply
++the old name for this exception store type.
++
++The "clusterized-persistent" type
++---------------------------------
++This implementation merely provides DLM wrapping around other available
++types.  This is why the term 'clusterized-' is used instead of 'cluster-'
++or 'clustered-'.  This implementation has the ability to wrap most
++present and future exception store implementations, although "persistent"
++is currently the only one supported.  This wrapping makes the exception
++stores cluster-aware, which in turn makes device-mapper snapshots cluster
++aware.
++
