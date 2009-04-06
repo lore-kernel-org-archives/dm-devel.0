@@ -1,9 +1,17 @@
-From: bmarzins@sourceware.org
-Subject: multipath-tools/multipathd main.c multipathd.i ...
-Date: 6 Apr 2009 16:50:44 -0000
-Message-ID: <20090406165044.22474.qmail@sourceware.org>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: RE: SCSI Hardware Handler and slow failover with large
+	number of LUNS
+Date: Mon, 06 Apr 2009 10:47:06 -0700
+Message-ID: <1239040026.25764.4.camel@chandra-ubuntu>
+References: <1238880636.11478.8.camel@chandra-ubuntu>
+	<8F08A56613D77044BD153E2AC5DA0F8401A817E4@CORPUSMX40A.corp.emc.com>
+Reply-To: sekharan@linux.vnet.ibm.com,
+	device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <8F08A56613D77044BD153E2AC5DA0F8401A817E4@CORPUSMX40A.corp.emc.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -13,57 +21,65 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-cvs@sourceware.org, dm-devel@redhat.com
+To: berthiaume_wayne@emc.com
+Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Babu.Moger@lsi.com
 List-Id: dm-devel.ids
 
-CVSROOT:	/cvs/dm
-Module name:	multipath-tools
-Branch: 	RHEL5_FC6
-Changes by:	bmarzins@sourceware.org	2009-04-06 16:50:44
 
-Modified files:
-	multipathd     : main.c multipathd.init.redhat 
+On Mon, 2009-04-06 at 11:38 -0400, berthiaume_wayne@emc.com wrote:
+> Hi Chandra.
+> 
+> 	We're currently testing 1024 LUNs across four paths with the
+> older handler but will be doing the same with the new handler later this
 
-Log message:
-	Fix for bz #493402. Change umask for multipathd. Already fixed upstream.
+Hi Wayne,
 
-Patches:
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.17&r2=1.69.2.18
-http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/multipathd.init.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.4.3&r2=1.2.4.4
+What do you mean by "older" handler ? dm_emc ?
 
---- multipath-tools/multipathd/main.c	2009/04/03 15:09:03	1.69.2.17
-+++ multipath-tools/multipathd/main.c	2009/04/06 16:50:43	1.69.2.18
-@@ -775,6 +775,7 @@
- 	add_handler(RESTOREQ+MAPS, cli_restore_all_queueing);
- 	add_handler(RESIZE+MAP, cli_resize);
- 
-+	umask(077);
- 	uxsock_listen(&uxsock_trigger, ap);
- 
- 	return NULL;
-@@ -1497,7 +1498,6 @@
- 	close(in_fd);
- 	close(out_fd);
- 	chdir("/");
--	umask(0);
- }
- 
- enum child_flag_bits {
---- multipath-tools/multipathd/multipathd.init.redhat	2008/08/28 19:22:33	1.2.4.3
-+++ multipath-tools/multipathd/multipathd.init.redhat	2009/04/06 16:50:44	1.2.4.4
-@@ -29,6 +29,7 @@
- 
- teardown_slaves()
- {
-+pwd=`pwd`
- cd $1; 
- if [ -d "slaves" ]; then
- for slave in slaves/*;
-@@ -54,6 +55,7 @@
- 			exit 1
- 		fi
- fi
-+cd $pwd
- }
- 
- #
+> month. It sounds like I should move this up in the queue. 
+> 
+> Regards,
+> Wayne. 
+> 
+> -----Original Message-----
+> From: linux-scsi-owner@vger.kernel.org
+> [mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of Chandra
+> Seetharaman
+> Sent: Saturday, April 04, 2009 5:31 PM
+> To: dm-devel; Linux SCSI Mailing list
+> Cc: Moger, Babu
+> Subject: SCSI Hardware Handler and slow failover with large number of
+> LUNS
+> 
+> Hello All,
+> 
+> During testing with the latest SCSI DH Handler on a rdac storage, Babu
+> found that the failover time with 100+ luns takes about 15 minutes,
+> which is not good.
+> 
+> We found that the problem is due to the fact that we serialize activate
+> in dm on the work queue.
+> 
+> We can solve the problem in rdac handler in 2 ways
+>  1. batch up the activates (mode_selects) and send few of them.
+>  2. Do mode selects in async mode.
+> 
+> Just wondering if anybody had seen the same problem in other storages
+> (EMC, HP and Alua). 
+> 
+> Please share your experiences, so we can come up with a solution that
+> works for all hardware handlers.
+> 
+> regards,
+> 
+> chandra
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
