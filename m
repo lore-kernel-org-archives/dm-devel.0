@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 3 of 33] DM Snapshot: shot cleanup
-Date: Mon, 6 Apr 2009 16:32:56 -0500
-Message-ID: <200904062132.n36LWubu019917@hydrogen.msp.redhat.com>
+Subject: [PATCH 5 of 33] DM Snapshot: rename exception_table to
+	dm_exception_table
+Date: Mon, 6 Apr 2009 16:33:17 -0500
+Message-ID: <200904062133.n36LXHDZ020063@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,97 +17,84 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snapshot-cleanup.patch
+Patch name: dm-snap-rename-exception_table-to-dm_exception_table.patch
 
-From: Jonathan Brassow <jbrassow@redhat.com>
-
-This patch applies on top of the previous 12 just to clean-up some
-indenting and such.
-
- brassow
-
-Indenting and formatting fixes after a long series of patches.
+Rename exception_table for broader use outside dm-snap.c
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
----
- drivers/md/dm-snap-persistent.c |    4 ++--
- drivers/md/dm-snap.c            |   14 +++++++-------
- 2 files changed, 9 insertions(+), 9 deletions(-)
-
-Index: linux-2.6.29/drivers/md/dm-snap-persistent.c
+Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
---- linux-2.6.29.orig/drivers/md/dm-snap-persistent.c
-+++ linux-2.6.29/drivers/md/dm-snap-persistent.c
-@@ -519,7 +519,7 @@ static int persistent_read_metadata(stru
- 	ps->exceptions_per_area = (ps->store->chunk_size << SECTOR_SHIFT) /
- 				  sizeof(struct disk_exception);
- 	ps->callbacks = dm_vcalloc(ps->exceptions_per_area,
--			sizeof(*ps->callbacks));
-+				   sizeof(*ps->callbacks));
- 	if (!ps->callbacks)
- 		return -ENOMEM;
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -51,7 +51,7 @@
+ #define DM_TRACKED_CHUNK_HASH(x)	((unsigned long)(x) & \
+ 					 (DM_TRACKED_CHUNK_HASH_SIZE - 1))
  
-@@ -630,7 +630,7 @@ static void persistent_commit_exception(
- 	 * If we completely filled the current area, then wipe the next one.
- 	 */
- 	if ((ps->current_committed == ps->exceptions_per_area) &&
--	     zero_disk_area(ps, ps->current_area + 1))
-+	    zero_disk_area(ps, ps->current_area + 1))
- 		ps->valid = 0;
+-struct exception_table {
++struct dm_exception_table {
+ 	uint32_t hash_mask;
+ 	unsigned hash_shift;
+ 	struct list_head *table;
+@@ -75,8 +75,8 @@ struct dm_snapshot {
+ 
+ 	atomic_t pending_exceptions_count;
+ 
+-	struct exception_table pending;
+-	struct exception_table complete;
++	struct dm_exception_table pending;
++	struct dm_exception_table complete;
  
  	/*
-Index: linux-2.6.29/drivers/md/dm-snap.c
-===================================================================
---- linux-2.6.29.orig/drivers/md/dm-snap.c
-+++ linux-2.6.29/drivers/md/dm-snap.c
-@@ -365,7 +365,8 @@ static int init_exception_table(struct e
+ 	 * pe_lock protects all pending_exception operations and access
+@@ -348,7 +348,7 @@ static void unregister_snapshot(struct d
+  * The lowest hash_shift bits of the chunk number are ignored, allowing
+  * some consecutive chunks to be grouped together.
+  */
+-static int init_exception_table(struct exception_table *et, uint32_t size,
++static int init_exception_table(struct dm_exception_table *et, uint32_t size,
+ 				unsigned hash_shift)
+ {
+ 	unsigned int i;
+@@ -365,7 +365,7 @@ static int init_exception_table(struct e
  	return 0;
  }
  
--static void exit_exception_table(struct exception_table *et, struct kmem_cache *mem)
-+static void exit_exception_table(struct exception_table *et,
-+				 struct kmem_cache *mem)
+-static void exit_exception_table(struct exception_table *et,
++static void exit_exception_table(struct dm_exception_table *et,
+ 				 struct kmem_cache *mem)
  {
  	struct list_head *slot;
- 	struct dm_snap_exception *ex, *next;
-@@ -669,8 +670,7 @@ static int snapshot_ctr(struct dm_target
- 
- 	s = kmalloc(sizeof(*s), GFP_KERNEL);
- 	if (!s) {
--		ti->error = "Cannot allocate snapshot context private "
--		    "structure";
-+		ti->error = "Cannot allocate snapshot private structure";
- 		r = -ENOMEM;
- 		goto bad_snap;
- 	}
-@@ -960,7 +960,7 @@ static void pending_complete(struct dm_s
- 	 */
- 	insert_completed_exception(s, e);
- 
-- out:
-+out:
- 	remove_exception(&pe->e);
- 	snapshot_bios = bio_list_get(&pe->snapshot_bios);
- 	origin_bios = put_pending_exception(pe);
-@@ -1023,7 +1023,7 @@ static void start_copy(struct dm_snap_pe
- 
- 	/* Hand over to kcopyd */
- 	dm_kcopyd_copy(s->kcopyd_client,
--		    &src, 1, &dest, 0, copy_callback, pe);
-+		       &src, 1, &dest, 0, copy_callback, pe);
+@@ -383,12 +383,12 @@ static void exit_exception_table(struct 
+ 	vfree(et->table);
  }
  
- static struct dm_snap_pending_exception *
-@@ -1168,9 +1168,9 @@ static int snapshot_map(struct dm_target
- 		map_context->ptr = track_chunk(s, chunk);
- 	}
- 
-- out_unlock:
-+out_unlock:
- 	up_write(&s->lock);
-- out:
-+out:
- 	return r;
+-static uint32_t exception_hash(struct exception_table *et, chunk_t chunk)
++static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
+ {
+ 	return (chunk >> et->hash_shift) & et->hash_mask;
  }
+ 
+-static void insert_exception(struct exception_table *eh,
++static void insert_exception(struct dm_exception_table *eh,
+ 			     struct dm_exception *e)
+ {
+ 	struct list_head *l = &eh->table[exception_hash(eh, e->old_chunk)];
+@@ -404,7 +404,7 @@ static void remove_exception(struct dm_e
+  * Return the exception data for a sector, or NULL if not
+  * remapped.
+  */
+-static struct dm_exception *lookup_exception(struct exception_table *et,
++static struct dm_exception *lookup_exception(struct dm_exception_table *et,
+ 						  chunk_t chunk)
+ {
+ 	struct list_head *slot;
+@@ -458,7 +458,7 @@ static void free_pending_exception(struc
+ static void insert_completed_exception(struct dm_snapshot *s,
+ 				       struct dm_exception *new_e)
+ {
+-	struct exception_table *eh = &s->complete;
++	struct dm_exception_table *eh = &s->complete;
+ 	struct list_head *l;
+ 	struct dm_exception *e = NULL;
  
