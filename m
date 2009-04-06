@@ -1,16 +1,16 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Re: [PATCH] dm-add-ioband.patch
-Date: Mon, 06 Apr 2009 12:18:01 +0900 (JST)
-Message-ID: <20090406.121801.193718314.ryov@valinux.co.jp>
-References: <20090310.202029.193700185.ryov@valinux.co.jp>
-	<20090403.185342.104044695.ryov@valinux.co.jp>
-	<20090403140841.GA15631@infradead.org>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: SCSI Hardware Handler and slow failover with large
+ number of LUNS
+Date: Mon, 6 Apr 2009 07:44:03 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466954724@cosmail01.lsi.com>
+References: <1238880636.11478.8.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090403140841.GA15631@infradead.org>
+In-Reply-To: <1238880636.11478.8.camel@chandra-ubuntu>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,30 +20,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, hch@infradead.org
-Cc: agk@redhat.com
+To: "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, dm-devel <dm-devel@redhat.com>, Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Christoph,
 
-> > I would appreciate it if you could take a look and review this patch
-> > and advice me about merging dm-ioband to upstream.
-> 
-> Do we have any agreement on what io bandwith controller we want to
-> merge?  Personally I don't think a dm target is a good idea, this seem
-> like something we want to tie into the block layer directly, especially
-> when using cfq so that it gets integrated into the scheduling decisions.
+Thanks Chandra for bringing this up.
 
-I don't think the IO bandwidth controller has to be integrated into
-the IO scheduler, because I think there are many cases where people
-only want bandwidth control, no need to classify IOs like CFQ.
-I think a dm target is a very good idea for the following reasons:
-- A user have a choice whether to use dm-ioband or not, and dm-ioband
-  doesn't make any effects on the system if a user doesn't use it.
-- The dm target is highly independent module, so we don't need to modify
-  the existing kernel code including the IO schedulers. It can keep
-  the IO scheduler and the IO bandwidth controller implementations
-  simple.
+Yes this will be a major drawback for the users who use rdac handler for =
+their storage with large configurations.
 
-Thanks,
-Ryo Tsuruta
+Thanks
+Babu Moger=20
+
+-----Original Message-----
+From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]=20
+Sent: Saturday, April 04, 2009 4:31 PM
+To: dm-devel; Linux SCSI Mailing list
+Cc: Moger, Babu
+Subject: SCSI Hardware Handler and slow failover with large number of LUN=
+S
+
+Hello All,
+
+During testing with the latest SCSI DH Handler on a rdac storage, Babu
+found that the failover time with 100+ luns takes about 15 minutes,
+which is not good.
+
+We found that the problem is due to the fact that we serialize activate
+in dm on the work queue.
+
+We can solve the problem in rdac handler in 2 ways
+ 1. batch up the activates (mode_selects) and send few of them.
+ 2. Do mode selects in async mode.
+
+Just wondering if anybody had seen the same problem in other storages
+(EMC, HP and Alua).=20
+
+Please share your experiences, so we can come up with a solution that
+works for all hardware handlers.
+
+regards,
+
+chandra
