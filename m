@@ -1,16 +1,17 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
+From: berthiaume_wayne@emc.com
 Subject: RE: SCSI Hardware Handler and slow failover with large
- number of LUNS
-Date: Mon, 6 Apr 2009 07:44:03 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466954724@cosmail01.lsi.com>
+	number of LUNS
+Date: Mon, 6 Apr 2009 11:38:41 -0400
+Message-ID: <8F08A56613D77044BD153E2AC5DA0F8401A817E4@CORPUSMX40A.corp.emc.com>
 References: <1238880636.11478.8.camel@chandra-ubuntu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
+Content-Type: text/plain;
+	charset="us-ascii"
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
 In-Reply-To: <1238880636.11478.8.camel@chandra-ubuntu>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,25 +21,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>, dm-devel <dm-devel@redhat.com>, Linux SCSI Mailing list <linux-scsi@vger.kernel.org>
+To: sekharan@linux.vnet.ibm.com, dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Cc: Babu.Moger@lsi.com
 List-Id: dm-devel.ids
 
+Hi Chandra.
 
-Thanks Chandra for bringing this up.
+	We're currently testing 1024 LUNs across four paths with the
+older handler but will be doing the same with the new handler later this
+month. It sounds like I should move this up in the queue.=20
 
-Yes this will be a major drawback for the users who use rdac handler for =
-their storage with large configurations.
-
-Thanks
-Babu Moger=20
+Regards,
+Wayne.=20
 
 -----Original Message-----
-From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]=20
-Sent: Saturday, April 04, 2009 4:31 PM
+From: linux-scsi-owner@vger.kernel.org
+[mailto:linux-scsi-owner@vger.kernel.org] On Behalf Of Chandra
+Seetharaman
+Sent: Saturday, April 04, 2009 5:31 PM
 To: dm-devel; Linux SCSI Mailing list
 Cc: Moger, Babu
-Subject: SCSI Hardware Handler and slow failover with large number of LUN=
-S
+Subject: SCSI Hardware Handler and slow failover with large number of
+LUNS
 
 Hello All,
 
@@ -62,3 +66,4 @@ works for all hardware handlers.
 regards,
 
 chandra
+
