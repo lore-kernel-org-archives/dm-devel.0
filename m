@@ -1,15 +1,9 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: SCSI Hardware Handler and slow failover with large
-	number of LUNS
-Date: Mon, 06 Apr 2009 10:43:45 -0500
-Message-ID: <49DA2331.8020609@cs.wisc.edu>
-References: <1238880636.11478.8.camel@chandra-ubuntu>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/multipathd main.c multipathd.i ...
+Date: 6 Apr 2009 16:50:44 -0000
+Message-ID: <20090406165044.22474.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1238880636.11478.8.camel@chandra-ubuntu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,61 +13,57 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com, device-mapper development <dm-devel@redhat.com>
-Cc: Linux SCSI Mailing list <linux-scsi@vger.kernel.org>, "Moger,
-	Babu" <Babu.Moger@lsi.com>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Chandra Seetharaman wrote:
-> Hello All,
-> 
-> During testing with the latest SCSI DH Handler on a rdac storage, Babu
-> found that the failover time with 100+ luns takes about 15 minutes,
-> which is not good.
-> 
-> We found that the problem is due to the fact that we serialize activate
-> in dm on the work queue.
-> 
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-04-06 16:50:44
 
-I thought we talked about this during the review?
+Modified files:
+	multipathd     : main.c multipathd.init.redhat 
 
-> We can solve the problem in rdac handler in 2 ways
->  1. batch up the activates (mode_selects) and send few of them.
->  2. Do mode selects in async mode.
+Log message:
+	Fix for bz #493402. Change umask for multipathd. Already fixed upstream.
 
-I think most of the ugliness in the original async mode was due to 
-trying to use the REQ_BLOCK* path. With the scsi_dh_activate path, it 
-should now be easier because in the send path we do not have to worry 
-about queue locks being held and context.
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.17&r2=1.69.2.18
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/multipathd.init.redhat.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.2.4.3&r2=1.2.4.4
 
-I think we could just use blk_execute_rq_nowait to send the IO. Then we 
-would have a workqueue/thread per something (maybe per dh module I 
-thought), that would be queued/notified when the IO completed. The 
-thread could then process the IO and handle the next stage if needed.
-
-Why use the thread you might wonder? I think it fixes another issue with 
-the original async mode, and makes it easier if the scsi_dh module has 
-to send more IO. When using the thread it would not have to worry about 
-the queue_lock being held in the IO completion path and does not have to 
-worry about being run from more restrictive contexts.
-
-
-> 
-> Just wondering if anybody had seen the same problem in other storages
-> (EMC, HP and Alua). 
-
-They should all have the same problem.
-
-
-> 
-> Please share your experiences, so we can come up with a solution that
-> works for all hardware handlers.
-> 
-> regards,
-> 
-> chandra
-> 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
+--- multipath-tools/multipathd/main.c	2009/04/03 15:09:03	1.69.2.17
++++ multipath-tools/multipathd/main.c	2009/04/06 16:50:43	1.69.2.18
+@@ -775,6 +775,7 @@
+ 	add_handler(RESTOREQ+MAPS, cli_restore_all_queueing);
+ 	add_handler(RESIZE+MAP, cli_resize);
+ 
++	umask(077);
+ 	uxsock_listen(&uxsock_trigger, ap);
+ 
+ 	return NULL;
+@@ -1497,7 +1498,6 @@
+ 	close(in_fd);
+ 	close(out_fd);
+ 	chdir("/");
+-	umask(0);
+ }
+ 
+ enum child_flag_bits {
+--- multipath-tools/multipathd/multipathd.init.redhat	2008/08/28 19:22:33	1.2.4.3
++++ multipath-tools/multipathd/multipathd.init.redhat	2009/04/06 16:50:44	1.2.4.4
+@@ -29,6 +29,7 @@
+ 
+ teardown_slaves()
+ {
++pwd=`pwd`
+ cd $1; 
+ if [ -d "slaves" ]; then
+ for slave in slaves/*;
+@@ -54,6 +55,7 @@
+ 			exit 1
+ 		fi
+ fi
++cd $pwd
+ }
+ 
+ #
