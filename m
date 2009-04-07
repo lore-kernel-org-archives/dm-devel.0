@@ -1,8 +1,8 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: FW: [RHSA-2009:0411-01] Moderate:
-	device-mapper-multipath security update
-Date: Tue, 7 Apr 2009 23:06:59 +0100
-Message-ID: <20090407220659.GP5688@agk.fab.redhat.com>
+From: Benjamin Marzinski <bmarzins@redhat.com>
+Subject: [PATCH] add queue_without_daemon config option for
+	multipathd
+Date: Tue, 7 Apr 2009 17:23:48 -0500
+Message-ID: <20090407222348.GA15911@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -17,224 +17,168 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+Once you stop multipathd, if you've lost all your paths, you aren't going to
+have them restored, and any queued IO will just sit there. This can be
+especially problematic on shutdown. This patch adds a queue_without_daemon
+option to the defaults section of multipath.conf. If this is set to "no",
+when multipathd stops, queue_if_no_path is turned off for all devices. If
+multipathd is restarted, queue_if_no_path is reset appropriately for all
+devices.
 
-=====================================================================
-                   Red Hat Security Advisory
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ libmultipath/config.h    |    1 +
+ libmultipath/dict.c      |   35 +++++++++++++++++++++++++++++++++++
+ libmultipath/structs.h   |    6 ++++++
+ multipath.conf.annotated |    9 +++++++++
+ multipath.conf.synthetic |    1 +
+ multipathd/main.c        |    5 +++++
+ 6 files changed, 57 insertions(+)
 
-Synopsis:          Moderate: device-mapper-multipath security update
-Advisory ID:       RHSA-2009:0411-01
-Product:           Red Hat Enterprise Linux
-Advisory URL:      https://rhn.redhat.com/errata/RHSA-2009-0411.html
-Issue date:        2009-04-07
-CVE Names:         CVE-2009-0115 
-=====================================================================
-
-1. Summary:
-
-Updated device-mapper-multipath packages that fix a security issue are now
-available for Red Hat Enterprise Linux 4 and 5.
-
-This update has been rated as having moderate security impact by the Red
-Hat Security Response Team.
-
-2. Relevant releases/architectures:
-
-Red Hat Enterprise Linux (v. 5 server) - i386, ia64, ppc, s390x, x86_64
-Red Hat Enterprise Linux AS version 4 - i386, ia64, ppc, s390, s390x, x86_64
-Red Hat Enterprise Linux Desktop (v. 5 client) - i386, x86_64
-Red Hat Enterprise Linux Desktop version 4 - i386, x86_64
-Red Hat Enterprise Linux ES version 4 - i386, ia64, x86_64
-Red Hat Enterprise Linux WS version 4 - i386, ia64, x86_64
-
-3. Description:
-
-The device-mapper multipath packages provide tools to manage multipath
-devices by issuing instructions to the device-mapper multipath kernel
-module, and by managing the creation and removal of partitions for
-device-mapper devices.
-
-It was discovered that the multipathd daemon set incorrect permissions on
-the socket used to communicate with command line clients. An unprivileged,
-local user could use this flaw to send commands to multipathd, resulting in
-access disruptions to storage devices accessible via multiple paths and,
-possibly, file system corruption on these devices. (CVE-2009-0115)
-
-Users of device-mapper-multipath are advised to upgrade to these updated
-packages, which contain a backported patch to resolve this issue. The
-multipathd service must be restarted for the changes to take effect.
-
-Important: the version of the multipathd daemon in Red Hat Enterprise Linux
-5 has a known issue which may cause a machine to become unresponsive when
-the multipathd service is stopped. This issue is tracked in the Bugzilla
-bug #494582; a link is provided in the References section of this erratum.
-Until this issue is resolved, we recommend restarting the multipathd
-service by issuing the following commands in sequence:
-
-	# killall -KILL multipathd
-
-	# service multipathd restart
-
-4. Solution:
-
-Before applying this update, make sure that all previously-released
-errata relevant to your system have been applied.
-
-This update is available via Red Hat Network.  Details on how to use
-the Red Hat Network to apply this update are available at
-http://kbase.redhat.com/faq/docs/DOC-11259
-
-5. Bugs fixed (http://bugzilla.redhat.com/):
-
-493330 - CVE-2009-0115 device-mapper-multipath: insecure permissions on multipathd.sock
-
-6. Package List:
-
-Red Hat Enterprise Linux AS version 4:
-
-Source:
-ftp://updates.redhat.com/enterprise/4AS/en/os/SRPMS/device-mapper-multipath-0.4.5-31.el4_7.1.src.rpm
-
-i386:
-device-mapper-multipath-0.4.5-31.el4_7.1.i386.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.i386.rpm
-
-ia64:
-device-mapper-multipath-0.4.5-31.el4_7.1.ia64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.ia64.rpm
-
-ppc:
-device-mapper-multipath-0.4.5-31.el4_7.1.ppc.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.ppc.rpm
-
-s390:
-device-mapper-multipath-0.4.5-31.el4_7.1.s390.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.s390.rpm
-
-s390x:
-device-mapper-multipath-0.4.5-31.el4_7.1.s390x.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.s390x.rpm
-
-x86_64:
-device-mapper-multipath-0.4.5-31.el4_7.1.x86_64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.x86_64.rpm
-
-Red Hat Enterprise Linux Desktop version 4:
-
-Source:
-ftp://updates.redhat.com/enterprise/4Desktop/en/os/SRPMS/device-mapper-multipath-0.4.5-31.el4_7.1.src.rpm
-
-i386:
-device-mapper-multipath-0.4.5-31.el4_7.1.i386.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.i386.rpm
-
-x86_64:
-device-mapper-multipath-0.4.5-31.el4_7.1.x86_64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.x86_64.rpm
-
-Red Hat Enterprise Linux ES version 4:
-
-Source:
-ftp://updates.redhat.com/enterprise/4ES/en/os/SRPMS/device-mapper-multipath-0.4.5-31.el4_7.1.src.rpm
-
-i386:
-device-mapper-multipath-0.4.5-31.el4_7.1.i386.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.i386.rpm
-
-ia64:
-device-mapper-multipath-0.4.5-31.el4_7.1.ia64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.ia64.rpm
-
-x86_64:
-device-mapper-multipath-0.4.5-31.el4_7.1.x86_64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.x86_64.rpm
-
-Red Hat Enterprise Linux WS version 4:
-
-Source:
-ftp://updates.redhat.com/enterprise/4WS/en/os/SRPMS/device-mapper-multipath-0.4.5-31.el4_7.1.src.rpm
-
-i386:
-device-mapper-multipath-0.4.5-31.el4_7.1.i386.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.i386.rpm
-
-ia64:
-device-mapper-multipath-0.4.5-31.el4_7.1.ia64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.ia64.rpm
-
-x86_64:
-device-mapper-multipath-0.4.5-31.el4_7.1.x86_64.rpm
-device-mapper-multipath-debuginfo-0.4.5-31.el4_7.1.x86_64.rpm
-
-Red Hat Enterprise Linux Desktop (v. 5 client):
-
-Source:
-ftp://ftp.redhat.com/pub/redhat/linux/enterprise/5Client/en/os/SRPMS/device-mapper-multipath-0.4.7-23.el5_3.2.src.rpm
-
-i386:
-device-mapper-multipath-0.4.7-23.el5_3.2.i386.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.i386.rpm
-kpartx-0.4.7-23.el5_3.2.i386.rpm
-
-x86_64:
-device-mapper-multipath-0.4.7-23.el5_3.2.x86_64.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.x86_64.rpm
-kpartx-0.4.7-23.el5_3.2.x86_64.rpm
-
-Red Hat Enterprise Linux (v. 5 server):
-
-Source:
-ftp://ftp.redhat.com/pub/redhat/linux/enterprise/5Server/en/os/SRPMS/device-mapper-multipath-0.4.7-23.el5_3.2.src.rpm
-
-i386:
-device-mapper-multipath-0.4.7-23.el5_3.2.i386.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.i386.rpm
-kpartx-0.4.7-23.el5_3.2.i386.rpm
-
-ia64:
-device-mapper-multipath-0.4.7-23.el5_3.2.ia64.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.ia64.rpm
-kpartx-0.4.7-23.el5_3.2.ia64.rpm
-
-ppc:
-device-mapper-multipath-0.4.7-23.el5_3.2.ppc.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.ppc.rpm
-kpartx-0.4.7-23.el5_3.2.ppc.rpm
-
-s390x:
-device-mapper-multipath-0.4.7-23.el5_3.2.s390x.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.s390x.rpm
-kpartx-0.4.7-23.el5_3.2.s390x.rpm
-
-x86_64:
-device-mapper-multipath-0.4.7-23.el5_3.2.x86_64.rpm
-device-mapper-multipath-debuginfo-0.4.7-23.el5_3.2.x86_64.rpm
-kpartx-0.4.7-23.el5_3.2.x86_64.rpm
-
-These packages are GPG signed by Red Hat for security.  Our key and 
-details on how to verify the signature are available from
-https://www.redhat.com/security/team/key/#package
-
-7. References:
-
-http://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2009-0115
-http://www.redhat.com/security/updates/classification/#moderate
-https://bugzilla.redhat.com/show_bug.cgi?id=494582
-
-8. Contact:
-
-The Red Hat security contact is <secalert@redhat.com>.  More contact
-details at https://www.redhat.com/security/team/contact/
-
-Copyright 2009 Red Hat, Inc.
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.4 (GNU/Linux)
-
-iD8DBQFJ26TjXlSAg2UNWIIRAnW7AJ4tUnBrI4MY67KDkm1s/8otbCkBIgCeIG5L
-k0Qd+xIu8PF3oLGHw61yKbE=
-=AdN9
------END PGP SIGNATURE-----
+Index: multipath-tools-090407/libmultipath/config.h
+===================================================================
+--- multipath-tools-090407.orig/libmultipath/config.h	2009-04-07 15:21:34.000000000 -0500
++++ multipath-tools-090407/libmultipath/config.h	2009-04-07 09:16:31.000000000 -0500
+@@ -66,6 +66,7 @@ struct config {
+ 	int pg_timeout;
+ 	int max_fds;
+ 	int force_reload;
++	int queue_without_daemon;
+ 	int daemon;
+ 	int flush_on_last_del;
+ 
+Index: multipath-tools-090407/libmultipath/dict.c
+===================================================================
+--- multipath-tools-090407.orig/libmultipath/dict.c	2009-04-07 15:21:35.000000000 -0500
++++ multipath-tools-090407/libmultipath/dict.c	2009-04-07 09:16:31.000000000 -0500
+@@ -221,6 +221,28 @@ def_no_path_retry_handler(vector strvec)
+ }
+ 
+ static int
++def_queue_without_daemon(vector strvec)
++{
++	char * buff;
++
++	buff = set_value(strvec);
++	if (!buff)
++		return 1;
++
++	if (!strncmp(buff, "off", 3) || !strncmp(buff, "no", 2) ||
++	    !strncmp(buff, "0", 1))
++		conf->queue_without_daemon = QUE_NO_DAEMON_OFF;
++	else if (!strncmp(buff, "on", 2) || !strncmp(buff, "yes", 3) ||
++		 !strncmp(buff, "1", 1))
++		conf->queue_without_daemon = QUE_NO_DAEMON_ON;
++	else
++		conf->queue_without_daemon = QUE_NO_DAEMON_UNDEF;
++
++	free(buff);
++	return 0;
++}
++
++static int
+ def_pg_timeout_handler(vector strvec)
+ {
+ 	int pg_timeout;
+@@ -1594,6 +1616,18 @@ snprint_def_no_path_retry (char * buff, 
+ }
+ 
+ static int
++snprint_def_queue_without_daemon (char * buff, int len, void * data)
++{
++	switch (conf->queue_without_daemon) {
++	case QUE_NO_DAEMON_OFF:
++		return snprintf(buff, len, "no");
++	case QUE_NO_DAEMON_ON:
++		return snprintf(buff, len, "yes");
++	}
++	return 0;
++}
++
++static int
+ snprint_def_pg_timeout (char * buff, int len, void * data)
+ {
+ 	if (conf->pg_timeout == DEFAULT_PGTIMEOUT)
+@@ -1678,6 +1712,7 @@ init_keywords(void)
+ 	install_keyword("max_fds", &max_fds_handler, &snprint_max_fds);
+ 	install_keyword("rr_weight", &def_weight_handler, &snprint_def_rr_weight);
+ 	install_keyword("no_path_retry", &def_no_path_retry_handler, &snprint_def_no_path_retry);
++	install_keyword("queue_without_daemon", &def_queue_without_daemon, &snprint_def_queue_without_daemon);
+ 	install_keyword("pg_timeout", &def_pg_timeout_handler, &snprint_def_pg_timeout);
+ 	install_keyword("flush_on_last_del", &def_flush_on_last_del_handler, &snprint_def_flush_on_last_del);
+ 	install_keyword("user_friendly_names", &names_handler, &snprint_def_user_friendly_names);
+Index: multipath-tools-090407/libmultipath/structs.h
+===================================================================
+--- multipath-tools-090407.orig/libmultipath/structs.h	2009-04-07 15:21:35.000000000 -0500
++++ multipath-tools-090407/libmultipath/structs.h	2009-04-07 09:16:31.000000000 -0500
+@@ -62,6 +62,12 @@ enum pgstates {
+ 	PGSTATE_ACTIVE
+ };
+ 
++enum queue_without_daemon_states {
++	QUE_NO_DAEMON_UNDEF,
++	QUE_NO_DAEMON_OFF,
++	QUE_NO_DAEMON_ON,
++};
++
+ enum pgtimeouts {
+ 	PGTIMEOUT_UNDEF,
+ 	PGTIMEOUT_NONE
+Index: multipath-tools-090407/multipath.conf.annotated
+===================================================================
+--- multipath-tools-090407.orig/multipath.conf.annotated	2009-04-07 15:21:35.000000000 -0500
++++ multipath-tools-090407/multipath.conf.annotated	2009-04-07 10:28:56.000000000 -0500
+@@ -151,6 +151,15 @@
+ #	no_path_retry  queue
+ #
+ #	#
++#	# name    : queue_without_daemon
++#	# scope   : multipathd
++#	# desc    : If set to "no", multipathd will disable queueing for all
++#	#           devices when it is shut down.
++#	# values  : yes|no
++#	# default : yes
++#	queue_without_daemon	no
++#
++#	#
+ #	# name    : user_friendly_names
+ #	# scope   : multipath
+ #	# desc    : If set to "yes", using the bindings file
+Index: multipath-tools-090407/multipath.conf.synthetic
+===================================================================
+--- multipath-tools-090407.orig/multipath.conf.synthetic	2009-04-07 15:21:35.000000000 -0500
++++ multipath-tools-090407/multipath.conf.synthetic	2009-04-07 10:28:56.000000000 -0500
+@@ -16,6 +16,7 @@
+ #	rr_weight		priorities
+ #	failback		immediate
+ #	no_path_retry		fail
++#	queue_without_daemon    no
+ #	user_friendly_names	no
+ #}
+ #blacklist {
+Index: multipath-tools-090407/multipathd/main.c
+===================================================================
+--- multipath-tools-090407.orig/multipathd/main.c	2009-04-07 15:21:35.000000000 -0500
++++ multipath-tools-090407/multipathd/main.c	2009-04-07 09:16:31.000000000 -0500
+@@ -1318,6 +1318,8 @@ child (void * param)
+ 	pthread_t check_thr, uevent_thr, uxlsnr_thr;
+ 	pthread_attr_t log_attr, misc_attr;
+ 	struct vectors * vecs;
++	struct multipath * mpp;
++	int i;
+ 
+ 	mlockall(MCL_CURRENT | MCL_FUTURE);
+ 
+@@ -1411,6 +1413,9 @@ child (void * param)
+ 	 */
+ 	block_signal(SIGHUP, NULL);
+ 	lock(vecs->lock);
++	if (conf->queue_without_daemon == QUE_NO_DAEMON_OFF)
++		vector_foreach_slot(vecs->mpvec, mpp, i)
++			dm_queue_if_no_path(mpp->alias, 0);
+ 	remove_maps_and_stop_waiters(vecs);
+ 	free_pathvec(vecs->pathvec, FREE_PATHS);
+ 
