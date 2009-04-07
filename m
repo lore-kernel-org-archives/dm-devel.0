@@ -1,15 +1,12 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: Re: [PATCH 1 of 1] Updated cluster log patch
-Date: Tue, 7 Apr 2009 02:05:05 +0100
-Message-ID: <20090407010505.GH5688@agk.fab.redhat.com>
-References: <1238683235.24108.5.camel@hydrogen.msp.redhat.com>
-	<20090407005253.GG5688@agk.fab.redhat.com>
+From: =?GB2312?B?0Lu42Q==?= <xiegang112@gmail.com>
+Subject: How does the multipath driver handle the order of I/O
+Date: Tue, 7 Apr 2009 14:33:50 +0800
+Message-ID: <d364733c0904062333n523abdc7n271609254773e96b@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090407005253.GG5688@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,16 +16,17 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: dm-devel@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Actually, last time we wanted to use netlink we ended up using uevents
-instead IIRC.
+Hi,
+I looked througth the mail "Barriers still not passing on simple dm
+devices". It seems that the dm multipath driver could not guarantee
+the order of I/Os. But as far as I know, other dmp driver such as
+Veritas dmp driver could handle this. How could other dmp driver
+handle this since there is some limitation in block layer?
 
-So I think we should also document the reason why netlink was selected
-as the most appropriate interface for this particular use.
+Thanks
 
-Alasdair
 -- 
-agk@redhat.com
+Xie Gang
