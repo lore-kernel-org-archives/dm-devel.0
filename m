@@ -1,14 +1,23 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: [PATCH] Uevent cookie env var support
-Date: Wed, 8 Apr 2009 05:49:11 -0700
-Message-ID: <ac3eb2510904080549l50353d85xf1c4af8a31eb7613@mail.gmail.com>
-References: <49DC92CC.30708@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Wed, 8 Apr 2009 08:54:12 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904080844550.28196@hs20-bc2-1.build.redhat.com>
+References: <20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	<20090324150517.GX27476@kernel.dk>
+	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	<20090325152751.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+	<20090326084205.GG27476@kernel.dk>
+	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+	<20090331104933.GJ5178@kernel.dk>
+	<Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
+	<20090403081131.GP5178@kernel.dk> <49D77AC3.3020207@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49DC92CC.30708@redhat.com>
+In-Reply-To: <49D77AC3.3020207@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,32 +27,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Ric Wheeler <rwheeler@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Jens Axboe <jens.axboe@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 8, 2009 at 05:04, Peter Rajnoha <prajnoha@redhat.com> wrote:
-> this is a kernel side patch that adds support for cookie variables.
-> A cookie is a random unsigned 32 bit value generated in userspace
-> and passed into the DM through ioctl (reusing the event_nr field to
-> avoid the change in the interface). These values are sent back in
-> CHANGE and REMOVE uevents. This way we can easily pair a process
-> waiting for udev's rule completion and the udev event itself.
+> And I will restate that back at EMC we tested the original barriers (with
+> reiserfs mostly, a bit on ext3 and ext2) and saw significant reduction in file
+> system integrity issues after power loss.
 
-That sounds useful.
+You saw that barrier-enabled filesystem was worse than the same filesystem 
+without barriers? And what kind of issues were that? Disks writing damaged 
+sectors if powered-off in the middle of the writes? Or data corruptions 
+due to bugs in ReiserFS?
 
-I always thought we would return the driver core generated seqnum with
-the ioctl, so you could watch the udev event queue to see the events
-being handled. But if you are going to listen to the udev events, the
-cookie sounds like a nice solution.
+> The vantage point I had at EMC while testing and deploying the original
+> barrier work done by Jens and Chris was pretty unique - full ability to do
+> root cause failures of any component when really needed, a huge installed base
+> which could send information home on a regular basis about crashes/fsck
+> instances/etc and the ability (with customer permission) to dial into any box
+> and diagnose issues remotely. Not to mention access to drive vendors to
+> pressure them to make the flushes more robust. The application was also able
+> to validate that all acknowledged writes were consistent.
+> 
+> Barriers do work as we have them, but as others have mentioned, it is not a
+> "free" win - fsync will actually move your data safely out to persistent
+> storage for a huge percentage of real users (including every ATA/S-ATA and SAS
+> drive I was able to test).  The file systems I monitored in production use
+> without barriers were much less reliable.
 
-> Also,
-> we can use the cookie value to group the actions and related uevents
-> together, so we know which uevents belong to actions done on one
-> DM tree.
+With write cache or without write cache?
 
-If you would use the same cookie for several actions, how do you
-track, that udev has finished the work when you expect an arbitrary
-number of events with the same cookie?
+With cache and without barriers the system is violating the specification. 
+There just could be data corruption ... and it will eventually happen.
 
-Thanks,
-Kay
+If you got corruption without cache and without barriers, there's a bug 
+and it needs to be investigated.
+
+> As others have noted, some storage does not need barriers or flushed (high end
+> arrays, drives with no volatile write cache) and some need it but stink (low
+> cost USB flash sticks?) so warning is a good thing to do...
+> 
+> ric
+
+Mikulas
