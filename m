@@ -1,32 +1,94 @@
-From: Henrique de Moraes Holschuh <hmh@hmh.eng.br>
-Subject: Re: [dm-devel] Barriers still not passing on simple dm devices...
-Date: Wed, 8 Apr 2009 12:16:12 -0300
-Message-ID: <20090408151612.GF7802@khazad-dum.debian.net>
-References: <20090326084205.GG27476@kernel.dk> <Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com> <20090331104933.GJ5178@kernel.dk> <Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com> <20090403081131.GP5178@kernel.dk> <49D77AC3.3020207@redhat.com> <20090405012839.GF7553@mit.edu> <49D89C06.1060700@gmail.com> <75b66ecd0904051814n353bb69bp76a38e36cac4d3fe@mail.gmail.com> <Pine.LNX.4.64.0904080839200.28196@hs20-bc2-1.build.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S933697AbZDHPQc@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0904080839200.28196@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Lee Revell <rlrevell@joe-job.com>, Ric Wheeler <ricwheeler@gmail.com>, Theodore Tso <tytso@mit.edu>, Ric Wheeler <rwheeler@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ak@linux.intel.com, "MASON, CHRISTOPHER" <CHRIS.MASON@oracle.com>
+From: bmarzins@sourceware.org
+Subject: multipath-tools/path_priority/pp_alua rtpg.c
+Date: 8 Apr 2009 21:38:45 -0000
+Message-ID: <20090408213845.10235.qmail@sourceware.org>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Wed, 08 Apr 2009, Mikulas Patocka wrote:
-> I have seen an installation having generator backup, but with another 
-> serious flaw --- if someone plugged a computer causing short-circuit, it 
-> turned off the circuit breaker for the whole rack :)
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-04-08 21:38:45
 
-You will be hard-pressed to find datacenters where the above is NOT true
-:-)
+Modified files:
+	path_priority/pp_alua: rtpg.c 
 
-Although, usually one has TWO independent power feeds per rack, so a short
-is likely to bring down just half of it, and any equipment properly set up
-with dual independent power feeds should survive...
+Log message:
+	Fix for bz #490633. Adjust SCSI RTPG request buffer size in ALUA prioritizer.
+	Already upstream.
 
--- 
-  "One disk to rule them all, One disk to find them. One disk to bring
-  them all and in the darkness grind them. In the Land of Redmond
-  where the shadows lie." -- The Silicon Valley Tarot
-  Henrique Holschuh
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/rtpg.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3&r2=1.3.2.1
+
+--- multipath-tools/path_priority/pp_alua/rtpg.c	2006/07/13 19:49:23	1.3
++++ multipath-tools/path_priority/pp_alua/rtpg.c	2009/04/08 21:38:44	1.3.2.1
+@@ -21,6 +21,7 @@
+ #include <sys/stat.h>
+ #include <unistd.h>
+ #include <errno.h>
++#include <inttypes.h>
+ 
+ #define __user
+ #include <scsi/sg.h>
+@@ -251,14 +252,38 @@
+ int
+ get_asymmetric_access_state(int fd, unsigned int tpg)
+ {
+-	unsigned char		buf[128];
++	unsigned char		*buf;
+ 	struct rtpg_data *	tpgd;
+ 	struct rtpg_tpg_dscr *	dscr;
+ 	int			rc;
++	int			buflen;
++	uint32_t		scsi_buflen;
+ 
+-	rc = do_rtpg(fd, buf, sizeof(buf));
++	buflen = 128; /* Initial value from old code */
++	buf = (unsigned char *)malloc(buflen);
++	if (!buf) {
++		PRINT_DEBUG ("malloc failed: could not allocate"
++			"%u bytes\n", buflen);
++		return -RTPG_RTPG_FAILED;
++	}
++	rc = do_rtpg(fd, buf, buflen);
+ 	if (rc < 0)
+ 		return rc;
++	scsi_buflen = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
++	if (buflen < (scsi_buflen + 4)) {
++		free(buf);
++		buf = (unsigned char *)malloc(scsi_buflen);
++		if (!buf) {
++			PRINT_DEBUG ("malloc failed: could not allocate"
++				"%u bytes\n", scsi_buflen);
++			return -RTPG_RTPG_FAILED;
++		}
++		buflen = scsi_buflen;
++		rc = do_rtpg(fd, buf, buflen);
++		if (rc < 0)
++			goto out;
++	}
++
+ 
+ 	tpgd = (struct rtpg_data *) buf;
+ 	rc   = -RTPG_TPG_NOT_FOUND;
+@@ -274,7 +299,8 @@
+ 			}
+ 		}
+ 	}
+-
++out:
++	free(buf);
+ 	return rc;
+ }
+ 
