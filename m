@@ -1,16 +1,23 @@
-From: Kay Sievers <kay.sievers@vrfy.org>
-Subject: Re: [PATCH] Uevent cookie env var support
-Date: Wed, 8 Apr 2009 06:31:24 -0700
-Message-ID: <ac3eb2510904080631p724b5588k29069fafe948af56@mail.gmail.com>
-References: <49DC92CC.30708@redhat.com>
-	<ac3eb2510904080549l50353d85xf1c4af8a31eb7613@mail.gmail.com>
-	<20090408132056.GS5688@agk.fab.redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Wed, 8 Apr 2009 09:37:56 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904080855340.28196@hs20-bc2-1.build.redhat.com>
+References: <20090324143034.GW27476@kernel.dk>
+	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	<20090324150517.GX27476@kernel.dk>
+	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	<20090325152751.GV27476@kernel.dk>
+	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+	<20090326084205.GG27476@kernel.dk>
+	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+	<20090331104933.GJ5178@kernel.dk>
+	<Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
+	<20090403081131.GP5178@kernel.dk>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090408132056.GS5688@agk.fab.redhat.com>
+In-Reply-To: <20090403081131.GP5178@kernel.dk>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,35 +27,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Jens Axboe <jens.axboe@oracle.com>
+Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 8, 2009 at 06:20, Alasdair G Kergon <agk@redhat.com> wrote:
-> On Wed, Apr 08, 2009 at 05:49:11AM -0700, Kay Sievers wrote:
->> I always thought we would return the driver core generated seqnum with
->> the ioctl,
->
-> When Peter tried to make that work it needed more and more hacks
-> piled onto it and instead he came up with this cookie method which seem=
-s
-> to satisfy all our requirements with a minimum amount of change, finger=
-s
-> crossed.
->
-> E.g. A problem with the other approach was: lvm2 userspace doesn't know=
- the
-> seqnum till after the uevent has fired and udev could complete processi=
-ng
-> before the lvm2 code has set itself up to wait for that seqnum so you h=
-ave to
-> build extra interlocking into the process making it much more complex. =
-=C2=A0If you
-> wait for all events up to a given number you could get stuck behind som=
-e
-> unrelated event on an unresponsive device, with is also unsatisfactory.
+> > So I'm wondering why Linux developers designed a barrier interface with 
+> > complex specification, complex implementation and the interface is useless 
+> > to provide any request ordering and it's no better than q->issue_flush_fn 
+> > method or whatever was there beffore. Obviously, the whole barrier thing 
+> > was designed by a person who never used it in a filesystem.
+> 
+> That's not quite true, it was done in conjunction with file system
+> people.
+> ...
+> Nobody was interested in barriers when they were done. Nobody.
 
-Yeah, sounds sensible, and like a nice solution to the problem if you
-are able to watch the events udev sends out.
+That's a contradiction :-)
 
-Thanks,
-Kay
+
+Some times ago I wrote a piece of code that uses barriers for performance 
+enhancement 
+(http://artax.karlin.mff.cuni.cz/~mikulas/spadfs/download/spadfs-0.9.10.tar.gz).
+
+The used trick is basically to take a lock that prevents filesystem-wide 
+updates, submit remaining writes (don't wait), submit the barrier that 
+causes transition to new generation (don't wait) and release the lock. The 
+lock is held for minimum time, no IO is waited for inside the lock. This 
+trick can't be done without barriers, without barriers you'd have to wait 
+inside the lock.
+
+And the requirement for this code is that barriers are supported for the 
+whole lifetime of the filesystem --- which is what the Linux kernel 
+doesn't support! If barrier support is lost, consistency is damaged. 
+
+With barriers, the code does [submit A, submit barrier B, submit C].
+If you don't have barriers, you must modify this sequence to: [submit A, 
+wait for A endio, submit B, wait for B endio, submit C]
+
+--- and now you are getting the point why failing barriers can't ever work 
+--- by the time request B completes, you find out that the device lost 
+barrier support and you realize that you should have inserted the waits in 
+the past --- but it's too late, there is no way to insert them 
+retroactively.
+
+AFAIK this is the only piece of code that uses barriers to improve 
+performance. All the other filesystems use barriers just as a way to flush 
+cache and don't overlap barrier request with any other requests.
+
+So there are two ways:
+
+- either support only what all in-kernel filesystems do. Using barrier 
+reqiests to flush hw cache. You can remove support for barriers with data, 
+leave just zero-data barrier, you can remove ordering restrictions. 
+In-kernel filesystems never overlap barrier with another metadata request 
+(see above why such overlap can't work), so you can freely reorder 
+zero-data barriers and simplify the code ... because all the requests that 
+could be submitted in paralel with the barrier are either for different 
+partition or non-metadata requests to the same partition from prefetch, 
+direct io or so.
+
+- or you can allow barriers to be used for purposes as I did. And then, 
+there must be clean indicator "this device supports barriers 
+*and*will*support*them*in*the*future*". Currently there is no such 
+indicator.
+
+Mikulas
+
+> -- 
+> Jens Axboe
+> 
