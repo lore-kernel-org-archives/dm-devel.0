@@ -1,16 +1,16 @@
 From: Kay Sievers <kay.sievers@vrfy.org>
 Subject: Re: [PATCH] Uevent cookie env var support
-Date: Wed, 8 Apr 2009 06:29:21 -0700
-Message-ID: <ac3eb2510904080629m176c5b6x3f76c640414dd027@mail.gmail.com>
+Date: Wed, 8 Apr 2009 06:31:24 -0700
+Message-ID: <ac3eb2510904080631p724b5588k29069fafe948af56@mail.gmail.com>
 References: <49DC92CC.30708@redhat.com>
 	<ac3eb2510904080549l50353d85xf1c4af8a31eb7613@mail.gmail.com>
-	<49DC9F86.3020903@redhat.com>
+	<20090408132056.GS5688@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49DC9F86.3020903@redhat.com>
+In-Reply-To: <20090408132056.GS5688@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,24 +23,32 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-On Wed, Apr 8, 2009 at 05:58, Peter Rajnoha <prajnoha@redhat.com> wrote:
-> Kay Sievers wrote:
->> If you would use the same cookie for several actions, how do you
->> track, that udev has finished the work when you expect an arbitrary
->> number of events with the same cookie?
+On Wed, Apr 8, 2009 at 06:20, Alasdair G Kergon <agk@redhat.com> wrote:
+> On Wed, Apr 08, 2009 at 05:49:11AM -0700, Kay Sievers wrote:
+>> I always thought we would return the driver core generated seqnum with
+>> the ioctl,
 >
-> Well, I use a simple semaphore in userspace waiting for zero. So for
-> every action I just increment the semaphore and when the cookie comes back
-> from uevent, I decrement it (I use this cookie value as the semaphore's
-> identifier as well). So the number of uevents I'm expecting is not
-> arbitrary from this perspective. I just need to fire off all the actions
-> and then at some point later need to be sure that all the udev rules
-> were executed (so I'm sure all the nodes are created) and so I can continue.
+> When Peter tried to make that work it needed more and more hacks
+> piled onto it and instead he came up with this cookie method which seem=
+s
+> to satisfy all our requirements with a minimum amount of change, finger=
+s
+> crossed.
+>
+> E.g. A problem with the other approach was: lvm2 userspace doesn't know=
+ the
+> seqnum till after the uevent has fired and udev could complete processi=
+ng
+> before the lvm2 code has set itself up to wait for that seqnum so you h=
+ave to
+> build extra interlocking into the process making it much more complex. =
+=C2=A0If you
+> wait for all events up to a given number you could get stuck behind som=
+e
+> unrelated event on an unresponsive device, with is also unsatisfactory.
 
-Sure, sounds good.
-
-I just read "we can use the cookie value to group the actions" as you
-would want to use the same value for several actions.
+Yeah, sounds sensible, and like a nice solution to the problem if you
+are able to watch the events udev sends out.
 
 Thanks,
 Kay
