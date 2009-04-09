@@ -1,64 +1,50 @@
-From: Alasdair G Kergon <agk@redhat.com>
-Subject: [git pull] device-mapper fixes for 2.6.30-rc2
-Date: Thu, 9 Apr 2009 02:14:24 +0100
-Message-ID: <20090409011424.GP5098@agk.fab.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Chris Mason <chris.mason@oracle.com>
+Subject: Re: [dm-devel] Barriers still not passing on simple dm devices...
+Date: Wed, 08 Apr 2009 21:27:20 -0400
+Message-ID: <1239240440.11220.3.camel@think.oraclecorp.com>
+References: <20090324143034.GW27476@kernel.dk>
+	 <Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
+	 <20090324150517.GX27476@kernel.dk>
+	 <Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
+	 <20090325152751.GV27476@kernel.dk>
+	 <Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
+	 <20090326084205.GG27476@kernel.dk>
+	 <Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
+	 <20090331104933.GJ5178@kernel.dk>
+	 <Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
+	 <20090403081131.GP5178@kernel.dk>
+	 <Pine.LNX.4.64.0904080855340.28196@hs20-bc2-1.build.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, "Martin K. Petersen" <martin.petersen@oracle.com>, linux-kernel@vger.kernel.org, dm-devel@redhat.com, Mikulas Patocka <mpatocka@redhat.com>, Jun'ichi Nomura <j-nomura@ce.jp.nec.com>, Milan Broz <mbroz@redhat.com>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754981AbZDIB2U@vger.kernel.org>
+In-Reply-To: <Pine.LNX.4.64.0904080855340.28196@hs20-bc2-1.build.redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ak@linux.intel.com
 List-Id: dm-devel.ids
 
-Please pull from:
+On Wed, 2009-04-08 at 09:37 -0400, Mikulas Patocka wrote:
 
-  master.kernel.org:/pub/scm/linux/kernel/git/agk/linux-2.6-dm.git master
+> So there are two ways:
+> 
+> - either support only what all in-kernel filesystems do. Using barrier 
+> reqiests to flush hw cache. You can remove support for barriers with data, 
+> leave just zero-data barrier, you can remove ordering restrictions. 
+> In-kernel filesystems never overlap barrier with another metadata request 
+> (see above why such overlap can't work), so you can freely reorder 
+> zero-data barriers and simplify the code ... because all the requests that 
+> could be submitted in paralel with the barrier are either for different 
+> partition or non-metadata requests to the same partition from prefetch, 
+> direct io or so.
+> 
+> - or you can allow barriers to be used for purposes as I did. And then, 
+> there must be clean indicator "this device supports barriers 
+> *and*will*support*them*in*the*future*". Currently there is no such 
+> indicator.
 
-to get the following device-mapper fixes for 2.6.30-rc2:
+I'm afraid expecting barriers forever in the future isn't completely
+compatible with dm or md.  Both of these allow the storage to change
+over time, and the filesystem needs to handle this without corruptions.
 
-1) Fix a kcopyd race.
-2) Support bio integrity.
-3) Support barrier bios such that dm will no longer issue -EOPNOTSUPP in
-response to an unsupported barrier but will instead emulate the barrier
-internally.  This finally gets us the long-overdue replacement for the
-issue_flush_fn that was removed oh-I-can't-remember-when...
-(Split into 7 bisectable patches for readability.)
-
-Alasdair G Kergon (3):
-      dm: rearrange dm_wq_work
-      dm: split DMF_BLOCK_IO flag into two
-      dm: simplify dm_request loop
-
-Martin K. Petersen (1):
-      dm: add integrity support
-
-Mikulas Patocka (6):
-      dm: remove limited barrier support
-      dm: rework queueing and suspension
-      dm: remove dm_request loop
-      dm: implement basic barrier support
-      dm kcopyd: prepare for callback race fix
-      dm kcopyd: fix callback race
-
- drivers/md/dm-ioctl.c         |   21 +++++
- drivers/md/dm-kcopyd.c        |   23 +++--
- drivers/md/dm-linear.c        |    1 -
- drivers/md/dm-table.c         |   59 ++++++++----
- drivers/md/dm.c               |  199 +++++++++++++++++++++++++++++------------
- drivers/md/dm.h               |    1 -
- include/linux/device-mapper.h |    1 -
- 7 files changed, 218 insertions(+), 87 deletions(-)
- 
-Alasdair
--- 
-agk@redhat.com
+-chris
