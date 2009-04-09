@@ -1,50 +1,53 @@
-From: Chris Mason <chris.mason@oracle.com>
-Subject: Re: [dm-devel] Barriers still not passing on simple dm devices...
-Date: Wed, 08 Apr 2009 21:27:20 -0400
-Message-ID: <1239240440.11220.3.camel@think.oraclecorp.com>
-References: <20090324143034.GW27476@kernel.dk>
-	 <Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
-	 <20090324150517.GX27476@kernel.dk>
-	 <Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
-	 <20090325152751.GV27476@kernel.dk>
-	 <Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
-	 <20090326084205.GG27476@kernel.dk>
-	 <Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
-	 <20090331104933.GJ5178@kernel.dk>
-	 <Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
-	 <20090403081131.GP5178@kernel.dk>
-	 <Pine.LNX.4.64.0904080855340.28196@hs20-bc2-1.build.redhat.com>
+From: Eric Sandeen <sandeen@sandeen.net>
+Subject: Re: Barriers still not passing on simple dm devices...
+Date: Wed, 08 Apr 2009 23:22:42 -0500
+Message-ID: <49DD7812.1030408@sandeen.net>
+References: <20090324150517.GX27476@kernel.dk>	
+	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>	
+	<20090326084205.GG27476@kernel.dk>	
+	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>	
+	<20090331104933.GJ5178@kernel.dk>	
+	<Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>	
+	<20090403081131.GP5178@kernel.dk>
+	<49D77AC3.3020207@redhat.com>	 <20090405012839.GF7553@mit.edu>
+	<49D89C06.1060700@gmail.com>
+	<75b66ecd0904051814n353bb69bp76a38e36cac4d3fe@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1754981AbZDIB2U@vger.kernel.org>
-In-Reply-To: <Pine.LNX.4.64.0904080855340.28196@hs20-bc2-1.build.redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Jens Axboe <jens.axboe@oracle.com>, device-mapper development <dm-devel@redhat.com>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, ak@linux.intel.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <75b66ecd0904051814n353bb69bp76a38e36cac4d3fe@mail.gmail.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Lee Revell <rlrevell@joe-job.com>
+Cc: Ric Wheeler <ricwheeler@gmail.com>, ak@linux.intel.com, Theodore Tso <tytso@mit.edu>, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, device-mapper development <dm-devel@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>, Jens Axboe <jens.axboe@oracle.com>, Ric Wheeler <rwheeler@redhat.com>, "MASON,
+	CHRISTOPHER" <CHRIS.MASON@oracle.com>
 List-Id: dm-devel.ids
 
-On Wed, 2009-04-08 at 09:37 -0400, Mikulas Patocka wrote:
-
-> So there are two ways:
+Lee Revell wrote:
+> On Sun, Apr 5, 2009 at 7:54 AM, Ric Wheeler <ricwheeler@gmail.com> wrote:
+>> One thing to point out here is that there are a lot of "servers" in high end
+>> data centers that do not have UPS backup. Those racks full of 1U and 2U
+>> boxes that are used to make "grids", "clouds" and so on often are built with
+>> as much gear as you can stuff in a rack - no batteries or UPS to be seen, so
+>> they are really quite similar to the normal desktop or home systems that we
+>> normally run at home :-)
 > 
-> - either support only what all in-kernel filesystems do. Using barrier 
-> reqiests to flush hw cache. You can remove support for barriers with data, 
-> leave just zero-data barrier, you can remove ordering restrictions. 
-> In-kernel filesystems never overlap barrier with another metadata request 
-> (see above why such overlap can't work), so you can freely reorder 
-> zero-data barriers and simplify the code ... because all the requests that 
-> could be submitted in paralel with the barrier are either for different 
-> partition or non-metadata requests to the same partition from prefetch, 
-> direct io or so.
+> These days even bargain basement data centers provide UPS functionality for
+> you, via generator backup and A/B power.
 > 
-> - or you can allow barriers to be used for purposes as I did. And then, 
-> there must be clean indicator "this device supports barriers 
-> *and*will*support*them*in*the*future*". Currently there is no such 
-> indicator.
+> Lee
 
-I'm afraid expecting barriers forever in the future isn't completely
-compatible with dm or md.  Both of these allow the storage to change
-over time, and the filesystem needs to handle this without corruptions.
+In that case, you can turn off barriers.  It's still no excuse, IMHO,
+for us to ship a journaling filesystem configuration which is known to
+corrupt on power loss, by default.
 
--chris
+-Eric
