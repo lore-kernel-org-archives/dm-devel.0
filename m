@@ -1,25 +1,10 @@
-From: Ric Wheeler <rwheeler@redhat.com>
-Subject: Re: Barriers still not passing on simple dm devices...
-Date: Thu, 09 Apr 2009 06:48:10 -0400
-Message-ID: <49DDD26A.2090901@redhat.com>
-References: <20090324143034.GW27476@kernel.dk>
-	<Pine.LNX.4.64.0903241033070.4088@hs20-bc2-1.build.redhat.com>
-	<20090324150517.GX27476@kernel.dk>
-	<Pine.LNX.4.64.0903251106520.27750@hs20-bc2-1.build.redhat.com>
-	<20090325152751.GV27476@kernel.dk>
-	<Pine.LNX.4.64.0903251825310.8027@hs20-bc2-1.build.redhat.com>
-	<20090326084205.GG27476@kernel.dk>
-	<Pine.LNX.4.64.0903302314500.6158@hs20-bc2-1.build.redhat.com>
-	<20090331104933.GJ5178@kernel.dk>
-	<Pine.LNX.4.64.0904021923040.19415@hs20-bc2-1.build.redhat.com>
-	<20090403081131.GP5178@kernel.dk> <49D77AC3.3020207@redhat.com>
-	<Pine.LNX.4.64.0904080844550.28196@hs20-bc2-1.build.redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] dm table: verify each table mapping is HW
+	sector aligned
+Date: Thu,  9 Apr 2009 23:58:15 -0400
+Message-ID: <1239335895-18613-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904080844550.28196@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,64 +14,172 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>, ak@linux.intel.com, Linux Kernel Mailing List <linux-kernel@vger.kernel.org>, "MASON,
-	CHRISTOPHER" <CHRIS.MASON@oracle.com>, Jens Axboe <jens.axboe@oracle.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mikulas Patocka wrote:
->> And I will restate that back at EMC we tested the original barriers (with
->> reiserfs mostly, a bit on ext3 and ext2) and saw significant reduction in file
->> system integrity issues after power loss.
->>     
->
-> You saw that barrier-enabled filesystem was worse than the same filesystem 
-> without barriers? And what kind of issues were that? Disks writing damaged 
-> sectors if powered-off in the middle of the writes? Or data corruptions 
-> due to bugs in ReiserFS?
->   
+Each mapping in a DM table must be properly aligned on HW sector
+boundaries.  This is particularly important when a DM table is composed
+of mappings for devices with different HW sector sizes.
 
-No - I was not being clear. We saw a reduction in issues which is a 
-confusing way to say that it was significantly better with barriers 
-enabled, for both ext3 & reiserfs.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |  112 +++++++++++++++++++++++++++++++++++++++++++------
+ 1 files changed, 99 insertions(+), 13 deletions(-)
 
->   
->> The vantage point I had at EMC while testing and deploying the original
->> barrier work done by Jens and Chris was pretty unique - full ability to do
->> root cause failures of any component when really needed, a huge installed base
->> which could send information home on a regular basis about crashes/fsck
->> instances/etc and the ability (with customer permission) to dial into any box
->> and diagnose issues remotely. Not to mention access to drive vendors to
->> pressure them to make the flushes more robust. The application was also able
->> to validate that all acknowledged writes were consistent.
->>
->> Barriers do work as we have them, but as others have mentioned, it is not a
->> "free" win - fsync will actually move your data safely out to persistent
->> storage for a huge percentage of real users (including every ATA/S-ATA and SAS
->> drive I was able to test).  The file systems I monitored in production use
->> without barriers were much less reliable.
->>     
->
-> With write cache or without write cache?
->   
-Write cache enabled.
-
-Barriers are off when write cache is disabled - we probe the drives 
-write cache and enable barriers at mount time if and only if the 
-barriers are on.
-> With cache and without barriers the system is violating the specification. 
-> There just could be data corruption ... and it will eventually happen.
->
-> If you got corruption without cache and without barriers, there's a bug 
-> and it needs to be investigated.
->
->   
->> As others have noted, some storage does not need barriers or flushed (high end
->> arrays, drives with no volatile write cache) and some need it but stink (low
->> cost USB flash sticks?) so warning is a good thing to do...
->>
->> ric
->>     
->
-> Mikulas
->   
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index e8361b1..90ce9f9 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -387,15 +387,39 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
+ /*
+  * If possible, this checks an area of a destination device is valid.
+  */
+-static int check_device_area(struct dm_dev_internal *dd, sector_t start,
+-			     sector_t len)
++static int check_device_area(struct dm_target *ti, struct block_device *bdev,
++			     sector_t start, sector_t len)
+ {
+-	sector_t dev_size = dd->dm_dev.bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	sector_t dev_size = bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	unsigned short hardsect_size_sectors =
++		ti->limits.hardsect_size >> SECTOR_SHIFT;
++	char b[BDEVNAME_SIZE];
+ 
+ 	if (!dev_size)
+ 		return 1;
+ 
+-	return ((start < dev_size) && (len <= (dev_size - start)));
++	if (!((start < dev_size) && (len <= (dev_size - start)))) {
++		DMWARN("%s: %s too small for target",
++		       dm_device_name(ti->table->md), bdevname(bdev, b));
++		return 0;
++	}
++
++	if (hardsect_size_sectors <= 1)
++		return 1;
++
++	if (start & (hardsect_size_sectors - 1)) {
++		DMWARN("%s: start=%lu in mapping of %s not H/W sector aligned",
++		       dm_device_name(ti->table->md), start, bdevname(bdev, b));
++		return 0;
++	}
++
++	if (len & (hardsect_size_sectors - 1)) {
++		DMWARN("%s: len=%lu in mapping of %s not H/W sector aligned",
++		       dm_device_name(ti->table->md), start, bdevname(bdev, b));
++		return 0;
++	}
++
++	return 1;
+ }
+ 
+ /*
+@@ -481,14 +505,7 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
+ 	}
+ 	atomic_inc(&dd->count);
+ 
+-	if (!check_device_area(dd, start, len)) {
+-		DMWARN("device %s too small for target", path);
+-		dm_put_device(ti, &dd->dm_dev);
+-		return -EINVAL;
+-	}
+-
+ 	*result = &dd->dm_dev;
+-
+ 	return 0;
+ }
+ 
+@@ -556,8 +573,15 @@ int dm_get_device(struct dm_target *ti, const char *path, sector_t start,
+ 	int r = __table_get_device(ti->table, ti, path,
+ 				   start, len, mode, result);
+ 
+-	if (!r)
+-		dm_set_device_limits(ti, (*result)->bdev);
++	if (r)
++		return r;
++
++	dm_set_device_limits(ti, (*result)->bdev);
++
++	if (!check_device_area(ti, (*result)->bdev, start, len)) {
++		dm_put_device(ti, *result);
++		return -EINVAL;
++	}
+ 
+ 	return r;
+ }
+@@ -696,6 +720,64 @@ static void check_for_valid_limits(struct io_restrictions *rs)
+ 		rs->bounce_pfn = -1;
+ }
+ 
++/*
++ * Verify a table's targets can collectively accommodate the table's
++ * hardsect_size aligned I/O in addition to their own hardsect_size
++ * alignment; paying attention to target boundaries in the table
++ * - incoming I/O is aligned to the table's hardsect_size
++ * - each targets' len is aligned to the target's hardsect_size
++ */
++static int check_for_valid_alignment(struct dm_table *table)
++{
++	int r = 0;
++	unsigned int i, num_targets;
++	struct dm_target *ti = NULL;
++	unsigned short remaining_sectors = 0;
++	unsigned short ti_hardsect_size_sectors = 0;
++	unsigned short table_hardsect_size_sectors =
++		table->limits.hardsect_size >> SECTOR_SHIFT;
++
++	num_targets = dm_table_get_num_targets(table);
++	for (i = 0; i < num_targets; i++) {
++		ti = dm_table_get_target(table, i);
++		ti_hardsect_size_sectors =
++			ti->limits.hardsect_size >> SECTOR_SHIFT;
++
++		/*
++		 * Check that the previous target's remaining_sectors
++		 * do not disturb this target's hardsect_size alignment
++		 * - if remaining_sectors is greater than this
++		 *   target's len: it is the next target's concern
++		 */
++		if ((remaining_sectors && remaining_sectors < ti->len) &&
++		    (remaining_sectors & (ti_hardsect_size_sectors - 1))) {
++			r = -EINVAL;
++			break;
++		}
++
++		/*
++		 * Determine how many sectors (if any) will remain
++		 * for the table's next target(s) to handle
++		 */
++		if (ti->len >= table_hardsect_size_sectors) {
++			remaining_sectors = (ti->begin + ti->len) &
++				(table_hardsect_size_sectors - 1);
++		} else {
++			remaining_sectors = table_hardsect_size_sectors -
++				(ti->begin + ti->len);
++		}
++	}
++
++	if (remaining_sectors) {
++		DMWARN("%s: mapping with begin=%lu len=%lu "
++		       "not table H/W sector aligned",
++		       dm_device_name(table->md), ti->begin, ti->len);
++		r = -EINVAL;
++	}
++
++	return r;
++}
++
+ int dm_table_add_target(struct dm_table *t, const char *type,
+ 			sector_t start, sector_t len, char *params)
+ {
+@@ -799,6 +881,10 @@ int dm_table_complete(struct dm_table *t)
+ 
+ 	check_for_valid_limits(&t->limits);
+ 
++	r = check_for_valid_alignment(t);
++	if (r)
++		return r;
++
+ 	/*
+ 	 * We only support barriers if there is exactly one underlying device.
+ 	 */
