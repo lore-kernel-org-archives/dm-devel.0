@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 10/11] bottom-layer barrier support
-Date: Fri, 10 Apr 2009 01:15:24 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904100114490.1117@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 11/11] bottom-layer barrier support
+Date: Fri, 10 Apr 2009 01:15:43 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904100115280.1117@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904100107160.1117@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904100110010.1117@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904100110370.1117@hs20-bc2-1.build.redhat.com>
@@ -30,36 +30,32 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Flush support for dm-crypt target.
+Flush supoprt for dm-delay target.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |    7 +++++++
- 1 file changed, 7 insertions(+)
+ drivers/md/dm-delay.c |    3 +++
+ 1 file changed, 3 insertions(+)
 
-Index: linux-2.6.30-rc1-devel/drivers/md/dm-crypt.c
+Index: linux-2.6.30-rc1-devel/drivers/md/dm-delay.c
 ===================================================================
---- linux-2.6.30-rc1-devel.orig/drivers/md/dm-crypt.c	2009-04-10 06:28:45.000000000 +0200
-+++ linux-2.6.30-rc1-devel/drivers/md/dm-crypt.c	2009-04-10 06:33:42.000000000 +0200
-@@ -1168,6 +1168,7 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad_crypt_queue;
- 	}
+--- linux-2.6.30-rc1-devel.orig/drivers/md/dm-delay.c	2009-04-10 06:28:25.000000000 +0200
++++ linux-2.6.30-rc1-devel/drivers/md/dm-delay.c	2009-04-10 06:33:45.000000000 +0200
+@@ -198,6 +198,7 @@ out:
+ 	mutex_init(&dc->timer_lock);
+ 	atomic_set(&dc->may_delay, 1);
  
 +	ti->num_flush_requests = 1;
- 	ti->private = cc;
+ 	ti->private = dc;
  	return 0;
  
-@@ -1226,6 +1227,12 @@ static int crypt_map(struct dm_target *t
- {
- 	struct dm_crypt_io *io;
+@@ -281,6 +282,8 @@ static int delay_map(struct dm_target *t
+ 		bio->bi_bdev = dc->dev_write->bdev;
+ 		bio->bi_sector = dc->start_write +
+ 				 (bio->bi_sector - ti->begin);
++		if (!bio_sectors(bio))
++			bio->bi_sector = 0;
  
-+	if (unlikely(bio_empty_barrier(bio))) {
-+		struct crypt_config *cc = ti->private;
-+		bio->bi_bdev = cc->dev->bdev;
-+		return DM_MAPIO_REMAPPED;
-+	}
-+
- 	io = crypt_io_alloc(ti, bio, bio->bi_sector - ti->begin);
- 
- 	if (bio_data_dir(io->base_bio) == READ)
+ 		return delay_bio(dc, dc->write_delay, bio);
+ 	}
