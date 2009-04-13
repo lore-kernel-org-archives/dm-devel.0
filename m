@@ -1,36 +1,42 @@
-From: Tomasz Chmielewski <mangoo-Nem3ZqsbT/g@public.gmane.org>
-Subject: SMP-aware kcryptd?
-Date: Mon, 13 Apr 2009 15:41:33 +0200
-Message-ID: <49E3410D.9040500@wpkg.org>
-Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: dm-ioband: Test results.
+Date: Mon, 13 Apr 2009 10:46:26 -0400
+Message-ID: <20090413144626.GF18007@redhat.com>
+References: <20090413.130552.226792299.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-crypt-return-3153-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
-List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
-List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
-To: dm-crypt-4q3lyFh4P1g@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090413.130552.226792299.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Ryo Tsuruta <vivek.goyal2008@gmail.com>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-Currently, the trend with CPUs is to add more cores rather than increase 
-the speed of a single core.
+On Mon, Apr 13, 2009 at 01:05:52PM +0900, Ryo Tsuruta wrote:
+> Hi Alasdair and all,
+> 
+> I did more tests on dm-ioband and I've posted the test items and
+> results on my website. The results are very good.
+> http://people.valinux.co.jp/~ryov/dm-ioband/test/test-items.xls
+> 
 
-This does not scale very well with certain things in the Linux kernel. 
-One of them is kcryptd.
+Hi Ryo,
 
+I quickly looked at the xls sheet. Most of the test cases seem to be
+direct IO. Have you done testing with buffered writes/async writes and
+been able to provide service differentiation between cgroups?
 
-A system able to deliver data with a speed of ~200 MB/s from a RAID 
-array, will be only able to deliver a fraction of it (i.e. ~40 MB/s in 
-my case) when reads are being done from a dm-crypt device.
+For example, two "dd" threads running in two cgroups doing writes.
 
-This is because kcryptd is not SMP-aware: it performs all calculations 
-on a single logical CPU only.
-
-Are there any plans to change it?
-
-
--- 
-Tomasz Chmielewski
-http://wpkg.org
+Thanks
+Vivek
