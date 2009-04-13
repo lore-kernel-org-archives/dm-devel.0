@@ -1,52 +1,36 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: multipathd init script errors
-Date: Mon, 13 Apr 2009 07:05:25 -0400
-Message-ID: <1239620726.30476.3.camel@jaspav.missionsit.net.missionsit.net>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Tomasz Chmielewski <mangoo-Nem3ZqsbT/g@public.gmane.org>
+Subject: SMP-aware kcryptd?
+Date: Mon, 13 Apr 2009 15:41:33 +0200
+Message-ID: <49E3410D.9040500@wpkg.org>
+Reply-To: dm-crypt-4q3lyFh4P1g@public.gmane.org
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+Return-path: <dm-crypt-return-3153-glkdd-dm-crypt=m.gmane.org-4q3lyFh4P1g@public.gmane.org>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-help-4q3lyFh4P1g@public.gmane.org>
+List-Unsubscribe: <mailto:dm-crypt-unsubscribe-4q3lyFh4P1g@public.gmane.org>
+List-Subscribe: <mailto:dm-crypt-subscribe-4q3lyFh4P1g@public.gmane.org>
+To: dm-crypt-4q3lyFh4P1g@public.gmane.org, dm-devel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org
 List-Id: dm-devel.ids
 
-Hello, all.  Whenever we stop multipathd, we get the following errors:
+Currently, the trend with CPUs is to add more cores rather than increase 
+the speed of a single core.
 
-[root@kvm01 sysconfig]# service multipathd stop
-/etc/init.d/multipathd: line 32: cd: HOME not set
-/etc/init.d/multipathd: line 50: read: read error: 0: Is a directory
+This does not scale very well with certain things in the Linux kernel. 
+One of them is kcryptd.
 
 
-When we looked at the init script, it appears to be a problem with the
-parameters passed to the teardown_slaves function.  We put a little echo
-statement in to tell us what was being passed as ${1} since the first
-line of the function and the one which seems to be causing the grief is
-"cd ${1}"
+A system able to deliver data with a speed of ~200 MB/s from a RAID 
+array, will be only able to deliver a fraction of it (i.e. ~40 MB/s in 
+my case) when reads are being done from a dm-crypt device.
 
-We got:
-[root@kvm01 init.d]# service multipathd stop
-/sys/block/dm-0
-/sys/block/md1
-/sys/block/sda/sda2
+This is because kcryptd is not SMP-aware: it performs all calculations 
+on a single logical CPU only.
 
-/etc/init.d/multipathd: line 33: cd: HOME not set
-/etc/init.d/multipathd: line 51: read: read error: 0: Is a directory
+Are there any plans to change it?
 
-Any idea how we fix this? Thanks - John
+
 -- 
-John A. Sullivan III
-Open Source Development Corporation
-+1 207-985-7880
-jsullivan@opensourcedevel.com
-
-http://www.spiritualoutreach.com
-Making Christianity intelligible to secular society
+Tomasz Chmielewski
+http://wpkg.org
