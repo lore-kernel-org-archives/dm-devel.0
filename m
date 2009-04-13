@@ -1,18 +1,14 @@
-From: Benjamin Marzinski <bmarzins@redhat.com>
-Subject: Re: multipath prio_callout broke from 5.2 to 5.3
-Date: Mon, 13 Apr 2009 15:55:11 -0500
-Message-ID: <20090413205511.GI15911@ether.msp.redhat.com>
-References: <1779195765.1578721239520436084.JavaMail.root@zimbra16-e3.priv.proxad.net>
-	<1239613205.6376.16.camel@jaspav.missionsit.net.missionsit.net>
-	<20090413185745.GF15911@ether.msp.redhat.com>
-	<1239652565.30476.41.camel@jaspav.missionsit.net.missionsit.net>
-	<20090413203711.GH15911@ether.msp.redhat.com>
+From: christophe.varoqui@free.fr
+Subject: [RFC] dm snapshot based asynchronous replication
+Date: Mon, 13 Apr 2009 23:08:20 +0200 (CEST)
+Message-ID: <177494415.1766861239656900680.JavaMail.root@zimbra16-e3.priv.proxad.net>
+References: <1567864196.1766411239656669717.JavaMail.root@zimbra16-e3.priv.proxad.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090413203711.GH15911@ether.msp.redhat.com>
+In-Reply-To: <1567864196.1766411239656669717.JavaMail.root@zimbra16-e3.priv.proxad.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -25,24 +21,29 @@ Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Just to clear one more thing up. There is nothing special about the
-"dummy" strings in the dummy section.  You could use 
-"this is gross hack" and it would work just as well.  The only thing is
-to choose a string that you can be reasonably sure that storage hardware
-makers won't use for their vendor and product names on their devices.
+dm developers,
 
--Ben
+I'm in need of an asynchronous replication method for active/passive clusters using direct-attached disks. Please advise if you know tools (other than drdb an rsync) to do the job. (How goes dm-replicator btw ?).
 
-> devices {
->         device {
->                 vendor          "WINSYS"
->                 product         "SF2372"
->                 path_grouping_policy    group_by_prio
->                 prio_callout            "/bin/bash /sbin/mpath_prio_one"
->         }
->         device {
->                 vendor          "dummy"
->                 product         "dummy"
->                 prio_callout    "/sbin/mpath_prio_one"
->         }
-> }
+Pending an existing project, I toyed with a replication scheme I'd like to sketch here for comments and fool-proofing.
+
+Source and destination are logical volumes : lv_src => lv_dst
+Upon cold start lv_src and lv_dst are unsynchronized.
+
+==== pseudo-code start
+snap lv_src (lv_src_snap0)
+full copy lv_src_snap0 on lv_dst
+while true:
+  wait n seconds
+  snap lv_src (lv_src_snap1)
+  for each changed chunk in lv_src_snap0 cow table:
+    copy chunk from lv_src_snap1 to lv_dst
+  drop lv_src_snap0, and rename lv_src_snap1 to lv_src_snap0
+==== pseudo-code end
+
+Snapshoting the lv_dst would make sense as a rollback safety net ... even if the rollback is a bit hard pending the snapshot merging  patchset inclusion.
+
+If this sketch looks sane to you, I'm interested in how to list the changed chunks for a snap. A pointer to existing code would do great.
+
+Regards,
+cvaroqui
