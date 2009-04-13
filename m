@@ -1,13 +1,16 @@
-From: Larry Dickson <ldickson@cuttedge.com>
-Subject: Re: SMP-aware kcryptd?
-Date: Mon, 13 Apr 2009 11:33:49 -0800
-Message-ID: <1c748a490904131233g53876794wa920e1dc267218ff@mail.gmail.com>
-References: <49E3410D.9040500@wpkg.org> <49E37824.8010100@redhat.com>
+From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
+Subject: Re: multipath prio_callout broke from 5.2 to 5.3
+Date: Mon, 13 Apr 2009 15:56:05 -0400
+Message-ID: <1239652565.30476.41.camel@jaspav.missionsit.net.missionsit.net>
+References: <1779195765.1578721239520436084.JavaMail.root@zimbra16-e3.priv.proxad.net>
+	<1239613205.6376.16.camel@jaspav.missionsit.net.missionsit.net>
+	<20090413185745.GF15911@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============1941653614=="
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49E37824.8010100@redhat.com>
+In-Reply-To: <20090413185745.GF15911@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,149 +21,93 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: dm-crypt@saout.de
 List-Id: dm-devel.ids
 
---===============1941653614==
-Content-Type: multipart/alternative; boundary=0016364179372a996a046774cbd5
+On Mon, 2009-04-13 at 13:57 -0500, Benjamin Marzinski wrote:
+> On Mon, Apr 13, 2009 at 05:00:05AM -0400, John A. Sullivan III wrote:
+> > Thank you.  I'll detail our script and the logic behind it in a separate
+> > email in case it is helpful to others.
+> > 
+> > In the meantime, we have a critical problem where the script which was
+> > working perfectly in 5.2 is now broken in 5.3.  Is there any way to
+> > deconfuse the 5.3 multipathd or any other immediate solution? - John
+> 
+> What christophe said is correct. In RHEL 5.3, multipath started copying
+> all of the necessary callouts into it own private namespace. It scans
+> through your config file, and pulls out all the binaries.  However,
+> there are two problems that are affecting you.  First, it only pulls the
+> command, "/bin/bash" in you case, not the arguments, which for
+> you include a script to run.  Second, it's private namespace only
+> consists of /sbin, /bin, /tmp, a couple of virtual filesystems, like
+> /proc and /sys (well, actually there are a couple of others, like /etc,
+> that multipath needs to start up, but you shouldn't rely on them being
+> there all the time, since you can lose access to them if the device
+> they're on goes down)
+> 
+> There are two ways to deal with this.  First is to rewrite the
+> prioritizer in C.  I realize that this is a pain, but it will be
+> necessary to run on RHEL6 and new fedora machines, which use upstream's
+> prio functions instead of callout binaries.
+> 
+> The second, quicker way is to move your callout to /sbin and add a dummy
+> device section to make sure it gets picked up.
+> 
+> devices {
+> ...
+> 	device {
+> 		vendor       "dummy"
+> 		product      "dummy"
+> 		prio_callout "/sbin/mpath_prio_ssi"
+> 	}
+> }
+> 
+> This will cause multipathd to copy your script into the private
+> namespace, and everything should work, with one exception.
+> 
+> bash is not a statically linked executable.  It links to libraries,
+> and multipathd doesn't make its own copies of them.  Under normal
+> operation this will work (/lib is also in multipathd's
+> private namespace). However, if you lose access to /lib, bash won't
+> work, and multipathd won't be able to restore access to your devices.
+> If you aren't planning on multipathing / or /lib you might choose to
+> ignore this (The exact same problem exists in 5.2).
+> 
+> I don't believe that there is a statically linked shell in RHEL 5.
+> This is another reason to convert your callout to a C program. Or
+> you can recompile bash with static linking.
+> 
+> -<snip>
+Thanks very much for the explanation.  If I understand correctly, 5.2
+also copied into a ramfs but not a separate namespace and that's why it
+worked in 5.2?
 
---0016364179372a996a046774cbd5
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+In any event, we attempted to implement the less preferred method for
+the sake of time right now (none of us are particularly adept at C and
+are not sure how we'd feed the configuration file if it is not safe to
+pull files from disk).  We moved mpath_prio_ssi to /sbin and called it
+directly in multipath.conf, i.e.,
+prio_callout            "/sbin/mpath_prio_ssi %n"
 
-On 4/13/09, Milan Broz <mbroz@redhat.com> wrote:
->
-> Tomasz Chmielewski wrote:
-> > Currently, the trend with CPUs is to add more cores rather than increase
-> > the speed of a single core.
-> >
-> > This does not scale very well with certain things in the Linux kernel.
-> > One of them is kcryptd.
-> >
-> >
-> > A system able to deliver data with a speed of ~200 MB/s from a RAID
-> > array, will be only able to deliver a fraction of it (i.e. ~40 MB/s in
-> > my case) when reads are being done from a dm-crypt device.
-> >
-> > This is because kcryptd is not SMP-aware: it performs all calculations
-> > on a single logical CPU only.
-> >
-> > Are there any plans to change it?
->
-> Yes, I think I already commented this in some thread,
-> there are basically 2 possible approaches:
->
-> 1) create several "encryption" threads in dm-crypt (e.g. per CPU core) or
-> 2) parallelize async crypto requests processing (in crypto layer)
->
-> I have some patches for 1) but the result is not what I expected
-> - performance highly depends on write pattern for example.
-> In short, the code need more thought.
+It still does not work but this time we get:
+Apr 13 15:33:15 kvm01 multipathd: error calling out /sbin/mpath_prio_ssi
+sdq
+Apr 13 15:33:15 kvm01 multipathd: /sbin/mpath_prio_ssi exitted with 255
 
+If we revert to
+prio_callout            "/bin/bash /sbin/mpath_prio_ssi %n"
+we return to:
+Apr 13 15:34:43 kvm01 multipathd: error calling
+out /bin/bash /sbin/mpath_prio_ssi sdc
+Apr 13 15:34:43 kvm01 multipathd: /bin/bash exitted with 127
 
-This is a golden opportunity. So many times, code (e.g. barriers) that still
-may "need more thought" has been rushed into production, leaving headaches
-that apparently last forever. I think this is a chance to get everyone in at
-the design stage. Can you publish a short sketch of the proposed design
-approaches for 1) and 2), with their advantages and drawbacks?
+We thought the script might need an explicit exit code so we changed
+everything to exit 0 but that did not fix the problem.  Any idea why we
+are getting this 255 error? Thanks - John
+-- 
+John A. Sullivan III
+Open Source Development Corporation
++1 207-985-7880
+jsullivan@opensourcedevel.com
 
-Larry Dickson
-Cutting Edge Networked Storage
-
-(I tried to parallelize sector encryption _vs_ whole bio request encryption,
-> and there are still some problem with both. Also barriers and reordering
-> of requests can be problem here.)
->
-> Another problem with 1) is what happens when there is hw acceleration -
-> multiple threads are useful only if main cpu runs encryption,
-> for hw & async crypto requests it can cause problems.
->
-> The crypto driver is completely transparent - dm-crypt have no idea
-> if encryption runs on main cpu or in an accelerator hw
-> (=> solution 2) is more generic).
->
-> Anyway, it is not highest priority currently... but still in slow progress.
-> (but I guess high speed SSDs will increase priority for this too,
-> currently it is real problem only for RAID arrays:-)
->
-> Milan
-> --
-> mbroz@redhat.com
->
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
->
-
---0016364179372a996a046774cbd5
-Content-Type: text/html; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
-
-<br><br>
-<div><span class=3D"gmail_quote">On 4/13/09, <b class=3D"gmail_sendername">=
-Milan Broz</b> &lt;<a href=3D"mailto:mbroz@redhat.com">mbroz@redhat.com</a>=
-&gt; wrote:</span>
-<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
-px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">Tomasz Chmielewski wrote:<br>&gt=
-; Currently, the trend with CPUs is to add more cores rather than increase<=
-br>
-&gt; the speed of a single core.<br>&gt;<br>&gt; This does not scale very w=
-ell with certain things in the Linux kernel.<br>&gt; One of them is kcryptd=
-.<br>&gt;<br>&gt;<br>&gt; A system able to deliver data with a speed of ~20=
-0 MB/s from a RAID<br>
-&gt; array, will be only able to deliver a fraction of it (i.e. ~40 MB/s in=
-<br>&gt; my case) when reads are being done from a dm-crypt device.<br>&gt;=
-<br>&gt; This is because kcryptd is not SMP-aware: it performs all calculat=
-ions<br>
-&gt; on a single logical CPU only.<br>&gt;<br>&gt; Are there any plans to c=
-hange it?<br><br>Yes, I think I already commented this in some thread,<br>t=
-here are basically 2 possible approaches:<br><br>1) create several &quot;en=
-cryption&quot; threads in dm-crypt (e.g. per CPU core) or<br>
-2) parallelize async crypto requests processing (in crypto layer)<br><br>I =
-have some patches for 1) but the result is not what I expected<br>- perform=
-ance highly depends on write pattern for example.<br>In short, the code nee=
-d more thought.</blockquote>
-
-<div>=A0</div>
-<div>This is a golden opportunity. So many times, code (e.g. barriers) that=
- still may &quot;need more thought&quot; has been rushed into production, l=
-eaving headaches that apparently last forever. I think this is a chance to =
-get everyone in at the design stage. Can you publish a short sketch of the =
-proposed design approaches for 1) and 2), with their advantages and drawbac=
-ks?</div>
-
-<div>=A0</div>
-<div>Larry Dickson</div>
-<div>Cutting Edge Networked Storage</div><br>
-<blockquote class=3D"gmail_quote" style=3D"PADDING-LEFT: 1ex; MARGIN: 0px 0=
-px 0px 0.8ex; BORDER-LEFT: #ccc 1px solid">(I tried to parallelize sector e=
-ncryption _vs_ whole bio request encryption,<br>and there are still some pr=
-oblem with both. Also barriers and reordering<br>
-of requests can be problem here.)<br><br>Another problem with 1) is what ha=
-ppens when there is hw acceleration -<br>multiple threads are useful only i=
-f main cpu runs encryption,<br>for hw &amp; async crypto requests it can ca=
-use problems.<br>
-<br>The crypto driver is completely transparent - dm-crypt have no idea<br>=
-if encryption runs on main cpu or in an accelerator hw<br>(=3D&gt; solution=
- 2) is more generic).<br><br>Anyway, it is not highest priority currently..=
-. but still in slow progress.<br>
-(but I guess high speed SSDs will increase priority for this too,<br>curren=
-tly it is real problem only for RAID arrays:-)<br><br>Milan<br>--<br><a hre=
-f=3D"mailto:mbroz@redhat.com">mbroz@redhat.com</a><br><br>--<br>dm-devel ma=
-iling list<br>
-<a href=3D"mailto:dm-devel@redhat.com">dm-devel@redhat.com</a><br><a href=
-=3D"https://www.redhat.com/mailman/listinfo/dm-devel">https://www.redhat.co=
-m/mailman/listinfo/dm-devel</a><br></blockquote></div><br>
-
---0016364179372a996a046774cbd5--
-
-
---===============1941653614==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
-
-
---===============1941653614==--
+http://www.spiritualoutreach.com
+Making Christianity intelligible to secular society
