@@ -1,18 +1,15 @@
-From: "John A. Sullivan III" <jsullivan@opensourcedevel.com>
-Subject: Re: multipath prio_callout broke from 5.2 to 5.3
-Date: Mon, 13 Apr 2009 17:49:13 -0400
-Message-ID: <1239659354.30476.49.camel@jaspav.missionsit.net.missionsit.net>
-References: <1779195765.1578721239520436084.JavaMail.root@zimbra16-e3.priv.proxad.net>
-	<1239613205.6376.16.camel@jaspav.missionsit.net.missionsit.net>
-	<20090413185745.GF15911@ether.msp.redhat.com>
-	<1239652565.30476.41.camel@jaspav.missionsit.net.missionsit.net>
-	<20090413203711.GH15911@ether.msp.redhat.com>
+From: Vivek Goyal <vgoyal@redhat.com>
+Subject: Re: dm-ioband: Test results.
+Date: Mon, 13 Apr 2009 22:49:43 -0400
+Message-ID: <20090414024943.GA976@redhat.com>
+References: <20090413.130552.226792299.ryov@valinux.co.jp>
+	<20090413144626.GF18007@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090413203711.GH15911@ether.msp.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090413144626.GF18007@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,160 +19,62 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 2009-04-13 at 15:37 -0500, Benjamin Marzinski wrote:
-> On Mon, Apr 13, 2009 at 03:56:05PM -0400, John A. Sullivan III wrote:
-> > On Mon, 2009-04-13 at 13:57 -0500, Benjamin Marzinski wrote:
-> > > On Mon, Apr 13, 2009 at 05:00:05AM -0400, John A. Sullivan III wrote:
-> > > > Thank you.  I'll detail our script and the logic behind it in a separate
-> > > > email in case it is helpful to others.
-> > > > 
-> > > > In the meantime, we have a critical problem where the script which was
-> > > > working perfectly in 5.2 is now broken in 5.3.  Is there any way to
-> > > > deconfuse the 5.3 multipathd or any other immediate solution? - John
-> > > 
-> > > What christophe said is correct. In RHEL 5.3, multipath started copying
-> > > all of the necessary callouts into it own private namespace. It scans
-> > > through your config file, and pulls out all the binaries.  However,
-> > > there are two problems that are affecting you.  First, it only pulls the
-> > > command, "/bin/bash" in you case, not the arguments, which for
-> > > you include a script to run.  Second, it's private namespace only
-> > > consists of /sbin, /bin, /tmp, a couple of virtual filesystems, like
-> > > /proc and /sys (well, actually there are a couple of others, like /etc,
-> > > that multipath needs to start up, but you shouldn't rely on them being
-> > > there all the time, since you can lose access to them if the device
-> > > they're on goes down)
-> > > 
-> > > There are two ways to deal with this.  First is to rewrite the
-> > > prioritizer in C.  I realize that this is a pain, but it will be
-> > > necessary to run on RHEL6 and new fedora machines, which use upstream's
-> > > prio functions instead of callout binaries.
-> > > 
-> > > The second, quicker way is to move your callout to /sbin and add a dummy
-> > > device section to make sure it gets picked up.
-> > > 
-> > > devices {
-> > > ...
-> > > 	device {
-> > > 		vendor       "dummy"
-> > > 		product      "dummy"
-> > > 		prio_callout "/sbin/mpath_prio_ssi"
-> > > 	}
-> > > }
-> > > 
-> > > This will cause multipathd to copy your script into the private
-> > > namespace, and everything should work, with one exception.
-> > > 
-> > > bash is not a statically linked executable.  It links to libraries,
-> > > and multipathd doesn't make its own copies of them.  Under normal
-> > > operation this will work (/lib is also in multipathd's
-> > > private namespace). However, if you lose access to /lib, bash won't
-> > > work, and multipathd won't be able to restore access to your devices.
-> > > If you aren't planning on multipathing / or /lib you might choose to
-> > > ignore this (The exact same problem exists in 5.2).
-> > > 
-> > > I don't believe that there is a statically linked shell in RHEL 5.
-> > > This is another reason to convert your callout to a C program. Or
-> > > you can recompile bash with static linking.
-> > > 
-> > > -<snip>
-> > Thanks very much for the explanation.  If I understand correctly, 5.2
-> > also copied into a ramfs but not a separate namespace and that's why it
-> > worked in 5.2?
-> 
-> Not quite.  multipathd had a private namespace in 5.2. but it didn't
-> unmount all of the unnecessary mountpoints.  This was changed in 5.3 for
-> two reasons.
-> 
-> 1. Otherwise if you unmounted a filesystem that had been mounted before
-> you started multipathd, and then tried to remove the device, you
-> couldn't, since the private namespace still had it open.
-> 
-> 2. To catch configurations like yours.  In RHEL 5.2, multipathd started
-> up and worked, but if you ever lost access to /usr/local/sbin,
-> multipathd would stop working.  By unmounting the filesystems that could
-> potentially disappear (or at least most of them), you can force people
-> to do things in a way that makes multipathd fault tolerant.
-> 
-> In rhel 5.2, multipath didn't make a private, in-memory copy of your
-> script. It just used the one on the regular filesystem, which is the
-> very thing that the private namespace was trying to avoid.
-> 
-> > In any event, we attempted to implement the less preferred method for
-> > the sake of time right now (none of us are particularly adept at C and
-> > are not sure how we'd feed the configuration file if it is not safe to
-> > pull files from disk).  We moved mpath_prio_ssi to /sbin and called it
-> > directly in multipath.conf, i.e.,
-> > prio_callout            "/sbin/mpath_prio_ssi %n"
-> 
-> Sorry for the confusion.  You still need to call your script with
-> /bin/bash in your actual device section, just like you originally were.
-> But you also need a dummy device section to cause multipathd to pull
-> that script into the private namespace. In the dummy device section, you
-> need to reference the script directly. This is because multipathd only
-> pulls in commands, not their arguments (even if the argument is a script
-> to run).  When I tested this setup before my first email, my
-> multipath.conf devices section looked like this:
-> 
-> devices {
->         device {
->                 vendor          "WINSYS"
->                 product         "SF2372"
->                 path_grouping_policy    group_by_prio
->                 prio_callout            "/bin/bash /sbin/mpath_prio_one"
->         }
->         device {
->                 vendor          "dummy"
->                 product         "dummy"
->                 prio_callout    "/sbin/mpath_prio_one"
->         }
-> }
-> 
-> mpath_prio_one is a bash script that just echos 1.
-> 
-> -Ben
-Ah, got it.  It worked. Thanks very, very much - John
+On Mon, Apr 13, 2009 at 10:46:26AM -0400, Vivek Goyal wrote:
+> On Mon, Apr 13, 2009 at 01:05:52PM +0900, Ryo Tsuruta wrote:
+> > Hi Alasdair and all,
 > > 
-> > It still does not work but this time we get:
-> > Apr 13 15:33:15 kvm01 multipathd: error calling out /sbin/mpath_prio_ssi
-> > sdq
-> > Apr 13 15:33:15 kvm01 multipathd: /sbin/mpath_prio_ssi exitted with 255
+> > I did more tests on dm-ioband and I've posted the test items and
+> > results on my website. The results are very good.
+> > http://people.valinux.co.jp/~ryov/dm-ioband/test/test-items.xls
 > > 
-> > If we revert to
-> > prio_callout            "/bin/bash /sbin/mpath_prio_ssi %n"
-> > we return to:
-> > Apr 13 15:34:43 kvm01 multipathd: error calling
-> > out /bin/bash /sbin/mpath_prio_ssi sdc
-> > Apr 13 15:34:43 kvm01 multipathd: /bin/bash exitted with 127
-> > 
-> > We thought the script might need an explicit exit code so we changed
-> > everything to exit 0 but that did not fix the problem.  Any idea why we
-> > are getting this 255 error? Thanks - John
-> > -- 
-> > John A. Sullivan III
-> > Open Source Development Corporation
-> > +1 207-985-7880
-> > jsullivan@opensourcedevel.com
-> > 
-> > http://www.spiritualoutreach.com
-> > Making Christianity intelligible to secular society
-> > 
-> > --
-> > dm-devel mailing list
-> > dm-devel@redhat.com
-> > https://www.redhat.com/mailman/listinfo/dm-devel
 > 
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
--- 
-John A. Sullivan III
-Open Source Development Corporation
-+1 207-985-7880
-jsullivan@opensourcedevel.com
+> Hi Ryo,
+> 
+> I quickly looked at the xls sheet. Most of the test cases seem to be
+> direct IO. Have you done testing with buffered writes/async writes and
+> been able to provide service differentiation between cgroups?
+> 
+> For example, two "dd" threads running in two cgroups doing writes.
+> 
 
-http://www.spiritualoutreach.com
-Making Christianity intelligible to secular society
+Just realized that last time I replied to wrong mail id. Ryo, this time
+you should get the mail. This is reply to my original reply.
+
+Also I wanted to test run your patches. How do I do that? I see that your
+patches are based on dm quilt tree. I downloaded the dm-patches and tried
+to apply on top of 2.6.30-rc1 but it failed. So can't apply your patches
+now.
+
+So what's the simplest way of testing your changes on latest kernels?
+
+Thanks
+Vivek
+
+Applying patch dm-add-request-based-facility.patch
+patching file drivers/md/dm-table.c
+Hunk #1 succeeded at 1021 (offset 29 lines).
+patching file drivers/md/dm.c
+Hunk #1 succeeded at 90 (offset 6 lines).
+Hunk #2 succeeded at 175 (offset -1 lines).
+Hunk #3 succeeded at 427 (offset 6 lines).
+Hunk #4 succeeded at 648 (offset 10 lines).
+Hunk #5 succeeded at 1246 with fuzz 2 (offset 20 lines).
+Hunk #6 succeeded at 1273 (offset 3 lines).
+Hunk #7 succeeded at 1615 with fuzz 1 (offset 20 lines).
+Hunk #8 succeeded at 2016 with fuzz 1 (offset 14 lines).
+Hunk #9 succeeded at 2141 (offset 33 lines).
+Hunk #10 FAILED at 2321.
+Hunk #11 FAILED at 2336.
+Hunk #12 succeeded at 2388 with fuzz 2 (offset 29 lines).
+2 out of 12 hunks FAILED -- rejects in file drivers/md/dm.c
+patching file drivers/md/dm.h
+patching file include/linux/device-mapper.h
+Hunk #1 succeeded at 230 (offset -1 lines).
+Patch dm-add-request-based-facility.patch does not apply (enforce with -f)
+
+> Thanks
+> Vivek
