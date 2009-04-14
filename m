@@ -1,15 +1,13 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: Re: dm-ioband: Test results.
-Date: Tue, 14 Apr 2009 18:30:22 +0900 (JST)
-Message-ID: <20090414.183022.71120459.ryov@valinux.co.jp>
-References: <20090413.130552.226792299.ryov@valinux.co.jp>
-	<20090413144626.GF18007@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: I/O error during controller reboot
+Date: Tue, 14 Apr 2009 19:15:36 +0530
+Message-ID: <0D1E8821739E724A86F4D16902CE275C1410F4D02D@inbmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090413144626.GF18007@redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,68 +17,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com, vgoyal@redhat.com
-Cc: vivek.goyal2008@gmail.com, agk@redhat.com, linux-kernel@vger.kernel.org
+To: James Bottomley <James.Bottomley@HansenPartnership.com>, "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Vivek,
+James,
 
-> I quickly looked at the xls sheet. Most of the test cases seem to be
-> direct IO. Have you done testing with buffered writes/async writes and
-> been able to provide service differentiation between cgroups?
-> 
-> For example, two "dd" threads running in two cgroups doing writes.
+I am having issue with scsi_io_completion routine. During device discover=
+y, READ CAPACITY is failing with 02/04/01. It has been retried 5 times(wi=
+th NEED_RETRY) but when retry gets exhausted ,scsi_io_completion simply e=
+nds the request without doing any delay retry as mentioned by you in belo=
+w mail. =20
 
-Thanks for taking a look at the sheet. I did a buffered write test
-with "fio." Only two "dd" threads can't generate enough I/O load to
-make dm-ioband start bandwidth control. The following is a script that
-I actually used for the test.
+scsi_io_completion routine checks for deferred sense and if not found, it=
+ sets error with -EIO, which eventually ends the request and doesnot allo=
+w for any more retries. I am seeing deffered error being checked only for=
+ REQ_TYPE_BLOCK_PC command type. Does it meant that command with cmd_type=
+ REQ_TYPE_BLOCK_PC having current error sense should not be retried in sc=
+si_io_completion? If yes, then would it be better to retry in rdac device=
+ handler in that case.=20
 
-  #!/bin/bash
-  sync
-  echo 1 > /proc/sys/vm/drop_caches
-  arg="--size=64m --rw=write --numjobs=50 --group_reporting"
-  echo $$ > /cgroup/1/tasks
-  fio $arg --name=ioband1 --directory=/mnt1 --output=ioband1.log &
-  echo $$ > /cgroup/2/tasks
-  fio $arg --name=ioband2 --directory=/mnt2 --output=ioband2.log &
-  echo $$ > /cgroup/tasks
-  wait
 
-I created two dm-devices to easily monitor the throughput of each
-cgroup by iostat, and gave weights of 200 for cgroup1 and 100 for
-cgroup2 that means cgroup1 can use twice bandwidth of cgroup2. The
-following is a part of the output of iostat. dm-0 and dm-1 corresponds
-to ioband1 and ioband2. You can see the bandwidth is according to the
-weights.
-
-  avg-cpu:  %user   %nice %system %iowait  %steal   %idle
-             0.99    0.00    6.44   92.57    0.00    0.00
-  
-  Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
-  dm-0           3549.00         0.00     28392.00          0      28392
-  dm-1           1797.00         0.00     14376.00          0      14376
-  
-  avg-cpu:  %user   %nice %system %iowait  %steal   %idle
-             1.01    0.00    4.02   94.97    0.00    0.00
-  
-  Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
-  dm-0           3919.00         0.00     31352.00          0      31352
-  dm-1           1925.00         0.00     15400.00          0      15400
-  
-  avg-cpu:  %user   %nice %system %iowait  %steal   %idle
-             0.00    0.00    5.97   94.03    0.00    0.00
-  
-  Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
-  dm-0           3534.00         0.00     28272.00          0      28272
-  dm-1           1773.00         0.00     14184.00          0      14184
-  
-  avg-cpu:  %user   %nice %system %iowait  %steal   %idle
-             0.50    0.00    6.00   93.50    0.00    0.00
-  
-  Device:            tps   Blk_read/s   Blk_wrtn/s   Blk_read   Blk_wrtn
-  dm-0           4053.00         0.00     32424.00          0      32424
-  dm-1           2039.00         8.00     16304.00          8      16304
+On Tues, 2009-03-10 at 15:47, James Bottomley wrote:
+> > +		if (sense_hdr->asc =3D=3D 0x04 && sense_hdr->ascq =3D=3D 0x01)
+> > +			/* LUN Not Ready - Logical Unit Not=20
+> Ready and is in
+> > +			 * the process of becoming ready
+> > +			 * Just retry.
+> > +			 */
+> > +			return ADD_TO_MLQUEUE;
+> > +		if (sense_hdr->asc =3D=3D 0x04 && sense_hdr->ascq =3D=3D 0x04)
+> > +			/* LUN Not Ready - Format In Progress
+> > +			 *
+> > +			 * Just retry.
+> > +			 */
+> > +			return ADD_TO_MLQUEUE;
+> > +		if (sense_hdr->asc =3D=3D 0x04  && sense_hdr->ascq =3D=3D 0x07)
+> > +			/* LUN Not Ready - Storage controller=20
+> cannot respond
+> > +			 * immediately to a PRIN or PROUT command.
+> > +			 * Just retry.
+> > +			 */
+> > +			return ADD_TO_MLQUEUE;
+>=20
+> For all of these ... along with a few other not ready types,=20
+> we already
+> do a delayed retry at the mid-layer (in scsi_io_completion).  Is there
+> some problem that causes this to need to be handled here as well?
 
 Thanks,
-Ryo Tsuruta
+Vijay
