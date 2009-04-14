@@ -1,15 +1,15 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: dm-ioband: Test results.
-Date: Mon, 13 Apr 2009 22:49:43 -0400
-Message-ID: <20090414024943.GA976@redhat.com>
-References: <20090413.130552.226792299.ryov@valinux.co.jp>
-	<20090413144626.GF18007@redhat.com>
+From: FUJITA Tomonori <fujita.tomonori@lab.ntt.co.jp>
+Subject: Re: [RFC] dm snapshot based asynchronous replication
+Date: Tue, 14 Apr 2009 12:29:01 +0900
+Message-ID: <20090414122812K.fujita.tomonori@lab.ntt.co.jp>
+References: <1567864196.1766411239656669717.JavaMail.root@zimbra16-e3.priv.proxad.net>
+	<177494415.1766861239656900680.JavaMail.root@zimbra16-e3.priv.proxad.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090413144626.GF18007@redhat.com>
+In-Reply-To: <177494415.1766861239656900680.JavaMail.root@zimbra16-e3.priv.proxad.net>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,62 +19,30 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: dm-devel@redhat.com, linux-kernel@vger.kernel.org, agk@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, Apr 13, 2009 at 10:46:26AM -0400, Vivek Goyal wrote:
-> On Mon, Apr 13, 2009 at 01:05:52PM +0900, Ryo Tsuruta wrote:
-> > Hi Alasdair and all,
-> > 
-> > I did more tests on dm-ioband and I've posted the test items and
-> > results on my website. The results are very good.
-> > http://people.valinux.co.jp/~ryov/dm-ioband/test/test-items.xls
-> > 
+On Mon, 13 Apr 2009 23:08:20 +0200 (CEST)
+christophe.varoqui@free.fr wrote:
+
+> dm developers,
 > 
-> Hi Ryo,
-> 
-> I quickly looked at the xls sheet. Most of the test cases seem to be
-> direct IO. Have you done testing with buffered writes/async writes and
-> been able to provide service differentiation between cgroups?
-> 
-> For example, two "dd" threads running in two cgroups doing writes.
-> 
+> I'm in need of an asynchronous replication method for active/passive clusters using direct-attached disks. Please advise if you know tools (other than drdb an rsync) to do the job. (How goes dm-replicator btw ?).
 
-Just realized that last time I replied to wrong mail id. Ryo, this time
-you should get the mail. This is reply to my original reply.
+Zumastor?
 
-Also I wanted to test run your patches. How do I do that? I see that your
-patches are based on dm quilt tree. I downloaded the dm-patches and tried
-to apply on top of 2.6.30-rc1 but it failed. So can't apply your patches
-now.
+http://zumastor.org/
 
-So what's the simplest way of testing your changes on latest kernels?
+An asynchronous remote replication based on snapshots is one of
+reasons why I worked a new dm snapshot implementation:
 
-Thanks
-Vivek
+https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
 
-Applying patch dm-add-request-based-facility.patch
-patching file drivers/md/dm-table.c
-Hunk #1 succeeded at 1021 (offset 29 lines).
-patching file drivers/md/dm.c
-Hunk #1 succeeded at 90 (offset 6 lines).
-Hunk #2 succeeded at 175 (offset -1 lines).
-Hunk #3 succeeded at 427 (offset 6 lines).
-Hunk #4 succeeded at 648 (offset 10 lines).
-Hunk #5 succeeded at 1246 with fuzz 2 (offset 20 lines).
-Hunk #6 succeeded at 1273 (offset 3 lines).
-Hunk #7 succeeded at 1615 with fuzz 1 (offset 20 lines).
-Hunk #8 succeeded at 2016 with fuzz 1 (offset 14 lines).
-Hunk #9 succeeded at 2141 (offset 33 lines).
-Hunk #10 FAILED at 2321.
-Hunk #11 FAILED at 2336.
-Hunk #12 succeeded at 2388 with fuzz 2 (offset 29 lines).
-2 out of 12 hunks FAILED -- rejects in file drivers/md/dm.c
-patching file drivers/md/dm.h
-patching file include/linux/device-mapper.h
-Hunk #1 succeeded at 230 (offset -1 lines).
-Patch dm-add-request-based-facility.patch does not apply (enforce with -f)
 
-> Thanks
-> Vivek
+Jonathan Brassow has been working on it (Jonathan, Thanks!):
+
+http://marc.info/?l=dm-devel&m=123905441719141&w=2
+
+If you add the interface to get the delta between two snapshots, then
+you can implement a daemon in user space that does an asynchronous
+remote replication.
