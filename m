@@ -1,13 +1,16 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: I/O error during controller reboot
-Date: Tue, 14 Apr 2009 19:15:36 +0530
-Message-ID: <0D1E8821739E724A86F4D16902CE275C1410F4D02D@inbmail01.lsi.com>
+From: Jonathan Brassow <jbrassow@redhat.com>
+Subject: Re: [RFC] dm snapshot based asynchronous replication
+Date: Tue, 14 Apr 2009 09:27:02 -0500
+Message-ID: <FDFDAA0C-8388-4A95-9254-97389422337C@redhat.com>
+References: <1567864196.1766411239656669717.JavaMail.root@zimbra16-e3.priv.proxad.net>
+	<177494415.1766861239656900680.JavaMail.root@zimbra16-e3.priv.proxad.net>
+	<20090414122812K.fujita.tomonori@lab.ntt.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="iso-8859-1"
-Content-Transfer-Encoding: quoted-printable
+Mime-Version: 1.0 (Apple Message framework v930.3)
+Content-Type: text/plain; charset=US-ASCII; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Language: en-US
+In-Reply-To: <20090414122812K.fujita.tomonori@lab.ntt.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -17,53 +20,61 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: James Bottomley <James.Bottomley@HansenPartnership.com>, "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>
-Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-James,
 
-I am having issue with scsi_io_completion routine. During device discover=
-y, READ CAPACITY is failing with 02/04/01. It has been retried 5 times(wi=
-th NEED_RETRY) but when retry gets exhausted ,scsi_io_completion simply e=
-nds the request without doing any delay retry as mentioned by you in belo=
-w mail. =20
+On Apr 13, 2009, at 10:29 PM, FUJITA Tomonori wrote:
 
-scsi_io_completion routine checks for deferred sense and if not found, it=
- sets error with -EIO, which eventually ends the request and doesnot allo=
-w for any more retries. I am seeing deffered error being checked only for=
- REQ_TYPE_BLOCK_PC command type. Does it meant that command with cmd_type=
- REQ_TYPE_BLOCK_PC having current error sense should not be retried in sc=
-si_io_completion? If yes, then would it be better to retry in rdac device=
- handler in that case.=20
+> On Mon, 13 Apr 2009 23:08:20 +0200 (CEST)
+> christophe.varoqui@free.fr wrote:
+>
+>> dm developers,
+>>
+>> I'm in need of an asynchronous replication method for active/ 
+>> passive clusters using direct-attached disks. Please advise if you  
+>> know tools (other than drdb an rsync) to do the job. (How goes dm- 
+>> replicator btw ?).
+>
+> Zumastor?
+>
+> http://zumastor.org/
+>
+> An asynchronous remote replication based on snapshots is one of
+> reasons why I worked a new dm snapshot implementation:
+>
+> https://www.redhat.com/archives/dm-devel/2008-August/msg00003.html
+>
+>
+> Jonathan Brassow has been working on it (Jonathan, Thanks!):
+>
+> http://marc.info/?l=dm-devel&m=123905441719141&w=2
+>
+> If you add the interface to get the delta between two snapshots, then
+> you can implement a daemon in user space that does an asynchronous
+> remote replication.
 
+The exception store API is waiting for agk to push upstream.  The  
+'shared' (aka tomonori/phillips) exception store module is working and  
+ready for testing.  I am working on the LVM patches to allow people to  
+use the shared exception store, but this will take me a while.  (The  
+cluster-aware exception store is ready for testing as well.)
 
-On Tues, 2009-03-10 at 15:47, James Bottomley wrote:
-> > +		if (sense_hdr->asc =3D=3D 0x04 && sense_hdr->ascq =3D=3D 0x01)
-> > +			/* LUN Not Ready - Logical Unit Not=20
-> Ready and is in
-> > +			 * the process of becoming ready
-> > +			 * Just retry.
-> > +			 */
-> > +			return ADD_TO_MLQUEUE;
-> > +		if (sense_hdr->asc =3D=3D 0x04 && sense_hdr->ascq =3D=3D 0x04)
-> > +			/* LUN Not Ready - Format In Progress
-> > +			 *
-> > +			 * Just retry.
-> > +			 */
-> > +			return ADD_TO_MLQUEUE;
-> > +		if (sense_hdr->asc =3D=3D 0x04  && sense_hdr->ascq =3D=3D 0x07)
-> > +			/* LUN Not Ready - Storage controller=20
-> cannot respond
-> > +			 * immediately to a PRIN or PROUT command.
-> > +			 * Just retry.
-> > +			 */
-> > +			return ADD_TO_MLQUEUE;
->=20
-> For all of these ... along with a few other not ready types,=20
-> we already
-> do a delayed retry at the mid-layer (in scsi_io_completion).  Is there
-> some problem that causes this to need to be handled here as well?
+Regarding the solution you are talking about... I'm not sure how you  
+will get the information out about the deltas between the snapshots.   
+One method I see working would be to use device-mapper's 'message' and  
+'wait/status' interface.  The API already has the ability to pass on  
+messages to the exception stores below, which are free to implement  
+their own features.  Still, it would be nice if there was a cleaner  
+way to do this....
 
-Thanks,
-Vijay
+Of course, this dialog assumes you've hit upon the right solution to  
+your problem.  There may be another way...  Direct-attached disks is  
+what is complicating the problem.  You could use 'rgmanager' if the  
+devices where shared.  You could also use a network block device  
+driver (gnbd, etc) and then use mirroring, but this isn't much  
+different than DRBD.
+
+  brassow
+
+  brassow
