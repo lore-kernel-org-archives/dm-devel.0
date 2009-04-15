@@ -1,7 +1,7 @@
 From: Vivek Goyal <vgoyal@redhat.com>
 Subject: Re: dm-ioband: Test results.
-Date: Wed, 15 Apr 2009 10:10:49 -0400
-Message-ID: <20090415141049.GA15067@redhat.com>
+Date: Wed, 15 Apr 2009 12:17:00 -0400
+Message-ID: <20090415161700.GC15067@redhat.com>
 References: <20090413.130552.226792299.ryov@valinux.co.jp>
 	<20090415043759.GA8349@redhat.com>
 	<20090415.223832.71125857.ryov@valinux.co.jp>
@@ -157,33 +157,124 @@ On Wed, Apr 15, 2009 at 10:38:32PM +0900, Ryo Tsuruta wrote:
 > 
 > The results show that the effect of the single queue is too small and
 > dm-ioband doesn't break CFQ's classification and priority.
-> What do you think about my results?
 
-Hmm..., strange. We are getting different results.  May be it is some
-configuration/setup issue.
+Ok, one more round of testing. Little different though this time. This
+time instead of progressively increasing the number of competing readers
+I have run with constant number of readers multimple times.
 
-How does your ioband setup looks like. Have you created at least one more
-competing ioband device? Because I think only in that case you have got
-this ad-hoc logic of waiting for the group which has not finished the
-tokens yet and you will end up buffering the bio in a FIFO.
+Again, I created two partitions /dev/sdd1 and /dev/sdd2 and created two
+ioband devices and assigned weight 40 and 10 respectively. All my IO
+is being done only on first ioband device and there is no IO happening
+on second partition.
 
-If you have not already done, can you just create two partitions on your
-disk, say sda1 and sda2. Create two ioband devices with weights say 95
-and 5 (95% of disk for first partition and 5% for other) and then run
-the above test on first ioband device.
+I use following to create ioband devices.
 
-So how does this proportional weight thing works. If I have got two ioband
-devices with weight 80 and 20 and if there is no IO happening on the
-second device, first devices should get all the BW?
+echo "0 $(blockdev --getsize /dev/sdd1) ioband /dev/sdd1 1 0 0 none"
+"weight 0 :40" | dmsetup create ioband1
+echo "0 $(blockdev --getsize /dev/sdd2) ioband /dev/sdd2 1 0 0 none"
+"weight 0 :10" | dmsetup create ioband2
 
-I will re-run my tests.
+mount /dev/mapper/ioband1 /mnt/sdd1
+mount /dev/mapper/ioband2 /mnt/sdd2
 
-Secondly from technical point of view how do you explain the fact that
-FIFO release of bio does not break the notion of CFQ priority? The moment
-you buffered the bios in a single queue and started doing FIFO dispatch,
-you lost that notion of one bio being more important than other.
+Following is dmsetup output.
 
-That's a different thing that in practice it might not be easily visible.
+# dmsetup status
+ioband2: 0 38025855 ioband 1 -1 150 13 186 1 0 8
+ioband1: 0 40098177 ioband 1 -1 335056 819 80342386 1 0 8
+
+Following is my actual script to run multiple reads.
+
+sync
+echo 3 > /proc/sys/vm/drop_caches
+ionice -c 1 -n 0 dd if=/mnt/sdd1/testzerofile1 of=/dev/null &
+ionice -c 2 -n 4 dd if=/mnt/sdd1/testzerofile2 of=/dev/null &
+ionice -c 2 -n 4 dd if=/mnt/sdd1/testzerofile3 of=/dev/null &
+ionice -c 2 -n 4 dd if=/mnt/sdd1/testzerofile4 of=/dev/null &
+ionice -c 2 -n 4 dd if=/mnt/sdd1/testzerofile5 of=/dev/null &
+
+Following is output of 4 runs of reads with and without dm-ioband
+
+1 RT process prio 0 and 4 BE process with prio 4.
+
+First run
+----------
+without dm-ioband
+
+2147483648 bytes (2.1 GB) copied, 35.3428 s, 60.8 MB/s
+2147483648 bytes (2.1 GB) copied, 215.446 s, 10.0 MB/s
+2147483648 bytes (2.1 GB) copied, 218.269 s, 9.8 MB/s
+2147483648 bytes (2.1 GB) copied, 219.433 s, 9.8 MB/s
+2147483648 bytes (2.1 GB) copied, 220.033 s, 9.8 MB/s
+
+with dm-ioband
+
+2147483648 bytes (2.1 GB) copied, 48.4239 s, 44.3 MB/s
+2147483648 bytes (2.1 GB) copied, 257.943 s, 8.3 MB/s
+2147483648 bytes (2.1 GB) copied, 258.385 s, 8.3 MB/s
+2147483648 bytes (2.1 GB) copied, 258.778 s, 8.3 MB/s
+2147483648 bytes (2.1 GB) copied, 259.81 s, 8.3 MB/s
+
+Second run
+----------
+without dm-ioband
+2147483648 bytes (2.1 GB) copied, 35.4003 s, 60.7 MB/s
+2147483648 bytes (2.1 GB) copied, 217.204 s, 9.9 MB/s
+2147483648 bytes (2.1 GB) copied, 218.336 s, 9.8 MB/s
+2147483648 bytes (2.1 GB) copied, 219.75 s, 9.8 MB/s
+2147483648 bytes (2.1 GB) copied, 219.816 s, 9.8 MB/s
+
+with dm-ioband
+2147483648 bytes (2.1 GB) copied, 49.7719 s, 43.1 MB/s
+2147483648 bytes (2.1 GB) copied, 254.118 s, 8.5 MB/s
+2147483648 bytes (2.1 GB) copied, 255.7 s, 8.4 MB/s
+2147483648 bytes (2.1 GB) copied, 256.512 s, 8.4 MB/s
+2147483648 bytes (2.1 GB) copied, 256.581 s, 8.4 MB/s
+
+third run
+---------
+without dm-ioband
+2147483648 bytes (2.1 GB) copied, 35.426 s, 60.6 MB/s
+2147483648 bytes (2.1 GB) copied, 218.4 s, 9.8 MB/s
+2147483648 bytes (2.1 GB) copied, 221.074 s, 9.7 MB/s
+2147483648 bytes (2.1 GB) copied, 222.421 s, 9.7 MB/s
+2147483648 bytes (2.1 GB) copied, 222.489 s, 9.7 MB/s
+
+with dm-ioband
+2147483648 bytes (2.1 GB) copied, 51.5454 s, 41.7 MB/s
+2147483648 bytes (2.1 GB) copied, 261.481 s, 8.2 MB/s
+2147483648 bytes (2.1 GB) copied, 261.567 s, 8.2 MB/s
+2147483648 bytes (2.1 GB) copied, 263.048 s, 8.2 MB/s
+2147483648 bytes (2.1 GB) copied, 264.204 s, 8.1 MB/s
+
+fourth run
+----------
+without dm-ioband
+2147483648 bytes (2.1 GB) copied, 35.4676 s, 60.5 MB/s
+2147483648 bytes (2.1 GB) copied, 217.752 s, 9.9 MB/s
+2147483648 bytes (2.1 GB) copied, 219.693 s, 9.8 MB/s
+2147483648 bytes (2.1 GB) copied, 221.921 s, 9.7 MB/s
+2147483648 bytes (2.1 GB) copied, 222.18 s, 9.7 MB/s
+
+with dm-ioband
+2147483648 bytes (2.1 GB) copied, 46.1355 s, 46.5 MB/s
+2147483648 bytes (2.1 GB) copied, 253.84 s, 8.5 MB/s
+2147483648 bytes (2.1 GB) copied, 256.282 s, 8.4 MB/s
+2147483648 bytes (2.1 GB) copied, 256.356 s, 8.4 MB/s
+2147483648 bytes (2.1 GB) copied, 256.679 s, 8.4 MB/s
+
+
+Do let me know if you think there is something wrong with my
+configuration.
+
+First of all I still notice that there is significant performance drop
+here.
+
+Secondly notice that finish time of RT task is varying so much with 
+dm-ioband and it is so stable with plain cfq.
+
+with dm-ioabnd		48.4239  49.7719   51.5454   46.1355  
+without dm-ioband	35.3428  35.4003   35.426    35.4676  		
 
 Thanks
 Vivek
