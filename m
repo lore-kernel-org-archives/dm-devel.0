@@ -1,23 +1,10 @@
-From: Kurt Bechstein <bkurt@bgsu.edu>
-Subject: RE: RE: Dell MD3000i issues with dm mp
-Date: Wed, 15 Apr 2009 14:36:06 -0400
-Message-ID: <D192143E8D8E6749B56F630ABC78B7331CEA571F42@MAIL3.bgsu.edu>
-References: <D192143E8D8E6749B56F630ABC78B7331CEA46C2C5@MAIL3.bgsu.edu>
-	<E463DF2B2E584B4A82673F53D62C2EF4669B59A6@cosmail01.lsi.com>
-	<D192143E8D8E6749B56F630ABC78B7331CEA46C3A5@MAIL3.bgsu.edu>
-	<E463DF2B2E584B4A82673F53D62C2EF4669B59E1@cosmail01.lsi.com>
-	<D192143E8D8E6749B56F630ABC78B7331CEA46C46E@MAIL3.bgsu.edu>
-	<E463DF2B2E584B4A82673F53D62C2EF4669B5A91@cosmail01.lsi.com>
-	<D192143E8D8E6749B56F630ABC78B7331CEA46C4F9@MAIL3.bgsu.edu>
-	<E463DF2B2E584B4A82673F53D62C2EF4669B5B48@cosmail01.lsi.com>
-	<49E61A69.6090807@cs.wisc.edu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH] dm table: verify each target is H/W sector
+	aligned
+Date: Wed, 15 Apr 2009 14:46:10 -0400
+Message-ID: <1239821170-8989-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49E61A69.6090807@cs.wisc.edu>
-Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -27,159 +14,98 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Here is a similar snippet.
+Establish device limits prior to verifying a target is H/W sector
+aligned.
 
-http://pastebin.com/m364ffe45
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+dm_set_device_limits() is now are now established prior to the call check_device_area()
+---
+ drivers/md/dm-table.c |   50 ++++++++++++++++++++++++++++++++++++------------
+ 1 files changed, 37 insertions(+), 13 deletions(-)
 
------Original Message-----
-From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] On=
- Behalf Of Mike Christie
-Sent: Wednesday, April 15, 2009 1:33 PM
-To: device-mapper development
-Subject: Re: [dm-devel] RE: Dell MD3000i issues with dm mp
-
-Moger, Babu wrote:
-> I don't see any apparent reason for these messages("rdac Dettached") by=
- looking at the log. There are some issci session failure messages.  I do=
-n't understand those messages very well.  You may have to ask some iscsi =
-experts to look at it.
->=20
-
-The http://pastebin.com/d97ae1ad link does not work anymore. If you=20
-could put the log back up, I can look at the iscsi messages.
-
-
-> ________________________________
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Kurt Bechstein
-> Sent: Tuesday, April 14, 2009 12:44 PM
-> To: device-mapper development
-> Subject: [dm-devel] RE: Dell MD3000i issues with dm mp
->=20
-> No devices were detached during this sequence at least not physically a=
-nyways.
->=20
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Moger, Babu
-> Sent: Tuesday, April 14, 2009 1:38 PM
-> To: device-mapper development
-> Subject: [dm-devel] RE: Dell MD3000i issues with dm mp
->=20
-> I am seeing few "rdac Dettached" messages. There are only messages I am=
- bit concerned about (unless you disconnected some devices purposefully d=
-uring the test). I am not concerned about other messages.
->=20
-> Thanks
-> Babu Moger
-> ________________________________
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Kurt Bechstein
-> Sent: Tuesday, April 14, 2009 12:10 PM
-> To: device-mapper development
-> Subject: [dm-devel] RE: Dell MD3000i issues with dm mp
->=20
-> Here is a snippet of my /var/log/messages from this morning's boot sequ=
-ence after iscsi started and some of the output I'm seeing.  Seems like q=
-uite a bit to me.
->=20
-> http://pastebin.com/d97ae1ad
->=20
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Moger, Babu
-> Sent: Tuesday, April 14, 2009 12:12 PM
-> To: device-mapper development
-> Subject: [dm-devel] RE: Dell MD3000i issues with dm mp
->=20
-> I would think it should be pretty sparse.
->=20
-> Thanks
-> Babu Moger
-> ________________________________
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Kurt Bechstein
-> Sent: Tuesday, April 14, 2009 10:57 AM
-> To: device-mapper development
-> Subject: [dm-devel] RE: Dell MD3000i issues with dm mp
->=20
-> I actually tried doing that by doing a mkinitrd /boot/initrdfile -prelo=
-ad=3Dscsi_dh_rdac kernelversion and booted using the initrd and it still =
-seemed to crank out quite a few errors.  With doing it this way, should I=
- still expect to see a good deal of I/O errors or should they pretty spar=
-se?
->=20
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Moger, Babu
-> Sent: Tuesday, April 14, 2009 11:38 AM
-> To: device-mapper development
-> Subject: [dm-devel] RE: Dell MD3000i issues with dm mp
->=20
-> Yes, this could happen during the boot where the scsi_dh_rdac handler i=
-s not yet loaded. You might want to try adding scsi_dh_rdac in the initrd=
-.  This will help to cut short all your error messages. I don't see any p=
-roblem with your multipath.conf.
->=20
-> Thanks
-> Babu Moger
-> ________________________________
-> From: dm-devel-bounces@redhat.com [mailto:dm-devel-bounces@redhat.com] =
-On Behalf Of Kurt Bechstein
-> Sent: Tuesday, April 14, 2009 9:54 AM
-> To: dm-devel@redhat.com
-> Subject: [dm-devel] Dell MD3000i issues with dm mp
->=20
-> Greetings everyone, I have a RHEL 5.3 host attached to two Dell MD3000i=
- storage arrays via iscsi.  I'm having some interesting issues upon bootu=
-p in this setup.  Between the two arrays I'm accessing 24 luns so after m=
-y iscsi service kicks in I get tons and tons of I/O error messages going =
-across the screen.  This can go on for 15-20 minutes or longer.  It would=
- appear that some I/O is being sent to the passive paths and they are ret=
-urning errors.  It would seem the scsi layer is doing its thing to scan f=
-or partitions and probably causing the I/O that is being seen.  Is there =
-any way to suppress/avoid this scenario?  Also, I thought I would post my=
- multipath.conf file just to have some other eyes have a look at it and m=
-ake sure I'm not missing something obvious so that is below.  Thanks in a=
-dvance!
->=20
->=20
-> devices {
->         device {
->                vendor                  "DELL"
->                product                 "MD3000i"
->                features                 "0"
->                getuid_callout          "/sbin/scsi_id -g -u -s /block/%=
-n"
->                prio_callout            "/sbin/mpath_prio_rdac /dev/%n"
->                hardware_handler        "1 rdac"
->                path_grouping_policy    group_by_prio
->                failback                immediate
->                path_checker            rdac
->                prio                     "rdac"
->=20
->        }
-> }
-> multipaths {
->         mulitpath {
->                 device {
->                         vendor DELL
->                         product MD3000i
->                 }
->         }
-> }
->=20
->=20
->=20
-> -----------------------------------------------------------------------=
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 429b50b..e8f8d11 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -384,15 +384,39 @@ static void close_dev(struct dm_dev_internal *d, struct mapped_device *md)
+ /*
+  * If possible, this checks an area of a destination device is valid.
+  */
+-static int check_device_area(struct dm_dev_internal *dd, sector_t start,
+-			     sector_t len)
++static int check_device_area(struct dm_target *ti, struct block_device *bdev,
++			     sector_t start, sector_t len)
+ {
+-	sector_t dev_size = dd->dm_dev.bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	sector_t dev_size = bdev->bd_inode->i_size >> SECTOR_SHIFT;
++	unsigned short hardsect_size_sectors =
++		ti->limits.hardsect_size >> SECTOR_SHIFT;
++	char b[BDEVNAME_SIZE];
+ 
+ 	if (!dev_size)
+ 		return 1;
+ 
+-	return ((start < dev_size) && (len <= (dev_size - start)));
++	if (!((start < dev_size) && (len <= (dev_size - start)))) {
++		DMWARN("%s: %s too small for target",
++		       dm_device_name(ti->table->md), bdevname(bdev, b));
++		return 0;
++	}
++
++	if (hardsect_size_sectors <= 1)
++		return 1;
++
++	if (start & (hardsect_size_sectors - 1)) {
++		DMWARN("%s: start=%lu in mapping of %s not H/W sector aligned",
++		       dm_device_name(ti->table->md), start, bdevname(bdev, b));
++		return 0;
++	}
++
++	if (len & (hardsect_size_sectors - 1)) {
++		DMWARN("%s: len=%lu in mapping of %s not H/W sector aligned",
++		       dm_device_name(ti->table->md), len, bdevname(bdev, b));
++		return 0;
++	}
++
++	return 1;
+ }
+ 
+ /*
+@@ -478,14 +502,7 @@ static int __table_get_device(struct dm_table *t, struct dm_target *ti,
+ 	}
+ 	atomic_inc(&dd->count);
+ 
+-	if (!check_device_area(dd, start, len)) {
+-		DMWARN("device %s too small for target", path);
+-		dm_put_device(ti, &dd->dm_dev);
+-		return -EINVAL;
+-	}
 -
->=20
-> --
-> dm-devel mailing list
-> dm-devel@redhat.com
-> https://www.redhat.com/mailman/listinfo/dm-devel
-
---
-dm-devel mailing list
-dm-devel@redhat.com
-https://www.redhat.com/mailman/listinfo/dm-devel
+ 	*result = &dd->dm_dev;
+-
+ 	return 0;
+ }
+ 
+@@ -553,8 +570,15 @@ int dm_get_device(struct dm_target *ti, const char *path, sector_t start,
+ 	int r = __table_get_device(ti->table, ti, path,
+ 				   start, len, mode, result);
+ 
+-	if (!r)
+-		dm_set_device_limits(ti, (*result)->bdev);
++	if (r)
++		return r;
++
++	dm_set_device_limits(ti, (*result)->bdev);
++
++	if (!check_device_area(ti, (*result)->bdev, start, len)) {
++		dm_put_device(ti, *result);
++		return -EINVAL;
++	}
+ 
+ 	return r;
+ }
+-- 
+1.6.0.6
