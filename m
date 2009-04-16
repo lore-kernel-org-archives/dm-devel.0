@@ -1,11 +1,10 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: LSF: Multipathing and path checking question
-Date: Thu, 16 Apr 2009 17:59:17 -0500
-Message-ID: <49E7B845.70400@cs.wisc.edu>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] crash in multipath argument parsing
+Date: Thu, 16 Apr 2009 19:48:16 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904161947370.312@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
@@ -16,46 +15,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hey,
+Fin a parsing crash with this command:
 
-For this topic:
+dmsetup create mpath --table "0 `blockdev --getsize /dev/mapper/cr0` multipath 0 0 2 1 round-robin 1000 0 1 1 /dev/mapper/cr0 round-robin 0 1 1 /dev/mapper/cr1 1000"
+kernel BUG at drivers/md/dm-mpath.c:530!
 
------------------------
-Next-Gen Multipathing
----------------------
-Dr. Hannes Reinecke
+The parser reads argument count as a number but doesn't check that sufficient
+number of arguments is supplied. This triggers the bug.
 
-......
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
-Should path checkers use sd->state to check for errors or availability?
-----------------------
+---
+ drivers/md/dm-mpath.c |    5 +++++
+ 1 file changed, 5 insertions(+)
 
-What was decided?
-
-Could this problem be fixed or helped if multipath tools always sets the 
-fast io fail tmo for FC or the replacement_timeout for iscsi?
-
-If those are set then IO in the blocked queue and in the driver will get 
-failed after fast io fail tmo/replacement_timeout seconds (driver has to 
-implement a terminate rport IO callback and only mptfc does not now). So 
-at this time, do we want to fail the path?
-
-Or are people thinking that we want to fail the path when the problem is 
-initially detected like when the LLD deletes the rport for fc for example?
-
-
-
-Also for this one:
------------------------
-How to communication device went away:
-1) send event to udev (uses netlink)
------------------------
-
-Is this an event when dev_loss_tmo fires or when the LLD first detects 
-something like a link down (or any event it might block the rport for), 
-or would it be for when the fast fail io tmo fires (when the fc class is 
-going to fail running IO and incoming IO), or would we have events for 
-all of them?
+Index: linux-2.6.30-rc1-devel/drivers/md/dm-mpath.c
+===================================================================
+--- linux-2.6.30-rc1-devel.orig/drivers/md/dm-mpath.c	2009-04-10 06:33:51.000000000 +0200
++++ linux-2.6.30-rc1-devel/drivers/md/dm-mpath.c	2009-04-10 06:33:57.000000000 +0200
+@@ -553,6 +553,11 @@ static int parse_path_selector(struct ar
+ 		dm_put_path_selector(pst);
+ 		return -EINVAL;
+ 	}
++	if (ps_argc > as->argc) {
++		dm_put_path_selector(pst);
++		ti->error = "not enough arguments for path selector";
++		return -EINVAL;
++	}
+ 
+ 	r = pst->create(&pg->ps, ps_argc, as->argv);
+ 	if (r) {
