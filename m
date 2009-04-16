@@ -1,120 +1,67 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [dm-devel] Re: dm-ioband: Test results.
-Date: Thu, 16 Apr 2009 11:47:50 +0900 (JST)
-Message-ID: <20090416.114750.226794985.ryov@valinux.co.jp>
-References: <20090413.130552.226792299.ryov@valinux.co.jp>
-	<20090415043759.GA8349@redhat.com>
-	<20090415.223832.71125857.ryov@valinux.co.jp>
+From: malahal@us.ibm.com
+Subject: Re: DM-RAID1 data corruption
+Date: Wed, 15 Apr 2009 19:49:59 -0700
+Message-ID: <20090416024959.GB19876@us.ibm.com>
+References: <Pine.LNX.4.64.0904141618220.701@hs20-bc2-1.build.redhat.com>
+	<20090415031210.GA11881@us.ibm.com> <49E645DA.4010204@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1753946AbZDPCsE@vger.kernel.org>
-In-Reply-To: <20090415.223832.71125857.ryov@valinux.co.jp>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: fernando@oss.ntt.co.jp, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <49E645DA.4010204@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Vivek, 
-
-> General thoughts about dm-ioband
-> ================================
-> - Implementing control at second level has the advantage tha one does not
->   have to muck with IO scheduler code. But then it also has the
->   disadvantage that there is no communication with IO scheduler.
+Takahiro Yasui [tyasui@redhat.com] wrote:
+> malahal@us.ibm.com wrote:
+> > Look at this patch
+> > http://permalink.gmane.org/gmane.linux.kernel.device-mapper.devel/4973
+> >
+> > It essentially generates an uevet and waits for the user level code to
+> > act on it and send a message to unblock it.
 > 
-> - dm-ioband is buffering bio at higher layer and then doing FIFO release
->   of these bios. This FIFO release can lead to priority inversion problems
->   in certain cases where RT requests are way behind BE requests or 
->   reader starvation where reader bios are getting hidden behind writer
->   bios etc. These are hard to notice issues in user space. I guess above
->   RT results do highlight the RT task problems. I am still working on
->   other test cases and see if i can show the probelm.
->
-> - dm-ioband does this extra grouping logic using dm messages. Why
->   cgroup infrastructure is not sufficient to meet your needs like
->   grouping tasks based on uid etc? I think we should get rid of all
->   the extra grouping logic and just use cgroup for grouping information.
+> This patch was posted more then a year ago, and I could not find
+> any discussion on this issue/patch in the mailing list archive.
+> What was the conclusion of the discussion about this patch?
+> Are there any discussions outside this mailing list?
 
-I want to use dm-ioband even without cgroup and to make dm-ioband has
-flexibility to support various type of objects.
- 
-> - Why do we need to specify bio cgroup ids to the dm-ioband externally with
->   the help of dm messages? A user should be able to just create the
->   cgroups, put the tasks in right cgroup and then everything should
->   just work fine.
+The patch alone can't fix the issue. It needed LVM changes. We had some
+discussions on how to implement the LVM related changes. Finally I was
+told look at remote-replication target code to see how that handles
+selecting the right "MASTER" device. That code is not published yet.
 
-This is because to handle cgroup on dm-ioband easily and it keeps the
-code simple.
+> I think data corruption is really a serious problem even if it
+> has very small chance to happen. If it is a known problem, we
+> need to fix it. Don't you agree?
 
-> - Why do we have to put another dm-ioband device on top of every partition
->   or existing device mapper device to control it? Is it possible to do
->   this control on make_request function of the reuqest queue so that
->   we don't end up creating additional dm devices? I had posted the crude
->   RFC patch as proof of concept but did not continue the development 
->   because of fundamental issue of FIFO release of buffered bios.
-> 
-> 	http://lkml.org/lkml/2008/11/6/227 
-> 
->   Can you please have a look and provide feedback about why we can not
->   go in the direction of the above patches and why do we need to create
->   additional dm device.
-> 
->   I think in current form, dm-ioband is hard to configure and we should
->   look for ways simplify configuration.
+Of course, yes!
 
-This can be solved by using a tool or a small script.
+> I roughly looked your patch, and I understand it is one of the
+> approach to fix this issue. I have just one concern about delay.
+> When 'unblock' message is delayed for some reason (by dmeventd?),
+> all write I/Os from applications need to be waited, and many I/Os
+> might come in a write queue and be blocked during 'block' status.
 
-> - I personally think that even group IO scheduling should be done at
->   IO scheduler level and we should not break down IO scheduling in two
->   parts where group scheduling is done by higher level IO scheduler 
->   sitting in dm layer and io scheduling among tasks with-in groups is
->   done by actual IO scheduler.
-> 
->   But this also means more work as one has to muck around with core IO
->   scheduler's to make them cgroup aware and also make sure existing
->   functionality is not broken. I posted the patches here.
-> 
-> 	http://lkml.org/lkml/2009/3/11/486
-> 
->   Can you please let us know that why does IO scheduler based approach
->   does not work for you? 
+That is how the "log device" failure is handled today. Alasdair also
+thought we needed to change LVM to handle events as soon as possible
+using a single thread and not block behind an LVM scan, etc.
 
-I think your approach is not bad, but I've made it my purpose to
-control disk bandwidth of virtual machines by device-mapper and
-dm-ioband. 
-I think device-mapper is a well designed system for the following
-reasons:
- - It can easily add new functions to a block device.
- - No need to muck around with the existing kernel code.
- - dm-devices are detachable. It doesn't make any effects on the
-   system if a user doesn't use it.
-So I think dm-ioband and your IO controller can coexist. What do you
-think about it?
- 
->   Jens, it would be nice to hear your opinion about two level vs one
->   level conrol. Do you think that common layer approach is the way
->   to go where one can control things more tightly or FIFO release of bios
->   from second level controller is fine and we can live with this additional       serialization in the layer above just above IO scheduler?
->
-> - There is no notion of RT cgroups. So even if one wants to run an RT
->   task in root cgroup to make sure to get full access of disk, it can't
->   do that. It has to share the BW with other competing groups. 
->
-> - dm-ioband controls amount of IO done per second. Will a seeky process
->   not run away more disk time? 
+Another method is to have dm-mirror target metadata on the disk itself.
+This metadata is internal to the kernel module and would NOT touch it.
+This would avoid any user level interaction and delays.
 
-Could you elaborate on this? dm-ioband doesn't control it per second.
+Of course, we can do something in the log itself but it will not fix
+"corelog" mirrors, more over the system can't auto recover after a
+missing log alone.
 
->   Additionally, at group level we will provide fairness in terms of amount
->   of IO (number of blocks transferred etc) and with-in group cfq will try
->   to provide fairness in terms of disk access time slices. I don't even
->   know whether it is a matter of concern or not. I was thinking that
->   probably one uniform policy on the hierarchical scheduling tree would
->   have probably been better. Just thinking loud.....
-> 
-> Thanks
-> Vivek
-
-Thanks,
-Ryo Tsuruta
+Thanks, Malahal.
