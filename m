@@ -1,63 +1,48 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 5/5] bio-cgroup: Add a cgroup support to dm-ioband
-Date: Thu, 16 Apr 2009 21:31:56 +0900 (JST)
-Message-ID: <20090416.213156.112612071.ryov@valinux.co.jp>
-References: <20090416.212931.71100972.ryov@valinux.co.jp>
-	<20090416.213019.104045053.ryov@valinux.co.jp>
-	<20090416.213105.189713999.ryov@valinux.co.jp>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+Subject: Re: [dm-devel] Re: dm-ioband: Test results.
+Date: Thu, 16 Apr 2009 21:56:30 +0900 (JST)
+Message-ID: <20090416.215630.183034963.ryov@valinux.co.jp>
+References: <20090413144626.GF18007@redhat.com>
+	<20090414.183022.71120459.ryov@valinux.co.jp>
+	<20090415170415.GE15067@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090416.213105.189713999.ryov@valinux.co.jp>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1756234AbZDPM4n@vger.kernel.org>
+In-Reply-To: <20090415170415.GE15067@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+To: vgoyal@redhat.com
+Cc: dm-devel@redhat.com, vivek.goyal2008@gmail.com, linux-kernel@vger.kernel.org, agk@redhat.com
 List-Id: dm-devel.ids
 
-With this patch, dm-ioband can work with the bio cgroup.
+Hi Vivek,
 
-Based on 2.6.30-rc1
-Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
-Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
+> How does your ioband setup looks like. Have you created at least one more
+> competing ioband device? Because I think only in that case you have got
+> this ad-hoc logic of waiting for the group which has not finished the
+> tokens yet and you will end up buffering the bio in a FIFO.
 
----
- drivers/md/dm-ioband-type.c |   10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
+I created two ioband devices and ran the dd commands only on the first
+device.
 
-Index: linux-2.6.30-rc1/drivers/md/dm-ioband-type.c
-===================================================================
---- linux-2.6.30-rc1.orig/drivers/md/dm-ioband-type.c
-+++ linux-2.6.30-rc1/drivers/md/dm-ioband-type.c
-@@ -6,6 +6,7 @@
-  * This file is released under the GPL.
-  */
- #include <linux/bio.h>
-+#include <linux/biotrack.h>
- #include "dm.h"
- #include "dm-bio-list.h"
- #include "dm-ioband.h"
-@@ -53,14 +54,7 @@ static int ioband_node(struct bio *bio)
- 
- static int ioband_cgroup(struct bio *bio)
- {
--	/*
--	 * This function should return the ID of the cgroup which
--	 * issued "bio". The ID of the cgroup which the current
--	 * process belongs to won't be suitable ID for this purpose,
--	 * since some BIOs will be handled by kernel threads like aio
--	 * or pdflush on behalf of the process requesting the BIOs.
--	 */
--	return 0;	/* not implemented yet */
-+	return get_bio_cgroup_id(bio);
- }
- 
- struct group_type dm_ioband_group_type[] = {
+> Do let me know if you think there is something wrong with my
+> configuration.
+
+From a quick look at your configuration, there seems to be no problem.
+
+> Can you also send bio-cgroup patches which apply to 2.6.30-rc1 so that
+> I can do testing for async writes.
+
+I've just posted the patches to related mailing lists. Please try it.
+
+> Why have you split the regular patch and bio-cgroup patch? Do you want
+> to address only reads and sync writes?
+
+For the first step, my goal is to merge dm-ioband into device-mapper,
+and bio-cgroup is not necessary for all situations such as bandwidth
+control on a per partition basis.
+
+I'll also try to do more test and report you back.
+
+Thank you for your help,
+Ryo Tsuruta
