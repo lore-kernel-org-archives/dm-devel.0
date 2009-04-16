@@ -1,77 +1,96 @@
-From: "Jun'ichi Nomura" <j-nomura@ce.jp.nec.com>
-Subject: Re: [k-ueda@ct.jp.nec.com: Re: request-based
-	dm-multipath]
-Date: Thu, 16 Apr 2009 18:30:45 +0900
-Message-ID: <49E6FAC5.2080807@ce.jp.nec.com>
-References: <20090410151914.GA3800@redhat.com>
-	<20090410153102.GC3800@redhat.com>
-	<Pine.LNX.4.64.0904151443170.23593@hs20-bc2-1.build.redhat.com>
-	<20090415201829.GB9064@redhat.com>
-	<Pine.LNX.4.64.0904151757160.23374@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 1/5] bio-cgroup: Introduction
+Date: Thu, 16 Apr 2009 21:28:36 +0900 (JST)
+Message-ID: <20090416.212836.226792104.ryov@valinux.co.jp>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904151757160.23374@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Mike Snitzer <snitzer@redhat.com>, dm-devel@redhat.com, Michael Christie <mchristi@redhat.com>, agk@redhat.com
+Return-path: <xen-devel-bounces@lists.xensource.com>
+List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
+List-Post: <mailto:xen-devel@lists.xensource.com>
+List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
+List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
+	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
+Sender: xen-devel-bounces@lists.xensource.com
+Errors-To: xen-devel-bounces@lists.xensource.com
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Mikulas Patocka wrote:
->>> What is the exact reason for your patch? I suppose that it's some 
->>> performance degradation caused by the fact that dm-multipath doesn't 
->>> distributes requests optimally across both paths. dm-multipath has 
->>> pluggable path selectors, so you could improve dm-round-robin.c (or write 
->>> alternate path selector module) and you don't have to touch generic dm 
->>> code to solve this problem.
->>>
->>> The point is that improving dm-multipath target with better path selector 
->>> is much less intrusive than patching device mapper core. If you improve 
->>> dm-multipath target, only people hacking on dm-multipath will have to 
->>> learn about your code. If you modify generic dm.c file, anyone doing 
->>> anything on device mapper must learn about your code --- so human time 
->>> consumed in much worse in this case.
->>>
->>> So, try the alternate solution (write new path selector for dm-multipath) 
->>> and then you can compare them and see the result --- and then it can be 
->>> consisdered if the high human time consumed by patching dm.c is worth the 
->>> performance improvement.
+Hi all,
 
-The main purpose of request-based dm patches is to provide a framework
-to implement optimal path selectors in non-intrusive way.
+This is a new release of bio-cgroup which provides an IO tracking
+mechanism. The patches can be applied to the kernel 2.6.30-rc1 and you
+can also download them from the following site.
+http://people.valinux.co.jp/~ryov/bio-cgroup/
 
-As you mentioned, it might be possible to implement a good path
-selector at bio-level by checking internals of underlying devices' 
-request queues and/or I/O schedulers.
+What's bio-cgroup all about?
+============================
 
-However, requiring knowledge/assumptions of internals of other layer
-is not a right approach.
-Or, splitting the request-based multipath driver out of dm would trash
-the existing userspace tools and libraries, so that's not good either.
-Thus we chose the design of 'adding request-based mapping feature to dm'.
-It doesn't break existing target drivers and userspace tools.
-The feature is enabled only for request-based target drivers.
-If you want to add a bio-specific new feature, it's still possible.
+With this feature, you can determine the owners of any type of
+I/Os. This makes dm-ioband_--_I/O_bandwidth_controller_-- be able to
+control the Block I/O bandwidths even when it accepts delayed write
+requests. Dm-ioband can find the owner cgroup of each request. It is
+also possible that the other people who work on the i/o bandwidth
+throttling use this functionality to control asynchronous I/Os with a
+little enhancement.
 
-The design has been discussed in several mailing lists, Ottawa Linux Symposium
-and Linux Storage/Filesystem workshop including maintainers
-of related subsystems for these few years,
-and I think we got basic agreement on this direction.
+Setting up bio-cgroup
+=====================
 
+You have to apply the patch dm-ioband_v1.9.0 before applying this
+series of bio-cgroup patches.
+And you have to select the following config options when compiling
+kernel.
 
-As for your barrier works, we are looking into the patches
-to make them work on request-based dm as well.
+      CONFIG_CGROUPS=y
+      CONFIG_CGROUP_BIO=y
 
-Thanks,
--- 
-Jun'ichi Nomura, NEC Corporation
+And I recommend you should also select the options for cgroup memory
+subsystem, because it makes it possible to give some I/O bandwidth and
+some memory to a certain cgroup to control delayed write requests and
+the processes in the cgroup will be able to make pages dirty only
+inside the cgroup even when the given bandwidth is narrow.
+
+      CONFIG_RESOURCE_COUNTERS=y
+      CONFIG_CGROUP_MEM_RES_CTLR=y
+
+Using bio-cgroup
+================
+
+The following shows how to use dm-ioband with cgroups. Please assume
+that you want make two cgroups, which we call "bio cgroup" here, to
+track down block I/Os and assign them to ioband device "ioband1".
+
+First, mount the bio cgroup filesystem.
+
+      # mount -t cgroup -o bio none /cgroup/bio
+
+Then, make new bio cgroups and put some processes in them.
+
+      # mkdir /cgroup/bio/bgroup1
+      # mkdir /cgroup/bio/bgroup2
+      # echo 1234 > /cgroup/bio/bgroup1/tasks
+      # echo 5678 > /cgroup/bio/bgroup1/tasks
+
+Now, check the ID of each bio cgroup which is just created.
+
+      # cat /cgroup/bio/bgroup1/bio.id
+      2
+      # cat /cgroup/bio/bgroup2/bio.id
+      3
+
+Finally, attach the cgroups to "ioband1" and assign them weights.
+
+      # dmsetup message ioband1 0 type cgroup
+      # dmsetup message ioband1 0 attach 2
+      # dmsetup message ioband1 0 attach 3
+      # dmsetup message ioband1 0 weight 2:30
+      # dmsetup message ioband1 0 weight 3:60
+
+You can also make use of the dm-ioband administration tool
+iobandctl.py. You can set up the device with the tool as follows.
+In this case, you don't need to know the IDs of the cgroups.
+
+      # iobandctl.py group /dev/mapper/ioband1 cgroup \
+        /cgroup/bio/bgroup1:30 /cgroup/bio/bgroup2:60
