@@ -1,12 +1,14 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: possible regression by the barrier patch in 2.6.30-rc2
-Date: Fri, 17 Apr 2009 13:57:02 +0900
-Message-ID: <49E80C1E.1040905@ct.jp.nec.com>
+From: Jens Axboe <jens.axboe@oracle.com>
+Subject: Re: [PATCH] fix crash in blk_queue_abort
+Date: Fri, 17 Apr 2009 08:36:15 +0200
+Message-ID: <20090417063615.GE4593@kernel.dk>
+References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -16,70 +18,66 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair Kergon <agk@redhat.com>, Mikulas Patocka <mpatocka@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Alasdair, Mikulas,
+On Thu, Apr 16 2009, Mikulas Patocka wrote:
+> Hi
+> 
+> This fixes a crash in blk_abort_queue. The crash can be triggered with 
+> device mapper multipath.
+> 
+> I believe that since there is method make_request_fn, the cleanest 
+> solution is to add another method, abort_queue_fn. But you can use 
+> different solution if you want (like testing some bit whether the device 
+> is request-based ... or so).
+> 
+> Mikulas
+> 
+> ---
+> 
+> Fix a crash due to blk_abort_queue being called on non-request device.
+> 
+> The crash can be reproduced in the following way:
+> 
+> # dmsetup create alias1 --table "0 `blockdev --getsize /dev/sda` linear /dev/sda 0"
+> # dmsetup create alias2 --table "0 `blockdev --getsize /dev/sda` linear /dev/sda 0"
+> # dmsetup create mpath --table "0 `blockdev --getsize /dev/sda` multipath 0 0 2 1 round-robin 0 1 0 /dev/mapper/alias1 round-robin 0 1 0 /dev/mapper/alias2"
+> # dmsetup reload alias1 --table "0 `blockdev --getsize /dev/sda` error"
+> # dmsetup suspend alias1
+> # dmsetup resume alias1
+> # less -f /dev/mapper/mpath
+> 
+> TPC: <__lock_acquire+0x5c/0x1c00>
+> Caller[000000000047f468]: lock_acquire+0xa8/0xc0
+> Caller[000000000065a978]: _spin_lock_irqsave+0x38/0x60
+> Caller[000000000054f7b4]: blk_abort_queue+0x34/0x140
+> Caller[00000000100ffe04]: deactivate_path+0x44/0x60 [dm_multipath]
+> Caller[0000000000468898]: worker_thread+0x1d8/0x2e0
+> Caller[000000000046d4ac]: kthread+0x4c/0x80
+> Caller[000000000042bc1c]: kernel_thread+0x3c/0x60
+> Caller[000000000046d3e4]: kthreadd+0x104/0x180
+> 
+> The crash happens because queue spinlock pointer is NULL and blk_abort_queue is
+> called.
+> 
+> The problem is that blk_abort_queue assumes that the underlying device is
+> request-based. If it uses bios, not requests, it accesses uninitialized data
+> structures and crashes.
+> 
+> This patch changes it to provide a method, abort_queue_fn, that will
+> abort the queue. On request-based devices, it points to generic_abort_queue,
+> on non-request based devices it can be NULL (no abort) or the driver can
+> register its own abort function there.
 
-I have reviewed the barrier patch-set and found some possible
-regression from 2.6.29 in dm-implement-basic-barrier-support.patch:
-   http://git.kernel.org/?p=linux/kernel/git/agk/linux-2.6-dm.git;a=commitdiff;h=af7e466a1acededbc10beaba9eec8531d561c566;hp=92c639021ca6e962645114f02e356e7feb131d0b
+Lets just add a
 
-Please take a look and consider to fix them (I don't have enough
-time to make patches now unfortunately).
+        if (!q->request_fn)
+                return;
 
-1. The semantics of flush suspend has been changed.
-   For flush suspend, dm used to flush all bios submitted before
-   the invocation of suspend.
-   But now, dm may not flush such bios:
-     1. submit a barrier => set QUEUE_IO_TO_THREAD flag and kick kdmflush
-     2. submit some bios => queued into md->defered if the barrier
-                            is still in progress
-     3. invoke suspend   => set BLOCK_IO_FOR_SUSPEND flag
-                            => kdmflush stops flushing md->defered
-                               => complete suspend with holding the bios
-   Then, we could expect bios submitted at 2 to be flushed, but
-   we can't expect that any more now.
-   I think no suspend user wants this semantics change.
-   Is it intended change or just a bug?
+at the top of blk_abort_queue(), no need in making this generic until
+someone actually needs different behaviour.
 
-
-2. Possible invalid pointer reference problem again.
-   Milan had fixed a possible NULL pointer reference in 2.6.29 by
-   http://git.kernel.org/?p=linux/kernel/git/agk/linux-2.6-dm.git;a=commitdiff;h=b35f8caa0890169000fec22902290d9a15274cbd;hp=b2174eebd1fadb76454dad09a1dacbc17081e6b0.
-   His patch means that we must not touch md after calling bio_endio()
-   in dec_pending() because the bio submitter can close/free the md
-   once bio_endio() is called.
-   The barrier patch breaks his fix and we get the possible invalid
-   pointer reference problem again.
-   The problematic part is below and free_io() should be called
-   before bio_endio().
-----------------------------------------------------------------------
--               free_io(md, io);
-+               if (bio_barrier(bio)) {
-+                       /*
-+                        * There can be just one barrier request so we use
-+                        * a per-device variable for error reporting.
-+                        * Note that you can't touch the bio after end_io_acct
-+                        */
-+                       md->barrier_error = io_error;
-+                       end_io_acct(io);
-+               } else {
-+                       end_io_acct(io);
- 
--               if (io_error != DM_ENDIO_REQUEUE) {
--                       trace_block_bio_complete(md->queue, bio);
-+                       if (io_error != DM_ENDIO_REQUEUE) {
-+                               trace_block_bio_complete(md->queue, bio);
- 
--                       bio_endio(bio, io_error);
-+                               bio_endio(bio, io_error);
-+                       }
-                }
-+
-+               free_io(md, io);
-----------------------------------------------------------------------
-
-Thanks,
-Kiyoshi Ueda
+-- 
+Jens Axboe
