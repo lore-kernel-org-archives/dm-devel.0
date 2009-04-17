@@ -1,15 +1,15 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: LSF: Multipathing and path checking question
-Date: Fri, 17 Apr 2009 10:21:54 -0500
-Message-ID: <49E89E92.7070709@cs.wisc.edu>
-References: <49E7B845.70400@cs.wisc.edu> <49E834CD.1090306@suse.de>
-	<49E89866.50205@cs.wisc.edu>
+From: Scott Dungan <scott@gps.caltech.edu>
+Subject: Re: FS directly on top of dm devices?
+Date: Fri, 17 Apr 2009 08:55:18 -0700
+Message-ID: <49E8A666.9060608@gps.caltech.edu>
+References: <49E7C4A6.3080301@gps.caltech.edu>
+	<7bc80d500904161747n588b5b27v54b6c346ecd824d7@mail.gmail.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49E89866.50205@cs.wisc.edu>
+In-Reply-To: <7bc80d500904161747n588b5b27v54b6c346ecd824d7@mail.gmail.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,83 +19,73 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Oops, I mashed two topics together. See below.
+Stripe alignment was the benefit we were thinking as well. These devices 
+will be used for ext3 file systems that will store a mix of file sizes 
+and types that are accessed by user-written and executed applications on 
+an HPC cluster.
 
-Mike Christie wrote:
-> Hannes Reinecke wrote:
+It is difficult to tune the file system or the underlying SAN LUNs for 
+such a mix, so we are choosing our best estimate for general i/o.
+
+It is comforting to know that others are using no partitioning.
+
+Thanks.
+
+
+
+Christopher Chen wrote:
+> I run md over mpath dm'd devices, without partitioning. Of course, I
+> use dm-multipath to reach individual disks in a JBOD with two FC-AL
+> loops.
+>
+> Lots of people like to do this to preserve stripe alignment.
+>
+> I also use LVM, with the metadatasize option on creation of the PV, to
+> preserve stripe alignment.
+>
+> Do you have a specific application in mind, like a database?
+>
+> On Thu, Apr 16, 2009 at 4:52 PM, Scott Dungan <scott@gps.caltech.edu> wrote:
+>   
+>> We recently had an engineer from a large storage vendor suggest that we make
+>> our file systems directly onto the multipathed devices without first
+>> creating underlying partitions or using LVM.  Having not run with this
+>> method in production before, we would like to gather as much information as
+>> possible first. Initial searches for documentation on this method has
+>> produced few results, short of a Suse/Novell document from 2005 under
+>> section 4:
 >>
->> FC Transport already maintains an attribute for the path state, and even
->> sends netlink events if and when this attribute changes. For iSCSI I have
-> 
-> Are you referring to fc_host_post_event? Is the same thing we talked 
-> about last year, where you wanted events? Is this in multipath tools now 
-> or just in the SLES ones?
-> 
-> For something like FCH_EVT_LINKDOWN, are you going to fail the path at 
-> that time or when would the multipath path be marked failed?
-> 
+>> http://support.novell.com/techcenter/sdb/en/2005/04/sles_multipathing.html
+>>
+>> Does anyone have any experience with this or can point us to more
+>> documentation. thoughts or recommendations?
+>>
+>> Thanks,
+>>
+>> --
+>>
+>> Scott A Dungan
+>>
+>>
+>> --
+>> dm-devel mailing list
+>> dm-devel@redhat.com
+>> https://www.redhat.com/mailman/listinfo/dm-devel
+>>
+>>     
+>
+>
+>
+>   
 
-I was asking this because it seems we have people always making 
-bugzillas saying they did not want the path to be marked failed for 
-short problems.
+-- 
 
-There was the problem where we might get DID_ERROR for temporary dropped 
-frame. That would be fixed by just listening to transport events like 
-you explained.
-
-But then I thought there was the case where if we get a linkdown then 
-linkup within a couple seconds, we would not want to transition the 
-multipath path state.
-
-So below while you were talking about when to remove the device, I was 
-talking about when to mark the path failed.
-
-
-
-> 
-> You got my hopes up for a solution in the the long explanation, then you 
-> destroyed them :)
-> 
-> 
-> Was the reason people did not like this because of the scsi device 
-> lifetime issue?
-> 
-> 
-> I think we still want someone to set the fast io fail tmo for users when 
-> multipath is being used, because we want IO out of the queues and 
-> drivers and sent to the multipath layer before dev_loss_tmo if 
-> dev_loss_tmo is still going to be a lot longer. fast io fail tmo is 
-> usually less than 10 or 5 and for dev_loss_tmo seems like we still have 
-> user setting that to minutes.
-> 
-> 
-> Can't the transport layers just send two events?
-> 1. On the initial link down when the port/session is blocked.
-> 2. When there fast io fail tmos fire.
-
-
-So for #2, I just want a way to figure out when the transport is giving 
-up on executing IO and is going to fail everything. At that time, I was 
-thinking we want to mark the path failed.
-
-I guess if multipiath tools is going to set fast io fail, it could also 
-use that as its down timer to decide when to fail the path and not have 
-to send SG IO or a bsg transport command.
-
-
-> 
-> Today, instead of #2, the Red Hat multipath tools guy and I were talking 
-> about doing a probe with SG_IO. For example we would send down a path 
-> tester IO and then wait for it to be failed with DID_TRANSPORT_FAILFAST.
-> 
-> Or for #2 if we cannot have a new event, can we send a transport level 
-> bsg request? For iscsi this would be a nop. For FC, I am not sure what 
-> it would be?
-> -- 
-> To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Scott A Dungan
+Systems Administrator
+GPS Division
+California Institute of Technology
+Phone: (626) 395-3170
+Fax:   (626) 585-1917
