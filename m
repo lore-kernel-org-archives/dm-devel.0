@@ -1,8 +1,8 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH 3/4] multipath-tools: update
-	multipathd.init.redhat
-Date: Fri, 17 Apr 2009 18:07:59 -0400
-Message-ID: <1240006080-27892-4-git-send-email-snitzer@redhat.com>
+Subject: [PATCH 4/4] multipath-tools: change default location for
+	bindings file
+Date: Fri, 17 Apr 2009 18:08:00 -0400
+Message-ID: <1240006080-27892-5-git-send-email-snitzer@redhat.com>
 References: <1240006080-27892-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
@@ -19,88 +19,40 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Various small improvements to Red Hat's multipathd initscript.
+Change from /var/lib/multipath/bindings to /etc/multipath/bindings.  On
+bootup, if /var is not on the same device as /, multipath may start up
+before /var is mounted.  /etc will always be available.  Use of
+/etc/multipath/ is to make selinux happy.
 
 Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 ---
- multipathd/multipathd.init.redhat |   30 ++++++++++++++----------------
- 1 files changed, 14 insertions(+), 16 deletions(-)
+ libmultipath/defaults.h |    2 +-
+ multipath/Makefile      |    1 +
+ 2 files changed, 2 insertions(+), 1 deletions(-)
 
-diff --git a/multipathd/multipathd.init.redhat b/multipathd/multipathd.init.redhat
-index 4664212..ee776f0 100644
---- a/multipathd/multipathd.init.redhat
-+++ b/multipathd/multipathd.init.redhat
-@@ -1,13 +1,16 @@
- #!/bin/bash
--
--#
--#	/etc/rc.d/init.d/multipathd
- #
--# Starts the multipath daemon
-+# multipathd	Starts the multipath daemon
- #
- # chkconfig: - 13 87
--# description: Manage device-mapper multipath devices
--# processname: multipathd
-+# description: Manages device-mapper multipath devices
-+
-+### BEGIN INIT INFO
-+# Provides: multipathd
-+# Short-Description: Control multipathd
-+# Description: This service monitors and manages
-+#              device-mapper multipath devices
-+### END INIT INFO
+diff --git a/libmultipath/defaults.h b/libmultipath/defaults.h
+index d7f93cb..4bd0a8b 100644
+--- a/libmultipath/defaults.h
++++ b/libmultipath/defaults.h
+@@ -18,6 +18,6 @@
+ #define DEFAULT_PIDFILE		"/var/run/multipathd.pid"
+ #define DEFAULT_SOCKET		"/var/run/multipathd.sock"
+ #define DEFAULT_CONFIGFILE	"/etc/multipath.conf"
+-#define DEFAULT_BINDINGS_FILE	"/var/lib/multipath/bindings"
++#define DEFAULT_BINDINGS_FILE	"/etc/multipath/bindings"
  
- DAEMON=/sbin/multipathd
- prog=`basename $DAEMON`
-@@ -16,14 +19,8 @@ lockdir=/var/lock/subsys
- sysconfig=/etc/sysconfig
+ char * set_default (char * str);
+diff --git a/multipath/Makefile b/multipath/Makefile
+index e0031a2..1f48a8f 100644
+--- a/multipath/Makefile
++++ b/multipath/Makefile
+@@ -27,6 +27,7 @@ install:
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).8.gz $(DESTDIR)$(mandir)
+ 	$(INSTALL_PROGRAM) -d $(DESTDIR)$(man5dir)
+ 	$(INSTALL_PROGRAM) -m 644 $(EXEC).conf.5.gz $(DESTDIR)$(man5dir)
++	$(INSTALL_PROGRAM) -d $(DESTDIR)/etc/multipath
  
-  
--system=redhat
-- 
--if [ $system = redhat ]; then
--	# Source function library.
--	. $initdir/functions
--fi
-+. $initdir/functions
-  
--test -x $DAEMON || exit 0
- test -r $sysconfig/$prog && . $sysconfig/$prog
- 
- RETVAL=0
-@@ -33,6 +30,7 @@ RETVAL=0
- #
- 
- start() {
-+	test -x $DAEMON || exit 5
- 	echo -n $"Starting $prog daemon: "
- 	daemon $DAEMON
- 	RETVAL=$?
-@@ -68,13 +66,13 @@ start)
- stop)
- 	stop
- 	;;
--reload)
-+force-reload|reload)
- 	reload
- 	;;
- restart)
- 	restart
- 	;;
--condrestart)
-+condrestart|try-restart)
- 	if [ -f $lockdir/$prog ]; then
- 	    restart
- 	fi
-@@ -85,7 +83,7 @@ status)
- 	;;
- *)
- 	echo $"Usage: $0 {start|stop|status|restart|condrestart|reload}"
--	RETVAL=1
-+	RETVAL=2
- esac
- 
- exit $RETVAL
+ uninstall:
+ 	rm $(DESTDIR)/etc/udev/rules.d/multipath.rules
 -- 
 1.6.0.6
