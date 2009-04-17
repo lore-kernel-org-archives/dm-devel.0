@@ -1,83 +1,172 @@
-From: Jens Axboe <jens.axboe@oracle.com>
-Subject: Re: [PATCH] fix crash in blk_queue_abort
-Date: Fri, 17 Apr 2009 08:36:15 +0200
-Message-ID: <20090417063615.GE4593@kernel.dk>
-References: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] LSF: Multipathing and path checking question
+Date: Fri, 17 Apr 2009 09:50:37 +0200
+Message-ID: <49E834CD.1090306@suse.de>
+References: <49E7B845.70400@cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <Pine.LNX.4.64.0904161948420.312@hs20-bc2-1.build.redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com, Alasdair G Kergon <agk@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <49E7B845.70400@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: device-mapper development <dm-devel@redhat.com>
+Cc: SCSI Mailing List <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Thu, Apr 16 2009, Mikulas Patocka wrote:
-> Hi
-> 
-> This fixes a crash in blk_abort_queue. The crash can be triggered with 
-> device mapper multipath.
-> 
-> I believe that since there is method make_request_fn, the cleanest 
-> solution is to add another method, abort_queue_fn. But you can use 
-> different solution if you want (like testing some bit whether the device 
-> is request-based ... or so).
-> 
-> Mikulas
-> 
-> ---
-> 
-> Fix a crash due to blk_abort_queue being called on non-request device.
-> 
-> The crash can be reproduced in the following way:
-> 
-> # dmsetup create alias1 --table "0 `blockdev --getsize /dev/sda` linear /dev/sda 0"
-> # dmsetup create alias2 --table "0 `blockdev --getsize /dev/sda` linear /dev/sda 0"
-> # dmsetup create mpath --table "0 `blockdev --getsize /dev/sda` multipath 0 0 2 1 round-robin 0 1 0 /dev/mapper/alias1 round-robin 0 1 0 /dev/mapper/alias2"
-> # dmsetup reload alias1 --table "0 `blockdev --getsize /dev/sda` error"
-> # dmsetup suspend alias1
-> # dmsetup resume alias1
-> # less -f /dev/mapper/mpath
-> 
-> TPC: <__lock_acquire+0x5c/0x1c00>
-> Caller[000000000047f468]: lock_acquire+0xa8/0xc0
-> Caller[000000000065a978]: _spin_lock_irqsave+0x38/0x60
-> Caller[000000000054f7b4]: blk_abort_queue+0x34/0x140
-> Caller[00000000100ffe04]: deactivate_path+0x44/0x60 [dm_multipath]
-> Caller[0000000000468898]: worker_thread+0x1d8/0x2e0
-> Caller[000000000046d4ac]: kthread+0x4c/0x80
-> Caller[000000000042bc1c]: kernel_thread+0x3c/0x60
-> Caller[000000000046d3e4]: kthreadd+0x104/0x180
-> 
-> The crash happens because queue spinlock pointer is NULL and blk_abort_queue is
-> called.
-> 
-> The problem is that blk_abort_queue assumes that the underlying device is
-> request-based. If it uses bios, not requests, it accesses uninitialized data
-> structures and crashes.
-> 
-> This patch changes it to provide a method, abort_queue_fn, that will
-> abort the queue. On request-based devices, it points to generic_abort_queue,
-> on non-request based devices it can be NULL (no abort) or the driver can
-> register its own abort function there.
+Hi Mike,
 
-Lets just add a
+Mike Christie wrote:
+> Hey,
+>=20
+> For this topic:
+>=20
+> -----------------------
+> Next-Gen Multipathing
+> ---------------------
+> Dr. Hannes Reinecke
+>=20
+> ......
+>=20
+> Should path checkers use sd->state to check for errors or availabilit=
+y?
+> ----------------------
+>=20
+> What was decided?
+>=20
+> Could this problem be fixed or helped if multipath tools always sets =
+the
+> fast io fail tmo for FC or the replacement_timeout for iscsi?
+>=20
+No, I already do this for FC (should be checking the replacement_timeou=
+t, too ...)
 
-        if (!q->request_fn)
-                return;
+> If those are set then IO in the blocked queue and in the driver will =
+get
+> failed after fast io fail tmo/replacement_timeout seconds (driver has=
+ to
+> implement a terminate rport IO callback and only mptfc does not now).=
+ So
+> at this time, do we want to fail the path?
+>=20
+> Or are people thinking that we want to fail the path when the problem=
+ is
+> initially detected like when the LLD deletes the rport for fc for exa=
+mple?
+>=20
+Well, the idea is the following:
 
-at the top of blk_abort_queue(), no need in making this generic until
-someone actually needs different behaviour.
+The primary purpose of the path checkers is to check the availability o=
+f
+the paths (my, that was easy :-).
 
--- 
-Jens Axboe
+And the main problem we have with the path checkers is that they are us=
+ing
+actual SCSI commands to determine this, thereby incurring unrelated err=
+ors
+(Disk errors, delaying response due to blocked path behaviour or error =
+handling
+etc). So we have to invest quite a bit of logic to separate the 'true' =
+path
+condition from unrelated errors, simply because we're checking at the w=
+rong
+level; the path state is maintained by the transport layer, not by the
+SCSI layer.
+
+So the suggestion here is to check the transport layer for the path sta=
+tes
+and do away with the existing path_checker SG_IO mechanism.
+
+The secondary use of the path checkers (determine inactive paths) will =
+have
+to be delegated to the priority callouts, which then have to arrange th=
+e
+paths correctly.
+
+=46C Transport already maintains an attribute for the path state, and e=
+ven
+sends netlink events if and when this attribute changes. For iSCSI I ha=
+ve
+to defer to your superior knowledge; of course it would be easiest if
+iSCSI could send out the very same message FC does.
+
+>=20
+>=20
+> Also for this one:
+> -----------------------
+> How to communication device went away:
+> 1) send event to udev (uses netlink)
+> -----------------------
+>=20
+> Is this an event when dev_loss_tmo fires or when the LLD first detect=
+s
+> something like a link down (or any event it might block the rport for=
+),
+> or would it be for when the fast fail io tmo fires (when the fc class=
+ is
+> going to fail running IO and incoming IO), or would we have events fo=
+r
+> all of them?
+>=20
+Currently the event is sent when the device itself is removed from sysf=
+s.
+And only then can we actually update the path maps and (possibly) chang=
+e
+to another part. We cannot do anything when the path is blocked (ie whe=
+n
+dev_loss_tmo is active) as we require this interval to capture jitter o=
+n
+the line.
+
+So we have this state diagram:
+
+sdev state:   RUNNING  <-> BLOCKED -> CANCEL
+mpath state:  path up  <-> <stall> -> path down / remove from map
+
+Notice the '<stall>' here; we cannot check the path state when the
+sdev is blocked as all I/O will be queued. And also note that we
+now lump two different multipath path states together; a path down
+is basically always followed immediately by a path remove event.
+
+However, when all paths are down (and queue_if_no_path is active) we mi=
+ght
+run into a deadlock when a path comes back, as we might not have enough
+memory to actually create the required structures.
+
+Idea was to modify the state machine so that fast_fail_io_tmo is
+being made mandatory, which transitions the sdev into an intermediate
+state 'DISABLED' and sends out a netlink message.
+
+sdev state:   RUNNING <-> BLOCKED <-> DISABLED -> CANCEL
+mpath state:  path up <-> <stall> <-> path down -> remove from map
+
+This will allow us to switch paths early, ie when it moves into
+'DISABLED' state. But the path structure themselves are still alive,
+so when a path comes back between 'DISABLED' and 'CANCEL' we won't
+have an issue reconnecting it. And we could even allow to set a
+dev_loss_tmo to infinity thereby simulating the 'old' behaviour.
+
+However, this proposal didn't go through.
+
+Instead it was proposed to do away with the unlimited queue_if_no_path
+setting and _always_ have a timeout there, so that the machine is able
+to recover after a certain period of time.
+
+I still like my original proposal, though.
+
+Maybe we can do the EU referendum thing and just ask again and again
+until everyone becomes tired of it and just says 'yes' to get rid
+of this issue ...
+
+Cheers,
+
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
