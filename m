@@ -1,18 +1,17 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: Re: dm-ioband: Test results.
-Date: Mon, 20 Apr 2009 17:37:38 -0400
-Message-ID: <20090420213738.GB9080@redhat.com>
-References: <20090416.114750.226794985.ryov@valinux.co.jp>
-	<20090416141125.GB8896@redhat.com>
-	<e98e18940904161324p9833457vdf699d66bb323591@mail.gmail.com>
-	<20090420.172959.193682665.ryov@valinux.co.jp>
+From: Mike Christie <michaelc@cs.wisc.edu>
+Subject: Re: LSF: Multipathing and path checking question
+Date: Mon, 20 Apr 2009 18:02:39 -0500
+Message-ID: <49ECFF0F.5080003@cs.wisc.edu>
+References: <49E7B845.70400@cs.wisc.edu>
+	<49E834CD.1090306@suse.de>	<49E89866.50205@cs.wisc.edu>
+	<49E89E92.7070709@cs.wisc.edu>	<49EC3010.5050502@suse.de>
+	<49ECCBAC.70308@cs.wisc.edu>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090420.172959.193682665.ryov@valinux.co.jp>
+In-Reply-To: <49ECCBAC.70308@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,88 +21,37 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Ryo Tsuruta <ryov@valinux.co.jp>
-Cc: fernando@oss.ntt.co.jp, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, nauman@google.com, Andrea Righi <righi.andrea@gmail.com>, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: SCSI Mailing List <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-On Mon, Apr 20, 2009 at 05:29:59PM +0900, Ryo Tsuruta wrote:
-> Hi Vivek and Nauman,
->=20
-> > On Thu, Apr 16, 2009 at 7:11 AM, Vivek Goyal <vgoyal@redhat.com> wrot=
-e:
-> > > On Thu, Apr 16, 2009 at 11:47:50AM +0900, Ryo Tsuruta wrote:
-> > >> Hi Vivek,
-> > >>
-> > >> > General thoughts about dm-ioband
-> > >> > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > >> > - Implementing control at second level has the advantage tha one=
- does not
-> > >> > =A0 have to muck with IO scheduler code. But then it also has th=
-e
-> > >> > =A0 disadvantage that there is no communication with IO schedule=
-r.
-> > >> >
-> > >> > - dm-ioband is buffering bio at higher layer and then doing FIFO=
- release
-> > >> > =A0 of these bios. This FIFO release can lead to priority invers=
-ion problems
-> > >> > =A0 in certain cases where RT requests are way behind BE request=
-s or
-> > >> > =A0 reader starvation where reader bios are getting hidden behin=
-d writer
-> > >> > =A0 bios etc. These are hard to notice issues in user space. I g=
-uess above
-> > >> > =A0 RT results do highlight the RT task problems. I am still wor=
-king on
-> > >> > =A0 other test cases and see if i can show the probelm.
-> >=20
-> > Ryo, I could not agree more with Vivek here. At Google, we have very
-> > stringent requirement for latency of our RT requests. If RT requests
-> > get queued in any higher layer (behind BE requests), all bets are off=
-.
-> > I don't find doing IO control at two layer for this particular reason=
-.
-> > The upper layer (dm-ioband in this case) would have to make sure that
-> > RT requests are released immediately, irrespective of the state (FIFO
-> > queuing and tokens held). And the lower layer (IO scheduling layer)
-> > has to do the same. This requirement is not specific to us. I have
-> > seen similar comments from filesystem folks here previously, in the
-> > context of metadata updates being submitted as RT. Basically, the
-> > semantics of RT class has to be preserved by any solution that is
-> > build on top of CFQ scheduler.
->=20
-> I could see the priority inversion by running Vivek's script and I
-> understand how RT requests has to be handled. I'll create a patch
-> which makes dm-ioband cooperates with CFQ scheduler. However, do you
-> think we need some kind of limitation on processes which belong to the
-> RT class to prevent the processes from depleting bandwidth?
+Mike Christie wrote:
+>> For starters we just should send a netlink event when fast_fail_io has
+>> fired. We could easily integrate that one in multipathd and would gain
+>> an instant benefit from that as we can switch paths in advance.
+>> Next step would be to implement an additional sdev state which would
+>> return 'DID_TRANSPORT_FASTFAIL' for any 'normal' I/O; it would be
+>> inserted between 'RUNNING' and 'CANCEL'.
+>> Transition would be possible between 'RUNNING' and 'FASTFAIL', but
+>> it would only be possible to transition into 'CANCEL' from 'FASTFAIL'.
+>>
+> 
+> 
+> Yeah, a new sdev state might be nice. Right now this state is handled by 
+> the classes. For iscsi and FC the port/session will be in 
+> blocked/ISCSI_SESSION_FAILED. Then internally the classes are decieding 
+> what to do with IO in the *_chkready functions.
+> 
+> 
 
-I think to begin with, we can keep the same behavior as CFQ. An RT task
-can starve other tasks.
 
-But we should provide two configurations and user can choose any one.
-If RT task is in root group, it will starve other sibling tasks/groups. I=
-f
-it is with-in a cgroup, then it will starve its sibling only with-in that
-cgroup and will not impact other cgroups.
+How about setting the device to the offline state for this case where 
+fast_io_fail has fired but the dev_loss_tmo has not yet fired? As fast 
+as failing IO we get the same result. scsi-ml would fail the incoming IO 
+instead of it getting to the class _chkready functions, but the scsi 
+device state indicates that it cannot execute IO which might be nice for 
+users.
 
-What I mean is following.
-
-			root
-			/  \
-		      RT   group1
-
-In above configuration RT task will starve everybody else.
-
-			root
-		        /   \
-		   group1   group2
-		   /  \
-	         RT   BE
-
-In above configuration  RT task will starve only sibling in group1 but
-will not starve the tasks in group2 or in root.
-
-Thanks
-Vivek
+Can we not do this because offline for the device only means when the 
+scsi-eh has put it offline because it could not recover it or is it more 
+generic like for any time it cannot execute IO?
