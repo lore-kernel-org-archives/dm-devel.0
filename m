@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
 Subject: [PATCH 6/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 03:56:25 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200355520.6097@hs20-bc2-1.build.redhat.com>
+Date: Mon, 20 Apr 2009 03:56:50 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200356290.6097@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904200355330.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -21,30 +21,79 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-remove-test-for-zero-size.patch
+dm-__clone_and_map_empty_barrier.patch
 
-Remove test for !bi_size. Zero-data flush barriers will be passed down
-this path.
+Introduce __clone_and_map_empty_barrier that will pass empty barrier
+to the targets. Each target receives as many requests as it set up
+in num_flush_requests.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm.c |    5 -----
- 1 file changed, 5 deletions(-)
+ drivers/md/dm.c |   32 ++++++++++++++++++++++++++++++++
+ 1 file changed, 32 insertions(+)
 
-Index: linux-2.6.30-rc1-devel/drivers/md/dm.c
+Index: linux-2.6.30-rc2-devel/drivers/md/dm.c
 ===================================================================
---- linux-2.6.30-rc1-devel.orig/drivers/md/dm.c	2009-04-10 06:33:23.000000000 +0200
-+++ linux-2.6.30-rc1-devel/drivers/md/dm.c	2009-04-10 06:33:28.000000000 +0200
-@@ -647,11 +647,6 @@ static void __map_bio(struct dm_target *
- 	sector_t sector;
- 	struct mapped_device *md;
+--- linux-2.6.30-rc2-devel.orig/drivers/md/dm.c	2009-04-15 16:35:46.000000000 +0200
++++ linux-2.6.30-rc2-devel/drivers/md/dm.c	2009-04-15 16:35:49.000000000 +0200
+@@ -761,6 +761,8 @@ static struct bio *clone_bio(struct bio 
+ 	return clone;
+ }
  
--	/*
--	 * Sanity checks.
--	 */
--	BUG_ON(!clone->bi_size);
--
- 	clone->bi_end_io = clone_endio;
- 	clone->bi_private = tio;
++static int __clone_and_map_empty_barrier(struct clone_info *ci);
++
+ static int __clone_and_map(struct clone_info *ci)
+ {
+ 	struct bio *clone, *bio = ci->bio;
+@@ -768,6 +770,9 @@ static int __clone_and_map(struct clone_
+ 	sector_t len = 0, max;
+ 	struct dm_target_io *tio;
  
++	if (unlikely(bio_empty_barrier(bio)))
++		return __clone_and_map_empty_barrier(ci);
++
+ 	ti = dm_table_find_target(ci->map, ci->sector);
+ 	if (!dm_target_is_valid(ti))
+ 		return -EIO;
+@@ -861,6 +866,31 @@ static int __clone_and_map(struct clone_
+ 	return 0;
+ }
+ 
++static int __clone_and_map_empty_barrier(struct clone_info *ci)
++{
++	unsigned i, j, n;
++	n = dm_table_get_num_targets(ci->map);
++	for (i = 0; i < n; i++) {
++		struct bio *clone;
++		struct dm_target *ti = dm_table_get_target(ci->map, i);
++		for (j = 0; j < ti->num_flush_requests; j++) {
++			struct dm_target_io *tio = alloc_tio(ci->md);
++			tio->io = ci->io;
++			tio->ti = ti;
++			memset(&tio->info, 0, sizeof(tio->info));
++			tio->info.flush_request = j;
++
++			clone = bio_alloc_bioset(GFP_NOIO, 0, ci->md->bs);
++			__bio_clone(clone, ci->bio);
++			clone->bi_destructor = dm_bio_destructor;
++
++			__map_bio(ti, clone, tio);
++		}
++	}
++	ci->sector_count = 0;
++	return 0;
++}
++
+ /*
+  * Split the bio into several clones and submit it to targets.
+  */
+@@ -888,6 +918,8 @@ static void __split_and_process_bio(stru
+ 	ci.io->md = md;
+ 	ci.sector = bio->bi_sector;
+ 	ci.sector_count = bio_sectors(bio);
++	if (unlikely(bio_empty_barrier(bio)))
++		ci.sector_count = 1;
+ 	ci.idx = bio->bi_idx;
+ 
+ 	start_io_acct(ci.io);
