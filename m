@@ -1,13 +1,11 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 6/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 03:56:50 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200356290.6097@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0904200355330.6097@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 7/17] bottom-layer barrier support (fwd)
+Date: Mon, 20 Apr 2009 03:57:43 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904200355330.6097@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
