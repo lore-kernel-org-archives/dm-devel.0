@@ -1,16 +1,17 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 11/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 04:00:43 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200400160.6097@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 12/17] bottom-layer barrier support
+Date: Mon, 20 Apr 2009 04:01:11 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200400500.6097@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358000.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358300.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200359520.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200400160.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904200359520.6097@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0904200400160.6097@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -24,38 +25,34 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-crypt-flush.patch
+dm-delay-flush.patch
 
-Flush support for dm-crypt target.
+Flush supoprt for dm-delay target.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-crypt.c |    7 +++++++
- 1 file changed, 7 insertions(+)
+ drivers/md/dm-delay.c |    3 +++
+ 1 file changed, 3 insertions(+)
 
-Index: linux-2.6.30-rc1-devel/drivers/md/dm-crypt.c
+Index: linux-2.6.30-rc1-devel/drivers/md/dm-delay.c
 ===================================================================
---- linux-2.6.30-rc1-devel.orig/drivers/md/dm-crypt.c	2009-04-10 06:28:45.000000000 +0200
-+++ linux-2.6.30-rc1-devel/drivers/md/dm-crypt.c	2009-04-10 06:33:42.000000000 +0200
-@@ -1168,6 +1168,7 @@ static int crypt_ctr(struct dm_target *t
- 		goto bad_crypt_queue;
- 	}
+--- linux-2.6.30-rc1-devel.orig/drivers/md/dm-delay.c	2009-04-10 06:28:25.000000000 +0200
++++ linux-2.6.30-rc1-devel/drivers/md/dm-delay.c	2009-04-10 06:33:45.000000000 +0200
+@@ -198,6 +198,7 @@ out:
+ 	mutex_init(&dc->timer_lock);
+ 	atomic_set(&dc->may_delay, 1);
  
 +	ti->num_flush_requests = 1;
- 	ti->private = cc;
+ 	ti->private = dc;
  	return 0;
  
-@@ -1226,6 +1227,12 @@ static int crypt_map(struct dm_target *t
- {
- 	struct dm_crypt_io *io;
+@@ -281,6 +282,8 @@ static int delay_map(struct dm_target *t
+ 		bio->bi_bdev = dc->dev_write->bdev;
+ 		bio->bi_sector = dc->start_write +
+ 				 (bio->bi_sector - ti->begin);
++		if (!bio_sectors(bio))
++			bio->bi_sector = 0;
  
-+	if (unlikely(bio_empty_barrier(bio))) {
-+		struct crypt_config *cc = ti->private;
-+		bio->bi_bdev = cc->dev->bdev;
-+		return DM_MAPIO_REMAPPED;
-+	}
-+
- 	io = crypt_io_alloc(ti, bio, bio->bi_sector - ti->begin);
- 
- 	if (bio_data_dir(io->base_bio) == READ)
+ 		return delay_bio(dc, dc->write_delay, bio);
+ 	}
