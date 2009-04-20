@@ -1,18 +1,21 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 13/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 04:01:48 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200401280.6097@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 16/17] bottom-layer barrier support
+Date: Mon, 20 Apr 2009 04:03:22 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200403070.6097@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358000.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358300.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200359520.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200400160.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200400500.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200401280.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200402010.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200402400.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904200400500.6097@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0904200402400.6097@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -26,26 +29,43 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-multipath-flush.patch
+dm-dmio-retry-barriers.patch
 
-Flush support for dm-multipath target.
+If -EOPNOTSUPP was returned and the request was a barrier request, retry it
+without barrier.
+
+Retry all regions (if there was just one region returning -EOPNOTSUPP), for
+now, barriers are submitted only for 1-region requests, so it doesn't matter.
+
+In the future, this can be fine-grained to retry only -EOPNOTSUPPed regions.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-mpath.c |    2 ++
- 1 file changed, 2 insertions(+)
+ drivers/md/dm-io.c |    6 ++++++
+ 1 file changed, 6 insertions(+)
 
-Index: linux-2.6.30-rc1-devel/drivers/md/dm-mpath.c
+Index: linux-2.6.29-rc1-devel/drivers/md/dm-io.c
 ===================================================================
---- linux-2.6.30-rc1-devel.orig/drivers/md/dm-mpath.c	2009-04-10 06:28:46.000000000 +0200
-+++ linux-2.6.30-rc1-devel/drivers/md/dm-mpath.c	2009-04-10 06:33:51.000000000 +0200
-@@ -824,6 +824,8 @@ static int multipath_ctr(struct dm_targe
- 		goto bad;
+--- linux-2.6.29-rc1-devel.orig/drivers/md/dm-io.c	2009-01-22 21:09:28.000000000 +0100
++++ linux-2.6.29-rc1-devel/drivers/md/dm-io.c	2009-01-22 21:09:37.000000000 +0100
+@@ -364,6 +364,7 @@ static int sync_io(struct dm_io_client *
+ 		return -EIO;
  	}
  
-+	ti->num_flush_requests = 1;
-+
- 	return 0;
++retry:
+ 	io.error_bits = 0;
+ 	io.eopnotsupp_bits = 0;
+ 	atomic_set(&io.count, 1); /* see dispatch_io() */
+@@ -382,6 +383,11 @@ static int sync_io(struct dm_io_client *
+ 	}
+ 	set_current_state(TASK_RUNNING);
  
-  bad:
++	if (io.eopnotsupp_bits && (rw & (1 << BIO_RW_BARRIER))) {
++		rw &= ~(1 << BIO_RW_BARRIER);
++		goto retry;
++	}
++
+ 	if (error_bits)
+ 		*error_bits = io.error_bits;
+ 
