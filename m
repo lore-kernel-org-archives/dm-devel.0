@@ -1,45 +1,84 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: DM-RAID1 data corruption
-Date: Mon, 20 Apr 2009 05:56:07 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200552590.27291@hs20-bc2-1.build.redhat.com>
-References: <Pine.LNX.4.64.0904141618220.701@hs20-bc2-1.build.redhat.com>
-	<20090415031210.GA11881@us.ibm.com> <49E645DA.4010204@redhat.com>
-	<20090416024959.GB19876@us.ibm.com> <49E7B029.20906@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Subject: [PATCH] scsi_dh_rdac: Retry for NOT_READY(02/04/01) in rdac device
+ handler
+Date: Mon, 20 Apr 2009 18:14:23 +0530
+Message-ID: <0D1E8821739E724A86F4D16902CE275C1410F4D4B1@inbmail01.lsi.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49E7B029.20906@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: Takahiro Yasui <tyasui@redhat.com>
-Cc: dm-devel@redhat.com
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Hannes Reinecke <hare@suse.de>
+Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-> > Of course, we can do something in the log itself but it will not fix
-> > "corelog" mirrors, more over the system can't auto recover after a
-> > missing log alone.
+This patch resolves the following issue. Please give your comment.
+
+> I am having issue with scsi_io_completion routine. During 
+> device discovery, READ CAPACITY is failing with 02/04/01. It 
+> has been retried 5 times(with NEED_RETRY) but when retry gets 
+> exhausted ,scsi_io_completion simply ends the request without 
+> trying with delay retry.  
 > 
-> Yes, storing information on the log device does not save "corelog"
-> mirrors, so we might need some area to keep information on mirror
-> legs.
+> Here scsi_io_completion routine checks for deferred sense and if 
+> not found, it sets error with -EIO, which eventually ends the 
+> request and doesnot allow for any more retries. I am seeing 
+> deffered error being checked only for REQ_TYPE_BLOCK_PC 
+> command type. Does it meant that command with cmd_type 
+> REQ_TYPE_BLOCK_PC having current error sense should not be 
+> retried in scsi_io_completion? If yes, then would it be 
+> better to retry in rdac device handler in that case. 
 > 
-> Thanks,
-> Taka
+> 
+> On Tues, 2009-03-10 at 15:47, James Bottomley wrote:
+> > > +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
+> > > +			/* LUN Not Ready - Logical Unit Not 
+> > Ready and is in
+> > > +			 * the process of becoming ready
+> > > +			 * Just retry.
+> > > +			 */
+> > > +			return ADD_TO_MLQUEUE;
+> > > +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x04)
+> > > +			/* LUN Not Ready - Format In Progress
+> > > +			 *
+> > > +			 * Just retry.
+> > > +			 */
+> > > +			return ADD_TO_MLQUEUE;
+> > > +		if (sense_hdr->asc == 0x04  && sense_hdr->ascq == 0x07)
+> > > +			/* LUN Not Ready - Storage controller 
+> > cannot respond
+> > > +			 * immediately to a PRIN or PROUT command.
+> > > +			 * Just retry.
+> > > +			 */
+> > > +			return ADD_TO_MLQUEUE;
+> > 
+> > For all of these ... along with a few other not ready types, 
+> > we already
+> > do a delayed retry at the mid-layer (in 
+> scsi_io_completion).  Is there
+> > some problem that causes this to need to be handled here as well?
 
-MD-RAID1 solves this problem by having counters in superblocks on both 
-legs. If some leg dies, the counter on the other devices is increased. If 
-the dead disk comes online again, it is found that it has old counter and 
-cannot be trusted.
+Thanks,
+Vijay
 
-Would it be possible to extend a logical volume when converting it to a 
-raid1 and use the last area of the volume as a superblock?
+---
+During device discovery read capacity fails with 0x020401 and sets the device size to 0. As a reason any I/O submitted to this path gets killed at sd_prep_fn with BLKPREP_KILL. This patch is to retry for 0x020401. NEED_RETRY in scsi_decide_disposition does not give sufficient time for the device to become ready. 
 
-Mikulas
+Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
+---
+--- linux-2.6.30-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-04-20 23:07:14.000000000 +0530
++++ linux-2.6.30-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-04-20 23:11:27.000000000 +0530
+@@ -561,6 +561,12 @@ static int rdac_check_sense(struct scsi_
+ 	struct rdac_dh_data *h = get_rdac_data(sdev);
+ 	switch (sense_hdr->sense_key) {
+ 	case NOT_READY:
++		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
++			/* LUN Not Ready - Logical Unit Not Ready and is in
++			* the process of becoming ready
++			* Just retry.
++			*/
++			return ADD_TO_MLQUEUE;
+ 		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x81)
+ 			/* LUN Not Ready - Storage firmware incompatible
+ 			 * Manual code synchonisation required.
