@@ -1,17 +1,18 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 4/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 03:54:36 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200351040.6097@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 5/17] bottom-layer barrier support
+Date: Mon, 20 Apr 2009 03:55:08 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200354420.6097@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904100107160.1117@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200348180.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200349181.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200349560.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200350370.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200351040.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904200350370.6097@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0904200351040.6097@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,37 +23,51 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
-Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-dont-report-eopnotsupp.patch
+dm-target-flush-option.patch
 
-Don't report -EOPNOTSUPP.
+Two variables for targets.
 
-If the underlying device doesn't support barriers and dm receives a barrier,
-it waits until all requests on that device drain --- so it doesn't have to
-report EOPNOTSUPP to the caller.
+Target driver can change num_flush_requests and signal that it wants
+to receive flushes. It receives num_flush_requests flushes, individual
+flushes are differentiated by map_info->flush_request (which goes from
+0 to num_flush_requests - 1).
 
-This patch fixes the confusing situation when moving volume from one physical
-device to another triggers an EOPNOTSUPP on a volume that didn't report it
-before.
+Old targets without flush support won't receive any flush requests.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/device-mapper.h |   11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-Index: linux-2.6.30-rc2-devel/drivers/md/dm.c
+Index: linux-2.6.30-rc1-devel/include/linux/device-mapper.h
 ===================================================================
---- linux-2.6.30-rc2-devel.orig/drivers/md/dm.c	2009-04-20 08:46:05.000000000 +0200
-+++ linux-2.6.30-rc2-devel/drivers/md/dm.c	2009-04-20 08:46:16.000000000 +0200
-@@ -565,7 +565,7 @@ static void dec_pending(struct dm_io *io
- 			 * a per-device variable for error reporting.
- 			 * Note that you can't touch the bio after end_io_acct
- 			 */
--			if (!md->barrier_error)
-+			if (!md->barrier_error && io_error != -EOPNOTSUPP)
- 				md->barrier_error = io_error;
- 			end_io_acct(io);
- 		} else {
+--- linux-2.6.30-rc1-devel.orig/include/linux/device-mapper.h	2009-04-10 06:32:54.000000000 +0200
++++ linux-2.6.30-rc1-devel/include/linux/device-mapper.h	2009-04-10 06:33:26.000000000 +0200
+@@ -21,6 +21,7 @@ typedef enum { STATUSTYPE_INFO, STATUSTY
+ union map_info {
+ 	void *ptr;
+ 	unsigned long long ll;
++	unsigned flush_request;
+ };
+ 
+ /*
+@@ -168,6 +169,16 @@ struct dm_target {
+ 	sector_t split_io;
+ 
+ 	/*
++	 * A number of zero-length barrier requests that will be submitted
++	 * to the target for the purpose of flushing cache.
++	 *
++	 * The request number will be placed in union map_info->flush_request.
++	 * It is a responsibility of the target driver to remap these requests
++	 * to the real underlying devices.
++	 */
++	unsigned num_flush_requests;
++
++	/*
+ 	 * These are automatically filled in by
+ 	 * dm_table_get_device.
+ 	 */
