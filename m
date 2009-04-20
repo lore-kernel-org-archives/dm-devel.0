@@ -1,17 +1,14 @@
-From: Takahiro Yasui <tyasui@redhat.com>
-Subject: Re: DM-RAID1 data corruption
-Date: Mon, 20 Apr 2009 13:08:24 -0400
-Message-ID: <49ECAC08.3040705@redhat.com>
-References: <Pine.LNX.4.64.0904141618220.701@hs20-bc2-1.build.redhat.com>
-	<20090415031210.GA11881@us.ibm.com> <49E645DA.4010204@redhat.com>
-	<20090416024959.GB19876@us.ibm.com> <49E7B029.20906@redhat.com>
-	<Pine.LNX.4.64.0904200552590.27291@hs20-bc2-1.build.redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: [PATCH] dm mpath: Try recover from I/O failure by
+ re-initializing the PG if device is running on one path
+Date: Mon, 20 Apr 2009 11:05:00 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-8859-1"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904200552590.27291@hs20-bc2-1.build.redhat.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,35 +18,47 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: dm-devel@redhat.com
+To: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Cc: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
 List-Id: dm-devel.ids
 
-Mikulas Patocka wrote:
->>> Of course, we can do something in the log itself but it will not fix
->>> "corelog" mirrors, more over the system can't auto recover after a
->>> missing log alone.
->> Yes, storing information on the log device does not save "corelog"
->> mirrors, so we might need some area to keep information on mirror
->> legs.
->>
->> Thanks,
->> Taka
-> 
-> MD-RAID1 solves this problem by having counters in superblocks on both 
-> legs. If some leg dies, the counter on the other devices is increased. If 
-> the dead disk comes online again, it is found that it has old counter and 
-> cannot be trusted.
-> 
-> Would it be possible to extend a logical volume when converting it to a 
-> raid1 and use the last area of the volume as a superblock?
+This patch introduces the mechanism to recover from I/O failures by re-in=
+itializing the path if the device is running on only one path.=20
 
-I agree with this idea. lvm metadata is managed by counters and I think
-this method would work for this issue as well.
+Problem: Device mapper fails the path for every I/O error. It does not ca=
+re about the type of error. There are certain errors which can be recover=
+ed by re-initializing the path again. I have seen this problem during my =
+testing on rdac device handler. I have observed I/O errors when there is =
+a change in Lun ownership. When Lun ownership changes device will return =
+back with check condition with sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning =
+Lun ownership changed). Currently, device mapper fails the path for this =
+error and eventually this will lead to I/O error. We don't want to see I/=
+O error for this reason.=20
 
-In addition, I think this sort of superblock is necessary not only
-for fixing the data corruption issue but also for introducing faster
-blockage algorithm which disables failed mirror legs in kernel.
+The patch will set the flag pg_init_required if the device is running on =
+single path. The process_queued_ios will re-initialize path if required. =
+I have tested this patch on LSI rdac handler.
 
-Thanks,
-Taka
+Signed-off-by: Babu Moger <babu.moger@lsi.com>
+---
+
+--- linux-2.6.30-rc2/drivers/md/dm-mpath.c.orig	2009-04-17 16:49:33.00000=
+0000 -0500
++++ linux-2.6.30-rc2/drivers/md/dm-mpath.c	2009-04-17 17:09:51.000000000 =
+-0500
+@@ -1152,6 +1152,15 @@ static int do_end_io(struct multipath *m
+ 		return error;
+=20
+ 	spin_lock_irqsave(&m->lock, flags);
++	/*
++	 * If this is the only path left, then lets try to
++	 * re-initialize the PG one last time..
++	 */
++	if (m->nr_valid_paths =3D=3D 1 && m->hw_handler_name) {
++		m->pg_init_required =3D 1;
++		spin_unlock_irqrestore(&m->lock, flags);
++		goto requeue;
++	}
+ 	if (!m->nr_valid_paths) {
+ 		if (__must_push_back(m)) {
+ 			spin_unlock_irqrestore(&m->lock, flags);
