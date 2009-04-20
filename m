@@ -1,84 +1,81 @@
-From: "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
-Subject: [PATCH] scsi_dh_rdac: Retry for NOT_READY(02/04/01) in rdac device
- handler
-Date: Mon, 20 Apr 2009 18:14:23 +0530
-Message-ID: <0D1E8821739E724A86F4D16902CE275C1410F4D4B1@inbmail01.lsi.com>
+From: Levy_Jerome@emc.com
+Subject: Re: LSF: Multipathing and path checking question
+Date: Mon, 20 Apr 2009 12:25:23 -0400
+Message-ID: <6416EE16C1AF1E4C86882867E4DD0FF60522BB1E@CORPUSMX40B.corp.emc.com>
+References: <20090420160041.527A76198AB@hormel.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Return-path: <linux-scsi-owner@vger.kernel.org>
-Content-Language: en-US
-Sender: linux-scsi-owner@vger.kernel.org
-To: "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>, James Bottomley <James.Bottomley@HansenPartnership.com>, Hannes Reinecke <hare@suse.de>
-Cc: "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-class: urn:content-classes:message
+In-Reply-To: <20090420160041.527A76198AB@hormel.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This patch resolves the following issue. Please give your comment.
+Just a note or two:
 
-> I am having issue with scsi_io_completion routine. During 
-> device discovery, READ CAPACITY is failing with 02/04/01. It 
-> has been retried 5 times(with NEED_RETRY) but when retry gets 
-> exhausted ,scsi_io_completion simply ends the request without 
-> trying with delay retry.  
-> 
-> Here scsi_io_completion routine checks for deferred sense and if 
-> not found, it sets error with -EIO, which eventually ends the 
-> request and doesnot allow for any more retries. I am seeing 
-> deffered error being checked only for REQ_TYPE_BLOCK_PC 
-> command type. Does it meant that command with cmd_type 
-> REQ_TYPE_BLOCK_PC having current error sense should not be 
-> retried in scsi_io_completion? If yes, then would it be 
-> better to retry in rdac device handler in that case. 
-> 
-> 
-> On Tues, 2009-03-10 at 15:47, James Bottomley wrote:
-> > > +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
-> > > +			/* LUN Not Ready - Logical Unit Not 
-> > Ready and is in
-> > > +			 * the process of becoming ready
-> > > +			 * Just retry.
-> > > +			 */
-> > > +			return ADD_TO_MLQUEUE;
-> > > +		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x04)
-> > > +			/* LUN Not Ready - Format In Progress
-> > > +			 *
-> > > +			 * Just retry.
-> > > +			 */
-> > > +			return ADD_TO_MLQUEUE;
-> > > +		if (sense_hdr->asc == 0x04  && sense_hdr->ascq == 0x07)
-> > > +			/* LUN Not Ready - Storage controller 
-> > cannot respond
-> > > +			 * immediately to a PRIN or PROUT command.
-> > > +			 * Just retry.
-> > > +			 */
-> > > +			return ADD_TO_MLQUEUE;
-> > 
-> > For all of these ... along with a few other not ready types, 
-> > we already
-> > do a delayed retry at the mid-layer (in 
-> scsi_io_completion).  Is there
-> > some problem that causes this to need to be handled here as well?
+> My proposal is to handle this in several stages:
+>=20
+> - path fails
+> -> Send out netlink event
+> -> start dev_loss_tmo and fast_fail_io timer
+> -> fast_fail_io timer triggers: Abort all oustanding I/O with
+>   DID_TRANSPORT_DISRUPTED, return DID_TRANSPORT_FAILFAST for
+>   any future I/O, and send out netlink event.
+> -> dev_loss_tmo timer triggers: Remove sdev and cleanup rport.
+>   netlink event is sent implicitely by removing the sdev.
+>
+> Multipath would then interact with this sequence by:
+>=20
+> - Upon receiving 'path failed' event: mark path as 'ghost' or
+'blocked',
+>   ie no I/O is currently possible and will be queued (no path switch
+yet).
+> - Upon receiving 'fast_fail_io' event: switch paths and resubmit
+queued I/Os
+> - Upon receiving 'path removed' event: remove path from internal
+structures,
+  update multipath maps etc.
 
-Thanks,
-Vijay
+This makes perfect sense to me. Are we going to allow the end-user to
+modify
+those timers (not sure that's a good idea...)?
 
----
-During device discovery read capacity fails with 0x020401 and sets the device size to 0. As a reason any I/O submitted to this path gets killed at sd_prep_fn with BLKPREP_KILL. This patch is to retry for 0x020401. NEED_RETRY in scsi_decide_disposition does not give sufficient time for the device to become ready. 
+> The time between 'path failed' and 'fast_fail_io triggers' would then
+be
+> able to capture any jitter / intermittent failures. Between=20
+> 'fast_fail_io triggers' and 'path removed' the path would be held in
+some
+> sort of 'limbo' in case it comes back again, eg for maintenance/SP
+update
+> etc. And we can even increase this one to rather long timespans (eg
+hours)
+> to give the admin enough time for a manual intervention.
 
-Signed-off-by: Vijay Chauhan <vijay.chauhan@lsi.com>
----
---- linux-2.6.30-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c.orig	2009-04-20 23:07:14.000000000 +0530
-+++ linux-2.6.30-rc2/drivers/scsi/device_handler/scsi_dh_rdac.c	2009-04-20 23:11:27.000000000 +0530
-@@ -561,6 +561,12 @@ static int rdac_check_sense(struct scsi_
- 	struct rdac_dh_data *h = get_rdac_data(sdev);
- 	switch (sense_hdr->sense_key) {
- 	case NOT_READY:
-+		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x01)
-+			/* LUN Not Ready - Logical Unit Not Ready and is in
-+			* the process of becoming ready
-+			* Just retry.
-+			*/
-+			return ADD_TO_MLQUEUE;
- 		if (sense_hdr->asc == 0x04 && sense_hdr->ascq == 0x81)
- 			/* LUN Not Ready - Storage firmware incompatible
- 			 * Manual code synchonisation required.
+> I still like this proposal as it makes multipath interaction far
+cleaner.
+> And we can do away with path checkers completely here.
+
+All true. Although I think the "long" timespans might be best measured
+in=20
+minutes (say, default to 5 minutes) and should be configurable. It
+probably isn't=20
+a good idea to leave that path dead for a very long time as a rule, even
+if=20
+it's possible to do so. Maybe even some sort of userland override would
+be=20
+worthwhile for scheduled maintenance?
+
+
+Regards, Jerry
