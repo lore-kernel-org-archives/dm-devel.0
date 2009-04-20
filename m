@@ -1,11 +1,13 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 5/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 03:55:46 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200355330.6097@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 6/17] bottom-layer barrier support
+Date: Mon, 20 Apr 2009 03:56:25 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200355520.6097@hs20-bc2-1.build.redhat.com>
+References: <Pine.LNX.4.64.0904200355330.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0904200355330.6097@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,49 +21,30 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-target-flush-option.patch
+dm-remove-test-for-zero-size.patch
 
-Two variables for targets.
-
-Target driver can change num_flush_requests and signal that it wants
-to receive flushes. It receives num_flush_requests flushes, individual
-flushes are differentiated by map_info->flush_request (which goes from
-0 to num_flush_requests - 1).
-
-Old targets without flush support won't receive any flush requests.
+Remove test for !bi_size. Zero-data flush barriers will be passed down
+this path.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- include/linux/device-mapper.h |   11 +++++++++++
- 1 file changed, 11 insertions(+)
+ drivers/md/dm.c |    5 -----
+ 1 file changed, 5 deletions(-)
 
-Index: linux-2.6.30-rc1-devel/include/linux/device-mapper.h
+Index: linux-2.6.30-rc1-devel/drivers/md/dm.c
 ===================================================================
---- linux-2.6.30-rc1-devel.orig/include/linux/device-mapper.h	2009-04-10 06:32:54.000000000 +0200
-+++ linux-2.6.30-rc1-devel/include/linux/device-mapper.h	2009-04-10 06:33:26.000000000 +0200
-@@ -21,6 +21,7 @@ typedef enum { STATUSTYPE_INFO, STATUSTY
- union map_info {
- 	void *ptr;
- 	unsigned long long ll;
-+	unsigned flush_request;
- };
+--- linux-2.6.30-rc1-devel.orig/drivers/md/dm.c	2009-04-10 06:33:23.000000000 +0200
++++ linux-2.6.30-rc1-devel/drivers/md/dm.c	2009-04-10 06:33:28.000000000 +0200
+@@ -647,11 +647,6 @@ static void __map_bio(struct dm_target *
+ 	sector_t sector;
+ 	struct mapped_device *md;
  
- /*
-@@ -168,6 +169,16 @@ struct dm_target {
- 	sector_t split_io;
+-	/*
+-	 * Sanity checks.
+-	 */
+-	BUG_ON(!clone->bi_size);
+-
+ 	clone->bi_end_io = clone_endio;
+ 	clone->bi_private = tio;
  
- 	/*
-+	 * A number of zero-length barrier requests that will be submitted
-+	 * to the target for the purpose of flushing cache.
-+	 *
-+	 * The request number will be placed in union map_info->flush_request.
-+	 * It is a responsibility of the target driver to remap these requests
-+	 * to the real underlying devices.
-+	 */
-+	unsigned num_flush_requests;
-+
-+	/*
- 	 * These are automatically filled in by
- 	 * dm_table_get_device.
- 	 */
