@@ -1,7 +1,7 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: [PATCH 16/17] bottom-layer barrier support
-Date: Mon, 20 Apr 2009 04:03:22 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904200403070.6097@hs20-bc2-1.build.redhat.com>
+Subject: [PATCH 17/17] bottom-layer barrier support
+Date: Mon, 20 Apr 2009 04:03:50 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904200403290.6097@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358000.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358300.6097@hs20-bc2-1.build.redhat.com>
@@ -11,11 +11,12 @@ References: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200401280.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200402010.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200402400.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200403070.6097@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <Pine.LNX.4.64.0904200402400.6097@hs20-bc2-1.build.redhat.com>
+In-Reply-To: <Pine.LNX.4.64.0904200403070.6097@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -29,43 +30,29 @@ To: dm-devel@redhat.com
 Cc: Alasdair G Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-dm-dmio-retry-barriers.patch
+dm-snapshot-sync-exception-store.patch
 
-If -EOPNOTSUPP was returned and the request was a barrier request, retry it
-without barrier.
+Send barrier requests when updating the exception area.
 
-Retry all regions (if there was just one region returning -EOPNOTSUPP), for
-now, barriers are submitted only for 1-region requests, so it doesn't matter.
-
-In the future, this can be fine-grained to retry only -EOPNOTSUPPed regions.
+Exception area updates need to be ordered w.r.t. data writes, so that
+the writes are not reordered in hardware disk cache.
 
 Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
 
 ---
- drivers/md/dm-io.c |    6 ++++++
- 1 file changed, 6 insertions(+)
+ drivers/md/dm-snap-persistent.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Index: linux-2.6.29-rc1-devel/drivers/md/dm-io.c
+Index: linux-2.6.30-rc2-devel/drivers/md/dm-snap-persistent.c
 ===================================================================
---- linux-2.6.29-rc1-devel.orig/drivers/md/dm-io.c	2009-01-22 21:09:28.000000000 +0100
-+++ linux-2.6.29-rc1-devel/drivers/md/dm-io.c	2009-01-22 21:09:37.000000000 +0100
-@@ -364,6 +364,7 @@ static int sync_io(struct dm_io_client *
- 		return -EIO;
- 	}
+--- linux-2.6.30-rc2-devel.orig/drivers/md/dm-snap-persistent.c	2009-04-10 06:16:42.000000000 +0200
++++ linux-2.6.30-rc2-devel/drivers/md/dm-snap-persistent.c	2009-04-20 08:41:18.000000000 +0200
+@@ -636,7 +636,7 @@ static void persistent_commit_exception(
+ 	/*
+ 	 * Commit exceptions to disk.
+ 	 */
+-	if (ps->valid && area_io(ps, WRITE))
++	if (ps->valid && area_io(ps, WRITE_BARRIER))
+ 		ps->valid = 0;
  
-+retry:
- 	io.error_bits = 0;
- 	io.eopnotsupp_bits = 0;
- 	atomic_set(&io.count, 1); /* see dispatch_io() */
-@@ -382,6 +383,11 @@ static int sync_io(struct dm_io_client *
- 	}
- 	set_current_state(TASK_RUNNING);
- 
-+	if (io.eopnotsupp_bits && (rw & (1 << BIO_RW_BARRIER))) {
-+		rw &= ~(1 << BIO_RW_BARRIER);
-+		goto retry;
-+	}
-+
- 	if (error_bits)
- 		*error_bits = io.error_bits;
- 
+ 	/*
