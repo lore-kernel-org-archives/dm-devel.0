@@ -1,17 +1,9 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: LSF: Multipathing and path checking question
-Date: Mon, 20 Apr 2009 18:02:39 -0500
-Message-ID: <49ECFF0F.5080003@cs.wisc.edu>
-References: <49E7B845.70400@cs.wisc.edu>
-	<49E834CD.1090306@suse.de>	<49E89866.50205@cs.wisc.edu>
-	<49E89E92.7070709@cs.wisc.edu>	<49EC3010.5050502@suse.de>
-	<49ECCBAC.70308@cs.wisc.edu>
+From: bmarzins@sourceware.org
+Subject: multipath-tools libcheckers/tur.c libmultipath ...
+Date: 21 Apr 2009 00:05:25 -0000
+Message-ID: <20090421000525.23250.qmail@sourceware.org>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49ECCBAC.70308@cs.wisc.edu>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,37 +13,124 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
-Cc: SCSI Mailing List <linux-scsi@vger.kernel.org>
+To: dm-cvs@sourceware.org, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Mike Christie wrote:
->> For starters we just should send a netlink event when fast_fail_io has
->> fired. We could easily integrate that one in multipathd and would gain
->> an instant benefit from that as we can switch paths in advance.
->> Next step would be to implement an additional sdev state which would
->> return 'DID_TRANSPORT_FASTFAIL' for any 'normal' I/O; it would be
->> inserted between 'RUNNING' and 'CANCEL'.
->> Transition would be possible between 'RUNNING' and 'FASTFAIL', but
->> it would only be possible to transition into 'CANCEL' from 'FASTFAIL'.
->>
-> 
-> 
-> Yeah, a new sdev state might be nice. Right now this state is handled by 
-> the classes. For iscsi and FC the port/session will be in 
-> blocked/ISCSI_SESSION_FAILED. Then internally the classes are decieding 
-> what to do with IO in the *_chkready functions.
-> 
-> 
+CVSROOT:	/cvs/dm
+Module name:	multipath-tools
+Branch: 	RHEL5_FC6
+Changes by:	bmarzins@sourceware.org	2009-04-21 00:05:24
 
+Modified files:
+	libcheckers    : tur.c 
+	libmultipath   : discovery.c discovery.h 
+	multipathd     : main.c 
+	path_priority/pp_alua: rtpg.c 
 
-How about setting the device to the offline state for this case where 
-fast_io_fail has fired but the dev_loss_tmo has not yet fired? As fast 
-as failing IO we get the same result. scsi-ml would fail the incoming IO 
-instead of it getting to the class _chkready functions, but the scsi 
-device state indicates that it cannot execute IO which might be nice for 
-users.
+Log message:
+	Fix for bz 472451.  This fixes two issues. First, it keeps multipathd from checking
+	scsi paths in the "blocked" state, since multipathd will just hang until the device
+	times out. Second, the tur checker retrys on a few more error codes that could happen
+	during transient path failures.
 
-Can we not do this because offline for the device only means when the 
-scsi-eh has put it offline because it could not recover it or is it more 
-generic like for any time it cannot execute IO?
+Patches:
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libcheckers/tur.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.4.2.1&r2=1.4.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.32.2.6&r2=1.32.2.7
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/libmultipath/discovery.h.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.14.2.1&r2=1.14.2.2
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/multipathd/main.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.69.2.18&r2=1.69.2.19
+http://sourceware.org/cgi-bin/cvsweb.cgi/multipath-tools/path_priority/pp_alua/rtpg.c.diff?cvsroot=dm&only_with_tag=RHEL5_FC6&r1=1.3.2.1&r2=1.3.2.2
+
+--- multipath-tools/libcheckers/tur.c	2008/08/25 21:43:54	1.4.2.1
++++ multipath-tools/libcheckers/tur.c	2009/04/21 00:05:22	1.4.2.2
+@@ -23,6 +23,11 @@
+ #define MSG_TUR_UP	"tur checker reports path is up"
+ #define MSG_TUR_DOWN	"tur checker reports path is down"
+ 
++/* from linux/include/scsi/scsi.h */
++#define DID_BUS_BUSY    0x02
++#define DID_ERROR       0x07
++#define DID_TRANSPORT_DISRUPTED 0x0e
++
+ struct tur_checker_context {
+ 	void * dummy;
+ };
+@@ -62,6 +67,12 @@
+ 	if (io_hdr.info & SG_INFO_OK_MASK) {
+ 		int key = 0, asc, ascq;
+ 
++		if (io_hdr.host_status == DID_BUS_BUSY ||
++		    io_hdr.host_status == DID_ERROR ||
++		    io_hdr.host_status == DID_TRANSPORT_DISRUPTED) {
++			if (--retry_tur)
++				goto retry;
++		}
+ 		if (io_hdr.sb_len_wr > 3) {
+ 			if (io_hdr.sbp[0] == 0x72 || io_hdr.sbp[0] == 0x73) {
+ 				key = io_hdr.sbp[1] & 0x0f;
+--- multipath-tools/libmultipath/discovery.c	2008/01/15 01:34:36	1.32.2.6
++++ multipath-tools/libmultipath/discovery.c	2009/04/21 00:05:22	1.32.2.7
+@@ -235,6 +235,7 @@
+ declare_sysfs_get_str(rev, "%s/block/%s/device/rev");
+ declare_sysfs_get_str(dev, "%s/block/%s/dev");
+ declare_sysfs_get_str(bustype, "%s/block/%s/device/bus");
++declare_sysfs_get_str(state, "%s/block/%s/device/state");
+ 
+ int
+ sysfs_get_size (char * sysfs_path, char * dev, unsigned long long * size)
+--- multipath-tools/libmultipath/discovery.h	2007/06/18 17:37:18	1.14.2.1
++++ multipath-tools/libmultipath/discovery.h	2009/04/21 00:05:23	1.14.2.2
+@@ -30,7 +30,7 @@
+ int sysfs_get_rev (char * sysfs_path, char * dev, char * buff, int len);
+ int sysfs_get_dev (char * sysfs_path, char * dev, char * buff, int len);
+ int sysfs_get_bustype (char * sysfs_path, char * dev, char * buff, int len);
+-
++int sysfs_get_state (char * sysfs_path, char * dev, char * buff, int len);
+ int sysfs_get_size (char * sysfs_path, char * dev, unsigned long long *);
+ int path_discovery (vector pathvec, struct config * conf, int flag);
+ 
+--- multipath-tools/multipathd/main.c	2009/04/06 16:50:43	1.69.2.18
++++ multipath-tools/multipathd/main.c	2009/04/21 00:05:23	1.69.2.19
+@@ -907,6 +907,22 @@
+ 	}
+ }
+ 
++int
++check_sysfs_state (struct path *pp, int *newstate)
++{
++	char state[32];
++	if (pp->bus != SYSFS_BUS_SCSI)
++		return 0;
++	if (sysfs_get_state(sysfs_path, pp->dev, state, 32) != 0)
++                return 0;
++	condlog(3, "%s: state = %s", pp->dev, state);
++	if (strncmp(state, "blocked", 7) == 0){
++		*newstate = PATH_PENDING;
++		return 1;
++	}
++	return 0;
++}
++
+ static void *
+ checkerloop (void *ap)
+ {
+@@ -963,7 +979,8 @@
+ 			 */
+ 			checker_set_async(&pp->checker);
+ 
+-			newstate = checker_check(&pp->checker);
++			if (check_sysfs_state(pp, &newstate) == 0)
++				newstate = checker_check(&pp->checker);
+ 			
+ 			if (newstate < 0) {
+ 				condlog(2, "%s: unusable path", pp->dev);
+--- multipath-tools/path_priority/pp_alua/rtpg.c	2009/04/08 21:38:44	1.3.2.1
++++ multipath-tools/path_priority/pp_alua/rtpg.c	2009/04/21 00:05:24	1.3.2.2
+@@ -268,7 +268,7 @@
+ 	}
+ 	rc = do_rtpg(fd, buf, buflen);
+ 	if (rc < 0)
+-		return rc;
++		goto out;
+ 	scsi_buflen = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
+ 	if (buflen < (scsi_buflen + 4)) {
+ 		free(buf);
