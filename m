@@ -1,55 +1,53 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: [dm-devel] Re: dm-ioband: Test results.
-Date: Tue, 21 Apr 2009 21:18:27 +0900 (JST)
-Message-ID: <20090421.211827.39163016.ryov@valinux.co.jp>
-References: <e98e18940904161324p9833457vdf699d66bb323591@mail.gmail.com>
-	<20090420.172959.193682665.ryov@valinux.co.jp>
-	<20090420213738.GB9080@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: dm-ioband: Test results.
+Date: Tue, 21 Apr 2009 09:57:23 -0400
+Message-ID: <20090421135723.GA13953@redhat.com>
+References: <20090420.172959.193682665.ryov@valinux.co.jp>
+	<e98e18940904200207y62eca680t7cf938049375f4b3@mail.gmail.com>
+	<20090421.210614.112619728.ryov@valinux.co.jp>
+	<20090421.211051.183023683.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752211AbZDUMSl@vger.kernel.org>
-In-Reply-To: <20090420213738.GB9080@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: vgoyal@redhat.com
-Cc: nauman@google.com, fernando@oss.ntt.co.jp, linux-kernel@vger.kernel.org, jmoyer@redhat.com, dm-devel@redhat.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com, righi.andrea@gmail.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090421.211051.183023683.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
+Cc: fernando@oss.ntt.co.jp, linux-kernel@vger.kernel.org, jmoyer@redhat.com, agk@redhat.com, jens.axboe@oracle.com, nauman@google.com, vgoyal@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Hi Vivek,
+On Tue, Apr 21 2009 at  8:10am -0400,
+Ryo Tsuruta <ryov@valinux.co.jp> wrote:
 
-> > I could see the priority inversion by running Vivek's script and I
-> > understand how RT requests has to be handled. I'll create a patch
-> > which makes dm-ioband cooperates with CFQ scheduler. However, do you
-> > think we need some kind of limitation on processes which belong to the
-> > RT class to prevent the processes from depleting bandwidth?
->
-> I think to begin with, we can keep the same behavior as CFQ. An RT task
-> can starve other tasks.
+> Hi Nauman,
 > 
-> But we should provide two configurations and user can choose any one.
-> If RT task is in root group, it will starve other sibling tasks/groups. If
-> it is with-in a cgroup, then it will starve its sibling only with-in that
-> cgroup and will not impact other cgroups.
+> > > The real question is, once you create a version of dm-ioband that
+> > > co-operates with CFQ scheduler, how that solution would compare with
+> > > the patch set Vivek has posted? In my opinion, we need to converge to
+> > > one solution as soon as possible, so that we can work on it together
+> > > to refine and test it.
+> > 
+> > I think I can do some help for your work. but I want to continue the
+> > development of dm-ioband, because dm-ioband actually works well and
+> > I think it has some advantages against other IO controllers.
+> >   - It can use without cgroup.
+> >   - It can control bandwidth on a per partition basis.
+> >   - The driver module can be replaced without stopping the system.
 > 
-> What I mean is following.
-> 
-> 			root
-> 			/  \
-> 		      RT   group1
-> 
-> In above configuration RT task will starve everybody else.
-> 
-> 			root
-> 		        /   \
-> 		   group1   group2
-> 		   /  \
-> 	         RT   BE
-> 
-> In above configuration  RT task will starve only sibling in group1 but
-> will not starve the tasks in group2 or in root.
+> In addition, dm-ioband can run on the RHEL5.
 
-Thanks for the suggestion. I'll try this way when dm-ioband supports
-hierarchical grouping.
+RHEL5 compatibility does not matter relative to merging an I/O bandwidth
+controller upstream.  So both the "can [be] use without cgroup" and "can
+run on RHEL5" features do not help your cause of getting dm-ioband
+merged upstream.  In fact these features serve as distractions.
 
-Thanks,
-Ryo Tsuruta
+Mike
