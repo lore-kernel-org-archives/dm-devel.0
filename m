@@ -1,78 +1,79 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH] dm mpath: Try recover from I/O failure by
- re-initializing the PG if device is running on one path
-Date: Tue, 21 Apr 2009 10:06:44 +0900
-Message-ID: <49ED1C24.9090303@ct.jp.nec.com>
-References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
+From: Hannes Reinecke <hare@suse.de>
+Subject: Re: [dm-devel] LSF: Multipathing and path checking question
+Date: Tue, 21 Apr 2009 09:04:08 +0200
+Message-ID: <49ED6FE8.5090009@suse.de>
+References: <49E7B845.70400@cs.wisc.edu> <49E834CD.1090306@suse.de> <49E89866.50205@cs.wisc.edu> <49EC2B65.1050508@suse.de> <49ECC8BB.9020906@cs.wisc.edu> <49ECCCD7.3070200@cs.wisc.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
-Content-Transfer-Encoding: 7bit
-Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: "Moger, Babu" <Babu.Moger@lsi.com>
-Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "Chauhan,
-	Vijay" <Vijay.Chauhan@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <49ECCCD7.3070200@cs.wisc.edu>
+Sender: linux-scsi-owner@vger.kernel.org
+To: Mike Christie <michaelc@cs.wisc.edu>
+Cc: device-mapper development <dm-devel@redhat.com>, SCSI Mailing List <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hi Babu,
+Hi Mike,
 
-On 2009/04/21 3:05 +0900, Moger, Babu wrote:
-> This patch introduces the mechanism to recover from I/O failures by
-> re-initializing the path if the device is running on only one path. 
-> 
-> Problem: Device mapper fails the path for every I/O error. It does not
-> care about the type of error. There are certain errors which can be
-> recovered by re-initializing the path again. I have seen this problem
-> during my testing on rdac device handler. I have observed I/O errors
-> when there is a change in Lun ownership. When Lun ownership changes
-> device will return back with check condition with
-> sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed).
-> Currently, device mapper fails the path for this error and eventually
-> this will lead to I/O error. We don't want to see I/O error for this reason. 
+Mike Christie wrote:
+> Mike Christie wrote:
+>> Hannes Reinecke wrote:
+>>>> Today, instead of #2, the Red Hat multipath tools guy and I were
+>>>> talking
+>>>> about doing a probe with SG_IO. For example we would send down a p=
+ath
+>>>> tester IO and then wait for it to be failed with
+>>>> DID_TRANSPORT_FAILFAST.
+>>>>
+>>> No. this is exactly what you cannot do. SG_IO will be stalled when =
+the
+>>> sdev is BLOCKED and will only return a result _after_ the sdev
+>>> transitions
+>>> _out_ of the BLOCKED state.
+>>> Translated to FC this means that whenever dev_loss_tmo is _active_ =
+(!)
+>>> no I/O will be send out neither any I/O result will be returned to
+>>> userland.
+>>>
+>>
+>> That is not true anymore. When fast io fail fires, the sdev and rpor=
+t
+>> will be blocked, but the the fc class will call into the LLD to have=
+ it=20
+>=20
+> I miswrote that. The rport will be show blocked state, but when fast =
+io
+> fail tmo fires, fc_terminate_rport_io will unblock the sdev, and the =
+fc
+> class chkready will fail any IO sent to it and of course
+> terminate_rport_io will fail IO in the driver like I said below. And
+> then you do not need a terminate_rport_io callback to have the fast i=
+o
+> fail tmo now. If you set that timer at least IO in the block queue an=
+d
+> new IO will be failed.
+>=20
+Indeed, I didn't look closely enough. Ok, so I/O will be failed after
+terminate_rport_io.=20
 
-Shouldn't we handle this type of device error inside device handler?
+So that means we can just implement a new netlink message after
+terminate_rport_io to inform the multipath daemon about this changes.
 
+And, of course, we _really_ should introduce a new sdev state here.
+Having the sdev set to 'RUNNING' but having all I/O failed in the
+transport class is just a quirky behaviour which is bound to cause
+trouble.
 
-> The patch will set the flag pg_init_required if the device is running
-> on single path. The process_queued_ios will re-initialize path if required.
-> I have tested this patch on LSI rdac handler.
-> 
-> Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> ---
-> 
-> --- linux-2.6.30-rc2/drivers/md/dm-mpath.c.orig	2009-04-17 16:49:33.000000000 -0500
-> +++ linux-2.6.30-rc2/drivers/md/dm-mpath.c	2009-04-17 17:09:51.000000000 -0500
-> @@ -1152,6 +1152,15 @@ static int do_end_io(struct multipath *m
->  		return error;
->  
->  	spin_lock_irqsave(&m->lock, flags);
-> +	/*
-> +	 * If this is the only path left, then lets try to
-> +	 * re-initialize the PG one last time..
-> +	 */
-> +	if (m->nr_valid_paths == 1 && m->hw_handler_name) {
-> +		m->pg_init_required = 1;
-> +		spin_unlock_irqrestore(&m->lock, flags);
-> +		goto requeue;
-> +	}
->  	if (!m->nr_valid_paths) {
->  		if (__must_push_back(m)) {
->  			spin_unlock_irqrestore(&m->lock, flags);
+Cheers,
 
-What happens in case of a real I/O error (e.g. I/O to a broken sector)?
-Is it correctly handled and returned to upper layer at last?
-I'm asking that because the change looks dm retries such errors forever.
-Or am I missing anything?
-
-Thanks,
-Kiyoshi Ueda
+Hannes
+--=20
+Dr. Hannes Reinecke		      zSeries & Storage
+hare@suse.de			      +49 911 74053 688
+SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
+GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+--
+To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
+n
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
