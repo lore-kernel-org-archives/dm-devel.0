@@ -1,18 +1,10 @@
-From: Vivek Goyal <vgoyal@redhat.com>
-Subject: Re: dm-ioband: Test results.
-Date: Tue, 21 Apr 2009 10:16:07 -0400
-Message-ID: <20090421141607.GA22619@redhat.com>
-References: <20090420.172959.193682665.ryov@valinux.co.jp>
-	<e98e18940904200207y62eca680t7cf938049375f4b3@mail.gmail.com>
-	<20090421.210614.112619728.ryov@valinux.co.jp>
-	<20090421.211051.183023683.ryov@valinux.co.jp>
-	<20090421135723.GA13953@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: [PATCH v2] dm table: verify a DM device is H/W sector
+	aligned
+Date: Tue, 21 Apr 2009 11:20:59 -0400
+Message-ID: <1240327259-14412-1-git-send-email-snitzer@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <20090421135723.GA13953@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -22,52 +14,103 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Mike Snitzer <snitzer@redhat.com>
-Cc: fernando@oss.ntt.co.jp, device-mapper development <dm-devel@redhat.com>, linux-kernel@vger.kernel.org, jmoyer@redhat.com, jens.axboe@oracle.com, nauman@google.com, agk@redhat.com, balbir@linux.vnet.ibm.com
+To: dm-devel@redhat.com
+Cc: Mike Snitzer <snitzer@redhat.com>
 List-Id: dm-devel.ids
 
-On Tue, Apr 21, 2009 at 09:57:23AM -0400, Mike Snitzer wrote:
-> On Tue, Apr 21 2009 at  8:10am -0400,
-> Ryo Tsuruta <ryov@valinux.co.jp> wrote:
-> 
-> > Hi Nauman,
-> > 
-> > > > The real question is, once you create a version of dm-ioband that
-> > > > co-operates with CFQ scheduler, how that solution would compare with
-> > > > the patch set Vivek has posted? In my opinion, we need to converge to
-> > > > one solution as soon as possible, so that we can work on it together
-> > > > to refine and test it.
-> > > 
-> > > I think I can do some help for your work. but I want to continue the
-> > > development of dm-ioband, because dm-ioband actually works well and
-> > > I think it has some advantages against other IO controllers.
-> > >   - It can use without cgroup.
-> > >   - It can control bandwidth on a per partition basis.
-> > >   - The driver module can be replaced without stopping the system.
-> > 
-> > In addition, dm-ioband can run on the RHEL5.
-> 
-> RHEL5 compatibility does not matter relative to merging an I/O bandwidth
-> controller upstream.  So both the "can [be] use without cgroup" and "can
-> run on RHEL5" features do not help your cause of getting dm-ioband
-> merged upstream.  In fact these features serve as distractions.
+Verify a table's targets can collectively accommodate the device's
+hardsect_size aligned I/O in addition to their own hardsect_size
+alignment; paying attention to target boundaries in the table.
+- incoming I/O is aligned to the device's hardsect_size
+- each target is aligned to the target's hardsect_size
+- device's hardsect_size >= each targets' hardsect_size
+- device and targets' hardsect_size are always powers of 2
 
-Exactly. I don't think that "it can be used without cgroup" is a feature
-or advantage. To me it is a disadvantage and should be fixed. cgroup is
-standard mechanism to group tasks arbitrarily and we should use that to make
-things working instead of coming up with own ways of grouping things and
-terming it as advantage.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
+---
+ drivers/md/dm-table.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 files changed, 63 insertions(+), 0 deletions(-)
 
-What do you mean by "The driver module can be replaced without stopping
-the system"? I guess you mean that one does not have to reboot the system
-to remove ioband device? So if one decides to not use the cgroup, then
-one shall have to remove the ioband devices, remount the filesystems and
-restart the application?
-
-With cgroup approach, if one does not want things to be classified, a user
-can simply move all the tasks to root group and things will be fine. No
-remounting, no application stopping etc. So this also does not look like
-an advantage instead sounds like an disadvantage.
-
-Thanks
-Vivek
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 61a05cd..ebb82b4 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -719,6 +719,65 @@ static void check_for_valid_limits(struct io_restrictions *rs)
+ 		rs->bounce_pfn = -1;
+ }
+ 
++/*
++ * Verify a table's targets can collectively accommodate the device's
++ * hardsect_size aligned I/O in addition to their own hardsect_size
++ * alignment; paying attention to target boundaries in the table
++ * - incoming I/O is aligned to the device's hardsect_size
++ * - each target is aligned to the target's hardsect_size
++ * - device's hardsect_size >= each targets' hardsect_size
++ * - device and targets' hardsect_size are always powers of 2
++ */
++static int alignment_is_valid(struct dm_table *table)
++{
++	int r = 0;
++	unsigned int i, num_targets;
++	struct dm_target *ti = NULL;
++	unsigned short partial_sectors, remaining_sectors = 0;
++	unsigned short ti_hardsect_size_sectors = 0;
++	unsigned short device_hardsect_size_sectors =
++		table->limits.hardsect_size >> SECTOR_SHIFT;
++
++	num_targets = dm_table_get_num_targets(table);
++	for (i = 0; i < num_targets; i++) {
++		ti = dm_table_get_target(table, i);
++		ti_hardsect_size_sectors =
++			ti->limits.hardsect_size >> SECTOR_SHIFT;
++
++		/*
++		 * Check that remaining_sectors from the previous target
++		 * do not disturb this target's hardsect_size alignment
++		 * - if remaining_sectors is greater than this
++		 *   target's len: it is the next target's concern
++		 */
++		if ((remaining_sectors && remaining_sectors < ti->len) &&
++		    (remaining_sectors & (ti_hardsect_size_sectors - 1)))
++			break;
++
++		/*
++		 * If device's hardsect_size aligned I/O crosses target
++		 * boundaries any remaining_sectors must be handled by
++		 * the next target(s) -- otherwise the table is misaligned
++		 */
++		remaining_sectors = 0;
++		partial_sectors =
++			(unsigned short) ((ti->begin + ti->len) &
++					  (device_hardsect_size_sectors - 1));
++		if (partial_sectors)
++			remaining_sectors = device_hardsect_size_sectors -
++				partial_sectors;
++	}
++
++	if (remaining_sectors) {
++		DMWARN("%s: mapping with begin=%lu len=%lu "
++		       "not device h/w sector aligned",
++		       dm_device_name(table->md), ti->begin, ti->len);
++		r = -EINVAL;
++	}
++
++	return r;
++}
++
+ int dm_table_add_target(struct dm_table *t, const char *type,
+ 			sector_t start, sector_t len, char *params)
+ {
+@@ -818,6 +877,10 @@ int dm_table_complete(struct dm_table *t)
+ 
+ 	check_for_valid_limits(&t->limits);
+ 
++	r = alignment_is_valid(t);
++	if (r)
++		return r;
++
+ 	/* how many indexes will the btree have ? */
+ 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
+ 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
+-- 
+1.6.0.6
