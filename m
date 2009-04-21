@@ -1,116 +1,91 @@
-From: Mike Snitzer <snitzer@redhat.com>
-Subject: [PATCH v2] dm table: verify a DM device is H/W sector
-	aligned
-Date: Tue, 21 Apr 2009 11:20:59 -0400
-Message-ID: <1240327259-14412-1-git-send-email-snitzer@redhat.com>
-Reply-To: device-mapper development <dm-devel@redhat.com>
-Return-path: <dm-devel-bounces@redhat.com>
-List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
-List-Archive: <https://www.redhat.com/archives/dm-devel>
-List-Post: <mailto:dm-devel@redhat.com>
-List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
-List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
-	<mailto:dm-devel-request@redhat.com?subject=subscribe>
-Sender: dm-devel-bounces@redhat.com
-Errors-To: dm-devel-bounces@redhat.com
-To: dm-devel@redhat.com
-Cc: Mike Snitzer <snitzer@redhat.com>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: [PATCH] dm mpath: Try recover from I/O failure by
+ re-initializing the PG if device is running on one path
+Date: Tue, 21 Apr 2009 10:06:12 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466A66DD4@cosmail01.lsi.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
+ <49ED1C24.9090303@ct.jp.nec.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: 8BIT
+Return-path: <linux-scsi-owner@vger.kernel.org>
+In-Reply-To: <49ED1C24.9090303@ct.jp.nec.com>
+Content-Language: en-US
+Sender: linux-scsi-owner@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "'sekharan@us.ibm.com'" <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-Verify a table's targets can collectively accommodate the device's
-hardsect_size aligned I/O in addition to their own hardsect_size
-alignment; paying attention to target boundaries in the table.
-- incoming I/O is aligned to the device's hardsect_size
-- each target is aligned to the target's hardsect_size
-- device's hardsect_size >= each targets' hardsect_size
-- device and targets' hardsect_size are always powers of 2
+Hi Kiyoshi,
 
-Signed-off-by: Mike Snitzer <snitzer@redhat.com>
----
- drivers/md/dm-table.c |   63 +++++++++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 63 insertions(+), 0 deletions(-)
+   Thanks for your comment.
 
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 61a05cd..ebb82b4 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -719,6 +719,65 @@ static void check_for_valid_limits(struct io_restrictions *rs)
- 		rs->bounce_pfn = -1;
- }
- 
-+/*
-+ * Verify a table's targets can collectively accommodate the device's
-+ * hardsect_size aligned I/O in addition to their own hardsect_size
-+ * alignment; paying attention to target boundaries in the table
-+ * - incoming I/O is aligned to the device's hardsect_size
-+ * - each target is aligned to the target's hardsect_size
-+ * - device's hardsect_size >= each targets' hardsect_size
-+ * - device and targets' hardsect_size are always powers of 2
-+ */
-+static int alignment_is_valid(struct dm_table *table)
-+{
-+	int r = 0;
-+	unsigned int i, num_targets;
-+	struct dm_target *ti = NULL;
-+	unsigned short partial_sectors, remaining_sectors = 0;
-+	unsigned short ti_hardsect_size_sectors = 0;
-+	unsigned short device_hardsect_size_sectors =
-+		table->limits.hardsect_size >> SECTOR_SHIFT;
-+
-+	num_targets = dm_table_get_num_targets(table);
-+	for (i = 0; i < num_targets; i++) {
-+		ti = dm_table_get_target(table, i);
-+		ti_hardsect_size_sectors =
-+			ti->limits.hardsect_size >> SECTOR_SHIFT;
-+
-+		/*
-+		 * Check that remaining_sectors from the previous target
-+		 * do not disturb this target's hardsect_size alignment
-+		 * - if remaining_sectors is greater than this
-+		 *   target's len: it is the next target's concern
-+		 */
-+		if ((remaining_sectors && remaining_sectors < ti->len) &&
-+		    (remaining_sectors & (ti_hardsect_size_sectors - 1)))
-+			break;
-+
-+		/*
-+		 * If device's hardsect_size aligned I/O crosses target
-+		 * boundaries any remaining_sectors must be handled by
-+		 * the next target(s) -- otherwise the table is misaligned
-+		 */
-+		remaining_sectors = 0;
-+		partial_sectors =
-+			(unsigned short) ((ti->begin + ti->len) &
-+					  (device_hardsect_size_sectors - 1));
-+		if (partial_sectors)
-+			remaining_sectors = device_hardsect_size_sectors -
-+				partial_sectors;
-+	}
-+
-+	if (remaining_sectors) {
-+		DMWARN("%s: mapping with begin=%lu len=%lu "
-+		       "not device h/w sector aligned",
-+		       dm_device_name(table->md), ti->begin, ti->len);
-+		r = -EINVAL;
-+	}
-+
-+	return r;
-+}
-+
- int dm_table_add_target(struct dm_table *t, const char *type,
- 			sector_t start, sector_t len, char *params)
- {
-@@ -818,6 +877,10 @@ int dm_table_complete(struct dm_table *t)
- 
- 	check_for_valid_limits(&t->limits);
- 
-+	r = alignment_is_valid(t);
-+	if (r)
-+		return r;
-+
- 	/* how many indexes will the btree have ? */
- 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
- 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
--- 
-1.6.0.6
+
+> -----Original Message-----
+> From: Kiyoshi Ueda [mailto:k-ueda@ct.jp.nec.com]
+> Sent: Monday, April 20, 2009 8:07 PM
+> To: Moger, Babu
+> Cc: 'dm-devel@redhat.com'; linux-scsi@vger.kernel.org; Chauhan, Vijay;
+> 'sekharan@us.ibm.com'
+> Subject: Re: [PATCH] dm mpath: Try recover from I/O failure by re-
+> initializing the PG if device is running on one path
+> 
+> Hi Babu,
+> 
+> On 2009/04/21 3:05 +0900, Moger, Babu wrote:
+> > This patch introduces the mechanism to recover from I/O failures by
+> > re-initializing the path if the device is running on only one path.
+> >
+> > Problem: Device mapper fails the path for every I/O error. It does not
+> > care about the type of error. There are certain errors which can be
+> > recovered by re-initializing the path again. I have seen this problem
+> > during my testing on rdac device handler. I have observed I/O errors
+> > when there is a change in Lun ownership. When Lun ownership changes
+> > device will return back with check condition with
+> > sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed).
+> > Currently, device mapper fails the path for this error and eventually
+> > this will lead to I/O error. We don't want to see I/O error for this
+> reason.
+> 
+> Shouldn't we handle this type of device error inside device handler?
+
+The current error in question requires re-activation of the path. We already have a code to handle this scenario in device handler. But, the problem is the return status does not go to DM layer. The return status gets lost in scsi layer. For DM layer all the errors are -EIO. Any thoughts from your side.
+
+> > The patch will set the flag pg_init_required if the device is running
+> > on single path. The process_queued_ios will re-initialize path if
+> required.
+> > I have tested this patch on LSI rdac handler.
+> >
+> > Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> > ---
+> >
+> > --- linux-2.6.30-rc2/drivers/md/dm-mpath.c.orig	2009-04-17
+> 16:49:33.000000000 -0500
+> > +++ linux-2.6.30-rc2/drivers/md/dm-mpath.c	2009-04-17
+> 17:09:51.000000000 -0500
+> > @@ -1152,6 +1152,15 @@ static int do_end_io(struct multipath *m
+> >  		return error;
+> >
+> >  	spin_lock_irqsave(&m->lock, flags);
+> > +	/*
+> > +	 * If this is the only path left, then lets try to
+> > +	 * re-initialize the PG one last time..
+> > +	 */
+> > +	if (m->nr_valid_paths == 1 && m->hw_handler_name) {
+> > +		m->pg_init_required = 1;
+> > +		spin_unlock_irqrestore(&m->lock, flags);
+> > +		goto requeue;
+> > +	}
+> >  	if (!m->nr_valid_paths) {
+> >  		if (__must_push_back(m)) {
+> >  			spin_unlock_irqrestore(&m->lock, flags);
+> 
+> What happens in case of a real I/O error (e.g. I/O to a broken sector)?
+> Is it correctly handled and returned to upper layer at last?
+> I'm asking that because the change looks dm retries such errors forever.
+> Or am I missing anything?
+> 
+  Yes, you are right. There are chances of that happening. I will investigate and get back.
+
+> Thanks,
+> Kiyoshi Ueda
