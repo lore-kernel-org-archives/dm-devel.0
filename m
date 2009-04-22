@@ -1,16 +1,19 @@
-From: Mike Christie <michaelc@cs.wisc.edu>
-Subject: Re: [PATCH] RFC: have dm-mpath use already attached
-	scsi_dh
-Date: Wed, 22 Apr 2009 08:52:55 -0500
-Message-ID: <49EF2137.80708@cs.wisc.edu>
-References: <1240374806-6043-1-git-send-email-michaelc@cs.wisc.edu>
-	<49EEE071.9060902@suse.de>
+From: "Moger, Babu" <Babu.Moger@lsi.com>
+Subject: RE: [PATCH] dm mpath: Try recover from I/O failure by
+ re-initializing the PG if device is running on one path
+Date: Wed, 22 Apr 2009 08:03:12 -0600
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466A6707A@cosmail01.lsi.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
+	<49ED1C24.9090303@ct.jp.nec.com>
+	<E463DF2B2E584B4A82673F53D62C2EF466A66DD4@cosmail01.lsi.com>
+	<49EE7870.3090008@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="iso-2022-jp"
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49EEE071.9060902@suse.de>
+In-Reply-To: <49EE7870.3090008@ct.jp.nec.com>
+Content-Language: en-US
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,46 +23,60 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: dm-devel@redhat.com, Levy_Jerome@emc.com, linux-scsi@vger.kernel.org
+To: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "Chauhan,
+	Vijay" <Vijay.Chauhan@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Hannes Reinecke wrote:
-> Hi Mike,
-> 
-> michaelc@cs.wisc.edu wrote:
->> From: Mike Christie <michaelc@cs.wisc.edu>
->>
->> If you have a mixed environment of clarriions, where some
->> support ALAU and some support PNR, what do you put in
->> your multipath.conf? With this patch you do not have to worry about
->> it. If those modules are loaded before dm-mpath, then they
->> will have attached to the correct devices based on inquiry, alua commands
->> and parsing of data buffers (for example in scsi_dh_emc's alua check).
->> There is no need for the user to set that info in the multipath.conf.
->> And in general since all scsi_dh_modules will attach to the devices
->> they work for, we do not need to have users specific this.
->>
-> No. The problem here is the hardware table from scsi_dh is compiled
-> in and cannot be changed from userland. The multipath.conf OTOH
-> is purely user-defined and, what's more, the user might have a valid
-> reason for modifying it.
-> (EG EMC Clariion can well be run in PNR mode even though ALUA is
-> active, or the user might want to try ALUA on any as-of-yet unknown
-> devices)
 
-Ah. I misread the code and misunderstood the compat mode. I thought 
-scsi_dh_emc was failing the attach when ALUA support was detected.
+Hi Kiyoshi,
 
-> 
-> So _not_ allowing multipath to override the device handler setting
-> will just add to the confusion and makes error tracking even more
-> difficult.
-> 
-> So I would prefer the attached patch, it even save to touch
-> device handler code at all.
-> 
+> >>
+> >> Hi Babu,
+> >>
+> >> On 2009/04/21 3:05 +0900, Moger, Babu wrote:
+> >>> This patch introduces the mechanism to recover from I/O failures by
+> >>> re-initializing the path if the device is running on only one path.
+> >>>
+> >>> Problem: Device mapper fails the path for every I/O error. It does =
+not
+> >>> care about the type of error. There are certain errors which can be
+> >>> recovered by re-initializing the path again. I have seen this probl=
+em
+> >>> during my testing on rdac device handler. I have observed I/O error=
+s
+> >>> when there is a change in Lun ownership. When Lun ownership changes
+> >>> device will return back with check condition with
+> >>> sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed).
+> >>> Currently, device mapper fails the path for this error and eventual=
+ly
+> >>> this will lead to I/O error. We don't want to see I/O error for thi=
+s
+> >>> reason.
+> >>
+> >> Shouldn't we handle this type of device error inside device handler?
+> >
+> > The current error in question requires re-activation of the path.
+> > We already have a code to handle this scenario in device handler.
+> > But, the problem is the return status does not go to DM layer.
+> > The return status gets lost in scsi layer. For DM layer all the error=
+s
+> > are -EIO. Any thoughts from your side.
+>=20
+> Oh, I missed the point and I thought that re-activating the path
+> in your device handler was enough for the error.
+> Currently, I have no idea to handle your case only in dm without
+> seeing I/O error.
+>=20
+  I have discussed about re-activating path in device handler with Chandr=
+a. Looks like that will lead to other issues (one is long boot up). Look =
+like that is not an option. =20
+> By the way, who did change the ownership when the device was running
+> with one path in your testing?  I can't see why such case happened.
+>=20
+This can happen if the user knowingly or unknowingly changes the ownershi=
+p. Also we have other feature in our storage which will allow user to red=
+istribute the luns. Thanks for you comment.
 
-Thanks. I think this will work for me.
-
-Are you going to push this for 2.6.30?
+> Thanks,
+> Kiyoshi Ueda
