@@ -1,17 +1,17 @@
 From: Mike Snitzer <snitzer@redhat.com>
-Subject: Re: [PATCH v2] dm table: verify a DM device is H/W
-	sector aligned
-Date: Wed, 22 Apr 2009 11:06:15 -0400
-Message-ID: <20090422150615.GB32602@redhat.com>
-References: <1240327259-14412-1-git-send-email-snitzer@redhat.com>
-	<20090422132543.GA7778@agk.fab.redhat.com>
+Subject: Re: dm-ioband: Test results.
+Date: Wed, 22 Apr 2009 11:18:06 -0400
+Message-ID: <20090422151805.GC32602@redhat.com>
+References: <20090421.211051.183023683.ryov@valinux.co.jp>
+	<20090421135723.GA13953@redhat.com>
+	<20090421141607.GA22619@redhat.com>
+	<20090422.121443.104042516.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
 Content-Disposition: inline
-In-Reply-To: <20090422132543.GA7778@agk.fab.redhat.com>
+In-Reply-To: <20090422.121443.104042516.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,121 +21,87 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Ryo Tsuruta <ryov@valinux.co.jp>
+Cc: fernando@oss.ntt.co.jp, dm-devel@redhat.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, agk@redhat.com, jens.axboe@oracle.com, nauman@google.com, vgoyal@redhat.com, balbir@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-On Wed, Apr 22 2009 at  9:25am -0400,
-Alasdair G Kergon <agk@redhat.com> wrote:
+On Tue, Apr 21 2009 at 11:14pm -0400,
+Ryo Tsuruta <ryov@valinux.co.jp> wrote:
 
-> I've tried to make this easier to understand.
-> Please check I've not broken something in the process...
+> Hi,
+> 
+> From: Vivek Goyal <vgoyal@redhat.com>
+> Subject: [dm-devel] Re: dm-ioband: Test results.
+> Date: Tue, 21 Apr 2009 10:16:07 -0400
+> 
+> > On Tue, Apr 21, 2009 at 09:57:23AM -0400, Mike Snitzer wrote:
+> > > On Tue, Apr 21 2009 at  8:10am -0400,
+> > > Ryo Tsuruta <ryov@valinux.co.jp> wrote:
+> > > 
+> > > > Hi Nauman,
+> > > > 
+> > > > > > The real question is, once you create a version of dm-ioband that
+> > > > > > co-operates with CFQ scheduler, how that solution would compare with
+> > > > > > the patch set Vivek has posted? In my opinion, we need to converge to
+> > > > > > one solution as soon as possible, so that we can work on it together
+> > > > > > to refine and test it.
+> > > > > 
+> > > > > I think I can do some help for your work. but I want to continue the
+> > > > > development of dm-ioband, because dm-ioband actually works well and
+> > > > > I think it has some advantages against other IO controllers.
+> > > > >   - It can use without cgroup.
+> > > > >   - It can control bandwidth on a per partition basis.
+> > > > >   - The driver module can be replaced without stopping the system.
+> > > > 
+> > > > In addition, dm-ioband can run on the RHEL5.
+> > > 
+> > > RHEL5 compatibility does not matter relative to merging an I/O bandwidth
+> > > controller upstream.  So both the "can [be] use without cgroup" and "can
+> > > run on RHEL5" features do not help your cause of getting dm-ioband
+> > > merged upstream.  In fact these features serve as distractions.
+> >
+> > Exactly. I don't think that "it can be used without cgroup" is a feature
+> > or advantage. To me it is a disadvantage and should be fixed. cgroup is
+> > standard mechanism to group tasks arbitrarily and we should use that to make
+> > things working instead of coming up with own ways of grouping things and
+> > terming it as advantage.
+> > 
+> > What do you mean by "The driver module can be replaced without stopping
+> > the system"? I guess you mean that one does not have to reboot the system
+> > to remove ioband device? So if one decides to not use the cgroup, then
+> > one shall have to remove the ioband devices, remount the filesystems and
+> > restart the application?
+> 
+> Device-mapper has a feature that can replace an intermediate module
+> without unmount the device like the following.
+> 
+>       ---------------------        ---------------------
+>      |         /mnt        |      |        /mnt         |
+>      |---------------------|      |---------------------|
+>      | /dev/mapper/ioband1 |      | /dev/mapper/ioband1 |
+>      |---------------------|      |---------------------|
+>      |      dm-ioband      | <==> |      dm-linear      |
+>      |---------------------|      |---------------------|
+>      |      /dev/sda1      |      |      /dev/sda1      |
+>       ---------------------        ---------------------
+> 
+> So we can safely unload the dm-ioband module and update it.
+> 
+> > With cgroup approach, if one does not want things to be classified, a user
+> > can simply move all the tasks to root group and things will be fine. No
+> > remounting, no application stopping etc. So this also does not look like
+> > an advantage instead sounds like an disadvantage.
+> > 
+> > Thanks
+> > Vivek
 
-Looks good, I especially like what you did with the revised DM_WARN().
-But there were some minor compiler warnings:
+Ryo,
 
-drivers/md/dm-table.c: In function =E2=80=98validate_hardsect_alignment=E2=
-=80=99:
-drivers/md/dm-table.c:763: warning: suggest parentheses around + or - in =
-operand of &
-drivers/md/dm-table.c: In function =E2=80=98dm_table_complete=E2=80=99:
-drivers/md/dm-table.c:749: warning: =E2=80=98ti=E2=80=99 may be used unin=
-itialized in this function
+Why is it that you repeatedly ignore concern/discussion about your
+determination to continue using a custom grouping mechanism?  It is this
+type of excess layering that serves no purpose other than to facilitate
+out-of-tree use-cases.  dm-ioband would take a big step closer to being
+merged upstream if you took others' feedback and showed more willingness
+to work through the outstanding issues.
 
-I fixed these warnings in the following revised patch.  I then fixed
-this checkpatch warning (which resulted in somewhat uglier code):
-
-WARNING: line over 80 characters
-#74: FILE: drivers/md/dm-table.c:763:
-+                   remaining & ((ti->limits.hardsect_size >> SECTOR_SHIF=
-T) - 1))
-
-
-diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-index 429b50b..73f0438 100644
---- a/drivers/md/dm-table.c
-+++ b/drivers/md/dm-table.c
-@@ -693,6 +693,71 @@ static void check_for_valid_limits(struct io_restric=
-tions *rs)
- 		rs->bounce_pfn =3D -1;
- }
-=20
-+/*
-+ * Impose necessary and sufficient conditions on a devices's table such
-+ * that any incoming bio which respects its hardsect_size can be
-+ * processed successfully.  If it falls across the boundary between
-+ * two or more targets, the size of each piece it gets split into must
-+ * be compatible with the hardsect_size of the target processing it.
-+ */
-+static int validate_hardsect_alignment(struct dm_table *table)
-+{
-+	/*
-+	 * This function uses arithmetic modulo the hardsect_size
-+	 * (in units of 512-byte sectors).
-+	 */
-+	unsigned short device_hardsect_size_sects =3D
-+			    table->limits.hardsect_size >> SECTOR_SHIFT;
-+
-+	/*
-+	 * Offset of the start of the next table entry, mod hardsect_size.
-+	 */
-+	unsigned short next_target_start =3D 0;
-+
-+	/*
-+	 * Given an aligned bio that extends beyond the end of a
-+	 * target, how many sectors must the next target handle?
-+	 */
-+	unsigned short remaining =3D 0;
-+
-+	struct dm_target *ti =3D NULL;
-+	unsigned i =3D 0;
-+
-+	/*
-+	 * Check each entry in the table in turn.
-+	 */
-+	while (i < dm_table_get_num_targets(table)) {
-+		ti =3D dm_table_get_target(table, i++);
-+
-+		/*
-+		 * If the remaining sectors fall entirely within this
-+		 * table entry are they compatible with its hardsect_size?
-+		 */
-+		if (remaining < ti->len &&
-+		    remaining & ((ti->limits.hardsect_size >>
-+				  SECTOR_SHIFT) - 1))
-+			break;	/* Error */
-+
-+		next_target_start =3D
-+		    (unsigned short) ((next_target_start + ti->len) &
-+				      (device_hardsect_size_sects - 1));
-+		remaining =3D next_target_start ?
-+		    device_hardsect_size_sects - next_target_start : 0;
-+	}
-+
-+	if (remaining) {
-+		DMWARN("%s: table line %u (start sect %llu len %llu) "
-+		       "not aligned to hardware sector size %hu",
-+		       dm_device_name(table->md), i,
-+		       (unsigned long long) ti->begin,
-+		       (unsigned long long) ti->len,
-+		       table->limits.hardsect_size);
-+		return -EINVAL;
-+	}
-+
-+	return 0;
-+}
-+
- int dm_table_add_target(struct dm_table *t, const char *type,
- 			sector_t start, sector_t len, char *params)
- {
-@@ -792,6 +857,10 @@ int dm_table_complete(struct dm_table *t)
-=20
- 	check_for_valid_limits(&t->limits);
-=20
-+	r =3D validate_hardsect_alignment(t);
-+	if (r)
-+		return r;
-+
- 	/* how many indexes will the btree have ? */
- 	leaf_nodes =3D dm_div_up(t->num_targets, KEYS_PER_NODE);
- 	t->depth =3D 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
+Mike
