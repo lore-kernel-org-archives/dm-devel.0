@@ -1,17 +1,12 @@
-From: Christophe Varoqui <christophe.varoqui@free.fr>
-Subject: Re: [RFC] dm snapshot based asynchronous replication
-Date: Wed, 22 Apr 2009 23:20:18 +0200
-Message-ID: <1240435218.492.29.camel@plop>
-References: <137413921.2150341239820262767.JavaMail.root@zimbra16-e3.priv.proxad.net>
-	<1046537454.2150461239820304817.JavaMail.root@zimbra16-e3.priv.proxad.net>
-	<20090416070213.GA7566@johann>
-	<540AD48B-A810-4F15-BEA0-5879350EA893@redhat.com>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: double free in recent multipath-tools
+Date: Wed, 22 Apr 2009 18:05:44 -0400
+Message-ID: <20090422220544.GH32602@redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <540AD48B-A810-4F15-BEA0-5879350EA893@redhat.com>
+Content-Disposition: inline
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -21,54 +16,54 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Jonathan Brassow <jbrassow@redhat.com>
-Cc: device-mapper development <dm-devel@redhat.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
 
-> It also seems that the script is not generic enough to handle the  
-> variety of exception stores that are coming.  I just wrote a 'snapshot- 
-> merge' target that will do what you ask.  I will post the patch  
-> shortly.  However, this won't help you in RHEL5.
-> 
-Jonathan,
+Seems the latest multipath-tools has an issue with a double free.  I
+haven't looked at what the proper fix is yet but I wanted to give others
+a heads up.
 
-thank you for this new snapshot-merge target. This plus the shared
-exception patches will certainly bring the definitive answer for
-LVM2-based replication/backup/time-navigation needs for RHEL6. I hope
-btrfs will even bring to the table an interesting alternative sometime
-in the el6 lifecycle.
+Running something as basic as 'multipath' drops a core.
 
-But for those stuck with (entitlements on thousands of) el4 and el5
-deployments, here is my contribution to the poor-man's async
-replication :
+The recent commit 37b079e555c459bd902a3855f223e3803aeb1fbe appears to
+have the offending hunk:
 
-http://christophe.varoqui.free.fr/rcow/
-
-* rcow.pl
-parse a cow device to generate a delta-file of 2 snapshots
-
-* rcowd
-handles full sync of remote device and schedule (one-shot or loop) :
-- delta-file creation
-- snapshot rotation
-- delta-file sending to remote
-- delta-file load on remote
+@@ -404,6 +410,12 @@ free_config (struct config * conf)
+        if (conf->checker_name)
+                FREE(conf->checker_name);
+ 
++       if (conf->prio_name)
++               FREE(conf->prio_name);
++
++       if (conf->checker_name)
++               FREE(conf->checker_name);
++
+        free_blacklist(conf->blist_devnode);
+        free_blacklist(conf->blist_wwid);
+        free_blacklist_device(conf->blist_device);
 
 
-Todo:
-- more error checking
-- sequencing cookies :
-  o store on remote the last delta-file cookie succesfully loaded
-  o store {prev_cookie, this_cookie} in delta_files
-  o verify on remote that delta-file(prev_cookie)==last applied cookie
-- replace the dd plumbing, though the readability of delta-file +
-command-file is quite nice for understanding what happen (and may go
-wrong). May be port to C.
-- delta-file historization and rotation
-
-
-Comments and contributions welcome.
-
-Regards,
-cvaroqui
+(gdb) bt
+#0  0x0000003a6ec32f05 in raise () from /lib64/libc.so.6
+#1  0x0000003a6ec34a73 in abort () from /lib64/libc.so.6
+#2  0x0000003a6ec72438 in __libc_message () from /lib64/libc.so.6
+#3  0x0000003a6ec77ec8 in malloc_printerr () from /lib64/libc.so.6
+#4  0x0000003a6ec7a486 in free () from /lib64/libc.so.6
+#5  0x00007ffff7dbc205 in xfree (p=0x60b2e0) at memory.c:52
+#6  0x00007ffff7dc3624 in free_config (conf=0x604620) at config.c:414
+#7  0x00000000004027a4 in main (argc=3, argv=0x7fffffffe718) at main.c:474
+(gdb) frame 6
+#6  0x00007ffff7dc3624 in free_config (conf=0x604620) at config.c:414
+(gdb) l
+409
+410             if (conf->checker_name)
+411                     FREE(conf->checker_name);
+412
+413             if (conf->prio_name)
+414                     FREE(conf->prio_name);
+415
+416             if (conf->checker_name)
+417                     FREE(conf->checker_name);
+418
