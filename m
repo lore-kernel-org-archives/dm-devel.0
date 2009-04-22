@@ -1,48 +1,89 @@
-From: "Moger, Babu" <Babu.Moger@lsi.com>
-Subject: RE: [PATCH] dm mpath: Try recover from I/O failure by
- re-initializing 	the PG if device is running on one path
-Date: Wed, 22 Apr 2009 11:16:21 -0700
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466A671EB@cosmail01.lsi.com>
+From: Chandra Seetharaman <sekharan@us.ibm.com>
+Subject: Re: [PATCH] dm mpath: Try recover from I/O failure by
+	re-initializing  the PG if device is running on one path
+Date: Wed, 22 Apr 2009 12:29:49 -0700
+Message-ID: <1240428589.19442.14.camel@chandra-ubuntu>
 References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
- <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
+	 <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
+Reply-To: sekharan@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Return-path: <linux-scsi-owner@vger.kernel.org>
 In-Reply-To: <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
-Content-Language: en-US
 Sender: linux-scsi-owner@vger.kernel.org
 To: Grant Grundler <grundler@google.com>
-Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
+Cc: "Moger, Babu" <Babu.Moger@lsi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
 List-Id: dm-devel.ids
 
-DQo+ID4gUHJvYmxlbTogRGV2aWNlIG1hcHBlciBmYWlscyB0aGUgcGF0aCBmb3IgZXZlcnkgSS9P
-IGVycm9yLg0KPiA+IEl0IGRvZXMgbm90IGNhcmUgYWJvdXQgdGhlIHR5cGUgb2YgZXJyb3IuDQo+
-IA0KPiBUaGlzIGlzIHRoZSBmdW5kYW1lbnRhbCBwcm9ibGVtLiAgRGlmZmVyZW50IGxheWVycyBv
-ZiB0aGUgYmxvY2sgSU8NCj4gcGF0aCBoYXZlIHRvIGFncmVlIG9uIGhvdyB0byBoYW5kbGUgZWFj
-aCBwb3NzaWJsZSB0eXBlIG9mIGVycm9yIHRoYXQNCj4gY2FuIGJlIHJldHVybmVkLiBJIGRvbid0
-IGtub3cgd2hlcmUgdG8gZmluZCBzdWNoIGFuIGFncmVlbWVudCBhbmQNCj4gdGhpbmsgYW4gaW1w
-bGVtZW50YXRpb24gdGhhdCBkb2VzIGRpc2NyaW1pbmF0ZSBpcyBuZWVkZWQuDQoNCj4gPiBUaGVy
-ZSBhcmUgY2VydGFpbiBlcnJvcnMgd2hpY2ggY2FuIGJlIHJlY292ZXJlZCBieSByZS1pbml0aWFs
-aXppbmcgdGhlDQo+IHBhdGggYWdhaW4uIEkgaGF2ZSBzZWVuIHRoaXMgcHJvYmxlbSBkdXJpbmcg
-bXkgdGVzdGluZyBvbiByZGFjIGRldmljZQ0KPiBoYW5kbGVyLiBJIGhhdmUgb2JzZXJ2ZWQgSS9P
-IGVycm9ycyB3aGVuIHRoZXJlIGlzIGEgY2hhbmdlIGluIEx1bg0KPiBvd25lcnNoaXAuIFdoZW4g
-THVuIG93bmVyc2hpcCBjaGFuZ2VzIGRldmljZSB3aWxsIHJldHVybiBiYWNrIHdpdGggY2hlY2sN
-Cj4gY29uZGl0aW9uIHdpdGggc2Vuc2UgMHgwNS8weDk0LzB4MDEoU0svQVNDL0FTQ1EgLW1lYW5p
-bmcgTHVuIG93bmVyc2hpcA0KPiBjaGFuZ2VkKS4gQ3VycmVudGx5LCBkZXZpY2UgbWFwcGVyIGZh
-aWxzIHRoZSBwYXRoIGZvciB0aGlzIGVycm9yIGFuZA0KPiBldmVudHVhbGx5IHRoaXMgd2lsbCBs
-ZWFkIHRvIEkvTyBlcnJvci4gV2UgZG9uJ3Qgd2FudCB0byBzZWUgSS9PIGVycm9yIGZvcg0KPiB0
-aGlzIHJlYXNvbi4NCj4gDQo+IDEpIFRoaXMgcGF0Y2ggaXNuJ3QgZGlzY3JpbWluYXRpbmcgYmV0
-d2VlbiB0cmFuc3BvcnQsIG1lZGlhLCBvciBvdGhlcg0KPiBkZXZpY2UgZXJyb3JzLiBXb3VsZG4n
-dCBpdCBtYWtlIHNlbnNlIHRvIGRpc2NyaW1pbmF0ZT8NCj4gIkxVTiBvd25lcnNoaXAgY2hhbmdl
-ZCIgc291bmRzIGxpa2Ugc29tZSBvZiB0aGUgZXZlbnRzIHBvc3NpYmxlIGluDQo+IG11bHRpLWlu
-aXRpdGlhdG9yIGVudmlyb21lbnQgd291bGQgd2FudCB0byBiZSBub3RpZmllZCBhYm91dCBhbmQN
-Cj4gcGVyaGFwcyBldmVuIHRha2Ugc29tZSBhY3Rpb24gKHJlbmVnb3RpYXRlIGFjY2VzcyB0bw0K
-DQpXZSB3aWxsIG5vdCBiZSBhYmxlIHRvIGRpc2NyaW1pbmF0ZSB0aGUgZXJyb3IgYmVjYXVzZSBl
-cnJvciBzcGVjaWZpYyBpbmZvcm1hdGlvbiBpcyBub3QgYXZhaWxhYmxlIHRvIERNLg0KDQo+IDIp
-IFdpbGwgdGhpcyByZXN1bHQgaW4gcmVzZXR0aW5nIGEgU0FUQSBkZXZpY2U/DQo+IEkgYXNrIGJl
-Y2F1c2UgZGV2aWNlIHJlc2V0IG1heSByZXN1bHQgaW4gZGF0YSBsb3NzIGR1ZSB0byBXQ0UgZW5h
-YmxlZC4NCj4gSSBqdXN0IGRvbid0IGtub3cgdGhlIGhpZ2hlciBwYXJ0cyBvZiB0aGUgYmxvY2sg
-U1cgc3RhY2sgYW5kIGhvdw0KPiBlcnJvcnMgZmxvdyB1cCB0aGUgc3RhY2suDQoNCkkgYW0gbm90
-IHN1cmUgYWJvdXQgdGhpcy4gRG9u4oCZdCBrbm93IGlmIHJlLWFjdGl2YXRpbmcgKG9yIGNhbGxp
-bmcgYWN0aXZhdGVfcGF0aCkgdGhlIGRldmljZSBjYXVzZXMgcmVzZXQuDQo=
+
+On Wed, 2009-04-22 at 10:41 -0700, Grant Grundler wrote:
+> On Mon, Apr 20, 2009 at 11:05 AM, Moger, Babu <Babu.Moger@lsi.com> wrote:
+> > This patch introduces the mechanism to recover from I/O failures by re-initializing the path if the device is running on only one path.
+> >
+> > Problem: Device mapper fails the path for every I/O error.
+> > It does not care about the type of error.
+> 
+> This is the fundamental problem.  Different layers of the block IO
+> path have to agree on how to handle each possible type of error that
+> can be returned. I don't know where to find such an agreement and
+> think an implementation that does discriminate is needed.
+> 
+> > There are certain errors which can be recovered by re-initializing the path again. I have seen this problem during my testing on rdac device handler. I have observed I/O errors when there is a change in Lun ownership. When Lun ownership changes device will return back with check condition with sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed). Currently, device mapper fails the path for this error and eventually this will lead to I/O error. We don't want to see I/O error for this reason.
+> 
+> 1) This patch isn't discriminating between transport, media, or other
+> device errors. Wouldn't it make sense to discriminate?
+
+yes it is. But currently we do not have it.
+
+> "LUN ownership changed" sounds like some of the events possible in
+> multi-inititiator enviroment would want to be notified about and
+> perhaps even take some action (renegotiate access to
+> 
+> 2) Will this result in resetting a SATA device?
+> I ask because device reset may result in data loss due to WCE enabled.
+> I just don't know the higher parts of the block SW stack and how
+> errors flow up the stack.
+
+The device is not hung, the I/O will come back after a while.
+
+BTW, activate doesn't do a reset, it just sends a command (in lsi rdac
+case, it just sends a mode select) to the controller.
+
+> 
+> thanks,
+> grant
+> 
+> >
+> > The patch will set the flag pg_init_required if the device is running on single path. The process_queued_ios will re-initialize path if required. I have tested this patch on LSI rdac handler.
+> >
+> > Signed-off-by: Babu Moger <babu.moger@lsi.com>
+> > ---
+> >
+> > --- linux-2.6.30-rc2/drivers/md/dm-mpath.c.orig 2009-04-17 16:49:33.000000000 -0500
+> > +++ linux-2.6.30-rc2/drivers/md/dm-mpath.c      2009-04-17 17:09:51.000000000 -0500
+> > @@ -1152,6 +1152,15 @@ static int do_end_io(struct multipath *m
+> >                return error;
+> >
+> >        spin_lock_irqsave(&m->lock, flags);
+> > +       /*
+> > +        * If this is the only path left, then lets try to
+> > +        * re-initialize the PG one last time..
+> > +        */
+> > +       if (m->nr_valid_paths == 1 && m->hw_handler_name) {
+> > +               m->pg_init_required = 1;
+> > +               spin_unlock_irqrestore(&m->lock, flags);
+> > +               goto requeue;
+> > +       }
+> >        if (!m->nr_valid_paths) {
+> >                if (__must_push_back(m)) {
+> >                        spin_unlock_irqrestore(&m->lock, flags);
+> >
+> >
+> >
+> > --
+> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
+> > the body of a message to majordomo@vger.kernel.org
+> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> >
+
