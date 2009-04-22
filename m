@@ -1,89 +1,42 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: Re: [PATCH] dm mpath: Try recover from I/O failure by
-	re-initializing  the PG if device is running on one path
-Date: Wed, 22 Apr 2009 12:29:49 -0700
-Message-ID: <1240428589.19442.14.camel@chandra-ubuntu>
-References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
-	 <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
-Reply-To: sekharan@linux.vnet.ibm.com
+From: Christophe Varoqui <christophe.varoqui@free.fr>
+Subject: Re: Re: [PATCH 2/4] multipath-tools: install
+	libmultipath.so in $syslibdir
+Date: Wed, 22 Apr 2009 22:44:28 +0200
+Message-ID: <1240433068.32381.3.camel@plop>
+References: <1240006080-27892-1-git-send-email-snitzer@redhat.com>
+	<1240006080-27892-3-git-send-email-snitzer@redhat.com>
+	<1240179025.25083.2.camel@plop>  <20090419223620.GA9385@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Grant Grundler <grundler@google.com>
-Cc: "Moger, Babu" <Babu.Moger@lsi.com>, "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090419223620.GA9385@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
 
-On Wed, 2009-04-22 at 10:41 -0700, Grant Grundler wrote:
-> On Mon, Apr 20, 2009 at 11:05 AM, Moger, Babu <Babu.Moger@lsi.com> wrote:
-> > This patch introduces the mechanism to recover from I/O failures by re-initializing the path if the device is running on only one path.
-> >
-> > Problem: Device mapper fails the path for every I/O error.
-> > It does not care about the type of error.
+> > 
+> > Mike,
+> > am I missing something ... I don't the lib/lib64 switching code.
 > 
-> This is the fundamental problem.  Different layers of the block IO
-> path have to agree on how to handle each possible type of error that
-> can be returned. I don't know where to find such an agreement and
-> think an implementation that does discriminate is needed.
+> The standard install would still just place libmultipath.so in /lib but
+> this patch exposes the ability to override the default e.g.:
+> make install syslibdir=/lib64 libdir=/lib64/multipath
 > 
-> > There are certain errors which can be recovered by re-initializing the path again. I have seen this problem during my testing on rdac device handler. I have observed I/O errors when there is a change in Lun ownership. When Lun ownership changes device will return back with check condition with sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed). Currently, device mapper fails the path for this error and eventually this will lead to I/O error. We don't want to see I/O error for this reason.
+> The path checker and prioritizer modules would get installed in
+> /lib64/multipath and libmultipath.so in /lib64
 > 
-> 1) This patch isn't discriminating between transport, media, or other
-> device errors. Wouldn't it make sense to discriminate?
+Oh ok, I was expecting some kind of detection code to set /lib64.
+I understand that this approach is sufficient for your packagers needs.
 
-yes it is. But currently we do not have it.
-
-> "LUN ownership changed" sounds like some of the events possible in
-> multi-inititiator enviroment would want to be notified about and
-> perhaps even take some action (renegotiate access to
-> 
-> 2) Will this result in resetting a SATA device?
-> I ask because device reset may result in data loss due to WCE enabled.
-> I just don't know the higher parts of the block SW stack and how
-> errors flow up the stack.
-
-The device is not hung, the I/O will come back after a while.
-
-BTW, activate doesn't do a reset, it just sends a command (in lsi rdac
-case, it just sends a mode select) to the controller.
-
-> 
-> thanks,
-> grant
-> 
-> >
-> > The patch will set the flag pg_init_required if the device is running on single path. The process_queued_ios will re-initialize path if required. I have tested this patch on LSI rdac handler.
-> >
-> > Signed-off-by: Babu Moger <babu.moger@lsi.com>
-> > ---
-> >
-> > --- linux-2.6.30-rc2/drivers/md/dm-mpath.c.orig 2009-04-17 16:49:33.000000000 -0500
-> > +++ linux-2.6.30-rc2/drivers/md/dm-mpath.c      2009-04-17 17:09:51.000000000 -0500
-> > @@ -1152,6 +1152,15 @@ static int do_end_io(struct multipath *m
-> >                return error;
-> >
-> >        spin_lock_irqsave(&m->lock, flags);
-> > +       /*
-> > +        * If this is the only path left, then lets try to
-> > +        * re-initialize the PG one last time..
-> > +        */
-> > +       if (m->nr_valid_paths == 1 && m->hw_handler_name) {
-> > +               m->pg_init_required = 1;
-> > +               spin_unlock_irqrestore(&m->lock, flags);
-> > +               goto requeue;
-> > +       }
-> >        if (!m->nr_valid_paths) {
-> >                if (__must_push_back(m)) {
-> >                        spin_unlock_irqrestore(&m->lock, flags);
-> >
-> >
-> >
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> >
-
+Thanks for explaining.
