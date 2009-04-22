@@ -1,63 +1,80 @@
-From: Li Zefan <lizf@cn.fujitsu.com>
-Subject: Re: dm-ioband: Test results.
-Date: Wed, 22 Apr 2009 08:50:10 +0800
-Message-ID: <49EE69C2.9030908@cn.fujitsu.com>
-References: <20090420.172959.193682665.ryov@valinux.co.jp> <e98e18940904200207y62eca680t7cf938049375f4b3@mail.gmail.com> <20090421.210614.112619728.ryov@valinux.co.jp> <20090421.211051.183023683.ryov@valinux.co.jp> <20090421135723.GA13953@redhat.com> <20090421141607.GA22619@redhat.com>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH] dm mpath: Try recover from I/O failure by
+ re-initializing the PG if device is running on one path
+Date: Wed, 22 Apr 2009 10:52:48 +0900
+Message-ID: <49EE7870.3090008@ct.jp.nec.com>
+References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
+	<49ED1C24.9090303@ct.jp.nec.com>
+	<E463DF2B2E584B4A82673F53D62C2EF466A66DD4@cosmail01.lsi.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=ISO-2022-JP
 Content-Transfer-Encoding: 7bit
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1752516AbZDVAtb@vger.kernel.org>
-In-Reply-To: <20090421141607.GA22619@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-To: Vivek Goyal <vgoyal@redhat.com>
-Cc: Mike Snitzer <snitzer@redhat.com>, device-mapper development <dm-devel@redhat.com>, nauman@google.com, fernando@oss.ntt.co.jp, linux-kernel@vger.kernel.org, jmoyer@redhat.com, jens.axboe@oracle.com, agk@redhat.com, balbir@linux.vnet.ibm.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <E463DF2B2E584B4A82673F53D62C2EF466A66DD4@cosmail01.lsi.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: "Moger, Babu" <Babu.Moger@lsi.com>
+Cc: "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "Chauhan,
+	Vijay" <Vijay.Chauhan@lsi.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>
 List-Id: dm-devel.ids
 
-Vivek Goyal wrote:
-> On Tue, Apr 21, 2009 at 09:57:23AM -0400, Mike Snitzer wrote:
->> On Tue, Apr 21 2009 at  8:10am -0400,
->> Ryo Tsuruta <ryov@valinux.co.jp> wrote:
+Hi Babu,
+
+On 2009/04/22 2:06 +0900, Moger, Babu wrote:
+> Hi Kiyoshi,
+> 
+>    Thanks for your comment.
+> 
+> 
+>> -----Original Message-----
+>> From: Kiyoshi Ueda [mailto:k-ueda@ct.jp.nec.com]
+>> Sent: Monday, April 20, 2009 8:07 PM
+>> To: Moger, Babu
+>> Cc: 'dm-devel@redhat.com'; linux-scsi@vger.kernel.org; Chauhan, Vijay;
+>> 'sekharan@us.ibm.com'
+>> Subject: Re: [PATCH] dm mpath: Try recover from I/O failure by re-
+>> initializing the PG if device is running on one path
 >>
->>> Hi Nauman,
+>> Hi Babu,
+>>
+>> On 2009/04/21 3:05 +0900, Moger, Babu wrote:
+>>> This patch introduces the mechanism to recover from I/O failures by
+>>> re-initializing the path if the device is running on only one path.
 >>>
->>>>> The real question is, once you create a version of dm-ioband that
->>>>> co-operates with CFQ scheduler, how that solution would compare with
->>>>> the patch set Vivek has posted? In my opinion, we need to converge to
->>>>> one solution as soon as possible, so that we can work on it together
->>>>> to refine and test it.
->>>> I think I can do some help for your work. but I want to continue the
->>>> development of dm-ioband, because dm-ioband actually works well and
->>>> I think it has some advantages against other IO controllers.
->>>>   - It can use without cgroup.
->>>>   - It can control bandwidth on a per partition basis.
->>>>   - The driver module can be replaced without stopping the system.
->>> In addition, dm-ioband can run on the RHEL5.
->> RHEL5 compatibility does not matter relative to merging an I/O bandwidth
->> controller upstream.  So both the "can [be] use without cgroup" and "can
->> run on RHEL5" features do not help your cause of getting dm-ioband
->> merged upstream.  In fact these features serve as distractions.
+>>> Problem: Device mapper fails the path for every I/O error. It does not
+>>> care about the type of error. There are certain errors which can be
+>>> recovered by re-initializing the path again. I have seen this problem
+>>> during my testing on rdac device handler. I have observed I/O errors
+>>> when there is a change in Lun ownership. When Lun ownership changes
+>>> device will return back with check condition with
+>>> sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed).
+>>> Currently, device mapper fails the path for this error and eventually
+>>> this will lead to I/O error. We don't want to see I/O error for this
+>>> reason.
+>>
+>> Shouldn't we handle this type of device error inside device handler?
 > 
-> Exactly. I don't think that "it can be used without cgroup" is a feature
-> or advantage. To me it is a disadvantage and should be fixed. cgroup is
-> standard mechanism to group tasks arbitrarily and we should use that to make
-> things working instead of coming up with own ways of grouping things and
-> terming it as advantage.
-> 
+> The current error in question requires re-activation of the path.
+> We already have a code to handle this scenario in device handler.
+> But, the problem is the return status does not go to DM layer.
+> The return status gets lost in scsi layer. For DM layer all the errors
+> are -EIO. Any thoughts from your side.
 
-I agree. And for the case of cpu scheduler, there are user group scheduler
-and cgroup group scheduler, but Peter said he would like to see user group
-scheduler to be removed.
+Oh, I missed the point and I thought that re-activating the path
+in your device handler was enough for the error.
+Currently, I have no idea to handle your case only in dm without
+seeing I/O error.
 
-> What do you mean by "The driver module can be replaced without stopping
-> the system"? I guess you mean that one does not have to reboot the system
-> to remove ioband device? So if one decides to not use the cgroup, then
-> one shall have to remove the ioband devices, remount the filesystems and
-> restart the application?
-> 
-> With cgroup approach, if one does not want things to be classified, a user
-> can simply move all the tasks to root group and things will be fine. No
-> remounting, no application stopping etc. So this also does not look like
-> an advantage instead sounds like an disadvantage.
-> 
-> Thanks
-> Vivek
+By the way, who did change the ownership when the device was running
+with one path in your testing?  I can't see why such case happened.
+
+Thanks,
+Kiyoshi Ueda
