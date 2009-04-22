@@ -1,82 +1,141 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] RFC: have dm-mpath use already attached scsi_dh
-Date: Wed, 22 Apr 2009 16:15:49 +0200
-Message-ID: <49EF2695.7070701@suse.de>
-References: <1240374806-6043-1-git-send-email-michaelc@cs.wisc.edu> <49EEE071.9060902@suse.de> <49EF2137.80708@cs.wisc.edu>
+From: Mike Snitzer <snitzer@redhat.com>
+Subject: Re: [PATCH v2] dm table: verify a DM device is H/W
+	sector aligned
+Date: Wed, 22 Apr 2009 11:06:15 -0400
+Message-ID: <20090422150615.GB32602@redhat.com>
+References: <1240327259-14412-1-git-send-email-snitzer@redhat.com>
+	<20090422132543.GA7778@agk.fab.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <49EF2137.80708@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Mike Christie <michaelc@cs.wisc.edu>
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org, Levy_Jerome@emc.com, berthiaume_wayne@emc.com
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20090422132543.GA7778@agk.fab.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Mike,
+On Wed, Apr 22 2009 at  9:25am -0400,
+Alasdair G Kergon <agk@redhat.com> wrote:
 
-Mike Christie wrote:
-> Hannes Reinecke wrote:
->> Hi Mike,
->>
->> michaelc@cs.wisc.edu wrote:
->>> From: Mike Christie <michaelc@cs.wisc.edu>
->>>
->>> If you have a mixed environment of clarriions, where some
->>> support ALAU and some support PNR, what do you put in
->>> your multipath.conf? With this patch you do not have to worry about
->>> it. If those modules are loaded before dm-mpath, then they
->>> will have attached to the correct devices based on inquiry, alua
->>> commands
->>> and parsing of data buffers (for example in scsi_dh_emc's alua chec=
-k).
->>> There is no need for the user to set that info in the multipath.con=
-f.
->>> And in general since all scsi_dh_modules will attach to the devices
->>> they work for, we do not need to have users specific this.
->>>
->> No. The problem here is the hardware table from scsi_dh is compiled
->> in and cannot be changed from userland. The multipath.conf OTOH
->> is purely user-defined and, what's more, the user might have a valid
->> reason for modifying it.
->> (EG EMC Clariion can well be run in PNR mode even though ALUA is
->> active, or the user might want to try ALUA on any as-of-yet unknown
->> devices)
->=20
-> Ah. I misread the code and misunderstood the compat mode. I thought
-> scsi_dh_emc was failing the attach when ALUA support was detected.
->=20
->>
->> So _not_ allowing multipath to override the device handler setting
->> will just add to the confusion and makes error tracking even more
->> difficult.
->>
->> So I would prefer the attached patch, it even save to touch
->> device handler code at all.
->>
->=20
-> Thanks. I think this will work for me.
->=20
-> Are you going to push this for 2.6.30?
-Well, yes, I could.
+> I've tried to make this easier to understand.
+> Please check I've not broken something in the process...
 
-However, I'm still waiting for agk to push the request-based
-multipath patches; I've got quite some updates here for multipathing
-which are done with request-based multipath in place;
-disentangling them will be quite time consuming (and pointless).
+Looks good, I especially like what you did with the revised DM_WARN().
+But there were some minor compiler warnings:
 
-But this one, sure.
+drivers/md/dm-table.c: In function =E2=80=98validate_hardsect_alignment=E2=
+=80=99:
+drivers/md/dm-table.c:763: warning: suggest parentheses around + or - in =
+operand of &
+drivers/md/dm-table.c: In function =E2=80=98dm_table_complete=E2=80=99:
+drivers/md/dm-table.c:749: warning: =E2=80=98ti=E2=80=99 may be used unin=
+itialized in this function
 
-Cheers,
+I fixed these warnings in the following revised patch.  I then fixed
+this checkpatch warning (which resulted in somewhat uglier code):
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+WARNING: line over 80 characters
+#74: FILE: drivers/md/dm-table.c:763:
++                   remaining & ((ti->limits.hardsect_size >> SECTOR_SHIF=
+T) - 1))
+
+
+diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
+index 429b50b..73f0438 100644
+--- a/drivers/md/dm-table.c
++++ b/drivers/md/dm-table.c
+@@ -693,6 +693,71 @@ static void check_for_valid_limits(struct io_restric=
+tions *rs)
+ 		rs->bounce_pfn =3D -1;
+ }
+=20
++/*
++ * Impose necessary and sufficient conditions on a devices's table such
++ * that any incoming bio which respects its hardsect_size can be
++ * processed successfully.  If it falls across the boundary between
++ * two or more targets, the size of each piece it gets split into must
++ * be compatible with the hardsect_size of the target processing it.
++ */
++static int validate_hardsect_alignment(struct dm_table *table)
++{
++	/*
++	 * This function uses arithmetic modulo the hardsect_size
++	 * (in units of 512-byte sectors).
++	 */
++	unsigned short device_hardsect_size_sects =3D
++			    table->limits.hardsect_size >> SECTOR_SHIFT;
++
++	/*
++	 * Offset of the start of the next table entry, mod hardsect_size.
++	 */
++	unsigned short next_target_start =3D 0;
++
++	/*
++	 * Given an aligned bio that extends beyond the end of a
++	 * target, how many sectors must the next target handle?
++	 */
++	unsigned short remaining =3D 0;
++
++	struct dm_target *ti =3D NULL;
++	unsigned i =3D 0;
++
++	/*
++	 * Check each entry in the table in turn.
++	 */
++	while (i < dm_table_get_num_targets(table)) {
++		ti =3D dm_table_get_target(table, i++);
++
++		/*
++		 * If the remaining sectors fall entirely within this
++		 * table entry are they compatible with its hardsect_size?
++		 */
++		if (remaining < ti->len &&
++		    remaining & ((ti->limits.hardsect_size >>
++				  SECTOR_SHIFT) - 1))
++			break;	/* Error */
++
++		next_target_start =3D
++		    (unsigned short) ((next_target_start + ti->len) &
++				      (device_hardsect_size_sects - 1));
++		remaining =3D next_target_start ?
++		    device_hardsect_size_sects - next_target_start : 0;
++	}
++
++	if (remaining) {
++		DMWARN("%s: table line %u (start sect %llu len %llu) "
++		       "not aligned to hardware sector size %hu",
++		       dm_device_name(table->md), i,
++		       (unsigned long long) ti->begin,
++		       (unsigned long long) ti->len,
++		       table->limits.hardsect_size);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
+ int dm_table_add_target(struct dm_table *t, const char *type,
+ 			sector_t start, sector_t len, char *params)
+ {
+@@ -792,6 +857,10 @@ int dm_table_complete(struct dm_table *t)
+=20
+ 	check_for_valid_limits(&t->limits);
+=20
++	r =3D validate_hardsect_alignment(t);
++	if (r)
++		return r;
++
+ 	/* how many indexes will the btree have ? */
+ 	leaf_nodes =3D dm_div_up(t->num_targets, KEYS_PER_NODE);
+ 	t->depth =3D 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
