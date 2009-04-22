@@ -1,103 +1,48 @@
 From: "Moger, Babu" <Babu.Moger@lsi.com>
 Subject: RE: [PATCH] dm mpath: Try recover from I/O failure by
-	re-initializing the PG if device is running on one path
-Date: Wed, 22 Apr 2009 11:43:39 -0600
-Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466A671C0@cosmail01.lsi.com>
+ re-initializing 	the PG if device is running on one path
+Date: Wed, 22 Apr 2009 11:16:21 -0700
+Message-ID: <E463DF2B2E584B4A82673F53D62C2EF466A671EB@cosmail01.lsi.com>
 References: <E463DF2B2E584B4A82673F53D62C2EF466A0E4DA@cosmail01.lsi.com>
-	 <49ED1C24.9090303@ct.jp.nec.com>
-	 <E463DF2B2E584B4A82673F53D62C2EF466A66DD4@cosmail01.lsi.com>
-	 <49EE7870.3090008@ct.jp.nec.com>
-	 <E463DF2B2E584B4A82673F53D62C2EF466A6707A@cosmail01.lsi.com>
- <1240421599.19442.8.camel@chandra-ubuntu>
+ <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1240421599.19442.8.camel@chandra-ubuntu>
+In-Reply-To: <da824cf30904221041h40b87096yb4cb2784f31c5270@mail.gmail.com>
 Content-Language: en-US
 Sender: linux-scsi-owner@vger.kernel.org
-To: "sekharan@linux.vnet.ibm.com" <sekharan@linux.vnet.ibm.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, "'dm-devel@redhat.com'" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>
+To: Grant Grundler <grundler@google.com>
+Cc: "dm-devel@redhat.com" <dm-devel@redhat.com>, "linux-scsi@vger.kernel.org" <linux-scsi@vger.kernel.org>, "Chauhan, Vijay" <Vijay.Chauhan@lsi.com>, "sekharan@us.ibm.com" <sekharan@us.ibm.com>
 List-Id: dm-devel.ids
 
-
-> -----Original Message-----
-> From: Chandra Seetharaman [mailto:sekharan@us.ibm.com]
-> Sent: Wednesday, April 22, 2009 12:33 PM
-> To: Moger, Babu
-> Cc: Kiyoshi Ueda; 'dm-devel@redhat.com'; linux-scsi@vger.kernel.org;
-> Chauhan, Vijay
-> Subject: RE: [PATCH] dm mpath: Try recover from I/O failure by re-
-> initializing the PG if device is running on one path
-> 
-> You mean to say that we do not require this patch/fix ?
- 
-
- No. I did not mean that. What I meant was re-activating the path from device handler (rdac_check_sense) is not an option. We have to find other ways to deal with it. 
-
-Lun ownership change can happen if the user knowingly or unknowingly changes the ownership. Also our redistribute feature can change the lun ownership.
-
-
-> On Wed, 2009-04-22 at 08:03 -0600, Moger, Babu wrote:
-> > Hi Kiyoshi,
-> >
-> > > >>
-> > > >> Hi Babu,
-> > > >>
-> > > >> On 2009/04/21 3:05 +0900, Moger, Babu wrote:
-> > > >>> This patch introduces the mechanism to recover from I/O failures
-> by
-> > > >>> re-initializing the path if the device is running on only one
-> path.
-> > > >>>
-> > > >>> Problem: Device mapper fails the path for every I/O error. It does
-> not
-> > > >>> care about the type of error. There are certain errors which can
-> be
-> > > >>> recovered by re-initializing the path again. I have seen this
-> problem
-> > > >>> during my testing on rdac device handler. I have observed I/O
-> errors
-> > > >>> when there is a change in Lun ownership. When Lun ownership
-> changes
-> > > >>> device will return back with check condition with
-> > > >>> sense 0x05/0x94/0x01(SK/ASC/ASCQ -meaning Lun ownership changed).
-> > > >>> Currently, device mapper fails the path for this error and
-> eventually
-> > > >>> this will lead to I/O error. We don't want to see I/O error for
-> this
-> > > >>> reason.
-> > > >>
-> > > >> Shouldn't we handle this type of device error inside device
-> handler?
-> > > >
-> > > > The current error in question requires re-activation of the path.
-> > > > We already have a code to handle this scenario in device handler.
-> > > > But, the problem is the return status does not go to DM layer.
-> > > > The return status gets lost in scsi layer. For DM layer all the
-> errors
-> > > > are -EIO. Any thoughts from your side.
-> > >
-> > > Oh, I missed the point and I thought that re-activating the path
-> > > in your device handler was enough for the error.
-> > > Currently, I have no idea to handle your case only in dm without
-> > > seeing I/O error.
-> > >
-> >   I have discussed about re-activating path in device handler with
-> Chandra. Looks like that will lead to other issues (one is long boot up).
-> Look like that is not an option.
-> > > By the way, who did change the ownership when the device was running
-> > > with one path in your testing?  I can't see why such case happened.
-> > >
-> > This can happen if the user knowingly or unknowingly changes the
-> ownership. Also we have other feature in our storage which will allow user
-> to redistribute the luns. Thanks for you comment.
-> >
-> > > Thanks,
-> > > Kiyoshi Ueda
-> >
-> > --
-> > To unsubscribe from this list: send the line "unsubscribe linux-scsi" in
-> > the body of a message to majordomo@vger.kernel.org
-> > More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+DQo+ID4gUHJvYmxlbTogRGV2aWNlIG1hcHBlciBmYWlscyB0aGUgcGF0aCBmb3IgZXZlcnkgSS9P
+IGVycm9yLg0KPiA+IEl0IGRvZXMgbm90IGNhcmUgYWJvdXQgdGhlIHR5cGUgb2YgZXJyb3IuDQo+
+IA0KPiBUaGlzIGlzIHRoZSBmdW5kYW1lbnRhbCBwcm9ibGVtLiAgRGlmZmVyZW50IGxheWVycyBv
+ZiB0aGUgYmxvY2sgSU8NCj4gcGF0aCBoYXZlIHRvIGFncmVlIG9uIGhvdyB0byBoYW5kbGUgZWFj
+aCBwb3NzaWJsZSB0eXBlIG9mIGVycm9yIHRoYXQNCj4gY2FuIGJlIHJldHVybmVkLiBJIGRvbid0
+IGtub3cgd2hlcmUgdG8gZmluZCBzdWNoIGFuIGFncmVlbWVudCBhbmQNCj4gdGhpbmsgYW4gaW1w
+bGVtZW50YXRpb24gdGhhdCBkb2VzIGRpc2NyaW1pbmF0ZSBpcyBuZWVkZWQuDQoNCj4gPiBUaGVy
+ZSBhcmUgY2VydGFpbiBlcnJvcnMgd2hpY2ggY2FuIGJlIHJlY292ZXJlZCBieSByZS1pbml0aWFs
+aXppbmcgdGhlDQo+IHBhdGggYWdhaW4uIEkgaGF2ZSBzZWVuIHRoaXMgcHJvYmxlbSBkdXJpbmcg
+bXkgdGVzdGluZyBvbiByZGFjIGRldmljZQ0KPiBoYW5kbGVyLiBJIGhhdmUgb2JzZXJ2ZWQgSS9P
+IGVycm9ycyB3aGVuIHRoZXJlIGlzIGEgY2hhbmdlIGluIEx1bg0KPiBvd25lcnNoaXAuIFdoZW4g
+THVuIG93bmVyc2hpcCBjaGFuZ2VzIGRldmljZSB3aWxsIHJldHVybiBiYWNrIHdpdGggY2hlY2sN
+Cj4gY29uZGl0aW9uIHdpdGggc2Vuc2UgMHgwNS8weDk0LzB4MDEoU0svQVNDL0FTQ1EgLW1lYW5p
+bmcgTHVuIG93bmVyc2hpcA0KPiBjaGFuZ2VkKS4gQ3VycmVudGx5LCBkZXZpY2UgbWFwcGVyIGZh
+aWxzIHRoZSBwYXRoIGZvciB0aGlzIGVycm9yIGFuZA0KPiBldmVudHVhbGx5IHRoaXMgd2lsbCBs
+ZWFkIHRvIEkvTyBlcnJvci4gV2UgZG9uJ3Qgd2FudCB0byBzZWUgSS9PIGVycm9yIGZvcg0KPiB0
+aGlzIHJlYXNvbi4NCj4gDQo+IDEpIFRoaXMgcGF0Y2ggaXNuJ3QgZGlzY3JpbWluYXRpbmcgYmV0
+d2VlbiB0cmFuc3BvcnQsIG1lZGlhLCBvciBvdGhlcg0KPiBkZXZpY2UgZXJyb3JzLiBXb3VsZG4n
+dCBpdCBtYWtlIHNlbnNlIHRvIGRpc2NyaW1pbmF0ZT8NCj4gIkxVTiBvd25lcnNoaXAgY2hhbmdl
+ZCIgc291bmRzIGxpa2Ugc29tZSBvZiB0aGUgZXZlbnRzIHBvc3NpYmxlIGluDQo+IG11bHRpLWlu
+aXRpdGlhdG9yIGVudmlyb21lbnQgd291bGQgd2FudCB0byBiZSBub3RpZmllZCBhYm91dCBhbmQN
+Cj4gcGVyaGFwcyBldmVuIHRha2Ugc29tZSBhY3Rpb24gKHJlbmVnb3RpYXRlIGFjY2VzcyB0bw0K
+DQpXZSB3aWxsIG5vdCBiZSBhYmxlIHRvIGRpc2NyaW1pbmF0ZSB0aGUgZXJyb3IgYmVjYXVzZSBl
+cnJvciBzcGVjaWZpYyBpbmZvcm1hdGlvbiBpcyBub3QgYXZhaWxhYmxlIHRvIERNLg0KDQo+IDIp
+IFdpbGwgdGhpcyByZXN1bHQgaW4gcmVzZXR0aW5nIGEgU0FUQSBkZXZpY2U/DQo+IEkgYXNrIGJl
+Y2F1c2UgZGV2aWNlIHJlc2V0IG1heSByZXN1bHQgaW4gZGF0YSBsb3NzIGR1ZSB0byBXQ0UgZW5h
+YmxlZC4NCj4gSSBqdXN0IGRvbid0IGtub3cgdGhlIGhpZ2hlciBwYXJ0cyBvZiB0aGUgYmxvY2sg
+U1cgc3RhY2sgYW5kIGhvdw0KPiBlcnJvcnMgZmxvdyB1cCB0aGUgc3RhY2suDQoNCkkgYW0gbm90
+IHN1cmUgYWJvdXQgdGhpcy4gRG9u4oCZdCBrbm93IGlmIHJlLWFjdGl2YXRpbmcgKG9yIGNhbGxp
+bmcgYWN0aXZhdGVfcGF0aCkgdGhlIGRldmljZSBjYXVzZXMgcmVzZXQuDQo=
