@@ -1,100 +1,127 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] RFC: have dm-mpath use already attached scsi_dh
-Date: Wed, 22 Apr 2009 11:16:33 +0200
-Message-ID: <49EEE071.9060902@suse.de>
-References: <1240374806-6043-1-git-send-email-michaelc@cs.wisc.edu>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH v2] dm table: verify a DM device is H/W sector
+	aligned
+Date: Wed, 22 Apr 2009 14:25:43 +0100
+Message-ID: <20090422132543.GA7778@agk.fab.redhat.com>
+References: <1240327259-14412-1-git-send-email-snitzer@redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------050909080402020708060901"
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <1240374806-6043-1-git-send-email-michaelc@cs.wisc.edu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: michaelc@cs.wisc.edu
-Cc: dm-devel@redhat.com, linux-scsi@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <1240327259-14412-1-git-send-email-snitzer@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mike Snitzer <snitzer@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------050909080402020708060901
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 8bit
+I've tried to make this easier to understand.
+Please check I've not broken something in the process...
 
-Hi Mike,
 
-michaelc@cs.wisc.edu wrote:
-> From: Mike Christie <michaelc@cs.wisc.edu>
-> 
-> If you have a mixed environment of clarriions, where some
-> support ALAU and some support PNR, what do you put in
-> your multipath.conf? With this patch you do not have to worry about
-> it. If those modules are loaded before dm-mpath, then they
-> will have attached to the correct devices based on inquiry, alua commands
-> and parsing of data buffers (for example in scsi_dh_emc's alua check).
-> There is no need for the user to set that info in the multipath.conf.
-> And in general since all scsi_dh_modules will attach to the devices
-> they work for, we do not need to have users specific this.
-> 
-No. The problem here is the hardware table from scsi_dh is compiled
-in and cannot be changed from userland. The multipath.conf OTOH
-is purely user-defined and, what's more, the user might have a valid
-reason for modifying it.
-(EG EMC Clariion can well be run in PNR mode even though ALUA is
-active, or the user might want to try ALUA on any as-of-yet unknown
-devices)
+From: Mike Snitzer <snitzer@redhat.com>
 
-So _not_ allowing multipath to override the device handler setting
-will just add to the confusion and makes error tracking even more
-difficult.
+Impose necessary and sufficient conditions on a devices's table such
+that any incoming bio which respects its hardsect_size can be processed
+successfully.
 
-So I would prefer the attached patch, it even save to touch
-device handler code at all.
+Signed-off-by: Mike Snitzer <snitzer@redhat.com>
 
-Cheers,
+---
+ drivers/md/dm-table.c |   68 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 68 insertions(+)
 
-Hannes
--- 
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 Nürnberg
-GF: Markus Rex, HRB 16746 (AG Nürnberg)
-
---------------050909080402020708060901
-Content-Type: text/plain;
- name="scsi-dh-reattach-handler"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="scsi-dh-reattach-handler"
-
-diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
-index 095f77b..46d01d9 100644
---- a/drivers/md/dm-mpath.c
-+++ b/drivers/md/dm-mpath.c
-@@ -592,12 +592,25 @@ static struct pgpath *parse_path(struct arg_set *as, struct path_selector *ps,
- 	}
+Index: linux-2.6.30-rc2/drivers/md/dm-table.c
+===================================================================
+--- linux-2.6.30-rc2.orig/drivers/md/dm-table.c
++++ linux-2.6.30-rc2/drivers/md/dm-table.c
+@@ -719,6 +719,70 @@ static void check_for_valid_limits(struc
+ 		rs->bounce_pfn = -1;
+ }
  
- 	if (m->hw_handler_name) {
--		r = scsi_dh_attach(bdev_get_queue(p->path.dev->bdev),
--				   m->hw_handler_name);
-+		struct request_queue *q = bdev_get_queue(p->path.dev->bdev);
++/*
++ * Impose necessary and sufficient conditions on a devices's table such
++ * that any incoming bio which respects its hardsect_size can be
++ * processed successfully.  If it falls across the boundary between
++ * two or more targets, the size of each piece it gets split into must
++ * be compatible with the hardsect_size of the target processing it.
++ */
++static int validate_hardsect_alignment(struct dm_table *table)
++{
++	/*
++	 * This function uses arithmetic modulo the hardsect_size
++	 * (in units of 512-byte sectors).
++	 */
++	unsigned short device_hardsect_size_sects =
++			    table->limits.hardsect_size >> SECTOR_SHIFT;
 +
-+		r = scsi_dh_attach(q, m->hw_handler_name);
-+		if (r == -EBUSY) {
-+			/*
-+			 * Already attached to different hw_handler,
-+			 * try to reattach with correct one.
-+			 */
-+			scsi_dh_detach(q);
-+			r = scsi_dh_attach(q, m->hw_handler_name);
-+		}
- 		if (r < 0) {
-+			ti->error = "error attaching hardware handler";
- 			dm_put_device(ti, p->path.dev);
- 			goto bad;
- 		}
-+	} else {
-+		/* Play safe and detach hardware handler */
-+		scsi_dh_detach(bdev_get_queue(p->path.dev->bdev));
- 	}
++	/*
++	 * Offset of the start of the next table entry, mod hardsect_size.
++	 */
++	unsigned short next_target_start = 0;
++
++	/*
++	 * Given an aligned bio that extends beyond the end of a
++	 * target, how many sectors must the next target handle?
++	 */
++	unsigned short remaining = 0;
++
++	struct dm_target *ti;
++	unsigned i = 0;
++
++	/*
++	 * Check each entry in the table in turn.
++	 */
++	while (i < dm_table_get_num_targets(table)) {
++		ti = dm_table_get_target(table, i++);
++
++		/*
++		 * If the remaining sectors fall entirely within this
++		 * table entry are they compatible with its hardsect_size?
++		 */
++		if (remaining < ti->len &&
++		    remaining & (ti->limits.hardsect_size >> SECTOR_SHIFT) - 1)
++			break;	/* Error */
++
++		next_target_start =
++		    (unsigned short) ((next_target_start + ti->len) &
++				      (device_hardsect_size_sects - 1));
++		remaining = next_target_start ?
++		    device_hardsect_size_sects - next_target_start : 0;
++	}
++
++	if (remaining) {
++		DMWARN("%s: table line %u (start sect %llu len %llu) "
++		       "not aligned to hardware sector size %hu",
++		       dm_device_name(table->md), i,
++		       (unsigned long long) ti->begin,
++		       (unsigned long long) ti->len,
++		       table->limits.hardsect_size);
++		return -EINVAL;
++	}
++
++	return 0;
++}
++
+ int dm_table_add_target(struct dm_table *t, const char *type,
+ 			sector_t start, sector_t len, char *params)
+ {
+@@ -818,6 +882,10 @@ int dm_table_complete(struct dm_table *t
  
- 	r = ps->type->add_path(ps, &p->path, as->argc, as->argv, &ti->error);
-
---------------050909080402020708060901--
+ 	check_for_valid_limits(&t->limits);
+ 
++	r = validate_hardsect_alignment(t);
++	if (r)
++		return r;
++
+ 	/* how many indexes will the btree have ? */
+ 	leaf_nodes = dm_div_up(t->num_targets, KEYS_PER_NODE);
+ 	t->depth = 1 + int_log(leaf_nodes, CHILDREN_PER_NODE);
