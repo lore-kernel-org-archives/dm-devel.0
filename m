@@ -1,252 +1,258 @@
-From: "Alan D. Brunelle" <Alan.Brunelle@hp.com>
-Subject: [RFC PATCH dm-ioband] Added in blktrace msgs for dm-ioband
-Date: Fri, 24 Apr 2009 17:47:37 -0400
-Message-ID: <49F23379.4010607@hp.com>
+From: Flavio Junior <billpp@gmail.com>
+Subject: How to config dm-multipath to change a path only if it
+	fails
+Date: Fri, 24 Apr 2009 20:47:15 -0300
+Message-ID: <58aa8d780904241647g6fed16c3l5d59c8d9336718b5@mail.gmail.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------070500080301040709040703"
-Return-path: <linux-kernel-owner+glk-linux-kernel-3=40m.gmane.org-S1758259AbZDXVsA@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-To: ryov@valinux.co.jp
-Cc: dm-devel@redhat.com, "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
+Return-path: <dm-devel-bounces@redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is a multi-part message in MIME format.
---------------070500080301040709040703
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Hi folks, good evening.
 
-Hi Ryo -
+My idea is set dm-multipath to only change from a path if it fails.
+How can I do that?
 
-I don't know if you are taking in patches, but whilst trying to uncover
-some odd behavior I added some blktrace messages to dm-ioband-ctl.c. If
-you're keeping one code base for old stuff (2.6.18-ish RHEL stuff) and
-upstream you'll have to #if around these (the blktrace message stuff
-came in around 2.6.26 or 27 I think).
+Setup is something as:
 
-My test case was to take a single 400GB storage device, put two 200GB
-partitions on it and then see what the "penalty" or overhead for adding
-dm-ioband on top. To do this I simply created an ext2 FS on each
-partition in parallel (two processes each doing a mkfs to one of the
-partitions). Then I put two dm-ioband devices on top of the two
-partitions (setting the weight to 100 in both cases - thus they should
-have equal access).
+- 2x DS4700 IBM Storages
+- 4x Fiber Switches (2 for each storage)
+- 4x Path to each LUN (2 controllers x 2 switches) - But it shows to
+me as a single device, because I'm using IBM rdac driver too.
 
-Using default values I was seeing /very/ large differences - on the
-order of 3X. When I bumped the number of tokens to a large number
-(10,240) the timings got much closer (<2%). I have found that using
-weight-iosize performs worse than weight (closer to 5% penalty).
+Now, I've a primary storage as read-write AND a secundary mirrored
+(bit by bit synchronous) as read-only. Of course, the LUN id's at each
+storage are different so comes my first "hack" using getuid_callout to
+group paths, and prio_callout to set priority higher for primary
+storage and lower for secundary one.
 
-I'll try to formalize these results as I go forward and report out on
-them. In any event, I thought I'd share this patch with you if you are
-interested...
+Everything is working like a charm, configured as:
 
-Here's a sampling from some blktrace output (sorry for the wrapping) - I
-should note that I'm a bit scared to see such large numbers of holds
-going on when the token count should be >5,000 for each device...
-Holding these back in an equal access situation is inhibiting the block
-I/O layer to merge (most) of these (as mkfs performs lots & lots of
-small but sequential I/Os).
+Link: http://pastebin.com/f4de2f7ca
 
-...
-  8,80  16        0     0.090651446     0  m   N ioband 1 hold_nrm 1654
-  8,80  16        0     0.090653575     0  m   N ioband 1 hold_nrm 1655
-  8,80  16        0     0.090655694     0  m   N ioband 1 hold_nrm 1656
-  8,80  16        0     0.090657609     0  m   N ioband 1 hold_nrm 1657
-  8,80  16        0     0.090659554     0  m   N ioband 1 hold_nrm 1658
-  8,80  16        0     0.090661327     0  m   N ioband 1 hold_nrm 1659
-  8,80  16        0     0.090666237     0  m   N ioband 1 hold_nrm 1660
-  8,80  16    53036     0.090675081  4713  C   W 391420657 + 1024 [0]
-  8,80  16    53037     0.090913365  4713  D   W 392995569 + 1024
-[mkfs.ext2]
-  8,80  16        0     0.090950380     0  m   N ioband 1 add_iss 1659 1659
-  8,80  16        0     0.090951296     0  m   N ioband 1 add_iss 1658 1658
-  8,80  16        0     0.090951870     0  m   N ioband 1 add_iss 1657 1657
-  8,80  16        0     0.090952416     0  m   N ioband 1 add_iss 1656 1656
-  8,80  16        0     0.090952965     0  m   N ioband 1 add_iss 1655 1655
-  8,80  16        0     0.090953517     0  m   N ioband 1 add_iss 1654 1654
-  8,80  16        0     0.090954064     0  m   N ioband 1 add_iss 1653 1653
-  8,80  16        0     0.090954610     0  m   N ioband 1 add_iss 1652 1652
-  8,80  16        0     0.090955280     0  m   N ioband 1 add_iss 1651 1651
-  8,80  16        0     0.090956495     0  m   N ioband 1 pop_iss
-  8,80  16    53038     0.090957387  4659  A  WS 396655745 + 8 <- (8,82)
-6030744
-  8,80  16    53039     0.090957561  4659  Q  WS 396655745 + 8 [kioband/16]
-  8,80  16    53040     0.090958328  4659  M  WS 396655745 + 8 [kioband/16]
-  8,80  16        0     0.090959595     0  m   N ioband 1 pop_iss
-  8,80  16    53041     0.090959754  4659  A  WS 396655753 + 8 <- (8,82)
-6030752
-  8,80  16    53042     0.090960007  4659  Q  WS 396655753 + 8 [kioband/16]
-  8,80  16    53043     0.090960402  4659  M  WS 396655753 + 8 [kioband/16]
-  8,80  16        0     0.090960962     0  m   N ioband 1 pop_iss
-  8,80  16    53044     0.090961104  4659  A  WS 396655761 + 8 <- (8,82)
-6030760
-  8,80  16    53045     0.090961231  4659  Q  WS 396655761 + 8 [kioband/16]
-  8,80  16    53046     0.090961496  4659  M  WS 396655761 + 8 [kioband/16]
-  8,80  16        0     0.090961995     0  m   N ioband 1 pop_iss
-  8,80  16    53047     0.090962117  4659  A  WS 396655769 + 8 <- (8,82)
-6030768
-  8,80  16    53048     0.090962222  4659  Q  WS 396655769 + 8 [kioband/16]
-  8,80  16    53049     0.090962530  4659  M  WS 396655769 + 8 [kioband/16]
-  8,80  16        0     0.090962974     0  m   N ioband 1 pop_iss
-  8,80  16    53050     0.090963095  4659  A  WS 396655777 + 8 <- (8,82)
-6030776
-  8,80  16    53051     0.090963334  4659  Q  WS 396655777 + 8 [kioband/16]
-  8,80  16    53052     0.090963518  4659  M  WS 396655777 + 8 [kioband/16]
-  8,80  16        0     0.090963985     0  m   N ioband 1 pop_iss
-  8,80  16    53053     0.090964220  4659  A  WS 396655785 + 8 <- (8,82)
-6030784
-  8,80  16    53054     0.090964327  4659  Q  WS 396655785 + 8 [kioband/16]
-  8,80  16    53055     0.090964632  4659  M  WS 396655785 + 8 [kioband/16]
-  8,80  16        0     0.090965094     0  m   N ioband 1 pop_iss
-  8,80  16    53056     0.090965218  4659  A  WS 396655793 + 8 <- (8,82)
-6030792
-  8,80  16    53057     0.090965324  4659  Q  WS 396655793 + 8 [kioband/16]
-  8,80  16    53058     0.090965548  4659  M  WS 396655793 + 8 [kioband/16]
-  8,80  16        0     0.090965991     0  m   N ioband 1 pop_iss
-  8,80  16    53059     0.090966112  4659  A  WS 396655801 + 8 <- (8,82)
-6030800
-  8,80  16    53060     0.090966221  4659  Q  WS 396655801 + 8 [kioband/16]
-  8,80  16    53061     0.090966526  4659  M  WS 396655801 + 8 [kioband/16]
-  8,80  16        0     0.090966944     0  m   N ioband 1 pop_iss
-  8,80  16    53062     0.090967065  4659  A  WS 396655809 + 8 <- (8,82)
-6030808
-  8,80  16    53063     0.090967173  4659  Q  WS 396655809 + 8 [kioband/16]
-  8,80  16    53064     0.090967383  4659  M  WS 396655809 + 8 [kioband/16]
-  8,80  16        0     0.090968394     0  m   N ioband 1 add_iss 1650 1650
-  8,80  16        0     0.090969068     0  m   N ioband 1 add_iss 1649 1649
-  8,80  16        0     0.090969684     0  m   N ioband 1 add_iss 1648 1648
-...
+# multipath.conf
+defaults {
+        user_friendly_names     yes
+        path_grouping_policy    failover
+        path_checker            tur
+        hardware_handler        "rdac"
+#       getuid_callout          "/sbin/scsi_id -g -u -s /block/%n"
+        getuid_callout          "/etc/multipath/get_lun_path.sh %n"
+#       prio_callout            /bin/true
+        prio_callout            "/bin/bash
+/etc/multipath/get_lun_path.sh %n prio"
+        failback                8
+}
 
-Regards,
-Alan D. Brunelle
-Hewlett-Packard
+devices {
+        device {
+                vendor       "dummy"
+                product      "dummy"
+                prio_callout "/sbin/scsi_id"
+        }
+}
 
---------------070500080301040709040703
-Content-Type: text/x-diff;
- name="0001-Added-in-blktrace-msgs-for-dm-ioband.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline;
- filename="0001-Added-in-blktrace-msgs-for-dm-ioband.patch"
+[root@pinky ~]# cat /etc/multipath/get_lun_path.sh
+#!/bin/bash
 
-From bd918c40d92e4f074763a88bc8f13593c4f2dc52 Mon Sep 17 00:00:00 2001
-From: Alan D. Brunelle <alan.brunelle@hp.com>
-Date: Fri, 24 Apr 2009 17:30:32 -0400
-Subject: [PATCH] Added in blktrace msgs for dm-ioband
+DEVICE=3D"$(/sbin/scsi_id -g -u -s /block/$1)"
+SCSI_ID_TABLE=3D"/etc/multipath/scsi_id_multipath"
 
-Added the following messages:
+if [ $# -lt 1 ]; then
+        exit 1
+fi
 
-In hold_bio - added messages as they are being added to either the
-urgent or normal hold lists.
+if [ "$2" =3D=3D "prio" ]; then
+        while read SCSI_ID WWID PRIO; do [ "$SCSI_ID" =3D=3D "${DEVICE}" =
+]
+&& echo $PRIO; done < $SCSI_ID_TABLE
+        exit 0
+else
+        while read SCSI_ID WWID PRIO; do [ "$SCSI_ID" =3D=3D "${DEVICE}" =
+]
+&& echo $WWID; done < $SCSI_ID_TABLE
+        exit 0
+fi
 
-  ioband <g_name> hold_urg <g_blocked>
-  ioband <g_name> hold_nrm <g_blocked>
+[root@pinky ~]# cat /etc/multipath/scsi_id_multipath
+3600a0b800048834e0000150149dcc594       HomeMaildir1            2
+3600a0b80004884c4000016e649dcc5a5       HomeMaildir2            2
+3600a0b80004884c4000016e449dcc534       WebPages                2
+3600a0b800048834e000014ff49dcc51b       MailQuorumDisk          2
+3600a0b800048834e0000172c49e76cbb       FileSystemDLM           2
+3600a0b80004885b40000b78f49dcd7f8       MailQuorumDisk          1
+3600a0b80004885b40000b79149dcd817       HomeMaildir1            1
+3600a0b80004885a00000c13349dcd9e5       HomeMaildir2            1
+3600a0b80004885b40000baa149ec46b5       FileSystemDLM           1
+3600a0b80004885a00000c13149dcd9c3       WebPages                1
 
-In make_issue_list - added messages when placing previously held bios
-onto either the pushback or issue lists:
+[root@pinky ~]# multipath -ll
+fs_dlm0 (FileSystemDLM) dm-8 IBM,VirtualDisk
+[size=3D300M][features=3D0][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 3:0:0:4 sdf 8:80  [active][ready]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 3:0:1:3 sdj 8:144 [active][ready]
+homemaildir1 (HomeMaildir2) dm-5 IBM,VirtualDisk
+[size=3D25G][features=3D0][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 3:0:0:1 sdc 8:32  [active][ready]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 3:0:1:2 sdi 8:128 [active][ready]
+webpages0 (WebPages) dm-6 IBM,VirtualDisk
+[size=3D4.0G][features=3D0][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 3:0:0:2 sdd 8:48  [active][ready]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 3:0:1:4 sdk 8:160 [active][ready]
+homemaildir0 (HomeMaildir1) dm-4 IBM,VirtualDisk
+[size=3D25G][features=3D0][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 3:0:0:0 sdb 8:16  [active][ready]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 3:0:1:1 sdh 8:112 [active][ready]
+qdisk0 (MailQuorumDisk) dm-7 IBM,VirtualDisk
+[size=3D200M][features=3D0][hwhandler=3D0][rw]
+\_ round-robin 0 [prio=3D2][active]
+ \_ 3:0:0:3 sde 8:64  [active][ready]
+\_ round-robin 0 [prio=3D1][enabled]
+ \_ 3:0:1:0 sdg 8:96  [active][ready]
 
-  ioband <g_name> add_pback <g_blocked> <c_blocked>
-  ioband <g_name> add_iss <g_blocked> <c_blocked>
+#####
 
-In release_urgent bios - added a message indicating that an urgent bio
-was added to the issue list:
+The problem comes when my higher priority path goes down (it happens
+if I change secundary=3Dread-only storage role to primary=3Dread-write),
+so dm-multipath fail to secundary path but it keeps trying to change
+back for my "primary" path, and fill /var/log/messages with it (is at
+last of above post link):
 
-  ioband <g_name> urg_add_iss> <g_blocked>
-
-In ioband_conduct - added messages as bios are being popped and executed
-(sent to generic_make_request) or pushed back (bio_endio):
-
-  ioband <g_name> pop_iss
-  ioband <g_name> pop_pback
-
-Signed-off-by: Alan D. Brunelle <alan.brunelle@hp.com>
----
- drivers/md/dm-ioband-ctl.c |   30 +++++++++++++++++++++++++++---
- 1 files changed, 27 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm-ioband-ctl.c b/drivers/md/dm-ioband-ctl.c
-index 29bef11..26ad7a5 100644
---- a/drivers/md/dm-ioband-ctl.c
-+++ b/drivers/md/dm-ioband-ctl.c
-@@ -13,6 +13,7 @@
- #include <linux/slab.h>
- #include <linux/workqueue.h>
- #include <linux/rbtree.h>
-+#include <linux/blktrace_api.h>
- #include "dm.h"
- #include "md.h"
- #include "dm-bio-list.h"
-@@ -633,9 +634,15 @@ static void hold_bio(struct ioband_group *gp, struct bio *bio)
- 		 */
- 		dp->g_prepare_bio(gp, bio, IOBAND_URGENT);
- 		bio_list_add(&dp->g_urgent_bios, bio);
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s hold_urg %d", dp->g_name,
-+				  dp->g_blocked);
- 	} else {
- 		gp->c_blocked++;
- 		dp->g_hold_bio(gp, bio);
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s hold_nrm %d", dp->g_name,
-+				  gp->c_blocked);
- 	}
- }
- 
-@@ -676,14 +683,21 @@ static int make_issue_list(struct ioband_group *gp, struct bio *bio,
- 		clear_group_blocked(gp);
- 		wake_up_all(&gp->c_waitq);
- 	}
--	if (should_pushback_bio(gp))
-+	if (should_pushback_bio(gp)) {
- 		bio_list_add(pushback_list, bio);
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s add_pback %d %d", dp->g_name,
-+				  dp->g_blocked, gp->c_blocked);
-+	}
- 	else {
- 		int rw = bio_data_dir(bio);
- 
- 		gp->c_stat[rw].deferred++;
- 		gp->c_stat[rw].sectors += bio_sectors(bio);
- 		bio_list_add(issue_list, bio);
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s add_iss %d %d", dp->g_name,
-+				  dp->g_blocked, gp->c_blocked);
- 	}
- 	return prepare_to_issue(gp, bio);
- }
-@@ -703,6 +717,9 @@ static void release_urgent_bios(struct ioband_device *dp,
- 		dp->g_blocked--;
- 		dp->g_issued[bio_data_dir(bio)]++;
- 		bio_list_add(issue_list, bio);
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s urg_add_iss %d", dp->g_name,
-+				  dp->g_blocked);
- 	}
- }
- 
-@@ -916,10 +933,17 @@ static void ioband_conduct(struct work_struct *work)
- 
- 	spin_unlock_irqrestore(&dp->g_lock, flags);
- 
--	while ((bio = bio_list_pop(&issue_list)))
-+	while ((bio = bio_list_pop(&issue_list))) {
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s pop_iss", dp->g_name);
- 		generic_make_request(bio);
--	while ((bio = bio_list_pop(&pushback_list)))
-+	}
-+
-+	while ((bio = bio_list_pop(&pushback_list))) {
-+		blk_add_trace_msg(bdev_get_queue(bio->bi_bdev),
-+				  "ioband %s pop_pback", dp->g_name);
- 		bio_endio(bio, -EIO);
-+	}
- }
- 
- static int ioband_end_io(struct dm_target *ti, struct bio *bio,
--- 
-1.5.6.3
+Apr 24 20:26:52 cerebro multipathd: homemaildir0: switch to path group #2
+Apr 24 20:26:53 cerebro kernel: 91
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 Unrecognized SK - 7
+Apr 24 20:26:53 cerebro kernel: 492
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 IO FAILURE. vcmnd SN 20095 pdev
+H1:C0:T1:L0 0x07/0x27/0x00 0x08000002 mpp_status:1
+Apr 24 20:26:53 cerebro kernel: sd 3:0:1:0: SCSI error: return code =3D 0=
+x08000002
+Apr 24 20:26:53 cerebro kernel: sdg: Current: sense key: Data Protect
+Apr 24 20:26:53 cerebro kernel:     Add. Sense: Write protected
+Apr 24 20:26:53 cerebro kernel:
+Apr 24 20:26:53 cerebro kernel: end_request: I/O error, dev sdg, sector 1=
+289
+Apr 24 20:26:53 cerebro kernel: device-mapper: multipath: Failing path 8:=
+96.
+Apr 24 20:26:53 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:26:53 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:26:58 cerebro multipathd: 8:96: mark as failed
+Apr 24 20:26:58 cerebro multipathd: homemaildir0: remaining active paths:=
+ 1
+Apr 24 20:26:58 cerebro multipathd: sdg: tur checker reports path is up
+Apr 24 20:26:58 cerebro multipathd: 8:96: reinstated
+Apr 24 20:26:58 cerebro multipathd: homemaildir0: remaining active paths:=
+ 2
+Apr 24 20:26:58 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:26:58 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:27:06 cerebro multipathd: homemaildir0: switch to path group #2
+Apr 24 20:27:07 cerebro kernel: 91
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 Unrecognized SK - 7
+Apr 24 20:27:07 cerebro kernel: 492
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 IO FAILURE. vcmnd SN 20212 pdev
+H1:C0:T1:L0 0x07/0x27/0x00 0x08000002 mpp_status:1
+Apr 24 20:27:07 cerebro kernel: sd 3:0:1:0: SCSI error: return code =3D 0=
+x08000002
+Apr 24 20:27:07 cerebro kernel: sdg: Current: sense key: Data Protect
+Apr 24 20:27:07 cerebro kernel:     Add. Sense: Write protected
+Apr 24 20:27:07 cerebro kernel:
+Apr 24 20:27:07 cerebro kernel: end_request: I/O error, dev sdg, sector 1=
+289
+Apr 24 20:27:07 cerebro kernel: device-mapper: multipath: Failing path 8:=
+96.
+Apr 24 20:27:07 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:27:07 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:27:07 cerebro multipathd: 8:96: mark as failed
+Apr 24 20:27:07 cerebro multipathd: homemaildir0: remaining active paths:=
+ 1
+Apr 24 20:27:12 cerebro multipathd: sdg: tur checker reports path is up
+Apr 24 20:27:12 cerebro multipathd: 8:96: reinstated
+Apr 24 20:27:12 cerebro multipathd: homemaildir0: remaining active paths:=
+ 2
+Apr 24 20:27:12 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:27:12 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:27:20 cerebro multipathd: homemaildir0: switch to path group #2
+Apr 24 20:27:21 cerebro kernel: 91
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 Unrecognized SK - 7
+Apr 24 20:27:21 cerebro kernel: 492
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 IO FAILURE. vcmnd SN 20305 pdev
+H1:C0:T1:L0 0x07/0x27/0x00 0x08000002 mpp_status:1
+Apr 24 20:27:21 cerebro kernel: sd 3:0:1:0: SCSI error: return code =3D 0=
+x08000002
+Apr 24 20:27:21 cerebro kernel: sdg: Current: sense key: Data Protect
+Apr 24 20:27:21 cerebro kernel:     Add. Sense: Write protected
+Apr 24 20:27:21 cerebro kernel:
+Apr 24 20:27:21 cerebro kernel: end_request: I/O error, dev sdg, sector 1=
+289
+Apr 24 20:27:21 cerebro kernel: device-mapper: multipath: Failing path 8:=
+96.
+Apr 24 20:27:21 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:27:21 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:27:21 cerebro multipathd: 8:96: mark as failed
+Apr 24 20:27:21 cerebro multipathd: homemaildir0: remaining active paths:=
+ 1
+Apr 24 20:27:26 cerebro multipathd: sdg: tur checker reports path is up
+Apr 24 20:27:26 cerebro multipathd: 8:96: reinstated
+Apr 24 20:27:26 cerebro multipathd: homemaildir0: remaining active paths:=
+ 2
+Apr 24 20:27:26 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:27:26 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:27:34 cerebro multipathd: homemaildir0: switch to path group #2
+Apr 24 20:27:35 cerebro kernel: 91
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 Unrecognized SK - 7
+Apr 24 20:27:35 cerebro kernel: 492
+[RAIDarray.mpp]IBM_DS4700_SITE1:1:0:0 IO FAILURE. vcmnd SN 20419 pdev
+H1:C0:T1:L0 0x07/0x27/0x00 0x08000002 mpp_status:1
+Apr 24 20:27:35 cerebro kernel: sd 3:0:1:0: SCSI error: return code =3D 0=
+x08000002
+Apr 24 20:27:35 cerebro kernel: sdg: Current: sense key: Data Protect
+Apr 24 20:27:35 cerebro kernel:     Add. Sense: Write protected
+Apr 24 20:27:35 cerebro kernel:
+Apr 24 20:27:35 cerebro kernel: end_request: I/O error, dev sdg, sector 1=
+289
+Apr 24 20:27:35 cerebro kernel: device-mapper: multipath: Failing path 8:=
+96.
+Apr 24 20:27:35 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:27:35 cerebro multipathd: dm-5: devmap already registered
+Apr 24 20:27:35 cerebro multipathd: 8:96: mark as failed
+Apr 24 20:27:35 cerebro multipathd: homemaildir0: remaining active paths:=
+ 1
+Apr 24 20:27:40 cerebro multipathd: sdg: tur checker reports path is up
+Apr 24 20:27:40 cerebro multipathd: 8:96: reinstated
+Apr 24 20:27:40 cerebro multipathd: homemaildir0: remaining active paths:=
+ 2
+Apr 24 20:27:40 cerebro multipathd: dm-5: add map (uevent)
+Apr 24 20:27:40 cerebro multipathd: dm-5: devmap already registered
+#############
 
 
---------------070500080301040709040703--
+My idea is set dm-multipath to only change from a path if it fails.
+How can I do that?
+
+Any comments, doubts or suggest for this config would be appreciated
+as i'm new to all this hardware/setup.
+
+Thanks in advance.
+
+--
+
+Fl=E1vio do Carmo J=FAnior aka waKKu
