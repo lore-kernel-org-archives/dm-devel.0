@@ -1,8 +1,8 @@
 From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: [PATCH 4/7] dm core: don't set QUEUE_ORDERED_DRAIN for
- request-based dm
-Date: Fri, 24 Apr 2009 17:14:43 +0900
-Message-ID: <49F174F3.8010008@ct.jp.nec.com>
+Subject: [PATCH 5/7] dm core: reject I/O violating new queue
+	limits
+Date: Fri, 24 Apr 2009 17:15:12 +0900
+Message-ID: <49F17510.7010805@ct.jp.nec.com>
 References: <49F17409.4060201@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
@@ -23,75 +23,60 @@ To: Alasdair Kergon <agk@redhat.com>
 Cc: device-mapper development <dm-devel@redhat.com>
 List-Id: dm-devel.ids
 
-Request-based dm doesn't have barrier support yet.
-So we need to set QUEUE_ORDERED_DRAIN only for bio-based dm.
-Since the device type is decided at the first table loading time,
-the flag set is deferred until then.
+This patch detects requests violating the queue limitations
+and rejects them.
+
+The same limitation checks are done when requests are submitted
+to the queue by blk_insert_cloned_request().
+However, such violation can happen if a table is swapped and
+the queue limitations are shrunk while some requests are
+in the queue.
+
+Since struct request is a reliable one in the block layer and
+device drivers, dispatching such requests is pretty dangerous.
+(e.g. it may cause kernel panic easily.)
+So avoid to dispatch such problematic requests in request-based dm.
 
 
 Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
 Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
 Cc: Alasdair G Kergon <agk@redhat.com>
 ---
- drivers/md/dm-table.c |    5 +++++
- drivers/md/dm.c       |   11 ++++++++++-
- drivers/md/dm.h       |    1 +
- 3 files changed, 16 insertions(+), 1 deletion(-)
+ drivers/md/dm.c |   24 ++++++++++++++++++++++++
+ 1 file changed, 24 insertions(+)
 
-Index: 2.6.30-rc3/drivers/md/dm-table.c
-===================================================================
---- 2.6.30-rc3.orig/drivers/md/dm-table.c
-+++ 2.6.30-rc3/drivers/md/dm-table.c
-@@ -819,6 +819,11 @@ int dm_table_get_type(struct dm_table *t
- 		DM_TYPE_BIO_BASED : DM_TYPE_REQUEST_BASED;
- }
- 
-+int dm_table_bio_based(struct dm_table *t)
-+{
-+	return dm_table_get_type(t) == DM_TYPE_BIO_BASED;
-+}
-+
- int dm_table_request_based(struct dm_table *t)
- {
- 	return dm_table_get_type(t) == DM_TYPE_REQUEST_BASED;
 Index: 2.6.30-rc3/drivers/md/dm.c
 ===================================================================
 --- 2.6.30-rc3.orig/drivers/md/dm.c
 +++ 2.6.30-rc3/drivers/md/dm.c
-@@ -1779,7 +1779,6 @@ static struct mapped_device *alloc_dev(i
- 	md->queue->backing_dev_info.congested_fn = dm_any_congested;
- 	md->queue->backing_dev_info.congested_data = md;
- 	blk_queue_make_request(md->queue, dm_request);
--	blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN, NULL);
- 	blk_queue_bounce_limit(md->queue, BLK_BOUNCE_ANY);
- 	md->queue->unplug_fn = dm_unplug_all;
- 	blk_queue_merge_bvec(md->queue, dm_merge_bvec);
-@@ -2206,6 +2205,16 @@ int dm_swap_table(struct mapped_device *
- 		goto out;
- 	}
+@@ -1500,6 +1500,30 @@ static void map_request(struct dm_target
+ 	dm_get(md);
  
-+	/*
-+	 * It is enought that blk_queue_ordered() is called only once when
-+	 * the first bio-based table is bound.
-+	 *
-+	 * This setting should be moved to alloc_dev() when request-based dm
-+	 * supports barrier.
-+	 */
-+	if (!md->map && dm_table_bio_based(table))
-+		blk_queue_ordered(md->queue, QUEUE_ORDERED_DRAIN, NULL);
+ 	tio->ti = ti;
 +
- 	__unbind(md);
- 	r = __bind(md, table);
- 
-Index: 2.6.30-rc3/drivers/md/dm.h
-===================================================================
---- 2.6.30-rc3.orig/drivers/md/dm.h
-+++ 2.6.30-rc3/drivers/md/dm.h
-@@ -58,6 +58,7 @@ int dm_table_any_congested(struct dm_tab
- int dm_table_any_busy_target(struct dm_table *t);
- int dm_table_set_type(struct dm_table *t);
- int dm_table_get_type(struct dm_table *t);
-+int dm_table_bio_based(struct dm_table *t);
- int dm_table_request_based(struct dm_table *t);
- int dm_table_alloc_md_mempools(struct dm_table *t);
- void dm_table_free_md_mempools(struct dm_table *t);
++	/*
++	 * Although submitted requests to the md->queue are checked against
++	 * the table/queue limitations at the submission time, the limitations
++	 * may be changed by a table swapping while those already checked
++	 * requests are in the md->queue.
++	 * If the limitations have been shrunk in such situations, we may be
++	 * dispatching requests violating the current limitations here.
++	 * Since struct request is a reliable one in the block-layer
++	 * and device drivers, dispatching such requests is dangerous.
++	 * (e.g. it may cause kernel panic easily.)
++	 * Avoid to dispatch such problematic requests in request-based dm.
++	 *
++	 * Since dm_kill_unmapped_request() expects that tio->ti is correctly
++	 * set, this has to be done after the set.
++	 */
++	r = blk_rq_check_limits(rq->q, rq);
++	if (unlikely(r)) {
++		DMWARN("violating the queue limitation. the limitation may be"
++		       " shrunk while there are some requests in the queue.");
++		dm_kill_unmapped_request(clone, r);
++		return;
++	}
++
+ 	r = ti->type->map_rq(ti, clone, &tio->info);
+ 	switch (r) {
+ 	case DM_MAPIO_SUBMITTED:
