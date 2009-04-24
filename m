@@ -1,15 +1,15 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 6/7] dm core: disable interrupt when taking
-	map_lock
-Date: Fri, 24 Apr 2009 11:00:10 +0200
-Message-ID: <49F17F9A.9040409@suse.de>
-References: <49F17409.4060201@ct.jp.nec.com> <49F17530.2060701@ct.jp.nec.com>
+Subject: Re: [PATCH 5/7] dm core: reject I/O violating new queue
+	limits
+Date: Fri, 24 Apr 2009 10:59:32 +0200
+Message-ID: <49F17F74.6010307@suse.de>
+References: <49F17409.4060201@ct.jp.nec.com> <49F17510.7010805@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49F17530.2060701@ct.jp.nec.com>
+In-Reply-To: <49F17510.7010805@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,39 +20,35 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Christof Schmitt <christof.schmitt@de.ibm.com>, Alasdair Kergon <agk@redhat.com>
+Cc: Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
+Hi Kiyoshi,
+
 Kiyoshi Ueda wrote:
-> This patch disables interrupt when taking map_lock to prevent
-> needless lockdep warnings in request-based dm.
+> This patch detects requests violating the queue limitations
+> and rejects them.
 >=20
-> request-based dm takes map_lock after taking queue_lock with
-> disabling interrupt:
->   spin_lock_irqsave(queue_lock)
->   q->request_fn() =3D=3D dm_request_fn()
->     =3D> dm_get_table()
->          =3D> read_lock(map_lock)
-> while queue_lock could be taken in interrupt context.
+> The same limitation checks are done when requests are submitted
+> to the queue by blk_insert_cloned_request().
+> However, such violation can happen if a table is swapped and
+> the queue limitations are shrunk while some requests are
+> in the queue.
 >=20
-> So lockdep warns that a deadlock can happen:
->   write_lock(map_lock)
->   <interrupt>
->   spin_lock_irqsave(queue_lock)
->   q->request_fn() =3D=3D dm_request_fn()
->     =3D> dm_get_table()
->          =3D> read_lock(map_lock)
+> Since struct request is a reliable one in the block layer and
+> device drivers, dispatching such requests is pretty dangerous.
+> (e.g. it may cause kernel panic easily.)
+> So avoid to dispatch such problematic requests in request-based dm.
 >=20
-> Currently there is no such code path in request-based dm where
-> q->request_fn() is called from interrupt context, so no such deadlock
-> happens.
-> But such warning messages confuse users, so prevent them by disabling
-> interrupt when taking map_lock.
->=20
->=20
-> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
+This patch actually triggers accidentally during a no-paths scenario;
+multipathing seems to flush all device details once all paths are gone,
+so it'll fall back to the system defaults.
+And then this check will trigger and kill all queued I/Os. Not good.
+
+So either we fix device-mapper to keep the device details even for
+the all-paths down scenario (basically we'd have to copy the device
+details into the target_io structures and use that for comparison)
+or we should rather not check here.
 
 Cheers,
 
