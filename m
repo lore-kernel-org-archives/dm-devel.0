@@ -1,15 +1,14 @@
 From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH 5/7] dm core: reject I/O violating new queue
-	limits
-Date: Fri, 24 Apr 2009 10:59:32 +0200
-Message-ID: <49F17F74.6010307@suse.de>
-References: <49F17409.4060201@ct.jp.nec.com> <49F17510.7010805@ct.jp.nec.com>
+Subject: Re: [PATCH 7/7] dm-mpath: convert to request-based
+Date: Fri, 24 Apr 2009 11:04:26 +0200
+Message-ID: <49F1809A.1020906@suse.de>
+References: <49F17409.4060201@ct.jp.nec.com> <49F1754F.3050706@ct.jp.nec.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49F17510.7010805@ct.jp.nec.com>
+In-Reply-To: <49F1754F.3050706@ct.jp.nec.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -23,32 +22,60 @@ To: device-mapper development <dm-devel@redhat.com>
 Cc: Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Hi Kiyoshi,
-
 Kiyoshi Ueda wrote:
-> This patch detects requests violating the queue limitations
-> and rejects them.
+> This patch converts dm-multipath target to request-based from bio-based=
+.
 >=20
-> The same limitation checks are done when requests are submitted
-> to the queue by blk_insert_cloned_request().
-> However, such violation can happen if a table is swapped and
-> the queue limitations are shrunk while some requests are
-> in the queue.
+> Basically, the patch just converts the I/O unit from struct bio
+> to struct request.
+> In the course of the conversion, it also changes the I/O queueing
+> mechanism.  The change in the I/O queueing is described in details
+> as follows.
 >=20
-> Since struct request is a reliable one in the block layer and
-> device drivers, dispatching such requests is pretty dangerous.
-> (e.g. it may cause kernel panic easily.)
-> So avoid to dispatch such problematic requests in request-based dm.
+> I/O queueing mechanism change
+> -----------------------------
+> In I/O submission, map_io(), there is no mechanism change from
+> bio-based, since the clone request is ready for retry as it is.
+> However, in I/O complition, do_end_io(), there is a mechanism change
+> from bio-based, since the clone request is not ready for retry.
 >=20
-This patch actually triggers accidentally during a no-paths scenario;
-multipathing seems to flush all device details once all paths are gone,
-so it'll fall back to the system defaults.
-And then this check will trigger and kill all queued I/Os. Not good.
-
-So either we fix device-mapper to keep the device details even for
-the all-paths down scenario (basically we'd have to copy the device
-details into the target_io structures and use that for comparison)
-or we should rather not check here.
+> In do_end_io() of bio-based, the clone bio has all needed memory
+> for resubmission.  So the target driver can queue it and resubmit
+> it later without memory allocations.
+> The mechanism has almost no overhead.
+>=20
+> On the other hand, in do_end_io() of request-based, the clone request
+> doesn't have clone bios, so the target driver can't resubmit it
+> as it is.  To resubmit the clone request, memory allocation for
+> clone bios is needed, and it takes some overheads.
+> To avoid the overheads just for queueing, the target driver doesn't
+> queue the clone request inside itself.
+> Instead, the target driver asks dm core for queueing and remapping
+> the original request of the clone request, since the overhead for
+> queueing is just a freeing memory for the clone request.
+>=20
+> As a result, the target driver doesn't need to record/restore
+> the information of the original request for resubmitting
+> the clone request.  So dm_bio_details in dm_mpath_io is removed.
+>=20
+>=20
+> multipath_busy()
+> ---------------------
+> The target driver returns "busy", only when the following case:
+>   o The target driver will map I/Os, if map() function is called
+>   and
+>   o The mapped I/Os will wait on underlying device's queue due to
+>     their congestions, if map() function is called now.
+>=20
+> In other cases, the target driver doesn't return "busy".
+> Otherwise, dm core will keep the I/Os and the target driver can't
+> do what it wants.
+> (e.g. the target driver can't map I/Os now, so wants to kill I/Os.)
+>=20
+>=20
+> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
+Acked-by: Hannes Reinecke <hare@suse.de>
 
 Cheers,
 
