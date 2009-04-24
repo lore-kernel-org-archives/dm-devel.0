@@ -1,15 +1,21 @@
-From: Christof Schmitt <christof.schmitt@de.ibm.com>
-Subject: Re: [PATCH 6/7] dm core: disable interrupt when taking
-	map_lock
-Date: Fri, 24 Apr 2009 13:50:03 +0200
-Message-ID: <20090424115002.GA23713@schmichrtp.de.ibm.com>
-References: <49F17409.4060201@ct.jp.nec.com> <49F17530.2060701@ct.jp.nec.com>
+From: Christopher Chen <muffaleta@gmail.com>
+Subject: Re: multipath prio_callout broke from 5.2 to 5.3
+Date: Fri, 24 Apr 2009 08:31:22 -0700
+Message-ID: <7bc80d500904240831y1a31beceg87b7a8795233b7fc@mail.gmail.com>
+References: <1779195765.1578721239520436084.JavaMail.root@zimbra16-e3.priv.proxad.net>
+	<1239613205.6376.16.camel@jaspav.missionsit.net.missionsit.net>
+	<20090413185745.GF15911@ether.msp.redhat.com>
+	<1239652565.30476.41.camel@jaspav.missionsit.net.missionsit.net>
+	<20090413203711.GH15911@ether.msp.redhat.com>
+	<1239659354.30476.49.camel@jaspav.missionsit.net.missionsit.net>
+	<49F0AEA0.9050803@nrel.colostate.edu>
+	<20090424062759.GZ15911@ether.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 Return-path: <dm-devel-bounces@redhat.com>
-Content-Disposition: inline
-In-Reply-To: <49F17530.2060701@ct.jp.nec.com>
+In-Reply-To: <20090424062759.GZ15911@ether.msp.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,101 +26,76 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
 To: device-mapper development <dm-devel@redhat.com>
-Cc: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-On Fri, Apr 24, 2009 at 05:15:44PM +0900, Kiyoshi Ueda wrote:
-> This patch disables interrupt when taking map_lock to prevent
-> needless lockdep warnings in request-based dm.
-> 
-> request-based dm takes map_lock after taking queue_lock with
-> disabling interrupt:
->   spin_lock_irqsave(queue_lock)
->   q->request_fn() == dm_request_fn()
->     => dm_get_table()
->          => read_lock(map_lock)
-> while queue_lock could be taken in interrupt context.
-> 
-> So lockdep warns that a deadlock can happen:
->   write_lock(map_lock)
->   <interrupt>
->   spin_lock_irqsave(queue_lock)
->   q->request_fn() == dm_request_fn()
->     => dm_get_table()
->          => read_lock(map_lock)
-> 
-> Currently there is no such code path in request-based dm where
-> q->request_fn() is called from interrupt context, so no such deadlock
-> happens.
-> But such warning messages confuse users, so prevent them by disabling
-> interrupt when taking map_lock.
-> 
-> 
-> Signed-off-by: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-> Signed-off-by: Jun'ichi Nomura <j-nomura@ce.jp.nec.com>
-> Cc: Christof Schmitt <christof.schmitt@de.ibm.com>
-> Cc: Alasdair G Kergon <agk@redhat.com>
-> ---
->  drivers/md/dm.c |   15 +++++++++------
->  1 file changed, 9 insertions(+), 6 deletions(-)
-> 
-> Index: 2.6.30-rc3/drivers/md/dm.c
-> ===================================================================
-> --- 2.6.30-rc3.orig/drivers/md/dm.c
-> +++ 2.6.30-rc3/drivers/md/dm.c
-> @@ -510,12 +510,13 @@ static void queue_io(struct mapped_devic
->  struct dm_table *dm_get_table(struct mapped_device *md)
->  {
->  	struct dm_table *t;
-> +	unsigned long flags;
-> 
-> -	read_lock(&md->map_lock);
-> +	read_lock_irqsave(&md->map_lock, flags);
->  	t = md->map;
->  	if (t)
->  		dm_table_get(t);
-> -	read_unlock(&md->map_lock);
-> +	read_unlock_irqrestore(&md->map_lock, flags);
-> 
->  	return t;
->  }
-> @@ -1940,6 +1941,7 @@ static int __bind(struct mapped_device *
->  {
->  	struct request_queue *q = md->queue;
->  	sector_t size;
-> +	unsigned long flags;
-> 
->  	size = dm_table_get_size(t);
-> 
-> @@ -1971,10 +1973,10 @@ static int __bind(struct mapped_device *
-> 
->  	__bind_mempools(md, t);
-> 
-> -	write_lock(&md->map_lock);
-> +	write_lock_irqsave(&md->map_lock, flags);
->  	md->map = t;
->  	dm_table_set_restrictions(t, q);
-> -	write_unlock(&md->map_lock);
-> +	write_unlock_irqrestore(&md->map_lock, flags);
-> 
->  	return 0;
->  }
-> @@ -1982,14 +1984,15 @@ static int __bind(struct mapped_device *
->  static void __unbind(struct mapped_device *md)
->  {
->  	struct dm_table *map = md->map;
-> +	unsigned long flags;
-> 
->  	if (!map)
->  		return;
-> 
->  	dm_table_event_callback(map, NULL, NULL);
-> -	write_lock(&md->map_lock);
-> +	write_lock_irqsave(&md->map_lock, flags);
->  	md->map = NULL;
-> -	write_unlock(&md->map_lock);
-> +	write_unlock_irqrestore(&md->map_lock, flags);
->  	dm_table_destroy(map);
->  }
+On Thu, Apr 23, 2009 at 11:27 PM, Benjamin Marzinski
+<bmarzins@redhat.com> wrote:
+> On Thu, Apr 23, 2009 at 12:08:32PM -0600, Ty! Boyack wrote:
+>> This thread has been great information since I'm looking at the same t=
+ype
+>> of thing. =A0However it raises a couple of (slightly off-topic) questi=
+ons for
+>> me.
+>> My recent upgrade to fedora 10 broke my prio_callout bash script just =
+like
+>> you described, but my getuid_callout (a bash script that calls udevadm=
+,
+>> grep, sed, and iscsi_id) runs just fine. =A0Are the two callouts handl=
+ed
+>> differently?
+>
+> Fedora 10 uses the same method as upstream, priority callouts have been
+> replaced by priority modules. These are dynamic shared objects that get
+> loaded by multipath. =A0Because of this, multipath doesn't use a privat=
+e
+> namespace, so it can use scripts without restrictions for the getuid_ca=
+llout.
+>
+>>
+>> Also, is there an easy way to know what tools are in the private names=
+pace
+>> already? =A0My prio_callout script calls two other binaries: /sbin/ude=
+vadm
+>> and grep. =A0If I go to C-code, handling grep's functions myself is no
+>> problem, but I'm not confident about re-implementing what udevadm does=
+.
+>> Can I assume that since /sbin/udevadm is in /sbin that it will be avai=
+lable
+>> to call via exec()? =A0Or would I be right back where we are with the =
+bash
+>> scripting, as in having to include a dummy device as you described?
+>
+> Sorry, the C code is necessary now.
+>
+>> Finally, in my case I've got two redundant iscsi networks, one is 1GbE=
+, and
+>> the other is 10GbE. =A0In the past I've always had symetric paths, so =
+I've
+>> used round-robin/multibus. =A0But I want to focus traffic on the 10GbE=
+ path,
+>> so I was looking at using the prio callout. =A0Is this even necessary?=
+ =A0Or
+>> will round-robin/multibus take full advantage of both paths? =A0I can =
+see
+>> round-robin on that setup resulting in either around 11Gbps or 2 Gbps,
+>> depending on whether the slower link becomes a limiting factor. =A0I'm=
+ just
+>> wondering if I am making things unnecessarily complex by trying to set
+>> priorities.
+>
+> With round-robin, you will send half your IO to the slow path. =A0A
+> priority callout makes sense here.
+>
+>> Thanks for all the help.
 
-Acked-by: Christof Schmitt <christof.schmitt@de.ibm.com>
+I ended up biting the bullet and writing a C program to do the
+priority calculations.
+
+m2c
+
+cc
+
+--=20
+Chris Chen <muffaleta@gmail.com>
+"I want the kind of six pack you can't drink."
+-- Micah
