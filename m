@@ -1,15 +1,22 @@
-From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: [PATCH 8/17] bottom-layer barrier support
-Date: Mon, 27 Apr 2009 19:21:01 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904271914440.9362@hs20-bc2-1.build.redhat.com>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: Re: [PATCH 12/17] bottom-layer barrier support
+Date: Tue, 28 Apr 2009 00:21:08 +0100
+Message-ID: <20090427232108.GJ23302@agk.fab.redhat.com>
 References: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358000.6097@hs20-bc2-1.build.redhat.com>
-	<20090427190222.GE23302@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0904200358300.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200359520.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200400160.6097@hs20-bc2-1.build.redhat.com>
+	<Pine.LNX.4.64.0904200400500.6097@hs20-bc2-1.build.redhat.com>
+	<20090427214837.GF23302@agk.fab.redhat.com>
+	<20090427220644.GG23302@agk.fab.redhat.com>
+	<Pine.LNX.4.64.0904271907150.9362@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090427190222.GE23302@agk.fab.redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0904271907150.9362@hs20-bc2-1.build.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -19,41 +26,28 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Alasdair G Kergon <agk@redhat.com>
+To: Mikulas Patocka <mpatocka@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Mon, 27 Apr 2009, Alasdair G Kergon wrote:
+On Mon, Apr 27, 2009 at 07:09:32PM -0400, Mikulas Patocka wrote:
+> The code is correct as it is.
+ 
+I don't see that.
 
-> On Mon, Apr 20, 2009 at 03:58:20AM -0400, Mikulas Patocka wrote:
-> > dm-flush-make-empty-barrier.patch
-> > Modify dm_flush so that is passes empty barrier flushes to the targets.
->  
-> > +	md->barrier_bio.bi_bdev = md->bdev;
-> 
-> There is no md->bdev in my tree - have I missed a dependency here?
-> 
-> Alasdair
+> The difference is the zero-barrier flush request --- it should have 
+> bi_sector always 0.
 
-That is from two patches:
-http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-bdev-rename-suspended_bdev-to-bdev.patch
-and
-http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-bdev-keep-bdev-always-referenced.patch
+But I'm asking at what point that is defined?
+0 before calling the target's map function?
+In which case it is wrong to perform:
+	bio->bi_sector = dc->start_write + (bio->bi_sector - ti->begin);
 
-They are old and fix memory-allocation-while-suspended violation.
+Or if it's not set to zero until the
+	bio->bi_sector = 0 
+line, then what does it hold on entry to the function and what does that
+mean?
 
-Do you want to accept them?
-
-There should be bdev value of the md device in bi_bdev, most targets don't 
-care about it, but for correctness, we should supply a correct value.
-
-If you don't want to accept the correct patches, we must make up some 
-dummy value for bi_bdev and review targets that they don't care about the 
-value (I consider it somehow hacky to place dummy values to bio fields for 
-targets, and I'd rather put the "keep-bdev-always-referenced" patch in).
-
-Another possibility would be to get bdev from submitted barrier request.
-
-Which of these ways do you want to go?
-
-Mikulas
+Alasdair
+-- 
+agk@redhat.com
