@@ -1,16 +1,11 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: Re: dm-ioband: Test results.
-Date: Mon, 27 Apr 2009 19:30:06 +0900 (JST)
-Message-ID: <20090427.193006.112614137.ryov@valinux.co.jp>
-References: <20090421141607.GA22619@redhat.com>
-	<20090422.121443.104042516.ryov@valinux.co.jp>
-	<20090422151805.GC32602@redhat.com>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH] raid1: use __GFP_NOFAIL
+Date: Mon, 27 Apr 2009 07:01:22 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904270658390.12384@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090422151805.GC32602@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,23 +15,44 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: snitzer@redhat.com
-Cc: fernando@oss.ntt.co.jp, dm-devel@redhat.com, linux-kernel@vger.kernel.org, jmoyer@redhat.com, agk@redhat.com, jens.axboe@oracle.com, nauman@google.com, vgoyal@redhat.com, balbir@linux.vnet.ibm.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Mike,
+Hi
 
-> Why is it that you repeatedly ignore concern/discussion about your
-> determination to continue using a custom grouping mechanism?  It is this
-> type of excess layering that serves no purpose other than to facilitate
-> out-of-tree use-cases.  dm-ioband would take a big step closer to being
-> merged upstream if you took others' feedback and showed more willingness
-> to work through the outstanding issues.
+This is a bug I found when implementing the barriers. There should be 
+__GFP_NOFAIL if the code can't handle an allocation failure.
 
-I think dm-ioband's approach is one simple way to handle cgroup
-because the current cgroup has no way to manage kernel module's
-resources. Please tell me if you have any good ideas to handle 
-cgroup by dm-ioband.
+Mikulas
 
-Thanks,
-Ryo Tsuruta
+--
+
+If the code can't handle allocation failures, use __GFP_NOFAIL - so that
+in case of memory pressure the allocator will retry indefinitely and
+won't return NULL which would cause a crash in the function.
+
+This is still not a correct fix, it may cause a classic deadlock when
+memory manager waits for I/O being done and I/O waits for some free memory.
+I/O code shouldn't allocate any memory. But in this case it probably
+doesn't matter much in practice, people usually do not swap on RAID.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm-region-hash.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-2.6.30-rc2-devel/drivers/md/dm-region-hash.c
+===================================================================
+--- linux-2.6.30-rc2-devel.orig/drivers/md/dm-region-hash.c	2009-04-24 09:38:43.000000000 +0200
++++ linux-2.6.30-rc2-devel/drivers/md/dm-region-hash.c	2009-04-24 09:39:56.000000000 +0200
+@@ -292,7 +292,7 @@ static struct dm_region *__rh_alloc(stru
+ 
+ 	nreg = mempool_alloc(rh->region_pool, GFP_ATOMIC);
+ 	if (unlikely(!nreg))
+-		nreg = kmalloc(sizeof(*nreg), GFP_NOIO);
++		nreg = kmalloc(sizeof(*nreg), GFP_NOIO | __GFP_NOFAIL);
+ 
+ 	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
+ 		      DM_RH_CLEAN : DM_RH_NOSYNC;
