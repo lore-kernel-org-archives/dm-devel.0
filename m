@@ -1,20 +1,15 @@
 From: Mikulas Patocka <mpatocka@redhat.com>
-Subject: Re: Re: [PATCH 12/17] bottom-layer barrier support
-Date: Mon, 27 Apr 2009 19:09:32 -0400 (EDT)
-Message-ID: <Pine.LNX.4.64.0904271907150.9362@hs20-bc2-1.build.redhat.com>
+Subject: Re: [PATCH 8/17] bottom-layer barrier support
+Date: Mon, 27 Apr 2009 19:21:01 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904271914440.9362@hs20-bc2-1.build.redhat.com>
 References: <Pine.LNX.4.64.0904200357240.6097@hs20-bc2-1.build.redhat.com>
 	<Pine.LNX.4.64.0904200358000.6097@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904200358300.6097@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904200359520.6097@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904200400160.6097@hs20-bc2-1.build.redhat.com>
-	<Pine.LNX.4.64.0904200400500.6097@hs20-bc2-1.build.redhat.com>
-	<20090427214837.GF23302@agk.fab.redhat.com>
-	<20090427220644.GG23302@agk.fab.redhat.com>
+	<20090427190222.GE23302@agk.fab.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090427220644.GG23302@agk.fab.redhat.com>
+In-Reply-To: <20090427190222.GE23302@agk.fab.redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -28,42 +23,37 @@ To: Alasdair G Kergon <agk@redhat.com>
 Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-
-
 On Mon, 27 Apr 2009, Alasdair G Kergon wrote:
 
-> On Mon, Apr 27, 2009 at 10:48:37PM +0100, Alasdair G Kergon wrote:
-> > On Mon, Apr 20, 2009 at 04:01:11AM -0400, Mikulas Patocka wrote:
-> > > Flush supoprt for dm-delay target.
-> > > @@ -281,6 +282,8 @@ static int delay_map(struct dm_target *t
-> > >  		bio->bi_sector = dc->start_write +
-> > >  				 (bio->bi_sector - ti->begin);
+> On Mon, Apr 20, 2009 at 03:58:20AM -0400, Mikulas Patocka wrote:
+> > dm-flush-make-empty-barrier.patch
+> > Modify dm_flush so that is passes empty barrier flushes to the targets.
+>  
+> > +	md->barrier_bio.bi_bdev = md->bdev;
 > 
-> In fact, does bi_sector have a meaningful value within
-> the context of a specific target any more when processing
-> a barrier flush, or is it a bug if a target attempts to access it?
-> (For example, it could be set to ti->begin or 0.)
+> There is no md->bdev in my tree - have I missed a dependency here?
 > 
-> I think the situation deserves defining in a comment.
-> 
-> (Maybe we will remove "- ti->begin" from all the mapping functions one day.
-> Not mixed in with this patch set though.)
+> Alasdair
 
-The code is correct as it is.
+That is from two patches:
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-bdev-rename-suspended_bdev-to-bdev.patch
+and
+http://people.redhat.com/mpatocka/patches/kernel/misc/2.6.29-rc8/dm-bdev-keep-bdev-always-referenced.patch
 
-For example, if you have first 10 sectors mapped on linear target and next 
-sectors mapped on delay target, you must subtract 10 from the value 
-(-ti->begin) and add the start offset dc->start_write.
+They are old and fix memory-allocation-while-suspended violation.
 
-If you map the whole device as one target, this is meaningless. But if you 
-map more targets into one table, this arithmetics is required.
+Do you want to accept them?
 
-The difference is the zero-barrier flush request --- it should have 
-bi_sector always 0.
+There should be bdev value of the md device in bi_bdev, most targets don't 
+care about it, but for correctness, we should supply a correct value.
+
+If you don't want to accept the correct patches, we must make up some 
+dummy value for bi_bdev and review targets that they don't care about the 
+value (I consider it somehow hacky to place dummy values to bio fields for 
+targets, and I'd rather put the "keep-bdev-always-referenced" patch in).
+
+Another possibility would be to get bdev from submitted barrier request.
+
+Which of these ways do you want to go?
 
 Mikulas
-
-> Alasdair
-> -- 
-> agk@redhat.com
-> 
