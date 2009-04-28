@@ -1,16 +1,16 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: [PATCH] Handle multipath paths in a path group
- properly during pg_init
-Date: Tue, 28 Apr 2009 08:30:16 +0200
-Message-ID: <49F6A278.5000300@suse.de>
-References: <1238436452.5858.2.camel@chandra-ubuntu>
-	<1240872495.22154.7.camel@chandra-ubuntu>
+From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
+Subject: Re: [PATCH 5/7] dm core: reject I/O violating new queue
+	limits
+Date: Tue, 28 Apr 2009 16:49:29 +0900
+Message-ID: <49F6B509.4000708@ct.jp.nec.com>
+References: <49F17409.4060201@ct.jp.nec.com> <49F17510.7010805@ct.jp.nec.com>
+	<49F17F74.6010307@suse.de>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <1240872495.22154.7.camel@chandra-ubuntu>
+In-Reply-To: <49F17F74.6010307@suse.de>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,59 +20,53 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: sekharan@linux.vnet.ibm.com
-Cc: Mike Anderson <andmike@us.ibm.com>, dm-devel <dm-devel@redhat.com>, Alasdair G Kergon <agk@redhat.com>, "Moger, Babu" <Babu.Moger@lsi.com>
+To: Hannes Reinecke <hare@suse.de>
+Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
 List-Id: dm-devel.ids
 
-Chandra Seetharaman wrote:
-> Resending the patch after fixing the header, Porting and testing in
-> 2.6.30-rc3, and a bug fix.
-> ---------------
-> There is a problem which was caused due to the architectural change mad=
-e
-> when we moved from dm hardware handler to SCSI hardware handler.
->=20
->   In dm, handler was called to do a pg_init for a path group, and there
->   was no state maintained in hardware handler code for each path.
->=20
->   In SCSI dh, "state" is maintanined per path, as we wanted to fail I/O
->   early on that path if it is not the active path.
->=20
->   All of the hardware handlers, do have a state now, and they are set t=
-o
->   active and (some form of) inactive. All of them have prep_fn(), which=
- use
->   this "state" to fail the I/O without it ever being sent to the device=
-.
->=20
-> So, in effect when dm-multipath calls scsi_dh_activate(), activate is
-> sent to only one path and the "state" of that path is changed appropria=
-tely
-> to "active" while other paths in the same path group are never changed
-> as they never got an "activate".
->=20
-> In order make sure all the paths in a path group gets their state set
-> properly when a pg_init happens, we need to call scsi_dh_activate() on
-> all paths in a path group.
->=20
-> Doing this at the hardware handler layer is not a good option as we
-> want the multipath layer to define the relationship between path and pa=
-th
-> groups and not the hardware handler.
->=20
-> Attached patch sends an "activate" on each path in a path group when a
-> path group is switched. It also sends an activate when a path is reinst=
-ated.
->=20
-> Patch is applied and tested on 2.6.30-rc3.
->=20
-> ----------
->=20
-> Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
-Acked-by: Hannes Reinecke <hare@suse.de>
+Hi Hannes,
 
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+On 2009/04/24 17:59 +0900, Hannes Reinecke wrote:
+> Hi Kiyoshi,
+> 
+> Kiyoshi Ueda wrote:
+>> This patch detects requests violating the queue limitations
+>> and rejects them.
+>>
+>> The same limitation checks are done when requests are submitted
+>> to the queue by blk_insert_cloned_request().
+>> However, such violation can happen if a table is swapped and
+>> the queue limitations are shrunk while some requests are
+>> in the queue.
+>>
+>> Since struct request is a reliable one in the block layer and
+>> device drivers, dispatching such requests is pretty dangerous.
+>> (e.g. it may cause kernel panic easily.)
+>> So avoid to dispatch such problematic requests in request-based dm.
+>>
+> This patch actually triggers accidentally during a no-paths scenario;
+> multipathing seems to flush all device details once all paths are gone,
+> so it'll fall back to the system defaults.
+> And then this check will trigger and kill all queued I/Os. Not good.
+> 
+> So either we fix device-mapper to keep the device details even for
+> the all-paths down scenario (basically we'd have to copy the device
+> details into the target_io structures and use that for comparison)
+> or we should rather not check here.
+
+Thank you for your review and the comment.
+I haven't understood the problem correctly yet.
+(e.g. Who flush the device details and how?  Restrictions are
+ changed when the table is swapped, but no table swapping should happen
+ even if the last path is gone while the device is in use.)
+
+Unfortunately, I can't read/send e-mail from Apr 29th throught May 7th
+because of long national holidays in Japan.
+I'll look at it after the holidays.
+
+> Cheers,
+> 
+> Hannes
+
+Thanks,
+Kiyoshi Ueda
