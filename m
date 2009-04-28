@@ -1,16 +1,11 @@
-From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 7/7] blkio-cgroup: Fast page tracking
-Date: Tue, 28 Apr 2009 21:47:40 +0900 (JST)
-Message-ID: <20090428.214740.183024301.ryov@valinux.co.jp>
-References: <20090428.214604.104034341.ryov@valinux.co.jp>
-	<20090428.214632.189725895.ryov@valinux.co.jp>
-	<20090428.214705.112621770.ryov@valinux.co.jp>
+From: Mikulas Patocka <mpatocka@redhat.com>
+Subject: [PATCH 1/2] dm-bdev-rename-suspended_bdev-to-bdev.patch
+Date: Tue, 28 Apr 2009 12:14:03 -0400 (EDT)
+Message-ID: <Pine.LNX.4.64.0904281211590.22533@hs20-bc2-1.build.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <20090428.214705.112621770.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,368 +15,138 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-This is an extra patch which reduces the overhead of IO tracking but
-increases the size of struct page_cgroup.
+Hi
 
-Based on 2.6.30-rc3-git3
-Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
-Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
+This is the first patch that keeps md->bdev. Note that you must apply both 
+patches, if you apply only this one, barriers will compile but don't work.
+
+Mikulas
 
 ---
- include/linux/biotrack.h    |    5 -
- include/linux/page_cgroup.h |   26 --------
- mm/biotrack.c               |  134 ++++++++++++++++++++++++++------------------
- 3 files changed, 87 insertions(+), 78 deletions(-)
 
-Index: linux-2.6.30-rc3-git3/mm/biotrack.c
+Rename suspended_bdev to bdev.
+
+This patch doesn't change any functionality, just renames the variable.
+In the next patch, the variable will be used even for non-suspended device.
+
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+
+---
+ drivers/md/dm.c |   36 ++++++++++++++++++------------------
+ 1 file changed, 18 insertions(+), 18 deletions(-)
+
+Index: linux-2.6.30-rc2-devel/drivers/md/dm.c
 ===================================================================
---- linux-2.6.30-rc3-git3.orig/mm/biotrack.c
-+++ linux-2.6.30-rc3-git3/mm/biotrack.c
-@@ -3,9 +3,6 @@
-  * Copyright (C) VA Linux Systems Japan, 2008-2009
-  * Developed by Hirokazu Takahashi <taka@valinux.co.jp>
-  *
-- * Copyright (C) 2008 Andrea Righi <righi.andrea@gmail.com>
-- * Use part of page_cgroup->flags to store blkio-cgroup ID.
-- *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License as published by
-  * the Free Software Foundation; either version 2 of the License, or
-@@ -20,6 +17,7 @@
- #include <linux/module.h>
- #include <linux/smp.h>
- #include <linux/bit_spinlock.h>
-+#include <linux/idr.h>
- #include <linux/blkdev.h>
- #include <linux/biotrack.h>
- #include <linux/mm_inline.h>
-@@ -45,8 +43,11 @@ static inline struct blkio_cgroup *blkio
- 					struct blkio_cgroup, css);
- }
- 
-+static struct idr blkio_cgroup_id;
-+static DEFINE_SPINLOCK(blkio_cgroup_idr_lock);
- static struct io_context default_blkio_io_context;
- static struct blkio_cgroup default_blkio_cgroup = {
-+	.id		= 0,
- 	.io_context	= &default_blkio_io_context,
- };
- 
-@@ -61,7 +62,6 @@ void blkio_cgroup_set_owner(struct page 
- {
- 	struct blkio_cgroup *biog;
- 	struct page_cgroup *pc;
--	unsigned long id;
- 
- 	if (blkio_cgroup_disabled())
- 		return;
-@@ -69,29 +69,27 @@ void blkio_cgroup_set_owner(struct page 
- 	if (unlikely(!pc))
- 		return;
- 
--	lock_page_cgroup(pc);
--	page_cgroup_set_id(pc, 0);	/* 0: default blkio_cgroup id */
--	unlock_page_cgroup(pc);
-+	pc->blkio_cgroup_id = 0;	/* 0: default blkio_cgroup id */
- 	if (!mm)
- 		return;
- 
-+	/*
-+	 * Locking "pc" isn't necessary here since the current process is
-+	 * the only one that can access the members related to blkio_cgroup.
-+	 */
- 	rcu_read_lock();
- 	biog = blkio_cgroup_from_task(rcu_dereference(mm->owner));
--	if (unlikely(!biog)) {
--		rcu_read_unlock();
--		return;
--	}
-+	if (unlikely(!biog))
-+		goto out;
- 	/*
- 	 * css_get(&bio->css) isn't called to increment the reference
- 	 * count of this blkio_cgroup "biog" so the css_id might turn
- 	 * invalid even if this page is still active.
- 	 * This approach is chosen to minimize the overhead.
+--- linux-2.6.30-rc2-devel.orig/drivers/md/dm.c	2009-04-15 16:23:23.000000000 +0200
++++ linux-2.6.30-rc2-devel/drivers/md/dm.c	2009-04-15 16:24:19.000000000 +0200
+@@ -168,7 +168,7 @@ struct mapped_device {
+ 	 * freeze/thaw support require holding onto a super block
  	 */
--	id = css_id(&biog->css);
-+	pc->blkio_cgroup_id = biog->id;
-+out:
- 	rcu_read_unlock();
--	lock_page_cgroup(pc);
--	page_cgroup_set_id(pc, id);
--	unlock_page_cgroup(pc);
+ 	struct super_block *frozen_sb;
+-	struct block_device *suspended_bdev;
++	struct block_device *bdev;
+ 
+ 	/* forced geometry settings */
+ 	struct hd_geometry geometry;
+@@ -1217,9 +1217,9 @@ static void free_dev(struct mapped_devic
+ {
+ 	int minor = MINOR(disk_devt(md->disk));
+ 
+-	if (md->suspended_bdev) {
++	if (md->bdev) {
+ 		unlock_fs(md);
+-		bdput(md->suspended_bdev);
++		bdput(md->bdev);
+ 	}
+ 	destroy_workqueue(md->wq);
+ 	mempool_destroy(md->tio_pool);
+@@ -1262,9 +1262,9 @@ static void __set_size(struct mapped_dev
+ {
+ 	set_capacity(md->disk, size);
+ 
+-	mutex_lock(&md->suspended_bdev->bd_inode->i_mutex);
+-	i_size_write(md->suspended_bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
+-	mutex_unlock(&md->suspended_bdev->bd_inode->i_mutex);
++	mutex_lock(&md->bdev->bd_inode->i_mutex);
++	i_size_write(md->bdev->bd_inode, (loff_t)size << SECTOR_SHIFT);
++	mutex_unlock(&md->bdev->bd_inode->i_mutex);
  }
  
- /**
-@@ -103,6 +101,13 @@ void blkio_cgroup_set_owner(struct page 
-  */
- void blkio_cgroup_reset_owner(struct page *page, struct mm_struct *mm)
- {
-+	/*
-+	 * A little trick:
-+	 * Just call blkio_cgroup_set_owner() for pages which are already
-+	 * active since the blkio_cgroup_id member of page_cgroup can be
-+	 * updated without any locks. This is because an integer type of
-+	 * variable can be set a new value at once on modern cpus.
-+	 */
- 	blkio_cgroup_set_owner(page, mm);
- }
+ static int __bind(struct mapped_device *md, struct dm_table *t)
+@@ -1280,7 +1280,7 @@ static int __bind(struct mapped_device *
+ 	if (size != get_capacity(md->disk))
+ 		memset(&md->geometry, 0, sizeof(md->geometry));
  
-@@ -133,7 +138,6 @@ void blkio_cgroup_reset_owner_pagedirty(
- void blkio_cgroup_copy_owner(struct page *npage, struct page *opage)
- {
- 	struct page_cgroup *npc, *opc;
--	unsigned long id;
+-	if (md->suspended_bdev)
++	if (md->bdev)
+ 		__set_size(md, size);
  
- 	if (blkio_cgroup_disabled())
+ 	if (!size) {
+@@ -1524,7 +1524,7 @@ int dm_swap_table(struct mapped_device *
+ 		goto out;
+ 
+ 	/* without bdev, the device size cannot be changed */
+-	if (!md->suspended_bdev)
++	if (!md->bdev)
+ 		if (get_capacity(md->disk) != dm_table_get_size(table))
+ 			goto out;
+ 
+@@ -1546,7 +1546,7 @@ static int lock_fs(struct mapped_device 
+ 
+ 	WARN_ON(md->frozen_sb);
+ 
+-	md->frozen_sb = freeze_bdev(md->suspended_bdev);
++	md->frozen_sb = freeze_bdev(md->bdev);
+ 	if (IS_ERR(md->frozen_sb)) {
+ 		r = PTR_ERR(md->frozen_sb);
+ 		md->frozen_sb = NULL;
+@@ -1566,7 +1566,7 @@ static void unlock_fs(struct mapped_devi
+ 	if (!test_bit(DMF_FROZEN, &md->flags))
  		return;
-@@ -144,12 +148,11 @@ void blkio_cgroup_copy_owner(struct page
- 	if (unlikely(!opc))
- 		return;
  
--	lock_page_cgroup(opc);
--	lock_page_cgroup(npc);
--	id = page_cgroup_get_id(opc);
--	page_cgroup_set_id(npc, id);
--	unlock_page_cgroup(npc);
--	unlock_page_cgroup(opc);
-+	/*
-+	 * Do this without any locks. The reason is the same as
-+	 * blkio_cgroup_reset_owner().
-+	 */
-+	npc->blkio_cgroup_id = opc->blkio_cgroup_id;
+-	thaw_bdev(md->suspended_bdev, md->frozen_sb);
++	thaw_bdev(md->bdev, md->frozen_sb);
+ 	md->frozen_sb = NULL;
+ 	clear_bit(DMF_FROZEN, &md->flags);
  }
+@@ -1606,8 +1606,8 @@ int dm_suspend(struct mapped_device *md,
  
- /* Create a new blkio-cgroup. */
-@@ -158,25 +161,44 @@ blkio_cgroup_create(struct cgroup_subsys
- {
- 	struct blkio_cgroup *biog;
- 	struct io_context *ioc;
-+	int ret;
+ 	/* bdget() can stall if the pending I/Os are not flushed */
+ 	if (!noflush) {
+-		md->suspended_bdev = bdget_disk(md->disk, 0);
+-		if (!md->suspended_bdev) {
++		md->bdev = bdget_disk(md->disk, 0);
++		if (!md->bdev) {
+ 			DMWARN("bdget failed in dm_suspend");
+ 			r = -ENOMEM;
+ 			goto out;
+@@ -1678,9 +1678,9 @@ int dm_suspend(struct mapped_device *md,
+ 	set_bit(DMF_SUSPENDED, &md->flags);
  
- 	if (!cgrp->parent) {
- 		biog = &default_blkio_cgroup;
- 		init_io_context(biog->io_context);
- 		/* Increment the referrence count not to be released ever. */
- 		atomic_inc(&biog->io_context->refcount);
-+		idr_init(&blkio_cgroup_id);
- 		return &biog->css;
+ out:
+-	if (r && md->suspended_bdev) {
+-		bdput(md->suspended_bdev);
+-		md->suspended_bdev = NULL;
++	if (r && md->bdev) {
++		bdput(md->bdev);
++		md->bdev = NULL;
  	}
  
- 	biog = kzalloc(sizeof(*biog), GFP_KERNEL);
--	if (!biog)
--		return ERR_PTR(-ENOMEM);
- 	ioc = alloc_io_context(GFP_KERNEL, -1);
--	if (!ioc) {
--		kfree(biog);
--		return ERR_PTR(-ENOMEM);
-+	if (!ioc || !biog) {
-+		ret = -ENOMEM;
-+		goto out_err;
+ 	dm_table_put(map);
+@@ -1711,9 +1711,9 @@ int dm_resume(struct mapped_device *md)
+ 
+ 	unlock_fs(md);
+ 
+-	if (md->suspended_bdev) {
+-		bdput(md->suspended_bdev);
+-		md->suspended_bdev = NULL;
++	if (md->bdev) {
++		bdput(md->bdev);
++		md->bdev = NULL;
  	}
- 	biog->io_context = ioc;
-+retry:
-+	if (!idr_pre_get(&blkio_cgroup_id, GFP_KERNEL)) {
-+		ret = -EAGAIN;
-+		goto out_err;
-+	}
-+	spin_lock_irq(&blkio_cgroup_idr_lock);
-+	ret = idr_get_new_above(&blkio_cgroup_id, (void *)biog, 1, &biog->id);
-+	spin_unlock_irq(&blkio_cgroup_idr_lock);
-+	if (ret == -EAGAIN)
-+		goto retry;
-+	else if (ret)
-+		goto out_err;
-+
- 	return &biog->css;
-+out_err:
-+	if (biog)
-+		kfree(biog);
-+	if (ioc)
-+		put_io_context(ioc);
-+	return ERR_PTR(ret);
- }
  
- /* Delete the blkio-cgroup. */
-@@ -185,10 +207,28 @@ static void blkio_cgroup_destroy(struct 
- 	struct blkio_cgroup *biog = cgroup_blkio(cgrp);
- 
- 	put_io_context(biog->io_context);
--	free_css_id(&blkio_cgroup_subsys, &biog->css);
-+
-+	spin_lock_irq(&blkio_cgroup_idr_lock);
-+	idr_remove(&blkio_cgroup_id, biog->id);
-+	spin_unlock_irq(&blkio_cgroup_idr_lock);
-+
- 	kfree(biog);
- }
- 
-+static struct blkio_cgroup *find_blkio_cgroup(int id)
-+{
-+	struct blkio_cgroup *biog;
-+	spin_lock_irq(&blkio_cgroup_idr_lock);
-+	/*
-+	 * It might fail to find A bio-group associated with "id" since it
-+	 * is allowed to remove the bio-cgroup even when some of I/O requests
-+	 * this group issued haven't completed yet.
-+	 */
-+	biog = (struct blkio_cgroup *)idr_find(&blkio_cgroup_id, id);
-+	spin_unlock_irq(&blkio_cgroup_idr_lock);
-+	return biog;
-+}
-+
- /**
-  * get_blkio_cgroup_id() - determine the blkio-cgroup ID
-  * @bio:	the &struct bio which describes the I/O
-@@ -200,14 +240,11 @@ unsigned long get_blkio_cgroup_id(struct
- {
- 	struct page_cgroup *pc;
- 	struct page *page = bio_iovec_idx(bio, 0)->bv_page;
--	unsigned long id = 0;
-+	int	id = 0;
- 
- 	pc = lookup_page_cgroup(page);
--	if (pc) {
--		lock_page_cgroup(pc);
--		id = page_cgroup_get_id(pc);
--		unlock_page_cgroup(pc);
--	}
-+	if (pc)
-+		id = pc->blkio_cgroup_id;
- 	return id;
- }
- 
-@@ -219,21 +256,17 @@ unsigned long get_blkio_cgroup_id(struct
-  */
- struct io_context *get_blkio_cgroup_iocontext(struct bio *bio)
- {
--	struct cgroup_subsys_state *css;
--	struct blkio_cgroup *biog;
-+	struct blkio_cgroup *biog = NULL;
- 	struct io_context *ioc;
--	unsigned long id;
-+	int	id = 0;
- 
- 	id = get_blkio_cgroup_id(bio);
--	rcu_read_lock();
--	css = css_lookup(&blkio_cgroup_subsys, id);
--	if (css)
--		biog = container_of(css, struct blkio_cgroup, css);
--	else
-+	if (id)
-+		biog = find_blkio_cgroup(id);
-+	if (!biog)
- 		biog = &default_blkio_cgroup;
- 	ioc = biog->io_context;	/* default io_context for this cgroup */
- 	atomic_inc(&ioc->refcount);
--	rcu_read_unlock();
- 	return ioc;
- }
- 
-@@ -249,17 +282,15 @@ struct io_context *get_blkio_cgroup_ioco
-  */
- struct cgroup *blkio_cgroup_lookup(int id)
- {
--	struct cgroup *cgrp;
--	struct cgroup_subsys_state *css;
-+	struct blkio_cgroup *biog = NULL;
- 
- 	if (blkio_cgroup_disabled())
- 		return NULL;
--
--	css = css_lookup(&blkio_cgroup_subsys, id);
--	if (!css)
-+	if (id)
-+		biog = find_blkio_cgroup(id);
-+	if (!biog)
- 		return NULL;
--	cgrp = css->cgroup;
--	return cgrp;
-+	return biog->css.cgroup;
- }
- EXPORT_SYMBOL(get_blkio_cgroup_iocontext);
- EXPORT_SYMBOL(get_blkio_cgroup_id);
-@@ -273,7 +304,7 @@ static u64 blkio_id_read(struct cgroup *
- 	rcu_read_lock();
- 	id = css_id(&biog->css);
- 	rcu_read_unlock();
--	return (u64)id;
-+	return (u64) biog->id;
- }
- 
- 
-@@ -296,5 +327,4 @@ struct cgroup_subsys blkio_cgroup_subsys
- 	.destroy	= blkio_cgroup_destroy,
- 	.populate	= blkio_cgroup_populate,
- 	.subsys_id	= blkio_cgroup_subsys_id,
--	.use_id		= 1,
- };
-Index: linux-2.6.30-rc3-git3/include/linux/biotrack.h
-===================================================================
---- linux-2.6.30-rc3-git3.orig/include/linux/biotrack.h
-+++ linux-2.6.30-rc3-git3/include/linux/biotrack.h
-@@ -12,6 +12,7 @@ struct block_device;
- 
- struct blkio_cgroup {
- 	struct cgroup_subsys_state css;
-+	int id;
- 	struct io_context *io_context;	/* default io_context */
- /*	struct radix_tree_root io_context_root; per device io_context */
- };
-@@ -24,9 +25,7 @@ struct blkio_cgroup {
-  */
- static inline void __init_blkio_page_cgroup(struct page_cgroup *pc)
- {
--	lock_page_cgroup(pc);
--	page_cgroup_set_id(pc, 0);
--	unlock_page_cgroup(pc);
-+	pc->blkio_cgroup_id = 0;
- }
- 
- /**
-Index: linux-2.6.30-rc3-git3/include/linux/page_cgroup.h
-===================================================================
---- linux-2.6.30-rc3-git3.orig/include/linux/page_cgroup.h
-+++ linux-2.6.30-rc3-git3/include/linux/page_cgroup.h
-@@ -17,6 +17,9 @@ struct page_cgroup {
- 	struct mem_cgroup *mem_cgroup;
- 	struct list_head lru;		/* per cgroup LRU list */
- #endif
-+#ifdef CONFIG_CGROUP_BLKIO
-+	int blkio_cgroup_id;
-+#endif
- };
- 
- void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat);
-@@ -124,27 +127,4 @@ static inline void swap_cgroup_swapoff(i
- }
- 
- #endif
--
--#ifdef CONFIG_CGROUP_BLKIO
--/*
-- * use lower 16 bits for flags and reserve the rest for the page tracking id
-- */
--#define PCG_TRACKING_ID_SHIFT	(16)
--#define PCG_TRACKING_ID_BITS \
--	(8 * sizeof(unsigned long) - PCG_TRACKING_ID_SHIFT)
--
--/* NOTE: must be called with page_cgroup() held */
--static inline unsigned long page_cgroup_get_id(struct page_cgroup *pc)
--{
--	return pc->flags >> PCG_TRACKING_ID_SHIFT;
--}
--
--/* NOTE: must be called with page_cgroup() held */
--static inline void page_cgroup_set_id(struct page_cgroup *pc, unsigned long id)
--{
--	WARN_ON(id >= (1UL << PCG_TRACKING_ID_BITS));
--	pc->flags &= (1UL << PCG_TRACKING_ID_SHIFT) - 1;
--	pc->flags |= (unsigned long)(id << PCG_TRACKING_ID_SHIFT);
--}
--#endif
- #endif
+ 	clear_bit(DMF_SUSPENDED, &md->flags);
