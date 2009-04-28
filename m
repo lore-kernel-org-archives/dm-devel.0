@@ -1,270 +1,184 @@
-From: Chandra Seetharaman <sekharan@us.ibm.com>
-Subject: [PATCH 3/3] scsi_dh: rdac handler: Batch up MODE SELECTs and send few of them
-Date: Mon, 27 Apr 2009 19:52:48 -0700
-Message-ID: <20090428025248.11108.38596.sendpatchset@chandra-ubuntu>
-References: <20090428025230.11108.88559.sendpatchset@chandra-ubuntu>
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <20090428025230.11108.88559.sendpatchset@chandra-ubuntu>
-Sender: linux-scsi-owner@vger.kernel.org
-To: linux-scsi@vger.kernel.org
-Cc: dm-devel@redhat.com, babu.moger@lsi.com, michaelc@cs.wisc.edu, Chandra Seetharaman <sekharan@us.ibm.com>
+From: Nikanth Karthikesan <knikanth@suse.de>
+Subject: Re: [PATCH] dm mpath: delay retry activate_path on
+	SCSI_DH_RETRY
+Date: Tue, 28 Apr 2009 11:45:39 +0530
+Message-ID: <200904281145.40357.knikanth@suse.de>
+Reply-To: device-mapper development <dm-devel@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Alasdair G Kergon <agk@redhat.com>
+Cc: device-mapper development <dm-devel@redhat.com>, sekharan@linux.vnet.ibm.com
 List-Id: dm-devel.ids
 
-Batch up MODE_SELECT in rdac device handler.
+On Saturday 21 February 2009 02:41:33 Chandra Seetharaman wrote:
+> On Fri, 2009-02-20 at 10:33 +0530, Nikanth Karthikesan wrote:
+> > On Friday 20 February 2009 06:15:29 Chandra Seetharaman wrote:
+> > > On Thu, 2009-02-19 at 12:40 +0530, Nikanth Karthikesan wrote:
+> > >
+> >
+> > I missed resetting pg_init_delay to zero after using it. I have attached
+> > the corrected patch with this. This variable keeps the code
+> > cleaner(avoids taking m->lock). Also having only a boolean in struct
+> > multipath keeps it a bit smaller.
+>
+> Ok. I am fine with your justification.
+>
+> > off-topic:
+> > I think struct multipath can be shrunk even further by making various
+> > flags like pg_init_required, pg_init_in_progress, queue_io,
+> > queue_if_no_path, saved_queue_if_no_path in to a single variable.
+> > Thoughts?
+>
+> As Konrad mentioned, it is worth the cost of readability ?
+>
+>
 
-LSI RDAC storage has the capability of handling mode selects for
-multiple luns in a same command. Make use of that ability to send
-as few MODE SELECTs as possible to the storage controller as possible.
+I think based on the above off-topic comment you had mistakenly marked this in 
+patch-work as changes requested.
 
-This patch creates a work queue and queues up activate requests
-when a MODE SELECT is sent down the wire. When that MODE SELECT 
-completes, it compiles queued up activate requests for multiple
-luns into a single MODE SELECT.
+> <snip>
+>
+> > SCSI Device Handlers return SCSI_DH_IMM_RETRY if we could retry
+> > immediately and SCSI_DH_RETRY in cases where it is better to retry
+> > after some delay.
+> >
+> > Currently we retry immediately irrespective of SCSI_DH_IMM_RETRY and
+> > SCSI_DH_RETRY.  This patch adds a 2 second delay before retrying to
+> > activate a device, if it returns SCSI_DH_RETRY.
+> >
+> > Signed-off-by: Nikanth Karthikesan <knikanth@suse.de>
+>
+> Acked-by: Chandra Seetharaman <sekharan@us.ibm.com>
+>
 
-This reduces the time to do failover/failback of large number of LUNS.
+All the comments received were incorporated already.
 
-Signed-off-by: Babu Moger <babu.moger@lsi.com>
-Signed-off-by: Chandra Seetharaman <sekharan@us.ibm.com>
+Can you merge this?
 
----
- drivers/scsi/device_handler/scsi_dh_rdac.c |  117 ++++++++++++++++++++++++++---
- 1 file changed, 104 insertions(+), 13 deletions(-)
+Thanks
+Nikanth
 
-Index: linux-2.6.29/drivers/scsi/device_handler/scsi_dh_rdac.c
-===================================================================
---- linux-2.6.29.orig/drivers/scsi/device_handler/scsi_dh_rdac.c
-+++ linux-2.6.29/drivers/scsi/device_handler/scsi_dh_rdac.c
-@@ -22,6 +22,7 @@
- #include <scsi/scsi.h>
- #include <scsi/scsi_eh.h>
- #include <scsi/scsi_dh.h>
-+#include <linux/workqueue.h>
- 
- #define RDAC_NAME "rdac"
- #define RDAC_RETRY_COUNT 5
-@@ -135,6 +136,11 @@ struct rdac_controller {
- 		struct rdac_pg_legacy legacy;
- 		struct rdac_pg_expanded expanded;
- 	} mode_select;
-+	spinlock_t		ms_lock;
-+	int			ms_queued;
-+	struct work_struct	ms_work;
-+	struct scsi_device	*ms_sdev;
-+	struct list_head	ms_head;
- };
- struct c8_inquiry {
- 	u8	peripheral_info;
-@@ -195,8 +201,17 @@ static const char *lun_state[] =
- 	"owned (AVT mode)",
- };
- 
-+struct rdac_queue_data {
-+	struct list_head	entry;
-+	struct rdac_dh_data	*h;
-+	activate_complete	callback_fn;
-+	void			*callback_data;
-+};
-+
- static LIST_HEAD(ctlr_list);
- static DEFINE_SPINLOCK(list_lock);
-+static struct workqueue_struct *kmpath_rdacd;
-+static void send_mode_select(struct work_struct *work);
- 
- static inline struct rdac_dh_data *get_rdac_data(struct scsi_device *sdev)
- {
-@@ -253,7 +268,6 @@ static struct request *rdac_failover_get
- 		rdac_pg->subpage_code = 0x1;
- 		rdac_pg->page_len[0] = 0x01;
- 		rdac_pg->page_len[1] = 0x28;
--		rdac_pg->lun_table[h->lun] = 0x81;
- 	} else {
- 		struct rdac_pg_legacy *rdac_pg;
- 
-@@ -263,7 +277,6 @@ static struct request *rdac_failover_get
- 		common = &rdac_pg->common;
- 		rdac_pg->page_code = RDAC_PAGE_CODE_REDUNDANT_CONTROLLER;
- 		rdac_pg->page_len = 0x68;
--		rdac_pg->lun_table[h->lun] = 0x81;
- 	}
- 	common->rdac_mode[1] = RDAC_MODE_TRANSFER_SPECIFIED_LUNS;
- 	common->quiescence_timeout = RDAC_QUIESCENCE_TIME;
-@@ -297,6 +310,7 @@ static void release_controller(struct kr
- 	struct rdac_controller *ctlr;
- 	ctlr = container_of(kref, struct rdac_controller, kref);
- 
-+	flush_workqueue(kmpath_rdacd);
- 	spin_lock(&list_lock);
- 	list_del(&ctlr->node);
- 	spin_unlock(&list_lock);
-@@ -326,6 +340,11 @@ static struct rdac_controller *get_contr
- 	memcpy(ctlr->slot_id, slot_id, SLOT_ID_LEN);
- 	kref_init(&ctlr->kref);
- 	ctlr->use_ms10 = -1;
-+	ctlr->ms_queued = 0;
-+	ctlr->ms_sdev = NULL;
-+	spin_lock_init(&ctlr->ms_lock);
-+	INIT_WORK(&ctlr->ms_work, send_mode_select);
-+	INIT_LIST_HEAD(&ctlr->ms_head);
- 	list_add(&ctlr->node, &ctlr_list);
- done:
- 	spin_unlock(&list_lock);
-@@ -445,8 +464,7 @@ static int set_mode_select(struct scsi_d
- 	return err;
- }
- 
--static int mode_select_handle_sense(struct scsi_device *sdev,
--				    unsigned char *sensebuf)
-+static int mode_select_handle_sense(unsigned char *sensebuf)
- {
- 	struct scsi_sense_hdr sense_hdr;
- 	int err = SCSI_DH_IO, ret;
-@@ -478,7 +496,7 @@ static int mode_select_handle_sense(stru
- 			err = SCSI_DH_RETRY;
- 		break;
- 	default:
--		sdev_printk(KERN_INFO, sdev,
-+		printk(KERN_INFO
- 			    "MODE_SELECT failed with sense %02x/%02x/%02x.\n",
- 			    sense_hdr.sense_key, sense_hdr.asc, sense_hdr.ascq);
- 	}
-@@ -487,11 +505,29 @@ done:
- 	return err;
- }
- 
--static int send_mode_select(struct scsi_device *sdev, struct rdac_dh_data *h)
-+static void send_mode_select(struct work_struct *work)
- {
-+	struct rdac_controller *ctlr =
-+		container_of(work, struct rdac_controller, ms_work);
- 	struct request *rq;
-+	struct scsi_device *sdev = ctlr->ms_sdev;
-+	struct rdac_dh_data *h = get_rdac_data(sdev);
- 	struct request_queue *q = sdev->request_queue;
- 	int err, retry_cnt = RDAC_RETRY_COUNT;
-+	struct rdac_queue_data *tmp, *qdata;
-+	LIST_HEAD(list);
-+	u8 *lun_table;
-+
-+	spin_lock(&ctlr->ms_lock);
-+	list_splice_init(&ctlr->ms_head, &list);
-+	ctlr->ms_queued = 0;
-+	ctlr->ms_sdev = NULL;
-+	spin_unlock(&ctlr->ms_lock);
-+
-+	if (ctlr->use_ms10)
-+		lun_table = ctlr->mode_select.expanded.lun_table;
-+	else
-+		lun_table = ctlr->mode_select.legacy.lun_table;
- 
- retry:
- 	err = SCSI_DH_RES_TEMP_UNAVAIL;
-@@ -499,13 +535,17 @@ retry:
- 	if (!rq)
- 		goto done;
- 
--	sdev_printk(KERN_INFO, sdev, "%s MODE_SELECT command.\n",
-+ 	list_for_each_entry(qdata, &list, entry) {
-+		lun_table[qdata->h->lun] = 0x81;
-+	}
-+
-+	printk(KERN_INFO "%s MODE_SELECT command.\n",
- 		(retry_cnt == RDAC_RETRY_COUNT) ? "queueing" : "retrying");
- 
- 	err = blk_execute_rq(q, NULL, rq, 1);
- 	blk_put_request(rq);
- 	if (err != SCSI_DH_OK) {
--		err = mode_select_handle_sense(sdev, h->sense);
-+		err = mode_select_handle_sense(h->sense);
- 		if (err == SCSI_DH_RETRY && retry_cnt--)
- 			goto retry;
- 	}
-@@ -513,10 +553,45 @@ retry:
- 		h->state = RDAC_STATE_ACTIVE;
- 
- done:
--	return err;
-+	list_for_each_entry_safe(qdata, tmp, &list, entry) {
-+		list_del(&qdata->entry);
-+		if (err == SCSI_DH_OK)
-+			qdata->h->state = RDAC_STATE_ACTIVE;
-+		if (qdata->callback_fn)
-+			qdata->callback_fn(qdata->callback_data, err);
-+		kfree(qdata);
-+	}
-+	return;
- }
- 
--static int rdac_activate(struct scsi_device *sdev, activate_complete fn, void *data)
-+static int queue_mode_select(struct scsi_device *sdev,
-+				activate_complete fn, void *data)
-+{
-+	struct rdac_queue_data *qdata;
-+	struct rdac_controller *ctlr;
-+
-+	qdata = kzalloc(sizeof(*qdata), GFP_KERNEL);
-+	if (!qdata)
-+		return SCSI_DH_RETRY;
-+
-+ 	qdata->h = get_rdac_data(sdev);
-+	qdata->callback_fn = fn;
-+	qdata->callback_data = data;
-+
-+	ctlr = qdata->h->ctlr;
-+	spin_lock(&ctlr->ms_lock);
-+	list_add_tail(&qdata->entry, &ctlr->ms_head);
-+	if (!ctlr->ms_queued) {
-+		ctlr->ms_queued = 1;
-+		ctlr->ms_sdev = sdev;
-+		queue_work(kmpath_rdacd, &ctlr->ms_work);
-+	}
-+	spin_unlock(&ctlr->ms_lock);
-+	return SCSI_DH_OK;
-+}
-+
-+static int rdac_activate(struct scsi_device *sdev,
-+				activate_complete fn, void *data)
- {
- 	struct rdac_dh_data *h = get_rdac_data(sdev);
- 	int err = SCSI_DH_OK;
-@@ -536,8 +611,11 @@ static int rdac_activate(struct scsi_dev
- 		if (err != SCSI_DH_OK)
- 			goto done;
- 	}
--	if (h->lun_state == RDAC_LUN_UNOWNED)
--		err = send_mode_select(sdev, h);
-+	if (h->lun_state == RDAC_LUN_UNOWNED) {
-+		err = queue_mode_select(sdev, fn, data);
-+		if (err == SCSI_DH_OK)
-+			return 0;
-+	}
- done:
- 	if (fn)
- 		fn(data, err);
-@@ -720,13 +798,26 @@ static int __init rdac_init(void)
- 	int r;
- 
- 	r = scsi_register_device_handler(&rdac_dh);
--	if (r != 0)
-+	if (r != 0) {
- 		printk(KERN_ERR "Failed to register scsi device handler.");
-+		goto done;
-+	}
-+
-+	/*
-+	 * Create workqueue to handle mode selects for rdac
-+	 */
-+	kmpath_rdacd = create_singlethread_workqueue("kmpath_rdacd");
-+	if (!kmpath_rdacd) {
-+		scsi_unregister_device_handler(&rdac_dh);
-+		printk(KERN_ERR "kmpath_rdacd creation failed.\n");
-+	}
-+done:
- 	return r;
- }
- 
- static void __exit rdac_exit(void)
- {
-+	destroy_workqueue(kmpath_rdacd);
- 	scsi_unregister_device_handler(&rdac_dh);
- }
- 
+> > ---
+> >
+> > diff --git a/drivers/md/dm-mpath.c b/drivers/md/dm-mpath.c
+> > index 095f77b..7ddf775 100644
+> > --- a/drivers/md/dm-mpath.c
+> > +++ b/drivers/md/dm-mpath.c
+> > @@ -65,12 +65,13 @@ struct multipath {
+> >  	spinlock_t lock;
+> >
+> >  	const char *hw_handler_name;
+> > -	struct work_struct activate_path;
+> > +	struct delayed_work activate_path;
+> >  	struct pgpath *pgpath_to_activate;
+> >  	unsigned nr_priority_groups;
+> >  	struct list_head priority_groups;
+> >  	unsigned pg_init_required;	/* pg_init needs calling? */
+> >  	unsigned pg_init_in_progress;	/* Only one pg_init allowed at once */
+> > +	unsigned pg_init_delay;		/* delay required before retry? */
+> >
+> >  	unsigned nr_valid_paths;	/* Total number of usable paths */
+> >  	struct pgpath *current_pgpath;
+> > @@ -203,7 +204,7 @@ static struct multipath *alloc_multipath(struct
+> > dm_target *ti) m->queue_io = 1;
+> >  		INIT_WORK(&m->process_queued_ios, process_queued_ios);
+> >  		INIT_WORK(&m->trigger_event, trigger_event);
+> > -		INIT_WORK(&m->activate_path, activate_path);
+> > +		INIT_DELAYED_WORK(&m->activate_path, activate_path);
+> >  		m->mpio_pool = mempool_create_slab_pool(MIN_IOS, _mpio_cache);
+> >  		if (!m->mpio_pool) {
+> >  			kfree(m);
+> > @@ -431,6 +432,7 @@ static void process_queued_ios(struct work_struct
+> > *work) struct pgpath *pgpath = NULL;
+> >  	unsigned init_required = 0, must_queue = 1;
+> >  	unsigned long flags;
+> > +	unsigned long delay = 0;
+> >
+> >  	spin_lock_irqsave(&m->lock, flags);
+> >
+> > @@ -452,13 +454,17 @@ static void process_queued_ios(struct work_struct
+> > *work) m->pg_init_required = 0;
+> >  		m->pg_init_in_progress = 1;
+> >  		init_required = 1;
+> > +		if (m->pg_init_delay) {
+> > +			delay = SCSI_DH_RETRY_DELAY;
+> > +			m->pg_init_delay = 0;
+> > +		}
+> >  	}
+> >
+> >  out:
+> >  	spin_unlock_irqrestore(&m->lock, flags);
+> >
+> >  	if (init_required)
+> > -		queue_work(kmpath_handlerd, &m->activate_path);
+> > +		queue_delayed_work(kmpath_handlerd, &m->activate_path, delay);
+> >
+> >  	if (!must_queue)
+> >  		dispatch_queued_ios(m);
+> > @@ -1060,6 +1066,7 @@ static void pg_init_done(struct dm_path *path, int
+> > errors) struct priority_group *pg = pgpath->pg;
+> >  	struct multipath *m = pg->m;
+> >  	unsigned long flags;
+> > +	unsigned delay = 0;
+> >
+> >  	/* device or driver problems */
+> >  	switch (errors) {
+> > @@ -1084,8 +1091,11 @@ static void pg_init_done(struct dm_path *path, int
+> > errors) */
+> >  		bypass_pg(m, pg, 1);
+> >  		break;
+> > -	/* TODO: For SCSI_DH_RETRY we should wait a couple seconds */
+> > +	/*
+> > +	 * For SCSI_DH_RETRY we wait before retrying.
+> > +	 */
+> >  	case SCSI_DH_RETRY:
+> > +		delay = 1;
+> >  	case SCSI_DH_IMM_RETRY:
+> >  	case SCSI_DH_RES_TEMP_UNAVAIL:
+> >  		if (pg_init_limit_reached(m, pgpath))
+> > @@ -1112,6 +1122,7 @@ static void pg_init_done(struct dm_path *path, int
+> > errors) }
+> >
+> >  	m->pg_init_in_progress = 0;
+> > +	m->pg_init_delay = delay;
+> >  	queue_work(kmultipathd, &m->process_queued_ios);
+> >  	spin_unlock_irqrestore(&m->lock, flags);
+> >  }
+> > @@ -1120,7 +1131,7 @@ static void activate_path(struct work_struct *work)
+> >  {
+> >  	int ret;
+> >  	struct multipath *m =
+> > -		container_of(work, struct multipath, activate_path);
+> > +		container_of(work, struct multipath, activate_path.work);
+> >  	struct dm_path *path;
+> >  	unsigned long flags;
+> >
+> > diff --git a/include/scsi/scsi_dh.h b/include/scsi/scsi_dh.h
+> > index 33efce2..f099d86 100644
+> > --- a/include/scsi/scsi_dh.h
+> > +++ b/include/scsi/scsi_dh.h
+> > @@ -55,6 +55,10 @@ enum {
+> >  	SCSI_DH_NOSYS,
+> >  	SCSI_DH_DRIVER_MAX,
+> >  };
+> > +
+> > +/* Time to wait before retry in case of SCSI_DH_RETRY */
+> > +#define SCSI_DH_RETRY_DELAY ((HZ * 2))
+> > +
+> >  #if defined(CONFIG_SCSI_DH) || defined(CONFIG_SCSI_DH_MODULE)
+> >  extern int scsi_dh_activate(struct request_queue *);
+> >  extern int scsi_dh_handler_exist(const char *);
+> > &#0;
