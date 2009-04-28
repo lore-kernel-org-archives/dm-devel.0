@@ -1,16 +1,14 @@
-From: Kiyoshi Ueda <k-ueda@ct.jp.nec.com>
-Subject: Re: [PATCH 5/7] dm core: reject I/O violating new queue
-	limits
-Date: Tue, 28 Apr 2009 16:49:29 +0900
-Message-ID: <49F6B509.4000708@ct.jp.nec.com>
-References: <49F17409.4060201@ct.jp.nec.com> <49F17510.7010805@ct.jp.nec.com>
-	<49F17F74.6010307@suse.de>
+From: Ryo Tsuruta <ryov@valinux.co.jp>
+Subject: [PATCH 2/7] blkio-cgroup: The new page_cgroup framework
+Date: Tue, 28 Apr 2009 21:44:57 +0900 (JST)
+Message-ID: <20090428.214457.226801820.ryov@valinux.co.jp>
+References: <20090428.214423.193684619.ryov@valinux.co.jp>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <49F17F74.6010307@suse.de>
+In-Reply-To: <20090428.214423.193684619.ryov@valinux.co.jp>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -20,53 +18,163 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: Hannes Reinecke <hare@suse.de>
-Cc: device-mapper development <dm-devel@redhat.com>, Alasdair Kergon <agk@redhat.com>
+To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Hi Hannes,
+This patch makes the page_cgroup framework be able to be used even if
+the compile option of the cgroup memory controller is off.
+So blkio-cgroup can use this framework without the memory controller.
 
-On 2009/04/24 17:59 +0900, Hannes Reinecke wrote:
-> Hi Kiyoshi,
-> 
-> Kiyoshi Ueda wrote:
->> This patch detects requests violating the queue limitations
->> and rejects them.
->>
->> The same limitation checks are done when requests are submitted
->> to the queue by blk_insert_cloned_request().
->> However, such violation can happen if a table is swapped and
->> the queue limitations are shrunk while some requests are
->> in the queue.
->>
->> Since struct request is a reliable one in the block layer and
->> device drivers, dispatching such requests is pretty dangerous.
->> (e.g. it may cause kernel panic easily.)
->> So avoid to dispatch such problematic requests in request-based dm.
->>
-> This patch actually triggers accidentally during a no-paths scenario;
-> multipathing seems to flush all device details once all paths are gone,
-> so it'll fall back to the system defaults.
-> And then this check will trigger and kill all queued I/Os. Not good.
-> 
-> So either we fix device-mapper to keep the device details even for
-> the all-paths down scenario (basically we'd have to copy the device
-> details into the target_io structures and use that for comparison)
-> or we should rather not check here.
+Based on 2.6.30-rc3-git3
+Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
 
-Thank you for your review and the comment.
-I haven't understood the problem correctly yet.
-(e.g. Who flush the device details and how?  Restrictions are
- changed when the table is swapped, but no table swapping should happen
- even if the last path is gone while the device is in use.)
+---
+ include/linux/memcontrol.h  |    6 ++++++
+ include/linux/mmzone.h      |    4 ++--
+ include/linux/page_cgroup.h |    8 +++++---
+ init/Kconfig                |    4 ++++
+ mm/Makefile                 |    3 ++-
+ mm/memcontrol.c             |    6 ++++++
+ mm/page_cgroup.c            |    3 +--
+ 7 files changed, 26 insertions(+), 8 deletions(-)
 
-Unfortunately, I can't read/send e-mail from Apr 29th throught May 7th
-because of long national holidays in Japan.
-I'll look at it after the holidays.
-
-> Cheers,
-> 
-> Hannes
-
-Thanks,
-Kiyoshi Ueda
+Index: linux-2.6.30-rc3-git3/include/linux/memcontrol.h
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/include/linux/memcontrol.h
++++ linux-2.6.30-rc3-git3/include/linux/memcontrol.h
+@@ -37,6 +37,8 @@ struct mm_struct;
+  * (Of course, if memcg does memory allocation in future, GFP_KERNEL is sane.)
+  */
+ 
++extern void __init_mem_page_cgroup(struct page_cgroup *pc);
++
+ extern int mem_cgroup_newpage_charge(struct page *page, struct mm_struct *mm,
+ 				gfp_t gfp_mask);
+ /* for swap handling */
+@@ -120,6 +122,10 @@ extern bool mem_cgroup_oom_called(struct
+ #else /* CONFIG_CGROUP_MEM_RES_CTLR */
+ struct mem_cgroup;
+ 
++static inline void __init_mem_page_cgroup(struct page_cgroup *pc)
++{
++}
++
+ static inline int mem_cgroup_newpage_charge(struct page *page,
+ 					struct mm_struct *mm, gfp_t gfp_mask)
+ {
+Index: linux-2.6.30-rc3-git3/include/linux/mmzone.h
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/include/linux/mmzone.h
++++ linux-2.6.30-rc3-git3/include/linux/mmzone.h
+@@ -607,7 +607,7 @@ typedef struct pglist_data {
+ 	int nr_zones;
+ #ifdef CONFIG_FLAT_NODE_MEM_MAP	/* means !SPARSEMEM */
+ 	struct page *node_mem_map;
+-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++#ifdef CONFIG_CGROUP_PAGE
+ 	struct page_cgroup *node_page_cgroup;
+ #endif
+ #endif
+@@ -958,7 +958,7 @@ struct mem_section {
+ 
+ 	/* See declaration of similar field in struct zone */
+ 	unsigned long *pageblock_flags;
+-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++#ifdef CONFIG_CGROUP_PAGE
+ 	/*
+ 	 * If !SPARSEMEM, pgdat doesn't have page_cgroup pointer. We use
+ 	 * section. (see memcontrol.h/page_cgroup.h about this.)
+Index: linux-2.6.30-rc3-git3/include/linux/page_cgroup.h
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/include/linux/page_cgroup.h
++++ linux-2.6.30-rc3-git3/include/linux/page_cgroup.h
+@@ -1,7 +1,7 @@
+ #ifndef __LINUX_PAGE_CGROUP_H
+ #define __LINUX_PAGE_CGROUP_H
+ 
+-#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++#ifdef CONFIG_CGROUP_PAGE
+ #include <linux/bit_spinlock.h>
+ /*
+  * Page Cgroup can be considered as an extended mem_map.
+@@ -12,9 +12,11 @@
+  */
+ struct page_cgroup {
+ 	unsigned long flags;
+-	struct mem_cgroup *mem_cgroup;
+ 	struct page *page;
++#ifdef CONFIG_CGROUP_MEM_RES_CTLR
++	struct mem_cgroup *mem_cgroup;
+ 	struct list_head lru;		/* per cgroup LRU list */
++#endif
+ };
+ 
+ void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat);
+@@ -71,7 +73,7 @@ static inline void unlock_page_cgroup(st
+ 	bit_spin_unlock(PCG_LOCK, &pc->flags);
+ }
+ 
+-#else /* CONFIG_CGROUP_MEM_RES_CTLR */
++#else /* CONFIG_CGROUP_PAGE */
+ struct page_cgroup;
+ 
+ static inline void __meminit pgdat_page_cgroup_init(struct pglist_data *pgdat)
+Index: linux-2.6.30-rc3-git3/init/Kconfig
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/init/Kconfig
++++ linux-2.6.30-rc3-git3/init/Kconfig
+@@ -608,6 +608,10 @@ config CGROUP_MEM_RES_CTLR_SWAP
+ 
+ endif # CGROUPS
+ 
++config CGROUP_PAGE
++	def_bool y
++	depends on CGROUP_MEM_RES_CTLR
++
+ config MM_OWNER
+ 	bool
+ 
+Index: linux-2.6.30-rc3-git3/mm/Makefile
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/mm/Makefile
++++ linux-2.6.30-rc3-git3/mm/Makefile
+@@ -37,4 +37,5 @@ else
+ obj-$(CONFIG_SMP) += allocpercpu.o
+ endif
+ obj-$(CONFIG_QUICKLIST) += quicklist.o
+-obj-$(CONFIG_CGROUP_MEM_RES_CTLR) += memcontrol.o page_cgroup.o
++obj-$(CONFIG_CGROUP_MEM_RES_CTLR) += memcontrol.o
++obj-$(CONFIG_CGROUP_PAGE) += page_cgroup.o
+Index: linux-2.6.30-rc3-git3/mm/memcontrol.c
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/mm/memcontrol.c
++++ linux-2.6.30-rc3-git3/mm/memcontrol.c
+@@ -128,6 +128,12 @@ struct mem_cgroup_lru_info {
+ 	struct mem_cgroup_per_node *nodeinfo[MAX_NUMNODES];
+ };
+ 
++void __meminit __init_mem_page_cgroup(struct page_cgroup *pc)
++{
++	pc->mem_cgroup = NULL;
++	INIT_LIST_HEAD(&pc->lru);
++}
++
+ /*
+  * The memory controller data structure. The memory controller controls both
+  * page cache and RSS per cgroup. We would eventually like to provide
+Index: linux-2.6.30-rc3-git3/mm/page_cgroup.c
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/mm/page_cgroup.c
++++ linux-2.6.30-rc3-git3/mm/page_cgroup.c
+@@ -14,9 +14,8 @@ static void __meminit
+ __init_page_cgroup(struct page_cgroup *pc, unsigned long pfn)
+ {
+ 	pc->flags = 0;
+-	pc->mem_cgroup = NULL;
+ 	pc->page = pfn_to_page(pfn);
+-	INIT_LIST_HEAD(&pc->lru);
++	__init_mem_page_cgroup(pc);
+ }
+ static unsigned long total_usage;
+ 
