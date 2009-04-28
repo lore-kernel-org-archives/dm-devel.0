@@ -1,101 +1,94 @@
 From: Ryo Tsuruta <ryov@valinux.co.jp>
-Subject: [PATCH 1/7] blkio-cgroup: Introduction
-Date: Tue, 28 Apr 2009 21:44:23 +0900 (JST)
-Message-ID: <20090428.214423.193684619.ryov@valinux.co.jp>
+Subject: [PATCH 3/7] blkio-cgroup: Refactoring io-context
+	initialization
+Date: Tue, 28 Apr 2009 21:45:35 +0900 (JST)
+Message-ID: <20090428.214535.71090234.ryov@valinux.co.jp>
+References: <20090428.214423.193684619.ryov@valinux.co.jp>
+	<20090428.214457.226801820.ryov@valinux.co.jp>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
 Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Return-path: <xen-devel-bounces@lists.xensource.com>
-List-Unsubscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=unsubscribe>
-List-Post: <mailto:xen-devel@lists.xensource.com>
-List-Help: <mailto:xen-devel-request@lists.xensource.com?subject=help>
-List-Subscribe: <http://lists.xensource.com/mailman/listinfo/xen-devel>,
-	<mailto:xen-devel-request@lists.xensource.com?subject=subscribe>
-Sender: xen-devel-bounces@lists.xensource.com
-Errors-To: xen-devel-bounces@lists.xensource.com
+Return-path: <dm-devel-bounces@redhat.com>
+In-Reply-To: <20090428.214457.226801820.ryov@valinux.co.jp>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
 To: linux-kernel@vger.kernel.org, dm-devel@redhat.com, containers@lists.linux-foundation.org, virtualization@lists.linux-foundation.org, xen-devel@lists.xensource.com
 List-Id: dm-devel.ids
 
-Hi all,
+This patch refactors io_context initialization.
 
-This is a new release of blkio-cgroup which provides an IO tracking
-mechanism. You can also download this series of patches from
-http://people.valinux.co.jp/~ryov/blkio-cgroup/
+Based on 2.6.30-rc3-git3
+Signed-off-by: Hirokazu Takahashi <taka@valinux.co.jp>
+Signed-off-by: Ryo Tsuruta <ryov@valinux.co.jp>
 
-Changes from the previous release
-=================================
-- bio-cgroup renamed to blkio-cgroup.
-- Use part of page_cgroup->flags to store the blkio-cgroup ID.
-  This code is taken from Andrea's io-throttle.
-  http://download.systemimager.org/~arighi/linux/patches/io-throttle/cgroup-io-throttle-v14.patch
-- Add a new function blkio_cgroup_lookup(ID) which can be called from
-  other cgroup subsystems and return the cgroup associated with a
-  given blkio-cgroup ID. It makes it easy to use blkio-cgroup from other
-  cgroup subsystems.
-- Add an extra patch which reduces the overhead of IO tracking.
-- Can be applied to 2.6.30-rc3 and 2.6.30-rc3-git3.
+---
+ block/blk-ioc.c           |   30 +++++++++++++++++-------------
+ include/linux/iocontext.h |    1 +
+ 2 files changed, 18 insertions(+), 13 deletions(-)
 
-What's blkio-cgroup all about?
-==============================
-
-With this feature, you can determine the owners of any type of
-I/Os. This makes dm-ioband_--_I/O_bandwidth_controller_-- be able to
-control the Block I/O bandwidths even when it accepts delayed write
-requests. Dm-ioband can find the owner cgroup of each request. It is
-also possible that the other people who work on the I/O bandwidth
-throttling use this functionality to control asynchronous I/Os with a
-little enhancement.
-
-Setting up blkio-cgroup
-=======================
-
-You have to apply the patch dm-ioband before applying this series of
-blkio-cgroup patches.
-And you have to select the following config options when compiling
-kernel.
-
-      CONFIG_CGROUPS=y
-      CONFIG_CGROUP_BLKIO=y
-
-And I recommend you should also select the options for cgroup memory
-subsystem, because it makes it possible to give some I/O bandwidth and
-some memory to a certain cgroup to control delayed write requests and
-the processes in the cgroup will be able to make pages dirty only
-inside the cgroup even when the given bandwidth is narrow.
-
-      CONFIG_RESOURCE_COUNTERS=y
-      CONFIG_CGROUP_MEM_RES_CTLR=y
-
-Using blkio-cgroup
-==================
-
-The following shows how to use dm-ioband with cgroups. Please assume
-that you want make two cgroups, which we call "bio cgroup" here, to
-track down block I/Os and assign them to ioband device "ioband1".
-
-First, mount the bio cgroup filesystem.
-
-      # mount -t cgroup -o blkio none /cgroup
-
-Then, make new bio cgroups and put some processes in them.
-
-      # mkdir /cgroup/grp1
-      # mkdir /cgroup/grp2
-      # echo 1234 > /cgroup/grp1/tasks
-      # echo 5678 > /cgroup/grp2/tasks
-
-Now, check the ID of each blkio cgroup which is just created.
-
-      # cat /cgroup/grp1/blkio.id
-      2
-      # cat /cgroup/grp2/blkio.id
-      3
-
-Finally, attach the cgroups to "ioband1" and assign them weights.
-
-      # dmsetup message ioband1 0 type cgroup
-      # dmsetup message ioband1 0 attach 2
-      # dmsetup message ioband1 0 attach 3
-      # dmsetup message ioband1 0 weight 2:30
-      # dmsetup message ioband1 0 weight 3:60
+Index: linux-2.6.30-rc3-git3/block/blk-ioc.c
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/block/blk-ioc.c
++++ linux-2.6.30-rc3-git3/block/blk-ioc.c
+@@ -84,24 +84,28 @@ void exit_io_context(void)
+ 	}
+ }
+ 
++void init_io_context(struct io_context *ioc)
++{
++	atomic_set(&ioc->refcount, 1);
++	atomic_set(&ioc->nr_tasks, 1);
++	spin_lock_init(&ioc->lock);
++	ioc->ioprio_changed = 0;
++	ioc->ioprio = 0;
++	ioc->last_waited = jiffies; /* doesn't matter... */
++	ioc->nr_batch_requests = 0; /* because this is 0 */
++	ioc->aic = NULL;
++	INIT_RADIX_TREE(&ioc->radix_root, GFP_ATOMIC | __GFP_HIGH);
++	INIT_HLIST_HEAD(&ioc->cic_list);
++	ioc->ioc_data = NULL;
++}
++
+ struct io_context *alloc_io_context(gfp_t gfp_flags, int node)
+ {
+ 	struct io_context *ret;
+ 
+ 	ret = kmem_cache_alloc_node(iocontext_cachep, gfp_flags, node);
+-	if (ret) {
+-		atomic_set(&ret->refcount, 1);
+-		atomic_set(&ret->nr_tasks, 1);
+-		spin_lock_init(&ret->lock);
+-		ret->ioprio_changed = 0;
+-		ret->ioprio = 0;
+-		ret->last_waited = jiffies; /* doesn't matter... */
+-		ret->nr_batch_requests = 0; /* because this is 0 */
+-		ret->aic = NULL;
+-		INIT_RADIX_TREE(&ret->radix_root, GFP_ATOMIC | __GFP_HIGH);
+-		INIT_HLIST_HEAD(&ret->cic_list);
+-		ret->ioc_data = NULL;
+-	}
++	if (ret)
++		init_io_context(ret);
+ 
+ 	return ret;
+ }
+Index: linux-2.6.30-rc3-git3/include/linux/iocontext.h
+===================================================================
+--- linux-2.6.30-rc3-git3.orig/include/linux/iocontext.h
++++ linux-2.6.30-rc3-git3/include/linux/iocontext.h
+@@ -104,6 +104,7 @@ int put_io_context(struct io_context *io
+ void exit_io_context(void);
+ struct io_context *get_io_context(gfp_t gfp_flags, int node);
+ struct io_context *alloc_io_context(gfp_t gfp_flags, int node);
++void init_io_context(struct io_context *ioc);
+ void copy_io_context(struct io_context **pdst, struct io_context **psrc);
+ #else
+ static inline void exit_io_context(void)
