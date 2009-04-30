@@ -1,14 +1,14 @@
-From: Hannes Reinecke <hare@suse.de>
-Subject: Re: rdac priority checker changing priorities
-Date: Thu, 30 Apr 2009 08:25:02 +0200
-Message-ID: <49F9443E.7040109@suse.de>
-References: <9ad205140904291534j4cc1a71aq3b4a0e308f1687bd@mail.gmail.com>
+From: "Diedrich Ehlerding" <diedrich.ehlerding@ts.fujitsu.com>
+Subject: multipath: expected results of configuring
+	"no_path_retry"?
+Date: Thu, 30 Apr 2009 10:47:04 +0200
+Message-ID: <7oranp$22o15k@dgate10u.abg.fsc.net>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Return-path: <dm-devel-bounces@redhat.com>
-In-Reply-To: <9ad205140904291534j4cc1a71aq3b4a0e308f1687bd@mail.gmail.com>
+Content-description: Mail message body
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
 List-Archive: <https://www.redhat.com/archives/dm-devel>
@@ -18,101 +18,45 @@ List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
 	<mailto:dm-devel-request@redhat.com?subject=subscribe>
 Sender: dm-devel-bounces@redhat.com
 Errors-To: dm-devel-bounces@redhat.com
-To: device-mapper development <dm-devel@redhat.com>
+To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Hi Lucas,
+I have a question concerning the expected behavior of dm_multipath 
+connected to an EMC Clariion array. Different versions of multipath 
+give different results when I disconnect all pathes to the storage. 
 
-Lucas Brasilino wrote:
-> Hi
->=20
-> I don't know if I'm misundertanding something. I've got an DS4700 and I=
-'m
-> switching from RDAC[1] to multipath, since it's natively supported in
-> the distribution I use
-> here (SLES 10 SP2).
->=20
-> Since RDAC[1] works perfect, I'm trying to use 'rdac' priority in multi=
-path.
->=20
-> My /etc/multiconf.conf is quite tiny, since I'm building it step-by-ste=
-p :-) :
->=20
-> blacklist {
-> 	devnode "^sda[0-9]*"
-> }
->=20
-> defaults {
-> 	user_friendly_names	yes
-> 	prio			rdac
-> 	path_checker		tur
-> }
->=20
-> multipaths {
-> 	multipath {
-> 		wwid	3600a0b8000327b900000107549f85224
-> 		alias	mpath0
-> 	}
-> }
->=20
-> I think that using 'prio rdac' makes multipath to use 'mpath_prio_rdac'=
- tool.
->=20
->  # multipath -v2 -ll
-> mpath0 (3600a0b8000327b900000107549f85224) dm-0 IBM,1814      FAStT
-> [size=3D140G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-> \_ round-robin 0 [prio=3D6][active]
->  \_ 9:0:0:0  sdb 8:16  [active][ready]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 10:0:0:0 sdc 8:32  [active][ghost]
->=20
-> So the first path has priority 6, as I can confirm:
->=20
-> # mpath_prio_rdac /dev/sdb
-> 6
-> # mpath_prio_rdac /dev/sdc
-> 1
->=20
-> After the first path (prio=3D6) failure I get:
->=20
-> # multipath -v2 -ll
-> sdb: rdac prio: inquiry command indicates error
-> mpath0 (3600a0b8000327b900000107549f85224) dm-0 IBM,1814      FAStT
-> [size=3D140G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-> \_ round-robin 0 [prio=3D0][enabled]
->  \_ 9:0:0:0  sdb 8:16  [failed][faulty]
-> \_ round-robin 0 [prio=3D1][enabled]
->  \_ 10:0:0:0 sdc 8:32  [active][ghost]
->=20
-> Ok.. working great, activating the second path. But after the faulty
-> path is restored:
->=20
-> # multipath -v2 -ll
-> mpath0 (3600a0b8000327b900000107549f85224) dm-0 IBM,1814      FAStT
-> [size=3D140G][features=3D1 queue_if_no_path][hwhandler=3D1 rdac]
-> \_ round-robin 0 [prio=3D2][enabled]
->  \_ 9:0:0:0  sdb 8:16  [active][ghost]
-> \_ round-robin 0 [prio=3D5][active]
->  \_ 10:0:0:0 sdc 8:32  [active][ready]
->=20
-> Second path is now priority!!! And of course does not fails back! By
-> the way, my LUN is configured in
-> DS4700 in sort a way that the first path *is* the path to preferred con=
-troller.
->=20
-> I think path priorities should not change. If so first path goes back
-> to 'active' status.
-> Am I misunderstanding something ? Or messing things up?
->=20
-You are using an old version of multipathing for SLES10 SP2.
-This had a bug triggering priority inversion on RDAC.
-Please update to the latest version.
+I have one server (SuSE SLES10 SP2, 2.6.16.60-0.3, multipath-tools 
+0.4.7-34.43) and another one (SLES 11,  2.6.27.19-5-default, 0.4.8-
+40.1). Both versions recognize the Clariion without further setting in 
+multipath.conf. The settings for the Clariion in multipath -t seem to 
+be the same (especially queue_if_no_path + no_path_retry 60)
 
-Cheers,
+Trying to setup a software mirror on top, i.e. trying to mirror the 
+data into a second box, I observed the follwoing diffenrent behavior 
+between these two versions: 
 
-Hannes
---=20
-Dr. Hannes Reinecke		      zSeries & Storage
-hare@suse.de			      +49 911 74053 688
-SUSE LINUX Products GmbH, Maxfeldstr. 5, 90409 N=FCrnberg
-GF: Markus Rex, HRB 16746 (AG N=FCrnberg)
+- on the SLES10 machine, disconnecting the disk in one Clariion results 
+in IO error, the mirror breaks up, and the use IO continues on the 
+surviving part of the mirror. This is the behavior which I want, and 
+which I expected, and this was my understanding of "no_path_retry" - 
+retry some times, then terminate IO.  
+
+- on the SLES11 machine, the same attempt makes IO hang infinitely. The 
+messages display that all pathes fail, and then "Entering recovery 
+mode: max_retries=60" - but then, nothing happens; IOs hang.
+
+I tried to modify no_path_retry=1 in multipath.conf, and according to 
+multipath -t, this setting is accepted - but again, the messages say 
+"Retry=60"; i.e. this setting seems to be hardcoded into dm_emc.
+
+It is, however, possible to set "features 0" in multipath.conf; now it 
+seems to work as desired - i.e. with this setting, IO doesnt hang, but 
+is terminated with an IO error when I disconnect the Lun. 
+
+My question is: which behaviour SHOULD I expect - is the SLES10 
+behavior correct (retry 60 times, and then create an error); or is the 
+SLES11 behavor correct (wait infinitely), if I use the default settings 
+for a Clariion?
+
+TIA
+D. 
