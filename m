@@ -1,55 +1,68 @@
-From: Dan Williams <dan.j.williams@gmail.com>
-Subject: Re: [PATCHSET] block,scsi,libata: implement alt_size
-Date: Thu, 30 Apr 2009 14:15:48 -0700
-Message-ID: <e9c3a7c20904301415t621670a0l1bd64c7d74d369f@mail.gmail.com>
-References: <1233456951-992-1-git-send-email-tj@kernel.org>
-	 <49F902CF.7080307@garzik.org> <49F903DD.8040707@kernel.org>
-	 <49FA0349.3090706@garzik.org>
+From: Alasdair G Kergon <agk@redhat.com>
+Subject: Re: [PATCH] raid1: use __GFP_NOFAIL
+Date: Fri, 1 May 2009 00:14:43 +0100
+Message-ID: <20090430231443.GD23302@agk.fab.redhat.com>
+References: <Pine.LNX.4.64.0904270658390.12384@hs20-bc2-1.build.redhat.com>
+Reply-To: device-mapper development <dm-devel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Return-path: <linux-scsi-owner@vger.kernel.org>
-In-Reply-To: <49FA0349.3090706@garzik.org>
-Sender: linux-scsi-owner@vger.kernel.org
-To: Jeff Garzik <jeff@garzik.org>
-Cc: Tejun Heo <tj@kernel.org>, linux-ide@vger.kernel.org, jens.axboe@oracle.com, linux-kernel@vger.kernel.org, linux-scsi@vger.kernel.org, James.Bottomley@hansenpartnership.com, Mauelshagen@redhat.com, dm-devel@redhat.com
+Content-Type: text/plain; charset=us-ascii
+Return-path: <dm-devel-bounces@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <Pine.LNX.4.64.0904270658390.12384@hs20-bc2-1.build.redhat.com>
+List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=unsubscribe>
+List-Archive: <https://www.redhat.com/archives/dm-devel>
+List-Post: <mailto:dm-devel@redhat.com>
+List-Help: <mailto:dm-devel-request@redhat.com?subject=help>
+List-Subscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
+	<mailto:dm-devel-request@redhat.com?subject=subscribe>
+Sender: dm-devel-bounces@redhat.com
+Errors-To: dm-devel-bounces@redhat.com
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Heinz Mauelshagen <heinzm@redhat.com>, dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-On Thu, Apr 30, 2009 at 1:00 PM, Jeff Garzik <jeff@garzik.org> wrote:
-> Tejun Heo wrote:
->>
->> Hello,
->>
->> Jeff Garzik wrote:
->>>
->>> <shrug> =A0I suppose...
->>>
->>> It just seems like a nasty hack, but unfortunately I don't see
->>> anyone stepping up to do it properly -- with a DM device
->>> automatically layered on top that splits the device into separate
->>> regions: one block device for the 'regular' area, and one for the
->>> HPA.
->>
->> Isn't that more hacky? =A0I don't know. =A0All that dm needs to know=
- is
->> the location of the metadata which is located w.r.t. the end of the
->> device which might be at a different location if BIOS tried to pull
->> silly stunts. =A0So, exporting the size BIOS might have used seems l=
-ike
->> a straight forward solution to me.
->
-> "<shrug> I suppose" is basically a reluctant ack, in the absence of o=
-ther
-> solutions :)
->
+On Mon, Apr 27, 2009 at 07:01:22AM -0400, Mikulas Patocka wrote:
+> This is a bug I found when implementing the barriers. There should be 
+> __GFP_NOFAIL if the code can't handle an allocation failure.
+ 
+See also this one:
+  dm-raid1-mempool-bug-workaround-reversion.patch
 
-Couldn't the "fix" also just be a note to users to disable ignore_hpa
-if they notice that there raid arrays are not assembling correctly?
+Has the original reason for that workaround gone away now or is that
+mempool still being used incorrectly?
 
---
-Dan
---
-To unsubscribe from this list: send the line "unsubscribe linux-scsi" i=
-n
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Alasdair
+
+
+From: Alasdair G Kergon <agk@redhat.com>
+
+Implement private fallback if immediate allocation from mempool fails.
+Standard mempool_alloc() fallback can yield a deadlock when only the
+calling process is able to refill the pool. In out-of-memory situations,
+instead of waiting for itself, kmirrord now waits for someone else to
+free some space, using a standard blocking allocation.
+
+Signed-off-by: Daniel Kobras <kobras@linux.de>
+Signed-off-by: Alasdair G Kergon <agk@redhat.com>
+---
+[AGK - This patch reverses the mempool workaround described above.]
+
+ drivers/md/dm-raid1.c |    4 +---
+ 1 files changed, 1 insertion(+), 3 deletions(-)
+
+Index: linux-2.6.19/drivers/md/dm-raid1.c
+===================================================================
+--- linux-2.6.19.orig/drivers/md/dm-raid1.c	2006-12-06 20:49:41.000000000 +0000
++++ linux-2.6.19/drivers/md/dm-raid1.c	2006-12-06 20:49:44.000000000 +0000
+@@ -261,9 +261,7 @@ static struct region *__rh_alloc(struct 
+ 	struct region *reg, *nreg;
+ 
+ 	read_unlock(&rh->hash_lock);
+-	nreg = mempool_alloc(rh->region_pool, GFP_ATOMIC);
+-	if (unlikely(!nreg))
+-		nreg = kmalloc(sizeof(struct region), GFP_NOIO);
++	nreg = mempool_alloc(rh->region_pool, GFP_NOIO);
+ 	nreg->state = rh->log->type->in_sync(rh->log, region, 1) ?
+ 		RH_CLEAN : RH_NOSYNC;
+ 	nreg->rh = rh;
