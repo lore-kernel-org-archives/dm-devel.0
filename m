@@ -1,8 +1,7 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 8 of 33] DM Snapshot: use allocated exception
-	tables
-Date: Fri, 1 May 2009 09:17:42 -0500
-Message-ID: <200905011417.n41EHgV9029060@hydrogen.msp.redhat.com>
+Subject: [PATCH 9 of 33] DM Snapshot: exception function changes 1
+Date: Fri, 1 May 2009 09:17:52 -0500
+Message-ID: <200905011417.n41EHqW2029133@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -17,12 +16,11 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-snap-use-allocated-exception-tables.patch
+Patch name: dm-snap-exception-function-changes-1.patch
 
-Change to using exception table pointers vs. just using the
-whole struct from within 'stuct dm_snapshot'.  Again, this is
-to facilitate extraction of the exception table/cache code from
-dm-snap.c.
+This patch moves towards a generalized interface for functions that
+allocate and deallocate exceptions.  So, we add an additional parameter
+for context pointers.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -30,163 +28,162 @@ Index: linux-2.6/drivers/md/dm-snap.c
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-snap.c
 +++ linux-2.6/drivers/md/dm-snap.c
-@@ -74,8 +74,8 @@ struct dm_snapshot {
+@@ -419,7 +419,7 @@ static struct dm_exception *dm_lookup_ex
+ 	return NULL;
+ }
  
- 	atomic_t pending_exceptions_count;
- 
--	struct dm_exception_table pending;
--	struct dm_exception_table complete;
-+	struct dm_exception_table *pending;
-+	struct dm_exception_table *complete;
- 
- 	/*
- 	 * pe_lock protects all pending_exception operations and access
-@@ -347,25 +347,32 @@ static void unregister_snapshot(struct d
-  * The lowest hash_shift bits of the chunk number are ignored, allowing
-  * some consecutive chunks to be grouped together.
-  */
--static int dm_exception_table_init(struct dm_exception_table *et,
--				   uint32_t size, unsigned hash_shift)
-+static struct dm_exception_table *
-+dm_exception_table_create(uint32_t size, unsigned hash_shift)
+-static struct dm_exception *alloc_completed_exception(void)
++static struct dm_exception *alloc_completed_exception(void *unused)
  {
- 	unsigned int i;
-+	struct dm_exception_table *et;
-+
-+	et = kmalloc(sizeof(*et), GFP_KERNEL);
-+	if (!et)
-+		return NULL;
+ 	struct dm_exception *e;
  
- 	et->hash_shift = hash_shift;
- 	et->hash_mask = size - 1;
- 	et->table = dm_vcalloc(size, sizeof(struct list_head));
--	if (!et->table)
--		return -ENOMEM;
-+	if (!et->table) {
-+		kfree(et);
-+		return NULL;
-+	}
- 
- 	for (i = 0; i < size; i++)
- 		INIT_LIST_HEAD(et->table + i);
- 
--	return 0;
-+	return et;
+@@ -430,13 +430,14 @@ static struct dm_exception *alloc_comple
+ 	return e;
  }
  
--static void dm_exception_table_exit(struct dm_exception_table *et,
--				    struct kmem_cache *mem)
-+static void dm_exception_table_destroy(struct dm_exception_table *et,
-+				       struct kmem_cache *mem)
+-static void free_completed_exception(struct dm_exception *e)
++static void free_completed_exception(struct dm_exception *e, void *unused)
  {
- 	struct list_head *slot;
- 	struct dm_exception *ex, *next;
-@@ -380,6 +387,7 @@ static void dm_exception_table_exit(stru
- 	}
- 
- 	vfree(et->table);
-+	kfree(et);
+ 	kmem_cache_free(exception_cache, e);
  }
  
- static uint32_t exception_hash(struct dm_exception_table *et, chunk_t chunk)
-@@ -507,7 +515,7 @@ static int dm_add_exception(void *contex
- 	/* Consecutive_count is implicitly initialised to zero */
- 	e->new_chunk = new;
- 
--	dm_insert_exception(&s->complete, e);
-+	dm_insert_exception(s->complete, e);
- 
- 	return 0;
- }
-@@ -543,8 +551,10 @@ static int init_hash_tables(struct dm_sn
- 	hash_size = min(hash_size, max_buckets);
- 
- 	hash_size = rounddown_pow_of_two(hash_size);
--	if (dm_exception_table_init(&s->complete, hash_size,
--				    DM_CHUNK_CONSECUTIVE_BITS))
-+
-+	s->complete = dm_exception_table_create(hash_size,
-+						DM_CHUNK_CONSECUTIVE_BITS);
-+	if (!s->complete)
- 		return -ENOMEM;
- 
- 	/*
-@@ -555,8 +565,9 @@ static int init_hash_tables(struct dm_sn
- 	if (hash_size < 64)
- 		hash_size = 64;
- 
--	if (dm_exception_table_init(&s->pending, hash_size, 0)) {
--		dm_exception_table_exit(&s->complete, exception_cache);
-+	s->pending = dm_exception_table_create(hash_size, 0);
-+	if (!s->pending) {
-+		dm_exception_table_destroy(s->complete, exception_cache);
- 		return -ENOMEM;
- 	}
- 
-@@ -748,8 +759,8 @@ bad_pending_pool:
- 	dm_kcopyd_client_destroy(s->kcopyd_client);
- 
- bad_kcopyd:
--	dm_exception_table_exit(&s->pending, pending_cache);
--	dm_exception_table_exit(&s->complete, exception_cache);
-+	dm_exception_table_destroy(s->pending, pending_cache);
-+	dm_exception_table_destroy(s->complete, exception_cache);
- 
- bad_hash_tables:
- 	dm_put_device(ti, s->origin);
-@@ -768,8 +779,8 @@ static void __free_exceptions(struct dm_
- 	dm_kcopyd_client_destroy(s->kcopyd_client);
- 	s->kcopyd_client = NULL;
- 
--	dm_exception_table_exit(&s->pending, pending_cache);
--	dm_exception_table_exit(&s->complete, exception_cache);
-+	dm_exception_table_destroy(s->pending, pending_cache);
-+	dm_exception_table_destroy(s->complete, exception_cache);
- }
- 
- static void snapshot_dtr(struct dm_target *ti)
-@@ -949,7 +960,7 @@ static void pending_complete(struct dm_s
- 	 * Add a proper exception, and remove the
- 	 * in-flight exception from the list.
- 	 */
--	dm_insert_exception(&s->complete, e);
-+	dm_insert_exception(s->complete, e);
- 
- out:
- 	dm_remove_exception(&pe->e);
-@@ -1020,7 +1031,7 @@ static void start_copy(struct dm_snap_pe
- static struct dm_snap_pending_exception *
- __lookup_pending_exception(struct dm_snapshot *s, chunk_t chunk)
+-static struct dm_snap_pending_exception *alloc_pending_exception(struct dm_snapshot *s)
++static struct dm_snap_pending_exception *alloc_pending_exception(void *context)
  {
--	struct dm_exception *e = dm_lookup_exception(&s->pending, chunk);
-+	struct dm_exception *e = dm_lookup_exception(s->pending, chunk);
++	struct dm_snapshot *s = context;
+ 	struct dm_snap_pending_exception *pe = mempool_alloc(s->pending_pool,
+ 							     GFP_NOIO);
  
- 	if (!e)
- 		return NULL;
-@@ -1061,7 +1072,7 @@ __find_pending_exception(struct dm_snaps
- 	}
- 
- 	get_pending_exception(pe);
--	dm_insert_exception(&s->pending, &pe->e);
-+	dm_insert_exception(s->pending, &pe->e);
- 
+@@ -446,7 +447,8 @@ static struct dm_snap_pending_exception 
  	return pe;
  }
-@@ -1103,7 +1114,7 @@ static int snapshot_map(struct dm_target
+ 
+-static void free_pending_exception(struct dm_snap_pending_exception *pe)
++static void free_pending_exception(struct dm_snap_pending_exception *pe,
++				   void *unused)
+ {
+ 	struct dm_snapshot *s = pe->snap;
+ 
+@@ -475,7 +477,7 @@ static void dm_insert_exception(struct d
+ 		    new_e->new_chunk == (dm_chunk_number(e->new_chunk) +
+ 					 dm_consecutive_chunk_count(e) + 1)) {
+ 			dm_consecutive_chunk_count_inc(e);
+-			free_completed_exception(new_e);
++			free_completed_exception(new_e, NULL);
+ 			return;
+ 		}
+ 
+@@ -485,7 +487,7 @@ static void dm_insert_exception(struct d
+ 			dm_consecutive_chunk_count_inc(e);
+ 			e->old_chunk--;
+ 			e->new_chunk--;
+-			free_completed_exception(new_e);
++			free_completed_exception(new_e, NULL);
+ 			return;
+ 		}
+ 
+@@ -506,7 +508,7 @@ static int dm_add_exception(void *contex
+ 	struct dm_snapshot *s = context;
+ 	struct dm_exception *e;
+ 
+-	e = alloc_completed_exception();
++	e = alloc_completed_exception(NULL);
+ 	if (!e)
+ 		return -ENOMEM;
+ 
+@@ -904,7 +906,7 @@ static struct bio *put_pending_exception
+ 	if (primary_pe &&
+ 	    atomic_dec_and_test(&primary_pe->ref_count)) {
+ 		origin_bios = bio_list_get(&primary_pe->origin_bios);
+-		free_pending_exception(primary_pe);
++		free_pending_exception(primary_pe, NULL);
  	}
  
- 	/* If the block is already remapped - use that, else remap it */
--	e = dm_lookup_exception(&s->complete, chunk);
-+	e = dm_lookup_exception(s->complete, chunk);
- 	if (e) {
- 		remap_exception(s, e, bio, chunk);
- 		goto out_unlock;
-@@ -1265,7 +1276,7 @@ static int __origin_write(struct list_he
- 		 * ref_count is initialised to 1 so pending_complete()
- 		 * won't destroy the primary_pe while we're inside this loop.
- 		 */
--		e = dm_lookup_exception(&snap->complete, chunk);
-+		e = dm_lookup_exception(snap->complete, chunk);
- 		if (e)
- 			goto next_snapshot;
+ 	/*
+@@ -912,7 +914,7 @@ static struct bio *put_pending_exception
+ 	 * it's not itself a primary pe.
+ 	 */
+ 	if (!primary_pe || primary_pe != pe)
+-		free_pending_exception(pe);
++		free_pending_exception(pe, NULL);
  
+ 	return origin_bios;
+ }
+@@ -933,7 +935,7 @@ static void pending_complete(struct dm_s
+ 		goto out;
+ 	}
+ 
+-	e = alloc_completed_exception();
++	e = alloc_completed_exception(NULL);
+ 	if (!e) {
+ 		down_write(&s->lock);
+ 		__invalidate_snapshot(s, -ENOMEM);
+@@ -944,7 +946,7 @@ static void pending_complete(struct dm_s
+ 
+ 	down_write(&s->lock);
+ 	if (!s->valid) {
+-		free_completed_exception(e);
++		free_completed_exception(e, NULL);
+ 		error = 1;
+ 		goto out;
+ 	}
+@@ -1055,7 +1057,7 @@ __find_pending_exception(struct dm_snaps
+ 
+ 	pe2 = __lookup_pending_exception(s, chunk);
+ 	if (pe2) {
+-		free_pending_exception(pe);
++		free_pending_exception(pe, NULL);
+ 		return pe2;
+ 	}
+ 
+@@ -1067,7 +1069,7 @@ __find_pending_exception(struct dm_snaps
+ 	pe->started = 0;
+ 
+ 	if (s->store->type->prepare_exception(s->store, &pe->e)) {
+-		free_pending_exception(pe);
++		free_pending_exception(pe, NULL);
+ 		return NULL;
+ 	}
+ 
+@@ -1133,14 +1135,14 @@ static int snapshot_map(struct dm_target
+ 			down_write(&s->lock);
+ 
+ 			if (!s->valid) {
+-				free_pending_exception(pe);
++				free_pending_exception(pe, NULL);
+ 				r = -EIO;
+ 				goto out_unlock;
+ 			}
+ 
+ 			e = dm_lookup_exception(&s->complete, chunk);
+ 			if (e) {
+-				free_pending_exception(pe);
++				free_pending_exception(pe, NULL);
+ 				remap_exception(s, e, bio, chunk);
+ 				goto out_unlock;
+ 			}
+@@ -1287,13 +1289,13 @@ static int __origin_write(struct list_he
+ 			down_write(&snap->lock);
+ 
+ 			if (!snap->valid) {
+-				free_pending_exception(pe);
++				free_pending_exception(pe, NULL);
+ 				goto next_snapshot;
+ 			}
+ 
+ 			e = dm_lookup_exception(&snap->complete, chunk);
+ 			if (e) {
+-				free_pending_exception(pe);
++				free_pending_exception(pe, NULL);
+ 				goto next_snapshot;
+ 			}
+ 
+@@ -1347,7 +1349,7 @@ static int __origin_write(struct list_he
+ 
+ 	if (first && atomic_dec_and_test(&primary_pe->ref_count)) {
+ 		flush_bios(bio_list_get(&primary_pe->origin_bios));
+-		free_pending_exception(primary_pe);
++		free_pending_exception(primary_pe, NULL);
+ 		/* If we got here, pe_queue is necessarily empty. */
+ 		return r;
+ 	}
