@@ -1,7 +1,8 @@
 From: Jonathan Brassow <jbrassow@redhat.com>
-Subject: [PATCH 25 of 33] DM Exception Store:  add shared_uuid
-Date: Fri, 1 May 2009 09:20:35 -0500
-Message-ID: <200905011420.n41EKZp1030305@hydrogen.msp.redhat.com>
+Subject: [PATCH 26 of 33] DM Exception Store: add arg to
+	prepare_commit
+Date: Fri, 1 May 2009 09:20:45 -0500
+Message-ID: <200905011420.n41EKjI2030378@hydrogen.msp.redhat.com>
 Reply-To: device-mapper development <dm-devel@redhat.com>
 Return-path: <dm-devel-bounces@redhat.com>
 List-Unsubscribe: <https://www.redhat.com/mailman/listinfo/dm-devel>,
@@ -16,12 +17,15 @@ Errors-To: dm-devel-bounces@redhat.com
 To: dm-devel@redhat.com
 List-Id: dm-devel.ids
 
-Patch name: dm-exception-store-add-shared_uuid.patch
+Patch name: dm-exception-store-add-arg-to-prepare_commit.patch
 
-This patch adds the shared_uuid to the dm_exception_store structure.
-Exception store implementations can set this to a unique non-zero
-value if they wish to express that the back-end is optimized for
-sharing.
+Add the 'group' paramenter to the prepare_exception function.  This
+is used to facilitate shared exception stores.  When writing to
+a snapshot, an exception is created for only that snapshot (group=0).
+When writing to the origin, all snapshots are affected, so rather
+than preparing_exceptions for all snapshots one at a time, we can
+use the group=1 to indicate that all snapshots managed by the shared
+exception store be updated.
 
 Signed-off-by: Jonathan Brassow <jbrassow@redhat.com>
 
@@ -29,32 +33,117 @@ Index: linux-2.6/drivers/md/dm-exception-store.h
 ===================================================================
 --- linux-2.6.orig/drivers/md/dm-exception-store.h
 +++ linux-2.6/drivers/md/dm-exception-store.h
-@@ -94,6 +94,16 @@ struct dm_exception_store {
- 
- 	struct dm_dev *cow;
- 
-+	/*
-+	 * If the underlying exception store implementation is shared,
-+	 * it can set 'shared_uuid' to identify which 'dm_exception_store's
-+	 * share the same underlying implementation specific store.
-+	 *
-+	 * The user can use this ID to consolidate work/structures in
-+	 * the upper layers.
-+	 */
-+	uint64_t shared_uuid;
-+
- 	/* Size of data blocks saved - must be a power of 2 */
- 	chunk_t chunk_size;
- 	chunk_t chunk_mask;
-Index: linux-2.6/drivers/md/dm-exception-store.c
-===================================================================
---- linux-2.6.orig/drivers/md/dm-exception-store.c
-+++ linux-2.6/drivers/md/dm-exception-store.c
-@@ -218,6 +218,7 @@ int dm_exception_store_create(const char
- 
- 	tmp_store->type = type;
- 	tmp_store->ti = ti;
-+	tmp_store->shared_uuid = 0;
+@@ -37,9 +37,14 @@ struct dm_exception_store_type {
  
  	/*
- 	 * COW-dev and chunk_size are common to all types of
+ 	 * Find somewhere to store the next exception.
++	 * If the exception store implementation is shared,
++	 * the 'group' field signifies whether to operate on
++	 * the group sharing one exception store, or whether
++	 * to operate on just one of those in the shared
++	 * exception store.
+ 	 */
+ 	int (*prepare_exception) (struct dm_exception_store *store,
+-				  struct dm_exception *e);
++				  struct dm_exception *e, int group);
+ 
+ 	/*
+ 	 * Update the metadata with this exception.
+Index: linux-2.6/drivers/md/dm-snap-persistent.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-persistent.c
++++ linux-2.6/drivers/md/dm-snap-persistent.c
+@@ -604,7 +604,7 @@ read_metadata:
+ }
+ 
+ static int persistent_prepare_exception(struct dm_exception_store *store,
+-					struct dm_exception *e)
++					struct dm_exception *e, int group)
+ {
+ 	struct pstore *ps = get_info(store);
+ 	uint32_t stride;
+Index: linux-2.6/drivers/md/dm-snap-transient.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap-transient.c
++++ linux-2.6/drivers/md/dm-snap-transient.c
+@@ -50,7 +50,7 @@ static int transient_resume(struct dm_ex
+ }
+ 
+ static int transient_prepare_exception(struct dm_exception_store *store,
+-				       struct dm_exception *e)
++				       struct dm_exception *e, int group)
+ {
+ 	struct transient_c *tc = store->context;
+ 	sector_t size = get_dev_size(store->cow->bdev);
+Index: linux-2.6/drivers/md/dm-snap.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-snap.c
++++ linux-2.6/drivers/md/dm-snap.c
+@@ -835,6 +835,12 @@ __lookup_pending_exception(struct dm_sna
+ }
+ 
+ /*
++ * __find_pending_exception
++ * @s
++ * @pe
++ * @chunk
++ * @group
++ *
+  * Looks to see if this snapshot already has a pending exception
+  * for this chunk, otherwise it allocates a new one and inserts
+  * it into the pending table.
+@@ -844,7 +850,8 @@ __lookup_pending_exception(struct dm_sna
+  */
+ static struct dm_snap_pending_exception *
+ __find_pending_exception(struct dm_snapshot *s,
+-			 struct dm_snap_pending_exception *pe, chunk_t chunk)
++			 struct dm_snap_pending_exception *pe,
++			 chunk_t chunk, int group)
+ {
+ 	struct dm_snap_pending_exception *pe2;
+ 
+@@ -861,7 +868,7 @@ __find_pending_exception(struct dm_snaps
+ 	atomic_set(&pe->ref_count, 0);
+ 	pe->started = 0;
+ 
+-	if (s->store->type->prepare_exception(s->store, &pe->e)) {
++	if (s->store->type->prepare_exception(s->store, &pe->e, group)) {
+ 		dm_free_exception(s->pending, &pe->e);
+ 		return NULL;
+ 	}
+@@ -883,7 +890,7 @@ static void remap_exception(struct dm_sn
+ static int snapshot_map(struct dm_target *ti, struct bio *bio,
+ 			union map_info *map_context)
+ {
+-	struct dm_exception *e, *tmp_e;
++	struct dm_exception *tmp_e;
+ 	struct dm_snapshot *s = ti->private;
+ 	int rtn, r = DM_MAPIO_REMAPPED;
+ 	chunk_t chunk, new_chunk;
+@@ -946,7 +953,7 @@ static int snapshot_map(struct dm_target
+ 				goto out_unlock;
+ 			}
+ 
+-			pe = __find_pending_exception(s, pe, chunk);
++			pe = __find_pending_exception(s, pe, chunk, 0);
+ 			if (!pe) {
+ 				__invalidate_snapshot(s, -ENOMEM);
+ 				r = -EIO;
+@@ -1084,7 +1091,7 @@ static int __origin_write(struct list_he
+ {
+ 	int rtn, r = DM_MAPIO_REMAPPED, first = 0;
+ 	struct dm_snapshot *snap;
+-	struct dm_exception *e, *tmp_e;
++	struct dm_exception *tmp_e;
+ 	struct dm_snap_pending_exception *pe, *next_pe, *primary_pe = NULL;
+ 	chunk_t chunk;
+ 	LIST_HEAD(pe_queue);
+@@ -1149,7 +1156,7 @@ static int __origin_write(struct list_he
+ 				goto next_snapshot;
+ 			}
+ 
+-			pe = __find_pending_exception(snap, pe, chunk);
++			pe = __find_pending_exception(snap, pe, chunk, 1);
+ 			if (!pe) {
+ 				__invalidate_snapshot(snap, -ENOMEM);
+ 				goto next_snapshot;
